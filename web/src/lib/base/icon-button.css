@@ -1,0 +1,106 @@
+@layer base {
+  :where([data-btn][data-size='icon']) {
+    --_btn-h: var(--oc-ibtn-size, var(--oc-control-h-xs));
+    --_btn-pad: 0;
+    --_btn-radius: var(--oc-control-radius);
+    width: var(--oc-ibtn-size, var(--oc-control-h-xs));
+    height: var(--oc-ibtn-size, var(--oc-control-h-xs));
+    min-width: 0;
+    flex: none;
+    overflow: visible;
+  }
+
+  :where([data-btn=''][data-size='icon'], [data-btn='secondary'][data-size='icon']) {
+    --_btn-edge: var(--oc-control-line);
+    --_btn-fill: var(--oc-ground-field);
+    --_btn-ink: var(--oc-text-secondary);
+    --_btn-edge-hover: var(--oc-control-line-hi);
+    --_btn-fill-hover: var(--oc-ground-field);
+    --_btn-ink-hover: var(--oc-text-secondary);
+  }
+
+  :where(:is([data-btn=''], [data-btn='secondary'])[data-size='icon'][aria-pressed='true']) {
+    --_btn-edge: var(--oc-orange);
+    --_btn-fill: var(--oc-ground-hover);
+    --_btn-ink: var(--oc-orange);
+    --_btn-edge-hover: var(--oc-orange);
+    --_btn-fill-hover: var(--oc-ground-hover);
+    --_btn-ink-hover: var(--oc-orange);
+  }
+
+  :where([data-btn='quiet'][data-size='icon']) {
+    --_btn-edge: transparent;
+    --_btn-fill: transparent;
+    --_btn-ink: var(--oc-text-dim);
+    --_btn-edge-hover: transparent;
+    --_btn-fill-hover: var(--oc-ground-hover);
+    --_btn-ink-hover: var(--oc-text-primary);
+  }
+
+  :where([data-btn='quiet'][data-size='icon']:is([aria-expanded='true'], [aria-pressed='true'])) {
+    --_btn-ink: var(--oc-orange);
+  }
+
+  :where([data-btn='quiet'][data-size='icon'][aria-current='page']) {
+    --_btn-fill: var(--oc-ground-hover);
+    --_btn-ink: var(--oc-orange);
+  }
+
+  :where([data-widget-head] [data-btn='quiet'][data-size='icon']:is([aria-expanded='true'], [aria-pressed='true'])) {
+    --_btn-ink: var(--oc-text-primary);
+  }
+
+  :where([data-btn][data-size='icon']:is(:disabled, [aria-disabled='true'])) {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  :where([data-btn][data-size='icon'][data-tone='danger']) {
+    --_btn-ink: var(--oc-coral);
+    --_btn-ink-hover: var(--oc-coral);
+    --_btn-fill-hover: transparent;
+  }
+
+  :where([data-btn][data-size='icon'][data-tone='close']) {
+    --_btn-ink-hover: var(--oc-coral);
+  }
+
+  :where([data-btn][data-size='icon'][data-tone='float']) {
+    --oc-ibtn-size: var(--oc-row-h-dense);
+    --_btn-radius: var(--oc-radius-sm);
+    --_btn-ink: var(--oc-text-muted);
+    --_btn-edge-hover: var(--oc-line-panel);
+    --_btn-fill-hover: var(--oc-ground-raised);
+    --_btn-ink-hover: var(--oc-text-primary);
+    opacity: 0.4;
+    transition-property: opacity, color, border-color, background-color;
+    transition-duration: var(--oc-motion-fast);
+  }
+
+  :where([data-btn][data-size='icon'][data-tone='float']:is(:hover, :focus-visible, [aria-expanded='true']):not(:disabled)) {
+    --_btn-edge: var(--oc-line-panel);
+    --_btn-fill: var(--oc-ground-raised);
+    --_btn-ink: var(--oc-text-primary);
+    opacity: 1;
+  }
+
+  @media (hover: none) {
+    :where([data-btn][data-size='icon'][data-tone='float']) {
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    :where([data-btn][data-size='icon']) {
+      --_btn-h: var(--oc-tap);
+      width: var(--oc-tap);
+      height: var(--oc-tap);
+    }
+
+    :where([data-widget-head]:not(.oc-frame-title--phone) [data-btn][data-size='icon']) {
+      --_btn-h: var(--oc-ibtn-size, var(--oc-control-h-xs));
+      width: var(--oc-ibtn-size, var(--oc-control-h-xs));
+      height: var(--oc-ibtn-size, var(--oc-control-h-xs));
+    }
+  }
+}

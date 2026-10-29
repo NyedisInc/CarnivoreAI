@@ -1,0 +1,112 @@
+/*
+ * RUNNING AND QUEUE (ui/RunQueue.svelte, an item follow-up, #1689): the two short sections over the pipeline chart
+ * and the scheduled chart. COPIED, NOT INVENTED: the deleted job widget's sections (75d4ae2a3^,
+ * cells/pipeline/Cell.svelte: .oc-pl-head, .oc-pl-count, .oc-pl-job, .oc-pl-name, .oc-pl-stage, .oc-pl-time,
+ * .oc-pl-none), restated here as global rules so the style guide's bundle (no component CSS) renders them. Color is
+ * --oc-* tokens only; the head is a title-row hairline (box-shadow, never a border). The time column is `auto`, so a
+ * time is never cut off; the name and the area share the rest and ellipsize (no tooltip on a name, #1209).
+ */
+@layer patterns {
+  .oc-rq {
+    flex: 0 0 auto;
+    font-family: var(--font-mono);
+    font-size: var(--oc-fs-body);
+    color: var(--oc-text-secondary);
+    box-shadow: inset 0 -1px 0 0 var(--oc-line-rule);
+  }
+
+  .oc-rq-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--oc-space-1);
+    margin: 0;
+    padding: var(--oc-space-1) var(--oc-space-2);
+    font-size: var(--oc-fs-label);
+    font-weight: normal;
+    letter-spacing: var(--oc-tracking-label, 0.6px);
+    text-transform: uppercase;
+    color: var(--oc-orange);
+    box-shadow: 0 1px 0 var(--oc-line-rule);
+  }
+
+  .oc-rq-section + .oc-rq-section {
+    box-shadow: inset 0 1px 0 0 var(--oc-line-rule);
+  }
+
+  .oc-rq-section:last-child > .oc-rq-head:last-child {
+    box-shadow: none;
+  }
+
+  .oc-rq-count {
+    color: var(--oc-text-dim);
+    letter-spacing: normal;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .oc-rq-rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* padding */
+  .oc-rq-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;
+    align-items: stretch;
+    line-height: 16px;
+    box-shadow: inset 0 -1px 0 0 var(--oc-line-faint);
+  }
+
+  .oc-rq-rows:last-child > .oc-rq-row:last-child {
+    box-shadow: none;
+  }
+
+  .oc-rq-name,
+  .oc-rq-area,
+  .oc-rq-time {
+    padding: var(--oc-space-1) var(--oc-space-2);
+  }
+
+  .oc-rq-area,
+  .oc-rq-time {
+    box-shadow: inset 1px 0 0 0 var(--oc-line-column);
+  }
+
+  .oc-rq-name,
+  .oc-rq-area {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .oc-rq-name {
+    color: var(--oc-text-bright);
+  }
+
+  .oc-rq-area {
+    color: var(--oc-text-secondary);
+  }
+
+  .oc-rq-time {
+    min-width: 15ch;
+    text-align: right;
+    white-space: nowrap;
+    color: var(--oc-text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .oc-rq-row[data-tone='wait'] .oc-rq-time {
+    color: var(--oc-yellow);
+  }
+
+  .oc-rq-none,
+  .oc-rq-more {
+    margin: 0;
+    padding: var(--oc-space-1) var(--oc-space-2);
+    font-size: var(--oc-fs-label);
+    color: var(--oc-text-dim);
+  }
+}

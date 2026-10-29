@@ -1,0 +1,228 @@
+<h2 class="sg-h2">toasts, notices, empty, loading and error states</h2>
+<p class="sg-lead">Feedback says what happened, in words, where the user is looking, and gets out of the way. A toast is
+for something that happened elsewhere; a notice strip is for something about this screen; an inline line is for a field or
+a row. Loading is a word, never a spinner. Empty is a sentence and, when there is one, the action that fills it.</p>
+
+<h3 class="sg-h3" id="feedback-toasts">toasts</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup copied from</span><code>client/js/toast-render.js</code><span>styles live</span></div>
+    <div class="sg-specimen__body sg-specimen__body--flush">
+        <div class="sg-stage">
+            <div class="toast-container" data-oc-base aria-live="polite">
+                <div class="toast" data-kind="PermissionRequest" data-severity="3" data-count="1" role="alert" tabindex="0">
+                    <div class="toast__title"><span class="toast__title-text">permission needed</span></div>
+                    <div class="toast__session">music-service</div>
+                    <div class="toast__body">claude wants to run: npm install</div>
+                    <button type="button" class="toast__dismiss" aria-label="dismiss" title="dismiss">&times;</button>
+                </div>
+                <div class="toast" data-kind="Stop" data-severity="1" data-count="3" role="status" tabindex="0">
+                    <div class="toast__title"><span class="toast__title-text">turn finished</span><span class="toast__count" aria-label="3 occurrences">&times;3</span></div>
+                    <div class="toast__session">carnivore</div>
+                    <button type="button" class="toast__dismiss" aria-label="dismiss" title="dismiss">&times;</button>
+                </div>
+                <div class="toast" data-kind="Notification" data-severity="1" data-count="1" role="status" tabindex="0">
+                    <div class="toast__title"><span class="toast__title-text">claude is waiting</span></div>
+                    <div class="toast__session" data-unknown="1">unknown session</div>
+                    <button type="button" class="toast__dismiss" aria-label="dismiss" title="dismiss">&times;</button>
+                </div>
+                <div class="toast" data-kind="AutoSlept" data-severity="1" data-count="1" role="status" tabindex="0">
+                    <div class="toast__title"><span class="toast__title-icon"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.3 9.3A6 6 0 0 1 6.7 2.7a6 6 0 1 0 6.6 6.6z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></span><span class="toast__title-text">session put to sleep</span></div>
+                    <div class="toast__session">auto-sleep</div>
+                    <div class="toast__body">slept example app after 60 min idle</div>
+                    <button type="button" class="toast__dismiss" aria-label="dismiss" title="dismiss">&times;</button>
+                </div>
+                <div class="toast-overflow" data-severity="2"><span class="toast-overflow__count">+4 more</span><span class="toast-overflow__worst">one needs you</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>Something happened in a session you are not looking at: a permission request, a finished turn, a notification.
+        Toasts group per session and kind (<code>toast-grouping.js</code>), show a <code>&times;N</code> count, collapse into an
+        overflow row when there are too many (fewer and full width under 640px), (the clickable card rule lives in <code>toast-collapse.css</code>). Clicking a toast navigates to its session (<code>toast-navigate.js</code>).</dd>
+    <dt>not for</dt>
+    <dd>A field error, a confirmation of the user's own click on this screen, or anything the user must act on to continue:
+        those are inline or a dialog.</dd>
+    <dt>severity</dt>
+    <dd><code>data-severity="3"</code> (blocking, a permission) is an <code>alert</code> exempt from the cap; lower severities
+        are <code>status</code>. The kind's marker is a <code>::before</code> on the title keyed by <code>data-kind</code>.</dd>
+    <dt>title icon</dt>
+    <dd>The auto-sleep toast (<code>kind="AutoSlept"</code>, issue #690) is the one exception to the <code>::before</code>
+        marker above: its title is prefixed with a real <code>.toast__title-icon</code> node carrying the app's own reused
+        sleep glyph (<code>SessionRowMenuIcons.svg('sleep', 13)</code> - the same crescent moon as the row menu's sleep item
+        and the status LED's asleep state), so it can paint with <code>currentColor</code> and follow the title's own
+        <code>--oc-text-primary</code> instead of a kind carrying its own hardcoded color.</dd>
+    <dt>action</dt>
+    <dd>A local card (<code>local: true</code>, raised from this browser) may carry one action: <code>action_label</code> plus
+        <code>on_action</code>, drawn by <code>toast-render.js</code> as the quiet <code>.modal-btn-secondary</code> with
+        <code>.toast__action</code>. Pressing it runs the action and retires the card. The widgets page's "undo" is the user.</dd>
+    <dt>themes</dt>
+    <dd>The card is <code>--oc-ground-card</code>, the one ground every theme lifts off its own terminal, so a toast reads
+        over output in all 40 themes. A session toast can take its session's theme (<code>data-themed="1"</code>).</dd>
+    <dt>access</dt>
+    <dd>The container is a live region; each card is focusable, its dismiss button labelled. Muting never suppresses status
+        events; viewing never resolves an open permission.</dd>
+</dl>
+
+<h3 class="sg-h3" id="feedback-toast-mute">the mute button on a notification card</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup copied from</span><code>web/src/lib/notifications/mute/mute-control.ts</code><span>styles live</span></div>
+    <div class="sg-specimen__body sg-specimen__body--flush">
+        <div class="sg-stage">
+            <div class="toast-container" data-oc-base aria-live="polite">
+                <div class="toast toast--mutable" data-kind="Stop" data-severity="1" data-count="1" role="status" tabindex="0">
+                    <div class="toast__title"><span class="toast__title-text">turn finished</span></div>
+                    <div class="toast__session">carnivore</div>
+                    <button type="button" class="toast__dismiss" aria-label="dismiss" title="dismiss">&times;</button>
+                    <div class="notify-mute-pop popup-focus" role="menu" aria-label="mute turn finished">
+                        <button type="button" class="notify-mute-pop__item" role="menuitem">mute here</button>
+                        <button type="button" class="notify-mute-pop__item" role="menuitem">mute everywhere</button>
+                    </div>
+                    <button type="button" class="toast__mute" aria-label="mute turn finished" title="mute turn finished" aria-haspopup="menu"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M4 11V7a4 4 0 0 1 6.5-3.1"/><path d="M12 6.5V11H3.5"/><path d="M6.5 13.5h3"/><path d="M2 2l12 12"/></svg></button>
+                </div>
+                <div class="toast toast--mutable" data-kind="NotifyMuted" data-severity="1" data-count="1" role="status" tabindex="0">
+                    <div class="toast__title"><span class="toast__title-text">muted turn finished.</span></div>
+                    <div class="toast__session">notifications</div>
+                    <button type="button" class="toast__dismiss" aria-label="dismiss" title="dismiss">&times;</button>
+                    <button type="button" class="toast__mute-undo">undo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>Every card whose toast carries a registered <code>notify_type</code> gets <code>.toast__mute</code> at its bottom right, drawn by the ONE shared renderer (<code>client/js/toast-render.js</code> calls <code>window.NotifyMute.attach</code>), never per call site. Action feedback cards (no type) get none.</dd>
+    <dt>how</dt>
+    <dd>The button opens <code>.notify-mute-pop</code>, which wears <code>popup-focus</code> and holds two <code>.notify-mute-pop__item</code> rows: "mute here" (this device; a phone also stops its own push) and "mute everywhere" (every device and destination). A mute confirms with a <code>NotifyMuted</code> card whose one action is <code>.toast__mute-undo</code>, a quiet outline like <code>.modal-btn-secondary</code>. <code>.toast--mutable</code> gives a one-line card room for the x and the control.</dd>
+    <dt>never</dt>
+    <dd>Never key a mute on the message text, and never let it touch the status lights: muting hides the pop-up and outside delivery only.</dd>
+</dl>
+
+<h3 class="sg-h3" id="feedback-toasts-detailed">toasts, detailed style</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup copied from</span><code>client/js/toast-mode.js</code><span>styles live</span></div>
+    <div class="sg-specimen__body sg-specimen__body--flush">
+        <div class="sg-stage">
+            <div class="toast-container" data-oc-base aria-live="polite">
+                <div class="toast-waiting" role="status" data-count="2">2 sessions waiting</div>
+                <div class="toast" data-kind="PermissionRequest" data-severity="3" data-count="1" data-mode="detailed" role="alert" tabindex="0">
+                    <div class="toast__title"><span class="toast__title-text">wants permission: Bash git push</span></div>
+                    <div class="toast__session">music-service</div>
+                    <div class="toast__body">pushing the release branch now</div>
+                    <button type="button" class="toast__dismiss" aria-label="dismiss" title="dismiss">&times;</button>
+                </div>
+                <div class="toast" data-kind="Stop" data-severity="1" data-count="3" data-mode="detailed" role="status" tabindex="0">
+                    <div class="toast__title"><span class="toast__title-text">finished and is waiting on you</span><span class="toast__count" aria-label="3 occurrences">&times;3</span></div>
+                    <div class="toast__session">carnivore</div>
+                    <div class="toast__body">the build is green and the tests pass</div>
+                    <button type="button" class="toast__dismiss" aria-label="dismiss" title="dismiss">&times;</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>waiting line</dt>
+    <dd><code>.toast-waiting</code> reads "N sessions waiting" when more than one session holds a card. It is a status line,
+        not a control: the title-row label (small tracked capitals in <code>--oc-orange</code>) with a hairline under it,
+        after the dismiss-all control and before every card.</dd>
+    <dt>not for</dt>
+    <dd>Deciding which events notify. The style changes presentation only; the watcher raises exactly the same records.</dd>
+</dl>
+
+<h3 class="sg-h3" id="feedback-notices">notice strips and banners</h3>
+<dl class="sg-facts">
+    <dt>live region</dt>
+    <dt>deep link</dt>
+    <dd>A link to something that no longer exists lands on home with a notice strip saying why, never a silent bounce
+        (<code>client/css/deep-link-notice.css</code>, <code>.deep-link-error__text</code>,
+        <code>.deep-link-error__dismiss</code>).</dd>
+    <dt>new version</dt>
+    <dd><code>VersionBanner.svelte</code> (<code>.vb-banner</code>): a reload offer when the server moved on, with reload and
+        dismiss (#576). It grows a collapsed what-is-new list (<code>.vb-news</code>, <code>.vb-list</code>, <code>.vb-row</code>, <code>.vb-tag</code>, <code>.vb-item</code>, <code>.vb-where</code>, <code>.vb-label</code>, <code>.vb-toggle</code>, <code>.vb-head</code>, <code>.vb-list--open</code>) fed by <code>GET /api/v1/whats-new</code> (#1196). The version chip in the footer is <code>.version-footer</code>.</dd>
+    <dt>offline marker</dt>
+    <dt>perf overlay</dt>
+    <dd><code>PerfOverlay.svelte</code> (<code>.perf-ov</code>, <code>.perf-ov__bar</code>, <code>.perf-ov__title</code>,
+        <code>.perf-ov__toggle</code>, <code>.perf-ov__grid</code>, <code>.perf-ov__label</code>, <code>.perf-ov__list</code>,
+        <code>.perf-ov__ms</code>): a developer-only panel in the bottom right, mounted only while the dev perf setting is
+        on. Title-row strip with the one orange label, mono numbers in a two-column grid, hairlines between regions, and a
+        quiet hide/show toggle. Never shown to a user with the setting off.</dd>
+    <dt>terminal notices</dt>
+    <dd><code>TerminalSizeNotice.svelte</code> (the pane is sized by another viewer) and
+        <code>TerminalStartupNotice.svelte</code> (the startup command could not be sent) sit over the terminal as one quiet
+        line with a dismiss; they never cover the prompt.</dd>
+    <dt>status pill</dt>
+    <dd>The legacy app-wide status line (<code>FabMenu.notify(message, level)</code>, <code>.fab-menu-notice</code>) is the
+        single channel for a short system message such as a refused theme script. Do not add a seventh message shape.</dd>
+</dl>
+
+<h3 class="sg-h3" id="feedback-states">empty, loading and error</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup copied from</span><code>web/src/lib/launchpad/RecentSessions.svelte</code><span>styles live</span></div>
+    <div class="sg-specimen__body">
+        <div class="launchpad-empty">no recent sessions yet. start one from the new session button.</div>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>empty</dt>
+    <dt>loading</dt>
+    <dd>The word, in the secondary tier ("reading...", "installing"), in the place the content will appear. No spinners, no
+        skeleton shimmer: shimmer would be a second animation competing with the running light. A button that is working
+        says its busy verb and is disabled.</dd>
+    <dt>unknown</dt>
+    <dt>error</dt>
+    <dd>Inline, next to what failed: <code>--oc-ground-raised</code> line, 2px <code>--oc-coral</code> left edge, primary text,
+        11 to 12px, <code>overflow-wrap: anywhere</code> (the base <code>State</code> error, live on the "work" card in
+        <a href="#ledger-screen">the provider ledger</a>). Say what failed and what happens next.
+        Never print a server's raw error object; <code>detailOf</code> in <code>opscenter/api/auth.svelte.ts</code> extracts
+        the sentence. A card whose data is stale keeps its last good answer and says how old it is.</dd>
+</dl>
+
+<h3 class="sg-h3" id="feedback-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>Narration.</strong> Poller chatter and recommendations were removed from the providers panel: show data, not
+        commentary. A quiet footer at most.</li>
+    <li><strong>A toast for a field error.</strong> It disappears and hides what to fix.</li>
+    <li><strong>"Not loaded" treated as "empty".</strong> A deep link that raced the list load bounced home (#543). Await the
+        newest load; never read absence before the first answer.</li>
+    <li><strong>A spinner.</strong> Words, in place.</li>
+</ul>
+
+<h3 class="sg-h3" id="feedback-pack-op">the transfer status card</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup copied from</span><code>web/src/lib/pack-op-toast/PackOpToast.svelte</code><span>styles live</span></div>
+    <div class="sg-specimen__body sg-specimen__body--flush">
+        <div class="sg-stage">
+            <div class="pot-dock" style="position: static; width: auto;" data-oc-base role="region" aria-label="transfers to other computers">
+                <section class="pot-card" data-phase="running" role="status">
+                    <div class="pot-head"><span class="pot-label">transfer</span><span class="pot-time">2:05</span><button type="button" data-pot="fold" data-btn="quiet" data-size="icon" aria-expanded="true" aria-label="collapse" title="collapse">-</button></div>
+                    <p class="pot-title">moving api to hosta</p>
+                    <p class="pot-step">waiting for the agent's turn to end. it is never interrupted. it gives up at 10:14 am.<span class="pot-count"> step 2 of 6</span></p>
+                    <div class="pot-foot"><button type="button" data-btn="danger" data-size="sm">cancel transfer</button></div>
+                </section>
+                <section class="pot-card" data-phase="done" role="status">
+                    <div class="pot-head"><span class="pot-label">transfer</span><span class="pot-time">3:41</span><button type="button" data-pot="fold" data-btn="quiet" data-size="icon" aria-expanded="true" aria-label="collapse" title="collapse">-</button></div>
+                    <p class="pot-title">api is now on hosta</p>
+                    <div class="pot-foot"><button type="button" data-btn="secondary" data-size="sm">open it</button><button type="button" data-btn="secondary" data-size="sm">dismiss</button></div>
+                </section>
+                <section class="pot-card" data-phase="failed" role="alert">
+                    <div class="pot-head"><span class="pot-label">transfer</span><span class="pot-time">10:00</span><button type="button" data-pot="fold" data-btn="quiet" data-size="icon" aria-expanded="true" aria-label="collapse" title="collapse">-</button></div>
+                    <p class="pot-title">api did not go to hosta</p>
+                    <p class="pot-outcome">its turn did not end in time.</p>
+                    <div class="pot-foot"><p class="pot-note">the other computer is already starting the agent, so it can no longer be stopped</p><button type="button" data-btn="secondary" data-size="sm">dismiss</button></div>
+                </section>
+            </div>
+        </div>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>what it is</dt>
+    <dt>look</dt>
+    <dd>The toast card's raised ground and 2px stem (orange running, green done, coral failed, muted canceled), the small tracked
+        <code>.pot-label</code> as the one accent word, and the base buttons: the danger <code>Button</code> cancels, the secondary one opens or dismisses.</dd>
+    <dt>fold</dt>
+    <dd>The quiet <code>IconButton</code> folds a card to its title line so it never covers the terminal input for long.</dd>
+</dl>

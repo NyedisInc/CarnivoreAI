@@ -1,0 +1,50 @@
+{
+  "api_routes": [
+    "src/api/provider_ledger_routes.py",
+    "src/api/provider_account_removal_routes.py"
+  ],
+  "area": "providers",
+  "docs": [
+    "docs/provider-ledger.md"
+  ],
+  "examples": [
+    "See which account still has room before starting a long task.",
+    "Spread work across a personal and a work account so neither runs out.",
+    "On a phone the page is one bar: the back arrow at the left, the title over the search in one frame, the filters that fit and one grid/list flip at the right."
+  ],
+  "how_to": [
+    "Add each claude or codex account you use on the ledger screen.",
+    "Read each account's five hour and weekly usage and when they reset; the pick badge marks the account to use next.",
+    "The drawer panel's chevron cycles compact, expanded and hidden.",
+    "Edit an account to change its name, its short name (shown where the full name will not fit) and its colour; the colour picker shows 249 distinct swatches from the 256 xterm indexes, plus a hex field.",
+    "The colour picker stays above surrounding panels while you choose a swatch, and Escape closes it.",
+    "Press the (i) at the top of the providers screen to read how account keep-alive works and what to do when an account shows login revoked.",
+    "On the Providers screen the strip on top ranks every account by its tightest window (read-only; the cards below never re-order). Each card shows its status in the title strip, usage as big percents with a meter, and plan, managed or built-in, fetched time and the switch control in the footer."
+  ],
+  "id": "provider-ledger",
+  "issues": [
+    128,
+    1126,
+    1316
+  ],
+  "keywords": [
+    "ledger",
+    "usage",
+    "cost"
+  ],
+  "media": [],
+  "name": "Provider ledger",
+  "since": "2026-09-18",
+  "status": "stable",
+  "summary": "track usage and spend across every AI provider account you've connected, in one place.",
+  "surfaces": [
+    "web/src/lib/ledger/ledger-host.ts",
+    "web/src/lib/ledger-drawer/DrawerLedger.svelte"
+  ],
+  "updated": "2026-10-04",
+  "where": [
+    "The PROVIDERS panel at the foot of the agents drawer.",
+    "The PROVIDER LEDGER card on the home screen, and View all for the full screen."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

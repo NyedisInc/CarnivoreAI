@@ -1,0 +1,154 @@
+<h2 class="sg-h2">title rows, labels and panels</h2>
+<p class="sg-lead">The Military Terminal unit of layout: a region with a title-row strip on its own ground, a hairline under
+it drawn as an inset shadow, one small tracked uppercase label in the accent, and content below split by hairlines. When a column holds
+several sections, each one gets its own panel (see <a href="#panels-sections">a column of sections</a>). Copy <code>web/src/lib/ledger/ledger-chrome.css</code>.</p>
+
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup copied from</span><code>web/src/lib/ledger/LedgerTotal.svelte</code><span>global rules in</span><code>ledger-chrome.css</code></div>
+    <div class="sg-specimen__body pledger">
+        <section class="pl-panel" aria-labelledby="sg-panel-title">
+            <div class="pl-titlebar">
+                <h2 class="pl-title" id="sg-panel-title">swarm total</h2>
+                <span class="pl-label">2 accounts</span>
+            </div>
+            <div class="sg-frame-body">
+                <p><span class="pl-label">last fetched</span> 3m ago</p>
+            </div>
+        </section>
+    </div>
+</div>
+
+<dl class="sg-facts">
+    <dt>title row</dt>
+    <dd><code>.pl-titlebar</code>: flex row, 10px gap, <code>min-height: var(--oc-titlerow-h)</code> (37px), padding 0 12px,
+        <code>--pl-titlerow</code> ground, <code>box-shadow: inset 0 -1px 0 0 var(--pl-line)</code>. A count, a status or a
+        right-justified action sits on the same line as the title (the per-row action rule from #151).</dd>
+    <dt>title</dt>
+    <dd><code>.pl-title</code>: <code>--oc-fs-title</code> (12px), weight 400, <code>--oc-tracking-title</code>, uppercase,
+        <code>--pl-accent</code>, one line with an ellipsis. It is the ONE accent-coloured thing in the region. Use a real
+        heading element (<code>h2</code> or <code>h3</code>) and point the region's <code>aria-labelledby</code> at it.</dd>
+    <dt>label</dt>
+    <dd><code>.pl-label</code>: <code>--oc-fs-micro</code> (10px), <code>--oc-tracking-label</code>, uppercase,
+        <code>--pl-dim</code>. Field labels, fact labels (<code>&lt;dt class="pl-label"&gt;</code>), column heads.</dd>
+    <dt>panel</dt>
+    <dd><code>.pl-panel</code>: <code>--pl-panel</code> ground, 1px <code>--pl-line-panel</code> edge,
+        <code>--pl-radius</code>. A panel exists because its content is one task or decision; a panel that exists for
+        decoration should be a divider.</dd>
+    <dt>outside the ledger</dt>
+    <dd>These classes are scoped under <code>.pledger</code>, which declares the <code>--pl-*</code> aliases. A new
+        compiled page puts <code>class="pledger"</code> on its root and uses them directly (<a href="#new-page">building a new
+        page</a>). A legacy dialog that cannot reach them restates the recipe and names the source
+        (<code>.text-prompt-modal__head</code>, <code>.restart-picker__head</code>). The operations center cells draw the same
+        recipe through <code>CellFrame</code> (<a href="#cells">cells</a>).</dd>
+    <dt>themes</dt>
+    <dd>Through the <code>--pl-*</code> aliases: <code>--oc-ground-titlerow</code>, <code>--oc-ground-panel</code>,
+        <code>--oc-line-rule</code>, <code>--oc-line-panel</code>, <code>--oc-orange</code>, <code>--oc-text-muted</code>.</dd>
+    <dt>ascii themes</dt>
+    <dd>A theme that sets <code>--ascii-display: block</code> decorates the dashboard's frames with static text rails at a chosen density
+        (<code>ArtFrame.svelte</code>, <code>art/ascii-art.css</code>, <code>docs/ascii-theme-layout.md</code>). Decoration never
+        enters a reading zone and never captures a pointer; a new panel needs no ASCII work of its own when it is built on
+        <code>CellFrame</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="panels-sections">a column of sections</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>compare</span><code>web/src/lib/base/Card.svelte</code><span><code>.oc-card</code> sections 24px apart, against bare <code>.pl-label</code> sections</span></div>
+    <div class="sg-specimen__body">
+        <div class="sg-rules">
+            <div class="sg-rules__col">
+                <div class="sg-stack" style="gap: var(--oc-space-5); margin-top: 0">
+                    <section class="oc-card" data-oc-base aria-labelledby="sg-sec-do-next" style="border-color: var(--oc-strip-edge); box-shadow: inset 3px 0 0 0 var(--oc-orange)">
+                        <div class="oc-card__head" style="min-height: calc(var(--oc-space-6) + var(--oc-space-2)); background: var(--oc-orange-tint); box-shadow: inset 3px 0 0 0 var(--oc-orange), inset 0 -1px 0 0 var(--oc-strip-edge)">
+                            <span class="oc-card__title" id="sg-sec-do-next" role="heading" aria-level="4">next step</span>
+                            <span class="oc-card__meta" style="text-align: right">2 checks did not pass</span>
+                        </div>
+                        <div class="oc-card__body">
+                            <div>fix the license and the readme, then send it again.</div>
+                            <div><button type="button" data-btn="confirm" data-size="sm">i fixed them, try again</button></div>
+                        </div>
+                    </section>
+                    <section class="oc-card" data-oc-base aria-labelledby="sg-sec-do-about">
+                        <div class="oc-card__head">
+                            <span class="oc-card__title" id="sg-sec-do-about" role="heading" aria-level="4">about this skill</span>
+                            <span class="oc-card__meta" style="text-align: right">acme/quiet-hours 1.0.0</span>
+                        </div>
+                        <div class="oc-card__body">
+                            <div>mutes notifications between the hours you pick.</div>
+                        </div>
+                    </section>
+                    <section class="oc-card" data-oc-base aria-labelledby="sg-sec-do-checks">
+                        <div class="oc-card__head">
+                            <span class="oc-card__title" id="sg-sec-do-checks" role="heading" aria-level="4">the 12 checks</span>
+                            <span class="oc-card__meta" style="text-align: right">10 passed, 2 did not pass</span>
+                        </div>
+                        <div class="oc-card__body">
+                            <div>license: did not pass</div>
+                            <div>readme: did not pass</div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+            <div class="sg-rules__col pledger">
+                <div class="sg-stack" style="gap: var(--oc-space-3); margin-top: 0">
+                    <div style="display: flex; flex-direction: column; gap: var(--oc-space-2); padding-top: var(--oc-space-3); box-shadow: inset 0 1px 0 0 var(--oc-line-faint)">
+                        <span class="pl-label">next step</span>
+                        <div>fix the license and the readme, then send it again.</div>
+                        <div><button type="button" data-btn="confirm" data-size="sm">i fixed them, try again</button></div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: var(--oc-space-2); padding-top: var(--oc-space-3); box-shadow: inset 0 1px 0 0 var(--oc-line-faint)">
+                        <span class="pl-label">about this skill</span>
+                        <div>mutes notifications between the hours you pick.</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: var(--oc-space-2); padding-top: var(--oc-space-3); box-shadow: inset 0 1px 0 0 var(--oc-line-faint)">
+                        <span class="pl-label">the 12 checks</span>
+                        <div>license: did not pass</div>
+                        <div>readme: did not pass</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<dl class="sg-facts">
+    <dt>one section, one card</dt>
+    <dd>Each section is its own <code>.oc-card</code> (<code>Card.svelte</code>, <a href="#base-set">base components</a>), a
+        sibling in the column, never a card inside another card's body. This is the one reconciling line with the
+        hairline rule: a region of one thing is split by hairlines, a column of several sections is split into panels. One bordered level, no drop shadow, no hover
+        lift, the theme's small corner (<code>--oc-radius-panel</code>).</dd>
+    <dt>the strip</dt>
+    <dd><code>.oc-card__head</code>: a fixed height (<code>--oc-titlerow-h-short</code>, 31px) on the band ground, its
+        hairline an inset shadow. <code>.oc-card__title</code> is the small tracked uppercase accent label, the ONE accent
+        thing in the section; a short note (a count, a version) sits at the right in <code>.oc-card__meta</code>, muted.
+        A section with no strip is not a section.</dd>
+    <dt>the gap</dt>
+    <dd>24px (<code>--oc-space-5</code>) between sections, set once as the column's <code>gap</code>; 12px
+        (<code>--oc-space-3</code>) or less inside a section. The gap between sections is always the biggest step in the
+        column, so the eye groups by it.</dd>
+    <dt>the primary section</dt>
+    <dd>Exactly one per column: the section that holds the next step, placed first. Its strip is taller (40px,
+        <code>calc(var(--oc-space-6) + var(--oc-space-2))</code>) on the <code>--oc-orange-tint</code> ground with its rule
+        in <code>--oc-strip-edge</code>, the card's edge is <code>--oc-strip-edge</code>, and a 3px <code>--oc-orange</code>
+        edge runs down its left side. No other section wears any of it, and nothing in its body turns accent: the edge is
+        the one primary thing the one-accent rule allows.</dd>
+    <dt>the worked example</dt>
+    <dd>The warez publish page's detail column (#2469): the next step, the 12 checks, the timeline, versions and rules,
+        each under its own strip, the next step primary. Until #2469 lands, the specimen above draws the primary marking
+        inline on the base card; the publish page's own panel joins this section when it lands.</dd>
+    <dt>judge it</dt>
+</dl>
+
+<h3 class="sg-h3" id="panels-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>The title in plain bold at 1.3rem.</strong> That is the legacy <code>.modal-header</code>; every restyled
+        surface uses the tracked accent label instead.</li>
+    <li><strong>Cards inside cards.</strong> Nested boxes read as a web dashboard. Split with hairlines.</li>
+    <li><strong>A second accent on the surface.</strong> If the title is accent, nothing else in the region is, except the
+        one primary action's edge.</li>
+    <li><strong>Accent-coloured dividers.</strong> Dividers between list items are grey (<code>--oc-line-faint</code>), like
+        the agents listing.</li>
+    <li><strong>No primary section, or two.</strong> When every strip is equally loud nothing says where to start; when
+        two sections wear the tint and the lit edge, neither leads. One per column: the next step.</li>
+    <li><strong>A gap between sections no bigger than the gaps inside them.</strong> The column then reads as one long
+        section. 24px between, 12px or less inside.</li>
+</ul>

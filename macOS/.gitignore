@@ -1,0 +1,16 @@
+node_modules/
+package-lock.json
+
+dist/
+dist-vmtest/
+dist-e2e/
+out/
+
+.cache/
+
+*.log
+npm-debug.log*
+
+.DS_Store
+
+.prompt_history/

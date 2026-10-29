@@ -1,0 +1,31 @@
+{
+  "api_routes": [
+    "src/api/session_attribution_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/session-attribution-import.md"
+  ],
+  "examples": [
+    "Spot a claude session you started in a plain terminal outside the app, now picked up by it."
+  ],
+  "how_to": [
+    "Nothing to do: every session records who started it and which harness runs it, and the drawer groups it accordingly."
+  ],
+  "id": "session-attribution",
+  "issues": [],
+  "keywords": [
+    "attribution",
+    "adopted"
+  ],
+  "media_exempt": "bookkeeping the server records for every session; it has no screen or control of its own",
+  "name": "Session attribution",
+  "since": "2026-09-10",
+  "status": "stable",
+  "summary": "know whether a session was started here or picked up from somewhere else, and by which harness.",
+  "surfaces": [],
+  "updated": "2026-09-27",
+  "where": [
+    "The agents drawer: sessions the app launched sit under their project; sessions it picked up from elsewhere are listed separately."
+  ]
+}

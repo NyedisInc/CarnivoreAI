@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://carnivore.ai/schemas/extensions/cplug.schema.json",
+  "title": "Carnivore plugin (cplug), layer 1",
+  "description": "A Carnivore plugin. Its runtime manifest stays src/cplugs/<id>/cplug.json; this sidecar carries the shared envelope and must agree with it on every field both carry.",
+  "allOf": [
+    {
+      "$ref": "item.schema.json"
+    },
+    {
+      "required": [
+        "data"
+      ],
+      "properties": {
+        "kind": {
+          "const": "cplug"
+        },
+        "scope": {
+          "const": [
+            "global"
+          ]
+        },
+        "icon": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "default_enabled": {
+          "type": "boolean"
+        },
+        "owns": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "routes",
+              "strings",
+              "styles",
+              "assets",
+              "tests",
+              "migrations",
+              "style_guide",
+              "contributions",
+              "files"
+            ]
+          }
+        },
+        "requires": {
+          "type": "array",
+          "items": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "cplug",
+                  "core"
+                ]
+              }
+            }
+          }
+        },
+        "runtime": {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false,
+          "description": "How a catalog plugin runs (L1-2): process (out of process in the sandbox) or none (no code, the host interprets the declared documents). inproc is first party and not a catalog value.",
+          "properties": {
+            "kind": {
+              "enum": [
+                "process",
+                "none"
+              ]
+            },
+            "language": {
+              "enum": [
+                "python"
+              ]
+            },
+            "entry": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "python": {
+              "$ref": "item.schema.json#/$defs/range"
+            }
+          }
+        },
+        "network_hosts": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "The hosts a catalog plugin may reach through the credential-injecting proxy (L1-2), so the sheet's declared-versus-observed check has a declared side. See docs/cplug-platform.md sections 5 and 9.",
+          "items": {
+            "type": "object",
+            "required": [
+              "host",
+              "reason"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "host": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 253
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "pattern": "\\S"
+              },
+              "methods": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "GET",
+                    "HEAD",
+                    "POST",
+                    "PUT",
+                    "PATCH",
+                    "DELETE"
+                  ]
+                }
+              },
+              "paths": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "^/"
+                }
+              },
+              "auth": {
+                "type": "object",
+                "required": [
+                  "secret",
+                  "header",
+                  "scheme"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "secret": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "header": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "scheme": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tier": {
+            "const": "catalog"
+          }
+        },
+        "required": [
+          "tier"
+        ]
+      },
+      "then": {
+        "properties": {
+          "id": {
+            "pattern": "^[a-z0-9-]{1,39}/[a-z][a-z0-9]{1,23}$"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "id": {
+            "pattern": "^[a-z][a-z0-9]{1,23}$"
+          },
+          "runtime": false,
+          "network_hosts": false
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

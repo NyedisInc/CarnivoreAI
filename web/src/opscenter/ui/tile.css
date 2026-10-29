@@ -1,0 +1,23 @@
+
+@layer patterns {
+  .oc-icon-tile {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    width: var(--tile-size, 28px);
+    height: var(--tile-size, 28px);
+    box-sizing: border-box;
+    border: 1px solid var(--oc-line-surface);
+    border-radius: var(--oc-control-radius, 2px);
+    background: var(--oc-surface-2);
+    color: var(--oc-text-secondary);
+  }
+
+  .oc-icon-tile--marks {
+    grid-auto-flow: column;
+    gap: 6px;
+    width: auto;
+    min-width: var(--tile-size, 28px);
+    padding: 0 6px;
+  }
+}

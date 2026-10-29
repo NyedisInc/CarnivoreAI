@@ -1,0 +1,55 @@
+{
+  "id": "pack-migrate",
+  "name": "Pack migrate",
+  "summary": "Move a project or a whole company to another paired computer and back, verified before the switch.",
+  "description": "A migrate plans first (the code rung, what is blocking, what moves), then copies the code, Swarm agents with their memory, huddle threads and cards, and the conversation files to the other computer, which checks everything before it becomes the project's home. The old copy stays here, inactive and marked moved away, and one call brings the project back. Nothing runs while a session or agent is live under the project, and the other computer's own restrictions decide whether it accepts.",
+  "area": "sessions",
+  "status": "beta",
+  "since": "2026-10-10",
+  "updated": "2026-10-13",
+  "surfaces": [
+    "Pack work tab and Projects page wizard",
+    "owner API routes"
+  ],
+  "api_routes": [
+    "POST /api/v1/projects/{name}/migrate",
+    "POST /api/v1/companies/{company}/migrate",
+    "POST /api/v1/projects/{name}/migrate-back",
+    "GET /api/v1/pack/ops/{op_id}",
+    "POST /api/v1/federation/pack/migrate/prepare",
+    "POST /api/v1/federation/pack/migrate/receive",
+    "POST /api/v1/federation/pack/migrate/verify",
+    "POST /api/v1/federation/pack/migrate/flip",
+    "POST /api/v1/federation/pack/migrate/abort",
+    "POST /api/v1/federation/pack/migrate/back"
+  ],
+  "docs": [
+    "docs/pack.md",
+    "docs/mcp-server.md"
+  ],
+  "issues": [
+    1517
+  ],
+  "keywords": [
+    "pack",
+    "migrate",
+    "move",
+    "company",
+    "project",
+    "transcripts"
+  ],
+  "where": [
+    "Pack, work tab: the move a project or company block. The Projects page: a project's or company's menu (move to another computer), and the move back button beside a moved-away project's tag.",
+    "Owner API routes: POST /api/v1/projects/{name}/migrate, POST /api/v1/companies/{company}/migrate and POST /api/v1/projects/{name}/migrate-back; progress on GET /api/v1/pack/ops/{op_id}."
+  ],
+  "how_to": [
+    "Open the wizard, pick the computer (one that refuses projects is listed disabled with the reason), read the plan (the transport, what moves, what blocks), then press move. A one-way archive move needs its own tick and a red confirm.",
+    "Watch the steps follow the move live; the old folder here stays, inactive, and the project's tag says moved to that computer.",
+    "Press move back on that tag to bring the project home again.",
+    "Over the API: plan a move with a project and a paired computer, read the checks, then apply it with the plan_fingerprint."
+  ],
+  "examples": [
+    "Move the ledgerbot project to hosta, keep working there, move it back tomorrow."
+  ],
+  "media_exempt": "Needs two paired computers; the test slot has none, so the wizard is driven from its vitest."
+}

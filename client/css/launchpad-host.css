@@ -1,0 +1,41 @@
+
+/*  hidden  display: none */
+body.home-opscenter > .header,
+body.home-opscenter #home-subheader {
+    display: none;
+}
+
+/* display: none */
+body.home-opscenter {
+    --overlay-top: var(--oc-topbar);
+}
+
+html[data-desktop-chrome] {
+    --header-h: calc(var(--control-size) + var(--header-pad-y) * 2 + var(--header-border) + var(--home-subheader-extra) + var(--desktop-inset-top));
+}
+
+html[data-desktop-chrome] body.home-opscenter {
+    --overlay-top: calc(var(--oc-topbar) + var(--desktop-inset-top));
+}
+
+/*  hidden  overflow-y: auto overflow: hidden */
+@media (max-width: 1023px) {
+    body.home-opscenter {
+        height: auto;
+        min-height: 100vh;
+        min-height: 100dvh;
+        overflow-x: clip;
+        overflow-y: visible;
+    }
+
+    /* flex: 0 0 auto` because a `flex: 1` item in an auto height column is
+       sized from a zero basis and then grown to a line whose height is the
+       content's; */
+    body.home-opscenter #launchpad-screen.active {
+        display: block;
+        flex: 0 0 auto;
+        min-height: 100vh;
+        min-height: 100dvh;
+        overflow: visible;
+    }
+}

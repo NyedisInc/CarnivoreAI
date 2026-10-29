@@ -1,0 +1,75 @@
+{
+  "api_routes": [
+    "src/api/catalog_routes.py",
+    "src/api/catalog_hosted_routes.py",
+    "src/api/skill_usage_routes.py",
+    "src/api/skill_watch_routes.py",
+    "src/api/catalog_contents_routes.py",
+    "src/api/catalog_media_routes.py"
+  ],
+  "area": "skills-catalog",
+  "docs": [
+    "docs/catalog.md",
+    "docs/skills-manager.md"
+  ],
+  "examples": [
+    "Find a skill that does code review before writing your own.",
+    "Each card shows a chip for every place a skill is installed, and the add button installs it to global or to the folder of the session you are in in one click.",
+    "You tweaked an installed skill on purpose: mark it keep as fork so an update never overwrites your edit."
+  ],
+  "how_to": [
+    "Search by name, publisher or tag, narrow it down with the kind chips (all, skills, mods, themes, plugins, packs), the filter chips (installed, available, updates, untrusted key, ships scripts) and the source facet on the one toolbar; sort by featured (the default, catalog order until a featured list is published), newest, oldest, name or recently updated. Skills are cards in a grid; the grid/list toggle at the right end of the toolbar swaps to 28px rows and is remembered on this device, as is the sort. Click a card or a row to open it. Every card has a large image band across its top. The top-fired strip and the most-fired and unused pair now sit at the top of the installed tab of Warez, INSTALLED, skills.",
+    "On a phone the warez page is one 56px bar: back, WAREZ over the one search, and the grid/list flip. The tabs and the source and type facets sit under it and slide away while you scroll down, and come back when you scroll up a little; the filter row fades at its right edge while more controls sit past it, as the tab rows do; the sign-in strip, when shown, is the first row of the list.",
+    "Every card, here and on each installed page, is the same card: a 16:9 picture, the name with the install state or on/off switch at its top right, and three lines of what it does. A warning (untrusted key, a review flag, deprecated) adds one line; there is no version, publisher or source line.",
+    "Open one card to see who signed it, the security verdict, the digest, the source commit and whether it ships scripts.",
+    "Open one card: the pane opens on a banner with the name large, the rating at double size and the id, source, developer and version block on the right, then the brief in larger text, the signing, security verdict and review below it, and the digest, size, file count, install count and executable-files line at the bottom.",
+    "Press / to search, j and k to move, enter to open, i to install, t to try it in a scratch session, u to update and ? for the list.",
+    "Link straight to one item with /#warez/<handle>/<name> (/#catalog/<handle>/<name> still works).",
+    "On an installed skill, read what happened after it fired (tool errors, interrupts, corrections) and whether it did anything its review did not mention.",
+    "If an installed copy was edited, the pane says which files changed; restore puts the installed version back, uninstall removes it, and keep as fork stops auto-update from overwriting it.",
+    "Open a card and press show files and SKILL.md to read the signed version's file list and SKILL.md before installing; the app verifies the download against the signed digest first and shows nothing if it does not match.",
+    "When an update changes a skill's own text, the consent sheet lists which files were added, removed or changed with a text diff of the small ones; a deprecated item is marked and names its replacement, and auto-update never moves you onto it.",
+    "When a skill has a hero image in the signed catalog, the card's top band and the pane's banner show it (the middle of the same picture); skills without one keep the letter or icon."
+  ],
+  "id": "skills-catalog-browse",
+  "issues": [
+    1082,
+    1084,
+    1087,
+    1331,
+    1342,
+    1465,
+    2025
+  ],
+  "keywords": [
+    "catalog",
+    "skills",
+    "plugins"
+  ],
+  "media": [],
+  "name": "Browse the skills catalog",
+  "since": "2026-09-15",
+  "status": "stable",
+  "summary": "browse a catalog of installable skills and plugins for your sessions; cards show a chip per installed scope and an add split button (global or this project), and the detail pane shows the estimated token cost, where it is installed and local usage; kind chips, an available filter and featured, newest and oldest sorts",
+  "surfaces": [
+    "web/src/lib/catalog/WarezScreen.svelte",
+    "web/src/lib/catalog/CatalogScreen.svelte",
+    "web/src/lib/catalog/AddSplit.svelte",
+    "web/src/lib/catalog/CostBadge.svelte",
+    "web/src/lib/catalog/InstalledWhere.svelte",
+    "web/src/lib/catalog/UsageFacts.svelte",
+    "web/src/lib/catalog/ContentsBlock.svelte",
+    "web/src/lib/catalog/UpdateDiffView.svelte",
+    "web/src/lib/catalog/DeprecatedMark.svelte",
+    "web/src/lib/catalog/PacksShelf.svelte",
+    "web/src/lib/catalog/CatalogToolbar.svelte",
+    "web/src/lib/manager-frame/ViewToggle.svelte",
+    "web/src/lib/skills-hub/SkillsHighlights.svelte"
+  ],
+  "updated": "2026-10-21",
+  "where": [
+    "Menu tab, Warez (hotkey r), then INSTALLED, skills: the tabs installed, stats and pack sit above the filter row. The signed catalog is the Warez store.",
+    "Also at /#warez, or /#catalog (its older link), and /#catalog/<handle>/<name> to open one item. /#skills opens Warez on INSTALLED, skills."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

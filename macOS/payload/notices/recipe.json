@@ -1,0 +1,215 @@
+{
+  "_comment": "Recipe for THIRD-PARTY-NOTICES (R2-15). Wheels, the Pillow bundled libraries, the Electron files and the app's npm packages are read from the build, never listed here. This file names only the parts that carry no license metadata of their own: what python-build-standalone links into the interpreter, tmux's static libraries, and the Tcl/Tk files. pinned_for is checked against build-payload.sh by the test, so a bump of either pin makes the test ask for a re-read of this file.",
+  "pinned_for": {
+    "pbs_build": "20261009",
+    "python": "3.12.15",
+    "tmux": "3.7c"
+  },
+  "binary_rules": [
+    {
+      "glob": "bin/tmux",
+      "component": "tmux"
+    },
+    {
+      "glob": "python/lib/python3.12/lib-dynload/_tkinter*",
+      "component": "tk"
+    },
+    {
+      "glob": "python/lib/libtcl9tk*",
+      "component": "tk"
+    },
+    {
+      "glob": "python/lib/libtcl9*",
+      "component": "tcl"
+    },
+    {
+      "glob": "python/lib/itcl*/*",
+      "component": "itcl"
+    },
+    {
+      "glob": "python/lib/thread*/*",
+      "component": "tcl-thread"
+    },
+    {
+      "glob": "python/bin/*",
+      "component": "cpython"
+    },
+    {
+      "glob": "python/lib/libpython*",
+      "component": "cpython"
+    },
+    {
+      "glob": "python/lib/python3.12/lib-dynload/*",
+      "component": "cpython"
+    }
+  ],
+  "components": [
+    {
+      "id": "cpython",
+      "name": "CPython",
+      "version": "{python.version}",
+      "license": "PSF-2.0",
+      "source": "https://www.python.org/downloads/source/",
+      "used_in": "python/bin/python3.12 and libpython3.12.dylib",
+      "text_from_tree": "python/lib/python3.12/LICENSE.txt"
+    },
+    {
+      "id": "python-build-standalone",
+      "name": "python-build-standalone",
+      "version": "{python.build}",
+      "license": "MPL-2.0",
+      "source": "https://github.com/astral-sh/python-build-standalone",
+      "used_in": "the build of the interpreter in each payload tree (its scripts and patches)",
+      "text_file": "mpl-2.0.txt"
+    },
+    {
+      "id": "openssl",
+      "name": "OpenSSL",
+      "version": "3.5.9",
+      "license": "Apache-2.0",
+      "source": "https://github.com/openssl/openssl",
+      "used_in": "linked into the interpreter by python-build-standalone (ssl, hashlib)",
+      "text_file": "openssl-Apache-2.0.txt"
+    },
+    {
+      "id": "sqlite",
+      "name": "SQLite",
+      "version": "3.53.1",
+      "license": "public domain",
+      "source": "https://sqlite.org/",
+      "used_in": "linked into the interpreter (sqlite3)",
+      "text_file": "sqlite-blessing.txt"
+    },
+    {
+      "id": "expat",
+      "name": "Expat",
+      "version": "2.9.0",
+      "license": "MIT",
+      "source": "https://github.com/libexpat/libexpat",
+      "used_in": "linked into the interpreter (pyexpat)",
+      "text_file": "expat-MIT.txt"
+    },
+    {
+      "id": "libmpdec",
+      "name": "mpdecimal",
+      "version": "4.0.0",
+      "license": "BSD-2-Clause",
+      "source": "https://www.bytereef.org/mpdecimal/",
+      "used_in": "linked into the interpreter (decimal)",
+      "text_file": "mpdecimal-BSD-2-Clause.txt"
+    },
+    {
+      "id": "libffi",
+      "name": "libffi",
+      "version": "as built by python-build-standalone {python.build}",
+      "license": "MIT",
+      "source": "https://github.com/libffi/libffi",
+      "used_in": "linked into the interpreter (ctypes)",
+      "text_file": "libffi-MIT.txt"
+    },
+    {
+      "id": "xz",
+      "name": "XZ Utils (liblzma)",
+      "version": "as built by python-build-standalone {python.build}",
+      "license": "0BSD",
+      "source": "https://tukaani.org/xz/",
+      "used_in": "linked into the interpreter (lzma)",
+      "text_file": "xz-0BSD.txt"
+    },
+    {
+      "id": "bzip2",
+      "name": "bzip2",
+      "version": "as built by python-build-standalone {python.build}",
+      "license": "bzip2-1.0.6",
+      "source": "https://sourceware.org/bzip2/",
+      "used_in": "linked into the interpreter (bz2)",
+      "text_file": "bzip2-bzip2-1.0.6.txt"
+    },
+    {
+      "id": "tcl",
+      "name": "Tcl",
+      "version": "9.0.4",
+      "license": "TCL (BSD-style)",
+      "source": "https://www.tcl-lang.org/",
+      "used_in": "python/lib/libtcl9.0.dylib",
+      "text_file": "tcl-license.txt"
+    },
+    {
+      "id": "tk",
+      "name": "Tk",
+      "version": "9.0.4",
+      "license": "TCL (BSD-style)",
+      "source": "https://www.tcl-lang.org/",
+      "used_in": "python/lib/libtcl9tk9.0.dylib and the _tkinter module",
+      "text_file": "tk-license.txt"
+    },
+    {
+      "id": "itcl",
+      "name": "Itcl",
+      "version": "4.3.8",
+      "license": "TCL (BSD-style)",
+      "source": "https://core.tcl-lang.org/itcl/",
+      "used_in": "python/lib/itcl4.3.8",
+      "text_file": "tcl-license.txt"
+    },
+    {
+      "id": "tcl-thread",
+      "name": "Tcl Thread extension",
+      "version": "3.0.6",
+      "license": "TCL (BSD-style)",
+      "source": "https://core.tcl-lang.org/thread/",
+      "used_in": "python/lib/thread3.0.6",
+      "text_file": "tcl-license.txt"
+    },
+    {
+      "id": "tmux",
+      "name": "tmux",
+      "version": "{tmux.version}",
+      "license": "ISC",
+      "source": "https://github.com/tmux/tmux",
+      "used_in": "bin/tmux (static build from github.com/tmux/tmux-builds)",
+      "text_file": "tmux-ISC.txt"
+    },
+    {
+      "id": "libevent",
+      "name": "libevent",
+      "version": "2.1.12",
+      "license": "BSD-3-Clause",
+      "source": "https://libevent.org/",
+      "used_in": "linked statically into bin/tmux",
+      "text_file": "libevent-BSD-3-Clause.txt"
+    },
+    {
+      "id": "utf8proc",
+      "name": "utf8proc",
+      "version": "2.11.2",
+      "license": "MIT (with the Unicode data license)",
+      "source": "https://github.com/JuliaStrings/utf8proc",
+      "used_in": "linked statically into bin/tmux",
+      "text_file": "utf8proc-MIT.txt"
+    },
+    {
+      "id": "ncurses",
+      "name": "ncurses",
+      "version": "6.5",
+      "license": "X11-style (MIT)",
+      "source": "https://invisible-island.net/ncurses/",
+      "used_in": "linked statically into bin/tmux",
+      "text_file": "ncurses-X11.txt"
+    }
+  ],
+  "sbom_exclude": {
+    "libimagequant": "listed in Pillow's SBOM as an optional build dependency; no PIL module or bundled dylib in the payload references it (no liq_ symbols), so it is not shipped",
+    "FriBiDi": "Pillow loads libfribidi from the system at run time when present; none is bundled in the payload",
+    "pybind11": "build-time headers only",
+    "pythoncapi_compat": "build-time headers only",
+    "fribidi-shim": "Pillow's own loader shim for the system FriBiDi, covered by Pillow's license"
+  },
+  "system_libraries_not_shipped": "libz, libedit, libncurses, libpanel, libresolv, libSystem, CoreFoundation, SystemConfiguration and libobjc are macOS system libraries, loaded from the operating system, not bundled.",
+  "sbom_license_fallback": {
+    "openssl": {
+      "license": "Apache-2.0",
+      "text_file": "openssl-Apache-2.0.txt"
+    }
+  }
+}

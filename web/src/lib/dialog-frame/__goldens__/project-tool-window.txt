@@ -1,0 +1,9 @@
+<div aria-label="crates: acme" class="popup-focus pw" data-project-tool="crate.project" role="dialog" tabindex="-1">
+  <div class="pw-title">
+    <span class="pw-label">
+      "crates: acme"
+    <button data-btn="secondary" data-button-root="true" data-project-tool-close="true" data-size="sm" tabindex="0" type="button">
+      "close"
+  <div class="ph-page pw-body">
+    <div class="ph-table">
+      <div data-fake-panel="18">

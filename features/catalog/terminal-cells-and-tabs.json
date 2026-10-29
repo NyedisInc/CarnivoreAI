@@ -1,0 +1,39 @@
+{
+  "api_routes": [],
+  "area": "terminal",
+  "docs": [
+    "docs/terminal-client-history.md"
+  ],
+  "examples": [
+    "Watch the api and web sessions side by side while both run tests.",
+    "Keep a plain shell in a second pane beside an agent."
+  ],
+  "how_to": [
+    "Click + at the end of the tab strip to open another session in a new tab.",
+    "Open the components menu (grid icon in the drawer bar) and choose arrange in columns, rows or a grid.",
+    "Drag tabs to move them between panes. On a phone the panes become a swipeable strip."
+  ],
+  "id": "terminal-cells-and-tabs",
+  "issues": [],
+  "keywords": [
+    "cells",
+    "panes",
+    "tabs",
+    "grid"
+  ],
+  "media": [],
+  "name": "Terminal panes and tabs",
+  "since": "2026-09-19",
+  "status": "stable",
+  "summary": "split a session's terminal into multiple panes and tabs, arranged in a grid you control.",
+  "surfaces": [
+    "web/src/opscenter/CellHost.svelte",
+    "web/src/opscenter/TerminalSurface.svelte"
+  ],
+  "updated": "2026-09-27",
+  "where": [
+    "Open a session: its tabs run along the top of the terminal.",
+    "The + after the last tab adds another; the components icon arranges them."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

@@ -1,0 +1,1516 @@
+{
+ "about": "hand-written buttons and fields outside web/src/lib/base per web/src file; may only fall (scripts/design/raw_controls.py, issue #2361)",
+ "files": {
+  "web/src/admin/Audit.svelte": {
+   "fields": 1
+  },
+  "web/src/admin/Enroll.svelte": {
+   "fields": 2
+  },
+  "web/src/admin/Moderation.svelte": {
+   "fields": 3
+  },
+  "web/src/admin/Passkeys.svelte": {
+   "fields": 1
+  },
+  "web/src/admin/Queue.svelte": {
+   "fields": 1
+  },
+  "web/src/admin/SignIn.svelte": {
+   "fields": 2
+  },
+  "web/src/admin/SubmissionDetail.svelte": {
+   "fields": 3
+  },
+  "web/src/admin/Users.svelte": {
+   "fields": 1
+  },
+  "web/src/cplugs/crate/CratePanel.svelte": {
+   "buttons": 10
+  },
+  "web/src/cplugs/crate/ExportDialog.svelte": {
+   "buttons": 6,
+   "fields": 1
+  },
+  "web/src/cplugs/crate/ImportDialog.svelte": {
+   "buttons": 6,
+   "fields": 2
+  },
+  "web/src/cplugs/crate/ImportResult.svelte": {
+   "buttons": 2
+  },
+  "web/src/cplugs/crate/JobProgress.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/crate/ProjectCrates.svelte": {
+   "buttons": 6
+  },
+  "web/src/cplugs/crate/RemoveDialog.svelte": {
+   "buttons": 3
+  },
+  "web/src/cplugs/crate/RestoredList.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/crate/UndoDialog.svelte": {
+   "buttons": 4
+  },
+  "web/src/cplugs/devwidgetlab/CaptureFooter.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/devwidgetlab/ChecksSection.svelte": {
+   "buttons": 2,
+   "fields": 1
+  },
+  "web/src/cplugs/devwidgetlab/ComparePair.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/devwidgetlab/DraftActions.svelte": {
+   "buttons": 2
+  },
+  "web/src/cplugs/devwidgetlab/DraftForm.svelte": {
+   "buttons": 4,
+   "fields": 4
+  },
+  "web/src/cplugs/devwidgetlab/DraftPanel.svelte": {
+   "buttons": 6
+  },
+  "web/src/cplugs/devwidgetlab/FindRow.svelte": {
+   "fields": 2
+  },
+  "web/src/cplugs/devwidgetlab/FitTable.svelte": {
+   "buttons": 2
+  },
+  "web/src/cplugs/devwidgetlab/HostBand.svelte": {
+   "buttons": 2
+  },
+  "web/src/cplugs/devwidgetlab/HostChrome.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/devwidgetlab/IdleReadout.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/devwidgetlab/LabControls.svelte": {
+   "buttons": 3,
+   "fields": 1
+  },
+  "web/src/cplugs/devwidgetlab/LabViewer.svelte": {
+   "buttons": 2
+  },
+  "web/src/cplugs/devwidgetlab/MenuSection.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/devwidgetlab/OptionChip.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/devwidgetlab/PreviewFrame.svelte": {
+   "buttons": 2
+  },
+  "web/src/cplugs/devwidgetlab/ScenarioBox.svelte": {
+   "buttons": 3,
+   "fields": 1
+  },
+  "web/src/cplugs/devwidgetlab/SidebarControls.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/devwidgetlab/WidgetTree.svelte": {
+   "buttons": 4
+  },
+  "web/src/cplugs/flow/FlowBody.svelte": {
+   "buttons": 1,
+   "fields": 2
+  },
+  "web/src/cplugs/flow/FlowBubble.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/flow/FlowCard.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/HuddleBody.svelte": {
+   "buttons": 9,
+   "fields": 4
+  },
+  "web/src/cplugs/huddle/HuddleReply.svelte": {
+   "buttons": 5,
+   "fields": 1
+  },
+  "web/src/cplugs/huddle/HuddleReview.svelte": {
+   "buttons": 2
+  },
+  "web/src/cplugs/huddle/HuddleViewSwitch.svelte": {
+   "buttons": 4
+  },
+  "web/src/cplugs/huddle/SwarmDecisionKeys.svelte": {
+   "buttons": 2
+  },
+  "web/src/cplugs/huddle/TaskManagerArtifactCard.svelte": {
+   "buttons": 2
+  },
+  "web/src/cplugs/huddle/TaskManagerArtifactDialog.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerChips.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerCommandBox.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerEmptyGroup.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerFiles.svelte": {
+   "buttons": 2
+  },
+  "web/src/cplugs/huddle/TaskManagerForkDialog.svelte": {
+   "buttons": 2,
+   "fields": 3
+  },
+  "web/src/cplugs/huddle/TaskManagerForkedFrom.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerInboxRow.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerMarkerFilter.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerMove.svelte": {
+   "buttons": 9
+  },
+  "web/src/cplugs/huddle/TaskManagerNewGroup.svelte": {
+   "buttons": 2,
+   "fields": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerProjectHead.svelte": {
+   "buttons": 2
+  },
+  "web/src/cplugs/huddle/TaskManagerRoundCard.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerRow.svelte": {
+   "buttons": 6,
+   "fields": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerRowPosts.svelte": {
+   "buttons": 3
+  },
+  "web/src/cplugs/huddle/TaskManagerSchedule.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerScheduleEditor.svelte": {
+   "buttons": 4,
+   "fields": 7
+  },
+  "web/src/cplugs/huddle/TaskManagerScheduleOffer.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerSearch.svelte": {
+   "buttons": 2,
+   "fields": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerSections.svelte": {
+   "buttons": 5,
+   "fields": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerSend.svelte": {
+   "buttons": 3
+  },
+  "web/src/cplugs/huddle/TaskManagerStatusFilter.svelte": {
+   "buttons": 3
+  },
+  "web/src/cplugs/huddle/TaskManagerStatusModal.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerStatusSections.svelte": {
+   "buttons": 3
+  },
+  "web/src/cplugs/huddle/TaskManagerSteps.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerSubHead.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerTail.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerTickConfirm.svelte": {
+   "buttons": 2
+  },
+  "web/src/cplugs/huddle/TaskManagerTitleEdit.svelte": {
+   "buttons": 2,
+   "fields": 1
+  },
+  "web/src/cplugs/huddle/agents/AgentChatFrame.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/agents/HuddleAgentRows.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/ask/AskQuestion.svelte": {
+   "fields": 1
+  },
+  "web/src/cplugs/huddle/ask/TaskManagerAskForm.svelte": {
+   "buttons": 1,
+   "fields": 1
+  },
+  "web/src/cplugs/huddle/ask/fields/AskChoice.svelte": {
+   "buttons": 1,
+   "fields": 1
+  },
+  "web/src/cplugs/huddle/ask/fields/AskRank.svelte": {
+   "buttons": 2
+  },
+  "web/src/cplugs/huddle/ask/fields/AskText.svelte": {
+   "fields": 2
+  },
+  "web/src/cplugs/huddle/chat/AuthorPath.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/chat/ChatBar.svelte": {
+   "buttons": 10
+  },
+  "web/src/cplugs/huddle/chat/ChatCard.svelte": {
+   "buttons": 5,
+   "fields": 1
+  },
+  "web/src/cplugs/huddle/chat/ChatWidget.svelte": {
+   "buttons": 3,
+   "fields": 1
+  },
+  "web/src/cplugs/huddle/chat/LeaderRename.svelte": {
+   "buttons": 3,
+   "fields": 1
+  },
+  "web/src/cplugs/huddle/chat/ReceiptRow.svelte": {
+   "buttons": 5
+  },
+  "web/src/cplugs/huddle/chat/RewindView.svelte": {
+   "buttons": 3
+  },
+  "web/src/cplugs/huddle/chat/TrafficCard.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/huddle/style-guide/ExpressionBoard.svelte": {
+   "buttons": 2
+  },
+  "web/src/cplugs/huddle/swarm/SwarmLedger.svelte": {
+   "buttons": 2
+  },
+  "web/src/cplugs/huddle/swarm/SwarmOrg.svelte": {
+   "buttons": 4
+  },
+  "web/src/cplugs/huddle/swarm/SwarmPanel.svelte": {
+   "buttons": 6
+  },
+  "web/src/cplugs/huddle/swarm/SwarmSettingsForm.svelte": {
+   "fields": 6
+  },
+  "web/src/cplugs/huddle/swarm/SwarmTitleActions.svelte": {
+   "buttons": 2
+  },
+  "web/src/cplugs/reviewboard/AttachmentsKey.svelte": {
+   "buttons": 3
+  },
+  "web/src/cplugs/reviewboard/BoardPicker.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/reviewboard/BoardScreen.svelte": {
+   "buttons": 12
+  },
+  "web/src/cplugs/reviewboard/ClosedReviews.svelte": {
+   "buttons": 3
+  },
+  "web/src/cplugs/reviewboard/HistoryBar.svelte": {
+   "buttons": 3
+  },
+  "web/src/cplugs/reviewboard/LiveBar.svelte": {
+   "buttons": 4,
+   "fields": 1
+  },
+  "web/src/cplugs/reviewboard/NotesPanel.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/reviewboard/PayloadControls.svelte": {
+   "buttons": 4
+  },
+  "web/src/cplugs/reviewboard/PromptRow.svelte": {
+   "buttons": 3,
+   "fields": 2
+  },
+  "web/src/cplugs/reviewboard/RelinkPicker.svelte": {
+   "buttons": 2
+  },
+  "web/src/cplugs/reviewboard/RoundView.svelte": {
+   "buttons": 3
+  },
+  "web/src/cplugs/reviewboard/ThemePicker.svelte": {
+   "fields": 1
+  },
+  "web/src/cplugs/reviewboard/Tray.svelte": {
+   "buttons": 6,
+   "fields": 2
+  },
+  "web/src/cplugs/save/FolderUnits.svelte": {
+   "buttons": 3,
+   "fields": 1
+  },
+  "web/src/cplugs/save/LocationPanel.svelte": {
+   "buttons": 2,
+   "fields": 1
+  },
+  "web/src/cplugs/save/RestorePoints.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/save/ScopePanel.svelte": {
+   "buttons": 1
+  },
+  "web/src/cplugs/save/StoragePanel.svelte": {
+   "buttons": 2
+  },
+  "web/src/cplugs/share/ShareModal.svelte": {
+   "buttons": 6,
+   "fields": 3
+  },
+  "web/src/lib/account-switch/AutoSwitchIcon.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/app-alerts/AlertPanel.svelte": {
+   "buttons": 10
+  },
+  "web/src/lib/approvals/ApprovalCard.svelte": {
+   "buttons": 9,
+   "fields": 1
+  },
+  "web/src/lib/approvals/ApprovalReview.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/approvals/AskForm.svelte": {
+   "buttons": 4,
+   "fields": 2
+  },
+  "web/src/lib/approvals/QuestionCardFrame.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/approvals/QuestionModal.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/approvals/TypedConfirm.svelte": {
+   "fields": 1
+  },
+  "web/src/lib/auto-sleep/KeepAwakeIcon.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/automations/fixtures/RowMenuHost.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/background-work/FootWork.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/beast-mode/BeastConfirm.svelte": {
+   "buttons": 3,
+   "fields": 1
+  },
+  "web/src/lib/blueprints/BlueprintEditorModal.svelte": {
+   "buttons": 3,
+   "fields": 1
+  },
+  "web/src/lib/blueprints/BlueprintsScreen.svelte": {
+   "buttons": 6
+  },
+  "web/src/lib/blueprints/ExportModal.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/blueprints/ImportModal.svelte": {
+   "buttons": 2,
+   "fields": 1
+  },
+  "web/src/lib/blueprints/LaunchModal.svelte": {
+   "buttons": 10,
+   "checkbox": 1
+  },
+  "web/src/lib/blueprints/ProjectPicker.svelte": {
+   "fields": 1
+  },
+  "web/src/lib/blueprints/SessionRow.svelte": {
+   "buttons": 1,
+   "fields": 7,
+   "radio": 2
+  },
+  "web/src/lib/blueprints/SkillsPicker.svelte": {
+   "buttons": 2,
+   "fields": 1
+  },
+  "web/src/lib/bookmarks/BookmarksPanel.svelte": {
+   "buttons": 4,
+   "fields": 1
+  },
+  "web/src/lib/browser/BrowserView.svelte": {
+   "buttons": 8,
+   "fields": 3
+  },
+  "web/src/lib/browser/PopOutChoice.svelte": {
+   "buttons": 4
+  },
+  "web/src/lib/byoai/CallsPanel.svelte": {
+   "buttons": 7,
+   "fields": 3
+  },
+  "web/src/lib/byoai/CallsSummary.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/byoai/ConnectionCard.svelte": {
+   "buttons": 5
+  },
+  "web/src/lib/byoai/ConnectionForm.svelte": {
+   "buttons": 2,
+   "fields": 7
+  },
+  "web/src/lib/byoai/ConnectionTest.svelte": {
+   "buttons": 5,
+   "fields": 3
+  },
+  "web/src/lib/byoai/ConnectionsPanel.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/byoai/ModelPicker.svelte": {
+   "fields": 1
+  },
+  "web/src/lib/byoai/RouteRow.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/byoai/RoutingPanel.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/carnivore-account/AccountBody.svelte": {
+   "buttons": 4
+  },
+  "web/src/lib/carnivore-account/RegisterModal.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/carnivore-account/SignInModal.svelte": {
+   "buttons": 8,
+   "fields": 2
+  },
+  "web/src/lib/carnivore-account/WelcomeModal.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/catalog/AccountPanel.svelte": {
+   "buttons": 7,
+   "fields": 2
+  },
+  "web/src/lib/catalog/AddSplit.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/catalog/AutoUpdateSwitch.svelte": {
+   "checkbox": 1
+  },
+  "web/src/lib/catalog/CardImageRow.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/catalog/CatalogCard.svelte": {
+   "buttons": 5
+  },
+  "web/src/lib/catalog/CatalogDetail.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/catalog/CatalogFilterRail.svelte": {
+   "buttons": 5
+  },
+  "web/src/lib/catalog/CatalogRows.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/catalog/CatalogScreen.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/catalog/CatalogToolbar.svelte": {
+   "buttons": 4
+  },
+  "web/src/lib/catalog/ConfirmSheet.svelte": {
+   "buttons": 2,
+   "checkbox": 1
+  },
+  "web/src/lib/catalog/ConsentScripts.svelte": {
+   "checkbox": 1
+  },
+  "web/src/lib/catalog/ContentsBlock.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/catalog/CplugFacts.svelte": {
+   "checkbox": 1
+  },
+  "web/src/lib/catalog/DetailActions.svelte": {
+   "buttons": 9
+  },
+  "web/src/lib/catalog/InstallChoices.svelte": {
+   "radio": 1
+  },
+  "web/src/lib/catalog/InstallSheet.svelte": {
+   "buttons": 3,
+   "fields": 1,
+   "radio": 2
+  },
+  "web/src/lib/catalog/InstalledWhere.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/catalog/ItemNoteForm.svelte": {
+   "buttons": 2,
+   "fields": 1
+  },
+  "web/src/lib/catalog/ItemNotePopup.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/catalog/ItemSummary.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/catalog/KeyHelp.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/catalog/ModFacts.svelte": {
+   "checkbox": 2
+  },
+  "web/src/lib/catalog/OneShotPicker.svelte": {
+   "buttons": 2,
+   "fields": 1
+  },
+  "web/src/lib/catalog/PacksShelf.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/catalog/RatingControl.svelte": {
+   "buttons": 5,
+   "fields": 1
+  },
+  "web/src/lib/catalog/RegisterDialog.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/catalog/RegisterFields.svelte": {
+   "checkbox": 2,
+   "fields": 1
+  },
+  "web/src/lib/catalog/RegisterGate.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/catalog/SessionsPanel.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/catalog/TrustBlock.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/catalog/TrySheet.svelte": {
+   "buttons": 3,
+   "fields": 1
+  },
+  "web/src/lib/catalog/WarezActs.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/catalog/WarezCard.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/catalog/menu/InstalledPage.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/catalog/menu/WarezMenu.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/code-review/CodeReviewModal.svelte": {
+   "buttons": 5
+  },
+  "web/src/lib/community/CommentThread.svelte": {
+   "buttons": 5
+  },
+  "web/src/lib/community/Composer.svelte": {
+   "buttons": 2,
+   "fields": 1
+  },
+  "web/src/lib/community/ReportDialog.svelte": {
+   "buttons": 3,
+   "fields": 2
+  },
+  "web/src/lib/computers/AddOverSsh.svelte": {
+   "buttons": 2,
+   "fields": 2
+  },
+  "web/src/lib/computers/ComputerRow.svelte": {
+   "buttons": 4
+  },
+  "web/src/lib/computers/ComputerUpdate.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/computers/ComputersPanel.svelte": {
+   "buttons": 4
+  },
+  "web/src/lib/computers/InviteCard.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/computers/JoinPack.svelte": {
+   "buttons": 2,
+   "fields": 1
+  },
+  "web/src/lib/computers/PackNameField.svelte": {
+   "buttons": 1,
+   "fields": 1
+  },
+  "web/src/lib/confirm-ok/ConfirmOkModal.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/cplug-ui/Button.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/crosstalk/CrosstalkCard.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/crosstalk/ForkPicker.svelte": {
+   "buttons": 3,
+   "checkbox": 1,
+   "fields": 5
+  },
+  "web/src/lib/crosstalk/terminal-cards/CardStack.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/dashboards/DashboardCard.svelte": {
+   "buttons": 9,
+   "fields": 1
+  },
+  "web/src/lib/dashboards/DashboardList.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/dashboards/DashboardsScreen.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/deepsearch/ContextModal.svelte": {
+   "buttons": 5
+  },
+  "web/src/lib/deepsearch/DeepSearchResults.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/deepsearch/HitActions.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/deepsearch/LayoutToggle.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/deepsearch/MoreInConversation.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/dialog-frame/fixtures/PopupProbe.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/drawer-tabs/CascadeMenu.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/drawer-tabs/DrawerMenu.svelte": {
+   "buttons": 8
+  },
+  "web/src/lib/drawer-tabs/DrawerSearch.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/drawer-zone/ZoneItem.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/drawer/DrawerBar.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/drawer/DrawerHeader.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/editor-controls/EditorControls.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/elite/BootStage.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/elite/DizBody.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/elite/DizComments.svelte": {
+   "buttons": 1,
+   "fields": 1
+  },
+  "web/src/lib/elite/DizPane.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/elite/EliteHeader.svelte": {
+   "buttons": 2,
+   "fields": 1
+  },
+  "web/src/lib/elite/FileArea.svelte": {
+   "buttons": 1,
+   "fields": 1
+  },
+  "web/src/lib/elite/HelpOverlay.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/elite/MenuBlock.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/elite/TaggedPane.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/file-drawer/FileDrawerGit.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/file-drawer/FileDrawerHeader.svelte": {
+   "buttons": 6,
+   "checkbox": 4,
+   "fields": 1
+  },
+  "web/src/lib/first-run/FirstRun.svelte": {
+   "buttons": 9,
+   "fields": 1
+  },
+  "web/src/lib/first-run/FirstRunJoin.svelte": {
+   "buttons": 5,
+   "fields": 2
+  },
+  "web/src/lib/help/FeatureMedia.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/help/HelpFeatures.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/help/HelpReleases.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/help/MediaLightbox.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/hosts-page/AddHostModal.svelte": {
+   "buttons": 3,
+   "fields": 4
+  },
+  "web/src/lib/hosts-page/FedConfirmModal.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/hosts-page/HostsScreen.svelte": {
+   "buttons": 6
+  },
+  "web/src/lib/hosts-page/PairModal.svelte": {
+   "buttons": 5,
+   "fields": 4
+  },
+  "web/src/lib/hosts-page/PeerDetail.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/hosts-page/PeerSessions.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/hosts-page/ShowCodeModal.svelte": {
+   "buttons": 5
+  },
+  "web/src/lib/huddle-agent/AgentDrawer.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/huddle-swarm/SwarmPage.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/icon-picker/IconPicker.svelte": {
+   "fields": 1
+  },
+  "web/src/lib/info-tip/InfoTip.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/item-settings/ItemSettingsPanel.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/item-settings/SettingsForm.svelte": {
+   "buttons": 2,
+   "fields": 3
+  },
+  "web/src/lib/item-settings/SettingsMatrix.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/launch-picker/LaunchAccountChoice.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/launch-picker/LaunchPickerModal.svelte": {
+   "buttons": 2,
+   "fields": 1
+  },
+  "web/src/lib/launch-profiles-page/ImportProfileModal.svelte": {
+   "buttons": 3,
+   "checkbox": 2,
+   "fields": 1
+  },
+  "web/src/lib/launch-profiles-page/LaunchProfileEditor.svelte": {
+   "buttons": 7,
+   "checkbox": 3,
+   "fields": 17,
+   "radio": 1
+  },
+  "web/src/lib/launch-profiles-page/LaunchProfilesScreen.svelte": {
+   "buttons": 10,
+   "fields": 1
+  },
+  "web/src/lib/launchpad/AttributionPrompt.svelte": {
+   "checkbox": 1
+  },
+  "web/src/lib/launchpad/ChoiceModal.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/launchpad/CloneModal.svelte": {
+   "buttons": 2,
+   "fields": 3
+  },
+  "web/src/lib/launchpad/EditProjectModal.svelte": {
+   "buttons": 2,
+   "fields": 3
+  },
+  "web/src/lib/launchpad/NoProjectGroup.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/launchpad/ProjectFolderModal.svelte": {
+   "buttons": 3,
+   "fields": 1
+  },
+  "web/src/lib/launchpad/ProjectNameModal.svelte": {
+   "buttons": 2,
+   "fields": 2
+  },
+  "web/src/lib/launchpad/ProjectNode.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/launchpad/RunningSessionName.svelte": {
+   "fields": 1
+  },
+  "web/src/lib/leader-confirm/LeaderConfirm.svelte": {
+   "buttons": 3,
+   "fields": 1
+  },
+  "web/src/lib/ledger-drawer/ProviderGlanceTile.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/ledger/ColorSwatches.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/ledger/LedgerRowSwatch.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/live-status/OfflineMarker.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/manager-frame/ManagerCard.svelte": {
+   "buttons": 4
+  },
+  "web/src/lib/manager-frame/ManagerFrame.svelte": {
+   "buttons": 5
+  },
+  "web/src/lib/manager-frame/ManagerItemActions.svelte": {
+   "buttons": 4
+  },
+  "web/src/lib/manager-frame/ViewToggle.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/markdown-editor/MarkdownEditor.svelte": {
+   "fields": 1
+  },
+  "web/src/lib/menu-page/MenuPageBar.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/messaging/BindingRows.svelte": {
+   "buttons": 1,
+   "fields": 1
+  },
+  "web/src/lib/messaging/MessagingScreen.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/messaging/ProviderCard.svelte": {
+   "buttons": 8,
+   "fields": 1
+  },
+  "web/src/lib/messaging/ProviderForm.svelte": {
+   "buttons": 2,
+   "fields": 5
+  },
+  "web/src/lib/mods/ModRow.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/mods/ModsScreen.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/native-shell/NativeAlertsPanel.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/notifications/destinations/DestinationCard.svelte": {
+   "buttons": 8
+  },
+  "web/src/lib/notifications/destinations/DestinationExtras.svelte": {
+   "buttons": 1,
+   "fields": 4
+  },
+  "web/src/lib/notifications/destinations/DestinationForm.svelte": {
+   "buttons": 2,
+   "fields": 4
+  },
+  "web/src/lib/notifications/destinations/DestinationsPanel.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/notifications/matrix/MatrixCell.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/notifications/matrix/MatrixPanel.svelte": {
+   "fields": 1
+  },
+  "web/src/lib/notifications/sync/SyncPanel.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/pack-machines/MachineEditor.svelte": {
+   "fields": 1
+  },
+  "web/src/lib/pack-machines/PackReceiveConsent.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/pack-machines/PackReserveRow.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/pack-machines/PackWorkTab.svelte": {
+   "buttons": 1,
+   "fields": 2
+  },
+  "web/src/lib/pack-machines/RelayConsentPopup.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/pack-machines/ReserveForm.svelte": {
+   "buttons": 1,
+   "fields": 7
+  },
+  "web/src/lib/pack-migrate/MigrateWizard.svelte": {
+   "buttons": 7,
+   "fields": 2
+  },
+  "web/src/lib/pack-offers/PackOffers.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/pack-roster/AddPane.svelte": {
+   "buttons": 5
+  },
+  "web/src/lib/pack-roster/ComputerPane.svelte": {
+   "buttons": 4
+  },
+  "web/src/lib/pack-roster/PackRoster.svelte": {
+   "buttons": 8
+  },
+  "web/src/lib/pack-roster/PaneLink.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/pack-roster/PaneOverview.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/pack-roster/PaneProjects.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/pack-roster/PaneSsh.svelte": {
+   "buttons": 6
+  },
+  "web/src/lib/pack-roster/RosterActions.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/pack-roster/RosterCard.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/pack-roster/RosterJoin.svelte": {
+   "buttons": 2,
+   "fields": 1
+  },
+  "web/src/lib/pack-roster/SettingsPanel.svelte": {
+   "buttons": 5,
+   "fields": 1
+  },
+  "web/src/lib/pack-transport/ProjectReplicas.svelte": {
+   "buttons": 2,
+   "fields": 1
+  },
+  "web/src/lib/pack-transport/ProjectTransport.svelte": {
+   "buttons": 3,
+   "fields": 3
+  },
+  "web/src/lib/perf-overlay/PerfOverlay.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/pipeline-status/PipelineSquares.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/pipeline-status/PipelineStatusPanel.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/plugins-page/DisableConfirm.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/plugins-page/PermissionSheet.svelte": {
+   "buttons": 1,
+   "checkbox": 1
+  },
+  "web/src/lib/plugins-page/PluginData.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/plugins-page/PluginsScreen.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/project-colors/ProjectColorPopover.svelte": {
+   "buttons": 3,
+   "fields": 1
+  },
+  "web/src/lib/project-colors/ProjectColorSwatches.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/projects-shared/GroupHeader.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/send-to/SendToModal.svelte": {
+   "buttons": 2,
+   "radio": 1
+  },
+  "web/src/lib/session-control/ControlCenter.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/session-move/MoveFolderModal.svelte": {
+   "buttons": 6,
+   "fields": 2,
+   "radio": 2
+  },
+  "web/src/lib/session-skills/ScoutSection.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/session-skills/SessionSkillsPanel.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/sessions-page/PanelHead.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/sessions-page/TimelineView.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/settings-page/appearance/ControlCenterPreview.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/sidebar-shell/Heading.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/sidebar-shell/HeadingRenameEditor.svelte": {
+   "fields": 1
+  },
+  "web/src/lib/sidebar-shell/RowWakeArm.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/sidebar-shell/SearchHead.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/sidebar-shell/SessionRow.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/sidebar-shell/ShowPathModal.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/sidebar-widgets/fixtures/FlyoutActionsFixture.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/sidebar-widgets/fixtures/FlyoutBodyFixture.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/skill-page/SkillInspector.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/skill-page/SkillMdBlock.svelte": {
+   "buttons": 7,
+   "fields": 2
+  },
+  "web/src/lib/skill-page/SkillRemoveStrip.svelte": {
+   "buttons": 6
+  },
+  "web/src/lib/skills-hub/pack/PackConfirmSheet.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/skills-hub/pack/PackDetailSheet.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/skills-hub/pack/PackSkillsTab.svelte": {
+   "buttons": 9
+  },
+  "web/src/lib/skills-hub/pack/PackTakeSheet.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/skills-page/SkillDetail.svelte": {
+   "buttons": 6
+  },
+  "web/src/lib/skills-page/SkillHealth.svelte": {
+   "buttons": 5
+  },
+  "web/src/lib/skills-page/SkillsScreen.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/slash-favorites/FavoriteChips.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/solo/SoloPanel.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/subagents/SubagentBadge.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/subagents/SubagentList.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/swarm-board/CardActionPanel.svelte": {
+   "buttons": 3,
+   "fields": 2
+  },
+  "web/src/lib/swarm-board/CardActions.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/swarm-board/CardPane.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/swarm-board/SwarmBoard.svelte": {
+   "buttons": 4,
+   "fields": 2
+  },
+  "web/src/lib/swarm-board/views/CalendarView.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/swarm-board/views/SwimlanesView.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/swarm-board/views/TimelineView.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/swarm-board/views/columns/ProjectColumn.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/swarm-board/views/list/CardVerdict.svelte": {
+   "buttons": 2,
+   "fields": 1
+  },
+  "web/src/lib/swarm-board/views/list/ListRow.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/swarm-board/views/swimlanes/LaneCard.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/swarm-board/views/swimlanes/LaneChat.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/swarm-board/views/swimlanes/SwimLane.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/terminal-background/TerminalBackgroundButton.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/terminal-background/TerminalBackgroundPanel.svelte": {
+   "buttons": 1,
+   "fields": 1
+  },
+  "web/src/lib/terminal-empty/TerminalEmpty.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/terminal-notice/TerminalStartupNotice.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/terminal-search/PromptHeader.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/terminal-search/PromptTick.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/terminal-search/SearchPanel.svelte": {
+   "fields": 1
+  },
+  "web/src/lib/themes-page/ThemesScreen.svelte": {
+   "buttons": 5
+  },
+  "web/src/lib/time-zone/TimeZonePanel.svelte": {
+   "fields": 1,
+   "radio": 1
+  },
+  "web/src/lib/timers/TimerBadge.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/timers/TimerList.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/toast-mode/ToastModePanel.svelte": {
+   "radio": 1
+  },
+  "web/src/lib/user-guide/GuideShot.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/version-watch/VersionBanner.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/warroom/WarroomModal.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/widget-bars/BarHandle.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/widgets-page/PlaceAdd.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/widgets-page/PlaceCard.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/widgets-page/PlaceDock.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/widgets-page/PlaceMenu.svelte": {
+   "buttons": 1,
+   "fields": 1
+  },
+  "web/src/lib/widgets-page/PlacesBody.svelte": {
+   "buttons": 2
+  },
+  "web/src/lib/widgets-page/PlacesRail.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/widgets-page/WidgetCard.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/widgets-page/WidgetPane.svelte": {
+   "buttons": 7
+  },
+  "web/src/lib/widgets-page/WidgetsScreen.svelte": {
+   "buttons": 3
+  },
+  "web/src/lib/zone-shell/PlacementMenuHost.svelte": {
+   "buttons": 1
+  },
+  "web/src/lib/zone-shell/TabKey.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/App.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/art/ArtDensity.svelte": {
+   "fields": 1
+  },
+  "web/src/opscenter/cells/analytics/ChartLegend.svelte": {
+   "buttons": 3
+  },
+  "web/src/opscenter/cells/analytics/DetailsModal.svelte": {
+   "buttons": 2
+  },
+  "web/src/opscenter/cells/developer/SentList.svelte": {
+   "fields": 1
+  },
+  "web/src/opscenter/cells/files/Cell.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/cells/files/FilesGlanceTile.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/cells/questions/Cell.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/cells/task-list/ApproveKey.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/cells/task-list/ListRow.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/cells/task-list/ListRowOpen.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/cells/task-list/MissingPopup.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/cells/terminal-live/SizeMasterCrown.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/cells/terminal-live/TerminalActions.svelte": {
+   "buttons": 7
+  },
+  "web/src/opscenter/cells/terminal-live/TerminalFoot.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/cells/themes/Cell.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/cells/timeline/Column.svelte": {
+   "buttons": 3
+  },
+  "web/src/opscenter/cells/timeline/KindKey.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/cells/warroom/Cell.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/engine/LiveRegion.svelte": {
+   "buttons": 2
+  },
+  "web/src/opscenter/layout-editor/AnalyticsFamilyFold.svelte": {
+   "buttons": 6
+  },
+  "web/src/opscenter/layout-editor/BoardTransfer.svelte": {
+   "buttons": 3
+  },
+  "web/src/opscenter/layout-editor/ChartDeleteChip.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/layout-editor/DrawerHead.svelte": {
+   "buttons": 2
+  },
+  "web/src/opscenter/layout-editor/DrawerList.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/layout-editor/DrawerTools.svelte": {
+   "fields": 1
+  },
+  "web/src/opscenter/layout-editor/WidgetDrawer.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/layout-editor/WidgetRow.svelte": {
+   "buttons": 2
+  },
+  "web/src/opscenter/layout-editor/WindowRows.svelte": {
+   "buttons": 2
+  },
+  "web/src/opscenter/layouts/AllDownModal.svelte": {
+   "buttons": 2
+  },
+  "web/src/opscenter/layouts/LayoutCellMarks.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/layouts/LayoutCommandBar.svelte": {
+   "buttons": 6,
+   "fields": 1
+  },
+  "web/src/opscenter/layouts/LayoutNameModal.svelte": {
+   "buttons": 3,
+   "fields": 1
+  },
+  "web/src/opscenter/layouts/MemberDownRow.svelte": {
+   "buttons": 2
+  },
+  "web/src/opscenter/log/LogList.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/log/LogRow.svelte": {
+   "buttons": 2
+  },
+  "web/src/opscenter/log/LogToolbar.svelte": {
+   "buttons": 5,
+   "fields": 1
+  },
+  "web/src/opscenter/log/LogViewer.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/phone/PhoneTabs.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/shell/CellFrame.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/shell/CornerMenu.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/shell/PopoutBarActions.svelte": {
+   "buttons": 2
+  },
+  "web/src/opscenter/shell/TabStrip.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/shell/TopBar.svelte": {
+   "buttons": 2
+  },
+  "web/src/opscenter/shell/WidgetHead.svelte": {
+   "buttons": 4
+  },
+  "web/src/opscenter/shell/fixtures/HeadBarProbe.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/shell/fixtures/HeadGroupsProbe.svelte": {
+   "buttons": 3
+  },
+  "web/src/opscenter/ui/Choice.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/ui/FacetSelect.svelte": {
+   "fields": 1
+  },
+  "web/src/opscenter/ui/InsetHostFixture.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/ui/Page.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/ui/RankPanel.svelte": {
+   "buttons": 2
+  },
+  "web/src/opscenter/ui/SearchField.svelte": {
+   "fields": 1
+  },
+  "web/src/opscenter/ui/SortControl.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/ui/Tabs.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/viz/FlowRenderer.svelte": {
+   "fields": 1
+  },
+  "web/src/opscenter/viz/ImpactRenderer.svelte": {
+   "fields": 3
+  },
+  "web/src/opscenter/viz/KpiRenderer.svelte": {
+   "checkbox": 2,
+   "fields": 4
+  },
+  "web/src/opscenter/viz/TreemapRenderer.svelte": {
+   "fields": 1
+  },
+  "web/src/opscenter/viz/TripwireEditor.svelte": {
+   "buttons": 1
+  },
+  "web/src/opscenter/viz/TripwireRow.svelte": {
+   "buttons": 2,
+   "checkbox": 1,
+   "fields": 5
+  },
+  "web/src/opscenter/viz/VizSettings.svelte": {
+   "fields": 5
+  },
+  "web/src/opscenter/widgets/chrome/RefusalPlate.svelte": {
+   "buttons": 2
+  },
+  "web/src/opscenter/widgets/shell/fixtures/ShellProbe.svelte": {
+   "buttons": 1
+  },
+  "web/src/pair/Pair.svelte": {
+   "buttons": 3,
+   "fields": 2
+  },
+  "web/src/public-site/Continuity.svelte": {
+   "buttons": 1
+  },
+  "web/src/public-site/InstallCommand.svelte": {
+   "buttons": 1
+  },
+  "web/src/style-guide/specimens/AnchoredPopupDemo.svelte": {
+   "buttons": 4
+  },
+  "web/src/style-guide/specimens/BaseComponents.svelte": {
+   "buttons": 2
+  },
+  "web/src/style-guide/specimens/BaseElements.svelte": {
+   "buttons": 2,
+   "checkbox": 1,
+   "fields": 5,
+   "radio": 2
+  },
+  "web/src/style-guide/specimens/BaseThemes.svelte": {
+   "buttons": 5,
+   "fields": 1
+  },
+  "web/src/style-guide/specimens/ContrastMatrix.svelte": {
+   "buttons": 1
+  },
+  "web/src/style-guide/specimens/Modals.svelte": {
+   "buttons": 4
+  },
+  "web/src/style-guide/specimens/ReviewPanel.svelte": {
+   "fields": 1
+  }
+ },
+ "totals": {
+  "buttons": 1082,
+  "checkbox": 25,
+  "fields": 266,
+  "radio": 13
+ }
+}

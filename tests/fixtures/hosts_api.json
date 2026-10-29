@@ -1,0 +1,504 @@
+{
+  "description": "Request and response examples for every /api/v1/hosts route (issue #162, slice S1). <timestamp> stands for a generated value. Regenerated and checked by tests/test_hosts_routes.py. Model: docs/remote-hosts.md.",
+  "examples": [
+    {
+      "title": "list, fresh install: this machine only",
+      "method": "GET",
+      "path": "/api/v1/hosts",
+      "request": null,
+      "status": 200,
+      "response": {
+        "status": "ok",
+        "detail": null,
+        "hosts": [
+          {
+            "key": "local",
+            "label": "this machine",
+            "local": true,
+            "ssh_target": null,
+            "ssh_port": null,
+            "socket": null,
+            "enabled": true,
+            "session_count": 0,
+            "probe_state": "never",
+            "probe_detail": null,
+            "probed_at": null,
+            "tmux_path": null,
+            "tmux_version": null,
+            "login_path": null,
+            "agent_paths": null,
+            "login_shell": null,
+            "machine_id": null,
+            "remote_carnivore": null,
+            "computer_install_id": null,
+            "created_at": "<timestamp>",
+            "updated_at": "<timestamp>"
+          }
+        ]
+      }
+    },
+    {
+      "title": "add by ssh alias",
+      "method": "POST",
+      "path": "/api/v1/hosts",
+      "request": {
+        "label": "Hosta",
+        "ssh_target": "hosta"
+      },
+      "status": 200,
+      "response": {
+        "key": "<host-key-1>",
+        "label": "Hosta",
+        "local": false,
+        "ssh_target": "hosta",
+        "ssh_port": null,
+        "socket": "carnivore-remote",
+        "enabled": true,
+        "session_count": 0,
+        "probe_state": "never",
+        "probe_detail": null,
+        "probed_at": null,
+        "tmux_path": null,
+        "tmux_version": null,
+        "login_path": null,
+        "agent_paths": null,
+        "login_shell": null,
+        "machine_id": null,
+        "remote_carnivore": null,
+        "computer_install_id": null,
+        "created_at": "<timestamp>",
+        "updated_at": "<timestamp>"
+      }
+    },
+    {
+      "title": "add with user@host, port and socket",
+      "method": "POST",
+      "path": "/api/v1/hosts",
+      "request": {
+        "label": "Studio",
+        "ssh_target": "acme@studio.local",
+        "ssh_port": 2201,
+        "socket": "carnivore-lab"
+      },
+      "status": 200,
+      "response": {
+        "key": "<host-key-2>",
+        "label": "Studio",
+        "local": false,
+        "ssh_target": "acme@studio.local",
+        "ssh_port": 2201,
+        "socket": "carnivore-lab",
+        "enabled": true,
+        "session_count": 0,
+        "probe_state": "never",
+        "probe_detail": null,
+        "probed_at": null,
+        "tmux_path": null,
+        "tmux_version": null,
+        "login_path": null,
+        "agent_paths": null,
+        "login_shell": null,
+        "machine_id": null,
+        "remote_carnivore": null,
+        "computer_install_id": null,
+        "created_at": "<timestamp>",
+        "updated_at": "<timestamp>"
+      }
+    },
+    {
+      "title": "add, 422 key is not a field the caller may set",
+      "method": "POST",
+      "path": "/api/v1/hosts",
+      "request": {
+        "key": "evil",
+        "label": "x",
+        "ssh_target": "hosta"
+      },
+      "status": 422,
+      "response": {
+        "detail": [
+          {
+            "type": "extra_forbidden",
+            "loc": [
+              "body",
+              "key"
+            ],
+            "msg": "Extra inputs are not permitted",
+            "input": "evil"
+          }
+        ]
+      }
+    },
+    {
+      "title": "add, 400 a leading '-' would be an ssh option",
+      "method": "POST",
+      "path": "/api/v1/hosts",
+      "request": {
+        "label": "x",
+        "ssh_target": "-oProxyCommand=touch /tmp/pwned"
+      },
+      "status": 400,
+      "response": {
+        "detail": {
+          "code": "host_target_invalid",
+          "detail": "an ssh target is an alias or user@host: letters, digits, '.', '_', '+' and '-', each part starting with a letter, digit or '_'"
+        }
+      }
+    },
+    {
+      "title": "add, 400 a host part starting '-'",
+      "method": "POST",
+      "path": "/api/v1/hosts",
+      "request": {
+        "label": "x",
+        "ssh_target": "acme@-oProxyCommand=x"
+      },
+      "status": 400,
+      "response": {
+        "detail": {
+          "code": "host_target_invalid",
+          "detail": "an ssh target is an alias or user@host: letters, digits, '.', '_', '+' and '-', each part starting with a letter, digit or '_'"
+        }
+      }
+    },
+    {
+      "title": "add, 400 a shell metacharacter",
+      "method": "POST",
+      "path": "/api/v1/hosts",
+      "request": {
+        "label": "x",
+        "ssh_target": "hosta;id"
+      },
+      "status": 400,
+      "response": {
+        "detail": {
+          "code": "host_target_invalid",
+          "detail": "an ssh target is an alias or user@host: letters, digits, '.', '_', '+' and '-', each part starting with a letter, digit or '_'"
+        }
+      }
+    },
+    {
+      "title": "add, 400 port out of range",
+      "method": "POST",
+      "path": "/api/v1/hosts",
+      "request": {
+        "label": "x",
+        "ssh_target": "hosta",
+        "ssh_port": 70000
+      },
+      "status": 400,
+      "response": {
+        "detail": {
+          "code": "host_port_invalid",
+          "detail": "an ssh port is an integer from 1 to 65535"
+        }
+      }
+    },
+    {
+      "title": "add, 400 the product's own socket (D1)",
+      "method": "POST",
+      "path": "/api/v1/hosts",
+      "request": {
+        "label": "x",
+        "ssh_target": "hosta",
+        "socket": "carnivore"
+      },
+      "status": 400,
+      "response": {
+        "detail": {
+          "code": "host_socket_reserved",
+          "detail": "'carnivore' is the socket Carnivore runs its own sessions on; a remote host gets its own, like 'carnivore-remote'"
+        }
+      }
+    },
+    {
+      "title": "add, 400 label invalid",
+      "method": "POST",
+      "path": "/api/v1/hosts",
+      "request": {
+        "label": "  ",
+        "ssh_target": "hosta"
+      },
+      "status": 400,
+      "response": {
+        "detail": {
+          "code": "host_label_invalid",
+          "detail": "a label is 1 to 64 characters with no control characters"
+        }
+      }
+    },
+    {
+      "title": "get this machine",
+      "method": "GET",
+      "path": "/api/v1/hosts/local",
+      "request": null,
+      "status": 200,
+      "response": {
+        "key": "local",
+        "label": "this machine",
+        "local": true,
+        "ssh_target": null,
+        "ssh_port": null,
+        "socket": null,
+        "enabled": true,
+        "session_count": 0,
+        "probe_state": "never",
+        "probe_detail": null,
+        "probed_at": null,
+        "tmux_path": null,
+        "tmux_version": null,
+        "login_path": null,
+        "agent_paths": null,
+        "login_shell": null,
+        "machine_id": null,
+        "remote_carnivore": null,
+        "computer_install_id": null,
+        "created_at": "<timestamp>",
+        "updated_at": "<timestamp>"
+      }
+    },
+    {
+      "title": "get one",
+      "method": "GET",
+      "path": "/api/v1/hosts/<host-key-1>",
+      "request": null,
+      "status": 200,
+      "response": {
+        "key": "<host-key-1>",
+        "label": "Hosta",
+        "local": false,
+        "ssh_target": "hosta",
+        "ssh_port": null,
+        "socket": "carnivore-remote",
+        "enabled": true,
+        "session_count": 0,
+        "probe_state": "never",
+        "probe_detail": null,
+        "probed_at": null,
+        "tmux_path": null,
+        "tmux_version": null,
+        "login_path": null,
+        "agent_paths": null,
+        "login_shell": null,
+        "machine_id": null,
+        "remote_carnivore": null,
+        "computer_install_id": null,
+        "created_at": "<timestamp>",
+        "updated_at": "<timestamp>"
+      }
+    },
+    {
+      "title": "get, 404",
+      "method": "GET",
+      "path": "/api/v1/hosts/nope",
+      "request": null,
+      "status": 404,
+      "response": {
+        "detail": {
+          "code": "host_not_found",
+          "detail": "no host 'nope'"
+        }
+      }
+    },
+    {
+      "title": "edit label and enabled",
+      "method": "PATCH",
+      "path": "/api/v1/hosts/<host-key-1>",
+      "request": {
+        "label": "Hosta 2",
+        "enabled": false
+      },
+      "status": 200,
+      "response": {
+        "key": "<host-key-1>",
+        "label": "Hosta 2",
+        "local": false,
+        "ssh_target": "hosta",
+        "ssh_port": null,
+        "socket": "carnivore-remote",
+        "enabled": false,
+        "session_count": 0,
+        "probe_state": "never",
+        "probe_detail": null,
+        "probed_at": null,
+        "tmux_path": null,
+        "tmux_version": null,
+        "login_path": null,
+        "agent_paths": null,
+        "login_shell": null,
+        "machine_id": null,
+        "remote_carnivore": null,
+        "computer_install_id": null,
+        "created_at": "<timestamp>",
+        "updated_at": "<timestamp>"
+      }
+    },
+    {
+      "title": "edit, 409 this machine is fixed",
+      "method": "PATCH",
+      "path": "/api/v1/hosts/local",
+      "request": {
+        "label": "mine"
+      },
+      "status": 409,
+      "response": {
+        "detail": {
+          "code": "host_local_fixed",
+          "detail": "'local' is this machine; it is never edited"
+        }
+      }
+    },
+    {
+      "title": "edit socket, 409 while sessions run there",
+      "method": "PATCH",
+      "path": "/api/v1/hosts/<host-key-1>",
+      "request": {
+        "socket": "other-socket"
+      },
+      "status": 409,
+      "response": {
+        "detail": {
+          "code": "host_in_use",
+          "detail": "sessions rows still name '<host-key-1>'; its socket cannot change under them"
+        }
+      }
+    },
+    {
+      "title": "delete, 409 while sessions rows name it",
+      "method": "DELETE",
+      "path": "/api/v1/hosts/<host-key-1>",
+      "request": null,
+      "status": 409,
+      "response": {
+        "detail": {
+          "code": "host_in_use",
+          "detail": "sessions rows still name '<host-key-1>'"
+        }
+      }
+    },
+    {
+      "title": "delete (nothing on that machine is touched)",
+      "method": "DELETE",
+      "path": "/api/v1/hosts/<host-key-2>",
+      "request": null,
+      "status": 200,
+      "response": {
+        "key": "<host-key-2>",
+        "deleted": true
+      }
+    },
+    {
+      "title": "delete, 409 this machine",
+      "method": "DELETE",
+      "path": "/api/v1/hosts/local",
+      "request": null,
+      "status": 409,
+      "response": {
+        "detail": {
+          "code": "host_local_fixed",
+          "detail": "'local' is this machine; it is never deleted"
+        }
+      }
+    },
+    {
+      "title": "delete, 404",
+      "method": "DELETE",
+      "path": "/api/v1/hosts/<host-key-2>",
+      "request": null,
+      "status": 404,
+      "response": {
+        "detail": {
+          "code": "host_not_found",
+          "detail": "no host '<host-key-2>'"
+        }
+      }
+    },
+    {
+      "title": "list",
+      "method": "GET",
+      "path": "/api/v1/hosts",
+      "request": null,
+      "status": 200,
+      "response": {
+        "status": "ok",
+        "detail": null,
+        "hosts": [
+          {
+            "key": "local",
+            "label": "this machine",
+            "local": true,
+            "ssh_target": null,
+            "ssh_port": null,
+            "socket": null,
+            "enabled": true,
+            "session_count": 0,
+            "probe_state": "never",
+            "probe_detail": null,
+            "probed_at": null,
+            "tmux_path": null,
+            "tmux_version": null,
+            "login_path": null,
+            "agent_paths": null,
+            "login_shell": null,
+            "machine_id": null,
+            "remote_carnivore": null,
+            "computer_install_id": null,
+            "created_at": "<timestamp>",
+            "updated_at": "<timestamp>"
+          },
+          {
+            "key": "<host-key-1>",
+            "label": "Hosta 2",
+            "local": false,
+            "ssh_target": "hosta",
+            "ssh_port": null,
+            "socket": "carnivore-remote",
+            "enabled": false,
+            "session_count": 1,
+            "probe_state": "never",
+            "probe_detail": null,
+            "probed_at": null,
+            "tmux_path": null,
+            "tmux_version": null,
+            "login_path": null,
+            "agent_paths": null,
+            "login_shell": null,
+            "machine_id": null,
+            "remote_carnivore": null,
+            "computer_install_id": null,
+            "created_at": "<timestamp>",
+            "updated_at": "<timestamp>"
+          }
+        ]
+      }
+    },
+    {
+      "title": "list, table unreadable: 200 unavailable, never an empty ok",
+      "method": "GET",
+      "path": "/api/v1/hosts",
+      "request": null,
+      "status": 200,
+      "response": {
+        "status": "unavailable",
+        "detail": "the hosts table is not present (schema before v40)",
+        "hosts": []
+      }
+    },
+    {
+      "title": "add, 503 datastore unavailable",
+      "method": "POST",
+      "path": "/api/v1/hosts",
+      "request": {
+        "label": "x",
+        "ssh_target": "hosta"
+      },
+      "status": 503,
+      "response": {
+        "detail": {
+          "code": "hosts_unavailable",
+          "detail": "the hosts table is not present (schema before v40)"
+        }
+      }
+    }
+  ]
+}

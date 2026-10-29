@@ -1,0 +1,61 @@
+{
+  "area": "skills-catalog",
+  "description": "A BBS-themed view of the Warez page. The file area lists every file in the index as numbered rows (name, kind, real install count, a two-line brief, no id line) with [upd!] and [inst] markers; every menu letter filters or sorts it, l lists the top ten by measured installs, / searches, and r redials the index (the cached listing stays on screen under a NO CARRIER banner while it is offline).",
+  "docs": [
+    "docs/catalog.md",
+    "docs/DECISIONS.md"
+  ],
+  "examples": [
+    "Open Warez for the very first time: the modem dials, the logo draws and docks, and the main menu appears under the node box. Every later visit shows the normal Warez page.",
+    "Press any key during the dial-up to skip it, then press a menu letter to see it echoed at the main menu prompt.",
+    "Press g to hang up: NO CARRIER shows, any key dials again, Esc goes back to Warez.",
+    "Open /#elite/board to land on the board with no dial-up.",
+    "Press s for skills only, i for installed only, then d to sort by downloads; the counts on the FILES and STATE panels follow what you narrowed.",
+    "Press / and type a word, Enter lists the matches over every kind, Esc clears the search and shows everything again.",
+    "Press l for the top ten by measured install counts; a file whose count could not be read is left out, never shown as zero."
+  ],
+  "how_to": [
+    "Open Warez from the menu: the first time ever you land in Elite Access. After that, click the gray pi in the bottom-right corner of the Warez menu (on a phone, the bottom-right of the menu screen).",
+    "Any key or click skips the dial-up. On a page opened without a click, the first key or click starts the sound.",
+    "Alt+D dials again, Alt+H hangs up, Esc returns to Warez.",
+    "Use /#elite for the dial-up and /#elite/board to go straight to the board.",
+    "In the board: a s t m p pick a kind, i v u n narrow by state, f w o e d c sort, l the top ten, / searches, : or the Command line takes a typed command, r redials the index.",
+    "Enter opens the FILE_ID.DIZ of the file under the bar (a sheet on a phone), Shift+= adds or updates it, = tries it, Shift+M comments, Alt+Up and Alt+Down scroll the pane, Shift+D downloads, Shift+U updates and Shift+C clears the tagged files, ? lists every key."
+  ],
+  "id": "warez-elite-access",
+  "issues": [
+    1931
+  ],
+  "keywords": [
+    "warez",
+    "elite",
+    "bbs",
+    "modem",
+    "ansi",
+    "catalog"
+  ],
+  "media_exempt": "recaptured at the next version bump",
+  "name": "Warez Elite Access",
+  "since": "2026-10-18",
+  "status": "beta",
+  "summary": "a BBS-themed view of Warez with a dial-up login, a node box, last callers and a main menu, shown on your first Warez visit and opened by the gray pi in the Warez menu",
+  "surfaces": [
+    "web/src/lib/elite/EliteScreen.svelte",
+    "web/src/lib/elite/EliteHeader.svelte",
+    "web/src/lib/elite/MenuBlock.svelte",
+    "web/src/lib/elite/BootStage.svelte",
+    "web/src/lib/elite/EliteStrip.svelte",
+    "web/src/lib/elite/elite-host.ts",
+    "web/src/lib/catalog/menu/WarezMenu.svelte",
+    "web/src/lib/elite/FileArea.svelte",
+    "web/src/lib/elite/FileRows.svelte",
+    "web/src/lib/elite/query.ts",
+    "web/src/lib/elite/board.svelte.ts",
+    "web/src/lib/elite/first-visit.ts"
+  ],
+  "updated": "2026-10-18",
+  "where": [
+    "The gray pi in the bottom-right corner of the Warez menu (tooltip ELITE ACCESS), and automatically on the first Warez visit.",
+    "The address /#elite and /#elite/board."
+  ]
+}

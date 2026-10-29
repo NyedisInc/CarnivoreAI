@@ -1,0 +1,27 @@
+
+@layer components {
+:root {
+    --sidebar-rail-w: 48px;
+}
+
+#session-sidebar-rail {
+    display: none;
+}
+
+body.session-sidebar-railed #session-sidebar-rail {
+    display: block;
+}
+
+body.session-sidebar-railed {
+    --dock-offset: var(--sidebar-rail-w);
+}
+
+body.session-sidebar-railed #session-sidebar-toggle {
+    display: none;
+}
+
+/*  hidden  */
+body.session-sidebar-railed:has(#terminal-screen.active) .header {
+    display: none;
+}
+}

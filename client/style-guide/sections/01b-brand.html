@@ -1,0 +1,135 @@
+<h2 class="sg-h2">brand: name, logos and background art</h2>
+<p class="sg-lead">The visible brand is Carnivore. It is raster art in fixed files, drawn at fixed heights, and only one brand
+mark is on screen at a time. Every identifier underneath stays Cloude.</p>
+
+<h3 class="sg-h3" id="brand-marks">wordmark and marks, where the app draws them</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup copied from</span><code>client/index.html</code><span>styles live</span></div>
+    <div class="sg-specimen__body">
+        <div class="sg-row">
+            <button type="button" class="session-sidebar-brand" aria-label="Carnivore, go to the home screen" title="home">
+                <img src="/static/img/carnivore/carnivore-wordmark.png" srcset="/static/img/carnivore/carnivore-wordmark.png 1x, /static/img/carnivore/carnivore-wordmark@2x.png 2x" alt="">
+            </button>
+            <button type="button" class="header-icon--wordmark" aria-label="Carnivore, go to the home screen" title="home">
+                <img src="/static/img/carnivore/carnivore-wordmark.png" srcset="/static/img/carnivore/carnivore-wordmark@2x.png 2x" alt="">
+            </button>
+            <button type="button" class="session-sidebar-toggle" aria-expanded="false" aria-label="open the drawer">
+                <img src="/static/img/carnivore/carnivore-mark.png" srcset="/static/img/carnivore/carnivore-mark@2x.png 2x" class="session-sidebar-toggle-mark" alt="" aria-hidden="true">
+            </button>
+        </div>
+        <p class="sg-caption">left to right: the drawer's title (the wordmark, 52px tall), the header's home button (the claw
+        mark, 30px), the drawer toggle (the claw mark, 20px, 0.72 opacity at rest).</p>
+    </div>
+</div>
+<div class="sg-table-wrap">
+<table class="sg-table">
+    <thead><tr><th>file</th><th>what it is</th><th>where</th></tr></thead>
+    <tbody>
+        <tr><td><img class="sg-asset" src="/static/img/carnivore/carnivore-wordmark@2x.png" alt="" height="27"><br><code>client/img/carnivore/carnivore-wordmark.png</code>, <code>@2x</code></td>
+            <td>the CARNIVORE lockup, 162x54 (324x108)</td>
+            <td>drawer title (<code>.session-sidebar-brand</code>, 52px)</td></tr>
+        <tr><td><img class="sg-asset" src="/static/img/carnivore/carnivore-mark@2x.png" alt="" height="30"><br><code>client/img/carnivore/carnivore-mark.png</code>, <code>@2x</code></td>
+            <td>the bare claw, 48x48 (96x96)</td>
+            <td>header home button (<code>.header-icon--wordmark</code> swaps it in by CSS, 30px, 26px under 640px) and the drawer
+                toggle (20px); both stand down while the drawer, which carries the wordmark, is open</td></tr>
+        <tr><td><img class="sg-asset" src="/static/img/carnivore/carnivore-icon@2x.png" alt="" height="28"><br><code>client/img/carnivore/carnivore-icon.png</code>, <code>@2x</code></td>
+            <td>the claw on its dark tile, 48x48 (96x96)</td>
+            <td>not drawn in the app now that the home masthead is gone; kept as the source of the tile</td></tr>
+    </tbody>
+</table>
+</div>
+
+<h3 class="sg-h3" id="brand-app-icons">app icon set</h3>
+<div class="sg-row">
+    <img class="sg-asset" src="/static/assets/icons/icon-180.png" alt="" width="60" height="60">
+    <img class="sg-asset" src="/static/assets/icons/icon-192.png" alt="" width="64" height="64">
+    <img class="sg-asset" src="/static/assets/icons/icon-512.png" alt="" width="80" height="80">
+    <img class="sg-asset" src="/static/assets/icons/icon-512-maskable.png" alt="" width="80" height="80">
+</div>
+<dl class="sg-facts">
+    <dt>files</dt>
+    <dd><code>client/assets/icons/</code>: <code>icon-180.png</code> is the apple-touch-icon, <code>icon-192.png</code> the
+        favicon and a manifest icon, <code>icon-512.png</code> and <code>icon-512-maskable.png</code> the manifest's large and
+        maskable icons (<code>client/manifest.webmanifest</code>). <code>header-icon.png</code> and <code>@2x</code> are
+        legacy sizes the header no longer draws.</dd>
+    <dt>source</dt>
+    <dd>All are cut from <code>macOS/assets/AppIcon-1024.png</code> by <code>scripts/generate-web-icons.sh</code>. Change the
+        master and regenerate; never edit a size by hand.</dd>
+</dl>
+
+<h3 class="sg-h3" id="brand-background">theme background art</h3>
+<div class="sg-row">
+    <img class="sg-asset" src="/static/css/themes/carnivore/background.webp" alt="" width="160" height="160" loading="lazy">
+    <img class="sg-asset" src="/static/css/themes/carnivore/preview.webp" alt="" width="80" height="80" loading="lazy">
+    <img class="sg-asset" src="/static/css/themes/claude/preview.webp" alt="" width="80" height="80" loading="lazy">
+    <img class="sg-asset" src="/static/css/themes/carnivore-light/preview.webp" alt="" width="80" height="80" loading="lazy">
+    <img class="sg-asset" src="/static/css/themes/matrix/preview.webp" alt="" width="80" height="80" loading="lazy">
+    <img class="sg-asset" src="/static/css/themes/black_ops/preview.webp" alt="" width="80" height="80" loading="lazy">
+</div>
+<dl class="sg-facts">
+    <dt>what</dt>
+    <dd>Every bundled theme ships <code>background.webp</code> (1254x1254) and <code>preview.webp</code> (240x240) in its own
+        folder: the claw and wordmark redrawn in that theme's palette (<code>docs/theme-catalog-layout.md</code>). Above:
+        carnivore's background, then five previews.</dd>
+    <dt>how it paints</dt>
+    <dd>Only behind the terminal, declared in the theme's <code>theme.json</code> <code>background</code> block, under a
+        scrim of the terminal's own colour (carnivore <code>dim</code> 0.8, default 0.9). A session can swap, borrow or switch
+        off its picture (<code>docs/terminal-background.md</code>). Previews appear on the themes page and the theme
+        pickers.</dd>
+</dl>
+
+<h3 class="sg-h3" id="brand-name">the name</h3>
+<div class="sg-table-wrap">
+<table class="sg-table">
+    <thead><tr><th>form</th><th>use it for</th></tr></thead>
+    <tbody>
+        <tr><td>CARNIVORE</td><td>the wordmark art only. Never type the capitals; a title row that shows it in capitals does
+            so by CSS.</td></tr>
+        <tr><td>carnivore</td></tr>
+        <tr><td>Carnivore</td></tr>
+        <tr><td>carnivore.ai</td><td>the public site (<code>hosted/site/</code>); <code>catalog.carnivore.ai</code> is the skills
+            catalog and its admin. Lowercase, and only where the UI links out.</td></tr>
+        <tr><td>Cloude</td><td>every identifier: the tmux socket <code>cloude</code>, the <code>cloude_*</code> session
+            prefix, <code>cloude.db</code>, <code>CLOUDE_*</code> variables, the bundle id <code>com.cloudecode.menubar</code>.
+            Deliberate; never "correct" it (<code>docs/rename-carnivore.md</code> lists what the rename still recognises).</td></tr>
+    </tbody>
+</table>
+</div>
+
+<h3 class="sg-h3" id="brand-mistakes">do not</h3>
+<ul class="sg-mistakes">
+    <li><strong>Two brands on screen.</strong> The header drops its mark while the drawer, which carries the wordmark, is
+        open.</li>
+    <li><strong>A redrawn or recoloured mark.</strong> The art is raster, full colour; hover and open states change opacity,
+        never colour. No SVG copy, no CSS filter, no theme tint.</li>
+    <li><strong>A stretched mark.</strong> Set the height and let the width follow; always ship the <code>@2x</code> in
+        <code>srcset</code>.</li>
+    <li><strong>The claw as an action or status icon.</strong> It means Carnivore, nothing else; actions use
+        <a href="#icons">the icon set</a>.</li>
+    <li><strong>Background art in chrome.</strong> It paints behind the terminal only, through the theme manifest, never as
+        an <code>&lt;img&gt;</code> on a page.</li>
+    <li><strong>Carnivore in an identifier.</strong> A new socket, prefix, key or variable follows the rename register, not
+        the brand.</li>
+</ul>
+
+<h3 class="sg-h3" id="brand-public-site">the public website</h3>
+<p class="sg-p">The public site is a separate static document, built from
+    <code>web/src/public-site/Page.svelte</code> and
+    <code>web/src/public-site/Continuity.svelte</code>. It uses the supplied claw and
+    wordmark, local JetBrains Mono, the Carnivore blue-green ground and red accent,
+    thin borders and border-only keyboard focus. Its isolated
+    <code>web/src/public-site/site.css</code> maps those brand values to the
+    Scrollcraft engine's tokens; it does not load the app runtime or theme switcher.</p>
+<p class="sg-p">The field-guide pattern has a layered promise, a quiet explanation,
+    one session-continuity illustration, real interface evidence and a steady
+    download plate. The illustration is explicitly conceptual and announces its
+    local state change. Essential copy and links are pre-rendered; small screens and
+    reduced motion use natural flow. Keep source, legal and verified public download
+    links available without scripts. Build, preview and asset contracts are in
+    <code>hosted/site/README.md</code>. Review this standalone page on its own origin
+    rather than mounting its global scroll engine inside an app panel.</p>
+<p class="sg-p">The install command block is <code>web/src/public-site/InstallCommand.svelte</code>
+    (<code>.install-cmd</code>): the one-line installer shown in mono beside a quiet outlined copy
+    button, under the download button in the hero and in the download section. A copy announces
+    "copied" through a polite live region; when the clipboard is refused the command text is
+    selected instead. It stacks to a full-width button under 750px.</p>

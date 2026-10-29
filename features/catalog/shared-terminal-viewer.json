@@ -1,0 +1,32 @@
+{
+  "api_routes": [],
+  "area": "sessions",
+  "docs": [
+    "docs/spectator-links.md"
+  ],
+  "examples": [
+    "Follow along with an agent's work from your phone while away from the desk."
+  ],
+  "how_to": [
+    "Open the link. The session's terminal streams live; you cannot type into it.",
+    "The page says when the link expires or when sharing stops."
+  ],
+  "id": "shared-terminal-viewer",
+  "issues": [],
+  "keywords": [
+    "viewer",
+    "spectator"
+  ],
+  "media_exempt": "the page only exists behind a live spectator link, which carries a secret token that must not be committed; see spectator-links for how one is made",
+  "name": "Shared terminal viewer",
+  "since": "2026-09-20",
+  "status": "stable",
+  "summary": "what someone sees when they open your spectator link: a live, read-only view of the session.",
+  "surfaces": [
+    "web/src/spectate/SpectatePage.svelte"
+  ],
+  "updated": "2026-10-17",
+  "where": [
+    "Open a read-only share link someone sent you, on any device."
+  ]
+}

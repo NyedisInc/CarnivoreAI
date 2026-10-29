@@ -1,0 +1,229 @@
+@layer components {
+  .rb-controls {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    flex: none;
+    gap: 6px;
+  }
+
+  .rb-saves {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    gap: 2px;
+  }
+
+  .rb-position { white-space: nowrap; }
+
+  .rb-icon[data-filled='true'] { color: var(--oc-orange); }
+
+  /*
+   * THE NOTES PANEL (`NotesPanel.svelte`, issue #1788): pinned top right over the board body on the shared popup frame (`AnchoredPopup`, the `popup-focus` look: its border, ground and shadow are that file's), the
+   * title strip copied from `.rb-strip` (the titlerow ground, a hairline under it by box-shadow, the quiet `.rb-label` caption, no second
+   * accent). Its size comes from the person (`resize: both`, remembered per device in `--rb-notes-w` / `--rb-notes-h`), bounded by the room
+   * and the viewport. It is pinned by its RIGHT edge, so the grip goes to the bottom LEFT, the corner that moves (`direction: rtl` on the
+   * frame, `ltr` again inside it). Below 700 px it is a bottom sheet across the body.
+   */
+  .rb-notes {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 6;
+    box-sizing: border-box;
+    width: var(--rb-notes-w, 440px);
+    height: var(--rb-notes-h, 380px);
+    min-width: 280px;
+    min-height: 200px;
+    max-width: min(calc(100vw - 32px), calc(100% - 16px));
+    max-height: min(calc(100vh - 96px), calc(100% - 16px));
+    overflow: hidden;
+    resize: both;
+    direction: rtl;
+  }
+
+  .rb-notes-inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    direction: ltr;
+  }
+
+  .rb-notes-head {
+    display: flex;
+    align-items: center;
+    flex: none;
+    gap: 6px;
+    min-height: 28px;
+    padding: 0 2px 0 8px;
+    background: var(--oc-ground-titlerow);
+    box-shadow: inset 0 -1px 0 0 var(--oc-line-rule);
+  }
+
+  .rb-notes-title { flex: 1 1 auto; }
+
+  .rb-notes-count {
+    flex: none;
+    color: var(--oc-text-muted);
+    font-size: var(--oc-fs-micro);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rb-notes-count[data-at-cap='true'] { color: var(--oc-coral); }
+
+  .rb-notes-body {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 6px;
+  }
+
+  .rb-clipwrap {
+    position: relative;
+    display: inline-flex;
+    flex: none;
+  }
+
+  .rb-icon.rb-clip-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    min-width: 28px;
+    padding: 0 4px;
+  }
+
+  .rb-clip-count {
+    margin-left: 2px;
+    color: var(--oc-orange);
+    font-size: var(--oc-fs-micro);
+  }
+
+  .rb-clippop {
+    box-sizing: border-box;
+    width: min(380px, 90vw);
+    max-height: min(360px, 70vh);
+    overflow-y: auto;
+  }
+
+  .rb-clippop-head {
+    margin: 0;
+    padding: 6px 8px;
+    box-shadow: inset 0 -1px 0 0 var(--oc-line-rule);
+  }
+
+  .rb-clippop > .rb-note,
+  .rb-clippop > .rb-note-text {
+    margin: 0;
+    padding: 8px;
+  }
+
+  .rb-cliplist {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .rb-clip {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 4px 4px 8px;
+    box-shadow: inset 0 -1px 0 0 var(--oc-line-faint);
+  }
+
+  .rb-clip:last-child { box-shadow: none; }
+
+  .rb-clip-text {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .rb-clip-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--oc-text-primary);
+    font-size: var(--oc-fs-label);
+  }
+
+  .rb-clip-meta {
+    color: var(--oc-text-muted);
+    font-size: var(--oc-fs-micro);
+  }
+
+  .rb-clip-meta--error { color: var(--oc-coral); }
+
+  @media (max-width: 700px) {
+    .rb-notes {
+      top: auto;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      width: auto;
+      height: min(60vh, 100%);
+      min-width: 0;
+      max-width: none;
+      resize: none;
+      direction: ltr;
+    }
+  }
+
+  .rb-send { flex: none; }
+
+  .rb-fold-key {
+    flex: none;
+    min-width: 0;
+    min-height: 28px;
+    padding: 0 12px;
+  }
+
+  .rb-fold-count {
+    margin-left: 6px;
+    color: var(--oc-orange);
+  }
+
+  .rb-theme {
+    flex: none;
+    box-sizing: border-box;
+    width: auto;
+    min-width: 150px;
+    max-width: 240px;
+    min-height: 28px;
+    padding: 0 6px;
+    text-overflow: ellipsis;
+    font-size: var(--oc-fs-micro);
+  }
+
+  .rb-notices {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 16px;
+  }
+
+  .rb-notices p { margin: 0; }
+
+  @media (max-width: 1023px) and (pointer: fine) {
+    .rb-controls .rb-send { min-height: 0; }
+    .rb-controls [data-btn][data-size='icon'] {
+      width: var(--oc-ibtn-size, 20px);
+      height: var(--oc-ibtn-size, 20px);
+      min-height: 0;
+    }
+  }
+
+  @media (pointer: coarse) {
+    .rb-fold-key,
+    .rb-theme { min-height: 40px; }
+
+    .rb-clip .rb-icon {
+      width: 40px;
+      height: 40px;
+    }
+
+    /* width: auto */
+    .rb-icon.rb-clip-key { min-width: 40px; }
+  }
+}

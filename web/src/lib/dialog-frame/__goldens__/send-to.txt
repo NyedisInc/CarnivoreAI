@@ -1,0 +1,46 @@
+<div aria-label="send api to hosta" class="popup-focus stm" data-send-to-modal="" role="dialog" tabindex="-1">
+  <div class="stm-titlerow">
+    <span class="stm-label">
+      "send"
+    <span class="stm-title" data-send="title">
+      "send api to hosta"
+  <div class="stm-body">
+    <div aria-label="send" class="stm-options" role="radiogroup">
+      <label aria-disabled="false" class="stm-option" data-blocked="false" data-choice="move">
+        <input name="send-choice" type="radio" value="move">
+        <span class="stm-option-text">
+          <span class="stm-option-title">
+            "move it"
+          <span class="stm-option-help">
+            "one way: this agent stops here and continues on hosta with its conversation."
+      <label aria-disabled="false" class="stm-option" data-blocked="false" data-choice="copy">
+        <input name="send-choice" type="radio" value="copy">
+        <span class="stm-option-text">
+          <span class="stm-option-title">
+            "copy it"
+          <span class="stm-option-help">
+            "a copy continues the conversation on hosta; this one keeps running here. the code keeps syncing both ways."
+      <label aria-disabled="false" class="stm-option" data-blocked="false" data-choice="fresh">
+        <input name="send-choice" type="radio" value="fresh">
+        <span class="stm-option-text">
+          <span class="stm-option-title">
+            "start a new agent there"
+          <span class="stm-option-help">
+            "a fresh agent in this project on hosta, with no conversation."
+      <label aria-disabled="false" class="stm-option" data-blocked="false" data-choice="project">
+        <input name="send-choice" type="radio" value="project">
+        <span class="stm-option-text">
+          <span class="stm-option-title">
+            "move the whole project"
+          <span class="stm-option-help">
+            "all its agents, board and notes go to hosta. opens the project move."
+    <div data-send="stop-running">
+      <button aria-checked="false" class="oc-check" role="checkbox" type="button">
+        <span aria-hidden="true" class="oc-check__box">
+        <span class="oc-check__label">
+          "stop running agents now and continue them on hosta"
+  <footer class="stm-foot">
+    <button class="modal-btn modal-btn-secondary" data-send="cancel" type="button">
+      "cancel"
+    <button class="modal-btn modal-btn-confirm" data-send="go" type="button">
+      "send"

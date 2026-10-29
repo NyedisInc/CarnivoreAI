@@ -1,0 +1,108 @@
+{
+  "kind": "cplug",
+  "id": "save",
+  "name": "conversation backups",
+  "version": "1.1.0",
+  "api_version": 1,
+  "min_app_version": "1.12.20",
+  "author": "Carnivore contributors",
+  "license": "MIT",
+  "tier": "builtin",
+  "scope": [
+    "global"
+  ],
+  "icon": "archive",
+  "default_enabled": false,
+  "requires": [
+    {
+      "id": "pipeline",
+      "kind": "core"
+    }
+  ],
+  "permissions": [
+    {
+      "name": "sessions.read",
+      "reason": "after a restore, find the session the restored conversation belongs to"
+    },
+    {
+      "name": "sessions.create",
+      "reason": "after a restore, start that session again on the restored conversation (a restore without it only puts the transcript back)"
+    }
+  ],
+  "owns": {
+    "routes": [
+      "/capture-scope",
+      "/conversations/{conversation_id}/points",
+      "/conversations/{conversation_id}/points/{point_id}",
+      "/conversations/{conversation_id}/points/{point_id}/pin",
+      "/conversations/{conversation_id}/points/{point_id}/restore",
+      "/folders",
+      "/folders/{unit}/points",
+      "/folders/{unit}/restore",
+      "/health",
+      "/imports",
+      "/imports/apply",
+      "/imports/preview",
+      "/imports/review",
+      "/imports/{run_id}",
+      "/imports/{run_id}/undo",
+      "/imports/{run_id}/verify",
+      "/location",
+      "/sessions/{session_uuid}/points",
+      "/sessions/{session_uuid}/points/{point_id}",
+      "/sessions/{session_uuid}/points/{point_id}/pin",
+      "/sessions/{session_uuid}/points/{point_id}/restore",
+      "/settings",
+      "/summary"
+    ],
+    "strings": [
+      "cplug.save."
+    ],
+    "style_guide": [
+      "web/src/cplugs/save/RestorePoints.svelte",
+      "web/src/cplugs/save/SaveSettings.svelte",
+      "web/src/cplugs/save/SessionTab.svelte",
+      "web/src/cplugs/save/StoragePanel.svelte",
+      "web/src/cplugs/save/ScopePanel.svelte",
+      "web/src/cplugs/save/LocationPanel.svelte",
+      "web/src/cplugs/save/FolderUnits.svelte"
+    ],
+    "tests": [
+      "tests/python/cplugs/save/",
+      "web/src/cplugs/save/"
+    ],
+    "contributions": [
+      "settings.panel",
+      "projects.session_tab"
+    ]
+  },
+  "data": [
+    {
+      "id": "vault",
+      "kind": "folder",
+      "root_setting": "vaultLocation",
+      "default": "vault",
+      "scope_by": "session_uuid",
+      "role": "backup_destination",
+      "provides": "backup_points",
+      "policy": {
+        "own": "excluded",
+        "share": "excluded",
+        "purge": "kept",
+        "reason": "the backup vault: checked copies of every conversation, and of every plugin folder marked for the vault."
+      }
+    },
+    {
+      "id": "legacy_points",
+      "kind": "folder",
+      "state_path": "time-machine",
+      "scope_by": "session_uuid",
+      "policy": {
+        "own": "excluded",
+        "share": "excluded",
+        "purge": "kept",
+        "reason": "the old restore point tree: read and migrated into the vault, never deleted by the plugin. It may hold the only copy of a point (migration unfinished, or the vault moved), so a purge always keeps it"
+      }
+    }
+  ]
+}

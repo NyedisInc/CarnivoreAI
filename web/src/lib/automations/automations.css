@@ -1,0 +1,78 @@
+@layer components {
+
+    .pledger .auto-line {
+        margin: 0;
+        font-size: var(--oc-fs-label);
+        color: var(--oc-text-muted);
+        overflow-wrap: anywhere;
+    }
+
+    .pledger .auto-line--error {
+        color: var(--oc-coral);
+    }
+
+
+    .pledger .auto-scroll {
+        overflow-x: auto;
+        max-width: 100%;
+    }
+
+    .pledger .auto-form {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .pledger .auto-form__row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: var(--oc-space-3);
+    }
+
+    .pledger .auto-form__note {
+        margin: 0;
+        font-size: var(--oc-fs-label);
+        color: var(--oc-text-muted);
+    }
+
+    .pledger .auto-form__fixed {
+        font-size: var(--oc-fs-status);
+        color: var(--oc-text-secondary);
+    }
+
+
+    .pledger .auto-form__group {
+        display: flex;
+        flex-direction: column;
+        gap: var(--oc-space-3);
+        min-width: 0;
+        padding-top: var(--oc-space-2);
+        box-shadow: inset 0 1px 0 var(--oc-line-faint);
+    }
+
+    .pledger .auto-form__group textarea,
+    .pledger .auto-form__body textarea {
+        resize: vertical;
+        font-family: var(--font-mono);
+    }
+
+    .pledger .auto-steps {
+        display: flex;
+        flex-direction: column;
+        gap: var(--oc-space-3);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .pledger .auto-step {
+        min-width: 0;
+    }
+
+    .pledger .auto-log {
+        display: flex;
+        flex-direction: column;
+        gap: var(--oc-space-3);
+        min-width: 0;
+    }
+}

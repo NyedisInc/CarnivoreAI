@@ -1,0 +1,44 @@
+{
+  "id": "save-pipeline-widget",
+  "name": "Save pipeline widget",
+  "summary": "",
+  "description": "Retired. The widget showed queued, running, done and dead counts for the old save pipeline. A saved dashboard that still holds the widget drops it silently on read, with no migration write. The status line (caught up, behind, stalled, rebuilding) lives in settings, pipeline, next to a rebuild button for each plugin.",
+  "area": "home",
+  "status": "removed",
+  "since": "2026-09-30",
+  "updated": "2026-10-12",
+  "surfaces": [
+    "home screen",
+    "drawer widget area",
+    "widgets page"
+  ],
+  "api_routes": [
+    "GET /api/v1/pipeline/status"
+  ],
+  "docs": [
+    "docs/widget-system.md"
+  ],
+  "issues": [
+    1160,
+    1682
+  ],
+  "keywords": [
+    "save pipeline",
+    "dead letter",
+    "retry dead",
+    "widget"
+  ],
+  "where": [
+    "Home screen once added: a cell titled save pipeline with a database mark.",
+    "The drawer's widget area at the bottom of the agents tab, once added."
+  ],
+  "how_to": [
+    "Open the edit layout control at the bottom of the drawer.",
+    "Search widgets for save pipeline; press the card to put it on the home page, or press the one under drawer area to put it in the drawer.",
+    "Read the counts; press retry dead, shown only when a dead job exists, to requeue every dead job."
+  ],
+  "examples": [
+    "See at once whether any job is dead and requeue it with retry dead."
+  ],
+  "media_exempt": "A widget whose screenshots are captured before the next version bump."
+}

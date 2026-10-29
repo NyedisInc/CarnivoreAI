@@ -1,0 +1,46 @@
+{
+  "id": "pack-session-move",
+  "name": "Pack session move",
+  "summary": "Move one running session to another paired computer without interrupting its turn.",
+  "description": "Move waits for the session's current turn to end, never interrupting it, then sleeps the session, carries its conversation to the other computer and wakes it there resumed in the same conversation. The other computer checks first, before anything moves, that it allows the session's project and has a login that can run the session's account, and refuses with the reason named. The old row is archived once the new one is awake and a forward record names the new computer; the moved session appears through the paired computer's listing.",
+  "area": "sessions",
+  "status": "beta",
+  "since": "2026-10-10",
+  "updated": "2026-10-10",
+  "surfaces": [
+    "session row menu",
+    "owner API routes"
+  ],
+  "api_routes": [
+    "POST /api/v1/sessions/{session_uuid}/move",
+    "POST /api/v1/federation/pack/session/receive",
+    "GET /api/v1/pack/ops/{op_id}",
+    "GET /api/v1/pack/ops",
+    "POST /api/v1/pack/ops/{op_id}/cancel"
+  ],
+  "docs": [
+    "docs/pack.md",
+    "docs/mcp-server.md"
+  ],
+  "issues": [
+    165
+  ],
+  "keywords": [
+    "pack",
+    "session",
+    "move",
+    "sleep",
+    "wake",
+    "resume",
+    "transcript"
+  ],
+  "where": [],
+  "how_to": [
+    "Open a session row menu, choose move to another computer, pick the paired computer and confirm; the move starts when the turn ends.",
+    "While a transfer runs a status card sits in the bottom right corner; cancel stops it before the other computer is asked to start the agent, and a finished card stays until dismissed."
+  ],
+  "examples": [
+    "Move the build session to hosta while it finishes its current turn."
+  ],
+  "media_exempt": "A confirm dialog and a status line; the dialog is the shared confirm modal."
+}

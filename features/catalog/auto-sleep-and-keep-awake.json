@@ -1,0 +1,45 @@
+{
+  "api_routes": [
+    "src/api/auto_sleep_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/session-project-operations.md",
+    "docs/session-status.md"
+  ],
+  "examples": [
+    "Leave auto-sleep on so forgotten sessions stop using memory overnight.",
+    "Mark the session running a long build or a watcher as keep awake, so auto-sleep never interrupts it."
+  ],
+  "how_to": [
+    "In settings, sessions section, turn on auto-sleep and pick how long a session may sit idle before it sleeps.",
+    "To exempt one session, open it and click the coffee cup in its terminal bar. The cup lights up with steam, and the same cup appears on its drawer row, always visible in every density.",
+    "Click the cup again to let it sleep on schedule again.",
+    "A session with a live timer, a running subagent or an open background shell is never slept, even with the cup off. With the cup off, hover the cup to see why (for example, 2 live timers and when the next fires)."
+  ],
+  "id": "auto-sleep-and-keep-awake",
+  "issues": [
+    559,
+    899
+  ],
+  "keywords": [
+    "auto-sleep",
+    "keep awake",
+    "idle"
+  ],
+  "media": [],
+  "name": "Auto-sleep and keep-awake",
+  "since": "2026-09-25",
+  "status": "stable",
+  "summary": "automatically sleep idle sessions after a timeout, or mark one to stay awake instead.",
+  "surfaces": [
+    "web/src/lib/settings-page/SettingControl.svelte",
+    "web/src/lib/auto-sleep/KeepAwakeIcon.svelte"
+  ],
+  "updated": "2026-09-27",
+  "where": [
+    "Keep awake: the coffee cup at the right end of a claude or codex session's terminal bar.",
+    "Auto sleep: settings (gear at the bottom of the drawer), sessions section, the auto-sleep group."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

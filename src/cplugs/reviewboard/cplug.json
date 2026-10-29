@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "id": "reviewboard",
+  "name_key": "cplug.reviewboard.name",
+  "description_key": "cplug.reviewboard.description",
+  "version": "0.6.0",
+  "icon": "plug",
+  "author": "Carnivore contributors",
+  "min_app_version": "1.16.1",
+  "tier": "builtin",
+  "default_enabled": false,
+  "requires": [
+    "huddle"
+  ],
+  "tool_family": "task_manager",
+  "permissions": {
+    "app": [
+      "agent_writes"
+    ]
+  },
+  "surfaces": {
+    "routes": true,
+    "mcp_tools": [
+      "task_manager_boards_list",
+      "task_manager_board_get",
+      "task_manager_board_create",
+      "task_manager_board_revision_add",
+      "task_manager_board_focus",
+      "task_manager_scratch_post",
+      "task_manager_scratch_clear",
+      "task_manager_board_attachment_add",
+      "task_manager_board_live_set",
+      "task_manager_board_milestone_add",
+      "task_manager_board_live_stop"
+    ],
+    "topics": [
+      "boards",
+      "drafts"
+    ],
+    "tabs": [
+      "reviewboard"
+    ],
+    "page_section": "review",
+    "page_section_label_key": "cplug.reviewboard.page_section",
+    "page_section_icon": "eye"
+  },
+  "owns": {
+    "routes": [
+      "/boards",
+      "/boards/live",
+      "/boards/{slug}",
+      "/boards/{slug}/attachments",
+      "/boards/{slug}/draft",
+      "/boards/{slug}/live",
+      "/boards/{slug}/live/end",
+      "/boards/{slug}/live/milestone",
+      "/boards/{slug}/live/send",
+      "/boards/{slug}/open",
+      "/boards/{slug}/payload-draft",
+      "/boards/{slug}/revisions",
+      "/boards/{slug}/revisions/{revision}/ticket",
+      "/boards/{slug}/rounds",
+      "/boards/{slug}/rounds/{round_id}/resend",
+      "/boards/{slug}/saves",
+      "/boards/{slug}/task",
+      "/posted/open",
+      "/rescan",
+      "/root",
+      "/scratch",
+      "/view/{ticket_text}"
+    ],
+    "strings": [
+      "cplug.reviewboard."
+    ],
+    "styles": [
+      "board.css",
+      "header.css",
+      "tray.css"
+    ],
+    "tests": [
+      "tests/python/cplugs/reviewboard/",
+      "web/src/cplugs/reviewboard/"
+    ],
+    "style_guide": [
+      "web/src/cplugs/reviewboard/AttachmentsKey.svelte",
+      "web/src/cplugs/reviewboard/BoardFrame.svelte",
+      "web/src/cplugs/reviewboard/BoardPicker.svelte",
+      "web/src/cplugs/reviewboard/BoardScreen.svelte",
+      "web/src/cplugs/reviewboard/ClosedReviews.svelte",
+      "web/src/cplugs/reviewboard/HistoryBar.svelte",
+      "web/src/cplugs/reviewboard/InlineLayer.svelte",
+      "web/src/cplugs/reviewboard/LiveBar.svelte",
+      "web/src/cplugs/reviewboard/NotesPanel.svelte",
+      "web/src/cplugs/reviewboard/PayloadControls.svelte",
+      "web/src/cplugs/reviewboard/PayloadNotices.svelte",
+      "web/src/cplugs/reviewboard/PromptRow.svelte",
+      "web/src/cplugs/reviewboard/RelinkPicker.svelte",
+      "web/src/cplugs/reviewboard/RoundView.svelte",
+      "web/src/cplugs/reviewboard/ThemePicker.svelte",
+      "web/src/cplugs/reviewboard/Tray.svelte",
+      "web/src/cplugs/reviewboard/board.css",
+      "web/src/cplugs/reviewboard/header.css",
+      "web/src/cplugs/reviewboard/tray.css"
+    ],
+    "contributions": [
+      "projects.panel"
+    ]
+  },
+  "settings_schema": {
+    "version": 1,
+    "fields": {
+      "boardsRoot": {
+        "kind": "string",
+        "labelKey": "cplug.reviewboard.settings.boards_root",
+        "hintKey": "cplug.reviewboard.settings.boards_root_help",
+        "maxLength": 1000,
+        "default": ""
+      }
+    }
+  },
+  "css_prefix": "rb"
+}

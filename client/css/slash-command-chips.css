@@ -1,0 +1,118 @@
+
+.common-commands-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.common-commands-note {
+    color: var(--oc-text-muted);
+    font-size: 0.7rem;
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.command-chip {
+    position: relative;
+    display: flex;
+    width: 31%;
+    /* width: auto */
+    min-width: 0;
+}
+
+.command-button {
+    /* align-items: center */
+    flex-direction: column;
+    gap: 2px;
+    line-height: 1.25;
+    /* padding */
+    min-height: 54px;
+    height: auto;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    width: 100%;
+    min-width: 0;
+    padding-right: 40px;
+    border-radius: var(--oc-radius-sm);
+}
+
+.command-button-name {
+    color: var(--oc-text-primary);
+    font-weight: 600;
+}
+
+.command-button-desc {
+    color: var(--oc-text-muted);
+    font-size: 0.68rem;
+    font-family: var(--font-sans, inherit);
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.common-commands-empty {
+    color: var(--oc-text-muted);
+    padding: 12px;
+    text-align: center;
+}
+
+/*  background: ...; ; border: border-radius: var(--radius-full); padding: 0; */
+.command-star {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    color: var(--oc-text-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.command-star--on {
+    color: var(--oc-orange);
+}
+
+.command-star:hover,
+.command-star:focus-visible {
+    color: var(--oc-orange);
+    background: var(--oc-orange-tint);
+    outline: none;
+}
+
+.command-star:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* position: relative */
+.command-item {
+    position: relative;
+    padding-right: 52px;
+}
+
+/* padding */
+@media (max-width: 600px) {
+    .command-chip {
+        width: 47%;
+    }
+
+    .command-button {
+        padding-left: 6px;
+        padding-right: 40px;
+    }
+
+    .command-button-desc {
+        font-size: 0.6rem;
+        letter-spacing: -0.01em;
+    }
+}

@@ -1,0 +1,63 @@
+<h2 class="sg-h2">the home screen lists</h2>
+<p class="sg-lead">Home is the operations center dashboard: a grid of cells (<a href="#cells">cells</a>) whose lists
+are running sessions, closed sessions, projects, skills, plugins, themes, the ledger and the activity log. Older launchpad
+list components still mount through <code>web/src/main.ts</code> for the legacy containers that remain. Both follow the same
+row rules.</p>
+<p>Token, estimated cost, activity, model, project, agent-kind and quota cards appear at the top of new Home layouts;
+the additive upgrade preserves existing placement and prior hide or remove choices. Token and cost cards show
+their measured breakdown and price coverage, activity shows observed starts, completions and duration, and model,
+project and agent-kind rankings show named bars directly. Quota shows one available window at a time with account
+labels and a sampled history. Cards use short rows of one or two. Each shows its
+selected period and a server-calculated value above its compact trend or ranking. The
+Details dialog contains <code>Controls.svelte</code> and its <code>.analytics-options</code> for shared time, filters,
+collection and coverage. A pinned chart range stays independent of those controls; collection off leaves retained
+history readable.</p>
+
+<dl class="sg-facts">
+    <dt>running sessions</dt>
+    <dd>The cell <code>opscenter/cells/running-sessions/Cell.svelte</code> is a <code>DataTable</code> with a sort control:
+        light, name, project, status word, age. The launchpad's <code>RunningSessions.svelte</code>,
+        <code>RunningSessionRow.svelte</code> and <code>RunningSessionName.svelte</code> draw the same facts as rows, with
+        inline rename (<code>.running-session-rename-input</code>) and kill. A row with attention pending is grouped at the top
+        (<code>AttentionGroup.svelte</code>, <code>.running-sessions-attention</code>).</dd>
+    <dt>recent and closed</dt>
+    <dd><code>opscenter/cells/closed-sessions/Cell.svelte</code> and the launchpad's <code>RecentSessions.svelte</code> and
+        <code>EndedSessionRow.svelte</code>: what ended, when, and a restart. Recently deleted rows are the undo list in
+        <code>client/css/recent-deleted.css</code>. A row being opened says so: <code>.oc-open-status</code> in the cell
+        (cyan opening, green opened, coral with the refusal) and <code>.recent-session-open-error</code> on the launchpad row,
+        both read from <code>recent-open-status.svelte.ts</code>, with a toast for each step.</dd>
+    <dt>projects</dt>
+    <dd><code>opscenter/cells/projects/Cell.svelte</code> and the launchpad tree (<code>ProjectTree.svelte</code>,
+        <code>ProjectNode.svelte</code>, <code>TreeSessionRows.svelte</code>, <code>ProjectSessionRow.svelte</code>,
+        <code>NoProjectGroup.svelte</code>): a chevron, the project name, a count, then the project's sessions indented under a
+        gutter. A project's directory is permanent; archived projects hide behind a toggle
+        (<code>.launchpad-archived-toggle</code>).</dd>
+    <dt>new</dt>
+    <dd>The new item button (<code>.new-fab</code>) opens new session, new project and clone. Starting a project walks name,
+        folder and harness dialogs (<code>ProjectNameModal</code>, <code>ProjectFolderModal</code>, <code>ChoiceModal</code>,
+        <code>CloneModal</code>), every step backed by an API route (<code>docs/DECISIONS.md</code>, API-first).</dd>
+    <dt>attach</dt>
+    <dd>A session this app did not create is offered through the adopt disclosure (<code>.adopt-disclosure</code>) and the
+        attribution prompt (<a href="#dialogs">dialogs</a>). An adopted id is <code>adopted:&lt;tmux-name&gt;</code>; code that
+        parses an id handles both shapes.</dd>
+    <dt>empty</dt>
+    <dd><code>.launchpad-empty</code>: one sentence and the action that fills the list. An error card
+        (<code>.launchpad-error-card</code>) says what failed and dismisses.</dd>
+    <dt>catalog keys</dt>
+    <dd><code>opscenter.session.*</code>, <code>opscenter.closed.*</code>, <code>opscenter.projects.*</code>,
+        <code>project.name.*</code>, <code>project.folder.*</code>, <code>project.clone.*</code>, and the per-screen assembly in
+        <code>client/js/labels/running-session.js</code>, <code>recent-session.js</code>, <code>project-tree.js</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="home-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>Wrapper against <code>info.session</code>.</strong> <code>info.id</code> and <code>info.session.unread</code> are
+        both undefined, silently; <code>activity_status</code>, <code>unread</code> and the family live on the wrapper,
+        <code>id</code> and <code>working_dir</code> on <code>info.session</code> (gotcha 1, the most repeated bug here).</li>
+    <li><strong>A deep link resolved against projects only.</strong> Resolve projects first, then live and adopted sessions
+        (gotcha 3).</li>
+    <li><strong>A default for an overwrite-only field.</strong> Never <code>||</code>-default the seven overwrite-only session
+        fields in the data layer (<code>docs/web-build-history.md</code>).</li>
+    <li><strong>Grouping read from the wrong level.</strong> Asleep rows landing under "unnamed project" came from a project
+        label read off the wrong level.</li>
+</ul>

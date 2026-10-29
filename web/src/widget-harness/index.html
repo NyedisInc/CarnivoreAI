@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" data-widget-harness="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>widget harness</title>
+    <link rel="stylesheet" href="/static/css/layers.css" />
+    <link rel="stylesheet" href="/static/css/styles.css" />
+    <link rel="stylesheet" href="/static/css/scrollbars.css" />
+    <link rel="stylesheet" href="/static/css/text-prompt-modal.css" />
+    <link rel="stylesheet" href="/static/css/modal-glow.css" />
+    <link rel="stylesheet" href="/static/css/config-editor.css" />
+    <link rel="stylesheet" href="/static/css/config-editor-modal.css" />
+    <!-- running sessions -->
+    <link rel="stylesheet" href="/static/css/subagent-count.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-groups.css" />
+    <link rel="stylesheet" href="/static/css/popup-focus.css" />
+</head>
+<body>
+    <div id="widget-harness"></div>
+    <div class="modal-overlay config-editor-picker-overlay" id="config-editor-overlay" hidden data-modal="config-picker">
+        <div class="config-editor-picker-content" role="dialog" aria-modal="true" aria-label="files">
+            <div class="config-editor-header" id="config-editor-header"></div>
+            <div class="modal-body config-editor-body">
+                <div id="config-editor-tree" class="config-editor-tree"></div>
+            </div>
+        </div>
+    </div>
+    <script src="/static/js/visibility-observer.js"></script>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/module-loader.js"></script>
+    <script src="/static/js/module-families.js"></script>
+    <script src="/static/js/markdown-lite.js"></script>
+    <script src="/static/js/modal-stack.js"></script>
+    <script src="/static/js/status-led.js"></script>
+    <script src="/static/js/agent-family-icon.js"></script>
+    <script src="/static/js/ui-flags.js"></script>
+    <script src="/static/js/session-status-ui.js"></script>
+    <script src="/static/js/config-editor-loader.js"></script>
+    <script type="module" src="./main.ts"></script>
+</body>
+</html>

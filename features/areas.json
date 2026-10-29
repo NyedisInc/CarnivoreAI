@@ -1,0 +1,62 @@
+[
+  {
+    "blurb": "Live tmux-backed terminal sessions: creating, restarting, restoring, and watching their status.",
+    "id": "sessions",
+    "name": "Sessions"
+  },
+  {
+    "blurb": "Repository tooling that keeps the codebase and its own release history in shape.",
+    "id": "dev-tooling",
+    "name": "Developer tooling"
+  },
+  {
+    "blurb": "The live terminal itself: panes, tabs, search, layouts, and the tools you attach to a session.",
+    "id": "terminal",
+    "name": "Terminal"
+  },
+  {
+    "blurb": "The landing screen: your running and recent sessions, your projects, and how you get into any of them.",
+    "id": "home",
+    "name": "Home screen"
+  },
+  {
+    "blurb": "The status lights and toasts that tell you what a session is doing without opening it.",
+    "id": "status-notifications",
+    "name": "Status and notifications"
+  },
+  {
+    "blurb": "The sliding panels beside the terminal: the sessions list, the file browser, and extra tool tabs.",
+    "id": "drawers",
+    "name": "Side panels"
+  },
+  {
+    "blurb": "Color themes, how they're chosen per session or globally, and building your own.",
+    "id": "themes",
+    "name": "Appearance and themes"
+  },
+  {
+    "blurb": "The permanent, searchable record of every past conversation.",
+    "id": "archive",
+    "name": "Transcript archive"
+  },
+  {
+    "blurb": "Connected AI provider accounts: usage tracking, model choice, and switching between them.",
+    "id": "providers",
+    "name": "Accounts and providers"
+  },
+  {
+    "blurb": "Browsing, installing and rating skills and plugins for your sessions.",
+    "id": "skills-catalog",
+    "name": "Skills catalog"
+  },
+  {
+    "blurb": "Workspace, wrapper, terminal and notification preferences, and moving them to a new device.",
+    "id": "settings",
+    "name": "Settings"
+  },
+  {
+    "blurb": "The macOS menu bar app that runs the server and hands you the link to connect from a phone.",
+    "id": "desktop-app",
+    "name": "Desktop app"
+  }
+]

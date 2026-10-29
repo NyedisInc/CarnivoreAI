@@ -1,0 +1,58 @@
+{
+  "id": "launch-picker",
+  "name": "Launch picker",
+  "summary": "One picker for choosing how a session launches: it shows each launch profile with its harness, account, model and permissions, marks the default, and a project can carry its own default.",
+  "description": "Every place that starts a session from a choice (new session, the launchpad, a project, cloning, restart, wake, the reopen offer and a blueprint member) now opens the same picker. Each row shows the launch profile's label, harness mark, account, model and permissions badge, and the default is marked. A project can set a default launch profile in its settings and the picker preselects it. A session row reads launched with: label, account, model, taken from the launch record. The restart picker keeps its arm box and footer and uses the same dropdown and choose account link, starting on the profile the agent was launched with; waking an asleep session that has no recorded launch asks through that picker. The profile is chosen from a custom dropdown with 24px icons instead of a radio list. For a claude profile that follows the active account, a choose account link under it expands an account dropdown, preselected to the active account, and a box to always launch this agent under that account.",
+  "area": "settings",
+  "status": "beta",
+  "since": "2026-10-03",
+  "updated": "2026-10-12",
+  "surfaces": [
+    "launch picker",
+    "web/src/lib/launch-picker/LaunchPickerModal.svelte",
+    "web/src/lib/launch-picker/LaunchChoice.svelte",
+    "web/src/lib/dropdown/ChoiceDropdown.svelte",
+    "web/src/lib/launch-picker/LaunchChoiceHost.svelte"
+  ],
+  "api_routes": [
+    "GET /api/v1/launch-profiles",
+    "GET /api/v1/launch/accounts",
+    "GET /api/v1/sessions/{session_uuid}/restart/accounts",
+    "POST /api/v1/sessions",
+    "PATCH /api/v1/projects/{name}",
+    "GET /api/v1/projects",
+    "GET /api/v1/sessions/list"
+  ],
+  "docs": [
+    "docs/launch-profiles.md"
+  ],
+  "issues": [
+    1257,
+    1641
+  ],
+  "keywords": [
+    "launch profile",
+    "picker",
+    "default",
+    "project",
+    "launched with"
+  ],
+  "where": [
+    "New session, project plus, clone, reopen offer and blueprint members.",
+    "Project settings, default launch profile.",
+    "Running session rows in the launchpad.",
+    "New session launch: the choose account link under the launch profile dropdown."
+  ],
+  "how_to": [
+    "Start a new session and pick a launch profile; the default is marked and preselected.",
+    "Open a project's settings and set its default launch profile; the picker then preselects it for that project.",
+    "Read launched with on a session row to see which launch profile started it.",
+    "Click choose account, pick another account, and tick always launch this agent under this account to make it that agent's default."
+  ],
+  "examples": [
+    "Pick the codex yolo launch profile for one session while the project default stays claude.",
+    "Set a project default to a claude via openrouter launch profile.",
+    "Launch one agent on the play account once, without changing which account is active."
+  ],
+  "media_exempt": "Screenshots are captured before the next version bump."
+}

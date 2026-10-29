@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://carnivore.ai/schemas/extensions/loadout.schema.json",
+  "title": "Loadout, layer 1",
+  "description": "A loadout: loadout.json lists other items by id, exact version and digest. The signature covers the list, each member's own signature covers its bytes.",
+  "allOf": [
+    {
+      "$ref": "item.schema.json"
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "loadout"
+        },
+        "scope": {
+          "const": [
+            "global"
+          ]
+        },
+        "members": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "version",
+              "digest"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]{0,37}/[a-z0-9][a-z0-9._-]{0,62}$"
+              },
+              "version": {
+                "$ref": "item.schema.json#/$defs/version"
+              },
+              "digest": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "kind": {
+                "enum": [
+                  "cplug",
+                  "widget",
+                  "theme",
+                  "skill",
+                  "claude-code-plugin",
+                  "mod"
+                ],
+                "description": "The member's contract kind, when stated. Which kinds a loadout may carry is policy (the policy file); a loadout never carries a loadout (L1-5)."
+              }
+            }
+          }
+        }
+      },
+      "required": [
+        "members"
+      ]
+    }
+  ],
+  "unevaluatedProperties": false
+}

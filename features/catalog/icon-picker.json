@@ -1,0 +1,46 @@
+{
+  "area": "settings",
+  "description": "A searchable grid of the app's own icons, with a no icon choice, driven fully from the keyboard. The choice is stored as a permanent icon id in the same document as the thing it names, so it exports, shares and follows you to another computer. There is no color choice: an icon always wears its parent's color, under every theme. Group headings in the agents drawer use it now (the group's menu, icon); wrapper groups, widgets and tabs adopt it as they ship.",
+  "docs": [
+    "docs/icon-picker.md"
+  ],
+  "examples": [
+    "Mark a research group with a flask so it stands out when collapsed.",
+    "Give a launch profile group a bolt icon so its sessions are easy to tell apart."
+  ],
+  "how_to": [
+    "Type in the filter field to narrow the icons by name or meaning.",
+    "Click an icon, or press the down arrow to enter the grid, move with the arrow keys and press enter.",
+    "Choose no icon, the first cell, to remove one."
+  ],
+  "id": "icon-picker",
+  "issues": [
+    764,
+    769,
+    767,
+    727
+  ],
+  "keywords": [
+    "icon",
+    "picker",
+    "group icon",
+    "glyph"
+  ],
+  "media": [],
+  "name": "Icon picker",
+  "since": "2026-09-27",
+  "status": "beta",
+  "summary": "One picker for choosing an icon for something you named; the icon takes the color of whatever it sits in.",
+  "surfaces": [
+    "web/src/lib/icon-picker/IconPicker.svelte",
+    "web/src/lib/icon-picker/IconMark.svelte",
+    "client/js/icons/icon-registry.js",
+    "client/js/session-sidebar-group-icon.js"
+  ],
+  "updated": "2026-09-27",
+  "where": [
+    "The style guide's icons section shows it live (/static/style-guide.html#icons-picker).",
+    "In the app it opens from the surfaces that adopt it: group headings, launch profiles, widgets and tabs."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

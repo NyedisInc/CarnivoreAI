@@ -1,0 +1,39 @@
+{
+  "api_routes": [],
+  "area": "terminal",
+  "docs": [
+    "docs/reconnect.md",
+    "docs/streaming-and-events-history.md"
+  ],
+  "examples": [
+    "Close the laptop lid, open it an hour later, and the session is there as you left it.",
+    "Click a running session in the sidebar: the prompt is live at once, and the saved history paints in underneath before the first new line of output.",
+    "Run a command that prints a huge amount of output: the pane keeps moving, no reconnect notice appears, and the screen is correct afterwards."
+  ],
+  "how_to": [
+    "Nothing to do: the terminal reconnects and repaints itself. The connection mark in the top bar shows the state.",
+    "Scroll to the very top of a session: older lines load from tmux and appear above, 2500 at a time, up to 50000."
+  ],
+  "id": "terminal-reconnect",
+  "issues": [],
+  "keywords": [
+    "reconnect",
+    "sleep",
+    "wake"
+  ],
+  "media_exempt": "background behavior with no screen of its own; the connection mark it drives is shown on the home screen",
+  "name": "Automatic reconnect",
+  "since": "2026-09-10",
+  "status": "stable",
+  "summary": "reconnect and repaint a session's terminal automatically after your device sleeps or the network drops.",
+  "surfaces": [
+    "client/js/terminal-readiness.js",
+    "client/js/terminal-history-gate.js",
+    "client/js/terminal-viewer-resync.js",
+    "client/js/terminal-history-scroll.js"
+  ],
+  "updated": "2026-10-23",
+  "where": [
+    "Automatic, whenever your device wakes or the network drops."
+  ]
+}

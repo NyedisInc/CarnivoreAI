@@ -1,0 +1,113 @@
+/*
+ * ONE MORE SURFACE IS A CENTERED CARD OVER A BACKDROP BUT DOES NOT USE
+ * `.modal-content` (it predates the shared chassis or needs its own
+ * sizing): the help panel's media lightbox
+ * (`.sidebar-help__lightbox-body`, media-lightbox.css). Only its travelling
+ * ring (the `::after` below) comes from this file; its position and its 1px
+ * inset hairline box-shadow are its own (media-lightbox.css, in
+ * `@layer legacy`, #1961), and the outer glow is not drawn on it.
+
+ * THE SCALE, AS A MULTIPLIER ON THE MENU'S OWN VALUES (`--pf-glow` and its
+ * two flat drop shadows in popup-focus.css), not a new effect: roughly
+ * 1.3x the blur/offset and about ten more points of color-mix intensity.
+ * If the menu's glow is retuned, apply the same ratio here by hand - there
+ * is no live CSS binding between the two files, only this documented
+ * relationship, because `--pf-glow` is scoped to `.popup-focus` rather
+ * than declared on `:root`.
+
+ * THE SHIMMER IS THE SAME RECIPE, NOT THE SAME DECLARATION.
+ * `tests/test_popup_focus_style.node.mjs` asserts that `--pf-angle` and
+ * `popup-focus-orbit` are declared in exactly one file, so this file
+ * registers its own `@property --mg-angle` and `@keyframes
+ * modal-glow-orbit` instead of reusing popup-focus.css's - a byte-for-byte
+ * duplicate of the property syntax and the keyframe's `0deg` to `360deg`
+ * sweep, kept in sync with popup-focus.css BY CONVENTION rather than by a
+ * shared declaration. Same duration (6s), same easing (linear), same
+ * conic-gradient angular span (130deg to 230deg): the travelling arc's
+ * speed and character are identical, only its `@property` name differs.
+
+ * THE RING RIDES THE CARD'S OWN BORDER, IT DOES NOT REPLACE THE BOX. Each
+ * target keeps its real `border` from its own file; the `::after` here is
+ * `position: absolute; inset: 0`, the same footprint as that border, so
+ * the travelling sheen and the static top-down gradient paint over it
+ * with no layout cost and no change to any panel's size. `position:
+ * relative` is added only where the target had no positioning context of
+ * its own (`.modal-content`); the lightbox body
+ * already declares it.
+
+ * REDUCED MOTION drops the sheen to transparent and stops the animation,
+ * exactly as popup-focus.css does for menus, leaving the plain glow and
+ * the static gradient border with no motion at all.
+
+ * EVERY COLOUR IS AN --oc-* TOKEN, re-derived from the active theme by
+ * web/src/opscenter/tokens.css, so this glow repaints under every theme
+ * and holds no literal of its own except the two flat black drop shadows,
+ * which are black on purpose (see popup-focus.css's own header): they must
+ * still read as a lift on a light theme, where every accent token is
+ * itself light.
+ */
+
+@property --mg-angle {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
+}
+
+@keyframes modal-glow-orbit {
+    from { --mg-angle: 0deg; }
+    to { --mg-angle: 360deg; }
+}
+
+.modal-content {
+    position: relative;
+}
+
+.modal-content {
+    --mg-glow: color-mix(in srgb, var(--oc-orange) 55%, transparent);
+    box-shadow:
+        0 4px 3px var(--mg-glow),
+        0 10px 32px rgba(0, 0, 0, 0.6),
+        0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* box-shadow */
+
+.modal-content::after,
+.sidebar-help__lightbox-body::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    border: 1px solid transparent;
+    border-radius: inherit;
+    --mg-sheen: color-mix(in srgb, color-mix(in srgb, var(--oc-orange) 55%, var(--oc-text-bright)) 85%, transparent);
+    background:
+        conic-gradient(
+            from var(--mg-angle),
+            transparent 0deg,
+            transparent 130deg,
+            var(--mg-sheen) 180deg,
+            transparent 230deg,
+            transparent 360deg
+        ) border-box,
+        linear-gradient(to bottom, var(--oc-line-panel), var(--oc-strip-edge)) border-box;
+    -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0) border-box;
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0) border-box;
+    mask-composite: exclude;
+    animation: modal-glow-orbit 6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .modal-content::after,
+    .sidebar-help__lightbox-body::after {
+        --mg-sheen: transparent;
+        animation: none;
+    }
+}
+
+:root[data-motion="off"] .modal-content::after,
+:root[data-motion="off"] .sidebar-help__lightbox-body::after {
+    --mg-sheen: transparent;
+}

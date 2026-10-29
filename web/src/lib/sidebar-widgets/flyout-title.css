@@ -1,0 +1,43 @@
+@layer components {
+  .sbr-flyout__title {
+    display: flex;
+    align-items: center;
+    gap: var(--oc-space-2);
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 0 var(--oc-space-2) 0 var(--oc-space-3);
+    background:
+      linear-gradient(
+        color-mix(in srgb, var(--sbr-tint) 16%, transparent),
+        color-mix(in srgb, var(--sbr-tint) 16%, transparent)
+      ),
+      var(--oc-ground-titlerow);
+  }
+
+  .sbr-flyout__icon {
+    display: inline-flex;
+    color: var(--sbr-tint);
+  }
+
+  .sbr-flyout__title .sbr-flyout__icon .oc-frame-corner {
+    color: var(--sbr-tint);
+  }
+
+  .sbr-flyout__name {
+    margin: 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-mono);
+    font-size: calc(var(--oc-fs-body) * 4 / 3);
+    font-weight: 700;
+    color: var(--oc-text-primary);
+  }
+
+  .sbr-flyout__title > [data-flyout-close] {
+    --oc-ibtn-size: 28px;
+    margin-left: auto;
+    flex: 0 0 auto;
+  }
+}

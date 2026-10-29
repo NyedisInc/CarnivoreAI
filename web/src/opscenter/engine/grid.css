@@ -1,0 +1,287 @@
+
+/* height: 100% position: relative */
+.oc-surface {
+  position: relative;
+  display: grid;
+  grid-template-rows: var(--rows, auto);
+  gap: 0;
+  min-width: 0;
+  min-height: 100%;
+  transition: grid-template-rows var(--oc-motion) ease;
+}
+
+/* position: fixed */
+.oc-surface-zoomable {
+  contain: layout;
+}
+
+/* grid-template-rows: none z-index: 2 */
+.oc-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--tracks, 1fr);
+  grid-template-rows: 100%;
+  min-width: 0;
+  min-height: 0;
+  transition: grid-template-columns var(--oc-motion) ease;
+}
+
+.oc-row > * {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* border: */
+.oc-gutter {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  touch-action: none;
+}
+
+.oc-gutter-col {
+  cursor: col-resize;
+}
+
+.oc-gutter-row {
+  position: absolute;
+  inset: 0;
+  cursor: row-resize;
+}
+
+.oc-gutter-col::before,
+.oc-gutter-row::before {
+  content: '';
+  position: absolute;
+  background: transparent;
+  transition: background var(--oc-motion-fast) linear;
+}
+
+.oc-gutter-col::before {
+  inset: var(--oc-space-1) 45%;
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+.oc-gutter-row::before {
+  inset: 45% 22%;
+  border-radius: 1px;
+}
+
+.oc-span-edge > .oc-gutter-col::before {
+  top: calc(-1 * var(--oc-space-1));
+}
+
+.oc-gutter:hover::before,
+.oc-gutter[data-lit]::before {
+  background: var(--oc-line-panel);
+}
+
+.oc-gutter:focus-visible {
+  outline: none;
+}
+
+.oc-gutter:focus-visible::before,
+.oc-gutter:active::before,
+.oc-gutter[data-lit='active']::before {
+  background: var(--oc-orange);
+}
+
+.oc-gutter-band {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+.oc-intersection {
+  position: absolute;
+  top: 50%;
+  height: 14px;
+  transform: translateY(-50%);
+  border-radius: 2px;
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
+.oc-intersection:hover,
+.oc-intersection:active {
+  background: var(--oc-orange-dim);
+}
+
+.oc-cellslot {
+  display: grid;
+  grid-template-rows: auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.oc-cellslot-reserved {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* height: auto position:
+   relative */
+.oc-cellslot.oc-cellslot-zoomed {
+  position: fixed;
+  inset: 0;
+  height: auto;
+  align-self: stretch;
+  z-index: 20;
+}
+
+@media (min-width: 1024px) {
+  .oc-cellslot-span {
+    height: var(--oc-span-h, auto);
+    align-self: start;
+    position: relative;
+    z-index: 2;
+    transition: height var(--oc-motion) ease;
+  }
+
+  body.grid-dragging .oc-cellslot-span {
+    transition: none;
+  }
+}
+
+.oc-slot-lifted {
+  overflow: visible;
+  outline: 1px dashed var(--oc-line-panel);
+  outline-offset: -1px;
+  border-radius: var(--oc-radius);
+}
+
+.oc-slot-lifted > * {
+  transform: translate(var(--oc-lift-x, 0px), var(--oc-lift-y, 0px));
+  opacity: 0.92;
+  box-shadow: 0 18px 38px var(--oc-shadow-lift);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.oc-gutter-slice {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+.oc-span-edge {
+  position: absolute;
+  z-index: 2;
+}
+
+.oc-span-edge > .oc-gutter {
+  position: absolute;
+  inset: 0;
+}
+
+.oc-gutter-inert {
+  pointer-events: none;
+}
+
+.oc-insert-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  margin-top: -1.5px;
+  border-radius: 2px;
+  background: var(--oc-orange);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.oc-stack-above,
+.oc-stack-below {
+  position: relative;
+}
+
+.oc-stack-above::after,
+.oc-stack-below::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 25%;
+  z-index: 2;
+  background: color-mix(in oklab, var(--oc-orange) 18%, transparent);
+  pointer-events: none;
+}
+
+.oc-stack-above::after {
+  top: 0;
+  border-top: 3px solid var(--oc-orange);
+}
+
+.oc-stack-below::after {
+  bottom: 0;
+  border-bottom: 3px solid var(--oc-orange);
+}
+
+.oc-insert {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--oc-orange);
+  pointer-events: none;
+}
+
+.oc-insert-column {
+  position: absolute;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--oc-orange);
+  pointer-events: none;
+  z-index: 3;
+}
+
+body.grid-dragging .oc-surface,
+body.grid-dragging .oc-row {
+  transition: none;
+}
+
+body.grid-dragging {
+  user-select: none;
+}
+
+@media (max-width: 1023px) {
+  .oc-surface {
+    grid-template-rows: none;
+    grid-auto-rows: min-content;
+  }
+
+  .oc-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--oc-gutter);
+  }
+
+  .oc-cellslot[data-slot='stats'] {
+    grid-column: 1 / -1;
+  }
+
+  .oc-cellslot-reserved {
+    display: none;
+  }
+
+  .oc-cellslot {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 639px) {
+  /* running sessions */
+  .oc-surface {
+    gap: var(--oc-gutter);
+  }
+
+  .oc-row {
+    display: contents;
+  }
+
+  .oc-cellslot {
+    order: var(--oc-phone-order, 0);
+  }
+}

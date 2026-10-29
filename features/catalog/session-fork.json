@@ -1,0 +1,38 @@
+{
+  "api_routes": [
+    "src/api/session_fork_routes.py",
+    "src/api/agent_fork_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/crosstalk.md"
+  ],
+  "examples": [
+    "Try a risky refactor in a fork, and keep the original conversation as it was in case the attempt goes nowhere.",
+    "Branch one planning conversation into two sessions that each build a different option."
+  ],
+  "how_to": [
+    "Open the session's menu and choose fork to.",
+    "Choose Claude or Codex, optionally set model, effort, a prompt, a name or a git worktree, then fork. The original is untouched."
+  ],
+  "id": "session-fork",
+  "issues": [],
+  "keywords": [
+    "fork",
+    "branch",
+    "clone conversation"
+  ],
+  "media": [],
+  "name": "Fork a session",
+  "since": "2026-09-10",
+  "status": "stable",
+  "summary": "branch a conversation into a new session without disturbing the original.",
+  "surfaces": [
+    "web/src/lib/crosstalk/ForkPicker.svelte"
+  ],
+  "updated": "2026-10-03",
+  "where": [
+    "The three dots on a session's drawer row, then fork to (F)."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

@@ -1,0 +1,32 @@
+@layer patterns {
+  .oc-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--oc-space-1);
+    min-width: 0;
+  }
+
+  .oc-form-field > [data-field] {
+    width: 100%;
+  }
+
+  [data-field][data-block] {
+    width: 100%;
+  }
+
+  .oc-search[data-block] {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .oc-form-field__help,
+  .oc-form-field__error {
+    font-size: var(--oc-fs-label);
+    line-height: var(--oc-lh-body);
+    color: var(--oc-text-muted);
+  }
+
+  .oc-form-field__error {
+    color: var(--oc-coral);
+  }
+}

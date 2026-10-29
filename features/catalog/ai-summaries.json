@@ -1,0 +1,46 @@
+{
+  "api_routes": [],
+  "area": "terminal",
+  "description": "A one line, plain english label of what each live claude or codex session is working on, so a glance at a terminal head tells you what the session is for. It is made by an ai model you route for it alone (it never borrows your chat default), and it is part of the working-on labels plugin, which is off until you turn it on, refreshed when a turn ends and again while a long turn keeps working, never on a timer at idle. Only a few redacted recent messages leave the computer, and only to the provider you routed it to.",
+  "docs": [],
+  "examples": [
+    "Eight agents are open: the line above each prompt bar reminds you which one was fixing the restart picker and which one was porting the settings screen.",
+    "You answered a string of yes and continue prompts, so the last prompt says nothing; the line still names the task and its goal.",
+    "Point the summaries at a small local model so they cost nothing, while chat keeps using a larger one, and watch the token readout to see what they use."
+  ],
+  "how_to": [
+    "Turn on the working-on labels plugin on the plugins page, then open settings, ai summaries and tick use a different model to give the session summary its own model. Until you do, it sends nothing and says it needs a model.",
+    "Open settings, then ai summaries to switch the working on line on or off, set the minimum seconds between calls for one session and the calls per hour cap, and see which route is in use.",
+    "Finish a turn in any claude or codex session: the line updates on every open browser within about ten seconds, with no reload.",
+    "Click the line (or focus it and press enter) to refresh it now.",
+    "Click [hide] at the right end of the line to turn the summary off for every browser and stop its model calls, and use the session working on line switch in settings, ai, summaries to bring it back; while no model is picked the line is a link that opens settings there.",
+    "Read what the live label cost (last hour and last 24 hours) in settings, ai summaries, and set its token budget there; when it is spent, summaries pause and the panel says when they resume."
+  ],
+  "id": "ai-summaries",
+  "issues": [
+    1215,
+    1216
+  ],
+  "keywords": [
+    "ai",
+    "summary",
+    "working on",
+    "label",
+    "session",
+    "terminal head",
+    "byoai"
+  ],
+  "media_exempt": "removed (#1898): the feature and its settings screen no longer exist, so there is nothing to capture",
+  "name": "Ai working on line",
+  "since": "2026-10-01",
+  "status": "removed",
+  "summary": "",
+  "surfaces": [],
+  "updated": "2026-10-17",
+  "where": [
+    "In a terminal head, directly above the prompt bar.",
+    "In the head of a home screen viewer cell.",
+    "In the tooltip of an inactive terminal tab and under the phone tab strip.",
+    "Settings, ai summaries."
+  ]
+}

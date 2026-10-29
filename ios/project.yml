@@ -1,0 +1,114 @@
+name: Carnivore
+options:
+  bundleIdPrefix: ai.carnivore
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    DEVELOPMENT_TEAM: ARD6KN4BX4
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+    SUPPORTS_MACCATALYST: NO
+    SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+targets:
+  Carnivore:
+    type: application
+    platform: iOS
+    sources:
+      - Carnivore
+      - path: Shared
+        excludes: [TestVectors]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.carnivore.ios
+        PRODUCT_NAME: Carnivore
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_ENTITLEMENTS: Carnivore/Carnivore.entitlements
+        GENERATE_INFOPLIST_FILE: NO
+      configs:
+        Debug:
+          APS_ENVIRONMENT: development
+          PUSH_ENVIRONMENT: sandbox
+        Release:
+          APS_ENVIRONMENT: production
+          PUSH_ENVIRONMENT: production
+    info:
+      path: Carnivore/Info.plist
+      properties:
+        CFBundleDisplayName: Carnivore
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        NSCameraUsageDescription: carnivore uses the camera to scan the pairing code shown on your computer.
+        NSLocalNetworkUsageDescription: carnivore connects to your computer on your local network.
+        ITSAppUsesNonExemptEncryption: false
+        CarnivorePushEnvironment: $(PUSH_ENVIRONMENT)
+        CarnivoreKeychainGroup: $(AppIdentifierPrefix)ai.carnivore.shared
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+    entitlements:
+      path: Carnivore/Carnivore.entitlements
+      properties:
+        aps-environment: $(APS_ENVIRONMENT)
+        com.apple.security.application-groups: [group.ai.carnivore]
+        keychain-access-groups: [$(AppIdentifierPrefix)ai.carnivore.shared]
+    dependencies:
+      - target: CarnivoreNotify
+        embed: true
+  CarnivoreNotify:
+    type: app-extension
+    platform: iOS
+    sources:
+      - CarnivoreNotify
+      - path: Shared
+        excludes: [TestVectors]
+      - Carnivore/Generated/Strings.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.carnivore.ios.notify
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_ENTITLEMENTS: CarnivoreNotify/CarnivoreNotify.entitlements
+        GENERATE_INFOPLIST_FILE: NO
+    info:
+      path: CarnivoreNotify/Info.plist
+      properties:
+        CFBundleDisplayName: Carnivore
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CarnivoreKeychainGroup: $(AppIdentifierPrefix)ai.carnivore.shared
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.usernotifications.service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).NotificationService
+    entitlements:
+      path: CarnivoreNotify/CarnivoreNotify.entitlements
+      properties:
+        com.apple.security.application-groups: [group.ai.carnivore]
+        keychain-access-groups: [$(AppIdentifierPrefix)ai.carnivore.shared]
+  CarnivoreTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Tests
+      - path: Shared/TestVectors
+        buildPhase: resources
+    dependencies:
+      - target: Carnivore
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: ai.carnivore.ios.tests
+        TARGETED_DEVICE_FAMILY: "1"
+schemes:
+  Carnivore:
+    build:
+      targets:
+        Carnivore: all
+    test:
+      targets: [CarnivoreTests]

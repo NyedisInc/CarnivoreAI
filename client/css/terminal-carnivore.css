@@ -1,0 +1,128 @@
+:root,
+[data-session-theme] {
+    --bot-ground-chrome: var(--oc-ground-chrome);
+    --bot-ground-page: var(--oc-ground-page);
+    --bot-ground-panel: var(--oc-ground-panel);
+    --bot-ground-raised: var(--oc-ground-raised);
+    --bot-ground-card: var(--oc-ground-card);
+    --bot-ground-titlerow: var(--oc-ground-titlerow);
+    --bot-ground-hover: var(--oc-ground-hover);
+    --bot-ground-field: var(--oc-ground-field);
+    --bot-line-rule: var(--oc-line-rule);
+    --bot-strip-edge: var(--oc-strip-edge);
+    --bot-line-chrome: var(--oc-line-chrome);
+    --bot-line-faint: var(--oc-line-faint);
+    --bot-text-primary: var(--oc-text-primary);
+    --bot-text-secondary: var(--oc-text-secondary);
+    --bot-text-muted: var(--oc-text-muted);
+    --bot-orange: var(--oc-orange);
+    --bot-orange-bright: var(--oc-orange-bright);
+}
+
+/* --color- */
+html {
+    background-color: var(--bot-ground-page);
+}
+
+/* border-bottom: var(--color-accent) */
+.header {
+    background: var(--bot-ground-chrome);
+    border-bottom: 1px solid var(--bot-line-rule);
+}
+
+#header-session-led {
+    display: none;
+}
+
+/* --color- */
+.session-sidebar-panel {
+    background: var(--bot-ground-chrome);
+}
+
+.session-sidebar-row {
+    background: transparent;
+}
+
+.session-sidebar-row[data-active='1'] {
+    background: var(--color-accent-bg);
+}
+
+/* The prompt strip follows the owning cell's scope, including its border.
+
+ * IT HAPPENED AGAIN THE SAME DAY, ON THE OTHER PROPERTY. The strip's rule
+ * was lit with the accent (`--oc-strip-edge`) and the terminal screen went
+ * on drawing the neutral hairline, because `border-color` here outranks
+ * the component's `border-bottom` shorthand just as `background` does.
+ * Measured, not assumed: the border pixel read #1f2e30 before and after.
+ * `box-shadow` is deliberately NOT listed below - this rule must stay
+ * silent on it so the component keeps sole ownership of the glow. */
+#terminal-screen .prompt-header {
+    background: var(--bot-ground-card);
+    border-color: var(--bot-strip-edge);
+}
+
+#terminal-screen .prompt-header-root--inline > .prompt-header {
+    background: var(--bot-ground-titlerow);
+}
+
+:is(.header h1, .session-sidebar-title) {
+    font-family: var(--font-mono);
+    font-weight: 400;
+    letter-spacing: 0;
+    color: var(--bot-orange);
+}
+
+.session-sidebar-title {
+    font-size: 1.15rem;
+}
+
+body:has(#terminal-screen.active) #header-icon { display: inline-flex; }
+body:has(#terminal-screen.active) :is(#header-title-text, #header-rename-pencil) {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    body:has(#terminal-screen.active) #header-icon { display: none; }
+    body:has(#terminal-screen.active) #header-title-text { display: inline; }
+    body:has(#terminal-screen.active) #header-rename-pencil {
+        display: inline-flex;
+    }
+}
+
+:is(.header .controls > button, .session-sidebar-toggle,
+    .session-sidebar-pin) {
+    background: transparent;
+    border: 1px solid var(--bot-line-rule);
+    border-radius: 4px;
+    color: var(--bot-orange);
+}
+
+.session-sidebar-pin[aria-pressed="true"] {
+    border-color: var(--bot-orange);
+    background: var(--oc-orange-tint);
+}
+
+:is(.header .controls > button, .session-sidebar-toggle,
+    .session-sidebar-pin):hover {
+    background: var(--bot-ground-hover);
+}
+
+.header-menu-panel button {
+    font-family: var(--font-mono);
+    font-weight: 400;
+    color: var(--bot-orange);
+}
+
+.session-sidebar-row[aria-selected="true"] .session-sidebar-row-name {
+    font-weight: 400;
+}
+
+.config-editor-toggle--root .config-editor-root-label {
+    font-weight: 400;
+    color: var(--bot-orange);
+}
+
+.config-editor-toggle-glyph {
+    color: var(--bot-orange);
+}
+

@@ -1,0 +1,253 @@
+/*
+ * THE LOG VIEWER (web/src/opscenter/log/, #1827 then #1861; the developer widget's log tab and the #logs page): a strip of level
+ * toggles, source chips, the live server level, export and clear; a filter row; a status line; then a VIRTUAL list of records,
+ * newest at the bottom. COPIED, NOT INVENTED: the strip is `.oc-rc-bar` (title-row hairline via box-shadow, never a border) holding the shared
+ * `.oc-btn .oc-btn--sm` (quiet outline); a level that is on turns its own border and text to the level's token, one that is off stays
+ * the quiet outline in dim text. The rows are the run queue's flat rows: mono type, a hairline between rows, no cards. Level shows by
+ * color token AND by its word. Color is --oc-* tokens only.
+ */
+@layer patterns {
+  .oc-lv {
+    overflow: hidden;
+  }
+
+  .oc-lv-bar {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .oc-lv-level {
+    color: var(--oc-text-dim);
+  }
+
+  .oc-lv-level[aria-pressed='true'] {
+    color: var(--_lv, var(--oc-text-secondary));
+    border-color: var(--_lv, var(--oc-line-rule));
+  }
+
+  .oc-lv [data-level='error'] { --_lv: var(--oc-coral); }
+  .oc-lv [data-level='warn'] { --_lv: var(--oc-yellow); }
+  .oc-lv [data-level='info'] { --_lv: var(--oc-cyan); }
+  .oc-lv [data-level='debug'] { --_lv: var(--oc-text-dim); }
+
+  .oc-lv-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--oc-space-1);
+    min-width: 0;
+  }
+
+  .oc-lv-spacer {
+    flex: 1 1 auto;
+  }
+
+  .oc-lv-server-level {
+    display: flex;
+    align-items: center;
+    gap: var(--oc-space-1);
+  }
+
+  .oc-lv-server-level .oc-field {
+    min-width: 0;
+    padding-block: 2px;
+    font-size: var(--oc-fs-label);
+  }
+
+  .oc-lv-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--oc-space-2);
+    padding: var(--oc-space-1) var(--oc-space-2);
+    box-shadow: 0 1px 0 var(--oc-line-rule);
+  }
+
+  .oc-lv-filters .oc-page__search {
+    flex: 1 1 12rem;
+    min-width: 0;
+  }
+
+  .oc-lv-filters .oc-field {
+    width: 100%;
+    padding-block: 3px;
+  }
+
+  .oc-lv-filters .oc-chip[data-exclude] {
+    border-color: var(--oc-coral);
+    background: transparent;
+    color: var(--oc-coral);
+  }
+
+  .oc-lv-error {
+    margin: 0;
+    color: var(--oc-coral);
+    font-size: var(--oc-fs-label);
+  }
+
+  .oc-lv-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--oc-space-2);
+    padding: 2px var(--oc-space-2);
+    font-size: var(--oc-fs-label);
+    color: var(--oc-text-dim);
+    box-shadow: 0 1px 0 var(--oc-line-rule);
+  }
+
+  .oc-lv-warn {
+    color: var(--oc-yellow);
+  }
+
+  .oc-lv-flash {
+    color: var(--oc-text-secondary);
+  }
+
+  .oc-lv-live {
+    margin-inline-start: auto;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .oc-lv-live[data-following] {
+    color: var(--oc-cyan);
+  }
+
+  .oc-lv-wrap {
+    position: relative;
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .oc-lv-list {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .oc-lv-pill {
+    position: absolute;
+    bottom: var(--oc-space-2);
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .oc-lv-rec {
+    box-sizing: border-box;
+    overflow: hidden;
+    box-shadow: 0 1px 0 var(--oc-line-rule);
+    font-size: var(--oc-fs-label);
+  }
+
+  .oc-lv-row {
+    display: grid;
+    grid-template-columns: auto auto auto auto minmax(0, 1fr) auto;
+    column-gap: var(--oc-space-2);
+    align-items: center;
+    height: 100%;
+    max-height: 22px;
+    padding: 0 var(--oc-space-2);
+  }
+
+  [data-log-expand] {
+    --oc-ibtn-size: 16px;
+    color: var(--oc-text-dim);
+  }
+
+  .oc-lv-time {
+    color: var(--oc-text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .oc-lv-time--approx {
+    opacity: 0.7;
+    font-style: italic;
+  }
+
+  .oc-lv-tag {
+    min-width: 5ch;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--_lv, var(--oc-text-secondary));
+  }
+
+  .oc-lv-source {
+    max-width: 14ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--oc-text-muted);
+  }
+
+  .oc-lv-text {
+    display: flex;
+    align-items: center;
+    gap: var(--oc-space-1);
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .oc-lv-event {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--oc-text-bright);
+  }
+
+  .oc-lv-more {
+    flex: none;
+    color: var(--oc-coral);
+  }
+
+  .oc-lv-field {
+    flex: none;
+    max-width: 28ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .oc-lv-copy {
+    visibility: hidden;
+  }
+
+  .oc-lv-rec:hover .oc-lv-copy,
+  .oc-lv-rec:focus-within .oc-lv-copy {
+    visibility: visible;
+  }
+
+  .oc-lv-rec[data-traceback] .oc-lv-event {
+    color: var(--oc-coral);
+  }
+
+  .oc-lv-json,
+  .oc-lv-lines {
+    margin: 0;
+    padding: var(--oc-space-1) var(--oc-space-2) var(--oc-space-2) calc(var(--oc-space-2) * 2 + 16px);
+    font-family: var(--font-mono);
+    font-size: var(--oc-fs-label);
+    color: var(--oc-text-secondary);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .oc-lv-rec[data-traceback] .oc-lv-lines {
+    color: var(--oc-coral);
+  }
+
+  .oc-lv-dropped {
+    margin: 0;
+    padding: 0 var(--oc-space-2) var(--oc-space-2);
+    color: var(--oc-text-dim);
+  }
+
+  .oc-lv-page {
+    grid-template-rows: minmax(0, 1fr);
+  }
+}

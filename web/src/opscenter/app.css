@@ -1,0 +1,108 @@
+
+@import './tokens.css';
+@import './focus.css';
+@import './controls.css';
+@import './fields.css';
+@import '../lib/base/base.css';
+@import './colhead.css';
+@import './page.css';
+@import './ui/tabs.css';
+@import './ui/tile.css';
+@import './ui/rank-panel.css';
+@import './ui/run-chart.css';
+@import './ui/run-queue.css';
+@import './ui/outbox-rows.css';
+@import './ui/log-viewer.css';
+@import './ui/page-kit.css';
+@import './art/ascii-art.css';
+@import './type.css';
+@import './engine/grid.css';
+
+.oc-app,
+.oc-app *,
+.oc-app *::before,
+.oc-app *::after {
+  box-sizing: border-box;
+}
+
+.oc-app {
+  display: grid;
+  grid-template-rows: var(--oc-topbar) minmax(0, 1fr);
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  flex: 1 1 auto;
+  font-family: var(--oc-font);
+  font-size: var(--oc-fs-body);
+  font-synthesis: none;
+  color: var(--oc-text-primary);
+  background: var(--oc-ground-page);
+  -webkit-font-smoothing: antialiased;
+}
+
+.oc-app-wallboard {
+  height: 100%;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.oc-app-wallboard.oc-app-noticed {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.oc-app-bare {
+  position: relative;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.oc-app-bare.oc-app-noticed {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.oc-app > * {
+  min-width: 0;
+}
+
+/* padding */
+.oc-content {
+  min-width: 0;
+  min-height: 0;
+  padding: var(--oc-pad-top) var(--oc-pad-right) var(--oc-pad-bottom) var(--oc-pad-left);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.oc-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* overflow-y: auto */
+@media (max-width: 1023px) {
+  .oc-app {
+    display: block;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    flex: 0 0 auto;
+  }
+
+  /* padding */
+  .oc-content {
+    overflow: visible;
+    padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .oc-surface {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+  }
+}

@@ -1,0 +1,5 @@
+
+pytest-xdist==3.8.0
+pytest-timeout==2.4.0
+botocore==1.42.47
+urllib3>=2.8.0

@@ -1,0 +1,11 @@
+@layer components {
+  .hd-block {
+    --hd-step: var(--oc-space-3);
+  }
+
+  @media (max-width: 700px) {
+    .hd-block {
+      --hd-step: var(--oc-space-2);
+    }
+  }
+}

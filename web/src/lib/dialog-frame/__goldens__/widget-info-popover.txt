@@ -1,0 +1,31 @@
+<div aria-label="activity log info" class="oc-anchored oc-winfo-pop popup-focus" data-info-popover="core.activity-log" popover="manual" role="dialog" style="left: 8px; top: 8px; width: 260px;" tabindex="-1">
+  <div class="oc-winfo-pop-body">
+    <article class="oc-winfo" data-widget-info="core.activity-log">
+      <header class="oc-winfo-head">
+        <span class="oc-winfo-icon" style="color: var(--oc-green);">
+          <svg aria-hidden="true" data-icon="activity" fill="none" focusable="false" height="15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24" width="15">
+            <path d="M2 12h4l3-8 5 16 3-8h5">
+        <h3 class="oc-winfo-name">
+          "activity log"
+        <span class="oc-winfo-version">
+          "v 1.0.0"
+      <p class="oc-winfo-about" data-widget-info-about="">
+        "a running feed of what happened: sessions, alerts and the app itself."
+      <dl class="oc-winfo-facts">
+        <dt>
+          "group"
+        <dd data-widget-info-fact="group">
+          "monitoring / feed"
+        <dt>
+          "copies"
+        <dd data-widget-info-fact="copies">
+          "one copy"
+        <dt>
+          "data"
+        <dd data-widget-info-fact="data">
+          "the live event stream"
+  <footer class="oc-winfo-pop-foot">
+    <button data-btn="secondary" data-button-root="true" data-info-catalog="true" data-size="sm" tabindex="0" type="button">
+      "open in the catalog"
+    <button data-btn="secondary" data-button-root="true" data-info-close="true" data-size="sm" tabindex="0" type="button">
+      "close"

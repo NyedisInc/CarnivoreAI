@@ -1,0 +1,59 @@
+{
+  "api_routes": [
+    "src/api/browser_routes.py",
+    "src/api/browser_open_routes.py"
+  ],
+  "area": "terminal",
+  "docs": [
+    "docs/browser-sessions.md",
+    "docs/browser-pages.md"
+  ],
+  "examples": [
+    "Let an agent check the page it just built, while you watch the same browser.",
+    "An agent opens a page it made for you; a row with its title appears in your left sidebar's browser list and the page fills the center screen, where a session's terminal shows.",
+    "Pop a browser or a page out into its own window, like a tab torn out of a browser.",
+    "Pop out a proxy browser showing localhost:3000 from your phone: the real page is off (it only resolves on the computer carnivore runs on), so pop out the proxy instead."
+  ],
+  "how_to": [
+    "Add a browser component to a session and enter a URL.",
+    "Drive it from the page; the agent can use the same browser.",
+    "Let an agent call browser_open, or press open in tab on a huddle page card: a huddle page or a Carnivore pop-out page becomes a page row in the left sidebar's browser list, shown in the center screen on every window and still there after a reload; an http(s) url becomes a browser row there.",
+    "Press pop out on a browser or page row's key or menu: a page opens in its own tab, and a proxy browser asks every time whether to pop out the proxy or open the real page in your own browser.",
+    "Hold shift in the left sidebar: every browser and page row's kebab turns into a red x that closes that row (a page at once, a proxy browser after its confirm); let go of shift and the kebabs come back.",
+    "Type an address into a proxy browser: it loads on the computer carnivore runs on, so localhost is that computer's; the note under the address bar says so."
+  ],
+  "id": "remote-browser-sessions",
+  "issues": [
+    448,
+    1694,
+    1697
+  ],
+  "keywords": [
+    "browser",
+    "browser_open",
+    "headless chromium",
+    "proxy browser"
+  ],
+  "media_exempt": "starts a real headless Chromium that loads external pages; not reproducible in a capture slot",
+  "name": "Remote browser sessions",
+  "since": "2026-09-25",
+  "status": "stable",
+  "summary": "open a real, remotely controlled web browser on the computer carnivore runs on, named a proxy browser, inside a session to test or research a page; pages an agent opens for you share its sidebar list and center screen, either kind pops out into its own tab, and a proxy browser asks every time whether to pop out the proxy or open the real page.",
+  "surfaces": [
+    "web/src/lib/browser/BrowserScreen.svelte",
+    "web/src/lib/browser/BrowserView.svelte",
+    "web/src/lib/browser/PageFrame.svelte",
+    "web/src/lib/browser/PopOutChoice.svelte",
+    "web/src/lib/browser/pages.svelte.ts",
+    "web/src/lib/browser/pop-out-choice.ts",
+    "web/src/lib/browser/pop-out-reach.ts",
+    "web/src/lib/browser/pop-out.ts",
+    "web/src/lib/browser/select-push.svelte.ts",
+    "web/src/popout/BrowserPopout.svelte"
+  ],
+  "updated": "2026-10-12",
+  "where": [
+    "The components menu, or a session's add component list, then proxy browser.",
+    "The browser list in the left sidebar: remote browsers and pages an agent opened for you, each with a pop out key; while shift is held every row shows a red close x."
+  ]
+}

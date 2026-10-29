@@ -1,0 +1,141 @@
+
+from __future__ import annotations
+
+from dataclasses import replace
+from pathlib import Path
+from typing import Callable, List, Optional, Sequence
+
+from src.config import mcp_launch
+from src.config.agents import AgentsConfig
+from src.config.launch_profiles import LAUNCH_PROFILES_KEY, LaunchProfile
+from src.core.account_switch.shared_mcp import mcp_config_args
+from src.core.agent_families import DEFAULT_FAMILY
+from src.core.agent_wrappers import WRAPPER_SCRIPT_MODE, wrapper_scripts_dir
+from src.core.byoai.contracts import Connection
+from src.core.launch_profiles.plan import Purpose
+from src.core.launch_profiles.resolve import LaunchRequest, pick_profile, resolve_launch
+from src.core.launch_profiles.seed_from_wrappers import seed_launch_profiles
+from src.core.safe_file_write import write_private_file
+
+
+def claude_cli_path(configured: Optional[str]) -> str:
+    import shutil
+
+    if configured:
+        return configured
+
+    claude_in_path = shutil.which("claude")
+    if claude_in_path:
+        return claude_in_path
+
+    home_path = Path.home() / ".claude" / "local" / "claude"
+    if home_path.exists():
+        return str(home_path)
+
+    return "claude"
+
+
+def profiles_for(profiles: Optional[Sequence[LaunchProfile]], agents: AgentsConfig) -> tuple:
+    if profiles is not None:
+        return tuple(profiles)
+    derived = seed_launch_profiles({"agents": {"wrappers": [w.model_dump() for w in agents.wrappers]}})
+    return tuple(LaunchProfile.model_validate(p) for p in derived[LAUNCH_PROFILES_KEY]["profiles"])
+
+
+def single_name_flag(args: Sequence[str]) -> List[str]:
+    last = max((i for i in range(len(args) - 1) if args[i] == "--name"), default=-1)
+    out: List[str] = []
+    i = 0
+    while i < len(args):
+        if args[i] == "--name":
+            if i == last:
+                out += args[i:i + 2]
+            i += 2
+            continue
+        out.append(args[i])
+        i += 1
+    return out
+
+
+def agent_command(
+    agent_type: Optional[str],
+    *,
+    agents: AgentsConfig,
+    resolve_state_dir: Callable[[], str],
+    disable_alternate_screen: Callable[[], bool],
+    model: Optional[str] = None,
+    model_is_explicit: bool = False,
+    extra_args: Optional[List[str]] = None,
+    carnivore_mcp_url: Optional[str] = None,
+    carnivore_mcp_channel: bool = False,
+    profiles: Optional[Sequence[LaunchProfile]] = None,
+    connections: Sequence[Connection] = (),
+    explicit: bool = False,
+    plan_sink: Optional[list] = None,
+    purpose: Purpose = "pane",
+) -> str:
+    """Resolve the shell command string that launches one agent type: a facade over ``resolve_launch``.
+
+    Description: EVERY LAUNCH GOES THROUGH ``launch_profiles.resolve.resolve_launch`` (issue #1257, S4a), the one
+      place the profile pick, the family-default rule, the model rule and the render live. This builds the
+      ``LaunchRequest`` (the app's own arguments composed in the order they always had), writes the plan's
+      ``script_file`` where the wrapper script always lived (``agent_wrapper_scripts/``, privately, no
+      symlink follow), and returns the plan's command. Callers keep their signature.
+
+      The app's arguments, front to back: the Carnivore MCP registration (claude: one inline ``--mcp-config``;
+      codex: ``-c mcp_servers.carnivore.*``, pane launches only, the caller passes ``carnivore_mcp_url``), the
+      shared MCP file (claude only, issue #704), then the caller's ``extra_args`` (resume, name, fork). With
+      ``carnivore_mcp_channel`` (``mcp.channels`` on) a claude registration also carries the dev channel flag
+      (``mcp_launch.claude_args(channel=True)``, ``docs/task-manager.md`` 37); a codex launch ignores it.
+
+      ``profiles`` None means the loaded config has no profile block: the profiles are derived from
+      ``agents.wrappers`` the way the config v7 step derives them. ``explicit`` is True only where the user
+      PICKED a profile; an unknown id then raises ``LaunchProfileNotFound`` (codes ``wrapper_needed`` and
+      ``launch_profile_needed``) instead of falling back to claude's default.
+    Inputs: agent_type (str | None) - a profile id, a bare harness name, or anything else; agents
+      (AgentsConfig) - the loaded agents block (the wrapper view of the profiles); resolve_state_dir
+      (Callable[[], str]) and disable_alternate_screen (Callable[[], bool]) - read at launch time, see the
+      module docstring; model (str | None); extra_args (list[str] | None); carnivore_mcp_url (str | None);
+      carnivore_mcp_channel (bool) - add the channel flag to a claude registration;
+      model_is_explicit (bool) - a new model pick, not an observed restart model;
+      profiles (Sequence[LaunchProfile] | None); connections (Sequence[Connection]) - the BYOAI connections a
+      profile's endpoint may name; explicit (bool); plan_sink (list | None) - the create seam passes a list and
+      gets the resolved ``LaunchPlan`` appended; it then OWNS ``plan.secret_refs`` (materializes them and sends
+      them only through the tmux start env), so a profile with secrets is not refused here; purpose (``pane``,
+      ``headless`` or ``preview``) is what the plan is for, a headless run (the Time Machine summary) starts no pane.
+    Output: str - one shell string, handed straight to tmux's ``new-session ... <cmd>``.
+    Raises:
+        ValueError: the harness needs a model and none was given; a profile that needs a Keychain secret
+          (the create seam materializes those, S4b); an unsupported posture.
+        LaunchProfileNotFound: ``explicit`` and no such profile.
+        OSError: the script file could not be written safely (a symlink in the way).
+    Example: agent_command("claude-chrome", agents=cfg.agents, ...)
+    """
+    profiles = profiles_for(profiles, agents)
+    scripts_dir = wrapper_scripts_dir(resolve_state_dir())
+    base = LaunchRequest(
+        profiles=profiles, agent_type=agent_type, explicit=explicit, model=model,
+        model_is_explicit=model_is_explicit,
+        scripts_dir=scripts_dir, disable_alternate_screen=disable_alternate_screen(), connections=tuple(connections),
+    )
+    harness = pick_profile(base).harness
+    app_args = list(extra_args or [])
+    if harness == DEFAULT_FAMILY:
+        app_args = single_name_flag(app_args)
+        app_args = mcp_config_args() + app_args
+        if carnivore_mcp_url:
+            app_args = mcp_launch.claude_args(channel=carnivore_mcp_channel) + app_args
+    elif harness == "codex" and carnivore_mcp_url:
+        app_args = mcp_launch.codex_args(carnivore_mcp_url) + app_args
+    plan = resolve_launch(replace(base, app_args=tuple(app_args)), purpose)
+    if plan_sink is not None:
+        plan_sink.append(plan)
+    elif plan.secret_refs:
+        raise ValueError(
+            f"launch profile {plan.display.label!r} needs Keychain secrets; only a session create or restart "
+            "materializes those"
+        )
+    if plan.script_file is not None:
+        path = Path(plan.script_file.path)
+        write_private_file(path.parent, path.name, plan.script_file.content.encode("utf-8"), WRAPPER_SCRIPT_MODE)
+    return plan.command

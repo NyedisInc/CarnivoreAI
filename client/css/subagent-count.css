@@ -1,0 +1,60 @@
+@layer legacy {
+
+.subagent-count {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    height: 16px;
+    padding: 0 4px;
+    margin: 0 2px;
+    border: 1px solid color-mix(in srgb, var(--oc-green) 45%, transparent);
+    border-radius: var(--oc-radius-sm, 2px);
+    background: transparent;
+    color: var(--oc-green);
+    font-family: var(--font-mono, monospace);
+    font-size: var(--oc-fs-micro, 10px);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: var(--oc-tracking-label, 0.6px);
+    text-transform: uppercase;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.subagent-count--button {
+    cursor: pointer;
+    font: inherit;
+    font-family: var(--font-mono, monospace);
+    font-size: var(--oc-fs-micro, 10px);
+}
+
+.subagent-count--button:hover {
+    background: var(--oc-ground-hover);
+}
+
+.subagent-count--rollup {
+    border-color: transparent;
+    padding: 0 2px;
+}
+
+.session-row__subagent-count {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    margin: 0 2px;
+    color: var(--oc-green);
+    font-family: var(--font-mono, monospace);
+    font-size: var(--oc-fs-micro, 10px);
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+/* THE WORKFLOW VARIANT (issue #852"if
+ * using workflows, make the subagent counter next to the agent icon blue
+ * instead of green"). The notice hue, --oc-cyan, the one blue the palette
+ * derives from each theme's --color-info. Colour only. */
+.session-row__subagent-count--workflow {
+    color: var(--oc-cyan);
+}
+}

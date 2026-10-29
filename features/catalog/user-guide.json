@@ -1,0 +1,46 @@
+{
+  "api_routes": [
+    "GET /api/v1/feature-media/{feature_id}/{filename}"
+  ],
+  "area": "status-notifications",
+  "docs": [
+    "docs/user-guide/README.md"
+  ],
+  "examples": [
+    "Learn what a light means before you start your first session: the status lights are the first thing on the documentation page.",
+    "Click a numbered mark on the settings picture to open the exact settings section it points at."
+  ],
+  "how_to": [
+    "Open the documentation (menu tab, documentation, or the question mark at the foot of the drawer). The status lights are explained at the top, in a grid that stacks on a narrow screen.",
+    "Scroll to a picture. Hover or focus a numbered mark to read what that area is; click it, or press enter, to open the page it points at. The same marks are listed under the picture.",
+    "Edit the guide as markdown: one file per section in docs/user-guide/, then rebuild the web bundle. The file format is docs/user-guide/README.md."
+  ],
+  "id": "user-guide",
+  "issues": [
+    1112
+  ],
+  "keywords": [
+    "documentation",
+    "user guide",
+    "status lights",
+    "screenshots",
+    "click marks"
+  ],
+  "media": [],
+  "name": "Documentation user guide",
+  "since": "2026-09-29",
+  "status": "stable",
+  "summary": "the documentation page is written as markdown, opens on the status lights, and carries screenshots with numbered click marks that open the part of the app they point at.",
+  "surfaces": [
+    "web/src/lib/user-guide/GuideShot.svelte",
+    "web/src/lib/user-guide/LightsLegend.svelte",
+    "web/src/lib/user-guide/guide-content.ts",
+    "docs/user-guide/README.md"
+  ],
+  "updated": "2026-09-29",
+  "where": [
+    "Menu tab, documentation; the question mark at the foot of the drawer.",
+    "The #docs link, or #docs/lights, #docs/start, #docs/terminals and #docs/settings for the pictures."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

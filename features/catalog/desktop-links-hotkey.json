@@ -1,0 +1,57 @@
+{
+  "api_routes": [
+    "GET /api/v1/preferences"
+  ],
+  "area": "desktop-app",
+  "docs": [
+    "docs/desktop-app.md",
+    "docs/desktop-bridge.md",
+    "docs/ui-preferences-inventory.md"
+  ],
+  "examples": [
+    "Run open \"carnivore://settings/desktop\" in Terminal and the app comes forward on the desktop app settings page.",
+    "Press Ctrl+Option+Cmd+C from any app: Carnivore comes forward, or opens the session that has waited on you longest.",
+    "A link in a note or a script can open a session, a project or the approvals popup, and can do nothing else."
+  ],
+  "how_to": [
+    "Links: carnivore://open, carnivore://session/<name>, carnivore://project/<name> (the same as session), carnivore://approvals/<id> and carnivore://settings[/<section>[/<tab>]]. A malformed or unknown link is ignored.",
+    "A link only shows you a place. It never answers a dialog, types, starts a session, adopts one or changes a setting. A session that is not running in the app shows as not found; open its row yourself.",
+    "The hotkey is set in settings, desktop app. If another app already uses the combination, the page says so under the box.",
+    "A link starts the app when it is not running. The hotkey needs the app running: after quitting it, the hotkey does nothing until you start the app again."
+  ],
+  "id": "desktop-links-hotkey",
+  "issues": [
+    2315,
+    2354
+  ],
+  "keywords": [
+    "carnivore://",
+    "deep link",
+    "link",
+    "hotkey",
+    "global shortcut",
+    "desktop",
+    "url scheme"
+  ],
+  "media_exempt": "native: needs the Electron app and the operating system's URL handler and keyboard shortcut, which a capture slot does not have",
+  "name": "Desktop links and hotkey",
+  "since": "2026-10-23",
+  "status": "beta",
+  "summary": "carnivore:// links that open a session, project, approvals popup or settings page in the desktop app, and a global hotkey that brings the app forward or opens the session waiting on you longest.",
+  "surfaces": [
+    "macOS/deep-link.js",
+    "macOS/link-router.js",
+    "macOS/app-links.js",
+    "macOS/hotkey.js",
+    "macOS/hotkey-action.js",
+    "macOS/second-instance.js",
+    "macOS/tray-menu/longest-waiting.js",
+    "macOS/package.json",
+    "macOS/hotkey-store.js",
+    "web/src/lib/launchpad/navigation.ts"
+  ],
+  "updated": "2026-10-23",
+  "where": [
+    "Any app or Terminal for a link; settings, desktop app, for the hotkey."
+  ]
+}

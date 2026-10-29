@@ -1,0 +1,82 @@
+{
+  "api_routes": [
+    "GET /api/v1/sessions/{session}/timeline",
+    "GET /api/v1/sessions/{session}/timeline/peek"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/session-timeline.md",
+    "docs/conversation-index.md",
+    "docs/session-bookmarks.md",
+    "docs/time-machine.md"
+  ],
+  "examples": [
+    "See at a glance that a session was cleared twice, rewound once and compacted three times, and when it slept (long sleeps are squeezed to a labeled break so the working hours get the width).",
+    "Read the band beside each rail to see when a conversation was busy, when it sat idle and when it was waiting on you.",
+    "Spot the exact message a rewind was cut from, read the messages around it, and branch from there.",
+    "Find the conversation backup taken just before a risky change and open a copy of it (conversation backups are the save plugin, so it must be on).",
+    "Put the timeline anywhere, wide or narrow, and read it top to bottom with every mark named.",
+    "Ask an agent for session_timeline_get to read a session's conversations, splits, compacts, sleeps and busy minutes."
+  ],
+  "how_to": [
+    "Drop the session timeline widget from the widget drawer onto either rail, or onto a dashboard (at least 192 by 96).",
+    "Time always runs down, at every width and in every host: oldest at the top and now at the bottom, with each conversation named in the words column beside the rail, and a bracket from a fork or rewind goes back to the message it was cut from. A short box scrolls.",
+    "The key in the header shows each kind with its own shape and count; click one to hide or show it. The same switches, and squeeze long sleeps, are in the widget menu; the choice is kept on this device.",
+    "Hover or focus a mark to see what it is in the detail; pick it (click, or Enter) to read the chat messages around it and act. Close marks merge into a counted box; pick it to list them.",
+    "Actions on the picked point: branch here, rewind here (tick the arm box first), bookmark this, open a copy (restores a conversation backup through the save plugin, which must be on) and open conversation. They are also widget menu items, blocked with the reason until they apply.",
+    "Keyboard: tab into the rail, up and down (or left and right) step through time, Home and End jump, Escape clears.",
+    "On a dashboard pick another session in the session picker; it follows the focused session by default. On a phone the widget is a list in time order."
+  ],
+  "id": "session-timeline",
+  "issues": [
+    1702,
+    2536
+  ],
+  "keywords": [
+    "timeline",
+    "lineage",
+    "clear",
+    "fork",
+    "rewind",
+    "compact",
+    "conversation backup",
+    "sleep",
+    "widget",
+    "busy",
+    "idle",
+    "activity"
+  ],
+  "media_exempt": "needs a real session with a lineage, bookmarks and conversation backups; a capture slot has none, so no image is recorded yet",
+  "name": "Session timeline",
+  "since": "2026-10-11",
+  "status": "stable",
+  "summary": "a session's conversations on a time axis from oldest to now, with its compacts, bookmarks, restarts, sleeps and conversation backups on it, no label ever under a mark, a real ruler, a busy, idle and waiting band, split points drawn back to the message they were cut from, and branch, rewind and open-a-copy on any picked point.",
+  "surfaces": [
+    "src/api/session_timeline_routes.py",
+    "src/core/mcp/timeline_tools.py",
+    "src/core/session_timeline/activity.py",
+    "src/core/session_timeline/assemble.py",
+    "src/core/session_timeline/gather.py",
+    "src/core/session_timeline/peek.py",
+    "src/core/session_timeline/push.py",
+    "web/src/opscenter/api/session-timeline.svelte.ts",
+    "web/src/opscenter/cells/timeline/Cell.svelte",
+    "web/src/opscenter/cells/timeline/Column.svelte",
+    "web/src/opscenter/cells/timeline/Detail.svelte",
+    "web/src/opscenter/cells/timeline/KindGlyph.svelte",
+    "web/src/opscenter/cells/timeline/KindKey.svelte",
+    "web/src/opscenter/cells/timeline/MarkCard.svelte",
+    "web/src/opscenter/cells/timeline/TimelineList.svelte",
+    "web/src/opscenter/cells/timeline/api.ts",
+    "web/src/opscenter/cells/timeline/column.ts",
+    "web/src/opscenter/cells/timeline/plot-model.ts",
+    "web/src/opscenter/cells/timeline/scale.ts",
+    "web/src/opscenter/cells/timeline/words.ts"
+  ],
+  "updated": "2026-10-26",
+  "where": [
+    "The session timeline widget in the session rail.",
+    "The session timeline tile on a dashboard.",
+    "The MCP tool session_timeline_get."
+  ]
+}

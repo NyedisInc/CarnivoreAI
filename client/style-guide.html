@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="carnivore" data-sg-page="style-guide">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>carnivore style guide</title>
+    <meta name="description" content="every carnivore component, live, with when and how to use it">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/assets/icons/icon-192.png">
+
+    <link rel="stylesheet" href="/static/css/layers.css" />
+    <link rel="stylesheet" href="/static/vendor/xterm/xterm.css" />
+    <link rel="stylesheet" href="/static/css/styles.css" />
+    <link rel="stylesheet" href="/static/css/scrollbars.css" />
+    <link rel="stylesheet" href="/static/css/header-actions.css" />
+    <link rel="stylesheet" href="/static/css/toast.css" />
+    <link rel="stylesheet" href="/static/css/toast-collapse.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-account-chip.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-rows.css" />
+    <link rel="stylesheet" href="/static/css/subagent-count.css" />
+    <link rel="stylesheet" href="/static/css/timer-chip.css" />
+    <link rel="stylesheet" href="/static/css/status-dot.css" />
+    <link rel="stylesheet" href="/static/css/status-led.css" />
+    <link rel="stylesheet" href="/static/css/session-header-led.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-density.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-row-bodies.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-row-controls.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-keep-awake.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-groups.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-section-drag.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-band-structure.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-layouts.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-colours.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-resize.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-rail.css" />
+    <link rel="stylesheet" href="/static/css/session-row-menu.css" />
+    <link rel="stylesheet" href="/static/css/version-footer.css" />
+    <link rel="stylesheet" href="/static/css/launchpad-wrapper-pill.css" />
+    <link rel="stylesheet" href="/static/css/session-restart-picker.css" />
+    <link rel="stylesheet" href="/static/css/terminal-mascot.css" />
+    <link rel="stylesheet" href="/static/css/wrapper-mark.css" />
+    <link rel="stylesheet" href="/static/css/text-prompt-modal.css" />
+    <link rel="stylesheet" href="/static/css/new-agent-flow.css" />
+    <link rel="stylesheet" href="/static/css/confirm-modal.css" />
+    <link rel="stylesheet" href="/static/css/session-restore-offer.css" />
+    <link rel="stylesheet" href="/static/css/sidebar-help.css" />
+    <link rel="stylesheet" href="/static/css/media-lightbox.css" />
+    <link rel="stylesheet" href="/static/css/recent-deleted.css" />
+    <link rel="stylesheet" href="/static/css/terminal-tools.css" />
+    <link rel="stylesheet" href="/static/css/phone-tabs-bar.css" />
+    <link rel="stylesheet" href="/static/css/copy-output.css" />
+    <link rel="stylesheet" href="/static/css/paste-fallback.css" />
+    <link rel="stylesheet" href="/static/css/modal-stack.css" />
+    <link rel="stylesheet" href="/static/css/config-editor.css" />
+    <link rel="stylesheet" href="/static/css/config-drawer.css" />
+    <link rel="stylesheet" href="/static/css/config-editor-modal.css" />
+    <link rel="stylesheet" href="/static/css/header-menu.css" />
+    <link rel="stylesheet" href="/static/css/header-master-all.css" />
+    <link rel="stylesheet" href="/static/css/home-bar.css" />
+    <link rel="stylesheet" href="/static/css/attribution-prompt.css" />
+    <link rel="stylesheet" href="/static/css/ios-chrome.css" />
+    <link rel="stylesheet" href="/static/css/slash-command-chips.css" />
+    <link rel="stylesheet" href="/static/css/slash-commands-fab.css" />
+    <link rel="stylesheet" href="/static/css/session-theme-tint.css" />
+    <link rel="stylesheet" href="/static/css/screen-chrome.css" />
+    <link rel="stylesheet" href="/static/css/terminal-opacity.css" />
+    <link rel="stylesheet" href="/static/css/terminal-background.css" />
+    <link rel="stylesheet" href="/static/css/deep-link-notice.css" />
+    <link rel="stylesheet" href="/static/css/effort-level.css" />
+    <link rel="stylesheet" href="/static/css/animation-pause.css" />
+    <link rel="stylesheet" href="/static/css/resting-row-effort.css" />
+    <link rel="stylesheet" href="/static/css/animation-types.css" />
+    <link rel="stylesheet" href="/static/dist/app.css" />
+    <link rel="stylesheet" href="/static/css/launchpad-host.css" />
+    <link rel="stylesheet" href="/static/css/terminal-grid.css" />
+    <link rel="stylesheet" href="/static/css/terminal-empty.css" />
+    <link rel="stylesheet" href="/static/css/terminal-key-bar.css" />
+    <link rel="stylesheet" href="/static/css/session-notes.css" />
+    <link rel="stylesheet" href="/static/css/terminal-carnivore.css" />
+    <link rel="stylesheet" href="/static/css/right-drawer.css" />
+    <link rel="stylesheet" href="/static/css/modal-glow.css" />
+    <link rel="stylesheet" href="/static/css/desktop-chrome.css" />
+    <link rel="stylesheet" href="/static/css/popup-focus.css" />
+
+    <link rel="stylesheet" href="/static/style-guide/guide.css" />
+</head>
+<body class="sg-body">
+    <div class="sg-app">
+        <header class="sg-topbar">
+            <span class="sg-topbar__label">carnivore</span>
+            <span class="sg-topbar__title">style guide</span>
+            <label class="sg-theme-picker" for="sg-theme-select">
+                <span class="sg-theme-picker__label">theme</span>
+                <select id="sg-theme-select" class="sg-theme-select" aria-describedby="sg-theme-status" disabled>
+                    <option value="carnivore">carnivore (default)</option>
+                </select>
+            </label>
+            <span class="sg-theme-status" id="sg-theme-status" role="status" aria-live="polite">loading themes</span>
+        </header>
+        <div class="sg-layout">
+            <nav class="sg-toc" id="sg-toc" aria-label="sections"></nav>
+            <main class="sg-main" id="sg-content" tabindex="-1">
+                <noscript>
+                    <p>this guide loads its sections with javascript. the sources are plain html under
+                    client/style-guide/sections/ and can be read directly.</p>
+                </noscript>
+            </main>
+        </div>
+    </div>
+
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/theme-var-writer.js"></script>
+    <script src="/static/js/themes/registry.js"></script>
+    <script src="/static/js/agent-family-icon.js"></script>
+    <script src="/static/js/wrapper-mark.js"></script>
+    <script src="/static/js/session-row-menu-icons.js"></script>
+    <script src="/static/js/modal-stack.js"></script>
+    <script src="/static/js/text-prompt-modal.js"></script>
+    <script src="/static/style-guide/guide.js"></script>
+    <script type="module" src="/static/js/i18n/boot.js"></script>
+    <script type="module" src="/static/dist/style-guide.js"></script>
+</body>
+</html>

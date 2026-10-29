@@ -1,0 +1,41 @@
+{
+  "api_routes": [
+    "GET /api/v1/swarm/cards/rules/{project_id}",
+    "PUT /api/v1/swarm/cards/rules/{project_id}"
+  ],
+  "area": "drawers",
+  "description": "The third slice of the swarm cards work: dealing and leases. When cards enter a project's Todo queue, the server sends the project agent one deal request after a 5 second window, however many cards arrived, and wakes it if it sleeps. The request lists the top of the queue and the free agents, and stays open until the agent deals a card or answers with hold; an unanswered request is sent again after 15 minutes, three times in all, then a line in the chat tells you. Dealing is off for every project that existed when this shipped: turn it on per project with the dealing switch (a project made later starts on). A card an agent holds in progress carries a lease: 10 minutes with no card write, no busy reading and no stop reading hands it back for a new deal (the old agent is told to stop and the next agent starts from the handoff note), or, with dealing off, marks it stalled with one line in the chat. An open question, a permission or dialog on screen, or a pause stops the clock; a plain session's working claim never lapses. A working agent whose handoff note is half an hour old is asked once to refresh it. This slice is backend only: the board screen waits for the layout pick.",
+  "docs": [
+    "docs/swarm-cards.md"
+  ],
+  "examples": [
+    "Add five cards to a project's queue in a burst with dealing on: the project agent gets one deal request that lists all five, not five requests.",
+    "A card held by an agent that has shown no sign of life for ten minutes goes back to Todo marked handed off, and the project agent is asked to deal it again; with dealing off it stays with the agent, marked stalled, and the chat says it is waiting for you."
+  ],
+  "how_to": [
+    "Call PUT /api/v1/swarm/cards/rules/{project_id} with dealing true to let the server deal that project's queue, false to stop it.",
+    "A project agent answers an open deal request with swarm_card_deal (a card and an agent) or with hold when nothing should start."
+  ],
+  "id": "swarm-cards-c3",
+  "issues": [
+    1385,
+    1397
+  ],
+  "keywords": [
+    "swarm",
+    "cards",
+    "dealing",
+    "lease",
+    "stalled",
+    "handoff"
+  ],
+  "media_exempt": "backend only; the board UI waits for the layout pick",
+  "name": "swarm cards: dealing and leases",
+  "since": "2026-10-07",
+  "status": "beta",
+  "summary": "new cards reach the project agent as one deal request, held cards lapse to a hand-off or a stalled line after ten quiet minutes, and dealing lands off for every existing project until you turn it on.",
+  "updated": "2026-10-07",
+  "where": [
+    "The board screen arrives in a later slice."
+  ]
+}

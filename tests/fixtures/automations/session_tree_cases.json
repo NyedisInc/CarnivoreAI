@@ -1,0 +1,281 @@
+{
+ "cases": [
+  {
+   "name": "empty",
+   "projects": [],
+   "sessions": [],
+   "automations": [],
+   "expected": []
+  },
+  {
+   "name": "full",
+   "projects": [
+    {
+     "id": 2,
+     "name": "site"
+    },
+    {
+     "id": 1,
+     "name": "api"
+    }
+   ],
+   "sessions": [
+    {
+     "session_uuid": "u-b",
+     "tmux_name": "beta",
+     "name": "Zed display",
+     "project_id": 1,
+     "archived_at": null
+    },
+    {
+     "session_uuid": "u-a",
+     "tmux_name": "Alpha",
+     "name": null,
+     "project_id": 1,
+     "archived_at": null
+    },
+    {
+     "session_uuid": "u-loose",
+     "tmux_name": "loose",
+     "name": null,
+     "project_id": null,
+     "archived_at": null
+    },
+    {
+     "session_uuid": "u-orphan",
+     "tmux_name": "orphan",
+     "name": null,
+     "project_id": 99,
+     "archived_at": null
+    },
+    {
+     "session_uuid": "u-old",
+     "tmux_name": "old",
+     "name": null,
+     "project_id": 1,
+     "archived_at": "2026-01-01"
+    },
+    {
+     "session_uuid": null,
+     "tmux_name": "no uuid",
+     "name": null,
+     "project_id": 1,
+     "archived_at": null
+    }
+   ],
+   "automations": [
+    {
+     "name": "on-session",
+     "enabled": true,
+     "next_fire_at": 500,
+     "last_run": {
+      "run_id": "r1",
+      "slot_at": 100,
+      "started_at": 100,
+      "ended_at": 105
+     },
+     "project_id": 2,
+     "target": {
+      "kind": "session_message",
+      "session_uuid": "u-a"
+     }
+    },
+    {
+     "name": "on-project",
+     "enabled": true,
+     "next_fire_at": 300,
+     "last_run": {
+      "run_id": "r2",
+      "slot_at": 200,
+      "started_at": 200,
+      "ended_at": 205
+     },
+     "project_id": 2,
+     "target": {
+      "kind": "recipe",
+      "recipe": "scrooge"
+     }
+    },
+    {
+     "name": "on-target-project",
+     "enabled": true,
+     "next_fire_at": 900,
+     "last_run": null,
+     "project_id": null,
+     "target": {
+      "kind": "command",
+      "command": "x",
+      "project_id": 1
+     }
+    },
+    {
+     "name": "off-but-soon",
+     "enabled": false,
+     "next_fire_at": 1,
+     "last_run": null,
+     "project_id": 2,
+     "target": {
+      "kind": "recipe",
+      "recipe": "scrooge"
+     }
+    },
+    {
+     "name": "on-gone-project",
+     "enabled": true,
+     "next_fire_at": null,
+     "last_run": null,
+     "project_id": 99,
+     "target": {
+      "kind": "recipe",
+      "recipe": "scrooge"
+     }
+    },
+    {
+     "name": "on-gone-session",
+     "enabled": true,
+     "next_fire_at": null,
+     "last_run": null,
+     "project_id": null,
+     "target": {
+      "kind": "session_message",
+      "session_uuid": "u-gone"
+     }
+    },
+    {
+     "name": "nowhere",
+     "enabled": true,
+     "next_fire_at": null,
+     "last_run": null,
+     "project_id": null,
+     "target": {
+      "kind": "recipe",
+      "recipe": "scrooge"
+     }
+    },
+    {
+     "name": "Zeta",
+     "enabled": true,
+     "next_fire_at": null,
+     "last_run": null,
+     "project_id": 1,
+     "target": {
+      "kind": "recipe",
+      "recipe": "scrooge"
+     }
+    },
+    {
+     "name": "alpha-two",
+     "enabled": true,
+     "next_fire_at": null,
+     "last_run": null,
+     "project_id": 1,
+     "target": {
+      "kind": "recipe",
+      "recipe": "scrooge"
+     }
+    }
+   ],
+   "expected": [
+    {
+     "key": "project:1",
+     "kind": "project",
+     "label": "api",
+     "project_id": 1,
+     "session_uuid": null,
+     "automations": [
+      "alpha-two",
+      "on-target-project",
+      "Zeta"
+     ],
+     "children": [
+      {
+       "key": "session:u-a",
+       "kind": "session",
+       "label": "Alpha",
+       "project_id": 1,
+       "session_uuid": "u-a",
+       "automations": [
+        "on-session"
+       ],
+       "children": [],
+       "next_fire_at": 500,
+       "last_run": "r1",
+       "count": 1
+      },
+      {
+       "key": "session:u-b",
+       "kind": "session",
+       "label": "beta",
+       "project_id": 1,
+       "session_uuid": "u-b",
+       "automations": [],
+       "children": [],
+       "next_fire_at": null,
+       "last_run": null,
+       "count": 0
+      }
+     ],
+     "next_fire_at": 500,
+     "last_run": "r1",
+     "count": 4
+    },
+    {
+     "key": "project:2",
+     "kind": "project",
+     "label": "site",
+     "project_id": 2,
+     "session_uuid": null,
+     "automations": [
+      "off-but-soon",
+      "on-project"
+     ],
+     "children": [],
+     "next_fire_at": 300,
+     "last_run": "r2",
+     "count": 2
+    },
+    {
+     "key": "unassigned",
+     "kind": "unassigned",
+     "label": "",
+     "project_id": null,
+     "session_uuid": null,
+     "automations": [
+      "nowhere",
+      "on-gone-project",
+      "on-gone-session"
+     ],
+     "children": [
+      {
+       "key": "session:u-loose",
+       "kind": "session",
+       "label": "loose",
+       "project_id": null,
+       "session_uuid": "u-loose",
+       "automations": [],
+       "children": [],
+       "next_fire_at": null,
+       "last_run": null,
+       "count": 0
+      },
+      {
+       "key": "session:u-orphan",
+       "kind": "session",
+       "label": "orphan",
+       "project_id": null,
+       "session_uuid": "u-orphan",
+       "automations": [],
+       "children": [],
+       "next_fire_at": null,
+       "last_run": null,
+       "count": 0
+      }
+     ],
+     "next_fire_at": null,
+     "last_run": null,
+     "count": 3
+    }
+   ]
+  }
+ ]
+}

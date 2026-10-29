@@ -1,0 +1,45 @@
+{
+  "api_routes": [
+    "src/api/blueprints_routes.py",
+    "src/api/blueprints_launch_routes.py"
+  ],
+  "area": "terminal",
+  "docs": [],
+  "examples": [
+    "Start the same three-agent setup (planner, builder, reviewer) for every new feature.",
+    "On a phone the page is one bar: the back arrow at the left, the title over the search in one frame, the filters that fit and one grid/list flip at the right."
+  ],
+  "how_to": [
+    "Open Blueprints and choose new blueprint, or import one from a project.",
+    "List the sessions it should start (agent, folder, first prompt).",
+    "Launch it to start the whole team at once.",
+    "Each card shows its members' provider marks in one tile, family tags (claude 2, codex 1) and the session count in the footer, with launch under the member list.",
+    "Launching again wakes the sessions that are asleep, keeps the ones running and creates only the missing ones; if the blueprint's layout already exists it asks before updating it.",
+    "Search, sort by name or recent, and flip between cards and the list from the toolbar; the choice is remembered on this device."
+  ],
+  "id": "blueprints",
+  "issues": [
+    759,
+    1316,
+    1325,
+    1327
+  ],
+  "keywords": [
+    "blueprints",
+    "team"
+  ],
+  "media": [],
+  "name": "Blueprints",
+  "since": "2026-09-26",
+  "status": "stable",
+  "summary": "launch a whole team of sessions at once from a saved spec, instead of starting each one by hand.",
+  "surfaces": [
+    "web/src/lib/blueprints/BlueprintsScreen.svelte",
+    "web/src/lib/blueprints/LaunchModal.svelte"
+  ],
+  "updated": "2026-10-04",
+  "where": [
+    "Menu tab, Blueprints."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

@@ -1,0 +1,34 @@
+{
+  "api_routes": [
+    "src/api/catalog_install_routes.py",
+    "src/api/catalog_installed_routes.py"
+  ],
+  "area": "skills-catalog",
+  "docs": [],
+  "examples": [
+    "Install a skill and use it in your next session without copying files by hand.",
+    "Install a plugin that adds an MCP server: the sheet prints the exact command it will run, and you tick to allow it."
+  ],
+  "how_to": [
+    "Press install on a card. The skill is added where your sessions can use it.",
+    "A plugin that declares an MCP server shows a boxed notice with the full command and the names of the environment variables it gets (never their values). The install button stays off until you tick the box."
+  ],
+  "id": "skills-catalog-install",
+  "issues": [
+    1811
+  ],
+  "keywords": [
+    "install"
+  ],
+  "media": [],
+  "name": "Install from the catalog",
+  "since": "2026-09-15",
+  "status": "stable",
+  "summary": "install a skill or plugin from the catalog straight into a session.",
+  "surfaces": [],
+  "updated": "2026-10-15",
+  "where": [
+    "The install button on each skill card in the catalog."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

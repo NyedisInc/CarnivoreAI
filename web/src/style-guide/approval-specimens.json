@@ -1,0 +1,902 @@
+[
+ {
+  "id": "purge",
+  "group": "destructive",
+  "label": "purge session (typed confirm)",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "session_purge",
+   "args": {
+    "target": "u1",
+    "plan_fingerprint": "7a01be"
+   },
+   "target": "",
+   "summary": "PURGE asleep session quartz held-tell test for good: 41 database rows, 6 files. Plan 7a01be.",
+   "plain": "",
+   "confirm_text": "quartz held-tell test",
+   "live": false
+  },
+  "display": {
+   "verb": "purge",
+   "object": "session",
+   "name": "quartz held-tell test",
+   "tone": "danger",
+   "consequences": [
+    {
+     "key": "purge_gone",
+     "params": {}
+    },
+    {
+     "key": "cannot_undo",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "fingerprint",
+     "value": "7a01be"
+    },
+    {
+     "key": "summary",
+     "value": "PURGE asleep session quartz held-tell test for good: 41 database rows, 6 files. Plan 7a01be."
+    }
+   ]
+  }
+ },
+ {
+  "id": "delete-live",
+  "group": "destructive",
+  "label": "delete session (running)",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "session_delete",
+   "args": {},
+   "target": "quartz held-tell test",
+   "summary": "DELETE session quartz held-tell test (its tmux session is killed)",
+   "plain": "",
+   "confirm_text": "",
+   "live": true
+  },
+  "display": {
+   "verb": "delete",
+   "object": "session",
+   "name": "quartz held-tell test",
+   "tone": "danger",
+   "consequences": [
+    {
+     "key": "session_killed",
+     "params": {}
+    },
+    {
+     "key": "record_leaves",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "summary",
+     "value": "DELETE session quartz held-tell test (its tmux session is killed)"
+    }
+   ]
+  }
+ },
+ {
+  "id": "delete-asleep",
+  "group": "destructive",
+  "label": "delete session (asleep)",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "session_delete",
+   "args": {},
+   "target": "quartz held-tell test",
+   "summary": "DELETE asleep session quartz held-tell test",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "delete",
+   "object": "session",
+   "name": "quartz held-tell test",
+   "tone": "danger",
+   "consequences": [
+    {
+     "key": "nothing_running",
+     "params": {}
+    },
+    {
+     "key": "record_leaves",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "summary",
+     "value": "DELETE asleep session quartz held-tell test"
+    }
+   ]
+  }
+ },
+ {
+  "id": "restart-live",
+  "group": "destructive",
+  "label": "restart session (running)",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "session_restart",
+   "args": {
+    "pane_live": true
+   },
+   "target": "quartz held-tell test",
+   "summary": "restart session quartz held-tell test",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "restart",
+   "object": "session",
+   "name": "quartz held-tell test",
+   "tone": "danger",
+   "consequences": [
+    {
+     "key": "agent_stops",
+     "params": {}
+    },
+    {
+     "key": "conversation_resumes",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "summary",
+     "value": "restart session quartz held-tell test"
+    }
+   ]
+  }
+ },
+ {
+  "id": "project-delete",
+  "group": "destructive",
+  "label": "delete project",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "project_delete",
+   "args": {
+    "project": 3
+   },
+   "target": "",
+   "summary": "DELETE project \"meadow willow 2026\" for good",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "delete",
+   "object": "project",
+   "name": "meadow willow 2026",
+   "tone": "danger",
+   "consequences": [
+    {
+     "key": "project_deleted",
+     "params": {}
+    },
+    {
+     "key": "folder_kept",
+     "params": {}
+    },
+    {
+     "key": "cannot_undo",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "summary",
+     "value": "DELETE project \"meadow willow 2026\" for good"
+    }
+   ]
+  }
+ },
+ {
+  "id": "company-delete",
+  "group": "destructive",
+  "label": "delete company",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "company_delete",
+   "args": {
+    "company_id": 7
+   },
+   "target": "",
+   "summary": "delete \"Personal\" (its projects become orphaned)",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "delete",
+   "object": "company",
+   "name": "Personal",
+   "tone": "danger",
+   "consequences": [
+    {
+     "key": "company_deleted",
+     "params": {}
+    },
+    {
+     "key": "folder_untouched",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "summary",
+     "value": "delete \"Personal\" (its projects become orphaned)"
+    }
+   ]
+  }
+ },
+ {
+  "id": "stop",
+  "group": "changes",
+  "label": "stop session",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "session_stop",
+   "args": {},
+   "target": "quartz held-tell test",
+   "summary": "stop (sleep) the session",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "stop",
+   "object": "session",
+   "name": "quartz held-tell test",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "sleeps",
+     "params": {}
+    },
+    {
+     "key": "conversation_kept",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "summary",
+     "value": "stop (sleep) the session"
+    }
+   ]
+  }
+ },
+ {
+  "id": "wake",
+  "group": "changes",
+  "label": "wake session",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "session_wake",
+   "args": {
+    "target": "u2"
+   },
+   "target": "quartz held-tell test",
+   "summary": "session_wake on asleep quartz held-tell test",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "wake",
+   "object": "session",
+   "name": "quartz held-tell test",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "wakes",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "summary",
+     "value": "session_wake on asleep quartz held-tell test"
+    }
+   ]
+  }
+ },
+ {
+  "id": "restart-asleep",
+  "group": "changes",
+  "label": "restart session (asleep)",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "session_restart",
+   "args": {
+    "pane_live": false
+   },
+   "target": "quartz held-tell test",
+   "summary": "restart session quartz held-tell test",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "restart",
+   "object": "session",
+   "name": "quartz held-tell test",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "conversation_resumes",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "summary",
+     "value": "restart session quartz held-tell test"
+    }
+   ]
+  }
+ },
+ {
+  "id": "move-folder",
+  "group": "changes",
+  "label": "move project (folder renamed)",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "project_move",
+   "args": {
+    "project": 3,
+    "new_root": "/Users/you/Development/Org/Personal/quartz",
+    "move_folder": true,
+    "plan_fingerprint": "abc123"
+   },
+   "target": "",
+   "summary": "move project \"meadow willow 2026\" to \"/Users/you/Development/Org/Personal/quartz\": rename the folder (2 sessions; plan abc123)",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "move",
+   "object": "project",
+   "name": "meadow willow 2026",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "moves_to",
+     "params": {
+      "to": "~/Development/Org/Personal/quartz"
+     }
+    },
+    {
+     "key": "folder_renamed",
+     "params": {}
+    },
+    {
+     "key": "sessions_follow",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "new_root",
+     "value": "/Users/you/Development/Org/Personal/quartz"
+    },
+    {
+     "key": "fingerprint",
+     "value": "abc123"
+    },
+    {
+     "key": "summary",
+     "value": "move project \"meadow willow 2026\" to \"/Users/you/Development/Org/Personal/quartz\": rename the folder (2 sessions; plan abc123)"
+    }
+   ]
+  }
+ },
+ {
+  "id": "move-repoint",
+  "group": "changes",
+  "label": "move project (re-point only)",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "project_move",
+   "args": {
+    "project": 3,
+    "new_root": "/Users/you/Development/Org/Personal/quartz",
+    "move_folder": false,
+    "plan_fingerprint": "abc123"
+   },
+   "target": "",
+   "summary": "move project \"meadow willow 2026\" to \"/Users/you/Development/Org/Personal/quartz\": re-point (folder already there)",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "move",
+   "object": "project",
+   "name": "meadow willow 2026",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "moves_to",
+     "params": {
+      "to": "~/Development/Org/Personal/quartz"
+     }
+    },
+    {
+     "key": "folder_repointed",
+     "params": {}
+    },
+    {
+     "key": "sessions_follow",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "new_root",
+     "value": "/Users/you/Development/Org/Personal/quartz"
+    },
+    {
+     "key": "fingerprint",
+     "value": "abc123"
+    },
+    {
+     "key": "summary",
+     "value": "move project \"meadow willow 2026\" to \"/Users/you/Development/Org/Personal/quartz\": re-point (folder already there)"
+    }
+   ]
+  }
+ },
+ {
+  "id": "project-create",
+  "group": "changes",
+  "label": "create project",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "project_create",
+   "args": {
+    "name": "meadow willow 2026",
+    "path": "/Users/you/carnivore-projects/meadow-willow-2026"
+   },
+   "target": "",
+   "summary": "create project \"meadow willow 2026\" in \"/Users/you/carnivore-projects/meadow-willow-2026\"",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "create",
+   "object": "project",
+   "name": "meadow willow 2026",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "in_folder",
+     "params": {
+      "path": "~/carnivore-projects/meadow-willow-2026"
+     }
+    }
+   ],
+   "detail": [
+    {
+     "key": "path",
+     "value": "/Users/you/carnivore-projects/meadow-willow-2026"
+    },
+    {
+     "key": "summary",
+     "value": "create project \"meadow willow 2026\" in \"/Users/you/carnivore-projects/meadow-willow-2026\""
+    }
+   ]
+  }
+ },
+ {
+  "id": "project-rename",
+  "group": "changes",
+  "label": "rename project",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "project_rename",
+   "args": {
+    "project": 3,
+    "name": "meadow willow 2027"
+   },
+   "target": "",
+   "summary": "rename project \"meadow willow 2026\" to \"meadow willow 2027\"",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "rename",
+   "object": "project",
+   "name": "meadow willow 2026",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "new_name",
+     "params": {
+      "name": "meadow willow 2027"
+     }
+    },
+    {
+     "key": "folder_untouched",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "summary",
+     "value": "rename project \"meadow willow 2026\" to \"meadow willow 2027\""
+    }
+   ]
+  }
+ },
+ {
+  "id": "project-archive",
+  "group": "calm",
+  "label": "archive project",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "project_archive",
+   "args": {
+    "project": 3
+   },
+   "target": "",
+   "summary": "archive project \"meadow willow 2026\"",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "archive",
+   "object": "project",
+   "name": "meadow willow 2026",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "list_only",
+     "params": {}
+    },
+    {
+     "key": "folder_untouched",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "summary",
+     "value": "archive project \"meadow willow 2026\""
+    }
+   ]
+  }
+ },
+ {
+  "id": "project-restore",
+  "group": "calm",
+  "label": "restore project",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "project_unarchive",
+   "args": {
+    "project": 3
+   },
+   "target": "",
+   "summary": "restore project \"meadow willow 2026\"",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "restore",
+   "object": "project",
+   "name": "meadow willow 2026",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "list_only",
+     "params": {}
+    },
+    {
+     "key": "folder_untouched",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "summary",
+     "value": "restore project \"meadow willow 2026\""
+    }
+   ]
+  }
+ },
+ {
+  "id": "company-create",
+  "group": "calm",
+  "label": "create company",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "company_create",
+   "args": {
+    "name": "Personal",
+    "parent_id": null
+   },
+   "target": "",
+   "summary": "create company \"Personal\" at the top level",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "create",
+   "object": "company",
+   "name": "Personal",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "top_level",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "summary",
+     "value": "create company \"Personal\" at the top level"
+    }
+   ]
+  }
+ },
+ {
+  "id": "company-rename",
+  "group": "calm",
+  "label": "rename company",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "company_rename",
+   "args": {
+    "company_id": 7,
+    "name": "Home"
+   },
+   "target": "",
+   "summary": "rename \"Personal\" to \"Home\" (its projects stay filed under it)",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "rename",
+   "object": "company",
+   "name": "Personal",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "new_name",
+     "params": {
+      "name": "Home"
+     }
+    },
+    {
+     "key": "folder_untouched",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "summary",
+     "value": "rename \"Personal\" to \"Home\" (its projects stay filed under it)"
+    }
+   ]
+  }
+ },
+ {
+  "id": "company-parent",
+  "group": "calm",
+  "label": "set company parent (generic card)",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "company_parent_set",
+   "args": {
+    "company_id": 7,
+    "parent_id": 2
+   },
+   "target": "",
+   "summary": "move \"Personal\" and every company under it to under \"Org\"",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "move",
+   "object": "company",
+   "name": "Personal",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "under_company",
+     "params": {
+      "company": "Org"
+     }
+    },
+    {
+     "key": "companies_follow",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "summary",
+     "value": "move \"Personal\" and every company under it to under \"Org\""
+    }
+   ]
+  }
+ },
+ {
+  "id": "company-hq",
+  "group": "calm",
+  "label": "set company HQ",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "company_hq_set",
+   "args": {
+    "company_id": 7,
+    "project_id": 3
+   },
+   "target": "",
+   "summary": "make \"meadow willow 2026\" (project) the HQ project of \"Personal\" (folders and sessions untouched)",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "set",
+   "object": "company_home_project",
+   "name": "Personal",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "home_set",
+     "params": {
+      "project": "meadow willow 2026"
+     }
+    },
+    {
+     "key": "folder_untouched",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "summary",
+     "value": "make \"meadow willow 2026\" (project) the HQ project of \"Personal\" (folders and sessions untouched)"
+    }
+   ]
+  }
+ },
+ {
+  "id": "dialog",
+  "group": "calm",
+  "label": "answer a session's dialog",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "session_dialog_answer",
+   "args": {
+    "target": "u1",
+    "choice": {
+     "option": "Yes"
+    }
+   },
+   "target": "quartz held-tell test",
+   "summary": "answer the dialog on quartz held-tell test with option Yes",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "answer",
+   "object": "session_dialog",
+   "name": "quartz held-tell test",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "answers_with",
+     "params": {
+      "choice": "Yes"
+     }
+    },
+    {
+     "key": "agent_continues",
+     "params": {}
+    }
+   ],
+   "detail": [
+    {
+     "key": "summary",
+     "value": "answer the dialog on quartz held-tell test with option Yes"
+    }
+   ]
+  }
+ },
+ {
+  "id": "send",
+  "group": "calm",
+  "label": "send a message to a session (generic card)",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "session_send_message",
+   "args": {
+    "target": "u1"
+   },
+   "target": "quartz held-tell test",
+   "summary": "send a message to quartz held-tell test: 42 characters",
+   "plain": "send a message to quartz held-tell test: 42 characters",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "session send message",
+   "object": "",
+   "name": "quartz held-tell test",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "summary",
+     "params": {
+      "text": "send a message to quartz held-tell test: 42 characters"
+     }
+    }
+   ],
+   "detail": [
+    {
+     "key": "summary",
+     "value": "send a message to quartz held-tell test: 42 characters"
+    }
+   ]
+  }
+ },
+ {
+  "id": "generic",
+  "group": "calm",
+  "label": "a tool with no card of its own",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "automation_run_now",
+   "args": {
+    "automation_id": 4
+   },
+   "target": "",
+   "summary": "run automation \"nightly digest\" now",
+   "plain": "run automation \"nightly digest\" now",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "automation run now",
+   "object": "",
+   "name": "nightly digest",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "summary",
+     "params": {
+      "text": "run automation \"nightly digest\" now"
+     }
+    }
+   ],
+   "detail": [
+    {
+     "key": "summary",
+     "value": "run automation \"nightly digest\" now"
+    }
+   ]
+  }
+ }
+]

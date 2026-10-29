@@ -1,0 +1,56 @@
+{
+  "name": "Desktop Dock app",
+  "issues": [
+    2310,
+    2318,
+    2323,
+    2354
+  ],
+  "keywords": [
+    "dock",
+    "badge",
+    "menu bar",
+    "app menu",
+    "electron",
+    "desktop",
+    "lifecycle"
+  ],
+  "summary": "Carnivore runs as a regular Mac app in the Dock: closing the window leaves it running, the Dock icon shows how many sessions wait on you, a Dock menu starts new work, and a full menu bar (File, Edit, View, Session, Window, Help) acts on the session in view.",
+  "where": [
+    "The Dock icon and its right-click menu while the desktop app runs.",
+    "The Mac menu bar at the top of the screen: Carnivore, File, Edit, View, Session, Window, Help."
+  ],
+  "how_to": [
+    "Click the Dock icon to bring the window back where you left it; closing the window does not quit the app or stop the engine.",
+    "Read the red number on the Dock icon: it is how many sessions are waiting on you, the same count as the menu bar icon's Need You row.",
+    "Right-click or hold the Dock icon for New Session, Recent Projects and the sessions waiting on you.",
+    "Watch the Dock icon hop once when a new question arrives while Carnivore is behind other windows.",
+    "Use File, Session and Window in the menu bar: New Session, New Window, Restart, Stop, Rename, Answer Waiting Question, which act on the session you are looking at.",
+    "Turn the menu bar icon off or on in settings, desktop app, show menu bar icon; the Dock app is unaffected."
+  ],
+  "examples": [
+    "Close the window, keep working in the terminal app, and see the Dock badge turn 2 when two agents ask for you.",
+    "Right-click the Dock icon and pick a recent project to start a session in it.",
+    "Press Cmd-Q for a one-time notice that the engine keeps your agents running."
+  ],
+  "docs": [
+    "docs/desktop-app.md",
+    "docs/desktop-bridge.md"
+  ],
+  "surfaces": [
+    "macOS/main.js",
+    "macOS/dock-presence.js",
+    "macOS/tray-presence.js",
+    "macOS/app-lifecycle-policy.js",
+    "macOS/quit-notice.js",
+    "macOS/app-menu/index.js",
+    "macOS/app-menu/commands.js",
+    "web/src/lib/desktop-menu/menu-commands.ts"
+  ],
+  "media_exempt": "native: the macOS Dock, its badge and menu, and the system menu bar, which no browser capture can show",
+  "id": "desktop-dock-app",
+  "area": "desktop-app",
+  "since": "2026-10-23",
+  "updated": "2026-10-23",
+  "status": "beta"
+}

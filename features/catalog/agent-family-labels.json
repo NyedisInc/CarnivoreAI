@@ -1,0 +1,31 @@
+{
+  "api_routes": [],
+  "area": "home",
+  "docs": [],
+  "examples": [
+    "Tell at a glance which of two sessions in the same folder is claude and which is codex."
+  ],
+  "how_to": [
+    "Read the mark: each harness (claude, codex and others) has its own."
+  ],
+  "id": "agent-family-labels",
+  "issues": [],
+  "keywords": [
+    "claude",
+    "codex",
+    "harness"
+  ],
+  "media": [],
+  "name": "Agent family labels",
+  "since": "2026-09-10",
+  "status": "stable",
+  "summary": "see at a glance whether a session is running claude, codex or another supported harness.",
+  "surfaces": [
+    "web/src/lib/launchpad/AgentFamilyPill.svelte"
+  ],
+  "updated": "2026-09-27",
+  "where": [
+    "Next to each session in the drawer and in the running sessions list."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

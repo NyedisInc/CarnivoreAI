@@ -1,0 +1,79 @@
+{
+  "api_routes": [
+    "src/cplugs/host/routes.py",
+    "src/cplugs/host/sideload_routes.py"
+  ],
+  "area": "settings",
+  "description": "Every plugin built into this app, on the shared manager frame, one kind of row with one switch each. A plugin that is switched off stops contributing to every surface it adds to (the session row menu, a tab, a menu link). Mark unread and share read only are plugins that ship on; huddle ships on for a clean install and keeps an existing install's choice. The choice is stored on the server, so every device agrees. Built-in plugins are part of the app, so none of those can be installed or removed here. Store plugins from the catalog sit on the same page as the same card warez draws (hero image on top, same order as warez): a plugin that is not installed shows the same add control as warez (add, with its caret to pick global or a project), a plugin with an update due shows update, and only an installed plugin shows its switch, which turns it off for the picked project. A plugin that runs a program (an MCP server) prints the full command on its card; add goes through warez's one-click route and opens the install sheet when the server asks for consent. Turning one on grants what it asks, listed in its details. The details are tabbed: overview, settings, permissions and data, with the state and switch always at the top and a plain reason when a plugin is held or waiting for a grant. Each permission is shown by risk tier, a plugin that asks for something dangerous in combination carries a warning, and a plugin's recent permission use is listed in its details. An agent can turn a plugin off or revoke grants over MCP, never turn one on or add a grant.",
+  "docs": [
+    "docs/cplugs.md",
+    "docs/manager-frame.md",
+    "docs/web-build-history.md"
+  ],
+  "examples": [
+    "Turn off share read only on a computer where nobody should hand out spectator links.",
+    "Turn off mark unread if you never use it and want a shorter session menu.",
+    "Turn on huddle to get the shared list between you and claude.",
+    "On a phone the page is one bar: the back arrow at the left, the title over the search in one frame, the filters that fit and one grid/list flip at the right.",
+    "Turn on flow chart while the swarm plugin is off and see it wait for it: turn the swarm plugin on and it starts.",
+    "Open mcp health, press the data tab and purge it while it is off: its folder, settings, grants and stored secrets go, and a plugin that ships on comes back on.",
+    "Press add on the rea card, or its caret to pick a project: the same control warez draws. Once installed it shows its switch; switch it off and it is gone from the picked project."
+  ],
+  "how_to": [
+    "Open the menu tab of the agents drawer and choose plugins, or press view all on the plugins card.",
+    "Search, pick a state (all, on, off) from the state facet, or sort by name or on first in the toolbar; press its name for its details.",
+    "Press its switch to turn it on or off; turning one on grants what its details say it asks.",
+    "Each plugin is one 28px row with its switch first and no repeated kind mark; press the name or the row to open its details. What this page cannot do is in the (i) beside the count.",
+    "Use the grid and list buttons at the right of the search bar to switch views; the choice is remembered on this device. Grid is the default.",
+    "On a phone, the back arrow at the top left leaves the page; the search sits beside the title and the filters and grid/list toggle share the one row below.",
+    "A plugin's details are four tabs under a strip with its name, state and switch: overview, settings, permissions and data. Arrow keys move between the tabs, and the tab you pick stays picked as you open other plugins, remembered on this device.",
+    "A plugin that has settings shows a gear on its card: press it to open the plugin's details on the settings tab. The same pane opens from #plugins/<plugin id>/settings. Plugin settings are not in the app Settings: restore points (save), the conversation index and usage stats keep their panels in their own details too.",
+    "A plugin waiting on a grant, or held because it could not start, shows a yellow strip under its name saying why. Press review to open its permissions tab: each permission is listed by risk with granted or not granted; tick each medium and high one yourself, there is no tick-all, then press grant. The tab also lists what the plugin used lately.",
+    "A plugin that is on but needs another plugin that is off reads on, but doing nothing until a plugin it needs is on, and its details list what it is waiting for (the swarm plugin, for flow chart and nudge).",
+    "A plugin's details list its dependencies: what it needs (other plugins, app features such as crosstalk or the save pipeline, the minimum app version), each marked ok, off or missing, and which plugins need it. A missing app feature or too old an app refuses turning it on and says why. Turning off a plugin that other plugins need asks first and names them.",
+    "The data tab shows how much the plugin stores and its folder. Purge data asks first with the number of files and the size, and only deletes when you confirm; it is off while the plugin is on, so turn it off first.",
+    "Store plugins: press add on a card (the caret picks global or a project), or update when one is due. An installed plugin shows its switch; switching off removes it from the picked project only."
+  ],
+  "id": "plugins-page",
+  "issues": [
+    482,
+    765,
+    1306,
+    1313,
+    1316,
+    1236,
+    1611,
+    1696,
+    1819
+  ],
+  "keywords": [
+    "plugins",
+    "enable",
+    "disable",
+    "manager",
+    "huddle",
+    "unread",
+    "share",
+    "downloadable",
+    "catalog",
+    "project"
+  ],
+  "media": [],
+  "name": "Plugins page",
+  "since": "2026-09-27",
+  "status": "stable",
+  "summary": "see every plugin in this build as a card with its icon, tags and author, and switch each one on or off.",
+  "surfaces": [
+    "web/src/lib/plugins-page/PluginsScreen.svelte",
+    "web/src/lib/plugins-page/PluginPane.svelte",
+    "web/src/lib/plugins-page/CatalogPluginFacts.svelte",
+    "web/src/lib/plugins-page/catalog-plugins.svelte.ts"
+  ],
+  "updated": "2026-10-15",
+  "where": [
+    "Menu tab, Plugins.",
+    "The plugins card's view all.",
+    "The #plugins link."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

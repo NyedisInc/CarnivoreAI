@@ -1,0 +1,712 @@
+<h2 class="sg-h2">operations center cells, frames and the grid</h2>
+<p class="sg-lead">The home page and the terminal page are grids of cells (the operations center, <code>web/src/opscenter/</code>).
+Every cell lives in the same frame: <code>CellFrame</code> draws the hairline box and the one widget header
+(<code>WidgetHead</code>, below: <a href="#cells-widget-header">the widget header</a>); the cell draws only its body. A new component on either page is a new cell kind, not a new frame.</p>
+
+<div class="sg-grid-2">
+    <div class="sg-specimen">
+        <div class="sg-specimen__label"><span>live, inert</span><code>web/src/opscenter/shell/CellFrame.svelte</code><span>the notes cell's frame</span></div>
+        <div class="sg-specimen__body" inert><div id="sg-live-cellframe"></div></div>
+    </div>
+    <div class="sg-specimen">
+        <div class="sg-specimen__label"><span>live, inert</span><span>a frame with a count (closed sessions)</span></div>
+        <div class="sg-specimen__body" inert><div id="sg-live-cellframe-count"></div></div>
+    </div>
+    <div class="sg-specimen">
+        <div class="sg-specimen__label"><span>live, inert</span><span>a header with a sort only group, view all and the close x</span></div>
+        <div class="sg-specimen__body" inert><div id="sg-live-widget-head-sort"></div></div>
+    </div>
+    <div class="sg-specimen">
+        <div class="sg-specimen__label"><span>live, inert</span><code>web/src/opscenter/shell/PlacementHead.svelte</code><span>a drawer card's header: icon menu, name, gear and pop out, close</span></div>
+        <div class="sg-specimen__body" inert><div id="sg-live-placement-head"></div></div>
+    </div>
+</div>
+
+<dl class="sg-facts">
+    <dt>frame</dt>
+    <dd><code>&lt;CellFrame meta={metaFor(slot, META)} instance={slot} widthState heightState store body /&gt;</code>. Optional:
+        <code>count</code> and <code>suffix</code> after the title, <code>collapsed</code> and <code>onToggleCollapse</code>,
+        <code>summary</code> and <code>total</code> for the phone's one-line summary (<code>PhoneSummary</code>),
+        <code>expanded</code>, <code>onRightControl</code>. The body is a snippet; the frame renders the widget header
+        (<code>WidgetHead.svelte</code>, <code>.oc-frame-title</code>, 31px for every widget) and the menu button
+        (<code>CornerMenu.svelte</code>). The frame on the page terminal has no border of its own.</dd>
+    <dt>cell record</dt>
+    <dd>Every cell kind is a record in <code>web/src/opscenter/engine/meta.ts</code>: <code>id</code>, <code>titleKey</code>
+        (a catalog key, <code>opscenter.cell.&lt;id&gt;.title</code>), <code>icon</code> and <code>iconTone</code> (a token name
+        without the dashes), <code>showCount</code>, <code>chrome</code>, <code>titleHeight</code>, <code>phoneOrder</code>,
+        the default row, index, fraction and height, <code>minPx</code> and <code>minHeight</code>, and named
+        <code>widthStates</code> and <code>heightStates</code>. The body switches what it shows on the named state, never on a
+        raw pixel width. Every threshold is derived, and says so in a comment.</dd>
+    <dt>kinds</dt>
+    <dd>The list of record is the folder <code>web/src/opscenter/cells/</code> and its <code>registry.ts</code>; the kinds today are:
+        activity log, analytics, automations (and all automations), bookmarks (and all bookmarks), browser, changes, closed sessions,
+        crosstalk, developer, files, keep awake, ledger, machine stats, notes, pipeline, plugins, projects, questions, running sessions,
+        scheduled tasks, session contents, skills, stat tile, task list, Task Manager (and all Task Manager lists), tasks (and all tasks),
+        themes, timeline, war room, and the terminal family (terminal, live terminal, viewer, tab group).
+        Each is <code>web/src/opscenter/cells/&lt;kind&gt;/Cell.svelte</code>, mounted by <code>CellHost.svelte</code>.</dd>
+    <dt>stat tile</dt>
+    <dd>One metric per widget (issue #1157 part 2): working now, sessions (24h), open projects, ledger usage, sessions alive,
+        subagents running, each its own singleton (<code>engine/stat-tile-meta.ts</code>), all drawn by
+        <code>cells/stat-tile/Cell.svelte</code>, which draws nothing itself: it hands the figures to the base component <code>StatTile.svelte</code>
+        (<code>.oc-stat-tile</code>, see "base components"), the one tile the gallery KPI card draws too. The tile is a bare cell (no frame chrome),
+        so <code>.oc-stat-tile--framed</code> draws the card edge: one hairline on <code>--oc-ground-panel</code>, the card's own corner.
+        <code>.oc-stat-tile__head</code> holds the small bare glyph <code>.oc-stat-tile__icon</code> (the tile's own stat tone,
+        <code>--_stat-tone</code>, set from the card's <code>--oc-stat-*</code> token) and the tracked uppercase <code>.oc-stat-tile__label</code>;
+        <code>.oc-stat-tile__body</code> holds the bright <code>.oc-stat-tile__figure</code> (<code>.oc-stat-tile__figure--dim</code> while loading,
+        <code>.oc-stat-tile__figure--note</code> for an endpoint's own sentence) and, two units wide, <code>.oc-stat-tile__delta</code>. The figure is sized
+        from the tile's height. <code>.oc-stat-tile__foot</code> pins to the bottom edge and holds one real secondary line, <code>.oc-stat-tile__sub</code>
+        (of N alive, live and closed, projects with live sessions, reset countdown, stopped, subagent parents), plus a
+        <code>.oc-stat-tile__meter</code> / <code>.oc-stat-tile__meter-fill</code> bar on ledger usage and sessions alive. A shrunk tile
+        (<code>.oc-stat-tile--line</code>) collapses to label left, figure right. Two units tall (<code>.oc-stat-tile--graph</code>) adds <code>.oc-stat-tile__spark</code>, the sampled
+        series. One unit wide is <code>.oc-stat-tile--compact</code> (its side inset is <code>--oc-widget-inset</code>, the same as every tile). Sizes 1 x 1 to 4 x 2 (<code>src/data/widgets.json</code>). A stored layout naming the retired strip
+        (<code>core.stats</code>) gets the six tiles in its place on read (<code>engine/replaced-cells.ts</code>). A tile that reads a note rather than a figure wears <code>.oc-stat-tile--note</code>.</dd>
+    <dt>git diff view</dt>
+    <dt>repo:branch chip</dt>
+    <dt>selected cell</dt>
+    <dd>On a page of terminal cells, every cell has a border in its own session's accent, dimmed unless selected; the selected
+        one (the one you type into) wears <code>.popup-focus</code> at full strength with a 5px glow. The border width never
+        changes, so the terminal is never resized by it. Terminal cells stay out of size negotiation: the resize guard reads
+        <code>negotiates_size</code>, never <code>accepts_input</code>.</dd>
+    <dt>themes</dt>
+    <dd>Frames read <code>--oc-ground-panel</code>, <code>--oc-ground-titlerow</code>, <code>--oc-line-panel</code>,
+        <code>--oc-text-*</code>. A cell of a pinned session is painted inside its own <code>[data-session-theme]</code> subtree,
+        so two cells in two themes sit side by side. Home cell borders are the lighter <code>--oc-line-frame</code> so a cell's edge
+        reads brighter than its row dividers.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-widget-header">the widget header</h3>
+
+<dl class="sg-facts">
+    <dt>title first</dt>
+    <dt>geometry</dt>
+    <dd>ONE height, 31px (<code>HEAD_ROW_PX</code>), for every widget on a desktop; below 1024 the whole row is the accordion
+        button that folds the widget and stays 44px (<code>PHONE_HEAD_PX</code>). Padding 0 12px (<code>--oc-space-3</code>),
+        8px between parts (<code>--oc-space-2</code>, 4px under a 300px cell). Ground <code>--oc-ground-titlerow</code>,
+        a hairline underneath as an inset <code>--oc-line-rule</code> shadow, never a border. The row is the grip the widget
+        is dragged by. THE NARROW-ROW RULES ARE <code>@container oc-head</code> QUERIES (the short title at 400px, the sort
+        at 440px, the arrow at 340px, the count at 240px, the tighter gap at 300px), so every host declares that container
+        on the box the head spans: the grid frame, a drawer card, a rail section, the pop-out window. The phone look
+        (<code>.oc-frame-title--phone</code>, <code>.oc-frame-corner--tap</code>: 44px tap targets, the tighter inset)
+        follows the host's phone state, never the viewport, so a pop-out window or a desktop window under 1024 keeps the
+        31px row and the controls in it keep their own size (<code>opscenter/controls.css</code>).</dd>
+    <dt>the label</dt>
+    <dd>The widget's name from the catalog (<code>titleKey</code>; an instance's own title when its cell sets one, a short
+        form at 400px and under when the record has <code>titleShortKey</code>), <code>.oc-frame-name</code>:
+        <code>--oc-fs-title</code>, weight 400, caps, ONE tracking value (<code>--oc-tracking-title</code>), in
+        <code>--oc-orange</code>, the one accent-colored thing in the row, cut by an ellipsis. The count and the suffix
+        after it are <code>--oc-text-secondary</code>.</dd>
+    <dt>order, left to right</dt>
+    <dd>The icon menu (<code>CornerMenu.svelte</code>, the widget's icon in <code>--oc-text-secondary</code>, never the accent, the gear
+        in <code>--oc-cyan</code> in edit layout, opens
+        <code>CellMenu</code>; a surface with no menu, the pop-out window, draws it inert, <code>.oc-frame-corner--still</code>),
+        the name, count and suffix, a spacer, the option groups (<code>frameHeader.action</code>, then
+        each of <code>frameHeader.groups</code>, then the host's own group), the right control (view all, clear, refresh or
+        the fold chevron), then the close x. Single-row controls that used to sit in a second bar inside a body move up into
+        a group (<code>useHeaderGroup</code> in <code>shell/frame-header.svelte.ts</code>: the timeline's picker and
+        kind key, quiet
+        because the name is the one accent; the crosstalk widget's scope choice and close-thread action are items of its widget menu, not header controls; a pressed or open bare toggle in the row is bright text, never the accent);
+        while no header takes them (ticked off, a phone, a popup with no frame: <code>FrameHeader.takesBars</code> false),
+        and below the width the row needs to hold them (the timeline's key from 260px and picker from 420px), the cell draws them in its body as before. Groups keep
+        the order their cell declares them in. A cell's <code>action</code> goes up only while the header is drawn
+        (<code>FrameHeader.drawn</code>), so a copy with its header off draws it in its body. The terminal viewer's head
+        row (<code>.oc-tv-head--up</code>) is the header's row on a desktop, as the terminal's own head is. A tab strip keeps its own row
+        (<code>frameHeader.strip</code>). On the grid the row is the grip (<code>.oc-frame-title--grip</code>); a drawer
+        card, a rail section and the pop-out are not dragged by it.</dd>
+    <dt>separators</dt>
+    <dd>THE HEADER DRAWS THEM, NEVER A WIDGET (<code>headParts</code>): one <code>.oc-head-sep</code>, a 1px by 14px
+        <code>--oc-line-rule</code> hairline, between two adjacent non-empty groups and one before the close x. Never
+        leading, trailing or doubled: an empty group draws nothing and takes no separator, and the close x alone takes
+        none. Each group is drawn in a <code>.oc-head-group</code> (<code>display: contents</code>); a group whose only
+        control is the sort, which a cell under 440px drops, is dropped WITH one separator beside it, so a narrow row
+        never starts with a hairline.</dd>
+    <dt>the close x</dt>
+    <dd><code>.oc-ibtn.oc-ibtn--bare.oc-ibtn--close</code> (<code>opscenter/controls.css</code>, after the bare hover in the
+        same layer), 20px, a 13px close glyph, dim, the destructive <code>--oc-coral</code> only under the
+        pointer. INSTANT, NO CONFIRM: a singleton is hidden and comes back from the
+        components list, an instance is removed, through the one path the menu's close takes
+        (<code>engine/close-widget.ts</code>; in edit layout the change is final at once). Absent on the terminal page's own pane, on a
+        record with <code>closable: false</code>, and on a phone.</dd>
+    <dt>the override flags</dt>
+    <dd>On the widget's record (<code>CellMeta</code>), never an id list, so any widget, a plugin's included, opts in:
+        <code>ownHead: true</code> means the cell draws its own head through <code>frameHeader.content</code> or
+        <code>strip</code> and the head is always on (no tick); <code>closable: false</code> keeps the x out. Today only the
+        terminal and the tabbed terminal set both (<code>TERMINAL_META</code>; a browser and a chart set them back).</dd>
+    <dt>the show header tick</dt>
+    <dt>drawer cards and slide-outs</dt>
+</dl>
+
+<h3 class="sg-h3" id="cells-widget-shell">the widget shell</h3>
+
+<dl class="sg-facts">
+    <dt>the body</dt>
+    <dd><code>.oc-wshell</code>: a column that fills the box and clips, the cell's own content inside it. No card, no border,
+        no title: the host's header names the widget. A list or table widget wraps its rows in <code>ShellScroll.svelte</code>
+        (<code>.oc-wshell-scroll</code>), the region that fills the column and scrolls on y, never on x, and is exactly as tall as
+        its rows where the host is auto height (a phone panel).</dd>
+    <dt>the controls</dt>
+    <dd>Handed up into the host's header while it is drawn (section 11 rule 2). With no header drawn they sit in
+        <code>.oc-wshell-bar</code>, a row at the top of the body padded <code>--oc-space-1</code>; in a bar slide-out with
+        no title row, <code>.oc-wshell-corner</code> takes no room and the control places itself in the body's top right corner.
+        There is no menu button here, ever: the host draws the one widget menu.</dd>
+    <dt>the states</dt>
+    <dd>The base state (<code>.oc-state--inline</code>, see base components): ONE plain sentence in place of the body for none, loading, empty and error,
+        the cell's own words or the catalog's (<code>widget.state.*</code>). Error draws the coral bar. Never an empty box and never a spinner.</dd>
+</dl>
+
+<h3 class="sg-h3">analytics charts</h3>
+<p>Each <code>analytics:&lt;uuid&gt;</code> Home cell uses the same quiet summary layout, drawn in the base <code>ChartFrame.svelte</code> (<code>.oc-chart-frame</code>: no title of its own, every row on the header's side inset, <code>--oc-widget-inset</code>):
+<code>.oc-chart-frame__head</code> carries a meaningful title and period, <code>.analytics-headline</code> presents the
+server-calculated period value, and <code>.analytics-plot</code> shows the trend with compact axes and gaps preserved.
+<code>.analytics-caveat</code> reserves a line for partial data so neighboring plots stay aligned. A before-and-after card
+puts <code>.analytics-change</code> on that same line instead: the change against the equal period before, yellow when
+<code>.analytics-change--up</code>, cyan when <code>.analytics-change--down</code>, the same words and colours as the kpi
+tile's delta. The summary has no
+annotations, legend, slider or toolbars. While the widget header takes bars (a desktop header that is on), the card's range label (<code>.analytics-range</code>, with any <code>.analytics-asof</code> tag) and its details opener are two header option groups, the label first and the opener after it with the header's own hairline between, and the body draws neither <code>.oc-chart-frame__head</code> nor a floating opener; with the header ticked off, or below 1024, they stay in the body as described here. A breakdown card (tokens by project, model, agent kind) draws no total and its rows start under the header, and the plain estimated cost card is a number with no chart under it. <code>.analytics-open</code> is the card's details opener, the faint floating
+<code>.oc-ibtn--float</code> glyph at the card's top right, taking no room from the title. It opens
+<code>DetailsModal.svelte</code> (dialogs), the one details dialog: the card's window, the full chart, the figures,
+rule changes and notes, contributing conversations and the account filters. Theme tokens paint every layer. <code>.analytics-asof</code> is a small quiet tag after the period, <code>as of 14:05</code>, drawn only while the numbers shown are not the latest: the server served a stale answer while it recomputes, a failed read kept the last good one, or a saved snapshot is painting before the live answer lands. It is muted text in the period's own type, never a pill or an alert, and it goes away when a current answer arrives. A chart's configuration is never drawn in its body: it is declared to the widget's settings overlay (the menu's config item).</p>
+<p>Analytics cells add supporting regions: <code>.analytics-context</code> and <code>.analytics-metadata</code> carry the
+scope and source of the figure, <code>.analytics-facts</code> lists its key values (the tokens card wears <code>.analytics-facts--corner</code> inside <code>.analytics-headline--tokens</code>: the four facts as a 2x2 of small labels and right-aligned figures in the headline's top right, wrapping under the total when narrow; <code>.analytics-plot--yield</code> lets the plot give up its height floor first), and <code>.analytics-quota-legend</code>
+is the quota card's legend: one <code>.analytics-swatch</code> per account in its plotted colour, the account name
+(ellipsed, never pushing the card wider) and its latest reading, wrapping to one account per line in a narrow card;
+the chart under it then draws no legend row of its own. A chart card's frame title names the chart (the quota card
+adds its window, "5-hour window", never the raw id), so the body shows only the period. <code>.analytics-ranking</code> stacks <code>.analytics-ranking-row</code> entries, each with an
+<code>.analytics-ranking-track</code> and <code>.analytics-ranking-fill</code> bar sized to its share. The list sits in <code>.analytics-ranking-room</code>, the card's leftover height, and draws as many rows as that room holds (down to one line); a short room adds <code>.analytics-ranking--bare</code>, which drops the bars, and the phone, which sizes a card to its content, adds <code>.analytics-ranking-room--free</code> so every row shows. A ranking card and the plain estimated cost card therefore shrink to a list instead of the resize plate; the cost card adds its change against the window before and its hourly average in an <code>.analytics-change</code> line (the cost card's wears <code>.analytics-change--cost</code>, a little air under the unpriced note), then its top models.
+<code>.analytics-canvas-box--compact</code> holds the chart canvas of a small cell above a floor of 70px, with <code>.chart-legend</code> (a row of swatch and name items, paged by whole items with a pager, never half an item; <code>.chart-legend__item</code>, <code>.chart-legend__pager</code>) above it; <code>.chart-legend__track--wrap</code> is the same row that wraps onto as many lines as it needs and never pages (tokens per agent). Every chart's axis label count
+follows its plot size (<code>viz/axis.ts</code>: one value tick per 28px of height, one time label per 80px of width,
+never rotated), and an empty bucket of a summed metric draws as zero; only time the store did not watch (before its
+first minute, or collection off) is left out, under a faint hatched band. Theme tokens paint every layer.</p>
+<p>The default cards add concise facts under the period value: token components and cached share, priced and
+unpriced cost coverage, observed activity, and visible ranked values. A ranking has no empty chart area. These
+facts use the server's period summaries and keep missing data distinct from zero.</p>
+
+<h3 class="sg-h3" id="cells-grid">the grid and drag and drop</h3>
+<dl class="sg-facts">
+    <dt>surface</dt>
+    <dd><code>GridSurface.svelte</code> lays rows (<code>GridRow</code>, <code>.oc-row</code>) of slots
+        (<code>.oc-cellslot</code>) with <code>--oc-gutter</code> between them. <code>Gutter.svelte</code> and
+        <code>Intersection.svelte</code> are the resize handles between cells and at crossings; a drag across them resizes the
+        neighbours, and on a shared terminal pane resizes the pane for everyone attached.</dd>
+    <dt>moving a cell</dt>
+    <dd>A cell lifts past a threshold into <code>FlyLayer.svelte</code> (<code>.oc-fly</code>), casting
+        <code>--oc-shadow-lift</code>; the insertion mark (<code>.oc-insert-row</code>, <code>.oc-insert-column</code>) shows
+        where it will land; the page carries <code>body.grid-dragging</code> meanwhile. A tab dragged between components shows
+        <code>DropOverlay.svelte</code>. The <code>grip</code> icon marks a draggable handle in a list (the slash command
+        chips).</dd>
+    <dt>adding and arranging</dt>
+    <dd>At 1024 and wider a widget is added in <a href="#cells-edit-layout">edit layout</a> alone; there
+        <code>ComponentsPopover.svelte</code> and the drawer's add component menu carry one line saying where, and keep
+        adding sessions and arranging the page (columns, rows, grid). Below 1024 they are still the restore list, the
+        phone's show and hide. Arrangement is saved per page and, for the terminal page, per session, and syncs to every
+        device; the live region announces what changed.</dd>
+    <dt>a Layout member that is down</dt>
+    <dd><code>web/src/opscenter/layouts/MemberDown.svelte</code> (issue #424): inside an open Layout, a member whose session is
+        not running keeps its cell and says why: asleep (a wake button), dead (recreate, through the restart picker's own
+        recreate question) or gone. The cell's note voice, a tracked uppercase label, and the calm
+        <code>.modal-btn-confirm</code>; a refusal is the coral-ruled line. A single agent's tab still shows the plain note.
+        The row itself (<code>.lmd</code>, <code>.lmd-title</code>, <code>.lmd-body</code>, <code>.lmd-error</code>) lives in
+        <code>MemberDownRow.svelte</code> (issue #791), parameterized on the member record directly, so
+        <code>AllDownModal.svelte</code> (below) can draw the same row outside a grid cell.</dd>
+    <dt>top bar</dt>
+    <dt>phone</dt>
+    <dd>Below 1024px the grid becomes one column in <code>phoneOrder</code>, and the terminal page becomes the phone tab strip.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-edit-layout">edit layout and the widget drawer</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>The one mode in which the screen behind the drawer is arranged (<code>web/src/opscenter/layout-editor/</code>, issue
+        #725). Its ONE entry is the "edit layout" item of the drawer footer's account menu (see <a
+        href="#chrome-account-chip">chrome</a>); nothing else turns it on. Desktop only: below 1024 the item is not
+        listed. Not to be confused with a saved Layout (a named view of several
+        sessions, <code>layout:&lt;uuid&gt;</code>): the words "edit layout" are this mode's alone.</dd>
+    <dt>on the surface</dt>
+    <dt>a short title for a narrow row</dt>
+    <dt>the notes widget's title row: edit | preview and the save disk</dt>
+    <dt id="cells-markdown-editor">the one markdown editor: box, preview and the hints key</dt>
+    <dt>the widget menu, one icon, everything inside</dt>
+    <dt>the settings overlay</dt>
+    <dd><code>widgets/chrome/SettingsOverlay.svelte</code> (<code>.oc-configure</code>, the <code>popup-focus</code>
+        look; mock section 6, option A): a top-layer popover 260px wide tethered 8px beside the widget, right side
+        first, then left, and over the widget's body when neither side fits (<code>data-sheet-mode</code> says which), so
+        the widget itself is the live preview. A widget's settings NEVER render in its body. Its strip
+        (<code>.oc-configure-head</code>) copies the restart picker's title row: the accent tracked label "settings"
+        (<code>.oc-configure-label</code>) and the widget's name (<code>.oc-configure-name</code>). The body
+        (<code>.oc-configure-body</code>, scope <code>.oc-wso</code>) is the schema form
+        (<code>SettingsForm.svelte</code>): fields grouped under plain headings (<code>.sf__group</code>,
+        <code>.sf__group-head</code>, the schema's <code>groups</code>), labels in words, a one-line hint only where a
+        field declares <code>hintKey</code>, toggles (<code>.oc-check</code> as a switch) for yes or no, a segmented
+        choice (<code>.oc-seg</code>) for a short list, a select for a long one, number and text fields. A copy that keeps
+        its own definition (an analytics chart) declares a panel instead (<code>.oc-configure-panel</code>,
+        <code>widgets/chrome/settings-panels.svelte.ts</code>). Every change applies at once; the foot
+        (<code>.oc-configure-foot</code>) has reset (a quiet <code>.oc-btn</code>, every field back to its default in one
+        write) and done (<code>.oc-btn--confirm</code>, which only closes). Escape closes it.</dd>
+    <dt>the widget info card</dt>
+    <dt>the no-show plate</dt>
+    <dd><code>widgets/chrome/NoShowPlate.svelte</code> (<code>.oc-noshow</code>, <code>.oc-noshow-name</code>), drawn by the
+        rail and drawer widget bodies when the measured box is under the widget's size class threshold
+        (<code>widgets/no-show.ts</code>): the widget's icon and lowercase name in the dim text token, no hatch, no
+        buttons. It is for a box that is merely tiny; the refusal plate is for a box the widget was not tested at.</dd>
+    <dt>the refusal plate</dt>
+    <dt>the resize guide</dt>
+    <dt>the widget drawer</dt>
+    <dt>widget drawer views, fuzzy find, icons and the options mark</dt>
+    <dt>widget drawer rows: the compact list</dt>
+    <dt>the window rows: session, terminal and browser, each folding open</dt>
+    <dt>the empty-space menu</dt>
+    <dt>the already-here prompt</dt>
+    <dt>the widget description card</dt>
+    <dt>edit layout in a dashboard pop-out</dt>
+    <dd><code>PopoutEditorHost.svelte</code> (no classes of its own): a dashboard pop-out's top bar offers "add widgets"
+        (the bar's quiet <code>.oc-topbar-popout</code> outline), which turns edit layout on and draws the widget drawer
+        UNDOCKED, the floating <code>.le-drawer</code> panel over the window's right edge, with no sidebar area or glance
+        shelf (a pop-out has no sidebar).</dd>
+    <dt>the dashboards page</dt>
+    <dt>thumbnails</dt>
+    <dd><code>WidgetThumb.svelte</code> (<code>.le-thumb</code>): a feature-catalog screenshot of that widget where one
+        exists (<code>layout-editor/thumbnails.ts</code>), otherwise the manifest's icon in its tone token over its width
+        ladder, one tick per density step (<code>.le-thumb__step</code>). Tokens only.</dd>
+    <dt>keyboard</dt>
+    <dd>Every card, chip and foot button is a real button; the splitters keep their arrow-key steps; Escape clears the
+        search first, then leaves edit mode and keeps every change; the live region says each add, drop, remove and save.</dd>
+    <dt>themes</dt>
+    <dd>Only <code>--oc-*</code> tokens: panel and titlerow grounds, rule and faint hairlines, the accent for the title
+        alone, cyan for focus, the outline and the "on screen" badge, coral for remove.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-scheduled-tasks">the scheduled tasks cell</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>The Claude desktop app's scheduled tasks (<code>web/src/opscenter/cells/scheduled-tasks/Cell.svelte</code>, issue
+        #893), read from <code>GET /scheduled-tasks</code> only while the cell is on the surface. Name and last run, then
+        the description, then the schedule as the width grows. A schedule the task does not record reads "not recorded"
+        (<code>.oc-st-muted</code>) with no tooltip; nothing is guessed from the task's prose, and there is
+        no next run column because nothing on disk records one.</dd>
+    <dt>placement</dt>
+    <dd>Hidden by default on both pages, so no saved layout moves; the Widgets list (the drawer menu's widgets row) offers it, including to a layout
+        saved before the cell existed (<code>offSurfaceIds</code> in <code>engine/model.ts</code>).</dd>
+    <dt>states</dt>
+    <dd>Loading, signed out, an older server, an error, no folder, an unreadable folder and an empty folder are seven
+        sentences (the base state line), never an empty table.</dd>
+    <dt>themes</dt>
+    <dd>The skills cell's name treatment: the clock mark in <code>--oc-cyan</code>, the name in
+        <code>--oc-text-bright</code>, the rest in <code>--oc-text-secondary</code> and <code>--oc-text-dim</code>.</dd>
+    <dt>terminal kebab actions row</dt>
+    <dd>In the terminal cell's kebab menu (<code>.cell-options</code>), the "actions" row takes <code>.after-tools</code>
+        while folded tools sit above it: a hairline in <code>--oc-line-rule</code> sets it apart from them.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-machine-stats">the machine stats cell</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>The vitals of the machine Carnivore runs on
+        (<code>web/src/opscenter/cells/machine-stats/Cell.svelte</code>, issue #1157 part 2b), from
+        <code>GET /machine-stats</code>: cpu, memory, disk free on the state volume, load and uptime. Declared sizes are
+        2 x 2 and 8 x 2. At 2 x 2 three meters stack (<code>.oc-ms-meter</code>: <code>.oc-ms-label</code>, a
+        <code>.oc-ms-bar</code> with its <code>.oc-ms-fill</code>, the bright <code>.oc-ms-figure</code>, or <code>.oc-ms-figure--none</code>, the not-measured words as a quiet note across the bar's column); at 8 x 2
+        (<code>.oc-ms--wide</code>) five columns sit side by side under hairline dividers, each with a small
+        <code>.oc-ms-sub</code> line. Narrow but tall enough for the <code>all</code> height step
+        (<code>.oc-ms--tall</code>), all five meters stack in one column, spread evenly down the cell, and each bar meter gains its detail line under the bar (<code>.oc-ms-sub--below</code>). A figure the server could not measure prints the not-measured words, never a zero.</dd>
+    <dt>placement</dt>
+    <dd>Hidden by default; the Widgets list or the drawer area puts it on. Its title mark is the <code>cpu</code> icon.
+        Pushed on the <code>machine_stats</code> topic, only while a widget is mounted and the tab is visible.</dd>
+    <dt>states</dt>
+    <dd>Loading, signed out and an error are one sentence (the base state line).</dd>
+    <dt>themes</dt>
+    <dd>The fill is <code>--oc-cyan</code>, yellow from 75 percent (<code>.oc-ms-fill--warn</code>) and
+        <code>--oc-coral</code> from 90 (<code>.oc-ms-fill--hot</code>); the figure is <code>--oc-text-bright</code>, labels
+        <code>--oc-text-secondary</code>, sub lines <code>--oc-text-dim</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-shell">the terminal widget</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>A plain shell in the folder of the agent the widget rail shows (<code>web/src/opscenter/cells/shell/Cell.svelte</code>,
+        issue #1551). The body (<code>.shell-cell__body</code>) holds the same primary terminal client every terminal cell
+        uses (its pane element is <code>.shell-pane</code>), attached to the agent's companion shell; it is not the agent's own terminal (<code>core.terminal</code>).</dd>
+    <dt>placement</dt>
+    <dd>Session scoped. The default of the bottom bar; hidden by default on every grid; its title mark is the
+        <code>terminal</code> icon. Its terminal is claimed under a <code>shell:row:&lt;n&gt;</code> slot, so opening it
+        never moves the keyboard or the files and notes scope off the agent's terminal.</dd>
+    <dt>states</dt>
+    <dd>No agent, starting, ended ("start again"), not running (the shell closed with its agent; "try again"), an agent on a
+        paired computer and an error with "try again" are the base state (<code>.oc-state--inline</code>, the retry its small secondary button).</dd>
+    <dt>themes</dt>
+    <dd>Plate text <code>--oc-text-dim</code>; the terminal wears the page theme.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-changes">the changes cell</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>What a session has changed since the last commit (<code>web/src/opscenter/cells/changes/Cell.svelte</code>,
+        issue #1472), over the pushed <code>git-status</code> read. One row per file (a base <code>ListRow</code>): the path
+        button (a base row <code>Button</code> holding <code>.oc-chg-path</code>, a base tag for a submodule and
+        the status letter <code>.oc-chg-letter</code>) opens the read-only diff; the quiet base <code>Button</code> opens
+        the file. Past the server's cap a last row counts the rest.</dd>
+    <dt>placement</dt>
+    <dd>Session scoped: on the session view's widget rail it shows the rail's session; on a dashboard, the selected
+        terminal's. Hidden by default on every grid; its title mark is the <code>code</code> icon.</dd>
+    <dt>states</dt>
+    <dd>Reading, clean, unknown (never clean), not a repository, remote and no session are one sentence
+        (the widget shell's base state, <code>.oc-state--inline</code>); unknown is its error state, with the coral bar.</dd>
+    <dt>themes</dt>
+    <dd>The file tree's tag tokens: added and untracked <code>--oc-green</code>, modified and renamed
+        <code>--oc-yellow</code>, deleted and conflicted <code>--oc-coral</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-task-manager"><span id="cells-huddle"></span>the Task Manager cell</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>The Task Manager list of a session's project (<code>web/src/opscenter/cells/task-manager/Cell.svelte</code>, issue #1472):
+        the Task Manager plugin's own body pinned to that one list (<code>.oc-hdl</code>), so rows, replies and the add box are
+        the Task Manager page's.</dd>
+    <dt>placement</dt>
+    <dd>Session scoped like the changes cell. Hidden by default; its title mark is the <code>users</code> icon.</dd>
+    <dt>states</dt>
+    <dd>No session, or a session with no project, is one sentence (<code>.oc-hdl-note</code>).</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-task-manager-mk2">TM Mark II (the Task Manager, reshaped)</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>header</dt>
+    <dt>task tabs</dt>
+    <dd>An opened task draws the shared base <code>Tabs</code> strip, untouched (joined inside the widget frame), and its right end carries mark read
+        (<code>Mk2MarkRead.svelte</code>, the base small button): no confirmation, a press holds the mark for five seconds and the button reads
+        <code>undo (n)</code> meanwhile (<code>mk2-mark-read.svelte.ts</code>). The review block and its current action sit INSIDE the action tab, the reply box
+        is the only thing under the strip (the old conversation box is gone: the discussion tab reads it), and there is no @agent button.</dd>
+    <dt>menu</dt>
+    <dd>What the old bar held, the view, the three densities, the accordion and the status counts, are declared to the one widget menu
+        (<code>mk2-menu.svelte.ts</code>), never drawn in the body. Two more switches, <code>project colors</code> and <code>status bar</code>,
+        are remembered per device (default on): off removes the project color from the project bar and the 3px bar down the left of every
+        header and row, or the status stripe of each row, and the room that bar drew in is given back (the left padding of the rows and
+        headers shrinks by it). <code>show completed</code> is a checkbox of the same menu, and <code>delete closed</code> a row that opens a
+        confirm dialog (<code>Mk2DeleteClosedModal.svelte</code>, the shared modal shell, <code>.mk2-closed-purge__ask</code>) saying how many
+        closed tasks it deletes. A checkbox row of any widget menu flips and leaves the menu open.</dd>
+    <dt>state</dt>
+    <dd>Through the widget wrapper's declared state, per copy and per device: the two side color switches and one <code>view</code> field holding the search
+        text, the picked chip, the open task and its tab (<code>mk2-view-state.svelte.ts</code>), restored on a reload. Folds, density, accordion, show
+        completed and the status toggles stay in the Task Manager's own stores.</dd>
+    <dt>frame</dt>
+    <dd><code>Mk2Frame.svelte</code> (<code>.mk2-frame</code>, <code>display: contents</code>) wraps the shared body, carries the two switches
+        as attributes, and holds each icon's stroke at one CSS pixel (<code>vector-effect: non-scaling-stroke</code>): the shared
+        <code>Icon</code> draws on a 24 unit box, so at the 10 to 14px this list uses its default stroke was thinner than a pixel. It also
+        opts the body in to Mark II's layout: no remove completed key or eye in the foot, and the tell carnivore key in the add row in the
+        place of the add button (it adds when text is typed, tells when the box is empty), 20px high like the add field.</dd>
+    <dt>task tabs</dt>
+</dl>
+
+<h3 class="sg-h3" id="cells-task-manager-all"><span id="cells-huddle-all"></span>the all Task Manager lists cell</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>Every Task Manager list at once (<code>web/src/opscenter/cells/task-manager-all/Cell.svelte</code>, issue #1492): the Task Manager
+        plugin's own body on its all projects view (<code>.oc-hdl-all</code>), one section per list under its tracked
+        uppercase project head, with the same rows, replies and add box.</dd>
+    <dt>placement</dt>
+    <dd>Not session scoped, so it stays put when the selected session or project changes. Hidden by default; placed in
+        either rail or on a dashboard in edit layout. Its title mark is the <code>users</code> icon.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-crosstalk">the crosstalk cell</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>layout</dt>
+    <dd>Three layouts from the box (<code>.xr--side</code> from 560px: the conversation beside the list, <code>.xr-list-pane</code>
+        and <code>.xr-pick</code> when none is open; <code>.xr--stack</code> when narrower and 320px tall: the list over the
+        conversation with a draggable divider, <code>.xr-divider</code>, <code>.xr-divider--drag</code>, a WAI-ARIA window
+        splitter; and drill-in when narrow and short, where the quiet <code>.oc-btn</code> back goes up into the host header,
+        <code>.xr-back</code>, placed in the corner when there is no title row).</dd>
+    <dt>placement</dt>
+    <dd>Session based (<code>scope: 'session'</code>), so it follows the selected session the way the Task Manager cell does. The
+        all, this project, this session switch is three radio items of the widget menu, with close the conversation and mark
+        all as read; the scope, the read marks and the divider position are remembered per device. Hidden by default; placed
+        in either rail or on a dashboard in edit layout. Its title mark is the <code>chat</code> icon.</dd>
+    <dt>data</dt>
+    <dd><code>GET /crosstalk/threads</code> and <code>GET /crosstalk/threads/{thread}/messages</code>, re-read on the
+        <code>crosstalk</code> resource topic while the copy is shown; no timer while the topic is pushed.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-tasks">the session tasks cells</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>The agent's own task list (<code>web/src/opscenter/cells/tasks/Cell.svelte</code>, <code>.oc-tsk</code>) for the
+        selected session, and its global sibling (<code>cells/tasks-all/Cell.svelte</code>, <code>.oc-tsk-all</code>) for
+        every session that has a list, one section per session under a tracked uppercase head (<code>.oc-tsk-head</code>,
+        the accent) with "N of M done". Both draw the same rows (<code>TaskRows.svelte</code>, <code>.oc-tsk-row</code>):
+        a status mark (<code>.oc-tsk-mark</code>: outlined pending, green in progress, checked and struck through
+        done) and the task text.</dd>
+    <dt>placement</dt>
+    <dd>Hidden by default; placed in either rail or on a dashboard in edit layout. The session cell is session scoped and
+        follows the selected session; the all cell is not, so it stays put, and its icon wears the global mark
+        (<code>.oc-wicon-globe</code>). Unreadable is its own coral sentence, never drawn as empty. Pushed, no polling.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-timeline">the session timeline cell</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>A session's conversations on a time axis, ALWAYS VERTICAL: oldest at the top and now at the bottom, at every width and in
+        every host, scrolling down when the box is short
+        (<code>web/src/opscenter/cells/timeline/Cell.svelte</code>, <code>.tlx</code>). NO TEXT SHARES A ROW WITH A MARK:
+        time runs down one merged rail (<code>.tlc-rail</code>, the current conversation outlined in cyan) with a ruler on
+        its left (<code>.tlc-ruler</code>, <code>.tlc-tick</code>, faint <code>.tlc-grid</code> rules), the rail carries
+        only marks (<code>.tlc-mark</code>), each drawn by the one glyph (<code>.tlx-glyph</code>: a violet diamond for a
+        compact, a yellow flag for a bookmark, a green dot for a restart, a cyan outlined square for a conversation backup),
+        and marks closer than a hit box merge into a counted cluster at their mean time. Every conversation and mark is named
+        in the words column beside the rail (<code>.tlc-label</code>, its time at the right), joined by a hairline leader
+        (<code>.tlc-leader</code>) when it had to slide to make room. A long sleep is a fixed hatched break
+        (<code>.tlc-sleep</code>) with its length on the ruler, a fork or rewind draws a cyan bracket
+        (<code>.tlc-hook</code>) from its split point (<code>.tlc-split</code>), and beside the rail a hairline band
+        (<code>.tlc-band</code>) is busy (<code>--oc-green</code>), idle (a dim line) or waiting on you (yellow). The key in
+        the header (<code>.tlx-key</code>, the shared <code>.oc-ibtn --bare</code> look) is the legend and the filter: each
+        kind with its own glyph and count, hollow and dim when hidden. A fixed detail region (a base <code>Card</code>) sits
+        under the rail: the read only peek, and the actions as worded base <code>Button</code>s with the base
+        <code>Checkbox</code> arm (<code>data-arm</code>) as the rewind's only confirmation. On a phone it is a list in time
+        order (<code>.oc-tl-list</code>), each row one shared <code>.oc-btn --ghost</code> laid out as a line
+        (<code>.oc-tl-rowline</code>) and its mark card (a base <code>Card</code>).</dd>
+    <dt>placement</dt>
+    <dd>Hidden by default; session scoped, so the rail hands it its session and a dashboard tile follows the focused
+        session with a session picker (the shared facet, <code>.oc-tl-top</code> when the header cannot hold it). Every
+        kind and the squeeze are switches in the one widget menu, and the five point actions are menu items that stay
+        blocked, with the reason, until a point is picked. Unreadable is a coral sentence. Pushed
+        (<code>session_timeline</code>, <code>bookmarks:&lt;row&gt;</code>), no polling.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-bookmarks">the session bookmarks cells</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>The marked points of a Claude Code conversation (<code>web/src/opscenter/cells/bookmarks/Cell.svelte</code>,
+        <code>.oc-bkm-cell</code>) for the selected session, and its global sibling
+        (<code>cells/bookmarks-all/Cell.svelte</code>) for the newest across every session, one section per session
+        in a base <code>Card</code> titled with the session. Both draw the panel's own rows
+        (<code>lib/bookmarks/BookmarkRow.svelte</code>: branch from here, rewind in place, delete) in one base <code>List</code>
+        through <code>BookmarksBody.svelte</code>, with a base <code>Checkbox</code>
+        (<code>data-arm</code>) as the rewind's only confirmation and a status line (<code>.oc-bkm-notice</code>).</dd>
+    <dt>placement</dt>
+    <dd>Hidden by default; placed in either rail or on a dashboard in edit layout. The session cell is session scoped and
+        follows the selected session; the all cell is not, so it stays put, and its icon wears the global mark
+        (<code>.oc-wicon-globe</code>). A Codex session says it takes no bookmarks. Pushed (<code>bookmarks:&lt;row&gt;</code>,
+        <code>bookmarks:*</code>), no polling.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-pipeline">the pipeline cell</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>placement</dt>
+    <dd>Hidden by default; placed in either rail or on a dashboard in edit layout, and it is the developer widget's
+        pipeline tab. It is global, with no local sibling, so it never follows the selected session, and its icon wears
+        the global mark (<code>.oc-wicon-globe</code>). Every view shares one read of <code>GET /pipeline/status</code>,
+        PUSHED on the <code>pipeline</code> topic; the 10 second poll runs only while the hello does not advertise it. The
+        ages tick on the page clock with no request.</dd>
+    <dt>states</dt>
+    <dd>No run since the server started draws <code>.oc-rc-notice</code>; a failed read is the panel's own coral line.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-pipeline-squares">the pipeline status squares</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>states</dt>
+    <dd>By SHAPE as well as token, the deleted job widget's mapping: a filled circle in <code>--oc-green</code> caught up, a
+        ring in <code>--oc-yellow</code> behind (files waiting), a diamond in <code>--oc-coral</code> failing (failing files,
+        or a stalled engine with this plugin's files waiting), a gray dash off (an engine reporting plugins while off). A
+        rebuild draws behind and says the word after its tile (<code>.ps-sq__word</code>).</dd>
+    <dt>filter</dt>
+    <dd>In the pipeline widget the squares are toggle buttons (<code>aria-pressed</code>): a click shows only that plugin's chart
+        rows, a second click clears it, another square switches. The selected square (<code>data-selected</code>) wears its own
+        border a little brighter (<code>--oc-line-frame</code>) on the title-row ground, no ring. A plugin that contributes a
+        chart row (backups) gets a square while its row is present. Settings, pipeline draws no squares and no filter.</dd>
+    <dt>detail</dt>
+    <dd>A mouse hovering a square, KEYBOARD focus (<code>:focus-visible</code> on the square) or a
+        click or tap shows <code>.ps-sq__detail</code> (<code>role="tooltip"</code>), the status line's hairline frame
+        raised over the chart: <code>.ps-sq__head</code> with the name <code>.ps-sq__plugin</code> and the state word in the
+        line's own <code>.ps-state</code>, then four <code>.ps-sq__fact</code> lines: the backlog and its lag, the last
+        delivery (ticking on the page clock), the last error with the failing count, and the runs since the server started.
+        The last delivery and the runs are the engine's own per-plugin figures on the status, never the chart rows (those
+        hold only an area's last run and are bounded). A touch's compatibility hover and a click's focus never hold it open:
+        a second click or tap closes it, as do Escape, the mouse leaving the strip and a press outside. Each square is
+        always described (<code>aria-describedby</code>) by a hidden <code>.oc-visually-hidden</code> copy of its detail,
+        so a screen reader hears it on focus.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-run-chart">the run chart</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>marks</dt>
+    <dd><code>.oc-rc-mark</code> is the outcome by SHAPE as well as color: filled circle ok (<code>--oc-green</code>),
+        diamond failed or error (<code>--oc-coral</code>), dash parked or skipped (<code>--oc-text-dim</code>), a cyan circle
+        for a run going now, and an empty slot (<code>none</code>) so the names line up.</dd>
+    <dt>states</dt>
+    <dd><code>.oc-rc-notice</code> is a plain sentence instead of rows; <code>data-tone="bad"</code> paints a failed read
+        <code>--oc-coral</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-run-queue">running and queue</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>states</dt>
+    <dd>An empty section says so in one dim line (<code>.oc-rq-none</code>). The queue draws at most eight rows and then
+        <code>.oc-rq-more</code>, "+N more". A queued key held by a failure's retry reads its time in
+        <code>--oc-yellow</code> (<code>data-tone="wait"</code>). The times tick on the page clock with no request.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-automations">the automations cells</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>The schedules aimed at the selected session (<code>web/src/opscenter/cells/automations/Cell.svelte</code>,
+        <code>.oc-aut</code>) and its global sibling (<code>cells/automations-all/Cell.svelte</code>, <code>.oc-aut-all</code>)
+        for every automation tied to no session (system actions, project level work, the built in ones). Both draw the same
+        rows (<code>AutomationRows.svelte</code>, base <code>ListRow</code>s): the name (a base row <code>Button</code> that opens the automation in the Automations editor), then <code>.oc-aut-line</code> lines for the schedule in
+        words, the next run and the last run with its outcome (coral when it failed), and an enable switch.</dd>
+    <dt>placement</dt>
+    <dd>Hidden by default; placed in either rail or on a dashboard in edit layout. The session cell is session scoped and
+        follows the selected session; the all cell is not, so it stays put, and its icon wears the global mark
+        (<code>.oc-wicon-globe</code>). Unreadable is its own coral sentence, never drawn as empty. Pushed on the
+        <code>automations</code> and <code>automation_runs</code> topics, no polling.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-keep-awake">the keep awake cell</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>placement</dt>
+    <dd>Hidden by default on both pages, like the scheduled tasks cell; the Widgets list offers it. Its title mark is the
+        <code>coffee</code> icon, the shared glyph's cup drawn still.</dd>
+    <dt>states</dt>
+    <dd>Loading, signed out, an older server, an error and nobody kept awake are each a sentence
+        (the base state line), never an empty table.</dd>
+    <dt>themes</dt>
+    <dd>The computer line is a small tracked uppercase label under a hairline; held awake wears <code>--oc-violet</code>, the
+        cup's own family, not held <code>--oc-yellow</code>, free to sleep <code>--oc-text-dim</code>. Names in
+        <code>--oc-text-bright</code>, projects in <code>--oc-text-secondary</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-developer">the developer cell</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>Tabs over live monitors (<code>web/src/opscenter/cells/developer/Cell.svelte</code>): the shared page <code>Tabs</code>
+        strip, then the selected monitor filling <code>.oc-dv-panel</code>. The monitors are one list,
+        <code>MONITORS</code> in <code>cells/developer/meta.ts</code> (an id, a label key, a component): the pipeline cell
+        itself first, then <code>ScheduledRuns.svelte</code>, then <code>SentList.svelte</code>, then <code>LogViewer.svelte</code>. Only the selected monitor is mounted, so a tab not shown reads
+        nothing. Every monitor is pushed, so nothing polls at idle.</dd>
+    <dt>scheduled monitor</dt>
+    <dt>sent monitor</dt>
+    <dt>log monitor</dt>
+    <dt>states</dt>
+    <dt>placement</dt>
+    <dd>Hidden by default on both pages; the Widgets list and the drawer widget area offer it.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-questions">the waiting on you cell (id questions)</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>states</dt>
+    <dt>reads from the theme</dt>
+    <dd>Rows are separated by a faint hairline (<code>--oc-line-faint</code>) and hover on <code>--oc-ground-hover</code>;
+        an approval's icon is <code>--oc-yellow</code>, a Task Manager question's <code>--oc-cyan</code>, an alert's <code>--oc-text-secondary</code>; the meta line is
+        <code>--oc-text-secondary</code>, the age <code>--oc-text-muted</code>.</dd>
+    <dt>placement</dt>
+    <dd>Hidden by default on both pages; the Widgets list and the drawer widget area offer it.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-task-manager-list"><span id="cells-huddle-list"></span>the Task Manager list cell (id task-list)</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>looks</dt>
+    <dt>which statuses</dt>
+    <dd>Each copy lists only the statuses it ticks, from the right-click menu of its key or of the list: the shared cascade menu with the heading "show in list" and the Task Manager's six badge-menu checks and hotkeys (<code>q r o w a s</code>), stored on that copy's placement (<code>options.st_&lt;status&gt;</code>, absent is on), synced to every device. A tick keeps the menu open.</dd>
+    <dt>reads from the theme</dt>
+    <dd>Rows are separated by <code>--oc-line-rule</code>, hover on <code>--oc-ground-hover</code>, an open row sits on <code>--oc-ground-card</code>; titles are <code>--oc-text-primary</code>, the second line <code>--oc-text-muted</code>. No hardcoded color.</dd>
+    <dt>placement</dt>
+</dl>
+
+<h3 class="sg-h3" id="cells-files">the files widget (id files)</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>looks</dt>
+    <dd>The body starts at the host's top edge (<code>.files</code>, a column at 100%; only <code>.files-tree</code> scrolls). Its first line is
+        the filter row (<code>FilesFilter.svelte</code>: <code>.ff-row</code> holding the base search <code>Field</code>). Every row is one 22px line (<code>FileRow.svelte</code>,
+        <code>.fx-row</code>): hairline indent guides (<code>.fx-guides</code>), a chevron column (<code>.fx-chev</code>), the name
+        (<code>.fx-name</code>, a muted <code>.fx-sub</code> folder), and a fixed right gutter for the git letter (<code>.fx-mark</code>) and the
+        read only mark (<code>.fx-ro</code>). A section header (PROJECT, GLOBAL) is the ledger's title row at row height, sticky, its
+        <code>.fx-label</code> the one accent-colored thing; the project header carries the git facts (<code>ProjectGit.svelte</code>,
+        <code>.pg</code>, <code>.pg-branch</code>). Git ignored entries are dimmed (<code>.fx-row--dim</code>).</dd>
+    <dt>the title row</dt>
+    <dd>One control, the "changed N" chip (the shared <code>.oc-chip</code> as <code>.files-chip</code>, pressed in <code>--oc-yellow</code>): in
+        the widget header while it is drawn, beside the filter when not, and left to the widget menu in a titleless bar slide-out. Every
+        option is a widget menu item (filter, just changes, whole file, the two folder settings, dot files, git ignored files, collapse,
+        reload); rows have no menu of their own. In a grid frame's header (<code>.oc-frame-title</code>, 36px) the chip keeps its own
+        height below 1023px instead of the shared 44px thumb height, so it never runs past the title row; a phone header
+        (<code>.oc-frame-title--phone</code>, the thumb row) and the chip beside the filter keep the 44px.</dd>
+    <dt>reads from the theme</dt>
+    <dd>The tag tokens of the file tree: added and untracked <code>--oc-green</code>, modified and renamed <code>--oc-yellow</code>, deleted and
+        conflicted <code>--oc-coral</code>; hover on <code>--oc-ground-hover</code>; no hardcoded color.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-session-contents">the session resources cell (id session-contents)</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>looks</dt>
+    <dt>the title row</dt>
+    <dd>Four controls, in the widget header when it takes controls, else in the sub row: the scope option group (the base <code>Segmented</code> in its <code>iconOnly</code> form, with an icon per option: <code>folder</code> local, <code>globe</code> global, <code>list</code> all, one active, no cycling button), the empty sections toggle (a quiet <code>IconButton</code>, <code>folder-eye</code> while empty sections show, <code>folder-eye-off</code> while they hide; while the filter box has text, hiding also drops the sections the text emptied), the show path toggle (a quiet <code>IconButton</code>, the <code>path</code> icon: a route of two end points joined by a bending line, in <code>icons.ts</code>) and refresh. Pressed toggles take the base pressed look. The widget header's own icon menu and right-click menu apply, with local, global and all as a radio set, show empty sections and show path as ticks, and refresh. A plugin counts as global. The scope and the empty choice are the copy's own placement options (<code>options.scope</code>, <code>options.show_empty</code>), so two copies keep two choices; a host with no option writer remembers them per device and per copy.</dd>
+    <dt>reads from the theme</dt>
+    <dd>Rows are the base list rows; no hardcoded color.</dd>
+    <dt>placement</dt>
+</dl>
+
+<h3 class="sg-h3" id="cells-warroom">the war room page and its wall cell (id warroom)</h3>
+<dl class="sg-facts">
+    <dt>what it is</dt>
+    <dt>the wall cell</dt>
+    <dd>The one cell it places by default, <code>warroom</code> (<code>web/src/opscenter/cells/warroom/Cell.svelte</code>, widget <code>core.warroom</code>, one per surface), filling the page. It draws ONE uniform grid of equal tiles that fills the window (<code>.ww</code> inside a <code>.ww-fill</code> box; columns and rows from the tile count and the box's aspect, scrolling only below a minimum tile). A project's tiles sit together in reading order inside <code>.ww-cell</code>s, and one outline in the project's colour wraps their union (a border on the cell edges whose neighbour is another project), with a small uppercase <code>.ww-plabel</code> on its first cell. The hovered tile peeks by transform only, to ONE width at every tile count that the peek zoom slider sets (0 no zoom, 50 the default, 100 the largest). Four include switches (shells, browsers, asleep, paired computers) ride the host header as <code>.oc-chip</code> and are also switches in the widget menu, beside the peek zoom slider (<code>.ww-peek</code>: a <code>.ww-peek-label</code>, a thin-track <code>.ww-peek-range</code> with a small square accent thumb, and the number in <code>.ww-peek-val</code>), whose menu twin is a radio set of five stops.</dd>
+    <dt>the tile</dt>
+    <dd><code>.ww-tile</code> (<code>web/src/lib/warroom/WarroomTile.svelte</code>): a <code>.ww-bar</code> title strip (fixed height, hairline by <code>box-shadow</code>) holding the status light and a <code>.ww-name</code>, over a <code>.ww-body</code> whose read-only terminal <code>.ww-canvas</code> fills it, the session's full width inside a small margin, bottom rows showing. Hover (after a 250 ms rest; a touch tap is immediate) peeks the tile at the slider's width (a tile already that wide only lifts), centred and clamped inside the wall, with the terminal fitted to the session's full width inside a small margin (text never under 60% of normal, only a very wide pane clips; bottom-left of the content, whole rows), and lifts it above the wall with a strong all-around layered shadow of <code>--oc-shadow-lift</code> plus a minimal accent rim; a transform moves no neighbour. <code>.ww-gone</code> is the coral line over a session that no longer exists.</dd>
+    <dt>the cards</dt>
+    <dd><code>.ww-card</code> (<code>web/src/lib/warroom/WarroomCard.svelte</code>) is the same chassis with a <code>.ww-card-body</code> of <code>.ww-card-line</code> facts instead of a terminal: an asleep session (<code>.ww-dim</code>, the asleep light, last active), a browser (its URL without the query string, live or stopped) and a paired computer whose link is down (the offline light). The wall root is <code>.ww</code>, styled by <code>web/src/lib/warroom/warroom.css</code>.</dd>
+    <dt>reads from the theme</dt>
+    <dd>Only <code>--oc-*</code> tokens; the page frame and the cell frame bring the Military Terminal look.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-sparkline">sparkline</h3>
+<div class="sg-grid-2">
+    <div class="sg-specimen">
+        <div class="sg-specimen__label"><span>live</span><code>web/src/opscenter/ui/Sparkline.svelte</code></div>
+        <div class="sg-specimen__body"><div id="sg-live-sparkline"></div></div>
+    </div>
+</div>
+<p><code>Sparkline</code> takes <code>values</code> or measured <code>bars</code> (height and tone each),
+<code>height</code>, <code>gap</code>, <code>barWidth</code>, <code>tone</code>; it draws three tones, not an opacity ramp
+(<code>--oc-spark</code>, <code>--oc-spark-mid</code>, <code>--oc-spark-dim</code>).</p>
+
+<h3 class="sg-h3" id="cells-control-center">the session control center</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>the stats grid</dt>
+    <dt>scheduled tasks</dt>
+    <dt>the stops</dt>
+    <dd>A row's stop (<code>data-scc-stop</code>) and a section's "stop all" (<code>data-scc-act</code>) are the base
+        small Button and ARM: a question (<code>.scc-confirm</code>, <code>.scc-ask</code>) with the destructive answer
+        in the base danger Button and a quiet secondary cancel (<code>.scc-answers</code>). One
+        thing armed at a time; Escape disarms before it folds the bar. The answer is a sentence in
+        <code>.scc-notice</code>. A subagent with nothing of its own to stop carries dim text (<code>.scc-quiet</code>)
+        never a disabled button.</dd>
+    <dt>empty</dt>
+    <dd>Each section says so in a sentence (<code>.scc-note</code>), and not measured is never drawn as zero rows.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-small-parts">small parts and the widget harness</h3>
+<dl class="sg-facts">
+    <dt>control arrow and sort wrap</dt>
+    <dd><code>.oc-frame-control-arrow</code> is the arrow after a frame control's label; <code>.oc-sort-wrap</code> wraps a sort control so its menu anchors to it (see <code>SortControl</code>).</dd>
+    <dd><code>.oc-frame-extra</code> wraps a cell's own extra in its header snippet (running sessions' subagent rollup): the first thing a title row narrower than 300px drops, after the sort (440px) and before the name gives up its last few letters.</dd>
+    <dt>widget harness</dt>
+    <dd><code>web/src/widget-harness/Harness.svelte</code> (<code>.wh-stage</code>, <code>.wh-cell--drawer</code>, and <code>.wh-rail-body</code>, a widget bar's slide-out body: the real rail body filling the panel square, edge to edge, for the Widget Lab's right and bottom drawers; <code>.wh-menu-spot</code> is the zero-size, click-through fixed marker that anchors the bar key's menu at the point the Widget Lab sends) is a dev-only page that lays a cell out for the fit check, and <code>FitProbe.svelte</code> (<code>.wh-probe</code>) is that check's negative control, a box that breaks every rule on purpose (<code>.wh-probe-wide</code> sideways, <code>.wh-probe-tall</code> out of the bottom, <code>.wh-probe-cut</code> a line cut mid-glyph, <code>.wh-probe-over</code> and <code>.wh-probe-stack</code> one label drawn over another). <code>DefectProbe.svelte</code> (<code>.wh-defect</code>) is the layout-defect check's negative control: one <code>.wh-defect-row</code> per rule, each broken on purpose (<code>.wh-defect-over</code> one label over another, <code>.wh-defect-figure</code> under <code>.wh-defect-bar</code> placed by <code>.wh-defect-on-figure</code>, <code>.wh-defect-clipped</code>, <code>.wh-defect-ellipsis</code>, <code>.wh-defect-tiny</code>, <code>.wh-defect-contrast</code>, <code>.wh-defect-wrap</code>, <code>.wh-defect-escape</code>) beside a clean and a declared-truncatable row that must stay silent. None of them ships to a user; do not copy them.</dd>
+</dl>
+
+<h3 class="sg-h3" id="cells-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>A cell that draws its own title row or border.</strong> The frame draws them; a second one doubles the line and
+        misses every theme and collapse behaviour.</li>
+    <li><strong>A width breakpoint inside a cell.</strong> Use the cell's named width states, which follow the cell, not the
+        window.</li>
+    <li><strong>Recolouring the frame to recolour a box you see.</strong> The stat tiles draw their own edges
+        (<code>.oc-tile</code>); change the thing that paints the pixel.</li>
+    <li><strong>A cell that lets its body resize the terminal.</strong> A cell never negotiates the session's size.</li>
+</ul>

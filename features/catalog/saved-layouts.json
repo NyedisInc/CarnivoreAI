@@ -1,0 +1,35 @@
+{
+  "api_routes": [
+    "src/api/layouts_routes.py"
+  ],
+  "area": "terminal",
+  "docs": [],
+  "examples": [
+    "Save your usual three-pane review setup once and restore it every morning."
+  ],
+  "how_to": [
+    "Open the terminal widget menu, choose edit layout, and add a second session from the widget drawer. The name this layout box opens; save it and the arrangement is kept.",
+    "Bring it back later from the LAYOUTS section of the agents drawer."
+  ],
+  "id": "saved-layouts",
+  "issues": [
+    424
+  ],
+  "keywords": [
+    "layouts",
+    "arrangement"
+  ],
+  "media": [],
+  "name": "Saved layouts",
+  "since": "2026-09-26",
+  "status": "stable",
+  "summary": "save an arrangement of terminal panes and tabs and bring the whole thing back later.",
+  "surfaces": [
+    "web/src/lib/layouts-bridge/bridge.ts"
+  ],
+  "updated": "2026-09-27",
+  "where": [
+    "The terminal widget menu, edit layout, while a session is open."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

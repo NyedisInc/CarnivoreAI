@@ -1,0 +1,22 @@
+@layer legacy {
+/* padding */
+
+.wrapper-pill {
+    font-size: 0.7em;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm, 3px);
+    letter-spacing: 0.3px;
+    border: 1px solid var(--color-border, var(--oc-line-panel));
+    background: transparent;
+    color: var(--color-fg-faint, var(--oc-text-muted));
+    white-space: nowrap;
+}
+
+.launched-with {
+    font-family: var(--font-mono);
+    font-size: 0.7em;
+    letter-spacing: 0.3px;
+    color: var(--color-fg-faint, var(--oc-text-muted));
+    overflow-wrap: anywhere;
+}
+}

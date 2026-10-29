@@ -1,0 +1,47 @@
+@layer legacy {
+/* `background:#c00; color:#fff */
+
+#deep-link-error {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--oc-ground-raised);
+    border-bottom: 1px solid var(--oc-cyan);
+    color: var(--oc-text-primary);
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.deep-link-error__text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.deep-link-error__dismiss {
+    flex: 0 0 auto;
+    appearance: none;
+    background: transparent;
+    border: none;
+    color: var(--oc-text-secondary);
+    font-size: 1.15rem;
+    line-height: 1;
+    padding: 2px 8px;
+    margin: -2px 0;
+    cursor: pointer;
+    border-radius: var(--oc-radius-sm);
+}
+
+.deep-link-error__dismiss:hover {
+    color: var(--oc-text-primary);
+    background: var(--oc-ground-hover);
+}
+
+.deep-link-error__dismiss:focus-visible {
+    color: var(--oc-text-primary);
+}
+}

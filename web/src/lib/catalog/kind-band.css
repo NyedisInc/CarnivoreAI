@@ -1,0 +1,31 @@
+/* the detail pane */
+.kind-band {
+    --_kind: var(--oc-line-rule);
+    --_kind-edge: var(--oc-line-rule);
+    box-shadow: inset 0 2px 0 0 var(--_kind), inset 0 3px 0 0 var(--_kind-edge);
+}
+
+.kind-band--mod {
+    --_kind: var(--oc-kind-mod);
+    --_kind-edge: var(--oc-kind-mod);
+}
+
+.kind-band--skill {
+    --_kind: var(--oc-kind-skill);
+    --_kind-edge: var(--oc-kind-skill);
+}
+
+.kind-band--theme {
+    --_kind: var(--oc-kind-theme);
+    --_kind-edge: var(--oc-kind-theme);
+}
+
+.kind-band--plugin {
+    --_kind: var(--oc-kind-plugin);
+    --_kind-edge: var(--oc-kind-plugin);
+}
+
+.kind-band--loadout {
+    --_kind: var(--oc-line-rule);
+    --_kind-edge: var(--oc-line-rule);
+}

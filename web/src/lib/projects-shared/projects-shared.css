@@ -1,0 +1,112 @@
+@layer components {
+    .ph-page {
+        container: ph oc-pane / inline-size;
+    }
+
+    :where(.ph-page) .ph-table {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .ph-scols {
+        display: grid;
+        grid-template-columns: 16px minmax(160px, 1fr) 140px 64px 48px 124px 24px;
+        align-items: center;
+        column-gap: var(--oc-space-2);
+        padding: 0 var(--oc-space-3);
+    }
+
+    .ph-sub {
+        font-size: var(--oc-fs-micro, 10px);
+        letter-spacing: var(--oc-tracking-label, 0.6px);
+        text-transform: uppercase;
+        color: var(--oc-text-dim);
+    }
+
+    .ph-gone {
+        color: var(--oc-coral);
+    }
+
+    .ph-hint {
+        margin: 0;
+        color: var(--oc-text-muted);
+    }
+
+    .ph-led {
+        display: inline-block;
+        flex: none;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .ph-led--running {
+        background: var(--oc-green);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--oc-green) 25%, transparent);
+    }
+
+    .ph-led--asleep {
+        border: 1px solid var(--oc-text-muted);
+    }
+
+    .ph-led--closed,
+    .ph-led--unknown {
+        width: 7px;
+        height: 7px;
+        border-radius: 1px;
+        background: var(--oc-line-frame);
+    }
+
+    .ph-led--removed {
+        width: 7px;
+        height: 7px;
+        border-radius: 1px;
+        border: 1px dashed var(--oc-text-dim);
+    }
+
+    .ph-word {
+        font-size: var(--oc-fs-micro, 10px);
+        letter-spacing: var(--oc-tracking-label, 0.6px);
+        text-transform: uppercase;
+        color: var(--oc-text-muted);
+    }
+
+    .ph-word--running {
+        color: var(--oc-green);
+    }
+
+    .ph-word--closed,
+    .ph-word--removed,
+    .ph-word--unknown {
+        color: var(--oc-text-dim);
+    }
+
+    .ph-tag {
+        flex: none;
+        padding: 0 4px;
+        border: 1px solid var(--oc-line-rule);
+        border-radius: var(--oc-radius-sm);
+        font-size: var(--oc-fs-micro, 10px);
+        letter-spacing: var(--oc-tracking-label, 0.6px);
+        line-height: 15px;
+        text-transform: uppercase;
+        color: var(--oc-text-dim);
+        white-space: nowrap;
+    }
+
+    .ph-tag--dash {
+        border-style: dashed;
+    }
+
+    .ph-tag--gone {
+        border-color: color-mix(in srgb, var(--oc-coral) 45%, transparent);
+        color: var(--oc-coral);
+    }
+
+    .ph-empty {
+        margin: 0;
+        padding: 5px var(--oc-space-3);
+        color: var(--oc-text-dim);
+    }
+}

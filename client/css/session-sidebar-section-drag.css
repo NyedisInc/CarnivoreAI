@@ -1,0 +1,16 @@
+
+#session-sidebar-list :is([data-section], .session-sidebar-groups-block > .session-sidebar-group__body > .session-sidebar-group) > .session-sidebar-group__headerrow .session-sidebar-group__icon,
+#session-sidebar-list :is([data-section], .session-sidebar-groups-block > .session-sidebar-group__body > .session-sidebar-group) > .session-sidebar-group__headerrow .session-sidebar-group__gutter {
+    touch-action: none;
+}
+
+.session-sidebar-list--section-dragging,
+.session-sidebar-list--section-dragging * {
+    cursor: grabbing;
+    user-select: none;
+}
+
+#session-sidebar-list [data-section-lifted="1"] {
+    background: var(--oc-ground-hover);
+    box-shadow: inset 0 0 0 1px var(--oc-line-panel);
+}

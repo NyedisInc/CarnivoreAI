@@ -1,0 +1,55 @@
+{
+  "api_routes": [
+    "GET /api/v1/layouts",
+    "POST /api/v1/layouts",
+    "PATCH /api/v1/layouts/{uuid}",
+    "PUT /api/v1/layouts/{uuid}/shape",
+    "PUT /api/v1/layouts/{uuid}/style",
+    "POST /api/v1/layouts/{uuid}/members",
+    "DELETE /api/v1/layouts/{uuid}/members/{session_uuid}",
+    "DELETE /api/v1/layouts/{uuid}",
+    "PUT /api/v1/layouts/order",
+    "PUT /api/v1/layouts/{uuid}/active"
+  ],
+  "area": "sessions",
+  "description": "A Layout is a saved grid of two or more terminal sessions shown together (`/layout/<uuid>`). It lives in the drawer's own LAYOUTS section, can be pinned, renamed, reordered, expanded to show its member sessions, saved as a reusable blueprint, and coloured like a hand-made group - a colour, gradient and heading animation picked from the same shared picker, painted on that one row's title text.",
+  "docs": [
+    "docs/layouts.md"
+  ],
+  "examples": [
+    "Keep a 'release' layout with the api, web and docs sessions side by side and open it in one click."
+  ],
+  "how_to": [
+    "Arrange two or more sessions in the terminal grid, then save the arrangement as a layout.",
+    "It appears in the drawer's LAYOUTS section: click it to reopen the whole grid.",
+    "Pin, rename, reorder, color it or save it as a blueprint from its menu."
+  ],
+  "id": "layouts",
+  "issues": [
+    424,
+    745,
+    802,
+    821
+  ],
+  "keywords": [
+    "layout",
+    "drawer",
+    "terminal grid",
+    "colour",
+    "session group"
+  ],
+  "media_exempt": "a layout needs several live sessions saved together; its picture is covered by saved-layouts and terminal-cells-and-tabs",
+  "name": "Saved Layouts",
+  "since": "2026-09-26",
+  "status": "stable",
+  "summary": "Save a named, multi-session terminal arrangement and reopen it as one row in the drawer.",
+  "surfaces": [
+    "drawer LAYOUTS section",
+    "/layout/<uuid>"
+  ],
+  "updated": "2026-09-27",
+  "where": [
+    "The drawer's LAYOUTS section, once you have saved one.",
+    "Each opens at /layout/<id>."
+  ]
+}

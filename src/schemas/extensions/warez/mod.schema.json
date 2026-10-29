@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://carnivore.ai/schemas/extensions/warez/mod.schema.json",
+  "title": "Claude Code mod, layer 2 (warez front door)",
+  "description": "L1 mod plus the base overlay.",
+  "allOf": [
+    {
+      "$ref": "../mod.schema.json"
+    },
+    {
+      "$ref": "item.schema.json"
+    },
+    {
+      "properties": {
+        "external_code": {
+          "items": {
+            "required": [
+              "server",
+              "runner",
+              "package",
+              "version",
+              "sha256"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

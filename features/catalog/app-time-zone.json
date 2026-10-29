@@ -1,0 +1,53 @@
+{
+  "api_routes": [
+    "GET /api/v1/preferences",
+    "PATCH /api/v1/preferences"
+  ],
+  "area": "settings",
+  "description": "One time zone for the whole app. Repeating schedules in the task manager (every day at 09:00, weekdays at 09:00, monthly on the 1st) are read in it. It is new york until you pick another, it is saved on the server so every device and every agent sees the same one, and an agent can read and change it with the preferences tools.",
+  "docs": [
+    "docs/task-manager.md",
+    "docs/ui-preferences-inventory.md"
+  ],
+  "examples": [
+    "You moved to Paris: pick Europe/Paris and your daily 09:00 stand-up repeat comes due at 09:00 Paris time from its next run on.",
+    "A one-time reminder set for Friday 15:00 New York time still fires at that exact moment after you change the zone; only repeating wall times are re-read.",
+    "An agent asked to schedule a daily 08:30 check reads the zone with preferences_get (time_zone) so it knows whose 08:30 that is."
+  ],
+  "how_to": [
+    "Open settings, general, time zone. Type part of a name (paris, new york, tokyo) in the search box and click the zone in the list; it saves at once.",
+    "To go back to new york, pick America/New_York, or have an agent send preferences_update with time_zone null.",
+    "Agents: preferences_get returns time_zone (absent means America/New_York); preferences_update with {\"time_zone\": \"Europe/Paris\"} changes it. A name this server does not know is refused."
+  ],
+  "id": "app-time-zone",
+  "issues": [
+    1984
+  ],
+  "keywords": [
+    "time zone",
+    "timezone",
+    "schedule",
+    "repeat",
+    "daily",
+    "utc",
+    "dst",
+    "new york",
+    "clock"
+  ],
+  "media_exempt": "A search box and a list in settings; the capture recipe is added before the next version bump.",
+  "name": "App time zone",
+  "since": "2026-10-19",
+  "status": "beta",
+  "summary": "one time zone for the whole app: repeating schedules are read in it, new york until you pick another.",
+  "surfaces": [
+    "settings, general, time zone",
+    "web/src/lib/time-zone/",
+    "src/core/time_zone/app_time_zone.py",
+    "src/api/preferences_routes.py"
+  ],
+  "updated": "2026-10-19",
+  "where": [
+    "Settings, general, the time tab: a search box over every time zone name and the list it narrows.",
+    "The preferences_get and preferences_update tools: the time_zone preference."
+  ]
+}

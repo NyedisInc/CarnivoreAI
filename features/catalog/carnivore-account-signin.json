@@ -1,0 +1,38 @@
+{
+  "api_routes": [
+    "src/api/catalog_web_signin_routes.py",
+    "src/api/catalog_email_signin_routes.py"
+  ],
+  "area": "skills-catalog",
+  "docs": [],
+  "examples": [],
+  "how_to": [
+    "Press continue with google or continue with github: a new tab opens on the provider's page and this window finishes by itself, or type your email, press continue and enter the code we send.",
+    "Signed out, settings > remote and security > mobile sync shows one line and a sign in button instead of the switch and pair button; the mobile sync row carries a gold star and 'sign in'. Mobile sync that is already on keeps working, with a note that sign in will be required later, and the paired list, revoke and turn off never need an account. The share read only dialog opened signed out shows the same sign in button instead of create link.",
+    "Every install sees one welcome to the free carnivore account the first time it opens after the update (signed out only): sign in or create account opens the sign in modal, not now dismisses it. Either choice is remembered for every device, so it never shows again; a signed in user never sees it.",
+    "Signed out, the drawer footer shows a gold sign in pill beside the SysOp chip, and the collapsed rail puts a gold dot on the avatar; the account menu opens with sign in or create your free account, and the phone top bar carries the same avatar and pill. Signed in, the account menu opens with your handle and email, then your account, settings, edit layout, help, master all, sign out and lock this device."
+  ],
+  "id": "carnivore-account-signin",
+  "issues": [
+    1200
+  ],
+  "keywords": [
+    "sign in",
+    "account",
+    "google",
+    "github",
+    "email",
+    "consent"
+  ],
+  "media_exempt": "A modal reached from the next slices' entry points; its screenshot is captured before the next version bump.",
+  "name": "Carnivore account sign in",
+  "since": "2026-10-01",
+  "status": "stable",
+  "summary": "one sign in or create your free carnivore account modal, opened from anywhere, with google, github and email code in the same window.",
+  "surfaces": [],
+  "updated": "2026-10-04",
+  "where": [
+    "Any gated action while signed out (opens over the current screen).",
+    "Once after launch, over the app, while signed out."
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "api_routes": [
+    "src/api/session_group_icon_routes.py",
+    "src/api/session_groups_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/icon-picker.md"
+  ],
+  "examples": [
+    "Keep a ashfield group and a backend group so a glance at the drawer tells you which side each agent is on.",
+    "Pin the one session you check most often so it never scrolls away."
+  ],
+  "how_to": [
+    "Open an agent's menu, choose add to, then group, and pick a group; a group's own menu, add, pulls agents in.",
+    "Drag a row by its grip to reorder it within its group, or drag a whole band to reorder groups.",
+    "Pin a row with the pin mark to keep it at the top. Pins, order and colors follow you to every device.",
+    "Give a group an icon from its heading menu, icon: pick one from the grid or choose no icon. It shows in the group's color, right of the chevron."
+  ],
+  "id": "session-groups",
+  "issues": [
+    769,
+    726,
+    973
+  ],
+  "keywords": [
+    "groups",
+    "icon",
+    "pin",
+    "sidebar"
+  ],
+  "media": [],
+  "name": "Session groups",
+  "since": "2026-08-25",
+  "status": "stable",
+  "summary": "organize sessions into named groups in the sidebar, with pins, colors and icons that stick.",
+  "surfaces": [
+    "client/js/session-sidebar-groups.js",
+    "web/src/lib/drawer/group-store.ts",
+    "client/js/session-sidebar-group-colour.js",
+    "client/js/session-sidebar-group-icon.js",
+    "web/src/lib/item-menu/ItemMenuHost.svelte",
+    "web/src/lib/sidebar-shell/HeadingRenameEditor.svelte"
+  ],
+  "updated": "2026-09-28",
+  "where": [
+    "The agents drawer: groups are the named bands above the ungrouped sessions.",
+    "Move a session into one with its row menu, add to, then group.",
+    "A group's icon: its heading menu (the three dots), icon."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

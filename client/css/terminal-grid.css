@@ -1,0 +1,129 @@
+/* padding */
+
+#terminal-grid {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* height: 100% */
+#terminal-grid > .oc-surface {
+    flex: 1;
+    min-height: 0;
+}
+
+/* slide-out PUSHES the grid the bottom bar the bottom rail */
+#terminal-grid:has(> .oc-surface) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr);
+    grid-auto-rows: auto;
+}
+
+#terminal-grid:has(> .oc-surface) > .oc-surface {
+    grid-row: 1;
+    grid-column: 1;
+    min-width: 0;
+}
+
+#terminal-grid:has(> .oc-surface) > [data-session-rail][data-rail-edge="side"] {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+}
+
+#terminal-grid:has(> .oc-surface) > [data-session-rail][data-rail-edge="bottom"] {
+    grid-row: 2;
+    grid-column: 1;
+}
+
+#terminal-grid:has(> .oc-surface) > :not(.oc-surface, [data-session-rail]) {
+    grid-row: 3;
+    grid-column: 1 / -1;
+}
+
+/* display: none */
+#terminal-grid:has(> .oc-surface) > .terminal-container {
+    display: none;
+}
+
+/* overflow-y: auto padding position: relative */
+#terminal-grid [data-cell="terminal:@primary"] .oc-frame-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: visible;
+    contain: none;
+}
+
+/*  hidden  overflow: hidden position: fixed */
+#terminal-components {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    overflow: visible;
+}
+
+
+/*  hidden  display: flex */
+#headerComponentsBtn {
+    display: none;
+}
+
+/*  hidden  */
+body:has(#terminal-grid > .oc-surface) .header :is(
+    #configEditorBtn, #terminalSearchBtn, #headerSessionThemeBtn, #headerDetachBtn,
+    #sessionNotesBtn
+) { display: none; }
+#terminal-grid:has([data-oc-focus]) [data-cell^="terminal:"]:not([data-oc-focus]) .oc-frame-body {
+    opacity: 0.88;
+}
+#terminal-grid [data-cell^="terminal:"] .terminal-container {
+    border: 0;
+    border-radius: 0;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* flex: 0 0 auto */
+#terminal-foot-bar {
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+
+/*  hidden  */
+@media (min-width: 1024px) {
+    body:has(#terminal-grid > .oc-surface):has(.session-sidebar-panel--open) .header {
+        display: none;
+    }
+}
+
+/*  hidden  */
+#terminal-grid {
+    position: relative;
+}
+
+/* height: 100% padding */
+#terminal-grid > #browser-screen {
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
+    padding: 1px;
+    z-index: 30;
+    pointer-events: none;
+}
+
+/* padding */
+#terminal-grid:has(> .oc-surface) > #browser-screen {
+    grid-row: 1 / 2;
+    grid-column: 1 / 2;
+}
+
+#terminal-grid[data-center-page] > .oc-surface,
+#terminal-grid[data-center-page] > .terminal-container {
+    visibility: hidden;
+}

@@ -1,0 +1,50 @@
+{
+  "id": "approvals-widget",
+  "name": "Approvals widget",
+  "summary": "",
+  "description": "Retired. The widget drew the inbox's own cards in a cell. The approval inbox, its pane and its routes are unchanged.",
+  "area": "home",
+  "status": "removed",
+  "since": "2026-09-30",
+  "updated": "2026-10-12",
+  "surfaces": [
+    "home screen",
+    "drawer widget area",
+    "widgets page"
+  ],
+  "api_routes": [
+    "GET /api/v1/approvals",
+    "POST /api/v1/sessions/{id}/dialog/answer",
+    "POST /api/v1/agent-actions/{id}/approve",
+    "POST /api/v1/agent-actions/{id}/deny"
+  ],
+  "docs": [
+    "docs/approvals.md",
+    "docs/widget-system.md"
+  ],
+  "issues": [
+    1188
+  ],
+  "keywords": [
+    "approvals",
+    "inbox",
+    "widget",
+    "permission",
+    "agent action",
+    "dialog"
+  ],
+  "where": [
+    "Home screen once added: a cell titled approvals with a check mark.",
+    "The drawer's widget area at the bottom of the agents tab, once added."
+  ],
+  "how_to": [
+    "Open the edit layout control at the bottom of the drawer.",
+    "Search widgets for approvals; press the card to put it on the home page, or press the one under drawer area to put it in the drawer.",
+    "Press an option on a card to answer it, or jump to open its session."
+  ],
+  "examples": [
+    "Leave the widget on the home page and answer a permission prompt from any session without opening the inbox.",
+    "See nothing waiting at a glance when no session needs you."
+  ],
+  "media_exempt": "A widget whose screenshots are captured before the next version bump."
+}

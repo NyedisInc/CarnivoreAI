@@ -1,0 +1,20 @@
+
+/* not present in */
+body:not(.is-authenticated) .header .controls > *:not([data-show-on-auth]) {
+    display: none !important;
+}
+
+body:not(.is-authenticated) [data-auth-only] {
+    display: none !important;
+}
+
+html[data-solo] #session-sidebar-toggle,
+html[data-solo] #session-sidebar-panel,
+html[data-solo] #session-sidebar-backdrop,
+html[data-solo] #session-sidebar-rail {
+    display: none !important;
+}
+
+html[data-solo] body {
+    --dock-offset: 0px !important;
+}

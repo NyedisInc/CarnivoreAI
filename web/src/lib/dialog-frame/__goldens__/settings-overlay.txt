@@ -1,0 +1,28 @@
+<div aria-label="activity log settings" class="oc-anchored oc-configure popup-focus" data-configure-sheet="core.activity-log" data-settings-overlay="core.activity-log" data-sheet-mode="right" popover="manual" role="dialog" style="left: 8px; top: 8px; width: 260px;" tabindex="-1">
+  <header class="oc-configure-head">
+    <span class="oc-configure-label">
+      "settings"
+    <span class="oc-configure-name">
+      "activity log"
+  <div class="oc-configure-body oc-wso">
+    <section aria-label="settings" class="sf" data-oc-base="" data-settings-form="">
+      <div aria-label="what to show" class="sf__group" data-settings-group="widgets.setting.activity_log.group.show" role="group">
+        <h4 class="sf__group-head">
+          "what to show"
+        <div class="sf__row" data-chosen="0" data-kind="boolean" data-setting="showSystem">
+          <label class="sf__label" for="wso-core-activity-log-showSystem">
+            "show system lines"
+          <div class="sf__control">
+            <button aria-checked="true" class="oc-check" data-on="1" id="wso-core-activity-log-showSystem" role="switch" type="button">
+              <span aria-hidden="true" class="oc-check__box">
+              <span class="oc-check__label">
+                "on"
+            <span class="sf__default">
+              "default"
+          <p class="sf__hint">
+            "the live channel connecting, a toast dismissed"
+  <footer class="oc-configure-foot">
+    <button data-btn="secondary" data-button-root="true" data-configure-reset="true" disabled="" tabindex="0" type="button">
+      "reset"
+    <button data-btn="confirm" data-button-root="true" data-configure-done="true" tabindex="0" type="button">
+      "done"

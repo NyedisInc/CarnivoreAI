@@ -1,0 +1,43 @@
+{
+  "api_routes": [
+    "GET /api/v1/pipeline/status",
+    "POST /api/v1/pipeline/plugins/{id}/rebuild"
+  ],
+  "area": "settings",
+  "description": "The pipeline reads your conversations once and feeds its plugins (usage stats and deep search). Both are built in and always on, so nothing asks you to approve a data view, a grant, a start point or a slow lane, and Settings has no switch, pause, grant or backfill screen for them. Settings, pipeline shows one read-only status line (caught up, behind with a file count and a lag, stalled since a time, or rebuilding a plugin) and, under it, one row per plugin with how much waits for it and a rebuild button (it asks first, because it replaces that plugin's data). The same status and rebuild are available over the API.",
+  "docs": [
+    "docs/save-pipeline.md",
+    "docs/DECISIONS.md"
+  ],
+  "how_to": [
+    "open settings and pick pipeline.",
+    "read the status line at the top: caught up, behind, stalled or rebuilding.",
+    "use rebuild on a plugin's row to start its data over; it asks first, because it replaces that plugin's data."
+  ],
+  "id": "log-processor-addons",
+  "keywords": [
+    "pipeline",
+    "plugin",
+    "status",
+    "stats",
+    "deep search",
+    "rebuild"
+  ],
+  "media_exempt": "the screen's captures are recaptured from features/capture before the next version bump; rendering was checked under three themes",
+  "name": "Pipeline plugins",
+  "since": "2026-10-01",
+  "status": "beta",
+  "summary": "one status line for the pipeline and a rebuild button per plugin; the approval screens (data views, grants, start points, slow lane) are gone.",
+  "surfaces": [
+    "GET /api/v1/pipeline/status",
+    "POST /api/v1/pipeline/plugins/{id}/rebuild",
+    "Settings, pipeline"
+  ],
+  "updated": "2026-10-12",
+  "where": [
+    "settings, pipeline"
+  ],
+  "issues": [
+    1682
+  ]
+}

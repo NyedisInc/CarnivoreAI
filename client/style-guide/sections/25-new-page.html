@@ -1,0 +1,112 @@
+<h2 class="sg-h2">building a new page</h2>
+
+<h3 class="sg-h3" id="new-page-decide">0. decide what it is</h3>
+<ul>
+    <li><strong>A full page</strong> you open, read and close (a library, an account list): an OVERLAY SCREEN like the ledger.
+        This walkthrough.</li>
+    <li><strong>A box on the dashboard</strong> beside running sessions (now playing): a CELL KIND on
+        <code>CellFrame</code> (step 10).</li>
+    <li><strong>A bounded decision</strong> (pick a track, confirm a delete): a DIALOG on <code>ModalShell</code>
+        (<a href="#dialogs">dialogs</a>).</li>
+</ul>
+
+<h3 class="sg-h3" id="new-page-steps">the steps</h3>
+<ol>
+    <li><strong>Intake.</strong> Run the work skill (<code>.claude/skills/work/SKILL.md</code>): search issues, file or reuse
+        one, claim it, work in a worktree under <code>worktrees/cloudecode/</code>. Read this guide's
+        <a href="#principles">principles</a>, then the ledger's files.</li>
+    <li><strong>API first.</strong> Every action the page offers is an authenticated route before it is a button:
+        <code>src/api/music_routes.py</code>, included by one line in the <code>src/api/routes.py</code> aggregator. The page is
+        a client of those routes and of nothing else.</li>
+    <li><strong>The container.</strong> Add <code>&lt;div id="music-screen"&gt;&lt;/div&gt;</code> to <code>client/index.html</code>
+        beside <code>#ledger-screen</code>. The id is a contract; nothing else mounts there, and the container carries no
+        class.</li>
+    <li><strong>The component, in <code>web/</code>.</strong> <code>web/src/lib/music/MusicScreen.svelte</code>, copying
+        <code>web/src/lib/ledger/LedgerScreen.svelte</code>:
+<pre class="sg-pre"><code>{#if open}
+  &lt;div class="pledger music-screen screen" role="region" aria-label={t('music.screen.title')}&gt;
+    &lt;MusicHeader count={tracks.length} onBack={close} {t} /&gt;
+    &lt;div class="music-scroll"&gt;        &lt;!-- THE ONE SCROLLING BOX --&gt;
+      &lt;div class="music-main"&gt;        &lt;!-- capped at 1680px, centred, --pl-gutter padding --&gt;
+        &lt;section class="pl-panel" aria-labelledby="music-now"&gt;
+          &lt;div class="pl-titlebar"&gt;&lt;h2 class="pl-title" id="music-now"&gt;{t('music.now.title')}&lt;/h2&gt;&lt;/div&gt;
+          ...
+        &lt;/section&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+{/if}</code></pre>
+        The page is the shared frame, <code>Page</code> (<code>web/src/opscenter/ui/Page.svelte</code>, rules in
+        <code>web/src/opscenter/page.css</code>): <code>.oc-page</code> is fixed from <code>var(--overlay-top)</code>,
+        z-index 40, column flex, and the page supplies only its body inside <code>.oc-page__body</code>. Never write a
+        fixed root of your own. A search bar is <code>SearchField</code> in the <code>bar</code> snippet; the single
+        <code>@media (max-width: 1023px)</code> step lives in <code>page.css</code>.</li>
+    <li><strong>The header.</strong> <code>Page</code> draws it: the title, a count, the one confirming action in the
+        <code>actions</code> snippet, a quiet close <code>.oc-btn</code>. A dialog opened from the page uses the picker's buttons (<a href="#buttons">buttons</a>).</li>
+    <li><strong>The body.</strong> Compose what this guide shows: panels with title rows (<a href="#panels">panels</a>), cards
+        in <code>repeat(auto-fill, minmax(min(100%, 340px), 1fr))</code> when each item is its own decision, a
+        <code>DataTable</code> when items are compared (<a href="#tables">tables</a>), <code>StatusLed</code> and
+        <code>SessionFace</code> wherever a session appears, <code>CascadeMenu</code> for any menu, the field and switch from
+        <a href="#forms">forms</a>, the empty, loading and error lines from <a href="#feedback">feedback</a>. Each section of
+        the body is its own card under its own strip, 24px apart, and the one that holds the next step is the primary one (<a href="#panels-sections">a column of sections</a>).</li>
+    <li><strong>The host.</strong> <code>web/src/lib/music/screen-host.ts</code>, copying
+        <code>web/src/lib/ledger/screen-host.ts</code>: <code>ensurePanel('music-screen', MusicScreen, {})</code>,
+        <code>openMusicScreen()</code> and <code>closeMusicScreen()</code>, the hash <code>#music</code> read once after
+        <code>whenLegacyBootComplete()</code> and then on <code>hashchange</code>. Wire it from <code>web/src/main.ts</code> the
+        way the ledger's is.</li>
+    <li><strong>Navigation.</strong> Add a row to <code>RAIL_DESTINATIONS</code> in
+        <code>web/src/opscenter/shell/rail-items.ts</code>: <code>{ id: 'music', icon: 'music', labelKey: 'opscenter.nav.music',
+        hint: 'm', run: () =&gt; void openMusic() }</code>, with <code>openMusic</code> beside <code>openThemes</code> in
+        <code>web/src/opscenter/api</code>. The agents drawer's menu tab draws it; the hash is the deep link.</li>
+    <li><strong>Strings.</strong> Add every string to <code>client/js/i18n/catalog.en.js</code> as flat dotted keys that say
+        what the string MEANS (<code>music.screen.title</code>, <code>music.empty</code>, <code>music.error.read</code>), data
+        only, lowercase, no dashes, no emoji. Read them with <code>t()</code>; keep the key list in a
+        <code>MUSIC_KEYS</code> object in the model file the way <code>LEDGER_KEYS</code> is.</li>
+    <li><strong>Tokens and icons.</strong> Use <code>--oc-*</code> and the <code>--pl-*</code> aliases; add no colour. A new
+        icon goes into <code>web/src/opscenter/ui/icons.ts</code> on the 24 grid (<a href="#new-component">making a new
+        icon</a>). If a meaning truly needs a colour no token carries, derive it with <code>color-mix()</code> at the screen root
+        and say why.</li>
+    <li><strong>A dashboard cell instead.</strong> Add a record to <code>web/src/opscenter/engine/meta.ts</code> (title key,
+        icon, icon tone, size ladder with named width and height states, phone order), a
+        <code>web/src/opscenter/cells/music/Cell.svelte</code> that draws only its body, and its entry in
+        <code>cells/registry.ts</code>. <code>CellFrame</code> gives it the title row, collapse, menu and every theme.</li>
+    <li><strong>This guide.</strong> Every new Svelte component and every new class goes into
+        <code>client/style-guide/registry.json</code> under the section that documents it, in the same change;
+        <code>venv/bin/python3 -m tests.helpers.style_guide_inventory</code> prints what is missing. A pattern this guide did
+        not have gets a section entry (<a href="#nothing-fits">when nothing fits</a>).</li>
+    <li><strong>Tests.</strong> A vitest for the model (<code>music-model.test.ts</code>), a render test for the screen
+        (<code>ThemesScreen.render.test.ts</code> is a model), the style guide drift test, <code>tests/test_no_remote_assets.py</code>,
+        and a browser verify script under <code>scripts/</code> (the <code>verify_terminal_tabs.py</code> family) that loads the
+        page on a leased server, asserts the concrete computed properties (outlined actions, 2px corners, cyan focus, the title
+        row's inset rule) under three themes, and is proven able to fail. Client-only diffs run the client tier, never the full
+        suite; a server route change runs the full suite.</li>
+    <li><strong>Build and look.</strong> <code>cd web &amp;&amp; npm run build</code> (leave <code>client/dist</code> unstaged
+        on a branch), <code>scripts/web-build-check.sh --branch</code>, <code>python3 scripts/js_syntax_check.py</code> on any
+        legacy JS you touched. Lease a server (<code>scripts/testsrv lease</code>), render at 390px and 1600px under carnivore,
+        codex and one more, and put the page beside the ledger before calling it done.</li>
+</ol>
+
+<h3 class="sg-h3" id="new-page-phone-header">the phone header (below 768px)</h3>
+<p>The rows under the bar SCROLL AWAY (layout 5, same pick). <code>Page</code> puts the tab row and the bar in ONE wrapper,
+    <code>.oc-page__away</code>, sticky under the sticky title bar; scrolling down slides it behind the bar by a transform
+    (the scroll area never changes size, so nothing flickers) and the bar casts the lift-shadow token while it is away
+    (<code>.oc-page--away</code> on the root). A scroll up of about 16px, the top of the page, focus inside the rows or a click on
+    them brings it back; content that overflows by less than the rows' own height never hides it; reduced motion is instant.
+    The rules are the pure <code>client/js/scroll-away.js</code>, wired by <code>web/src/opscenter/ui/scroll-away.ts</code>. A host
+    that embeds screens (warez) takes their search, filter row and flip into its own <code>Page</code> (the
+    <code>searchSlot</code>, <code>barSlot</code> and <code>controlsSlot</code> props) so the rows slide as one, and its
+    sign-in act (<code>.warez-act</code>) is the last control of the bar's one sideways row, never a row of its own and never header. Desktop never hides.</p>
+
+<h3 class="sg-h3" id="new-page-checklist">done means</h3>
+<ul>
+    <li>No colour literal in the diff; every colour an <code>--oc-*</code> token or an alias of one.</li>
+    <li>Every string a catalog key; no em dash, en dash or emoji.</li>
+    <li>Every action behind an authenticated route.</li>
+    <li>At 390px the header follows the phone header rule above; no horizontal scroll; content capped and centred at 2560px; 44px targets under 1024px.</li>
+    <li>Screenshots under three themes, one of them light, that look like the ledger.</li>
+    <li>Cover the body text and every section is still countable and nameable from its strip: a card each, 24px apart,
+        one primary section that holds the next step (<a href="#panels-sections">a column of sections</a>).</li>
+    <li>Every view that opens has its own close or back at its top and foot, and Escape closes it; every set of marks has
+        a key in view.</li>
+    <li>The registry and this guide updated; the drift test green.</li>
+</ul>

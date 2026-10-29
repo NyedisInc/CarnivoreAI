@@ -1,0 +1,55 @@
+{
+  "id": "launch-profiles-page",
+  "name": "Launch profiles page",
+  "summary": "One page for every way a session can be launched: pick the harness, account, endpoint, model and permissions in a form, see the exact command it will run, and check, copy, share or delete it safely.",
+  "description": "A launch profile is a structured record of how an agent starts: the harness (claude, codex or a plain shell), the account it uses (follow the active one, or a pinned claude account), the endpoint (native, or one of your AI connections such as openrouter or lm studio), the model (the harness default, a fixed one, or ask at launch), and the permissions posture. Advanced fields (extra flags, environment variables, secret variables read from the keychain, the shell startup file, a before-launch step) and an expert custom command are folded away. A live preview shows the exact command and environment, with secrets as names and key hints only. The page replaces the wrappers page at the same menu row.",
+  "area": "settings",
+  "status": "beta",
+  "since": "2026-10-03",
+  "updated": "2026-10-12",
+  "surfaces": [
+    "launch profiles page",
+    "web/src/lib/launch-profiles-page/LaunchProfilesScreen.svelte"
+  ],
+  "api_routes": [
+    "GET /api/v1/launch-profiles",
+    "POST /api/v1/launch-profiles",
+    "PUT /api/v1/launch-profiles/{id}",
+    "DELETE /api/v1/launch-profiles/{id}",
+    "POST /api/v1/launch-profiles/preview",
+    "GET /api/v1/launch-profiles/{id}/preview",
+    "POST /api/v1/launch-profiles/{id}/check",
+    "POST /api/v1/launch-profiles/import"
+  ],
+  "docs": [
+    "docs/launch-profiles.md"
+  ],
+  "issues": [
+    1257,
+    1641
+  ],
+  "keywords": [
+    "launch profile",
+    "wrapper",
+    "harness",
+    "model",
+    "permissions",
+    "endpoint"
+  ],
+  "where": [
+    "Settings, launch profiles section (#settings/launch_profiles, or the old /#wrappers fragment). With the drawer menu focused, press l.",
+    "The agents link in settings > sessions & agents opens it."
+  ],
+  "how_to": [
+    "Press new and pick a template: claude subscription, claude via openrouter, claude via lm studio, codex yolo or plain shell.",
+    "Change the fields; the preview shows the exact command as you type.",
+    "Press save. Use check to run the harness, duplicate to copy, make default to use it for new sessions of that harness.",
+    "Delete asks you to move anything still using the launch profile to another one first.",
+    "The icon row shows the chosen icon at 24px beside its id, and the list shows the same 24px icons."
+  ],
+  "examples": [
+    "Run claude through openrouter with a model picked from the connection's live list.",
+    "Keep a codex launch profile that skips all permission checks, marked clearly in the list."
+  ],
+  "media_exempt": "Screenshots are captured before the next version bump."
+}

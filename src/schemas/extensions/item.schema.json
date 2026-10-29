@@ -1,0 +1,551 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://carnivore.ai/schemas/extensions/item.schema.json",
+  "title": "Carnivore extension item, layer 0 (the base every kind extends)",
+  "description": "The authored sidecar every item carries, named carnivore.json for every kind. The kind is still decided by the native manifest present; the sidecar never counts as the manifest. See docs/extension-contract.md.",
+  "type": "object",
+  "required": [
+    "kind",
+    "id",
+    "name",
+    "version",
+    "api_version",
+    "min_app_version",
+    "author",
+    "tier",
+    "scope"
+  ],
+  "properties": {
+    "kind": {
+      "enum": [
+        "cplug",
+        "widget",
+        "theme",
+        "skill",
+        "claude-code-plugin",
+        "mod",
+        "loadout"
+      ],
+      "description": "The item class. One L1 schema per value."
+    },
+    "id": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 80,
+      "pattern": "^[a-z0-9][a-z0-9._-]*(/[a-z0-9][a-z0-9._-]*)?$",
+      "description": "A bare id for a first-party item, <publisher>/<name> for a catalog item. Each kind tightens this."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "The display name shown beside the id on the Plugins page and in warez."
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 400
+    },
+    "version": {
+      "$ref": "#/$defs/version"
+    },
+    "api_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": ""
+    },
+    "min_app_version": {
+      "$ref": "#/$defs/semver"
+    },
+    "author": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "An SPDX identifier. Required for tier catalog."
+    },
+    "tier": {
+      "enum": [
+        "builtin",
+        "catalog",
+        "dev"
+      ],
+      "description": "builtin: first-party, compiled in, removable. catalog: third party, run out of process. dev: sideloaded, developer mode only. core is not a tier for items."
+    },
+    "scope": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "global",
+          "project"
+        ]
+      },
+      "description": "Where it may be turned on."
+    },
+    "requires": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/requirement"
+      }
+    },
+    "permissions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/permission"
+      }
+    },
+    "owns": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "description": "Everything the item puts on disk or into the app, as lists keyed by what they are."
+    },
+    "data": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/data_entry"
+      },
+      "description": "The stores the item keeps, one entry each, so export, inventory and purge find them without a table in core. Required for a cplug ([] means it keeps no data). ids are unique within the item (the parser checks that; a schema cannot). See docs/extension-contract.md section 8."
+    },
+    "links": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Where to read more. Each value is an https:// URL (L0-4).",
+      "properties": {
+        "homepage": {
+          "type": "string",
+          "maxLength": 300,
+          "pattern": "^https://"
+        },
+        "repository": {
+          "type": "string",
+          "maxLength": 300,
+          "pattern": "^https://"
+        },
+        "issues": {
+          "type": "string",
+          "maxLength": 300,
+          "pattern": "^https://"
+        }
+      }
+    },
+    "keywords": {
+      "type": "array",
+      "maxItems": 10,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9-]{1,24}$"
+      },
+      "description": "Search terms and the census band (L0-5)."
+    },
+    "upstream": {
+      "type": "object",
+      "required": [
+        "name",
+        "url"
+      ],
+      "additionalProperties": false,
+      "description": "Honest credit for a wrapper around somebody else's tool (L0-6).",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "url": {
+          "type": "string",
+          "maxLength": 300,
+          "pattern": "^https://"
+        },
+        "license": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        }
+      }
+    },
+    "min_harness_version": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The oldest Claude Code or Codex that loads the item, keyed by harness, each a range (L0-7).",
+      "properties": {
+        "claude": {
+          "$ref": "#/$defs/range"
+        },
+        "codex": {
+          "$ref": "#/$defs/range"
+        }
+      }
+    }
+  },
+  "if": {
+    "properties": {
+      "tier": {
+        "const": "catalog"
+      }
+    },
+    "required": [
+      "tier"
+    ]
+  },
+  "then": {
+    "required": [
+      "license"
+    ],
+    "properties": {
+      "permissions": {
+        "items": {
+          "required": [
+            "reason"
+          ]
+        }
+      }
+    }
+  },
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]{1,9}(\\.[0-9]{1,9}){0,3}(-[0-9a-z][0-9a-z.-]{0,28}[0-9a-z])?$",
+      "description": "The catalog's VERSION_RE: up to four numeric components and an optional pre-release."
+    },
+    "requirement": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "kind": {
+          "enum": [
+            "cplug",
+            "widget",
+            "theme",
+            "skill",
+            "claude-code-plugin",
+            "mod",
+            "loadout",
+            "core",
+            "mcp"
+          ],
+          "description": "core: a core feature id. mcp: an MCP server the item expects."
+        },
+        "range": {
+          "$ref": "#/$defs/range"
+        }
+      }
+    },
+    "permission": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "pattern": "^[a-z][a-z0-9_.]*(:.*)?$",
+          "description": "A row of src/cplugs/sdk/permission_registry.py. The parser checks the name against the registry."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      }
+    },
+    "relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300,
+      "pattern": "^(?!/)(?!(?:.*/)?\\.\\.(?:/|$))[^\\\\]+$",
+      "description": "Relative to the item's own storage folder (<state>/cplugs/<id>/ for a plugin): no leading slash, no .. segment, no backslash."
+    },
+    "data_policy": {
+      "type": "object",
+      "required": [
+        "own",
+        "share",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "own": {
+          "enum": [
+            "carried",
+            "derived",
+            "excluded"
+          ],
+          "description": ""
+        },
+        "share": {
+          "enum": [
+            "carried",
+            "derived",
+            "excluded"
+          ],
+          "description": "What a share to another person does with it."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 400,
+          "pattern": "\\S",
+          "description": "Why, in words; shown in the export plan."
+        },
+        "purge": {
+          "enum": [
+            "removed",
+            "kept"
+          ],
+          "description": "What a purge of the plugin does with the store: removed or kept. Required on an entry that sits outside the plugin folder (root_setting or state_path); a store inside the plugin folder is always removed with it."
+        },
+        "backup": {
+          "enum": [
+            "vault",
+            "none"
+          ],
+          "description": "vault: the save plugin backs this folder up into its vault as one folder unit (<plugin>.<data id>), with dedup, retention that never drops a sole copy, health and a restore to a new sibling folder. none (the default): not backed up by the product. Only a kind folder entry that is not itself a backup_destination may say vault."
+        }
+      }
+    },
+    "data_entry": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "scope_by",
+        "policy"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "maxLength": 64,
+          "description": "Unique within the item; the full id is <item id>.<id>."
+        },
+        "kind": {
+          "enum": [
+            "db",
+            "folder",
+            "file"
+          ]
+        },
+        "path": {
+          "$ref": "#/$defs/relative_path"
+        },
+        "root_setting": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "A setting this item declares whose value is the store's root folder."
+        },
+        "sub": {
+          "$ref": "#/$defs/relative_path"
+        },
+        "scope_by": {
+          "enum": [
+            "session_uuid",
+            "task_item_id",
+            "project",
+            "install"
+          ],
+          "description": "The key that ties a row or folder to a subject; install means no subject."
+        },
+        "policy": {
+          "$ref": "#/$defs/data_policy"
+        },
+        "secret_columns": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": "Columns of a db store that hold secrets and are left out of an export. Only for kind db."
+        },
+        "state_path": {
+          "$ref": "#/$defs/relative_path",
+          "description": "A store the plugin keeps directly under the app state folder by a fixed name (for example save's old restore point tree), relative to <state>/."
+        },
+        "default": {
+          "$ref": "#/$defs/relative_path",
+          "description": "Only with root_setting: where the store lives, relative to <state>/, when the setting is blank (crate's bundles: crates)."
+        },
+        "role": {
+          "enum": [
+            "store",
+            "backup_destination"
+          ],
+          "description": "store (the default) or backup_destination: a place the plugin writes copies meant to survive the loss of the original."
+        },
+        "provides": {
+          "enum": [
+            "backup_points"
+          ],
+          "description": "backup_points: this folder is where the plugin keeps the backup points of conversations (the vault). A crate asks the enabled plugin that declares it for the points to carry and to file, instead of naming a plugin. At most one entry per plugin, a folder store."
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "path"
+          ]
+        },
+        {
+          "required": [
+            "root_setting"
+          ]
+        },
+        {
+          "required": [
+            "state_path"
+          ]
+        }
+      ],
+      "not": {
+        "required": [
+          "secret_columns",
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "folder",
+              "file"
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "sub"
+            ]
+          },
+          "then": {
+            "required": [
+              "root_setting"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "default"
+            ]
+          },
+          "then": {
+            "required": [
+              "root_setting"
+            ]
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "required": [
+                  "root_setting"
+                ]
+              },
+              {
+                "required": [
+                  "state_path"
+                ]
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "policy": {
+                "required": [
+                  "purge"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "range": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "pattern": "^(?:\\*|(?:>=|<=|>|<|=|\\^|~)[0-9]+(?:\\.[0-9]+){0,2}(?:-[0-9A-Za-z][0-9A-Za-z.-]*)?(?: (?:>=|<=|>|<|=|\\^|~)[0-9]+(?:\\.[0-9]+){0,2}(?:-[0-9A-Za-z][0-9A-Za-z.-]*)?)*)$",
+      "description": "A version range: one or more comparators (>=, >, <=, <, =, ^, ~ then a version) separated by spaces (AND), or *. No || (L0-1). See docs/warez/01-base-and-kinds.md section 3.3."
+    },
+    "external_code": {
+      "type": "array",
+      "maxItems": 16,
+      "description": "Code an MCP server fetches at run time (npx, uvx), one entry per server. The version is the runner's exact version, never a range; sha256 is the hash of the downloaded tarball bytes (L0-2, L0-3).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "server",
+          "runner",
+          "package",
+          "version",
+          "sha256"
+        ],
+        "properties": {
+          "server": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "The mcpServers key this entry covers."
+          },
+          "runner": {
+            "enum": [
+              "npx",
+              "uvx"
+            ]
+          },
+          "package": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 214
+          },
+          "version": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[0-9]+(?:\\.[0-9]+){1,3}(?:(?:a|b|rc)[0-9]+|\\.?(?:post|dev)[0-9]+|-[0-9A-Za-z][0-9A-Za-z.-]*)*(?:\\+[0-9A-Za-z][0-9A-Za-z.]*)?$",
+            "description": "npm semver (pre-release allowed) or PEP 440 exact version for uvx."
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    }
+  }
+}

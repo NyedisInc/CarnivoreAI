@@ -1,0 +1,19 @@
+@layer components {
+    .d-rules h3:not(.d-panel__lab) { margin: var(--oc-pp-space-28) 0 var(--oc-pp-space-10); font-size: var(--oc-fs-micro); font-weight: 400; letter-spacing: var(--oc-tracking-label, .6px); text-transform: uppercase; color: var(--oc-orange); }
+    .d-rules p, .d-rules li { font-size: var(--oc-fs-body); line-height: 1.6; color: var(--oc-text-secondary); max-width: 68ch; }
+    .d-rules ol, .d-rules ul.d-plain { margin: 0; padding-left: var(--oc-pp-space-20); }
+    .d-rules dl { margin: 0; display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr); gap: 0 var(--oc-pp-space-18); }
+    .d-rules dt { display: flex; gap: var(--oc-space-2); align-items: baseline; padding: var(--oc-pp-space-10) 0; font-size: var(--oc-fs-body); color: var(--oc-text-primary); box-shadow: inset 0 1px 0 0 var(--oc-line-faint); }
+    .d-rules dd { margin: 0; padding: var(--oc-pp-space-10) 0; font-size: var(--oc-fs-body); line-height: 1.55; color: var(--oc-text-secondary); box-shadow: inset 0 1px 0 0 var(--oc-line-faint); }
+    .d-rules .d-back { display: inline-flex; }
+    .d-rules__end { margin-top: var(--oc-pp-space-28); }
+    .d-rules .d-panel__body p:first-child { margin-top: 0; }
+    .d-rules .d-panel__body p, .d-rules .d-panel__body ul, .d-rules .d-panel__body ol { margin-top: 0; }
+    .d-rules .d-panel__body p { margin-bottom: var(--oc-space-3); }
+    .d-rules .d-panel__body p + p, .d-rules .d-panel__body p + ul { margin-top: var(--oc-pp-space-10); }
+    .d-rules__fail { color: var(--oc-coral); }
+    @container pp (max-width: 719px) {
+        .d-rules dl { grid-template-columns: minmax(0, 1fr); }
+        .d-rules dd { box-shadow: none; padding-top: 0; }
+    }
+}

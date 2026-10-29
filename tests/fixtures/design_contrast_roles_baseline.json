@@ -1,0 +1,17 @@
+{
+ "about": "bundled themes' role pairs below their minimum (scripts/contrast/roles.py, issue #2033 guard G2); a theme may not add a pair or lower a ratio",
+ "themes": {
+  "acid_trip": {},
+  "alien": {},
+  "black_ops": {},
+  "blade_runner": {},
+  "carnivore": {},
+  "carnivore-light": {},
+  "claude": {},
+  "dracula": {},
+  "hermes": {},
+  "lovecraft": {},
+  "matrix": {},
+  "metal": {}
+ }
+}

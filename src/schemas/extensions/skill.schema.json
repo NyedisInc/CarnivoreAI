@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://carnivore.ai/schemas/extensions/skill.schema.json",
+  "title": "Skill, layer 1",
+  "description": "A skill: SKILL.md is the native manifest. The sidecar adds the envelope and the harness and MCP dependencies. An MCP dependency is a requires entry of kind mcp, never a second spelling (L1-7). min_harness_version is defined once, in L0.",
+  "allOf": [
+    {
+      "$ref": "item.schema.json"
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "skill"
+        },
+        "harnesses": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "claude",
+              "codex"
+            ]
+          }
+        },
+        "requires_tools": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "harnesses"
+      ]
+    }
+  ],
+  "unevaluatedProperties": false
+}

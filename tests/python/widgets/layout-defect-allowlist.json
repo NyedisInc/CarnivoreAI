@@ -1,0 +1,19 @@
+{
+  "_doc": "The layout-defect allow-list (scripts/widgets/defect_allow.py, docs/widget-spec.md 'The layout-defect check'). One entry per intended or not-yet-fixed defect: widget, size, rule (theme, shape, selector narrow it; '*' or absent matches all), a reason, and todo: true for debt to burn down. An entry that matches nothing in a full sweep of its widget fails the run.",
+  "entries": [
+    {
+      "widget": "core.running-sessions",
+      "size": "large",
+      "rule": "low-contrast",
+      "shape": "data",
+      "reason": "asleep rows keep the 50% fade (#537); low contrast is intended"
+    },
+    {
+      "widget": "core.running-sessions",
+      "size": "full",
+      "rule": "low-contrast",
+      "shape": "data",
+      "reason": "asleep rows keep the 50% fade (#537); low contrast is intended"
+    }
+  ]
+}

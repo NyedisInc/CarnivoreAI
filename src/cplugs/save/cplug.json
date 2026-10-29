@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "id": "save",
+  "name_key": "cplug.save.name",
+  "description_key": "cplug.save.description",
+  "version": "1.1.0",
+  "icon": "archive",
+  "author": "Carnivore contributors",
+  "min_app_version": "1.12.20",
+  "tier": "builtin",
+  "default_enabled": false,
+  "requires_core": [
+    "pipeline"
+  ],
+  "permissions": {
+    "app": [
+      "sessions.read",
+      "sessions.create"
+    ]
+  },
+  "permission_reasons": {
+    "sessions.read": "after a restore, find the session the restored conversation belongs to",
+    "sessions.create": "after a restore, start that session again on the restored conversation (a restore without it only puts the transcript back)"
+  },
+  "surfaces": {
+    "routes": true,
+    "plugins": [
+      "settings-panel",
+      "session-tab"
+    ],
+    "mcp_tools": [
+      "save_import_preview",
+      "save_import",
+      "save_import_remove",
+      "save_import_check",
+      "save_imports_list",
+      "save_import_decide"
+    ]
+  },
+  "owns": {
+    "routes": [
+      "/capture-scope",
+      "/conversations/{conversation_id}/points",
+      "/conversations/{conversation_id}/points/{point_id}",
+      "/conversations/{conversation_id}/points/{point_id}/pin",
+      "/conversations/{conversation_id}/points/{point_id}/restore",
+      "/folders",
+      "/folders/{unit}/points",
+      "/folders/{unit}/restore",
+      "/health",
+      "/imports",
+      "/imports/apply",
+      "/imports/preview",
+      "/imports/review",
+      "/imports/{run_id}",
+      "/imports/{run_id}/undo",
+      "/imports/{run_id}/verify",
+      "/location",
+      "/sessions/{session_uuid}/points",
+      "/sessions/{session_uuid}/points/{point_id}",
+      "/sessions/{session_uuid}/points/{point_id}/pin",
+      "/sessions/{session_uuid}/points/{point_id}/restore",
+      "/settings",
+      "/summary"
+    ],
+    "strings": [
+      "cplug.save."
+    ],
+    "style_guide": [
+      "web/src/cplugs/save/RestorePoints.svelte",
+      "web/src/cplugs/save/SaveSettings.svelte",
+      "web/src/cplugs/save/SessionTab.svelte",
+      "web/src/cplugs/save/StoragePanel.svelte",
+      "web/src/cplugs/save/ScopePanel.svelte",
+      "web/src/cplugs/save/LocationPanel.svelte",
+      "web/src/cplugs/save/FolderUnits.svelte"
+    ],
+    "tests": [
+      "tests/python/cplugs/save/",
+      "web/src/cplugs/save/"
+    ],
+    "contributions": [
+      "settings.panel",
+      "projects.session_tab"
+    ]
+  },
+  "settings_schema": {
+    "version": 1,
+    "fields": {
+      "vaultLocation": {
+        "kind": "string",
+        "labelKey": "cplug.save.settings.location_label",
+        "hintKey": "cplug.save.settings.location_hint",
+        "maxLength": 4096,
+        "default": ""
+      },
+      "vaultFolderOptOut": {
+        "kind": "string",
+        "labelKey": "cplug.save.settings.folder_optout_label",
+        "hintKey": "cplug.save.settings.folder_optout_hint",
+        "maxLength": 4096,
+        "default": ""
+      }
+    }
+  },
+  "css_prefix": "rpt"
+}

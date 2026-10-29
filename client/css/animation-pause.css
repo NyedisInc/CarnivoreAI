@@ -1,0 +1,45 @@
+/*  hidden  display: none */
+
+@layer legacy {
+[data-anim-offscreen],
+[data-anim-offscreen]::before,
+[data-anim-offscreen]::after,
+[data-anim-host][data-anim-offscreen] *,
+[data-anim-host][data-anim-offscreen] *::before,
+[data-anim-host][data-anim-offscreen] *::after,
+:is(
+    body.menu-page-open > .screen,
+    body.menu-page-open > .header,
+    body.menu-page-open #session-notes-panel,
+    body.menu-page-open .config-editor-picker-overlay,
+    .oc-tabpane-hidden,
+    .oc-tf-measure,
+    [data-parked-terminals]
+) *,
+:is(
+    body.menu-page-open > .screen,
+    body.menu-page-open > .header,
+    body.menu-page-open #session-notes-panel,
+    body.menu-page-open .config-editor-picker-overlay,
+    .oc-tabpane-hidden,
+    .oc-tf-measure,
+    [data-parked-terminals]
+) *::before,
+:is(
+    body.menu-page-open > .screen,
+    body.menu-page-open > .header,
+    body.menu-page-open #session-notes-panel,
+    body.menu-page-open .config-editor-picker-overlay,
+    .oc-tabpane-hidden,
+    .oc-tf-measure,
+    [data-parked-terminals]
+) *::after {
+    animation-play-state: paused !important;
+}
+
+:root[data-motion="off"] *,
+:root[data-motion="off"] *::before,
+:root[data-motion="off"] *::after {
+    animation: none !important;
+}
+}

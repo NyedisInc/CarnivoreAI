@@ -1,0 +1,285 @@
+@layer legacy {
+/* --color- */
+
+.cloude-copy-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--oc-backdrop);
+    padding: 16px;
+}
+
+.cloude-copy-sheet__panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 640px;
+    max-height: 80vh;
+    max-height: 80dvh;
+    padding: 16px;
+    border-radius: var(--oc-radius-sm);
+    background: var(--oc-ground-raised);
+    border: var(--oc-border) solid var(--oc-line-panel);
+    box-shadow: none;
+}
+
+.cloude-copy-sheet__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.cloude-copy-sheet__title {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--oc-text-primary);
+}
+
+.cloude-copy-sheet__close {
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    color: var(--oc-text-secondary);
+    font-family: var(--font-mono);
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.cloude-copy-sheet__close:hover {
+    color: var(--oc-orange);
+}
+
+.cloude-copy-sheet__chips {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-x: hidden;
+    max-height: 30vh;
+    max-height: 30dvh;
+    overflow-y: auto;
+}
+
+.cloude-copy-status {
+    margin: 0;
+    min-height: 18px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--oc-text-muted);
+}
+
+.cloude-copy-status[data-kind="success"] {
+    color: var(--oc-green);
+}
+
+.cloude-copy-status[data-kind="error"] {
+    color: var(--oc-coral);
+}
+
+.cloude-copy-row {
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+    width: 100%;
+}
+
+/* min-width: 0 width: auto */
+.cloude-copy-row .cloude-copy-chip {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+}
+
+.cloude-copy-open {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    height: auto;
+    min-width: 56px;
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: var(--oc-radius-sm);
+    background: var(--oc-ground-field);
+    border: var(--oc-border) solid var(--oc-line-panel);
+    color: var(--oc-text-secondary);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-decoration: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.cloude-copy-open:hover,
+.cloude-copy-open:focus-visible {
+    border-color: var(--oc-orange);
+    background: var(--oc-orange-tint);
+    color: var(--oc-text-primary);
+    outline: none;
+}
+
+.cloude-copy-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 44px;
+    padding: 6px 10px;
+    text-align: left;
+    border-radius: var(--oc-radius-sm);
+    background: var(--oc-ground-field);
+    border: var(--oc-border) solid var(--oc-line-panel);
+    color: var(--oc-text-primary);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.cloude-copy-chip:hover,
+.cloude-copy-chip:focus-visible {
+    border-color: var(--oc-orange);
+    outline: none;
+}
+
+.cloude-copy-chip.is-copied {
+    border-color: var(--oc-orange);
+    background: var(--oc-orange-tint);
+}
+
+.cloude-copy-chip__kind {
+    flex: 0 0 auto;
+    padding: 2px 6px;
+    border-radius: var(--oc-radius-sm);
+    background: var(--oc-ground-panel);
+    color: var(--oc-text-secondary);
+    font-size: 10px;
+    text-transform: lowercase;
+}
+
+.cloude-copy-chip.is-copied .cloude-copy-chip__kind {
+    color: var(--oc-orange);
+}
+
+.cloude-copy-chip.is-copied .cloude-copy-chip__kind::after {
+    content: " copied";
+}
+
+.cloude-copy-chip__value {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    word-break: break-all;
+}
+
+.cloude-copy-chip__size {
+    flex: 0 0 auto;
+    color: var(--oc-text-muted);
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+.cloude-copy-sheet__empty {
+    margin: 0;
+    color: var(--oc-text-muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+}
+
+.cloude-copy-sheet__text {
+    flex: 1 1 auto;
+    min-height: 120px;
+    padding: 8px;
+    border-radius: var(--oc-radius-sm);
+    background: var(--oc-ground-field);
+    border: var(--oc-border) solid var(--oc-line-faint);
+    color: var(--oc-text-primary);
+    font-family: var(--font-mono);
+    font-size: 16px;
+    line-height: 1.4;
+    resize: none;
+    white-space: pre;
+    overflow: auto;
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+.cloude-copy-sheet__foot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* border-radius: var(--radius-full) flex: 0 1 auto */
+.cloude-copy-sheet__action {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    height: auto;
+    min-width: 120px;
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: var(--oc-radius-sm);
+    background: var(--oc-ground-field);
+    border: var(--oc-border) solid var(--oc-orange);
+    color: var(--oc-orange);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.cloude-copy-sheet__action:hover,
+.cloude-copy-sheet__action:focus-visible {
+    border-color: var(--oc-orange-bright);
+    background: var(--oc-orange-tint);
+    color: var(--oc-orange-bright);
+    outline: none;
+}
+
+.cloude-copy-sheet__action.is-copied {
+    border-color: var(--oc-orange);
+    background: var(--oc-orange-tint);
+}
+
+.cloude-copy-sheet__action.is-copied::after {
+    content: ' copied';
+    color: var(--oc-text-muted);
+}
+
+.cloude-copy-sheet__hint {
+    flex: 1 1 160px;
+    color: var(--oc-text-muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+}
+
+@media (max-width: 768px) {
+    .cloude-copy-sheet {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .cloude-copy-sheet__panel {
+        max-width: none;
+        max-height: 88vh;
+        max-height: 88dvh;
+        border-radius: var(--oc-radius-sm) var(--oc-radius-sm) 0 0;
+        border-bottom: none;
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+}
+}

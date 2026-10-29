@@ -1,0 +1,40 @@
+{
+  "api_routes": [
+    "src/api/catalog_account_routes.py",
+    "GET /catalog/install-report/disclosure"
+  ],
+  "area": "skills-catalog",
+  "docs": [],
+  "examples": [
+    "Open settings > account > sign in, or go to #account: signed in it shows your handle, email, provider and a switch for the carnivore news email."
+  ],
+  "how_to": [
+    "Open settings and press the account row, or open #account. Signed in: change the news email switch, review and sign out your devices, export or delete your account data, or sign out. Signed out: read what the account unlocks and press sign in or create your free account.",
+    "On the skills screen, signed out, one line asks you to sign in to rate, comment and publish and opens the same sign in modal."
+  ],
+  "id": "carnivore-account-page",
+  "issues": [
+    1200
+  ],
+  "keywords": [
+    "account",
+    "handle",
+    "email",
+    "devices",
+    "news",
+    "sign out",
+    "settings"
+  ],
+  "media_exempt": "A page whose screenshot is captured before the next version bump.",
+  "name": "Carnivore account page",
+  "since": "2026-10-01",
+  "status": "stable",
+  "summary": "one page for your free carnivore account: who you are, the news email, devices, your data, and sign out.",
+  "surfaces": [],
+  "updated": "2026-10-18",
+  "where": [
+    "Settings > account.",
+    "The #account page.",
+    "Settings > account > install reports."
+  ]
+}

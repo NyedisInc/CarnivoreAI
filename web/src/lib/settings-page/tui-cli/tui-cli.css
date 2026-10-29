@@ -1,0 +1,20 @@
+.tui-cli__steps {
+    margin: 0;
+    padding-left: var(--oc-space-5);
+    color: var(--oc-text-bright);
+    font-family: var(--oc-font);
+    font-size: var(--oc-fs-body);
+}
+
+.tui-cli__shot {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+.tui-cli__block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--oc-space-2);
+    min-width: 0;
+}

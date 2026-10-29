@@ -1,0 +1,55 @@
+{
+  "api_routes": [
+    "src/api/session_conversations_routes.py",
+    "src/api/lineage_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/conversation-index.md",
+    "docs/session-identity-history.md",
+    "docs/time-machine.md"
+  ],
+  "examples": [
+    "You /clear a session halfway through a migration and later need what it decided; open the session on the projects page, find the cleared conversation in previous conversations and read its summary, or resume it into a new session.",
+    "A session you cleared three times shows a count of 3 on its row; each earlier conversation lists when it ended, why (cleared, forked, switched) and its first prompt."
+  ],
+  "how_to": [
+    "Run /clear, /reset or /new in a session: the old conversation is kept under the session and saved like a close (a restore point named clear, its last messages, a summary queued).",
+    "Open the session on the projects page: previous conversations lists each one newest first with resume (starts a NEW session on it, the current one untouched) and restore point.",
+    "GET /api/v1/sessions/{session_uuid}/conversations for the same list, and GET /api/v1/session-conversations/counts for the per-session count.",
+    "GET /api/v1/lineage/{node_type}/{node_id} (session, conversation or subagent) for a node's parents, children, siblings, subagents and milestones such as compacts.",
+    "python3 scripts/lineage/backfill_disk.py reads the transcripts on disk (Claude and Codex) and fills compact milestones, node levels, fork split points and subagent edges; dry run by default, add --apply to write, safe to rerun. The app runs the same pass every two minutes on what changed.",
+    "An agent calls the MCP tool session_lineage_get to read a session's conversations oldest first, how each began (clear, fork, rewind, resume, switch), the split point and the milestones.",
+    "A bookmark branch or rewind is recorded as an edge from the source conversation to the copy, with the message it was cut at."
+  ],
+  "id": "conversation-lineage",
+  "issues": [
+    1107
+  ],
+  "keywords": [
+    "bookmark",
+    "clear",
+    "codex",
+    "compact",
+    "fork",
+    "lineage",
+    "milestones",
+    "previous conversations",
+    "restore point",
+    "resume",
+    "rewind",
+    "siblings",
+    "split point",
+    "subagents"
+  ],
+  "media_exempt": "A list on the projects page session detail whose screenshots are recaptured before the next version bump.",
+  "name": "Conversation lineage",
+  "since": "2026-09-29",
+  "status": "beta",
+  "summary": "a /clear no longer loses the old conversation: it stays linked under the session, is saved with a summary and last messages, and can be resumed into a new session.",
+  "surfaces": [],
+  "updated": "2026-10-10",
+  "where": [
+    "The projects page: previous conversations on a session's detail and a small count on its row. API under /api/v1/sessions/{session_uuid}/conversations."
+  ]
+}

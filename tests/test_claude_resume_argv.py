@@ -1,0 +1,133 @@
+
+from __future__ import annotations
+
+import os
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+os.environ.setdefault("DEFAULT_WORKING_DIR", "/tmp")
+os.environ.setdefault("LOG_DIRECTORY", "/tmp")
+os.environ.setdefault("TOTP_SECRET", "testsecretnotreal")
+os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
+
+# ruff: noqa: E402
+from src.core.claude_resume_argv import (
+    ProcessRow,
+    find_resume_uuid_in_tree,
+    list_process_table,
+)
+
+RESUME_UUID = "82854c0e-a423-4591-a34f-a14cb92fbf41"
+
+
+def test_pane_pid_is_claude_directly_with_resume():
+    processes = [
+        ProcessRow(
+            pid=4239,
+            ppid=1,
+            command=(
+                "/Users/example/.local/bin/claude "
+                f"--resume {RESUME_UUID} --dangerously-skip-permissions"
+            ),
+        ),
+    ]
+    result = find_resume_uuid_in_tree(4239, processes)
+    assert result == RESUME_UUID
+
+
+def test_pane_pid_is_a_shell_claude_is_a_child():
+    processes = [
+        ProcessRow(pid=4347, ppid=1, command="/bin/zsh -il"),
+        ProcessRow(
+            pid=4818,
+            ppid=4347,
+            command=f"claude --resume {RESUME_UUID} --dangerously-skip-permissions",
+        ),
+    ]
+    result = find_resume_uuid_in_tree(4347, processes)
+    assert result == RESUME_UUID
+
+
+def test_grandchild_claude_is_still_found():
+    processes = [
+        ProcessRow(pid=1, ppid=0, command="/bin/zsh -il"),
+        ProcessRow(pid=2, ppid=1, command="/usr/bin/env some-wrapper"),
+        ProcessRow(pid=3, ppid=2, command=f"claude --resume {RESUME_UUID}"),
+    ]
+    assert find_resume_uuid_in_tree(1, processes) == RESUME_UUID
+
+
+def test_no_resume_falls_through_with_no_match():
+    processes = [
+        ProcessRow(pid=4818, ppid=4347, command="claude --dangerously-skip-permissions"),
+        ProcessRow(pid=4347, ppid=1, command="/bin/zsh -il"),
+    ]
+    assert find_resume_uuid_in_tree(4347, processes) is None
+
+
+def test_no_claude_process_at_all_is_no_match():
+    processes = [ProcessRow(pid=1, ppid=0, command="/bin/zsh -il")]
+    assert find_resume_uuid_in_tree(1, processes) is None
+
+
+def test_malformed_uuid_is_rejected_not_returned():
+    processes = [
+        ProcessRow(pid=1, ppid=0, command="claude --resume not-a-uuid-at-all"),
+    ]
+    assert find_resume_uuid_in_tree(1, processes) is None
+
+
+def test_truncated_uuid_is_rejected():
+    truncated = RESUME_UUID[:-1]
+    processes = [ProcessRow(pid=1, ppid=0, command=f"claude --resume {truncated}")]
+    assert find_resume_uuid_in_tree(1, processes) is None
+
+
+def test_resume_equals_form_is_parsed():
+    processes = [ProcessRow(pid=1, ppid=0, command=f"claude --resume={RESUME_UUID}")]
+    assert find_resume_uuid_in_tree(1, processes) == RESUME_UUID
+
+
+def test_uuid_is_lowercased():
+    upper = RESUME_UUID.upper()
+    processes = [ProcessRow(pid=1, ppid=0, command=f"claude --resume {upper}")]
+    assert find_resume_uuid_in_tree(1, processes) == RESUME_UUID
+
+
+def test_an_unrelated_process_naming_claude_in_arguments_is_not_matched():
+    processes = [
+        ProcessRow(
+            pid=1,
+            ppid=0,
+            command=f"/usr/bin/grep claude --resume {RESUME_UUID} /some/file",
+        ),
+    ]
+    assert find_resume_uuid_in_tree(1, processes) is None
+
+
+def test_root_pid_absent_from_table_is_no_match_not_a_crash():
+    processes = [ProcessRow(pid=2, ppid=1, command=f"claude --resume {RESUME_UUID}")]
+    assert find_resume_uuid_in_tree(999, processes) is None
+
+
+def test_depth_cap_stops_a_pathological_chain():
+    from src.core.claude_resume_argv import MAX_TREE_DEPTH
+
+    processes = []
+    depth = MAX_TREE_DEPTH + 5
+    for i in range(depth):
+        processes.append(ProcessRow(pid=i + 1, ppid=i, command="/bin/sh"))
+    processes.append(
+        ProcessRow(pid=depth + 1, ppid=depth, command=f"claude --resume {RESUME_UUID}")
+    )
+    assert find_resume_uuid_in_tree(1, processes) is None
+
+
+def test_list_process_table_reads_real_ps():
+    table = list_process_table()
+    assert table is not None
+    assert len(table) > 0
+    assert all(isinstance(row.pid, int) and isinstance(row.ppid, int) for row in table)

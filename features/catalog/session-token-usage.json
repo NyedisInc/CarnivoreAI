@@ -1,0 +1,34 @@
+{
+  "api_routes": [
+    "src/api/session_token_usage_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/session-token-usage.md"
+  ],
+  "examples": [
+    "Check how close a long conversation is to its context limit before starting another big task in it.",
+    "See which account a session is spending against."
+  ],
+  "how_to": [
+    "Open a session; its bottom bar shows the model, how much of the context window is used, and the account's usage windows.",
+    "Hover a figure for its detail."
+  ],
+  "id": "session-token-usage",
+  "issues": [],
+  "keywords": [
+    "tokens",
+    "usage"
+  ],
+  "media": [],
+  "name": "Per-session token usage",
+  "since": "2026-09-19",
+  "status": "stable",
+  "summary": "see how many tokens a session has used, right on its own screen.",
+  "surfaces": [],
+  "updated": "2026-09-27",
+  "where": [
+    "The bottom bar of a claude or codex session's terminal."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

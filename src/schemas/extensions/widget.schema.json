@@ -1,0 +1,287 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://carnivore.ai/schemas/extensions/widget.schema.json",
+  "title": "Widget, layer 1",
+  "description": "send the weekly digest to the team",
+  "allOf": [
+    {
+      "$ref": "item.schema.json"
+    },
+    {
+      "required": [
+        "source",
+        "declarative",
+        "instancing",
+        "sizes",
+        "hosts",
+        "reads",
+        "fixtures"
+      ],
+      "properties": {
+        "kind": {
+          "const": "widget"
+        },
+        "source": {
+          "enum": [
+            "builtin",
+            "catalog",
+            "sideload"
+          ],
+          "description": "Where the widget's code comes from. builtin: compiled into the app (first party). catalog and sideload: only ever declarative."
+        },
+        "declarative": {
+          "type": "boolean",
+          "description": "True when the widget is data only: the app draws it from this record, no script of the widget's own runs in the browser. Required true for every source other than builtin."
+        },
+        "instancing": {
+          "enum": [
+            "singleton",
+            "per-target"
+          ]
+        },
+        "sizes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "small",
+              "wide",
+              "tall",
+              "medium",
+              "large",
+              "full"
+            ]
+          },
+          "description": "The named sizes it calls out. Widget Lab draws and fit-checks every one."
+        },
+        "any_size": {
+          "type": "boolean",
+          "description": "Whether the body also fills any box from its floor up."
+        },
+        "max_per_surface": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        "hosts": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "home",
+              "terminal",
+              "drawer",
+              "popout",
+              "glance"
+            ]
+          },
+          "description": "The hosts it is drawn in, by the harness's names: home (the dashboard grid), terminal (the terminal canvas and its rails), drawer (the sidebar widget area), popout (its own window), glance (the drawer's mini row; needs a glance height)."
+        },
+        "glance": {
+          "type": "object",
+          "required": [
+            "height"
+          ],
+          "properties": {
+            "height": {
+              "type": "integer",
+              "minimum": 24,
+              "maximum": 160
+            }
+          },
+          "additionalProperties": false,
+          "description": "The fixed tile height in px the widget draws in the glance row."
+        },
+        "reads": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "required": [
+              "kind",
+              "ref"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "route",
+                  "feed"
+                ]
+              },
+              "ref": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            },
+            "additionalProperties": false,
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "route"
+                }
+              },
+              "required": [
+                "kind"
+              ]
+            },
+            "then": {
+              "properties": {
+                "ref": {
+                  "pattern": "^(GET|POST) /[A-Za-z0-9_./:*{}-]*$"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "ref": {
+                  "pattern": "^[a-z][a-z0-9._-]*$"
+                }
+              }
+            }
+          },
+          "description": "The data it reads: a route (METHOD /path under /api/v1, the fixture's own key form) or a push feed (a resource topic). The fixtures answer exactly these."
+        },
+        "fixtures": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "data",
+              "empty",
+              "stress"
+            ]
+          },
+          "description": "The fixture scenarios it ships. A widget that is not builtin must ship data and empty (the gate refuses one that does not, for any widget); stress is derived from data by the harness and may be listed. An empty list on a builtin widget is a gap the gate reports."
+        },
+        "remembers": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 24,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{0,47}$"
+          },
+          "description": "The view state it remembers across a page refresh and a remount (selection, search, filters, toggles, grouping, folds, active tab, scroll): flat lowercase names. An explicit empty list declares the widget stateless. Absent is undeclared and the Widget Lab gate warns. See docs/widget-spec.md section 12."
+        },
+        "fixture": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "The Widget Lab fixture key the gate runs (a first-party widget's own id, an analytics preset as core.analytics:<preset>)."
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "source": {
+            "const": "builtin"
+          }
+        },
+        "required": [
+          "source"
+        ]
+      },
+      "else": {
+        "properties": {
+          "declarative": {
+            "const": true
+          },
+          "reads": {
+            "minItems": 1
+          },
+          "fixtures": {
+            "minItems": 2
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tier": {
+            "const": "builtin"
+          }
+        },
+        "required": [
+          "tier"
+        ]
+      },
+      "then": {
+        "properties": {
+          "source": {
+            "const": "builtin"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tier": {
+            "const": "catalog"
+          }
+        },
+        "required": [
+          "tier"
+        ]
+      },
+      "then": {
+        "properties": {
+          "source": {
+            "const": "catalog"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tier": {
+            "const": "dev"
+          }
+        },
+        "required": [
+          "tier"
+        ]
+      },
+      "then": {
+        "properties": {
+          "source": {
+            "const": "sideload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tier": {
+            "const": "catalog"
+          }
+        },
+        "required": [
+          "tier"
+        ]
+      },
+      "then": {
+        "properties": {
+          "id": {
+            "pattern": "^[a-z0-9-]{1,39}/[a-z][a-z0-9-]{0,31}$"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "id": {
+            "pattern": "^[a-z][a-z0-9]{1,23}\\.[a-z][a-z0-9-]{0,31}$"
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

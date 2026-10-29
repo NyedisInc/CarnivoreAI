@@ -1,0 +1,34 @@
+{
+  "api_routes": [],
+  "area": "terminal",
+  "docs": [],
+  "examples": [
+    "Find the error message an agent printed three screens ago.",
+    "Jump back to where a test run started."
+  ],
+  "how_to": [
+    "Open search and type. Matches in the session's scrollback are highlighted.",
+    "Step through them with the up and down arrows; Esc closes it."
+  ],
+  "id": "terminal-search",
+  "issues": [],
+  "keywords": [
+    "search",
+    "scrollback"
+  ],
+  "media": [],
+  "name": "Search in the terminal",
+  "since": "2026-09-13",
+  "status": "stable",
+  "summary": "find text in a session's own scrollback without leaving the terminal.",
+  "surfaces": [
+    "web/src/lib/terminal-search/mount-search.ts",
+    "client/js/terminal-search-engine.js"
+  ],
+  "updated": "2026-09-27",
+  "where": [
+    "Open a session, then the magnifier in the header (on a phone, search in the terminal tools menu).",
+    "Or press Ctrl+F (Cmd+F on a computer) in the terminal."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

@@ -1,0 +1,53 @@
+{
+  "api_routes": [
+    "src/cplugs/tmdevtools/routes.py"
+  ],
+  "area": "sessions",
+  "description": "task-manager-dev-tools is an experimental plugin of the dev tier: hidden and not loaded until you turn on developer mode (Settings, Advanced), and then off by default. It needs the huddle. It gives Claude three tools for your task manager screen. task_manager_dev_scroll_set scrolls the task manager to the top in every browser you have open (optionally switching to one project first). task_manager_dev_fold_set folds or unfolds a project (its bar, status sections and groups), a named group, or a task, and with action close collapses an opened task card back to its row without changing any task. task_manager_dev_tasks_list lists projects or tasks compactly (id, title, status, project, group, tag), filtered by any mix of project, status, group, tag and kind, so Claude can answer what the open questions are, what tasks are open, or what is open in one project. Scroll and fold are pushed to the browsers, which act on the task manager's own fold state; nothing is polled and nothing new is stored. With the plugin off there are no routes and no tools.",
+  "docs": [
+    "docs/cplugs.md"
+  ],
+  "examples": [
+    "Ask Claude what the open questions are and it lists the tasks whose status is question, with project and group.",
+    "Ask Claude to fold the carnivore project and its bar, status sections and groups fold on your screen.",
+    "Ask Claude to close the card you have open and it collapses back to its row."
+  ],
+  "how_to": [
+    "Turn on developer mode (Settings, Advanced, developer mode), then turn task-manager-dev-tools on from the plugins page (it needs the huddle).",
+    "Ask Claude to scroll to the top, fold or unfold a project or group, close the open card, or list tasks by status; it calls task_manager_dev_scroll_set, task_manager_dev_fold_set and task_manager_dev_tasks_list.",
+    "The same actions are POST /api/v1/cplugs/tmdevtools/scroll-top, POST /fold and GET /tasks."
+  ],
+  "id": "tmdevtools",
+  "issues": [
+    1748
+  ],
+  "keywords": [
+    "task-manager-dev-tools",
+    "tmdevtools",
+    "task_manager_dev_scroll_set",
+    "task_manager_dev_fold_set",
+    "task_manager_dev_tasks_list",
+    "fold",
+    "scroll",
+    "experimental"
+  ],
+  "media_exempt": "the plugin has no screen of its own; it moves and folds the task manager, which a still image cannot show",
+  "name": "Task manager dev tools",
+  "since": "2026-10-13",
+  "status": "beta",
+  "summary": "experimental, off by default: Claude can scroll your task manager to the top, fold things and list tasks by status.",
+  "surfaces": [
+    "src/cplugs/tmdevtools/mcp.py",
+    "src/cplugs/tmdevtools/service.py",
+    "src/cplugs/tmdevtools/commands.py",
+    "src/cplugs/huddle/devtools_port.py",
+    "web/src/cplugs/tmdevtools/commands.ts",
+    "web/src/cplugs/huddle/task-manager-view-commands.ts"
+  ],
+  "updated": "2026-10-13",
+  "where": [
+    "The task-manager-dev-tools plugin on the plugins page.",
+    "The task_manager_dev_scroll_set, task_manager_dev_fold_set and task_manager_dev_tasks_list MCP tools, while the plugin is on.",
+    "POST /api/v1/cplugs/tmdevtools/scroll-top, POST /fold, GET /tasks and GET /commands."
+  ]
+}

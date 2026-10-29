@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Carnivore</title>
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Carnivore">
+    <!-- <span class="version" -->
+    <meta name="cloude-app-version" content="{{VERSION}}">
+    <meta name="cloude-client-build" content="{{CLIENT_BUILD}}">
+    <meta name="theme-color" content="#0a0a0a">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="/static/assets/icons/icon-180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/assets/icons/icon-192.png">
+
+    <!-- Vendored xterm.js -->
+    <link rel="stylesheet" href="/static/css/layers.css" />
+    <link rel="stylesheet" href="/static/vendor/xterm/xterm.css" />
+
+    <link rel="stylesheet" href="/static/css/styles.css" />
+    <link rel="stylesheet" href="/static/css/scrollbars.css" />
+    <!-- --color- -->
+    <link rel="stylesheet" href="/static/css/header-actions.css" />
+    <!-- --color- -->
+    <link rel="stylesheet" href="/static/css/toast.css" />
+    <link rel="stylesheet" href="/static/css/toast-collapse.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-account-chip.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-rows.css" />
+    <link rel="stylesheet" href="/static/css/subagent-count.css" />
+    <link rel="stylesheet" href="/static/css/timer-chip.css" />
+    <link rel="stylesheet" href="/static/css/status-dot.css" />
+    <link rel="stylesheet" href="/static/css/status-led.css" />
+    <link rel="stylesheet" href="/static/css/session-header-led.css" />
+    <!-- padding -->
+    <link rel="stylesheet" href="/static/css/session-sidebar-density.css" />
+    <!-- padding -->
+    <link rel="stylesheet" href="/static/css/session-sidebar-row-bodies.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-row-controls.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-keep-awake.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-groups.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-section-drag.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-band-structure.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-layouts.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-colours.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-resize.css" />
+    <link rel="stylesheet" href="/static/css/session-sidebar-rail.css" />
+    <!-- .session-sidebar-row-pin -->
+    <link rel="stylesheet" href="/static/css/session-row-menu.css" />
+    <link rel="stylesheet" href="/static/css/version-footer.css" />
+    <!-- --color- -->
+    <link rel="stylesheet" href="/static/css/launchpad-wrapper-pill.css" />
+    <link rel="stylesheet" href="/static/css/session-restart-picker.css" />
+    <link rel="stylesheet" href="/static/css/terminal-mascot.css" />
+    <link rel="stylesheet" href="/static/css/wrapper-mark.css" />
+    <link rel="stylesheet" href="/static/css/text-prompt-modal.css" />
+    <link rel="stylesheet" href="/static/css/new-agent-flow.css" />
+    <link rel="stylesheet" href="/static/css/confirm-modal.css" />
+    <link rel="stylesheet" href="/static/css/session-restore-offer.css" />
+    <link rel="stylesheet" href="/static/css/sidebar-help.css" />
+    <link rel="stylesheet" href="/static/css/media-lightbox.css" />
+    <link rel="stylesheet" href="/static/css/recent-deleted.css" />
+    <link rel="stylesheet" href="/static/css/terminal-tools.css" />
+    <link rel="stylesheet" href="/static/css/phone-tabs-bar.css" />
+    <link rel="stylesheet" href="/static/css/copy-output.css" />
+    <link rel="stylesheet" href="/static/css/paste-fallback.css" />
+    <link rel="stylesheet" href="/static/css/modal-stack.css" />
+    <link rel="stylesheet" href="/static/css/config-editor.css" />
+    <link rel="stylesheet" href="/static/css/config-drawer.css" />
+    <link rel="stylesheet" href="/static/css/config-editor-modal.css" />
+    <link rel="stylesheet" href="/static/css/header-menu.css" />
+    <link rel="stylesheet" href="/static/css/header-master-all.css" />
+    <link rel="stylesheet" href="/static/css/home-bar.css" />
+    <link rel="stylesheet" href="/static/css/attribution-prompt.css" />
+    <link rel="stylesheet" href="/static/css/ios-chrome.css" />
+    <link rel="stylesheet" href="/static/css/slash-command-chips.css" />
+    <link rel="stylesheet" href="/static/css/slash-commands-fab.css" />
+
+    <!-- .settings-section -->
+
+    <link rel="stylesheet" href="/static/css/session-theme-tint.css" />
+
+    <!-- hidden -->
+    <link rel="stylesheet" href="/static/css/screen-chrome.css" />
+
+    <link rel="stylesheet" href="/static/css/terminal-opacity.css" />
+    <link rel="stylesheet" href="/static/css/terminal-background.css" />
+
+
+    <link rel="stylesheet" href="/static/css/deep-link-notice.css" />
+    <link rel="stylesheet" href="/static/css/effort-level.css" />
+    <link rel="stylesheet" href="/static/css/animation-pause.css" />
+    <link rel="stylesheet" href="/static/css/resting-row-effort.css" />
+    <link rel="stylesheet" href="/static/css/animation-types.css" />
+    <link rel="stylesheet" href="/static/dist/app.css" />
+
+    <link rel="stylesheet" href="/static/css/launchpad-host.css" />
+
+    <link rel="stylesheet" href="/static/css/terminal-grid.css" />
+    <link rel="stylesheet" href="/static/css/terminal-empty.css" />
+
+    <link rel="stylesheet" href="/static/css/terminal-key-bar.css" />
+
+    <link rel="stylesheet" href="/static/css/session-notes.css" />
+
+    <link rel="stylesheet" href="/static/css/terminal-carnivore.css" />
+    <link rel="stylesheet" href="/static/css/right-drawer.css" />
+    <!-- THE SAME GLOW SHIMMER, SCALED UP, FOR CENTERED MODALS (issue #918).
+         Targets `.modal-content` (the shared dialog chassis in styles.css),
+         and the help lightbox, reusing popup-focus.css's
+         own `--pf-angle` animation. Loads after styles.css and sidebar-help.css
+         (both earlier in this file) so its box-shadow
+         wins their equal-specificity rules; loads BEFORE popup-focus.css,
+         which stays the last sheet of all per the note below. -->
+    <link rel="stylesheet" href="/static/css/modal-glow.css" />
+    <link rel="stylesheet" href="/static/css/desktop-chrome.css" />
+    <link rel="stylesheet" href="/static/css/popup-focus.css" />
+</head>
+<body>
+    <!-- the terminal grid -->
+    <div id="deep-link-error" role="status" aria-live="polite">
+        <span id="deep-link-error-text" class="deep-link-error__text"></span>
+        <button type="button" id="deep-link-error-dismiss"
+                class="deep-link-error__dismiss" aria-label="dismiss notice">&times;</button>
+    </div>
+
+    <div class="header">
+        <!-- text-overflow: ellipsis -->
+        <div class="header-row">
+        <div class="header-home-spacer" aria-hidden="true"></div>
+        <!-- <button> -->
+        <button type="button" id="session-sidebar-toggle" class="session-sidebar-toggle hidden"
+                data-auth-only
+                aria-expanded="false" aria-controls="session-sidebar-panel"
+                aria-label="Agents" title="agents">
+            <img src="/static/img/carnivore/carnivore-mark.png"
+                 srcset="/static/img/carnivore/carnivore-mark@2x.png 2x"
+                 class="session-sidebar-toggle-mark" alt="" aria-hidden="true" />
+            <span id="headerAlertDot"></span>
+        </button>
+        <h1 id="appTitle">
+            <!-- HEADER_BRAND_ICON_URL -->
+            <button type="button" id="header-icon" class="header-icon header-icon--wordmark"
+                    aria-label="Carnivore, go to the home screen"><img data-brand-icon src="/static/img/carnivore/carnivore-wordmark.png" srcset="/static/img/carnivore/carnivore-wordmark@2x.png 2x" alt="" /></button>
+            <span id="header-title-text"></span>
+            <!-- flex-shrink: 0 -->
+            <!-- could not -->
+            <button type="button" id="launchpad-help-btn" class="btn-icon" aria-label="help">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4"/>
+                    <line x1="12" y1="17.5" x2="12" y2="17.5"/>
+                </svg>
+            </button>
+            <!-- flex-shrink: 0 -->
+        </h1>
+        <div class="controls">
+            <!-- nothing at all -->
+            <button id="logoutBtn" class="hidden" aria-label="Logout">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M7 2.5H3.75C3.05964 2.5 2.5 3.05964 2.5 3.75V12.25C2.5 12.9404 3.05964 13.5 3.75 13.5H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M6.25 8H13.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M10.5 5.25L13.25 8L10.5 10.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button type="button" id="settingsBtn" class="hidden" aria-label="Settings">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="8" r="4.2" stroke="currentColor" stroke-width="1.5"/>
+                    <circle cx="8" cy="8" r="1.6" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M8 3.8V2.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M11.64 5.9L13.02 5.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M11.64 10.1L13.02 10.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M8 12.2V13.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M4.36 10.1L2.98 10.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M4.36 5.9L2.98 5.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            </button>
+            <button type="button" id="configEditorBtn" class="btn-icon hidden" aria-label="File editor" title="file editor" aria-expanded="false" aria-controls="config-editor-panel">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M2 5.25C2 4.69772 2.44772 4.25 3 4.25H6.5L7.75 5.75H13C13.5523 5.75 14 6.19772 14 6.75V11.25C14 11.8023 13.5523 12.25 13 12.25H3C2.44772 12.25 2 11.8023 2 11.25V5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <!-- file editor -->
+            <button type="button" id="sessionNotesBtn" class="btn-icon hidden" aria-label="notes" title="notes for this session" aria-pressed="false">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M3.25 2.5H9.25L12.75 6V13.5H3.25V2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                    <path d="M9.25 2.5V6H12.75" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                    <path d="M5.75 9H10.25M5.75 11.25H8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            </button>
+            <!-- hidden -->
+            <button type="button" id="terminalSearchBtn" class="btn-icon"
+                    aria-label="search session" title="search (Cmd+F)">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="m10.5 10.5 3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+        </div>
+        <div id="home-subheader" class="home-subheader" hidden></div>
+    </div>
+    <div class="session-sidebar-backdrop" id="session-sidebar-backdrop" hidden></div>
+    <aside id="session-sidebar-panel" class="session-sidebar-panel" aria-hidden="true"
+           aria-label="Agents" data-density="compact">
+        <div id="session-sidebar-header" class="session-sidebar-header"></div>
+        <div id="session-sidebar-wrail" class="sbr-rail-slot"></div>
+        <div id="session-sidebar-stats" class="session-sidebar-stats"></div>
+        <!-- hidden -->
+        <div id="session-sidebar-region" class="sbr-region">
+        <div class="session-sidebar-scroll">
+        <div id="session-sidebar-search" class="session-sidebar-search"></div>
+        <div id="session-sidebar-list" class="session-sidebar-list"
+             role="listbox" aria-label="Sessions" data-density="cozy"></div>
+        </div>
+        <div id="session-sidebar-flyout" class="sbr-flyout-slot"></div>
+        </div>
+        <!-- hidden -->
+        <div id="session-sidebar-tabbody" class="session-sidebar-tabbody" hidden></div>
+        <div id="session-sidebar-area-bar" class="session-sidebar-area-bar"></div>
+        <div id="session-sidebar-ledger" class="session-sidebar-ledger"></div>
+        <div id="session-sidebar-bar-slot" class="session-sidebar-bar-slot"></div>
+        <div id="session-sidebar-live" class="session-sidebar-live"
+             role="status" aria-live="polite"></div>
+        <!-- <button> -->
+        <div id="session-sidebar-resize-handle" class="session-sidebar-resize-handle"
+             role="separator" aria-orientation="vertical"
+             aria-label="Resize the agents sidebar. Double-click to reset."
+             tabindex="0"></div>
+    </aside>
+    <div id="session-sidebar-rail"></div>
+    <div id="session-sidebar-account-menu"></div>
+
+    <div class="modal-overlay config-editor-picker-overlay" id="config-editor-overlay" hidden data-modal="config-picker">
+        <div class="config-editor-picker-content" role="dialog" aria-modal="true" aria-label="files">
+            <div class="config-editor-header" id="config-editor-header"></div>
+            <div class="config-editor-git" id="config-editor-git"></div>
+            <div class="modal-body config-editor-body">
+                <div id="config-editor-tree" class="config-editor-tree"></div>
+            </div>
+            <div class="config-editor-gitline" id="config-editor-gitline"></div>
+        </div>
+    </div>
+
+    <!-- Auth Screen -->
+    <div id="auth-screen" class="screen"></div>
+    <div id="first-run-screen" class="screen"></div>
+
+    <div id="launchpad-screen" class="screen"></div>
+
+    <div id="themes-screen"></div>
+
+
+    <div id="catalog-screen"></div>
+
+    <div id="warez-screen"></div>
+    <div id="elite-screen"></div>
+
+    <div id="blueprints-screen"></div>
+
+    <div id="plugins-screen"></div>
+    <div id="widgets-screen"></div>
+    <div id="account-screen"></div>
+    <div id="docs-screen"></div>
+    <div id="dashboards-screen"></div>
+    <div id="automations-screen"></div>
+    <div id="mods-screen"></div>
+    <div id="hosts-screen"></div>
+    <div id="changelog-screen"></div>
+    <div id="logs-screen"></div>
+    <div id="warroom-screen"></div>
+    <div id="huddle-agent-screen"></div>
+    <div id="huddle-agent-drawer"></div>
+    <div id="huddle-swarm-screen"></div>
+    <div id="sessions-screen"></div>
+    <div id="settings-screen"></div>
+
+    <!-- hidden -->
+    <div id="menu-page-bar"></div>
+
+    <div id="ledger-screen"></div>
+
+    <div id="plugin-main-view"></div>
+
+    <!-- position: fixed -->
+    <div id="add-to-cascade-menu"></div>
+    <div id="send-to-modal"></div>
+    <div id="move-folder-modal"></div>
+
+    <div id="terminal-screen" class="screen" data-foot-area>
+
+        <div id="terminal-components"></div>
+        <div id="solo-panel"></div>
+        <div id="layout-command-bar"></div>
+        <div id="terminal-phone-tabs"></div>
+        <div id="terminal-grid">
+            <div id="browser-screen"></div>
+            <div class="terminal-container" id="terminal-container">
+                <div id="terminal" class="xterm-host"></div>
+                <div id="terminal-startup-notice"></div>
+                <div id="terminal-size-notice"></div>
+                <div id="terminal-empty-state"></div>
+                <div id="terminal-phone-pane"></div>
+            </div>
+        </div>
+        <div id="terminal-foot-bar"></div>
+    </div>
+
+    <script src="/static/js/perf-probe.js"></script>
+
+    <!-- Vendored xterm.js -->
+    <script src="/static/vendor/xterm/xterm.js"></script>
+    <script src="/static/vendor/xterm/xterm-addon-fit.js"></script>
+    <script src="/static/vendor/xterm/xterm-addon-webgl.js"></script>
+    <script src="/static/vendor/xterm/xterm-addon-unicode11.js"></script>
+    <script src="/static/vendor/xterm/xterm-addon-search.js"></script>
+
+    <script src="/static/js/dismiss-guard.js"></script>
+    <script src="/static/js/navigation-generation.js"></script>
+    <script src="/static/js/solo-window.js"></script>
+    <script src="/static/js/desktop-chrome.js"></script>
+    <!-- hidden -->
+    <script src="/static/js/desktop-window-hidden.js"></script>
+    <script src="/static/js/kebab-icon.js"></script>
+    <script type="module" src="/static/js/browser-storage-migrate.js"></script>
+    <script src="/static/js/boot-fetch-dedupe.js"></script>
+    <script src="/static/js/api.js"></script>
+    <!-- file editor -->
+    <script src="/static/js/module-loader.js"></script>
+    <script src="/static/js/module-families.js"></script>
+    <script src="/static/js/api-toasts.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/preferences.js"></script>
+    <!-- before terminal.js -->
+    <script src="/static/js/preferences-transport.js"></script>
+
+    <script src="/static/js/preference-bridge.js"></script>
+    <script src="/static/js/motion-setting.js"></script>
+    <script src="/static/js/session-label.js"></script>
+    <script src="/static/js/toast-render-batch.js"></script>
+    <script src="/static/js/toast-version-arbitration.js"></script>
+    <script src="/static/js/toast.js"></script>
+    <script src="/static/js/toast-grouping.js"></script>
+    <script src="/static/js/toast-render.js"></script>
+    <script src="/static/js/toast-lifecycle.js"></script>
+    <script src="/static/js/toast-mode.js"></script>
+    <script src="/static/js/toast-dismissed-ring.js"></script>
+    <script src="/static/js/toast-navigate.js"></script>
+    <script src="/static/js/toast-global-poll.js"></script>
+    <script src="/static/js/attachment-toast.js"></script>
+    <script src="/static/js/toast-collapse.js"></script>
+    <script src="/static/js/write-failure-notice.js"></script>
+    <script src="/static/js/status-led.js"></script>
+    <script src="/static/js/visibility-observer.js"></script>
+    <script src="/static/js/animation-pauser.js"></script>
+    <script src="/static/js/session-transport.js"></script>
+    <script src="/static/js/session-status-summary.js"></script>
+    <script src="/static/js/toast-session-group.js"></script>
+    <script src="/static/js/version-footer.js"></script>
+    <script src="/static/js/ui-flags.js"></script>
+    <script src="/static/js/session-status-ui.js"></script>
+    <script src="/static/js/session-header-led.js"></script>
+    <script src="/static/js/session-row-actions-confirm.js"></script>
+    <script src="/static/js/session-row-actions.js"></script>
+    <script src="/static/js/session-theme-tint.js"></script>
+    <script src="/static/js/folder-picker-modal.js"></script>
+    <script src="/static/js/providers.js"></script>
+    <script src="/static/js/server-restart-watch.js"></script>
+    <script src="/static/js/terminal-scroll-step.js"></script>
+    <script src="/static/js/terminal-scroll.js"></script>
+    <script src="/static/js/terminal-input-kind.js"></script>
+    <script src="/static/js/terminal-select-scrolled.js"></script>
+    <script src="/static/js/altscreen-keys.js"></script>
+    <script src="/static/js/altscreen-scroll.js"></script>
+    <script src="/static/js/clipboard-compat.js"></script>
+    <script src="/static/js/anchor-popover.js"></script>
+    <script src="/static/js/terminal-metrics.js"></script>
+    <script src="/static/js/terminal-layout-wait.js"></script>
+    <script src="/static/js/terminal-socket-abandon.js"></script>
+    <script src="/static/js/terminal-size-master.js"></script>
+    <script src="/static/js/terminal-size-vote.js"></script>
+    <script src="/static/js/terminal-resize-settle.js"></script>
+    <script src="/static/js/terminal-layout.js"></script>
+    <script src="/static/js/terminal-background-opacity.js"></script>
+    <script src="/static/js/terminal-prompt-remap.js"></script>
+    <script src="/static/js/terminal-reconnect-buffer.js"></script>
+    <script src="/static/js/terminal-frame-guard.js"></script>
+    <script src="/static/js/terminal-input-ownership.js"></script>
+    <script src="/static/js/terminal-write-queue.js"></script>
+    <script src="/static/js/socket-auth-recovery.js"></script>
+    <script src="/static/js/terminal-reconnect-policy.js"></script>
+    <script src="/static/js/terminal-input-buffer.js"></script>
+    <script src="/static/js/terminal-startup-notice.js"></script>
+    <script src="/static/js/terminal-readiness.js"></script>
+    <script src="/static/js/terminal-scrollback-paint.js"></script>
+    <script src="/static/js/terminal-history-gate.js"></script>
+    <script src="/static/js/terminal-viewer-resync.js"></script>
+    <script src="/static/js/terminal-lifecycle.js"></script>
+    <script src="/static/js/terminal-page-owner.js"></script>
+    <script src="/static/js/terminal-header-rename.js"></script>
+    <script src="/static/js/terminal-client-factory.js"></script>
+    <script src="/static/js/terminal-addons.js"></script>
+    <script src="/static/js/terminal-option-meta.js"></script>
+    <script src="/static/js/terminal-screen-reader.js"></script>
+    <script src="/static/js/terminal-paint-gate.js"></script>
+    <script src="/static/js/terminal-teardown.js"></script>
+    <script src="/static/js/terminal-session-bind.js"></script>
+    <script src="/static/js/terminal-keyboard-reveal.js"></script>
+    <script src="/static/js/terminal.js"></script>
+    <script src="/static/js/clipboard.js"></script>
+    <script src="/static/js/terminal-file-drop.js"></script>
+    <script src="/static/js/touch-select.js"></script>
+    <script src="/static/js/output-scan.js"></script>
+    <script src="/static/js/copy-output.js"></script>
+    <!-- <script -->
+    <script src="/static/js/terminal-prompt-join.js"></script>
+    <script src="/static/js/terminal-prompt-ticks.js"></script>
+    <script src="/static/js/terminal-prompt-scan.js"></script>
+    <script src="/static/js/terminal-history-load.js"></script>
+    <script src="/static/js/terminal-history-scroll.js"></script>
+    <script src="/static/js/terminal-search-engine.js"></script>
+    <script src="/static/js/dpad.js"></script>
+    <script src="/static/js/command-description.js"></script>
+    <script src="/static/js/slash-command-filter.js"></script>
+    <script src="/static/js/slash-favorites.js"></script>
+    <script src="/static/js/slash-commands.js"></script>
+    <script src="/static/js/slash-commands-boot.js"></script>
+    <script src="/static/js/router.js"></script>
+    <script src="/static/js/terminal-empty-entry.js"></script>
+
+    <script src="/static/js/screen-chrome.js"></script>
+
+    <script src="/static/js/session-key.js"></script>
+    <script src="/static/js/theme-var-writer.js"></script>
+    <script src="/static/js/theme-consent.js"></script>
+    <script src="/static/js/themes/registry.js"></script>
+    <script src="/static/js/terminal-mascot.js"></script>
+    <script src="/static/js/terminal-background-contrast.js"></script>
+    <script src="/static/js/terminal-background-manifest.js"></script>
+    <script src="/static/js/terminal-background.js"></script>
+    <script src="/static/js/themes/themeSelector.js"></script>
+
+    <script src="/static/js/theme-navigation.js"></script>
+
+    <script src="/static/js/theme-global-follow.js"></script>
+
+    <script src="/static/js/session-theme-menu.js"></script>
+
+    <!-- the bottom bar -->
+    <script src="/static/js/session-sidebar-rename.js"></script>
+    <script src="/static/js/sidebar-help.js"></script>
+    <script src="/static/js/effort-level.js"></script>
+    <script src="/static/js/session-model-icon.js"></script>
+    <script src="/static/js/agent-family-icon.js"></script>
+    <script src="/static/js/wrapper-mark.js"></script>
+    <script src="/static/js/session-sidebar-row-controls.js"></script>
+    <script src="/static/js/session-sidebar-keep-awake.js"></script>
+    <script src="/static/js/session-sidebar-subagents.js"></script>
+    <script src="/static/js/session-sidebar-timers.js"></script>
+    <script src="/static/js/session-sidebar-project-header.js"></script>
+    <script src="/static/js/session-sidebar-groups.js"></script>
+    <script src="/static/js/session-sidebar-browsers.js"></script>
+    <script src="/static/js/session-sidebar-layouts.js"></script>
+    <script src="/static/js/session-restart-live.js"></script>
+    <script src="/static/js/session-restart-options.js"></script>
+    <script src="/static/js/session-restart-picker.js"></script>
+    <script src="/static/js/session-restart-direct.js"></script>
+    <script src="/static/js/session-restore-offer.js"></script>
+    <script src="/static/js/session-restart-return.js"></script>
+    <script src="/static/js/session-sidebar-plugin-clicks.js"></script>
+    <!-- the bottom bar -->
+    <script src="/static/js/session-sidebar-chrome-clicks.js"></script>
+    <script src="/static/js/session-sidebar-wake-click.js"></script>
+    <script src="/static/js/session-sidebar-restart-click.js"></script>
+    <script src="/static/js/session-sidebar-clicks.js"></script>
+    <script src="/static/js/session-entry-toasts.js"></script>
+    <script src="/static/js/app-events.js"></script>
+    <script src="/static/js/dashboard-polls.js"></script>
+    <script src="/static/js/launchpad-host.js"></script>
+    <script src="/static/js/terminal-grid-host.js"></script>
+    <script src="/static/js/session-sidebar-drop-target.js"></script>
+    <script src="/static/js/session-sidebar-reorder.js"></script>
+    <script src="/static/js/session-sidebar-row-drag.js"></script>
+    <script src="/static/js/session-row-menu-icons.js"></script>
+    <script src="/static/js/text-prompt-modal.js"></script>
+    <script src="/static/js/session-sidebar-group-actions.js"></script>
+    <script src="/static/js/session-sidebar-group-colour.js"></script>
+    <script src="/static/js/session-sidebar-group-icon.js"></script>
+    <script src="/static/js/session-row-menu-actions.js"></script>
+    <script src="/static/js/session-row-menu-sleep.js"></script>
+    <script src="/static/js/session-sidebar-heading-actions.js"></script>
+
+
+    <script src="/static/js/markdown-lite.js"></script>
+    <script src="/static/js/modal-stack.js"></script>
+    <script src="/static/js/config-editor-loader.js"></script>
+
+    <script src="/static/js/header-menu.js"></script>
+
+    <script src="/static/js/header-title-fit.js"></script>
+
+    <script src="/static/js/fab-menu.js"></script>
+    <script src="/static/js/paste-fallback.js"></script>
+    <script src="/static/js/terminal-tools-menu.js"></script>
+    <!-- failed to load -->
+    <script src="/static/js/terminal-key-bar.js"></script>
+
+
+    <script src="/static/js/app-boot-complete.js"></script>
+
+    <script src="/static/js/app.js"></script>
+
+    <!-- no inline script -->
+    <script type="module" src="/static/js/i18n/boot.js"></script>
+
+    <script type="module" src="/static/dist/app.js"></script>
+    <script type="module" src="/static/vendor/jungle-run/jungle-run-loader.js"></script>
+
+    <div id="version-banner-container"></div>
+    <div id="cplug-overlay-container"></div>
+    <div id="relay-consent-container"></div>
+    <div id="pack-op-toast-container"></div>
+    <div id="perf-overlay-container"></div>
+
+    <div id="toast-container" class="toast-container" data-oc-base aria-live="polite"></div>
+
+    <!-- hidden -->
+    <input type="file" id="cloude-image-attach-input" hidden />
+
+    <div hidden>
+        <span class="status" id="statusText" data-status="Ready" tabindex="0"
+              role="status" aria-live="polite" aria-label="Ready"></span>
+    </div>
+
+
+</body>
+</html>

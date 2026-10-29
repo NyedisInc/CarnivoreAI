@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>status dot shape harness</title>
+<!-- --color- -->
+<link rel="stylesheet" href="../../client/css/styles.css" />
+<link rel="stylesheet" href="../../client/css/session-sidebar.css" />
+<link rel="stylesheet" href="../../client/css/status-dot.css" />
+<link rel="stylesheet" href="../../client/css/session-sidebar-density.css" />
+<link rel="stylesheet" href="../../client/css/session-theme-tint.css" />
+<style>
+  /* --color- */
+  body { margin: 0; padding: 24px; }
+  #dots { max-width: 320px; }
+
+  #control-filled, #control-hollow {
+      width: 9px; height: 9px; display: inline-block; border-radius: 0;
+      margin-right: 12px;
+  }
+  #control-filled { background: #c81e6e; }
+  #control-hollow { background: transparent; box-shadow: inset 0 0 0 2px #c81e6e; }
+  #controls { margin-top: 28px; }
+</style>
+</head>
+<body>
+<div class="session-sidebar-list" id="dots"></div>
+
+<div id="controls">
+  <span id="control-filled"></span><span id="control-hollow"></span>
+</div>
+
+<script src="../../client/js/session-status-ui.js"></script>
+<script>
+window.__dotsReady = false;
+
+/**
+ * The seven states, in the same display-priority order the shipped
+ * module documents. Every one is measured; a subset would let a state
+ * regress into looking like its neighbour without failing anything.
+ * @type {Array<string>}
+ */
+window.__STATES = ['dead', 'question', 'working_subagent', 'working',
+                   'finished_unread', 'idle', 'unknown'];
+
+/**
+ * Apply one shipped theme's cssVars to :root, exactly as the real theme
+ * loader does, by reading that theme's OWN manifest off disk. Hardcoding
+ * a palette here would test a palette this app does not ship.
+ *
+ * EVERY PROPERTY THE PREVIOUS THEME SET IS CLEARED FIRST. Without that,
+ * a token the incoming manifest does not declare keeps the OUTGOING
+ * theme's value, and the run measures a palette no user can ever have.
+ * It was not hypothetical: `codex` declares no --radius-full, and after
+ * `terminal` had been applied it measured as 0 rather than falling back
+ * to the stylesheet's own 50% - so a whole check was scored against a
+ * value that came from the harness's setup, not from the theme.
+ *
+ * @param {string} id - theme directory name, e.g. "claude".
+ * @returns {Promise<object>} the cssVars map that was applied.
+ */
+window.__applyTheme = async function (id) {
+    const res = await fetch('../../client/css/themes/' + id + '/theme.json');
+    if (!res.ok) throw new Error('theme manifest ' + id + ' -> HTTP ' + res.status);
+    const manifest = await res.json();
+    const vars = manifest.cssVars || {};
+    const root = document.documentElement;
+    Array.from(root.style).forEach((k) => {
+        if (k.indexOf('--') === 0) root.style.removeProperty(k);
+    });
+    Object.keys(vars).forEach((k) => root.style.setProperty(k, vars[k]));
+    root.setAttribute('data-theme', id);
+    document.body.style.background = vars['--color-bg'] || '#000000';
+    return vars;
+};
+
+/**
+ * Resolve a custom property off :root to its computed value.
+ * @param {string} name - e.g. "--color-fg-subtle".
+ * @returns {string} the trimmed value, "" when the property is unset.
+ */
+window.__token = function (name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+};
+
+/**
+ * Build one sidebar row per state, with the dot produced by the SHIPPED
+ * module so the harness cannot drift from what the app renders.
+ * @returns {void}
+ */
+function build() {
+    const ui = window.SessionStatusUI;
+    if (!ui || typeof ui.dotHtml !== 'function') {
+        throw new Error('SessionStatusUI.dotHtml is not loaded; nothing to measure');
+    }
+    document.getElementById('dots').innerHTML = window.__STATES.map((s) => (
+        '<div class="session-sidebar-row" data-active="0" data-pinned="0" '
+        + 'data-state="' + s + '">'
+        + '<div class="session-sidebar-row-main" id="cell-' + s + '">'
+        + ui.dotHtml(s)
+        + '<span class="session-sidebar-row-name">' + s + '</span>'
+        + '</div></div>'
+    )).join('');
+}
+
+/**
+ * Geometry and computed paint for one dot, keyed by its state.
+ *
+ * The rect is reported so the driver can compute its own sample points;
+ * this function deliberately does NOT decide where to sample, because a
+ * page that both chose the sample point and reported the colour could
+ * choose a point that made any rule look right.
+ *
+ * @param {string} state - one of __STATES.
+ * @returns {?object} null when the dot is absent from the DOM.
+ */
+window.__dot = function (state) {
+    const cell = document.getElementById('cell-' + state);
+    const el = cell ? cell.querySelector('.status-dot') : null;
+    if (!el) return null;
+    const cs = getComputedStyle(el);
+    const r = el.getBoundingClientRect();
+    return {
+        state: state,
+        className: el.className,
+        rect: { x: r.left, y: r.top, w: r.width, h: r.height },
+        backgroundColor: cs.backgroundColor,
+        boxShadow: cs.boxShadow,
+        borderRadius: cs.borderRadius,
+        title: el.getAttribute('title'),
+        ariaLabel: el.getAttribute('aria-label'),
+    };
+};
+
+/** @param {string} id - element id. @returns {?object} its box. */
+window.__box = function (id) {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { id: id, rect: { x: r.left, y: r.top, w: r.width, h: r.height } };
+};
+
+/** @returns {object} the whole measurement bundle for the current theme. */
+window.__dots = function () {
+    return {
+        hidden: document.hidden,
+        visibilityState: document.visibilityState,
+        innerWidth: window.innerWidth,
+        devicePixelRatio: window.devicePixelRatio,
+        theme: document.documentElement.getAttribute('data-theme'),
+        tokens: {
+            bg: window.__token('--color-bg'),
+            fgFaint: window.__token('--color-fg-faint'),
+            fgSubtle: window.__token('--color-fg-subtle'),
+            radiusFull: window.__token('--radius-full'),
+        },
+        dots: window.__STATES.map(window.__dot),
+        controlFilled: window.__box('control-filled'),
+        controlHollow: window.__box('control-hollow'),
+    };
+};
+
+(async () => {
+    build();
+    await window.__applyTheme('claude');
+    window.__dotsReady = true;
+})();
+</script>
+</body>
+</html>

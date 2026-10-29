@@ -1,0 +1,41 @@
+{
+  "api_routes": [
+    "src/api/session_theme_routes.py",
+    "src/api/theme_export_routes.py",
+    "src/api/themes_routes.py"
+  ],
+  "area": "themes",
+  "docs": [
+    "docs/theme-catalog-layout.md"
+  ],
+  "examples": [
+    "Pick a light-on-dark palette that is easier on the eyes late at night."
+  ],
+  "how_to": [
+    "Browse the installed themes; filter by favorites, built in, yours or ASCII.",
+    "Click one to preview it, then make it the page theme or star it as a favorite.",
+    "To share one, open it and press export: its theme.json is saved. Themes install only from the catalog, which checks a signed release."
+  ],
+  "id": "theme-system",
+  "issues": [
+    888
+  ],
+  "keywords": [
+    "themes",
+    "colors"
+  ],
+  "media": [],
+  "name": "Theme system",
+  "since": "2026-09-10",
+  "status": "stable",
+  "summary": "choose from more than twenty bundled color themes, or write your own.",
+  "surfaces": [
+    "web/src/lib/themes-page/ThemeCard.svelte"
+  ],
+  "updated": "2026-09-28",
+  "where": [
+    "Menu tab, Themes.",
+    "Or the THEMES card on the home screen."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

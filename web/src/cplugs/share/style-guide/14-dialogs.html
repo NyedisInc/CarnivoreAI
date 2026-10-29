@@ -1,0 +1,10 @@
+<h3 class="sg-h3" id="dialogs-share">share plugin: the read-only link dialog</h3>
+<dl class="sg-facts">
+    <dt id="dialogs-share-link">share read-only link</dt>
+    <dd><code>web/src/cplugs/share/ShareModal.svelte</code> renders <code>ModalShell</code> and is opened by the share row menu item. It states
+        who can watch and what is scrubbed, takes a lifetime (<code>.share-select</code>) and an optional label, then shows the one live link
+        (<code>.share-active</code>, <code>.share-row</code>, <code>.share-url</code>) with a copy key (<code>.share-copy</code>) and a revoke
+        (<code>.share-revoke</code>, a <code>.modal-btn-danger</code>). Below the live link, a quiet line names how many links the install holds in all and
+        offers "revoke all links" (<code>.share-all</code>, <code>.share-all-text</code>; two presses), which ends every minted link at once (the same route the plugin's purge uses); the notice line
+        (<code>.share-notice</code>) reports a failed read or revoke. See <code>docs/spectator-links.md</code>.</dd>
+</dl>

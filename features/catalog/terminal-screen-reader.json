@@ -1,0 +1,45 @@
+{
+  "api_routes": [
+    "GET /api/v1/preferences",
+    "PATCH /api/v1/preferences"
+  ],
+  "area": "settings",
+  "docs": [
+    "docs/desktop-bridge.md",
+    "docs/ui-preferences-inventory.md"
+  ],
+  "examples": [
+    "Turn VoiceOver on in the desktop app and open a session: the terminal reads out new output.",
+    "Set terminal screen reader mode to on in a browser tab, where the app cannot tell a screen reader is running."
+  ],
+  "how_to": [
+    "Open settings, terminal, and find terminal screen reader mode under accessibility.",
+    "Leave it on auto and the desktop app follows VoiceOver; pick on or off to force it. Every open terminal follows at once."
+  ],
+  "id": "terminal-screen-reader",
+  "issues": [
+    2398
+  ],
+  "keywords": [
+    "accessibility",
+    "screen reader",
+    "voiceover",
+    "a11y",
+    "terminal"
+  ],
+  "media_exempt": "the control is three radio rows and the effect is an accessibility tree, which a screenshot does not show",
+  "name": "Terminal screen reader mode",
+  "since": "2026-10-23",
+  "status": "beta",
+  "summary": "a terminal turns on xterm's screen reader mode when the computer reports a running screen reader, or when the setting forces it on or off.",
+  "surfaces": [
+    "client/js/terminal-screen-reader.js",
+    "web/src/lib/screen-reader/ScreenReaderPanel.svelte",
+    "macOS/screen-reader.js",
+    "client/js/i18n/document-lang.js"
+  ],
+  "updated": "2026-10-23",
+  "where": [
+    "Settings, terminal, accessibility."
+  ]
+}

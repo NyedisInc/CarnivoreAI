@@ -1,0 +1,88 @@
+{
+  "blobs": {
+    "count": 7,
+    "set_sha256": "445a4a7c16e2dc7f839fb2b0af87e8924ffcde755a0c2a9145de065a9c89ff1f"
+  },
+  "bundle_sha256": "d357ff64db330068c726bc123c95af3b1cc496662dce8282dc602daa52007167",
+  "content_id": "30e804e04a84a7044fbc0055f885afa26372ff523fa16a7552ddb0cf7b3bb422",
+  "conversations": [
+    "aaaaaaaa-0000-0000-0000-00000000000a",
+    "aaaaaaaa-0000-0000-0000-0000000000a0",
+    "bbbbbbbb-0000-0000-0000-00000000000b"
+  ],
+  "files": [
+    {
+      "content_sha256": "004d5ac7ca3e3b1af46198d60a48f2dcd044e5a125d1d0ed8c67b072e78d8b64",
+      "home": "claude",
+      "home_index": 0,
+      "length": 1434,
+      "rel": "projects/_shared/aaaaaaaa-0000-0000-0000-00000000000a.jsonl"
+    },
+    {
+      "content_sha256": "242970f8de7bd5fe3c64ad9e1028f87a94b4c9d1d192d2845f58c1017d50a262",
+      "home": "claude",
+      "home_index": 0,
+      "length": 27,
+      "rel": "projects/_shared/aaaaaaaa-0000-0000-0000-00000000000a/notes.txt"
+    },
+    {
+      "content_sha256": "9d382b18323105eea6269497fdfdb2bcaa2f0ac7e13bb860b28d518cae80ce8e",
+      "home": "claude",
+      "home_index": 0,
+      "length": 27,
+      "rel": "projects/_shared/aaaaaaaa-0000-0000-0000-00000000000a/subagents/agent-a1.jsonl"
+    },
+    {
+      "content_sha256": "6c94ef2661958c2b41d0d3d3312f8102f2ce92c491f423598bb315394a86e5bd",
+      "home": "claude",
+      "home_index": 0,
+      "length": 13,
+      "rel": "projects/_shared/aaaaaaaa-0000-0000-0000-00000000000a/tool-results/résumé-ü.txt"
+    },
+    {
+      "content_sha256": "f0e5f3da9b60f8c9f19e7bb9df9b7e7f7abcfe2302c1c6ec6b1a07e974e674e9",
+      "home": "claude",
+      "home_index": 0,
+      "length": 2620905,
+      "rel": "projects/_shared/aaaaaaaa-0000-0000-0000-0000000000a0.jsonl"
+    },
+    {
+      "content_sha256": "dc8651d287efa24541ca744c79bdfa1ae269e43edf9dc358344e01408c11629f",
+      "home": "claude",
+      "home_index": 0,
+      "length": 498,
+      "rel": "projects/_shared/bbbbbbbb-0000-0000-0000-00000000000b.jsonl"
+    },
+    {
+      "content_sha256": "9d382b18323105eea6269497fdfdb2bcaa2f0ac7e13bb860b28d518cae80ce8e",
+      "home": "codex",
+      "home_index": 0,
+      "length": 27,
+      "rel": "sessions/_shared/rollout-2026-10-09T00-00-00-aaaaaaaa-0000-0000-0000-00000000000a.jsonl"
+    }
+  ],
+  "format_version": [
+    1,
+    0
+  ],
+  "members": [
+    "CRATE",
+    "README.txt",
+    "blobs/00/004d5ac7ca3e3b1af46198d60a48f2dcd044e5a125d1d0ed8c67b072e78d8b64.zst",
+    "blobs/0c/0c3884cdaa87785e4eb83480004f20f41fd7fc12e9b92e7755335148833d3cbb.zst",
+    "blobs/24/242970f8de7bd5fe3c64ad9e1028f87a94b4c9d1d192d2845f58c1017d50a262.zst",
+    "blobs/6c/6c94ef2661958c2b41d0d3d3312f8102f2ce92c491f423598bb315394a86e5bd.zst",
+    "blobs/9b/9b3e6d535dd0eb5fb2d0456755a9dd7d235336f7b8d02d00baace7832284060e.zst",
+    "blobs/9d/9d382b18323105eea6269497fdfdb2bcaa2f0ac7e13bb860b28d518cae80ce8e.zst",
+    "blobs/dc/dc8651d287efa24541ca744c79bdfa1ae269e43edf9dc358344e01408c11629f.zst",
+    "crate.json",
+    "entries.json",
+    "extract.py",
+    "files.jsonl",
+    "paths.jsonl",
+    "reconcile.json",
+    "secrets.json"
+  ],
+  "rows": {},
+  "variant": "share"
+}

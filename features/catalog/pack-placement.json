@@ -1,0 +1,50 @@
+{
+  "api_routes": [
+    "POST /api/v1/pack/placement/explain",
+    "GET /api/v1/pack/queue",
+    "DELETE /api/v1/pack/queue/{queue_id}"
+  ],
+  "area": "settings",
+  "docs": [
+    "docs/pack.md"
+  ],
+  "examples": [
+    "Ask which computer would take a browser test run right now, and read how many cores and gigabytes each one has free after the share it keeps for its owner.",
+    "Let a busy daytime computer send a heavy build to the idle one, while a small job stays on the computer its project lives on.",
+    "See a spawn that no computer could take wait in the queue with the reason, and cancel it."
+  ],
+  "how_to": [
+    "Ask an agent to call placement_explain with a workload kind (light, browser, suite, build or render) to see the decision and every computer's headroom.",
+    "Turn auto-distribute on in the Pack settings (the alpha holds it) to spread light work too; pick the model for enhanced placement under byoai routing as the pack placement feature.",
+    "Tag a swarm_spawn with a workload (kind and size estimates); without one the task type picks a default.",
+    "Open a Swarm agent's chat: when the pack placed it, a quiet line under the title strip says placed on <computer>: <reason>. An agent the pack did not place shows no line."
+  ],
+  "id": "pack-placement",
+  "issues": [
+    1519,
+    1618
+  ],
+  "keywords": [
+    "pack",
+    "placement",
+    "reserve",
+    "throttle",
+    "queue",
+    "headroom",
+    "auto-distribute",
+    "workload"
+  ],
+  "media_exempt": "Routes and agent tools only in this slice; the settings screen for it ships with the Pack settings UI slice.",
+  "name": "Pack placement",
+  "since": "2026-10-10",
+  "status": "beta",
+  "summary": "a new agent goes to the computer with room left after the share its owner keeps free; light work stays on its project's home, battery blocks heavy work, a full Pack queues the request, and a computer over its line puts its own agents in the background priority.",
+  "surfaces": [
+    "src/api/pack_placement_routes.py",
+    "src/core/mcp/pack_placement_tools.py"
+  ],
+  "updated": "2026-10-10",
+  "where": [
+    "Agent tools (placement_explain, pack_queue_items_list, pack_queue_cancel) and the Pack API; the pack placement feature in byoai routing."
+  ]
+}

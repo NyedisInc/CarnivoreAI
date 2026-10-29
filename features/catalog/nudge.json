@@ -1,0 +1,55 @@
+{
+  "id": "nudge",
+  "name": "Nudge",
+  "area": "drawers",
+  "status": "stable",
+  "since": "2026-10-12",
+  "updated": "2026-10-16",
+  "summary": "wakes an idle agent about stale swarm items and flags an item to you when the agent never answers; part of the Task Manager plugin again, with its own switch that ships off.",
+  "description": "It also stops whenever the Task Manager plugin is off. Its timers (minutes of silence, nudges before an item is flagged, items named per nudge) and the three nudge texts are settings in the Task Manager's side pane, under the same names as before. What you saved under the old nudge plugin carries over once, when the app first starts after the change.",
+  "surfaces": [
+    "src/cplugs/huddle/nudge/__init__.py",
+    "src/cplugs/huddle/nudge/sweep.py",
+    "src/cplugs/huddle/nudge/scheduler.py",
+    "src/cplugs/huddle/nudge/lines.py",
+    "src/cplugs/host/plugin_fold.py"
+  ],
+  "api_routes": [
+    "GET /api/v1/cplugs/huddle/lists/{key}/prefs",
+    "PUT /api/v1/cplugs/huddle/lists/{key}/prefs",
+    "GET /api/v1/cplugs/huddle/session-prefs",
+    "GET /api/v1/cplugs/huddle/sessions/{session_uuid}/prefs",
+    "PUT /api/v1/cplugs/huddle/sessions/{session_uuid}/prefs",
+    "PUT /api/v1/cplugs/huddle"
+  ],
+  "docs": [
+    "docs/cplugs.md",
+    "docs/task-manager.md"
+  ],
+  "issues": [
+    1629,
+    1711
+  ],
+  "keywords": [
+    "nudge",
+    "idle",
+    "stuck",
+    "unstick",
+    "plugin",
+    "swarm"
+  ],
+  "where": [
+    "Menu tab, plugins page, the Task Manager plugin, its settings (link: #plugins/huddle/settings), the nudge fields.",
+    "Which projects and sessions get nudged is still chosen per project (edit project) and per session (the row menu)."
+  ],
+  "how_to": [
+    "Set the minutes of silence before a nudge, how many nudges an item gets before it asks you to unstick it, and how many items one nudge names.",
+    "Edit the three nudge texts to change what the agent is told; the slots {minutes}, {item}, {items}, {is} and {it} are filled in, and an empty text brings back the standard words."
+  ],
+  "examples": [
+    "You turn the nudge on, switch it on for a project, and an item that sat open for an hour gets its idle agent woken with your own wording.",
+    "You lower the tries to two so a stuck item asks you to unstick it sooner.",
+    "You turn the nudge switch off while you are away from the desk; no agent is woken and no nudge line is posted until you turn it on again."
+  ],
+  "media_exempt": "background behavior plus settings fields drawn by the generic plugin side pane; there is no new screen of its own to capture"
+}

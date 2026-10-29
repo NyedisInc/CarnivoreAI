@@ -1,0 +1,43 @@
+{
+  "api_routes": [],
+  "area": "drawers",
+  "description": "The agent side of swarm cards. A feature or task agent's brief now teaches the card loop: start the card, keep the handoff current, finish with a result and how-to-validate steps, release when stuck, and never mark a card done. A project agent's standing rules add how to run the queue: deal the top cards in order, hold when nothing should start, split big cards, accept or reject reports and suggest reorders. Every wake, fresh or resumed, repeats a short card duty. A dealt card's message lists up to three facts its chain already knows, with their ids, so what a parent learned travels down, and a spawned child's first message lists them next to its card. The huddle guide moves to revision 6 and teaches plain sessions the four columns, that a swarm-held card refuses huddle state writes, and that only you reach Done. Backend only: the board screen waits for the layout pick.",
+  "docs": [
+    "docs/swarm-cards.md",
+    "docs/task-manager.md",
+    "docs/swarm.md"
+  ],
+  "examples": [
+    "Spawn a task agent and read its brief: section 4 tells it to start its card, write a handoff as it goes and finish with how to validate.",
+    "Deal a card to an agent whose parent remembered a related fact: the deal message names that fact with its f_ id.",
+    "Spawn a task agent whose parent remembered a related fact: the child's first message names that fact with its f_ id."
+  ],
+  "how_to": [
+    "Read a project agent's creation brief or its next wake to see the dealing rules after its delegation sentence.",
+    "Call huddle_guide and check guide_rev is 6; section 18 is the cards section.",
+    "Kill a fact you do not want passed down with DELETE /api/v1/swarm/facts/{fact_id}."
+  ],
+  "id": "swarm-cards-c5",
+  "issues": [
+    1387,
+    1392
+  ],
+  "keywords": [
+    "swarm",
+    "cards",
+    "agent rules",
+    "briefs",
+    "wake prompt",
+    "huddle guide",
+    "learning"
+  ],
+  "media_exempt": "backend only; the board UI waits for the layout pick",
+  "name": "swarm cards: agent rules and learning down",
+  "since": "2026-10-07",
+  "status": "beta",
+  "summary": "swarm agents are taught the card loop in their briefs and on every wake, project agents get the dealing rules, a dealt card carries the facts its chain already knows, and the huddle guide moves to rev 6.",
+  "updated": "2026-10-07",
+  "where": [
+    "Backend only for now: the rules reach agents through their briefs, wake texts and the huddle guide. The board screen arrives in a later slice."
+  ]
+}

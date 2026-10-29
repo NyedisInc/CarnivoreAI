@@ -1,0 +1,57 @@
+{
+  "id": "beast-mode",
+  "name": "Beast Mode",
+  "summary": "arm agent actions without approval while keeping the safety rails active, and optionally answer session permission prompts with plain yes while you are away.",
+  "area": "sessions",
+  "status": "beta",
+  "since": "2026-10-03",
+  "updated": "2026-10-14",
+  "surfaces": [
+    "account menu",
+    "bottom bar right of the crown",
+    "confirmation modal",
+    "settings agent gate panel",
+    "beast mode plugin settings"
+  ],
+  "api_routes": [
+    "src/api/beast_mode_routes.py",
+    "src/api/agent_action_routes.py",
+    "src/api/session_dialog_routes.py"
+  ],
+  "docs": [
+    "docs/beastmode.md",
+    "docs/crosstalk.md",
+    "docs/mcp-server.md",
+    "docs/approvals.md"
+  ],
+  "issues": [
+    1263,
+    1268,
+    1792
+  ],
+  "keywords": [
+    "beast",
+    "agent",
+    "approval",
+    "mcp",
+    "away",
+    "prompts",
+    "permission",
+    "auto approve"
+  ],
+  "where": [
+    "Press your name chip at the bottom of the agents drawer and choose beast mode; while it is on, a coral bolt sits right of the crown in the bottom bar."
+  ],
+  "how_to": [
+    "Open the account menu, choose beast mode, review the pending action count, then arm with the coral confirm button.",
+    "Press the bolt by the crown, or the menu item, and turn it off in one press.",
+    "Tick also answer session permission prompts in the confirmation, pick when it turns off, then arm; the bolt tooltip says prompts are answered too.",
+    "Choose what it handles in the beast mode plugin's settings grid (the beast on column)."
+  ],
+  "examples": [
+    "Arm Beast Mode before several agents collaborate across computers; their eligible actions run without individual approval prompts.",
+    "Leaving the desk for an afternoon: arm Beast Mode with prompts for 4 hours; each Bash or edit permission is answered yes and announced, while plan approvals and questions still wait for you."
+  ],
+  "media": [],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

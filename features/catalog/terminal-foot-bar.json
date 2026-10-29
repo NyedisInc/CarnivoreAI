@@ -1,0 +1,44 @@
+{
+  "api_routes": [],
+  "area": "terminal",
+  "docs": [
+    "docs/session-status.md"
+  ],
+  "examples": [
+    "Check which folder a pane is in before you paste a command."
+  ],
+  "how_to": [
+    "Read the session's folder, what is running and the pane size at a glance.",
+    "For an agent session it also carries the model and usage meters.",
+    "The context meter is a colored gauge: green, blue, yellow, orange, then red as the conversation fills, with the percent in the same color.",
+    "The model leads on the left, then the three limits (ctx, 5h, 7d) as one group; the timers segment sits on the right, drawn only when it has something to say; the agents and shells segments are off by default and appear there only once you turn them on in settings. On a narrow cell the lowest priority pieces give way first (the 7d reset, the context fraction, the effort, then the 5h reset and the bars); the percentages and the work segments always stay. The agents and shells numbers are exactly the lengths of the control center's AGENTS (running) and SHELLS lists.",
+    "Click the bar to grow it into the session control center, full width and never resizing the session: every figure as a labeled band across the top (context/model/tokens, the two windows, cost/account), with timers, agents and shells as three equal columns underneath, each with its own count and stop-all. On a phone the band becomes tiles and the three lists become an accordion, one section open at a time.",
+    "Which items the collapsed bar shows (model, effort, context, either rate-limit window, agents, shells, timers) can be turned on or off individually (agents and shells start off, the rest start on); the grown view always shows everything regardless.",
+    "Three layouts are built for the collapsed bar and three for the grown one, picked independently in settings (next to the status bar items list): collapsed A (meters first, default), B (a text status line grouped into session/account scopes) or C (attention-first, one meter for whichever limit is closest to its end); open A (a summary band plus three columns, default), B (a tabs rail: usage/timers/agents/shells) or C (one merged list grouped by owner, with filter chips)."
+  ],
+  "id": "terminal-foot-bar",
+  "issues": [
+    149,
+    1044,
+    1053,
+    1853,
+    2463
+  ],
+  "keywords": [
+    "toolbar"
+  ],
+  "media": [],
+  "name": "Status bar",
+  "since": "2026-09-24",
+  "status": "stable",
+  "summary": "a slim status bar under the terminal shows the session's folder, model and usage at a glance, and grows into the session control center.",
+  "surfaces": [
+    "web/src/lib/terminal-foot-bar/TerminalFootHost.svelte",
+    "web/src/opscenter/cells/terminal-live/GitChip.svelte"
+  ],
+  "updated": "2026-10-24",
+  "where": [
+    "The thin bar under the terminal you are looking at."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

@@ -1,0 +1,47 @@
+{
+  "api_routes": [
+    "src/api/session_sleep_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/session-project-operations.md"
+  ],
+  "examples": [
+    "You have ten sessions open and the computer is slowing down: sleep the ones you are not using today.",
+    "Before a long break, sleep a session instead of closing it, so you can pick the conversation up exactly where it stopped.",
+    "Mark a session unread before sleeping it overnight; tomorrow its green moon reminds you to come back to it."
+  ],
+  "how_to": [
+    "Open the session's menu (three dots on its drawer row) and choose sleep agent.",
+    "The agent stops and its terminal closes; the row stays where it was, showing a moon.",
+    "To bring it back, open the same menu and choose wake agent. It resumes the same conversation.",
+    "A session whose agent exited on its own (/exit, Ctrl-C or a crash) also shows a moon. Wake brings it back in its own terminal, resuming the same conversation; nothing running is stopped.",
+    "To discard a sleeping agent for good, choose kill agent on its row and confirm. The record leaves your lists and cannot be woken; the conversation history is kept.",
+    "To keep a reminder, mark the session unread before or after sleeping it: the moon then shows in the unread green, and the flag is still there after you wake it.",
+    "When something scheduled will wake a sleeping session (a Task Manager item with a fire time or a repeat that tells it, or an automation aimed at it that wakes it), a small clock sits beside its sleeping mark; hover it for the next wake time."
+  ],
+  "id": "session-sleep",
+  "issues": [
+    749,
+    1726,
+    1771
+  ],
+  "keywords": [
+    "sleep",
+    "wake"
+  ],
+  "media": [],
+  "name": "Sleep a session",
+  "since": "2026-09-25",
+  "status": "stable",
+  "summary": "put a running session to sleep to free up resources without losing its conversation.",
+  "surfaces": [],
+  "updated": "2026-09-27",
+  "where": [
+    "Open the agents drawer on the left.",
+    "Open a claude or codex session's menu with the three dots on its row.",
+    "An asleep session keeps its row and shows a moon in place of its light.",
+    "A moon in the unread green is an asleep session you flagged for follow-up."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

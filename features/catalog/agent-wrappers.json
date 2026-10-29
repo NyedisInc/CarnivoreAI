@@ -1,0 +1,30 @@
+{
+  "api_routes": [],
+  "area": "settings",
+  "docs": [],
+  "examples": [
+    "Launch claude through a wrapper that loads the right account for work projects."
+  ],
+  "how_to": [
+    "This feature was removed. Open the menu tab and choose launch profiles instead."
+  ],
+  "id": "agent-wrappers",
+  "issues": [
+    903,
+    1097
+  ],
+  "keywords": [
+    "wrapper",
+    "harness"
+  ],
+  "media_exempt": "retired in #1257 S9a: the feature is gone, see launch-profiles-page",
+  "name": "Agent wrappers",
+  "since": "2026-09-10",
+  "status": "removed",
+  "summary": "Agent wrappers were replaced by launch profiles. choose which coding agent, claude, codex, or another supported harness, a new session launches with.",
+  "surfaces": [],
+  "updated": "2026-10-03",
+  "where": [
+    "Replaced by Menu tab, Launch Profiles."
+  ]
+}

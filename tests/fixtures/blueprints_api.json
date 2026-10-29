@@ -1,0 +1,1295 @@
+{
+  "description": "Request and response examples for every /api/v1/blueprints route (issue #759, Layouts slice E of #424). <tmp> is the test's own directory, <proj> under it a registered project, <tmp>/app a git repository on master; <blueprint_uuid_N>, <layout_uuid_N>, <session_id> and <timestamp> stand for generated values. Regenerated and checked by tests/test_blueprints_contract_fixture.py. Model: docs/blueprints.md.",
+  "examples": [
+    {
+      "title": "list, empty install",
+      "method": "GET",
+      "path": "/api/v1/blueprints",
+      "request": null,
+      "status": 200,
+      "response": {
+        "status": "ok",
+        "blueprints": [],
+        "detail": null
+      }
+    },
+    {
+      "title": "create",
+      "method": "POST",
+      "path": "/api/v1/blueprints",
+      "request": {
+        "spec": {
+          "name": "Team",
+          "sessions": [
+            {
+              "label": "api",
+              "family": "claude",
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              },
+              "model": "anthropic/claude-opus-4",
+              "opening_prompt": "read the README and run the tests"
+            },
+            {
+              "label": "web",
+              "family": "codex",
+              "folder": {
+                "mode": "worktree",
+                "repo_path": "<tmp>/app",
+                "base_branch": "master",
+                "branch": "feat/web"
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response": {
+        "blueprint_uuid": "<blueprint_uuid_1>",
+        "name": "Team",
+        "spec": {
+          "version": 1,
+          "name": "Team",
+          "shape_template": null,
+          "sessions": [
+            {
+              "label": "api",
+              "family": "claude",
+              "model": "anthropic/claude-opus-4",
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              },
+              "skills": [],
+              "opening_prompt": "read the README and run the tests",
+              "session_uuid": null,
+              "theme": null,
+              "keep_awake": null,
+              "notifications_muted": null,
+              "background": null,
+              "host_key": null
+            },
+            {
+              "label": "web",
+              "family": "codex",
+              "model": null,
+              "folder": {
+                "mode": "worktree",
+                "repo_path": "<tmp>/app",
+                "base_branch": "master",
+                "branch": "feat/web"
+              },
+              "skills": [],
+              "opening_prompt": null,
+              "session_uuid": null,
+              "theme": null,
+              "keep_awake": null,
+              "notifications_muted": null,
+              "background": null,
+              "host_key": null
+            }
+          ]
+        },
+        "created_at": "<timestamp>",
+        "updated_at": "<timestamp>"
+      }
+    },
+    {
+      "title": "create, 409 name taken (case folded)",
+      "method": "POST",
+      "path": "/api/v1/blueprints",
+      "request": {
+        "spec": {
+          "name": "TEAM",
+          "sessions": [
+            {
+              "label": "api",
+              "family": "claude",
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              },
+              "model": "anthropic/claude-opus-4",
+              "opening_prompt": "read the README and run the tests"
+            },
+            {
+              "label": "web",
+              "family": "codex",
+              "folder": {
+                "mode": "worktree",
+                "repo_path": "<tmp>/app",
+                "base_branch": "master",
+                "branch": "feat/web"
+              }
+            }
+          ]
+        }
+      },
+      "status": 409,
+      "response": {
+        "detail": {
+          "code": "blueprint_name_taken",
+          "detail": "a blueprint called 'TEAM' already exists"
+        }
+      }
+    },
+    {
+      "title": "create, 422 unknown field",
+      "method": "POST",
+      "path": "/api/v1/blueprints",
+      "request": {
+        "spec": {
+          "name": "Team",
+          "sessions": [
+            {
+              "label": "api",
+              "family": "claude",
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              },
+              "model": "anthropic/claude-opus-4",
+              "opening_prompt": "read the README and run the tests",
+              "token": "x"
+            }
+          ]
+        }
+      },
+      "status": 422,
+      "response": {
+        "detail": [
+          {
+            "type": "extra_forbidden",
+            "loc": [
+              "body",
+              "spec",
+              "sessions",
+              0,
+              "token"
+            ],
+            "msg": "Extra inputs are not permitted",
+            "input": "x"
+          }
+        ]
+      }
+    },
+    {
+      "title": "create, 400 secret in the spec",
+      "method": "POST",
+      "path": "/api/v1/blueprints",
+      "request": {
+        "spec": {
+          "name": "leak",
+          "sessions": [
+            {
+              "label": "a",
+              "family": "claude",
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              },
+              "opening_prompt": "use <fake_github_token> now"
+            }
+          ]
+        }
+      },
+      "status": 400,
+      "response": {
+        "detail": {
+          "code": "blueprint_secret",
+          "detail": "the blueprint holds what looks like a credential (github_token); a blueprint never carries a secret",
+          "detectors": [
+            "github_token"
+          ]
+        }
+      }
+    },
+    {
+      "title": "get",
+      "method": "GET",
+      "path": "/api/v1/blueprints/<blueprint_uuid_1>",
+      "request": null,
+      "status": 200,
+      "response": {
+        "blueprint_uuid": "<blueprint_uuid_1>",
+        "name": "Team",
+        "spec": {
+          "version": 1,
+          "name": "Team",
+          "shape_template": null,
+          "sessions": [
+            {
+              "label": "api",
+              "family": "claude",
+              "model": "anthropic/claude-opus-4",
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              },
+              "skills": [],
+              "opening_prompt": "read the README and run the tests",
+              "session_uuid": null,
+              "theme": null,
+              "keep_awake": null,
+              "notifications_muted": null,
+              "background": null,
+              "host_key": null
+            },
+            {
+              "label": "web",
+              "family": "codex",
+              "model": null,
+              "folder": {
+                "mode": "worktree",
+                "repo_path": "<tmp>/app",
+                "base_branch": "master",
+                "branch": "feat/web"
+              },
+              "skills": [],
+              "opening_prompt": null,
+              "session_uuid": null,
+              "theme": null,
+              "keep_awake": null,
+              "notifications_muted": null,
+              "background": null,
+              "host_key": null
+            }
+          ]
+        },
+        "created_at": "<timestamp>",
+        "updated_at": "<timestamp>"
+      }
+    },
+    {
+      "title": "get, 404",
+      "method": "GET",
+      "path": "/api/v1/blueprints/00000000-0000-0000-0000-000000000000",
+      "request": null,
+      "status": 404,
+      "response": {
+        "detail": {
+          "code": "blueprint_not_found",
+          "detail": "no blueprint 00000000-0000-0000-0000-000000000000"
+        }
+      }
+    },
+    {
+      "title": "replace",
+      "method": "PUT",
+      "path": "/api/v1/blueprints/<blueprint_uuid_1>",
+      "request": {
+        "spec": {
+          "name": "Team",
+          "sessions": [
+            {
+              "label": "api",
+              "family": "claude",
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              },
+              "model": "anthropic/claude-opus-4",
+              "opening_prompt": "read the README and run the tests"
+            },
+            {
+              "label": "web",
+              "family": "codex",
+              "folder": {
+                "mode": "worktree",
+                "repo_path": "<tmp>/app",
+                "base_branch": "master",
+                "branch": "feat/web"
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response": {
+        "blueprint_uuid": "<blueprint_uuid_1>",
+        "name": "Team",
+        "spec": {
+          "version": 1,
+          "name": "Team",
+          "shape_template": null,
+          "sessions": [
+            {
+              "label": "api",
+              "family": "claude",
+              "model": "anthropic/claude-opus-4",
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              },
+              "skills": [],
+              "opening_prompt": "read the README and run the tests",
+              "session_uuid": null,
+              "theme": null,
+              "keep_awake": null,
+              "notifications_muted": null,
+              "background": null,
+              "host_key": null
+            },
+            {
+              "label": "web",
+              "family": "codex",
+              "model": null,
+              "folder": {
+                "mode": "worktree",
+                "repo_path": "<tmp>/app",
+                "base_branch": "master",
+                "branch": "feat/web"
+              },
+              "skills": [],
+              "opening_prompt": null,
+              "session_uuid": null,
+              "theme": null,
+              "keep_awake": null,
+              "notifications_muted": null,
+              "background": null,
+              "host_key": null
+            }
+          ]
+        },
+        "created_at": "<timestamp>",
+        "updated_at": "<timestamp>"
+      }
+    },
+    {
+      "title": "settings, default root",
+      "method": "GET",
+      "path": "/api/v1/blueprints/settings",
+      "request": null,
+      "status": 200,
+      "response": {
+        "worktree_root": "worktrees"
+      }
+    },
+    {
+      "title": "settings, set root",
+      "method": "PUT",
+      "path": "/api/v1/blueprints/settings",
+      "request": {
+        "worktree_root": "<tmp>/wt"
+      },
+      "status": 200,
+      "response": {
+        "worktree_root": "<tmp>/wt"
+      }
+    },
+    {
+      "title": "settings, 400 system root",
+      "method": "PUT",
+      "path": "/api/v1/blueprints/settings",
+      "request": {
+        "worktree_root": "/"
+      },
+      "status": 400,
+      "response": {
+        "detail": {
+          "code": "worktree_root_invalid",
+          "detail": "'/' is a system directory"
+        }
+      }
+    },
+    {
+      "title": "export",
+      "method": "POST",
+      "path": "/api/v1/blueprints/<blueprint_uuid_1>/export",
+      "request": {
+        "project_path": "<tmp>/proj"
+      },
+      "status": 200,
+      "response": {
+        "path": "<tmp>/proj/.carnivore/swarm.json",
+        "blueprint_uuid": "<blueprint_uuid_1>"
+      }
+    },
+    {
+      "title": "export, 409 unknown project",
+      "method": "POST",
+      "path": "/api/v1/blueprints/<blueprint_uuid_1>/export",
+      "request": {
+        "project_path": "<tmp>"
+      },
+      "status": 409,
+      "response": {
+        "detail": {
+          "code": "project_path_invalid",
+          "detail": "'<tmp>' contains a global install root, so installing into it as a project would write where a global install writes"
+        }
+      }
+    },
+    {
+      "title": "import under a new name",
+      "method": "POST",
+      "path": "/api/v1/blueprints/import",
+      "request": {
+        "project_path": "<tmp>/proj",
+        "name": "Team copy"
+      },
+      "status": 200,
+      "response": {
+        "blueprint_uuid": "<blueprint_uuid_2>",
+        "name": "Team copy",
+        "spec": {
+          "version": 1,
+          "name": "Team copy",
+          "shape_template": null,
+          "sessions": [
+            {
+              "label": "api",
+              "family": "claude",
+              "model": "anthropic/claude-opus-4",
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              },
+              "skills": [],
+              "opening_prompt": "read the README and run the tests",
+              "session_uuid": null,
+              "theme": null,
+              "keep_awake": null,
+              "notifications_muted": null,
+              "background": null,
+              "host_key": null
+            },
+            {
+              "label": "web",
+              "family": "codex",
+              "model": null,
+              "folder": {
+                "mode": "worktree",
+                "repo_path": "<tmp>/app",
+                "base_branch": "master",
+                "branch": "feat/web"
+              },
+              "skills": [],
+              "opening_prompt": null,
+              "session_uuid": null,
+              "theme": null,
+              "keep_awake": null,
+              "notifications_muted": null,
+              "background": null,
+              "host_key": null
+            }
+          ]
+        },
+        "created_at": "<timestamp>",
+        "updated_at": "<timestamp>"
+      }
+    },
+    {
+      "title": "import, 409 malformed file",
+      "method": "POST",
+      "path": "/api/v1/blueprints/import",
+      "request": {
+        "project_path": "<tmp>/proj"
+      },
+      "status": 409,
+      "response": {
+        "detail": {
+          "code": "swarm_file_invalid",
+          "detail": "<tmp>/proj/.carnivore/swarm.json is not valid JSON (line 1, column 19: Expecting property name enclosed in double quotes)"
+        }
+      }
+    },
+    {
+      "title": "import, 404 no file",
+      "method": "POST",
+      "path": "/api/v1/blueprints/import",
+      "request": {
+        "project_path": "<tmp>/proj"
+      },
+      "status": 404,
+      "response": {
+        "detail": {
+          "code": "swarm_file_missing",
+          "detail": "<tmp>/proj/.carnivore/swarm.json does not exist"
+        }
+      }
+    },
+    {
+      "title": "launch preview",
+      "method": "POST",
+      "path": "/api/v1/blueprints/<blueprint_uuid_1>/launch/preview",
+      "request": {},
+      "status": 200,
+      "response": {
+        "blueprint_uuid": "<blueprint_uuid_1>",
+        "name": "Team",
+        "worktree_root": "<tmp>/wt",
+        "members": [
+          {
+            "index": 0,
+            "label": "api",
+            "family": "claude",
+            "family_name": "claude",
+            "folder": {
+              "mode": "existing",
+              "path": "<tmp>/proj",
+              "worktree": null
+            },
+            "project": {
+              "known": true,
+              "name": "project-0"
+            },
+            "skills": [],
+            "skill_roots_to_create": [],
+            "opening_prompt": true,
+            "problems": []
+          },
+          {
+            "index": 1,
+            "label": "web",
+            "family": "codex",
+            "family_name": "codex",
+            "folder": {
+              "mode": "worktree",
+              "path": "<tmp>/wt/app/feat-web",
+              "worktree": {
+                "repo_path": "<tmp>/app",
+                "base_branch": "master",
+                "branch": "feat/web",
+                "path": "<tmp>/wt/app/feat-web",
+                "create": true,
+                "branch_exists": false
+              }
+            },
+            "project": {
+              "known": false,
+              "name": null
+            },
+            "skills": [],
+            "skill_roots_to_create": [],
+            "opening_prompt": false,
+            "problems": []
+          }
+        ]
+      }
+    },
+    {
+      "title": "launch preview, 400 unknown member",
+      "method": "POST",
+      "path": "/api/v1/blueprints/<blueprint_uuid_1>/launch/preview",
+      "request": {
+        "members": [
+          5
+        ]
+      },
+      "status": 400,
+      "response": {
+        "detail": {
+          "code": "member_unknown",
+          "detail": "this blueprint has 2 sessions"
+        }
+      }
+    },
+    {
+      "title": "launch (sequential; saved as a layout)",
+      "method": "POST",
+      "path": "/api/v1/blueprints/<blueprint_uuid_1>/launch",
+      "request": {
+        "cols": 120,
+        "rows": 40
+      },
+      "status": 200,
+      "response": {
+        "blueprint_uuid": "<blueprint_uuid_1>",
+        "name": "Team",
+        "complete": true,
+        "members": [
+          {
+            "index": 0,
+            "label": "api",
+            "state": "launched",
+            "folder": {
+              "mode": "existing",
+              "path": "<tmp>/proj",
+              "worktree": null
+            },
+            "project": {
+              "known": true,
+              "name": "project-0"
+            },
+            "skills": [],
+            "session": {
+              "id": "<session_id>",
+              "tmux_session": "cloude_api_1",
+              "session_row_id": 1,
+              "session_uuid": "bp-1"
+            },
+            "problem": null
+          },
+          {
+            "index": 1,
+            "label": "web",
+            "state": "launched",
+            "folder": {
+              "mode": "worktree",
+              "path": "<tmp>/wt/app/feat-web",
+              "worktree": {
+                "repo_path": "<tmp>/app",
+                "base_branch": "master",
+                "branch": "feat/web",
+                "path": "<tmp>/wt/app/feat-web",
+                "create": true,
+                "branch_exists": false
+              }
+            },
+            "project": {
+              "known": true,
+              "name": "app (feat/web)"
+            },
+            "skills": [],
+            "session": {
+              "id": "<session_id>",
+              "tmux_session": "cloude_web_2",
+              "session_row_id": 2,
+              "session_uuid": "bp-2"
+            },
+            "problem": null
+          }
+        ],
+        "layout": {
+          "layout_uuid": "<layout_uuid_1>",
+          "name": "Team",
+          "position": 0,
+          "shape": {
+            "layout": {
+              "v": 6,
+              "rows": [
+                {
+                  "id": "r1",
+                  "kind": "flex",
+                  "size": 1.0,
+                  "slots": [
+                    {
+                      "id": "terminal:row:1",
+                      "fr": 0.5
+                    },
+                    {
+                      "id": "terminal:row:2",
+                      "fr": 0.5
+                    }
+                  ]
+                }
+              ],
+              "hidden": [],
+              "heroCollapsed": false,
+              "collapsed": []
+            },
+            "groups": {}
+          },
+          "revision": 1,
+          "source_key": null,
+          "members": [
+            {
+              "session_row_id": 1,
+              "session_uuid": "bp-1",
+              "position": 0,
+              "broadcast": true
+            },
+            {
+              "session_row_id": 2,
+              "session_uuid": "bp-2",
+              "position": 1,
+              "broadcast": true
+            }
+          ],
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "colour": "green",
+          "gradient": null,
+          "animation": "none"
+        },
+        "layout_detail": null,
+        "layout_updated": false
+      }
+    },
+    {
+      "title": "launch, 409 the blueprint's layout already exists",
+      "method": "POST",
+      "path": "/api/v1/blueprints/<blueprint_uuid_1>/launch",
+      "request": {},
+      "status": 409,
+      "response": {
+        "detail": {
+          "code": "layout_exists",
+          "detail": "a layout named Team already exists",
+          "layout": {
+            "layout_uuid": "<layout_uuid_1>",
+            "name": "Team"
+          }
+        }
+      }
+    },
+    {
+      "title": "launch with overwrite_layout updates that layout in place",
+      "method": "POST",
+      "path": "/api/v1/blueprints/<blueprint_uuid_1>/launch",
+      "request": {
+        "overwrite_layout": true
+      },
+      "status": 200,
+      "response": {
+        "blueprint_uuid": "<blueprint_uuid_1>",
+        "name": "Team",
+        "complete": true,
+        "members": [
+          {
+            "index": 0,
+            "label": "api",
+            "state": "launched",
+            "folder": {
+              "mode": "existing",
+              "path": "<tmp>/proj",
+              "worktree": null
+            },
+            "project": {
+              "known": true,
+              "name": "project-0"
+            },
+            "skills": [],
+            "session": {
+              "id": "<session_id>",
+              "tmux_session": "cloude_api_3",
+              "session_row_id": 3,
+              "session_uuid": "bp-3"
+            },
+            "problem": null
+          },
+          {
+            "index": 1,
+            "label": "web",
+            "state": "launched",
+            "folder": {
+              "mode": "worktree",
+              "path": "<tmp>/wt/app/feat-web",
+              "worktree": {
+                "repo_path": "<tmp>/app",
+                "base_branch": "master",
+                "branch": "feat/web",
+                "path": "<tmp>/wt/app/feat-web",
+                "create": false,
+                "branch_exists": true
+              }
+            },
+            "project": {
+              "known": true,
+              "name": "app (feat/web)"
+            },
+            "skills": [],
+            "session": {
+              "id": "<session_id>",
+              "tmux_session": "cloude_web_4",
+              "session_row_id": 4,
+              "session_uuid": "bp-4"
+            },
+            "problem": null
+          }
+        ],
+        "layout": {
+          "layout_uuid": "<layout_uuid_1>",
+          "name": "Team",
+          "position": 0,
+          "shape": {
+            "layout": {
+              "v": 6,
+              "rows": [
+                {
+                  "id": "r1",
+                  "kind": "flex",
+                  "size": 1.0,
+                  "slots": [
+                    {
+                      "id": "terminal:row:3",
+                      "fr": 0.5
+                    },
+                    {
+                      "id": "terminal:row:4",
+                      "fr": 0.5
+                    }
+                  ]
+                }
+              ],
+              "hidden": [],
+              "heroCollapsed": false,
+              "collapsed": []
+            },
+            "groups": {}
+          },
+          "revision": 2,
+          "source_key": null,
+          "members": [
+            {
+              "session_row_id": 3,
+              "session_uuid": "bp-3",
+              "position": 0,
+              "broadcast": true
+            },
+            {
+              "session_row_id": 4,
+              "session_uuid": "bp-4",
+              "position": 1,
+              "broadcast": true
+            }
+          ],
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "colour": "green",
+          "gradient": null,
+          "animation": "none"
+        },
+        "layout_detail": null,
+        "layout_updated": true
+      }
+    },
+    {
+      "title": "create a blueprint with failing members",
+      "method": "POST",
+      "path": "/api/v1/blueprints",
+      "request": {
+        "spec": {
+          "name": "Mixed",
+          "sessions": [
+            {
+              "label": "ok one",
+              "family": "claude",
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              }
+            },
+            {
+              "label": "ghost",
+              "family": "nosuchwrapper",
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              }
+            },
+            {
+              "label": "fails",
+              "family": "claude",
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              }
+            },
+            {
+              "label": "ok two",
+              "family": "claude",
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response": {
+        "blueprint_uuid": "<blueprint_uuid_3>",
+        "name": "Mixed",
+        "spec": {
+          "version": 1,
+          "name": "Mixed",
+          "shape_template": null,
+          "sessions": [
+            {
+              "label": "ok one",
+              "family": "claude",
+              "model": null,
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              },
+              "skills": [],
+              "opening_prompt": null,
+              "session_uuid": null,
+              "theme": null,
+              "keep_awake": null,
+              "notifications_muted": null,
+              "background": null,
+              "host_key": null
+            },
+            {
+              "label": "ghost",
+              "family": "nosuchwrapper",
+              "model": null,
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              },
+              "skills": [],
+              "opening_prompt": null,
+              "session_uuid": null,
+              "theme": null,
+              "keep_awake": null,
+              "notifications_muted": null,
+              "background": null,
+              "host_key": null
+            },
+            {
+              "label": "fails",
+              "family": "claude",
+              "model": null,
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              },
+              "skills": [],
+              "opening_prompt": null,
+              "session_uuid": null,
+              "theme": null,
+              "keep_awake": null,
+              "notifications_muted": null,
+              "background": null,
+              "host_key": null
+            },
+            {
+              "label": "ok two",
+              "family": "claude",
+              "model": null,
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              },
+              "skills": [],
+              "opening_prompt": null,
+              "session_uuid": null,
+              "theme": null,
+              "keep_awake": null,
+              "notifications_muted": null,
+              "background": null,
+              "host_key": null
+            }
+          ]
+        },
+        "created_at": "<timestamp>",
+        "updated_at": "<timestamp>"
+      }
+    },
+    {
+      "title": "launch, partial: failed members are outcomes, nothing rolled back",
+      "method": "POST",
+      "path": "/api/v1/blueprints/<blueprint_uuid_3>/launch",
+      "request": {},
+      "status": 200,
+      "response": {
+        "blueprint_uuid": "<blueprint_uuid_3>",
+        "name": "Mixed",
+        "complete": false,
+        "members": [
+          {
+            "index": 0,
+            "label": "ok one",
+            "state": "launched",
+            "folder": {
+              "mode": "existing",
+              "path": "<tmp>/proj",
+              "worktree": null
+            },
+            "project": {
+              "known": true,
+              "name": "project-0"
+            },
+            "skills": [],
+            "session": {
+              "id": "<session_id>",
+              "tmux_session": "cloude_ok_one_5",
+              "session_row_id": 5,
+              "session_uuid": "bp-5"
+            },
+            "problem": null
+          },
+          {
+            "index": 1,
+            "label": "ghost",
+            "state": "failed",
+            "folder": {
+              "mode": "existing",
+              "path": null,
+              "worktree": null
+            },
+            "project": null,
+            "skills": [],
+            "session": null,
+            "problem": {
+              "step": "family",
+              "code": "family_unknown",
+              "detail": "'nosuchwrapper' is not an agent family or a launch profile"
+            }
+          },
+          {
+            "index": 2,
+            "label": "fails",
+            "state": "failed",
+            "folder": {
+              "mode": "existing",
+              "path": "<tmp>/proj",
+              "worktree": null
+            },
+            "project": {
+              "known": true,
+              "name": "project-0"
+            },
+            "skills": [],
+            "session": null,
+            "problem": {
+              "step": "session",
+              "code": "create_502",
+              "detail": "agent failed to launch: test double"
+            }
+          },
+          {
+            "index": 3,
+            "label": "ok two",
+            "state": "launched",
+            "folder": {
+              "mode": "existing",
+              "path": "<tmp>/proj",
+              "worktree": null
+            },
+            "project": {
+              "known": true,
+              "name": "project-0"
+            },
+            "skills": [],
+            "session": {
+              "id": "<session_id>",
+              "tmux_session": "cloude_ok_two_7",
+              "session_row_id": 6,
+              "session_uuid": "bp-7"
+            },
+            "problem": null
+          }
+        ],
+        "layout": {
+          "layout_uuid": "<layout_uuid_2>",
+          "name": "Mixed",
+          "position": 1,
+          "shape": {
+            "layout": {
+              "v": 6,
+              "rows": [
+                {
+                  "id": "r1",
+                  "kind": "flex",
+                  "size": 1.0,
+                  "slots": [
+                    {
+                      "id": "terminal:row:5",
+                      "fr": 0.5
+                    },
+                    {
+                      "id": "terminal:row:6",
+                      "fr": 0.5
+                    }
+                  ]
+                }
+              ],
+              "hidden": [],
+              "heroCollapsed": false,
+              "collapsed": []
+            },
+            "groups": {}
+          },
+          "revision": 1,
+          "source_key": null,
+          "members": [
+            {
+              "session_row_id": 5,
+              "session_uuid": "bp-5",
+              "position": 0,
+              "broadcast": true
+            },
+            {
+              "session_row_id": 6,
+              "session_uuid": "bp-7",
+              "position": 1,
+              "broadcast": true
+            }
+          ],
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "colour": "green",
+          "gradient": null,
+          "animation": "none"
+        },
+        "layout_detail": null,
+        "layout_updated": false
+      }
+    },
+    {
+      "title": "from layout",
+      "method": "POST",
+      "path": "/api/v1/blueprints/from-layout/<layout_uuid_1>",
+      "request": {
+        "name": "From layout"
+      },
+      "status": 200,
+      "response": {
+        "blueprint_uuid": "<blueprint_uuid_4>",
+        "name": "From layout",
+        "spec": {
+          "version": 1,
+          "name": "From layout",
+          "shape_template": {
+            "layout": {
+              "collapsed": [],
+              "heroCollapsed": false,
+              "hidden": [],
+              "rows": [
+                {
+                  "id": "r1",
+                  "kind": "flex",
+                  "size": 1.0,
+                  "slots": [
+                    {
+                      "fr": 0.5,
+                      "id": "terminal:member:0"
+                    },
+                    {
+                      "fr": 0.5,
+                      "id": "terminal:member:1"
+                    }
+                  ]
+                }
+              ],
+              "v": 6
+            },
+            "groups": {}
+          },
+          "sessions": [
+            {
+              "label": "api",
+              "family": "claude",
+              "model": null,
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              },
+              "skills": [],
+              "opening_prompt": null,
+              "session_uuid": "bp-3",
+              "theme": null,
+              "keep_awake": null,
+              "notifications_muted": null,
+              "background": null,
+              "host_key": null
+            },
+            {
+              "label": "web",
+              "family": "codex",
+              "model": null,
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/wt/app/feat-web"
+              },
+              "skills": [],
+              "opening_prompt": null,
+              "session_uuid": "bp-4",
+              "theme": null,
+              "keep_awake": null,
+              "notifications_muted": null,
+              "background": null,
+              "host_key": null
+            }
+          ]
+        },
+        "created_at": "<timestamp>",
+        "updated_at": "<timestamp>"
+      }
+    },
+    {
+      "title": "from layout, 404",
+      "method": "POST",
+      "path": "/api/v1/blueprints/from-layout/nope",
+      "request": {},
+      "status": 404,
+      "response": {
+        "detail": {
+          "code": "layout_not_found",
+          "detail": "no layout nope"
+        }
+      }
+    },
+    {
+      "title": "delete",
+      "method": "DELETE",
+      "path": "/api/v1/blueprints/<blueprint_uuid_1>",
+      "request": null,
+      "status": 200,
+      "response": {
+        "deleted": true
+      }
+    },
+    {
+      "title": "delete, 404",
+      "method": "DELETE",
+      "path": "/api/v1/blueprints/<blueprint_uuid_1>",
+      "request": null,
+      "status": 404,
+      "response": {
+        "detail": {
+          "code": "blueprint_not_found",
+          "detail": "no blueprint <blueprint_uuid_1>"
+        }
+      }
+    },
+    {
+      "title": "list, table unreadable: 200 unavailable, never an empty ok",
+      "method": "GET",
+      "path": "/api/v1/blueprints",
+      "request": null,
+      "status": 200,
+      "response": {
+        "status": "unavailable",
+        "blueprints": [],
+        "detail": "the blueprints table is not present (schema before v35)"
+      }
+    },
+    {
+      "title": "create, 503 datastore unavailable",
+      "method": "POST",
+      "path": "/api/v1/blueprints",
+      "request": {
+        "spec": {
+          "name": "Team",
+          "sessions": [
+            {
+              "label": "api",
+              "family": "claude",
+              "folder": {
+                "mode": "existing",
+                "path": "<tmp>/proj"
+              },
+              "model": "anthropic/claude-opus-4",
+              "opening_prompt": "read the README and run the tests"
+            },
+            {
+              "label": "web",
+              "family": "codex",
+              "folder": {
+                "mode": "worktree",
+                "repo_path": "<tmp>/app",
+                "base_branch": "master",
+                "branch": "feat/web"
+              }
+            }
+          ]
+        }
+      },
+      "status": 503,
+      "response": {
+        "detail": {
+          "code": "blueprints_unavailable",
+          "detail": "the blueprints table is not present (schema before v35)"
+        }
+      }
+    }
+  ]
+}

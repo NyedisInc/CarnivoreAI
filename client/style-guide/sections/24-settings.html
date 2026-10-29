@@ -1,0 +1,194 @@
+<h2 class="sg-h2">settings</h2>
+
+<dl class="sg-facts">
+    <dt>account: the carnivore account</dt>
+    <dd>The first section of the rail (issue #1200): one <code>carnivore-account</code> row (<code>carnivore_account</code>) that draws the account body inline
+        (<code>web/src/lib/carnivore-account/AccountBody.svelte</code>, the same body the <code>#account</code> menu page,
+        <code>AccountPage.svelte</code>, puts on the manager frame).
+        The page is the manager frame with sections separated by hairlines and a small tracked label each
+        (<code>acctpage__sec</code>): identicon, handle (or "pick your handle"), email and "signed in with &lt;provider&gt;",
+        the news email switch, the devices panel (<code>SessionsPanel</code>), the export and delete panel
+        (<code>AccountPanel</code>) and sign out. Signed out it lists what the account unlocks and one sign in button that
+        opens the sign in modal with source <code>account_page</code>. Strings are <code>account.page.*</code>. The Skills
+        screen shows one line (<code>screen__cta</code>) instead of sign in panels while signed out.</dd>
+    <dt>anatomy</dt>
+    <dd>The rail (<code>SettingsNav.svelte</code>): <code>.st-nav</code>, the search field first (<code>.st-nav__top</code>), then
+        one base <code>ListRow</code> per section, holding one whole-row <code>Button</code> (<code>variant="row"</code>, <code>data-section</code>) with its icon (<code>.st-nav__icon</code>), label
+        (<code>.st-nav__label</code>), the unsaved dot (<code>.st-nav__dot</code>, the page tabs' <code>.oc-ptab__dot</code>)
+        and, while a search is typed, its match count (<code>.st-nav__count</code>, the button dimmed by <code>data-empty</code> at zero); an item carries no tooltip (no <code>title</code>; the section's hint shows as text in search results). The open section is the selected <code>ListRow</code> (<code>aria-current="page"</code> on its button). Below the sections, <code>.st-nav__heading</code> (an <code>.oc-label</code>, shown only while a plugin that is on has settings) titles one more row per such plugin, which opens the plugin's own settings form in the same frame. That form is the plugins page's own (<code>.plp-region</code>), drawn inside one <code>Card</code> titled with the plugin's name in <code>PluginSettingsSection.svelte</code>. Below 768px the list is gone and a native
+        <code>.st-nav__select</code> sits beside the search field in one 44px row. The content column
+        (<code>.st-content</code>) holds the tab strip (<code>.st-tabs</code>), then the open group's panel
+        (<code>.st-panel</code>, with its one dim hint line <code>.st-tabhint</code> and its rows in <code>.st-rows</code> inside one <code>Card</code>, <code>[data-st-frame]</code>) or the
+        embedded screen (<code>.st-screen</code>). The hosts list's <code>.oc-page__items--list</code> (now on the Pack page, <code>.pk-screen</code>) collapses the switch column on <code>.mgr-card</code> rows when
+        no <code>.mgr-card__head</code> contains an <code>.oc-check</code>. The section's own title (<code>h2.st-section__title</code>) is visually
+        hidden: the rail already says where you are.</dd>
+    <dt>a row</dt>
+    <dd><code>SettingRow.svelte</code> on the generated settings form's row (<code>.sf__row</code>, <code>.sf__label</code>,
+        <code>.sf__hint</code>, <code>.sf__control</code>, <code>.sf__error</code>): <code>.st-row</code>, its head
+        (<code>.st-row__head</code>, <code>.st-row__label</code>), its help (<code>.st-row__help</code>) and its control
+        (<code>.st-row__control</code>). The mark in the head (<code>.st-mark</code>) is a base <code>Tag</code> saying what
+        happened to the last change: saving (neutral), saved (ok), unsaved (accent), not saved or invalid (danger). A
+        search jump marks the row for a moment (<code>.st-row--flash</code>); a <code>#settings/&lt;section&gt;/&lt;tab&gt;?highlight=&lt;id&gt;</code>
+        link marks the one control carrying <code>data-highlight="&lt;id&gt;"</code> the same way (<code>.st-highlight-flash</code>,
+        <code>settings-highlight.ts</code>), waiting for it to render. A row whose feature needs a carnivore account
+        while signed out is LOCKED (<code>.st-row--locked</code>): a dim label and, in the mark slot, a star in
+        <code>--oc-yellow-bright</code> with a small "sign in" (<code>.st-mark__lock</code>, <code>.st-mark__star</code>); it stays usable.</dd>
+    <dt>base components</dt>
+    <dt>an (i) note</dt>
+    <dd><code>web/src/lib/info-tip/InfoTip.svelte</code>: a <code>.info-tip</code> holding a 16px <code>.info-tip__btn</code> (an
+        italic <code>i</code> in a 1px hairline with a small square corner, muted, the accent on hover and while open) that
+        toggles a one-sentence <code>.info-tip__note</code> (<code>role="note"</code>) in place. Use it instead of a tooltip
+        for a fact a person must be able to read: it is a real button, so a tap, Enter or Space opens it, Escape closes it,
+        and it is a thumb-sized target below 768px. A setting gets one by setting <code>info: true</code> in the registry and
+        adding the catalog key <code>settings.item.&lt;id&gt;.info</code> (worked example: auto-sleep, which says pinned
+        sessions never sleep automatically).</dd>
+    <dt>a group is a tab</dt>
+    <dt>tables, copy fields, lifecycle</dt>
+    <dt>controls</dt>
+    <dd><code>SettingControl.svelte</code> maps each registry control kind to one component under
+        <code>web/src/lib/settings-page/controls/</code>: <code>TextControl.svelte</code> (text and secret, the settings
+        base <code>Field</code>; a secret shows set or not set and is never echoed, and is the shared secret field below),
+        <code>EnvControl.svelte</code> (<code>.st-env</code>, <code>.st-env__row</code> a NAME / value / remove grid that folds
+        on a phone, the value field <code>.st-env__value</code>), <code>BindControl.svelte</code> (the address, then its
+        measured facts in <code>.st-facts</code>), <code>SwitchControl.svelte</code> (the shared square check as a switch,
+        <code>.st-switch</code>), and <code>MinutesControl.svelte</code>; the toast style's classic-script panel sits in <code>.st-legacy</code>. Every
+        gap is on the one 4 / 8 / 12 / 16 / 24 / 32 px scale, and a classic panel's buttons take the app's outline shape
+        (<code>settings-page.css</code>); the toast style
+        (<code>web/src/lib/toast-mode/ToastModePanel.svelte</code>) is two radios drawn as choice cards
+        (<code>.toast-mode-options</code>). <code>web/src/lib/screen-reader/ScreenReaderPanel.svelte</code> (terminal screen reader mode, R2-13) is a three-choice base <code>RadioGroup</code>. <code>LinkControl.svelte</code> is the link-style control kind.</dd>
+    <dt>secret input</dt>
+    <dd>Every API key or token field (the settings secret control and the BYOAI connection key) uses the one
+        <code>secretField</code> action (<code>web/src/lib/secret-field.ts</code>) and the <code>.oc-secret</code> class
+        (<code>web/src/opscenter/fields.css</code>, on <code>.oc-field</code>): a plain <code>type="text"</code> input masked with
+        <code>-webkit-text-security: disc</code>, with <code>autocomplete="off"</code>, <code>autocapitalize="off"</code>,
+        <code>spellcheck="false"</code> and the password-manager ignore attributes <code>data-1p-ignore</code>,
+        <code>data-lpignore</code>, <code>data-bwignore</code> and <code>data-form-type="other"</code>. It is never
+        <code>type="password"</code> (Chrome and Safari offer to save a password field, and Chrome remembers a field that was ever
+        one), so no browser offers to store a key. Only a browser where <code>CSS.supports('-webkit-text-security', 'disc')</code>
+        is false (Firefox before 114 and other old engines) falls back to <code>type="password"</code>, since masking the key on
+        screen matters more than the prompt there. Do not use it for the account's own login password: a password manager is
+        right for that.</dd>
+    <dt>appearance</dt>
+    <dt>advanced: export and import config</dt>
+    <dd><code>ConfigBundlePanel.svelte</code> (<code>.cb</code>), a thin client of <code>GET /config/export</code> and
+        <code>POST /config/import</code>. Two base <code>Button</code> actions (<code>.cb__row</code>); a chosen file opens a preview
+        (<code>.cb__preview</code>, a section of the card, no frame) with the merge / replace choice (a base <code>Segmented</code>), the server's dry-run change list
+        (<code>.cb__changes</code>, a base <code>List</code> with one <code>ListRow</code> per setting: a <code>Tag</code> for the kind, the path, the before and after)
+        and the cancel and confirm <code>Button</code> pair in <code>.cb__actions</code>. Nothing is written until apply. Notes use
+        <code>.cb__hint</code> and a <code>State</code> (done, a file from another machine, a refusal).</dd>
+    <dt>notifications: alerts on this device</dt>
+    <dd><code>WebPushPanel.svelte</code>, a client of <code>/api/v1/push/*</code> drawn with the panel kit's classes
+        (<code>.tm</code>, <code>.tm__sub</code>, <code>.tm__figs</code>, <code>.tm__note</code>, <code>.tm__problem</code>): an
+        <code>.oc-btn--confirm</code> "alerts on" that shows only in the installed app on a browser with the push stack,
+        one line per subscription (service host and last push result) with an <code>.oc-btn--sm</code> remove, and a
+        "send test" <code>.oc-btn</code>. No endpoint or key is ever shown.</dd>
+    <dt>notifications: alerts on this phone</dt>
+    <dt>sessions &amp; agents: mcp gate</dt>
+    <dt>general: app updates</dt>
+    <dt>desktop app</dt>
+    <dt>advanced: server log level</dt>
+    <dt>pipeline: what deep search reads</dt>
+    <dt>general: time zone</dt>
+    <dt>advanced: mcp tools</dt>
+    <dt>sessions &amp; agents: mcp server</dt>
+    <dt>plugin pane: usage stats (moved out of advanced)</dt>
+    <dt>ai: connections, routing, recent calls</dt>
+    <dt>notifications: destinations</dt>
+    <dt>notifications: messaging</dt>
+    <dd>The <code>notifications.messaging</code> group (issue #1499) is one panel row, <code>MessagingScreen.svelte</code>, a
+        client of <code>/api/v1/messaging/*</code> in the same <code>.tm</code> frame. <code>ProviderCard.svelte</code> is one provider:
+        name, stream state, a gap line in <code>.tm__problem</code>, "set" or "not set" per secret, an on switch, its conversations with
+        the routable-only picker, the test text and remove with the <code>.modal-btn-danger</code> confirm.
+        <code>ProviderForm.svelte</code> adds one, every secret through <code>secretField</code>. <code>BindingRows.svelte</code> lists
+        bindings as hairline <code>.messaging-row</code> rows (<code>.messaging-rows</code>) with the direction select, the default
+        <code>Check</code>, a held count in <code>.messaging-held</code> (the question token) and unbind. The log rows add
+        <code>.messaging-log__status</code> (held in yellow, failed in coral, <code>unconfirmed</code> in cyan: an outbound text whose outcome is
+        unknown, with a hint line and never a retry) and <code>.messaging-log__text</code>, with retry on a failed inbound row. The provider card
+        ends its status lines with the duplicate-send protection line: plain when a replayed key was ever answered with the original, in
+        <code>.messaging-held</code> when never seen. Styles: <code>web/src/lib/messaging/messaging.css</code>.</dd>
+    <dt>notifications: routing matrix, link and pause</dt>
+    <dt>notifications: sync with paired computers</dt>
+    <dt>remote &amp; security: mobile sync, your own domain</dt>
+    <dd><code>CustomDomain.svelte</code> under the mobile sync panel, a client of <code>/api/v1/phone-link/custom-domain</code>
+        and read on the <code>custom_domain</code> push topic. <code>custom-domain.css</code>: a <code>.cd</code> block with a
+        <code>.oc-label</code> title, a <code>.cd-form</code> name field and submit, a <code>.cd-state</code> line holding the
+        <code>.cd-domain</code> name and a <code>.cd-led</code> light (<code>--ok</code> live, <code>--wait</code> pending,
+        <code>--bad</code> dead) with the reason in plain words, and a <code>.cd-record</code> of three copyable
+        <code>.cd-cell</code> values (name, type, target) for the one CNAME to add. Remove is a danger <code>Button</code>. Colour is <code>--oc-*</code> tokens only.</dd>
+    <dt>remote &amp; security: mobile sync</dt>
+    <dt>remote &amp; security: api keys</dt>
+    <dd><code>api-keys/ApiKeysPanel.svelte</code>, a client of <code>/api/v1/api-keys</code> (docs/api-keys.md) drawn
+        exactly like the mcp panel's token list, with no class of its own: the panel kit's frame (<code>.tm</code>,
+        <code>.tm__sub</code>, <code>.tm__problem</code>), one <code>.tm__srv</code> row per key (name, the
+        <code>cak_</code> display prefix, created and last used, a revoked line), an <code>.oc-field</code> name and an
+        <code>.oc-btn--confirm</code> "new key". The new key shows once in a <code>.tm__warn</code> box with
+        <code>CopyField</code> and the line that it will not be shown again; "i copied it" is a
+        <code>.modal-btn-secondary</code>. Revoke is an <code>.oc-btn--sm</code> that opens an inline
+        <code>.tm__warn</code> with <code>.modal-btn-secondary</code> cancel and <code>.modal-btn-danger</code> confirm.</dd>
+    <dt>terminal: carnivore tui</dt>
+    <dt>plugins</dt>
+    <dt>the save model</dt>
+    <dd>A choice (a switch, a radio, a picker) applies the moment it is made and its row shows saving, then saved. A typed value
+        waits: the frame footer (<code>SettingsFooter.svelte</code>, <code>.st-footer</code>, with <code>.st-footer__text</code> and
+        <code>.st-footer__error</code>), drawn only on a tab that holds a typed setting, ends the frame with a right-aligned quiet
+        <code>.oc-btn</code> discard and an <code>.oc-btn--confirm</code> "save changes", both dimmed until a draft waits; it
+        says how many wait. Save sends ONE <code>PATCH /config/settings</code> with only what changed and, like discard, acts on
+        every waiting draft. A panel that manages a list writes each change through its own route as it is made.</dd>
+    <dt>search</dt>
+    <dd><code>SettingsSearchResults.svelte</code>: a hit per matching setting (<code>.st-results</code>,
+        <code>.st-hit</code>, <code>.st-hit__top</code>, <code>.st-hit__label</code>, the section in <code>.pl-label</code>,
+        <code>.st-hit__help</code>) on the frame's list rhythm, best first; picking one (or Enter) opens its section, scrolls
+        to the row, marks it and focuses its control. The search field is the shared <code>SearchField</code>, its
+        caption hidden on a phone where the placeholder says it.</dd>
+    <dt>pipeline</dt>
+    <dt>a new setting</dt>
+    <dd>One entry in <code>settings-registry.ts</code> (its section, its control, whether it saves instantly, in a batch or
+        through its own panel) and three catalog strings, <code>settings.item.&lt;id&gt;.label</code>, <code>settings.item.&lt;id&gt;.help</code> and
+        <code>settings.item.&lt;id&gt;.keywords</code> (synonyms search matches). Describe in plain words what it does, not how. It is backed by a
+        documented route, and by a <code>ui_preferences</code> field when it has no other server owner
+        (<code>docs/ui-preferences-inventory.md</code>).</dd>
+    <dt>pack page: the pack machines panel</dt>
+    <dt>pack page: the computers panel</dt>
+    <dt>pack page: the computers roster</dt>
+    <dt>pack page: the settings blocks</dt>
+    <dt>pack page: follow the master, and a project's transport settings</dt>
+    <dt>pack page: the migrate wizard</dt>
+</dl>
+
+<h3 class="sg-h3" id="settings-pack">pack page: computers, meters and marks</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live, inert</span><code>web/src/lib/computers/ComputerRow.svelte</code><span>this computer as alpha, hosta linked</span></div>
+    <div class="sg-specimen__body" inert><div id="sg-live-pack-computers"></div></div>
+</div>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live, inert</span><code>web/src/lib/pack-machines/PackMeter.svelte</code><span>normal, high, critical, unmeasured</span></div>
+    <div class="sg-specimen__body" inert><div id="sg-live-pack-meters"></div></div>
+</div>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live, inert</span><code>web/src/lib/pack-machines/PackMarks.svelte</code></div>
+    <div class="sg-specimen__body" inert><div id="sg-live-pack-marks"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>marks</dt>
+    <dt>name badge</dt>
+    <dt>meters</dt>
+    <dt>tools</dt>
+    <dd><code>.pm-tools</code> and <code>.pm-tool</code>: a row of small outlined chips, one per probed tool, struck through
+        when the tool is missing; shown in the first specimen under each computer with a snapshot.</dd>
+    <dt>fields</dt>
+    <dd><code>.pk-field</code> and <code>.pk-select</code>: the catalog toolbar's outlined field (transparent fill, 1px
+        hairline, 2px corners), not the filled <code>.oc-field</code> box.</dd>
+</dl>
+
+<h3 class="sg-h3" id="settings-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>A typed value written on every keystroke.</strong> A half-typed shell path would be written and refused. Typed
+        values wait for the footer save; choices apply at once.</li>
+    <li><strong>Building a second place to edit something a feature's own page already edits.</strong> Wrappers are added and
+        edited on the wrappers page; settings only keeps each family's legacy fallback command and links there.</li>
+    <li><strong>A setting only this browser remembers.</strong> If other devices should follow it, it is a server preference;
+        <code>localStorage</code> is for per-device conveniences only (the remembered section is one).</li>
+    <li><strong>A config write around the one writer.</strong> Server config goes through <code>src/core/config_writer.py</code>
+        only.</li>
+</ul>

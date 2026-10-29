@@ -1,0 +1,75 @@
+
+/* padding */
+[data-search-section] {
+  margin: 0;
+}
+
+[data-search-section] > .session-sidebar-group__body {
+  padding: 0;
+}
+
+.ssr-line {
+  margin: 0;
+  padding: var(--oc-space-1) var(--oc-space-3) var(--oc-space-2);
+  color: var(--oc-text-muted);
+  font-size: var(--oc-fs-label);
+}
+
+[data-search-section='agents'] .session-sidebar-row:not([data-search-cursor='1']):hover {
+  background: transparent;
+  border-color: transparent;
+}
+
+[data-search-section='agents'] .session-sidebar-row:not(.ssr-row) .session-sidebar-row-main {
+  gap: var(--oc-space-2);
+  padding: 0;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+[data-search-section='agents'] .session-sidebar-row:not(.ssr-row) .session-sidebar-row-provider {
+  width: var(--oc-space-2);
+  overflow: visible;
+}
+
+[data-search-section='agents'] .session-sidebar-row:not(.ssr-row) .session-sidebar-row-provider svg {
+  width: var(--oc-space-3);
+  height: var(--oc-space-3);
+}
+
+[data-search-section='agents'] .session-sidebar-row:not(.ssr-row) .session-sidebar-row-subtitle {
+  flex: 0 0 auto;
+  max-width: none;
+  margin: 0;
+  color: var(--oc-text-muted);
+  font-size: var(--oc-fs-micro);
+}
+
+.ssr-none {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oc-space-2);
+  padding: var(--oc-space-3);
+}
+
+.ssr-none__line {
+  margin: 0;
+  color: var(--oc-text-secondary);
+}
+
+.ssr-none__acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oc-space-2);
+}
+
+.ssr-key {
+  margin-inline-start: var(--oc-space-1-5);
+  color: var(--oc-text-muted);
+  font-family: inherit;
+  font-size: var(--oc-fs-micro);
+}
+
+[data-search-section='agents'] .session-sidebar-row-pin {
+  display: none;
+}

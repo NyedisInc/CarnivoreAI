@@ -1,0 +1,41 @@
+{
+  "id": "crosstalk-cards",
+  "name": "Crosstalk cards",
+  "summary": "A Settings switch, off for a new install: when a crosstalk message is delivered the server pushes one event and the receiving terminal shows a FROM card, the sending terminal a TO card. Nothing scans the terminal.",
+  "area": "terminal",
+  "status": "beta",
+  "since": "2026-10-03",
+  "updated": "2026-10-17",
+  "issues": [
+    1263,
+    1272,
+    1305,
+    1577,
+    1598,
+    1610,
+    1899
+  ],
+  "surfaces": [
+    "web/src/lib/crosstalk/terminal-cards/CardStack.svelte",
+    "src/core/crosstalk/card_push.py"
+  ],
+  "api_routes": [
+    "GET /api/v1/crosstalk/messages"
+  ],
+  "docs": [
+    "docs/crosstalk.md"
+  ],
+  "media_exempt": "off by default; screenshot is captured before the next version bump",
+  "where": [
+    "Settings, Terminal, crosstalk cards: switch it on; the other three switches are under it.",
+    "Open the terminal of an agent that sent or received a crosstalk message."
+  ],
+  "how_to": [
+    "Switch \"show crosstalk cards\" on; a card appears on both terminals when a message is delivered.",
+    "Click a card to dismiss it; it also fades after twenty seconds.",
+    "Switch the sending or the receiving side off under it."
+  ],
+  "examples": [
+    "A reply from a Codex agent shows a FROM card on your Claude terminal without leaving the conversation."
+  ]
+}

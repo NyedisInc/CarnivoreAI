@@ -1,0 +1,87 @@
+.cd {
+    display: flex;
+    flex-direction: column;
+    gap: var(--oc-space-3);
+    padding-top: var(--oc-space-4);
+    border-top: 1px solid var(--oc-line-panel);
+    font-family: var(--oc-font);
+    font-size: var(--oc-fs-body);
+}
+
+.cd--lifecycle {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.cd-state {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--oc-space-2) var(--oc-space-3);
+    margin: 0;
+    color: var(--oc-text-bright);
+}
+
+.cd-domain {
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.cd-led {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: var(--oc-radius-sm);
+    box-shadow: inset 0 0 0 1px var(--oc-line-frame);
+    background: var(--oc-text-muted);
+}
+
+.cd-led--ok {
+    background: var(--oc-green);
+}
+
+.cd-led--wait {
+    background: var(--oc-orange);
+}
+
+.cd-led--bad {
+    background: var(--oc-coral);
+}
+
+.cd-record {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--oc-space-2);
+}
+
+.cd-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--oc-space-2);
+    min-width: 0;
+}
+
+.cd-cell small {
+    color: var(--oc-text-dim);
+    font-size: var(--oc-fs-hint);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.cd-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--oc-space-2);
+}
+
+.cd-form [data-field] {
+    flex: 1 1 14rem;
+    min-width: 0;
+}
+
+@media (max-width: 640px) {
+    .cd-record {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

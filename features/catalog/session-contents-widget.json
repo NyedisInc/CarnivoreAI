@@ -1,0 +1,55 @@
+{
+  "id": "session-contents-widget",
+  "name": "Session resources widget",
+  "summary": "A widget (formerly session contents) that follows the selected session and lists everything it has loaded or can load: instruction files, skills, agents, commands, hooks, settings layers, MCP servers and plugins for a Claude session, the AGENTS.md chain, prompts, skills, profiles and MCP servers for a Codex one. Off until you add it.",
+  "description": "A widget for any widget bar. It follows the session the bar is showing and reads its files once when you switch session, and again when you press refresh; it never polls. For a Claude session it lists the CLAUDE.md chain (the account's own, each folder from the working directory up, CLAUDE.local.md, rules and what they import), skills, agents, commands, hooks, output styles, settings layers (global, project, project local, managed), MCP servers (user, local, project .mcp.json, plugin) and installed plugins. For a Codex session it lists the AGENTS.md chain, skills, prompts, config.toml settings, profiles and MCP servers. Each row shows the name, its line count and G (global), P (project) or PL (plugin); press a row to select it and open its file in the Files tab, and see its full path, kind, line count and load status (loaded, available to load or disabled) in the details footer. An item with no file of its own, such as an MCP server or a settings key, only selects. A filter box narrows the open sections, and a show path key swaps each name for its path. The title row has a scope toggle that cycles local (this project), global (the account) and all, and the icon menu and right-click menu carry the same choices plus refresh; each copy keeps its own scope. Each section folds from its header and shows its count. Line counts are not context tokens. The files are read from the session's own account config folder, so a session on a second account shows that account's skills. It shows names, paths and descriptions only: never an env value, token, header or URL, and Codex's auth file is never opened. A session on a paired computer says to open its contents there.",
+  "area": "drawers",
+  "status": "beta",
+  "since": "2026-10-16",
+  "updated": "2026-10-17",
+  "surfaces": [
+    "widget bars",
+    "web/src/opscenter/cells/session-contents/Cell.svelte"
+  ],
+  "api_routes": [
+    "GET /api/v1/sessions/{session}/contents"
+  ],
+  "docs": [
+    "docs/session-contents.md",
+    "docs/widget-system.md"
+  ],
+  "issues": [
+    1873
+  ],
+  "keywords": [
+    "session contents",
+    "skills",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "agents",
+    "commands",
+    "hooks",
+    "settings",
+    "mcp",
+    "plugins",
+    "widget",
+    "session resources",
+    "library"
+  ],
+  "where": [
+    "Any widget bar, once added: a key with the library icon."
+  ],
+  "how_to": [
+    "Open edit layout and drag the session resources widget from the widgets drawer onto a bar.",
+    "Select a session; the widget lists what that session has loaded or can load.",
+    "Press a section header to fold or open it, and type in the filter box to narrow the open ones.",
+    "Press a row to see its details and open its file in the Files tab.",
+    "Press the scope icon in the title row to cycle local, global and all, or pick one from the icon menu.",
+    "Press refresh after you add a skill or edit a settings file."
+  ],
+  "examples": [
+    "Check which MCP servers a session on your second account actually has.",
+    "See which CLAUDE.md files a session in a nested folder picks up, and what they import."
+  ],
+  "media_exempt": "A widget whose screenshots are captured before the next version bump."
+}

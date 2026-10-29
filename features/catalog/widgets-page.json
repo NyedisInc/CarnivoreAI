@@ -1,0 +1,68 @@
+{
+  "api_routes": [
+    "GET /api/v1/widgets",
+    "GET /api/v1/item-settings",
+    "GET /api/v1/item-settings/{kind}/{id}",
+    "PATCH /api/v1/item-settings/{kind}/{id}"
+  ],
+  "area": "settings",
+  "description": "Every widget this build carries, on the shared manager frame, as a places podium: a rail filters by group, by what fits a place and by state; a sticky podium of five places (right bar, bottom bar, drawer cards, glance row, dashboards) sits over the grouped widget cards, each with a live preview and marks for where it already is. A widget goes into a place by dragging its card onto the place, by the plus in the place's heading, or by the card's add button and its menu; a place can be picked to show only what fits it, and rows in a place reorder by drag or alt up and down and come out with remove, each with an undo toast. Opening a widget shows a reading pane: a live preview at the chosen size with sample or your own data, its views, a size switch (the chosen size in the accent, sizes it does not have greyed out), what it is, where it is placed, its generated options and an on and off toggle (green when on). Switching a widget off takes it out of every place. A widget that is off is no longer offered in any widgets menu. Fits is advice drawn from the sizes a widget declares; nothing is refused. Widgets are built into the app, so the page says plainly that none can be installed or removed here.",
+  "docs": [
+    "docs/manager-frame.md",
+    "docs/widget-system.md"
+  ],
+  "examples": [
+    "Drag the activity log onto the right bar, then press undo in the toast if that was a mistake.",
+    "Pick the glance row to see which widgets can sit in it.",
+    "Switch off a widget you never use so it stops being offered and leaves every place it was in.",
+    "Turn off the activity log's system lines so it only shows what your sessions did."
+  ],
+  "how_to": [
+    "Open the menu tab of the agents drawer and choose widgets.",
+    "Drag a widget card onto a place in the podium, or press the plus in a place's heading and pick a widget.",
+    "Press a place's name to show only the widgets that fit it; press it again to clear.",
+    "Press a card's add button, or its arrow to choose a place.",
+    "Press a card's name to open the reading pane; pick a size to see it drawn at that size.",
+    "In the pane, use the toggle to turn the widget off or on; use remove beside a place to take it out of that place.",
+    "In a place, drag a row to reorder it, or press alt and the up or down arrow; press the x to take it out."
+  ],
+  "id": "widgets-page",
+  "issues": [
+    727,
+    765,
+    888,
+    1551,
+    2055
+  ],
+  "keywords": [
+    "components",
+    "manager",
+    "settings",
+    "switch",
+    "widgets"
+  ],
+  "name": "Widgets page",
+  "since": "2026-09-27",
+  "status": "stable",
+  "summary": "place every widget on the right bar, bottom bar, drawer, glance row or a dashboard from one page, and switch one off or change its settings.",
+  "surfaces": [
+    "web/src/lib/item-settings/ItemSettingsPanel.svelte",
+    "web/src/lib/item-settings/SettingsForm.svelte",
+    "web/src/lib/widgets-page/PlaceCard.svelte",
+    "web/src/lib/widgets-page/PlacesBody.svelte",
+    "web/src/lib/widgets-page/PlacesRail.svelte",
+    "web/src/lib/widgets-page/WidgetCard.svelte",
+    "web/src/lib/widgets-page/WidgetHero.svelte",
+    "web/src/lib/widgets-page/WidgetPane.svelte",
+    "web/src/lib/widgets-page/WidgetTilePreview.svelte",
+    "web/src/lib/widgets-page/WidgetsScreen.svelte",
+    "web/src/lib/widgets-page/places-writes.ts"
+  ],
+  "updated": "2026-10-21",
+  "where": [
+    "Menu tab, Widgets, all widgets.",
+    "The #widgets link."
+  ],
+  "media": [],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

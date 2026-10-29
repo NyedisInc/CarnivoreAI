@@ -1,0 +1,122 @@
+<h2 class="sg-h2">tabs and tab strips</h2>
+
+<h3 class="sg-h3" id="page-tabs">page tabs</h3>
+<p class="sg-lead">The strip a PAGE wears under its title bar: <code>Tabs.svelte</code> (<code>web/src/opscenter/ui/</code>),
+placed through <code>Page</code>'s <code>tabs</code> snippet. It is not the terminal strip below, and it is not for filters:
+filters are <code>.oc-chip</code> with <code>aria-pressed</code>.</p>
+<ul>
+    <li><strong>Props.</strong> <code>tabs</code> (<code>id</code>, translated lowercase <code>label</code>, optional
+        <code>icon</code>, <code>badge</code> count, <code>dot</code>, <code>disabled</code>), <code>active</code>,
+        <code>onSelect</code>, <code>label</code> (the tablist's name), <code>idBase</code>. The host spreads
+        <code>panelAttrs(idBase, id)</code> on its panel. Tabs owns no URL; the host maps its hash to
+        <code>active</code> and remembers the choice with <code>tab-memory.ts</code>.</li>
+    <li><strong>Access.</strong> Roving tabindex, arrows wrap, Home and End jump, disabled tabs are skipped, and selection
+        follows focus. Focus is the shared rule on the tab's reserved 1px border.</li>
+</ul>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>Tabs.svelte</code><span>a badge, a dot, one panel each</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-page-tabs"></div></div>
+</div>
+<h3 class="sg-h3" id="widget-tabs">widget tabs, joined to the body</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>Tabs.svelte</code><span><code>joined</code>: the picked tab runs into the body</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-page-tabs-joined"></div></div>
+</div>
+
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>Tabs.svelte</code><span><code>compact collapse</code>, wide: labels</span></div>
+    <div class="sg-specimen__body" style="max-width: 480px"><div id="sg-live-page-tabs-collapse-wide"></div></div>
+</div>
+
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>Tabs.svelte</code><span><code>compact collapse</code>, narrow: icons, labels in aria-label and title</span></div>
+    <div class="sg-specimen__body" style="max-width: 260px"><div id="sg-live-page-tabs-collapse-narrow"></div></div>
+</div>
+
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><span>more tabs than the strip is wide: scroll sideways, the edge fades</span></div>
+    <div class="sg-specimen__body" style="max-width: 320px"><div id="sg-live-page-tabs-many"></div></div>
+</div>
+
+<h3 class="sg-h3" id="terminal-tabs">terminal tab strip</h3>
+
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>TabStrip.svelte</code><span>in the real</span><code>CellFrame.svelte</code><span>terminal row: click to select, "x" closes, Shift for the skull</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-tabs"></div></div>
+</div>
+<div class="sg-grid-2">
+    <div class="sg-specimen">
+        <div class="sg-specimen__label"><span>live</span><span>phone form in</span><code>PhoneTabs.svelte</code><span>host: <code>touch</code>, 44px</span></div>
+        <div class="sg-specimen__body"><div id="sg-live-tabs-touch"></div></div>
+    </div>
+    <div class="sg-specimen">
+        <div class="sg-specimen__label"><span>live</span><span>mid-drag: the carried tab dims, the drop mark shows</span></div>
+        <div class="sg-specimen__body"><div id="sg-live-tabs-drag"></div></div>
+    </div>
+</div>
+
+<dl class="sg-facts">
+    <dt>anatomy</dt>
+    <dd>Left to right: the component's icon (a button that opens the component options menu), the session's status light
+        (THE one <code>StatusLed</code>), the provider mark only when the session has a provider, the name (truncates), and
+        the "x". After the last tab, set off by a gap, the dimmed "+" that opens the "+" tab menu (#453, #514).</dd>
+    <dt>props</dt>
+    <dd><code>items</code> (<code>TabItem[]</code>: <code>id</code>, <code>name</code>, <code>family</code>,
+        <code>tint</code>, and the light's <code>status</code>, <code>unread</code>, <code>startupGate</code>,
+        <code>statusSource</code>, <code>transport</code>), <code>active</code>, <code>onSelect</code>, <code>onClose</code>,
+        <code>onKill</code>, <code>onNew</code> and <code>newOpen</code>, <code>onIconClick</code> and <code>menuOpen</code>,
+        <code>group</code>, <code>dragging</code>, <code>dropIndex</code>, <code>onDragStart</code>, <code>touch</code>,
+        <code>menuLabel</code>. Omit <code>onClose</code> and there is no "x"; omit <code>onNew</code> and there is no "+".</dd>
+    <dt>behaviour</dt>
+    <dd>Clicking a tab changes the view and nothing else: the grid, the URL and the page's session stay put. The "x" closes the
+        tab only; holding Shift, or a 500ms long press on touch, turns it into the skull, which kills the session through the
+        one existing kill path (it confirms first). Delete closes a focused tab, Shift+Delete kills. A tab that does not fit
+        shrinks to a minimum with its title truncated, then the strip scrolls sideways with faded edges. Dragging lifts a tab
+        past a threshold, so a click is still a click (<code>engine/tab-drag.ts</code>, #455).</dd>
+    <dt>sizes</dt>
+    <dt>one band</dt>
+    <dt>the tool icon group</dt>
+    <dt>zoom</dt>
+    <dt>themes</dt>
+    <dd><code>--oc-ground-tabstrip</code> behind the strip, <code>--oc-ground-titlerow</code> on the active tab, an inactive
+        tab's session accent (<code>tint</code>) mixed into the strip ground, weaker than the step to the active tab. Every
+        colour is a token or a <code>color-mix</code> of one.</dd>
+    <dt>access</dt>
+    <dd>The WAI-ARIA tabs pattern: a <code>tablist</code> of <code>tab</code>s, <code>aria-selected</code> on the one showing,
+        a roving tabindex so the strip is one Tab stop, arrows, Home and End move between tabs, selection follows focus. The
+        "x" is outside the roving order. The "+" is a menu button with <code>aria-expanded</code>, outside the tablist.</dd>
+    <dt>page tabs</dt>
+    <dt>widget tabs</dt>
+    <dt>zone</dt>
+    <dd>The component is a zone (slice 7, #2008): <code>ZoneShell</code> draws every tab in its own <code>.zone-pane</code>, stacked on one box
+        (<code>.zone-pane--stacked</code>, an inactive one <code>.zone-pane--hidden</code>, which is also what the terminal paint gate reads), each pane its own theme
+        scope; the strip row's tools are the ACTIVE tab's (<code>ZoneToolbar</code>) and a right-click on any tab opens that tab's menu.</dd>
+    <dt>sync</dt>
+</dl>
+
+<h3 class="sg-h3" id="tabs-others">the other tab rows</h3>
+<ul>
+    <li><strong>Phone strip.</strong> Below 1024px <code>web/src/opscenter/phone/PhoneTabs.svelte</code> replaces the grid:
+        the same <code>TabStrip</code> with <code>touch</code>, one pane at a time (<code>PhoneTabPane.svelte</code>).
+        It is also the phone's only top bar (the page header is collapsed by <code>client/css/phone-tabs-bar.css</code>):
+        the Carnivore claw is pinned left and opens the agents drawer, the tabs scroll in the middle, and the alert
+        bell (with its count) and a bare kebab with no border are pinned right, every target at least 44px. The kebab
+        presses the header menu's own toggle, so there is one menu.</li>
+    <li><strong>Drawer tabs.</strong> Not a strip any more: the agents drawer's tabs are keys on the sidebar rail
+        (<code>SidebarRail.svelte</code>), icon only - see <a href="#chrome-sidebar-rail">the sidebar rail</a>.</li>
+    <li><strong>Settings sections.</strong> Not tabs any more: the settings page has a section rail (a column, and a chip
+        strip on a phone) - see <a href="#settings">settings</a>.</li>
+    <li><strong>Drop overlay.</strong> <code>DropOverlay.svelte</code> marks where a dragged tab would land in another
+        component.</li>
+</ul>
+
+<h3 class="sg-h3" id="tabs-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>Mixed icon sizes in a tab.</strong> Misaligned tab icons were reworked twice (#514, #569). 14x14, centred.</li>
+    <li><strong>A tab click that navigates.</strong> It swaps the visible pane only; the drawer is what navigates.</li>
+    <li><strong>An "x" that kills.</strong> Close and kill are two acts; kill needs Shift or a long press and a confirm.</li>
+    <li><strong>A "+" menu that lists what is already open.</strong> Excluded since #596.</li>
+    <li><strong>A strip outside its host.</strong> Mounted bare, a tab collapses to its text height; render it in
+        <code>CellFrame</code>'s strip row or the phone host.</li>
+    <li><strong>Growing the row for the skull.</strong> The tab height never changes.</li>
+</ul>

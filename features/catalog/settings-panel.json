@@ -1,0 +1,74 @@
+{
+  "api_routes": [
+    "src/api/log_level_routes.py",
+    "src/api/workspace_settings_routes.py"
+  ],
+  "area": "settings",
+  "docs": [
+    "docs/settings-and-pages-inventory.md",
+    "docs/ui-preferences-inventory.md"
+  ],
+  "examples": [
+    "Set the development root new projects are created under.",
+    "Type \"port\" in the search to jump straight to the bind address.",
+    "Change the default shell and the environment together, then save both at once from the bar at the bottom.",
+    "On a phone the page is one bar: the back arrow at the left, the title over the search in one frame, the filters that fit and one grid/list flip at the right.",
+    "Advanced, diagnostics: pick debug to see every detail in the server log while you troubleshoot, then back to info, with no restart."
+  ],
+  "how_to": [
+    "Open settings; pick a section in the rail: account, appearance, sessions & agents, launch profiles, terminal, notifications, ai, pipeline, remote & security, general, keyboard shortcuts or advanced. On a phone the rail is a section picker beside the search.",
+    "A section with several groups is a tabbed page: sessions & agents has AUTO-SLEEP, AGENTS, TIME MACHINE and CONVERSATION INDEX tabs, appearance has COLORS, AGENT ROWS, STATUS BAR and CONTROL CENTER. Only the open tab's rows show.",
+    "Link straight to a tab with #settings/<section>/<tab>, for example #settings/sessions/agents. Plugin settings sit under the plugins heading at the bottom of the rail: one entry per plugin that is on and has settings (#settings/plugin/<id>), the same form as its pane on the plugins page, which the gear on its card also opens. The search finds them by field name, hint or plugin name.",
+    "Launch profiles and keyboard shortcuts are sections too: each opens its own screen inside settings.",
+    "Or type in the search box at the top of the rail to find a setting by name or what it does, and press enter to jump to its tab.",
+    "Each tab is one framed list: the label and its help on the left, the control on the right. A setting that depends on another sits indented under it and is greyed out while the other is off.",
+    "Switches and pickers apply at once and show saved. Typed values wait: a tab that holds one ends its frame with save changes and discard, dimmed until you type; a dot marks any tab and its rail item that holds an unsaved change.",
+    "Advanced, diagnostics: pick the server log level (error, warn, info or debug). It changes at once with no restart and is kept across restarts; the use LOG_LEVEL from .env button hands the choice back to the .env value (error on a new install, info when .env names none)."
+  ],
+  "id": "settings-panel",
+  "issues": [
+    1061,
+    1062,
+    1068,
+    1069,
+    1070,
+    1316,
+    1822,
+    1958
+  ],
+  "keywords": [
+    "display",
+    "launch profiles",
+    "preferences",
+    "row icons",
+    "save",
+    "search",
+    "sections",
+    "settings",
+    "status bar items",
+    "tabs"
+  ],
+  "media": [],
+  "name": "Settings panel",
+  "since": "2026-09-10",
+  "status": "stable",
+  "summary": "one settings page, in twelve tabbed sections with a search, where choices apply at once and typed values wait for one save.",
+  "surfaces": [
+    "web/src/lib/settings-page/SettingsScreen.svelte",
+    "web/src/lib/settings-page/SettingsNav.svelte",
+    "web/src/lib/settings-page/SettingsFooter.svelte",
+    "web/src/lib/settings-page/SettingsSearchResults.svelte",
+    "web/src/lib/settings-page/RowIconsPanel.svelte",
+    "web/src/lib/settings-page/FootBarLayoutPanel.svelte",
+    "web/src/lib/settings-page/FootBarItemsPanel.svelte",
+    "web/src/lib/settings-page/SettingsScreenSection.svelte",
+    "web/src/lib/settings-page/screen-sections.ts",
+    "web/src/lib/settings-page/CopyField.svelte",
+    "web/src/opscenter/colhead.css"
+  ],
+  "updated": "2026-10-13",
+  "where": [
+    "Settings in the menu (the menu key in the rail, or the menu in the drawer; ` while the menu has focus), or the #settings link, with #settings/<section> or #settings/<section>/<tab> to land on one place. It replaces the screen behind it."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

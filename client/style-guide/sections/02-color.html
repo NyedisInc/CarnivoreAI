@@ -1,0 +1,274 @@
+<h2 class="sg-h2">color tokens</h2>
+<p class="sg-lead">Every colour in Carnivore is an <code>--oc-*</code> token. <code>web/src/opscenter/tokens.css</code> is the
+only file allowed to hold a colour literal, and it re-derives every token from the active theme's <code>--color-*</code>
+manifest at <code>:root, [data-session-theme]</code>. The table below reads the live values: switch the theme at the top and
+every swatch, value and contrast figure repaints, which is exactly what a component using these tokens does.</p>
+
+<h3 class="sg-h3" id="color-how">how a token reaches a component</h3>
+<ol>
+    <li>A theme's <code>client/css/themes/&lt;id&gt;/theme.json</code> lists <code>cssVars</code>: about fifty
+        <code>--color-*</code> values plus <code>--font-mono</code> and the <code>--radius-*</code> set.</li>
+    <li><code>Themes.applyTheme(id)</code> (<code>client/js/themes/registry.js</code>) writes them onto
+        <code>:root</code> through <code>ThemeVarWriter</code> and sets <code>&lt;html data-theme&gt;</code>. The home page
+        calls it through <code>applyGlobal</code>, which also saves the choice; this guide calls it bare so it saves nothing.</li>
+    <li><code>tokens.css</code> maps them onto the <code>--oc-*</code> vocabulary. A session pinned to its own theme gets the
+        same mapping on its own subtree through <code>[data-session-theme]</code>, so two terminals in two themes sit side
+        by side on one page while the chrome stays on the global theme (issue #318).</li>
+    <li>A component reads only <code>--oc-*</code> (or a local alias of one, such as the ledger's <code>--pl-*</code> and
+        the catalog's <code>--cat-*</code>, which are declared once at the screen root from <code>--oc-*</code>).</li>
+</ol>
+
+<h3 class="sg-h3" id="color-meaning">what the accent is for</h3>
+<p>The signal colours carry the same meaning everywhere: <code>--oc-green</code> working or ok,
+<code>--oc-yellow</code> waiting on you, <code>--oc-cyan</code> notice, <code>--oc-coral</code> danger or failure.
+A theme may move their hues but never their meanings, and each always travels with a word.</p>
+<h4 class="sg-h4">grounds</h4>
+<div class="sg-table-wrap">
+<table class="sg-table">
+    <thead><tr><th>swatch</th><th>token</th><th>means</th><th>derived from</th><th>resolves to now</th><th>contrast</th></tr></thead>
+    <tbody>
+        <tr data-sg-token="--oc-ground-chrome"><td><span class="sg-swatch"></span></td><td><code>--oc-ground-chrome</code></td><td>the header and top bar ground</td><td>--color-header-bg</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-ground-page"><td><span class="sg-swatch"></span></td><td><code>--oc-ground-page</code></td><td>the page ground behind everything</td><td>--color-bg-page</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-ground-band"><td><span class="sg-swatch"></span></td><td><code>--oc-ground-band</code></td><td>a page's TOP LAYER: the title bar, the selected tab, the search and filter bar (<a href="#chrome-page-layers">page layers</a>)</td><td>--oc-ground-chrome</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-ground-content"><td><span class="sg-swatch"></span></td><td><code>--oc-ground-content</code></td><td>a page's LOWER LAYER: the data under the band</td><td>--oc-ground-page</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-ground-panel</code></td><td>a panel or cell body</td><td>--color-bg</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-ground-titlerow"><td><span class="sg-swatch"></span></td><td><code>--oc-ground-titlerow</code></td><td>a title-row strip</td><td>--color-header-bg</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-ground-tabstrip"><td><span class="sg-swatch"></span></td><td><code>--oc-ground-tabstrip</code></td><td>a component tab strip: the title row taken darker, so the active tab joins the row under it</td><td>derived</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-ground-tab-inactive"><td><span class="sg-swatch"></span></td><td><code>--oc-ground-tab-inactive</code></td><td>an inactive tab in every tab strip: the strip lifted a step toward the foreground (in a component's terminal strip it reads lighter than the active tab; in a page tab strip it is the darker fill under the selected tab)</td><td>derived</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-ground-tab-inactive-hover"><td><span class="sg-swatch"></span></td><td><code>--oc-ground-tab-inactive-hover</code></td><td>an inactive tab under the pointer, one step lighter again</td><td>derived</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-ground-tab-selected"><td><span class="sg-swatch"></span></td><td><code>--oc-ground-tab-selected</code></td><td>derived</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-ground-field"><td><span class="sg-swatch"></span></td><td><code>--oc-ground-field</code></td><td>a text field, a code sample, anything typed into</td><td>--color-bg-page</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-ground-raised"><td><span class="sg-swatch"></span></td><td><code>--oc-ground-raised</code></td><td>a dialog panel, an error line, a lifted surface</td><td>--color-bg-elevated</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-ground-card"><td><span class="sg-swatch"></span></td><td><code>--oc-ground-card</code></td><td>a toast card and the one ground every theme lifts off its own terminal</td><td>--color-bg-card</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-ground-hover"><td><span class="sg-swatch"></span></td><td><code>--oc-ground-hover</code></td><td>a hovered row or quiet button</td><td>--color-bg-hover</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-backdrop"><td><span class="sg-swatch"></span></td><td><code>--oc-backdrop</code></td><td>the dim behind a dialog: the page ground at 82 percent, never black</td><td>--oc-ground-page</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-backdrop-soft"><td><span class="sg-swatch"></span></td><td><code>--oc-backdrop-soft</code></td><td>the same ground at 40 percent, for a click-outside catcher that only hints</td><td>--oc-ground-page</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-shadow-lift"><td><span class="sg-swatch"></span></td><td><code>--oc-shadow-lift</code></td><td>the shadow a dragged panel casts; separate from the backdrop on purpose</td><td>fixed</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+    </tbody>
+</table>
+</div>
+<h4 class="sg-h4">surfaces</h4>
+<div class="sg-table-wrap">
+<table class="sg-table">
+    <thead><tr><th>swatch</th><th>token</th><th>means</th><th>derived from</th><th>resolves to now</th><th>contrast</th></tr></thead>
+    <tbody>
+        <tr data-sg-token="--oc-surface-1"><td><span class="sg-swatch"></span></td><td><code>--oc-surface-1</code></td><td>a tile, panel or card</td><td>derived: content ground toward --color-fg</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-surface-1-on"><td><span class="sg-swatch"></span></td><td><code>--oc-surface-1-on</code></td><td>its hover, pressed or selected state</td><td>derived: content ground toward --color-fg</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-surface-2"><td><span class="sg-swatch"></span></td><td><code>--oc-surface-2</code></td><td>a card's media band and an icon tile</td><td>derived: content ground toward --color-fg</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-line-surface"><td><span class="sg-swatch"></span></td><td><code>--oc-line-surface</code></td><td>the hairline around a surface</td><td>derived: content ground toward --color-fg</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+    </tbody>
+</table>
+</div>
+<h4 class="sg-h4">lines</h4>
+<div class="sg-table-wrap">
+<table class="sg-table">
+    <thead><tr><th>swatch</th><th>token</th><th>means</th><th>derived from</th><th>resolves to now</th><th>contrast</th></tr></thead>
+    <tbody>
+        <tr data-sg-token="--oc-line-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-line-panel</code></td><td>the edge of a panel or a quiet button</td><td>--color-border</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-line-chrome"><td><span class="sg-swatch"></span></td><td><code>--oc-line-chrome</code></td><td>a hairline in the chrome</td><td>--color-border</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-line-rule"><td><span class="sg-swatch"></span></td><td><code>--oc-line-rule</code></td><td>THE hairline: title-row rules, field edges, region splits</td><td>--color-border</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-line-column"><td><span class="sg-swatch"></span></td><td><code>--oc-line-column</code></td><td>a column split inside a table</td><td>--color-border-subtle</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-line-faint"><td><span class="sg-swatch"></span></td><td><code>--oc-line-faint</code></td><td>a divider between list rows; grey, never the accent (#431)</td><td>--color-border-subtle</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-line-strip"><td><span class="sg-swatch"></span></td><td><code>--oc-line-strip</code></td><td>the top bar status separators</td><td>--color-border</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-line-frame"><td><span class="sg-swatch"></span></td><td><code>--oc-line-frame</code></td><td>the brighter edge of the home cells, stat cards, terminal frame and top bar line</td><td>(fixed, not theme derived)</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+    </tbody>
+</table>
+</div>
+<h4 class="sg-h4">text</h4>
+<div class="sg-table-wrap">
+<table class="sg-table">
+    <thead><tr><th>swatch</th><th>token</th><th>means</th><th>derived from</th><th>resolves to now</th><th>contrast</th></tr></thead>
+    <tbody>
+        <tr data-sg-token="--oc-text-bright" data-sg-on="--oc-ground-page"><td><span class="sg-swatch"></span></td><td><code>--oc-text-bright</code></td><td>the brightest text: a hovered label, a figure, code</td><td>--color-fg</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-text-primary" data-sg-on="--oc-ground-page"><td><span class="sg-swatch"></span></td><td><code>--oc-text-primary</code></td><td>body text and names</td><td>--color-fg</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-text-secondary" data-sg-on="--oc-ground-page"><td><span class="sg-swatch"></span></td><td><code>--oc-text-secondary</code></td><td>supporting text, labels, a quiet button</td><td>--color-fg-muted</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-text-muted" data-sg-on="--oc-ground-page"><td><span class="sg-swatch"></span></td><td><code>--oc-text-muted</code></td><td>dimmer supporting text; never the only carrier of something critical</td><td>--color-fg-subtle</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-text-dim" data-sg-on="--oc-ground-page"><td><span class="sg-swatch"></span></td><td><code>--oc-text-dim</code></td><td>placeholders and the faintest metadata</td><td>--color-fg-faint</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-text-status" data-sg-on="--oc-ground-chrome"><td><span class="sg-swatch"></span></td><td><code>--oc-text-status</code></td><td>the top bar connected label</td><td>--color-fg-muted</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+    </tbody>
+</table>
+</div>
+<h4 class="sg-h4">accent and signals</h4>
+<div class="sg-table-wrap">
+<table class="sg-table">
+    <thead><tr><th>swatch</th><th>token</th><th>means</th><th>derived from</th><th>resolves to now</th><th>contrast</th></tr></thead>
+    <tbody>
+        <tr data-sg-token="--oc-orange" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-orange</code></td><td>THE ACCENT (named orange for history; Carnivore red today): a surface's one title, a primary action edge, the chosen radio</td><td>--color-accent</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-orange-bright"><td><span class="sg-swatch"></span></td><td><code>--oc-orange-bright</code></td><td>the accent on hover</td><td>--color-accent-strong</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-on-accent"><td><span class="sg-swatch"></span></td><td><code>--oc-on-accent</code></td><td>the ink of a face drawn on an accent colored body (the Swarm characters' eyes)</td><td>--color-on-accent</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-orange-dim"><td><span class="sg-swatch"></span></td><td><code>--oc-orange-dim</code></td><td>the accent mixed 70% into the panel: an outlined primary edge</td><td>derived</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-orange-tint"><td><span class="sg-swatch"></span></td><td><code>--oc-orange-tint</code></td><td>the accent wash: selection and hover backgrounds (never a ring)</td><td>--color-accent-bg</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-green" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-green</code></td><td>working, ok, confirm, success</td><td>--color-success</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-green-bright"><td><span class="sg-swatch"></span></td><td><code>--oc-green-bright</code></td><td>a brighter success</td><td>--color-success</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-green-dim"><td><span class="sg-swatch"></span></td><td><code>--oc-green-dim</code></td><td>green mixed 60% into the panel</td><td>derived</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-green-deep"><td><span class="sg-swatch"></span></td><td><code>--oc-green-deep</code></td><td>green mixed 30% into the panel</td><td>derived</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-cyan" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-cyan</code></td><td>FOCUS, and info or notice states</td><td>--color-info</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-yellow" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-yellow</code></td><td>waiting on you, warning</td><td>--color-warning</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-yellow-bright"><td><span class="sg-swatch"></span></td><td><code>--oc-yellow-bright</code></td><td>a brighter warning</td><td>--color-warning</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-coral" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-coral</code></td><td>danger, failure, destructive actions</td><td>--color-danger</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-violet"><td><span class="sg-swatch"></span></td><td><code>--oc-violet</code></td><td>the one violet mark; not theme derived, use only where it already is</td><td>fixed</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-scheduled" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-scheduled</code></td><td>a task scheduled for later: its status mark, stripe and time; apart from the question yellow</td><td>--color-bg (lightness) and a fixed hue</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-purple-light" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-purple-light</code></td><td>xhigh effort; lightness taken from the theme's text</td><td>--color-fg</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-purple-deep" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-purple-deep</code></td><td>ultracode effort; lightness taken from the theme's text</td><td>--color-fg</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-kind-mod" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-kind-mod</code></td><td>catalog kind mod, Claude coral: tile fill and border, card band; non-text only, lightness from the theme's text</td><td>--color-fg</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-kind-skill" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-kind-skill</code></td><td>catalog kind skill, purple: the --oc-purple-deep math under its own name, so a kind can move alone</td><td>--color-fg</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-catalog" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-catalog</code></td><td>downloadable plugin, mint (alias of --oc-kind-plugin): the card band and tile border on the plugins page; non-text only, lightness from the theme's text</td><td>--color-fg</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-kind-theme" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-kind-theme</code></td><td>catalog kind theme, bone (low-chroma warm off-white; a dark warm grey on a light theme): tile fill and border, card band; non-text only, lightness from the theme's text</td><td>--color-fg</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-kind-plugin" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-kind-plugin</code></td><td>catalog kind plugin, mint: tile fill and border, card band; non-text only, lightness from the theme's text</td><td>--color-fg</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-kind-ink"><td><span class="sg-swatch"></span></td><td><code>--oc-kind-ink</code></td><td>the glyph on the coral, purple, mint and bone tiles</td><td>--oc-ground-page</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+    </tbody>
+</table>
+</div>
+<h4 class="sg-h4">focus, strips and scrollbars</h4>
+<div class="sg-table-wrap">
+<table class="sg-table">
+    <thead><tr><th>swatch</th><th>token</th><th>means</th><th>derived from</th><th>resolves to now</th><th>contrast</th></tr></thead>
+    <tbody>
+        <tr data-sg-token="--oc-focus-lift"><td><span class="sg-swatch"></span></td><td><code>--oc-focus-lift</code></td><td>the pole a focused edge is mixed toward (focus.css)</td><td>white on a dark ground, black on a light one</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-focus-keep"><td></td><td><code>--oc-focus-keep</code></td><td>how much of an element's own edge colour survives the focus mix</td><td>75%</td><td class="sg-token__value"></td><td></td></tr>
+        <tr data-sg-token="--oc-focus-edge"><td><span class="sg-swatch"></span></td><td><code>--oc-focus-edge</code></td><td>the active terminal cell and popup edge</td><td>derived from the accent</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-focus-glow"><td><span class="sg-swatch"></span></td><td><code>--oc-focus-glow</code></td><td>the glow under a focused popup or active cell</td><td>derived from the accent</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-strip-edge"><td><span class="sg-swatch"></span></td><td><code>--oc-strip-edge</code></td><td>a chrome strip's lit lower edge (the prompt bar)</td><td>accent into the rule</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-strip-glow"><td><span class="sg-swatch"></span></td><td><code>--oc-strip-glow</code></td><td>the faint light a strip drops past its edge</td><td>derived from the accent</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-rail-header-ground"><td><span class="sg-swatch"></span></td><td><code>--oc-rail-header-ground</code></td><td>the session widget rails' closed strip and the bar handle ground (both rails, both sections)</td><td>accent 10% into the title-row ground</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-project-block-mix"><td><span class="sg-swatch"></span></td><td><code>--oc-project-block-mix</code></td><td>share of a project's color mixed into the panel ground behind a colored project block (drawer and Sessions page headings)</td><td>9%</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-project-block-default"><td><span class="sg-swatch"></span></td><td><code>--oc-project-block-default</code></td><td>the gray a project with no chosen color wears (drawer project block and Sessions page heading); mirrors <code>palette.ts</code> DEFAULT_PROJECT_COLOR</td><td>rgb(56 56 56)</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-scrollbar-thumb"><td><span class="sg-swatch"></span></td><td><code>--oc-scrollbar-thumb</code></td><td>scrollbar thumb: accent 70% onto the ground</td><td>derived</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-scrollbar-thumb-rest"><td><span class="sg-swatch"></span></td><td><code>--oc-scrollbar-thumb-rest</code></td><td>scrollbar thumb at rest: always drawn, 65% of the thumb colour</td><td>derived</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-scrollbar-thumb-hover"><td><span class="sg-swatch"></span></td><td><code>--oc-scrollbar-thumb-hover</code></td><td>scrollbar thumb on hover</td><td>derived</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-scrollbar-thumb-active"><td><span class="sg-swatch"></span></td><td><code>--oc-scrollbar-thumb-active</code></td><td>scrollbar thumb while dragged</td><td>accent</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-scrollbar-track"><td><span class="sg-swatch"></span></td><td><code>--oc-scrollbar-track</code></td><td>scrollbar track: the text colour at 8%</td><td>derived</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+    </tbody>
+</table>
+</div>
+<h4 class="sg-h4">dashboard marks</h4>
+<div class="sg-table-wrap">
+<table class="sg-table">
+    <thead><tr><th>swatch</th><th>token</th><th>means</th><th>derived from</th><th>resolves to now</th><th>contrast</th></tr></thead>
+    <tbody>
+        <tr data-sg-token="--oc-tag-session"><td><span class="sg-swatch"></span></td><td><code>--oc-tag-session</code></td><td>activity tag: session</td><td>cyan</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-tag-agent"><td><span class="sg-swatch"></span></td><td><code>--oc-tag-agent</code></td><td>activity tag: agent</td><td>text</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-tag-tool"><td><span class="sg-swatch"></span></td><td><code>--oc-tag-tool</code></td><td>activity tag: tool</td><td>green</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-tag-system"><td><span class="sg-swatch"></span></td><td><code>--oc-tag-system</code></td><td>activity tag: system</td><td>cyan</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-tag-test"><td><span class="sg-swatch"></span></td><td><code>--oc-tag-test</code></td><td>activity tag: test</td><td>text</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-tag-plugin"><td><span class="sg-swatch"></span></td><td><code>--oc-tag-plugin</code></td><td>activity tag: plugin</td><td>green</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-tag-project"><td><span class="sg-swatch"></span></td><td><code>--oc-tag-project</code></td><td>activity tag: project</td><td>accent</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-stat-1"><td><span class="sg-swatch"></span></td><td><code>--oc-stat-1</code></td><td>stat card 1 icon</td><td>green</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-stat-2"><td><span class="sg-swatch"></span></td><td><code>--oc-stat-2</code></td><td>stat card 2 icon</td><td>text</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-stat-3"><td><span class="sg-swatch"></span></td><td><code>--oc-stat-3</code></td><td>stat card 3 icon</td><td>green</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-stat-4"><td><span class="sg-swatch"></span></td><td><code>--oc-stat-4</code></td><td>stat card 4 icon</td><td>accent</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-stat-5"><td><span class="sg-swatch"></span></td><td><code>--oc-stat-5</code></td><td>stat card 5 icon</td><td>green</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-spark"><td><span class="sg-swatch"></span></td><td><code>--oc-spark</code></td><td>sparkline bar, bright</td><td>green</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-spark-mid"><td><span class="sg-swatch"></span></td><td><code>--oc-spark-mid</code></td><td>sparkline bar, mid</td><td>derived</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-spark-dim"><td><span class="sg-swatch"></span></td><td><code>--oc-spark-dim</code></td><td>sparkline bar, dim</td><td>derived</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+    </tbody>
+</table>
+</div>
+<h4 class="sg-h4">theme tile sets</h4>
+<p>Six fixed five-row previews the dashboard's themes cell draws, measured off the mockup: an interior, a border, four chip tones and three line tones each. They are literals on purpose (a tile shows ANOTHER theme, so it must not follow the active one) and are the only colour literals a component may read.</p>
+<details class="sg-coverage"><summary class="sg-coverage__summary">all 54 tile tokens</summary>
+<div class="sg-table-wrap">
+<table class="sg-table">
+    <thead><tr><th>swatch</th><th>token</th><th>resolves to now</th></tr></thead>
+    <tbody>
+        <tr data-sg-token="--oc-theme-terminal-bg"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-terminal-bg</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-terminal-border"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-terminal-border</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-terminal-chip-1"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-terminal-chip-1</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-terminal-chip-2"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-terminal-chip-2</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-terminal-chip-3"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-terminal-chip-3</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-terminal-chip-4"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-terminal-chip-4</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-terminal-line-1"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-terminal-line-1</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-terminal-line-2"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-terminal-line-2</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-terminal-line-3"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-terminal-line-3</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-cyber-bg"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-cyber-bg</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-cyber-border"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-cyber-border</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-cyber-chip-1"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-cyber-chip-1</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-cyber-chip-2"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-cyber-chip-2</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-cyber-chip-3"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-cyber-chip-3</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-cyber-chip-4"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-cyber-chip-4</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-cyber-line-1"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-cyber-line-1</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-cyber-line-2"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-cyber-line-2</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-cyber-line-3"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-cyber-line-3</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-dracula-bg"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-dracula-bg</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-dracula-border"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-dracula-border</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-dracula-chip-1"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-dracula-chip-1</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-dracula-chip-2"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-dracula-chip-2</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-dracula-chip-3"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-dracula-chip-3</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-dracula-chip-4"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-dracula-chip-4</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-dracula-line-1"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-dracula-line-1</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-dracula-line-2"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-dracula-line-2</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-dracula-line-3"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-dracula-line-3</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-nord-bg"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-nord-bg</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-nord-border"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-nord-border</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-nord-chip-1"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-nord-chip-1</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-nord-chip-2"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-nord-chip-2</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-nord-chip-3"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-nord-chip-3</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-nord-chip-4"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-nord-chip-4</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-nord-line-1"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-nord-line-1</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-nord-line-2"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-nord-line-2</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-nord-line-3"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-nord-line-3</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-solarized-bg"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-solarized-bg</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-solarized-border"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-solarized-border</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-solarized-chip-1"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-solarized-chip-1</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-solarized-chip-2"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-solarized-chip-2</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-solarized-chip-3"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-solarized-chip-3</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-solarized-chip-4"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-solarized-chip-4</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-solarized-line-1"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-solarized-line-1</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-solarized-line-2"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-solarized-line-2</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-solarized-line-3"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-solarized-line-3</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-light-bg"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-light-bg</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-light-border"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-light-border</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-light-chip-1"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-light-chip-1</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-light-chip-2"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-light-chip-2</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-light-chip-3"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-light-chip-3</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-light-chip-4"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-light-chip-4</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-light-line-1"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-light-line-1</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-light-line-2"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-light-line-2</code></td><td class="sg-token__value"></td></tr>
+        <tr data-sg-token="--oc-theme-light-line-3"><td><span class="sg-swatch"></span></td><td><code>--oc-theme-light-line-3</code></td><td class="sg-token__value"></td></tr>
+    </tbody>
+</table>
+</div>
+</details>
+
+<h3 class="sg-h3" id="color-manifest">what a theme must define</h3>
+<p>A theme that leaves one of these out falls back to the Carnivore literal behind it in <code>tokens.css</code>, which
+reads as a stray Carnivore colour in someone else's palette. Define all of them:</p>
+<p><code>--color-header-bg</code> <code>--color-bg-page</code> <code>--color-bg</code> <code>--color-bg-elevated</code>
+<code>--color-bg-card</code> <code>--color-bg-hover</code> <code>--color-bg-overlay</code> <code>--color-border</code>
+<code>--color-border-subtle</code> <code>--color-fg</code> <code>--color-fg-muted</code> <code>--color-fg-subtle</code>
+<code>--color-fg-faint</code> <code>--color-accent</code> <code>--color-accent-strong</code> <code>--color-accent-bg</code>
+<code>--color-success</code> <code>--color-info</code> <code>--color-warning</code> <code>--color-danger</code>
+<code>--font-mono</code>.</p>
+<p>Legacy stylesheets still read a few <code>--color-*</code> names directly (for example <code>--color-danger</code> in
+<code>.modal-btn-danger</code>) and the <code>--radius-sm</code>, <code>--radius-md</code>, <code>--radius-lg</code>,
+<code>--radius-pill</code> and <code>--radius-full</code> set. Three themes zero every radius, so no design may rely on a
+rounded corner to carry meaning. The ground colour of the default theme is spelled in three places that move together:
+<code>client/css/themes/carnivore/theme.json</code>, <code>macOS/main.js</code> (the window background, which only takes
+effect after an app restart) and the fallbacks in <code>tokens.css</code> (<code>docs/theme-catalog-layout.md</code>).</p>
+
+<h3 class="sg-h3" id="color-contrast">contrast</h3>
+
+<h3 class="sg-h3" id="color-literals">the literals that exist today</h3>
+<p>A handful of shipped rules still hold a literal. They are recorded here so nobody copies them as precedent:</p>
+<ul>
+    <li>The provider marks: claude's starburst carries its brand orange as a literal
+        (<code>client/js/agent-family-icon.js</code>), because a brand mark is not a theme colour.</li>
+</ul>
+
+<h3 class="sg-h3" id="color-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>A hex in a component.</strong> It looks right in Carnivore and wrong in 39 other themes. Use the token; if
+        no token fits, derive one with <code>color-mix()</code> from two that exist, the way <code>--cat-failure-wash</code>
+        does, and name why in a comment.</li>
+    <li><strong>Recolouring a token nobody sees.</strong> Commit <code>a1459054</code> changed the cell frame border and
+        nothing on screen moved, because the visible boxes (<code>.oc-tile</code>) draw their own
+        edges. Grep the served <code>app.css</code> for the selector that paints the pixel before calling a colour change
+        done.</li>
+    <li><strong>Accent as a frame.</strong> An accent border around a panel, an accent divider, two accent buttons side by
+        side. The accent marks one thing.</li>
+    <li><strong>Reading <code>--color-*</code> in new code.</strong> Those follow the manifest's raw names and skip the
+        derivations (the dim, tint and mix steps); new code reads <code>--oc-*</code>.</li>
+    <li><strong>A fixed colour for a scrollbar or a glow.</strong> A fixed red is wrong on matrix, on the four-colour
+        gameboy LCD and on codex, whose ground is near white. Derive from the theme's own accent and ground, as
+        <code>--oc-scrollbar-thumb</code> does.</li>
+</ul>

@@ -1,0 +1,39 @@
+{
+  "api_routes": [],
+  "area": "sessions",
+  "docs": [
+    "docs/conversation-index.md"
+  ],
+  "examples": [
+    "You remember discussing a flaky migration test last week but not which session it was; type flaky migration in the projects search box and the conversation opens with its summary and last messages.",
+    "You close forty old sessions before a trip; their summaries are written one at a time in the background by the Local server and are searchable as they land."
+  ],
+  "how_to": [
+    "Close, remove or sleep a session: its last messages and details are saved at once and a summary is queued.",
+    "Search from the projects page search box, or GET /api/v1/conversations/search?q=flux%20cap&project=carnivore (words match by prefix, best match first, matches are marked in the snippet).",
+    "Open one with GET /api/v1/conversations/{conversation_id or session_uuid}: the summary, the last messages, the files touched and its restore points.",
+    "Set automatic summaries on close, how many messages are kept, and pause or resume the queue in settings > sessions & agents > conversation index; the queue length and the time it will take are shown there.",
+    "Index conversations you already closed with python3 scripts/conversation_index/backfill.py (dry run by default; it prints how long the summary queue will take)."
+  ],
+  "id": "conversation-index",
+  "issues": [
+    1128
+  ],
+  "keywords": [
+    "search",
+    "summary",
+    "recent messages",
+    "fts5",
+    "local llm"
+  ],
+  "media_exempt": "A search box and settings panel on pages whose screenshots are recaptured before the next version bump.",
+  "name": "Conversation index",
+  "since": "2026-09-29",
+  "status": "removed",
+  "summary": "closed conversations are kept in the database with an llm-written summary, their last messages and a full-text search over both.",
+  "surfaces": [],
+  "updated": "2026-10-12",
+  "where": [
+    "The projects page search box (results open the session detail), the session detail's summary and last messages, and settings > sessions & agents > conversation index. API under /api/v1/conversations/*."
+  ]
+}

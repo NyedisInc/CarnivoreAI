@@ -1,0 +1,65 @@
+{
+  "api_routes": [
+    "src/api/companies_routes.py",
+    "src/api/hero_image_routes.py"
+  ],
+  "area": "sessions",
+  "description": "A company is a named group of projects, the tier above them (company, then project, then agent). Create, rename and delete companies, nest one company under another (up to four levels), and file any project under one or take it out. A project with no company is orphaned. A project whose folder sits inside another project's folder shows under that project. Deleting a company orphans its projects and moves its child companies up a level, and touches nothing else. Every browser updates live, and agents can read companies through the carnivore MCP server.",
+  "docs": [
+    "docs/mcp-server.md"
+  ],
+  "examples": [
+    "Group the projects of one client under a company, so the sidebar and projects page can show them together.",
+    "Delete a company you no longer use: its projects become orphaned and keep all their agents.",
+    "Open the projects page, press a company card, and see only that client's projects; an old #projects/<project> link opens at its company path.",
+    "Open the projects page: companies show as hero cards (toggle to a ledger of thumbnails) above the orphaned projects, each section with its own toggle; the kebab's set image replaces a generated hero, remove image brings it back.",
+    "Mirror a folder tree: INITECH as a company, Brightfund as a company under it, and Org/INITECH/Brightfund/support as a project nested under the Brightfund project."
+  ],
+  "how_to": [
+    "In the agents tab, open a project heading's menu, pick add to, then company, then a company (or new company... to name one).",
+    "Open a company heading's menu to rename or delete it; take a filed project out with remove from company in its menu.",
+    "Click a company heading to fold it; the fold follows you to your other desktop screens, and a fold made on a phone follows you to your other phone screens.",
+    "Call POST /api/v1/companies with a name to create one.",
+    "Call PUT /api/v1/projects/{project name}/company with a company_id to file a project, or with null to orphan it.",
+    "On the projects page press new company, or the kebab on a company card to rename or delete it.",
+    "On a project's kebab choose add to, then company, then pick a company (or new company...); choose remove from company to orphan it.",
+    "Call POST /api/v1/companies with a name and a parent_id to create a company under another; PATCH /api/v1/companies/{id} with parent_id (null for the top level) to move it, or hq_project_id to set its HQ project.",
+    "Put a project's folder inside another project's folder and it shows nested under that project in the agents tab, when both are in the same company."
+  ],
+  "id": "companies",
+  "issues": [
+    1338
+  ],
+  "keywords": [
+    "company",
+    "companies",
+    "projects",
+    "group",
+    "orphaned",
+    "nested",
+    "parent",
+    "tree",
+    "lineage"
+  ],
+  "media_exempt": "the projects page slice and the recapture land with the version bump",
+  "name": "Companies",
+  "since": "2026-10-05",
+  "status": "beta",
+  "summary": "Group projects under named companies; a project with no company is orphaned.",
+  "surfaces": [
+    "GET/POST /api/v1/companies",
+    "PATCH/DELETE /api/v1/companies/{id}",
+    "PUT /api/v1/projects/{project}/company",
+    "the companies_list MCP tool",
+    "the projects page companies level (#projects/c/<company id>)",
+    "the company headings and the add to > company menu in the agents tab",
+    "PUT/GET/DELETE /api/v1/companies/{id}/image and /api/v1/projects/{project}/image (hero images)"
+  ],
+  "updated": "2026-10-13",
+  "where": [
+    "The agents tab of the sidebar: every top-level company is a foldable heading, A to Z, with its projects and their agents inside it, then its child companies, each one step further in; a project inside another project's folder sits under it; an orphaned projects heading comes last.",
+    "The routes under /api/v1/companies.",
+    "In an agent's tool list as companies_list and the company_* tools.",
+    "Projects page: the companies level at #projects (a card per company A-Z, orphaned projects last), a company's projects at #projects/c/<company id>."
+  ]
+}

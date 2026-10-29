@@ -1,0 +1,54 @@
+{
+  "files": {
+    "web/src/cplugs/save/FolderUnits.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/cplugs/save/LocationPanel.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/cplugs/save/RestorePoints.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "oc-ibtn",
+        "rpt-action",
+        "rpt-bar",
+        "rpt-bar__grow",
+        "rpt-frame",
+        "rpt-meter",
+        "rpt-table",
+        "rpt-table__acts",
+        "rpt-table__dim",
+        "rpt-table__mo",
+        "rpt-table__sz",
+        "rpt-tag",
+        "rpt-why",
+        "rpt-why__k",
+        "rpt-why__k--fs"
+      ]
+    },
+    "web/src/cplugs/save/SaveSettings.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/cplugs/save/ScopePanel.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/cplugs/save/SessionTab.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "rpt-hintline",
+        "rpt-stack",
+        "rpt-ways",
+        "rpt-ways__ok",
+        "rpt-ways__rp"
+      ]
+    },
+    "web/src/cplugs/save/StoragePanel.svelte": {
+      "section": "settings",
+      "classes": []
+    }
+  }
+}

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+  <title>Carnivore</title>
+  <link rel="stylesheet" href="update.css">
+</head>
+<body>
+  <header class="uw-title">
+    <span class="uw-label" id="uw-title"></span>
+    <span class="uw-name" id="uw-name"></span>
+  </header>
+  <main class="uw-main">
+    <p class="uw-status" id="uw-status" role="status" aria-live="polite"></p>
+    <div class="uw-bar" id="uw-bar" hidden><div class="uw-fill" id="uw-fill"></div></div>
+    <p class="uw-detail" id="uw-detail" hidden></p>
+    <div class="uw-actions"><button type="button" class="uw-btn" id="uw-retry" hidden></button></div>
+  </main>
+  <script src="update.js"></script>
+</body>
+</html>

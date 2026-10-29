@@ -1,0 +1,96 @@
+{
+  "id": "crate",
+  "name": "Crates",
+  "summary": "",
+  "description": "The crate plugin writes a session or a project, its conversations, their side files and Carnivore's own records into one file. An own crate is byte exact and never redacted; it is fully verified before it is kept, recorded as an export (deep search tags each conversation), and copied and verified at an optional second folder. Encryption is optional and standard age v1 to the public keys in the plugin's settings; the private key stays in 1Password. A share crate is separate: secrets starred, images removed, the home folder hidden, never recorded, and it resumes only as a fork. Every build reads every crate version ever written, and python3 -m src.core.crate_format verifies or extracts one offline.",
+  "area": "archive",
+  "status": "beta",
+  "since": "2026-10-17",
+  "updated": "2026-10-20",
+  "surfaces": [
+    "plugins page",
+    "projects page",
+    "mcp tools"
+  ],
+  "api_routes": [
+    "GET /api/v1/cplugs/crate/summary",
+    "POST /api/v1/cplugs/crate/plan",
+    "POST /api/v1/cplugs/crate/exports",
+    "GET /api/v1/cplugs/crate/jobs",
+    "GET /api/v1/cplugs/crate/jobs/{job_id}",
+    "POST /api/v1/cplugs/crate/jobs/{job_id}/cancel",
+    "GET /api/v1/cplugs/crate/bundles",
+    "GET /api/v1/cplugs/crate/bundles/{bundle_id}",
+    "POST /api/v1/cplugs/crate/bundles/{bundle_id}/contents",
+    "POST /api/v1/cplugs/crate/bundles/{bundle_id}/verify",
+    "POST /api/v1/cplugs/crate/bundles/{bundle_id}/copies",
+    "POST /api/v1/cplugs/crate/bundles/{bundle_id}/extract",
+    "GET /api/v1/cplugs/crate/folders/{folder}/crates",
+    "POST /api/v1/cplugs/crate/folders/primary/crates/upload",
+    "POST /api/v1/cplugs/crate/crates/remove",
+    "POST /api/v1/cplugs/crate/folders/{folder}/crates/{name}/contents",
+    "POST /api/v1/cplugs/crate/folders/{folder}/crates/{name}/verify",
+    "POST /api/v1/cplugs/crate/folders/{folder}/crates/{name}/extract",
+    "POST /api/v1/cplugs/crate/imports/plan",
+    "POST /api/v1/cplugs/crate/imports",
+    "GET /api/v1/cplugs/crate/imports",
+    "GET /api/v1/cplugs/crate/imports/{import_id}",
+    "GET /api/v1/cplugs/crate/bundles/{bundle_id}/download",
+    "GET /api/v1/cplugs/crate/folders/{folder}/crates/{name}/download",
+    "GET /api/v1/cplugs/crate/imports/{import_id}/undo",
+    "POST /api/v1/cplugs/crate/imports/{import_id}/undo"
+  ],
+  "docs": [
+    "docs/crate.md",
+    "docs/crate-format.md",
+    "docs/crate-import.md",
+    "docs/export-status.md"
+  ],
+  "issues": [
+    1912,
+    1949
+  ],
+  "keywords": [
+    "crate",
+    "export",
+    "archive",
+    "backup",
+    "verify",
+    "age",
+    "encrypt",
+    "share copy",
+    "bundle",
+    "extract",
+    "restore",
+    "import"
+  ],
+  "where": [
+    "The Plugins page: turn on crates, then press its gear for the folders, public keys and the recorded crates.",
+    "The Projects page, inside a project: the crates group after the session groups, while the plugin is on.",
+    "The restore button on a recorded crate (the plugin's settings and a project's crates group) opens the restore dialog: a preview of what restoring would do, then the restore itself with its progress and a done screen listing the sessions that came back asleep, each with a wake button.",
+    "Under the found crates in the plugin's settings: \"restored\" lists the finished restores, each with an undo."
+  ],
+  "how_to": [
+    "From a shell or a test, run python3 -m scripts.crate.cli (setup, export, send, restore, verify, undo, cycle) with a bearer token from CARNIVORE_TOKEN or 1Password: it exports on one Mac, moves the crate to another with its sha256 checked, restores it there (refusing, with nothing written, when the plan has blockers) and can verify and undo it. Details in docs/crate.md, section 11.1.",
+    "Under \"restored\" in the crates plugin settings, press undo on a finished restore and confirm: it removes the rows, files, backup points, sessions and project that restore wrote and puts back what it changed. Anything already here or changed since stays and is listed; a later restore of the same source, a running crate job or an interrupted restore blocks it, with nothing written.",
+    "Press download on any crate row (recorded, found, or on a project page) and your browser saves the crate file. It is streamed from the crates folder, so a large crate is not loaded into memory.",
+    "Press remove on a crate row (recorded or found) in the crates plugin settings or on a project page and confirm: the crate and its checksum file move to the Trash, where you can put them back. A recorded crate stays in the list marked removed; tick the second folder option to take that copy too.",
+    "Turn the crates plugin on in the Plugins page; optionally set a second folder and age public keys in its settings.",
+    "Open a project on the Projects page and press export this project in its crates group.",
+    "Choose own copy or share copy, tick encrypt if you want it, press preview, read the counts and any blocker, then press export.",
+    "Tick include the project's files (own copy only) to carry the folder's files too; the preview lists the skipped folders with their sizes.",
+    "Read the plugin data rows of the preview: a plugin's review boards of the project's tasks are carried in an own copy; a store whose folder setting is blank is listed with that reason.",
+    "Put every session of the project to sleep first: a running session blocks the export.",
+    "Press verify on a crate to check every copy again; a pass records when it was verified.",
+    "Press restore on a recorded crate, press preview to see which folders it lands in and what blocks it (nothing is written yet), then press restore: the project, its sessions (all asleep), conversation files and records come back, and the done screen has a wake button per session. A crate encrypted with age asks for its private key in the dialog.",
+    "Under include backups in the export dialog, tick conversations and any plugin folder listed there (review boards: this project's boards); a folder switched off in the save plugin's backup menu shows greyed. On import, a crate from another computer shows one tick per backup family, on by default."
+  ],
+  "examples": [
+    "Move a finished project to another disk with its code, its conversations and its git state (branch, commit and uncommitted changes) in one file.",
+    "Send a coworker a share copy of one conversation with its secrets starred.",
+    "Verify a two year old crate with python3 -m src.core.crate_format verify, with no Carnivore server running.",
+    "Move a project with its review boards: the boards linked to its tasks travel in the same crate.",
+    "Bring back a project you deleted from a crate: restore it at its old folders, then wake the sessions you want."
+  ],
+  "media_exempt": "first media is captured at the next pre-bump recapture"
+}

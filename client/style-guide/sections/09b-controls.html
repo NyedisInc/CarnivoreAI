@@ -1,0 +1,159 @@
+<h2 class="sg-h2">shared controls</h2>
+
+<h3 class="sg-h3" id="controls-group">the label column group</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup</span><code>web/src/opscenter/controls.css</code><span><code>.oc-group</code></span></div>
+    <div class="sg-specimen__body">
+        <section class="oc-group">
+            <div class="oc-group__side">
+                <h3 class="oc-group__label">colors</h3>
+                <p class="oc-group__hint">the theme for the whole app. a session can still pin its own.</p>
+            </div>
+            <div class="oc-group__main">
+                <div class="oc-grid-2">
+                    <button type="button" class="oc-check" role="checkbox" aria-checked="true"><span class="oc-check__box"></span>model</button>
+                    <button type="button" class="oc-check" role="checkbox" aria-checked="false"><span class="oc-check__box"></span>effort</button>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>A page that holds several groups of related controls. A fixed side column names the group once, in the accent
+        (<code>.oc-group__label</code>), with one line of hint (<code>.oc-group__hint</code>); the main column
+        (<code>.oc-group__main</code>) holds the rows in an even grid, and a row that needs the width takes it with
+        <code>.oc-wide</code>. A hairline closes each group. The group answers to the width of its PANE, not the window: put <code>.oc-pane</code> on the scrolling container that holds the groups, and the side sits above the main column until that pane is 820px wide, then goes to a 190px column beside it. Grids inside a group answer to the main column: <code>.oc-grid-3</code> is stacked until it is 600px wide, <code>.oc-grid-4</code> fills with cells of at least 140px. Hint text is <code>--oc-fs-hint</code>, never the inherited page size. A group whose main column is a wide grid (the notification routing matrix) adds <code>.oc-group--stacked</code>, which keeps the side above the main column at every pane width so the grid gets the whole pane.</dd>
+    <dt>one heading</dt>
+    <dd>The group is named exactly once. A page title above it, the group label and the row label are three levels; do not
+        repeat the same word at each. A row alone in its group is named by the group.</dd>
+    <dt>spacing</dt>
+    <dd>One scale, 4 / 8 / 12 / 16 / 24 / 32 px, applied with <code>gap</code> and never with stacked margins. Colour is
+        <code>--oc-*</code> tokens only.</dd>
+</dl>
+
+<h3 class="sg-h3" id="controls-check">check toggle</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup</span><code>web/src/opscenter/ui/Check.svelte</code><span><code>.oc-check</code></span></div>
+    <div class="sg-specimen__body">
+        <div class="oc-grid-4">
+            <button type="button" class="oc-check" role="checkbox" aria-checked="true"><span class="oc-check__box"></span>agents</button>
+            <button type="button" class="oc-check" role="checkbox" aria-checked="false"><span class="oc-check__box"></span>shells</button>
+            <button type="button" class="oc-check" role="checkbox" aria-checked="true"><span class="oc-check__box"></span>timers</button>
+            <button type="button" class="oc-check" role="checkbox" aria-checked="false" disabled><span class="oc-check__box"></span>effort<span class="oc-check__note">needs model</span></button>
+        </div>
+        <div class="oc-grid-4">
+            <button type="button" class="oc-check oc-check--bare" role="checkbox" aria-checked="true" aria-label="approve"><span class="oc-check__box"></span></button>
+            <button type="button" class="oc-check oc-check--bare" role="checkbox" aria-checked="false" aria-label="approve"><span class="oc-check__box"></span></button>
+        </div>
+        <div class="oc-grid-4" style="margin-top: 12px">
+            <button type="button" class="oc-check oc-check--bare" role="checkbox" aria-checked="false"><span class="oc-check__box"></span>hide completed</button>
+            <button type="button" class="oc-check oc-check--bare" role="checkbox" aria-checked="true"><span class="oc-check__box"></span>bare, on</button>
+        </div>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>An on or off choice: a member of a set (<code>role="checkbox"</code>) or a single setting (<code>role="switch"</code>).
+        A square box that fills in the confirm colour when on; the state is <code>aria-checked</code>. Never a native
+        checkbox restyled, never a track and knob. An optional glyph (<code>.oc-check__glyph</code>) and a small right-hand
+        note (<code>.oc-check__note</code>), and a hint: a quieter second line under the label (<code>.oc-check__text</code> over <code>.oc-check__hint</code>).
+        With NO label text (the second row above, <code>.oc-check--bare</code>, set by <code>Check.svelte</code> when the label
+        is empty) the frame around the box is not drawn, only the box; the border stays reserved but transparent so layout and
+        the shared focus rule are unchanged. Give it an <code>ariaLabel</code>.</dd>
+    <dt>bare</dt>
+</dl>
+
+<h3 class="sg-h3" id="controls-seg">segmented choice</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup</span><code>web/src/lib/item-settings/SettingsForm.svelte</code><span><code>.oc-seg</code>, <code>.oc-seg__item</code></span></div>
+    <div class="sg-specimen__body">
+        <div class="oc-seg" role="radiogroup" aria-label="windows">
+            <button type="button" class="oc-seg__item" role="radio" aria-checked="false">5h</button>
+            <button type="button" class="oc-seg__item" role="radio" aria-checked="false">7d</button>
+            <button type="button" class="oc-seg__item" role="radio" aria-checked="true">both</button>
+        </div>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>One choice from a SHORT list (up to four words), where every choice should show at once and cost one press: the
+        settings overlay's enum fields draw it by default (<code>lib/item-settings/schema-layout.ts::controlOf</code>; a
+        field may declare <code>control: 'select'</code> instead). One hairline frame, hairlines between items (never
+        cards), small mono words; the chosen one takes the hover ground and bright text, and the state is
+        <code>aria-checked</code> on a <code>role="radio"</code> inside a <code>role="radiogroup"</code>, never colour alone.
+        Focus is the shared focus rule. A longer list is a select (<code>.oc-field</code>).</dd>
+</dl>
+
+<h3 class="sg-h3" id="controls-scope-filter">scope filter (global, sessions, both)</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup</span><code>web/src/opscenter/ui/ScopeFilter.svelte</code><span><code>.oc-seg</code>, <code>.oc-seg__item</code></span></div>
+    <div class="sg-specimen__body">
+        <div class="oc-seg" role="radiogroup" aria-label="show">
+            <button type="button" class="oc-seg__item" role="radio" aria-checked="false">global</button>
+            <button type="button" class="oc-seg__item" role="radio" aria-checked="false">sessions</button>
+            <button type="button" class="oc-seg__item" role="radio" aria-checked="true">both</button>
+        </div>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+</dl>
+
+<h3 class="sg-h3" id="controls-choice">choice card</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup</span><code>web/src/opscenter/ui/Choice.svelte</code><span><code>.oc-choice</code></span></div>
+    <div class="sg-specimen__body">
+        <div class="oc-grid-3" role="radiogroup" aria-label="layout">
+            <button type="button" class="oc-choice" role="radio" aria-checked="true">
+                <span class="oc-choice__top"><span class="oc-radio"></span><span class="oc-choice__name">columns</span><span class="oc-choice__use">in use</span></span>
+                <span class="oc-choice__desc">timers, agents and shells side by side.</span>
+            </button>
+            <button type="button" class="oc-choice" role="radio" aria-checked="false">
+                <span class="oc-choice__top"><span class="oc-radio"></span><span class="oc-choice__name">tabs</span></span>
+                <span class="oc-choice__desc">one list at a time, full width.</span>
+            </button>
+            <button type="button" class="oc-choice" role="radio" aria-checked="false">
+                <span class="oc-choice__top"><span class="oc-radio"></span><span class="oc-choice__name">one list</span></span>
+                <span class="oc-choice__desc">everything in one list.</span>
+            </button>
+        </div>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>One choice among a few, where showing the result helps: put a preview inside the card. Radio semantics
+        (<code>role="radio"</code> in a <code>role="radiogroup"</code>). The one in use has a brighter edge, a filled dot and
+        the word "in use" (<code>.oc-choice__use</code>). The preview inside is inert: no button of its own.</dd>
+</dl>
+
+<h3 class="sg-h3" id="controls-order">order list, buttons and well</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup</span><code>web/src/opscenter/ui/OrderList.svelte</code><span><code>.oc-order</code>, <code>.oc-ibtn</code>, <code>.oc-btn</code>, <code>.oc-well</code></span></div>
+    <div class="sg-specimen__body">
+        <div class="oc-order">
+            <div class="oc-order__item"><span class="oc-order__n">1</span><span class="oc-order__name">context</span>
+                <button type="button" class="oc-ibtn" aria-label="move context earlier" disabled>&uarr;</button>
+                <button type="button" class="oc-ibtn" aria-label="move context later">&darr;</button></div>
+            <div class="oc-order__item oc-order__item--off"><span class="oc-order__n">2</span><span class="oc-order__name">5-hour window</span>
+                <button type="button" class="oc-ibtn" aria-label="move 5-hour window earlier">&uarr;</button>
+                <button type="button" class="oc-ibtn" aria-label="move 5-hour window later">&darr;</button></div>
+        </div>
+        <p><button type="button" class="oc-ibtn oc-ibtn--float" aria-label="open details">&#x2922;</button> <button type="button" class="oc-btn">add</button> <button type="button" class="oc-btn oc-btn--confirm">save</button> <button type="button" class="oc-btn oc-btn--danger">stop all</button> <button type="button" class="oc-btn oc-btn--sm">cancel</button></p>
+        <div class="oc-well"><p class="oc-key">a hairline well frames a preview.</p></div>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>focus</dt>
+    <dd>Nothing here draws its own focus ring. Each control keeps a reserved 1px border and the one shared rule
+        (<code>web/src/opscenter/focus.css</code>) brightens it.</dd>
+</dl>
+
+<h3 class="sg-h3" id="controls-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>A control restyled per page.</strong> A checkbox that looks different on two screens is a bug; add to
+        <code>controls.css</code> or use what is there.</li>
+    <li><strong>A native checkbox or radio in new code.</strong> Use <code>Check.svelte</code> and <code>Choice.svelte</code>.</li>
+    <li><strong>Reordering with a drag only.</strong> An order list always has move-earlier and move-later buttons.</li>
+</ul>

@@ -1,0 +1,593 @@
+#!/usr/bin/env python3
+"""testsrv - a pool of always-available, isolated validation servers.
+
+  - its own tmux socket, ``cloude-test<N>`` (``session.tmux_socket_name``);
+    the live ``cloude`` socket is refused outright;
+  - its own state dir, config.json, ``.totp_paired`` sentinel and private
+    HOME under ``worktrees/.testsrv/slot<N>/`` (0700, outside Dropbox);
+  - its secrets only in the slot's own ``.env`` (0600), read through
+    ``CARNIVORE_SETTINGS_ENV_FILE``, never in the process environment;
+  - a whitelisted process environment, so no inherited ``CARNIVORE_*`` /
+    ``CLOUDE_*`` variable, ``HOST``, ``PORT`` or ``TMUX`` can redirect it;
+  - notifications and relay publishing off;
+  - a server is only ever stopped by the pid in its own pidfile, after the
+    process start time recorded at launch still matches. Never by pattern.
+
+Commands (full guide: docs/test-server-pool.md):
+  testsrv lease [--pid PID] [--link]  take a free slot, heal it, print
+                                 `export TESTSRV_SLOT/BASE/AUTH/SOCKET=...`
+                                 lines (eval them in one shell). --link also
+                                 turns the phone link on (Let's Encrypt
+                                 STAGING, its own file-backed device identity,
+                                 legacy relay token off) and prints
+                                 TESTSRV_LINK_HOST
+  testsrv point [--slot N] WT    restart the slot's server from worktree WT
+  testsrv reset [--slot N]       wipe the slot's app state and tmux sessions
+  testsrv release [--slot N]     give the slot back (the server keeps running)
+  testsrv status                 one line per slot
+  testsrv down [--slot N] [--force]  stop servers (all slots by default)
+
+--slot defaults to $TESTSRV_SLOT. Exit codes: 0 ok, 1 failed, 2 refused
+(not leased, port held by someone else), 3 no free slot.
+"""
+
+from __future__ import annotations
+
+import argparse
+import base64
+import contextlib
+import fcntl
+import hmac
+import json
+import os
+import secrets
+import shutil
+import signal
+import socket
+import struct
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+from typing import Optional
+
+REPO = Path(__file__).resolve().parents[1]
+ROOT = Path("worktrees/.testsrv").expanduser()
+SLOTS = int(os.environ.get("TESTSRV_SLOTS", "6"))
+BASE_PORT = 8100
+LEASE_MAX_S = 3600
+LIVE_SOCKET = "cloude"
+FORBIDDEN_PORTS = (5000, 8000)
+ENV_PASS = ("PATH", "LANG", "LC_ALL", "LC_CTYPE", "TMPDIR", "USER", "LOGNAME", "SHELL")
+WIPED = ("state", "home", "work", "logs", "config.json*", ".totp_paired", "link-mode", "bonjour-mode",
+         "auth-state.json", "server.log")
+SHELLS = ("sh", "bash", "zsh", "dash")
+LE_STAGING = "https://acme-staging-v02.api.letsencrypt.org/directory"
+
+
+class Refused(Exception):
+    pass
+
+
+class Slot:
+
+    def __init__(self, n: int) -> None:
+        if not 1 <= n <= SLOTS:
+            raise Refused(f"slot {n} does not exist (pool has {SLOTS})")
+        self.n = n
+        self.dir = ROOT / f"slot{n}"
+        self.port = BASE_PORT + n
+        self.socket = f"cloude-test{n}"
+        if self.socket == LIVE_SOCKET or self.port in FORBIDDEN_PORTS:
+            raise Refused(f"slot {n} would use the live socket or port {self.port}")
+        self.base = f"http://127.0.0.1:{self.port}"
+        self.lease = self.dir / "lease"
+        self.auth = self.dir / "auth-state.json"
+        self.env_file = self.dir / ".env"
+        self.config = self.dir / "config.json"
+        self.pidfile = self.dir / "server.pid"
+        self.log = self.dir / "server.log"
+        self.worktree_file = self.dir / "worktree"
+        self.link_marker = self.dir / "link-mode"
+        self.bonjour_marker = self.dir / "bonjour-mode"
+        self.device_key = self.dir / "state" / "relay-device.key"
+
+
+
+def write_private(path: Path, text: str) -> None:
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write(text)
+    os.replace(tmp, path)
+
+
+def started_at(pid: int) -> Optional[str]:
+    out = subprocess.run(["ps", "-o", "lstart=", "-p", str(pid)],
+                         capture_output=True, text=True).stdout.strip()
+    return out or None
+
+
+def pid_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def port_open(port: int) -> bool:
+    with socket.socket() as s:
+        s.settimeout(0.5)
+        return s.connect_ex(("127.0.0.1", port)) == 0
+
+
+def healthy(slot: Slot) -> bool:
+    try:
+        with urllib.request.urlopen(slot.base + "/health", timeout=2) as r:
+            return r.status == 200
+    except (urllib.error.URLError, OSError):
+        return False
+
+
+def tmux(slot: Slot, *args: str) -> subprocess.CompletedProcess:
+    assert slot.socket != LIVE_SOCKET
+    env = {k: v for k, v in os.environ.items() if k not in ("TMUX", "TMUX_PANE")}
+    return subprocess.run(["tmux", "-L", slot.socket, *args],
+                          capture_output=True, text=True, env=env)
+
+
+def env_value(path: Path, key: str) -> str:
+    for line in path.read_text().splitlines():
+        if line.startswith(key + "="):
+            return line.split("=", 1)[1].strip()
+    raise Refused(f"{key} missing from {path}")
+
+
+def totp(secret: str, step: int) -> str:
+    key = base64.b32decode(secret + "=" * (-len(secret) % 8), casefold=True)
+    digest = hmac.new(key, struct.pack(">Q", step), "sha1").digest()
+    offset = digest[-1] & 15
+    return "%06d" % ((struct.unpack(">I", digest[offset:offset + 4])[0] & 0x7FFFFFFF) % 1000000)
+
+
+
+def provision(slot: Slot) -> None:
+    for d in (ROOT, slot.dir):
+        d.mkdir(parents=True, exist_ok=True)
+        d.chmod(0o700)
+    for sub in ("state", "home", "work", "logs"):
+        (slot.dir / sub).mkdir(exist_ok=True)
+    if not slot.env_file.exists():
+        write_private(slot.env_file, "\n".join([
+            "HOST=0.0.0.0",
+            f"PORT={slot.port}",
+            f"TOTP_SECRET={base64.b32encode(secrets.token_bytes(20)).decode()}",
+            f"JWT_SECRET={secrets.token_hex(32)}",
+            f"AUTH_CONFIG_FILE={slot.config}",
+            f"CARNIVORE_STATE_DIR={slot.dir / 'state'}",
+            f"LOG_DIRECTORY={slot.dir / 'logs'}",
+            f"DEFAULT_WORKING_DIR={slot.dir / 'work'}",
+            "LOG_LEVEL=WARNING",
+        ]) + "\n")
+    if not slot.config.exists():
+        cfg = json.loads((REPO / "config.example.json").read_text())
+        cfg.setdefault("session", {})["tmux_socket_name"] = slot.socket
+        cfg.pop("notifications", None)
+        cfg["relay"] = relay_block(slot, False)
+        write_private(slot.config, json.dumps(cfg, indent=2) + "\n")
+    sentinel = slot.dir / ".totp_paired"
+    if not sentinel.exists():
+        write_private(sentinel, "")
+
+
+def relay_block(slot: Slot, link: bool) -> dict:
+    if not link:
+        return {"enabled": False}
+    return {"enabled": True, "legacy_fallback": False, "link_acme_directory": LE_STAGING,
+            "device_key_file": str(slot.device_key)}
+
+
+def apply_link_config(slot: Slot, link: bool) -> bool:
+    cfg = json.loads(slot.config.read_text())
+    want = relay_block(slot, link)
+    if not link:
+        slot.link_marker.unlink(missing_ok=True)
+    if cfg.get("relay") == want:
+        return False
+    cfg["relay"] = want
+    write_private(slot.config, json.dumps(cfg, indent=2) + "\n")
+    if link:
+        write_private(slot.link_marker, "")
+    return True
+
+
+def apply_bonjour_mode(slot: Slot, on: bool) -> bool:
+    if on == slot.bonjour_marker.exists():
+        return False
+    if on:
+        write_private(slot.bonjour_marker, "")
+    else:
+        slot.bonjour_marker.unlink(missing_ok=True)
+    return True
+
+
+def api(slot: Slot, method: str, path: str, body: Optional[dict] = None, timeout: float = 300):
+    items = json.loads(slot.auth.read_text())["origins"][0]["localStorage"]
+    tok = next(i["value"] for i in items if i["name"] == "claude_tunnel_token")
+    req = urllib.request.Request(slot.base + path, method=method, data=None if body is None else json.dumps(body).encode(),
+                                 headers={"Authorization": "Bearer " + tok, "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read() or b"{}")
+    except urllib.error.HTTPError as err:
+        raise RuntimeError(f"slot {slot.n} {method} {path} answered {err.code}: {err.read()[:200]!r}") from None
+
+
+def link_enable(slot: Slot) -> str:
+    api(slot, "PUT", "/api/v1/phone-link", {"enabled": True})
+    window = api(slot, "POST", "/api/v1/phone-link/pairing-window")
+    return window["url"].split("/")[2]
+
+
+def link_teardown(slot: Slot) -> None:
+    try:
+        for device in api(slot, "GET", "/api/v1/phone-link/devices", timeout=30):
+            api(slot, "DELETE", f"/api/v1/phone-link/devices/{device['id']}", timeout=30)
+        api(slot, "PUT", "/api/v1/phone-link", {"enabled": False}, timeout=30)
+    except (RuntimeError, OSError, KeyError, ValueError, StopIteration):
+        pass
+    slot.device_key.unlink(missing_ok=True)
+    (slot.dir / "state" / "federation-device.key").unlink(missing_ok=True)
+    shutil.rmtree(slot.dir / "state" / "phone_link", ignore_errors=True)
+    slot.link_marker.unlink(missing_ok=True)
+    with contextlib.suppress(OSError, ValueError, KeyError):
+        apply_link_config(slot, False)
+
+
+def child_env(slot: Slot) -> dict:
+    env = {k: os.environ[k] for k in ENV_PASS if k in os.environ}
+    home = str(slot.dir / "home")
+    env.update(HOME=home, ZDOTDIR=home, CARNIVORE_SETTINGS_ENV_FILE=str(slot.env_file),
+               CARNIVORE_LEDGER_KEEPALIVE="0")
+    if slot.bonjour_marker.exists():
+        env["CARNIVORE_TESTSRV_BONJOUR"] = f"testslot_{slot.n}"
+    return env
+
+
+def python_for(worktree: Path) -> str:
+    common = subprocess.run(["git", "-C", str(worktree), "rev-parse", "--path-format=absolute",
+                             "--git-common-dir"], capture_output=True, text=True).stdout.strip()
+    for root in (worktree, REPO, Path(common).parent if common else None):
+        if root and os.access(root / "venv" / "bin" / "python3", os.X_OK):
+            return str(root / "venv" / "bin" / "python3")
+    raise Refused(f"no venv/bin/python3 for {worktree}, {REPO} or the main checkout")
+
+
+
+def running_pid(slot: Slot) -> Optional[int]:
+    try:
+        rec = json.loads(slot.pidfile.read_text())
+    except (OSError, ValueError):
+        return None
+    return rec["pid"] if started_at(rec["pid"]) == rec["started"] else None
+
+
+def stop(slot: Slot) -> None:
+    pid = running_pid(slot)
+    if pid:
+        stamp = started_at(pid)
+        for sig, wait in ((signal.SIGTERM, 15), (signal.SIGKILL, 5)):
+            try:
+                os.kill(pid, sig)
+            except ProcessLookupError:
+                break
+            deadline = time.monotonic() + wait
+            while time.monotonic() < deadline and started_at(pid) == stamp:
+                time.sleep(0.2)
+            if started_at(pid) != stamp:
+                break
+        else:
+            raise RuntimeError(f"slot {slot.n}: pid {pid} survived SIGKILL")
+    slot.pidfile.unlink(missing_ok=True)
+    deadline = time.monotonic() + 10
+    while port_open(slot.port) and time.monotonic() < deadline:
+        time.sleep(0.2)
+
+
+def start(slot: Slot, worktree: Path, timeout: float) -> float:
+    if not (worktree / "src" / "main.py").is_file():
+        raise Refused(f"{worktree} is not a checkout of this repo (no src/main.py)")
+    if port_open(slot.port):
+        raise Refused(f"port {slot.port} is held by a process slot {slot.n} did not start; "
+                      f"inspect it with: lsof -nP -iTCP:{slot.port} -sTCP:LISTEN")
+    provision(slot)
+    fd = os.open(slot.log, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    t0 = time.monotonic()
+    with os.fdopen(fd, "w") as log:
+        proc = subprocess.Popen([python_for(worktree), "-m", "src.main"], cwd=worktree,
+                                env=child_env(slot), stdin=subprocess.DEVNULL, stdout=log,
+                                stderr=subprocess.STDOUT, start_new_session=True)
+    write_private(slot.pidfile, json.dumps({"pid": proc.pid, "started": started_at(proc.pid)}))
+    (slot.dir / "totp-used.json").unlink(missing_ok=True)
+    slot.worktree_file.write_text(str(worktree))
+    while time.monotonic() - t0 < timeout:
+        if proc.poll() is not None:
+            raise RuntimeError(f"slot {slot.n} server exited {proc.returncode}; log: {slot.log}")
+        if healthy(slot):
+            return time.monotonic() - t0
+        time.sleep(0.2)
+    raise RuntimeError(f"slot {slot.n} not healthy after {timeout:.0f}s; log: {slot.log}")
+
+
+def recorded(slot: Slot) -> Optional[Path]:
+    try:
+        return Path(slot.worktree_file.read_text().strip())
+    except OSError:
+        return None
+
+
+def pointed(slot: Slot) -> Path:
+    wt = recorded(slot)
+    return wt if wt and (wt / "src" / "main.py").is_file() else REPO
+
+
+def ensure_up(slot: Slot, timeout: float) -> Optional[float]:
+    if running_pid(slot) and healthy(slot) and pointed(slot) == (recorded(slot) or REPO):
+        return None
+    stop(slot)
+    return start(slot, pointed(slot), timeout)
+
+
+def auth_valid(slot: Slot) -> bool:
+    try:
+        items = json.loads(slot.auth.read_text())["origins"][0]["localStorage"]
+        tok = next(i["value"] for i in items if i["name"] == "claude_tunnel_token")
+        seg = tok.split(".")[1]
+        exp = json.loads(base64.urlsafe_b64decode(seg + "=" * (-len(seg) % 4)))["exp"]
+    except (OSError, ValueError, KeyError, IndexError, StopIteration):
+        return False
+    if exp - time.time() < 5400:
+        return False
+    req = urllib.request.Request(slot.base + "/api/v1/auth/status",
+                                 headers={"Authorization": "Bearer " + tok})
+    try:
+        with urllib.request.urlopen(req, timeout=5) as r:
+            return r.status == 200
+    except (urllib.error.URLError, OSError):
+        return False
+
+
+def login(slot: Slot) -> None:
+    if auth_valid(slot):
+        return
+    secret = env_value(slot.env_file, "TOTP_SECRET")
+    used_file = slot.dir / "totp-used.json"
+    try:
+        used = json.loads(used_file.read_text())
+    except (OSError, ValueError):
+        used = []
+    for _window in range(2):
+        now = int(time.time()) // 30
+        for code in (totp(secret, s) for s in (now, now + 1, now - 1)):
+            if code in used:
+                continue
+            used = (used + [code])[-9:]
+            write_private(used_file, json.dumps(used))
+            req = urllib.request.Request(slot.base + "/api/v1/auth/verify", method="POST",
+                                         data=json.dumps({"code": code}).encode(),
+                                         headers={"Content-Type": "application/json"})
+            try:
+                with urllib.request.urlopen(req, timeout=10) as r:
+                    tok = json.loads(r.read())
+            except urllib.error.HTTPError as err:
+                if err.code == 401:
+                    continue
+                raise RuntimeError(f"slot {slot.n} login answered {err.code}") from None
+            write_private(slot.auth, json.dumps({"cookies": [], "origins": [{
+                "origin": slot.base, "localStorage": [
+                    {"name": "claude_tunnel_token", "value": tok["access_token"]},
+                    {"name": "claude_refresh_token", "value": tok["refresh_token"]}]}]}))
+            return
+        time.sleep(30 - time.time() % 30 + 1)
+    raise RuntimeError(f"slot {slot.n}: no TOTP code was accepted in two windows")
+
+
+
+def lease_info(slot: Slot) -> Optional[dict]:
+    if not slot.lease.is_dir():
+        return None
+    try:
+        rec = json.loads((slot.lease / "holder").read_text())
+    except (OSError, ValueError):
+        rec = {"pid": None, "at": slot.lease.stat().st_mtime}
+    age = time.time() - rec["at"]
+    why = "holder dead" if rec["pid"] and not pid_alive(rec["pid"]) else \
+        "older than 60 min" if age > LEASE_MAX_S else ""
+    return {**rec, "age": age, "stale": bool(why), "why": why}
+
+
+def default_holder() -> int:
+    pid = os.getppid()
+    for _ in range(8):
+        out = subprocess.run(["ps", "-o", "ppid=,comm=", "-p", str(pid)],
+                             capture_output=True, text=True).stdout.split(None, 1)
+        if len(out) != 2 or Path(out[1].strip()).name.lstrip("-") not in SHELLS \
+                or int(out[0]) <= 1:
+            return pid
+        pid = int(out[0])
+    return pid
+
+
+def try_acquire(slot: Slot, holder: int) -> bool:
+    slot.dir.mkdir(parents=True, exist_ok=True)
+    with open(slot.dir / ".lease.lock", "a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        provision(slot)
+        info = lease_info(slot)
+        if info and info["stale"]:
+            shutil.rmtree(slot.lease)
+        try:
+            slot.lease.mkdir()
+        except FileExistsError:
+            return False
+        (slot.lease / "holder").write_text(json.dumps({"pid": holder, "at": time.time()}))
+        return True
+
+
+def require_lease(slot: Slot) -> None:
+    info = lease_info(slot)
+    if not info or info["stale"]:
+        raise Refused(f"slot {slot.n} is not leased (run: scripts/testsrv lease)")
+
+
+
+def cmd_lease(args: argparse.Namespace) -> int:
+    holder = args.pid or default_holder()
+    for n in range(1, SLOTS + 1):
+        slot = Slot(n)
+        if not try_acquire(slot, holder):
+            continue
+        try:
+            changed = apply_link_config(slot, args.link)
+            changed = apply_bonjour_mode(slot, args.bonjour) or changed
+            if changed:
+                stop(slot)
+            boot = ensure_up(slot, args.timeout)
+            login(slot)
+            link_host = link_enable(slot) if args.link else None
+        except Exception:
+            shutil.rmtree(slot.lease, ignore_errors=True)
+            raise
+        if boot is not None:
+            print(f"# slot {n} was down; restarted in {boot:.1f}s", file=sys.stderr)
+        print(f"export TESTSRV_SLOT={n}\nexport TESTSRV_BASE={slot.base}\n"
+              f"export TESTSRV_AUTH={slot.auth}\nexport TESTSRV_SOCKET={slot.socket}")
+        if link_host:
+            print(f"export TESTSRV_LINK_HOST={link_host}")
+        return 0
+    print("no free slot; see: scripts/testsrv status", file=sys.stderr)
+    return 3
+
+
+def cmd_point(args: argparse.Namespace) -> int:
+    slot = Slot(args.slot)
+    require_lease(slot)
+    t0 = time.monotonic()
+    stop(slot)
+    boot = start(slot, Path(args.worktree).expanduser().resolve(), args.timeout)
+    login(slot)
+    print(f"TESTSRV_RESTART_S={time.monotonic() - t0:.1f}\nTESTSRV_BOOT_S={boot:.1f}")
+    return 0
+
+
+def remove_tree(path: Path) -> None:
+    if path.is_symlink() or not path.is_dir():
+        path.unlink(missing_ok=True)
+        return
+    for root, dirs, _files in os.walk(path, followlinks=False):
+        for d in [Path(root), *(Path(root, name) for name in dirs)]:
+            if not d.is_symlink():
+                d.chmod(d.stat().st_mode | 0o700)
+    shutil.rmtree(path)
+
+
+def cmd_reset(args: argparse.Namespace) -> int:
+    slot = Slot(args.slot)
+    require_lease(slot)
+    t0 = time.monotonic()
+    worktree = pointed(slot)
+    stop(slot)
+    tmux(slot, "kill-server")
+    for pattern in WIPED:
+        for p in slot.dir.glob(pattern):
+            remove_tree(p)
+    start(slot, worktree, args.timeout)
+    login(slot)
+    print(f"TESTSRV_RESET_S={time.monotonic() - t0:.1f}")
+    return 0
+
+
+def cmd_release(args: argparse.Namespace) -> int:
+    slot = Slot(args.slot)
+    if slot.link_marker.exists() and lease_info(slot) is not None:
+        link_teardown(slot)
+    if slot.bonjour_marker.exists() and lease_info(slot) is not None:
+        apply_bonjour_mode(slot, False)
+        stop(slot)
+    if slot.lease.is_dir():
+        with open(slot.dir / ".lease.lock", "a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            shutil.rmtree(slot.lease, ignore_errors=True)
+    return 0
+
+
+def cmd_status(args: argparse.Namespace) -> int:
+    for n in range(1, SLOTS + 1):
+        slot = Slot(n)
+        pid = running_pid(slot)
+        server = f"up pid={pid}" if pid and healthy(slot) else \
+            f"UNHEALTHY pid={pid}" if pid else "down (the next lease restarts it)"
+        wt = pointed(slot)
+        sha = subprocess.run(["git", "-C", str(wt), "rev-parse", "--short", "HEAD"],
+                             capture_output=True, text=True).stdout.strip()
+        ls = tmux(slot, "list-sessions", "-F", "#{session_name}")
+        sessions = len(ls.stdout.split()) if ls.returncode == 0 else 0
+        info = lease_info(slot)
+        lease = "free" if not info else \
+            f"STALE ({info['why']})" if info["stale"] else \
+            f"held pid={info['pid']} {int(info['age'] // 60)}m"
+        print(f"slot {n}  {slot.base}  server={server}  code={wt}@{sha}  "
+              f"socket={slot.socket} sessions={sessions}  lease={lease}")
+    return 0
+
+
+def cmd_down(args: argparse.Namespace) -> int:
+    for n in [args.slot] if args.slot else range(1, SLOTS + 1):
+        slot = Slot(n)
+        info = lease_info(slot)
+        if info and not info["stale"] and not args.force:
+            print(f"slot {n} is leased; skipped (use --force)", file=sys.stderr)
+            continue
+        stop(slot)
+        tmux(slot, "kill-server")
+    return 0
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    env_slot = int(os.environ["TESTSRV_SLOT"]) if os.environ.get("TESTSRV_SLOT") else None
+    for name, fn in (("lease", cmd_lease), ("point", cmd_point), ("reset", cmd_reset),
+                     ("release", cmd_release), ("status", cmd_status), ("down", cmd_down)):
+        p = sub.add_parser(name)
+        p.set_defaults(fn=fn)
+        if name in ("point", "reset", "release", "down"):
+            p.add_argument("--slot", type=int, default=env_slot,
+                           required=env_slot is None and name != "down")
+        if name in ("lease", "point", "reset"):
+            p.add_argument("--timeout", type=float, default=90.0, help="health wait, seconds")
+    sub.choices["lease"].add_argument("--pid", type=int, help="holder pid (default: the caller)")
+    sub.choices["lease"].add_argument("--link", action="store_true",
+                                      help="phone link on, Let's Encrypt STAGING, own file-backed identity")
+    sub.choices["lease"].add_argument("--bonjour", action="store_true",
+                                      help="this slot advertises Bonjour as testslot_<N> (off by default; cleared by reset and release)")
+    sub.choices["point"].add_argument("worktree")
+    sub.choices["down"].add_argument("--force", action="store_true")
+    args = ap.parse_args()
+    try:
+        return args.fn(args)
+    except Refused as err:
+        print(f"refused: {err}", file=sys.stderr)
+        return 2
+    except RuntimeError as err:
+        print(f"failed: {err}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

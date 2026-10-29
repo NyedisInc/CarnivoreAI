@@ -1,0 +1,36 @@
+
+:root {
+    --config-drawer-w: min(420px, 40vw);
+}
+
+@media (max-width: 700px) {
+    :root {
+        --config-drawer-w: min(360px, 88vw);
+    }
+}
+
+
+.config-editor-picker-overlay {
+    justify-content: flex-end;
+    align-items: stretch;
+}
+
+.config-editor-picker-content {
+    width: var(--config-drawer-w);
+    max-width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    background: var(--oc-ground-panel);
+    border: none;
+    border-left: 1px solid var(--oc-line-rule);
+    border-radius: 0;
+    box-shadow: -4px 0 24px var(--oc-shadow-lift);
+    display: flex;
+    flex-direction: column;
+    animation: configDrawerIn 160ms ease;
+}
+
+@keyframes configDrawerIn {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}

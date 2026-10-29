@@ -1,0 +1,160 @@
+/* Header overflow menu
+ *
+ * Holds five rows: search, session theme and detach session (session-
+ * scoped, on top - search joined an earlier date, above theme, see
+ * client/js/header-menu.js's HEADER_SESSION_CONTROL_IDS comment), then
+ * logout and settings (app-scoped). It used
+ * to be a phone-only fold of the whole six-icon cluster; between
+ * an earlier date and #317 (an earlier date) it was a permanent overflow with the
+ * trigger always visible regardless of width, which is the bug #317
+ * reports - a door drawn next to every control it would have opened.
+ * The fix is narrower than a full revert: the file editor and the
+ * archive icon still never fold (see client/js/header-menu.js's
+ * HEADER_TOOL_CONTROL_IDS), but session theme/detach/components/
+ * logout/settings are foldable again, and `#header-menu-toggle`'s own
+ * visibility now tracks whether anything is actually folded - see
+ * `.controls--folded` below. See client/js/header-menu.js for why
+ * logout/settings are RE-PARENTED rather than mirrored, why session
+ * theme/detach are BUILT here instead, and for what is deliberately kept
+ * out.
+ *
+ * COLOUR COMES FROM THE --oc-* PALETTE NOW, NOT FROM THE SESSION THEME.
+ * This menu is app chrome, so it reads the same tokens the operations
+ * center dashboard does (web/src/opscenter/tokens.css, already on :root
+ * through the compiled bundle) rather than the --color-* theme variables
+ * it used to. No import and no new file: the tokens are already there.
+ */
+
+.controls {
+    position: relative;
+}
+
+/* flex-shrink:0 */
+.header-menu-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.controls--folded .header-menu-toggle {
+    display: inline-flex;
+}
+
+.header-menu-toggle > svg {
+    color: var(--oc-orange);
+}
+
+.header-menu-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 1100;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 200px;
+    padding: 6px;
+    /* --color- */
+    border-radius: var(--oc-radius-sm);
+    max-width: calc(100vw - 24px);
+    /* height: 100dvh overflow: hidden; */
+    max-height: calc(100vh - 96px);
+    max-height: calc(100dvh - 96px);
+    overflow-y: auto;
+}
+
+.header-menu-panel--open {
+    display: flex;
+}
+
+.header-menu-panel button {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    width: 100%;
+    height: auto;
+    min-height: 44px;
+    padding: 0 12px;
+    background: transparent;
+    border: none;
+    border-radius: var(--oc-radius-sm);
+    text-align: left;
+    transform: none;
+}
+
+.header-menu-panel button:hover,
+.header-menu-panel button:focus-visible {
+    background: var(--oc-ground-hover);
+    transform: none;
+}
+
+.header-menu-panel button > svg {
+    flex-shrink: 0;
+}
+
+.header .controls .header-menu-panel button > svg {
+    color: var(--oc-text-secondary);
+}
+
+.header .controls .header-menu-panel button:hover > svg,
+.header .controls .header-menu-panel button:focus-visible > svg {
+    color: var(--oc-text-bright);
+}
+
+.header-menu-panel button::after {
+    content: attr(title);
+    position: static;
+    display: inline;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: lowercase;
+    font-size: 0.9rem;
+    /* --color- */
+    color: var(--oc-text-secondary);
+    pointer-events: none;
+}
+
+.header-menu-panel button[data-tooltip-title]::after {
+    content: attr(data-tooltip-title);
+}
+
+.header-menu-panel button[data-menu-label]::after {
+    content: attr(data-menu-label);
+}
+
+.header-menu-panel button:hover::after,
+.header-menu-panel button:focus-visible::after {
+    color: var(--oc-text-bright);
+}
+
+.header-menu-toggle::after {
+    content: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .header-menu-panel button {
+        transition: none;
+    }
+}
+
+/*  hidden  display: flex */
+#headerSessionThemeBtn,
+#headerDetachBtn {
+    display: none;
+}
+
+body:has(#terminal-screen.active) #headerSessionThemeBtn,
+body:has(#terminal-screen.active) #headerDetachBtn {
+    display: flex;
+}

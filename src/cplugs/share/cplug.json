@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "id": "share",
+  "name_key": "cplug.share.name",
+  "description_key": "cplug.share.description",
+  "version": "1.0.0",
+  "icon": "link",
+  "author": "Carnivore contributors",
+  "min_app_version": "1.12.20",
+  "tier": "builtin",
+  "default_enabled": true,
+  "surfaces": {
+    "plugins": [
+      "session-card-action"
+    ]
+  },
+  "owns": {
+    "strings": [
+      "cplug.share."
+    ],
+    "tests": [
+      "tests/python/cplugs/share/",
+      "web/src/cplugs/share/"
+    ],
+    "style_guide": [
+      "web/src/cplugs/share/ShareModal.svelte"
+    ],
+    "contributions": [
+      "session.card_action"
+    ]
+  },
+  "settings_schema": {
+    "version": 1,
+    "fields": {}
+  }
+}

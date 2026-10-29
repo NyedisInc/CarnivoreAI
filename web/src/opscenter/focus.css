@@ -1,0 +1,20 @@
+
+/*  hidden  */
+:focus-visible:not(.oc-focus-host :is(input, textarea, select, [contenteditable]), .xterm-helper-textarea, .cm-content, .oc-card__open, .oc-stat-tile__sub--go),
+.oc-focus-host:has(:is(input, textarea, select, [contenteditable]):focus-visible),
+.mgr-card:has(.mgr-card__open:focus-visible),
+.oc-card:has(.oc-card__open:focus-visible),
+.oc-stat-tile:has(.oc-stat-tile__sub--go:focus-visible) {
+  --_fbd: color-mix(in oklab, var(--_bd, currentColor) var(--oc-focus-keep, 75%), var(--oc-focus-lift, currentColor));
+  outline: none !important;
+  border-color: var(--_fbd) !important;
+}
+
+:is(input[type="checkbox"], input[type="radio"], input[type="range"]):focus-visible:not(.oc-focus-host *) {
+  outline: 1px solid var(--_fbd) !important;
+  outline-offset: 1px !important;
+}
+
+.oc-focus-host :is(input, textarea, select, [contenteditable]):focus-visible {
+  outline: none !important;
+}

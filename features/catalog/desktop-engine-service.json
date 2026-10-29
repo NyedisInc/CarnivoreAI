@@ -1,0 +1,49 @@
+{
+  "name": "Desktop engine login service",
+  "issues": [
+    2300,
+    2439
+  ],
+  "keywords": [
+    "engine",
+    "login service",
+    "launchd",
+    "smappservice",
+    "background items",
+    "login items",
+    "headless",
+    "engine host"
+  ],
+  "summary": "The desktop app can run the engine as a headless login service that starts at login with no window, restarts itself on an update and hands every Dock click to a real window; it is built and switchable but off by default (the detached engine stays the default).",
+  "where": [
+    "Settings, desktop app, the three login rows (start the engine at login, open carnivore in the background at login, open a window at login), when the engine host is set to launchd-agent.",
+    "System Settings, General, Login Items and Extensions, the Carnivore row."
+  ],
+  "how_to": [
+    "Set CARNIVORE_ENGINE_HOST=launchd-agent, or write {\"strategy\": \"launchd-agent\"} to engine-host.json in the app's data folder, then open the app: the engine login service is registered and starts at login with no Dock icon and no window.",
+    "Click the Dock icon while only the service runs: a real window opens and adopts the running engine.",
+    "Uninstall Carnivore (the tray, or uninstall.sh) or run nuke.sh: the app unregisters the engine login service, both LaunchAgent labels go, your privacy rows are reset and your projects stay; terminal sessions keep running unless you add --stop-tmux."
+  ],
+  "examples": [
+    "Reboot the computer: the engine is healthy again 30 seconds after login with no window and your tmux sessions untouched.",
+    "Install a new version over the old one: the service restarts itself onto the new bundle and the new version serves, sessions unchanged.",
+    "After uninstall, launchctl print shows no ai.carnivore.menubar job and ~/carnivore-projects is untouched."
+  ],
+  "docs": [
+    "docs/desktop-app.md",
+    "docs/reboot-restore.md"
+  ],
+  "surfaces": [
+    "macOS/engine-host/index.js",
+    "macOS/engine-host/service-entry.js",
+    "macOS/engine-host/service-loop.js",
+    "macOS/engine-host/login-sync.js",
+    "macOS/login-items.js"
+  ],
+  "media_exempt": "headless login service, nothing to screenshot",
+  "id": "desktop-engine-service",
+  "area": "desktop-app",
+  "since": "2026-10-24",
+  "updated": "2026-10-24",
+  "status": "beta"
+}

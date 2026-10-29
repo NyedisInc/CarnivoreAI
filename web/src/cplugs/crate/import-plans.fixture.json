@@ -1,0 +1,1008 @@
+{
+  "blocked": {
+    "blockers": [
+      {
+        "code": "relocate_required",
+        "detail": ""
+      }
+    ],
+    "crate": {
+      "bundle_id": "crate-20261018T234829Z-project-8e9f8e3b",
+      "created_at": "",
+      "encrypted": false,
+      "format_version": [
+        1,
+        0
+      ],
+      "label": null,
+      "scope": "project",
+      "variant": "own"
+    },
+    "fingerprint": "",
+    "mapping": [],
+    "ok": false,
+    "project": {
+      "action": null,
+      "adoptions": [],
+      "id": null,
+      "name": "Proj One",
+      "root_from": "/Users/me/tmp/x/w/proj1",
+      "root_to": null,
+      "suggested_root": "/Users/me/tmp/x/t/projects/Proj One",
+      "uid": "project-uid-1"
+    },
+    "provenance": "foreign",
+    "provenance_reason": "claims_this_computer_not_proven",
+    "source": {},
+    "version": 1,
+    "warnings": [
+      {
+        "code": "claims_this_computer",
+        "detail": "crate-20261018T234829Z-project-8e9f8e3b"
+      }
+    ]
+  },
+  "own": {
+    "blockers": [],
+    "conversations": [
+      {
+        "class": "write",
+        "id": "aaaaaaaa-0000-0000-0000-00000000000a",
+        "resume": "native",
+        "title": "session A"
+      },
+      {
+        "class": "write",
+        "id": "aaaaaaaa-0000-0000-0000-0000000000a0",
+        "resume": "native",
+        "title": "session A"
+      },
+      {
+        "class": "write",
+        "id": "agent-abc12345",
+        "resume": "native",
+        "title": null
+      },
+      {
+        "class": "write",
+        "id": "bbbbbbbb-0000-0000-0000-00000000000b",
+        "resume": "native",
+        "title": "session B"
+      },
+      {
+        "class": "write",
+        "id": "orphan-conv-0001",
+        "resume": "native",
+        "title": null
+      }
+    ],
+    "crate": {
+      "bundle_id": "crate-20261018T234828Z-project-2e7ba5b4",
+      "created_at": "",
+      "encrypted": false,
+      "format_version": [
+        1,
+        0
+      ],
+      "label": null,
+      "scope": "project",
+      "variant": "own"
+    },
+    "dropped": {},
+    "enc": [
+      {
+        "from": "-private-var-folders-xx-0000000000000000000000000000gn-T-pytest-of-contributor-pytest-3285-test-gen0-w-proj1",
+        "to": "-private-var-folders-xx-0000000000000000000000000000gn-T-pytest-of-contributor-pytest-3285-test-gen0-w-proj1",
+        "verified_by": "working_dir"
+      }
+    ],
+    "entries": {},
+    "files": {
+      "boards_beside": [],
+      "by_home": {
+        "claude": 7,
+        "codex": 1
+      },
+      "bytes": 197,
+      "conflicts_kept": [],
+      "count": 8,
+      "side_folder": null
+    },
+    "fingerprint": "28daf77cbf07766c875433e13039eed827c1b6322923b58fee88f5f9adf0a123",
+    "instructions": {
+      "held_back": false,
+      "memory_files": 1,
+      "plans": 0
+    },
+    "journal": {
+      "rebased": 0
+    },
+    "mapping": [
+      {
+        "from": "/Users/me/tmp/w/proj1",
+        "source": "root",
+        "to": "/Users/me/tmp/w/proj1"
+      },
+      {
+        "from": "/Users/me/tmp/w/claude",
+        "source": "home",
+        "to": "/Users/me/tmp/t/claude"
+      },
+      {
+        "from": "/Users/me/tmp/w/codex",
+        "source": "home",
+        "to": "/Users/me/tmp/t/codex"
+      },
+      {
+        "from": "/Users/me/tmp/w/state",
+        "source": "home",
+        "to": "/Users/me/tmp/t/state"
+      }
+    ],
+    "not_restored": [
+      {
+        "what": "cloude.db.crosstalk_contacts",
+        "why": "grant"
+      },
+      {
+        "what": "cloude.db.crosstalk_watches",
+        "why": "grant"
+      },
+      {
+        "what": "cloude.db.export_bundles",
+        "why": "source_records"
+      },
+      {
+        "what": "cloude.db.export_pointers",
+        "why": "source_records"
+      },
+      {
+        "what": "cloude.db.installed_item_targets",
+        "why": "reinstall"
+      },
+      {
+        "what": "cloude.db.installed_items",
+        "why": "reinstall"
+      },
+      {
+        "what": "cloude.db.installed_loadout_members",
+        "why": "reinstall"
+      },
+      {
+        "what": "cloude.db.message_appearances",
+        "why": "retired"
+      },
+      {
+        "what": "cloude.db.message_bodies",
+        "why": "retired"
+      },
+      {
+        "what": "cloude.db.message_transcripts",
+        "why": "retired"
+      },
+      {
+        "what": "cloude.db.messaging_bindings",
+        "why": "grant"
+      },
+      {
+        "what": "cloude.db.messaging_notices",
+        "why": "grant"
+      },
+      {
+        "what": "cloude.db.pack_bundle_tips",
+        "why": "machine"
+      },
+      {
+        "what": "cloude.db.pack_carried_trust",
+        "why": "machine"
+      },
+      {
+        "what": "cloude.db.pack_migrations",
+        "why": "machine"
+      },
+      {
+        "what": "cloude.db.pack_placements",
+        "why": "machine"
+      },
+      {
+        "what": "cloude.db.pack_session_moves",
+        "why": "machine"
+      },
+      {
+        "what": "cloude.db.peer_sessions",
+        "why": "machine"
+      },
+      {
+        "what": "cloude.db.pipeline_jobs",
+        "why": "rebuilt_by_app"
+      },
+      {
+        "what": "cloude.db.pipeline_stage_runs",
+        "why": "rebuilt_by_app"
+      },
+      {
+        "what": "cloude.db.project_replicas",
+        "why": "machine"
+      },
+      {
+        "what": "cloude.db.project_storage",
+        "why": "machine"
+      },
+      {
+        "what": "cloude.db.project_tombstones",
+        "why": "never_imported"
+      },
+      {
+        "what": "cloude.db.session_conversations",
+        "why": "table_absent_here"
+      },
+      {
+        "what": "cloude.db.session_group_members",
+        "why": "retired"
+      },
+      {
+        "what": "cloude.db.spectator_links",
+        "why": "grant"
+      },
+      {
+        "what": "cloude.db.swarm_agents",
+        "why": "swarm_lane"
+      },
+      {
+        "what": "cloude.db.swarm_deliveries",
+        "why": "swarm_lane"
+      },
+      {
+        "what": "cloude.db.swarm_facts",
+        "why": "swarm_lane"
+      },
+      {
+        "what": "cloude.db.swarm_learning",
+        "why": "swarm_lane"
+      },
+      {
+        "what": "cloude.db.swarm_project_settings",
+        "why": "swarm_lane"
+      },
+      {
+        "what": "cloude.db.swarm_promotions",
+        "why": "swarm_lane"
+      },
+      {
+        "what": "cloude.db.swarm_question_askers",
+        "why": "swarm_lane"
+      },
+      {
+        "what": "cloude.db.swarm_question_hops",
+        "why": "swarm_lane"
+      },
+      {
+        "what": "cloude.db.swarm_questions",
+        "why": "swarm_lane"
+      },
+      {
+        "what": "cloude.db.swarm_receipts",
+        "why": "swarm_lane"
+      },
+      {
+        "what": "cloude.db.swarm_remote_bodies",
+        "why": "swarm_lane"
+      },
+      {
+        "what": "cloude.db.swarm_repo_visibility",
+        "why": "swarm_lane"
+      },
+      {
+        "what": "cloude.db.swarm_reports",
+        "why": "swarm_lane"
+      },
+      {
+        "what": "cloude.db.swarm_suggestions",
+        "why": "swarm_lane"
+      },
+      {
+        "what": "cloude.db.swarm_wakes",
+        "why": "swarm_lane"
+      },
+      {
+        "what": "cloude.db.transcript_archives",
+        "why": "retired"
+      },
+      {
+        "what": "cloude.db.transcript_files",
+        "why": "rebuilt_by_app"
+      },
+      {
+        "what": "cloude.db.transcript_records",
+        "why": "retired"
+      },
+      {
+        "what": "cloude.db.transcript_root_decisions",
+        "why": "retired"
+      },
+      {
+        "what": "cloude.db.work_callers",
+        "why": "machine"
+      },
+      {
+        "what": "cloude.db.work_card_grants",
+        "why": "grant"
+      },
+      {
+        "what": "cloude.db.work_item_waits",
+        "why": "secret"
+      },
+      {
+        "what": "cloude.db.work_reads",
+        "why": "machine"
+      },
+      {
+        "what": "cloude.db.work_send_picks",
+        "why": "machine"
+      },
+      {
+        "what": "files:orphan_transcript (2)",
+        "why": "copy_role"
+      },
+      {
+        "what": "files:swarm_desk (2)",
+        "why": "swarm_desk"
+      },
+      {
+        "what": "files:task_file (3)",
+        "why": "task_file"
+      }
+    ],
+    "ok": true,
+    "project": {
+      "action": "create",
+      "adoptions": [],
+      "id": null,
+      "name": "Proj One",
+      "root_from": "/Users/me/tmp/w/proj1",
+      "root_to": "/Users/me/tmp/w/proj1",
+      "uid": "project-uid-1"
+    },
+    "provenance": "own_verified",
+    "provenance_reason": "written_here",
+    "rewrites": {},
+    "rows": {
+      "attention_history.db.attention_events": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "automations.db.automation_changes": {
+        "insert": 4,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "automations.db.automations": {
+        "insert": 4,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "automations.db.run_sessions": {
+        "insert": 4,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "automations.db.runs": {
+        "insert": 4,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "bookmarks.db.bookmarks": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.agent_spawn_links": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.companies": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.conversation_index": {
+        "insert": 4,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.conversation_milestones": {
+        "insert": 2,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.crosstalk_contacts": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "grant",
+        "skipped": 1
+      },
+      "cloude.db.crosstalk_messages": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.crosstalk_watches": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "grant",
+        "skipped": 1
+      },
+      "cloude.db.export_bundles": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "source_records",
+        "skipped": 2
+      },
+      "cloude.db.export_pointers": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "source_records",
+        "skipped": 1
+      },
+      "cloude.db.installed_item_targets": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "reinstall",
+        "skipped": 1
+      },
+      "cloude.db.installed_items": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "reinstall",
+        "skipped": 1
+      },
+      "cloude.db.installed_loadout_members": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "reinstall",
+        "skipped": 1
+      },
+      "cloude.db.layout_broadcast_off": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.layout_members": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.layout_styles": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.layouts": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.lineage_edges": {
+        "insert": 3,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.lineage_nodes": {
+        "insert": 3,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.mcp_events": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.message_appearances": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "retired",
+        "skipped": 2
+      },
+      "cloude.db.message_bodies": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "retired",
+        "skipped": 1
+      },
+      "cloude.db.message_transcripts": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "retired",
+        "skipped": 1
+      },
+      "cloude.db.messaging_bindings": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "grant",
+        "skipped": 1
+      },
+      "cloude.db.messaging_messages": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.messaging_notices": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "grant",
+        "skipped": 1
+      },
+      "cloude.db.pack_bundle_tips": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "machine",
+        "skipped": 1
+      },
+      "cloude.db.pack_carried_trust": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "machine",
+        "skipped": 1
+      },
+      "cloude.db.pack_migrations": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "machine",
+        "skipped": 1
+      },
+      "cloude.db.pack_placements": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "machine",
+        "skipped": 1
+      },
+      "cloude.db.pack_session_moves": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "machine",
+        "skipped": 1
+      },
+      "cloude.db.peer_sessions": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "machine",
+        "skipped": 1
+      },
+      "cloude.db.pipeline_jobs": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "rebuilt_by_app",
+        "skipped": 1
+      },
+      "cloude.db.pipeline_stage_runs": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "rebuilt_by_app",
+        "skipped": 1
+      },
+      "cloude.db.project_replicas": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "machine",
+        "skipped": 1
+      },
+      "cloude.db.project_storage": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "machine",
+        "skipped": 1
+      },
+      "cloude.db.project_tombstones": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "never_imported",
+        "skipped": 1
+      },
+      "cloude.db.projects": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.session_conversations": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "table_absent_here",
+        "skipped": 1
+      },
+      "cloude.db.session_group_members": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "retired",
+        "skipped": 1
+      },
+      "cloude.db.session_group_membership": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.session_group_styles": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.session_groups": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.session_notes": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.sessions": {
+        "insert": 2,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.spectator_links": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "grant",
+        "skipped": 1
+      },
+      "cloude.db.swarm_agents": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "swarm_lane",
+        "skipped": 2
+      },
+      "cloude.db.swarm_deliveries": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "swarm_lane",
+        "skipped": 2
+      },
+      "cloude.db.swarm_facts": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "swarm_lane",
+        "skipped": 2
+      },
+      "cloude.db.swarm_learning": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "swarm_lane",
+        "skipped": 2
+      },
+      "cloude.db.swarm_project_settings": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "swarm_lane",
+        "skipped": 1
+      },
+      "cloude.db.swarm_promotions": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "swarm_lane",
+        "skipped": 2
+      },
+      "cloude.db.swarm_question_askers": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "swarm_lane",
+        "skipped": 2
+      },
+      "cloude.db.swarm_question_hops": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "swarm_lane",
+        "skipped": 2
+      },
+      "cloude.db.swarm_questions": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "swarm_lane",
+        "skipped": 2
+      },
+      "cloude.db.swarm_receipts": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "swarm_lane",
+        "skipped": 2
+      },
+      "cloude.db.swarm_remote_bodies": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "swarm_lane",
+        "skipped": 1
+      },
+      "cloude.db.swarm_repo_visibility": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "swarm_lane",
+        "skipped": 1
+      },
+      "cloude.db.swarm_reports": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "swarm_lane",
+        "skipped": 2
+      },
+      "cloude.db.swarm_suggestions": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "swarm_lane",
+        "skipped": 2
+      },
+      "cloude.db.swarm_wakes": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "swarm_lane",
+        "skipped": 2
+      },
+      "cloude.db.transcript_archives": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "retired",
+        "skipped": 1
+      },
+      "cloude.db.transcript_files": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "rebuilt_by_app",
+        "skipped": 1
+      },
+      "cloude.db.transcript_records": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "retired",
+        "skipped": 1
+      },
+      "cloude.db.transcript_root_decisions": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "retired",
+        "skipped": 1
+      },
+      "cloude.db.work_blockers": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.work_callers": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "machine",
+        "skipped": 2
+      },
+      "cloude.db.work_card_deals": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.work_card_events": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.work_card_grants": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "grant",
+        "skipped": 1
+      },
+      "cloude.db.work_card_rules": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.work_card_suggestions": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.work_held_sends": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.work_inbox": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.work_item_groups": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.work_item_lineage": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.work_item_nudges": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.work_item_triggers": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.work_item_waits": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "secret",
+        "skipped": 1
+      },
+      "cloude.db.work_items": {
+        "insert": 4,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.work_list_prefs": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.work_message_receipts": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.work_messages": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.work_project_roles": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.work_reads": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "machine",
+        "skipped": 2
+      },
+      "cloude.db.work_send_picks": {
+        "insert": 0,
+        "kept_local": 0,
+        "present": 0,
+        "reason": "machine",
+        "skipped": 1
+      },
+      "cloude.db.work_sends": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.work_session_prefs": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "cloude.db.work_write_actors": {
+        "insert": 2,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      },
+      "stats.db.stats_annotations": {
+        "insert": 1,
+        "kept_local": 0,
+        "present": 0,
+        "skipped": 0
+      }
+    },
+    "secrets": {
+      "count_by_kind": {}
+    },
+    "source": {},
+    "space": {
+      "free": 1000000000000,
+      "needed": 197,
+      "volume": "/Users/me/tmp/t/claude/projects"
+    },
+    "trust": {
+      "crate_said": null,
+      "engine": "asks",
+      "folders": []
+    },
+    "version": 1,
+    "warnings": []
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "api_routes": [],
+  "area": "terminal",
+  "docs": [
+    "docs/terminal-client-history.md"
+  ],
+  "examples": [
+    "Your phone is also open on the session, so the desktop view shows empty space: the notice tells you why."
+  ],
+  "how_to": [
+    "Read the notice: another device has the session at a smaller size, and the pane shows that grid.",
+    "Close the other device's view, or make it larger, and the pane grows again."
+  ],
+  "id": "terminal-size-notice",
+  "issues": [],
+  "keywords": [
+    "resize",
+    "pane size"
+  ],
+  "media_exempt": "only appears while a second, smaller device is attached to the same session, which one capture browser cannot reproduce faithfully",
+  "name": "Window-larger-than-pane notice",
+  "since": "2026-09-23",
+  "status": "stable",
+  "summary": "warn you when your window is bigger than a session's pane, so you know why there's empty space.",
+  "surfaces": [
+    "web/src/lib/terminal-notice/TerminalSizeNotice.svelte"
+  ],
+  "updated": "2026-09-27",
+  "where": [
+    "Appears over a terminal when your window is larger than the session's pane."
+  ]
+}

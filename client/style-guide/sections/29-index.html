@@ -1,0 +1,10 @@
+<h2 class="sg-h2">class and component index</h2>
+<p class="sg-lead">Every stylesheet and Svelte component Carnivore ships, with every CSS class it defines, filed under the
+section that documents it. This list is rendered from <code>client/style-guide/registry.json</code>, and
+<code>tests/test_style_guide_drift.py</code> fails when the shipped code and the registry disagree in either direction, so
+nothing here is stale and nothing shipped is missing.</p>
+<p>To see the gap after a change: <code>venv/bin/python3 -m tests.helpers.style_guide_inventory</code>. Add each new class
+under the file that defines it, in the section that documents it, and describe it in that section's fragment.</p>
+<h3 class="sg-h3" id="index-excluded">not covered, on purpose</h3>
+<ul id="sg-exclusions"></ul>
+<div id="sg-full-index"></div>

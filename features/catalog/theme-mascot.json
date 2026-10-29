@@ -1,0 +1,35 @@
+{
+  "api_routes": [],
+  "area": "themes",
+  "docs": [],
+  "examples": [
+    "Run a session in the Lovecraft theme and Claude Code's little crab is replaced by a green Cthulhu.",
+    "Run a session in the Black Market, Matrix or Game Boy theme and the startup crab is replaced by that theme's own sprite."
+  ],
+  "how_to": [
+    "Pin or select a theme that ships a mascot, such as HP Lovecraft, and start a Claude Code session. The sprite sits over the mascot in the startup banner."
+  ],
+  "id": "theme-mascot",
+  "issues": [
+    1151
+  ],
+  "keywords": [
+    "mascot",
+    "clawd",
+    "cthulhu",
+    "lovecraft"
+  ],
+  "media_exempt": "a small sprite over a startup banner; the screenshot is captured by hand for the issue and recaptured with the pre-release feature captures",
+  "name": "Theme mascot",
+  "since": "2026-09-30",
+  "status": "beta",
+  "summary": "a theme can replace Claude Code's Clawd in the terminal with its own sprite; HP Lovecraft ships a green Cthulhu and 26 more themes ship their own.",
+  "surfaces": [
+    "client/js/terminal-mascot.js",
+    "client/css/terminal-mascot.css"
+  ],
+  "updated": "2026-09-30",
+  "where": [
+    "The top of a terminal running a fresh Claude Code session, in a theme that declares a mascot."
+  ]
+}

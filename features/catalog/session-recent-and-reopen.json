@@ -1,0 +1,40 @@
+{
+  "api_routes": [
+    "src/api/session_recent_routes.py",
+    "src/api/restore_offer_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/reboot-restore.md"
+  ],
+  "examples": [
+    "You closed a session by accident: reopen it from the recent list instead of starting over.",
+    "The computer restarted overnight: bring back every session that was running with one click."
+  ],
+  "how_to": [
+    "Look in RECENTLY CLOSED SESSIONS on the home screen for sessions that ended.",
+    "Click one to reopen it; a claude session resumes its conversation.",
+    "After a reboot, tick the sessions you want back in the reopen offer and accept."
+  ],
+  "id": "session-recent-and-reopen",
+  "issues": [],
+  "keywords": [
+    "recent",
+    "reopen",
+    "reboot"
+  ],
+  "media": [],
+  "name": "Recent sessions and reopen",
+  "since": "2026-09-10",
+  "status": "stable",
+  "summary": "see your recently used sessions, and reopen the ones a reboot left behind.",
+  "surfaces": [
+    "web/src/lib/launchpad/RecentSessions.svelte"
+  ],
+  "updated": "2026-09-27",
+  "where": [
+    "Home screen, the RECENTLY CLOSED SESSIONS card.",
+    "After a restart of the computer, a reopen offer lists what was running."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

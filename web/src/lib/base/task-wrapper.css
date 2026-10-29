@@ -1,0 +1,67 @@
+@layer patterns {
+  .oc-task {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--oc-space-2);
+    min-width: 0;
+    padding-block: var(--oc-space-2);
+    padding-inline: calc(var(--oc-task-indent, var(--oc-space-4)) + var(--oc-space-0-5)) var(--oc-space-2);
+    box-shadow: inset 0 calc(-1 * var(--oc-border)) 0 0 var(--oc-line-faint);
+    background: var(--oc-ground-panel);
+    color: var(--oc-text-secondary);
+    font-size: var(--oc-fs-label);
+    line-height: var(--oc-lh-tight);
+    list-style: none;
+  }
+
+  .oc-task:not([data-task-state='compact']) {
+    gap: var(--oc-task-gap);
+    padding-block: var(--oc-task-pad-y);
+    padding-inline-end: var(--oc-task-pad-x);
+  }
+
+  .oc-task__row {
+    display: flex;
+    align-items: center;
+    gap: var(--oc-space-2);
+    min-width: 0;
+    min-height: var(--oc-control-h-xs);
+  }
+
+  /* reserved 1px border */
+  .oc-task__toggle {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--oc-space-2);
+    min-width: 0;
+    padding: 0;
+    border: var(--oc-border) solid transparent;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .oc-task__keys:empty {
+    display: none;
+  }
+
+  .oc-task__keys {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--oc-space-1);
+  }
+
+  .oc-task__tabs {
+    min-width: 0;
+    padding-block-start: var(--oc-space-1);
+  }
+
+  .oc-task__row > :not(.oc-task__toggle) {
+    flex: none;
+  }
+}

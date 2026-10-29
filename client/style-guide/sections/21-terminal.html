@@ -1,0 +1,88 @@
+<h2 class="sg-h2">terminal chrome and the prompt bar</h2>
+<p class="sg-lead">The terminal is xterm.js painting a tmux pane. Everything around it (the prompt bar, the head row, the
+status bar, the tools, the key bar, copy and paste) is chrome that must never cover a glyph, never resize the pane by itself,
+and never take input meant for the terminal.</p>
+
+<dl class="sg-facts">
+    <dt>mascot overlay</dt>
+    <dd>A theme may name a <code>mascot</code> sprite in its <code>theme.json</code>; <code>client/js/terminal-mascot.js</code>
+        finds Claude Code's Clawd block in the top of the xterm buffer and pins <code>.terminal-mascot</code>
+        (<code>client/css/terminal-mascot.css</code>) over exactly those 9 by 3 cells with an xterm decoration. The sprite is
+        artwork and may carry its own colours; the CSS holds none. No match leaves stock Clawd, and the pane's bytes are never touched.</dd>
+    <dt>head row</dt>
+    <dt>tools</dt>
+    <dt>status bar</dt>
+    <dd><code>TerminalFoot.svelte</code> (its meters are drawn by <code>FootMeters.svelte</code> and its grown overlay by <code>FootGrown.svelte</code>; and <code>TerminalFootHost.svelte</code> under the legacy pane): live in
+        <a href="#meters-foot">the bottom bar meter</a>. A click grows it upward over the pane to add cost and the account;
+        it never resizes the pane. A plain shell gets <code>ShellFoot.svelte</code> instead (issue #623): folder (home as ~,
+        truncated from the left), branch, running program and pane size from <code>GET /sessions/{id}/pane-facts</code>, in
+        the same bar style; size, then program, then branch give way first. <code>.oc-tf-labels-measure</code> is the
+        foot's hidden measuring row: it sizes the full labels so the bar knows when to fold them, and is never shown.</dd>
+    <dt>search</dt>
+    <dd><code>SearchPanel.svelte</code> and <code>search-globals.css</code> over the framework-free engine in
+        <code>client/js/terminal-search-engine.js</code>: logic that renders nothing stays in <code>client/js</code>.</dd>
+    <dt>background</dt>
+    <dd><code>TerminalBackgroundButton.svelte</code> and <code>TerminalBackgroundPanel.svelte</code>
+        (<code>docs/terminal-background.md</code>): a theme's artwork at the default 90% scrim, with opacity in
+        <code>terminal-opacity.css</code>. The terminal toolbar's kebab menu drives it with <code>asMenuItem</code> (issue
+        #959): a full-width, icon-plus-label row (<code>.tbg-menuitem</code>, <code>.tbg-menuitem-label</code>) instead of the
+        bare 22px icon (<code>.tbg-open</code>) the legacy info bar and the wide toolbar still use. Same open/close/Escape/
+        outside-press contract either way; only the trigger's shape changes.</dd>
+    <dt>phone</dt>
+    <dd>The key bar (<code>client/css/terminal-key-bar.css</code>; two rows, <code>.terminal-key-bar__row</code>, dragged up to show the second in 250 ms), the slash command button and its panel
+        (<code>slash-commands-fab.css</code>, <code>slash-command-chips.css</code>, <code>FavoriteChips.svelte</code>) and the
+        direction pad exist only below 769px.</dd>
+    <dt>copy and paste</dt>
+    <dd><code>client/css/copy-output.css</code> (a bottom sheet under 768px) and <code>paste-fallback.css</code> (a bottom sheet
+        under 480px).</dd>
+    <dt>shared viewer</dt>
+    <dd><code>web/src/spectate/SpectatePage.svelte</code>: the read-only share link's page, the same terminal look with no
+        input (<code>docs/spectator-links.md</code>).</dd>
+    <dt>browser sessions</dt>
+    <dt>opened pages</dt>
+    <dt>opened files</dt>
+    <dt>themes</dt>
+    <dd>The terminal wears its session's theme (pin, then project default, then global) on its own container through
+        <code>[data-session-theme]</code>; the chrome around it stays on the global theme. <code>terminal-carnivore.css</code>
+        keeps the header and sidebar Military Terminal whatever the session theme is; <code>session-theme-tint.css</code> draws
+        a session's pinned accent where it is listed.</dd>
+    <dt>layout command bar</dt>
+    <dt>broadcast toggle</dt>
+    <dd><code>LayoutCellMarks.svelte</code>: a <code>&gt;</code> in each member terminal's tool group
+        (<code>.lcm__toggle</code>, the cell tools' own 26px size - issue #1021), pressed means on, the default and a
+        broadcast skips it when unpressed. NO BOX AT REST in either state: on reads the same colour as the row's other
+        tool icons (<code>--oc-orange</code>), off dims the glyph (<code>--oc-text-dim</code>, the tab strip's own
+        idle-icon idiom - issue #936). Hovering either state may paint the sibling tool buttons' own hover box
+        (border plus ground fill), same as any other tool icon; keyboard focus carries no rule of its own and is
+        handled entirely by the one shared <code>focus.css</code> rule. Stored with the membership
+        (<code>PUT /layouts/{uuid}/members/{session_uuid}/broadcast</code>), so every device agrees. While the bar
+        searches, the terminal's own count sits beside it (<code>.lcm__count</code>, <code>.lcm__count--current</code> on
+        the terminal the walk is on).</dd>
+    <dt>solo terminal window</dt>
+    <dd>The desktop app's native terminal window (R1-12, #2330; <code>docs/desktop-app.md</code>) is this same page at <code>/?solo=&lt;row id&gt;</code>: <code>client/js/solo-window.js</code> stamps <code>data-solo</code> on the root, the agents drawer, its rail and the home screen never appear, and the one pane is the page's own. While the row has no live session, <code>SoloPanel.svelte</code> (<code>.solo</code>) covers the window with a title row (<code>.solo__bar</code>, one small tracked accent label <code>.solo__label</code> and the session name <code>.solo__name</code>) over a body (<code>.solo__body</code>) of at most one shared <code>.oc-btn</code> (wake, reopen or close this window) and the server's own sentence when it refused (<code>.solo__note</code>, in the coral token). Four states: looking for this session, asleep, no longer running, ended. The window never closes itself and never shows another session.</dd>
+</dl>
+
+<h3 class="sg-h3" id="terminal-rules">rules the terminal chrome may never break</h3>
+<ul>
+    <li>Claim input at the gesture, check it at the write (<code>terminal-input-ownership.js</code>); a stale navigation token
+        discards silently.</li>
+    <li>The left inset is <code>--oc-terminal-inset</code> (8px) and never more than 16: above that, glyphs clip.</li>
+    <li>A bare <code>requestAnimationFrame</code> never resolves in a hidden tab; race a timer (gotcha 9).</li>
+    <li>Nothing overlays the prompt row; a notice sits above the output, never on the input line.</li>
+</ul>
+<h3 class="sg-h3" id="terminal-crosstalk">crosstalk cards</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/crosstalk/CrosstalkCard.svelte</code><span>received message, collapsed and expanded</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-crosstalk-card"></div></div>
+</div>
+<h3 class="sg-h3" id="terminal-xtalk-cards">crosstalk cards on a terminal (core since #1899, formerly the xtalk plugin)</h3>
+<p>The crosstalk cards (a Settings switch under Terminal, off for a new install) draw a FROM card on the terminal a crosstalk message was delivered to and a TO card on the terminal that sent it. The server pushes one <code>crosstalk.card</code> frame per delivery and nothing reads the terminal or its scrollback. <code>web/src/lib/crosstalk/terminal-cards/CardStack.svelte</code> owns the markup, <code>web/src/lib/crosstalk/terminal-cards/terminal-cards.css</code> the <code>.xtalk-card</code> and <code>.xtalk-layer</code> selectors, copied from the history card above: a hairline, a 3px square-cornered left bar in the accent for FROM and the confirm green for TO, a tracked uppercase direction, and tokens only. The whole card is one button: click to dismiss; it also expires on its own after twenty seconds, unless the <em>keep cards until dismissed</em> setting is on (off by default): then the cards stay, per session, while the page is open, and the layer takes the modifier <code>.xtalk-layer--keep</code> (only the card column, scrollable). The layer sits over the terminal in the cell's enclosing box, never inside the pane, so it takes none of the terminal's input.</p>
+
+<h3 class="sg-h3" id="terminal-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>A bar icon that breaks the fold width.</strong> The cup moved show-everything from 600 to 640px.</li>
+    <li><strong>A strip on the terminal colour.</strong> On carnivore four grounds are the same <code>#02161e</code>; a strip
+        painted on any of them reads as output. Use <code>--oc-ground-card</code>.</li>
+    <li><strong>A session theme painting the page.</strong> A pin reaches its own subtree only (#318).</li>
+    <li><strong>Treating a status grey flash as a UI bug.</strong> It is the watcher being honest under load (#524).</li>
+</ul>

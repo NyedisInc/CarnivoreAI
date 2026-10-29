@@ -1,0 +1,49 @@
+{
+  "id": "crosstalk-history",
+  "name": "crosstalk history",
+  "summary": "browse agent to agent conversations from a rail widget: who wrote to whom, what is new, what failed to arrive, and the full back and forth.",
+  "area": "sessions",
+  "status": "beta",
+  "since": "2026-10-09",
+  "updated": "2026-10-21",
+  "surfaces": [
+    "web/src/opscenter/cells/crosstalk/Cell.svelte",
+    "web/src/opscenter/cells/crosstalk/ThreadList.svelte",
+    "web/src/opscenter/cells/crosstalk/ThreadView.svelte",
+    "web/src/opscenter/cells/crosstalk/model.ts",
+    "web/src/lib/crosstalk/history/conversations.svelte.ts"
+  ],
+  "api_routes": [
+    "src/api/crosstalk_routes.py"
+  ],
+  "docs": [
+    "docs/crosstalk.md"
+  ],
+  "issues": [
+    1498
+  ],
+  "keywords": [
+    "crosstalk",
+    "agents",
+    "history",
+    "threads",
+    "widget",
+    "mcp"
+  ],
+  "where": [
+    "In edit layout, add the crosstalk widget to the session view's side or bottom rail, or to a dashboard."
+  ],
+  "how_to": [
+    "Open the widget's menu (right-click its title or rail key) and pick all conversations, this project's or this session's; the project and session follow the selected terminal, and the choice is kept on this device. The caption at the top says which one is showing.",
+    "Each row reads last speaker to the one spoken to, with how long ago; a green mark means activity this device has not seen, and a yellow or coral line says a message is waiting, held, not delivered or expired.",
+    "Click a row (or press Enter) to read the conversation as a transcript; it opens beside the list in a wide box, under it in a tall narrow one (drag the divider to resize), or replaces it in a short one, where back (or Escape) returns.",
+    "The widget menu has mark all as read, and close the conversation.",
+    "Agents read a thread with the MCP tool crosstalk_thread."
+  ],
+  "examples": [
+    "After a Claude agent and a Codex agent worked a bug together overnight, open the project's crosstalk to read what they agreed.",
+    "Keep the widget on the rail set to this session to see every conversation the selected agent took part in.",
+    "An agent calls crosstalk_thread to reread the thread where a coworker reported back."
+  ],
+  "media_exempt": "Not captured yet: the capture spec lands with the next pre-version-bump recapture (scripts/feature_capture.py); the thread view reuses the existing crosstalk card look."
+}

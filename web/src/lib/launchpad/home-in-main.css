@@ -1,0 +1,12 @@
+body.home-in-main #launchpad-screen.active {
+    position: fixed;
+    top: var(--menu-surface-top);
+    left: var(--menu-surface-left);
+    right: var(--menu-surface-right);
+    bottom: var(--menu-surface-bottom);
+    z-index: 2;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    background: var(--oc-ground-content);
+}

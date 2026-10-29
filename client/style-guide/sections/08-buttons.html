@@ -1,0 +1,146 @@
+<h2 class="sg-h2">buttons</h2>
+
+<h3 class="sg-h3" id="buttons-dialog">dialog and footer buttons, the reference shape</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup copied from</span><code>client/js/session-restart-picker.js</code><code>client/js/session-restart-live.js</code><span>styles live</span></div>
+    <div class="sg-specimen__body">
+        <div class="restart-picker">
+            <div class="modal-footer restart-picker__foot">
+                <button type="button" class="modal-btn modal-btn-secondary">cancel</button>
+                <button type="button" class="modal-btn modal-btn-primary">restart</button>
+            </div>
+            <div class="modal-footer restart-picker__foot">
+                <button type="button" class="modal-btn modal-btn-secondary">cancel</button>
+                <button type="button" class="modal-btn modal-btn-confirm">create</button>
+            </div>
+            <div class="modal-footer restart-picker__foot">
+                <label class="restart-picker__arm" for="sg-arm-demo" title="ticking this lets the restart kill the running session">
+                    <input type="checkbox" id="sg-arm-demo">
+                    <span>kill running session</span>
+                </label>
+                <button type="button" class="modal-btn modal-btn-secondary">cancel</button>
+                <button type="button" class="modal-btn modal-btn-danger">kill and restart</button>
+            </div>
+            <div class="modal-footer restart-picker__foot">
+                <button type="button" class="modal-btn modal-btn-secondary" disabled>cancel</button>
+                <button type="button" class="modal-btn modal-btn-primary" disabled>restart</button>
+                <button type="button" class="modal-btn modal-btn-danger" disabled>kill and restart</button>
+            </div>
+        </div>
+        <p class="sg-caption">cancel plus confirm (<code>.modal-btn-primary</code>, <code>.modal-btn-confirm</code>), cancel plus
+        destroy (the armed picker), then all three disabled. hover, tab to focus, and press to see each state.</p>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>cancel</dt>
+    <dd><code>.modal-btn-secondary</code>: transparent, <code>--oc-text-secondary</code> label, <code>--oc-line-panel</code>
+        edge; hover brightens ground (<code>--oc-ground-hover</code>), edge (<code>--oc-line-rule</code>) and label, never the
+        accent.</dd>
+    <dt>confirm</dt>
+    <dd><code>.modal-btn-primary</code> or <code>.modal-btn-confirm</code>: an <code>--oc-orange-tint</code> interior, a 1px
+        <code>--oc-orange</code> edge, an <code>--oc-text-bright</code> label; hover <code>--oc-orange-dim</code> with an
+        <code>--oc-orange-bright</code> edge. Same colours; <code>-confirm</code> also carries the picker's compact size. One per
+        surface.</dd>
+    <dt>destroy</dt>
+    <dt>size</dt>
+    <dd><code>.modal-btn</code>: 10px 24px, 0.95rem. In the picker (<code>.restart-picker .modal-btn</code>): 7px 16px, 13px,
+        2px corners, a 44px floor at 600px or on a coarse pointer. Footer: <code>.modal-footer</code>, right-aligned.</dd>
+    <dt>picked</dt>
+    <dd><code>aria-pressed="true"</code> (a toggle) or <code>aria-checked="true"</code> (a radio or checkbox drawn as a button, such as a
+        question's pills) gives any <code>data-btn</code> the selected ground and a bright label, in every theme.</dd>
+    <dt>labels</dt>
+    <dd>Name the act, never "ok": <code>session.restart.picker.cancel</code> and <code>session.restart.picker.go</code> are
+        the reference; a new dialog adds <code>&lt;feature&gt;.confirm</code> and <code>&lt;feature&gt;.cancel</code>.</dd>
+    <dt>access</dt>
+    <dd>A real <code>&lt;button type="button"&gt;</code>; focus is a 2px cyan outline at offset 2px
+        (<code>.restart-picker .modal-btn:focus-visible</code>). A disabled button says why in a <code>title</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="buttons-alert">the alert button, rarely</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>styles live</span><code>client/css/text-prompt-modal.css</code></div>
+    <div class="sg-specimen__body">
+        <div class="restart-picker">
+            <div class="modal-footer restart-picker__foot">
+                <button type="button" class="modal-btn modal-btn-secondary">later</button>
+                <button type="button" class="modal-btn modal-btn-alert">log in now</button>
+            </div>
+        </div>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>use only for</dt>
+    <dd><code>.modal-btn-alert</code>, the filled <code>--oc-orange</code> block with <code>--oc-ground-chrome</code> ink:
+        the one act a user must not miss, where missing it breaks every session (a dead login). No surface wears it today.</dd>
+    <dt>never for</dt>
+    <dd>An ordinary save, create, open or run (confirm), or a delete or kill (destroy). Never two on one screen, never beside
+        another accent button.</dd>
+</dl>
+
+<h3 class="sg-h3" id="buttons-panel">panel and toolbar buttons</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>the page-frame button</span><code>web/src/opscenter/controls.css</code></div>
+    <div class="sg-specimen__body">
+        <div class="sg-row">
+            <button type="button" class="oc-btn oc-btn--confirm">add account</button>
+            <button type="button" class="oc-btn">back</button>
+            <button type="button" class="oc-btn oc-btn--ghost">show details</button>
+            <button type="button" class="oc-btn oc-btn--danger">remove</button>
+            <button type="button" class="oc-btn" disabled>disabled</button>
+        </div>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd><code>.oc-btn</code> on every menu page: a quiet outline, 44px under 1024px.
+        <code>--confirm</code> is the calm confirm recipe; <code>--ghost</code> drops the edge; <code>--danger</code> paints edge and label
+        <code>--oc-coral</code>.</dd>
+    <dt>themes</dt>
+    <dd>Every value is an <code>--oc-*</code> token.</dd>
+</dl>
+
+<h3 class="sg-h3" id="buttons-icon">icon buttons</h3>
+<p>A square hit box, the icon centred and inheriting the button's colour, an <code>aria-label</code> and a
+<code>title</code>, the cyan focus outline. References: the tab strip's icon and close buttons (<a href="#tabs">tabs</a>) and
+the cell frame's controls (<a href="#cells">cells</a>). <code>.btn-icon</code> is the legacy header's control class only;
+<code>.modal-close</code> is the legacy dialog "x", and new dialogs close with cancel and Escape instead.</p>
+
+<h3 class="sg-h3" id="buttons-states">every state</h3>
+<div class="sg-table-wrap">
+<table class="sg-table">
+    <thead><tr><th>state</th><th>what changes</th></tr></thead>
+    <tbody>
+        <tr><td>hover</td><td>ground to the variant's hover, edge and label brighten</td></tr>
+        <tr><td>focus</td><td>its own border a little brighter, same width, no shadow (<code>focus.css</code>, <code>--_bd</code> set to the border token), on <code>:focus-visible</code> only</td></tr>
+        <tr><td>active</td><td>the hover look held; no scale, no lift</td></tr>
+        <tr><td>disabled</td><td>opacity 0.45 to 0.55, the reason in a <code>title</code></td></tr>
+        <tr><td>busy</td><td>the label becomes the catalog's busy verb ("installing") and the button is disabled; no
+            spinner</td></tr>
+    </tbody>
+</table>
+</div>
+<p>A state never moves a pixel of layout: size, position and the row around it stay put.</p>
+
+<h3 class="sg-h3" id="buttons-long">long labels</h3>
+<p><strong>A label never widens its button.</strong> A base button never grows past its container (<code>max-width: 100%</code>,
+    <code>min-width: 0</code>). When its label does not fit, <code>titleWhenTruncated</code> moves the button's children into one
+    <code>&lt;span data-btn-label&gt;</code> that clips to one line and ends in an ellipsis (a flex container cannot ellipsize its own
+    text, so the label becomes its own block); a label that fits keeps the markup it was written with. A row trigger
+    (<code>data-btn="row"</code>) wraps instead, and an icon alone is not a label. <code>Button.svelte</code> applies the action itself; a
+    button written by hand with <code>buttonAttrs</code> gives itself <code>use:titleWhenTruncated</code>.</p>
+<p><strong>Hover shows the full line only when it was cut.</strong> <code>titleWhenTruncated</code>
+    (<code>web/src/lib/base/truncate.ts</code>) sets <code>title</code> to the full label while the label is clipped and takes it away
+    again when it fits, so a button whose label fits shows nothing on hover; a <code>title</code> the author wrote is put back. It
+    re-measures on resize and when the text changes. Tabs (<code>.oc-ptab__label</code>) and the Mark II chips use the same action.</p>
+<p><strong>The outline is the button line.</strong> The edge is <code>--oc-line-button</code>, never the hairline
+    <code>--oc-line-panel</code>, which was 1.0 to 2.0:1 on 11 of 12 shipped themes and left the button with no visible outline.</p>
+
+<h3 class="sg-h3" id="buttons-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>A pill or a rounded accent block.</strong> PR #598's "create" was rejected.</li>
+    <li><strong>Corner targeting brackets.</strong> The public site's; app buttons have none.</li>
+    <li><strong>Two accent buttons side by side.</strong> One confirm per surface; the rest are quiet.</li>
+    <li><strong>A label that grows and wraps the footer.</strong> Size the footer for the longest label (#592 widened the
+        picker to 500px).</li>
+    <li><strong>A local button class.</strong> Reuse <code>.modal-btn</code> and its variants.</li>
+</ul>

@@ -1,0 +1,41 @@
+{
+  "api_routes": [
+    "GET /api/v1/swarm/cards/{card_id}/validation",
+    "POST /api/v1/swarm/cards/{card_id}/validate"
+  ],
+  "area": "drawers",
+  "description": "The seventh slice of the swarm cards work. A card in Review can now be validated: the project agent starts a fresh task agent that runs the card's how-to-validate steps (through a validator agent definition when the project has one, else with its own tools) and ends with a pass or fail verdict plus the proof it saw, kept word for word on the card. A pass marks the card validated and, when the project's auto-done switch is on, moves it to Done, after re-checking inside the Done write that the pass still covers the card (a send-back and re-finish, or a newer validation run, in between keeps it in Review). A fail sends the card back to In Progress marked validation failed with the proof, held again by the agent that finished it, which is told what failed. With nothing to validate it, the card reads no proof yet and the validate route answers 409. You start a validation from the validate route, or turn on the project's auto-validate switch so every card that reaches Review is validated by itself. This slice is backend only: the board screen waits for the layout pick.",
+  "docs": [
+    "docs/swarm-cards.md"
+  ],
+  "examples": [
+    "With auto-validate and auto-done both on for a project, a card that reaches Review is validated; on a pass it moves to Done by itself, and on a fail it goes back to In Progress."
+  ],
+  "how_to": [
+    "Call POST /api/v1/swarm/cards/{card_id}/validate on a card in Review to start a validation now; it answers 409 no_capability when the project has no validator agent and no project agent.",
+    "Call GET /api/v1/swarm/cards/{card_id}/validation to read the state, the proof (null reads no proof yet), what would validate the card and whether a start would be accepted.",
+    "Call PUT /api/v1/swarm/cards/rules/{project_id} with auto_validate to validate every card that reaches Review, and auto_done to finish a card after a pass.",
+    "The validating agent ends with the swarm_card_verdict tool: card_id, verdict pass or fail, and the proof."
+  ],
+  "id": "swarm-cards-c7",
+  "issues": [
+    1389
+  ],
+  "keywords": [
+    "swarm",
+    "cards",
+    "validation",
+    "validator",
+    "proof",
+    "auto-done"
+  ],
+  "media_exempt": "backend only; the board UI waits for the layout pick",
+  "name": "swarm cards: validation",
+  "since": "2026-10-07",
+  "status": "beta",
+  "summary": "a card in Review can be validated by a fresh task agent (or a validator agent definition) that returns pass or fail with its proof; a fail sends the card back marked validation failed, a pass can finish it.",
+  "updated": "2026-10-07",
+  "where": [
+    "The board screen arrives in a later slice."
+  ]
+}

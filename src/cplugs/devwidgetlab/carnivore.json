@@ -1,0 +1,112 @@
+{
+  "kind": "cplug",
+  "id": "devwidgetlab",
+  "name": "widget lab",
+  "version": "0.1.0",
+  "api_version": 1,
+  "min_app_version": "1.16.1",
+  "author": "Carnivore contributors",
+  "license": "MIT",
+  "tier": "dev",
+  "scope": [
+    "global"
+  ],
+  "icon": "grid",
+  "default_enabled": false,
+  "permissions": [
+    {
+      "name": "sessions.read",
+      "reason": "list the sessions so a draft handed to Claude can name its session"
+    },
+    {
+      "name": "sessions.message",
+      "reason": "needed for this plugin to work"
+    },
+    {
+      "name": "sessions.create",
+      "reason": "needed for this plugin to work"
+    },
+    {
+      "name": "agent_writes",
+      "reason": "let agents create and edit widget lab drafts through the widget lab tools"
+    }
+  ],
+  "owns": {
+    "assets": [],
+    "contributions": [],
+    "files": [],
+    "migrations": [],
+    "routes": [],
+    "strings": [
+      "cplug.devwidgetlab."
+    ],
+    "style_guide": [
+      "web/src/cplugs/devwidgetlab/CaptureFooter.svelte",
+      "web/src/cplugs/devwidgetlab/CaptureResults.svelte",
+      "web/src/cplugs/devwidgetlab/ChecksSection.svelte",
+      "web/src/cplugs/devwidgetlab/ComparePair.svelte",
+      "web/src/cplugs/devwidgetlab/DockBar.svelte",
+      "web/src/cplugs/devwidgetlab/DraftActions.svelte",
+      "web/src/cplugs/devwidgetlab/DraftCompare.svelte",
+      "web/src/cplugs/devwidgetlab/DraftForm.svelte",
+      "web/src/cplugs/devwidgetlab/DraftPanel.svelte",
+      "web/src/cplugs/devwidgetlab/DrawerChrome.svelte",
+      "web/src/cplugs/devwidgetlab/FindRow.svelte",
+      "web/src/cplugs/devwidgetlab/FitTable.svelte",
+      "web/src/cplugs/devwidgetlab/HostBand.svelte",
+      "web/src/cplugs/devwidgetlab/HostChrome.svelte",
+      "web/src/cplugs/devwidgetlab/IdleReadout.svelte",
+      "web/src/cplugs/devwidgetlab/LabControls.svelte",
+      "web/src/cplugs/devwidgetlab/LabFrame.svelte",
+      "web/src/cplugs/devwidgetlab/LabMenu.svelte",
+      "web/src/cplugs/devwidgetlab/LabViewer.svelte",
+      "web/src/cplugs/devwidgetlab/MenuSection.svelte",
+      "web/src/cplugs/devwidgetlab/OptionChip.svelte",
+      "web/src/cplugs/devwidgetlab/PreviewFrame.svelte",
+      "web/src/cplugs/devwidgetlab/ResizeBox.svelte",
+      "web/src/cplugs/devwidgetlab/ScenarioBox.svelte",
+      "web/src/cplugs/devwidgetlab/PointerMenu.svelte",
+      "web/src/cplugs/devwidgetlab/SidebarControls.svelte",
+      "web/src/cplugs/devwidgetlab/WidgetTree.svelte",
+      "web/src/cplugs/devwidgetlab/WidgetTreeMenu.svelte",
+      "web/src/cplugs/devwidgetlab/lab.css",
+      "web/src/cplugs/devwidgetlab/lab-frame.css",
+      "web/src/cplugs/devwidgetlab/lab-menu.css",
+      "web/src/cplugs/devwidgetlab/lab-viewer.css"
+    ],
+    "styles": [
+      "lab.css",
+      "lab-frame.css",
+      "lab-menu.css",
+      "lab-viewer.css"
+    ],
+    "tests": [
+      "tests/python/cplugs/devwidgetlab/",
+      "web/src/cplugs/devwidgetlab/"
+    ]
+  },
+  "data": [
+    {
+      "id": "captures",
+      "kind": "folder",
+      "path": "captures",
+      "scope_by": "install",
+      "policy": {
+        "own": "excluded",
+        "share": "excluded",
+        "reason": "developer screenshots and metadata a capture run writes; running the capture again rebuilds them"
+      }
+    },
+    {
+      "id": "drafts",
+      "kind": "folder",
+      "path": "drafts",
+      "scope_by": "install",
+      "policy": {
+        "own": "excluded",
+        "share": "excluded",
+        "reason": "needed for this plugin to work"
+      }
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "_comment": "Known-answer vectors for the v2 relay envelope (src/core/relay_e2ee.py, web/src/spectate/e2ee.ts). Shared by pytest and vitest; regenerate only on a deliberate format change.",
+  "token": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "link_id": "AAECAwQFBgcICQoLDA0ODw",
+  "watch_auth_b64url": "5_vjfZuxzzY8B6fdVgxWc0eASIy7qOnqUSDkgCT6C_U",
+  "verifier_hex": "01a41fabaaafeef8272eecea8ddb9887cda3b61b7886a9a7bc689c88b087af2d",
+  "content_key_hex": "71985a72ecae96563930640ff421d802a38e4095ee5fb0109731f45dc903b15a",
+  "stream_id_hex": "a0a1a2a3a4a5a6a7a8a9aaabacadaeaf",
+  "stream_key_hex": "39665ff8b48b43195854bf38702201971150b84f9249f953e04fe5fef26e283b",
+  "fragment": "v2.AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "wrong_length_tokens": [
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  ],
+  "records": [
+    {
+      "seq": 0,
+      "kind": 1,
+      "ts_ms": 1790000000000,
+      "body_hex": "7b22636c69656e745f76657273696f6e223a22312e392e30222c22636f6c73223a3132302c22657870697265735f6174223a313739303030333630302c2270726576223a6e756c6c2c22726f7773223a34302c2273637275626265725f6964223a22303132333435363738396162227d",
+      "aad_hex": "6361726e69766f72652d72656c61792d76321641414543417751464267634943516f4c4441304f447702a0a1a2a3a4a5a6a7a8a9aaabacadaeaf0000000000000000",
+      "record_hex": "02a0a1a2a3a4a5a6a7a8a9aaabacadaeaf0000000000000000468fa28dfa17c948fd5175812635b8d5249314be98a2460c82d1e7d7d990dff97dc1a72b3821ba70efaab4cbc48a6440508a945f14a1739757cbb0de6b84309b9ff8d4efb0e2b45f818dcb0ca856e612b37667c1b39a350d4c321934cc537b5838d3fd14b02811464fb4c04739533875489d3ebf751201114922c2216c10e0693c2b2c55f9432c67ec"
+    },
+    {
+      "seq": 1,
+      "kind": 5,
+      "ts_ms": 1790000000001,
+      "body_hex": "1b5b324a1b5b487061696e74",
+      "aad_hex": "6361726e69766f72652d72656c61792d76321641414543417751464267634943516f4c4441304f447702a0a1a2a3a4a5a6a7a8a9aaabacadaeaf0000000000000001",
+      "record_hex": "02a0a1a2a3a4a5a6a7a8a9aaabacadaeaf0000000000000001cda1ec18a87f17d9b38651d1500b9c4e989699e0f8b03290c8448d8e63a02fd8640d34a86c"
+    },
+    {
+      "seq": 2,
+      "kind": 2,
+      "ts_ms": 1790000000002,
+      "body_hex": "68656c6c6f201b5b33316d7265641b5b306d20c3a90d0a",
+      "aad_hex": "6361726e69766f72652d72656c61792d76321641414543417751464267634943516f4c4441304f447702a0a1a2a3a4a5a6a7a8a9aaabacadaeaf0000000000000002",
+      "record_hex": "02a0a1a2a3a4a5a6a7a8a9aaabacadaeaf0000000000000002724e6f4d5d624daa28a377d7b701d978711c4d57563a78c825f611c074d250aabdb9b57cc97807c205a0aee12ccc996a"
+    },
+    {
+      "seq": 3,
+      "kind": 3,
+      "ts_ms": 1790000005002,
+      "body_hex": "",
+      "aad_hex": "6361726e69766f72652d72656c61792d76321641414543417751464267634943516f4c4441304f447702a0a1a2a3a4a5a6a7a8a9aaabacadaeaf0000000000000003",
+      "record_hex": "02a0a1a2a3a4a5a6a7a8a9aaabacadaeaf00000000000000039c2b3e3bc4b22b1c1fc43d54bcabfb4a883c6b4ca1c93ec7a4"
+    },
+    {
+      "seq": 4,
+      "kind": 4,
+      "ts_ms": 1790000006000,
+      "body_hex": "",
+      "aad_hex": "6361726e69766f72652d72656c61792d76321641414543417751464267634943516f4c4441304f447702a0a1a2a3a4a5a6a7a8a9aaabacadaeaf0000000000000004",
+      "record_hex": "02a0a1a2a3a4a5a6a7a8a9aaabacadaeaf00000000000000045ffe372c0a37731a0b7affe4c33971daf723cc523f468d4e38"
+    }
+  ]
+}

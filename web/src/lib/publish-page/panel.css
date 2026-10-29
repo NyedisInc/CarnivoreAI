@@ -1,0 +1,54 @@
+@layer components {
+    .d-panel {
+        min-width: 0;
+        margin-top: var(--oc-space-5);
+        background: var(--oc-ground-content, var(--oc-ground-page));
+        box-shadow: inset 0 0 0 1px var(--oc-line-rule);
+    }
+    .d-panel:first-child { margin-top: 0; }
+    .d-panel__bar {
+        --pl-dim: var(--oc-orange);
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--oc-space-0-5) var(--oc-pp-space-14);
+        min-height: var(--oc-space-6);
+        padding: var(--oc-space-1-5) var(--oc-space-4);
+        background: color-mix(in oklab, var(--oc-text-muted) 9%, var(--oc-ground-titlerow));
+        box-shadow: inset 0 -1px 0 0 var(--oc-line-rule);
+    }
+    .d-panel__bar .pl-label.d-panel__lab {
+        margin: 0;
+        flex: none;
+        color: var(--oc-orange);
+    }
+    .d-panel__aux {
+        margin-left: auto;
+        min-width: 0;
+        font-size: var(--oc-fs-hint);
+        line-height: 1.4;
+        color: var(--oc-text-muted);
+        text-align: right;
+        overflow-wrap: normal;
+    }
+    .d-panel__body {
+        min-width: 0;
+        padding: var(--oc-space-4) var(--oc-space-4) var(--oc-pp-space-18);
+    }
+    .d-panel__bar--primary {
+        min-height: var(--oc-pp-space-40);
+        background: var(--oc-orange-tint);
+        box-shadow: inset 0 -1px 0 0 var(--oc-strip-edge, var(--oc-orange));
+    }
+    .d-panel__body > :first-child { margin-top: 0; }
+    @container pp (max-width: 719px) {
+        .d-panel__bar { padding-inline: var(--oc-space-3); }
+        .d-panel__body { padding: var(--oc-pp-space-14) var(--oc-space-3) var(--oc-space-4); }
+    }
+    .pp-ident {
+        overflow-wrap: normal;
+        word-break: keep-all;
+        hyphens: none;
+    }
+    .pp-tok, dd.pp-ident { white-space: nowrap; }
+}

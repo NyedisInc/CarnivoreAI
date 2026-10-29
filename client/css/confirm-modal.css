@@ -1,0 +1,80 @@
+/*
+ * `showConfirmModal` always adds a `confirm-modal` class to its overlay
+ * (never conditional, unlike the old per-caller `overlayClass` opt-in), so
+ * every rule below is scoped to `.confirm-modal` and reaches ONLY dialogs
+ * `showConfirmModal` itself draws - never the ~21 other dialogs across both
+ * front end trees that also read bare `.modal-overlay` / `.modal-content` /
+ * `.modal-header` from the legacy chassis in `styles.css` (the file editor,
+ * the folder picker, the slash commands popup, settings, and more).
+
+ * COPIED FROM THE RESTART PICKER (client/css/session-restart-picker.css,
+ * issue #558), the canonical title-row-strip recipe: a strip
+ * (`--oc-ground-titlerow` ground, a hairline underneath drawn as an inset
+ * box-shadow so it costs no layout) holding one small tracked-capitals
+ * label in `--oc-orange`, the ONE accent-coloured thing on the surface -
+ * plain text, no "»" (the restart picker's own verb is just "restart";
+ * `text-prompt-modal.css` still keeps the "»" from an earlier pass, but
+ * that is not repeated here). `.modal-content`'s default 31px padding is
+ * zeroed and re-applied per region, exactly as text-prompt-modal.css does,
+ * so the strip can bleed to the panel's edges.
+
+ * DESTRUCTIVE VS CALM: the confirm button wears `.modal-btn-danger` (a
+ * tinted dark interior and a bright `--oc-coral` outline) for a caller that
+ * destroys or removes a live resource or a named user artifact - logout,
+ * close/remove session, remove project, close browser, remove group,
+ * remove layout, discard unsaved changes, remove provider model. It stays
+ * the calm `.modal-btn-primary` shape (tinted `--oc-orange`, the confirm
+ * token family, unchanged since before this reskin) for a caller that only
+ * reveals something or overwrites a file with a backup kept - reveal
+ * credentials, save executable file, save credentials file. `App.js`
+ * itself decides which class each caller's `primaryVariant` maps to;
+ * this file only supplies the shapes. Cancel always keeps the shared
+ * `.modal-btn-secondary` untouched. Focus is the shared brightened
+ * edge every control wears (web/src/opscenter/focus.css).
+
+ * EVERY COLOUR IS AN --oc-* TOKEN, re-derived from the active theme by
+ * web/src/opscenter/tokens.css, so this dialog repaints under every theme
+ * and holds no colour literal of its own.
+ */
+
+.confirm-modal .modal-content {
+    padding: 0;
+    overflow: hidden;
+}
+
+.confirm-modal__head {
+    display: flex;
+    align-items: center;
+    min-height: var(--oc-titlerow-h, 37px);
+    padding: 0 14px;
+    background: var(--oc-ground-titlerow);
+    box-shadow: inset 0 -1px 0 0 var(--oc-line-rule);
+}
+
+.confirm-modal__verb {
+    font-size: var(--oc-fs-title, 12px);
+    letter-spacing: var(--oc-tracking-title, 0.8px);
+    text-transform: uppercase;
+    color: var(--oc-orange);
+}
+
+.confirm-modal .modal-body {
+    margin: 0;
+    padding: 20px 14px 4px;
+}
+
+.confirm-modal .modal-footer {
+    padding: 16px 14px 14px;
+    margin: 0;
+}
+
+.confirm-modal .modal-btn {
+    padding: 7px 16px;
+    font-size: 13px;
+}
+
+@media (pointer: coarse), (max-width: 600px) {
+    .confirm-modal .modal-btn {
+        min-height: 44px;
+    }
+}

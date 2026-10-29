@@ -1,0 +1,47 @@
+{
+  "id": "home-popout",
+  "name": "Home screen pop-out",
+  "summary": "The home screen can be popped out into its own small window that keeps its stats live in the background.",
+  "description": "Pop out home opens the home screen alone in its own browser window, titled carnivore stats, with no drawer and a compact bar. The window keeps its numbers live over the same events feed as the main window, opens no terminal and never votes on a pane size, remembers its size and place, re-lays out to whatever size it is dragged to, and has a focus main window link that raises the window that opened it. It uses the sign-in the main window already holds; signed out it says to sign in from the main window. Wallboard opens the same page as a wallboard: only the home analytics widgets, no bar, no handles, read only, sized to fill the window and following the synced home layout live; a board in the menu opens the wallboard for that board. Analytics widgets can also be placed beside terminals in a saved terminal layout.",
+  "area": "home",
+  "status": "stable",
+  "since": "2026-09-29",
+  "updated": "2026-10-03",
+  "surfaces": [
+    "home screen",
+    "web/src/popout/popout.ts",
+    "client/popout.html"
+  ],
+  "api_routes": [],
+  "docs": [
+    "docs/DECISIONS.md"
+  ],
+  "issues": [
+    1157
+  ],
+  "keywords": [
+    "pop out",
+    "popout",
+    "stats",
+    "background",
+    "second window",
+    "home"
+  ],
+  "where": [
+    "The home screen's top right corner: the faint open in a new window icon, which opens the menu.",
+    "The popped-out window's top bar: focus main window."
+  ],
+  "how_to": [
+    "Point at the top right corner of the home screen and click the open in a new window icon; choose pop out home, and a window titled carnivore stats opens.",
+    "Leave it open behind other windows; its numbers keep updating, and it catches up by itself after a sleep, a dropped network or a server restart.",
+    "If a strip reading offline, data may be stale appears in its bottom left corner, the window has lost its live link for that long: press retry, or reload it. If a pill reading new version available or update ready appears at the top, press reload to run the new install.",
+    "Click focus main window to raise the app window that opened it.",
+    "Choose wallboard from the same menu to open the home analytics widgets alone in a window for a big screen, or choose a board to open that board's wallboard; changes to the home layout in the main window appear there live.",
+    "In edit layout on a terminal page, open the widget gallery and add an analytics widget beside the terminal."
+  ],
+  "examples": [
+    "Keep token use and cost visible on a second monitor while agents run in the main window.",
+    "Put a cost and tokens wallboard on a wall screen while the main window drives the agents."
+  ],
+  "media_exempt": "the visible effect is a second browser window, which the screenshot capture harness does not open"
+}

@@ -1,0 +1,39 @@
+{
+  "api_routes": [
+    "GET /api/v1/whats-new"
+  ],
+  "area": "desktop-app",
+  "description": "When the server restarts on newer code, the reload prompt at the top of the page lists what is new since this page loaded, grouped by type, with where to find each one.",
+  "docs": [],
+  "examples": [
+    "After a restart you see the reload prompt and want to know if anything you care about changed before you reload.",
+    "Several updates landed while a tab stayed open; the prompt lists them all, newest first, so you know where to look afterwards."
+  ],
+  "how_to": [
+    "When the small reload prompt appears at the top of the page, read the what is new list under it: added, changed and fixed items, each with where to find it when it maps to a feature.",
+    "Press show all to expand the list past three lines; press show less to fold it.",
+    "Press reload to load the new version. The list is only information; reloading is never automatic."
+  ],
+  "id": "reload-whats-new",
+  "issues": [
+    1196
+  ],
+  "keywords": [
+    "reload",
+    "new version",
+    "what is new",
+    "update ready"
+  ],
+  "media_exempt": "a transient prompt that only appears after a server restart on newer code, and its content is the feature list itself",
+  "name": "What is new in the reload prompt",
+  "since": "2026-09-30",
+  "status": "stable",
+  "summary": "the reload prompt lists what changed since the page loaded and where to find it",
+  "surfaces": [
+    "reload prompt at the top of the page"
+  ],
+  "updated": "2026-09-30",
+  "where": [
+    "The small reload prompt at the top of the page, shown after the server restarts on new code."
+  ]
+}

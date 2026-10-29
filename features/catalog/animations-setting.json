@@ -1,0 +1,51 @@
+{
+  "api_routes": [
+    "GET /api/v1/preferences",
+    "PATCH /api/v1/preferences"
+  ],
+  "area": "settings",
+  "docs": [
+    "docs/ui-preferences-inventory.md"
+  ],
+  "examples": [
+    "Turn animations off on a laptop on battery or a machine with many terminals open to cut gpu work.",
+    "Keep a quiet screen while presenting or screen sharing."
+  ],
+  "how_to": [
+    "Open settings from the account menu, pick appearance, then the motion tab.",
+    "Turn animations off: the working-status spinners and pulses, the effort shimmer, drawer band pulses, the keep awake steam, dialog edge glows, the swarm characters and panel slide-ins go still, the same static look as the operating system's reduce motion setting, whatever that is set to.",
+    "The motion tab lists what stops, why you would turn it off, and a small live example that animates when the switch is on and holds still when it is off.",
+    "Turn it back on to play them again. The choice is shared with your other devices; an agent can set it with the preferences_update tool (field animations).",
+    "Short fades and slides on menus and buttons stay, because they are cheap and carry meaning."
+  ],
+  "id": "animations-setting",
+  "issues": [
+    1617
+  ],
+  "keywords": [
+    "animations",
+    "motion",
+    "gpu",
+    "reduce motion",
+    "battery",
+    "performance",
+    "preferences_update"
+  ],
+  "name": "Animations setting",
+  "since": "2026-10-11",
+  "status": "beta",
+  "summary": "one switch under settings, appearance, motion that stops the app's animations to save gpu; on by default.",
+  "surfaces": [
+    "client/js/motion-setting.js",
+    "client/css/animation-pause.css",
+    "web/src/lib/motion/motion.ts",
+    "web/src/lib/motion/animations-pref.ts",
+    "web/src/lib/settings-page/controls/SwitchControl.svelte"
+  ],
+  "updated": "2026-10-11",
+  "where": [
+    "Settings, appearance, the motion tab: a switch labelled animations."
+  ],
+  "media": [],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

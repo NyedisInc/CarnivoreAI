@@ -1,0 +1,59 @@
+{
+  "id": "devwidgetlab",
+  "name": "Widget Lab plugin",
+  "area": "dev-tooling",
+  "status": "beta",
+  "since": "2026-10-18",
+  "updated": "2026-10-18",
+  "summary": "a developer plugin, off by default: a page that draws any registered widget in each host it is declared for at its published sizes, under any theme, from a fixture or a pasted json scenario, and captures it to a png with metadata.",
+  "description": "Widget Lab frames the shared widget harness (the page the capture pipeline drives) inside the app. Pick a widget (notes first), a theme and a fixture (data, empty, stress); the page draws the widget in the home grid, the terminal grid, the sidebar area and the pop-out window, marks a host the widget's declaration does not place it in, lists each host's published sizes with the floor, and keeps the widget box at its published size whatever the page width. A json box takes routes laid over the fixture (only parsed, never run, with plain errors); a save made in the widget plays inside the frame and reads back, and goes nowhere else. The frame isolates its own storage, so it never touches the app's real token, and answers every request from the fixture. A capture button on each host card runs the capture pipeline for exactly that state, with the widget's own menu open when asked, and writes a png plus metadata (widget, source revision, host, size, theme, fixture hash, state). A capture that cannot run, finds a problem or has a broken fixture is shown as failed, never as a pass. The harness page now also loads the app's popup stylesheet last, so a widget's menu is drawn on the themed popup surface there as it is in the app.",
+  "surfaces": [
+    "src/cplugs/devwidgetlab/__init__.py",
+    "src/cplugs/devwidgetlab/cplug.json",
+    "src/cplugs/devwidgetlab/routes.py",
+    "src/cplugs/devwidgetlab/capture.py",
+    "web/src/cplugs/devwidgetlab/index.ts",
+    "web/src/cplugs/devwidgetlab/LabViewer.svelte",
+    "web/src/cplugs/sdk/widget-lab.ts",
+    "web/src/widget-harness/scenario.ts",
+    "web/src/widget-harness/scenario-store.ts",
+    "scripts/widgets/capture_one.py",
+    "web/vite.widget-lab.config.ts"
+  ],
+  "api_routes": [
+    "GET /api/v1/cplugs/devwidgetlab/status",
+    "POST /api/v1/cplugs/devwidgetlab/capture"
+  ],
+  "docs": [
+    "docs/widget-lab.md",
+    "docs/widget-spec.md",
+    "docs/cplugs.md"
+  ],
+  "issues": [
+    1939
+  ],
+  "keywords": [
+    "widget lab",
+    "widget harness",
+    "fixture",
+    "scenario",
+    "capture",
+    "developer",
+    "plugin"
+  ],
+  "where": [
+    "Settings, advanced, developer mode on; then the plugins page lists the widget lab plugin (off by default); once on, the widget lab tab in the sidebar strip."
+  ],
+  "how_to": [
+    "Turn on developer mode in settings, advanced, open the plugins page from the menu tab, find widget lab and press its switch, then open the widget lab tab.",
+    "Pick notes, a theme and a fixture; press the menu open switch on a host card to see the widget's own menu on the popup surface.",
+    "Paste a json scenario of routes into the box, press apply, and edit the note: the save reads back inside the frame only.",
+    "Press capture or capture with menu on a host card to write a png and its metadata.",
+    "Press the idle traffic key on a frame's caption: the lab measures a simulated minute with the widget shown and one hidden, and the word beside the key reads green when a hidden widget sends nothing, coral with the count otherwise."
+  ],
+  "examples": [
+    "A scenario of one route, GET /sessions/cloude_billing-api/note with a body of your own text, makes the notes widget show that text in every host.",
+    "A widget with a hidden 5 second polling timer reads 12 hidden requests a minute and fails; the same check runs over every widget with python3 -m scripts.widgets.idle."
+  ],
+  "media_exempt": "a developer page whose own pictures are the captures it writes; no catalog image is taken of it for this slice"
+}

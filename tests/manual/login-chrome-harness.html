@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>login chrome harness</title>
+<link rel="stylesheet" href="../../client/css/styles.css" />
+<link rel="stylesheet" href="../../client/css/header-menu.css" />
+<link rel="stylesheet" href="../../client/css/home-bar.css" />
+<link rel="stylesheet" href="../../client/css/session-sidebar.css" />
+<link rel="stylesheet" href="../../client/css/terminal-tools.css" />
+<link rel="stylesheet" href="../../client/css/screen-chrome.css" />
+</head>
+<body>
+<div id="harness-mount"></div>
+
+<script>
+window.__loginChromeReady = false;
+
+/**
+ * Description: pull the real `.header` block and the three screen divs
+ *   out of the shipped client/index.html and mount them here, then boot
+ *   the real modules that inject the rest of the chrome at runtime.
+ * Inputs: none.
+ * Output: Promise<void>; sets window.__loginChromeReady when done.
+ */
+async function boot() {
+    const html = await (await fetch('../../client/index.html')).text();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+
+    const mount = document.getElementById('harness-mount');
+    mount.appendChild(doc.querySelector('.header'));
+    for (const id of ['auth-screen', 'launchpad-screen', 'terminal-screen']) {
+        const el = doc.getElementById(id);
+        if (el) mount.appendChild(el);
+    }
+
+    await loadScript('../../client/js/dismiss-guard.js');
+    await loadScript('../../client/js/header-menu.js');
+
+    await loadScript('../../client/js/command-description.js');
+    await loadScript('../../client/js/slash-command-filter.js');
+    await loadScript('../../client/js/api.js');
+    await loadScript('../../client/js/slash-favorites.js');
+    await loadScript('../../client/js/slash-commands.js');
+    await loadScript('../../client/js/dpad.js');
+
+    await loadScript('../../client/js/screen-chrome.js');
+
+    window.__loginChromeReady = true;
+}
+
+/**
+ * Description: load one classic script and resolve when it has run.
+ * Inputs: src (string) - relative url.
+ * Output: Promise<void>.
+ */
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error('failed to load ' + src));
+        document.head.appendChild(s);
+    });
+}
+
+/**
+ * Description: switch the harness to a screen using the REAL policy
+ *   module, mirroring what App.showAuth()/showLaunchpad() do - stamp the
+ *   marker and mark the screen div active.
+ * Inputs: screen (string) - 'auth' | 'launchpad' | 'terminal'.
+ * Output: void.
+ */
+window.__setScreen = function (screen) {
+    for (const id of ['auth-screen', 'launchpad-screen', 'terminal-screen']) {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('active', id === screen + '-screen');
+    }
+    if (screen === 'auth' && window.__legacyShowAuth) {
+        for (const id of ['logoutBtn', 'settingsBtn', 'configEditorBtn',
+                          'session-sidebar-toggle']) {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        }
+    }
+    if (screen !== 'auth') {
+        for (const id of ['logoutBtn', 'settingsBtn', 'configEditorBtn', 'session-sidebar-toggle']) {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('hidden');
+        }
+    }
+    window.ScreenChrome.apply(screen);
+};
+
+/**
+ * Description: open the header overflow dropdown. #logoutBtn and
+ *   #settingsBtn are re-parented INTO that panel by header-menu.js, so
+ *   on an authenticated screen they are legitimately 0x0 until it is
+ *   open - measuring them closed would read as a regression that is
+ *   really just a collapsed menu.
+ * Inputs: none.
+ * Output: void.
+ */
+window.__openMenu = function () {
+    if (window.HeaderMenu && !window.HeaderMenu.isOpen) window.HeaderMenu.open();
+};
+
+/**
+ * Description: measure every app-chrome control as the eye sees it.
+ * Inputs: none.
+ * Output: object keyed by element id; each value is
+ *   {present, w, h, display, visibility, opacity, visible} where
+ *   `visible` is the pixel verdict, or {present: false} when the element
+ *   does not exist at all. A missing element is reported as its own
+ *   state, never folded into "not visible" - see the THREE-OUTCOME RULE.
+ */
+window.__chrome = function () {
+    const ids = [
+        'logoutBtn', 'settingsBtn', 'configEditorBtn',
+        'header-menu-toggle', 'session-sidebar-toggle',
+        'appTitle'
+    ];
+    const out = { screen: document.body.dataset.screen || null,
+                  isAuthenticated: document.body.classList.contains('is-authenticated') };
+    for (const id of ids) {
+        const el = document.getElementById(id);
+        if (!el) { out[id] = { present: false }; continue; }
+        const r = el.getBoundingClientRect();
+        const cs = getComputedStyle(el);
+        out[id] = {
+            present: true,
+            w: r.width,
+            h: r.height,
+            display: cs.display,
+            visibility: cs.visibility,
+            opacity: cs.opacity,
+            visible: r.width > 0 && r.height > 0 &&
+                     cs.display !== 'none' && cs.visibility !== 'hidden' &&
+                     parseFloat(cs.opacity) > 0.01
+        };
+    }
+    return out;
+};
+
+boot();
+</script>
+</body>
+</html>

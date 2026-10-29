@@ -1,0 +1,35 @@
+{
+  "api_routes": [
+    "src/api/catalog_account_routes.py"
+  ],
+  "area": "skills-catalog",
+  "docs": [
+    "docs/catalog.md"
+  ],
+  "examples": [
+    "Register with the handle you want instead of your GitHub login, then change it a month later."
+  ],
+  "how_to": [
+    "Registering asks every account for a handle (a GitHub account sees its login filled in; change it if you like). Later, open the skills catalog while signed in and use change handle under YOUR ACCOUNT. You can change it once every 30 days, your old handle stays reserved for you for 90 days, and a handle with an approved submission is permanent. The change is refused while one of your submissions is still pending."
+  ],
+  "id": "skills-catalog-account-handle",
+  "issues": [
+    1194
+  ],
+  "keywords": [
+    "handle",
+    "rename",
+    "username",
+    "profile"
+  ],
+  "media_exempt": "the control needs a signed in catalog account; its screenshot is captured in the pre-release recapture, not per change",
+  "name": "Catalog handle pick and rename",
+  "since": "2026-10-01",
+  "status": "stable",
+  "summary": "pick your own catalog handle at registration and rename it later, with the old one held for you.",
+  "surfaces": [],
+  "updated": "2026-10-01",
+  "where": [
+    "The skills catalog, YOUR ACCOUNT, change handle; the register dialog for the first pick."
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "about": "One ranking, two implementations: the providers panel star (web/src/lib/ledger-drawer/recommend.ts) and the auto-switcher (src/core/account_switch/decide.py). tests/test_account_switch_decide.py and web/src/lib/ledger-drawer/recommend.parity.test.ts both rank every case and must produce `order`, best first. Every account here is eligible under both rules. Times are hours from `now`.",
+  "now": "2026-10-08T01:00:00Z",
+  "cases": [
+    {
+      "name": "the screenshot case: 8% weekly with the soonest reset beats two untouched accounts",
+      "accounts": [
+        {"id": "claude-code-beta", "windows": [["five_hour", 0, 18000, 4], ["seven_day", 0, 604800, 150]]},
+        {"id": "claude-code-gamma", "windows": [["five_hour", 0, 18000, 4], ["seven_day", 0, 604800, 140]]},
+        {"id": "claude-code-delta", "windows": [["five_hour", 0, 18000, 3], ["seven_day", 8, 604800, 20]]}
+      ],
+      "order": ["claude-code-delta", "claude-code-gamma", "claude-code-beta"]
+    },
+    {
+      "name": "weekly percent left per hour to the weekly reset decides",
+      "accounts": [
+        {"id": "a", "windows": [["five_hour", 10, 18000, 2], ["seven_day", 40, 604800, 24]]},
+        {"id": "b", "windows": [["five_hour", 10, 18000, 2], ["seven_day", 10, 604800, 120]]},
+        {"id": "c", "windows": [["five_hour", 10, 18000, 2], ["seven_day", 80, 604800, 4]]}
+      ],
+      "order": ["c", "a", "b"]
+    },
+    {
+      "name": "equal urgency: more 5-hour headroom wins",
+      "accounts": [
+        {"id": "x", "windows": [["five_hour", 30, 18000, 2], ["seven_day", 50, 604800, 50]]},
+        {"id": "y", "windows": [["five_hour", 10, 18000, 2], ["seven_day", 50, 604800, 50]]}
+      ],
+      "order": ["y", "x"]
+    },
+    {
+      "name": "equal urgency and 5-hour room: the earlier weekly reset wins",
+      "accounts": [
+        {"id": "q", "windows": [["five_hour", 20, 18000, 2], ["seven_day", 0, 604800, 100]]},
+        {"id": "p", "windows": [["five_hour", 20, 18000, 2], ["seven_day", 50, 604800, 50]]}
+      ],
+      "order": ["p", "q"]
+    },
+    {
+      "name": "no 5-hour window counts as less room than any 5-hour window",
+      "accounts": [
+        {"id": "n", "windows": [["seven_day", 50, 604800, 50]]},
+        {"id": "m", "windows": [["five_hour", 90, 18000, 2], ["seven_day", 50, 604800, 50]]}
+      ],
+      "order": ["m", "n"]
+    },
+    {
+      "name": "a weekly window named primary is classified by its length",
+      "accounts": [
+        {"id": "w", "windows": [["primary", 70, 604800, 10]]},
+        {"id": "v", "windows": [["primary", 0, 18000, 1], ["secondary", 20, 604800, 100]]}
+      ],
+      "order": ["w", "v"]
+    },
+    {
+      "name": "a full tie goes to the id",
+      "accounts": [
+        {"id": "k2", "windows": [["five_hour", 5, 18000, 2], ["seven_day", 30, 604800, 70]]},
+        {"id": "k1", "windows": [["five_hour", 5, 18000, 2], ["seven_day", 30, 604800, 70]]}
+      ],
+      "order": ["k1", "k2"]
+    }
+  ]
+}

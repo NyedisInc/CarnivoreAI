@@ -1,0 +1,42 @@
+{
+  "api_routes": [
+    "GET /api/v1/swarm/cards/board",
+    "GET /api/v1/swarm/cards/{card_id}"
+  ],
+  "area": "drawers",
+  "description": "The first slice of the swarm cards work. A card is a huddle task: nothing is copied and no task row is rewritten. Its board column is worked out from its state, who holds it, whether claude is working it and whether the agent that made it accepted the report: todo, in progress, review or done. The huddle database gains the card columns and tables in one migration that writes no rows, and the server takes a checked copy of the database (huddle.db.pre-cards plus the time) before it runs. One writer in the huddle plugin owns every card change, and a test fails if any other file writes a card column. A new cards push topic tells open browsers to re-read the board. This slice is backend only: the board screen waits for the layout pick.",
+  "docs": [
+    "docs/swarm-cards.md",
+    "docs/task-manager.md"
+  ],
+  "examples": [
+    "Open the board for one project and see which tasks are todo, which an agent holds in progress and which wait in review for your click.",
+    "Open an existing install: the first start after the update leaves a huddle.db.pre-cards copy beside the database, and every task already shows in its column."
+  ],
+  "how_to": [
+    "Call GET /api/v1/swarm/cards/board?scope=sysop to get the four columns with every card, the per project lanes and the through review today figure.",
+    "Add filter=mine to see only the cards you made; agent-made child cards fold under their parent.",
+    "Call GET /api/v1/swarm/cards/{card_id} for one card with its column, holder, children and origin."
+  ],
+  "id": "swarm-cards-c1",
+  "issues": [
+    1383
+  ],
+  "keywords": [
+    "swarm",
+    "cards",
+    "board",
+    "kanban",
+    "huddle",
+    "projection"
+  ],
+  "media_exempt": "backend only; the board UI waits for the layout pick",
+  "name": "swarm cards: the card model and board reads",
+  "since": "2026-10-07",
+  "status": "beta",
+  "summary": "every huddle task now reads as a card with one of four board columns (todo, in progress, review, done), readable through two new routes.",
+  "updated": "2026-10-07",
+  "where": [
+    "Backend only for now: read the board at GET /api/v1/swarm/cards/board with a scope (sysop, a company or a project), and one card at GET /api/v1/swarm/cards/{card_id}. The board screen arrives in a later slice."
+  ]
+}

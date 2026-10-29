@@ -1,0 +1,107 @@
+<h2 class="sg-h2">motion and focus</h2>
+<p class="sg-lead">Two things animate by design: the breathing ring of a running session's light, and the popup focus
+sheen. Everything else moves only enough to explain a change, and every motion stops for
+<code>prefers-reduced-motion</code>.</p>
+
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><span>motion and focus tokens</span></div>
+    <div class="sg-specimen__body">
+        <div class="sg-table-wrap">
+        <table class="sg-table">
+            <thead><tr><th>token</th><th>value</th><th>use</th></tr></thead>
+            <tbody>
+                <tr data-sg-token="--oc-motion-fast"><td><code>--oc-motion-fast</code></td><td class="sg-token__value"></td><td>hover colour, border colour</td></tr>
+                <tr data-sg-token="--oc-motion"><td><code>--oc-motion</code></td><td class="sg-token__value"></td><td>a control changing state</td></tr>
+                <tr data-sg-token="--oc-motion-slow"><td><code>--oc-motion-slow</code></td><td class="sg-token__value"></td><td>a panel opening</td></tr>
+                <tr data-sg-token="--oc-focus-breathe"><td><code>--oc-focus-breathe</code></td><td class="sg-token__value"></td><td>one lap of the popup focus sheen</td></tr>
+            </tbody>
+        </table>
+        </div>
+        <p class="sg-caption">under <code>prefers-reduced-motion: reduce</code> the three motion tokens resolve to 0ms.</p>
+    </div>
+</div>
+
+<dl class="sg-facts">
+    <dt>the ring</dt>
+    <dd>A running session's light breathes; that is the only perpetual animation in a list. It stops for reduced motion and
+        holds at full brightness. See <a href="#status-led">the status light</a>.</dd>
+    <dt>popup focus</dt>
+    <dd>Every floating menu and the selected terminal cell wear <code>.popup-focus</code>
+        (<code>client/css/popup-focus.css</code>): a top-down 1px border drawn by background layers, a short bright arc
+        that travels once around it every 6 seconds, a 5px accent glow and two flat black drop shadows. Opt in with the
+        class; never copy its declarations. A surface that needs its own edge colour sets the <code>--pf-*</code> inputs
+        (the active terminal cell sets its session accent). A surface that stays on screen, the selected terminal cell, adds <code>popup-focus-turn</code> and one <code>&lt;span class="pf-sheen" aria-hidden="true"&gt;</code> child: the arc then rotates with <code>transform</code> only, behind a static 1px mask, so an idle selected terminal costs no layout or repaint (#1809). Reduced motion shows no sheen at all, not a parked one.</dd>
+    <dt>transitions</dt>
+    <dd>Colour, background and border colour on hover over <code>--oc-motion-fast</code>, <code>ease</code>. No transform on
+        hover, no lift, no scale (the old <code>.modal-close:hover</code> scale is legacy). An entering dialog fades 0.2s.</dd>
+    <dt>on-state marks</dt>
+    <dt>focus</dt>
+</dl>
+
+<h3 class="sg-h3" id="motion-pause">animation pause</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>Every infinite animation animates <code>transform</code> or <code>opacity</code> only, so it runs on the compositor.
+        One listener (<code>client/js/animation-pauser.js</code>) marks an animated element that left the viewport with
+        <code>data-anim-offscreen</code>, and <code>client/css/animation-pause.css</code> pauses it
+        (<code>animation-play-state</code>, never <code>animation: none</code>, so it resumes in phase). The same file pauses
+        everything under a <code>visibility: hidden</code> cover: <code>body.menu-page-open</code> over
+        <code>.screen</code>, <code>.header</code> and <code>.config-editor-picker-overlay</code>, an inactive tab body
+        (<code>.oc-tabpane-hidden</code>) and the terminal parking shelf. A new cover that hides a subtree with
+        <code>visibility: hidden</code> is added to that list. A sidebar row (<code>.session-sidebar-row</code>) that is not
+        selected, hovered or focused keeps (<code>client/css/resting-row-effort.css</code>) its effort mark (<code>.session-sidebar-row-model</code>, its
+        <code>.effort-fx</code> sheen and <code>__spark</code>) still, with <code>animation: none</code> and the sheen hidden;
+        only the selected, hovered or focused row moves.</dd>
+</dl>
+<h3 class="sg-h3" id="motion-types">animation types</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>Every animation belongs to one recognizable type (status lights, avatar spiral, terminal ring, dialog glow, effort badges,
+        drawer bands, sparks and steam, busy pulses, attention cues, swarm characters, pop-ins, transitions, layout moves, theme
+        backdrop, cursor blink; the ids are <code>ANIMATION_TYPES</code> in <code>web/src/lib/motion/animation-types.ts</code>).
+        Settings > appearance can switch each off in one browser: <code>data-anim-off="&lt;ids&gt;"</code> on the root, kept in
+        localStorage. <code>client/css/animation-types.css</code> is one rule group per CSS type
+        (<code>animation: none !important</code>; transitions drop <code>transition</code>). <strong>A new animation joins an
+        existing type's selector list there, or becomes a new id in both files</strong>; a JS loop reads the same attribute.</dd>
+</dl>
+<h3 class="sg-h3" id="motion-effort">effort level</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup copied from</span><code>TerminalFoot.svelte</code><span>styles live</span><code>client/css/effort-level.css</code></div>
+    <div class="sg-specimen__body">
+        <span class="effort-level effort--low" title="effort: low">low</span>
+        <span class="effort-level effort--medium" title="effort: medium">medium</span>
+        <span class="effort-level effort--high" title="effort: high">high</span>
+        <span class="effort-level effort--xhigh" title="effort: xhigh">xhigh</span>
+        <span class="effort-level effort--max" title="effort: max">max</span>
+        <span class="effort-level effort--ultracode" title="effort: ultracode">ultracode</span>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>The reasoning effort a session runs at (issue #852): the foot bar's effort text and the drawer's agent robot both
+        wear <code>.effort-level .effort--&lt;level&gt;</code>; the drawer robot also wears
+        <code>.session-sidebar-row-model</code> (an xhigh robot also carries an <code>.effort-fx</code> span, the three sheen windows). Both read one mapping, <code>effortClass(effort)</code>
+        (<code>web/src/lib/effort/effort-level.ts</code>) or <code>EffortLevel.className(effort)</code>
+        (<code>client/js/effort-level.js</code>). low yellow, medium green, high cyan, xhigh light purple with a shimmer (an opacity pulse over a glow; on the robot a bright copy of the drawing revealed through a sliding window),
+        max a rainbow colour cycle (coral, green and cyan copies cross-faded by opacity), ultracode deep purple with a shimmer and two twinkling sparkles.</dd>
+    <dt>a record, never a default</dt>
+    <dd>The level is what the harness wrote (<code>running_model_effort</code> on the listing WRAPPER,
+        <code>effort</code> on the token usage payload). Unknown or absent writes no class, and the element keeps its own
+        colour.</dd>
+    <dt>motion</dt>
+    <dd>On the agent robot, high and xhigh are a steady colour (high its own cost tint, xhigh light purple) with a moving bright sheen (a mask sweep, <code>effort-sheen</code>), never a colour flash. Otherwise a filter and a colour, never a text gradient, so the same class moves an SVG robot stroked in
+        <code>currentColor</code>. Under <code>prefers-reduced-motion</code> every colour stays and every animation and
+        sparkle goes.</dd>
+    <dt>themes</dt>
+    <dd><code>--oc-yellow</code>, <code>--oc-green</code>, <code>--oc-cyan</code>, <code>--oc-coral</code> and the two
+        derived purples, <code>--oc-purple-light</code> and <code>--oc-purple-deep</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="motion-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>Waiting on <code>requestAnimationFrame</code> for work a hidden tab must still do.</strong> A bare rAF never
+        resolves in a background tab (gotcha 9); race a timer (<code>client/js/terminal-layout-wait.js</code>).</li>
+    <li><strong>A new perpetual animation.</strong> One breathing thing per list is the budget. A second one competes with
+        the only signal that means "running".</li>
+    <li><strong>A parked sheen under reduced motion.</strong> A sheen frozen at 0deg reads as a rendering fault; remove it.</li>
+</ul>

@@ -1,0 +1,33 @@
+
+@layer components {
+.session-sidebar-layout__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: var(--oc-radius-sm);
+    color: var(--oc-text-secondary);
+    cursor: pointer;
+    transition: color 120ms ease, background 120ms ease;
+}
+
+.session-sidebar-layout__toggle:hover,
+.session-sidebar-layout__toggle:focus-visible {
+    color: var(--oc-orange);
+    background: var(--oc-ground-hover);
+    outline: none;
+}
+
+.session-sidebar-layout__toggle[aria-expanded="true"] .session-sidebar-group__chevron {
+    transform: rotate(90deg);
+}
+
+/*  hidden  */
+
+}

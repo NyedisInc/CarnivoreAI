@@ -1,0 +1,202 @@
+.pk-sq{position:relative;width:1em;height:1em;font-size:var(--s,48px);flex:none;--c:var(--oc-series-1)}
+.pk-sq>.pk-fx,.pk-sq>.pk-tl{position:absolute;inset:0}
+.pk-sq[data-tile]::before{content:'';position:absolute;inset:-.14em;border-radius:.12em;background:var(--tile);box-shadow:inset 0 0 0 1px var(--tile)}
+.pk-fx{pointer-events:none}
+.pk-tl{transform:perspective(4em) rotateY(calc(var(--gx,0)*10deg)) rotateX(calc(var(--gy,0)*-8deg));transition:transform .32s cubic-bezier(.3,.7,.3,1)}
+.pk-mv,.pk-sz{position:absolute;inset:0}
+.pk-mv{transform-origin:50% 100%;transform:translateY(calc(var(--qy,0)*1em)) rotate(calc(var(--qr,0)*1deg));transition:transform .2s ease-out}
+.pk-sz{transform-origin:50% 100%;transform:scale(var(--qsx,1),var(--qsy,1));transition:transform .2s ease-out}
+.pk-sq svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;display:block}
+.pk-shp{fill:var(--c)}
+.pk-cr{position:absolute;inset:0}
+.pk-cor{opacity:0;transform-origin:50% 50%}
+.pk-cor use{fill:var(--c)}
+.pk-ey{position:absolute;left:0;right:0;top:.29em;height:.24em;transform:translate(calc(var(--gx,0)*.07em),calc(var(--gy,0)*.06em));transition:transform .18s ease-out}
+.pk-ex{display:flex;justify-content:center;gap:.22em;height:100%;transform-origin:50% 50%;transition:transform .25s ease-out,opacity .2s}
+.pk-e{display:block;width:.1em;height:100%;border-radius:.05em;background:var(--oc-on-accent);transform:scaleY(var(--bl,1));transition:transform 70ms,translate .2s ease-out,rotate .2s ease-out,scale .2s ease-out}
+.pk-e:first-child{translate:calc(var(--fl-x,0)*1em) calc(var(--fl-y,0)*1em);rotate:calc(var(--fl-r,0)*1deg);scale:var(--fl-sx,1) var(--fl-sy,1);clip-path:var(--fl-clip,none);background:var(--fl-bg,var(--oc-on-accent))}
+.pk-e:last-child{translate:calc(var(--fr-x,0)*1em) calc(var(--fr-y,0)*1em);rotate:calc(var(--fr-r,0)*1deg);scale:var(--fr-sx,1) var(--fr-sy,1);clip-path:var(--fr-clip,none);background:var(--fr-bg,var(--oc-on-accent))}
+.pk-sq[data-fm]:not([data-still]) .pk-ex{animation-duration:var(--fd,1.8s);animation-timing-function:ease-in-out;animation-fill-mode:both}
+.pk-sq[data-fm="sweep"] .pk-ex{animation-name:pk-m-sweep}
+.pk-sq[data-fm="dart"] .pk-ex{animation-name:pk-m-dart}
+.pk-sq[data-fm="roll"] .pk-ex{animation-name:pk-m-roll}
+.pk-sq[data-fm="orbit"] .pk-ex{animation-name:pk-m-orbit}
+.pk-sq[data-fm="shake"] .pk-ex{animation-name:pk-m-shake}
+.pk-sq[data-fm="bob"] .pk-ex{animation-name:pk-m-bob}
+.pk-sq[data-fm="pulse"] .pk-ex{animation-name:pk-m-pulse}
+.pk-sq[data-fm="twinkle"] .pk-ex{animation-name:pk-m-twinkle}
+.pk-sq[data-fm="tilt"] .pk-ex{animation-name:pk-m-tilt}
+.pk-sq[data-fm="droop"] .pk-ex{animation-name:pk-m-droop}
+.pk-sq[data-fm="sob"] .pk-ex{animation-name:pk-m-sob}
+.pk-sq[data-fm="glance"] .pk-ex{animation-name:pk-m-glance}
+.pk-sq[data-fm="sigh"] .pk-ex{animation-name:pk-m-sigh}
+.pk-sq[data-fm="lift"] .pk-ex{animation-name:pk-m-lift}
+@keyframes pk-m-sweep{0%,100%{translate:0 0}30%{translate:-.07em 0}70%{translate:.07em 0}}
+@keyframes pk-m-dart{0%,100%{translate:0 0}12%{translate:-.08em .02em}26%{translate:.08em -.03em}40%{translate:-.05em -.04em}55%{translate:.07em .03em}70%{translate:-.08em 0}85%{translate:.04em -.02em}}
+@keyframes pk-m-roll{0%,100%{translate:0 0}12%{translate:-.08em 0}25%{translate:-.06em -.06em}38%{translate:0 -.09em}50%{translate:.06em -.06em}62%{translate:.08em 0}75%{translate:.05em .05em}88%{translate:0 0}}
+@keyframes pk-m-orbit{0%,100%{translate:0 -.05em}25%{translate:.05em 0}50%{translate:0 .05em}75%{translate:-.05em 0}}
+@keyframes pk-m-shake{0%,100%{translate:0 0}8%{translate:-.025em 0}16%{translate:.025em 0}24%{translate:-.02em 0}32%{translate:.02em 0}40%{translate:-.025em 0}48%{translate:.025em 0}56%{translate:-.02em 0}64%{translate:.02em 0}72%{translate:-.015em 0}80%{translate:.015em 0}}
+@keyframes pk-m-bob{0%,100%{translate:0 0}20%{translate:0 -.05em}40%{translate:0 .01em}60%{translate:0 -.05em}80%{translate:0 .01em}}
+@keyframes pk-m-pulse{0%,100%{scale:1}20%{scale:1.22}40%{scale:.94}60%{scale:1.22}80%{scale:.94}}
+@keyframes pk-m-twinkle{0%,100%{scale:1;rotate:0deg}25%{scale:1.2;rotate:-14deg}50%{scale:.9;rotate:0deg}75%{scale:1.2;rotate:14deg}}
+@keyframes pk-m-tilt{0%,100%{rotate:0deg}25%{rotate:-9deg}70%{rotate:7deg}}
+@keyframes pk-m-droop{0%{translate:0 0}60%,100%{translate:0 .06em}}
+@keyframes pk-m-sob{0%,100%{translate:0 0}10%{translate:0 .025em}20%{translate:0 -.005em}30%{translate:0 .025em}40%{translate:0 -.005em}50%{translate:0 .025em}60%{translate:0 -.005em}70%{translate:0 .025em}80%{translate:0 0}}
+@keyframes pk-m-glance{0%,100%{translate:0 0}25%,70%{translate:.07em .02em}}
+@keyframes pk-m-sigh{0%,100%{translate:0 0}40%,60%{translate:0 .05em}}
+@keyframes pk-m-lift{0%,100%{translate:0 0}30%,70%{translate:0 -.05em}}
+.pk-orb{position:absolute;left:50%;top:50%;width:calc(var(--r)*1em);height:calc(var(--r)*1em);margin:calc(var(--r)*-.5em) 0 0 calc(var(--r)*-.5em);transform:perspective(5em) rotate(var(--t)) rotateX(var(--rx))}
+.pk-spin{position:absolute;inset:0;transform:rotate(var(--a0));animation:pk-k-spin var(--d) linear infinite;animation-direction:var(--dir)}
+.pk-orb use{fill:var(--k)}
+.pk-fxf .pk-orb{clip-path:inset(50% 0 0 0)}
+.pk-fxf .pk-orb use{stroke:var(--pk-kl,var(--oc-ground-panel));stroke-width:4;paint-order:stroke;stroke-linejoin:round}
+.pk-cm{position:absolute;left:.36em;top:-.08em;width:.28em;height:.7em;opacity:0}
+.pk-cm use{fill:var(--c)}
+.pk-tk{position:absolute;left:50%;top:56%;width:.1em;height:.1em;margin:-.05em 0 0 -.05em;border-radius:50%;background:var(--c);opacity:0}
+
+@keyframes pk-k-spin{from{transform:rotate(var(--a0))}to{transform:rotate(calc(var(--a0) + 360deg))}}
+@keyframes pk-k-in{from{opacity:0}to{opacity:1}}
+
+.pk-gw{position:absolute;inset:0;border-radius:.22em;box-shadow:0 0 .12em .07em color-mix(in srgb,var(--gc) 85%,transparent);pointer-events:none;animation:pk-k-in .7s both}
+.pk-sq:not([data-shape="sq"]) .pk-gw{box-shadow:none}
+.pk-sq:not([data-shape="sq"]) .pk-gw ~ .pk-bd{filter:drop-shadow(0 0 .07em color-mix(in srgb,var(--gc) 85%,transparent)) drop-shadow(0 0 .05em var(--gc))}
+.pk-dt{position:absolute;left:50%;top:50%;width:.2em;height:.2em;margin:-.1em 0 0 -.1em;border-radius:50%;background:var(--c);opacity:0}
+.pk-dt.pk-dm{width:.26em;height:.26em;margin:-.13em 0 0 -.13em}
+.pk-rip{fill:none;stroke:var(--oc-ground-panel);stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}
+.pk-gl{fill:none;stroke:var(--oc-text-dim);stroke-width:3;stroke-linecap:round}
+.pk-rip,.pk-gl{animation:pk-k-in .4s .7s backwards}
+
+.pk-sq[data-state="working"]:not([data-still]) .pk-mv{transform-origin:50% 50%;animation:pk-k-think 1.5s cubic-bezier(.3,.7,.3,1) both}
+@keyframes pk-k-think{0%{transform:scale(1);opacity:1}12%{transform:scale(.24);opacity:1}16%{transform:scale(.2);opacity:0}74%{transform:scale(.2);opacity:0}80%{transform:scale(.5);opacity:1}90%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+.pk-sq[data-state="working"]:not([data-still]) .pk-dt{animation:pk-k-dot 1.5s cubic-bezier(.3,.7,.3,1) both;animation-delay:var(--dl)}
+@keyframes pk-k-dot{0%{opacity:0;transform:translateX(0) scale(.2)}14%{opacity:var(--o);transform:translateX(var(--x)) scale(1)}28%{opacity:1;transform:translateX(var(--x)) scale(1.2)}40%{opacity:var(--o);transform:translateX(var(--x)) scale(1)}54%{opacity:1;transform:translateX(var(--x)) scale(1.2)}66%{opacity:var(--o);transform:translateX(var(--x)) scale(1)}78%{opacity:var(--o);transform:translateX(0) scale(.6)}86%,100%{opacity:0;transform:translateX(0) scale(.3)}}
+.pk-sq[data-state="working"]:not([data-still]) .pk-orb{animation:pk-k-in .5s 1.25s both}
+.pk-sq[data-state="working_subagent"]:not([data-still]) .pk-mv{transform-origin:50% 50%;animation:pk-k-spin1 1.6s cubic-bezier(.55,0,.3,1) both}
+@keyframes pk-k-spin1{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.pk-sq[data-state="working_subagent"]:not([data-still]) .pk-orb{animation:pk-k-fling .7s cubic-bezier(.2,.9,.3,1.15) both;animation-delay:calc(.55s + var(--i) * .1s)}
+@keyframes pk-k-fling{from{opacity:0;scale:.35}to{opacity:1;scale:1}}
+.pk-sq[data-state="question"]:not([data-still]) .pk-mv{transform-origin:50% 86%;animation:pk-k-qwob 2.2s ease-in-out both,pk-k-nudge 6s 2.2s ease-in-out infinite}
+@keyframes pk-k-nudge{0%,62%{transform:none}66%{transform:translateY(-.08em) rotate(-9deg)}71%{transform:rotate(7deg)}76%{transform:rotate(-4deg)}81%{transform:rotate(2deg)}86%,100%{transform:none}}
+@keyframes pk-k-qwob{0%,16%{transform:rotate(0)}24%{transform:rotate(-14deg)}34%{transform:rotate(11deg)}44%{transform:rotate(-8deg)}54%{transform:rotate(5deg)}64%{transform:rotate(-2deg)}72%,100%{transform:rotate(0)}}
+.pk-sq[data-state="question"]:not([data-still]) .pk-sz{animation:pk-k-pop 2.2s ease-out both}
+@keyframes pk-k-pop{0%{transform:scale(1)}7%{transform:scale(1.08,.9)}14%{transform:scale(.94,1.08)}22%,100%{transform:scale(1)}}
+.pk-sq[data-state="question"]:not([data-still]) .pk-ex{animation:pk-k-eyesoff 2.2s linear both}
+@keyframes pk-k-eyesoff{0%{opacity:1}7%,100%{opacity:0}}
+.pk-sq[data-state="question"] .pk-ex{opacity:0}
+.pk-sq[data-state="notice"]:not([data-still]) .pk-sz{animation:pk-k-perk 1.3s cubic-bezier(.3,.7,.3,1) both}
+@keyframes pk-k-perk{0%{transform:scale(1)}12%{transform:scale(1.1,.86)}30%{transform:scale(.9,1.16)}46%{transform:scale(1.04,.97)}60%,100%{transform:scale(1)}}
+.pk-sq[data-state="notice"]:not([data-still]) .pk-mv{animation:pk-k-perkhop 1.3s cubic-bezier(.3,.7,.3,1) both}
+@keyframes pk-k-perkhop{0%,12%{transform:translateY(0)}30%{transform:translateY(-.08em)}46%,100%{transform:translateY(0)}}
+.pk-sq[data-state="notice"]:not([data-still]) .pk-ex{animation:pk-k-wide 1.3s ease-out both}
+@keyframes pk-k-wide{0%{transform:scale(1)}28%{transform:scale(1.34)}60%,100%{transform:scale(1.12)}}
+.pk-sq[data-still][data-state="notice"] .pk-sz{transform:scale(.9,1.16)}
+.pk-sq[data-still][data-state="notice"] .pk-ex{transform:scale(1.3)}
+.pk-sq[data-state="finished_unread"] .pk-ex{transform:scaleY(.72)}
+.pk-sq[data-state="finished_unread"]:not([data-still]) .pk-sz{animation:pk-k-hopsz 1.1s ease-out both}
+@keyframes pk-k-hopsz{0%{transform:scale(1)}12%{transform:scale(1.12,.84)}26%{transform:scale(.92,1.1)}50%{transform:scale(.97,1.04)}62%{transform:scale(1.1,.88)}76%{transform:scale(.98,1.02)}88%,100%{transform:scale(1)}}
+.pk-sq[data-state="finished_unread"]:not([data-still]) .pk-mv{animation:pk-k-hopmv 1.1s cubic-bezier(.3,.6,.4,1) both}
+@keyframes pk-k-hopmv{0%,12%{transform:translateY(0)}38%{transform:translateY(-.2em)}60%,100%{transform:translateY(0)}}
+.pk-sq[data-still][data-state="finished_unread"] .pk-sz{transform:scale(1.05,.95)}
+.pk-sq[data-state="dead"] .pk-shp{fill:var(--oc-text-dim)}
+.pk-sq[data-state="dead"] .pk-ex{opacity:0}
+.pk-sq[data-state="dead"]:not([data-still]) .pk-ex{animation:pk-k-eyeout .5s ease-in backwards}
+@keyframes pk-k-eyeout{from{opacity:1}to{opacity:0}}
+.pk-sq[data-state="unknown"] .pk-shp{fill:none;stroke:var(--c);stroke-width:5;stroke-dasharray:10 7;stroke-linecap:round}
+.pk-sq[data-state="unknown"] .pk-ex{opacity:0}
+.pk-sq[data-state="asleep"] .pk-sz{transform:scale(calc(1.05 * var(--qsx,1)),calc(.9 * var(--qsy,1)));transition:transform 1.4s ease-in-out}
+.pk-sq[data-state="asleep"] .pk-ex{transform:translateY(.03em) scaleY(.14)}
+.pk-sq[data-state="asleep"]:not([data-still]) .pk-sz{animation:pk-k-sink 1.4s ease-in-out backwards}
+@keyframes pk-k-sink{0%{transform:scale(1)}50%{transform:scale(1,.97)}100%{transform:scale(1.05,.9)}}
+.pk-sq[data-state="asleep"]:not([data-still]) .pk-ex{animation:pk-k-droop 1.4s ease-in-out backwards}
+@keyframes pk-k-droop{0%{transform:scaleY(1)}30%{transform:scaleY(.45)}42%{transform:scaleY(.6)}70%,100%{transform:translateY(.03em) scaleY(.14)}}
+.pk-sq[data-state="startup_gate"] .pk-ex{opacity:0}
+.pk-sq[data-state="startup_gate"] .pk-sz{transform-origin:50% 87%}
+.pk-sq[data-state="startup_gate"]:not([data-still]) .pk-mv{animation:pk-k-knock 2.8s ease-in-out infinite}
+@keyframes pk-k-knock{0%{transform:translateY(0)}5%{transform:translateY(-.1em)}10%{transform:translateY(0)}15%{transform:translateY(-.07em)}20%,100%{transform:translateY(0)}}
+.pk-sq[data-state="startup_gate"]:not([data-still]) .pk-sz{animation:pk-k-knocksz 2.8s ease-in-out infinite}
+@keyframes pk-k-knocksz{0%{transform:scale(1)}3%{transform:scale(.92,1.08)}10%{transform:scale(1.1,.9)}13%{transform:scale(.95,1.05)}20%{transform:scale(1.08,.93)}24%,100%{transform:scale(1)}}
+.pk-sq[data-state="question_waiting"] .pk-mv{transform-origin:50% 96%;transform:rotate(-6deg)}
+.pk-sq[data-state="question_waiting"]:not([data-still]) .pk-mv{animation:pk-k-lean .6s ease-out both,pk-k-sway 3.2s .6s ease-in-out infinite}
+@keyframes pk-k-lean{from{transform:rotate(0)}to{transform:rotate(-6deg)}}
+@keyframes pk-k-sway{0%{transform:rotate(-6deg)}10%{transform:rotate(-13deg)}22%{transform:rotate(1deg)}32%{transform:rotate(-8deg)}40%,100%{transform:rotate(-6deg)}}
+.pk-sq[data-state="done"]:not([data-still]) .pk-mv{transform-origin:50% 50%;animation:pk-k-donemv 1.5s cubic-bezier(.35,.6,.35,1) both}
+@keyframes pk-k-donemv{0%,12%{transform:translateY(0) rotate(0)}30%{transform:translateY(-.3em) rotate(60deg)}46%{transform:translateY(-.36em) rotate(270deg)}62%,100%{transform:translateY(0) rotate(360deg)}}
+.pk-sq[data-state="done"]:not([data-still]) .pk-sz{animation:pk-k-donesz 1.5s ease-out both}
+@keyframes pk-k-donesz{0%{transform:scale(1)}10%{transform:scale(1.12,.85)}22%{transform:scale(.9,1.12)}40%,60%{transform:scale(1)}66%{transform:scale(1.14,.84)}78%{transform:scale(.96,1.04)}90%,100%{transform:scale(1)}}
+.pk-sq[data-state="done"]:not([data-still]) .pk-ex{animation:pk-k-happy 1.5s linear both}
+@keyframes pk-k-happy{0%,62%{transform:scaleY(1)}66%,92%{transform:scaleY(.3)}100%{transform:scaleY(1)}}
+.pk-sq[data-still][data-state="done"] .pk-mv{transform:translateY(-.18em)}
+.pk-sq[data-still][data-state="done"] .pk-sz{transform:scale(.94,1.08)}
+.pk-sq[data-still][data-state="done"] .pk-ex{transform:scaleY(.32)}
+.pk-sq[data-state="talking"] .pk-tl{transform:perspective(4em) rotateY(calc(var(--side,1) * 24deg));transition:none}
+.pk-sq[data-state="talking"]:not([data-still]) .pk-sz{animation:pk-k-talk 2.4s ease-in-out infinite;animation-delay:var(--td,0s)}
+@keyframes pk-k-talk{0%{transform:scale(1)}6%{transform:scale(1.05,.95)}12%{transform:scale(.97,1.04)}18%{transform:scale(1.05,.95)}24%{transform:scale(.97,1.04)}30%{transform:scale(1.04,.96)}38%,100%{transform:scale(1)}}
+.pk-sq[data-state="talking"]:not([data-still]) .pk-tk{animation:pk-k-say 2.4s ease-out infinite;animation-delay:var(--td,0s)}
+@keyframes pk-k-say{0%,8%{opacity:0;transform:translateX(calc(var(--side,1) * .5em))}12%{opacity:1}36%{opacity:1;transform:translateX(calc(var(--side,1) * .86em))}42%,100%{opacity:0;transform:translateX(calc(var(--side,1) * .92em))}}
+.pk-sq[data-state="escalating"]:not([data-still]) .pk-cm{animation:pk-k-up 3s cubic-bezier(.5,0,.75,.4) infinite}
+@keyframes pk-k-up{0%,9.6%{opacity:0;transform:translateY(.12em) scale(.5)}12.8%{opacity:1;transform:translateY(0) scale(1)}38.4%{opacity:1;transform:translateY(-1.05em) scale(1)}44.8%,100%{opacity:0;transform:translateY(-1.45em) scale(.8)}}
+.pk-sq[data-state="escalating"]:not([data-still]) .pk-sz{animation:pk-k-launch 3s ease-out infinite}
+@keyframes pk-k-launch{0%{transform:scale(1)}7.47%{transform:scale(1.1,.86)}12.8%{transform:scale(.93,1.1)}21.33%{transform:scale(1.02,.98)}27.73%,100%{transform:scale(1)}}
+.pk-sq[data-still][data-state="escalating"] .pk-cm{opacity:1;transform:translateY(-.5em)}
+.pk-sq[data-state="learning"] .pk-cm svg{transform:rotate(180deg)}
+.pk-sq[data-state="learning"]:not([data-still]) .pk-cm{animation:pk-k-down 3s cubic-bezier(.45,0,.8,.5) infinite}
+@keyframes pk-k-down{0%{opacity:0;transform:translateY(-1.5em)}6%{opacity:1}21.6%{opacity:1;transform:translateY(-.5em)}25.2%,100%{opacity:0;transform:translateY(-.4em)}}
+.pk-sq[data-state="learning"]:not([data-still]) .pk-sz{animation:pk-k-gulp 3s ease-out infinite}
+@keyframes pk-k-gulp{0%,21.6%{transform:scale(1)}26.4%{transform:scale(1.1,.86)}32.4%{transform:scale(.96,1.05)}37.2%,100%{transform:scale(1)}}
+.pk-sq[data-state="learning"]:not([data-still]) .pk-mv{animation:pk-k-tilt 3s ease-in-out infinite}
+@keyframes pk-k-tilt{0%,33.6%{transform:rotate(0)}40.8%,51.6%{transform:rotate(-9deg)}60%,100%{transform:rotate(0)}}
+.pk-sq[data-state="learning"]:not([data-still]) .pk-ex{animation:pk-k-blinkin 3s linear infinite}
+@keyframes pk-k-blinkin{0%,22.8%{transform:scaleY(1)}26.4%,31.2%{transform:scaleY(.18)}34.8%,100%{transform:scaleY(1)}}
+.pk-sq[data-still][data-state="learning"] .pk-mv{transform:rotate(-9deg)}
+.pk-sq[data-state="promoted"]:not([data-still]) .pk-sz{animation:pk-k-grow 1.9s cubic-bezier(.3,.7,.3,1) both}
+@keyframes pk-k-grow{0%{transform:scale(1)}5%{transform:scale(1.06,.9)}12%,20%{transform:scale(1.1)}25%{transform:scale(1.16,1.02)}32%,40%{transform:scale(1.2)}45%{transform:scale(1.26,1.12)}52%,72%{transform:scale(1.3)}82%{transform:scale(.95,1.03)}91%{transform:scale(1.02,.99)}100%{transform:scale(1)}}
+.pk-sq[data-state="promoted"]:not([data-still]) .pk-ex{animation:pk-k-proud 1.9s ease-out both}
+@keyframes pk-k-proud{0%{transform:scale(1)}14%,74%{transform:scale(1.14)}100%{transform:scale(1)}}
+.pk-sq[data-still][data-state="promoted"] .pk-sz{transform:scale(1.24)}
+.pk-sq[data-state^="alert"] .pk-cor{opacity:1}
+.pk-sq[data-state="alert_immediate"] .pk-ex{transform:scale(1.2)}
+.pk-sq[data-state="alert_flash"] .pk-ex{transform:scale(1.36)}
+.pk-sq[data-state="alert_routine"]:not([data-still]) .pk-sz{animation:pk-k-breath 2.4s ease-in-out both}
+@keyframes pk-k-breath{0%{transform:scale(1)}40%{transform:scale(1.035)}80%,100%{transform:scale(1)}}
+.pk-sq[data-state="alert_routine"]:not([data-still]) .pk-cor{animation:pk-k-bristle 2.4s ease-in-out both}
+@keyframes pk-k-bristle{0%{opacity:0;scale:.94}40%{opacity:1;scale:1.02}80%,100%{opacity:1;scale:1}}
+.pk-sq[data-state="alert_priority"]:not([data-still]) .pk-cor{animation:pk-k-grow2 .5s cubic-bezier(.2,.9,.3,1.3) both,pk-k-pulse 3.2s .5s ease-in-out infinite}
+@keyframes pk-k-grow2{from{opacity:0;scale:.78}to{opacity:1;scale:1}}
+@keyframes pk-k-pulse{0%{scale:1}8%{scale:1.08}16%{scale:.97}24%{scale:1.08}34%,100%{scale:1}}
+.pk-sq[data-state="alert_immediate"]:not([data-still]) .pk-cor{animation:pk-k-snap .35s cubic-bezier(.2,.9,.3,1.4) both}
+@keyframes pk-k-snap{from{opacity:0;scale:.68}to{opacity:1;scale:1}}
+.pk-sq[data-state="alert_immediate"]:not([data-still]) .pk-mv{transform-origin:50% 50%;animation:pk-k-shake 1.8s linear .35s infinite}
+@keyframes pk-k-shake{0%{transform:none}4%{transform:translateX(-.05em) rotate(-5deg)}8%{transform:translateX(.05em) rotate(5deg)}12%{transform:translateX(-.045em) rotate(-4deg)}16%{transform:translateX(.04em) rotate(4deg)}20%{transform:translateX(-.03em) rotate(-2.5deg)}24%{transform:translateX(.02em) rotate(1.5deg)}30%,100%{transform:none}}
+.pk-sq[data-state="alert_flash"]{z-index:5}
+.pk-sq[data-state="alert_flash"] .pk-tl{transform:scale(1.3);transition:none}
+.pk-sq[data-state="alert_flash"]:not([data-still]) .pk-mv{transform-origin:50% 50%;animation:pk-k-freak .36s steps(1,end) infinite}
+@keyframes pk-k-freak{0%{transform:translate(.03em,-.02em) rotate(-4deg)}17%{transform:translate(-.04em,.03em) rotate(5deg)}33%{transform:translate(.04em,.02em) rotate(-6deg)}50%{transform:translate(-.03em,-.03em) rotate(3deg)}67%{transform:translate(.02em,.04em) rotate(-5deg)}83%{transform:translate(-.04em,-.01em) rotate(6deg)}100%{transform:translate(.03em,-.02em) rotate(-4deg)}}
+.pk-sq[data-state="alert_flash"]:not([data-still]) .pk-cor{animation:pk-k-flare .5s ease-in-out infinite alternate}
+@keyframes pk-k-flare{from{scale:.96;rotate:-5deg}to{scale:1.08;rotate:5deg}}
+
+.pk-sq[data-pack="pixel"] .pk-e,.pk-sq[data-pack="pixel"] .pk-tk,.pk-sq[data-pack="pixel"] .pk-dt{border-radius:0}
+.pk-sq[data-pack="pixel"] svg{shape-rendering:crispEdges}
+.pk-sq[data-pack="pixel"] *{animation-timing-function:steps(3,end)!important}
+.pk-sq[data-pack="pixel"] .pk-spin{animation-timing-function:steps(12,end)!important}
+.pk-sq[data-pack="pixel"]:not([data-state="alert_flash"]) .pk-tl{transform:none}
+.pk-sq[data-pack="pixel"] .pk-ey{transition-timing-function:steps(2,end)}
+.pk-sq[data-pack="pixel"] .pk-e{transition-timing-function:steps(2,end)}
+.pk-sq[data-pack="pixel"] .pk-gw{border-radius:.08em;box-shadow:0 0 0 .07em var(--gc)}
+.pk-sq[data-pack="pixel"] .pk-rip,.pk-sq[data-pack="pixel"] .pk-gl{stroke-linecap:butt;stroke-linejoin:miter}
+
+/*  hidden  animation:none */
+:root[data-paused] .pk-sq,:root[data-paused] .pk-sq *{animation-play-state:paused!important}
+.pk-sq[data-still],.pk-sq[data-still] *{animation:none!important;transition:none!important}
+
+.pk-defs{position:absolute;width:0;height:0;overflow:hidden}
+
+[data-swarm-roll]{--pk-roll:var(--oc-line-rule);border-color:var(--pk-roll)!important;background:color-mix(in oklab,var(--pk-roll) 14%,transparent)}
+[data-swarm-roll="working"]{--pk-roll:var(--oc-green)}
+[data-swarm-roll="question"],[data-swarm-roll="startup_gate"]{--pk-roll:var(--oc-yellow)}
+[data-swarm-roll="notice"]{--pk-roll:var(--oc-cyan)}
+[data-swarm-roll="finished_unread"]{--pk-roll:var(--oc-green-dim)}
+[data-swarm-roll="dead"]{--pk-roll:var(--oc-coral)}
+[data-swarm-roll="idle"]{background:none}
+@media (prefers-reduced-motion:no-preference){[data-swarm-roll="working"]{animation:pk-roll-breathe 2.4s ease-in-out infinite}}
+@keyframes pk-roll-breathe{0%,100%{opacity:1}50%{opacity:.55}}
+.pk-swatch{display:inline-block;width:10px;height:10px;border-radius:2px;box-shadow:inset 0 0 0 1px var(--oc-line-rule);vertical-align:middle}

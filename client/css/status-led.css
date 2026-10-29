@@ -1,0 +1,289 @@
+@layer legacy {
+/* box-shadow */
+
+.status-led {
+    --led-color-working: var(--color-success, #4ade80);
+
+    /* --color- */
+    --led-color-waiting: var(--color-warning, #fbbf24);
+    --led-color-permission: var(--color-warning, #fbbf24);
+
+    /* LIGHT BLUE - still working, and asking for the user. A Notification
+     * does not stop the agent, so it may not paint the "stopped" yellow,
+     * and it is not resting, so it may not paint grey.
+     *
+     * WHY BLUE AND NOT A THIRD WARM HUE. This light has to be told apart
+     * from green by people who cannot tell red from green: under both
+     * protanopia and deuteranopia the green (#4ade80) desaturates toward
+     * a pale yellow-khaki while a blue at this wavelength stays plainly
+     * blue, so the pair survives. A warm hue would not have.
+     * --color-info (#4fc1ff) is the palette's existing light blue. */
+    --led-color-notice: var(--color-info, #4fc1ff);
+
+    /* --color- */
+    --led-color-idle: var(--color-fg-muted, #8b8b8b);
+    --led-color-unknown: var(--color-fg-muted, #8b8b8b);
+
+    --led-color-dead: #494c4f;
+    --led-color-disconnected: var(--color-danger, #ff4444);
+
+    --led-color-limit: var(--color-danger, #ff4444);
+
+    --led-color-unread: var(--color-success, #4ade80);
+
+    --led-size: 9px;
+    --led-ring-width: 0px;
+    --led-ring-feather-blur: 0px;
+    --led-ring-feather-fraction: 0;
+    --led-glow-blur: 0px;
+    --led-glow-spread: 0px;
+
+    --led-glow-rest: 0.4;
+
+    --led-ink: var(--led-color-unknown);
+    --led-ring-ink: var(--led-color-unknown);
+    --led-ring-alpha: 30%;
+    --led-glow-alpha: 0%;
+
+    --led-fill: var(--led-ink);
+
+    /* box-shadow */
+    --led-hollow-width: 2px;
+    --led-inset-ring: inset 0 0 0 0 transparent;
+
+    /* box-shadow */
+    --led-ring-layer: 0 0 0 var(--led-ring-width)
+        color-mix(in srgb, var(--led-ring-ink) var(--led-ring-alpha), transparent);
+    --led-ring-feather-layer: 0 0 var(--led-ring-feather-blur) var(--led-ring-width)
+        color-mix(
+            in srgb,
+            var(--led-ring-ink) calc(var(--led-ring-alpha) * var(--led-ring-feather-fraction)),
+            transparent
+        );
+    --led-glow-layer: 0 0 var(--led-glow-blur) var(--led-glow-spread)
+        color-mix(in srgb, var(--led-ring-ink) var(--led-glow-alpha), transparent);
+    --led-glow-layer-rest: 0 0 var(--led-glow-blur)
+        calc(var(--led-glow-spread) * var(--led-glow-rest))
+        color-mix(
+            in srgb,
+            var(--led-ring-ink) calc(var(--led-glow-alpha) * var(--led-glow-rest)),
+            transparent
+        );
+
+    display: inline-block;
+    flex-shrink: 0;
+    /* position: absolute position: relative */
+    position: relative;
+    width: var(--led-size);
+    height: var(--led-size);
+    border-radius: var(--radius-full);
+    background-color: var(--led-fill);
+    /* box-shadow */
+    box-shadow: var(--led-inset-ring), var(--led-ring-layer), var(--led-ring-feather-layer),
+        var(--led-glow-layer);
+}
+
+
+.status-led[data-inner='working'] {
+    --led-ink: var(--led-color-working);
+}
+
+.status-led[data-inner='waiting-permission'] {
+    --led-ink: var(--led-color-permission);
+}
+
+.status-led[data-inner='waiting-input'] {
+    --led-ink: var(--led-color-waiting);
+}
+
+.status-led[data-inner='notice'] {
+    --led-ink: var(--led-color-notice);
+}
+
+.status-led[data-inner='idle'] {
+    --led-ink: var(--led-color-idle);
+}
+
+.status-led[data-inner='done'] {
+    --led-ink: var(--led-color-idle);
+}
+
+.status-led[data-inner='dead'] {
+    --led-ink: var(--led-color-dead);
+}
+
+.status-led[data-inner='disconnected'] {
+    --led-ink: var(--led-color-disconnected);
+}
+
+/* --color- position: relative */
+.status-led[data-inner='working'],
+.status-led[data-inner='waiting-permission'],
+.status-led[data-inner='waiting-input'],
+.status-led[data-inner='asleep'],
+.status-led[data-inner='asleep-unread'],
+.status-led[data-inner='limit'] {
+    --led-fill: transparent;
+}
+
+.status-led[data-inner='working']::after,
+.status-led[data-inner='waiting-permission']::after,
+.status-led[data-inner='waiting-input']::after,
+.status-led[data-inner='asleep']::after,
+.status-led[data-inner='asleep-unread']::after,
+.status-led[data-inner='limit']::after {
+    content: '';
+    display: block;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-color: var(--led-ink);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+}
+
+.status-led[data-inner='working']::after {
+    /* The owner's supplied artwork, unaltered: viewBox 0 0 24 24, an
+     * open arc rather than a closed ring. Rotation is set where its
+     * @keyframes status-led-spin is declared, in the motion section
+     * below - not here, so the whole animation stays in one place. */
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M12,23a9.63,9.63,0,0,1-8-9.5,9.51,9.51,0,0,1,6.79-9.1A1.66,1.66,0,0,0,12,2.81h0a1.67,1.67,0,0,0-1.94-1.64A11,11,0,0,0,12,23Z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M12,23a9.63,9.63,0,0,1-8-9.5,9.51,9.51,0,0,1,6.79-9.1A1.66,1.66,0,0,0,12,2.81h0a1.67,1.67,0,0,0-1.94-1.64A11,11,0,0,0,12,23Z'/%3E%3C/svg%3E");
+}
+
+.status-led[data-inner='waiting-permission']::after,
+.status-led[data-inner='waiting-input']::after {
+    /* padding */
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8,7 C8,3.5 10.2,1.8 12.3,1.8 C15,1.8 17.3,3.6 17.3,6.8 C17.3,9.6 15.3,10.6 13.6,12 C12.4,13 12,13.9 12,15.6' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='12' cy='21' r='2.05' fill='white'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8,7 C8,3.5 10.2,1.8 12.3,1.8 C15,1.8 17.3,3.6 17.3,6.8 C17.3,9.6 15.3,10.6 13.6,12 C12.4,13 12,13.9 12,15.6' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='12' cy='21' r='2.05' fill='white'/%3E%3C/svg%3E");
+}
+
+/* running sessions */
+.status-led[data-inner='asleep'] {
+    --led-ink: var(--led-color-idle);
+}
+
+.status-led[data-inner='asleep-unread'] {
+    --led-ink: var(--led-color-unread);
+}
+
+.status-led[data-inner='asleep']::after,
+.status-led[data-inner='asleep-unread']::after {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M21.5 14.6A10 10 0 0 1 9.4 2.5a10 10 0 1 0 12.1 12.1Z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M21.5 14.6A10 10 0 0 1 9.4 2.5a10 10 0 1 0 12.1 12.1Z'/%3E%3C/svg%3E");
+}
+
+.status-led[data-inner='limit'] {
+    --led-ink: var(--led-color-limit);
+}
+
+.status-led[data-inner='limit']::after {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='3 2.5 18 18'%3E%3Cpath fill='white' fill-rule='evenodd' d='M12 3.5c-4.4 0-7.5 3-7.5 7.2 0 2.3 1 4 2.5 5v2.8h10v-2.8c1.5-1 2.5-2.7 2.5-5 0-4.2-3.1-7.2-7.5-7.2ZM7.4 11a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0-3.2 0ZM13.4 11a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0-3.2 0ZM12 13.2l-.9 1.7h1.8Z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='3 2.5 18 18'%3E%3Cpath fill='white' fill-rule='evenodd' d='M12 3.5c-4.4 0-7.5 3-7.5 7.2 0 2.3 1 4 2.5 5v2.8h10v-2.8c1.5-1 2.5-2.7 2.5-5 0-4.2-3.1-7.2-7.5-7.2ZM7.4 11a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0-3.2 0ZM13.4 11a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0-3.2 0ZM12 13.2l-.9 1.7h1.8Z'/%3E%3C/svg%3E");
+}
+
+.status-led[data-inner='unknown'],
+.status-led[data-outer='unread'] {
+    --led-fill: transparent;
+}
+
+.status-led[data-inner='unknown'] {
+    /* box-shadow */
+    --led-inset-ring: inset 0 0 0 var(--led-hollow-width) var(--led-color-unknown);
+    --led-ink: var(--led-color-unknown);
+}
+
+
+.status-led[data-outer='active'] {
+    --led-ring-ink: var(--led-ink);
+    --led-ring-alpha: 85%;
+    --led-glow-alpha: 55%;
+}
+
+.status-led[data-outer='steady'] {
+    --led-ring-ink: var(--led-ink);
+    --led-ring-alpha: 60%;
+    --led-glow-alpha: 25%;
+}
+
+.status-led[data-outer='unread'] {
+    --led-inset-ring: inset 0 0 0 var(--led-hollow-width) var(--led-color-unread);
+    --led-ink: var(--led-color-unread);
+    --led-ring-ink: var(--led-color-unknown);
+    --led-ring-alpha: 18%;
+    --led-glow-alpha: 0%;
+}
+
+.status-led[data-outer='off'] {
+    /* box-shadow */
+    --led-ring-alpha: 0%;
+    --led-glow-alpha: 0%;
+}
+
+.status-led[data-outer='dim'] {
+    --led-ring-ink: var(--led-color-unknown);
+    --led-ring-alpha: 30%;
+    --led-glow-alpha: 0%;
+}
+
+/* box-shadow: none }` here - two classes, and
+ * therefore more specific than every rule above - would erase the outer
+ * ring on every LED in the app. The legacy shadows it used to cancel
+ * (`.status-dot--dead`'s ring, `.status-dot--question`'s glow) are all
+ * single-class rules in status-dot.css, which loads BEFORE this file, so
+ * the base `.status-led` rule already beats them on source order at equal
+ * specificity. That file-order requirement is load-bearing; */
+
+.status-dot.status-led:not([data-outer='active']) {
+    animation: none;
+}
+
+.status-dot.status-led {
+    background-color: var(--led-fill);
+}
+
+/* box-shadow */
+
+.status-led[data-outer='active'] {
+    animation: status-led-breathe 2s ease-in-out infinite;
+}
+
+@keyframes status-led-breathe {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.4;
+    }
+}
+
+.status-led[data-outer='active'][data-inner='working'],
+.status-led[data-outer='active'][data-inner='waiting-permission'],
+.status-led[data-outer='active'][data-inner='waiting-input'] {
+    animation: none;
+}
+
+@keyframes status-led-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.status-led[data-inner='working']::after {
+    animation: status-led-spin 0.75s linear infinite;
+}
+
+/* .status-led::after */
+@media (prefers-reduced-motion: reduce) {
+    .status-led,
+    .status-led::after {
+        animation: none !important;
+    }
+}
+
+}

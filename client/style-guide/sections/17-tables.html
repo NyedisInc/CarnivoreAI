@@ -1,0 +1,55 @@
+<h2 class="sg-h2">tables, lists and sorting</h2>
+<p class="sg-lead">Dense rows beat tall cards when the user compares things: sessions, projects, accounts, events. Rows are
+26px on desktop, split by grey hairlines, with the identity column taking the slack and every other column pinned.</p>
+
+<h3 class="sg-h3" id="tables-datatable">the data table</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/opscenter/ui/DataTable.svelte</code><span>focus a row and press enter</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-table"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>Any columnar list in a compiled cell or page. Props: <code>columns</code> (<code>ColumnSpec[]</code>: <code>key</code>,
+        <code>headKey</code> a catalog key, <code>minPx</code>, <code>weight</code>, optional <code>align</code>,
+        <code>tone</code>, <code>insetPx</code>, <code>headInsetPx</code>, <code>line</code>), <code>rows</code>,
+        <code>rowKey</code>, a <code>cell</code> snippet that draws one cell, and optionally <code>onActivate</code>,
+        <code>canActivate</code>, <code>rowLabel</code>, <code>rowIdAttr</code>, <code>rowHeight</code>,
+        <code>headHeight</code>, <code>showHead</code>, <code>compact</code>.</dd>
+    <dt>layout</dt>
+    <dd>Column heads are catalog keys drawn as tracked capitals. Hairlines are one-sided inset shadows, so a row never gains a
+        pixel. The table grows with its cell; it never adds a second scrollbar inside the cell's own. <code>compact</code>
+        draws the phone's two-line record (identity on line one, supporting facts on line two).</dd>
+    <dt>access</dt>
+    <dd>An activatable row is focusable, Enter or Space runs <code>onActivate</code>, and <code>rowLabel</code> gives it an
+        accessible name that says what activating does.</dd>
+    <dt>themes</dt>
+    <dd><code>--oc-line-column</code>, <code>--oc-line-faint</code>, <code>--oc-text-primary</code> and
+        <code>--oc-text-secondary</code>, <code>--oc-ground-hover</code> on hover.</dd>
+    <dt>run chart</dt>
+    <dd><code>web/src/opscenter/ui/RunChartTable.svelte</code> is this table at the run chart's 26px rhythm, keyed on each row's
+        <code>id</code> and capped by <code>limit</code>: the pipeline, scheduled runs and sent list cells all draw it.</dd>
+</dl>
+
+<h3 class="sg-h3" id="tables-sort">sorting</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/opscenter/ui/SortControl.svelte</code><span>opens the real CascadeMenu with radio items</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-sort"></div></div>
+</div>
+<p>One quiet button in the title row that names the current order (<code>opscenter.session.sort.button</code>) and opens a
+radio menu. Props: <code>buttonText</code>, <code>menuLabel</code>, <code>menu</code> (<code>MenuNode[]</code> with
+<code>checked</code>). A legacy list uses a native select instead (<a href="#forms">forms</a>).</p>
+
+<h3 class="sg-h3" id="tables-lists">lists</h3>
+<ul>
+    <li><strong>Session rows</strong> in the agents drawer (<code>client/css/session-sidebar-rows.css</code>): light, mark,
+        name, secondary info to the right dimmed and middle-dot separated, a right-justified kebab. See
+        <a href="#chrome">drawers</a>.</li>
+    <li><strong>Home lists</strong>: running, recent and projects (<a href="#home">home</a>).</li>
+</ul>
+
+<h3 class="sg-h3" id="tables-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>Accent dividers between rows.</strong> Grey, <code>--oc-line-faint</code>.</li>
+    <li><strong>A literal column head.</strong> <code>headKey</code> is a catalog key.</li>
+    <li><strong>Stretching at 2560px.</strong> Cap the content and centre it.</li>
+</ul>

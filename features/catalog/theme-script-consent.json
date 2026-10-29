@@ -1,0 +1,32 @@
+{
+  "api_routes": [],
+  "area": "themes",
+  "docs": [],
+  "examples": [
+    "Try an animated theme without letting unknown code run until you agree."
+  ],
+  "how_to": [
+    "Select an installed theme that ships a script on the themes screen; its details say it runs effects.js and that you will be asked before it runs.",
+    "Set it as the global theme (or double click it). The first time, the app asks: never, allow once or always allow.",
+    "Always allow covers that exact script on every device; allow once lasts until you reload; never applies everywhere too. Declining still applies the theme without the animation."
+  ],
+  "id": "theme-script-consent",
+  "issues": [],
+  "keywords": [
+    "theme script",
+    "consent"
+  ],
+  "media": [],
+  "name": "Theme script consent",
+  "since": "2026-09-10",
+  "status": "stable",
+  "summary": "a theme's own animation script only runs after you've approved it once.",
+  "surfaces": [
+    "client/js/theme-consent.js"
+  ],
+  "updated": "2026-09-27",
+  "where": [
+    "Themes screen: a theme that ships a script is marked runs effects.js in its details, and applying it asks first. Built-in themes run their own scripts without asking; the prompt is for installed themes."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

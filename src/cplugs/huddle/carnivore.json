@@ -1,0 +1,58 @@
+{
+  "kind": "cplug",
+  "id": "huddle",
+  "name": "task manager",
+  "version": "1.0.0",
+  "api_version": 1,
+  "min_app_version": "1.12.20",
+  "author": "Carnivore contributors",
+  "license": "MIT",
+  "tier": "builtin",
+  "scope": [
+    "global"
+  ],
+  "icon": "chat",
+  "default_enabled": true,
+  "permissions": [
+    {
+      "name": "sessions.read"
+    },
+    {
+      "name": "sessions.message"
+    },
+    {
+      "name": "notify"
+    },
+    {
+      "name": "agent_writes"
+    },
+    {
+      "name": "swarm"
+    },
+    {
+      "name": "work"
+    }
+  ],
+  "owns": {
+    "strings": [
+      "cplug.huddle."
+    ],
+    "styles": [
+      "task-manager-tail.css",
+      "task-manager-tree.css",
+      "task-manager-bubble.css",
+      "ask/ask-form.css",
+      "swarm/characters/characters.css"
+    ],
+    "tests": [
+      "tests/python/cplugs/huddle/"
+    ],
+    "contributions": [
+      "chat.widget_kind",
+      "style_guide.specimen",
+      "session.schedules",
+      "session.roles"
+    ]
+  },
+  "data": []
+}

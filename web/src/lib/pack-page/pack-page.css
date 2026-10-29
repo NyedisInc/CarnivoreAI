@@ -1,0 +1,28 @@
+
+.pack-page .pk-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.pack-page .pk-screen {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.pack-page .pk-tabs {
+    flex: none;
+    padding-inline: var(--oc-page-gutter);
+}
+
+@media (max-width: 1023px) {
+    .pack-page .oc-page__body {
+        flex: 1 0 auto;
+    }
+}
+
+.pack-page .pk-screen[data-screen='hosts'] .oc-page__items--list:not(:has(.mgr-card__head .oc-check)) .mgr-card {
+    grid-template-columns: 0 minmax(120px, max-content) auto minmax(0, 1fr) auto auto;
+}

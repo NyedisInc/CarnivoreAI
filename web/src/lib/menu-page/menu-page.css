@@ -1,0 +1,63 @@
+/* display: none position: fixed */
+
+:root {
+    --menu-page-bar-h: 48px;
+}
+
+:is(#sessions-screen, #plugins-screen,
+    #themes-screen, #warez-screen, #elite-screen, #settings-screen, #widgets-screen, #account-screen, #ledger-screen, #blueprints-screen,
+    #docs-screen, #changelog-screen, #logs-screen, #warroom-screen, #dashboards-screen, #automations-screen, #mods-screen, #hosts-screen, #huddle-agent-screen, #huddle-swarm-screen) {
+    --overlay-top: var(--desktop-inset-top, 0px);
+}
+
+#plugin-main-view {
+    --overlay-top: var(--desktop-inset-top, 0px);
+}
+
+body.menu-page-open:not(.session-sidebar-pinned):not(.session-sidebar-railed)
+    :is(#sessions-screen, #plugins-screen,
+        #themes-screen, #warez-screen, #elite-screen, #settings-screen, #widgets-screen, #account-screen, #ledger-screen, #blueprints-screen,
+    #docs-screen, #changelog-screen, #logs-screen, #warroom-screen, #dashboards-screen, #automations-screen, #mods-screen, #hosts-screen, #huddle-agent-screen, #huddle-swarm-screen) {
+    --overlay-top: calc(var(--menu-page-bar-h) + var(--desktop-inset-top, 0px));
+}
+
+body.menu-page-open:not(.menu-page-surface) > .screen,
+body.menu-page-open:not(.menu-page-surface) > .header,
+body.menu-page-open:not(.menu-page-surface) #session-notes-panel,
+body.menu-page-open:not(.menu-page-surface) .config-editor-picker-overlay {
+    visibility: hidden;
+}
+
+body.menu-page-surface .oc-page:not(.oc-page--embedded) {
+    top: var(--menu-surface-top);
+    left: var(--menu-surface-left);
+    right: var(--menu-surface-right);
+    bottom: var(--menu-surface-bottom);
+    padding-left: 0;
+}
+
+body.menu-page-open:not(.menu-page-surface) > .header,
+body.menu-page-open:not(.menu-page-surface) > .header * {
+    transition: none;
+}
+
+#menu-page-bar {
+    display: none;
+}
+
+body.menu-page-open:not(.session-sidebar-pinned):not(.session-sidebar-railed) #menu-page-bar {
+    display: block;
+}
+
+@media (max-width: 767px) {
+    body.menu-page-open:has([data-page-back]) #menu-page-bar {
+        display: none !important;
+    }
+
+    body.menu-page-open:has([data-page-back])
+        :is(#sessions-screen, #plugins-screen,
+            #themes-screen, #warez-screen, #elite-screen, #settings-screen, #widgets-screen, #account-screen, #ledger-screen, #blueprints-screen,
+            #docs-screen, #changelog-screen, #logs-screen, #warroom-screen, #dashboards-screen, #automations-screen, #mods-screen, #hosts-screen, #huddle-agent-screen, #huddle-swarm-screen) {
+        --overlay-top: var(--desktop-inset-top, 0px) !important;
+    }
+}

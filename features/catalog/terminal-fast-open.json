@@ -1,0 +1,38 @@
+{
+  "name": "Faster terminal open",
+  "issues": [
+    2354
+  ],
+  "keywords": [
+    "speed",
+    "terminal",
+    "open",
+    "history",
+    "scrollback",
+    "boot"
+  ],
+  "summary": "A terminal opens at once instead of waiting for its scrollback: the live connection starts immediately while history loads beside it, and the first screen's data is fetched once instead of several times.",
+  "where": [
+    "Every terminal, in the browser and in the desktop app, when you open or switch to a session."
+  ],
+  "how_to": [
+    "Open or switch to a session: output is live right away and the scrollback fills in behind it, in order.",
+    "Reload the page: the boot data requests are shared, not repeated, so the app is ready sooner."
+  ],
+  "examples": [
+    "Click a long-running session and type before its history finishes loading."
+  ],
+  "docs": [
+    "docs/streaming-and-events-history.md"
+  ],
+  "surfaces": [
+    "client/js/terminal-history-load.js",
+    "client/js/api.js"
+  ],
+  "media_exempt": "timing: a speed change; a still capture cannot show how fast a terminal opens",
+  "id": "terminal-fast-open",
+  "area": "terminal",
+  "since": "2026-10-23",
+  "updated": "2026-10-23",
+  "status": "beta"
+}

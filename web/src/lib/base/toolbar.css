@@ -1,0 +1,91 @@
+/* padding */
+@layer patterns {
+  .oc-toolbar {
+    display: flex;
+    flex: 1 1 100%;
+    align-items: center;
+    gap: var(--oc-space-2);
+    min-width: 0;
+    flex-wrap: wrap;
+    row-gap: var(--oc-space-1);
+  }
+
+  .oc-toolbar--band {
+    flex: none;
+    align-self: stretch;
+    row-gap: var(--oc-space-2);
+    padding: var(--oc-space-2) var(--oc-space-3);
+    background: var(--oc-surface-band);
+    box-shadow: inset 0 calc(-1 * var(--oc-border)) 0 0 var(--oc-line-hairline);
+  }
+
+  .oc-toolbar__search {
+    display: flex;
+    flex: 1 1 160px;
+    max-width: 320px;
+    min-width: 160px;
+  }
+
+  .oc-toolbar__search .oc-page__search {
+    flex: 1 1 auto;
+    max-width: none;
+  }
+
+  .oc-toolbar .oc-field {
+    box-sizing: border-box;
+    height: var(--oc-rowheight, 26px);
+    padding-block: 0;
+  }
+
+  .oc-toolbar__facets,
+  .oc-toolbar__extras,
+  .oc-toolbar__end {
+    display: flex;
+    align-items: center;
+    gap: var(--oc-space-2);
+    min-width: 0;
+  }
+
+  .oc-toolbar__end {
+    flex: none;
+    margin-left: auto;
+  }
+
+  .oc-toolbar__facets {
+    flex: none;
+  }
+
+  .oc-toolbar__extras {
+    flex: none;
+  }
+
+  .oc-toolbar__extras > * {
+    flex: none;
+  }
+
+  .oc-toolbar__below {
+    display: flex;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--oc-space-1-5);
+    min-width: 0;
+  }
+
+  @media (max-width: 767px) {
+    .oc-toolbar:not(.oc-toolbar--wrap) {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .oc-toolbar:not(.oc-toolbar--wrap) :is(.oc-toolbar__facets, .oc-toolbar__extras) {
+      flex: none;
+      overflow: visible;
+    }
+
+    .oc-toolbar:not(.oc-toolbar--wrap) .oc-toolbar__end {
+      margin-left: 0;
+    }
+  }
+}

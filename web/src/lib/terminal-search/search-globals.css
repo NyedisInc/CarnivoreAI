@@ -1,0 +1,11 @@
+
+/*  hidden  display: flex flex-shrink: 0 padding */
+#terminalSearchBtn {
+    display: none;
+}
+
+@media (min-width: 769px) {
+    body:has(#terminal-screen.active) #terminalSearchBtn {
+        display: flex;
+    }
+}

@@ -1,0 +1,13 @@
+@import '../app.css';
+@import '../opscenter/app.css';
+@import '../lib/manager-frame/manager-frame.css';
+@import '../lib/manager-frame/manager-card.css';
+@import '../lib/menu-page/menu-page.css';
+@import '../lib/item-settings/settings-form.css';
+@import '../lib/icon-picker/icon-picker.css';
+@import '../lib/tooltip/tooltip.css';
+
+:root { --overlay-top: 0px; }
+html { background: var(--oc-ground, #000); }
+body { margin: 0; min-height: 100dvh; background: var(--oc-ground, #000); }
+#browse-root { min-height: 100dvh; }

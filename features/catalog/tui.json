@@ -1,0 +1,55 @@
+{
+  "area": "sessions",
+  "description": "A full-screen terminal client for the computer's own Carnivore server. Ssh in, run carnivore tui, log in once with the authenticator code and drive your sessions from the keyboard: see every session with its status light, attach and detach, start, stop, restart (live restarts need an arm key first), mark read, answer approvals, and read the usage ledger and the catalog.",
+  "docs": [
+    "docs/tui.md"
+  ],
+  "examples": [
+    "Ssh into the computer, run carnivore tui, press 1 and move with j and k to a session marked as waiting, press enter to attach, answer in the pane, detach with the tmux prefix and d and land back on the list.",
+    "Press 2 on the approvals screen and press a to approve or d to deny a pending request without opening a browser.",
+    "Press ? on any screen to see every key, listed by screen.",
+    "Open Settings, Terminal, carnivore tui in the dev-mode app, press install command, approve the admin prompt, then ssh in and run carnivore tui.",
+    "With the server stopped, ssh in and run carnivore tui: it says the server did not answer and opens offline mode, lists the sessions from tmux marked server down: read from tmux, press w to watch one read only or t to type into it."
+  ],
+  "how_to": [
+    "Open Settings, Terminal, carnivore tui and press install command if it says not installed; approve the admin prompt on the computer. Or run the shown command from a terminal.",
+    "On the computer, or over ssh, run carnivore tui (from a source checkout, run the checkout command shown in the same block).",
+    "Enter the six digit authenticator code once; later runs reuse the saved login.",
+    "Press 1 to 4 to switch screens and ? for the full key list.",
+    "When the server is down, carnivore tui opens offline mode by itself (or run carnivore tui --offline): w watches, t or enter types, f fits the pane to this window, a shows every session on the socket."
+  ],
+  "id": "tui",
+  "issues": [
+    156,
+    1862
+  ],
+  "keywords": [
+    "attach",
+    "command line",
+    "hotkeys",
+    "install",
+    "keyboard",
+    "offline",
+    "server down",
+    "settings",
+    "ssh",
+    "terminal",
+    "tui"
+  ],
+  "media": [],
+  "name": "Terminal client",
+  "since": "2026-10-07",
+  "status": "beta",
+  "summary": "Drive your sessions from a terminal over ssh: list, attach, approve, ledger, catalog.",
+  "surfaces": [
+    "the carnivore tui command",
+    "Settings, Terminal, carnivore tui"
+  ],
+  "updated": "2026-10-16",
+  "where": [
+    "Settings, Terminal, carnivore tui: what it is, how to use it, and the install button for the command.",
+    "Run carnivore tui in any terminal on the computer, including over ssh.",
+    "Run carnivore tui --offline, or carnivore tui while the server is down, for the offline session list read from tmux."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

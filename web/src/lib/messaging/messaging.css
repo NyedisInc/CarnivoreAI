@@ -1,0 +1,44 @@
+@layer components {
+    .messaging-rows {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .messaging-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--oc-space-3);
+        padding: var(--oc-space-2) 0;
+        box-shadow: inset 0 -1px 0 var(--oc-line-faint);
+        font-family: var(--font-mono);
+        font-size: var(--oc-fs-body);
+    }
+
+    .messaging-row > :last-child {
+        margin-left: auto;
+    }
+
+    .messaging-held {
+        color: var(--oc-yellow);
+    }
+
+    .messaging-log__text {
+        flex: 1 1 16rem;
+        min-width: 0;
+        color: var(--oc-text-primary);
+        overflow-wrap: anywhere;
+    }
+
+    .messaging-log__status[data-status='held'] {
+        color: var(--oc-yellow);
+    }
+
+    .messaging-log__status[data-status='unconfirmed'] {
+        color: var(--oc-cyan);
+    }
+
+    .messaging-log__status[data-status='failed'] {
+        color: var(--oc-coral);
+    }
+}

@@ -1,0 +1,21 @@
+.sw-scroll{overflow-x:auto;overflow-y:hidden}
+.sw-board{position:relative}
+.sw-lane{position:absolute;left:0;right:0;background:color-mix(in srgb,var(--c) 7%,var(--panel));box-shadow:0 1px 0 var(--hair)}
+.sw-lab{width:190px;position:sticky;left:0;z-index:4;display:flex;gap:10px;align-items:center;padding:0 12px;background:color-mix(in srgb,var(--c) 10%,var(--panel));box-shadow:1px 0 0 var(--hair);overflow:hidden}
+.sw-lab>div:last-child{min-width:0}
+.sw-lab .nm{font-weight:650;font-size:13px;line-height:1.2;overflow-wrap:anywhere}
+.sw-lab .ds{font-size:10px;color:var(--mut);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sw-axis{position:absolute;top:0;left:0;height:30px;background:var(--panel2);box-shadow:0 1px 0 var(--hair)}
+.sw-axis .tk{position:absolute;top:8px;transform:translateX(-50%);font-size:10px;color:var(--mut)}
+.sw-tickline{position:absolute;top:30px;width:0;border-left:1px dashed var(--hair2)}
+.sw-card{position:absolute;z-index:2;padding:6px 8px;background:var(--panel);box-shadow:0 0 0 1px var(--hair);border-radius:3px;overflow:hidden;display:flex;flex-direction:column;gap:2px}
+.sw-card .h{display:flex;align-items:center;gap:6px;font-weight:650;font-size:11px;min-width:0}
+.sw-card .h svg{width:16px;height:16px;flex:none}
+.sw-card .h span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.sw-card .b{font-size:10px;color:var(--mut);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sw-card .id{margin-left:auto;flex:none;font:600 10px ui-monospace,Menlo,monospace;padding:0 5px;border-radius:2px;color:var(--c);background:color-mix(in srgb,var(--c) 15%,transparent)}
+.sw-card.recv{padding:4px 8px;flex-direction:row;align-items:center;gap:6px;font-size:10px;color:var(--mut);box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 40%,var(--hair))}
+.sw-card.recv svg{width:14px;height:14px;flex:none;color:var(--c)}
+.sw-card.recv span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sw-arrows{position:absolute;left:0;top:0;z-index:1;pointer-events:none;overflow:visible}
+.sw-arrows .ep{stroke-width:1.6}

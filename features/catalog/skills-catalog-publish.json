@@ -1,0 +1,47 @@
+{
+  "api_routes": [
+    "src/api/catalog_account_routes.py",
+    "src/api/catalog_publish_routes.py"
+  ],
+  "area": "skills-catalog",
+  "docs": [
+    "docs/catalog.md",
+    "docs/warez/02-submission-pipeline.md"
+  ],
+  "examples": [
+    "Publish a skill you wrote: open publish yours in the warez menu, check it, read the files and notes, send it with a card image, then follow its stage (submitted, in review, approved, rejected) and its 12 checks."
+  ],
+  "how_to": [
+    "Open the warez store and press publish yours in the menu (or publish a skill in the title strip).",
+    "Pick the tab for what you wrote (skills, themes, mods, plugins), pick the item, press check it, read the notes, then press send for review.",
+    "Register first: tick the terms and the 16-or-older box, and (an email account) pick a publisher handle, fixed once chosen; it stays pending until your first submission is approved.",
+    "Add a card image in step 2: your own png, jpeg or webp (up to 512 KiB, at least 1200x500, 3:2 to 3:1), or make one for me. Replace it later from the card panel.",
+    "Open your submissions to see each stage, the 12 checks, the timeline and what to do next; withdraw a submission or appeal a rejection from the next step."
+  ],
+  "id": "skills-catalog-publish",
+  "issues": [
+    195,
+    1085,
+    1170,
+    1172,
+    2469
+  ],
+  "keywords": [
+    "handle",
+    "lint",
+    "publish",
+    "register",
+    "submit",
+    "terms"
+  ],
+  "media_exempt": "the view needs a live catalog sign in and the hosted submission service, which a capture spec cannot fake; this slice was proven with stubbed hosted answers on a leased test slot",
+  "name": "Publish your skill",
+  "since": "2026-09-28",
+  "status": "beta",
+  "summary": "send one of your own skills to the catalog from inside the app, with a local check first and your submissions listed beside it; you register once (terms, age, handle) before you can publish. Your own themes are listed beside your skills and go through the same check and review (a theme is theme.json plus raster images only); a plugin is checked the same way when the app has a local source for one.",
+  "surfaces": [],
+  "updated": "2026-10-24",
+  "where": [
+    "The warez store, PUBLISH YOURS in the menu (#warez/publish)."
+  ]
+}

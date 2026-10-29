@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://carnivore.ai/schemas/extensions/warez/claude-code-plugin.schema.json",
+  "title": "Claude Code plugin, layer 2 (warez front door)",
+  "description": "L1 plugin plus the base overlay. Every external_code entry names its server and carries the reviewed sha256 with an exact version. The npx/uvx entry-per-server rule is pipeline gate 7 and the registry hash match is gate 9.",
+  "allOf": [
+    {
+      "$ref": "../claude-code-plugin.schema.json"
+    },
+    {
+      "$ref": "item.schema.json"
+    },
+    {
+      "properties": {
+        "external_code": {
+          "items": {
+            "required": [
+              "server",
+              "runner",
+              "package",
+              "version",
+              "sha256"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

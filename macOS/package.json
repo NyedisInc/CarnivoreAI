@@ -1,0 +1,216 @@
+{
+  "name": "cloude-code-menubar",
+  "version": "1.16.4",
+  "description": "macOS menu bar app for Carnivore remote control",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --mac",
+    "package": "electron-builder --mac --publish never",
+    "package:e2e": "bash scripts/e2e/build-e2e-app.sh"
+  },
+  "keywords": [
+    "electron",
+    "menubar",
+    "claude",
+    "macos"
+  ],
+  "author": "Carnivore",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "45.0.0",
+    "electron-builder": "26.15.3",
+    "playwright-core": "1.64.0"
+  },
+  "dependencies": {
+    "axios": "^1.20.0",
+    "electron-updater": "6.8.9",
+    "qrcode": "^1.5.4",
+    "semver": "~7.7.3"
+  },
+  "build": {
+    "appId": "ai.carnivore.menubar",
+    "productName": "Carnivore",
+    "afterPack": "scripts/after-pack.js",
+    "afterAllArtifactBuild": "scripts/notarize-dmg.js",
+    "electronFuses": {
+      "runAsNode": false,
+      "enableCookieEncryption": true,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "enableEmbeddedAsarIntegrityValidation": true,
+      "onlyLoadAppFromAsar": true,
+      "loadBrowserProcessSpecificV8Snapshot": false,
+      "grantFileProtocolExtraPrivileges": false
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!scripts/**",
+      "!.*{,/**/*}"
+    ],
+    "extraResources": [
+      {
+        "from": "../src",
+        "to": "src",
+        "filter": [
+          "**/*",
+          "!**/__pycache__/**",
+          "!**/*.pyc",
+          "!**/.DS_Store"
+        ]
+      },
+      {
+        "from": "../client",
+        "to": "client",
+        "filter": [
+          "**/*",
+          "!**/__pycache__/**",
+          "!**/*.pyc",
+          "!**/.DS_Store"
+        ]
+      },
+      {
+        "from": "../features",
+        "to": "features",
+        "filter": [
+          "**/*",
+          "!**/.DS_Store"
+        ]
+      },
+      {
+        "from": "../requirements.txt",
+        "to": "requirements.txt"
+      },
+      {
+        "from": "../requirements.lock",
+        "to": "requirements.lock"
+      },
+      {
+        "from": "../setup_auth.py",
+        "to": "setup_auth.py"
+      },
+      {
+        "from": "../config.example.json",
+        "to": "config.example.json"
+      },
+      {
+        "from": "../nuke.sh",
+        "to": "nuke.sh"
+      },
+      {
+        "from": "../hosted/site/uninstall.sh",
+        "to": "uninstall.sh"
+      },
+      {
+        "from": "../scripts/session_journal.py",
+        "to": "scripts/session_journal.py"
+      },
+      {
+        "from": "../scripts/resolve-port.sh",
+        "to": "scripts/resolve-port.sh"
+      },
+      {
+        "from": "../scripts/upgrade_lib/upgrade_rollback_common.sh",
+        "to": "scripts/upgrade_lib/upgrade_rollback_common.sh"
+      },
+      {
+        "from": "../.env.example",
+        "to": ".env.example"
+      }
+    ],
+    "protocols": [
+      {
+        "name": "Carnivore",
+        "schemes": [
+          "carnivore"
+        ]
+      }
+    ],
+    "mac": {
+      "identity": null,
+      "extraFiles": [
+        {
+          "from": "engine-host/ai.carnivore.menubar.engine.plist",
+          "to": "Library/LaunchAgents/ai.carnivore.menubar.engine.plist"
+        }
+      ],
+      "hardenedRuntime": true,
+      "entitlements": "scripts/entitlements.mac.plist",
+      "entitlementsInherit": "scripts/entitlements.mac.inherit.plist",
+      "notarize": true,
+      "signIgnore": ["/Contents/Resources/payload/"],
+      "category": "public.app-category.developer-tools",
+      "minimumSystemVersion": "14.0",
+      "icon": "assets/icon.icns",
+      "extendInfo": {
+        "NSUserNotificationAlertStyle": "alert",
+        "CarnivoreBuildPurpose": "release",
+        "NSAppleEventsUsageDescription": "carnivore opens terminal windows for setup and logs.",
+        "NSLocalNetworkUsageDescription": "carnivore finds and talks to the other computers in your pack on your network.",
+        "NSBonjourServices": [
+          "_carnivore._tcp"
+        ],
+        "CFBundleDocumentTypes": [
+          {
+            "CFBundleTypeName": "Folder",
+            "CFBundleTypeRole": "Viewer",
+            "LSItemContentTypes": [
+              "public.folder"
+            ],
+            "LSHandlerRank": "Alternate"
+          }
+        ]
+      },
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "universal"
+          ]
+        }
+      ]
+    },
+    "publish": {
+      "provider": "generic",
+      "url": "https://github.com/NyedisInc/CarnivoreAI/releases/latest/download"
+    },
+    "dmg": {
+      "title": "Carnivore ${version}",
+      "background": "assets/dmg/background.tiff",
+      "icon": "assets/icon.icns",
+      "window": {
+        "width": 600,
+        "height": 648
+      },
+      "contents": [
+        {
+          "x": 142,
+          "y": 388,
+          "type": "file"
+        },
+        {
+          "x": 456,
+          "y": 388,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "iconSize": 128,
+      "iconTextSize": 14,
+      "format": "UDZO",
+      "sign": true
+    }
+  },
+  "allowScripts": {
+    "electron@45.0.0": true
+  }
+}

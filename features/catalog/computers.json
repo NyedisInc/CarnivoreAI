@@ -1,0 +1,70 @@
+{
+  "api_routes": [
+    "GET /api/v1/computers",
+    "POST /api/v1/computers/invites",
+    "GET /api/v1/computers/invites/{invite_id}",
+    "DELETE /api/v1/computers/invites/{invite_id}",
+    "DELETE /api/v1/computers/peers/{install_id}",
+    "PUT /api/v1/computers/peers/{install_id}/direction",
+    "POST /api/v1/computers/join",
+    "GET /api/v1/computers/join",
+    "POST /api/v1/computers/join/look",
+    "POST /api/v1/computers/leave",
+    "POST /api/v1/computers/add/preview",
+    "POST /api/v1/computers/add",
+    "GET /api/v1/computers/add/{job_id}"
+  ],
+  "area": "settings",
+  "docs": [
+    "docs/computers.md",
+    "docs/federation.md"
+  ],
+  "examples": [
+    "Open a code for adding a second computer, read it on the first computer, type it on the second.",
+    "Stop a linked computer from controlling this one while this one still drives it.",
+    "Remove a computer you no longer use, from the computer that added it.",
+    "Add a second computer you can ssh into with keys: preview it, check the host key, approve, and it installs Carnivore and joins the pack."
+  ],
+  "how_to": [
+    "On the new computer run curl -fsSL https://carnivore.ai/install.sh | bash (someone must be logged in there), then type the 6-digit code from main's invite card at the prompt, or paste the join link. Pressing enter alone sets it up as a separate computer.",
+    "Open pack, computers and press add a computer: the code (123 456), its countdown and the join link show on the invite card.",
+    "List the linked computers, their state and direction with computers_list.",
+    "Main must be awake with Carnivore open: it dials the new computer, so no port is opened and no router is changed. A code lives 15 minutes and 3 wrong tries; 10 wrong codes in an hour switch codes off for an hour.",
+    "On 1.16.0 a code join over the home network does not complete (pair over ssh, pack, ssh tab); the fix ships in the next release."
+  ],
+  "id": "computers",
+  "issues": [
+    1530,
+    1504,
+    1622
+  ],
+  "keywords": [
+    "computers",
+    "invite",
+    "join",
+    "leave",
+    "direction",
+    "link",
+    "code",
+    "ssh",
+    "install"
+  ],
+  "media_exempt": "The panel needs a live computers link between two computers to show a code, a list and a job; the capture is recorded with the release end to end run.",
+  "name": "Computers link",
+  "since": "2026-10-11",
+  "status": "beta",
+  "summary": "add a computer with a short code or link over a direct encrypted link, see every linked computer, make one one way, remove it or leave the pack.",
+  "surfaces": [
+    "src/api/computers_routes.py",
+    "src/core/mcp/computers_tools.py",
+    "src/core/computers/view.py",
+    "src/core/computers/forget.py",
+    "web/src/lib/computers/ComputersPanel.svelte",
+    "src/core/computers/add_over_ssh.py",
+    "src/core/computers/add_preview.py"
+  ],
+  "updated": "2026-10-13",
+  "where": [
+    "Pack, computers tab: add a computer, the invite card with the code and link, the list with a direction switch and remove, add over ssh, and join a pack on a standalone computer; agents use the computer tools."
+  ]
+}

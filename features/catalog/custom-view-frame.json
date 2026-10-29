@@ -1,0 +1,46 @@
+{
+  "api_routes": [
+    "POST /api/v1/cplugs/{id}/view/{name}/ticket",
+    "GET /api/v1/cplugs/{id}/view/{name}/{ticket}/{file}"
+  ],
+  "area": "settings",
+  "description": "A plugin's own script runs only inside a sandboxed frame with no network, no cookies, no storage and no access to the app around it. It talks to its own plugin through a small bridge that reaches only the routes the plugin declared. The overlay surface is live: one transparent layer under every popover that is clipped to a few declared rectangles and never covers the terminal.",
+  "docs": [
+    "docs/cplug-platform.md",
+    "docs/cplug-runtime.md",
+    "docs/DECISIONS.md"
+  ],
+  "examples": [
+    "A pixel pet walks across the screen while a session runs; it cannot read the terminal or call the network."
+  ],
+  "how_to": [
+    "Install a plugin that declares a view and turn it on with third-party plugins enabled.",
+    "Its overlay view appears; clicks outside its declared rectangles go to the app underneath.",
+    "Turn the plugin or the master switch off and the frame is removed."
+  ],
+  "id": "custom-view-frame",
+  "issues": [
+    2063
+  ],
+  "keywords": [
+    "plugins",
+    "view",
+    "iframe",
+    "sandbox",
+    "overlay"
+  ],
+  "media_exempt": "pending the next recapture",
+  "name": "Plugin custom views",
+  "since": "2026-10-22",
+  "status": "beta",
+  "summary": "a third-party plugin can draw its own page in a locked box, such as a pet that walks across the screen, without touching the app.",
+  "surfaces": [
+    "web/src/lib/cplug-ui/ViewFrame.svelte",
+    "web/src/lib/cplug-ui/OverlayRoot.svelte",
+    "web/src/lib/cplug-ui/bridge.ts"
+  ],
+  "updated": "2026-10-22",
+  "where": [
+    "Anywhere on screen for an overlay view, under popovers and above the page, outside the terminal grid."
+  ]
+}

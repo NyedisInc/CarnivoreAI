@@ -1,0 +1,57 @@
+{
+  "api_routes": [
+    "GET /api/v1/bookmarks",
+    "GET /api/v1/sessions/{session}/bookmarks",
+    "POST /api/v1/sessions/{session}/bookmarks",
+    "DELETE /api/v1/bookmarks/{id}",
+    "POST /api/v1/bookmarks/{id}/branch",
+    "GET /api/v1/bookmarks/{id}/preview",
+    "POST /api/v1/bookmarks/{id}/rewind"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/session-bookmarks.md"
+  ],
+  "examples": [
+    "Mark the point before a risky refactor, then branch from it into a new session without touching the original.",
+    "Rewind a session that went down the wrong path to the turn where it was still on track.",
+    "Keep every session's recent bookmarks in the side rail and branch from one without opening that session."
+  ],
+  "how_to": [
+    "Press the bookmark icon in a Claude Code terminal's header to open the bookmarks popup; type a name and press the add key at the top to mark the latest turn.",
+    "In the list, press the fork icon on a bookmark or a past turn to branch from there into a new session.",
+    "To rewind in place, tick the arm box in the popup footer and press the rewind icon; the full transcript stays on disk.",
+    "Press the eye icon on a bookmark to preview the last few chat messages before its point; how many (default 4) and whether the eye shows are settings of the bookmarks widget.",
+    "Drop the session bookmarks widget (this session) or the all bookmarks widget (every session, with the globe mark) from the widget drawer onto either rail."
+  ],
+  "id": "session-bookmarks",
+  "issues": [],
+  "keywords": [
+    "bookmark",
+    "branch",
+    "rewind",
+    "fork",
+    "widget"
+  ],
+  "media_exempt": "a header icon pair and a modal over a live session; a capture needs a real Claude conversation, so none is recorded yet",
+  "name": "Session bookmarks",
+  "since": "2026-10-06",
+  "status": "stable",
+  "summary": "mark a point in a Claude Code conversation, then branch a copy cut there into a new session or rewind the session in place.",
+  "surfaces": [
+    "src/core/bookmarks/preview.py",
+    "web/src/lib/bookmarks/BookmarkButtons.svelte",
+    "web/src/lib/bookmarks/BookmarkPreviewList.svelte",
+    "web/src/lib/bookmarks/BookmarksPanel.svelte",
+    "web/src/lib/bookmarks/preview-state.svelte.ts",
+    "web/src/lib/bookmarks/row-actions.ts",
+    "web/src/opscenter/cells/bookmarks-all/Cell.svelte",
+    "web/src/opscenter/cells/bookmarks/Cell.svelte"
+  ],
+  "updated": "2026-10-25",
+  "where": [
+    "The one bookmark icon in a Claude Code terminal's header.",
+    "The bookmarks popup it opens.",
+    "The session bookmarks and all bookmarks widgets."
+  ]
+}

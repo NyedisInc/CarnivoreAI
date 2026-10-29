@@ -1,0 +1,231 @@
+{
+  "$defs": {
+    "area": {
+      "additionalProperties": false,
+      "properties": {
+        "blurb": {
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "blurb",
+        "id",
+        "name"
+      ],
+      "title": "Area",
+      "type": "object"
+    },
+    "catalogEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "api_routes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "area": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "docs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "examples": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "how_to": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "id": {
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "type": "string"
+        },
+        "issues": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "media": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "alt": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "caption": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "file": {
+                "pattern": "^[a-z0-9][a-z0-9_-]*(\\.[a-z0-9_-]+)*\\.(png|gif|svg|webp)$",
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "screenshot",
+                  "gif",
+                  "icon"
+                ],
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "theme": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "alt",
+              "caption",
+              "file",
+              "kind"
+            ],
+            "title": "Media item",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "media_exempt": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "since": {
+          "format": "date",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "stable",
+            "beta",
+            "deprecated",
+            "removed"
+          ],
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "surfaces": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "updated": {
+          "format": "date",
+          "type": "string"
+        },
+        "where": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "area",
+        "id",
+        "name",
+        "since",
+        "status",
+        "summary",
+        "updated"
+      ],
+      "title": "Catalog entry",
+      "type": "object"
+    },
+    "changeEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "breaking": {
+          "type": "boolean"
+        },
+        "date": {
+          "format": "date",
+          "type": "string"
+        },
+        "details": {
+          "type": "string"
+        },
+        "features": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "issue": {
+          "type": "integer"
+        },
+        "landed_at": {
+          "type": "string"
+        },
+        "media_unchanged": {
+          "type": "boolean"
+        },
+        "pr": {
+          "type": "integer"
+        },
+        "release": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "added",
+            "changed",
+            "fixed",
+            "removed",
+            "deprecated",
+            "security",
+            "internal"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "date",
+        "features",
+        "summary",
+        "type"
+      ],
+      "title": "Change entry",
+      "type": "object"
+    }
+  },
+  "$id": "https://carnivore.ai/schemas/features.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Cloude Code feature catalog"
+}

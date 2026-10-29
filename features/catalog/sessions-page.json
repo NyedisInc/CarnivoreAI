@@ -1,0 +1,78 @@
+{
+  "api_routes": [
+    "GET /api/v1/projects/history",
+    "GET /api/v1/sessions/usage",
+    "GET /api/v1/sessions/latest-lines",
+    "GET /api/v1/sessions/{session}/conversations",
+    "GET /api/v1/sessions/{session}/timeline"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/sessions-page.md",
+    "docs/session-timeline.md",
+    "docs/session-usage.md"
+  ],
+  "examples": [
+    "See every running and asleep session on one screen and pick out the three that are waiting on you.",
+    "Press the most used lens to find which sessions took the most hours of work in the last 30 days.",
+    "Switch to pivot and put projects down the side and weekdays across to see which day each project gets worked on.",
+    "Switch to timeline, set 24 hours and drag the playhead to see how many sessions were working or waiting at 3 in the afternoon.",
+    "Select a session and read its conversations in the panel, then resume an earlier conversation from there.",
+    "Type part of a project's name in the find box to find a project that has no running session, then expand it or open its menu with a right click."
+  ],
+  "how_to": [
+    "Open the menu tab and choose Projects (or open #sessions). The title strip holds the find box, the list, pivot and timeline switch, the counts of running, needs you, working and asleep, and the + start button.",
+    "In the list, pick a lens in the rail on the left (project a to z, recents, most used, dormant, pinned, provider, computer, needs you, long runners). Press a column header to sort inside each group. Arrow keys move, enter opens, space previews, left and right fold a group, and typing jumps to a name.",
+    "On the project lens every non-archived project is listed: projects with a running session sit on top, expanded; every project with none (including one with no session at all) sits below them a to z, collapsed and grayed. Typing in the find box filters both groups by project name. A project heading draws no menu button; a right click on it (or Shift+F10 on the selected heading) opens its project menu, without folding the group.",
+    "The state buttons and the company, project, computer and provider filters narrow every view; the find box searches names, projects, companies and providers.",
+    "Press a row (or space) to open the panel: the status light and word, the drawer row's icons and its one menu button for this session, the layouts and group it belongs to, what it is doing right now, conversations with resume, bookmarks with branch and rewind, and facts. The link #sessions/<session_uuid> opens the same panel.",
+    "In pivot, pick what the rows and columns mean, press swap to turn them around, press a row or column label to isolate it, and press a chip to open its panel.",
+    "In timeline, pick 1 hour, 6 hours, 24 hours or 7 days, move the playhead to read the counts at that moment, and read the yellow, blue and green underlines for waiting on a question, a notice and done.",
+    "Waiting history and most used start empty when this ships and are not backfilled; a session whose transcript Claude Code pruned (about 30 days) shows its stored facts but cannot resume.",
+    "Press the three dots at the far right of a session row, or right click the row (or press the context-menu key or Shift+F10 on the list), for the same session menu the sidebar rows have; it never opens the panel. The state icons (needs you, working, running, asleep) are independent toggles: press one to hide or show the sessions in that state, and the eye icon turns every state back on. The title strip has new project and new session icons (they open the usual dialogs) and one icon that expands or collapses every project group; list, pivot and timeline are icons at the right end of the filter row, beside the count. In the left panel, projects with no running session sit under one collapsed inactive item.",
+    "Open a project's menu (right click on its heading) and choose project settings for air-gap, the GitHub account, the transport rung, publish a private repo and the replicas list, or closed reviews and crates (export) when those plugins are on. Projects of a paired computer have no menu."
+  ],
+  "id": "sessions-page",
+  "issues": [
+    1784,
+    2041,
+    2043,
+    2045
+  ],
+  "keywords": [
+    "sessions",
+    "list",
+    "pivot",
+    "timeline",
+    "lens",
+    "most used",
+    "waiting",
+    "panel",
+    "find",
+    "inactive projects"
+  ],
+  "name": "Projects page (the Sessions page)",
+  "since": "2026-10-14",
+  "status": "stable",
+  "summary": "every running and asleep agent session in one list, pivot or timeline, with lenses, filters, find and a slide-out panel holding what the session is doing, its conversations and bookmarks.",
+  "surfaces": [
+    "web/src/lib/sessions-page/SessionsPage.svelte",
+    "web/src/lib/sessions-page/ListView.svelte",
+    "web/src/lib/sessions-page/PivotView.svelte",
+    "web/src/lib/sessions-page/TimelineView.svelte",
+    "web/src/lib/sessions-page/SessionPanel.svelte",
+    "web/src/lib/sessions-page/sessions-route.ts",
+    "web/src/lib/sessions-page/SessionsScreen.svelte",
+    "web/src/lib/sessions-page/inactive-projects.ts"
+  ],
+  "updated": "2026-10-21",
+  "where": [
+    "Menu tab, Projects.",
+    "Home screen, the running sessions panel's View all.",
+    "The address #sessions, and #sessions/<session_uuid> for the panel.",
+    "The address /session.",
+    "The old address #projects opens it too."
+  ],
+  "media": [],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

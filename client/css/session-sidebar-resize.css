@@ -1,0 +1,56 @@
+/* position: fixed width: var(--sidebar-dock-w) */
+
+@layer components {
+.session-sidebar-resize-handle {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    bottom: 0;
+    width: 7px;
+    cursor: ew-resize;
+    background: transparent;
+    z-index: 1101;
+    touch-action: none;
+}
+
+.session-sidebar-resize-handle::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 3px;
+    width: 1px;
+    background: transparent;
+    transition: background 120ms ease;
+}
+
+.session-sidebar-resize-handle:hover::after,
+.session-sidebar-resize-handle:focus-visible::after {
+    background: var(--oc-orange);
+}
+
+.session-sidebar-resize-handle:focus-visible {
+    outline: none;
+}
+
+/*  hidden  tabindex= */
+.session-sidebar-panel:not(.session-sidebar-panel--open) .session-sidebar-resize-handle,
+body:not(.session-sidebar-pinned) .session-sidebar-resize-handle {
+    display: none;
+}
+
+body.session-sidebar-resizing {
+    cursor: ew-resize !important;
+    user-select: none;
+}
+
+body.session-sidebar-resizing .session-sidebar-panel {
+    transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .session-sidebar-resize-handle::after {
+        transition: none;
+    }
+}
+}

@@ -1,0 +1,46 @@
+{
+  "api_routes": [
+    "src/api/session_notes_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/session-notes.md"
+  ],
+  "examples": [
+    "Keep the acceptance criteria for the task a session is working on right beside its terminal.",
+    "Jot down what you were about to try before you step away, so the next person (or you tomorrow) knows."
+  ],
+  "how_to": [
+    "Open the notes drawer from the notes key on the right widget bar (a default key).",
+    "Type in markdown; it saves as you go and belongs to that session only.",
+    "Use the edit | preview toggle at the right end of the title row to write the markdown or read it rendered. In a widget bar's slide-out it is one small icon in the top right corner of the note, and opening the widget puts the cursor in the note.",
+    "The disk beside the toggle shows the save: green saved, yellow not saved yet, red with the reason when a save failed. Click it to save now or to retry.",
+    "The same edit, preview and save now are items of the widget's menu too: right-click its icon on the rail or at the top left of its title row, then w, v or s.",
+    "Close it with the x or the same icon."
+  ],
+  "id": "session-notes",
+  "issues": [
+    1693
+  ],
+  "keywords": [
+    "notes",
+    "notepad",
+    "markdown"
+  ],
+  "media": [],
+  "name": "Session notes",
+  "since": "2026-09-20",
+  "status": "stable",
+  "summary": "keep a private markdown notepad attached to each session.",
+  "surfaces": [
+    "web/src/lib/notes-header/NotesDrawer.svelte",
+    "web/src/opscenter/cells/notes/Cell.svelte",
+    "web/src/opscenter/cells/notes/NotesControls.svelte"
+  ],
+  "updated": "2026-10-21",
+  "where": [
+    "Open a session, then the notes icon in the terminal cell's title strip (in its three-dot menu when the strip is too narrow).",
+    "The edit | preview toggle and the save disk sit at the right end of the notes title row, in the grid and in the notes drawer."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

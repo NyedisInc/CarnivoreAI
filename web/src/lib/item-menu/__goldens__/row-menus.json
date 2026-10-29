@@ -1,0 +1,2483 @@
+{
+  "session working": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session working with plugins": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "share-read-only",
+      "label": "share read only",
+      "key": "o",
+      "locked": true
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "huddle-project-lead",
+      "label": "make project lead",
+      "key": "j"
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "huddle-do-not-disturb",
+      "label": "do not disturb",
+      "key": "q"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session idle unread": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "mark-read",
+      "label": "mark read",
+      "key": "u"
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session idle unread with plugins": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "mark-read",
+      "label": "mark read",
+      "key": "u"
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "share-read-only",
+      "label": "share read only",
+      "key": "o",
+      "locked": true
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "huddle-project-lead",
+      "label": "make project lead",
+      "key": "j"
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "huddle-do-not-disturb",
+      "label": "do not disturb",
+      "key": "q"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session finished unread": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "mark-read",
+      "label": "mark read",
+      "key": "u"
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session finished unread with plugins": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "mark-read",
+      "label": "mark read",
+      "key": "u"
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "share-read-only",
+      "label": "share read only",
+      "key": "o",
+      "locked": true
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "huddle-project-lead",
+      "label": "make project lead",
+      "key": "j"
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "huddle-do-not-disturb",
+      "label": "do not disturb",
+      "key": "q"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session dead": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session dead not restartable": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "",
+      "disabled": "cannot fork: carnivore did not create this agent, so it has no recorded conversation to branch from"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s",
+      "sep": true
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session asleep": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "wake",
+      "label": "wake agent",
+      "key": "e",
+      "sep": true
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session asleep unread": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "mark-read",
+      "label": "mark read",
+      "key": "u"
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "wake",
+      "label": "wake agent",
+      "key": "e",
+      "sep": true
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session asleep no key": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w",
+      "sep": true
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "wake",
+      "label": "wake agent",
+      "key": "",
+      "disabled": "cannot tell which stored agent this row is, so it cannot be woken from here",
+      "sep": true
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "",
+      "disabled": "cannot send: this row is not matched to a stored agent yet",
+      "children": []
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "",
+      "disabled": "cannot tell which stored agent this row is, so it cannot be woken from here",
+      "sep": true
+    }
+  ],
+  "session closed": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p",
+      "sep": true
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "reopen",
+      "label": "reopen session",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "archive",
+      "label": "archive",
+      "key": "v",
+      "sep": true
+    }
+  ],
+  "session archived": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p",
+      "sep": true
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    }
+  ],
+  "session update ready": [
+    {
+      "id": "update-restart",
+      "label": "update and restart (2.1.0 → 2.2.0)",
+      "key": "e",
+      "tone": "update"
+    },
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n",
+      "sep": true
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session update busy": [
+    {
+      "id": "update-restart",
+      "label": "update and restart (2.1.0 → 2.2.0)",
+      "key": "e",
+      "tone": "update"
+    },
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n",
+      "sep": true
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session mcp drop idle": [
+    {
+      "id": "reconnect-mcp",
+      "label": "reconnect mcp (github)",
+      "key": "z"
+    },
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n",
+      "sep": true
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session mcp drop working": [
+    {
+      "id": "reconnect-mcp",
+      "label": "reconnect mcp (github, slack)",
+      "key": "",
+      "disabled": "wait until the session is idle at its prompt"
+    },
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n",
+      "sep": true
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session remote": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m",
+      "sep": true
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session remote with plugins": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m",
+      "sep": true
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session adopted": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "",
+      "disabled": "cannot fork: carnivore did not create this agent, so it has no recorded conversation to branch from"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session not renameable": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "",
+      "disabled": "cannot rename: this agent has no live backend to send the change to",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session in group": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "remove-from-group",
+      "label": "remove from group",
+      "key": "-"
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session shift held": [
+    {
+      "id": "restart-now",
+      "label": "restart now (kills and resumes)",
+      "key": "e",
+      "tone": "update"
+    },
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n",
+      "sep": true
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session no key": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w",
+      "sep": true
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "",
+      "disabled": "cannot sleep: this row is not matched to a stored agent yet"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "",
+      "disabled": "cannot send: this row is not matched to a stored agent yet",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "",
+      "disabled": "cannot move: this row is not matched to a stored agent yet"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session muted codex": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "mute",
+      "label": "unmute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session kept awake": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-to",
+      "label": "add to",
+      "key": "a",
+      "children": []
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "stop keeping awake",
+      "key": "w"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "session home surface": [
+    {
+      "id": "new-in-folder",
+      "label": "new agent",
+      "key": "n"
+    },
+    {
+      "id": "new-terminal-here",
+      "label": "new terminal here",
+      "key": "t"
+    },
+    {
+      "id": "fork",
+      "label": "fork to...",
+      "key": "f"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "show-path",
+      "label": "show path",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "copy-session-id",
+      "label": "copy session id",
+      "key": "y"
+    },
+    {
+      "id": "schedule",
+      "label": "schedule this",
+      "key": "l",
+      "sep": true
+    },
+    {
+      "id": "keep-awake",
+      "label": "keep awake",
+      "key": "w"
+    },
+    {
+      "id": "mute",
+      "label": "mute",
+      "key": "m"
+    },
+    {
+      "id": "restart",
+      "label": "restart the agent",
+      "key": "h",
+      "sep": true
+    },
+    {
+      "id": "sleep",
+      "label": "sleep agent",
+      "key": "s"
+    },
+    {
+      "id": "send-to",
+      "label": "send to",
+      "key": "g",
+      "children": []
+    },
+    {
+      "id": "move-to-folder",
+      "label": "move to folder...",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "kill agent",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "browser": [
+    {
+      "id": "popout",
+      "label": "pop out",
+      "key": "o"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "move-to-group",
+      "label": "add to",
+      "key": "a"
+    },
+    {
+      "id": "close",
+      "label": "close proxy browser",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "browser in group": [
+    {
+      "id": "popout",
+      "label": "pop out",
+      "key": "o"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "move-to-group",
+      "label": "add to",
+      "key": "a"
+    },
+    {
+      "id": "remove-from-group",
+      "label": "remove from group",
+      "key": "-"
+    },
+    {
+      "id": "close",
+      "label": "close proxy browser",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "page": [
+    {
+      "id": "popout",
+      "label": "pop out",
+      "key": "o"
+    },
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r",
+      "sep": true
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "move-to-group",
+      "label": "add to",
+      "key": "a"
+    },
+    {
+      "id": "close",
+      "label": "close page",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "file": [
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r"
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "move-to-group",
+      "label": "add to",
+      "key": "a"
+    },
+    {
+      "id": "close",
+      "label": "close file",
+      "key": "k",
+      "sep": true
+    }
+  ],
+  "layout": [
+    {
+      "id": "rename",
+      "label": "rename",
+      "key": "r"
+    },
+    {
+      "id": "pin",
+      "label": "pin",
+      "key": "p"
+    },
+    {
+      "id": "add-members",
+      "label": "add",
+      "key": "+",
+      "children": []
+    },
+    {
+      "id": "move-to-group",
+      "label": "add to",
+      "key": "a"
+    },
+    {
+      "id": "colour",
+      "label": "color",
+      "key": "c"
+    },
+    {
+      "id": "close",
+      "label": "remove layout",
+      "key": "k",
+      "sep": true
+    }
+  ]
+}

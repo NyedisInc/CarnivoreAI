@@ -1,0 +1,44 @@
+{
+  "api_routes": [
+    "GET /api/v1/swarm/cards/capacity",
+    "GET /api/v1/swarm/cards/grants",
+    "PUT /api/v1/swarm/cards/grants/{scope}"
+  ],
+  "area": "drawers",
+  "description": "The fourth slice of the swarm cards work: the capacity governor. A card dealt to an agent that has no body yet (asleep) needs a new body, and the governor decides whether that may start now. It waits when the project has no free slot (a project or company with no grant has no limit of its own since #1439, and you or SysOp can grant 0 to 20 per project or company; while a project is throttled for merge conflicts it runs at most 3), or when the machine is hot: the CPU has been over 85 percent for the last two minutes, or a fresh usage window is over 90 percent on the Claude account the new agent will run on (a different account that is parked at its limit holds nothing back; when that account cannot be told, every account counts). The capacity reading, the slot refusal, the spawn refusal and the deal request name that account and the window that tripped. A deal that waits shows the card marked waiting for a slot, and the server deals it by itself, oldest first, once a slot frees. The governor never pauses, sleeps or kills running work, never touches a card an agent already holds, and a deal to an awake agent always goes through. The governor's CPU reading is whole-machine busy time; separately, since #1439 every new agent body is admitted by measuring the machine (load average per core and free memory), and refused with system is pegged, try later and a retry_after when it cannot take one. While a project's dealing switch is off the two machine floors do not apply, so your own explicit deals are not held back by a hot machine. SysOp and company agents read the numbers with swarm_card_capacity, set grants with swarm_card_grant and set a project's pace (normal: one card per free agent, asap: use every free slot) with swarm_card_pace; the deal request the project agent receives now names its free slots, the cards waiting for one and the pace. This slice is backend only: the board screen waits for the layout pick.",
+  "docs": [
+    "docs/swarm-cards.md"
+  ],
+  "examples": [
+    "Grant a project 2 slots while two of its agents are running: a card dealt to a third, sleeping agent reads waiting for a slot, and starts by itself the moment one of the two finishes.",
+    "With the CPU over 85 percent for two minutes and dealing on, a deal to a sleeping agent waits; the agents already working are not touched, and the card is dealt when the machine cools."
+  ],
+  "how_to": [
+    "Call GET /api/v1/swarm/cards/capacity for the CPU busy figure, the highest usage window on the account new agents run on (usage_account, usage_window), live agents against the caps and whether a floor is on.",
+    "Call PUT /api/v1/swarm/cards/grants/project:16 with slots 0 to 20 and a reason to cap a project (company:3 for a company); send slots null to go back to the default."
+  ],
+  "id": "swarm-cards-c4",
+  "issues": [
+    1386,
+    1393,
+    1439
+  ],
+  "keywords": [
+    "swarm",
+    "cards",
+    "capacity",
+    "grants",
+    "pace",
+    "slots",
+    "cpu"
+  ],
+  "media_exempt": "backend only; the board UI waits for the layout pick",
+  "name": "swarm cards: capacity governor",
+  "since": "2026-10-07",
+  "status": "beta",
+  "summary": "a deal that needs a new agent waits for a slot when the grant is full or the machine is hot, and is dealt by itself when one frees; grants and pace come from SysOp, company agents and you.",
+  "updated": "2026-10-08",
+  "where": [
+    "The board screen arrives in a later slice."
+  ]
+}

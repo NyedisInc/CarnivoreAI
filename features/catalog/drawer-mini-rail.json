@@ -1,0 +1,38 @@
+{
+  "api_routes": [],
+  "area": "drawers",
+  "docs": [],
+  "examples": [
+    "Keep the whole screen for your terminals and still jump to any agent, layout or terminal in two clicks.",
+    "Reach settings, themes or skills from the home tab without opening the drawer."
+  ],
+  "how_to": [
+    "On a desktop, close the agents drawer with the panel button beside the logo: it shrinks to a column of icons on the left.",
+    "The claw at the top opens the full drawer again; the two tabs under it switch between the menu and your agents.",
+    "On the agents tab each icon is one drawer section (pinned, layouts, groups, projects, terminals, browsers): click it for a list of that section's rows with their lights, and click a row to open it."
+  ],
+  "id": "drawer-mini-rail",
+  "issues": [
+    990
+  ],
+  "keywords": [
+    "mini drawer",
+    "icon rail",
+    "collapsed sidebar"
+  ],
+  "media": [],
+  "name": "Mini drawer",
+  "since": "2026-09-27",
+  "status": "stable",
+  "summary": "on a desktop, a closed agents drawer becomes a narrow icon rail that still reaches every section.",
+  "surfaces": [
+    "web/src/lib/mini-rail/MiniRail.svelte",
+    "web/src/lib/mini-rail/sections.ts",
+    "client/css/session-sidebar-rail.css"
+  ],
+  "updated": "2026-09-27",
+  "where": [
+    "The left edge of every screen on a desktop, whenever the agents drawer is closed."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

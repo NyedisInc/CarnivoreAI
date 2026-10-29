@@ -1,0 +1,51 @@
+{
+  "api_routes": [
+    "GET /api/v1/pack/skills",
+    "PUT /api/v1/pack/skills/choices",
+    "PUT /api/v1/pack/skills/{family}/{name}",
+    "POST /api/v1/pack/skills/{family}/{name}/held",
+    "POST /api/v1/pack/skills/sync-now"
+  ],
+  "area": "skills-catalog",
+  "docs": [
+    "docs/pack.md"
+  ],
+  "examples": [
+    "Turn on one personal skill on the alpha computer and watch the other computers go from syncing to in sync.",
+    "Turn on keep every skill in sync, leaving out the few you want to stay on one computer.",
+    "a catalog (warez) skill on alpha shows on every other computer as 'from warez', installed there from that computer's own signed catalog at the same version"
+  ],
+  "how_to": [
+    "Open Warez, INSTALLED, skills and pick the pack tab (it shows when the Pack has two or more computers), or open the Pack page and pick its skills tab (the same table): one row per skill name with a provider icon for each family that holds it, one column per computer showing the worst state across the families; the header row stays put while you scroll.",
+    "Flip a skill's global switch on the alpha computer (it turns every family that holds that name on or off together), read the check (only that skill: what each computer will add or replace, scripts listed, the other synced skills as one line) and press confirm.",
+    "On any other computer the tab is read only and says to change it on alpha.",
+    "A skill alpha no longer has shows missing on alpha with stop syncing and remove everywhere.",
+    "Open the alert bell for the pack skills alerts: alpha changed, skills left behind by a computer you unpaired (remove what it placed moves them to the trash for 14 days), and a local edit that alpha's copy replaced (kept 14 days).",
+    "On a receiver each skill row says which computer placed it."
+  ],
+  "id": "pack-skill-sync",
+  "issues": [
+    1917,
+    2025
+  ],
+  "keywords": [
+    "skills",
+    "pack",
+    "sync",
+    "alpha",
+    "computers"
+  ],
+  "media_exempt": "the tab's screenshots are recaptured before the next version bump, not per change",
+  "name": "Pack skill sync",
+  "since": "2026-10-17",
+  "status": "beta",
+  "summary": "Keep chosen personal skills (one by one, or all) the same on every computer in the Pack: alpha decides, every other computer follows, and the pack tab shows each computer's state for each skill with a check before anything changes.",
+  "surfaces": [
+    "Warez, installed, skills, pack tab",
+    "Pack page, skills tab"
+  ],
+  "updated": "2026-10-20",
+  "where": [
+    "Web: Warez > installed > skills > pack, or the Pack page > skills. API: /api/v1/pack/skills."
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "id": "session-skill-fires",
+  "name": "Skill use per session",
+  "summary": "See a session's recent skill use in the terminal's skills drawer: which skill, how it was seen and how long ago.",
+  "description": "The attention watcher reads the session's own transcript once per cycle, a bounded amount at a time, and counts skill use: a Skill tool call, a skill run as a slash command, or, for Codex, a read of a SKILL.md, which is only inferred and is labelled that way. Only the skill name, the time and how it was seen are kept, in a small local file that can be deleted and rebuilt at any time; no message text is stored and nothing leaves the machine. The session listing carries the count and the newest skill; a session whose transcript cannot be read has no count, never zero. Claude Code's own commands such as clear and model are not counted. Nothing here feeds the light's colour or the auto-sleep idle clock.",
+  "area": "sessions",
+  "status": "stable",
+  "since": "2026-09-28",
+  "updated": "2026-09-28",
+  "surfaces": [
+    "terminal skills drawer"
+  ],
+  "api_routes": [
+    "GET /api/v1/sessions/list",
+    "GET /api/v1/sessions/{session_id}/skill-fires"
+  ],
+  "docs": [
+    "docs/skills-manager.md",
+    "docs/session-status.md"
+  ],
+  "issues": [
+    1080,
+    1100
+  ],
+  "keywords": [
+    "skills",
+    "telemetry",
+    "usage",
+    "census",
+    "slash",
+    "codex"
+  ],
+  "where": [
+    "Terminal cell, three-dot menu, session skills: the recent skills list under the skills, in the drawer on the cell's right edge."
+  ],
+  "how_to": [
+    "Run a claude session and let it use a skill, or type a skill's slash command.",
+    "Open the terminal's three-dot menu and choose session skills.",
+    "Read the recent skills list: the skill, how it was seen and how long ago."
+  ],
+  "examples": [
+    "A session that called sme and issues lists both, newest first."
+  ],
+  "media_exempt": "a text list inside the skills drawer, whose shot is on the skills manager feature"
+}

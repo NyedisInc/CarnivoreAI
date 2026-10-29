@@ -1,0 +1,44 @@
+{
+  "api_routes": [],
+  "area": "drawers",
+  "docs": [
+    "docs/dynamic-tab.md"
+  ],
+  "examples": [
+    "A question arrives and a yellow tab appears beside agents; answer it and the tab goes away.",
+    "Choose edit layout and the sidebar opens on an edit layout tab holding the widget drawer; close the tab to finish."
+  ],
+  "how_to": [
+    "Press a tab's key on the sidebar rail, or move between keys with the arrow keys.",
+    "A tab with a close key (edit layout) closes with it, or with Delete while its key is focused.",
+    "Menu and agents are remembered on this device; questions and edit layout appear only while they have something to show.",
+    "A tab with a pop out key in its title row (the huddle) opens in its own resizable window, remembered where you left it.",
+    "On a phone, the back arrow on a page opened from the drawer returns to the drawer on the tab you left; a page opened from another page returns to that page first."
+  ],
+  "id": "drawer-dynamic-tabs",
+  "issues": [
+    1774
+  ],
+  "keywords": [
+    "drawer",
+    "sidebar",
+    "tabs",
+    "edit layout",
+    "questions"
+  ],
+  "media_exempt": "the rail keys and their states are shown in the style guide's chrome section (the sidebar rail)",
+  "name": "Sidebar tabs",
+  "since": "2026-10-01",
+  "status": "stable",
+  "summary": "the left sidebar's tabs open and close when they have something to show: menu and agents always, questions while something waits, edit layout while you edit.",
+  "surfaces": [
+    "web/src/lib/dynamic-tabs/registry.ts",
+    "web/src/lib/dynamic-tabs/tab-store.svelte.ts",
+    "web/src/lib/dynamic-tabs/DynamicTabBody.svelte",
+    "web/src/lib/sidebar-widgets/SidebarRail.svelte"
+  ],
+  "updated": "2026-10-14",
+  "where": [
+    "The keys of the sidebar rail down the left edge of the left sidebar."
+  ]
+}

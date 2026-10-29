@@ -1,0 +1,28 @@
+.crosstalk-card {
+  box-sizing: border-box;
+  width: min(100%, 520px);
+  max-height: 260px;
+  overflow: auto;
+  padding: 8px 10px;
+  border: var(--oc-border) solid var(--oc-line-panel);
+  border-left: 3px solid var(--oc-orange);
+  border-radius: 3px;
+  background: var(--oc-ground-card);
+  color: var(--oc-text-primary);
+  box-shadow: 0 2px 12px var(--oc-shadow-lift);
+  font: 12px/1.45 var(--oc-font);
+  pointer-events: auto;
+}
+.crosstalk-card[data-direction="outbound"] { border-left-color: var(--oc-green); }
+.crosstalk-card__head { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.crosstalk-card__mark { display: inline-flex; flex: none; }
+.crosstalk-card__direction { color: var(--oc-text-dim); text-transform: uppercase; letter-spacing: .08em; }
+.crosstalk-card__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crosstalk-card__sender { border: 0; background: none; padding: 0; color: var(--oc-orange); font: inherit; font-weight: 700; cursor: pointer; }
+.crosstalk-card__sender:focus-visible { outline: 2px solid var(--oc-orange); outline-offset: 2px; }
+.crosstalk-card__meta { color: var(--oc-text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crosstalk-card__time { color: var(--oc-text-dim); margin-left: auto; white-space: nowrap; }
+.crosstalk-card__quote { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.crosstalk-card__quote--expanded { display: block; overflow: visible; }
+.crosstalk-card__toggle { border: 0; background: none; color: var(--oc-orange); font: inherit; padding: 3px 0 0; cursor: pointer; }
+.crosstalk-card__toggle:focus-visible { outline: 2px solid var(--oc-orange); outline-offset: 2px; }

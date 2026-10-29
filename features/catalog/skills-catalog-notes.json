@@ -1,0 +1,28 @@
+{
+  "api_routes": [
+    "src/api/catalog_note_routes.py"
+  ],
+  "area": "skills-catalog",
+  "docs": [],
+  "examples": [
+    "Tell the author that a skill breaks on a monorepo."
+  ],
+  "how_to": [
+    "Open a skill and leave a note for its developer."
+  ],
+  "id": "skills-catalog-notes",
+  "issues": [],
+  "keywords": [
+    "notes"
+  ],
+  "media_exempt": "note controls appear only when signed in to the live catalog, which a capture must not do with a real account",
+  "name": "Catalog developer notes",
+  "since": "2026-09-22",
+  "status": "stable",
+  "summary": "leave a developer note on a catalog listing.",
+  "surfaces": [],
+  "updated": "2026-09-27",
+  "where": [
+    "A skill's card in the catalog, once signed in."
+  ]
+}

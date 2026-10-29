@@ -1,0 +1,89 @@
+<h2 class="sg-h2">spacing, geometry, radii, borders, elevation</h2>
+<p class="sg-lead">Carnivore's geometry is fixed pixels measured off the reference mockup, held in
+<code>web/src/opscenter/tokens.css</code>. Surfaces are split by 1px hairlines, not by cards and shadows. Corners are
+small and square.</p>
+
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><span>geometry tokens, resolved</span></div>
+    <div class="sg-specimen__body">
+        <div class="sg-table-wrap">
+        <table class="sg-table">
+            <thead><tr><th>token</th><th>value</th><th>what it sizes</th><th>bar</th></tr></thead>
+            <tbody>
+                <tr data-sg-token="--oc-topbar"><td><code>--oc-topbar</code></td><td class="sg-token__value"></td><td>the app top bar height</td><td><span class="sg-space-bar" style="width: var(--oc-topbar)"></span></td></tr>
+                <tr data-sg-token="--oc-titlerow-h"><td><code>--oc-titlerow-h</code></td><td class="sg-token__value"></td><td>a title-row strip</td><td><span class="sg-space-bar" style="width: var(--oc-titlerow-h)"></span></td></tr>
+                <tr data-sg-token="--oc-foot-h"><td><code>--oc-foot-h</code></td><td class="sg-token__value"></td><td>the terminal status bar, and the widget bars' compact size</td><td><span class="sg-space-bar" style="width: var(--oc-foot-h)"></span></td></tr>
+                <tr data-sg-token="--oc-titlerow-h-short"><td><code>--oc-titlerow-h-short</code></td><td class="sg-token__value"></td><td>the two short title rows</td><td><span class="sg-space-bar" style="width: var(--oc-titlerow-h-short)"></span></td></tr>
+                <tr data-sg-token="--oc-rowheight"><td><code>--oc-rowheight</code></td><td class="sg-token__value"></td><td>a table or list row</td><td><span class="sg-space-bar" style="width: var(--oc-rowheight)"></span></td></tr>
+                <tr data-sg-token="--oc-tap"><td><code>--oc-tap</code></td><td class="sg-token__value"></td><td>the phone tap target floor</td><td><span class="sg-space-bar" style="width: var(--oc-tap)"></span></td></tr>
+                <tr data-sg-token="--oc-gutter"><td><code>--oc-gutter</code></td><td class="sg-token__value"></td><td>the gap between dashboard cells</td><td><span class="sg-space-bar" style="width: var(--oc-gutter)"></span></td></tr>
+                <tr data-sg-token="--oc-space-1"><td><code>--oc-space-1</code></td><td class="sg-token__value"></td><td>the spacing scale, 4px: binds a title to its hint</td><td><span class="sg-space-bar" style="width: var(--oc-space-1)"></span></td></tr>
+                <tr data-sg-token="--oc-space-2"><td><code>--oc-space-2</code></td><td class="sg-token__value"></td><td>the spacing scale, 8px: between a row's own parts</td><td><span class="sg-space-bar" style="width: var(--oc-space-2)"></span></td></tr>
+                <tr data-sg-token="--oc-space-3"><td><code>--oc-space-3</code></td><td class="sg-token__value"></td><td>the spacing scale, 12px: a panel's padding</td><td><span class="sg-space-bar" style="width: var(--oc-space-3)"></span></td></tr>
+                <tr data-sg-token="--oc-space-4"><td><code>--oc-space-4</code></td><td class="sg-token__value"></td><td>the spacing scale, 16px: between the rows of a group</td><td><span class="sg-space-bar" style="width: var(--oc-space-4)"></span></td></tr>
+                <tr data-sg-token="--oc-space-5"><td><code>--oc-space-5</code></td><td class="sg-token__value"></td><td>the spacing scale, 24px: a group's padding, and the gap between its two columns</td><td><span class="sg-space-bar" style="width: var(--oc-space-5)"></span></td></tr>
+                <tr data-sg-token="--oc-space-6"><td><code>--oc-space-6</code></td><td class="sg-token__value"></td><td>the spacing scale, 32px: the largest step</td><td><span class="sg-space-bar" style="width: var(--oc-space-6)"></span></td></tr>
+                <tr data-sg-token="--oc-cell-pad"><td><code>--oc-cell-pad</code></td><td class="sg-token__value"></td><td>a cell's inner padding</td><td><span class="sg-space-bar" style="width: var(--oc-cell-pad)"></span></td></tr>
+                <tr data-sg-token="--oc-widget-inset"><td><code>--oc-widget-inset</code></td><td class="sg-token__value"></td><td>the side inset a widget body shares with its host header's title (stat tile, chart body)</td><td><span class="sg-space-bar" style="width: var(--oc-widget-inset)"></span></td></tr>
+                <tr data-sg-token="--oc-widget-clear"><td><code>--oc-widget-clear</code></td><td class="sg-token__value"></td><td>the right inset of a chart card's head: the inset plus room for the floating opener</td><td><span class="sg-space-bar" style="width: var(--oc-widget-clear)"></span></td></tr>
+                <tr data-sg-token="--oc-mono-advance"><td><code>--oc-mono-advance</code></td><td class="sg-token__value"></td><td>the mono face's glyph advance in em: a stat figure never grows wider than its tile holds at this width per character</td><td></td></tr>
+                <tr data-sg-token="--oc-pad-top"><td><code>--oc-pad-top</code></td><td class="sg-token__value"></td><td>dashboard outer padding, top</td><td><span class="sg-space-bar" style="width: var(--oc-pad-top)"></span></td></tr>
+                <tr data-sg-token="--oc-pad-right"><td><code>--oc-pad-right</code></td><td class="sg-token__value"></td><td>right</td><td><span class="sg-space-bar" style="width: var(--oc-pad-right)"></span></td></tr>
+                <tr data-sg-token="--oc-pad-bottom"><td><code>--oc-pad-bottom</code></td><td class="sg-token__value"></td><td>bottom</td><td><span class="sg-space-bar" style="width: var(--oc-pad-bottom)"></span></td></tr>
+                <tr data-sg-token="--oc-pad-left"><td><code>--oc-pad-left</code></td><td class="sg-token__value"></td><td>left</td><td><span class="sg-space-bar" style="width: var(--oc-pad-left)"></span></td></tr>
+                <tr data-sg-token="--oc-terminal-inset"><td><code>--oc-terminal-inset</code></td><td class="sg-token__value"></td><td>left inset of a terminal's first glyph; never above 16 (the scrollbar reserve)</td><td><span class="sg-space-bar" style="width: var(--oc-terminal-inset)"></span></td></tr>
+                <tr data-sg-token="--oc-stats-h"><td><code>--oc-stats-h</code></td><td class="sg-token__value"></td><td>the stat strip</td><td><span class="sg-space-bar" style="width: var(--oc-stats-h)"></span></td></tr>
+                <tr data-sg-token="--oc-radius"><td><code>--oc-radius</code></td><td class="sg-token__value"></td><td>a panel corner</td><td></td></tr>
+                <tr data-sg-token="--oc-radius-sm"><td><code>--oc-radius-sm</code></td><td class="sg-token__value"></td><td>a quiet control corner</td><td></td></tr>
+                <tr data-sg-token="--oc-border"><td><code>--oc-border</code></td><td class="sg-token__value"></td><td>every hairline's width</td><td></td></tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+
+<dl class="sg-facts">
+    <dt>spacing</dt>
+    <dd>Steps of 2, 4, 6, 8, 10, 12, 14 and 16px cover everything. 12px is the phone gutter and 16px the desktop gutter
+        (<code>--pl-gutter</code>). Prefer more space over less, with grey dividers between list items. A title row pads
+        0 12 to 14px; a panel body pads 12px; a dialog footer 12 to 16px.</dd>
+    <dt>between sections</dt>
+    <dt>hairlines</dt>
+    <dd>1px (<code>--oc-border</code>) in <code>--oc-line-rule</code> between regions, <code>--oc-line-faint</code>
+        between list rows, <code>--oc-line-panel</code> for a panel or quiet control edge. A title row's rule is an inset
+        shadow (<code>box-shadow: inset 0 -1px 0 0 var(--oc-line-rule)</code>), which costs no layout; never a border that
+        moves the row by a pixel.</dd>
+    <dt>radii</dt>
+    <dd>2px on controls (buttons, fields, chips), <code>--oc-radius-sm</code> (4px) on quiet boxes and dialogs,
+        <code>--oc-radius</code> (6px) on a panel. Three themes zero every radius, so nothing may depend on a rounded
+        corner. Never a pill-shaped button.</dd>
+    <dt>elevation</dt>
+    <dd>Ground steps and hairlines separate surfaces. The only shadows are the popup-focus drop shadows under a floating
+        menu, <code>--shadow-modal</code> under the legacy status pill and attach menu, and <code>--oc-shadow-lift</code>
+        under a panel being dragged. The dialog chassis has none: its ground and hairline separate it. No card hover lift, no glow on buttons.
+        Surfaces step off the content ground by the surface ladder (<code>--oc-surface-1</code>, <code>-1-on</code>, <code>-2</code>, <code>--oc-line-surface</code>), a fixed share toward the theme's ink, so a tile, panel or card never paints a raw manifest ground.</dd>
+    <dt>breakpoints</dt>
+    <dd><code>1023px</code> is the design contract's phone line: 44px targets, stacked panels, 12px gutter.
+        <code>769px</code> decides whether the phone-only floating controls exist. <code>700px</code> decides whether the
+        agents sidebar and the right drawer dock or overlay. <code>900px</code> is the archive's own column line. Smaller
+        adjustments live at 768, 640, 600 and 480. Cap and centre content on very wide screens
+        (<code>max-width: 1680px; margin: 0 auto</code>), never stretch it edge to edge at 2560.</dd>
+    <dt>tap targets</dt>
+    <dd>Every control a thumb can reach is at least 44px (<code>--oc-tap</code>) at the phone line, set as a
+        <code>min-height</code> floor so a wrapping label still grows the row. A pointer-only desktop control may be
+        30px.</dd>
+</dl>
+
+<h3 class="sg-h3" id="space-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>Tidying a measured number.</strong> The dialog chassis pads 31px, not 30, because a 2px frame became a
+        1px hairline and the pixel moved into the padding to hold both the outer box and the content box still
+        (<code>client/css/styles.css</code>, above <code>.modal-overlay</code>). Re-measure before rounding.</li>
+    <li><strong>A border for a rule.</strong> A 1px border on a title row pushes the body down a pixel and shifts every
+        measured position under it. Draw the rule as an inset shadow.</li>
+    <li><strong>Horizontal scroll at 390px.</strong> A fixed min-width, an unbroken token or a table without a scroll
+        wrapper. Give long strings <code>overflow-wrap: anywhere</code> and wrap tables.</li>
+    <li><strong>A layout jump on a state change.</strong> The restart picker's footer wrapped when "restart" became "kill
+        and restart" and the centred modal shifted every row above it (#592). Size the container for the longest label
+        of every state.</li>
+</ul>

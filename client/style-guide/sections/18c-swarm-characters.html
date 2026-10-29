@@ -1,0 +1,118 @@
+<h2 class="sg-h2">swarm characters</h2>
+
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/cplugs/huddle/swarm/characters/Character.svelte</code><span>every state at 28, 40 and 64 px, then the reduced-motion pose; the swarm follows the theme switcher</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-swarm-characters"></div></div>
+</div>
+
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><span>the pixel pack forced on, so the per-theme mechanism shows under any theme (gameboy wears it by itself)</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-swarm-characters-pixel"></div></div>
+</div>
+
+<h3 class="sg-h3" id="swarm-characters-expressions">fifty eye expressions</h3>
+<p>Every 120 to 180 seconds the shared clock picks ONE visible character that is at rest (<code>idle</code> or <code>finished_unread</code>, settled for 3 s) and plays one
+random face on it for 1.2 to 2.5 s: only the two eyes change (shape, size, tilt, offset, one quick motion), then they return to normal. Never twice in a row, never on dead, asleep,
+working, a question, the startup gate or an alert, never in reduced motion, and a hidden tab pauses it. Pick any name to play it now; "cycle all" runs the fifty at 1.5 s each; the sheet below holds every face still at 28 and 64 px.</p>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/cplugs/huddle/swarm/characters/expressions.ts</code><span>the picker plays through the shared clock; the sheet follows the theme switcher (gameboy draws the pixel versions)</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-swarm-expressions"></div></div>
+</div>
+
+<h3 class="sg-h3" id="swarm-characters-ladder">the alert ladder is a body language</h3>
+<p>The spikes are one static path per rung, drawn behind the body in the body's own color and standing on its outline, so the glyph itself looks spiky.
+A PRIORITY badge, when there is one, lives on the Swarm drawer tab and never on a node.</p>
+
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>no badge, one glow</dt>
+    <dd><code>tell</code> is still accepted (the panel passes it) and draws nothing; it only adds to the spoken label. The one
+        backdrop is the finished_unread glow, <code>.pk-gw</code>: a static rounded rectangle the size of the resting square with its corner
+        radius and an equal spread on every side, in a CONTRAST series token (<code>--gc</code>, never the body's own color); only its opacity animates.
+        The pixel pack draws one hard square band. On a home shape other than the square (the Swarm look, #1426) the glow drops its box and the body
+        (<code>.pk-bd</code>, the SVG holding the outline) wears it as a drop shadow, so it hugs the shape.</dd>
+    <dt>ribbons and glyphs</dt>
+    <dd>A working square's ribbon turns in 0.6 of the mockup's time, is wider, and wears a bright series color that is never the body's
+        (<code>contrastIndex</code>). The dead gravestone is grey (<code>--oc-text-dim</code>) with an engraved cross and RIP
+        (<code>.pk-rip</code>) on a ground line (<code>.pk-gl</code>).</dd>
+    <dt>one attribute</dt>
+    <dd>One <code>data-state</code> per square picks every pose, keyframe and shape in
+        <code>web/src/cplugs/huddle/swarm/characters/characters.css</code>, the <code>status-led.css</code> precedent. Exactly one
+        animation per state, held by <code>animation-map.test.ts</code>.</dd>
+    <dt>motion</dt>
+    <dd>Only <code>transform</code> and <code>opacity</code> animate (plus the individual <code>translate</code>, <code>scale</code> and
+        <code>rotate</code> properties), and the body shape morphs ONCE per state change through SMIL, begun one frame after the
+        svg is inserted (a morph begun in the insertion frame never plays in Chromium). One shared clock
+        (<code>clock.ts</code>) writes the gaze, the blinks and the rare idle quirk; a character at rest is still. A hidden tab
+        pauses with <code>animation-play-state</code> (never <code>animation: none</code>), stops the clock and pauses SMIL.</dd>
+    <dt>reduced motion</dt>
+    <dt>themes</dt>
+    <dd>Body colors come from the agent's color family (below); the eyes
+        are <code>--oc-on-accent</code>. Carnivore's nodes render under every theme through tokens. A theme may name an
+        alternate swarm in <code>theme.json</code> (<code>"characters": {"swarm": "pixel"}</code>); gameboy wears the pixel pack,
+        read by <code>readCharacterPack</code> in <code>web/src/cplugs/huddle/swarm/characters/pack-reader.ts</code>, which falls
+        back to the default swarm for a missing, malformed or unknown block.</dd>
+    <dt>color families</dt>
+    <dt>access</dt>
+    <dd>Every character is <code>role="img"</code> with an accessible label from the catalog
+        (<code>cplug.huddle.swarm.state.*</code>), the agent's name first. Color never carries the state alone: the body shape and
+        motion do.</dd>
+</dl>
+
+<h3 class="sg-h3" id="swarm-panel">the swarm panel</h3>
+<p>The Task Manager drawer tab opens on the Swarm panel (<code>web/src/cplugs/huddle/swarm/SwarmPanel.svelte</code>): SysOp as one big square,
+then COMPANIES, PROJECTS and AGENTS, each under a hairline divider with a small tracked label and a count of what is shown. It is
+the LIVE FLOOR (S6f): every session the Agents tab lists (remote ones too), every company and project they sit under, and every
+Swarm agent. Below, the panel over a fixture floor (a remote session, a dead pane, an asleep record, a project with no agent) at its
+three densities with the inactive nodes hidden, then once more with them shown, drawn by the real component.</p>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>SwarmPanel.svelte</code><span>condensed (nodes only), expanded (with names), detailed (name, provider mark, context bar, working-on line), and expanded with the inactive shown; each column's quiet link works</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-swarm-panel"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd><code>&lt;SwarmPanel floor agents density now showInactive onToggleInactive onOpen onTurnOn threadsReady onOpenPlugins /&gt;</code> is presentational; <code>SwarmPanelLive.svelte</code>
+        builds the floor (<code>swarm/floor.ts</code>, pure) from the pushed roster and the read-only SDK door <code>floorSource</code> (the Agents tab's own rows, never a second listing) and wires the density setting. Density keys on the drawer bar map compact,
+        normal and full to condensed, expanded and detailed; the swarm / lists switch, the density keys and a quiet grid icon key that opens the Swarm page sit in the SWARM title row (<code>SwarmTitleActions.svelte</code>, <code>.pta-page</code>; the switch is per device, the pop-out draws none).</dd>
+    <dt>state</dt>
+    <dd>One state per square, first that applies: an open alert's rung, a fresh activity (8 seconds), question_waiting, asleep, the
+        startup gate, the listing's activity status, else unknown. The rules are pure, in <code>swarm/panel-state.ts</code>.</dd>
+    <dt>floor</dt>
+    <dt>drag within a tier</dt>
+    <dd>A node drags to a new place inside its own tier (COMPANIES, PROJECTS, AGENTS; <code>tier-drag.ts</code>, #1453): the mouse lifts it after a
+        5 px move, a finger after a 500 ms hold. The tier grid takes <code>.pkp-drag-on</code> (no text selection, the neighbours slide to their
+        new slots by transform); the node takes <code>.pkp-drag-lift</code>, the Street View pegman: it rises over <code>--oc-shadow-lift</code>, grows
+        a little and swings from the grab point. A release inside the tier glides it into the gap (<code>.pkp-drag-home</code>) and it settles
+        with a small bounce (<code>.pkp-drag-plop</code>); Esc or a release outside the tier slides it home. Reduced motion: no swing, no slide,
+        no bounce. The order is one server value for every device (<code>GET</code> / <code>PUT /swarm/node-order</code>, pushed as
+        <code>swarm_node_order</code>), keyed on the node, never a tmux name. Shift+click stays the lineage filter and never lifts.</dd>
+    <dt>never</dt>
+    <dd>No count, dot or ring on a node; the corner tell is the only badge. The PRIORITY count (agents whose alert is priority or higher) is the drawer tab's badge.
+        A density change never remounts a node, since a remount replays its entry.</dd>
+</dl>
+
+<h3 class="sg-h3" id="swarm-node-menu">a node's own look: the node menu</h3>
+<dl class="sg-facts">
+    <dt>where</dt>
+    <dd>The drawer's Swarm grid, the Swarm page and the org chart open it; an ordinary session's stand-in and a vacant seat have none.</dd>
+    <dt>reads</dt>
+    <dd>Every surface draws a node's shape and tile through the one resolver, <code>shapeFor</code> and <code>backgroundFor</code> in
+        <code>node-look.ts</code>, passed to <code>Character</code> as <code>shape</code> and <code>background</code>: the drawer square, the
+        Swarm page, the org chart, the ledger, the board faces and the chat avatar all agree. A node's own shape beats its tier's; its tile is
+        a series color (the slot 1 to 8) mixed toward transparent drawn behind the body (<code>data-tile</code>, <code>--tile</code>).</dd>
+    <dt>never</dt>
+    <dd>Never pass a shape from the rank alone (<code>rank=</code> without <code>shape={shapeFor(it)}</code>): the node's own pick would
+        show on one surface and not another.</dd>
+</dl>
+
+<h3 class="sg-h3" id="swarm-characters-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>A round glow behind a node.</strong> A circle is thick at the sides and thin at the corners. The halo is a rounded rectangle with the body's corner radius and equal spread.</li>
+    <li><strong>A ribbon in the body's own color.</strong> Use <code>contrastIndex</code>, never the body's series.</li>
+    <li><strong>A timer per square.</strong> The one shared clock writes the gaze and blinks; keyframes start because
+        <code>data-state</code> changed.</li>
+    <li><strong>Starting the morph in the insertion frame.</strong> Begin it in a following animation frame.</li>
+    <li><strong>Picking a square's color anywhere but the color book.</strong> A view that calls <code>seriesVar</code> or a
+        random slot breaks the company grouping; pass <code>color={colors.of(agent)}</code>.</li>
+    <li><strong>A literal color.</strong> Body, eyes and ribbons are tokens, so every theme works.</li>
+</ul>

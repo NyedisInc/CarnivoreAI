@@ -1,0 +1,59 @@
+{
+  "area": "skills-catalog",
+  "docs": [
+    "docs/catalog.md"
+  ],
+  "examples": [
+    "Open warez and spot the three themes by their black mark and palette miniature, the mods by red and the skills by purple.",
+    "Press ? in the title strip to see the shipped keys: / search, j k move, enter open, i t u act."
+  ],
+  "how_to": [
+    "Open Warez from the menu (hotkey r), or go to /#warez.",
+    "Read the mark before each title to know the kind at a glance: mods are red, skills purple, themes black, each with its own glyph, and the card's top edge wears the same color.",
+    "Use the left menu: find in warez, then store (everything, newest, updates, one line per kind with its count) and installed (one line per kind, each opening to its installed items with a state word). A needs a look group shows only when something does. Sort, the grid or list choice and search stay in the top row and are remembered on this device.",
+    "Choose an installed item to manage it on the right with the same panels as the plugins, themes, skills and mods pages; a plugin's tabs sit on its page. On a phone the menu is the first screen and each choice opens under a back bar.",
+    "Open a card to read who signed it first (signer, pinned key, scripts, source, digest), then the description and the context cost; theme cards show the theme's own palette and named swatches.",
+    "Add an item from its card, or open it to install to another scope, update or remove it; refresh the index, publish a skill, sign in and the key list (the ? button) sit in the title strip.",
+    "If you published an item, open its card to find a card image row: choose a png, jpeg or webp (at least 1200x500, 3:2 to 3:1, up to 512 KiB), see it on the card here only, then send it for review; other people see it after review."
+  ],
+  "id": "warez",
+  "issues": [
+    1465,
+    1554,
+    1555,
+    1819
+  ],
+  "keywords": [
+    "warez",
+    "catalog",
+    "skills",
+    "themes",
+    "mods",
+    "plugins"
+  ],
+  "name": "Warez",
+  "since": "2026-10-09",
+  "status": "stable",
+  "summary": "the signed catalog as a faceted shelf: labelled kind, state and sort groups, theme miniatures from each theme's real palette, trust first in the reading pane, and a colored mark before every title (mods red, skills purple, themes black), and a publisher can preview and send their own card image",
+  "surfaces": [
+    "web/src/lib/catalog/WarezScreen.svelte",
+    "web/src/lib/catalog/warez-host.ts",
+    "web/src/lib/catalog/CatalogScreen.svelte",
+    "web/src/lib/catalog/CatalogToolbar.svelte",
+    "web/src/lib/catalog/KindMark.svelte",
+    "web/src/lib/catalog/VerdictMark.svelte",
+    "web/src/lib/catalog/FilterGroup.svelte",
+    "web/src/lib/catalog/WarezStatusLine.svelte",
+    "web/src/lib/catalog/WarezActs.svelte",
+    "web/src/lib/catalog/CatalogPhoneBar.svelte",
+    "web/src/lib/catalog/TrustBlock.svelte",
+    "src/api/catalog_theme_palette_routes.py"
+  ],
+  "updated": "2026-10-15",
+  "where": [
+    "Menu tab, Warez (hotkey r), under Themes.",
+    "Also at /#warez, /#catalog, /#warez/<handle>/<name> to open one item, and /#warez/store/... or /#warez/installed/... for a menu node."
+  ],
+  "media": [],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

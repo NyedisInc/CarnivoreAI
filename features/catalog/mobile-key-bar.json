@@ -1,0 +1,41 @@
+{
+  "id": "mobile-key-bar",
+  "name": "Mobile key bar",
+  "summary": "The phone's key strip under the terminal drags up to a second row with Enter, undo, search, sleep, theme, notes, keep awake, files and plugins.",
+  "description": "Below 769px a strip of keys sits under the terminal: slash commands, esc, tab, the four arrows, the terminal tools menu and Enter. Drag the strip up and it snaps open to twice its height in 250 ms to show a second row: the agent key (shift tab, cycles permission mode), undo (control shift minus), search, sleep, session theme, session notes, keep awake, session files and session plugins. Each of those runs the same action the desktop toolbar and header run. Drag down to snap back to one row. A plain tap on a key never counts as a drag. Open or closed is remembered on this device, and the terminal refits once after the animation ends.",
+  "area": "sessions",
+  "status": "stable",
+  "since": "2026-10-01",
+  "updated": "2026-10-01",
+  "surfaces": [
+    "client/js/terminal-key-bar.js",
+    "client/js/labels/terminal-key-bar.js",
+    "client/css/terminal-key-bar.css",
+    "web/src/opscenter/ui/icon-svg.ts"
+  ],
+  "issues": [
+    1197
+  ],
+  "keywords": [
+    "phone",
+    "keys",
+    "keypad",
+    "swipe",
+    "enter",
+    "undo"
+  ],
+  "where": [
+    "Open a session on a phone (screen narrower than 769px): the key strip is the bottom row of the screen."
+  ],
+  "how_to": [
+    "Drag the strip up (or flick it) to show the second row.",
+    "Drag it down to go back to one row.",
+    "Tap Enter in the first row to send a return to the terminal.",
+    "In the second row, tap undo to send control shift minus, stash to stash the current prompt (control s), or sleep, theme, notes, keep awake, files or search for the same actions as on desktop."
+  ],
+  "examples": [
+    "Answer a prompt with Enter without opening the phone keyboard.",
+    "Put the session to sleep from the phone without opening the menu."
+  ],
+  "media_exempt": "touch gesture on the phone key strip; the screenshots are taken in the pre-version-bump recapture"
+}

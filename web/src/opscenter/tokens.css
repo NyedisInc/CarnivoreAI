@@ -1,0 +1,391 @@
+
+:root {
+  --oc-ground-chrome: #02161e;
+  --oc-ground-page: #02161e;
+  --oc-ground-panel: #02161e;
+  --oc-ground-titlerow: #02161e;
+  --oc-ground-field: #030c0d;
+  --oc-ground-raised: #061214;
+  --oc-ground-card: #151a1c;
+  --oc-ground-hover: #0b1a1c;
+  --oc-backdrop: #00000090;
+  --oc-shadow-lift: #00000090;
+
+  --oc-line-panel: #1f2e30;
+  --oc-line-chrome: #1f2e30;
+  --oc-line-rule: #1f2e30;
+  --oc-line-column: #1f2e30;
+  --oc-line-faint: #1f2e30;
+  --oc-line-strip: #1f2e30;
+  --oc-line-frame: #3f4649;
+
+  --oc-text-bright: #ffffff;
+  --oc-text-primary: #cbd6d9;
+  --oc-text-secondary: #a3b4bb;
+  --oc-text-muted: #82898f;
+  --oc-text-dim: #6b7378;
+  --oc-text-status: #c1cad5;
+
+  --oc-orange: #ff4652;
+  --oc-orange-bright: #ff6872;
+  --oc-orange-dim: #bd3540;
+  --oc-orange-tint: #301419;
+  --oc-green: #4acf93;
+  --oc-green-bright: #36ef94;
+  --oc-green-dim: #2f7f5e;
+  --oc-green-deep: #174e3b;
+  --oc-cyan: #6cb0e0;
+  --oc-yellow: #dbca76;
+  --oc-yellow-bright: #e4c13c;
+  --oc-coral: #e78475;
+  --oc-violet: #a98fe0;
+
+  --oc-tag-session: #6cb0e0;
+  --oc-tag-agent: #eae8e5;
+  --oc-tag-tool: #a3d692;
+  --oc-tag-system: #81c2ac;
+  --oc-tag-test: #bdbdad;
+  --oc-tag-plugin: #66b293;
+  --oc-tag-project: #e78475;
+
+  --oc-stat-1: #6af1b5;
+  --oc-stat-2: #dee1e8;
+  --oc-stat-3: #3ce091;
+  --oc-stat-4: var(--oc-orange);
+  --oc-stat-5: #43de9d;
+
+  --oc-theme-terminal-bg: #0a0d0e;
+  --oc-theme-terminal-border: #2b3033;
+  --oc-theme-terminal-chip-1: #686f74;
+  --oc-theme-terminal-chip-2: #71777c;
+  --oc-theme-terminal-chip-3: #656b70;
+  --oc-theme-terminal-chip-4: #787c80;
+  --oc-theme-terminal-line-1: #575c5f;
+  --oc-theme-terminal-line-2: #656a6e;
+  --oc-theme-terminal-line-3: #5e6265;
+  --oc-theme-cyber-bg: #0a0d0e;
+  --oc-theme-cyber-border: #293c33;
+  --oc-theme-cyber-chip-1: #63ff9d;
+  --oc-theme-cyber-chip-2: #39c187;
+  --oc-theme-cyber-chip-3: #37b77a;
+  --oc-theme-cyber-chip-4: #42e484;
+  --oc-theme-cyber-line-1: #44cb79;
+  --oc-theme-cyber-line-2: #42d38e;
+  --oc-theme-cyber-line-3: #42b97a;
+  --oc-theme-dracula-bg: #1a1924;
+  --oc-theme-dracula-border: #363841;
+  --oc-theme-dracula-chip-1: #f46fb8;
+  --oc-theme-dracula-chip-2: #f688cd;
+  --oc-theme-dracula-chip-3: #df70aa;
+  --oc-theme-dracula-chip-4: #f68fd0;
+  --oc-theme-dracula-line-1: #dc78b9;
+  --oc-theme-dracula-line-2: #d17abe;
+  --oc-theme-dracula-line-3: #d481be;
+  --oc-theme-nord-bg: #131d25;
+  --oc-theme-nord-border: #2f373e;
+  --oc-theme-nord-chip-1: #c6acff;
+  --oc-theme-nord-chip-2: #7aa7ff;
+  --oc-theme-nord-chip-3: #7aaefa;
+  --oc-theme-nord-chip-4: #94c0fc;
+  --oc-theme-nord-line-1: #6b8ed5;
+  --oc-theme-nord-line-2: #7895cd;
+  --oc-theme-nord-line-3: #7f9edf;
+  --oc-theme-solarized-bg: #012d36;
+  --oc-theme-solarized-border: #25434b;
+  --oc-theme-solarized-chip-1: #fff49f;
+  --oc-theme-solarized-chip-2: #7cfaf4;
+  --oc-theme-solarized-chip-3: #5de7d3;
+  --oc-theme-solarized-chip-4: #98faf8;
+  --oc-theme-solarized-line-1: #d3d7c3;
+  --oc-theme-solarized-line-2: #69e0da;
+  --oc-theme-solarized-line-3: #5edae1;
+  --oc-theme-light-bg: #edeff5;
+  --oc-theme-light-border: #f8fafc;
+  --oc-theme-light-chip-1: #c2c7d1;
+  --oc-theme-light-chip-2: #ced1dc;
+  --oc-theme-light-chip-3: #d2d5e0;
+  --oc-theme-light-chip-4: #dee1e8;
+  --oc-theme-light-line-1: #c4c9d4;
+  --oc-theme-light-line-2: #cbcfda;
+  --oc-theme-light-line-3: #c9cfda;
+
+  /* running sessions */
+  --oc-spark: #2be393;
+  --oc-spark-mid: #1f7f55;
+  --oc-spark-dim: #174a37;
+
+  --oc-font: var(--font-mono, ui-monospace, monospace);
+  --oc-fs-wordmark: 20px;
+  --oc-fs-figure: 20px;
+  --oc-fs-display: 28px;
+  --oc-fs-tile: 32px;
+  --oc-fs-tile-words: 24px;
+  --oc-fs-card-name: 15px;
+  --oc-fs-status: 13px;
+  --oc-fs-body: 12px;
+  --oc-fs-nav: 12px;
+  --oc-fs-title: 12px;
+  --oc-fs-label: 11px;
+  --oc-fs-hint: 11px;
+  --oc-fs-micro: 10px;
+  --oc-tracking-wordmark: -0.5px;
+  --oc-tracking-title: 0.8px;
+  --oc-tracking-label: 0.6px;
+
+  --oc-topbar: 54px;
+  --oc-pad-top: 16px;
+  --oc-pad-right: 14px;
+  --oc-pad-bottom: 13px;
+  --oc-pad-left: 16px;
+  --oc-gutter: 12px;
+  /* padding */
+  --oc-space-1: 4px;
+  --oc-space-2: 8px;
+  --oc-space-3: 12px;
+  --oc-space-4: 16px;
+  --oc-space-5: 24px;
+  --oc-space-6: 32px;
+
+  --oc-space-0-5: 2px;
+  --oc-space-1-5: 6px;
+  --oc-pp-space-1: 1px;
+  --oc-pp-space-3: 3px;
+  --oc-pp-space-5: 5px;
+  --oc-pp-space-7: 7px;
+  --oc-pp-space-9: 9px;
+  --oc-pp-space-10: 10px;
+  --oc-pp-space-11: 11px;
+  --oc-pp-space-14: 14px;
+  --oc-pp-space-18: 18px;
+  --oc-pp-space-20: 20px;
+  --oc-pp-space-22: 22px;
+  --oc-pp-space-28: 28px;
+  --oc-pp-space-40: 40px;
+  --oc-pp-space-56: 56px;
+  --oc-fs-control: var(--oc-fs-status);
+  --oc-fs-heading: 16px;
+  --oc-fs-run-title: 14px;
+  --oc-fs-drawer-name: 18px;
+  --oc-lh-tight: 1.2;
+  --oc-lh-body: 1.45;
+  --oc-lh-prose: 1.6;
+  --oc-tracking-caps: 0.08em;
+  --oc-control-h-xs: 20px;
+  --oc-control-h-sm: 24px;
+  --oc-control-h: 32px;
+  --oc-row-h-dense: 22px;
+  --oc-row-h: var(--oc-rowheight);
+  --oc-row-h-roomy: 32px;
+  /* padding */
+  --oc-task-pad-x: var(--oc-space-3);
+  --oc-task-pad-y: var(--oc-space-3);
+  --oc-task-gap: var(--oc-space-3);
+  --oc-radius-control: clamp(0px, var(--radius-control, 2px), 4px);
+  --oc-radius-panel: clamp(0px, var(--radius-panel, 4px), 8px);
+  --oc-radius-round: 999px;
+  --oc-ease: cubic-bezier(0.2, 0, 0, 1);
+  --oc-z-raised: 1;
+  --oc-z-sticky: 10;
+  --oc-z-drawer: 100;
+  --oc-z-popover: 1000;
+  --oc-z-modal: 1100;
+  --oc-z-toast: 1200;
+  --oc-z-tooltip: 1300;
+  /* padding */
+  --oc-terminal-inset: 8px;
+  --oc-stats-h: 69px;
+  --oc-titlerow-h: 37px;
+  --oc-titlerow-h-short: 31px;
+  --oc-foot-h: 20px;
+  --oc-rowheight: 26px;
+  --oc-radius: 6px;
+  --oc-radius-sm: 4px;
+  --oc-project-block-mix: 9%;
+  --oc-project-block-default: rgb(56 56 56);
+  --oc-border: 1px;
+  --oc-cell-pad: 14px;
+  /* one side inset */
+  --oc-widget-inset: var(--oc-space-3);
+  --oc-widget-clear: calc(var(--oc-widget-inset) + var(--oc-space-5));
+  --oc-mono-advance: 0.62;
+  --oc-tap: 44px;
+
+  --oc-motion-fast: 120ms;
+  --oc-motion: 160ms;
+  --oc-motion-slow: 240ms;
+
+  --oc-focus-edge: color-mix(in oklab, var(--oc-orange) 65%, transparent);
+  --oc-focus-glow: color-mix(in oklab, var(--oc-orange) 45%, transparent);
+  --oc-focus-breathe: 6000ms;
+
+  --oc-strip-edge: color-mix(in oklab, var(--oc-orange) 55%, var(--oc-line-rule));
+  --oc-strip-glow: color-mix(in oklab, var(--oc-orange) 20%, transparent);
+  --oc-rail-header-ground: color-mix(in oklab, var(--oc-orange) 10%, var(--oc-ground-titlerow));
+}
+
+:root,
+[data-session-theme] {
+  --color-tabstrip-bg: initial;
+  --oc-ground-chrome: var(--color-header-bg, #02161e);
+  --oc-ground-page: var(--color-bg-page, #02161e);
+  --oc-on-accent: var(--color-on-accent, #0a0d0e);
+  --oc-focus-lift: oklch(from var(--oc-ground-page) clamp(0, (0.6 - l) * 1000, 1) 0 0);
+  --oc-focus-keep: 75%;
+  --oc-ground-panel: var(--color-bg, #02161e);
+  --oc-ground-titlerow: var(--color-header-bg, #02161e);
+  --oc-ground-band: var(--oc-ground-chrome);
+  --oc-ground-content: var(--oc-ground-page);
+  /* A component's tab strip (#514): the title row's own ground taken darker,
+     so the active tab, which wears the title row's ground, joins the row
+     under it and everything else in the strip steps back. Mixing 18% toward
+     BLACK (it was 40, which read as a black bar on every dark theme, the owner
+     (contributor), an earlier date) is a fixed absolute step, so on a dark ground it lands a shade
+     darker (as intended) but on a LIGHT ground it crushes a light grey into
+     a mid grey the icons and inactive-tab text painted over it cannot clear
+     4.5:1 against (issue #975). `--color-tabstrip-bg` lets a theme override
+     the result directly through its own manifest instead of changing this
+     shared formula for every theme; no theme sets it, so every other
+     theme's computed output is unchanged; the reset above (issue #995) is
+     what keeps that override from leaking into a differently-themed scope.
+     derived, overridable */
+  --oc-ground-tabstrip: var(--color-tabstrip-bg, color-mix(in srgb, var(--oc-ground-titlerow) 82%, black));
+  --oc-ground-tab-inactive: color-mix(in srgb, color-mix(in srgb, color-mix(in srgb, var(--oc-ground-tabstrip) 85%, var(--oc-ground-titlerow)) 91%, var(--oc-text-primary)) 25%, var(--oc-ground-titlerow));
+  --oc-ground-tab-inactive-hover: color-mix(in srgb, var(--oc-ground-tab-inactive) 90%, var(--oc-text-primary));
+  --oc-ground-tab-selected: color-mix(in srgb, var(--oc-ground-tab-inactive) 84%, white);
+  --oc-ground-tabstrip-joined: oklch(from var(--oc-ground-panel) calc(l - 0.08 + 0.25 * clamp(0, (0.16 - l) * 1000, 1)) c h);
+  --oc-ground-tab-joined-hover: color-mix(in srgb, var(--oc-ground-tabstrip-joined) 65%, var(--oc-ground-panel));
+  --oc-ground-field: var(--color-bg-page, #030c0d);
+  --oc-ground-raised: var(--color-bg-elevated, #061214);
+  --oc-ground-card: var(--color-bg-card, #151a1c);
+  --oc-ground-hover: var(--color-bg-hover, #0b1a1c);
+  --oc-surface-1: color-mix(in srgb, var(--oc-ground-content), var(--oc-text-primary) 6%);
+  --oc-surface-1-on: color-mix(in srgb, var(--oc-ground-content), var(--oc-text-primary) 9%);
+  --oc-surface-2: color-mix(in srgb, var(--oc-ground-content), var(--oc-text-primary) 12%);
+  --oc-line-surface: color-mix(in srgb, var(--oc-ground-content), var(--oc-text-primary) 20%);
+  --oc-surface-sunken: oklch(from var(--oc-ground-content) calc(l - 0.03) c h);
+  --oc-surface-base: var(--oc-ground-content);
+  --oc-surface-band: var(--oc-ground-band);
+  --oc-surface-raised: var(--oc-surface-1);
+  --oc-surface-overlay: var(--oc-surface-2);
+  --oc-state-hover: color-mix(in srgb, var(--_on, var(--oc-ground-content)), var(--oc-text-primary) 6%);
+  --oc-state-selected: color-mix(in srgb, var(--_on, var(--oc-ground-content)), var(--oc-orange) 12%);
+  --oc-line-hairline: var(--color-border, #1f2e30);
+  --oc-line-control: color-mix(in srgb, var(--oc-ground-content), var(--oc-text-primary) 55%);
+  --oc-line-button: color-mix(in srgb, var(--oc-ground-panel), var(--oc-text-primary) 65%);
+  --oc-line-button-hover: color-mix(in srgb, var(--oc-ground-panel), var(--oc-text-primary) 85%);
+  /* --color- */
+  --oc-backdrop: color-mix(in srgb, var(--oc-ground-page) 82%, transparent);
+  --oc-backdrop-soft: color-mix(in srgb, var(--oc-ground-page) 40%, transparent);
+  --oc-line-panel: var(--color-border, #1f2e30);
+  --oc-line-chrome: var(--color-border, #1f2e30);
+  --oc-line-rule: var(--color-border, #1f2e30);
+  --oc-line-column: var(--color-border-subtle, #1f2e30);
+  --oc-line-faint: var(--color-border-subtle, #1f2e30);
+  --oc-line-strip: var(--color-border, #1f2e30);
+  --oc-line-frame: #3f4649;
+  --oc-text-bright: var(--color-fg, #ffffff);
+  --oc-text-primary: var(--color-fg, #cbd6d9);
+  --oc-text-secondary: var(--color-fg-muted, #a3b4bb);
+  --oc-text-muted: var(--color-fg-subtle, #82898f);
+  --oc-text-dim: var(--color-fg-faint, #6b7378);
+  --oc-text-status: var(--color-fg-muted, #c1cad5);
+  --oc-orange: var(--color-accent, #ff4652);
+  --oc-orange-bright: var(--color-accent-strong, #ff6872);
+  --oc-orange-dim: color-mix(in oklab, var(--oc-orange) 70%, var(--oc-ground-panel));
+  --oc-orange-tint: var(--color-accent-bg, #301419);
+  --oc-green: var(--color-success, #4acf93);
+  --oc-green-bright: var(--color-success, #36ef94);
+  --oc-green-dim: color-mix(in oklab, var(--oc-green) 60%, var(--oc-ground-panel));
+  --oc-green-deep: color-mix(in oklab, var(--oc-green) 30%, var(--oc-ground-panel));
+  --oc-cyan: var(--color-info, #6cb0e0);
+  --oc-yellow: var(--color-warning, #dbca76);
+  --oc-yellow-bright: var(--color-warning, #e4c13c);
+  --oc-coral: var(--color-danger, #e78475);
+  /* THE TWO EFFORT PURPLES (issue #852). No manifest carries a purple, so
+     both take their LIGHTNESS from the theme's own text colour (a light
+     text means a dark ground and the other way round) and fix only the
+     hue and chroma: light purple is a pastel lavender, deep purple a
+     saturated violet. Measured against --color-bg over all 42 shipped
+     themes: light worst 5.33 (gameboy), deep worst 3.67 (snes), median
+     10.1 and 6.3. derived */
+  --oc-purple-light: oklch(from var(--color-fg, #cbd6d9) calc(0.3 + 0.55 * l) 0.1 310);
+  --oc-purple-deep: oklch(from var(--color-fg, #cbd6d9) calc(0.22 + 0.5 * l) 0.2 292);
+  --oc-violet: oklch(from var(--color-fg, #cbd6d9) calc(0.22 + 0.55 * l) 0.13 295);
+  --oc-kind-mod: oklch(from var(--color-fg, #cbd6d9) calc(0.30 + 0.40 * l) 0.13 40);
+  --oc-kind-skill: oklch(from var(--color-fg, #cbd6d9) calc(0.22 + 0.50 * l) 0.20 292);
+  --oc-kind-theme: oklch(from var(--color-fg, #cbd6d9) calc(0.30 + 0.62 * l) 0.02 80);
+  --oc-kind-plugin: oklch(from var(--color-fg, #cbd6d9) calc(0.30 + 0.50 * l) 0.12 160);
+  --oc-catalog: var(--oc-kind-plugin);
+  --oc-kind-ink: var(--oc-ground-page);
+  --oc-series-1: oklch(from var(--color-bg, #02161e) calc(0.8 - 0.3 * clamp(0, (l - 0.3) * 2, 1)) 0.14 25);
+  --oc-series-2: oklch(from var(--color-bg, #02161e) calc(0.8 - 0.3 * clamp(0, (l - 0.3) * 2, 1)) 0.14 70);
+  --oc-series-3: oklch(from var(--color-bg, #02161e) calc(0.8 - 0.3 * clamp(0, (l - 0.3) * 2, 1)) 0.14 110);
+  --oc-series-4: oklch(from var(--color-bg, #02161e) calc(0.8 - 0.3 * clamp(0, (l - 0.3) * 2, 1)) 0.14 150);
+  --oc-series-5: oklch(from var(--color-bg, #02161e) calc(0.8 - 0.3 * clamp(0, (l - 0.3) * 2, 1)) 0.14 195);
+  --oc-series-6: oklch(from var(--color-bg, #02161e) calc(0.8 - 0.3 * clamp(0, (l - 0.3) * 2, 1)) 0.14 250);
+  --oc-series-7: oklch(from var(--color-bg, #02161e) calc(0.8 - 0.3 * clamp(0, (l - 0.3) * 2, 1)) 0.14 295);
+  --oc-series-8: oklch(from var(--color-bg, #02161e) calc(0.8 - 0.3 * clamp(0, (l - 0.3) * 2, 1)) 0.14 340);
+  --oc-scheduled: var(--oc-series-8);
+  --oc-stat-1: var(--oc-green);
+  --oc-stat-2: var(--oc-text-primary);
+  --oc-stat-3: var(--oc-green);
+  --oc-stat-4: var(--oc-orange);
+  --oc-stat-5: var(--oc-green);
+  --oc-spark: var(--oc-green);
+  --oc-spark-mid: var(--oc-green-dim);
+  --oc-spark-dim: var(--oc-green-deep);
+  --oc-tag-session: var(--oc-cyan);
+  --oc-tag-agent: var(--oc-text-primary);
+  --oc-tag-tool: var(--oc-green);
+  --oc-tag-system: var(--oc-cyan);
+  --oc-tag-test: var(--oc-text-secondary);
+  --oc-tag-plugin: var(--oc-green);
+  --oc-tag-project: var(--oc-orange);
+  --oc-font: var(--font-mono, ui-monospace, monospace);
+  --oc-focus-edge: color-mix(in oklab, var(--oc-orange) 65%, transparent);
+  --oc-focus-glow: color-mix(in oklab, var(--oc-orange) 45%, transparent);
+  --oc-strip-edge: color-mix(in oklab, var(--oc-orange) 55%, var(--oc-line-rule));
+  --oc-rail-header-ground: color-mix(in oklab, var(--oc-orange) 10%, var(--oc-ground-titlerow));
+  --oc-strip-glow: color-mix(in oklab, var(--oc-orange) 20%, transparent);
+
+  --oc-scrollbar-thumb: color-mix(in oklab, var(--oc-orange) 70%, var(--oc-ground-panel));
+  --oc-scrollbar-thumb-rest: color-mix(in oklab, var(--oc-scrollbar-thumb) 65%, transparent);
+  --oc-scrollbar-thumb-hover: color-mix(in oklab, var(--oc-orange) 85%, var(--oc-ground-panel));
+  --oc-scrollbar-thumb-active: var(--oc-orange);
+  --oc-scrollbar-track: color-mix(in oklab, var(--oc-text-primary) 8%, var(--oc-ground-panel));
+}
+
+/* --color- */
+[data-session-theme="carnivore-light"] {
+  --oc-violet: #743677;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --oc-motion-fast: 0ms;
+    --oc-motion: 0ms;
+    --oc-motion-slow: 0ms;
+  }
+}
+
+@supports not (color: oklch(from red l c h)) {
+  :root,
+  [data-session-theme] {
+    --oc-series-1: #f28b82;
+    --oc-series-2: #f0a35e;
+    --oc-series-3: #d9c65f;
+    --oc-series-4: #7fd18b;
+    --oc-series-5: #5fcfc4;
+    --oc-series-6: #6cb0e0;
+    --oc-series-7: #a98fe0;
+    --oc-series-8: #e58bc0;
+    --oc-purple-light: #caa5e7;
+    --oc-purple-deep: #9672fe;
+    --oc-kind-mod: #da7957;
+    --oc-kind-skill: #9672fe;
+    --oc-kind-theme: #dfd7ca;
+    --oc-kind-plugin: #67cc9a;
+    --oc-focus-lift: var(--oc-text-bright);
+    --oc-surface-sunken: var(--oc-ground-content);
+  }
+}

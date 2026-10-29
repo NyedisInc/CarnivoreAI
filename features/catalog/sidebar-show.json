@@ -1,0 +1,51 @@
+{
+  "api_routes": [
+    "src/api/ui_show_routes.py"
+  ],
+  "area": "drawers",
+  "description": "An agent can bring a left bar item into view for you. The tool sidebar_show takes a kind (session, file, browser, board, layout or task_manager) and an id, checks the item exists, and shows it in the window you used last, the one with your latest click or key press. Your other windows and devices do not move. files_open and browser_open take an optional front flag that does the same for the row they just opened; it is off unless the agent sets it. If you have not used any window since the app started, or every window has closed, there is nothing to show it in, and the agent is told so. A window you close is forgotten, so the show falls back to the window you used before it. In the desktop app the window that gets the item also comes to the front.",
+  "docs": [
+    "docs/ui-show.md"
+  ],
+  "examples": [
+    "An agent opens plan.md with front true: the files row appears and the file fills the main section in the window you were just typing in, while your phone stays where it was.",
+    "An agent calls sidebar_show with kind layout and a layout's uuid: that layout opens in your current window.",
+    "An agent calls sidebar_show with kind task_manager: the Task Manager widget comes up in the window you used last.",
+    "You close the window you were typing in; an agent calls sidebar_show and the item opens in the window you used before it, and the desktop app brings that window to the front."
+  ],
+  "how_to": [
+    "Nothing to turn on: use any window and agents can show things in it.",
+    "An agent calls the MCP tool sidebar_show with kind and id (no id for task_manager), or sets front true on files_open or browser_open.",
+    "POST /api/v1/ui/show {kind, id, target_client_id?} does the same (the optional target names one open window) over the API; POST /api/v1/ui/activity {client_id} is how a window reports that you used it, and POST /api/v1/ui/activity/gone how it reports that it closed.",
+    "Close a window and the next show goes to the window you used before it; in the desktop app the window that shows the item is raised, even from behind other apps."
+  ],
+  "id": "sidebar-show",
+  "issues": [
+    1868,
+    2341
+  ],
+  "keywords": [
+    "bring to front",
+    "sidebar show",
+    "last used window",
+    "front flag",
+    "sidebar_show"
+  ],
+  "media_exempt": "no new screen: the item an agent names is selected through the sidebar row's own click path, so there is nothing new to capture",
+  "name": "Agents bring a left bar item into view",
+  "since": "2026-10-16",
+  "status": "beta",
+  "summary": "an agent shows any left bar item in the window you used last with sidebar_show, or with front true on files_open and browser_open; other windows are left alone.",
+  "surfaces": [
+    "web/src/lib/ui-show/show-push.svelte.ts",
+    "web/src/lib/ui-show/selectors.ts",
+    "web/src/lib/ui-show/activity.ts",
+    "macOS/window-host.js",
+    "macOS/window-ipc.js",
+    "web/src/opscenter/api/auth.svelte.ts"
+  ],
+  "updated": "2026-10-23",
+  "where": [
+    "The left sidebar and the main section of the window you used last."
+  ]
+}

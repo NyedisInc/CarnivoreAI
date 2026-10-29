@@ -1,0 +1,65 @@
+
+.cc-tooltip,
+.prompt-rail-tooltip {
+    padding: 3px 7px;
+    border: 1px solid var(--oc-line-frame);
+    border-radius: 2px;
+    background: var(--oc-ground-raised);
+    color: var(--oc-text-secondary);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.35;
+    text-transform: none;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    box-shadow: none;
+    pointer-events: none;
+}
+
+.cc-tooltip {
+    position: fixed;
+    z-index: 20000;
+    inset: auto;
+    margin: 0;
+    overflow: visible;
+    max-width: min(280px, calc(100vw - 16px));
+    --cc-arrow: 50%;
+}
+
+.cc-tooltip[hidden] {
+    display: none;
+}
+
+.cc-tooltip::after {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: var(--oc-ground-raised);
+    border: 1px solid var(--oc-line-frame);
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.cc-tooltip[data-side='top']::after {
+    top: 100%;
+    left: var(--cc-arrow);
+    border-width: 0 1px 1px 0;
+}
+
+.cc-tooltip[data-side='bottom']::after {
+    top: 0;
+    left: var(--cc-arrow);
+    border-width: 1px 0 0 1px;
+}
+
+.cc-tooltip[data-side='left']::after {
+    left: 100%;
+    top: var(--cc-arrow);
+    border-width: 1px 1px 0 0;
+}
+
+.cc-tooltip[data-side='right']::after {
+    left: 0;
+    top: var(--cc-arrow);
+    border-width: 0 0 1px 1px;
+}

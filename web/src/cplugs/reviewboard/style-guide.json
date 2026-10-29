@@ -1,0 +1,183 @@
+{
+  "files": {
+    "web/src/cplugs/reviewboard/AttachmentsKey.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/BoardFrame.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/BoardPicker.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/BoardScreen.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/ClosedReviews.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "rb-closed-act",
+        "rb-closed-lead",
+        "rb-closed-meta",
+        "rb-closed-more",
+        "rb-closed-name",
+        "rb-closed-pad",
+        "rb-closed-row",
+        "rb-closed-task",
+        "rb-closed-title",
+        "rb-closed-when"
+      ]
+    },
+    "web/src/cplugs/reviewboard/HistoryBar.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/InlineLayer.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/LiveBar.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/NotesPanel.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/PayloadControls.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/PayloadNotices.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/PromptRow.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/RelinkPicker.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/RoundView.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/ThemePicker.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/Tray.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/board.css": {
+      "section": "chrome",
+      "classes": [
+        "rb",
+        "rb-back",
+        "rb-box",
+        "rb-box--capped",
+        "rb-chip",
+        "rb-count",
+        "rb-field",
+        "rb-frame",
+        "rb-history",
+        "rb-icon",
+        "rb-label",
+        "rb-list",
+        "rb-live-form",
+        "rb-name",
+        "rb-note",
+        "rb-note--error",
+        "rb-readout",
+        "rb-round",
+        "rb-row",
+        "rb-row-meta",
+        "rb-row-title",
+        "rb-stage",
+        "rb-state",
+        "rb-step",
+        "rb-step--fold",
+        "rb-strip",
+        "rb-tools",
+        "rb-track",
+        "rb-views"
+      ]
+    },
+    "web/src/cplugs/reviewboard/header.css": {
+      "section": "chrome",
+      "classes": [
+        "rb-clip",
+        "rb-clip-count",
+        "rb-clip-key",
+        "rb-clip-meta",
+        "rb-clip-meta--error",
+        "rb-clip-name",
+        "rb-clip-text",
+        "rb-cliplist",
+        "rb-clippop",
+        "rb-clippop-head",
+        "rb-clipwrap",
+        "rb-controls",
+        "rb-fold-count",
+        "rb-fold-key",
+        "rb-icon",
+        "rb-note",
+        "rb-note-text",
+        "rb-notes",
+        "rb-notes-body",
+        "rb-notes-count",
+        "rb-notes-head",
+        "rb-notes-inner",
+        "rb-notes-title",
+        "rb-notices",
+        "rb-position",
+        "rb-saves",
+        "rb-send",
+        "rb-theme"
+      ]
+    },
+    "web/src/cplugs/reviewboard/tray.css": {
+      "section": "chrome",
+      "classes": [
+        "rb",
+        "rb-count",
+        "rb-row",
+        "rb-actions",
+        "rb-anchors",
+        "rb-body",
+        "rb-card-head",
+        "rb-changed",
+        "rb-confirm",
+        "rb-field",
+        "rb-foot-key",
+        "rb-ghost",
+        "rb-link",
+        "rb-main",
+        "rb-note-text",
+        "rb-notice",
+        "rb-over",
+        "rb-pill",
+        "rb-pills",
+        "rb-prompt",
+        "rb-prompt-label",
+        "rb-prompt-note",
+        "rb-round-card",
+        "rb-sent",
+        "rb-warn",
+        "oc-check",
+        "oc-check__label",
+        "rb-fold",
+        "rb-fold-body",
+        "rb-fold-foot",
+        "rb-inline",
+        "rb-inline-block"
+      ]
+    }
+  }
+}

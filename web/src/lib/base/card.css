@@ -1,0 +1,148 @@
+/* .oc-card: ONE bordered level (on the Task Manager question card: "the question box looks
+   like shit, if we dont have solid inheritance of styles like bootstrap we are doomed to fail"). A card never nests a
+   bordered card: what sits inside is separated by hairlines and gap, and every child shares the body's one left
+   edge. The title strip copies the ledger's `.pl-titlebar` / `.pl-title` (web/src/lib/ledger/ledger-chrome.css): band
+   ground, inset hairline, the small tracked uppercase accent label as the card's ONE accent-colored thing.
+     .oc-card            raised surface, surface edge, panel corner
+       __head            the title strip (absent when the card has no title, lead or actions); it WRAPS: the title keeps its
+                         width (ellipsis, never below 12ch) and the actions drop to a second line when the line runs out; __toggle is its fold button when the card folds (actions stay outside it)
+       __lead __title __meta __actions
+       __body            the content column, one padding, gap between children
+       __foot            a hairline above, actions in a wrapping row
+     .oc-card--compact   the small padding step */
+@layer patterns {
+  .oc-card {
+    --_on: var(--oc-surface-raised);
+    --oc-state-hover: color-mix(in srgb, var(--_on), var(--oc-text-primary) 6%);
+    --oc-state-selected: color-mix(in srgb, var(--_on), var(--oc-orange) 12%);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    --_bd: var(--oc-line-surface);
+    border: var(--oc-border) solid var(--oc-line-surface);
+    border-radius: var(--oc-radius-panel);
+    background: var(--oc-surface-raised);
+    color: var(--oc-text-primary);
+    font-family: var(--oc-font);
+    font-size: var(--oc-fs-body);
+    line-height: var(--oc-lh-body);
+    overflow: hidden;
+  }
+
+  .oc-card__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--oc-space-1) var(--oc-space-2);
+    min-width: 0;
+    min-height: var(--oc-titlerow-h-short);
+    padding: var(--oc-space-1) var(--oc-space-3);
+    background: var(--oc-surface-band);
+    box-shadow: inset 0 calc(-1 * var(--oc-border)) 0 0 var(--oc-line-hairline);
+  }
+
+  .oc-card__toggle {
+    --sidebar-gutter: var(--oc-space-4);
+    flex: 1 0 auto;
+    min-width: min(12ch, 100%);
+    max-width: 100%;
+  }
+
+  .oc-card__lead {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: var(--oc-space-1-5);
+  }
+
+  .oc-card__title {
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: 100%;
+    color: var(--oc-orange);
+    font-size: var(--oc-fs-title);
+    font-weight: 400;
+    letter-spacing: var(--oc-tracking-title);
+    line-height: var(--oc-lh-tight);
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .oc-card__open {
+    all: unset;
+    cursor: pointer;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .oc-card__meta {
+    flex: 1 1 auto;
+    min-width: 0;
+    color: var(--oc-text-muted);
+    font-size: var(--oc-fs-label);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .oc-card__actions {
+    display: flex;
+    flex: none;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: 100%;
+    align-items: center;
+    gap: var(--oc-space-1-5);
+    margin-left: auto;
+  }
+
+  .oc-card__body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: var(--oc-space-3);
+    min-width: 0;
+    padding: var(--oc-space-3);
+  }
+
+  .oc-card[hidden],
+  .oc-card__body[hidden],
+  .oc-card__foot[hidden] {
+    display: none;
+  }
+
+  .oc-card__body > p {
+    overflow-wrap: anywhere;
+  }
+
+  .oc-card__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--oc-space-2);
+    min-width: 0;
+    padding: var(--oc-space-2) var(--oc-space-3);
+    box-shadow: inset 0 var(--oc-border) 0 0 var(--oc-line-hairline);
+  }
+
+  .oc-card--compact .oc-card__body {
+    gap: var(--oc-space-2);
+    padding: var(--oc-space-2);
+  }
+
+  .oc-card--compact .oc-card__foot {
+    padding: var(--oc-space-1-5) var(--oc-space-2);
+  }
+
+  .oc-card[data-landed] {
+    outline: 2px solid var(--oc-yellow);
+    outline-offset: 2px;
+  }
+
+  .oc-card[data-open='false'] .oc-card__head {
+    box-shadow: none;
+  }
+}

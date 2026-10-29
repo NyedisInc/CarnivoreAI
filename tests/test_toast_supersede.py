@@ -1,0 +1,177 @@
+from __future__ import annotations
+
+import os
+import sys
+import tempfile
+from pathlib import Path
+
+import pytest
+
+os.environ.setdefault("DEFAULT_WORKING_DIR", tempfile.mkdtemp(prefix="cc_ts_wd_"))
+os.environ.setdefault("LOG_DIRECTORY", tempfile.mkdtemp(prefix="cc_ts_logs_"))
+os.environ.setdefault("TOTP_SECRET", "testsecretnotreal")
+os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+# ruff: noqa: E402
+from src.core import toast_auto_ack
+from src.core.session_manager import SessionManager
+from src.models import Session, SessionStatus
+
+
+class _StubSettings:
+
+    def __init__(self, pin_path: Path, log_dir: Path):
+        self._pin_path = pin_path
+        self._log_dir = log_dir
+
+    def get_pinned_themes_path(self) -> Path:
+        return self._pin_path
+
+    def get_unread_state_path(self) -> Path:
+        return self._pin_path.parent / "unread_state.json"
+
+    @property
+    def log_directory(self) -> str:
+        return str(self._log_dir)
+
+    def get_session_metadata_path(self) -> Path:
+        return self._log_dir / "session_metadata.json"
+
+
+@pytest.fixture()
+def mgr(monkeypatch, tmp_path) -> SessionManager:
+    (tmp_path / "logs").mkdir(exist_ok=True)
+    monkeypatch.setattr(
+        "src.core.session_manager.settings",
+        _StubSettings(tmp_path / "pinned_themes.json", tmp_path / "logs"),
+    )
+    manager = SessionManager()
+    work = tmp_path / "proj"
+    work.mkdir()
+    for sid in ("ses_a", "ses_b"):
+        manager._registry.sessions[sid] = Session(
+            id=sid,
+            pty_pid=None,
+            working_dir=str(work),
+            status=SessionStatus.RUNNING,
+            tmux_session=None,
+        )
+        manager._registry.subscribers.setdefault(sid, [])
+    return manager
+
+
+
+
+def test_twelve_unacked_stops_leave_exactly_one_record(mgr):
+    for i in range(12):
+        mgr.record_toast("ses_a", "Stop", "Your turn", body=f"turn {i}")
+
+    stored = mgr._toast_inbox.get("ses_a")
+    assert len(stored) == 1, f"expected 1 record, got {len(stored)}"
+    assert stored[0].kind == "Stop"
+
+
+def test_superseding_keeps_the_original_id(mgr):
+    first = mgr.record_toast("ses_a", "Stop", "Your turn", body="one")
+    later = mgr.record_toast("ses_a", "Stop", "Your turn", body="two")
+
+    assert later.id == first.id
+    assert [t.id for t in mgr._toast_inbox.get("ses_a")] == [first.id]
+
+
+def test_surviving_record_carries_the_newest_content(mgr):
+    mgr.record_toast("ses_a", "Stop", "Your turn", body="oldest")
+    mgr.record_toast("ses_a", "Stop", "Your turn", body="middle")
+    mgr.record_toast("ses_a", "Stop", "Your turn", body="newest")
+
+    stored = mgr._toast_inbox.get("ses_a")
+    assert len(stored) == 1
+    assert stored[0].body == "newest"
+
+
+def test_superseded_record_timestamp_advances(mgr):
+    first = mgr.record_toast("ses_a", "Stop", "Your turn", body="one")
+    stamp_before = first.created_at
+    later = mgr.record_toast("ses_a", "Stop", "Your turn", body="two")
+    assert later.created_at >= stamp_before
+
+
+
+
+def test_acked_stop_is_never_superseded(mgr):
+    first = mgr.record_toast("ses_a", "Stop", "Your turn", body="dismissed")
+    assert mgr._toast_inbox.ack("ses_a", first.id, toast_auto_ack.ACK_REASON_DISMISSED) is True
+
+    second = mgr.record_toast("ses_a", "Stop", "Your turn", body="fresh")
+
+    stored = mgr._toast_inbox.get("ses_a")
+    assert len(stored) == 2
+    assert second.id != first.id
+    acked = [t for t in stored if t.id == first.id]
+    assert len(acked) == 1
+    assert acked[0].acknowledged is True
+    assert acked[0].body == "dismissed", "the acked record was mutated"
+    assert mgr._toast_inbox.get("ses_a", unacked_only=True)[0].body == "fresh"
+
+
+def test_notification_is_never_superseded(mgr):
+    for i in range(4):
+        mgr.record_toast("ses_a", "Notification", "Waiting", body=f"msg {i}")
+    assert len(mgr._toast_inbox.get("ses_a")) == 4
+
+
+def test_identical_notifications_are_never_superseded(mgr):
+    for _ in range(3):
+        mgr.record_toast("ses_a", "Notification", "Waiting", body="same")
+    assert len(mgr._toast_inbox.get("ses_a")) == 3
+
+
+def test_permission_request_is_never_superseded(mgr):
+    for cmd in ("rm -rf /tmp/x", "curl example.com", "git push"):
+        mgr.record_toast("ses_a", "PermissionRequest", "Allow?", body=cmd)
+    stored = mgr._toast_inbox.get("ses_a")
+    assert len(stored) == 3
+    assert {t.body for t in stored} == {
+        "rm -rf /tmp/x",
+        "curl example.com",
+        "git push",
+    }
+
+
+def test_stop_with_a_different_title_does_not_supersede(mgr):
+    mgr.record_toast("ses_a", "Stop", "Your turn", body="a")
+    mgr.record_toast("ses_a", "Stop", "Something else", body="b")
+    assert len(mgr._toast_inbox.get("ses_a")) == 2
+
+
+def test_supersession_does_not_cross_sessions(mgr):
+    mgr.record_toast("ses_a", "Stop", "Your turn", body="a1")
+    mgr.record_toast("ses_b", "Stop", "Your turn", body="b1")
+    mgr.record_toast("ses_a", "Stop", "Your turn", body="a2")
+
+    assert len(mgr._toast_inbox.get("ses_a")) == 1
+    assert len(mgr._toast_inbox.get("ses_b")) == 1
+    assert mgr._toast_inbox.get("ses_a")[0].body == "a2"
+    assert mgr._toast_inbox.get("ses_b")[0].body == "b1"
+
+
+
+
+def test_superseded_stop_moves_to_the_front(mgr):
+    mgr.record_toast("ses_a", "Stop", "Your turn", body="stop-1")
+    mgr.record_toast("ses_a", "Notification", "Waiting", body="note")
+    mgr.record_toast("ses_a", "Stop", "Your turn", body="stop-2")
+
+    stored = mgr._toast_inbox.get("ses_a")
+    assert [t.kind for t in stored] == ["Stop", "Notification"]
+    assert stored[0].body == "stop-2"
+
+
+def test_long_session_unacked_stops_stay_bounded(mgr):
+    for i in range(200):
+        mgr.record_toast("ses_a", "Stop", "Your turn", body=f"t{i}")
+    assert len(mgr._toast_inbox.get("ses_a", unacked_only=True)) == 1

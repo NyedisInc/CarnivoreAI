@@ -1,0 +1,70 @@
+{
+  "id": "beastmode",
+  "name": "Beast mode",
+  "area": "sessions",
+  "status": "stable",
+  "since": "2026-10-13",
+  "updated": "2026-10-17",
+  "summary": "beast mode decides what carnivore answers and approves for you: a grid in Settings, Advanced with a beast off and a beast on box for each kind of prompt, the beast mode switch in the account menu, and a bolt beside the crown while it is on; part of the app, on by default.",
+  "description": "Beast mode (formerly the auto answer plugin, core since #1899) holds every automatic answer and approval in one place. Its grid is in Settings, Advanced, beast mode: one row per kind of prompt, with two check boxes, beast off and beast on. A prompt is handled for you only when the box for the mode you are in now is ticked, so a row can be off in both, on in one or on in both. Out of the box it behaves exactly as before: the four startup screens (our development channels warning, plain folder trust and external imports in your projects' folders, and no on the claude in chrome prompt) are answered in both modes, while claude permission prompts, codex approvals and agent writes over MCP are handled only while Beast Mode is on. Some things always ask you and have no box at all: questions, free text, plan approvals, any other startup screen, and the hard safety gates such as deletes, purges and renames. Beast Mode itself is armed from the account menu, with its confirmation and auto-off, and a coral bolt sits right of the crown in the bottom bar while it is on. Unticking every box stops every automatic answer and approval.",
+  "surfaces": [
+    "src/core/approvals/beast_policy.py",
+    "src/core/approvals/beast_grid.py",
+    "src/core/approvals/beast_lifecycle.py",
+    "src/core/approvals/beast_grid_migration.py",
+    "src/core/mcp/beast_tools.py",
+    "src/api/beast_mode_routes.py",
+    "src/cplugs/sdk/beast_mode.py",
+    "src/core/approvals/auto_answer/engine.py",
+    "src/core/beast_prompts/engine.py",
+    "src/core/mcp/beast_mode.py",
+    "web/src/lib/beast-mode/BeastGridPanel.svelte",
+    "web/src/lib/beast-mode/control.svelte.ts",
+    "web/src/lib/beast-mode/BeastConfirm.svelte"
+  ],
+  "api_routes": [
+    "GET /api/v1/beast-mode",
+    "PUT /api/v1/beast-mode",
+    "GET /api/v1/beast-mode/rules",
+    "PUT /api/v1/beast-mode/rules"
+  ],
+  "docs": [
+    "docs/beastmode.md",
+    "docs/autoanswer.md",
+    "docs/cplugs.md",
+    "docs/approvals.md",
+    "docs/mcp-server.md"
+  ],
+  "issues": [
+    1764,
+    1792,
+    1899
+  ],
+  "keywords": [
+    "beast mode",
+    "auto answer",
+    "auto approve",
+    "startup screen",
+    "folder trust",
+    "permission prompt",
+    "codex approval",
+    "grid"
+  ],
+  "where": [
+    "Menu tab, Settings, Advanced, beast mode: the grid (link: #settings/advanced/beast_mode).",
+    "The account menu (press your name chip at the bottom of the drawer): the beast mode item arms or disarms it.",
+    "The bottom bar, right of the crown: a coral bolt while Beast Mode is on."
+  ],
+  "how_to": [
+    "Open Settings from the menu tab, then Advanced, then beast mode.",
+    "Tick or untick the beast off and beast on box of each row; a row is handled only in the mode whose box is ticked.",
+    "Pick whether folder trust and imports apply to only the folders of projects Carnivore knows or to every folder.",
+    "Press your name chip, choose beast mode, review the confirmation, pick when it turns off and arm it; press the bolt by the crown or the menu item again to turn it off."
+  ],
+  "examples": [
+    "You want folder trust answered only while you are away: untick its beast off box and keep beast on ticked.",
+    "Leaving the desk for an afternoon: arm Beast Mode with prompts for 4 hours; each claude permission prompt is answered yes, while plan approvals and questions still wait for you.",
+    "You tick agent actions under beast off: the settings ask first, and a dimmed bolt stays in the bottom bar until you untick it, even with beast mode off."
+  ],
+  "media_exempt": "settings grid drawn by the Advanced section and the account menu item from the shared menu; recaptured with beast-mode at the next version bump"
+}

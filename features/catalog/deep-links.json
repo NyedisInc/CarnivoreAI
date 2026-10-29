@@ -1,0 +1,28 @@
+{
+  "api_routes": [],
+  "area": "home",
+  "docs": [],
+  "examples": [
+    "Bookmark your main session on your phone's home screen."
+  ],
+  "how_to": [
+    "Paste or bookmark the link; opening it goes straight to that session or project."
+  ],
+  "id": "deep-links",
+  "issues": [],
+  "keywords": [
+    "deep link"
+  ],
+  "media_exempt": "a URL format; opening one shows the same screens pictured elsewhere",
+  "name": "Deep links",
+  "since": "2026-09-10",
+  "status": "stable",
+  "summary": "open a specific session or project straight from a link, without hunting through the list.",
+  "surfaces": [
+    "web/src/lib/launchpad/deep-link.ts"
+  ],
+  "updated": "2026-09-27",
+  "where": [
+    "A URL: /session/<name> opens a session, and archive and layout pages have their own addresses."
+  ]
+}

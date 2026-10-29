@@ -1,0 +1,58 @@
+{
+  "api_routes": [
+    "src/api/hosts_routes.py",
+    "src/api/session_crud_routes.py"
+  ],
+  "area": "sessions",
+  "description": "Stage one of driving sessions on another machine you can ssh into, with nothing installed there. The second slice adds the ssh transport and a probe that checks a host over ssh (tmux and its version, the login shell, the agents, whether the far box runs its own Carnivore) and stores what it found.",
+  "docs": [
+    "docs/remote-hosts-ssh.md",
+    "docs/remote-hosts.md"
+  ],
+  "examples": [
+    "Add the studio computer from the hosts page, probe it to check ssh, tmux and the agents it has, then pick it in the new-session dialog to launch a claude session there.",
+    "Script your machines through the API instead of the page: one POST per box; the hosts page reads and writes the same routes.",
+    "Pair the studio computer from the discovered list with one click, then revoke the grant you gave it when it is sold, or unpair to end both sides at once."
+  ],
+  "how_to": [
+    "Open Pack (press h with the drawer menu focused, or go to /#hosts), open the computers tab, and press \"add a computer\" for a label and an ssh target (an alias from your ~/.ssh/config, or user@host); the port and tmux socket are optional. The server generates the host's key; it shows up in the detail pane once the host is added.",
+    "Open the new row and press \"probe\" to check it over ssh: tmux and its version, the login shell, the agents it has, and whether it runs its own Carnivore. A failed probe names why (unreachable, ssh authentication failed, host key not verified, tmux too old); fix it and probe again.",
+    "Its status is read off its own pane (a permission dialog there reads question), with host_state down and status unknown while its host is unreachable; after a restart it comes back on its row and id.",
+    "Restart it from its row menu (the picker previews its far pane), or restart a stopped one from the launchpad: it comes back on its host, on the same row, resuming its conversation, but only once the host is reachable and confirms the old session is gone.",
+    "Or drive it through the API directly: POST /api/v1/hosts to add, GET to list, PATCH to edit, DELETE to remove, POST /api/v1/hosts/{key}/probe to check it, and POST /sessions with host_key set to a probed host to launch there.",
+    "If its ssh host key is already trusted here nothing is typed and the pairing finishes; on first contact the dialog asks for a code, which you get by pressing \"show a code\" on the other computer's own hosts page and typing its pairing id and code here. A computer Bonjour cannot see (a tailnet, another network) is added with \"pair a computer\": its name or ssh target.",
+    "A paired computer shows one of: connected, connecting, disconnected (the link is down and retrying), incompatible (its carnivore speaks another protocol), unpaired (it dropped its grant) or identity changed (its key is not the pinned one: unpair and pair again). A computer that is both an ssh host and a paired computer sits under one heading."
+  ],
+  "id": "remote-hosts",
+  "issues": [
+    162,
+    1048
+  ],
+  "keywords": [
+    "remote",
+    "ssh",
+    "hosts",
+    "tmux",
+    "tailnet",
+    "lan"
+  ],
+  "media": [],
+  "name": "Remote tmux hosts",
+  "since": "2026-09-28",
+  "status": "beta",
+  "summary": "add the machines you can ssh into as hosts, and run sessions on them from here.",
+  "surfaces": [
+    "web/src/lib/hosts-page/",
+    "web/src/lib/launchpad/create-flow.ts",
+    "web/src/lib/sidebar-shell/row-chips.ts",
+    "web/src/lib/hosts-page/federation-api.ts"
+  ],
+  "updated": "2026-10-13",
+  "where": [
+    "Pack page: the computers tab, over ssh filter (#pack/ssh, or the old /#hosts and /#settings/hosts fragments). With the drawer menu focused, press h.",
+    "The host picker in the new-session dialog, right after choosing a provider.",
+    "A remote session's host label on its drawer row, beside its status light.",
+    "The PAIRING tab's pair a computer, show a code, advertising, rescan and rotate key controls, and its found on this network group; a paired computer's detail pane on MACHINES."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

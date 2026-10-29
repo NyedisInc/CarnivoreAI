@@ -1,0 +1,40 @@
+{
+  "api_routes": [
+    "GET /api/v1/swarm/cards/board"
+  ],
+  "area": "drawers",
+  "description": "The eighth slice of the swarm cards work. A company agent (or SysOp) can now make one parent card in its own list and hang child cards on it in several of its projects' queues; each child is dealt by that project's own project agent, as any card is. Children of another company's project are refused, and a company agent adds children only under its own cards or its company's project cards. When every child, in any project, is done, the parent moves to Review by itself with a merged how-to-validate (n of n done, plus each child's steps and proof), and your Done on the parent finishes the children too. On the company and SysOp board a parent shows once in its own lane and again in the lane of every project that holds one of its children, marked as the parent of the cards in that lane. This slice is backend only: the board screen waits for the layout pick.",
+  "docs": [
+    "docs/swarm-cards.md"
+  ],
+  "examples": [
+    "Zeta's agent and Alpha's agent each deal their own child. When both are accepted the parent reads Review, 2 of 2 done, and shows in both project lanes on the company board.",
+    "Company 2's agent tries to hang a child in its own project under company 1's card and is refused; Alpha (SysOp) may do it anywhere."
+  ],
+  "how_to": [
+    "Make the parent in the company agent's own list, then make each child with the swarm_card_create tool naming the parent and the project_id of the project it goes in.",
+    "Read GET /api/v1/swarm/cards/board?scope=company:<id> or scope=sysop; a cross-project parent has lane_role parent_of_children_here in every lane but its own.",
+    "Click Done on the parent in Review (POST /api/v1/swarm/cards/{id}/done) to finish it and its children."
+  ],
+  "id": "swarm-cards-c8",
+  "issues": [
+    1390
+  ],
+  "keywords": [
+    "swarm",
+    "cards",
+    "company",
+    "cross-project",
+    "roll-up",
+    "parent"
+  ],
+  "media_exempt": "backend only; the board UI waits for the layout pick",
+  "name": "swarm cards: cross-project cards",
+  "since": "2026-10-07",
+  "status": "beta",
+  "summary": "a company or SysOp card can have children in several projects' queues, each dealt by its own project agent; the parent rolls up to Review across projects and shows in every child's lane at company scope.",
+  "updated": "2026-10-07",
+  "where": [
+    "Backend only for now: the company and SysOp board at /api/v1/swarm/cards/board and the swarm_card_create tool. The board screen arrives in a later slice."
+  ]
+}

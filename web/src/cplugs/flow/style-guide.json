@@ -1,0 +1,51 @@
+{
+  "files": {
+    "web/src/cplugs/flow/FlowBody.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/flow/FlowBubble.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/flow/FlowCard.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/flow/flow.css": {
+      "section": "chrome",
+      "classes": [
+        "flw",
+        "flw-bar",
+        "flw-bubble",
+        "flw-bubble--owner",
+        "flw-call",
+        "flw-call-tool",
+        "flw-calls",
+        "flw-card",
+        "flw-chip",
+        "flw-entry",
+        "flw-entry--owner",
+        "flw-field",
+        "flw-field--id",
+        "flw-follow",
+        "flw-head",
+        "flw-kind",
+        "flw-label",
+        "flw-md",
+        "flw-meta",
+        "flw-meta--warn",
+        "flw-more",
+        "flw-name",
+        "flw-note",
+        "flw-note--error",
+        "flw-route",
+        "flw-stream",
+        "flw-text",
+        "flw-time",
+        "flw-title",
+        "flw-who"
+      ]
+    }
+  }
+}

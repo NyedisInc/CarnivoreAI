@@ -1,0 +1,2 @@
+
+raise SystemExit(1)

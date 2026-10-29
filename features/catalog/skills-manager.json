@@ -1,0 +1,70 @@
+{
+  "id": "skills-manager",
+  "name": "Skills manager",
+  "summary": "See every skill on disk for global, a profile, or a project, switch each on or off, choose compact or on demand for Claude, and see the skills one running session really has.",
+  "description": "The skills manager page lists every skill folder the app can find for one place: global (the default Claude profile and the Codex config), another Claude profile group (a profile with a real skills folder of its own says so), or one of your projects. Each skill has an on or off switch. In the detail pane a Claude skill also offers compact (the model sees only its name) and on demand (only you can run it), and a Codex skill offers on and off only, with a reminder that a running Codex session needs a restart. A plugin's skill has no switch because it switches with the whole plugin. Changes are written by the server to the right settings file: the global choice to the profile's settings.json (profile links stay links), a project choice to that project's .claude/settings.local.json. Locations can be removed (moved to a trash folder, never deleted); one installed from the catalog is removed there so its install record stays right. Chips narrow the list to claude, codex, off, shadowed and heavy skills, where heavy is an estimated per-turn cost of the description. Opening session skills from a terminal's menu shows the skills that pane's agent really has, a switch for each that writes that project's local settings, and its recent skill use. One tab sits beside the list. Census shows every skill in every root with how often it fired in the last 7, 30 and 90 days and its estimated per-turn cost (a skill nothing has measured says not measured, never 0), sortable by any column. Its two columns are separate panels with banded rows. Opening a skill shows all of its state in five sections: where it lives and its state per harness, usage and cost (fires in the last 7, 30 and 90 days, and the estimated per-turn cost), health (whether Sentinel says the installed copy was edited, with restore and keep as fork, Tripwire's verdict, and the autopsy of what followed its fires), provenance and trust (the install record, the signer, the security review, the digest and any deprecated note), and contents (the SKILL.md of each copy and the signed file list). The list marks a drifted, flagged or unused-for-30-days skill so problems stand out without opening each one; anything not measured says so instead of showing 0 or clean. With a text model chosen for skill card summaries in Settings > AI, each skill's card shows a one sentence summary that fits its three lines, written once per skill text and again only when the skill changes; with none chosen the card shows the plain description.",
+  "area": "skills-catalog",
+  "status": "stable",
+  "since": "2026-09-28",
+  "updated": "2026-10-20",
+  "surfaces": [
+    "skills manager page",
+    "terminal skills drawer"
+  ],
+  "api_routes": [
+    "GET /api/v1/skills",
+    "PUT /api/v1/skills/overrides",
+    "DELETE /api/v1/skills/locations/{location_id}",
+    "GET /api/v1/sessions/{session_id}/skills",
+    "GET /api/v1/sessions/{session_id}/skill-fires",
+    "GET /api/v1/skills/census",
+    "GET /api/v1/catalog/installed",
+    "GET /api/v1/skill-fires/usage",
+    "GET /api/v1/skills/{name}/autopsy",
+    "POST /api/v1/catalog/installed/{install_id}/restore",
+    "PUT /api/v1/catalog/installed/{install_id}/fork"
+  ],
+  "docs": [
+    "docs/skills-manager.md",
+    "docs/manager-frame.md"
+  ],
+  "issues": [
+    1079,
+    1081,
+    1099,
+    1100,
+    1953
+  ],
+  "keywords": [
+    "skills",
+    "toggle",
+    "compact",
+    "on demand",
+    "codex",
+    "profile",
+    "project",
+    "token cost",
+    "census",
+    "unused skills"
+  ],
+  "where": [
+    "Menu tab, Warez, INSTALLED, skills, then the installed or stats tab, or go to the skills-manager address fragment (it lands on installed).",
+    "In any terminal, open the three-dot menu and choose session skills: a drawer slides out on the right edge of that terminal."
+  ],
+  "how_to": [
+    "Pick where to look in the where menu: global, a profile, or a project.",
+    "Press a skill's switch to turn it off or on; the row shows what the server now holds.",
+    "Open a skill to choose compact or on demand for Claude, to see its folders and where each came from, and to remove one.",
+    "In a terminal's menu choose session skills: the drawer on its right edge shows and switches the skills that session's agent has, with its recent skill use. Escape or the close button hides it.",
+    "Open the stats tab to sort skills by how often they fired and what they cost.",
+    "Open a skill and read down its sections: state, usage and cost, health, provenance and trust, contents; a mark on a card (drifted, flagged, unused 30 d) tells you which to open first.",
+    "Installed opens as a grid of cards (harness mark, on, off or shadowed top right, managed or local tag, publisher byline, fires over 30 days); the toggle beside the search swaps to rows and is remembered on this device.",
+    "Census ranks every skill by its 30 day fires in two columns, most fired first; a skill with no count reads not measured and ranks last."
+  ],
+  "examples": [
+    "A skill you never use costs its description in every turn: mark it heavy, then switch it off for one project only.",
+    "Two profiles share one skills folder but one has its own: pick each in the where menu to see the difference.",
+    "A card marked drifted: open it, see which files changed, then restore the installed version or keep it as your own fork."
+  ],
+  "media_exempt": "the page is captured against a machine's real skills folders, which no neutral demo seed can fake yet; screenshots are taken by hand at review until the capture seed can lay down skill folders"
+}

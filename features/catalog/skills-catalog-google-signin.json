@@ -1,0 +1,34 @@
+{
+  "api_routes": [
+    "src/api/catalog_google_signin_routes.py"
+  ],
+  "area": "skills-catalog",
+  "docs": [
+    "docs/catalog.md"
+  ],
+  "examples": [
+    "Sign in to the catalog with your Google account; if you already use that email address here, you land on the same account."
+  ],
+  "how_to": [
+    "Press sign in with google, type the short code it shows at google.com/device, and approve. For an address Google does not run the mailbox for, type the code we email you once. The button is greyed out until the catalog has Google configured."
+  ],
+  "id": "skills-catalog-google-signin",
+  "issues": [
+    1184
+  ],
+  "keywords": [
+    "sign in",
+    "google",
+    "email"
+  ],
+  "media_exempt": "A button beside GitHub's in the sign in panel; its screenshot is captured before the next version bump.",
+  "name": "Catalog Google sign-in",
+  "since": "2026-09-30",
+  "status": "stable",
+  "summary": "sign in to the catalog with Google; a verified Google address merges with the email account for the same address.",
+  "surfaces": [],
+  "updated": "2026-09-30",
+  "where": [
+    "The top of the skills catalog, CATALOG SIGN IN, next to the GitHub button."
+  ]
+}

@@ -1,0 +1,12 @@
+vitest web/src/lib/zone-shell/zone-hosts.test.ts
+vitest web/src/lib/zone-shell/wrapper-rules.test.ts
+vitest web/src/opscenter/widgets/menu/menu-conformance.test.ts
+vitest web/src/opscenter/widgets/shell/shell-conformance.test.ts
+vitest web/src/widget-harness/menu-conformance.test.ts
+vitest web/src/lib/i18n/coverage.test.ts
+vitest web/src/cplugs/boundaries.test.ts
+vitest web/src/lib/base/theme-contract.test.ts
+vitest web/src/lib/base/modal-btn-default.test.ts
+vitest web/src/lib/session-list/session-list.widget.test.ts
+pytest tests/test_style_guide_drift.py
+pytest tests/test_no_remote_assets.py

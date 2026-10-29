@@ -1,0 +1,146 @@
+/*  hidden  */
+@layer components {
+[data-bar-indicator] {
+    color: var(--oc-coral);
+}
+
+[data-bar-indicator][data-bar-indicator-quiet] {
+    opacity: 0.5;
+}
+
+.session-sidebar-bar__account {
+    --_bd: var(--oc-line-panel);
+    display: flex;
+    align-items: center;
+    gap: var(--oc-space-2);
+    min-width: 0;
+    max-width: 100%;
+    min-height: 22px;
+    padding: 0 var(--oc-space-1);
+    border: 1px solid transparent;
+    border-radius: var(--oc-radius-sm);
+    background: none;
+    color: var(--oc-text-secondary);
+    font: inherit;
+    font-family: var(--font-mono);
+    font-size: var(--oc-fs-body);
+    line-height: 1.2;
+    text-align: left;
+    cursor: pointer;
+}
+
+.session-sidebar-bar__account:hover,
+.session-sidebar-bar__account[aria-expanded='true'] {
+    background: var(--oc-ground-hover);
+    color: var(--oc-text-primary);
+}
+
+.session-sidebar-bar__avatar {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    overflow: hidden;
+    border: 1px solid var(--oc-line-panel);
+    border-radius: 2px;
+    background: var(--oc-ground-raised);
+    color: var(--oc-text-dim);
+    line-height: 0;
+}
+
+.session-sidebar-bar__avatar > svg {
+    width: 100%;
+    height: 100%;
+}
+
+
+/*  hidden  */
+.session-sidebar-bar__avatar .spiral-turn {
+    overflow: visible;
+    transform-origin: 50% 50%;
+    animation: session-sidebar-spiral-turn 6s linear infinite;
+}
+
+@keyframes session-sidebar-spiral-turn {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .session-sidebar-bar__avatar .spiral-turn { animation: none; }
+}
+
+.session-sidebar-bar__account:hover .session-sidebar-bar__avatar {
+    border-color: var(--oc-text-secondary);
+}
+
+.session-sidebar-bar__account-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.session-sidebar-bar__account-chevron {
+    display: inline-flex;
+    flex: 0 0 auto;
+    color: var(--oc-text-dim);
+    transform: rotate(180deg);
+    transition: transform var(--oc-motion-fast) ease;
+}
+
+.session-sidebar-bar__account[aria-expanded='true'] .session-sidebar-bar__account-chevron {
+    transform: none;
+}
+
+/*  hidden  */
+.session-sidebar-bar__signin {
+    --_bd: var(--oc-yellow-bright);
+    --_btn-h: 22px;
+    --_btn-pad: var(--oc-space-2);
+    --_btn-fs: var(--oc-fs-label);
+    --_btn-lh: 1;
+    --_btn-radius: var(--oc-radius-sm);
+    --_btn-edge: var(--oc-yellow-bright);
+    --_btn-edge-hover: var(--oc-yellow-bright);
+    --_btn-ink: var(--oc-yellow-bright);
+    --_btn-ink-hover: var(--oc-yellow-bright);
+    flex: 0 0 auto;
+    font-family: var(--font-mono);
+}
+
+.session-sidebar-bar__avatar[data-kind='lurker'] {
+    position: relative;
+    overflow: visible;
+}
+
+.mr-footer .session-sidebar-bar__signin {
+    display: none;
+}
+
+.mr-footer .session-sidebar-bar__avatar[data-kind='lurker']::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--oc-yellow-bright);
+}
+
+@media (pointer: coarse) {
+    .session-sidebar-bar__account {
+        min-height: 40px;
+    }
+
+    .session-sidebar-bar__signin {
+        --_btn-h: 40px;
+    }
+
+    .session-sidebar-bar__avatar {
+        width: 28px;
+        height: 28px;
+    }
+}
+}

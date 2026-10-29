@@ -1,0 +1,56 @@
+{
+  "id": "warroom",
+  "name": "War room",
+  "summary": "A full page, the war room, that shows every running session as a small live terminal on a wall, grouped by project, in a layout you can add any widget to. Desktop only.",
+  "description": "The war room is a page of its own, opened from the menu row, the c key in the menu or the link #warroom. Its wall shows one small read-only terminal per running session, grouped by project in the project colours, each with the session's status light and name. A tile connects only while it is on screen and repaints about once a second (four times a second under the pointer); hovering a tile scales it up and floats it over its neighbours without moving them, and a click opens the session. Four switches in the widget's header and menu add the extras, all remembered per browser: shells (off), browsers (off), asleep sessions (off, drawn as dimmed cards that wake the session when clicked) and paired computers (on, with an offline card while a link is down). The page is also the third one edit layout works on, after Home and the terminal page: drag any widget onto it beside the wall. The arrangement is saved on the server and is the same on every desktop. There is no war room on a phone: the menu row is hidden at 700 pixels wide and narrower.",
+  "area": "home",
+  "status": "beta",
+  "since": "2026-10-20",
+  "updated": "2026-10-21",
+  "surfaces": [
+    "menu page",
+    "web/src/lib/warroom/WarRoomScreen.svelte",
+    "web/src/opscenter/cells/warroom/Cell.svelte",
+    "web/src/lib/warroom/WarroomWall.svelte",
+    "web/src/lib/warroom/WarroomTile.svelte"
+  ],
+  "api_routes": [
+    "PATCH /api/v1/preferences (warroom_layout)"
+  ],
+  "docs": [
+    "docs/warroom.md",
+    "docs/ui-preferences-inventory.md"
+  ],
+  "issues": [
+    135
+  ],
+  "keywords": [
+    "war room",
+    "warroom",
+    "wall",
+    "tiles",
+    "layout",
+    "edit layout",
+    "widget",
+    "sessions"
+  ],
+  "where": [
+    "The menu tab of the drawer: the war room row, under sessions (desktop only).",
+    "The link #warroom."
+  ],
+  "how_to": [
+    "Open the drawer's menu tab and press the war room row, or press c while the menu has focus.",
+    "Hover a tile to enlarge it and refresh it faster; click it to open that session.",
+    "Drag the peek zoom slider in the widget header (or pick a stop in its menu) to set how big the hover peek is: the steps are equal from 0 (no zoom) to 100 (twice the default peek), the same peek width at every tile count. Resting tiles show the session's bottom rows filling the tile.",
+    "Use the shells, browsers, asleep and paired computers switches in the widget header (or its menu) to add or remove those tiles.",
+    "Press edit layout (right click on empty space, or the layout button) to open the widgets drawer on the war room.",
+    "Drag a widget, for example a stats tile, from the drawer onto the page; it is saved at once and kept after a reload.",
+    "Press reset in edit layout to put the page back to the wall alone."
+  ],
+  "examples": [
+    "Open the war room on a second monitor and leave it there.",
+    "Turn on asleep, then click a dimmed card to wake that session.",
+    "Put the running sessions count and the providers widget beside the wall."
+  ],
+  "media_exempt": "captured at the next version bump"
+}

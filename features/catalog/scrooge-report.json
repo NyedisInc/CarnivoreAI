@@ -1,0 +1,50 @@
+{
+  "id": "scrooge-report",
+  "name": "Scrooge report",
+  "summary": "A weekly spend report: your own Claude Code cost numbers, rule-file size and overlap checks and one capped read-only AI pass, stored as a report with a fix-it session button per finding.",
+  "description": "The scrooge recipe reads Carnivore's own usage numbers for projects worked on in the last 30 days, checks each project's rule files for size and repeated lines (read only, nothing is written), then makes one model call with no tools, capped at one dollar, over the numbers and the redacted rule text. The result is stored as a report on the run, one notification is sent through your notification destinations, and each finding that has a fix prompt can open a new Claude session in that project with the prompt loaded. Nothing is edited until you drive that session. The Automations page shows the report: totals, projects, lever coverage (levers that could not be measured say so) and the findings.",
+  "area": "settings",
+  "status": "beta",
+  "since": "2026-10-09",
+  "updated": "2026-10-09",
+  "surfaces": [
+    "src/core/automations/recipes.py",
+    "src/core/automations/scrooge/report.py",
+    "web/src/lib/automations/report/ReportBody.svelte"
+  ],
+  "api_routes": [
+    "POST /api/v1/automations/runs/{run_id}/findings/{finding_id}/fix",
+    "GET /api/v1/automations",
+    "POST /api/v1/automations/{automation_id}/run",
+    "GET /api/v1/automations/runs/{run_id}"
+  ],
+  "docs": [
+    "docs/automations.md"
+  ],
+  "issues": [
+    1468
+  ],
+  "keywords": [
+    "scrooge",
+    "spend",
+    "cost",
+    "report",
+    "automation",
+    "fix-it"
+  ],
+  "where": [
+    "The Automations page (menu tab, hotkey u): open a scrooge run's report from its run history, or follow a notification's link.",
+    "A notification titled automation report ready.",
+    "The automations MCP tools (automation_run_now, automation_run_get) and routes, which wait for your approval before a run starts."
+  ],
+  "how_to": [
+    "Run the scrooge automation now, or wait for its weekly slot.",
+    "Open the report from the notification and read the findings, each with its evidence.",
+    "Press fix-it on a finding to open a Claude session in that project with the fix prompt loaded, then drive it yourself."
+  ],
+  "examples": [
+    "Find the project whose spend is mostly the most expensive model.",
+    "Spot a CLAUDE.md that repeats your global rules and ask a session to propose trims."
+  ],
+  "media_exempt": "The report's media are captured at the next version bump with the rest of the feature recapture."
+}

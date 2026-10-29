@@ -1,0 +1,83 @@
+/* input, textarea reserved 1px border */
+
+@layer primitives {
+  .oc-field {
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 7px 10px;
+    border: 1px solid var(--oc-line-rule);
+    border-radius: var(--oc-radius-sm);
+    background: var(--oc-ground-raised);
+    color: var(--oc-text-primary);
+    font-family: inherit;
+    font-size: 13px;
+  }
+
+  .oc-secret {
+    -webkit-text-security: disc;
+  }
+
+  .oc-secret::placeholder {
+    -webkit-text-security: none;
+  }
+
+  .oc-field::placeholder {
+    color: var(--oc-text-muted);
+  }
+
+  .oc-field:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  textarea.oc-field {
+    resize: vertical;
+    line-height: 1.45;
+  }
+
+  select.oc-field {
+    appearance: none;
+    -webkit-appearance: none;
+    min-width: 120px;
+    padding-right: 28px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M3 5l3 3 3-3'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px 10px;
+  }
+
+  .oc-select-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--oc-space-1);
+    min-width: 0;
+  }
+
+  .oc-chip {
+    padding: 2px 8px;
+    border: 1px solid var(--oc-line-button);
+    border-radius: var(--oc-radius-sm);
+    background: transparent;
+    color: var(--oc-text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--oc-fs-micro, 10px);
+    cursor: pointer;
+  }
+
+  .oc-chip[aria-pressed='true'] {
+    border-color: var(--oc-orange-dim);
+    background: var(--oc-orange-tint);
+    color: var(--oc-orange);
+  }
+
+  @media (max-width: 1023px) {
+    .oc-field,
+    .oc-chip {
+      min-height: var(--oc-tap, 44px);
+    }
+
+    .oc-chip {
+      padding: 0 12px;
+    }
+  }
+}

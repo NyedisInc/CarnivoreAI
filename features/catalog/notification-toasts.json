@@ -1,0 +1,62 @@
+{
+  "api_routes": [
+    "GET /api/v1/toasts",
+    "PATCH /api/v1/preferences",
+    "GET /api/v1/notifications/mutes",
+    "PUT /api/v1/notifications/mutes"
+  ],
+  "area": "status-notifications",
+  "docs": [
+    "docs/notifications.md",
+    "docs/ui-preferences-inventory.md"
+  ],
+  "examples": [
+    "Get told the moment an agent asks for permission, even while you are in another session.",
+    "Finished-turn cards are noisy while you work: untick the screen column for that notification and the bell and history still record it.",
+    "A finished-turn card keeps popping on your phone while you work at the computer: tap its mute button, pick mute here, and that phone stops showing and pushing it while the computer still does."
+  ],
+  "how_to": [
+    "Click a toast to open that session; dismiss it with its x. Click a question or permission toast (also from the history list, a browser push or the desktop notification) to open the approvals popup on that item instead; it closes itself once answered.",
+    "A busy session's toasts are grouped into one.",
+    "Pick the toast style under settings, notifications, toast style: compact (the default) shows each session's most urgent event; detailed shows its latest event with a descriptive title and a snippet, counts the sessions waiting, and a click opens the session and dismisses only that card.",
+    "Attach an image to a session and click the small thumbnail on the attached notice to see it full size; Esc, a click outside the picture or the close button closes it.",
+    "Settings, notifications, routing, the screen column: untick a notification to stop its pop-up card. Needs-you cards are always shown. Hiding a card hides the pop-up only; the bell, the history, the status light and the tray still keep it.",
+    "Every notification card has a mute button at its bottom right: mute here silences that type on this device (on a phone, its push too), mute everywhere silences it on every device and destination. A muted card confirms with an undo. Settings, notifications, routing, muted notifications lists each mute with where it holds and an unmute button. Muting never changes the status lights."
+  ],
+  "id": "notification-toasts",
+  "issues": [
+    750,
+    1208,
+    1278,
+    1445
+  ],
+  "keywords": [
+    "detailed",
+    "notification",
+    "toast",
+    "toast style",
+    "verbosity",
+    "routing",
+    "mute"
+  ],
+  "media": [],
+  "name": "Notification toasts",
+  "since": "2026-09-10",
+  "status": "stable",
+  "summary": "get a toast when a session needs your attention, grouped so a busy session doesn't spam you; the screen column of the routing matrix decides which cards pop up.",
+  "surfaces": [
+    "client/js/toast-grouping.js",
+    "client/js/toast-mode.js",
+    "client/js/toast-session-group.js",
+    "web/src/lib/toast-mode/ToastModePanel.svelte",
+    "web/src/lib/notifications/mute/mute-control.ts",
+    "web/src/lib/notifications/mute/MutesPanel.svelte"
+  ],
+  "updated": "2026-10-08",
+  "where": [
+    "Top right of the screen, when a session needs you.",
+    "Settings, notifications tab, toast style.",
+    "Bottom right of every notification card: the mute button. Settings, notifications tab, muted notifications."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

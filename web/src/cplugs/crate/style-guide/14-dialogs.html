@@ -1,0 +1,107 @@
+<h3 class="sg-h3" id="dialogs-crate-import">crate plugin: the restore dialog</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup copied from</span><code>TtyBox.svelte</code><code>ImportPreview.svelte</code><span>styles live; a short plan drawn inert</span></div>
+    <div class="sg-specimen__body">
+        <div class="crt-tty">
+            <div class="crt-tty__bar">
+                <span class="crt-tty__label">preview</span>
+                <span class="crt-tty__state"><span class="crt-tty__tag crt-tty__tag--ok">ready</span></span>
+            </div>
+            <div class="crt-tty__screen crt-tty__screen--fit" role="region" aria-label="preview" tabindex="0">
+                <div class="crt-tty__out">
+                    <div class="crt-tty__note">
+                        <span class="crt-tty__tag crt-tty__tag--warn">from elsewhere</span>
+                        <span class="crt-tty__text">this crate came from another computer.</span>
+                    </div>
+                    <div class="crt-tty__note">
+                        <span class="crt-tty__tag crt-tty__tag--warn">warning</span>
+                        <p class="crt-tty__text">a conversation is newer here than in the crate; the copy here is kept.</p>
+                    </div>
+                    <section class="crt-tty__sec">
+                        <div class="crt-tty__head"><span>conversations</span><span class="crt-tty__count">4</span></div>
+                        <p class="crt-tty__row"><span class="crt-tty__name">wire the restore dialog to the plan route</span><span class="crt-tty__fig">resumes</span><span class="crt-tty__tag crt-tty__tag--ok">new</span></p>
+                        <p class="crt-tty__row"><span class="crt-tty__name">zstd on python 3.13</span><span class="crt-tty__fig">resumes</span><span class="crt-tty__tag crt-tty__tag--grow">grows</span></p>
+                        <p class="crt-tty__row"><span class="crt-tty__name">found in folder list</span><span class="crt-tty__fig">resumes as a fork</span><span class="crt-tty__tag crt-tty__tag--warn">newer here</span></p>
+                        <p class="crt-tty__row"><span class="crt-tty__name">scratch</span><span class="crt-tty__fig">file only</span><span class="crt-tty__tag crt-tty__tag--quiet">here</span></p>
+                    </section>
+                    <section class="crt-tty__sec crt-tty__sec--pair">
+                        <div class="crt-tty__head"><span>not restored</span><span class="crt-tty__count">2</span></div>
+                        <p class="crt-tty__row"><span class="crt-tty__name">carnivore.db.sessions_fts</span><span class="crt-tty__fig crt-tty__fig--left">rebuilt here from the rows</span></p>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt id="dialogs-crate-dialog-css">shared look</dt>
+    <dd><code>web/src/cplugs/crate/crate-dialog.css</code>: what the export and restore dialogs share, so neither restates it.
+        <code>.crt-modal</code> on the overlay widens the <code>text-prompt-modal</code> recipe to 600px, stacks it no taller than the window,
+        scrolls only the body and pins the footer under a hairline so the buttons never move; a phone gets the whole screen. <code>.crt-modal--fill</code> (the restore form) makes the dialog a fixed frame as tall as the window allows and gives the
+        terminal box whatever the summary and the form leave, so the box is whole on screen and nothing under it moves. These chassis rules
+        are unlayered, as <code>.analytics-modal</code>'s are, because the legacy sheet they widen is. The form is a column on the space steps
+        (<code>.crt-form</code>, its rows <code>.crt-form__row</code> label over field, its section labels <code>.pl-label</code> restated
+        from the ledger, its ticks in <code>.crt-ticks</code>, two columns once each has 16rem); the done screen is <code>.crt-plan</code>, its last
+        button <code>.crt-plan__act</code>. The summary strip <code>.crt-sum</code> is four aligned lines, a <code>.crt-sum__key</code> in tracked
+        capitals and a one-line <code>.crt-sum__val</code> cut with an ellipsis (<code>--bright</code> for the crate's name, <code>--unread</code>
+        dim before a plan answers). While a request with no progress of its own runs, <code>.crt-measure</code> shows a pulsing green square
+        <code>.crt-measure__dot</code>, the sentence <code>.crt-measure__sub</code> and the seconds <code>.crt-measure__figs</code>; the pulse is
+        still when motion is reduced or off.</dd>
+    <dt id="dialogs-crate-tty">TtyBox, the terminal box</dt>
+    <dd><code>web/src/cplugs/crate/TtyBox.svelte</code>: the inset readout every list in the crate dialogs lives in, so a crate with hundreds of
+        items scrolls inside the box and never stretches the dialog. <code>.crt-tty</code> is the field ground with a 1px hairline frame drawn as
+        an inset shadow and small square corners; <code>.crt-tty__bar</code> is a short title row (<code>.crt-tty__label</code> at the left,
+        <code>.crt-tty__state</code> at the right holding the wait row or a ready or blocked tag); <code>.crt-tty__screen</code> scrolls on its own
+        at a fixed height so the box never jumps between idle, waiting and a plan, and <code>--fit</code> shrinks it to a short list, capped at
+        the same height. Inside, <code>.crt-tty__out</code> is the column (<code>--lines</code> for the export plan's sentences),
+        <code>.crt-tty__idle</code> the one dim sentence before a plan. A <code>.crt-tty__note</code> is a tag and a wrapping
+        <code>.crt-tty__text</code> (<code>--bad</code> coral for a blocker, <code>--dim</code> for its detail). A <code>.crt-tty__sec</code> is
+        one grid whose rows (<code>.crt-tty__row</code>) are its subgrid, so the columns line up down the whole list: the name
+        (<code>.crt-tty__name</code>, takes the slack, ellipsis, full text as its title), the figure (<code>.crt-tty__fig</code>, dim, right,
+        tabular digits; <code>--left</code> in a <code>.crt-tty__sec--pair</code>, which is two equal columns for from and to or what and why) and
+        the outcome tag. A section's <code>.crt-tty__head</code> sticks to the top of the screen with its <code>.crt-tty__count</code>; a
+        <code>.crt-tty__line</code> is a full-width line (<code>--bright</code> for the project's action); <code>.crt-tty__act</code> puts a small
+        button in the tag column. Below 440px of box a row puts its name on a line of its own.</dd>
+    <dt id="dialogs-crate-tag">outcome tag</dt>
+    <dd><code>.crt-tty__tag</code>: the ledger's state tag (the base <code>Tag</code>) restated at row height, tracked capitals, a square marker
+        and a 45% edge in the signal colour: <code>--ok</code> green (new, ready, written here), <code>--grow</code> cyan (grows the copy here),
+        <code>--warn</code> yellow (newer here, from elsewhere, a warning), <code>--bad</code> coral (conflict, running, blocked), and
+        <code>--quiet</code> muted with a hollow marker (already here, left out, held back). The tag says the outcome in a word; the full
+        sentence is its title.</dd>
+    <dt id="dialogs-crate-import-dialog">ImportDialog</dt>
+    <dt id="dialogs-crate-remove-dialog">RemoveDialog</dt>
+    <dd><code>web/src/cplugs/crate/RemoveDialog.svelte</code>: the confirm a crate row's "remove" opens through <code>openModal</code>. The
+        <code>text-prompt-modal</code> head, one plain sentence (the crate and its checksum file go to the Trash and can be put back), a
+        <code>.tm__sub</code> line for a recorded crate (it stays in the list, marked removed), and a <code>Check</code> for the second folder's copy
+        only when another copy exists (off by default). The footer is the restart picker's: a quiet <code>.modal-btn-secondary</code> cancel and the
+        destructive <code>.modal-btn-danger</code>, in its own token and never the confirming one.</dd>
+    <dt id="dialogs-crate-undo-dialog">UndoDialog</dt>
+    <dd><code>web/src/cplugs/crate/UndoDialog.svelte</code>: the confirm a restored row's "undo" opens through <code>openModal</code>. The
+        <code>text-prompt-modal</code> head, one plain sentence saying what the undo removes (the database rows and files the restore wrote, the
+        sessions and project it made) and that anything already here or changed since stays, then a <code>TtyBox</code> listing each row that
+        stays with its reason. A blocker (a later restore, a running job, a step that cannot be undone cleanly) is a <code>.tm__problem</code>
+        line and keeps the undo off. The footer is the restart picker's: a quiet <code>.modal-btn-secondary</code> cancel and the destructive
+        <code>.modal-btn-danger</code>; after the undo the body says what was removed and one quiet button closes it.</dd>
+    <dt id="dialogs-crate-import-preview">ImportPreview</dt>
+    <dd><code>web/src/cplugs/crate/ImportPreview.svelte</code>: the read-only plan on the box's screen, in the order an owner decides by: who
+        wrote the crate, every blocker, every warning, then a section each for the project, the folder mapping, the conversations (name, how it
+        resumes, outcome tag), the records that did something (table, counts, tag), the instructions held back, and what is never restored and
+        why.</dd>
+    <dt id="dialogs-crate-import-result">ImportResult</dt>
+    <dd><code>web/src/cplugs/crate/ImportResult.svelte</code>: the restore's done screen, a <code>.crt-plan</code> that replaces the job's progress.
+        A <code>.tm__figs</code> line says how many sessions came back asleep and in which project, the folder dim under it, then a fitted terminal
+        box: the warnings, one row per session (its name, its state in the figure column, a small <code>.oc-btn</code> that wakes it through the
+        app's own wake route), the boards kept beside ones already here, the folder the project's files went into, and what was not restored.
+        The last control is an <code>.oc-btn</code> to the Projects screen.</dd>
+    <dt>ExportDialog</dt>
+    <dd><code>web/src/cplugs/crate/ExportDialog.svelte</code>: the crates plugin's "export this project" dialog, opened through
+        <code>openModal</code> from a project's crates group. The <code>text-prompt-modal</code> recipe and head: one
+        <code>.modal-description</code> sentence, then <code>.crt-form</code> (its rows <code>.crt-form__row</code>, label over field,
+        the restore points capture scope's <code>.oc-choice</code> cards for own or share copy, a <code>Check</code> for encrypt, an
+        <code>.oc-field</code> label), and after "preview" the plan under a hairline (<code>.crt-plan</code>: the counts in
+        <code>.tm__figs</code>, each blocker in <code>.tm__problem</code> with the server's own words dim under it, warnings dim).
+        The footer is a quiet <code>.modal-btn-secondary</code> cancel and the confirming <code>.modal-btn-confirm</code>, which
+        reads preview (previewing while it runs, with a wait row <code>.crt-measure</code> under the form: a pulsing green square
+        <code>.crt-measure__dot</code>, the sentence and the seconds so far, still when motion is reduced) until a plan that can be written is on screen and export after; a changed choice drops the plan. Once
+        the export starts, <code>JobProgress.svelte</code> takes the body and the footer holds one quiet button.</dd>
+</dl>

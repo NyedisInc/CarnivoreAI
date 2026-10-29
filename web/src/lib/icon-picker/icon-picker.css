@@ -1,0 +1,122 @@
+
+.icp {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 8px;
+    width: max-content;
+    max-width: 100%;
+    min-width: 0;
+    font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+.icp .icp__search {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.icp .icp__label {
+    font-size: var(--oc-fs-micro, 10px);
+    letter-spacing: var(--oc-tracking-label, 0.6px);
+    text-transform: uppercase;
+    color: var(--oc-text-secondary);
+}
+
+.icp .icp__input {
+    padding: 7px 10px;
+    border: 1px solid var(--oc-line-rule);
+    border-radius: var(--oc-radius-sm, 4px);
+    background: var(--oc-ground-raised);
+    color: var(--oc-text-primary);
+    font-family: inherit;
+    font-size: 13px;
+}
+
+.icp .icp__grid {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 32px));
+    gap: 2px;
+    padding: 2px;
+    border-radius: var(--oc-radius-sm, 4px);
+}
+
+.icp .icp__cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 32px;
+    border-radius: var(--oc-radius-sm, 4px);
+    cursor: pointer;
+}
+
+.icp .icp__cell:hover {
+    background: var(--oc-ground-hover);
+}
+
+.icp .icp__cell[aria-selected='true'] {
+    box-shadow: inset 0 0 0 1px currentColor;
+}
+
+.icp .icp__grid:focus-visible .icp__cell--active {
+    box-shadow: inset 0 0 0 1px var(--_fbd);
+}
+
+.icp .icp__none {
+    position: relative;
+    width: 14px;
+    height: 14px;
+    border: 1px solid currentColor;
+    border-radius: 2px;
+    opacity: 0.55;
+    overflow: hidden;
+}
+
+.icp .icp__none::after {
+    content: '';
+    position: absolute;
+    left: -3px;
+    top: 50%;
+    width: 22px;
+    height: 1px;
+    background: currentColor;
+    transform: rotate(-45deg);
+}
+
+.icp .icp__empty {
+    margin: 0;
+    font-size: 12px;
+    color: var(--oc-text-secondary);
+}
+
+.icp .icp__sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+@media (max-width: 1023px) {
+    .icp .icp__grid {
+        grid-template-columns: repeat(8, minmax(0, 44px));
+    }
+
+    .icp .icp__cell {
+        height: 44px;
+    }
+
+    .icp .icp__input {
+        min-height: 44px;
+    }
+}
+
+.icon-mark {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    vertical-align: middle;
+}

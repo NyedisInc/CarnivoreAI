@@ -1,0 +1,717 @@
+<h2 class="sg-h2">page shells, headers, drawers and sidebars</h2>
+<p class="sg-lead">The frame every screen sits in. <code>client/index.html</code> is ONE document: the screens are divs, one
+visible at a time (<code>.screen.active</code>), under one sticky header, with the agents drawer on the left and one shared
+right-hand slot for the file or notes drawer. Overlays (the ledger, the catalog, the themes page, a new page) paint over
+the active screen below the header and restore nothing when they close.</p>
+
+<h3 class="sg-h3" id="chrome-shell">the shell</h3>
+<div class="sg-table-wrap">
+<table class="sg-table">
+    <thead><tr><th>part</th><th>files</th><th>notes</th></tr></thead>
+    <tbody>
+        <tr><td>screens</td><td><code>client/index.html</code>, <code>.screen</code>, <code>client/js/screen-chrome.js</code>,
+            <code>client/css/screen-chrome.css</code></td><td>sign in, home, session, archive. <code>ScreenChrome.apply()</code> keys
+            the header controls on those names; an overlay does not join that family.</td></tr>
+        <tr><td>overlay screens</td><td><code>#ledger-screen</code>, <code>#catalog-screen</code>, <code>#themes-screen</code> in
+            <code>client/index.html</code></td><td>a compiled screen mounts into its container with <code>ensurePanel</code>; it is
+            fixed from <code>var(--overlay-top)</code> down, z-index 40, one scrolling box inside.</td></tr>
+        <tr><td>header</td><td><code>.header</code> in <code>styles.css</code>, <code>header-actions.css</code>,
+            <code>header-menu.css</code>, <code>client/js/header-*.js</code></td><td>the app
+            title returns home; entries fold into the kebab menu below 768px (#317), whose rows print their labels and show
+            no tooltip; inline, each icon's <code>title</code> is <a href="#menus-tooltip">the tooltip</a> (#981).</td></tr>
+        <tr><td>top bar (compiled)</td><td><code>web/src/opscenter/shell/TopBar.svelte</code></td><td>the dashboard's strip on a
+            phone and in the pop-out window; the desktop home draws none (<a href="#chrome-home-header">below</a>); see
+            <a href="#cells">cells</a>.</td></tr>
+        <tr><td>home bottom bar</td><td><code>client/css/home-bar.css</code></td><td>status, version, one outbound link; a 44px
+            target on any touch device.</td></tr>
+        <tr><td>phone and iOS</td><td><code>client/css/ios-chrome.css</code>, <code>docs/ios-standalone.md</code></td><td>pads the
+            notch and the home indicator when added to the home screen.</td></tr>
+        <tr><td>phone pair page</td><td><code>web/src/pair/Pair.svelte</code>, <code>pair.css</code> (<code>.pair</code>,
+            <code>.pair__bar</code>, <code>.pair__form</code>, <code>.pair__input</code>), built by <code>vite.pair.config.ts</code></td></tr>
+        <tr><td>first-run screen</td><td><code>web/src/lib/first-run/FirstRun.svelte</code>, <code>first-run.css</code> (<code>.first-run</code>,
+            <code>.first-run__bar</code>, <code>.first-run__qr</code>, <code>.first-run__input</code>), mounted into <code>#first-run-screen</code> by
+            <code>boot.ts</code></td></tr>
+        <tr><td>sign in</td><td><code>.auth-*</code> in <code>styles.css</code>, <code>client/js/auth.js</code></td><td>a six digit
+            code, one field, one button, an error line.</td></tr>
+    </tbody>
+</table>
+</div>
+
+<h3 class="sg-h3" id="chrome-desktop-inset">the desktop title strip</h3>
+<p>Inside the Mac app each window hides its title bar and floats the traffic lights over the page, so the page keeps a strip
+clear of them and makes it the window's drag region. It exists only in the app: <code>client/js/desktop-chrome.js</code> stamps
+<code>data-desktop-chrome</code> on <code>&lt;html&gt;</code> when the app's bridge lists <code>windowChrome</code>, and a browser tab
+never gets the stamp, so it shows no strip and no inset.</p>
+<div class="sg-table-wrap">
+<table class="sg-table">
+    <thead><tr><th>part</th><th>rule</th></tr></thead>
+    <tbody>
+        <tr><td>the band</td><td><code>client/css/desktop-chrome.css</code> pads the body by <code>--desktop-inset-top</code> (28px, the app's
+            answer replaces it) and paints that band as a chrome-ground strip with a hairline, the same look as the drawer it meets. It
+            is one shared band, not a patch per screen; nothing interactive lives in it, so it needs no no-drag exceptions.</td></tr>
+        <tr><td>fixed layers</td><td>anything fixed at the top edge starts below the band with <code>top: var(--desktop-inset-top, 0px)</code>
+            (the drawer, its rail, the notes panel, the update banner, the menu page bar); a browser tab falls back to 0.
+            <code>--header-h</code> and <code>--overlay-top</code> grow by the band, so overlays still start under the header.</td></tr>
+        <tr><td>the pop-out bar</td><td>a pop-out that draws its compact bar (<code>.oc-topbar--popout</code>) uses the bar as the strip: it keeps
+            <code>--desktop-inset-left</code> (78px) clear for the lights, is the drag region, and every control on it is no-drag.</td></tr>
+        <tr><td>full screen</td><td>no lights, so the app reports an inset of 0 and <code>data-fullscreen</code> hides the band.</td></tr>
+        <tr><td>the numbers</td><td>owned by the shell (<code>macOS/window-chrome.js</code>): lights at x16 y8, 28px high, 78px from the left.</td></tr>
+    </tbody>
+</table>
+</div>
+
+<h3 class="sg-h3" id="chrome-drawer">the agents drawer</h3>
+<dl class="sg-facts">
+    <dt>what</dt>
+    <dd>The left panel from the menu button: the sidebar rail down its left edge (<code>SidebarRail.svelte</code>,
+        <a href="#chrome-sidebar-rail">below</a>), whose keys open the menu (the destinations that were the home rail,
+        <code>rail-items.ts</code>), agents and the other slide-outs; a quick-look stats bar above the search (<code>DrawerStats.svelte</code>: the <code>.dst-row</code> / <code>.dst-field</code> frame copied from the search row at the same 24px and wearing <code>data-tooltip-off</code>, so no figure, glyph, chart or bar shows a hover tip; first, only when the pack holds more than one computer (this one and offline members counted), the wolf glyph and that number (<code>.dst-pack</code>, a plain readout, not a button); then three counts that are buttons, each named by <code>aria-label</code> (<code>.dst-count</code>: a click lists only the agents that figure counted with every fold open, and the figure wears a loud <code>--oc-yellow-bright</code> frame, <code>data-filter="on"</code>, until a second click clears it; one at a time) (the automations figure is not in this bar); the strip wears no box, no border and no fill, and the token readout ends flush with the row's right padding edge, in line with the new-agent button below, with at most one decimal (4.5M, 58.8k); up = tokens out and down = tokens in with a rate button that cycles per sec, min, hour and day, and a bar chart button that cycles 1h, 5h, 1d and 7d; a measured zero is the <code>.dst-bar--zero</code> stub and an unmeasured slot the hatched <code>.dst-bar--gap</code>, never the same; a named state such as stats off, or a feed that cannot be read (signed out, no route, a failed read), replaces the token half as <code>.dst-word</code>; bars are 2px with a 1px gap and a long window folds buckets so every bar stays that wide, no tooltip on a bar; a paired computer that is missing hatches the chart from its last good time as <code>.dst-band</code> with a <code>.dst-flag</code> square on the rate, muted when it is paused or off and in the danger token when it cannot be reached); search with its mode dropdown
+        (<code>DrawerSearch.svelte</code>; sidebar search redesign D: the box is the base Field's search variant, <code>.oc-search</code>
+        (icon, input, a clear x whenever there is text, a key hint, then the mode select in the trailing slot);
+        under it the SIMILAR TERMS (<code>SearchTerms.svelte</code>, <code>.ds-terms</code>, <code>.ds-terms__label</code>,
+        <code>.ds-terms__n</code>): base button chips, a term and how many messages hold it, from the deep search's suggest route;
+        a typed text lists AGENTS (<code>SearchAgents.svelte</code>, the quiet variant D row <code>SearchAgentRow.svelte</code>,
+        <code>.sd-r</code>, the mock's agent row ported in <code>deepsearch/search-d.css</code>: no box, no provider mark, no pin; line one
+        the light (a closed row wears the quiet hollow ring, so every name starts in one column), the name <code>.sd-r__name</code> with the match
+        <code>.sd-mark</code> (bright ink, a hairline under it) and the age <code>.sd-r__meta</code>, the row's kebab at its end; line two
+        <code>.sd-r__sub</code> the model and effort, or the muted note <code>.sd-dim</code> for an asleep or closed agent, or
+        <code>.sd-why</code> saying why a project or folder match is listed; the cursor's row is <code>.is-focus</code> (the focus edge and the state
+        layer, never hover); one click opens the session; a saved Layout or browser row is the same quiet row) then the top
+        CONVERSATIONS (<code>SearchConversations.svelte</code>, hits (<code>HitRow.svelte</code>, <code>.sd-hit</code>: the head line
+        <code>.sd-hit__top</code> with the light, the name <code>.sd-hit__name</code> and the muted who and when, the excerpt
+        <code>.sd-hit__snip</code> indented to the name and never clamped, and in the context mode only the action row <code>.sd-acts</code> under
+        it: read around the shared confirm button repainted green, go to session the shared quiet button, the icon buttons <code>.sd-ib--framed</code>;
+        the "more" list is the mock's menu) and the no-match state
+        <code>.ssr-none</code> offering the next steps). Each section opens with a head (<code>SearchHead.svelte</code>,
+        <code>.sd-hd</code>: the fold chevron <code>.sd-hd__chev</code>, the label <code>.sd-hd__label</code> and the muted count
+        <code>.sd-hd__n</code> as one fold button <code>.sd-hd__fold</code>, and on the CONVERSATIONS head the right-aligned
+        <code>.sd-hd__act</code> "deep search" link), with the hairline <code>.sd-rule</code> between them; an armed asleep row's wake
+        offer is <code>RowWakeArm.svelte</code>; wrapper package S-5: the mode select, like the stats strip's counts, rate and chart, is the shared tool button,
+        <code>.oc-btn .oc-btn--tool</code>; <code>drawer-strips.test.ts</code> holds both strips to a recorded DOM and refuses a
+        hand-made input or button in <code>web/src/lib/drawer-tabs/</code>); bands of rows grouped by project under COMPANY headings (then ORPHANED PROJECTS), with TERMINALS and ROGUE AGENTS
+        (<code>client/js/session-sidebar-*.js</code>, <code>client/css/session-sidebar*.css</code>); a footer bar.</dd>
+    <dt>one band wrapper</dt>
+    <dd>Every band is <code>Band.svelte</code> (<code>web/src/lib/sidebar-shell/</code>, wrapper package S-1): the
+        <code>.session-sidebar-group</code> group, its heading row (none for the leader band) and its
+        <code>.session-sidebar-group__body</code>, which stays in the DOM while folded so <code>aria-controls</code> resolves and the drop
+        target survives. A project band, its nested child and its spawned sub-heading (<code>BandSection.svelte</code>), the leader band
+        (<code>LeaderBand.svelte</code>), the <em>companies</em> and <em>groups</em> blocks, a company and the PACK section are uses of it (a PACK computer row is a switch: <code>aria-pressed</code>, and an off computer wears <code>data-pack-off</code>, dimmed with its name struck through),
+        passing only their modifier class and data attributes. No other file draws the wrapper or the body by hand
+        (<code>band-conformance.test.ts</code>; <code>band-structure.test.ts</code> holds the DOM to a recorded golden).
+        The heading row and its kebab are <code>Heading.svelte</code>'s alone (wrapper package S-2): a hand-made group, a project and a
+        company name their menu in the plan (<code>HeadingPlan.menu</code>: kind, id, accessible name) and the heading draws the one
+        <code>.session-sidebar-group__menu</code> button, which opens that item type's menu through the one item menu
+        (<code>item-menu/ItemMenuHost.svelte</code>, the shared <code>CascadeMenu</code>; wrapper package S-6); a right-click on the row
+        opens the same menu at the pointer, and Shift+F10 or the menu key opens it from the kebab.</dd>
+    <dt>one row chip</dt>
+    <dd>Every chip, mark and icon on a drawer row is <code>RowChip.svelte</code> (<code>web/src/lib/sidebar-shell/</code>, wrapper
+        package S-3), drawn from a plan record (<code>RowChipSpec</code>: attributes, an optional shared glyph, optional text) built in
+        <code>row-chips.ts</code>: a <code>&lt;button&gt;</code> for the chips that open something (the cozy subagent and timer chips,
+        share, the cup, the automations clock, the pin, a live-work part), a <code>&lt;span&gt;</code> for the marks (provider with its role
+        mark, archived, agents, shells, timers, the wake clock, workflow, the model mark, badges and stamps). The heading's inactive mark
+        and moved-away badge are the same component. A plugin <code>status-source</code> chip (<code>docs/cplug-platform.md</code> 7.4) is a
+        RowChipSpec of text and a title, painted here like a badge and never a signal to the light. No sessions-list file spreads a plan
+        record onto a chip element by hand or writes a row chip's class into markup (<code>band-conformance.test.ts</code>;
+        <code>row-structure.test.ts</code> holds every chip to a recorded golden).</dd>
+    <dt>one row action, one menu trigger</dt>
+    <dd>A drawer row's kebab is <code>RowMenuTrigger.svelte</code> and a dead row's inline restart and remove are
+        <code>RowActions.svelte</code> (wrapper package S-4), both drawn through <code>RowChip.svelte</code> from the records of the ONE
+        builder each control has: <code>triggerSpec</code> (<code>web/src/lib/item-menu/row-context.ts</code>: the plain, dimmed,
+        update-ready and mcp states and every <code>data-row-menu-*</code> fact) and <code>SessionRowActions.specs</code>
+        (<code>client/js/session-row-actions.js</code>). The string surfaces (home, the Projects page, the terminal zone, a saved Layout
+        row) call <code>triggerHtml</code> and <code>html</code>, which serialize the same records byte for byte. The actions sit at the
+        end of a compact row's control cluster, on the cozy body's ended line and on the detailed body's exited flag. A Swarm ghost
+        leader's kebab keeps its own menu and the shared dots (<code>kebab.ts</code>). No other file writes either control's class
+        (<code>band-conformance.test.ts</code>).</dd>
+    <dt>company headings</dt>
+    <dd>Each company (issue #1338, <code>plan.ts</code> <code>companyPlan</code>) is a top-level foldable heading, A-Z, with its
+        project bands inside and the orphaned projects heading last; the heading wears the bold
+        <code>.session-sidebar-group__header--projects</code> look and a kebab (rename, delete), the orphaned heading none. An
+        open company with no agent-bearing project shows one quiet line (<code>.session-sidebar-company__empty</code>). The fold
+        is <code>c:&lt;id&gt;</code> or <code>c:orphaned</code> in <code>drawer_arrangement.collapsed</code>. A project's kebab adds
+        <em>add to</em> (a branch flyout: company, every company then <em>new company...</em>) and, only when filed,
+        <em>remove from company</em>. Everything under any heading (company, project, group, the agents fold) sits one
+        <code>--sidebar-tree-step</code> (8px, <code>--oc-space-2</code>) further in: the drawer is a tree, and the step is applied by ONE rule,
+        <code>padding-inline-start</code> on <code>.session-sidebar-group &gt; .session-sidebar-group__body</code> and the Layout members body, so depth N
+        starts at N x the step for headings, rows, folds and dividers alike. A child's left edge sits under its parent's chevron glyph.</dd>
+    <dt>company and project lineage</dt>
+    <dd>Companies nest (<code>companies.parent_id</code>, at most four levels): a child company's heading sits inside its
+        parent's body, A-Z after the parent's projects, so it inherits the same <code>--sidebar-tree-step</code> per
+        level and keeps its own fold, <code>c:&lt;id&gt;</code>. Inside one company, a project whose folder sits inside another
+        project's folder (<code>parent_project_id</code>, derived by the server) is a band drawn inside that project's body and
+        gets the marker class <code>session-sidebar-group--nested</code> (no stylesheet rule of its own: the indent is one more <code>--sidebar-tree-step</code> of structure, nothing else).
+        A parent project in another company never pulls a project across. With no parents at all the drawer is unchanged
+        (<code>web/src/lib/sidebar-shell/lineage-render.test.ts</code>).</dd>
+    <dt>spawned agents sub-heading</dt>
+    <dd>Agents a project agent spawned (a task or feature agent with a project agent above it in the Swarm tree, issue #1464)
+        leave their project's rows and sit under a quiet <code>features (N)</code> sub-heading inside the project band. It wears the
+        reserved grouping-heading look (no new class) and is COLLAPSED by default; its fold key <code>p:&lt;id&gt;:agents</code> in
+        <code>drawer_arrangement.collapsed</code> reads INVERTED (present means expanded). A typed search opens it.</dd>
+    <dt>grouping headings</dt>
+    <dt>section reorder</dt>
+    <dd>Every top-level section (PINNED, LAYOUTS, GROUPS, COMPANIES, ROGUE AGENTS, TERMINALS, BROWSERS, REVIEW, PACK) moves by its heading:
+        a mouse or pen drags the heading, a finger drags from its leading glyph or chevron, and Alt+ArrowUp / Alt+ArrowDown on a focused
+        heading moves it one slot and says where it went in the drawer's live region. The order is one value for every device,
+        <code>drawer_arrangement.sections</code>; a section the stored list does not name joins right after its default predecessor.
+        A group heading under GROUPS reorders the groups among themselves, never the GROUPS block.</dd>
+    <dt>cascade fold (shift+click)</dt>
+    <dd>Shift+click on any fold heading (band, company, nested company, project, the companies heading, the groups heading) folds or unfolds it
+        <em>and every fold underneath it</em> to the same new state, as one <code>drawer_arrangement</code> write
+        (<code>cascadeBandFold</code> in <code>sidebar-shell/heading-fold.ts</code>; the keys come from <code>cascade-keys.ts</code>, since a folded
+        heading's children are not in the plan). Shift+Enter and Shift+Space do the same on a focused heading. A plain click is unchanged.
+        While Shift is held and the pointer or focus is on a heading, the single chevron (<code>M4 2l4 4-4 4</code>) becomes the
+        <em>double chevron</em> (<code>M2 2l4 4-4 4M6 2l4 4-4 4</code>, <code>cascade-hint.ts</code>), turned by the same
+        <code>aria-expanded</code> rotation, and the row wears <code>data-cascade="1"</code>. It uses the heading's own colour (<code>currentColor</code>),
+        no new class, and no tooltip (the heading is a labelled text control, not icon-only).</dd>
+    <dt>swarm leaders</dt>
+    <dd>SysOp, each company agent and each project agent (issue #1371, <code>web/src/lib/sidebar-shell/leaders.ts</code>, joined to the
+        listing on <code>session_row_id</code> / <code>session_uuid</code>, never a tmux name) sit in a fixed slot: SysOp above every band, a company
+        agent first under its company heading (<code>LeaderBand.svelte</code>, a headingless band so the row gestures reach it), a
+        project agent first in its project band. The row wears a rank insignia drawn as an SVG, by shape and not a text badge: one chevron
+        (project leader), two chevrons (company leader), a star (SysOp), in the accent token
+        (<code>.session-sidebar-row-leader</code>), plus a 2px accent edge on the row (<code>.session-sidebar-row[data-leader]</code>). Closing,
+        deleting, killing or turning one off asks for the exact name (<code>LeaderConfirm.svelte</code>, the text-prompt look,
+        <code>.modal-btn-danger</code> disabled until the name matches, cancel focused); the server refuses it without the name.
+        Rename is the row's own rename or the agent chat menu's <em>rename agent</em> (<code>LeaderRename.svelte</code>).</dd>
+    <dt>the footer bar</dt>
+    <dt>the questions tab</dt>
+    <dt id="chrome-dynamic-tabs">dynamic tabs</dt>
+    <dt id="chrome-tab-popout">a tab in its own window</dt>
+    <dt id="chrome-task-manager-markdown"><span id="chrome-huddle-markdown"></span>Task Manager post formatting</dt>
+    <dd>Every Task Manager text surface draws a safe markdown subset through ONE renderer
+        (<code>web/src/cplugs/huddle/TaskManagerMarkdown.svelte</code>, parser <code>task-manager-markdown.ts</code>); another plugin draws the same words through the sdk seam (<code>web/src/cplugs/sdk/Markdown.svelte</code>, registered by the Task Manager at start, plain text when the Task Manager is off), as the review board does for a revision summary: the row's title, latest line,
+        description and posts, the thread, the review block and the answer popup (item name, context, prompts, help, options,
+        reasons), whoever wrote the words. A one-line host passes <code>inline</code>: the text draws as one run in
+        <code>.hmd-line</code> (an inline span), so the host's own ellipsis or line clamp cuts the DRAWN words and bold, italic and
+        code keep their styling up to the cut. A folded post passes <code>limit</code> and <code>more</code>: the parsed tree is cut
+        (<code>task-manager-markdown-clip.ts</code>), never the source text, so no marker ever shows at a cut. Native tooltips and
+        aria-labels take <code>mdPlain</code>, the words with every marker gone. It builds nodes, never HTML: a tag in a post shows as literal text, links are http and https only and open
+        in a new tab. Syntax: paragraphs, <code>**bold**</code>, <code>*italic*</code>, inline code, fenced code, bullet and numbered
+        lists (one nested level), <code>***bold italic***</code>, bold and italic across the lines of one paragraph, <code>#</code> and <code>##</code> headings (small tracked capitals, <code>.hmd-h</code>), links, GFM pipe tables
+        and a <code>```kv</code> fence of <code>key: value</code> lines. A table (<code>.hmd-table</code>) scrolls sideways in its own
+        box (<code>.hmd-scroll</code>), hairline rows from <code>--oc-line-faint</code>, mono tracked column heads, and a column of all
+        numbers is right aligned with tabular figures (<code>.hmd-cell--right</code>). A key: value block (<code>.hmd-kv</code>) is an aligned
+        grid, labels in <code>--oc-text-secondary</code> mono. Code reads on <code>--oc-ground-hover</code>; links in <code>--oc-cyan</code>. Anything
+        unrecognized, and a malformed table, stays plain text.</dd>
+    <dt id="chrome-task-manager-command"><span id="chrome-huddle-command"></span>Task Manager command area</dt>
+    <dd>A fenced code block in any Task Manager post, and a typed question's <code>command</code>, draws through
+        <code>web/src/cplugs/huddle/TaskManagerCommandBox.svelte</code> (<code>.hcb</code>): the code in a <code>.hcb-pre</code> box
+        (the <code>.hmd-pre</code> look: hairline, small square corner, mono, the hover ground), an optional tracked language
+        label (<code>.hcb-lang</code>) and an icon-only copy button in the corner (<code>.hcb-copy</code>, the catalog strings
+        <code>cplug.huddle.command.copy</code> and <code>cplug.huddle.command.copied</code> as tooltip and aria label; <code>.hcb-copy--done</code>
+        shows the check in the green token for a moment). Copy uses <code>task-manager-copy.ts</code>; a refused copy selects the code.
+        On a <code>single</code> question with a command the options draw as pills (<code>.hdq-pills</code>, each a base <code>Button</code>)
+        under the command (<code>.hdq-command</code>): one tap picks. A post with ONE <code>single</code> or <code>yes_no</code> question draws that
+        question inline in the thread (<code>.hdq-inline</code>, <code>TaskManagerAskInline.svelte</code>): context, prompt, command and the
+        pills, one tap answers through the popup's own route; Shift-click dismisses. The same component draws on the Task Manager row with the context cut to its first line (<code>.hdq-lead</code>); the row shows only the newest open question and counts older ones as <code>.tkm-posts-more</code> ("+N more open"). Do not hand-draw a
+        copy button; tokens only.</dd>
+    <dt id="chrome-task-manager-bubble"><span id="chrome-huddle-bubble"></span>Task Manager message bubble</dt>
+    <dt id="chrome-task-manager-answer-box"><span id="chrome-huddle-answer-box"></span>Task Manager answer box</dt>
+    <dt id="chrome-task-manager-form-answer"><span id="chrome-huddle-form-answer"></span>Task Manager form answer card</dt>
+    <dt id="chrome-task-manager-ask-form"><span id="chrome-huddle-ask-form"></span>Task Manager answer form</dt>
+    <dt id="chrome-task-manager"><span id="chrome-huddle"></span>the Task Manager</dt>
+    <dt>the agent chat widget</dt>        <dt>Task Manager reply files</dt>
+    <dd>Files dropped or pasted on a Task Manager reply (<code>docs/task-manager.md</code> section 42). The reply box (<code>HuddleReply.svelte</code>) takes files pasted from the clipboard or dropped on it (the frame's own border turns the accent while files are over it, <code>.hdt-actions--drop</code>) and uploads each at once; <code>TaskManagerChips.svelte</code> shows one chip per file (<code>.hdc-chip</code>: name <code>.hdc-name</code>, size or state <code>.hdc-state</code>, a failed upload in the coral with the server's reason, and an icon-only remove key <code>.hdc-remove</code>, the one control here that carries a tooltip). A reply may be files only. In a thread and on a row's posts <code>TaskManagerFiles.svelte</code> draws a reply's images as hairline-framed square thumbnails (<code>.hdf-thumb</code>, click opens the shared full size lightbox) and any other file as a quiet mono chip (<code>.hdf-chip</code>, click saves it). Every byte is read through the authenticated route as a blob. <code>.tkm-post-files</code> places them under a row post. A question's reply box has no cancel key: replying answers it (<code>POST /items/{id}/cancel-question</code> stays for the API). The reply key stays beside the box as the text grows (the box takes the free width, <code>flex: 1 1 0</code>). The row's remove key asks "delete for good?" in the tick-confirm dialog (<code>.htc</code>, delete mode, the red <code>.modal-btn-danger</code> confirm) before anything is deleted.</dd>
+    <dt>Task Manager schedule keys</dt>
+    <dt>Task Manager schedule offer</dt>
+    <dt>Task Manager artifact card and popout</dt>
+    <dt>Task Manager live worker strip</dt>
+    <dd>Live worker state on a row (<code>docs/task-manager.md</code> section 46). <code>TaskManagerProgress.svelte</code> draws one line per worker under the row's title and at the top of the open detail: a phase chip (<code>.hdp-chip</code>, a 1px hairline in the phase token: running green, testing cyan, installing orange, blocked coral, queued and done dim), the worker label when there are several (<code>.hdp-worker</code>), the note (<code>.hdp-note</code>, ellipsised at 60 characters on the row, whole when open, <code>.hdp-line--full</code>) and the time since the last report (<code>.hdp-age</code>). A line with no report for 30 minutes is <code>.hdp-line--stale</code>, drawn dim. It renders nothing when the item has no line. Pushed on the <code>cplug.huddle.progress</code> topic; no poll.</dd>
+    <dt>Task Manager session steps strip</dt>
+    <dt>the session widget rails</dt>
+    <dt>the one key</dt>
+    <dt>the split divider</dt>
+    <dd>A draggable divider between two panes that share one container and are placed by a RATIO
+        (<code>web/src/lib/split-divider/SplitDivider.svelte</code>, <code>.split-divider</code>; issue #1472). It sits ON
+        the seam, absolutely placed at the ratio inside its positioned parent, so it takes no room from either pane: a 7px
+        invisible hit area (<code>.split-divider--y</code> between stacked panes, <code>.split-divider--x</code> between
+        side-by-side ones) over a 1px hairline in the frame line that takes the accent while hovered, focused or dragged
+        (<code>.split-divider--dragging</code>), the rail grip's look. A drag reports every step and saves once at the end;
+        Escape during a drag puts the start back; the arrows along its axis step it and Home resets; a focusable
+        separator whose value is the first pane's percentage. Use it for any ratio split that is not the terminal grid:
+        the grid's own divider (<code>Gutter.svelte</code>) is a grid track bound to the layout store and divides nothing
+        else. Do not: use it where the panes are grid tracks, or give it a border or ring for focus.</dd>
+    <dt>the agent drawer</dt>
+    <dd>A click on a Swarm agent slides a drawer out from UNDER the left (Swarm) drawer toward the right (<code>AgentDrawer.svelte</code>, <code>.had</code>, #1363) instead of opening the agent's full page. It is anchored at the left drawer's right edge (the window edge when that drawer is shut), one layer under it, over the main area, and slides back under it on close; at the left drawer's own width by default (<code>agent-drawer.svelte.ts</code> reads the same per-device value), dragged on its right edge (<code>.had-grip</code>, a 7px column-resize handle that lights in the accent on hover or focus; arrow keys step it, Home and End jump, a double-click resets) and remembered per device. A 5px ground gap on top (<code>.had-topgap</code>), then ONE row (<code>.had-barwrap</code>) that is the chat's own bar (<code>ChatBar.svelte</code>, framed) carrying the Military Terminal tabs "chat" and "tasks" (<code>.had-tabs</code>, each a <code>.had-tabwrap</code> around a <code>.had-tab</code>, the selected one <code>.had-tabwrap--active</code>: the terminal tab strip's pattern, <code>TabStrip</code>'s <code>.oc-tabrow</code> ground with the active tab lifted onto the body ground) and the shared bare close key at its right end. Escape closes it. The body (<code>.had-body</code>) holds the ONE chat component, <code>ChatWidget.svelte</code>, or on the second tab the Task Manager lists view filtered to that agent (<code>.had-tasks</code>, <code>HuddleBody</code> with its <code>agent</code> prop), never a copy. It is no menu page, so the left drawer stays on its tab. SLICE B: the bar and body live in <code>AgentChatFrame.svelte</code>, which the drawer, the <code>huddle.chat</code> widget cell (<code>ChatWidgetHost.svelte</code>, <code>.hdw</code>, its own tab state) and the pop-out window (<code>AgentPopout.svelte</code>, <code>.ap</code>, <code>.ap-notice</code>, address <code>popout.html?agent=&lt;id&gt;</code>, chat and tasks viewer tabs, no layout writes) both draw. The drawer has no kebab of its own: its "pop out", "agent terminal" and "make widget" are items in the chat bar's ONE menu; make widget adds the <code>huddle.chat:agent:&lt;id&gt;</code> widget to the current layout and closes the drawer, and dragging the title row drops the same widget through the engine's own drop hints (<code>agent-dock.ts</code>). Dropping as a tab is not offered: tab groups hold terminals only.</dd>
+    <dt>the widget area</dt>
+    <dt>the glance area</dt>
+    <dt>docking</dt>
+    <dt>the root zone: the session list is a widget</dt>
+    <dd>The drawer's root region is ONE zone (<code>web/src/lib/drawer-layout/root-zone.svelte.ts</code>); its session list tab is the
+        <code>core.session-list</code> widget (<code>SessionListWidget.svelte</code>, <code>SessionListBody.svelte</code>), which joins the zone through
+        <code>ZoneTabContext.svelte</code> (the header and visibility context a pane gives, with no element of its own) and draws the tree with no wrapper
+        element. It changes nothing you see: a right-click on the agents key now offers the view menu's choices (issue #2008).</dd>
+    <dt>closed, on a desktop</dt>
+    <dd>The collapsed rail's ground fades top to bottom from the accent (<code>--oc-orange</code> at 30% over the chrome ground) to the plain chrome ground (<code>.mr</code>). At 1024px and up a closed drawer collapses to an icon rail (<code>web/src/lib/mini-rail/MiniRail.svelte</code>, issue
+        #990) instead of vanishing: <code>body.session-sidebar-railed</code> (set by <code>web/src/lib/drawer/pin.ts</code>) pads
+        the screens by <code>--sidebar-rail-w</code> (<code>client/css/session-sidebar-rail.css</code>). Top to bottom:
+        the claw (<code>.mr-claw</code>, reopens the drawer), the bell, the sidebar rail's own keys, icon only
+        (<code>ZoneKeys.svelte</code> in flow, <code>.rail__key</code>, count <code>.zone-badge</code>; menu, agents, then every slide-out on offer, each opening the
+        drawer and its slide-out, issue #1774), then one node <code>.oc-ibtn.oc-ibtn--bare</code> per drawer section (the
+        shared icon button, made 32px square) (pinned, layouts, groups, projects, terminals, browsers) whose
+        flyout is <code>CascadeMenu</code> nested against the rail, a branch per group or project, each row with its status
+        light. Icons are named by <code>aria-label</code> and show <a href="#menus-tooltip">the tooltip</a> to the right of the rail
+        (<code>data-tooltip-side="right"</code>, #981). The rail replaces the header's
+        drawer toggle, so the terminal page's top bar is gone and the page starts at the top. Below 1024 nothing changes. Just above the bottom cluster sits one settings button (<code>.mr-settings</code>, the menu's own Settings entry, the same gear and the same <code>.oc-ibtn--bare</code> button).</dd>
+    <dt>a row</dt>
+    <dd><code>.session-sidebar-row</code>: the status light, the provider mark, the name (truncates first), secondary facts to
+        the right dimmed and middle-dot separated, and the kebab (<code>.session-row-menu-trigger</code>) right-justified on the
+        same line. An asleep row shows the moon and stays where it is. A pinned theme shows as a small swatch. A kept-awake
+        row ALWAYS shows its lit cup (<code>.session-sidebar-row-keep-awake</code>, issue #899): every density, no hover,
+        any family, beside the share mark; an off row draws no cup at all, never a dimmed one. A saved LAYOUT
+        row (issue #424) is drawn by its own module instead (<code>client/js/session-sidebar-layouts.js</code>, the BROWSERS
+        precedent, D38): grid icon, name, member count, and ONE aggregate status light - the loudest member state, the same
+        roll-up a group header's own light already computes
+        (<code>client/js/session-status-summary.js</code>) - never a light per member.</dd>
+    <dt>the row's context gauge</dt>
+    <dd><code>.session-sidebar-row-context</code> (issue #1102): a 2px fill along the row's bottom edge, drawn by the shared
+        <code>LimitGauge</code> (fill form) and filled to the share of the context window the last turn used
+        (<code>running_context_used_pct</code> on the listing wrapper). Its colour is the foot bar's context ladder
+        (25/50/80/95 percent), so a full conversation reads at a glance. Absolutely placed and pointer-transparent: no
+        layout shift at any density. It starts one corner radius in so it clears the row's curve, fades in over its first 5px and is drawn at 75% opacity. A null reading draws nothing, never an empty gauge. OFF by default; the
+        <code>context</code> key of the <code>drawer_row_icons</code> preference turns it on per density (settings,
+        appearance, sidebar rows).</dd>
+    <dt>the row's workflow mark (issue #1130)</dt>
+    <dd><code>.session-sidebar-row-workflow-icon</code>: a 16px slot holding the <code>workflow</code> glyph (three linked nodes) in
+        <code>--oc-cyan</code>, the same blue a subagent count turns during a workflow (#852), with a slow opacity pulse that
+        stops under <code>prefers-reduced-motion</code>. Drawn in the right-hand cluster directly left of the pin at every density while
+        <code>workflow_active</code> is true (null and false draw nothing); it is not
+        preference-gated, so no density or narrow width drops it. The title is <code>sidebar.row.workflow_icon.title</code>.</dd>
+    <dt>the row's role marks (Task Manager roles, #1705)</dt>
+    <dt>a sleeping row (#1799)</dt>
+    <dd>An asleep row draws no separate sleeping glyph: the status light's crescent moon already says it, and a 16px extra slot used to push the
+        name right of an awake row's. A sleeping leader keeps its rank insignia and its status light (the crescent moon), like any other sleeping row. The row dims; nothing slides or indents. A click still arms the wake.</dd>
+    <dt>row hover (#1799)</dt>
+    <dd>A row session or browser, not the selected one, lights up on hover: the accent mixed 12% into <code>--oc-ground-hover</code>, the
+        border mixed 35% into <code>--oc-line-panel</code>, and <code>cursor: pointer</code>. Restated unlayered in
+        <code>web/src/lib/sidebar-shell/row-polish.css</code>.</dd>
+    <dt>row pointer (#1799)</dt>
+    <dd>The pointer hand shows on every part of a row, through a zero-specificity <code>:where</code> rule, so each control keeps its own cursor;
+        while a drag is in flight <code>.session-sidebar-list--dragging</code> switches it to <code>grabbing</code>.</dd>
+    <dt>middle click on a row (#1799)</dt>
+    <dd>A middle click on a session row asks (<code>confirmOk</code>, ok focused) and then puts that session to sleep through the sleep route; an
+        asleep row does nothing. The binding is <code>MIDDLE_CLICK_ACTION</code> in <code>row-middle-click.ts</code>.</dd>
+    <dt>the row's wake clock</dt>
+    <dd><code>.session-sidebar-row-wake-icon</code> (issue #1771): on an asleep row that something scheduled will wake (a Task Manager
+        schedule or an automation aimed at the session; <code>next_wake_at</code> on the asleep record, epoch seconds, null = none), a
+        16px slot in the row's right-hand icon group (left of the workflow mark and the pin), holding the <code>clock</code> glyph in <code>--oc-text-muted</code>, static. The
+        title is <code>sidebar.row.wake_icon.title</code> ("scheduled to wake this session: &lt;time&gt;"); a live row never draws it.</dd>
+    <dt>the row's archived mark and a heading's inactive mark</dt>
+    <dt>the closed mark</dt>
+    <dd><code>.session-sidebar-row-closed</code> (issue #1845): a session the user closed, still on the lists because it is not archived,
+        wears a small tracked uppercase chip reading "closed" (<code>session.closed.label</code>) in place of a status light: the badge
+        family in <code>--oc-text-muted</code> on a dashed hairline, never the accent, with the name dimmed to the same token
+        (<code>data-closed="1"</code> on the row). It is a third state, never the asleep moon and never the archived box. The row menu
+        offers reopen (a restart, <code>session.menu.reopen</code>) and archive (<code>session.archive.action</code>); the row itself
+        does nothing on click. Listed whatever "show archived" says, and unless the view menu's "show closed sessions" (<code>drawer.density.show_closed</code>, issue #1937) is unticked.</dd>
+    <dt>the auto mark</dt>
+    <dd><code>.session-sidebar-row-auto</code> (issue #171): a session an automation run started wears a small tracked uppercase chip
+        reading "auto" (<code>sidebar.row.auto</code>), the badge family in <code>--oc-text-muted</code> on a hairline, never the accent.
+        It sits right of the sleeping glyph, stays when the session sleeps, and its title is "started by automation {name}"
+        (<code>sidebar.row.auto_title</code>). Drawn by <code>automationChip</code> (web/src/lib/sidebar-shell/row-chips.ts), the only row renderer.</dd>
+    <dt>messaging badge</dt>
+    <dd><code>MessagingBadge.svelte</code> with <code>.messaging-badge</code> (issue #1499): a session bound to a messaging
+        conversation wears ONE icon-only mark in the 16px slot the provider, agents and timers marks share, so compact gains
+        no width. A speech bubble in <code>--oc-text-muted</code> whose state is drawn: a left arrow is in, a right arrow is out,
+        both stacked is in and out (from the wrapper's <code>messaging</code> field, planned by
+        <code>web/src/lib/messaging/badge.ts</code>). With texts held the bubble turns to the question token,
+        <code>--oc-yellow</code>, and a filled dot sits on its corner. No visible text: the tooltip and the aria-label
+        (<code>messaging.ui.badge.title.*</code>, <code>held_title</code>) name the direction and the held count.</dd>
+    <dt>the row's right-hand control cluster</dt>
+    <dd><code>.session-sidebar-row-controls-cluster</code> (issue #1045, split and preference-gated by issue #1061): one 2px-gap
+        run, left to right, of the agents icon (<code>.session-sidebar-row-agents-icon</code>, running sub-agents, people
+        glyph, <code>--oc-green</code>), the shells icon (<code>.session-sidebar-row-shells-icon</code>, open background
+        shells/monitors or a parked reason, terminal glyph, also <code>--oc-green</code> since both are "work happening"),
+        the timers icon (<code>.session-sidebar-row-timers-icon</code>, a live cron/wakeup/sleep timer, clock glyph,
+        <code>--oc-text-secondary</code>), the Carnivore timers button (<code>.session-sidebar-row-automations-icon</code>, a session's
+        automations, alarm clock glyph painted by the server's status word through the shared <code>.oc-timer-state</code> /
+        <code>.oc-timer-glyph</code> pair: <code>data-state</code> <code>ok</code> is <code>--oc-green</code>, <code>warning</code>
+        <code>--oc-yellow</code>, <code>error</code> <code>--oc-coral</code>, <code>disabled</code> <code>--oc-text-dim</code> with a drawn
+        x over the glyph, no new colour; a button, a click opens the
+        Automations page on that session; drawn only on a session that has automations, shown by default, hidden per density by
+        <code>drawer_row_icons.&lt;density&gt;.automations</code>), the keep-awake cup, the pin, then the kebab. None of the three icons draws a
+        visible count; the count and any reason are the hover title only. Each is hidden per density by the
+        <code>drawer_row_icons</code> server preference (<code>web/src/lib/drawer/row-icon-prefs.ts</code>): compact starts
+        all three OFF, cozy and detailed start all three ON, independently per icon. Reference crops of a full cluster
+        (agents, shells, timers, cup, pin, kebab or the green update icon) against a plain row, at every density and at
+        the drawer's default (320px) and minimum (240px) width, live under <code>docs/assets/sidebar-row-densities/</code>
+        (issue #1061 QA pass, fixed in the follow-up); regenerate them with
+        <code>scripts/qa/capture_sidebar_row_densities.py</code>. The QA pass found a busy cozy or detailed row
+        collapsing its own name to one character at 320px and to nothing at 240px, with the pin/kebab clipped past
+        the list's own <code>overflow-x: hidden</code> edge. FIXED with CSS alone, no markup change on either tree:
+        <code>.session-sidebar-row</code> is a queried container (<code>container-name: sidebar-row</code>) and
+        <code>.session-sidebar-row-name</code> floors at <code>8ch</code>; the pin and kebab already carried
+        <code>flex-shrink: 0</code> and are never given up. As the row's own width shrinks, the optional pieces drop
+        lowest value first: the plain-text counts (cozy's clickable subagent/timer chips, detailed's bare number),
+        then the timers icon, then the shells icon, then the agents icon, then the keep-awake cup, with the kebab (<code>.session-row-menu-trigger</code>) always the rightmost control of the row, whatever icons are on, by <code>order</code> in the cluster; the cup comes last of the icons (it is
+        holding the computer awake). Every dropped icon keeps its <code>title</code>/<code>aria-label</code> in the
+        markup regardless, so its info survives in the row's hover state. See the density crops for the fixed
+        state. THE THREE ICONS DROP BY REAL OVERFLOW, NOT BY A WIDTH (issue #1211): they share
+        <code>.session-sidebar-row-optional-icons</code>, a one-line wrapping group (fixed 16px height,
+        <code>overflow: hidden</code>) drawn only when the row has one of them, and the cluster may shrink
+        (<code>flex-shrink: 1</code>, <code>min-width: 0</code>) once the name is at its floor, so the group gives up its
+        rightmost icon first: timers, then shells, then agents. The old fixed widths (275, 260, 245px) hid a quiet row's
+        only icon inside a band at the 320px default drawer; measured in a browser by
+        <code>tests/python/drawer/test_sidebar_row_icon_fit.py</code>.</dd>
+    <dt>the cozy meter and the detailed triage stack</dt>
+    <dt>the asleep row's wake arm</dt>
+    <dt>the phone drawer's width</dt>
+    <dt>the yellow MCP-dropped mark</dt>
+    <dd>When a session's transcript says an MCP server dropped (<code>mcp_health.dropped</code>, wrapper field, null
+        when not measured), the kebab shows a bar-and-dot mark in the update icon's slot:
+        <code>.session-row-menu-trigger--mcp</code>, same position and size, <code>--oc-yellow</code>, with a tooltip naming the
+        servers and saying an idle session shows a drop only after its next turn. The green update icon wins the slot when
+        both apply. The row menu gains "reconnect mcp" (key <kbd>z</kbd>), disabled while the session is not idle.</dd>
+    <dt>the green update-ready icon</dt>
+    <dt>LAYOUTS</dt>
+    <dd>Sits directly under PINNED, above every hand-made group (D35). PINNED itself is a mixed list: a pinned Layout renders
+        there too, duplicated exactly like a pinned session or browser (never moved). A click navigates to
+        <code>/layout/&lt;uuid&gt;</code>, a real browser navigation. Its order is server truth
+        (<code>layouts.position</code>, <code>PUT /api/v1/layouts/order</code>), never a local band order, so it is the one
+        band the generic drag engine (<code>session-sidebar-row-drag.js</code>) refuses by name and
+        <code>session-sidebar-layouts.js</code> drives its own small native drag instead. The row menu offers rename,
+        pin/unpin and remove (never kills a member session); "save as blueprint" is registered and hidden until the
+        blueprints slice turns its feature check on.</dd>
+    <dt>the fold chevron (#1651)</dt>
+    <dd>ONE component, <code>web/src/opscenter/ui/FoldChevron.svelte</code> (plugins import it from the SDK as
+        <code>FoldChevron</code>): a <code>.session-sidebar-group__gutter</code> holding a 10px
+        <code>.session-sidebar-group__chevron</code> (stroke 2, <code>currentColor</code>) that turns 90 degrees when the
+        nearest fold button says <code>aria-expanded="true"</code>, with a 120ms transition that
+        <code>prefers-reduced-motion</code> removes. The drawer's band headings and every Task Manager fold bar (project, status,
+        area, group, sub-area) draw it, so an open and a shut bar read the same everywhere. Put it first inside the fold
+        button; never copy the svg.</dd>
+    <dt>expanding a Layout (#802)</dt>
+    <dd>Only in the LAYOUTS section itself (its duplicate in PINNED stays flat): a <code>.session-sidebar-layout__toggle</code>
+        chevron, reusing the shared <code>.session-sidebar-group__chevron</code> glyph and the same
+        <code>[data-group-toggle]</code> fold mechanism every other band uses (<code>session-sidebar-chrome-clicks.js</code>),
+        under the key <code>layout:&lt;uuid&gt;</code>. Collapsed by default - the ONE fold key in the drawer that reads
+        inverted (presence in the stored fold list means expanded, not collapsed; see
+        <code>web/src/lib/drawer/store-keys.ts</code>'s <code>LAYOUT_ITEM_FOLD_PREFIX</code>). Expanded, every member session
+        renders through the ordinary row (<code>SessionRow.svelte</code>) in a
+        <code>.session-sidebar-group__body.session-sidebar-layout__members</code> body - same status light, pin, kebab and
+        click-to-open as anywhere else, one indent level deeper than the Layout row; an asleep or dead member draws exactly as
+        it would anywhere else, never hidden. Opening the Layout itself (<code>/layout/&lt;uuid&gt;</code>) still highlights
+        only the Layout's own row, never an expanded member's (#799).</dd>
+    <dt>bands</dt>
+    <dd>A band header has its chevron at the left and the aggregate light at the right, the light only while collapsed
+        (#525). Groups match on <code>member_session_uuids</code>, and rows join to <code>session_uuid</code>, never to a tmux
+        name (1.11.1). There is no UNGROUPED band (#512): an agent outside every project is a ROGUE AGENT. Every band's
+        heading also carries a leading icon, always drawn (<code>.session-sidebar-group__icon</code>, #661): folder-tree for
+        each company heading and the orphaned heading, folder for each project section, pin for PINNED, terminal for TERMINALS, globe for
+        BROWSERS, grid for LAYOUTS - a hand-made group and ROGUE AGENTS draw none. One shared 16x16 glyph table
+        (<code>client/js/icons/glyphs.js</code>) supplies the shape, read through
+        <code>client/js/session-sidebar-project-header.js</code>'s <code>iconHtml()</code>. A project's name keeps its real
+        case; every other heading is uppercase. A project heading and a hand-made group heading end in the same kebab
+        (<code>.session-sidebar-group__menu</code> drawing <code>KebabIcon.svg(14, 1.4)</code>, the row kebab's glyph, never
+        an ellipsis character, #667): a project offers rename, sleep and remove (remove confirms with a
+        <code>.modal-btn-danger</code>, closes the project's sessions, then archives it), a group rename, colour, sleep, move up,
+        move down and remove, built by <code>client/js/session-sidebar-heading-actions.js</code> and
+        <code>session-sidebar-group-actions.js</code> through the shared <code>.session-sidebar-group-menu</code>. Rename on
+        either opens the SAME inline editor a session or Layout row renames through (issue #850) - the label span turns into a
+        <code>.session-sidebar-rename-edit</code> input in place, Enter commits, Escape cancels - never a separate dialog.</dd>
+    <dt>a styled opened row (#1767)</dt>
+    <dd>A file, page or browser row in the FILES and BROWSERS bands can carry a color and an icon an agent gave it
+        (<code>files_open</code> / <code>browser_open</code> <code>color</code> and <code>icon</code>, or
+        <code>sidebar_row_look_set</code> later; <code>docs/row-looks.md</code>). The color is a theme color NAME drawn as
+        <code>var(--oc-&lt;name&gt;)</code> on the mark (<code>.session-sidebar-row-provider</code>) and the name
+        (<code>.session-sidebar-row-name</code>), never a hex; the icon is a name from <code>icons.ts</code> and replaces the
+        mark inside <code>BrowserRow.svelte</code> via <code>Icon.svelte</code>. Neither set draws the usual row, byte for
+        byte. No new class: the look is inline <code>style="color: var(--oc-...)"</code> on those two existing spans, held by
+        <code>row-looks.test.ts</code>.</dd>
+    <dt>the band shell (#726)</dt>
+    <dd>The bands and their headings are Svelte now (<code>web/src/lib/sidebar-shell/</code>: <code>SidebarList.svelte</code>,
+        <code>BandSection.svelte</code>, <code>Heading.svelte</code>), mounted into <code>#session-sidebar-list</code>, drawing the
+        SAME markup and classes as the legacy string paint (held byte for byte by <code>parity.test.ts</code>). Since slice 3
+        each ROW is Svelte too (<code>SidebarRow.svelte</code> dispatching to <code>SessionRow.svelte</code>,
+        <code>BrowserRow.svelte</code>, with <code>RowPin.svelte</code> shared; a terminal tab draws the same model robot, share mark, keep-awake cup and green update icon through <code>AgentTabMarks.svelte</code>, classes <code>oc-tab-update</code> and <code>oc-tab-mark-static</code>, no usage gauge), built from <code>row-plan.ts</code> and drawing
+        the same <code>.session-sidebar-row</code> markup the legacy string builder drew (that twin is retired; the Svelte row is
+        the only row renderer); its light is the
+        shared <code>StatusLed</code> in its <code>bare</code> form. The row's gestures, the kebab trigger, a dead row's inline
+        controls and the LAYOUTS band are still legacy until their own slices (docs/widget-system.md section 10). A new row chip
+        goes in <code>row-chips.ts</code> and <code>SessionRow.svelte</code>, reusing the existing row classes. <code>data-list-shell="svelte"</code> on the list says which renderer drew it; the
+        per-device switch <code>localStorage['carnivore.session.sidebar.shell'] = 'legacy'</code> turns the port off.
+        Since slice 2 the heading GESTURES are the shell's too: the fold, the kebab menus
+        (now the one item menu, <code>item-menu/ItemMenuHost.svelte</code>, drawn by the shared <code>CascadeMenu</code> in its own
+        body-level host) and the inline rename (<code>HeadingRenameEditor.svelte</code>, the same
+        <code>.session-sidebar-rename-edit</code> box). Nothing new to style: reuse those classes. The box sits inside the
+        heading's fold button, so it refuses the button's Space activation, or typing a space would fold the band.</dd>
+    <dt>the pack section (#1687)</dt>
+    <dt>the pack rows at the three densities (#1727)</dt>
+    <dt>reordering the sections (#1687)</dt>
+    <dt>reordering the menu tab's rows</dt>
+    <dt>vertical rhythm (#897)</dt>
+    <dd>One spacing scale, three tokens in <code>client/css/session-sidebar-band-structure.css</code>:
+        <code>--sidebar-band-gap</code> (28px, 16px compact) between bands as a flex <code>row-gap</code>,
+        <code>--sidebar-heading-gap</code> (6px, 4px compact) between a heading and its first row, and
+        <code>--sidebar-row-gap</code> (4px, 1px compact) between rows. A divider (<code>--sidebar-divider</code>, half of <code>--oc-line-panel</code> over the ground, #1775) sits under
+        PINNED, under LAYOUTS, above and below COMPANIES (so groups, companies and what follows are each split off) and above PROJECTS, centred in the band gap with exactly equal space above and below. Two
+        companies side by side (<code>.session-sidebar-company + .session-sidebar-company</code>) get a 1px hairline in the fainter <code>--sidebar-divider-minor</code>, inset
+        on the right by <code>--sidebar-tree-step</code> and on the left by the level it sits at, so it reads as a shorter minor break beside the full-width group dividers. The line between a company's own folders and a nested company follows the same rule, and lands one <code>--sidebar-tree-step</code> further in per nesting level. Do not add a
+        margin to a band or a row to space it; change the token.</dd>
+    <dt>colour coding</dt>
+    <dt>group colour picker</dt>
+    <dd><code>.group-colour-picker</code> (<code>client/js/session-sidebar-group-colour.js</code>), opened by "colour" in a
+        group's kebab. A <code>popup-focus</code> popup: title strip with the accent label, then three hairline-separated regions
+        of radio buttons: nine square <code>__swatch</code>es, four <code>__swatch--gradient</code>s and the none / shimmer / pulse
+        <code>__option</code>s. Every click writes <code>PUT /api/v1/session-groups/{uuid}/style</code> at once, so the drawer
+        behind it previews live; Escape or a click outside closes it. Focus is the shared brightened edge (<code>focus.css</code>).</dd>
+    <dt>group icon</dt>
+    <dd><code>.group-icon-picker</code> (<code>client/js/session-sidebar-group-icon.js</code>), opened by "icon" in a
+        group's kebab (issue #769). The colour picker's sibling: a <code>popup-focus</code> popup reusing
+        <code>.group-colour-picker__title</code>, then one <code>__body</code> region that mounts the shared icon picker
+        (<a href="#icons">icons</a>) through <code>window.CloudeWeb.iconPicker</code>; no second grid. The body sets
+        <code>--icon-hue</code> to the group's <code>--drawer-hue-*</code>, so the previews wear the group's colour. A
+        choice writes <code>PUT /api/v1/session-groups/{uuid}/icon</code> and closes. On the heading the mark is the
+        12px <code>.session-sidebar-group__icon</code> box, right of the chevron (right of the light while collapsed), in
+        <code>currentColor</code>; no icon, or an id this build does not know, draws nothing and the heading is
+        unchanged.</dd>
+    <dt>repaint</dt>
+    <dd>The legacy drawer rebuilds its rows from an HTML string on each poll, keyed by a row signature. Anything mounted into a
+        row must survive that: adopt and move the node, never recreate it.</dd>
+</dl>
+<dl class="sg-facts">
+    <dt>chat header row and question card</dt>
+    <dt>burst headers and event folds</dt>
+</dl>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>TrafficCard.svelte</code><code>EventCard.svelte</code><code>ChatCard.svelte</code><code>RewindView.svelte</code><span>every receipt status, the known and an unknown event, a decided card, the promotion receipt, the trust card with its two keys, and the rewind picker asleep and awake</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-chat-entries"></div></div>
+</div>
+
+<h3 class="sg-h3" id="chrome-alerts">the alert center: bell, badge, dot, panel and toast</h3>
+<dl class="sg-facts">
+    <dt>what it is</dt>
+    <dd>App health, not session attention (<code>docs/save-pipeline.md</code> section 4). The one store is
+        <code>web/src/lib/app-alerts/alerts.svelte.ts</code>; the panel and whether it is open is
+        <code>alert-panel.svelte.ts</code>; the doors are mounted by <code>mount-alerts.svelte.ts</code>.</dd>
+    <dt>bell</dt>
+    <dd><code>AlertBell.svelte</code> (<code>[data-app-alert-bell]</code>, the base quiet icon button written by hand, <code>data-btn="quiet" data-size="icon"</code>, so its tip stays the shared <code>data-tooltip</code>):
+        the bell icon with the badge, <code>aria-expanded</code> read off the panel. It lives in the AGENTS DRAWER'S
+        HEADER beside the Carnivore mark (<code>#session-sidebar-alerts</code>, <code>.session-sidebar-alerts</code>, 28px),
+        and under the claw of the closed drawer's icon rail (<code>MiniRail.svelte</code>, 32px). At the drawer's
+        narrowest width the mark shrinks, never the bell. Not drawn until the first read of
+        <code>GET /api/v1/alerts</code> succeeds, never re-hidden. Do not put a second bell in the legacy
+        <code>.header</code>: it is not drawn on a desktop.</dd>
+    <dt>badge</dt>
+    <dd><code>AlertBadge.svelte</code> (<code>.aa-badge</code>, <code>.aa-badge--error</code>, <code>.aa-badge--warn</code>):
+        active error plus warn count, a 1px outline in the highest severity's token (<code>--oc-coral</code> error,
+        <code>--oc-yellow</code> warn) on the chrome ground, riding the bell's corner, nothing at zero. Info alerts are
+        listed, never counted.</dd>
+    <dt>dot</dt>
+    <dd><code>AlertDot.svelte</code> (<code>.aa-dot</code>, <code>.aa-dot--error</code>, <code>.aa-dot--warn</code>): the
+        phone's hint, a 7px square in the severity token on the claw that opens the drawer (the legacy header's
+        <code>#session-sidebar-toggle</code> through <code>#headerAlertDot</code>; the home phone strip draws the bell itself).
+        A mark on a button, never a button: the claw opens the drawer, whose bell opens the panel.</dd>
+    <dt>panel</dt>
+    <dt>toast</dt>
+    <dd>Every NEWLY RAISED alert, at any severity, raises one local card, kind <code>AppAlert</code>, through
+        <code>window.ToastManager</code>; a count bump, or a raise absorbed by a dismissed or snoozed alert, does not.
+        The card carries <code>alert_severity</code>, which <code>toast.css</code> paints as
+        <code>.toast[data-alert-severity]</code> (the leading square in the severity token, an error's edge in
+        <code>--oc-coral</code>), and <code>on_open</code>, so a click opens the panel and retires the card.</dd>
+</dl>
+
+<h3 class="sg-h3" id="chrome-home-header">the home screen without a header</h3>
+<dl class="sg-facts">
+    <dt>what moved</dt>
+    <dt>pop-out control</dt>
+    <dt>clock</dt>
+    <dt>chip</dt>
+    <dt>filter row</dt>
+    <dt>phone and rail</dt>
+    <dd>The phone keeps its strip (above). The closed drawer's rail stacks the inbox door, the bell and the clock under
+        the claw, and mirrors the footer at its foot: the account chip as its circle alone, then the light over the
+        version.</dd>
+</dl>
+
+<h3 class="sg-h3" id="chrome-drawer-top">the drawer's title bar and stats row</h3>
+<p class="sg-note">The TITLE BAR is <code>web/src/lib/drawer/DrawerHeader.svelte</code>, mounted into <code>#session-sidebar-header</code>
+(<code>header-mount.ts</code>) before the controller wires: the Carnivore wordmark (<code>.session-sidebar-brand</code>, also the way
+home), the session list's controls (the view menu and the "+", <code>SidebarControls.svelte</code>, mounted into
+<code>#session-sidebar-topbar-controls</code>), the alert bell's slot, and the collapse key, the base quiet icon button
+(<code>IconButton.svelte</code>, <code>variant="quiet"</code>, hooked by <code>[data-dh-key]</code>) at the 28px square every key of the row wears, so the row reads as one set; the clusters (<code>.session-sidebar-heading</code>, <code>.session-sidebar-actions</code>) sit a spacing step apart (<code>--oc-space-3</code>, keys <code>--oc-space-1</code>). The STATS ROW (<code>--oc-space-2</code> above and below, <code>--oc-space-3</code> at the edges, <code>--oc-space-2</code> between its items) is
+<code>DrawerStats.svelte</code>: three counts (active agents, working, waiting to be read; each a base quiet button,
+<code>data-btn="quiet"</code>, that filters the list), then the token rate (up is out, down is in; click to walk sec, min, hour, day) and a
+bar chart of the chosen window (a gap is hatched, a measured zero is a stub; click to walk 1h, 5h, 1d, 7d). The specimens feed fixed data: the
+stats bar takes a fixed body through its <code>feed</code> prop and never holds the feed.</p>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/drawer/DrawerHeader.svelte</code><code>SidebarControls.svelte</code><span>the title bar</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-drawer-header"></div></div>
+</div>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/drawer-tabs/DrawerStats.svelte</code><span>the stats row at 320px, at 240px and with stats off</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-drawer-stats"></div></div>
+</div>
+
+<h3 class="sg-h3" id="chrome-account-chip">the account chip and its menu</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/drawer/DrawerBar.svelte</code><code>AccountMenu.svelte</code><span>the drawer's footer (signed in, signed out, crown and preview marker), then the rail's; press a chip</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-account-chip"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>what</dt>
+    <dt>who it names</dt>
+    <dd>The signed-in CATALOG account (email, Google or GitHub), never the provider account and never a plan: its
+        registered handle, else the local part of the signed-in email (<code>account-identity.ts</code>,
+        <code>catalog-account.svelte.ts</code>, the same two reads the catalog screen makes). The avatar is that handle's
+        community identicon (<code>identiconMarkup()</code>, the <code>.ident</code> svg, tones are <code>--oc-orange</code>, <code>--oc-cyan</code>,
+        <code>--oc-green</code>, <code>--oc-yellow</code>). Signed out, the name is "SysOp" (catalog key
+        <code>drawer.account.lurker</code>) and the avatar is a monochrome two-arm spiral (<code>svg.spiral</code>, <code>currentColor</code> = <code>--oc-text-dim</code>) turning once every 6 seconds in CSS only (<code>.spiral-turn</code>), still under prefers-reduced-motion.</dd>
+    <dt>the version</dt>
+    <dd>At the bar's right, never truncated: the short form <code>v1.12.21</code> (major.minor.patch) and, for a
+        preview build only, a tiny tracked <code>.version-footer__preview</code> marker; the full build string is not
+        shown (<code>client/js/version-footer.js</code>). The chip's name gives way first.</dd>
+    <dt>the menu</dt>
+    <dt>the sign in pill</dt>
+    <dd><code>.session-sidebar-bar__signin</code>, a SIBLING of the chip (never nested in it) while nobody is signed in: a 1px
+        <code>--oc-yellow-bright</code> outline and gold lowercase mono "sign in", the same accent as the locked star.
+        <code>data-bar-action="signin"</code> opens the sign in modal with source <code>chip</code>. The phone top bar draws the same avatar and pill; the 48px rail hides the pill and puts a small gold dot on the avatar.</dd>
+    <dt>focus and touch</dt>
+    <dd>Focus is the shared rule on the chip's own 1px border (transparent at rest, <code>--_bd</code> is
+        <code>--oc-line-panel</code>). Under a coarse pointer the chip is 40px tall and its avatar 28px.</dd>
+    <dt>on the rail</dt>
+    <dd>The closed drawer's rail mirrors the bar's markup (<code>MiniRail.svelte</code>) and shows the avatar alone.</dd>
+    <dt>catalog keys</dt>
+    <dd><code>drawer.account.*</code> (<code>menu</code>, <code>chip</code>, <code>lurker</code>, <code>signin</code>, <code>catalog</code>, <code>via</code>, <code>lurker_hint</code>, <code>settings</code>, <code>help</code>,
+        <code>layout_blocked</code>, <code>logout</code>), <code>layout_editor.bar.*</code>,
+        <code>header.master_all</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="chrome-approvals">the question modal</h3>
+<dl class="sg-facts">
+    <dt>what it is</dt>
+    <dt>question modal</dt>
+    <dt>code review modal</dt>
+    <dt>whole ask form</dt>
+    <dd><code>AskForm.svelte</code> (<code>.ak</code>, <code>.ak-meta</code>, <code>.ak-name</code>, <code>.ak-host</code>,
+        <code>.ak-tabs</code> (the shared page tabs), <code>.ak-panel</code>, <code>.ak-question</code>, <code>.ak-body</code>,
+        <code>.ak-body--preview</code>, <code>.ak-options</code>, <code>.ak-other</code>, <code>.ak-input</code>,
+        <code>.ak-preview</code>, <code>.ak-notice</code>, <code>.ak-foot</code>, <code>.ak-left</code>, <code>.ak-link</code>,
+        <code>.ak-spacer</code>): an ask the server matched to the transcript, every question on a step strip that says
+        <em>done</em> or <em>unanswered</em> in words (the current step wears the accent and a 1px accent underline, arrow keys move). A
+        single-select is <code>.oc-choice</code> radios, a multi-select <code>.oc-check</code> boxes, each with Claude's own
+        description; the Other row is a text field (typing in it picks it, as the terminal's own Other row does); only a question whose
+        options carry previews shows the highlighted option's preview and a notes field, because Claude Code takes notes on those alone.
+        A step strip tab (or the arrow keys) is the way back; the foot has no back button. A <code>.modal-btn-confirm</code> next shows on every question but the last. NOTHING IS SENT UNTIL THE ONE SUBMIT, which the server plays into Claude in order. A question
+        left alone is left out, as Claude's own review screen allows, and the foot says how many before you press. A refusal (the ask
+        changed under you) shows its plain words in <code>.ak-notice</code>, in the danger token, and the list re-reads.</dd>
+    <dt>specimen</dt>
+    <dd><div class="sg-specimen">
+            <div class="sg-specimen__label"><span>live</span><code>AskForm.svelte</code><span>three questions: single-select, multi-select with Other, previews with notes</span></div>
+            <div class="sg-specimen__body"><div id="sg-live-ask-form"></div></div>
+        </div></dd>
+    <dt id="chrome-question-card">question card</dt>
+    <dt>specimen</dt>
+    <dd><div class="sg-specimen">
+            <div class="sg-specimen__label"><span>live</span><code>ApprovalCard.svelte</code><code>QuestionCardFrame.svelte</code><span>one card per kind: folder trust and bash open, the rest folded to the headline (click a head)</span></div>
+            <div class="sg-specimen__body"><div id="sg-live-question-cards"></div></div>
+        </div></dd>
+    <dt>card</dt>
+    <dt id="chrome-approval-cards">agent action card</dt>
+    <dt>typed confirmation</dt>
+    <dd><code>TypedConfirm.svelte</code> (<code>.ap-confirm</code>, <code>.ap-confirm__ask</code>, <code>.ap-confirm__input</code>
+        on the shared <code>.oc-field</code>): an action that asks for typed words (<code>confirm_text</code>, session purge)
+        shows the ask in <code>--oc-coral</code> over its box, INSIDE the card, and approve stays off until the exact words
+        (no trimming, no case folding) are typed; the server checks again. One component for every surface: the inbox,
+        its widget, the questions tab and the Task Manager row (sdk <code>TypedConfirm</code>). It renders nothing when nothing
+        asks for typed words.</dd>
+    <dt>specimen</dt>
+    <dd><div class="sg-specimen">
+            <div class="sg-specimen__label"><span>live</span><code>ApprovalCard.svelte</code><code>ApprovalHead.svelte</code><code>TypedConfirm.svelte</code><span>one card per action kind, grouped destructive, changes, calm (samples are the server's real display blocks)</span></div>
+            <div class="sg-specimen__body"><div id="sg-live-approval-cards"></div></div>
+        </div></dd>
+    <dt>approval diff</dt>
+    <dd><code>ApprovalDiff.svelte</code> (<code>.ap-diff</code>, <code>.ap-diff__field</code>, <code>.ap-diff__before</code>,
+        <code>.ap-diff__after</code>): the before/after table an automation change carries on its approval card (the server's
+        <code>args.diff</code>, computed when the action was filed). Three mono columns with a hairline between rows: the field
+        in small tracked uppercase, what it is now muted, what it becomes in <code>--oc-orange</code>, the one accent on the
+        table. A create has no "now", a delete no "becomes". Do not hand-format a diff into <code>.qc-raw</code>.</dd>
+    <dt>startup screen card</dt>
+</dl>
+
+<h3 class="sg-h3" id="chrome-right">the right drawer: files and notes</h3>
+<dl class="sg-facts">
+    <dt>one slot</dt>
+    <dd>The file drawer and the notes drawer share one right-hand slot (<code>client/css/right-drawer.css</code>): above 700px
+        it docks and the page narrows, below it slides over the terminal. Opening one closes the other. It resizes from its grip
+        (<code>.right-drawer-grip</code>). THE SLOT IS ONE ZONE (wrapper package Z-2, <code>right-drawer/zone.svelte.ts</code>):
+        files and notes are its two tabs, the last opened is the active one, and each tab has its own frame header; the zone's
+        shell draws the notes tab, the file tree stays the legacy drawer's own mount.</dd>
+    <dt>file drawer</dt>
+    <dd>Header <code>FileDrawerHeader.svelte</code> (<code>.fdh</code>: find field, options menu); tree rows and toggles in
+        <code>client/css/config-editor.css</code>, a canonical reference for tree rows; the editor is CodeMirror in the stacked
+        editor modal.</dd>
+    <dt>file drawer: git</dt>
+    <dt>notes drawer</dt>
+    <dd><code>NotesDrawer.svelte</code> draws the zone's notes tab (<code>NotesTab.svelte</code>, <code>.nd-frame</code>,
+        <code>.nd-body</code>) under the zone's header row, <code>RightDrawerHead.svelte</code>: THE widget header with the icon
+        that opens the one menu (the cell's declared actions, open as widget, close), the cell's controls, open as widget and the close x;
+        plus the notepad in <code>client/css/session-notes.css</code>: the session's markdown, saved as you type.</dd>
+    <dt>help</dt>
+</dl>
+
+<h3 class="sg-h3" id="chrome-menu-popout">the drawer menu's pop-out keys and dashboard previews</h3>
+
+<h3 class="sg-h3" id="chrome-sidebar-rail">the sidebar rail and its tinted slide-outs</h3>
+
+<p class="sg-p">THE MINI RAIL'S RIGHT-CLICK MENU (the folded sidebar; slice 4, issue #1785): a right click anywhere on the collapsed rail opens the
+    same <code>CascadeMenu</code> at the pointer (<code>.mr-menu-anchor</code>): open the drawer (letter o), then edit layout.
+    Do: build it with <code>railMenuNodes</code>. Do not: show an inert pin.</p>
+
+<p class="sg-p">THE HEADING MENUS (project, company and group; widget menu contract slice 2, issue #1785) are drawn by the shared
+    <code>CascadeMenu</code> from the item type's entry list (<code>item-menu/menus/*.ts</code> through <code>item-menu/entries.ts</code>;
+    one model keyed by item type, wrapper package S-6): a hairline above each later group
+    (identity | sleep | arrange | remove), the destructive entry last in <code>--oc-coral</code>, an entry that cannot apply drawn
+    inert with its reason inline (move up on the first group), a color entry as the shared swatch row (<code>.acm-swatches</code>),
+    "add" and "add to" as real branches, one open menu at a time and click-away on a press, a focus change or an iframe press. The
+    kebab, a right-click and Shift+F10 on the heading open the SAME menu; a right-click hangs it from a zero size marker at the
+    pointer (<code>.hm-anchor</code>). Do: add an entry to its type's file under <code>item-menu/menus/</code>, or extend a type with
+    <code>contributeItemMenu</code>. Do not: build a menu outside the model (<code>item-menu/menu-conformance.test.ts</code>).</p>
+
+<h3 class="sg-h3" id="chrome-send-to">send to</h3>
+
+<h3 class="sg-h3" id="chrome-move-to-folder">move to folder</h3>
+<p class="sg-p">A live agent row's "move to folder..." item (issue #254) opens <code>MoveFolderModal.svelte</code> in
+    <code>#move-folder-modal</code>. It wears the send-to modal's frame (<code>.stm</code>, <code>.stm-titlerow</code>, <code>.stm-label</code>,
+    <code>.stm-options</code>, <code>.stm-foot</code>) and adds only the plan block: <code>.mvf-plan</code> of hairline-ruled
+    <code>.mvf-plan-row</code> rows (<code>.mvf-plan-key</code> label, <code>.mvf-plan-val</code> value, <code>.mvf-bad</code> for a
+    same-name collision), <code>.mvf-row</code> for the folder field and its browse button, and <code>.mvf-live</code> for the
+    running-agent reason with the arm box. The footer is the restart picker's: cancel and check are <code>.modal-btn-secondary</code>,
+    the move is <code>.modal-btn-confirm</code>, and for a running agent it becomes <code>.modal-btn-danger</code> ("stop and move"),
+    enabled only with the arm box ticked. The move waits for a plan with no refusal (<code>POST /sessions/{uuid}/move-folder</code> with
+    <code>apply: false</code>, which changes nothing); changing the destination drops the plan. Do: show the server's own refusal sentence.
+    Do not: run a move the plan on screen was not made for.</p>
+
+<h3 class="sg-h3" id="chrome-menu-page">the menu page shell</h3>
+
+<h3 class="sg-h3" id="chrome-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>A new screen that joins the legacy screen family.</strong> That teaches two legacy modules a fifth name. Build
+        an overlay with its own container (<a href="#new-page">building a new page</a>).</li>
+    <li><strong>A page that starts below <code>--overlay-top</code> on its own.</strong> The header that token measures is
+        not on every screen; on the terminal page the strip above an overlay was the session's tab strip, live and
+        clickable. A menu page takes the column (<a href="#chrome-menu-page">the menu page shell</a>).</li>
+    <li><strong>Search in the header.</strong> It lives in the drawer (#428).</li>
+    <li><strong>Keying on a tmux name.</strong> A session's identity is its uuid; a rename or a recreate changes the name
+        (gotcha 4b).</li>
+</ul>
+
+<h3 class="sg-h3" id="chrome-page-frame">page frame</h3>
+<p><code>Page.svelte</code> (<code>web/src/opscenter/page.css</code>): the title bar is the terminal's own 37px row
+        (one 44px row below 1024: the title never truncates, the sub truncates and goes under 480px, actions scroll
+        sideways). Optional slots: <code>tabs</code> (a <code>Tabs</code> strip, <code>.oc-page__tabs</code>), <code>bar</code>
+        (min 37px), <code>foot</code> (a 24px strip pinned to the bottom, <code>.oc-page__foot</code>). INSET: a host calls
+        <code>provideInset()</code> (<code>web/src/opscenter/ui/page-inset.ts</code>) and every <code>Page</code> below it
+        draws no title bar; its sub and actions ride at the right end of the bar row (<code>.oc-page__inset-end</code>).</p>
+
+<h3 class="sg-h3" id="chrome-page-layers">page layers: the band and the data</h3>
+<dl class="sg-facts">
+    <dt>the rule</dt>
+    <dt>how</dt>
+    <dd>Use <code>Page.svelte</code> and its slots and the layers come free. A page-specific row that belongs to the top
+        band paints <code>--oc-ground-band</code>; a region of data never does. Never <code>--oc-ground-panel</code> for a band: it is
+        the theme's <code>--color-bg</code>, which on some themes is lighter than the chrome and on others equals the page,
+        so the band either goes off-theme or disappears.</dd>
+    <dt>held by</dt>
+    <dd><code>tests/python/design_system/test_page_band_layers.py</code>, measured in Chromium under two themes.</dd>
+</dl>

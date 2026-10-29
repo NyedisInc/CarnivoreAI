@@ -1,0 +1,124 @@
+/*
+ * THE LAYER'S STYLE (#1832): served as <style data-rb-layer> inside the sandboxed frame, where no app stylesheet loads.
+ *
+ * The Military Terminal look copied from the ledger and the restart picker (client/style-guide.html): a title strip with one accent-colored
+ * uppercase label, 1px hairlines between regions drawn with box-shadow, mono type, small square corners, quiet outlined controls, the picked
+ * one in the confirm outline (`.modal-btn-confirm`: the accent border on a transparent fill, tinted on hover), a destructive thing in a different
+ * token. Color is --oc-* only; the fallbacks after each comma are the browser's own system colors for the instant before the board sends the
+ * theme (the board's `theme` message sets every --oc-* on :root, so a theme change repaints this). Focus is the control's own border a little
+ * brighter, no outline, no extra width (web/src/opscenter/focus.css, restated because that file does not load here).
+ */
+.rbl, .rbl-item {
+  --rbl-ink: var(--oc-text-primary, CanvasText);
+  --rbl-dim: var(--oc-text-muted, GrayText);
+  --rbl-ground: var(--oc-ground-card, Canvas);
+  --rbl-field: var(--oc-ground-field, Canvas);
+  --rbl-line: var(--oc-line-panel, GrayText);
+  --rbl-accent: var(--oc-orange, Highlight);
+  --rbl-accent-tint: var(--oc-orange-tint, transparent);
+  --rbl-radius: var(--oc-radius-sm, 4px);
+  --rbl-field-max: 640px;
+  box-sizing: border-box;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--rbl-ink);
+}
+.rbl *, .rbl-item * { box-sizing: border-box; }
+/*  hidden  */
+.rbl [hidden], .rbl-item [hidden] { display: none !important; }
+.rb-shell-title { display: none; }
+
+.rbl-end { margin: 16px 0 0; background: var(--rbl-ground); box-shadow: 0 0 0 1px var(--rbl-line); border-radius: var(--rbl-radius); }
+.rbl-float {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 2147483000; width: 360px; max-width: 100%;
+  display: flex; flex-direction: column; background: var(--rbl-ground); box-shadow: -1px 0 0 var(--rbl-line);
+}
+.rbl-float .rbl-list { flex: 1; min-height: 0; overflow-y: auto; }
+.rbl-float--closed { width: auto; bottom: auto; box-shadow: none; background: transparent; }
+.rbl-float--closed > :not(.rbl-fold) { display: none; }
+.rbl-fold { align-self: flex-end; margin: 6px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.rbl-strip { padding: 8px 12px; background: var(--oc-ground-titlerow, var(--rbl-ground)); box-shadow: inset 0 -1px 0 0 var(--rbl-line); }
+.rbl-title { display: flex; align-items: center; gap: 10px; }
+.rbl-title__text { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--rbl-accent); }
+.rbl-count { margin-left: auto; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--rbl-dim); }
+.rbl-intro { margin: 6px 0 0; color: var(--rbl-dim); }
+
+.rbl-group { padding: 8px 12px 4px; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--rbl-dim); }
+
+.rbl-item { padding: 10px 12px; background: var(--rbl-ground); box-shadow: 0 -1px 0 0 var(--rbl-line); }
+.rbl-item--inline { margin: 8px 0; box-shadow: 0 0 0 1px var(--rbl-line); border-radius: var(--rbl-radius); }
+.rbl-head { display: flex; align-items: baseline; gap: 8px; }
+.rbl-label { flex: 0 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.rbl-req { color: var(--rbl-accent); }
+.rbl-spacer { flex: 1; }
+.rbl-help { margin: 4px 0 0; color: var(--rbl-dim); overflow-wrap: anywhere; }
+
+.rbl-opts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.rbl-opt, .rbl-key, .rbl-switch {
+  --_bd: var(--rbl-line);
+  appearance: none; margin: 0; font: inherit; color: var(--rbl-ink); cursor: pointer;
+  background: transparent; border: 1px solid var(--_bd); border-radius: var(--rbl-radius);
+}
+.rbl-opt { padding: 4px 10px; text-transform: lowercase; }
+.rbl-opt[aria-pressed="true"] { --_bd: var(--rbl-accent); background: var(--rbl-accent-tint); }
+.rbl-opt:disabled { opacity: 0.45; cursor: default; }
+.rbl-key { padding: 1px 7px; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--rbl-dim); }
+.rbl-notekey[aria-expanded="true"] { --_bd: var(--rbl-accent); color: var(--rbl-ink); }
+.rbl-notekey--has { --_bd: var(--rbl-accent); background: var(--rbl-accent-tint); color: var(--rbl-ink); }
+.rbl-switch { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; padding: 3px 8px; }
+.rbl-switch__knob { width: 10px; height: 10px; border: 1px solid var(--_bd); border-radius: var(--rbl-radius); }
+.rbl-switch[aria-checked="true"] { --_bd: var(--rbl-accent); background: var(--rbl-accent-tint); }
+.rbl-switch[aria-checked="true"] .rbl-switch__knob { background: var(--rbl-accent); }
+
+.rbl-field {
+  --_bd: var(--rbl-line);
+  display: block; width: 100%; max-width: var(--rbl-field-max); margin: 8px 0 0; padding: 5px 8px; font: inherit; color: var(--rbl-ink);
+  background: var(--rbl-field); border: 1px solid var(--_bd); border-radius: var(--rbl-radius); resize: vertical;
+}
+.rbl-note { margin-top: 6px; }
+.rbl-field::placeholder { color: var(--rbl-dim); }
+
+.rbl-rank { list-style: none; margin: 8px 0 0; padding: 0; max-width: var(--rbl-field-max); }
+.rbl-rank__item {
+  --_bd: var(--rbl-line);
+  display: flex; align-items: center; gap: 8px; margin: 0 0 4px; padding: 4px 8px;
+  background: var(--rbl-field); border: 1px solid var(--_bd); border-radius: var(--rbl-radius);
+}
+.rbl-rank__item:focus-visible { outline: none; border-color: color-mix(in oklab, var(--_bd) var(--oc-focus-keep, 75%), var(--oc-focus-lift, currentColor)); }
+.rbl-rank__item--drag { --_bd: var(--rbl-accent); background: var(--rbl-accent-tint); }
+.rbl-rank__grip { color: var(--rbl-dim); cursor: grab; touch-action: none; user-select: none; padding: 2px 4px; letter-spacing: -0.1em; }
+.rbl-rank__n { min-width: 2ch; color: var(--rbl-dim); text-align: right; }
+.rbl-rank__label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+
+.rbl-num { max-width: var(--rbl-field-max); display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.rbl-num .rbl-field { width: 12ch; margin: 0; }
+.rbl-num .rbl-range { flex: 1; min-width: 0; margin: 0; accent-color: var(--rbl-accent); }
+.rbl-num__read, .rbl-num__unit { color: var(--rbl-dim); }
+.rbl-datefield { width: auto; min-width: 16ch; }
+
+.rbl-row { margin-top: 6px; }
+.rbl-chip { display: inline-block; padding: 0 6px; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--rbl-dim); box-shadow: 0 0 0 1px var(--rbl-line); border-radius: var(--rbl-radius); }
+.rbl-lines { margin-top: 6px; }
+.rbl-line { color: var(--rbl-dim); overflow-wrap: anywhere; }
+.rbl-line__label { font-weight: 400; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--oc-yellow, var(--rbl-dim)); }
+.rbl-line__text { color: var(--rbl-ink); }
+.rbl-meta { margin-top: 4px; font-size: 10px; color: var(--rbl-dim); overflow-wrap: anywhere; }
+.rbl-picks .rbl-opt { display: inline-flex; align-items: baseline; gap: 6px; }
+.rbl-opt__mark { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--rbl-dim); }
+.rbl-opt[data-rbl-suggest="true"]:not([aria-pressed="true"]) { border-style: dashed; }
+.rbl-tone-ok[aria-pressed="true"] { --_bd: var(--oc-green, Highlight); background: transparent; }
+.rbl-tone-push[aria-pressed="true"] { --_bd: var(--oc-coral, LinkText); background: transparent; }
+.rbl-tone-later[aria-pressed="true"] { --_bd: var(--oc-cyan, VisitedText); background: transparent; }
+
+.rbl :is(button, input, textarea):focus-visible, .rbl-item :is(button, input, textarea):focus-visible {
+  outline: none;
+  border-color: color-mix(in oklab, var(--_bd, currentColor) var(--oc-focus-keep, 75%), var(--oc-focus-lift, currentColor));
+}
+
+@media (max-width: 559px) {
+  .rbl-float { top: auto; left: 0; width: 100%; max-height: 60vh; box-shadow: 0 -1px 0 var(--rbl-line); }
+  .rbl-opt, .rbl-key, .rbl-switch { min-height: 36px; }
+  .rbl-rank__item { min-height: 40px; }
+}

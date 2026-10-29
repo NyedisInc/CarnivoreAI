@@ -1,0 +1,47 @@
+{
+  "api_routes": [
+    "src/api/projects_history_routes.py",
+    "src/api/session_records_routes.py",
+    "src/api/projects_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/settings-and-pages-inventory.md",
+    "docs/sessions-page.md"
+  ],
+  "examples": [
+    "Open the menu tab, choose projects, and find a project or start a new one from the title strip."
+  ],
+  "how_to": [
+    "This page was removed. Open the menu tab and choose projects: it is the Sessions page, which now lists every project."
+  ],
+  "id": "projects-page",
+  "issues": [
+    1066,
+    1067,
+    1316,
+    1411,
+    2045
+  ],
+  "keywords": [
+    "projects",
+    "sessions",
+    "history",
+    "closed sessions",
+    "removed sessions",
+    "resume",
+    "hotkeys",
+    "menu keys"
+  ],
+  "media": [],
+  "name": "Projects page",
+  "since": "2026-09-28",
+  "status": "removed",
+  "summary": "The Projects page was folded into the Sessions page, which now lists every project and starts new projects and sessions.",
+  "surfaces": [],
+  "updated": "2026-10-21",
+  "where": [
+    "Replaced by Menu tab, Projects (the Sessions page)."
+  ],
+  "media_exempt": "retired in #2045: the page is gone, see sessions-page"
+}

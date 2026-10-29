@@ -1,0 +1,72 @@
+{
+  "id": "messaging",
+  "name": "Messaging",
+  "summary": "Bind a session to your own imessage conversation: text it what to do from your phone, and let it text you back. A text never goes into an open dialog; it waits and arrives once the dialog closes.",
+  "description": "Carnivore connects to a messaging provider (the imsg bridge, speaking the Carnivore Provider Protocol) and binds sessions to conversations, in, out or both. A text from you reaches the bound session: a threaded reply goes to the session that sent the original, a leading @name to that session, otherwise the default one; with several bound and none named, Carnivore texts back which session. Only your own handles, as imessage, are accepted; an sms gets a short reply asking for imessage, and a stranger gets nothing. While a permission, question or startup dialog is open the text is held and you get one text saying so; it goes in when the dialog closes, and several held texts arrive as one batch, oldest first, each dated. An asleep session is woken. An edit or unsend replaces or drops a held text, and sends a short note after delivery. A bound session sends with messaging_send: text only, secrets starred, rate limited, and logged first. Secrets live in the keychain only, and the provider's address is write-only.",
+  "area": "status-notifications",
+  "status": "beta",
+  "since": "2026-10-09",
+  "updated": "2026-10-13",
+  "surfaces": [
+    "settings, notifications, messaging",
+    "drawer row msg badge",
+    "web/src/lib/messaging/MessagingScreen.svelte",
+    "web/src/lib/messaging/MessagingBadge.svelte"
+  ],
+  "api_routes": [
+    "GET /api/v1/messaging/providers",
+    "POST /api/v1/messaging/providers",
+    "PATCH /api/v1/messaging/providers/{provider_id}",
+    "DELETE /api/v1/messaging/providers/{provider_id}",
+    "POST /api/v1/messaging/providers/{provider_id}/test",
+    "GET /api/v1/messaging/providers/{provider_id}/conversations",
+    "GET /api/v1/messaging/conversations",
+    "POST /api/v1/messaging/conversations",
+    "PATCH /api/v1/messaging/conversations/{conversation_id}",
+    "DELETE /api/v1/messaging/conversations/{conversation_id}",
+    "GET /api/v1/messaging/bindings",
+    "POST /api/v1/messaging/bindings",
+    "PATCH /api/v1/messaging/bindings/{binding_id}",
+    "DELETE /api/v1/messaging/bindings/{binding_id}",
+    "GET /api/v1/messaging/messages",
+    "POST /api/v1/messaging/messages/{message_id}/retry",
+    "POST /api/v1/sessions/{session_id}/messaging/send",
+    "POST /api/v1/sessions/command"
+  ],
+  "docs": [
+    "docs/messaging.md"
+  ],
+  "issues": [
+    1499,
+    1769,
+    1770
+  ],
+  "keywords": [
+    "messaging",
+    "imessage",
+    "text",
+    "phone",
+    "bridge",
+    "binding",
+    "held",
+    "messaging_send"
+  ],
+  "where": [
+    "Settings, notifications, messaging: providers, their conversations, every binding and the message log."
+  ],
+  "how_to": [
+    "Open settings, notifications, messaging and press add provider. Enter the bridge address, its token (or an op:// reference) and your phone number or email; allow a private address and plain http only for a bridge on your own network. Save: Carnivore checks the bridge first.",
+    "On the provider, press add conversation and add the conversation with you; only conversations the bridge lists as routable can be added.",
+    "Ask an agent with the messaging tools to bind the session to the conversation (it names a direction: in and out, in only or out only); you approve the bind when it asks.",
+    "Text the conversation from your phone. Start with @name to reach one session when several are bound, or reply to a session's own text.",
+    "Watch the log on the settings screen for held and failed messages; retry a failed one there.",
+    "A text you sent whose outcome is unknown (the bridge restarted mid-send) shows in the log as unconfirmed, in its own color, with no retry: check your phone before sending it again.",
+    "On the provider card, the duplicate-send protection line says whether a retried send was ever answered with the original result (proven, with when) or never seen yet."
+  ],
+  "examples": [
+    "You text restart the feed while the session is asking a permission question; you get held for ledgerbot, and the text goes in after you answer the dialog.",
+    "Three texts sent while the computer was asleep arrive as one message, oldest first, each with its time and age.",
+    "A bound session texts you build is green with messaging_send; a session without an out binding is refused."
+  ],
+  "media_exempt": "The screen's media are captured at the next version bump with the rest of the feature recapture."
+}

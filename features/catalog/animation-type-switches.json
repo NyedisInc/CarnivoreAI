@@ -1,0 +1,48 @@
+{
+  "api_routes": [],
+  "area": "settings",
+  "docs": [
+    "docs/idle-frames-intersection-observer.md"
+  ],
+  "examples": [
+    "Switch the status lights off, then the terminal ring, one at a time, while watching Activity Monitor, to find which kind of motion costs your browser the most.",
+    "Keep the spiral and cursor blink but stop the theme background effect."
+  ],
+  "how_to": [
+    "Open settings, pick appearance, then the motion tab. While the animations switch is on, a list of fifteen switches appears under it, one per kind of motion.",
+    "Uncheck a kind to stop it at once, no reload; check it again to resume. Everything is checked by default.",
+    "The choice is kept in this browser only (local storage), so a test in one window never changes your phone or other windows.",
+    "Kinds: status lights, avatar spiral, selected terminal ring, dialog glow, effort badges, drawer bands, sparks and steam, busy pulses, attention cues, swarm characters, pop-ins, transitions, layout moves, theme background effect, terminal cursor blink."
+  ],
+  "id": "animation-type-switches",
+  "issues": [
+    1821
+  ],
+  "keywords": [
+    "animations",
+    "motion",
+    "gpu",
+    "cpu",
+    "performance",
+    "per type",
+    "toggle",
+    "cursor blink",
+    "theme effects"
+  ],
+  "media_exempt": "recapture at next version bump",
+  "name": "Animation type switches",
+  "since": "2026-10-15",
+  "status": "beta",
+  "summary": "under the animations switch, one switch per kind of motion, kept in this browser only, to find which animation costs the most.",
+  "surfaces": [
+    "client/js/motion-setting.js",
+    "client/css/animation-types.css",
+    "client/css/themes/_shared/effects-base.js",
+    "web/src/lib/motion/animation-types.ts",
+    "web/src/lib/settings-page/MotionPanel.svelte"
+  ],
+  "updated": "2026-10-15",
+  "where": [
+    "Settings, appearance, the motion tab: the list under the animations switch, shown only while animations are on."
+  ]
+}

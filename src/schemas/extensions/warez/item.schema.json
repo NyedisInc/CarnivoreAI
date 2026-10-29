@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://carnivore.ai/schemas/extensions/warez/item.schema.json",
+  "title": "Warez front door, layer 2 base overlay",
+  "description": "Applied BESIDE the kind's L1 schema, never instead of it: a submission is valid at the front door when it passes <kind>.schema.json AND this overlay AND the kind's own L2 file (warez/<kind>.schema.json, which already pulls in both). It only tightens properties L0 already defines and adds none, so L1's unevaluatedProperties closure is unaffected. Rules that need the signed-in account (the publisher part of id equals the account handle) are pipeline gate 4, not schema. See docs/warez/03-contracts-and-schemas.md.",
+  "type": "object",
+  "required": [
+    "id",
+    "tier",
+    "version",
+    "api_version",
+    "min_app_version",
+    "author",
+    "description",
+    "license"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,37}[a-z0-9])?/[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?$",
+      "description": "Always <publisher>/<name> at the front door: the publisher by the catalog PUBLISHER_RE, the name by SKILL_NAME_RE."
+    },
+    "tier": {
+      "const": "catalog",
+      "description": "Nothing builtin or dev comes through the front door."
+    },
+    "author": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 400,
+      "pattern": "\\S",
+      "description": "The card text. Required here because the card needs a brief."
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9.+-]+(?: (?:AND|OR|WITH) [A-Za-z0-9.+-]+)*$",
+      "description": "An SPDX expression. Which ids are allowed is policy (warez/policy.json licenses.allow), checked by gate 8."
+    },
+    "permissions": {
+      "items": {
+        "required": [
+          "name",
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "\\S"
+          }
+        }
+      }
+    },
+    "requires": {
+      "items": {
+        "if": {
+          "properties": {
+            "kind": {
+              "enum": [
+                "cplug",
+                "mcp"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        },
+        "then": {
+          "required": [
+            "range"
+          ]
+        }
+      }
+    },
+    "links": {
+      "type": "object",
+      "properties": {
+        "homepage": {
+          "type": "string",
+          "maxLength": 300,
+          "pattern": "^https://"
+        },
+        "repository": {
+          "type": "string",
+          "maxLength": 300,
+          "pattern": "^https://"
+        },
+        "issues": {
+          "type": "string",
+          "maxLength": 300,
+          "pattern": "^https://"
+        }
+      },
+      "description": "L0 defines links (L0-4); the front door restates that every URL is https."
+    }
+  }
+}

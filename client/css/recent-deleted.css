@@ -1,0 +1,18 @@
+@layer legacy {
+
+.recent-session-row--deleted {
+    opacity: 0.72;
+}
+
+.recent-session-deleted {
+    flex: 0 0 auto;
+    font-size: 0.7em;
+    padding: 2px 6px;
+    border: 1px solid var(--color-danger, currentColor);
+    border-radius: var(--radius-sm);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--color-danger, inherit);
+    background: transparent;
+}
+}

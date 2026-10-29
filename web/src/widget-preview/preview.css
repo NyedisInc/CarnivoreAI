@@ -1,0 +1,13 @@
+/* padding */
+html,
+body.wpv-body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: var(--oc-ground-page);
+}
+
+html body.wpv-body .wh-stage {
+    display: block;
+    padding: 0;
+}

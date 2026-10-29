@@ -1,0 +1,11 @@
+@layer legacy {
+/* flex-shrink: 0 */
+
+.header-session-led {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-right: 6px;
+    line-height: 0;
+}
+}

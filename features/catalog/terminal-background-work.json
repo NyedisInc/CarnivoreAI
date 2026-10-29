@@ -1,0 +1,60 @@
+{
+  "id": "terminal-background-work",
+  "name": "Session control center in the terminal bar",
+  "summary": "The bar under a terminal counts the session's running subagents, background shells and live timers; grown, it becomes a session control center that lists scheduled tasks, subagents and background processes and can stop one or all of them.",
+  "description": "Right of the usage meters in the terminal's bottom bar, a segment shows the running subagents and the open background shells and monitors (agents 2 bg 1), and a clock shows the live timer count and the time to the next fire. Both are drawn only when there is something to count, and neither is ever cut off: on a narrow bar the usage figures give way first, lowest priority first, and the segments shorten last (bg 3, 3·32m). Clicking a segment, or the bar, grows it into the session control center: the usage figures on the left, and on the right three lists. Scheduled tasks shows each timer's schedule, what it runs and when it next fires. Subagents shows the running ones with their type, task and age; a subagent runs inside claude, so its stop stops the background processes it started, and stop all interrupts the session with one escape, which stops the agent's current turn and every subagent in it. Background processes shows each tool shell's task, command summary, age and pid, with a stop per row and a stop all. Every stop asks first. The server only stops a process that is still the same process it listed and sits under that session's own agent: never the agent, never the pane's shell, never anything outside the session. Below 720px the two halves stack.",
+  "area": "terminal",
+  "status": "stable",
+  "since": "2026-09-28",
+  "updated": "2026-09-28",
+  "surfaces": [
+    "web/src/lib/background-work/FootWork.svelte",
+    "web/src/lib/session-control/ControlCenter.svelte",
+    "web/src/opscenter/cells/terminal-live/TerminalFoot.svelte"
+  ],
+  "api_routes": [
+    "GET /api/v1/sessions/list",
+    "GET /api/v1/sessions/{session_id}/background-work",
+    "POST /api/v1/sessions/{session_id}/background-work/{pid}/terminate",
+    "POST /api/v1/sessions/{session_id}/background-work/terminate-all",
+    "POST /api/v1/sessions/{session_id}/interrupt",
+    "GET /api/v1/sessions/{session_id}/subagents",
+    "GET /api/v1/sessions/{session_id}/timers"
+  ],
+  "docs": [
+    "docs/session-status.md"
+  ],
+  "issues": [
+    1044,
+    1053
+  ],
+  "keywords": [
+    "background",
+    "context",
+    "control center",
+    "escape",
+    "hung",
+    "interrupt",
+    "kill",
+    "process",
+    "scheduled",
+    "stop",
+    "stop all",
+    "subagent",
+    "timers"
+  ],
+  "where": [
+    "The thin bar under a claude terminal, at its right end: agents and bg counts, and a clock with a count and a time, each only while there is something to show. Grown, the right half of the bar."
+  ],
+  "how_to": [
+    "Click the agents/bg segment to grow the bar into the control center on its subagents section, or the clock for scheduled tasks; click it again to fold it.",
+    "Press stop on a process row, or stop all over the list, read the question, then press the red answer; cancel or Escape backs out.",
+    "Press stop on a subagent to stop the background processes it started, or stop all over the subagents to interrupt the session."
+  ],
+  "examples": [
+    "A background ssh a subagent started hangs for hours: grow the bar, press stop on that subagent, and its shell is stopped without killing claude.",
+    "A runaway turn has three subagents fanned out: stop all over the subagents sends one escape and the whole turn stops.",
+    "On a 1024px cell the tokens figure now stays, because only the resets have to give way."
+  ],
+  "media_exempt": "the control center only has rows while a live claude runs a background process, subagent or timer, which the capture seed's demo agent cannot start; the bar's own look is shown by terminal-foot-bar"
+}

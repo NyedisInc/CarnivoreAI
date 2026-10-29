@@ -1,0 +1,220 @@
+<h2 class="sg-h2">icons and marks</h2>
+<p class="sg-lead">Every icon is inline SVG compiled or scripted into the page: nothing is fetched, so no
+<code>img-src</code> relaxation and no icon can fail to arrive. Every stroke is <code>currentColor</code>, so the
+surrounding text colour, and therefore the theme, colours it.</p>
+
+<h3 class="sg-h3" id="icons-set">the compiled icon set</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/opscenter/ui/Icon.svelte</code><span>every name in <code>icons.ts</code>, at 14, 16 and 20px</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-icons"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>Every action and marker icon in <code>web/</code>: <code>&lt;Icon name="skull" size={14} /&gt;</code>. Props:
+        <code>name</code> (a key of <code>icons.ts</code>), <code>size</code> (px, default 16), <code>strokeWidth</code>
+        (default 1.5), <code>fill</code> (<code>'outline'</code> default, <code>'solid'</code> for an explicitly filled
+        symbol).</dd>
+    <dt>authenticator</dt>
+    <dd><code>authenticator</code> is the first-run screen's mark (#1503): a phone outline with a row of six code dots and a
+        shield notch, drawn at 48px, 1.5 stroke, in the accent. Use it for anything about the authenticator app.</dd>
+    <dt>brand glyphs</dt>
+    <dd><code>github</code> and <code>google</code> are the official one-colour marks, filled
+        (<code>&lt;Icon name="github" fill="solid" size={16} /&gt;</code>) so they take <code>currentColor</code> and every
+        theme; never a multicolour G. They sit left of the label in a fixed 16px box on the sign-in modal's provider
+        buttons (<code>.signin__prov</code>, <code>.signin__icon</code>).</dd>
+    <dt>Task Manager keys</dt>
+    <dt>approve</dt>
+    <dt>changelog</dt>
+    <dd><code>changelog</code> is a version tag (a pentagon with a hole): the Home menu's changelog row, kept apart from <code>docs</code> and <code>files</code>, which are pages.</dd>
+    <dt>view toggle</dt>
+    <dd><code>grid</code> and <code>list</code> are the two icons of a manager page's grid/list toggle (framed <code>.oc-ibtn</code>,
+        <code>aria-pressed</code>, <code>aria-label</code> "grid view" and "list view"). <code>list</code> is three rules with three dots.</dd>
+    <dt>tile</dt>
+    <dd><code>.oc-icon-tile</code> wraps one icon in a node 1px hairline tile (28px on a manager card at icon size 16, 20px in the ranked
+        panel at icon size 12): card ground, <code>--oc-text-secondary</code> glyph, 2px corners.</dd>
+    <dt>grid</dt>
+    <dd>A 24x24 box, 1.5 stroke, round caps and joins, so every icon sits at the same optical weight beside 12px type.
+        One exception: <code>bot</code>, the generic agent robot, keeps its native 20x20 box because its path is a byte copy
+        of <code>ROBOT</code> in <code>client/js/session-model-icon.js</code>, guarded by
+        <code>icons.robot-parity.test.ts</code>. There is exactly one robot in the app.</dd>
+    <dt>sizes</dt>
+    <dt>lock</dt>
+    <dd><code>lock</code> (#1200): a padlock, the account menu's "lock this device" row (the computer's TOTP lock, separate from the carnivore account's sign out, which keeps <code>log-out</code>).</dd>
+    <dt>colour</dt>
+    <dd>Inherit it. Set <code>color</code> on the button, never <code>fill</code> or <code>stroke</code> on the icon.
+        A muted icon is <code>--oc-text-secondary</code>; hover lifts it to <code>--oc-text-primary</code> or
+        <code>--oc-text-bright</code>; a destructive icon (the skull) is <code>--oc-coral</code>.</dd>
+    <dt>access</dt>
+    <dd>The svg is <code>aria-hidden</code>. An icon-only button carries its own <code>aria-label</code> and a
+        <code>title</code>; an icon beside a label adds nothing.</dd>
+    <dt>unknown name</dt>
+    <dd>Falls back to the neutral <code>grid</code> glyph rather than an empty box. If you see a grid where you expected
+        your icon, the name is misspelled.</dd>
+</dl>
+
+<h3 class="sg-h3" id="icons-global-mark">the global widget mark</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>look</dt>
+    <dd>The mark is the <code>globe</code> entry of the compiled set at 0.6 of the icon (never under 8px), in the icon's own
+        colour on a <code>--oc-ground-panel</code> disc, so it follows every theme. The local variant is drawn bare.</dd>
+    <dt>adding a global sibling</dt>
+    <dd>Add its cell id to <code>GLOBAL_WIDGET_IDS</code> in <code>web/src/opscenter/widgets/global-scope.ts</code>; no
+        other file changes.</dd>
+</dl>
+
+<h3 class="sg-h3" id="icons-glyphs">the shared 16px glyphs</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/Glyph.svelte</code><span>every record in <code>client/js/icons/glyphs.js</code></span></div>
+    <div class="sg-specimen__body"><div id="sg-live-glyphs"></div></div>
+</div>
+<p>These glyphs are DATA, not markup: one set of coordinates in <code>client/js/icons/glyphs.js</code>, drawn by two
+renderers (<code>glyphSvg(name, size)</code> for the legacy tree's <code>innerHTML</code>, <code>&lt;Glyph name="..." /&gt;</code>
+for Svelte). Add a glyph by adding its records there, never by pasting an SVG string into a component. They are 16x16 on
+a <code>0 0 16 16</code> box, <code>currentColor</code>. A glyph may reuse another set's geometry through a
+<code>transform</code> attribute on its records (<code>wolf</code>, the Pack icon, is the opscenter 24 box outline scaled by 0.6667; both renderers
+pass <code>transform</code> through, so ONE outline draws the Pack everywhere). The row menu's own icons
+(<code>client/js/session-row-menu-icons.js</code>) borrow from this table for the same reason.</p>
+
+<h3 class="sg-h3" id="icons-picker">the icon picker and picked icons</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/icon-picker/IconPicker.svelte</code><span>inside a green parent, a heading drawn by <code>IconMark</code> above it</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-icon-picker"></div></div>
+</div>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/icon-picker/IconPicker.svelte</code><span>the same picker in a violet parent, nothing chosen</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-icon-picker-none"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>The ONE way a user picks an icon for something they named: a group, a wrapper group, a widget, a user tab
+        (issue #764). <code>&lt;IconPicker value={icon} onChange={(id) =&gt; save(id)} /&gt;</code>, with optional
+        <code>onCancel</code> (Escape) and <code>autofocus</code>. It never saves: the caller writes the id through its own
+        documented route. Never build a second picker. Contract: <code>docs/icon-picker.md</code>.</dd>
+    <dt>render</dt>
+    <dd>Show a picked icon with <code>&lt;IconMark id={icon} size={12} /&gt;</code> in Svelte, or
+        <code>CloudeGlyphs.iconSvg(id, 12)</code> in the legacy tree. Never map an id to a <code>Glyph</code> name by
+        hand. An empty or unknown id draws nothing at all, so a row with no icon lays out exactly as it did before.</dd>
+    <dt>stored value</dt>
+    <dd>The icon's <code>id</code> string from <code>client/js/icons/icon-registry.js</code>, or <code>null</code> for
+        none, inside the one JSON shape (#727). Ids are forever: never rename or remove one; retire it through
+        <code>RETIRED_ICON_IDS</code>.</dd>
+    <dt>colour</dt>
+    <dt>keyboard</dt>
+    <dd>The grid is one tab stop (<code>listbox</code>): arrows move a cell or a row of eight, Home and End jump,
+        Enter or Space chooses, Escape calls <code>onCancel</code>. ArrowDown in the search field enters the grid.
+        "No icon" is always the first cell.</dd>
+    <dt>adding an icon</dt>
+    <dd>Draw it in <code>client/js/icons/glyphs.js</code> on the 16 box, then add one entry to
+        <code>icon-registry.js</code> and its <code>icon.*</code> name to the catalog. Action glyphs (trash, close,
+        pencil, restart) are never pickable: a group wearing a trash can reads as an instruction.</dd>
+</dl>
+
+<h3 class="sg-h3" id="icons-ai">ai provider logos and capability icons</h3>
+<dl class="sg-facts">
+    <dt>provider logo</dt>
+    <dd><code>&lt;ProviderMark preset="openrouter" size={16} /&gt;</code> (<code>web/src/lib/byoai/ProviderMark.svelte</code>,
+        data in <code>provider-marks.ts</code>) goes in front of a provider wherever one is named on the ai settings: each
+        connection, the add-a-connection preset list and the routing connection picker. ONE colour: solid
+        <code>currentColor</code> on a 24x24 box, tinted by <code>.ai-mark</code> (<code>--oc-text-secondary</code>), never a
+        brand colour, so it follows every theme. The same component marks the notification destination kinds (slack, discord, teams, telegram, ntfy, twilio, pagerduty, aws for sns; simple-icons, CC0). The path data is the mono set of lobe-icons (MIT), attribution in
+        <code>provider-marks.NOTICE.md</code>. A preset with no fitting logo (jev, the local audio server, custom) draws a glyph
+        from the icon set above. No tooltip: it sits beside the provider's name and is <code>aria-hidden</code>.</dd>
+    <dt>inbox tray (combined alert types)</dt>
+    <dd>The <code>inbox-tray</code> entry in <code>icons.ts</code> (24 box, 1.5 stroke, a tray with a notch): the head a copy of the
+        questions widget wears when MORE THAN ONE alert type is ticked in its options. One ticked type wears that type's own icon
+        and name; none ticked keeps the widget's own. Chosen over a bell because the bell is the single-sender fallback.</dd>
+    <dt>capability icon</dt>
+    <dd>In front of each routing row's label: <code>cap-embed</code>, <code>cap-decide</code>, <code>cap-speak</code>,
+        <code>cap-transcribe</code>, <code>cap-video</code> and <code>cap-audio</code> in <code>icons.ts</code> (24 box, 1.5 stroke,
+        like the rest of the set), plus the existing <code>chat</code>, <code>image</code> and <code>bot</code> (agent).
+        <code>capabilityIcon(capability)</code> in <code>capability-icons.ts</code> is the one mapping.</dd>
+    <dt>arrow-left</dt>
+    <dd>The phone's back arrow, the first cell of the page's one bar (<code>.oc-titlebar__back</code>, the omnibar), the
+        mirror of <code>arrow</code>; it replaces the claw while a page is open (building a new page).</dd>
+    <dt>chevron-left</dt>
+    <dd>The warez page's phone back control (<code>Page</code> <code>backIcon="chevron-left"</code>): a thin chevron on its own 14 box,
+        1.3 stroke, the faceted shelf's omnibar glyph; every other page keeps <code>arrow-left</code>.</dd>
+    <dt>shelf-grid, shelf-list</dt>
+    <dd>The warez page's view pair (<code>ViewToggle</code> <code>shelf</code>): a four-square grid and three plain rules on their own 14
+        box, 1.2 stroke, the faceted shelf's glyphs; every other page keeps <code>grid</code> and <code>list</code>.</dd>
+    <dt>mod, skill</dt>
+    <dt>swarm</dt>
+    <dd>The Swarm's tab in the drawer strip (<code>swarm</code> in <code>icons.ts</code>: one node with two dot eyes over two smaller nodes, 24 box, 1.5
+        stroke, drawn at 14px like the agents robot; also the Swarm row of the menu tab). Dim like every other tab until selected; the Swarm tab carries no
+        count and no question tone.</dd>
+    <dt>direction marks</dt>
+    <dt>quote</dt>
+    <dd><code>quote</code> (two open quote marks), 24 box, 1.5 stroke, drawn at 12px at the right of every Swarm chat message
+        (<code>.hdc-quote</code>, <code>ChatWidget.svelte</code>), dim until the row is hovered. It puts the message's words in the
+        composer; a quoted open question or review keeps its item, so the reply answers that card (#1435).</dd>
+    <dt>author path icons</dt>
+    <dd>The crumbs of a Swarm chat message's header row (<code>AuthorPath.svelte</code>), reusing the drawer's own marks: the glyphs
+        <code>building</code> (a company, as on the company heading), <code>folder</code> (a project) and <code>crown</code>
+        (SysOp) from <code>glyphs.js</code>, and the icons <code>bot</code> (an agent) and <code>person</code> (you). <code>CRUMB_ICON</code> in <code>author-path.ts</code> is the one mapping.</dd>
+    <dt>the widget bar pin</dt>
+    <dt>swarm status marks</dt>
+</dl>
+
+<h3 class="sg-h3" id="icons-wrapper-mark">a wrapper's mark</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>Every surface that shows a launch wrapper draws it through the ONE mapping, <code>client/js/wrapper-mark.js</code>
+        (issue #1004): <code>WrapperMark.svg({icon, family}, 14)</code> in the legacy tree, <code>wrapperMark(icon, family)</code>
+        (<code>web/src/lib/sessions/agent-marks.ts</code>) in Svelte. The wrapper's picked icon when it names one this build
+        can draw, else its family's provider mark. Surfaces today: the wrappers page's cards and detail pane, the new session
+        menu, the restart and wake picker.</dd>
+    <dt>class</dt>
+    <dd><code>.wrapper-mark</code> (<code>client/css/wrapper-mark.css</code>) sizes the mark in a picker row: a 16px box,
+        no colour of its own. <code>data-mark-source</code> is <code>icon</code> or <code>family</code>.</dd>
+    <dt>stored value</dt>
+    <dd><code>agents.wrappers[].icon</code> in config.json, written by <code>PUT /api/v1/wrappers/{id}/icon</code> from the
+        icon picker on the wrappers page's detail pane; exported in the share document (version 2).</dd>
+    <dt>mistakes already made</dt>
+    <dd>Mapping an icon id to a glyph by hand, or falling back to nothing: an unknown id falls back to the family mark,
+        which is what the wrapper wore before an icon was chosen.</dd>
+</dl>
+
+<h3 class="sg-h3" id="icons-marks">provider marks and the status pair</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/sessions/SessionFace.svelte</code><span>light then mark, one per agent family</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-agent-marks"></div></div>
+</div>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/account-switch/BotCycleMark.svelte</code><span>the auto switch mark at 14, 18 and 24px, off then on</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-bot-cycle-mark"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>provider mark</dt>
+    <dt>launch profiles</dt>
+    <dd>The settings rail's launch profiles entry wears <code>rocket</code> (<code>icons.ts</code>: an outline rocket, 24 box, 1.5 stroke,
+        like its neighbours), no longer the terminal chevron.</dd>
+    <dt>order</dt>
+    <dd>Anywhere a session is listed (a drawer row, a menu entry, a tab): status light, then provider mark, then name
+        (#554). Use <code>&lt;SessionFace row={...} mark /&gt;</code>, which draws the pair in that order and hands the light every signal on the row; a shell or unknown
+        session draws no mark.</dd>
+    <dt>kebab</dt>
+    <dd>The vertical three-dot overflow mark is defined once in <code>client/js/kebab-icon.js</code> at 20px, a size
+        chosen for its ink weight (the file header says why); reuse it, never redraw three dots.</dd>
+    <dt>skull, moon, cup, sun</dt>
+    <dt>task mark</dt>
+    <dt>crown</dt>
+</dl>
+
+<h3 class="sg-h3" id="icons-kinds">catalog kind glyphs</h3>
+<p>One glyph per catalog kind, drawn inside <code>KindMark.svelte</code> from <code>Icon.svelte</code>, never a second set:
+mod <code>mod</code>, plugin <code>plug</code>, skill <code>skill</code>, theme <code>palette</code>, pack <code>pack</code> (added to
+<code>web/src/opscenter/ui/icons.ts</code> with the kind mark, #1554; <code>kindIcon</code> in <code>web/src/lib/catalog/card.ts</code>
+is the one mapping). A kind this build cannot name draws <code>grid</code>.</p>
+
+<h3 class="sg-h3" id="icons-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>A second robot, a second kebab, a hand-drawn provider mark.</strong> Each exists once; a copy drifts and the
+        same thing is drawn two shapes on two screens.</li>
+    <li><strong>Misaligned tab icons.</strong> Mixing 14 and 16 and 20 in one row, or a mark with its own margin, puts the
+        row out of line (#514, #569). Every icon in a tab passes <code>size={14}</code> and centres in a fixed box.</li>
+    <li><strong>Icon-only meaning.</strong> A glyph with no label and no <code>aria-label</code> means nothing to a screen
+        reader and little to a new user.</li>
+    <li><strong>An <code>&lt;img src&gt;</code> icon.</strong> It is a network request, it cannot take
+        <code>currentColor</code>, and it does not follow the theme.</li>
+</ul>

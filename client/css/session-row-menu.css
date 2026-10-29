@@ -1,0 +1,299 @@
+/* position: fixed */
+
+
+@layer components {
+.session-row-menu-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    padding: 0 6px;
+    min-width: 24px;
+    align-self: stretch;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    /* --color- */
+    color: var(--oc-text-secondary);
+    cursor: pointer;
+    line-height: 0;
+    transition: color 120ms ease;
+}
+
+.session-sidebar-row-pin + .session-row-menu-trigger {
+    margin-inline-start: -10px;
+}
+
+.session-sidebar-panel[data-density="compact"] .session-sidebar-row-pin + .session-row-menu-trigger {
+    margin-inline-start: -7px;
+}
+
+/* padding: 0 6px` (the
+ * thumb-sized tap target, see the file header), so a margin of 0 here
+ * still left the dots glyph sitting 2px (gap) + 6px (the trigger's own
+ * left padding) = 8px past the pin, four times the 2px rhythm every
+ * other pair in the cluster keeps. -6px cancels exactly that padding, so
+ * the glyph lands the same 2px past the pin as the subagent/schedule
+ * icons and the cup sit past each other - the padding stays for the tap
+ * target (only the trigger's POSITION moves; */
+.session-sidebar-row-controls-cluster .session-sidebar-row-pin + .session-row-menu-trigger,
+.session-sidebar-panel[data-density="compact"] .session-sidebar-row-controls-cluster .session-sidebar-row-pin + .session-row-menu-trigger {
+    margin-inline-start: -6px;
+}
+
+.session-sidebar-row-keep-awake {
+    margin-inline: -2px;
+}
+
+.session-sidebar-row-controls-cluster .session-sidebar-row-keep-awake {
+    margin-inline: 0;
+}
+
+/* padding */
+.session-sidebar-panel[data-density="compact"] .session-row-menu-trigger {
+    padding: 0 var(--oc-space-1);
+}
+
+.session-row-menu-trigger:hover,
+.session-row-menu-trigger[aria-expanded="true"] {
+    color: var(--oc-text-bright);
+}
+
+.session-row-menu-trigger--dim {
+    opacity: 0;
+    transition: opacity 120ms ease;
+}
+
+.session-sidebar-row:hover .session-row-menu-trigger--dim,
+.session-sidebar-row:focus-within .session-row-menu-trigger--dim,
+.session-row-menu-trigger--dim[aria-expanded="true"] {
+    opacity: 0.45;
+}
+
+.session-row-menu-trigger--dim:hover,
+.session-row-menu-trigger--dim:focus-visible {
+    opacity: 1;
+}
+
+.session-row-menu-trigger::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 100%;
+    transform: translateY(-50%);
+}
+
+@media (pointer: coarse) {
+    .session-row-menu-trigger {
+        min-width: 36px;
+        padding: 0 10px;
+    }
+
+    /* padding */
+    .session-sidebar-row-controls-cluster .session-sidebar-row-pin + .session-row-menu-trigger {
+        margin-inline-start: -10px;
+    }
+
+    .session-sidebar-panel[data-density="cozy"] .session-row-menu-trigger::after,
+    .session-sidebar-panel[data-density="detailed"] .session-row-menu-trigger::after,
+    .running-session-row .session-row-menu-trigger::after {
+        height: 44px;
+    }
+
+    .session-row-menu .session-row-menu__item {
+        min-height: 38px;
+        padding: 7px 10px;
+    }
+}
+
+
+.session-row-menu {
+    position: fixed;
+    z-index: 1200;
+    min-width: 200px;
+    /* white-space: normal */
+    max-width: calc(100vw - 16px);
+    max-width: min(320px, calc(100vw - 16px));
+    padding: 3px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    /* --color- box-shadow overflow-y: auto padding */
+    border-radius: var(--oc-radius-sm);
+    max-height: calc(100vh - 16px);
+    max-height: calc(100dvh - 16px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+}
+
+/* ---- One item */
+
+.session-row-menu .session-row-menu__item {
+    display: grid;
+    grid-template-columns: 14px 1fr auto;
+    align-items: center;
+    gap: 2px var(--oc-space-2);
+    width: 100%;
+    min-width: 0;
+    /* padding */
+    min-height: 26px;
+    padding: 3px var(--oc-space-2);
+    box-sizing: border-box;
+    background: transparent;
+    border: none;
+    border-radius: var(--oc-radius-sm);
+    color: var(--oc-text-primary);
+    font-family: inherit;
+    font-size: 0.68em;
+    text-align: left;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease;
+}
+
+.session-row-menu .session-row-menu__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    line-height: 0;
+}
+
+.session-row-menu .session-row-menu__label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.session-row-menu .session-row-menu__key {
+    justify-self: end;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--oc-space-1);
+    color: var(--oc-text-muted);
+    font-size: 0.68rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.session-row-menu .session-row-menu__chevron {
+    display: inline-flex;
+    flex-shrink: 0;
+    color: var(--oc-text-muted);
+}
+
+.session-row-menu .session-row-menu__reason {
+    grid-column: 1 / -1;
+    color: var(--oc-text-secondary);
+    font-size: 0.72rem;
+    line-height: 1.35;
+    white-space: normal;
+}
+
+.session-row-menu .session-row-menu__item:hover,
+.session-row-menu .session-row-menu__item:focus-visible {
+    background: var(--oc-ground-hover);
+    color: var(--oc-text-bright);
+    outline: none;
+}
+
+.session-row-menu .session-row-menu__item:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--oc-orange);
+}
+
+.session-row-menu .session-row-menu__item[aria-disabled="true"] {
+    cursor: default;
+    color: var(--oc-text-dim);
+}
+
+.session-row-menu .session-row-menu__item[aria-disabled="true"] .session-row-menu__icon {
+    opacity: 0.55;
+}
+
+.session-row-menu .session-row-menu__item[aria-disabled="true"]:hover,
+.session-row-menu .session-row-menu__item[aria-disabled="true"]:focus-visible {
+    background: var(--oc-ground-field);
+    color: var(--oc-text-dim);
+}
+
+.session-row-menu .session-row-menu__item--locked {
+    grid-template-columns: 14px 1fr auto auto;
+}
+
+.session-row-menu .session-row-menu__item--locked .session-row-menu__label {
+    color: var(--oc-text-dim);
+}
+
+.session-row-menu .session-row-menu__lock {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--oc-space-1);
+    color: var(--oc-text-dim);
+    font-size: 0.72rem;
+}
+
+.session-row-menu .session-row-menu__lock-star {
+    display: inline-flex;
+    color: var(--oc-yellow-bright);
+}
+
+
+.session-row-menu .session-row-menu__sep {
+    height: 1px;
+    margin: 3px 6px;
+    background: var(--oc-line-rule);
+}
+
+.session-row-menu .session-row-menu__item[data-row-menu-item="close"]:not([aria-disabled="true"]),
+.session-row-menu .session-row-menu__item[data-row-menu-item="close"]:not([aria-disabled="true"]) .session-row-menu__key {
+    color: var(--oc-coral);
+}
+
+.session-row-menu .session-row-menu__item[data-row-menu-item="close"]:hover,
+.session-row-menu .session-row-menu__item[data-row-menu-item="close"]:focus-visible {
+    background: var(--oc-ground-hover);
+}
+
+.session-row-menu-trigger--update {
+    color: var(--oc-green);
+}
+
+.session-row-menu-trigger--update:hover,
+.session-row-menu-trigger--update[aria-expanded="true"] {
+    color: var(--oc-green);
+    opacity: 0.85;
+}
+
+.session-row-menu-trigger--mcp,
+.session-row-menu-trigger--mcp:hover,
+.session-row-menu-trigger--mcp[aria-expanded="true"] {
+    color: var(--oc-yellow);
+}
+
+.session-row-menu__item.session-row-menu-panel__item--update {
+    color: var(--oc-green);
+}
+
+.session-row-menu__item.session-row-menu-panel__item--update:hover,
+.session-row-menu__item.session-row-menu-panel__item--update:focus-visible {
+    background: var(--oc-ground-hover);
+    color: var(--oc-green);
+}
+
+.session-row-menu-trigger--update[data-shift-restart="1"],
+.session-row-menu-trigger--update[data-shift-restart="1"]:hover,
+.session-row-menu-trigger--update[data-shift-restart="1"][aria-expanded="true"] {
+    color: var(--oc-yellow);
+}
+
+.session-row-menu__item.session-row-menu-panel__item--update[aria-disabled="true"] {
+    color: var(--oc-text-muted);
+}
+}

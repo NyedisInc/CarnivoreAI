@@ -1,0 +1,30 @@
+{
+  "api_routes": [],
+  "area": "terminal",
+  "docs": [],
+  "examples": [
+    "On a phone, send /compact or /clear with one tap instead of typing it."
+  ],
+  "how_to": [
+    "Open the slash command list and star the commands you use most.",
+    "Starred ones show as chips at the top; tap one to send it."
+  ],
+  "id": "slash-command-favorites",
+  "issues": [],
+  "keywords": [
+    "slash commands",
+    "favorites"
+  ],
+  "media_exempt": "lives in the phone prompt bar popup, which needs a live agent pane to open",
+  "name": "Slash command favorites",
+  "since": "2026-09-24",
+  "status": "stable",
+  "summary": "pin your most-used slash commands so they're one tap away on a phone.",
+  "surfaces": [
+    "web/src/lib/slash-favorites/FavoriteChips.svelte"
+  ],
+  "updated": "2026-09-27",
+  "where": [
+    "The slash command popup on a phone, or the prompt bar's slash button."
+  ]
+}

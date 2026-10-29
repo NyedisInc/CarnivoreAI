@@ -1,0 +1,21 @@
+<h2 class="sg-h2">review: live, for sign off</h2>
+<p class="sg-lead">What is up for review right now, live. The picker repaints only this panel, so flip themes in place
+and click, tab and type on the real components. Nothing here is a picture.</p>
+
+<dl class="sg-facts">
+    <dt>under review</dt>
+    <dd>Design base, slice 3 (issue #2033): the shared shells on the base. One button recipe now draws the base
+        button, the <code>.oc-btn</code> family and the <code>.modal-btn</code> family
+        (<code>web/src/lib/base/elements.css</code>); the widget shell and head, the menus, the page frame, the
+        settings form, the dialogs and the toasts carry <code>data-oc-base</code>, so plain html inside them takes
+        the house look. Below the slice 2b parts, the last group draws those shells live.</dd>
+    <dt>what to check</dt>
+    <dd>"take recommendation" and "add a note" are the same button: same height, same outline, same type, only the
+        label differs. Every plain element below looks like the rest of the app in every theme. In the shells group,
+        open the widget menu, the sort menu, each dialog, and tab through the settings form, under a few themes.</dd>
+</dl>
+
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/style-guide/specimens/ReviewPanel.svelte</code></div>
+    <div class="sg-specimen__body" id="sg-live-review"></div>
+</div>

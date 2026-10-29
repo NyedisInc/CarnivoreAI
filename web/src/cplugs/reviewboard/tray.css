@@ -1,0 +1,192 @@
+@layer components {
+  .rb { container: rb / inline-size; }
+
+  .rb-body {
+    position: relative;
+    min-width: 0;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  /* min-width: 0 */
+  .rb-main {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+  }
+
+  .rb-fold {
+    display: flex;
+    flex: 0 1 auto;
+    flex-direction: column;
+    max-height: 55%;
+    min-height: 0;
+    min-width: 0;
+    background: var(--oc-ground-page);
+    box-shadow: inset 0 -1px 0 0 var(--oc-line-rule);
+  }
+
+  .rb-fold-body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    padding: 8px;
+    overflow-y: auto;
+    scroll-padding-block: 12px;
+  }
+
+  .rb-fold-foot {
+    display: flex;
+    align-items: center;
+    flex: none;
+    gap: 8px;
+    padding: 6px 8px;
+    box-shadow: inset 0 1px 0 0 var(--oc-line-rule);
+  }
+
+  .rb-fold-foot .rb-count { flex: 1 1 auto; text-align: center; }
+  .rb-foot-key { display: inline-grid; place-items: center; min-width: 44px; min-height: 40px; }
+
+  .rb-prompt {
+    --_bd: transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-bottom: 8px;
+    box-shadow: inset 0 -1px 0 0 var(--oc-line-faint);
+  }
+
+  .rb-prompt[data-highlighted='true'] { box-shadow: inset 2px 0 0 0 var(--oc-orange), inset 0 -1px 0 0 var(--oc-line-faint); }
+  .rb-fold .oc-check,
+  .rb-fold .oc-check__label { white-space: normal; overflow-wrap: anywhere; }
+  .rb-pill { overflow-wrap: anywhere; }
+
+  .rb-prompt-label { margin: 0; overflow-wrap: anywhere; color: var(--oc-text-primary); }
+  .rb-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .rb-pill {
+    --_bd: var(--oc-line-frame);
+    box-sizing: border-box;
+    min-height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--_bd);
+    border-radius: var(--oc-radius-sm);
+    background: transparent;
+    color: var(--oc-text-secondary);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .rb-pill:hover:not(:disabled) { background: var(--oc-ground-hover); color: var(--oc-text-primary); }
+
+  .rb-pill[aria-checked='true'],
+  .rb-pill[aria-pressed='true'] { --_bd: var(--oc-orange); color: var(--oc-text-bright); }
+
+  .rb-field {
+    --_bd: var(--oc-control-line);
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 36px;
+    padding: 6px 8px;
+    border: 1px solid var(--_bd);
+    border-radius: var(--oc-radius-sm);
+    background: var(--oc-ground-field);
+    color: var(--oc-text-primary);
+    font: inherit;
+    resize: vertical;
+  }
+
+  .rb-field::placeholder { color: var(--oc-text-dim); }
+
+  .rb-ghost {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--oc-text-muted);
+    font-size: var(--oc-fs-micro);
+  }
+
+  .rb-prompt-note { display: flex; align-items: flex-start; gap: 6px; }
+  .rb-prompt-note .rb-field { flex: 1 1 auto; }
+  .rb-note-text { margin: 0; color: var(--oc-text-secondary); font-size: var(--oc-fs-micro); overflow-wrap: anywhere; }
+  .rb-anchors { display: flex; flex-direction: column; gap: 6px; }
+
+  .rb-changed { display: flex; flex-direction: column; gap: 4px; padding-bottom: 8px; box-shadow: inset 0 -1px 0 0 var(--oc-line-faint); }
+  .rb-notice { display: flex; flex-direction: column; gap: 6px; color: var(--oc-yellow); font-size: var(--oc-fs-micro); }
+  .rb-notice p { margin: 0; }
+  .rb-confirm { margin: 0; color: var(--oc-green); font-size: var(--oc-fs-micro); overflow-wrap: anywhere; }
+  .rb-confirm[data-delivered='false'],
+  .rb-warn { margin: 0; color: var(--oc-coral); font-size: var(--oc-fs-micro); overflow-wrap: anywhere; }
+
+  .rb-link {
+    --_bd: transparent;
+    align-self: flex-start;
+    min-height: 32px;
+    padding: 0 4px;
+    border: 1px solid var(--_bd);
+    background: transparent;
+    color: var(--oc-cyan);
+    font: inherit;
+    font-size: var(--oc-fs-micro);
+    cursor: pointer;
+  }
+
+  .rb-over {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+    max-height: 60%;
+    overflow-y: auto;
+  }
+
+  .rb-round-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--oc-line-frame);
+    background: var(--oc-ground-field);
+  }
+
+  .rb-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .rb-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .rb-sent { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: var(--oc-fs-micro); }
+  .rb-sent em { color: var(--oc-text-muted); font-style: normal; }
+  .rb-sent li { overflow-wrap: anywhere; }
+  .rb-row[aria-current='true'] { --_bd: var(--oc-orange); }
+
+  .rb-inline {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .rb-inline-block {
+    position: absolute;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    background: var(--oc-ground-field);
+    box-shadow: inset 0 1px 0 0 var(--oc-line-rule), inset 0 -1px 0 0 var(--oc-line-rule);
+    pointer-events: auto;
+  }
+
+  @container rb (min-width: 900px) {
+    .rb-over { top: 0; left: auto; width: 360px; max-height: none; }
+  }
+
+  @media (pointer: coarse), (max-width: 600px) {
+    .rb-pill { min-height: 40px; }
+    .rb-field { min-height: 40px; }
+    .rb-link { min-height: 40px; }
+  }
+}

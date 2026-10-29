@@ -1,0 +1,45 @@
+/* The BBS frame and the Military Terminal rules for the whole TUI, from the active theme's palette.
+   Variables: $accent $background $foreground $frame $muted $coral $titlerow (src/tui/theme.py).
+   Rules: a title-row strip over a hairline, square corners, ONE accent-colored thing per surface (the active
+   tab, the login heading), hairlines instead of cards, destructive things in $coral. ASCII mode swaps the
+   frame to plain + - | characters (class "ascii" on the app). */
+
+Screen { background: $background; color: $foreground; }
+
+#tabs {
+    height: 2; padding: 0 1; background: $titlerow; color: $muted;
+    border-bottom: solid $frame;
+}
+#panes { border: solid $frame; height: 1fr; }
+.ascii #tabs { border-bottom: ascii $frame; }
+.ascii #panes { border: ascii $frame; }
+
+#server-down-banner {
+    height: 2; padding: 0 1; background: $titlerow; color: $coral;
+    border-bottom: solid $coral;
+}
+.ascii #server-down-banner { border-bottom: ascii $coral; }
+
+DataTable { background: $background; color: $foreground; }
+DataTable > .datatable--header { background: $titlerow; color: $muted; text-style: none; }
+DataTable > .datatable--cursor { background: $frame; color: $foreground; text-style: none; }
+SessionsPane.armed DataTable > .datatable--cursor { background: $coral; color: $background; }
+
+.read-summary, .read-note, #sessions-note { color: $muted; }
+
+Footer { background: $titlerow; color: $muted; }
+Footer FooterKey { background: $titlerow; color: $muted; }
+Footer FooterKey .footer-key--key { background: $titlerow; color: $foreground; text-style: bold; }
+
+Input { background: $background; border: solid $frame; }
+Input:focus { border: solid $foreground; }
+.ascii Input { border: ascii $frame; }
+.ascii Input:focus { border: ascii $foreground; }
+
+#login { width: 60; height: auto; margin: 2 4; padding: 0 1; border: solid $frame; }
+.ascii #login { border: ascii $frame; }
+#login-heading { color: $accent; text-style: bold; }
+#login-notice, #login-status { color: $coral; }
+
+NewSessionModal #new-box { border: solid $frame; }
+.ascii NewSessionModal #new-box { border: ascii $frame; }

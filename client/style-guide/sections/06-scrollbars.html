@@ -1,0 +1,39 @@
+<h2 class="sg-h2">scrollbars</h2>
+<p class="sg-lead">Scrollbars are themed once, globally, by <code>client/css/scrollbars.css</code>, for pointer devices
+(<code>(hover: hover) and (pointer: fine)</code>). A component never styles its own. Always reachable: a thin
+themed thumb is drawn whenever the area actually overflows, and brightens under the pointer with no layout shift.</p>
+
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><span>the shipped scrollbar on an ordinary scrolling box, point at the thumb</span></div>
+    <div class="sg-specimen__body">
+        <div class="sg-scroll-demo" tabindex="0" aria-label="scrollbar sample">
+            <p>at rest the thumb is already drawn (<code>--oc-scrollbar-thumb-rest</code>) and the track is quiet - nothing appears or moves when the pointer arrives.</p>
+            <p>the full thumb colour is the theme's accent pulled 70 percent of the way onto its own ground (<code>--oc-scrollbar-thumb</code>).</p>
+            <p>hovering the thumb itself takes it to 85 percent (<code>--oc-scrollbar-thumb-hover</code>) and holding it takes it all the way to the accent (<code>--oc-scrollbar-thumb-active</code>).</p>
+            <p>the track, once shown, is the theme's own text colour at 8 percent (<code>--oc-scrollbar-track</code>), so the channel reads as cut into the surface.</p>
+            <p>the bar is 11px wide with a 2px transparent inset, so the whole 11px is grabbable and 7px of it is painted, with a 36px minimum thumb.</p>
+            <p>measured thumb against track across all 40 themes: worst 2.19 (snes), carnivore 2.83, best 7.77 (matrix).</p>
+            <p>a box that does not overflow has no bar at all.</p>
+        </div>
+    </div>
+</div>
+
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>Any box with <code>overflow: auto</code> or <code>scroll</code> gets the themed, always-reachable bar
+        automatically. Give a page ONE scrolling box (the page frame's <code>.oc-page__body</code>): a fixed overlay
+        whose document never scrolls under it.</dd>
+    <dt>do not</dt>
+    <dd>Declare <code>::-webkit-scrollbar</code> rules in a component, hide a scroll region's ability to scroll (this
+        file only ever changes paint, never <code>overflow</code> or <code>display</code>), or set the
+        <code>background</code> shorthand on the thumb (it resets <code>background-clip</code> and fills the inset
+        back in).</dd>
+    <dt>why never hover on the box</dt>
+    <dt>themes</dt>
+    <dd>Reads <code>--oc-scrollbar-thumb-rest</code>, <code>--oc-scrollbar-thumb</code>, <code>--oc-scrollbar-thumb-hover</code>,
+        <code>--oc-scrollbar-thumb-active</code> and <code>--oc-scrollbar-track</code>, all derived from the theme's accent,
+        ground and text. A fixed red would be wrong on matrix, gameboy, the ASCII themes and codex.</dd>
+    <dt>terminal</dt>
+    <dd>xterm's own scrollbar is drawn at zero width by <code>client/css/styles.css</code>; the 16px the fit addon reserves
+        for it is where <code>--oc-terminal-inset</code> comes from.</dd>
+</dl>

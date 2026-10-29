@@ -1,0 +1,49 @@
+{
+  "api_routes": [
+    "src/api/stats_routes.py",
+    "src/api/stats_maintenance_routes.py",
+    "src/api/stats_feed_routes.py"
+  ],
+  "area": "settings",
+  "docs": [
+    "docs/stats-dashboard.md",
+    "docs/stats-store-redesign.md",
+    "docs/stats-feed.md"
+  ],
+  "examples": [
+    "Turn stats off and clear: usage stats rebuilds its small database from your transcripts, keeping your charts, settings and recorded activity."
+  ],
+  "how_to": [
+    "Open settings, advanced, statistics.",
+    "Switch collect stats off. Every stats widget now says stats off.",
+    "Press clear stats and reclaim space, then clear stats to confirm. Usage stats rebuilds from your transcripts.",
+    "Switch collect stats on; backfill and catch up also rebuilds. The panel counts the conversations left."
+  ],
+  "id": "stats-collection",
+  "issues": [
+    1189,
+    1547,
+    1900
+  ],
+  "keywords": [
+    "stats",
+    "analytics",
+    "clear",
+    "reclaim",
+    "disk",
+    "backfill",
+    "catch up"
+  ],
+  "media_exempt": "a settings panel whose clear action is destructive; the capture would need a seeded stats database",
+  "name": "Stats collection",
+  "since": "2026-09-30",
+  "status": "stable",
+  "summary": "usage stats is a core feature with one on/off switch in Settings; switch collection off, clear what it collected to reclaim the disk, and backfill to catch up when you turn it back on.",
+  "surfaces": [
+    "web/src/lib/settings-page/StatsCollectionPanel.svelte"
+  ],
+  "updated": "2026-10-17",
+  "where": [
+    "Settings, advanced, statistics."
+  ]
+}

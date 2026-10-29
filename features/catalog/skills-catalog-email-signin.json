@@ -1,0 +1,30 @@
+{
+  "api_routes": [
+    "src/api/catalog_email_signin_routes.py"
+  ],
+  "area": "skills-catalog",
+  "docs": [],
+  "examples": [
+    "Sign in to rate a skill from a machine where you are not logged in to GitHub."
+  ],
+  "how_to": [
+    "Type your email and press email me a code, then enter the code. No separate account is needed."
+  ],
+  "id": "skills-catalog-email-signin",
+  "issues": [],
+  "keywords": [
+    "sign in",
+    "email"
+  ],
+  "media": [],
+  "name": "Catalog email sign-in",
+  "since": "2026-09-16",
+  "status": "stable",
+  "summary": "sign in to the catalog with just an email address, no separate account needed.",
+  "surfaces": [],
+  "updated": "2026-09-27",
+  "where": [
+    "The top of the skills catalog, EMAIL SIGN IN."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

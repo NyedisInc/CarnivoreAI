@@ -1,0 +1,74 @@
+{
+  "kind": "cplug",
+  "id": "flow",
+  "name": "flow chart",
+  "version": "1.0.0",
+  "api_version": 1,
+  "min_app_version": "1.16.0",
+  "author": "Carnivore contributors",
+  "license": "MIT",
+  "tier": "builtin",
+  "scope": [
+    "global"
+  ],
+  "icon": "swarm",
+  "default_enabled": false,
+  "requires": [
+    {
+      "id": "huddle",
+      "kind": "cplug"
+    },
+    {
+      "id": "crosstalk",
+      "kind": "core"
+    },
+    {
+      "id": "activity_read",
+      "kind": "core"
+    },
+    {
+      "id": "transcript_events",
+      "kind": "core"
+    }
+  ],
+  "permissions": [
+    {
+      "name": "activity.read"
+    }
+  ],
+  "owns": {
+    "routes": [
+      "/feed",
+      "/run"
+    ],
+    "strings": [
+      "cplug.flow."
+    ],
+    "styles": [
+      "flow.css"
+    ],
+    "tests": [
+      "tests/python/cplugs/flow/",
+      "web/src/cplugs/flow/"
+    ],
+    "style_guide": [
+      "web/src/cplugs/flow/FlowBody.svelte",
+      "web/src/cplugs/flow/FlowBubble.svelte",
+      "web/src/cplugs/flow/FlowCard.svelte",
+      "web/src/cplugs/flow/flow.css"
+    ]
+  },
+  "data": [
+    {
+      "id": "graph",
+      "kind": "db",
+      "path": "flow.db",
+      "scope_by": "install",
+      "policy": {
+        "own": "excluded",
+        "share": "excluded",
+        "reason": "flow graph snapshots of this install, keyed by no session or project"
+      }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+<h2 class="sg-h2">contrast: every theme, every role</h2>
+<p class="sg-lead">A role matrix, measured live in this browser: every text role on every ground, and the non-text
+pairs a base must guarantee, under every shipped theme (issue #2033). Each pair is resolved on a real element painted
+with that theme alone, composited over the page ground, and scored with the WCAG 2.x formula, so
+<code>color-mix</code> and relative colors count exactly as they are painted. This page reports; it does not fail a
+build. The gate that holds bundled themes to these floors comes in a later slice.</p>
+
+<dl class="sg-facts">
+    <dt>floors</dt>
+    <dd>Text 4.5:1 on every ground (WCAG AA). A text pair between 3:1 and 4.5:1 is flagged "large only": readable as a
+        heading, not as body text. The control line (<code>--oc-line-control</code>) needs 3:1 against its ground (WCAG
+        1.4.11). A hover or selected layer needs a visible step of 1.1:1 off its surface. The hairline
+        (<code>--oc-line-hairline</code>) is decorative and has no floor; its ratio is shown for reference.</dd>
+    <dt>resting and transient grounds</dt>
+    <dd>Sunken, base, band, raised, and the legacy panel and card grounds are resting: something sits on them all the
+        time. The overlay and the legacy hover ground (marked *) are transient. The first count in the table is resting
+        failures, the ones a reader meets on an ordinary page.</dd>
+    <dt>faint ink is held as text</dt>
+</dl>
+
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/style-guide/specimens/ContrastMatrix.svelte</code><span>pick a theme to see its matrix</span></div>
+    <div class="sg-specimen__body" id="sg-live-contrast"></div>
+</div>

@@ -1,0 +1,110 @@
+{
+  "schema": 1,
+  "id": "devwidgetlab",
+  "name_key": "cplug.devwidgetlab.name",
+  "description_key": "cplug.devwidgetlab.description",
+  "version": "0.1.0",
+  "icon": "grid",
+  "author": "Carnivore contributors",
+  "min_app_version": "1.16.1",
+  "tier": "dev",
+  "tool_family": "widget_lab",
+  "default_enabled": false,
+  "permissions": {
+    "app": [
+      "sessions.read",
+      "sessions.message",
+      "sessions.create",
+      "agent_writes"
+    ]
+  },
+  "permission_reasons": {
+    "sessions.read": "list the sessions so a draft handed to Claude can name its session",
+    "sessions.message": "needed for this plugin to work",
+    "sessions.create": "needed for this plugin to work",
+    "agent_writes": "let agents create and edit widget lab drafts through the widget lab tools"
+  },
+  "surfaces": {
+    "routes": true,
+    "tabs": [
+      "devwidgetlab"
+    ],
+    "page_section": "dev",
+    "page_section_label_key": "cplug.devwidgetlab.page_section",
+    "page_section_icon": "grid",
+    "mcp_tools": [
+      "widget_lab_drafts_list",
+      "widget_lab_draft_get",
+      "widget_lab_draft_create",
+      "widget_lab_draft_files_list",
+      "widget_lab_draft_file_get",
+      "widget_lab_draft_file_set",
+      "widget_lab_draft_file_delete",
+      "widget_lab_draft_rebuild",
+      "widget_lab_draft_spawn",
+      "widget_lab_draft_delete"
+    ]
+  },
+  "settings_schema": {
+    "version": 1,
+    "fields": {
+      "sourceFolder": {
+        "kind": "string",
+        "labelKey": "cplug.devwidgetlab.settings.source_folder",
+        "hintKey": "cplug.devwidgetlab.settings.source_folder_help",
+        "maxLength": 1000,
+        "default": ""
+      }
+    }
+  },
+  "css_prefix": "dwl",
+  "owns": {
+    "strings": [
+      "cplug.devwidgetlab."
+    ],
+    "styles": [
+      "lab.css",
+      "lab-frame.css",
+      "lab-menu.css",
+      "lab-viewer.css"
+    ],
+    "tests": [
+      "tests/python/cplugs/devwidgetlab/",
+      "web/src/cplugs/devwidgetlab/"
+    ],
+    "style_guide": [
+      "web/src/cplugs/devwidgetlab/CaptureFooter.svelte",
+      "web/src/cplugs/devwidgetlab/CaptureResults.svelte",
+      "web/src/cplugs/devwidgetlab/ChecksSection.svelte",
+      "web/src/cplugs/devwidgetlab/ComparePair.svelte",
+      "web/src/cplugs/devwidgetlab/DockBar.svelte",
+      "web/src/cplugs/devwidgetlab/DraftActions.svelte",
+      "web/src/cplugs/devwidgetlab/DraftCompare.svelte",
+      "web/src/cplugs/devwidgetlab/DraftForm.svelte",
+      "web/src/cplugs/devwidgetlab/DraftPanel.svelte",
+      "web/src/cplugs/devwidgetlab/DrawerChrome.svelte",
+      "web/src/cplugs/devwidgetlab/FindRow.svelte",
+      "web/src/cplugs/devwidgetlab/FitTable.svelte",
+      "web/src/cplugs/devwidgetlab/HostBand.svelte",
+      "web/src/cplugs/devwidgetlab/HostChrome.svelte",
+      "web/src/cplugs/devwidgetlab/IdleReadout.svelte",
+      "web/src/cplugs/devwidgetlab/LabControls.svelte",
+      "web/src/cplugs/devwidgetlab/LabFrame.svelte",
+      "web/src/cplugs/devwidgetlab/LabMenu.svelte",
+      "web/src/cplugs/devwidgetlab/LabViewer.svelte",
+      "web/src/cplugs/devwidgetlab/MenuSection.svelte",
+      "web/src/cplugs/devwidgetlab/OptionChip.svelte",
+      "web/src/cplugs/devwidgetlab/PreviewFrame.svelte",
+      "web/src/cplugs/devwidgetlab/ResizeBox.svelte",
+      "web/src/cplugs/devwidgetlab/ScenarioBox.svelte",
+      "web/src/cplugs/devwidgetlab/PointerMenu.svelte",
+      "web/src/cplugs/devwidgetlab/SidebarControls.svelte",
+      "web/src/cplugs/devwidgetlab/WidgetTree.svelte",
+      "web/src/cplugs/devwidgetlab/WidgetTreeMenu.svelte",
+      "web/src/cplugs/devwidgetlab/lab.css",
+      "web/src/cplugs/devwidgetlab/lab-frame.css",
+      "web/src/cplugs/devwidgetlab/lab-menu.css",
+      "web/src/cplugs/devwidgetlab/lab-viewer.css"
+    ]
+  }
+}

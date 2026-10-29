@@ -1,0 +1,259 @@
+{
+  "about": "THE THEME CONTRACT (design base, issue #2033, plan section 5): the only custom properties a theme's cssVars may set. A theme owns color, its one font family and a clamped corner choice; the base owns spacing, type sizes, heights, borders, depth, motion and stacking. Anything else a theme sets is REPORTED (warn only until plan batch B11), never silently honored as part of the contract. Read by src/core/design_base/theme_contract.py and web/src/lib/base/theme-contract.ts.",
+  "names": {
+    "--color-bg": {
+      "kind": "color",
+      "required": true
+    },
+    "--color-bg-page": {
+      "kind": "color",
+      "required": true
+    },
+    "--color-header-bg": {
+      "kind": "color",
+      "required": true
+    },
+    "--color-bg-card": {
+      "kind": "color",
+      "required": true
+    },
+    "--color-fg": {
+      "kind": "color",
+      "required": true
+    },
+    "--color-fg-muted": {
+      "kind": "color",
+      "required": true
+    },
+    "--color-fg-subtle": {
+      "kind": "color",
+      "required": true
+    },
+    "--color-fg-faint": {
+      "kind": "color",
+      "required": true
+    },
+    "--color-border": {
+      "kind": "color",
+      "required": true
+    },
+    "--color-accent": {
+      "kind": "color",
+      "required": true
+    },
+    "--color-accent-strong": {
+      "kind": "color",
+      "required": true
+    },
+    "--color-on-accent": {
+      "kind": "color",
+      "required": true
+    },
+    "--color-success": {
+      "kind": "color",
+      "required": true
+    },
+    "--color-warning": {
+      "kind": "color",
+      "required": true
+    },
+    "--color-danger": {
+      "kind": "color",
+      "required": true
+    },
+    "--color-info": {
+      "kind": "color",
+      "required": true
+    },
+    "--color-border-subtle": {
+      "kind": "color"
+    },
+    "--color-bg-elevated": {
+      "kind": "color"
+    },
+    "--color-bg-hover": {
+      "kind": "color"
+    },
+    "--color-tabstrip-bg": {
+      "kind": "color"
+    },
+    "--color-bg-overlay": {
+      "kind": "color"
+    },
+    "--color-bg-overlay-faint": {
+      "kind": "color"
+    },
+    "--color-bg-overlay-soft": {
+      "kind": "color"
+    },
+    "--color-accent-bg": {
+      "kind": "color"
+    },
+    "--color-accent-bg-active": {
+      "kind": "color"
+    },
+    "--color-accent-bg-faint": {
+      "kind": "color"
+    },
+    "--color-accent-bg-hover": {
+      "kind": "color"
+    },
+    "--color-accent-bg-soft": {
+      "kind": "color"
+    },
+    "--color-accent-border": {
+      "kind": "color"
+    },
+    "--color-accent-border-mid": {
+      "kind": "color"
+    },
+    "--color-accent-border-soft": {
+      "kind": "color"
+    },
+    "--color-accent-border-strong": {
+      "kind": "color"
+    },
+    "--color-accent-glow": {
+      "kind": "color"
+    },
+    "--color-accent-glow-strong": {
+      "kind": "color"
+    },
+    "--color-accent-shadow-soft": {
+      "kind": "color"
+    },
+    "--color-danger-bg": {
+      "kind": "color"
+    },
+    "--color-danger-bg-hover": {
+      "kind": "color"
+    },
+    "--color-danger-border": {
+      "kind": "color"
+    },
+    "--color-danger-glow": {
+      "kind": "color"
+    },
+    "--color-danger-soft": {
+      "kind": "color"
+    },
+    "--color-danger-strong": {
+      "kind": "color"
+    },
+    "--color-danger-strong-bg": {
+      "kind": "color"
+    },
+    "--color-info-bg": {
+      "kind": "color"
+    },
+    "--color-info-border": {
+      "kind": "color"
+    },
+    "--color-warning-bg": {
+      "kind": "color"
+    },
+    "--color-warning-border": {
+      "kind": "color"
+    },
+    "--color-badge-external-bg": {
+      "kind": "color"
+    },
+    "--color-badge-external-fg": {
+      "kind": "color"
+    },
+    "--color-badge-owned-bg": {
+      "kind": "color"
+    },
+    "--color-badge-owned-fg": {
+      "kind": "color"
+    },
+    "--color-badge-tmux-bg": {
+      "kind": "color"
+    },
+    "--color-badge-tmux-fg": {
+      "kind": "color"
+    },
+    "--color-status-connected": {
+      "kind": "color"
+    },
+    "--color-status-connected-glow": {
+      "kind": "color"
+    },
+    "--color-status-error": {
+      "kind": "color"
+    },
+    "--color-status-error-glow": {
+      "kind": "color"
+    },
+    "--color-status-pending": {
+      "kind": "color"
+    },
+    "--color-status-pending-glow": {
+      "kind": "color"
+    },
+    "--color-syntax-blue": {
+      "kind": "color"
+    },
+    "--color-syntax-cyan": {
+      "kind": "color"
+    },
+    "--badge-color-claude": {
+      "kind": "color"
+    },
+    "--badge-color-codex": {
+      "kind": "color"
+    },
+    "--badge-color-hermes": {
+      "kind": "color"
+    },
+    "--badge-color-openclaw": {
+      "kind": "color"
+    },
+    "--shadow-modal": {
+      "kind": "shadow"
+    },
+    "--font-mono": {
+      "kind": "font"
+    },
+    "--radius-control": {
+      "kind": "length",
+      "min": 0,
+      "max": 4,
+      "unit": "px"
+    },
+    "--radius-panel": {
+      "kind": "length",
+      "min": 0,
+      "max": 8,
+      "unit": "px"
+    },
+    "--legacy-radius-sm": {
+      "kind": "length",
+      "min": 0,
+      "max": 4,
+      "unit": "px"
+    },
+    "--legacy-radius-md": {
+      "kind": "length",
+      "min": 0,
+      "max": 8,
+      "unit": "px"
+    },
+    "--legacy-radius-lg": {
+      "kind": "length",
+      "min": 0,
+      "max": 8,
+      "unit": "px"
+    }
+  },
+  "deprecated": {
+    "--radius-sm": "--radius-control",
+    "--radius-md": "--radius-panel",
+    "--radius-lg": "--radius-panel",
+    "--radius-full": null,
+    "--radius-pill": null
+  },
+  "forbidden_prefixes": [
+    "--oc-"
+  ]
+}

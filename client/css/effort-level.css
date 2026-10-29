@@ -1,0 +1,449 @@
+/* EFFORT LEVEL - the colour, and for the top levels the motion, of a
+ * session's reasoning effort (issue #852).
+
+ * ONE CLASS SET FOR BOTH TREES. The terminal foot bar's effort text
+ * (web/src/opscenter/cells/terminal-live/TerminalFoot.svelte) and the
+ * drawer's agent robot (client/js/session-model-icon.js) both wear
+ * `.effort-level .effort--<level>`, built by one mapping
+ * (client/js/effort-level.js, mirrored in web/src/lib/effort/), so the
+ * text and the icon cannot drift apart. The motion is never a text
+ * gradient, because the robot is an SVG stroked in currentColor and a
+ * background-clip shimmer cannot reach it.
+
+ * EVERY @keyframes IN THIS FILE ANIMATES TRANSFORM OR OPACITY ONLY (#1599,
+ *"Rewrite the three expensive ones onto the
+ * cheap properties"). The browser moves those on the compositor, from a
+ * layer painted once; filter, mask-position and colour keyframes repaint
+ * or re-rasterise every frame, and a page with several terminals paid for
+ * it constantly. tests/python/design_system/test_cheap_animations.py fails
+ * the build on any other animated property. The effects that used to animate
+ * a property are now STATIC effects on a layer that is moved or faded:
+ * a text-shadow glow under an opacity pulse (shimmer), a pre-brightened
+ * copy of the robot under a window that slides with translateX (sheen, the
+ * robot only), and three pre-coloured copies cross-faded by opacity (the
+ * rainbow, #1821). NOTHING THAT MOVES SITS INSIDE A BACKDROP ROOT, A FILTER,
+ * A MASK OR AN OPACITY BELOW 1 (tests/python/design_system/
+ * test_effort_cheap_surfaces.py).
+
+ * THE LEVEL IS WHAT THE HARNESS RECORDED, never a default: no class is
+ * written for an unknown or absent effort, and the element keeps its own
+ * colour.
+
+ * Colour is --oc-* tokens only. The two purples are derived per theme in
+ * web/src/opscenter/tokens.css. prefers-reduced-motion keeps every colour
+ * and drops every animation and sparkle. */
+
+.effort-level {
+    position: relative;
+}
+
+.effort-level.effort--low {
+    color: var(--oc-yellow);
+}
+
+.effort-level.effort--medium {
+    color: var(--oc-green);
+}
+
+.effort-level.effort--high:not(.session-sidebar-row-model) {
+    color: var(--oc-cyan);
+}
+
+.effort-level.effort--xhigh {
+    color: var(--oc-purple-light);
+    animation: effort-shimmer 2.4s ease-in-out infinite;
+    text-shadow: 0 0 2px color-mix(in oklab, currentColor 70%, transparent);
+}
+
+.effort-level.effort--max {
+    color: var(--oc-coral);
+}
+
+.effort-level.effort--ultracode {
+    color: var(--oc-purple-deep);
+    animation: effort-shimmer 2.4s ease-in-out infinite;
+    text-shadow: 0 0 2px color-mix(in oklab, currentColor 70%, transparent);
+}
+
+.session-sidebar-row-model.effort-level.effort--ultracode > svg {
+    filter: drop-shadow(0 0 1.5px color-mix(in oklab, currentColor 70%, transparent));
+}
+
+.effort-level.effort--max::before,
+.effort-level.effort--max::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    opacity: 0;
+    animation: effort-rainbow-a 3.6s linear infinite;
+}
+
+.effort-level.effort--max::before {
+    --effort-rb: var(--oc-green);
+}
+
+.effort-level.effort--max::after {
+    --effort-rb: var(--oc-cyan);
+    animation-name: effort-rainbow-b;
+}
+
+.session-sidebar-row-model.effort-level.effort--max::before,
+.session-sidebar-row-model.effort-level.effort--max::after {
+    width: 16px;
+    height: 16px;
+    -webkit-mask: var(--effort-robot-mask) center / 14px 14px no-repeat;
+    mask: var(--effort-robot-mask) center / 14px 14px no-repeat;
+    background: var(--effort-rb);
+}
+
+.effort-level.effort--max:not(.session-sidebar-row-model)::before,
+.effort-level.effort--max:not(.session-sidebar-row-model)::after {
+    content: attr(data-word) / '';
+    right: 0;
+    bottom: 0;
+    white-space: nowrap;
+    color: var(--effort-rb);
+}
+
+.session-sidebar-row-model.effort-level.effort--xhigh {
+    animation: none;
+}
+
+.session-sidebar-row-model.effort-level.effort--high > svg,
+.session-sidebar-row-model.effort-level.effort--xhigh > svg {
+    opacity: 0.6;
+}
+
+.session-sidebar-row-model.effort-level {
+    --effort-robot-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Crect x='3.5' y='5' width='13' height='10.5' rx='2.6' stroke='%23000' stroke-width='1.5'/%3E%3Cpath d='M10 2.6v2.4M2.6 9.2v2.6M17.4 9.2v2.6' stroke='%23000' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='10' cy='2' r='1.05' fill='%23000'/%3E%3Ccircle cx='7.4' cy='9.4' r='1.15' fill='%23000'/%3E%3Ccircle cx='12.6' cy='9.4' r='1.15' fill='%23000'/%3E%3Cpath d='M7.6 12.6h4.8' stroke='%23000' stroke-width='1.5' stroke-linecap='round'/%3E%3Crect x='7.5' y='2.5' width='5' height='3' rx='1' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+}
+
+.session-sidebar-row-model.effort-level > .effort-fx {
+    display: none;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.session-sidebar-row-model.effort-level.effort--high > .effort-fx,
+.session-sidebar-row-model.effort-level.effort--xhigh > .effort-fx {
+    display: block;
+}
+
+.session-sidebar-row-model.effort-level.effort--high > .effort-fx > i,
+.session-sidebar-row-model.effort-level.effort--xhigh > .effort-fx > i {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--w);
+    overflow: hidden;
+    animation: effort-sheen-window 2.6s linear infinite;
+}
+
+.effort-fx > i:nth-child(1) { --w: 9.6px; --a: 0.1; }
+.effort-fx > i:nth-child(2) { --w: 6.4px; --a: 0.222; }
+.effort-fx > i:nth-child(3) { --w: 3.2px; --a: 0.286; }
+
+.session-sidebar-row-model.effort-level.effort--high > .effort-fx > i::before,
+.session-sidebar-row-model.effort-level.effort--xhigh > .effort-fx > i::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 16px;
+    height: 16px;
+    -webkit-mask: var(--effort-robot-mask) center / 14px 14px no-repeat;
+    mask: var(--effort-robot-mask) center / 14px 14px no-repeat;
+    background: rgb(from currentColor clamp(0, calc(r * 1.9), 255) clamp(0, calc(g * 1.9), 255) clamp(0, calc(b * 1.9), 255));
+    opacity: var(--a);
+    animation: effort-sheen-copy 2.6s linear infinite;
+}
+
+@keyframes effort-sheen-window {
+    from { transform: translateX(calc(-4.8px - var(--w) / 2)); }
+    to { transform: translateX(calc(21.12px - var(--w) / 2)); }
+}
+
+@keyframes effort-sheen-copy {
+    from { transform: translateX(calc(4.8px + var(--w) / 2)); }
+    to { transform: translateX(calc(-21.12px + var(--w) / 2)); }
+}
+
+.effort-level.effort--ultracode::before,
+.effort-level.effort--ultracode::after {
+    content: '';
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--oc-text-bright) 0 35%, transparent 70%);
+    opacity: 0;
+    pointer-events: none;
+    animation: effort-twinkle 1.8s ease-in-out infinite;
+}
+
+.effort-level.effort--ultracode::before {
+    top: -2px;
+    right: -3px;
+}
+
+.effort-level.effort--ultracode::after {
+    bottom: -1px;
+    left: -3px;
+    animation-delay: 0.9s;
+}
+
+.session-sidebar-row-model.effort-level.effort--ultracode {
+    animation: none;
+}
+
+.session-sidebar-row-model.effort-level.effort--ultracode > svg {
+    animation: effort-shimmer 2.4s ease-in-out infinite;
+}
+
+.session-sidebar-row-model.effort-level.effort--ultracode::before,
+.session-sidebar-row-model.effort-level.effort--ultracode::after {
+    animation: effort-twinkle-scale 1.8s ease-in-out infinite, effort-twinkle-pulse-a 7.2s linear infinite;
+}
+
+.session-sidebar-row-model.effort-level.effort--ultracode::after {
+    animation-name: effort-twinkle-scale, effort-twinkle-pulse-b;
+    animation-delay: 0.9s;
+}
+
+@keyframes effort-twinkle-scale {
+    0%, 100% { transform: scale(0.4); }
+    50% { transform: scale(1); }
+}
+
+@keyframes effort-twinkle-pulse-a {
+    0% { opacity: 0; }
+    1.3889% { opacity: 0.017; }
+    2.7778% { opacity: 0.071; }
+    4.1667% { opacity: 0.167; }
+    5.5556% { opacity: 0.305; }
+    6.9444% { opacity: 0.473; }
+    8.3333% { opacity: 0.645; }
+    9.7222% { opacity: 0.795; }
+    11.1111% { opacity: 0.903; }
+    12.5% { opacity: 0.959; }
+    13.8889% { opacity: 0.958; }
+    15.2778% { opacity: 0.895; }
+    16.6667% { opacity: 0.768; }
+    18.0556% { opacity: 0.592; }
+    19.4444% { opacity: 0.398; }
+    20.8333% { opacity: 0.222; }
+    22.2222% { opacity: 0.094; }
+    23.6111% { opacity: 0.022; }
+    25% { opacity: 0; }
+    26.3889% { opacity: 0.019; }
+    27.7778% { opacity: 0.076; }
+    29.1667% { opacity: 0.167; }
+    30.5556% { opacity: 0.283; }
+    31.9444% { opacity: 0.407; }
+    33.3333% { opacity: 0.522; }
+    34.7222% { opacity: 0.615; }
+    36.1111% { opacity: 0.681; }
+    37.5% { opacity: 0.721; }
+    38.8889% { opacity: 0.736; }
+    40.2778% { opacity: 0.714; }
+    41.6667% { opacity: 0.645; }
+    43.0556% { opacity: 0.527; }
+    44.4444% { opacity: 0.375; }
+    45.8333% { opacity: 0.222; }
+    47.2222% { opacity: 0.1; }
+    48.6111% { opacity: 0.024; }
+    50% { opacity: 0; }
+    51.3889% { opacity: 0.024; }
+    52.7778% { opacity: 0.1; }
+    54.1667% { opacity: 0.222; }
+    55.5556% { opacity: 0.375; }
+    56.9444% { opacity: 0.527; }
+    58.3333% { opacity: 0.645; }
+    59.7222% { opacity: 0.714; }
+    61.1111% { opacity: 0.736; }
+    62.5% { opacity: 0.721; }
+    63.8889% { opacity: 0.681; }
+    65.2778% { opacity: 0.615; }
+    66.6667% { opacity: 0.522; }
+    68.0556% { opacity: 0.407; }
+    69.4444% { opacity: 0.283; }
+    70.8333% { opacity: 0.167; }
+    72.2222% { opacity: 0.076; }
+    73.6111% { opacity: 0.019; }
+    75% { opacity: 0; }
+    76.3889% { opacity: 0.022; }
+    77.7778% { opacity: 0.094; }
+    79.1667% { opacity: 0.222; }
+    80.5556% { opacity: 0.398; }
+    81.9444% { opacity: 0.592; }
+    83.3333% { opacity: 0.768; }
+    84.7222% { opacity: 0.895; }
+    86.1111% { opacity: 0.958; }
+    87.5% { opacity: 0.959; }
+    88.8889% { opacity: 0.903; }
+    90.2778% { opacity: 0.795; }
+    91.6667% { opacity: 0.645; }
+    93.0556% { opacity: 0.473; }
+    94.4444% { opacity: 0.305; }
+    95.8333% { opacity: 0.167; }
+    97.2222% { opacity: 0.071; }
+    98.6111% { opacity: 0.017; }
+    100% { opacity: 0; }
+}
+
+@keyframes effort-twinkle-pulse-b {
+    0% { opacity: 0; }
+    1.3889% { opacity: 0.024; }
+    2.7778% { opacity: 0.101; }
+    4.1667% { opacity: 0.232; }
+    5.5556% { opacity: 0.403; }
+    6.9444% { opacity: 0.584; }
+    8.3333% { opacity: 0.736; }
+    9.7222% { opacity: 0.832; }
+    11.1111% { opacity: 0.864; }
+    12.5% { opacity: 0.84; }
+    13.8889% { opacity: 0.775; }
+    15.2778% { opacity: 0.678; }
+    16.6667% { opacity: 0.554; }
+    18.0556% { opacity: 0.415; }
+    19.4444% { opacity: 0.277; }
+    20.8333% { opacity: 0.158; }
+    22.2222% { opacity: 0.069; }
+    23.6111% { opacity: 0.017; }
+    25% { opacity: 0; }
+    26.3889% { opacity: 0.018; }
+    27.7778% { opacity: 0.081; }
+    29.1667% { opacity: 0.195; }
+    30.5556% { opacity: 0.358; }
+    31.9444% { opacity: 0.551; }
+    33.3333% { opacity: 0.736; }
+    34.7222% { opacity: 0.882; }
+    36.1111% { opacity: 0.971; }
+    37.5% { opacity: 1; }
+    38.8889% { opacity: 0.971; }
+    40.2778% { opacity: 0.882; }
+    41.6667% { opacity: 0.736; }
+    43.0556% { opacity: 0.551; }
+    44.4444% { opacity: 0.358; }
+    45.8333% { opacity: 0.195; }
+    47.2222% { opacity: 0.081; }
+    48.6111% { opacity: 0.018; }
+    50% { opacity: 0; }
+    51.3889% { opacity: 0.017; }
+    52.7778% { opacity: 0.069; }
+    54.1667% { opacity: 0.158; }
+    55.5556% { opacity: 0.277; }
+    56.9444% { opacity: 0.415; }
+    58.3333% { opacity: 0.554; }
+    59.7222% { opacity: 0.678; }
+    61.1111% { opacity: 0.775; }
+    62.5% { opacity: 0.84; }
+    63.8889% { opacity: 0.864; }
+    65.2778% { opacity: 0.832; }
+    66.6667% { opacity: 0.736; }
+    68.0556% { opacity: 0.584; }
+    69.4444% { opacity: 0.403; }
+    70.8333% { opacity: 0.232; }
+    72.2222% { opacity: 0.101; }
+    73.6111% { opacity: 0.024; }
+    75% { opacity: 0; }
+    76.3889% { opacity: 0.023; }
+    77.7778% { opacity: 0.09; }
+    79.1667% { opacity: 0.195; }
+    80.5556% { opacity: 0.322; }
+    81.9444% { opacity: 0.449; }
+    83.3333% { opacity: 0.554; }
+    84.7222% { opacity: 0.627; }
+    86.1111% { opacity: 0.668; }
+    87.5% { opacity: 0.68; }
+    88.8889% { opacity: 0.668; }
+    90.2778% { opacity: 0.627; }
+    91.6667% { opacity: 0.554; }
+    93.0556% { opacity: 0.449; }
+    94.4444% { opacity: 0.322; }
+    95.8333% { opacity: 0.195; }
+    97.2222% { opacity: 0.09; }
+    98.6111% { opacity: 0.023; }
+    100% { opacity: 0; }
+}
+
+@keyframes effort-shimmer {
+    0%, 100% {
+        opacity: 0.68;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+@keyframes effort-rainbow-a {
+    0%, 5%, 66%, 100% { opacity: 0; }
+    25%, 58% { opacity: 1; }
+}
+
+@keyframes effort-rainbow-b {
+    0%, 35%, 100% { opacity: 0; }
+    55%, 80% { opacity: 1; }
+}
+
+@keyframes effort-twinkle {
+    0%, 100% {
+        opacity: 0;
+        transform: scale(0.4);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .effort-level.effort--xhigh,
+    .effort-level.effort--max,
+    .effort-level.effort--ultracode {
+        animation: none;
+    }
+
+    .session-sidebar-row-model.effort-level.effort--high > svg,
+    .session-sidebar-row-model.effort-level.effort--xhigh > svg {
+        opacity: 1;
+    }
+
+    .session-sidebar-row-model.effort-level.effort--ultracode > svg {
+        animation: none;
+    }
+
+    .session-sidebar-row-model.effort-level > .effort-fx {
+        display: none;
+    }
+
+    .effort-level.effort--max::before,
+    .effort-level.effort--max::after {
+        content: none;
+    }
+
+    .effort-level.effort--ultracode::before,
+    .effort-level.effort--ultracode::after {
+        content: none;
+    }
+}
+
+:root[data-motion="off"] .session-sidebar-row-model.effort-level.effort--high > svg,
+:root[data-motion="off"] .session-sidebar-row-model.effort-level.effort--xhigh > svg {
+    opacity: 1;
+}
+
+:root[data-motion="off"] .effort-level.effort--max::before,
+:root[data-motion="off"] .effort-level.effort--max::after,
+:root[data-motion="off"] .effort-level.effort--ultracode::before,
+:root[data-motion="off"] .effort-level.effort--ultracode::after {
+    content: none;
+}
+
+:root[data-motion="off"] .session-sidebar-row-model.effort-level > .effort-fx {
+    display: none;
+}

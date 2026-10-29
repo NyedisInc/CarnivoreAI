@@ -1,0 +1,55 @@
+{
+  "api_routes": [
+    "GET /api/v1/feature-catalog",
+    "GET /api/v1/feature-media/{feature_id}/{filename}"
+  ],
+  "area": "status-notifications",
+  "docs": [],
+  "examples": [
+    "Check what a light or robot icon in the sessions list means without leaving the page.",
+    "See a screenshot of a feature you have not tried yet before turning it on."
+  ],
+  "how_to": [
+    "Open the menu (the menu key in the rail, or the menu in the drawer) and choose documentation; it opens the documentation page.",
+    "Use the contents list at the top to jump to a section: getting started, the sidebar, what the marks mean, terminals and layouts, the status bar and control center, accounts and providers, launch profiles, skills, plugins, widgets and themes, settings and config, keyboard shortcuts, remote access and security, and all features. Each section has its own link, /#docs/<section>.",
+    "Type in the search box (press / to focus it) to keep only the sections that contain your words; clear it to see the whole guide.",
+    "At the end, all features lists every feature by area. Click a row to expand it into where it is, how to use it, and its media - text on the left, screenshots or a GIF on the right at wide widths.",
+    "What changed in each release is on the changelog page (menu, changelog), which has its own search."
+  ],
+  "id": "sidebar-help-panel",
+  "issues": [
+    844,
+    846,
+    866,
+    876,
+    917
+  ],
+  "keywords": [
+    "help",
+    "what the marks mean",
+    "feature list",
+    "features by release",
+    "changelog"
+  ],
+  "media": [],
+  "name": "Documentation and legend",
+  "since": "2026-09-24",
+  "status": "stable",
+  "summary": "",
+  "surfaces": [
+    "client/js/sidebar-help.js",
+    "web/src/lib/help/HelpFeatures.svelte",
+    "web/src/lib/help/FeatureDetail.svelte",
+    "web/src/lib/help/FeatureMedia.svelte",
+    "web/src/lib/help/MediaLightbox.svelte",
+    "web/src/lib/info-pages/DocsGuide.svelte",
+    "web/src/lib/user-guide/guide-content.ts",
+    "docs/user-guide/README.md"
+  ],
+  "updated": "2026-09-27",
+  "where": [
+    "The menu in the drawer or rail: documentation.",
+    "The #docs link, or #docs/<section> for one section."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

@@ -1,0 +1,75 @@
+<h2 class="sg-h2">progress bars and meters</h2>
+
+<h3 class="sg-h3" id="meters-segmented">segmented quota meter</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live, inert</span><code>web/src/lib/ledger-drawer/DrawerLedger.svelte</code><span>folded, then unfolded</span></div>
+    <div class="sg-specimen__body" inert><div id="sg-live-meters-drawer"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>An account's rate-limit window: a row of small outlined cells (<code>.seg-bar</code>, <code>.seg-bar__cell</code>), lit
+        from the left, the percent at the right end. Folded, one line per account with 5h and 7d side by side; unfolded,
+        one line per window with its reset. The bar itself is one shared component,
+        <code>web/src/lib/ui/SegmentedMeterBar.svelte</code>: the agents drawer's PROVIDERS panel and the provider ledger
+        screen's per-window table (<code>LedgerUsageCell.svelte</code>, issue #657) both render it, so there is exactly one
+        segmented bar in the app, never a ledger-only copy of it.</dd>
+    <dt>colour</dt>
+    <dd>One five-step ladder for the segmented meter and the gauge (<code>data-scale</code> 1 to 5): <code>--oc-green-bright</code>,
+        <code>--oc-cyan</code>, <code>--oc-yellow-bright</code>, a yellow and coral mix, <code>--oc-coral</code>. A window steps
+        at 50, 60, 75 and 90% (<code>WINDOW_SCALE_STOPS</code> in <code>client/js/labels/usage-panel.js</code>). Unlit cells
+        keep only their outline.</dd>
+    <dt>active row</dt>
+    <dd>The account the pane is spending against gets the ground tint and an accent name, never a ring.</dd>
+</dl>
+
+<h3 class="sg-h3" id="meters-gauge">limit gauge and pace marker</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>Every account limit window (5h, 7d, the swarm total) is drawn by ONE primitive,
+        <code>web/src/opscenter/ui/LimitGauge.svelte</code> (<code>.oc-gauge</code> in
+        <code>web/src/opscenter/controls.css</code>): a usage bar with ONE vertical PACE MARKER
+        (<code>.oc-gauge__pace</code>, 2px wide) at the elapsed fraction of the window,
+        <code>1 - time_to_reset / window_length</code> (5h is five hours, 7d is seven days). It reaches 3px above and below
+        a bar of 7px or more, 2px on a compact one, so it reads on segmented and plain bars at every size. A fill short of
+        the marker is under pace. It has two bar forms, <code>segments</code> (the drawer and the ledger screen) and <code>fill</code>
+        (<code>.oc-gauge__bar</code>, <code>.oc-gauge__fill</code>: the bottom bar, the grown stats, the home cell, the
+        mini rail and the settings strips). No reset instant, or a reset already past, or a window length nobody stated,
+        means NO marker; nothing is guessed.</dd>
+    <dt>colour</dt>
+</dl>
+
+<h3 class="sg-h3" id="meters-foot">bottom bar meter</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live, inert</span><code>web/src/opscenter/cells/terminal-live/TerminalFoot.svelte</code><span>full width, 420px, absent, unchecked</span></div>
+    <div class="sg-specimen__body" inert><div id="sg-live-meters-foot"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>The terminal cell's bottom bar: context, model, tokens, then the 5h and 7d windows. Each meter is a label, a thin
+        rounded bar (<code>.oc-tf-bar</code>, <code>.oc-tf-bar-fill</code>), the percent, then its detail or reset.</dd>
+    <dt>colour</dt>
+    <dd>The same ladder. Context steps at 25, 50, 80 and 95% (<code>SCALE_STOPS</code>), a window on the drawer's stops.
+        Every step comes from <code>sessionUsageLabels</code>; no component keeps its own thresholds.</dd>
+    <dt>narrow</dt>
+    <dt>account tag</dt>
+    <dd>At the right edge (<code>.oc-tf-acct</code>, <code>foot-account.ts</code>) the short name of the provider
+        account the session's pane runs under, from the listing wrapper's <code>account_id</code>; nothing when it
+        is not measured. A yellow hazard triangle (<code>.oc-tf-acct-warn</code>, <code>--oc-yellow-bright</code>) with a
+        tooltip sits beside it when that account is not the provider's active one. It replaces the agents count.</dd>
+    <dt>layout</dt>
+    <dt>context percent</dt>
+    <dd>The context percent (<code>.oc-tf-pct</code>) wears the same scale step as its bar, so the number alone says how
+        full the conversation is once a narrow cell has dropped the bar.</dd>
+    <dt>reset countdown</dt>
+    <dt>work segments</dt>
+    <dt>no data</dt>
+    <dd>Absent (nothing spent yet) draws hollow bars; unchecked (could not tell) draws hatched bars. Never a zero.</dd>
+</dl>
+
+<h3 class="sg-h3" id="meters-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>A third meter style.</strong> Copy the segmented meter, the limit gauge or the bottom bar meter.</li>
+    <li><strong>A bar with no number.</strong> The percent is always printed beside it.</li>
+    <li><strong>Absent drawn as 0%.</strong> Absent and unchecked each have their own look and sentence.</li>
+    <li><strong>A meter split over two lines.</strong> Label, bar, percent and reset share one line.</li>
+</ul>

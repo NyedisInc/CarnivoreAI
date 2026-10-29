@@ -1,0 +1,39 @@
+@layer patterns {
+  .oc-ob-row {
+    row-gap: 0;
+  }
+
+  .oc-ob-row[data-failed='true'] .oc-rq-time {
+    color: var(--oc-coral);
+  }
+
+  .oc-ob-row .oc-ob-keys {
+    grid-column: 1 / -1;
+  }
+
+  .oc-ob-keys {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--oc-space-1);
+    padding: 0 var(--oc-space-2) var(--oc-space-1);
+  }
+
+  .oc-ob-copy {
+    flex: 0 0 auto;
+    padding: 0 var(--oc-space-2) var(--oc-space-2);
+    box-shadow: 0 1px 0 var(--oc-line-rule);
+  }
+
+  .oc-ob-text {
+    box-sizing: border-box;
+    width: 100%;
+    resize: vertical;
+    padding: var(--oc-space-1) var(--oc-space-2);
+    font: inherit;
+    color: var(--oc-text-primary);
+    background: var(--oc-ground-panel);
+    border: 1px solid var(--oc-line-rule);
+    border-radius: var(--oc-radius-sm, 4px);
+  }
+}

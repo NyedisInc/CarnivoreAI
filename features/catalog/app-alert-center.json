@@ -1,0 +1,46 @@
+{
+  "api_routes": [
+    "src/api/app_alerts_routes.py"
+  ],
+  "area": "status-notifications",
+  "docs": [
+    "docs/save-pipeline.md"
+  ],
+  "examples": [
+    "The Local server and a test machine are both unreachable while conversations close: a red badge appears on the bell beside the Carnivore mark in the agents drawer, a card says no summary server reachable, and the panel shows how many summaries are waiting. The alert resolves by itself on the first summary that succeeds.",
+    "You already know a server is down: dismiss the alert and it stays quiet until the condition clears, or snooze it for an hour.",
+    "You want a Slack message when the save pipeline stops, but no pop-up card: tick save pipeline under the Slack destination and untick it on screen."
+  ],
+  "how_to": [
+    "Click the bell beside the Carnivore mark in the agents drawer (or under the claw of the closed drawer's icon rail): open alerts first, errors before warnings, each with its count and first and last seen; resolved alerts of the last 24 hours fold underneath. On a phone with the drawer shut, a coloured dot on the claw says an alert is open; tap the claw, then the bell. Clicking any alert card opens the panel too.",
+    "Dismiss, snooze 1h, or clear resolved from the panel; each is a route: POST /api/v1/alerts/{id}/dismiss, POST /api/v1/alerts/{id}/snooze {minutes}, POST /api/v1/alerts/dismiss-resolved.",
+    "GET /api/v1/alerts?state=active|all for the list and the badge counts; changes also arrive on /ws/events as app_alert.raised, app_alert.updated and app_alert.resolved.",
+    "An alert card can be hidden per type: untick that alert's row in the screen column of the routing matrix. The bell and the panel still list it.",
+    "Alerts can also be routed to outside destinations (chat, push, email, sms): tick the alert rows (self check, save pipeline, archive, transcripts, account, phone link) under a destination in the matrix."
+  ],
+  "id": "app-alert-center",
+  "issues": [
+    1143,
+    1278
+  ],
+  "keywords": [
+    "alert",
+    "alert center",
+    "app health",
+    "badge",
+    "bell",
+    "llm down",
+    "summary server",
+    "warning"
+  ],
+  "media_exempt": "A drawer bell and popup whose screenshots are captured before the next version bump.",
+  "name": "Alert center",
+  "since": "2026-09-29",
+  "status": "beta",
+  "summary": "one place for app health: any part of the app can raise a deduplicated alert with a severity, and the bell in the agents drawer shows the count, a panel lists them, and every newly raised alert raises a card coloured by its severity.",
+  "surfaces": [],
+  "updated": "2026-10-03",
+  "where": [
+    "The bell beside the Carnivore mark in the agents drawer's header, and under the claw of the closed drawer's icon rail; on a phone, a severity dot on the claw that opens the drawer. Shown once signed in. API under /api/v1/alerts."
+  ]
+}

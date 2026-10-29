@@ -1,0 +1,29 @@
+<div aria-label="custom color" class="pc-pop popup-focus" data-project-color-popover="" role="dialog" style="left: 8px; top: 8px;" tabindex="-1">
+  <div class="pc-pop__head">
+    <span class="pc-pop__label">
+      "custom color"
+  <div class="pc-pop__body">
+    <div class="pc-pop__square" data-pc-square-area="" role="presentation" style="--pc-hue: #0080ff;">
+      <span aria-label="saturation and brightness" aria-valuemax="100" aria-valuemin="0" aria-valuenow="60" aria-valuetext="saturation 67, brightness 60" class="pc-pop__handle" data-pc-square="" role="slider" style="left: 66.66666666666666%; top: 40%;" tabindex="0">
+    <div class="pc-pop__hue" data-pc-hue-area="" role="presentation">
+      <span aria-label="hue" aria-valuemax="360" aria-valuemin="0" aria-valuenow="210" class="pc-pop__handle pc-pop__handle--hue" data-pc-hue="" role="slider" style="left: 58.333333333333336%;" tabindex="0">
+    <div class="pc-pop__row">
+      <span class="pc-pop__preview" data-project-color-preview="" style="background: rgb(51, 102, 153);">
+      <div class="pc-pop__rgb">
+        <label class="pc-pop__chan">
+          <span>
+            "r"
+          <input data-channel="r" max="255" min="0" step="1" type="number">
+        <label class="pc-pop__chan">
+          <span>
+            "g"
+          <input data-channel="g" max="255" min="0" step="1" type="number">
+        <label class="pc-pop__chan">
+          <span>
+            "b"
+          <input data-channel="b" max="255" min="0" step="1" type="number">
+  <div class="pc-pop__foot">
+    <button class="modal-btn modal-btn-secondary" data-project-color-cancel="" type="button">
+      "cancel"
+    <button class="modal-btn modal-btn-confirm" data-project-color-ok="" type="button">
+      "ok"

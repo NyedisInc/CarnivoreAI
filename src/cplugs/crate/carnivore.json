@@ -1,0 +1,150 @@
+{
+  "kind": "cplug",
+  "id": "crate",
+  "name": "crates",
+  "version": "1.0.0",
+  "api_version": 1,
+  "min_app_version": "1.16.1",
+  "author": "Carnivore contributors",
+  "license": "MIT",
+  "tier": "builtin",
+  "scope": [
+    "global"
+  ],
+  "icon": "archive",
+  "default_enabled": false,
+  "permissions": [
+    {
+      "name": "sessions.read",
+      "reason": "check that every session in an export is asleep, and name sessions in the plan"
+    },
+    {
+      "name": "agent_writes",
+      "reason": "let an agent cancel a crate job, verify a crate, copy one to your second folder, or unpack a plain crate into the plugin's scratch folder; exporting always waits for you"
+    },
+    {
+      "name": "imports.write",
+      "reason": "restore a crate into this install: write its sessions (asleep), project, transcripts and rows, only after you press restore with the plan's fingerprint"
+    }
+  ],
+  "owns": {
+    "assets": [],
+    "contributions": [
+      "settings.panel",
+      "projects.panel"
+    ],
+    "files": [],
+    "migrations": [],
+    "routes": [
+      "/summary",
+      "/backup-families",
+      "/plan",
+      "/exports",
+      "/jobs",
+      "/jobs/{job_id}",
+      "/jobs/{job_id}/cancel",
+      "/bundles",
+      "/bundles/{bundle_id}",
+      "/bundles/{bundle_id}/contents",
+      "/bundles/{bundle_id}/verify",
+      "/bundles/{bundle_id}/copies",
+      "/bundles/{bundle_id}/extract",
+      "/bundles/{bundle_id}/download",
+      "/folders/{folder}/crates",
+      "/folders/primary/crates/upload",
+      "/crates/remove",
+      "/folders/{folder}/crates/{name}/contents",
+      "/folders/{folder}/crates/{name}/verify",
+      "/folders/{folder}/crates/{name}/extract",
+      "/folders/{folder}/crates/{name}/download",
+      "/imports/plan",
+      "/imports",
+      "/imports/{import_id}",
+      "/imports/{import_id}/undo"
+    ],
+    "strings": [
+      "cplug.crate."
+    ],
+    "style_guide": [
+      "web/src/cplugs/crate/CratePanel.svelte",
+      "web/src/cplugs/crate/ExportDialog.svelte",
+      "web/src/cplugs/crate/ImportDialog.svelte",
+      "web/src/cplugs/crate/RemoveDialog.svelte",
+      "web/src/cplugs/crate/UndoDialog.svelte",
+      "web/src/cplugs/crate/RestoredList.svelte",
+      "web/src/cplugs/crate/ImportPreview.svelte",
+      "web/src/cplugs/crate/ImportResult.svelte",
+      "web/src/cplugs/crate/JobProgress.svelte",
+      "web/src/cplugs/crate/TtyBox.svelte",
+      "web/src/cplugs/crate/ProjectCrates.svelte",
+      "web/src/cplugs/crate/crate-dialog.css"
+    ],
+    "styles": [],
+    "tests": [
+      "tests/python/cplugs/crate/",
+      "web/src/cplugs/crate/"
+    ]
+  },
+  "data": [
+    {
+      "id": "jobs",
+      "kind": "folder",
+      "path": "jobs",
+      "scope_by": "install",
+      "policy": {
+        "own": "excluded",
+        "share": "excluded",
+        "reason": "export, verify and copy job records, pruned after 30 days; the durable record of an export is its export_bundles row in carnivore.db"
+      }
+    },
+    {
+      "id": "extract",
+      "kind": "folder",
+      "path": "extract",
+      "scope_by": "install",
+      "policy": {
+        "own": "excluded",
+        "share": "excluded",
+        "reason": "conversations extracted from a crate for a resume check, swept after 24 hours"
+      }
+    },
+    {
+      "id": "bundles",
+      "kind": "folder",
+      "root_setting": "folder",
+      "scope_by": "install",
+      "policy": {
+        "own": "excluded",
+        "share": "excluded",
+        "reason": "needed for this plugin to work",
+        "purge": "kept"
+      },
+      "default": "crates",
+      "role": "backup_destination"
+    },
+    {
+      "id": "second_copies",
+      "kind": "folder",
+      "root_setting": "secondFolder",
+      "scope_by": "install",
+      "policy": {
+        "own": "excluded",
+        "share": "excluded",
+        "reason": "needed for this plugin to work",
+        "purge": "kept"
+      },
+      "role": "backup_destination"
+    },
+    {
+      "id": "imports",
+      "kind": "folder",
+      "path": "imports",
+      "scope_by": "install",
+      "policy": {
+        "own": "excluded",
+        "share": "excluded",
+        "reason": "import receipts and the undo logs of imports in flight; this install's own record of what it restored, never part of a crate"
+      }
+    }
+  ]
+}

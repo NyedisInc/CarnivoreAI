@@ -1,0 +1,73 @@
+{
+  "api_routes": [
+    "GET /api/v1/widgets",
+    "GET /api/v1/item-settings",
+    "GET /api/v1/preferences",
+    "PATCH /api/v1/preferences"
+  ],
+  "area": "home",
+  "description": "Edit layout arranges the screen you are on, the home screen or a session's terminal page, on a desktop window. Its one entry is the edit layout item of the account menu, which the account chip at the bottom left of the agents drawer opens. While it is on, every widget is outlined with a remove control and an arrow beside its top left icon that opens the widget's actions (hide or remove, extend down or pull back a row, and settings for a widget whose copies keep their own), the splitters between widgets are drawn so they can be dragged, and a widget drawer lists every widget as a tree by type (or one list by name, kept per device) with each widget's icon, a fuzzy find box and a kind select beside it, and the analytics charts as a family that folds open. Any widget drops anywhere: onto the screen exactly where you let go, into the sidebar's widget area or its glance area; press a row to add it where it is designed to go. A widget switched off on the widgets page is never added: pressing or dropping it, or dragging a splitter past a widget's smallest size, shows one short line saying why. Every change is final the moment it is made: there is no undo, reset or cancel, and the one button, done, or Escape just leaves the mode. A removed widget stays in the drawer and drags back with its settings. Every change is saved the way that screen already saves: the home screen on this browser, a session's terminal page synced to every device. Below 1024 wide there is no edit layout; the widgets menu stays the phone's show and hide.",
+  "docs": [
+    "docs/widget-system.md",
+    "docs/widget-spec.md",
+    "docs/cplug-platform.md"
+  ],
+  "examples": [
+    "Put the notes widget in a row of its own at the top of the home screen by dragging it there.",
+    "Take the masthead off the home screen to give the session lists more room, and bring it back later from the widget drawer.",
+    "Make a rearrangement and press Escape: it is already saved, and the mode closes.",
+    "On a session's terminal page, turn on show what can't go here to learn that projects fits only home and the pop-out.",
+    "A game plugin declares medium and large in its cplug.json fits: its widget offers exactly those two in the size gear and refuses to shrink below its declared smallest size."
+  ],
+  "how_to": [
+    "Open the agents drawer, press the account chip at its bottom left, and choose edit layout.",
+    "The widget drawer opens as the edit layout tab in the left sidebar; switch to another tab and back without leaving edit layout, and press the tab's close key to finish (it keeps the edit).",
+    "Find a widget in the widget drawer: by default a tree with one fold per type (kpi, list, monitor, feed, tool, chart) and its widgets sorted by name; press the list button in the drawer's title row for one flat list by name. Each row leads with the widget's icon, the same one on the widget's top left corner on the home screen, and a small settings mark after the name means the widget has configurable views or settings. Type in the find box for a fuzzy search (the letters in order, best match first, matched letters highlighted); the folds open while you search and come back as you left them. Shift+press a type to fold or open every type. Pick a kind in the select beside the find box to narrow it. Drag a row onto the screen, or press it to add it at its designed place.",
+    "Press the (i) on a row to open the widget's description card: what it shows, a preview, its suggested sizes, where it can go, its options and who made it. The widgets page opens the same card in its detail pane.",
+    "In a dashboard pop-out, press add widgets in its top bar: the same widget drawer opens over the window, and what you add is saved to that dashboard only.",
+    "On the terminal page, drag or press the session, terminal or browser card to pick one of your live ones from a list and add it the same way.",
+    "Press arrange layout, in the components list, to open edit mode and rearrange by hand.",
+    "Press the small arrow beside a widget's top left icon to list what that widget can do; outside edit layout the same menu opens from the icon itself.",
+    "Press a widget's remove control to take it off; drag the splitters to resize.",
+    "Press done or Escape to leave; every change was saved when you made it. Drag a removed widget from the drawer to put it back.",
+    "Press done, or the layout button again, to keep it.",
+    "Drag a widget's side edge to resize it: a widget covering several rows has the full height edge to grab, and its four corners move the side and the row boundary together.",
+    "A plugin's panel view (a developer-sideloaded plugin that declares the panel surface) is listed in the drawer while the plugin is on; press it to add it. It lands at large, or at its smallest size when it does not offer large, and the cell menu size gear lists only the sizes the view declares."
+  ],
+  "id": "layout-editor",
+  "issues": [
+    722,
+    725,
+    1043,
+    1676
+  ],
+  "keywords": [
+    "edit layout",
+    "layout mode",
+    "widgets",
+    "widget drawer",
+    "drag and drop",
+    "widget drawer view",
+    "fuzzy search"
+  ],
+  "media": [],
+  "name": "Edit layout",
+  "since": "2026-09-28",
+  "status": "beta",
+  "summary": "arrange the screen you are on: drag widgets in from a drawer, remove, resize; every change saves as you make it.",
+  "surfaces": [
+    "web/src/opscenter/layout-editor/WidgetDrawer.svelte",
+    "web/src/opscenter/layout-editor/EditOverlay.svelte",
+    "web/src/opscenter/layout-editor/WidgetThumb.svelte",
+    "web/src/lib/drawer/bar.ts",
+    "web/src/lib/drawer-hud/AccountMenu.svelte",
+    "web/src/opscenter/layout-editor/EditLayoutBody.svelte",
+    "web/src/opscenter/layout-editor/edit-layout-tab.ts"
+  ],
+  "updated": "2026-10-25",
+  "where": [
+    "The edit layout item of the account menu (the chip at the bottom left of the agents drawer), on a window 1024 or wider.",
+    "The edit layout tab of the left sidebar, which holds the widget drawer while edit layout is on."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

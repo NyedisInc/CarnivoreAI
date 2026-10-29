@@ -1,0 +1,55 @@
+<h2 class="sg-h2">making a new icon or component that fits</h2>
+<p class="sg-lead">When the thing you need is not on this page, build the smallest thing that looks like it was always here:
+same grid, same stroke, same tokens, same states, same voice.</p>
+
+<h3 class="sg-h3" id="new-icon">a new icon</h3>
+<ol>
+    <li><strong>Check first.</strong> Scan <a href="#icons">the icon set</a> and the glyph table. A near match with a clear
+        meaning beats a new drawing. Never draw a second robot, kebab or provider mark.</li>
+    <li><strong>Draw on the grid.</strong> A 24x24 box, 1.5 stroke, <code>stroke-linecap</code> and
+        <code>stroke-linejoin</code> round, no fill unless it is a deliberately solid symbol, 2px of clearance to the box edge,
+        optical weight matched to <code>terminal</code> and <code>folder</code> beside it. A path borrowed from an open set (the
+        <code>recycle</code> mark is lucide's) says so in a comment.</li>
+    <li><strong>No colour.</strong> <code>currentColor</code> only; the button sets <code>color</code> from a token.</li>
+    <li><strong>Add it once.</strong> Compiled: a key in <code>web/src/opscenter/ui/icons.ts</code>, named for what it IS
+        (<code>music</code>, <code>vinyl</code>), not for where it is used. Legacy and shared: records in
+        <code>client/js/icons/glyphs.js</code> on the 16 grid, drawn by both renderers.</li>
+    <li><strong>Size by context.</strong> 14px in a tab, 16px in chrome and menus, 20px only for the header kebab and the rare
+        larger mark. An icon-only button gets an <code>aria-label</code> and a <code>title</code> from the catalog.</li>
+    <li><strong>On and off.</strong> A toggle icon is grey and still when off, coloured with a subtle living detail when on
+        (the cup's steam, the switch's sparkle), and still again under reduced motion.</li>
+    <li><strong>Check it.</strong> It appears in <a href="#icons">the icon set</a> the moment it is added. Look at it under
+        three themes at 14 and 16px beside its neighbours.</li>
+</ol>
+
+<h3 class="sg-h3" id="new-component-steps">a new component</h3>
+<ol>
+    <li><strong>Find its family on this page.</strong> Every component is a variation of one here: a panel, a row, a menu, a
+        dialog, a field, a chip, a cell. Start from that family's markup and classes.</li>
+    <li><strong>Build it in <code>web/</code></strong> as a Svelte 5 component with typed props, one job, documented (a one-line
+        description, typed inputs, an example when usage is not obvious). Put it in the folder of the surface that owns it,
+        or in <code>web/src/opscenter/ui/</code> when two surfaces share it.</li>
+    <li><strong>Style with tokens only</strong>, in the component's scoped <code>&lt;style&gt;</code>: grounds, lines and text
+        tiers from <a href="#color">the token table</a>, the title-row recipe for a header, 1px hairlines, 2px corners on
+        controls, <code>--font-mono</code>, the cyan focus outline. Where a scoped reference rule cannot be reached, restate it
+        and name the source in a comment.</li>
+    <li><strong>Every state</strong>: default, hover, focus-visible, active, disabled with its reason, busy with its verb,
+        empty, error, unknown. A state change never moves layout.</li>
+    <li><strong>Every width</strong>: at 390px no horizontal scroll and 44px targets; at 2560px capped and centred.</li>
+    <li><strong>Register it</strong>: its file and classes in <code>client/style-guide/registry.json</code> under the section
+        that documents it, and a live specimen in that section's fragment (a <code>sg-live-*</code> container plus an entry in
+        <code>web/src/style-guide/main.ts</code>) when it has props that can be fed a fixture without touching the API.</li>
+</ol>
+
+<h3 class="sg-h3" id="new-component-naming">naming</h3>
+<ul>
+    <li>Components are PascalCase for what they are (<code>MusicTrackRow</code>, <code>MusicHeader</code>), in the folder of the
+        surface that owns them.</li>
+    <li>Classes: a short block prefix per surface, BEM-style elements and modifiers (<code>music-row</code>,
+        <code>music-row__title</code>, <code>music-row--playing</code>). Reuse <code>.pl-*</code> and <code>.modal-*</code>
+        rather than renaming them.</li>
+    <li>State is a <code>data-*</code> attribute or a <code>class:</code> directive, never a global state class.</li>
+    <li>Catalog keys name meaning, flat and dotted: <code>music.row.playing</code>, not <code>music.green_label</code>.</li>
+    <li>Tokens are never added by a feature; <code>tokens.css</code> is the palette. A local alias block at the screen root
+        (<code>--music-*</code> from <code>--oc-*</code>) is fine and is the ledger's pattern.</li>
+</ul>

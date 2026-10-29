@@ -1,0 +1,51 @@
+{
+  "api_routes": [
+    "src/api/ai_routes.py",
+    "src/api/ai_invoke_routes.py"
+  ],
+  "area": "settings",
+  "docs": [
+    "docs/byoai.md"
+  ],
+  "examples": [
+    "Point chat at a local ollama on another computer so app features run on your own model.",
+    "Add a cloud provider with your own key, test it, and route speak or image to it.",
+    "Open recent calls, switch to 7d and click the top model in where the money goes to see every call it served."
+  ],
+  "how_to": [
+    "Open settings, then ai.",
+    "Press add connection, pick a preset (local, cloud or cli), set the label and base url, and save. A key is write-only: type it once, it is never shown again.",
+    "Press test on the connection to see ok or the error, the latency and a sample. Refresh the model list or type a model id.",
+    "In routing, pick a connection and model for each capability: type to filter a model list, with recent and popular models on top. Then set per-feature overrides below it.",
+    "Open recent calls to see the summary strip (calls, spend, error rate, latency, tokens), where the money goes by feature and model, and the log paged 50 at a time under day headers. Pick 24h, 7d or 30d, filter by feature, connection, model or result, click a spend row to filter by it, click a call to expand its ids and full error. New calls arrive live."
+  ],
+  "id": "byoai",
+  "issues": [
+    1201
+  ],
+  "keywords": [
+    "ai",
+    "byoai",
+    "connections",
+    "routing",
+    "ollama",
+    "provider",
+    "models"
+  ],
+  "media": [],
+  "name": "Bring your own ai",
+  "since": "2026-10-01",
+  "status": "beta",
+  "summary": "connect your own ai providers, then point app features at them.",
+  "surfaces": [
+    "web/src/lib/byoai/ConnectionsPanel.svelte",
+    "web/src/lib/byoai/RoutingPanel.svelte",
+    "web/src/lib/byoai/CallsPanel.svelte",
+    "web/src/lib/byoai/ModelPicker.svelte"
+  ],
+  "updated": "2026-10-01",
+  "where": [
+    "Settings, ai tab: connections, routing, recent calls."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

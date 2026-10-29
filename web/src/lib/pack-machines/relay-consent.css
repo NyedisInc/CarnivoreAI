@@ -1,0 +1,6 @@
+.rc-list { display: flex; flex-direction: column; gap: 6px; }
+.rc-desc { margin: 0 0 10px; color: var(--oc-text-muted); font-size: var(--oc-fs-body); line-height: 1.45; }
+.rc-popup .modal-body { display: flex; flex-direction: column; gap: 8px; max-height: 60vh; overflow-y: auto; }
+.rc-error { margin: 0; padding: 6px var(--oc-space-2); border-left: 2px solid var(--oc-coral); background: color-mix(in srgb, var(--oc-coral) 12%, var(--oc-ground-raised)); color: var(--oc-text-primary); font-size: var(--oc-fs-body); line-height: 1.45; }
+.rc-actions { display: flex; justify-content: flex-end; }
+.modal-overlay.rc-popup { z-index: 10700; }

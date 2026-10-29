@@ -1,0 +1,300 @@
+
+/*  hidden  display: flex display: none */
+.config-editor-picker-overlay[hidden] {
+    display: none;
+}
+
+
+.config-editor-header {
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--oc-line-faint);
+}
+
+.config-editor-new-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+}
+
+.config-editor-new-form label {
+    color: var(--oc-text-secondary);
+    font-size: 0.8rem;
+}
+
+.config-editor-new-form select,
+.config-editor-new-form input {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--oc-ground-field);
+    border: 1px solid var(--oc-line-rule);
+    border-radius: var(--oc-radius-sm);
+    color: var(--oc-text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    padding: 8px 10px;
+}
+
+.config-editor-new-hint {
+    color: var(--oc-text-muted);
+    font-size: 0.75rem;
+}
+
+.config-editor-new-form select:focus,
+.config-editor-new-form input:focus {
+    outline: none;
+    border-color: var(--oc-orange);
+}
+
+.config-editor-git {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+    min-height: 0;
+}
+
+.config-editor-picker-content[data-file-tab="changed"] .config-editor-git {
+    flex: 1 1 auto;
+}
+
+.config-editor-picker-content[data-file-tab="changed"] .config-editor-body {
+    display: none;
+}
+
+.config-editor-gitline {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+}
+
+.config-editor-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.config-editor-tree {
+    flex: 1;
+    padding: 4px 4px 8px;
+    overflow-y: auto;
+}
+
+.config-editor-loading,
+.config-editor-notice {
+    padding: 4px 8px;
+    color: var(--oc-text-secondary);
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.config-editor-error {
+    padding: 10px 8px;
+    color: var(--oc-coral);
+    font-size: 0.85rem;
+}
+
+.config-editor-error.config-editor-success {
+    color: var(--oc-orange);
+}
+
+.config-editor-root-label {
+    color: var(--oc-text-muted);
+}
+
+.config-editor-list {
+    list-style: none;
+    margin: 0;
+    padding-left: 0;
+}
+
+/* text-align: center */
+.config-editor-tree,
+.config-editor-list--roots {
+    text-align: left;
+}
+
+/* <button> */
+.config-editor-toggle,
+.config-editor-file {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    width: 100%;
+    /* Explicit, for the bare `button` reset in styles.css, which pins
+     * height to 36px (40px under @media max-width 480px); min-height
+     * cannot lower a declared height. */
+    height: 24px;
+    min-height: 0;
+    padding: 0 6px 0 4px;
+    border: none;
+    background: transparent;
+    border-radius: var(--oc-radius-sm);
+    color: var(--oc-text-primary);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 16px;
+    text-align: left;
+    cursor: pointer;
+}
+
+/* <button> overflow-y: auto transform: scale( */
+.config-editor-toggle:hover:not(:disabled),
+.config-editor-file:hover:not(:disabled),
+.config-editor-toggle:focus-visible,
+.config-editor-file:focus-visible {
+    background: var(--oc-ground-hover);
+    outline: none;
+    transform: none;
+    box-shadow: none;
+}
+
+.config-editor-file {
+    color: var(--oc-text-secondary);
+}
+
+.config-editor-file:hover:not(:disabled),
+.config-editor-file:focus-visible {
+    color: var(--oc-orange);
+    background: var(--oc-orange-tint);
+}
+
+/* The focus ring is INSET, so it paints inside the row's own box and adds
+ * no width either. Declared last so it survives the `box-shadow: none`
+ * above, which exists only to kill the reset's outset glow. */
+.config-editor-file:focus-visible:not(:disabled),
+.config-editor-toggle:focus-visible:not(:disabled) {
+    box-shadow: inset 0 0 0 1px var(--oc-orange);
+}
+
+.config-editor-toggle.config-editor-match,
+.config-editor-file.config-editor-match {
+    background: var(--oc-ground-hover);
+    box-shadow: inset 0 0 0 1px var(--oc-orange);
+}
+
+.config-editor-file.config-editor-match {
+    color: var(--oc-orange);
+    background: var(--oc-orange-tint);
+}
+
+.config-editor-toggle svg,
+.config-editor-file svg {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+}
+
+.config-editor-toggle > svg,
+.config-editor-file > svg {
+    color: var(--oc-text-muted);
+}
+
+.config-editor-guide {
+    display: inline-block;
+    width: 12px;
+    flex-shrink: 0;
+}
+
+.config-editor-toggle-glyph {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--oc-text-muted);
+}
+
+.config-editor-toggle-glyph svg {
+    width: 12px;
+    height: 12px;
+    transition: transform 100ms ease;
+}
+
+.config-editor-toggle[aria-expanded="true"] .config-editor-toggle-glyph svg {
+    transform: rotate(90deg);
+}
+
+.config-editor-toggle:hover .config-editor-toggle-glyph,
+.config-editor-toggle:focus-visible .config-editor-toggle-glyph {
+    color: var(--oc-text-primary);
+}
+
+.config-editor-toggle-spacer {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+}
+
+/* project files */
+.config-editor-toggle--root .config-editor-root-label {
+    color: var(--oc-text-primary);
+}
+
+/* <button> flex-shrink: 0 min-width: 0 width: auto */
+.config-editor-node-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.config-editor-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+    margin-left: auto;
+    padding: 0 5px;
+    font-size: 10px;
+    line-height: 14px;
+    border-radius: var(--oc-radius-sm);
+    background: var(--oc-ground-field);
+    color: var(--oc-text-muted);
+}
+
+.config-editor-badge svg {
+    width: 11px;
+    height: 11px;
+}
+
+.config-editor-badge--exec {
+    background: var(--oc-ground-field);
+    color: var(--oc-yellow);
+}
+
+/* @media (max-width width: 700px */
+
+.config-editor-toggle[data-git-letter]::after,
+.config-editor-file[data-git-letter]::after {
+    content: attr(data-git-letter);
+    flex: 0 0 auto;
+    min-width: 1em;
+    margin-left: auto;
+    padding-left: 6px;
+    text-align: right;
+}
+
+.config-editor-toggle[data-git-tone="green"] .config-editor-node-name,
+.config-editor-file[data-git-tone="green"] .config-editor-node-name,
+.config-editor-toggle[data-git-tone="green"]::after,
+.config-editor-file[data-git-tone="green"]::after {
+    color: var(--oc-green);
+}
+
+.config-editor-toggle[data-git-tone="yellow"] .config-editor-node-name,
+.config-editor-file[data-git-tone="yellow"] .config-editor-node-name,
+.config-editor-toggle[data-git-tone="yellow"]::after,
+.config-editor-file[data-git-tone="yellow"]::after {
+    color: var(--oc-yellow);
+}
+
+.config-editor-toggle[data-git-tone="coral"] .config-editor-node-name,
+.config-editor-file[data-git-tone="coral"] .config-editor-node-name,
+.config-editor-toggle[data-git-tone="coral"]::after,
+.config-editor-file[data-git-tone="coral"]::after {
+    color: var(--oc-coral);
+}

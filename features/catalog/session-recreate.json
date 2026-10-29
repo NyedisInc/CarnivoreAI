@@ -1,0 +1,34 @@
+{
+  "api_routes": [
+    "src/api/recreate_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/restart-and-recreate-history.md"
+  ],
+  "examples": [
+    "tmux was killed and every pane vanished: recreate the sessions instead of starting new conversations."
+  ],
+  "how_to": [
+    "Open the ended session's row menu and choose restart, or accept it in the reopen offer.",
+    "A new terminal starts under the same name and resumes the stored conversation."
+  ],
+  "id": "session-recreate",
+  "issues": [],
+  "keywords": [
+    "recreate",
+    "reopen"
+  ],
+  "media": [],
+  "name": "Recreate a lost session",
+  "since": "2026-09-08",
+  "status": "stable",
+  "summary": "bring a session back to life when its terminal process is gone but its conversation history is not.",
+  "surfaces": [],
+  "updated": "2026-09-27",
+  "where": [
+    "A session whose terminal process is gone but whose conversation is kept shows in the running list as ended; its menu offers to bring it back.",
+    "After a reboot, the reopen offer does it for every lost session at once."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

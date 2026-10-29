@@ -1,0 +1,45 @@
+{
+  "api_routes": [],
+  "area": "settings",
+  "description": "Every configured launch wrapper on the shared manager frame, grouped by type (family), each group with a heading row that names the count and the type's default wrapper (or says there is none) and a plus that adds a wrapper of that type; each wrapper shows its family, the command it runs, the live sessions launched through it and its whole script. A wrapper's family and id are fixed once it exists - the id is also a launched session's stored agent type, so moving a wrapper to a different family would change what an already-launched session resolves to; add a new wrapper in the family you want instead. Export saves a wrapper as a small JSON file to share; import checks a shared file, shows its whole script, and writes only after you tick that you read it. An imported wrapper is never made a default. Each wrapper can wear its own icon, chosen with the shared icon picker in its detail pane; the same icon marks it in the new session menu and the restart and wake picker, and its share file carries it. The frame's own actions share it: export in the detail pane saves the file, remove takes away a wrapper that is not a default and that no live session runs through, after asking, and install in the title strip opens the reviewed import.",
+  "docs": [
+    "docs/manager-frame.md"
+  ],
+  "examples": [
+    "Send a teammate your claude-chrome wrapper so their sessions launch with the same browser tools.",
+    "Check which live sessions still run through an old wrapper before you delete it in settings.",
+    "Give claude-chrome a globe so it stands out from your other claude wrappers when you start or restart a session."
+  ],
+  "how_to": [
+    "This feature was removed. Open settings and choose launch profiles instead."
+  ],
+  "id": "wrappers-page",
+  "issues": [
+    767,
+    888,
+    1004,
+    1062,
+    1097
+  ],
+  "keywords": [
+    "wrappers",
+    "add",
+    "edit",
+    "default",
+    "share",
+    "export",
+    "import",
+    "manager",
+    "icon"
+  ],
+  "media_exempt": "retired in #1257 S9a: the feature is gone, see launch-profiles-page",
+  "name": "Wrappers page",
+  "since": "2026-09-27",
+  "status": "removed",
+  "summary": "The wrappers page was replaced by the launch profiles page. add, edit, set default and remove any launch wrapper, give it an icon, and share one as a file.",
+  "surfaces": [],
+  "updated": "2026-10-03",
+  "where": [
+    "Replaced by Settings, launch profiles (the old #wrappers fragment opens it)."
+  ]
+}

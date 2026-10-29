@@ -1,0 +1,92 @@
+{
+  "id": "notification-destinations",
+  "name": "Notification destinations",
+  "summary": "send the notifications you pick to places outside the app, with one routing matrix that says which notification goes where.",
+  "description": "Twelve kinds of destination, many instances of each: slack, discord, microsoft teams (workflows webhook), telegram, ntfy, pushover, a generic signed webhook, email (smtp), sms through aws sns, sms through twilio, pagerduty, and every web push device. Every secret, recipient and number lives in the Keychain and is write-only. One matrix lists 29 notification types in families (needs you, sessions, accounts, health, app, in-app only) against a screen column plus one column per destination. Every cell can be unticked, needs-you included; needs-you starts ticked. Hiding a card hides the pop-up only: the bell, the history, the status light and the tray keep everything. Each destination can add away mode, quiet hours, a reminder and a project filter, and can opt in to details (tool and target, or the question snippet; scrubbed, capped at 200 characters, never on sms). The message carries a link back, tried in order: the mobile sync public address, then the local name, then the network address, then no link. A pause switch holds all outside delivery on one computer. Settings and secrets sync to paired computers over the paired link, secrets landing in each computer's Keychain; any tick or destination can be pinned to one computer. An agent can send you a notification with the notify tool. The old Slack, ntfy and Pushover secrets move into the Keychain.",
+  "area": "status-notifications",
+  "status": "beta",
+  "since": "2026-10-03",
+  "updated": "2026-10-07",
+  "surfaces": [
+    "web/src/lib/notifications/destinations/DestinationsPanel.svelte",
+    "web/src/lib/notifications/matrix/MatrixPanel.svelte",
+    "web/src/lib/notifications/matrix/LinkPanel.svelte"
+  ],
+  "api_routes": [
+    "GET /api/v1/notifications/types",
+    "GET /api/v1/notifications/settings",
+    "PUT /api/v1/notifications/settings",
+    "PUT /api/v1/notifications/ticks",
+    "PUT /api/v1/notifications/defaults",
+    "DELETE /api/v1/notifications/overrides",
+    "GET /api/v1/notifications/destinations",
+    "POST /api/v1/notifications/destinations",
+    "PATCH /api/v1/notifications/destinations/{id}",
+    "DELETE /api/v1/notifications/destinations/{id}",
+    "PUT /api/v1/notifications/destinations/{id}/extras",
+    "POST /api/v1/notifications/destinations/{id}/test",
+    "GET /api/v1/notifications/link",
+    "POST /api/v1/notifications/presence",
+    "GET /api/v1/notifications/sync",
+    "PUT /api/v1/notifications/sync/peers/{key}",
+    "POST /api/v1/notifications/sync/now",
+    "POST /api/v1/sessions/{session_id}/agent-message",
+    "PUT /api/v1/mcp-admin/agent-notify"
+  ],
+  "docs": [
+    "docs/notifications.md",
+    "docs/mcp-server.md",
+    "docs/federation.md",
+    "docs/web-push.md"
+  ],
+  "issues": [
+    1278
+  ],
+  "keywords": [
+    "notification",
+    "destination",
+    "slack",
+    "discord",
+    "teams",
+    "telegram",
+    "ntfy",
+    "pushover",
+    "webhook",
+    "email",
+    "sms",
+    "twilio",
+    "sns",
+    "pagerduty",
+    "routing",
+    "matrix",
+    "quiet hours",
+    "away",
+    "sync",
+    "notify"
+  ],
+  "where": [
+    "Settings, notifications tab, destinations: add, test, edit and delete each destination.",
+    "Settings, notifications tab, routing: the matrix, the link back, and the pause switch.",
+    "Settings, notifications tab, alerts on this device: each web push device appears as its own column in the matrix."
+  ],
+  "how_to": [
+    "Open settings, notifications, destinations, press add a destination, pick a kind from the grouped list (each service has its logo; click the field or use the arrow keys, type to filter), fill in its fields and press add. Secrets are write-only: once saved they show as set, and a blank field keeps the stored one. A webhook generates a signing secret for you and shows it once.",
+    "Press test on a destination to send one fixed test message; one test every 10 seconds.",
+    "Open settings, notifications, routing. Tick a notification under a destination to send it there. The screen column decides which cards pop up; needs-you rows start ticked and can be unticked like any other. A tick on the new destination column sets what a new destination starts with.",
+    "Press reset to global on a pinned cell to go back to the synced value.",
+    "Turn on details to add the tool and target or the question snippet; sms never gets details.",
+    "Under routing, read the link line: it says which link outside messages carry (mobile sync address, local name, network address or none) and why.",
+    "With a paired computer, settings and secrets sync over the paired link, and each computer keeps secrets in its own Keychain.",
+    "An agent in a session can call the notify tool to send you one notification of type agent.message, routed by the matrix. The switch is mcp.agent_notify (PUT /api/v1/mcp-admin/agent-notify); off hides the tool.",
+    "Existing Slack, ntfy and Pushover settings move into Keychain-backed destinations on their own and the plaintext is removed from config.json and its backup.",
+    "A self-hosted webhook or ntfy server that only speaks http (nflow, Home Assistant) on your own network: on its form turn on allow private addresses, then allow plain http on this network, and use an http:// address. While plain http is on, the message and any auth header cross your network unencrypted; only private addresses are allowed, and a public address stays refused."
+  ],
+  "examples": [
+    "You walk away from your desk: the permission and question notifications go to your phone through ntfy or Pushover, and a quiet-hours window keeps the finished-turn pings off at night while a permission request still gets through.",
+    "A shared channel gets a Slack message when a session dies, but with details off, so no command or file name leaves the computer.",
+    "Your laptop and your desktop are paired: add a destination once and it appears on both, with its secret stored in each computer's Keychain.",
+    "A destination fails five times in a row with a permanent error: it is switched off and a notifications health alert tells you, without that alert being sent outside."
+  ],
+  "media": [],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

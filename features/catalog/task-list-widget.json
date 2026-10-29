@@ -1,0 +1,56 @@
+{
+  "id": "task-list-widget",
+  "name": "Task Manager list widget",
+  "summary": "The Task Manager's items in one flat list on the right widget bar, beside the notepad: questions first, then reviews, working, waiting, scheduled and open, with a count, and you tick which statuses show from the right-click menu. Off until you add it.",
+  "description": "A widget for the right widget bar (the bar the notepad lives on). Its key opens a drawer beside the terminal, sized like the notepad: drag the drawer's left edge for width and, when it shares the drawer with another widget, drag the line between them for height. One item per row, never nested, in the order questions, reviews, working, waiting, scheduled, open, the item touched last first inside a status. A row is the Task Manager's own status mark, the title and how old it is; a question wears a yellow stripe. Compact rows are one 20px line so eight or more fit; two-line rows add the latest message under the title with who wrote it. The title row carries the count and the two density keys, which show when the pointer or focus is in the row. Hover a title or second line that is cut off with an ellipsis to see all of it. Press a row to open it in place, one at a time: a question shows the Task Manager's real answer form, a review its latest line and the reply box, every other row its latest line, and each has open in task manager. Right-click the widget's key, or anywhere in the list, for the six status checks of the Task Manager's badge menu under the heading show in list; ticking keeps the menu open and the ticks are stored on that copy, so you can place it more than once with different statuses, and they sync to every device. The key's badge is the number of rows the copy lists. The list is pushed from the Task Manager's own store and never polls.",
+  "area": "drawers",
+  "status": "beta",
+  "since": "2026-10-14",
+  "updated": "2026-10-14",
+  "surfaces": [
+    "right widget bar",
+    "web/src/opscenter/cells/task-list/Cell.svelte"
+  ],
+  "api_routes": [
+    "GET /api/v1/cplugs/huddle/aggregate",
+    "GET /api/v1/cplugs/huddle/lists",
+    "POST /api/v1/cplugs/huddle/focus",
+    "PATCH /api/v1/preferences"
+  ],
+  "docs": [
+    "docs/task-manager.md",
+    "docs/widget-system.md"
+  ],
+  "issues": [
+    1772
+  ],
+  "keywords": [
+    "task manager",
+    "huddle",
+    "list",
+    "widget",
+    "sidebar",
+    "statuses",
+    "questions",
+    "reviews",
+    "right-click",
+    "widget bar"
+  ],
+  "where": [
+    "The right widget bar, once added: a key with the list icon and a count badge."
+  ],
+  "how_to": [
+    "Open edit layout and drag the Task Manager list widget from the widgets drawer onto the right widget bar.",
+    "Press its key to open the drawer; drag the drawer's left edge to size it.",
+    "Right-click the key (or the list) and tick the statuses you want to see; the menu stays open.",
+    "Press a row to open it in place; a question shows the answer form.",
+    "Use the two icons in the title row to switch between compact and two-line rows.",
+    "Use the status and folder icons in the title row to group the rows under headers by status or by project; each header shows its count.",
+    "Press open in task manager on an open row: the Task Manager widget comes up (its bar opens if it was shut), the group unfolds and the task scrolls into view. With no Task Manager widget placed, a small warning says to add one from edit layout."
+  ],
+  "examples": [
+    "Keep only questions and reviews ticked for a short list of what waits on you.",
+    "Add a second copy with only working ticked to watch what the agents are doing."
+  ],
+  "media_exempt": "A widget whose screenshots are captured before the next version bump."
+}

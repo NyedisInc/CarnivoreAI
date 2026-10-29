@@ -1,0 +1,11 @@
+{
+  "share_link": {"server_enforced": true},
+  "phone_link": {"server_enforced": true},
+  "phone_pairing": {"server_enforced": true},
+  "rate": {"server_enforced": false, "guest_ok": true},
+  "comment": {"server_enforced": false},
+  "report": {"server_enforced": false},
+  "note": {"server_enforced": false},
+  "publish": {"server_enforced": false},
+  "install_report": {"server_enforced": false, "guest_ok": true}
+}

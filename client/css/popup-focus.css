@@ -1,0 +1,126 @@
+/* padding */
+
+@property --pf-angle {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
+}
+
+@keyframes popup-focus-orbit {
+    from { --pf-angle: 0deg; }
+    to { --pf-angle: 360deg; }
+}
+
+.popup-focus {
+    --pf-ground: var(--oc-ground-raised);
+    --pf-edge-top: var(--oc-line-panel);
+    --pf-edge-bottom: var(--oc-strip-edge);
+    --pf-sheen: color-mix(in srgb, color-mix(in srgb, var(--oc-orange) 55%, var(--oc-text-bright)) 85%, transparent);
+    --pf-glow: color-mix(in srgb, var(--oc-orange) 45%, transparent);
+    border: 1px solid transparent;
+    background:
+        linear-gradient(var(--pf-ground), var(--pf-ground)) padding-box,
+        conic-gradient(
+            from var(--pf-angle),
+            transparent 0deg,
+            transparent 130deg,
+            var(--pf-sheen) 180deg,
+            transparent 230deg,
+            transparent 360deg
+        ) border-box,
+        linear-gradient(to bottom, var(--pf-edge-top), var(--pf-edge-bottom)) border-box;
+    box-shadow:
+        0 3px 2px var(--pf-glow),
+        0 8px 24px rgba(0, 0, 0, 0.55),
+        0 2px 6px rgba(0, 0, 0, 0.35);
+    animation: popup-focus-orbit 6s linear infinite;
+}
+
+/* THE SHEEN THAT TURNS ON THE COMPOSITOR (issue #1809). A surface that stays
+ * on screen (the selected terminal cell, a dashboard widget) wears
+ * `popup-focus-turn` next to `popup-focus` and carries one child,
+ * `<span class="pf-sheen" aria-hidden="true">`. Animating the registered
+ * `--pf-angle` re-resolves style, re-lays-out and repaints the whole frame every
+ * frame and the GPU re-rasterizes the gradient (measured an earlier date: about 85%
+ * of the renderer and 79% of the GPU of an idle tab, forever). So here the
+ * frame's border is STATIC (the ground and the top-down edge only, no conic
+ * layer), and the sheen is a conic square, larger than the frame's diagonal,
+ * that ROTATES with `transform`, clipped to a 1px band by a static mask on its
+ * host. Only `transform` animates, so no layout, no style recalc, no repaint.
+ * `overflow: clip` with a 1px margin lets the host reach over the border while
+ * the frame still clips its own content to the rounded edge. The same look,
+ * speed (6s a lap) and direction (clockwise) as the bordered menus below,
+ * which are short lived and keep the registered-angle lap. */
+@keyframes popup-focus-turn {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.popup-focus.popup-focus-turn {
+    --pf-bw: 1px;
+    animation: none;
+    overflow: clip;
+    overflow-clip-margin: 1px;
+    background:
+        linear-gradient(var(--pf-ground), var(--pf-ground)) padding-box,
+        linear-gradient(to bottom, var(--pf-edge-top), var(--pf-edge-bottom)) border-box;
+}
+
+.popup-focus.popup-focus-turn.popup-focus-ring {
+    --pf-bw: 0px;
+    border: 0;
+    background: transparent;
+}
+
+.popup-focus-turn > .pf-sheen {
+    position: absolute;
+    inset: calc(-1 * var(--pf-bw));
+    z-index: 41;
+    pointer-events: none;
+    container-type: size;
+    padding: 1px;
+    border-radius: inherit;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+}
+
+.popup-focus-ring > .pf-sheen {
+    background: linear-gradient(to bottom, var(--pf-edge-top), var(--pf-edge-bottom));
+}
+
+.popup-focus-turn > .pf-sheen::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: calc(100cqw + 100cqh);
+    height: calc(100cqw + 100cqh);
+    margin: calc((100cqw + 100cqh) / -2) 0 0 calc((100cqw + 100cqh) / -2);
+    background: conic-gradient(
+        from 0deg,
+        transparent 0deg,
+        transparent 130deg,
+        var(--pf-sheen) 180deg,
+        transparent 230deg,
+        transparent 360deg
+    );
+    will-change: transform;
+    animation: popup-focus-turn 6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .popup-focus {
+        --pf-sheen: transparent;
+        animation: none;
+    }
+
+    .popup-focus-turn > .pf-sheen::before {
+        animation: none;
+    }
+}
+
+:root[data-motion="off"] .popup-focus {
+    --pf-sheen: transparent;
+}

@@ -1,0 +1,68 @@
+<h2 class="sg-h2">the status light</h2>
+<p class="sg-lead">The app's most important visual vocabulary. Every place a session appears carries a small two-part
+light: the inner dot says what the conversation is doing, the outer ring says whether something is running and whether
+anything waits for you. It is ONE component in two trees, proven byte identical by <code>StatusLed.parity.test.ts</code>.
+Full model: <code>docs/session-status.md</code>.</p>
+
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/StatusLed.svelte</code><span>every state and signal, <code>showLabel</code> on</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-led-matrix"></div></div>
+</div>
+
+<h3 class="sg-h3" id="status-led-states">eight states, five hues, two rings</h3>
+<div class="sg-table-wrap">
+<table class="sg-table">
+    <thead><tr><th>hue</th><th>states</th><th>means</th><th>told apart by</th></tr></thead>
+    <tbody>
+        <tr><td>green</td><td><code>working</code>, <code>working_subagent</code></td><td>the agent is working now</td><td>the label; the ring breathes</td></tr>
+        <tr><td>yellow</td><td><code>question</code>, the startup gate</td><td>stopped, waiting on you</td><td>the label</td></tr>
+        <tr><td>light blue</td><td><code>notice</code></td><td>still working, wants attention</td><td>alone</td></tr>
+        <tr><td>grey</td><td><code>idle</code>, <code>unknown</code></td><td>at rest and read; not measured</td><td>SHAPE: solid centre against hollow centre</td></tr>
+        <tr><td>crisp green ring</td><td><code>finished_unread</code></td><td>a turn ended and nobody looked</td><td>a still ring with a cleared centre</td></tr>
+        <tr><td>dark grey</td><td><code>dead</code></td><td>the process exited</td></tr>
+        <tr><td>red</td><td>transport <code>disconnected</code></td><td>this browser lost its socket</td></tr>
+        <tr><td>red skull</td><td>the wrapper's <code>usage_limit</code> signal (inner state <code>limit</code>; not a ninth status)</td><td>the session hit its usage limit and stopped, whatever its status says (issue #1902)</td></tr>
+        <tr><td>grey moon</td><td><code>asleep</code> (a client paint)</td><td>put to sleep, row kept in place</td><td>the moon replaces the dot</td></tr>
+        <tr><td>moon in the unread color</td><td><code>asleep</code> + <code>unread</code> (inner state <code>asleep-unread</code>)</td><td>asleep and flagged for follow-up: the manual mark unread outlives the sleep (issue #749)</td><td>the moon takes <code>--led-color-unread</code>, no ring</td></tr>
+    </tbody>
+</table>
+</div>
+<p>The eight state NAMES stay eight; only the paint collapses onto five hues. Every state paints the same lit diameter,
+so one busy session in a column of quiet ones never looks bigger than its neighbours. <code>unknown</code> is a real answer
+and is never drawn as <code>idle</code>.</p>
+
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>Every surface that shows a session: a drawer row, a home table row, a tab, a menu entry, a group header (collapsed
+        groups only, #525). Svelte: <code>&lt;SessionFace row={row} /&gt;</code> (<code>web/src/lib/sessions/SessionFace.svelte</code>), the one
+        piece that draws a session's face and hands <code>StatusLed</code> every signal on the row at once (<code>unread</code>,
+        <code>startup_gate</code>, <code>status_source</code>, <code>transport</code>, the hint, the parked summary, the usage limit,
+        the paired Mac); no other component renders <code>StatusLed</code> for a session. Legacy:
+        <code>client/js/status-led.js</code> with the same signals. Beside a provider mark, use <code>SessionFace</code> with <code>mark</code>
+        (<a href="#icons">icons</a>).</dd>
+    <dt>pass signals</dt>
+    <dd>The light is TWO independent rings, so a surface passes SIGNALS, not just the status word: <code>unread</code>,
+        <code>startupGate</code>, <code>statusSource</code>, <code>activityHint</code>, <code>transport</code> and <code>usageLimit</code> (<code>usageLimitLabel(row)</code> in <code>led.ts</code>). A surface
+        that drops one silently loses a state (the unread ring, the red of a dropped socket). All of them live on the
+        <code>SessionInfo</code> WRAPPER, not on <code>info.session</code>.</dd>
+    <dt>props</dt>
+    <dd><code>size</code> takes a CSS length (<code>'10px'</code>) and sets <code>--led-size</code>; <code>showLabel</code>
+        prints the words next to the light, as this specimen does.</dd>
+    <dt>themes</dt>
+    <dt>access</dt>
+    <dd>Every light has an accessible label and, being an icon, a tooltip in words, including where the status came from
+        (<code>via registry</code>, <code>via transcript</code>). Reduced motion stops the breathing ring at full
+        brightness.</dd>
+</dl>
+
+<h3 class="sg-h3" id="status-led-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>Changing one tree.</strong> Edit <code>led.ts</code> and <code>status-led.js</code> together or half the
+        app's lights change; the parity test fails on purpose.</li>
+    <li><strong>"Fixing" a grey flash in the client.</strong> The watcher goes unknown only after three missed cycles; a
+        grey flash under load is the server being honest (#524).</li>
+    <li><strong>A copied light.</strong> A dot painted with a status colour next to a name is a second, drifting
+        implementation. Mount the component.</li>
+    <li><strong>An aggregate light on an expanded group.</strong> The group header shows the light only while collapsed
+        (#525).</li>
+</ul>

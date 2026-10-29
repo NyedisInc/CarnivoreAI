@@ -1,0 +1,83 @@
+{
+  "api_routes": [],
+  "area": "desktop-app",
+  "docs": [
+    "docs/desktop-app.md",
+    "docs/desktop-bridge.md",
+    "docs/browser-pages.md"
+  ],
+  "examples": [
+    "Pop a widget, the home page, a dashboard, a Swarm agent chat or a page out of the desktop app and it opens as its own window, listed in the Window menu.",
+    "Quit with three pop-outs open, start the app again, and all three come back at their old size and place; one you closed before quitting does not.",
+    "Pop a terminal out of the widget menu or a tab menu and its session leaves the main window and opens in a terminal window of its own. Clicking that session in the drawer brings the terminal window forward.",
+    "Open two pop-outs, choose Window, Merge All Windows, and they become tabs of one window; Move Tab to New Window pulls one back out. In a browser tab the page shows no title strip at all.",
+    "Hide the app with a session scrolling output, then show it: the terminal is already current. With more than 16 terminals open, close a few and the ones that fell back return to the fast renderer when you look at them.",
+    "Drag a terminal tab (or a widget header) past the edge of the desktop app window and let go: it opens in a window of its own with the cursor on its title strip, and the terminal keeps running."
+  ],
+  "how_to": [
+    "In the desktop app every pop-out button opens a window of its own. Opening the same one again brings the existing window forward.",
+    "Choose pop out in a terminal's menu to give a session its own terminal window: the session moves out of the main window, has no drawer or home screen of its own, and shows a short panel (asleep with wake, no longer running with reopen) while it has no live session.",
+    "The Window menu lists the open windows and Cmd-backtick cycles through them.",
+    "The windows open again after a restart, where they were. A window you closed yourself stays closed.",
+    "In a plain browser a pop-out is still a new tab.",
+    "Window, Merge All Windows joins windows of the same kind (two pop-outs, say) into one window with a tab bar; Move Tab to New Window splits one out and Show Tab Bar toggles the bar. A pop-out and a terminal window never merge.",
+    "Green button or Ctrl-Cmd-F takes a window full screen; Spaces, Mission Control and Stage Manager treat it like any Mac app. The title bar is hidden and the page keeps its top strip clear of the traffic lights; drag that strip to move the window.",
+    "A hidden window keeps running, so bringing it back shows it current with no catch-up wait. A terminal that fell back to the plain renderer under load gets its fast renderer back when it is shown and one is free.",
+    "Drag a terminal tab or a widget header out past the window edge and release to tear it into its own window at the cursor (Escape cancels). A torn-out terminal leaves the main window's tabs; a widget is copied, as its pop-out is. Closing the torn window leaves the session running. A plain browser does nothing."
+  ],
+  "id": "desktop-native-windows",
+  "issues": [
+    2330,
+    2338,
+    2344,
+    2354,
+    2383
+  ],
+  "keywords": [
+    "pop out",
+    "popout",
+    "window",
+    "windows",
+    "window menu",
+    "restore windows",
+    "desktop",
+    "terminal window",
+    "solo terminal",
+    "tabs",
+    "native tabs",
+    "merge all windows",
+    "full screen",
+    "title bar",
+    "traffic lights",
+    "tear off",
+    "drag out of window"
+  ],
+  "media_exempt": "native: needs the Electron app and its native windows, which a capture slot does not have",
+  "name": "Desktop native windows",
+  "since": "2026-10-23",
+  "status": "beta",
+  "summary": "In the desktop app every pop-out, terminals included, opens as its own native window with its own renderer, listed in the Window menu and brought back with its size and place after a restart, with native tabs per window kind, full screen and a hidden-inset title bar.",
+  "surfaces": [
+    "macOS/window-host.js",
+    "macOS/app-window.js",
+    "macOS/app-window-policy.js",
+    "macOS/app-window-preload.js",
+    "macOS/window-ipc.js",
+    "macOS/window-state.js",
+    "client/js/solo-window.js",
+    "web/src/lib/solo/SoloPanel.svelte",
+    "web/src/lib/desktop-menu/pop-out-session.ts",
+    "macOS/window-chrome.js",
+    "macOS/app-menu/window.js",
+    "client/js/desktop-chrome.js",
+    "client/css/desktop-chrome.css",
+    "web/src/lib/tearoff/tearoff.ts",
+    "web/src/lib/tearoff/tab-tearoff.ts"
+  ],
+  "updated": "2026-10-23",
+  "where": [
+    "Any pop-out button in the desktop app; the Window menu in the menu bar.",
+    "The pop out item of a terminal's widget menu and tab menu.",
+    "Any terminal tab or widget header in the desktop app, dragged past the window edge."
+  ]
+}

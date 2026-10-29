@@ -1,0 +1,49 @@
+{
+  "api_routes": [
+    "src/api/approvals_routes.py",
+    "src/api/session_dialog_routes.py"
+  ],
+  "area": "status-notifications",
+  "docs": [
+    "docs/approvals.md"
+  ],
+  "examples": [
+    "Claude's startup folder-trust prompt (the quick safety check) in a session you are not looking at shows as a card on the questions tab; only your own press answers it. Claude asks a multiple choice question in a session you are not looking at: the questions tab grows in the drawer with a yellow count, and you answer from its card without switching sessions.",
+    "A session on your other computer is waiting on a permission dialog: its card carries a host tag and answering it forwards to that computer, where the dialog is checked again before any key is sent.",
+    "A restarted session stops on claude's new MCP server approval (or the resume picker, the bypass warning, or a screen nobody has seen before): a read-only card names the session and shows the screen text; clicking it opens the session, and the card goes away once claude starts."
+  ],
+  "how_to": [
+    "Open the questions tab in the drawer (it shows only while something is waiting) or click the notification: each card names the session and project, shows the question and its options. Click an option to answer; multi-select cards have checkboxes and submit; a free text row has a text box.",
+    "dismiss sends escape to the dialog; go to session opens the session; an agent action card names its caller and target and has approve and deny.",
+    "Turn the cross-session mcp gate on or off under settings, sessions and agents, hold cross-session agent actions. It is off by default.",
+    "GET /api/v1/approvals for the list; POST /api/v1/sessions/{id}/dialog/answer {fingerprint, choice} to answer; the approvals frame on /ws/events says when to re-read.",
+    "A startup screen card has no buttons to answer: click it to open the session and answer there. The screen it showed is also written to the session journal (session-journal/journal.log, event startup_prompt_seen).",
+    "POST /api/v1/sessions/{id}/dialog/answer-all (MCP session_dialog_questions_answer) answers every question of a multi-question ask in one call; the server types the answers in order, re-reading the screen before every key, and stops with a 409 and a named reason if the screen drifts."
+  ],
+  "id": "approval-inbox",
+  "issues": [
+    142
+  ],
+  "keywords": [
+    "approval",
+    "approvals",
+    "inbox",
+    "dialog",
+    "question",
+    "permission",
+    "mcp gate",
+    "agent action",
+    "startup",
+    "startup screen"
+  ],
+  "media_exempt": "Cards and a modal whose screenshots are captured before the next version bump.",
+  "name": "Approval inbox",
+  "since": "2026-09-30",
+  "status": "beta",
+  "summary": "one place to answer what your agents are waiting on: open dialogs from every session (and your other computer) and mcp agent actions, on the drawer's questions tab, the approvals widget and the notification popup.",
+  "surfaces": [],
+  "updated": "2026-10-12",
+  "where": [
+    "The drawer's questions tab (while something waits), the approvals widget, and the question popup a notification click opens. The gate switch is in settings, sessions and agents."
+  ]
+}

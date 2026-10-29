@@ -1,0 +1,47 @@
+{
+  "id": "machine-stats-widget",
+  "name": "Machine stats widget",
+  "summary": "The vitals of the computer Carnivore runs on as a widget: cpu, memory, disk free, load and uptime, pushed live while it is on screen.",
+  "description": "At 2 x 2 it stacks three meters (cpu, memory, disk) with bars that turn yellow at 75 percent and coral at 90; at 8 x 2 it draws five columns with load and uptime and a small line under each figure. The figures come from one read of the machine stats route; the server samples only while a visible widget holds a short lease on its sampler and names the machine_stats topic when a figure moves, so a board without the widget costs nothing. A figure that could not be measured says not measured, never zero. Nothing in the answer names the computer or its user.",
+  "area": "home",
+  "status": "beta",
+  "since": "2026-10-01",
+  "updated": "2026-10-01",
+  "surfaces": [
+    "home screen",
+    "drawer widget area",
+    "pop-out window",
+    "web/src/opscenter/cells/machine-stats/Cell.svelte"
+  ],
+  "api_routes": [
+    "GET /api/v1/machine-stats"
+  ],
+  "docs": [
+    "docs/widget-spec.md"
+  ],
+  "issues": [
+    1157
+  ],
+  "keywords": [
+    "machine",
+    "cpu",
+    "memory",
+    "disk",
+    "load",
+    "uptime",
+    "widget"
+  ],
+  "where": [
+    "The drawer's widget area once added."
+  ],
+  "how_to": [
+    "Open the edit layout control at the bottom of the drawer.",
+    "Search widgets for machine; press the card to put it on the home page.",
+    "Resize it to 2 x 2 for three meters or 8 x 2 for five columns."
+  ],
+  "examples": [
+    "Watch cpu and memory climb while several sessions build at once.",
+    "Notice disk free on the state volume running low before a save fails."
+  ],
+  "media_exempt": "A widget whose screenshots are captured before the next version bump."
+}

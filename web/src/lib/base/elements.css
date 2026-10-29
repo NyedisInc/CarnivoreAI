@@ -1,0 +1,316 @@
+/* :where() */
+@layer base {
+  :where(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *)) {
+    --_btn-h: var(--oc-control-h);
+    --_btn-pad-y: 0;
+    --_btn-pad: var(--oc-space-4);
+    --_btn-fs: var(--oc-fs-control);
+    --_btn-lh: var(--oc-lh-body);
+    --_btn-radius: var(--oc-radius-control);
+    --_btn-bw: var(--oc-border);
+    --_bd: var(--_btn-focus, var(--_btn-edge));
+    box-sizing: border-box;
+    min-height: var(--_btn-h);
+    margin: 0;
+    font-weight: 400;
+    text-decoration: none;
+  }
+
+  :where(.oc-btn, .modal-btn, .modal-btn-danger, .modal-btn-confirm) {
+    --_btn-lh: normal;
+    --_btn-radius: var(--oc-radius-sm);
+    --_btn-bw: var(--oc-border);
+    --_btn-tx: all;
+  }
+
+  :where(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *), .oc-btn, .modal-btn, .modal-btn-danger, .modal-btn-confirm) {
+    padding: var(--_btn-pad-y) var(--_btn-pad);
+    border: var(--_btn-bw) solid currentColor;
+    border-radius: var(--_btn-radius);
+    font-family: var(--oc-font);
+    font-size: var(--_btn-fs);
+    line-height: var(--_btn-lh);
+    cursor: pointer;
+    transition-property: var(--_btn-tx, background-color, border-color, color);
+    transition-duration: var(--oc-motion);
+    transition-timing-function: ease;
+  }
+
+  :where(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *), .oc-btn) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--oc-space-1-5);
+    white-space: nowrap;
+  }
+
+  :where([data-btn]:not(.xterm *, .cm-editor *)) {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  :where([data-btn]:not(:has(> [data-btn-label]), .xterm *, .cm-editor *)) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  :where([data-btn] > [data-btn-label]) {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :where([data-btn='row'] > [data-btn-label]) {
+    display: contents;
+  }
+
+  :where([data-btn-label]:has(> svg:only-child)) {
+    display: contents;
+  }
+
+  :where(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *), .oc-btn, .modal-btn:not([class*='modal-btn-']), .modal-btn-secondary, .modal-btn-primary, .modal-btn-confirm, .modal-btn-danger, .modal-btn-alert) {
+    --_btn-edge: var(--oc-line-button);
+    --_btn-fill: transparent;
+    --_btn-ink: var(--oc-text-secondary);
+    --_btn-edge-hover: var(--oc-line-button-hover);
+    --_btn-fill-hover: var(--oc-ground-hover);
+    --_btn-ink-hover: var(--oc-text-primary);
+    border-color: var(--_btn-edge);
+    background: var(--_btn-fill);
+    color: var(--_btn-ink);
+  }
+
+  :where(:is(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *), .oc-btn):hover:not(:disabled, [aria-disabled='true']), :is(.modal-btn:not([class*='modal-btn-']), .modal-btn-secondary, .modal-btn-primary, .modal-btn-confirm, .modal-btn-danger, .modal-btn-alert):hover) {
+    border-color: var(--_btn-edge-hover);
+    background: var(--_btn-fill-hover);
+    color: var(--_btn-ink-hover);
+  }
+
+  :where(:is(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *), .oc-btn):is(:disabled, [aria-disabled='true'])) {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  :where([data-btn][aria-pressed='true'], [data-btn][aria-checked='true']) {
+    --_btn-fill: var(--oc-state-selected);
+    --_btn-ink: var(--oc-text-bright);
+  }
+
+  :where(.modal-btn-primary) {
+    --_bd: var(--oc-orange);
+    --_btn-edge: var(--oc-orange);
+    --_btn-fill: var(--oc-orange-tint);
+    --_btn-ink: var(--oc-text-bright);
+    --_btn-edge-hover: var(--oc-orange-bright);
+    --_btn-fill-hover: var(--oc-orange-dim);
+    --_btn-ink-hover: var(--oc-text-bright);
+  }
+
+  :where([data-btn='danger'], .oc-btn--danger, .modal-btn-danger) {
+    --_bd: var(--oc-coral);
+    --_btn-edge: var(--oc-coral);
+    --_btn-fill: color-mix(in oklab, var(--oc-coral) 25%, var(--oc-ground-raised));
+    --_btn-ink: var(--oc-text-bright);
+    --_btn-edge-hover: var(--oc-coral);
+    --_btn-fill-hover: color-mix(in oklab, var(--oc-coral) 35%, var(--oc-ground-raised));
+    --_btn-ink-hover: var(--oc-text-bright);
+  }
+
+  :where([data-btn='confirm'], .oc-btn--confirm, .modal-btn-confirm) {
+    --_bd: var(--oc-orange);
+    --_btn-edge: var(--oc-orange);
+    --_btn-ink: var(--oc-text-bright);
+    --_btn-edge-hover: var(--oc-orange-bright);
+    --_btn-fill-hover: var(--oc-orange-tint);
+    --_btn-ink-hover: var(--oc-text-bright);
+  }
+
+  :where(.oc-btn--alert, .modal-btn-alert) {
+    --_btn-edge: var(--oc-orange);
+    --_btn-fill: var(--oc-orange);
+    --_btn-ink: var(--oc-ground-chrome);
+    --_btn-edge-hover: var(--oc-orange-bright);
+    --_btn-fill-hover: var(--oc-orange-bright);
+    --_btn-ink-hover: var(--oc-ground-chrome);
+  }
+
+  :where([data-btn='quiet'], .oc-btn--ghost, .oc-btn--tool) {
+    --_btn-edge: transparent;
+  }
+
+  :where([data-btn='quiet']) {
+    --_btn-focus: var(--oc-line-rule);
+  }
+
+  :where(.oc-btn--tool[aria-expanded='true']) {
+    --_btn-ink: var(--oc-orange);
+  }
+
+  :where([data-btn='row']) {
+    --_btn-h: var(--oc-row-h);
+    --_btn-pad: 0;
+    --_btn-fs: 1em;
+    --_btn-edge: transparent;
+    --_btn-edge-hover: transparent;
+    --_btn-fill-hover: transparent;
+    --_btn-ink-hover: var(--_btn-ink);
+    --_btn-focus: var(--oc-line-rule);
+    display: flex;
+    justify-content: flex-start;
+    gap: var(--oc-space-2);
+    text-align: left;
+    white-space: normal;
+  }
+
+  @media (max-width: 1023px) {
+    :where([data-btn='row']) {
+      --_btn-h: var(--oc-tap);
+    }
+  }
+
+  :where([data-btn][data-size='sm']) {
+    --_btn-h: var(--oc-control-h-sm);
+    --_btn-pad: var(--oc-space-2);
+    --_btn-fs: var(--oc-fs-label);
+  }
+
+  :where(:is([data-oc-base] :is(input:not([type='checkbox'], [type='radio'], [type='range'], [type='color'], [type='file'], [type='hidden'], [type='image'], [type='button'], [type='submit'], [type='reset']), select, textarea):not([class]), :is(input, select, textarea)[data-field]):not(.xterm *, .cm-editor *)) {
+    --_bd: var(--oc-line-control);
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: var(--oc-control-h);
+    margin: 0;
+    padding: 0 var(--oc-space-2);
+    border: var(--oc-border) solid var(--oc-line-control);
+    border-radius: var(--oc-radius-control);
+    background: var(--oc-surface-sunken);
+    color: var(--oc-text-primary);
+    font-family: var(--oc-font);
+    font-size: var(--oc-fs-control);
+    line-height: var(--oc-lh-body);
+  }
+
+  :where(:is(input, select, textarea)[data-field][data-size='sm']:not(.xterm *, .cm-editor *)) {
+    min-height: var(--oc-control-h-sm);
+    font-size: var(--oc-fs-label);
+  }
+
+  :where(select[data-field]:not(.xterm *, .cm-editor *)) {
+    padding-inline-end: var(--oc-space-5);
+    background-image: linear-gradient(45deg, transparent 50%, var(--oc-text-muted) 50%), linear-gradient(135deg, var(--oc-text-muted) 50%, transparent 50%);
+    background-position: calc(100% - var(--oc-space-3)) 50%, calc(100% - var(--oc-space-2)) 50%;
+    background-size: var(--oc-space-1) var(--oc-space-1);
+    background-repeat: no-repeat;
+    appearance: none;
+  }
+
+  :where(:is([data-oc-base] textarea:not([class]), textarea[data-field]):not(.xterm *, .cm-editor *)) {
+    padding: var(--oc-space-1-5) var(--oc-space-2);
+    resize: vertical;
+  }
+
+  :where(:is([data-oc-base] :is(input, textarea):not([class]), :is(input, select, textarea)[data-field])::placeholder) {
+    color: var(--oc-text-dim);
+  }
+
+  :where(:is([data-oc-base] :is(input, select, textarea):not([class]), :is(input, select, textarea)[data-field]):is(:disabled, [readonly])) {
+    border-color: transparent;
+  }
+
+  :where(:is([data-oc-base] :is(input, select, textarea):not([class]), :is(input, select, textarea)[data-field])[aria-invalid='true']) {
+    --_bd: var(--oc-coral);
+    border-color: var(--oc-coral);
+  }
+
+  :where([data-oc-base] input:is([type='checkbox'], [type='radio'], [type='range']):not([class])) {
+    accent-color: var(--oc-orange);
+  }
+
+  :where([data-oc-base] a:not([class], [data-btn])) {
+    color: var(--oc-cyan);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  :where([data-oc-base] :is(h1, h2, h3, h4, h5, h6):not([class])) {
+    font-family: var(--oc-font);
+    font-weight: 400;
+    line-height: var(--oc-lh-tight);
+    color: var(--oc-text-bright);
+  }
+
+  :where([data-oc-base] h1:not([class])) { font-size: var(--oc-fs-heading); }
+  :where([data-oc-base] h2:not([class])) { font-size: var(--oc-fs-status); }
+
+  :where([data-oc-base] :is(h3, h4, h5, h6):not([class])) {
+    font-size: var(--oc-fs-label);
+    letter-spacing: var(--oc-tracking-caps);
+    text-transform: uppercase;
+    color: var(--oc-text-secondary);
+  }
+
+  :where([data-oc-base] :is(label, legend):not([class])) {
+    font-size: var(--oc-fs-label);
+    color: var(--oc-text-secondary);
+  }
+
+  :where([data-oc-base] small:not([class])) {
+    font-size: var(--oc-fs-hint);
+    color: var(--oc-text-muted);
+  }
+
+  :where([data-oc-base] :is(code, kbd):not([class])) {
+    padding: 0 var(--oc-space-0-5);
+    border-radius: var(--oc-radius-control);
+    background: var(--oc-surface-band);
+    font-family: var(--oc-font);
+  }
+
+  :where([data-oc-base] kbd:not([class])) {
+    border: var(--oc-border) solid var(--oc-line-control);
+  }
+
+  :where([data-oc-base] hr:not([class])) {
+    height: 0;
+    margin: var(--oc-space-3) 0;
+    border: 0;
+    border-top: var(--oc-border) solid var(--oc-line-hairline);
+  }
+
+  :where([data-oc-base] fieldset:not([class])) {
+    min-width: 0;
+    margin: 0;
+    padding: var(--oc-space-2) var(--oc-space-3) var(--oc-space-3);
+    border: var(--oc-border) solid var(--oc-line-panel);
+    border-radius: var(--oc-radius-control);
+  }
+
+  :where([data-oc-base] legend:not([class])) {
+    padding: 0 var(--oc-space-1);
+    letter-spacing: var(--oc-tracking-caps);
+    text-transform: uppercase;
+  }
+
+  :where([data-oc-base] table:not([class])) {
+    border-collapse: collapse;
+    font-size: var(--oc-fs-body);
+  }
+
+  :where([data-oc-base] table:not([class]) > * > tr > :is(th, td):not([class])) {
+    padding: var(--oc-space-1) var(--oc-space-2);
+    border-bottom: var(--oc-border) solid var(--oc-line-faint);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  :where([data-oc-base] table:not([class]) > * > tr > th:not([class])) {
+    border-bottom-color: var(--oc-line-panel);
+    color: var(--oc-text-muted);
+    font-size: var(--oc-fs-micro);
+    font-weight: 400;
+    letter-spacing: var(--oc-tracking-caps);
+    text-transform: uppercase;
+  }
+}

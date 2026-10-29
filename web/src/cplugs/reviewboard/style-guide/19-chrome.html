@@ -1,0 +1,17 @@
+<h3 class="sg-h3" id="chrome-review-plugin">review board plugin: the page, header, notes, layer, attachments and tray</h3>
+<dl class="sg-facts">
+    <dt id="chrome-review-board">review board page</dt>
+    <dt id="chrome-review-payload">review board header controls</dt>
+    <dd>The board has NO sidebar (issue #1760, <code>docs/reviewboard.md</code>, "Payload pages"): its controls live in the title strip (<code>.rb-strip</code>, which wraps onto a
+        second row on a narrow board) and the page frame takes the full width under it. Styled in <code>web/src/cplugs/reviewboard/header.css</code>. They are OUTSIDE the sandboxed
+        frame, so the page can only supply its state and never press a key. <code>ThemePicker.svelte</code> is the shared <code>.oc-field</code> select (<code>.rb-theme</code>): it repaints only
+        the page frame in another theme. For a revision that declares <code>payload_mode</code>, <code>PayloadControls.svelte</code> (<code>.rb-controls</code>) adds the save disk (the notepad widget's own <code>EditorControls</code> disk: <code>--oc-yellow</code> while the state is unsaved or <code>saving</code>, <code>--oc-green</code> once saved, <code>--oc-coral</code> with a short word when the write was refused; pressing it saves now), the save stepper
+        (<code>.rb-saves</code>: older and newer <code>.rb-icon</code> keys around <code>.rb-position</code>, the <code>.rb-label</code> reading <code>save 3 of 5</code> or <code>draft</code>), a note key
+        (an <code>.rb-icon</code>, accent while a note waits) opening the notes panel below, and Send (<code>.rb-send</code> on the Task Manager's own send key,
+        <code>.oc-btn.oc-btn--sm</code>: <code>.oc-btn--confirm</code> once there is a state to send, <code>.oc-btn--ghost</code> before). <code>PayloadNotices.svelte</code> (<code>.rb-notices</code>) is the one quiet row under the strip: the
+        confirm line after a send (<code>.rb-confirm</code>, <code>.rb-warn</code>) and the note of the save on show. Tokens only; focus is the shared rule; 40px keys on a touch screen.</dd>
+    <dt id="chrome-review-notes">review board notes panel</dt>
+    <dt id="chrome-review-layer">review board questions layer</dt>
+    <dt id="chrome-review-attachments">review board attachments key</dt>
+    <dt id="chrome-review-tray">review board tray</dt>
+</dl>

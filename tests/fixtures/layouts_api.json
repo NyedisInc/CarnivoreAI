@@ -1,0 +1,1498 @@
+{
+  "description": "Request and response examples for every /api/v1/layouts route (issue #424, slice A #745; the broadcast toggle and broadcast, issue #837). Sessions rows 1-4 carry session_uuid u0-0000..u3-0000; <layout_uuid_N> and <timestamp> stand for generated values. Regenerated and checked by tests/test_layouts_contract_fixture.py. Model: docs/layouts.md.",
+  "examples": [
+    {
+      "title": "list, empty install",
+      "method": "GET",
+      "path": "/api/v1/layouts",
+      "request": null,
+      "status": 200,
+      "response": {
+        "status": "ok",
+        "layouts": [],
+        "detail": null
+      }
+    },
+    {
+      "title": "create",
+      "method": "POST",
+      "path": "/api/v1/layouts",
+      "request": {
+        "name": "api + web",
+        "shape": {
+          "layout": {
+            "v": 6,
+            "rows": [
+              {
+                "id": "r1",
+                "kind": "flex",
+                "size": 1,
+                "slots": [
+                  {
+                    "id": "terminal:row:1",
+                    "fr": 0.5
+                  },
+                  {
+                    "id": "terminal:row:2",
+                    "fr": 0.5
+                  }
+                ]
+              }
+            ],
+            "hidden": [],
+            "heroCollapsed": false,
+            "collapsed": []
+          },
+          "groups": {}
+        }
+      },
+      "status": 200,
+      "response": {
+        "layout": {
+          "layout_uuid": "<layout_uuid_1>",
+          "name": "api + web",
+          "position": 0,
+          "shape": {
+            "layout": {
+              "v": 6,
+              "rows": [
+                {
+                  "id": "r1",
+                  "kind": "flex",
+                  "size": 1,
+                  "slots": [
+                    {
+                      "id": "terminal:row:1",
+                      "fr": 0.5
+                    },
+                    {
+                      "id": "terminal:row:2",
+                      "fr": 0.5
+                    }
+                  ]
+                }
+              ],
+              "hidden": [],
+              "heroCollapsed": false,
+              "collapsed": []
+            },
+            "groups": {}
+          },
+          "revision": 1,
+          "source_key": null,
+          "members": [
+            {
+              "session_row_id": 1,
+              "session_uuid": "u0-0000",
+              "position": 0,
+              "broadcast": true
+            },
+            {
+              "session_row_id": 2,
+              "session_uuid": "u1-0000",
+              "position": 1,
+              "broadcast": true
+            }
+          ],
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "colour": "green",
+          "gradient": null,
+          "animation": "none"
+        },
+        "deleted": false,
+        "survivor": null,
+        "created": true
+      }
+    },
+    {
+      "title": "create with a source_key (the one-time migration's)",
+      "method": "POST",
+      "path": "/api/v1/layouts",
+      "request": {
+        "name": "migrated",
+        "shape": {
+          "layout": {
+            "v": 6,
+            "rows": [
+              {
+                "id": "r1",
+                "kind": "flex",
+                "size": 1,
+                "slots": [
+                  {
+                    "id": "terminal:row:1",
+                    "fr": 0.5
+                  },
+                  {
+                    "id": "terminal:row:2",
+                    "fr": 0.5
+                  }
+                ]
+              }
+            ],
+            "hidden": [],
+            "heroCollapsed": false,
+            "collapsed": []
+          },
+          "groups": {}
+        },
+        "source_key": "terminal_layouts:cloude_a@1"
+      },
+      "status": 200,
+      "response": {
+        "layout": {
+          "layout_uuid": "<layout_uuid_2>",
+          "name": "migrated",
+          "position": 1,
+          "shape": {
+            "layout": {
+              "v": 6,
+              "rows": [
+                {
+                  "id": "r1",
+                  "kind": "flex",
+                  "size": 1,
+                  "slots": [
+                    {
+                      "id": "terminal:row:1",
+                      "fr": 0.5
+                    },
+                    {
+                      "id": "terminal:row:2",
+                      "fr": 0.5
+                    }
+                  ]
+                }
+              ],
+              "hidden": [],
+              "heroCollapsed": false,
+              "collapsed": []
+            },
+            "groups": {}
+          },
+          "revision": 1,
+          "source_key": "terminal_layouts:cloude_a@1",
+          "members": [
+            {
+              "session_row_id": 1,
+              "session_uuid": "u0-0000",
+              "position": 0,
+              "broadcast": true
+            },
+            {
+              "session_row_id": 2,
+              "session_uuid": "u1-0000",
+              "position": 1,
+              "broadcast": true
+            }
+          ],
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "colour": "green",
+          "gradient": null,
+          "animation": "none"
+        },
+        "deleted": false,
+        "survivor": null,
+        "created": true
+      }
+    },
+    {
+      "title": "create, idempotent repeat",
+      "method": "POST",
+      "path": "/api/v1/layouts",
+      "request": {
+        "name": "migrated",
+        "shape": {
+          "layout": {
+            "v": 6,
+            "rows": [
+              {
+                "id": "r1",
+                "kind": "flex",
+                "size": 1,
+                "slots": [
+                  {
+                    "id": "terminal:row:1",
+                    "fr": 0.5
+                  },
+                  {
+                    "id": "terminal:row:2",
+                    "fr": 0.5
+                  }
+                ]
+              }
+            ],
+            "hidden": [],
+            "heroCollapsed": false,
+            "collapsed": []
+          },
+          "groups": {}
+        },
+        "source_key": "terminal_layouts:cloude_a@1"
+      },
+      "status": 200,
+      "response": {
+        "layout": {
+          "layout_uuid": "<layout_uuid_2>",
+          "name": "migrated",
+          "position": 1,
+          "shape": {
+            "layout": {
+              "v": 6,
+              "rows": [
+                {
+                  "id": "r1",
+                  "kind": "flex",
+                  "size": 1,
+                  "slots": [
+                    {
+                      "id": "terminal:row:1",
+                      "fr": 0.5
+                    },
+                    {
+                      "id": "terminal:row:2",
+                      "fr": 0.5
+                    }
+                  ]
+                }
+              ],
+              "hidden": [],
+              "heroCollapsed": false,
+              "collapsed": []
+            },
+            "groups": {}
+          },
+          "revision": 1,
+          "source_key": "terminal_layouts:cloude_a@1",
+          "members": [
+            {
+              "session_row_id": 1,
+              "session_uuid": "u0-0000",
+              "position": 0,
+              "broadcast": true
+            },
+            {
+              "session_row_id": 2,
+              "session_uuid": "u1-0000",
+              "position": 1,
+              "broadcast": true
+            }
+          ],
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "colour": "green",
+          "gradient": null,
+          "animation": "none"
+        },
+        "deleted": false,
+        "survivor": null,
+        "created": false
+      }
+    },
+    {
+      "title": "create, 409 name taken (case folded)",
+      "method": "POST",
+      "path": "/api/v1/layouts",
+      "request": {
+        "name": "API + WEB",
+        "shape": {
+          "layout": {
+            "v": 6,
+            "rows": [
+              {
+                "id": "r1",
+                "kind": "flex",
+                "size": 1,
+                "slots": [
+                  {
+                    "id": "terminal:row:1",
+                    "fr": 0.5
+                  },
+                  {
+                    "id": "terminal:row:2",
+                    "fr": 0.5
+                  }
+                ]
+              }
+            ],
+            "hidden": [],
+            "heroCollapsed": false,
+            "collapsed": []
+          },
+          "groups": {}
+        }
+      },
+      "status": 409,
+      "response": {
+        "detail": {
+          "code": "layout_name_taken",
+          "detail": "a layout called 'API + WEB' already exists"
+        }
+      }
+    },
+    {
+      "title": "create, 409 member unresolved",
+      "method": "POST",
+      "path": "/api/v1/layouts",
+      "request": {
+        "name": "ghost",
+        "shape": {
+          "layout": {
+            "v": 6,
+            "rows": [
+              {
+                "id": "r1",
+                "kind": "flex",
+                "size": 1,
+                "slots": [
+                  {
+                    "id": "terminal:row:1",
+                    "fr": 0.5
+                  },
+                  {
+                    "id": "terminal:row:99",
+                    "fr": 0.5
+                  }
+                ]
+              }
+            ],
+            "hidden": [],
+            "heroCollapsed": false,
+            "collapsed": []
+          },
+          "groups": {}
+        }
+      },
+      "status": 409,
+      "response": {
+        "detail": {
+          "code": "member_unresolved",
+          "detail": "members that name no stored session: terminal:row:99",
+          "unresolved": [
+            "terminal:row:99"
+          ]
+        }
+      }
+    },
+    {
+      "title": "create, 400 too few members",
+      "method": "POST",
+      "path": "/api/v1/layouts",
+      "request": {
+        "name": "solo",
+        "shape": {
+          "layout": {
+            "v": 6,
+            "rows": [
+              {
+                "id": "r1",
+                "kind": "flex",
+                "size": 1,
+                "slots": [
+                  {
+                    "id": "terminal:row:1",
+                    "fr": 1.0
+                  }
+                ]
+              }
+            ],
+            "hidden": [],
+            "heroCollapsed": false,
+            "collapsed": []
+          },
+          "groups": {}
+        }
+      },
+      "status": 400,
+      "response": {
+        "detail": {
+          "code": "layout_too_few_members",
+          "detail": "a layout shows at least 2 terminal sessions"
+        }
+      }
+    },
+    {
+      "title": "create, 400 name invalid",
+      "method": "POST",
+      "path": "/api/v1/layouts",
+      "request": {
+        "name": "   ",
+        "shape": {
+          "layout": {
+            "v": 6,
+            "rows": [
+              {
+                "id": "r1",
+                "kind": "flex",
+                "size": 1,
+                "slots": [
+                  {
+                    "id": "terminal:row:1",
+                    "fr": 0.5
+                  },
+                  {
+                    "id": "terminal:row:2",
+                    "fr": 0.5
+                  }
+                ]
+              }
+            ],
+            "hidden": [],
+            "heroCollapsed": false,
+            "collapsed": []
+          },
+          "groups": {}
+        }
+      },
+      "status": 400,
+      "response": {
+        "detail": {
+          "code": "layout_name_invalid",
+          "detail": "layout name is empty"
+        }
+      }
+    },
+    {
+      "title": "create, 400 primary sentinel in a layout",
+      "method": "POST",
+      "path": "/api/v1/layouts",
+      "request": {
+        "name": "p",
+        "shape": {
+          "layout": {
+            "v": 6,
+            "rows": [
+              {
+                "id": "r1",
+                "kind": "flex",
+                "size": 1,
+                "slots": [
+                  {
+                    "id": "terminal:@primary",
+                    "fr": 0.5
+                  },
+                  {
+                    "id": "terminal:row:2",
+                    "fr": 0.5
+                  }
+                ]
+              }
+            ],
+            "hidden": [],
+            "heroCollapsed": false,
+            "collapsed": []
+          },
+          "groups": {}
+        }
+      },
+      "status": 400,
+      "response": {
+        "detail": {
+          "code": "layout_shape_invalid",
+          "detail": "a layout names its members by row; 'terminal:@primary' is not a member"
+        }
+      }
+    },
+    {
+      "title": "rename",
+      "method": "PATCH",
+      "path": "/api/v1/layouts/<layout_uuid_1>",
+      "request": {
+        "name": "api + web + db"
+      },
+      "status": 200,
+      "response": {
+        "layout": {
+          "layout_uuid": "<layout_uuid_1>",
+          "name": "api + web + db",
+          "position": 0,
+          "shape": {
+            "layout": {
+              "v": 6,
+              "rows": [
+                {
+                  "id": "r1",
+                  "kind": "flex",
+                  "size": 1,
+                  "slots": [
+                    {
+                      "id": "terminal:row:1",
+                      "fr": 0.5
+                    },
+                    {
+                      "id": "terminal:row:2",
+                      "fr": 0.5
+                    }
+                  ]
+                }
+              ],
+              "hidden": [],
+              "heroCollapsed": false,
+              "collapsed": []
+            },
+            "groups": {}
+          },
+          "revision": 1,
+          "source_key": null,
+          "members": [
+            {
+              "session_row_id": 1,
+              "session_uuid": "u0-0000",
+              "position": 0,
+              "broadcast": true
+            },
+            {
+              "session_row_id": 2,
+              "session_uuid": "u1-0000",
+              "position": 1,
+              "broadcast": true
+            }
+          ],
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "colour": "green",
+          "gradient": null,
+          "animation": "none"
+        },
+        "deleted": false,
+        "survivor": null,
+        "created": false
+      }
+    },
+    {
+      "title": "set style (issue #821)",
+      "method": "PUT",
+      "path": "/api/v1/layouts/<layout_uuid_1>/style",
+      "request": {
+        "colour": "teal",
+        "gradient": "tide",
+        "animation": "shimmer"
+      },
+      "status": 200,
+      "response": {
+        "layout": {
+          "layout_uuid": "<layout_uuid_1>",
+          "name": "api + web + db",
+          "position": 0,
+          "shape": {
+            "layout": {
+              "v": 6,
+              "rows": [
+                {
+                  "id": "r1",
+                  "kind": "flex",
+                  "size": 1,
+                  "slots": [
+                    {
+                      "id": "terminal:row:1",
+                      "fr": 0.5
+                    },
+                    {
+                      "id": "terminal:row:2",
+                      "fr": 0.5
+                    }
+                  ]
+                }
+              ],
+              "hidden": [],
+              "heroCollapsed": false,
+              "collapsed": []
+            },
+            "groups": {}
+          },
+          "revision": 1,
+          "source_key": null,
+          "members": [
+            {
+              "session_row_id": 1,
+              "session_uuid": "u0-0000",
+              "position": 0,
+              "broadcast": true
+            },
+            {
+              "session_row_id": 2,
+              "session_uuid": "u1-0000",
+              "position": 1,
+              "broadcast": true
+            }
+          ],
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "colour": "teal",
+          "gradient": "tide",
+          "animation": "shimmer"
+        },
+        "deleted": false,
+        "survivor": null,
+        "created": false
+      }
+    },
+    {
+      "title": "set style, 400 invalid colour",
+      "method": "PUT",
+      "path": "/api/v1/layouts/<layout_uuid_1>/style",
+      "request": {
+        "colour": "not-a-colour"
+      },
+      "status": 400,
+      "response": {
+        "detail": {
+          "code": "layout_style_invalid",
+          "detail": "colour must be one of cyan, violet, yellow, green, coral, orange, teal, rose, gold or a #rrggbb hex"
+        }
+      }
+    },
+    {
+      "title": "set style, 404 unknown layout",
+      "method": "PUT",
+      "path": "/api/v1/layouts/00000000-0000-0000-0000-000000000000/style",
+      "request": {
+        "colour": "teal"
+      },
+      "status": 404,
+      "response": {
+        "detail": {
+          "code": "layout_not_found",
+          "detail": "no layout 00000000-0000-0000-0000-000000000000"
+        }
+      }
+    },
+    {
+      "title": "broadcast toggle off (issue #837; revision unchanged)",
+      "method": "PUT",
+      "path": "/api/v1/layouts/<layout_uuid_1>/members/u1-0000/broadcast",
+      "request": {
+        "enabled": false
+      },
+      "status": 200,
+      "response": {
+        "layout": {
+          "layout_uuid": "<layout_uuid_1>",
+          "name": "api + web + db",
+          "position": 0,
+          "shape": {
+            "layout": {
+              "v": 6,
+              "rows": [
+                {
+                  "id": "r1",
+                  "kind": "flex",
+                  "size": 1,
+                  "slots": [
+                    {
+                      "id": "terminal:row:1",
+                      "fr": 0.5
+                    },
+                    {
+                      "id": "terminal:row:2",
+                      "fr": 0.5
+                    }
+                  ]
+                }
+              ],
+              "hidden": [],
+              "heroCollapsed": false,
+              "collapsed": []
+            },
+            "groups": {}
+          },
+          "revision": 1,
+          "source_key": null,
+          "members": [
+            {
+              "session_row_id": 1,
+              "session_uuid": "u0-0000",
+              "position": 0,
+              "broadcast": true
+            },
+            {
+              "session_row_id": 2,
+              "session_uuid": "u1-0000",
+              "position": 1,
+              "broadcast": false
+            }
+          ],
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "colour": "teal",
+          "gradient": "tide",
+          "animation": "shimmer"
+        },
+        "deleted": false,
+        "survivor": null,
+        "created": false
+      }
+    },
+    {
+      "title": "broadcast toggle, 409 not a member",
+      "method": "PUT",
+      "path": "/api/v1/layouts/<layout_uuid_1>/members/u3-0000/broadcast",
+      "request": {
+        "enabled": false
+      },
+      "status": 409,
+      "response": {
+        "detail": {
+          "code": "member_unresolved",
+          "detail": "members that name no stored session: u3-0000",
+          "unresolved": [
+            "u3-0000"
+          ]
+        }
+      }
+    },
+    {
+      "title": "broadcast: one result per member (row 1 live, row 2 toggled off)",
+      "method": "POST",
+      "path": "/api/v1/layouts/<layout_uuid_1>/broadcast",
+      "request": {
+        "text": "git status"
+      },
+      "status": 200,
+      "response": {
+        "layout_uuid": "<layout_uuid_1>",
+        "results": [
+          {
+            "session_row_id": 1,
+            "session_uuid": "u0-0000",
+            "status": "sent",
+            "code": null
+          },
+          {
+            "session_row_id": 2,
+            "session_uuid": "u1-0000",
+            "status": "skipped_off",
+            "code": null
+          }
+        ],
+        "sent": 1,
+        "skipped": 1,
+        "failed": 0
+      }
+    },
+    {
+      "title": "broadcast, 400 a newline is a second command",
+      "method": "POST",
+      "path": "/api/v1/layouts/<layout_uuid_1>/broadcast",
+      "request": {
+        "text": "ls\nrm -rf build"
+      },
+      "status": 400,
+      "response": {
+        "detail": {
+          "code": "broadcast_text_control",
+          "detail": "the text holds a control character (a newline or an escape)"
+        }
+      }
+    },
+    {
+      "title": "replace shape (tabs inside a component)",
+      "method": "PUT",
+      "path": "/api/v1/layouts/<layout_uuid_1>/shape",
+      "request": {
+        "shape": {
+          "layout": {
+            "v": 6,
+            "rows": [
+              {
+                "id": "r1",
+                "kind": "flex",
+                "size": 1,
+                "slots": [
+                  {
+                    "id": "terminal:row:1",
+                    "fr": 0.5
+                  },
+                  {
+                    "id": "terminal:row:2",
+                    "fr": 0.5
+                  }
+                ]
+              }
+            ],
+            "hidden": [],
+            "heroCollapsed": false,
+            "collapsed": []
+          },
+          "groups": {
+            "terminal:row:1": {
+              "tabs": [
+                "terminal:row:1",
+                "terminal:row:3"
+              ]
+            }
+          }
+        },
+        "expected_revision": 1
+      },
+      "status": 200,
+      "response": {
+        "layout": {
+          "layout_uuid": "<layout_uuid_1>",
+          "name": "api + web + db",
+          "position": 0,
+          "shape": {
+            "layout": {
+              "v": 6,
+              "rows": [
+                {
+                  "id": "r1",
+                  "kind": "flex",
+                  "size": 1,
+                  "slots": [
+                    {
+                      "id": "terminal:row:1",
+                      "fr": 0.5
+                    },
+                    {
+                      "id": "terminal:row:2",
+                      "fr": 0.5
+                    }
+                  ]
+                }
+              ],
+              "hidden": [],
+              "heroCollapsed": false,
+              "collapsed": []
+            },
+            "groups": {
+              "terminal:row:1": {
+                "tabs": [
+                  "terminal:row:1",
+                  "terminal:row:3"
+                ]
+              }
+            }
+          },
+          "revision": 2,
+          "source_key": null,
+          "members": [
+            {
+              "session_row_id": 1,
+              "session_uuid": "u0-0000",
+              "position": 0,
+              "broadcast": true
+            },
+            {
+              "session_row_id": 3,
+              "session_uuid": "u2-0000",
+              "position": 1,
+              "broadcast": true
+            },
+            {
+              "session_row_id": 2,
+              "session_uuid": "u1-0000",
+              "position": 2,
+              "broadcast": false
+            }
+          ],
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "colour": "teal",
+          "gradient": "tide",
+          "animation": "shimmer"
+        },
+        "deleted": false,
+        "survivor": null,
+        "created": false
+      }
+    },
+    {
+      "title": "replace shape, 409 stale carries current",
+      "method": "PUT",
+      "path": "/api/v1/layouts/<layout_uuid_1>/shape",
+      "request": {
+        "shape": {
+          "layout": {
+            "v": 6,
+            "rows": [
+              {
+                "id": "r1",
+                "kind": "flex",
+                "size": 1,
+                "slots": [
+                  {
+                    "id": "terminal:row:1",
+                    "fr": 0.5
+                  },
+                  {
+                    "id": "terminal:row:2",
+                    "fr": 0.5
+                  }
+                ]
+              }
+            ],
+            "hidden": [],
+            "heroCollapsed": false,
+            "collapsed": []
+          },
+          "groups": {}
+        },
+        "expected_revision": 1
+      },
+      "status": 409,
+      "response": {
+        "detail": {
+          "code": "layout_stale",
+          "detail": "the layout is at revision 2",
+          "current": {
+            "layout_uuid": "<layout_uuid_1>",
+            "name": "api + web + db",
+            "position": 0,
+            "shape": {
+              "layout": {
+                "v": 6,
+                "rows": [
+                  {
+                    "id": "r1",
+                    "kind": "flex",
+                    "size": 1,
+                    "slots": [
+                      {
+                        "id": "terminal:row:1",
+                        "fr": 0.5
+                      },
+                      {
+                        "id": "terminal:row:2",
+                        "fr": 0.5
+                      }
+                    ]
+                  }
+                ],
+                "hidden": [],
+                "heroCollapsed": false,
+                "collapsed": []
+              },
+              "groups": {
+                "terminal:row:1": {
+                  "tabs": [
+                    "terminal:row:1",
+                    "terminal:row:3"
+                  ]
+                }
+              }
+            },
+            "revision": 2,
+            "source_key": null,
+            "members": [
+              {
+                "session_row_id": 1,
+                "session_uuid": "u0-0000",
+                "position": 0,
+                "broadcast": true
+              },
+              {
+                "session_row_id": 3,
+                "session_uuid": "u2-0000",
+                "position": 1,
+                "broadcast": true
+              },
+              {
+                "session_row_id": 2,
+                "session_uuid": "u1-0000",
+                "position": 2,
+                "broadcast": false
+              }
+            ],
+            "created_at": "<timestamp>",
+            "updated_at": "<timestamp>",
+            "colour": "teal",
+            "gradient": "tide",
+            "animation": "shimmer"
+          }
+        }
+      }
+    },
+    {
+      "title": "add member by session_uuid",
+      "method": "POST",
+      "path": "/api/v1/layouts/<layout_uuid_1>/members",
+      "request": {
+        "session_uuid": "u3-0000"
+      },
+      "status": 200,
+      "response": {
+        "layout": {
+          "layout_uuid": "<layout_uuid_1>",
+          "name": "api + web + db",
+          "position": 0,
+          "shape": {
+            "layout": {
+              "v": 6,
+              "rows": [
+                {
+                  "id": "r1",
+                  "kind": "flex",
+                  "size": 1,
+                  "slots": [
+                    {
+                      "id": "terminal:row:1",
+                      "fr": 0.5
+                    },
+                    {
+                      "id": "terminal:row:2",
+                      "fr": 0.5
+                    }
+                  ]
+                }
+              ],
+              "hidden": [],
+              "heroCollapsed": false,
+              "collapsed": []
+            },
+            "groups": {
+              "terminal:row:1": {
+                "tabs": [
+                  "terminal:row:1",
+                  "terminal:row:3",
+                  "terminal:row:4"
+                ]
+              }
+            }
+          },
+          "revision": 3,
+          "source_key": null,
+          "members": [
+            {
+              "session_row_id": 1,
+              "session_uuid": "u0-0000",
+              "position": 0,
+              "broadcast": true
+            },
+            {
+              "session_row_id": 3,
+              "session_uuid": "u2-0000",
+              "position": 1,
+              "broadcast": true
+            },
+            {
+              "session_row_id": 4,
+              "session_uuid": "u3-0000",
+              "position": 2,
+              "broadcast": true
+            },
+            {
+              "session_row_id": 2,
+              "session_uuid": "u1-0000",
+              "position": 3,
+              "broadcast": false
+            }
+          ],
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "colour": "teal",
+          "gradient": "tide",
+          "animation": "shimmer"
+        },
+        "deleted": false,
+        "survivor": null,
+        "created": false
+      }
+    },
+    {
+      "title": "remove member",
+      "method": "DELETE",
+      "path": "/api/v1/layouts/<layout_uuid_1>/members/u3-0000",
+      "request": null,
+      "status": 200,
+      "response": {
+        "layout": {
+          "layout_uuid": "<layout_uuid_1>",
+          "name": "api + web + db",
+          "position": 0,
+          "shape": {
+            "layout": {
+              "v": 6,
+              "rows": [
+                {
+                  "id": "r1",
+                  "kind": "flex",
+                  "size": 1,
+                  "slots": [
+                    {
+                      "id": "terminal:row:1",
+                      "fr": 0.5
+                    },
+                    {
+                      "id": "terminal:row:2",
+                      "fr": 0.5
+                    }
+                  ]
+                }
+              ],
+              "hidden": [],
+              "heroCollapsed": false,
+              "collapsed": []
+            },
+            "groups": {
+              "terminal:row:1": {
+                "tabs": [
+                  "terminal:row:1",
+                  "terminal:row:3"
+                ]
+              }
+            }
+          },
+          "revision": 4,
+          "source_key": null,
+          "members": [
+            {
+              "session_row_id": 1,
+              "session_uuid": "u0-0000",
+              "position": 0,
+              "broadcast": true
+            },
+            {
+              "session_row_id": 3,
+              "session_uuid": "u2-0000",
+              "position": 1,
+              "broadcast": true
+            },
+            {
+              "session_row_id": 2,
+              "session_uuid": "u1-0000",
+              "position": 2,
+              "broadcast": false
+            }
+          ],
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "colour": "teal",
+          "gradient": "tide",
+          "animation": "shimmer"
+        },
+        "deleted": false,
+        "survivor": null,
+        "created": false
+      }
+    },
+    {
+      "title": "remove member",
+      "method": "DELETE",
+      "path": "/api/v1/layouts/<layout_uuid_1>/members/u2-0000",
+      "request": null,
+      "status": 200,
+      "response": {
+        "layout": {
+          "layout_uuid": "<layout_uuid_1>",
+          "name": "api + web + db",
+          "position": 0,
+          "shape": {
+            "layout": {
+              "v": 6,
+              "rows": [
+                {
+                  "id": "r1",
+                  "kind": "flex",
+                  "size": 1,
+                  "slots": [
+                    {
+                      "id": "terminal:row:1",
+                      "fr": 0.5
+                    },
+                    {
+                      "id": "terminal:row:2",
+                      "fr": 0.5
+                    }
+                  ]
+                }
+              ],
+              "hidden": [],
+              "heroCollapsed": false,
+              "collapsed": []
+            },
+            "groups": {
+              "terminal:row:1": {
+                "tabs": [
+                  "terminal:row:1"
+                ]
+              }
+            }
+          },
+          "revision": 5,
+          "source_key": null,
+          "members": [
+            {
+              "session_row_id": 1,
+              "session_uuid": "u0-0000",
+              "position": 0,
+              "broadcast": true
+            },
+            {
+              "session_row_id": 2,
+              "session_uuid": "u1-0000",
+              "position": 1,
+              "broadcast": false
+            }
+          ],
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "colour": "teal",
+          "gradient": "tide",
+          "animation": "shimmer"
+        },
+        "deleted": false,
+        "survivor": null,
+        "created": false
+      }
+    },
+    {
+      "title": "remove member to one: deleted with survivor",
+      "method": "DELETE",
+      "path": "/api/v1/layouts/<layout_uuid_1>/members/u1-0000",
+      "request": null,
+      "status": 200,
+      "response": {
+        "layout": null,
+        "deleted": true,
+        "survivor": {
+          "session_row_id": 1,
+          "session_uuid": "u0-0000",
+          "position": 0,
+          "broadcast": true
+        },
+        "created": false
+      }
+    },
+    {
+      "title": "list",
+      "method": "GET",
+      "path": "/api/v1/layouts",
+      "request": null,
+      "status": 200,
+      "response": {
+        "status": "ok",
+        "layouts": [
+          {
+            "layout_uuid": "<layout_uuid_2>",
+            "name": "migrated",
+            "position": 1,
+            "shape": {
+              "layout": {
+                "v": 6,
+                "rows": [
+                  {
+                    "id": "r1",
+                    "kind": "flex",
+                    "size": 1,
+                    "slots": [
+                      {
+                        "id": "terminal:row:1",
+                        "fr": 0.5
+                      },
+                      {
+                        "id": "terminal:row:2",
+                        "fr": 0.5
+                      }
+                    ]
+                  }
+                ],
+                "hidden": [],
+                "heroCollapsed": false,
+                "collapsed": []
+              },
+              "groups": {}
+            },
+            "revision": 1,
+            "source_key": "terminal_layouts:cloude_a@1",
+            "members": [
+              {
+                "session_row_id": 1,
+                "session_uuid": "u0-0000",
+                "position": 0,
+                "broadcast": true
+              },
+              {
+                "session_row_id": 2,
+                "session_uuid": "u1-0000",
+                "position": 1,
+                "broadcast": true
+              }
+            ],
+            "created_at": "<timestamp>",
+            "updated_at": "<timestamp>",
+            "colour": "green",
+            "gradient": null,
+            "animation": "none"
+          }
+        ],
+        "detail": null
+      }
+    },
+    {
+      "title": "reorder",
+      "method": "PUT",
+      "path": "/api/v1/layouts/order",
+      "request": {
+        "layout_uuids": [
+          "<layout_uuid_2>"
+        ]
+      },
+      "status": 200,
+      "response": {
+        "status": "ok",
+        "layouts": [
+          {
+            "layout_uuid": "<layout_uuid_2>",
+            "name": "migrated",
+            "position": 0,
+            "shape": {
+              "layout": {
+                "v": 6,
+                "rows": [
+                  {
+                    "id": "r1",
+                    "kind": "flex",
+                    "size": 1,
+                    "slots": [
+                      {
+                        "id": "terminal:row:1",
+                        "fr": 0.5
+                      },
+                      {
+                        "id": "terminal:row:2",
+                        "fr": 0.5
+                      }
+                    ]
+                  }
+                ],
+                "hidden": [],
+                "heroCollapsed": false,
+                "collapsed": []
+              },
+              "groups": {}
+            },
+            "revision": 1,
+            "source_key": "terminal_layouts:cloude_a@1",
+            "members": [
+              {
+                "session_row_id": 1,
+                "session_uuid": "u0-0000",
+                "position": 0,
+                "broadcast": true
+              },
+              {
+                "session_row_id": 2,
+                "session_uuid": "u1-0000",
+                "position": 1,
+                "broadcast": true
+              }
+            ],
+            "created_at": "<timestamp>",
+            "updated_at": "<timestamp>",
+            "colour": "green",
+            "gradient": null,
+            "animation": "none"
+          }
+        ],
+        "detail": null
+      }
+    },
+    {
+      "title": "renew active lease",
+      "method": "PUT",
+      "path": "/api/v1/layouts/<layout_uuid_2>/active",
+      "request": null,
+      "status": 200,
+      "response": {
+        "layout_uuid": "<layout_uuid_2>",
+        "active": true,
+        "lease_seconds": 180
+      }
+    },
+    {
+      "title": "renew lease, 404 unknown layout",
+      "method": "PUT",
+      "path": "/api/v1/layouts/00000000-0000-0000-0000-000000000000/active",
+      "request": null,
+      "status": 404,
+      "response": {
+        "detail": {
+          "code": "layout_not_found",
+          "detail": "no layout 00000000-0000-0000-0000-000000000000"
+        }
+      }
+    },
+    {
+      "title": "delete (sessions untouched)",
+      "method": "DELETE",
+      "path": "/api/v1/layouts/<layout_uuid_2>",
+      "request": null,
+      "status": 200,
+      "response": {
+        "layout": null,
+        "deleted": true,
+        "survivor": null,
+        "created": false
+      }
+    },
+    {
+      "title": "delete, 404",
+      "method": "DELETE",
+      "path": "/api/v1/layouts/<layout_uuid_2>",
+      "request": null,
+      "status": 404,
+      "response": {
+        "detail": {
+          "code": "layout_not_found",
+          "detail": "no layout <layout_uuid_2>"
+        }
+      }
+    },
+    {
+      "title": "list, tables unreadable: 200 unavailable, never an empty ok",
+      "method": "GET",
+      "path": "/api/v1/layouts",
+      "request": null,
+      "status": 200,
+      "response": {
+        "status": "unavailable",
+        "layouts": [],
+        "detail": "the layouts tables are not present (schema before v34)"
+      }
+    },
+    {
+      "title": "create, 503 datastore unavailable",
+      "method": "POST",
+      "path": "/api/v1/layouts",
+      "request": {
+        "name": "x",
+        "shape": {
+          "layout": {
+            "v": 6,
+            "rows": [
+              {
+                "id": "r1",
+                "kind": "flex",
+                "size": 1,
+                "slots": [
+                  {
+                    "id": "terminal:row:1",
+                    "fr": 0.5
+                  },
+                  {
+                    "id": "terminal:row:2",
+                    "fr": 0.5
+                  }
+                ]
+              }
+            ],
+            "hidden": [],
+            "heroCollapsed": false,
+            "collapsed": []
+          },
+          "groups": {}
+        }
+      },
+      "status": 503,
+      "response": {
+        "detail": {
+          "code": "layouts_unavailable",
+          "detail": "the layouts tables are not present (schema before v34)"
+        }
+      }
+    }
+  ]
+}

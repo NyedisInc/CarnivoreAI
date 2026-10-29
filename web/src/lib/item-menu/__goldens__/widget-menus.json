@@ -1,0 +1,273 @@
+{
+  "normal bare": [
+    {
+      "id": "close-widget",
+      "label": "close widget",
+      "key": "k",
+      "danger": true
+    }
+  ],
+  "normal full": [
+    {
+      "id": "sort:name",
+      "label": "sort:name",
+      "key": "n",
+      "checked": true
+    },
+    {
+      "id": "sort:recent",
+      "label": "sort:recent",
+      "key": "r",
+      "checked": false
+    },
+    {
+      "id": "view-all",
+      "label": "view-all",
+      "key": "i",
+      "sep": true
+    },
+    {
+      "id": "pop-out",
+      "label": "pop out",
+      "key": "o",
+      "sep": true
+    },
+    {
+      "id": "show-header",
+      "label": "show header",
+      "key": "h",
+      "checked": true,
+      "toggle": true
+    },
+    {
+      "id": "edit-layout",
+      "label": "edit layout",
+      "key": "e",
+      "sep": true
+    },
+    {
+      "id": "close-widget",
+      "label": "close widget",
+      "key": "k",
+      "sep": true,
+      "danger": true
+    }
+  ],
+  "normal scope switch": [
+    {
+      "id": "session",
+      "label": "session",
+      "key": "s",
+      "checked": true
+    },
+    {
+      "id": "all",
+      "label": "all",
+      "key": "a",
+      "checked": false
+    },
+    {
+      "id": "pop-out",
+      "label": "pop out",
+      "key": "o",
+      "sep": true
+    },
+    {
+      "id": "show-header",
+      "label": "show header",
+      "key": "h",
+      "checked": false,
+      "toggle": true
+    },
+    {
+      "id": "edit-layout",
+      "label": "edit layout",
+      "key": "e",
+      "sep": true
+    },
+    {
+      "id": "remove-widget",
+      "label": "remove widget",
+      "key": "k",
+      "sep": true,
+      "danger": true
+    }
+  ],
+  "normal on a bar": [
+    {
+      "id": "edit-layout",
+      "label": "edit layout",
+      "key": "e"
+    },
+    {
+      "id": "close-widget",
+      "label": "close widget",
+      "key": "k",
+      "sep": true,
+      "danger": true
+    }
+  ],
+  "normal pop-out window": [
+    {
+      "id": "focus-main-window",
+      "label": "focus main window",
+      "key": "f"
+    },
+    {
+      "id": "show-header",
+      "label": "show header",
+      "key": "h",
+      "checked": true,
+      "toggle": true
+    }
+  ],
+  "normal tab": [
+    {
+      "id": "pop-out",
+      "label": "pop out",
+      "key": "o"
+    },
+    {
+      "id": "move-tab",
+      "label": "move to...",
+      "key": "m",
+      "sep": true
+    },
+    {
+      "id": "split-right",
+      "label": "split right",
+      "key": "s"
+    },
+    {
+      "id": "split-down",
+      "label": "split down",
+      "key": "p"
+    },
+    {
+      "id": "close-tab",
+      "label": "close tab",
+      "key": "k",
+      "danger": true
+    },
+    {
+      "id": "edit-layout",
+      "label": "edit layout",
+      "key": "e",
+      "sep": true
+    }
+  ],
+  "edit full": [
+    {
+      "id": "view-all",
+      "label": "view-all",
+      "key": "i"
+    },
+    {
+      "id": "compact",
+      "label": "compact",
+      "key": "c",
+      "sep": true,
+      "checked": true
+    },
+    {
+      "id": "detailed",
+      "label": "detailed",
+      "key": "t",
+      "checked": false
+    },
+    {
+      "id": "show-header",
+      "label": "show header",
+      "key": "h",
+      "sep": true,
+      "checked": true,
+      "toggle": true
+    },
+    {
+      "id": "settings",
+      "label": "settings",
+      "key": ",",
+      "sep": true
+    },
+    {
+      "id": "extend-row",
+      "label": "extend a row",
+      "key": "+",
+      "sep": true
+    },
+    {
+      "id": "pull-back-row",
+      "label": "pull back a row",
+      "key": "",
+      "disabled": "one row now"
+    },
+    {
+      "id": "widget-move-up",
+      "label": "move up",
+      "key": "["
+    },
+    {
+      "id": "widget-move-down",
+      "label": "move down",
+      "key": "",
+      "disabled": "already last"
+    },
+    {
+      "id": "move-to-drawer",
+      "label": "move to the drawer area",
+      "key": "m"
+    },
+    {
+      "id": "move-to-bar",
+      "label": "move to the right bar",
+      "key": "o"
+    },
+    {
+      "id": "done-editing",
+      "label": "done editing",
+      "key": "e",
+      "sep": true
+    },
+    {
+      "id": "close-widget",
+      "label": "close widget",
+      "key": "k",
+      "sep": true,
+      "danger": true
+    }
+  ],
+  "edit with branch content": [
+    {
+      "id": "filter",
+      "label": "filter",
+      "key": "f",
+      "children": [
+        {
+          "id": "all",
+          "label": "all",
+          "key": "a",
+          "checked": true
+        },
+        {
+          "id": "mine",
+          "label": "mine",
+          "key": "m",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "done-editing",
+      "label": "done editing",
+      "key": "e",
+      "sep": true
+    },
+    {
+      "id": "remove-widget",
+      "label": "remove widget",
+      "key": "k",
+      "sep": true,
+      "danger": true
+    }
+  ]
+}

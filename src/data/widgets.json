@@ -1,0 +1,878 @@
+{
+  "schema": 1,
+  "widgets": [
+    {
+      "id": "core.stat-running",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "small",
+          "wide"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.stat-sessions",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "small",
+          "wide"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.stat-projects",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "small",
+          "wide"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.stat-ledger",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "small",
+          "wide"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.stat-alive",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "small",
+          "wide"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.stat-subagents",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "small",
+          "wide"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.running-sessions",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.closed-sessions",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.projects",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.skills",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.plugins",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.themes",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.ledger",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      },
+      "glance": {
+        "height": 36
+      }
+    },
+    {
+      "id": "core.activity-log",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      },
+      "settings": {
+        "version": 1,
+        "fields": {
+          "showSystem": {
+            "kind": "boolean",
+            "labelKey": "widgets.setting.activity_log.show_system",
+            "hintKey": "widgets.setting.activity_log.show_system.hint",
+            "default": true
+          }
+        },
+        "groups": [
+          {
+            "labelKey": "widgets.setting.activity_log.group.show",
+            "fields": [
+              "showSystem"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "core.notes",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.files",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      },
+      "glance": {
+        "height": 36
+      },
+      "settings": {
+        "version": 1,
+        "fields": {
+          "showGlobalFolder": {
+            "kind": "boolean",
+            "labelKey": "widgets.setting.files.show_global_folder",
+            "hintKey": "widgets.setting.files.show_global_folder.hint",
+            "default": true
+          },
+          "topFolder": {
+            "kind": "enum",
+            "labelKey": "widgets.setting.files.top_folder",
+            "hintKey": "widgets.setting.files.top_folder.hint",
+            "default": "global",
+            "options": [
+              "global",
+              "project"
+            ],
+            "control": "segmented"
+          },
+          "showBadge": {
+            "kind": "boolean",
+            "labelKey": "widgets.setting.alert_badge.show",
+            "hintKey": "widgets.setting.alert_badge.show.hint",
+            "default": true
+          }
+        },
+        "groups": [
+          {
+            "labelKey": "widgets.setting.files.group.roots",
+            "fields": [
+              "showGlobalFolder",
+              "topFolder"
+            ]
+          },
+          {
+            "labelKey": "widgets.setting.alert_badge.group",
+            "fields": [
+              "showBadge"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "core.scheduled-tasks",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.keep-awake",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.machine-stats",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.changes",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      },
+      "settings": {
+        "version": 1,
+        "fields": {
+          "showBadge": {
+            "kind": "boolean",
+            "labelKey": "widgets.setting.alert_badge.show",
+            "hintKey": "widgets.setting.alert_badge.show.hint",
+            "default": true
+          }
+        },
+        "groups": [
+          {
+            "labelKey": "widgets.setting.alert_badge.group",
+            "fields": [
+              "showBadge"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "core.task-manager",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      },
+      "settings": {
+        "version": 1,
+        "fields": {
+          "showBadge": {
+            "kind": "boolean",
+            "labelKey": "widgets.setting.alert_badge.show",
+            "hintKey": "widgets.setting.alert_badge.show.hint",
+            "default": true
+          }
+        },
+        "groups": [
+          {
+            "labelKey": "widgets.setting.alert_badge.group",
+            "fields": [
+              "showBadge"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "core.task-manager-mk2",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      },
+      "settings": {
+        "version": 1,
+        "fields": {
+          "showBadge": {
+            "kind": "boolean",
+            "labelKey": "widgets.setting.alert_badge.show",
+            "hintKey": "widgets.setting.alert_badge.show.hint",
+            "default": true
+          }
+        },
+        "groups": [
+          {
+            "labelKey": "widgets.setting.alert_badge.group",
+            "fields": [
+              "showBadge"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "core.task-manager-mk2-all",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      },
+      "settings": {
+        "version": 1,
+        "fields": {
+          "showBadge": {
+            "kind": "boolean",
+            "labelKey": "widgets.setting.alert_badge.show",
+            "hintKey": "widgets.setting.alert_badge.show.hint",
+            "default": true
+          }
+        },
+        "groups": [
+          {
+            "labelKey": "widgets.setting.alert_badge.group",
+            "fields": [
+              "showBadge"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "core.task-manager-all",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      },
+      "settings": {
+        "version": 1,
+        "fields": {
+          "showBadge": {
+            "kind": "boolean",
+            "labelKey": "widgets.setting.alert_badge.show",
+            "hintKey": "widgets.setting.alert_badge.show.hint",
+            "default": true
+          }
+        },
+        "groups": [
+          {
+            "labelKey": "widgets.setting.alert_badge.group",
+            "fields": [
+              "showBadge"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "core.crosstalk",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.tasks",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      },
+      "settings": {
+        "version": 1,
+        "fields": {
+          "showBadge": {
+            "kind": "boolean",
+            "labelKey": "widgets.setting.alert_badge.show",
+            "hintKey": "widgets.setting.alert_badge.show.hint",
+            "default": true
+          }
+        },
+        "groups": [
+          {
+            "labelKey": "widgets.setting.alert_badge.group",
+            "fields": [
+              "showBadge"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "core.tasks-all",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      },
+      "settings": {
+        "version": 1,
+        "fields": {
+          "showBadge": {
+            "kind": "boolean",
+            "labelKey": "widgets.setting.alert_badge.show",
+            "hintKey": "widgets.setting.alert_badge.show.hint",
+            "default": true
+          }
+        },
+        "groups": [
+          {
+            "labelKey": "widgets.setting.alert_badge.group",
+            "fields": [
+              "showBadge"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "core.bookmarks",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      },
+      "settings": {
+        "version": 1,
+        "fields": {
+          "showPreview": {
+            "kind": "boolean",
+            "labelKey": "widgets.setting.bookmarks.show_preview",
+            "hintKey": "widgets.setting.bookmarks.show_preview.hint",
+            "default": true
+          },
+          "previewTurns": {
+            "kind": "number",
+            "labelKey": "widgets.setting.bookmarks.preview_turns",
+            "hintKey": "widgets.setting.bookmarks.preview_turns.hint",
+            "default": 4,
+            "min": 1,
+            "max": 20
+          }
+        },
+        "groups": [
+          {
+            "labelKey": "widgets.setting.bookmarks.group.preview",
+            "fields": [
+              "showPreview",
+              "previewTurns"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "core.bookmarks-all",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.pipeline",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.automations",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.automations-all",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      },
+      "settings": {
+        "version": 1,
+        "fields": {
+          "showBadge": {
+            "kind": "boolean",
+            "labelKey": "widgets.setting.alert_badge.show",
+            "hintKey": "widgets.setting.alert_badge.show.hint",
+            "default": true
+          }
+        },
+        "groups": [
+          {
+            "labelKey": "widgets.setting.alert_badge.group",
+            "fields": [
+              "showBadge"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "core.shell",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.timeline",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.questions",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      },
+      "settings": {
+        "version": 1,
+        "fields": {
+          "showBadge": {
+            "kind": "boolean",
+            "labelKey": "widgets.setting.alert_badge.show",
+            "hintKey": "widgets.setting.alert_badge.show.hint",
+            "default": true
+          }
+        },
+        "groups": [
+          {
+            "labelKey": "widgets.setting.alert_badge.group",
+            "fields": [
+              "showBadge"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "core.developer",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.task-list",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      },
+      "settings": {
+        "version": 1,
+        "fields": {
+          "showBadge": {
+            "kind": "boolean",
+            "labelKey": "widgets.setting.alert_badge.show",
+            "hintKey": "widgets.setting.alert_badge.show.hint",
+            "default": true
+          }
+        },
+        "groups": [
+          {
+            "labelKey": "widgets.setting.alert_badge.group",
+            "fields": [
+              "showBadge"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "core.session-contents",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.warroom",
+      "instancing": "singleton",
+      "fits": {
+        "sizes": [
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
+    },
+    {
+      "id": "core.terminal",
+      "instancing": "per-target",
+      "fits": {
+        "sizes": [
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true
+      }
+    },
+    {
+      "id": "core.browser",
+      "instancing": "per-target",
+      "fits": {
+        "sizes": [
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true
+      }
+    },
+    {
+      "id": "core.analytics",
+      "instancing": "per-target",
+      "fits": {
+        "sizes": [
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true
+      }
+    }
+  ],
+  "replaced": {
+    "core.stats": [
+      "core.stat-running",
+      "core.stat-sessions",
+      "core.stat-projects",
+      "core.stat-ledger",
+      "core.stat-alive",
+      "core.stat-subagents"
+    ],
+    "core.approvals": [
+      "core.questions"
+    ],
+    "core.huddle": [
+      "core.task-manager"
+    ],
+    "core.huddle-all": [
+      "core.task-manager-all"
+    ],
+    "core.huddle-list": [
+      "core.task-list"
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://carnivore.ai/schemas/extensions/warez/cplug.schema.json",
+  "title": "Plugin (cplug), layer 2 (warez front door)",
+  "description": "L1 cplug plus the base overlay. Closed until after 1.0 (policy). runtime is required; a process plugin declares its network_hosts (an empty list is allowed). Which permission names a catalog plugin may declare is a registry rule (permission_registry.py), not schema.",
+  "allOf": [
+    {
+      "$ref": "../cplug.schema.json"
+    },
+    {
+      "$ref": "item.schema.json"
+    },
+    {
+      "required": [
+        "runtime",
+        "data"
+      ],
+      "if": {
+        "properties": {
+          "runtime": {
+            "properties": {
+              "kind": {
+                "const": "process"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          }
+        },
+        "required": [
+          "runtime"
+        ]
+      },
+      "then": {
+        "required": [
+          "network_hosts"
+        ]
+      }
+    }
+  ]
+}

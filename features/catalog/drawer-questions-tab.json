@@ -1,0 +1,59 @@
+{
+  "id": "drawer-questions-tab",
+  "name": "Drawer questions tab",
+  "summary": "A drawer tab, a yellow question mark with a count on the sidebar rail, that appears only while a session is waiting on you and lists every open question in a cell outlined in its session's theme.",
+  "description": "While the approval inbox has an open question, the sidebar rail grows a questions key below menu and agents: a question mark with the waiting count in yellow, whose glow pulses when a new one arrives. It opens a yellow slide-out over the agents list: a scrollable list of every open question, oldest first so nothing moves when a new one lands at the end. Each question is one cell outlined in the theme of the session it comes from (the session's own pin, its project default, else the global theme), holding the standard question card: one layout for every kind (a startup screen, bash, an edit, a question, a plan, an agent action, a codex approval, an unreadable prompt), with a kind badge and stripe, who and where, how long it has waited and one plain sentence saying what is asked, written from the structured data instead of claude's own text. Cards start open (click a head to fold one to that sentence); each shows its 2 to 4 facts (the folder, the command, what yes and no do, the risk), the raw text folded under details, every option as its own button in screen order in plain words, multi select, your own answer, approve and deny, a footer chip saying whether beast mode would answer it, it always waits for you, it is an mcp write or it is read only, and go to session. A card you fold stays folded while it waits. A session stopped on a startup screen (folder trust, an mcp server, the bypass permissions warning, external imports) shows that screen's warning and its real options, and your click presses exactly that one; nothing answers a startup screen for you, beast mode included. A startup screen whose options cannot be read safely (sign in, a picker, an unknown screen) stays a read only card that says why. Answering resolves the cell and it collapses out; the last answer removes the key and the slide-out closes back to agents. Keys on a focused cell: up and down move, enter opens a folded card, 1 to 9 press that option, enter submits a multi select, escape closes the slide-out. Controls are 44px tall on a phone. Questions from the paired computer show too. The tray icon doors are unchanged.",
+  "area": "drawers",
+  "status": "beta",
+  "since": "2026-09-30",
+  "updated": "2026-10-15",
+  "surfaces": [
+    "drawer",
+    "web/src/lib/drawer-tabs/DrawerQuestions.svelte",
+    "web/src/lib/sidebar-widgets/core-widgets.ts"
+  ],
+  "docs": [
+    "docs/approvals.md"
+  ],
+  "issues": [
+    1192,
+    1774
+  ],
+  "keywords": [
+    "approvals",
+    "questions",
+    "drawer",
+    "tab",
+    "inbox",
+    "session theme",
+    "permission",
+    "folder trust",
+    "startup screen",
+    "mcp server",
+    "question card",
+    "folded",
+    "headline",
+    "beast mode"
+  ],
+  "where": [
+    "The sidebar rail: a question mark key with a count, shown only while something is waiting on you; it opens the questions slide-out."
+  ],
+  "how_to": [
+    "Open the drawer while a session shows a question or permission dialog and press the question mark key on the sidebar rail.",
+    "Click a card to open it, then press an option, or focus a cell, press enter to open it and press its number; press go to session to open the session.",
+    "Press escape on a cell to close the slide-out and go back to agents.",
+    "When a session waits on a startup screen such as folder trust, press the option you want on its cell; if the screen changed meanwhile the press is refused and the list re-reads."
+  ],
+  "examples": [
+    "Three sessions with three themes each ask something: the list shows three cells, each outlined in its own session's colours.",
+    "Answer the last question and the key disappears, leaving the drawer on the agents list.",
+    "A session wakes on folder trust with a warning that the folder pre-approves 4 tool permissions: the cell shows the warning and two buttons, no, continue without these permissions and yes, i trust this folder."
+  ],
+  "media_exempt": "Screenshots are captured before the next version bump.",
+  "api_routes": [
+    "GET /api/v1/approvals",
+    "POST /api/v1/sessions/{id}/dialog/answer",
+    "POST /api/v1/agent-actions/{id}/approve",
+    "POST /api/v1/agent-actions/{id}/deny"
+  ]
+}

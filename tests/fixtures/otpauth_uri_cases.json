@@ -1,0 +1,92 @@
+[
+ {
+  "secret": "JBSWY3DPEHPK3PXP",
+  "computer_name": "the team MacBook Pro",
+  "account": "the team MacBook Pro",
+  "uri": "otpauth://totp/Carnivore:the%20team%20MacBook%20Pro?secret=JBSWY3DPEHPK3PXP&issuer=Carnivore"
+ },
+ {
+  "secret": "JBSWY3DPEHPK3PXP",
+  "computer_name": "the team's (Laptop) *one* ! & co",
+  "account": "the team's (Laptop) *one* ! & co",
+  "uri": "otpauth://totp/Carnivore:the%20team%27s%20%28Laptop%29%20%2Aone%2A%20%21%20%26%20co?secret=JBSWY3DPEHPK3PXP&issuer=Carnivore"
+ },
+ {
+  "secret": "JBSWY3DPEHPK3PXP",
+  "computer_name": "a:b\tc",
+  "account": "abc",
+  "uri": "otpauth://totp/Carnivore:abc?secret=JBSWY3DPEHPK3PXP&issuer=Carnivore"
+ },
+ {
+  "secret": "JBSWY3DPEHPK3PXP",
+  "computer_name": "the team\u2019s MacBook Pro",
+  "account": "the team\u2019s MacBook Pro",
+  "uri": "otpauth://totp/Carnivore:the%20team%E2%80%99s%20MacBook%20Pro?secret=JBSWY3DPEHPK3PXP&issuer=Carnivore"
+ },
+ {
+  "secret": "JBSWY3DPEHPK3PXP",
+  "computer_name": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "account": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "uri": "otpauth://totp/Carnivore:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?secret=JBSWY3DPEHPK3PXP&issuer=Carnivore"
+ },
+ {
+  "secret": "JBSWY3DPEHPK3PXP",
+  "computer_name": "\u0001\u0002\u007f\u0085",
+  "account": "carnivore",
+  "uri": "otpauth://totp/Carnivore:carnivore?secret=JBSWY3DPEHPK3PXP&issuer=Carnivore"
+ },
+ {
+  "secret": "JBSWY3DPEHPK3PXP",
+  "computer_name": "the team \ud83d\udcbb Mac",
+  "account": "the team \ud83d\udcbb Mac",
+  "uri": "otpauth://totp/Carnivore:the%20team%20%F0%9F%92%BB%20Mac?secret=JBSWY3DPEHPK3PXP&issuer=Carnivore"
+ },
+ {
+  "secret": "JBSWY3DPEHPK3PXP",
+  "computer_name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\ud83d\udcbbxyz",
+  "account": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\ud83d\udcbb",
+  "uri": "otpauth://totp/Carnivore:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%F0%9F%92%BB?secret=JBSWY3DPEHPK3PXP&issuer=Carnivore"
+ },
+ {
+  "secret": "JBSWY3DPEHPK3PXP",
+  "computer_name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa xyz",
+  "account": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "uri": "otpauth://totp/Carnivore:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa?secret=JBSWY3DPEHPK3PXP&issuer=Carnivore"
+ },
+ {
+  "secret": "JBSWY3DPEHPK3PXP",
+  "computer_name": "Desk\u00a0Box",
+  "account": "Desk Box",
+  "uri": "otpauth://totp/Carnivore:Desk%20Box?secret=JBSWY3DPEHPK3PXP&issuer=Carnivore"
+ },
+ {
+  "secret": "JBSWY3DPEHPK3PXP",
+  "computer_name": "Desk\u2028Box",
+  "account": "Desk Box",
+  "uri": "otpauth://totp/Carnivore:Desk%20Box?secret=JBSWY3DPEHPK3PXP&issuer=Carnivore"
+ },
+ {
+  "secret": "JBSWY3DPEHPK3PXP",
+  "computer_name": "Ma\u200bc",
+  "account": "Mac",
+  "uri": "otpauth://totp/Carnivore:Mac?secret=JBSWY3DPEHPK3PXP&issuer=Carnivore"
+ },
+ {
+  "secret": "JBSWY3DPEHPK3PXP",
+  "computer_name": "\u202eevil",
+  "account": "evil",
+  "uri": "otpauth://totp/Carnivore:evil?secret=JBSWY3DPEHPK3PXP&issuer=Carnivore"
+ },
+ {
+  "secret": "JBSWY3DPEHPK3PXP",
+  "computer_name": " \u200b \u00a0 ",
+  "account": "carnivore",
+  "uri": "otpauth://totp/Carnivore:carnivore?secret=JBSWY3DPEHPK3PXP&issuer=Carnivore"
+ },
+ {
+  "secret": "JBSWY3DPEHPK3PXP",
+  "computer_name": "  lead and   trail  ",
+  "account": "lead and trail",
+  "uri": "otpauth://totp/Carnivore:lead%20and%20trail?secret=JBSWY3DPEHPK3PXP&issuer=Carnivore"
+ }
+]

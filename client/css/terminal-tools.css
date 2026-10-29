@@ -1,0 +1,136 @@
+@layer legacy {
+/* --color- */
+
+/*  hidden  */
+@media (min-width: 769px) {
+    .terminal-tools-menu {
+        display: none !important;
+    }
+}
+
+/* removed with it */
+
+
+.fab-menu {
+    position: fixed;
+    z-index: 10001;
+    display: flex;
+    flex-direction: column;
+    min-width: 220px;
+    max-width: min(280px, calc(100vw - 16px));
+    border-radius: var(--oc-radius-sm);
+    overflow: hidden;
+}
+
+.fab-menu__item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    width: 100%;
+    height: auto;
+    min-height: 44px;
+    border-radius: 0;
+    padding: 0 12px;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: var(--oc-text-primary);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.fab-menu__item svg {
+    flex: 0 0 auto;
+    color: var(--oc-text-secondary);
+}
+
+.fab-menu__item:hover,
+.fab-menu__item:focus-visible {
+    background: var(--oc-ground-hover);
+    outline: none;
+}
+
+.fab-menu__item:hover svg,
+.fab-menu__item:focus-visible svg {
+    color: var(--oc-orange);
+}
+
+
+.fab-menu__label {
+    flex: 1 1 auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cloude-session-theme {
+    position: fixed;
+    z-index: 10001;
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+    max-width: min(280px, calc(100vw - 16px));
+    border-radius: var(--oc-radius-sm);
+    overflow: hidden;
+}
+
+.cloude-session-theme__head {
+    padding: 8px 12px;
+    border-bottom: var(--oc-border) solid var(--oc-line-faint);
+    color: var(--oc-text-secondary);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cloude-session-theme__list {
+    display: flex;
+    flex-direction: column;
+    max-height: 60vh;
+    max-height: 60dvh;
+    overflow-y: auto;
+}
+
+.cloude-session-theme__item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    /* min-width: 0 overflow-wrap: anywhere overflow-y: auto */
+    min-width: 0;
+    height: auto;
+    min-height: 44px;
+    border-radius: 0;
+    padding: 0 12px;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: var(--oc-text-primary);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+}
+
+/* box-shadow overflow-y: auto transform: none transform: scale( */
+.cloude-session-theme__list .cloude-session-theme__item:hover,
+.cloude-session-theme__list .cloude-session-theme__item:focus-visible {
+    background: var(--oc-ground-hover);
+    outline: none;
+    transform: none;
+}
+
+.cloude-session-theme__item.is-active {
+    color: var(--oc-orange);
+}
+
+.cloude-session-theme__item.is-active::after {
+    content: ' *';
+}
+}

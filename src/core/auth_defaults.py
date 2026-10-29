@@ -1,0 +1,12 @@
+
+from __future__ import annotations
+
+CONFIG_VERSION: int = 0
+
+JWT_EXPIRY_MINUTES: int = 30
+
+ACCESS_TOKEN_TTL_SECONDS: int = 14400
+
+REFRESH_TOKEN_TTL_SECONDS: int = 604800
+
+REFRESH_GRACE_SECONDS: int = 10

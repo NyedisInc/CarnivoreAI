@@ -1,0 +1,43 @@
+{
+  "api_routes": [
+    "GET /api/v1/swarm/agents/{id}/conversation?view=all|shown"
+  ],
+  "area": "drawers",
+  "description": "The sixth slice of the swarm cards work. Every line in an agent's conversation now carries a category (conversation, result, question, important, dealt, and so on), and card traffic lines that carry one now show in the conversation instead of being dropped. A new swarm_chat_muted preference hides categories: the conversation route takes view=shown to drop what you muted (unset shows only conversation, result, question and important), while view=all, the default, drops nothing. Your own words and the agent's can never be muted. The only thing that goes to your phone is a question that climbed to you because no agent above the asker could answer it: it is one push of its own type, swarm.question_climbed, seeded on web push and native app push only, and the question card is marked sent to your phone only when a destination actually took the push (a type left unticked, quiet hours or paused routing leave it unmarked). A swarm body's own finished, attention and posted toasts stay in the app (matched on the body's own tmux instance, so a later plain session that reuses a destroyed body's name still pushes); its permission, question and plan dialogs still go out. This slice is backend only: the chat filter UI waits for the layout pick.",
+  "docs": [
+    "docs/swarm-cards.md",
+    "docs/ui-preferences-inventory.md"
+  ],
+  "examples": [
+    "Mute dealt and handed_off lines with swarm_chat_muted, then read an agent's conversation with view=shown: those lines are gone and your own messages stay.",
+    "An agent asks something no one above it can answer: your web push destination gets one swarm question for you push once you tick that type on the notifications screen, and the card reads sent to your phone; with that type unticked everywhere the card stays unmarked."
+  ],
+  "how_to": [
+    "Call GET /api/v1/swarm/agents/{id}/conversation?view=shown to read a conversation without the categories you muted; view=all returns everything, each entry with its category.",
+    "PATCH /api/v1/preferences with swarm_chat_muted set to a list of category names to choose what hides; leave it unset for the default of conversation, result, question and important only.",
+    "Tick swarm question for you on a destination in the notifications screen to get the climbed-question push there (an existing destination starts with it off)."
+  ],
+  "id": "swarm-cards-c6",
+  "issues": [
+    1388,
+    1395
+  ],
+  "keywords": [
+    "swarm",
+    "chat",
+    "categories",
+    "mute",
+    "phone",
+    "push",
+    "question"
+  ],
+  "media_exempt": "backend only; the board UI waits for the layout pick",
+  "name": "swarm chat categories, mute and phone",
+  "since": "2026-10-07",
+  "status": "beta",
+  "summary": "swarm conversations carry a category per line with a mute preference and a shown view, and only a question that climbed to you pushes to your phone.",
+  "updated": "2026-10-07",
+  "where": [
+    "Backend only for now: read a conversation at GET /api/v1/swarm/agents/{id}/conversation (view=all or view=shown), set the mute list through the swarm_chat_muted preference, and tick the swarm question for you type on the notifications screen. The chat filter screen arrives with the board UI."
+  ]
+}

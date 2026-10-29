@@ -1,0 +1,17 @@
+
+/*  hidden  overflow: hidden position: fixed */
+body.modal-stack-locked,
+html:has(body.modal-stack-locked) {
+    overflow: hidden;
+}
+
+.modal-stack--covered {
+    filter: brightness(0.55) saturate(0.8);
+    transition: filter 160ms ease;
+}
+
+@media (max-width: 700px) {
+    .modal-stack--covered {
+        display: none;
+    }
+}

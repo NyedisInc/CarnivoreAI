@@ -1,0 +1,53 @@
+{
+  "api_routes": [
+    "src/api/enrollment_routes.py",
+    "src/api/join_local_routes.py"
+  ],
+  "area": "desktop-app",
+  "docs": [
+    "README.md",
+    "SECURITY_GAPS.md",
+    "docs/deployment-docker.md",
+    "docs/computers.md"
+  ],
+  "examples": [
+    "Install Carnivore, open it on the same computer, scan the code with your authenticator app, and type one code to finish.",
+    "Join a second computer to your pack: choose join your pack on its first-run screen and type the code from your main computer; it links to the pack without an authenticator of its own."
+  ],
+  "how_to": [
+    "Open Carnivore on the computer it runs on (the menu bar opens it on first launch, or use Finish Setup... in the menu). Choose set up as a new computer, or join your pack.",
+    "Scan the code with any authenticator app, or open can't scan? and type the key.",
+    "Choose i scanned it, type the 6-digit code from the app, and choose finish setup.",
+    "The window opens Terminal for the join; if it cannot, it shows a line to paste there."
+  ],
+  "id": "first-run-setup",
+  "issues": [
+    1503
+  ],
+  "keywords": [
+    "first run",
+    "setup",
+    "authenticator",
+    "totp",
+    "qr",
+    "pairing",
+    "join",
+    "pack"
+  ],
+  "media_exempt": "needs an unpaired test slot and scripts/testsrv always writes the pairing sentinel; follow-up issue #1535",
+  "name": "First-run setup",
+  "since": "2026-10-10",
+  "status": "stable",
+  "summary": "an unpaired install shows a carnivore setup screen only on the computer it runs on: set up a new authenticator, or join your pack with a code from your main computer.",
+  "surfaces": [
+    "web/src/lib/first-run/FirstRun.svelte",
+    "client/js/auth.js",
+    "macOS/main.js",
+    "web/src/lib/first-run/FirstRunJoin.svelte"
+  ],
+  "updated": "2026-10-12",
+  "where": [
+    "On the computer Carnivore runs on, open Carnivore before pairing an authenticator: the setup screen replaces the login screen.",
+    "From any other device before pairing: a panel says to finish setup on the computer."
+  ]
+}

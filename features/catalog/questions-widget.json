@@ -1,0 +1,60 @@
+{
+  "id": "questions-widget",
+  "name": "Waiting on you widget",
+  "summary": "Everything waiting on you from the top bell in one widget called waiting on you: the open approvals, the huddle questions that need you and the alerts, oldest first, each opening the place that answers it. Place it more than once, each copy listing the types you tick.",
+  "description": "The widget is named waiting on you (its id stays questions) and it replaced the older approvals widget, which is retired: a saved approvals widget in the drawer widget area, either side rail, a glance tile or the home grid becomes a waiting on you copy that lists approvals only, in the same spot. One row per thing waiting, merged from the approvals store (re-read on its pushed approvals topic), the huddle aggregate (re-read on its pushed huddle topics) and the alert center behind the top bell (re-read on its pushed alert frames): what is asked, the session, project or sender it belongs to, and how long it has waited. Nothing is answered in the widget. A click on an approval opens the approval inbox on that session; a click on a huddle item shows it in the huddle through the documented focus route; a click on an alert opens the bell's panel. In the drawer widget area and the session rails the widget can be placed more than once, and each copy has a checkmark for every type (approvals, huddle questions and each sender the alert center knows), all on until you switch one off; a copy that lists exactly one type wears that type's icon and name, and a copy that lists several wears an inbox-tray icon. A counts switch in the same options panel (on by default) shows or hides that copy's number on its sidebar icon and the count at the top of the widget. A quiet day reads nothing waiting on you. It fits the home grid, the terminal page and the drawer widget area from 220px wide.",
+  "area": "home",
+  "status": "beta",
+  "since": "2026-10-11",
+  "updated": "2026-10-12",
+  "surfaces": [
+    "home screen",
+    "drawer widget area",
+    "widgets page",
+    "web/src/opscenter/cells/questions/Cell.svelte"
+  ],
+  "api_routes": [
+    "GET /api/v1/approvals",
+    "GET /api/v1/alerts",
+    "GET /api/v1/cplugs/huddle/aggregate",
+    "GET /api/v1/cplugs/huddle/lists",
+    "POST /api/v1/cplugs/huddle/focus",
+    "PATCH /api/v1/preferences"
+  ],
+  "docs": [
+    "docs/approvals.md",
+    "docs/task-manager.md",
+    "docs/widget-system.md"
+  ],
+  "issues": [],
+  "keywords": [
+    "waiting on you",
+    "inbox",
+    "questions",
+    "approvals",
+    "huddle",
+    "needs you",
+    "widget",
+    "waiting",
+    "bell",
+    "alerts",
+    "instances"
+  ],
+  "where": [
+    "Home screen once added: a cell titled waiting on you with a question mark.",
+    "The drawer widget area and the side rails, once added."
+  ],
+  "how_to": [
+    "Open the edit layout control at the bottom of the drawer.",
+    "Search widgets for waiting on you; press the card to put it on the home page or in the drawer.",
+    "Press a row to open the approval or the huddle item that answers it.",
+    "Drag the widget in again to add another copy; open the gear on a copy in the drawer area (or right-click its key in edit layout on a rail) and tick the types that copy lists.",
+    "Leave only one type ticked and the copy takes that type's icon and name."
+  ],
+  "examples": [
+    "Keep it in the side rail and see at a glance whether any agent or huddle item is waiting on you.",
+    "Press the oldest row to answer the question that has held an agent the longest.",
+    "One copy in the side rail for approvals alone and another in the bottom rail for the bell's backup and save alerts."
+  ],
+  "media_exempt": "A widget whose screenshots are captured before the next version bump."
+}

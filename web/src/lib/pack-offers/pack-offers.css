@@ -1,0 +1,4 @@
+.pack-offers { display: flex; flex-direction: column; gap: 8px; width: 100%; margin: 0; padding: 0; list-style: none; }
+.pack-offers__row { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.pack-offers__text { margin: 0; color: var(--oc-text-secondary); overflow-wrap: anywhere; }
+.pack-offers__actions { display: flex; flex-wrap: wrap; gap: 10px; }

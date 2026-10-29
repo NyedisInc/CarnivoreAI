@@ -1,0 +1,40 @@
+{
+  "api_routes": [
+    "src/api/session_crud_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/ui-inventory.md"
+  ],
+  "examples": [
+    "Start a claude session in your api project to work on a bug while another session keeps building the web client.",
+    "Start a codex session beside a claude one on the same folder to compare their answers."
+  ],
+  "how_to": [
+    "Click + and pick the agent you want (claude, codex, or another installed harness) with the arrow keys or by typing its name.",
+    "Press Enter. Pick or type the project folder it should start in.",
+    "The new session opens in the terminal and appears in the drawer."
+  ],
+  "id": "session-create",
+  "issues": [],
+  "keywords": [
+    "create",
+    "new session",
+    "launch"
+  ],
+  "media": [],
+  "name": "Create a session",
+  "since": "2026-09-10",
+  "status": "stable",
+  "summary": "start a new claude or codex session in a project folder, right from the home screen.",
+  "surfaces": [
+    "web/src/lib/launchpad/create-flow.ts",
+    "web/src/lib/launchpad/ChoiceModal.svelte"
+  ],
+  "updated": "2026-10-03",
+  "where": [
+    "The + button at the top of the agents drawer.",
+    "Or the + beside RUNNING SESSIONS on the home screen, or the + in the menu tab's button row (new session)."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

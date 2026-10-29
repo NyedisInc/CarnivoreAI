@@ -1,0 +1,61 @@
+/* padding */
+@layer patterns {
+  .oc-state {
+    display: grid;
+    gap: var(--oc-space-3);
+    justify-items: start;
+    align-content: start;
+    min-width: 0;
+    padding: var(--oc-space-6) var(--oc-space-3);
+    color: var(--oc-text-muted);
+    font-family: var(--oc-font);
+    font-size: var(--oc-fs-body);
+    line-height: var(--oc-lh-body);
+  }
+
+  .oc-state--inline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--oc-space-2);
+    padding: var(--oc-space-2) var(--oc-space-3);
+  }
+
+  .oc-state__glyph {
+    display: inline-flex;
+    color: var(--oc-text-muted);
+  }
+
+  .oc-state__title {
+    margin: 0;
+    color: var(--oc-text-secondary);
+    font-size: var(--oc-fs-body);
+    font-weight: 400;
+  }
+
+  .oc-state__hint {
+    margin: 0;
+    color: var(--oc-text-muted);
+    font-size: var(--oc-fs-label);
+  }
+
+  .oc-state__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--oc-space-2);
+  }
+
+  .oc-state[data-state='error'] {
+    box-shadow: inset 2px 0 0 0 var(--oc-coral);
+  }
+
+  .oc-state[data-state='warn'] {
+    box-shadow: inset 2px 0 0 0 var(--oc-yellow);
+  }
+
+  .oc-state[data-state='warn'] .oc-state__title,
+  .oc-state[data-state='error'] .oc-state__title {
+    color: var(--oc-text-primary);
+  }
+}

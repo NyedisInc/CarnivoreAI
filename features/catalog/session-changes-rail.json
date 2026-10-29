@@ -1,0 +1,58 @@
+{
+  "api_routes": [
+    "src/api/session_git_routes.py"
+  ],
+  "area": "terminal",
+  "description": "The file browser has two tabs. 'files' is the tree, where every changed entry has its name tinted by status and one letter at the right edge (U untracked, M modified, A added, D deleted, R renamed, ! conflict), and a folder holding changes takes its strongest child's tint and a dot. 'changed files' lists every changed path with its letter, in git's order, with '+N more' past the cap. A status line pinned to the bottom of the browser shows the repository, branch, a dirty dot, ahead and behind, the staged, modified and untracked counts and the last commit's short sha. The repository is read only while the browser is open and stays live as the files change. A repository that could not be read says so, never zero changes; a folder outside git and a session on a paired computer each get their own sentence. The terminal keeps its full width: there is no column beside it.",
+  "docs": [
+    "docs/changes-rail.md",
+    "docs/session-status-model.md"
+  ],
+  "examples": [
+    "Claude has been working for ten minutes: open the file browser and switch to 'changed files' to see which files it touched.",
+    "Scan the tree: the folders tinted yellow with a dot are the ones holding modified files; the letter at the right edge says what happened to each file.",
+    "More than 500 files changed: the list shows the first 500 and ends with '+N more'.",
+    "See exactly what Claude changed in one file: click its path in 'changed files' and read the added and removed lines in green and red. A binary or secret-looking file is named, never shown."
+  ],
+  "how_to": [
+    "Open the file browser from the files entry in the terminal cell's three-dot menu.",
+    "Use the 'files' and 'changed files' tabs under the browser's header; the browser remembers which one you used last on this device.",
+    "Tints and letters: green U untracked or A added, yellow M modified or R renamed, red D deleted or ! conflict; a dot on a folder means changes inside it.",
+    "Click a path in 'changed files' to see its read-only diff; click 'open' on the row to open the file itself.",
+    "Read the status line at the bottom of the browser for the branch, the counts and the last commit."
+  ],
+  "id": "session-changes-rail",
+  "issues": [
+    148,
+    1406
+  ],
+  "keywords": [
+    "git",
+    "changes",
+    "changed files",
+    "modified files",
+    "file browser",
+    "diff",
+    "repository",
+    "status line"
+  ],
+  "name": "Git in the file browser",
+  "since": "2026-10-07",
+  "status": "beta",
+  "summary": "the file browser shows what changed in the session's repository since the last commit: a changed files tab, status letters on the tree, and a git status line.",
+  "surfaces": [
+    "web/src/lib/file-drawer/FileDrawerGit.svelte",
+    "web/src/lib/file-drawer/FileDrawerGitLine.svelte",
+    "web/src/lib/file-drawer/git-tags.ts",
+    "web/src/opscenter/api/session-git.svelte.ts",
+    "web/src/opscenter/cells/terminal-live/GitDiffView.svelte",
+    "client/js/config-editor-panel.js"
+  ],
+  "updated": "2026-10-07",
+  "where": [
+    "Open a session in a terminal cell and open its file browser.",
+    "The two tabs sit under the browser's header; the status line sits at its bottom."
+  ],
+  "media": [],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

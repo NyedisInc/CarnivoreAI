@@ -1,0 +1,109 @@
+/* =====================================================================
+ * The terminal key bar: one row of the keys a phone's own keyboard
+ * cannot send, under the pane. Pairs with client/js/terminal-key-bar.js,
+ * the only thing that builds this markup.
+
+ * PURE CSS, NO JS BRANCH, for the reason the slash-commands-fab.css
+ * docblock gives at length: a JS width check paints the control on the
+ * first frame and removes it once the script runs, which is a flash of a
+ * control the desktop user was told they do not have.
+
+ * NOTHING HERE FLOATS. Every control this row replaced was
+ * `position: fixed` and painted over live terminal output. This is the
+ * last in-flow child of `#terminal-screen`'s flex column, so the height
+ * it takes is height the pane was never given. It changes height only
+ * on a deliberate swipe (issue #1197, one row to two and back, 250 ms);
+ * the terminal's debounced layout turns that into one fit at the end.
+ * See the docblock at the top of client/css/terminal-grid.css for what a
+ * late resize costs.
+
+ * COLOUR COMES FROM THE --oc-* PALETTE, not from the session theme's
+ * --color-* names: this is chrome around the pane, on the same tier as
+ * the header and the sidebar, and it should not move when the session's
+ * terminal theme does. Same call the copy sheet and the paste fallback
+ * already made.
+ * ===================================================================== */
+
+:root {
+    /* padding */
+    --key-bar-pad: 4px;
+    --key-bar-key-h: 30px;
+    --key-bar-h: calc(var(--key-bar-key-h) + (2 * var(--key-bar-pad)) + 1px);
+}
+
+#terminal-key-bar {
+    display: flex;
+    flex-direction: column;
+    /* padding */
+    gap: calc((2 * var(--key-bar-pad)) + 1px);
+    box-sizing: border-box;
+    overflow: hidden;
+    touch-action: none;
+    height: calc(var(--key-bar-h) + env(safe-area-inset-bottom, 0px));
+    transition: height 250ms ease;
+    flex: 0 0 auto;
+    padding: var(--key-bar-pad) 8px;
+    background: var(--oc-ground-chrome);
+    border-top: var(--oc-border) solid var(--oc-line-panel);
+
+    /* padding-bottom: */
+    margin-bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(var(--key-bar-pad) + env(safe-area-inset-bottom, 0px));
+}
+
+#terminal-key-bar[data-open="1"] {
+    height: calc((2 * var(--key-bar-h)) + env(safe-area-inset-bottom, 0px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #terminal-key-bar { transition: none; }
+}
+
+.terminal-key-bar__row {
+    display: flex;
+    align-items: stretch;
+    gap: var(--key-bar-pad);
+    flex: 0 0 var(--key-bar-key-h);
+}
+
+.terminal-key-bar__key[aria-pressed="true"] {
+    color: var(--oc-violet);
+}
+
+/* flex: 1 1 0` rather than by a fixed size, so
+ * the row fills the phone it is on instead of being tuned to one width; min-width: 0 */
+.terminal-key-bar__key {
+    flex: 1 1 0;
+    min-width: 0;
+    /* padding */
+    min-height: var(--key-bar-key-h);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: var(--oc-radius);
+    background: var(--oc-ground-raised);
+    color: var(--oc-text-secondary);
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: background 0.12s ease, color 0.12s ease;
+}
+
+.terminal-key-bar__key:active,
+.terminal-key-bar__key:focus-visible {
+    background: var(--oc-ground-hover);
+    color: var(--oc-text-primary);
+    outline: none;
+}
+
+@media (min-width: 769px) {
+    #terminal-key-bar {
+        display: none;
+    }
+}

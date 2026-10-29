@@ -1,0 +1,29 @@
+{
+  "api_routes": [
+    "src/api/server_control_routes.py"
+  ],
+  "area": "settings",
+  "docs": [],
+  "examples": [
+    "Check the server is not exposed on every network interface."
+  ],
+  "how_to": [
+    "See the address the server listens on and its safety warning."
+  ],
+  "id": "server-controls",
+  "issues": [],
+  "keywords": [
+    "bind address"
+  ],
+  "media": [],
+  "name": "Server controls",
+  "since": "2026-09-10",
+  "status": "stable",
+  "summary": "the settings remote section showing the server's bind address and its safety warning.",
+  "surfaces": [],
+  "updated": "2026-10-22",
+  "where": [
+    "Settings, remote & security, access tab."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

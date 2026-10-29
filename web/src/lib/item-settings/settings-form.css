@@ -1,0 +1,206 @@
+
+:is(.mgr, .oc-wso, .wp-screen) .sf {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 16px;
+    padding-top: 12px;
+    box-shadow: inset 0 1px 0 var(--pl-line);
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf__group + .sf__group {
+    margin-top: 6px;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf__group-head {
+    margin: 0;
+    padding: 8px 0 2px;
+    color: var(--pl-muted);
+    font-size: var(--oc-fs-micro, 10px);
+    font-weight: 400;
+    letter-spacing: var(--oc-tracking-label, 0.6px);
+    text-transform: uppercase;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf__title {
+    margin: 0 0 8px;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+    padding: 10px 0;
+    box-shadow: inset 0 -1px 0 var(--pl-line);
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf__label {
+    color: var(--pl-text);
+    font-size: 12px;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf__control {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf__input {
+    min-width: 0;
+    max-width: 320px;
+    flex: 1 1 160px;
+    font-family: var(--pl-mono);
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf__input--number {
+    flex: 0 1 120px;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf__default {
+    color: var(--pl-dim);
+    font-size: var(--oc-fs-micro, 10px);
+    letter-spacing: var(--oc-tracking-label, 0.6px);
+    text-transform: uppercase;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf__hint,
+:is(.mgr, .oc-wso, .wp-screen) .sf__empty,
+:is(.mgr, .oc-wso, .wp-screen) .sf__notice {
+    margin: 0;
+    color: var(--pl-muted);
+    font-size: 11px;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf__error {
+    margin: 0;
+    padding: 6px 8px;
+    border-left: 2px solid var(--pl-high);
+    background: var(--pl-raised);
+    color: var(--pl-text);
+    font-size: 11px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf__warn {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    padding: 6px 8px;
+    border-left: 2px solid var(--pl-warn);
+    background: var(--pl-raised);
+    color: var(--pl-text);
+    font-size: 11px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf__warn-message {
+    color: var(--pl-text);
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf__warn-detail {
+    color: var(--pl-muted);
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf-matrix__frame {
+    overflow-x: auto;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf-matrix {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf-matrix__col {
+    padding: 6px 8px;
+    color: var(--pl-muted);
+    font-size: var(--oc-fs-micro, 10px);
+    font-weight: 400;
+    letter-spacing: var(--oc-tracking-label, 0.6px);
+    text-align: center;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf-matrix__row {
+    box-shadow: inset 0 -1px 0 var(--pl-line);
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf-matrix__label {
+    padding: 8px 8px 8px 0;
+    font-weight: 400;
+    text-align: left;
+    vertical-align: top;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf-matrix__words {
+    display: block;
+    color: var(--pl-text);
+    font-size: 12px;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf-matrix__hint {
+    display: block;
+    margin-top: 2px;
+    color: var(--pl-muted);
+    font-size: 11px;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf-matrix__cell {
+    padding: 8px;
+    text-align: center;
+    vertical-align: top;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf-matrix__locked {
+    padding: 8px;
+    color: var(--pl-dim);
+    font-size: var(--oc-fs-micro, 10px);
+    letter-spacing: var(--oc-tracking-label, 0.6px);
+    text-align: center;
+    text-transform: uppercase;
+    vertical-align: top;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf-matrix__row[data-locked='1'] .sf-matrix__words {
+    color: var(--pl-muted);
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf-matrix__ask td {
+    padding: 8px 0;
+    box-shadow: inset 0 -1px 0 var(--pl-line);
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf-matrix__ask-text {
+    margin: 0 0 8px;
+    color: var(--oc-coral);
+    font-size: 11px;
+}
+
+:is(.mgr, .oc-wso, .wp-screen) .sf-matrix__ask-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--oc-space-2, 8px);
+}
+
+.oc-wso .sf {
+    margin-top: 0;
+    padding-top: 0;
+    box-shadow: none;
+}
+
+@media (max-width: 1023px) {
+    :is(.mgr, .oc-wso, .wp-screen) .sf__input,
+    :is(.mgr, .oc-wso, .wp-screen) .sf__reset,
+    :is(.mgr, .oc-wso, .wp-screen) .sf-matrix__cell .oc-check {
+        min-height: 44px;
+    }
+
+    :is(.mgr, .oc-wso, .wp-screen) .sf__input {
+        max-width: none;
+    }
+}

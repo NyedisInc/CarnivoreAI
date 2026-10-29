@@ -1,0 +1,44 @@
+{
+  "api_routes": [
+    "src/api/search_index_routes.py",
+    "src/api/session_search_routes.py",
+    "src/api/deepsearch_routes.py"
+  ],
+  "area": "sessions",
+  "description": "A small dropdown on the agents drawer's search button picks what the box searches. Names (the default) narrows the agent list. Prompts searches only what you typed to agents, in every saved conversation, leaving replies out. Context searches every saved row: your prompts, the agents' replies and subagents. Each row shows an icon and one word, and the choice is remembered on this device. The new session plus key sits in the tab bar beside the view menu, so the search field takes the whole row.",
+  "docs": [
+    "docs/deepsearch.md",
+    "docs/save-pipeline.md"
+  ],
+  "examples": [
+    "You remember an agent printing a stack trace but never typed it: context finds it, prompts does not.",
+    "You want only the times you asked about rsync: prompts."
+  ],
+  "how_to": [
+    "Press the search mode button (the icon with a small arrow) right of the search agents box.",
+    "Pick names, prompts or context. The text you typed stays and runs on the new mode.",
+    "Type at least two characters for any mode other than names; arrows walk the hits and Enter opens one."
+  ],
+  "id": "search-modes",
+  "issues": [],
+  "keywords": [
+    "search",
+    "prompts",
+    "context",
+    "dropdown"
+  ],
+  "media_exempt": "captured with the pre-version-bump feature recapture; needs a test slot holding indexed conversations",
+  "name": "Search modes",
+  "since": "2026-10-05",
+  "status": "stable",
+  "summary": "choose what the drawer search box searches: names, your prompts or the context of every conversation.",
+  "surfaces": [
+    "web/src/lib/drawer-tabs/DrawerSearch.svelte",
+    "web/src/lib/drawer-tabs/search-modes.ts",
+    "web/src/lib/deepsearch/providers.ts"
+  ],
+  "updated": "2026-10-17",
+  "where": [
+    "The mode button beside the search agents box at the top of the agents drawer."
+  ]
+}

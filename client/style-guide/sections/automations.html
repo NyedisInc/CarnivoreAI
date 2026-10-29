@@ -1,0 +1,227 @@
+<h2 class="sg-h2">automations page</h2>
+<p class="sg-lead">The menu page for saved schedules: three tabs. <b>automations</b> is the simple overview (tiles and cards), <b>sessions</b> is
+a simple review feed of runs with a quick-view drawer, and <b>advanced</b> keeps every older feature, unchanged: a sortable table of automations
+beside a detail pane (output, runs, overview, log, and the editor), the run feed with its reader, the counter strip, the log dock and the commands
+popover. It wears the manager frame (<code>ManagerFrame</code>: title strip, the one primary
+"new automation", the page's one sentence) and supplies its own body. It is a client of the automation routes only, and it
+follows the <code>automations</code> and <code>automation_runs</code> push topics, polling only while one is not live.
+The sections below that say "tab" for the table and the run feed describe the sub-tabs of advanced.</p>
+
+<h3 class="sg-h3" id="automations-simple">the three tabs: overview, review feed and drawer</h3>
+<dl class="sg-facts">
+    <dt>tabs</dt>
+    <dd>Three top tabs in the shared tab row (<code>.ap-toptabs</code>, <code>.ap-tabrow</code>), remembered per device. The sessions tab wears the unread badge
+        (<code>.oc-ptab__badge</code>). <code>AdvancedTab</code> holds the older page inside <code>.ap-adv</code>: a head with the page sentence, the pause
+        switch and the commands popover (<code>.ap-adv-head</code>, <code>.ap-adv-sum</code>) and the two sub-tabs table and run feed (<code>.ap-subtabs</code>).
+        Deep links <code>#automations/advanced</code>, <code>#automations/run/&lt;id&gt;</code> and <code>#automations/session/&lt;uuid&gt;</code> land there.</dd>
+    <dt>overview</dt>
+    <dt>review feed</dt>
+    <dd><code>ReviewTab</code> and <code>ReviewRow</code>: a time-ordered feed of runs (<code>.t-feed</code>, <code>.t-feedbar</code>, <code>.t-day</code>) with the
+        filter segment to review or all (<code>.t-filt</code>) and mark all reviewed. A row (<code>.f-row</code>) is the time (<code>.f-time-in</code>), a
+        dot on a spine (<code>.f-dot</code>), the automation (<code>.f-who</code>) and a status word (a base <code>Tag</code>), the run title
+        (<code>.f-title</code>, <code>--oc-fs-run-title</code>), a one-line summary (<code>.f-sum</code>) and the outlined looks good action (<code>.f-act</code>);
+        reviewed rows fold out. Title and summary are written by code on the server, never by a model; a run stored before they existed shows the
+        older feed face line. Keys <code>j</code> <code>k</code> <code>enter</code> <code>r</code> (<code>.f-keys</code>).</dd>
+    <dt>drawer</dt>
+    <dd><code>ItemDrawer</code> (<code>.ap-dr</code>, a non-modal side panel, <code>role="complementary"</code>) docks at 420 px from 1100 px of page, covers the page below
+        that and is a full sheet with a back button (a base <code>Button</code>) at phone width. Title bar <code>.ap-dr-bar</code>, scroll body
+        <code>.ap-dr-scroll</code>, sections base <code>Card</code>s with a small uppercase label <code>.ap-dr-lab</code>. <code>AutomationDrawer</code>:
+        name (<code>.ap-dr-name</code>), switch, run now, the next three runs (a base <code>List</code>), the last run (<code>LastRun</code>), edit and
+        open in advanced (base <code>Button</code>s). <code>RunDrawer</code>: the run, its title and summary (<code>.ap-dr-title</code>, <code>.ap-dr-sum</code>),
+        attachments, a since sentence against the previous run and the full report in advanced. Focus moves in on open and back to the opener on
+        Escape; Tab stays inside.</dd>
+    <dt>schedule field</dt>
+    <dd>The editor's when field (<code>WhenField</code>, <code>.w-when</code>, a base <code>Segmented</code>) has three modes: words (type a sentence, read back
+        in words with the next fires, <code>WhenWords</code>), pick (repeat, weekday chips <code>.w-days</code>, a calendar <code>.w-cal</code>, hour, minute,
+        am or pm, <code>WhenPick</code>) and cron (the field as before; a fire under 15 minutes apart is refused). Switching modes reads the
+        schedule back. The day-of-week field also reads <code>dow#n</code> (<code>2#3</code> is the third Tuesday). Each field carries a hint
+        (<code>FieldHint</code>, <code>.w-hint</code>) and an example, and <code>IdeasList</code> (<code>.w-ideas</code>, <code>.w-idea</code>) fills the form from
+        a one-line idea. Create stays blocked until the schedule is confirmed.</dd>
+</dl>
+
+
+<h3 class="sg-h3" id="automations-live">the whole page</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live, inert</span><code>AutomationsScreen</code><span>fixture automations and Task Manager schedules, pane open on a never-run automation</span></div>
+    <div class="sg-specimen__body" inert><div id="sg-live-automations-page"></div></div>
+</div>
+
+<h3 class="sg-h3" id="automations-list">the list and the editor</h3>
+<dl class="sg-facts">
+    <dt>pattern</dt>
+    <dd>The automations tab is <code>AutoList</code> (<code>.ap-listcol</code>): the toolbar, ONE sortable table
+        (<code>.ap-list</code>, <code>.ap-lhead</code>, <code>.ap-row</code>) whose columns are record fields, the newest-run line and
+        the key hints. The table is a container (<code>container-type: inline-size</code>), so its columns follow its own width, not the
+        window: from 680 px the last-12 strip and the ok rate, from 900 px the on switch, from 1100 px the next run and the median took
+        (<code>.ap-c-next</code>, <code>.ap-c-strip</code>, <code>.ap-c-rate</code>, <code>.ap-c-med</code>, <code>.ap-c-on</code>). The table is the
+        base list (<code>.oc-list</code>) and each row a base row (<code>.oc-list__row</code>): a selected row is the selected layer
+        with a 2 px orange left edge, and run now with the kebab (<code>.oc-list__actions</code>) shows on hover, focus or selection,
+        always on a phone. On a phone there is no header row and a row is two lines.</dd>
+    <dt>toolbar</dt>
+    <dd><code>AutoToolbar</code> (<code>.ap-lt</code>, the base toolbar's band strip, <code>.oc-toolbar--band</code>): hairline groups (base <code>Field</code>/<code>Select</code> groups) each with a small uppercase label
+        (the field label): find (the base field, <code>data-field</code>), add filter and sort (a base <code>Select</code>, with the direction button
+        a base <code>IconButton</code>), then the density radios (a base <code>Segmented</code>), <code>clear</code> (only while something narrows the
+        list) and the live count (<code>.ap-lt__count</code>), all on one row from about 900 px of list width; narrower, the density and count drop under the groups. Removable filter pills (<code>.ap-pill</code>) sit in a row below. Rows show
+        when the pressed counter AND every pill AND the search all match.</dd>
+    <dt>row</dt>
+    <dd><code>AutoRow</code>: the health light, the name with its needs-attention tag (the base tag, <code>.oc-tag</code>, the first matching of waiting
+        on you, last run failed, skipped lately, newest output empty, switched off) and the schedule in words (<code>.ap-l2</code>), the next
+        run, the last run (<code>.ap-lr</code>), the strip, the rate, the median, the on switch (the shared <code>.oc-check</code>, its word hidden in
+        the cell) and the outlined <code>run now</code> (the base confirm button, <code>data-btn="confirm"</code> at the small size) with the kebab
+        (a base <code>IconButton</code>). <code>RowMenu</code> (the app's one menu, <code>CascadeMenu</code>) offers edit, duplicate and delete; delete asks in a strip
+        (<code>.ap-confirm</code>) with the restart picker's danger button.</dd>
+    <dt>marks and strip</dt>
+    <dd><code>Mark</code> draws a run status as a shape (<code>.ap-mk-run</code>, <code>.ap-mk-light</code>): succeeded a filled square, failed a
+        struck square, skipped a hollow square with a gap, waiting on you a diamond that breathes, running a dashed ring that turns, claimed a
+        hollow square. <code>RunStrip</code> (<code>.ap-strip-box</code>, <code>.ap-strip-in</code>, <code>.ap-sm</code>) is the last twelve runs, oldest
+        left; the run shown in the pane has an orange outline, a landed run slides the strip in over 200 ms unless motion is reduced.</dd>
+    <dt>scheduled tree</dt>
+    <dt>never ran</dt>
+    <dd>An automation with no run shows a base <code>State</code> in the pane's output tab: the page's empty-state look (no frame, muted words), a
+        hollow square mark, the words <b>never ran</b> in the small tracked label, the next run, and the one <code>run now</code> action, centered in the
+        body.</dd>
+    <dt>newest-run line</dt>
+    <dd><code>NewestRunLine</code> (<code>.ap-pv</code>) reads the selected automation's newest run (or the run the pane is stepped to) as one
+        line; <code>KeyHints</code> (<code>.ap-keys</code>) names the table's keys and hides on a phone.</dd>
+    <dt>editor</dt>
+    <dt>target picker</dt>
+    <dd><code>TargetPicker</code> offers a target kind only when the server lists a runner for it and a form exists in
+        <code>target-forms.ts</code>. A later target adds one line there and its own form file. <code>TargetRecipe</code> draws
+        the recipe's whole-number params from the schema the server sends. <code>TargetBlueprint</code> lists the saved Blueprints
+        (a select) and one square check per member (<code>Check</code>); all ticked saves every member, including ones added later.
+        <code>TargetCard</code> picks a project board and takes the card's title, summary, text and how to validate (each with the board's
+        length cap shown), plus one <code>Check</code> switch to start the card right away.</dd>
+    <dt>cron agent form</dt>
+    <dt>page shell</dt>
+    <dd><code>AutomationsScreen</code> draws its own title row (<code>.pl-titlebar</code>, the one accent label, then the live
+        sentence <code>.ap-sum</code> and the actions <code>.ap-acts</code>): <code>scheduler log</code> and <code>commands</code>
+        (the base button at the base size every title bar wears), the <code>pause scheduler</code> switch (<code>.oc-check</code>, the square check look, yellow while
+        on) and the outlined <code>new automation</code> (<code>data-btn="confirm"</code>). A paused scheduler also shows
+        <code>.ap-strip</code>. The root is <code>.ap-page</code> (<code>page.css</code>).</dd>
+    <dt>tabs</dt>
+    <dd>Under the title the page wears the shared page tabs (<code>Tabs</code>, <code>.oc-ptabs</code>, flattened here by <code>.ap-tabs</code> to the mockup's strip): <b>automations</b> and
+        <b>sessions</b>. There is no Task Manager tab. The chosen tab is remembered per device
+        (<code>carnivore.tabs.automations</code>, try/catch); a remembered <code>huddle</code> reads as automations.</dd>
+    <dt>counter strip</dt>
+    <dd><code>CounterStrip</code> (<code>.ap-ctb</code>): eight toggle buttons (<code>.ap-ct</code>), a micro label
+        (<code>.ap-ct__l</code>) and a figure (<code>.ap-ct__n</code>). The numbers come from the server, failed counters are coral and
+        waiting on you yellow only above zero, a pressed counter wears the orange border and tint and is shared by both tabs, and a
+        changed count flashes once for 1300 ms (off under reduced motion).</dd>
+    <dt>log dock</dt>
+    <dd><code>LogDock</code> (<code>.ap-logdock</code>): the scheduler log of every automation under the list, at most 38% of the
+        page, its header (<code>.ap-logdock__h</code>) sticking, a close button, and the rotation settings after the lines.</dd>
+    <dt>commands popover</dt>
+    <dd><code>CommandsPopover</code> (<code>.ap-cmd-wrap</code>, <code>.ap-cmd-pop</code>): the allow-list under the
+        <code>commands</code> button, editable, closed by a click outside or Escape; fixed with a 16 px gutter on a phone.</dd>
+    <dt>schedule this</dt>
+    <dd>The drawer's session row menu and project menu carry "schedule this". It opens this page at the fragment
+        <code>#automations/new/session/&lt;session_uuid&gt;</code> or <code>#automations/new/project/&lt;project_id&gt;</code>
+        (<code>schedule-prefill.ts</code>), which puts the new-automation editor up with the target (and project) filled in and then
+        takes itself off the address. Save is still the one authenticated create call.</dd>
+    <dt>files</dt>
+    <dd><code>web/src/lib/automations/</code>: <code>AutomationsScreen</code>, <code>CounterStrip</code>, <code>AutoList</code>,
+        <code>AutoToolbar</code>, <code>AutoRow</code>, <code>RunStrip</code>, <code>Mark</code>, <code>RowMenu</code>, <code>NewestRunLine</code>,
+        <code>KeyHints</code>, <code>auto-list.css</code>, <code>LogDock</code>, <code>CommandsPopover</code>, <code>page.css</code>, <code>AutomationEditor</code>,
+        <code>TargetPicker</code>, <code>TargetRecipe</code>, <code>TargetBlueprint</code>, <code>TargetCard</code>, <code>AgentBuilder</code>, the detail pane under <code>pane/</code> (<code>DetailPane</code>, <code>PaneHead</code>, <code>PaneEditor</code>,
+        <code>OutputTab</code>, <code>RunsTab</code>, <code>OverviewTab</code>, <code>LogTab</code>, <code>pane.css</code>), and
+        <code>automations.css</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="automations-contract">contract fields, more targets, change log and scheduler log</h3>
+<dl class="sg-facts">
+    <dt>contract fields</dt>
+    <dd><code>ContractFields</code> sits in the editor under the schedule (<code>.auto-form__group</code>): what it is for (a
+        textarea), the project (a select that leaves archived projects out), what to do about a missed run (run once, the default
+        for a new automation, or skip), retries (0 to 3) with the wait, and the longest a run may take. Times are typed in
+        minutes and saved as seconds. The search reads an automation's description and its project too, and the
+        project is shown as an a base <code>Tag</code>.</dd>
+    <dt>more targets</dt>
+    <dt>scheduler log</dt>
+    <dd><code>SchedulerLog</code> (<code>.auto-log</code>, a base <code>ListRow</code>): the scheduler's own lines, newest first, read on
+        open and on the <code>automation_log</code> push topic. Above them the rotation settings: by size (with a size in MB) or
+        daily, and how many old files to keep, saved through <code>PUT /automation-log/settings</code>.</dd>
+    <dt>allowed commands</dt>
+</dl>
+
+<h3 class="sg-h3" id="automations-pane">the detail pane</h3>
+<dl class="sg-facts">
+    <dt>pattern</dt>
+    <dd><code>DetailPane</code> is the page's right column (<code>.ap-pn</code>), sized by the PAGE, never the window: the page is a
+        container (<code>ap-page</code>), and from 900 px of page the pane docks at 36% of it (340 to 760 px) while the list, the title
+        bar and the strips stop at its left edge; under 900 px it covers the whole page. The title bar is its own container
+        (<code>ap-title</code>) and drops the sentence under 1000 px of bar. It slides in over
+        <code>var(--oc-motion)</code> and the body fades 150 ms when the tab or the run changes (<code>.ap-pn-fade</code>), both
+        off under reduced motion. A title row (<code>.ap-pn-bar</code>), the head or the editor, four tabs (<code>.ap-pn-tabs</code>)
+        and the body. <code>[</code> steps to the older run, <code>]</code> to the newer one, Escape closes.</dd>
+    <dt>head and editor</dt>
+    <dt>output</dt>
+    <dd><code>OutputTab</code>: the run stepper (<code>.ap-pn-step</code>, a base <code>Button</code> with the neighbour's mark,
+        <code>.ap-tri</code>), then <code>RunSheet</code> with its action row.</dd>
+    <dt>runs</dt>
+    <dt>overview and log</dt>
+    <dd><code>OverviewTab</code>: a label and value grid (<code>.ap-pn-dl</code>), the next five runs (<code>.ap-pn-fires</code>), what
+        ran in a base fold (<code>.oc-fold</code>; its settings are <code>.ap-pn-chip</code>), then the change log
+        (a base <code>List</code>, rows a base <code>ListRow</code>). <code>LogTab</code>: the scheduler lines of the run or of every
+        run (a base <code>List</code>, a base <code>Segmented</code> segmented control), oldest first.</dd>
+</dl>
+
+<h3 class="sg-h3" id="automations-generic-report">the generic report renderer</h3>
+<dl class="sg-facts">
+    <dt>pattern</dt>
+    <dd><code>RunSheet</code> draws one run's stored report by shape, for every automation, with no key known by name beyond the
+        reserved ones (summary, metrics, items, exit_code, stdout_tail, stderr_tail, error, fix_prompt, conversation_uuid). It has
+        two compositions: <code>pane</code> (header, error, body, a changes chip, raw json, then the action row) and
+        <code>reader</code> (error, body, the "since #n" changes section, raw json). Report text is always drawn as text, never
+        as HTML. Every part wears the <code>.r-sheet</code> rules of <code>report.css</code>.</dd>
+    <dt>header</dt>
+    <dd><code>RunHeader</code>: the status line (a run mark, the status word and the reason) with the run number, then
+        base <code>Tag</code> chips for the trigger, the timing, the cost, the output size ("of 1 MB cap" at 524288 bytes), the
+        exit code, the sessions and the computer.</dd>
+    <dt>body</dt>
+    <dd><code>ReportBody</code> draws the summary (<code>.r-summary</code>), the exit-code tile, the metric tiles
+        (<code>Tiles</code>, <code>.r-tile</code>), stderr above stdout on a failed run and below it on a good one
+        (<code>.r-sec</code>), the items list (<code>.r-items</code>), the small fields (<code>.r-kv</code>) and one section
+        per remaining key. A report with nothing in it says what happened (<code>.r-empty</code>), never a blank.</dd>
+    <dt>rows</dt>
+    <dt>text</dt>
+    <dd><code>LongText</code> clips a long string to its first 12 and last 3 lines (<code>.r-clipbar</code>);
+        <code>Markdown</code> draws headings, lists, fences and pipe tables (<code>.r-md</code>, <code>.r-mh</code>,
+        <code>.r-code</code>); <code>RawJson</code> is the copyable raw JSON, a closed foldable base <code>Card</code>.</dd>
+    <dt>changes</dt>
+    <dd><code>DiffSection</code>: the one-line sentence (<code>.r-chg-s</code>), the header deltas, then new, cleared,
+        numbers changed, values changed and text changed with a +, - or ~ gutter (<code>.r-cl</code>). The pane opens it from a
+        foldable base <code>Card</code> titled changes.</dd>
+</dl>
+
+<h3 class="sg-h3" id="automations-feed">the sessions tab: run feed and reader</h3>
+<p class="sg-p">The second tab is a feed of every automation run (<code>FeedTab</code>) beside a reader, and from 1700 px a third column.
+   Copied rule for rule from the accepted mockup; every colour is an <code>--oc-*</code> token and the sheet is
+   <code>web/src/lib/automations/feed/feed.css</code>.</p>
+<dl class="sg-facts">
+    <dt>layout</dt>
+    <dd><code>.ap-sx</code> is the grid (feed, reader, and at 1700 px and wider <code>.ap-cx</code>, this automation's last twelve
+        runs, drawn by <code>ContextColumn</code>). <code>.ap-feed</code> holds the filter block <code>FeedTop</code>
+        (<code>.ap-fd-top</code>, <code>.ap-fd-row1</code>, <code>.ap-fd-row2</code>, the search field a base search <code>Field</code>,
+        a base <code>Select</code> for the five selects, lit with <code>data-on</code> while one filters), the counts line
+        (<code>.ap-fd-meta</code>, <code>.ap-fd-meta-b</code>) and the list <code>FeedList</code> (<code>.ap-fd-list</code>,
+        an ARIA listbox the keyboard walks) above the key hints (<code>.ap-keys</code>).</dd>
+    <dt>rows</dt>
+    <dd>A day head is sticky (<code>.ap-fd-day</code>, <code>.ap-fd-dc</code>). One run is a 32 px grid row
+        <code>FeedRow</code> (<code>.ap-fd-r</code>): time <code>.ap-fd-t</code>, mark <code>.ap-fd-mk</code>, name
+        <code>.ap-fd-nm</code> <code>.ap-fd-n1</code> with a trigger word <code>.ap-fd-tg</code>, where it files
+        <code>.ap-fd-wh</code>, the face <code>.ap-fd-f</code> <code>.ap-fd-ft</code> (changed words <code>.ap-fd-chg</code>, a
+        fold caret <code>.ap-fd-car</code>), took <code>.ap-fd-tk</code> and size <code>.ap-fd-sz</code>. Unread is a 2 px
+        orange bar, selected a 1 px hairline, changed is brighter, a repeat is dimmer. Identical repeats fold into one row
+        whose members open under it (<code>.ap-fd-ms</code>, <code>.ap-fd-m</code>). A new row slides in over 180 ms and a
+        fold's face rolls over 220 ms, neither under reduced motion. Messages and paging: <code>.ap-fd-msg</code>,
+        <code>.ap-fd-more</code>, <code>.ap-fd-end</code>.</dd>
+    <dt>reader</dt>
+    <dd><code>ReaderSheet</code> (<code>.ap-dc</code>, <code>.ap-dc-scroll</code>, <code>.ap-dc-wrap</code>, a back <code>Button</code>)
+        is a column on a desktop and a full-screen sheet on a phone that slides in and walks runs with a swipe.
+        <code>Reader</code> draws the head (<code>.ap-rd-head</code>, <code>.ap-rd-kick</code>, a quiet <code>Button</code> with the automation name,
+        <code>.ap-rd-num</code>, <code>.ap-rd-rel</code>, <code>.ap-rd-stl</code>, <code>.ap-rd-stw</code>,
+        <code>.ap-rd-reason</code>, <code>.ap-rd-since</code>), the facts (<code>.ap-rd-def</code>), the action strip
+        (<code>.ap-rd-strip</code>, <code>.ap-rd-nav</code>), then the body (<code>.ap-rd-in</code>) with the generic run sheet
+        and the record section; attachments are links (<code>.ap-rd-file</code>). With no run it shows the templates
+        (<code>.ap-rd-none</code>, a base <code>Tag</code>).</dd>
+</dl>

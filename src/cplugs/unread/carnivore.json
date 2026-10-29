@@ -1,0 +1,29 @@
+{
+  "kind": "cplug",
+  "id": "unread",
+  "name": "mark unread",
+  "version": "1.0.0",
+  "api_version": 1,
+  "min_app_version": "1.12.20",
+  "author": "Carnivore contributors",
+  "license": "MIT",
+  "tier": "builtin",
+  "scope": [
+    "global"
+  ],
+  "icon": "bell",
+  "default_enabled": true,
+  "permissions": [],
+  "owns": {
+    "strings": [
+      "cplug.unread."
+    ],
+    "tests": [
+      "tests/python/cplugs/unread/"
+    ],
+    "contributions": [
+      "session.card_action"
+    ]
+  },
+  "data": []
+}

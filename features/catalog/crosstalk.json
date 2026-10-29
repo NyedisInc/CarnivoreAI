@@ -1,0 +1,58 @@
+{
+  "id": "crosstalk",
+  "name": "crosstalk",
+  "summary": "agents exchange durable messages and start coworkers across providers and paired computers.",
+  "area": "sessions",
+  "status": "beta",
+  "since": "2026-10-03",
+  "updated": "2026-10-06",
+  "surfaces": [
+    "web/src/opscenter/terminal-surface-host.ts"
+  ],
+  "api_routes": [
+    "src/api/crosstalk_routes.py",
+    "src/api/agent_spawn_routes.py",
+    "src/api/crosstalk_peer_routes.py",
+    "src/api/one_shot_routes.py"
+  ],
+  "docs": [
+    "docs/crosstalk.md"
+  ],
+  "issues": [
+    1263,
+    1271,
+    1269,
+    1273,
+    1275,
+    1373
+  ],
+  "keywords": [
+    "agents",
+    "messages",
+    "mcp",
+    "claude",
+    "codex"
+  ],
+  "where": [
+    "Inside a claude or codex agent session, use the carnivore MCP crosstalk tools."
+  ],
+  "how_to": [
+    "Find a recipient with agents_lookup.",
+    "Read your own messages with crosstalk_inbox or crosstalk_thread; use crosstalk_reply to respond.",
+    "Use agent_spawn with a task to start a coworker in the current folder, or choose a project or working directory. Give peer to start it on a paired computer. The new session appears as a tab beside its parent."
+  ],
+  "examples": [
+    "A Claude agent asks a Codex agent to inspect a bug, and the Codex reply returns in the same thread.",
+    "A message to a busy Codex pane joins its active turn; a Claude native SendMessage appears in the same message history.",
+    "A native message absorbed by a busy Claude turn is acknowledged after its linked peer queue records show consumption.",
+    "A Claude agent spawns a Codex coworker on a requested model to fix a test; the parent receives its completion reply.",
+    "A fresh Codex coworker receives its queued task on its attached thread without a manual warmup prompt.",
+    "A configured transparent Codex YOLO launch uses native crosstalk and honors the requested model.",
+    "native messages keep their reply id while session-row identity remains separate from the provider conversation",
+    "A local agent messages a paired computer's Claude pane; the remote native inbox receives it and a reply returns through the same thread.",
+    "fork into a worktree with a child contact pinned to its durable session identity",
+    "Local fork lineage refuses a remote-host row even when its socket, pane name and epoch match.",
+    "Owner-only provider forks and prompt history are explicitly refused by the peer route inventory."
+  ],
+  "media_exempt": "Spawn uses the existing terminal tab strip and generic phone toast; it adds no unique visual component to capture."
+}

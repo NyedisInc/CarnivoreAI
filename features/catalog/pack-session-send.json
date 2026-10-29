@@ -1,0 +1,48 @@
+{
+  "id": "pack-session-send",
+  "name": "Send a session to another computer",
+  "summary": "Send a running session to a paired computer as a move, a copy that continues the conversation as a fork, or a fresh agent in the same project.",
+  "description": "A send does one of three things on a paired computer. Move is the session move: the agent stops here and continues there with its conversation. Copy waits for the current turn to end, carries a whole-lines snapshot of the conversation and starts a new session there that resumes it as a fork with its own conversation id, while the original keeps running untouched; the code keeps syncing both ways: when either agent finishes a turn its new commits go to the other computer, which fast-forwards its checked-out branch only when its agent is idle, its tree is clean and the move is a pure fast-forward. Fresh starts a new agent in the same project on that computer with no conversation. When the other computer does not hold the project yet, with_project adds it as a replica and syncs it first; without that the refusal stays project_not_on_target. The other computer decides every refusal by its own restrictions. A check route reports per mode what would work, with no side effects, and progress is a pack op. Before you confirm, the send dialog shows a plain checklist: what comes along, what stays behind and why (uncommitted work, ignored folders with their size, another project's folders), tools the conversation ran that the other computer lacks, and servers that will stop. Folders outside the project that the agent used are read from the conversation since its last compaction; a computer that cannot take them yet says to update it.",
+  "area": "sessions",
+  "status": "beta",
+  "since": "2026-10-12",
+  "updated": "2026-10-24",
+  "surfaces": [
+    "agent row menu",
+    "owner API routes"
+  ],
+  "api_routes": [
+    "POST /api/v1/sessions/{session_uuid}/send",
+    "POST /api/v1/sessions/{session_uuid}/send/check",
+    "POST /api/v1/federation/pack/session/receive",
+    "GET /api/v1/pack/ops/{op_id}"
+  ],
+  "docs": [
+    "docs/pack.md",
+    "docs/mcp-server.md"
+  ],
+  "issues": [
+    1653
+  ],
+  "keywords": [
+    "pack",
+    "session",
+    "send",
+    "copy",
+    "fork",
+    "fresh",
+    "move",
+    "replica"
+  ],
+  "where": [
+    "The agent row menu's \"send to\" item (hotkey G), which lists the paired computers; picking one opens the send modal."
+  ],
+  "how_to": [
+    "Open an agent's row menu, choose send to, then a computer. Pick move it, copy it, start a new agent there, or move the whole project; tick \"copy the project to <computer> first\" when the project is not there yet; press send.",
+    "Read the checklist under the options before pressing send: it lists what comes along, what stays behind, missing tools (a warning, never a refusal) and servers that will stop."
+  ],
+  "examples": [
+    "Copy the build agent to hosta: row menu, send to, hosta, copy it, send. The original keeps running here."
+  ],
+  "media_exempt": "The menu and modal are checked under three themes by the change's own screenshots; capture config comes with the next feature recapture."
+}

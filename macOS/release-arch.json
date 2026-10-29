@@ -1,0 +1,4 @@
+{
+  "dmg_arch": "arm64",
+  "single_arch_name_tokens": ["arm64", "x64"]
+}

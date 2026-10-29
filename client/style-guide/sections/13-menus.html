@@ -1,0 +1,296 @@
+<h2 class="sg-h2">menus and popups</h2>
+<p class="sg-lead">Every floating menu is one look (<code>.popup-focus</code>) and, in compiled code, one driver
+(<code>CascadeMenu.svelte</code>). Menus hold actions only: no hint text, no decorative dividers, no explanations. The one addition is a LOCKED action: an item that needs a carnivore account while signed out keeps its place with a dim label, a star in <code>--oc-yellow-bright</code> and a small trailing "sign in" (<code>.acm-locked</code> in the cascade, <code>.session-row-menu__item--locked</code> in the row menu). It stays clickable, never aria-disabled: a click opens the sign in modal and then runs the action.</p>
+
+<h3 class="sg-h3" id="menus-cascade">the cascade menu, and the "+" tab menu</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/drawer-tabs/CascadeMenu.svelte</code><span>press the dimmed "+" after the last tab, or a tab's icon</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-tabs-menu"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>Every compiled popup menu: the agents drawer's add component, row detail and new session menus (#527), a terminal
+        component's "+" tab menu, and the sort menu. <code>&lt;CascadeMenu root={nodes} anchor={button} label={t(...)}
+        onClose={close} /&gt;</code>. A node is <code>{id, label}</code> plus one of: <code>children</code> (a branch that
+        opens a level), <code>run</code> (a leaf), <code>checked</code> (a radio item, the chosen one in the accent),
+        <code>agent</code> (a session: its light and provider mark before the label, #554), <code>sep</code> (a rule
+        above it), <code>blocked</code> (inert, with its reason). The account menu added four, inert for every other
+        caller: a node's <code>icon</code> (an <code>icons.ts</code> name before the label, <code>.acm-icon</code>) and
+        <code>hint</code> (its keyboard key in a <code>&lt;kbd class="acm-hint"&gt;</code> at the row's end, as the row
+        menu's key), <code>toggle</code> with <code>checked</code> (an on/off <code>menuitemcheckbox</code>), and the
+        props <code>above</code> (the top level opens OVER its button, for a button at the window's foot) and
+        <code>heading</code> (a muted, unfocusable top line, <code>.acm-heading</code>, over a hairline). The search mode menu added a node's <code>desc</code> (a short muted note on the label's line, <code>.acm-desc</code>) and the prop <code>wide</code> (<code>.acm-menu--wide</code>, 220px minimum, 340px maximum), plus <code>alignEnd</code>, which right-aligns the menu to a control at the end of a field.</dd>
+    <dt>behaviour</dt>
+    <dd>Each open level is its own <code>role="menu"</code> panel fixed to the viewport, placed against the item that opened
+        it. A branch opens on hover, click, ArrowRight, Enter or Space; ArrowLeft and Escape close one level; a pointer
+        anywhere else closes all of them; focus returns to the anchor. A refused leaf may keep the menu open and say why in
+        <code>status</code>.</dd>
+    <dt>hotkeys</dt>
+    <dt>"+" menu</dt>
+    <dt>catalog keys</dt>
+    <dd><code>drawer.add.*</code>, <code>opscenter.tabs.*</code>, <code>opscenter.components.*</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="menus-row">the row menu and the popup focus look</h3>
+<div class="sg-specimen" id="menus-disabled-specimen">
+    <div class="sg-specimen__label"><span>the retired legacy row panel; the last row is a DISABLED item: grayed, <code>aria-disabled</code>, its reason is the tooltip (hover or focus it), a click runs nothing</span><code>client/css/session-row-menu.css</code><span>for reference; the live row menu is the one item menu</span></div>
+    <div class="sg-specimen__body sg-specimen__body--flush">
+        <div class="sg-stage sg-stage--short">
+            <div class="session-row-menu popup-focus" role="menu" aria-label="actions for music-service" style="top: 16px; left: 16px">
+                <button type="button" class="session-row-menu__item" role="menuitem" tabindex="0">
+                    <span class="session-row-menu__icon" aria-hidden="true" data-sg-row-icon="rename"></span>
+                    <span class="session-row-menu__label">rename</span>
+                    <span class="session-row-menu__key" aria-hidden="true">r</span>
+                </button>
+                <button type="button" class="session-row-menu__item" role="menuitem" tabindex="0" aria-haspopup="menu">
+                    <span class="session-row-menu__icon" aria-hidden="true"></span>
+                    <span class="session-row-menu__label">add to</span>
+                    <span class="session-row-menu__key" aria-hidden="true">d<svg class="session-row-menu__chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m7.5 4.5 8 7.5-8 7.5"/></svg></span>
+                </button>
+                <div class="session-row-menu__sep" role="separator"></div>
+                <button type="button" class="session-row-menu__item" role="menuitem" tabindex="0">
+                    <span class="session-row-menu__icon" aria-hidden="true" data-sg-row-icon="sleep"></span>
+                    <span class="session-row-menu__label">sleep session</span>
+                    <span class="session-row-menu__key" aria-hidden="true">z</span>
+                </button>
+                <button type="button" class="session-row-menu__item" role="menuitem" tabindex="0">
+                    <span class="session-row-menu__icon" aria-hidden="true" data-sg-row-icon="close"></span>
+                    <span class="session-row-menu__label">kill session</span>
+                    <span class="session-row-menu__key" aria-hidden="true">k</span>
+                </button>
+                <button type="button" class="session-row-menu__item" role="menuitem" tabindex="0" aria-disabled="true" data-tooltip="close the session first" data-sg-disabled-item>
+                    <span class="session-row-menu__icon" aria-hidden="true" data-sg-row-icon="restart"></span>
+                    <span class="session-row-menu__label">restart</span>
+                    <span class="session-row-menu__key" aria-hidden="true">t</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>popup focus</dt>
+    <dd>Add <code>popup-focus</code> to the panel's class list and declare no border, ground or shadow of your own; the look
+        is drawn once in <code>client/css/popup-focus.css</code>, which loads last so it wins at equal specificity. Worn by the
+        row menu, the drawer group menu, the header kebab menu, the terminal tools and server controls menus, the session
+        theme picker, the components popover, the add component menu, a panel's corner menu, a terminal cell's options menu,
+        the background popover and the file drawer's options menu. Every centered dialog wears a scaled-up version of the
+        same shimmer, duplicating this file's angle/keyframe recipe (its own <code>--mg-angle</code> and
+        <code>modal-glow-orbit</code>, not this file's <code>--pf-angle</code> - a shared declaration is disallowed by
+        <code>tests/test_popup_focus_style.node.mjs</code>) - see <a href="#dialogs">dialogs, "glow"</a> and
+        <code>client/css/modal-glow.css</code>.</dd>
+    <dt>row menu</dt>
+    <dd>The kebab on a session, browser, page, file or Layout row opens the ONE item menu (wrapper package S-6 part 2): the
+        row types are entries in <code>web/src/lib/item-menu/menus/row.ts</code> (items in <code>row-items.ts</code>), drawn by
+        <code>item-menu/ItemMenuHost.svelte</code> through <code>CascadeMenu.svelte</code> (a 14px icon, a label, the letter
+        from the one registry), opened by <code>item-menu/row-open.ts</code> from the kebab, and from a right-click, a long
+        press or Shift+F10 on the row (<code>sidebar-shell/row-menu-gestures.ts</code>). <code>placeMenu</code> puts its
+        top-left at the kebab's bottom-left and flips and clamps it; a right-click hangs it at the pointer. An inert item shows
+        its reason inline; "update and restart" and the Shift-held "restart now" wear the green update tone
+        (<code>.acm-item--update</code>). The panel above is the retired legacy look, kept for reference.</dd>
+    <dt>a tab's menu, and a fold-out beside a menu (#1838)</dt>
+    <dd>A right click on a terminal tab (the Menu key or Shift+F10 on a focused tab) opens the row menu for that tab's
+        session at the pointer, in that session's own theme and the global theme for a session with none
+        (<code>Themes.applyScopeTo</code> on the panel and on the "add to" cascade host, handed back on close). The kebab's
+        "actions" item opens the same panel as a FOLD-OUT beside the kebab menu, which stays open: hover, click or
+        ArrowRight opens it, ArrowLeft or Escape retracts it (a second Escape closes the menu), and hovering a sibling item
+        retracts it. A fold-out is placed by the app's one placement rule, <code>placeMenu</code>
+        (<code>window.CloudeWeb.placeMenu</code>): right of the host, flipped to its left when there is no room, shifted up
+        off the bottom edge and height-capped to scroll, so it never sits under or past the window's edge. No new class: it is
+        the one item menu's <code>CascadeMenu</code>, which wears <code>popup-focus</code>.</dd>
+    <dt>a nested branch, from a flat panel (#954)</dt>
+    <dd>"add to" (a Layout row: "add"), and "send to", are branch items: since the row menu is the one item menu (S-6
+        part 2) they are ordinary <code>CascadeMenu</code> submenus, their levels built by <code>addToNodes</code>
+        (<code>web/src/lib/add-to-menu/host.ts</code>) and <code>computerNodes</code> (<code>web/src/lib/send-to/host.ts</code>).
+        Before that, the legacy panel opened them as a nested flyout via <code>window.CloudeWeb.addToMenu</code>. Hovering any other item in this panel retracts the flyout, the
+        same as hovering a sibling retracts a submenu anywhere else. A leaf pick collapses the whole nested tree, this
+        panel included; Escape or ArrowLeft on the flyout's own top level backs out of it alone. The chevron
+        (<code>.session-row-menu__chevron</code>, and the group heading kebab's twin
+        <code>.session-sidebar-group-menu__chevron</code>) is the same glyph as <code>CascadeMenu.svelte</code>'s own
+        <code>.acm-chevron</code>.</dd>
+    <dt>spacers between groups</dt>
+    <dt>component options</dt>
+    <dt>overflow</dt>
+    <dd>At 620px of cell width a terminal cell's tool icons collapse into the session kebab menu, keeping every action in
+        its session's context. When you add a bar icon, re-check that width: the keep-awake cup moved it from 600 to 640px.</dd>
+    <dt>themes</dt>
+    <dd><code>--oc-ground-card</code> or <code>--oc-ground-raised</code> under the items, <code>--oc-ground-hover</code> on
+        hover, <code>--oc-strip-edge</code> and <code>--oc-focus-glow</code> for the popup edge, black drop shadows (they must
+        read on a light theme).</dd>
+    <dt>access</dt>
+    <dd><code>role="menu"</code> with an <code>aria-label</code> naming what the actions act on, <code>role="menuitem"</code>
+        buttons, arrow keys between items, Escape closes and returns focus to the trigger, the trigger carries
+        <code>aria-expanded</code>. The legacy row menu trigger's focus outline is the accent; new triggers use cyan.</dd>
+</dl>
+
+<h3 class="sg-h3" id="menus-anchored-popup">the anchored popup</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/dialog-frame/AnchoredPopup.svelte</code><span>press either control; Escape, a press outside or an answer closes it</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-anchored-popup"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>Every popup that opens beside a control, or floats on its own without covering the page, is
+        <code>AnchoredPopup.svelte</code> (wrapper package T-2); the centered modal is <code>ModalShell.svelte</code>
+        (dialogs section). The popup brings only its body and its own class for size and layout; the frame adds
+        <code>.oc-anchored</code> and <code>popup-focus</code> itself, so no popup declares its own edge, ground or shadow.
+        The popup's rule for the frame is <code>:global(...)</code> in its own file, because the element is the
+        component's. Worn by the widget info and settings popovers, the components list, the custom project color
+        picker, the project tool window, the subagent and timer lists, the alert center, the duplicate and "no Task
+        Manager" prompts, the account color picker and the terminal background popover.</dd>
+    <dt>a question</dt>
+    <dd>A destructive question that opens from the key that asked it (clear the board, end the session, delete the automation) is
+        <code>ConfirmPopup.svelte</code>, the second specimen above: an <code>alertdialog</code> on this frame with a sentence, the
+        quiet secondary cancel and the coral danger answer, both the base <code>Button</code> at the small size. Focus starts on cancel,
+        Escape or a press outside answers no, focus goes back to the key. Never an inline strip with its own
+        <code>role="alertdialog"</code>.</dd>
+    <dt>placement</dt>
+    <dd><code>placement="below"</code> (the default) puts it under the anchor, flips it above when the room below is short,
+        clamps it to the window and makes it a full-width sheet at phone width, through
+        <code>web/src/lib/dropdown/placement.ts</code>, the dropdowns' one rule. <code>placement="manual"</code> takes the
+        popup's own geometry as <code>style</code>, computed in <code>onPlace</code>; the frame calls it on open, on a
+        window resize, on any scroll and when its own size changes, so no popup wires those listeners again.
+        <code>topLayer</code> promotes it with <code>popover="manual"</code> when an ancestor would clip it or contain it.
+        Its defaults (<code>position: fixed</code>, <code>z-index: var(--oc-z-popover)</code>) sit in
+        <code>@layer base</code>, so a popup's own rule wins.</dd>
+    <dt>behaviour</dt>
+    <dd>Escape closes it and stops there, so the page or strip under it never sees the same press
+        (<code>escape="window"</code> hears it anywhere; <code>escape="document"</code> hears it in the capture phase
+        without stopping it, for a popup holding a native picker). <code>onEscape</code> replaces the close for Escape
+        alone (a picker that puts back the first choice). A press outside the popup and its anchor closes it
+        (<code>outside="capture"</code> for one nested in a menu, <code>"none"</code> for a form). <code>dismissable</code>
+        (a value or a check) holds both while, for example, a modal the popup opened is up. Every other key reaches the
+        popup's own <code>onkeydown</code>.</dd>
+    <dt>access</dt>
+    <dd><code>role="dialog"</code>, or <code>"alertdialog"</code> for a question, named by <code>label</code>. Focus goes to
+        the first control on open (or <code>initialFocus</code>: a selector, <code>self</code> or <code>none</code>) and
+        back to the anchor on close when it was inside. A showing <code>role="dialog"</code> is the floating layer that
+        owns Escape (<code>web/src/lib/sidebar-widgets/escape-guards.ts</code>). The <code>dialog-frame</code> scan
+        (<code>web/src/lib/zone-shell/host-scan.ts</code>) refuses a <code>role="dialog"</code>,
+        <code>role="alertdialog"</code> or <code>aria-modal</code> on a plain element anywhere but the two frames.</dd>
+</dl>
+
+<h3 class="sg-h3" id="menus-subagents">the subagent list</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>The read-only list of one session's subagents (<code>SubagentList.svelte</code>, opened by
+        <code>openSubagentList(anchor, sessionId, name)</code> in <code>web/src/lib/subagents/popup.ts</code>, published
+        on <code>window.CloudeWeb</code> for the legacy sidebar). A free-floating popup: the <code>.popup-focus</code> look
+        with the ledger's title strip (<code>.sal-titlebar</code>, <code>.sal-title</code> in the accent). Data only:
+        status, type, description, age, from <code>GET /sessions/{id}/subagents</code>, read once on open.</dd>
+    <dt>states</dt>
+    <dt>access</dt>
+    <dd><code>role="dialog"</code> named "subagents of NAME"; Escape, the close control or a click elsewhere closes
+        it and focus returns to the chip.</dd>
+</dl>
+
+<h3 class="sg-h3" id="menus-timers">the timer list</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>The read-only list of one session's timers (<code>TimerList.svelte</code>, opened by
+        <code>openTimerList(anchor, sessionId, name)</code> in <code>web/src/lib/timers/popup.ts</code>, published on
+        <code>window.CloudeWeb</code>). It wears the subagent list's look from one shared stylesheet,
+        <code>web/src/lib/subagents/popup-list.css</code>, with its own column widths on <code>.sal-table--timers</code>
+        (the subagent list's are on <code>.sal-table--subagents</code>). Data only, read once on open from
+        <code>GET /sessions/{id}/timers</code>: status, schedule, time to the next fire, a redacted prompt summary, and a
+        closing line counting open background shells and monitors, which is a count and never a list.</dd>
+    <dt>states</dt>
+    <dd>Live is the one green (<code>.sal-status--live</code>); every ended state (fired, canceled, replaced, expired,
+        refused, lost) is dim (<code>.sal-status--ended</code>); unknown and unreadable are yellow
+        (<code>.sal-status--unknown</code>). Not applicable and not measured are sentences, never an empty table.</dd>
+    <dt>access</dt>
+    <dd><code>role="dialog"</code> named "timers of NAME"; Escape, the close control or a click elsewhere closes it and
+        focus returns to the chip.</dd>
+</dl>
+
+<h3 class="sg-h3" id="menus-session-skills">the session skills panel</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>The skills one session's agent really has (issue #1079): <code>SessionSkillsPanel.svelte</code>, drawn as a
+        DRAWER on the right edge of its terminal cell (issue #1100). The terminal kebab's "session skills" toggles it
+        through <code>toggleSkillsDrawer(slot)</code> in <code>web/src/lib/session-skills/drawer.svelte.ts</code>;
+        both terminal cells (primary and live) host it through <code>SkillsDrawer.svelte</code> inside a <code>.oc-tl-stage</code> box, the positioning box around the pane. <code>.sal-panel--docked</code>
+        places it absolutely over the pane (top, right, bottom; 360px wide, or the cell's width when narrower), so the
+        pane's box, the fit and the size vote never change. <code>.sal-panel--full</code> gives it the whole width in a
+        narrow cell (the phone strip). A 1px left hairline drawn by a shadow, the raised ground, no popup sheen. It
+        wears the skill list's shell and <code>popup-list.css</code>, with
+        <code>.sal-table--skills</code> for its column widths, <code>.sal-section</code> for the "recent use" heading,
+        <code>.sal-error</code> for a refused switch and <code>.sal-row--unseen</code> to dim a skill the agent cannot
+        see. The switch is a <code>.sal-close</code> button with <code>role="switch"</code>.</dd>
+    <dt>access</dt>
+    <dd><code>role="dialog"</code> named "session skills", not modal. It takes focus only when a click opened it (never
+        when restored on load) and Escape closes it while focus is inside, so the terminal keeps its own Escape. Open or
+        closed is per device and per terminal tab, cached in localStorage and never synced.</dd>
+    <dt>how</dt>
+    <dd>Read on open from <code>GET /api/v1/sessions/{id}/skills</code> and <code>GET /api/v1/sessions/{id}/skill-fires</code>,
+        again on <code>skills.changed</code>. A Claude switch writes <code>PUT /api/v1/skills/overrides</code> to the
+        project's local settings file, never the global one; a Codex switch says a restart is needed. A plugin's skill
+        and a shadowed copy have no switch.</dd>
+    <dt>skill scout (#1083)</dt>
+    <dd><code>ScoutSection.svelte</code> under the skills list, claude sessions only: a <code>.sal-scout</code> row holding a
+        <code>.sal-close</code> button and a <code>.sal-scout-hint</code> note, then a <code>.sal-chips</code> list whose
+        <code>.sal-chip-row</code> pairs a <code>.sal-chip</code> (quiet outlined add button, the accent only on hover)
+        with the agent's reason in <code>.sal-chip-why</code>, always rendered as text. A chip goes through
+        <code>quickAdd</code> and the install sheet, so consent is never skipped. Routes:
+        <code>POST</code> and <code>GET /api/v1/sessions/{id}/skills/scout</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="menus-tooltip">the tooltip</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/tooltip/tooltip.ts</code><code>tooltip.css</code><span>rest the pointer on an icon, or tab to it</span></div>
+    <div class="sg-specimen__body sg-specimen__body--flush">
+        <div class="sg-stage sg-stage--short">
+            <div class="sg-anchor" style="top: 120px; left: 24px; display: flex; gap: 12px">
+                <button type="button" class="btn-icon" aria-label="pin" title="pin to top">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14l-2-4V4H7v9l-2 4z"/></svg>
+                </button>
+                <button type="button" class="btn-icon" aria-label="notes" data-tooltip="notes for this session" data-tooltip-side="right">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.25 2.5H9.25L12.75 6V13.5H3.25V2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                </button>
+            </div>
+            <div class="cc-tooltip" data-side="top" style="top: 72px; left: 24px; --cc-arrow: 16px">pin to top</div>
+        </div>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>look</dt>
+    <dt>behaviour</dt>
+    <dd>One <code>.cc-tooltip</code> box on <code>&lt;body&gt;</code>, in the look above. While the pointer is
+        inside an element its <code>title</code> (and every ancestor's) waits in <code>data-tooltip-title</code>, so the
+        browser's own tooltip never fires beside it; it comes back on leave. <code>data-tooltip-side</code> (top, bottom,
+        left, right; default top) is a preference that flips when it does not fit. A press or Escape hides it until the
+        pointer leaves; a touch never shows it.</dd>
+    <dt>cut-off text</dt>
+    <dt>none</dt>
+    <dd>A kebab carries no tooltip: its icon speaks for itself. <code>data-tooltip-off</code> on a region silences it (the
+        header's folded menu, whose rows print their labels); an empty value on the nearest carrier means none; a control
+        whose popup is open (<code>aria-expanded="true"</code>) shows none.</dd>
+    <dt>access</dt>
+    <dd>The shown box is <code>role="tooltip"</code> and the target's <code>aria-describedby</code> names it while it is up.
+        Keyboard focus shows it after the same delay; a mouse click's focus does not.</dd>
+</dl>
+
+<h3 class="sg-h3" id="menus-widget">a widget's menus: the one widget menu</h3>
+
+<h3 class="sg-h3" id="menus-mistakes">common mistakes</h3>
+<p><strong>Agent menu, rename (issue #1371).</strong> A Swarm leader's chat menu adds <em>rename agent</em>
+    (<code>LeaderRename.svelte</code>): the item opens an inline field (<code>.hdc-rename</code>, <code>.hdc-rename-label</code>,
+    <code>.hdc-rename-input</code>, <code>.hdc-rename-row</code>) in the menu, like the turn-off confirm row.</p>
+<ul class="sg-mistakes">
+    <li><strong>Decorative divider lines.</strong> The border above the old menu note line was removed with the note (#603). A <code>sep</code> separates groups of actions, nothing more.</li>
+    <li><strong>A second menu component.</strong> Reuse <code>CascadeMenu</code>; #527 added radio items to it rather than
+        forking.</li>
+    <li><strong>A session entry without its light and mark.</strong> Pass <code>agent</code> facts; the order is light, mark,
+        name.</li>
+    <li><strong>A literal label.</strong> Several row menu labels are still literals in
+        <code>web/src/lib/item-menu/menus/row-items.ts</code>; a new item takes a catalog key (<code>session.menu.*</code>).</li>
+    <li><strong>A CSS tooltip.</strong> An <code>::after</code> bubble reading <code>attr(title)</code> showed instantly and the
+        native one followed it, two looks at once (#981). Set <code>title</code> or <code>data-tooltip</code> on an icon-only control; the one tooltip
+        does the rest.</li>
+    <li><strong>A tooltip that states the obvious.</strong> A <code>title</code> or <code>data-tooltip</code> on anything
+        that repeats its visible text, names a self-evident icon (house, gear, X, magnifier, trash, arrows, any drawer tab),
+        or glues open, close, show or fold onto a name already on screen ("open SysOp" on a node labeled SysOp, "swarm" on
+        the Swarm tab, "close" on an X) (#1686). Say something the screen does not, or say nothing.</li>
+    <li><strong>A menu the drawer repaint destroys.</strong> The legacy drawer rebuilds its rows from an HTML string on every
+        poll; anything mounted into it must adopt and move its nodes, not be recreated.</li>
+</ul>

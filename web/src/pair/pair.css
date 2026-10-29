@@ -1,0 +1,96 @@
+@import '../opscenter/tokens.css';
+@import '../opscenter/focus.css';
+@import '../opscenter/controls.css';
+@import '../opscenter/fields.css';
+@import '../opscenter/type.css';
+
+:root {
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--oc-ground-page);
+  color: var(--oc-text-primary);
+  font-family: var(--font-mono);
+}
+
+.pair,
+.pair * {
+  box-sizing: border-box;
+}
+
+.pair {
+  min-height: 100dvh;
+  max-width: 440px;
+  margin: 0 auto;
+  padding-bottom: env(safe-area-inset-bottom);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.pair__bar {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 16px;
+  padding-top: env(safe-area-inset-top);
+  background: var(--oc-ground-titlerow);
+  box-shadow: 0 1px 0 var(--oc-line-panel);
+}
+
+.pair__label {
+  color: var(--oc-orange);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pair__body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 16px;
+}
+
+.pair__head {
+  margin: 0;
+  color: var(--oc-text-bright);
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.pair__text,
+.pair__sub {
+  margin: 0;
+  color: var(--oc-text-secondary);
+}
+
+.pair__sub {
+  font-size: 12px;
+}
+
+.pair__form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pair__input {
+  font-size: 22px;
+  letter-spacing: 0.3em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.pair__submit {
+  min-height: 44px;
+}
+
+.pair__problem {
+  margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--oc-line-panel);
+  color: var(--oc-coral);
+}

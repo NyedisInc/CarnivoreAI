@@ -1,0 +1,124 @@
+/*
+ * The text-prompt modal (currently "new group...", any future single-field
+ * prompt built on client/js/text-prompt-modal.js) in the Military Terminal
+ * look, issue #597.
+
+ *   title row + label  web/src/lib/ledger/ledger-chrome.css `.pl-titlebar`,
+ *                      `.pl-title`, `.pl-label`
+ *   field              web/src/lib/catalog/CatalogToolbar.svelte
+ *                      `.bar__input` (hairline rule, 13px, 7px 10px) and its
+ *                      focus: the shared brightened edge (focus.css)
+ *   cancel             `.restart-picker`'s cancel: the shared
+ *                      `.modal-btn.modal-btn-secondary` from styles.css,
+ *                      sized exactly like the picker's own footer buttons
+ *                      (7px 16px, 13px) - a quiet 1px outline, no ornament.
+ *   confirm ("create") the shared `.modal-btn-confirm` below, built to the
+ *                      same shape as styles.css's `.modal-btn-danger` (a
+ *                      tinted dark interior plus a bright 1px outline, the
+ *                      picker's "kill and restart" look) but in the accent
+ *                      (confirm) token family, never the destructive one -
+ *                      creating a group destroys nothing. `.modal-btn-danger`
+ *                      lives in styles.css, which is at its line-count cap
+ *                      (CLAUDE.md), so its confirm counterpart is declared
+ *                      here instead, unscoped, as the first consumer.
+ *   focus              the picker's `.modal-btn:focus-visible`: 2px
+ *                      `--oc-cyan`, offset 2px
+ *   phone target        the picker's `.modal-btn` at `(pointer: coarse),
+ *                      (max-width: 600px)`: 44px
+
+ * No corner brackets, no targeting-bracket ornament: neither of the picker's
+ * buttons wears one and neither does this dialog's now.
+
+ * The picker's rules are scoped under `.restart-picker`, so they cannot be
+ * reached from this dialog; the recipe is restated here, scoped under
+ * `.text-prompt-modal` (buttons excepted, see above), and the shared
+ * `.modal-*` classes stay on the markup so the chassis in
+ * client/css/styles.css still supplies the overlay, the panel ground and its
+ * hairline. No other legacy modal is touched.
+
+ * EVERY COLOUR IS AN --oc-* TOKEN. web/src/opscenter/tokens.css re-derives
+ * that palette from the active theme's --color-* manifest, so this dialog
+ * repaints under every theme and holds no colour literal of its own.
+ */
+
+.text-prompt-modal .modal-content {
+    max-width: 380px;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 2px;
+    font-family: var(--font-mono);
+}
+
+.text-prompt-modal__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: var(--oc-titlerow-h, 37px);
+    padding: 0 14px;
+    background: var(--oc-ground-titlerow);
+    box-shadow: inset 0 -1px 0 0 var(--oc-line-rule);
+}
+
+.text-prompt-modal__verb {
+    font-size: var(--oc-fs-title, 12px);
+    font-weight: 400;
+    letter-spacing: var(--oc-tracking-title, 0.8px);
+    text-transform: uppercase;
+    color: var(--oc-orange);
+}
+
+.text-prompt-modal .modal-body {
+    margin: 0;
+    padding: 16px 14px 4px;
+}
+
+.text-prompt-modal .modal-input-group {
+    margin-bottom: 0;
+}
+
+.text-prompt-modal .modal-label {
+    font-size: var(--oc-fs-micro, 10px);
+    letter-spacing: var(--oc-tracking-label, 0.6px);
+    text-transform: uppercase;
+    color: var(--oc-text-muted);
+    margin-bottom: 6px;
+}
+
+.text-prompt-modal .modal-input {
+    padding: 7px 10px;
+    border: var(--oc-border, 1px) solid var(--oc-line-rule);
+    border-radius: 2px;
+    background: var(--oc-ground-field);
+    font-size: 13px;
+    transition: border-color var(--oc-motion-fast, 120ms) ease;
+}
+
+.text-prompt-modal .modal-input:focus {
+    border-color: var(--oc-line-rule);
+    box-shadow: none;
+}
+
+.text-prompt-modal .modal-footer {
+    gap: 18px;
+    padding: 16px 14px 14px;
+    margin: 0;
+}
+
+.text-prompt-modal .modal-btn {
+    padding: 7px 16px;
+    font-size: 13px;
+}
+
+.modal-btn-confirm {
+    --_btn-pad-y: 6px;
+    --_btn-pad: 12px;
+    --_btn-fs: 0.8rem;
+    --_btn-bw: 1px;
+}
+
+@media (pointer: coarse), (max-width: 600px) {
+    .text-prompt-modal .modal-btn {
+        min-height: 44px;
+    }
+}

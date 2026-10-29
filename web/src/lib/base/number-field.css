@@ -1,0 +1,27 @@
+@layer patterns {
+  .oc-number {
+    --oc-ibtn-size: var(--oc-control-h);
+    display: flex;
+    align-items: center;
+    gap: var(--oc-space-1);
+    min-width: 0;
+  }
+
+  .oc-number[data-size='sm'] {
+    --oc-ibtn-size: var(--oc-control-h-sm);
+  }
+
+  .oc-number > [data-field] {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    font-variant-numeric: tabular-nums;
+    appearance: textfield;
+  }
+
+  .oc-number > [data-field]::-webkit-inner-spin-button,
+  .oc-number > [data-field]::-webkit-outer-spin-button {
+    margin: 0;
+    appearance: none;
+  }
+}

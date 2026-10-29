@@ -1,0 +1,106 @@
+@layer patterns {
+  .oc-inline-field {
+    --_inner: calc(var(--oc-control-h-sm) - 2 * var(--oc-border));
+    display: flex;
+    align-items: flex-end;
+    min-width: 0;
+    min-height: var(--oc-control-h-sm);
+    box-sizing: border-box;
+    border: var(--oc-border) solid var(--oc-line-rule);
+    border-radius: var(--oc-radius);
+    background: var(--oc-ground-raised);
+  }
+
+  .oc-inline-field__input {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: var(--_inner);
+    max-height: calc(var(--oc-inline-field-rows, 3) * 1lh + 2 * var(--oc-space-1));
+    box-sizing: border-box;
+    margin: 0;
+    padding: var(--oc-space-1) var(--oc-space-2);
+    border: 0;
+    border-radius: var(--oc-radius);
+    background: transparent;
+    color: var(--oc-text-primary);
+    font-family: var(--oc-font);
+    font-size: var(--oc-fs-body);
+    line-height: var(--oc-lh-tight);
+    resize: none;
+    outline: none;
+  }
+
+  .oc-inline-field__input::placeholder {
+    overflow: hidden;
+    color: var(--oc-text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .oc-inline-field__key {
+    position: relative;
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    gap: var(--oc-space-1);
+    box-sizing: border-box;
+    height: var(--_inner);
+    min-height: 0;
+    margin: 0;
+    padding: 0 var(--oc-space-2);
+    border: 0;
+    border-left: var(--oc-border) solid var(--oc-line-rule);
+    border-radius: 0;
+    background: transparent;
+    color: var(--oc-text-secondary);
+    font-family: var(--font-mono);
+    font-size: var(--oc-fs-label);
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .oc-inline-field__key:last-child {
+    border-radius: 0 var(--oc-radius) var(--oc-radius) 0;
+  }
+
+  .oc-inline-field__key:hover:not(:disabled) {
+    color: var(--oc-text-primary);
+  }
+
+  .oc-inline-field__key[data-ready] {
+    color: var(--oc-orange);
+  }
+
+  .oc-inline-field__key[aria-expanded='true'] {
+    color: var(--oc-orange);
+  }
+
+  .oc-inline-field__key:disabled {
+    color: var(--oc-text-dim);
+    cursor: default;
+  }
+
+  .oc-inline-field__select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  @media (max-width: 1023px) {
+    .oc-inline-field__key::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: 0;
+      left: 0;
+      height: var(--oc-tap);
+      transform: translateY(-50%);
+    }
+  }
+}

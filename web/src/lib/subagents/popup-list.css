@@ -1,0 +1,145 @@
+
+.sal-panel {
+  position: fixed;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  width: min(520px, calc(100vw - 16px));
+  overflow-y: auto;
+  border-radius: var(--oc-radius-sm, 2px);
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  color: var(--oc-text-secondary);
+}
+
+.sal-panel:focus {
+  outline: none;
+}
+
+.sal-panel .sal-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  padding: 0 10px;
+  background: var(--oc-ground-titlerow);
+  box-shadow: 0 1px 0 0 var(--oc-line-rule);
+  flex: 0 0 auto;
+}
+
+.sal-panel .sal-title {
+  margin: 0;
+  font-size: var(--oc-fs-title, 12px);
+  font-weight: 400;
+  letter-spacing: var(--oc-tracking-title, 0.8px);
+  text-transform: uppercase;
+  color: var(--oc-orange);
+  white-space: nowrap;
+}
+
+.sal-panel .sal-name {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--oc-text-dim);
+}
+
+.sal-panel .sal-close {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border: 1px solid var(--oc-line-panel);
+  border-radius: var(--oc-radius-sm, 2px);
+  background: transparent;
+  color: var(--oc-text-secondary);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.sal-panel .sal-close:hover {
+  background: var(--oc-ground-hover);
+  color: var(--oc-text-primary);
+}
+
+.sal-panel .sal-summary,
+.sal-panel .sal-note {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: var(--oc-fs-label, 11px);
+  color: var(--oc-text-dim);
+}
+
+.sal-panel .sal-summary {
+  box-shadow: 0 1px 0 0 var(--oc-line-rule);
+}
+
+.sal-panel .sal-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.sal-panel .sal-table th {
+  padding: 6px 10px;
+  font-size: var(--oc-fs-micro, 10px);
+  font-weight: 400;
+  letter-spacing: var(--oc-tracking-label, 0.6px);
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--oc-text-dim);
+  box-shadow: 0 1px 0 0 var(--oc-line-rule);
+}
+
+.sal-panel .sal-table--subagents th:nth-child(1) { width: 72px; }
+.sal-panel .sal-table--subagents th:nth-child(2) { width: 110px; }
+.sal-panel .sal-table--subagents th:nth-child(4) { width: 84px; }
+
+.sal-panel .sal-table--timers th:nth-child(1) { width: 84px; }
+.sal-panel .sal-table--timers th:nth-child(2) { width: 130px; }
+.sal-panel .sal-table--timers th:nth-child(3) { width: 64px; }
+
+.sal-panel .sal-table td {
+  padding: 5px 10px;
+  box-shadow: 0 1px 0 0 var(--oc-line-rule);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sal-panel .sal-type {
+  color: var(--oc-text-primary);
+}
+
+.sal-panel .sal-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.sal-panel .sal-status {
+  text-transform: uppercase;
+  letter-spacing: var(--oc-tracking-label, 0.6px);
+  font-size: var(--oc-fs-micro, 10px);
+}
+
+.sal-panel .sal-status--running {
+  color: var(--oc-green);
+}
+
+.sal-panel .sal-status--done {
+  color: var(--oc-text-dim);
+}
+
+.sal-panel .sal-status--unknown {
+  color: var(--oc-yellow);
+}
+
+/* could not */
+.sal-panel .sal-status--live {
+  color: var(--oc-green);
+}
+
+.sal-panel .sal-status--ended {
+  color: var(--oc-text-dim);
+}

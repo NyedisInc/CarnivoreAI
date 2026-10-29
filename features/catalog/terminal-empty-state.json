@@ -1,0 +1,28 @@
+{
+  "api_routes": [],
+  "area": "terminal",
+  "docs": [],
+  "examples": [
+    "You closed the last tab: the pane tells you how to get going again instead of showing a blank box."
+  ],
+  "how_to": [
+    "Pick a running session from the agents drawer, or press new session in the pane."
+  ],
+  "id": "terminal-empty-state",
+  "issues": [],
+  "keywords": [
+    "empty state"
+  ],
+  "media_exempt": "screenshots are not shipped in the open-source tree",
+  "name": "Empty pane state",
+  "since": "2026-09-22",
+  "status": "stable",
+  "summary": "guide you to open or create a session when a terminal pane has nothing attached to it.",
+  "surfaces": [
+    "web/src/lib/terminal-empty/TerminalEmpty.svelte"
+  ],
+  "updated": "2026-09-27",
+  "where": [
+    "Any terminal pane with no session attached, for example the terminal screen before you pick one."
+  ]
+}

@@ -1,0 +1,46 @@
+.xtalk-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 8px;
+  pointer-events: none;
+}
+.xtalk-layer--keep {
+  inset: 0 0 auto auto;
+  width: min(100%, 436px);
+  max-height: 100%;
+  overflow-y: auto;
+  pointer-events: auto;
+}
+.xtalk-card {
+  box-sizing: border-box;
+  display: block;
+  width: min(100%, 420px);
+  max-height: 160px;
+  overflow: hidden;
+  padding: 8px 10px;
+  border: var(--oc-border) solid var(--oc-line-panel);
+  border-left: 3px solid var(--oc-orange);
+  border-radius: 3px;
+  background: var(--oc-ground-card);
+  color: var(--oc-text-primary);
+  box-shadow: 0 2px 12px var(--oc-shadow-lift);
+  font: 12px/1.45 var(--oc-font);
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.xtalk-card[data-side="sent"] { border-left-color: var(--oc-green); }
+.xtalk-card:focus-visible { border-color: var(--oc-orange); }
+.xtalk-card__head { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.xtalk-card__mark { display: inline-flex; flex: none; }
+.xtalk-card__direction { color: var(--oc-text-dim); text-transform: uppercase; letter-spacing: .08em; }
+.xtalk-card__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--oc-orange); font-weight: 700; }
+.xtalk-card__meta { color: var(--oc-text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.xtalk-card__time { color: var(--oc-text-dim); margin-left: auto; white-space: nowrap; }
+.xtalk-card__quote { display: -webkit-box; margin-top: 6px; white-space: pre-wrap; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }

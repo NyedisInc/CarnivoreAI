@@ -1,0 +1,16 @@
+:root, .oc-frame[data-session-theme] { --ascii-display:none; }
+.oc-ascii-frame { display:var(--ascii-display, none); position:absolute; inset:0; pointer-events:none; user-select:none; z-index:2; overflow:visible; color:var(--color-accent); }
+.oc-ascii-frame pre { position:absolute; margin:0; font:7px/7px var(--oc-font); letter-spacing:0; white-space:pre; opacity:.5; }
+.oc-ascii-rail { top:-1px; left:12px; max-width:35%; overflow:hidden; }
+.oc-ascii-joint { bottom:-1px; right:12px; max-width:35%; overflow:hidden; }
+.oc-ascii-frame .oc-ascii-spill { right:-1px; top:35%; opacity:.35; }
+:root[data-art-density="minimal"] .oc-ascii-joint,
+:root[data-art-density="minimal"] .oc-ascii-spill { display:none; }
+:root[data-art-density="minimal"] .oc-ascii-rail { max-width:42px; opacity:.3; }
+:root:not([data-art-density="full"]) .oc-ascii-spill { display:none; }
+:root[data-art-density="full"] .oc-ascii-rail,
+:root[data-art-density="full"] .oc-ascii-joint { max-width:60%; opacity:.7; }
+@media (max-width:1023px) {
+  .oc-ascii-frame .oc-ascii-spill { display:none; }
+  .oc-ascii-rail, .oc-ascii-joint { max-width:25%; }
+}

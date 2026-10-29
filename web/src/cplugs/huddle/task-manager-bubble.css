@@ -1,0 +1,126 @@
+@layer components {
+  .hb {
+    --_post: var(--oc-text-secondary);
+    position: relative;
+    min-width: 0;
+    padding: 6px 8px;
+    border: 1px solid color-mix(in srgb, var(--_post) 45%, transparent);
+    border-radius: var(--oc-radius-sm);
+    background: color-mix(in srgb, var(--_post) 8%, transparent);
+    color: var(--oc-text-primary);
+  }
+
+  .hb--row {
+    display: grid;
+    grid-template-columns: 14px minmax(0, 1fr) auto;
+    column-gap: 8px;
+    align-items: start;
+  }
+
+  .hb--thread {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .hb-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 18px;
+    color: var(--_post);
+  }
+
+  .hb-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .hb-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    color: var(--oc-text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--oc-fs-micro);
+    letter-spacing: 0.1em;
+    line-height: 16px;
+    text-transform: uppercase;
+  }
+
+  .hb-who {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--_post);
+  }
+
+  .hb-who svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .hb-kind {
+    padding: 0 3px;
+    border: 1px solid currentColor;
+    border-radius: var(--oc-radius-sm);
+    color: var(--_post);
+    line-height: 12px;
+  }
+
+  .hb-time {
+    margin-left: auto;
+    color: var(--oc-text-dim);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+  }
+
+  .hb-body {
+    min-width: 0;
+    margin: 0;
+    color: var(--oc-text-primary);
+    font-size: var(--hd-fs-body, var(--oc-fs-body));
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .hb--waiting {
+    border-color: var(--_post);
+  }
+
+  .hb--owner {
+    border-color: var(--oc-line-frame);
+    background: var(--oc-ground-raised);
+    box-shadow: inset -2px 0 0 var(--oc-text-secondary);
+  }
+
+  .hb--owner .hb-head {
+    flex-direction: row-reverse;
+  }
+
+  .hb--owner .hb-time {
+    margin-right: auto;
+    margin-left: 0;
+  }
+
+  .hb--form_answer {
+    border-style: dashed;
+    border-radius: 0;
+    background: var(--oc-ground-panel);
+  }
+
+  .hb--form_answer .hb-kind {
+    border-radius: 0;
+  }
+
+  .hb--form_answer .hb-fa-icon {
+    display: inline-flex;
+    order: -1;
+    color: var(--_post);
+  }
+}

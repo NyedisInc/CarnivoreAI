@@ -1,0 +1,456 @@
+{
+  "project unfiled": {
+    "ariaLabel": "rename, sleep or remove the proj project",
+    "entries": [
+      {
+        "id": "new-agent",
+        "label": "new agent",
+        "key": "n"
+      },
+      {
+        "id": "load-blueprint",
+        "label": "load blueprint",
+        "key": "b"
+      },
+      {
+        "id": "rename-project",
+        "label": "rename",
+        "key": "r",
+        "sep": true
+      },
+      {
+        "id": "add-to-company",
+        "label": "add to",
+        "key": "a",
+        "children": [
+          {
+            "id": "acme",
+            "label": "acme",
+            "key": "a"
+          }
+        ]
+      },
+      {
+        "id": "project-color",
+        "label": "",
+        "key": "",
+        "swatches": true
+      },
+      {
+        "id": "show-path",
+        "label": "show path",
+        "key": "i",
+        "sep": true
+      },
+      {
+        "id": "sleep",
+        "label": "sleep",
+        "key": "s",
+        "sep": true
+      },
+      {
+        "id": "delete-project",
+        "label": "remove",
+        "key": "d",
+        "sep": true,
+        "danger": true
+      }
+    ]
+  },
+  "project filed": {
+    "ariaLabel": "rename, sleep or remove the proj project",
+    "entries": [
+      {
+        "id": "new-agent",
+        "label": "new agent",
+        "key": "n"
+      },
+      {
+        "id": "load-blueprint",
+        "label": "load blueprint",
+        "key": "b"
+      },
+      {
+        "id": "rename-project",
+        "label": "rename",
+        "key": "r",
+        "sep": true
+      },
+      {
+        "id": "add-to-company",
+        "label": "add to",
+        "key": "a",
+        "children": [
+          {
+            "id": "acme",
+            "label": "acme",
+            "key": "a"
+          }
+        ]
+      },
+      {
+        "id": "project-color",
+        "label": "",
+        "key": "",
+        "swatches": true
+      },
+      {
+        "id": "remove-from-company",
+        "label": "remove from company",
+        "key": "-"
+      },
+      {
+        "id": "show-path",
+        "label": "show path",
+        "key": "i",
+        "sep": true
+      },
+      {
+        "id": "sleep",
+        "label": "sleep",
+        "key": "s",
+        "sep": true
+      },
+      {
+        "id": "delete-project",
+        "label": "remove",
+        "key": "d",
+        "sep": true,
+        "danger": true
+      }
+    ]
+  },
+  "project unnamed": {
+    "ariaLabel": "rename, sleep or remove the unnamed project project",
+    "entries": [
+      {
+        "id": "new-agent",
+        "label": "new agent",
+        "key": "n"
+      },
+      {
+        "id": "load-blueprint",
+        "label": "load blueprint",
+        "key": "b"
+      },
+      {
+        "id": "rename-project",
+        "label": "rename",
+        "key": "r",
+        "sep": true
+      },
+      {
+        "id": "show-path",
+        "label": "show path",
+        "key": "i",
+        "sep": true
+      },
+      {
+        "id": "sleep",
+        "label": "sleep",
+        "key": "s",
+        "sep": true
+      },
+      {
+        "id": "delete-project",
+        "label": "remove",
+        "key": "d",
+        "sep": true,
+        "danger": true
+      }
+    ]
+  },
+  "company with color": {
+    "ariaLabel": "rename or delete the acme company",
+    "entries": [
+      {
+        "id": "rename-company",
+        "label": "rename",
+        "key": "r"
+      },
+      {
+        "id": "company-color",
+        "label": "",
+        "key": "",
+        "swatches": true
+      },
+      {
+        "id": "clear-company-color",
+        "label": "no color",
+        "key": "x"
+      },
+      {
+        "id": "delete-company",
+        "label": "delete",
+        "key": "d",
+        "sep": true,
+        "danger": true
+      }
+    ]
+  },
+  "company without color": {
+    "ariaLabel": "rename or delete the plain company",
+    "entries": [
+      {
+        "id": "rename-company",
+        "label": "rename",
+        "key": "r"
+      },
+      {
+        "id": "company-color",
+        "label": "",
+        "key": "",
+        "swatches": true
+      },
+      {
+        "id": "delete-company",
+        "label": "delete",
+        "key": "d",
+        "sep": true,
+        "danger": true
+      }
+    ]
+  },
+  "group first": {
+    "ariaLabel": "Actions for the crew group",
+    "entries": [
+      {
+        "id": "rename-group",
+        "label": "rename",
+        "key": "r"
+      },
+      {
+        "id": "add-members",
+        "label": "add",
+        "key": "+",
+        "children": [
+          {
+            "id": "agents",
+            "label": "agents",
+            "key": "a",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "colour",
+        "label": "color",
+        "key": "c"
+      },
+      {
+        "id": "group-icon",
+        "label": "icon",
+        "key": "g"
+      },
+      {
+        "id": "sleep",
+        "label": "sleep",
+        "key": "s",
+        "sep": true
+      },
+      {
+        "id": "move-up",
+        "label": "move up",
+        "key": "",
+        "disabled": "already first",
+        "sep": true
+      },
+      {
+        "id": "move-down",
+        "label": "move down",
+        "key": "]"
+      },
+      {
+        "id": "delete-group",
+        "label": "remove (2 agents move to their project or rogue agents)",
+        "key": "d",
+        "sep": true,
+        "danger": true
+      }
+    ]
+  },
+  "group middle": {
+    "ariaLabel": "Actions for the ops group",
+    "entries": [
+      {
+        "id": "rename-group",
+        "label": "rename",
+        "key": "r"
+      },
+      {
+        "id": "add-members",
+        "label": "add",
+        "key": "+",
+        "children": [
+          {
+            "id": "agents",
+            "label": "agents",
+            "key": "a",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "colour",
+        "label": "color",
+        "key": "c"
+      },
+      {
+        "id": "group-icon",
+        "label": "icon",
+        "key": "g"
+      },
+      {
+        "id": "sleep",
+        "label": "sleep",
+        "key": "s",
+        "sep": true
+      },
+      {
+        "id": "move-up",
+        "label": "move up",
+        "key": "[",
+        "sep": true
+      },
+      {
+        "id": "move-down",
+        "label": "move down",
+        "key": "]"
+      },
+      {
+        "id": "delete-group",
+        "label": "remove (1 agent moves to its project or rogue agents)",
+        "key": "d",
+        "sep": true,
+        "danger": true
+      }
+    ]
+  },
+  "group last": {
+    "ariaLabel": "Actions for the misc group",
+    "entries": [
+      {
+        "id": "rename-group",
+        "label": "rename",
+        "key": "r"
+      },
+      {
+        "id": "add-members",
+        "label": "add",
+        "key": "+",
+        "children": [
+          {
+            "id": "agents",
+            "label": "agents",
+            "key": "a",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "colour",
+        "label": "color",
+        "key": "c"
+      },
+      {
+        "id": "group-icon",
+        "label": "icon",
+        "key": "g"
+      },
+      {
+        "id": "sleep",
+        "label": "sleep",
+        "key": "s",
+        "sep": true
+      },
+      {
+        "id": "move-up",
+        "label": "move up",
+        "key": "[",
+        "sep": true
+      },
+      {
+        "id": "move-down",
+        "label": "move down",
+        "key": "",
+        "disabled": "already last"
+      },
+      {
+        "id": "delete-group",
+        "label": "remove (0 agents move to their project or rogue agents)",
+        "key": "d",
+        "sep": true,
+        "danger": true
+      }
+    ]
+  },
+  "color group": {
+    "ariaLabel": "color for crew",
+    "entries": [
+      {
+        "id": "group-color",
+        "label": "",
+        "key": "",
+        "swatches": true
+      },
+      {
+        "id": "color-style",
+        "label": "gradient and animation",
+        "key": "c",
+        "sep": true
+      }
+    ]
+  },
+  "color layout": {
+    "ariaLabel": "color for deck",
+    "entries": [
+      {
+        "id": "layout-color",
+        "label": "",
+        "key": "",
+        "swatches": true
+      },
+      {
+        "id": "color-style",
+        "label": "gradient and animation",
+        "key": "c",
+        "sep": true
+      }
+    ]
+  },
+  "leader alpha": {
+    "ariaLabel": "agent actions for Alpha",
+    "entries": [
+      {
+        "id": "wake",
+        "label": "wake",
+        "key": "w"
+      },
+      {
+        "id": "rename-agent",
+        "label": "rename agent",
+        "key": "r"
+      }
+    ]
+  },
+  "leader company": {
+    "ariaLabel": "agent actions for Acme HQ",
+    "entries": [
+      {
+        "id": "wake",
+        "label": "wake",
+        "key": "w"
+      },
+      {
+        "id": "rename-agent",
+        "label": "rename agent",
+        "key": "r"
+      },
+      {
+        "id": "turn-off-agent",
+        "label": "turn off",
+        "key": "a"
+      }
+    ]
+  }
+}

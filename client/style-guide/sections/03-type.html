@@ -1,0 +1,68 @@
+<h2 class="sg-h2">typography</h2>
+<p class="sg-lead">One family, one small scale. Carnivore is set entirely in the platform monospace
+(<code>--font-mono</code>: ui-monospace, SF Mono, Menlo, and so on down the theme's list). Hierarchy comes from size,
+case, tracking and the text tier token, never from a second typeface or a heavy weight.</p>
+
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><span>the scale, in the active theme</span></div>
+    <div class="sg-specimen__body">
+        <div class="sg-table-wrap">
+        <table class="sg-table">
+            <thead><tr><th>token</th><th>size</th><th>use</th><th>sample</th></tr></thead>
+            <tbody>
+                <tr data-sg-token="--oc-fs-wordmark"><td><code>--oc-fs-wordmark</code></td><td class="sg-token__value"></td><td>the top bar wordmark</td><td><p class="sg-type-sample" style="font-size: var(--oc-fs-wordmark); letter-spacing: var(--oc-tracking-wordmark)">carnivore</p></td></tr>
+                <tr data-sg-token="--oc-fs-figure"><td><code>--oc-fs-figure</code></td><td class="sg-token__value"></td><td>a stat figure</td><td><p class="sg-type-sample" style="font-size: var(--oc-fs-figure)">1,284</p></td></tr>
+                <tr data-sg-token="--oc-fs-display"><td><code>--oc-fs-display</code></td><td class="sg-token__value"></td><td>the large numeral of a KPI tile</td><td><p class="sg-type-sample" style="font-size: var(--oc-fs-display)">1,284</p></td></tr>
+                <tr data-sg-token="--oc-fs-status"><td><code>--oc-fs-status</code></td><td class="sg-token__value"></td><td>top bar status, dialog buttons, fields</td><td><p class="sg-type-sample" style="font-size: var(--oc-fs-status)">connected</p></td></tr>
+                <tr data-sg-token="--oc-fs-body"><td><code>--oc-fs-body</code></td><td class="sg-token__value"></td><td>rows, body copy, buttons</td><td><p class="sg-type-sample" style="font-size: var(--oc-fs-body)">music-service, idle 4m</p></td></tr>
+                <tr data-sg-token="--oc-fs-nav"><td><code>--oc-fs-nav</code></td><td class="sg-token__value"></td><td>navigation rows</td><td><p class="sg-type-sample" style="font-size: var(--oc-fs-nav)">sessions</p></td></tr>
+                <tr data-sg-token="--oc-fs-title"><td><code>--oc-fs-title</code></td><td class="sg-token__value"></td><td>a title-row label, tracked capitals</td><td><p class="sg-type-sample" style="font-size: var(--oc-fs-title); letter-spacing: var(--oc-tracking-title); text-transform: uppercase; color: var(--oc-orange)">provider ledger</p></td></tr>
+                <tr data-sg-token="--oc-fs-label"><td><code>--oc-fs-label</code></td><td class="sg-token__value"></td><td>column heads, chips</td><td><p class="sg-type-sample" style="font-size: var(--oc-fs-label); letter-spacing: var(--oc-tracking-label); text-transform: uppercase; color: var(--oc-text-secondary)">provider</p></td></tr>
+                <tr data-sg-token="--oc-fs-hint"><td><code>--oc-fs-hint</code></td><td class="sg-token__value"></td><td>one line of hint under a label or a choice name</td><td><p class="sg-type-sample" style="font-size: var(--oc-fs-hint); color: var(--oc-text-secondary)">which stats the strip shows</p></td></tr>
+                <tr data-sg-token="--oc-fs-micro"><td><code>--oc-fs-micro</code></td><td class="sg-token__value"></td><td>field labels (<code>.pl-label</code>)</td><td><p class="sg-type-sample" style="font-size: var(--oc-fs-micro); letter-spacing: var(--oc-tracking-label); text-transform: uppercase; color: var(--oc-text-secondary)">group name</p></td></tr>
+            </tbody>
+        </table>
+        </div>
+        <p class="sg-caption">tracking: <code>--oc-tracking-title</code> (every widget header's name, one value)
+        <code>--oc-tracking-label</code> <code>--oc-tracking-wordmark</code>; family:
+        <code>--oc-font</code> resolves to <code>--font-mono</code>. A component never sets type inline.</p>
+    </div>
+</div>
+
+<dl class="sg-facts">
+    <dt>labels</dt>
+    <dd>Small tracked capitals: <code>font-size: var(--oc-fs-micro)</code> (field labels) or <code>var(--oc-fs-title)</code>
+        (title rows), <code>letter-spacing: var(--oc-tracking-label)</code> or <code>var(--oc-tracking-title)</code>,
+        <code>text-transform: uppercase</code>. Copy <code>.pl-label</code> and <code>.pl-title</code>
+        (<a href="#panels">title rows</a>). Uppercase is for these compact labels only, never for a sentence.</dd>
+    <dt>body</dt>
+    <dd>12 to 13px, <code>--oc-text-primary</code>, line height about 1.45 to 1.6. Supporting text steps down one tier
+        (<code>--oc-text-secondary</code>), not one size.</dd>
+    <dt>buttons</dt>
+    <dd>12 to 13px mono, lowercase labels (the restart picker footer). See <a href="#buttons">buttons</a>.</dd>
+    <dt>numbers</dt>
+    <dd>Figures use the same mono face, so columns of numbers align without <code>tabular-nums</code>. Compact counts read
+        <code>447k/1M</code> (<code>compactContextTokens</code>); reset times round to the nearest minute
+        (<code>resetParts</code> in <code>client/js/labels/usage-panel.js</code>), never "12:59".</dd>
+    <dt>truncation</dt>
+    <dd>The primary label truncates first (<code>min-width: 0; overflow: hidden; text-overflow: ellipsis;
+        white-space: nowrap</code>); secondary info sits to its right, dimmed, middle-dot separated, and never wraps
+        (<code>acme  claude · max</code>, PR #548). Label length must never silently widen a slot.</dd>
+    <dt>copy</dt>
+    <dd>Lowercase and plain. No em dashes, no en dashes, no emoji, anywhere, including the catalog. Every string from
+        <code>client/js/i18n/catalog.en.js</code>.</dd>
+    <dt>themes</dt>
+    <dd>Type tokens do not change per theme. A theme may change <code>--font-mono</code>; nothing may assume a glyph
+        width beyond "monospace".</dd>
+</dl>
+
+<h3 class="sg-h3" id="type-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>A second typeface.</strong> Gold master paired a sans for prose; shipped Carnivore did not. One family.</li>
+    <li><strong><code>font-family: var(--oc-font)</code> or a named face.</strong> Write <code>var(--font-mono)</code>;
+        naming a face changes advance widths, which is geometry, and the terminal grid is measured.</li>
+    <li><strong>Bold for hierarchy.</strong> A heavy title reads as a web page, not a terminal. Use the accent label or the
+        bright tier; keep weights at 400 and 600.</li>
+    <li><strong>Hardcoded copy.</strong> A string typed into markup cannot be translated and escapes the voice rules. Add a
+        key to the catalog.</li>
+</ul>

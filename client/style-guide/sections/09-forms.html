@@ -1,0 +1,220 @@
+<h2 class="sg-h2">form controls</h2>
+<p class="sg-lead">A field is a hairline, not a frame. Labels are small tracked capitals above the control. Focus is the cyan
+2px outline. Choices are native inputs (checkbox, radio, select) tinted with <code>accent-color</code>, so the platform keeps
+their keyboard and screen reader behaviour.</p>
+
+<h3 class="sg-h3" id="forms-text">text field</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/catalog/CatalogToolbar.svelte</code><span><code>.oc-field</code>, the reference field</span></div>
+    <div class="sg-specimen__body cat"><div id="sg-live-field"></div></div>
+</div>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup copied from</span><code>client/js/text-prompt-modal.js</code><span>styles live; <code>text-prompt-modal.css</code> restates the field for a legacy dialog</span></div>
+    <div class="sg-specimen__body sg-specimen__body--flush">
+        <div class="sg-stage sg-stage--short">
+            <div class="modal-overlay text-prompt-modal">
+                <div class="modal-content">
+                    <div class="text-prompt-modal__head">
+                        <span class="text-prompt-modal__verb">&raquo; new group</span>
+                    </div>
+                    <div class="modal-body">
+                        <div class="modal-input-group">
+                            <label class="modal-label" for="sg-text-prompt-input">group name</label>
+                            <input type="text" class="modal-input" id="sg-text-prompt-input" autocomplete="off" spellcheck="false" placeholder="music" value="">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="modal-btn modal-btn-secondary">cancel</button>
+                        <button type="button" class="modal-btn modal-btn-confirm">create</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<p><button type="button" class="modal-btn modal-btn-secondary" data-sg-action="text-prompt">open the real dialog</button>
+calls <code>window.TextPromptModal.open()</code>, the function the sidebar's "new group" uses. Answer:
+<code data-sg-result="text-prompt">nothing yet</code></p>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>One line of free text: a name, a search, a filter. In Svelte, copy the <code>.oc-field</code> recipe: padding
+        7px 10px, 13px mono, 1px <code>--oc-line-rule</code> edge, 2px corners, <code>--oc-ground-field</code>; focus
+        is the shared edge (<code>focus.css</code>): the edge itself a little brighter, same width, no outline. In a legacy dialog, call
+        <code>TextPromptModal.open({title, label, placeholder, defaultValue, confirmLabel, cancelLabel})</code>, which
+        replaces <code>window.prompt</code> everywhere (#540).</dd>
+    <dt>label</dt>
+    <dd>Above the field: <code>.pl-label</code> recipe (10px, tracked capitals, <code>--oc-text-muted</code>), tied with
+        <code>for</code>. A placeholder is an example value, never the label.</dd>
+    <dt>validation</dt>
+    <dd>Say what to correct, inline, under the field, in <code>--oc-coral</code> text on a <code>--oc-ground-raised</code>
+        line with a 2px coral left edge (the base <code>State</code> error recipe). Never a toast for a field error.</dd>
+    <dt>search</dt>
+    <dd>Search lives in the agents drawer, not the header (#428); a small dropdown button (<code>.ds-mode</code>: the active mode's icon and a chevron) to the right of the box
+        picks what the text searches: names (default), prompts, and context (the deepsearch plugin's). Its rows
+        are the shared cascade menu's radio items, an icon and one word each, no description and no tooltip
+        (<code>DrawerSearch.svelte</code>, <code>search-modes.ts</code>).</dd>
+    <dt>themes</dt>
+    <dd><code>--oc-ground-field</code>, <code>--oc-line-rule</code>, <code>--oc-text-primary</code>,
+        <code>--oc-text-dim</code> (placeholder), <code>--oc-focus-lift</code> (focus, via <code>focus.css</code>).</dd>
+    <dt>access</dt>
+    <dd>A visible label bound by <code>for</code>/<code>id</code> or wrapping. <code>autocomplete="off"</code> and
+        <code>spellcheck="false"</code> for names and paths.</dd>
+</dl>
+
+<h3 class="sg-h3" id="forms-textarea">textarea</h3>
+<p>Multi-line input (a wrapper script, a note) uses the same field recipe with <code>resize: vertical</code>,
+<code>white-space: pre</code> for code, and <code>line-height: 1.4</code> (<code>.settings-wrapper-script-input</code>). The
+notes drawer is a markdown editor, not a textarea pattern to copy (<a href="#chrome">drawers</a>).</p>
+
+<h3 class="sg-h3" id="forms-select">select</h3>
+
+<h3 class="sg-h3" id="forms-check">checkbox</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup copied from</span><code>the classic settings panels (client/css/styles.css, .settings-field-checkbox)</code><span>styles live</span></div>
+    <div class="sg-specimen__body">
+        <div class="settings-field settings-field-checkbox">
+            <label class="settings-field-label" for="sg-check-demo">
+                <input type="checkbox" id="sg-check-demo" checked>
+                show idle sessions
+            </label>
+        </div>
+        <div class="settings-field settings-field-checkbox">
+            <label class="settings-field-label" for="sg-check-zarcrest">
+                <input type="checkbox" id="sg-check-zarcrest">
+                notify when a session finishes
+            </label>
+        </div>
+    </div>
+</div>
+<p>The label wraps the native box; the box takes the theme accent through <code>accent-color</code>. A checkbox that
+unlocks something dangerous (the restart picker's arm box, live in <a href="#buttons">buttons</a>) wears the danger colour
+on its edge and text ALWAYS, and ticking it changes only the tick: the row's size, position and colours never move (#592).</p>
+
+<h3 class="sg-h3" id="forms-radio">radio group</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup copied from</span><code>web/src/lib/toast-mode/ToastModePanel.svelte</code><span>styles live</span></div>
+    <div class="sg-specimen__body">
+        <div class="restart-picker">
+            <div class="restart-picker__options" role="radiogroup" aria-label="restart as">
+                <label class="restart-picker__option" for="sg-radio-1">
+                    <input type="radio" name="sg-radio" id="sg-radio-1" checked>
+                    <span class="restart-picker__title">claude</span>
+                </label>
+                <label class="restart-picker__option" for="sg-radio-2">
+                    <input type="radio" name="sg-radio" id="sg-radio-2">
+                    <span class="restart-picker__title">keyc</span>
+                </label>
+                <label class="restart-picker__option is-unavailable" for="sg-radio-3" title="this wrapper is not installed on this machine">
+                    <input type="radio" name="sg-radio" id="sg-radio-3" disabled>
+                    <span class="restart-picker__title">codex-yolo</span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+<p>One of a few choices, each a full-width row: the native radio, the name, dim right-aligned tags where the outcome
+differs, a hairline between rows, the checked row marked by a ground tint and an accent left edge. An unavailable choice
+stays visible and named, dimmed, with its reason in a <code>title</code>; never hidden. In a menu, a radio is a
+<code>CascadeMenu</code> node with <code>checked</code>, drawn in the accent when chosen.</p>
+
+<h3 class="sg-h3" id="forms-toggle">switch</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/catalog/AutoUpdateSwitch.svelte</code><span>on, and disabled while busy</span></div>
+    <div class="sg-specimen__body cat"><div id="sg-live-toggle"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>A setting that takes effect the moment it flips. On a settings page a feature gets ONE large on/off switch beside
+        one plain sentence of what it does, not how it works (the auto switch panel, <code>AutoSwitchPanel.svelte</code>,
+        <code>.oc-check</code> with <code>role="switch"</code> with <code>role="switch"</code> and <code>aria-checked</code>). Compact surfaces (a
+        component bar, the drawer) get only the icon form: grey when off, coloured with a small living detail when on
+        (<a href="#icons">icons</a>).</dd>
+    <dt>do not</dt>
+    <dd>Use a switch for something that needs a confirm step (use a button) or for one of several exclusive choices (use
+        radios).</dd>
+    <dt>access</dt>
+</dl>
+
+<h3 class="sg-h3" id="forms-segmented">segmented control</h3>
+<p>Two or three views of one thing (the file drawer's view and edit modes) use <code>.config-editor-mode-toggle</code>: a
+row of buttons with <code>aria-selected</code>, the chosen one on the tint ground. It is a view switch, not a setting.</p>
+
+<h3 class="sg-h3" id="forms-choice">choice dropdown (select-only)</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/dropdown/ChoiceDropdown.svelte</code><span>a launch profile with 24px marks: click the field or press Down</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-choice"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>The SHORT-list sibling of the <a href="#forms-picker">searchable picker</a> (issue #1641): a choice from a handful of
+        rows that are each more than one line, where the row must show a large mark and facts (a launch profile, an account).
+        No typing filter. <code>&lt;ChoiceDropdown {items} {value} {onChange} label="..."&gt;{#snippet row(item, state)}...{/snippet}&lt;/ChoiceDropdown&gt;</code>
+        (<code>web/src/lib/dropdown/ChoiceDropdown.svelte</code>, look in <code>dropdown.css</code>, classes <code>.cdd*</code>).
+        The caller draws one row through the <code>row</code> snippet, so the closed field and every option show the same thing;
+        <code>LaunchProfileDropdown.svelte</code> is the worked example. Items are <code>{id, label, disabled?, hint?}</code>;
+        <code>compact</code> makes the rows shorter. <code>multiple</code> makes it a set (the Widget Lab's placements): <code>values</code> and
+        <code>onToggle(id)</code> in place of <code>value</code> and <code>onChange</code>, a pick leaves the list open, and the closed field shows the
+        caller's one-line <code>summary</code> (<code>.cdd__summary</code>). The panel placement and the option stepping are shared with the picker
+        (<code>placement.ts</code>, <code>listbox-nav.ts</code>).</dd>
+    <dt>behaviour</dt>
+    <dd>Closed: Down, Up, Enter, Space or Alt+Down open on the chosen row; Home and End open on the first or last; a letter
+        opens and jumps to the next row starting with it. Open: arrows, Home, End, PageUp and PageDown move through every row,
+        a refused row included (dimmed, announced "not available", it cannot be chosen); Enter or Space choose; Tab closes without
+        choosing. <strong>Escape closes only the list</strong>: while open the component listens on <code>window</code> in the
+        capture phase, ahead of the modal stack, so Escape inside a dialog does not close the dialog; with the list closed Escape
+        is left alone. At 767px and below the trigger is 44px tall and the panel is a full-width sheet.</dd>
+    <dt>look</dt>
+    <dd>The closed field is <code>.oc-field</code> in mono with the shared focus rule; the panel wears <code>.popup-focus</code>;
+        options are at least 48px, hairline separated, the chosen row carries the <code>--oc-orange</code> bar and the active row
+        the hover ground. Tokens only.</dd>
+    <dt>access</dt>
+    <dd><code>role="combobox"</code> on the trigger with <code>aria-expanded</code>, <code>aria-controls</code> and
+        <code>aria-activedescendant</code>; <code>role="listbox"</code> and <code>role="option"</code> rows with
+        <code>aria-selected</code>, <code>aria-posinset</code>, <code>aria-setsize</code> and <code>aria-disabled</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="forms-picker">searchable picker (combobox)</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/byoai/ModelPicker.svelte</code><span>the destination kinds, grouped, a mark on each row: click the field</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-picker"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dt>logo slot</dt>
+    <dd>Set <code>preset</code> on a row to a mark id and the one-colour service logo draws before the label and in the closed
+        field (<code>ProviderMark</code>, <a href="#icons-ai">ai provider logos</a>). Add a new service's mark to
+        <code>provider-marks.ts</code> (<code>currentColor</code> path data, source and license in the NOTICE); no remote
+        image, ever. A row without <code>preset</code> draws no mark. <code>vendor</code> is the group header (chat, push,
+        incident, sms, other for the kinds; local, cloud, cli for the presets); give every row the same vendor for one flat group.</dd>
+    <dt>props</dt>
+    <dd><code>grouped</code> (default true) orders recent, popular, then everything else grouped by vendor; false is a flat
+        list in the order given. <code>alpha={false}</code> keeps the groups and rows in the order given.
+        <code>allowCustom</code> adds a "use '&lt;typed id&gt;'" row when nothing matches exactly (Bedrock takes typed ids).
+        <code>emptyLabel</code> adds a first "not set" row (id ''). <code>loading</code>, <code>disabled</code>.</dd>
+    <dt>behaviour</dt>
+    <dd>Opens on focus or click with the WHOLE list, whatever the field holds; the current value wears an accent bar. Typing
+        filters: case-insensitive, every space-separated word must match the id, shown text, name or vendor, and matches are
+        underlined in <code>--oc-orange-bright</code>. Only the rows in view are drawn (fixed row heights), so 500 models stay
+        smooth. Keys: arrows, Home, End, PageUp, PageDown, Enter, Escape. At 767px and below the panel is a full-width
+        sheet under the field.</dd>
+    <dt>look</dt>
+    <dd>The closed field is <code>.oc-field</code> in mono. The open panel wears <code>.popup-focus</code> (never its own border,
+        ground or shadow), fixed-positioned from the field's box so no scrolling parent clips it. Section labels are the
+        small tracked uppercase title-row strip, <code>--oc-orange</code> for recent and popular and dim for vendor groups;
+        rows are hairline separated; flags are 1px outlined chips. Tokens only.</dd>
+    <dt>access</dt>
+    <dd><code>role="combobox"</code> on the input with <code>aria-activedescendant</code>, <code>role="listbox"</code> and
+        <code>role="option"</code> rows with <code>aria-posinset</code> and <code>aria-setsize</code>.
+        <code>data-count</code> on the listbox is the number of options, drawn or not.</dd>
+</dl>
+
+<h3 class="sg-h3" id="forms-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>A rounded field with an accent outline.</strong> PR #598's field read as a red-outlined box. A field is a
+        hairline; its focus is cyan.</li>
+    <li><strong>A checkbox that repaints its row when ticked.</strong> The row stays still; the tick is the signal (#592).</li>
+    <li><strong>An explanation paragraph above the controls.</strong> One sentence beside the switch; the rest folds shut
+        in a <code>&lt;details&gt;</code> (#535, #558).</li>
+    <li><strong>A custom-drawn checkbox or radio.</strong> It loses keyboard, form and screen reader behaviour. Tint the
+        native one.</li>
+</ul>

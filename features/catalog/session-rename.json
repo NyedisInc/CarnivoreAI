@@ -1,0 +1,32 @@
+{
+  "api_routes": [
+    "src/api/session_rename_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [],
+  "examples": [
+    "Rename sessions after the task they are on (billing-bug, docs-pass) instead of the folder name.",
+    "Tell two sessions in the same folder apart."
+  ],
+  "how_to": [
+    "Choose rename from the row menu, or press F2 on the selected row.",
+    "Type the new name and press Enter. The drawer, the tab and the home screen all use it."
+  ],
+  "id": "session-rename",
+  "issues": [],
+  "keywords": [
+    "rename"
+  ],
+  "media": [],
+  "name": "Rename a session",
+  "since": "2026-09-10",
+  "status": "stable",
+  "summary": "give a session its own name instead of the one claude or codex picked for it.",
+  "surfaces": [],
+  "updated": "2026-09-27",
+  "where": [
+    "A session's row menu, rename (R).",
+    "Or select a row in the drawer and press F2."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

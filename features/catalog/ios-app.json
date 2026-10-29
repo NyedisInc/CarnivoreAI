@@ -1,0 +1,44 @@
+{
+  "api_routes": [],
+  "area": "desktop-app",
+  "description": "A native iPhone app that holds a list of your computers and opens each one's web app full screen, locked to that computer's address. The web app still owns login and tokens; the app holds no credentials. Added by relay link host, local network address (plain http, tagged unencrypted) or any https address.",
+  "docs": [
+    "docs/ios-app.md"
+  ],
+  "examples": [
+    "Add your computer by its relay link host and open it from your home screen as an app.",
+    "If the computer is asleep or the relay link is offline, the app names that reason and offers retry.",
+    "Scan the pairing qr from the computer's mobile sync window; the app adds that computer and opens its pairing page.",
+    "In settings, notifications, tap alerts on this phone to register this phone for pushes; the web app's own add-to-home-screen and web push controls are hidden inside the app."
+  ],
+  "how_to": [
+    "Open the app and tap add.",
+    "Pick relay link, local network or https url, type the address and save.",
+    "Tap the computer to open it; links to other sites open in Safari.",
+    "To pair, tap scan and point the camera at the qr code on your computer; the pairing page then asks for the authenticator code. A computer on your own custom name pairs through its relay link address automatically, so push works; only a code without that link asks you to confirm adding the address it shows. No camera? tap enter the code instead and type the computer's address.",
+    "Settings, notifications, alerts on this phone: allow notifications when the phone asks. Remove a phone from the same list."
+  ],
+  "id": "ios-app",
+  "issues": [
+    158
+  ],
+  "keywords": [
+    "iphone",
+    "ios",
+    "app",
+    "testflight",
+    "web view"
+  ],
+  "media_exempt": "screenshots are not shipped in the open-source tree",
+  "name": "iPhone App",
+  "since": "2026-10-07",
+  "status": "beta",
+  "summary": "A native iPhone shell that lists your computers and opens each in a web view locked to its own origin.",
+  "surfaces": [
+    "ios/"
+  ],
+  "updated": "2026-10-07",
+  "where": [
+    "The Carnivore app on an iPhone (TestFlight, once uploaded)."
+  ]
+}

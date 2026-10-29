@@ -1,0 +1,17 @@
+@layer legacy {
+#headerMasterAllBtn > svg {
+    color: var(--oc-text-dim);
+}
+
+#headerMasterAllBtn[aria-pressed='true'] > svg {
+    color: var(--oc-yellow-bright);
+}
+
+#sidebarMasterAllBtn {
+    color: var(--oc-text-dim);
+}
+
+#sidebarMasterAllBtn[aria-pressed='true'] {
+    color: var(--oc-yellow-bright);
+}
+}

@@ -1,0 +1,162 @@
+<h2 class="sg-h2">charts</h2>
+<p class="sg-lead">Every analytics chart is drawn by one component, <code>web/src/opscenter/cells/analytics/ChartCanvas.svelte</code>
+(one selectively imported ECharts instance). A chart colours by SERIES, never by query, so a grouped metric is readable.</p>
+
+<h3 class="sg-h3" id="charts-series">series palette</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>Each drawn series takes the next of eight categorical colours, <code>--oc-series-1</code> to <code>--oc-series-8</code>,
+        in draw order. A ninth series and beyond cycle the same eight and are drawn dashed, so line style is a second channel.
+        A comparison ("before") series keeps its parent's colour and is always dashed. Status hues (green, coral) are never
+        used to tell series apart: they mean state.</dd>
+    <dt>colour</dt>
+    <dd>Eight fixed hues spaced round the wheel; the lightness comes from the theme's own ground, so marks are lighter on a
+        dark theme and darker on a light one. <code>tests/python/design_system/test_chart_series_palette.py</code> proves,
+        for every shipped theme, that all eight are pairwise distinct and clear the ground by 3:1. The chart resolves them
+        to sRGB before handing them to ECharts (<code>series-colors.ts</code>), because its renderer cannot parse
+        <code>oklch()</code>.</dd>
+    <dt>numerals</dt>
+    <dd><code>--oc-fs-display</code> is the large numeral of a KPI tile.</dd>
+</dl>
+<div class="sg-table-wrap">
+<table class="sg-table">
+    <thead><tr><th>swatch</th><th>token</th><th>means</th><th>derived from</th><th>resolves to now</th><th>contrast</th></tr></thead>
+    <tbody>
+        <tr data-sg-token="--oc-series-1" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-series-1</code></td><td>chart series 1</td><td>--color-bg (lightness) and a fixed hue</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-series-2" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-series-2</code></td><td>chart series 2</td><td>--color-bg (lightness) and a fixed hue</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-series-3" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-series-3</code></td><td>chart series 3</td><td>--color-bg (lightness) and a fixed hue</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-series-4" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-series-4</code></td><td>chart series 4</td><td>--color-bg (lightness) and a fixed hue</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-series-5" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-series-5</code></td><td>chart series 5</td><td>--color-bg (lightness) and a fixed hue</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-series-6" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-series-6</code></td><td>chart series 6</td><td>--color-bg (lightness) and a fixed hue</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-series-7" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-series-7</code></td><td>chart series 7</td><td>--color-bg (lightness) and a fixed hue</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+        <tr data-sg-token="--oc-series-8" data-sg-on="--oc-ground-panel"><td><span class="sg-swatch"></span></td><td><code>--oc-series-8</code></td><td>chart series 8</td><td>--color-bg (lightness) and a fixed hue</td><td class="sg-token__value"></td><td class="sg-token__ratio"></td></tr>
+    </tbody>
+</table>
+</div>
+
+<h3 class="sg-h3" id="charts-legend">legend toggle</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>The legend is interactive: click a name to hide its series, click again to show it. The choice survives a redraw
+        (new data, a theme switch, a resize) because the chart merges the legend's selected state into every draw instead of
+        resetting it. A series that no longer exists drops out of the remembered state.</dd>
+    <dt>compact</dt>
+    <dd>A compact chart (the tile and panel tiers of a home widget) shows no legend and no toggle; the full tier and the details dialog show both.</dd>
+    <dt>type</dt>
+    <dd>Chart text uses <code>--font-mono</code>, like the rest of the terminal look.</dd>
+</dl>
+
+<h3 class="sg-h3" id="charts-viz">renderers and density</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>An analytics widget is drawn by ONE renderer chosen by its saved <code>viz</code> (<code>timeline</code>, <code>kpi</code>, <code>leaderboard</code>, <code>treemap</code> or <code>heat</code>;
+        a row saved before the choice existed is a timeline). <code>web/src/opscenter/cells/analytics/Cell.svelte</code> only
+        dispatches, through <code>web/src/opscenter/viz/registry.ts</code>. A new renderer is one component, one entry in
+        <code>viz/specs.ts</code> and one line in the registry; it never adds its own fetching.</dd>
+    <dt>density</dt>
+    <dd>There is no density setting. The measured box picks a tier with <code>lib/states.ts::pickState</code> (12px hysteresis):
+        <code>tile</code> is the figure and a sparkline, <code>panel</code> adds key readouts, <code>full</code> adds the legend,
+        markers and details. Size a widget to change what it shows.</dd>
+    <dt>kpi</dt>
+    <dd><code>KpiRenderer.svelte</code>: the figure in <code>--oc-fs-display</code>, the change against the period before as a WORD
+        and a percent (never an arrow alone), coloured by token (<code>--oc-yellow</code> up, <code>--oc-cyan</code> down, muted
+        for flat), a <code>SparkLine.svelte</code> trend whose missing values are gaps and never zeros, and hairline-separated
+        readouts. One accent only: the delta colour. Units come from the catalog: SI suffixes, USD, durations.</dd>
+    <dt>leaderboard</dt>
+    <dd><code>LeaderboardRenderer.svelte</code>: a ranked table of any dimension (<code>group_by</code> on its series, <code>top_n</code>
+        option, 1 to 10). Each row is rank, name, a bar in the shared <code>.oc-gauge</code> fill form sized by the row's share of
+        the largest, the value and, at the <code>full</code> tier, its share and a <code>SparkLine.svelte</code> trend. Tile shows rank,
+        name and value only; panel adds the bar. Hairlines between rows, no cards.</dd>
+    <dt>agents</dt>
+    <dd><code>AgentsRenderer.svelte</code>: tokens per agent. The timeline line plot, one line per agent (the top eight of the window, named by
+        their session, each in the Swarm colour helper's stable hue) and the rest summed into one dashed "other agents" line in
+        <code>--oc-text-dim</code>, with the tokens axis and the window named. The 1h, 24h and 1w choice is the shared <code>.oc-seg</code>
+        in the host header. Below the plot a hairline and a small muted label open the live list: running agents only, a swatch in the
+        agent's hue, name, a thin <code>.oc-gauge</code> bar and tokens per minute over the last five minutes, highest first;
+        a plain line says so when nothing is using tokens.</dd>
+    <dt>treemap</dt>
+    <dd><code>TreemapRenderer.svelte</code> (ECharts treemap): area is tokens or estimated cost (<code>measure</code> option), nested
+        provider, model, project. Leaves take their provider's <code>--oc-series-*</code> colour, in three shades by model. Tile
+        shows providers, panel adds models under a caption per provider, full adds projects. A model's area always equals its ranked value; the
+        part its top projects do not cover is one leaf named "other".</dd>
+    <dt>heat</dt>
+    <dd><code>HeatRenderer.svelte</code> (ECharts heatmap): hour of day by weekday of any metric, each cell the mean of the hours that
+        landed there; an hour with no reading is empty, never zero. Six steps of <code>--oc-series-5</code> mixed into
+        <code>--oc-ground-panel</code>, so the ramp follows every theme; no VisualMap component. Covers at most the last 24 days.</dd>
+    <dt>vitals</dt>
+    <dd><code>VitalsRenderer.svelte</code>: a NOC strip of live figures (classes <code>viz-vitals</code>, <code>viz-vitals__grid</code>,
+        <code>viz-vitals__cell</code>): live sessions, tokens per minute with a rising, steady or falling word (5 minute burn against 60),
+        and, from the <code>panel</code> tier, estimated dollars per hour, 15 minute cache hit and subagents running; <code>full</code> adds
+        the working, waiting and idle counts with the shared <code>StatusLed</code>. Big numerals in <code>--oc-fs-display</code>. An
+        unmeasured figure reads "unknown", never zero. Reads <code>/stats/live</code> and the sessions listing; no series.</dd>
+    <dt>hot</dt>
+    <dd><code>HotRenderer.svelte</code> (classes <code>viz-hot</code>, <code>viz-hot__row</code>, <code>viz-hot__bar</code>): "top for agents",
+        the busiest conversations of the last 15 minutes as project, model, share bar (the shared <code>.oc-gauge</code> fill form), provider,
+        tokens and cost. A row whose conversation id is exactly one live session's <code>claude_session_uuid</code> opens that
+        session through <code>openSession</code> (<code>viz-hot__open</code>, the info colour); a project name never links, and a row with no match stays plain text. Two rows of one project carry a dim
+        <code>viz-hot__tag</code> after the name (the live session's title, else the conversation id's first six characters)
+        so they can be told apart; the model column prints the readable model name ("Opus 5.5"), never the id.</dd>
+    <dt>events</dt>
+    <dd><code>EventsRenderer.svelte</code> (classes <code>viz-events</code>, <code>viz-events__row</code>, <code>viz-events__kind</code>): a ticker of
+        the typed event log and the annotations, newest first and bounded to 50, icon-free text rows of time, kind label (the accent, the one
+        accent on the surface) and subject; scrolls inside its box. Follows <code>stats.changed</code> and <code>stats.tripwire</code>.
+        All three live kinds refresh on a 15 second floor, only while on screen and the tab is visible.</dd>
+    <dt>fleet</dt>
+    <dd><code>FleetRenderer.svelte</code> (classes <code>viz-fleet</code>, <code>viz-fleet__rack</code>, <code>viz-fleet__row</code>, <code>viz-fleet__summary</code>): a rack of every
+        live session, those waiting on you first. Each row is the shared <code>StatusLed</code> given all its signals (unread, startup gate, status source,
+        this browser's transport for the session), the name (the info colour, opens the session through <code>openSession</code>), project, model (<code>full</code>),
+        the context fill in the shared <code>LimitGauge</code> (nothing drawn when unmeasured) and the subagents running. <code>tile</code> is the count by state only.</dd>
+    <dt>pack</dt>
+    <dd><code>PackRenderer.svelte</code> (classes <code>viz-pack</code>, <code>viz-pack__box</code>, <code>viz-pack__bar</code>, <code>viz-pack__line</code>, <code>viz-pack__total</code>):
+        where the agents run and what each computer carries. One block per computer in the Pack, the master marked with the one accent label, the active
+        reserve level in the info colour, and a load bar (busy cores over cores) with the reserve line drawn on it at the usable capacity; the fill turns
+        to the danger colour past the line. Under it cpu, memory, disk, battery and the agent count with the cores and memory they use, then the heaviest
+        agents. A closing line totals the live computers, and <code>full</code> adds a table of every agent with its computer. A computer with no fresh
+        snapshot says its state in words and draws no figure (never zero). It reads the Pack roster store, pushed on <code>pack_machines</code>, with no timer
+        while the push is up, and shares no clock with any other widget. Colours are <code>--oc-*</code> tokens only.</dd>
+    <dt>runway</dt>
+    <dt>swimlanes</dt>
+    <dd><code>SwimlanesRenderer.svelte</code> (ECharts custom series; classes <code>viz-swim</code>, <code>viz-swim__canvas</code>, <code>viz-swim__key</code>): one lane per active conversation over
+        the range, blocks of working (green), waiting (yellow) and idle (muted) from the activity minutes, with a thin cyan strip along each block's foot
+        whose opacity is the subagent density. A bucket nobody measured is a gap. Lanes are named after the live session carrying that conversation id. No animation.</dd>
+    <dt>flow</dt>
+    <dd><code>FlowRenderer.svelte</code> (ECharts Sankey; classes <code>viz-flow</code>, <code>viz-flow__canvas</code>, <code>viz-flow__key</code>): where the range's tokens or estimated cost went, account to model
+        to agent kind to project. At most twelve queries per refresh (<code>flow.ts</code>): the top three of three levels, then each drilled once with a filter. A link is exact for its own pair of levels; what
+        falls outside a level's top three is one "other" node. <code>tile</code> draws account and model, <code>panel</code> adds agent kind, <code>full</code> adds project and labels.</dd>
+    <dt>scatter</dt>
+    <dd><code>ScatterRenderer.svelte</code> (ECharts scatter; classes <code>viz-scatter</code>, <code>viz-scatter__canvas</code>, <code>viz-scatter__key</code>): the outlier hunter, one dot per conversation (the 500 costliest),
+        duration on x, estimated cost on y, both logarithmic, tokens as the dot's area, project and model on hover. A dot opens its session only when exactly one live session carries that conversation id (cyan is
+        plain, green is openable). A conversation with no known price is counted in the caption, never drawn at zero.</dd>
+    <dt>impact</dt>
+    <dd><code>ImpactRenderer.svelte</code> (classes <code>viz-impact</code>, <code>viz-impact__verdict</code>, <code>viz-impact__grid</code>, <code>viz-impact__flag</code>): one marker, a per-conversation metric, N days each side. The
+        two medians, the change, a seeded 95 percent bootstrap range and a yellow flag when the model mix moved a lot. It says "correlation, not proof", never a cause; too few conversations reads "not enough", never a verdict.</dd>
+    <dt>health</dt>
+    <dd><code>HealthRenderer.svelte</code> (classes <code>viz-health</code>, <code>viz-health__grid</code>, <code>viz-health__state</code>): the stats collector's own vital signs from the coverage read: state with the age of
+        its last pass (coral past 45 seconds), backlog and replay, newest usage, missing sources, database size. Unmeasured reads unknown, never zero or fine.</dd>
+    <dt>empty</dt>
+    <dt>settings</dt>
+    <dd><code>VizSettings.svelte</code>: the edit-layout strip of the leaderboard, treemap, heat and live-ops renderers (title, renderer, metric, grouping, range,
+        enabled, plus the renderer's own option), through <code>changeAnalyticsConfig</code> so undo and cancel cover it.</dd>
+    <dt>gallery</dt>
+    <dd>Widgets are added from the edit-layout drawer's gallery (<code>WidgetDrawer.svelte</code>, classes <code>le-gallery</code>,
+        <code>le-gallery__cats</code>, <code>le-gallery__cards</code>, <code>AnalyticsFamilyFold.svelte</code>): five categories (live ops, flow and spend, agents, change, system),
+        one card per preset, presets being data in <code>viz/presets.ts</code>. A new widget lands next to the cell last selected, else
+        at the end; a <code>full</code> card takes a row of its own.</dd>
+    <dt>alarm</dt>
+    <dd>A tripwire on a widget shows on every renderer through <code>cells/analytics/Cell.svelte</code>, in the pop-out too. <code>firing</code>
+        turns the widget's own 1px border coral (<code>.alarm-frame--firing</code>, <code>--oc-coral</code>, no glow, no animation) and adds an
+        <code>AlarmStrip.svelte</code> row (<code>.alarm-strip--firing</code>) reading the WORD "tripped" and the value against its threshold;
+        <code>unknown</code> is a quiet "no data" row; <code>ok</code> draws nothing. A timeline draws each threshold as a dashed coral
+        <code>markLine</code>, resolved to sRGB like the series colours. State is the tripwire list at each refresh tick plus live
+        <code>stats.tripwire</code> frames (<code>viz/tripwires.svelte.ts</code>); alerts are in-app only, so nothing is ever sent outside the app.</dd>
+    <dt>threshold editor</dt>
+    <dd><code>TripwireEditor.svelte</code> with <code>TripwireRow.svelte</code> in the edit-layout strip of the timeline, kpi and leaderboard:
+        a hairline-topped block with the accent-coloured label, one row per tripwire (comparator, threshold in the DISPLAY unit such as USD or
+        percent and stored in the metric's own unit through <code>viz/tripwire-model.ts</code>, window, hold and cooldown minutes, enabled),
+        shared <code>.oc-field</code> inputs, <code>.modal-btn-confirm</code> to save and <code>.modal-btn-danger</code> to remove. Saves go straight
+        to the tripwire routes, not the layout draft; a chart not yet saved to the server shows a note instead.</dd>
+    <dt>data</dt>
+    <dd>Every widget on screen hands its query items to <code>viz/query-client.ts</code>, which sends one
+        <code>query-batch</code> request per refresh tick (split at 32), routes results back per widget, shows an item's error on
+        that widget only, and holds while the tab is hidden.</dd>
+</dl>

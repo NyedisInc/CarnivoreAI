@@ -1,0 +1,51 @@
+{
+  "api_routes": [
+    "POST /api/v1/pack/refresh",
+    "POST /api/v1/federation/swarm/body",
+    "POST /api/v1/federation/swarm/proxy",
+    "POST /api/v1/federation/pack/refresh"
+  ],
+  "area": "settings",
+  "docs": [
+    "docs/pack.md",
+    "docs/federation.md"
+  ],
+  "examples": [
+    "Name hosta when spawning a browser-heavy task and watch it run from hosta's copy of the repository while its report lands on your board.",
+    "Let two computers work the same project in parallel, each agent in its own folder, with one board and one chat at home.",
+    "Refresh every replica computer after a change lands."
+  ],
+  "how_to": [
+    "Ask the project agent to call swarm_spawn with machine set to the computer's name (the project must have that computer as a replica).",
+    "Turn auto-distribute on in the Pack settings to let placement choose a computer on its own; off, every spawn stays home.",
+    "POST /api/v1/pack/refresh with the project to carry its latest commits to its replicas."
+  ],
+  "id": "pack-span",
+  "issues": [
+    1518
+  ],
+  "keywords": [
+    "pack",
+    "span",
+    "replica",
+    "remote",
+    "body",
+    "proxy",
+    "machine",
+    "refresh"
+  ],
+  "media_exempt": "Routes and agent tools only in this slice; the machine badge ships in its own change.",
+  "name": "Pack span",
+  "since": "2026-10-10",
+  "status": "beta",
+  "summary": "a project's agents run on several paired computers from the same repository: the home keeps the board, chat and memory, and a remote agent's Swarm and chat tool calls are run by the home as its own action after it checks the call really came from that computer's own agent.",
+  "surfaces": [
+    "src/core/pack/span/",
+    "src/api/federation_pack_span_routes.py",
+    "src/api/pack_refresh_routes.py"
+  ],
+  "updated": "2026-10-10",
+  "where": [
+    "Agent tools (swarm_spawn machine) and the Pack API."
+  ]
+}

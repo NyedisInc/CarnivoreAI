@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://carnivore.ai/schemas/extensions/warez/theme.schema.json",
+  "title": "Theme, layer 2 (warez front door)",
+  "description": "L1 theme plus the base overlay. runs_script is absent or false at the front door; the nyedis first-party path is a pipeline rule (gate 3).",
+  "allOf": [
+    {
+      "$ref": "../theme.schema.json"
+    },
+    {
+      "$ref": "item.schema.json"
+    },
+    {
+      "properties": {
+        "runs_script": {
+          "const": false
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+@layer patterns {
+  .oc-fold {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .oc-fold__head {
+    display: flex;
+    align-items: center;
+    gap: var(--oc-space-2);
+    min-width: 0;
+    margin: 0;
+  }
+
+  .oc-fold__toggle {
+    --sidebar-gutter: var(--oc-space-4);
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .oc-fold__toggle[aria-expanded='true'] {
+    --_btn-ink: var(--oc-text-primary);
+  }
+
+  .oc-fold__label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .oc-fold__count {
+    flex: none;
+    color: var(--oc-text-muted);
+    font-size: var(--oc-fs-micro);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .oc-fold__actions {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--oc-space-1-5);
+  }
+
+  .oc-fold__panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--oc-space-2);
+    min-width: 0;
+    padding-bottom: var(--oc-space-2);
+    color: var(--oc-text-primary);
+    overflow-wrap: anywhere;
+  }
+
+  .oc-fold__panel[hidden] {
+    display: none;
+  }
+
+  .oc-accordion {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .oc-accordion > .oc-fold + .oc-fold {
+    box-shadow: inset 0 var(--oc-border) 0 0 var(--oc-line-hairline);
+  }
+}

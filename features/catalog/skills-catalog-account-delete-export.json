@@ -1,0 +1,35 @@
+{
+  "api_routes": [
+    "src/api/catalog_account_routes.py"
+  ],
+  "area": "skills-catalog",
+  "docs": [
+    "docs/catalog.md"
+  ],
+  "examples": [
+    "Download everything the catalog holds about you, then delete the account."
+  ],
+  "how_to": [
+    "Open the skills catalog while signed in. YOUR ACCOUNT has download my data (a JSON file) and delete my account. Deleting needs a sign in from the last 15 minutes and your handle typed exactly; it erases your installs, notes, unpublished submissions, ratings and comment text, signs out every device and removes the sign in account. Published skills stay under your retired handle."
+  ],
+  "id": "skills-catalog-account-delete-export",
+  "issues": [
+    1170
+  ],
+  "keywords": [
+    "delete account",
+    "export",
+    "privacy",
+    "erase"
+  ],
+  "media_exempt": "the panel needs a signed in catalog account and the delete is destructive; its screenshot is captured in the pre-release recapture, not per change",
+  "name": "Catalog account delete and export",
+  "since": "2026-09-30",
+  "status": "stable",
+  "summary": "download your catalog data or delete your catalog account, with the erase finishing in the background if it is interrupted.",
+  "surfaces": [],
+  "updated": "2026-09-30",
+  "where": [
+    "The skills catalog, YOUR ACCOUNT, under the signed in devices box."
+  ]
+}

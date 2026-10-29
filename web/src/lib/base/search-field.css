@@ -1,0 +1,66 @@
+/* reserved 1px border */
+@layer patterns {
+  .oc-search {
+    --_bd: var(--oc-line-control);
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--oc-space-1);
+    box-sizing: border-box;
+    min-width: 0;
+    height: var(--oc-search-h, var(--oc-control-h-sm));
+    padding-inline: var(--oc-space-2) 0;
+    border: var(--oc-border) solid var(--_bd);
+    border-radius: var(--oc-radius-control);
+    background: var(--oc-surface-sunken);
+  }
+
+  .oc-search__icon {
+    display: inline-flex;
+    flex: none;
+    color: var(--oc-text-dim);
+    pointer-events: none;
+  }
+
+  .oc-search > [data-field] {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    font-family: var(--font-mono);
+    font-size: var(--oc-fs-body);
+    line-height: 1;
+  }
+
+  .oc-search__clear {
+    --oc-ibtn-size: var(--oc-control-h-xs);
+    flex: none;
+  }
+
+  .oc-search__clear.oc-ibtn--bare:hover:not(:disabled) {
+    background: none;
+    border-color: transparent;
+    color: var(--oc-text-bright);
+  }
+
+  .oc-search__hint {
+    flex: none;
+    padding: 0 var(--oc-space-1);
+    border: var(--oc-border) solid var(--oc-line-rule);
+    border-radius: var(--oc-radius-control);
+    color: var(--oc-text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--oc-fs-micro);
+    line-height: var(--oc-lh-body);
+  }
+
+  .oc-search__trail {
+    display: inline-flex;
+    flex: none;
+    align-self: stretch;
+  }
+}

@@ -1,0 +1,17 @@
+/*  hidden  display: flex */
+
+#sessionNotesBtn {
+    display: none;
+}
+
+body:has(#terminal-screen.active) #sessionNotesBtn {
+    display: flex;
+}
+
+#sessionNotesBtn[aria-pressed='true'] {
+    background: var(--oc-orange-tint, transparent);
+    color: var(--oc-orange-bright, currentColor);
+}
+
+/* padding */
+

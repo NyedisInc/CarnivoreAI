@@ -1,0 +1,35 @@
+{
+  "api_routes": [
+    "src/api/catalog_account_routes.py"
+  ],
+  "area": "skills-catalog",
+  "docs": [
+    "docs/catalog.md"
+  ],
+  "examples": [
+    "Sign out the laptop you left at the office from the phone you have with you."
+  ],
+  "how_to": [
+    "Open the skills catalog while signed in. The signed in devices box lists every device, marks this one, and has a sign out button on each other one and one to sign out all other devices."
+  ],
+  "id": "skills-catalog-devices",
+  "issues": [
+    1170
+  ],
+  "keywords": [
+    "devices",
+    "sessions",
+    "sign out",
+    "revoke"
+  ],
+  "media_exempt": "the panel needs a catalog account signed in on two devices; its screenshot is captured in the pre-release recapture, not per change",
+  "name": "Catalog signed in devices",
+  "since": "2026-09-30",
+  "status": "stable",
+  "summary": "see every device signed in to your catalog account and sign any of them out.",
+  "surfaces": [],
+  "updated": "2026-09-30",
+  "where": [
+    "The skills catalog, SIGNED IN DEVICES, under the sign in box."
+  ]
+}

@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  cloude:
+    image: cloude-code:local
+    build:
+      context: .
+      args:
+        UID: "${UID:-1000}"
+        GID: "${GID:-1000}"
+    ports:
+      - "${CLOUDE_BIND_IP:-127.0.0.1}:${PORT:-8000}:${PORT:-8000}"
+    volumes:
+      - "${HOME}/.claude:/home/cloude/.claude"
+      - "${CLOUDE_PROJECT_PATH:-./projects}:/workspace"
+      - "./config.json:/app/config.json:ro"
+      - "./.env:/app/.env:ro"
+      - "${CLOUDE_LOG_DIR:-./logs}:/var/log/cloude"
+    environment:
+      CLOUDECODE_LOG_DIR: /var/log/cloude
+      CLOUDECODE_DEFAULT_WORKING_DIR: /workspace
+      TZ: ${TZ:-UTC}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:${PORT:-8000}/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

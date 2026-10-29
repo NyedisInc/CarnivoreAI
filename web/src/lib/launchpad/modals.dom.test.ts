@@ -1,0 +1,449 @@
+/** @vitest-environment jsdom */
+import { afterEach, describe, expect, test } from 'vitest';
+
+import { openModal, openModalCount } from '../modal';
+import ChoiceModal from './ChoiceModal.svelte';
+import CloneModal from './CloneModal.svelte';
+import ProjectFolderModal from './ProjectFolderModal.svelte';
+import { remoteBrowseNote } from './remote-folders';
+import ProjectNameModal from './ProjectNameModal.svelte';
+import type { ChoiceItem, ClonedProject, FolderChoice, ProjectDetails } from './modal-types';
+
+async function settle(): Promise<void> {
+    for (let i = 0; i < 6; i += 1) await Promise.resolve();
+}
+
+function overlay(): HTMLElement | null {
+    return document.querySelector('.modal-overlay');
+}
+
+function press(key: string, target: Element | null = overlay()): void {
+    target?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+}
+
+afterEach(() => {
+    document.body.innerHTML = '';
+});
+
+describe('openModal puts one overlay up and takes it down again', () => {
+    test('a resolved modal removes its overlay and its host', async () => {
+        const promise = openModal<string, Record<string, unknown>>(ChoiceModal as never, {
+            title: 'pick one',
+            items: [{ key: 'a', label: 'the a' }] as ChoiceItem[],
+        });
+        await settle();
+        expect(overlay()).not.toBe(null);
+        expect(openModalCount()).toBe(1);
+
+        (overlay()!.querySelector('[data-choice-index="0"]') as HTMLElement).click();
+        expect(await promise).toBe('a');
+        expect(overlay()).toBe(null);
+        expect(document.body.children).toHaveLength(0);
+        expect(openModalCount()).toBe(0);
+    });
+
+    test('escape resolves null, and a cancel is always null', async () => {
+        const promise = openModal<string, Record<string, unknown>>(ChoiceModal as never, {
+            title: 'pick one',
+            items: [{ key: 'a', label: 'the a' }] as ChoiceItem[],
+        });
+        await settle();
+        press('Escape', document.body);
+        expect(await promise).toBe(null);
+        expect(overlay()).toBe(null);
+    });
+
+    test('a click on the overlay itself cancels; a click inside does not', async () => {
+        const promise = openModal<ProjectDetails, Record<string, unknown>>(
+            ProjectNameModal as never,
+            { title: 'name this project', confirmLabel: 'create session' },
+        );
+        await settle();
+        (overlay()!.querySelector('.modal-content') as HTMLElement).click();
+        await settle();
+        expect(overlay()).not.toBe(null);
+        overlay()!.click();
+        expect(await promise).toBe(null);
+    });
+});
+
+describe('the one-of-N picker', () => {
+    const ITEMS: ChoiceItem[] = [
+        { key: 'empty', label: 'start empty', sub: 'a fresh working folder' },
+        { key: 'clone', label: 'clone from github', sub: 'from an existing repository' },
+    ];
+
+    test('it renders one row per item, with its second line', async () => {
+        const promise = openModal<string, Record<string, unknown>>(ChoiceModal as never, {
+            title: 'new claude project',
+            items: ITEMS,
+        });
+        await settle();
+        const rows = overlay()!.querySelectorAll('.folder-picker-item');
+        expect(rows).toHaveLength(2);
+        expect(rows[0]!.textContent).toContain('start empty');
+        expect(rows[0]!.textContent).toContain('a fresh working folder');
+        expect(rows[1]!.textContent).toContain('clone from github');
+        expect(rows[0]!.classList.contains('folder-picker-item-active')).toBe(true);
+        press('Escape', document.body);
+        await promise;
+    });
+
+    test('an empty list draws the caller sentence and NO rows', async () => {
+        const promise = openModal<string, Record<string, unknown>>(ChoiceModal as never, {
+            title: 'new session',
+            items: [],
+            emptyMessage: 'nothing here',
+            emptyKind: 'unknown',
+        });
+        await settle();
+        const empty = overlay()!.querySelector('.folder-picker-empty');
+        expect(empty).not.toBe(null);
+        expect(empty!.classList.contains('folder-picker-empty--unknown')).toBe(true);
+        expect(empty!.textContent).toContain('nothing here');
+        expect(overlay()!.querySelectorAll('.folder-picker-item')).toHaveLength(0);
+        expect(overlay()!.querySelector('[data-choice-cancel]')!.textContent!.trim()).toBe('ok');
+        press('Escape', document.body);
+        await promise;
+    });
+
+    test('a disabled row is VISIBLE, carries its reason, and refuses a click', async () => {
+        const promise = openModal<string, Record<string, unknown>>(ChoiceModal as never, {
+            title: 'new session in which project',
+            items: [
+                { key: 'gone', label: 'gone', disabled: true, reason: 'folder MISSING' },
+                { key: 'good', label: 'good', sub: '/good' },
+            ] as ChoiceItem[],
+        });
+        await settle();
+        const rows = overlay()!.querySelectorAll('.folder-picker-item');
+        expect(rows[0]!.classList.contains('folder-picker-item-disabled')).toBe(true);
+        expect(rows[0]!.getAttribute('aria-disabled')).toBe('true');
+        expect(rows[0]!.textContent).toContain('folder MISSING');
+        (rows[0] as HTMLElement).click();
+        await settle();
+        expect(overlay()).not.toBe(null);
+        expect(rows[1]!.classList.contains('folder-picker-item-active')).toBe(true);
+        (rows[1] as HTMLElement).click();
+        expect(await promise).toBe('good');
+    });
+
+    test('arrow keys walk only the selectable rows, and enter chooses', async () => {
+        const promise = openModal<string, Record<string, unknown>>(ChoiceModal as never, {
+            title: 'pick',
+            items: [
+                { key: 'a', label: 'a' },
+                { key: 'b', label: 'b', disabled: true },
+                { key: 'c', label: 'c' },
+            ] as ChoiceItem[],
+        });
+        await settle();
+        press('ArrowDown', document.body);
+        await settle();
+        press('Enter', document.body);
+        expect(await promise).toBe('c');
+    });
+});
+
+describe('the name step collects and refuses nothing', () => {
+    test('a prefilled name comes back when confirmed', async () => {
+        const promise = openModal<ProjectDetails, Record<string, unknown>>(
+            ProjectNameModal as never,
+            { title: 'name this project', confirmLabel: 'create session', defaultName: 'a/b' },
+        );
+        await settle();
+        const input = overlay()!.querySelector('#modal-project-name') as HTMLInputElement;
+        expect(input.value).toBe('a/b');
+        (overlay()!.querySelector('#modal-confirm') as HTMLElement).click();
+        expect(await promise).toEqual({ name: 'a/b', description: '' });
+    });
+
+    test('an empty name does not resolve, it refocuses', async () => {
+        let settled = false;
+        const promise = openModal<ProjectDetails, Record<string, unknown>>(
+            ProjectNameModal as never,
+            { title: 'name this project', confirmLabel: 'create session' },
+        );
+        void promise.then(() => {
+            settled = true;
+        });
+        await settle();
+        (overlay()!.querySelector('#modal-confirm') as HTMLElement).click();
+        await settle();
+        expect(settled).toBe(false);
+        expect(overlay()).not.toBe(null);
+        press('Escape');
+        expect(await promise).toBe(null);
+    });
+
+    test('the folder hint is shown only when there is a folder to report', async () => {
+        const promise = openModal<ProjectDetails, Record<string, unknown>>(
+            ProjectNameModal as never,
+            {
+                title: 'add project',
+                confirmLabel: 'open project',
+                pathHint: '/Users/me/code/api',
+            },
+        );
+        await settle();
+        expect(overlay()!.querySelector('.folder-picker-path')!.textContent).toContain(
+            '/Users/me/code/api',
+        );
+        press('Escape');
+        await promise;
+    });
+});
+
+describe('the folder step asks, previews, and refuses', () => {
+    test('it fills the parent from the server and previews the folder as-is', async () => {
+        const promise = openModal<FolderChoice, Record<string, unknown>>(
+            ProjectFolderModal as never,
+            {
+                name: 'My App',
+                defaultParent: async () => '/Users/me/Development',
+                openPicker: null,
+            },
+        );
+        await settle();
+        const parent = overlay()!.querySelector('#project-parent-input') as HTMLInputElement;
+        expect(parent.value).toBe('/Users/me/Development');
+        expect(overlay()!.querySelector('#project-path-preview')!.textContent!.trim()).toBe(
+            '/Users/me/Development',
+        );
+        const confirm = overlay()!.querySelector('#project-folder-confirm') as HTMLButtonElement;
+        expect(confirm.disabled).toBe(false);
+        confirm.click();
+        expect(await promise).toEqual({
+            parent: '/Users/me/Development',
+            path: '/Users/me/Development',
+        });
+    });
+
+    test('with no default it stays EMPTY and refuses, rather than guessing', async () => {
+        const promise = openModal<FolderChoice, Record<string, unknown>>(
+            ProjectFolderModal as never,
+            { name: 'My App', defaultParent: async () => null, openPicker: null },
+        );
+        await settle();
+        const parent = overlay()!.querySelector('#project-parent-input') as HTMLInputElement;
+        expect(parent.value).toBe('');
+        expect(parent.placeholder).toBe('type or browse to a folder');
+        const confirm = overlay()!.querySelector('#project-folder-confirm') as HTMLButtonElement;
+        expect(confirm.disabled).toBe(true);
+        expect(overlay()!.querySelector('#project-path-status')!.textContent).toContain(
+            'choose a folder to create the project in',
+        );
+        press('Escape');
+        expect(await promise).toBe(null);
+    });
+
+    test('an illegal name is refused here too, with the sentence on screen', async () => {
+        const promise = openModal<FolderChoice, Record<string, unknown>>(
+            ProjectFolderModal as never,
+            {
+                name: 'a/b',
+                defaultParent: async () => '/Users/me/Development',
+                openPicker: null,
+            },
+        );
+        await settle();
+        const status = overlay()!.querySelector('#project-path-status')!;
+        expect(status.textContent).toContain("a project name cannot contain '/'");
+        expect(status.classList.contains('folder-picker-status--error')).toBe(true);
+        expect(
+            (overlay()!.querySelector('#project-folder-confirm') as HTMLButtonElement).disabled,
+        ).toBe(true);
+        press('Escape');
+        await promise;
+    });
+
+    test('browse takes the picker answer, and a missing picker says so', async () => {
+        const withPicker = openModal<FolderChoice, Record<string, unknown>>(
+            ProjectFolderModal as never,
+            {
+                name: 'My App',
+                defaultParent: async () => null,
+                openPicker: async () => '/picked/here',
+            },
+        );
+        await settle();
+        (overlay()!.querySelector('#project-folder-browse') as HTMLElement).click();
+        await settle();
+        expect(
+            (overlay()!.querySelector('#project-parent-input') as HTMLInputElement).value,
+        ).toBe('/picked/here');
+        press('Escape');
+        await withPicker;
+
+        const noPicker = openModal<FolderChoice, Record<string, unknown>>(
+            ProjectFolderModal as never,
+            { name: 'My App', defaultParent: async () => null, openPicker: null },
+        );
+        await settle();
+        (overlay()!.querySelector('#project-folder-browse') as HTMLElement).click();
+        await settle();
+        expect(overlay()!.querySelector('#project-path-status')!.textContent).toContain(
+            'the folder picker is unavailable',
+        );
+        press('Escape');
+        await noPicker;
+    });
+    test('a paired computer that can list its folders gets browse; an older one says why and stays typed', async () => {
+        const able = openModal<FolderChoice, Record<string, unknown>>(
+            ProjectFolderModal as never,
+            {
+                name: 'My App',
+                defaultParent: async () => '/Users/example/carnivore-projects',
+                openPicker: async () => '/Users/example/code',
+                remote: { label: 'hosta', creates: true, browse: Promise.resolve(null) },
+            },
+        );
+        await settle();
+        (overlay()!.querySelector('#project-folder-browse') as HTMLElement).click();
+        await settle();
+        expect((overlay()!.querySelector('#project-parent-input') as HTMLInputElement).value).toBe('/Users/example/code');
+        press('Escape');
+        await able;
+
+        const older = openModal<FolderChoice, Record<string, unknown>>(
+            ProjectFolderModal as never,
+            {
+                name: 'My App',
+                defaultParent: async () => null,
+                openPicker: async () => '/x',
+                remote: {
+                    label: 'hosta',
+                    creates: true,
+                    browse: Promise.resolve('hosta runs an older carnivore that cannot list its folders. type the folder.'),
+                },
+            },
+        );
+        await settle();
+        expect(overlay()!.querySelector('#project-folder-browse')).toBeNull();
+        expect(overlay()!.querySelector('#project-path-status')!.textContent).toContain('runs an older carnivore');
+        const input = overlay()!.querySelector('#project-parent-input') as HTMLInputElement;
+        input.value = '/Users/example/typed';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        await settle();
+        expect((overlay()!.querySelector('#project-folder-confirm') as HTMLButtonElement).disabled).toBe(false);
+        press('Escape');
+        await older;
+    });
+});
+
+describe('the clone form collects a parent directory', () => {
+    test('the parent field is there, prefilled, and travels with the request', async () => {
+        let sent: Record<string, string> | null = null;
+        const promise = openModal<ClonedProject, Record<string, unknown>>(CloneModal as never, {
+            clone: async (payload: Record<string, string>) => {
+                sent = payload;
+                return { name: 'repo', path: '/p/repo' };
+            },
+        });
+        await settle();
+        const parent = overlay()!.querySelector('#modal-clone-parent') as HTMLInputElement;
+        expect(parent).not.toBe(null);
+        expect(parent.value).toBe('~/projects');
+
+        const url = overlay()!.querySelector('#modal-clone-url') as HTMLInputElement;
+        url.value = 'owner/repo';
+        url.dispatchEvent(new Event('input', { bubbles: true }));
+        parent.value = '/Users/me/code';
+        parent.dispatchEvent(new Event('input', { bubbles: true }));
+        await settle();
+        (overlay()!.querySelector('#modal-clone-confirm') as HTMLElement).click();
+
+        expect(await promise).toEqual({ name: 'repo', path: '/p/repo' });
+        expect(sent).toEqual({
+            repoUrl: 'owner/repo',
+            parentDir: '/Users/me/code',
+            description: undefined,
+        });
+    });
+
+    test('an empty url is refused before anything is sent', async () => {
+        let called = false;
+        const promise = openModal<ClonedProject, Record<string, unknown>>(CloneModal as never, {
+            clone: async () => {
+                called = true;
+                return { name: 'repo', path: '/p/repo' };
+            },
+        });
+        await settle();
+        (overlay()!.querySelector('#modal-clone-confirm') as HTMLElement).click();
+        await settle();
+        expect(called).toBe(false);
+        expect(overlay()!.querySelector('#modal-clone-status')!.textContent).toContain(
+            'paste a github url first',
+        );
+        press('Escape');
+        expect(await promise).toBe(null);
+    });
+
+    test('a failure stays open, keeps what was typed, and says why', async () => {
+        const promise = openModal<ClonedProject, Record<string, unknown>>(CloneModal as never, {
+            clone: async () => {
+                throw new Error('HTTP 409: a folder already exists');
+            },
+        });
+        await settle();
+        const url = overlay()!.querySelector('#modal-clone-url') as HTMLInputElement;
+        url.value = 'owner/repo';
+        url.dispatchEvent(new Event('input', { bubbles: true }));
+        await settle();
+        (overlay()!.querySelector('#modal-clone-confirm') as HTMLElement).click();
+        await settle();
+
+        expect(overlay()).not.toBe(null);
+        expect((overlay()!.querySelector('#modal-clone-url') as HTMLInputElement).value).toBe(
+            'owner/repo',
+        );
+        expect(overlay()!.querySelector('#modal-clone-status')!.textContent).toContain(
+            'folder or project name already exists',
+        );
+        expect(
+            (overlay()!.querySelector('#modal-clone-confirm') as HTMLButtonElement).disabled,
+        ).toBe(false);
+        press('Escape');
+        expect(await promise).toBe(null);
+    });
+
+    test('WHILE IT IS IN FLIGHT nothing dismisses it', async () => {
+        let release: (value: ClonedProject) => void = () => {};
+        const promise = openModal<ClonedProject, Record<string, unknown>>(CloneModal as never, {
+            clone: () =>
+                new Promise<ClonedProject>((resolve) => {
+                    release = resolve;
+                }),
+        });
+        await settle();
+        const url = overlay()!.querySelector('#modal-clone-url') as HTMLInputElement;
+        url.value = 'owner/repo';
+        url.dispatchEvent(new Event('input', { bubbles: true }));
+        await settle();
+        (overlay()!.querySelector('#modal-clone-confirm') as HTMLElement).click();
+        await settle();
+
+        press('Escape');
+        overlay()!.click();
+        await settle();
+        expect(overlay()).not.toBe(null);
+        expect(
+            (overlay()!.querySelector('#modal-clone-cancel') as HTMLButtonElement).disabled,
+        ).toBe(true);
+
+        release({ name: 'repo', path: '/p/repo' });
+        expect(await promise).toEqual({ name: 'repo', path: '/p/repo' });
+    });
+});
+
+describe('remote browse is offered only when the first answer succeeded', () => {
+    const t = ((key: string) => key) as never;
+    test('a refusal, a one way answer or a busy computer hides browse; ok and a missing projects folder keep it', () => {
+        expect(remoteBrowseNote({ status: 'refused', code: 'outside_allowed_roots' }, 'hosta', t)).not.toBeNull();
+        expect(remoteBrowseNote({ status: 'unavailable', reason: 'one_way' }, 'hosta', t)).not.toBeNull();
+        expect(remoteBrowseNote({ status: 'unavailable', reason: 'busy' }, 'hosta', t)).not.toBeNull();
+        expect(remoteBrowseNote({ status: 'refused', code: 'not_found' }, 'hosta', t)).toBeNull();
+        expect(remoteBrowseNote({ status: 'ok', path: '/a', parent: null, entries: [], truncated: false }, 'hosta', t)).toBeNull();
+    });
+});

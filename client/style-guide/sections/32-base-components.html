@@ -1,0 +1,204 @@
+<h2 class="sg-h2">base components: card, fold, field, buttons, option list, tag, list, toolbar, state, stat tile, chart frame</h2>
+
+<dl class="sg-facts">
+    <dt>card</dt>
+    <dd><code>.oc-card</code>, <code>Card.svelte</code>: ONE bordered level. A title strip in the ledger look (band ground,
+        hairline, the small accent label as the one accent thing), a body with one padding and gap, an optional foot and
+        an optional fold whose button carries <code>aria-expanded</code>. A card never holds another bordered card. An optional
+        lead slot (<code>.oc-card__lead</code>) holds a mark or color swatch before the title (the providers page's account
+        card); any <code>data-*</code> attribute lands on the section, so a test hook is a data attribute, never a class,
+        and <code>data-landed</code> outlines the card a link landed on. <code>title</code> is optional: with no title, meta, lead or actions the card draws NO strip, only the bordered body (pass <code>aria-label</code>); <code>foldable</code> and <code>onopen</code> throw without a title. The strip wraps: the title keeps its width (ellipsis, never crushed by the actions) and the actions drop to a second line when the line runs out; one line when everything fits. <code>onopen</code> makes the title the card's one real button (<code>.oc-card__open</code>); the stat tile's <code>onsub</code> does the same for its sub line (<code>.oc-stat-tile__sub--go</code>). The providers page (ledger) is drawn only with
+        the base set: Card, StatTile, State, Button, Field, Select, Switch, Checkbox, Tag and Fold.</dd>
+    <dt>fold and accordion</dt>
+    <dd><code>.oc-fold</code>, <code>Fold.svelte</code> (bits-ui Collapsible) and <code>.oc-accordion</code>,
+        <code>Accordion.svelte</code> (bits-ui Accordion: arrows, Home and End move between headers). No frame: a fold
+        sits in a card body or a panel on the container's left edge. The chevron is the one
+        <code>FoldChevron.svelte</code>.</dd>
+    <dt>field</dt>
+    <dd><code>.oc-form-field</code>, <code>Field.svelte</code>: a real label above the base field (<code>data-field</code>,
+        no class), whose boundary is the control line (3:1), help or error below tied by <code>aria-describedby</code>.
+        With no <code>label</code> the bare input is drawn (the bare textarea with <code>multiline</code>), for a row or a popup (pass <code>aria-label</code>, as Select does).
+        <code>block</code> makes a bare input or the search frame fill its container (a filter above a list); <code>iconOnly</code> segmented items wear a narrow pad for header strips.
+        <code>variant="search"</code> (<code>.oc-search</code>, <code>search-field.css</code>) is the framed search box: a leading
+        icon, the input, a clear x drawn whenever there is text (focused or not) with no hover tile, an optional key hint
+        (<code>/</code> while empty, <code>esc</code> with text) and a trailing slot for a mode button. The frame wears
+        <code>oc-focus-host</code>, so focus brightens the frame's own border. The drawer's search box is this variant; the
+        similar terms under it are base <code>Button</code> chips (<code>role="option"</code>) in a horizontal listbox.</dd>
+    <dt>task wrapper</dt>
+    <dd><code>.oc-task</code>, <code>TaskWrapper.svelte</code>: THE ONE WRAPPER of a task, the same for every task whatever its section,
+        status or kind. It has three states, <code>data-task-state</code> compact (exactly one row: lead, status icon, title and meta),
+        opened (the row and the shared tab strip, always) and detailed (the same parts, every tab panel at full length, nothing clamped). The reply box is
+        the last thing in the tab panel, on the panel's ground and inside its padding, never a part of its own. The state is the host's value; a press on the
+        row asks for the next one (compact, opened, detailed, compact). What only some tasks have, such as a question form, a review block or a
+        scheduled time, goes inside a slot (<code>head</code>, <code>tabs</code>), never in a row component of its own.
+        The room around an expanded task is the shell tokens (<code>--oc-task-pad-x</code>, <code>--oc-task-pad-y</code>, <code>--oc-task-gap</code>). TM Mark II draws every task through it.</dd>
+    <dt>small field</dt>
+    <dd><code>data-field</code> with <code>data-size="sm"</code>: the base field at the 24px control height and the label type size, for a bar or
+        an add row that sits beside a small button. TM Mark II's search, add and reply boxes are all this one field.</dd>
+    <dt>inline field</dt>
+    <dd><code>.oc-inline-field</code> (<code>lib/base/inline-field.css</code>): ONE frame that holds a field and the keys that act on it, in the look of the
+        left sidebar's search. The frame is the 24px small control (<code>--oc-control-h-sm</code>, a rule border, the raised ground, <code>oc-focus-host</code> beside it);
+        the field inside is bare (<code>.oc-inline-field__input</code>, one line high at rest, a textarea grows to three lines); each key after it
+        (<code>.oc-inline-field__key</code>) is squared into the frame behind a 1px hairline, an icon only, muted until pointed at and the accent when something is
+        ready to send; a mode choice is the same key with a native select laid over it (<code>.oc-inline-field__select</code>). TM Mark II's reply box is this.</dd>
+    <dt>button</dt>
+    <dd><code>Button.svelte</code> is a plain <code>&lt;button&gt;</code> (or a link) with <code>data-btn</code> and
+        <code>data-size</code> and no class: its whole look is the base layer
+        (<a href="#base-elements">foundations: base elements</a>). secondary (the default), confirm, danger, quiet and
+        row, md or sm. Two buttons of one variant and size differ only in their label.</dd>
+    <dt>option list</dt>
+    <dd><code>.oc-options</code>, <code>OptionList.svelte</code>: one choice (bits-ui RadioGroup, one tab stop, arrows
+        choose) or several (bits-ui Checkbox), a numbered prompt with a tag, a recommended tag and a reason per row, and
+        a foot for actions. The radio mark is the shared <code>.oc-radio</code>.</dd>
+    <dt>tag</dt>
+    <dd><code>.oc-tag</code>, <code>Tag.svelte</code>: a static uppercase word in one of six tones; a pressable filter is
+        still <code>.oc-chip</code>.</dd>
+    <dt>list and row</dt>
+    <dt>toolbar</dt>
+    <dd><code>.oc-toolbar</code>, <code>Toolbar.svelte</code>: search, filters, a page's own extras, the end pushed right,
+        and an optional row below for removable pills, each slot drawn only when given. Plain, it sits in a page bar
+        (the page kit's <code>PageToolbar</code> draws through it) and scrolls sideways on a phone;
+        <code>.oc-toolbar--band</code> is a standalone strip on the band ground with a hairline under it, and
+        <code>.oc-toolbar--wrap</code> wraps on a phone instead. A control that does not fit goes to the one widget
+        menu, never a menu of the toolbar's own.</dd>
+    <dt>state</dt>
+    <dd><code>.oc-state</code>, <code>State.svelte</code>: what a region says when it is empty, loading or failed. Muted
+        words, an optional glyph and hint, an optional row of actions; a warn (something stopped, <code>kind="warn"</code>) wears the yellow bar and an error is an alert with the coral bar and the
+        catalog's "try again". A <code>children</code> snippet draws rich words under the title and hint (a list of what stops working), before the actions. Block or <code>.oc-state--inline</code>.</dd>
+    <dt>stat tile</dt>
+    <dd><code>.oc-stat-tile</code>, <code>StatTile.svelte</code>: ONE single-metric tile. A small uppercase label (with an optional glyph),
+        one bright figure with an optional unit, an optional change with a tone (<code>.oc-stat-tile__delta--up</code>,
+        <code>--down</code>, <code>--flat</code>), an optional notice, an optional series slot, and a foot (a meter, a quiet line). Size is
+        <code>compact</code> (one unit wide) or <code>regular</code>; mode is <code>line</code> (label and figure only),
+        <code>flat</code> or <code>graph</code> (two units tall, more air). The side inset is <code>--oc-widget-inset</code> at every size, the top inset <code>--oc-space-4</code> and the bottom <code>--oc-space-3</code> (a shrunk tile centers its line: <code>--oc-space-3</code> above and below; a 1 x 1 tile <code>--oc-space-2</code>); <code>.oc-stat-tile--framed</code> draws the card edge for a tile placed with no frame
+        chrome. Nothing changes on hover.</dd>
+    <dt>chart frame</dt>
+    <dd><code>.oc-chart-frame</code>, <code>ChartFrame.svelte</code>: the body of a chart card. It draws no title; the host header owns the title
+        (<code>.oc-frame-title</code>), and every part of the body (<code>.oc-chart-frame__headline</code>, <code>__note</code>,
+        <code>__facts</code>, <code>__context</code>, <code>__list</code>, <code>__plot</code>, <code>__empty</code>) takes the same side inset the
+        header takes, <code>--oc-widget-inset</code>, so the body's left edge lines up with the title's at every width. A card without a host header
+        opens with <code>.oc-chart-frame__head</code>, whose right inset (<code>--oc-widget-clear</code>) clears the floating opener.</dd>
+</dl>
+
+<h3 class="sg-h3" id="base-components-all">every variant and state</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/style-guide/specimens/BaseComponents.svelte</code></div>
+    <div class="sg-specimen__body" id="sg-live-base-components"></div>
+</div>
+
+<h3 class="sg-h3" id="base-controls">controls: icon button, switch, checkbox, radio, select, number field, segmented</h3>
+<p>The controls the base lacked (batch D, issue #2361). Every one is a component in <code>web/src/lib/base/</code> that wears the one
+button recipe or the one field (<code>data-btn</code>, <code>data-field</code>), reserves the 1px border the focus rule lights, and reads tokens only.</p>
+<dl class="sg-facts">
+    <dt>icon button</dt>
+    <dd><code>IconButton.svelte</code>, <code>icon-button.css</code> (<code>variant="danger"</code> is bare like quiet with the glyph coral at rest: a destructive key, nothing new on hover): the base button at <code>data-size="icon"</code>, a square that wears what
+        <code>.oc-ibtn</code> wore. <code>label</code> is required and is both the accessible name and the tooltip (an icon-only control is the one place a
+        tooltip is right). Variants: secondary (the framed square; <code>pressed</code> makes it a toggle), quiet (no frame until pointed at), close (quiet,
+        coral under the pointer), float (the faint floating icon). a custom property on the button or an ancestor sets the square; a phone gets the thumb target.</dd>
+    <dt>switch</dt>
+    <dd><code>Switch.svelte</code>: a real button with <code>role="switch"</code> and <code>aria-checked</code>, drawn as the app's square check
+        (<code>.oc-check</code>), so Space and Enter work natively and the state is never color alone. <code>bind:checked</code>; a caller that may refuse
+        the change binds with a function binding so a refused write leaves the switch where it was. Optional hint line, note, bare (no frame),
+        glyph (an icon before the label) and <code>role="checkbox"</code> for a member of a set (same look). The opscenter <code>Check.svelte</code>
+        is a thin wrapper over it that keeps its old props and <code>onToggle</code>; new code imports the base Switch.</dd>
+    <dt>checkbox, radio, radio group</dt>
+    <dd><code>Checkbox.svelte</code> (<code>tone="danger"</code>: the label, box edge and tick in the destructive token, for a warning such as arming a rewind), <code>Radio.svelte</code>, <code>RadioGroup.svelte</code>, <code>pick.css</code> (<code>.oc-pick</code>): the real
+        <code>&lt;input&gt;</code> in its <code>&lt;label&gt;</code>, only the box drawn: a hairline square or circle on the control line, the confirm token
+        filling its middle when on, a dash when mixed (<code>indeterminate</code>, checkbox only). The label is a string or a slot, with an optional
+        hint line. A <code>RadioGroup</code> (<code>role="radiogroup"</code>) gives its radios one shared name, so the browser's own keys apply: one tab
+        stop, arrows move and choose. Options as data or as <code>Radio</code> children; <code>orientation</code> vertical or horizontal.</dd>
+    <dt>select</dt>
+    <dd><code>Select.svelte</code>: a native <code>&lt;select data-field&gt;</code>, the base field (control line, sunken ground, control height, coral when
+        invalid; the drawn caret and the small <code>data-size</code> are in <a href="#base-elements">base elements</a>), so the browser keeps the list, the
+        keys and the phone's picker. Options as data (<code>{ value, label, disabled }</code>, or a group) or as a children snippet. With a
+        <code>label</code> it is the labelled column with help and error; without one it is the bare select for a bar, and the caller passes
+        <code>aria-label</code>.</dd>
+    <dt>number field</dt>
+    <dd><code>NumberField.svelte</code>, <code>number-field.css</code> (<code>.oc-number</code>): the base field with
+        <code>type="number"</code>, min, max and step, and an optional stepper: a base icon button minus and plus either side, at the field's height.
+        ArrowUp and ArrowDown step by <code>step</code>, clamped, with the step's own decimals (0.1 + 0.2 reads 0.3). The browser's spin arrows are
+        dropped. An empty field is <code>null</code>, never 0. The buttons keep out of the tab order (the arrows are the keyboard way) and keep their labels.</dd>
+    <dt>segmented</dt>
+    <dd><code>Segmented.svelte</code>, <code>segmented.css</code> (<code>.oc-segmented</code>): a single-choice picker drawn as joined buttons in one hairline
+        frame. A radio group, not tabs: <code>role="radiogroup"</code> of base buttons (<code>data-btn="quiet"</code>) with <code>role="radio"</code> and
+        <code>aria-checked</code>, one tab stop (roving tabindex), arrows move and choose, Home and End jump, a disabled option is skipped. The picked option is the
+        base picked state. <code>iconOnly</code> draws only each option's icon (the label stays its accessible name and tooltip), for a header too narrow for words. Tabs that switch a panel stay <code>Tabs.svelte</code> (page tabs) and the terminal strip; never build a second tab component from this.</dd>
+</dl>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/style-guide/specimens/BaseControls.svelte</code></div>
+    <div class="sg-specimen__body" id="sg-live-base-controls"></div>
+</div>
+
+<h3 class="sg-h3" id="stat-widgets">stat tile and chart frame, every size and mode</h3>
+<p>Each tile at its 92 by 56 floor, a wider size, each mode, then a chart body under a header title in the same box so the two left
+edges can be compared (the guide line marks <code>--oc-widget-inset</code>). The last row repeats them under every shipped theme.</p>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/style-guide/specimens/StatWidgets.svelte</code></div>
+    <div class="sg-specimen__body" id="sg-live-stat-widgets"></div>
+</div>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/style-guide/specimens/StatWidgetsThemes.svelte</code></div>
+    <div class="sg-specimen__body" id="sg-live-stat-widgets-themes"></div>
+</div>
+
+<h3 class="sg-h3" id="base-components-themes">every shipped theme, and the theme contract</h3>
+<p>Each tile wears one theme alone. The line under it is that theme's standing against the theme contract
+(<code>client/js/themes/theme-contract.json</code>): a theme may set its colors, one font family and two clamped corners
+(<code>--radius-control</code> 0 to 4px, <code>--radius-panel</code> 0 to 8px); anything else it sets is reported here
+and logged by the server when the theme loads, never acted on yet.</p>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/style-guide/specimens/BaseComponentsThemes.svelte</code></div>
+    <div class="sg-specimen__body" id="sg-live-base-components-themes"></div>
+</div>
+
+<h3 class="sg-h3" id="task-wrapper">the task wrapper, three states</h3>
+<p>One review task compact, one working task opened and one question detailed, so the three states sit side by side. The opened and detailed tasks both show the tab strip, with the reply box (the base field) at the bottom of the panel. Press a row to
+cycle its state. The narrow copy is 320px wide and its tab strip collapses to icons.</p>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/style-guide/specimens/TaskWrapperDemo.svelte</code><span>wide</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-task-wrapper"></div></div>
+</div>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><span>320px wide</span></div>
+    <div class="sg-specimen__body"><div class="sg-qc-narrow" id="sg-live-task-wrapper-narrow"></div></div>
+</div>
+
+<h3 class="sg-h3" id="question-card-demo">the task manager question card, rebuilt</h3>
+<p>Left: a static copy (<code>QuestionCardToday.svelte</code>) of how the Task Manager's question card nests today (question box, answer box, indented answer
+body, three left edges, a clipped tag, links instead of buttons). Right: the same content built ONLY from the base
+components: one border, one left edge, real buttons, the accent on the title alone. The narrow copy is 320px wide.
+This is a demo; the Task Manager's own code is not changed here.</p>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>compare</span><code>web/src/style-guide/specimens/QuestionCardDemo.svelte</code></div>
+    <div class="sg-specimen__body">
+        <div class="sg-qc-compare">
+            <div class="sg-qc-col">
+                <span class="sg-bc__label">today (static copy)</span>
+                <div id="sg-live-question-card-today"></div>
+            </div>
+            <div class="sg-qc-col">
+                <span class="sg-bc__label">rebuilt from base components</span>
+                <div id="sg-live-question-card-demo"></div>
+            </div>
+            <div class="sg-qc-col">
+                <span class="sg-bc__label">rebuilt, 320px wide</span>
+                <div class="sg-qc-narrow" id="sg-live-question-card-demo-narrow"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3 class="sg-h3" id="base-guards">the guards that hold it</h3>
+<dl class="sg-facts">
+    <dt>no new raw value</dt>
+    <dd><code>tests/python/design_system/test_raw_values_ratchet.py</code>: a raw spacing, font size or color in a
+        <code>web/src</code> stylesheet or style block above that file's count in
+        <code>tests/fixtures/design_raw_values_baseline.json</code> fails; a file not listed must have none.</dd>
+    <dt>no theme gets worse</dt>
+    <dd><code>tests/python/design_system/test_theme_contrast_roles.py</code>: the role matrix of the contrast section,
+        computed for every bundled theme; a new failing pair or a lower ratio fails
+        (<code>tests/fixtures/design_contrast_roles_baseline.json</code>).</dd>
+    <dt>the theme contract</dt>
+    <dd><code>tests/python/design_system/test_theme_contract.py</code>: every bundled theme sets only contract names and
+        every required one; a planted <code>--oc-space-3</code> is reported at load.</dd>
+</dl>

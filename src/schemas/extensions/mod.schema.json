@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://carnivore.ai/schemas/extensions/mod.schema.json",
+  "title": "Claude Code mod, layer 1",
+  "description": "A Claude Code mod: a Claude Code plugin whose hooks list JavaScript modules, installed to ~/.claude/mods. Never names a Carnivore-side add-on.",
+  "allOf": [
+    {
+      "$ref": "item.schema.json"
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "mod"
+        },
+        "scope": {
+          "const": [
+            "global"
+          ]
+        },
+        "external_code": {
+          "$ref": "item.schema.json#/$defs/external_code"
+        },
+        "hooks_modules": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "hooks_modules"
+      ]
+    }
+  ],
+  "unevaluatedProperties": false
+}

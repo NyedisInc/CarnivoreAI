@@ -1,0 +1,45 @@
+{
+  "api_routes": [
+    "src/api/api_keys_routes.py"
+  ],
+  "area": "settings",
+  "docs": [
+    "docs/api-keys.md"
+  ],
+  "examples": [
+    "Make a key named crate sync on a test machine, copy it into 1Password, and run the crate cli with --token-op pointing at that item: export and restore run headless with no sign in.",
+    "Revoke a key from the list behind a warning: the script using it gets 401 on its next request.",
+    "A leaked key cannot make another key, revoke yours, mint an mcp token or sign in."
+  ],
+  "how_to": [
+    "Open settings, remote and security, api keys.",
+    "Type a name for the script and press new key. Copy the key at once into 1Password; it is never shown again.",
+    "Send it as Authorization: Bearer cak_... from the script, or pass --token-op op://Vault/<item>/credential to the crate cli.",
+    "Press revoke on a key, then revoke key in the warning, when the script is retired."
+  ],
+  "id": "api-keys",
+  "issues": [
+    1066
+  ],
+  "keywords": [
+    "api key",
+    "script",
+    "token",
+    "bearer",
+    "cli",
+    "crate",
+    "headless",
+    "1password",
+    "revoke"
+  ],
+  "media_exempt": "settings panel whose proof is its vitest and the route tests; a screenshot is captured at the next version bump",
+  "name": "API keys for scripts",
+  "since": "2026-10-20",
+  "status": "beta",
+  "summary": "long-lived api keys for your own scripts: made and revoked in settings, stored only as a hash, valid on every api route except key management, sign in and mcp token minting.",
+  "surfaces": [],
+  "updated": "2026-10-20",
+  "where": [
+    "Settings, remote and security, api keys."
+  ]
+}

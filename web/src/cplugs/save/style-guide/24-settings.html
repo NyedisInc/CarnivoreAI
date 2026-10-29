@@ -1,0 +1,9 @@
+<h3 class="sg-h3" id="settings-save-plugin">save plugin: its settings panel</h3>
+<dl class="sg-facts">
+    <dt id="settings-save-panel">restore points settings</dt>
+    <dd>The restore points panel (<code>web/src/cplugs/save/SaveSettings.svelte</code>, with <code>LocationPanel.svelte</code>, <code>StoragePanel.svelte</code> and <code>ScopePanel.svelte</code> in the panel kit's <code>.tm</code> frame) reaches the plugin's pane as a <code>settings-panel</code> contribution and shows only while the plugin is on, with the same routes and stored values as before it moved into the pane.</dd>
+    <dt id="settings-save-location">vault location</dt>
+    <dd><code>LocationPanel.svelte</code> (#1956): the plugin setting <code>vaultLocation</code> as a <code>.oc-field</code> folder field in a <code>.tm__field</code> label, the folder in force and whether it can be used in <code>.tm__sub</code>, a refused or unusable folder in <code>.tm__problem</code>, the same-disk and left-behind advice in the framed <code>.tm__warn</code>, and a quiet <code>.oc-btn</code> "use default" beside the confirm <code>.oc-btn--confirm</code> "save location" in <code>.tm__actions</code>. It writes through the plugin settings route; it adds no class.</dd>
+    <dt id="settings-save-folders">plugin folders</dt>
+    <dd><code>FolderUnits.svelte</code> (#1955), under the storage meter, adds no class: one <code>.tm__srv</code> row per backed-up plugin folder in <code>.tm__servers</code> (<code>.tm__srv-name</code> for the plugin and data id, <code>.tm__sub</code> for size, restore points and the relative last backup, a <code>.oc-btn.oc-btn--sm</code> restore). Restore asks inline in a <code>.tm__warn</code> block with an <code>.oc-field</code> point picker and an <code>.oc-btn</code> cancel and <code>.oc-btn--confirm</code> pair; the result line is <code>.tm__note</code> and names the new folder. With none, one dim <code>.tm__sub</code> line says so.</dd>
+</dl>

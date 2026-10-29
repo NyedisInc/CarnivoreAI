@@ -1,0 +1,52 @@
+/*  hidden  .settings-tabs pointer-events: none */
+
+:root {
+
+    --scrollbar-size: 11px;
+    --scrollbar-inset: 2px;
+    --scrollbar-thumb-min: 36px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+
+
+    ::-webkit-scrollbar {
+        width: var(--scrollbar-size);
+        height: var(--scrollbar-size);
+    }
+
+    ::-webkit-scrollbar-track,
+    ::-webkit-scrollbar-corner {
+        background-color: transparent;
+    }
+
+    /* padding */
+    ::-webkit-scrollbar-thumb {
+        background-color: var(--oc-scrollbar-thumb-rest);
+        background-clip: padding-box;
+        border: var(--scrollbar-inset) solid transparent;
+        border-radius: var(--scrollbar-size);
+        min-height: var(--scrollbar-thumb-min);
+        min-width: var(--scrollbar-thumb-min);
+    }
+
+    ::-webkit-scrollbar-track:hover {
+        background-color: var(--oc-scrollbar-track);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background-color: var(--oc-scrollbar-thumb-hover);
+    }
+
+    ::-webkit-scrollbar-thumb:active {
+        background-color: var(--oc-scrollbar-thumb-active);
+    }
+
+
+    @supports not selector(::-webkit-scrollbar) {
+        :root {
+            scrollbar-width: thin;
+            scrollbar-color: var(--oc-scrollbar-thumb-rest) transparent;
+        }
+    }
+}

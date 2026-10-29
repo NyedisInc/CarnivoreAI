@@ -1,0 +1,104 @@
+
+@layer legacy {
+:root[data-anim-off~="status-lights"] .status-led,
+:root[data-anim-off~="status-lights"] .status-led::before,
+:root[data-anim-off~="status-lights"] .status-led::after,
+:root[data-anim-off~="status-lights"] .status-dot,
+:root[data-anim-off~="status-lights"] .status-dot::before,
+:root[data-anim-off~="status-lights"] .status-dot::after,
+:root[data-anim-off~="status-lights"] .status.connected,
+:root[data-anim-off~="status-lights"] .status.connected::before,
+:root[data-anim-off~="status-lights"] .status.connected::after,
+:root[data-anim-off~="status-lights"] .mw-step,
+:root[data-anim-off~="status-lights"] .mw-step::before,
+:root[data-anim-off~="status-lights"] .mw-step::after {
+    animation: none !important;
+}
+
+:root[data-anim-off~="avatar-spiral"] .session-sidebar-bar__avatar .spiral-turn {
+    animation: none !important;
+}
+
+:root[data-anim-off~="terminal-ring"] .oc-frame[data-oc-focus]:not(.oc-frame-terminal)::before {
+    animation: none !important;
+}
+
+:root[data-anim-off~="dialog-glow"] .popup-focus,
+:root[data-anim-off~="dialog-glow"] .popup-focus-turn > .pf-sheen::before,
+:root[data-anim-off~="dialog-glow"] .modal-content::after,
+:root[data-anim-off~="dialog-glow"] .sidebar-help__lightbox-body::after {
+    animation: none !important;
+}
+
+:root[data-anim-off~="effort-badges"] .effort-level,
+:root[data-anim-off~="effort-badges"] .effort-level::before,
+:root[data-anim-off~="effort-badges"] .effort-level::after,
+:root[data-anim-off~="effort-badges"] .effort-level *,
+:root[data-anim-off~="effort-badges"] .effort-level *::before,
+:root[data-anim-off~="effort-badges"] .effort-level *::after {
+    animation: none !important;
+}
+
+:root[data-anim-off~="drawer-bands"] .session-sidebar-row[data-layout-anim] .session-sidebar-row-name,
+:root[data-anim-off~="drawer-bands"] .session-sidebar-group[data-group-anim] .session-sidebar-group__label {
+    animation: none !important;
+}
+
+:root[data-anim-off~="drawer-bands"] .band-fx {
+    animation: none !important;
+    transform: translateX(75%);
+}
+
+:root[data-anim-off~="drawer-bands"] .band-fx > i::before {
+    animation: none !important;
+    transform: translateX(-75%);
+}
+
+/* keep awake */
+:root[data-anim-off~="sparks-steam"] .session-sidebar-row-model__spark,
+:root[data-anim-off~="sparks-steam"] .session-sidebar-row-model__spark::before,
+:root[data-anim-off~="sparks-steam"] .session-sidebar-row-model__spark::after,
+:root[data-anim-off~="sparks-steam"] .asw-spark,
+:root[data-anim-off~="sparks-steam"] .asw-spark::before,
+:root[data-anim-off~="sparks-steam"] .asw-spark::after,
+:root[data-anim-off~="sparks-steam"] .kaw-steam,
+:root[data-anim-off~="sparks-steam"] .kaw-steam::before,
+:root[data-anim-off~="sparks-steam"] .kaw-steam::after {
+    animation: none !important;
+}
+
+:root[data-anim-off~="busy-pulses"] .session-sidebar-row-workflow-icon,
+:root[data-anim-off~="busy-pulses"] .oc-tab-workflow {
+    animation: none !important;
+}
+
+:root[data-anim-off~="attention-cues"] .zone-badge[data-cue='on'],
+:root[data-anim-off~="attention-cues"] .oc-resize-guide-chevron,
+:root[data-anim-off~="attention-cues"] .settings-page .st-highlight-flash,
+:root[data-anim-off~="attention-cues"] .hdtl-fill,
+:root[data-anim-off~="attention-cues"] .ai-entry--fresh::after {
+    animation: none !important;
+}
+
+:root[data-anim-off~="pop-ins"] .modal-overlay,
+:root[data-anim-off~="pop-ins"] .modal-content,
+:root[data-anim-off~="pop-ins"] .slash-commands-modal-content,
+:root[data-anim-off~="pop-ins"] .cloude-attach-menu,
+:root[data-anim-off~="pop-ins"] .cloude-touch-copy,
+:root[data-anim-off~="pop-ins"] .config-editor-picker-content,
+:root[data-anim-off~="pop-ins"] .config-editor-modal-content,
+:root[data-anim-off~="pop-ins"] #session-notes-panel,
+:root[data-anim-off~="pop-ins"] .sp-pn,
+:root[data-anim-off~="pop-ins"] .sp-pn-body,
+:root[data-anim-off~="pop-ins"] .tkm-post-close,
+:root[data-anim-off~="pop-ins"] .pkp-it.pkp-drag-plop,
+:root[data-anim-off~="pop-ins"] .ai-entry--fresh {
+    animation: none !important;
+}
+
+:root[data-anim-off~="transitions"] *,
+:root[data-anim-off~="transitions"] *::before,
+:root[data-anim-off~="transitions"] *::after {
+    transition: none !important;
+}
+}

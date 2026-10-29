@@ -1,0 +1,54 @@
+{
+  "name": "Open in a terminal app",
+  "issues": [
+    2328,
+    2334,
+    2354
+  ],
+  "keywords": [
+    "terminal app",
+    "ghostty",
+    "iterm",
+    "finder",
+    "drag",
+    "reveal",
+    "editor",
+    "desktop"
+  ],
+  "summary": "Open any session in the terminal app you already use (Ghostty, iTerm2, Terminal, Kitty, WezTerm or a command you confirm), drag a Finder folder onto the Dock icon to open it as a project, drop a file on a terminal to type its path, and reveal a session's folder in Finder or your editor.",
+  "where": [
+    "Session menu, Open In Terminal App... in the menu bar, and the terminal widget menu, open in terminal app.",
+    "The Carnivore icon in the Dock (drop a folder) and any terminal in the window (drop a file or folder).",
+    "Session menu and File menu: Reveal in Finder, Open in Editor, Reveal Project in Finder, Open Project in Editor."
+  ],
+  "how_to": [
+    "Pick your terminal app in settings, desktop app; Open In Terminal App... then opens the session there through its attach command.",
+    "Choose a custom command and Carnivore shows it in full and asks you to confirm the first time and whenever it changes.",
+    "Drag a folder from Finder onto the Carnivore icon in the Dock: it opens that project, or asks to add the folder as a project first.",
+    "Drag a file or folder from Finder onto a terminal: its quoted full path is typed at the prompt, not sent, so the agent can read it.",
+    "Session menu, Reveal in Finder or Open in Editor open the folder of the session in view; the editor is the default editor set in Settings, General."
+  ],
+  "examples": [
+    "Watch an agent in Ghostty while Carnivore keeps the session alive.",
+    "Drop a screenshot onto a terminal so the agent can read its path.",
+    "Drop a project folder on the Dock icon to start working in it."
+  ],
+  "api_routes": [
+    "GET /api/v1/sessions/{id}/attach-command"
+  ],
+  "docs": [
+    "docs/desktop-app.md",
+    "docs/desktop-bridge.md"
+  ],
+  "surfaces": [
+    "macOS/app-menu/commands.js",
+    "macOS/main.js",
+    "web/src/lib/desktop-menu/menu-commands.ts"
+  ],
+  "media_exempt": "native: opens other macOS apps and takes Finder drops, which no browser capture can show",
+  "id": "open-in-terminal-app",
+  "area": "desktop-app",
+  "since": "2026-10-23",
+  "updated": "2026-10-23",
+  "status": "beta"
+}

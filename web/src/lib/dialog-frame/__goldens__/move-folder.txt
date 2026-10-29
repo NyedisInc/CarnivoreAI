@@ -1,0 +1,34 @@
+<div aria-label="move api to a folder" class="popup-focus stm" data-move-modal="" role="dialog" tabindex="-1">
+  <div class="stm-titlerow">
+    <span class="stm-label">
+      "move"
+    <span class="stm-title" data-move="title">
+      "move api to a folder"
+  <div class="stm-body">
+    <div aria-label="move" class="stm-options" role="radiogroup">
+      <label class="stm-option" data-choice="project">
+        <input name="move-mode" type="radio" value="project">
+        <span class="stm-option-text">
+          <span class="stm-option-title">
+            "a project"
+          <select aria-label="a project" class="modal-input" data-move="project">
+            <option value="">
+              "choose a project"
+            <option value="3">
+              "app"
+      <label class="stm-option" data-choice="folder">
+        <input name="move-mode" type="radio" value="folder">
+        <span class="stm-option-text">
+          <span class="stm-option-title">
+            "a new folder"
+          <span class="mvf-row">
+            <input aria-label="a new folder" autocomplete="off" class="modal-input" data-move="folder" disabled="" placeholder="/path/to/folder" spellcheck="false" type="text">
+          <span class="stm-option-help">
+            "created when missing; its parent folder must exist"
+  <footer class="stm-foot">
+    <button class="modal-btn modal-btn-secondary" data-move="cancel" type="button">
+      "cancel"
+    <button class="modal-btn modal-btn-secondary" data-move="check" disabled="" type="button">
+      "check"
+    <button class="modal-btn modal-btn-confirm" data-move="go" disabled="" type="button">
+      "move"

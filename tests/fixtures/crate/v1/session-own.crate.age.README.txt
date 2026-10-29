@@ -1,0 +1,11 @@
+session-own.crate.age is an encrypted crate (age v1, X25519).
+
+it opens with the private key of one of these age recipients:
+  age1mcypnvfkfxz0pent9ydrhtlznn5jxxdrq032v7a2vrykyjh6ny7ss960nr
+
+where the key lives: the golden test key is derived from a public seed in tests/python/crate_format/golden_read.py
+
+decrypt it with:
+  age -d -i <identity file> session-own.crate.age > crate.crate
+
+then read crate.crate's README.txt, or run: python3 -m src.core.crate_format verify crate.crate

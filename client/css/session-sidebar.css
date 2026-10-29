@@ -1,0 +1,358 @@
+
+@layer components {
+:root {
+    --sidebar-dock-w: min(320px, 85vw);
+    /* padding */
+    --drawer-field-h: 24px;
+    --drawer-bar-h: calc(var(--drawer-field-h) + 2 * var(--oc-space-1) + var(--oc-border));
+}
+
+@media (max-width: 700px) {
+    :root {
+        --sidebar-dock-w: min(calc(100vw - 36px), 480px) !important;
+    }
+}
+
+
+.session-sidebar-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    margin-right: var(--oc-space-1);
+    background: transparent;
+    border: none;
+    border-radius: var(--oc-radius-sm);
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.session-sidebar-toggle-mark {
+    display: block;
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    opacity: 0.72;
+    transition: opacity 120ms ease;
+}
+
+.session-sidebar-toggle:hover .session-sidebar-toggle-mark,
+.session-sidebar-toggle[aria-expanded="true"] .session-sidebar-toggle-mark {
+    opacity: 1;
+}
+
+
+.session-sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: var(--oc-backdrop);
+    z-index: 1090;
+}
+
+.session-sidebar-backdrop[hidden] {
+    display: none;
+}
+
+
+.session-sidebar-panel {
+    position: fixed;
+    top: var(--desktop-inset-top, 0px);
+    left: 0;
+    bottom: 0;
+    width: var(--sidebar-dock-w);
+    background: var(--oc-ground-chrome);
+    border-right: var(--oc-border) solid var(--oc-line-chrome);
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(-100%);
+    /*  hidden  display: none */
+    visibility: hidden;
+    transition: transform 160ms ease, visibility 0s linear 160ms;
+}
+
+.session-sidebar-panel--open {
+    transform: translateX(0);
+    visibility: visible;
+    transition: transform 160ms ease, visibility 0s linear 0s;
+}
+
+
+/* padding */
+/* padding: 0 }`
+ * (home-bar.css) and `.header { padding-left }` (ios-chrome.css) are still
+ * unlayered, so the docked `padding-left` written here for those two
+ * selectors LOST to them after design system slice 5 wrapped this file: the
+ * home screen and its drawer-side content slid under the docked drawer
+ * ("the homepage is not resizing. its falling
+ * under the drawer"). A custom property is not a property those rules set,
+ * so it cannot lose; */
+body.session-sidebar-pinned {
+    --dock-offset: var(--sidebar-dock-w);
+}
+
+.screen {
+    padding-left: var(--dock-offset, 0);
+}
+
+body.session-sidebar-pinned .session-sidebar-panel {
+    box-shadow: none;
+}
+
+
+.session-sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    /* padding */
+    padding: var(--oc-space-1) var(--oc-space-4);
+    border-bottom: 1px solid var(--oc-line-faint);
+    flex-shrink: 0;
+}
+
+.session-sidebar-search,
+.session-sidebar-stats {
+    flex-shrink: 0;
+}
+
+.session-sidebar-scroll {
+    display: contents;
+}
+
+@media (max-width: 1023px) {
+    .session-sidebar-scroll {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .session-sidebar-scroll > .session-sidebar-list {
+        flex: 0 0 auto;
+        overflow-y: visible;
+    }
+
+    /*  hidden  */
+    .session-sidebar-scroll:has(> .session-sidebar-list[hidden]) {
+        display: none;
+    }
+}
+
+/* `display: flex` on the list, the filter box and the stats would otherwise
+ * beat the user agent's `[hidden] { display: none }`, so the `[hidden]` rule
+ * here is load bearing: `applyDrawerTab` hides them while another drawer
+ * tab's body (edit layout) shows. */
+.session-sidebar-list[hidden],
+.session-sidebar-search[hidden],
+.session-sidebar-stats[hidden] {
+    display: none;
+}
+
+/* width: auto */
+.session-sidebar-brand {
+    display: inline-flex;
+    align-items: center;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    border-radius: var(--oc-radius-sm);
+    transition: opacity 120ms ease;
+}
+
+.session-sidebar-brand img {
+    display: block;
+    width: auto;
+    height: 52px;
+    object-fit: contain;
+}
+
+.session-sidebar-brand:hover {
+    opacity: 0.82;
+}
+
+.session-sidebar-heading .session-sidebar-brand {
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.session-sidebar-heading .session-sidebar-brand img {
+    max-width: 100%;
+}
+
+.session-sidebar-alerts {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+}
+
+.session-sidebar-alerts:empty {
+    display: none;
+}
+
+.session-sidebar-heading .session-sidebar-brand {
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.session-sidebar-heading .session-sidebar-brand img {
+    max-width: 100%;
+}
+
+.session-sidebar-alerts {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+}
+
+.session-sidebar-alerts:empty {
+    display: none;
+}
+
+.session-sidebar-heading .session-sidebar-brand {
+    margin-right: auto;
+}
+
+/* flex: 0 0 auto */
+.session-sidebar-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: var(--oc-space-2);
+}
+
+.session-sidebar-list > * {
+    flex: 0 0 auto;
+    /* align-items: stretch overflow: hidden; text-overflow: ellipsis */
+    min-width: 0;
+}
+
+.session-sidebar-ledger {
+    flex: 0 0 auto;
+    max-height: 45vh;
+    max-height: 45dvh;
+    overflow-y: auto;
+}
+
+.session-sidebar-tabbody {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.session-sidebar-tabbody[hidden] {
+    display: none;
+}
+
+.session-sidebar-area-bar {
+    flex: 0 0 auto;
+}
+
+/* position: fixed */
+body.oc-layout-editing .session-sidebar-panel--open {
+    transform: none;
+}
+
+.session-sidebar-ledger[hidden] {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    .session-sidebar-ledger {
+        max-height: 38vh;
+        max-height: 38dvh;
+    }
+}
+
+/* padding */
+
+.session-sidebar-empty {
+    padding: var(--oc-space-5) var(--oc-space-3);
+    text-align: center;
+    color: var(--oc-text-secondary);
+    font-size: 0.85em;
+}
+
+/* the account chip */
+
+.session-sidebar-bar-slot {
+    flex: 0 0 auto;
+}
+
+.session-sidebar-bar {
+    /* the account chip */
+    display: flex;
+    align-items: center;
+    gap: var(--oc-space-2);
+    padding: 6px var(--oc-space-2);
+    border-top: 1px solid var(--oc-line-faint);
+}
+
+.session-sidebar-bar__group {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+}
+
+.session-sidebar-bar__version {
+    flex: 0 0 auto;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.session-sidebar-bar__version > [data-bar-action] {
+    --oc-ibtn-size: 28px;
+    flex-shrink: 0;
+    border-radius: var(--oc-radius-sm);
+    color: var(--oc-text-secondary);
+}
+
+.session-sidebar-bar__version > [data-bar-action]:hover:not(:disabled),
+.session-sidebar-bar__version > [data-bar-action]:focus-visible {
+    color: var(--oc-orange);
+}
+
+.session-sidebar-bar__version > [data-bar-indicator]:not([data-bar-indicator-quiet]) {
+    color: var(--oc-coral);
+}
+
+.session-sidebar-bar__version > [data-bar-indicator] {
+    margin-left: -4px;
+}
+
+.session-sidebar-bar__version .version-footer__preview {
+    margin-left: var(--oc-space-1);
+    color: var(--oc-text-dim);
+    font-size: var(--oc-fs-micro);
+    letter-spacing: var(--oc-tracking-label);
+    text-transform: uppercase;
+}
+
+.session-sidebar-bar__version .version-footer {
+    min-width: 0;
+    margin: 0;
+}
+
+@media (pointer: coarse) {
+    .session-sidebar-bar__version > [data-bar-action] {
+        --oc-ibtn-size: 40px;
+    }
+}
+}

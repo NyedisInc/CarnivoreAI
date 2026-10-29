@@ -1,0 +1,19 @@
+.wrapper-mark {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    line-height: 0;
+}
+
+.wrapper-mark[data-mark-source='family'] svg {
+    opacity: 0.9;
+}
+
+.folder-picker-item:has(> .wrapper-mark) {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}

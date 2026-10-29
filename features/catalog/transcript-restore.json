@@ -1,0 +1,29 @@
+{
+  "api_routes": [],
+  "area": "archive",
+  "docs": [
+    "docs/transcript-restore.md"
+  ],
+  "examples": [
+    "A cleanup script deleted ~/.claude/projects: get the conversation back and resume it."
+  ],
+  "how_to": [
+    "Restore the conversation's file from the archive so claude can resume it."
+  ],
+  "id": "transcript-restore",
+  "issues": [],
+  "keywords": [
+    "restore",
+    "recovery"
+  ],
+  "media_exempt": "an API-driven repair with no screen of its own",
+  "name": "Transcript restore",
+  "since": "2026-09-15",
+  "status": "stable",
+  "summary": "recover a conversation's history when its file went missing, so you can resume it.",
+  "surfaces": [],
+  "updated": "2026-09-27",
+  "where": [
+    "The archive, for a conversation whose original file has gone missing."
+  ]
+}

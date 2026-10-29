@@ -1,0 +1,218 @@
+
+.mgr .oc-page__bar {
+    align-items: center;
+    flex: none;
+}
+
+.mgr .pl-titlebar.mgr__detail-bar {
+    justify-content: space-between;
+    border-radius: 0;
+}
+
+.mgr .mgr__detail-title:focus:not(:focus-visible) {
+    outline: none;
+}
+
+.mgr .mgr__detail-title--kicked {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
+}
+
+.mgr .mgr__detail-kicker {
+    flex: none;
+}
+
+.mgr .mgr__detail-name {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--pl-text);
+    font-size: 13px;
+    letter-spacing: 0;
+    text-transform: none;
+    text-overflow: ellipsis;
+}
+
+/* padding */
+.mgr .oc-page__detail-body.mgr__detail-body--fill {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+}
+
+.mgr .mgr-facts {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 8px 16px;
+    margin: 0;
+}
+
+.mgr .mgr-facts > dt {
+    padding-top: 1px;
+    color: var(--pl-muted);
+    font-size: 10px;
+    letter-spacing: var(--oc-tracking-label, 0.6px);
+    text-transform: uppercase;
+}
+
+.mgr .mgr-facts > dd {
+    min-width: 0;
+    margin: 0;
+    color: var(--pl-text);
+    font-family: var(--pl-mono);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.mgr .mgr-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--pl-line);
+}
+
+.mgr .mgr-actions__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mgr .mgr-actions__why {
+    margin: 0;
+    color: var(--pl-muted);
+    font-size: 11px;
+}
+
+@media (max-width: 1023px) {
+    .mgr .mgr-actions .oc-btn {
+        min-height: var(--oc-tap, 44px);
+    }
+}
+
+:is(.mgr, .cat) .oc-page__view {
+    display: flex;
+    gap: var(--oc-space-1);
+    margin-left: auto;
+}
+
+:is(.mgr, .cat) .oc-page__view .oc-ibtn {
+    --oc-ibtn-size: 24px;
+}
+
+:is(.mgr, .cat) .oc-page__view .oc-ibtn[aria-pressed='true'] {
+    border-color: var(--oc-control-line-hi);
+    background: var(--oc-ground-raised);
+    color: var(--oc-text-primary);
+}
+
+@media (max-width: 1023px) {
+    :is(.mgr, .cat) .oc-page__view .oc-ibtn {
+        --oc-ibtn-size: var(--oc-tap, 44px);
+    }
+}
+
+@media (max-width: 767px) {
+    .oc-page__flip {
+        --oc-ibtn-size: 44px;
+        flex: none;
+        background: transparent;
+        color: var(--oc-text-secondary);
+    }
+
+    .mgr:not(.settings-page) .oc-page__main {
+        padding-top: 12px;
+    }
+
+    .oc-titlebar__controls .oc-page__chips {
+        flex-wrap: nowrap;
+        gap: 0;
+        height: 44px;
+        box-sizing: border-box;
+        border: 1px solid var(--oc-line-rule);
+        border-radius: var(--oc-control-radius, 2px);
+    }
+
+    .oc-titlebar__controls .oc-chip {
+        flex: none;
+        min-width: 44px;
+        height: 100%;
+        min-height: 0;
+        padding: 0 8px;
+        border: 0;
+        border-radius: 0;
+        font-size: 11px;
+    }
+
+    .oc-titlebar__controls .oc-chip + .oc-chip {
+        box-shadow: inset 1px 0 0 var(--oc-line-rule);
+    }
+
+    .mgr .oc-page__bar {
+        flex-wrap: nowrap;
+        gap: var(--oc-space-2);
+        padding-top: 0;
+        padding-bottom: 0;
+        min-height: 0;
+    }
+
+    .mgr .oc-page__chips {
+        flex: 1 1 auto;
+        min-width: 0;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .mgr .oc-page__chips > * {
+        flex: none;
+    }
+
+    .mgr .oc-page__tools--end {
+        margin-left: auto;
+        flex: none;
+        flex-wrap: nowrap;
+    }
+
+    .mgr .oc-page__tools--end + .oc-page__view {
+        margin-left: 0;
+    }
+}
+
+.oc-page--embedded .oc-page__bar {
+    container: oc-embar / inline-size;
+}
+
+@container oc-embar (max-width: 899px) {
+    .oc-page__bar > .oc-page__search {
+        flex: 1 0 100%;
+        max-width: none;
+    }
+
+    .oc-page__bar > .oc-page__chips {
+        flex: 1 1 auto;
+        min-width: 0;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .oc-page__bar > .oc-page__chips > * {
+        flex: none;
+    }
+}
+
+.oc-page--embedded > .oc-page__away {
+    position: static;
+    transform: none;
+}
+
+@media (max-width: 767px) {
+    .mgr.oc-page--embedded .oc-page__bar {
+        flex-wrap: wrap;
+    }
+}

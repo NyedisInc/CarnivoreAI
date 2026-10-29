@@ -1,0 +1,47 @@
+{
+  "api_routes": [
+    "GET /api/v1/cplug-owner/sideload",
+    "PUT /api/v1/cplug-owner/sideload/switch",
+    "POST /api/v1/cplug-owner/sideload",
+    "DELETE /api/v1/cplug-owner/sideload"
+  ],
+  "area": "settings",
+  "description": "For people writing a plugin. Sideload copies a folder holding a plugin manifest (cplug.json) into the host, installs it as local/<name> with the unverified mark, and runs it like any other sidecar. It has its own switch, separate from developer mode, and the switch expires after twelve hours. Turning it off stops and hides every sideloaded plugin; your source folder is never touched.",
+  "docs": [
+    "docs/cplug-runtime.md"
+  ],
+  "examples": [
+    "Try a pixel pet you are building without publishing it: sideload the folder, tick its permissions, watch it run.",
+    "Leave the switch on overnight: it turns itself off after twelve hours and the sideloaded plugins stop."
+  ],
+  "how_to": [
+    "Turn on developer sideload (it shows twelve hours).",
+    "Sideload a folder that holds a plugin manifest (cplug.json); the plugin appears as local/<name> marked unverified, switched off with no permissions.",
+    "Turn the switch off to stop and hide every sideloaded plugin; your source folder is never touched."
+  ],
+  "id": "developer-sideload",
+  "issues": [
+    2063
+  ],
+  "keywords": [
+    "plugins",
+    "sideload",
+    "developer",
+    "local",
+    "cplug"
+  ],
+  "media_exempt": "pending the next recapture",
+  "name": "Developer sideload",
+  "since": "2026-10-22",
+  "status": "beta",
+  "summary": "load a plugin from a local folder to try it, behind its own switch that turns itself off after twelve hours.",
+  "surfaces": [
+    "web/src/lib/plugins-page/SideloadSwitch.svelte",
+    "src/cplugs/host/sideload_routes.py",
+    "src/cplugs/host/sideload.py"
+  ],
+  "updated": "2026-10-25",
+  "where": [
+    "The plugins page, the developer sideload row beside the third-party switch."
+  ]
+}

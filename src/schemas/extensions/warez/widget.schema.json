@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://carnivore.ai/schemas/extensions/warez/widget.schema.json",
+  "title": "Widget, layer 2 (warez front door)",
+  "description": "L1 widget plus the base overlay. Closed until after 1.0 (policy). Catalog widgets are declarative, ship the data and empty fixtures and read at least one source. The passing Widget Lab gate record is pipeline gate 11.",
+  "allOf": [
+    {
+      "$ref": "../widget.schema.json"
+    },
+    {
+      "$ref": "item.schema.json"
+    },
+    {
+      "properties": {
+        "source": {
+          "const": "catalog"
+        },
+        "declarative": {
+          "const": true
+        },
+        "reads": {
+          "minItems": 1
+        },
+        "fixtures": {
+          "$comment": "contains data and contains empty, spelled with not/items because the checker has no contains: not (every item is not X) means some item is X.",
+          "allOf": [
+            {
+              "not": {
+                "items": {
+                  "not": {
+                    "const": "data"
+                  }
+                }
+              }
+            },
+            {
+              "not": {
+                "items": {
+                  "not": {
+                    "const": "empty"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "source",
+        "declarative",
+        "reads",
+        "fixtures"
+      ]
+    }
+  ]
+}

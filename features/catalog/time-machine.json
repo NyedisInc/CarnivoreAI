@@ -1,0 +1,58 @@
+{
+  "api_routes": [
+    "/api/v1/cplugs/save/*"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/time-machine.md",
+    "docs/backup-vault.md",
+    "docs/old-archive-import.md"
+  ],
+  "examples": [
+    "You remove a session and later find its transcript file is gone; restore the point from the session's conversation backups tab and resume the same conversation."
+  ],
+  "how_to": [
+    "Turn on conversation backups (the save plugin) in plugins. It ships off; an install that already had it on keeps it on.",
+    "Conversation backups copy every conversation on disk into the backup vault when the plugin is turned on and keep it current as the conversation grows; killing, removing, sleeping or restarting a session also saves a point at that moment. A conversation whose file was later shortened or rewritten keeps the older point.",
+    "Open a session on the projects page and use its conversation backups tab, or GET /api/v1/cplugs/save/sessions/{session_uuid}/points; pin a point so it never ages out, or restore it.",
+    "A restore always puts the transcript back. Starting a session on it needs the permissions sessions.read and sessions.create, which you grant to the plugin on the plugins page; without them the tab tells you so in plain words.",
+    "Set how much disk conversation backups may use, and what they capture, in the plugin's settings pane on the plugins page (the storage slider and the capture scope: human, human and subsessions, or all; GET and PUT /api/v1/cplugs/save/settings and /capture-scope).",
+    "The vault never deletes a conversation's last copy, never deletes to get under the size limit, and tells you in the backup health alerts when it is over the limit, cannot be reached, has fallen behind, or holds conversations with no copy.",
+    "Choose where the vault lives in the plugin's settings pane (vault location, the setting vaultLocation; blank is the app data folder). A new location starts a new vault; nothing is moved and the old folder stays.",
+    "Plugin folders marked for the vault (the review boards and their drafts first) are backed up hourly into the same vault, git history included. GET /api/v1/cplugs/save/folders lists them with their size; POST /api/v1/cplugs/save/folders/{unit}/restore puts a copy in a new folder beside the original and never touches the original.",
+    "Old archive databases, recovered transcripts and the retired save store come in through POST /api/v1/cplugs/save/imports/preview (counts and a fingerprint, writes nothing) and POST /imports/apply (add only; undo with POST /imports/{run_id}/undo); an imported point shows an imported chip and its labels in the restore points table, and a junk, trash or review labeled import stays out of deep search until the once-over records a keep verdict."
+  ],
+  "id": "time-machine",
+  "issues": [
+    1107,
+    1128,
+    1675,
+    1956,
+    2038
+  ],
+  "keywords": [
+    "backup",
+    "capture scope",
+    "multi-frame zstd",
+    "conversation backup",
+    "slider",
+    "storage cap",
+    "subagents",
+    "transcript",
+    "save plugin"
+  ],
+  "media_exempt": "Panels driven by the plugin's routes; feature screenshots are recaptured before the next version bump.",
+  "name": "Conversation backups",
+  "since": "2026-09-29",
+  "status": "beta",
+  "summary": "with the save plugin on (it ships off), every killed or removed session leaves a compressed conversation backup of its conversation, sleep or restart keep one rotating emergency copy, and a conversation still being written gets a fresh copy every 30 minutes.",
+  "surfaces": [
+    "web/src/cplugs/save/SessionTab.svelte",
+    "web/src/cplugs/save/SaveSettings.svelte",
+    "web/src/cplugs/save/RestorePoints.svelte"
+  ],
+  "updated": "2026-10-21",
+  "where": [
+    "Plugins > conversation backups (settings pane), a session's conversation backups tab on the projects page, and /api/v1/cplugs/save/*. The vault lives in the folder set as vault location (the app data folder's vault/ by default); old restore points stay under time-machine/."
+  ]
+}

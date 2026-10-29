@@ -1,0 +1,42 @@
+{
+  "id": "widget-thumbnails",
+  "name": "Widget screenshots",
+  "summary": "Every widget on the widgets page shows a screenshot of itself, captured by the same script that keeps the rest of the help pictures current.",
+  "description": "The widgets page lists every widget this build carries, and each card now carries a picture of the widget so you can tell what it looks like before adding it. The same picture is the thumbnail on the card in the edit layout widget drawer. The pictures are not hand taken: they are the output of one capture spec, features/capture/widget-thumbnails.json, replayed against a throwaway test server by scripts/feature_capture.py, so they are recaptured when a widget changes instead of going stale. A widget with no picture yet draws its icon and a tick per density step instead.",
+  "area": "home",
+  "status": "beta",
+  "since": "2026-09-29",
+  "updated": "2026-09-29",
+  "surfaces": [
+    "widgets page",
+    "web/src/lib/widgets-page/WidgetsScreen.svelte",
+    "web/src/opscenter/layout-editor/WidgetThumb.svelte"
+  ],
+  "api_routes": [
+    "GET /api/v1/widgets",
+    "GET /api/v1/feature-media/{feature_id}/{filename}"
+  ],
+  "docs": [
+    "docs/widget-system.md"
+  ],
+  "issues": [],
+  "keywords": [
+    "widgets",
+    "screenshot",
+    "thumbnail",
+    "widgets page"
+  ],
+  "where": [
+    "The widgets page: every widget card carries its picture.",
+    "Edit layout's widget drawer: the same picture is the card's thumbnail."
+  ],
+  "how_to": [
+    "Open the widgets page from the drawer menu.",
+    "Read a card's picture to see what the widget looks like, then add it from the widgets menu or the edit layout drawer."
+  ],
+  "examples": [
+    "Check what the files widget looks like before adding it to the home screen."
+  ],
+  "media": [],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

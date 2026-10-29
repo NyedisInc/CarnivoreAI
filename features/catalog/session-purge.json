@@ -1,0 +1,42 @@
+{
+  "id": "session-purge",
+  "name": "Session purge",
+  "summary": "permanently remove an asleep session and everything traced to it: its record, database rows, search and archive entries, Claude Code and Codex transcripts, todos, file history, behind Beast Mode plus typing the session's name.",
+  "area": "sessions",
+  "status": "beta",
+  "since": "2026-10-09",
+  "updated": "2026-10-09",
+  "surfaces": [
+    "owner API route"
+  ],
+  "api_routes": [
+    "src/api/session_purge_routes.py",
+    "src/api/agent_action_routes.py"
+  ],
+  "docs": [
+    "docs/mcp-server.md"
+  ],
+  "issues": [],
+  "keywords": [
+    "purge",
+    "hard delete",
+    "delete",
+    "transcript",
+    "session",
+    "beast",
+    "confirm",
+    "forget"
+  ],
+  "where": [],
+  "how_to": [
+    "Arm Beast Mode first; a purge is refused while it is off.",
+    "Plan the purge: POST the route with apply false and read what it would remove.",
+    "To apply, POST it with apply true, the plan's plan_fingerprint and confirm_text set to the session's exact name.",
+    "The receipt of what was removed lands in purge-receipts in the app's state folder."
+  ],
+  "examples": [
+    "A throwaway session full of pasted secrets: purge it so its transcript, archive copy and search entries are gone, not just hidden from the list."
+  ],
+  "media": [],
+  "media_exempt": "an owner API route only; there is no screen for it"
+}

@@ -1,0 +1,310 @@
+/* automations list */
+@layer components {
+    .pledger .lsk-page,
+    .lsk-sheet {
+        display: flex;
+        flex-direction: column;
+        gap: var(--oc-space-3);
+        font-family: var(--font-mono);
+        min-width: 0;
+    }
+
+    .pledger .lsk-line,
+    .lsk-sheet .lsk-line {
+        margin: 0;
+        font-size: var(--oc-fs-label);
+        color: var(--oc-text-muted);
+        overflow-wrap: anywhere;
+    }
+
+    .pledger .lsk-line--warn,
+    .lsk-sheet .lsk-line--warn {
+        color: var(--oc-orange);
+    }
+
+    .pledger .lsk-line--error {
+        color: var(--oc-coral);
+    }
+
+    .pledger .lsk-mark,
+    .lsk-sheet .lsk-mark {
+        padding: 0 6px;
+        border: 1px solid var(--oc-line-faint);
+        border-radius: var(--oc-radius-sm, 2px);
+        font-size: var(--oc-fs-micro, 10px);
+        color: var(--oc-text-secondary);
+    }
+
+    .lsk-sheet .lsk-mark--warn {
+        color: var(--oc-orange);
+        border-color: var(--oc-orange);
+    }
+
+    .pledger .lsk-scroll {
+        overflow: auto;
+        max-width: 100%;
+        border: 1px solid var(--oc-line-rule);
+        border-radius: var(--oc-radius-sm, 2px);
+        background: var(--oc-ground-panel);
+    }
+
+    .pledger .lsk-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: var(--oc-fs-label);
+    }
+
+    .pledger .lsk-table th,
+    .pledger .lsk-table td {
+        padding: var(--oc-space-2) var(--oc-space-3);
+        text-align: left;
+        vertical-align: top;
+        font-weight: normal;
+        box-shadow: inset 0 1px 0 var(--oc-line-rule);
+    }
+
+    .pledger .lsk-table thead th {
+        box-shadow: none;
+        color: var(--oc-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-size: var(--oc-fs-micro, 10px);
+    }
+
+    .pledger .lsk-table__name {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        min-width: 11rem;
+        background: var(--oc-ground-panel);
+    }
+
+    .pledger .lsk-table__name button {
+        margin-left: var(--oc-space-2);
+    }
+
+    .pledger .lsk-name {
+        color: var(--oc-text-primary);
+        font-size: var(--oc-fs-status);
+        overflow-wrap: anywhere;
+    }
+
+    .pledger .lsk-col__label {
+        display: block;
+        color: var(--oc-text-primary);
+        text-transform: none;
+        letter-spacing: 0;
+    }
+
+    .pledger .lsk-col__sub,
+    .lsk-sheet .lsk-col__sub {
+        display: block;
+        color: var(--oc-text-muted);
+        font-size: var(--oc-fs-micro, 10px);
+        text-transform: none;
+        letter-spacing: 0;
+    }
+
+    .pledger .lsk-cell {
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: var(--oc-space-1) var(--oc-space-2);
+        margin-right: var(--oc-space-2);
+        color: var(--oc-text-secondary);
+        white-space: nowrap;
+        font-size: var(--oc-fs-label);
+    }
+
+    .pledger .lsk-cell--present .lsk-cell__mark {
+        color: var(--oc-green, var(--oc-text-primary));
+    }
+
+    .pledger .lsk-cell--differs,
+    .pledger .lsk-cell--shadowed {
+        color: var(--oc-orange);
+    }
+
+    .pledger .lsk-cell--absent,
+    .pledger .lsk-cell--none_yet {
+        color: var(--oc-text-muted);
+    }
+
+    /* --color- */
+    .pledger .lsk-cell[data-state='syncing'],
+    .pledger .lsk-cell[data-state='syncing'] .lsk-cell__mark {
+        color: var(--oc-yellow);
+    }
+
+    .pledger .oc-btn.pks-on {
+        --_bd: var(--oc-yellow);
+        border-color: var(--oc-yellow);
+        color: var(--oc-yellow);
+    }
+
+    .pledger .pks-fam {
+        display: inline-flex;
+        vertical-align: middle;
+        margin-right: var(--oc-space-1);
+    }
+
+    .pledger .pks-name {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--oc-space-1);
+        min-width: 0;
+    }
+
+    .pledger .pks-name .pks-fam {
+        margin-right: 0;
+    }
+
+    .pledger .pks-controls {
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--oc-space-1) var(--oc-space-2);
+    }
+
+    /* box-shadow */
+    .pledger .lsk-scroll--pack {
+        max-height: min(70dvh, 52rem);
+    }
+
+    .pledger .lsk-table .pks-head th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: var(--oc-ground-titlerow);
+        box-shadow: 0 1px 0 var(--oc-line-rule);
+        font-family: var(--font-mono);
+        font-size: var(--oc-fs-micro, 10px);
+        font-weight: 400;
+        letter-spacing: var(--oc-tracking-label, 0.6px);
+        text-transform: uppercase;
+        color: var(--oc-text-muted);
+        white-space: nowrap;
+    }
+
+    .pledger .lsk-table .pks-head th.lsk-table__name {
+        z-index: 3;
+        background: var(--oc-ground-titlerow);
+    }
+
+    .pledger .pks-head .lsk-col__label {
+        color: var(--oc-text-muted);
+        text-transform: uppercase;
+        letter-spacing: var(--oc-tracking-label, 0.6px);
+    }
+
+    .pledger .pks-head .lsk-col__sub {
+        font-family: var(--font-mono);
+        text-transform: uppercase;
+        letter-spacing: var(--oc-tracking-label, 0.6px);
+    }
+
+    .pledger .lsk-cell__folder {
+        color: var(--oc-text-muted);
+        font-size: var(--oc-fs-micro, 10px);
+    }
+
+    .pledger .lsk-list,
+    .pledger .lsk-places {
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .pledger .lsk-list {
+        border: 1px solid var(--oc-line-rule);
+        border-radius: var(--oc-radius-sm, 2px);
+        background: var(--oc-ground-panel);
+    }
+
+    .pledger .lsk-item {
+        padding: var(--oc-space-2) var(--oc-space-3);
+        min-width: 0;
+    }
+
+    .pledger .lsk-item + .lsk-item {
+        box-shadow: inset 0 1px 0 var(--oc-line-rule);
+    }
+
+    .pledger .lsk-item__head,
+    .pledger .lsk-place {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--oc-space-1) var(--oc-space-3);
+    }
+
+    .pledger .lsk-place__label {
+        color: var(--oc-text-muted);
+        font-size: var(--oc-fs-label);
+    }
+
+    .lsk-sheet__heading {
+        margin: 0;
+        color: var(--oc-orange);
+        font-size: var(--oc-fs-micro, 10px);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .lsk-sheet__field {
+        display: flex;
+        flex-direction: column;
+        gap: var(--oc-space-1);
+    }
+
+    .lsk-targets,
+    .lsk-results,
+    .lsk-files {
+        display: flex;
+        flex-direction: column;
+        gap: var(--oc-space-1);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        font-size: var(--oc-fs-label);
+        color: var(--oc-text-primary);
+    }
+
+    .lsk-plan {
+        display: flex;
+        flex-direction: column;
+        gap: var(--oc-space-2);
+        padding-top: var(--oc-space-2);
+        box-shadow: inset 0 1px 0 var(--oc-line-rule);
+    }
+
+    .lsk-result {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .lsk-result__status {
+        color: var(--oc-text-secondary);
+    }
+
+    .lsk-result--refused .lsk-result__status,
+    .lsk-result--use_catalog_install .lsk-result__status,
+    .lsk-result--use_catalog_uninstall .lsk-result__status {
+        color: var(--oc-coral);
+    }
+
+    .lsk-files {
+        font-family: var(--font-mono);
+        overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 1023px) {
+        .lsk-sheet-overlay {
+            align-items: flex-end;
+        }
+    }
+}

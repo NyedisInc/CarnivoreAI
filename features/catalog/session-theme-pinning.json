@@ -1,0 +1,32 @@
+{
+  "api_routes": [],
+  "area": "themes",
+  "docs": [
+    "docs/session-identity-history.md"
+  ],
+  "examples": [
+    "Give production sessions a red theme so you never mistake them for a scratch one."
+  ],
+  "how_to": [
+    "Pick a theme for this session only, or set it as the default for the whole project."
+  ],
+  "id": "session-theme-pinning",
+  "issues": [],
+  "keywords": [
+    "pin",
+    "theme"
+  ],
+  "media": [],
+  "name": "Session theme pinning",
+  "since": "2026-09-07",
+  "status": "stable",
+  "summary": "pin a color theme to one session, or a whole project, so you recognize it at a glance.",
+  "surfaces": [
+    "client/js/theme-navigation.js"
+  ],
+  "updated": "2026-10-21",
+  "where": [
+    "Open a session, then its session options menu (the three dots at the top right of its terminal widget) and choose session theme."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

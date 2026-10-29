@@ -1,0 +1,58 @@
+{
+  "api_routes": [
+    "PATCH /api/v1/preferences"
+  ],
+  "area": "drawers",
+  "docs": [
+    "docs/sidebar-rail.md"
+  ],
+  "examples": [
+    "Answer a waiting question from the yellow slide-out without losing your place in the agents list.",
+    "Swap from questions straight to swarm with one click on the rail."
+  ],
+  "how_to": [
+    "The menu lives down the left sidebar's left edge, as the full menu or as a pinned icon rail; it is the only sidebar layout.",
+    "The menu is the rail: agents is the top row, swarm is under it, and settings is the last row, with the pin at the bottom right of the sidebar.",
+    "Unpinned, hover the thin handle on the sidebar's left edge and the full menu slides out; move away and it goes back (escape from anywhere but a terminal puts it back too, and a swarm or questions panel that was open is swapped for the menu while you hover).",
+    "Pinned (click the pin at the bottom right of the sidebar, or the pin at the bottom of the rail), the menu becomes a narrow rail of icons, one per menu row. Hover an icon and its full name shows to the right while the icons grow like a dock; nothing animates while the pointer is away, and with reduced motion the names still show and nothing grows.",
+    "Click an icon to slide its panel over the agents list; click it again, the agents icon, the x, or press escape to go back to agents.",
+    "The menu closes when you pick a destination or click outside it; questions and swarm stay open while you work.",
+    "With the drawer collapsed, the same keys show in the narrow rail; pressing one opens the drawer on that panel.",
+    "Right-click the icon at the top left of an open panel's title row (or press shift+f10 on it) for that widget's menu: edit layout and whatever the widget offers.",
+    "Plugin page tabs such as flow get an icon too, once the tab is on; a closable one has a small x on its icon, or press delete on it.",
+    "From the keyboard, tab to the rail once, then use the arrow keys, home and end to move between icons and enter or space to open one.",
+    "Right-click the rail or its handle (or press shift+f10 on the handle) for its menu: pin rail, edit layout or done editing."
+  ],
+  "id": "sidebar-rail",
+  "issues": [
+    1774,
+    1785,
+    1790,
+    2047
+  ],
+  "keywords": [
+    "icon rail",
+    "slide-out",
+    "flyout",
+    "sidebar"
+  ],
+  "media": [],
+  "media_exempt": "screenshots are captured at the pre-version-bump recapture",
+  "name": "Sidebar rail",
+  "since": "2026-10-14",
+  "status": "beta",
+  "summary": "the sidebar menu: agents, swarm and settings in one menu that pops out on hover, or pins into a narrow icon rail whose icons name themselves on hover.",
+  "surfaces": [
+    "web/src/lib/sidebar-widgets/SidebarRail.svelte",
+    "web/src/lib/sidebar-widgets/SidebarFlyoutHost.svelte",
+    "web/src/lib/sidebar-widgets/rail-layout.svelte.ts",
+    "web/src/lib/sidebar-widgets/sidebar-rail.css",
+    "web/src/lib/sidebar-widgets/SidebarRailShell.svelte",
+    "web/src/lib/sidebar-widgets/RailMenu.svelte",
+    "web/src/lib/widget-menu/rail-menu.ts"
+  ],
+  "updated": "2026-10-14",
+  "where": [
+    "The left sidebar, down its left edge under the top bar."
+  ]
+}

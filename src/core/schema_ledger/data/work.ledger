@@ -1,0 +1,6 @@
+# Rung ledger of the work ladder inside carnivore.db (src/core/work/work_ladder MIGRATIONS), one line per rung: W<n> takes work_meta.work_ladder to n.
+# W<n> <sha256 of the rung's exact SQL text> <author> <slug>
+# Append-only; a changed hash on a shipped rung is a failing test. Issue #1711 (split P2); see docs/work-core.md.
+W1 d1b0502b9ed9941cc7895028f904113690165625097894da8d4f4c53ca6a9198 acme task-manager-tables-in-carnivore-db
+W2 5503829670c958cfcaf0f927ea6e7d4855dae18abfc93c96d53358b0470808fa acme work-held-tells-becomes-work-held-sends
+W3 d96b125025f741f6a458a10149d5398ec710df0fd42eb7e81cd877fb674f09f1 acme work-items-review-checks

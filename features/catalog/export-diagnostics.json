@@ -1,0 +1,42 @@
+{
+  "name": "Export diagnostics",
+  "issues": [
+    2326,
+    2354
+  ],
+  "keywords": [
+    "diagnostics",
+    "crash",
+    "support",
+    "zip",
+    "redacted",
+    "desktop"
+  ],
+  "summary": "Help, Export Diagnostics... saves a redacted diagnostics zip wherever you choose; crash dumps and crash lines stay on your computer and nothing is sent anywhere.",
+  "where": [
+    "Help menu in the menu bar, Export Diagnostics...",
+    "The Carnivore icon menu in the menu bar, Export Diagnostics..., also while the server is down."
+  ],
+  "how_to": [
+    "Pick Help, Export Diagnostics... and choose where the zip is saved.",
+    "Attach the zip yourself when you ask for help; Carnivore never uploads it.",
+    "Expect secrets to be starred out of the logs inside the zip."
+  ],
+  "examples": [
+    "Save the zip to the Desktop after a crash and send it to a teammate by hand."
+  ],
+  "docs": [
+    "docs/desktop-app.md"
+  ],
+  "surfaces": [
+    "macOS/app-menu/commands.js",
+    "macOS/tray-menu/model/server.js",
+    "macOS/tray-menu/model/index.js"
+  ],
+  "media_exempt": "native: a macOS save dialog and a zip written to disk, which no browser capture can show",
+  "id": "export-diagnostics",
+  "area": "desktop-app",
+  "since": "2026-10-23",
+  "updated": "2026-10-23",
+  "status": "beta"
+}

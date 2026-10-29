@@ -1,0 +1,35 @@
+{
+  "api_routes": [
+    "src/api/catalog_publish_routes.py"
+  ],
+  "area": "themes",
+  "docs": [],
+  "examples": [
+    "Match the app to your company colors."
+  ],
+  "how_to": [
+    "Follow the steps shown: make a folder, write its theme.json, add art if you want.",
+    "It appears in the themes list with no restart.",
+    "Press SUBMIT A THEME to open the publish screen; your own theme folders are listed there. The local check refuses a theme that carries a script, stylesheet, svg or html, naming the file."
+  ],
+  "id": "build-your-own-theme",
+  "issues": [
+    1172
+  ],
+  "keywords": [
+    "custom theme"
+  ],
+  "media": [],
+  "name": "Build your own theme",
+  "since": "2026-09-22",
+  "status": "stable",
+  "summary": "design your own color theme and preview it before saving it.",
+  "surfaces": [
+    "web/src/lib/themes-page/BuildYourOwn.svelte"
+  ],
+  "updated": "2026-09-30",
+  "where": [
+    "Themes screen, BUILD YOUR OWN, SUBMIT A THEME."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

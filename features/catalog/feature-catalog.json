@@ -1,0 +1,37 @@
+{
+  "api_routes": [],
+  "area": "dev-tooling",
+  "description": "Each PR adds small JSON files under `features/catalog/` (a feature's current state) and `features/changes/` (one immutable entry per PR). `FEATURES.md`, `features/index.json` and `features/schema.json` are generated from them at merge time and are never hand-edited. This is a per-change log, not release notes; the GitHub release body stays the release record.",
+  "docs": [
+    "features/README.md",
+    "docs/DECISIONS.md"
+  ],
+  "examples": [
+    "Answer what shipped in a release, feature by feature, without reading the git log."
+  ],
+  "how_to": [
+    "Every PR adds a change entry; features.py check --branch enforces it before merge."
+  ],
+  "id": "feature-catalog",
+  "issues": [
+    816
+  ],
+  "keywords": [
+    "changelog",
+    "catalog",
+    "features",
+    "release notes"
+  ],
+  "media_exempt": "repository tooling with no screen in the app",
+  "name": "Feature catalog and update log",
+  "since": "2026-09-26",
+  "status": "stable",
+  "summary": "A per-change, machine-readable record of what the product does and what changed, generated at merge time.",
+  "surfaces": [
+    "FEATURES.md"
+  ],
+  "updated": "2026-09-27",
+  "where": [
+    "In the repository: features/ and the generated FEATURES.md."
+  ]
+}

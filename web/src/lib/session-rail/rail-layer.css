@@ -1,0 +1,65 @@
+@layer components {
+  .rail__handle {
+    position: absolute;
+    inset: 0;
+  }
+
+  .rail__layer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 45;
+    display: flex;
+    flex-direction: column;
+    width: var(--rail-w, 36px);
+    background: var(--oc-rail-header-ground);
+    box-shadow: inset 1px 0 0 0 var(--oc-line-frame);
+    transition: transform 140ms ease-out, visibility 0s linear 140ms;
+  }
+
+  .rail--bottom .rail__layer {
+    top: auto;
+    left: 0;
+    flex-direction: row;
+    width: auto;
+    height: var(--rail-h);
+    box-shadow: inset 0 1px 0 0 var(--oc-line-frame);
+  }
+
+  .rail__layer[data-out='false'] {
+    visibility: hidden;
+    transform: translateX(100%);
+  }
+
+  .rail--bottom .rail__layer[data-out='false'] {
+    transform: translateY(100%);
+  }
+
+  .rail__layer[data-out='true'] {
+    transition: transform 140ms ease-out, visibility 0s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rail__layer,
+    .rail__layer[data-out='true'] {
+      transition: none;
+    }
+  }
+
+  .rail__pin {
+    position: absolute;
+    z-index: 1;
+    bottom: var(--rail-pad, var(--oc-space-2));
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .rail--bottom .rail__pin {
+    top: 50%;
+    bottom: auto;
+    left: auto;
+    right: var(--rail-pad, var(--oc-space-2));
+    transform: translateY(-50%);
+  }
+}

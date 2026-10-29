@@ -1,0 +1,48 @@
+{
+  "api_routes": [
+    "src/api/filesystem_routes.py",
+    "src/api/config_files_routes.py",
+    "PATCH /api/v1/item-settings/widget/core.files"
+  ],
+  "area": "drawers",
+  "docs": [],
+  "examples": [
+    "Read the file an agent just changed without leaving its terminal.",
+    "See the branch, ahead and behind, and the five newest changes at the top of the project, then press just changes to list every changed file alone.",
+    "Type part of a name in the filter, press Enter, and the first match opens in the files list."
+  ],
+  "how_to": [
+    "Open the files widget (the files key on the right widget bar) to browse the session's project and ~/.claude as two sections, project first by the setting.",
+    "Click a file, or press Enter on it, to open it as a row of the left sidebar's files list, shown full size in the main section (see open-files); a changed file opens its diff, Shift opens the file. When a file cannot be opened the line under the tree says why.",
+    "Type in the filter (or press / in the tree) to find files by name; Escape clears it, the down arrow goes back to the tree.",
+    "Right-click the widget's icon on the rail or at the top left of its title strip for its menu: filter, just changes, whole file not diff, show the global folder, list project first, dot files, git ignored files, collapse all folders and reload. The two folder choices are also settings of the files widget.",
+    "The files key on the rail wears a bubble with how many files changed, so you see it without opening the widget; nothing shows when the tree is clean. Turn it off in the files widget's settings under rail key.",
+    "Folders you open, the filter, just changes and the other view choices are remembered on this device, per project."
+  ],
+  "id": "file-drawer",
+  "issues": [
+    2009
+  ],
+  "keywords": [
+    "files",
+    "file browser"
+  ],
+  "media": [],
+  "name": "File drawer",
+  "since": "2026-09-10",
+  "status": "stable",
+  "summary": "browse your project's files, its git state and its changes in one tree, and open any of them in the files list.",
+  "surfaces": [
+    "web/src/lib/file-drawer/FileDrawerHeader.svelte",
+    "client/js/config-editor-roots.js",
+    "web/src/lib/file-drawer/roots-prefs.svelte.ts",
+    "web/src/opscenter/cells/files/Cell.svelte",
+    "web/src/lib/file-drawer/tree-api.ts"
+  ],
+  "updated": "2026-10-26",
+  "where": [
+    "Open a session, then the files key on the right widget bar (a default key), or add the files widget to a dashboard or the terminal page from edit layout.",
+    "The legacy file drawer still opens from files in the terminal cell's three-dot menu; its open as component control puts the files widget in the grid."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

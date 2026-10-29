@@ -1,0 +1,57 @@
+/*  hidden  */
+
+
+/* flex-shrink: 0 */
+/* display:none */
+body:has(.session-sidebar-panel--open) #header-icon {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* display: none */
+@media (min-width: 701px) {
+    body:has(.session-sidebar-panel--open) #session-sidebar-toggle {
+        visibility: hidden;
+        pointer-events: none;
+    }
+}
+
+.header-icon--wordmark {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    border-radius: var(--oc-radius-sm);
+}
+
+.header-icon--wordmark img {
+    content: url("/static/img/carnivore/carnivore-mark@2x.png");
+    width: 30px;
+    height: 30px;
+}
+
+.header-icon--wordmark:hover {
+    opacity: 0.82;
+}
+
+@media (max-width: 640px) {
+    .header-icon--wordmark,
+    .header-icon--wordmark img {
+        width: 26px;
+        height: 26px;
+    }
+}
+
+/* display: none */
+#settingsBtn,
+#logoutBtn,
+#headerComponentsBtn {
+    display: none;
+}
+
+/* file editor */
+body:has(.bscreen) .header :is(#configEditorBtn, #headerSizeMasterBtn) {
+    display: none;
+}

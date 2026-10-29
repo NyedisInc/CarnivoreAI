@@ -1,0 +1,30 @@
+{
+  "api_routes": [],
+  "area": "settings",
+  "docs": [
+    "docs/ui-preferences-inventory.md"
+  ],
+  "examples": [
+    "Move your preferences from the old per-browser storage so your phone and desktop agree."
+  ],
+  "how_to": [
+    "This feature was removed. To move settings to another machine, use export and import config in Settings, advanced, migration."
+  ],
+  "id": "settings-migration",
+  "issues": [],
+  "keywords": [
+    "import",
+    "migration",
+    "preferences"
+  ],
+  "media_exempt": "removed: the one-time import has no screen; export and import config is its own feature",
+  "name": "Settings migration",
+  "since": "2026-09-10",
+  "status": "removed",
+  "summary": "the one-time import of a browser's locally stored settings onto the server was removed; export and import config stays.",
+  "surfaces": [],
+  "updated": "2026-10-16",
+  "where": [
+    "Removed. Export and import config: Settings, advanced, migration."
+  ]
+}

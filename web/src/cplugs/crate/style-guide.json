@@ -1,0 +1,127 @@
+{
+  "files": {
+    "web/src/cplugs/crate/CratePanel.svelte": {
+      "section": "settings",
+      "classes": [
+        "crt-region",
+        "crt-row",
+        "crt-row--line",
+        "crt-row__acts",
+        "crt-row__meta",
+        "crt-row__name",
+        "crt-row__where"
+      ]
+    },
+    "web/src/cplugs/crate/JobProgress.svelte": {
+      "section": "settings",
+      "classes": [
+        "crt-job",
+        "crt-job__head",
+        "oc-btn"
+      ]
+    },
+    "web/src/cplugs/crate/crate-dialog.css": {
+      "section": "dialogs",
+      "classes": [
+        "crt-form",
+        "crt-form__row",
+        "crt-measure",
+        "crt-measure__dot",
+        "crt-measure__figs",
+        "crt-measure__sub",
+        "crt-modal",
+        "crt-modal--fill",
+        "crt-plan",
+        "crt-plan__act",
+        "crt-sum",
+        "crt-sum__key",
+        "crt-sum__val",
+        "crt-sum__val--bright",
+        "crt-sum__val--unread",
+        "crt-ticks",
+        "crt-tty",
+        "crt-tty__act",
+        "crt-tty__bar",
+        "crt-tty__count",
+        "crt-tty__fig",
+        "crt-tty__fig--left",
+        "crt-tty__head",
+        "crt-tty__idle",
+        "crt-tty__label",
+        "crt-tty__line",
+        "crt-tty__line--bright",
+        "crt-tty__name",
+        "crt-tty__note",
+        "crt-tty__out",
+        "crt-tty__out--lines",
+        "crt-tty__row",
+        "crt-tty__screen",
+        "crt-tty__screen--fit",
+        "crt-tty__sec",
+        "crt-tty__sec--pair",
+        "crt-tty__state",
+        "crt-tty__tag",
+        "crt-tty__tag--bad",
+        "crt-tty__tag--grow",
+        "crt-tty__tag--ok",
+        "crt-tty__tag--quiet",
+        "crt-tty__tag--warn",
+        "crt-tty__text",
+        "crt-tty__text--bad",
+        "crt-tty__text--dim",
+        "modal-body",
+        "modal-content",
+        "modal-footer",
+        "pl-label",
+        "text-prompt-modal"
+      ]
+    },
+    "web/src/cplugs/crate/ExportDialog.svelte": {
+      "section": "dialogs",
+      "classes": []
+    },
+    "web/src/cplugs/crate/ImportDialog.svelte": {
+      "section": "dialogs",
+      "classes": []
+    },
+    "web/src/cplugs/crate/ImportResult.svelte": {
+      "section": "dialogs",
+      "classes": []
+    },
+    "web/src/cplugs/crate/ImportPreview.svelte": {
+      "section": "dialogs",
+      "classes": []
+    },
+    "web/src/cplugs/crate/ProjectCrates.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "crt-pacts",
+        "crt-pjob",
+        "crt-pmore",
+        "crt-prow",
+        "crt-prow__act",
+        "crt-prow__lead",
+        "crt-prow__meta",
+        "crt-prow__name",
+        "crt-prow__pad",
+        "crt-prow__when"
+      ]
+    },
+    "web/src/cplugs/crate/TtyBox.svelte": {
+      "section": "dialogs",
+      "classes": []
+    },
+    "web/src/cplugs/crate/RemoveDialog.svelte": {
+      "section": "dialogs",
+      "classes": []
+    },
+    "web/src/cplugs/crate/UndoDialog.svelte": {
+      "section": "dialogs",
+      "classes": []
+    },
+    "web/src/cplugs/crate/RestoredList.svelte": {
+      "section": "settings",
+      "classes": []
+    }
+  }
+}

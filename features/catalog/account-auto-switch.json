@@ -1,0 +1,35 @@
+{
+  "api_routes": [],
+  "area": "providers",
+  "docs": [],
+  "examples": [
+    "Keep working through a rate limit without stopping to log in to another account.",
+    "After switching accounts, confirm and reset all sessions still running on the previous account.",
+    "A session that hit its weekly limit overnight is restarted on another account and keeps working, with no one at the keyboard."
+  ],
+  "how_to": [
+    "Turn on auto-switch. When the account a session uses hits its limit, new sessions move to another signed-in account, and a running session frozen on the limit is restarted on that account and sent continue.",
+    "On the Providers page, check the confirmation beside the running sessions, then press reset all to restart those sessions on the active account."
+  ],
+  "id": "account-auto-switch",
+  "issues": [],
+  "keywords": [
+    "auto switch",
+    "rate limit"
+  ],
+  "media": [],
+  "name": "Account auto-switch",
+  "since": "2026-09-25",
+  "status": "stable",
+  "summary": "automatically switch to another signed-in account when the one you're using hits a rate limit.",
+  "surfaces": [
+    "web/src/lib/account-switch/AutoSwitchPanel.svelte",
+    "web/src/lib/account-switch/SwitchAccountButton.svelte"
+  ],
+  "updated": "2026-10-21",
+  "where": [
+    "The switch icon beside PROVIDER LEDGER on the home screen and in the drawer's PROVIDERS panel.",
+    "The auto-switch accounts section on the Providers page."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://carnivore.ai/schemas/extensions/warez/skill.schema.json",
+  "title": "Skill, layer 2 (warez front door)",
+  "description": "L1 skill plus the base overlay. requires_tools entries are tool names. Cross-field rules (front matter name equals the name part of id; no scripts/ unless first party) are pipeline gates.",
+  "allOf": [
+    {
+      "$ref": "../skill.schema.json"
+    },
+    {
+      "$ref": "item.schema.json"
+    },
+    {
+      "properties": {
+        "requires_tools": {
+          "items": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_:.*-]{0,63}$"
+          }
+        }
+      }
+    }
+  ]
+}

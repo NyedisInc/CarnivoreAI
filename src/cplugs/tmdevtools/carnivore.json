@@ -1,0 +1,43 @@
+{
+  "kind": "cplug",
+  "id": "tmdevtools",
+  "name": "task-manager-dev-tools",
+  "version": "0.1.0",
+  "api_version": 1,
+  "min_app_version": "1.16.1",
+  "author": "Carnivore contributors",
+  "license": "MIT",
+  "tier": "dev",
+  "scope": [
+    "global"
+  ],
+  "icon": "plug",
+  "default_enabled": false,
+  "requires": [
+    {
+      "id": "huddle",
+      "kind": "cplug"
+    }
+  ],
+  "permissions": [
+    {
+      "name": "agent_writes"
+    }
+  ],
+  "owns": {
+    "routes": [
+      "/commands",
+      "/fold",
+      "/scroll-top",
+      "/tasks"
+    ],
+    "strings": [
+      "cplug.tmdevtools."
+    ],
+    "tests": [
+      "tests/python/cplugs/tmdevtools/",
+      "web/src/cplugs/tmdevtools/"
+    ]
+  },
+  "data": []
+}

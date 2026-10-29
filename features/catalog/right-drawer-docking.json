@@ -1,0 +1,32 @@
+{
+  "api_routes": [],
+  "area": "drawers",
+  "docs": [],
+  "examples": [
+    "Keep notes docked beside the terminal on a wide screen instead of floating over it."
+  ],
+  "how_to": [
+    "Open files or notes from their keys on the right widget bar (or the terminal cell's three-dot menu); the drawer docks beside the terminal, which shrinks to fit.",
+    "Opening the other one swaps it into the same slot.",
+    "The notes drawer's header is the standard widget header: right-click it, or press Shift+F10 on its top left icon, for the notes actions, open as widget and close."
+  ],
+  "id": "right-drawer-docking",
+  "issues": [],
+  "keywords": [
+    "drawer",
+    "docking"
+  ],
+  "media": [],
+  "name": "Right drawer docking",
+  "since": "2026-09-24",
+  "status": "stable",
+  "summary": "the file drawer and notes drawer share one slot on the right edge that docks beside the page or overlays it, depending on room.",
+  "surfaces": [
+    "web/src/lib/right-drawer/dock.svelte.ts"
+  ],
+  "updated": "2026-10-21",
+  "where": [
+    "The right edge of a session: the files and notes drawers open there."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

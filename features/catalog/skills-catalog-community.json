@@ -1,0 +1,35 @@
+{
+  "api_routes": [
+    "src/api/catalog_community_routes.py",
+    "src/api/catalog_community_write_routes.py"
+  ],
+  "area": "skills-catalog",
+  "docs": [],
+  "examples": [
+    "Ask the author a question under their skill, or report a comment that breaks the rules."
+  ],
+  "how_to": [
+    "Open a skill in the catalog and scroll to comments. Post, reply once deep, edit within 15 minutes, delete or report. Press a handle to open the author's page. Turn reply emails on or off in the catalog account panel."
+  ],
+  "id": "skills-catalog-community",
+  "issues": [
+    1171
+  ],
+  "keywords": [
+    "comments",
+    "replies",
+    "report",
+    "author page",
+    "profile"
+  ],
+  "media_exempt": "comments need a signed-in catalog account, which a capture must not use",
+  "name": "Comments and author pages",
+  "since": "2026-09-30",
+  "status": "beta",
+  "summary": "comment on a catalog skill or theme, report abuse, and open an author's page from any handle.",
+  "surfaces": [],
+  "updated": "2026-09-30",
+  "where": [
+    "A skill's detail pane in the catalog, and a theme's feedback block on the themes page."
+  ]
+}

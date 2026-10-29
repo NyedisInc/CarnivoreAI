@@ -1,0 +1,51 @@
+{
+  "api_routes": [
+    "POST /api/v1/swarm/cards/",
+    "POST /api/v1/swarm/cards/{card_id}/done",
+    "POST /api/v1/swarm/cards/{card_id}/send-back",
+    "POST /api/v1/swarm/cards/{card_id}/move",
+    "POST /api/v1/swarm/cards/{card_id}/release",
+    "POST /api/v1/swarm/cards/{card_id}/pause",
+    "POST /api/v1/swarm/cards/{card_id}/resume",
+    "POST /api/v1/swarm/cards/{card_id}/swap",
+    "POST /api/v1/swarm/cards/{card_id}/pin",
+    "POST /api/v1/swarm/cards/suggestions/{suggestion_id}",
+    "GET /api/v1/swarm/cards/rules/{project_id}",
+    "PUT /api/v1/swarm/cards/rules/{project_id}"
+  ],
+  "area": "drawers",
+  "description": "The second slice of the swarm cards work. Swarm agents now work from cards: they start a card they were dealt, keep its handoff note current as a heartbeat, and finish it with a result and the steps to validate it, which puts it in Review. Spawning an agent gives it a card (the one you name, or one made from its goal). A card holder's report goes through the same finish path and is tied to the card, so accepting the report accepts the card; when the last child card of a parent is accepted the parent moves to Review with every child's steps merged. This slice is backend only: the board screen waits for the layout pick.",
+  "docs": [
+    "docs/swarm-cards.md"
+  ],
+  "examples": [
+    "Pause a parent card with now: the agent holding it and every agent holding a child card are stopped and told to write their handoff, and the response lists the child cards and agents the pause reached."
+  ],
+  "how_to": [
+    "Call POST /api/v1/swarm/cards/{card_id}/send-back with a note to reopen a Review card; the last holder is re-held when still alive, else the card waits in Todo.",
+    "Call PUT /api/v1/swarm/cards/rules/{project_id} with auto_done, reorder (suggest or auto), pace or dealing to change a project's switches.",
+    "Agents use the swarm_card_* tools: swarm_card_start, swarm_card_handoff, swarm_card_finish (result plus how_to_validate), swarm_card_release, swarm_card_create, swarm_card_reorder and swarm_card_deal."
+  ],
+  "id": "swarm-cards-c2",
+  "issues": [
+    1384
+  ],
+  "keywords": [
+    "swarm",
+    "cards",
+    "mcp",
+    "handoff",
+    "review",
+    "send back",
+    "roll-up"
+  ],
+  "media_exempt": "backend only; the board UI waits for the layout pick",
+  "name": "swarm cards: card tools and owner routes",
+  "since": "2026-10-07",
+  "status": "beta",
+  "summary": "",
+  "updated": "2026-10-07",
+  "where": [
+    "The board screen arrives in a later slice."
+  ]
+}

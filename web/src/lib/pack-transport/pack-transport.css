@@ -1,0 +1,18 @@
+.pt { min-width: 0; padding: 4px 12px; }
+.pt-body { display: flex; flex-direction: column; gap: 8px; padding: 8px 0 4px; border-top: 1px solid var(--oc-line-faint); min-width: 0;
+  color: var(--oc-text-primary); font-size: 12px; font-family: var(--font-mono); }
+.pt-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; min-width: 0; }
+.pt-line { margin: 0; color: var(--oc-text-primary); overflow-wrap: anywhere; min-width: 0; }
+.pt-note { margin: 0; color: var(--oc-text-secondary); overflow-wrap: anywhere; min-width: 0; }
+.pt-pick { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.pt-publish { display: flex; flex-direction: column; gap: 6px; padding-top: 8px; border-top: 1px solid var(--oc-line-faint); min-width: 0; }
+.pt-replicas { display: flex; flex-direction: column; gap: 6px; padding-top: 8px; border-top: 1px solid var(--oc-line-faint); min-width: 0; }
+.pt-replica-list { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.pt-replica { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; min-width: 0; }
+.pt-actions { display: flex; justify-content: flex-end; }
+.pt-error, .pt-done { margin: 0; padding: 6px 8px; background: var(--oc-ground-raised); color: var(--oc-text-primary); border-left: 2px solid var(--oc-coral); }
+.pt-done { border-left-color: var(--oc-green); }
+@media (max-width: 700px) {
+  .pt { padding: 4px 8px; }
+  .pt-actions > button { width: 100%; }
+}

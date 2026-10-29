@@ -1,0 +1,59 @@
+{
+  "id": "claude-code-mods",
+  "name": "Claude Code mods",
+  "summary": "Installing one from warez runs claude code's checker and a consent sheet first.",
+  "description": "A mod is a Claude Code plugin that changes how Claude Code looks and behaves; it is code that runs with your permissions and is not sandboxed. The Mods page lists every mod Carnivore finds: the ones installed from the catalog, the ones registered in your Claude settings, and the ones sitting in ~/.claude/mods. Each row shows the name, version, a catalog or local tag, and whether the mod is on, off, or on in only some of your Claude settings files (for example on in 1 of 2). The switch registers or unregisters the mod in every settings file; remove sends a local mod's folder to the trash, or uninstalls a catalog mod through the catalog, after one confirm. Changes take effect in new sessions. Installing a mod from the warez page runs claude code's own checker (claude plugin validate --strict) on a staged copy, shows the events it handles and the calls it makes on a consent sheet with a trust tick (plus a second tick when the security review flagged it or did not run), refuses a blocked review, never updates a mod by itself, and takes it out of every settings file before its folder moves on uninstall.",
+  "area": "skills-catalog",
+  "status": "beta",
+  "since": "2026-10-09",
+  "updated": "2026-10-09",
+  "surfaces": [
+    "drawer menu tab",
+    "mods menu page",
+    "web/src/lib/mods/ModsScreen.svelte",
+    "web/src/lib/catalog/ModFacts.svelte",
+    "web/src/lib/catalog/InstallSheet.svelte"
+  ],
+  "api_routes": [
+    "GET /api/v1/mods",
+    "PUT /api/v1/mods/{mod_id}/enabled",
+    "DELETE /api/v1/mods/{mod_id}",
+    "DELETE /api/v1/catalog/installed/{install_id}",
+    "POST /api/v1/catalog/install/preview",
+    "POST /api/v1/catalog/install"
+  ],
+  "docs": [
+    "docs/catalog.md",
+    "docs/mods.md"
+  ],
+  "issues": [
+    1466
+  ],
+  "keywords": [
+    "mods",
+    "mod",
+    "claude code",
+    "plugin",
+    "working-on",
+    "warez"
+  ],
+  "where": [
+    "The drawer's menu tab: the mods row right after plugins, hotkey m while the menu has focus. Deep link #mods.",
+    "The install sheet that opens from a claude code mod on the warez page (menu tab, Warez, hotkey r)."
+  ],
+  "how_to": [
+    "Open the menu tab and choose mods. The line under the title says changes take effect in new sessions.",
+    "Use a row's switch to turn a mod on or off in every Claude settings file; a row that reads on in 1 of 2 is on in only some of them, and the switch finishes the job.",
+    "Press remove, then remove again in the confirm: a local mod's folder goes to the trash, a catalog mod is uninstalled through the catalog.",
+    "Press get more on warez to browse the mods the catalog publishes.",
+    "To install one, open the warez page, pick the claude code mod kind chip, open a mod and press install. Read the sheet: the unsandboxed warning, the events and calls the checker found, the claude code version it needs and which settings files it registers in. Tick the trust box (and the second box when it is shown), then install.",
+    "A mod never updates itself: update it from the installed list and read the sheet again. A mod whose security review says blocked cannot be installed, and mods cannot be installed over MCP."
+  ],
+  "examples": [
+    "See that the hand-installed working-on mod is listed as local and on.",
+    "Notice that a settings file Carnivore could not write is named on the page, and the switch can be pressed again once it is fixed.",
+    "You open a mod on the warez page, read that it spends plan usage on every refresh, and decide not to install it.",
+    "A mod whose review is flagged shows two ticks; the install button stays off until you tick both."
+  ],
+  "media_exempt": "The page's media are captured at the next version bump with the rest of the feature recapture."
+}

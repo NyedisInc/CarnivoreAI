@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+  <title>Carnivore</title>
+  <link rel="stylesheet" href="status.css">
+</head>
+<body>
+  <header class="sw-title">
+    <span class="sw-label" id="sw-title"></span>
+    <span class="sw-name" id="sw-name"></span>
+  </header>
+  <main class="sw-main">
+    <p class="sw-status" id="sw-status" role="status" aria-live="polite"></p>
+    <button type="button" class="sw-why" id="sw-why" hidden></button>
+    <div class="sw-actions" id="sw-actions"></div>
+  </main>
+  <script src="status.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<h2 class="sg-h2">foundations: base elements</h2>
+<p class="sg-lead">The house look on plain html, the way a reset like Bootstrap's Reboot gives a page its defaults
+(issue #2033, slice 2b). It lives in <code>web/src/lib/base/elements.css</code>, in the <code>base</code> cascade
+layer that <code>client/css/layers.css</code> declares first, so a component, a page, a utility or any legacy rule
+still wins property by property. A screen writes plain markup and inherits; a component sets only what differs.</p>
+
+<dl class="sg-facts">
+    <dt>a region</dt>
+    <dd><code>data-oc-base</code> on any element gives every element inside it with no class the base look: buttons,
+        text fields, select, textarea, links, h1 to h6, label, small, code, kbd, hr, fieldset and legend, and a
+        classless table. A card (<code>Card.svelte</code>) is a region.</dd>
+    <dt>one element</dt>
+    <dd><code>data-btn</code> (secondary, confirm, danger, quiet, row) with <code>data-size="sm"</code>, and
+        <code>data-field</code>, give one element the look anywhere, class or no class. <code>Button.svelte</code> and
+        <code>Field.svelte</code> write them; legacy <code>client/js</code> writes the same attributes.</dd>
+    <dt>why not the whole app yet</dt>
+    <dd>Measured: some screens style a classless element only through its container (the sessions page view switch,
+        the Task Manager yes or no, the markdown preview headings). The base would fill the properties those rules leave
+        to the browser and move them. A screen joins by putting <code>data-oc-base</code> on its root when it is
+        migrated, with its own before and after.</dd>
+    <dt>sizes</dt>
+    <dd>Buttons and fields are <code>--oc-control-h</code> tall, a small button <code>--oc-control-h-sm</code>, a row
+        trigger <code>--oc-row-h</code> (<code>--oc-tap</code> on a phone). Corners are
+        <code>--oc-radius-control</code>; every boundary is a reserved 1px border the one focus rule brightens.</dd>
+</dl>
+
+<h3 class="sg-h3" id="base-elements-sheet">every bare element</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/style-guide/specimens/BaseElements.svelte</code></div>
+    <div class="sg-specimen__body" id="sg-live-base-elements"></div>
+</div>
+
+<h3 class="sg-h3" id="base-elements-themes">every shipped theme</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/style-guide/specimens/BaseElementsThemes.svelte</code></div>
+    <div class="sg-specimen__body" id="sg-live-base-elements-themes"></div>
+</div>

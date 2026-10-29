@@ -1,0 +1,55 @@
+{
+  "id": "dashboards",
+  "name": "Dashboards",
+  "summary": "several home dashboards managed from their own menu item, each shown as a card with a preview of its layout: create, rename in place, set as home, open or edit in a pop-out, export, import and delete; the active dashboard is the home screen on every browser.",
+  "description": "Every dashboard is a widget grid on the same layout editor as home. The dashboards menu page lists them; the active one is the home screen for every browser and cannot be deleted until another is made active. Any other dashboard opens in the main area beside the sidebar (Escape goes back to where you were), or in its own pop-out window to be edited, where its changes save to that dashboard alone. Upgrading keeps the home screen exactly as it was: it becomes the active dashboard.",
+  "area": "home",
+  "status": "beta",
+  "since": "2026-10-02",
+  "updated": "2026-10-02",
+  "surfaces": [
+    "drawer menu tab",
+    "dashboards menu page",
+    "home screen",
+    "dashboard pop-out window",
+    "web/src/lib/dashboards/DashboardsScreen.svelte"
+  ],
+  "api_routes": [
+    "GET /api/v1/dashboards",
+    "POST /api/v1/dashboards",
+    "PATCH /api/v1/dashboards/{id}",
+    "PUT /api/v1/dashboards/{id}/layout",
+    "POST /api/v1/dashboards/{id}/activate",
+    "DELETE /api/v1/dashboards/{id}"
+  ],
+  "docs": [
+    "docs/dashboards.md",
+    "docs/widget-system.md"
+  ],
+  "issues": [],
+  "keywords": [
+    "dashboard",
+    "dashboards",
+    "board",
+    "home screen",
+    "active",
+    "pop-out",
+    "wallboard"
+  ],
+  "where": [
+    "The drawer's menu tab: the dashboards row at the top (it replaced the home row); its caret folds out every dashboard. Deep link #dashboards.",
+    "A dashboard's own pop-out window, opened from its card's open or edit button."
+  ],
+  "how_to": [
+    "Open the drawer's menu tab. The dashboards row at the top goes to your default dashboard (the home screen); press its down caret to list every dashboard A to Z, the default with a star, each with a pop-out key and a hover preview, and press edit under the list to manage them. Pressing a listed dashboard shows it in the main window for now (the star and your home screen stay put, a reload goes back); the dashboards row goes back to the default. For the page itself, press edit. The line under the title says it: your active dashboard is your home screen; open any other in its own window.",
+    "Press new dashboard (the default home grid) or duplicate the home screen; click a card's name to rename it in place.",
+    "Press set as home on a card to make that dashboard the home screen on every browser; the home screen's card carries the green home screen tag.",
+    "Press open on any other card to view it in its own window, or edit to open it there with edit layout already on; edit layout on the home screen's card edits home.",
+    "Press delete on a card that is not the home screen, then delete again in the confirm."
+  ],
+  "examples": [
+    "Keep an analytics dashboard and an operations dashboard, and switch the home screen between them with set as home.",
+    "Open the analytics dashboard in its own window on a second screen while home shows operations, and rearrange it there."
+  ],
+  "media_exempt": "A menu page and pop-out whose screenshots are captured before the next version bump."
+}

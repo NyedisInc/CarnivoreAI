@@ -1,0 +1,56 @@
+{
+  "changed_at": "",
+  "changed_files": 0,
+  "checks": [
+    {
+      "at": "2025-10-09T08:55:00Z",
+      "bytes": 142,
+      "digest": "7f82dc8cabbce9ed3e3c58e276c373f89fd5c87d166196fd43e999097a5f70b9",
+      "files": 3,
+      "findings": [],
+      "grade": "B",
+      "ok": true,
+      "summary": "clean",
+      "version": "1.4.0"
+    }
+  ],
+  "cost": {
+    "description_tokens_est": 12,
+    "label": "est."
+  },
+  "declared_version": "1.4.0",
+  "file_count": 3,
+  "files": [
+    {
+      "path": "LICENSE",
+      "size": 12
+    },
+    {
+      "path": "SKILL.md",
+      "size": 119
+    },
+    {
+      "path": "notes/more.md",
+      "size": 11
+    }
+  ],
+  "grade": "B",
+  "harness": "claude",
+  "kind": "skill",
+  "license": "MIT",
+  "license_file": true,
+  "location": "skill:my-skill",
+  "made_at": "2025-10-09T08:53:20Z",
+  "name": "my-skill",
+  "sends": [
+    {
+      "hero": "",
+      "hero_sha": "",
+      "media_submission_id": "",
+      "sent_at": "2025-10-09T08:56:40Z",
+      "submission_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "version": "1.4.0"
+    }
+  ],
+  "total_bytes": 142
+}

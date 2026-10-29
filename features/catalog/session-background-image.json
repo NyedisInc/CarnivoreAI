@@ -1,0 +1,38 @@
+{
+  "api_routes": [
+    "src/api/session_background_routes.py",
+    "src/api/session_background_image_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/terminal-background.md"
+  ],
+  "examples": [
+    "Put a different image behind each project's sessions so you know at a glance which one you are typing into."
+  ],
+  "how_to": [
+    "Click the picture icon on the terminal bar (or, when the bar is too narrow, the three dots then background) to open the terminal background panel.",
+    "Choose an image and adjust how strongly it shows; it applies to that session only.",
+    "Clear it from the same panel."
+  ],
+  "id": "session-background-image",
+  "issues": [],
+  "keywords": [
+    "background",
+    "wallpaper"
+  ],
+  "media": [],
+  "name": "Session background image",
+  "since": "2026-09-20",
+  "status": "stable",
+  "summary": "set a custom background image behind a session's terminal.",
+  "surfaces": [
+    "web/src/lib/terminal-background/TerminalBackgroundPanel.svelte",
+    "web/src/lib/terminal-background/TerminalBackgroundButton.svelte"
+  ],
+  "updated": "2026-10-21",
+  "where": [
+    "Open a session, then the picture icon in its terminal bar; on a narrow bar it is the background item in the three-dot menu."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

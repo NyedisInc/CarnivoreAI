@@ -1,0 +1,23 @@
+@layer primitives {
+  .oc-tag {
+    --_oc-tag-tone: var(--oc-text-muted);
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    padding: 0 var(--oc-space-1);
+    border: var(--oc-border) solid color-mix(in srgb, var(--_oc-tag-tone) 45%, transparent);
+    border-radius: var(--oc-radius-control);
+    color: var(--_oc-tag-tone);
+    font-size: var(--oc-fs-micro);
+    letter-spacing: var(--oc-tracking-caps);
+    line-height: var(--oc-lh-body);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .oc-tag--accent { --_oc-tag-tone: var(--oc-orange); }
+  .oc-tag--ok { --_oc-tag-tone: var(--oc-green); }
+  .oc-tag--warn { --_oc-tag-tone: var(--oc-yellow); }
+  .oc-tag--danger { --_oc-tag-tone: var(--oc-coral); }
+  .oc-tag--info { --_oc-tag-tone: var(--oc-cyan); }
+}

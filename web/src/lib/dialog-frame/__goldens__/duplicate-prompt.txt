@@ -1,0 +1,10 @@
+<div aria-label="providers is already here. add a second copy?" class="le-dupe oc-anchored popup-focus" data-duplicate-prompt="copy" popover="manual" role="alertdialog" style="left: 18px; top: 18px; width: 300px;" tabindex="-1">
+  <p class="le-dupe__line">
+    "providers is already here. add a second copy?"
+  <div class="le-dupe__row">
+    <button data-btn="secondary" data-button-root="true" data-dupe-cancel="true" tabindex="0" type="button">
+      "cancel"
+    <button data-btn="secondary" data-button-root="true" data-dupe-move="true" tabindex="0" type="button">
+      "move here"
+    <button data-btn="confirm" data-button-root="true" data-dupe-copy="true" data-dupe-primary="true" tabindex="0" type="button">
+      "add copy"

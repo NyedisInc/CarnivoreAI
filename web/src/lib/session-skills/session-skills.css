@@ -1,0 +1,65 @@
+/* position: relative */
+.sal-panel.sal-panel--docked {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  width: min(360px, 100%);
+  max-height: none;
+  border-radius: 0;
+  background: var(--oc-ground-raised);
+  box-shadow: -1px 0 0 0 var(--oc-line-panel);
+}
+.sal-panel.sal-panel--docked.sal-panel--full { width: 100%; box-shadow: none; }
+.sal-panel .sal-table--skills th:nth-child(2) { width: 96px; }
+.sal-panel .sal-table--skills th:nth-child(3) { width: 84px; }
+.sal-panel .sal-table--skills th:nth-child(4) { width: 64px; }
+
+.sal-panel .sal-section {
+  margin: 0;
+  padding: 8px 10px 4px;
+  font-size: var(--oc-fs-micro, 10px);
+  letter-spacing: var(--oc-tracking-label, 0.6px);
+  text-transform: uppercase;
+  color: var(--oc-text-dim);
+  box-shadow: 0 1px 0 0 var(--oc-line-rule);
+}
+
+.sal-panel .sal-error {
+  margin: 0;
+  padding: 6px 10px;
+  color: var(--oc-coral);
+  font-size: var(--oc-fs-label, 11px);
+}
+
+.sal-panel .sal-row--unseen td { color: var(--oc-text-dim); }
+
+.sal-panel .sal-scout { display: flex; align-items: center; gap: 8px; padding: 6px 10px; }
+.sal-panel .sal-scout-hint { padding: 0; flex: 1; }
+.sal-panel .sal-chips { list-style: none; margin: 0; padding: 4px 10px 8px; display: flex; flex-direction: column; gap: 6px; }
+.sal-panel .sal-chip-row { display: flex; align-items: baseline; gap: 8px; }
+.sal-panel .sal-chip {
+  flex: none;
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: var(--oc-fs-label, 11px);
+  color: var(--oc-text-primary);
+  background: transparent;
+  border: 1px solid var(--oc-line-rule);
+  border-radius: 2px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.sal-panel .sal-chip:hover:not(:disabled) { border-color: var(--oc-orange); }
+.sal-panel .sal-chip:disabled { color: var(--oc-text-dim); cursor: default; }
+.sal-panel .sal-chip-why { color: var(--oc-text-dim); font-size: var(--oc-fs-label, 11px); overflow-wrap: anywhere; }
+
+.oc-tl-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}

@@ -1,0 +1,45 @@
+{
+  "api_routes": [
+    "src/api/project_pack_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/project-pack.md",
+    "docs/DECISIONS.md",
+    "docs/mcp-server.md"
+  ],
+  "examples": [
+    "Months later the project comes back: unpack folder checks the archive's checksum, restores every file, and moves the archive to the Trash."
+  ],
+  "how_to": [
+    "Hide (archive) the project first; only hidden projects can be packed.",
+    "Open the project's menu on the projects page and choose pack folder. The plan checks for live sessions, unpushed or modified git work, cloud-only files and free space, and shows what will happen.",
+    "A repo with no remote asks a second question: the archive will be the only copy. Confirm to pack; the originals go to the Trash only after every file in the archive is checked against a sha256 manifest.",
+    "A packed project shows a packed tag with the archive size. If the archive is changed or missing outside Carnivore the tag turns into a warning, and the unpack confirmation repeats it.",
+    "Choose unpack folder to restore. The archive checksum is compared first; a modified archive is refused and nothing is extracted."
+  ],
+  "id": "project-pack",
+  "issues": [
+    1509
+  ],
+  "keywords": [
+    "projects",
+    "pack",
+    "unpack",
+    "archive",
+    "compress",
+    "disk space",
+    "trash",
+    "checksum"
+  ],
+  "media_exempt": "its screen is the projects page's project menu and the shared confirm dialog; no recapture is run for it until the pre-release pipeline",
+  "name": "Pack a project's folder",
+  "since": "2026-10-10",
+  "status": "beta",
+  "summary": "compress a hidden project's folder in place into one archive to free disk space, with git, live-session and cloud-only refusals, a per-file checksum check before the originals go to the Trash, and a warning when the archive was changed outside carnivore.",
+  "surfaces": [],
+  "updated": "2026-10-10",
+  "where": [
+    "Projects page: a hidden project's menu, pack folder / unpack folder; POST /api/v1/projects/{name}/pack and /unpack."
+  ]
+}

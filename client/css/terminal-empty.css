@@ -1,0 +1,11 @@
+/*  hidden  */
+body:has(#terminal-screen.terminal-screen--empty.active) :is(
+    #sessionNotesBtn,
+    #headerSessionThemeBtn,
+    #headerDetachBtn,
+    #header-rename-pencil,
+    #terminalSearchBtn,
+    #terminal-key-bar
+) {
+    display: none;
+}

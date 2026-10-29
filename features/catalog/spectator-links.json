@@ -1,0 +1,43 @@
+{
+  "api_routes": [
+    "POST /api/v1/sessions/{session_id}/spectator-links",
+    "GET /api/v1/sessions/{session_id}/spectator-links",
+    "DELETE /api/v1/sessions/{session_id}/spectator-links/{link_id}"
+  ],
+  "area": "sessions",
+  "description": "A spectator link streams a session's terminal output to a viewer who cannot type into it. Every byte passes through the stream redactor first, which stars vendor credentials (GitHub, AWS, Google, Slack, 1Password, Anthropic, OpenAI, Cloudflare, private keys) in place, preserving length so the viewer's screen still lines up.",
+  "docs": [
+    "docs/spectator-links.md",
+    "docs/secret-scanning.md"
+  ],
+  "examples": [
+    "Let a teammate watch an agent work through a migration without handing them a shell.",
+    "Show a demo to someone on their phone."
+  ],
+  "how_to": [
+    "Choose share read only and pick how long the link lasts.",
+    "Copy the link and send it. The viewer sees the live terminal but cannot type; credentials are starred out of the stream.",
+    "Open the same share read only dialog again to stop sharing, or let the link expire."
+  ],
+  "id": "spectator-links",
+  "issues": [
+    813
+  ],
+  "keywords": [
+    "spectator",
+    "share",
+    "redaction",
+    "secrets"
+  ],
+  "media": [],
+  "name": "Read-only spectator links",
+  "since": "2026-09-26",
+  "status": "stable",
+  "summary": "Share a live session read-only with someone else, with credentials starred out of the stream before it leaves the computer.",
+  "surfaces": [],
+  "updated": "2026-09-27",
+  "where": [
+    "A session's options menu in the terminal head (the three dots at the top right), actions, share read only (S)."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

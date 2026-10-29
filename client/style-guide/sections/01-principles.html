@@ -1,0 +1,86 @@
+<h2 class="sg-h2">principles and the military terminal look</h2>
+<p class="sg-lead">The canonical reference for how Carnivore looks. Every example is the real component in the stylesheets
+the app ships (the same list and order as <code>client/index.html</code>), in the theme picked at the top. Read this, then
+the section for the component you are touching, and copy what it shows.</p>
+
+<h3 class="sg-h3" id="principles-rules">the rules that bind every surface</h3>
+<ol>
+    <li><strong>Colour is <code>--oc-*</code> tokens only.</strong> Never a hex, <code>rgb()</code> or named colour in a
+        component. <code>web/src/opscenter/tokens.css</code> re-derives every token from the active theme's
+        <code>--color-*</code> manifest, so a token repaints under all 42 themes and a literal does not. See
+        <a href="#color">color tokens</a>.</li>
+    <li><strong>Every theme, every time.</strong> Before calling a UI change done, render it under the default and at
+        least two more themes with visibly different accents and grounds (one light, such as <code>codex</code>). Use the
+        picker at the top of this page to see the same thing for every component here.</li>
+    <li><strong>Every string comes from the one catalog.</strong> <code>client/js/i18n/catalog.en.js</code>, read in
+        Svelte through <code>t()</code> from <code>web/src/lib/i18n/index.svelte.ts</code> and in legacy code through
+        <code>window.CloudeI18n.t</code>. Copy is lowercase and plain. No em dashes, no en dashes, no emoji. A missing key
+        renders the key itself, loudly.</li>
+    <li><strong>Words carry meaning, colour repeats it.</strong> A state is never colour only: a light has a label and a
+        tooltip, a chip has text, idle and unknown differ by shape.</li>
+    <li><strong>Efficiency is god.</strong> No intro paragraphs above controls, no per-option explanations, no poller
+        chatter, no hint text printed inside a menu (#558, #603). One line per thing. Long help folds shut.</li>
+    <li><strong>A new component, icon or pattern joins this guide in the same change.</strong> The drift test
+        (<code>tests/test_style_guide_drift.py</code>) fails when a shipped class or Svelte component has no entry here,
+        and when an entry here names something that no longer exists.</li>
+</ol>
+
+<h3 class="sg-h3" id="principles-references">the canonical reference surfaces</h3>
+<div class="sg-table-wrap">
+<table class="sg-table">
+    <thead><tr><th>surface</th><th>file</th><th>copy it for</th></tr></thead>
+    <tbody>
+        <tr><td>restart picker</td><td><code>client/css/session-restart-picker.css</code></td></tr>
+        <tr><td>provider ledger</td><td><code>web/src/lib/ledger/ledger-chrome.css</code>, <code>LedgerScreen.svelte</code></td>
+            <td><code>.pl-titlebar</code>, <code>.pl-title</code>, <code>.pl-label</code>, <code>.pl-panel</code>, a page shell</td></tr>
+        <tr><td>catalog</td><td><code>CatalogScreen.svelte</code>, <code>CatalogToolbar.svelte</code>, <code>CatalogCard.svelte</code></td>
+            <td>the text field <code>.oc-field</code> and its cyan focus, the card grid</td></tr>
+        <tr><td>auto switch panel</td><td><code>web/src/lib/account-switch/AutoSwitchPanel.svelte</code></td>
+            <td>one line of what a feature does beside one large switch</td></tr>
+        <tr><td>row menu</td><td><code>client/css/session-row-menu.css</code> plus <code>client/css/popup-focus.css</code></td>
+            <td>every popup menu</td></tr>
+        <tr><td>file drawer tree</td><td><code>client/css/config-editor.css</code></td><td>tree rows, toggles, hover</td></tr>
+        <tr><td>new group dialog</td><td><code>client/css/text-prompt-modal.css</code></td><td>the worked example: every rule
+            names the reference it was copied from</td></tr>
+        <tr><td>carnivore.ai</td><td><code>web/src/public-site/site.css</code></td></tr>
+    </tbody>
+</table>
+</div>
+
+<h3 class="sg-h3" id="principles-two-trees">two trees, one look</h3>
+<p><code>client/js</code> is hand-written vanilla JS served off disk; <code>web/</code> is Svelte 5 + TypeScript +
+Tailwind compiled by vite into <code>client/dist/app.js</code> and <code>app.css</code>. The first question about any
+client change is which tree owns that screen today: read its mount path in the current source, not a dated
+inventory. Both trees read the same <code>--oc-*</code> tokens, because <code>client/dist/app.css</code> declares them
+on <code>:root</code> for every screen. The status light lives in both trees on purpose and is proven byte identical by
+<code>StatusLed.parity.test.ts</code>; change both or neither.</p>
+<p>Tailwind ships utilities only, prefixed <code>tw:</code>, with no preflight. Use a utility for one-off layout inside a
+component; never use it to re-create a component that exists here.</p>
+
+<h3 class="sg-h3" id="principles-gold-master">where the older gold master references disagree, the shipped code wins</h3>
+<p>The gold master design references (<code>docs/ui-switchover-design-references.md</code>) came before the shipped
+Carnivore surfaces. Where they disagree, follow this guide:</p>
+<ul>
+    <li><strong>Type.</strong> Gold master pairs IBM Plex Mono with PT Sans. Shipped Carnivore is one family: the
+        platform monospace in <code>--font-mono</code>. <code>web/src/opscenter/type.css</code> declares JetBrains Mono
+        faces for the measured dashboard mockup, but no shipped rule names that family, and <code>--oc-font</code> resolves
+        to <code>--font-mono</code> today. Components write <code>--font-mono</code>, as every reference surface does (a
+        family swap changes glyph advance, which is geometry).</li>
+    <li><strong>Geometry.</strong> Gold master measures a 62px header and a 352px hero on a <code>100vw / 1672</code>
+        unit. Shipped geometry is the fixed pixel set in <code>tokens.css</code>: 54px top bar, 31px widget header (<a href="#cells-widget-header">the widget header</a>), 26px rows,
+        12px gutter.</li>
+</ul>
+
+<h3 class="sg-h3" id="principles-state-classes">shared state classes</h3>
+<p>A handful of short class names in <code>client/css/styles.css</code> are state hooks the legacy screens toggle, not
+components: <code>.active</code> (the visible screen or the chosen item), <code>.hidden</code> and <code>.visible</code>,
+<code>.danger</code>, <code>.error</code>, <code>.connected</code>, <code>.status</code>, <code>.is-on</code>,
+<code>.keyboard-active</code>, <code>.filter-hidden</code> and <code>.version</code>. Reuse them only on the legacy
+elements that already carry them. In <code>web/</code>, state is a <code>data-*</code> attribute or a scoped
+<code>class:</code> directive, never one of these global names, because a global state class restyles every element in
+the app that happens to carry it.</p>
+
+<h3 class="sg-h3" id="principles-reading">how to read a component entry</h3>
+<p>A specimen, then a fact sheet, then the mistakes already made. A label that says <strong>live</strong> mounts the real
+component; <strong>markup copied from</strong> reproduces a legacy renderer's markup by hand in the shipped styles, and the
+drift test proves every class in it still exists.</p>

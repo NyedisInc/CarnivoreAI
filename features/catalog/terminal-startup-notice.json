@@ -1,0 +1,29 @@
+{
+  "api_routes": [],
+  "area": "terminal",
+  "docs": [],
+  "examples": [
+    "A launch profile failed to launch the agent: the notice says so instead of leaving a silent shell."
+  ],
+  "how_to": [
+    "Read whether the session's startup command ran, did not run, or failed, and act on it."
+  ],
+  "id": "terminal-startup-notice",
+  "issues": [],
+  "keywords": [
+    "startup",
+    "notice"
+  ],
+  "media_exempt": "only appears when a startup command fails or is absent, a condition the capture slot does not create",
+  "name": "Startup command notice",
+  "since": "2026-09-19",
+  "status": "stable",
+  "summary": "show whether a session's startup command actually ran when it opened.",
+  "surfaces": [
+    "web/src/lib/terminal-notice/TerminalStartupNotice.svelte"
+  ],
+  "updated": "2026-09-27",
+  "where": [
+    "Appears at the top of a terminal right after it opens."
+  ]
+}

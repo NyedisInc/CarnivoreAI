@@ -1,0 +1,92 @@
+{
+  "fixture_blocked": {
+    "digest": "ef7bc0a161a1a497aa55f28d96b6d400e81637566d7f2851fe4ca698d422349a",
+    "status": "reviewed",
+    "verdict": "blocked",
+    "summary": "this skill attempts to read AWS credentials and SSH private keys, which is a security risk.",
+    "warnings": [
+      {
+        "kind": "credential_access",
+        "detail": "the skill instructs the agent to read AWS credentials.",
+        "file": "SKILL.md",
+        "line": 6
+      },
+      {
+        "kind": "credential_access",
+        "detail": "the skill instructs the agent to read SSH private keys.",
+        "file": "SKILL.md",
+        "line": 7
+      },
+      {
+        "kind": "credential_access",
+        "detail": "the skill instructs the agent to read macOS keychain credentials.",
+        "file": "SKILL.md",
+        "line": 8
+      }
+    ],
+    "model": "google/gemini-2.5-flash-lite",
+    "reviewed_at": "2026-09-19T15:06:12Z"
+  },
+  "fixture_blocked_with_override": {
+    "digest": "ef7bc0a161a1a497aa55f28d96b6d400e81637566d7f2851fe4ca698d422349a",
+    "status": "reviewed",
+    "verdict": "blocked",
+    "summary": "this skill attempts to read AWS credentials and SSH private keys, which is a security risk.",
+    "warnings": [
+      {
+        "kind": "credential_access",
+        "detail": "the skill instructs the agent to read AWS credentials.",
+        "file": "SKILL.md",
+        "line": 6
+      },
+      {
+        "kind": "credential_access",
+        "detail": "the skill instructs the agent to read SSH private keys.",
+        "file": "SKILL.md",
+        "line": 7
+      },
+      {
+        "kind": "credential_access",
+        "detail": "the skill instructs the agent to read macOS keychain credentials.",
+        "file": "SKILL.md",
+        "line": 8
+      }
+    ],
+    "model": "google/gemini-2.5-flash-lite",
+    "reviewed_at": "2026-09-19T15:06:13Z",
+    "override": {
+      "reason": "corpus fixture, never published",
+      "by": "acme",
+      "at": "2026-09-19T15:06:14Z"
+    }
+  },
+  "live_skill_clean": {
+    "digest": "aeaacd1cc67d2f29e7d2aa42ab55d366a5b61c3adc75a23ea9a3c3208fd7476f",
+    "status": "reviewed",
+    "verdict": "clean",
+    "summary": "this skill provides expert ashfield design guidance, covering philosophy, workflow, and technical implementation details for creating well-crafted user interfaces. it references various markdown files for detailed style archetypes, typography, spacing, depth, motion, and tailwind css usage, and includes validation steps using playwright.",
+    "warnings": [],
+    "model": "google/gemini-2.5-flash-lite",
+    "reviewed_at": "2026-09-19T15:10:52Z"
+  },
+  "live_skill_blocked": {
+    "digest": "dfd68a92024aabcc271ffee0e3b98cfa900529ac5c2f4fb86a2791ed5135c6ea",
+    "status": "reviewed",
+    "verdict": "blocked",
+    "summary": "this skill attempts to inject a prompt into the agent's instructions, which is a security risk.",
+    "warnings": [
+      {
+        "kind": "prompt_injection",
+        "detail": "the skill attempts to override the agent's instructions by instructing it to adopt a new system prompt and to have all subagents act as SMEs.",
+        "file": "SKILL.md",
+        "line": 7
+      }
+    ],
+    "model": "google/gemini-2.5-flash-lite",
+    "reviewed_at": "2026-09-19T15:10:52Z"
+  },
+  "live_skill_unavailable": {
+    "digest": "dcfd2e1d6cc5d680d655139c315a0969a250aea001be084c5fb2e934566d5121",
+    "status": "unavailable"
+  }
+}

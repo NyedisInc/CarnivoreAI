@@ -1,0 +1,50 @@
+
+/* var(--color-bg) */
+
+/* padding */
+.header {
+    padding-top: calc(var(--header-pad-y) + env(safe-area-inset-top));
+    /* padding */
+    padding-left: calc(var(--dock-offset, 0px) + var(--header-pad-x) + env(safe-area-inset-left));
+    padding-right: calc(var(--header-pad-x) + env(safe-area-inset-right));
+}
+
+/* padding */
+.screen {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+#launchpad-screen {
+    padding-bottom: 0;
+}
+
+:root {
+    --home-bar-inset: env(safe-area-inset-bottom);
+}
+
+
+/* padding-top: */
+
+/* position: fixed */
+
+.session-sidebar-panel,
+.config-editor-picker-content {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.toast-container {
+    top: calc(60px + env(safe-area-inset-top));
+    right: calc(16px + env(safe-area-inset-right) + var(--oc-toast-clear-right, 0px));
+}
+
+:root[data-toast-clear="full"] .toast-container {
+    top: auto;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+}
+
+@media (display-mode: standalone) {
+    body {
+        overscroll-behavior-y: none;
+    }
+}

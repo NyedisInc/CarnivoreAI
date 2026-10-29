@@ -1,0 +1,257 @@
+/* box-shadow */
+@layer components {
+  .rb {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    color: var(--oc-text-primary);
+    font-family: var(--font-mono);
+    font-size: var(--oc-fs-body);
+  }
+
+  .rb-strip {
+    display: flex;
+    align-items: center;
+    flex: none;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    min-height: 36px;
+    padding: 2px 8px;
+    background: var(--oc-ground-titlerow);
+    box-shadow: inset 0 -1px 0 0 var(--oc-line-rule);
+  }
+
+  .rb-name {
+    flex: 1 1 8ch;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--oc-text-primary);
+  }
+
+  .rb-state {
+    flex: none;
+    color: var(--oc-text-muted);
+    font-size: var(--oc-fs-micro);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .rb-state[data-state='undelivered'] { color: var(--oc-coral); }
+  .rb-state[data-state='live'] { color: var(--oc-green); }
+
+  .rb-tools {
+    display: inline-flex;
+    flex: none;
+    gap: 2px;
+  }
+
+  .rb-icon {
+    --_bd: transparent;
+    display: inline-grid;
+    place-items: center;
+    box-sizing: border-box;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--_bd);
+    border-radius: var(--oc-radius-sm);
+    background: transparent;
+    color: var(--oc-text-secondary);
+    cursor: pointer;
+  }
+
+  .rb-icon:hover:not(:disabled) {
+    --_bd: var(--oc-line-frame);
+    background: var(--oc-ground-hover);
+    color: var(--oc-text-primary);
+  }
+
+  .rb-icon:disabled {
+    color: var(--oc-text-muted);
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .rb-history {
+    display: flex;
+    align-items: center;
+    flex: none;
+    gap: 4px;
+    min-height: 32px;
+    padding: 0 8px;
+    box-shadow: inset 0 -1px 0 0 var(--oc-line-faint);
+  }
+
+  .rb-track {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    gap: 6px;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .rb-step {
+    --_bd: var(--oc-line-frame);
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    box-sizing: border-box;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 4px;
+    border: 1px solid var(--_bd);
+    border-radius: var(--oc-radius-sm);
+    background: transparent;
+    color: var(--oc-text-secondary);
+    font: inherit;
+    font-size: var(--oc-fs-micro);
+    cursor: pointer;
+  }
+
+  .rb-step:hover { background: var(--oc-ground-hover); color: var(--oc-text-primary); }
+
+  .rb-step[aria-current='true'] {
+    --_bd: var(--oc-orange);
+    color: var(--oc-text-bright);
+  }
+
+  .rb-step--fold { border-style: dashed; }
+
+  .rb-round {
+    --_bd: var(--oc-line-frame);
+    flex: none;
+    box-sizing: border-box;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--oc-text-secondary);
+    cursor: pointer;
+  }
+
+  .rb-round::before {
+    content: '';
+    display: block;
+    width: 9px;
+    height: 9px;
+    margin: auto;
+    border: 1px solid var(--_bd);
+    transform: rotate(45deg);
+  }
+
+  .rb-round[data-undelivered='true']::before { border-color: var(--oc-coral); }
+  .rb-round:hover::before { background: var(--oc-ground-hover); }
+
+  .rb-count {
+    flex: none;
+    color: var(--oc-text-muted);
+    font-size: var(--oc-fs-micro);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+
+  .rb-views {
+    display: flex;
+    flex: none;
+    gap: 4px;
+    padding: 4px 8px;
+    box-shadow: inset 0 -1px 0 0 var(--oc-line-faint);
+  }
+
+  .rb-views[data-live-bar] { flex-wrap: wrap; align-items: center; gap: 8px; }
+  .rb-live-form { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; margin: 0; }
+  .rb-live-form .rb-field { flex: 1 1 12em; min-width: 0; }
+
+  .rb-back {
+    flex: none;
+    margin-left: auto;
+  }
+
+  .rb-stage {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    overflow: auto;
+    background: var(--oc-ground-page);
+  }
+
+  .rb-box {
+    position: relative;
+    width: calc(var(--rb-w) * var(--rb-scale));
+    height: 100%;
+    min-height: 240px;
+  }
+
+  .rb-box--capped { margin-inline: auto; }
+
+  .rb-frame {
+    display: block;
+    width: var(--rb-w);
+    height: calc(100% / var(--rb-scale));
+    border: 0;
+    color-scheme: light;
+    background: Canvas;
+    transform: scale(var(--rb-scale));
+    transform-origin: 0 0;
+  }
+
+  .rb-note {
+    margin: 0;
+    padding: 12px;
+    color: var(--oc-text-dim);
+  }
+
+  .rb-note--error { color: var(--oc-coral); }
+
+  .rb-readout {
+    flex: none;
+    max-height: 30%;
+    overflow-y: auto;
+    padding: 6px 8px;
+    box-shadow: inset 0 1px 0 0 var(--oc-line-rule);
+    color: var(--oc-text-secondary);
+    font-size: var(--oc-fs-micro);
+  }
+
+  .rb-readout p { margin: 0 0 4px; }
+  .rb-readout p:last-child { margin-bottom: 0; }
+  .rb-label { color: var(--oc-text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .rb-chip { color: var(--oc-yellow); }
+
+  .rb-list { margin: 0; padding: 0; list-style: none; overflow-y: auto; }
+
+  .rb-row {
+    --_bd: transparent;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--_bd);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: inset 0 -1px 0 0 var(--oc-line-faint);
+  }
+
+  .rb-row:hover { background: var(--oc-ground-hover); }
+  .rb-row-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rb-row-meta { flex: none; color: var(--oc-text-muted); font-size: var(--oc-fs-micro); }
+
+  @media (pointer: coarse) {
+    .rb-icon { width: 40px; height: 40px; }
+    .rb-step { min-width: 40px; height: 40px; }
+    .rb-round { width: 40px; height: 40px; }
+    .rb-row { min-height: 44px; align-items: center; }
+  }
+}

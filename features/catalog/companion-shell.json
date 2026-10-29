@@ -1,0 +1,53 @@
+{
+  "api_routes": [
+    "POST /api/v1/sessions/{session_id}/shell",
+    "GET /api/v1/sessions/{session_id}/shell"
+  ],
+  "area": "drawers",
+  "docs": [
+    "docs/widget-system.md",
+    "docs/session-identity-history.md",
+    "docs/mcp-server.md"
+  ],
+  "examples": [
+    "Run git, a dev server or a quick script next to an agent without opening another session or touching the agent's terminal.",
+    "Switch to another agent with the panel open and get a shell in that agent's folder."
+  ],
+  "how_to": [
+    "Open a session on a desktop-width window and press the terminal key on the bottom bar (the bar is shown when you move to its handle at the bottom edge).",
+    "Type as in any terminal: the shell starts in the folder the agent was started in, and it is listed under terminals in the sidebar, nowhere else.",
+    "Close the panel and open it again: the same shell comes back with its scrollback; it closes with its agent.",
+    "An agent on a paired computer shows a short note instead of a shell.",
+    "An agent or script reads the same shell and its pane through the MCP tool session_shell_get."
+  ],
+  "id": "companion-shell",
+  "issues": [
+    1551
+  ],
+  "keywords": [
+    "terminal widget",
+    "shell",
+    "companion shell",
+    "bottom bar",
+    "widget bar",
+    "terminal",
+    "session_shell_get"
+  ],
+  "media": [],
+  "name": "Terminal widget",
+  "since": "2026-10-11",
+  "status": "beta",
+  "summary": "a plain shell per agent, opened from the bottom bar in the agent's folder, kept running in tmux, listed only under the drawer's terminals and closed with its agent.",
+  "surfaces": [
+    "src/api/companion_shell_routes.py",
+    "src/core/mcp/companion_shell_tools.py",
+    "src/core/companion_shell/ensure.py",
+    "web/src/opscenter/cells/shell/Cell.svelte",
+    "web/src/opscenter/cells/shell/shell-api.ts"
+  ],
+  "updated": "2026-10-11",
+  "where": [
+    "The bottom bar under the terminal grid, its first key, at 1024 wide or more."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

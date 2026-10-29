@@ -1,0 +1,46 @@
+{
+  "id": "scheduled-tasks-widget",
+  "name": "Scheduled tasks widget",
+  "summary": "A home screen widget listing the Claude desktop app's scheduled tasks, with what is actually recorded about each: its name, description and last run.",
+  "description": "The Claude desktop app keeps its scheduled tasks as folders under ~/.claude/scheduled-tasks, each with a SKILL.md whose frontmatter names and describes the task. The widget lists them from an authenticated, read-only route. Only recorded facts are shown: the schedule appears only when the task file itself records one, and otherwise reads not recorded, because the desktop app keeps schedules in its own store rather than in the task file; nothing is guessed from the task's prose, and there is no next-run column. The last run and the number of runs come from the scheduler's own record at the start of each run's transcript. The widget is hidden by default, so no saved layout changes; add it from the Widgets list on either page.",
+  "area": "home",
+  "status": "stable",
+  "since": "2026-09-27",
+  "updated": "2026-09-27",
+  "surfaces": [
+    "home screen",
+    "components list"
+  ],
+  "api_routes": [
+    "GET /api/v1/scheduled-tasks"
+  ],
+  "docs": [
+    "docs/session-status.md"
+  ],
+  "issues": [
+    893
+  ],
+  "keywords": [
+    "scheduled tasks",
+    "schedule",
+    "desktop app",
+    "widget",
+    "last run"
+  ],
+  "where": [
+    "Home screen, once added: a cell titled scheduled tasks, with a clock mark.",
+    "Edit layout (a widget's menu, edit layout): the widget drawer's entry that puts it on the page."
+  ],
+  "how_to": [
+    "Open any widget's menu on the home screen and choose edit layout.",
+    "Find scheduled tasks in the widget drawer (search widgets helps) and press it; the widget lands on the page. Press done.",
+    "Widen the widget to add the description and, when a task records one, its schedule.",
+    "Hover a last run to see how many runs are recorded."
+  ],
+  "examples": [
+    "Check at a glance that the nightly fleet check actually ran last night, without opening the desktop app.",
+    "Spot a task that has never run since it was created."
+  ],
+  "media": [],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

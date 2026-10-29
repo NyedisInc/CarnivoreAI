@@ -1,0 +1,27 @@
+
+.version-footer {
+    margin: var(--oc-space-1) var(--oc-space-1) 2px var(--oc-space-1);
+    text-align: center;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.version-footer .version {
+    display: block;
+    font-size: 0.68em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.version-footer__link {
+    display: block;
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+}
+
+.version-footer__link:hover .version,
+.version-footer__link:focus-visible .version {
+    text-decoration: underline;
+}

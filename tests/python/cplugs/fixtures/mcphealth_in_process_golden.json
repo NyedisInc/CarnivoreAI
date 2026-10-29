@@ -1,0 +1,129 @@
+{
+ "adopted:tm_c": {
+  "dropped": [
+   [
+    "plugin:x:y",
+    "dropped",
+    true,
+    "process"
+   ]
+  ],
+  "servers": [
+   [
+    "cmem",
+    "stdio",
+    "connected",
+    "process_running",
+    "process",
+    true
+   ],
+   [
+    "plugin:x:y",
+    "stdio",
+    "down",
+    "process_gone",
+    "process",
+    true
+   ]
+  ]
+ },
+ "ses_a": {
+  "dropped": [
+   [
+    "figma",
+    "dropped",
+    true,
+    "client_log"
+   ],
+   [
+    "gone",
+    "dropped",
+    true,
+    "process"
+   ],
+   [
+    "notion",
+    "needs_auth",
+    true,
+    "client_log"
+   ],
+   [
+    "plugin:x:y",
+    "dropped",
+    false,
+    "client_log"
+   ]
+  ],
+  "servers": [
+   [
+    "claude.ai Gmail",
+    "proxy",
+    "connected",
+    "connected",
+    "client_log",
+    false
+   ],
+   [
+    "docs",
+    "http",
+    "unknown",
+    "not_seen",
+    "probe",
+    true
+   ],
+   [
+    "figma",
+    "http",
+    "down",
+    "closed",
+    "client_log",
+    true
+   ],
+   [
+    "gone",
+    "stdio",
+    "down",
+    "process_gone",
+    "process",
+    true
+   ],
+   [
+    "memory",
+    "stdio",
+    "connected",
+    "process_running",
+    "process",
+    true
+   ],
+   [
+    "notion",
+    "sse",
+    "needs_auth",
+    "needs_auth",
+    "client_log",
+    true
+   ],
+   [
+    "plugin:x:y",
+    "stdio",
+    "down",
+    "gave_up",
+    "client_log",
+    false
+   ]
+  ]
+ },
+ "ses_b": {
+  "dropped": [],
+  "servers": [
+   [
+    "bridge",
+    "stdio",
+    "connected",
+    "process_running",
+    "process",
+    true
+   ]
+  ]
+ }
+}

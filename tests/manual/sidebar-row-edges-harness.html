@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>sidebar row edge harness</title>
+<link rel="stylesheet" href="../../client/css/styles.css" />
+<link rel="stylesheet" href="../../client/css/session-sidebar.css" />
+<link rel="stylesheet" href="../../client/css/status-dot.css" />
+<link rel="stylesheet" href="../../client/css/session-sidebar-density.css" />
+<link rel="stylesheet" href="../../client/css/session-sidebar-groups.css" />
+<link rel="stylesheet" href="../../client/css/session-theme-tint.css" />
+<script src="../../client/js/session-theme-tint.js"></script>
+<style>
+  /* --color- */
+  body { margin: 0; padding: 24px; }
+
+  #control-rail {
+      box-shadow: inset 3px 0 0 var(--color-accent);
+  }
+</style>
+</head>
+<body>
+<!-- position: fixed -->
+<div class="session-sidebar-panel session-sidebar-panel--open" data-density="cozy" id="panel">
+  <div class="session-sidebar-row" id="row-plain"
+       data-active="0" data-pinned="0">
+    <div class="session-sidebar-row-main">
+      <span class="status-dot status-dot--idle"></span>
+      <span class="session-sidebar-row-name">plain</span>
+    </div>
+  </div>
+
+  <div class="session-sidebar-row" id="row-pinned"
+       data-active="0" data-pinned="1">
+    <div class="session-sidebar-row-main">
+      <span class="status-dot status-dot--idle"></span>
+      <span class="session-sidebar-row-name">pinned</span>
+    </div>
+  </div>
+
+  <div class="session-sidebar-row" id="row-active"
+       data-active="1" data-pinned="0">
+    <div class="session-sidebar-row-main">
+      <span class="status-dot status-dot--idle"></span>
+      <span class="session-sidebar-row-name">active</span>
+    </div>
+  </div>
+
+  <div class="session-sidebar-row" id="row-themed"
+       data-active="0" data-pinned="0" data-session-theme="green_crt"
+       style="--session-theme-accent: #33ff66; --session-theme-ring: rgba(51, 255, 102, 0.45); --session-theme-wash: rgba(51, 255, 102, 0.10);">
+    <div class="session-sidebar-row-main">
+      <span class="status-dot status-dot--idle"></span>
+      <span class="session-sidebar-row-name">themed</span>
+    </div>
+  </div>
+
+  <div class="session-sidebar-row" id="row-pinned-themed"
+       data-active="0" data-pinned="1" data-session-theme="green_crt"
+       style="--session-theme-accent: #33ff66; --session-theme-ring: rgba(51, 255, 102, 0.45); --session-theme-wash: rgba(51, 255, 102, 0.10);">
+    <div class="session-sidebar-row-main">
+      <span class="status-dot status-dot--idle"></span>
+      <span class="session-sidebar-row-name">pinned + themed</span>
+    </div>
+  </div>
+
+  <div class="session-sidebar-row" id="control-rail"
+       data-active="0" data-pinned="0">
+    <div class="session-sidebar-row-main">
+      <span class="status-dot status-dot--idle"></span>
+      <span class="session-sidebar-row-name">control: rail on purpose</span>
+    </div>
+  </div>
+</div>
+
+<script>
+window.__edgesReady = false;
+
+/**
+ * Apply one shipped theme's cssVars to :root, exactly as the real theme
+ * loader does, by reading the theme's OWN manifest off disk.
+ *
+ * Hardcoding a palette here would test a palette this app does not ship.
+ * The manifest is fetched so a theme whose tokens change cannot leave a
+ * stale copy passing in this file.
+ *
+ * @param {string} id - theme directory name, e.g. "terminal".
+ * @returns {Promise<object>} the cssVars map that was applied.
+ */
+window.__applyTheme = async function (id) {
+    const res = await fetch('../../client/css/themes/' + id + '/theme.json');
+    if (!res.ok) throw new Error('theme manifest ' + id + ' -> HTTP ' + res.status);
+    const manifest = await res.json();
+    const vars = manifest.cssVars || {};
+    const root = document.documentElement;
+    Object.keys(vars).forEach((k) => root.style.setProperty(k, vars[k]));
+    root.setAttribute('data-theme', id);
+    document.body.style.background = vars['--color-bg'] || '#000000';
+    return vars;
+};
+
+/**
+ * Resolve a custom property off :root to its computed value.
+ * @param {string} name - e.g. "--color-border".
+ * @returns {string} the trimmed value, "" when the property is unset.
+ */
+window.__token = function (name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+};
+
+/**
+ * Geometry and computed paint for one row.
+ *
+ * The rect is reported in DEVICE-ALIGNED integers because every pixel the
+ * verifier samples is addressed as an offset from the row's left or right
+ * edge, and a fractional origin would slide those samples off the band
+ * they were chosen to land on.
+ *
+ * @param {string} id - element id.
+ * @returns {?object} null when the element is absent.
+ */
+window.__row = function (id) {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    const cs = getComputedStyle(el);
+    const r = el.getBoundingClientRect();
+    var sw = el.querySelector('.session-theme-swatch');
+    return {
+        id: id,
+        rect: {
+            x: Math.round(r.left), y: Math.round(r.top),
+            w: Math.round(r.width), h: Math.round(r.height),
+        },
+        swatch: sw ? {
+            x: Math.round(sw.getBoundingClientRect().left),
+            y: Math.round(sw.getBoundingClientRect().top),
+            w: Math.round(sw.getBoundingClientRect().width),
+            h: Math.round(sw.getBoundingClientRect().height),
+        } : null,
+        boxShadow: cs.boxShadow,
+        borderLeftColor: cs.borderLeftColor,
+        borderLeftWidth: cs.borderLeftWidth,
+        borderTopColor: cs.borderTopColor,
+        backgroundColor: cs.backgroundColor,
+    };
+};
+
+/** @returns {object} the whole measurement bundle for the current theme. */
+window.__edges = function () {
+    return {
+        hidden: document.hidden,
+        visibilityState: document.visibilityState,
+        innerWidth: window.innerWidth,
+        theme: document.documentElement.getAttribute('data-theme'),
+        tokens: {
+            border: window.__token('--color-border'),
+            bg: window.__token('--color-bg'),
+            accent: window.__token('--color-accent'),
+        },
+    };
+};
+
+/**
+ * Give every `data-session-theme` row the swatch the real row builders
+ * emit, using the shipped module rather than a hardcoded copy of what it
+ * is believed to produce.
+ *
+ * The inline `--session-theme-*` properties above stay hardcoded on
+ * purpose - they are the geometry under test - but the swatch is the
+ * thing check_identity_survives now samples, so a builder that stopped
+ * emitting one must be able to fail this page.
+ *
+ * @returns {void}
+ */
+window.__paintSwatches = function () {
+    window.Themes = {
+        listAll: function () {
+            return [{
+                id: 'green_crt',
+                name: 'Green CRT',
+                cssVars: { '--color-accent': '#33ff66' },
+            }];
+        },
+    };
+    var rows = document.querySelectorAll('[data-session-theme]');
+    for (var i = 0; i < rows.length; i++) {
+        var old = rows[i].querySelector('.session-theme-swatch');
+        if (old) old.parentNode.removeChild(old);
+        rows[i].querySelector('.session-sidebar-row-main')
+            .insertAdjacentHTML('beforeend',
+                window.SessionThemeTint.swatchHtml('green_crt'));
+    }
+};
+
+(async () => {
+    await window.__applyTheme('terminal');
+    window.__paintSwatches();
+    window.__edgesReady = true;
+})();
+</script>
+</body>
+</html>

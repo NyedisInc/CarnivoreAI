@@ -1,0 +1,53 @@
+{
+  "api_routes": [
+    "src/api/agent_action_routes.py",
+    "src/api/crosstalk_routes.py",
+    "src/api/mcp_routes.py",
+    "src/api/descriptions_routes.py",
+    "src/api/mcp_usage_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/crosstalk.md",
+    "docs/mcp-server.md"
+  ],
+  "examples": [
+    "Ask an agent in one pane what other sessions are running and what state they are in, without leaving its prompt.",
+    "An agent asks to stop a runaway session, you see the request, and approve it.",
+    "An agent on one computer lists the paired computer's sessions, reads one, and asks to restart it; the request waits in your inbox.",
+    "Ask one agent to send a task to another; it waits safely if the receiver is busy or in a dialog.",
+    "An agent calls agents_lookup with view roster and scope around, reads each session's short description and its project and company, and skips the archived ones."
+  ],
+  "how_to": [
+    "Start or restart a claude or codex session: it registers a server named carnivore by itself, ready for the first turn.",
+    "Ask an agent to use the carnivore tools. For another agent, run agents_lookup and crosstalk_send; the first contact asks for owner approval.",
+    "The hold is off by default. With it on, an agent's keys, restart or stop aimed at another session wait for your approval (GET /api/v1/agent-actions, then POST /api/v1/agent-actions/{id}/approve or /deny). Turn that hold on or off with PUT /api/v1/agent-actions/settings {\"gate_cross_session_actions\": true}. The server itself is on by default; switching it off in settings lists every feature that stops working first.",
+    "To turn the server off, set mcp.enabled to false in config.json and restart the session.",
+    "Before messaging another session, ask an agent to call agents_lookup with view roster: scope online (live), around (live and asleep) or all (archived included, marked archived: true); has_description finds sessions with or without a short or long description."
+  ],
+  "id": "carnivore-mcp-server",
+  "issues": [
+    152,
+    1263,
+    1271,
+    1502,
+    1752
+  ],
+  "keywords": [
+    "mcp",
+    "agent",
+    "tools",
+    "claude",
+    "codex"
+  ],
+  "media_exempt": "no interface of its own: the agent's own prompt shows the tools, and the proof is a scripted test against the real claude and codex binaries",
+  "name": "Carnivore MCP server",
+  "since": "2026-09-30",
+  "status": "beta",
+  "summary": "claude and codex sessions use carnivore tools to inspect sessions, act with owner approval, and exchange durable crosstalk messages.",
+  "surfaces": [],
+  "updated": "2026-10-13",
+  "where": [
+    "Inside any claude or codex pane: the agent lists a server named carnivore."
+  ]
+}

@@ -1,0 +1,128 @@
+{
+  "kind": "cplug",
+  "id": "reviewboard",
+  "name": "review board",
+  "version": "0.6.0",
+  "api_version": 1,
+  "min_app_version": "1.16.1",
+  "author": "Carnivore contributors",
+  "license": "MIT",
+  "tier": "builtin",
+  "scope": [
+    "global"
+  ],
+  "icon": "plug",
+  "default_enabled": false,
+  "requires": [
+    {
+      "id": "huddle",
+      "kind": "cplug"
+    }
+  ],
+  "permissions": [
+    {
+      "name": "agent_writes"
+    }
+  ],
+  "owns": {
+    "routes": [
+      "/boards",
+      "/boards/live",
+      "/boards/{slug}",
+      "/boards/{slug}/attachments",
+      "/boards/{slug}/draft",
+      "/boards/{slug}/live",
+      "/boards/{slug}/live/end",
+      "/boards/{slug}/live/milestone",
+      "/boards/{slug}/live/send",
+      "/boards/{slug}/open",
+      "/boards/{slug}/payload-draft",
+      "/boards/{slug}/revisions",
+      "/boards/{slug}/revisions/{revision}/ticket",
+      "/boards/{slug}/rounds",
+      "/boards/{slug}/rounds/{round_id}/resend",
+      "/boards/{slug}/saves",
+      "/boards/{slug}/task",
+      "/posted/open",
+      "/rescan",
+      "/root",
+      "/scratch",
+      "/view/{ticket_text}"
+    ],
+    "strings": [
+      "cplug.reviewboard."
+    ],
+    "styles": [
+      "board.css",
+      "header.css",
+      "tray.css"
+    ],
+    "tests": [
+      "tests/python/cplugs/reviewboard/",
+      "web/src/cplugs/reviewboard/"
+    ],
+    "style_guide": [
+      "web/src/cplugs/reviewboard/AttachmentsKey.svelte",
+      "web/src/cplugs/reviewboard/BoardFrame.svelte",
+      "web/src/cplugs/reviewboard/BoardPicker.svelte",
+      "web/src/cplugs/reviewboard/BoardScreen.svelte",
+      "web/src/cplugs/reviewboard/ClosedReviews.svelte",
+      "web/src/cplugs/reviewboard/HistoryBar.svelte",
+      "web/src/cplugs/reviewboard/InlineLayer.svelte",
+      "web/src/cplugs/reviewboard/LiveBar.svelte",
+      "web/src/cplugs/reviewboard/NotesPanel.svelte",
+      "web/src/cplugs/reviewboard/PayloadControls.svelte",
+      "web/src/cplugs/reviewboard/PayloadNotices.svelte",
+      "web/src/cplugs/reviewboard/PromptRow.svelte",
+      "web/src/cplugs/reviewboard/RelinkPicker.svelte",
+      "web/src/cplugs/reviewboard/RoundView.svelte",
+      "web/src/cplugs/reviewboard/ThemePicker.svelte",
+      "web/src/cplugs/reviewboard/Tray.svelte",
+      "web/src/cplugs/reviewboard/board.css",
+      "web/src/cplugs/reviewboard/header.css",
+      "web/src/cplugs/reviewboard/tray.css"
+    ],
+    "contributions": [
+      "projects.panel"
+    ]
+  },
+  "data": [
+    {
+      "id": "boards",
+      "kind": "folder",
+      "root_setting": "boardsRoot",
+      "default": "review-boards",
+      "scope_by": "task_item_id",
+      "policy": {
+        "own": "carried",
+        "share": "excluded",
+        "reason": "needed for this plugin to work",
+        "purge": "kept",
+        "backup": "vault"
+      }
+    },
+    {
+      "id": "drafts",
+      "kind": "folder",
+      "path": "drafts",
+      "scope_by": "install",
+      "policy": {
+        "own": "carried",
+        "share": "excluded",
+        "reason": "needed for this plugin to work",
+        "backup": "vault"
+      }
+    },
+    {
+      "id": "locks",
+      "kind": "folder",
+      "path": "locks",
+      "scope_by": "install",
+      "policy": {
+        "own": "excluded",
+        "share": "excluded",
+        "reason": "per-board write lock files; held for seconds and meaningless on another machine, so not a store anyone keeps"
+      }
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "api_routes": [
+    "GET /api/v1/pack/machines",
+    "PUT /api/v1/pack/master",
+    "PUT /api/v1/pack/settings",
+    "GET /api/v1/pack/machines/{machine}/reserve",
+    "PUT /api/v1/pack/machines/{machine}/reserve",
+    "GET /api/v1/pack/machines/{machine}/restrictions",
+    "PUT /api/v1/pack/machines/{machine}/restrictions",
+    "POST /api/v1/pack/machines/self/rescan",
+    "GET /api/v1/pack/relay",
+    "PUT /api/v1/pack/relay/{account}",
+    "GET /api/v1/pack/tracks-master",
+    "PUT /api/v1/pack/tracks-master",
+    "GET /api/v1/projects/{project_name}/github-account",
+    "PUT /api/v1/projects/{project_name}/github-account",
+    "PUT /api/v1/projects/{project_name}/air-gap",
+    "GET /api/v1/projects/{project_name}/publish-repo",
+    "POST /api/v1/projects/{project_name}/publish-repo"
+  ],
+  "area": "settings",
+  "docs": [
+    "docs/pack.md",
+    "docs/computers.md",
+    "docs/federation.md"
+  ],
+  "examples": [
+    "See every paired computer's load, memory and disk beside the compute it keeps free for its owner.",
+    "Make another computer the Pack alpha, and see at once when two computers disagree about which one it is.",
+    "Stop a paired computer from hosting more than two agents, from that computer or from this one."
+  ],
+  "how_to": [
+    "Open the pack row in the menu (press h with the menu focused).",
+    "A meter is 20 cells outlined in a hairline: green under 75 percent, amber from 75, coral from 90.",
+    "Press make alpha next to a computer's name, on the computer that is alpha now, to hand alpha to another computer; every paired computer follows within seconds, because each one accepts only a change signed by the alpha it follows. Pressed on any other computer it changes only that computer, and the others raise a refused pack change alert offering to follow it there.",
+    "Restrictions on another computer can only be tightened from here; that computer's own owner loosens them.",
+    "On a project's page, open transport... to set air-gap, see which github account the project uses and where that came from, pick one of the logged-in accounts, see how a replica would get the code, and publish a private repo for a folder with no remote.",
+    "A session or Swarm agent running on another computer wears that computer's name as a small badge on the Swarm page and in its chat header.",
+    "The ssh tab holds ssh-only machines and the pairing tools."
+  ],
+  "id": "pack-machines",
+  "issues": [
+    1514,
+    1521,
+    1618,
+    1921
+  ],
+  "keywords": [
+    "pack",
+    "alpha",
+    "reserve",
+    "restrictions",
+    "machines",
+    "paired computers",
+    "wolf"
+  ],
+  "name": "Pack machines",
+  "since": "2026-10-10",
+  "status": "beta",
+  "summary": "",
+  "surfaces": [
+    "web/src/lib/pack-machines/pack-machines-store.svelte.ts",
+    "web/src/lib/pack-machines/ReserveForm.svelte",
+    "web/src/lib/pack-machines/PackSettingsBlock.svelte",
+    "web/src/lib/pack-machines/PackRelayBlock.svelte",
+    "web/src/lib/pack-machines/pack-relay-store.svelte.ts",
+    "web/src/lib/pack-transport/ProjectTransport.svelte",
+    "web/src/opscenter/ui/MachineBadge.svelte",
+    "web/src/lib/computers/ComputersPanel.svelte",
+    "web/src/lib/computers/ComputerRow.svelte",
+    "web/src/lib/pack-machines/PackWorkTab.svelte",
+    "web/src/lib/pack-machines/PackLoginsTab.svelte",
+    "web/src/lib/pack-machines/MachineEditor.svelte",
+    "web/src/lib/pack-machines/PackMeter.svelte",
+    "web/src/lib/pack-machines/PackMarks.svelte"
+  ],
+  "updated": "2026-10-18",
+  "where": [
+    "Pack: the computers, work, logins and ssh tabs."
+  ],
+  "media": [],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

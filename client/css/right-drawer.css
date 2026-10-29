@@ -1,0 +1,99 @@
+/* padding */
+
+:root {
+    --right-dock-w: 320px;
+}
+
+
+body.right-drawer-docked #terminal-screen {
+    padding-right: var(--right-dock-w);
+}
+
+/* padding */
+body.right-drawer-docked:has(#terminal-screen.active) .header {
+    padding-right: calc(var(--right-dock-w) + var(--header-pad-x));
+}
+
+
+body.right-drawer-docked .config-editor-picker-overlay {
+    left: auto;
+    width: var(--right-dock-w);
+    background: transparent;
+    animation: none;
+    z-index: 1100;
+}
+
+body.right-drawer-docked .config-editor-picker-overlay .config-editor-picker-content {
+    width: 100%;
+    box-shadow: none;
+}
+
+.config-editor-picker-content {
+    position: relative;
+}
+
+
+#session-notes-panel {
+    position: fixed;
+    top: var(--desktop-inset-top, 0px);
+    right: 0;
+    bottom: 0;
+    z-index: 1100;
+    width: min(360px, 88vw);
+    display: flex;
+    flex-direction: column;
+    background: var(--oc-ground-panel);
+    border-left: 1px solid var(--oc-line-rule);
+    box-shadow: -4px 0 24px var(--oc-shadow-lift);
+    animation: rightDrawerIn 160ms ease;
+}
+
+body.right-drawer-docked #session-notes-panel {
+    width: var(--right-dock-w);
+    box-shadow: none;
+}
+
+@keyframes rightDrawerIn {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #session-notes-panel {
+        animation: none;
+    }
+}
+
+
+.right-drawer-grip {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 7px;
+    z-index: 5;
+    cursor: col-resize;
+    touch-action: none;
+    background: transparent;
+}
+
+.right-drawer-grip:hover,
+.right-drawer-grip:focus-visible,
+body.right-drawer-resizing .right-drawer-grip {
+    background: linear-gradient(to right, transparent 3px, var(--oc-orange) 3px, var(--oc-orange) 4px, transparent 4px);
+    outline: none;
+}
+
+body:not(.right-drawer-docked) .right-drawer-grip {
+    display: none;
+}
+
+body.right-drawer-resizing {
+    cursor: col-resize;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body.right-drawer-resizing .xterm {
+    pointer-events: none;
+}

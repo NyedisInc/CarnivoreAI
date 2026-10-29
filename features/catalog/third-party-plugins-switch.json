@@ -1,0 +1,47 @@
+{
+  "api_routes": [
+    "GET /api/v1/cplug-owner/switch",
+    "PUT /api/v1/cplug-owner/switch",
+    "PUT /api/v1/cplugs/safe-mode"
+  ],
+  "area": "settings",
+  "description": "Plugins installed from the catalog run as isolated processes in a macOS sandbox, never inside the app. Nothing third-party runs until you turn the master switch on, and turning it off stops every one of them. Safe mode stops them all at once without removing anything. A plugin you install starts off with no permissions and asks again when its code changes.",
+  "docs": [
+    "docs/cplug-runtime.md",
+    "docs/cplug-platform.md"
+  ],
+  "examples": [
+    "Install a plugin from Warez: it lands switched off with no permissions, you tick what it asks for, and it runs only while the master switch is on.",
+    "Turn the switch off before handing your computer to someone: every third-party plugin stops within a moment."
+  ],
+  "how_to": [
+    "Open the plugins page and flip third-party plugins on; the note beside it says sandbox ready, not checked yet, or unavailable with the reason.",
+    "Flip it off to stop every third-party plugin; installed ones and their data stay.",
+    "If the note says safe mode is on, none run until safe mode is lifted."
+  ],
+  "id": "third-party-plugins-switch",
+  "issues": [
+    2063
+  ],
+  "keywords": [
+    "plugins",
+    "third-party",
+    "sandbox",
+    "sidecar",
+    "switch",
+    "safe mode"
+  ],
+  "media_exempt": "pending the next recapture",
+  "name": "Third-party plugins switch",
+  "since": "2026-10-22",
+  "status": "beta",
+  "summary": "one owner switch, off by default, that decides whether any plugin installed from the catalog may run, with a sandbox check and a safe mode.",
+  "surfaces": [
+    "web/src/lib/plugins-page/ThirdPartySwitch.svelte",
+    "src/cplugs/host/owner_switch.py"
+  ],
+  "updated": "2026-10-25",
+  "where": [
+    "The plugins page, the third-party plugins row at the top."
+  ]
+}

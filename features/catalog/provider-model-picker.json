@@ -1,0 +1,29 @@
+{
+  "api_routes": [
+    "src/api/provider_models_routes.py"
+  ],
+  "area": "providers",
+  "docs": [],
+  "examples": [
+    "Default a cheaper model for an account you use for quick questions."
+  ],
+  "how_to": [
+    "Pick the model an account's new sessions start with."
+  ],
+  "id": "provider-model-picker",
+  "issues": [],
+  "keywords": [
+    "model",
+    "picker"
+  ],
+  "media_exempt": "the picker is on a configured account's ledger row, which needs a real provider sign-in the capture slot does not have",
+  "name": "Provider model picker",
+  "since": "2026-09-10",
+  "status": "stable",
+  "summary": "choose which model a provider account uses for new sessions.",
+  "surfaces": [],
+  "updated": "2026-09-27",
+  "where": [
+    "The provider ledger screen, on an account's row."
+  ]
+}

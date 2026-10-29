@@ -1,0 +1,53 @@
+{
+  "id": "layout-command-bar",
+  "name": "Layout command bar and broadcast",
+  "summary": "A bar across the top of an open Layout that searches every terminal in it at once, or sends one command to every terminal whose broadcast toggle is on.",
+  "description": "The bar shows the Layout's name and one box with one mode toggle inside it: a magnifying glass in search mode, a \">\" in command mode. Search mode (the default) runs the query in every member terminal through that terminal's own search, with the same \"in prompt only\" switch, a count per terminal and in total, and next and previous across terminals. Command mode sends the typed line plus Enter to every live member whose \">\" toggle is on, after showing how many will receive it (\"to 2 of 3\", a chip that also opens a menu to choose which terminals); a member that is working right now asks first, and a pane stopped on a dialog is refused rather than answered. Each member terminal carries the \">\" toggle in its title bar, on by default and stored with the Layout so every device agrees - the bar's recipients menu sets the same value, and a clean send says nothing further (Enter is already the confirmation); a skip or a failure still reports in the result line. While the desktop drawer is collapsed to its mini rail, the box right-justifies to the header's right edge. In command mode a line that starts with \"/\" or \"$\" opens a skill list under the box: every global skill plus the project skills that every terminal the line would reach has, filtered as you type, each with its one-line description and scope.",
+  "area": "sessions",
+  "status": "stable",
+  "since": "2026-09-26",
+  "updated": "2026-09-30",
+  "surfaces": [
+    "web/src/opscenter/layouts/LayoutCommandBar.svelte",
+    "web/src/opscenter/layouts/command-bar.svelte.ts",
+    "web/src/opscenter/layouts/LayoutCellMarks.svelte",
+    "web/src/opscenter/layouts/LayoutSkillMenu.svelte",
+    "web/src/opscenter/layouts/skill-complete.svelte.ts"
+  ],
+  "api_routes": [
+    "PUT /api/v1/layouts/{uuid}/members/{session_uuid}/broadcast",
+    "POST /api/v1/layouts/{uuid}/broadcast",
+    "GET /api/v1/layouts/{uuid}/skills"
+  ],
+  "docs": [
+    "docs/layouts.md"
+  ],
+  "issues": [
+    837,
+    1154
+  ],
+  "keywords": [
+    "layout",
+    "broadcast",
+    "search",
+    "command",
+    "multi-pane"
+  ],
+  "where": [
+    "Open a saved Layout (a LAYOUTS row in the agents drawer): the bar sits in the tab row above its terminals, to the right of the Layout's name tab.",
+    "Each terminal in the Layout carries a \">\" toggle in its title bar, beside its tools - the one recipients control, on every width including a phone."
+  ],
+  "how_to": [
+    "Type in the box: search mode (the magnifying glass, the default) finds the text in every terminal at once; each terminal shows its own count and the bar shows the total.",
+    "Press Enter or Shift+Enter to walk the matches from one terminal into the next; the prompt icon limits the search to prompts you sent, the same switch as a single terminal's search.",
+    "Click the mode toggle to switch to command mode: its icon swaps from the magnifying glass to \">\".",
+    "Escape clears the box, and a second Escape leaves it.",
+    "In command mode, start the line with \"/\" (Claude Code) or \"$\" (Codex) to list skills: every global skill plus the project skills each receiving terminal shares. Keep typing to filter, Up and Down to move, Tab or Enter to insert, Escape to close, or click a row."
+  ],
+  "examples": [
+    "Three agents on one repo: search \"error\" to see which of them hit a failure, then send \"git status\" to all three at once.",
+    "Leave a long-running session's \">\" off so a broadcast \"npm test\" only reaches the other terminals."
+  ],
+  "media": [],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

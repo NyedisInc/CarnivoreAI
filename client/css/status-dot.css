@@ -1,0 +1,68 @@
+@layer legacy {
+
+
+.status-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: var(--radius-full);
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.status-dot--dead {
+    background: var(--color-danger);
+    box-shadow: 0 0 0 2px var(--color-danger-strong-bg, rgba(255, 68, 68, 0.35));
+}
+
+.status-dot--question {
+    /* failed to load */
+    background: var(--color-status-pending, #ffa500);
+    box-shadow: 0 0 8px var(--color-status-pending, #ffa500);
+    animation: status-dot-pulse 0.9s ease-in-out infinite;
+}
+
+.status-dot--notice {
+    background: var(--color-accent);
+    box-shadow: 0 0 8px var(--color-accent-glow, var(--color-accent));
+    animation: status-dot-pulse 0.9s ease-in-out infinite;
+}
+
+.status-dot--working-subagent {
+    background: var(--color-info);
+    box-shadow: 0 0 8px var(--color-info);
+    animation: status-dot-pulse 1.6s ease-in-out infinite;
+}
+
+.status-dot--working {
+    background: var(--color-success);
+    box-shadow: 0 0 8px var(--color-success);
+    animation: status-dot-pulse 1.6s ease-in-out infinite;
+}
+
+.status-dot--finished-unread {
+    background: var(--color-warning);
+    box-shadow: 0 0 8px var(--color-warning);
+    animation: status-dot-pulse 2.4s ease-in-out infinite;
+}
+
+.status-dot--idle {
+    background: var(--color-fg-faint);
+}
+
+.status-dot--stopped {
+    /* --color- */
+    background: var(--color-fg-faint);
+    opacity: 0.55;
+}
+
+.status-dot--unknown {
+    /* --color- */
+    background: transparent;
+    box-shadow: inset 0 0 0 2px var(--color-fg-subtle);
+}
+
+@keyframes status-dot-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.55; }
+}
+}

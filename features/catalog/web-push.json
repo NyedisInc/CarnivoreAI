@@ -1,0 +1,45 @@
+{
+  "api_routes": [
+    "src/api/web_push_routes.py"
+  ],
+  "area": "status-notifications",
+  "docs": [
+    "docs/web-push.md"
+  ],
+  "examples": [
+    "An agent stops on a permission dialog while your mobile device is locked: the installed app pushes \"approval needed\" straight from your computer to Apple, and tapping it opens the app.",
+    "A push does not arrive: settings shows the last result for that device, for example 403 from the push service, so the cause is visible.",
+    "Your phone gets permission and question pushes only, while your tablet gets nothing: untick the tablet's column."
+  ],
+  "how_to": [
+    "Open the installed app (added to the home screen), go to settings, notifications, alerts on this device, and press alerts on. Allow notifications when asked.",
+    "Press send test to push one \"approval needed\" to every subscribed device now; remove drops a device.",
+    "Routes: GET /api/v1/push/vapid-public-key, POST and GET /api/v1/push/subscriptions, DELETE /api/v1/push/subscriptions/{id}, POST /api/v1/push/test.",
+    "Each subscribed device is its own column in the routing matrix (settings, notifications, routing): tick the notification types that device should get. A new device starts with the global default ticks.",
+    "Pushes for the same type to the same device within 10 seconds are coalesced into one."
+  ],
+  "id": "web-push",
+  "issues": [
+    164,
+    1278
+  ],
+  "keywords": [
+    "web push",
+    "push notification",
+    "vapid",
+    "alerts",
+    "approval",
+    "phone",
+    "service worker"
+  ],
+  "media_exempt": "A permission prompt and a system notification: neither is capturable from the app's own page.",
+  "name": "Web push alerts",
+  "since": "2026-09-30",
+  "status": "beta",
+  "summary": "",
+  "surfaces": [],
+  "updated": "2026-10-03",
+  "where": [
+    "Settings, notifications, alerts on this device (the button shows only in the installed app). The worker is /sw.js."
+  ]
+}

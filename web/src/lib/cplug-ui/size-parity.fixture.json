@@ -1,0 +1,66 @@
+{
+ "sizes": {
+  "ascii": 63,
+  "accented_latin": 82,
+  "cjk": 94,
+  "astral_emoji": 67,
+  "escaped_quote": 70,
+  "keys_and_nesting": 132
+ },
+ "documents": {
+  "ascii": {
+   "schema": 1,
+   "root": {
+    "type": "text",
+    "value": "hello world"
+   }
+  },
+  "accented_latin": {
+   "schema": 1,
+   "root": {
+    "type": "text",
+    "value": "caf\u00e9 \u00fcber na\u00efve"
+   }
+  },
+  "cjk": {
+   "schema": 1,
+   "root": {
+    "type": "text",
+    "value": "\u3053\u3093\u306b\u3061\u306f\u4e16\u754c"
+   }
+  },
+  "astral_emoji": {
+   "schema": 1,
+   "root": {
+    "type": "text",
+    "value": "ok \ud83d\ude00"
+   }
+  },
+  "escaped_quote": {
+   "schema": 1,
+   "root": {
+    "type": "text",
+    "value": "say \"hi\" \\ done"
+   }
+  },
+  "keys_and_nesting": {
+   "schema": 1,
+   "root": {
+    "type": "list",
+    "items": [],
+    "empty": "\u00e9"
+   },
+   "data": {
+    "k\u00e9y": [
+     1,
+     2.5,
+     true,
+     null,
+     {
+      "a": "\u4e16"
+     }
+    ]
+   }
+  }
+ }
+}

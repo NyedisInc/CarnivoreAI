@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://carnivore.ai/schemas/extensions/theme.schema.json",
+  "title": "Theme, layer 1",
+  "description": "A theme: theme.json is the native manifest. Third-party themes are data only; code only for publisher nyedis.",
+  "allOf": [
+    {
+      "$ref": "item.schema.json"
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "theme"
+        },
+        "id": {
+          "pattern": "^[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?(/[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?)?$"
+        },
+        "scope": {
+          "const": [
+            "global"
+          ]
+        },
+        "runs_script": {
+          "type": "boolean",
+          "description": "True when the theme ships script. Allowed only when the publisher is nyedis: a cross-field rule the pipeline enforces (gate 3), written here because a schema cannot read the account (L1-6)."
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

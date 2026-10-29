@@ -1,0 +1,81 @@
+{
+  "api_routes": [
+    "GET /api/v1/swarm/roster",
+    "GET /api/v1/swarm/settings",
+    "PATCH /api/v1/companies/{company_id}",
+    "PATCH /api/v1/swarm/agents/{agent_id}",
+    "PUT /api/v1/swarm/settings",
+    "PUT /api/v1/swarm/agents/{agent_id}/name"
+  ],
+  "area": "drawers",
+  "description": "The Swarm page opens from the swarm page link on the drawer's huddle panel (or the #swarm link) and leaves the drawer on its tab. Its ledger lists SysOp, companies, projects, agents and your ordinary sessions as collapsible rows; the org chart draws the same tree top-down with zoom and pan, stacking each parent's leaf agents in a column (two or three when long) so it grows down instead of sideways and never shrinks to fit; nodes is the drawer panel at full width. All three show the same active floor, with one quiet link to show the inactive ones, and all three follow the node filter, which shows one node's lineage: the node, its parents up to SysOp and everything under it. An agent's chat groups its messages in bursts: one header per run from the same sender (an arrow in for what the agent received, out for what it sent, the sender's square, its path and the time since), follow-ups tucked under it with only a dim time, two or more quiet events in a row folded into one \"N events\" line that opens in place, and a question or review card always under its own header with a yellow edge; an outgoing crosstalk message is headed by the agent it went to. A click on an agent anywhere (a ledger row, a node, a square, a name in a chat message, an agent row in the huddle) opens its chat with its terminal beside it, on the right (at 1024 px and wider the chat docks and the terminal moves over; a press in that terminal keeps the chat open; the swarm page steps aside); an asleep agent opens its chat alone and is never woken by the click. On the nodes and org chart tabs a shift+click filters to that node's lineage (shift+click it again to clear); the filtered node keeps an outline. A company or project with no agent is a vacant seat that asks before turning one on. The settings tab picks the default view, the default density and the character set. Project, company and SysOp nodes wear the same rolled-up status the Agents tab heading shows, and a vacant seat takes that status's hue on its dashed outline. Every project, company and SysOp wears its own bright color, as unlike the others as the screen allows on the theme you are using (each new one picked as the color farthest from every one before it, so adding one never moves the rest; dark and light themes get their own sets, neons and near-whites included), and only a project's agents and sessions share its tone, each a distinct bright shade, never a muddy one; a color you set by hand on an agent still wins. Its settings tab also sets the Swarm look for every device: agent colors by project or random, a body shape per agent type and an animation per status.",
+  "docs": [
+    "docs/swarm.md"
+  ],
+  "examples": [
+    "see every active agent and who it reports to at a glance",
+    "turn on an agent for a project that has none by clicking its vacant seat",
+    "tell at a glance which project an agent belongs to by its color tone",
+    "make companies hexagons and sysop a cloud, or let every agent wear its own random color"
+  ],
+  "how_to": [
+    "pick ledger, org chart or nodes in the tab strip",
+    "click a row, node or square to open that session, or that agent's chat with its terminal beside it on the right",
+    "shift+click a node (or shift+enter) on the nodes or org chart tab to show only its lineage, its parents up to sysop and everything under it; shift+click it again to show everything",
+    "in the drawer panel or on the swarm page, click a project agent to show only its agents below it, or a company to show only its projects and their agents; click sysop or close the agent chat to show everything again",
+    "scroll the wheel or press plus and minus on the org chart to zoom, drag to pan",
+    "open settings to pick the default view, default density and character set",
+    "open an agent's chat, then use its menu to pop it out into its own window or make it a widget, or drag its title row onto the layout to drop it as a widget",
+    "a swarm agent in a folder carnivore made (alpha, a company hq, a project you approved) is trusted for you on every account; a folder of your own still shows one trust card per start, and clicking it answers claude code's question",
+    "in an agent's chat, every message starts with who posted it (company > project > agent, or sysop, or you) and how long ago; click a name to open that agent's chat with its terminal beside it",
+    "a question card shows the asker, the task it is on and a one-sentence question; click full details to read the raw question, who else asked and how it was routed, and click it again to fold it",
+    "press the mouse anywhere outside the agent chat to hide it; pressing another agent's square in the drawer switches the chat instead",
+    "to recolor a company, edit the company's hue in the app; the company agent and agents with that company but no project follow, projects keep their own hues",
+    "in the swarm page's settings tab, under look, pick the agent colors (by project or random), a shape for sysop, companies, projects and agents, and how each status moves (or still); each row shows a live character and the choice holds on every device",
+    "right-click a node (or long press it on a phone) for its menu: r rename, c color, b background, s shape; auto, none and tier default put the automatic look back",
+    "the agents drawer lists the paired computers in its pack section, under browsers; click a row to open pack"
+  ],
+  "id": "pack-page",
+  "issues": [
+    1353,
+    1363,
+    1374,
+    1376,
+    1403,
+    1414,
+    1415,
+    1426,
+    1437,
+    1452,
+    1687
+  ],
+  "keywords": [
+    "swarm",
+    "org chart",
+    "ledger",
+    "squares",
+    "agents",
+    "swarm",
+    "question card",
+    "breadcrumb",
+    "color",
+    "company colors"
+  ],
+  "media": [],
+  "name": "Swarm page",
+  "since": "2026-10-05",
+  "status": "beta",
+  "summary": "a main-area page that shows your whole floor of sessions and Swarm agents as a ledger, an org chart or nodes, with settings for the default view, density and character set",
+  "surfaces": [
+    "huddle drawer panel bar: swarm page link",
+    "main area page #swarm",
+    "web/src/lib/huddle-swarm/",
+    "web/src/cplugs/huddle/swarm/"
+  ],
+  "updated": "2026-10-13",
+  "where": [
+    "open the huddle tab in the left drawer, with the swarm view on",
+    "click the swarm page link on the panel's bar"
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

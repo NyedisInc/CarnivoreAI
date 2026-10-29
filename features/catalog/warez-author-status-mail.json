@@ -1,0 +1,42 @@
+{
+  "api_routes": [
+    "GET /v1/submissions/mine",
+    "GET /v1/submissions/{id}/report"
+  ],
+  "area": "skills-catalog",
+  "description": "The publish view lists your submissions with their state: received, being checked, did not pass its checks, waiting for approval, publishing, published, withdrawn, replaced, stuck. Open a failed one to read the check results meant for the author: the kinds of warnings and bounded detail, never the model's full text or admin notes. Mail uses fixed wording and a link, never your submission text, at most five a day per recipient, and sends only where the catalog's community mail is switched on.",
+  "docs": [
+    "docs/catalog.md"
+  ],
+  "examples": [
+    "A skill whose gate failed shows did not pass its checks with the failing gate named; fix and resubmit."
+  ],
+  "how_to": [
+    "Open publish a skill and read the state beside each submission.",
+    "Open a row that did not pass to see its check results.",
+    "Look for the mail after a failed check or a publish."
+  ],
+  "id": "warez-author-status-mail",
+  "issues": [
+    2063
+  ],
+  "keywords": [
+    "warez",
+    "submission",
+    "status",
+    "mail",
+    "author"
+  ],
+  "media_exempt": "pending the next recapture",
+  "name": "Submission status and mail",
+  "since": "2026-10-22",
+  "status": "beta",
+  "summary": "authors see where each submission stands in the app and get a short mail when a check fails or the item publishes.",
+  "surfaces": [
+    "web/src/lib/publish-page/PublishPage.svelte"
+  ],
+  "updated": "2026-10-22",
+  "where": [
+    "The skills catalog, PUBLISH A SKILL, your submissions."
+  ]
+}

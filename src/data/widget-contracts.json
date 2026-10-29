@@ -1,0 +1,2096 @@
+{
+  "schema": 1,
+  "widgets": [
+    {
+      "kind": "widget",
+      "id": "core.stat-running",
+      "name": "working now",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "small",
+        "wide"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /projects"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /provider-ledger"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/asleep"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/recent"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.stat-running",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.stat-sessions",
+      "name": "sessions (24h)",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "small",
+        "wide"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /projects"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /provider-ledger"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/asleep"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/recent"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.stat-sessions",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.stat-projects",
+      "name": "open projects",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "small",
+        "wide"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /projects"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /provider-ledger"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/asleep"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/recent"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.stat-projects",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.stat-ledger",
+      "name": "ledger usage",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "small",
+        "wide"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /projects"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /provider-ledger"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/asleep"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/recent"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.stat-ledger",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.stat-alive",
+      "name": "sessions alive",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "small",
+        "wide"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /projects"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /provider-ledger"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/asleep"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/recent"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.stat-alive",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.stat-subagents",
+      "name": "subagents running",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "small",
+        "wide"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /projects"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /provider-ledger"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/asleep"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/recent"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.stat-subagents",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.running-sessions",
+      "name": "running sessions",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /projects"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/asleep"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.running-sessions",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.closed-sessions",
+      "name": "recently closed sessions",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /projects"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/recent"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.closed-sessions",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.projects",
+      "name": "projects / folders",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /projects"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.projects",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.skills",
+      "name": "recent skills",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /catalog/items"
+        },
+        {
+          "kind": "route",
+          "ref": "POST /catalog/index/refresh"
+        },
+        {
+          "kind": "route",
+          "ref": "POST /catalog/refresh"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.skills",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.plugins",
+      "name": "recent plugins",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /catalog/items"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.plugins",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.themes",
+      "name": "themes",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /themes"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.themes",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.ledger",
+      "name": "provider ledger",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout",
+        "glance"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /provider-ledger"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.ledger",
+      "max_per_surface": 1,
+      "glance": {
+        "height": 36
+      }
+    },
+    {
+      "kind": "widget",
+      "id": "core.activity-log",
+      "name": "activity log",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /toasts/history"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.activity-log",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.notes",
+      "name": "notes",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global",
+        "project"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/{id}/note"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.notes",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.files",
+      "name": "files",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global",
+        "project"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout",
+        "glance"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /config-files/find"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /config-files/tree"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/records"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/{id}/git-status"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.files",
+      "max_per_surface": 1,
+      "glance": {
+        "height": 36
+      }
+    },
+    {
+      "kind": "widget",
+      "id": "core.scheduled-tasks",
+      "name": "scheduled tasks",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /scheduled-tasks"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.scheduled-tasks",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.keep-awake",
+      "name": "keep awake",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /auto-sleep"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /projects"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.keep-awake",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.machine-stats",
+      "name": "this machine",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /machine-stats"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.machine-stats",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.changes",
+      "name": "changes",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global",
+        "project"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /sessions/{id}/git-status"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.changes",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.task-manager",
+      "name": "task manager",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global",
+        "project"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /cplugs/huddle/lists"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /cplugs/huddle/lists/{id}"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.task-manager",
+      "max_per_surface": 1,
+      "remembers": [
+        "status-folds",
+        "open-project",
+        "hidden-sections",
+        "counts-hidden",
+        "swarm-view",
+        "swarm-inactive",
+        "schedule-project"
+      ]
+    },
+    {
+      "kind": "widget",
+      "id": "core.task-manager-mk2",
+      "name": "tm mark ii",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global",
+        "project"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /cplugs/huddle/lists"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /cplugs/huddle/lists/{id}"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.task-manager-mk2",
+      "max_per_surface": 1,
+      "remembers": [
+        "status-folds",
+        "open-project",
+        "hidden-sections",
+        "counts-hidden",
+        "swarm-view",
+        "swarm-inactive",
+        "schedule-project"
+      ]
+    },
+    {
+      "kind": "widget",
+      "id": "core.task-manager-mk2-all",
+      "name": "tm mark ii all",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /cplugs/huddle/aggregate"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /cplugs/huddle/lists"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.task-manager-mk2-all",
+      "max_per_surface": 1,
+      "remembers": [
+        "status-folds",
+        "open-project",
+        "hidden-sections",
+        "counts-hidden",
+        "swarm-view",
+        "swarm-inactive",
+        "schedule-project"
+      ]
+    },
+    {
+      "kind": "widget",
+      "id": "core.task-manager-all",
+      "name": "all task managers",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /cplugs/huddle/aggregate"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /cplugs/huddle/lists"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.task-manager-all",
+      "max_per_surface": 1,
+      "remembers": [
+        "status-folds",
+        "open-project",
+        "hidden-sections",
+        "counts-hidden",
+        "swarm-view",
+        "swarm-inactive",
+        "schedule-project"
+      ]
+    },
+    {
+      "kind": "widget",
+      "id": "core.crosstalk",
+      "name": "crosstalk",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global",
+        "project"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /crosstalk/threads"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /crosstalk/threads/*"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.crosstalk",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.tasks",
+      "name": "session tasks",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global",
+        "project"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /session-tasks"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/{id}/tasks"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.tasks",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.tasks-all",
+      "name": "all session tasks",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /session-tasks"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/{id}/tasks"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.tasks-all",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.bookmarks",
+      "name": "session bookmarks",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global",
+        "project"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /bookmarks"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/{id}/bookmarks"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.bookmarks",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.bookmarks-all",
+      "name": "all bookmarks",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /bookmarks"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/{id}/bookmarks"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.bookmarks-all",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.pipeline",
+      "name": "pipeline",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /pipeline/status"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.pipeline",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.automations",
+      "name": "session automations",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global",
+        "project"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /automations"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/records"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.automations",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.automations-all",
+      "name": "global automations",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /automations"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/records"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.automations-all",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.shell",
+      "name": "terminal",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global",
+        "project"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/{id}/shell"
+        },
+        {
+          "kind": "route",
+          "ref": "POST /sessions/{id}/shell"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.shell",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.timeline",
+      "name": "session timeline",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global",
+        "project"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /projects"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/{id}/timeline"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/{id}/timeline/peek"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.timeline",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.questions",
+      "name": "waiting on you",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /approvals"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /cplugs/huddle/aggregate"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /cplugs/huddle/lists"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.questions",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.developer",
+      "name": "developer",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /pipeline/status"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.developer",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.task-list",
+      "name": "tasks",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /cplugs/huddle/aggregate"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /cplugs/huddle/lists"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.task-list",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.session-contents",
+      "name": "session resources",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global",
+        "project"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /projects"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/{id}/contents"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.session-contents",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.warroom",
+      "name": "war room",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "singleton",
+      "sizes": [
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [],
+      "fixtures": [],
+      "fixture": "core.warroom",
+      "max_per_surface": 1
+    },
+    {
+      "kind": "widget",
+      "id": "core.terminal",
+      "name": "terminal",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "per-target",
+      "sizes": [
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/{id}/pane-facts"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/{id}/token-usage"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.terminal"
+    },
+    {
+      "kind": "widget",
+      "id": "core.browser",
+      "name": "proxy browser",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "per-target",
+      "sizes": [
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /browsers"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.browser"
+    },
+    {
+      "kind": "widget",
+      "id": "core.analytics",
+      "name": "analytics",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "per-target",
+      "sizes": [
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "GET /provider-ledger"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /sessions/list"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /stats/annotations*"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /stats/catalog"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /stats/charts"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /stats/contributions*"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /stats/conversations*"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /stats/coverage"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /stats/dimensions*"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /stats/event-log*"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /stats/events*"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /stats/impact*"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /stats/live"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /stats/settings"
+        },
+        {
+          "kind": "route",
+          "ref": "GET /stats/tripwires"
+        },
+        {
+          "kind": "route",
+          "ref": "POST /stats/query-batch"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.analytics"
+    }
+  ]
+}

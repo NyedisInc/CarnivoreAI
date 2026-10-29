@@ -1,0 +1,8 @@
+{
+  "errors": 24,
+  "remaining": {
+    "web/src/cplugs/huddle/**": 16,
+    "web/src/lib/catalog/**": 8
+  },
+  "rule": "This number only goes down. Clear errors, then lower it in the same commit; never raise it."
+}

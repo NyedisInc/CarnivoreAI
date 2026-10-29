@@ -1,0 +1,56 @@
+{
+  "api_routes": [
+    "src/api/deepsearch_routes.py",
+    "src/api/deepsearch_peer_routes.py"
+  ],
+  "area": "sessions",
+  "description": "Deep search is built into the app. Results come back one group per conversation: its session name, project and date, how many matches, and its best few hits with the match marked. A small ledger / best hits toggle in the results header picks the layout (remembered per device). The picked hit offers read around, go to session or resume, branch here, copy link (a link that reopens that message's context window), bookmark this message and only this conversation; a hit with no session or read from a backup offers read around and copy link only. The index mirrors your disk file by file: when a transcript file is deleted or moved its rows go at the next pass (unless the save plugin is on and holds it), and a second copy of the same conversation keeps its own. The index is a disposable cache file that rebuilds itself from your transcripts if it is ever deleted, and searches keep answering from the older index until the new one is complete. It is always on. The save plugin adds the backup fallback: with save off the results still show, a deleted conversation is no longer found from backup, and a line says the index is paused. With another computer paired, each computer searches its own transcripts and the results merge: a conversation held by the other computer carries a small tag with that computer's name, one held by both is listed once and says so, and a computer that did not answer is named in one quiet line instead of delaying the rest. A conversation on the other computer opens only when a live session of it is listed here; otherwise its row says which computer holds it. Agents get the same search, peer hits included and tagged, as the conversation_search tool. Agents get the window through the deepsearch_context_get tool.",
+  "docs": [
+    "docs/deepsearch.md",
+    "docs/federation.md"
+  ],
+  "examples": [
+    "You remember asking claude about a rsync retention flag last week but not which session: open the drawer's context search and type rsync retention.",
+    "Turn save off and deep search says the index is paused instead of quietly going stale.",
+    "A subagent found the answer, not you: leave the setting on everything and search for a word from it; the hit is marked subagent."
+  ],
+  "how_to": [
+    "In the agents drawer, press the search mode button right of the search box, pick context, then type at least two characters.",
+    "Suggested words appear under the box as you type the end of a word: arrows to pick one, Enter to take it, Escape to close the list.",
+    "Use the arrows to walk the hits; Enter reads around the picked hit and cmd or ctrl Enter goes to its session (or resumes it). The picked hit shows its buttons.",
+    "Press show more for the next page of conversations.",
+    "With a computer paired, results from it carry its name in a small tag; if it is offline the line under the status says it did not answer.",
+    "Pick the layout with the small ledger / best hits toggle in the results header; in best hits, the you / agent / tool chips keep one speaker. Read around shows the hit in context; scroll for more, then open the agent or restore the closest bookmark as a clone.",
+    "Open settings, pipeline tab, and choose what deep search reads (people only, people plus headless sessions, or everything); sub-agent transcripts are read in the background and the search keeps answering meanwhile."
+  ],
+  "id": "deep-search",
+  "issues": [
+    1156,
+    1674,
+    1732
+  ],
+  "keywords": [
+    "search",
+    "conversation",
+    "transcript",
+    "subagent",
+    "deep search",
+    "conversation_search"
+  ],
+  "media_exempt": "captured with the pre-version-bump feature recapture; needs a test slot holding indexed conversations",
+  "name": "Deep search",
+  "since": "2026-10-04",
+  "status": "stable",
+  "summary": "",
+  "surfaces": [
+    "web/src/lib/deepsearch/DeepSearchResults.svelte",
+    "web/src/lib/drawer-tabs/DrawerSearch.svelte",
+    "web/src/lib/settings-page/DeepSearchScopePanel.svelte"
+  ],
+  "updated": "2026-10-17",
+  "where": [
+    "The context row of the search mode button beside the search agents box at the top of the agents drawer.",
+    "Settings, pipeline tab: what deep search reads.",
+    "The conversation_search MCP tool for agents."
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "api_routes": [
+    "src/api/catalog_rating_routes.py",
+    "src/api/catalog_hosted_routes.py"
+  ],
+  "area": "skills-catalog",
+  "docs": [],
+  "examples": [
+    "Pick between two similar skills by their ratings."
+  ],
+  "how_to": [
+    "A guest account made by your installs can rate; comments need a sign in."
+  ],
+  "id": "skills-catalog-ratings",
+  "issues": [],
+  "keywords": [
+    "ratings",
+    "reviews"
+  ],
+  "media_exempt": "rating controls need a signed-in catalog account, which a capture must not use",
+  "name": "Rate a catalog listing",
+  "since": "2026-09-16",
+  "status": "stable",
+  "summary": "rate a skill you've installed and read what other people thought of it.",
+  "surfaces": [],
+  "updated": "2026-10-05",
+  "where": [
+    "A skill's card in the catalog."
+  ]
+}

@@ -1,0 +1,230 @@
+<h2 class="sg-h2">dialogs</h2>
+<p class="sg-lead">A dialog is for a bounded decision: create, configure, confirm. It dims the page, holds one focus trap,
+closes on Escape, and gives focus back to what opened it. The restart picker is the reference: title-row strip, one line
+per option, the footer's buttons, nothing else.</p>
+
+<h3 class="sg-h3" id="dialogs-reference">the reference dialog</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup copied from</span><code>client/js/session-restart-picker.js</code><code>session-restart-options.js</code><span>styles live; the choice is drawn inert here</span></div>
+    <div class="sg-specimen__body sg-specimen__body--flush">
+        <div class="sg-stage sg-stage--tall">
+            <div class="modal-overlay restart-picker">
+                <div class="modal-content restart-picker__content" role="dialog" aria-modal="true" aria-label="restart music-service">
+                    <div class="restart-picker__head">
+                        <span class="restart-picker__verb">restart</span>
+                        <span class="restart-picker__name">music-service</span>
+                        <span class="restart-picker__state" data-state="alive">running</span>
+                    </div>
+                    <div class="modal-body restart-picker__main">
+                        <div class="restart-picker__choice">
+                            <div class="cdd">
+                                <div class="cdd__trigger oc-field oc-focus-host" role="combobox" tabindex="0" aria-expanded="false" aria-label="start it with">
+                                    <span class="cdd__row"><span>claude</span></span>
+                                    <span class="cdd__chev" aria-hidden="true"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="restart-picker__why" aria-live="polite"></div>
+                    </div>
+                    <div class="modal-footer restart-picker__foot">
+                        <label class="restart-picker__arm" for="sg-rp-arm" title="ticking this lets the restart kill the running session">
+                            <input type="checkbox" id="sg-rp-arm" checked>
+                            <span>kill running session</span>
+                        </label>
+                        <button type="button" class="modal-btn modal-btn-secondary">cancel</button>
+                        <button type="button" class="modal-btn modal-btn-danger">kill and restart</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>anatomy</dt>
+    <dd>Overlay <code>.modal-overlay</code> (fixed, <code>--oc-backdrop</code>, centred). Panel <code>.modal-content</code>
+        (<code>--oc-ground-raised</code>, 1px <code>--oc-line-panel</code>, <code>--oc-radius-sm</code>) with
+        <code>padding: 0</code> and a width cap (the picker is 500px). Head strip: the title-row recipe with a tracked accent
+        VERB, the object's name in the primary tier, and a state marker at the right. Body: the options. Footer:
+        <code>.modal-footer</code> with the arm box on the left and the buttons on the right (<a href="#buttons">buttons</a>).</dd>
+    <dt>copy</dt>
+    <dt>launch choice</dt>
+    <dt>legacy chassis</dt>
+    <dd><code>client/css/styles.css</code> owns <code>.modal-overlay</code>, <code>.modal-content</code>,
+        <code>.modal-header</code>, <code>.modal-body</code>, <code>.modal-footer</code>, <code>.modal-input</code> and the
+        buttons for twenty-two dialogs across both trees. Its <code>.modal-header</code> (plain bold 1.3rem, the title is NOT
+        the accent) and 31px padding are the older look; a restyled dialog sets <code>padding: 0</code> on its content and
+        adds the head strip, the way <code>text-prompt-modal.css</code> and <code>session-restart-picker.css</code> do.</dd>
+    <dt>glow (issue #918)</dt>
+    <dd><code>client/css/modal-glow.css</code> gives every dialog on this chassis the same border shimmer a popup menu
+        wears (<a href="#menus">menus and popups</a>), scaled up: roughly 1.3x the menu's blur/offset and about ten more
+        points of colour-mix intensity, since a dialog is the larger surface. It targets <code>.modal-content</code> alone,
+        so it reaches every dialog on this page with no markup change - the reference dialog above, the confirm dialog, the
+        text prompt, every compiled <code>ModalShell</code> dialog below, and the "?" help panel. It also reaches one
+        surface that predates this chassis and is not <code>.modal-content</code>: the help panel's media lightbox
+        (<code>.sidebar-help__lightbox-body</code>). Its sheen duplicates <code>popup-focus.css</code>'s recipe under its own
+        names, <code>--mg-angle</code> and <code>modal-glow-orbit</code>, rather than sharing the menu's
+        <code>--pf-angle</code>/<code>popup-focus-orbit</code> (a shared declaration across files is disallowed by
+        <code>tests/test_popup_focus_style.node.mjs</code>); the duration, easing and angular span match exactly, so the
+        travelling sheen is identical in character, not a lookalike; <code>prefers-reduced-motion</code>
+        drops the sheen and stops the animation the same way the menu does. It does NOT reach the file editor
+        (<code>.config-editor-modal-content</code>, full screen, no edge to draw) or the file-picker drawer
+        (<code>.config-editor-picker-content</code>, a right-edge drawer, not a floating card).</dd>
+    <dt>focus</dt>
+    <dd>Legacy: <code>window.ModalStack.trap(overlay, opts)</code> (<code>client/js/modal-stack.js</code>) is the one
+        focus-trap, Escape, Tab-wrap and focus-restore contract; stacked modals get <code>.modal-stack--covered</code> and the
+        page <code>.modal-stack-locked</code>, and Escape reaches only the top entry. Compiled: <code>ModalShell</code> does
+        the same for itself.</dd>
+    <dt>access</dt>
+    <dd><code>role="dialog"</code>, <code>aria-modal="true"</code>, an <code>aria-label</code> or <code>aria-labelledby</code>
+        naming the object; first control focused on open; Escape cancels unless the dialog is busy; the overlay click cancels;
+        focus returns to the opener.</dd>
+</dl>
+
+<h3 class="sg-h3" id="dialogs-compiled">compiled dialogs</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>ModalShell.svelte</code><code>ProjectNameModal</code><code>ChoiceModal</code><code>ConfirmSheet</code><span>each opens on demand, exactly as the app mounts it</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-modals"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>ModalShell</dt>
+    <dd><code>web/src/lib/launchpad/ModalShell.svelte</code>: the one compiled dialog frame. Props <code>title</code> (already
+        translated), <code>children</code> and <code>footer</code> snippets, <code>dismissable</code> (false while busy),
+        <code>onCancel</code>, and for a dialog with its own card look <code>head</code> (a replacement title strip), an optional <code>footer</code> (absent: no footer row), <code>contentClass</code> (extra classes on the panel) and any other attribute, which lands on the overlay (the send-to and move-folder dialogs are built this way). It carries no style of its own and borrows the chassis classes by name, so it changes with the
+        legacy dialogs. It takes focus on mount, traps Tab, handles Escape itself and restores focus on unmount.</dd>
+    <dt>built on it</dt>
+    <dt>WarroomModal</dt>
+    <dd><code>web/src/lib/warroom/WarroomModal.svelte</code> (issue #135): one session's live terminal over the war room wall. The
+        <code>text-prompt-modal</code> chassis (<code>.modal-overlay .modal-content</code>) drawn by <code>ModalShell</code>, which is told the terminal owns two keys
+        (<code>trapFocus</code> off, an <code>escapeGuard</code>) and the panel's size (<code>width</code> and <code>height</code>, inline,
+        1100 by 760 clamped to the window; <code>fill</code> makes the panel a flex column whose body takes the room, <code>.modal-content--fill</code>):
+        with focus in the terminal Escape and Tab are the terminal's, elsewhere Escape closes. The head is the one widget header (<code>.wrm-head</code>)
+        with the terminal's own strip and, in its corner, <code>.wrm-go</code>: the quiet <code>.oc-btn--tool</code> buttons go to session and go to
+        layout (when the session is in several layouts it opens the pick list, the one menu engine, <code>CascadeMenu</code>). The body
+        (<code>.wrm-body</code>) is the live terminal cell.</dd>
+    <dt>RelayConsentPopup</dt>
+    <dt>RegisterModal</dt>
+    <dd><code>web/src/lib/carnivore-account/RegisterModal.svelte</code> (issue #1200): the handle step for a refused call with no
+        register gate around it. <code>ModalShell</code> holding the catalog <code>RegisterDialog</code>; opened by the central
+        refusal classifier (<code>carnivore-account/refusal.ts</code>) on a registration code. Registering closes it, a close
+        button cancels. No classes of its own.</dd>
+    <dt>SignInModal</dt>
+    <dt>WelcomeModal</dt>
+    <dt>InstallReportPrivacyPanel</dt>
+    <dd><code>web/src/lib/install-report/InstallReportPrivacyPanel.svelte</code> (issue #1337): the Settings account, install reports
+        group. Two hairline-left lists (<code>irp</code>) of the field ids the app sends, read from
+        <code>GET /catalog/install-report/disclosure</code>, each with its plain sentence
+        (<code>privacy.install_report.field.*</code>), in the shared <code>tm</code> panel-kit type. Read only.</dd>
+    <dt>ForkPicker</dt>
+    <dd><code>web/src/lib/crosstalk/ForkPicker.svelte</code> uses the shared <code>ModalShell</code>
+        and <code>text-prompt-modal na-flow</code> form recipe for provider, model, effort, name,
+        optional continuation and worktree. The action keeps the active terminal in place while
+        the new tab is appended beside its source.</dd>
+    <dt>LayoutNameModal</dt>
+    <dd><code>web/src/opscenter/layouts/LayoutNameModal.svelte</code> (issue #424): names the Layout a split makes. It is the
+        one compiled dialog that wears the Military Terminal recipe of the new-group dialog: <code>ModalShell</code> with
+        <code>overlayClass="text-prompt-modal"</code> and a <code>head</code> snippet drawing
+        <code>.text-prompt-modal__head</code>, a hairline field with the cyan focus outline, cancel
+        <code>.modal-btn-secondary</code>, save <code>.modal-btn-confirm</code>. A refusal (a taken name, the limit) stays in the
+        dialog as a coral-ruled line (<code>.lnm-error</code>, the catalog's <code>.one-shot__refusal</code> restated) with the
+        name still typed. Cancel, Escape, the backdrop and a navigation all put the view back.</dd>
+    <dt>DetailsModal</dt>
+    <dt>AllDownModal</dt>
+    <dd><code>web/src/opscenter/layouts/AllDownModal.svelte</code> (issue #791): a Layout opened with NO live member at all
+        (the page's own pane binds TO the anchor, so with nothing live there is no grid to draw). Wears the same
+        <code>text-prompt-modal</code> recipe as <code>LayoutNameModal</code>, with one <code>MemberDownRow</code> per member
+        in place of a field (<code>.lad-body</code>, <code>.lad-hint</code>, <code>.lad-row</code> hairlines between them).
+        The moment any member comes back live the modal closes itself and the caller re-opens the Layout for real; opening
+        it never wakes anything by itself.</dd>
+    <dt>PopOutChoice</dt>
+    <dt>ShowPathModal</dt>
+    <dt>overlayClass and head</dt>
+    <dd>Two optional <code>ModalShell</code> props for a dialog with a scoped look: an extra class on the overlay, and a snippet
+        that replaces the plain header row. Absent, the chassis is unchanged. The legacy
+        <code>App.showConfirmModal</code> (<code>client/js/app.js</code>) carries the matching <code>overlayClass</code>
+        parameter, but since issue #864 it no longer gates the header: every <code>showConfirmModal</code> dialog gets the
+        shared, unscoped <code>.confirm-modal__head</code> / <code>.confirm-modal__verb</code> title-row strip and the
+        <code>confirm-modal</code> overlay class UNCONDITIONALLY (<code>client/css/confirm-modal.css</code>).
+        <code>overlayClass</code> stays available only as an extra class for a caller that needs further one-off scoping of
+        its own - no current caller does.</dd>
+    <dt>mounting</dt>
+    <dd>A dialog is mounted on demand onto <code>document.body</code> through the launchpad's modal host
+        (<code>web/src/lib/launchpad/modals.ts</code>) and unmounted when it resolves. Never mount one at load: it takes focus
+        the instant it mounts.</dd>
+    <dt>the new-agent flow (issue #984 restyle)</dt>
+    <dt>LeaderConfirm (issue #1371)</dt>
+    <dt>BlueprintEditorModal, LaunchModal, ExportModal, ImportModal</dt>
+    <dd><code>web/src/lib/blueprints/</code> (issue #790, D47, <code>docs/blueprints.md</code>): the blueprints screen's own
+        four dialogs, every one a plain <code>ModalShell</code> with no scoped overlay class. <code>LaunchModal</code> carries
+        three states in one dialog (preview, launching, done) rather than three separate ones, with dismissal suspended while
+        a launch is in flight, the same reason the clone modal refuses escape mid-clone. A refusal in any of the four (a name
+        taken, a secret detected, a malformed import file) is a coral-ruled line (<code>.bp-editor__error</code>,
+        <code>.bp-modal__error</code>) with the form left open, the same voice <code>.lnm-error</code> above uses. A skill whose review found it edits an instruction file
+        gets a yellow-ruled notice line (<code>.bp-launch__notice</code>) in <code>LaunchModal</code>: a warning only, no tick, the launch proceeds.</dd>
+</dl>
+
+<h3 class="sg-h3" id="dialogs-confirm">the confirm dialog</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup copied from</span><code>client/js/app.js</code> (<code>showConfirmModal</code>)<span>styles live; <code>confirm-modal.css</code> supplies the title-row strip</span></div>
+    <div class="sg-specimen__body sg-specimen__body--flush">
+        <div class="sg-stage sg-stage--short">
+            <div class="modal-overlay confirm-modal">
+                <div class="modal-content">
+                    <div class="confirm-modal__head">
+                        <span class="confirm-modal__verb">remove group "backend"?</span>
+                    </div>
+                    <div class="modal-body">
+                        <div class="modal-message">every session in the group moves to ungrouped. this cannot be undone.</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="modal-btn modal-btn-secondary">cancel</button>
+                        <button type="button" class="modal-btn modal-btn-danger">remove group</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<p class="sg-caption">every <code>showConfirmModal</code> caller wears this unconditionally (#864) - logout, close/remove
+    session, remove project, close browser, remove group, remove layout, discard unsaved changes, reveal credentials, save
+    executable/credentials file, remove provider model. A destructive caller passes <code>primaryVariant: 'danger'</code>
+    for <code>.modal-btn-danger</code> here; the rest keep the calm <code>.modal-btn-primary</code>.</p>
+
+<h3 class="sg-h3" id="dialogs-other">the other dialogs, and where they live</h3>
+<div class="sg-table-wrap">
+<table class="sg-table">
+    <thead><tr><th>dialog</th><th>files</th><th>note</th></tr></thead>
+    <tbody>
+        <tr><td>text prompt ("new group")</td><td><code>client/js/text-prompt-modal.js</code>, <code>client/css/text-prompt-modal.css</code></td><td>replaces <code>window.prompt</code>; live in <a href="#forms">forms</a></td></tr>
+        <tr><td>confirm dialogs (every <code>showConfirmModal</code> caller)</td><td><code>client/js/app.js</code> (<code>showConfirmModal</code>), <code>client/css/confirm-modal.css</code></td><td>the Military Terminal title-row strip and button variant are the DEFAULT for every caller (#864), including logout, close/remove session, remove project, close browser, remove group, remove layout, discard unsaved changes, reveal credentials, save executable/credentials file and remove provider model; destructive callers pass <code>primaryVariant: 'danger'</code>, the rest keep the calm <code>.modal-btn-primary</code></td></tr>
+        <tr><td>confirm (legacy)</td><td><code>client/js/session-row-actions-confirm.js</code></td><td>kill, close; a live restart does not ask twice (#441); renders through the row above</td></tr>
+        <tr><td>select provider</td><td><code>client/js/providers.js</code></td><td>every real launch's first step (issue #984 restyle); launch profile and model rows; see the new-agent flow above</td></tr>
+        <tr><td>select a folder</td><td><code>client/js/folder-picker-modal.js</code>, <code>.folder-picker-*</code>, <code>client/css/new-agent-flow.css</code></td><td>path bar with quiet up/home icon buttons, list, status line (issue #984 restyle); its rows are the File view's rows (<code>.config-editor-toggle</code>, 24px, icon inline, ellipsis, no tooltip); see the new-agent flow above</td></tr>
+        <tr><td>restore offer</td><td><code>client/js/session-restore-offer.js</code>, <code>client/css/session-restore-offer.css</code></td></tr>
+        <tr><td>attribution prompt</td><td><code>AttributionPrompt.svelte</code>, <code>client/css/attribution-prompt.css</code></td><td>which project an external session belongs to</td></tr>
+        <tr><td>file editor</td><td><code>client/js/config-editor-modal.js</code>, <code>client/css/config-editor-modal.css</code></td><td>CodeMirror (<code>.cm-*</code>), stacked over the picker by ModalStack</td></tr>
+        <tr><td>theme script consent</td><td><code>client/js/theme-consent.js</code>, <code>showConsentModal</code> in <code>themes/registry.js</code></td><td>six-outcome ladder; never bypassed</td></tr>
+        <tr><td>carnivore account sign in</td><td><code>web/src/lib/carnivore-account/SignInModal.svelte</code></td><td>google, github, email code inline; consent line and news box</td></tr>
+        <tr><td>session bookmarks</td><td><code>web/src/lib/bookmarks/BookmarksPanel.svelte</code>, <code>BookmarkRow.svelte</code>, <code>.bm-panel</code>, <code>.oc-list__row</code></td><td>opened by <code>BookmarkButtons.svelte</code> (the ONE quiet bookmark icon in a Claude Code terminal header); a name field with an icon add key (<code>.bm-panel__add</code>) on top, then a ruled list of bookmarks and past turns whose actions are icon-only keys (<code>.oc-ibtn --bare</code> with a catalog tooltip and aria-label: preview, bookmark, branch from here, rewind in place in coral, delete); a bookmark's preview (<code>BookmarkPreviewList.svelte</code>, <code>.bm-preview</code>) is the last few chat messages before its point, N being the bookmarks widget's <code>previewTurns</code> setting; the arm box in the footer (the base <code>Checkbox</code> in danger, <code>.oc-pick[data-tone=danger]</code>, the bookmarks widget's own) is the rewind's only confirmation; see <code>docs/session-bookmarks.md</code></td></tr>
+        <tr><td>deep search context</td><td><code>web/src/lib/deepsearch/ContextModal.svelte</code>, <code>.dps-ctx__*</code></td><td>opened by clicking a deep search hit: the hit centered in its conversation (20 messages either side, more on scroll), you/agent labels and times, an inline bookmark marker; footer is a quiet <code>.dps-ctx__restore-line</code> naming the bookmark, then close (<code>.modal-btn-secondary</code>), "restore as clone" (only when a bookmark sits at or after the hit) and "open agent" (both <code>.modal-btn-confirm</code>), all sized like the restart picker footer; see <code>docs/deepsearch.md</code></td></tr>
+    </tbody>
+</table>
+</div>
+
+<h3 class="sg-h3" id="dialogs-confirm-ok">the ok-first confirm</h3>
+<dl class="sg-facts">
+    <dt>ConfirmOkModal (#1799)</dt>
+    <dd><code>web/src/lib/confirm-ok/ConfirmOkModal.svelte</code>, opened by <code>confirmOk()</code>: a <code>ModalShell</code> in the text-prompt
+        look with a quiet <code>.modal-btn-secondary</code> cancel and a <code>.modal-btn-confirm</code> ok that holds focus from the first frame, so Enter
+        confirms and Escape cancels. It answers a middle click that closes a main-area tab or puts a sidebar row to sleep. Not for a destructive
+        action: that stays <code>.modal-btn-danger</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="dialogs-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>Restyling only the header.</strong> PR #598 changed the title and left the rounded, accent-ringed field and
+        the solid button; rejected. Restyle the whole dialog from the reference.</li>
+    <li><strong>A layout jump inside the dialog.</strong> A centred dialog that grows moves every row above the change (#592).</li>
+    <li><strong>Two Escape listeners.</strong> A dialog over a screen that owns a document Escape listener must take focus on
+        mount so its own handler sees the key first; stacked legacy dialogs register with ModalStack.</li>
+    <li><strong>A dialog for navigation.</strong> Routine navigation is a screen or a drawer; a dialog is a bounded decision.</li>
+</ul>

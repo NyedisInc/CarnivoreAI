@@ -1,0 +1,25 @@
+/*
+ * THE WIDGET LAB (`LabMenu.svelte` slide-out and `LabViewer.svelte` page, docs/widget-lab.md#1939, #1944). Military
+ * Terminal: mono type, hairlines between regions instead of cards, small square corners, small tracked uppercase labels, `--oc-*` tokens only.
+ * COPIED from the flow chat view (`web/src/cplugs/flow/flow.css`, the title-row strip with a hairline by `box-shadow`), the review board
+ * (`web/src/cplugs/reviewboard/board.css`, `.rb-strip`, `.rb-label`) and the catalog (`web/src/lib/catalog/CatalogScreen.svelte`, `.bar__input`, the quiet
+ * hairline rows). The ONE accent-colored thing is the picked widget's name in the viewer strip (the page's own title lives in the tab, never repeated); the capture key is the calm confirm token, as `.modal-btn-confirm`. Buttons and
+ * fields are the shared `.oc-btn` and `.oc-field`; focus is the shared rule (`web/src/opscenter/focus.css`), so every control keeps its own 1px
+ * border. THE MENU is a column sized by the slide-out (about 276px usable, wider when the drawer is): nothing is side by side unless it fits there.
+ * THE VIEWER is sized by its own panel, not the browser viewport; a frame wider than the page scrolls inside its own stage (a widget's box is its
+ * published size, never the page's width), and a phone-wide page shows one host at a time with frames scaled down.
+ */
+@import './lab-frame.css';
+@import './lab-menu.css';
+@import './lab-viewer.css';
+
+/*  hidden  */
+@layer components {
+  .dwl-open-float + .dwl-strip {
+    padding-right: calc(var(--oc-space-3) + 22px + var(--oc-space-1));
+  }
+
+  .dwl-fit-cell {
+    padding: 1px var(--oc-space-1);
+  }
+}

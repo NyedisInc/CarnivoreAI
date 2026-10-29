@@ -1,0 +1,49 @@
+{
+  "api_routes": [
+    "GET /api/v1/dev/shape-alerts"
+  ],
+  "area": "status-notifications",
+  "docs": [
+    "docs/session-status.md",
+    "docs/status-led-history.md",
+    "docs/jsonl-shape-inventory.md",
+    "docs/debugging.md"
+  ],
+  "examples": [
+    "See from across the room that one agent is waiting for a permission answer.",
+    "Know which sessions finished while you were away, by their unread ring."
+  ],
+  "how_to": [
+    "Read the light: green is working, yellow is waiting on you, light blue wants attention, grey is idle, red is dead or disconnected.",
+    "A ring around it marks an unread turn; hover for the exact state and where it came from.",
+    "A moon means the session is asleep; a green moon means you flagged it unread to follow up.",
+    "A red skull means the session hit its usage limit; hover for when it resets."
+  ],
+  "id": "session-status-lights",
+  "issues": [
+    749,
+    762,
+    786,
+    1323
+  ],
+  "keywords": [
+    "status",
+    "led",
+    "light",
+    "shape contract",
+    "latency"
+  ],
+  "media": [],
+  "name": "Session status lights",
+  "since": "2026-09-08",
+  "status": "stable",
+  "summary": "a two-part light on every session that shows what it's doing and whether it needs you, from across the room.",
+  "surfaces": [
+    "client/js/status-led.js"
+  ],
+  "updated": "2026-10-04",
+  "where": [
+    "On every session: drawer rows, tabs, the running sessions list."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

@@ -1,0 +1,117 @@
+@layer legacy {
+/* --color- */
+
+.paste-fallback {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--oc-backdrop);
+    padding: 16px;
+}
+
+.paste-fallback__panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 560px;
+    padding: 16px;
+    border-radius: var(--oc-radius-sm);
+    background: var(--oc-ground-raised);
+    border: var(--oc-border) solid var(--oc-line-panel);
+    box-shadow: none;
+}
+
+.paste-fallback__title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--oc-text-primary);
+}
+
+.paste-fallback__hint {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--oc-text-secondary);
+}
+
+/* user-select: none */
+.paste-fallback__input {
+    width: 100%;
+    min-height: 96px;
+    resize: vertical;
+    padding: 10px;
+    font-family: var(--font-mono);
+    font-size: 16px;
+    line-height: 1.4;
+    color: var(--oc-text-primary);
+    background: var(--oc-ground-field);
+    border: var(--oc-border) solid var(--oc-line-faint);
+    border-radius: var(--oc-radius-sm);
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+.paste-fallback__input:focus {
+    outline: none;
+    border-color: var(--oc-orange);
+}
+
+.paste-fallback__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.paste-fallback__btn {
+    min-height: 44px;
+    min-width: 88px;
+    padding: 0 16px;
+    font-family: inherit;
+    font-size: 14px;
+    border-radius: var(--oc-radius-sm);
+    border: var(--oc-border) solid var(--oc-line-panel);
+    background: transparent;
+    color: var(--oc-text-secondary);
+    cursor: pointer;
+}
+
+.paste-fallback__btn--primary {
+    border-color: var(--oc-orange);
+    color: var(--oc-orange);
+}
+
+.paste-fallback__btn:hover:not(:disabled),
+.paste-fallback__btn:focus-visible {
+    border-color: var(--oc-line-rule);
+    background: var(--oc-ground-hover);
+    color: var(--oc-text-primary);
+}
+
+.paste-fallback__btn--primary:hover:not(:disabled),
+.paste-fallback__btn--primary:focus-visible {
+    border-color: var(--oc-orange-bright);
+    background: var(--oc-orange-tint);
+    color: var(--oc-orange-bright);
+}
+
+@media (max-width: 480px) {
+    .paste-fallback {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .paste-fallback__panel {
+        max-width: none;
+        border-radius: var(--oc-radius-sm) var(--oc-radius-sm) 0 0;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .paste-fallback__btn {
+        flex: 1;
+    }
+}
+}

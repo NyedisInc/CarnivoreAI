@@ -1,0 +1,37 @@
+/* padding */
+
+@layer legacy {
+    html[data-desktop-chrome] {
+        --desktop-inset-top: 28px;
+        --desktop-inset-left: 78px;
+    }
+
+    html[data-desktop-chrome] body {
+        padding-top: var(--desktop-inset-top);
+    }
+
+    html[data-desktop-chrome]::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: var(--desktop-inset-top);
+        z-index: 0;
+        background: var(--oc-ground-chrome);
+        box-shadow: inset 0 -1px 0 0 var(--oc-line-chrome);
+        -webkit-app-region: drag;
+    }
+
+    html[data-desktop-chrome][data-fullscreen]::before {
+        display: none;
+    }
+
+    html[data-popout][data-desktop-chrome]:has(.oc-topbar) body {
+        padding-top: 0;
+    }
+
+    html[data-popout][data-desktop-chrome]:has(.oc-topbar)::before {
+        display: none;
+    }
+}

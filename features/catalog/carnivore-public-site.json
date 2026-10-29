@@ -1,0 +1,46 @@
+{
+  "id": "carnivore-public-site",
+  "name": "Carnivore public website",
+  "summary": "a scroll-driven introduction to Carnivore, persistent sessions and access from your phone, with the verified public macOS download, and a one-line terminal installer with a pinned checksum.",
+  "area": "dev-tooling",
+  "status": "stable",
+  "since": "2026-10-03",
+  "updated": "2026-10-22",
+  "issues": [
+    1259,
+    1500,
+    2225
+  ],
+  "surfaces": [
+    "web/src/public-site/Page.svelte",
+    "web/src/public-site/InstallCommand.svelte"
+  ],
+  "api_routes": [],
+  "docs": [
+    "hosted/site/README.md"
+  ],
+  "keywords": [
+    "website",
+    "carnivore.ai",
+    "download",
+    "scrollcraft",
+    "installer",
+    "curl"
+  ],
+  "where": [
+    "https://carnivore.ai/",
+    "https://carnivore.ai/install.sh",
+    "https://carnivore.ai/uninstall.sh",
+    "https://carnivore.ai/help/uninstall/"
+  ],
+  "how_to": [
+    "Read the product introduction and explore the labeled session-continuity illustration.",
+    "Follow download for macos to the pinned public release, or read source and legal information.",
+    "Paste curl -fsSL https://carnivore.ai/install.sh | bash into Terminal (the copy button is under the download button) to install the missing dependencies and the checksum-verified release, then launch it.",
+    "To remove carnivore, run bash -c \"$(curl -fsSL https://carnivore.ai/uninstall.sh)\" in Terminal (add --dry-run to only see the list). It asks before removing anything."
+  ],
+  "examples": [
+    "Leave the desk in the illustration: the viewer path disconnects while the running-session path remains."
+  ],
+  "media_exempt": "The standalone public package is validated on its own local origin with desktop, phone, reduced-motion, no-JavaScript and interaction captures. The in-app feature-capture slot serves the application, not this separate public document."
+}

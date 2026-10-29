@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://carnivore.ai/schemas/extensions/claude-code-plugin.schema.json",
+  "title": "Claude Code plugin, layer 1",
+  "description": "A Claude Code plugin (catalog kind plugin): .claude-plugin/plugin.json is the native manifest, with the safe-subset rules and the MCP carve-out. Labeled Claude Code plugin in the UI. When an mcpServers command is npx or uvx, an external_code entry for that server is REQUIRED (L1-8; a cross-field rule the pipeline enforces at gate 7, because a schema cannot read plugin.json).",
+  "allOf": [
+    {
+      "$ref": "item.schema.json"
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "claude-code-plugin"
+        },
+        "external_code": {
+          "$ref": "item.schema.json#/$defs/external_code"
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

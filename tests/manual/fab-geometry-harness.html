@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>fab geometry harness</title>
+<!-- height: 36px width: 36px -->
+<link rel="stylesheet" href="../../client/css/styles.css" />
+<link rel="stylesheet" href="../../client/css/terminal-tools.css" />
+<link rel="stylesheet" href="../../client/css/ios-chrome.css" />
+<link rel="stylesheet" href="../../client/css/terminal-key-bar.css" />
+<style>
+  #out { position: fixed; top: 8px; left: 8px; z-index: 99999;
+         font: 12px/1.5 ui-monospace, monospace; white-space: pre;
+         background: #000; color: #0f0; padding: 8px; }
+</style>
+</head>
+<body>
+<div id="terminal-screen" class="screen active"></div>
+
+<button type="button" id="sessionEditorBtn" class="fab-menu-btn session-editor-fab"
+        aria-label="session editor"></button>
+
+<button type="button" id="terminalToolsBtn" class="fab-menu-btn terminal-tools-fab"
+        aria-label="terminal tools"></button>
+
+<iframe id="desktop" src="?inner=1" width="1024" height="700"
+        style="position:absolute;left:-9999px;top:0;border:0"></iframe>
+
+<pre id="out"></pre>
+<script>
+/**
+ * This document's own geometry report.
+ *
+ * @param {Window} w - the window to measure in.
+ * @returns {{viewport: object, visible: string[], boxes: object[]}}
+ */
+function report(w) {
+    var d = w.document;
+    var vw = w.innerWidth, vh = w.innerHeight;
+    var out = { viewport: { w: vw, h: vh }, visible: [], boxes: [] };
+    [['session editor', '.session-editor-fab'],
+     ['terminal tools', '.terminal-tools-fab']].forEach(function (t) {
+        var el = d.querySelector(t[1]);
+        var r = el.getBoundingClientRect();
+        var shown = w.getComputedStyle(el).display !== 'none';
+        if (shown) out.visible.push(t[0]);
+        out.boxes.push({
+            name: t[0], shown: shown,
+            left: r.left, right: r.right, w: r.width, h: r.height,
+            fromRight: vw - r.right, fromBottom: vh - r.bottom,
+            cx: r.left + r.width / 2, cy: r.top + r.height / 2
+        });
+    });
+    return out;
+}
+
+window.__fabReport = function () { return report(window); };
+
+window.__fabGeometry = function () {
+    var frame = document.getElementById('desktop');
+    return {
+        phone: report(window),
+        desktop: frame && frame.contentWindow.__fabReport
+            ? frame.contentWindow.__fabReport()
+            : 'iframe not ready'
+    };
+};
+
+if (location.search.indexOf('inner=1') === -1) {
+    var render = function () {
+        document.getElementById('out').textContent =
+            JSON.stringify(window.__fabGeometry(), null, 1);
+    };
+    document.getElementById('desktop').addEventListener('load', render);
+    render();
+} else {
+    document.getElementById('desktop').remove();
+    document.getElementById('out').textContent =
+        JSON.stringify(report(window), null, 1);
+}
+</script>
+</body>
+</html>

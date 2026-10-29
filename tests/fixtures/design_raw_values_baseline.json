@@ -1,0 +1,1167 @@
+{
+ "about": "raw spacing/font-size/color declarations per web/src file; may only fall (scripts/design/raw_values.py, issue #2033 guard G1)",
+ "files": {
+  "web/src/admin/admin.css": {
+   "spacing": 24
+  },
+  "web/src/cplugs/crate/ProjectCrates.svelte": {
+   "spacing": 1
+  },
+  "web/src/cplugs/crate/crate-dialog.css": {
+   "font": 2,
+   "spacing": 14
+  },
+  "web/src/cplugs/devwidgetlab/lab.css": {
+   "spacing": 2
+  },
+  "web/src/cplugs/flow/flow.css": {
+   "spacing": 28
+  },
+  "web/src/cplugs/huddle/CrosstalkTrail.svelte": {
+   "spacing": 4
+  },
+  "web/src/cplugs/huddle/HuddleBody.svelte": {
+   "spacing": 7
+  },
+  "web/src/cplugs/huddle/HuddleReply.svelte": {
+   "spacing": 4
+  },
+  "web/src/cplugs/huddle/HuddleReview.svelte": {
+   "spacing": 6
+  },
+  "web/src/cplugs/huddle/HuddleThread.svelte": {
+   "spacing": 3
+  },
+  "web/src/cplugs/huddle/HuddleViewSwitch.svelte": {
+   "spacing": 3
+  },
+  "web/src/cplugs/huddle/SwarmDecisionKeys.svelte": {
+   "spacing": 4
+  },
+  "web/src/cplugs/huddle/TaskManagerAnswerBox.svelte": {
+   "spacing": 2
+  },
+  "web/src/cplugs/huddle/TaskManagerArtifactCard.svelte": {
+   "spacing": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerAsk.svelte": {
+   "spacing": 3
+  },
+  "web/src/cplugs/huddle/TaskManagerCommandBox.svelte": {
+   "font": 1,
+   "spacing": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerEmptyGroup.svelte": {
+   "spacing": 2
+  },
+  "web/src/cplugs/huddle/TaskManagerFormAnswer.svelte": {
+   "spacing": 2
+  },
+  "web/src/cplugs/huddle/TaskManagerMarkdown.svelte": {
+   "font": 5,
+   "spacing": 8
+  },
+  "web/src/cplugs/huddle/TaskManagerMarkerFilter.svelte": {
+   "spacing": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerMove.svelte": {
+   "spacing": 2
+  },
+  "web/src/cplugs/huddle/TaskManagerNewGroup.svelte": {
+   "spacing": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerProgress.svelte": {
+   "spacing": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerProjectHead.svelte": {
+   "spacing": 5
+  },
+  "web/src/cplugs/huddle/TaskManagerRoundCard.svelte": {
+   "spacing": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerRow.svelte": {
+   "spacing": 15
+  },
+  "web/src/cplugs/huddle/TaskManagerRowPeek.svelte": {
+   "spacing": 3
+  },
+  "web/src/cplugs/huddle/TaskManagerRowPosts.svelte": {
+   "spacing": 1
+  },
+  "web/src/cplugs/huddle/TaskManagerSchedule.svelte": {
+   "spacing": 3
+  },
+  "web/src/cplugs/huddle/TaskManagerSections.svelte": {
+   "spacing": 6
+  },
+  "web/src/cplugs/huddle/TaskManagerSend.svelte": {
+   "spacing": 3
+  },
+  "web/src/cplugs/huddle/TaskManagerStatusFilter.svelte": {
+   "font": 1,
+   "spacing": 2
+  },
+  "web/src/cplugs/huddle/TaskManagerStatusSections.svelte": {
+   "spacing": 5
+  },
+  "web/src/cplugs/huddle/TaskManagerSubHead.svelte": {
+   "spacing": 3
+  },
+  "web/src/cplugs/huddle/TaskManagerTitleEdit.svelte": {
+   "spacing": 4
+  },
+  "web/src/cplugs/huddle/agents/AgentChatFrame.svelte": {
+   "spacing": 2
+  },
+  "web/src/cplugs/huddle/agents/HuddleAgentRows.svelte": {
+   "spacing": 3
+  },
+  "web/src/cplugs/huddle/ask/ask-form.css": {
+   "spacing": 1
+  },
+  "web/src/cplugs/huddle/chat/AuthorPath.svelte": {
+   "spacing": 4
+  },
+  "web/src/cplugs/huddle/chat/ChatAvatar.svelte": {
+   "font": 1,
+   "spacing": 1
+  },
+  "web/src/cplugs/huddle/chat/ChatBar.svelte": {
+   "spacing": 8
+  },
+  "web/src/cplugs/huddle/chat/ChatCard.svelte": {
+   "spacing": 12
+  },
+  "web/src/cplugs/huddle/chat/ChatMarkdown.svelte": {
+   "spacing": 9
+  },
+  "web/src/cplugs/huddle/chat/ChatWidget.svelte": {
+   "spacing": 16
+  },
+  "web/src/cplugs/huddle/chat/EventCard.svelte": {
+   "spacing": 2
+  },
+  "web/src/cplugs/huddle/chat/ReceiptRow.svelte": {
+   "spacing": 5
+  },
+  "web/src/cplugs/huddle/chat/RewindView.svelte": {
+   "spacing": 8
+  },
+  "web/src/cplugs/huddle/chat/TrafficCard.svelte": {
+   "spacing": 6
+  },
+  "web/src/cplugs/huddle/style-guide/ChatEntries.svelte": {
+   "spacing": 1
+  },
+  "web/src/cplugs/huddle/style-guide/SwarmPageBoard.svelte": {
+   "spacing": 1
+  },
+  "web/src/cplugs/huddle/style-guide/SwarmPanelBoard.svelte": {
+   "spacing": 2
+  },
+  "web/src/cplugs/huddle/swarm/SwarmLedger.svelte": {
+   "spacing": 7
+  },
+  "web/src/cplugs/huddle/swarm/SwarmOrg.svelte": {
+   "spacing": 3
+  },
+  "web/src/cplugs/huddle/swarm/SwarmPanel.svelte": {
+   "spacing": 11
+  },
+  "web/src/cplugs/huddle/swarm/SwarmSettingsForm.svelte": {
+   "spacing": 5
+  },
+  "web/src/cplugs/huddle/swarm/characters/characters.css": {
+   "spacing": 1
+  },
+  "web/src/cplugs/huddle/task-manager-bubble.css": {
+   "spacing": 7
+  },
+  "web/src/cplugs/huddle/task-manager-tail.css": {
+   "font": 1,
+   "spacing": 2
+  },
+  "web/src/cplugs/reviewboard/ClosedReviews.svelte": {
+   "spacing": 1
+  },
+  "web/src/cplugs/reviewboard/board.css": {
+   "spacing": 16
+  },
+  "web/src/cplugs/reviewboard/header.css": {
+   "spacing": 15
+  },
+  "web/src/cplugs/reviewboard/tray.css": {
+   "spacing": 22
+  },
+  "web/src/cplugs/save/RestorePoints.svelte": {
+   "spacing": 7
+  },
+  "web/src/cplugs/save/SessionTab.svelte": {
+   "spacing": 1
+  },
+  "web/src/cplugs/share/ShareModal.svelte": {
+   "font": 4,
+   "spacing": 10
+  },
+  "web/src/lib/app-alerts/AlertBadge.svelte": {
+   "font": 1,
+   "spacing": 1
+  },
+  "web/src/lib/app-alerts/AlertPanel.svelte": {
+   "font": 4,
+   "spacing": 18
+  },
+  "web/src/lib/approvals/ApprovalCard.svelte": {
+   "font": 1,
+   "spacing": 5
+  },
+  "web/src/lib/approvals/AskForm.svelte": {
+   "spacing": 4
+  },
+  "web/src/lib/approvals/QuestionCardFrame.svelte": {
+   "spacing": 4
+  },
+  "web/src/lib/approvals/QuestionModal.svelte": {
+   "spacing": 3
+  },
+  "web/src/lib/background-work/FootWork.svelte": {
+   "spacing": 2
+  },
+  "web/src/lib/blueprints/BlueprintEditorModal.svelte": {
+   "font": 1,
+   "spacing": 4
+  },
+  "web/src/lib/blueprints/BlueprintsScreen.svelte": {
+   "font": 5,
+   "spacing": 13
+  },
+  "web/src/lib/blueprints/ExportModal.svelte": {
+   "font": 2,
+   "spacing": 3
+  },
+  "web/src/lib/blueprints/ImportModal.svelte": {
+   "font": 1,
+   "spacing": 2
+  },
+  "web/src/lib/blueprints/LaunchModal.svelte": {
+   "font": 9,
+   "spacing": 11
+  },
+  "web/src/lib/blueprints/SessionRow.svelte": {
+   "font": 3,
+   "spacing": 8
+  },
+  "web/src/lib/blueprints/SkillsPicker.svelte": {
+   "font": 3,
+   "spacing": 5
+  },
+  "web/src/lib/bookmarks/BookmarkPreviewList.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/browser/BrowserScreen.svelte": {
+   "font": 1,
+   "spacing": 1
+  },
+  "web/src/lib/browser/BrowserView.svelte": {
+   "font": 6,
+   "spacing": 9
+  },
+  "web/src/lib/byoai/model-picker.css": {
+   "spacing": 4
+  },
+  "web/src/lib/carnivore-account/AccountBody.svelte": {
+   "font": 4,
+   "spacing": 6
+  },
+  "web/src/lib/carnivore-account/SignInModal.svelte": {
+   "font": 4,
+   "spacing": 7
+  },
+  "web/src/lib/carnivore-account/WelcomeModal.svelte": {
+   "font": 1,
+   "spacing": 2
+  },
+  "web/src/lib/catalog/AccountPanel.svelte": {
+   "font": 5,
+   "spacing": 7
+  },
+  "web/src/lib/catalog/AddSplit.svelte": {
+   "font": 1,
+   "spacing": 3
+  },
+  "web/src/lib/catalog/AutoUpdateSwitch.svelte": {
+   "font": 2,
+   "spacing": 3
+  },
+  "web/src/lib/catalog/AutopsyFacts.svelte": {
+   "font": 2,
+   "spacing": 2
+  },
+  "web/src/lib/catalog/CardImageRow.svelte": {
+   "font": 4,
+   "spacing": 3
+  },
+  "web/src/lib/catalog/CatalogCard.svelte": {
+   "font": 3,
+   "spacing": 4
+  },
+  "web/src/lib/catalog/CatalogDetail.svelte": {
+   "font": 9,
+   "spacing": 17
+  },
+  "web/src/lib/catalog/CatalogFilterRail.svelte": {
+   "font": 2,
+   "spacing": 6
+  },
+  "web/src/lib/catalog/CatalogPhoneBar.svelte": {
+   "spacing": 4
+  },
+  "web/src/lib/catalog/CatalogRows.svelte": {
+   "font": 6,
+   "spacing": 11
+  },
+  "web/src/lib/catalog/CatalogScreen.svelte": {
+   "font": 2,
+   "spacing": 5
+  },
+  "web/src/lib/catalog/CatalogToolbar.svelte": {
+   "spacing": 2
+  },
+  "web/src/lib/catalog/CompatBadges.svelte": {
+   "font": 4,
+   "spacing": 3
+  },
+  "web/src/lib/catalog/ConfirmSheet.svelte": {
+   "font": 5,
+   "spacing": 5
+  },
+  "web/src/lib/catalog/ConsentInstructions.svelte": {
+   "font": 2,
+   "spacing": 2
+  },
+  "web/src/lib/catalog/ConsentScripts.svelte": {
+   "font": 5,
+   "spacing": 4
+  },
+  "web/src/lib/catalog/ContentsBlock.svelte": {
+   "font": 4,
+   "spacing": 3
+  },
+  "web/src/lib/catalog/CostBadge.svelte": {
+   "font": 3,
+   "spacing": 2
+  },
+  "web/src/lib/catalog/DeprecatedMark.svelte": {
+   "font": 1,
+   "spacing": 1
+  },
+  "web/src/lib/catalog/DetailActions.svelte": {
+   "font": 3,
+   "spacing": 3
+  },
+  "web/src/lib/catalog/DriftFacts.svelte": {
+   "font": 2,
+   "spacing": 1
+  },
+  "web/src/lib/catalog/FilterGroup.svelte": {
+   "font": 2,
+   "spacing": 5
+  },
+  "web/src/lib/catalog/GradeBlock.svelte": {
+   "font": 7,
+   "spacing": 11
+  },
+  "web/src/lib/catalog/InstallChoices.svelte": {
+   "font": 3,
+   "spacing": 3
+  },
+  "web/src/lib/catalog/InstallCount.svelte": {
+   "font": 1
+  },
+  "web/src/lib/catalog/InstallPreview.svelte": {
+   "font": 8,
+   "spacing": 8
+  },
+  "web/src/lib/catalog/InstallSheet.svelte": {
+   "font": 7,
+   "spacing": 11
+  },
+  "web/src/lib/catalog/InstalledWhere.svelte": {
+   "font": 3,
+   "spacing": 3
+  },
+  "web/src/lib/catalog/ItemFeedback.svelte": {
+   "spacing": 3
+  },
+  "web/src/lib/catalog/ItemNoteForm.svelte": {
+   "font": 8,
+   "spacing": 8
+  },
+  "web/src/lib/catalog/ItemNotePopup.svelte": {
+   "font": 1,
+   "spacing": 3
+  },
+  "web/src/lib/catalog/ItemRatings.svelte": {
+   "spacing": 4
+  },
+  "web/src/lib/catalog/ItemSummary.svelte": {
+   "spacing": 4
+  },
+  "web/src/lib/catalog/LoadoutMembers.svelte": {
+   "font": 5,
+   "spacing": 7
+  },
+  "web/src/lib/catalog/ModFacts.svelte": {
+   "font": 5,
+   "spacing": 6
+  },
+  "web/src/lib/catalog/OneShotPicker.svelte": {
+   "font": 3,
+   "spacing": 7
+  },
+  "web/src/lib/catalog/PacksShelf.svelte": {
+   "font": 2,
+   "spacing": 1
+  },
+  "web/src/lib/catalog/PluginFacts.svelte": {
+   "font": 6,
+   "spacing": 10
+  },
+  "web/src/lib/catalog/RatingControl.svelte": {
+   "font": 7,
+   "spacing": 9
+  },
+  "web/src/lib/catalog/RatingHistogram.svelte": {
+   "font": 1,
+   "spacing": 2
+  },
+  "web/src/lib/catalog/RegisterDialog.svelte": {
+   "font": 3,
+   "spacing": 5
+  },
+  "web/src/lib/catalog/RegisterFields.svelte": {
+   "font": 2,
+   "spacing": 6
+  },
+  "web/src/lib/catalog/RegisterGate.svelte": {
+   "font": 1,
+   "spacing": 1
+  },
+  "web/src/lib/catalog/ReviewBlock.svelte": {
+   "font": 9,
+   "spacing": 10
+  },
+  "web/src/lib/catalog/SessionsPanel.svelte": {
+   "font": 5,
+   "spacing": 6
+  },
+  "web/src/lib/catalog/TrustBlock.svelte": {
+   "font": 8,
+   "spacing": 12
+  },
+  "web/src/lib/catalog/TrySheet.svelte": {
+   "font": 3,
+   "spacing": 5
+  },
+  "web/src/lib/catalog/UpdateDiffView.svelte": {
+   "font": 5,
+   "spacing": 5
+  },
+  "web/src/lib/catalog/UsageFacts.svelte": {
+   "font": 2,
+   "spacing": 1
+  },
+  "web/src/lib/catalog/VerdictMark.svelte": {
+   "font": 1,
+   "spacing": 1
+  },
+  "web/src/lib/catalog/WarezStatusLine.svelte": {
+   "font": 1
+  },
+  "web/src/lib/catalog/WarezTools.svelte": {
+   "font": 3,
+   "spacing": 4
+  },
+  "web/src/lib/catalog/catalog-phone-bar.css": {
+   "font": 1,
+   "spacing": 1
+  },
+  "web/src/lib/catalog/menu/InstalledPage.svelte": {
+   "font": 5,
+   "spacing": 8
+  },
+  "web/src/lib/catalog/menu/WarezMenu.svelte": {
+   "font": 8,
+   "spacing": 20
+  },
+  "web/src/lib/catalog/warez-card.css": {
+   "font": 4,
+   "spacing": 12
+  },
+  "web/src/lib/code-review/CodeReviewModal.svelte": {
+   "font": 2,
+   "spacing": 9
+  },
+  "web/src/lib/community/AuthorPage.svelte": {
+   "font": 7,
+   "spacing": 5
+  },
+  "web/src/lib/community/CommentThread.svelte": {
+   "font": 9,
+   "spacing": 15
+  },
+  "web/src/lib/community/CommunitySettings.svelte": {
+   "font": 2,
+   "spacing": 2
+  },
+  "web/src/lib/community/Composer.svelte": {
+   "font": 4,
+   "spacing": 6
+  },
+  "web/src/lib/community/ReportDialog.svelte": {
+   "font": 5,
+   "spacing": 7
+  },
+  "web/src/lib/computers/computers.css": {
+   "font": 5,
+   "spacing": 24
+  },
+  "web/src/lib/crosstalk/cards.css": {
+   "spacing": 4
+  },
+  "web/src/lib/crosstalk/terminal-cards/terminal-cards.css": {
+   "spacing": 5
+  },
+  "web/src/lib/dashboards/BoardPreview.svelte": {
+   "font": 1,
+   "spacing": 1
+  },
+  "web/src/lib/dashboards/DashboardCard.svelte": {
+   "spacing": 5
+  },
+  "web/src/lib/deepsearch/ContextModal.svelte": {
+   "font": 1,
+   "spacing": 5
+  },
+  "web/src/lib/deepsearch/results.css": {
+   "spacing": 8
+  },
+  "web/src/lib/drawer-tabs/DrawerMenu.svelte": {
+   "spacing": 8
+  },
+  "web/src/lib/drawer-zone/DrawerZone.svelte": {
+   "spacing": 3
+  },
+  "web/src/lib/drawer-zone/ZoneItem.svelte": {
+   "spacing": 3
+  },
+  "web/src/lib/dropdown/dropdown.css": {
+   "spacing": 3
+  },
+  "web/src/lib/editor-controls/EditorControls.svelte": {
+   "spacing": 2
+  },
+  "web/src/lib/file-drawer/FileDrawerGit.svelte": {
+   "font": 1,
+   "spacing": 5
+  },
+  "web/src/lib/file-drawer/FileDrawerGitLine.svelte": {
+   "spacing": 3
+  },
+  "web/src/lib/file-drawer/FileDrawerHeader.svelte": {
+   "font": 4,
+   "spacing": 10
+  },
+  "web/src/lib/first-run/first-run.css": {
+   "font": 4,
+   "spacing": 12
+  },
+  "web/src/lib/hosts-page/HostsScreen.svelte": {
+   "font": 1,
+   "spacing": 2
+  },
+  "web/src/lib/hosts-page/PairSas.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/hosts-page/PeerDetail.svelte": {
+   "font": 4,
+   "spacing": 8
+  },
+  "web/src/lib/hosts-page/PeerSessions.svelte": {
+   "font": 4,
+   "spacing": 4
+  },
+  "web/src/lib/hosts-page/PeerState.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/hosts-page/ShowCodeModal.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/huddle-swarm/SwarmPage.svelte": {
+   "spacing": 2
+  },
+  "web/src/lib/icon-picker/icon-picker.css": {
+   "font": 2,
+   "spacing": 5
+  },
+  "web/src/lib/info-pages/DocsGuide.svelte": {
+   "spacing": 4
+  },
+  "web/src/lib/info-pages/InfoScreen.svelte": {
+   "spacing": 3
+  },
+  "web/src/lib/info-tip/InfoTip.svelte": {
+   "font": 2
+  },
+  "web/src/lib/install-report/InstallReportPrivacyPanel.svelte": {
+   "font": 1,
+   "spacing": 3
+  },
+  "web/src/lib/item-settings/settings-form.css": {
+   "font": 7,
+   "spacing": 18
+  },
+  "web/src/lib/launch-picker/LaunchAccountChoice.svelte": {
+   "font": 5,
+   "spacing": 6
+  },
+  "web/src/lib/launch-picker/LaunchChoice.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/launch-picker/LaunchPickerModal.svelte": {
+   "font": 4,
+   "spacing": 3
+  },
+  "web/src/lib/launch-picker/LaunchProfileDropdown.svelte": {
+   "font": 4,
+   "spacing": 4
+  },
+  "web/src/lib/launch-profiles-page/ImportProfileModal.svelte": {
+   "font": 6,
+   "spacing": 5
+  },
+  "web/src/lib/launch-profiles-page/LaunchProfileEditor.svelte": {
+   "font": 4,
+   "spacing": 16
+  },
+  "web/src/lib/launch-profiles-page/LaunchProfilesScreen.svelte": {
+   "font": 9,
+   "spacing": 28
+  },
+  "web/src/lib/launchpad/ModalShell.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/launchpad/RecentSessions.svelte": {
+   "font": 1
+  },
+  "web/src/lib/ledger-drawer/DrawerLedger.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/ledger-drawer/ProviderGlanceTile.svelte": {
+   "font": 1,
+   "spacing": 3
+  },
+  "web/src/lib/ledger/ColorSwatches.svelte": {
+   "spacing": 2
+  },
+  "web/src/lib/ledger/LedgerScreen.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/ledger/LedgerUsageCell.svelte": {
+   "spacing": 3
+  },
+  "web/src/lib/ledger/ledger-chrome.css": {
+   "spacing": 1
+  },
+  "web/src/lib/live-status/OfflineMarker.svelte": {
+   "spacing": 3
+  },
+  "web/src/lib/manager-frame/manager-card-rich.css": {
+   "spacing": 2
+  },
+  "web/src/lib/manager-frame/manager-card.css": {
+   "font": 5,
+   "spacing": 7
+  },
+  "web/src/lib/manager-frame/manager-frame.css": {
+   "font": 5,
+   "spacing": 9
+  },
+  "web/src/lib/markdown-editor/MarkdownEditor.svelte": {
+   "spacing": 7
+  },
+  "web/src/lib/menu-page/MenuPageBar.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/mini-rail/MiniRail.svelte": {
+   "spacing": 3
+  },
+  "web/src/lib/mini-rail/MiniRailFooter.svelte": {
+   "font": 1,
+   "spacing": 3
+  },
+  "web/src/lib/mini-rail/MiniRailUsage.svelte": {
+   "font": 1,
+   "spacing": 1
+  },
+  "web/src/lib/mods/mods.css": {
+   "spacing": 1
+  },
+  "web/src/lib/notifications/mute/mute.css": {
+   "font": 2,
+   "spacing": 5
+  },
+  "web/src/lib/open-files/FileScreen.svelte": {
+   "font": 15,
+   "spacing": 7
+  },
+  "web/src/lib/pack-machines/PackMarks.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/pack-machines/PackMeter.svelte": {
+   "font": 3,
+   "spacing": 4
+  },
+  "web/src/lib/pack-machines/pack-machines.css": {
+   "font": 4,
+   "spacing": 26
+  },
+  "web/src/lib/pack-machines/pack-settings.css": {
+   "font": 2,
+   "spacing": 6
+  },
+  "web/src/lib/pack-machines/pack-work.css": {
+   "font": 2,
+   "spacing": 18
+  },
+  "web/src/lib/pack-machines/relay-consent.css": {
+   "spacing": 4
+  },
+  "web/src/lib/pack-migrate/migrate-wizard.css": {
+   "font": 2,
+   "spacing": 17
+  },
+  "web/src/lib/pack-offers/pack-offers.css": {
+   "spacing": 3
+  },
+  "web/src/lib/pack-transport/pack-transport.css": {
+   "font": 1,
+   "spacing": 13
+  },
+  "web/src/lib/perf-overlay/PerfOverlay.svelte": {
+   "spacing": 6
+  },
+  "web/src/lib/plugins-page/PluginsScreen.svelte": {
+   "font": 1,
+   "spacing": 3
+  },
+  "web/src/lib/plugins-page/catalog-plugins.css": {
+   "font": 4,
+   "spacing": 3
+  },
+  "web/src/lib/plugins-page/plugin-pane.css": {
+   "font": 2,
+   "spacing": 34
+  },
+  "web/src/lib/project-colors/ProjectColorPopover.svelte": {
+   "color": 2,
+   "spacing": 2
+  },
+  "web/src/lib/project-colors/ProjectColorSwatches.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/projects-shared/projects-shared.css": {
+   "spacing": 2
+  },
+  "web/src/lib/send-to/send-to.css": {
+   "font": 6,
+   "spacing": 4
+  },
+  "web/src/lib/session-control/control-center.css": {
+   "spacing": 13
+  },
+  "web/src/lib/session-move/move-folder.css": {
+   "font": 1,
+   "spacing": 1
+  },
+  "web/src/lib/session-rail/RailSlideout.svelte": {
+   "spacing": 2
+  },
+  "web/src/lib/session-skills/session-skills.css": {
+   "spacing": 8
+  },
+  "web/src/lib/sessions-page/pivot.css": {
+   "spacing": 7
+  },
+  "web/src/lib/sessions-page/sessions-list.css": {
+   "spacing": 4
+  },
+  "web/src/lib/sessions-page/sessions-page.css": {
+   "spacing": 4
+  },
+  "web/src/lib/sessions-page/sessions-panel.css": {
+   "spacing": 1
+  },
+  "web/src/lib/sessions-page/timeline.css": {
+   "font": 1,
+   "spacing": 2
+  },
+  "web/src/lib/sessions/AgentMarks.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/settings-page/RowIconsPanel.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/settings-page/SettingsSearchResults.svelte": {
+   "font": 2,
+   "spacing": 3
+  },
+  "web/src/lib/settings-page/ThemePicker.svelte": {
+   "spacing": 2
+  },
+  "web/src/lib/settings-page/appearance/ControlCenterPreview.svelte": {
+   "font": 2,
+   "spacing": 8
+  },
+  "web/src/lib/settings-page/appearance/FootBarStrip.svelte": {
+   "spacing": 2
+  },
+  "web/src/lib/settings-page/phone-link/phone-link.css": {
+   "font": 1
+  },
+  "web/src/lib/settings-page/settings-page.css": {
+   "font": 3,
+   "spacing": 7
+  },
+  "web/src/lib/sidebar-shell/PackSection.svelte": {
+   "font": 5,
+   "spacing": 4
+  },
+  "web/src/lib/sidebar-widgets/SidebarControls.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/sidebar-widgets/SidebarRail.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/skill-page/skill-page.css": {
+   "font": 6,
+   "spacing": 1
+  },
+  "web/src/lib/skills-hub/local/local-skills.css": {
+   "spacing": 2
+  },
+  "web/src/lib/skills-page/skills-page.css": {
+   "font": 9,
+   "spacing": 17
+  },
+  "web/src/lib/slash-favorites/FavoriteChips.svelte": {
+   "spacing": 7
+  },
+  "web/src/lib/subagents/popup-list.css": {
+   "font": 2,
+   "spacing": 6
+  },
+  "web/src/lib/swarm-board/CardActionPanel.svelte": {
+   "spacing": 6
+  },
+  "web/src/lib/swarm-board/CardActions.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/swarm-board/CardPane.svelte": {
+   "spacing": 4
+  },
+  "web/src/lib/swarm-board/SwarmBoard.svelte": {
+   "spacing": 9
+  },
+  "web/src/lib/swarm-board/views/CalendarView.svelte": {
+   "spacing": 11
+  },
+  "web/src/lib/swarm-board/views/ColumnsView.svelte": {
+   "spacing": 5
+  },
+  "web/src/lib/swarm-board/views/ListView.svelte": {
+   "spacing": 5
+  },
+  "web/src/lib/swarm-board/views/SwimlanesView.svelte": {
+   "spacing": 7
+  },
+  "web/src/lib/swarm-board/views/TimelineView.svelte": {
+   "spacing": 9
+  },
+  "web/src/lib/swarm-board/views/calendar/BoardKey.svelte": {
+   "spacing": 4
+  },
+  "web/src/lib/swarm-board/views/calendar/CalendarRow.svelte": {
+   "spacing": 11
+  },
+  "web/src/lib/swarm-board/views/columns/ProjectColumn.svelte": {
+   "spacing": 3
+  },
+  "web/src/lib/swarm-board/views/list/CardDetail.svelte": {
+   "font": 1,
+   "spacing": 18
+  },
+  "web/src/lib/swarm-board/views/list/CardVerdict.svelte": {
+   "spacing": 5
+  },
+  "web/src/lib/swarm-board/views/list/ListRow.svelte": {
+   "font": 1,
+   "spacing": 5
+  },
+  "web/src/lib/swarm-board/views/swimlanes/LaneCard.svelte": {
+   "font": 1,
+   "spacing": 13
+  },
+  "web/src/lib/swarm-board/views/swimlanes/LaneChat.svelte": {
+   "spacing": 3
+  },
+  "web/src/lib/swarm-board/views/swimlanes/SwimLane.svelte": {
+   "spacing": 18
+  },
+  "web/src/lib/swarm-board/views/timeline/TimelineGroup.svelte": {
+   "spacing": 13
+  },
+  "web/src/lib/terminal-background/TerminalBackgroundButton.svelte": {
+   "spacing": 3
+  },
+  "web/src/lib/terminal-background/TerminalBackgroundPanel.svelte": {
+   "spacing": 5
+  },
+  "web/src/lib/terminal-empty/TerminalEmpty.svelte": {
+   "font": 2,
+   "spacing": 2
+  },
+  "web/src/lib/terminal-notice/TerminalSizeNotice.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/terminal-notice/TerminalStartupNotice.svelte": {
+   "font": 2,
+   "spacing": 2
+  },
+  "web/src/lib/terminal-search/PromptHeader.svelte": {
+   "spacing": 3
+  },
+  "web/src/lib/terminal-search/SearchPanel.svelte": {
+   "font": 2,
+   "spacing": 2
+  },
+  "web/src/lib/themes-page/BuildYourOwn.svelte": {
+   "font": 1,
+   "spacing": 8
+  },
+  "web/src/lib/themes-page/ThemeInspector.svelte": {
+   "font": 2,
+   "spacing": 10
+  },
+  "web/src/lib/themes-page/ThemesScreen.svelte": {
+   "font": 2,
+   "spacing": 3
+  },
+  "web/src/lib/toast-mode/ToastModePanel.svelte": {
+   "spacing": 4
+  },
+  "web/src/lib/tooltip/tooltip.css": {
+   "font": 1,
+   "spacing": 1
+  },
+  "web/src/lib/ui/SegmentedMeterBar.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/user-guide/McpToolList.svelte": {
+   "font": 1
+  },
+  "web/src/lib/version-watch/VersionBanner.svelte": {
+   "color": 2,
+   "font": 1,
+   "spacing": 9
+  },
+  "web/src/lib/widget-bars/PinnedKeyBadge.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/widgets-page/widgets-page.css": {
+   "color": 3,
+   "font": 23,
+   "spacing": 53
+  },
+  "web/src/lib/zone-shell/PlacementBody.svelte": {
+   "spacing": 1
+  },
+  "web/src/lib/zone-shell/TabKey.svelte": {
+   "spacing": 3
+  },
+  "web/src/lib/zone-shell/ZoneBadge.svelte": {
+   "spacing": 1
+  },
+  "web/src/opscenter/App.svelte": {
+   "spacing": 2
+  },
+  "web/src/opscenter/CellHost.svelte": {
+   "spacing": 1
+  },
+  "web/src/opscenter/app.css": {
+   "spacing": 1
+  },
+  "web/src/opscenter/cells/analytics/Controls.svelte": {
+   "spacing": 1
+  },
+  "web/src/opscenter/cells/analytics/DetailsModal.svelte": {
+   "font": 1,
+   "spacing": 7
+  },
+  "web/src/opscenter/cells/analytics/TimelineView.svelte": {
+   "font": 1
+  },
+  "web/src/opscenter/cells/task-list/ListBody.svelte": {
+   "spacing": 2
+  },
+  "web/src/opscenter/cells/task-list/ListRow.svelte": {
+   "spacing": 5
+  },
+  "web/src/opscenter/cells/task-list/ListRowOpen.svelte": {
+   "spacing": 2
+  },
+  "web/src/opscenter/cells/task-manager/Cell.svelte": {
+   "spacing": 1
+  },
+  "web/src/opscenter/cells/terminal-live/Cell.svelte": {
+   "spacing": 1
+  },
+  "web/src/opscenter/cells/terminal-live/FootStats.svelte": {
+   "spacing": 8
+  },
+  "web/src/opscenter/cells/terminal-live/GitChip.svelte": {
+   "spacing": 1
+  },
+  "web/src/opscenter/cells/terminal-live/ShellFoot.svelte": {
+   "spacing": 3
+  },
+  "web/src/opscenter/cells/terminal-live/TerminalActions.svelte": {
+   "spacing": 5
+  },
+  "web/src/opscenter/cells/terminal-live/TerminalFoot.svelte": {
+   "color": 1,
+   "font": 1,
+   "spacing": 6
+  },
+  "web/src/opscenter/cells/terminal-live/TerminalHead.svelte": {
+   "spacing": 4
+  },
+  "web/src/opscenter/cells/terminal-live/TerminalUtilities.svelte": {
+   "spacing": 2
+  },
+  "web/src/opscenter/controls.css": {
+   "spacing": 5
+  },
+  "web/src/opscenter/engine/LiveRegion.svelte": {
+   "font": 1,
+   "spacing": 1
+  },
+  "web/src/opscenter/fields.css": {
+   "font": 1,
+   "spacing": 4
+  },
+  "web/src/opscenter/layout-editor/AnalyticsFamilyFold.svelte": {
+   "spacing": 9
+  },
+  "web/src/opscenter/layout-editor/WidgetDrawer.svelte": {
+   "spacing": 9
+  },
+  "web/src/opscenter/layout-editor/WidgetRow.svelte": {
+   "spacing": 4
+  },
+  "web/src/opscenter/layout-editor/WidgetThumb.svelte": {
+   "spacing": 2
+  },
+  "web/src/opscenter/layout-editor/WindowRows.svelte": {
+   "spacing": 8
+  },
+  "web/src/opscenter/layouts/LayoutCellMarks.svelte": {
+   "spacing": 2
+  },
+  "web/src/opscenter/layouts/LayoutCommandBar.svelte": {
+   "spacing": 1
+  },
+  "web/src/opscenter/layouts/LayoutNameModal.svelte": {
+   "spacing": 2
+  },
+  "web/src/opscenter/layouts/LayoutSkillMenu.svelte": {
+   "spacing": 1
+  },
+  "web/src/opscenter/layouts/MemberDownRow.svelte": {
+   "spacing": 1
+  },
+  "web/src/opscenter/page.css": {
+   "font": 2,
+   "spacing": 3
+  },
+  "web/src/opscenter/shell/TabStrip.svelte": {
+   "spacing": 3
+  },
+  "web/src/opscenter/shell/TopBar.svelte": {
+   "spacing": 4
+  },
+  "web/src/opscenter/shell/WidgetHead.svelte": {
+   "spacing": 4
+  },
+  "web/src/opscenter/ui/AgentTier.svelte": {
+   "spacing": 1
+  },
+  "web/src/opscenter/ui/DataTable.svelte": {
+   "spacing": 4
+  },
+  "web/src/opscenter/ui/PhoneSummary.svelte": {
+   "spacing": 1
+  },
+  "web/src/opscenter/ui/StatusPill.svelte": {
+   "spacing": 1
+  },
+  "web/src/opscenter/ui/log-viewer.css": {
+   "spacing": 4
+  },
+  "web/src/opscenter/ui/page-kit.css": {
+   "font": 3,
+   "spacing": 3
+  },
+  "web/src/opscenter/ui/tabs.css": {
+   "color": 3,
+   "spacing": 2
+  },
+  "web/src/opscenter/ui/tile.css": {
+   "spacing": 2
+  },
+  "web/src/opscenter/widgets/chrome/RefusalPlate.svelte": {
+   "spacing": 2
+  },
+  "web/src/pair/pair.css": {
+   "font": 5,
+   "spacing": 5
+  },
+  "web/src/spectate/SpectatePage.svelte": {
+   "font": 4,
+   "spacing": 12
+  },
+  "web/src/style-guide/specimens/BarSizesDemo.svelte": {
+   "spacing": 4
+  },
+  "web/src/style-guide/specimens/BarVisibilityDemo.svelte": {
+   "spacing": 4
+  },
+  "web/src/style-guide/specimens/PinnedPanelDemo.svelte": {
+   "spacing": 6
+  },
+  "web/src/widget-harness/DefectProbe.svelte": {
+   "font": 3
+  },
+  "web/src/widget-harness/FitProbe.svelte": {
+   "font": 1
+  },
+  "web/src/widget-harness/Harness.svelte": {
+   "spacing": 1
+  }
+ },
+ "totals": {
+  "color": 11,
+  "font": 507,
+  "spacing": 1773
+ }
+}

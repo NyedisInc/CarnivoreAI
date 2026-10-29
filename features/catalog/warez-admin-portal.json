@@ -1,0 +1,48 @@
+{
+  "api_routes": [
+    "GET /v1/admin/submissions/{id}/report",
+    "POST /v1/submissions/{id}/approve",
+    "POST /v1/submissions/{id}/regate",
+    "POST /v1/admin/submissions/{id}/revoke",
+    "POST /v1/submissions/{id}/revocation-published"
+  ],
+  "area": "skills-catalog",
+  "description": "Admins (signed in with a passkey) see one tab per submission status: pending, received, gate failed, awaiting approval, approved, publishing, published, rejected, withdrawn, superseded, stuck and revoked. Opening a row shows the stored gate report and the diff against the published version. Approve is one click and quotes the report digest so you approve exactly what you saw. Reject and override ask for a written reason; override exists only for a blocked AI verdict on a skill, theme or plugin. Revoke takes a published item back. The publish worker that acts on an approved row is built but switched off.",
+  "docs": [
+    "docs/catalog.md",
+    "docs/warez/02-submission-pipeline.md"
+  ],
+  "examples": [
+    "Approve a passed skill in one click and the publish worker picks it up at its next poll once publishing is switched on.",
+    "Revoke a published item and the signed revocation reaches apps at their next index refresh."
+  ],
+  "how_to": [
+    "Sign in with your passkey and open a status tab.",
+    "Open a row to read its gate report and diff, then approve, reject or override with a reason.",
+    "Open a published row and press revoke with a reason to take it back."
+  ],
+  "id": "warez-admin-portal",
+  "issues": [
+    2063
+  ],
+  "keywords": [
+    "warez",
+    "admin",
+    "portal",
+    "approve",
+    "revoke",
+    "submissions"
+  ],
+  "media_exempt": "pending the next recapture",
+  "name": "Warez admin portal",
+  "since": "2026-10-22",
+  "status": "beta",
+  "summary": "the admin page at admin.carnivore.ai that shows every submission by status, the gate report, one-click approve and revoke.",
+  "surfaces": [
+    "web/src/admin/App.svelte"
+  ],
+  "updated": "2026-10-22",
+  "where": [
+    "https://admin.carnivore.ai, the submissions queue."
+  ]
+}

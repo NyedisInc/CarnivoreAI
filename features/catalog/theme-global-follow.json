@@ -1,0 +1,29 @@
+{
+  "api_routes": [],
+  "area": "themes",
+  "docs": [],
+  "examples": [
+    "Switch everything to a calmer theme for the evening in one step."
+  ],
+  "how_to": [
+    "Change the global theme. Every session without its own pinned theme repaints to follow it, live."
+  ],
+  "id": "theme-global-follow",
+  "issues": [],
+  "keywords": [
+    "global theme"
+  ],
+  "media": [],
+  "name": "Global theme follow",
+  "since": "2026-09-20",
+  "status": "stable",
+  "summary": "an unpinned session follows the theme you set globally, and repaints live when you change it.",
+  "surfaces": [
+    "client/js/theme-global-follow.js"
+  ],
+  "updated": "2026-09-27",
+  "where": [
+    "Settings, general tab, theme; or the themes screen."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

@@ -1,0 +1,27 @@
+{
+  "api_routes": [],
+  "area": "skills-catalog",
+  "docs": [],
+  "examples": [
+    "Check your skill's card reads well before publishing it."
+  ],
+  "how_to": [
+    "Press publish a skill; the older path-based preview is superseded by the publish view (see skills-catalog-publish)."
+  ],
+  "id": "skills-catalog-submit",
+  "issues": [],
+  "keywords": [
+    "submit"
+  ],
+  "media": [],
+  "name": "Submit to the catalog",
+  "since": "2026-09-16",
+  "status": "stable",
+  "summary": "preview how your own skill would look before submitting it to the catalog.",
+  "surfaces": [],
+  "updated": "2026-09-28",
+  "where": [
+    "The skills catalog, PUBLISH A SKILL."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

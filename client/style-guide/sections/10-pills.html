@@ -1,0 +1,143 @@
+<h2 class="sg-h2">pills, badges and chips</h2>
+
+<h3 class="sg-h3" id="pills-status">status pill</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/opscenter/ui/StatusPill.svelte</code><code>AgentTier.svelte</code></div>
+    <div class="sg-specimen__body"><div id="sg-live-status-pills"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>A state word with a coloured dot in a compiled table or card: <code>&lt;StatusPill label={t(...)} tone="var(--oc-green)" dot /&gt;</code>.
+        Props: <code>label</code> (required, from the catalog), <code>tone</code> (a <code>var(--oc-*)</code> string, default
+        green), <code>showLabel</code> (default true), <code>dot</code>, <code>shape</code> (<code>'solid'</code> or
+        <code>'hollow'</code>; hollow is "not measured", the same shape rule the status light uses). <code>AgentTier</code>
+        is the robot mark plus an agent name.</dd>
+    <dt>not for</dt>
+    <dd>A session's status in a row: that is the status light (<a href="#status-led">status light</a>), which carries both
+        rings and every signal. A pill is for states that are not a session's attention state.</dd>
+    <dt>access</dt>
+    <dd>With <code>showLabel={false}</code> the label still reaches the accessible name; do not drop the label prop.</dd>
+</dl>
+
+<h3 class="sg-h3" id="pills-family">agent family and wrapper pills</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/launchpad/AgentFamilyPill.svelte</code><code>WrapperPill.svelte</code></div>
+    <div class="sg-specimen__body"><div id="sg-live-family-pills"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>three outcomes</dt>
+    <dd>A recorded family is SOLID (<code>.family-pill--fact</code>), an inferred one is DASHED
+        (<code>.family-pill--guess</code>), and nothing known says "unknown family" in words
+        (<code>.family-pill--unknown</code>). Never collapse a guess into a fact or an unknown into "claude". Props:
+        <code>family</code> and <code>source</code> straight off the <code>/sessions/list</code> WRAPPER level
+        (<code>agent_family</code>, <code>agent_family_source</code>), never the nested <code>info.session</code> (gotcha 1).</dd>
+    <dt>wrapper</dt>
+    <dd><code>&lt;WrapperPill label={row.agent_wrapper_label} /&gt;</code> renders nothing for a null label; its
+        <code>title</code> is the full sentence (<code>RUNNING_SESSION_KEYS.wrapperTitle</code>).</dd>
+    <dt>themes</dt>
+    <dd>The family pills read <code>--color-family-fact-*</code> and <code>--color-family-guess-*</code>; the legacy
+        <code>.badge-tmux</code>, <code>.badge-external</code> and <code>.badge-ended</code> read the
+        <code>--color-badge-*</code> manifest values. Both are legacy <code>--color-*</code> reads kept for these badges only.</dd>
+</dl>
+
+<h3 class="sg-h3" id="pills-chips">chips and counts</h3>
+<dl class="sg-facts">
+    <dt>state chip</dt>
+    <dd>A card's credential state is a chip that says the state in words first and repeats it in colour
+        (the base <code>Tag</code> with tone <code>ok</code>, <code>warn</code>, <code>danger</code> or neutral in
+        <code>LedgerCards.svelte</code>; live in <a href="#ledger-catalog">the ledger</a>): tracked capitals in the signal
+        colour on a softened edge. An unmeasured state is the neutral tag.</dd>
+    <dt>command chips</dt>
+    <dd>The slash command favourites are chips (<code>.command-chip</code>, <code>FavoriteChips.svelte</code>,
+        <code>client/css/slash-command-chips.css</code>): a tap target that inserts a command, reorderable by drag with a
+        grip. The grip (<code>[data-fav-grip]</code>, a full-height strip) and the unstar key (<code>[data-fav-star]</code>, a 44px
+        square at every width) are the base quiet <code>IconButton</code>. Two per row under 600px.</dd>
+    <dt>counts</dt>
+    <dd>A count is plain text in the secondary tier beside its label (<code>ledger-total__count</code>), or the toast's
+        <code>×3</code> badge. Absent is not zero: print nothing, or "unknown", never a fabricated 0.</dd>
+</dl>
+
+<h3 class="sg-h3" id="pills-subagents">subagent count</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup copied from</span><code>client/js/session-sidebar-subagents.js</code><span>styles live</span><code>client/css/subagent-count.css</code></div>
+    <div class="sg-specimen__body">
+        <button type="button" class="subagent-count subagent-count--button" aria-label="2 subagents running, 7 launched in this conversation">2 sub</button>
+        <span class="subagent-count subagent-count--rollup" title="3 subagents running in this group">3 sub</span>
+        <span class="session-row__subagent-count" title="2 subagents running, 7 launched in this conversation">2</span>
+        <span class="session-row__subagent-count session-row__subagent-count--workflow" title="2 subagents running, 7 launched in this conversation, running a workflow">2</span>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>How many subagents a session is running right now (issues #747, #748). The chip sits BESIDE the status light,
+        never on it: the light's rings keep their meaning. <code>&lt;SubagentBadge running={row.subagents_running}
+        total={row.subagents_total} sessionId={row.session.id} name={...} /&gt;</code> in compiled code
+        (<code>SubagentBadge.svelte</code>); <code>subagentChip(r)</code> in the drawer row (<code>web/src/lib/sidebar-shell/row-chips.ts</code>). Both wear
+        <code>.subagent-count</code>. A click opens the read-only list (<code>SubagentList.svelte</code>, see
+        <a href="#menus-subagents">menus</a>).</dd>
+    <dt>rollup</dt>
+    <dd><code>.subagent-count--rollup</code> is the summed, non-interactive form on a group or project heading and in
+        the running sessions header; <code>&lt;SubagentBadge rollup rollupTitle={...} /&gt;</code>. A session drawn twice
+        in one band is counted once.</dd>
+    <dt>density (drawer row only, issue #848)</dt>
+    <dd>The drawer row shows the count only ONE way at a time, gated by
+        <code>web/src/lib/drawer/density.ts</code>'s mode: <code>cozy</code> draws the clickable
+        <code>.subagent-count</code> chip beside the status light; <code>detailed</code> draws a bare number instead,
+        <code>.session-row__subagent-count</code>, beside the agent icon (<code>SessionModelIcon</code>) rather than
+        beside the light, with no border and no click target
+        (<code>subagentCount(r)</code>); <code>compact</code> and every other density draw
+        neither. The project/group heading rollup above is a separate call site and is NOT density-gated - it draws at
+        every density.</dd>
+    <dt>workflow (issue #852)</dt>
+    <dd>While a Workflow run is in flight the bare count turns blue: one modifier,
+        <code>.session-row__subagent-count--workflow</code>, overriding <code>color</code> alone with
+        <code>--oc-cyan</code>, and the title gains "running a workflow". It reads <code>workflow_active</code> off the
+        listing WRAPPER, projected from the same watcher observation as the counts; only a measured true turns it, a
+        null (not measured, or codex, which has no Workflow tool) keeps the green.</dd>
+    <dt>null is not zero</dt>
+    <dd>Nothing draws for a null, absent or zero count: <code>subagents_running</code> is null when the watcher has not
+        measured the session and for codex (<code>subagents_state</code> <code>not_applicable</code>). Read it off the
+        WRAPPER, never <code>info.session</code>.</dd>
+    <dt>themes</dt>
+    <dd>The working hue, <code>--oc-green</code>, with a 45% edge on the chip; the bare inline count uses the same
+        token with no edge and no background.</dd>
+</dl>
+
+<h3 class="sg-h3" id="pills-timers">timer chip</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup copied from</span><code>client/js/session-sidebar-timers.js</code><span>styles live</span><code>client/css/timer-chip.css</code></div>
+    <div class="sg-specimen__body">
+        <button type="button" class="timer-chip timer-chip--button" aria-label="2 live timers, next fires in 18m"><svg class="timer-chip__glyph" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="4"></circle><path d="M5 2.6V5l1.6 1"></path></svg>18m</button>
+        <button type="button" class="timer-chip timer-chip--button" aria-label="1 live timer"><svg class="timer-chip__glyph" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="4"></circle><path d="M5 2.6V5l1.6 1"></path></svg>1 timer</button>
+    </div>
+</div>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>How soon a session's next LIVE in-session timer fires (issue #893): a <code>ScheduleWakeup</code> or a
+        <code>CronCreate</code> job whose claude process is alive and set it. It reads the time to the next fire
+        ("18m", "3h", "2d", "due"), or the live count when no fire time is known. It sits beside the subagent chip, never
+        on the light, and feeds neither the light nor the idle clock. <code>&lt;TimerBadge live={row.timers_live}
+        nextFireAt={row.timers_next_fire_at} sessionId={row.session.id} name={...} /&gt;</code> in compiled code;
+        <code>timerPlan(r)</code> in the drawer row (<code>web/src/lib/sidebar-shell/row-chips.ts</code>), which asks the
+        same <code>timerChip</code> helper for its words so the two places say the same thing. A click opens the
+        read-only list (<code>TimerList.svelte</code>, see <a href="#menus-timers">menus</a>).</dd>
+    <dt>density (drawer row)</dt>
+    <dd>Drawn in <code>cozy</code> and <code>detailed</code>, never <code>compact</code>. It is a different fact from the
+        subagent count, so detailed draws both.</dd>
+    <dt>null is not zero</dt>
+    <dd>Nothing draws for a null, absent or zero <code>timers_live</code>: null means not measured, and codex rows are
+        <code>timers_state</code> <code>not_applicable</code>. Read it off the WRAPPER.</dd>
+    <dt>themes</dt>
+    <dd>Calm by default: <code>--oc-text-secondary</code> with a 45% edge, because a timer is a fact about the future,
+        not work and not a question. Hover lifts to <code>--oc-ground-hover</code>; focus is the shared
+        brightened edge (<code>focus.css</code>).</dd>
+</dl>
+
+<h3 class="sg-h3" id="pills-mistakes">common mistakes</h3>
+<ul class="sg-mistakes">
+    <li><strong>Colour-only status.</strong> A green dot with no word. Every chip carries its word.</li>
+    <li><strong>A pill for prose.</strong> A badge holds a word or two; a sentence goes in a tooltip or a line.</li>
+    <li><strong>A pill-shaped radius.</strong> Chips use 2px to <code>--radius-sm</code> corners, not 999px.</li>
+    <li><strong>Reading the family off the wrong level.</strong> <code>info.session.agent_family</code> is undefined and
+        renders "unknown family" for every row. It lives on the wrapper.</li>
+</ul>

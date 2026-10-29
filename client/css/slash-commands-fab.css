@@ -1,0 +1,35 @@
+@layer legacy {
+/* The slash-commands MODAL's mobile gate.
+
+ * THE FAB THIS FILE IS NAMED AFTER IS GONE. The round "/" button that
+ * used to float over the bottom-left of the terminal screen is deleted:
+ * the slash key is the first key in the row under the pane now
+ * (client/css/terminal-key-bar.css), and it opens this same modal. The
+ * FILENAME is kept because it is linked from client/index.html and named
+ * in tests, and a rename would be churn with no behaviour in it; what
+ * the file gates is stated here instead.
+
+ * THE PANEL IS GATED BECAUSE ITS ONE OPENER IS. The rule used to hide
+ * the trigger AND the panel together, because a panel left reachable
+ * with no button is dead markup. The trigger is deleted rather than
+ * hidden now, so the panel is all that is left to gate - and it must
+ * stay gated, or a desktop would carry a modal with nothing that opens
+ * it.
+
+ * PURE CSS ON PURPOSE, no JS gate; see the docblock in
+ * client/css/terminal-key-bar.css for why. `!important` is what beats
+ * `.modal.active { display: flex !important; }` in styles.css.
+
+ * WHAT DESKTOP KEEPS: typing "/" directly into the terminal reaches
+ * claude's own CLI, which is a real slash-command entry point. What this
+ * modal offers beyond that - a discoverable list of every available
+ * command with a description for each, plus a starred-favorites row and
+ * live filtering - has no desktop replacement. Recorded here rather than
+ * fixed here, the same call already made for the terminal-tools FAB.
+ */
+@media (min-width: 769px) {
+    #slash-commands-modal {
+        display: none !important;
+    }
+}
+}

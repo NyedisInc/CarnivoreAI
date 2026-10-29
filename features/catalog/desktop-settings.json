@@ -1,0 +1,65 @@
+{
+  "api_routes": [
+    "GET /api/v1/preferences",
+    "PATCH /api/v1/preferences"
+  ],
+  "area": "settings",
+  "docs": [
+    "docs/desktop-bridge.md",
+    "docs/desktop-app.md",
+    "docs/ui-preferences-inventory.md"
+  ],
+  "examples": [
+    "Turn on approval banners and let macOS ask once for permission to show them.",
+    "Change the global hotkey, or turn it off, from settings.",
+    "Pick Ghostty as the terminal app, or set your own command and confirm it when the app asks.",
+    "Keep Do Not Disturb on, add Carnivore to its allowed apps, and turn on asks only so only real asks interrupt you."
+  ],
+  "how_to": [
+    "In the desktop app, open settings and pick the desktop app page. It is not in the list in a browser tab.",
+    "Turn on approval banners. The first time, macOS asks for permission and one 'banners are on' notification appears. If the row says denied or unknown, press open system settings and allow Carnivore under Notifications.",
+    "Turn on desktop notifications: asks only to have the app post a macOS notification only when an agent asks you something; other toasts stay in the app. It is off by default.",
+    "Banners break through a macOS Focus only when Carnivore is listed under that Focus's allowed apps; open focus settings opens the Focus pane (the Notifications pane if the first is refused).",
+    "Click the hotkey box and press the combination you want; turn off clears it and use default brings back Ctrl+Option+Cmd+C.",
+    "Use the start the engine at login and open a window at login switches to choose what happens when you log in.",
+    "Choose the terminal app open in terminal uses; custom command takes your own command.",
+    "The network rows show which address the server listens on and whether the connection is encrypted."
+  ],
+  "id": "desktop-settings",
+  "issues": [
+    2303,
+    2307,
+    2459
+  ],
+  "keywords": [
+    "desktop",
+    "banners",
+    "notifications",
+    "hotkey",
+    "login",
+    "menu bar",
+    "terminal",
+    "option meta"
+  ],
+  "media_exempt": "needs the Electron app's bridge attached, which a capture slot does not have; the page is absent in a browser tab by design",
+  "name": "Desktop app settings",
+  "since": "2026-10-23",
+  "status": "beta",
+  "summary": "a settings page that exists only inside the desktop app: approval banners and the macOS notification permission, the global hotkey, login items, the menu bar icon, option as meta and the terminal app.",
+  "surfaces": [
+    "web/src/lib/settings-page/DesktopPanel.svelte",
+    "web/src/lib/settings-page/desktop-bridge.ts",
+    "web/src/lib/settings-page/desktop-prefs.ts",
+    "macOS/desktop-settings.js",
+    "macOS/login-items.js",
+    "macOS/notification-permission.js",
+    "src/core/desktop_app/preferences.py",
+    "web/src/lib/settings-page/desktop-network.ts",
+    "macOS/banners/mirror.js",
+    "macOS/banners/focus.js"
+  ],
+  "updated": "2026-10-24",
+  "where": [
+    "Settings, desktop app (desktop app only)."
+  ]
+}

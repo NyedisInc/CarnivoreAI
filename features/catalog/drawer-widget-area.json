@@ -1,0 +1,56 @@
+{
+  "api_routes": [
+    "src/api/preferences_routes.py"
+  ],
+  "area": "providers",
+  "docs": [
+    "docs/dynamic-tab.md",
+    "docs/widget-system.md",
+    "docs/widget-spec.md"
+  ],
+  "examples": [
+    "Keep the providers panel and add keep awake under it, so both are one glance away from the session list.",
+    "Show the providers in the full look, the one the home page uses, when the drawer is wide.",
+    "Place the providers widget in the glance area twice and pick a different account on each, so the glance row shows both accounts side by side.",
+    "Place the files widget in the glance area: its tile shows changed 5, or clean, for the session your terminal is on, and pressing it opens the area full."
+  ],
+  "how_to": [
+    "Press edit layout at the bottom of the drawer.",
+    "Drag any row of the widget drawer's one list into the area, or press it to add it.",
+    "Use the strip above each widget to reorder it, switch its look between compact and full, or remove it.",
+    "Under the widgets, edit layout shows the glance area in yellow dashes: drag any row of the widget drawer's list into it; drag a glance's grip to reorder it, use its options to choose what it shows (the providers glance: which account), or remove it.",
+    "Press done to keep the arrangement; it follows you to every device.",
+    "Drag the thin handle above the area to move it between closed, glance (one row of small tiles) and full; while it is closed, click the small upward chevron to open it full.",
+    "Each tab remembers its own state on this device: agents and edit layout show it full, menu and questions at a glance.",
+    "Drag the line under a widget to make it taller or shorter for this visit."
+  ],
+  "id": "drawer-widget-area",
+  "issues": [],
+  "keywords": [
+    "drawer",
+    "widget",
+    "providers",
+    "look",
+    "glance",
+    "account"
+  ],
+  "media_exempt": "the area is a list of existing widgets in the drawer, arranged in edit layout; its states are shown in the style guide's ledger section",
+  "name": "Drawer widget area",
+  "since": "2026-09-29",
+  "status": "stable",
+  "summary": "the area under every tab of the left sidebar is a list of widgets you arrange, with the providers panel in it by default; each tab remembers it full, at a glance, or closed. The glance row is its own glance area: widgets placed there separately, reordered among themselves, each placement with its own options (the providers glance names one account, so it can be placed once per account).",
+  "surfaces": [
+    "web/src/lib/drawer-zone/DrawerZone.svelte",
+    "web/src/lib/drawer-zone/zone-store.svelte.ts",
+    "web/src/lib/dynamic-tabs/WidgetAreaBar.svelte",
+    "web/src/lib/dynamic-tabs/widget-area.svelte.ts",
+    "web/src/lib/drawer-zone/GlanceArea.svelte",
+    "web/src/lib/drawer-zone/glance-model.ts"
+  ],
+  "updated": "2026-10-03",
+  "where": [
+    "The area under every tab of the left sidebar, above the account bar, below its drag handle.",
+    "The widget drawer in edit layout: any row drops into the area.",
+    "The yellow-dashed glance area under the widgets while editing; any row of the widget drawer drops into it."
+  ]
+}

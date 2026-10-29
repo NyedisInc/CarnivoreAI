@@ -1,0 +1,63 @@
+{
+  "seen": {
+    "codecs": [
+      "lzma",
+      "zstd"
+    ],
+    "encodings": [
+      "$b64",
+      "$f",
+      "$t64"
+    ],
+    "entry_stores": [
+      ".claude.json",
+      "cc-theme",
+      "config.json",
+      "pinned_themes.json",
+      "session-journal",
+      "ui_preferences",
+      "unread_state.json"
+    ],
+    "homes": [
+      "claude",
+      "codex",
+      "plugin-synth",
+      "project",
+      "state"
+    ],
+    "lines_sources": [
+      "claude-history",
+      "codex-session-index"
+    ],
+    "member_kinds": [
+      "blob",
+      "fixed",
+      "lines",
+      "rows"
+    ],
+    "roles": [
+      "archived_copy",
+      "codex_rollout",
+      "conflict_copy",
+      "conversation_file",
+      "file_history",
+      "memory",
+      "orphan_transcript",
+      "plan",
+      "plugin_file",
+      "project_file",
+      "project_link",
+      "project_note",
+      "set_aside_transcript",
+      "subagent",
+      "swarm_desk",
+      "task_file",
+      "todo",
+      "tool_result",
+      "transcript"
+    ],
+    "variants": [
+      "own"
+    ]
+  }
+}

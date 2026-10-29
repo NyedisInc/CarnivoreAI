@@ -1,0 +1,108 @@
+/* padding */
+@layer patterns {
+  .oc-options {
+    --oc-option-mark: var(--oc-space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--oc-space-1);
+    min-width: 0;
+  }
+
+  .oc-options__rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--oc-space-0-5);
+    min-width: 0;
+  }
+
+  .oc-options__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--oc-space-1) var(--oc-space-1-5);
+    min-width: 0;
+    color: var(--oc-text-primary);
+  }
+
+  .oc-options__num {
+    flex: none;
+    color: var(--oc-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .oc-options__prompt {
+    flex: 1 1 12em;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .oc-option {
+    align-items: flex-start;
+    min-width: 0;
+    margin: 0 calc(-1 * var(--oc-space-2));
+    padding: var(--oc-space-1) var(--oc-space-2);
+  }
+
+  .oc-option[aria-checked='true'] {
+    --_btn-ink: var(--oc-text-bright);
+    --_btn-ink-hover: var(--oc-text-bright);
+  }
+
+  .oc-option__lead {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    height: 1lh;
+  }
+
+  .oc-option__box {
+    display: grid;
+    place-items: center;
+    width: var(--oc-option-mark);
+    height: var(--oc-option-mark);
+    border: var(--oc-border) solid var(--oc-line-control);
+    border-radius: var(--oc-border);
+  }
+
+  .oc-option[aria-checked='true'] .oc-option__box {
+    border-color: var(--oc-green);
+  }
+
+  .oc-option[aria-checked='true'] .oc-option__box::after {
+    content: '';
+    width: calc(var(--oc-option-mark) / 2);
+    height: calc(var(--oc-option-mark) / 2);
+    background: var(--oc-green);
+  }
+
+  .oc-option__text {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: var(--oc-space-0-5);
+    min-width: 0;
+  }
+
+  .oc-option__label {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--oc-space-1-5);
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .oc-option__reason {
+    color: var(--oc-text-muted);
+    font-size: var(--oc-fs-label);
+    overflow-wrap: anywhere;
+  }
+
+  .oc-options__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--oc-space-2);
+    padding-top: var(--oc-space-1);
+  }
+}

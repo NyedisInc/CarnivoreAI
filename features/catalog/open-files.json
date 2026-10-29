@@ -1,0 +1,56 @@
+{
+  "api_routes": [
+    "src/api/open_files_routes.py",
+    "src/api/config_files_routes.py",
+    "src/api/row_looks_routes.py"
+  ],
+  "area": "drawers",
+  "description": "A file opened from the files widget is a row of the left sidebar's own files list, right under the browsers, and shows full size in the main section where a browser page shows. One row per file per session, the path on the file mark's tooltip and a dot while it has unsaved edits. The row behaves like every other opened item: click shows it, the kebab closes it, and holding Shift turns the kebab into a red x. Closing a file with unsaved edits asks first. A save is refused when the file changed on disk after it was opened (an agent wrote it), with keep editing, reload from disk and overwrite.",
+  "docs": [
+    "docs/open-files.md",
+    "docs/row-looks.md"
+  ],
+  "examples": [
+    "Open main.py from the files widget: a files row appears under the browsers and the file fills the main section, with the session's rails still around it.",
+    "An agent edits the file while you have it open: your save is refused, and you pick reload from disk or overwrite.",
+    "Close a file with unsaved edits by holding Shift and clicking the red x: it asks before throwing the edits away.",
+    "Click a changed file in the files widget's changed files tab: its diff opens read only in the main section.",
+    "An agent opens plan.md with color cyan and icon docs: the row in the files list wears a cyan docs icon and name."
+  ],
+  "how_to": [
+    "Open the files widget (the files key on the right widget bar, or a files component), then click a file, a changed file's open, or a changed file itself for its diff.",
+    "Edit and press save, or Cmd or Ctrl+S; a markdown file has a preview toggle.",
+    "Switch between open files from the files list in the left sidebar; unsaved edits stay with each row until you save or close it.",
+    "GET /api/v1/files/open lists the rows; POST opens one; DELETE /api/v1/files/open/{id} closes one; GET and PUT /api/v1/files/open/{id}/content read and save with the sha256 revision check.",
+    "An agent opens a file for you with the MCP tool files_open (target, path, root, kind, and optional color and icon); it adds or reuses the row and does not switch your screen unless it also sets front true.",
+    "To make a row easier to spot, an agent can give it a theme color and an icon when it opens it, or later with sidebar_row_look_set (row, color, icon); a row with neither looks as before."
+  ],
+  "id": "open-files",
+  "issues": [
+    1699,
+    1724,
+    1767
+  ],
+  "keywords": [
+    "files",
+    "editor",
+    "open file",
+    "files list",
+    "stale save",
+    "diff"
+  ],
+  "media_exempt": "a new main-area screen and sidebar list whose reproducible screenshots are captured with feature_capture before the next version bump",
+  "name": "Files opened in the main area",
+  "since": "2026-10-12",
+  "status": "beta",
+  "summary": "files open as rows of the left sidebar's files list and show full size in the main section, with a stale-save check.",
+  "surfaces": [
+    "web/src/lib/open-files/FileScreen.svelte",
+    "web/src/lib/sidebar-shell/BrowserRow.svelte",
+    "client/js/config-editor-panel.js"
+  ],
+  "updated": "2026-10-13",
+  "where": [
+    "The files list in the left sidebar, under the browsers, and the main section when a file row is selected."
+  ]
+}

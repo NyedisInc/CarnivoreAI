@@ -1,0 +1,42 @@
+{
+  "id": "skill-scout",
+  "name": "Skill scout",
+  "summary": "Ask a running Claude session which catalog skills would have helped its work and add one with a tap.",
+  "description": "Skill scout, in a session's session skills panel, pastes a short request into the running Claude agent. The request lists the skills of the signed catalog you have not installed (id, name, description; nothing unsigned) and a small digest of this conversation's own history: the skills it used most, the tools that keep failing and its last few corrections, with anything that looks like a credential dropped. It is refused, and nothing is pasted, when the pane is stopped on a question, dead or not an agent. The agent answers with lines of the form CARNIVORE-SKILL id | reason; the app reads them from the transcript and shows only ids that exist in the verified catalog, without duplicates and at most ten, each as a chip with the reason as plain text. A chip adds the skill to this project through the normal install path: one tap when the server allows it, the consent sheet otherwise; consent is never skipped.",
+  "area": "skills-catalog",
+  "status": "stable",
+  "since": "2026-09-28",
+  "updated": "2026-09-28",
+  "surfaces": [
+    "terminal menu: session skills"
+  ],
+  "api_routes": [
+    "POST /api/v1/sessions/{session_id}/skills/scout",
+    "GET /api/v1/sessions/{session_id}/skills/scout"
+  ],
+  "docs": [
+    "docs/skills-manager.md"
+  ],
+  "issues": [
+    1083
+  ],
+  "keywords": [
+    "skills",
+    "scout",
+    "catalog",
+    "suggest",
+    "install",
+    "claude"
+  ],
+  "where": [
+    "In a Claude terminal, open the three-dot menu, choose session skills, and look for the skill scout block."
+  ],
+  "how_to": [
+    "Press scout and wait for the agent to answer.",
+    "Press a chip to add that skill to this session's project; a consent sheet opens when the skill needs your say-so."
+  ],
+  "examples": [
+    "An agent keeps failing on the same tool: scout suggests a catalog skill built for it."
+  ],
+  "media_exempt": "the answer comes from a live agent reading a signed catalog, which no neutral demo seed can fake; shots are taken by hand at review"
+}

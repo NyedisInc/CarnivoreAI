@@ -1,0 +1,30 @@
+{
+  "api_routes": [
+    "src/api/projects_presence_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [],
+  "examples": [
+    "Before starting a new session, see whether one is already open in that project."
+  ],
+  "how_to": [
+    "Nothing to do: the projects list marks which projects have a session running right now."
+  ],
+  "id": "project-presence",
+  "issues": [],
+  "keywords": [
+    "projects",
+    "presence"
+  ],
+  "media": [],
+  "name": "Project presence",
+  "since": "2026-09-10",
+  "status": "stable",
+  "summary": "see at a glance which of your projects currently have a running session.",
+  "surfaces": [],
+  "updated": "2026-09-27",
+  "where": [
+    "Home screen, the PROJECTS card: a project with a running session is marked."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

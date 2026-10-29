@@ -1,0 +1,18 @@
+
+@layer primitives {
+  .oc-colhead {
+    align-items: end;
+    padding-bottom: var(--oc-space-2);
+    box-shadow: inset 0 -1px 0 var(--oc-line-faint);
+  }
+
+  .oc-colhead__ghost {
+    visibility: hidden;
+  }
+
+  @media (max-width: 767px) {
+    .oc-colhead {
+      display: none !important;
+    }
+  }
+}

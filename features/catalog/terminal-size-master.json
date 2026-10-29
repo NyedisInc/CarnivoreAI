@@ -1,0 +1,57 @@
+{
+  "api_routes": [
+    "src/api/size_master_routes.py"
+  ],
+  "area": "terminal",
+  "description": "When more than one window shows a session, the pane normally takes the smallest window's size. The crown in the terminal toolbar lets one window take the size instead: while it is lit, only that window's size moves the pane, and every other window follows it, showing the same grid (scaled down to fit when it is smaller). Size only: every window can still type. A window that holds the crown and disconnects keeps it for 20 seconds, so a reconnect or a reload does not drop it.",
+  "docs": [
+    "docs/terminal-client-history.md",
+    "docs/DECISIONS.md"
+  ],
+  "examples": [
+    "You bounce between a desktop and a laptop on the same session: take the crown on the desktop and the pane stops flipping width every time you switch, so Claude Code stops redrawing at alternating widths.",
+    "Someone watches your session from a smaller screen: keep the crown on your window and their view scales down instead of shrinking your pane.",
+    "You are about to work from the other machine for a while: click the crown there and it takes the size; click it again to go back to smallest-window-wins."
+  ],
+  "how_to": [
+    "Click the crown in the terminal's toolbar (1024px and up). It lights up gold: this window now sets the pane's size.",
+    "Every other window showing the session turns its crown into a dim gold outline (watcher) and follows your size, scaled to fit if its window is smaller.",
+    "Click the lit crown again to give the size back; the pane returns to the smallest window's size.",
+    "Clicking the crown in a watcher window takes the size from the other window (last click wins).",
+    "Below 1024px, where the toolbar does not exist: open the header's overflow menu (the three dots) and use the 'master' row - same claim, same release, styled like every other row in that menu.",
+    "To hand every session in this browser to whichever machine you are on now: turn on 'master all sessions' - the gold crown in the app header's top-right corner on a wide window, or 'master all sessions' in the account menu at the bottom left of the drawer once the terminal grid replaces the header (the lit crown then shows beside the drawer's version while it is on). It claims every session this browser has attached, plus any it attaches afterward, until you turn it off (which releases them) or a different browser takes one of your sessions over, which turns this switch off by itself."
+  ],
+  "id": "terminal-size-master",
+  "issues": [
+    998,
+    1019
+  ],
+  "keywords": [
+    "size master",
+    "crown",
+    "watcher",
+    "resize",
+    "pane size",
+    "multiple windows"
+  ],
+  "media": [],
+  "name": "Size master crown",
+  "since": "2026-09-27",
+  "status": "stable",
+  "summary": "choose which window sets a shared session's pane size, so switching between computers stops re-sizing the pane.",
+  "surfaces": [
+    "web/src/opscenter/cells/terminal-live/SizeMasterCrown.svelte",
+    "client/js/terminal-size-master.js",
+    "client/js/header-menu.js",
+    "web/src/lib/drawer/bar.ts",
+    "web/src/opscenter/api/master-all.svelte.ts"
+  ],
+  "updated": "2026-09-28",
+  "where": [
+    "Open a session on the terminal page.",
+    "1024px and up: the crown is the icon just left of the three-dot menu in the terminal's toolbar, top right.",
+    "Below 1024px: the header's overflow (kebab) menu carries a 'master' row.",
+    "The browser-wide switch: the app header's top-right corner (wide windows with the drawer closed) or the drawer's account menu, with the lit crown beside the version while it is on (once the terminal grid replaces the header - the common desktop state); also in the phone kebab menu as 'master all'."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

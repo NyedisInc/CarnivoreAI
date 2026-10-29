@@ -1,0 +1,131 @@
+@layer components {
+    .d-list {
+        grid-area: list;
+        position: sticky;
+        top: calc(var(--pp-stick, 0px) + var(--d-top, 37px) + var(--d-tabs-h, 40px));
+        align-self: start;
+        max-height: var(--d-list-h, 70vh);
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+    .d-list__head,
+    .d-handle,
+    .d-filter { flex: none; }
+    .d-groups { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-bottom: var(--oc-space-3); position: relative; }
+    .d-list__head {
+        --pl-dim: var(--oc-orange);
+        display: flex;
+        align-items: baseline;
+        gap: var(--oc-pp-space-10);
+        padding: var(--oc-pp-space-18) var(--oc-space-4) var(--oc-space-2);
+    }
+    .d-list__count { margin-left: auto; font-size: var(--oc-fs-hint); color: var(--oc-text-muted); }
+    .d-handle { display: none; margin: 0; padding: 0 var(--oc-space-4) var(--oc-pp-space-10); font-size: var(--oc-fs-hint); line-height: 1.5; color: var(--oc-text-muted); }
+    .d-filter { padding: 0 var(--oc-space-4) var(--oc-space-1-5); font-size: var(--oc-fs-body); }
+    .d-filter input { width: 100%; text-overflow: ellipsis; padding-inline: var(--oc-space-2); }
+    .d-filter input::-webkit-search-cancel-button {
+        appearance: none;
+        -webkit-appearance: none;
+        width: var(--oc-space-3);
+        height: var(--oc-space-3);
+        cursor: pointer;
+        background:
+            linear-gradient(45deg, transparent 46%, var(--oc-cyan) 46% 54%, transparent 54%),
+            linear-gradient(-45deg, transparent 46%, var(--oc-cyan) 46% 54%, transparent 54%);
+    }
+    .d-grp { margin: var(--oc-pp-space-18) var(--oc-space-4) var(--oc-space-1-5); display: flex; gap: var(--oc-space-2); align-items: center; }
+    .d-list ul { list-style: none; margin: 0; padding: 0; }
+
+    .d-row {
+        position: relative;
+        display: grid;
+        grid-template-columns: 14px minmax(0, 1fr) auto;
+        align-items: center;
+        column-gap: var(--oc-pp-space-10);
+        width: 100%;
+        padding: var(--oc-pp-space-9) var(--oc-space-4);
+        background: transparent;
+        border: var(--oc-border) solid transparent;
+        border-radius: 0;
+        color: var(--oc-text-primary);
+        font: inherit;
+        font-size: var(--oc-fs-body);
+        text-align: left;
+        cursor: pointer;
+        box-shadow: inset 0 -1px 0 0 var(--oc-line-faint);
+    }
+    .d-row:hover { background: var(--oc-ground-hover); }
+    .d-row[aria-current='true']:focus-visible { --_bd: var(--oc-text-bright); }
+    .d-row[aria-current='true'] { background: var(--oc-orange-tint); box-shadow: inset 2px 0 0 0 var(--oc-orange), inset 0 -1px 0 0 var(--oc-line-faint); }
+    .d-row__m { display: inline-flex; }
+    .d-row__t { min-width: 0; display: flex; flex-direction: column; gap: var(--oc-space-0-5); }
+    .d-row__n { min-width: 0; }
+    .d-row__nm { display: inline-block; max-width: 100%; vertical-align: bottom; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .d-row__h { margin-left: var(--oc-space-1-5); font-size: var(--oc-fs-hint); color: var(--oc-text-muted); white-space: nowrap; }
+    .d-row__s { font-size: var(--oc-fs-hint); color: var(--oc-text-muted); }
+    .d-row[data-wait='1'] .d-row__s { color: var(--oc-yellow); }
+    .d-row--changed::after,
+    .pp-flash::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: color-mix(in srgb, var(--oc-cyan) 38%, transparent);
+        pointer-events: none;
+        opacity: 0;
+        animation: pp-flash 1.2s ease-out;
+    }
+    @keyframes pp-flash {
+        from { opacity: 0.55; }
+        to { opacity: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .d-row--changed::after,
+        .pp-flash::after { animation: none; }
+    }
+    .d-empty { margin: var(--oc-pp-space-14) var(--oc-space-4); font-size: var(--oc-fs-hint); line-height: 1.55; color: var(--oc-text-muted); }
+    .d-empty p { margin: 0 0 var(--oc-pp-space-10); }
+    .d-empty--fail { color: var(--oc-yellow); }
+    .d-empty--fail button { margin-top: var(--oc-space-1); }
+
+    @container pp (min-width: 720px) and (max-width: 1099px) {
+        .d-row__h { display: block; margin: var(--oc-space-0-5) 0 0; }
+        .d-row__s,
+        .d-list__count { display: none; }
+        .d-row { padding-inline: var(--oc-space-3); }
+        .d-list__head,
+        .d-filter { padding-inline: var(--oc-space-3); }
+        .d-list__head { margin-inline: var(--oc-space-3); }
+        .d-grp { margin-inline: var(--oc-space-3); }
+    }
+    @container pp (max-width: 719px) {
+        .d-handle:not(:empty) { display: block; }
+        .d-list { position: static; max-height: none; display: block; }
+        .d-groups { overflow: visible; }
+        .d-row { padding-block: var(--oc-space-3); min-height: 48px; }
+    }
+
+    .d-key {
+        flex: none;
+        padding: var(--oc-pp-space-10) var(--oc-space-4) var(--oc-pp-space-56);
+        box-shadow: inset 0 1px 0 0 var(--oc-line-rule);
+        background: var(--oc-ground-content, var(--oc-ground-page));
+    }
+    .d-key__lab { margin: 0 0 var(--oc-space-1-5); }
+    .d-key__g { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--oc-space-1) var(--oc-pp-space-14); }
+    .d-key__i { display: flex; align-items: flex-start; gap: var(--oc-space-1-5); min-width: 0; max-width: 100%; font-size: var(--oc-fs-hint); line-height: 1.35; color: var(--oc-text-secondary); }
+    .d-key__i > :first-child { flex: none; margin-top: var(--oc-border); }
+    .d-key__w { min-width: 0; }
+    @container pp (min-width: 720px) and (max-width: 1099px) {
+        .d-key { padding-inline: var(--oc-space-3); }
+        .d-key__g { gap: var(--oc-space-1) var(--oc-pp-space-10); }
+    }
+    @container pp (max-width: 719px) {
+        .d-key { max-height: none; overflow: visible; padding-block: var(--oc-pp-space-14) var(--oc-pp-space-56); }
+    }
+}
+
+/* the shared one */
+@media (max-width: 719px), (pointer: coarse) {
+    .d-filter input, .d-empty--fail button { min-height: var(--oc-tap); }
+}

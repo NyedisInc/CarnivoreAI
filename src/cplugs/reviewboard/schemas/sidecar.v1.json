@@ -1,0 +1,2597 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "carnivore.reviewboard.sidecar.v1",
+  "title": "review board sidecar",
+  "description": "One board's sidecar.json; generated from src/cplugs/reviewboard/schema.py, do not edit.",
+  "$defs": {
+    "Actor": {
+      "additionalProperties": false,
+      "description": "Who made a board or a revision. Fields: actor; session (the app session id, when known); label (its name).",
+      "properties": {
+        "actor": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "Actor",
+          "type": "string"
+        },
+        "session": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Session"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        }
+      },
+      "required": [
+        "actor"
+      ],
+      "title": "Actor",
+      "type": "object"
+    },
+    "Anchor": {
+      "additionalProperties": false,
+      "description": "",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "title": "Anchor",
+      "type": "object"
+    },
+    "AnchorNote": {
+      "additionalProperties": false,
+      "description": "",
+      "properties": {
+        "anchor": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "Anchor",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "anchor",
+        "text"
+      ],
+      "title": "AnchorNote",
+      "type": "object"
+    },
+    "Answer": {
+      "additionalProperties": false,
+      "description": "",
+      "properties": {
+        "prompt": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "Prompt",
+          "type": "string"
+        },
+        "options": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+                "type": "string"
+              },
+              "maxItems": 12,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Options"
+        },
+        "checked": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checked"
+        },
+        "text": {
+          "anyOf": [
+            {
+              "maxLength": 4000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Text"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 4000,
+          "title": "Note",
+          "type": "string"
+        }
+      },
+      "required": [
+        "prompt"
+      ],
+      "title": "Answer",
+      "type": "object"
+    },
+    "Board": {
+      "additionalProperties": false,
+      "description": "The board itself. ``slug`` equals its folder name; ``kind`` is display only.",
+      "properties": {
+        "slug": {
+          "pattern": "^[0-9]{8}-[a-z0-9-]{1,48}$",
+          "title": "Slug",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "mockup",
+            "flowchart",
+            "copy",
+            "other"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "created_at": {
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+          "title": "Created At",
+          "type": "string"
+        },
+        "created_by": {
+          "$ref": "#/$defs/Actor"
+        }
+      },
+      "required": [
+        "slug",
+        "title",
+        "kind",
+        "created_at",
+        "created_by"
+      ],
+      "title": "Board",
+      "type": "object"
+    },
+    "ChoiceItem": {
+      "additionalProperties": false,
+      "description": "Pick one of ``options``; the payload value is the option id.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "const": "choice",
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "help": {
+          "anyOf": [
+            {
+              "maxLength": 600,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Help"
+        },
+        "anchor": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Anchor"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Group"
+        },
+        "required": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Required"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/$defs/LayerOption"
+          },
+          "maxItems": 12,
+          "minItems": 1,
+          "title": "Options",
+          "type": "array"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "label",
+        "options"
+      ],
+      "title": "ChoiceItem",
+      "type": "object"
+    },
+    "DateItem": {
+      "additionalProperties": false,
+      "description": "A calendar day, ``YYYY-MM-DD``, optionally bounded by ``min`` and ``max``.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "const": "date",
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "help": {
+          "anyOf": [
+            {
+              "maxLength": 600,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Help"
+        },
+        "anchor": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Anchor"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Group"
+        },
+        "required": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Required"
+        },
+        "min": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min"
+        },
+        "max": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "label"
+      ],
+      "title": "DateItem",
+      "type": "object"
+    },
+    "Delivery": {
+      "additionalProperties": false,
+      "description": "How the round reached its task: ``pending``, ``posted`` (item and message) or ``undelivered`` (with a reason).",
+      "properties": {
+        "state": {
+          "enum": [
+            "pending",
+            "posted",
+            "undelivered"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "item_id": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Item Id"
+        },
+        "message_id": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Message Id"
+        },
+        "at": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "At"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "title": "Delivery",
+      "type": "object"
+    },
+    "ExtBlock": {
+      "additionalProperties": true,
+      "description": "One extension's block under ``ext``: a version ``v`` and anything else the extension keeps (kept as written).",
+      "properties": {
+        "v": {
+          "minimum": 1,
+          "title": "V",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "v"
+      ],
+      "title": "ExtBlock",
+      "type": "object"
+    },
+    "LayerOption": {
+      "additionalProperties": false,
+      "description": "One option of a ``choice``, ``multi`` or ``rank`` item.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "title": "LayerOption",
+      "type": "object"
+    },
+    "LongTextItem": {
+      "additionalProperties": false,
+      "description": "A long text (at most 4000 characters, ``MAX_TEXT``).",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "const": "longtext",
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "help": {
+          "anyOf": [
+            {
+              "maxLength": 600,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Help"
+        },
+        "anchor": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Anchor"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Group"
+        },
+        "required": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Required"
+        },
+        "placeholder": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Placeholder"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "maxLength": 4000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "label"
+      ],
+      "title": "LongTextItem",
+      "type": "object"
+    },
+    "MultiItem": {
+      "additionalProperties": false,
+      "description": "Pick several of ``options`` (``min`` and ``max`` bound the count); the payload value is the list of option ids.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "const": "multi",
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "help": {
+          "anyOf": [
+            {
+              "maxLength": 600,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Help"
+        },
+        "anchor": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Anchor"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Group"
+        },
+        "required": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Required"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/$defs/LayerOption"
+          },
+          "maxItems": 12,
+          "minItems": 1,
+          "title": "Options",
+          "type": "array"
+        },
+        "min": {
+          "anyOf": [
+            {
+              "maximum": 12,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min"
+        },
+        "max": {
+          "anyOf": [
+            {
+              "maximum": 12,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+                "type": "string"
+              },
+              "maxItems": 12,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "label",
+        "options"
+      ],
+      "title": "MultiItem",
+      "type": "object"
+    },
+    "NumberItem": {
+      "additionalProperties": false,
+      "description": "A number in ``min``..``max`` (a slider needs both bounds); ``unit`` is only shown.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "const": "number",
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "help": {
+          "anyOf": [
+            {
+              "maxLength": 600,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Help"
+        },
+        "anchor": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Anchor"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Group"
+        },
+        "required": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Required"
+        },
+        "min": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min"
+        },
+        "max": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max"
+        },
+        "step": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "gt": 0
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Step"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "maxLength": 20,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "slider": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Slider"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "label"
+      ],
+      "title": "NumberItem",
+      "type": "object"
+    },
+    "Option": {
+      "additionalProperties": false,
+      "description": "One option of a ``choice`` or ``multi`` prompt.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "title": "Option",
+      "type": "object"
+    },
+    "PayloadDiff": {
+      "additionalProperties": false,
+      "description": "What a send changed against the previous send, by dotted path: ``added``, ``removed``, ``changed`` (each at most\n``MAX_DIFF_PATHS``; ``more`` counts the paths left out). ``previous`` names that earlier round; absent on the first send.",
+      "properties": {
+        "previous": {
+          "anyOf": [
+            {
+              "pattern": "^n[1-9][0-9]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previous"
+        },
+        "added": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Added",
+          "type": "array"
+        },
+        "removed": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Removed",
+          "type": "array"
+        },
+        "changed": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Changed",
+          "type": "array"
+        },
+        "more": {
+          "default": 0,
+          "minimum": 0,
+          "title": "More",
+          "type": "integer"
+        }
+      },
+      "title": "PayloadDiff",
+      "type": "object"
+    },
+    "PayloadDraft": {
+      "additionalProperties": false,
+      "description": "A payload page's working state (#1760): ONE draft per revision, overwritten in place by the board's autosave, never numbered.",
+      "properties": {
+        "at": {
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+          "title": "At",
+          "type": "string"
+        },
+        "payload": {
+          "additionalProperties": true,
+          "title": "Payload",
+          "type": "object"
+        }
+      },
+      "required": [
+        "at",
+        "payload"
+      ],
+      "title": "PayloadDraft",
+      "type": "object"
+    },
+    "Prompt": {
+      "additionalProperties": false,
+      "description": "",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "choice",
+            "multi",
+            "check",
+            "question"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "options": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Option"
+              },
+              "maxItems": 12,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Options"
+        },
+        "anchor": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Anchor"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "label"
+      ],
+      "title": "Prompt",
+      "type": "object"
+    },
+    "QuestionsLayer": {
+      "additionalProperties": false,
+      "description": "The questions layer: at most 60 items; the payload is ``{layer: \"questions\", v: 1, values: {item id: value}, notes: {item id: text}}``.",
+      "properties": {
+        "kind": {
+          "const": "questions",
+          "title": "Kind",
+          "type": "string"
+        },
+        "v": {
+          "const": 1,
+          "title": "V",
+          "type": "integer"
+        },
+        "title": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "intro": {
+          "anyOf": [
+            {
+              "maxLength": 600,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Intro"
+        },
+        "placement": {
+          "default": "inline",
+          "enum": [
+            "inline",
+            "float"
+          ],
+          "title": "Placement",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "choice": "#/$defs/ChoiceItem",
+                "date": "#/$defs/DateItem",
+                "longtext": "#/$defs/LongTextItem",
+                "multi": "#/$defs/MultiItem",
+                "number": "#/$defs/NumberItem",
+                "rank": "#/$defs/RankItem",
+                "text": "#/$defs/TextItem",
+                "toggle": "#/$defs/ToggleItem",
+                "yesno": "#/$defs/YesNoItem"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/YesNoItem"
+              },
+              {
+                "$ref": "#/$defs/ToggleItem"
+              },
+              {
+                "$ref": "#/$defs/ChoiceItem"
+              },
+              {
+                "$ref": "#/$defs/MultiItem"
+              },
+              {
+                "$ref": "#/$defs/RankItem"
+              },
+              {
+                "$ref": "#/$defs/TextItem"
+              },
+              {
+                "$ref": "#/$defs/LongTextItem"
+              },
+              {
+                "$ref": "#/$defs/NumberItem"
+              },
+              {
+                "$ref": "#/$defs/DateItem"
+              }
+            ]
+          },
+          "maxItems": 60,
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "v",
+        "title",
+        "items"
+      ],
+      "title": "QuestionsLayer",
+      "type": "object"
+    },
+    "RankItem": {
+      "additionalProperties": false,
+      "description": "",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "const": "rank",
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "help": {
+          "anyOf": [
+            {
+              "maxLength": 600,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Help"
+        },
+        "anchor": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Anchor"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Group"
+        },
+        "required": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Required"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/$defs/LayerOption"
+          },
+          "maxItems": 30,
+          "minItems": 2,
+          "title": "Options",
+          "type": "array"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+                "type": "string"
+              },
+              "maxItems": 30,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "label",
+        "options"
+      ],
+      "title": "RankItem",
+      "type": "object"
+    },
+    "Revision": {
+      "additionalProperties": false,
+      "description": "One revision: immutable once written. ``answers_round`` names the round it answers, if any.\n\n``payload_mode`` (#1760) says the page owns its controls and posts a payload; ``saves`` are the numbered saves of that payload, appended\nby the board's one writer. ``draft`` is the one overwriting autosave of the page's latest state (not a save, not counted against\n``MAX_SAVES``). ``max_width`` (px, optional) holds a canvas page to that width, centered; absent means full width. ``layer`` (#1832) names the prebuilt layer (questions or rows) the board draws over the page; it implies ``payload_mode``.\nThe page file and the rest of the row never change; saves and the draft are not revisions.",
+      "properties": {
+        "id": {
+          "pattern": "^r[1-9][0-9]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "n": {
+          "minimum": 1,
+          "title": "N",
+          "type": "integer"
+        },
+        "created_at": {
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+          "title": "Created At",
+          "type": "string"
+        },
+        "by": {
+          "$ref": "#/$defs/Actor"
+        },
+        "summary": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        },
+        "answers_round": {
+          "anyOf": [
+            {
+              "pattern": "^n[1-9][0-9]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Answers Round"
+        },
+        "source_commit": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{7,40}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Commit"
+        },
+        "viewport": {
+          "maximum": 2560,
+          "minimum": 240,
+          "title": "Viewport",
+          "type": "integer"
+        },
+        "views": {
+          "items": {
+            "$ref": "#/$defs/View"
+          },
+          "maxItems": 7,
+          "minItems": 1,
+          "title": "Views",
+          "type": "array"
+        },
+        "prompts": {
+          "items": {
+            "$ref": "#/$defs/Prompt"
+          },
+          "maxItems": 40,
+          "title": "Prompts",
+          "type": "array"
+        },
+        "anchors": {
+          "items": {
+            "$ref": "#/$defs/Anchor"
+          },
+          "maxItems": 60,
+          "title": "Anchors",
+          "type": "array"
+        },
+        "payload_mode": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Payload Mode"
+        },
+        "layer": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "questions": "#/$defs/QuestionsLayer",
+                  "rows": "#/$defs/RowsLayer"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/QuestionsLayer"
+                },
+                {
+                  "$ref": "#/$defs/RowsLayer"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Layer"
+        },
+        "max_width": {
+          "anyOf": [
+            {
+              "maximum": 2400,
+              "minimum": 480,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Width"
+        },
+        "saves": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Save"
+              },
+              "maxItems": 200,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Saves"
+        },
+        "draft": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PayloadDraft"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "ext": {
+          "patternProperties": {
+            "^[a-z][a-z0-9]{1,23}$": {
+              "$ref": "#/$defs/ExtBlock"
+            }
+          },
+          "title": "Ext",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "n",
+        "created_at",
+        "by",
+        "summary",
+        "viewport",
+        "views"
+      ],
+      "title": "Revision",
+      "type": "object"
+    },
+    "Round": {
+      "additionalProperties": false,
+      "description": "A payload send (#1760) carries ``payload`` (the state sent), ``save`` (the number of the save the send made on its revision) and ``diff``\n(against the previous send); its ``answers`` and ``anchor_notes`` are empty.",
+      "properties": {
+        "id": {
+          "pattern": "^n[1-9][0-9]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "n": {
+          "minimum": 1,
+          "title": "N",
+          "type": "integer"
+        },
+        "revision": {
+          "pattern": "^r[1-9][0-9]*$",
+          "title": "Revision",
+          "type": "string"
+        },
+        "client_round_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "title": "Client Round Id",
+          "type": "string"
+        },
+        "sent_at": {
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+          "title": "Sent At",
+          "type": "string"
+        },
+        "by": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "By",
+          "type": "string"
+        },
+        "context": {
+          "$ref": "#/$defs/RoundContext"
+        },
+        "answers": {
+          "items": {
+            "$ref": "#/$defs/Answer"
+          },
+          "maxItems": 40,
+          "title": "Answers",
+          "type": "array"
+        },
+        "anchor_notes": {
+          "items": {
+            "$ref": "#/$defs/AnchorNote"
+          },
+          "maxItems": 60,
+          "title": "Anchor Notes",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 8000,
+          "title": "Note",
+          "type": "string"
+        },
+        "unanswered": {
+          "items": {
+            "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+            "type": "string"
+          },
+          "maxItems": 40,
+          "title": "Unanswered",
+          "type": "array"
+        },
+        "payload": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Payload"
+        },
+        "save": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Save"
+        },
+        "diff": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PayloadDiff"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "delivery": {
+          "$ref": "#/$defs/Delivery"
+        },
+        "ext": {
+          "patternProperties": {
+            "^[a-z][a-z0-9]{1,23}$": {
+              "$ref": "#/$defs/ExtBlock"
+            }
+          },
+          "title": "Ext",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "n",
+        "revision",
+        "client_round_id",
+        "sent_at",
+        "by",
+        "delivery"
+      ],
+      "title": "Round",
+      "type": "object"
+    },
+    "RoundContext": {
+      "additionalProperties": false,
+      "description": "",
+      "properties": {
+        "theme": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Theme"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "maximum": 10000,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Width"
+        },
+        "fit": {
+          "anyOf": [
+            {
+              "enum": [
+                "actual",
+                "fit"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fit"
+        },
+        "view": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9-]{0,23}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "View"
+        }
+      },
+      "title": "RoundContext",
+      "type": "object"
+    },
+    "Row": {
+      "additionalProperties": false,
+      "description": "One row to review. ``suggest`` is the agent's take (a choice id), shown and NEVER pre-picked; ``default`` is a carried pick the agent embeds.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "tag": {
+          "anyOf": [
+            {
+              "maxLength": 40,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tag"
+        },
+        "lines": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/RowLine"
+              },
+              "maxItems": 8,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lines"
+        },
+        "meta": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Meta"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Group"
+        },
+        "anchor": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Anchor"
+        },
+        "choices": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/RowChoice"
+              },
+              "maxItems": 12,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Choices"
+        },
+        "suggest": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Suggest"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+              "type": "string"
+            },
+            {
+              "items": {
+                "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default"
+        }
+      },
+      "required": [
+        "id",
+        "title"
+      ],
+      "title": "Row",
+      "type": "object"
+    },
+    "RowChoice": {
+      "additionalProperties": false,
+      "description": "One pick a row may take. ``tone`` (``ok``, ``push``, ``later``, ``none``) only picks the token its chip is painted with.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "tone": {
+          "anyOf": [
+            {
+              "enum": [
+                "ok",
+                "push",
+                "later",
+                "none"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tone"
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "title": "RowChoice",
+      "type": "object"
+    },
+    "RowLine": {
+      "additionalProperties": false,
+      "description": "One labeled line of a row (``you had``, ``now``, ``my take``), plain text.",
+      "properties": {
+        "label": {
+          "maxLength": 60,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "text"
+      ],
+      "title": "RowLine",
+      "type": "object"
+    },
+    "RowsLayer": {
+      "additionalProperties": false,
+      "description": "The review-rows layer: at most 200 rows, each picking from ``choices`` (the layer's, or its own); ``pick`` says one or several.\n\nThe payload is ``{layer: \"rows\", v: 1, values: {row id: pick id, or a list of ids when pick is several}, notes: {row id: text}}``.",
+      "properties": {
+        "kind": {
+          "const": "rows",
+          "title": "Kind",
+          "type": "string"
+        },
+        "v": {
+          "const": 1,
+          "title": "V",
+          "type": "integer"
+        },
+        "title": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "intro": {
+          "anyOf": [
+            {
+              "maxLength": 600,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Intro"
+        },
+        "placement": {
+          "default": "inline",
+          "enum": [
+            "inline",
+            "float"
+          ],
+          "title": "Placement",
+          "type": "string"
+        },
+        "pick": {
+          "default": "one",
+          "enum": [
+            "one",
+            "several"
+          ],
+          "title": "Pick",
+          "type": "string"
+        },
+        "choices": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/RowChoice"
+              },
+              "maxItems": 12,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Choices"
+        },
+        "rows": {
+          "items": {
+            "$ref": "#/$defs/Row"
+          },
+          "maxItems": 200,
+          "minItems": 1,
+          "title": "Rows",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "v",
+        "title",
+        "rows"
+      ],
+      "title": "RowsLayer",
+      "type": "object"
+    },
+    "Save": {
+      "additionalProperties": false,
+      "description": "Not a revision.",
+      "properties": {
+        "n": {
+          "minimum": 1,
+          "title": "N",
+          "type": "integer"
+        },
+        "at": {
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+          "title": "At",
+          "type": "string"
+        },
+        "payload": {
+          "additionalProperties": true,
+          "title": "Payload",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "maxLength": 4000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        }
+      },
+      "required": [
+        "n",
+        "at",
+        "payload"
+      ],
+      "title": "Save",
+      "type": "object"
+    },
+    "TaskLink": {
+      "additionalProperties": false,
+      "description": "THE ONE task rounds go to. ``computer`` owns the item (ids are per machine); ``github_issue`` is portable.",
+      "properties": {
+        "item_id": {
+          "minimum": 1,
+          "title": "Item Id",
+          "type": "integer"
+        },
+        "list": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "List"
+        },
+        "computer": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Computer"
+        },
+        "github_issue": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9_.-]{1,64}/[A-Za-z0-9_.-]{1,100}#[1-9][0-9]{0,8}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Github Issue"
+        },
+        "title_at_link": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title At Link"
+        },
+        "linked_at": {
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+          "title": "Linked At",
+          "type": "string"
+        },
+        "history": {
+          "items": {
+            "$ref": "#/$defs/TaskLinkChange"
+          },
+          "title": "History",
+          "type": "array"
+        }
+      },
+      "required": [
+        "item_id",
+        "linked_at"
+      ],
+      "title": "TaskLink",
+      "type": "object"
+    },
+    "TaskLinkChange": {
+      "additionalProperties": false,
+      "description": "One relink (or correction) of the board's task, kept forever. ``from`` is the item it was linked to before.",
+      "properties": {
+        "item_id": {
+          "minimum": 1,
+          "title": "Item Id",
+          "type": "integer"
+        },
+        "computer": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Computer"
+        },
+        "from": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "From"
+        },
+        "at": {
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+          "title": "At",
+          "type": "string"
+        },
+        "by": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "By",
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        }
+      },
+      "required": [
+        "item_id",
+        "at",
+        "by"
+      ],
+      "title": "TaskLinkChange",
+      "type": "object"
+    },
+    "TextItem": {
+      "additionalProperties": false,
+      "description": "A short line of text (at most 300 characters).",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "const": "text",
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "help": {
+          "anyOf": [
+            {
+              "maxLength": 600,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Help"
+        },
+        "anchor": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Anchor"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Group"
+        },
+        "required": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Required"
+        },
+        "placeholder": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Placeholder"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "label"
+      ],
+      "title": "TextItem",
+      "type": "object"
+    },
+    "ToggleItem": {
+      "additionalProperties": false,
+      "description": "An on or off switch; ``false`` unless a default says otherwise.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "const": "toggle",
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "help": {
+          "anyOf": [
+            {
+              "maxLength": 600,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Help"
+        },
+        "anchor": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Anchor"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Group"
+        },
+        "required": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Required"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "label"
+      ],
+      "title": "ToggleItem",
+      "type": "object"
+    },
+    "View": {
+      "additionalProperties": false,
+      "description": "One page of a revision: its file, and the sha256 and byte count of the file as written (immutable).",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9-]{0,23}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "file": {
+          "pattern": "^r[0-9]{3,4}(--[a-z][a-z0-9-]{0,23})?\\.html$",
+          "title": "File",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "bytes": {
+          "maximum": 2097152,
+          "minimum": 1,
+          "title": "Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "file",
+        "sha256",
+        "bytes"
+      ],
+      "title": "View",
+      "type": "object"
+    },
+    "YesNoItem": {
+      "additionalProperties": false,
+      "description": "A tri-state yes or no: absent from the payload is unanswered. Has no default.",
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "const": "yesno",
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "help": {
+          "anyOf": [
+            {
+              "maxLength": 600,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Help"
+        },
+        "anchor": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Anchor"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Group"
+        },
+        "required": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Required"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "label"
+      ],
+      "title": "YesNoItem",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "carnivore.reviewboard.sidecar",
+      "title": "Schema",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "board": {
+      "$ref": "#/$defs/Board"
+    },
+    "task": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TaskLink"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "revisions": {
+      "items": {
+        "$ref": "#/$defs/Revision"
+      },
+      "maxItems": 9999,
+      "title": "Revisions",
+      "type": "array"
+    },
+    "rounds": {
+      "items": {
+        "$ref": "#/$defs/Round"
+      },
+      "maxItems": 9999,
+      "title": "Rounds",
+      "type": "array"
+    },
+    "ext": {
+      "patternProperties": {
+        "^[a-z][a-z0-9]{1,23}$": {
+          "$ref": "#/$defs/ExtBlock"
+        }
+      },
+      "title": "Ext",
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "schema_version",
+    "board",
+    "task"
+  ],
+  "type": "object"
+}

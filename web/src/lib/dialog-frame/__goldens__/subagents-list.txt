@@ -1,0 +1,10 @@
+<div aria-label="subagents of api work" class="popup-focus sal-panel" role="dialog" style="left: 8px; top: 4px; max-height: 756px;" tabindex="-1">
+  <header class="sal-titlebar">
+    <h2 class="sal-title">
+      "subagents"
+    <span class="sal-name">
+      "api work"
+    <button class="sal-close" type="button">
+      "close"
+  <p class="sal-note" role="status">
+    "could not read subagents: offline"

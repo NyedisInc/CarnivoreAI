@@ -1,0 +1,73 @@
+{
+  "api_routes": [
+    "GET /api/v1/swarm/cards/board",
+    "GET /api/v1/swarm/cards/{id}/events",
+    "GET /api/v1/swarm/cards/events",
+    "GET /api/v1/swarm/roster",
+    "GET /api/v1/projects",
+    "GET /api/v1/companies"
+  ],
+  "area": "drawers",
+  "description": "The board tab on the Swarm page shows every Swarm card in five views behind one switcher: swimlanes, list, timeline, calendar and columns by project. Swimlanes is the default. Swimlanes draws one lane per project (or named list) with a full-width header: the project name, its company, its card total, how many are done, the faces of the agents working its cards and a stacked bar of todo, in progress, review and done. An open lane shows its todo, in progress, review and done cards side by side in faintly tinted columns, five per cell with a +N more key; a card shows its number, age, title, a one-line summary of what it is for, who holds it, a working, queued, paused or stalled chip and its reported progress as a calm green bar. Click a card to open the same detail pane the list view uses. Drag a card to reorder its queue (the order agents are dealt cards) or into another column: in progress to todo pauses it, into done completes it. Each card carries quick action keys for its stage: top and bottom, pause, mark done, auto-promote for a todo card, reclassify with a note for the next agent, archive (the archived key brings it back), collapse to one line and delete with a confirm. Agents hear about a move about 15 seconds after the last change, so a quick undo never reaches them. A lane with nothing in progress or in review is folded to one line with its four counts, and your own fold or unfold is remembered on this device. Filter by scope (sysop, a company or a project), all cards or only yours, and search by #number or title. The board updates by itself when any card changes, and the device remembers the view you picked. The list view puts every card not yet done in three bands, the cards waiting on your review first under needs you, then in progress, then todo, each child right under its parent. Click a row to open its detail pane: the created, started, review and done steps with their times, its progress, result and how to validate it, its history newest first, and done or send back with a note, which mark the card through the same routes as everywhere else. The calendar view shows the week (or today, or the last three days) as a grid: one row per project grouped by company, and in each day how many of its cards were created, started, sent to review, approved or sent back, an hourly activity bar under it, the faces of the agents whose card started that day, a now line in today, hatched days still to come and a key at the bottom. The timeline view draws the last twelve hours (or three days, or a week) on a time scale: per project, each parent card as a thick bar with its children nested under it and a dashed link where each child reached review, then the cards with no parent. A bar shows waiting, working and review spans, grey where the start was never recorded; the working agent's face sits on every bar being worked and on its parent's line, a now line crosses every lane and the shared key sits at the bottom. The columns by project view puts each project in its own column with its cards stacked under its name, the ones waiting on your review first, then in progress, todo and done, five of each before a +N more key; each card carries its state glyph, the same quick action keys and opens the same detail pane, and a todo or queued card drags to a new place in its queue.",
+  "docs": [
+    "docs/swarm-board.md",
+    "docs/swarm-cards.md"
+  ],
+  "examples": [
+    "see at a glance which projects have work in progress and which are idle",
+    "find a card by its number from any project",
+    "check how far along a working agent says it is",
+    "go through every card waiting on your review and mark it done or send it back with a note",
+    "see what each project got done today and this week in the calendar",
+    "see which parent cards moved in the last twelve hours and which agent is on each child",
+    "talk to a project's agent from its lane without leaving the board",
+    "see each project's work side by side, one column per project"
+  ],
+  "how_to": [
+    "open the swarm page and pick the board tab",
+    "pick a view in the view keys; swimlanes is the default and the device remembers your pick",
+    "in list, click a row to open its detail; on a card in review, press done, or write a note and press send back",
+    "in calendar, pick day, 3 days or week in the scale keys; the device remembers it",
+    "click a lane's header to fold or open it",
+    "click +N more under a cell to see every card in it, fewer to close it",
+    "pick a scope and all or mine to narrow the board, or type #number or words from a title in the search",
+    "in timeline, pick day, 3 days or week in the scale keys; hover a bar span to see its times",
+    "in swimlanes, press agent chat over the columns to put each lane's agent chat before todo; type to it there, or press open full chat for its drawer",
+    "in columns by project, drag a todo or queued card up or down its column to change the order it is dealt in; use its keys to pause, finish or reclassify it"
+  ],
+  "id": "swarm-board",
+  "issues": [
+    1418,
+    1419,
+    1420,
+    1421,
+    1422,
+    1449
+  ],
+  "keywords": [
+    "board",
+    "swimlanes",
+    "cards",
+    "task board",
+    "kanban",
+    "swarm",
+    "list",
+    "calendar",
+    "timeline"
+  ],
+  "media": [],
+  "name": "Swarm task board",
+  "since": "2026-10-07",
+  "status": "beta",
+  "summary": "a board tab on the swarm page that shows every card in four views behind one switcher, with swimlanes per project as the default",
+  "surfaces": [
+    "main area page #swarm, tab board",
+    "web/src/lib/swarm-board/"
+  ],
+  "updated": "2026-10-08",
+  "where": [
+    "open the swarm page (the swarm page link on the huddle panel's bar, or #swarm)",
+    "pick the board tab"
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

@@ -1,0 +1,41 @@
+{
+  "api_routes": [
+    "GET /api/v1/skills/command-center",
+    "POST /api/v1/skills/copy",
+    "POST /api/v1/skills/remove"
+  ],
+  "area": "skills-catalog",
+  "docs": [
+    "docs/skills-manager.md"
+  ],
+  "examples": [
+    "Copy the skill you wrote in one project into three others, or into the personal skills folder every Claude login shares, after a dry run that lists its scripts.",
+    "Drop a stale copy of a skill from one project without opening a terminal; it goes to the trash, not away."
+  ],
+  "how_to": [
+    "Or use the API: POST /api/v1/skills/copy is a dry run by default; a real copy needs that dry run's generation and source_digest.",
+    "Read the matrix with GET /api/v1/skills/command-center or the skills_command_center MCP tool: one row per skill, one column per place it lives, each cell marked here, differs, missing, no folder yet or shadowed."
+  ],
+  "id": "skills-command-center",
+  "issues": [
+    1467
+  ],
+  "keywords": [
+    "skills",
+    "copy",
+    "projects",
+    "command center"
+  ],
+  "media_exempt": "the tab's screenshots are recaptured before the next version bump, not per change",
+  "name": "Skill command center (API and MCP)",
+  "since": "2026-10-09",
+  "status": "beta",
+  "summary": "See every local skill against every project and the personal skills folders, and copy one skill folder to other projects with a dry run, a digest check, a trash-backed replace and a per-cell remove to the trash.",
+  "surfaces": [
+    "API and MCP: skills_command_center, skills_copy, skills_remove"
+  ],
+  "updated": "2026-10-18",
+  "where": [
+    "API: /api/v1/skills/command-center and /api/v1/skills/copy and /api/v1/skills/remove; MCP: skills_command_center (the skills page tab was removed)."
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "per_day": 5,
+  "used_today": 2,
+  "new_account": false,
+  "new_account_per_day": 1,
+  "new_account_days": 7,
+  "open_max": 3,
+  "open_now": 3,
+  "cooldown_until": "2026-11-11T17:46:40Z",
+  "strikes": 3,
+  "strikes_max": 3,
+  "appeals_max": 2,
+  "media_per_day": 5,
+  "media_used_today": 1
+}

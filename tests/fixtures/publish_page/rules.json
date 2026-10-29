@@ -1,0 +1,44 @@
+{
+  "kinds": [
+    {
+      "kind": "skills",
+      "open": true
+    },
+    {
+      "kind": "themes",
+      "open": true
+    },
+    {
+      "kind": "mods",
+      "open": true
+    },
+    {
+      "kind": "plugins",
+      "open": true
+    }
+  ],
+  "caps": {
+    "hero_max_bytes": 524288,
+    "hero_min_width": 1200,
+    "hero_min_height": 500,
+    "hero_max_side": 8192,
+    "hero_max_pixels": 16000000,
+    "hero_ratio_min": 1.5,
+    "hero_ratio_max": 3.0,
+    "skill_members": 2000,
+    "skill_file_bytes": 262144,
+    "skill_total_bytes": 1048576,
+    "theme_members": 32,
+    "theme_file_bytes": 524288,
+    "theme_total_bytes": 1048576,
+    "plugin_members": 500,
+    "plugin_file_bytes": 262144,
+    "plugin_total_bytes": 1048576,
+    "mod_members": 200,
+    "mod_file_bytes": 262144,
+    "mod_total_bytes": 1048576,
+    "cplug_members": 500,
+    "cplug_file_bytes": 262144,
+    "cplug_total_bytes": 2097152
+  }
+}

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>copy output harness</title>
+<link rel="stylesheet" href="/client/css/styles.css">
+<link rel="stylesheet" href="/client/css/terminal-tools.css">
+<link rel="stylesheet" href="/client/css/copy-output.css">
+<style>
+  body { font-family: monospace; padding: 12px; }
+  #log { white-space: pre-wrap; font-size: 12px; }
+  #openBtn, #dropBtn, #narrowBtn {
+      display: block;
+      width: 280px;
+      min-height: 44px;
+      margin: 6px 0;
+      border-radius: 6px;
+      font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<h1>copy output harness</h1>
+<button class="h" id="openBtn" type="button">open sheet</button>
+<button class="h" id="dropBtn" type="button">drop clipboard api</button>
+<button class="h" id="narrowBtn" type="button">narrow buffer (wrapped url)</button>
+<div id="log"></div>
+
+<script src="/client/js/clipboard-compat.js"></script>
+<script src="/client/js/output-scan.js"></script>
+<script src="/client/js/copy-output.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    var log = document.getElementById('log');
+    function say(msg) { log.textContent += msg + '\n'; }
+
+    window.__readClipboard = (navigator.clipboard && navigator.clipboard.readText)
+        ? navigator.clipboard.readText.bind(navigator.clipboard)
+        : null;
+
+    var WIDE = [
+        "Browser didn't open? Use the url below to sign in:",
+        '',
+        'https://claude.ai/oauth/authorize?code=true&client_id=9d1c3f7a&scope=user%3Ainference&state=abcdef0123456789',
+        '',
+        'Then enter this code: WDJB-MJHT',
+        ''
+    ];
+
+    var NARROW = [];
+    (function buildNarrow() {
+        WIDE.forEach(function (line) {
+            if (line.length <= 30) {
+                NARROW.push({ text: line, wrapped: false });
+                return;
+            }
+            for (var i = 0; i < line.length; i += 30) {
+                NARROW.push({ text: line.slice(i, i + 30), wrapped: i > 0 });
+            }
+        });
+    })();
+
+    function makeBuffer(rows) {
+        return {
+            buffer: {
+                active: {
+                    length: rows.length,
+                    getLine: function (i) {
+                        var r = rows[i];
+                        if (!r) return null;
+                        return {
+                            isWrapped: !!r.wrapped,
+                            translateToString: function () { return r.text; }
+                        };
+                    }
+                }
+            }
+        };
+    }
+
+    var wideTerm = makeBuffer(WIDE.map(function (t) { return { text: t, wrapped: false }; }));
+    var narrowTerm = makeBuffer(NARROW);
+
+    var wrapper = {
+        term: wideTerm,
+        _showStatusPill: function (msg, kind) {
+            window.__lastPill = { message: msg, kind: kind };
+            say('pill[' + kind + '] ' + msg);
+        }
+    };
+    window.__wrapper = wrapper;
+
+    document.getElementById('openBtn').addEventListener('click', function () {
+        window.CopyOutput.open(wrapper);
+    });
+    document.getElementById('dropBtn').addEventListener('click', function () {
+        try { delete navigator.clipboard; } catch (e) { /* non-configurable */ }
+        if (navigator.clipboard) {
+            Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
+        }
+        say('clipboard api present: ' + window.CopyCompat.hasAsyncClipboard());
+    });
+    document.getElementById('narrowBtn').addEventListener('click', function () {
+        wrapper.term = wrapper.term === wideTerm ? narrowTerm : wideTerm;
+        say('buffer: ' + (wrapper.term === narrowTerm ? 'narrow/wrapped' : 'wide'));
+    });
+}());
+</script>
+</body>
+</html>

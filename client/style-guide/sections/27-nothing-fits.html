@@ -1,0 +1,25 @@
+<h2 class="sg-h2">when nothing in the guide fits</h2>
+<p class="sg-lead">The rule: invent the SMALLEST extension of the existing language, then ADD it to this guide in the same
+change. A new style that is not written here does not exist for the next person, who will invent a different one.</p>
+
+<ol>
+    <li><strong>Prove nothing fits.</strong> Read the family's section and the canonical reference surfaces
+        (<a href="#principles-references">references</a>). Most "new" needs are an existing component with different content.</li>
+    <li><strong>Extend, do not invent.</strong> Change one property of the nearest existing pattern and keep the rest: same
+        ground, hairline, corner, type, focus and accent rule. A variant (<code>--compact</code>, a new data state) beats a new
+        component; a new component beats a new look.</li>
+    <li><strong>Build it to this guide's standard</strong>: tokens only, every state, every width, words first, every theme
+        (<a href="#new-component">making a component</a>).</li>
+    <li><strong>Add it here, in the same change</strong>:
+        <ul>
+            <li>an entry in the fragment of the section it belongs to under <code>client/style-guide/sections/</code>: what it
+                is, a live specimen or copied markup, when to use it and when not, how (classes, props, catalog keys), what it
+                reads from the theme, accessibility, and the mistakes you already made with it;</li>
+            <li>its file and classes in <code>client/style-guide/registry.json</code>;</li>
+            <li>if it is a pattern other surfaces should copy, a line in <a href="#dos-donts">do and do not</a>;</li>
+            <li>a new section only when it truly is a new family: add it to <code>registry.json</code>'s <code>sections</code>
+                list and create its fragment.</li>
+        </ul></li>
+</ol>
+<p>The drift test (<code>tests/test_style_guide_drift.py</code>) enforces the registry half of this automatically. The
+fragment half is on you, and the next agent will build from whatever you wrote.</p>

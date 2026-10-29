@@ -1,0 +1,21 @@
+{
+  "files": {
+    "web/src/cplugs/share/ShareModal.svelte": {
+      "section": "dialogs",
+      "classes": [
+        "share-active",
+        "share-all",
+        "share-all-text",
+        "share-copy",
+        "share-explain",
+        "share-notice",
+        "share-revoke",
+        "share-row",
+        "share-row-link",
+        "share-row-text",
+        "share-select",
+        "share-url"
+      ]
+    }
+  }
+}

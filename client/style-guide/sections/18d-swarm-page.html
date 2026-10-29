@@ -1,0 +1,100 @@
+<h2 class="sg-h2">swarm page</h2>
+<p>The Swarm page is a main-area menu page (id <code>huddle-swarm</code>, fragment <code>#swarm</code>, plugin page key <code>huddle.swarm</code>, opened from
+the "swarm page" link on the drawer panel's bar, <code>keepDrawerTab</code> so the drawer stays on the Task Manager tab). It wears the shared page frame
+(<code>web/src/opscenter/ui/Page.svelte</code> and <code>Tabs.svelte</code>) with four tabs: ledger (the default), org chart, nodes and board; its settings are not a tab: they live in the swarm plugin's settings pane on the plugins page (see settings below).
+The three agent views draw the SAME floor as the drawer panel (<code>swarm/floor.ts</code>, never a second population rule), arranged as a tree by
+<code>swarm/swarm-tree.ts</code>; the quiet "show inactive (N)" link and its per-device key are the panel's.</p>
+
+<h3 class="sg-h3" id="swarm-page-views">the ledger, the org chart and the settings</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>SwarmLedger.svelte</code><span>the ledger, then the org chart (wheel or the plus and minus keys to zoom, drag to pan), then the settings form (shown here, but it lives on the plugins page, not on the Swarm page)</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-swarm-page"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>ledger</dt>
+    <dd><code>&lt;SwarmLedger tree agents now swarm asking onOpen /&gt;</code>: the hierarchy as collapsible rows (<code>.pkg-row</code>, a hairline under each) under a header row of tracked labels (<code>.pkg-head</code>). Every row and the header share ONE column grid (<code>.pkg-cols</code>), so
+        kind, status and the rest start at one x at every depth: depth indents only the first cell (<code>.pkg-who</code>, with the caret). A collapse caret (<code>.pkg-caret</code>), a 28px character, the name, the rank in tracked capitals (<code>.pkg-rank</code>), the state in words, the job, the effort and the
+        open alert rung (<code>.pkg-alert</code>). A vacant seat is a row with a dashed square (<code>.pkg-seat</code>) and no character. A click opens the row's target; a seat's click turns its agent on at once (the server runs git init in a
+        folder that is not a repo, #1434), and only a refusal draws a line under the view (<code>SwarmSeatRefusal</code>, <code>.pkg-refusal</code>, the route's reason in the warning token).</dd>
+    <dt>org chart</dt>
+    <dd><code>&lt;SwarmOrg tree agents now swarm asking onOpen /&gt;</code>: a top-down tree in a 1px frame (<code>.pko</code>), links drawn as SVG paths (<code>.pko-link</code>), nodes are characters with their names
+        (<code>.pko-node</code>). It grows down, not sideways: SysOp, companies and projects sit side by side, while leaf agents (no children) stack under their parent as rows, face left and
+        name right (<code>.pko-node--leaf</code>), each hung off a trunk by a left-side elbow; more than six wrap into two columns, more than twelve into three. A node with both leaves and children (SysOp with its own agents) hangs its stack right under it, and its children's row sits below the stack. A cut name shows whole in the tooltip.
+        The layout and the zoom are pure (<code>swarm/org-layout.ts</code>): one link per non-root node, zoom held between 0.4 and 2.5, and fit never shrinks the chart below its own size. A row of siblings (companies, projects) wider than the frame wraps onto a new row below, still under
+        the same parent and reached by one connector bus, recursively; only a single column wider than the frame pans. Every view on the page draws the selected node's lineage (<code>lineageFloor</code>: the node, its ancestors up to SysOp and its descendants). On the nodes and org chart tabs a plain click (or Enter) opens the node's terminal, a vacant seat still asks; a shift+click (or Shift+Enter) toggles the filter onto that node, and the filtered node wears the focus border (<code>aria-current</code>, the same brightened hairline as <code>focus.css</code>). The controls
+        (<code>.pko-ctl</code>, <code>.pko-key</code>) are the drawer bar's key frame.</dd>
+    <dt>nodes</dt>
+    <dd><code>&lt;SwarmPanel flow ... density="expanded" /&gt;</code>: the drawer panel at page width. SysOp gets its own SYSOP label and every section is fixed-width cells from the left edge, so nodes share one x and one gap at any width.</dd>
+    <dt>settings</dt>
+    <dd><code>&lt;SwarmSettingsForm /&gt;</code>, drawn on the ONE Swarm settings home, the swarm plugin's side pane on the plugins page (<code>HuddleSwarmSettings.svelte</code>, under the manifest fields; deep link <code>#plugins/huddle/settings</code>); the Swarm page has no settings tab and no second copy.
+        Rows (<code>.pkg-set-row</code>, text left, a <code>.oc-field</code> select or number right): the default view, the default density, the character set
+        (follow the theme or a named swarm), the upper ranks' permission posture and the close-out window in minutes (1 to 1440). Each change is one <code>PUT /swarm/settings</code>, one value for every device; a device's own choice (its remembered tab, its density keys) wins.
+        Under them the look section (<code>.pkg-look</code>, a <code>.pkg-look-title</code> heading in small tracked capitals
+        with a hairline under it): the agent colors (by project or random), a body shape per agent type (SysOp, company,
+        project, agent: square, circle, hexagon, triangle, diamond, pentagon, octagon, star, shield or cloud) and an animation
+        per status (any status's movement, or still), each row with a live <code>Character</code> in a
+        <code>.pkg-look-figure</code> on its left; <code>.pkg-look-note</code> is the hint above the animation rows. Reduced
+        motion and a hidden tab still freeze every character (docs/swarm.md 13.9).</dd>
+    <dt>never</dt>
+    <dd>No second population rule and no second swarm reader: the page and the drawer panel both call <code>activePack</code> in <code>swarm/swarm-settings.svelte.ts</code>. A device's choice is never overwritten by a default.</dd>
+</dl>
+
+<h3 class="sg-h3" id="swarm-page-board">the board</h3>
+<p>The board tab is the Swarm task board (<code>web/src/lib/swarm-board/</code>, <code>docs/swarm-board.md</code>): every card the swarm holds, in five views behind one
+switcher. Swimlanes is the default; list, timeline, calendar and columns by project are built too. Checked under carnivore, dracula and carnivore-light.
+The page body is the board's one scroller (<code>.pkg-body--scroll</code>, on the board tab only): the page frame is a fixed, overflow-hidden column, so the
+body takes the height under the tabs and scrolls, and every view's sticky rows ride on it (#1432).</p>
+<dl class="sg-facts">
+    <dt>shell</dt>
+    <dd><code>&lt;SwarmBoard /&gt;</code> (<code>.sbb</code>): the mockups' slim filter bar (<code>.sbb-bar</code>, a hairline under it): groups (<code>.sbb-group</code>) of small tracked keys (<code>.sbb-key</code>, the pressed one a cyan
+        border on a faint cyan tint, <code>aria-pressed</code>) behind a tracked label (<code>.sbb-label</code>): scope (sysop, company, project, the last two with an <code>.oc-field</code> select, <code>.sbb-select</code>), show (all, mine) and view
+        (<code>.sbb-key--view</code>). The search (<code>.sbb-search</code>, the shared <code>SearchField</code>) sits right and takes a full row below 720px. Loading, off and error lines are <code>.sbb-note</code> (<code>.sbb-note--bad</code> in coral).</dd>
+    <dt>view switcher</dt>
+    <dd>The picked view is remembered per device (<code>readTab</code>/<code>writeTab</code>, key <code>swarm-board-view</code>). Every view is one component in <code>views.ts</code>'s <code>VIEW_COMPONENTS</code>, mounted with one prop,
+        <code>data</code> (<code>BoardViewProps</code>); a view owns its own folder. A placeholder is <code>&lt;ViewPlaceholder view data /&gt;</code> (<code>.sbp</code>, a tracked label <code>.sbp-label</code> and one line <code>.sbp-text</code>).</dd>
+    <dt>swimlanes</dt>
+    <dt>card</dt>
+    <dt>columns by project</dt>
+    <dd><code>&lt;ColumnsView data /&gt;</code> (<code>.sbj</code>, mockup D, #1450): the status line, then a strip (<code>.sbj-main</code>, the container; <code>.sbj-strip</code>, 20px apart, scrolling sideways inside itself past the view's width, stacked on a phone) of one
+        <code>&lt;ProjectColumn&gt;</code> per project or list with cards, active ones first (<code>.sbjc</code>, an equal share, at least 240px): the name in tracked capitals (<code>.sbjc-head</code>, <code>.sbjc-name</code>) and the count (<code>.sbjc-n</code>), then the cards
+        (<code>.sbjc-stack</code>, lit <code>.sbjc-stack--over</code> under a droppable drag) review first, then in progress, todo and done, each state cut at five with the dashed "+N more" key (<code>.sbjc-more</code>, the swimlanes <code>.sbl-more</code> restated).
+        The card is <code>&lt;LaneCard glyph /&gt;</code>, so its keys, panels and click-to-detail are the swimlanes card's; the pane is <code>&lt;CardPane&gt;</code> (<code>.sbj--open</code>). A waiting card drags to a new place in its own state's run; the state changes through its keys.
+        <code>.sbj-empty</code> is the no-card line.</dd>
+    <dt>card actions</dt>
+    <dd><code>&lt;CardActions card data bind:mode only? /&gt;</code> (<code>.sba</code>): the keys a card's stage offers (<code>stageActions</code> in <code>card-actions.svelte.ts</code>), each a 24px square icon key (<code>.oc-ibtn--bare</code> with <code>.sba-key</code>, quiet until hovered, its tooltip and spoken
+        label from the catalog): top and bottom (<code>to-top</code>, <code>to-bottom</code>) on a waiting card, pause on in progress, mark done (<code>check</code>) on review, the auto-promote toggle (<code>arrow-up-circle</code>, <code>aria-pressed</code>, green while on,
+        <code>.sba-key--on</code>) on todo, then reclassify (<code>cycle</code>), archive, collapse (<code>shrink</code> / <code>expand</code>) and delete (<code>trash</code>, coral on hover, <code>.sba-key--danger</code>) on every card. Each calls its owner route at once,
+        except reclassify and delete, which open <code>&lt;CardActionPanel&gt;</code> in the card (<code>.sbp</code>, a hairline above it): reclassify is a column dropdown and a note (<code>.sbp-label</code>, <code>.sbp-field</code>) with cancel and an outlined
+        move (<code>.oc-btn--confirm</code>); delete asks first (<code>.sbp-ask</code>) with cancel and delete in <code>.oc-btn--danger</code> (<code>.sbp-keys</code>). Reuse these two in any view that draws a card.</dd>
+    <dt>list</dt>
+    <dd><code>&lt;ListView data /&gt;</code> (<code>.sbli</code>, the container; <code>.sbli-grid</code>, the list <code>.sbli-list</code> at 45% and the pane at 55%, stacked below 720px): bands (<code>.sbli-band</code>, a glyph, a tracked name <code>.sbli-band-name</code> and a count
+        <code>.sbli-band-n</code>) for review, in progress and todo, the review band named "needs you" in cyan (<code>.sbli-band--you</code>, a faint cyan ground and the cyan edge). Each card is one row button (<code>&lt;ListRow&gt;</code>, <code>.sbr</code>, a hairline
+        under it, 30px deeper per tree level with a branch mark <code>.sbr-branch</code>; the open one <code>.sbr--on</code>, a raised ground and the cyan edge): glyph, number (<code>.sbr-id</code>), one-line title (<code>.sbr-title</code>, a parent
+        <code>.sbr-title--parent</code> in 600) and at the right (<code>.sbr-end</code>) a parent's roll-up (<code>.sbr-rollup</code>) or the project pill (<code>.sbr-pill</code>) and the holder's face. Empty lines are <code>.sbli-empty</code> (<code>.sbli-pick</code> in the pane).</dd>
+    <dt>list detail</dt>
+    <dt>calendar</dt>
+    <dd><code>&lt;CalendarView data /&gt;</code> (<code>.sbcal</code>, a container, mockup F4): a title row (<code>.sbcal-head</code>: <code>.sbcal-title</code>, the tracked subtitle <code>.sbcal-sub</code>, and the scale group
+        <code>.sbcal-scale</code> with its <code>.sbcal-label</code> and keys <code>.sbcal-key</code>, the shell's <code>.sbb-key</code> restated: day, 3 days, week, remembered per device), the day headers (<code>.sbcal-days</code>, <code>.sbcal-day</code>, today
+        marked in cyan by <code>.sbcal-today</code>), then a company heading (<code>.sbcal-group</code>, <code>.sbcal-group-kind</code>) over its lanes. A lane is <code>&lt;CalendarRow&gt;</code> (<code>.sbcal-row</code>): the name, card total and four
+        column counts (<code>.sbcal-lane</code>, <code>.sbcal-lane-name</code>, <code>.sbcal-lane-total</code>, <code>.sbcal-lane-counts</code>, <code>.sbcal-lane-n</code>), then a day cell each (<code>.sbcal-cell</code>, hairlines by box-shadow):
+        what the lane's cards did that day (<code>.sbcal-count</code>, <code>.sbcal-n</code>, <code>.sbcal-kind</code>: created, started, to review, approved, sent back), "quiet" or "ahead" (<code>.sbcal-quiet</code>), a day to come hatched
+        (<code>.sbcal-cell--ahead</code>), the faces of agents whose worked card started that day (<code>.sbcal-faces</code>, <code>.sbcal-more</code>), the now line in today's cell (<code>.sbcal-now</code>) and 24 hour bars (<code>.sbcal-hours</code>,
+        <code>.sbcal-bar</code>, <code>.sbcal-bar--on</code> in cyan). On a phone each cell names its day (<code>.sbcal-cell-day</code>) and the days stack. Notes are <code>.sbcal-note</code> (<code>.sbcal-note--bad</code> coral).
+        Sent back wears <code>&lt;SentBackGlyph&gt;</code> (<code>.sbcal-back</code>, a coral ring with a back chevron).</dd>
+    <dt>timeline</dt>
+    <dd><code>&lt;TimelineView data /&gt;</code> (<code>.sbt</code>, a container, mockup F3): a title row (<code>.sbt-top</code>: <code>.sbt-name</code>, the tracked <code>.sbt-sub</code>, and the scale group <code>.sbt-scale</code>: day, 3 days, week, remembered per device),
+        the time axis (<code>.sbt-axis</code>, <code>.sbt-ticks</code>, <code>.sbt-tick</code>) over the body (<code>.sbt-body</code>) with its hairline grid (<code>.sbt-grid</code>) and the cyan now rule (<code>.sbt-now</code>, <code>.sbt-now-label</code>); notes are <code>.sbt-msg</code> (<code>.sbt-msg--bad</code> coral).
+        A lane is <code>&lt;TimelineGroup&gt;</code>: a header (<code>.sbt-head</code>, <code>.sbt-head--after</code> for the loose cards, <code>.sbt-title</code>, <code>.sbt-head-end</code>, <code>.sbt-working</code>, <code>.sbt-note</code>, <code>.sbt-note--wide</code>), then label and bar columns
+        (<code>.sbt-lane</code>, <code>.sbt-label</code>, <code>.sbt-id</code>, <code>.sbt-chip</code>, <code>.sbt-elbow</code> for a nested child; <code>.sbt-bars</code>, <code>.sbt-block</code>, <code>.sbt-track</code>, <code>.sbt-track--thick</code> for a parent). A bar is segments (<code>.sbt-seg</code>: <code>.sbt-seg--wait</code> dashed,
+        <code>.sbt-seg--work</code>, <code>.sbt-seg--unrecorded</code> grey, <code>.sbt-seg--review</code>), a child's dashed link to review (<code>.sbt-link</code>, <code>.sbt-link-dot</code>) and the agent nodes (<code>.sbt-nodes</code>): <code>&lt;TimelineNode&gt;</code> (<code>.sbt-node</code>, <code>.sbt-node-stem</code>, which a lane header's working faces restyle), the agent's face on a stem at now,
+        on every worked bar and on the parent line holding one. The bottom key is the shared <code>&lt;BoardKey&gt;</code> (<code>.sbt-key</code> places it).</dd>
+    <dt>board key</dt>
+    <dd><code>&lt;BoardKey totals sentBack /&gt;</code> (<code>.sbkey</code>, a hairline above): a tracked label (<code>.sbkey-label</code>) and entries (<code>.sbkey-item</code>) pairing each column glyph with its total and bar swatch
+        (<code>.sbkey-swatch</code>, <code>.sbkey-swatch--todo</code> dashed, <code>.sbkey-swatch--in_progress</code>, <code>.sbkey-swatch--review</code>, <code>.sbkey-swatch--unrecorded</code>), the agent node, sent back and the hatch note.
+        The calendar and the timeline share this one key.</dd>
+    <dt>glyphs and faces</dt>
+    <dd><code>&lt;StatusGlyph column size label /&gt;</code> (<code>.sbg</code>, <code>.sbg--in_progress</code>, <code>.sbg--review</code>, <code>.sbg--done</code>; parts <code>.sbg-ring</code>, <code>.sbg-half</code>, <code>.sbg-fill</code>, <code>.sbg-check</code>): the ring, half, ring in ring and checked disc of the four columns.
+        <code>&lt;AgentFace agent working colors /&gt;</code> (<code>.sbf</code>, <code>.sbf--idle</code> dimmed): the swarm's own character, held still, in the agent's company color.</dd>
+    <dt>never</dt>
+    <dd>No second card reader and no timer at idle: every view reads the one <code>createBoardData</code> (<code>board-data.svelte.ts</code>), which re-reads on the pushed <code>cplug.huddle.cards</code> family and polls only while that family is not pushed. No hex in a view: color is <code>--oc-*</code> only.</dd>
+</dl>

@@ -1,0 +1,46 @@
+{
+  "api_routes": [
+    "GET /api/v1/pack/machines"
+  ],
+  "area": "home",
+  "docs": [
+    "docs/federation.md"
+  ],
+  "examples": [
+    "See at a glance which computer is busiest, how close each one is to the compute it keeps free for you, and which agents are running where.",
+    "Check the pack total: how many agents are running across all computers and how many cores and how much memory they use together."
+  ],
+  "how_to": [
+    "Open Home, press edit layout, and add the pack machines card from the live category.",
+    "Each computer shows its load bar with the reserve line drawn on it; the fill turns red when the computer is past its line and new work goes elsewhere.",
+    "Make the card larger to see the table of every agent with its computer, cpu and memory."
+  ],
+  "id": "pack-machine-view",
+  "issues": [
+    1522
+  ],
+  "keywords": [
+    "pack",
+    "analytics",
+    "machines",
+    "load",
+    "agents",
+    "reserve",
+    "home"
+  ],
+  "media": [],
+  "name": "Pack machine view",
+  "since": "2026-10-10",
+  "status": "beta",
+  "summary": "a Home analytics card showing every computer in the pack: load against its reserve line, cpu, memory, disk, battery, the agents running on it with their cpu and memory, a total per computer and a total overall, with the master marked.",
+  "surfaces": [
+    "web/src/opscenter/viz/PackRenderer.svelte",
+    "web/src/opscenter/viz/pack.ts",
+    "src/core/pack/load/agents.py"
+  ],
+  "updated": "2026-10-10",
+  "where": [
+    "Home, analytics, the pack machines card in the edit layout gallery."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

@@ -1,0 +1,31 @@
+{
+  "api_routes": [
+    "src/api/project_clone_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [],
+  "examples": [
+    "Start work on a repository you have not checked out yet, straight from the app."
+  ],
+  "how_to": [
+    "Choose New Project, then clone from github.",
+    "Paste the repository URL and pick where it goes. It clones, and the folder becomes a project you can start sessions in."
+  ],
+  "id": "project-clone",
+  "issues": [],
+  "keywords": [
+    "clone",
+    "projects"
+  ],
+  "media": [],
+  "name": "Clone a project",
+  "since": "2026-09-10",
+  "status": "stable",
+  "summary": "clone an existing project into a new folder to start a fresh copy of it.",
+  "surfaces": [],
+  "updated": "2026-09-27",
+  "where": [
+    "The + at the top of the agents drawer, then New Project, then clone from github."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

@@ -1,0 +1,43 @@
+{
+  "area": "skills-catalog",
+  "description": "catalog.carnivore.ai shows the Warez page in a browser with no app and no sign in: the same cards, kind chips, sorts and search as the app's Warez page, read live from the signed index (v1/index.json) every time the page loads. Hero images come from the index's own media files and theme cards use the palettes file baked beside the index when it is there. The page is read only: there is no add or install button, installed menu, publish, refresh, rating or sign in. A detail shows the item's facts from the index and one action, get carnivore (a link to carnivore.ai), with the item id to copy and the source repository link when the index carries one. A quiet line at the foot names the signed index serial, its dates and the signing key id; the page shows no trust mark because only the app verifies the signature.",
+  "docs": [
+    "docs/catalog.md"
+  ],
+  "examples": [
+    "Open catalog.carnivore.ai on a phone and browse every skill, theme, plugin and mod the catalog lists."
+  ],
+  "how_to": [
+    "Open https://catalog.carnivore.ai in any browser.",
+    "Pick a kind in the left menu, sort or search the list.",
+    "Open any card to read its facts, copy its id or follow its source repository link."
+  ],
+  "id": "warez-public-browse",
+  "issues": [
+    2532
+  ],
+  "keywords": [
+    "warez",
+    "catalog",
+    "browse",
+    "public",
+    "signed index"
+  ],
+  "media_exempt": "pending the next recapture",
+  "name": "Warez public browse page",
+  "since": "2026-10-26",
+  "status": "beta",
+  "summary": "the public page at catalog.carnivore.ai that lists the whole signed catalog the way the app's Warez page does, read live from the index.",
+  "surfaces": [
+    "web/src/browse/static-host.ts",
+    "web/src/browse/main.ts",
+    "web/vite.browse.config.ts",
+    "web/src/lib/catalog/readonly.ts",
+    "web/src/lib/catalog/ReadonlyActions.svelte",
+    "web/src/lib/catalog/TrustLine.svelte"
+  ],
+  "updated": "2026-10-26",
+  "where": [
+    "https://catalog.carnivore.ai, once the page is deployed."
+  ]
+}

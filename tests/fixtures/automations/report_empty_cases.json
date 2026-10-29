@@ -1,0 +1,20 @@
+[
+  {"name": "json null", "report": null, "empty": true},
+  {"name": "empty object", "report": {}, "empty": true},
+  {"name": "empty array", "report": [], "empty": true},
+  {"name": "empty string", "report": "", "empty": true},
+  {"name": "whitespace string", "report": "  \n\t ", "empty": true},
+  {"name": "command report with only echo keys", "report": {"command": "ls", "exit_code": 0, "duration_s": 1.5}, "empty": true},
+  {"name": "command report with blank stdout", "report": {"command": "ls", "exit_code": 0, "duration_s": 1.5, "stdout": "  \n"}, "empty": true},
+  {"name": "command report with stdout", "report": {"command": "ls", "exit_code": 0, "duration_s": 1.5, "stdout": "a.txt\n"}, "empty": false},
+  {"name": "nested empty objects and arrays", "report": {"items": [], "meta": {"tags": [], "note": null, "deep": {"x": ""}}}, "empty": true},
+  {"name": "nested value among empties", "report": {"items": [], "meta": {"tags": ["a"]}}, "empty": false},
+  {"name": "zero is a value", "report": {"count": 0}, "empty": false},
+  {"name": "false is a value", "report": {"ok": false}, "empty": false},
+  {"name": "top level zero", "report": 0, "empty": false},
+  {"name": "top level text", "report": "hello", "empty": false},
+  {"name": "echo keys only count at the top level", "report": {"inner": {"command": "ls"}}, "empty": false},
+  {"name": "scrooge-like report with findings", "report": {"schema": "scrooge/1", "findings": [{"id": "f1", "title": "big prompt"}], "totals": {"usd": 1.2}}, "empty": false},
+  {"name": "scrooge-like report with nothing found", "report": {"findings": [], "notes": [], "summary": ""}, "empty": true},
+  {"name": "pruned marker is not empty by the rule", "report": {"pruned": true}, "empty": false}
+]

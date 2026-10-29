@@ -1,0 +1,33 @@
+{
+  "kind": "cplug",
+  "id": "share",
+  "name": "share read only",
+  "version": "1.0.0",
+  "api_version": 1,
+  "min_app_version": "1.12.20",
+  "author": "Carnivore contributors",
+  "license": "MIT",
+  "tier": "builtin",
+  "scope": [
+    "global"
+  ],
+  "icon": "link",
+  "default_enabled": true,
+  "permissions": [],
+  "owns": {
+    "strings": [
+      "cplug.share."
+    ],
+    "tests": [
+      "tests/python/cplugs/share/",
+      "web/src/cplugs/share/"
+    ],
+    "style_guide": [
+      "web/src/cplugs/share/ShareModal.svelte"
+    ],
+    "contributions": [
+      "session.card_action"
+    ]
+  },
+  "data": []
+}

@@ -1,0 +1,60 @@
+{
+  "api_routes": [
+    "GET /api/v1/approvals",
+    "POST /api/v1/sessions/{id}/dialog/answer",
+    "POST /api/v1/sessions/{id}/dialog/answer-all"
+  ],
+  "area": "desktop-app",
+  "docs": [
+    "docs/desktop-app.md",
+    "docs/desktop-bridge.md",
+    "docs/approvals.md"
+  ],
+  "examples": [
+    "Walk away with the Carnivore window closed; when an agent asks for permission a banner appears and you press Yes or No on it.",
+    "Answer a three-question ask one banner at a time; the answers are sent together after the last one.",
+    "A plan approval, a folder trust prompt and a Codex approval each appear as a banner with the dialog's own buttons.",
+    "Reply to an agent's free-text question straight from the banner, even with the Carnivore window closed; a session's banners group together in Notification Center."
+  ],
+  "how_to": [
+    "In the desktop app, open settings, desktop app, and turn on approval banners. Allow Carnivore under macOS Notifications when asked.",
+    "When an agent is waiting on you, press a button on its banner. The press answers the dialog the banner showed; if the dialog changed meanwhile, nothing is typed and a 'this question changed' banner opens the app.",
+    "A question that takes only a typed reply shows a reply field on its banner: type and send it (2000 characters at most; a longer one is refused and nothing is sent). Multi-select questions open Carnivore instead of offering buttons.",
+    "With desktop notifications: asks only turned on in the desktop app settings, the app mirrors only the toasts that ask you something to macOS."
+  ],
+  "id": "approval-banners",
+  "issues": [
+    2307,
+    2354,
+    2459,
+    2460
+  ],
+  "keywords": [
+    "banner",
+    "notification",
+    "approval",
+    "permission",
+    "desktop",
+    "answer",
+    "buttons"
+  ],
+  "media_exempt": "native: needs the signed Electron app and a macOS notification, which a capture slot cannot show",
+  "name": "Approval banners",
+  "since": "2026-10-23",
+  "status": "beta",
+  "summary": "macOS banners from the desktop app for every open agent dialog, with the dialog's own options as buttons; a press answers it from the app, no window needed.",
+  "surfaces": [
+    "macOS/banners/model.js",
+    "macOS/banners/answer.js",
+    "macOS/banners/presenter-electron.js",
+    "macOS/banners/index.js",
+    "macOS/tray-menu/events-client.js",
+    "client/js/toast-lifecycle.js",
+    "src/api/session_dialog_routes.py",
+    "macOS/banners/launch.js"
+  ],
+  "updated": "2026-10-24",
+  "where": [
+    "The macOS notification area, while the desktop app is running (the window may be closed)."
+  ]
+}

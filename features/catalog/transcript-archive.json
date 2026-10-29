@@ -1,0 +1,36 @@
+{
+  "api_routes": [
+    "src/main.py"
+  ],
+  "area": "archive",
+  "docs": [
+    "docs/history-archive-scope.md",
+    "docs/transcript-archive-completeness.md"
+  ],
+  "examples": [
+    "Look up what an agent did last month in a session that is long gone."
+  ],
+  "how_to": [
+    "It cannot be turned on: the message_archive config flag and the CLOUDE_MESSAGE_ARCHIVE variable are ignored and log one warning. For past conversations use the harness transcript files and the save pipeline restore points (docs/time-machine.md)."
+  ],
+  "id": "transcript-archive",
+  "issues": [
+    1606
+  ],
+  "keywords": [
+    "archive",
+    "transcripts",
+    "history",
+    "freshness"
+  ],
+  "media_exempt": "retired feature with no working screen to show; the /archive page is not captured",
+  "name": "Transcript archive",
+  "since": "2026-08-31",
+  "status": "deprecated",
+  "summary": "",
+  "surfaces": [],
+  "updated": "2026-10-12",
+  "where": [
+    "Nothing to open in the app today: the archive is off unless the message archive switch is on in config, and its /archive page is not working (#1606)."
+  ]
+}

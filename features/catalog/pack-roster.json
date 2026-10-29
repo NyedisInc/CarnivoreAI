@@ -1,0 +1,59 @@
+{
+  "api_routes": [
+    "GET /api/v1/computers",
+    "GET /api/v1/pack/machines",
+    "GET /api/v1/hosts",
+    "PUT /api/v1/hosts/{key}/computer",
+    "POST /api/v1/hosts/{key}/probe",
+    "PATCH /api/v1/hosts/{key}",
+    "DELETE /api/v1/hosts/{key}",
+    "PUT /api/v1/pack/master",
+    "GET /api/v1/federation/discovered"
+  ],
+  "area": "settings",
+  "docs": [
+    "docs/federation.md"
+  ],
+  "examples": [
+    "See every computer in the pack and every ssh host in one list, with the ones that need a look pulled into a red group.",
+    "Open a computer you reach over ssh and read its ssh facts, copy the ssh command and say which computer an ssh host belongs to.",
+    "Find the computer with the most free cpu before you start a big job."
+  ],
+  "how_to": [
+    "Open pack, computers: the rail filters the list, the find field searches name, ssh login and tools, and sort and the cards or list switch sit in the bar.",
+    "Click a computer to open its reading pane: overview, projects, link and ssh tabs; escape closes the pane and the arrow keys move between computers.",
+    "On the ssh tab, pick the computer an ssh host belongs to; the pack keeps your pick instead of guessing from the name.",
+    "Press the wolf button on a computer, then confirm, to make it the pack leader.",
+    "Press add a computer: one entry with four routes (a code, over ssh, an ssh host only, pair an older computer).",
+    "The pack settings panel on the right folds into the gear in the title strip; it holds the pack name, advertising, membership or join a pack, show a code and rotate key."
+  ],
+  "id": "pack-roster",
+  "issues": [
+    2061
+  ],
+  "keywords": [
+    "pack",
+    "computers",
+    "ssh",
+    "roster",
+    "wolf",
+    "leader",
+    "settings"
+  ],
+  "media_exempt": "The roster needs a live pack of two or more computers and an ssh host to show cards, the red needs a look group and the ssh tab; the capture is recorded with the release run.",
+  "name": "Pack roster",
+  "since": "2026-10-21",
+  "status": "beta",
+  "summary": "the pack page's computers and ssh tabs are one roster of computer cards with a reading pane per computer and a pack settings panel that folds into a gear.",
+  "surfaces": [
+    "web/src/lib/pack-roster/PackRoster.svelte",
+    "web/src/lib/pack-roster/ComputerPane.svelte",
+    "web/src/lib/pack-roster/SettingsPanel.svelte",
+    "src/api/hosts_routes.py",
+    "src/core/hosts/store.py"
+  ],
+  "updated": "2026-10-21",
+  "where": [
+    "Pack, computers tab (#pack, with #pack/ssh landing on the over ssh filter)."
+  ]
+}

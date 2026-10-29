@@ -1,0 +1,9 @@
+<div aria-label="Hidden widgets" class="oc-anchored oc-popover popup-focus" role="dialog" style="left: 8px; top: 4px; max-height: 756px; overflow-y: auto;" tabindex="-1">
+  <p class="oc-popover-empty" data-layout-editor-pointer="">
+    "add widgets in edit layout, bottom left of the drawer"
+  <button class="oc-popover-arrange oc-popover-item" data-btn="row" type="button">
+    "arrange layout"
+  <button class="oc-popover-reset" data-btn="row" type="button">
+    "reset layout"
+  <button class="oc-popover-reset" data-btn="row" data-widgets-page="" type="button">
+    "all widgets"

@@ -1,0 +1,52 @@
+{
+  "api_routes": [
+    "src/api/restart_routes.py",
+    "src/api/session_restart_apply_routes.py",
+    "src/api/restart_account_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/restart-and-recreate-history.md",
+    "docs/provider-ledger.md"
+  ],
+  "examples": [
+    "The agent is stuck: restart it and carry on with the same conversation.",
+    "You changed your claude launch profile: restart a session so it relaunches with the new one.",
+    "Keep one session on a specific account without thinking about the active account each time you restart it."
+  ],
+  "how_to": [
+    "Choose restart the agent. A picker shows what will happen: the launch profile dropdown starts on the one the agent was launched with, and says whether the conversation resumes.",
+    "To replace an agent that is still running, tick the arm box first; the tick is the confirmation.",
+    "Confirm. The session comes back in the same row with its conversation resumed.",
+    "On a claude session, click choose account under the launch profile to pick the account to restart on. Leave the box unticked for a one-time choice, which also clears a saved account. Closed, the link leaves the agent on its saved account, else the active one.",
+    "To restart at once, hold shift and open the row menu: restart now kills the running agent and resumes it in one click. If the pane was not measured running, the normal picker opens instead and says why."
+  ],
+  "id": "session-restart-and-resume",
+  "issues": [
+    1641
+  ],
+  "keywords": [
+    "restart",
+    "resume",
+    "respawn"
+  ],
+  "media": [],
+  "name": "Restart and resume a session",
+  "since": "2026-09-07",
+  "status": "stable",
+  "summary": "restart a session and resume its exact conversation, with a picker that shows what will happen before you commit.",
+  "surfaces": [
+    "client/js/session-restart-picker.js",
+    "client/js/session-restart-options.js",
+    "client/js/session-restart-live.js",
+    "client/js/session-restart-return.js",
+    "web/src/lib/launch-picker/LaunchChoiceHost.svelte",
+    "client/js/session-restart-direct.js"
+  ],
+  "updated": "2026-10-17",
+  "where": [
+    "A session's row menu, restart the agent.",
+    "A session's row menu with shift held, restart now (kills and resumes)."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

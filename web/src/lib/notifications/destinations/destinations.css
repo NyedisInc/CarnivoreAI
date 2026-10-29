@@ -1,0 +1,44 @@
+.nd-badge {
+    padding: 0 var(--oc-space-2);
+    box-shadow: inset 0 0 0 1px var(--oc-orange);
+    font-family: var(--oc-font);
+    font-size: var(--oc-fs-label);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--oc-orange);
+}
+
+.nd-status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--oc-space-3);
+    margin: 0;
+    font-family: var(--oc-font);
+    font-size: var(--oc-fs-body);
+}
+
+.nd-secret + .nd-secret::before {
+    content: '/';
+    margin: 0 var(--oc-space-2);
+    color: var(--oc-line-faint);
+}
+
+.nd-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: var(--oc-space-3);
+}
+
+.nd-extras {
+    display: flex;
+    flex-direction: column;
+    gap: var(--oc-space-3);
+    padding-top: var(--oc-space-3);
+    box-shadow: 0 -1px 0 var(--oc-line-faint);
+}
+
+.nd-times {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 12rem));
+    gap: var(--oc-space-3);
+}

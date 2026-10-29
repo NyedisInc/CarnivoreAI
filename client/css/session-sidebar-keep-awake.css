@@ -1,0 +1,68 @@
+
+@layer components {
+.session-sidebar-row-keep-awake {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border-radius: var(--oc-radius-sm);
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--oc-text-muted);
+    opacity: 0.6;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 120ms ease, background 120ms ease, opacity 120ms ease;
+}
+
+.session-sidebar-row-keep-awake:hover,
+.session-sidebar-row-keep-awake:focus-visible {
+    background: var(--oc-ground-hover);
+    opacity: 1;
+    outline: none;
+}
+
+.session-sidebar-row-keep-awake[data-keep-awake="1"] {
+    color: var(--oc-violet);
+    opacity: 1;
+}
+
+.session-sidebar-row-keep-awake svg {
+    overflow: visible;
+}
+
+.session-sidebar-row-keep-awake .kaw-steam {
+    opacity: 0;
+}
+
+.session-sidebar-row-keep-awake[data-keep-awake="1"] .kaw-steam {
+    animation: session-keep-awake-steam 2.4s ease-out infinite;
+}
+
+.session-sidebar-row-keep-awake[data-keep-awake="1"] .kaw-steam-2 {
+    animation-delay: 0.8s;
+}
+
+.session-sidebar-row-keep-awake[data-keep-awake="1"] .kaw-steam-3 {
+    animation-delay: 1.6s;
+}
+
+@keyframes session-keep-awake-steam {
+    0%   { opacity: 0; transform: translateY(calc(1.5px * var(--kaw-u, 1))); }
+    30%  { opacity: 0.85; }
+    100% { opacity: 0; transform: translateY(calc(-2.5px * var(--kaw-u, 1))); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .session-sidebar-row-keep-awake[data-keep-awake="1"] .kaw-steam {
+        animation: none;
+        opacity: 0.6;
+    }
+}
+
+:root[data-motion="off"] .session-sidebar-row-keep-awake[data-keep-awake="1"] .kaw-steam {
+    opacity: 0.6;
+}
+}

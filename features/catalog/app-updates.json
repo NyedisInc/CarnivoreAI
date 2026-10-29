@@ -1,0 +1,66 @@
+{
+  "api_routes": [
+    "GET /api/v1/app-update",
+    "PUT /api/v1/app-update/auto-update",
+    "POST /api/v1/app-update/check",
+    "POST /api/v1/app-update/install",
+    "GET /api/v1/app-update/computer/{host_key}",
+    "PUT /api/v1/app-update/computer/{host_key}/auto-update",
+    "POST /api/v1/app-update/computer/{host_key}/check",
+    "POST /api/v1/app-update/computer/{host_key}/install"
+  ],
+  "area": "settings",
+  "docs": [
+    "docs/mac-auto-update.md"
+  ],
+  "examples": [
+    "See the red menu bar icon, click it, click the update row, and watch the window go from downloading to restarting.",
+    "Turn on update automatically and never see the icon, the row, the notice or the window: the app updates itself when no session is working."
+  ],
+  "how_to": [
+    "Open settings, general, updates. The block shows the running version and what the updater says.",
+    "A small window shows the download, the check, the install and the restart. Nothing else to confirm.",
+    "The notice in Notification Center carries an update button; clicking the notice itself does the same.",
+    "Press check now to look for a new version, and update now when one is waiting. The app downloads it, stops the server and restarts; your sessions keep running.",
+    "Turn on update automatically to download new versions in the background and restart into them when no session is working. It is off by default.",
+    "To update a paired computer, open the Pack page, Computers, and use update now or the update automatically switch on its row."
+  ],
+  "id": "app-updates",
+  "issues": [
+    2217,
+    2223,
+    2368
+  ],
+  "keywords": [
+    "update",
+    "upgrade",
+    "version",
+    "auto update",
+    "restart"
+  ],
+  "media_exempt": "the Electron tray icon, menu, Notification Center notice and native update window cannot be captured by the browser capture rig; the real proof is the next release installed on a Tart guest",
+  "name": "App updates",
+  "since": "2026-10-22",
+  "status": "stable",
+  "summary": "the desktop app updates itself from the public releases: a red menu bar icon and a one-click row when you update by hand, or fully automatically if you turn it on.",
+  "surfaces": [
+    "web/src/lib/settings-page/AppUpdatePanel.svelte",
+    "macOS/auto-update.js",
+    "macOS/update-bridge.js",
+    "web/src/lib/computers/ComputerUpdate.svelte",
+    "src/core/federation/peer_app_update.py",
+    "src/core/mcp/app_update_tools.py",
+    "macOS/update-ux.js",
+    "macOS/update-window.js",
+    "macOS/update-notice.js",
+    "macOS/tray-presence.js",
+    "macOS/assets/generate-update-icon.py"
+  ],
+  "updated": "2026-10-23",
+  "where": [
+    "Settings, general, updates.",
+    "The menu bar icon turns red with a white up arrow while an update waits (auto update off), and the first row of its menu is the one-click update.",
+    "A Notification Center notice with an update button, once per version.",
+    "Pack page, Computers: each computer's row."
+  ]
+}

@@ -1,0 +1,180 @@
+<h2 class="sg-h2">sessions page</h2>
+
+<h3 class="sg-h3" id="sessions-page-strip">title strip and filter bar</h3>
+<dl class="sg-facts">
+    <dt>title strip</dt>
+    <dd>The Page title bar spans <code>TitleStrip.svelte</code> in its sub slot (the Page's own heading is clipped; the strip draws the
+        same word, <code>.sp-tbl</code> with <code>.pl-title</code>, on the phone too): the icon buttons
+        new project, new session, show hidden (an <code>aria-pressed</code> toggle: automated runs and automated-only projects) and expand or collapse all (<code>.sp-acts</code> holding base <code>IconButton</code>s, <code>TitleActions.svelte</code>; each carries an <code>aria-label</code> and a title), the find box centered
+        (<code>.sp-find</code> holding the base search <code>Field</code>, <code>.oc-search</code>) and the fleet summary at the
+        right (<code>.sp-sum</code>, <code>FleetSummary.svelte</code>). The page's buttons are base <code>Button</code>s at the small size. On a phone the find rides the Page omnibar and the summary moves into <code>.sp-phonebar</code>.</dd>
+    <dt>fleet summary</dt>
+    <dd>Icon and number pairs (<code>.sp-pair</code>): running is the terminal mark; needs you, working and asleep wear the real
+        status lights (<code>StatusLed.svelte</code>, the same component the rows use); oldest asleep is the clock. With the live
+        listing down the needs you and working pairs are left out, never drawn as zero.</dd>
+    <dt>filter bar</dt>
+    <dd>ONE row (<code>FilterBar.svelte</code>, the base <code>Toolbar</code> in its band form: the groups in its filters slot, the clear button, view switch and count in its end slot): the state toggles in <code>.sp-seg</code> (five show-these-kinds icons: working, questions, sleep, closed, archived; working and sleep start on; each is an independent on or off button with <code>aria-pressed</code>, an on one bright with no box or border, an off one dimmed), then company, project, computer and provider as labelled hairline groups
+        (<code>.sp-g</code>, <code>.sp-gl</code>, a small base <code>Select</code>) copied from the catalog bar, then clear (a base small <code>Button</code>, <code>[data-clear]</code>)
+        the view switch (<code>[data-view-switch]</code>, <code>ViewSwitch.svelte</code>: an icon-only base <code>Segmented</code>, list, pivot, timeline) and the live count <code>.sp-count</code> ("2 of 2") at the right end; pivot and timeline, which have no filter bar, draw the switch and count alone in a band <code>Toolbar</code> . A session row ends in <code>.sp-tail</code>: its action button and the drawer's session menu kebab (a right click on the row opens the same menu). The lens rail folds every inactive project under one inactive item (<code>[data-nested]</code> rows). Under 960px of bar the labels
+        move into each select's "any" option (<code>.sp-bar--compact</code>).</dd>
+    <dt>accent bar</dt>
+    <dt>body</dt>
+    <dd><code>.sp-body</code> holds the bar, the accent bar and <code>.sp-hosts</code>: one <code>.sp-host</code> per view, the
+        list, pivot and timeline hosts, only the active one shown. The empty and loading line is the base <code>State</code> (loading or empty).</dd>
+    <dt>files</dt>
+    <dd><code>web/src/lib/sessions-page/</code>: <code>SessionsPage.svelte</code>, <code>TitleStrip.svelte</code>,
+        <code>FleetSummary.svelte</code>, <code>FilterBar.svelte</code>, <code>sessions-page.css</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="sessions-page-list">list view</h3>
+<dl class="sg-facts">
+    <dt>shape</dt>
+    <dd><code>ListView.svelte</code> (<code>.sp-ix</code>): the lens rail on the left, one scroller (<code>.sp-list</code>, the base <code>List</code> at the roomy density, role listbox) on the
+        right holding the sticky column header and the ruled groups. The active lens is remembered per device.</dd>
+    <dt>lens rail</dt>
+    <dd><code>LensRail.svelte</code> (<code>.sp-rail</code>): nine lenses (project, recents, most used, dormant, pinned, provider,
+        computer, needs you, long runners), each a base row <code>Button</code> (<code>[data-lens]</code>) with its own icon and a live count
+        (<code>.sp-n</code>). The active lens lists its groups as row <code>Button</code> sub-items (<code>[data-sec]</code>); the one scrolled to wears
+        <code>aria-current</code>. A lens the data cannot answer is disabled and says why (<code>.sp-why</code>). On a phone the
+        rail is rows of 44px chips and the keys hint (<code>.sp-keys</code>) is dropped.</dd>
+    <dt>column header</dt>
+    <dd><code>ListHead.svelte</code> (<code>.sp-lhead</code>): sticky, small tracked uppercase headings (quiet small base <code>Button</code>s, <code>[data-sort]</code>) in the
+        rows' own cell classes (<code>.sp-c-name</code> and friends) so each sits over its column. A click sorts the sessions inside
+        each group, a second click reverses it, the chosen heading shows <code>aria-sort</code> and a small accent arrow
+        (<code>.sp-arr</code>). Groups never move. On a phone the headings fold into one sort select and a direction button
+        (<code>.sp-lh-m</code>, a base <code>Select</code> and <code>IconButton</code> <code>[data-dir]</code>).</dd>
+    <dt>group</dt>
+    <dd><code>GroupSection.svelte</code> (<code>.sp-sec</code>): a flush heading on a blue wash, a different color from its rows (<code>.sp-sec-head</code>: chevron, the project's
+        letter chip <code>.sp-pchip</code> or the provider's mark <code>.sp-pico</code>, the name <code>.sp-sh-l</code>, facts
+        <code>.sp-sh-m</code>, the measure <code>.sp-sh-t</code>) with its sessions inset under it and a hairline guide down the
+        inset. Groups named by words (project, provider, computer) list a to z, case-insensitive; time and rank lenses keep
+        their own order. On the project lens an <strong>inactive</strong> project (no running session, including a project with no
+        session at all) is drawn grayed (<code>data-inactive</code>) and collapsed, below every active one, a to z. A project heading ends in the
+        project kebab (<code>RowMenu.svelte</code>, the Projects page's own menu); a right click on the bar opens the same menu at the pointer and
+        neither folds the group. The fold is a base row <code>Button</code> (<code>[data-fold]</code>); the color item opens a swatch row (<code>.sp-sec-colors</code>) under the bar.
+        A project heading also wears small base <code>Tag</code>s (neutral, or the danger tone for a failed pack): archived, packed, moved to a computer
+        (with an inline <code>.oc-btn</code> "move back") and automated. Under the inactive projects an <strong>archived</strong> fold (collapsed, grayed) lists the archived
+        projects as headings only (<code>data-leaf</code>: no body, no chevron), whose menu offers unarchive, pack folder and unpack folder. Fold choices of a project are remembered in the drawer's fold list. On the project lens a <strong>company heading</strong> (same <code>.sp-sec</code> heading, <code>data-company</code>: title-row ground, accent label, no chip) sits above each company's projects, whose headings step in (<code>data-in-company</code>); its kebab and right click open the company menu (rename, move to another computer, set or remove image, regenerate art, delete), the title strip's new company button asks a name, and a company's fold is the drawer's own <code>c:&lt;id&gt;</code> key. Projects with no company, and every project of a paired computer, follow the companies as before.</dd>
+    <dt>session line</dt>
+    <dd><code>SessionLine.svelte</code> (<code>.sp-row</code>, a base <code>ListRow</code> at the roomy height with its cells as children): every cell on one middle line: the status light
+        (<code>StatusLed.svelte</code> fed the listing wrapper's signals; the moon for an asleep session), name, state word,
+        project, the provider mark before the provider name, the latest line clamped to one line, the lens measure, computer, the
+        started date, then the action button <code>[data-go]</code> (a base small <code>Button</code> in the action's color, always shown) with at least 16px clear of the date. No conversations column.
+        The selection is one accent outline, <code>.sp-selbox</code>, that glides between rows (a transform, 120ms); a header sort or a
+        listing change slides the rows that moved to their new places (FLIP, transform only, 200ms). Both stand still under reduced motion.</dd>
+    <dt>closed sessions</dt>
+    <dd><code>ClosedRows.svelte</code>: under a project's open sessions, a quiet bar (a base row <code>Button</code>, <code>[data-closed-head]</code>, a chevron, the word closed and the count) folds the project's closed
+        sessions, open while the find box holds text; each is a session line (<code>.sp-row.sp-row--closed</code>, dimmed one step) with the transcript tag (on disk, or gone in
+        the danger <code>Tag</code>), the "N earlier" tag, and the one action it leads with in <code>[data-go]</code>: resume while the transcript is on disk, restart when it never had a
+        conversation, a disabled resume (the reason as its title) when it is gone. More than eight rows show six and a "show all" button (a small base <code>Button</code>, <code>[data-show-all]</code>).
+        A paired computer's closed rows are history only (no button, no menu) and show once the computer filter is set. Pressing a line opens the side panel, whose head carries
+        put back in lists or remove from lists beside the action and the line that says why resume is what it is, and whose facts list the transcript path or "gone" with the reason.</dd>
+    <dt>action button</dt>
+    <dd><code>[data-go]</code>: open in <code>--oc-series-7</code> with the prompt mark, wake in <code>--oc-series-8</code>
+        (<code>[data-go=wake]</code>) with the bolt, <code>[data-go=start]</code> (+ start) in the theme accent, a recorded exception
+        to the one-accent rule.</dd>
+    <dt>keys</dt>
+    <dd>Up and down move the selection, enter acts on it, space opens the panel, left and right fold, <code>/</code> finds, and
+        any letter jumps to the first name that starts with it (<code>typeahead.ts</code>).</dd>
+    <dt>files</dt>
+    <dd><code>web/src/lib/sessions-page/</code>: <code>ListView.svelte</code>, <code>LensRail.svelte</code>,
+        <code>ListHead.svelte</code>, <code>GroupSection.svelte</code>, <code>SessionLine.svelte</code>,
+        <code>sessions-list.css</code>, <code>lenses.ts</code>, <code>sorting.ts</code>, <code>typeahead.ts</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="sessions-page-panel">slide-out panel</h3>
+<dl class="sg-facts">
+    <dt>panel</dt>
+    <dd><code>SessionPanel.svelte</code> (<code>.sp-pn</code>): the detail of one session docked at the right of the page body
+        (480px, 560 from 1700px; the list makes room, <code>.sp-hosts[data-panel]</code>), non-modal. Selecting another row swaps the
+        content with an opacity crossfade (<code>.sp-pn-body</code>); the list keeps the keyboard. Escape, the close button or a
+        second press on the row closes it. At 700px or less it is a full sheet and <code>[data-pn-back]</code> ("&lt; sessions") returns to
+        the list. The title bar is the ledger chrome (<code>.pl-titlebar</code>, <code>.pl-label</code>); sections are
+        <code>.sp-pn-sec</code> with a hairline under each and definition lists <code>.sp-pn-dl</code>.</dd>
+    <dt>head</dt>
+    <dd><code>PanelHead.svelte</code>: the status light with its word and "via tier" (<code>.sp-pn-status</code>, <code>.sp-pn-src</code>), the
+        icon cluster at the top right (<code>.sp-pn-icons</code>, each <code>.sp-pic</code>: share periscope in cyan, sub-agents and
+        background shells in green, timers and asleep in muted, the carnivore timers alarm clock painted by its state, keep awake cup in violet, the pin, the drawer's kebab far right), the
+        name (<code>.sp-pn-name</code>), the meta line of icons (<code>.sp-pn-meta</code>: project chip, company icon, provider mark,
+        computer icon, each <code>.sp-pn-mi</code>) and the row's one action (a base <code>Button</code> <code>[data-go]</code> at the full size, as the restart picker footer sizes it).</dd>
+    <dt>sections</dt>
+    <dd><code>PanelBelongs.svelte</code> (layouts and at most one group as small base <code>Button</code>s (<code>[data-chip]</code>), or "none"),
+        <code>PanelNow.svelte</code> (right now: helpers, background, model, timers), <code>PanelConversations.svelte</code> (the list with busy time, compact marks and "resume this one"; <code>.sp-pn-dim</code> spans <code>data-busy</code> and <code>data-mark="compact"</code>, codex says it has no marks),
+        <code>PanelBookmarks.svelte</code> (rewind behind the arm box <code>.sp-pn-arm</code>, branch) and <code>PanelFacts.svelte</code>.
+        Honest states: transcript gone (<code>.sp-pn-gone</code>), codex has no bookmarks, history unavailable, live
+        status offline.</dd>
+    <dt>files</dt>
+    <dd><code>web/src/lib/sessions-page/</code>: <code>SessionPanel.svelte</code>, <code>PanelHead.svelte</code>,
+        <code>PanelBelongs.svelte</code>, <code>PanelNow.svelte</code>,
+        <code>PanelConversations.svelte</code>, <code>PanelBookmarks.svelte</code>, <code>PanelFacts.svelte</code>,
+        <code>sessions-panel.css</code>, <code>memberships.ts</code>, <code>panel-data.svelte.ts</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="sessions-page-pivot">pivot view</h3>
+<dl class="sg-facts">
+    <dt>shape</dt>
+    <dd><code>PivotView.svelte</code> (<code>.sp-pv</code>): one axis down the side, one across, every session a chip at its
+        coordinates. It reads the same rows and data layer as the list and fetches nothing of its own. The axes and chip size are
+        remembered per device. The axes: project, company, provider, computer, state, recency, most used, hour of day, weekday and
+        conversations; hour and weekday are read in the viewer's time zone from the last time work happened. A tier or a time the
+        data cannot place lands under "not measured" or "no data", never in a guessed bucket.</dd>
+    <dt>axis bar</dt>
+    <dt>matrix</dt>
+    <dd><code>.sp-pv-scroll</code> holds <code>.sp-pv-mx</code>, a grid whose corner (<code>.sp-pv-corner</code>), column heads
+        (<code>.sp-pv-ch</code>) and row heads (<code>.sp-pv-rh</code>) stick on both axes. A head (a base row <code>Button</code>, <code>[data-hb]</code>) shows
+        its name and count (the project's letter chip, the provider's mark); a press isolates that row or column and dims the rest
+        (<code>data-dim</code>), a second press releases it. A cell (<code>.sp-pv-cell</code>) carries its number on the plain
+        ground: no shading and no legend (m1.11); an empty cell is one dot. Hovering or focusing a chip lights its row head, its
+        column head and its row and column (<code>data-xh</code>, <code>data-xr</code>, <code>data-xc</code>), a state flip with no
+        transition. A cell shows six chips and "+N more" (a quiet small <code>Button</code>, <code>[data-more]</code>); past 30 rows the rest fold into one totals line.
+        With the panel open the columns size so a whole number of them fills the region and snap.</dd>
+    <dt>chip</dt>
+    <dd><code>.sp-pv-chip</code>: the status light (<code>RowLed.svelte</code>, shared with the list row), the name, the provider
+        on wide screens (<code>.sp-pv-ag</code>), the latest line (<code>.sp-pv-line</code>) and a foot with the age and the row's
+        action (<code>[data-go]</code>). Pressing the body (a row <code>Button</code>, <code>[data-cb]</code>) opens or closes the panel; the selected chip wears the
+        accent border. Compact chips keep the light and the name only. Chips glide to their new places when an axis changes (a
+        transform, 280ms, still under reduced motion); nothing animates at rest.</dd>
+    <dt>phone</dt>
+    <dd>At 700px or less (<code>.sp-pv-ph</code>) the matrix becomes one section per row (<code>.sp-pv-phsec</code>): the row head,
+        a strip of 44px count cells per column (small base <code>Button</code>s, <code>[data-pc]</code>), and the tapped cell's chips below. The column strip on
+        top (<code>[data-ic]</code>) isolates a column everywhere.</dd>
+    <dt>files</dt>
+    <dd><code>web/src/lib/sessions-page/</code>: <code>PivotView.svelte</code>, <code>RowLed.svelte</code>,
+        <code>pivot.css</code>, <code>pivot-axes.ts</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="sessions-page-timeline">timeline view</h3>
+<dl class="sg-facts">
+    <dt>shape</dt>
+    <dt>readout and ruler</dt>
+    <dd><code>.sp-tl-readout</code> says the moment (<code>.sp-tl-moment</code>), what the fleet was doing then
+        (<code>.sp-tl-counts</code>) and the hovered or selected lane (<code>.sp-tl-detail</code>). The ruler
+        (<code>.sp-tl-ruler</code>, <code>.sp-tl-rtrack</code>) carries ticks (<code>.sp-tl-tk</code>), labels
+        (<code>.sp-tl-tl</code>) and the playhead handle (<code>.sp-tl-handle</code>); drag the ruler or an empty stretch of a lane,
+        use the arrow keys, or press n for now. A moment the timeline says nothing about reads "not measured", never a guess.</dd>
+    <dt>lane</dt>
+    <dd><code>.sp-tl-lane</code> holds the name cell (<code>.sp-tl-name</code>: the status light at the playhead),
+        the track (<code>.sp-tl-track</code>) and the stub past the now edge (<code>.sp-tl-stub</code>: the light now and the upcoming
+        timer, <code>.sp-tl-timer</code>). The trace (<code>.sp-tl-cv</code>) is filled where the session worked
+        (<code>.sp-tl-bd</code>); the yellow, blue and green underlines (<code>.sp-tl-wt</code>) are waiting on a question, a notice
+        and a finished turn; a moon (<code>.sp-tl-moon</code>) at the sleep moment is asleep; a tick (<code>.sp-tl-bk</code>) is a bookmark.
+        A lane press opens the panel.</dd>
+    <dt>project tool window</dt>
+    <dt>grouping and key</dt>
+    <dd>Every section (needs you, running, asleep, the fold) groups its lanes under a project head (a base row <code>Button</code>, <code>[data-tl-grp]</code>), projects a to z,
+        sessions a to z, no project last. A project with a chosen color draws ONE box (<code>.sp-tl-gbox[data-block]</code>) round its head and all its lanes, the list's block look; clicking the head folds the group to the head, which then wears the block alone. Its working bands (<code>.sp-tl-bd</code>) and finished line (<code>.sp-tl-wt</code>) take that color through <code>--tl-busy</code>; no color keeps green, and waiting, notice, dead and the moon keep their own colors. The key
+        (<code>.sp-tl-key</code>: <code>.sp-tl-keyh</code> label, <code>.sp-tl-ks</code> items, <code>.sp-tl-kline</code> the trace sample)
+        sits under the readout and draws a real sample of every mark.</dd>
+    <dt>rewind</dt>
+    <dd>A bookmark tick asks for the rewind in the readout (<code>.sp-tl-rw</code>) with the arm box (<code>.sp-tl-arm</code>), which is
+        the only confirmation; the rewind goes through the existing bookmark route.</dd>
+    <dt>reads</dt>
+    <dd>One timeline read per lane, four at a time, only for lanes on screen, a lane re-read when a push names it. A lane that
+        cannot be read draws a dashed line and "history unavailable" (<code>.sp-tl-fail</code>).</dd>
+    <dt>motion and phone</dt>
+    <dd>The lane group slides one minute on the minute tick (a transform, off under reduced motion); nothing animates at rest. At 700px
+        or less the name moves above the track and a slider (<code>.sp-tl-slider</code>) moves the playhead.</dd>
+    <dt>files</dt>
+    <dd><code>web/src/lib/sessions-page/</code>: <code>TimelineView.svelte</code>, <code>timeline.css</code>,
+        <code>timeline-lanes.svelte.ts</code>, <code>timeline-model.ts</code>.</dd>
+</dl>

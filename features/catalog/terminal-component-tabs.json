@@ -1,0 +1,53 @@
+{
+  "api_routes": [],
+  "area": "drawers",
+  "docs": [
+    "docs/browser-pages.md"
+  ],
+  "examples": [
+    "Keep a plain shell in a tab next to the agent you are working with.",
+    "Keep a review board in a tab next to the agent that is working on it, and split it out beside the terminal.",
+    "Keep the Task Manager list in a tab beside the agent that is working on it."
+  ],
+  "how_to": [
+    "Press the + at the end of a terminal's tab strip.",
+    "Pick an agent, a terminal, a blueprint or the browser; it opens as a tab beside the terminal.",
+    "Or drag a session from the agents drawer onto a terminal's tab strip to add it there as a tab.",
+    "A tab shows a small cyan workflow icon right of its title while that session has a workflow running.",
+    "Pick browser in the + menu for a new proxy browser, or any page, file or browser already open (a review board is a page); it opens as a tab. Drag a row from the sidebar's browsers, files or review list onto a strip, a pane edge or the middle of a pane to do the same. A plain click on one of those rows still takes over the main area.",
+    "Pick widget in the + menu to open any widget (notes, tasks, files...) as a tab beside your terminals; it wears the widget's icon, title and alert badge, and a right-click on it (or its icon) opens the widget's own menu, including the selected session | all sessions switch and close tab. A tab you are not looking at fetches nothing. Widget tabs open on a larger screen; the phone strip shows sessions only.",
+    "Right-click a tab (or focus it and press the Menu key or Shift+F10) for that session's menu, drawn in the tab's own theme. In the kebab on the strip's right, actions folds out beside the menu, which stays open."
+  ],
+  "id": "terminal-component-tabs",
+  "issues": [
+    1043,
+    1153,
+    1787,
+    1838,
+    2008
+  ],
+  "keywords": [
+    "tabs",
+    "components"
+  ],
+  "media": [],
+  "name": "Terminal component tabs",
+  "since": "2026-09-22",
+  "status": "stable",
+  "summary": "open another agent, a terminal, a blueprint, a browser, an open page, an open file or any widget as a tab alongside your terminal, and right-click any tab for its menu.",
+  "surfaces": [
+    "web/src/opscenter/shell/TabStrip.svelte",
+    "web/src/opscenter/cells/terminal-group/Cell.svelte",
+    "web/src/opscenter/engine/tab-drag.ts",
+    "web/src/opscenter/cells/terminal-group/PageTabBody.svelte",
+    "web/src/opscenter/engine/page-tabs.ts",
+    "web/src/lib/item-menu/row-open.ts",
+    "web/src/opscenter/cells/terminal-group/WidgetTabBody.svelte",
+    "web/src/opscenter/engine/widget-tabs.ts"
+  ],
+  "updated": "2026-10-19",
+  "where": [
+    "The + (new tab) at the end of a terminal's tab strip, on the terminal page."
+  ],
+  "media_exempt": "screenshots and captures are not part of the open source export"
+}

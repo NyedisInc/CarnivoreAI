@@ -1,0 +1,28 @@
+.gt-grid{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr)}
+@media(max-width:700px){.gt-grid{grid-template-columns:minmax(150px,200px) minmax(0,1fr)}}
+.gt-tree{border-right:1px solid var(--hair);min-width:0}
+.gt-head{height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);box-shadow:0 1px 0 var(--hair)}
+.gt-row{height:30px;display:flex;align-items:center;gap:8px;padding:0 10px;box-shadow:0 1px 0 var(--hair2);min-width:0}
+.gt-row.grp{background:var(--panel2);font-weight:650}
+.gt-row.task{padding-left:34px}
+.gt-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.gt-row .caret{flex:none;width:18px;height:18px;padding:0;border:1px solid var(--hair);border-radius:2px;background:transparent;color:var(--mut);cursor:pointer;font:11px/1 ui-monospace,Menlo,monospace}
+.gt-row .caret:focus-visible{outline:none;border-color:var(--fg)}
+.gt-row .dot{flex:none;width:10px;height:10px;border-radius:50%;background:var(--c)}
+.gt-row .pill{flex:none}
+.gt-plot{min-width:0;overflow:hidden}
+.gt-plot svg{display:block;width:100%}
+.gt-plot text{font:600 10px ui-monospace,Menlo,Consolas,monospace;fill:var(--mut)}
+.gt-plot .bar{fill:var(--c);fill-opacity:.9}
+.gt-plot .seg{fill:var(--c);fill-opacity:.55}
+.gt-plot .barlab{fill:var(--panel);font-size:10px}
+.gt-plot .grid{stroke:var(--hair2);stroke-width:1}
+.gt-plot .gapmark{stroke:var(--hair);stroke-width:1;stroke-dasharray:3 3}
+.gt-plot .ms{stroke:var(--panel);stroke-width:1.5}
+.gt-call{position:absolute;width:var(--bw);padding:6px 8px;background:var(--panel);border:1px solid color-mix(in srgb,var(--c) 60%,var(--hair));border-radius:3px;font-size:11px;line-height:1.3;overflow:hidden}
+.gt-call b{font-size:11px;color:var(--c)}
+.gt-call .t{color:var(--mut);margin-left:6px;font-size:10px}
+.gt-call q{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;quotes:none;color:var(--fg)}
+.gt-legend{display:flex;flex-wrap:wrap;gap:6px 22px;padding:10px 16px;border-top:1px solid var(--hair2);font-size:11px;color:var(--mut)}
+.gt-legend span{display:inline-flex;align-items:center;gap:8px}
+.gt-legend svg{width:34px;height:12px}

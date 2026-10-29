@@ -1,0 +1,52 @@
+{
+  "id": "pack-project-identity",
+  "name": "Project identity and replicas",
+  "summary": "Every project and company has a stable uid shared by every paired computer that holds it, a project can have an active replica on another computer, and a project that moved away refuses to start anything.",
+  "description": "Each project and company gets a uid that never changes and is the same on every computer holding it. A project has a home (the computer holding the project of record), may have active replicas on paired computers (same uid, nothing locked, both run at once), and may be moved away, the source of a one-way migrate. A moved-away project is the only locked state: every session create and every wake inside its folder is refused with 409 project_moved_away, and the drawer heading and the Projects page say moved to the computer's name. Replicas are made from the project's own routes and registered on the other computer through a peer-only route that needs the replica scope. A project can be marked air-gapped so Carnivore never contacts GitHub for it.",
+  "area": "sessions",
+  "status": "beta",
+  "since": "2026-10-10",
+  "updated": "2026-10-10",
+  "surfaces": [
+    "drawer project heading",
+    "web/src/lib/sidebar-shell/row-chips.ts"
+  ],
+  "api_routes": [
+    "GET /api/v1/projects/{name}/replicas",
+    "POST /api/v1/projects/{name}/replicas",
+    "DELETE /api/v1/projects/{name}/replicas/{machine}",
+    "PUT /api/v1/projects/{name}/air-gap",
+    "POST /api/v1/federation/pack/replica",
+    "DELETE /api/v1/federation/pack/replica/{project_uid}"
+  ],
+  "docs": [
+    "docs/mcp-server.md"
+  ],
+  "issues": [
+    1515,
+    1618
+  ],
+  "keywords": [
+    "pack",
+    "replica",
+    "uid",
+    "moved away",
+    "air-gap",
+    "identity",
+    "project"
+  ],
+  "where": [
+    "The drawer's project heading, after the name, when the project moved away.",
+    "The Projects page, a tag on the project's card and list row."
+  ],
+  "how_to": [
+    "Ask for a replica with POST /projects/{name}/replicas naming a paired computer.",
+    "Starting or waking a session inside a moved-away project's folder answers 409 project_moved_away.",
+    "Open a project's page, then transport...: under run on another computer pick a connected paired computer and press add replica. Each computer already running a copy is listed with a remove button (press twice)."
+  ],
+  "examples": [
+    "Keep the same project running on two computers under one uid.",
+    "See moved to hosta on a project that migrated, and be refused when something tries to start it here."
+  ],
+  "media_exempt": "The badge reuses the archived badge and the Projects page tag; screenshots are captured before the next version bump."
+}
