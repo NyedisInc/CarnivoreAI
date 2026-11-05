@@ -71,6 +71,8 @@ ${argXml}
     </dict>
     <key>ThrottleInterval</key>
     <integer>10</integer>
+    <key>ProcessType</key>
+    <string>Interactive</string>
     <key>StandardOutPath</key>
     <string>${xmlEscape(this.logPath)}</string>
     <key>StandardErrorPath</key>
@@ -242,8 +244,9 @@ ${argXml}
     const argsCurrent = [].concat(appPath).every((a) => previousContent.includes(`<string>${xmlEscape(a)}</string>`));
     const logsCurrent = previousContent.includes(`<string>${xmlEscape(this.logPath)}</string>`)
       && previousContent.includes(`<string>${xmlEscape(this.errorLogPath)}</string>`);
-    if (previousContent.includes('<key>KeepAlive</key>') && argsCurrent && logsCurrent) {
-      return { ran: true, upgraded: false, details: 'plist already has KeepAlive and the current log paths' };
+    const processTypeCurrent = previousContent.includes('<key>ProcessType</key>');
+    if (previousContent.includes('<key>KeepAlive</key>') && argsCurrent && logsCurrent && processTypeCurrent) {
+      return { ran: true, upgraded: false, details: 'plist already has KeepAlive, ProcessType and the current log paths' };
     }
 
     const bakPath = `${this.plistPath}.bak`;

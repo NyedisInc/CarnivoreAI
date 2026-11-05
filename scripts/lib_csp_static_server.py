@@ -75,8 +75,8 @@ class CSPStaticHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
 
-def serve(root: Path) -> tuple[socketserver.TCPServer, int]:
-    handler = functools.partial(CSPStaticHandler, directory=str(root))
+def serve(root: Path, handler_class: type[CSPStaticHandler] = CSPStaticHandler) -> tuple[socketserver.TCPServer, int]:
+    handler = functools.partial(handler_class, directory=str(root))
     httpd = socketserver.TCPServer(("127.0.0.1", 0), handler)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     return httpd, httpd.server_address[1]

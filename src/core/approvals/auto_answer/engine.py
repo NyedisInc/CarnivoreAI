@@ -136,29 +136,30 @@ class AutoAnswerEngine:
                 logger.info("auto_answer_skipped", session_id=session_id, rule=rule_id, reason=verdict.reason)
                 return
             entry[1] += 1
+            label = rule.label_for(ctx.dialog)
             try:
                 if verdict.options:
-                    await self._answer(session_id, ctx.dialog.fingerprint, rule.label, options=verdict.options)
+                    await self._answer(session_id, ctx.dialog.fingerprint, label, options=verdict.options)
                 else:
-                    await self._answer(session_id, ctx.dialog.fingerprint, rule.label)
+                    await self._answer(session_id, ctx.dialog.fingerprint, label)
             except AckRefused as exc:
                 logger.info("auto_answer_refused", session_id=session_id, rule=rule_id, reason=exc.reason, attempt=entry[1])
                 return
             entry[2] = True
-            logger.info("auto_answer_pressed", session_id=session_id, rule=rule_id, risk=rule.info.risk, label=rule.label,
+            logger.info("auto_answer_pressed", session_id=session_id, rule=rule_id, risk=rule.info.risk, label=label,
                         evidence=verdict.evidence, fingerprint=ctx.dialog.fingerprint[:12])
-            await self._announce(session_id, ctx, rule, verdict.evidence)
+            await self._announce(session_id, ctx, rule, label, verdict.evidence)
         finally:
             self._inflight.discard(key)
 
-    async def _announce(self, session_id: str, ctx: rules.Ctx, rule: rules.ScreenRule, evidence: str) -> None:
+    async def _announce(self, session_id: str, ctx: rules.Ctx, rule: rules.ScreenRule, label: str, evidence: str) -> None:
         if self._on_pressed is None:
             return
         info = await self._info(session_id)
         if info is None:
             logger.info("auto_answer_unrecorded", session_id=session_id, rule=rule.info.id, reason="row_gone")
             return
-        self._on_pressed(info, ctx.dialog, rule.info.id, rule.label, evidence)
+        self._on_pressed(info, ctx.dialog, rule.info.id, label, evidence)
 
     def forget(self, live_ids: Iterable[str]) -> None:
         if not self._state:

@@ -31,6 +31,9 @@ def test_keystroke_not_blocked_by_slow_owner_input(monkeypatch) -> None:
         await asyncio.sleep(2)
 
     class Manager:
+        def tmux_name_for(self, session_id):
+            return None
+
         async def send_input(self, text, session_id=None):
             writes.append((text, time.monotonic()))
 

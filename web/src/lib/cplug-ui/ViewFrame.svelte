@@ -12,6 +12,9 @@
     import HostFrame from './HostFrame.svelte';
     import { frameTopics, type FrameTopicHandle } from './frame-topics';
     import { shareRelay } from './share-relay';
+    import { createTrailingLimiter } from './trailing-limiter';
+    import { ACTIONS_WINDOW_MS, MAX_ACTION_LISTS, type ViewAction } from './view-actions';
+    import { widgetMenuGesture, type OpenWidgetMenu } from '../item-menu/widget-gesture';
 
     interface Props {
         plugin: Pick<CplugItem, 'cplugId' | 'name' | 'unverified' | 'declared' | 'installKey'>;
@@ -20,10 +23,14 @@
         viewRole?: ViewRole;
         onShow?: () => void;
         visible?: boolean;
+        bar?: boolean;
+        fill?: boolean;
+        onActions?: (actions: ViewAction[]) => void;
+        onMenu?: OpenWidgetMenu;
         t: Translate;
     }
 
-    const { plugin, view, surface, viewRole, onShow, visible = true, t }: Props = $props();
+    const { plugin, view, surface, viewRole, onShow, visible = true, bar = true, fill = false, onActions, onMenu, t }: Props = $props();
     const role = $derived<ViewRole>(viewRole ?? surface);
     const declared = $derived(plugin.declared ?? { routes: [], tools: [] });
     const nonce = newNonce();
@@ -49,11 +56,44 @@
 
     let topicHandle: FrameTopicHandle | null = null;
 
+    const MENU_GAP_MS = 500;
+    let lastMenuAt = -Infinity;
+    let latestActions: ViewAction[] = [];
+    const actionLimiter = createTrailingLimiter(MAX_ACTION_LISTS, ACTIONS_WINDOW_MS);
+
+    function takeActions(list: ViewAction[]): { ok: true } | { ok: false; error: string } {
+        if (!onActions || surface !== 'panel') return { ok: false, error: 'unavailable' };
+        latestActions = list;
+        actionLimiter.hit(() => onActions(latestActions));
+        return { ok: true };
+    }
+
+    function takeMenu(at: { x: number; y: number } | null): void {
+        if (!onMenu || surface !== 'panel' || !frameEl || !armed || document.activeElement !== frameEl) return;
+        const now = Date.now();
+        if (now - lastMenuAt < MENU_GAP_MS) return;
+        lastMenuAt = now;
+        const box = frameEl.getBoundingClientRect();
+        onMenu(at ? { x: box.left + Math.min(Math.max(at.x, 0), box.width), y: box.top + Math.min(Math.max(at.y, 0), box.height) } : null, frameEl);
+    }
+
+    export function sendAction(id: string, on?: boolean): void {
+        bridge.send('action', on === undefined ? { id } : { id, on });
+    }
+
+    function canSee(): boolean {
+        return visible && !document.hidden;
+    }
+
     const bridge = createBridge({
         nonce,
         get role() { return role; },
-        features: () => (plugin.installKey ? ['share', 'visible', ...(frameTopics().live() ? ['topic'] : [])] : []),
+        get label() { return `${plugin.cplugId}/${view}`; },
+        features: () => (plugin.installKey ? ['share', 'visible', ...(frameTopics().live() ? ['topic'] : []), ...(surface === 'panel' && onActions ? ['actions'] : []), ...(surface === 'panel' && onMenu ? ['menu'] : [])] : []),
+        onActions: takeActions,
+        onMenu: takeMenu,
         theme: () => readTheme(),
+        visible: canSee,
         onShare: (value, show) => {
             if (!plugin.installKey) return { ok: false, error: 'unavailable' };
             const shared = shareRelay.share(plugin.installKey, nonce, value);
@@ -66,7 +106,7 @@
         viewport: () => ({ w: window.innerWidth, h: window.innerHeight }),
         onState: (s) => { viewState = s; },
         onHitRegions: (rects) => { if (surface === 'overlay') declaredRects = rects; },
-        onReload: () => { src = null; failed = true; declaredRects = []; },
+        onReload: () => { src = null; failed = true; declaredRects = []; actionLimiter.cancel(); onActions?.([]); },
     });
 
     const watch = createTerminalWatch(terminalRects, () => { layoutTick++; });
@@ -88,11 +128,14 @@
         told = now;
         bridge.send('visible', { visible: now });
         topicHandle?.refresh();
+        bridge.release();
     });
 
     onMount(() => {
         armed = role === 'menu';
         const listen = (event: MessageEvent): void => bridge.handle(event);
+        const pageShown = (): void => bridge.release();
+        document.addEventListener('visibilitychange', pageShown);
         const relayout = (): void => { layoutTick++; };
         window.addEventListener('message', listen);
         window.addEventListener('resize', relayout);
@@ -110,12 +153,14 @@
         );
         return () => {
             window.removeEventListener('message', listen);
+            document.removeEventListener('visibilitychange', pageShown);
             window.removeEventListener('resize', relayout);
             stopFocus();
             stopTheme();
             unshare();
             topicHandle?.release();
             topicHandle = null;
+            actionLimiter.cancel();
             document.removeEventListener('focusin', disarm, true);
             window.removeEventListener('focus', rearm);
         };
@@ -140,14 +185,15 @@
         ></iframe>
         {#if surface === 'panel' && !armed}
             <button type="button" class="cu-gate__shield" data-cplug-gate data-base-exempt="an invisible click shield over a frame, not a drawn control" title={t('cplug_ui.panel_activate')} aria-label={t('cplug_ui.panel_activate')}
-                onclick={() => { armed = true; frameEl?.focus(); }}></button>
+                onclick={() => { armed = true; frameEl?.focus(); }}
+                {...(onMenu ? widgetMenuGesture(onMenu) : {})}></button>
         {/if}
         </div>
     {/if}
 {/snippet}
 
 {#if surface === 'panel'}
-    <HostFrame name={plugin.name} unverified={plugin.unverified} note={failed ? t('cplug_ui.could_not_draw') : null} {t}>
+    <HostFrame name={plugin.name} unverified={plugin.unverified} note={failed ? t('cplug_ui.could_not_draw') : null} {bar} {fill} {t}>
         {@render frame()}
     </HostFrame>
 {:else if !failed}

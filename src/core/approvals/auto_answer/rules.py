@@ -9,10 +9,10 @@ from typing import Any, Awaitable, Callable, Optional, Sequence, Tuple
 
 import structlog
 
-from src.core.approvals import carried_trust, dev_channels, mcp_multi
+from src.core.approvals import carried_trust, dev_channels, effort_nudge, mcp_multi
 from src.core.approvals.auto_answer import catalog, mcp_installed
 from src.core.approvals.extract import CHROME_ACCEPT_LABEL, CHROME_DECLINE_LABEL, DEV_CHANNELS_ACCEPT, is_chrome_prompt
-from src.core.session_startup_gate import SCREEN_BYPASS_PERMISSIONS, SCREEN_MCP_SERVER, SCREEN_TRUST
+from src.core.session_startup_gate import SCREEN_BYPASS_PERMISSIONS, SCREEN_EFFORT_NUDGE, SCREEN_MCP_SERVER, SCREEN_TRUST
 from src.core.swarm.auto_trust import (GATE_AWAITING, is_claude_trust_dialog, is_plain_imports_dialog, plain_dialog_folder,
                                        shows_folder)
 
@@ -63,6 +63,10 @@ class ScreenRule:
     guard: Guard
     needs_gate: bool = False
     needs_pid: bool = False
+    pick: Optional[Callable[[Any], str]] = None
+
+    def label_for(self, dialog: Any) -> str:
+        return self.pick(dialog) if self.pick is not None else self.label
 
 
 async def _dev_channels_guard(ctx: Ctx) -> Verdict:
@@ -185,6 +189,19 @@ async def _mcp_server_guard(ctx: Ctx) -> Verdict:
     return Verdict(ALLOW, evidence="installed")
 
 
+def is_effort_dialog(dialog: Any) -> bool:
+    return (dialog is not None and getattr(dialog, "family", None) == "claude" and getattr(dialog, "startup_kind", None) == SCREEN_EFFORT_NUDGE
+            and len(dialog.rows) == 2 and dialog.cursor is not None and effort_nudge.KEEP_ROW.match(dialog.rows[dialog.cursor].label) is not None)
+
+
+def _effort_keep_label(dialog: Any) -> str:
+    return str(dialog.rows[dialog.cursor].label)
+
+
+async def _effort_keep_guard(ctx: Ctx) -> Verdict:
+    return Verdict(ALLOW, evidence="keep_current")
+
+
 async def _mcp_servers_guard(ctx: Ctx) -> Verdict:
     work, folder = await _measured_folder(ctx)
     if work is None or folder is None:
@@ -218,6 +235,7 @@ RULES: Tuple[ScreenRule, ...] = (
     ScreenRule(catalog.info_for(catalog.RULE_BYPASS_ACCEPT), is_bypass_dialog, BYPASS_ACCEPT_LABEL, _bypass_accept_guard),
     ScreenRule(catalog.info_for(catalog.RULE_MCP_SERVER), is_mcp_server_dialog, MCP_APPROVE_LABEL, _mcp_server_guard, needs_gate=True),
     ScreenRule(catalog.info_for(catalog.RULE_MCP_SERVER), is_mcp_servers_dialog, mcp_multi.SUBMIT_LABEL, _mcp_servers_guard, needs_gate=True),
+    ScreenRule(catalog.info_for(catalog.RULE_EFFORT_KEEP), is_effort_dialog, "Keep", _effort_keep_guard, pick=_effort_keep_label),
 )
 
 

@@ -57,6 +57,8 @@ _MOD_SOURCE_EXT = (".ts", ".tsx", ".mts", ".cts", ".js", ".mjs", ".cjs", ".jsx")
 _MOD_FILE_EXT = _MOD_SOURCE_EXT + (".json", ".md")
 _MOD_MAX_LISTED = 10
 
+_MOD_GENERATED_DIR = ".claude-plugin/types/"
+
 
 def _walk(folder: Path) -> List[str]:
     found: List[str] = []
@@ -301,6 +303,8 @@ def prepare_kind(kind: str, folder_path: str, version: str, handle: str = "") ->
     folder = Path(os.path.realpath(folder_path))
     prepared = publish_prepare.Prepared(name=folder.name, version=version, kind=kind)
     paths = _walk(folder)
+    if kind == KIND_MOD:
+        paths = [p for p in paths if not p.startswith(_MOD_GENERATED_DIR)]
     read = _read_all(folder, paths, prepared, kind)
     if kind == KIND_THEME:
         _check_theme(paths, read, prepared)

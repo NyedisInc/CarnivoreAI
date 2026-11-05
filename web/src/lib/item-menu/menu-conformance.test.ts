@@ -67,7 +67,7 @@ const CONTEXT_KNOWN: Record<string, string> = {
     'web/src/widget-harness/Harness.svelte': HARNESS,
 };
 
-const CONTEXT_OWNERS = ['web/src/lib/sidebar-shell/heading-events.ts', 'web/src/lib/sidebar-shell/row-events.ts', 'web/src/lib/item-menu/page-row.ts'];
+const CONTEXT_OWNERS = ['web/src/lib/sidebar-shell/heading-events.ts', 'web/src/lib/sidebar-shell/row-events.ts', 'web/src/lib/item-menu/page-row.ts', 'web/src/lib/item-menu/widget-gesture.ts'];
 
 function sources(rel: string, exts: string[]): string[] {
     const out: string[] = [];

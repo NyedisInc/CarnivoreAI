@@ -63,3 +63,8 @@ match, so a bump you have not recorded here cannot land quietly.
 (its `peerDependencies` name `xterm@^5.3.0`). Its UMD bundle defines the
 global `SearchAddon`, and the class is `SearchAddon.SearchAddon` - the
 same double-name shape the fit and webgl add-ons use.
+
+`client/js/canvas-font-trim.js` (#2806) is a shim loaded before xterm.js: Chromium
+156 rejects a canvas `ctx.font` with a leading space and the webgl add-on emits one
+for regular text. xterm 6.0.0 / addon-webgl 0.19.0 still emit it as of 2026-11-05.
+It installs only when a probe shows the bug; drop it when the probe stops installing.

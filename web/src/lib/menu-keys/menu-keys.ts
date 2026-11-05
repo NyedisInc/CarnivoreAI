@@ -3,6 +3,18 @@ import { assignMenuKeys, registeredKey } from '../../../../client/js/menu-keys.j
 
 export { assignMenuKeys, registeredKey };
 
+interface KeyedNode {
+    id: string;
+    label: string;
+    blocked?: string;
+    swatches?: unknown;
+    keyless?: boolean;
+}
+
+export function keysOfNodes(nodes: readonly KeyedNode[]): string[] {
+    return assignMenuKeys(nodes.map((n) => ({ id: n.id, label: n.label, skip: !!n.blocked || !!n.swatches || !!n.keyless })));
+}
+
 function typing(target: EventTarget | null): boolean {
     const el = target as HTMLElement | null;
     if (!el || !el.tagName) return false;

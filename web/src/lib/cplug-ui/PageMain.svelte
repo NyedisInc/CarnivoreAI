@@ -12,7 +12,7 @@
 <div class="cu-page cu-page--main" data-page-main>
     {#if entry}
         {#key entry.key}
-            <ViewFrame plugin={entry.plugin} view={entry.main} surface="panel" viewRole="page" {t} />
+            <ViewFrame plugin={entry.plugin} view={entry.main} surface="panel" fill viewRole="page" {t} />
         {/key}
     {:else}
         <p class="cu-page__off" role="status">{t('cplug_ui.panel_off')}</p>

@@ -15,6 +15,7 @@ function nodeOf(action: DeclaredAction): MenuNode {
     ...(action.checked === undefined ? {} : { checked: action.checked }),
     ...(action.toggle ? { toggle: true } : {}),
     ...(action.blocked ? { blocked: action.blocked } : {}),
+    ...(action.keyless ? { keyless: true } : {}),
     run: action.run,
   };
 }

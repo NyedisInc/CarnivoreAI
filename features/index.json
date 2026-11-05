@@ -11274,23 +11274,24 @@
     {
       "api_routes": [],
       "area": "terminal",
-      "description": "Make terminal text bigger or smaller, and pick the font it is drawn in, on this device only: a phone and a big screen can each keep their own. Every open terminal changes at once, with no reload. Prompt-theme icons (starship, powerlevel10k) draw through a bundled icon font whatever font you pick. Bigger text in one window can shrink a session you also have open in another window, because a shared pane takes the smallest window's size; the size crown decides which window sets it.",
+      "description": "Make terminal text bigger or smaller, and pick the font and weight (light, normal, medium or bold) it is drawn in, on this device only: a phone and a big screen can each keep their own. Every open terminal changes at once, with no reload. Prompt-theme icons (starship, powerlevel10k) draw through a bundled icon font whatever font you pick. Bigger text in one window can shrink a session you also have open in another window, because a shared pane takes the smallest window's size; the size crown decides which window sets it.",
       "docs": [
         "docs/DECISIONS.md"
       ],
       "examples": [
         "On a 4K screen, press Ctrl+Cmd+= twice and every terminal is two points bigger.",
         "On the phone, open Settings, terminal and set the size to 11 so more of Claude's output fits.",
-        "Type JetBrains Mono as the font and the terminals switch to it; clear the box to go back to the system font."
+        "Pick JetBrains Mono from the list and the terminals switch to it; choose medium for a heavier stroke, or clear the box to go back to the system font."
       ],
       "how_to": [
         "Press Ctrl+Cmd+= for bigger text, Ctrl+Cmd+- for smaller, Ctrl+Cmd+0 for the default size.",
         "Or open Settings, terminal, text: use a- and a+ (9 to 28), or reset.",
-        "Type a font name in the font box (the desktop app can list your installed fonts) and leave the box to apply it; the preview line shows it first."
+        "Pick a font from the installed fonts list (each drawn in its own face) or type its name; it saves as you go and the status line says saved. Pick light, normal, medium or bold for the weight."
       ],
       "id": "terminal-text-size",
       "issues": [
-        2726
+        2726,
+        2807
       ],
       "keywords": [
         "font size",
@@ -11298,20 +11299,24 @@
         "zoom",
         "font",
         "nerd font",
-        "terminal"
+        "terminal",
+        "font weight",
+        "bold",
+        "light"
       ],
       "media_exempt": "recaptured at the version bump with the other settings screens",
-      "name": "Terminal text size and font",
+      "name": "Terminal text size, font and weight",
       "since": "2026-10-30",
       "status": "beta",
-      "summary": "Change terminal text size and font per device from Settings, terminal, or with Ctrl+Cmd+= / - / 0.",
+      "summary": "Change terminal text size, font and weight per device from Settings, terminal, or with Ctrl+Cmd+= / - / 0.",
       "surfaces": [
         "client/js/terminal-font.js",
         "web/src/lib/terminal-font/TerminalFontPanel.svelte",
         "web/src/lib/app-keys/chords.ts",
-        "client/fonts/symbols-nerd-font/SymbolsNerdFontMono-Regular.woff2"
+        "client/fonts/symbols-nerd-font/SymbolsNerdFontMono-Regular.woff2",
+        "web/src/lib/terminal-font/installed-fonts.ts"
       ],
-      "updated": "2026-10-30",
+      "updated": "2026-11-05",
       "where": [
         "Settings, terminal, text.",
         "Ctrl+Cmd+= / Ctrl+Cmd+- / Ctrl+Cmd+0 from anywhere in the app."
@@ -38567,7 +38572,7 @@
         "theme-system"
       ],
       "issue": 2033,
-      "release": "v1.16.6",
+      "release": "v1.16.7",
       "summary": "design base slice 3: the shared shells (the .oc-btn and .modal-btn families) now draw from one button recipe in the base, and the shells opt into the base (data-oc-base) so their classless controls take the house look. A bare .modal-btn with no variant class wears the quiet outline secondary instead of the browser's white block. The style guide gains a live review of the shells. The raw-values baseline was regenerated on the merge because master gained raw values in the same files",
       "type": "fixed"
     },
@@ -47659,6 +47664,26 @@
     {
       "date": "2026-11-04",
       "features": [
+        "carnivore-mcp-server"
+      ],
+      "landed_at": "2026-11-05T01:40:32Z",
+      "release": "v1.16.7",
+      "summary": "a Swarm agent's swarm_join, session_restart and session_wake of a session on this computer run with no card again; the proxied-caller guard fired for every caller",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-04",
+      "features": [
+        "computers"
+      ],
+      "landed_at": "2026-11-05T00:49:56Z",
+      "release": "v1.16.6",
+      "summary": "a computer joining by knock now has its own hourly wrong-code cap, so its 6-digit code cannot be guessed online; the far registry row binds its conversation again",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-04",
+      "features": [
         "computers"
       ],
       "issue": 2799,
@@ -47666,6 +47691,42 @@
       "release": "v1.16.6",
       "summary": "a new computer that finds a pack can ask to join it: the main shows a join request popup with the code to read to that computer, and the code is typed there to finish joining; the join port also answers a knock while the computer is findable, which the existing advertise setting switches",
       "type": "added"
+    },
+    {
+      "date": "2026-11-04",
+      "features": [
+        "custom-view-frame"
+      ],
+      "issue": 2802,
+      "landed_at": "2026-11-05T00:15:37Z",
+      "pr": 2802,
+      "release": "v1.16.7",
+      "summary": "a plugin's panel view can be dropped on the widget rails and the drawer's widget area like any other widget, not only the page grid; the widget's size rules decide whether it draws or shows the not available plate",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-04",
+      "features": [
+        "custom-view-frame"
+      ],
+      "issue": 2802,
+      "landed_at": "2026-11-04T23:56:25Z",
+      "pr": 2802,
+      "release": "v1.16.7",
+      "summary": "a plugin's panel view can hand its controls to the widget's one menu (and open it), so its choices sit with the widget's own options; plugin items draw no hotkey letter",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-04",
+      "features": [
+        "custom-view-frame"
+      ],
+      "issue": 2802,
+      "landed_at": "2026-11-04T23:27:48Z",
+      "pr": 2802,
+      "release": "v1.16.7",
+      "summary": "a plugin's panel view now runs inside the one plugin view widget on the shared widget shell, so it is built, themed and scanned like every other widget; saved layouts and installed plugins keep working",
+      "type": "changed"
     },
     {
       "date": "2026-11-04",
@@ -47680,6 +47741,17 @@
       "release": "v1.16.6",
       "summary": "a relayed login shows the owner's usage, reset times, plan, keep-alive result, login time left and open sessions on every Pack computer, the all accounts total counts one quota per real account, and auto-switch can move onto a fresh relayed Claude login",
       "type": "changed"
+    },
+    {
+      "date": "2026-11-04",
+      "features": [
+        "account-auto-switch",
+        "pack-credential-relay"
+      ],
+      "landed_at": "2026-11-05T00:53:32Z",
+      "release": "v1.16.6",
+      "summary": "a relayed login's freshness no longer trusts the paired computer's clock, a resume id cannot be flag-shaped, and a session wait cannot match inside redacted text",
+      "type": "fixed"
     },
     {
       "date": "2026-11-04",
@@ -47734,6 +47806,64 @@
       "release": "v1.16.6",
       "summary": "the toast stack is painted by a Svelte component in web/ instead of client/js: the manager keeps the model, grouping, timers and click rules and publishes a view; four legacy DOM writers leave the guard list; the card's dismiss labels now come from the lowercase catalog",
       "type": "internal"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "beastmode"
+      ],
+      "issue": 2761,
+      "landed_at": "2026-11-05T06:03:17Z",
+      "release": "v1.16.7",
+      "summary": "claude code's startup effort screen (keep your level or switch to high effort) is now seen as a dialog, and with beast mode on it keeps your current level once per launch; with beast off it waits for you",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "terminal-component-tabs"
+      ],
+      "issue": 2806,
+      "landed_at": "2026-11-05T05:11:42Z",
+      "release": "v1.16.7",
+      "summary": "terminal text draws at the right size and font again: a small shim trims the leading space in the canvas font string that Chromium 156 rejects, so the xterm WebGL glyphs no longer bake as 10px sans-serif",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "pack-placement"
+      ],
+      "issue": 2805,
+      "landed_at": "2026-11-05T05:06:03Z",
+      "pr": 2805,
+      "release": "v1.16.7",
+      "summary": "terminals stay responsive on a pegged machine: carnivore runs at interactive priority and demotes other sessions' heavy tool-call children while the machine is busy",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "skills-catalog-publish",
+        "claude-code-mods"
+      ],
+      "issue": 2808,
+      "landed_at": "2026-11-05T05:34:32Z",
+      "pr": 2808,
+      "release": "v1.16.7",
+      "summary": "the publish page now offers local mods from ~/.claude/mods and leaves out the engine-generated types folder",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "terminal-text-size"
+      ],
+      "issue": 2807,
+      "landed_at": "2026-11-05T05:38:48Z",
+      "release": "v1.16.7",
+      "summary": "the terminal font box now saves as you type or pick and says applying, saved or why not; an installed fonts list shows each font in its own face (the desktop app may now list fonts); and a light, normal, medium or bold weight picker restyles every terminal on this device",
+      "type": "fixed"
     }
   ]
 }

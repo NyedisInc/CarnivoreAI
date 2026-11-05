@@ -17,11 +17,11 @@
     {#if entry}
         {#key entry.key}
             <div class="cu-page__step" data-page-step="menu" hidden={phone && step !== 'menu'}>
-                <ViewFrame plugin={entry.plugin} view={entry.menu} surface="panel" viewRole="menu" visible={!phone || step === 'menu'} onShow={() => tabId && phone && showStep(tabId, 'view')} {t} />
+                <ViewFrame plugin={entry.plugin} view={entry.menu} surface="panel" fill viewRole="menu" visible={!phone || step === 'menu'} onShow={() => tabId && phone && showStep(tabId, 'view')} {t} />
             </div>
             {#if phone}
                 <div class="cu-page__step" data-page-step="view" hidden={step !== 'view'}>
-                    <ViewFrame plugin={entry.plugin} view={entry.main} surface="panel" viewRole="page" visible={step === 'view'} {t} />
+                    <ViewFrame plugin={entry.plugin} view={entry.main} surface="panel" fill viewRole="page" visible={step === 'view'} {t} />
                 </div>
             {/if}
         {/key}

@@ -39,6 +39,8 @@ test('same origin stays in the window, other http(s) goes to the browser, the re
 test('only notifications and clipboard write, only for the server origin', () => {
   assert.equal(policy.isPermissionAllowed('notifications', `${ORIGIN}/`, ORIGIN), true);
   assert.equal(policy.isPermissionAllowed('clipboard-sanitized-write', ORIGIN, ORIGIN), true);
+  assert.equal(policy.isPermissionAllowed('local-fonts', ORIGIN, ORIGIN), true);
+  assert.equal(policy.isPermissionAllowed('local-fonts', 'https://example.com/', ORIGIN), false);
   assert.equal(policy.isPermissionAllowed('media', `${ORIGIN}/`, ORIGIN), false);
   assert.equal(policy.isPermissionAllowed('geolocation', `${ORIGIN}/`, ORIGIN), false);
   assert.equal(policy.isPermissionAllowed('notifications', 'https://example.com/', ORIGIN), false);

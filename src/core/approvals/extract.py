@@ -395,6 +395,12 @@ def extract_dialog(text: str, family: Optional[str]) -> Optional[Dialog]:
         plural = mcp_multi.decode(lines)
         if plural is not None:
             return plural
+    if fam == FAMILY_CLAUDE and "effort" in (text or ""):
+        from src.core.approvals import effort_nudge
+
+        nudge = effort_nudge.decode(lines)
+        if nudge is not None:
+            return nudge
     foot, tag = _footer_index(lines, fam)
     if foot is None and fam == FAMILY_CLAUDE:
         foot, tag = _footerless_end(lines), "claude"

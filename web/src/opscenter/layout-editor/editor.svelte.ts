@@ -2,7 +2,7 @@
 import { tick } from 'svelte';
 import { flipCells, measureCells } from '../engine/flip';
 import type { DropTarget, LayoutStore } from '../engine/layout.svelte';
-import { META, isInstanceId, metaFor } from '../engine/meta';
+import { META, isInstanceId, kindOf, metaFor } from '../engine/meta';
 import { PRIMARY_SLOT, type AddRefusal } from '../engine/model';
 import { addSession, sessionInstanceId } from '../engine/components-actions';
 import { flushSave } from '../engine/persist';
@@ -134,6 +134,24 @@ async function animated(store: LayoutStore, act: () => boolean, line: string): P
   return true;
 }
 
+const GRID_ROOT: Record<string, string> = { home: '#launchpad-screen', terminal: '#terminal-grid', warroom: '#warroom-screen' };
+
+function seatPanel(store: LayoutStore, id: SlotId): 'ready' | 'added' | 'refused' {
+  const kind = kindOf(id);
+  if (!kind || !panels().isPanel(kind)) return 'ready';
+  const layout = store.state.layout;
+  if (layout.hidden.includes(id)) return 'ready';
+  const dupe = (): 'refused' => (refusePlacement(t('layout_editor.dupe.here', { title: slotTitle(id) })), 'refused');
+  if (layout.rows.some((row) => row.slots.some((held) => held.id.startsWith(`${kind}:`)))) return dupe();
+  return store.add(kind, id.slice(kind.length + 1)) ? dupe() : 'added';
+}
+
+function sizeSeated(store: LayoutStore, id: SlotId): void {
+  const width = document.querySelector(`${GRID_ROOT[layoutEditor.page ?? 'home'] ?? ''} .oc-cellslot`)?.parentElement?.clientWidth ?? 0;
+  const kind = kindOf(id);
+  if (width > 0 && kind) store.setCellSize(id, panels().fit(kind), width, GUTTER);
+}
+
 export async function addWidget(id: SlotId): Promise<boolean> {
   const store = live();
   if (!store) return false;
@@ -142,7 +160,10 @@ export async function addWidget(id: SlotId): Promise<boolean> {
   const done = await animated(
     store,
     () => {
+      const seat = seatPanel(store, id);
+      if (seat === 'refused') return false;
       store.show(id);
+      if (seat === 'added') sizeSeated(store, id);
       return store.state.layout !== before;
     },
     t('layout_editor.announce.added', { title: slotTitle(id) }),
@@ -159,7 +180,15 @@ export async function dropWidget(id: SlotId, target: DropTarget): Promise<'lande
       title: slotTitle(id),
     });
   const before = measureCells();
-  outcome = store.showAt(id, target);
+  const seat = seatPanel(store, id);
+  if (seat === 'refused') return outcome;
+  if (seat === 'added') {
+    store.moveTo(id, target);
+    sizeSeated(store, id);
+    outcome = 'landed';
+  } else {
+    outcome = store.showAt(id, target);
+  }
   layoutEditor.revision += 1;
   if (outcome === 'unchanged') {
     return outcome;
@@ -220,29 +249,6 @@ export function addAnalyticsWidget(copy?: ChartConfig, target?: DropTarget | nul
   const refusal = store.add('analytics', chart.id);
   if (refusal) return false;
   if (target) store.moveTo(`analytics:${chart.id}` as SlotId, target);
-  layoutEditor.revision++;
-  return true;
-}
-
-const GRID_ROOT: Record<string, string> = { home: '#launchpad-screen', terminal: '#terminal-grid', warroom: '#warroom-screen' };
-
-export function addPanelWidget(kind: string, target?: DropTarget | null, title: string = kind): boolean {
-  const store = live();
-  const tail = panels().tail(kind);
-  if (!store || tail === undefined) return false;
-  const slot = `${kind}:${tail}` as SlotId;
-  if (store.state.layout.rows.some((row) => row.slots.some((held) => held.id === slot || held.id.startsWith(`${kind}:`)))) {
-    refusePlacement(t('layout_editor.dupe.here', { title }));
-    return false;
-  }
-  if (store.state.layout.hidden.includes(slot)) store.show(slot);
-  else if (store.add(kind as InstanceKind, tail)) {
-    refusePlacement(t('layout_editor.dupe.here', { title }));
-    return false;
-  }
-  if (target) store.moveTo(slot, target);
-  const width = document.querySelector(`${GRID_ROOT[layoutEditor.page ?? 'home'] ?? ''} .oc-cellslot`)?.parentElement?.clientWidth ?? 0;
-  if (width > 0) store.setCellSize(slot, panels().fit(kind), width, GUTTER);
   layoutEditor.revision++;
   return true;
 }

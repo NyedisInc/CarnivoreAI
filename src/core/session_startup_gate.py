@@ -37,6 +37,7 @@ SCREEN_ONBOARDING_THEME: str = "onboarding_theme"
 SCREEN_LOGIN_METHOD: str = "login_method"
 SCREEN_DEV_CHANNELS: str = "dev_channels"
 SCREEN_CHROME: str = "chrome_extension"
+SCREEN_EFFORT_NUDGE: str = "effort_nudge"
 SCREEN_UNRECOGNIZED: str = "unrecognized"
 
 SHARED_FOOTER_MARKER: str = "Enter to confirm · Esc to cancel"
@@ -58,6 +59,8 @@ STARTUP_SCREEN_MARKERS: tuple[tuple[str, Marker], ...] = (
     (SCREEN_LOGIN_METHOD, re.compile(r"Select\s+login\s+method:")),
     (SCREEN_DEV_CHANNELS, re.compile(r"WARNING:\s+Loading\s+development\s+channels")),
     (SCREEN_CHROME, re.compile(r"Claude\s+in\s+Chrome\s+extension\s+detected")),
+    (SCREEN_EFFORT_NUDGE, re.compile(r"change\s+this\s+any\s+time\s+with\s+/effort")),
+    (SCREEN_EFFORT_NUDGE, re.compile(r"estimated\s+cost\s+of\s+\S+\s+\(the\s+default\)")),
     (SCREEN_TRUST, SHARED_FOOTER_MARKER),
 )
 

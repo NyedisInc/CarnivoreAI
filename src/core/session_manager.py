@@ -1576,6 +1576,10 @@ class SessionManager:
             after_delivery=lambda: book_command_delivery(self._registry.count_command, self._save_session_metadata, sid, sess),
         )
 
+    def tmux_name_for(self, session_id: Optional[str]) -> Optional[str]:
+        sess = self._registry.sessions.get(self._registry.resolve_session_id(session_id) or "")
+        return sess.tmux_session if sess is not None else None
+
     async def send_input(
         self, data: str, session_id: Optional[str] = None
     ) -> bool:

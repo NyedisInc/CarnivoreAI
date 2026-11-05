@@ -10,18 +10,16 @@
   import type { SessionInfo } from '../api/types';
   import { t } from '../../lib/i18n/index.svelte';
   import { categoryKey, passesFilter } from './drawer-model';
-  import { drawerList, isPanelRow, listKinds, type GroupRow } from './drawer-groups';
+  import { drawerList, listKinds, type GroupRow } from './drawer-groups';
   import { buildView } from './drawer-view';
   import { widgetDrawerView } from './drawer-view-pref.svelte';
   import type { WindowChoice, WindowKind } from './WindowRows.svelte';
   import type { WidgetType } from '../widgets/types';
   import { isPopoutWindow } from '../widgets/fits';
   import { refusePlacement } from '../widgets/chrome/refusal-toast.svelte';
-  import { panels } from '../engine/plugin-kinds';
   import { beginDrawerCarry, sidebarOffers, type CarryTarget } from './drawer-carry';
   import { repeatableInGlance } from '../../lib/drawer-zone/glance';
   import {
-    addPanelWidget,
     addSessionWidget,
     addWidget,
     finishLayoutEditor,
@@ -246,10 +244,6 @@
       refusePlacement(row.sentence);
       return;
     }
-    if (isPanelRow(row)) {
-      if (addPanelWidget(row.manifest.id, null, row.title)) store.announce(t('layout_editor.announce.added', { title: row.title }));
-      return;
-    }
     if (row.widgetId === 'core.analytics') {
       galleryOpen = !galleryOpen;
       return;
@@ -270,15 +264,11 @@
 
   function offerFor(row: GroupRow) {
     const refusal = row.state === 'refused' ? row.sentence : '';
-    const surface = isPanelRow(row)
-      ? row.state === 'placed'
-        ? null
-        : { cell: `${row.manifest.id}:${panels().tail(row.manifest.id) ?? 'panel'}` as SlotId, refusal }
+    const surface = row.cell
+      ? { cell: row.cell, refusal }
       : row.family
         ? { cell: `${row.manifest.id.slice('core.'.length)}:new` as SlotId, refusal }
-        : row.cell
-          ? { cell: row.cell, refusal }
-          : null;
+        : null;
     const none = { refusal: '', moves: null };
     const holds = (zone: readonly string[]) => sidebarOffers(row.manifest, row.title, {
       zone,

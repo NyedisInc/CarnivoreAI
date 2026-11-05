@@ -96,9 +96,10 @@ async def _own_theme_locations(request: Request) -> List[Dict[str, Any]]:
 
 async def _own_plugin_locations(request: Request) -> List[Dict[str, Any]]:
     names = await _installed_names(request, "plugin")
-    if names is None:
+    mod_names = await _installed_names(request, "mod")
+    if names is None or mod_names is None:
         return []
-    return await asyncio.to_thread(publish_plugin_sources.own_plugin_locations, names)
+    return await asyncio.to_thread(publish_plugin_sources.own_plugin_locations, names, mod_names)
 
 
 async def _own_cplug_locations(request: Request) -> List[Dict[str, Any]]:

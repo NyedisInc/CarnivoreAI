@@ -2,10 +2,15 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { homeLayout } from '../engine/layout.svelte';
 import { onHomeChange } from '../engine/arrangement-events';
+import { drawerZone } from '../../lib/drawer-zone/zone-store.svelte';
+import { railEnd, railStores } from '../../lib/session-rail/rail-store.svelte';
+import { dismissRefusal, placementRefusal } from '../widgets/chrome/refusal-toast.svelte';
+import { groupRows, type GroupRow } from './drawer-groups';
+import { landRow } from './drawer-landing';
+import { resolvePlacement } from '../widgets/placement-resolve';
 import type { LayoutPage } from '../engine/types';
 import {
   EDITING_CLASS,
-  addPanelWidget,
   addWidget,
   checkLayoutEditor,
   dropWidget,
@@ -136,18 +141,44 @@ describe('every change is final when made (issue #1776)', () => {
   });
 });
 
-describe('a plugin panel view is one copy per page (#2379)', () => {
+describe('a plugin panel view lands like any widget (#2379, #2802)', () => {
+  const row = (key: string) => ({ id: 'pillpanic', runtime: 'sidecar', enabled: true, state: 'active', name: 'Pill Panic', install_key: key,
+    views: [{ name: 'game', surfaces: ['panel'] }] }) as never;
+  const drawerRow = (): GroupRow => groupRows({ onSurface: placed() as never, disabled: () => false, query: '', t: (key) => key }).find((r) => r.widgetId === 'pillpanic.game')!;
+  const atEnd = { kind: 'new', after: null } as const;
+  const pointer = { x: 0, y: 0 };
+
+  afterEach(async () => (await import('../../lib/cplug-ui/panel-views.svelte')).setPanels([]));
+
   test('a second copy is refused even when the first is a leftover cell of an earlier install', async () => {
     const { setPanels } = await import('../../lib/cplug-ui/panel-views.svelte');
-    const row = (key: string) => ({ id: 'pillpanic', runtime: 'sidecar', enabled: true, state: 'active', name: 'Pill Panic', install_key: key,
-      views: [{ name: 'game', surfaces: ['panel'] }] }) as never;
     setPanels([row('aaaaaaaa11')]);
     enterLayoutEditor();
-    expect(addPanelWidget('pillpanic.game')).toBe(true);
+    landRow(homeLayout, drawerRow(), { area: 'surface', target: atEnd }, pointer);
+    await Promise.resolve();
     expect(placed().filter((id) => id.startsWith('pillpanic.game:'))).toEqual(['pillpanic.game:panel-aaaaaaaa']);
     setPanels([row('bbbbbbbb22')]);
-    expect(addPanelWidget('pillpanic.game')).toBe(false);
+    landRow(homeLayout, drawerRow(), { area: 'surface', target: atEnd }, pointer);
+    await Promise.resolve();
     expect(placed().filter((id) => id.startsWith('pillpanic.game:'))).toEqual(['pillpanic.game:panel-aaaaaaaa']);
-    setPanels([]);
+  });
+
+  test('a row let go on a widget rail lands there, with its install tail, and no refusal is said', async () => {
+    const { setPanels } = await import('../../lib/cplug-ui/panel-views.svelte');
+    setPanels([row('cccccccc33')]);
+    enterLayoutEditor();
+    dismissRefusal();
+    landRow(homeLayout, drawerRow(), { area: 'rail', edge: 'side', spot: railEnd('side'), moves: null }, pointer);
+    expect(railStores.side.items.some((item) => item.widget === 'pillpanic.game' && item.target === 'panel-cccccccc')).toBe(true);
+    expect(placementRefusal.line).toBe('');
+    expect(resolvePlacement({ widget: 'pillpanic.game', target: 'panel-cccccccc' })?.slot).toBe('pillpanic.game:panel-cccccccc');
+  });
+
+  test('a row let go in the drawer area lands there, with its install tail', async () => {
+    const { setPanels } = await import('../../lib/cplug-ui/panel-views.svelte');
+    setPanels([row('dddddddd44')]);
+    enterLayoutEditor();
+    landRow(homeLayout, drawerRow(), { area: 'zone', index: 0, moves: null }, pointer);
+    expect(drawerZone.items.some((item) => item.widget === 'pillpanic.game' && item.target === 'panel-dddddddd')).toBe(true);
   });
 });

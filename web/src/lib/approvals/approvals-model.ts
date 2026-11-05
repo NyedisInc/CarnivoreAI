@@ -100,7 +100,7 @@ export function isStartupPrompt(item: ApprovalItem): boolean {
 
 const STARTUP_KINDS: ReadonlySet<string> = new Set([
   'trust', 'oauth_login', 'codex_trust', 'external_imports', 'mcp_server', 'bypass_permissions',
-  'resume_picker', 'onboarding_theme', 'login_method', 'dev_channels', 'chrome_extension', 'unrecognized',
+  'resume_picker', 'onboarding_theme', 'login_method', 'dev_channels', 'chrome_extension', 'effort_nudge', 'unrecognized',
 ]);
 
 export function startupKindKey(kind: string | undefined): string {

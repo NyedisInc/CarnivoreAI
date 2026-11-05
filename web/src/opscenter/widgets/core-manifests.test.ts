@@ -1,3 +1,5 @@
+import { PLUGIN_VIEW_ID } from '../cells/plugin-view/constants';
+import { PLUGIN_VIEW_TEMPLATE_META } from '../cells/plugin-view/definition';
 import { describe, expect, test } from 'vitest';
 import { ANALYTICS_META, BROWSER_META, CELL_IDS, META, TERMINAL_META } from '../engine/meta';
 import type { CellMeta } from '../engine/types';
@@ -14,6 +16,7 @@ const PAIRS: [string, CellMeta][] = [
   [coreWidgetId('terminal'), TERMINAL_META],
   [coreWidgetId('browser'), BROWSER_META],
   [coreWidgetId('analytics'), ANALYTICS_META],
+  [PLUGIN_VIEW_ID, PLUGIN_VIEW_TEMPLATE_META],
 ];
 
 describe('core manifests', () => {

@@ -8,6 +8,14 @@
     var MAX_FAMILY_LENGTH = 200;
     var SIZE_KEY = 'carnivore.terminal-font-size';
     var FAMILY_KEY = 'carnivore.terminal-font-family';
+    var WEIGHT_KEY = 'carnivore.terminal-font-weight';
+    var DEFAULT_WEIGHT = 'normal';
+    var WEIGHTS = {
+        light: { fontWeight: 300, fontWeightBold: 600 },
+        normal: { fontWeight: 400, fontWeightBold: 700 },
+        medium: { fontWeight: 500, fontWeightBold: 700 },
+        bold: { fontWeight: 700, fontWeightBold: 800 }
+    };
     var SYMBOLS_FAMILY = 'SymbolsNerdFontMono';
     var FALLBACK_BASE = 'monospace';
 
@@ -57,12 +65,18 @@
 
     function family() { return sanitizeFamily(load(FAMILY_KEY)); }
 
+    function weight() {
+        var w = load(WEIGHT_KEY);
+        return w && Object.prototype.hasOwnProperty.call(WEIGHTS, w) ? w : DEFAULT_WEIGHT;
+    }
+
     function optionsFor(base) {
-        return { fontSize: size(), fontFamily: familyStack(family(), base) };
+        var w = WEIGHTS[weight()];
+        return { fontSize: size(), fontFamily: familyStack(family(), base), fontWeight: w.fontWeight, fontWeightBold: w.fontWeightBold };
     }
 
     function notify() {
-        var state = { size: size(), family: family() };
+        var state = { size: size(), family: family(), weight: weight() };
         listeners.forEach(function (fn) {
             try { fn(state); } catch (err) { console.warn('TerminalFont: listener failed', err); }
         });
@@ -77,6 +91,9 @@
             var want = optionsFor(rec.base);
             try {
                 var moved = false;
+                ['fontWeight', 'fontWeightBold'].forEach(function (k) {
+                    if (term.options[k] !== want[k]) { term.options[k] = want[k]; moved = true; }
+                });
                 if (term.options.fontSize !== want.fontSize) { term.options.fontSize = want.fontSize; moved = true; }
                 if (term.options.fontFamily !== want.fontFamily) { term.options.fontFamily = want.fontFamily; moved = true; }
                 if (!moved) return;
@@ -106,11 +123,20 @@
 
     function reset() { return setSize(DEFAULT_SIZE); }
 
+    function setWeight(value) {
+        var w = Object.prototype.hasOwnProperty.call(WEIGHTS, value) ? value : DEFAULT_WEIGHT;
+        store(WEIGHT_KEY, w === DEFAULT_WEIGHT ? null : w);
+        var name = family();
+        if (name) loadFace(name).then(schedule); else schedule();
+        return w;
+    }
+
     function loadFace(name) {
         var fonts = global.document && global.document.fonts;
         if (!fonts || typeof fonts.load !== 'function') return Promise.resolve();
         var px = size() + 'px ';
-        return Promise.all([fonts.load(px + '"' + name + '"'), fonts.load('bold ' + px + '"' + name + '"')])
+        var w = WEIGHTS[weight()];
+        return Promise.all([fonts.load(w.fontWeight + ' ' + px + '"' + name + '"'), fonts.load(w.fontWeightBold + ' ' + px + '"' + name + '"')])
             .then(function () {}, function (err) { console.warn('TerminalFont: font load failed', name, err); });
     }
 
@@ -151,7 +177,7 @@
 
     if (typeof global.addEventListener === 'function') {
         global.addEventListener('storage', function (event) {
-            if (event && (event.key === SIZE_KEY || event.key === FAMILY_KEY)) schedule();
+            if (event && (event.key === SIZE_KEY || event.key === FAMILY_KEY || event.key === WEIGHT_KEY)) schedule();
         });
     }
 
@@ -167,6 +193,9 @@
         optionsFor: optionsFor,
         size: size,
         family: family,
+        weight: weight,
+        setWeight: setWeight,
+        WEIGHTS: WEIGHTS,
         setSize: setSize,
         step: step,
         reset: reset,

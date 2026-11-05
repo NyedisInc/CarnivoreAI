@@ -1,4 +1,5 @@
 
+import { PLUGIN_VIEW_ID } from '../cells/plugin-view/constants';
 import { CORE_MANIFESTS } from '../widgets/core-manifests';
 import { drawingIds, isViewCell } from '../widgets/views';
 import { WIDGET_CATEGORIES, WIDGET_TYPES, type WidgetCategory, type WidgetManifest, type WidgetType } from '../widgets/types';
@@ -13,7 +14,7 @@ export type RowRefusal = 'disabled';
 
 export interface GroupRow {
   widgetId: string;
-  cell: CellId | null;
+  cell: SlotId | null;
   manifest: WidgetManifest;
   title: string;
   type: WidgetType;
@@ -53,8 +54,9 @@ export function refusalWords(title: string, t: GroupInputs['t']): { reason: stri
   return { reason: t('layout_editor.refuse.disabled_short'), sentence: t('layout_editor.refuse.disabled', { title }) };
 }
 
-export function isPanelRow(row: { manifest: WidgetManifest }): boolean {
-  return panels().isPanel(row.manifest.id);
+function panelSlot(kind: string): SlotId | null {
+  const tail = panels().tail(kind);
+  return tail === undefined ? null : (`${kind}:${tail}` as SlotId);
 }
 
 function copiesOn(manifest: WidgetManifest, onSurface: readonly SlotId[]): number {
@@ -68,10 +70,13 @@ export function groupRows(input: GroupInputs): GroupRow[] {
   const rows: GroupRow[] = [];
   for (const manifest of Object.values(manifests)) {
     if (isViewCell(manifest)) continue;
+    if (manifest.id === PLUGIN_VIEW_ID) continue;
     const family = manifest.instancing === 'per-target';
     if (family && manifest.type === 'pane') continue;
     const key = manifest.id.slice('core.'.length);
-    const cell = family || !manifest.id.startsWith('core.') ? null : (key as CellId);
+    const cell = panels().isPanel(manifest.id)
+      ? panelSlot(manifest.id)
+      : family || !manifest.id.startsWith('core.') ? null : (key as CellId);
     const title = input.t(manifest.titleKey);
     const placed = copiesOn(manifest, input.onSurface);
     const refusal: RowRefusal | null = input.disabled(manifest.id) ? 'disabled' : null;

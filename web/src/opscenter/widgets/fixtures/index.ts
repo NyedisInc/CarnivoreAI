@@ -30,6 +30,7 @@ import { automationsFixtures } from './core.automations';
 import { crosstalkFixtures } from './core.crosstalk';
 import { pipelineFixtures } from './core.pipeline';
 import { shellFixtures } from './core.shell';
+import { pluginViewFixtures } from './core.plugin-view';
 import { stressTable } from './stress';
 
 const ANALYTICS = 'core.analytics:';
@@ -69,6 +70,7 @@ const TABLES: Readonly<Record<string, WidgetFixtures>> = {
   'core.task-manager-all': taskManagerListFixtures,
   'core.task-manager-mk2-all': taskManagerListFixtures,
   'core.shell': shellFixtures,
+  'core.plugin-view': pluginViewFixtures,
   'core.stat-running': statTileFixtures,
   'core.stat-sessions': statTileFixtures,
   'core.stat-projects': statTileFixtures,

@@ -1,4 +1,6 @@
 
+import { createTrailingLimiter, type TrailingLimiter } from './trailing-limiter';
+
 export const MAX_SHARE_BYTES = 4096;
 export const MAX_SHARE_DEPTH = 8;
 export const MAX_SENDS = 10;
@@ -12,12 +14,11 @@ interface Install {
     readonly frames: Map<string, Deliver>;
     last: unknown;
     has: boolean;
-    sent: number[];
     from: string | null;
-    timer: ReturnType<typeof setTimeout> | null;
+    readonly limiter: TrailingLimiter;
 }
 
-function depthOf(value: unknown): number {
+export function depthOf(value: unknown): number {
     if (typeof value !== 'object' || value === null) return 0;
     let deepest = 0;
     for (const child of Object.values(value)) deepest = Math.max(deepest, depthOf(child));
@@ -41,14 +42,11 @@ export function createShareRelay(now: () => number = () => Date.now()) {
     const installs = new Map<string, Install>();
     const installOf = (key: string): Install => {
         let found = installs.get(key);
-        if (!found) installs.set(key, (found = { frames: new Map(), last: undefined, has: false, sent: [], from: null, timer: null }));
+        if (!found) installs.set(key, (found = { frames: new Map(), last: undefined, has: false, from: null, limiter: createTrailingLimiter(MAX_SENDS, WINDOW_MS, now) }));
         return found;
     };
 
     const flush = (install: Install): void => {
-        install.timer = null;
-        install.sent = install.sent.filter((at) => now() - at < WINDOW_MS);
-        install.sent.push(now());
         for (const [id, deliver] of install.frames) if (id !== install.from) deliver(install.last);
     };
 
@@ -72,23 +70,15 @@ export function createShareRelay(now: () => number = () => Date.now()) {
             install.last = clean.value;
             install.has = true;
             install.from = frameId;
-            if (install.timer !== null) return { ok: true };
-            install.sent = install.sent.filter((at) => now() - at < WINDOW_MS);
-            if (install.sent.length < MAX_SENDS) {
-                flush(install);
-            } else {
-                const wait = Math.max(0, (install.sent[0] ?? 0) + WINDOW_MS - now());
-                install.timer = setTimeout(() => flush(install), wait);
-            }
+            install.limiter.hit(() => flush(install));
             return { ok: true };
         },
         retain(active: ReadonlySet<string>): void {
             for (const [key, install] of installs) {
                 if (active.has(key)) continue;
-                if (install.timer !== null) clearTimeout(install.timer);
+                install.limiter.cancel();
                 install.has = false;
                 install.last = undefined;
-                install.timer = null;
                 if (install.frames.size === 0) installs.delete(key);
             }
         },

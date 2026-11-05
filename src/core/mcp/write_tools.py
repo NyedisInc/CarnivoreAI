@@ -439,7 +439,7 @@ async def _with_usage(running: Awaitable[dict], usage: Optional[dict]) -> dict:
 async def _swarm_agent_skip(manager: Any, caller: AgentCaller, action: str, target_id: str) -> bool:
     if action not in beast_mode.SWARM_AGENT_ACTIONS or caller.external or str(target_id).startswith("remote:"):
         return False
-    if getattr(caller, "proxied_agent_id", None) is not None:
+    if caller.proxied_agent_id:
         return False
     import sqlite3
 

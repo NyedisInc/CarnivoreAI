@@ -1,23 +1,24 @@
 {
   "api_routes": [],
   "area": "terminal",
-  "description": "Make terminal text bigger or smaller, and pick the font it is drawn in, on this device only: a phone and a big screen can each keep their own. Every open terminal changes at once, with no reload. Prompt-theme icons (starship, powerlevel10k) draw through a bundled icon font whatever font you pick. Bigger text in one window can shrink a session you also have open in another window, because a shared pane takes the smallest window's size; the size crown decides which window sets it.",
+  "description": "Make terminal text bigger or smaller, and pick the font and weight (light, normal, medium or bold) it is drawn in, on this device only: a phone and a big screen can each keep their own. Every open terminal changes at once, with no reload. Prompt-theme icons (starship, powerlevel10k) draw through a bundled icon font whatever font you pick. Bigger text in one window can shrink a session you also have open in another window, because a shared pane takes the smallest window's size; the size crown decides which window sets it.",
   "docs": [
     "docs/DECISIONS.md"
   ],
   "examples": [
     "On a 4K screen, press Ctrl+Cmd+= twice and every terminal is two points bigger.",
     "On the phone, open Settings, terminal and set the size to 11 so more of Claude's output fits.",
-    "Type JetBrains Mono as the font and the terminals switch to it; clear the box to go back to the system font."
+    "Pick JetBrains Mono from the list and the terminals switch to it; choose medium for a heavier stroke, or clear the box to go back to the system font."
   ],
   "how_to": [
     "Press Ctrl+Cmd+= for bigger text, Ctrl+Cmd+- for smaller, Ctrl+Cmd+0 for the default size.",
     "Or open Settings, terminal, text: use a- and a+ (9 to 28), or reset.",
-    "Type a font name in the font box (the desktop app can list your installed fonts) and leave the box to apply it; the preview line shows it first."
+    "Pick a font from the installed fonts list (each drawn in its own face) or type its name; it saves as you go and the status line says saved. Pick light, normal, medium or bold for the weight."
   ],
   "id": "terminal-text-size",
   "issues": [
-    2726
+    2726,
+    2807
   ],
   "keywords": [
     "font size",
@@ -25,20 +26,24 @@
     "zoom",
     "font",
     "nerd font",
-    "terminal"
+    "terminal",
+    "font weight",
+    "bold",
+    "light"
   ],
   "media_exempt": "recaptured at the version bump with the other settings screens",
-  "name": "Terminal text size and font",
+  "name": "Terminal text size, font and weight",
   "since": "2026-10-30",
   "status": "beta",
-  "summary": "Change terminal text size and font per device from Settings, terminal, or with Ctrl+Cmd+= / - / 0.",
+  "summary": "Change terminal text size, font and weight per device from Settings, terminal, or with Ctrl+Cmd+= / - / 0.",
   "surfaces": [
     "client/js/terminal-font.js",
     "web/src/lib/terminal-font/TerminalFontPanel.svelte",
     "web/src/lib/app-keys/chords.ts",
-    "client/fonts/symbols-nerd-font/SymbolsNerdFontMono-Regular.woff2"
+    "client/fonts/symbols-nerd-font/SymbolsNerdFontMono-Regular.woff2",
+    "web/src/lib/terminal-font/installed-fonts.ts"
   ],
-  "updated": "2026-10-30",
+  "updated": "2026-11-05",
   "where": [
     "Settings, terminal, text.",
     "Ctrl+Cmd+= / Ctrl+Cmd+- / Ctrl+Cmd+0 from anywhere in the app."

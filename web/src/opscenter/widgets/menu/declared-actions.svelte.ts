@@ -8,6 +8,7 @@ export interface DeclaredAction {
   toggle?: boolean;
   blocked?: string;
   group?: string;
+  keyless?: boolean;
   run: () => void;
 }
 

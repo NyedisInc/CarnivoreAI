@@ -27,7 +27,7 @@ export function resolvePlacement(ref: PlacementRef): ResolvedPlacement | null {
   if (!manifest) return null;
   const cell = cellManifestFor(manifest, ref.view, allManifests());
   const target = ref.target ?? null;
-  const base = cell.id.slice('core.'.length);
+  const base = cell.id.startsWith('core.') ? cell.id.slice('core.'.length) : cell.id;
   return {
     manifest,
     cell,

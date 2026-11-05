@@ -1,5 +1,5 @@
 import type { MenuNode } from '../drawer-tabs/add-component-menu';
-import { assignMenuKeys } from '../menu-keys/menu-keys';
+import { keysOfNodes } from '../menu-keys/menu-keys';
 
 export interface GoldenEntry {
     id: string;
@@ -17,7 +17,7 @@ export interface GoldenEntry {
 }
 
 export function goldenOfNodes(nodes: readonly MenuNode[], shallow = false): GoldenEntry[] {
-    const keys = assignMenuKeys(nodes.map((n) => ({ id: n.id, label: n.label, skip: !!n.blocked || !!n.swatches })));
+    const keys = keysOfNodes(nodes);
     return nodes.map((n, i) => {
         const out: GoldenEntry = { id: n.id, label: n.label, key: keys[i] ?? '' };
         if (n.blocked) out.disabled = n.blocked;

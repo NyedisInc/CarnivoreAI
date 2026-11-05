@@ -8,6 +8,7 @@ export interface MenuNode {
   children?: MenuNode[];
   run?: () => void;
   blocked?: string;
+  keyless?: boolean;
   sep?: boolean;
   checked?: boolean;
   agent?: AgentMarkFacts;

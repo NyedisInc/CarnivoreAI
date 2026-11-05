@@ -13,6 +13,8 @@
   import { HEADER_OPTION } from '../opscenter/shell/widget-head';
   import { manifestById } from '../opscenter/widgets/core-manifests';
   import type { HarnessWidget } from './catalog';
+  import { PLUGIN_VIEW_ID } from '../opscenter/cells/plugin-view/constants';
+  import { FIXTURE_KIND } from './plugin-view-fixture';
   import type { StandardSize } from '../opscenter/widgets/standard-sizes';
   import type { FitZone } from '../opscenter/widgets/types';
 
@@ -20,12 +22,13 @@
 
   const store = createLayoutStore(zone === 'terminal' ? 'terminal' : 'home');
   if (zone !== 'drawer' && new URLSearchParams(location.search).get('header') === 'off') store.setHeaderShown(widget.slot, false);
-  const manifest = $derived(manifestById(widget.manifest));
+  const placed = widget.manifest === PLUGIN_VIEW_ID ? FIXTURE_KIND : widget.manifest;
+  const manifest = $derived(manifestById(placed));
   if (zone === 'drawer') {
     const headerParam = new URLSearchParams(location.search).get('header');
     const options = headerParam === 'on' || headerParam === 'off' ? { [HEADER_OPTION]: headerParam === 'on' } : undefined;
     const seed: ZoneItemModel = {
-      widget: widget.manifest,
+      widget: placed,
       look: null,
       ...(widget.target ? { target: widget.target } : {}),
       ...(options ? { options } : {}),
@@ -67,7 +70,7 @@
     <div class="wh-cell wh-cell--drawer" data-harness-cell {style}>
       {#if manifest && size.name === 'glance'}
         <GlanceRow
-          entries={[{ key: widget.manifest, widget: widget.manifest, manifest, options: widget.target ? { target: widget.target } : {} }]}
+          entries={[{ key: placed, widget: placed, manifest, options: widget.target ? { target: widget.target } : {} }]}
           onopen={() => undefined}
         />
       {:else if manifest}

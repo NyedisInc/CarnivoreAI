@@ -4,6 +4,8 @@ import { ANALYTICS_META, BROWSER_META, CELL_IDS, META, TERMINAL_META, kindOf } f
 import { isPluginSlot } from '../engine/plugin-kinds';
 import { resetLayout } from '../engine/model';
 import type { CellId, CellMeta, InstanceKind, PluginKind, SlotId } from '../engine/types';
+import { PLUGIN_VIEW_ID } from '../cells/plugin-view/constants';
+import { PLUGIN_VIEW_EXTRAS, PLUGIN_VIEW_TEMPLATE_META } from '../cells/plugin-view/definition';
 import { fitsFor } from './fits';
 import { validateManifest } from './validate';
 import {
@@ -210,6 +212,13 @@ export const CORE_MANIFESTS: Readonly<Record<string, WidgetManifest>> = Object.f
       coreWidgetId(kind),
       manifestFromMeta(kind, INSTANCE_BASES[kind], WIDGET_CANVASES, 'per-target'),
     ]),
+    [
+      PLUGIN_VIEW_ID,
+      manifestFromMeta(PLUGIN_VIEW_ID as InstanceKind, PLUGIN_VIEW_TEMPLATE_META, WIDGET_CANVASES, 'per-target', PLUGIN_VIEW_EXTRAS, {
+        id: PLUGIN_VIEW_ID,
+        version: CORE_WIDGET_VERSION,
+      }),
+    ],
   ]),
 );
 
@@ -251,7 +260,7 @@ export function allManifests(): Readonly<Record<string, WidgetManifest>> {
 }
 
 export function manifestById(id: string): WidgetManifest | undefined {
-  return CORE_MANIFESTS[id] ?? DRAFT_MANIFESTS.get(id);
+  return CORE_MANIFESTS[id] ?? DRAFT_MANIFESTS.get(id) ?? PLUGIN_MANIFESTS.get(id);
 }
 
 export function manifestForSlot(slotId: SlotId): WidgetManifest | undefined {

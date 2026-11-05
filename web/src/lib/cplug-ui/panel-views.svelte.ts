@@ -1,20 +1,22 @@
 import { registerPluginBinding } from '../../opscenter/cells/registry';
 import { pluginKindMeta, registerPluginKind, setPanelProvider } from '../../opscenter/engine/plugin-kinds';
-import type { CellMeta, PluginKind, SlotId } from '../../opscenter/engine/types';
+import type { PluginKind } from '../../opscenter/engine/types';
 import { setPluginPreview } from '../../opscenter/layout-editor/thumbnails';
-import { SIZE_UNIT_PX } from '../../opscenter/widgets/fits';
 import { registerPluginDeclaration } from '../../opscenter/widgets/fit-declarations';
 import { registerPluginManifest } from '../../opscenter/widgets/core-manifests';
 import { GRID_SIZE_NAMES, NAMED_SIZE_UNITS, isGridSizeName, type GridSizeName } from '../../opscenter/widgets/named-sizes';
 import type { FitSize, WidgetManifest } from '../../opscenter/widgets/types';
 import { i18n, t } from '../i18n/index.svelte';
 import { toCplugItem, type CplugItem, type CplugRow, type CplugViewRow } from '../plugins-page/cplugs-adapter';
-import PanelCell from './PanelCell.svelte';
+import PluginViewCell from '../../opscenter/cells/plugin-view/Cell.svelte';
+import { DEFAULT_PANEL_MIN, INSTALL_KEY_CHARS, MAX_MIN_UNITS, PANEL_FIT, PANEL_TAIL } from '../../opscenter/cells/plugin-view/constants';
+import { panelMeta } from '../../opscenter/cells/plugin-view/definition';
 
-const PANEL_TAIL = 'panel';
-export const PANEL_FIT = { w: 6, h: 5 };
-const DEFAULT_FITS: PanelFits = { sizes: ['medium', 'large', 'full'], min: { w: 3, h: 3 }, anySize: true };
-const MAX_MIN = 12;
+export { PANEL_FIT };
+
+const TOO_SHORT_SIZES: readonly GridSizeName[] = ['small', 'wide'];
+
+const DEFAULT_FITS: PanelFits = { sizes: ['medium', 'large', 'full'], min: DEFAULT_PANEL_MIN, anySize: true };
 
 export interface PanelFits {
     readonly sizes: readonly GridSizeName[];
@@ -44,9 +46,10 @@ export function word(raw: string): string {
 
 export function fitsOf(raw: CplugViewRow['fits']): PanelFits {
     if (!raw || !Array.isArray(raw.sizes) || raw.sizes.length === 0 || !raw.sizes.every(isGridSizeName)) return DEFAULT_FITS;
-    const sizes = GRID_SIZE_NAMES.filter((name) => raw.sizes?.includes(name));
+    const sizes = GRID_SIZE_NAMES.filter((name) => raw.sizes?.includes(name) && !TOO_SHORT_SIZES.includes(name));
+    if (sizes.length === 0) return DEFAULT_FITS;
     const lowest = { w: Math.min(...sizes.map((n) => NAMED_SIZE_UNITS[n].w)), h: Math.min(...sizes.map((n) => NAMED_SIZE_UNITS[n].h)) };
-    const whole = (v: unknown, cap: number): number | null => (typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= Math.min(MAX_MIN, cap) ? v : null);
+    const whole = (v: unknown, cap: number): number | null => (typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= Math.min(MAX_MIN_UNITS, cap) ? v : null);
     const min = { w: whole(raw.min?.w, lowest.w) ?? lowest.w, h: whole(raw.min?.h, lowest.h) ?? lowest.h };
     return { sizes, min, anySize: raw.anySize === true };
 }
@@ -73,7 +76,7 @@ export function panelEntries(rows: readonly CplugRow[]): PanelEntry[] {
             seen.add(kind);
             const plugin = toCplugItem(row, t);
             const title = mine.length > 1 ? `${plugin.name} ${view.name}` : plugin.name;
-            const tail = row.install_key ? `${PANEL_TAIL}-${word(row.install_key).slice(0, 8)}` : PANEL_TAIL;
+            const tail = row.install_key ? `${PANEL_TAIL}-${word(row.install_key).slice(0, INSTALL_KEY_CHARS)}` : PANEL_TAIL;
             out.push({ kind, key: `${row.id}:${row.install_key ?? ''}:${view.name}`, plugin, view: view.name, title, tail, fits: fitsOf(view.fits) });
         }
     }
@@ -101,34 +104,13 @@ function infoKeysOf(entry: PanelEntry): { about: string; data: string } {
     return { about, data: fallback.data };
 }
 
-function metaOf(kind: string, titleKey: string, fits: PanelFits): CellMeta {
-    return {
-        id: `${kind}:${PANEL_TAIL}` as SlotId,
-        titleKey,
-        icon: 'plug',
-        iconTone: 'oc-cyan',
-        showCount: false,
-        chrome: 'card',
-        titleHeight: 31,
-        defaultRow: 'r1',
-        defaultIndex: 0,
-        defaultFr: 1,
-        defaultHeight: 320,
-        minPx: fits.min.w * SIZE_UNIT_PX.w,
-        minHeight: fits.min.h * SIZE_UNIT_PX.h,
-        widthStates: [{ name: 'narrow', min: 0 }, { name: 'wide', min: 560 }],
-        heightStates: [{ name: 'strip', min: 0 }, { name: 'pane', min: 200 }],
-        phoneOrder: 23,
-    } as CellMeta;
-}
-
 function register(entry: PanelEntry): void {
     const titleKey = titleKeyOf(entry.kind, entry.title);
     try {
         i18n.extendCatalog?.(STRING_OWNER, { [titleKey]: entry.title });
     } catch {
     }
-    const meta = metaOf(entry.kind, titleKey, entry.fits);
+    const meta = panelMeta(entry.kind, titleKey, entry.fits.min);
     const kind = entry.kind as PluginKind;
     PANEL_KINDS.add(entry.kind);
     INFO.set(entry.kind, infoKeysOf(entry));
@@ -136,7 +118,7 @@ function register(entry: PanelEntry): void {
     registerPluginKind(kind, meta);
     registerPluginDeclaration({ id: kind, instancing: 'per-target', fits: { sizes: [...entry.fits.sizes], anySize: entry.fits.anySize, max_per_surface: 1 } });
     MANIFESTS.set(kind, registerPluginManifest(kind, meta, { category: 'plugins', type: 'plugin', capabilities: [] }, entry.plugin.version ?? '1.0.0'));
-    registerPluginBinding(kind, { component: PanelCell });
+    registerPluginBinding(kind, { component: PluginViewCell });
 }
 
 export function setPanels(rows: readonly CplugRow[]): void {

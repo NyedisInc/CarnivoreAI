@@ -17,6 +17,7 @@ from src.api.resize_negotiation import apply_negotiated_resize
 from src.api import ws_repaint
 from src.api import terminal_socket_role as socket_role
 from src.core import db, viewer_fanout
+from src.core.pack.reserve import session_demote
 from src.core.perf_hooks.monitor import PERF
 from src.api.ws_input_pipeline import InputPipeline
 
@@ -65,6 +66,8 @@ async def receive_messages(
 
     async def deliver_input(text: str) -> None:
         await session_manager.send_input(text, session_id=session_id)
+        if text:
+            session_demote.note_viewer_input(session_manager.tmux_name_for(session_id))
         if websocket.scope.get('peer_grant') is None and text:
             from src.core.crosstalk.contacts import schedule_owner_input
             schedule_owner_input(websocket.app, session_id)

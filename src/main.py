@@ -26,6 +26,7 @@ from src.api.joined_lockdown import JoinedLockdownMiddleware
 from src.api.json_gzip import JsonGzipMiddleware
 from src.core.boot.catalog import build_registry as build_boot_registry
 from src.core.boot.context import BootContext
+from src.core.perf_hooks import thread_qos
 from src.core.boot.steps import BootRunner
 from src.api.shell.pages import router as shell_page_router
 from src.api.shell.static import install_static
@@ -102,6 +103,7 @@ logger = structlog.get_logger()
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("application_starting", version=resolve_version() or "unknown")
     live_log_level_expiry.arm_at_boot(settings.log_level, Path(settings.auth_config_file).expanduser())
+    thread_qos.request_user_interactive("event_loop")
     boot_ctx = BootContext(app=app)
     boot_runner = BootRunner(build_boot_registry())
     await boot_runner.start_all(boot_ctx)

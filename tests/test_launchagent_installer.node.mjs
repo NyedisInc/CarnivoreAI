@@ -273,7 +273,7 @@ test('upgradePlistIfNeeded: idempotent - a second call on an already-upgraded pl
   const second = installer.upgradePlistIfNeeded(appPath);
   assert.equal(second.ran, true);
   assert.equal(second.upgraded, false, 'a plist that already has KeepAlive was rewritten again');
-  assert.equal(second.details, 'plist already has KeepAlive and the current log paths');
+  assert.equal(second.details, 'plist already has KeepAlive, ProcessType and the current log paths');
 
   const afterSecond = fs.readFileSync(installer.plistPath, 'utf8');
   assert.equal(afterSecond, afterFirst, 'the file changed on a call that should have been a no-op');

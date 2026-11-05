@@ -51,6 +51,23 @@
     box-shadow: inset 0 -1px 0 0 var(--oc-line-rule);
 }
 
+.cu-frame--fill {
+    flex: 1;
+    min-height: 0;
+}
+
+.cu-frame--fill > .cu-box {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    overflow: hidden;
+}
+
+.cu-frame--fill .cu-gate,
+.cu-frame--fill .cu-view {
+    height: 100%;
+}
+
 .cu-box {
     position: relative;
     z-index: 0;
@@ -234,10 +251,11 @@
 }
 
 .cu-gate__shield {
+    --_bd: var(--oc-focus-quiet);
     position: absolute;
     inset: 0;
     padding: 0;
-    border: 0;
+    border: 1px solid transparent;
     background: transparent;
     cursor: pointer;
 }
@@ -276,24 +294,6 @@
 
 .cu-page__step[hidden] {
     display: none;
-}
-
-.cu-page > .cu-frame,
-.cu-page__step > .cu-frame {
-    flex: 1;
-    min-height: 0;
-}
-
-.cu-page .cu-box {
-    flex: 1;
-    min-height: 0;
-    max-height: none;
-    overflow: hidden;
-}
-
-.cu-page .cu-gate,
-.cu-page .cu-view {
-    height: 100%;
 }
 
 .cu-page .cu-page__off {

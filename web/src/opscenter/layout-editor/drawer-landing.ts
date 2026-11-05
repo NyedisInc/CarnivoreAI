@@ -9,18 +9,12 @@ import type { RailEdge } from '../../lib/session-rail/rail-model';
 import type { RailSpot } from '../../lib/session-rail/rail-sections';
 import { addChart } from '../cells/analytics/state.svelte';
 import type { CarryTarget } from './drawer-carry';
-import { isPanelRow, type GroupRow } from './drawer-groups';
-import { addAnalyticsWidget, addPanelWidget, dropWidget } from './editor.svelte';
-import { refusePlacement } from '../widgets/chrome/refusal-toast.svelte';
+import type { GroupRow } from './drawer-groups';
+import { addAnalyticsWidget, dropWidget } from './editor.svelte';
 import { askDuplicate, duplicateKind } from './duplicate-prompt.svelte';
 
 export function landRow(store: LayoutStore, row: GroupRow, target: CarryTarget, pointer: { x: number; y: number }): void {
-  if (isPanelRow(row)) {
-    if (target.area !== 'surface') refusePlacement(t('layout_editor.refuse.panel_surface_only'));
-    else if (addPanelWidget(row.manifest.id, target.target, row.title)) store.announce(t('layout_editor.announce.added', { title: row.title }));
-    return;
-  }
-  if (row.family) {
+  if (row.family && !row.cell) {
     landFamilyCopy(store, row, target);
     return;
   }
@@ -44,6 +38,10 @@ export function landRow(store: LayoutStore, row: GroupRow, target: CarryTarget, 
   landNow(store, row, target);
 }
 
+function fixedTarget(row: GroupRow): string | undefined {
+  return row.family && row.cell ? row.cell.slice(row.manifest.id.length + 1) : undefined;
+}
+
 export function moveExisting(row: GroupRow, target: CarryTarget, inGlance: string | null): void {
   if (target.area === 'surface') {
     if (row.cell) void dropWidget(row.cell, target.target);
@@ -62,12 +60,12 @@ export function landNow(store: LayoutStore, row: GroupRow, target: CarryTarget):
     if (row.cell) void dropWidget(row.cell, target.target);
   } else if (target.area === 'zone') {
     if (target.moves) drawerZone.move(target.moves, target.index);
-    else addToZone(store, row.manifest, target.index);
+    else addToZone(store, row.manifest, target.index, fixedTarget(row));
   } else if (target.area === 'rail') {
-    addToRail(store, target.edge, row.manifest.id, row.title, target.spot);
+    addToRail(store, target.edge, row.manifest.id, row.title, target.spot, fixedTarget(row));
   } else if (target.moves) {
     drawerZone.moveGlance(target.moves, target.index);
-  } else if (drawerZone.addGlance(row.manifest.id, repeatableInGlance(row.manifest.id), target.index)) {
+  } else if (drawerZone.addGlance(row.manifest.id, repeatableInGlance(row.manifest.id), target.index, glanceTarget(row))) {
     store.announce(t('layout_editor.announce.glance_added', { title: row.title }));
   }
 }
@@ -87,8 +85,13 @@ export function landFamilyCopy(store: LayoutStore, row: GroupRow, target: CarryT
   }
 }
 
-export function addToZone(store: LayoutStore, manifest: WidgetManifest, index?: number): void {
-  if (drawerZone.add(manifest.id, index)) store.announce(t('layout_editor.announce.zone_added', { title: t(manifest.titleKey) }));
+function glanceTarget(row: GroupRow): Record<string, string> {
+  const target = fixedTarget(row);
+  return target ? { [FAMILY_TARGET_OPTION]: target } : {};
+}
+
+export function addToZone(store: LayoutStore, manifest: WidgetManifest, index?: number, target?: string): void {
+  if (drawerZone.add(manifest.id, index, target)) store.announce(t('layout_editor.announce.zone_added', { title: t(manifest.titleKey) }));
 }
 
 export function addToRail(store: LayoutStore, edge: RailEdge, widget: string, title: string, spot?: RailSpot, target?: string): boolean {

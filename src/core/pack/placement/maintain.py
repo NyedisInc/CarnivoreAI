@@ -5,13 +5,13 @@ import asyncio
 import dataclasses
 import sqlite3
 from contextlib import closing
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 
 import structlog
 
 from src.core.db_reuse.kept_read import hot_read
 from src.core.pack.placement import queue as spawn_queue
-from src.core.pack.reserve import throttle as throttle_mod
+from src.core.pack.reserve import session_demote, throttle as throttle_mod
 from src.core.swarm import switch as swarm_switch
 
 logger = structlog.get_logger()
@@ -69,12 +69,15 @@ def _cancel(open_db: Callable[[], sqlite3.Connection], queue_id: int, reason: st
             conn.execute("UPDATE pack_spawn_queue SET last_reason = ? WHERE id = ?", (reason, queue_id))
 
 
-async def run(app_state: Any, wired: Any, throttle: throttle_mod.Throttle, *, tick: float = throttle_mod.TICK_SECONDS) -> None:
-    await asyncio.to_thread(throttle.boot_clear)
+async def run(app_state: Any, wired: Any, throttle: throttle_mod.Throttle, *, tick: float = throttle_mod.TICK_SECONDS,
+              extra: Sequence[throttle_mod.Throttle] = ()) -> None:
+    for each in (throttle, *extra):
+        await asyncio.to_thread(each.boot_clear)
     while True:
         await asyncio.sleep(tick)
         try:
-            await asyncio.to_thread(throttle.tick)
+            for each in (throttle, *extra):
+                await asyncio.to_thread(each.tick)
             waiting = await asyncio.to_thread(_count_waiting, wired.open_db)
             if waiting and swarm_switch.is_on():
                 await drain(app_state, wired.open_db)
@@ -85,4 +88,4 @@ async def run(app_state: Any, wired: Any, throttle: throttle_mod.Throttle, *, ti
 def start(app: Any, wired: Any) -> "asyncio.Task[None]":
     throttle = throttle_mod.Throttle(measure=lambda: throttle_mod.measure_local(wired),
                                      roots=lambda: throttle_mod.agent_pane_pids(wired.open_db))
-    return asyncio.create_task(run(app.state, wired, throttle), name="pack-reserve-maintenance")
+    return asyncio.create_task(run(app.state, wired, throttle, extra=(session_demote.build(wired),)), name="pack-reserve-maintenance")

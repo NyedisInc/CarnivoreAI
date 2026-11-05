@@ -24,6 +24,7 @@ CLEAR_AFTER_SECONDS = 60.0
 CLEAR_MARGIN = 0.05
 
 SetPriority = Callable[[int, int, int], None]
+Select = Callable[[List[process_tree.Proc]], Optional[Tuple[Set[int], Set[int]]]]
 _AGENT_SESSIONS_SQL = ("SELECT s.tmux_socket, s.tmux_name FROM swarm_agents a JOIN sessions s ON s.id = a.session_row_id "
                        "JOIN swarm_wakes w ON w.agent_id = a.id AND w.ended_at IS NULL "
                        "WHERE a.torn_down_at IS NULL AND s.tmux_name IS NOT NULL "
@@ -79,20 +80,24 @@ class Throttle:
 
     def __init__(self, *, measure: Callable[[], Optional[Tuple[float, float, int]]], roots: Callable[[], List[int]],
                  ps: Callable[[], Optional[List[process_tree.Proc]]] = process_tree.read, setpriority: Optional[SetPriority] = None,
-                 clock: Callable[[], float] = time.monotonic, enabled: Optional[bool] = None) -> None:
-        self._measure, self._roots, self._ps, self._set, self._clock = measure, roots, ps, setpriority, clock
+                 clock: Callable[[], float] = time.monotonic, enabled: Optional[bool] = None, select: Optional[Select] = None) -> None:
+        self._measure, self._roots, self._ps, self._set, self._clock, self._select = measure, roots, ps, setpriority, clock, select
         self.enabled = sys.platform == "darwin" if enabled is None else enabled
         self.throttled: Set[int] = set()
         self._under_since: Optional[float] = None
 
-    def _agent_pids(self) -> Optional[Set[int]]:
+    def _agent_pids(self) -> Optional[Tuple[Set[int], Set[int]]]:
         procs = self._ps()
         if procs is None:
             return None
+        if self._select is not None:
+            picked = self._select(procs)
+            return None if picked is None else (picked[0] - {os.getpid()}, picked[1] - {os.getpid()})
         roots = [r for r in self._roots() if r != os.getpid()]
         if not roots:
-            return set()
-        return set().union(*process_tree.trees(procs, roots).values()) - {os.getpid()}
+            return set(), set()
+        pids = set().union(*process_tree.trees(procs, roots).values()) - {os.getpid()}
+        return pids, pids
 
     def tick(self) -> int:
         if not self.enabled:
@@ -104,9 +109,12 @@ class Throttle:
         now = self._clock()
         if busy > line:
             self._under_since = None
-            now_pids = self._agent_pids()
-            if now_pids is None:
+            picked = self._agent_pids()
+            if picked is None:
                 return len(self.throttled)
+            now_pids, scope = picked
+            for pid in (self.throttled & scope) - now_pids:
+                set_background(pid, False, setpriority=self._set)
             for pid in now_pids - self.throttled:
                 if set_background(pid, True, setpriority=self._set):
                     self.throttled.add(pid)
@@ -121,10 +129,10 @@ class Throttle:
         return len(self.throttled)
 
     def clear(self) -> int:
-        alive = self._agent_pids()
-        if alive is None:
+        picked = self._agent_pids()
+        if picked is None:
             return 0
-        cleared = sum(1 for pid in self.throttled & alive if set_background(pid, False, setpriority=self._set))
+        cleared = sum(1 for pid in self.throttled & picked[1] if set_background(pid, False, setpriority=self._set))
         self.throttled.clear()
         self._under_since = None
         return cleared
@@ -133,10 +141,11 @@ class Throttle:
         figures = self._measure() if self.enabled else None
         if figures is None or figures[0] > figures[1]:
             return 0
-        return sum(1 for pid in self._agent_pids() or () if set_background(pid, False, setpriority=self._set))
+        picked = self._agent_pids()
+        return sum(1 for pid in (picked[1] if picked else ()) if set_background(pid, False, setpriority=self._set))
 
 
-def measure_local(wired: Any) -> Optional[Tuple[float, float, int]]:
+def measure_local(wired: Any, *, default_busy_fraction: Optional[float] = None) -> Optional[Tuple[float, float, int]]:
     from src.core.machine_stats import cpu_busy
     from src.core.pack.reserve import local
 
@@ -148,6 +157,7 @@ def measure_local(wired: Any) -> Optional[Tuple[float, float, int]]:
         except OSError:
             return None
     active = local.active_reserve(wired)
-    if not cores or active is None:
+    if not cores or (active is None and default_busy_fraction is None):
         return None
-    return min(busy, float(cores)), cores * (1 - active["cpu_pct"] / 100), cores
+    line = cores * default_busy_fraction if active is None else cores * (1 - active["cpu_pct"] / 100)
+    return min(busy, float(cores)), line, cores

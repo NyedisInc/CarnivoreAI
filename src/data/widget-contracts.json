@@ -2091,6 +2091,48 @@
         "empty"
       ],
       "fixture": "core.analytics"
+    },
+    {
+      "kind": "widget",
+      "id": "core.plugin-view",
+      "name": "plugin view",
+      "version": "1.0.0",
+      "api_version": 1,
+      "min_app_version": "1.16.1",
+      "author": "Carnivore",
+      "tier": "builtin",
+      "scope": [
+        "global"
+      ],
+      "source": "builtin",
+      "declarative": false,
+      "instancing": "per-target",
+      "sizes": [
+        "tall",
+        "medium",
+        "large",
+        "full"
+      ],
+      "any_size": true,
+      "hosts": [
+        "home",
+        "terminal",
+        "drawer",
+        "popout"
+      ],
+      "reads": [
+        {
+          "kind": "route",
+          "ref": "POST /cplugs/{id}/view/{name}/ticket"
+        }
+      ],
+      "fixtures": [
+        "data",
+        "empty"
+      ],
+      "fixture": "core.plugin-view",
+      "max_per_surface": 1,
+      "remembers": []
     }
   ]
 }

@@ -7,6 +7,8 @@ import { standardSizes, type StandardSize } from '../opscenter/widgets/standard-
 import { META, metaFor } from '../opscenter/engine/meta';
 import { PRESETS } from '../opscenter/viz/presets';
 import { VIZ_SPECS } from '../opscenter/viz/specs';
+import { PLUGIN_VIEW_KIND } from '../opscenter/cells/plugin-view/constants';
+import { FIXTURE_SLOT } from './plugin-view-fixture';
 import { fixtureChartId } from '../opscenter/widgets/fixtures/ids';
 import type { SlotId } from '../opscenter/engine/types';
 import type { FitZone } from '../opscenter/widgets/types';
@@ -35,6 +37,7 @@ function slotFor(manifestId: string): SlotId | null {
   if (cell === 'terminal') return FIXTURE_TERMINAL_SLOT;
   if (cell === 'browser') return FIXTURE_BROWSER_SLOT;
   if (cell === 'analytics') return null;
+  if (cell === PLUGIN_VIEW_KIND) return FIXTURE_SLOT;
   return cell as SlotId;
 }
 

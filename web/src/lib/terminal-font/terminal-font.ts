@@ -2,6 +2,7 @@
 export interface TerminalFontState {
     size: number;
     family: string;
+    weight: string;
 }
 
 export interface TerminalFontApi {
@@ -10,6 +11,9 @@ export interface TerminalFontApi {
     DEFAULT_SIZE: number;
     size(): number;
     family(): string;
+    weight(): string;
+    setWeight(value: string): string;
+    WEIGHTS: Record<string, { fontWeight: number; fontWeightBold: number }>;
     familyStack(picked: string, base?: string): string;
     sanitizeFamily(value: unknown): string;
     setSize(value: number): number;

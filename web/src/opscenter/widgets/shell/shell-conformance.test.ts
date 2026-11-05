@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import type { CplugRow } from '../../../lib/plugins-page/cplugs-adapter';
+import type { CellMeta, SlotId } from '../../engine/types';
 import catalog from '../../../../../client/js/i18n/catalog.en.js';
 import { registeredKey } from '../../../lib/menu-keys/menu-keys';
 import { CORE_MANIFESTS } from '../core-manifests';
@@ -128,4 +130,30 @@ describe('each rule goes red on a broken cell and stays green on a conforming on
       'core.notes: setting nope is not a manifest field',
     ]);
   });
+});
+
+describe('every registered plugin panel kind binds the plugin-view cell on the shell (#2802)', () => {
+  const AGENTFLOW = {
+    id: 'agentflow', runtime: 'sidecar', enabled: true, state: 'active', name: 'Agent Flow', install_key: 'afk12345xx',
+    views: [{ name: 'flow', surfaces: ['panel'], fits: { sizes: ['large', 'full'], min: { w: 6, h: 4 }, anySize: true } }],
+  } as unknown as CplugRow;
+
+  it('binds a component from a cells/ folder whose Cell.svelte renders through WidgetShell, and keeps the field fits', async () => {
+    const { setPanels } = await import('../../../lib/cplug-ui/panel-views.svelte');
+    const { entryFor } = await import('../../cells/registry');
+    const { pluginKindMeta } = await import('../../engine/plugin-kinds');
+    const { fitsFor } = await import('../fits');
+    setPanels([AGENTFLOW]);
+    const bound = entryFor('agentflow.flow:panel-afk12345' as SlotId)?.component;
+    expect(bound, 'the panel kind is registered with a component').toBeDefined();
+    const owners: string[] = [];
+    for (const [file, load] of Object.entries(import.meta.glob('../../cells/*/Cell.svelte'))) {
+      if (((await load()) as { default: unknown }).default === bound) owners.push(file.split('/').at(-2) ?? '');
+    }
+    expect(owners, 'the bound component lives in exactly one cells/ folder').toEqual(['plugin-view']);
+    expect(scanShell(cellText(CELLS, 'plugin-view'))).toEqual([]);
+    const fits = fitsFor('agentflow.flow' as never, pluginKindMeta('agentflow.flow') as CellMeta);
+    expect([fits.sizes, fits.min, fits.anySize]).toEqual([['large', 'full'], { w: 6, h: 4 }, true]);
+    setPanels([]);
+  }, Number.POSITIVE_INFINITY);
 });

@@ -15,6 +15,7 @@ from src.core.approvals.extract import CHROME_ACCEPT_LABEL, CHROME_DECLINE_LABEL
 from src.core.approvals.dev_channels import OUR_FLAG_TOKEN
 from src.core.approvals.startup_extract import answer_needs_owner
 from src.core.beast_prompts.engine import eligible_dialog
+from src.core.session_startup_gate import startup_screen_kind
 from tests.python.approvals.auto_helpers import FixedPolicy, make_engine
 
 SCREENS = Path(__file__).resolve().parents[2] / "fixtures" / "startup_screens"
@@ -219,8 +220,22 @@ def test_the_press_is_recorded_with_its_rule_and_evidence() -> None:
     assert seen == [(catalog.RULE_FOLDER_TRUST, YES_LABEL, "project")]
 
 
+def test_effort_nudge_is_detected_always_and_kept_with_enter_once_per_launch_under_beast_on_only() -> None:
+    text = screen("effort_nudge.txt")
+    dialog = extract_dialog(text, "claude")
+    assert dialog is not None and dialog.startup_kind == "effort_nudge" and [r.label for r in dialog.rows] == ["Keep xhigh", "Switch Fable 5.1 to high effort"]
+    assert startup_screen_kind(text) == "effort_nudge" and answer_needs_owner(dialog)
+    assert run(text, readings=3).labels == ["Keep xhigh"]
+    assert run(text.replace("xhigh", "max").replace("Fable 5.1", "Opus 9"), readings=1).labels == ["Keep max"]
+    assert run(text, policy=FixedPolicy(off=[catalog.RULE_EFFORT_KEEP])).labels == []
+    assert extract_dialog(text.replace("Switch Fable 5.1 to high effort", "Switch Fable 5.1 to xhigh effort"), "claude") is None
+    assert extract_dialog(text.replace("❯ Keep", "  Keep"), "claude") is None
+    assert extract_dialog("\n".join(ln for ln in text.splitlines() if "effort." not in ln and "estimated" not in ln), "claude") is None
+    assert rules.rule_for(extract_dialog(text.replace("❯ Keep", "  Keep").replace("  Switch", "❯ Switch"), "claude")) is None
+
+
 def test_every_rule_label_is_fixed_and_none_is_an_affirmative_chrome_or_bypass_row() -> None:
-    assert [r.label for r in rules.RULES] == [DEV_CHANNELS_ACCEPT, YES_LABEL, IMPORTS_YES_LABEL, CHROME_ACCEPT_LABEL, CHROME_DECLINE_LABEL, YES_LABEL, rules.BYPASS_ACCEPT_LABEL, rules.MCP_APPROVE_LABEL, "Enable selected"]
+    assert [r.label for r in rules.RULES] == [DEV_CHANNELS_ACCEPT, YES_LABEL, IMPORTS_YES_LABEL, CHROME_ACCEPT_LABEL, CHROME_DECLINE_LABEL, YES_LABEL, rules.BYPASS_ACCEPT_LABEL, rules.MCP_APPROVE_LABEL, "Enable selected", "Keep"]
     assert list(dict.fromkeys(r.info.id for r in rules.RULES)) == [i.id for i in catalog.RULE_INFOS]
 
 

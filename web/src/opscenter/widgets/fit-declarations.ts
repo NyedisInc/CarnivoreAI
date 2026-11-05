@@ -1,6 +1,7 @@
 
 import declarations from '../../../../src/data/widgets.json';
 import { CELL_IDS, INSTANCE_KINDS } from '../engine/meta';
+import { PLUGIN_VIEW_ID } from '../cells/plugin-view/constants';
 import type { CellId, InstanceKind } from '../engine/types';
 import { isGridSizeName, type GridSizeName } from './named-sizes';
 import { MAX_PER_SURFACE_CEILING } from './types';
@@ -87,3 +88,7 @@ export const FIT_DECLARATIONS: Readonly<Record<CellId | InstanceKind, FitDeclara
     FitDeclaration
   >,
 );
+
+const TEMPLATE_ROW = ROWS.find((row) => row.id === PLUGIN_VIEW_ID);
+if (!TEMPLATE_ROW) throw new FitDeclarationError(`${PLUGIN_VIEW_ID} has no row in src/data/widgets.json`);
+registerPluginDeclaration(TEMPLATE_ROW);

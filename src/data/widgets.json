@@ -649,6 +649,20 @@
         ],
         "anySize": true
       }
+    },
+    {
+      "id": "core.plugin-view",
+      "instancing": "per-target",
+      "fits": {
+        "sizes": [
+          "tall",
+          "medium",
+          "large",
+          "full"
+        ],
+        "anySize": true,
+        "max_per_surface": 1
+      }
     }
   ],
   "replaced": {

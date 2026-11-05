@@ -39,6 +39,7 @@ describe('src/data/widget-contracts.json', () => {
     expect(generalizeRoute('GET /sessions/asleep')).toBe('GET /sessions/asleep');
     expect(generalizeRoute('GET /sessions/ses_billingapi/tasks')).toBe('GET /sessions/{id}/tasks');
     expect(generalizeRoute('GET /sessions/9001/bookmarks')).toBe('GET /sessions/{id}/bookmarks');
+    expect(generalizeRoute('POST /cplugs/fx-plugin/view/demo/ticket')).toBe('POST /cplugs/{id}/view/{name}/ticket');
   });
 
   test('a route a widget answers is a read even when every page asks it (the stat tiles read the listing)', () => {

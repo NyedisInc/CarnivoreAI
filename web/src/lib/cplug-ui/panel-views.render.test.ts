@@ -8,8 +8,8 @@ vi.mock('./api', () => ({
     callViewRoute: vi.fn(),
 }));
 
-import PanelCell from './PanelCell.svelte';
-import { fitsOf, landingFit, livePanelManifests, panelEntries, setPanels } from './panel-views.svelte';
+import PanelCell from '../../opscenter/cells/plugin-view/Cell.svelte';
+import { fitsOf, landingFit, livePanelManifests, panelEntries, panels, setPanels } from './panel-views.svelte';
 import { CORE_MANIFESTS } from '../../opscenter/widgets/core-manifests';
 import { fitsFor } from '../../opscenter/widgets/fits';
 import { pluginKindMeta, panels as panelProvider } from '../../opscenter/engine/plugin-kinds';
@@ -29,14 +29,24 @@ afterEach(() => { if (cell) unmount(cell); cell = null; document.body.innerHTML 
 
 describe('panel view sizes (#2184)', () => {
     test('a view registers the fits it declares, the default when it declares none, and lands at large else its smallest size', () => {
-        setPanels([row({ views: [{ name: 'game', surfaces: ['panel'] }, { name: 'tiny', surfaces: ['panel'], fits: { sizes: ['wide', 'small'], min: { w: 1, h: 1 }, anySize: true } }] })]);
+        setPanels([row({ views: [{ name: 'game', surfaces: ['panel'] }, { name: 'tiny', surfaces: ['panel'], fits: { sizes: ['wide', 'small', 'tall'], min: { w: 1, h: 1 }, anySize: true } }] })]);
         const dflt = fitsFor('hello.game' as never, pluginKindMeta('hello.game') as CellMeta);
         expect([dflt.sizes, dflt.anySize, dflt.min]).toEqual([['medium', 'large', 'full'], true, { w: 3, h: 3 }]);
         const tiny = fitsFor('hello.tiny' as never, pluginKindMeta('hello.tiny') as CellMeta);
-        expect([tiny.sizes, tiny.anySize, tiny.min]).toEqual([['small', 'wide'], true, { w: 1, h: 1 }]);
+        expect([tiny.sizes, tiny.anySize, tiny.min]).toEqual([['tall'], true, { w: 1, h: 1 }]);
         expect(panelProvider().fit('hello.game')).toEqual({ w: 6, h: 5 });
-        expect(panelProvider().fit('hello.tiny')).toEqual({ w: 1, h: 1 });
+        expect(panelProvider().fit('hello.tiny')).toEqual({ w: 2, h: 4 });
         expect(landingFit(fitsOf({ sizes: ['medium', 'large'] }))).toEqual({ w: 6, h: 5 });
+    });
+
+    test('small and wide are dropped from a panel view (64 px under the 31 px strip holds no frame); a view left with no size still loads at the default (#2802, S6)', () => {
+        expect(fitsOf({ sizes: ['wide', 'small', 'medium'] }).sizes).toEqual(['medium']);
+        const onlySmall = fitsOf({ sizes: ['small'], min: { w: 1, h: 1 }, anySize: true });
+        expect([onlySmall.sizes, onlySmall.min]).toEqual([['medium', 'large', 'full'], { w: 3, h: 3 }]);
+        setPanels([row({ views: [{ name: 'dot', surfaces: ['panel'], fits: { sizes: ['small', 'wide'], anySize: false } }] })]);
+        expect(panels.list.map((e) => e.kind)).toEqual(['hello.dot']);
+        expect(fitsFor('hello.dot' as never, pluginKindMeta('hello.dot') as CellMeta).sizes).toEqual(['medium', 'large', 'full']);
+        expect(panelProvider().fit('hello.dot')).toEqual({ w: 6, h: 5 });
     });
 
     test('a fits that is not clean falls back and a floor is clamped, never trusted raw', () => {
@@ -51,11 +61,12 @@ describe('panel views as widgets', () => {
         expect(panelEntries([row({ enabled: false }), row({ views: [{ name: 'game', surfaces: ['overlay'] }] }), row({ state: 'stopped' })])).toEqual([]);
         setPanels([row({})]);
         expect(Object.keys(livePanelManifests())).toEqual(['hello.game']);
-        cell = mount(PanelCell, { target: document.body, props: { instance: 'hello.game:panel-k1' } });
+        cell = mount(PanelCell, { target: document.body, props: { instance: 'hello.game:panel-k1' } as never });
         await tick(); await tick();
         const frame = document.querySelector<HTMLIFrameElement>('iframe[data-cplug-view="game"]');
         expect(frame?.getAttribute('sandbox')).toBe('allow-scripts');
-        expect(document.querySelector('[data-cplug-name]')?.textContent).toBe('<img src=x onerror=alert(1)>');
+        expect(document.querySelector('[data-cplug-name]')).toBeNull();
+        expect(document.querySelector('[data-cplug-mark]')?.textContent).toBe('unverified');
         expect(document.querySelector('[data-cplug-box] img')).toBeNull();
         setPanels([row({ enabled: false })]);
         flushSync();
@@ -66,7 +77,7 @@ describe('panel views as widgets', () => {
 
     test('a slot placed for one install shows the off note for another install of the same name and view (L1)', async () => {
         setPanels([row({ install_key: 'other-install' })]);
-        cell = mount(PanelCell, { target: document.body, props: { instance: 'hello.game:panel-k1' } });
+        cell = mount(PanelCell, { target: document.body, props: { instance: 'hello.game:panel-k1' } as never });
         await tick(); await tick();
         expect(document.querySelector('iframe')).toBeNull();
         expect(document.querySelector('[data-panel-cell] [role="status"]')).not.toBeNull();

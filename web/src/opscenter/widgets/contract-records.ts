@@ -48,8 +48,10 @@ export function fixtureKeysOf(id: string): string[] {
 
 const SESSION_ID_SEGMENT = /\/sessions\/(?!(?:list|asleep|recent|records)(?:\/|$))[^/]+/;
 
+const PLUGIN_VIEW_SEGMENTS = /\/cplugs\/[^/]+\/view\/[^/]+/;
+
 export function generalizeRoute(route: string): string {
-  return route.replace(SESSION_ID_SEGMENT, '/sessions/{id}').replace(/\/\d+(?=\/|$)/g, '/{id}');
+  return route.replace(SESSION_ID_SEGMENT, '/sessions/{id}').replace(PLUGIN_VIEW_SEGMENTS, '/cplugs/{id}/view/{name}').replace(/\/\d+(?=\/|$)/g, '/{id}');
 }
 
 export function readRoutesOf(id: string): string[] {

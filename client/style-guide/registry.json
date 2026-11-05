@@ -258,6 +258,7 @@
     "web/src/opscenter/ui/InsetHostFixture.svelte": "vitest fixture: a host that calls provideInset() for Tabs.render.test.ts; never rendered by the app",
     "web/src/cplugs/reviewboard/fixtures/": "vitest fixture: a stand-in board header key for header-keys.render.test.ts; never rendered by the app",
     "web/src/opscenter/shell/fixtures/": "vitest fixtures that mount CellFrame for tests; never rendered by the app",
+    "web/src/opscenter/cells/plugin-view/fixtures/": "vitest fixture: the plugin-view cell under a host title strip for Cell.header.test.ts; never rendered by the app",
     "web/src/opscenter/cells/terminal-group/fixtures/": "vitest fixtures for the page tab tests (Cell.pages.test.ts); never rendered by the app",
     "web/src/cplugs/huddle/style-guide/": "the huddle plugin's own live specimens, listed to the guide through web/src/cplugs/style-guide.ts (#1630)",
     "web/src/style-guide/": "this guide's own specimen harness",
@@ -4230,6 +4231,13 @@
     "web/src/opscenter/cells/ledger/Cell.svelte": {
       "section": "cells",
       "classes": []
+    },
+    "web/src/opscenter/cells/plugin-view/Cell.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "cu-panelcell",
+        "cu-panelcell__mark"
+      ]
     },
     "web/src/opscenter/cells/notes/Cell.svelte": {
       "section": "cells",
@@ -12824,17 +12832,6 @@
       "section": "ledger-catalog",
       "classes": []
     },
-    "web/src/lib/cplug-ui/PanelCell.svelte": {
-      "section": "ledger-catalog",
-      "classes": [
-        "cu-box",
-        "cu-frame",
-        "cu-gate",
-        "cu-panelcell",
-        "cu-panelcell__off",
-        "cu-view"
-      ]
-    },
     "web/src/lib/cplug-ui/ViewFrame.svelte": {
       "section": "ledger-catalog",
       "classes": []
@@ -12889,6 +12886,7 @@
         "cu-action__ask",
         "cu-action__line",
         "cu-frame",
+        "cu-frame--fill",
         "cu-frame__bar",
         "cu-frame__mark",
         "cu-frame__name",
@@ -13916,10 +13914,13 @@
       "section": "settings",
       "classes": [
         "terminal-font-panel",
-        "terminal-font-panel__error",
+        "terminal-font-panel__filter",
         "terminal-font-panel__label",
+        "terminal-font-panel__list",
+        "terminal-font-panel__option",
         "terminal-font-panel__preview",
         "terminal-font-panel__row",
+        "terminal-font-panel__status",
         "terminal-font-panel__value"
       ]
     },

@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 
 const css = readFileSync(new URL('./run-queue.css', import.meta.url), 'utf8');
 
+/** The declaration block of the one rule with this exact selector. Inputs: selector. Output: its body text, or ''. */
 function body(selector: string): string {
   const at = css.indexOf(`${selector} {`);
   return at < 0 ? '' : css.slice(css.indexOf('{', at) + 1, css.indexOf('}', at));

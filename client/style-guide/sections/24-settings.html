@@ -196,9 +196,12 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
     <dd><code>web/src/lib/terminal-font/TerminalFontPanel.svelte</code> (#2726), this device's own value (localStorage, through
         <code>client/js/terminal-font.js</code>): a row with the small uppercase accent label (<code>.terminal-font-panel__label</code>),
         two <code>Button size="sm"</code> steppers (a- / a+) around the size in mono (<code>.terminal-font-panel__value</code>) and a quiet
-        reset; a base <code>Field</code> for the font name with a <code>datalist</code> (the desktop app's list installed fonts key fills
-        it); a one-line preview in the chosen stack framed by a 1px hairline (<code>.terminal-font-panel__preview</code>); a refusal in
-        coral (<code>.terminal-font-panel__error</code>). Every terminal follows at once.</dd>
+        reset; a base <code>Field</code> for the font name beside an "installed fonts" <code>Button</code> that opens a scrolling list
+        (<code>.terminal-font-panel__list</code>, hairline frame, a base <code>Checkbox</code> for every font in <code>.terminal-font-panel__filter</code>)
+        whose rows (<code>.terminal-font-panel__option</code>) are each drawn in their own face, monospace first; a base <code>Segmented</code> for the
+        weight (light, normal, medium, bold); a one-line preview in the chosen stack and weight framed by a 1px hairline (<code>.terminal-font-panel__preview</code>);
+        a status line (<code>.terminal-font-panel__status</code>: applying in muted, saved in green, a refusal in coral). The font and weight save as they are
+        typed or picked. Every terminal follows at once.</dd>
     <dt>general: turn checkpoints disk use</dt>
     <dd><code>CheckpointsUsagePanel.svelte</code> (#2736), a client of <code>GET /checkpoints/usage</code>, pushed on <code>checkpoints:*</code>:
         a <code>.tm__sub</code> total, then a dense base <code>List</code> with one row per repository (its folder, the snapshot count

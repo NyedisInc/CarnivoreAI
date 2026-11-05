@@ -53,6 +53,10 @@ function fakeTerm(TF) {
     let fam = o.fontFamily;
     Object.defineProperty(t.options, 'fontSize', { get: () => size, set: (v) => { size = v; t.sets++; } });
     Object.defineProperty(t.options, 'fontFamily', { get: () => fam, set: (v) => { fam = v; t.sets++; } });
+    for (const k of ['fontWeight', 'fontWeightBold']) {
+        let v = o[k];
+        Object.defineProperty(t.options, k, { get: () => v, set: (x) => { v = x; t.sets++; } });
+    }
     t.clearTextureAtlas = () => { t.cleared++; };
     return t;
 }
@@ -73,6 +77,25 @@ await test('a burst of steps applies once after the debounce: one option write a
     TF.setSize(17);
     await settle(TF);
     assert.deepEqual(fits, [1, 1, 1]);
+});
+
+await test('weight: four numeric choices, default normal, optionsFor carries them, a live terminal restyles once, an unknown name is normal', async () => {
+    const { TF, storage } = page();
+    assert.equal(TF.weight(), 'normal');
+    assert.deepEqual([TF.optionsFor().fontWeight, TF.optionsFor().fontWeightBold], [400, 700]);
+    const term = fakeTerm(TF);
+    let fits = 0;
+    TF.bind(term, () => { fits++; });
+    assert.equal(TF.setWeight('light'), 'light');
+    await settle(TF);
+    assert.equal(storage.get('carnivore.terminal-font-weight'), 'light');
+    assert.deepEqual([term.options.fontWeight, term.options.fontWeightBold, fits], [300, 600, 1]);
+    for (const [name, w, b] of [['medium', 500, 700], ['bold', 700, 800]]) {
+        TF.setWeight(name);
+        assert.deepEqual([TF.optionsFor().fontWeight, TF.optionsFor().fontWeightBold], [w, b]);
+    }
+    assert.equal(TF.setWeight('heavy'), 'normal');
+    assert.equal(storage.has('carnivore.terminal-font-weight'), false);
 });
 
 await test('the size is clamped to 9..28 and the default is stored as nothing', () => {
@@ -97,7 +120,7 @@ await test('a family name cannot carry CSS: quotes, semicolons, commas, braces, 
     assert.equal(loads.length, 0, 'a refused name is never loaded');
     assert.equal(await TF.setFamily('  JetBrains Mono  '), true);
     assert.equal(TF.family(), 'JetBrains Mono');
-    assert.ok(loads.includes('14px "JetBrains Mono"'), 'loaded before it is applied');
+    assert.ok(loads.includes('400 14px "JetBrains Mono"'), 'loaded before it is applied');
     assert.equal(await TF.setFamily(''), true);
     assert.equal(TF.family(), '');
 });

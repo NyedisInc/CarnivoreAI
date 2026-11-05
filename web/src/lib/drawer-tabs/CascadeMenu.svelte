@@ -5,7 +5,7 @@
   import { truncatedTip } from '../tooltip/truncated-tip';
   import SessionFace from '../sessions/SessionFace.svelte';
   import { placeMenu, placeMenuAbove, type MenuNode, type Placement } from './add-component-menu';
-  import { assignMenuKeys, pressMenuKey } from '../menu-keys/menu-keys';
+  import { keysOfNodes, pressMenuKey } from '../menu-keys/menu-keys';
   import MenuKey from '../menu-keys/MenuKey.svelte';
   import ProjectColorRow from '../project-colors/ProjectColorRow.svelte';
   import { claimOpenMenu } from './open-menu';
@@ -117,8 +117,7 @@
     else if (path.length > level) path = path.slice(0, level);
   }
 
-  const keysOf = (nodes: MenuNode[]): string[] =>
-    assignMenuKeys(nodes.map((n) => ({ id: n.id, label: n.label, skip: !!n.blocked || !!n.swatches })));
+  const keysOf = (nodes: MenuNode[]): string[] => keysOfNodes(nodes);
 
   function onKeydown(level: number, event: KeyboardEvent): void {
     if (pressMenuKey(event, panels[level])) return;

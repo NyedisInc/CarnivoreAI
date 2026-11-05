@@ -99,8 +99,9 @@ def build_if_stale() -> bool:
 
 def serve() -> tuple[Any, str]:
     from scripts.lib_csp_static_server import serve as csp_serve  # noqa: PLC0415
+    from scripts.widgets.view_fixture import HarnessHandler  # noqa: PLC0415
 
-    httpd, port = csp_serve(REPO)
+    httpd, port = csp_serve(REPO, HarnessHandler)
     return httpd, f"http://127.0.0.1:{port}"
 
 

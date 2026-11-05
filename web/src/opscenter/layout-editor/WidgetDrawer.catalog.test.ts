@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import { PLUGIN_VIEW_ID } from '../cells/plugin-view/constants';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, unmount } from 'svelte';
 
@@ -58,7 +59,7 @@ describe('one catalog on every surface', () => {
     const terminal = catalogOn('terminal', terminalLayout);
     expect(dashboard).toEqual(home);
     expect(terminal).toEqual(home);
-    for (const manifest of Object.values(CORE_MANIFESTS).filter((m) => !isViewCell(m))) {
+    for (const manifest of Object.values(CORE_MANIFESTS).filter((m) => !isViewCell(m) && m.id !== PLUGIN_VIEW_ID)) {
       const offered = manifest.type === 'pane' && manifest.instancing === 'per-target'
         ? home.includes(`window:${manifest.id === 'core.browser' ? 'browser' : 'terminal'}`)
         : home.includes(manifest.id);

@@ -221,6 +221,9 @@ def test_crosstalk_and_send_keys_record_a_data_row_before_delivery(env, monkeypa
         return SimpleNamespace(session_row_id=env.alpha_row)
 
     class Manager:
+        def tmux_name_for(self, session_id):
+            return None
+
         async def send_input(self, text, session_id):
             seen.append(_rows(env, env.alpha))
 
@@ -370,7 +373,7 @@ def _keys(env, peer, monkeypatch, fail=False):
     async def send_input(text, session_id=None):
         seen.append(_rows(env, env.alpha))
 
-    manager = SimpleNamespace(get_session_info=info, send_input=send_input)
+    manager = SimpleNamespace(get_session_info=info, send_input=send_input, tmux_name_for=lambda session_id: None)
     if fail:
         import sqlite3
         monkeypatch.setattr(delivery, "record_for_session_row", lambda *a: (_ for _ in ()).throw(sqlite3.OperationalError("x")))

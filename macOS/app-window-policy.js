@@ -3,7 +3,7 @@
 
 const crypto = require('crypto');
 
-const ALLOWED_PERMISSIONS = Object.freeze(['notifications', 'clipboard-sanitized-write']);
+const ALLOWED_PERMISSIONS = Object.freeze(['notifications', 'clipboard-sanitized-write', 'local-fonts']);
 
 function originOf(url) {
   if (typeof url !== 'string') return null;

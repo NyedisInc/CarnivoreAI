@@ -20,6 +20,7 @@ ROW_TRUST_PERMISSIONS: str = "trust_permissions"
 ROW_BYPASS_ACCEPT: str = "bypass_accept"
 ROW_CHROME_ACCEPT: str = "chrome_accept"
 ROW_MCP_SERVER: str = "mcp_server"
+ROW_EFFORT_KEEP: str = "effort_keep"
 ROW_CLAUDE_PERMISSION: str = "claude_permission"
 ROW_CODEX_APPROVAL: str = "codex_approval"
 ROW_AGENT_WRITES: str = "agent_writes"
@@ -52,6 +53,7 @@ ROWS: Tuple[RowInfo, ...] = (
     RowInfo(ROW_BYPASS_ACCEPT, "bypassAccept", KIND_STARTUP, False, True),
     RowInfo(ROW_CHROME_ACCEPT, "chromeAccept", KIND_STARTUP, False, True),
     RowInfo(ROW_MCP_SERVER, "mcpServer", KIND_STARTUP, False, True),
+    RowInfo(ROW_EFFORT_KEEP, "effortKeep", KIND_STARTUP, False, True),
     RowInfo(ROW_CLAUDE_PERMISSION, "claudePermission", KIND_PROMPT, False, True),
     RowInfo(ROW_CODEX_APPROVAL, "codexApproval", KIND_PROMPT, False, True),
     RowInfo(ROW_AGENT_WRITES, "agentWrites", KIND_WRITES, False, True),
