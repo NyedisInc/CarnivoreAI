@@ -10,7 +10,7 @@
   import Segmented from '../../lib/base/Segmented.svelte';
   import { useHeaderGroup } from '../shell/frame-header.svelte';
   import { seriesBlank } from './empty';
-  import { AGENT_WINDOWS, OTHER_KEY, agentChart, agentWindow, agentsPlan, liveAgents } from './agents';
+  import { AGENT_WINDOWS, OTHER_KEY, agentChart, agentP95, agentWindow, agentsPlan, liveAgents } from './agents';
   import EmptyState from './EmptyState.svelte';
   import type { Tier } from './density';
   import { formatSi } from './format';
@@ -37,7 +37,7 @@
   const chart = $derived(agentChart(answer));
   const looks = $derived(new Map(chart.lines.map((line) => [line.key, { color: line.color, dashed: line.other }])));
   const drawConfig = $derived<ChartConfig>({ ...config, display: { ...config.display, type: 'line', stacked: false, legend: true } });
-  const rows = $derived(liveAgents(live.data, sessions.data));
+  const rows = $derived(liveAgents(live.data, sessions.data, agentP95(chart.result)));
   const place = useHeaderGroup(() => (config.enabled ? windowGroup : null));
 
   function pick(next: (typeof AGENT_WINDOWS)[number]): void {

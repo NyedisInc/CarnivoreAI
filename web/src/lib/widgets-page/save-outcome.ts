@@ -7,6 +7,7 @@ import { writtenRails, type RailSnap } from './bar-placement';
 interface PreferencesLayer {
     subscribe(listener: (name: string, value: unknown, record: { state?: string }) => void): () => void;
     stateFor(name: string): string;
+    discardLocal?(name: string): void;
 }
 
 export const SAVE_WAIT_MS = 15000;
@@ -65,6 +66,14 @@ export async function performContents(run: () => void, waitMs: number = SAVE_WAI
     const field = (edge: RailEdge): string => RAIL_SPECS[edge].field;
     for (const edge of RAIL_EDGES) watches.set(field(edge), { pending: false, final: null });
     let wake: (() => void) | null = null;
+    let late: { edges: readonly RailEdge[]; unsubscribe: () => void } | null = null;
+    const dropRefused = (edges: readonly RailEdge[]): void => {
+        for (const edge of edges) {
+            if (watches.get(field(edge))?.final !== 'conflict') continue;
+            prefs?.discardLocal?.(field(edge));
+            railStores[edge].reload();
+        }
+    };
     const unsubscribe =
         prefs?.subscribe((name, _value, record) => {
             const watch = watches.get(name);
@@ -73,8 +82,13 @@ export async function performContents(run: () => void, waitMs: number = SAVE_WAI
             else if (watch.pending && watch.final === null) {
                 watch.final = record.state;
                 wake?.();
+                if (late) {
+                    dropRefused(late.edges);
+                    if (late.edges.every((edge) => watches.get(field(edge))?.final !== null)) late.unsubscribe();
+                }
             }
         }) ?? (() => {});
+    let keepWatching = false;
     try {
         run();
         const after = snapshotRails();
@@ -88,13 +102,20 @@ export async function performContents(run: () => void, waitMs: number = SAVE_WAI
         }
         const settled = (): boolean => written.every((edge) => watches.get(field(edge))?.final !== null);
         const landed = settled() || (await bounded(new Promise<void>((resolve) => (wake = () => settled() && resolve())), waitMs)) !== 'timedOut';
-        if (!landed) return done('unconfirmed');
+        if (!landed) {
+            late = { edges: written, unsubscribe };
+            keepWatching = true;
+            return done('unconfirmed');
+        }
         const states = written.map((edge) => watches.get(field(edge))?.final ?? '');
         if (states.some((state) => state === 'failed') || written.some((edge) => prefs?.stateFor(field(edge)) === 'failed')) return done('failed');
-        if (states.some((state) => state === 'conflict') || written.some((edge) => prefs?.stateFor(field(edge)) === 'conflict')) return done('conflict');
+        if (states.some((state) => state === 'conflict') || written.some((edge) => prefs?.stateFor(field(edge)) === 'conflict')) {
+            dropRefused(written);
+            return done('conflict');
+        }
         return done('saved');
     } finally {
-        unsubscribe();
+        if (!keepWatching) unsubscribe();
     }
 }
 

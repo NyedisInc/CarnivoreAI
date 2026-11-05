@@ -119,7 +119,7 @@ the first screen built from them; its chosen mockup is <code>docs/design/setting
 
 <h3 class="sg-h3" id="controls-choice">choice card</h3>
 <div class="sg-specimen">
-    <div class="sg-specimen__label"><span>markup</span><code>web/src/opscenter/ui/Choice.svelte</code><span><code>.oc-choice</code></span></div>
+    <div class="sg-specimen__label"><span>markup</span><code>web/src/opscenter/controls.css</code><span><code>.oc-choice</code></span></div>
     <div class="sg-specimen__body">
         <div class="oc-grid-3" role="radiogroup" aria-label="layout">
             <button type="button" class="oc-choice" role="radio" aria-checked="true">
@@ -188,6 +188,6 @@ the first screen built from them; its chosen mockup is <code>docs/design/setting
 <ul class="sg-mistakes">
     <li><strong>A control restyled per page.</strong> A checkbox that looks different on two screens is a bug; add to
         <code>controls.css</code> or use what is there.</li>
-    <li><strong>A native checkbox or radio in new code.</strong> Use <code>Check.svelte</code> and <code>Choice.svelte</code>.</li>
+    <li><strong>A native checkbox or radio in new code.</strong> Use <code>Check.svelte</code> and the <code>.oc-choice</code> card.</li>
     <li><strong>Reordering with a drag only.</strong> An order list always has move-earlier and move-later buttons.</li>
 </ul>

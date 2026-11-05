@@ -3,6 +3,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
+import { installTrOnly } from '../helpers/catalog-tr.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 let failures = 0;
@@ -33,6 +34,7 @@ function loadApi(status, body) {
     sandbox.window = sandbox;
     sandbox.globalThis = sandbox;
     vm.createContext(sandbox);
+    installTrOnly(sandbox);
     vm.runInContext(fs.readFileSync(path.join(ROOT, 'client/js/api.js'), 'utf8'), sandbox, { filename: 'api.js' });
     const api = new (sandbox.APIClient || sandbox.API.constructor)();
     api.handleUnauthorized = () => {};

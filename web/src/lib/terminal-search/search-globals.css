@@ -4,7 +4,7 @@
 }
 
 @media (min-width: 769px) {
-    body:has(#terminal-screen.active) #terminalSearchBtn {
+    body.ps-terminal-active #terminalSearchBtn {
         display: flex;
     }
 }

@@ -1,4 +1,5 @@
 import { themeAssetBase } from '../lib/themes-page/asset-base';
+import { withColorScheme } from '../lib/theme-scheme';
 
 let paintedNames: string[] = [];
 
@@ -10,7 +11,7 @@ export async function paintTheme(id: string): Promise<void> {
   const manifest = (await response.json()) as { cssVars?: Record<string, string> };
   for (const name of paintedNames) document.documentElement.style.removeProperty(name);
   paintedNames = [];
-  for (const [name, value] of Object.entries(manifest.cssVars ?? {})) {
+  for (const [name, value] of Object.entries(withColorScheme(manifest.cssVars ?? {}))) {
     if (!name.startsWith('--')) continue;
     document.documentElement.style.setProperty(name, value);
     paintedNames.push(name);

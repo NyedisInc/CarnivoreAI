@@ -1,0 +1,51 @@
+{
+  "api_routes": [
+    "GET /api/v1/swarm/agents/{id}/waiting",
+    "POST /api/v1/swarm/cards/{id}/done",
+    "POST /api/v1/swarm/cards/{id}/send-back"
+  ],
+  "area": "drawers",
+  "description": "Every Swarm agent chat carries a waiting on you strip right above the box you type in whenever anything waits on you, and it is gone when nothing does. Collapsed it shows the count and a short mix line: by kind in an agent's chat (1 promotion, 2 question), and in the SysOp and company chats how many are here and how many sit under each company. Click it to open the list over the conversation, never over the box. Each row names its kind (chat cards in the accent, approvals in cyan, reviews in violet), the agent's breadcrumb and how long it has waited, and you answer it right there: a question with its reply box or typed form, a promotion with keep or flip back, folder trust, a held message, naming, git init, memory and suggestion cards with their two keys, an approval or a permission prompt with the inbox's own buttons, and a card in review that needs you with accept or send back with a note. An answered row leaves and the count drops. The SysOp and company chats roll up everything waiting under them, grouped by breadcrumb with the company, project and agent marks, the chat's own items first; click a group head or the last crumb to open that agent. The strip updates on its own the moment something changes, with no polling, and agents can read the same list with the swarm_waiting tool.",
+  "docs": [
+    "docs/swarm.md"
+  ],
+  "examples": [
+    "see that a promotion keep or flip back is waiting without scrolling up the chat",
+    "approve an agent's spawn request from the chat you are already in",
+    "answer every question waiting under a company from its chat",
+    "accept a card in review that needs your pick, or send it back with a note"
+  ],
+  "how_to": [
+    "open any Swarm agent chat; when something waits on you, the waiting on you strip sits above the box",
+    "click the strip to open the list, and click it again to close it",
+    "answer a row with its own keys or reply box; it leaves when answered",
+    "in the SysOp or a company chat, click a group head to open that agent's chat"
+  ],
+  "id": "swarm-waiting-tray",
+  "issues": [
+    2768
+  ],
+  "keywords": [
+    "waiting on you",
+    "waiting on me",
+    "tray",
+    "approvals",
+    "questions",
+    "swarm",
+    "chat",
+    "roll-up"
+  ],
+  "media_exempt": "new strip; its screenshot is captured at the next version bump recapture",
+  "name": "Waiting on you tray",
+  "since": "2026-11-02",
+  "status": "beta",
+  "summary": "a strip above every swarm chat box with everything waiting on you, answered in place; sysop and company chats roll up their children's items by breadcrumb",
+  "surfaces": [
+    "every Swarm agent chat, above the box",
+    "web/src/cplugs/huddle/chat/WaitingTray.svelte"
+  ],
+  "updated": "2026-11-02",
+  "where": [
+    "open the swarm page or the huddle panel and open any agent chat"
+  ]
+}

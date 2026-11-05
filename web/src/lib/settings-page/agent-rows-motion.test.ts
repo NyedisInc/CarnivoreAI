@@ -130,7 +130,7 @@ describe('removed settings', () => {
         expect(ids).not.toContain('wake_on_click');
         const groups = new Set(SETTINGS.map((s) => s.group as GroupId));
         expect([...groups].filter((x) => x.startsWith('appearance.'))).toEqual([
-            'appearance.colors', 'appearance.sidebar', 'appearance.status_bar', 'appearance.control_center', 'appearance.motion',
+            'appearance.colors', 'appearance.sidebar', 'appearance.rail', 'appearance.status_bar', 'appearance.control_center', 'appearance.motion',
         ]);
     });
 });

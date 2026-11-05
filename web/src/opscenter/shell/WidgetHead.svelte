@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import Icon from '../ui/Icon.svelte';
+  import HeadLockMark from './HeadLockMark.svelte';
   import IconButton from '../../lib/base/IconButton.svelte';
   import PhoneSummaryStrip from '../ui/PhoneSummary.svelte';
   import type { CellMeta, PhoneSummary } from '../engine/types';
@@ -24,6 +25,7 @@
     corner,
     onClose,
     withRight = true,
+    locked = false,
     bare = false,
     onGripDown,
     onToggleCollapse,
@@ -44,6 +46,7 @@
     corner: Snippet | null;
     onClose: ((from: DOMRect) => void) | null;
     withRight?: boolean;
+    locked?: boolean;
     bare?: boolean;
     onGripDown?: (event: PointerEvent) => void;
     onToggleCollapse?: () => void;
@@ -93,7 +96,7 @@
   {#if right === 'collapse'}
     <button
       type="button"
-      class="oc-btn oc-btn--tool oc-frame-control"
+      class="oc-btn oc-btn--tool oc-frame-control" data-btn="quiet" data-size="auto"
       aria-expanded={!collapsed}
       aria-controls={bodyId}
       aria-label={collapsed ? t('opscenter.frame.expand', { title: spoken }) : t('opscenter.frame.collapse', { title: spoken })}
@@ -102,11 +105,11 @@
       <Icon name={collapsed ? 'chevron-down' : 'chevron-up'} size={15} />
     </button>
   {:else if right === 'view-all' && !phone}
-    <button type="button" class="oc-btn oc-btn--tool oc-frame-control" onclick={onRightControl}
+    <button type="button" class="oc-btn oc-btn--tool oc-frame-control" data-btn="quiet" data-size="auto" onclick={onRightControl}
       >{controlLabel} <span class="oc-frame-control-arrow" aria-hidden="true">&#8594;</span></button
     >
   {:else}
-    <button type="button" class="oc-btn oc-btn--tool oc-frame-control" onclick={onRightControl}>{controlLabel}</button>
+    <button type="button" class="oc-btn oc-btn--tool oc-frame-control" data-btn="quiet" data-size="auto" onclick={onRightControl}>{controlLabel}</button>
   {/if}
 {/snippet}
 
@@ -115,10 +118,14 @@
     onclick={onCloseClick} />
 {/snippet}
 
+{#snippet separator()}
+  <span class="oc-head-sep" role="separator" aria-orientation="vertical"></span>
+{/snippet}
+
 {#snippet cluster()}
   {#each parts as part, at (at)}
     {#if part.kind === 'sep'}
-      <span class="oc-head-sep" role="separator" aria-orientation="vertical"></span>
+      {@render separator()}
     {:else if part.kind === 'close'}
       {@render closeButton()}
     {:else if part.at < options.length}
@@ -135,11 +142,12 @@
   {#if corner}{@render corner()}{/if}
   {#if header.content}
     {@render header.content()}
-    {#if closable}{@render closeButton()}{/if}
-  {:else if phone}
+    {#if closable}{@render separator()}{@render closeButton()}{/if}
+  {:else if phone && !meta?.ownHead}
     
     <h2 class="oc-frame-name oc-frame-name-wrap">
-      <button type="button" class="oc-frame-toggle" aria-expanded={!collapsed} aria-controls={bodyId} onclick={() => onToggleCollapse?.()}>
+      <button type="button" class="oc-frame-toggle" data-btn="row" data-size="auto" aria-expanded={!collapsed} aria-controls={bodyId} onclick={() => onToggleCollapse?.()}>
+        {#if locked}<HeadLockMark />{/if}
         <span class="oc-frame-nametext">{title}</span>
         {#if meta?.showCount && count !== null}<span class="oc-frame-count">{t('opscenter.frame.count', { count })}</span>{/if}
         {#if collapsed && summary}<PhoneSummaryStrip {summary} />{/if}
@@ -151,12 +159,14 @@
     </h2>
     {@render cluster()}
   {:else}
+    {#if locked}<HeadLockMark />{/if}
     {#if titleShort}
       
       <h2 class="oc-frame-name"><span class="oc-frame-name-full">{title}</span><span class="oc-frame-name-short">{titleShort}</span></h2>
     {:else}
       <h2 class="oc-frame-name">{title}</h2>
     {/if}
+    {#if header.status}{@render header.status()}{/if}
     <!-- could not determine -->
     {#if meta?.showCount && count !== null}
       <span class="oc-frame-count oc-frame-count-narrow-drop">{t('opscenter.frame.count', { count })}</span>
@@ -319,12 +329,12 @@
       flex-wrap: wrap;
       align-items: center;
       align-content: center;
-      column-gap: 10px;
-      row-gap: 2px;
+      column-gap: var(--oc-gap-parts);
+      row-gap: var(--oc-space-0-5);
       flex: 1 1 auto;
       min-width: 0;
       min-height: var(--oc-tap);
-      padding: 0 21px 0 0;
+      padding: 0 var(--oc-head-chevron-room) 0 0;
       background: none;
       border: 0;
       color: var(--oc-orange);
@@ -374,7 +384,7 @@
     }
 
     .oc-frame-title--phone {
-      padding: 0 var(--oc-space-1) 0 2px;
+      padding: 0 var(--oc-space-1) 0 var(--oc-space-0-5);
       touch-action: auto;
       cursor: default;
     }

@@ -94,6 +94,12 @@ One component draws it, <code>web/src/opscenter/shell/WidgetHead.svelte</code>; 
 <code>shell/widget-head.ts</code>. A widget never draws a header of its own unless its record says so.</p>
 
 <dl class="sg-facts">
+    <dt>lock mark and divider</dt>
+    <dd>A widget locked to a session or agent (a bar tab pinned on an agent) wears a lock icon (<code>lock</code>, <code>.oc-head-lock</code>)
+        to the LEFT of its name and as tall as the title's text (<code>--oc-fs-title</code>, one em), in <code>--oc-locked</code>, labeled "locked to its agent"; the terminal's session light and status word follow the name. A terminal in a bar slide-out wears this row too, header on, with no tick (Joe (ccsliinc), 2026-11-03, #2777). The
+        hairline before the close x (<code>oc-head-sep</code>) is drawn on EVERY closable header, whether or not a group sits left of it. The
+        terminal's untabbed head is this same row (its name, its light, its tools in the option group); a tabbed terminal keeps its strip and
+        prompt row as the extra row. A terminal placed in a bar or drawer card wears the same head as every other placed widget, with the close x and the hairline before it (Joe (ccsliinc), 2026-11-03, #2777).</dd>
     <dt>title first</dt>
     <dd>The title is the one thing the row keeps readable (Joe (ccsliinc), 2026-10-22). An analytics card's period label
         (<code>analytics-period</code>, in the group the header draws) is MEASURED against the title, not set at a width: first it
@@ -620,7 +626,7 @@ facts use the server's period summaries and keep missing data distinct from zero
         <code>Field</code> for an absolute or <code>~/</code> path (#2697). The menu offers the same action with
         the registered <code>p</code> shortcut. It works without a selected session.</dd>
     <dt>layout</dt>
-    <dd><code>.files-path-form</code> stacks the field and footer with <code>--oc-space-3</code>.
+    <dd>In <code>OpenPathDialog.svelte</code>, <code>.files-path-form</code> stacks the field and footer with <code>--oc-space-3</code>.
         <code>.files-path-actions</code> aligns the quiet cancel and confirm open buttons to the end with
         <code>--oc-space-2</code>. The shared controls own their colors, focus and error text.</dd>
     <dt>states</dt>
@@ -702,7 +708,7 @@ facts use the server's period summaries and keep missing data distinct from zero
         the open card (<code>.tn-detail</code>), the shared page <code>Tabs</code>, untouched (action, discussion, details; the discussion
         label carries its new count) and the selected body (<code>.tn-tabbody</code>). The reply box is the last thing in the body
         (<code>.mk2-reply</code>), on the body's own ground and inside its padding. The action tab is Mark II's own: the one current actionable message first
-        (<code>.mk2-sched-keys</code> holds a scheduled task's pause and stop keys under the status rows, round 9, since the schedule block under the row is gone; <code>.mk2-actionable</code>: the open question, else the newest unread info; a mark read sends the task back to its own section at once), then label and value pairs
+        (<code>.mk2-sched-keys</code> holds a scheduled task's pause and stop keys under the status rows, round 9, since the schedule block under the row is gone; <code>.mk2-actionable</code>: the oldest unread message, a question included, with <code>.mk2-actionable-more</code> counting the cards still in front of the action; a mark read sends the task back to its own section at once), then label and value pairs
         (<code>.mk2-rows</code>; round 10: the status value is the workers' live lines, one plain line each, <code>.mk2-worker</code>, dim when stale <code>.mk2-worker--stale</code>, and no status row when nothing real is said; no boxed note sits between the strip and the panel). Detailed is the same scroll box, only taller (<code>.tn-chat--tall</code>), with its show read and hide read key; the discussion is never drawn whole inline. The discussion and details tabs are the new Task Manager's, ported, not restyled
         (<code>Mk2Discussion.svelte</code>, <code>Mk2Details.svelte</code>, <code>Mk2SharedViewer.svelte</code>): the conversation box
         (<code>.tn-chat</code>, <code>.tn-message</code>, the new line <code>.tn-newline</code>, the earlier toggle <code>.tn-history-toggle</code>) and the ruled details
@@ -1079,7 +1085,7 @@ facts use the server's period summaries and keep missing data distinct from zero
     <dt>use</dt>
     <dd>The session's files, its git facts and its changes in ONE dense, keyboard-first tree (<code>web/src/opscenter/cells/files/Cell.svelte</code>,
         Joe (ccsliinc), Task Manager item 1030, issue #2009), on the widget shell. A file click opens it as a row of the left bar's files
-        list; a click that cannot open says why in the status line (<code>.files-status</code>, <code>.files-status--error</code> in
+        list; a click that cannot open says why in the status line (<code>FilesStatus.svelte</code>: <code>.files-status</code>, <code>.files-status--error</code> in
         <code>--oc-coral</code>) and never falls back to another editor.</dd>
     <dt>looks</dt>
     <dd>The body starts at the host's top edge (<code>.files</code>, a column at 100%; only <code>.files-tree</code> scrolls). Its first line is

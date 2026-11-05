@@ -1,8 +1,10 @@
+/* a dialog is open */
 
 import { subscribe } from '../../opscenter/api/events.svelte';
 import { authFetch } from '../../opscenter/api/auth.svelte';
 import type { EventFrame } from '../../opscenter/api/types';
 import { resourcePush } from '../resource-push/boot';
+import { browserDeps, createAutoReloader } from './auto-reload';
 
 const META_NAME = 'cloude-app-version';
 
@@ -117,6 +119,17 @@ export async function loadWhatsNew(): Promise<void> {
 
 let started = false;
 
+let autoReloader: ReturnType<typeof createAutoReloader> | null = null;
+
+function syncAutoReload(): void {
+  if (typeof document === 'undefined') return;
+  autoReloader ??= createAutoReloader(browserDeps());
+  const kind = bannerKind(versionWatch);
+  autoReloader.consider(
+    kind === null ? null : `${versionWatch.latestServerVersion}|${versionWatch.latestClientBuild}`,
+  );
+}
+
 export interface VersionWatchOptions {
   baselineFromServer?: boolean;
 }
@@ -132,6 +145,7 @@ export function observeServer(version: unknown, build: unknown): void {
     if (baselineFromServer && versionWatch.pageClientBuild === '') versionWatch.pageClientBuild = build;
     versionWatch.latestClientBuild = build;
   }
+  syncAutoReload();
 }
 
 export function startVersionWatch(options: VersionWatchOptions = {}): void {
@@ -172,6 +186,7 @@ function startClientBuildPoll(): void {
 export function dismissVersionBanner(): void {
   versionWatch.dismissedVersion = versionWatch.latestServerVersion;
   versionWatch.dismissedClientBuild = versionWatch.latestClientBuild;
+  syncAutoReload();
 }
 
 export function reloadForNewVersion(): void {

@@ -1,12 +1,14 @@
 import { authFetch } from '../../opscenter/api/auth.svelte';
 import { resourcePush } from '../resource-push/boot';
 import { deviceKey } from './mute/device-key';
+import { toastSurface } from '../toast-surface';
 
 export type Fetcher = typeof authFetch;
 
 interface TypeRow {
     readonly id: string;
     readonly label_key?: string;
+    readonly family?: string;
 }
 
 export interface MutesBody {
@@ -16,6 +18,7 @@ export interface MutesBody {
 
 export interface NotifyScreenGlobal {
     shows(toast: { notify_type?: unknown } | null | undefined): boolean;
+    groupOf(type: unknown): string | null;
 }
 
 export const SCREEN_POLL_MS = 15000;
@@ -23,14 +26,16 @@ export const SCREEN_POLL_MS = 15000;
 export class ScreenFilter {
     private known = new Set<string>();
     private labels = new Map<string, string>();
+    private families = new Map<string, string>();
     private ticks: Record<string, boolean> | null = null;
     private muted = new Set<string>();
     private registryLoaded = false;
+    private aliases: Record<string, string> = {};
 
     constructor(private readonly fetcher: Fetcher = authFetch) {}
 
     shows(toast: { notify_type?: unknown } | null | undefined): boolean {
-        const type = toast?.notify_type;
+        const type = this.canonical(toast?.notify_type);
         if (typeof type !== 'string' || !type) return true;
         if (this.muted.has(type)) return false;
         if (!this.registryLoaded || !this.ticks) return true;
@@ -39,11 +44,20 @@ export class ScreenFilter {
     }
 
     isKnown(type: unknown): type is string {
-        return typeof type === 'string' && this.known.has(type);
+        const id = this.canonical(type);
+        return typeof id === 'string' && this.known.has(id);
+    }
+
+    canonical(type: unknown): unknown {
+        return typeof type === 'string' && Object.hasOwn(this.aliases, type) ? this.aliases[type] : type;
+    }
+
+    groupOf(type: unknown): string | null {
+        return this.families.get(String(this.canonical(type))) ?? null;
     }
 
     labelKey(type: string): string | null {
-        return this.labels.get(type) ?? null;
+        return this.labels.get(String(this.canonical(type))) ?? null;
     }
 
     applyMutes(body: MutesBody | null | undefined): void {
@@ -53,10 +67,12 @@ export class ScreenFilter {
     async refresh(): Promise<void> {
         try {
             if (!this.registryLoaded) {
-                const body = await this.fetcher<{ types?: TypeRow[] } | null>('/notifications/types');
+                const body = await this.fetcher<{ types?: TypeRow[]; aliases?: Record<string, string> } | null>('/notifications/types');
                 const rows = Array.isArray(body?.types) ? body.types : [];
+                this.aliases = body?.aliases && typeof body.aliases === 'object' ? body.aliases : {};
                 this.known = new Set(rows.map((r) => r.id));
                 this.labels = new Map(rows.filter((r) => typeof r.label_key === 'string').map((r) => [r.id, r.label_key as string]));
+                this.families = new Map(rows.filter((r) => typeof r.family === 'string').map((r) => [r.id, r.family as string]));
                 this.registryLoaded = rows.length > 0;
             }
             const settings = await this.fetcher<{ screen?: Record<string, { value?: unknown }> } | null>('/notifications/settings');
@@ -77,8 +93,7 @@ export class ScreenFilter {
     }
 
     private pruneShownCards(): void {
-        const manager = (globalThis as unknown as { ToastManager?: { pruneHidden?: (shows: ScreenFilter['shows']) => void } }).ToastManager;
-        manager?.pruneHidden?.((toast) => this.shows(toast));
+        toastSurface()?.pruneHidden?.((toast) => this.shows(toast));
     }
 }
 
@@ -93,7 +108,7 @@ export function installNotifyScreen(fetcher?: Fetcher): ScreenFilter {
     const filter = new ScreenFilter(fetcher);
     installed = filter;
     const host = globalThis as unknown as { NotifyScreen?: NotifyScreenGlobal };
-    host.NotifyScreen = { shows: (toast) => filter.shows(toast) };
+    host.NotifyScreen = { shows: (toast) => filter.shows(toast), groupOf: (type) => filter.groupOf(type) };
     resourcePush().pushOrPoll(() => void filter.refresh(), SCREEN_POLL_MS, ['notification_settings']);
     void filter.refresh();
     return filter;

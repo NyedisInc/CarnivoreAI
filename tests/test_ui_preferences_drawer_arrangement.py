@@ -20,6 +20,7 @@ from fastapi.testclient import TestClient
 from src.api.auth import require_auth
 from src.api.preferences_routes import router as preferences_router
 from src.core import ui_preferences
+from src.core.ui_preferences import SECTION_IDS
 from src.core.ui_preferences_store import COMMITTED, REJECTED_INVALID, UiPreferencesStore
 
 FIELD = "drawer_arrangement"
@@ -219,26 +220,45 @@ def test_apply_changes_carries_mobile_only_for_the_drawer_field():
     assert block["values"]["drawer_arrangement"]["mobile"] == {"collapsed": ["c:1"]}
 
 
-SECTIONS_NON_DEFAULT = ["browsers", "review", "pack", "terminals", "rogue", "companies", "groups", "layouts", "pinned"]
+SECTIONS_NON_DEFAULT = ["browsers", "files", "review", "pack", "terminals", "rogue", "companies", "groups", "layouts", "pinned"]
 
 
 def test_section_order_is_stored_validated_and_kept_by_a_write_that_omits_it(store):
     result = store.update({FIELD: arrangement(sections=SECTIONS_NON_DEFAULT)})
     assert result.status == COMMITTED, result.detail
     stored = result.values[FIELD]["sections"]
-    assert len(stored) == 9, "population: all nine ids read back"
+    assert len(stored) == 10, "population: all ten ids read back"
     assert stored == SECTIONS_NON_DEFAULT
 
     kept = store.update({FIELD: arrangement(collapsed=["other"])})
     assert kept.status == COMMITTED, kept.detail
     assert kept.values[FIELD]["sections"] == SECTIONS_NON_DEFAULT, "a write that omits the key keeps the order"
 
-    for bad in (["pinned", "nope"], ["pinned", "pinned"]):
-        refused = store.update({FIELD: arrangement(sections=bad)})
-        assert refused.status == REJECTED_INVALID
-        assert "section" in refused.detail
+    refused = store.update({FIELD: arrangement(sections=["pinned", "pinned"])})
+    assert refused.status == REJECTED_INVALID
+    assert "section" in refused.detail
     assert store.update({FIELD: arrangement(collapsed=["other"])}).values[FIELD]["sections"] == SECTIONS_NON_DEFAULT
 
     cleared = store.update({FIELD: arrangement(sections=None)})
     assert cleared.status == COMMITTED, cleared.detail
     assert cleared.values[FIELD]["sections"] is None
+
+
+def test_an_unknown_section_id_is_dropped_not_refused(store):
+    result = store.update({FIELD: arrangement(sections=["browsers", "from-the-future", "pinned"], collapsed=["other"])})
+    assert result.status == COMMITTED, result.detail
+    stored = result.values[FIELD]
+    assert stored["sections"] == ["browsers", "pinned"], "the unknown id is dropped, the rest keep their order"
+    assert stored["collapsed"] == ["other"], "the rest of the write landed"
+
+
+def test_a_too_long_section_list_is_refused_and_an_all_unknown_one_keeps_the_stored_order(store):
+    assert store.update({FIELD: arrangement(sections=SECTIONS_NON_DEFAULT)}).status == COMMITTED
+    too_long = [f"future-{n}" for n in range(2 * len(SECTION_IDS) + 1)]
+    refused = store.update({FIELD: arrangement(sections=too_long)})
+    assert refused.status == REJECTED_INVALID
+    assert "section" in refused.detail
+
+    unknown_only = store.update({FIELD: arrangement(sections=["future-a", "future-b"], collapsed=["p:7"])})
+    assert unknown_only.status == COMMITTED, unknown_only.detail
+    assert unknown_only.values[FIELD]["sections"] == SECTIONS_NON_DEFAULT, "the stored custom order is left alone"

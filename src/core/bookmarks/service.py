@@ -1,6 +1,8 @@
 
 from __future__ import annotations
 
+import sqlite3
+
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -40,12 +42,22 @@ def add_bookmark(session_uuid: str, *, label: str = "", entry_uuid: Optional[str
     opened = transcript_index.marked_turn(index, node)
     snippet = opened.snippet if opened is not None else ""
     try:
-        return store.get_store().add(
+        added = store.get_store().add(
             session_uuid=row.session_uuid, session_row_id=row.id, claude_session_uuid=conversation,
             entry_uuid=node.uuid, label=label, created_by=created_by, snippet=snippet,
             entry_timestamp=node.timestamp)
     except ValueError as exc:
         raise BookmarkError(str(exc)) from exc
+    from src.core.checkpoints import pins, store as checkpoint_store
+
+    pins.refresh_session_soon(checkpoint_store.get_store(), row.session_uuid)
+    return added
+
+
+def _with_files(marks: list, working_dir: Optional[str]) -> list:
+    from src.core.checkpoints import bookmark_rewind, store as checkpoint_store
+
+    return bookmark_rewind.annotate(checkpoint_store.get_store(), marks, working_dir)
 
 
 def list_bookmarks(session_uuid: str) -> dict:
@@ -54,7 +66,8 @@ def list_bookmarks(session_uuid: str) -> dict:
         "session_uuid": row.session_uuid,
         "conversation": row.claude_session_uuid,
         "family": rows.family_of(row.agent_type),
-        "bookmarks": [b.as_dict() for b in store.get_store().list_for_session(row.session_uuid)],
+        "bookmarks": _with_files([b.as_dict() for b in store.get_store().list_for_session(row.session_uuid)],
+                                 row.working_dir),
         "compactions": [],
     }
 
@@ -73,7 +86,17 @@ def list_all(limit: int = store.MAX_RECENT) -> dict:
 
 
 def delete_bookmark(bookmark_id: int) -> store.Bookmark:
-    return store.get_store().delete(bookmark_id)
+    removed = store.get_store().delete(bookmark_id)
+    from src.core.checkpoints import cleanup, store as checkpoint_store
+
+    try:
+        cleanup.prune_session(checkpoint_store.get_store(), removed.session_uuid)
+    except (OSError, sqlite3.Error) as exc:
+        logger.warning("checkpoint_prune_after_bookmark_delete_failed", error=type(exc).__name__)
+    from src.core.checkpoints import pins
+
+    pins.refresh_session_soon(checkpoint_store.get_store(), removed.session_uuid)
+    return removed
 
 
 def turns_page(session_uuid: str, *, offset: int = 0, limit: int = 50) -> dict:

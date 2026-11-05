@@ -11,6 +11,8 @@
     import { pageRowMenu } from '../item-menu/page-row';
     import { sessionMenuContext } from '../projects-shared/session-menu-context';
     import RowLed from './RowLed.svelte';
+    import BadgeSlot from '../session-badges/BadgeSlot.svelte';
+    import { badgeSlotPlan } from '../session-badges';
     import { dateWord, latestView } from './latest-line';
     import type { LatestLine } from './sessions-data.svelte';
     import type { LensKey } from './lenses';
@@ -40,6 +42,7 @@
     const stateKey = $derived(stateKeyOf(s, live));
     const action = $derived(rowAction(s));
     const created = $derived(dateWord(s.created_at));
+    const badges = $derived(badgeSlotPlan(live as Record<string, unknown> | undefined));
 
     function menu() {
         const ctx = sessionMenuContext(s, live, asleepUnread);
@@ -64,6 +67,7 @@
     <div class="sp-l1">
         <span class="sp-c-name">{name}</span>
         <span class="sp-c-state">{t(`sessions.page.state.${stateKey}`)}</span>
+        {#if badges}<BadgeSlot plan={badges} />{/if}
         <span class="sp-c-proj">
             <ProjectChip name={row.project} projectId={row.projectRef?.id ?? null} />
             <span>{row.project}</span>

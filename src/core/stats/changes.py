@@ -65,9 +65,10 @@ class PassChanges:
 
 def summarise(*, published_sources: int, activity_metrics: Iterable[str], live_before: dict | None,
               live_after: dict | None, events_before: int, events_after: int,
-              sides_before: dict | None = None, sides_after: dict | None = None) -> PassChanges:
+              sides_before: dict | None = None, sides_after: dict | None = None,
+              pack_imported: bool = False) -> PassChanges:
     changes = PassChanges(metrics=set(activity_metrics))
-    if published_sources > 0:
+    if published_sources > 0 or pack_imported:
         changes.metrics |= USAGE_METRICS
     if sides_after is None:
         moved = published_sources > 0 or "starts" in changes.metrics

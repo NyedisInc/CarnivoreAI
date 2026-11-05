@@ -24,16 +24,19 @@ from src.core.tmux_server_config import (
     write_server_config,
 )
 from tests.socket_guard import derive_test_socket
+from tests.tmux_support.grid_depth import (
+    flood_command,
+    is_full_depth,
+    is_stock_depth,
+    measured_depth,
+    tmux_version,
+)
 
 pytestmark = pytest.mark.skipif(
     shutil.which("tmux") is None, reason="real tmux binary not available"
 )
 
-LONG_LIVED = "sleep 120"
-
-STOCK_HISTORY_LIMIT = "2000"
-
-COLD_LAUNCH_TMUX_PROCESSES = 8
+COLD_LAUNCH_TMUX_PROCESSES = 9
 
 
 def _tmux(socket: str, *args: str) -> subprocess.CompletedProcess:
@@ -46,11 +49,8 @@ def _tmux(socket: str, *args: str) -> subprocess.CompletedProcess:
     )
 
 
-def _pane_depth(socket: str, name: str) -> str:
-    probe = _tmux(socket, "display-message", "-p", "-t", name, "#{history_limit}")
-    if probe.returncode != 0:
-        return ""
-    return probe.stdout.strip()
+def _pane_depth(socket: str, name: str) -> int:
+    return measured_depth(socket, name)
 
 
 @pytest.fixture()
@@ -68,7 +68,7 @@ def cold_socket(request):
         _tmux(socket, "kill-server")
 
 
-async def _launch(socket: str, work_dir, name: str) -> TmuxBackend:
+async def _launch(socket: str, work_dir, name: str, command: str | None = None) -> TmuxBackend:
     backend = TmuxBackend(
         session_id=name,
         working_dir=work_dir,
@@ -76,7 +76,7 @@ async def _launch(socket: str, work_dir, name: str) -> TmuxBackend:
         socket_name=socket,
         session_name=name,
     )
-    await backend.start(command=LONG_LIVED)
+    await backend.start(command=command or flood_command(HISTORY_LIMIT))
     return backend
 
 
@@ -139,10 +139,10 @@ def test_a_cold_socket_without_the_config_is_born_on_the_stock_depth(
     created = _tmux(
         socket,
         "new-session", "-d", "-s", "born_control",
-        "-c", str(tmp_path), "-x", "100", "-y", "40", LONG_LIVED,
+        "-c", str(tmp_path), "-x", "100", "-y", "40", flood_command(HISTORY_LIMIT),
     )
     assert created.returncode == 0, created.stderr
-    assert _pane_depth(socket, "born_control") == STOCK_HISTORY_LIMIT
+    assert is_stock_depth(_pane_depth(socket, "born_control"))
 
 
 @pytest.mark.asyncio
@@ -152,9 +152,9 @@ async def test_the_first_pane_on_a_cold_socket_is_born_at_the_full_depth(
     socket = cold_socket
     backend = await _launch(socket, tmp_path, "cloude_born_first")
     try:
-        assert _pane_depth(socket, "cloude_born_first") == str(HISTORY_LIMIT), (
+        assert is_full_depth(_pane_depth(socket, "cloude_born_first"), HISTORY_LIMIT), (
             "the first pane on a cold socket is still carrying tmux's stock "
-            "scrollback depth, so this session holds 48000 fewer lines of "
+            "scrollback depth, so this session holds far fewer lines of "
             "history than every other session on the box"
         )
     finally:
@@ -170,7 +170,7 @@ async def test_a_second_session_on_a_warm_socket_is_still_born_at_the_full_depth
     try:
         second = await _launch(socket, tmp_path, "cloude_born_warm_b")
         try:
-            assert _pane_depth(socket, "cloude_born_warm_b") == str(HISTORY_LIMIT)
+            assert is_full_depth(_pane_depth(socket, "cloude_born_warm_b"), HISTORY_LIMIT)
         finally:
             await second.stop()
     finally:
@@ -188,7 +188,11 @@ async def test_a_config_that_cannot_be_written_still_launches_a_session(
     backend = await _launch(socket, tmp_path, "cloude_born_nofile")
     try:
         assert _tmux(socket, "has-session", "-t", "cloude_born_nofile").returncode == 0
-        assert _pane_depth(socket, "cloude_born_nofile") == STOCK_HISTORY_LIMIT
+        depth = _pane_depth(socket, "cloude_born_nofile")
+        if tmux_version() >= (3, 8):
+            assert is_full_depth(depth, HISTORY_LIMIT)
+        else:
+            assert is_stock_depth(depth)
     finally:
         await backend.stop()
 
@@ -196,8 +200,11 @@ async def test_a_config_that_cannot_be_written_still_launches_a_session(
 
 
 @pytest.mark.asyncio
-async def test_the_launch_spends_no_extra_tmux_process(cold_socket, tmp_path):
+async def test_the_launch_spends_no_extra_tmux_process(
+    cold_socket, tmp_path, monkeypatch
+):
     socket = cold_socket
+    monkeypatch.setenv("CARNIVORE_CONTROL_INPUT", "0")
     spawned: list = []
     stdin_scripts: list = []
     original_async = asyncio.create_subprocess_exec
@@ -259,7 +266,7 @@ async def test_concurrent_launches_on_a_cold_socket_all_start_at_full_depth(
     try:
         failures = [s for s in started if isinstance(s, BaseException)]
         assert not failures, f"a concurrent cold launch failed: {failures!r}"
-        assert {_pane_depth(socket, name) for name in names} == {str(HISTORY_LIMIT)}
+        assert all(is_full_depth(_pane_depth(socket, name), HISTORY_LIMIT) for name in names)
     finally:
         for backend in started:
             if isinstance(backend, TmuxBackend):

@@ -4,6 +4,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
+import { installTrOnly } from '../helpers/catalog-tr.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '../..');
@@ -22,6 +23,7 @@ function load() {
     win.ConfigEditorTreeState = { setNodeCollapsed: (k, v) => calls.collapsed.push([k, v]) };
     const ctx = { window: win, console: { log() {} }, document: { createElement: () => ({ style: {}, appendChild() {} }) } };
     vm.createContext(ctx);
+    installTrOnly(ctx);
     for (const f of ['config-editor-roots.js', 'config-editor-filter.js', 'config-editor-panel.js']) {
         vm.runInContext(fs.readFileSync(path.join(ROOT, 'client', 'js', f), 'utf8'), ctx);
     }

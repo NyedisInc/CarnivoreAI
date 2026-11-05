@@ -20,8 +20,6 @@ export function ScopeProbe(anchor: Node, props: ProbeProps): void {
   $effect(() => () => el.remove());
 }
 
-export const fakeBadge = $state({ count: 3 as number | null, show: true });
-
 export const fakeListing = $state({ data: [{ session_row_id: 7, project_id: 4, session: { id: 'ses_1', working_dir: '/w' } }] });
 
 export const fakePins = $state({

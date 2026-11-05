@@ -15,8 +15,11 @@ function rule(selector: string): string {
 describe('slide-out edge line geometry', () => {
   test('the line is 2px and the hit area stays 8px, reaching 5px over the grid', () => {
     const shared = rule('.rail-grip');
-    expect(shared).toContain('--edge-line: 2px;');
-    expect(shared).toContain('--edge-hit: 8px;');
+    const tokens = readFileSync(join(process.cwd(), 'src/opscenter/tokens.css'), 'utf8');
+    expect(tokens).toContain('--oc-grip-line: 2px;');
+    expect(tokens).toContain('--oc-grip-hit: 8px;');
+    expect(shared).toContain('--edge-line: var(--oc-grip-line);');
+    expect(shared).toContain('--edge-hit: var(--oc-grip-hit);');
     expect(shared).toContain('--edge-reach: 5px;');
   });
   test('both edges size the line from the one token, flush at the reach', () => {

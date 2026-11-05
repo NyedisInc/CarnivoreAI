@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
-from src.cplugs.huddle import inbox, inbox_filing, own_list, rules, service
+from src.cplugs.huddle import inbox, inbox_filing, own_list, rules, service, task_files
 from src.cplugs.huddle.inbox_store import InboxStore
 from src.cplugs.sdk import AgentCaller, CplugContext, ToolError
 
@@ -65,7 +65,7 @@ async def _file_one(ctx: CplugContext, caller: AgentCaller, entry: Dict[str, Any
         fields["kind"] = rules.QUESTION
     added = await add(ctx, caller, fields)
     item_id = added["id"]
-    await run(lambda: store.link_item(entry["id"], item_id))
+    await run(lambda: store.link_item(entry["id"], item_id, task_files.pastes_for(ctx)))
     if spec.state in (inbox_filing.TODO, inbox_filing.WORKING):
         await update(ctx, caller, {"item": item_id, "state": spec.state})
     if spec.ask is not None:

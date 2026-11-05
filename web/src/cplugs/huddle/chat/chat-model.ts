@@ -65,7 +65,7 @@ export function decisionKeys(item: HuddleItem): DecisionKeys | null {
 }
 
 export function cardLineId(entry: { kind: string; event?: string; ref?: string }): number | null {
-  if (entry.kind !== 'event' || entry.event !== 'card') return null;
+  if (entry.kind !== 'event' || (entry.event !== 'card' && entry.event !== 'done')) return null;
   const found = /^card:([1-9][0-9]*)$/.exec(entry.ref ?? '');
   return found ? Number(found[1]) : null;
 }
@@ -127,7 +127,7 @@ export function checkpointBlock(kind: string): string | null {
 type Say = (key: string, params?: Record<string, string | number>) => string;
 
 const TRAFFIC_STATUSES = ['queued', 'held', 'delivering', 'delivered', 'failed', 'expired'];
-const EVENT_KINDS = ['spawned', 'reported', 'accepted', 'asked', 'answered', 'escalated', 'learned', 'promoted'];
+const EVENT_KINDS = ['spawned', 'reported', 'accepted', 'asked', 'answered', 'escalated', 'learned', 'promoted', 'done'];
 
 function plain(name: string): string {
   return name.replace(/[_:.-]+/g, ' ').trim();
@@ -185,7 +185,7 @@ export type ChatRow =
   | { kind: 'fold'; id: string; entries: SwarmEntry[] };
 
 export function isQuiet(entry: SwarmEntry): boolean {
-  return entry.kind === 'event';
+  return entry.kind === 'event' && entry.event !== 'done';
 }
 
 function selfParty(self: ChatSelf, own: AuthorCrumb, path: AuthorCrumb[] = []): BurstParty {

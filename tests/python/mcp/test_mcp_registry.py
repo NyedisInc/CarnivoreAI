@@ -57,7 +57,7 @@ def test_every_write_has_a_declared_gate_class_and_the_undeclared_allowlist_is_e
     assert {n for n, c in classes.items() if c == gates.UNDECLARED} == set(gates.UNDECLARED_WRITES) == set()
     assert gates.gate_class("session_delete") == gates.ALWAYS_WAITS_CLASS and gates.gate_class("session_create") == gates.ACT
     assert gates.gate_class("notify") == gates.ARRANGE and gates.gate_class("pack_master_set") == gates.ACT
-    assert gates.gate_class("huddle_add") == gates.gate_class("task_manager_add") == gates.AGENT
+    assert gates.gate_class("task_manager_add") == gates.AGENT
     assert gates.gate_class("task_manager_lead_set") == gates.ALWAYS_WAITS_CLASS
 
 
@@ -69,7 +69,8 @@ def test_flat_names_and_dotted_ids_round_trip_and_retired_names_resolve_to_their
         assert aliases.flat_name(cid) == aliases.canonical(name) and aliases.flat_name(name) == aliases.canonical(name)
     for old, new in aliases.table().items():
         assert table[old] == table[new]
-    assert aliases.capability_id("huddle_list") == "task_manager.tasks.list"
+    assert aliases.capability_id("huddle_list") is None
+    assert aliases.capability_id("task_manager_tasks_list") == "task_manager.tasks.list"
     assert aliases.flat_name("task_manager.tasks.list") == "task_manager_tasks_list"
     assert aliases.capability_id("no_such_tool") is None and aliases.flat_name("ui.no.such") is None
     assert aliases.capability_id("ui.no.such") is None

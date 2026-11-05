@@ -3,6 +3,7 @@ import { railSlideout } from '../session-rail/slideout.svelte';
 import type { RailEdge } from '../session-rail/rail-model';
 import { widgetBars, type BarMode, type BarsTogether } from './bar-settings.svelte';
 import { barLead } from './bar-lead.svelte';
+import { panelPins } from './panel-pins.svelte';
 import { barState, foldedEdge, realClock, type BarVisual, type Clock } from './bar-state';
 import { createPeekCore } from './peek-core.svelte';
 import { stripMode } from './bar-pin-action';
@@ -44,7 +45,7 @@ export function createBarVisibility(edge: RailEdge, read: () => BarVisibilityInp
   });
 
   $effect(() => {
-    if (input.together === 'one' && folded && input.panelShown) railSlideout.close(edge);
+    if (input.together === 'one' && folded && input.panelShown && !untrack(() => panelPins.pinned(edge))) railSlideout.close(edge);
   });
 
   let foldWithPanel = false;

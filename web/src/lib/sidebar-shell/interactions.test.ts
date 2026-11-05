@@ -6,133 +6,16 @@ const sleepHook = vi.hoisted(() => ({ release: (_name: string): void => {} }));
 vi.mock('../drawer/row-menu-sleep', async (orig) => ({
     ...(await orig<typeof import('../drawer/row-menu-sleep')>()), releaseThisTab: (o: { name: string }) => sleepHook.release(o.name),
 }));
-import { closeItemMenu } from '../item-menu/open.svelte';
-import { canonicalDom } from './legacy-fixture';
-import { legacyAnswer, suiteOfTest } from './goldens';
-import {
-    loadInteractions, recorded, settle, startRun, type Harness, type RunOptions,
-} from './interaction-fixture';
-import { SHELL_ATTR, sidebarShell } from './shell.svelte';
+import { legacyRun, loadShell, menuItems, play, recorded, same, settle, TOGGLE } from './interaction-play';
+import type { Gestures } from './interaction-play';
 
-
-interface Snapshot {
-    label: string;
-    list: string;
-    menu: string | null;
-    focus: string;
-    collapsed: string[];
-    groups: string;
-}
-
-type Steps = (h: Harness, g: Gestures) => Promise<void>;
-
-interface Gestures {
-    click(selector: string): Promise<void>;
-    key(key: string, target?: Element | null): Promise<void>;
-    pick(label: string): Promise<void>;
-    type(value: string): Promise<void>;
-    snap(label: string): void;
-    el(selector: string): Element;
-}
-
-let w: Record<string, any>;
-
-function focusOf(): string {
-    const el = document.activeElement as HTMLElement | null;
-    if (!el || el === document.body) return 'body';
-    if (el.closest('.acm-menu') && el.dataset['node']) return `item:${el.querySelector('.acm-label')?.textContent ?? ''}`;
-    return [el.tagName, el.className, el.getAttribute('data-menu-index'), el.getAttribute('data-group-toggle')].join('|');
-}
-
-function menuItems(): HTMLElement[] {
-    return Array.from(document.querySelectorAll<HTMLElement>('.acm-menu[data-level="0"] [data-node]'));
-}
-
-interface Run {
-    snaps: Snapshot[];
-    events: unknown[];
-    shell: string | null;
-}
-
-async function play(steps: Steps, o: RunOptions = {}): Promise<Run> {
-    const mode = 'shell';
-    const h = startRun(o);
-    const shell = h.list.getAttribute(SHELL_ATTR);
-    const snaps: Snapshot[] = [];
-    const el = (selector: string): Element => {
-        const found = document.querySelector(selector);
-        if (!found) throw new Error(`${mode}: nothing matches ${selector}`);
-        return found;
-    };
-    const g: Gestures = {
-        el,
-        async click(selector) {
-            el(selector).dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, cancelable: true }));
-            (el(selector) as HTMLElement).click();
-            await settle();
-        },
-        async key(key, target) {
-            const at = target || document.activeElement || document.body;
-            at.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
-            await settle();
-        },
-        async pick(label) {
-            const item = menuItems().find((b) => b.querySelector('.acm-label')?.textContent === label);
-            if (!item) throw new Error(`${mode}: no menu item ${label}`);
-            item.click();
-            await settle();
-        },
-        async type(value) {
-            const input = el('#session-sidebar-list .session-sidebar-rename-input') as HTMLInputElement;
-            input.value = value;
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            await settle();
-        },
-        snap(label) {
-            const menu = document.querySelector('.acm-menu');
-            const state = w.SessionSidebarArrangement.current();
-            snaps.push({
-                label,
-                list: canonicalDom(h.list),
-                menu: menu ? menuItems().map((b) => `${b.querySelector('.acm-label')?.textContent ?? ''}${b.getAttribute('aria-disabled') ? ` (${b.getAttribute('data-tooltip') ?? 'inert'})` : ''}`).join('|') : null,
-                focus: focusOf(),
-                collapsed: (state.collapsed || []).slice(),
-                groups: JSON.stringify(h.groups()),
-            });
-        },
-    };
-    await steps(h, g);
-    g.snap('end');
-    closeItemMenu();
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    const input = document.querySelector('#session-sidebar-list .session-sidebar-rename-input') as HTMLInputElement | null;
-    if (input) input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    await settle();
-    return { snaps, events: recorded().slice(), shell };
-}
-
-function legacyRun(run: Run): Run {
-    return legacyAnswer(suiteOfTest(), { ...run, shell: null });
-}
-
-async function same(steps: Steps, o: RunOptions = {}): Promise<Run> {
-    const svelte = await play(steps, o);
-    const legacy = legacyRun(svelte);
-    expect(legacy.shell).toBeNull();
-    expect(svelte.shell).toBe('svelte');
-    expect(svelte.events).toEqual(legacy.events);
-    const around = (snaps: Snapshot[]) => snaps.map(({ menu, focus, ...rest }) => ({ ...rest, menu: menu === null, focus: focus.startsWith('item:') || focus.includes('session-sidebar-group-menu__item') ? 'menu' : focus }));
-    expect(around(svelte.snaps)).toEqual(around(legacy.snaps));
-    return svelte;
-}
 
 const GROUP_KEBAB = (uuid: string) => `#session-sidebar-list [data-group-menu="${uuid}"]`;
 const PROJECT_KEBAB = (key: string) => `#session-sidebar-list [data-project-menu="${key}"]`;
-const TOGGLE = (key: string) => `#session-sidebar-list [data-group-toggle="${key}"]`;
 const INPUT = '#session-sidebar-list .session-sidebar-rename-input';
 
 beforeAll(() => {
-    w = loadInteractions(sidebarShell);
+    loadShell();
     sleepHook.release = (name) => { recorded().push(['release', name]); };
 });
 
@@ -172,7 +55,7 @@ describe('the group heading menu', () => {
             await g.click('#session-sidebar-live');
         });
         expect(run.snaps[0]!.menu).toContain('move up');
-        expect(run.snaps[0]!.focus).toBe('item:rename');
+        expect(run.snaps[0]!.focus).toBe('item:customize');
         expect(run.snaps[2]!.menu).toBeNull();
     });
 
@@ -198,7 +81,7 @@ describe('the group heading menu', () => {
             await g.key('Escape');
         });
         // wraps to the first
-        expect(run.snaps.map((s) => s.focus.split(' (')[0])).toEqual(['item:add', 'item:remove', 'item:rename', 'BUTTON|oc-ibtn oc-ibtn--bare session-sidebar-group__menu||']);
+        expect(run.snaps.map((s) => s.focus.split(' (')[0])).toEqual(['item:fold everything inside', 'item:remove', 'item:customize', 'BUTTON|oc-ibtn oc-ibtn--bare session-sidebar-group__menu||']);
     });
 
     it('move up on the first group and move down on the last stay in the menu, inert, with the reason inline', async () => {
@@ -229,7 +112,7 @@ describe('the group heading menu', () => {
         });
         expect(prevented).toBe(true);
         expect(run.snaps[1]!.menu, 'same items in the same order').toBe(run.snaps[0]!.menu);
-        expect(run.snaps[1]!.menu).toContain('rename');
+        expect(run.snaps[1]!.menu).toContain('customize');
     });
 
     it('move down and move up send the whole new order', async () => {
@@ -430,10 +313,10 @@ describe('the project heading menu', () => {
         expect(slept).toEqual(['su-cloude_c', 'su-cloude_e']);
     });
 
-    it('remove closes every session the right way, then archives', async () => {
+    it('archive project closes every session the right way, then archives', async () => {
         const run = await same(async (_h, g) => {
             await g.click(PROJECT_KEBAB('p:20'));
-            await g.pick('remove');
+            await g.pick('archive project');
         });
         const api = run.events.filter((e) => (e as unknown[])[0] === 'api').map((e) => (e as unknown[]).slice(1));
         expect(api).toEqual([
@@ -445,7 +328,7 @@ describe('the project heading menu', () => {
     it('one failed close keeps the project', async () => {
         const run = await same(async (_h, g) => {
             await g.click(PROJECT_KEBAB('p:20'));
-            await g.pick('remove');
+            await g.pick('archive project');
         }, { failRoute: 'destroyExternalSession' });
         expect(run.events.some((e) => (e as unknown[])[1] === 'archiveProject')).toBe(false);
     });

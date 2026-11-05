@@ -3,7 +3,7 @@
   import type { SessionGitDiff } from '../../api/types';
   import { t } from '../../../lib/i18n/index.svelte';
 
-  let { sessionId, path }: { sessionId: string; path: string } = $props();
+  let { sessionId, path, source = '' }: { sessionId: string; path: string; source?: string } = $props();
 
   let diff = $state<SessionGitDiff | null>(null);
   let failed = $state<'unknown' | 'gone' | null>(null);
@@ -14,7 +14,7 @@
     let live = true;
     diff = null;
     failed = null;
-    authFetch<SessionGitDiff>(`/sessions/${id}/git-diff?path=${q}`).then(
+    authFetch<SessionGitDiff>(source || `/sessions/${id}/git-diff?path=${q}`).then(
       (d) => { if (live) diff = d; },
       (e: unknown) => { if (live) failed = (e as { status?: number })?.status === 404 ? 'gone' : 'unknown'; },
     );

@@ -18,6 +18,7 @@ from src.core.federation.peer_terminal_proxy import PeerUnavailable, connect_ups
 from src.core.hosts.identity import remote_session_id
 from src.core.notifications import contracts, types
 from src.core.notifications.sources.toast import attention_notify_type
+from src.core.session_output import waits as session_waits
 from src.models import WSMessageType
 
 logger = structlog.get_logger()
@@ -91,6 +92,8 @@ async def _follow_once(app_state: Any, host_key: str, client: PeerClient, instal
             if dispatcher is not None and local.get('type') in (
                     WSMessageType.SESSION_STATUS_CHANGED.value, WSMessageType.SESSIONS_CHANGED.value):
                 dispatcher.on_peer_change(local.get('session_id'))
+            if local.get("type") == WSMessageType.SESSION_STATUS_CHANGED.value and "activity_status" in local:
+                session_waits.REGISTRY.on_status(local.get("session_id"), local["activity_status"])
             if local.get("type") == WSMessageType.TOAST_NEW.value:
                 offer_to_engine(local)
     finally:

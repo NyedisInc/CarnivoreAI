@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 
 import { GOOD_FOLDER, GOOD_NAME, enT, modals, recorder } from './create-harness';
-import { accountFields, buildCreatePayload, buildOpenProjectPayload, isRemoteRoot, splitRemoteRoot, agentTypeFor, chooseHost, createConsoleFlow, createProjectFlow } from './create-flow';
+import { accountFields, buildCreatePayload, agentTypeFor, chooseHost, createConsoleFlow, createProjectFlow } from './create-flow';
+import { buildOpenProjectPayload, isRemoteRoot, splitRemoteRoot } from './open-project-payload';
 import type { HostChoice } from './create-host';
 import { cloneFromGithubFlow } from './entry-flows';
 import { openProjectFromFolderFlow } from './open-folder-flow';

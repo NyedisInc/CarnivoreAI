@@ -1,8 +1,9 @@
 
 <script lang="ts">
+  import { failureReason } from '../../errors/failure-reason';
   import Radio from '../../base/Radio.svelte';
   import RadioGroup from '../../base/RadioGroup.svelte';
-  import ModalShell from '../../launchpad/ModalShell.svelte';
+  import ModalShell from '../../dialog-frame/ModalShell.svelte';
   import type { Translate } from '../../sessions/types';
   import * as api from './pack-skills-api';
 
@@ -19,7 +20,7 @@
 
   function say(error: unknown): void {
     plan = null;
-    notice = api.refusalCode(error) === 'plan_stale' ? t('skills.pack.sheet.stale') : t('skills.pack.sheet.failed', { reason: error instanceof Error ? error.message : String(error) });
+    notice = api.refusalCode(error) === 'plan_stale' ? t('skills.pack.sheet.stale') : t('skills.pack.sheet.failed', { reason: failureReason(error) });
   }
 
   async function check(): Promise<void> {

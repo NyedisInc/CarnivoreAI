@@ -71,8 +71,8 @@ function createBanners(deps) {
     const result = await api.getAuthed(PREFERENCES_ROUTE);
     if (!result.reachable || !result.data || typeof result.data.values !== 'object' || result.data.values === null) return null;
     const values = result.data.values;
-    return { banners: values.desktop_banners === true, hideCommand: values.desktop_banner_hide_command === true,
-      asksOnly: values.desktop_notify_asks_only === true };
+    return { banners: values.desktop_banners !== false, hideCommand: values.desktop_banner_hide_command === true,
+      asksOnly: values.desktop_notify_asks_only === true, quietWatched: values.notify_quiet_watched !== false };
   }
 
   function closeAll() {
@@ -108,9 +108,21 @@ function createBanners(deps) {
     }
   }
 
+  let firstAskChecked = false;
+
+  async function firstLaunchAsk(api) {
+    if (firstAskChecked || !deps.requestPermission) return;
+    if (deps.readPermission() !== 'not_asked') { firstAskChecked = true; return; }
+    const prefs = await readPrefs(api);
+    if (!prefs) return;
+    firstAskChecked = true;
+    if (prefs.banners) await deps.requestPermission();
+  }
+
   async function reconcile() {
     const api = deps.getApi();
     if (!api) { closeAll(); return; }
+    await firstLaunchAsk(api);
     const result = await api.getAuthed(APPROVALS_ROUTE);
     if (!result.reachable || !result.data || !Array.isArray(result.data.items)) return;
     const wanted = new Map();
@@ -130,7 +142,13 @@ function createBanners(deps) {
       if (prefs && prefs.banners) await pruneDelivered(wanted);
     }
     for (const [key, item] of wanted) {
-      if (entries.has(key) || deps.isWindowFocused()) continue;
+      if (entries.has(key)) continue;
+      if (deps.isWindowFocused()) {
+        prefs = prefs || await readPrefs(api);
+        if (!prefs || !prefs.quietWatched) continue;
+        const watched = deps.watchedSession ? deps.watchedSession() : '';
+        if (watched && item.session_id === watched) continue;
+      }
       prefs = prefs || await readPrefs(api);
       const verdict = model.bannersDeliverable({ prefOn: !!(prefs && prefs.banners), permission: deps.readPermission(), apiPresent: true });
       if (!verdict.ok || !supported()) return;

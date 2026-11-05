@@ -1,5 +1,6 @@
 import { t } from '../i18n/index.svelte';
 import { mountPanel, unmountPanel } from '../mount';
+import { createAnchoredPopup } from './anchored-popup';
 import { drawerEnv } from './env';
 import * as GroupStore from './group-store';
 import type { GroupRule } from './group-rule';
@@ -8,17 +9,10 @@ import GroupRulePanel from './GroupRulePanel.svelte';
 
 export const MOUNT_ID = 'group-rule-panel-mount';
 
-let openPopup: HTMLElement | null = null;
-let returnFocusTo: HTMLElement | null = null;
-let wired = false;
+const popup = createAnchoredPopup({ onClose: () => unmountPanel(MOUNT_ID) });
 
 export function close(restoreFocus = false): void {
-    unmountPanel(MOUNT_ID);
-    if (openPopup && openPopup.parentNode) openPopup.parentNode.removeChild(openPopup);
-    openPopup = null;
-    const target = returnFocusTo;
-    returnFocusTo = null;
-    if (restoreFocus && target && target.isConnected) target.focus();
+    popup.close(restoreFocus);
 }
 
 export async function saveRule(groupUuid: string, rule: GroupRule): Promise<boolean> {
@@ -51,26 +45,5 @@ export function open(anchor: Element, groupUuid: string): void {
     body.className = 'group-icon-picker__body';
     body.id = MOUNT_ID;
     el.append(title, body);
-    const box = anchor.getBoundingClientRect();
-    el.style.top = `${Math.round(box.bottom + 2)}px`;
-    document.body.appendChild(el);
-    openPopup = el;
-    returnFocusTo = anchor instanceof HTMLElement ? anchor : null;
-    mountPanel(MOUNT_ID, GroupRulePanel, { groupUuid, save: (rule: GroupRule) => saveRule(groupUuid, rule) });
-    const left = Math.min(box.left, window.innerWidth - el.offsetWidth - 8);
-    el.style.left = `${Math.max(8, Math.round(left))}px`;
-    const bottomGap = window.innerHeight - (box.bottom + 2 + el.offsetHeight) - 8;
-    if (bottomGap < 0) el.style.top = `${Math.max(8, Math.round(box.bottom + 2 + bottomGap))}px`;
-    wire();
-}
-
-function wire(): void {
-    if (wired) return;
-    document.addEventListener('mousedown', (e) => {
-        if (openPopup && !openPopup.contains(e.target as Node)) close();
-    });
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && openPopup) close(true);
-    });
-    wired = true;
+    popup.open(el, anchor, () => mountPanel(MOUNT_ID, GroupRulePanel, { groupUuid, save: (rule: GroupRule) => saveRule(groupUuid, rule) }));
 }

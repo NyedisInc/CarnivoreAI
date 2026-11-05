@@ -7,7 +7,7 @@ const { app } = require('electron');
 const net = require('net');
 const fs = require('fs');
 const os = require('os');
-const { currentTotp, secondsUntilRollover } = require('./totp');
+const { currentTotp } = require('./totp');
 const { readEnvValue, validateEnvFile } = require('./env-file');
 const devProvisioning = require('./dev-provisioning');
 const { terminateProcess, isAlive } = require('./process-teardown');
@@ -239,10 +239,6 @@ class ServerManager {
       console.warn('[otp] getCurrentOtp failed:', err.message);
       return null;
     }
-  }
-
-  getOtpSecondsRemaining() {
-    return secondsUntilRollover();
   }
 
   findPython() {
@@ -597,6 +593,7 @@ class ServerManager {
 
   cancelSlowRetry() { this.slowRetry.cancel(); }
 
+  /* cannot be undone */
   beginQuit() {
     this.quitting = true; this.slowRetry.cancel();
     if (this.supervisorTimer) {

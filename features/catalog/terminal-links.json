@@ -1,0 +1,43 @@
+{
+  "api_routes": [],
+  "area": "terminal",
+  "description": "Any http or https address printed as plain text in a terminal is a link. Hover it and it underlines; Cmd-click it on a Mac (Ctrl-click elsewhere, a plain tap on a phone or tablet) and it opens in your system browser. Links a program marks itself keep opening on a plain click. Only http and https ever open. A URL that the program drew across two rows with cursor moves links only its first row.",
+  "docs": [
+    "docs/DECISIONS.md"
+  ],
+  "examples": [
+    "Claude prints a pull request address: Cmd-click it and the PR opens in your browser.",
+    "A dev server prints http://localhost:5173: Cmd-click it to open the app.",
+    "On the phone, tap a printed address to open it."
+  ],
+  "how_to": [
+    "Move the pointer over an address in a terminal: it underlines.",
+    "Hold Cmd (Ctrl on Windows or Linux) and click it. It opens in your system browser.",
+    "On a touch screen, tap the address."
+  ],
+  "id": "terminal-links",
+  "issues": [
+    2725
+  ],
+  "keywords": [
+    "url",
+    "link",
+    "cmd-click",
+    "open in browser",
+    "terminal"
+  ],
+  "media_exempt": "a hover underline and a browser opening are not visible in a still capture; recaptured at the version bump",
+  "name": "Clickable URLs in the terminal",
+  "since": "2026-10-30",
+  "status": "beta",
+  "summary": "Cmd-click any http or https address printed in a terminal to open it in your system browser.",
+  "surfaces": [
+    "client/js/terminal-links.js",
+    "client/vendor/xterm/xterm-addon-web-links.js",
+    "web/src/opscenter/cells/terminal-viewer/Cell.svelte"
+  ],
+  "updated": "2026-10-30",
+  "where": [
+    "Every terminal: the session page, dashboard cells and viewers."
+  ]
+}

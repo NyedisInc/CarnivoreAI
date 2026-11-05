@@ -115,6 +115,21 @@ def resolve_version(root: Path | None = None) -> str:
     )
 
 
+DEV_BUILD_STAMP = ".dev-build"
+
+
+def dev_build(root: Path | None = None) -> str:
+    try:
+        with (root or repo_root()).joinpath(DEV_BUILD_STAMP).open("r", encoding="utf-8") as handle:
+            stamp = json.load(handle)
+        number = int(stamp["r"])
+        if normalize_tag(str(stamp["version"])) != resolve_version(root) or number < 0:
+            return ""
+        return f"r{number}" + ("+" if stamp.get("local") else "")
+    except (OSError, ValueError, KeyError, TypeError):
+        return ""
+
+
 
 _startup_version: str | None = None
 

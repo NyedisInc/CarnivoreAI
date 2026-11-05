@@ -17,11 +17,13 @@ HARNESS = """<!DOCTYPE html>
 <link rel="stylesheet" href="file://%(css)s/animation-pause.css">
 <script>
   /* A stand-in for the preference layer: a stored value and the one subscriber PreferenceBridge.follow keeps. */
-  window.__stored = undefined;
+  window.__stored = window.__preset || {};
+  window.__followers = {};
   window.__follower = null;
   window.PreferenceBridge = {
-    read: function (field, local) { return window.__stored === undefined ? local() : window.__stored; },
-    follow: function (field, apply) { window.__follower = apply; return function () {}; },
+    read: function (field, local) { return field in window.__stored ? window.__stored[field] : local(); },
+    /* Like the real bridge, a subscriber hears only its own field (the lights setting subscribes too, issue #2704). */
+    follow: function (field, apply) { window.__followers[field] = apply; if (field === 'animations') window.__follower = apply; return function () {}; },
   };
 </script>
 <script src="file://%(js)s/motion-setting.js"></script>

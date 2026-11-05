@@ -224,7 +224,7 @@ def test_summary_fallback_takes_the_first_sentence_and_cuts_at_a_word():
 
 def test_swarm_ask_schema_carries_summary_and_task():
     desc, props, required, _ = swarm_tools.TOOLS["swarm_ask"]
-    assert set(props) == {"question", "summary", "task", "questions"} and required == ["question", "summary"]
+    assert set(props) == {"question", "summary", "task", "questions", "replaces"} and required == ["question", "summary"]
     assert "no file names, line numbers or code" in props["summary"]["description"]
     assert "changes for the owner" in props["summary"]["description"]
     assert "summary" in desc

@@ -16,7 +16,7 @@
   {#each FILTER_KEYS as key (key)}
     {@const name = t(`opscenter.cell.timeline.filter.${key}`)}
     {@const label = counts[key] === 0 ? tx('key.none', { kind: name }) : tx('key.label', { kind: name, count: counts[key] })}
-    <button type="button" class="tlx-key__btn" data-filter={key} data-empty={counts[key] === 0 || undefined}
+    <button type="button" class="tlx-key__btn" data-btn="quiet" data-size="auto" data-filter={key} data-empty={counts[key] === 0 || undefined}
       aria-pressed={filters[key]} aria-label={label} title={label} onclick={() => onToggle(key)}>
       <KindGlyph kind={GLYPH[key]} off={!filters[key]} />
       {#if form !== 'glyphs'}<span class="tlx-key__n">{counts[key]}</span>{/if}
@@ -38,6 +38,8 @@
       display: inline-flex;
       align-items: center;
       gap: var(--oc-space-1);
+      flex: none;
+      --_btn-focus: var(--oc-text-secondary);
       height: 1.375rem;
       padding: 0 calc(var(--oc-space-1) + var(--oc-border));
       border: var(--oc-border) solid transparent;

@@ -54,3 +54,19 @@ def verdict(p95: Optional[float], target_ms: float) -> str:
     if p95 is None:
         return "N/A (unmeasured)"
     return "PASS" if p95 <= target_ms else "FAIL"
+
+
+def parse_cputime(text: str) -> float:
+    parts = text.strip().split(":")
+    if not 2 <= len(parts) <= 3:
+        raise ValueError(f"not a cputime: {text!r}")
+    total = 0.0
+    for part in parts:
+        total = total * 60.0 + float(part)
+    return total
+
+
+def idle_cpu_percent(cpu_start_s: float, cpu_end_s: float, wall_s: float) -> float:
+    if wall_s <= 0 or cpu_end_s < cpu_start_s:
+        raise ValueError("bad idle window")
+    return (cpu_end_s - cpu_start_s) / wall_s * 100.0

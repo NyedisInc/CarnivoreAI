@@ -123,7 +123,7 @@ test('the emitted stylesheet still carries the rules the panel cannot scope', ()
     assert.ok(css.includes('--terminal-search-match-bg:'), 'the decoration colours must ship');
     assert.ok(css.includes('#terminalSearchBtn'), 'the header trigger scoping must ship');
     assert.ok(
-        css.includes('body:has(#terminal-screen.active) #terminalSearchBtn'),
+        css.includes('body.ps-terminal-active #terminalSearchBtn'),
         'the trigger must be allowed on the terminal screen, not inside it',
     );
     assert.ok(

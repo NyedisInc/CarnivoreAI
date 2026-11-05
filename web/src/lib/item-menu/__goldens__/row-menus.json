@@ -2575,6 +2575,12 @@
       "key": "a"
     },
     {
+      "id": "download",
+      "label": "download file",
+      "key": "s",
+      "sep": true
+    },
+    {
       "id": "close",
       "label": "close file",
       "key": "k",

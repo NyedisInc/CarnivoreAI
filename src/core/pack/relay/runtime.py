@@ -2,18 +2,23 @@
 from __future__ import annotations
 
 import sqlite3
+from pathlib import Path
 from typing import Callable, List, Optional
 
+from src.config import settings
 from src.core import resource_push
 from src.core.computers import direction
 from src.core.federation import peer_links
 from src.core.pack.machines import runtime as machines_runtime
 from src.core.pack.machines.exchange import post_via
+from src.core.pack.relay import ledger_sync_store
+from src.core.pack.relay.ledger_sync_push import LedgerSync
 from src.core.pack.relay.owner_side import PeerFn, Relay
-from src.core.provider_ledger import refresh_poke
+from src.core.provider_ledger import poller, poller_core, refresh_poke
 from src.core.resource_push import topics
 
 RELAY: Optional[Relay] = None
+SYNC: Optional[LedgerSync] = None
 
 
 def candidate_ids() -> List[str]:
@@ -25,7 +30,7 @@ def candidate_ids() -> List[str]:
 
 
 def start(open_db: Callable[[], sqlite3.Connection], links_getter: Callable[[], Optional[peer_links.PeerLinks]]) -> Relay:
-    global RELAY
+    global RELAY, SYNC
 
     def peer(install_id: str):
         links = links_getter()
@@ -39,8 +44,15 @@ def start(open_db: Callable[[], sqlite3.Connection], links_getter: Callable[[], 
     if wired is None:
         raise RuntimeError("the Pack machine layer must start before the credential relay")
     lookup: PeerFn = peer
+    ledger_sync_store.PATH = lambda: Path(settings.get_state_dir()) / "ledger_sync.db"
+    SYNC = LedgerSync(open_db=open_db, peer=lookup, snapshot=poller.snapshot, self_id=wired.runtime.install_id,
+                      self_label=wired.runtime.label, allows=allows)
+    poller_core.add_snapshot_listener(SYNC.on_snapshot)
+    links = links_getter()
+    if links is not None:
+        links.add_connect_listener(SYNC.on_connect)
     RELAY = Relay(open_db=open_db, peer=lookup, notify=lambda: resource_push.notify(topics.PACK_RELAY),
-                  self_id=wired.runtime.install_id, allows=allows, candidates=candidate_ids,
+                  self_id=wired.runtime.install_id, allows=allows, candidates=candidate_ids, on_pushed=SYNC.on_credential_pushed,
                   accepts=lambda iid, account: machines_runtime.peer_relay_accepts(iid, account, wired.runtime.install_id))
     refresh_poke.add_credential_listener(RELAY.on_credential)
     return RELAY

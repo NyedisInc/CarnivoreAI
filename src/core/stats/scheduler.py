@@ -13,7 +13,7 @@ import structlog
 
 from src.core.db import db_path_for
 from src.core.session_change_notice import publish
-from . import activity, changes, config, events, observations, rules, tripwires
+from . import activity, changes, config, events, observations, pack_scope, rules, tripwires
 from .plugin import PLUGIN_ID, ingest
 from .account_owner import AccountAttribution
 from .store import StatsStore
@@ -45,6 +45,7 @@ class StatsScheduler:
         self._noticed_live: dict | None = None
         self._noticed_event_id = -1
         self._noticed_sides: dict | None = None
+        self._seen_pack: str | None = None
         self._held_changes = changes.PassChanges()
         self._last_tripwires = 0.0
         self._backfill_running = False
@@ -159,12 +160,15 @@ class StatsScheduler:
     async def _notice(self, result: dict, live_metrics: dict) -> None:
         event_id = await asyncio.to_thread(changes.last_event_id, self.store)
         sides = await asyncio.to_thread(changes.side_fingerprints, self.store)
+        pack = await asyncio.to_thread(pack_scope.rollup_fingerprint, self.store)
+        pack_imported = pack is not None and pack != self._seen_pack
+        self._seen_pack = pack
         found = changes.summarise(
             published_sources=int(result.get('published_sources') or 0),
             activity_metrics=result.get('activity_metrics') or (),
             live_before=self._noticed_live, live_after=live_metrics,
             events_before=self._noticed_event_id, events_after=event_id,
-            sides_before=self._noticed_sides, sides_after=sides)
+            sides_before=self._noticed_sides, sides_after=sides, pack_imported=pack_imported)
         self._held_changes = self._merge_held(found)
         now = time.monotonic()
         since_chart = now - self._last_chart_notice

@@ -26,13 +26,12 @@ interface RestartResult {
 }
 
 interface RestartCtrl {
-    _lastSig?: string | null;
     _fetchAndRender?(): Promise<void>;
     _closeAfterSwitch?(): void;
 }
 
 interface RestartGlobals {
-    Router?: { showError?(message: string): void };
+    WriteFailureNotice?: { notify?(key: string, params: Record<string, unknown>, opts: Record<string, unknown>): void };
     SessionRestartPicker?: RestartAsk;
     SessionRestartDirect?: RestartAsk;
     SessionRestartOptions?: { recreateTarget?(records: unknown, name: string): string | null };
@@ -44,14 +43,20 @@ interface RestartGlobals {
     };
 }
 
-function report(message: string): void {
-    console.error('SessionSidebarRestartClick:', message);
-    const router = (drawerEnv() as RestartGlobals).Router;
-    if (router && typeof router.showError === 'function') router.showError(message);
+const RESTARTED_WITH_PROBLEM = 'notice.restart_warning.title';
+
+const RESTART_FAILED_TITLE = 'notice.restart_failed.title';
+
+function notifyFailure(name: string, key: string, params: Record<string, unknown>, titleKey?: string): void {
+    const notice = (drawerEnv() as RestartGlobals).WriteFailureNotice;
+    if (!notice || typeof notice.notify !== 'function') {
+        console.warn('SessionSidebarRestartClick:', 'no failure notice module for:', key);
+        return;
+    }
+    notice.notify(key, params, { titleKey: titleKey || RESTART_FAILED_TITLE, surface: name, logPrefix: 'SessionSidebarRestartClick:' });
 }
 
 async function resync(ctrl: RestartCtrl): Promise<void> {
-    ctrl._lastSig = null;
     if (ctrl._fetchAndRender) await ctrl._fetchAndRender();
 }
 
@@ -62,7 +67,7 @@ export async function runRestart(
     const g = drawerEnv() as RestartGlobals;
     const picker = g.SessionRestartPicker;
     if (!picker) {
-        report(t('session.restart.error.picker_missing', { name }));
+        notifyFailure(name, 'session.restart.picker_missing', { name });
         return;
     }
     const trigger = (rowEl && typeof rowEl.querySelector === 'function' && rowEl.querySelector('[data-row-menu]'))
@@ -75,7 +80,7 @@ export async function runRestart(
     const remote = !!host && host !== 'local';
     const target = g.SessionKey ? g.SessionKey.forName(name, host) : (remote ? null : name);
     if (!target) {
-        report(t('session.restart.error.key_missing', { name }));
+        notifyFailure(name, 'session.restart.keys_missing', { name });
         return;
     }
     const opts = g.SessionRestartOptions;
@@ -86,7 +91,7 @@ export async function runRestart(
         : await picker.open(target, label, status, uuid, !!focusWrapper, armedByGesture === true, busyWork === true);
     if (!choice) {
         const why = (oneClick || picker).lastError();
-        if (why) report(t('session.restart.error.no_prediction', { name, reason: why }));
+        if (why) notifyFailure(name, 'session.restart.predict_failed', { name, why });
         return;
     }
     await act(ctrl, name, target, choice);
@@ -96,6 +101,7 @@ async function act(ctrl: RestartCtrl, name: string, target: string, choice: Rest
     const g = drawerEnv() as RestartGlobals;
     const recreating = choice.mode === 'recreate';
     const verb = recreating ? 'recreate' : 'restart';
+    const failedKey = recreating ? 'session.recreate.failed' : 'session.restart.card_failed';
     let result: RestartResult | null = null;
     try {
         result = recreating
@@ -103,13 +109,13 @@ async function act(ctrl: RestartCtrl, name: string, target: string, choice: Rest
             : await g.API!.respawnSession(target, choice.agentType, choice.confirmRestartLive === true, choice.account);
     } catch (err) {
         console.error(`SessionSidebar: ${verb} failed:`, err);
-        report(t('session.restart.error.' + verb, { name, detail: err instanceof Error ? err.message : String(err) }));
+        notifyFailure(name, failedKey, { name, detail: err instanceof Error ? err.message : String(err) });
         await resync(ctrl);
         return;
     }
     const worked = recreating ? result && result.status === 'started' : result && result.ok === true;
     if (!worked || !result) {
-        report(t('session.restart.error.' + verb, { name, detail: (result && result.detail) || t('session.restart.error.no_reason') }));
+        notifyFailure(name, failedKey, { name, detail: (result && result.detail) || t('session.restart.no_reason') });
         await resync(ctrl);
         return;
     }
@@ -117,15 +123,15 @@ async function act(ctrl: RestartCtrl, name: string, target: string, choice: Rest
         result = { name: result.tmux_session || name, session_id: result.session_id || null, detail: result.detail || '' };
     }
     if (!recreating && choice.agentType && result.agent_type_persisted === false) {
-        report(t('session.restart.error.not_saved', { name, agent: choice.agentType }));
+        notifyFailure(name, 'session.restart.choice_not_saved', { name, agent: choice.agentType }, RESTARTED_WITH_PROBLEM);
     }
     const back = g.SessionRestartReturn
         ? await g.SessionRestartReturn.reopen(result)
-        : { status: 'not_reopened', detail: 'the reopen module did not load' };
+        : { status: 'not_reopened', detail: t('session.restart.reopen_missing') };
     if (back.status === 'reopened') {
         if (ctrl._closeAfterSwitch) ctrl._closeAfterSwitch();
         return;
     }
-    if (back.detail) report(back.detail);
+    if (back.detail) notifyFailure(name, 'session.restart.reopen_failed', { name, detail: back.detail }, RESTARTED_WITH_PROBLEM);
     await resync(ctrl);
 }

@@ -13,7 +13,6 @@
 .mk2-design button:not(.oc-ptab, [data-btn]) { background: transparent; border: 0; border-radius: 2px; }
 .mk2-design button:not(.oc-ptab, [data-btn], :disabled):hover { background: var(--oc-surface-1-on); }
 .mk2-design button:not(.oc-ptab, [data-btn]):disabled { opacity: 0.4; }
-.mk2-design button[aria-pressed="true"] { color: var(--oc-orange); background: var(--oc-surface-2); }
 .mk2-design button:not(.oc-ptab, [data-btn]), .mk2-design a { outline-offset: 2px; }
 .mk2-design a:not([data-btn]) { color: var(--oc-cyan); text-decoration: none; }
 .mk2-design p { margin: var(--oc-space-1) 0; }
@@ -22,7 +21,6 @@
 .mk2-design dd { margin: 0; overflow-wrap: anywhere; }
 .mk2-design details { margin-top: var(--oc-space-1); }
 .mk2-design summary { color: var(--oc-text-muted); padding: var(--oc-space-1) 0; }
-@media (pointer: coarse) { .mk2-design button:not(.oc-ptab, [data-btn]) { min-height: 44px; } }
 
 .mk2-design .oc-ptabs { --_tab-on: var(--tm-body); }
 .mk2-design .tn-detail { padding: 0; border: 0; background: none; box-shadow: none; }

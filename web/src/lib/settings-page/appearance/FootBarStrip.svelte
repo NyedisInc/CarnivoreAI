@@ -1,4 +1,4 @@
-
+<!-- grouped by session -->
 <script lang="ts">
     import Icon from '../../../opscenter/ui/Icon.svelte';
     import LimitGauge from '../../../opscenter/ui/LimitGauge.svelte';

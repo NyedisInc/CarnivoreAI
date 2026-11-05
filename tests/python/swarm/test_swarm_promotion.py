@@ -21,7 +21,7 @@ os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 from src.core.crosstalk import bus, store as crosstalk_store
 from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
-from src.core.mcp import swarm_tools
+from src.core.mcp import beast_mode, swarm_tools
 from src.core.mcp.caller import AgentCaller
 from src.core.swarm import body, body_create, create, delivery, desk, promotion, reports, spawn, promotion_store, store, thread_port, wake_prompt
 from src.core.swarm.facade import SwarmFacade
@@ -141,6 +141,30 @@ def _exclude_text(env) -> str:
     return (path if path.is_absolute() else env.repo / path).read_text()
 
 
+@pytest.fixture(autouse=True)
+def _beast_off(monkeypatch):
+    monkeypatch.setattr(beast_mode, "beast_enabled", lambda: False)
+
+
+def test_a_promotion_is_kept_with_an_info_line_and_no_approval_card_beast_off(env, monkeypatch):
+    for n in range(1, 5):
+        env.add_task(f"t{n}")
+        assert _finish(env, f"t{n}") == "torn_down"
+    t5 = env.add_task("t5")
+    assert _finish(env, "t5") == "promotion_candidate"
+    view, caller = _view(env, "boss")
+    asyncio.run(swarm_tools.swarm_promote(view, caller, {"agent_id": t5["id"], "specialty": "Refactoring"}))
+    promo = _db(env, lambda c: promotion_store.live_promotion(c, t5["id"]))
+    assert promo is not None and not promo["receipt_card_ref"] and promo["flipped_back_at"] is None
+    assert not [c for c in env.port.cards if c[2].startswith("promotion:")]
+    assert (env.boss["thread_key"], f"promotion-kept:{promo['id']}") in env.port.traffic
+    _db(env, lambda c: promotion_store.set_promotion_card(c, promo["id"], "41"))
+    before = list(env.port.closed)
+    assert asyncio.run(promotion.settle_open_receipts()) == 1 and env.port.closed == [*before, (41, "done")]
+    assert asyncio.run(promotion.settle_open_receipts()) == 0 and env.port.closed == [*before, (41, "done")]
+    assert _db(env, lambda c: promotion_store.get_promotion(c, promo["id"]))["receipt_card_ref"] == "kept:41"
+
+
 def test_fifth_accepted_report_promotes_and_flip_back_reverses_it(env, monkeypatch):
     slug = "t5"
     local, proj = env.repo / ".claude/agent-memory-local" / slug, env.repo / ".claude/agent-memory" / slug
@@ -199,8 +223,8 @@ def test_fifth_accepted_report_promotes_and_flip_back_reverses_it(env, monkeypat
     assert {f".claude/agent-memory/{slug}/MEMORY.md", f".claude/agent-memory/{slug}/seed-from-runs.md", f".claude/agents/{slug}.md",
             f".codex/agents/{slug}.toml"} <= set(tracked)
     promo = _db(env, lambda c: promotion_store.live_promotion(c, t5["id"]))
-    assert promo["task_type"] == "refactor" and promo["commit_sha"] == result["commit"]["sha"] and promo["receipt_card_ref"]
-    assert env.port.cards[-1] == (env.boss["thread_key"], "question", f"promotion:{promo['id']}")
+    assert promo["task_type"] == "refactor" and promo["commit_sha"] == result["commit"]["sha"] and not promo["receipt_card_ref"]
+    assert (env.boss["thread_key"], f"promotion-kept:{promo['id']}") in env.port.traffic
     events = asyncio.run(promotion.promoted_events(env.boss, 10))
     assert [e["event"] for e in events] == ["promoted"] and events[0]["id"] == f"ev:promoted:promotion:{promo['id']}"
     assert _db(env, lambda c: body._resolve_mode(c, promoted, "auto")) == "fresh"
@@ -247,7 +271,6 @@ def test_fifth_accepted_report_promotes_and_flip_back_reverses_it(env, monkeypat
     still = set(git(env.repo, "ls-tree", "-r", "--name-only", "HEAD").split())
     assert not [f for f in still if slug in f] and "README.md" in still
     assert git(env.repo, "status", "--porcelain").strip() == ""
-    assert (int(promo["receipt_card_ref"]), "flipped") in env.port.closed
     assert json.loads((env.repo / f".claude/agent-memory-local/{slug}/swarm.json").read_text())["parent_slug"] == env.boss["slug"]
     assert _db(env, lambda c: promotion_store.promoted_agent(c, env.boss["id"], "refactor")) is None
     assert _db(env, lambda c: body._resolve_mode(c, back, "auto")) == "fresh"

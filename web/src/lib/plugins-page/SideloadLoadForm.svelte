@@ -3,13 +3,15 @@
     import Button from '../base/Button.svelte';
     import Field from '../base/Field.svelte';
     import type { Translate } from '../sessions/types';
-    import { refusalText, type GitRequest } from './sideload-switch';
+    import type { InstallConsent } from '../catalog/types';
+    import SideloadConsent from './SideloadConsent.svelte';
+    import { consentSheetOf, refusalText, type GitRequest, type SideloadSheet } from './sideload-switch';
     import './plugin-pane.css';
 
     interface Props {
         mode: 'folder' | 'git';
         t: Translate;
-        onFolder: (path: string, name: string | null) => Promise<void>;
+        onFolder: (path: string, name: string | null, consent?: InstallConsent) => Promise<void>;
         onGit: (request: GitRequest) => Promise<void>;
         onDone: () => void;
     }
@@ -23,9 +25,20 @@
     let name = $state('');
     let busy = $state(false);
     let error = $state<string | null>(null);
+    let sheet = $state<SideloadSheet | null>(null);
 
     const ready = $derived((mode === 'folder' ? path : url).trim() !== '' && !busy);
     const source = $derived((mode === 'folder' ? path : url).trim() || t('plugins.page.sideload.warning.load_source'));
+
+    async function send(consent?: InstallConsent): Promise<void> {
+        if (mode === 'folder') await (consent ? onFolder(path.trim(), name.trim() || null, consent) : onFolder(path.trim(), name.trim() || null));
+        else await onGit(consent ? { url: url.trim(), ref, subdir, name, consent } : { url: url.trim(), ref, subdir, name });
+    }
+
+    async function confirmed(consent: InstallConsent): Promise<void> {
+        await send(consent);
+        onDone();
+    }
 
     async function submit(event: SubmitEvent): Promise<void> {
         event.preventDefault();
@@ -33,17 +46,20 @@
         busy = true;
         error = null;
         try {
-            if (mode === 'folder') await onFolder(path.trim(), name.trim() || null);
-            else await onGit({ url: url.trim(), ref, subdir, name });
+            await send();
             onDone();
         } catch (failure) {
-            error = refusalText(failure, t);
+            sheet = consentSheetOf(failure);
+            if (!sheet) error = refusalText(failure, t);
         } finally {
             busy = false;
         }
     }
 </script>
 
+{#if sheet}
+    <SideloadConsent {sheet} {t} onConfirm={confirmed} onCancel={() => (sheet = null)} />
+{:else}
 <form class="sideload-form" data-sideload-form={mode} onsubmit={(event) => void submit(event)}>
     <p class="sideload-form__title">{t(mode === 'folder' ? 'plugins.page.sideload.load_folder' : 'plugins.page.sideload.load_git')}</p>
     <div class="sideload-form__fields">
@@ -65,6 +81,7 @@
         </Button>
     </div>
 </form>
+{/if}
 
 <style>
     @layer components {

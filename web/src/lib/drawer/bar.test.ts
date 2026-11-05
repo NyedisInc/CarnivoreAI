@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it, vi } from 'vitest';
+import { flushSync } from 'svelte';
 import * as Bar from './bar';
 import { accountChip } from '../drawer-hud/account-menu.svelte';
 import { versionFooterStub } from './test-support';
@@ -20,10 +21,10 @@ afterEach(() => problems.mockRestore());
 
 describe('the drawer bottom bar', () => {
     it('a repaint that changes nothing leaves the bar element alone', () => {
-        Bar.paint();
+        Bar.paint(); flushSync();
         const chip = slot.querySelector('[data-bar-action="account"]');
         assert.ok(chip, 'setup: the bar is drawn');
-        Bar.paint(); Bar.paint();
+        Bar.paint(); flushSync(); Bar.paint(); flushSync();
         assert.equal(slot.querySelector('[data-bar-action="account"]'), chip, 'the same button after a repaint; a panel anchored to it survives');
         assert.deepEqual(problems.mock.calls, [], 'no [i18n] problem is reported while drawing the chip');
     });
@@ -32,7 +33,7 @@ describe('the drawer bottom bar', () => {
         for (const width of [900, 1400]) {
             Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
             Bar.reset();
-            Bar.paint();
+            Bar.paint(); flushSync();
             const actions = [...slot.querySelectorAll('[data-bar-action]')].map((el) => el.getAttribute('data-bar-action'));
             assert.deepEqual(actions, ['account', 'signin'], `at ${width}px`);
         }
@@ -41,7 +42,7 @@ describe('the drawer bottom bar', () => {
     it('the chip names the catalog account and escapes what a user typed', () => {
         accountChip.identity = { kind: 'member', name: 'Joe <b>', provider: 'github' };
         try {
-            Bar.paint();
+            Bar.paint(); flushSync();
             const chip = slot.querySelector('[data-bar-action="account"]') as HTMLElement;
             assert.equal(chip.querySelector('.session-sidebar-bar__account-name')!.textContent, 'Joe <b>');
             assert.equal(chip.querySelector('b'), null, 'a typed name is text, never markup');
@@ -55,7 +56,7 @@ describe('the drawer bottom bar', () => {
     it('the version sits at the right, after the chip', () => {
         (window as unknown as Record<string, unknown>).VersionFooter = versionFooterStub('1.2.3');
         try {
-            Bar.paint();
+            Bar.paint(); flushSync();
             const bar = slot.querySelector('.session-sidebar-bar') as HTMLElement;
             const parts = [...bar.children].map((el) => el.className);
             assert.deepEqual(parts, ['session-sidebar-bar__group', 'session-sidebar-bar__version']);
@@ -71,10 +72,11 @@ describe('the drawer bottom bar', () => {
             masterAllEnabled: () => on,
             setMasterAll: (v: boolean) => { on = v; },
         };
-        Bar.paint();
+        Bar.paint(); flushSync();
         const crown = slot.querySelector('#sidebarMasterAllBtn') as HTMLElement;
         assert.ok(crown, 'drawn while on');
         crown.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        flushSync();
         assert.equal(on, false);
         assert.equal(slot.querySelector('#sidebarMasterAllBtn'), null, 'gone once off');
     });

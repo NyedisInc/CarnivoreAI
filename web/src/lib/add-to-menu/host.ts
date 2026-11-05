@@ -1,4 +1,5 @@
 import type { Component } from 'svelte';
+import type { SidebarPick } from '../legacy-globals';
 import { mountPanel, unmountPanel } from '../mount';
 import CascadeMenu from '../drawer-tabs/CascadeMenu.svelte';
 import type { MenuNode } from '../drawer-tabs/add-component-menu';
@@ -38,9 +39,7 @@ interface KindGroupsGlobal {
   isAgentKind(row: LegacyRow): boolean;
 }
 
-interface SessionSidebarGlobal {
-  _rows?: LegacyRow[];
-}
+type SessionSidebarGlobal = SidebarPick<'rows'>;
 
 interface LegacyGlobals {
   SessionSidebarGroupStore?: GroupStoreGlobal;
@@ -53,7 +52,7 @@ function legacy(): LegacyGlobals {
 }
 
 function agentRows(): LegacyRow[] {
-  const rows = legacy().SessionSidebar?._rows ?? [];
+  const rows = legacy().SessionSidebar?.rows<LegacyRow>() ?? [];
   const kinds = legacy().SessionSidebarKindGroups;
   return kinds ? rows.filter((r) => kinds.isAgentKind(r)) : [];
 }

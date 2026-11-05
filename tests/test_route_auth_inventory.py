@@ -18,6 +18,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 from starlette.websockets import WebSocketDisconnect  # noqa: E402
 
 from src.api.auth import require_auth  # noqa: E402
+from src.api.checkpoint_revert_routes import require_owner  # noqa: E402
 from src.main import app  # noqa: E402
 from src.cplugs.sdk import public_routes  # noqa: E402
 
@@ -33,6 +34,8 @@ PUBLIC_HTTP = {
     ("POST", "/api/v1/auth/join"): "first-run join: local-transport and unpaired/join_pending gated, #1530 J5c",
     ("GET", "/api/v1/auth/join/status"): "first-run join: local-transport and unpaired/join_pending gated, #1530 J5c",
     ("POST", "/api/v1/auth/join/look"): "first-run look for a pack: same local-transport and unpaired/join_pending gate as /auth/join, opens the Terminal helper, carries no secret, #1622",
+    ("POST", "/api/v1/auth/join/knock"): "first-run knock on a pack: same local-transport and unpaired/join_pending gate (_check) as /auth/join, carries no secret, #2799",
+    ("POST", "/api/v1/auth/join/code"): "first-run join code: same local-transport and unpaired/join_pending gate (_check) as /auth/join, rate limited, the code is never logged, #2799",
     ("GET", "/api/v1/health"): "liveness probe, no data",
     ("GET", "/health"): "liveness probe, no data",
     ("GET", "/api/v1/setup/state"): "first-run wizard: loopback-only while setup is incomplete, require_auth after",
@@ -93,7 +96,7 @@ def _http_routes() -> List[Tuple[str, str, bool]]:
         if kind != "http":
             continue
         calls = set(_dep_calls(route.dependant)) | set(inherited)
-        guarded = require_auth in calls or any(hasattr(c, "peer_scope") for c in calls)
+        guarded = require_auth in calls or require_owner in calls or any(hasattr(c, "peer_scope") for c in calls)
         for method in sorted(route.methods - {"HEAD", "OPTIONS"}):
             out.append((method, path, guarded))
     return out

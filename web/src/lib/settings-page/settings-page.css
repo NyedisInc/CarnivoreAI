@@ -324,8 +324,7 @@
     cursor: not-allowed;
 }
 
-.settings-page .st-legacy .modal-input,
-.settings-page .st-legacy .theme-selector {
+.settings-page .st-legacy .modal-input {
     padding: 7px 10px;
     font-size: 13px;
 }

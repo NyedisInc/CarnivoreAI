@@ -136,10 +136,6 @@ describe('the rails draw the stored size', () => {
     }
   });
 
-  test('a compact key shows the alert count as a 6px dot, not a bubble over its 12px icon', () => {
-    expect(source('lib/zone-shell/ZoneBadge.svelte')).toMatch(/:global\(\[data-bar-size='compact'\]\) \.zone-badge \{[^}]*width: 6px;[^}]*height: 6px;/);
-  });
-
   test('the bottom slide-out floor is the bar itself at every size', () => {
     expect(outMinPx('bottom', 'compact')).toBe(20);
     expect(outMinPx('bottom', 'cozy')).toBe(36);

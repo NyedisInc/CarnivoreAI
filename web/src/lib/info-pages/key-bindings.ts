@@ -3,6 +3,7 @@ import { CATALOG_KEY_ROWS } from '../catalog/keys';
 import { SEARCH_BINDINGS } from '../terminal-search/search-keys';
 import { SETTINGS_KEY_ROWS } from '../settings-page/settings-shortcut';
 import { ZOOM_KEY_ROWS } from '../../opscenter/engine/layout-zoom.svelte';
+import { APP_KEY_ROWS } from '../app-keys/chords';
 
 export interface KeyRow {
     keys: string;
@@ -10,13 +11,18 @@ export interface KeyRow {
 }
 
 export interface KeySection {
-    id: 'menu' | 'terminal-search' | 'terminal-zoom' | 'catalog' | 'settings';
+    id: 'app' | 'menu' | 'terminal-search' | 'terminal-zoom' | 'catalog' | 'settings';
     titleKey: string;
     rows: KeyRow[];
 }
 
 export function keySections(): KeySection[] {
     const sections: KeySection[] = [
+        {
+            id: 'app',
+            titleKey: 'keys.page.section.app',
+            rows: APP_KEY_ROWS.map((r) => ({ ...r })),
+        },
         {
             id: 'menu',
             titleKey: 'keys.page.section.menu',

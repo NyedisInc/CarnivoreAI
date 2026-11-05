@@ -27,6 +27,9 @@ from src.core.ui_preferences.constants import (
     MAX_DRAWER_ZONE_ITEMS,
     MAX_SESSION_RAIL_ITEMS,
     MAX_SESSION_RAIL_SECTIONS,
+    MAX_SESSION_RAIL_V2_SECTIONS,
+    SESSION_RAIL_MIN_SHARE,
+    SESSION_RAIL_CUT_EPSILON,
     SESSION_RAIL_RATIO_MIN,
     SESSION_RAIL_RATIO_MAX,
     DRAWER_ZONE_WIDGET_ID_RE,
@@ -61,7 +64,7 @@ from src.core.ui_preferences.constants import (
     MAX_UNKNOWN_VALUE_BYTES,
 )
 
-from src.core.ui_preferences.drawer import (
+from src.core.ui_preferences.drawer_arrangement import (
     SECTION_IDS,
     SESSION_UUID_RE,
     MAX_DRAWER_ARRANGEMENT_BYTES,
@@ -69,6 +72,9 @@ from src.core.ui_preferences.drawer import (
     COMPANY_FOLD_RE,
     DrawerViewState,
     DrawerArrangement,
+)
+
+from src.core.ui_preferences.drawer_row_icons import (
     DRAWER_ROW_ICON_DEFAULTS,
     DRAWER_ROW_EXTRA_ICON_DEFAULT,
     DRAWER_ROW_EXTRA_ICON_KEYS,
@@ -76,11 +82,14 @@ from src.core.ui_preferences.drawer import (
     DRAWER_ROW_AUTOMATIONS_DEFAULT,
     DrawerRowIconSet,
     DrawerRowIcons,
+    drawer_row_icons_defaults,
+)
+
+from src.core.ui_preferences.drawer_zone import (
     DrawerZoneItem,
     DrawerZone,
     SessionRailSection,
     SessionRail,
-    drawer_row_icons_defaults,
 )
 
 from src.core.ui_preferences.layouts import (
@@ -134,6 +143,9 @@ __all__ = [
     "MAX_DRAWER_ZONE_ITEMS",
     "MAX_SESSION_RAIL_ITEMS",
     "MAX_SESSION_RAIL_SECTIONS",
+    "MAX_SESSION_RAIL_V2_SECTIONS",
+    "SESSION_RAIL_MIN_SHARE",
+    "SESSION_RAIL_CUT_EPSILON",
     "SESSION_RAIL_RATIO_MIN",
     "SESSION_RAIL_RATIO_MAX",
     "DRAWER_ZONE_WIDGET_ID_RE",

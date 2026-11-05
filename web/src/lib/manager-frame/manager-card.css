@@ -3,9 +3,9 @@
     --_bd: var(--pl-line-panel);
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--oc-space-1-5);
     min-width: 0;
-    padding: 10px 12px;
+    padding: var(--oc-card-pad-y) var(--oc-space-3);
 }
 
 .mgr .mgr-card.mgr-card--selected {
@@ -18,7 +18,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: var(--oc-gap-parts);
     min-width: 0;
 }
 
@@ -26,11 +26,12 @@
     min-width: 0;
     color: var(--pl-text);
     font-weight: 600;
-    font-size: 13px;
+    font-size: var(--oc-fs-status);
     overflow-wrap: anywhere;
 }
 
 .mgr .mgr-card__open {
+    display: inline-block;
     padding: 0;
     border: none;
     background: transparent;
@@ -47,44 +48,44 @@
     margin: 0;
     color: var(--pl-muted);
     font-family: var(--pl-mono);
-    font-size: 11px;
+    font-size: var(--oc-fs-label);
     overflow-wrap: anywhere;
 }
 
 .mgr .mgr-card__brief {
     margin: 0;
     color: var(--pl-muted);
-    font-size: 12px;
+    font-size: var(--oc-fs-body);
     line-height: 1.45;
 }
 
 .mgr .mgr-card__marks {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: var(--oc-space-1-5);
     margin: 0;
     padding: 0;
     list-style: none;
 }
 
 .mgr .mgr-mark {
-    padding: 1px 6px;
+    padding: var(--oc-gap-hair) var(--oc-space-1-5);
     border: 1px solid var(--pl-line-quiet);
     border-radius: var(--pl-radius-sm);
     color: var(--pl-muted);
     font-family: var(--pl-mono);
-    font-size: 10px;
+    font-size: var(--oc-fs-micro);
     text-transform: uppercase;
     letter-spacing: var(--oc-tracking-label, 0.6px);
 }
 
 .mgr .mgr-card__error {
     margin: 0;
-    padding: 6px 8px;
+    padding: var(--oc-space-1-5) var(--oc-space-2);
     border-left: 2px solid var(--pl-high);
     background: var(--pl-raised);
     color: var(--pl-text);
-    font-size: 11px;
+    font-size: var(--oc-fs-label);
     line-height: 1.45;
     overflow-wrap: anywhere;
 }
@@ -185,7 +186,7 @@
     .mgr .oc-page__items--list .mgr-card {
         grid-template-columns: auto minmax(0, 1fr) minmax(0, max-content) auto;
         min-height: 48px;
-        padding-block: 2px;
+        padding-block: var(--oc-space-0-5);
         row-gap: 0;
     }
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import { t } from '../sdk';
+  import { frameScheme, t } from '../sdk';
   import { Button } from '../sdk/ui';
   import type { LabSize } from '../sdk/widget-lab';
   import { frameHeight, frameUrl, frameWindowWidth, SIDEBAR_WINDOW, type FrameSpec } from './frame-url';
@@ -62,6 +62,7 @@
     aria-hidden="true"
     tabindex="-1"
     style="position: fixed; left: -10000px; top: 0; border: 0; visibility: hidden;"
+    style:color-scheme={frameScheme(spec.theme)}
     onload={() => void loaded()}
   ></iframe>
 {/if}

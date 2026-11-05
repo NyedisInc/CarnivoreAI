@@ -36,7 +36,7 @@ setLocale('en');
 
 const SELF = (role: string) => ({ install_id: 'me', label: 'studio', fid_short: 'ab12cd', role,
   link: { state: 'listening', port: 8443, join_open: false, addresses: [], code_paused_until: null },
-  main: role === 'member' ? { label: 'ripley', state: 'connected', last_link_at: null, reachable_note: false } : null });
+  main: role === 'member' ? { label: 'bravo', state: 'connected', last_link_at: null, reachable_note: false } : null });
 const machine = (id: string, over: Record<string, unknown> = {}) => ({ install_id: id, label: id, is_self: id === 'me', is_master: id === 'me', paired: id !== 'me',
   state: 'ok', capabilities: [], specs: null, snapshot: null, age_seconds: 5, ...over });
 const entry = (id: string, over: Record<string, unknown> = {}) => ({ install_id: id, label: id, host_key: null, transport: 'ssh', role: 'member', state: 'connected', direction: 'both',

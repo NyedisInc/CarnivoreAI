@@ -77,7 +77,7 @@ test('one edit mode: outside edit layout there is no badge and no dashed cell; i
   layoutEditor.active = true;
   await settle();
   const n = rail().querySelectorAll('[data-rail-key]').length;
-  expect(rail().querySelectorAll('[data-edit-cell] [data-edit-badge]')).toHaveLength(n);
+  expect(rail().querySelectorAll('[data-edit-cell] [data-edit-badge]')).toHaveLength(n + 1);
   expect(badge('docs').getAttribute('aria-label')).toBe('hide documentation');
   rail().querySelector<HTMLElement>('[data-rail-key="docs"]')!.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
   await settle();

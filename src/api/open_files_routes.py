@@ -6,13 +6,14 @@ from typing import Optional
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from fastapi.concurrency import run_in_threadpool
+from fastapi.concurrency import iterate_in_threadpool, run_in_threadpool
+from fastapi.responses import StreamingResponse
 
 from src.api.auth import require_auth
 from src.config import settings
 from src.core import app_config_guard, config_files, row_looks
 from src.core.db import DatastoreUnreadableError, db_path_for
-from src.core.open_files import content, open_list
+from src.core.open_files import content, download, open_list
 from src.core.open_files.session_folder import SessionNotFound
 from src.models.open_files import (
     OpenFileContent,
@@ -115,6 +116,28 @@ async def read_open_file(file_id: str) -> OpenFileContent:
     except DatastoreUnreadableError as exc:
         raise api_error(503, "datastore_unavailable", exc, step="read_open_file") from exc
     return OpenFileContent(**result)
+
+
+@router.get("/files/open/{file_id}/download", response_class=StreamingResponse)
+async def download_open_file(file_id: str) -> StreamingResponse:
+    """Stream the exact bytes of a row's file as an attachment. Errors: 400 open_file_is_diff; 403 open_file_unreadable; 404
+    (row, file, a link or a non-regular file); 409 open_file_unavailable (session gone); 503."""
+    row = _row(file_id)
+    if row.kind != "file":
+        raise _refused(400, "open_file_is_diff", "a diff has no file to download")
+    try:
+        target = await run_in_threadpool(download.resolve, _db_path(), row)
+    except download.DownloadSessionGone as exc:
+        raise _refused(409, "open_file_unavailable", str(exc)) from exc
+    except download.DownloadUnavailable as exc:
+        raise _refused(404, "open_file_not_found", str(exc)) from exc
+    except download.DownloadUnreadable as exc:
+        raise _refused(403, "open_file_unreadable", str(exc)) from exc
+    except DatastoreUnreadableError as exc:
+        raise api_error(503, "datastore_unavailable", exc, step="download_open_file") from exc
+    logger.info("open_file_downloaded", file_id=row.id, root=row.root, size=target.size)
+    return StreamingResponse(iterate_in_threadpool(target.chunks()), media_type=target.media_type,
+                             headers=download.attachment_headers(target.filename, target.size))
 
 
 @router.put("/files/open/{file_id}/content", response_model=SaveOpenFileResponse)

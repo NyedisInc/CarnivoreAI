@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { failureReason } from '../errors/failure-reason';
     import { onMount } from 'svelte';
     import { loadCodeMirror, type CodeEditor } from './codemirror';
 
@@ -29,7 +30,7 @@
             },
             (err: unknown) => {
                 console.error('open files: the editor could not be loaded', err);
-                if (live) onUnavailable?.(err instanceof Error ? err.message : String(err));
+                if (live) onUnavailable?.(failureReason(err));
             },
         );
         return () => {

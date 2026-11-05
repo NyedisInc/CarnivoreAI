@@ -61,13 +61,6 @@ export function anyDensityShows(icon: IconKind): boolean {
     return DENSITY_KEYS.some((density) => iconVisible(density, icon));
 }
 
-const listeners = new Set<() => void>();
-
-export function onIconPrefsChange(fn: () => void): () => void {
-    listeners.add(fn);
-    return () => { listeners.delete(fn); };
-}
-
 let stopFollow: (() => void) | null = null;
 
 export function init(): void {
@@ -75,10 +68,8 @@ export function init(): void {
     const b = bridge();
     if (!b || typeof b.follow !== 'function') return;
     stopFollow = b.follow(PREFERENCE_FIELD, () => {
-        for (const fn of listeners) fn();
         drawerController()?.repaint();
     });
-    for (const fn of listeners) fn();
 }
 
 export function _resetForTest(): void {

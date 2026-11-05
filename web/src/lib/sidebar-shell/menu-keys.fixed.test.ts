@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MenuNode } from '../drawer-tabs/add-component-menu';
 import { assignMenuKeys, registeredKey } from '../menu-keys/menu-keys';
@@ -22,7 +23,7 @@ vi.mock('./interaction-globals', () => ({
     announce: () => {},
     announceFailure: () => {},
     hg: () => ({
-        SessionSidebar: { _rows: [{ name: 'a', kind: 'agent', project_id: 5, project_name: 'proj' }] },
+        SessionSidebar: { rows() { return this._rows; }, _rows: [{ name: 'a', kind: 'agent', project_id: 5, project_name: 'proj' }] },
         SessionRowMenuIcons: { svg: () => '' },
     }),
     reasonOf: (e: unknown) => String((e as Error).message),
@@ -36,6 +37,12 @@ vi.mock('./interaction-globals', () => ({
 
 beforeEach(() => { filedUnder.clear(); });
 
+function sectionRow(): Element {
+    const row = document.createElement('div');
+    row.innerHTML = '<button data-group-toggle="terminals" aria-expanded="true"><span class="session-sidebar-group__label">terminals</span></button>';
+    return row;
+}
+
 async function allMenus(): Promise<Record<string, MenuNode[]>> {
     await import('../item-menu/menus/all');
     const { itemMenu } = await import('../item-menu/registry');
@@ -48,6 +55,7 @@ async function allMenus(): Promise<Record<string, MenuNode[]>> {
     out['group middle'] = itemMenu('group', { key: 'g1', anchor }, env)!.nodes;
     out['group first'] = itemMenu('group', { key: 'g0', anchor }, env)!.nodes;
     out['company'] = itemMenu('company', { key: 'c:7', anchor }, env)!.nodes;
+    out['section'] = itemMenu('section', { key: 'terminals', anchor: sectionRow() }, env)!.nodes;
     out['ghost'] = itemMenu('leader', { ghost: { agentId: 2, name: 'Acme HQ', rank: 'company' }, anchor }, env)!.nodes;
     return out;
 }
@@ -55,7 +63,7 @@ async function allMenus(): Promise<Record<string, MenuNode[]>> {
 describe('the sidebar heading menus draw the fixed map', () => {
     it('every entry is registered, drawn on exactly its registry letter, and no menu repeats a key', async () => {
         const menus = await allMenus();
-        expect(Object.keys(menus).length, 'population: all six menus opened').toBe(6);
+        expect(Object.keys(menus).length, 'population: all seven menus opened').toBe(7);
         for (const [name, entries] of Object.entries(menus)) {
             expect(entries.length, `${name}: has entries`).toBeGreaterThan(1);
             const items = entries.filter((e) => e.label).map((e) => ({ id: e.id, label: e.label }));

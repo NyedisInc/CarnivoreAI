@@ -22,7 +22,7 @@ def limit_rotation(
 ) -> None:
     limit = {"weekly_model": "weekly model", "other": ""}.get(limit_kind, limit_kind)
     contracts.emit(contracts.NotifyEvent(
-        type_id="session.limit_rotation", kind="provider_account.switched", title=common.type_title("session.limit_rotation"),
+        type_id="account.switched", kind="provider_account.switched", title=common.type_title("account.switched"),
         ts=common.now(), instance_key=f"limit_rotation:{outcome}:{session}:{common.now():.0f}", session_ref=session,
         copy_variant=outcome,
         copy_fields=(("from_account", from_name or from_account_id), ("to_account", to_name or to_account_id), ("limit", limit)),

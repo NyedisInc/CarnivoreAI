@@ -4,6 +4,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
+import { installTrOnly } from './helpers/catalog-tr.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -34,6 +35,7 @@ function loadScan() {
     const sandbox = { window: {}, console: { warn() {} } };
     sandbox.globalThis = sandbox;
     vm.createContext(sandbox);
+    installTrOnly(sandbox);
     vm.runInContext(scanSrc, sandbox);
     return sandbox.window.OutputScan;
 }
@@ -46,6 +48,7 @@ function loadOutput() {
     };
     sandbox.globalThis = sandbox;
     vm.createContext(sandbox);
+    installTrOnly(sandbox);
     vm.runInContext(httpUrlSrc, sandbox);
     vm.runInContext(outputSrc, sandbox);
     return sandbox.window.CopyOutput;
@@ -262,6 +265,7 @@ function loadOutputWithDom() {
     };
     sandbox.globalThis = sandbox;
     vm.createContext(sandbox);
+    installTrOnly(sandbox);
     vm.runInContext(httpUrlSrc, sandbox);
     vm.runInContext(outputSrc, sandbox);
     return sandbox.window.CopyOutput;

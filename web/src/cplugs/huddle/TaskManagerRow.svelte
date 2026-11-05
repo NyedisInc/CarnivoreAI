@@ -25,7 +25,7 @@
   import { decisionKeys } from './chat/chat-model';
   import HuddleReview from './HuddleReview.svelte';
   import TaskManagerActionTag from './TaskManagerActionTag.svelte';
-  import { actionOf, isStatusEcho, reviewAnswerOf, reviewOf } from './huddle-review';
+  import { actionOf, isStatusEcho, reviewOf } from './huddle-review';
   import TaskManagerRowPeek from './TaskManagerRowPeek.svelte';
   import TaskManagerMarkdown from './TaskManagerMarkdown.svelte';
   import { mdPlain } from './task-manager-markdown';
@@ -62,7 +62,6 @@
   const wrapped = options.taskWrapper;
   const asking = $derived(hasOpenQuestion(item));
   const review = $derived(reviewOf(item));
-  const reviewAnswer = $derived(review ? reviewAnswerOf(item) : null);
   const needsAction = $derived(item.needs_you ? actionOf(item.needs_action) : null);
   const density = $derived(taskManagerPrefs.density);
   const taskState = $derived<TaskState>(options.taskState === 'compact' || options.taskState === undefined ? (huddle.openId === item.id ? 'opened' : 'compact') : options.taskState);
@@ -276,7 +275,7 @@
       {@render detailBody()}
     {/if}
     {#if !open}<TaskManagerRowPeek {item} {parts} />{/if}
-    {#if review && (open ? !options.tabbedDetail : parts.review)}<HuddleReview block={review} id={item.id} answer={reviewAnswer} issue={item.github_issue} />{/if}
+    {#if review && (open ? !options.tabbedDetail : parts.review)}<HuddleReview block={review} id={item.id} issue={item.github_issue} />{/if}
     {#if !open && parts.reply && !parts.questions}<div class="tkm-reply"><HuddleReply {item} onRow /></div>{/if}
   {/if}
 </li>

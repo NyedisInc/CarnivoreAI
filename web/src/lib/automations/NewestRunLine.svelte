@@ -5,6 +5,7 @@
   import type { DiffResult } from './logic/diff';
   import { compareWithPrevious, lineFor } from './list-state.svelte';
   import { data, openPane } from './page-store.svelte';
+  import { settledStatus } from './logic/words';
 
   const auto = $derived(data.automations.find((a) => a.automation_id === data.selectedId) ?? null);
   const run = $derived.by(() => {
@@ -17,7 +18,7 @@
   $effect(() => {
     const a = auto;
     const r = run;
-    if (!a || !r || (r.status !== 'succeeded' && r.status !== 'failed')) {
+    if (!a || !r || !settledStatus(r.status)) {
       cmp = null;
       return;
     }

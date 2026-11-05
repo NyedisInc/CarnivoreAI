@@ -35,6 +35,8 @@ class Slots:
 
 class Rates:
 
+    PER_MINUTE, PER_HOUR, ALL_MINUTE = PER_SOURCE_MINUTE, PER_SOURCE_HOUR, GLOBAL_MINUTE
+
     def __init__(self, clock: Callable[[], float] = time.monotonic) -> None:
         self._clock = clock
         self._src: Dict[str, Deque[float]] = defaultdict(deque)
@@ -47,14 +49,20 @@ class Rates:
 
     def admit(self, addr: str) -> bool:
         now = self._clock()
-        src = self._src[addr]
+        src = self._src.get(addr) or deque()
         self._trim(src, now - 3600)
         self._trim(self._all, now - 60)
-        if len(src) >= PER_SOURCE_HOUR or len(self._all) >= GLOBAL_MINUTE or sum(1 for x in src if x > now - 60) >= PER_SOURCE_MINUTE:
+        if len(src) >= self.PER_HOUR or len(self._all) >= self.ALL_MINUTE or sum(1 for x in src if x > now - 60) >= self.PER_MINUTE:
             return False
         src.append(now)
+        self._src[addr] = src
         self._all.append(now)
         if len(self._src) > 256:
             for key in [k for k, q in self._src.items() if not q or q[-1] <= now - 3600]:
                 self._src.pop(key, None)
         return True
+
+
+class KnockRates(Rates):
+
+    PER_MINUTE, PER_HOUR, ALL_MINUTE = 3, 10, 10

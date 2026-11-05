@@ -21,7 +21,6 @@ const contribution: Contribution<'session-card-action'> = {
   order: 200,
   enabled: (context) => context.flags[FLAG] !== false,
   payload: {
-    shortcut: 'U',
     label: (row) => t(row.unread ? 'cplug.unread.clear' : 'cplug.unread.set'),
     /* what the row shows */
     async run(row, context): Promise<void> {

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import { Button } from '../base';
-  import ModalShell from '../launchpad/ModalShell.svelte';
+  import ModalShell from '../dialog-frame/ModalShell.svelte';
   import { ApiError } from '../../opscenter/api/auth.svelte';
   import { openConversation } from '../conversation-open/open';
   import { openSession } from '../../cplugs/sdk/sessions.svelte';

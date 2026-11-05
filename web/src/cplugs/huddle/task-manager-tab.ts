@@ -1,15 +1,11 @@
 import type { DynamicTabDef } from '../sdk';
-import { swarmSwitch } from '../../lib/swarm-switch/control.svelte';
+import { swarmIsOn } from '../../lib/swarm-switch/control.svelte';
 import { huddle } from './huddle.svelte';
 import { taskManagerPrefs } from './task-manager-prefs.svelte';
 import { LIST_PARAM } from './huddle-model';
 import { TASK_MANAGER_TAB } from './huddle-tab-id';
 import HuddleBody from './HuddleBody.svelte';
 import SwarmTitleActions from './swarm/SwarmTitleActions.svelte';
-
-export function swarmIsOn(): boolean {
-  return swarmSwitch.data?.enabled !== false;
-}
 
 export const taskManagerTab: DynamicTabDef = {
   id: TASK_MANAGER_TAB,

@@ -1,11 +1,35 @@
 
 from __future__ import annotations
 
+import threading
+from collections import OrderedDict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, Mapping, Optional
 
+import structlog
+
+from src.core.attention.codex_pane_home import pane_codex_home
+from src.core.attention.evidence import FAMILY_CODEX
 from src.core.session_token_usage.reader import SessionSubject, read_session_token_usage
+
+logger = structlog.get_logger()
+
+_SEEN_FAILURES_MAX = 256
+_SEEN_FAILURES: "OrderedDict[tuple, None]" = OrderedDict()
+_SEEN_FAILURES_LOCK = threading.Lock()
+
+
+def _log_read_failure(tmux_name: str, error_type: str) -> None:
+    key = (tmux_name, error_type)
+    with _SEEN_FAILURES_LOCK:
+        first = key not in _SEEN_FAILURES
+        _SEEN_FAILURES[key] = None
+        _SEEN_FAILURES.move_to_end(key)
+        while len(_SEEN_FAILURES) > _SEEN_FAILURES_MAX:
+            _SEEN_FAILURES.popitem(last=False)
+    emit = logger.warning if first else logger.debug
+    emit("model_facts_read_failed", tmux_name=tmux_name, error_type=error_type)
 
 _FAMILIES_WITH_READER = ("claude", "codex")
 
@@ -67,10 +91,10 @@ def _epoch_for_name(name: str, *, status_map: Optional[Any]) -> Optional[int]:
     return int(epoch) if isinstance(epoch, (int, float)) else None
 
 
-def context_used_pct(remaining_pct: Optional[float]) -> Optional[float]:
-    if remaining_pct is None:
+def context_used_pct(used_tokens: Optional[int], window_tokens: Optional[int]) -> Optional[float]:
+    if used_tokens is None or not window_tokens or window_tokens <= 0:
         return None
-    return round(min(100.0, max(0.0, 100.0 - float(remaining_pct))), 1)
+    return min(100.0, max(0.0, used_tokens / window_tokens * 100.0))
 
 
 def _model_facts_for_one(
@@ -103,7 +127,7 @@ def _model_facts_for_one(
         model_effort=usage.effort,
         model_tier=usage.model_cost_tier,
         family=agent_family,
-        context_used_pct=context_used_pct(usage.context_remaining_pct),
+        context_used_pct=context_used_pct(usage.context_used_tokens, usage.context_window_tokens),
     )
 
 
@@ -145,11 +169,28 @@ def build_model_listing_prefetch(
                 conversation_for_instance=conversation_for_instance,
                 read_usage=read_usage,
                 projects_dir=projects_dir,
-                codex_home=codex_home,
+                codex_home=codex_home or (
+                    pane_codex_home(getattr(status_map, "socket", None), name) if agent_family == FAMILY_CODEX else None
+                ),
             )
-        except Exception:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
+            _log_read_failure(name, type(exc).__name__)
             out[name] = ModelListingFacts(family=agent_family)
     return out
+
+
+def facts_matching_family(
+    row_facts: ModelListingFacts, live_family: Optional[str], *, tmux_name: str
+) -> ModelListingFacts:
+    if row_facts.family == live_family:
+        return row_facts
+    logger.debug(
+        "model_facts_dropped_family_mismatch",
+        tmux_name=tmux_name,
+        stored_family=row_facts.family,
+        live_family=live_family,
+    )
+    return _UNKNOWN
 
 
 class ModelListingPrefetch:

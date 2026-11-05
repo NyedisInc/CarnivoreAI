@@ -1,5 +1,5 @@
 
-export type RunStatus = 'claimed' | 'running' | 'waiting_on_you' | 'succeeded' | 'failed' | 'skipped' | 'cancelled';
+export type RunStatus = 'claimed' | 'running' | 'waiting_on_you' | 'succeeded' | 'failed' | 'alerted' | 'skipped' | 'cancelled';
 
 export interface RunUsage {
   input: number;

@@ -4,10 +4,18 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { mount, unmount, flushSync, tick } from 'svelte';
 import TerminalFoot from './TerminalFoot.svelte';
 import { auth } from '../../api/auth.svelte';
+import { fetchBackgroundWork } from '../../../lib/background-work/background-work';
+import { fetchSubagents } from '../../../lib/subagents/subagents';
+import { readSessionWork, resetSessionWork } from '../../../lib/session-stats/session-work';
 import type { SessionInfo, SessionTokenUsage } from '../../api/types';
 
 let rows: Partial<SessionInfo>[] = [];
 let usagePayload: SessionTokenUsage | null = null;
+vi.mock('../../../lib/session-stats/session-work', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../../../lib/session-stats/session-work')>();
+  return { ...real, readSessionWork: vi.fn(real.readSessionWork) };
+});
+
 vi.mock('../../api', async () => {
   const actual = await vi.importActual<typeof import('../../api')>('../../api');
   return {
@@ -68,6 +76,7 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
+  resetSessionWork();
   for (const component of mounted.splice(0)) await unmount(component);
   document.body.replaceChildren();
   rows = [];
@@ -149,6 +158,23 @@ test('the bar counts equal the grown control center headers on the same lists', 
   expect(panel('processes')).toBe('1');
   expect(bar('agents')).toBe(panel('agents'));
   expect(bar('shells')).toBe(panel('processes'));
+});
+
+test('the bar and an open control center on one listing row share ONE read of each list (#2773)', async () => {
+  resetSessionWork();
+  vi.mocked(fetchSubagents).mockClear();
+  vi.mocked(fetchBackgroundWork).mockClear();
+  vi.mocked(readSessionWork).mockClear();
+  const target = setup({ subagents_running: 1, background_open: 3, timers_live: null });
+  await settle();
+  target.querySelector<HTMLButtonElement>('button.oc-tf')!.click();
+  flushSync();
+  await settle();
+  expect(target.querySelector('.scc-section')).not.toBeNull();
+  expect(fetchSubagents).toHaveBeenCalledTimes(1);
+  expect(fetchBackgroundWork).toHaveBeenCalledTimes(1);
+  expect(vi.mocked(readSessionWork).mock.calls.length).toBeGreaterThanOrEqual(2);
+  expect(vi.mocked(readSessionWork).mock.calls.every(([, , options]) => !options?.force)).toBe(true);
 });
 
 test('a segment grows the bar into the control center on its own section; a second click folds it', async () => {

@@ -3,9 +3,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { codeOnly, scanCell, scanCellData, type CellSource, type DataFinding, type MenuFinding } from './cell-menu-scan';
-import { ALLOWED, DATA_KNOWN, DATA_KNOWN_CEILING, KNOWN, excusedRules } from './menu-rules';
+import { ALLOWED, DATA_KNOWN, DATA_KNOWN_CEILING, KNOWN, KNOWN_CEILING, PLUGIN_KNOWN, excusedRules } from './menu-rules';
 
 const CELLS = fileURLToPath(new URL('../../cells', import.meta.url));
+const PLUGINS = fileURLToPath(new URL('../../../cplugs', import.meta.url));
 const DRAFT_ROOT = process.env['MENU_CONFORMANCE_ROOT'] ?? '';
 
 function sourcesOf(dir: string, base = ''): CellSource[] {
@@ -54,6 +55,10 @@ describe.skipIf(DRAFT_ROOT !== '')('every shipped widget cell meets the menu sta
     expect(bad, 'see docs/widget-spec.md section 11; a new cell is never added to KNOWN').toEqual([]);
   });
 
+  it('holds KNOWN at or under its ceiling (the table only shrinks)', () => {
+    expect(KNOWN.length).toBeLessThanOrEqual(KNOWN_CEILING);
+  });
+
   it('keeps every ALLOWED and KNOWN row true (a fixed cell leaves the table)', () => {
     const stale = [...ALLOWED, ...KNOWN].flatMap((entry) => {
       const scan = scans.find((one) => one.folder === entry.folder);
@@ -71,6 +76,26 @@ describe.skipIf(DRAFT_ROOT !== '')('every shipped widget cell meets the menu sta
   it('passes the references: Notes (chrome) and Themes (declared controls)', () => {
     expect(scans.find((one) => one.folder === 'notes')!.findings).toEqual([]);
     expect(scans.find((one) => one.folder === 'themes')!.findings).toEqual([]);
+  });
+});
+
+describe.skipIf(DRAFT_ROOT !== '')('every plugin widget under cplugs/ meets the menu standard (FE-10)', () => {
+  const scans = foldersOf(PLUGINS).map((plugin) => ({ plugin, findings: scanCell(sourcesOf(path.join(PLUGINS, plugin))) }));
+  const known = (plugin: string, f: MenuFinding): boolean => PLUGIN_KNOWN.some((row) => row.plugin === plugin && row.file === f.path && row.rule === f.rule);
+
+  it('looked at the plugins (a scan of nothing is not a pass)', () => {
+    expect(scans.find((one) => one.plugin === 'huddle')).toBeDefined();
+    expect(scans.find((one) => one.plugin === 'devwidgetlab')!.findings.length).toBeGreaterThan(0);
+  });
+
+  it('has no finding outside PLUGIN_KNOWN (a new plugin file is never added to it)', () => {
+    const bad = scans.flatMap(({ plugin, findings }) => findings.filter((f) => !known(plugin, f)).map((f) => say(`cplugs/${plugin}`, f)));
+    expect(bad, 'see docs/widget-spec.md section 11: a widget draws no menu of its own').toEqual([]);
+  });
+
+  it('keeps every PLUGIN_KNOWN row true (a fixed file leaves the list)', () => {
+    const stale = PLUGIN_KNOWN.filter((row) => !scans.some((one) => one.plugin === row.plugin && one.findings.some((f) => f.path === row.file && f.rule === row.rule)));
+    expect(stale).toEqual([]);
   });
 });
 

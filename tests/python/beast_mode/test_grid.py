@@ -51,7 +51,9 @@ def test_the_defaults_through_the_gates(monkeypatch):
     for armed in (False, True):
         install(monkeypatch, {}, armed=lambda armed=armed: armed, prompts=lambda armed=armed: armed)
         policy = grid_policy()
-        assert all(policy.rule_on(r) for r in ("dev_channels", "folder_trust", "external_imports", "chrome_decline"))
+        assert all(policy.rule_on(r) for r in ("dev_channels", "folder_trust", "external_imports"))
+        assert policy.rule_on("chrome_decline") is not armed
+        assert all(policy.rule_on(r) is armed for r in ("chrome_accept", "trust_permissions", "bypass_accept", "mcp_server"))
         assert beast_mode.writes_handled() is armed and prompt_allowed(CLAUDE_PROMPT) is armed
         assert prompt_allowed(SimpleNamespace(family="codex")) is armed
 

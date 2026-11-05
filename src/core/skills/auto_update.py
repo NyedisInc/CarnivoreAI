@@ -14,6 +14,7 @@ from src.core.catalog.verify import check_digest
 from src.core.skill_watch import sentinel
 from src.core.skill_watch.store import default_watch_store
 from src.core.skills import update_holds
+from src.core.skills.code_gate import staged_plugin_declares_code
 from src.core.skills.digest import hash_file
 from src.core.skills.kinds import manifest_name
 from src.core.skills.ledger_types import SCOPE_GLOBAL, InstalledItem
@@ -135,7 +136,6 @@ async def _one_row(
 ) -> AutoUpdateRow:
     from fastapi import HTTPException
 
-    from src.api.catalog_consent import staged_plugin_declares_code
     from src.api.catalog_install_support import fetch_and_stage_with
     from src.api.catalog_installed_support import apply_update_with
     from src.core.skills.installer import discard_staging

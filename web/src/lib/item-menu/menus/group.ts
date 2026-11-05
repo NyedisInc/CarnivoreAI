@@ -1,11 +1,13 @@
 import { t } from '../../i18n/index.svelte';
 import { open as openGroupRule } from '../../drawer/group-rule-popup';
+import { bandKeyFor } from '../../drawer/group-store';
 import { addToNodes } from '../../add-to-menu/host';
 import { deleteGroup, moveGroup, renameGroup } from '../../sidebar-shell/heading-group-actions';
 import { sleepGroup } from '../../sidebar-shell/heading-project-actions';
 import { hg, usableGroups } from '../../sidebar-shell/interaction-globals';
-import { entryNodes, spaced } from '../entries';
+import { entryNodes, spaced, type ItemMenuEntry } from '../entries';
 import { defineItemMenu } from '../registry';
+import { foldInsideEntry } from './fold-inside';
 
 defineItemMenu('group', {
     build({ key: groupUuid, anchor }, env) {
@@ -14,14 +16,16 @@ defineItemMenu('group', {
         if (!G || !group) return null;
         const order = G.current().groups.map((g) => g.group_uuid);
         const at = order.indexOf(groupUuid);
+        const customize: ItemMenuEntry[] = [
+            { label: t('sidebar.heading.rename'), icon: 'rename', id: 'rename-group', onPick: () => { renameGroup(groupUuid); } },
+            { label: 'add', icon: 'add', id: 'add-members', children: () => addToNodes.forGroup(groupUuid), onPick: () => undefined },
+            { label: t('sidebar.group.colour.menu'), icon: 'colour', id: 'colour', onPick: () => hg().SessionSidebarGroupColour?.open(anchor, groupUuid) },
+            { label: t('sidebar.group.icon.menu'), icon: 'group-icon', id: 'group-icon', onPick: () => hg().SessionSidebarGroupIcon?.open(anchor, groupUuid) },
+            { label: t('sidebar.group.rule.menu'), icon: 'add', id: 'group-rule', onPick: () => openGroupRule(anchor, groupUuid) },
+        ];
         const entries = spaced([
-            [
-                { label: t('sidebar.heading.rename'), icon: 'rename', id: 'rename-group', onPick: () => { renameGroup(groupUuid); } },
-                { label: 'add', icon: 'add', id: 'add-members', children: () => addToNodes.forGroup(groupUuid), onPick: () => undefined },
-                { label: t('sidebar.group.colour.menu'), icon: 'colour', id: 'colour', onPick: () => hg().SessionSidebarGroupColour?.open(anchor, groupUuid) },
-                { label: t('sidebar.group.icon.menu'), icon: 'group-icon', id: 'group-icon', onPick: () => hg().SessionSidebarGroupIcon?.open(anchor, groupUuid) },
-                { label: t('sidebar.group.rule.menu'), icon: 'add', id: 'group-rule', onPick: () => openGroupRule(anchor, groupUuid) },
-            ],
+            [{ label: t('sidebar.group.menu.customize'), icon: 'colour', id: 'customize', children: () => entryNodes(customize, env.glyph, env.close), onPick: () => undefined }],
+            [foldInsideEntry(bandKeyFor(groupUuid))],
             [{ label: t('sidebar.heading.sleep'), icon: 'sleep', id: 'sleep', onPick: () => { void sleepGroup(groupUuid); } }],
             [
                 {

@@ -43,15 +43,21 @@
         "sep": true
       },
       {
+        "id": "fold-inside",
+        "label": "fold everything inside",
+        "key": "f",
+        "sep": true
+      },
+      {
         "id": "sleep",
         "label": "sleep",
         "key": "s",
         "sep": true
       },
       {
-        "id": "delete-project",
-        "label": "remove",
-        "key": "d",
+        "id": "archive-project",
+        "label": "archive project",
+        "key": "v",
         "sep": true,
         "danger": true
       }
@@ -106,15 +112,21 @@
         "sep": true
       },
       {
+        "id": "fold-inside",
+        "label": "fold everything inside",
+        "key": "f",
+        "sep": true
+      },
+      {
         "id": "sleep",
         "label": "sleep",
         "key": "s",
         "sep": true
       },
       {
-        "id": "delete-project",
-        "label": "remove",
-        "key": "d",
+        "id": "archive-project",
+        "label": "archive project",
+        "key": "v",
         "sep": true,
         "danger": true
       }
@@ -146,15 +158,21 @@
         "sep": true
       },
       {
+        "id": "fold-inside",
+        "label": "fold everything inside",
+        "key": "f",
+        "sep": true
+      },
+      {
         "id": "sleep",
         "label": "sleep",
         "key": "s",
         "sep": true
       },
       {
-        "id": "delete-project",
-        "label": "remove",
-        "key": "d",
+        "id": "archive-project",
+        "label": "archive project",
+        "key": "v",
         "sep": true,
         "danger": true
       }
@@ -180,6 +198,12 @@
         "key": "x"
       },
       {
+        "id": "fold-inside",
+        "label": "fold everything inside",
+        "key": "f",
+        "sep": true
+      },
+      {
         "id": "delete-company",
         "label": "delete",
         "key": "d",
@@ -203,6 +227,12 @@
         "swatches": true
       },
       {
+        "id": "fold-inside",
+        "label": "fold everything inside",
+        "key": "f",
+        "sep": true
+      },
+      {
         "id": "delete-company",
         "label": "delete",
         "key": "d",
@@ -215,37 +245,50 @@
     "ariaLabel": "Actions for the crew group",
     "entries": [
       {
-        "id": "rename-group",
-        "label": "rename",
-        "key": "r"
-      },
-      {
-        "id": "add-members",
-        "label": "add",
-        "key": "+",
+        "id": "customize",
+        "label": "customize",
+        "key": "c",
         "children": [
           {
-            "id": "agents",
-            "label": "agents",
-            "key": "a",
-            "children": []
+            "id": "rename-group",
+            "label": "rename",
+            "key": "r"
+          },
+          {
+            "id": "add-members",
+            "label": "add",
+            "key": "+",
+            "children": [
+              {
+                "id": "agents",
+                "label": "agents",
+                "key": "a",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "colour",
+            "label": "color",
+            "key": "c"
+          },
+          {
+            "id": "group-icon",
+            "label": "icon",
+            "key": "g"
+          },
+          {
+            "id": "group-rule",
+            "label": "filter",
+            "key": "e"
           }
         ]
       },
       {
-        "id": "colour",
-        "label": "color",
-        "key": "c"
-      },
-      {
-        "id": "group-icon",
-        "label": "icon",
-        "key": "g"
-      },
-      {
-        "id": "group-rule",
-        "label": "rule",
-        "key": "u"
+        "id": "fold-inside",
+        "label": "fold everything inside",
+        "key": "f",
+        "sep": true
       },
       {
         "id": "sleep",
@@ -278,37 +321,50 @@
     "ariaLabel": "Actions for the ops group",
     "entries": [
       {
-        "id": "rename-group",
-        "label": "rename",
-        "key": "r"
-      },
-      {
-        "id": "add-members",
-        "label": "add",
-        "key": "+",
+        "id": "customize",
+        "label": "customize",
+        "key": "c",
         "children": [
           {
-            "id": "agents",
-            "label": "agents",
-            "key": "a",
-            "children": []
+            "id": "rename-group",
+            "label": "rename",
+            "key": "r"
+          },
+          {
+            "id": "add-members",
+            "label": "add",
+            "key": "+",
+            "children": [
+              {
+                "id": "agents",
+                "label": "agents",
+                "key": "a",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "colour",
+            "label": "color",
+            "key": "c"
+          },
+          {
+            "id": "group-icon",
+            "label": "icon",
+            "key": "g"
+          },
+          {
+            "id": "group-rule",
+            "label": "filter",
+            "key": "e"
           }
         ]
       },
       {
-        "id": "colour",
-        "label": "color",
-        "key": "c"
-      },
-      {
-        "id": "group-icon",
-        "label": "icon",
-        "key": "g"
-      },
-      {
-        "id": "group-rule",
-        "label": "rule",
-        "key": "u"
+        "id": "fold-inside",
+        "label": "fold everything inside",
+        "key": "f",
+        "sep": true
       },
       {
         "id": "sleep",
@@ -340,37 +396,50 @@
     "ariaLabel": "Actions for the misc group",
     "entries": [
       {
-        "id": "rename-group",
-        "label": "rename",
-        "key": "r"
-      },
-      {
-        "id": "add-members",
-        "label": "add",
-        "key": "+",
+        "id": "customize",
+        "label": "customize",
+        "key": "c",
         "children": [
           {
-            "id": "agents",
-            "label": "agents",
-            "key": "a",
-            "children": []
+            "id": "rename-group",
+            "label": "rename",
+            "key": "r"
+          },
+          {
+            "id": "add-members",
+            "label": "add",
+            "key": "+",
+            "children": [
+              {
+                "id": "agents",
+                "label": "agents",
+                "key": "a",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "colour",
+            "label": "color",
+            "key": "c"
+          },
+          {
+            "id": "group-icon",
+            "label": "icon",
+            "key": "g"
+          },
+          {
+            "id": "group-rule",
+            "label": "filter",
+            "key": "e"
           }
         ]
       },
       {
-        "id": "colour",
-        "label": "color",
-        "key": "c"
-      },
-      {
-        "id": "group-icon",
-        "label": "icon",
-        "key": "g"
-      },
-      {
-        "id": "group-rule",
-        "label": "rule",
-        "key": "u"
+        "id": "fold-inside",
+        "label": "fold everything inside",
+        "key": "f",
+        "sep": true
       },
       {
         "id": "sleep",
@@ -396,6 +465,161 @@
         "key": "d",
         "sep": true,
         "danger": true
+      }
+    ]
+  },
+  "section first, open": {
+    "ariaLabel": "actions for the pinned section",
+    "entries": [
+      {
+        "id": "fold",
+        "label": "fold",
+        "key": "c"
+      },
+      {
+        "id": "fold-inside",
+        "label": "fold everything inside",
+        "key": "f",
+        "sep": true
+      },
+      {
+        "id": "move-up",
+        "label": "move section up",
+        "key": "",
+        "disabled": "already first",
+        "sep": true
+      },
+      {
+        "id": "move-down",
+        "label": "move section down",
+        "key": "]"
+      }
+    ]
+  },
+  "section middle, folded": {
+    "ariaLabel": "actions for the terminals section",
+    "entries": [
+      {
+        "id": "fold",
+        "label": "unfold",
+        "key": "c"
+      },
+      {
+        "id": "fold-inside",
+        "label": "unfold everything inside",
+        "key": "f",
+        "sep": true
+      },
+      {
+        "id": "move-up",
+        "label": "move section up",
+        "key": "[",
+        "sep": true
+      },
+      {
+        "id": "move-down",
+        "label": "move section down",
+        "key": "]"
+      }
+    ]
+  },
+  "section last, with new browser": {
+    "ariaLabel": "actions for the browsers section",
+    "entries": [
+      {
+        "id": "fold",
+        "label": "fold",
+        "key": "c"
+      },
+      {
+        "id": "fold-inside",
+        "label": "fold everything inside",
+        "key": "f",
+        "sep": true
+      },
+      {
+        "id": "move-up",
+        "label": "move section up",
+        "key": "[",
+        "sep": true
+      },
+      {
+        "id": "move-down",
+        "label": "move section down",
+        "key": "",
+        "disabled": "already last"
+      },
+      {
+        "id": "browser",
+        "label": "new browser",
+        "key": "b",
+        "sep": true
+      }
+    ]
+  },
+  "section middle, can edit layout": {
+    "ariaLabel": "actions for the terminals section",
+    "entries": [
+      {
+        "id": "fold",
+        "label": "fold",
+        "key": "c"
+      },
+      {
+        "id": "fold-inside",
+        "label": "fold everything inside",
+        "key": "f",
+        "sep": true
+      },
+      {
+        "id": "move-up",
+        "label": "move section up",
+        "key": "[",
+        "sep": true
+      },
+      {
+        "id": "move-down",
+        "label": "move section down",
+        "key": "]"
+      },
+      {
+        "id": "edit-layout",
+        "label": "edit layout",
+        "key": "e",
+        "sep": true
+      }
+    ]
+  },
+  "section middle, editing layout": {
+    "ariaLabel": "actions for the terminals section",
+    "entries": [
+      {
+        "id": "fold",
+        "label": "fold",
+        "key": "c"
+      },
+      {
+        "id": "fold-inside",
+        "label": "fold everything inside",
+        "key": "f",
+        "sep": true
+      },
+      {
+        "id": "move-up",
+        "label": "move section up",
+        "key": "[",
+        "sep": true
+      },
+      {
+        "id": "move-down",
+        "label": "move section down",
+        "key": "]"
+      },
+      {
+        "id": "done-editing",
+        "label": "done editing",
+        "key": "e",
+        "sep": true
       }
     ]
   },

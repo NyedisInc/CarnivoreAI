@@ -12,6 +12,7 @@
     by?: 'owner' | 'claude' | null;
     busy: boolean;
     canRewind: boolean;
+    rewindLabel?: string;
     onBranch: () => void;
     onRewind: () => void;
     onMark?: () => void;
@@ -20,7 +21,7 @@
     preview?: PreviewEntry | null;
   }
 
-  let { title, meta, by = null, busy, canRewind, onBranch, onRewind, onMark, onDelete, onPreview, preview = null }: Props = $props();
+  let { title, meta, by = null, busy, canRewind, rewindLabel, onBranch, onRewind, onMark, onDelete, onPreview, preview = null }: Props = $props();
 </script>
 
 {#snippet metaLine()}{meta}{#if by === 'claude'} <Tag tone="info">{t('bookmarks.by_claude')}</Tag>{/if}{/snippet}
@@ -32,7 +33,7 @@
     <IconButton label={t('bookmarks.mark')} variant="quiet" disabled={busy} onclick={onMark}><Glyph name="bookmark-plus" /></IconButton>
   {/if}
   <IconButton label={t('bookmarks.branch')} variant="quiet" disabled={busy} data-branch onclick={onBranch}><Glyph name="workflow" /></IconButton>
-  <IconButton label={t('bookmarks.rewind')} variant="danger" disabled={busy || !canRewind} data-rewind onclick={onRewind}><Glyph name="rewind" /></IconButton>
+  <IconButton label={rewindLabel ?? t('bookmarks.rewind')} variant="danger" disabled={busy || !canRewind} data-rewind onclick={onRewind}><Glyph name="rewind" /></IconButton>
   {#if onDelete}
     <IconButton label={t('bookmarks.delete')} variant="danger" disabled={busy} data-delete onclick={onDelete}><Glyph name="trash" /></IconButton>
   {/if}

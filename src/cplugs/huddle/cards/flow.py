@@ -10,7 +10,7 @@ import structlog
 
 from src.cplugs.huddle import actor_log, blockers, groups, lane, lineage, original_ask, rules, review, title as titles, triggers
 from src.cplugs.huddle.cards import policy, projection, reads, tx
-from src.cplugs.huddle.cards.columns import CARD_COLS, MARKS
+from src.cplugs.huddle.cards.columns import CARD_COLS, LEVELS, MARKS
 from src.cplugs.huddle.rules import CLAUDE, JOE, TaskManagerForbidden
 from src.cplugs.huddle.wire import ITEM_COLS
 from src.cplugs.sdk.cards import CardRefused
@@ -181,14 +181,14 @@ def _check_act(row: sqlite3.Row, new_state: str, act: CardAct) -> None:
     agent_close = act.op == "done" and bool(act.fields.get("agent_close")) and _agent_of(act.by) is not None
     if new_state in rules.APPROVED_STATES and act.by not in ("owner", "auto_done") and not agent_close:
         raise CardRefused("refused", "only the owner or a closing agent moves a card to Done")
-    if new_state in rules.APPROVED_STATES and (act.by == "auto_done" or agent_close) and lane.is_task_manager(row):
+    if new_state in rules.APPROVED_STATES and act.by == "auto_done" and lane.is_task_manager(row):
         raise CardRefused(lane.REFUSED_CODE, "the swarm never ticks a task manager task; only the owner does")
     if act.op == "validation_fail":
         _check_validating(row, act.fields.get("agent_id"))
     if act.op == "finish":
         if row["card_holder"] is None or _agent_of(act.by) != row["card_holder"] or row["state"] != rules.OPEN:
             raise CardRefused("not_holder", "you do not hold this card")
-    elif act.op in ("done", "send_back", "reject", "validation_fail") and row["state"] not in _REVIEW_STATES:
+    elif act.op in ("done", "send_back", "reject", "validation_fail") and row["state"] not in _REVIEW_STATES and not agent_close:
         raise CardRefused("not_in_review", "that card is not in review")
     elif act.op in ("send_back", "validation_fail") and row["card_accepted_at"] is not None:
         raise CardRefused("not_in_review", "that card was accepted by its parent and reads Done")
@@ -334,7 +334,7 @@ def _take(conn: sqlite3.Connection, row: sqlite3.Row, agent_id: int, by: str, no
 
 
 def create(conn: sqlite3.Connection, *, list_key: str, title: str, text: str, by: str, origin: str, parent: Optional[int],
-           how_to_validate: str, before_id: Optional[int], now: float, summary: str = "", queued: bool = False) -> FlowResult:
+           how_to_validate: str, before_id: Optional[int], now: float, summary: str = "", queued: bool = False, level: Optional[str] = None) -> FlowResult:
     from src.cplugs.huddle.store import TaskManagerStore
 
     parent_row = _row(conn, parent) if parent is not None else None
@@ -344,7 +344,7 @@ def create(conn: sqlite3.Connection, *, list_key: str, title: str, text: str, by
     item_id = TaskManagerStore._insert_item(conn, list_key, rules.clean_text(text or title, "text", rules.MAX_TEXT), actor=actor, seq=seq, now=now,
                                        created_key=rules.OWNER_KEY if actor == JOE else by, reviewing=reviewing)
     _set(conn, item_id, {"card_origin": origin, "lane": lane.for_new(list_key=list_key, card_origin=origin), "card_parent": parent, "card_summary": rules.clean_text(summary, "summary", MAX_SUMMARY_CHARS, allow_blank=True),
-                         "card_queued": int(queued)})
+                         "card_queued": int(queued), "card_level": level if level in LEVELS else None})
     if parent_row is not None:
         original_ask.copy_link(conn, item_id, parent_row["inbox_id"])
     if before_id is not None:

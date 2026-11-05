@@ -8,13 +8,8 @@ ENTRY_LINE = re.compile(
 )
 ENTRY_START = re.compile(r"""^\s*'(?P<key>[a-z0-9_.]+)':\s*['"]""")
 
-KNOWN_REPEATED_KEYS = {
-    "sessions.page.sort.label",
-}
-KNOWN_MULTI_LINE_KEYS = {
-    "sidebar.project.remove.detail_empty",
-    "sidebar.project.remove_partial",
-}
+KNOWN_REPEATED_KEYS: set[str] = set()
+KNOWN_MULTI_LINE_KEYS: set[str] = set()
 
 
 def _lines() -> list[str]:

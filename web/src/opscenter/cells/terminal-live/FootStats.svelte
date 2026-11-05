@@ -10,15 +10,17 @@
     model,
     payload,
     layout = 'band',
+    createdAt = null,
     oncollapse = undefined,
   }: {
     model: UsagePanelModel;
     payload: SessionTokenUsage | null;
     layout?: 'band' | 'tiles';
+    createdAt?: string | null;
     oncollapse?: () => void;
   } = $props();
 
-  const groups = $derived(statsGroups(model, payload, Date.now()));
+  const groups = $derived(statsGroups(model, payload, Date.now(), createdAt));
 
   function fillPct(meter: UsageMeter): number {
     return meter.segments > 0 ? (meter.filled / meter.segments) * 100 : 0;

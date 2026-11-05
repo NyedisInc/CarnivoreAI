@@ -19,6 +19,7 @@ SIDEBAR_DENSITIES = ("compact", "cozy", "detailed")
 WIDGET_DRAWER_VIEWS = ("type", "name")
 SIDEBAR_LAYOUTS = ("classic", "rail")
 TOAST_MODES = ("compact", "detailed")
+RAIL_MAGNIFY_PERCENTS = (100, 125, 150, 175, 200)
 TERMINAL_SCREEN_READER_MODES = ("auto", "on", "off")
 DEEPSEARCH_INDEX_SCOPES = ("human", "human+subsessions", "all")
 """``compact`` is Alex (example-owner)'s toast behaviour and the default; ``detailed``
@@ -111,9 +112,12 @@ MAX_SKILL_NAME_CHARS = 200
 
 MAX_DRAWER_ZONE_ITEMS = 12
 MAX_SESSION_RAIL_ITEMS = 256
-MAX_SESSION_RAIL_SECTIONS = 2
+MAX_SESSION_RAIL_SECTIONS = 4
+MAX_SESSION_RAIL_V2_SECTIONS = 2
 SESSION_RAIL_RATIO_MIN = 0.15
 SESSION_RAIL_RATIO_MAX = 0.85
+SESSION_RAIL_MIN_SHARE = 0.15
+SESSION_RAIL_CUT_EPSILON = 1e-6
 
 DRAWER_ZONE_WIDGET_ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 

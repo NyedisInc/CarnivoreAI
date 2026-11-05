@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from src.api.auth import require_auth
 from src.core import icon_registry
 from src.core import session_change_notice
-from src.core import session_group_rule as rule_store
+from src.core.session_groups import session_group_rule as rule_store
 from src.core import session_group_store as store
 from src.core import session_group_style as style_store
 from src.core.db import DatastoreUnreadableError, connect, db_path_for

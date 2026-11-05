@@ -9,6 +9,8 @@
   import { bindTerminalTheme } from '../cells/terminal-live/theme';
   import { followTab, rejoinTab } from '../cells/terminal-group/tab-vote';
   import { inputFocus } from '../lib/input-focus.svelte';
+  import { registerTerminalActions } from '../cells/terminal-live/actions';
+  import { overlayClient } from './overlay-client.svelte';
 
   const active = $derived(phoneTabSource.active());
   const sessionId = $derived(active === PRIMARY_SLOT ? '' : sessionIdOf(active, sessions.data));
@@ -27,8 +29,14 @@
       followTab(page, PRIMARY_SLOT, { active: false });
       const live = startLiveTerminal(el, tab, row);
       const release = live ? bindTerminalTheme(live.client, el, { pinnedTheme: row?.pinned_theme ?? null }) : () => {};
+      const stopActions = live
+        ? registerTerminalActions(tab, live.client as Parameters<typeof registerTerminalActions>[1], el, false, el.parentElement)
+        : () => {};
+      if (live) { overlayClient.slot = tab; overlayClient.client = live.client; }
       return () =>
         untrack(() => {
+          stopActions();
+          if (overlayClient.slot === tab) { overlayClient.slot = null; overlayClient.client = null; }
           release();
           live?.dispose();
           inputFocus.release(tab);

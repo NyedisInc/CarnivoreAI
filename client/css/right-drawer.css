@@ -9,7 +9,7 @@ body.right-drawer-docked #terminal-screen {
     padding-right: var(--right-dock-w);
 }
 
-body.right-drawer-docked:has(#terminal-screen.active) .header {
+body.right-drawer-docked.ps-terminal-active .header {
     padding-right: calc(var(--right-dock-w) + var(--header-pad-x));
 }
 
@@ -42,7 +42,7 @@ body.right-drawer-docked .config-editor-picker-overlay .config-editor-picker-con
     display: flex;
     flex-direction: column;
     background: var(--oc-ground-panel);
-    border-left: 1px solid var(--oc-line-rule);
+    border-left: var(--oc-grip-line) solid var(--oc-line-frame);
     box-shadow: -4px 0 24px var(--oc-shadow-lift);
     animation: rightDrawerIn 160ms ease;
 }
@@ -69,7 +69,7 @@ body.right-drawer-docked #session-notes-panel {
     top: 0;
     bottom: 0;
     left: 0;
-    width: 7px;
+    width: var(--oc-grip-hit);
     z-index: 5;
     cursor: col-resize;
     touch-action: none;
@@ -79,7 +79,7 @@ body.right-drawer-docked #session-notes-panel {
 .right-drawer-grip:hover,
 .right-drawer-grip:focus-visible,
 body.right-drawer-resizing .right-drawer-grip {
-    background: linear-gradient(to right, transparent 3px, var(--oc-orange) 3px, var(--oc-orange) 4px, transparent 4px);
+    background: linear-gradient(to right, var(--oc-text-dim) var(--oc-grip-line), transparent var(--oc-grip-line));
     outline: none;
 }
 

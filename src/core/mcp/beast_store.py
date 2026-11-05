@@ -49,6 +49,29 @@ def write_switch(*, enabled: bool, prompts: bool = False, hours: Optional[int] =
     resource_push.notify(topics.BEAST_MODE)
 
 
+class NotArmedError(Exception):
+    pass
+
+
+async def adjust(*, prompts: Optional[bool] = None, hours_set: bool = False, hours: Optional[int] = None) -> None:
+    until = until_for(hours) if hours_set else None
+
+    def mutate(doc: dict) -> dict:
+        block = doc.get("mcp")
+        block = dict(block) if isinstance(block, dict) else {}
+        if not block.get("beast_mode") or beast_mode.until_passed(block.get("beast_mode_until")):
+            raise NotArmedError("beast mode is not armed")
+        if prompts is not None:
+            block["beast_prompts"] = prompts
+        if hours_set:
+            block["beast_mode_until"] = until
+        return {**doc, "mcp": block}
+
+    await asyncio.to_thread(config_writer.commit, Path(settings.auth_config_file).expanduser(), mutate)
+    settings.drop_auth_config_cache()
+    resource_push.notify(topics.BEAST_MODE)
+
+
 def write_grid(*, cells: Optional[Mapping[str, bool]] = None, trust_scope: Optional[str] = None) -> None:
     known = cell_defaults()
     for key, value in (cells or {}).items():

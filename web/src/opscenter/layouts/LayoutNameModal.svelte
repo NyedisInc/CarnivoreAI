@@ -4,7 +4,7 @@
     import Button from '../../lib/base/Button.svelte';
     import Field from '../../lib/base/Field.svelte';
     import IconButton from '../../lib/base/IconButton.svelte';
-    import ModalShell from '../../lib/launchpad/ModalShell.svelte';
+    import ModalShell from '../../lib/dialog-frame/ModalShell.svelte';
     import { t } from '../../lib/i18n/index.svelte';
     import { NAME_MAX, nameProblem } from './shape';
 

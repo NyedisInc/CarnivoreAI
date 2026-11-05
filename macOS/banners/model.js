@@ -28,7 +28,7 @@ function bannersDeliverable({ prefOn, permission, apiPresent }) {
   if (prefOn !== true) return { ok: false, reason: 'off' };
   if (permission === 'denied') return { ok: false, reason: 'permission_denied' };
   if (permission === 'not_asked') return { ok: false, reason: 'permission_not_asked' };
-  if (permission !== 'unknown' && permission !== 'allowed') return { ok: false, reason: 'permission_unreadable' };
+  if (permission !== 'unknown' && permission !== 'allowed' && permission !== 'blocked') return { ok: false, reason: 'permission_unreadable' };
   return { ok: true, reason: 'ok' };
 }
 

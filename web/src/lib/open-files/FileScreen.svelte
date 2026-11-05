@@ -1,7 +1,9 @@
 <script lang="ts">
+    import { failureReason } from '../errors/failure-reason';
     import { untrack } from 'svelte';
     import '../ledger/ledger-chrome.css';
     import Button from '../base/Button.svelte';
+    import IconButton from '../base/IconButton.svelte';
     import GitDiffView from '../../opscenter/cells/terminal-live/GitDiffView.svelte';
     import { t } from '../i18n/index.svelte';
     import { readOpenFile, type CantShowReason, type OpenFileContent, type OpenFileInfo } from './api.svelte';
@@ -9,8 +11,10 @@
     import EditorControls from '../editor-controls/EditorControls.svelte';
     import FileEditor from './FileEditor.svelte';
     import { fileSaveLight } from './file-save-light';
+    import { downloadWithMessage } from './download';
+    import { isDownloading } from './download-row.svelte';
     import { closeFileRow } from './open-bridge';
-    import { appConfirm, saveFile } from './save-flow';
+    import { appConfirm, saveFile, type SaveOutcome } from './save-flow';
     import { sessionIdForUuid } from './session-ref';
 
     let { file }: { file: OpenFileInfo } = $props();
@@ -54,7 +58,7 @@
         } catch (err) {
             if (rowId !== id) return;
             console.warn('open files: the file could not be read', { id: rowId, error: err });
-            errorText = err instanceof Error ? err.message : String(err);
+            errorText = failureReason(err);
             phase = 'error';
         }
     }
@@ -86,7 +90,7 @@
         } catch (err) {
             if (row.id !== id) return;
             console.warn('open files: the diff session could not be found', { id: row.id, error: err });
-            errorText = err instanceof Error ? err.message : String(err);
+            errorText = failureReason(err);
             phase = 'error';
         }
     }
@@ -107,8 +111,8 @@
         });
     });
 
-    async function save(overwrite = false): Promise<void> {
-        if (saving || readOnly || phase !== 'ready' || masked) return;
+    async function save(overwrite = false): Promise<SaveOutcome> {
+        if (saving || readOnly || phase !== 'ready' || masked) return { kind: 'cancelled' };
         saving = true;
         failed = false;
         message = null;
@@ -128,6 +132,7 @@
             failed = true;
             message = { tone: 'error', text: t('files.editor.save_failed', { detail: outcome.detail }) };
         }
+        return outcome;
     }
 
     async function reloadFromDisk(): Promise<void> {
@@ -139,7 +144,7 @@
         } catch (err) {
             if (rowId !== id) return;
             console.warn('open files: the reload could not read the file', { id: rowId, error: err });
-            message = { tone: 'error', text: t('files.screen.read_failed', { detail: err instanceof Error ? err.message : String(err) }) };
+            message = { tone: 'error', text: t('files.screen.read_failed', { detail: failureReason(err) }) };
             return;
         }
         if (rowId !== id) return;
@@ -175,6 +180,11 @@
         void save(false);
     }
 
+    async function pressDownload(): Promise<void> {
+        const text = await downloadWithMessage(file, { dirty, save: () => save(false) });
+        if (text) message = { tone: 'error', text };
+    }
+
     function preview(text: string): string {
         const md = (globalThis as { MarkdownLite?: { render?: (s: string) => string } }).MarkdownLite;
         return typeof md?.render === 'function' ? md.render(text) : '';
@@ -189,6 +199,10 @@
         {#if dirty}<span class="fs-flag" data-file-dirty="">{t('files.editor.unsaved')}</span>{/if}
         {#if file.kind === 'diff' || readOnly}<span class="fs-flag fs-flag--quiet">{t('files.editor.read_only')}</span>{/if}
         <span class="fs-actions">
+            {#if file.kind === 'file'}
+                <IconButton label={t('files.screen.download')} variant="quiet" icon="import" iconSize={15} data-file-download="" disabled={isDownloading(id)} aria-busy={isDownloading(id)}
+                    onclick={() => void pressDownload()} />
+            {/if}
             
             <EditorControls {mode} onMode={(next) => { mode = next; }} showMode={showMode} showSave={showSave}
                 light={light} saveState={saving ? 'saving' : ''} saveDisabled={saveDisabled} onSave={pressDisk}

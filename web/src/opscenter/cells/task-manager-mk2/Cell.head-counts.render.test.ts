@@ -75,14 +75,14 @@ describe('the title strip carries needs you and unread, per task', () => {
   test('both counts, each the chip number, in words and in the narrow icon form', async () => {
     const host = await draw();
     expect(strip(host, 'needs-you')?.querySelector('.mk2-head-words')?.textContent).toBe('3 needs you');
-    expect(strip(host, 'unread')?.querySelector('.mk2-head-words')?.textContent).toBe('7 unread');
+    expect(strip(host, 'unread')?.querySelector('.mk2-head-words')?.textContent).toBe('6 unread');
     for (const key of ['needs-you', 'unread'] as const) {
       const one = strip(host, key)!;
       expect(one.querySelector('.mk2-head-ico svg')).not.toBeNull();
       expect(one.getAttribute('aria-label')).toBe(one.querySelector('.mk2-head-words')!.textContent);
       expect(one.getAttribute('title')).toBe(one.getAttribute('aria-label'));
     }
-    expect(numbers(host)).toEqual({ unread: '7', needs: '3' });
+    expect(numbers(host)).toEqual({ unread: '6', needs: '3' });
   });
 
   test('a container query on the strip (not a viewport breakpoint) swaps words for icon and number', () => {
@@ -99,35 +99,35 @@ describe('the title strip carries needs you and unread, per task', () => {
     expect(key).not.toBeNull();
     key!.click();
     await settle();
-    expect(numbers(host)).toEqual({ unread: '6', needs: '2' });
+    expect(numbers(host)).toEqual({ unread: '5', needs: '2' });
     host.querySelector<HTMLElement>('[data-task-manager-mark-read="1"]')!.click();
     await settle();
-    expect(numbers(host)).toEqual({ unread: '7', needs: '3' });
+    expect(numbers(host)).toEqual({ unread: '6', needs: '3' });
   });
 
   test('marking read a task with three unread messages drops the unread count by three, at once, and the undo puts all three back', async () => {
     const host = await draw();
-    expect(numbers(host).unread).toBe('7');
+    expect(numbers(host).unread).toBe('6');
     toggleRow(5);
     await settle();
     host.querySelector<HTMLElement>('[data-task-manager-mark-read="5"]')!.click();
     await settle();
-    expect(numbers(host)).toEqual({ unread: '4', needs: '3' });
+    expect(numbers(host)).toEqual({ unread: '3', needs: '3' });
     host.querySelector<HTMLElement>('[data-task-manager-mark-read="5"]')!.click();
     await settle();
-    expect(numbers(host)).toEqual({ unread: '7', needs: '3' });
+    expect(numbers(host)).toEqual({ unread: '6', needs: '3' });
   });
 
-  test('the audit task: mark read drops the strip by exactly what its tab shows (2), and the undo puts both back', async () => {
+  test('the audit task: mark read drops the strip by exactly what its tab shows (1), and the undo puts both back', async () => {
     const host = await draw();
     toggleRow(6);
     await settle();
-    expect(host.querySelector('[role="tab"]:nth-child(2)')?.textContent).toContain('2');
+    expect(host.querySelector('[role="tab"]:nth-child(2)')?.textContent).toContain('1');
     host.querySelector<HTMLElement>('[data-task-manager-mark-read="6"]')!.click();
     await settle();
     expect(numbers(host)).toEqual({ unread: '5', needs: '3' });
     host.querySelector<HTMLElement>('[data-task-manager-mark-read="6"]')!.click();
     await settle();
-    expect(numbers(host)).toEqual({ unread: '7', needs: '3' });
+    expect(numbers(host)).toEqual({ unread: '6', needs: '3' });
   });
 });

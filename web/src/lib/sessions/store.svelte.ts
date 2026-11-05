@@ -17,6 +17,7 @@ import { browserSessionHost, type SessionHost } from './host';
 import { emptyListing, listingReasonFromError, statusFromError } from './listing';
 import { createPoller, type Poller, type PollerDeps } from './poller';
 import { loadRunningRows } from './running';
+import { latestOnly } from '../resource-push/latest-only';
 import type {
     ListingState,
     ProjectAuthority,
@@ -59,11 +60,11 @@ let sessionRecords = $state<SessionRecord[]>([]);
 let workStampByName = $state<Map<string, string>>(new Map());
 
 let poller: Poller | null = null;
-let runningGeneration = 0;
+const runningGate = latestOnly();
 let newestRunningLoad: Promise<void> | null = null;
-let projectsGeneration = 0;
-let recentGeneration = 0;
-let attributionGeneration = 0;
+const projectsGate = latestOnly();
+const recentGate = latestOnly();
+const attributionGate = latestOnly();
 
 let host: SessionHost | null = null;
 
@@ -88,7 +89,7 @@ function applyAttribution(snap: AttributionSnapshot): void {
     sessionAttributionListingDetail = snap.listingDetail;
 }
 
-async function fetchRunningSessions(t: Translate, generation: number): Promise<void> {
+async function fetchRunningSessions(t: Translate, isNewest: () => boolean): Promise<void> {
     const flags = (hostWindow() as unknown as {
         UIFlags?: { ensure?: unknown };
     } | undefined)?.UIFlags;
@@ -106,7 +107,7 @@ async function fetchRunningSessions(t: Translate, generation: number): Promise<v
         onReauth: dispatchReauthNeeded,
     });
     const attributionSnapshot = await attribution;
-    if (generation !== runningGeneration) return newestRunningLoad ?? undefined;
+    if (!isNewest()) return newestRunningLoad ?? undefined;
     runningSessionsListing = listing;
     applyAttribution(attributionSnapshot);
     runningSessions = sortRunningSessionsByWork(rows.slice(), workStampByName);
@@ -163,11 +164,11 @@ export const sessionStore = {
         includeArchived: boolean,
         t: RecentTranslate,
     ): Promise<void> {
-        const mine = ++recentGeneration;
+        const isNewest = recentGate.begin();
         recentInFlight = true;
         try {
             const payload = await fetchRecent(!!includeArchived);
-            if (mine !== recentGeneration) return;
+            if (!isNewest()) return;
             recentPayload = {
                 state: (payload && payload.state) || 'probe_unavailable',
                 sessions: (payload && payload.sessions) || [],
@@ -175,14 +176,14 @@ export const sessionStore = {
             };
         } catch (error) {
             console.warn('CloudeWeb: failed to load recent sessions:', error);
-            if (mine !== recentGeneration) return;
+            if (!isNewest()) return;
             recentPayload = {
                 state: 'probe_unavailable',
                 sessions: [],
                 notice: loadFailedNotice(error, t),
             };
         } finally {
-            if (mine === recentGeneration) recentInFlight = false;
+            if (isNewest()) recentInFlight = false;
         }
     },
 
@@ -215,7 +216,7 @@ export const sessionStore = {
         includeArchived: boolean,
         t: Translate,
     ): Promise<{ ok: boolean; error: string | null }> {
-        const mine = ++projectsGeneration;
+        const isNewest = projectsGate.begin();
         let sidecars: Promise<unknown> = Promise.resolve();
         try {
             const listing = activeHost().getProjects(includeArchived);
@@ -224,7 +225,7 @@ export const sessionStore = {
                 this.loadProjectAuthority(),
             ]);
             const answered = await listing;
-            if (mine === projectsGeneration) {
+            if (isNewest()) {
                 projects = answered;
                 projectsListingOk = true;
                 archivedFetchOk = includeArchived ? true : null;
@@ -232,7 +233,7 @@ export const sessionStore = {
             await sidecars;
             return { ok: true, error: null };
         } catch (error) {
-            if (mine === projectsGeneration) {
+            if (isNewest()) {
                 projectsListingOk = false;
                 archivedFetchOk = includeArchived ? false : null;
             }
@@ -243,13 +244,13 @@ export const sessionStore = {
     },
 
     async loadSessionAttribution(t: Translate): Promise<void> {
-        const mine = ++attributionGeneration;
+        const isNewest = attributionGate.begin();
         const snap = await startAttribution(t);
-        if (mine === attributionGeneration) applyAttribution(snap);
+        if (isNewest()) applyAttribution(snap);
     },
 
     loadRunningSessions(t: Translate): Promise<void> {
-        const load = fetchRunningSessions(t, ++runningGeneration);
+        const load = fetchRunningSessions(t, runningGate.begin());
         newestRunningLoad = load;
         return load;
     },
@@ -269,10 +270,10 @@ export const sessionStore = {
     },
 
     reset(): void {
-        ++runningGeneration;
-        ++projectsGeneration;
-        ++recentGeneration;
-        ++attributionGeneration;
+        runningGate.invalidate();
+        projectsGate.invalidate();
+        recentGate.invalidate();
+        attributionGate.invalidate();
         newestRunningLoad = null;
         this.stopPolling();
         recentPayload = null;

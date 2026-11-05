@@ -42,6 +42,10 @@ class PendingLimitError(ValueError):
     pass
 
 
+class PayloadTooLargeError(PendingLimitError):
+    pass
+
+
 class ActionRefused(RuntimeError):
     pass
 
@@ -199,7 +203,7 @@ class PendingActions:
         args = args or {}
         args_summary = fit_text(args_summary, SUMMARY_MAX)
         if len(format_payload(args)) > MAX_SHOWN_PAYLOAD_CHARS:
-            raise PendingLimitError("the payload is too long to show the owner in full, so it cannot be sent for approval; send less")
+            raise PayloadTooLargeError("the payload is too long to show the owner in full, so it cannot be sent for approval; send less")
         waiting = [i for i in self._items.values() if i.status == PENDING]
         for item in waiting:
             if supersede and (item.caller_tmux, item.target_session_id, item.action, item.dedupe_key) == (
@@ -327,6 +331,14 @@ class PendingActions:
             except Exception as exc:  # noqa: BLE001
                 logger.warning("agent_action_deny_hook_failed", id=item.id, action=item.action, error=str(exc)[:200])
         return item
+
+    def withdraw(self, action_id: str, reason: str) -> bool:
+        item = self.get(action_id)
+        if item is None or item.status != PENDING:
+            return False
+        item.reason = reason
+        self.deny(action_id)
+        return True
 
     def deny_for_caller(self, caller_tmux: str) -> int:
         ids = [i.id for i in self._items.values() if i.status == PENDING and i.caller_tmux == caller_tmux]

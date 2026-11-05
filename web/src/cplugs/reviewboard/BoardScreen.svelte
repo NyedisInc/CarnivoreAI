@@ -1,7 +1,7 @@
 <script lang="ts">
   /* the history bar the notes panel the page frame */
   import { onMount, untrack } from 'svelte';
-  import { activeThemeId, ApiError, markdownPlain, resourcePush, t } from '../sdk';
+  import { activeThemeId, ApiError, boardHeaderKeys, markdownPlain, resourcePush, t } from '../sdk';
   import { Button, ConfirmPopup, IconButton, Segmented } from '../sdk/ui';
   import { clearScratch, fetchBoard, fetchBoards, rescan } from './board-api';
   import AttachmentsKey from './AttachmentsKey.svelte';
@@ -297,6 +297,10 @@
       {/if}
       {#if sidecar && !isScratch(sidecar)}
         <AttachmentsKey slug={sidecar.board.slug} tick={boardsTick} />
+        {#each boardHeaderKeys() as key (key.id)}
+          {@const Key = key.component}
+          <Key slug={sidecar.board.slug} />
+        {/each}
       {/if}
       <span class="rb-tools">
         <IconButton label={t('cplug.reviewboard.action.back')} icon="chevron-left" variant="quiet" iconSize={16}

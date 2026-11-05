@@ -82,12 +82,6 @@
         margin-left: var(--oc-space-2);
     }
 
-    .pledger .lsk-name {
-        color: var(--oc-text-primary);
-        font-size: var(--oc-fs-status);
-        overflow-wrap: anywhere;
-    }
-
     .pledger .lsk-col__label {
         display: block;
         color: var(--oc-text-primary);
@@ -113,20 +107,6 @@
         color: var(--oc-text-secondary);
         white-space: nowrap;
         font-size: var(--oc-fs-label);
-    }
-
-    .pledger .lsk-cell--present .lsk-cell__mark {
-        color: var(--oc-green, var(--oc-text-primary));
-    }
-
-    .pledger .lsk-cell--differs,
-    .pledger .lsk-cell--shadowed {
-        color: var(--oc-orange);
-    }
-
-    .pledger .lsk-cell--absent,
-    .pledger .lsk-cell--none_yet {
-        color: var(--oc-text-muted);
     }
 
     .pledger .lsk-cell[data-state='syncing'],
@@ -251,13 +231,6 @@
         letter-spacing: 0.04em;
     }
 
-    .lsk-sheet__field {
-        display: flex;
-        flex-direction: column;
-        gap: var(--oc-space-1);
-    }
-
-    .lsk-targets,
     .lsk-results,
     .lsk-files {
         display: flex;
@@ -286,12 +259,6 @@
 
     .lsk-result__status {
         color: var(--oc-text-secondary);
-    }
-
-    .lsk-result--refused .lsk-result__status,
-    .lsk-result--use_catalog_install .lsk-result__status,
-    .lsk-result--use_catalog_uninstall .lsk-result__status {
-        color: var(--oc-coral);
     }
 
     .lsk-files {

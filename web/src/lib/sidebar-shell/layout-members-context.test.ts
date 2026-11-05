@@ -19,7 +19,7 @@ function paint(pct: number | null): void {
     const base = [session(pct)];
     const rows = base.concat(w.SessionSidebarLayouts.rows(base));
     const ctrl: Record<string, unknown> = {
-        _rows: rows, _listing: { ok: true }, _lastSig: null, _dragging: false, _missing: [], listEl,
+        _rows: rows, _listing: { ok: true }, _dragging: false, _missing: [], listEl,
     };
     ctrl.repaint = () => paintDrawer(ctrl);
     w.SessionSidebar = ctrl;

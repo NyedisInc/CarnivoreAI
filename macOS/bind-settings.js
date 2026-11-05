@@ -1,17 +1,42 @@
 
 'use strict';
 
+const crypto = require('crypto');
 const fs = require('fs');
 
 const BIND_SETTINGS_ROUTE = '/api/v1/config/settings';
 
+const PRIVATE_FILE_MODE = 0o600;
+
+function writeDurably(target, text) {
+  const tmp = `${target}.${process.pid}.${crypto.randomBytes(4).toString('hex')}.tmp`;
+  try {
+    const fd = fs.openSync(tmp, 'wx', PRIVATE_FILE_MODE);
+    try {
+      fs.fchmodSync(fd, PRIVATE_FILE_MODE);
+      fs.writeSync(fd, text);
+      fs.fsyncSync(fd);
+    } finally {
+      fs.closeSync(fd);
+    }
+    fs.renameSync(tmp, target);
+  } catch (err) {
+    fs.rmSync(tmp, { force: true });
+    throw err;
+  }
+}
+
 function writeConfigBindHost(configPath, ip) {
   try {
-    const parsed = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    const raw = fs.readFileSync(configPath, 'utf8');
+    const parsed = JSON.parse(raw);
     parsed.server_prefs = Object.assign({}, parsed.server_prefs, { bind_host: ip });
-    const tmp = configPath + '.menubar.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(parsed, null, 2), 'utf8');
-    fs.renameSync(tmp, configPath);
+    try {
+      writeDurably(configPath + '.bak', raw);
+    } catch (err) {
+      console.warn('[bind-host] could not write config.json.bak, saving anyway:', err.message);
+    }
+    writeDurably(configPath, JSON.stringify(parsed, null, 2));
     return true;
   } catch (err) {
     console.warn('[bind-host] could not write config.json:', err.message);

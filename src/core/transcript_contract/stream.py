@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 import json
-from typing import Any, BinaryIO, Iterator, List, Optional, Tuple
+from typing import Any, Iterator, List, Optional, Tuple
 
 from src.core.transcript_contract.claude_blocks import ToolResultBlock
+from src.core.transcript_contract.cold_budget import LineSource
 from src.core.transcript_contract.claude_attachments import AttachmentBody, parse_attachment_body
 from src.core.transcript_contract.claude_message import UserMessage, parse_user_message
 from src.core.transcript_contract.claude_meta_records import QueueOperationRecord
@@ -74,7 +75,7 @@ def complete_lines(chunk: bytes, *, at_start: bool) -> List[bytes]:
 
 class LineScan:
 
-    def __init__(self, handle: BinaryIO, marks: Tuple[bytes, ...] = (),
+    def __init__(self, handle: LineSource, marks: Tuple[bytes, ...] = (),
                  rejects: Tuple[bytes, ...] = ()) -> None:
         self._handle = handle
         self._marks = marks

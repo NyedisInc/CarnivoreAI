@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import CascadeMenu from '../drawer-tabs/CascadeMenu.svelte';
   import type { MenuNode } from '../drawer-tabs/add-component-menu';
   import { t } from '../i18n/index.svelte';
@@ -72,7 +73,7 @@
         },
       });
     }
-    const swarm = swarmSwitch.data;
+    const swarm = swarmSwitch.data?.enabled ? swarmSwitch.data : null;
     if (swarm) {
       out.push({
         id: 'swarm',
@@ -134,6 +135,20 @@
     });
     return out;
   }
+
+  let swarmRowShown = false;
+
+  $effect(() => {
+    const shown = swarmSwitch.data?.enabled === true;
+    const gone = swarmRowShown && !shown;
+    swarmRowShown = shown;
+    if (!gone || !accountMenu.open) return;
+    void tick().then(() => {
+      if (document.activeElement && document.activeElement !== document.body) return;
+      const list = [...document.querySelectorAll<HTMLElement>(`[role="menu"][aria-label="${t('drawer.account.menu')}"] [role^="menuitem"]`)];
+      (list.find((i) => i.dataset.node === 'master_all') ?? list[0])?.focus({ preventScroll: true });
+    });
+  });
 
   const root = $derived<MenuNode[]>(accountMenu.open ? nodes() : []);
   const heading = $derived.by(() => {

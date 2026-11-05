@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from src.core.db import transaction
 from src.core.mcp import family_signals
-from src.core.pack import progress
+from src.core.pack.transport import progress
 from src.core.trail_entry import utc_now
 
 STEPS = ("prepare", "code", "rows", "transcripts", "verify", "flip")

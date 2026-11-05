@@ -1,5 +1,5 @@
 import { glyphSvg } from '../../../../client/js/icons/glyphs.js';
-import { scaleStep } from '../../../../client/js/labels/usage-panel.js';
+import { contextGauge, contextPercentSpoken, modelShortName } from '../session-stats/context-gauge';
 import { iconVisible, type IconKind } from '../drawer/row-icon-prefs';
 import { t } from '../i18n/index.svelte';
 import { ledStateFor, type InnerState } from '../led';
@@ -74,11 +74,7 @@ function num(v: unknown): number | null {
 }
 
 function context(r: SidebarRow): { pct: number; scale: number } | null {
-    const raw = num(r.running_context_used_pct);
-    if (raw === null) return null;
-    const pct = Math.min(100, Math.max(0, raw));
-    const scale = scaleStep(pct) as number | null;
-    return scale === null ? null : { pct, scale };
+    return contextGauge(r.running_context_used_pct);
 }
 
 function contextTone(scale: number): BodyTone | null {
@@ -166,7 +162,7 @@ export function rowFlags(r: SidebarRow, led: LedPlan): BodyFlag[] {
     }
     const ctx = context(r);
     const ctxTone = ctx ? contextTone(ctx.scale) : null;
-    if (ctx && ctxTone) out.push({ kind: 'context', tone: ctxTone, text: t('sidebar.row.flag.context_full', { percent: Math.round(ctx.pct) }) });
+    if (ctx && ctxTone) out.push({ kind: 'context', tone: ctxTone, text: t('sidebar.row.flag.context_full', { percent: contextPercentSpoken(ctx.pct) }) });
     return out;
 }
 
@@ -206,7 +202,7 @@ export function rowBodyPlan(r: SidebarRow, mode: string, led: LedPlan | null): R
     if (mode === 'cozy') {
         if (!asleep && !dead && model) {
             body.model = model;
-            body.modelName = String(r.running_model).trim().replace(/^claude-/, '');
+            body.modelName = modelShortName(r.running_model);
             body.effort = typeof r.running_model_effort === 'string' ? r.running_model_effort.trim() : '';
         }
         return body;

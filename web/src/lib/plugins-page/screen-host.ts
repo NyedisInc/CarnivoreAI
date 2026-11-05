@@ -8,7 +8,7 @@ export const PLUGINS_HASH = '#plugins';
 
 export const LEGACY_TASK_MANAGER_SETTINGS_HASHES: readonly string[] = ['#swarm-settings', '#interactive-todo'];
 
-const host = createOverlayHost(PLUGINS_SCREEN_CONTAINER, PluginsScreen, PLUGINS_HASH, { aliases: LEGACY_TASK_MANAGER_SETTINGS_HASHES });
+const host = createOverlayHost(PLUGINS_SCREEN_CONTAINER, PluginsScreen, PLUGINS_HASH, { aliases: LEGACY_TASK_MANAGER_SETTINGS_HASHES, props: { scope: 'plugins' } });
 
 export const openPluginsScreen = (): boolean => host.open();
 

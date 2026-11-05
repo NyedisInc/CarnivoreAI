@@ -106,7 +106,7 @@ def test_the_plugin_hooks_start_and_stop_the_listener() -> None:
 
     async def scenario() -> None:
         config = settings()
-        ctx = SimpleNamespace(settings=config, settings_now=lambda: config)
+        ctx = SimpleNamespace(settings=config, settings_now=lambda: config, storage=None)
         await CPLUG.on_start(ctx)
         port = int(config["port"])
         assert SERVICE.listener is not None and await asyncio.to_thread(answers, port)

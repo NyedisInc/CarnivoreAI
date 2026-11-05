@@ -3,6 +3,7 @@
   import { tick } from 'svelte';
   import { legendFitsOneRow, legendPages, type LegendItem } from './legend-pages';
   import { t } from '../../../lib/i18n/index.svelte';
+  import { buttonAttrs } from '../../../lib/base/classes';
 
   let { items, onToggle, wrap = false }: { items: LegendItem[]; onToggle: (name: string) => void; wrap?: boolean } = $props();
 
@@ -52,7 +53,7 @@
       <ul bind:this={track} class="chart-legend__track" class:chart-legend__track--wrap={wrap} style:transform={`translateX(-${shift}px)`} style:--legend-cap={cap === null ? null : `${cap}px`}>
         {#each items as item, index (item.id ?? index)}
           <li class="chart-legend__cell" class:chart-legend__cell--off={index < first || index > last}>
-            <button type="button" class="chart-legend__item" class:chart-legend__item--dim={!item.on} aria-pressed={item.on} tabindex={index < first || index > last ? -1 : 0}
+            <button type="button" class="chart-legend__item" {...buttonAttrs('quiet', 'bare')} data-focus="ink" class:chart-legend__item--dim={!item.on} aria-pressed={item.on} tabindex={index < first || index > last ? -1 : 0}
               title={item.name} onclick={() => onToggle(item.name)}>
               <i class="chart-legend__swatch" style:background={item.color} aria-hidden="true"></i><span>{item.name}</span>
             </button>
@@ -62,9 +63,9 @@
     </div>
     {#if paged}
       <div class="chart-legend__pager">
-        <button type="button" class="chart-legend__step" disabled={at === 0} aria-label={t('analytics.legend_previous')} onclick={() => { page = at - 1; }}>&#9664;</button>
+        <button type="button" class="chart-legend__step" {...buttonAttrs('quiet', 'bare')} data-focus="ink" disabled={at === 0} aria-label={t('analytics.legend_previous')} onclick={() => { page = at - 1; }}>&#9664;</button>
         <span>{at + 1}/{starts.length}</span>
-        <button type="button" class="chart-legend__step" disabled={at >= starts.length - 1} aria-label={t('analytics.legend_next')} onclick={() => { page = at + 1; }}>&#9654;</button>
+        <button type="button" class="chart-legend__step" {...buttonAttrs('quiet', 'bare')} data-focus="ink" disabled={at >= starts.length - 1} aria-label={t('analytics.legend_next')} onclick={() => { page = at + 1; }}>&#9654;</button>
       </div>
     {/if}
     <div bind:this={pagerProbe} class="chart-legend__pager chart-legend__pager--probe" aria-hidden="true"><span class="chart-legend__step">&#9664;</span><span>99/99</span><span class="chart-legend__step">&#9654;</span></div>
@@ -75,7 +76,7 @@
   @layer components {
     .chart-legend { position: relative; display: flex; flex: none; align-items: center; min-width: 0; min-height: var(--oc-space-4); color: var(--oc-text-secondary); font-family: var(--font-mono); font-size: var(--oc-fs-micro); }
 
-    .chart-legend__view { flex: 1 1 0; min-width: 0; overflow: hidden; }
+    .chart-legend__view { flex: 1 1 0; min-width: 0; margin: calc(var(--oc-border) * -1); padding: var(--oc-border); overflow: hidden; }
 
     .chart-legend__track { display: flex; gap: var(--oc-space-3); margin: 0; padding: 0; list-style: none; white-space: nowrap; }
 
@@ -85,7 +86,7 @@
 
     .chart-legend__cell--off { visibility: hidden; }
 
-    .chart-legend__item { display: flex; align-items: center; gap: var(--oc-space-1); max-width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+    .chart-legend__item { display: flex; align-items: center; gap: var(--oc-space-1); max-width: calc(100% + 2 * var(--oc-border)); margin: calc(var(--oc-border) * -1); padding: 0; border: var(--oc-border) solid transparent; background: none; color: inherit; font: inherit; }
 
     .chart-legend__item--dim { color: var(--oc-text-dim); }
 
@@ -99,8 +100,6 @@
 
     .chart-legend__pager--probe { position: absolute; visibility: hidden; pointer-events: none; }
 
-    .chart-legend__step { padding: 0 var(--oc-space-1); border: 0; background: none; color: var(--oc-text-secondary); font: inherit; cursor: pointer; }
-
-    .chart-legend__step:disabled { color: var(--oc-text-dim); cursor: default; }
+    .chart-legend__step { margin: calc(var(--oc-border) * -1); padding: 0 var(--oc-space-1); border: var(--oc-border) solid transparent; background: none; color: var(--oc-text-secondary); font: inherit; }
   }
 </style>

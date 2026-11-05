@@ -1,5 +1,8 @@
 import { drawerEnv } from './env';
+import { confirmOk } from '../confirm-ok/confirm-ok';
+import type { SidebarPick } from '../legacy-globals';
 import { say, tr } from '../item-menu/run/run-env';
+import { nonEmptyErrorMessageOr } from '../errors/failure-reason';
 
 export interface SleepCtx {
     name: string;
@@ -8,7 +11,9 @@ export interface SleepCtx {
     surface?: string;
 }
 
-interface WakeAnswer { status?: string; code?: string; detail?: string }
+interface WakeAnswer { status?: string; code?: string; detail?: string; session_id?: string | null }
+
+export interface WakeOutcome { started: boolean; sessionId: string | null }
 
 interface PickerChoice { agentType?: string; account?: string }
 
@@ -20,12 +25,11 @@ interface SleepGlobals {
         restartSession(uuid: string): Promise<unknown>;
         deleteSessionRecord(uuid: string): Promise<unknown>;
     };
-    App?: { showConfirmModal(title: string, question: string, details: string, ok: string, cancel: string, style?: string): Promise<boolean> };
     SessionRestartPicker?: {
         open?(name: string, label: string, a: null, uuid: string): Promise<PickerChoice | null>;
         lastError?(): string | null;
     };
-    SessionSidebar?: { forceRefresh?(): Promise<unknown>; activeTmuxName(): string | null };
+    SessionSidebar?: SidebarPick<'forceRefresh' | 'activeTmuxName'>;
     TerminalController?: {
         sessionActive?: boolean;
         stopReconnecting?(): void;
@@ -51,7 +55,7 @@ async function refresh(): Promise<void> {
 }
 
 function reasonOf(err: unknown): string {
-    return (err as { message?: string } | null)?.message || 'the server could not be reached';
+    return nonEmptyErrorMessageOr(err, tr('error.server_unreachable'));
 }
 
 export function releaseThisTab(ctx: { name: string }): void {
@@ -86,13 +90,13 @@ export async function runSleep(ctx: SleepCtx): Promise<void> {
 }
 
 export async function offerFresh(name: string, label: string, sessionUuid: string): Promise<WakeAnswer | null> {
-    const ok = await g().App!.showConfirmModal(
-        tr('session.wake.fresh.title'),
-        tr('session.wake.fresh.question', { name: label || name }),
-        tr('session.wake.fresh.details'),
-        tr('session.wake.fresh.confirm'),
-        tr('session.wake.fresh.cancel'),
-    );
+    const ok = await confirmOk({
+        title: tr('session.wake.fresh.title'),
+        message: tr('session.wake.fresh.question', { name: label || name }),
+        details: tr('session.wake.fresh.details'),
+        okLabel: tr('session.wake.fresh.confirm'),
+        cancelLabel: tr('session.wake.fresh.cancel'),
+    });
     if (!ok) return null;
     return (await g().API!.wakeSession(sessionUuid, null, null, true)) ?? null;
 }
@@ -125,15 +129,17 @@ async function resolveRefusal(ctx: SleepCtx, name: string, res: WakeAnswer | und
     return answer;
 }
 
-export async function runWake(ctx: SleepCtx): Promise<boolean> {
+export async function runWakeWithId(ctx: SleepCtx): Promise<WakeOutcome> {
     const name = ctx.label || ctx.name;
     let started = false;
-    if (!ctx.sessionUuid) { say(ctx, tr('session.wake.no_uuid')); return false; }
+    let sessionId: string | null = null;
+    if (!ctx.sessionUuid) { say(ctx, tr('session.wake.no_uuid')); return { started: false, sessionId: null }; }
     const nav = g().NavigationGeneration ? g().NavigationGeneration!.begin('wake:' + ctx.name) : null;
     try {
         const res = await resolveRefusal(ctx, name, await g().API!.wakeSession(ctx.sessionUuid));
-        if (res === 'cancelled') { await refresh(); return false; }
+        if (res === 'cancelled') { await refresh(); return { started: false, sessionId: null }; }
         started = !!res && res.status === 'started';
+        sessionId = (started && res && res.session_id) || null;
         if (!started) say(ctx, tr('session.wake.failed', { name, reason: (res && res.detail) || '' }));
     } catch (err) {
         console.error('[SessionRowMenuSleep] wake failed:', err);
@@ -141,20 +147,24 @@ export async function runWake(ctx: SleepCtx): Promise<boolean> {
     }
     await refresh();
     if (started && g().WakeFocus) void g().WakeFocus!.afterWake(ctx.sessionUuid, nav);
-    return started;
+    return { started, sessionId };
+}
+
+export async function runWake(ctx: SleepCtx): Promise<boolean> {
+    return (await runWakeWithId(ctx)).started;
 }
 
 export async function runKillAsleep(ctx: SleepCtx): Promise<boolean> {
     const name = ctx.label || ctx.name;
     if (!ctx.sessionUuid) { say(ctx, tr('session.wake.no_uuid')); return false; }
-    const ok = await g().App!.showConfirmModal(
-        tr('session.kill_asleep.title'),
-        tr('session.kill_asleep.question', { name }),
-        tr('session.kill_asleep.details'),
-        tr('session.kill_asleep.confirm'),
-        tr('session.kill_asleep.cancel'),
-        'danger',
-    );
+    const ok = await confirmOk({
+        title: tr('session.kill_asleep.title'),
+        message: tr('session.kill_asleep.question', { name }),
+        details: tr('session.kill_asleep.details'),
+        okLabel: tr('session.kill_asleep.confirm'),
+        cancelLabel: tr('session.kill_asleep.cancel'),
+        variant: 'danger',
+    });
     if (!ok) return false;
     let done = false;
     try {

@@ -56,8 +56,8 @@ def world(tmp_path, monkeypatch):
         calls.append(("git", body.url, body.ref, body.subdir))
         return {"id": "clock"}
 
-    async def delete(request, name):
-        calls.append(("delete", name))
+    async def delete(request, name, kind=None):
+        calls.append(("delete", name) if kind is None else ("delete", name, kind))
         return {"removed": name}
 
     monkeypatch.setattr(sideload_routes, "post_sideload", post)
@@ -100,6 +100,15 @@ def test_switch_on_files_a_card_even_under_beast_and_the_approve_runs_the_route(
     assert held["status"] == "pending" and world.calls == []
     asyncio.run(world.store.approve(world.store.list()[0]["id"]))
     assert world.calls == [("git", "https://github.com/me/clock.git", None, "plugin")]
+
+
+def test_remove_passes_the_kind_and_add_has_no_way_to_carry_a_consent(world):
+    sideload.set_switch(world.state, True)
+    _call(world, "plugin_sideload_remove", {"name": "twin", "kind": "theme"})
+    asyncio.run(world.store.approve(world.store.list()[0]["id"]))
+    assert world.calls == [("delete", "twin", "theme")]
+    add = next(spec for spec in plugin_sideload_tools.SPECS if spec.name == "plugin_sideload_add")
+    assert "consent" not in add.properties
 
 
 def test_a_switch_turned_off_before_the_approve_still_refuses(world):

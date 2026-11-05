@@ -2,7 +2,6 @@
   import EmptyState from './EmptyState.svelte';
   import { framedTitle } from '../shell/frame-header.svelte';
   import { emptyLine } from './empty';
-  import { scaleStep } from '../../../../client/js/labels/usage-panel.js';
   import StatusLed from '../../lib/StatusLed.svelte';
   import SessionFace from '../../lib/sessions/SessionFace.svelte';
   import { openSession, sessions } from '../api';
@@ -41,15 +40,14 @@
     {:else}
       <ol class="viz-fleet__rack" data-fleet="rack">
         {#each model.rows as row (row.key)}
-          {@const step = row.contextPct === null ? null : scaleStep(row.contextPct)}
           <li class="viz-fleet__row" data-fleet-row={row.sessionId}>
             <SessionFace facts={{ ...row.led, transport: transportFor(row.sessionId) }} />
             <a class="viz-fleet__name" href="#session" title={t('fleet.open')} onclick={(event) => { event.preventDefault(); openSession(row.sessionId, row.tmuxSession); }}>{row.name}</a>
             <span class="viz-fleet__project" title={row.project ?? ''}>{row.project ?? ''}</span>
             {#if tier === 'full'}<span class="viz-fleet__model" title={row.model ?? ''}>{row.model ?? ''}</span>{/if}
             <span class="viz-fleet__context">
-              {#if row.contextPct !== null && step !== null}
-                <LimitGauge variant="fill" pct={row.contextPct} scale={step} meterText={t('sidebar.row.context.label', { percent: Math.round(row.contextPct) })} height={4} />
+              {#if row.context !== null}
+                <LimitGauge variant="fill" pct={row.context.pct} scale={row.context.scale} meterText={t('sidebar.row.context.label', { percent: row.contextSpoken })} height={4} />
               {/if}
             </span>
             <span class="viz-fleet__subs" title={t('fleet.subagents')}>{row.subagents === null ? '' : t('fleet.subs', { count: row.subagents })}</span>

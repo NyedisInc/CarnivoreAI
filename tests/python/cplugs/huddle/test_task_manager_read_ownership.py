@@ -54,11 +54,11 @@ def test_a_foreign_read_answers_the_status_it_left_not_open(manager):
     assert [i["status"] for i in listed["items"]] == ["waiting_to_send"]
 
 
-def test_a_foreign_focus_records_nothing_and_the_own_focus_does(manager):
+def test_a_foreign_item_read_records_nothing_and_the_own_read_does(manager):
     item = huddle_store(manager).add("12", "fix it", actor=JOE)
-    call(manager, "huddle_focus", {"list": "12", "items": [item["id"]]}, caller=ORCHESTRATOR)
+    call(manager, "task_manager_tasks_list", {"list": "12", "item": item["id"]}, caller=ORCHESTRATOR)
     assert status(manager, item["id"]) == "waiting_to_send"
-    call(manager, "huddle_focus", {"list": "12", "items": [item["id"]]}, caller=OWN)
+    call(manager, "task_manager_tasks_list", {"list": "12", "item": item["id"]}, caller=OWN)
     assert status(manager, item["id"]) == "open"
 
 

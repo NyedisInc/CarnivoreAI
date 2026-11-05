@@ -1,4 +1,4 @@
-body:has(#terminal-screen.terminal-screen--empty.active) :is(
+body.ps-terminal-empty-active.ps-terminal-active :is(
     #sessionNotesBtn,
     #headerSessionThemeBtn,
     #headerDetachBtn,

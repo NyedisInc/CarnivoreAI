@@ -1,4 +1,4 @@
-import { hostWindow } from '../sessions/env';
+import { legacyApi } from '../legacy-globals';
 import { refusalCodeOf } from '../catalog/install-actions';
 
 export interface CommentAuthor {
@@ -87,7 +87,7 @@ interface LegacyApi {
 
 export function browserCommunityHost(): CommunityHost {
     const api = (): LegacyApi =>
-        (hostWindow() as unknown as { API: LegacyApi } | undefined)?.API as LegacyApi;
+        legacyApi<LegacyApi>();
     return {
         comments: (itemId, cursor) => api().getCatalogComments(itemId, cursor),
         myComments: (itemId) => api().getMyCatalogComments(itemId),

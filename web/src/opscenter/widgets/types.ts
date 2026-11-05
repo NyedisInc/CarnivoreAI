@@ -147,6 +147,7 @@ export interface SettingsMatrix {
 export interface SettingsMatrixRow {
   labelKey: string;
   hintKey?: string;
+  noteKey?: string;
   fields?: readonly string[];
   confirm?: Readonly<Record<string, string>>;
   locked?: true;

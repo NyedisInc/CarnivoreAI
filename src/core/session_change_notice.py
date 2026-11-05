@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional
 import structlog
 
 from src.core.event_hub import EventHub, get_hub
-from src.core.ttl_flight import invalidate_all
+from src.core.read_caches.ttl_flight import invalidate_all
 from src.models import WSMessageType
 
 logger = structlog.get_logger()

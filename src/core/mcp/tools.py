@@ -16,7 +16,7 @@ from src.core.db import DatastoreUnreadableError, connect, db_path_for
 from src.cplugs.host import mcp as cplug_mcp
 from src.core.mcp import (session_target, companion_shell_tools, dashboard_tools, description_tools, project_color_tools, color_tools, dialog_tools, notification_tools, preference_tools,
                           project_lifecycle_tools, project_replica_tools, session_control_tools, automation_tools, beast_mode, bookmark_tools, lineage_tools, timeline_tools, board_tools, byoai_tools, crosstalk_tools, federated, launch_profile_tools, notify_tools,
-                          messaging_tools, card_capacity_tools, card_tools, card_validate_tools, company_tools, group_tools, swarm_memory_tools, swarm_tools, pin_tools, pipeline_tools, session_delete_tools, session_folder_move_tools, session_purge_tools, project_tools, project_pack_tools, catalog_tools, mod_tools, skill_tools, read_tools, swarm_order_tools, write_tools, computers_tools, pack_machines_tools, app_update_tools, plugin_sideload_tools, pack_relay_tools, api_key_tools, pack_skills_tools, pack_placement_tools, pack_transport_tools, pack_span_tools, pack_migrate_tools, pack_move_tools, browser_open_tools, files_open_tools, ui_show_tools, row_look_tools, pack_send_tools, usage_tools, session_usage_tools, swarm_switch_tools, swarm_member_tools, beast_tools, autonomy_tools, deepsearch_tools)
+                          messaging_tools, card_capacity_tools, card_tools, card_validate_tools, company_tools, group_tools, swarm_memory_tools, swarm_tools, pin_tools, pipeline_tools, session_delete_tools, session_folder_move_tools, session_purge_tools, project_tools, project_pack_tools, catalog_tools, mod_tools, skill_tools, read_tools, swarm_order_tools, write_tools, computers_tools, pack_machines_tools, app_update_tools, plugin_sideload_tools, pack_relay_tools, api_key_tools, pack_skills_tools, pack_placement_tools, pack_transport_tools, pack_span_tools, pack_migrate_tools, pack_move_tools, browser_open_tools, files_open_tools, ui_show_tools, row_look_tools, pack_send_tools, usage_tools, session_usage_tools, session_inspect_tools, swarm_switch_tools, swarm_member_tools, beast_tools, autonomy_tools, deepsearch_tools, wait_tools)
 from src.core.mcp import agent_tool_switches, aliases, merged_tools, pane_only, read_only_hint, tool_switches
 from src.core.mcp import lean_answers
 from src.core.mcp.approvals import call_context
@@ -193,9 +193,8 @@ Handler = Callable[[Any, AgentCaller, dict], Awaitable[dict]]
 
 _TOOLS: dict[str, tuple[str, dict, list, Handler]] = {
     "whoami": ("Say who you are: your own session row (an external client gets its token name and scope) plus hidden_families, the tool families this computer is not offering you and how the owner turns each on. Call it when a tool you expect is missing.", {}, [], whoami),
-    "sessions_list": ("Every live session on this computer and on each paired computer (host column). With include_asleep, "
-                      "also this computer's asleep sessions, marked asleep: true (id is the session_uuid; wake with session_wake). "
-                      "Shows 50 rows (total says how many exist); limit up to 200, or detail true for 200.",
+    "sessions_list": ("List sessions on this computer and each paired computer (host column). include_asleep adds asleep ones "
+                      "(id is the session_uuid; wake with session_wake); 50 rows by default (total says how many exist), limit up to 200.",
                       {"include_asleep": {"type": "boolean", "description": "also list asleep sessions (default false)"},
                        "include_closed": {"type": "boolean", "description": "also list closed sessions with a conversation, e.g. closed by a reboot, marked closed: true (default false); reopen with session_wake"},
                        "limit": {"type": "integer", "minimum": 1, "maximum": MAX_LIST_ROWS},
@@ -221,6 +220,8 @@ _TOOLS: dict[str, tuple[str, dict, list, Handler]] = {
 _TOOLS.update(read_tools.TOOLS)
 _TOOLS.update(write_tools.TOOLS)
 _TOOLS.update(write_tools.READ_TOOLS)
+_TOOLS.update(wait_tools.READ_TOOLS)
+_TOOLS.update(wait_tools.WRITE_TOOLS)
 _TOOLS.update(pipeline_tools.TOOLS)
 _TOOLS.update(project_tools.TOOLS)
 _TOOLS.update(project_pack_tools.TOOLS)
@@ -257,7 +258,7 @@ _TOOLS.update(card_tools.TOOLS)
 _TOOLS.update(card_validate_tools.TOOLS)
 _TOOLS.update(card_capacity_tools.TOOLS)
 _ROUTE_MODULES = (swarm_memory_tools, session_control_tools, companion_shell_tools, dialog_tools, dashboard_tools, preference_tools, notification_tools,
-                  project_lifecycle_tools, project_replica_tools, messaging_tools, description_tools, project_color_tools, color_tools, computers_tools, pack_machines_tools, app_update_tools, plugin_sideload_tools, pack_relay_tools, api_key_tools, pack_skills_tools, pack_placement_tools, pack_transport_tools, pack_span_tools, pack_migrate_tools, pack_move_tools, browser_open_tools, files_open_tools, ui_show_tools, row_look_tools, pack_send_tools, usage_tools, session_usage_tools, swarm_switch_tools, swarm_member_tools, beast_tools, autonomy_tools)
+                  project_lifecycle_tools, project_replica_tools, messaging_tools, description_tools, project_color_tools, color_tools, computers_tools, pack_machines_tools, app_update_tools, plugin_sideload_tools, pack_relay_tools, api_key_tools, pack_skills_tools, pack_placement_tools, pack_transport_tools, pack_span_tools, pack_migrate_tools, pack_move_tools, browser_open_tools, files_open_tools, ui_show_tools, row_look_tools, pack_send_tools, usage_tools, session_usage_tools, session_inspect_tools, swarm_switch_tools, swarm_member_tools, beast_tools, autonomy_tools)
 for _module in _ROUTE_MODULES:
     _TOOLS.update(_module.READ_TOOLS)
     _TOOLS.update(_module.WRITE_TOOLS)
@@ -267,7 +268,7 @@ for _old, _merge in merged_tools.MERGED.items():
     _TOOLS[_old] = (_merge.note, *_TOOLS[_merge.into][1:])
 
 
-WRITE_TOOLS = frozenset(write_tools.TOOLS) | frozenset(pipeline_tools.TOOLS) | frozenset(project_tools.TOOLS) | frozenset(project_pack_tools.TOOLS) | frozenset(mod_tools.WRITE_TOOLS) | frozenset(skill_tools.WRITE_TOOLS) | frozenset(company_tools.TOOLS) | frozenset(pin_tools.WRITE_TOOLS) | frozenset(group_tools.WRITE_TOOLS) | frozenset(swarm_order_tools.WRITE_TOOLS) | frozenset(session_delete_tools.WRITE_TOOLS) | frozenset(session_folder_move_tools.WRITE_TOOLS) | frozenset(session_purge_tools.WRITE_TOOLS) | automation_tools.WRITE_TOOLS | frozenset(board_tools.WRITE_TOOLS) | frozenset(crosstalk_tools.WRITE_TOOLS) | frozenset(notify_tools.WRITE_TOOLS) | frozenset(bookmark_tools.WRITE_TOOLS) | swarm_tools.WRITE_TOOLS | card_tools.WRITE_TOOLS | card_validate_tools.WRITE_TOOLS | card_capacity_tools.WRITE_TOOLS | cplug_mcp.WRITE_TOOLS | frozenset().union(*(m.WRITE_TOOLS for m in _ROUTE_MODULES))
+WRITE_TOOLS = frozenset(write_tools.TOOLS) | frozenset(wait_tools.WRITE_TOOLS) | frozenset(pipeline_tools.TOOLS) | frozenset(project_tools.TOOLS) | frozenset(project_pack_tools.TOOLS) | frozenset(mod_tools.WRITE_TOOLS) | frozenset(skill_tools.WRITE_TOOLS) | frozenset(company_tools.TOOLS) | frozenset(pin_tools.WRITE_TOOLS) | frozenset(group_tools.WRITE_TOOLS) | frozenset(swarm_order_tools.WRITE_TOOLS) | frozenset(session_delete_tools.WRITE_TOOLS) | frozenset(session_folder_move_tools.WRITE_TOOLS) | frozenset(session_purge_tools.WRITE_TOOLS) | automation_tools.WRITE_TOOLS | frozenset(board_tools.WRITE_TOOLS) | frozenset(crosstalk_tools.WRITE_TOOLS) | frozenset(notify_tools.WRITE_TOOLS) | frozenset(bookmark_tools.WRITE_TOOLS) | swarm_tools.WRITE_TOOLS | card_tools.WRITE_TOOLS | card_validate_tools.WRITE_TOOLS | card_capacity_tools.WRITE_TOOLS | cplug_mcp.WRITE_TOOLS | frozenset().union(*(m.WRITE_TOOLS for m in _ROUTE_MODULES))
 BEAST_SCOPE_TOOLS = WRITE_TOOLS - cplug_mcp.INBOX_TOOLS
 _UNGATED_WRITES = frozenset({
     "session_notes_put",

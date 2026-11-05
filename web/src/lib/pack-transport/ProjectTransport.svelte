@@ -1,7 +1,7 @@
 <script lang="ts">
   import './pack-transport.css';
   import { t } from '../i18n/index.svelte';
-  import { nonEmptyErrorMessageOr } from '../errors/failure-reason';
+  import { nonEmptyErrorMessageOr, withRefusedFiles } from '../errors/failure-reason';
   import Check from '../../opscenter/ui/Check.svelte';
   import Button from '../base/Button.svelte';
   import Field from '../base/Field.svelte';
@@ -55,6 +55,7 @@
     busy = true;
     error = null;
     done = null;
+    let refusal: string | null = null;
     try {
       const made = await api.publish(name, {
         ...(owner.trim() ? { owner: owner.trim() } : {}),
@@ -62,10 +63,11 @@
       });
       done = t('pack.transport.publish_done', { url: made.url });
     } catch (failure) {
-      error = nonEmptyErrorMessageOr(failure, t('pack.transport.error.failed'));
+      refusal = withRefusedFiles(nonEmptyErrorMessageOr(failure, t('pack.transport.error.failed')), failure, t);
     } finally {
       busy = false;
       await load();
+      if (refusal) error = refusal;
     }
   }
 

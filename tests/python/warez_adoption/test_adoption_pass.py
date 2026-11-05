@@ -27,6 +27,7 @@ from tests.helpers.catalog_surface import FrozenClock
 from tests.test_skill_installer import FakeInstallRoots
 
 SHIPPED = plugin_folders(PLUGINS_ROOT)
+EXPECTED_SHIPPED = ["huddle", "unread", "share", "save", "flow", "reviewboard", "publicboard", "tmdevtools", "crate", "devwidgetlab", "timemachine"]
 
 
 class Env:
@@ -76,8 +77,9 @@ def test_every_compiled_in_plugin_gets_one_builtin_row_and_nothing_else_is_writt
     assert before, "the fixture state tree must not be empty, or the unchanged-hash claim proves nothing"
     result = adoption.adopt_builtin_plugins(env.services)
     rows = [r for r in env.rows() if r.kind == "cplug"]
-    assert sorted(r.item_id for r in rows) == sorted(f"nyedis/{i}" for i in SHIPPED) and len(SHIPPED) == 10
-    assert result.adopted == 10 and result.failed == 0
+    assert sorted(r.item_id for r in rows) == sorted(f"nyedis/{i}" for i in SHIPPED)
+    assert sorted(SHIPPED) == sorted(EXPECTED_SHIPPED)
+    assert result.adopted == len(SHIPPED) and result.failed == 0
     for row in rows:
         assert (row.source_index_url, row.publisher_key_id, row.auto_update, row.consent_via, row.scope) == ("builtin", "builtin", False, "one_click", "global")
         assert row.digest.startswith("builtin:")
@@ -135,9 +137,9 @@ def test_the_rollback_script_deletes_builtin_rows_only(env: Env) -> None:
     adoption.adopt_builtin_plugins(env.services)
     with env.services.catalog.ledger() as ledger:
         keep = ledger.insert(_skill_row())
-    assert unadopt.remove_builtin_rows(db_path_for(env.state), dry_run=True) == 10
-    assert len([r for r in env.rows() if r.kind == "cplug"]) == 10
-    assert unadopt.remove_builtin_rows(db_path_for(env.state)) == 10
+    assert unadopt.remove_builtin_rows(db_path_for(env.state), dry_run=True) == len(SHIPPED)
+    assert len([r for r in env.rows() if r.kind == "cplug"]) == len(SHIPPED)
+    assert unadopt.remove_builtin_rows(db_path_for(env.state)) == len(SHIPPED)
     assert [r.item_id for r in env.rows()] == [keep.item_id]
     assert unadopt.remove_builtin_rows(db_path_for(env.state)) == 0
 

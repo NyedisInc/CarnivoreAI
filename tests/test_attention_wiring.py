@@ -153,6 +153,9 @@ class RecordingManager:
     def _instance_index_for_listing(self, *, socket, names):
         return InstanceIndex()
 
+    def _is_unread(self, tmux_name, epoch=None, row_id=None) -> bool:
+        return False
+
     def tmux_socket_name(self):
         return SOCKET
 

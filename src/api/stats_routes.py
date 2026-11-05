@@ -3,17 +3,19 @@ from __future__ import annotations
 import asyncio
 import sqlite3
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Awaitable, Callable, NoReturn, ParamSpec, TypeVar
 from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.routing import APIRoute
+from starlette.responses import Response
 from pydantic import ValidationError
 
 from src.api.auth import require_auth
 from src.core.session_change_notice import publish
 from src.core.stats import catalog, config, live_view, pack_scope, queries, query_buckets
+from src.core.stats.store import StatsStore
 from src.models.stats import (
     AnnotationPatch, AnnotationWrite, BackfillRequest, ChartPatch, ChartWrite,
     Dimension, QueryBatchRequest, QueryRequest, SettingsPatch, StatsFilters,
@@ -23,6 +25,9 @@ from src.api.error_response import api_error
 MAX_BODY_BYTES = 32 * 1024
 logger = structlog.get_logger()
 
+P = ParamSpec("P")
+T = TypeVar("T")
+
 
 async def _chart_changed(request: Request) -> None:
     revision = await asyncio.to_thread(_store(request).revision)
@@ -30,10 +35,10 @@ async def _chart_changed(request: Request) -> None:
 
 
 class _BoundedBodyRoute(APIRoute):
-    def get_route_handler(self):
+    def get_route_handler(self) -> Callable[[Request], Awaitable[Response]]:
         handler = super().get_route_handler()
 
-        async def bounded(request: Request):
+        async def bounded(request: Request) -> Response:
             if request.method in ("POST", "PATCH", "PUT"):
                 length = request.headers.get("content-length")
                 if length is not None:
@@ -57,14 +62,14 @@ router = APIRouter(prefix="/stats", tags=["stats"], route_class=_BoundedBodyRout
                    dependencies=[Depends(require_auth)])
 
 
-def _store(request: Request):
+def _store(request: Request) -> StatsStore:
     store = getattr(request.app.state, "stats_store", None)
     if store is None:
         raise HTTPException(503, detail={"code": "stats_unavailable"})
     return store
 
 
-def _error(exc: Exception):
+def _error(exc: Exception) -> NoReturn:
     if isinstance(exc, config.NotFound):
         raise HTTPException(404, detail={"code": "not_found"}) from exc
     if isinstance(exc, config.StatsOff):
@@ -76,13 +81,13 @@ def _error(exc: Exception):
     raise exc
 
 
-async def _on(request: Request):
+async def _on(request: Request) -> StatsStore:
     store = _store(request)
     await _run(config.require_enabled, store)
     return store
 
 
-async def _run(fn, *args, **kwargs):
+async def _run(fn: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
     try:
         return await asyncio.to_thread(fn, *args, **kwargs)
     except (ValueError, config.NotFound, config.RevisionConflict, config.StatsOff, query_buckets.QueryLimit) as exc:

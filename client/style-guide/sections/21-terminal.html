@@ -53,6 +53,8 @@ and never take input meant for the terminal.</p>
         #959): a full-width, icon-plus-label row (<code>.tbg-menuitem</code>, <code>.tbg-menuitem-label</code>) instead of the
         bare 22px icon (<code>.tbg-open</code>) the legacy info bar and the wide toolbar still use. Same open/close/Escape/
         outside-press contract either way; only the trigger's shape changes.</dd>
+    <dt>phone mic strip</dt>
+    <dd>The dictation strip the key bar's mic key opens (<code>web/src/lib/phone-mic/PhoneMic.svelte</code>, #2789): fixed to the bottom of the screen so the pane never resizes, a title-row strip with a small accent label (listening, recording, transcribing), the live transcript under a hairline, and the base Button pair (cancel quiet, send confirming). The mic key's glyph is a capsule, pickup arc and stem in the key bar's own 20px geometry.</dd>
     <dt>phone</dt>
     <dd>The key bar (<code>client/css/terminal-key-bar.css</code>; two rows, <code>.terminal-key-bar__row</code>, dragged up to show the second in 250 ms), the slash command button and its panel
         (<code>slash-commands-fab.css</code>, <code>slash-command-chips.css</code>, <code>FavoriteChips.svelte</code>) and the

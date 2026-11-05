@@ -30,6 +30,7 @@
       "/boards/live",
       "/boards/{slug}",
       "/boards/{slug}/attachments",
+      "/boards/{slug}/attachments/{file_id}",
       "/boards/{slug}/draft",
       "/boards/{slug}/live",
       "/boards/{slug}/live/end",

@@ -57,7 +57,3 @@ export function repaintKeepingFocus(name: string, band?: string | null): void {
     if (ctrl && typeof ctrl.repaint === 'function') ctrl.repaint();
     setFocusRow(name, stop.band, true);
 }
-
-export function focusStop(): { name: string | null; band: string | null } {
-    return { ...stop };
-}

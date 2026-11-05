@@ -12,6 +12,7 @@ from typing import Any, Dict
 import structlog
 
 from src.core import db, session_store
+from src.core.crosstalk import gone as crosstalk_gone
 from src.core.swarm import body, commit_guard, definition, launch, memory, store, thread_port
 
 logger = structlog.get_logger()
@@ -51,7 +52,9 @@ def archive_and_tombstone(agent: Dict[str, Any]) -> None:
                 session_store.archive_session(conn, str(found[0]))
             except session_store.SessionNotFoundError:
                 logger.warning("swarm_teardown_session_missing", agent_id=agent["id"])
-        store.tear_down(conn, agent["id"])
+        torn = store.tear_down(conn, agent["id"])
+    if torn and found and found[0]:
+        crosstalk_gone.drop_for_torn_down(str(found[0]))
 
 
 async def run(app_state: Any, agent: Dict[str, Any]) -> None:

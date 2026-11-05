@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { preferenceField, SAVE_NO_ANSWER, SAVE_UNAVAILABLE } from './field';
+import { SAVE_UNAVAILABLE } from '../zone-shell/preference-field';
+import { preferenceField } from './field';
+
+vi.mock('../i18n/index.svelte', () => ({ t: (key: string) => key }));
+const NO_ANSWER_KEY = 'prefs.save.no_answer';
 
 function install(bridge: Record<string, unknown> | undefined): void {
   (globalThis as { PreferenceBridge?: unknown }).PreferenceBridge = bridge;
@@ -33,7 +37,7 @@ describe('preferenceField', () => {
     install({ read: () => null, write: async () => ({ status: 'conflict', detail: 'stale' }) });
     expect(await preferenceField('x', coerce, 0).save(1)).toBe('stale');
     install({ read: () => null, write: async () => null });
-    expect(await preferenceField('x', coerce, 0).save(1)).toBe(SAVE_NO_ANSWER);
+    expect(await preferenceField('x', coerce, 0).save(1)).toBe(NO_ANSWER_KEY);
   });
 
   it('follows through the coercer', () => {

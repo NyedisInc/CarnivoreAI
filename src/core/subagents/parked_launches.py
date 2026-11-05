@@ -7,7 +7,7 @@ import threading
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, BinaryIO, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 import structlog
 
@@ -22,10 +22,11 @@ from src.core.attention.turn_counts import (
     stopped_task_id,
 )
 from src.core.session_token_usage.cache import HEAD_BYTES, IncrementalCache, stat_signature
+from src.core.transcript_contract.cold_budget import BudgetedHandle, LineSource
 from src.core.session_token_usage.persist_spec import PersistSpec, decode_instant, encode_instant
 from src.core.subagents.files import read_line_facts, read_meta_facts
 from src.core.subagents.parent_index import (
-    MAX_COLD_PARENT_BYTES,
+    PARENT_SLICE_BYTES,
     INDEX_SOURCES,
     CompletionIndex,
     index_spec,
@@ -196,7 +197,7 @@ def _unmeasured_launch(record: Dict[str, Any], agent_id: str) -> Optional[OpenLa
     return OpenLaunch(agent_id, KIND_SHELL, "shape_unrecognized:" + key, at)
 
 
-def _scan_launches(handle: BinaryIO, ledger: _Ledger, agent_id: str) -> Tuple[_Ledger, int]:
+def _scan_launches(handle: LineSource, ledger: _Ledger, agent_id: str) -> Tuple[_Ledger, int]:
     scan = LineScan(handle, _LAUNCH_MARKS)
     for line in scan:
         record = decode_object(line)
@@ -215,7 +216,7 @@ def _scan_launches(handle: BinaryIO, ledger: _Ledger, agent_id: str) -> Tuple[_L
     return ledger, scan.offset
 
 
-def _scan_prompts(handle: BinaryIO, mark: _PromptMark, _unused: str) -> Tuple[_PromptMark, int]:
+def _scan_prompts(handle: LineSource, mark: _PromptMark, _unused: str) -> Tuple[_PromptMark, int]:
     scan = LineScan(handle, (_PROMPT_MARK,), _PROMPT_REJECTS)
     newest = mark.at
     for line in scan:
@@ -229,18 +230,15 @@ def _scan_prompts(handle: BinaryIO, mark: _PromptMark, _unused: str) -> Tuple[_P
 
 
 def _incremental(path: Path, store: IncrementalCache, fresh: Callable[[], Any],
-                 scan: Callable[[BinaryIO, Any, str], Tuple[Any, int]], tag: str) -> Any:
+                 scan: Callable[[LineSource, Any, str], Tuple[Any, int]], tag: str) -> Any:
     key = os.path.abspath(str(path))
     try:
         stat = os.stat(key)
         signature = stat_signature(stat)
         with _CACHE_LOCK:
             unchanged = store.unchanged(key, signature)
-            known = store.knows(key)
         if unchanged is not None:
             return unchanged
-        if stat.st_size > MAX_COLD_PARENT_BYTES and not known:
-            return None
         with open(key, "rb") as handle:
             head = handle.read(HEAD_BYTES)
             with _CACHE_LOCK:
@@ -253,9 +251,16 @@ def _incremental(path: Path, store: IncrementalCache, fresh: Callable[[], Any],
                 offset, remembered = resume
                 handle.seek(offset)
                 accumulator = remembered.copy()
-            accumulator, offset = scan(handle, accumulator, tag)
+            budgeted = BudgetedHandle(handle, PARENT_SLICE_BYTES)
+            accumulator, offset = scan(budgeted, accumulator, tag)
     except OSError as exc:
         logger.debug("parked_launch_read_failed", error=str(exc), error_type=type(exc).__name__)
+        return None
+    if budgeted.exhausted:
+        logger.debug("parked_launch_warming", size=stat.st_size, offset=offset)
+        with _CACHE_LOCK:
+            store.remember(key, size=stat.st_size, mtime_ns=stat.st_mtime_ns,
+                           head=head, offset=offset, totals=accumulator)
         return None
     with _CACHE_LOCK:
         store.remember(key, size=stat.st_size, mtime_ns=stat.st_mtime_ns,
@@ -370,6 +375,8 @@ def conversation_launches(parent_path: Path) -> Optional[List[Tuple[OpenLaunch, 
     if parent is None:
         return None
     index = read_completion_index(parent_path)
+    if index is None:
+        return None
     found = [(launch, _retired(launch.task_id, parent, index))
              for launch in parent.launches.values()]
     directory = subagents_dir_for(parent_path)

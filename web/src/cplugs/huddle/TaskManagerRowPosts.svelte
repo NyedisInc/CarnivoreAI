@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Icon } from '../sdk/ui';
+  import { Icon, buttonAttrs } from '../sdk/ui';
   import { t } from '../sdk';
   import type { HuddleItem, TaskManagerMessage } from './huddle-model';
   import { POST_KINDS, QUESTION_BLOCK, askFold, isFoldToggle, isFormAsk, isShiftDismiss, openQuestions, postBody, postFold, postKindOf, rowFeed, rowQuestionPick, unreadPosts, type TaskManagerPostKind } from './task-manager-posts';
@@ -20,6 +20,7 @@
   let { item, parts, only = null, unfolded = false, oneLine = false }: { item: HuddleItem; parts: RowParts; only?: number | null; unfolded?: boolean; oneLine?: boolean } = $props();
 
   const feed = $derived(only === null ? rowFeed(item) : rowFeed(item).filter((message) => message.id === only));
+  const oneCard = $derived(only !== null);
   const pick = $derived(rowQuestionPick(feed));
   const hasPosts = $derived(unreadPosts(item).length > 0);
   const questionCount = $derived(parts.questions ? openQuestions(item).length : 0);
@@ -28,7 +29,7 @@
   function onPostClick(event: MouseEvent, message: TaskManagerMessage): void {
     if (!isShiftDismiss(event)) return onFoldClick(event, message.id, message.kind !== 'question' && postFold(message.text, oneLine).foldable);
     event.preventDefault();
-    void readPost(item, message);
+    void readPost(item, message, { oneCard });
   }
 
   const canDismissAsk = (message: TaskManagerMessage): boolean => message.kind === 'question' && isFormAsk(message) && !message.answered;
@@ -66,7 +67,7 @@
 
 {#snippet foldKey(id: number, foldable: boolean, open: boolean)}
   {#if foldable}
-    <button type="button" class="tkm-post-fold" aria-expanded={open} data-task-manager-post-fold={id}
+    <button type="button" class="tkm-post-fold" {...buttonAttrs('secondary', 'bare')} aria-expanded={open} data-task-manager-post-fold={id}
             aria-label={t(open ? 'cplug.huddle.post.fold' : 'cplug.huddle.post.unfold')} title={t(open ? 'cplug.huddle.post.fold' : 'cplug.huddle.post.unfold')}
             onclick={() => { opened[id] = !open; }}><Icon name={open ? 'chevron-up' : 'chevron-down'} size={12} strokeWidth={1.75} /></button>
   {/if}
@@ -95,7 +96,7 @@
                       onpointerleave={closable ? () => cue.leave(message.id) : undefined}>
           {#snippet lead()}
             {#if closable}
-              <button type="button" class="tkm-post-read" aria-label={t('cplug.huddle.question.dismiss')}
+              <button type="button" class="tkm-post-read" {...buttonAttrs('secondary', 'bare')} aria-label={t('cplug.huddle.question.dismiss')}
                       data-task-manager-question-dismiss={message.id} onclick={(event: MouseEvent) => dismissQuestion(event, message)}
                       onpointerenter={() => { iconOver = message.id; }} onpointerleave={() => { iconOver = null; }} onfocus={() => { iconOver = message.id; }} onblur={() => { iconOver = null; }}><Icon name={armed(message.id) ? 'close' : QUESTION_BLOCK.icon} size={12} strokeWidth={1.75} /></button>
             {:else}<span class="tkm-post-read tkm-post-mark"><Icon name={QUESTION_BLOCK.icon} size={12} strokeWidth={1.75} /></span>{/if}
@@ -115,12 +116,12 @@
         {@const cut = fold.foldable && !open}
         <TaskManagerBubble kind={bubbleKindOf(message)} tag="li" cls="tkm-posts-post {armed(message.id) ? 'tkm-posts-post--closing' : ''}"
                       data-task-manager-post={message.id} data-task-manager-post-kind={message.kind} data-task-manager-post-folded={fold.foldable ? String(!open) : undefined}
-                      title={t('cplug.huddle.post.shift_hint')} onmousedown={onPostDown} onauxclick={(event: MouseEvent) => onMiddleDismiss(event, () => void readPost(item, message))} onclick={(event: MouseEvent) => onPostClick(event, message)}
+                      title={t('cplug.huddle.post.shift_hint')} onmousedown={onPostDown} onauxclick={(event: MouseEvent) => onMiddleDismiss(event, () => void readPost(item, message, { oneCard }))} onclick={(event: MouseEvent) => onPostClick(event, message)}
                       onpointerover={(event: PointerEvent) => cue.point(message.id, event)} onpointermove={(event: PointerEvent) => cue.point(message.id, event)}
                       onpointerleave={() => cue.leave(message.id)}>
           {#snippet lead()}
-            <button type="button" class="tkm-post-read" aria-label={t(meta.readKey)} title={t(meta.readKey)}
-                    data-task-manager-post-read={message.id} onclick={() => void readPost(item, message)}
+            <button type="button" class="tkm-post-read" {...buttonAttrs('secondary', 'bare')} aria-label={t(meta.readKey)} title={t(meta.readKey)}
+                    data-task-manager-post-read={message.id} onclick={() => void readPost(item, message, { oneCard })}
                     onpointerenter={() => { iconOver = message.id; }} onpointerleave={() => { iconOver = null; }} onfocus={() => { iconOver = message.id; }} onblur={() => { iconOver = null; }}><Icon name={armed(message.id) ? 'close' : meta.icon} size={12} strokeWidth={1.75} /></button>
           {/snippet}
           {#snippet body()}
@@ -151,6 +152,7 @@
     }
 
     :global(.tkm-post-read) {
+      --_bd: currentColor;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -185,6 +187,7 @@
     }
 
     .tkm-post-fold {
+      --_bd: currentColor;
       display: inline-flex;
       align-items: center;
       justify-content: center;

@@ -48,7 +48,7 @@ function bands(layouts: boolean): [string, boolean][] {
         session('c', { project_id: 1, project_name: 'one' }), session('d', { project_id: 9, project_name: 'loose' }),
     ];
     const rows = base.concat(w.SessionSidebarLayouts.rows(base));
-    const ctrl: Record<string, unknown> = { _rows: rows, _listing: { ok: true }, _lastSig: null, _dragging: false, _missing: [], listEl };
+    const ctrl: Record<string, unknown> = { _rows: rows, _listing: { ok: true }, _dragging: false, _missing: [], listEl };
     ctrl.repaint = () => paintDrawer(ctrl);
     w.SessionSidebar = ctrl;
     unmountPanel(listEl.id);

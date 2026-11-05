@@ -13,29 +13,18 @@ from src.core.federation import peer_hosts, peer_links
 from src.core.federation.peer_client import PeerRefused, PeerUnreachable
 from src.core.mcp.caller import AgentCaller
 from src.core.mcp.common import _fail
-from src.core.mcp import aliases
-from src.core.pack.machines import capabilities as caps_mod
-from src.core.pack.migrate import task_manager_names
 from src.cplugs.sdk.tool_families import TASK_MANAGER_PREFIX
 
 logger = structlog.get_logger()
 
 PROXY_PATH = "/federation/swarm/proxy"
-PROXIED_PREFIXES = ("swarm_", "huddle_", TASK_MANAGER_PREFIX)
-HUDDLE_PREFIX = "huddle_"
+PROXIED_PREFIXES = ("swarm_", TASK_MANAGER_PREFIX)
 
 
 def is_proxied(name: str) -> bool:
     from src.core.mcp.tool_families import SWARM_SWITCH_TOOLS
 
     return name.startswith(PROXIED_PREFIXES) and name not in SWARM_SWITCH_TOOLS
-
-
-def wire_tool_name(name: str, home_capabilities: Any) -> str:
-    retired = aliases.retired_name(name)
-    if retired is None or caps_mod.has(home_capabilities, caps_mod.CAP_TASK_MANAGER_NAMES):
-        return name
-    return retired
 
 
 def _find(row_id: int) -> Optional[Dict[str, Any]]:
@@ -74,9 +63,7 @@ async def maybe_forward(manager: Any, caller: AgentCaller, name: str, args: Any)
     if client is None:
         return _fail(f"home {await asyncio.to_thread(label)} is not connected; retry")
     sent = args if isinstance(args, dict) else {}
-    if name.startswith(HUDDLE_PREFIX) or aliases.was_renamed(name):
-        sent = task_manager_names.wire_state_args(sent)
-    payload = {"tool": wire_tool_name(name, links.capabilities(found["home_install_id"])), "args": sent, "body_session_uuid": found["session_uuid"],
+    payload = {"tool": name, "args": sent, "body_session_uuid": found["session_uuid"],
                "body_epoch": info.session.tmux_created_epoch, "project_uid": found["project_uid"], "home_agent_id": found["home_agent_id"]}
     try:
         answer = await client.request("POST", PROXY_PATH, json=payload, timeout=60)

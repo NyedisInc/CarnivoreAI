@@ -1,5 +1,6 @@
 
 import { t } from '../../lib/i18n/index.svelte';
+import { detailOfBody } from '../../lib/errors/detail-of-body';
 
 const ACCESS_KEY = 'claude_tunnel_token';
 
@@ -83,22 +84,7 @@ export function initAuth(): void {
 }
 
 function detailOf(body: unknown): string {
-  if (!body || typeof body !== 'object') return '';
-  const record = body as Record<string, unknown>;
-  const detail = record['detail'];
-  if (typeof detail === 'string' && detail) return detail;
-  if (detail && typeof detail === 'object') {
-    const inner = detail as Record<string, unknown>;
-    if (typeof inner['message'] === 'string' && inner['message']) return inner['message'] as string;
-    if (typeof inner['detail'] === 'string' && inner['detail']) return inner['detail'] as string;
-    if (typeof inner['reason'] === 'string' && inner['reason']) {
-      return (inner['reason'] as string) === 'code_reused'
-        ? t('opscenter.auth.code_reused')
-        : (inner['reason'] as string);
-    }
-  }
-  if (typeof record['message'] === 'string' && record['message']) return record['message'] as string;
-  return '';
+  return detailOfBody(body, (reason) => (reason === 'code_reused' ? t('opscenter.auth.code_reused') : reason));
 }
 
 export function errorCodeOf(body: unknown): string | null {
@@ -113,11 +99,18 @@ export function errorCodeOf(body: unknown): string | null {
   return null;
 }
 
+export function paramsOf(body: unknown): Record<string, string> {
+  const detail = body && typeof body === 'object' ? (body as Record<string, unknown>)['detail'] : null;
+  const raw = detail && typeof detail === 'object' ? (detail as Record<string, unknown>)['params'] : null;
+  if (!raw || typeof raw !== 'object') return {};
+  return Object.fromEntries(Object.entries(raw).filter((entry): entry is [string, string] => typeof entry[1] === 'string'));
+}
+
 export function codedSentence(body: unknown, fallback: string): string {
   const code = errorCodeOf(body);
   if (!code) return fallback;
   const key = `api.error.${code}`;
-  const sentence = t(key);
+  const sentence = t(key, paramsOf(body));
   return sentence && sentence !== key ? sentence : fallback;
 }
 
@@ -230,6 +223,17 @@ export function authFetchBlob(path: string, init: RequestInit = {}): Promise<Blo
   return request(path, init, false, (response) => response.blob());
 }
 
+export function dispositionFilename(header: string): string | undefined {
+  const extended = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(header)?.[1];
+  if (extended) {
+    try {
+      return decodeURIComponent(extended.trim());
+    } catch {
+    }
+  }
+  return /filename="?([^";/\\]+)"?/i.exec(header)?.[1];
+}
+
 async function readBody<T>(response: Response): Promise<T> {
   // there is nothing
   if (response.status === 204) {
@@ -239,7 +243,7 @@ async function readBody<T>(response: Response): Promise<T> {
   const kind = response.headers?.get?.('content-type') ?? '';
   if (kind.startsWith('application/zip') || (response.headers?.get?.('content-disposition') && !kind.includes('json'))) {
     const blob = await response.blob();
-    const name = /filename="?([^";/\\]+)"?/i.exec(response.headers.get('content-disposition') ?? '')?.[1];
+    const name = dispositionFilename(response.headers.get('content-disposition') ?? '');
     return (name ? new File([blob], name, { type: blob.type }) : blob) as T;
   }
   return (await response.json()) as T;

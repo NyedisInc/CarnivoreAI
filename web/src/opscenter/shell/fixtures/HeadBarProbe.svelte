@@ -6,7 +6,7 @@
 </script>
 
 {#snippet bar()}
-  <button type="button" data-probe-bar="">bar</button>
+  <button type="button" data-btn data-probe-bar="">bar</button>
 {/snippet}
 
 <div data-probe-body="">

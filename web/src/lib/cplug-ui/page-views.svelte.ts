@@ -78,7 +78,7 @@ function tabDefOf(entry: PageEntry, order: number): DynamicTabDef {
         present: () => pageOf(entry.tabId) !== undefined,
         mainView: PageMain,
         mainViewOnPhone: false,
-        body: { component: PageMenu, titleKey, titleActions: PageSwitch as unknown as Component<{ popout?: boolean }> },
+        body: { component: PageMenu, titleKey, titleActions: PageSwitch },
     };
 }
 

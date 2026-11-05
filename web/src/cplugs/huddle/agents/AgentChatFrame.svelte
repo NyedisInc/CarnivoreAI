@@ -19,9 +19,10 @@
         onBarDown?: (event: PointerEvent) => void;
         menu?: ChatMenuExtra[];
         actions?: Snippet;
+        lead?: Snippet;
     }
 
-    let { id, tab = $bindable(), t = appT, store, onOpenedTerminal, onBarDown, menu = [], actions }: Props = $props();
+    let { id, tab = $bindable(), t = appT, store, onOpenedTerminal, onBarDown, menu = [], actions, lead }: Props = $props();
 
     const tabsList: { id: AgentDrawerTab; label: string }[] = $derived([
         { id: 'chat', label: t('cplug.huddle.swarm.drawer.tab_chat') },
@@ -38,7 +39,7 @@
 <div class="had-topgap" aria-hidden="true"></div>
 <div class="had-barwrap" data-agent-frame-bar>
     <ChatBar agentId={id} agent={chat.state.agent} {chat} bind:waitingOnly {waiting} {store} {onOpenedTerminal} {onBarDown}
-             extra={menu} framed onNotice={(text) => (notice = text)} trail={actions}>
+             extra={menu} framed onNotice={(text) => (notice = text)} {lead} trail={actions}>
         {#snippet tabs()}
             <div class="had-tabs" role="tablist">
                 {#each tabsList as entry (entry.id)}

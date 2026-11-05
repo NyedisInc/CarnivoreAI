@@ -13,10 +13,17 @@ export interface AskRead {
   answer_message_id: number | null;
 }
 
+export interface AskRefusedQuestion {
+  id: string;
+  rule: string;
+  item: number | null;
+}
+
 export interface AskOutcome {
   ok: boolean;
   error: string;
   code: string | null;
+  question?: AskRefusedQuestion;
   /* the server did not answer */
   kept?: boolean;
 }
@@ -46,8 +53,17 @@ export async function submitAsk(messageId: number, answers: Record<string, Recor
     void refreshTaskManager();
     const code = error instanceof ApiError ? refusalCode(error.payload) : null;
     const detail = (error instanceof ApiError ? (error.payload as { detail?: { detail?: string } } | null)?.detail?.detail : '') ?? '';
-    return { ok: false, error: code === 'task_manager_invalid' && detail ? detail : explain(error), code };
+    const question = error instanceof ApiError ? refusedQuestion(error.payload) : null;
+    return { ok: false, error: code === 'task_manager_invalid' && detail ? detail : explain(error), code, ...(question ? { question } : {}) };
   }
+}
+
+export function refusedQuestion(payload: unknown): AskRefusedQuestion | null {
+  const raw: unknown = (payload as { detail?: { question?: unknown } } | null)?.detail?.question;
+  if (!raw || typeof raw !== 'object') return null;
+  const { id, rule, item } = raw as Record<string, unknown>;
+  if (typeof id !== 'string' || typeof rule !== 'string') return null;
+  return { id, rule, item: typeof item === 'number' ? item : null };
 }
 
 export type AskAnswers = Record<string, AskAnswer>;

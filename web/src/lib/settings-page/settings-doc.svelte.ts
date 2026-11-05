@@ -1,6 +1,7 @@
 import { authFetch } from '../../opscenter/api/auth.svelte';
 import { autoSleep, saveAutoSleep, saveUnreadPolicy } from '../auto-sleep/auto-sleep-store.svelte';
 import { settingById, type ConfigField } from './settings-registry';
+import { failureReason } from '../errors/failure-reason';
 
 export interface MaskedSecret {
     configured: boolean;
@@ -92,7 +93,7 @@ export class SettingsDoc {
             this.summary = await this.#api.get();
             this.loadError = null;
         } catch (error) {
-            this.loadError = error instanceof Error ? error.message : String(error);
+            this.loadError = failureReason(error);
         }
     }
 
@@ -223,7 +224,7 @@ export class SettingsDoc {
             }
             return true;
         } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
+            const message = failureReason(error);
             this.saveError = message;
             for (const id of pending) this.#mark(id, { state: 'error', message });
             return false;
@@ -247,7 +248,7 @@ export class SettingsDoc {
             this.#mark(id, { state: 'saved' });
             return true;
         } catch (error) {
-            this.#mark(id, { state: 'error', message: error instanceof Error ? error.message : String(error) });
+            this.#mark(id, { state: 'error', message: failureReason(error) });
             return false;
         }
     }

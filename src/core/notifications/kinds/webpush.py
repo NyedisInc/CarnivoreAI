@@ -27,10 +27,16 @@ _ASK_TYPES = frozenset({"session.question", "session.permission", "session.plan_
 
 def build_payload(event: NotifyEvent) -> dict:
     r = copy.render(event, _SPEC, details_on=False)
-    if event.type_id in _ASK_TYPES and event.session_id:
-        return {"title": r.title, "body": r.body, "path": f"/?approvals={quote(event.session_id, safe='')}"}
     slug = event.tmux_name or event.session_ref
-    return {"title": r.title, "body": r.body, "path": links.session_path(slug) if slug else "/"}
+    if event.type_id in _ASK_TYPES and event.session_id:
+        payload = {"title": r.title, "body": r.body, "path": f"/?approvals={quote(event.session_id, safe='')}"}
+    else:
+        payload = {"title": r.title, "body": r.body, "path": links.session_path(slug) if slug else "/"}
+    thread = str(slug or "")[:200]
+    payload["tag"] = f"{event.type_id}:{thread}" if thread else event.type_id
+    if thread:
+        payload["thread"] = thread
+    return payload
 
 
 class WebPushSender:

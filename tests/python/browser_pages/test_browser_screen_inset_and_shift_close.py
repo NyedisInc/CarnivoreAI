@@ -43,7 +43,7 @@ def _inset_html(with_grid: bool) -> str:
         f"html,body{{margin:0}} #terminal-screen{{display:flex;flex-direction:column;"
         f"width:{SHELL_WIDTH}px;height:{SHELL_HEIGHT}px}}"
         f"{css}</style></head><body>"
-        '<div id="terminal-screen"><div id="terminal-grid">'
+        f'<div id="terminal-screen"><div id="terminal-grid"{" class=\'ps-grid-surface\'" if with_grid else ""}>'
         f"{grid_children}"
         '<div id="browser-screen"><div class="bscreen"><div class="bs-body"></div></div></div>'
         "</div></div></body></html>"

@@ -37,10 +37,10 @@ import { resourcePush } from '../../lib/resource-push/boot';
 import { setLocale } from '../../lib/i18n/index.svelte';
 import { MENU_PAGES, menuPage } from '../../lib/menu-page/menu-pages';
 import { resetMenuPageShell, syncMenuPages, type ShellDeps } from '../../lib/menu-page/menu-page-shell.svelte';
+import '../sdk';
 import { registerCplugPage } from '../sdk/pages';
 import { AGENT_PAGE, agentIdFromHash, agentPage } from './agents/agent-page.svelte';
-import { swarmRoster, projectHasAgent } from './agents/agent-roster.svelte';
-import HuddleAgentRows from './agents/HuddleAgentRows.svelte';
+import { swarmRoster, projectHasAgent, refreshRoster } from './agents/agent-roster.svelte';
 import ChatWidget from './chat/ChatWidget.svelte';
 import { chatSlotId } from './chat/chat-model';
 
@@ -79,42 +79,10 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('the drawer rows', () => {
-  test('one row per live agent with its display name, asleep ones included, a finished one left out', async () => {
-    const host = mountOn(HuddleAgentRows);
-    await vi.waitFor(() => expect(host.querySelectorAll('[data-huddle-agent]').length).toBe(2));
-    expect([...host.querySelectorAll('.hdr-agent-name')].map((n) => n.textContent)).toEqual(['Loki', 'Frigg']);
-    expect(host.textContent).not.toMatch(/project agent:/);
-    expect(host.querySelector('[data-huddle-agent="8"]')?.getAttribute('data-agent-state')).toBe('asleep');
-  });
-
-  test('reads the pushed roster: a frame rereads it, no timer runs', async () => {
-    const interval = vi.spyOn(globalThis, 'setInterval');
-    const host = mountOn(HuddleAgentRows);
-    await vi.waitFor(() => expect(host.querySelectorAll('[data-huddle-agent]').length).toBe(2));
-    const reads = () => server.calls.filter((c) => c.path === '/swarm/roster').length;
-    const before = reads();
-    resourcePush().store.frame({ topics: ['swarm_roster'] });
-    await vi.waitFor(() => expect(reads()).toBe(before + 1));
-    expect(interval).not.toHaveBeenCalled();
-  });
-
-  test('a click opens the huddle.agent page with that agent id, for an awake, an asleep and a never-woken agent alike', async () => {
-    const host = mountOn(HuddleAgentRows);
-    await vi.waitFor(() => expect(host.querySelectorAll('[data-huddle-agent]').length).toBe(2));
-    (host.querySelector('[data-huddle-agent="8"]') as HTMLButtonElement).click();
-    expect(opened).toHaveBeenCalledTimes(1);
-    expect(agentPage.id).toBe(8);
-    expect(location.hash).toBe('');
-    (host.querySelector('[data-huddle-agent="7"]') as HTMLButtonElement).click();
-    expect(agentPage.id).toBe(7);
-    expect(opened).toHaveBeenCalledTimes(2);
-    expect(server.navigate).not.toHaveBeenCalled();
-  });
-
+describe('the roster', () => {
   test('a project that has its agent is known, so the kebab does not offer to turn it on twice', async () => {
-    mountOn(HuddleAgentRows);
-    await vi.waitFor(() => expect(swarmRoster.agents.length).toBe(2));
+    await refreshRoster();
+    expect(swarmRoster.agents.length).toBe(2);
     expect(projectHasAgent(12)).toBe(true);
     expect(projectHasAgent(13)).toBe(false);
     expect(projectHasAgent(null)).toBe(false);

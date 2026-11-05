@@ -5,6 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { makeDom } from '../helpers/fake_overlay_dom.mjs';
+import { installTrOnly } from '../helpers/catalog-tr.mjs';
 
 const JS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'client', 'js');
 
@@ -18,6 +19,7 @@ function load() {
     };
     sandbox.window = sandbox;
     vm.createContext(sandbox);
+    installTrOnly(sandbox);
     for (const f of ['session-restart-options.js', 'session-restart-picker.js']) vm.runInContext(fs.readFileSync(path.join(JS, f), 'utf8'), sandbox);
     return { picker: sandbox.window.SessionRestartPicker, overlays, body, released };
 }

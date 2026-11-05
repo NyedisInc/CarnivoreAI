@@ -24,6 +24,8 @@ export const ALLOWED: readonly MenuRuleEntry[] = [
 
 export const KNOWN: readonly MenuRuleEntry[] = [];
 
+export const KNOWN_CEILING = 0;
+
 export function excusedRules(folder: string): Set<MenuRule> {
   return new Set([...ALLOWED, ...KNOWN].filter((one) => one.folder === folder).flatMap((one) => one.rules));
 }
@@ -42,3 +44,19 @@ export interface DataKnownEntry {
 export const DATA_KNOWN: readonly DataKnownEntry[] = [];
 
 export const DATA_KNOWN_CEILING = 0;
+
+export interface PluginKnownEntry {
+  plugin: string;
+  file: string;
+  rule: MenuRule;
+  why: string;
+}
+
+const LAB_DEBT = 'developer harness (HARNESS in item-menu MARKUP_KNOWN), not a user widget';
+
+export const PLUGIN_KNOWN: readonly PluginKnownEntry[] = [
+  { plugin: 'devwidgetlab', file: 'DockBar.svelte', rule: 'body-menu-button', why: LAB_DEBT },
+  { plugin: 'devwidgetlab', file: 'LabFrame.svelte', rule: 'menu-without-declared-actions', why: LAB_DEBT },
+  { plugin: 'devwidgetlab', file: 'PointerMenu.svelte', rule: 'menu-without-declared-actions', why: LAB_DEBT },
+  { plugin: 'devwidgetlab', file: 'WidgetTreeMenu.svelte', rule: 'menu-without-declared-actions', why: LAB_DEBT },
+];

@@ -19,14 +19,35 @@
       "kind": "cplug"
     }
   ],
-  "permissions": [],
+  "permissions": [
+    {
+      "name": "agent_writes"
+    }
+  ],
   "owns": {
+    "routes": [
+      "/links",
+      "/links/{link_id}",
+      "/status"
+    ],
     "strings": [
       "cplug.publicboard."
     ],
     "tests": [
       "tests/python/cplugs/publicboard/",
       "web/src/cplugs/publicboard/"
+    ],
+    "styles": [
+      "share-link.css"
+    ],
+    "style_guide": [
+      "web/src/cplugs/publicboard/ShareLinkKey.svelte",
+      "web/src/cplugs/publicboard/ShareLinkModal.svelte",
+      "web/src/cplugs/publicboard/share-link.css"
+    ],
+    "contributions": [
+      "board.header_key",
+      "page.row_action"
     ]
   },
   "data": []

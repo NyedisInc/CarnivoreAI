@@ -1,7 +1,9 @@
 <script lang="ts">
     import { t } from '../i18n/index.svelte';
+    import { confirmOk } from '../confirm-ok/confirm-ok';
     import { browserById, closeBrowser } from './api.svelte';
     import BrowserView from './BrowserView.svelte';
+    import { raiseFlag } from '../page-flags/page-flags';
     import PageFrame from './PageFrame.svelte';
     import type { PageInfo } from './page-frame';
     import { openPages, pageById } from './pages.svelte';
@@ -88,10 +90,13 @@
     async function closeShown(): Promise<void> {
         const id = current;
         if (!id) return;
-        const app = (window as unknown as { App?: { showConfirmModal?: (...a: unknown[]) => Promise<boolean> } }).App;
-        const ok = app?.showConfirmModal
-            ? await app.showConfirmModal(t('browser.close.confirm'), title || id, t('browser.close.detail'), t('browser.menu.close'), undefined, 'danger')
-            : window.confirm(t('browser.close.confirm'));
+        const ok = await confirmOk({
+            title: t('browser.close.confirm'),
+            message: title || id,
+            details: t('browser.close.detail'),
+            okLabel: t('browser.menu.close'),
+            variant: 'danger',
+        });
         if (!ok || current !== id) return;
         try {
             await closeBrowser(id);
@@ -117,7 +122,7 @@
 </script>
 
 {#if current}
-    <div class="bscreen" role="region" aria-label={regionLabel}>
+    <div class="bscreen" role="region" aria-label={regionLabel} {@attach () => raiseFlag('browser-screen')}>
         {#key current}
             <div class="bs-body">
                 {#if resolved?.kind === 'file' && heldFile}

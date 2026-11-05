@@ -5,10 +5,7 @@ console.log('[SessionRestartLive Module] Loading...');
     'use strict';
 
     function armHtml(opts) {
-        var i18n = globalThis.CloudeI18n;
-        var tr = function (key) {
-            return (i18n && typeof i18n.t === 'function') ? i18n.t(key) : key;
-        };
+        var tr = globalThis.CloudeTr;
         var armedByGesture = !!(opts && opts.armedByGesture === true);
         return '<label class="restart-picker__arm oc-focus-host" for="restart-picker-live">'
             + '<input type="checkbox" id="restart-picker-live" '

@@ -13,6 +13,7 @@ from src.config.browser import BROWSER_KEY, BrowserConfig
 from src.config import config_file
 from src.config.byoai import BYOAI_KEY, ByoaiConfig
 from src.config.launch_profiles import LAUNCH_PROFILES_KEY, LaunchProfilesConfig
+from src.config.launch_profiles_lenient import load_profiles
 from src.config.mcp import MCP_KEY, McpConfig
 from src.config.provider_accounts import (
     PROVIDER_ACCOUNTS_KEY,
@@ -63,7 +64,7 @@ def _launch_view(data: Dict[str, Any]) -> tuple:
     raw = data.get(LAUNCH_PROFILES_KEY)
     if raw is not None:
         try:
-            block = LaunchProfilesConfig.model_validate(raw)
+            block = load_profiles(raw).block
             return block, AgentsConfig(wrappers=wrappers_from_profiles(block.profiles))
         except ValidationError:
             logger.warning("invalid_launch_profiles_config_block")
@@ -95,7 +96,7 @@ def _relay_switched_off(raw: Any) -> bool:
         return True
 
 
-def _relay_block(raw: Any) -> RelayConfig:
+def relay_block(raw: Any) -> RelayConfig:
     killed = _relay_switched_off(raw)
     relay = parse_block(
         RelayConfig, raw or {}, event="invalid_relay_config_block",
@@ -168,7 +169,7 @@ def load(
             event="invalid_provider_accounts_config_block",
             payload=_keys_only_payload,
         ),
-        relay=_relay_block(data.get(RELAY_KEY)),
+        relay=relay_block(data.get(RELAY_KEY)),
         browser=parse_block(
             BrowserConfig, data.get(BROWSER_KEY, {}) or {},
             event="invalid_browser_config_block",

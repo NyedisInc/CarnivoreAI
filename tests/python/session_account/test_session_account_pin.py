@@ -9,7 +9,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -218,9 +218,12 @@ def test_an_unlaunchable_active_account_falls_back_to_current_but_is_not_called_
     assert (body["selected_id"], body["active_id"], body["pinned"]) == ("play", None, False)
 
 
-def test_the_dropdown_is_empty_for_codex_and_unknown_rows(client):
+def test_the_dropdown_is_empty_for_shell_codex_without_a_relay_and_unknown_rows(client):
     url = "/api/v1/sessions/u1/restart/accounts"
-    with patch("src.api.restart_account_routes._read_row", return_value=_row("codex")):
+    with patch("src.api.restart_account_routes._read_row", return_value=_row("shell")):
+        assert client.get(url).json()["options"] == []
+    with patch("src.api.restart_account_routes._read_row", return_value=_row("codex")), \
+            patch("src.core.account_switch.pane_account.resolve_pane_account", new=AsyncMock(return_value=None)):
         assert client.get(url).json()["options"] == []
     with patch("src.api.restart_account_routes._read_row", return_value=None):
         assert client.get(url).json()["options"] == []

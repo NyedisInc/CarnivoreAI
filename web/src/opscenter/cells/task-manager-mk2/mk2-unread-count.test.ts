@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, test } from 'vitest';
-import '../../../lib/session-rail/alert-count-sources.svelte';
-import { alertCountSource } from '../../../lib/session-rail/alert-counts';
 import { huddle } from '../../../cplugs/huddle/huddle.svelte';
 import { taskOf } from '../../../cplugs/huddle/task-manager-design/adapter';
 import { entriesOf } from '../../../cplugs/huddle/task-manager-design/entries';
 import type { HuddleItem, TaskManagerGroup } from '../../../cplugs/huddle/huddle-model';
 import { allTasksOf, headCountOf } from './mk2-head-count';
 import { unreadCount } from './mk2-chips';
+import { newCount } from '../../../cplugs/huddle/task-manager-design/model';
+import { unreadMessageCount } from './mk2-unread';
 
 const mk = (id: number, status: string, unread: boolean, list = '18', extra: Record<string, unknown> = {}) =>
   ({ id, list, text: `item ${id}`, state: status === 'todo' ? 'todo' : status === 'done' ? 'approved' : 'open', status, section: status, kind: 'task', thread: [],
@@ -26,7 +26,6 @@ const GROUPS = [
   { list: '9', name: 'Amerifund', items: [mk(1028, 'scheduled', true, '9'), mk(1127, 'waiting', true, '9')] },
   { list: 'agent:5', name: null, items: CHAT },
 ] as unknown as TaskManagerGroup[];
-const scope = { sessionId: 'ses_1', rowId: 1, workingDir: '/x', projectId: 18 };
 
 beforeEach(() => {
   huddle.groups = GROUPS;
@@ -37,24 +36,16 @@ beforeEach(() => {
   ] as never;
 });
 
-describe('one unread number for the title and the chip; the rail key counts what needs him instead (round 6 point C)', () => {
+describe('one unread number for the title and the chip', () => {
   test('list 18 reads nine: the active flagged tasks, not the parked or done ones', () => {
     const items = LIVE_18;
     const tasks = entriesOf([GROUPS[0]!]).map((entry) => taskOf(entry));
     expect(headCountOf(tasks)).toBe(ACTIVE_UNREAD.length);
     expect(unreadCount(items)).toBe(ACTIVE_UNREAD.length);
-    expect(alertCountSource('core.task-manager-mk2')?.read(scope)).toBe(2);
   });
 
   test('every project reads ten: list 18 and Amerifund\'s waiting task, no agent chat thread, no never-opened scheduled task', () => {
     expect(headCountOf(allTasksOf(GROUPS)!)).toBe(ACTIVE_UNREAD.length + 1);
-    expect(alertCountSource('core.task-manager-mk2-all')?.read(null)).toBe(2);
-  });
-
-  test('before the groups are read the key shows nothing, never a zero', () => {
-    huddle.groups = null;
-    expect(alertCountSource('core.task-manager-mk2')?.read(scope)).toBeNull();
-    expect(alertCountSource('core.task-manager-mk2-all')?.read(null)).toBeNull();
   });
 });
 
@@ -78,5 +69,34 @@ describe('a scheduled task counts as unread only while it holds an unread messag
   test('a scheduled task whose last post is the owner\'s stays out', () => {
     expect(headCountOf(tasksOf([answered]))).toBe(0);
     expect(unreadCount([answered])).toBe(0);
+  });
+});
+
+describe('only messages not yet read are counted (#2765)', () => {
+  const post = (id: number, author: string, unread: boolean, extra: Record<string, unknown> = {}) =>
+    ({ id, author, kind: 'info', text: `post ${id}`, answered: false, unread, ...extra });
+  const warez = mk(3001, 'question', true, '18', {
+    thread: [post(1, 'joe', false), ...[2, 3, 4, 5, 6, 7].map((id) => post(id, 'claude', false)), post(8, 'claude', true, { kind: 'question' })],
+  });
+  const audit = mk(3002, 'working', true, '18', {
+    thread: [post(1, 'joe', false), post(2, 'claude', true), post(3, 'claude', false, { kind: 'question', answered: true })],
+  });
+  const taskOne = (item: HuddleItem) => taskOf(entriesOf([{ list: '18', name: 'Carnivore', items: [item] }] as unknown as TaskManagerGroup[])[0]!);
+
+  test('read posts after the owner\'s last reply stay out: the strip, the chip and the tab all say 1', () => {
+    expect(unreadMessageCount(warez)).toBe(1);
+    expect(unreadCount([warez])).toBe(1);
+    expect(headCountOf([taskOne(warez)])).toBe(1);
+    expect(newCount(taskOne(warez))).toBe(1);
+  });
+
+  test('an answered question the server flags read is not counted by the tab either, so the three still agree', () => {
+    expect(newCount(taskOne(audit))).toBe(1);
+    expect(unreadMessageCount(audit)).toBe(1);
+  });
+
+  test('a task flagged unread with no unread message still counts one', () => {
+    const flagged = mk(3003, 'working', true, '18', { thread: [post(1, 'joe', false), post(2, 'claude', false)] });
+    expect(unreadMessageCount(flagged)).toBe(1);
   });
 });

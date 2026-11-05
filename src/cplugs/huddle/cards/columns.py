@@ -5,8 +5,15 @@ CARD_COLS = (
     "card_holder, card_last_holder, card_held_since, card_started_at, card_beat_at, card_refresh_asked_at, card_parent, "
     "card_origin, card_dealt_to, card_paused_mode, card_paused_by, card_paused_at, card_mark, card_mark_at, "
     "card_accepted_at, card_report_id, card_pin_agent, card_pin_place, card_progress, card_result, card_handoff, "
-    "card_proof, card_validation, claude_working_by, phone_sent_at, card_summary, card_queued, card_archived_at, card_auto_promote, card_owner_note"
+    "card_proof, card_validation, claude_working_by, phone_sent_at, card_summary, card_queued, card_archived_at, card_auto_promote, card_owner_note, card_level"
 )
+
+LEVELS = ("task", "feature")
+
+
+def level(stored: object, parent: object) -> str:
+    return stored if stored in LEVELS else ("task" if parent is not None else "feature")
+
 
 CHAT_KINDS = ("question", "info")
 

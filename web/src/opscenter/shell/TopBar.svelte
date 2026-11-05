@@ -1,6 +1,7 @@
 <script lang="ts">
   /* the home screen */
   import Icon from '../ui/Icon.svelte';
+  import { raiseFlag } from '../../lib/page-flags/page-flags';
   import { isDemo, transport } from '../api';
   import { t } from '../../lib/i18n/index.svelte';
   import { viewport } from '../engine/viewport.svelte';
@@ -12,6 +13,7 @@
   import { accountChip, toggleAccountMenu } from '../../lib/drawer-hud/account-menu.svelte';
   import { avatarHtml } from '../../lib/drawer/avatar';
   import { openSignInDoor } from '../../lib/carnivore-account/sign-in-door';
+  import { togglePalette } from '../../lib/palette/palette-host';
 
   const member = $derived(accountChip.identity?.kind === 'member');
   const accountName = $derived(member ? (accountChip.identity?.name ?? '') : t('drawer.account.lurker'));
@@ -54,7 +56,7 @@
   );
 </script>
 
-<header class="oc-topbar" class:oc-topbar--popout={popout}>
+<header class="oc-topbar" class:oc-topbar--popout={popout} {@attach () => raiseFlag('topbar')}>
   
   {#if !popout}
   <TabKey
@@ -122,18 +124,26 @@
   <span class="oc-topbar-spacer"></span>
   
   {#if !popout}
+    
+    {#if viewport.phone}
+      <button type="button" data-btn="quiet" data-size="icon" data-palette-open
+        aria-label={t('palette.open')} data-tooltip={t('palette.open')} onclick={() => togglePalette('go')}>
+        <Icon name="search" size={16} />
+      </button>
+    {/if}
     <AlertBell place="drawer" />
     
     <button
       type="button"
       class="session-sidebar-bar__account"
+      data-base-exempt="account-chip-no-base-equivalent"
       aria-haspopup="menu"
       aria-expanded="false"
       aria-label={t('drawer.account.chip', { name: accountName })}
       onclick={(e) => toggleAccountMenu(e.currentTarget)}
     >{@html avatarHtml(accountChip.identity)}</button>
     {#if !member}
-      <button type="button" class="session-sidebar-bar__signin" onclick={() => openSignInDoor('topbar')}>
+      <button type="button" class="session-sidebar-bar__signin" data-btn="secondary" onclick={() => openSignInDoor('topbar')}>
         {t('account.chip.signin')}
       </button>
     {/if}
@@ -148,7 +158,7 @@
       display: flex;
       align-items: center;
       height: var(--oc-topbar);
-      padding: 0 var(--oc-space-4) 0 22px;
+      padding: 0 var(--oc-space-4) 0 var(--oc-topbar-pad-left);
       background: var(--oc-ground-chrome);
       box-shadow: inset 0 -1px 0 0 var(--oc-line-frame);
       white-space: nowrap;
@@ -167,7 +177,7 @@
       display: block;
       height: 20px;
       width: auto;
-      margin-right: 9px;
+      margin-right: var(--oc-topbar-word-gap);
       flex: 0 0 auto;
     }
 
@@ -183,19 +193,19 @@
       visibility: hidden;
     }
 
-    :global(body:has(.session-sidebar-panel--open)) .oc-topbar-word {
+    :global(body.ps-drawer-open) .oc-topbar-word {
       visibility: hidden;
     }
 
-    :global(body:not(:has(.session-sidebar-panel--open))) .oc-topbar-word {
+    :global(body:not(.ps-drawer-open)) .oc-topbar-word {
       content: url('/static/img/carnivore/carnivore-mark@2x.png');
       width: 30px;
       height: 30px;
     }
 
     .oc-topbar-chip {
-      margin-left: 18px;
-      padding: 3px var(--oc-space-2);
+      margin-left: var(--oc-topbar-chip-gap);
+      padding: var(--oc-pad-snug) var(--oc-space-2);
       border: var(--oc-border) solid var(--oc-line-panel);
       border-radius: var(--oc-radius-sm);
       font-size: var(--oc-fs-micro);

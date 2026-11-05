@@ -20,7 +20,7 @@ os.environ.setdefault("TOTP_SECRET", "testsecretnotreal")
 os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 
 # ruff: noqa: E402
-from src.core import ttl_flight
+from src.core.read_caches import ttl_flight
 from src.core.attention.listing_marks import marks_stamp
 from src.core.listing_push import publisher as publisher_module
 from src.core.listing_push.publisher import Collection, CollectionResult, ListingPublisher
@@ -131,7 +131,7 @@ def _watcher_pass(monkeypatch):
 
 def _evidence(**over):
     base = dict(subagents=None, timers=None, skills=None, parked_work=None, background_open=None,
-                transcript=SimpleNamespace(mcp_events=(), verdict="unread"), registry=SimpleNamespace(known=False), agent_family="claude")
+                transcript=SimpleNamespace(mcp_events=(), verdict="unread"), registry=SimpleNamespace(known=False), agent_family="claude", identity=None)
     return SimpleNamespace(**{**base, **over})
 
 

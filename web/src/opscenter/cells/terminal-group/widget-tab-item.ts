@@ -28,7 +28,7 @@ export function widgetTabItem(tab: string, widgetId: string): TabItem {
     name: t(manifest.titleKey),
     family: WIDGET_TAB_FAMILY,
     glyph: manifest.icon,
-    badge: { manifest, global: isGlobalWidget(manifest.id) },
+    badge: { global: isGlobalWidget(manifest.id) },
   };
 }
 

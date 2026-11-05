@@ -148,5 +148,6 @@ test('the preload bridge sends the ask id with the notification over IPC', () =>
   const rec = loadPreload();
   rec.exposed.api.notify('needs you', 'run it?', 'ses_abc');
   assert.equal(rec.exposed.name, 'carnivoreDesktop');
-  assert.deepEqual(rec.sends, [['carnivore:notify', 'needs you', 'run it?', 'ses_abc']]);
+  assert.deepEqual(rec.sends, [['carnivore:notify', 'needs you', 'run it?', 'ses_abc',
+    { id: '', group: '', subtitle: '', session_id: '', tmux_name: '', silent: false }]]);
 });

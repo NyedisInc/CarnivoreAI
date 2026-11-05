@@ -28,6 +28,8 @@ console.log('[TerminalKeyBar Module] Loading...');
     };
 
     var GLYPHS = {
+        mic: '<rect x="7.2" y="2.4" width="5.6" height="9.4" rx="2.8" stroke="currentColor" stroke-width="1.6"/>'
+            + '<path d="M4.4 9.4a5.6 5.6 0 0 0 11.2 0M10 15v2.6M7 17.6h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
         enter: '<path d="M16 4v6a2 2 0 0 1-2 2H4M7.5 8.5L4 12l3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
         undo: '<path d="M7 4.5L3.5 8 7 11.5M3.5 8H12a4 4 0 0 1 0 8H8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
         up: '<path d="M10 15V5M5 10l5-5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -144,7 +146,7 @@ console.log('[TerminalKeyBar Module] Loading...');
         files: function (anchor) {
             return call(global.ConfigEditorLoader, 'toggleWhenReady', [anchor]);
         },
-        theme: function (anchor) { return call(global.SessionThemeMenu, 'open', [anchor]); },
+        mic: function () { return call(global.PhoneMic, 'start'); },
         sleep: function () {
             var name = activeName();
             var members = global.SessionSidebarGroupMembership;

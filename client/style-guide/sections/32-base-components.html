@@ -1,4 +1,4 @@
-<h2 class="sg-h2">base components: card, fold, field, buttons, option list, tag, list, toolbar, state, stat tile, chart frame</h2>
+<h2 class="sg-h2">base components: card, fold, field, buttons, option list, tag, keycap, list, toolbar, state, stat tile, chart frame</h2>
 <p class="sg-lead">The first shared components of the design base (issue #2033, slice 2). Each is a class API that
 <code>client/js</code> can write plus a thin Svelte component in <code>web/src/lib/base/</code> that renders exactly that
 markup. They read only base tokens (<code>web/src/opscenter/tokens.css</code>) and keep a reserved 1px border so the one
@@ -19,6 +19,13 @@ with no look of its own, pending Alex's ruling on #2033.</p>
     <dd><code>.oc-fold</code>, <code>Fold.svelte</code> (bits-ui Collapsible) and <code>.oc-accordion</code>,
         <code>Accordion.svelte</code> (bits-ui Accordion: arrows, Home and End move between headers). No frame: a fold
         sits in a card body or a panel on the container's left edge. The chevron is the one
+        <code>FoldChevron.svelte</code>.</dd>
+    <dt>tree</dt>
+    <dd><code>.oc-tree</code>, <code>Tree.svelte</code>: a folding tree in the WAI-ARIA tree pattern (the keys page is the first user).
+        A branch folds on a click and shows how many leaves it holds (<code>.oc-tree__count</code>); a leaf draws whatever the
+        caller puts in it. Arrows walk the visible rows, Right opens a shut branch, Left shuts an open one or steps out to its
+        parent, Home and End jump, Enter and Space fold a branch or activate a leaf, and typing letters jumps to the next row starting with them. A leaf's buttons go in the <code>actions</code> cell (<code>.oc-tree__actions</code>) beside the row, never inside the treeitem. One tab stop. <code>forceOpen</code> opens
+        every branch for a search that shows only what matched. Indent is one token step per level; the chevron is the one
         <code>FoldChevron.svelte</code>.</dd>
     <dt>field</dt>
     <dd><code>.oc-form-field</code>, <code>Field.svelte</code>: a real label above the base field (<code>data-field</code>,
@@ -61,13 +68,18 @@ with no look of its own, pending Alex's ruling on #2033.</p>
     <dt>tag</dt>
     <dd><code>.oc-tag</code>, <code>Tag.svelte</code>: a static uppercase word in one of six tones; a pressable filter is
         still <code>.oc-chip</code>.</dd>
+    <dt>keycap</dt>
+    <dd><code>.oc-keycaps</code> &gt; <code>.oc-keycap</code>, <code>Keycap.svelte</code>: the keys of one shortcut as small outlined
+        mono caps, one per key, on a 1px hairline with no fill (a hint, never a button); <code>--hit</code> accents the caps of
+        the shortcut that was searched for. The keys screen (<code>KeymapScreen.svelte</code>) draws every binding with it, from
+        the registry in <code>client/js/keymap/</code>; <code>MenuKey.svelte</code> stays the bare dim menu letter.</dd>
     <dt>list and row</dt>
     <dd><code>.oc-list</code>, <code>List.svelte</code> and <code>.oc-list__row</code>, <code>ListRow.svelte</code>: one
         line per row in a fixed order, lead (an LED, an icon or a mark), primary, secondary (muted, gives way first), meta
         (right, tabular numbers), trailing actions. Three densities from the row tokens: dense 22, default 26, roomy 32.
         A list has NOTHING on hover (Joe (ccsliinc), 2026-10-26): no tint on a row or a row button; selected, focus and pressed stay. A row NEVER changes height on hover or focus: the state layers move only colors, the 1px border the focus rule
         lights is reserved at rest, and the trailing actions are ALWAYS SHOWN on every row at rest (Joe (ccsliinc),
-        2026-10-22: "all records should show all the buttons at once"): nothing reveals them on hover, focus or a pick. <code>aria-disabled="true"</code> on a row is the base disabled look: text dimmed through the dim token, no pointer action, no pointer flag; callers write no local rule. A table row (automations) keeps its own grid of cells and
+        2026-10-22: "all records should show all the buttons at once"): nothing reveals them on hover, focus or a pick. <code>aria-disabled="true"</code> on a row is the base disabled look: text dimmed through the dim token, no pointer action, no pointer flag; callers write no local rule. <code>muted</code> dims the same way but keeps the row clickable and readable as an ordinary row (an offline computer's session in the palette): the dim ink only, no <code>aria-disabled</code>, no loss of the pointer. Any pointer handler (<code>onclick</code> or <code>onmousedown</code>) makes a row interactive (pointer cursor). A table row (automations) keeps its own grid of cells and
         marks its actions cell <code>.oc-list__actions</code>. The <code>wrap</code> prop (<code>data-wrap</code>) lets a row's text wrap in full, no clamp and no ellipsis, for a record that carries a snippet. The <code>below</code> prop (<code>.oc-list__head</code> over <code>.oc-list__below</code>, <code>data-below</code>) keeps the row's one head line (lead, text, meta, actions) and puts the excerpt UNDER it at the full row width, indented to the text start, wrapping freely, never changing on a state (sidebar search variant D). Named <code>oc-list__row</code> because
         <code>.oc-row</code> is the settings row.</dd>
     <dt>toolbar</dt>

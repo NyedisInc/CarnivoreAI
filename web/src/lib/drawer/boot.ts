@@ -38,10 +38,6 @@ import { publishRunTable } from '../item-menu/run';
 
 let controller: SessionSidebarController | null = null;
 
-export function sidebarController(): SessionSidebarController | null {
-    return controller;
-}
-
 function storeFacade(): Record<string, unknown> {
     return {
         load: Store.load, current: Store.current, save: Store.save, onSaved: Store.onSaved,

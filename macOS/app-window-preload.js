@@ -5,10 +5,20 @@ const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('carnivoreDesktop', {
   contract: 1,
-  capabilities: Object.freeze(['notify', 'localLogin', 'desktopState', 'setLoginItem', 'requestNotifications', 'openNotificationSettings', 'openFocusSettings',
-    'openSessionWindow', 'focusSessionWindow', 'showInMain', 'openInTerminal', 'revealById', 'openInEditor', 'droppedPaths', 'raiseWindow', 'windowChrome', 'tearOff', 'screenReader']),
-  notify(title, body, askSessionId) {
-    ipcRenderer.send('carnivore:notify', String(title), String(body || ''), String(askSessionId || ''));
+  capabilities: Object.freeze(['notify', 'unnotify', 'watching', 'localLogin', 'desktopState', 'setLoginItem', 'requestNotifications', 'openNotificationSettings', 'openFocusSettings',
+    'openSessionWindow', 'focusSessionWindow', 'showInMain', 'openInTerminal', 'revealById', 'openInEditor', 'droppedPaths', 'raiseWindow', 'windowChrome', 'tearOff', 'goRecent', 'screenReader']),
+  notify(title, body, askSessionId, meta) {
+    const m = meta && typeof meta === 'object' ? meta : {};
+    const str = (v) => (typeof v === 'string' ? v : '');
+    ipcRenderer.send('carnivore:notify', String(title), String(body || ''), String(askSessionId || ''), {
+      id: str(m.id), group: str(m.group), subtitle: str(m.subtitle), session_id: str(m.session_id), tmux_name: str(m.tmux_name), silent: m.silent === true,
+    });
+  },
+  watching(sessionId) {
+    ipcRenderer.send('carnivore:watching', typeof sessionId === 'string' ? sessionId : '');
+  },
+  unnotify(id) {
+    ipcRenderer.send('carnivore:unnotify', String(id || ''));
   },
   localLogin() {
     return ipcRenderer.invoke('carnivore:local-login');
@@ -69,6 +79,17 @@ contextBridge.exposeInMainWorld('carnivoreDesktop', {
   windowChrome() {
     return ipcRenderer.invoke('carnivore:window-chrome');
   },
+  goRecent(labels) {
+    if (Array.isArray(labels)) ipcRenderer.send('carnivore:go-recent', labels.slice(0, 10).map(String));
+  },
+});
+
+ipcRenderer.on('carnivore:notify-click', (_event, target) => {
+  const t = target && typeof target === 'object' ? target : {};
+  const ok = (v) => typeof v === 'string' && /^[A-Za-z0-9_:.-]{0,200}$/.test(v);
+  if (ok(t.session_id) && ok(t.tmux_name) && (t.session_id || t.tmux_name)) {
+    window.postMessage({ type: 'carnivore.notify-click', session_id: t.session_id, tmux_name: t.tmux_name }, window.location.origin);
+  }
 });
 
 ipcRenderer.on('carnivore:open-approval', (_event, sessionId) => {
@@ -78,7 +99,7 @@ ipcRenderer.on('carnivore:open-approval', (_event, sessionId) => {
 });
 
 ipcRenderer.on('carnivore:menu-command', (_event, verb) => {
-  if (typeof verb === 'string' && /^[a-z_.]{1,40}$/.test(verb)) {
+  if (typeof verb === 'string' && /^[a-z0-9_.]{1,40}$/.test(verb)) {
     window.postMessage({ type: 'carnivore.menu-command', verb }, window.location.origin);
   }
 });

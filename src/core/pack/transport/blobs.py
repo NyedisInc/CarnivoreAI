@@ -11,7 +11,7 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 import structlog
 
-from src.core.pack import progress
+from src.core.pack.transport import progress
 from src.core.trail_entry import utc_now
 
 logger = structlog.get_logger()

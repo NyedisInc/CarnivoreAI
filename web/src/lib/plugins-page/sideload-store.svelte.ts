@@ -6,26 +6,30 @@ import {
     sideloadFolder,
     sideloadGit,
     type GitRequest,
+    kindOf,
     type SideloadItem,
+    type SideloadKind,
     type SideloadStatus,
 } from './sideload-switch';
+import { isCplugIndexKind } from '../catalog/kind-display';
+import type { InstallConsent } from '../catalog/types';
 
 export interface SideloadApi {
     load: () => Promise<SideloadStatus>;
     save: (enabled: boolean, hours?: number | null) => Promise<SideloadStatus>;
-    folder: (path: string, name?: string | null) => Promise<unknown>;
+    folder: (path: string, name?: string | null, consent?: InstallConsent) => Promise<unknown>;
     git: (request: GitRequest) => Promise<unknown>;
-    resync: (item: SideloadItem) => Promise<unknown>;
-    remove: (name: string) => Promise<unknown>;
+    resync: (item: SideloadItem, consent?: InstallConsent) => Promise<unknown>;
+    remove: (name: string, kind?: SideloadKind) => Promise<unknown>;
 }
 
 export const LIVE_SIDELOAD_API: SideloadApi = {
     load: () => loadSideload(),
     save: (enabled, hours) => saveSideload(enabled, hours),
-    folder: (path, name) => sideloadFolder(path, name),
+    folder: (path, name, consent) => sideloadFolder(path, name, undefined, consent),
     git: (request) => sideloadGit(request),
-    resync: (item) => resyncSideload(item),
-    remove: (name) => removeSideload(name),
+    resync: (item, consent) => resyncSideload(item, undefined, consent),
+    remove: (name, kind) => removeSideload(name, kind),
 };
 
 export interface SideloadStore {
@@ -34,11 +38,11 @@ export interface SideloadStore {
     readonly busy: Readonly<Record<string, boolean>>;
     refresh(): Promise<void>;
     setSwitch(enabled: boolean, hours?: number | null): Promise<void>;
-    loadFolder(path: string, name?: string | null): Promise<void>;
+    loadFolder(path: string, name?: string | null, consent?: InstallConsent): Promise<void>;
     loadGit(request: GitRequest): Promise<void>;
-    resync(name: string): Promise<unknown>;
-    remove(name: string): Promise<void>;
-    item(name: string): SideloadItem | null;
+    resync(name: string, kind?: SideloadKind, consent?: InstallConsent): Promise<unknown>;
+    remove(name: string, kind?: SideloadKind): Promise<void>;
+    item(name: string, kind?: SideloadKind): SideloadItem | null;
 }
 
 export function createSideloadStore(api: SideloadApi = LIVE_SIDELOAD_API, onChanged: () => void = () => {}): SideloadStore {
@@ -64,6 +68,10 @@ export function createSideloadStore(api: SideloadApi = LIVE_SIDELOAD_API, onChan
         }
     }
 
+    function find(name: string, kind?: SideloadKind): SideloadItem | null {
+        return status?.items.find((i) => i.id === name && (kind === undefined || kindOf(i) === kind)) ?? null;
+    }
+
     async function onName(name: string, run: () => Promise<unknown>): Promise<unknown> {
         busy = { ...busy, [name]: true };
         try {
@@ -84,13 +92,17 @@ export function createSideloadStore(api: SideloadApi = LIVE_SIDELOAD_API, onChan
             failed = false;
             onChanged();
         },
-        loadFolder: async (path, name) => { await write(() => api.folder(path, name)); },
+        loadFolder: async (path, name, consent) => { await write(() => (consent ? api.folder(path, name, consent) : api.folder(path, name))); },
         loadGit: async (request) => { await write(() => api.git(request)); },
-        async resync(name) {
-            const found = status?.items.find((i) => i.id === name);
-            return found ? onName(name, () => api.resync(found)) : null;
+        async resync(name, kind, consent) {
+            const found = find(name, kind);
+            return found ? onName(name, () => (consent ? api.resync(found, consent) : api.resync(found))) : null;
         },
-        remove: async (name) => { await onName(name, () => api.remove(name)); },
-        item: (name) => status?.items.find((i) => i.id === name) ?? null,
+        remove: async (name, kind) => {
+            const found = find(name, kind);
+            const named = found && !isCplugIndexKind(kindOf(found)) ? kindOf(found) : undefined;
+            await onName(name, () => (named ? api.remove(name, named) : api.remove(name)));
+        },
+        item: (name, kind) => find(name, kind),
     };
 }

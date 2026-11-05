@@ -9,7 +9,7 @@ _PLAN_SEED = {
     "alert.self_check", "alert.save_pipeline", "alert.account",
     "alert.phone_link",
     "pack.skills",
-    "swarm.alert", "swarm.flash",
+    "approval.agent_action",
     "swarm.question_climbed",
     "session.beast_approved",
 }
@@ -24,7 +24,7 @@ def test_needs_you_rows_pass_quiet_hours_and_no_screen_cell_is_locked() -> None:
     assert not hasattr(d, "screen_locked")
     assert not any(t.defaults.passes_quiet_hours for t in T.TYPES if t.id not in T.NEEDS_YOU)
     assert T.get_type("approval.agent_action").defaults.screen_surface == "approvals_inbox"
-    assert not T.get_type("approval.agent_action").defaults.seed
+    assert T.get_type("approval.agent_action").defaults.seed
 
 
 def test_outside_locked_off_rows() -> None:
@@ -34,14 +34,14 @@ def test_outside_locked_off_rows() -> None:
 
 
 def test_seed_equals_the_plan_default_tick_set() -> None:
-    assert set(T.seed_type_ids()) == _PLAN_SEED and len(T.seed_type_ids()) == 16
+    assert set(T.seed_type_ids()) == _PLAN_SEED and len(T.seed_type_ids()) == 15
     assert "approval.folder_trust" not in _PLAN_SEED and not T.get_type("approval.folder_trust").defaults.screen
 
 
 def test_sms_and_pagerduty_seeds_omit_finished() -> None:
     for kind in ("sns", "twilio", "pagerduty"):
         seed = T.seed_for_kind(kind)
-        assert "session.finished" not in seed and len(seed) == (12 if kind != "pagerduty" else 11), kind
+        assert "session.finished" not in seed and len(seed) == 12, kind
     for kind in ("slack", "webhook", "email"):
         assert "session.finished" in T.seed_for_kind(kind)
 
@@ -55,10 +55,9 @@ def test_swarm_alert_types_seed_on_their_own_kinds_and_never_pass_quiet_hours() 
     doc = doc_store._seed_defaults(doc_model.empty_doc(), "install")
     for kind in T._ALL_KINDS:
         ticked = store._tick_ids_for(doc, kind)
-        assert ("swarm.flash" in ticked) == (kind in ("sns", "twilio")), kind
-        assert ("swarm.alert" in ticked) == (kind in ("webpush", "apns")), kind
+        assert "swarm.flash" not in ticked and "swarm.alert" not in ticked, kind
         assert ("swarm.question_climbed" in ticked) == (kind in ("webpush", "apns")), kind
-        assert ("swarm.flash" in T.seed_for_kind(kind)) == (kind in ("sns", "twilio"))
+        assert "swarm.flash" not in T.seed_for_kind(kind) and "swarm.alert" not in T.seed_for_kind(kind)
     for type_id in ("swarm.alert", "swarm.flash", "swarm.question_climbed"):
         assert not T.get_type(type_id).defaults.passes_quiet_hours and not T.get_type(type_id).defaults.screen
 

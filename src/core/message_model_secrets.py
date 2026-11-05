@@ -289,6 +289,53 @@ def _vendor_guard_drops(pattern: _VendorPattern, value: str) -> bool:
     return pattern.require_mixed_alphabet and not has_mixed_alphabet(value)
 
 
+def _scan_vendor_pattern(
+    pattern: _VendorPattern,
+    text: str,
+    trust_vendor_marker: bool,
+    deadline: Optional[Deadline],
+    claimed: ClaimedSpans,
+) -> List[SecretFinding]:
+    findings: List[SecretFinding] = []
+    regex = pattern.redact_regex if trust_vendor_marker else pattern.regex
+    accept = pattern.redact_accept if trust_vendor_marker else pattern.accept
+    claims: List[Tuple[int, int]] = []
+    for match in accepted_matches(regex, text, accept):
+        if deadline is not None:
+            deadline.check()
+        has_value = "value" in (match.groupdict() or {})
+        group = "value" if has_value else 0
+        value = match.group(group)
+        if not trust_vendor_marker and _vendor_guard_drops(pattern, value):
+            continue
+        start, end = match.span(group)
+        if claimed.overlaps(start, end):
+            continue
+        findings.append(_finding(pattern.detector, value, start))
+        claims.append((start, end))
+    if claims:
+        claimed.merge(claims)
+    return findings
+
+
+def _scan_assignments(text: str, deadline: Optional[Deadline], claimed: ClaimedSpans) -> List[SecretFinding]:
+    findings: List[SecretFinding] = []
+    for match in _ASSIGNMENT_RE.finditer(text):
+        if deadline is not None:
+            deadline.check()
+        value = match.group("value")
+        start = match.start("value")
+        end = match.end("value")
+        if claimed.overlaps(start, end):
+            continue
+        if is_placeholder(value):
+            continue
+        if shannon_entropy(value) < MIN_ENTROPY_BITS_PER_CHAR:
+            continue
+        findings.append(_finding(DETECTOR_HIGH_ENTROPY_ASSIGNMENT, value, start))
+    return findings
+
+
 def scan_text(
     text: str,
     detectors: Optional[Iterable[str]] = None,
@@ -309,43 +356,12 @@ def scan_text(
             continue
         if deadline is not None:
             deadline.check()
-        regex = pattern.redact_regex if trust_vendor_marker else pattern.regex
-        accept = pattern.redact_accept if trust_vendor_marker else pattern.accept
-        claims: List[Tuple[int, int]] = []
-        for match in accepted_matches(regex, text, accept):
-            if deadline is not None:
-                deadline.check()
-            has_value = "value" in (match.groupdict() or {})
-            group = "value" if has_value else 0
-            value = match.group(group)
-            if not trust_vendor_marker and _vendor_guard_drops(pattern, value):
-                continue
-            start, end = match.span(group)
-            if claimed.overlaps(start, end):
-                continue
-            findings.append(_finding(pattern.detector, value, start))
-            claims.append((start, end))
-        if claims:
-            claimed.merge(claims)
+        findings.extend(_scan_vendor_pattern(pattern, text, trust_vendor_marker, deadline, claimed))
 
     if DETECTOR_HIGH_ENTROPY_ASSIGNMENT in wanted:
         if deadline is not None:
             deadline.check()
-        for match in _ASSIGNMENT_RE.finditer(text):
-            if deadline is not None:
-                deadline.check()
-            value = match.group("value")
-            start = match.start("value")
-            end = match.end("value")
-            if claimed.overlaps(start, end):
-                continue
-            if is_placeholder(value):
-                continue
-            if shannon_entropy(value) < MIN_ENTROPY_BITS_PER_CHAR:
-                continue
-            findings.append(
-                _finding(DETECTOR_HIGH_ENTROPY_ASSIGNMENT, value, start)
-            )
+        findings.extend(_scan_assignments(text, deadline, claimed))
 
     findings.sort(key=lambda f: f.offset)
     return findings

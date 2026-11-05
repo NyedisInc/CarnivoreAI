@@ -33,7 +33,7 @@ def alertdb(tmp_path):
     sd.mkdir()
     assert ensure_db_migrated(sd).status == "ok"
     service.configure(db_path_for(sd), None)
-    alerts.configure(alerts.Seams("ME", lambda: ("A", "A", 0), lambda i: {"X": "ripley", "A": "nostromo"}.get(i, ""), lambda i: False))
+    alerts.configure(alerts.Seams("ME", lambda: ("A", "A", 0), lambda i: {"X": "bravo", "A": "nostromo"}.get(i, ""), lambda i: False))
     yield
     alerts.configure(None)
     service.configure(None, None)

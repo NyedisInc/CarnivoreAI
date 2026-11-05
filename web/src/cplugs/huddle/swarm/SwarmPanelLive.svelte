@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { openPluginsPage } from '../../sdk';
+  import { openFeaturesPage } from '../../sdk';
   import { agentPage } from '../agents/agent-page.svelte';
   import { swarmInactive, setSwarmInactive } from '../huddle-swarm-inactive.svelte';
   import SwarmPanel from './SwarmPanel.svelte';
@@ -14,5 +14,5 @@
 
 <SwarmPanel {floor} agents={live.agents} colors={live.colors} density={effectiveDensity()} now={live.now} pack={live.pack} onOpen={openFloorTarget} onTurnOn={turnOnSeat}
            showInactive={swarmInactive.shown} onToggleInactive={() => setSwarmInactive(!swarmInactive.shown)}
-           threadsReady={live.threadsReady} onOpenPlugins={() => void openPluginsPage()}
+           threadsReady={live.threadsReady} onOpenPlugins={() => void openFeaturesPage()}
            onReorder={(tier, keys) => void saveTierOrder(tier, floor[tier], keys)} />

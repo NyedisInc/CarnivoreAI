@@ -87,28 +87,6 @@ def _checkout_carried(root: str, sender: str, branch: Optional[str], head: str, 
 
 
 def checkout_replica(root: str, sender: str, branch: str, remote: Optional[str], *, air_gap: bool) -> bool:
-    if _git(root, "rev-parse", "--verify", "HEAD", air_gap=air_gap).returncode == 0:
-        if remote and not ladder.remote_has_userinfo(remote) and not air_gap and not bundles.origin_url(root):
-            _git(root, "remote", "add", "origin", ladder.https_url(remote), air_gap=air_gap)
-        return False
-    ref = f"refs/carnivore/{sender}/heads/{branch}" if branch else None
-    has_head = _git(root, "rev-parse", "--verify", "HEAD", air_gap=air_gap).returncode == 0
-    if not has_head:
-        done = _git(root, "checkout", "-q", "-B", branch or "main", ref or head, air_gap=air_gap) if ref else \
-            _git(root, "checkout", "-q", "--detach", head, air_gap=air_gap)
-    else:
-        if _out(_git(root, "status", "--porcelain", "--untracked-files=no", air_gap=air_gap)):
-            raise CodeError("checkout_failed", "the folder here has uncommitted changes, so the source's commits were not checked out")
-        if branch and _out(_git(root, "symbolic-ref", "--short", "-q", "HEAD", air_gap=air_gap)) != branch:
-            known = _git(root, "rev-parse", "--verify", branch, air_gap=air_gap).returncode == 0
-            _git(root, "checkout", "-q", *(() if known else ("-B",)), branch, *(() if known else (head,)), air_gap=air_gap)
-        done = _git(root, "merge", "--ff-only", "-q", head, air_gap=air_gap)
-    if done.returncode != 0:
-        logger.warning("pack_migrate_checkout_failed", status=done.returncode, stderr_bytes=len(done.stderr))
-        raise CodeError("checkout_failed", "git could not check the source's branch out here (this folder has its own commits that do not line up)")
-
-
-def checkout_replica(root: str, sender: str, branch: str, remote: Optional[str], *, air_gap: bool) -> bool:
     if remote and not ladder.remote_has_userinfo(remote) and not air_gap and not bundles.origin_url(root) and _git(root, "rev-parse", "--verify", "HEAD", air_gap=air_gap).returncode == 0:
         _git(root, "remote", "add", "origin", ladder.https_url(remote), air_gap=air_gap)
     if _git(root, "rev-parse", "--verify", "HEAD", air_gap=air_gap).returncode == 0:

@@ -11,6 +11,7 @@ export interface SessionRow {
   tmux_session: string | null;
   model: string | null;
   tmux_created_epoch?: number | null;
+  agent_type_via_fingerprint?: boolean;
 }
 
 export interface LogEntry {
@@ -34,6 +35,26 @@ export interface UsageLimit {
   since: string;
 }
 
+import type {
+  AgentUpdateInfo,
+  AutomationMark,
+  MessagingMark,
+  BackgroundProcessesInfo,
+  McpServerHealthInfo,
+  McpDropInfo,
+  McpHealthInfo,
+  LocalServerInfo,
+} from './session-info-types';
+export type {
+  AgentUpdateInfo,
+  AutomationMark,
+  MessagingMark,
+  BackgroundProcessesInfo,
+  McpServerHealthInfo,
+  McpDropInfo,
+  McpHealthInfo,
+  LocalServerInfo,
+} from './session-info-types';
 /* could not determine */
 export interface SessionInfo {
   session: SessionRow;
@@ -77,6 +98,38 @@ export interface SessionInfo {
   skill_last?: { name: string; at?: string | null } | null;
   background_open?: number | null;
   account_id?: string | null;
+  local_servers?: LocalServerInfo[];
+  claude_title?: string | null;
+  session_uuid?: string | null;
+  agent_wrapper_icon?: string | null;
+  prompt_suggestion?: string | null;
+  swarm_agent_id?: number | null;
+  swarm_rank?: string | null;
+  swarm_character_seed?: number | null;
+  swarm_color_slot?: number | null;
+  project_uid?: string | null;
+  company_uid?: string | null;
+  origin_install_id?: string | null;
+  parent_session_id?: number | null;
+  agent_update?: AgentUpdateInfo | null;
+  automation?: AutomationMark | null;
+  messaging?: MessagingMark | null;
+  background_processes?: BackgroundProcessesInfo | null;
+  mcp_health?: McpHealthInfo | null;
+  launched_with?: Record<string, unknown> | null;
+  do_not_disturb?: boolean | null;
+  task_lead?: boolean | null;
+  short_description?: string | null;
+  parked_summary?: string | null;
+  spectator_expires_at?: string | null;
+  notifications_muted?: boolean;
+  created_by_us?: boolean;
+  created_by_cloude?: boolean;
+  initial_scrollback_b64?: string | null;
+  running_model?: string | null;
+  running_model_effort?: string | null;
+  running_model_tier?: number | null;
+  running_context_used_pct?: number | null;
 }
 
 export interface SessionRecord {

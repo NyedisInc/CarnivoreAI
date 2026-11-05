@@ -1,7 +1,7 @@
 <script lang="ts">
   /* the widget harness page */
   import { getContext, onDestroy, untrack } from 'svelte';
-  import { t } from '../sdk';
+  import { frameScheme, t } from '../sdk';
   import type { FrameReport, LabSize } from '../sdk/widget-lab';
   import { frameHeight, frameUrl, frameWindowWidth, SIDEBAR_WINDOW, STAGE_PADDING_PX, type FrameSpec } from './frame-url';
   import { KEY_MENU_MESSAGE, MENU_CHOOSE, MENU_CLOSE, MENU_HIDE, MENU_SHOW, readMenuMessage } from '../sdk/widget-lab';
@@ -146,6 +146,7 @@
     width={width}
     {height}
     style:margin={`-${box.inset}px`}
+    style:color-scheme={frameScheme(spec.theme)}
     style:visibility={veiled ? 'hidden' : undefined}
     data-veiled={veiled ? 'yes' : undefined}
     onload={() => void loaded()}

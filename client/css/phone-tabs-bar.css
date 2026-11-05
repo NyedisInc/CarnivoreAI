@@ -1,4 +1,4 @@
-body:has([data-phone-tabs]) .header {
+body.ps-phone-tabs .header {
     height: 0;
     min-height: 0;
     padding: 0;
@@ -9,19 +9,19 @@ body:has([data-phone-tabs]) .header {
     overflow: visible;
 }
 
-body:has([data-phone-tabs]) .header .header-row {
+body.ps-phone-tabs .header .header-row {
     height: 0;
     min-height: 0;
     padding: 0;
     overflow: visible;
 }
 
-body:has([data-phone-tabs]) .header .header-row > *,
-body:has([data-phone-tabs]) .header .controls > * {
+body.ps-phone-tabs .header .header-row > *,
+body.ps-phone-tabs .header .controls > * {
     visibility: hidden;
 }
 
-body:has([data-phone-tabs]) .header #header-menu-panel {
+body.ps-phone-tabs .header #header-menu-panel {
     visibility: visible;
     position: fixed;
     top: 48px;

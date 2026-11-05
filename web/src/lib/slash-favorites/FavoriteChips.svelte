@@ -89,7 +89,7 @@
         preview = next;
         await commitOrder(next.map((f) => f.command));
         await tick();
-        const buttons = grid ? [...grid.querySelectorAll<HTMLButtonElement>('.command-button')] : [];
+        const buttons = grid ? [...grid.querySelectorAll<HTMLButtonElement>('[data-fav-chip]')] : [];
         buttons.find((button) => button.dataset.command === moving.command)?.focus();
     }
 
@@ -192,9 +192,9 @@
                         onpointercancel={onGripCancel}
                     ><span aria-hidden="true"></span></IconButton>
                 {/if}
-                <button data-base-exempt="slash-menu-command-chip-and-color-swatches"
-                    type="button"
-                    class="command-button"
+                <Button
+                    size="auto"
+                    data-fav-chip
                     data-command={fav.command}
                     aria-expanded={arranging ? picking === fav.command : undefined}
                     onclick={() => onChipClick(fav.command)}
@@ -204,7 +204,7 @@
                     {#if fav.description}
                         <span class="command-button-desc">{fav.description}</span>
                     {/if}
-                </button>
+                </Button>
                 <IconButton
                     label={t('slash.favorites.unstar', { command: fav.command })}
                     variant="quiet"
@@ -277,6 +277,25 @@
     .fav-bar :global(.common-commands-note) {
         margin-bottom: 0;
         text-align: left;
+    }
+
+    .command-chip :global([data-fav-chip]) {
+        flex-direction: column;
+        gap: var(--oc-space-0-5);
+        width: 100%;
+        min-width: 0;
+        min-height: 54px;
+        height: auto;
+        padding: var(--oc-space-3) var(--oc-tap) var(--oc-space-3) var(--oc-space-3);
+        line-height: 1.25;
+        text-align: center;
+        font-family: var(--font-mono);
+    }
+
+    @media (max-width: 600px) {
+        .command-chip :global([data-fav-chip]) {
+            padding-left: var(--oc-space-1-5);
+        }
     }
 
     .fav-bar :global([data-fav-arrange]) {

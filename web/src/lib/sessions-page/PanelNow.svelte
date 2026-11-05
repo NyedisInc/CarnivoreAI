@@ -2,6 +2,7 @@
 <script lang="ts">
     import type { SessionListItem, Translate } from '../sessions/types';
     import type { PageRow } from './filters';
+    import { contextPercentSpoken, modelShortName } from '../session-stats/context-gauge';
 
     interface Props {
         row: PageRow;
@@ -18,8 +19,10 @@
     const background = $derived(typeof live?.background_open === 'number' && live.background_open > 0 ? t('sessions.page.panel.now.background_val', { count: live.background_open }) : null);
     const model = $derived.by((): string | null => {
         const l = live as (SessionListItem & { running_model?: string | null; running_context_used_pct?: number | null }) | undefined;
-        if (!l?.running_model) return null;
-        return typeof l.running_context_used_pct === 'number' ? t('sessions.page.panel.now.model_val', { model: l.running_model, pct: Math.round(l.running_context_used_pct) }) : l.running_model;
+        const name = modelShortName(l?.running_model);
+        if (!name) return null;
+        const pct = contextPercentSpoken(l?.running_context_used_pct);
+        return pct === null ? name : t('sessions.page.panel.now.model_val', { model: name, pct });
     });
     const timer = $derived.by((): string | null => {
         const at = live?.timers_next_fire_at ? Date.parse(live.timers_next_fire_at) : NaN;

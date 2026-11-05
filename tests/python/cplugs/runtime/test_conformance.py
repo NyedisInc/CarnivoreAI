@@ -11,7 +11,7 @@ from typing import Any, Dict
 import pytest
 
 from src.cplugs.runtime import conformance as kit
-from src.cplugs.runtime import guards, watchdog
+from src.cplugs.runtime import guards, watchdog, webhooks
 
 
 class _Anything:
@@ -74,6 +74,15 @@ def test_a_host_that_refuses_everything_fails_the_positive_controls(tmp_path):
         assert any(line.startswith("positive") for line in results[rule]), rule
 
 
+def _evict_oldest_by_count(self: webhooks.InboundVerifier, hook: str) -> None:
+    import heapq
+
+    if len(self._nonces) >= webhooks.NONCE_CACHE_SIZE:
+        _, old_hook, key = heapq.heappop(self._expiries)
+        self._nonces.pop(key, None)
+        self._live[old_hook] -= 1
+
+
 @pytest.mark.parametrize("module,attr,value,rule", [
     (guards, "CONTROL_LEAD", frozenset(), "c2_owner_token_and_control_lines"),
     (guards, "SESSION_FIELDS", guards.SESSION_FIELDS + ("parked_summary", "working_dir"), "h4_session_fields"),
@@ -83,8 +92,9 @@ def test_a_host_that_refuses_everything_fails_the_positive_controls(tmp_path):
     ("src.cplugs.runtime.webhooks", "MAX_SKEW_SECONDS", 10 ** 9, "l4_webhooks"),
     ("src.cplugs.runtime.webhooks", "MAX_FUTURE_SECONDS", 10 ** 9, "l4_webhooks"),
     ("src.cplugs.runtime.webhooks", "_before_start", lambda ts, started: False, "l4_webhooks"),
+    (webhooks.InboundVerifier, "_check_room", _evict_oldest_by_count, "l4_webhooks"),
     ("src.cplugs.runtime.watchdog", "MEMORY_LIMIT_BYTES", 10 ** 12, "m4_limits"),
-], ids=["c2-control-lead", "h4-fields", "m6-remote", "l2-git", "l2-filter-config", "l4-skew", "l4-future-cap", "l4-restart-floor", "m4-memory"])
+], ids=["c2-control-lead", "h4-fields", "m6-remote", "l2-git", "l2-filter-config", "l4-skew", "l4-future-cap", "l4-restart-floor", "l4-nonce-age", "m4-memory"])
 def test_removing_the_rule_in_the_real_code_turns_its_probe_red(tmp_path, monkeypatch, module, attr, value, rule):
     import importlib
 

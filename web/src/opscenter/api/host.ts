@@ -8,6 +8,7 @@ interface WebNamespace {
   openPluginsScreen?: () => boolean;
   openWidgetsScreen?: () => boolean;
   openWrappersScreen?: () => boolean;
+  openFeaturesScreen?: () => boolean;
   openHostsScreen?: () => boolean;
   openLedgerScreen?: (account?: string) => boolean;
   openBlueprintsScreen?: () => boolean;
@@ -196,6 +197,14 @@ export function openWidgets(): boolean {
   closeOtherMenuScreens('widgets');
   const open = web()?.openWidgetsScreen;
   if (typeof open !== 'function') return missing('CloudeWeb.openWidgetsScreen');
+  open();
+  return true;
+}
+
+export function openFeatures(): boolean {
+  closeOtherMenuScreens('settings');
+  const open = web()?.openFeaturesScreen;
+  if (typeof open !== 'function') return missing('CloudeWeb.openFeaturesScreen');
   open();
   return true;
 }

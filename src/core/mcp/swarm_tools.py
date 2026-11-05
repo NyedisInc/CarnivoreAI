@@ -14,7 +14,7 @@ from src.core.mcp.common import ToolError, _ok
 from src.core.swarm.cards import ops, port as card_port
 from src.cplugs.sdk.cards import CardRefused
 from src.cplugs.sdk.storage import CplugSchemaError
-from src.core.swarm import answers, body, brief, conflicts, facts, naming_rules, project_agent, promotion, receipts, rename, reports, rewind, routing, say, spawn, store, stream, suggest, views
+from src.core.swarm import answers, body, brief, conflicts, done_feed, facts, naming_rules, project_agent, promotion, question_close, receipts, rename, reports, rewind, routing, say, spawn, store, stream, suggest, views, waiting
 from src.core.swarm import effort as effort_floor
 from src.core.swarm.settings import LookShape
 
@@ -64,7 +64,18 @@ async def swarm_conversation(manager: Any, caller: AgentCaller, args: dict) -> d
         raise ToolError("since must be an entry id from an earlier read")
 
     async def read() -> dict:
-        return await stream.page(await views.get_agent_row(_agent_id(args)), since=since, limit=limit)
+        page = await stream.page(await views.get_agent_row(_agent_id(args)), since=since, limit=limit)
+        return {**page, "entries": done_feed.for_agents(page["entries"])}
+
+    return await _read(read())
+
+
+async def swarm_waiting(manager: Any, caller: AgentCaller, args: dict) -> dict:
+    state = getattr(getattr(manager, "app", None), "state", None)
+
+    async def read() -> dict:
+        found = await waiting.feed(_agent_id(args), manager=manager, inbox=getattr(state, "approvals_inbox", None))
+        return {**found, "items": [waiting.brief(i) for i in found["items"]]}
 
     return await _read(read())
 
@@ -207,6 +218,13 @@ async def swarm_ask(manager: Any, caller: AgentCaller, args: dict) -> dict:
         raise ToolError(str(exc)) from None
 
 
+async def swarm_withdraw(manager: Any, caller: AgentCaller, args: dict) -> dict:
+    try:
+        return _ok(await question_close.withdraw(manager, caller, args))
+    except routing.QuestionRefused as exc:
+        raise ToolError(str(exc)) from None
+
+
 async def swarm_answer(manager: Any, caller: AgentCaller, args: dict) -> dict:
     try:
         return _ok(await answers.answer(manager, caller, args))
@@ -328,7 +346,7 @@ async def swarm_conflict(manager: Any, caller: AgentCaller, args: dict) -> dict:
 
 
 WRITE_TOOLS: frozenset = frozenset({"swarm_spawn", "swarm_report", "swarm_accept_report", "swarm_propose_naming",
-                                  "swarm_suggest", "swarm_remember", "swarm_forget", "swarm_ask", "swarm_answer", "swarm_pass", "swarm_promote", "swarm_say",
+                                  "swarm_suggest", "swarm_remember", "swarm_forget", "swarm_ask", "swarm_withdraw", "swarm_answer", "swarm_pass", "swarm_promote", "swarm_say",
                                   "swarm_rewind", "swarm_set_look", "swarm_rename", "swarm_conflict"})
 
 _DETAIL = {"type": "boolean", "description": "full answer instead of the lean default"}
@@ -345,6 +363,10 @@ TOOLS: dict = {
          "limit": {"type": "integer", "minimum": 1, "maximum": stream.MAX_LIMIT},
          "since": {"type": "string", "description": "an entry id: only later entries"}},
         ["agent_id"], swarm_conversation),
+    "swarm_waiting": (
+        "What waits on the owner under a Swarm agent's chat, as its tray lists it: cards asking him something, Review cards "
+        "finished with needs_owner and approvals inbox items, the agent's own first, then its descendants', one line each.",
+        {"agent_id": {"type": "integer", "minimum": 1}}, ["agent_id"], swarm_waiting),
     "swarm_checkpoints": (
         "A Swarm agent's memory checkpoints: the commits of its project-scope memory folder, newest first (kind memory, promotion, "
         "flip_back or rewind). An empty list carries a reason (local memory is not in git).",
@@ -415,15 +437,15 @@ TOOLS: dict = {
          "company_id": {"type": "integer", "minimum": 1, "description": "a project suggestion's own company; may be left out"}},
         ["kind", "name", "reason"], swarm_suggest),
     "swarm_remember": (
-        "Write one fact into your own memory, rarely. " + facts.fact_life.MEMORY_BAR + " Give text, or learning_id (a learning "
-        "item in your inbox, copied verbatim), or owner_message_ref (huddle:msg:<id> of an owner message in YOUR thread, stored as "
-        "an owner fact). Saving a fact you already hold counts a use instead of a copy. A fact that clashes with one the owner "
-        "taught is held until the owner decides. scope: craft (any project) or project (this repo only).",
+        "Write one fact into your own memory, rarely: only one that meets the memory bar (the text field states it). Give text, "
+        "learning_id or owner_message_ref. Saving a fact you already hold counts a use instead of a copy. A fact that clashes "
+        "with one the owner taught is held until the owner decides. scope: craft (any project) or project (this repo only).",
         {"title": {"type": "string", "maxLength": facts.MAX_TITLE_CHARS},
          "scope": {"type": "string", "enum": list(facts.memory.FACT_SCOPES)},
-         "text": {"type": "string", "maxLength": facts.MAX_FACT_CHARS},
-         "learning_id": {"type": "integer", "minimum": 1},
-         "owner_message_ref": {"type": "string", "pattern": "^huddle:msg:[0-9]+$"},
+         "text": {"type": "string", "maxLength": facts.MAX_FACT_CHARS, "description": facts.fact_life.MEMORY_BAR},
+         "learning_id": {"type": "integer", "minimum": 1, "description": "a learning item in your inbox, copied verbatim"},
+         "owner_message_ref": {"type": "string", "pattern": "^huddle:msg:[0-9]+$",
+                               "description": "huddle:msg:<id> of an owner message in YOUR thread, stored as an owner fact"},
          "push_up": {"type": "boolean", "description": "also queue this as a discovery for your parent"},
          "kind": {"type": "string", "enum": list(facts.fact_life.KINDS),
                   "description": "rule: a standing rule kept until deleted; note (default): expires 14 days after its last use"}},
@@ -449,10 +471,16 @@ TOOLS: dict = {
                                       "| long_text, prompt (short), options [{id, label, recommended, reason}] for a choice or rank, "
                                       "recommend {value | order | text, reason} otherwise, help, required (default true)}; mark your "
                                       "recommendation on each so the owner can accept them in one press. He answers them in one form; you get one line per "
-                                      "question plus JSON keyed by your question ids, with the absolute path of any file he attached"}},
+                                      "question plus JSON keyed by your question ids, with the absolute path of any file he attached"},
+         "replaces": {"type": "integer", "minimum": 1,
+                      "description": "optional: the id of one of your own open questions this ask replaces; it is withdrawn with this ask"}},
         ["question", "summary"], swarm_ask),
+    "swarm_withdraw": (
+        "Withdraw one of your own open questions that no longer needs an answer (asked wrong, superseded, solved). Its card "
+        "closes and leaves the owner's tray. To re-ask in better shape, use swarm_ask with replaces instead.",
+        {"question_id": {"type": "integer", "minimum": 1}}, ["question_id"], swarm_withdraw),
     "swarm_answer": (
-        "Answer a question that was routed to you. fact_ids are YOUR stored facts you relied on: the server keeps only "
+        "Answer a question that was routed to you, or one waiting on the owner that an agent below you asked (its owner card closes). fact_ids are YOUR stored facts you relied on: the server keeps only "
         "live facts of yours and writes the receipt itself. No stored fact means your answer is marked as your judgment. "
         "It reaches the asker as your words, never the owner's, even when it repeats what he told you.",
         {"question_id": {"type": "integer", "minimum": 1},

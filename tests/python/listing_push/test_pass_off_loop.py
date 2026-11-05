@@ -15,7 +15,7 @@ SLOW_SECONDS = 0.4
 def test_slow_keep_does_not_block_the_loop(tmp_path, monkeypatch) -> None:
     db = tmp_path / "carnivore.db"
     db.write_bytes(b"")
-    monkeypatch.setattr("src.core.db.db_path_for", lambda _dir: db)
+    monkeypatch.setattr(routes, "db_path_for", lambda _dir: db)
     monkeypatch.setattr(routes, "read_stored_rows", lambda *_a: [{"session_uuid": "u1", "lifecycle": "running", "origin": "created"}])
 
     async def no_wake(*_a, **_k) -> None:

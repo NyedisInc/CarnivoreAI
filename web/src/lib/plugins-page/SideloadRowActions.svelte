@@ -3,18 +3,22 @@
     import Button from '../base/Button.svelte';
     import type { Translate } from '../sessions/types';
     import type { SideloadStore } from './sideload-store.svelte';
-    import { refusalText, sourceLine } from './sideload-switch';
+    import type { InstallConsent } from '../catalog/types';
+    import SideloadConsent from './SideloadConsent.svelte';
+    import { consentSheetOf, refusalText, sourceLine, type SideloadKind, type SideloadSheet } from './sideload-switch';
     import './plugin-pane.css';
 
     interface Props {
         store: SideloadStore;
         name: string;
+        kind?: SideloadKind;
         t: Translate;
     }
 
-    const { store, name, t }: Props = $props();
+    const { store, name, kind, t }: Props = $props();
 
-    const item = $derived(store.item(name));
+    const item = $derived(store.item(name, kind));
+    let sheet = $state<SideloadSheet | null>(null);
     const busy = $derived(store.busy[name] === true);
     let error = $state<string | null>(null);
     let resynced = $state<string | null>(null);
@@ -24,11 +28,16 @@
         return (Array.isArray(a.changed) && a.changed.length > 0) || a.unchanged === false;
     }
 
-    async function resync(): Promise<void> {
+    async function resync(consent?: InstallConsent): Promise<void> {
         resynced = null;
         const from = item ? sourceLine(item, t) : name;
-        const answer = await store.resync(name);
+        const answer = await (consent ? store.resync(name, kind, consent) : store.resync(name, kind));
         if (loadedNewCode(answer)) resynced = from;
+    }
+
+    async function confirmed(consent: InstallConsent): Promise<void> {
+        await resync(consent);
+        sheet = null;
     }
 
     async function act(run: () => Promise<void>): Promise<void> {
@@ -36,7 +45,8 @@
         try {
             await run();
         } catch (failure) {
-            error = refusalText(failure, t);
+            sheet = consentSheetOf(failure);
+            if (!sheet) error = refusalText(failure, t);
         }
     }
 </script>
@@ -44,14 +54,15 @@
 {#if item}
     <div class="sideload-row" data-sideload-row={name}>
         <span class="sideload-row__source" title={sourceLine(item, t)} data-sideload-source>{sourceLine(item, t)}</span>
-        <Button size="sm" disabled={busy} data-sideload-resync={name} onclick={() => void act(resync)}>
+        <Button size="sm" disabled={busy} data-sideload-resync={name} onclick={() => void act(() => resync())}>
             {t('plugins.page.sideload.resync')}
         </Button>
-        <Button size="sm" variant="danger" disabled={busy} data-sideload-remove={name} onclick={() => void act(() => store.remove(name))}>
+        <Button size="sm" variant="danger" disabled={busy} data-sideload-remove={name} onclick={() => void act(() => store.remove(name, kind))}>
             {t('plugins.page.sideload.remove')}
         </Button>
         {#if resynced}<p class="plp-warn plp-danger sideload-row__warning" role="status" data-sideload-resynced>{t('plugins.page.sideload.warning.resynced', { source: resynced })}</p>{/if}
         {#if error}<p class="plp__error" role="alert" data-sideload-row-error>{error}</p>{/if}
+        {#if sheet}<SideloadConsent {sheet} {t} onConfirm={confirmed} onCancel={() => (sheet = null)} />{/if}
     </div>
 {/if}
 

@@ -1,5 +1,6 @@
 import { faceFacts, type AgentMarkFacts, type FaceRow } from '../../lib/sessions/agent-marks';
 import { bucket } from './noc';
+import { contextGauge, contextPercentSpoken, modelShortName, type ContextGauge } from '../../lib/session-stats/context-gauge';
 
 export interface FleetSource extends FaceRow {
   label?: string | null;
@@ -21,7 +22,8 @@ export interface FleetRow {
   name: string;
   project: string | null;
   model: string | null;
-  contextPct: number | null;
+  context: ContextGauge | null;
+  contextSpoken: number | null;
   subagents: number | null;
   state: FleetState;
   led: AgentMarkFacts;
@@ -44,15 +46,15 @@ export function fleetModel(rows: readonly FleetSource[] | null): FleetModel {
     const state: FleetState = bucket(row) ?? 'unknown';
     counts[state]++;
     const id = row.session?.id ?? '';
-    const context = row.running_context_used_pct;
     list.push({
       key: id || row.tmux_session || `row-${list.length}`,
       sessionId: id,
       tmuxSession: row.tmux_session ?? null,
       name: row.label || row.tmux_session || id,
       project: row.project_name ?? null,
-      model: row.running_model ?? null,
-      contextPct: typeof context === 'number' && Number.isFinite(context) ? Math.min(100, Math.max(0, context)) : null,
+      model: modelShortName(row.running_model) || null,
+      context: contextGauge(row.running_context_used_pct),
+      contextSpoken: contextPercentSpoken(row.running_context_used_pct),
       subagents: row.subagents_state === 'ok' && typeof row.subagents_running === 'number' ? row.subagents_running : null,
       state,
       led: faceFacts(row, { transport: null }),

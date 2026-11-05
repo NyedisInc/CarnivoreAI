@@ -147,6 +147,28 @@ async def delete_invite(invite_id: str, request: Request) -> Dict[str, bool]:
     return {"deleted": True}
 
 
+@router.get("/knocks")
+async def get_knocks(request: Request) -> Dict[str, Any]:
+    """The pending join requests (#2799): ``{"knocks": [{id, label, addr, fid_short, code|null, expires_at, attempts_left}]}``.
+
+    The owner's popup reads the code here, over this authenticated route only (the push topic ``pack_knocks`` is a name). ``code`` is null
+    when a newer invite retired it. 503 ``computers_unavailable``. Example: ``(await get_knocks(request))["knocks"][0]["code"]`` -> "042917".
+    """
+    rt = _rt()
+    if rt.knocks is None:
+        raise _error(503, "computers_unavailable", "the computers link is not running")
+    return {"knocks": [{**k, "expires_at": view.iso(k["expires_at"])} for k in rt.knocks.pending()]}
+
+
+@router.delete("/knocks/{knock_id}")
+async def delete_knock(knock_id: str, request: Request) -> Dict[str, bool]:
+    """"Not me": cancel the request's invite and block that computer for ten minutes. Output: ``{"deleted": true}``; 404 ``knock_not_found``."""
+    rt = _rt()
+    if rt.knocks is None or not rt.knocks.dismiss(knock_id):
+        raise _error(404, "knock_not_found", "no pending join request with that id")
+    return {"deleted": True}
+
+
 def _find_computer(rt: runtime.ComputersRuntime, iid: str) -> Optional[Dict[str, Any]]:
     with closing(rt.open_db()) as conn:
         return next((c for c in view.read_computers(conn, rt, _links()) if c["install_id"] == iid), None)

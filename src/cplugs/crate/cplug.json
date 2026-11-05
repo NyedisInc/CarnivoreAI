@@ -12,7 +12,7 @@
   "permissions": { "app": ["sessions.read", "agent_writes", "imports.write"] },
   "permission_reasons": {
     "sessions.read": "check that every session in an export is asleep, and name sessions in the plan",
-    "agent_writes": "let an agent cancel a crate job, verify a crate, copy one to your second folder, or unpack a plain crate into the plugin's scratch folder; exporting always waits for you",
+    "agent_writes": "let an agent cancel a crate job, verify a crate, copy one to your second folder, or unpack a plain crate into the feature's scratch folder; exporting always waits for you",
     "imports.write": "restore a crate into this install: write its sessions (asleep), project, transcripts and rows, only after you press restore with the plan's fingerprint"
   },
   "surfaces": {

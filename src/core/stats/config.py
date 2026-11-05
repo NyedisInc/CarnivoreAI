@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import json
 import os
+import sqlite3
 import time
 import uuid
 from typing import Any
 
 from src.core.stats.plugin import usage_revision
-from src.models.stats import AnnotationWrite, ChartWrite
+from src.core.stats.store_port import StatsStoreLike
+from src.models.stats import AnnotationWrite, ChartWrite, StatsFilters
 
 
 class RevisionConflict(ValueError):
@@ -22,17 +24,17 @@ class StatsOff(RuntimeError):
     pass
 
 
-def require_enabled(store) -> None:
+def require_enabled(store: StatsStoreLike) -> None:
     if not get_settings(store)["enabled"]:
         raise StatsOff("stats off")
 
 
-def _bump(db) -> None:
+def _bump(db: sqlite3.Connection) -> None:
     db.execute("UPDATE stats_meta SET value=CAST(value AS INTEGER)+1 WHERE key='revision'")
     usage_revision.bump(db)
 
 
-def ensure_schema(store) -> None:
+def ensure_schema(store: StatsStoreLike) -> None:
     with store.connect() as db:
         db.executescript("""
         CREATE TABLE IF NOT EXISTS stats_settings (
@@ -79,7 +81,7 @@ def ensure_schema(store) -> None:
 LEGEND_MIGRATION_KEY = "migration_legend_on_v1"
 
 
-def _migrate_legend_on(db) -> None:
+def _migrate_legend_on(db: sqlite3.Connection) -> None:
     db.commit()
     db.execute("BEGIN IMMEDIATE")
     try:
@@ -101,13 +103,13 @@ def _migrate_legend_on(db) -> None:
         db.execute("COMMIT")
 
 
-def get_settings(store) -> dict:
+def get_settings(store: StatsStoreLike) -> dict:
     with store.connect_read() as db:
         row = db.execute("SELECT enabled,revision FROM stats_settings WHERE singleton=1").fetchone()
     return {"enabled": bool(row["enabled"]), "revision": row["revision"]}
 
 
-def update_settings(store, *, enabled: bool, revision: int) -> dict:
+def update_settings(store: StatsStoreLike, *, enabled: bool, revision: int) -> dict:
     with store.connect() as db:
         previous = db.execute("SELECT enabled FROM stats_settings WHERE singleton=1 AND revision=?",
                               (revision,)).fetchone()
@@ -132,7 +134,7 @@ def update_settings(store, *, enabled: bool, revision: int) -> dict:
     return get_settings(store)
 
 
-def _chart(row) -> dict:
+def _chart(row: sqlite3.Row) -> dict:
     stored = json.loads(row["config_json"])
     stored.setdefault("viz", "timeline")
     stored.setdefault("options", {})
@@ -140,13 +142,13 @@ def _chart(row) -> dict:
             "created_at": row["created_at"], "updated_at": row["updated_at"]}
 
 
-def list_charts(store) -> list[dict]:
+def list_charts(store: StatsStoreLike) -> list[dict]:
     with store.connect(readonly=True) as db:
         rows = db.execute("SELECT * FROM stats_charts ORDER BY created_at,id LIMIT 200").fetchall()
     return [_chart(row) for row in rows]
 
 
-def get_chart(store, chart_id: str) -> dict:
+def get_chart(store: StatsStoreLike, chart_id: str) -> dict:
     with store.connect(readonly=True) as db:
         row = db.execute("SELECT * FROM stats_charts WHERE id=?", (chart_id,)).fetchone()
     if row is None:
@@ -154,7 +156,7 @@ def get_chart(store, chart_id: str) -> dict:
     return _chart(row)
 
 
-def create_chart(store, config: ChartWrite) -> dict:
+def create_chart(store: StatsStoreLike, config: ChartWrite) -> dict:
     now = int(time.time())
     chart_id = str(config.id or uuid.uuid4())
     with store.connect() as db:
@@ -167,7 +169,7 @@ def create_chart(store, config: ChartWrite) -> dict:
     return get_chart(store, chart_id)
 
 
-def update_chart(store, chart_id: str, config: ChartWrite, revision: int) -> dict:
+def update_chart(store: StatsStoreLike, chart_id: str, config: ChartWrite, revision: int) -> dict:
     with store.connect() as db:
         cursor = db.execute(
             "UPDATE stats_charts SET revision=revision+1,config_json=?,updated_at=? WHERE id=? AND revision=?",
@@ -181,7 +183,7 @@ def update_chart(store, chart_id: str, config: ChartWrite, revision: int) -> dic
     return get_chart(store, chart_id)
 
 
-def delete_chart(store, chart_id: str, revision: int) -> None:
+def delete_chart(store: StatsStoreLike, chart_id: str, revision: int) -> None:
     with store.connect() as db:
         cursor = db.execute("DELETE FROM stats_charts WHERE id=? AND revision=?", (chart_id, revision))
         if cursor.rowcount != 1:
@@ -192,15 +194,15 @@ def delete_chart(store, chart_id: str, revision: int) -> None:
         _bump(db)
 
 
-def _annotation(row) -> dict:
+def _annotation(row: sqlite3.Row) -> dict:
     return {key: row[key] for key in ("id", "revision", "occurred_at", "kind", "label",
                                      "rule_hash", "reference", "basis", "created_at", "updated_at")} | {
         "scope": json.loads(row["scope_json"])
     }
 
 
-def list_annotations(store, *, start: int, end: int, limit: int = 200, cursor: int = 0,
-                     filters=None) -> dict:
+def list_annotations(store: StatsStoreLike, *, start: int, end: int, limit: int = 200, cursor: int = 0,
+                     filters: StatsFilters | None = None) -> dict:
     where = ["occurred_at>=?", "occurred_at<?"]
     args = [start, end]
     if filters is not None:
@@ -218,7 +220,7 @@ def list_annotations(store, *, start: int, end: int, limit: int = 200, cursor: i
             "next_cursor": cursor + limit if len(rows) > limit else None}
 
 
-def get_annotation(store, annotation_id: str) -> dict:
+def get_annotation(store: StatsStoreLike, annotation_id: str) -> dict:
     with store.connect(readonly=True) as db:
         row = db.execute("SELECT * FROM stats_annotations WHERE id=?", (annotation_id,)).fetchone()
     if row is None:
@@ -226,7 +228,7 @@ def get_annotation(store, annotation_id: str) -> dict:
     return _annotation(row)
 
 
-def create_annotation(store, value: AnnotationWrite) -> dict:
+def create_annotation(store: StatsStoreLike, value: AnnotationWrite) -> dict:
     now = int(time.time())
     annotation_id = str(uuid.uuid4())
     with store.connect() as db:
@@ -238,7 +240,7 @@ def create_annotation(store, value: AnnotationWrite) -> dict:
     return get_annotation(store, annotation_id)
 
 
-def update_annotation(store, annotation_id: str, value: AnnotationWrite, revision: int) -> dict:
+def update_annotation(store: StatsStoreLike, annotation_id: str, value: AnnotationWrite, revision: int) -> dict:
     with store.connect() as db:
         cursor = db.execute(
             "UPDATE stats_annotations SET revision=revision+1,occurred_at=?,kind=?,label=?,"
@@ -256,7 +258,7 @@ def update_annotation(store, annotation_id: str, value: AnnotationWrite, revisio
     return get_annotation(store, annotation_id)
 
 
-def delete_annotation(store, annotation_id: str, revision: int) -> None:
+def delete_annotation(store: StatsStoreLike, annotation_id: str, revision: int) -> None:
     with store.connect() as db:
         cursor = db.execute("DELETE FROM stats_annotations WHERE id=? AND revision=?", (annotation_id, revision))
         if cursor.rowcount != 1:
@@ -266,10 +268,10 @@ def delete_annotation(store, annotation_id: str, revision: int) -> None:
         _bump(db)
 
 
-def add_observed_annotation(store, *, kind: str, occurred_at: int, label: str,
+def add_observed_annotation(store: StatsStoreLike, *, kind: str, occurred_at: int, label: str,
                             scope: dict, rule_hash: str | None = None,
                             reference: str | None = None,
-                            basis: str = "observed", connection=None) -> dict:
+                            basis: str = "observed", connection: sqlite3.Connection | None = None) -> dict:
     from datetime import datetime, timezone
     value = AnnotationWrite(occurred_at=datetime.fromtimestamp(occurred_at, timezone.utc),
                             kind=kind, label=label, scope=scope, rule_hash=rule_hash,
@@ -289,7 +291,7 @@ def add_observed_annotation(store, *, kind: str, occurred_at: int, label: str,
     return create_annotation(store, value)
 
 
-def request_backfill(store, key: str) -> dict:
+def request_backfill(store: StatsStoreLike, key: str) -> dict:
     now = int(time.time())
     with store.connect() as db:
         db.execute("INSERT OR IGNORE INTO stats_backfill VALUES (?,?,'requested',?)", (key, now, now))
@@ -297,7 +299,7 @@ def request_backfill(store, key: str) -> dict:
     return dict(row)
 
 
-def update_backfill(store, key: str, state: str) -> None:
+def update_backfill(store: StatsStoreLike, key: str, state: str) -> None:
     if state not in ("requested", "running", "complete", "failed"):
         raise ValueError("invalid backfill state")
     with store.connect() as db:

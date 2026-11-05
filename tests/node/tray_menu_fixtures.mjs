@@ -41,7 +41,7 @@ export function snap(over = {}) {
     routes: { standDown: 'unknown', logLevelExpiry: 'unknown', diagnostics: 'unknown', keepAwake: 'ok' },
     offline: { alive: null, tmuxRunning: null, error: null },
     phone: { bindHost: '0.0.0.0', localIps: [{ iface: 'en0', ip: '10.0.1.5' }, { iface: 'utun4', ip: '100.64.0.2' }], effectiveHost: '0.0.0.0',
-      measuredUrl: 'http://10.0.1.5:8000', publishedUrl: 'http://10.0.1.5:8000', otp: '123456', otpRemaining: 20 },
+      measuredUrl: 'http://10.0.1.5:8000', publishedUrl: 'http://10.0.1.5:8000', otpAvailable: true },
     launchAtLogin: true, offlineTuiAvailable: false, sysop: { tmuxName: 'carnivore_sysop', folder: '/p/Alpha', label: 'SysOp' },
   };
   const out = { ...base };

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from src.models.provider_ledger import (
     AccountUsage,
@@ -21,7 +21,18 @@ KIND_ORDER: Tuple[str, ...] = (
 )
 
 
-def compute_total(accounts: List[AccountUsage]) -> LedgerTotal:
+def compute_total(accounts: List[AccountUsage], identity_keys: Optional[Dict[str, Optional[str]]] = None) -> LedgerTotal:
+    keys = identity_keys or {}
+    seen: Set[str] = set()
+    counted: List[AccountUsage] = []
+    for account in accounts:
+        key = keys.get(account.id)
+        if key:
+            if key in seen:
+                continue
+            seen.add(key)
+        counted.append(account)
+    accounts = counted
     buckets: Dict[str, List[UsageWindow]] = {}
     for account in accounts:
         for window in account.windows:

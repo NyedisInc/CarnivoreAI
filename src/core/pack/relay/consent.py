@@ -35,7 +35,10 @@ def clean_offers(raw: Any) -> List[Dict[str, str]]:
     for item in raw[:MAX_ACCOUNTS] if isinstance(raw, list) else []:
         key, label = (item.get("account_key"), item.get("label")) if isinstance(item, dict) else (None, None)
         if isinstance(key, str) and _ACCOUNT_RE.fullmatch(key):
-            out.append({"account_key": key, "label": " ".join(str(label or key).split())[:_LABEL_MAX] or key})
+            offer = {"account_key": key, "label": " ".join(str(label or key).split())[:_LABEL_MAX] or key}
+            if item.get("provider") == "codex":
+                offer["provider"] = "codex"
+            out.append(offer)
     return out
 
 

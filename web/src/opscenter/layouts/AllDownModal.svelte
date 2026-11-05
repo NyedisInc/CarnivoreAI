@@ -1,7 +1,7 @@
 
 <script lang="ts">
     import { onMount } from 'svelte';
-    import ModalShell from '../../lib/launchpad/ModalShell.svelte';
+    import ModalShell from '../../lib/dialog-frame/ModalShell.svelte';
     import { t } from '../../lib/i18n/index.svelte';
     import { asleep, recent, sessions } from '../api';
     import Button from '../../lib/base/Button.svelte';

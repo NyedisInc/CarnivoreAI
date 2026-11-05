@@ -45,6 +45,25 @@ def answers_own_dev_channels(dialog: Any) -> bool:
     return rule_on(grid_policy(), catalog.RULE_DEV_CHANNELS) and carnivore_answers(dialog)
 
 
+def default_seams() -> rules.Seams:
+    return rules.Seams(_read_process_rows, carried_trust.carried_op_for, carried_trust.carried_imports_for, projects.in_projects_db)
+
+
+async def will_answer(dialog: Any, info: Any) -> bool:
+    policy = grid_policy()
+    rule = next((r for r in rules.rules_for(dialog) if rule_on(policy, r.info.id)), None)
+    if rule is None:
+        return False
+    if rule.needs_pid:
+        return answers_own_dev_channels(dialog)
+
+    async def read(_session_id: str) -> Any:
+        return info
+
+    verdict = await rule.guard(rules.Ctx(info.session.id, dialog, None, trust_scope(policy), read, default_seams()))
+    return verdict.outcome != rules.DECLINE
+
+
 class AutoAnswerEngine:
 
     def __init__(self, app_state: Any, get_manager: Callable[[], Any], *, policy: Optional[Callable[[], catalog.Policy]] = None,
@@ -55,7 +74,7 @@ class AutoAnswerEngine:
         self._policy = policy or grid_policy
         self._answer: Answer = answer or route_answer(app_state, get_manager)
         self._info: Info = info or self._manager_info(get_manager)
-        self._seams = seams or rules.Seams(_read_process_rows, carried_trust.carried_op_for, carried_trust.carried_imports_for, projects.in_projects_db)
+        self._seams = seams or default_seams()
         self._on_pressed = on_pressed
         self._state: Dict[tuple, list] = {}
         self._inflight: Set[tuple] = set()
@@ -76,11 +95,9 @@ class AutoAnswerEngine:
             return None
         if session_id.startswith(("adopted:", "remote:")):
             return None
-        rule = rules.rule_for(dialog)
-        if rule is None:
-            return None
         policy = self._policy()
-        if not rule_on(policy, rule.info.id):
+        rule = next((r for r in rules.rules_for(dialog) if rule_on(policy, r.info.id)), None)
+        if rule is None:
             return None
         key = (session_id, rule.info.id)
         identity = tuple(getattr(evidence, "identity", None) or ())
@@ -120,7 +137,10 @@ class AutoAnswerEngine:
                 return
             entry[1] += 1
             try:
-                await self._answer(session_id, ctx.dialog.fingerprint, rule.label)
+                if verdict.options:
+                    await self._answer(session_id, ctx.dialog.fingerprint, rule.label, options=verdict.options)
+                else:
+                    await self._answer(session_id, ctx.dialog.fingerprint, rule.label)
             except AckRefused as exc:
                 logger.info("auto_answer_refused", session_id=session_id, rule=rule_id, reason=exc.reason, attempt=entry[1])
                 return

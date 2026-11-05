@@ -47,23 +47,6 @@ export function summarize(text: string, stored: string = '', max: number = SUMMA
   return { summary, more };
 }
 
-export interface ReviewAnswer {
-  id: number;
-  summary: string;
-  hasMore: boolean;
-  text: string;
-}
-
-export function reviewAnswerOf(item: HuddleItem): ReviewAnswer | null {
-  const thread: TaskManagerMessage[] = item.thread ?? [];
-  const asked = new Set(thread.filter((m) => m.author === 'joe' && m.kind === 'reply' && m.answers_to === undefined).map((m) => m.id));
-  const answer = [...thread].reverse().find((m) => m.author === 'claude' && m.kind === 'answer' && m.quote?.id != null && asked.has(m.quote.id));
-  if (!answer) return null;
-  const text = answer.text.trim();
-  const { summary, more } = summarize(text);
-  return { id: answer.id, summary, hasMore: more, text };
-}
-
 export function reviewOf(item: HuddleItem): ReviewBlock | null {
   if (statusOf(item) !== 'review') return null;
   const description = (item.review_description ?? '').trim();

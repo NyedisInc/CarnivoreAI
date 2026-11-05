@@ -117,11 +117,6 @@ export const createConversation = (providerId: string, conversation: string, lab
 export const deleteConversation = (id: string, fetcher: Fetcher = authFetch) =>
     fetcher<unknown>(`${BASE}/conversations/${seg(id)}`, { method: 'DELETE' });
 
-export const createBinding = (conversationId: string, sessionUuid: string, direction: Direction, isDefault: boolean, fetcher: Fetcher = authFetch) =>
-    fetcher<Binding>(`${BASE}/bindings`, {
-        method: 'POST', body: json({ conversation_id: conversationId, session_uuid: sessionUuid, direction, default: isDefault }),
-    });
-
 export const patchBinding = (id: string, body: { direction?: Direction; default?: boolean; held_notice?: boolean }, fetcher: Fetcher = authFetch) =>
     fetcher<Binding>(`${BASE}/bindings/${seg(id)}`, { method: 'PATCH', body: json(body) });
 

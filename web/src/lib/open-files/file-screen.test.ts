@@ -14,6 +14,9 @@ const server = vi.hoisted(() => {
         posts: [] as Record<string, unknown>[],
         deletes: [] as string[],
         reads: [] as string[],
+        blobs: [] as string[],
+        downloadName: 'main.py',
+        hold: null as Promise<void> | null,
     };
 });
 
@@ -35,6 +38,11 @@ vi.mock('../../opscenter/api/auth.svelte', async (importOriginal) => {
                 server.contents[row.id] = { id: row.id, viewable: true, content: 'opened\n', sha256: 's-open' };
                 server.disk[row.id] = 's-open';
                 return { file: row, reused: false };
+            }
+            if (/^\/files\/open\/[0-9a-f]{16}\/download$/.test(p)) {
+                server.blobs.push(p);
+                await server.hold;
+                return new File(['bytes'], server.downloadName);
             }
             const content = /^\/files\/open\/([0-9a-f]{16})\/content$/.exec(p);
             if (content && method === 'GET') {
@@ -84,6 +92,7 @@ import { browserBridge, closeBrowserScreen, dismissBrowserScreen, openBrowser } 
 import { openFiles } from './api.svelte';
 import { dropBuffer, isDirty } from './buffers.svelte';
 import { openFromDrawer } from './open-bridge';
+import { autoAnswerConfirm, type AutoAnswer } from '../../test-support/auto-answer';
 
 const FILE = { id: 'a1b2c3d4e5f60718', kind: 'file', root: 'workdir', path: 'src/main.py', session_uuid: 'u-1', title: 'main.py', opened_at: 1, seq: 1 };
 const BIN = { ...FILE, id: 'b1b2c3d4e5f60718', path: 'logo.png', title: 'logo.png' };
@@ -96,7 +105,8 @@ async function settle(): Promise<void> {
 
 const headerCalls: string[] = [];
 let confirmAnswer = true;
-const confirms: string[] = [];
+let confirmer: AutoAnswer;
+const confirms = (): string[] => confirmer.asked.map((a) => a.title);
 
 function q<T extends Element = HTMLElement>(sel: string): T | null {
     return document.querySelector<T>(sel);
@@ -116,8 +126,8 @@ describe('a file in the main section', () => {
             + '<span id="header-rename-pencil"></span>'
             + '<div id="terminal-screen" class="screen active"><div id="terminal-grid"><div id="browser-screen"></div></div></div>';
         headerCalls.length = 0;
-        confirms.length = 0;
         confirmAnswer = true;
+        confirmer = autoAnswerConfirm(() => confirmAnswer);
         server.files = [FILE, BIN, DIFF];
         server.contents = {
             [FILE.id]: { id: FILE.id, viewable: true, content: 'print(1)\n', sha256: 's-1', is_executable: false, is_sensitive: false, read_only: false },
@@ -128,16 +138,19 @@ describe('a file in the main section', () => {
         server.posts = [];
         server.deletes = [];
         server.reads = [];
+        server.blobs = [];
+        server.downloadName = 'main.py';
+        server.hold = null;
         const g = globalThis as Record<string, unknown>;
         g.App = {
             hideAllScreens: () => { document.querySelectorAll('.screen').forEach((el) => el.classList.remove('active')); closeBrowserScreen(); },
-            showConfirmModal: async (title: string) => { confirms.push(title); return confirmAnswer; },
         };
         g.setHeaderIdentity = (o: { icon: string; title: string }) => { headerCalls.push(`${o.icon}:${o.title}`); };
         g.setPageTitle = () => {};
         await openFiles.refresh(true);
     });
     afterEach(() => {
+        confirmer.stop();
         dismissBrowserScreen();
         for (const f of [FILE, BIN, DIFF]) dropBuffer(f.id);
         for (const k of ['App', 'setHeaderIdentity', 'setPageTitle']) delete (globalThis as Record<string, unknown>)[k];
@@ -253,7 +266,7 @@ describe('a file in the main section', () => {
         confirmAnswer = false;
         await browserBridge.close(FILE.id);
         await settle();
-        expect(confirms).toEqual(['discard unsaved changes?']);
+        expect(confirms()).toEqual(['discard unsaved changes?']);
         expect(server.deletes).toEqual([]);
         expect(q('.fscreen')).not.toBeNull();
         confirmAnswer = true;
@@ -271,7 +284,7 @@ describe('a file in the main section', () => {
         confirmAnswer = false;
         q<HTMLButtonElement>('[data-file-close]')!.click();
         await settle();
-        expect(confirms).toEqual(['discard unsaved changes?']);
+        expect(confirms()).toEqual(['discard unsaved changes?']);
         expect(server.deletes).toEqual([]);
         confirmAnswer = true;
         q<HTMLButtonElement>('[data-file-close]')!.click();
@@ -282,7 +295,7 @@ describe('a file in the main section', () => {
 
     test('a saved row closes with no question', async () => {
         await browserBridge.close(FILE.id);
-        expect(confirms).toEqual([]);
+        expect(confirms()).toEqual([]);
         expect(server.deletes).toEqual([FILE.id]);
     });
 
@@ -408,5 +421,119 @@ describe('a file in the main section', () => {
         expect(rule('.fs-doc')).toMatch(/width:\s*100%/);
         expect(rule('.fs-doc')).toContain('overflow-wrap: anywhere');
         expect(/\.fs-doc :global\(pre\)\s*\{[^}]*overflow-x:\s*auto/.test(css)).toBe(true);
+    });
+    describe('download (#2787)', () => {
+        const saved: Array<{ name: string; href: string }> = [];
+        beforeEach(() => {
+            saved.length = 0;
+            vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: () => 'blob:test', revokeObjectURL: () => {} }));
+            vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+                saved.push({ name: this.download, href: this.href });
+            });
+        });
+
+        test('the header control fetches the row\'s download route and saves it under the file\'s own name', async () => {
+            openBrowser(FILE.id);
+            await settle();
+            q<HTMLButtonElement>('[data-file-download]')!.click();
+            await settle();
+            expect(server.blobs).toEqual([`/files/open/${FILE.id}/download`]);
+            expect(saved).toEqual([{ name: 'main.py', href: 'blob:test' }]);
+            expect(confirms()).toEqual([]);
+        });
+
+        test('a file the editor cannot show still offers the download, and a diff row offers none', async () => {
+            openBrowser(BIN.id);
+            await settle();
+            expect(q('[data-file-cant]')).not.toBeNull();
+            expect(q('[data-file-download]')).not.toBeNull();
+            dismissBrowserScreen();
+            await settle();
+            openBrowser(DIFF.id);
+            await settle();
+            expect(q('[data-file-download]')).toBeNull();
+        });
+
+        test('unsaved edits ask first; "save and download" writes the edits, then downloads', async () => {
+            openBrowser(FILE.id);
+            await settle();
+            type('print(2)\n');
+            q<HTMLButtonElement>('[data-file-download]')!.click();
+            await settle();
+            expect(confirms()).toEqual(['save before download?']);
+            expect(server.puts.at(-1)!.body).toMatchObject({ content: 'print(2)\n', expected_sha256: 's-1' });
+            expect(server.blobs).toEqual([`/files/open/${FILE.id}/download`]);
+            expect(isDirty(FILE.id)).toBe(false);
+        });
+
+        test('cancelling the ask downloads nothing and keeps the edits', async () => {
+            confirmAnswer = false;
+            openBrowser(FILE.id);
+            await settle();
+            type('print(2)\n');
+            q<HTMLButtonElement>('[data-file-download]')!.click();
+            await settle();
+            expect(confirms()).toEqual(['save before download?']);
+            expect(server.puts).toEqual([]);
+            expect(server.blobs).toEqual([]);
+            expect(isDirty(FILE.id)).toBe(true);
+        });
+
+        test('a save that comes back 409 downloads nothing and says why', async () => {
+            openBrowser(FILE.id);
+            await settle();
+            type('print(2)\n');
+            server.disk[FILE.id] = 's-agent';
+            q<HTMLButtonElement>('[data-file-download]')!.click();
+            await settle();
+            expect(server.puts).toHaveLength(1);
+            expect(server.blobs).toEqual([]);
+            expect(q('.fs-msg')?.textContent).toContain('changed on disk');
+            expect(q('[data-file-stale]')).not.toBeNull();
+        });
+
+        test('the saved name comes from the server, not the row title', async () => {
+            server.downloadName = 'résumé ✓.txt';
+            openBrowser(FILE.id);
+            await settle();
+            q<HTMLButtonElement>('[data-file-download]')!.click();
+            await settle();
+            expect(saved.map((s) => s.name)).toEqual(['résumé ✓.txt']);
+        });
+
+        test('a credentials file asks once before it downloads', async () => {
+            server.contents[FILE.id] = { ...server.contents[FILE.id]!, is_sensitive: true };
+            confirmAnswer = false;
+            openBrowser(FILE.id);
+            await settle();
+            q<HTMLButtonElement>('[data-file-download]')!.click();
+            await settle();
+            expect(confirms()).toEqual(['download credentials file?']);
+            expect(server.blobs).toEqual([]);
+            confirmAnswer = true;
+            q<HTMLButtonElement>('[data-file-download]')!.click();
+            await settle();
+            expect(confirms()).toHaveLength(2);
+            expect(server.blobs).toHaveLength(1);
+        });
+
+        test('a second press while one runs starts no second fetch, and the key shows it is working', async () => {
+            let release: () => void = () => {};
+            server.hold = new Promise<void>((r) => { release = r; });
+            openBrowser(FILE.id);
+            await settle();
+            const key = q<HTMLButtonElement>('[data-file-download]')!;
+            key.click();
+            await settle();
+            expect(key.disabled).toBe(true);
+            expect(key.getAttribute('aria-busy')).toBe('true');
+            key.click();
+            await settle();
+            expect(server.blobs).toHaveLength(1);
+            release();
+            await settle();
+            expect(key.disabled).toBe(false);
+            expect(saved).toHaveLength(1);
+        });
     });
 });

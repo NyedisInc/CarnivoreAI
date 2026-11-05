@@ -1,6 +1,7 @@
 import { ApiError, authFetch } from '../api/auth.svelte';
 import type { Layout } from '../engine/types';
 import type { TabGroups } from '../engine/tabs';
+import { failureReason } from '../../lib/errors/failure-reason';
 
 export interface LayoutShape {
   layout: Layout | null;
@@ -50,7 +51,7 @@ const ROOT = '/layouts';
 
 export function layoutError(error: unknown): LayoutError {
   if (!(error instanceof ApiError)) {
-    return { code: '', detail: error instanceof Error ? error.message : String(error), status: 0, current: null };
+    return { code: '', detail: failureReason(error), status: 0, current: null };
   }
   const body = error.payload as { detail?: unknown } | null;
   const inner = body && typeof body.detail === 'object' && body.detail !== null

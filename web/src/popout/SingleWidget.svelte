@@ -37,9 +37,11 @@
   const key = $derived(`popout-widget:${widget}`);
   const scope = $derived(placement.sessionId ? sessionScopeFor(sessions.data, placement.sessionId) : undefined);
 
+  const locked = $derived(!!placement.pinned && resolvePlacement({ widget, view })?.cell.scope === 'session');
+
   function pickView(next: string): void {
     view = next;
-    history.replaceState(null, '', widgetPath(widget, { sessionId: placement.sessionId, view: next, options: placement.options }));
+    history.replaceState(null, '', widgetPath(widget, { sessionId: placement.sessionId, view: next, options: placement.options, pinned: placement.pinned }));
   }
 
   const zone = createZone({
@@ -63,13 +65,14 @@
 </script>
 
 {#snippet popHead(header: FrameHeader)}
+  
   {#snippet menu(slot: MenuSlot)}
     <PopoutMenu hostId={key} title={header.title || t(titleKey!)} anchor={slot.anchor} onClose={slot.close} manifest={manifest} {view} {pickView} />
   {/snippet}
   {#snippet corner()}
     <CornerMenu {meta} title={t(titleKey!)} editing={false} place="row" {menu} />
   {/snippet}
-  <WidgetHead {meta} {header} title={header.title || t(titleKey!)} {corner} onClose={() => window.close()} withRight={false} />
+  <WidgetHead {meta} {header} title={header.title || t(titleKey!)} {corner} onClose={() => window.close()} withRight={false} {locked} />
 {/snippet}
 
 {#snippet tabBody()}

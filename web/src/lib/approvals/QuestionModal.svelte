@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, type Snippet } from 'svelte';
   import '../ledger/ledger-chrome.css';
-  import ModalShell from '../launchpad/ModalShell.svelte';
+  import ModalShell from '../dialog-frame/ModalShell.svelte';
   import { Button, IconButton } from '../base';
   import { t } from '../i18n/index.svelte';
   import { approvals, inboxFocus, noticeKey, refreshApprovals } from './approvals.svelte';

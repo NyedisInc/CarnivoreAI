@@ -7,6 +7,7 @@ import re
 import sqlite3
 import time
 from collections import defaultdict
+from collections.abc import Sequence
 from pathlib import PurePath
 from zoneinfo import ZoneInfo
 
@@ -23,6 +24,7 @@ from src.core.stats.query_buckets import (
 from src.core.stats.project_groups import OTHER_GROUP, OTHER_PUBLIC_KEY, ProjectGroups, other_label
 from src.core.provider_ledger import poller
 from src.models.stats import QueryRequest, StatsFilters
+from src.core.stats.store_port import StatsStoreLike
 
 logger = structlog.get_logger()
 
@@ -150,9 +152,9 @@ def _where(table: str, filters: StatsFilters, start: int, end: int,
     return " AND ".join(parts), args
 
 
-def _fetch(store, table: str, filters: StatsFilters, start: int, end: int,
+def _fetch(store: StatsStoreLike, table: str, filters: StatsFilters, start: int, end: int,
            group_by: str | None, deadline: float | None = None, counter: str | None = None,
-           arm: pack_scope.Arm | None = None):
+           arm: pack_scope.Arm | None = None) -> list[sqlite3.Row]:
     if table == "minute_counters":
         cols = "minute_ts,host,provider,conversation_id,project,model,agent_kind,key,value AS counter_value"
     elif table == "quota_minutes":
@@ -195,7 +197,7 @@ def _fetch(store, table: str, filters: StatsFilters, start: int, end: int,
         db.close()
 
 
-def _fetch_usage_aggregated(store, metric: str, filters: StatsFilters,
+def _fetch_usage_aggregated(store: StatsStoreLike, metric: str, filters: StatsFilters,
                             start: int, end: int, group_by: str | None,
                             deadline: float, arm: pack_scope.Arm | None = None) -> tuple[list, int | set]:
     expression = _TOKEN_TOTAL if metric == "total_tokens" else metric
@@ -239,7 +241,7 @@ def _fetch_usage_aggregated(store, metric: str, filters: StatsFilters,
         db.close()
 
 
-def _value(row, metric: str) -> float | int | None:
+def _value(row: sqlite3.Row, metric: str) -> float | int | None:
     if "metric_value" in row.keys():
         return row["metric_value"]
     if "counter_value" in row.keys():
@@ -264,7 +266,7 @@ def _new_coverage() -> dict:
             "mixed_price_token_total": 0}
 
 
-def _aggregate_activity(rows, metric: str, resolution: str, zone: ZoneInfo,
+def _aggregate_activity(rows: Sequence[sqlite3.Row], metric: str, resolution: str, zone: ZoneInfo,
                         group_by: str | None, deadline: float) -> tuple[dict, dict]:
     coverage = _new_coverage()
 
@@ -277,7 +279,7 @@ def _aggregate_activity(rows, metric: str, resolution: str, zone: ZoneInfo,
     return cells, coverage
 
 
-def _aggregate(rows, metric: str, resolution: str, zone: ZoneInfo,
+def _aggregate(rows: Sequence[sqlite3.Row], metric: str, resolution: str, zone: ZoneInfo,
                group_by: str | None, deadline: float) -> tuple[dict, dict]:
     cells: dict[tuple[str, str], dict] = {}
     coverage = _new_coverage()
@@ -381,7 +383,7 @@ def _transformed(value: float | int | None, cell: dict, request: QueryRequest,
     return value
 
 
-def _price_provenance(store, versions: list[str]) -> list[dict]:
+def _price_provenance(store: StatsStoreLike, versions: list[str]) -> list[dict]:
     if not versions:
         return []
     db = store.connect(readonly=True)
@@ -396,7 +398,7 @@ def _price_provenance(store, versions: list[str]) -> list[dict]:
         db.close()
 
 
-def _read_span(store, request: QueryRequest, table: str, start: int, end: int, deadline: float,
+def _read_span(store: StatsStoreLike, request: QueryRequest, table: str, start: int, end: int, deadline: float,
                arm: pack_scope.Arm | None) -> tuple[list, int | set]:
     if table == "minute_usage" and request.transform != "per_conversation":
         return _fetch_usage_aggregated(store, request.metric, request.filters, start, end, request.group_by, deadline, arm)
@@ -410,7 +412,7 @@ def _read_span(store, request: QueryRequest, table: str, start: int, end: int, d
     return rows, (found if arm else len(found))
 
 
-def _pack_query(store, request: QueryRequest, table: str) -> pack_scope.PackQuery | None:
+def _pack_query(store: StatsStoreLike, request: QueryRequest, table: str) -> pack_scope.PackQuery | None:
     if request.scope != "pack" or table not in pack_scope.PACK_TABLES:
         return None
     view = store if isinstance(store, BatchStore) else BatchStore(store)
@@ -421,7 +423,7 @@ def _pack_query(store, request: QueryRequest, table: str) -> pack_scope.PackQuer
             view.release()
 
 
-def execute(store, request: QueryRequest, deadline: float | None = None) -> dict:
+def execute(store: StatsStoreLike, request: QueryRequest, deadline: float | None = None) -> dict:
     deadline = deadline if deadline is not None else time.monotonic() + DEADLINE_SECONDS
     unit, table = METRICS[request.metric]
     if table in ("activity_minutes", "minute_counters") and request.group_by in (
@@ -607,7 +609,7 @@ def execute(store, request: QueryRequest, deadline: float | None = None) -> dict
     }
 
 
-def coverage(store) -> dict:
+def coverage(store: StatsStoreLike) -> dict:
     db = store.connect(readonly=True)
     try:
         grain = ("SELECT u.t AS t, u.cost_nano AS cost FROM {table} u JOIN dim_model m ON m.id=u.model "
@@ -639,7 +641,7 @@ def coverage(store) -> dict:
         db.close()
 
 
-def contributions(store, request: QueryRequest, *, limit: int, cursor: int) -> dict:
+def contributions(store: StatsStoreLike, request: QueryRequest, *, limit: int, cursor: int) -> dict:
     deadline = time.monotonic() + DEADLINE_SECONDS
     if request.metric == "quota_utilization":
         raise ValueError("quota has no conversation contributions")
@@ -670,7 +672,7 @@ def contributions(store, request: QueryRequest, *, limit: int, cursor: int) -> d
             "coverage": {"minute_rows": len(rows), "partial": any(item["unknown_rows"] for item in grouped.values())}}
 
 
-def dimensions(store, *, dimension: str, filters: StatsFilters,
+def dimensions(store: StatsStoreLike, *, dimension: str, filters: StatsFilters,
                start: int | None, end: int | None, limit: int, cursor: int) -> dict:
     if dimension not in _FILTER_COLUMNS:
         raise ValueError("unknown dimension")
@@ -719,7 +721,7 @@ def dimensions(store, *, dimension: str, filters: StatsFilters,
         db.close()
 
 
-def _project_dimension(db, groups: ProjectGroups, source: str, where: str, args: list,
+def _project_dimension(db: sqlite3.Connection, groups: ProjectGroups, source: str, where: str, args: list,
                        limit: int, cursor: int) -> dict:
     counts: dict[str, int] = defaultdict(int)
     members: dict[str, int] = {}
@@ -745,7 +747,7 @@ def _project_dimension(db, groups: ProjectGroups, source: str, where: str, args:
             "total": len(ordered)}
 
 
-def execute_batch(store, items: list[dict]) -> dict:
+def execute_batch(store: StatsStoreLike, items: list[dict]) -> dict:
     cap = time.monotonic() + BATCH_CAP_SECONDS
     memo: dict[str, dict] = {}
     results = []
@@ -794,7 +796,7 @@ def _answer_item(view: BatchStore, item: dict, cap: float, state: str) -> dict:
         families=families_for(request.metric))
 
 
-def _run_batch(store, items: list[dict], cap: float, memo: dict, results: list) -> dict:
+def _run_batch(store: StatsStoreLike, items: list[dict], cap: float, memo: dict, results: list) -> dict:
     state = answers.plugin_state(store)
     for item in items:
         key = json.dumps(item, sort_keys=True, separators=(",", ":"), default=str)

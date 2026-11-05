@@ -48,6 +48,8 @@ targets:
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         NSCameraUsageDescription: carnivore uses the camera to scan the pairing code shown on your computer.
         NSLocalNetworkUsageDescription: carnivore connects to your computer on your local network.
+        NSMicrophoneUsageDescription: carnivore listens through the microphone when you tap the mic key to dictate into a terminal.
+        NSSpeechRecognitionUsageDescription: carnivore turns your speech into text when you dictate into a terminal.
         ITSAppUsesNonExemptEncryption: false
         CarnivorePushEnvironment: $(PUSH_ENVIRONMENT)
         CarnivoreKeychainGroup: $(AppIdentifierPrefix)ai.carnivore.shared

@@ -41,13 +41,13 @@
       <dt>{t('perf.overlay.echo')}</dt>
       <dd>{n(snap.echo.net_ms, 1)} / {n(snap.echo.painted_ms, 1)} ms ({t('perf.overlay.worst')} {n(snap.echo.worst_ms, 0)}, n={snap.echo.samples})</dd>
       <dt>{t('perf.overlay.received')}</dt>
-      <dd>{n(rxMsgs, 1)} msg/s, {n(rxBytes, 0)} B/s</dd>
+      <dd>{t('perf.overlay.received_value', { msgs: n(rxMsgs, 1), bytes: n(rxBytes, 0) })}</dd>
       <dt>{t('perf.overlay.frames')}</dt>
       <dd>{n(snap.frames_per_s, 1)}/s</dd>
       <dt>{t('perf.overlay.loop_lag')}</dt>
       <dd>{n(server?.loop_lag_ms.p50, 1)} / {n(server?.loop_lag_ms.p99, 1)} / {n(server?.loop_lag_ms.minute_max, 0)} ms</dd>
       <dt>{t('perf.overlay.server')}</dt>
-      <dd>{n(server?.processes?.server?.cpu_pct, 1)}% cpu, {n(server?.processes?.server?.rss_mb, 0)} MB, {n(server?.requests_per_min, 0)} req/min</dd>
+      <dd>{t('perf.overlay.server_value', { cpu: n(server?.processes?.server?.cpu_pct, 1), mb: n(server?.processes?.server?.rss_mb, 0), req: n(server?.requests_per_min, 0) })}</dd>
       <dt>{t('perf.overlay.watcher')}</dt>
       <dd>{n(server?.watcher_ms?.full?.p50, 1)} ms ({t('perf.overlay.worst')} {n(server?.watcher_ms?.full?.max, 0)})</dd>
     </dl>

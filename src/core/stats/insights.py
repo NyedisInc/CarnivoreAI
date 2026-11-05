@@ -16,6 +16,7 @@ from src.core.stats.queries import (
 )
 from src.core.stats.query_buckets import QueryLimit
 from src.models.stats import StatsFilters
+from src.core.stats.store_port import StatsStoreLike
 
 CONVERSATION_CAP = 500
 """Most conversations the scatter returns (the costliest, then the largest)."""
@@ -36,7 +37,7 @@ _METRIC_SQL = {
 _UNITS = {"estimated_cost_nano_usd": "nano_usd", "usage_count": "observations"}
 
 
-def _grouped(store, filters: StatsFilters, start: int, end: int, metric: str) -> list[sqlite3.Row]:
+def _grouped(store: StatsStoreLike, filters: StatsFilters, start: int, end: int, metric: str) -> list[sqlite3.Row]:
     deadline = time.monotonic() + DEADLINE_SECONDS
     where, args = _where("minute_usage", filters, start, end)
     source = _usage_source(filters, None)
@@ -76,7 +77,7 @@ def _per_conversation(rows: list[sqlite3.Row]) -> dict[str, dict]:
     return out
 
 
-def conversations(store, *, start: int, end: int, filters: StatsFilters, limit: int = CONVERSATION_CAP) -> dict:
+def conversations(store: StatsStoreLike, *, start: int, end: int, filters: StatsFilters, limit: int = CONVERSATION_CAP) -> dict:
     limit = max(1, min(limit, CONVERSATION_CAP))
     grouped = _per_conversation(_grouped(store, filters, start, end, "estimated_cost_nano_usd"))
     ordered = sorted(grouped.items(), key=lambda pair: (pair[1]["value"] is None, -(pair[1]["value"] or 0),
@@ -136,7 +137,7 @@ def _mix_report(before: dict[str, int], after: dict[str, int]) -> dict:
     return {"distance": distance, "shifted": distance >= MIX_SHIFT, "models": moves[:3]}
 
 
-def impact(store, *, annotation_id: str, metric: str, days: int, now: float | None = None,
+def impact(store: StatsStoreLike, *, annotation_id: str, metric: str, days: int, now: float | None = None,
            iterations: int = BOOTSTRAP_ITERATIONS) -> dict:
     if metric not in _METRIC_SQL or not 1 <= days <= 30:
         raise ValueError("unsupported impact metric or window")

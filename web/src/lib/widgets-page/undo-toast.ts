@@ -1,12 +1,9 @@
 
+import { toastSurface, type ToastManagerLike } from '../toast-surface';
+
 export const WIDGETS_TOAST_KIND = 'WidgetsBars';
 
 export type ToastKind = 'saved' | 'undone' | 'failed';
-
-interface ToastSurface {
-    add(toast: Record<string, unknown>): void;
-    dismiss(id: string, options?: { syncToServer?: boolean }): void;
-}
 
 export interface ToastSpec {
     kind: ToastKind;
@@ -19,15 +16,15 @@ export interface ToastSpec {
 let shownId: string | null = null;
 let timer: ReturnType<typeof setTimeout> | null = null;
 
-function surface(): ToastSurface | null {
-    const found = (globalThis as { ToastManager?: ToastSurface }).ToastManager;
-    return found && typeof found.add === 'function' && typeof found.dismiss === 'function' ? found : null;
+function surface(): ToastManagerLike | null {
+    const found = toastSurface();
+    return found && typeof found.dismiss === 'function' ? found : null;
 }
 
 export function closeToast(): void {
     if (timer !== null) clearTimeout(timer);
     timer = null;
-    if (shownId !== null) surface()?.dismiss(shownId, { syncToServer: false });
+    if (shownId !== null) surface()?.dismiss?.(shownId, { syncToServer: false });
     shownId = null;
 }
 

@@ -5,8 +5,13 @@ import hashlib
 import json
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
+from pydantic import ValidationError
+
+from src.config.provider_accounts import ProviderAccount
+
 from src.core.config_bundle.constants import (
     ACCOUNT_DIR_FIELDS,
+    ACCOUNT_MANAGED_KEY,
     AGENT_COMMAND_FIELDS,
     BROWSER_EXECUTABLE_KEY,
     WORKSPACE_EDITOR_KEY,
@@ -41,7 +46,9 @@ def written_commands(before: Any, after: Any) -> List[Dict[str, Any]]:
             "id": wrapper_id,
             "family": wrapper.get("family"),
             "label": wrapper.get("label"),
-            "parts": [{"kind": key, "text": _text(value)} for key, value in command.items()],
+            "parts": [{"kind": key, "text": _text(value),
+                       "was": _text(old[wrapper_id][key]) if wrapper_id in old and key in old[wrapper_id] else None}
+                      for key, value in command.items()],
         })
     return rows
 
@@ -57,8 +64,9 @@ def written_workspace(before: Any, after: Any) -> List[Dict[str, Any]]:
     for name, value in sorted(_mapping(new.get(WORKSPACE_ENV_KEY)).items()):
         if name in old_env and old_env[name] == value:
             continue
+        was = _text(old_env[name]) if name in old_env else None
         rows.append({"id": name, "kind": "env", "label": name,
-                     "parts": [{"kind": "env", "text": f"{name}={_text(value)}"}]})
+                     "parts": [{"kind": "env", "text": f"{name}={_text(value)}", "was": was}]})
     rows.extend(_scalar_row(old, new, WORKSPACE_SHELL_KEY, "shell"))
     rows.extend(_scalar_row(old, new, WORKSPACE_EDITOR_KEY, "editor"))
     return rows
@@ -68,7 +76,9 @@ def _scalar_row(old: Mapping[str, Any], new: Mapping[str, Any], key: str, kind: 
     value = new.get(key)
     if not isinstance(value, str) or not value.strip() or value == old.get(key):
         return []
-    return [{"id": key, "kind": kind, "label": key, "parts": [{"kind": key, "text": value}]}]
+    was = old.get(key)
+    return [{"id": key, "kind": kind, "label": key,
+             "parts": [{"kind": key, "text": value, "was": was if isinstance(was, str) and was else None}]}]
 
 
 def written_browser(before: Any, after: Any) -> List[Dict[str, Any]]:
@@ -77,6 +87,13 @@ def written_browser(before: Any, after: Any) -> List[Dict[str, Any]]:
 
 def written_template_path(before: Any, after: Any) -> List[Dict[str, Any]]:
     return _scalar_row({"template_path": before}, {"template_path": after}, "template_path", "template")
+
+
+def _is_managed(account: Mapping[str, Any]) -> bool:
+    try:
+        return ProviderAccount.model_validate(dict(account)).managed
+    except ValidationError:
+        return bool(account.get(ACCOUNT_MANAGED_KEY))
 
 
 def written_account_dirs(before: Any, after: Any) -> List[Dict[str, Any]]:
@@ -89,8 +106,12 @@ def written_account_dirs(before: Any, after: Any) -> List[Dict[str, Any]]:
     for account in accounts(after):
         account_id = str(account.get("id"))
         prior = old.get(account_id, {})
-        parts = [{"kind": key, "text": f"{key}={_text(account[key])}"} for key in ACCOUNT_DIR_FIELDS
+        parts = [{"kind": key, "text": f"{key}={_text(account[key])}",
+                  "was": _text(prior[key]) if key in prior else None}
+                 for key in ACCOUNT_DIR_FIELDS
                  if key in account and (key not in prior or prior[key] != account[key])]
+        if _is_managed(account) and not _is_managed(prior):
+            parts.append({"kind": ACCOUNT_MANAGED_KEY, "text": f"{ACCOUNT_MANAGED_KEY}=true", "was": "false"})
         if parts:
             out.append({"id": account_id, "kind": "account_dir", "label": str(account.get("name") or account_id),
                         "parts": parts})

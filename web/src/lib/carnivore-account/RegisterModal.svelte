@@ -4,7 +4,7 @@
     import RegisterDialog from '../catalog/RegisterDialog.svelte';
     import { browserPublishHost, type PublishAccount } from '../catalog/publish';
     import { t } from '../i18n/index.svelte';
-    import ModalShell from '../launchpad/ModalShell.svelte';
+    import ModalShell from '../dialog-frame/ModalShell.svelte';
     import { Button } from '../base';
 
     interface Props {

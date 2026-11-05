@@ -6,7 +6,7 @@ from collections import Counter
 from typing import Dict, Optional, Tuple
 
 from src.core.message_model_secrets import DETECTOR_BEARER_TOKEN, DETECTOR_JWT, EXTRA_VENDOR_DETECTORS, VENDOR_DETECTORS, scan_text
-from src.core.secret_scanning.deadline import Deadline, ScanTimeout  # noqa: F401
+from src.core.secret_scanning.deadline import CpuDeadline, Deadline, ScanTimeout  # noqa: F401
 
 FILE_DETECTORS: Tuple[str, ...] = VENDOR_DETECTORS + EXTRA_VENDOR_DETECTORS + (DETECTOR_BEARER_TOKEN, DETECTOR_JWT)
 

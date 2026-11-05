@@ -1,0 +1,12 @@
+<h3 class="sg-h3" id="dialogs-publicboard-share">public review links plugin: the share window</h3>
+<dl class="sg-facts">
+    <dt id="dialogs-publicboard-share-window">share a review board publicly</dt>
+    <dd><code>web/src/cplugs/publicboard/ShareLinkModal.svelte</code> renders <code>ModalShell</code> in the <code>text-prompt-modal</code> look and is opened by the
+        board header's share key (<code>web/src/cplugs/publicboard/ShareLinkKey.svelte</code>, an <code>IconButton</code> with the globe icon, contributed through
+        <code>web/src/cplugs/sdk/board-header-keys.ts</code> so it exists only while the plugin is on). Two base <code>RadioGroup</code>s pick how long the link lasts
+        and which revision it shows, the base <code>Button</code> in the confirm variant makes it, and the whole link then shows ONCE in a base <code>Field</code>
+        (<code>.pbs-once</code>) with a copy key and a warning line (<code>.pbs-warn</code>). Below, the board's links are a base <code>List</code> of rows: id, mode, end, a
+        state <code>Tag</code>, and a danger <code>IconButton</code> to remove a live one; <code>.pbs-label</code> captions the list, <code>.pbs-explain</code> and
+        <code>.pbs-none</code> are the quiet lines, a quiet danger <code>Button</code> "remove all" under the list opens the shared <code>ConfirmPopup</code>, <code>.pbs-remove</code> keeps that key one row high, <code>.pbs-actions</code> lays the buttons out and <code>.pbs-error</code> prints a refusal in the destructive color.
+        See <code>docs/publicboard.md</code>.</dd>
+</dl>

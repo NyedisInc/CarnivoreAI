@@ -1,6 +1,7 @@
 /* and writes nothing */
 import { authFetch, ApiError } from '../../opscenter/api/auth.svelte';
 import type { PreviewAnswer, PreviewRequest } from '../../widget-preview/protocol';
+import { failureReason } from '../errors/failure-reason';
 
 export const PROXY_SHARE_MS = 2000;
 
@@ -31,7 +32,7 @@ export function createPreviewProxy(
         return { id: request.id, ok: true, body: await entry.read };
       } catch (error) {
         const status = error instanceof ApiError ? error.status : 503;
-        return { id: request.id, ok: false, status, detail: error instanceof Error ? error.message : String(error) };
+        return { id: request.id, ok: false, status, detail: failureReason(error) };
       }
     },
   };

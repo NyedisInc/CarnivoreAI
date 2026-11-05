@@ -15,6 +15,7 @@ from src.core.skills import kinds
 from src.core.skills.digest import CHUNK_BYTES, DigestEntry, digest_entries, mode_string
 from src.core.skills.member_names import unsafe_name_reason, unsafe_relpath_reason
 from src.core.skills.validate_types import (  # noqa: F401
+    is_script_member,
     ARCHIVE_INVALID,
     EXCLUDED_BASENAME_PREFIXES,
     EXCLUDED_BASENAMES,
@@ -229,20 +230,12 @@ def validate_archive(
                     f"header sizes sum over {limits.max_bytes} bytes at {raw_name!r}",
                 )
 
-            in_scripts_dir = relpath == SCRIPTS_DIR or relpath.startswith(
-                SCRIPTS_DIR + "/"
-            )
             executable = bool(member.mode & stat.S_IXUSR)
-            if not allow_scripts:
-                if in_scripts_dir:
-                    raise ArchiveRefused(
-                        SCRIPTS_NOT_SUPPORTED, f"{SCRIPTS_DIR}/ member: {raw_name!r}"
-                    )
-                if executable:
-                    raise ArchiveRefused(
-                        SCRIPTS_NOT_SUPPORTED, f"executable member: {raw_name!r}"
-                    )
-            if in_scripts_dir or executable:
+            is_script = is_script_member(relpath, executable)
+            if is_script and not allow_scripts:
+                what = f"{SCRIPTS_DIR}/ member" if is_script_member(relpath, False) else "executable member"
+                raise ArchiveRefused(SCRIPTS_NOT_SUPPORTED, f"{what}: {raw_name!r}")
+            if is_script:
                 scripts.append(relpath)
 
             hex_digest, read = _hash_member(

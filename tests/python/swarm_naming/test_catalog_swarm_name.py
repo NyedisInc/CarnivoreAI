@@ -15,6 +15,7 @@ PACK_MEANS_MACHINES = ("pack.", "projects.page.pack", "projects.page.action.pack
                        "drawer.stats.pack", "session.send.none", "warez.skills.tab.pack", "skills.pack.",
                        "notify.type.pack.skills.", "notify.copy.pack.skills.", "menubar.setup.joined",
                        "roster.",
+                       "pack_knock.", "notify.type.computer.knock.", "notify.copy.computer.knock.",
                        "skills.prov.consent_pack")
 ALPHA_IS_THE_LEAD = ("pack.machines.", "pack.work.", "app_alert.pack_skills.", "drawer.pack.alpha", "skills.pack.",
                      "notify.type.pack.skills.")

@@ -55,7 +55,7 @@ under the header with one scrolling box, a header row, a capped and centred colu
         drop area by its <code>data-drop</code> state, a faint cyan tint, deeper with a solid inner hairline under the pointer,
         Joe (ccsliinc), 2026-10-03; nothing is drawn refused); <code>ZoneItem.svelte</code> wraps one widget and, only in edit layout, draws
         its strip (<code>.dz-strip</code>: drag handle <code>[data-zone-handle]</code> (each strip key a base quiet <code>IconButton</code>, remove its close variant), name, look picker (a base <code>Segmented</code>),
-        up, down, remove); <code>zone-shell/PlacementBody.svelte</code> (<code>.dzc</code>) draws any other core widget's cell in the
+        up, down, remove); <code>zone-shell/PlacementBody.svelte</code> (<code>.dzc</code>; stacked cards, the compact usage card included, sit in <code>.dz-item</code> wrappers (<code>ZoneItem.svelte</code>), touch and share ONE hairline, the lower card giving up its top edge, #2779) draws any other core widget's cell in the
         same card look as <code>.ldp</code>; it is also the body of a bar slide-out (<code>.rail-body</code>) and of a pop-out window. Any one-copy widget drops here from the widget drawer's
         one list (no zone list since 2026-10-03, Joe (ccsliinc): "anything can be dropped anywhere"); its
         <code>looks</code> (compact, full) are chosen per instance.
@@ -492,7 +492,7 @@ under the header with one scrolling box, a header row, a capped and centred colu
         (<code>StageMark.svelte</code>, <code>.pp-stage</code>: submitted an empty square, in review a half filled one, approved a check, rejected a cross; hues muted, cyan, green, coral, the word beside the shape or in its aria label) and the check result shapes
         (<code>CheckMark.svelte</code>, <code>.pp-verdict</code>; <code>.d-mk</code> is the shape alone). A region of the page is a <code>Panel.svelte</code> (<code>.d-panel</code>): a title row strip with the label in the accent
         (<code>.d-panel__bar</code>, 32px; the next step wears <code>.d-panel__bar--primary</code>, 40px on the orange tint) over a body, 1px inset hairlines. A code, path, gate id or version wears <code>.pp-ident</code> so it never splits mid-word.
-        Spacing the scale lacks are the tokens of <code>web/src/opscenter/tokens.css</code> named for their pixels: <code>--oc-pp-space-1</code>, <code>--oc-pp-space-3</code>, <code>--oc-pp-space-5</code>, <code>--oc-pp-space-7</code>, <code>--oc-pp-space-9</code>, <code>--oc-pp-space-10</code>, <code>--oc-pp-space-11</code>, <code>--oc-pp-space-14</code>, <code>--oc-pp-space-18</code>, <code>--oc-pp-space-20</code>, <code>--oc-pp-space-22</code>, <code>--oc-pp-space-28</code>, <code>--oc-pp-space-40</code>, <code>--oc-pp-space-56</code>. The views (<code>PublishPage.svelte</code>, <code>ListColumn.svelte</code>, <code>DossierHead.svelte</code>,
+        Spacing the scale lacks are the tokens of <code>web/src/opscenter/tokens.css</code> named for their pixels: <code>--oc-pp-space-1</code>, <code>--oc-pp-space-3</code>, <code>--oc-pp-space-5</code>, <code>--oc-pp-space-7</code>, <code>--oc-pp-space-9</code>, <code>--oc-pp-space-10</code>, <code>--oc-pp-space-11</code>, <code>--oc-pp-space-14</code>, <code>--oc-pp-space-18</code>, <code>--oc-pp-space-20</code>, <code>--oc-pp-space-22</code>, <code>--oc-pp-space-28</code>, <code>--oc-pp-space-40</code>, <code>--oc-pp-space-56</code>. Only the publish page reads them (<code>tests/python/design_system/test_shells_on_base.py</code> holds it). The views (<code>PublishPage.svelte</code>, <code>ListColumn.svelte</code>, <code>DossierHead.svelte</code>,
         <code>NextStep.svelte</code>, <code>ItemPanels.svelte</code>, <code>SendWizard.svelte</code>, <code>ImageStep.svelte</code>, <code>ChecksView.svelte</code>, <code>LocalCheckView.svelte</code>, <code>SideColumn.svelte</code>, <code>StageView.svelte</code>,
         <code>ImageView.svelte</code>, <code>RulesView.svelte</code>, <code>EmptyPage.svelte</code>) are filled in by later slices of the same epic.</dd>
     <dt>publish page card and timeline</dt>
@@ -523,6 +523,10 @@ under the header with one scrolling box, a header row, a capped and centred colu
 <div class="sg-specimen">
     <div class="sg-specimen__label"><span>live</span><code>PluginsScreen.svelte</code><span>embedded, over a fixture adapter; its switches act on the fixture only</span></div>
     <div class="sg-specimen__body"><div id="sg-live-plugins-page"></div></div>
+</div>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>PluginsScreen.svelte</code><span><code>scope="features"</code>, the page Settings &gt; features embeds (#2723): the same rows worded as features, no store, no developer zone</span></div>
+    <div class="sg-specimen__body"><div id="sg-live-features-page"></div></div>
 </div>
 <div class="sg-specimen">
     <div class="sg-specimen__label"><span>live</span><code>WidgetsScreen.svelte</code><span>embedded, the real core widget manifests over the real adapter; switches and the activity log's settings act on memory only</span></div>
@@ -646,12 +650,30 @@ under the header with one scrolling box, a header row, a capped and centred colu
         <b>The size seg</b> (Alex, 2026-10-21, m3.1) is the base Segmented: one picked size, an undeclared size is disabled and says so in its tooltip.
         <b>The toggle</b> (m3.2) is the base Switch, labelled on or off. Every placement is one existing route and answers with a toast and an undo from the app's one toast surface
         (<code>undo-toast.ts</code>). Fits is advice: nothing is refused by the server. Sizes are shown by name, never as numbers.</dd>
+    <dt>settings tab</dt>
+    <dd>The widgets page has a second tab, <b>settings</b> (the page frame's <code>Tabs</code>; <code>#widgets/settings</code> opens it): the widget bars' chrome as strips of pictures
+        (<code>web/src/lib/widgets-page/settings/BarsSettings.svelte</code>). Each strip is one <code>role="radiogroup"</code> (<code>PictureStrip.svelte</code>, <code>.wp-strip</code>) of
+        <code>.wp-pic</code> radios, each drawing a miniature terminal layout at the real bar sizes (<code>BarPicture.svelte</code>, <code>.wp-mini</code>); the picked one wears the accent as its own border
+        and a filled mark, arrow keys move and apply. The bands are the base Card and the reset is the base danger Button. A pick applies at once, answers with the page's toast and an undo, and writes
+        one sparse leaf of <code>widget_bars</code>.
+        <b>The framed mock layout</b> (<code>MockLayout.svelte</code>, <code>.wp-mock</code>) is the picture the last two bands draw on: a 1px section hairline (<code>--wp-line-section</code>) and 8px of head
+        ground (<code>--wp-surface-head</code>) round a 1280x640 stage (<code>.wp-mock__stage</code>) scaled to the band, holding two terminal cells (<code>.wp-mock__cell</code>), each a title strip
+        (<code>.wp-mock__head</code>) over an EDGED BODY (<code>.wp-mock__body</code>, sample text in <code>.wp-mock__lines</code>). The frame sits outside the scale; the body counter-scales its border, inset and
+        type (<code>--wp-mock-k</code>, one over the scale) so they render at their design size at every width. Both tokens are derived from the theme with <code>color-mix</code>, so the frame follows every
+        theme; the proof is a test over every shipped theme. The bars in it are <code>MockBar.svelte</code> (<code>.wp-mockbar</code>, <code>.wp-key</code>), drawn from the real bar sizes.
+        <b>In this bar</b> (<code>BarsEditor.svelte</code>, <code>.wp-edit</code>): the user's real keys in the frame; select a key, then "move to" the other bar or "take out of" its own. There is no drag
+        (the drawer area's drag in edit layout is the one drag system). Under a coarse pointer a list of the same keys (<code>.wp-edit__keys</code>, base row buttons, 44px tall) sits under the frame and selects the same pick. <b>Try it</b> (<code>TryIt.svelte</code>, <code>.wp-try</code>): the same frame driven by the bars' own state table; hover an edge to peek,
+        press a key to open a sample panel, press the panel's thin edge (<code>.wp-try__pin</code>) to pin it (the accent line) or drag it to resize. It mounts the bars' real handle, pin icon and pinned-key badge.
+        <div class="sg-specimen">
+            <div class="sg-specimen__label"><span>live</span><code>MockLayout.svelte</code><span>the framed mock layout with a key selected, under the theme switcher</span></div>
+            <div class="sg-specimen__body" inert><div id="sg-live-mock-layout"></div></div>
+        </div></dd>
     <dt>how</dt>
     <dd>Each page is a <code>ManagerFrame</code> over its adapter (<code>web/src/lib/plugins-page/cplugs-adapter.ts</code>,
         <code>web/src/lib/widgets-page/widgets-adapter.ts</code>), mounted as an overlay by the shared
         <code>web/src/lib/manager-frame/overlay-host.ts</code>. The plugins adapter is <code>GET /api/v1/cplugs</code> and
         <code>PUT /api/v1/cplugs/{id}</code>, one kind of card with one switch, its own icon, tier and surface tags and its author (grid by default, list one click away); a plugin that is off contributes to no
-        surface, because the plugin host wraps every contribution in its switch. The widgets adapter is <code>GET /api/v1/widgets</code> and
+        surface, because the plugin host wraps every contribution in its switch. The Plugins page lists plugins (store and sideloaded items) only; the compiled-in items are features, listed by the same page in its <code>features</code> scope under Settings > features (<code>scope</code> prop of <code>PluginsScreen.svelte</code>). The widgets adapter is <code>GET /api/v1/widgets</code> and
         <code>PATCH /api/v1/item-settings/widget/{id}</code> with <code>{"enabled": false}</code>.</dd>
     <dt>facts</dt>
     <dd>A detail pane lists an item's facts as <code>dl.mgr-facts</code> (<code>manager-frame.css</code>): small tracked
@@ -667,6 +689,14 @@ under the header with one scrolling box, a header row, a capped and centred colu
         sideloaded count, and the two loaders at the right; the sandbox status shows only when it is not ok. The fold is a per-browser view
         state, closed by default. Drawn into the manager frame's <code>zone</code> slot, outside the scrolling list.
         <b>When to use:</b> controls for developers that browsing people do not need every day.</dd>
+    <dt>sideload list and consent sheet (#2540)</dt>
+    <dd>The developer zone lists every sideload (<code>SideloadKinds.svelte</code>, <code>.sideload-list</code>): a small uppercase kind label
+        (<code>.sideload-list__kind</code>: plugin, theme or skill; a sidecar plugin and a Claude Code plugin are both "plugin"), the name
+        (<code>.sideload-list__name</code>) and, for a theme, skill or Claude Code plugin, its source line with re-sync and remove
+        (<code>.sideload-list__actions</code>). A folder that runs code (hooks, MCP servers, scripts, a theme's script) answers with the
+        catalog's consent sheet, drawn by <code>SideloadConsent.svelte</code> (<code>.sideload-consent</code>, title strip, body, footer)
+        out of the catalog's own <code>InstallPreview</code>, <code>PluginFacts</code> and <code>ConsentScripts</code>: the tick unlocks the
+        load, and the digest it sends is the one the server named. <b>When to use:</b> only for a sideload; a catalog install keeps its own sheet.</dd>
     <dt>developer sideload's loud warning (#2541)</dt>
     <dd>Turning the sideload switch on (<code>SideloadSwitch.svelte</code>) opens <code>SideloadConfirm.svelte</code> every time: the shared
         <code>ModalShell</code> with the text prompt modal's head, the risk sentence as a danger strip, the base <code>Button</code> quiet
@@ -752,7 +782,7 @@ under the header with one scrolling box, a header row, a capped and centred colu
         (<code>.sf-matrix__label</code>, <code>.sf-matrix__words</code>, <code>.sf-matrix__hint</code>) and one bare
         <code>.oc-check</code> box per column in <code>.sf-matrix__cell</code>, spoken as "row, column". A LOCKED row draws a
         dim "always asks you" across the columns (<code>.sf-matrix__locked</code>) and has no box at all, so a thing the item
-        never does on its own can never be ticked. Hairlines between rows inside <code>.sf-matrix__frame</code>, never cards;
+        never does on its own can never be ticked. A row whose boxes have no effect right now (beast mode armed without permission prompts) carries a muted italic second line, <code>.sf-matrix__note</code>, under its hint. Hairlines between rows inside <code>.sf-matrix__frame</code>, never cards;
         each box is still one <code>PATCH</code> of one boolean key, so storage is unchanged. A row's <code>confirm</code>
         (cell key to catalog key) makes that box ASK before it is ticked: the question opens under the row
         (<code>.sf-matrix__ask</code>) in the danger token like the beast mode arm dialog's risk line
@@ -844,14 +874,17 @@ under the header with one scrolling box, a header row, a capped and centred colu
         delete is an error <code>State</code> with a count per kind and a move-to picker (<code>.lp-refusal</code>).
         #2669 adds three things. An agent that is not installed on this computer has its profile hidden from the list and the
         agent pickers (the API's per-profile <code>installed</code> flag; nothing is removed): a base <code>Checkbox</code>
-        "show hidden" with a dim <code>.lp-hint-line</code> in <code>.lp-hidden</code> brings them back, each marked by a warn
+        "show hidden" (<code>HiddenToggle.svelte</code>) with a dim <code>.lp-hint-line</code> in <code>.lp-hidden</code> brings them back, each marked by a warn
         <code>Tag</code>. The new-profile screen opens with <code>LaunchProfileExamples.svelte</code> (<code>.lp-examples</code>),
         a base <code>Fold</code> shut by default: hairline rows (<code>.lp-examples__row</code>) of a bold name, one dim line of words,
         the flags in mono (<code>.lp-examples__sets</code>) and a quiet small base <code>Button</code> that fills the form; the same
         component is the first-run launch profile step (<code>FirstRunProfiles.svelte</code>, there open, its button adds the profile).
         The agent type, model and permissions fields carry a one-line <code>help</code> / <code>.lp-hint</code> under them.
         <code>ImportProfileModal.svelte</code> (<code>.lp-import*</code>) is the two-step digest confirm on base
-        <code>Field</code>, <code>Checkbox</code>, <code>State</code> and <code>Button</code>.</dd>
+        <code>Field</code>, <code>Checkbox</code>, <code>State</code> and <code>Button</code>.
+        #2715: a stored profile that no longer validates is listed by <code>DisabledProfiles.svelte</code> (<code>.lp-off</code>)
+        under the list, base <code>List</code> rows with no button: its name and id, a warn <code>State</code> "profile disabled:
+        &lt;reason&gt;", and a dim line naming the profile standing in when it was the default.</dd>
     <dt>theme</dt>
     <dd>Every colour is an <code>--oc-*</code> token through the ledger's <code>--pl-*</code> aliases; focus is the shared rule.</dd>
 </dl>
@@ -893,6 +926,13 @@ under the header with one scrolling box, a header row, a capped and centred colu
         ticked.</dd>
     <dt>theme</dt>
     <dd>Every colour is an <code>--oc-*</code> token; focus is the shared <code>oc-focus-host</code> rule.</dd>
+    <dt>worktree</dt>
+    <dd><code>LaunchWorktree.svelte</code> (<code>.lwt</code>, <code>.lwt-label</code>, <code>.lwt-note</code>,
+        <code>.lwt-file</code>, <code>.lwt-error</code>; issue #2727) sits under the name field when the launch folder is a git
+        repository's top level on this computer: the box "start in a new git worktree", then the new branch (started from the
+        name), the from branch, and, from the repository's <code>.carnivore/worktree.json</code>, the setup box and the files to
+        copy. An unapproved or edited setup file shows its full text in the left-ruled <code>.lwt-file</code> with an "approve
+        setup" quiet button first; a secret-looking copy name starts unticked. The look copies <code>LaunchNamePin</code>.</dd>
 </dl>
 
 <h3 class="sg-h3" id="projects-shared">project marks and the project menu</h3>
@@ -909,9 +949,7 @@ under the header with one scrolling box, a header row, a capped and centred colu
         widget menu: <code>projects-shared/menu-nodes.ts</code> for a heading, <code>deepsearch/hit-menu.ts</code> for a hit,
         <code>automations/row-menu-nodes.ts</code> for an automation; a session row opens the drawer's own session menu
         (<code>projects-shared/session-menu-context.ts</code>). The one menu button a page keeps is the side panel head's
-        (<code>SessionKebab.svelte</code>, the same trigger <code>triggerSpec</code> (<code>web/src/lib/item-menu/row-context.ts</code>) builds, <code>.ph-kebab-host</code>), the menu of the SELECTED session. A group head row is <code>GroupHeader.svelte</code> (<code>.ph-ghead</code>: a
-        chevron that folds the group, the name in tracked capitals, a dim tally). A state's mark is <code>StateMark.svelte</code>
-        (<code>.ph-page</code> and <code>.ph-table</code>: a plugin panel tool window body's container and row column; <code>.ph-led</code>: a dot running, a ring sleeping, a square closed, a dashed square removed; <code>.ph-word</code> the word beside it).
+        (<code>SessionKebab.svelte</code>, the same trigger <code>triggerSpec</code> (<code>web/src/lib/item-menu/row-context.ts</code>) builds, <code>.ph-kebab-host</code>), the menu of the SELECTED session. The plugin panel tool window's parts are (<code>.ph-page</code> and <code>.ph-table</code>: a plugin panel tool window body's container and row column; <code>.ph-led</code>: a dot running, a ring sleeping, a square closed, a dashed square removed; <code>.ph-word</code> the word beside it).
         The small shared tags and tones (<code>.ph-tag</code>, <code>.ph-empty</code>, <code>.ph-sub</code>, <code>.ph-gone</code>,
         <code>.ph-hint</code>) are in <code>projects-shared.css</code>.</dd>
     <dt>reading pages</dt>
@@ -919,8 +957,9 @@ under the header with one scrolling box, a header row, a capped and centred colu
         the manager frame with <code>searchable={false}</code> (no search bar, a reading body), each in its own container
         through <code>DocsScreen.svelte</code> and <code>ChangelogScreen.svelte</code>; the keyboard shortcuts are the same component embedded in Settings, keyboard shortcuts.
         Documentation and changelog draw the help panel's own views (<code>HelpFeatures.svelte</code>,
-        <code>HelpReleases.svelte</code>); the shortcuts list is <code>key-bindings.ts</code>, read from the tables the
-        keys are acted on from, in <code>.info-keys</code> groups (a hairline between groups, mono keys).</dd>
+        <code>HelpReleases.svelte</code>); the shortcuts page is <code>KeymapScreen.svelte</code> (#2783), the registry in
+        <code>client/js/keymap/</code> drawn by category as base list rows with <code>Keycap.svelte</code> caps and a scope tag, found by name
+        in the frame's search or by pressing a shortcut.</dd>
     <dt>actions</dt>
     <dd>Only what a documented route backs: <code>web/src/lib/projects-shared/history-api.ts</code> names each.</dd>
     <dt>catalog keys</dt>

@@ -1,9 +1,10 @@
 import { ApiError } from '../../opscenter/api/auth.svelte';
 import { t } from '../i18n/index.svelte';
 import {
-  addBookmark, branchFrom, deleteBookmark, listBookmarks, listTurns, rewindTo,
-  type Bookmark, type Point, type Turn,
+  addBookmark, branchFrom, deleteBookmark, listBookmarks, listTurns, rewindFiles, rewindTo,
+  type Bookmark, type Point, type RewindMode, type Turn,
 } from './api';
+import { failureReason } from '../errors/failure-reason';
 
 export interface Notice {
   text: string;
@@ -11,7 +12,7 @@ export interface Notice {
 }
 
 function messageOf(error: unknown): string {
-  return error instanceof ApiError || error instanceof Error ? error.message : String(error);
+  return failureReason(error);
 }
 
 export class BookmarksPanelState {
@@ -23,6 +24,7 @@ export class BookmarksPanelState {
   family = $state<string | null>(null);
   loading = $state(true);
   armed = $state(false);
+  mode = $state<RewindMode>('conversation');
   busy = $state<string | null>(null);
   notice = $state<Notice | null>(null);
 
@@ -97,6 +99,7 @@ export class BookmarksPanelState {
 
   async rewind(point: Point): Promise<boolean> {
     if (!this.armed) return false;
+    if (this.mode !== 'conversation') return this.rewindFiles(point);
     let done = false;
     await this.run('rewind', async () => {
       const result = await rewindTo(this.rowId, point, this.armed);
@@ -105,6 +108,22 @@ export class BookmarksPanelState {
       await this.load();
       if (!result.ok) throw new Error(result.detail || t('bookmarks.rewind_failed'));
       return t(result.resumed_copy ? 'bookmarks.rewound' : 'bookmarks.rewound_other');
+    });
+    return done;
+  }
+
+  private async rewindFiles(point: Point): Promise<boolean> {
+    const mode = this.mode;
+    if (!('bookmarkId' in point) || mode === 'conversation') return false;
+    let done = false;
+    await this.run('rewind', async () => {
+      const result = await rewindFiles(point.bookmarkId, mode, this.armed);
+      done = result.files_restored || !!result.conversation;
+      this.armed = false;
+      await this.load();
+      if (!result.files_restored) throw new Error(t('bookmarks.files_not_restored', { why: result.why ?? '' }));
+      const counts = { changed: result.changed.length, created: result.created.length, deleted: result.deleted.length };
+      return t(mode === 'both' ? 'bookmarks.both_rewound' : 'bookmarks.files_rewound', counts);
     });
     return done;
   }

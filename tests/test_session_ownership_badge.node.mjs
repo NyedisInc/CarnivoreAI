@@ -325,6 +325,7 @@ await test('both surfaces render the same flag as the same badge', () => {
     assert.match(meta, /text: 'external'/);
     assert.ok(!meta.includes("created_by_cloude ? 'tmux' : 'external'"),
         'the old two-way ternary must not come back');
+    // the string catalog
     const catalog = read('client', 'js', 'i18n', 'catalog.en.js');
     assert.match(catalog, /'session\.badge\.tmux': 'tmux'/);
     assert.match(catalog, /'session\.badge\.external': 'external'/);

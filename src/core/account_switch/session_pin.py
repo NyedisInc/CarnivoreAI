@@ -11,7 +11,7 @@ from src.config.provider_accounts import ProviderAccount, profile_dir_for
 from src.core import config_writer
 from src.core.account_switch import auto_switch, shared_links
 from src.core.account_switch.active import PROVIDERS, find_account
-from src.core.provider_ledger import accounts_store, poller_scan
+from src.core.provider_ledger import accounts_store, poller_scan, relay_accounts
 
 logger = structlog.get_logger()
 
@@ -90,7 +90,16 @@ def all_accounts(config_path: Path) -> List[ProviderAccount]:
     return poller_scan.with_auto_default(accounts_store.list_accounts(config_path))
 
 
+def pin_fits(config_path: Path, account_id: str, family: str) -> bool:
+    account = find_account(all_accounts(config_path), account_id, family)
+    if account is not None:
+        return True
+    return family == PIN_PROVIDER and not any(a.id == account_id for a in all_accounts(config_path))
+
+
 def is_launchable(account: Optional[ProviderAccount]) -> bool:
+    if account is not None and account.provider == "codex":
+        return relay_accounts.is_codex_relay_account(account) and Path(profile_dir_for(account)).is_dir()
     if account is None or account.provider != PIN_PROVIDER:
         return False
     default = shared_links.is_default_profile(account.provider, profile_dir_for(account))
@@ -99,12 +108,12 @@ def is_launchable(account: Optional[ProviderAccount]) -> bool:
     return auto_switch._linkable(account)
 
 
-def launchable_accounts(config_path: Path) -> List[ProviderAccount]:
-    return [a for a in all_accounts(config_path) if is_launchable(a)]
+def launchable_accounts(config_path: Path, provider: str = PIN_PROVIDER) -> List[ProviderAccount]:
+    return [a for a in all_accounts(config_path) if a.provider == provider and is_launchable(a)]
 
 
-def require_launchable(config_path: Path, account_id: str) -> ProviderAccount:
-    account = find_account(all_accounts(config_path), account_id, PIN_PROVIDER)
+def require_launchable(config_path: Path, account_id: str, provider: str = PIN_PROVIDER) -> ProviderAccount:
+    account = find_account(all_accounts(config_path), account_id, provider)
     if account is None or not is_launchable(account):
         raise PinError("that account cannot start and resume this session")
     return account

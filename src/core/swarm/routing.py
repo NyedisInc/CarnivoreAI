@@ -122,21 +122,24 @@ def _join_target(conn: sqlite3.Connection, text: str) -> Optional[int]:
 
 
 def _create_or_join(conn: sqlite3.Connection, agent: Dict[str, Any], text: str, summary: Optional[str] = None,
-                    task: Optional[str] = None, *, joinable: bool = True) -> Dict[str, Any]:
+                    task: Optional[str] = None, *, joinable: bool = True, replaces: Optional[int] = None) -> Dict[str, Any]:
+    from src.core.swarm import question_close
+
     now = utc_now()
     path = json.dumps(author_path.path_for_agent(conn, agent))
     with transaction(conn):
+        replaced = question_close.withdraw_rows(conn, agent["id"], replaces) if replaces is not None else None
         target = _join_target(conn, text) if joinable else None
         if target is not None:
             conn.execute("INSERT OR IGNORE INTO swarm_question_askers (question_id, agent_id, asked_at, author_path) VALUES (?, ?, ?, ?)",
                          (target, agent["id"], now, path))
-            return {"question_id": target, "joined": True}
+            return {"question_id": target, "joined": True, "replaced": replaced}
         qid = int(conn.execute("INSERT INTO swarm_questions (text, state, created_at, summary, task) VALUES (?, 'routing', ?, ?, ?)",
                                (text, now, summary, task)).lastrowid)
         conn.execute("INSERT INTO swarm_question_fts (question_id, text) VALUES (?, ?)", (qid, text))
         conn.execute("INSERT INTO swarm_question_askers (question_id, agent_id, asked_at, author_path) VALUES (?, ?, ?, ?)",
                      (qid, agent["id"], now, path))
-    return {"question_id": qid, "joined": False}
+    return {"question_id": qid, "joined": False, "replaced": replaced}
 
 
 def _question_text(args: Dict[str, Any]) -> str:
@@ -200,6 +203,13 @@ async def ask(view: Any, caller: AgentCaller, args: Dict[str, Any]) -> Dict[str,
     if port is None:
         raise QuestionRefused("the huddle plugin is off, so a question has nowhere to go")
     form = args.get("questions")
+    from src.core.swarm import question_close
+
+    if form is None and (listed := question_close.list_refusal(text)):
+        raise QuestionRefused(listed)
+    replaces = args.get("replaces")
+    if replaces is not None:
+        replaces = question_close.question_id_arg(replaces, "replaces")
     if form is not None:
         try:
             flat = await port.check_form(form)
@@ -208,7 +218,9 @@ async def ask(view: Any, caller: AgentCaller, args: Dict[str, Any]) -> Dict[str,
             raise QuestionRefused(str(exc)) from None
         text = f"{text}\n\n{flat}"
     try:
-        made = await body.run_db(lambda c: _create_or_join(c, agent, text, summary, task, joinable=form is None))
+        made = await body.run_db(lambda c: _create_or_join(c, agent, text, summary, task, joinable=form is None, replaces=replaces))
+        if made["replaced"] and made["replaced"]["closed"]:
+            await question_close.close_card(made["replaced"]["card_ref"], replaces)
         if form is not None:
             await _stage_form(port, made["question_id"], form)
         if not made["joined"]:
@@ -220,7 +232,8 @@ async def ask(view: Any, caller: AgentCaller, args: Dict[str, Any]) -> Dict[str,
         raise QuestionRefused("the question could not be saved; try again") from None
     await asyncio.to_thread(push.notify_agent, agent["id"])
     logger.info("swarm_asked", question_id=made["question_id"], agent_id=agent["id"], joined=made["joined"])
-    return {"question_id": made["question_id"], "state": state, "joined": made["joined"]}
+    return {"question_id": made["question_id"], "state": state, "joined": made["joined"],
+            **({"replaced": replaces} if replaces is not None else {})}
 
 
 async def _stage_form(port: Any, question_id: int, form: Any) -> None:

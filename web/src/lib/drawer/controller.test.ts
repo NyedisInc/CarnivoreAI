@@ -117,7 +117,9 @@ describe('a row pick shows at once (from test_sidebar_immediate_selection)', () 
         win.CloudeTerminal = { SCROLLBACK_ROWS: 5000 };
         win.App = {};
         win.SessionHeaderLed = { beginRequest() {}, update() {} };
-        win.alert = (x: unknown) => alerts.push(x);
+        win.alert = () => { throw new Error('a row pick must not call alert()'); };
+        const report = (key: string) => { alerts.push(key); return true; };
+        win.WriteFailureNotice = { reportKey: report, notify: report, tr: (key: string) => key };
         delete win.CloudeWeb;
         const ctrl = new SessionSidebarController();
         win.SessionSidebar = ctrl;
@@ -356,13 +358,3 @@ describe('the last main view record (#1542)', () => {
     });
 });
 
-describe('forceRefresh repaints past an unchanged poll signature', () => {
-    it('clears the signature, then re-reads once', async () => {
-        const ctrl = new SessionSidebarController();
-        ctrl._lastSig = 'same';
-        const seen: Array<string | null> = [];
-        ctrl._fetchAndRender = async () => { seen.push(ctrl._lastSig); };
-        await ctrl.forceRefresh();
-        assert.deepEqual(seen, [null]);
-    });
-});

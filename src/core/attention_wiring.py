@@ -14,11 +14,13 @@ from src.core.attention.side_effects import AttentionSideEffects
 from src.core.attention.watcher import DEFAULT_TICK_SECONDS, AttentionWatcher
 from src.core.attention.wiring_builders import (
     ObservationHooks,
+    ObservationMemos,
     build_inbox,
     make_announce_rename,
     make_fresh_evidence,
     make_list_targets,
     make_on_observation,
+    make_on_pass_end,
     make_raise_toast,
     make_read_policy,
 )
@@ -29,6 +31,7 @@ from src.core.attention_reader import AttentionEvidenceReader
 from src.core.beast_prompts.wiring import build_engine as build_beast_prompts
 from src.core.notifications.sources.died import DiedTracker
 from src.core.pipeline.feed import LiveFeed
+from src.core.session_output import escape_notices
 from src.core.skill_watch.wiring import attach_tripwire, make_notice_raiser
 from src.models import ToastAckMessage
 
@@ -44,6 +47,7 @@ def build_attention_watcher(
     idle_clock: Optional[Any] = None,
 ) -> AttentionWatcher:
     send = _sync_sender(broadcast)
+    escape_notices.NOTICES.attach(manager, app_state, send)
     effects = AttentionSideEffects(
         manager,
         broadcast_toast_ack=lambda session_id, toast_id: send(
@@ -75,6 +79,7 @@ def build_attention_watcher(
 
     policy_store = getattr(manager, "_notification_policy_store", None)
 
+    memos = ObservationMemos()
     watcher = AttentionWatcher(
         list_targets=list_targets,
         read_evidence=read_evidence,
@@ -84,7 +89,8 @@ def build_attention_watcher(
         on_busy_edge=effects.on_busy_edge,
         on_done_edge=effects.on_done_edge,
         on_transition=hooks.history.on_transition,
-        on_observation=make_on_observation(manager, app_state, effects, hooks, idle_clock),
+        on_observation=make_on_observation(manager, app_state, effects, hooks, idle_clock, memos),
+        on_pass_end=make_on_pass_end(manager, hooks, memos),
         read_policy=make_read_policy(manager) if policy_store is not None else None,
         ledger=ledger,
         tick_seconds=tick_seconds,

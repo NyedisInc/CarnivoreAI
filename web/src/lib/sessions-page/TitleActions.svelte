@@ -2,6 +2,7 @@
 <script lang="ts">
     import IconButton from '../base/IconButton.svelte';
     import type { Translate } from '../sessions/types';
+    import { openWorktreeCleanup } from '../worktree-cleanup/open';
 
     interface Props {
         onNewProject: () => void;
@@ -20,12 +21,14 @@
     const companyName = $derived(t('sessions.page.act.new_company'));
     const sessionName = $derived(t('sessions.page.act.new_session'));
     const hiddenName = $derived(t('sessions.page.act.show_hidden'));
+    const cleanupName = $derived(t('sessions.page.act.clean_worktrees'));
 </script>
 
 <div class="sp-acts">
     <IconButton data-act="new-project" label={projectName} icon="folder-plus" iconSize={14} onclick={onNewProject} />
     <IconButton data-act="new-company" label={companyName} icon="library" iconSize={14} onclick={onNewCompany} />
     <IconButton data-act="new-session" label={sessionName} icon="plus" iconSize={14} onclick={onNewSession} />
+    <IconButton data-act="clean-worktrees" label={cleanupName} icon="branch" iconSize={14} onclick={() => void openWorktreeCleanup({ finishedOnly: true })} />
     <IconButton data-act="show-hidden" label={hiddenName} icon={showHidden ? 'eye' : 'eye-off'} iconSize={14} pressed={showHidden} onclick={onToggleHidden} />
     {#if showFold}
         <IconButton data-act="fold-all" label={foldName} icon={allOpen ? 'shrink' : 'expand'} iconSize={14} onclick={onToggleAll} />

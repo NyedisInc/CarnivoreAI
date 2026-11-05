@@ -3,7 +3,7 @@
     display: none;
 }
 
-body:has(#terminal-screen.active) #sessionNotesBtn {
+body.ps-terminal-active #sessionNotesBtn {
     display: flex;
 }
 

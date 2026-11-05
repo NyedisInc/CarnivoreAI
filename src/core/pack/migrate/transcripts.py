@@ -12,6 +12,7 @@ import structlog
 
 from src.core.claude_project_dirs import path_spellings
 from src.core.claude_transcript_correlate import slugify_project_dir
+from src.core.session_token_usage.transcript_absence import forget_all
 from src.core.project_move.claude_side import files_under, transcript_roots
 
 logger = structlog.get_logger()
@@ -126,6 +127,13 @@ def drop_backups(folder: Path, rels: Iterable[str]) -> None:
 
 
 def unpack(archive: str, target_root: str, projects_root: Optional[Path] = None) -> Tuple[List[str], List[str], List[str]]:
+    try:
+        return _unpack(archive, target_root, projects_root)
+    finally:
+        forget_all()
+
+
+def _unpack(archive: str, target_root: str, projects_root: Optional[Path]) -> Tuple[List[str], List[str], List[str]]:
     dest = target_folder(target_root, projects_root)
     with tarfile.open(archive, mode="r:gz") as tar:
         members = tar.getmembers()

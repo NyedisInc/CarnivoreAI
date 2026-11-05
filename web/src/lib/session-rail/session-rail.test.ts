@@ -319,7 +319,7 @@ describe('edit layout owns the rails', () => {
     expect(railDrag.state.index).toBeNull();
     expect(railDrags.bottom.state.index).toBe(1);
     card.dispatchEvent(ptr('pointerup', 100, 718));
-    expect(landed).toEqual([{ area: 'rail', edge: 'bottom', spot: { section: 0, index: 1, split: null }, moves: null }]);
+    expect(landed).toEqual([{ area: 'rail', edge: 'bottom', spot: { section: 0, index: 1, split: false }, moves: null }]);
     card.remove();
   });
 });
@@ -327,7 +327,7 @@ describe('edit layout owns the rails', () => {
 describe('the rails hold more than the drawer area and one widget in one rail', () => {
   test('placing a widget in one rail takes it out of the other', () => {
     follow(RAIL_FIELD, { v: 1, items: [{ widget: 'core.changes' }, { widget: 'core.files' }] });
-    expect(placeInRail('bottom', 'core.files', { section: 0, index: 0, split: null })).toBe(true);
+    expect(placeInRail('bottom', 'core.files', { section: 0, index: 0, split: false })).toBe(true);
     flushSync();
     expect(keys()).toEqual(['core.changes']);
     expect(bottomKeys()).toEqual(['core.files', 'core.shell', 'core.scheduled-tasks']);

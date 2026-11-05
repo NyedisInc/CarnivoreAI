@@ -235,10 +235,39 @@ function finish(): void {
     repaint();
 }
 
-function focusHeading(key: string): void {
+export function focusHeading(key: string): void {
     const list = listElement();
     const button = list?.querySelector<HTMLElement>(`[data-group-toggle="${key}"]`);
     button?.focus();
+}
+
+function wrapperOf(id: SectionId): HTMLElement | null {
+    const list = listElement();
+    return list ? wrappers(list).find((el) => el.getAttribute(SECTION_ATTR) === id) ?? null : null;
+}
+
+export function canStepSection(id: SectionId, delta: -1 | 1): boolean {
+    const list = listElement();
+    return !!list && stepSection(resolveSectionOrder(arrangement().sections), visibleSections(list), id, delta) !== null;
+}
+
+export function stepSectionBy(id: SectionId, delta: -1 | 1, key: string): boolean {
+    const list = listElement();
+    const wrap = wrapperOf(id);
+    if (!list || !wrap) return false;
+    const name = labelOf(wrap);
+    const visible = visibleSections(list);
+    const next = stepSection(resolveSectionOrder(arrangement().sections), visible, id, delta);
+    if (!next) {
+        announce(t(delta < 0 ? 'sidebar.row.move.top_of_list' : 'sidebar.row.move.bottom_of_list', { name }));
+        return false;
+    }
+    saveSectionOrder(next);
+    repaint();
+    focusHeading(key);
+    const shown = next.filter((x) => visible.indexOf(x) !== -1);
+    announce(t('sidebar.row.move.moved', { name, position: shown.indexOf(id) + 1, total: shown.length }));
+    return true;
 }
 
 export function onSectionKeydown(e: KeyboardEvent, row: Element): boolean {
@@ -270,17 +299,6 @@ export function onSectionKeydown(e: KeyboardEvent, row: Element): boolean {
         });
         return true;
     }
-    const order = resolveSectionOrder(arrangement().sections);
-    const visible = visibleSections(list);
-    const next = stepSection(order, visible, id, delta);
-    if (!next) {
-        announce(t(delta < 0 ? 'sidebar.row.move.top_of_list' : 'sidebar.row.move.bottom_of_list', { name }));
-        return true;
-    }
-    saveSectionOrder(next);
-    repaint();
-    focusHeading(key);
-    const shown = next.filter((x) => visible.indexOf(x) !== -1);
-    announce(t('sidebar.row.move.moved', { name, position: shown.indexOf(id) + 1, total: shown.length }));
+    stepSectionBy(id, delta, key);
     return true;
 }

@@ -1,5 +1,6 @@
 
 <script lang="ts">
+    import { failureReason } from '../errors/failure-reason';
     import Button from '../base/Button.svelte';
     import { untrack } from 'svelte';
     import { subscribe } from '../../opscenter/api/events.svelte';
@@ -93,7 +94,7 @@
             await panel.resume(conversationId);
             resumeNotice = { text: t('sessions.page.panel.conv.resumed'), error: false };
         } catch (error) {
-            resumeNotice = { text: error instanceof Error ? error.message : String(error), error: true };
+            resumeNotice = { text: failureReason(error), error: true };
         }
     }
 

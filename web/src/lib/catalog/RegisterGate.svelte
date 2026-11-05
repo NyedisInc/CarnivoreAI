@@ -1,6 +1,6 @@
 
 <script lang="ts">
-    import ModalShell from '../launchpad/ModalShell.svelte';
+    import ModalShell from '../dialog-frame/ModalShell.svelte';
     import type { Translate } from '../sessions/types';
     import type { PublishHost } from './publish';
     import RegisterDialog from './RegisterDialog.svelte';

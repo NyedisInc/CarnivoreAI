@@ -16,7 +16,7 @@ from src.config import settings
 from src.core.computers import direction
 from src.core.db_reuse.kept_read import hot_read
 from src.core.pack.machines import runtime as machines_runtime
-from src.core.pack.relay import runtime as relay_runtime, targets
+from src.core.pack.relay import ledger_sync_store, runtime as relay_runtime, targets
 from src.core.provider_ledger import accounts_store
 
 router = APIRouter(prefix="/pack/relay", tags=["pack-relay"], dependencies=[Depends(require_auth)])
@@ -30,12 +30,16 @@ class RelayBody(BaseModel):
     machines: List[str] = Field(max_length=32)
 
 
-def _claude_account_ids() -> List[str]:
+def _account_providers() -> Dict[str, str]:
     try:
         rows = accounts_store.list_accounts(Path(settings.auth_config_file).expanduser())
     except (OSError, ValueError):
-        return []
-    return [a.id for a in rows if a.provider == "claude"]
+        return {}
+    return {a.id: a.provider for a in rows if a.provider in ("claude", "codex")}
+
+
+def _claude_account_ids() -> List[str]:
+    return list(_account_providers())
 
 
 def _stored_targets(conn: sqlite3.Connection) -> Tuple[Dict[str, List[Dict[str, object]]], FrozenSet[str]]:
@@ -57,9 +61,9 @@ def _read() -> Dict[str, Any]:
     return {"accounts": out, "default_on": defaults}
 
 
-def _write(account: str, install_ids: List[str], sender_install_id: str) -> List[str]:
+def _write(account: str, install_ids: List[str], sender_install_id: str, provider: str = "claude") -> List[str]:
     with closing(open_db()) as conn:
-        return targets.set_machines(conn, account, install_ids, sender_install_id)
+        return targets.set_machines(conn, account, install_ids, sender_install_id, provider)
 
 
 @router.get("")
@@ -70,9 +74,10 @@ async def get_relay() -> Dict[str, Any]:
 
 @router.put("/{account}")
 async def put_relay(account: str, body: RelayBody, request: Request) -> Dict[str, Any]:
-    """Set exactly which machines mirror this Claude account (none switches it off). 404 for an unknown account or machine."""
-    if account not in await asyncio.to_thread(_claude_account_ids):
-        raise HTTPException(404, {"code": "account_unknown", "detail": "no Claude account here has that id"})
+    """Set exactly which machines mirror this Claude or Codex account (none switches it off). 404 for an unknown account or machine."""
+    provider = (await asyncio.to_thread(_account_providers)).get(account)
+    if provider is None:
+        raise HTTPException(404, {"code": "account_unknown", "detail": "no Claude or Codex account here has that id"})
     install_ids: List[str] = []
     wired = machines_runtime.wiring()
     if body.machines:
@@ -87,7 +92,9 @@ async def put_relay(account: str, body: RelayBody, request: Request) -> Dict[str
             if direction.contained(found):
                 raise HTTPException(409, {"code": direction.REFUSAL_CODE, "detail": "that computer is set to one way and receives no credentials"})
             install_ids.append(found)
-    dropped = await asyncio.to_thread(_write, account, install_ids, wired.runtime.install_id if wired is not None else "")
+    dropped = await asyncio.to_thread(_write, account, install_ids, wired.runtime.install_id if wired is not None else "", provider)
     if dropped and relay_runtime.RELAY is not None:
-        await relay_runtime.RELAY.revoke(account, dropped)
+        await relay_runtime.RELAY.revoke(account, dropped, provider)
+        for iid in dropped:
+            await asyncio.to_thread(ledger_sync_store.forget, iid, provider, account)
     return await asyncio.to_thread(_read)

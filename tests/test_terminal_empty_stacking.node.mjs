@@ -41,7 +41,7 @@ test('the terminal container is not a stacking context', () => {
 
 test('the empty state hides the phone key bar', () => {
     const sheet = read('client/css/terminal-empty.css').replace(/\/\*[\s\S]*?\*\//g, '');
-    const rule = /body:has\(#terminal-screen\.terminal-screen--empty\.active\)\s*:is\(([^)]*)\)\s*\{([^}]*)\}/.exec(sheet);
+    const rule = /body\.ps-terminal-empty-active\.ps-terminal-active\s*:is\(([^)]*)\)\s*\{([^}]*)\}/.exec(sheet);
     assert.ok(rule, 'no empty-state hide rule');
     assert.match(rule[1], /#terminal-key-bar\b/);
     assert.match(rule[2], /display:\s*none/);

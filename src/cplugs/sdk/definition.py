@@ -84,6 +84,7 @@ class CplugDefinition:
     on_start: Optional[LifecycleHook] = None
     on_stop: Optional[LifecycleHook] = None
     on_settings: Optional[LifecycleHook] = None
+    before_purge: Optional[LifecycleHook] = None
     settings_check: Optional[SettingsCheck] = None
 
     @property

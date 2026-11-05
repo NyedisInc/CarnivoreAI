@@ -36,6 +36,10 @@ export interface SessionSubagents {
     as_of: string | null;
 }
 
+export function measuredRows(payload: SessionSubagents): SubagentRow[] | null {
+    return payload.state === 'unchecked' ? null : payload.subagents;
+}
+
 export function fetchSubagents(sessionId: string): Promise<SessionSubagents> {
     return authFetch<SessionSubagents>(`/sessions/${encodeURIComponent(sessionId)}/subagents`);
 }

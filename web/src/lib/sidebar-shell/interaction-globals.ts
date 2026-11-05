@@ -55,7 +55,7 @@ export interface HeadingApi {
 }
 
 export interface DrawerController {
-    _rows?: SidebarRow[];
+    rows?<T = SidebarRow>(): readonly T[];
     repaint?(): void;
     _fetchAndRender?(): Promise<void>;
 }
@@ -71,12 +71,6 @@ export interface HeadingGlobals {
     };
     WriteFailureNotice?: { report?(text: string): void };
     API?: HeadingApi;
-    App?: {
-        showConfirmModal(
-            title: string, message: string, detail: string,
-            confirm: string, cancel: string, variant: string,
-        ): Promise<boolean>;
-    };
     CloudeWeb?: {
         openBlueprintsScreen?(): void;
         layouts?: {

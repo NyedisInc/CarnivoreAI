@@ -145,9 +145,10 @@ def test_only_the_owner_login_decides(env):
 
 
 def test_no_tool_plugin_or_peer_path_can_decide():
-    decide = re.compile(r"(?:store|get_store\(\))\.(approve|deny|execute_claimed|claim_for_beast|deny_for_caller)\(")
+    decide = re.compile(r"(?:store|get_store\(\))\.(approve|deny|execute_claimed|claim_for_beast|deny_for_caller|withdraw)\(")
     allowed = {"src/api/agent_action_routes.py", "src/api/mcp_admin_routes.py", "src/core/mcp/beast_mode.py",
-               "src/core/mcp/pending.py"}
+               "src/core/mcp/pending.py",
+               "src/cplugs/host/session_create_port.py"}
     callers = {str(p.relative_to(ROOT)) for p in (ROOT / "src").rglob("*.py") if decide.search(p.read_text())}
     assert callers and callers <= allowed, sorted(callers - allowed)
     assert not (ROOT / "src/cplugs/sdk/approvals.py").exists()

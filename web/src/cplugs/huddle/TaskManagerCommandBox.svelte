@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { t } from '../sdk';
+  import { copyToClipboard, t } from '../sdk';
   import { Icon } from '../sdk/ui';
-  import { copyToClipboard } from './task-manager-copy';
 
   let { text, copyText = undefined, lang = '' }: { text: string; copyText?: string; lang?: string } = $props();
 

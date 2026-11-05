@@ -211,7 +211,10 @@ describe('a remote row (test_session_row_menu_host_gate)', () => {
         };
         win.SessionRestartOptions = { recreateTarget: () => 'local-uuid' };
         win.API = { respawnSession: async (target: string) => { calls.respawned.push(target); return { ok: false, detail: 'x' }; } };
-        win.Router = { showError: (m: unknown) => calls.alerts.push(m) };
+        win.alert = () => { throw new Error('the restart flow must not call alert()'); };
+        const report = (key: string) => { calls.alerts.push(key); return true; };
+        // the real module's shape: notify and tr beside reportKey
+        win.WriteFailureNotice = { reportKey: report, notify: report, tr: (key: string) => key };
         if (!win.CSS || typeof win.CSS.escape !== 'function') win.CSS = { ...(win.CSS || {}), escape: (v: string) => String(v) };
         const key = win.SessionKey;
         if (!withKey) delete win.SessionKey;
@@ -237,8 +240,7 @@ describe('a remote row (test_session_row_menu_host_gate)', () => {
         const calls = await restartWith('studio', false);
         expect(calls.opened).toEqual([]);
         expect(calls.respawned).toEqual([]);
-        expect(calls.alerts).toHaveLength(1);
-        expect(String(calls.alerts[0])).toContain('cloude_api');
+        expect(calls.alerts).toEqual(['session.restart.keys_missing']);
     });
 });
 

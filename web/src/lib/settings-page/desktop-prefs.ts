@@ -17,7 +17,7 @@ export interface DesktopPrefValues {
 export type DesktopPrefField = keyof DesktopPrefValues;
 
 export const DESKTOP_PREF_DEFAULTS: Readonly<DesktopPrefValues> = {
-    desktop_banners: false,
+    desktop_banners: true,
     desktop_banner_hide_command: false,
     desktop_notify_asks_only: false,
     desktop_hotkey: 'Ctrl+Option+Cmd+C',

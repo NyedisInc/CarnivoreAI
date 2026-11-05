@@ -33,12 +33,11 @@ import argparse
 import datetime
 import hashlib
 import json
-import struct
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
+from scripts.widgets.common import PNG_SIGNATURE, key_slug, page_height, png_dimensions, source_revision
 from scripts.widgets.harness import (CHROMIUM_ARGS, REPO, HarnessError, build_if_stale, catalog, junk_findings, open_widget,
                                      serve, shoot)
 
@@ -51,7 +50,6 @@ SIDEBAR_DENSITIES = ("compact", "cozy", "detailed")
 SIDEBAR_WINDOW = {"width": 1440, "height": 800}
 DEFAULT_OUT = REPO / "build" / "widget-lab"
 MENU_SELECTOR = '[role="menu"]:popover-open'
-PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 PNG_END = b"IEND\xaeB`\x82"
 READABLE_TEXT_LIMIT = 2000
 
@@ -80,14 +78,6 @@ def parse(argv: list[str]) -> argparse.Namespace:
     return ap.parse_args(argv)
 
 
-def source_revision() -> dict[str, Any]:
-    def git(*args: str) -> str:
-        done = subprocess.run(["git", *args], cwd=REPO, capture_output=True, text=True, timeout=30)
-        return done.stdout.strip() if done.returncode == 0 else ""
-
-    return {"sha": git("rev-parse", "HEAD"), "dirty": bool(git("status", "--porcelain", "--", "web/src", "src", "client"))}
-
-
 def sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
@@ -98,16 +88,16 @@ def png_size(path: Path) -> tuple[int, int]:
     data = path.read_bytes()
     if not data.startswith(PNG_SIGNATURE) or not data.endswith(PNG_END):
         raise CaptureFailed("the screenshot is not a complete png")
-    width, height = struct.unpack(">II", data[16:24])
-    if width < 1 or height < 1:
+    dims = png_dimensions(data)
+    if dims is None or min(dims) < 1:
         raise CaptureFailed("the screenshot has no pixels")
-    return width, height
+    return dims
 
 
 def stem_for(args: argparse.Namespace) -> str:
     scenario = "-scenario" if args.scenario_file else ""
     sidebar = f"-sidebar-{args.width}-{'folded' if args.folded else 'open'}-{args.area}-{args.density}" if args.sidebar else ""
-    return f"{args.widget.replace(':', '--')}-{args.host}-{args.size}{sidebar}-{args.theme}-{args.fixture}{scenario}-{args.state}"
+    return f"{key_slug(args.widget)}-{args.host}-{args.size}{sidebar}-{args.theme}-{args.fixture}{scenario}-{args.state}"
 
 
 def find_size(widgets: list[dict], widget: str, host: str, size: str) -> dict:
@@ -143,7 +133,7 @@ def clip_box(page: Any, with_menu: bool) -> dict[str, float]:
 
 def draw_and_shoot(page: Any, base: str, args: argparse.Namespace, size: dict, png: Path, scenario: str | None) -> dict[str, Any]:
     sidebar = args.sidebar
-    page.set_viewport_size(SIDEBAR_WINDOW if sidebar else {"width": size["viewport"], "height": 1100 if size["viewport"] > 500 else 844})
+    page.set_viewport_size(SIDEBAR_WINDOW if sidebar else {"width": size["viewport"], "height": page_height(size["viewport"])})
     first = {"zone": args.host, "size": args.size, "theme": args.theme}
     extra = {"state": "menu"} if args.state == "menu" else {}
     if sidebar:
@@ -193,7 +183,7 @@ def capture(args: argparse.Namespace) -> dict[str, Any]:
     for stale in (png, png.with_suffix(".json")):
         stale.unlink(missing_ok=True)
     meta: dict[str, Any] = {"widget": args.widget, "host": args.host, "theme": args.theme, "state": args.state,
-                            "size": {"name": args.size}, "source_revision": source_revision(),
+                            "size": {"name": args.size}, "source_revision": source_revision(REPO),
                             "captured_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
                             "fixture": {"kind": args.fixture, "scenario": scenario is not None, "hash": ""}, "failures": []}
     try:

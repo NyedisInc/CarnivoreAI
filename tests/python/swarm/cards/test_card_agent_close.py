@@ -91,7 +91,7 @@ def test_finish_routes_by_needs_owner_and_close_is_scoped_to_the_closers_project
     owners = asyncio.run(ops.create(None, None, {"title": "owner task", "project_id": 16, "queued": True}, by="owner"))["id"]
     asyncio.run(card_port.get().act("deal", owners, {"agent_id": 9}, "owner"))
     asyncio.run(ops.start(None, owners, {}, by=WORKER))
-    assert finish(owners, needs_owner=False)["column"] == "review"
+    assert finish(owners, needs_owner=False)["column"] == "done"
 
 
 def card_port_column(card_id: int) -> str:

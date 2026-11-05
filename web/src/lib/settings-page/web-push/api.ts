@@ -8,6 +8,7 @@ export interface PushSubscriptionRow {
     readonly device_id: string | null;
     readonly created_at: string | null;
     readonly last_result: { readonly status: number; readonly at: string } | null;
+    readonly app_too?: boolean;
 }
 
 export interface PushEnvironment {

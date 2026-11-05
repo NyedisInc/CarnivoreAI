@@ -4,13 +4,16 @@
     import { onMount } from 'svelte';
     import { fly } from 'svelte/transition';
     import Icon from '../../opscenter/ui/Icon.svelte';
+    import IconButton from '../base/IconButton.svelte';
     import { t as appT } from '../i18n/index.svelte';
     import type { Translate } from '../sessions/types';
     import AgentChatFrame from '../../cplugs/huddle/agents/AgentChatFrame.svelte';
     import { openAgentTerminal } from '../../cplugs/huddle/agents/agent-terminal';
     import { addAgentWidget, beginAgentBarDrag, popOutAgent } from './agent-dock';
+    import { phoneView } from '../drawer/phone-view.svelte';
     import {
-        AGENT_DRAWER_MAX_PX, AGENT_DRAWER_MIN_PX, agentDrawer, closeAgentDrawer, dockBesideTerminal, drawerAnchorLeft, drawerWidth, resetDrawerWidth, setDrawerWidth, widthFromPointer,
+        AGENT_DRAWER_MAX_PX, AGENT_DRAWER_MIN_PX, PHONE_LOCK_CLASS, agentDrawer, closeAgentDrawer, dockBesideTerminal, drawerAnchorLeft, drawerWidth, isEdgeSwipeBack,
+        phoneFrame, resetDrawerWidth, setDrawerWidth, widthFromPointer, type PhoneFrame,
     } from './agent-drawer.svelte';
 
     interface Props {
@@ -20,9 +23,11 @@
     const { t = appT }: Props = $props();
 
     const width = $derived(drawerWidth());
+    const phone = $derived(phoneView());
+    let frame = $state<PhoneFrame | null>(null);
     let dragging = false;
     const slide = $derived({
-        x: -width,
+        x: phone ? (typeof window === 'undefined' ? 0 : window.innerWidth) : -width,
         duration: typeof Element === 'undefined' || typeof Element.prototype.animate !== 'function' || motionReduced() ? 0 : 180,
     });
     let opener: HTMLElement | null = null;
@@ -71,6 +76,43 @@
     $effect(() => {
         dockBesideTerminal(agentDrawer.id !== null, width);
     });
+
+    $effect(() => {
+        if (!phone || agentDrawer.id === null) {
+            frame = null;
+            return;
+        }
+        const fit = (): void => {
+            frame = phoneFrame();
+        };
+        fit();
+        const root = document.documentElement;
+        root.classList.add(PHONE_LOCK_CLASS);
+        const drawerPanel = document.getElementById('session-sidebar-panel');
+        drawerPanel?.style.setProperty('--sidebar-dock-w', '100vw');
+        const vv = window.visualViewport;
+        vv?.addEventListener('resize', fit);
+        vv?.addEventListener('scroll', fit);
+        window.addEventListener('resize', fit);
+        return () => {
+            root.classList.remove(PHONE_LOCK_CLASS);
+            drawerPanel?.style.removeProperty('--sidebar-dock-w');
+            vv?.removeEventListener('resize', fit);
+            vv?.removeEventListener('scroll', fit);
+            window.removeEventListener('resize', fit);
+        };
+    });
+
+    let swipeFrom: { x: number; y: number } | null = null;
+
+    function swipeDown(event: PointerEvent): void {
+        swipeFrom = phone && event.pointerType === 'touch' ? { x: event.clientX, y: event.clientY } : null;
+    }
+
+    function swipeUp(event: PointerEvent): void {
+        if (swipeFrom && frame && isEdgeSwipeBack(swipeFrom, { x: event.clientX, y: event.clientY }, frame.left)) closeWithFocus();
+        swipeFrom = null;
+    }
 
     onMount(() => {
         const redock = (): void => {
@@ -122,18 +164,31 @@
     }
 </script>
 
+{#snippet close()}
+    <button type="button" class="oc-ibtn oc-ibtn--bare had-close" data-agent-drawer-close aria-label={t('cplug.huddle.swarm.drawer.close')}
+            onclick={closeWithFocus}><Icon name="close" size={12} /></button>
+{/snippet}
+
+
+{#snippet back()}
+    <span class="had-back"><IconButton label={t('cplug.huddle.swarm.drawer.back')} icon="back" iconSize={16} variant="quiet" data-agent-drawer-back
+                                       onclick={closeWithFocus} /></span>
+{/snippet}
+
 {#if agentDrawer.id !== null}
-    <aside class="had" transition:fly={slide} bind:this={panel} style:width="min({width}px, 85vw)" aria-label={t('cplug.huddle.swarm.drawer.label')} data-agent-drawer={agentDrawer.id} data-agent-drawer-width={width}>
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+    <aside class="had" class:had--phone={phone} transition:fly={slide} bind:this={panel} aria-label={t('cplug.huddle.swarm.drawer.label')}
+           data-agent-drawer={agentDrawer.id} data-agent-drawer-width={phone ? null : width} data-agent-drawer-phone={phone ? '' : null}
+           style:width={phone ? null : `min(${width}px, 85vw)`} style:top={frame ? `${frame.top}px` : null} style:left={frame ? `${frame.left}px` : null}
+           style:height={frame ? `${frame.height}px` : null} onpointerdown={swipeDown} onpointerup={swipeUp} onpointercancel={() => (swipeFrom = null)}>
+        {#if !phone}
         <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
         <div class="had-grip" role="separator" aria-orientation="vertical" tabindex="0" data-agent-drawer-grip
              aria-label={t('cplug.huddle.swarm.drawer.resize')} aria-valuemin={AGENT_DRAWER_MIN_PX} aria-valuemax={AGENT_DRAWER_MAX_PX} aria-valuenow={width}
              onpointerdown={down} onpointermove={move} onpointerup={up} onpointercancel={up} onkeydown={key} ondblclick={resetDrawerWidth}></div>
-        <AgentChatFrame id={agentDrawer.id} bind:tab={agentDrawer.tab} {t} onOpenedTerminal={closeAgentDrawer} onBarDown={barDown} menu={menu}>
-            {#snippet actions()}
-                <button type="button" class="oc-ibtn oc-ibtn--bare had-close" data-agent-drawer-close aria-label={t('cplug.huddle.swarm.drawer.close')}
-                        onclick={closeWithFocus}><Icon name="close" size={12} /></button>
-            {/snippet}
-        </AgentChatFrame>
+        {/if}
+        <AgentChatFrame id={agentDrawer.id} bind:tab={agentDrawer.tab} {t} onOpenedTerminal={closeAgentDrawer} onBarDown={phone ? undefined : barDown} menu={menu}
+                        lead={phone ? back : undefined} actions={phone ? undefined : close} />
     </aside>
 {/if}
 
@@ -165,13 +220,37 @@
       touch-action: none;
     }
 
-    :global(body:has(.session-sidebar-panel--open)) .had {
+    :global(body.ps-drawer-open) .had:not(.had--phone) {
       left: var(--sidebar-dock-w);
     }
+
+    .had--phone {
+      right: 0;
+      bottom: auto;
+      z-index: 1101;
+      overscroll-behavior: contain;
+    }
+
+    .had-back {
+      display: inline-flex;
+      flex: none;
+      --oc-ibtn-size: 36px;
+    }
+
+    .had--phone :global(.hdc-filter:disabled) {
+      display: none;
+    }
+
 
     .had-grip:hover,
     .had-grip:focus-visible {
       background: color-mix(in srgb, var(--oc-orange) 35%, transparent);
     }
+  }
+
+  :global(html.had-phone-open),
+  :global(html.had-phone-open body) {
+    overflow: hidden;
+    overscroll-behavior: none;
   }
 </style>

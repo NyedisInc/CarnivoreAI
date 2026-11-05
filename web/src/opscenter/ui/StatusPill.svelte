@@ -39,7 +39,7 @@
     .oc-pill {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
+      gap: var(--oc-gap-mark);
       min-width: 0;
     }
 

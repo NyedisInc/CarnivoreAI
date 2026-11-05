@@ -24,7 +24,7 @@ _APP_FLAGS = frozenset({
     CLAUDE_MCP_CONFIG_FLAG,
 })
 _MODEL_FLAGS = frozenset({"--model", "-m", "--fallback-model", "--oss", "--local-provider"})
-_PERMISSION_FLAGS = frozenset({
+PERMISSION_FIELD_FLAGS = frozenset({
     "--dangerously-skip-permissions", "--allow-dangerously-skip-permissions", "--permission-mode",
     "--yolo", "--full-auto", "--dangerously-bypass-approvals-and-sandbox",
     "--ask-for-approval", "-a", "--sandbox", "-s",
@@ -38,7 +38,7 @@ def _refusal(flag: str) -> Optional[str]:
         return f"{name} is added by the app on every launch"
     if name in _MODEL_FLAGS:
         return f"{name} belongs to the model field"
-    if name in _PERMISSION_FLAGS:
+    if name in PERMISSION_FIELD_FLAGS:
         return f"{name} belongs to the permissions field"
     return None
 
@@ -152,6 +152,51 @@ class CustomCommand(BaseModel):
     entry: Optional[str] = None
 
 
+_PROGRAM = re.compile(r"^[A-Za-z0-9._+-]{1,64}$")
+RESUME_ID_PLACEHOLDER = "{id}"
+
+
+class AgentDefinition(BaseModel):
+    """How Carnivore reads and resumes another agent CLI this profile launches (feature plan #14, issue #2733).
+
+    ``process``: the program name to find under the pane (layer 1); ``rules``: a shipped rule file id
+    (``src/core/agent_manifests/rules``) to match its screen (layer 2); ``status_codes``: trust OSC 3008
+    codes it prints (layer 3); ``resume``: a command template run on restart, whose only placeholder is
+    ``{id}``; ``resume_id``: where that id comes from (``status_code``: the ``id=`` field of its last
+    OSC 3008 code; never a scraped screen). A resume runs only when its first word is a prefix the
+    owner approved on this computer (``LaunchProfilesConfig.approved_resume_prefixes``).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    process: Optional[str] = None
+    rules: Optional[str] = None
+    status_codes: bool = True
+    resume: Optional[str] = None
+    resume_id: Literal["status_code"] = "status_code"
+
+    @field_validator("process", "rules")
+    @classmethod
+    def _program_name(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and not _PROGRAM.match(value):
+            raise ValueError("a process or rules name is a bare name: letters, digits, . _ + -")
+        return value
+
+    @field_validator("resume")
+    @classmethod
+    def _resume_template(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value or len(value) > 500 or "\n" in value or "\r" in value:
+            raise ValueError("a resume command is one line of at most 500 characters")
+        if value.replace(RESUME_ID_PLACEHOLDER, "").count("{") or value.replace(RESUME_ID_PLACEHOLDER, "").count("}"):
+            raise ValueError("a resume command's only placeholder is {id}")
+        if not _PROGRAM.match(value.split()[0]):
+            raise ValueError("a resume command starts with a bare program name")
+        return value
+
+
 class LaunchProfile(BaseModel):
     """One launch profile. ``id`` equals the id of the wrapper it replaces, so stored sessions keep resolving."""
 
@@ -174,6 +219,7 @@ class LaunchProfile(BaseModel):
     before_launch: Optional[str] = None
     custom_command: Optional[CustomCommand] = None
     custom_command_ack_no_args: bool = False
+    agent: Optional[AgentDefinition] = None
 
     @field_validator("id")
     @classmethod
@@ -197,6 +243,8 @@ class LaunchProfile(BaseModel):
                 reason = _config_key_refusal(token)
             elif is_option and token.split("=", 1)[0] in ("-c", "--config") and "=" in token:
                 reason = _config_key_refusal(token.split("=", 1)[1])
+            elif is_option and token.startswith("-c") and not token.startswith("--") and len(token) > 2:
+                reason = _config_key_refusal(token[2:])
             if reason:
                 raise ValueError(reason)
             previous = token if is_option and "=" not in token else ""
@@ -230,6 +278,15 @@ class LaunchProfilesConfig(BaseModel):
 
     revision: int = 0
     profiles: List[LaunchProfile] = Field(default_factory=list)
+    approved_resume_prefixes: List[str] = Field(default_factory=list)
+
+    @field_validator("approved_resume_prefixes")
+    @classmethod
+    def _bare_prefixes(cls, values: List[str]) -> List[str]:
+        for value in values:
+            if not _PROGRAM.match(value):
+                raise ValueError("an approved resume prefix is a bare program name")
+        return list(dict.fromkeys(values))
 
     @model_validator(mode="after")
     def _unique_ids_and_defaults(self) -> "LaunchProfilesConfig":

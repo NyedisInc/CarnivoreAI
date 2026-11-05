@@ -170,13 +170,14 @@ export function widgetFromSearch(search: string): string | null {
     return isWidgetId(id) ? id : null;
 }
 
-export const PLACEMENT_PARAMS = Object.freeze({ session: 'session', view: 'view', options: 'options' });
+export const PLACEMENT_PARAMS = Object.freeze({ session: 'session', view: 'view', options: 'options', pinned: 'pinned' });
 
 /* session it was about */
 export interface PopoutPlacement {
     sessionId?: string | null;
     view?: string | null;
     options?: Readonly<Record<string, boolean | number | string>>;
+    pinned?: boolean;
 }
 
 function isOptionValue(value: unknown): value is boolean | number | string {
@@ -187,6 +188,7 @@ export function widgetPath(id: string, placement: PopoutPlacement = {}): string 
     const params = new URLSearchParams({ [WIDGET_PARAM]: id });
     if (placement.sessionId) params.set(PLACEMENT_PARAMS.session, placement.sessionId);
     if (placement.view) params.set(PLACEMENT_PARAMS.view, placement.view);
+    if (placement.pinned) params.set(PLACEMENT_PARAMS.pinned, '1');
     if (placement.options && Object.keys(placement.options).length > 0) params.set(PLACEMENT_PARAMS.options, JSON.stringify(placement.options));
     return `${POPOUT_PATH}?${params.toString()}`;
 }
@@ -198,6 +200,7 @@ export function placementFromSearch(search: string): PopoutPlacement {
     if (session) out.sessionId = session;
     const view = params.get(PLACEMENT_PARAMS.view);
     if (view && /^[a-z][a-z0-9_-]{0,31}$/.test(view)) out.view = view;
+    if (params.get(PLACEMENT_PARAMS.pinned) === '1') out.pinned = true;
     const raw = params.get(PLACEMENT_PARAMS.options);
     if (raw) {
         try {

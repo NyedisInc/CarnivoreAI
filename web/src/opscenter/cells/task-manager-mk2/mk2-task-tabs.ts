@@ -1,7 +1,7 @@
 import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
 import { statusKey, statusOf, type TaskManagerStatus } from '../../../cplugs/huddle/huddle-status';
 import { isStatusEcho, reviewOf } from '../../../cplugs/huddle/huddle-review';
-import { rowFeed, rowQuestionPick } from '../../../cplugs/huddle/task-manager-posts';
+import { rowFeed } from '../../../cplugs/huddle/task-manager-posts';
 import { ageNow, clip, elapsed, isStale, type ProgressLine } from '../../../cplugs/huddle/huddle-progress';
 import type { WaitLine } from '../../../cplugs/huddle/task-manager-wait';
 
@@ -25,11 +25,13 @@ export function statusLinesOf(lines: readonly ProgressLine[], sinceMs: number, w
 }
 
 export function actionableIdOf(item: HuddleItem): number | null {
-  const feed = rowFeed(item);
-  const question = rowQuestionPick(feed).shown;
-  if (question !== null && question !== undefined) return question;
-  if (reviewOf(item)) return null;
-  return feed.at(-1)?.id ?? null;
+  return rowFeed(item)[0]?.id ?? null;
+}
+
+export function cardsInFrontOf(item: HuddleItem): number {
+  const waiting = rowFeed(item).length;
+  if (waiting === 0) return 0;
+  return waiting - 1 + (statusOf(item) === 'review' && reviewOf(item) ? 1 : 0);
 }
 
 export function actionDataOf(item: HuddleItem, wait?: WaitLine): Mk2ActionData {

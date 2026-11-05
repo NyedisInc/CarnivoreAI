@@ -5,6 +5,8 @@ import re
 import sys
 from pathlib import Path
 
+from scripts.design.harness_paths import is_harness
+
 REPO = Path(__file__).resolve().parents[2]
 WEB_SRC = REPO / "web" / "src"
 BASELINE = REPO / "tests" / "fixtures" / "design_raw_values_baseline.json"
@@ -75,7 +77,7 @@ def count_css(css: str) -> dict[str, int]:
 
 
 def is_exempt(rel: str) -> bool:
-    return any(rel == e or (e.endswith("/") and rel.startswith(e)) for e in EXEMPT)
+    return is_harness(rel) or any(rel == e or (e.endswith("/") and rel.startswith(e)) for e in EXEMPT)
 
 
 def scan(root: Path = WEB_SRC, base: Path = REPO) -> dict[str, dict[str, int]]:

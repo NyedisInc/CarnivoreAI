@@ -53,7 +53,7 @@
           >
         {/snippet}
         {#snippet children()}
-          {#if Form}<Form bind:target={(target.steps as AutomationTarget[])[index]} {targets} {projects} />{/if}
+          {#if Form}<Form bind:target={(target.steps as AutomationTarget[])[index]} {targets} {projects} inSequence />{/if}
         {/snippet}
       </Card>
     </li>

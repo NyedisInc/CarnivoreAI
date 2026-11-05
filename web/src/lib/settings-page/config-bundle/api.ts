@@ -1,4 +1,5 @@
 import { ApiError, authFetch } from '../../../opscenter/api/auth.svelte';
+import { failureReason } from '../../errors/failure-reason';
 
 export type Fetcher = typeof authFetch;
 
@@ -14,6 +15,10 @@ export interface ChangeLine {
 export interface CommandPart {
     readonly kind: string;
     readonly text: string;
+    readonly was?: string | null;
+    readonly value?: string;
+    readonly was_text?: string;
+    readonly tone?: 'danger' | 'unknown';
 }
 
 export interface AgentCommands {
@@ -30,11 +35,30 @@ export interface ProfileCommands {
     readonly parts: readonly CommandPart[];
 }
 
-export const SETTING_SECTIONS = ['workspace', 'browser', 'provider_accounts', 'common_slash_commands', 'template_path'] as const;
+export const SETTING_SECTIONS = [
+    'workspace',
+    'browser',
+    'provider_accounts',
+    'common_slash_commands',
+    'template_path',
+    'relay',
+    'catalog',
+    'auth_rate_limits',
+    'providers',
+    'access_token_ttl_seconds',
+    'refresh_token_ttl_seconds',
+    'refresh_grace_seconds',
+] as const;
 
 export type SettingSection = (typeof SETTING_SECTIONS)[number];
 
-export type SettingKind = 'env' | 'shell' | 'editor' | 'executable' | 'account_dir' | 'slash' | 'template';
+export type SettingKind = 'env' | 'shell' | 'editor' | 'executable' | 'account_dir' | 'slash' | 'template' | 'address' | 'trust';
+
+const CHANGE_KINDS: ReadonlySet<string> = new Set<SettingKind>(['address', 'trust']);
+
+export function isChangeKind(kind: string): boolean {
+    return CHANGE_KINDS.has(kind);
+}
 
 export interface SettingCommands {
     readonly id: string;

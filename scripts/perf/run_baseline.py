@@ -107,6 +107,7 @@ import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from types import ModuleType
 from typing import Optional
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -114,9 +115,10 @@ REPO_ROOT = SCRIPT_DIR.parents[1]
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from perf_client import PerfClient, sample_process, wait_until  # noqa: E402
+from perf_client import PerfClient, cpu_seconds, sample_process, wait_until  # noqa: E402
+from baseline_phases import TOAST_COUNT_JS, BaselineRun, run_browser_phases  # noqa: E402,F401
 from perf_env import PerfServer  # noqa: E402
-from perf_stats import fmt_ms, summarize, verdict  # noqa: E402
+from perf_stats import fmt_ms, idle_cpu_percent, summarize, verdict  # noqa: E402
 
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -129,15 +131,6 @@ PLAN_TARGETS_MS = {
     "menu_open": 16.7,
     "notification_toast": 100.0,
 }
-
-
-def _quick_reps(quick: bool, normal: int, quick_n: int) -> int:
-    return quick_n if quick else normal
-
-
-TOAST_COUNT_JS = "() => document.querySelectorAll('#toast-container .toast').length"
-TOAST_VISIBLE_JS = "() => { const b = window.__visibleBox && window.__visibleBox('#toast-container .toast'); return !!(b && b.visible); }"
-TOAST_DISMISS_JS = "() => document.querySelectorAll('#toast-container .toast button').forEach(b => b.click())"
 
 
 class DbMissing(RuntimeError):
@@ -157,296 +150,69 @@ def _measure_db_cost(state_dir: Path, session_count: int) -> float:
     return (time.perf_counter() - t0) * 1000.0
 
 
-def _idle_sample(pid: int, seconds: float = 1.5) -> dict:
-    time.sleep(seconds)
+IDLE_WINDOW_S = 10.0
+
+
+def _idle_sample(pid: int, seconds: float = IDLE_WINDOW_S) -> dict:
+    empty = {"cpu_percent": None, "rss_kb": None, "child_count": None}
+    try:
+        cpu_start, wall_start = cpu_seconds(pid), time.monotonic()
+        time.sleep(seconds)
+        cpu_end, wall_end = cpu_seconds(pid), time.monotonic()
+        cpu_percent = idle_cpu_percent(cpu_start, cpu_end, wall_end - wall_start)
+    except (RuntimeError, ValueError):
+        return empty
     sample = sample_process(pid)
     if sample is None:
-        return {"cpu_percent": None, "rss_kb": None, "child_count": None}
+        return empty
     return {
-        "cpu_percent": sample.cpu_percent,
+        "cpu_percent": cpu_percent,
         "rss_kb": sample.rss_kb,
         "child_count": sample.child_count,
     }
+
+
+def _start_background_sessions(server: PerfServer, client: PerfClient, n_sessions: int, run_tag: str) -> None:
+    background_ids = []
+    for i in range(max(0, n_sessions - 2)):
+        body = client.create_session(server.work_dir, f"perf-bg-{run_tag}-{i}")
+        background_ids.append(body["id"])
+    wait_until(lambda: len(client.list_sessions()) >= len(background_ids), timeout=30.0)
+
+
+def _measure_in_browser(perf_browser: ModuleType, result: dict, quick: bool, run_tag: str, server: PerfServer, client: PerfClient) -> None:
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(args=["--use-mock-keychain"])
+        try:
+            context = browser.new_context(viewport={"width": 1280, "height": 900})
+            perf_browser.install_instrumentation(context)
+            run = BaselineRun(result=result, quick=quick, run_tag=run_tag, server=server, client=client,
+                              pb=perf_browser, context=context, page=context.new_page())
+            run_browser_phases(run)
+            context.close()
+        finally:
+            browser.close()
 
 
 def run_for_session_count(n_sessions: int, quick: bool = False) -> dict:
     import perf_browser
 
     result: dict = {"n_sessions": n_sessions, "quick": quick}
-
-    def _safe(label: str, fn, default):
-        try:
-            return fn()
-        except Exception as exc:  # noqa: BLE001
-            print(f"measurement step {label!r} failed, continuing: {exc}", file=sys.stderr)
-            return default
-
+    run_tag = uuid.uuid4().hex[:8]
     with PerfServer() as server:
         server.start()
         result["boot_seconds"] = server.boot_seconds
-
         client = PerfClient(server.base_url, server.totp_secret)
         client.login()
-
-        idle_at_zero = _idle_sample(server.pid, seconds=1.0)
-        result["idle_at_zero_sessions"] = idle_at_zero
-
-        background_ids = []
-        run_tag = uuid.uuid4().hex[:8]
-        for i in range(max(0, n_sessions - 2)):
-            body = client.create_session(server.work_dir, f"perf-bg-{run_tag}-{i}")
-            background_ids.append(body["id"])
-
-        def _rows_ready() -> bool:
-            rows = client.list_sessions()
-            return len(rows) >= len(background_ids)
-
-        wait_until(_rows_ready, timeout=30.0)
-
-        idle_at_n = _idle_sample(server.pid, seconds=1.5)
-        result["idle_at_n_sessions"] = idle_at_n
+        result["idle_at_zero_sessions"] = _idle_sample(server.pid, seconds=IDLE_WINDOW_S)
+        _start_background_sessions(server, client, n_sessions, run_tag)
+        result["idle_at_n_sessions"] = _idle_sample(server.pid, seconds=IDLE_WINDOW_S)
         result["db_read_ms_at_n"] = _measure_db_cost(Path(server._state_dir), n_sessions)
-
-        from playwright.sync_api import sync_playwright
-
-        with sync_playwright() as pw:
-            browser = pw.chromium.launch(args=["--use-mock-keychain"])
-            try:
-                context = browser.new_context(viewport={"width": 1280, "height": 900})
-                perf_browser.install_instrumentation(context)
-                page = context.new_page()
-
-                last_login_error = None
-                for attempt in range(3):
-                    try:
-                        result["startup_cold_ms"] = perf_browser.login_via_ui(
-                            page, server.base_url, server.totp_secret
-                        )
-                        last_login_error = None
-                        break
-                    except Exception as exc:  # noqa: BLE001
-                        last_login_error = exc
-                        print(f"cold login attempt {attempt + 1} failed: {exc}", file=sys.stderr)
-                if last_login_error is not None:
-                    raise last_login_error
-
-                entry_session = client.create_session(server.work_dir, f"perf-entry-{run_tag}")
-
-                def _entry_row_ready() -> bool:
-                    return client.row_for(entry_session["id"]) is not None
-
-                wait_until(_entry_row_ready, timeout=15.0)
-                page.wait_for_function(
-                    "(sid) => !!document.querySelector('[data-session-id=\"' + sid + '\"]')",
-                    arg=entry_session["id"],
-                    timeout=15000,
-                )
-
-                launch_session, launch_cold_ms = perf_browser.open_fresh_session_terminal(
-                    page, server.base_url, client.token, server.work_dir, f"perf-launch-cold-{run_tag}"
-                )
-                result["launch_cold_ms"] = launch_cold_ms
-
-                typing_cold_n = _quick_reps(quick, 5, 3)
-                typing_warm_n = _quick_reps(quick, 20, 4)
-                result["typing_cold"] = perf_browser.measure_typing_echo(page, count=typing_cold_n)
-                result["typing_warm"] = perf_browser.measure_typing_echo(page, count=typing_warm_n)
-
-                entry_page = context.new_page()
-                perf_browser.inject_authenticated_session(entry_page, server.base_url, client.token)
-                entry_page.wait_for_function(
-                    "(sid) => !!document.querySelector('[data-session-id=\"' + sid + '\"]')",
-                    arg=entry_session["id"],
-                    timeout=15000,
-                )
-                result["entry_cold_ms"] = _safe(
-                    "entry_cold",
-                    lambda: perf_browser.open_session_row(entry_page, entry_session["id"]),
-                    None,
-                )
-                entry_page.close()
-
-                sidebar_scope = "#session-sidebar-panel"
-                perf_browser.ensure_sidebar_open(page)
-                switch_cold_ms = _safe(
-                    "session_entry_switch_target",
-                    lambda: perf_browser.open_session_row(
-                        page, entry_session["id"], scope=sidebar_scope, wait_for_paint=False
-                    ),
-                    None,
-                )
-                result["session_entry_switch_target_ms"] = switch_cold_ms
-                result["session_switch_cold_ms"] = _safe(
-                    "session_switch_cold",
-                    lambda: perf_browser.open_session_row(
-                        page, launch_session["id"], scope=sidebar_scope, wait_for_paint=True
-                    ),
-                    None,
-                )
-                _safe(
-                    "session_switch_warm_setup",
-                    lambda: (
-                        perf_browser.ensure_sidebar_open(page),
-                        perf_browser.open_session_row(
-                            page, entry_session["id"], scope=sidebar_scope, wait_for_paint=False
-                        ),
-                    ),
-                    None,
-                )
-                result["session_switch_warm_ms"] = _safe(
-                    "session_switch_warm",
-                    lambda: (
-                        perf_browser.ensure_sidebar_open(page),
-                        perf_browser.open_session_row(
-                            page, launch_session["id"], scope=sidebar_scope, wait_for_paint=True
-                        ),
-                    )[-1],
-                    None,
-                )
-
-                launch_warm_result = _safe(
-                    "launch_warm",
-                    lambda: perf_browser.open_fresh_session_terminal(
-                        page, server.base_url, client.token, server.work_dir, f"perf-launch-warm-{run_tag}"
-                    ),
-                    (None, None),
-                )
-                result["launch_warm_ms"] = launch_warm_result[1]
-
-                def _open_menu():
-                    perf_browser.open_sidebar_control(page)
-
-                def _close_menu():
-                    page.keyboard.press("Escape")
-
-                result["menu_open_cold_ms"] = _safe(
-                    "menu_open_cold",
-                    lambda: perf_browser.measure_visible_box(
-                        page, "#session-sidebar-panel.session-sidebar-panel--open", _open_menu
-                    ),
-                    None,
-                )
-                _close_menu()
-                page.wait_for_timeout(150)
-                result["menu_open_warm_ms"] = _safe(
-                    "menu_open_warm",
-                    lambda: perf_browser.measure_visible_box(
-                        page, "#session-sidebar-panel.session-sidebar-panel--open", _open_menu
-                    ),
-                    None,
-                )
-                _close_menu()
-                page.wait_for_timeout(150)
-
-                def _overflow_is_open() -> bool:
-                    return bool(page.is_visible("#settingsBtn"))
-
-                def _open_header_overflow(attempts: int = 5) -> None:
-                    for _ in range(attempts):
-                        if _overflow_is_open():
-                            return
-                        perf_browser.click_tolerant(page, "#header-menu-toggle")
-                        try:
-                            page.wait_for_selector(
-                                "#settingsBtn", state="visible", timeout=1000
-                            )
-                            return
-                        except perf_browser.PlaywrightTimeoutError:
-                            page.wait_for_timeout(150)
-
-                def _open_settings():
-                    perf_browser.click_tolerant(page, "#settingsBtn")
-
-                def _close_settings():
-                    page.keyboard.press("Escape")
-                    try:
-                        page.wait_for_selector(
-                            ".settings-page .st-main", state="hidden", timeout=3000
-                        )
-                    except perf_browser.PlaywrightTimeoutError:
-                        pass
-
-                _open_header_overflow()
-                result["settings_open_cold_ms"] = _safe(
-                    "settings_open_cold",
-                    lambda: perf_browser.measure_visible_box(page, ".settings-page .st-main", _open_settings),
-                    None,
-                )
-                _close_settings()
-                page.wait_for_timeout(150)
-                _open_header_overflow()
-                result["settings_open_warm_ms"] = _safe(
-                    "settings_open_warm",
-                    lambda: perf_browser.measure_visible_box(page, ".settings-page .st-main", _open_settings),
-                    None,
-                )
-                _close_settings()
-                page.wait_for_timeout(150)
-
-                def _run_notification_reps() -> list:
-                    perf_browser.ensure_sidebar_open(page)
-                    perf_browser.open_session_row(
-                        page, launch_session["id"], scope="#session-sidebar-panel", wait_for_paint=True
-                    )
-                    toast_reps = _quick_reps(quick, 8, 3)
-                    samples = []
-                    for i in range(toast_reps):
-                        clear_deadline = time.perf_counter() + 2.0
-                        while page.evaluate(TOAST_COUNT_JS) != 0 and time.perf_counter() < clear_deadline:
-                            time.sleep(0.05)
-                        if page.evaluate(TOAST_COUNT_JS) != 0:
-                            continue
-                        t0 = time.perf_counter()
-                        client.create_toast(
-                            launch_session["id"], "Notification", "perf check", f"toast-{i}"
-                        )
-                        deadline = time.perf_counter() + 3.0
-                        seen = False
-                        while time.perf_counter() < deadline:
-                            if page.evaluate(TOAST_VISIBLE_JS):
-                                seen = True
-                                break
-                            time.sleep(0.005)
-                        if seen:
-                            samples.append((time.perf_counter() - t0) * 1000.0)
-                        page.evaluate(TOAST_DISMISS_JS)
-                        time.sleep(0.1)
-                    return samples
-
-                result["notification_toast"] = _safe("notification_toast", _run_notification_reps, [])
-
-                def _run_scroll_proxy() -> list:
-                    list_page = context.new_page()
-                    try:
-                        perf_browser.inject_authenticated_session(list_page, server.base_url, client.token)
-                        list_page.wait_for_timeout(300)
-                        return perf_browser.measure_scroll_frame_times(
-                            list_page, "#launchpad-screen .launchpad-scroll"
-                        )
-                    finally:
-                        list_page.close()
-
-                result["scroll_frame_gaps_ms"] = _safe("scroll_frame_gaps", _run_scroll_proxy, [])
-
-                def _run_startup_warm() -> float:
-                    t0 = time.perf_counter()
-                    page.reload(wait_until="domcontentloaded")
-                    page.wait_for_function(
-                        "() => { const b = window.__visibleBox && window.__visibleBox('#launchpad-screen.active'); return !!(b && b.visible); }",
-                        timeout=15000,
-                    )
-                    return (time.perf_counter() - t0) * 1000.0
-
-                result["startup_warm_ms"] = _safe("startup_warm", _run_startup_warm, None)
-
-                context.close()
-            finally:
-                browser.close()
-
-        idle_final = _idle_sample(server.pid, seconds=1.0)
-        result["idle_final"] = idle_final
+        _measure_in_browser(perf_browser, result, quick, run_tag, server, client)
+        result["idle_final"] = _idle_sample(server.pid, seconds=IDLE_WINDOW_S)
         client.close()
-
     return result
 
 

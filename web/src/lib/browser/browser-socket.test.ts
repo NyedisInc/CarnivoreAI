@@ -109,7 +109,7 @@ test('a close that never opened confirms via refresh and reconnects at once, not
     });
     vi.stubGlobal('fetch', fetchMock);
     const { last } = start();
-    last().drop(1006);
+    last().drop(1006); // never opened
     expect(FakeSocket.made.length, 'the ordinary backoff still schedules a retry synchronously').toBe(1);
     await vi.advanceTimersByTimeAsync(0);
     expect(fetchMock).toHaveBeenCalledTimes(1);

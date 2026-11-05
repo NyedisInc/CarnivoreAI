@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { createEnvironment } from './mini-dom.mjs';
 import CATALOG from '../client/js/i18n/catalog.en.js';
 import { headerActionLabels, HEADER_ACTION_KEYS } from '../client/js/labels/header-actions.js';
+import { installTrOnly } from './helpers/catalog-tr.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -81,6 +82,7 @@ function load(options = {}) {
         sandbox.CloudeLabels = { headerActionLabels };
     }
     vm.createContext(sandbox);
+    installTrOnly(sandbox);
     for (const file of ['kebab-icon.js', 'dismiss-guard.js', 'header-menu.js']) {
         vm.runInContext(
             fs.readFileSync(path.join(__dirname, '..', 'client', 'js', file), 'utf8'),

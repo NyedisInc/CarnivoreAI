@@ -374,7 +374,6 @@ export const REVIEW_BLOCKING_KINDS = new Set([
     'settings_write',
 ]);
 
-/* on the card and */
 export const REVIEW_INSTRUCTIONS_WRITE_KIND = 'instructions_write';
 
 export function reviewVerdictLabel(verdict, t) {

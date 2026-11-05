@@ -6,6 +6,7 @@ import { rekeyEntry } from '../engine/slot-identity';
 import { openModal } from '../../lib/modal';
 import { currentNav, type NavToken } from '../../lib/launchpad/nav-generation';
 import { t } from '../../lib/i18n/index.svelte';
+import { announceFailure, reasonOf } from '../../lib/sidebar-shell/interaction-globals';
 import { primarySessionId } from '../api/host';
 import { sessions } from '../api';
 import type { Layout } from '../engine/types';
@@ -148,7 +149,11 @@ async function askName(mine: Naming): Promise<void> {
     forgetTabs(PENDING_KEY);
     return;
   }
-  if (layout) void deleteLayout(layout.layout_uuid).catch(() => undefined);
+  if (layout) {
+    void deleteLayout(layout.layout_uuid).catch((error: unknown) => {
+      announceFailure(t('layout.cleanup_failed', { reason: reasonOf(error) }));
+    });
+  }
   putBack(mine.agentKey, mine.agentLayout);
 }
 

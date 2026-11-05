@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import pytest
 
 from src.api import computers_routes, descriptions_routes, pack_machines_routes
-from src.core.mcp import aliases, deprecated_tools, merged_tools, tool_switches, tools
+from src.core.mcp import aliases, deprecated_tools, merged_tools, tools
 from src.core.mcp.caller import AgentCaller
 from src.core.mcp.registry import index
 
@@ -67,9 +67,8 @@ def test_merged_names_are_aliases_with_no_registry_record_of_their_own() -> None
     assert merged_tools.with_preset("agents_lookup", None) == {}
 
 
-def test_task_manager_delete_is_off_mcp_and_huddle_focus_is_retired_not_deleted() -> None:
+def test_task_manager_delete_is_off_mcp_and_huddle_focus_is_removed() -> None:
     listed = {d["name"] for d in tools.tool_definitions()}
     assert not {"task_manager_delete", "huddle_delete"} & (listed | set(tools.tool_names()) | set(aliases.table()))
-    assert "huddle_focus" in tools.tool_names() and "huddle_focus" in deprecated_tools.DEPRECATED
-    assert not tool_switches.is_on("huddle_focus", {}) and tool_switches.is_on("huddle_focus", {"huddle_focus": True})
-    assert index.entries()["huddle_focus"].id == "task_manager.tasks.focus"
+    assert "huddle_focus" not in tools.tool_names() and "huddle_focus" not in deprecated_tools.DEPRECATED
+    assert "huddle_focus" not in index.entries() and "task_manager.tasks.focus" not in {c.id for c in index.entries().values()}

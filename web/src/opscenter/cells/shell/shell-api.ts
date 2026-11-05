@@ -1,4 +1,5 @@
 import { ApiError, authFetch } from '../../api/auth.svelte';
+import { failureReason } from '../../../lib/errors/failure-reason';
 
 export interface CompanionShell {
   agent_session_id: string;
@@ -21,7 +22,7 @@ export function shellSlot(rowId: number): string {
 }
 
 function wordOf(err: unknown): { code: string; detail: string } {
-  if (!(err instanceof ApiError)) return { code: 'unknown', detail: err instanceof Error ? err.message : String(err) };
+  if (!(err instanceof ApiError)) return { code: 'unknown', detail: failureReason(err) };
   const body = err.payload as { detail?: { code?: unknown; detail?: unknown } } | null;
   const nested = body?.detail;
   const code = nested && typeof nested === 'object' && typeof nested.code === 'string' ? nested.code : err.code;

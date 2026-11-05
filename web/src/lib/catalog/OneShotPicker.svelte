@@ -1,6 +1,6 @@
 
 <script lang="ts">
-    import ModalShell from '../launchpad/ModalShell.svelte';
+    import ModalShell from '../dialog-frame/ModalShell.svelte';
     import {
         SKILL_KEYS,
         isUnsupported,

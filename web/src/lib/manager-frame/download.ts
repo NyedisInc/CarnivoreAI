@@ -3,7 +3,7 @@ export function downloadJson(filename: string, document: unknown, doc: Document 
     return downloadBlob(filename, new Blob([`${JSON.stringify(document, null, 2)}\n`], { type: 'application/json' }), doc);
 }
 
-export function downloadBlob(filename: string, blob: Blob, doc: Document = globalThis.document): string {
+export function downloadBlob(filename: string, blob: Blob, doc: Document = globalThis.document, revokeAfterMs = 0): string {
     const url = URL.createObjectURL(blob);
     const link = doc.createElement('a');
     link.href = url;
@@ -12,6 +12,6 @@ export function downloadBlob(filename: string, blob: Blob, doc: Document = globa
     doc.body.append(link);
     link.click();
     link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 0);
+    setTimeout(() => URL.revokeObjectURL(url), revokeAfterMs);
     return filename;
 }

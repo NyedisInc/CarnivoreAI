@@ -1,9 +1,10 @@
 
 <script lang="ts">
-    import ModalShell from '../launchpad/ModalShell.svelte';
+    import ModalShell from '../dialog-frame/ModalShell.svelte';
     import { Button, Checkbox, Field, State } from '../base';
     import type { Translate } from '../sessions/types';
     import { errorText, type ImportPreview, type LaunchProfilesApi } from './api';
+    import { describePart } from '../settings-page/config-bundle/part-words';
 
     interface Props {
         api: LaunchProfilesApi;
@@ -58,9 +59,11 @@
         {#if preview}
             <p class="lp-import__label">{t('launch_profiles.import.parts', { name: preview.profile.id })}</p>
             {#if preview.parts.length === 0}<p class="lp-import__note">{t('launch_profiles.import.no_parts')}</p>{/if}
-            {#each preview.parts as part, i (i)}
-                <p class="lp-import__label">{part.kind}</p>
-                <pre class="lp-import__script">{part.text}</pre>
+            {#each preview.parts.map((part) => describePart(part, t)) as view, i (i)}
+                <p class="lp-import__label">{view.label}{#if view.words !== null}{' '}{view.words}{/if}</p>
+                {#if view.text !== ''}<pre class="lp-import__script">{view.text}</pre>{/if}
+                {#if view.warning !== null}<State inline kind={view.tone === 'danger' ? 'error' : 'warn'} role="none" title={view.warning} />{/if}
+                {#if view.was !== null}<p class="lp-import__note">{view.was}</p>{/if}
             {/each}
             {#if preview.endpoint_connection_missing}<State inline kind="warn" role="none" title={t('launch_profiles.import.connection_missing')} />{/if}
             {#if preview.exists}

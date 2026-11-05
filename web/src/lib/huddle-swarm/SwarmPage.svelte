@@ -3,8 +3,9 @@
     import Page from '../../opscenter/ui/Page.svelte';
     import Tabs, { panelAttrs, type TabDef } from '../../opscenter/ui/Tabs.svelte';
     import { readTab, writeTab } from '../../opscenter/ui/tab-memory';
+    import { isOneOf } from '../../opscenter/ui/stored-choice';
     import { t } from '../i18n/index.svelte';
-    import { openPluginsPage } from '../../cplugs/sdk';
+    import { openFeaturesPage } from '../../cplugs/sdk';
     import { swarmInactive, setSwarmInactive } from '../../cplugs/huddle/huddle-swarm-inactive.svelte';
     import SwarmLedger from '../../cplugs/huddle/swarm/SwarmLedger.svelte';
     import SwarmOrg from '../../cplugs/huddle/swarm/SwarmOrg.svelte';
@@ -44,7 +45,7 @@
     const tabs = $derived<TabDef[]>(SWARM_TABS.map((id) => ({ id, label: t(`cplug.huddle.swarm.page.tab.${id}`) })));
 
     function pick(id: string): void {
-        if (!(SWARM_TABS as readonly string[]).includes(id)) return;
+        if (!isOneOf(id, SWARM_TABS)) return;
         chosen = id;
         failed = null;
         refusal = '';
@@ -99,7 +100,7 @@
     {#if live.threadsReady === false}
         <div class="pkg-need" data-swarm-needs-permission>
             <span class="pkg-need-text">{t('cplug.huddle.swarm.need_permission')}</span>
-            <button type="button" class="modal-btn modal-btn-secondary" data-swarm-open-plugins onclick={() => void openPluginsPage()}>{t('cplug.huddle.swarm.need_permission.open')}</button>
+            <button type="button" class="modal-btn modal-btn-secondary" data-swarm-open-plugins onclick={() => void openFeaturesPage()}>{t('cplug.huddle.swarm.need_permission.open')}</button>
         </div>
     {/if}
 {/snippet}

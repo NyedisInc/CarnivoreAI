@@ -1,5 +1,6 @@
 import { t } from '../i18n/index.svelte';
 import { drawerEnv } from './env';
+import { confirmOk } from '../confirm-ok/confirm-ok';
 
 export const BROWSER_PREFIX = 'browser:';
 
@@ -23,7 +24,6 @@ interface BrowserGlobals {
         sidebarShell?: { togglePinRow?(name: string): void };
         rowMenu?: { contextFromTrigger?(trigger: Element | null): BrowserMenuCtx | null };
     };
-    App?: { showConfirmModal?(...args: unknown[]): Promise<boolean> };
 }
 
 function g(): BrowserGlobals {
@@ -103,10 +103,13 @@ async function close(ctx: BrowserMenuCtx): Promise<void> {
         }
         return;
     }
-    const app = g().App;
-    const ok = app && typeof app.showConfirmModal === 'function'
-        ? await app.showConfirmModal(t('browser.close.confirm'), ctx.label || ctx.name, t('browser.close.detail'), t('browser.menu.close'), undefined, 'danger')
-        : window.confirm(t('browser.close.confirm'));
+    const ok = await confirmOk({
+        title: t('browser.close.confirm'),
+        message: ctx.label || ctx.name,
+        details: t('browser.close.detail'),
+        okLabel: t('browser.menu.close'),
+        variant: 'danger',
+    });
     if (!ok) return;
     try {
         await b.close(idOf(ctx.name));

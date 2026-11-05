@@ -23,6 +23,7 @@ import { rememberLastView, watchSessionDestroyed } from './last-view';
 import { noteDrawerClosed } from '../menu-page/menu-page-origin';
 import { sidebarTabs } from '../dynamic-tabs/tab-store.svelte';
 import type { ListingPushGlobal } from '../listing-push/boot';
+import { setFlag } from '../page-flags/page-flags';
 
 function listingPush(): ListingPushGlobal | null {
     const found = (drawerEnv() as { ListingPush?: ListingPushGlobal }).ListingPush;
@@ -61,7 +62,6 @@ export class SessionSidebarController {
     _wired = false;
     _pollInterval: ReturnType<typeof setInterval> | null = null;
     _pushStop: (() => void) | null = null;
-    _lastSig: string | null = null;
 
     _rows: ArrangedRow[] = [];
     _listing: ListingVerdict = { ok: true, reason: null, detail: null };
@@ -231,6 +231,7 @@ export class SessionSidebarController {
         this._transientOpen = !persist;
         this._setInteractive(true);
         this.panel.classList.add('session-sidebar-panel--open');
+        setFlag('drawer-open', true);
         this.panel.setAttribute('aria-hidden', 'false');
         if (this.backdrop) this.backdrop.hidden = false;
         if (this.toggleBtn) this.toggleBtn.setAttribute('aria-expanded', 'true');
@@ -255,6 +256,7 @@ export class SessionSidebarController {
         this.isOpen = false;
         this._transientOpen = false;
         this.panel.classList.remove('session-sidebar-panel--open');
+        setFlag('drawer-open', false);
         this._releaseFocus();
         this._setInteractive(false);
         this.panel.setAttribute('aria-hidden', 'true');
@@ -322,7 +324,6 @@ export class SessionSidebarController {
     }
 
     async forceRefresh(): Promise<void> {
-        this._lastSig = null;
         await this._fetchAndRender();
     }
 
@@ -363,6 +364,10 @@ export class SessionSidebarController {
         return this._fetchAndRender().catch((err) => {
             console.warn('SessionSidebar: event-driven refresh failed:', err);
         });
+    }
+
+    rows<T = ArrangedRow>(): readonly T[] {
+        return this._rows as unknown as readonly T[];
     }
 
     repaint(): void {

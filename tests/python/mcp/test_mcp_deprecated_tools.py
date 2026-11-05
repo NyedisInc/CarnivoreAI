@@ -49,7 +49,7 @@ def test_the_stored_choice_persists_like_any_tools_and_default_drops_it() -> Non
 
 def test_every_deprecated_tool_is_registered_off_and_none_is_a_live_tool_in_disguise() -> None:
     registered = set(tools.tool_names())
-    assert len(deprecated_tools.DEPRECATED) == 108 and deprecated_tools.DEPRECATED <= registered
+    assert len(deprecated_tools.DEPRECATED) == 107 and deprecated_tools.DEPRECATED <= registered
     assert tool_switches.DEFAULT_OFF == deprecated_tools.DEPRECATED
     assert "session_delete" not in deprecated_tools.DEPRECATED and tool_switches.is_on("session_delete", {})
     assert not any(tool_switches.is_on(n, {}) for n in deprecated_tools.DEPRECATED)

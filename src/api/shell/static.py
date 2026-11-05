@@ -13,7 +13,7 @@ from starlette.types import Scope
 from src.core import static_asset_keys, theme_paths
 from src.core.catalog import theme_migration
 from src.core.static_serving import keyed_page_response, maybe_gzip_file_response, render_compressible_html_response, warm_static_gzip_cache
-from src.core.version import resolve_version
+from src.core.version import dev_build, resolve_version
 
 logger = structlog.get_logger()
 
@@ -48,6 +48,7 @@ class NoCacheStaticFiles(StaticFiles):
 
 _VERSION_PLACEHOLDER = "{{VERSION}}"
 _CLIENT_BUILD_PLACEHOLDER = "{{CLIENT_BUILD}}"
+_DEV_BUILD_PLACEHOLDER = "{{DEV_BUILD}}"
 
 APP_VERSION = resolve_version()
 
@@ -57,7 +58,7 @@ def _render_index_html() -> str:
     chip = f"v{APP_VERSION}" if APP_VERSION else ""
     html = html.replace(_VERSION_PLACEHOLDER, chip).replace(
         _CLIENT_BUILD_PLACEHOLDER, static_asset_keys.client_build_key(client_dir)
-    )
+    ).replace(_DEV_BUILD_PLACEHOLDER, dev_build())
     return static_asset_keys.render(html, client_dir)
 
 

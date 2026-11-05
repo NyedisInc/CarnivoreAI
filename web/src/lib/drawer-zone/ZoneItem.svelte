@@ -83,6 +83,23 @@
       min-width: 0;
     }
 
+    .dz-item:not(.dz-item--editing):has(~ .dz-item) :global([data-zone-card]) {
+      margin-bottom: 0;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    .dz-item:not(.dz-item--editing) ~ .dz-item :global([data-zone-card]) {
+      margin-top: 0;
+      border-top-width: 0;
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+    }
+
+    .dz-item--editing :global([data-zone-card]) {
+      margin-top: 0;
+    }
+
     .dz-strip {
       --oc-ibtn-size: 22px;
       display: flex;

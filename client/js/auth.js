@@ -24,8 +24,7 @@ class Auth {
     }
 
     t(key) {
-        const i18n = globalThis.CloudeI18n;
-        return i18n && typeof i18n.t === 'function' ? i18n.t(key) : key;
+        return typeof globalThis.CloudeTr === 'function' ? globalThis.CloudeTr(key) : key;
     }
 
     renderAuthUI() {

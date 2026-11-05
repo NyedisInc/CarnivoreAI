@@ -19,8 +19,8 @@ test('every catalog row names a key keyAction answers', () => {
     }
 });
 
-test('the sections are the five live groups', () => {
-    expect(keySections().map((s) => s.id)).toEqual(['menu', 'terminal-search', 'terminal-zoom', 'catalog', 'settings']);
+test('the sections are the six live groups', () => {
+    expect(keySections().map((s) => s.id)).toEqual(['app', 'menu', 'terminal-search', 'terminal-zoom', 'catalog', 'settings']);
 });
 
 test('every catalog key the page reaches for exists', () => {

@@ -15,6 +15,7 @@
   import ShellFoot from './ShellFoot.svelte';
   import FootWork from '../../../lib/background-work/FootWork.svelte';
   import FootGrown from './FootGrown.svelte';
+  import FootProgress from './FootProgress.svelte';
   import type { ControlSection } from '../../../lib/session-control/control-center';
   import { splitFoot } from './foot-toolbar';
   import {
@@ -260,6 +261,7 @@
 <ShellFoot {sessionId} {width} />
 {:else if !noStats}
 <div class="oc-tf-slot" bind:this={slot} onkeydown={onKeydown} role="presentation">
+  <FootProgress {sessionId} />
   <div class="oc-tf-line" data-foot-bar>
   <button
     type="button"
@@ -301,7 +303,7 @@
     <span class="oc-tf-label oc-tf-labels-measure" aria-hidden="true" bind:this={labelsFullEl}
       >{t('usage.context.title')}{#each windows as w (w.key)}{w.label}{/each}</span>
   {/if}
-  <FootGrown {regionId} style={grownStyle} {stacked} {expanded} {model} {payload} {sessionId} {focus}
+  <FootGrown {regionId} style={grownStyle} {stacked} {expanded} {model} {payload} {sessionId} createdAt={footRow?.session?.created_at ?? null} {focus}
     openOption={resolvedOpenOption} onclose={() => setExpanded(false)} />
 </div>
 {/if}

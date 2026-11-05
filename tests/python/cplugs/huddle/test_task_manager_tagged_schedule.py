@@ -102,7 +102,7 @@ def test_the_row_icon_port_counts_a_tagged_fire_on_its_tag(client, world):
     assert {k: len(v) for k, v in got.items()} == {"ses_old": 1, "ses_other": 1}
 
 
-def test_a_stale_wait_handback_is_told_to_the_tag_not_the_parker(client, world, pasted):
+def test_a_stale_wait_handback_is_told_to_the_tag_not_the_holder(client, world, pasted):
     item = add(client)
     told = client.post(f"{BASE}/send", json={"lists": ["12"]}).json()["results"][0]
     assert told["status"] == "sent"
@@ -110,5 +110,22 @@ def test_a_stale_wait_handback_is_told_to_the_tag_not_the_parker(client, world, 
     store = store_of(world.app)
     store.update(item, actor="claude", state="review")
     wait_runner.hand_back(store, item, "still waiting?", "wait_expired")
-    asyncio.run(wait_runner.send_parker(ctx_of(world.app), {"set_by": "ses_old"}, "12", item))
+    asyncio.run(wait_runner.send_holder(ctx_of(world.app), {"set_by": "ses_old"}, "12", item))
     assert pasted[-1][0] == "ses_other"
+
+
+def test_a_wait_ended_with_no_owner_request_still_wakes_its_agent(client, world, pasted):
+    from src.cplugs.huddle.roles import port as roles_port
+
+    item = add(client)
+    store = store_of(world.app)
+    store.update(item, actor="claude", state="review")
+    wait_runner.hand_back(store, item, "still waiting?", "wait_expired")
+    requestless = runtime.host_for(world.app).context("huddle")
+    assert not hasattr(requestless.sessions, "deliver")
+    roles_port.register(ctx_of(world.app))
+    try:
+        asyncio.run(wait_runner.send_holder(requestless, {"set_by": "ses_old"}, "12", item))
+    finally:
+        roles_port.unregister()
+    assert pasted and pasted[-1][0] == "ses_old"

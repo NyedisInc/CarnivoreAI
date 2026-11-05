@@ -10,7 +10,8 @@ START = ("src.cplugs.publicboard.edge", "src.cplugs.publicboard.headers", "src.c
 FORBIDDEN = ("src.api", "src.main", "src.core", "src.utils", "src.models", "src.config", "src.cplugs.huddle", "src.cplugs.reviewboard", "src.cplugs.share")
 NOT_FOLLOWED = {"src", "src.cplugs", "src.cplugs.sdk", "src.cplugs.publicboard"}
 EXPECTED = {"src.cplugs.publicboard.edge", "src.cplugs.publicboard.headers", "src.cplugs.publicboard.routes", "src.cplugs.sdk.public_listener",
-            "src.cplugs.sdk.sandboxed_html"}
+            "src.cplugs.sdk.sandboxed_html", "src.cplugs.publicboard.read", "src.cplugs.publicboard.resolve", "src.cplugs.publicboard.respond",
+            "src.cplugs.publicboard.assets", "src.cplugs.publicboard.capability", "src.cplugs.publicboard.ratelimit", "src.cplugs.publicboard.deps", "src.cplugs.publicboard.health"}
 
 
 def module_file(name: str) -> Path:

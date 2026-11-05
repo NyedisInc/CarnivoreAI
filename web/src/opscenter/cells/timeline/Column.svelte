@@ -2,6 +2,7 @@
   import { tick } from 'svelte';
   import type { SessionTimeline } from './types';
   import KindGlyph from './KindGlyph.svelte';
+  import { buttonAttrs } from '../../../lib/base/classes';
   import { BAND_X, HOOK_STEP, HOOK_X0, LABEL_PX, RAIL_COL_PX, RAIL_X, RULER_PX, type Column, type ColumnItem } from './column';
   import { COLUMN_INSET_PX, type Item, type Move } from './plot-model';
   import { tx } from './strings';
@@ -92,12 +93,12 @@
     {#each column.items as c (c.item.key)}
       {@const item = c.item}
       {#if item.kind === 'sleep'}
-        <button type="button" class="tlc-sleep" data-key={item.key} data-open={item.gap.end === null || undefined} tabindex={stop === item.key ? 0 : -1}
+        <button type="button" class="tlc-sleep" {...buttonAttrs('quiet', 'bare')} data-focus="ink" data-key={item.key} data-open={item.gap.end === null || undefined} tabindex={stop === item.key ? 0 : -1}
           aria-pressed={pressed(item)} aria-label={itemLabel(item, data)} style:top={`${c.y}px`} style:height={`${item.x1 - c.y}px`}
           onclick={() => onSelect(item.key)} onfocus={() => onHover(item.key)} onpointerenter={() => onHover(item.key)}></button>
       {:else if item.kind === 'mark' || item.kind === 'cluster'}
         {#if c.labelTop === null}
-          <button type="button" class="tlc-mark" data-key={item.key} data-kind={item.kind === 'mark' ? item.mark.kind : 'cluster'}
+          <button type="button" class="tlc-mark" {...buttonAttrs('quiet', 'bare')} data-focus="ink" data-key={item.key} data-kind={item.kind === 'mark' ? item.mark.kind : 'cluster'}
             tabindex={stop === item.key ? 0 : -1} aria-pressed={pressed(item)} aria-label={itemLabel(item, data)} style:top={`${c.y}px`}
             onclick={() => onSelect(item.key)} onfocus={() => onHover(item.key)} onpointerenter={() => onHover(item.key)}>
             {#if item.kind === 'cluster'}<span class="tlc-mark__n">{item.marks.length}</span>{:else}<KindGlyph kind={kindOf(item)} />{/if}
@@ -112,7 +113,7 @@
         {/if}
       {/if}
       {#if c.labelTop !== null && item.kind !== 'sleep'}
-        <button type="button" class="tlc-label" data-key={item.key} data-kind={item.kind} data-current={(item.kind === 'conversation' && item.bar.current) || undefined}
+        <button type="button" class="tlc-label" {...buttonAttrs('quiet', 'bare')} data-focus="ink" data-key={item.key} data-kind={item.kind} data-current={(item.kind === 'conversation' && item.bar.current) || undefined}
           tabindex={stop === item.key ? 0 : -1} aria-pressed={pressed(item)} aria-label={itemLabel(item, data)} style:top={`${c.labelTop}px`}
           onclick={() => onSelect(item.key)} onfocus={() => onHover(item.key)} onpointerenter={() => onHover(item.key)}>
           {#if item.kind === 'conversation'}

@@ -60,6 +60,7 @@
                     <th scope="row" class="sf-matrix__label">
                         <span class="sf-matrix__words">{t(row.labelKey)}</span>
                         {#if row.hintKey}<span class="sf-matrix__hint">{t(row.hintKey)}</span>{/if}
+                        {#if row.noteKey}<span class="sf-matrix__note" data-matrix-note>{t(row.noteKey)}</span>{/if}
                         {#if row.fields && error && row.fields.includes(error.key)}<span class="sf__error" role="alert">{error.text}</span>{/if}
                     </th>
                     {#if row.locked || !row.fields}

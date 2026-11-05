@@ -1,6 +1,6 @@
 
 body.modal-stack-locked,
-html:has(body.modal-stack-locked) {
+html.modal-stack-locked {
     overflow: hidden;
 }
 

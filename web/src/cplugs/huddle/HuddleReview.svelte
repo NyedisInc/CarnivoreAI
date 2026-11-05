@@ -1,22 +1,21 @@
 <script lang="ts">
-  import { Icon } from '../sdk/ui';
+  import { Icon, buttonAttrs } from '../sdk/ui';
   import { t } from '../sdk';
   import TaskManagerBubble from './TaskManagerBubble.svelte';
   import TaskManagerMarkdown from './TaskManagerMarkdown.svelte';
   import TaskManagerActionTag from './TaskManagerActionTag.svelte';
-  import { followHash, linkTarget, type ReviewAnswer, type ReviewBlock } from './huddle-review';
+  import { followHash, linkTarget, type ReviewBlock } from './huddle-review';
   import { reviewOpen, setReviewOpen } from './task-manager-review-fold';
   import { mdPlain } from './task-manager-markdown';
   import { issueNumber } from './task-manager-github-issue';
 
-  let { block, id, answer = null, issue = null, foldAll = false, unfolded = false }: { block: ReviewBlock; id: number; answer?: ReviewAnswer | null; issue?: string | null; foldAll?: boolean; unfolded?: boolean } = $props();
+  let { block, id, issue = null, foldAll = false, unfolded = false }: { block: ReviewBlock; id: number; issue?: string | null; foldAll?: boolean; unfolded?: boolean } = $props();
 
   const linkIssue = $derived(block.link && issue === block.link ? issueNumber(block.link) : null);
 
   const target = $derived(block.link ? linkTarget(block.link, window.location) : null);
   let open = $state(foldAll ? unfolded : reviewOpen(id));
   const foldable = $derived(foldAll ? !!block.summary : block.hasMore);
-  let answerOpen = $state(false);
 
   function toggle(): void {
     open = !open;
@@ -55,7 +54,7 @@
         <div class="tkm-review-part tkm-review-summary" class:tkm-review-click={foldable} data-task-manager-review-summary
              use:descriptionTip={foldable && !open ? mdPlain(block.description) : null} onclick={onSection}>
           {#if foldable}
-            <button type="button" class="tkm-review-fold" aria-expanded={open} data-task-manager-review-fold
+            <button type="button" class="tkm-review-fold" {...buttonAttrs('row', 'bare')} aria-expanded={open} data-task-manager-review-fold
                     title={t(open ? 'cplug.huddle.review.hide' : 'cplug.huddle.review.show')}
                     aria-label={t(open ? 'cplug.huddle.review.hide' : 'cplug.huddle.review.show')}>
               <Icon name={open ? 'chevron-down' : 'chevron-right'} size={10} />
@@ -81,20 +80,6 @@
       {/if}
     {/snippet}
   </TaskManagerBubble>
-  {#if answer}
-    <div class="tkm-review-answer" data-task-manager-review-answer={answer.id}>
-      <span class="tkm-review-key">{t('cplug.huddle.review.answered')}</span>
-      {#if answerOpen}
-        <div class="tkm-review-answer-text"><TaskManagerMarkdown text={answer.text} /></div>
-      {:else}
-        <span class="tkm-review-line">{answer.summary}</span>
-      {/if}
-      {#if answer.hasMore}
-        <button type="button" class="tkm-review-more" aria-expanded={answerOpen} data-task-manager-review-answer-more
-                onclick={() => (answerOpen = !answerOpen)}>{t(answerOpen ? 'cplug.huddle.review.less' : 'cplug.huddle.review.more')}</button>
-      {/if}
-    </div>
-  {/if}
 </div>
 
 <style>
@@ -145,25 +130,23 @@
       white-space: nowrap;
     }
 
-    .tkm-review-fold,
-    .tkm-review-more {
+    .tkm-review-fold {
+      --_bd: currentColor;
       flex: none;
+      margin: -1px;
       padding: 0;
-      border: 0;
+      border: 1px solid transparent;
       background: none;
       color: var(--oc-text-muted);
       font: inherit;
       cursor: pointer;
     }
 
-    .tkm-review-more {
-      font-size: var(--oc-fs-micro);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+    .tkm-review-fold {
+      display: inline-block;
     }
 
-    .tkm-review-fold:hover,
-    .tkm-review-more:hover {
+    .tkm-review-fold:hover {
       color: var(--oc-text-primary);
     }
 
@@ -173,23 +156,6 @@
       align-items: baseline;
       gap: 6px;
       color: var(--oc-text-secondary);
-    }
-
-    .tkm-review-answer {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      gap: 6px;
-      margin-top: 4px;
-      min-width: 0;
-    }
-
-    .tkm-review-answer-text {
-      flex: 1 1 100%;
-      min-width: 0;
-      color: var(--oc-text-primary);
-      font-size: var(--hd-fs-body, var(--oc-fs-body));
-      line-height: 1.5;
     }
 
     .tkm-review-text {

@@ -56,9 +56,8 @@ from src.core.attention.registry_record import (
     parse_registry_record,
 )
 from src.core.attention.registry_index import pid_is_running, registry_for_session
+from src.core.attention.resolve_rest import DONE_QUIET_SECONDS, STREAMING_LOOKBACK_SECONDS
 from src.core.attention.resolve import (
-    DONE_QUIET_SECONDS,
-    STREAMING_LOOKBACK_SECONDS,
     WAITING_DIALOG_OPEN,
     WAITING_INPUT_NEEDED,
     WAITING_PERMISSION_PROMPT,

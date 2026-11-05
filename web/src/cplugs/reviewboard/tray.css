@@ -53,7 +53,7 @@
   .rb-fold-foot .rb-count { flex: 1 1 auto; text-align: center; }
 
   .rb-prompt {
-    --_bd: transparent;
+    --_bd: var(--oc-focus-quiet);
     display: flex;
     flex-direction: column;
     gap: 6px;

@@ -1,19 +1,12 @@
 import { t } from '../../i18n/index.svelte';
 import { currentScreenFilter } from '../screen-filter';
 import { setMute, type MuteScope } from './api';
+import { addLocalToast } from '../../toast-surface';
 import './mute.css';
 
 export const MUTED_TOAST_KIND = 'NotifyMuted';
 
 type ToastLike = Record<string, unknown> & { notify_type?: unknown; mute_undo?: unknown };
-
-export interface NotifyMuteGlobal {
-    attach(card: HTMLElement, toast: ToastLike | null | undefined): void;
-}
-
-interface ToastSurface {
-    add(toast: Record<string, unknown>): void;
-}
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -56,23 +49,22 @@ function closeAll(): void {
 }
 
 async function mute(type: string, scope: MuteScope): Promise<void> {
-    const surface = (globalThis as { ToastManager?: ToastSurface }).ToastManager;
     const label = typeLabel(type);
     try {
         currentScreenFilter()?.applyMutes(await setMute(type, scope, true));
     } catch {
-        surface?.add(confirmCard(t('notify.mute.failed', { type: label }), null));
+        addLocalToast(confirmCard(t('notify.mute.failed', { type: label }), null));
         return;
     }
     const undo = async (): Promise<void> => {
         try {
             currentScreenFilter()?.applyMutes(await setMute(type, scope, false));
         } catch {
-            surface?.add(confirmCard(t('notify.mute.undo_failed', { type: label }), null));
+            addLocalToast(confirmCard(t('notify.mute.undo_failed', { type: label }), null));
         }
     };
     const key = scope === 'here' ? 'notify.mute.toast.here' : 'notify.mute.toast.everywhere';
-    surface?.add(confirmCard(t(key, { type: label }), undo));
+    addLocalToast(confirmCard(t(key, { type: label }), undo));
 }
 
 function confirmCard(title: string, undo: (() => Promise<void>) | null): Record<string, unknown> {
@@ -148,7 +140,7 @@ export function attach(card: HTMLElement, toast: ToastLike | null | undefined): 
         return;
     }
     const filter = currentScreenFilter();
-    const type = toast.notify_type;
+    const type = filter ? filter.canonical(toast.notify_type) : toast.notify_type;
     if (!filter || !filter.isKnown(type)) return;
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -167,8 +159,4 @@ export function attach(card: HTMLElement, toast: ToastLike | null | undefined): 
     shield(btn);
     card.appendChild(btn);
     card.classList.add('toast--mutable');
-}
-
-export function installNotifyMute(): void {
-    (globalThis as unknown as { NotifyMute?: NotifyMuteGlobal }).NotifyMute = { attach };
 }

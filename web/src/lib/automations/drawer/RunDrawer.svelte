@@ -10,7 +10,7 @@
   import { reports, lookup } from '../feed-store.svelte';
   import { compare, previousIndex, type DiffRun } from '../logic/diff';
   import { slotOf, type FeedRow } from '../logic/feed';
-  import { skipReason, statusWord } from '../logic/words';
+  import { settledStatus, skipReason, statusWord } from '../logic/words';
   import { data, openDrawer, openInAdvanced } from '../page-store.svelte';
   import { attachmentRows, sinceSentence } from './drawer-model';
   import { dr, loadRun } from './drawer-state.svelte';
@@ -26,7 +26,7 @@
   const since = $derived.by(() => {
     if (!run) return '';
     if (run.status === 'skipped') return skipReason(run, data.tz);
-    if (run.status !== 'succeeded' && run.status !== 'failed') return t('automations.simple.dr.nothing_compare');
+    if (!settledStatus(run.status)) return t('automations.simple.dr.nothing_compare');
     void reports[run.run_id];
     const at = dr.runs.findIndex((r) => r.run_id === run.run_id);
     const prev = at >= 0 ? previousIndex(dr.runs, at, lookup) : -1;

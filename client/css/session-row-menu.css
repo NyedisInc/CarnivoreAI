@@ -206,27 +206,6 @@
     color: var(--oc-text-dim);
 }
 
-.session-row-menu .session-row-menu__item--locked {
-    grid-template-columns: 14px 1fr auto auto;
-}
-
-.session-row-menu .session-row-menu__item--locked .session-row-menu__label {
-    color: var(--oc-text-dim);
-}
-
-.session-row-menu .session-row-menu__lock {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--oc-space-1);
-    color: var(--oc-text-dim);
-    font-size: 0.72rem;
-}
-
-.session-row-menu .session-row-menu__lock-star {
-    display: inline-flex;
-    color: var(--oc-yellow-bright);
-}
-
 
 .session-row-menu .session-row-menu__sep {
     height: 1px;

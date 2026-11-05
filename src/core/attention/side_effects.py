@@ -19,6 +19,7 @@ from src.core.attention.codex_reader import CODEX_RECORD_ABSENT
 from src.core.attention.ledger import Transition
 from src.core.attention.manager_port import SideEffectsManager
 from src.core.attention.subagent_work import SubagentWorkStamp
+from src.core.resource_push.session_usage_watch import SessionUsageWatch
 from src.core.attention.registry_record import STALE_CAUSE_CONVERSATION
 from src.core.attention.watcher import Observation, WatchTarget
 from src.core.db_models import SESSION_CLAUDE_UUID_SOURCE_REGISTRY
@@ -56,6 +57,7 @@ class AttentionSideEffects:
         self._broadcast_rename = broadcast_rename
         self._bound_conversations: dict = {}
         self._subagent_work = SubagentWorkStamp(manager)
+        self._usage_watch = SessionUsageWatch()
         self._asks = ask_toasts if ask_toasts is not None else AskToasts()
 
 
@@ -202,6 +204,7 @@ class AttentionSideEffects:
                 "attention_title_sync_failed", session_id, self._sync_title, session_id
             )
         if not codex:
+            self._guard("session_usage_push_failed", session_id, self._usage_watch.observe, session_id, observation.evidence)
             self._guard(
                 "attention_subagent_work_stamp_failed", session_id,
                 self._subagent_work.observe, session_id, tmux_name,

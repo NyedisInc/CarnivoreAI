@@ -9,6 +9,7 @@ import structlog
 
 from src.core.db import DatastoreUnreadableError, connect, db_path_for
 from src.core.product_identity import strip_session_prefix
+from src.core.stats.store_port import StatsStoreLike
 
 logger = structlog.get_logger()
 
@@ -31,7 +32,21 @@ def _name_of(title: Optional[str], tmux_name: Optional[str]) -> Optional[str]:
     return None
 
 
-def resolve(store) -> Dict[str, str]:
+def _peer_names(app_db: sqlite3.Connection) -> Dict[str, str]:
+    try:
+        rows = app_db.execute("SELECT conversation_id, agent_name FROM pack_rollups WHERE agent_name IS NOT NULL "
+                              "ORDER BY hour").fetchall()
+    except sqlite3.Error as exc:
+        logger.info("stats_agent_names_peer_unreadable", error=str(exc))
+        return {}
+    return {root_of(cid): name for cid, name in rows}
+
+
+def local_names(store: StatsStoreLike) -> Dict[str, str]:
+    return resolve(store, peers=False)
+
+
+def resolve(store: StatsStoreLike, *, peers: bool = True) -> Dict[str, str]:
     try:
         app_db = connect(db_path_for(store.state_dir), create=False)
     except DatastoreUnreadableError as exc:
@@ -39,6 +54,8 @@ def resolve(store) -> Dict[str, str]:
         return {}
     names: Dict[str, str] = {}
     try:
+        if peers:
+            names.update(_peer_names(app_db))
         rows = app_db.execute(
             "SELECT claude_session_uuid, title, tmux_name FROM sessions "
             "WHERE claude_session_uuid IS NOT NULL AND claude_session_uuid != '' ORDER BY id").fetchall()
@@ -54,7 +71,7 @@ def resolve(store) -> Dict[str, str]:
     return names
 
 
-def names_for(store, *, now: Optional[float] = None) -> Dict[str, str]:
+def names_for(store: StatsStoreLike, *, now: Optional[float] = None) -> Dict[str, str]:
     clock = time.monotonic() if now is None else now
     key = str(store.state_dir)
     with _lock:

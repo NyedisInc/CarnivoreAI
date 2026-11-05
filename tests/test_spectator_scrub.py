@@ -61,7 +61,8 @@ def test_a_flush_leaves_the_same_redactor_feeding():
 
 
 def test_the_real_redactor_stars_a_token_in_the_scrubbed_stream():
-    pytest.importorskip("src.core.stream_redactor")
+    from src.core import stream_redactor  # noqa: F401
+
     alphabet = "aB3dE5fG7hJ9kL1mN2pQ4rS6tU8vW0xY2zA4cD6e"
     token = "gh" + "p_" + alphabet[:36]
     chunk = f"export GH={token} done-marker\r\n".encode()

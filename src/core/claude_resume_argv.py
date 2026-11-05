@@ -13,7 +13,7 @@ from typing import Callable, Dict, List, Optional, Sequence
 
 import structlog
 
-from src.core import libproc_snapshot
+from src.core.machine_stats import libproc_snapshot
 
 logger = structlog.get_logger()
 

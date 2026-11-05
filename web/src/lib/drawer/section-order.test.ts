@@ -11,12 +11,12 @@ describe('resolveSectionOrder', () => {
     it('is the default with nothing stored', () => {
         expect(resolveSectionOrder(undefined)).toEqual([...DEFAULT_SECTION_ORDER]);
         expect(resolveSectionOrder(null)).toEqual([...DEFAULT_SECTION_ORDER]);
-        expect(DEFAULT_SECTION_ORDER.length).toBe(9);
+        expect(DEFAULT_SECTION_ORDER.length).toBe(10);
     });
 
     it('puts a section missing from an old stored order right after its default predecessor', () => {
         const old = ['browsers', 'terminals', 'rogue', 'companies', 'groups', 'layouts', 'pinned'];
-        expect(resolveSectionOrder(old)).toEqual(['browsers', 'review', 'pack', 'terminals', 'rogue', 'companies', 'groups', 'layouts', 'pinned']);
+        expect(resolveSectionOrder(old)).toEqual(['browsers', 'files', 'review', 'pack', 'terminals', 'rogue', 'companies', 'groups', 'layouts', 'pinned']);
         expect(resolveSectionOrder(['layouts', 'groups', 'companies', 'rogue', 'terminals', 'browsers', 'pack'])[0]).toBe('pinned');
     });
 
@@ -24,14 +24,14 @@ describe('resolveSectionOrder', () => {
         const got = resolveSectionOrder(['pack', 'nope', 'pack', 'pinned', 7 as unknown as string]);
         expect(got.filter((x) => x === 'pack').length).toBe(1);
         expect(got).not.toContain('nope' as SectionId);
-        expect(got.length).toBe(9);
+        expect(got.length).toBe(10);
     });
 });
 
 describe('a stored order and a section it does not name (#1863)', () => {
     it('a section missing from the stored order joins right after its default predecessor', () => {
         const got = resolveSectionOrder(['terminals', 'pinned', 'layouts', 'companies', 'browsers', 'review', 'pack']);
-        expect(got).toEqual(['terminals', 'pinned', 'layouts', 'groups', 'companies', 'rogue', 'browsers', 'review', 'pack']);
+        expect(got).toEqual(['terminals', 'pinned', 'layouts', 'groups', 'companies', 'rogue', 'browsers', 'files', 'review', 'pack']);
     });
 
     it('a stored order survives a section this build added: every stored id keeps its relative order', () => {
@@ -143,7 +143,7 @@ describe('a plugin page section', () => {
         expect(sectionOfBand('notes')).toBeNull();
         registerPageSections([{ id: 'notes', labelKey: 'cplug.notes.section', icon: 'note' }]);
         expect(sectionOfBand('notes')).toBe(PAGE_SECTION_SLOT);
-        expect(DEFAULT_SECTION_ORDER.indexOf(PAGE_SECTION_SLOT)).toBe(DEFAULT_SECTION_ORDER.indexOf('browsers') + 1);
+        expect(DEFAULT_SECTION_ORDER.indexOf(PAGE_SECTION_SLOT)).toBe(DEFAULT_SECTION_ORDER.indexOf('files') + 1);
         expect(isFoldKey('review')).toBe(true);
         expect(isFoldKey('notes')).toBe(true);
     });

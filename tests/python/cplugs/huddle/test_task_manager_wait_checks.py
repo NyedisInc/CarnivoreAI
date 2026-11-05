@@ -50,7 +50,7 @@ def test_a_check_outside_the_menu_or_with_an_unsafe_field_is_refused(raw):
 def test_every_menu_kind_parses_and_describes_itself():
     good = [{"kind": "version_live", "version": "1.17.0"}, {"kind": "git_contains", "repo": "/r", "ref": "main", "sha": "ABCDEF1"},
             {"kind": "issue_closed", "repo": "Harbor666/CarnivoreAIDev", "number": 7}, {"kind": "pr_merged", "repo": "o/r", "number": 8},
-            {"kind": "item_state", "item": 3, "state": "done_by_claude"}, {"kind": "session_idle", "session": "ses_1"},
+            {"kind": "item_state", "item": 3, "state": "review"}, {"kind": "session_idle", "session": "ses_1"},
             {"kind": "file_exists", "path": "/tmp/x"}, {"kind": "url_ok", "url": "http://127.0.0.1:8000/x"}]
     assert {checks.parse(g).kind for g in good} == set(checks.KINDS)  # type: ignore[attr-defined]
     assert checks.parse(good[4]).state == "review" and checks.parse(good[1]).sha == "abcdef1"

@@ -26,7 +26,7 @@
     import { dirtySectionsOf, dirtyTabsOf } from './dirty-places';
     import { searchPluginSettings, searchScreenSections, searchSettings, type PluginMatch } from './settings-search';
     import PluginSettingsSection from './plugin-settings/PluginSettingsSection.svelte';
-    import { pluginEntries } from './plugin-settings/plugin-entries';
+    import { pluginEntries, splitEntries } from './plugin-settings/plugin-entries';
     import { pluginSettingsIndex } from './plugin-settings/plugin-settings-index.svelte';
     import { PLUGIN_OPTION_PREFIX } from './plugin-settings/plugin-select';
     import {
@@ -52,6 +52,8 @@
     } from './settings-hash';
     import { highlightControl } from './settings-highlight';
     import { settingsView } from './settings-view.svelte';
+    import { isFeatureTier } from '../catalog/app-own';
+    import { FeatureRouting } from './features/feature-routing.svelte';
     import { openHostsScreen } from '../pack-page/screen-host';
     import { packFragment, packTabOf } from '../pack-page/pack-hash';
 
@@ -74,11 +76,15 @@
     const phoneBar = $derived(viewport.narrow && !embedded);
     const matches = $derived(searchSettings(query, t));
     const sectionHits = $derived(searchScreenSections(query, t));
-    const plugins = $derived(pluginEntries(pluginSettingsIndex.rows, t));
-    const pluginHits = $derived(searchPluginSettings(query, t, plugins));
+    const entryKinds = $derived(splitEntries(pluginEntries(pluginSettingsIndex.rows, t)));
+    const plugins = $derived(entryKinds.plugins);
+    const featureEntries = $derived(entryKinds.features);
+    const pluginHits = $derived(searchPluginSettings(query, t, [...featureEntries, ...plugins]));
+    // svelte-ignore state_referenced_locally
+    const features = new FeatureRouting(embedded, () => ((query = ''), (activePlugin = null), (pluginAnchor = null)));
     let activePlugin = $state<string | null>(null);
     let pluginAnchor = $state<string | null>(null);
-    const pluginEntry = $derived(plugins.find((p) => p.id === activePlugin) ?? null);
+    const pluginEntry = $derived([...featureEntries, ...plugins].find((p) => p.id === activePlugin) ?? null);
     const searching = $derived(query.trim() !== '');
     const counts = $derived.by(() => {
         if (!searching) return null;
@@ -116,6 +122,11 @@
 
     $effect(() => {
         if (!activePlugin || !pluginSettingsIndex.read || pluginEntry) return;
+        const row = pluginSettingsIndex.rows.find((r) => r.id === activePlugin);
+        if (row && isFeatureTier(row.tier)) {
+            features.pick(activePlugin, false, 'replace');
+            return;
+        }
         activePlugin = null;
         pluginAnchor = null;
         if (!embedded) writeSettingsFragment(settingsFragment(settingsView.section, settingsView.tabOf(settingsView.section)), 'replace');
@@ -141,8 +152,9 @@
             activePlugin = wantedPlugin;
             pluginAnchor = null;
         }
+        const wantedFeature = typeof window === 'undefined' ? null : features.follow(window.location.hash);
         const wanted = typeof window === 'undefined' ? null : settingsTabOf(window.location.hash);
-        if (wanted) {
+        if (wanted && !wantedFeature) {
             activePlugin = null;
             settingsView.section = wanted.section;
             if (wanted.tab) settingsView.setTab(wanted.section, wanted.tab);
@@ -153,7 +165,7 @@
             window.history?.replaceState?.(window.history.state, '', settingsHashWithoutHighlight(window.location.hash));
             void tick().then(() => highlightControl(document, mark));
         }
-        if (!embedded && typeof window !== 'undefined' && !mark && !wantedPlugin) {
+        if (!embedded && typeof window !== 'undefined' && !mark && !wantedPlugin && !wantedFeature) {
             writeSettingsFragment(settingsFragment(settingsView.section, settingsView.tabOf(settingsView.section)));
         }
         if (open) return;
@@ -178,6 +190,7 @@
     function pick(id: SectionId): void {
         query = '';
         activePlugin = null;
+        features.clear();
         pluginAnchor = null;
         settingsView.section = id;
         if (!embedded) writeSettingsFragment(settingsFragment(id, settingsView.tabOf(id)), 'push');
@@ -201,6 +214,7 @@
         query = '';
         activePlugin = null;
         pluginAnchor = null;
+        features.clear();
         settingsView.section = def.section;
         settingsView.setTab(def.section, slugOf(def.group));
         if (!embedded) writeSettingsFragment(settingsFragment(def.section, settingsView.tabOf(def.section)), 'replace');
@@ -261,9 +275,15 @@
                 }}
             >
                 {#snippet children()}
-                    {#each SETTINGS_SECTIONS as section (section.id)}
+                    {#each SETTINGS_SECTIONS.filter((section) => section.id !== 'features') as section (section.id)}
                         <option value={section.id}>{t(sectionKey(section.id, 'label'))}{dirtySections.has(section.id) ? ' *' : ''}</option>
                     {/each}
+                    <optgroup label={t('settings.features.heading')}>
+                        <option value="features">{t('settings.features.overview')}</option>
+                        {#each featureEntries as plugin (plugin.id)}
+                            <option value={`${PLUGIN_OPTION_PREFIX}${plugin.id}`}>{plugin.name}</option>
+                        {/each}
+                    </optgroup>
                     {#if plugins.length > 0}
                         <optgroup label={t('settings.plugins.heading')}>
                             {#each plugins as plugin (plugin.id)}
@@ -319,6 +339,7 @@
                     onPick={pick}
                     search={railSearch}
                     {plugins}
+                    features={featureEntries}
                     activePlugin={pluginEntry?.id ?? null}
                     {pluginCounts}
                     onPickPlugin={(id) => pickPlugin(id)}
@@ -357,7 +378,7 @@
                         {#if pluginEntry}
                             <PluginSettingsSection entry={pluginEntry} {t} anchor={pluginAnchor} onSaved={() => void pluginSettingsIndex.load()} />
                         {:else if screen}
-                            <SettingsScreenSection kind={screen} {tab} panel={tabbed ? panelAttrs(`settings-${active}`, tab ?? '') : {}} />
+                            <SettingsScreenSection kind={screen} {tab} panel={tabbed ? panelAttrs(`settings-${active}`, tab ?? '') : {}} focus={features.focus} onSelectFeature={(id, paneTab) => features.select(id, paneTab)} />
                         {:else if group}
                             {@const all = settingsInGroup(group)}
                             {@const rows = all.filter((r) => !r.lifecycle)}

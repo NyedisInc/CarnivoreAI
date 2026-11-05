@@ -27,12 +27,19 @@ _PLUGIN_TAILS = ("notify.copy.",)
 _FAMILY_SEVERITY: Dict[str, str] = {
     types.FAMILY_NEEDS_YOU: SEVERITY_WARN,
     types.FAMILY_SESSIONS: SEVERITY_INFO,
-    types.FAMILY_ACCOUNTS: SEVERITY_WARN,
+    types.FAMILY_MESSAGES: SEVERITY_INFO,
+    types.FAMILY_AUTO_ANSWERS: SEVERITY_INFO,
+    types.FAMILY_SWARM: SEVERITY_INFO,
     types.FAMILY_HEALTH: SEVERITY_ERROR,
+    types.FAMILY_SECURITY: SEVERITY_WARN,
+    types.FAMILY_AUTOMATIONS: SEVERITY_INFO,
     types.FAMILY_APP: SEVERITY_INFO,
-    types.FAMILY_IN_APP: SEVERITY_INFO,
 }
-_TYPE_SEVERITY: Dict[str, str] = {"session.died": SEVERITY_ERROR}
+_TYPE_SEVERITY: Dict[str, str] = {
+    "session.died": SEVERITY_ERROR, "account.switched": SEVERITY_WARN, "provider.needs_login": SEVERITY_WARN,
+    "computer.wrong_code": SEVERITY_ERROR, "computer.link_cert": SEVERITY_ERROR,
+    "computer.knock": SEVERITY_WARN,
+}
 
 _PLACEHOLDER = re.compile(r"\{(session|project|computer|from_account|to_account|limit)\}")
 _OPTIONAL = re.compile(r"\[([^\[\]]*)\]")

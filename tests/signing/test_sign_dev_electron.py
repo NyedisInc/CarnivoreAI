@@ -13,9 +13,9 @@ CODESIGN = """#!/bin/bash
 # wrongteam / wrongid verify fine but name another team / identifier
 case " $* " in
   *" --verify "*) [ "$STATE" != adhoc ]; exit $? ;;
-  *" -dv "*) if [ "$STATE" = wrongteam ]; then printf 'Identifier=com.github.Electron\\nTeamIdentifier=ARD6KN4BX4\\n' >&2;
-             elif [ "$STATE" = wrongid ]; then printf 'Identifier=Electron\\nTeamIdentifier=MDH8UQ6H46\\n' >&2;
-             elif [ "$STATE" = signed ]; then printf 'Identifier=com.github.Electron\\nTeamIdentifier=MDH8UQ6H46\\n' >&2;
+  *" -dv "*) if [ "$STATE" = wrongteam ]; then printf 'Identifier=ai.carnivore.menubar.dev\\nTeamIdentifier=ARD6KN4BX4\\n' >&2;
+             elif [ "$STATE" = wrongid ]; then printf 'Identifier=com.github.Electron\\nTeamIdentifier=MDH8UQ6H46\\n' >&2;
+             elif [ "$STATE" = signed ]; then printf 'Identifier=ai.carnivore.menubar.dev\\nTeamIdentifier=MDH8UQ6H46\\n' >&2;
              else printf 'Identifier=Electron\\nTeamIdentifier=not set\\n' >&2; fi ;;
 esac
 exit 0

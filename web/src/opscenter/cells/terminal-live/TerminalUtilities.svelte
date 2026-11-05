@@ -13,8 +13,8 @@
     term?: { options?: { theme?: Record<string, string> } };
   }
   /* there is nothing */
-  let { sessionId, controller, slot, width = 0, showsConnection = true, agentFamily = null, groupSlot = null, inHeader = false }:
-    { sessionId: string; controller: unknown; slot: string; width?: number; showsConnection?: boolean; inHeader?: boolean;
+  let { sessionId, controller, slot, width = 0, showsConnection = true, agentFamily = null, groupSlot = null, inHeader = false, appRows = false }:
+    { sessionId: string; controller: unknown; slot: string; width?: number; showsConnection?: boolean; inHeader?: boolean; appRows?: boolean;
       agentFamily?: string | null; groupSlot?: string | null } = $props();
   const client = $derived(controller as Controller | null);
   let connection: Connection | null = $state(null);
@@ -53,7 +53,7 @@
 {/snippet}
 <div class="oc-terminal-utilities" data-session-id={sessionId}>
   <TerminalActions
-    {slot} {sessionId} {width} {groupSlot} {inHeader} {agentFamily} utilities={utilityButtons}
+    {slot} {sessionId} {width} {groupSlot} {inHeader} {appRows} {agentFamily} utilities={utilityButtons}
     {sessionName}
     getPalette={() => client?._cellThemeManifest?.()?.xterm ?? client?.term?.options?.theme}
   />

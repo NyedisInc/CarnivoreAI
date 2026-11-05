@@ -93,7 +93,7 @@
     }
 
     function t(key) {
-        return (window.CloudeI18n && typeof window.CloudeI18n.t === 'function') ? window.CloudeI18n.t(key) : key;
+        return globalThis.CloudeTr(key);
     }
 
     function panelHtml() {

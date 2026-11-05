@@ -1,6 +1,6 @@
 
 <script lang="ts">
-    import ModalShell from '../launchpad/ModalShell.svelte';
+    import ModalShell from '../dialog-frame/ModalShell.svelte';
     import { BROWSE_KEYS } from '../../../../client/js/labels/skill-browse.js';
     import { SKILL_KEYS, reasonOf } from '../../../../client/js/labels/skill.js';
     import type { Translate } from '../sessions/types';

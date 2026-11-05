@@ -1,4 +1,5 @@
 import { LOG_LEVELS, type LogLevel, type LogRecord } from './types';
+import { failureReason } from '../../lib/errors/failure-reason';
 
 export const SESSION_KEYS = ['session', 'session_id', 'session_uuid', 'session_name', 'tmux_name', 'tmux_session'] as const;
 
@@ -40,7 +41,7 @@ export function compileText(text: string): { test: (haystack: string) => boolean
       const re = new RegExp(pattern[1] as string, pattern[2] as string);
       return { test: (haystack) => { re.lastIndex = 0; return re.test(haystack); }, error: null };
     } catch (error) {
-      return { test: () => false, error: error instanceof Error ? error.message : String(error) };
+      return { test: () => false, error: failureReason(error) };
     }
   }
   const needle = query.toLowerCase();

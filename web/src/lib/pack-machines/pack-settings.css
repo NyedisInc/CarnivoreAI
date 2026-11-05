@@ -2,7 +2,6 @@
 .cmp-body { max-width: 76ch; }
 .pk-tab { max-width: 100%; }
 .pk-tab > * { max-width: 100%; }
-.modal-btn.pk-act { flex: 0 0 auto; align-self: center; min-height: 0; padding: 4px 12px; font-size: 12px; }
 .pk-meters { display: flex; flex-direction: column; gap: 6px; margin: 2px 0; }
 .pm-note, .cmp-note { max-width: 70ch; }
 @media (max-width: 700px) {

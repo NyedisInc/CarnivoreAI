@@ -101,6 +101,7 @@ class ApprovalItem(BaseModel):
     fingerprint: str = Field(default="", max_length=128)
     plain_yes: Optional[str] = Field(default=None, max_length=500)
     plain_no: Optional[str] = Field(default=None, max_length=500)
+    beast_would_answer: Optional[bool] = None
     startup_kind: Optional[str] = Field(default=None, max_length=64)
     question_index: Optional[int] = None
     question_total: Optional[int] = None

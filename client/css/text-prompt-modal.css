@@ -62,13 +62,6 @@
     font-size: 13px;
 }
 
-.modal-btn-confirm {
-    --_btn-pad-y: 6px;
-    --_btn-pad: 12px;
-    --_btn-fs: 0.8rem;
-    --_btn-bw: 1px;
-}
-
 @media (pointer: coarse), (max-width: 600px) {
     .text-prompt-modal .modal-btn {
         min-height: 44px;

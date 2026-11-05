@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { autoAnswerConfirm, type AutoAnswer } from '../../test-support/auto-answer';
 import {
     offerFresh, pickAndWake, releaseThisTab, runArchive, runKillAsleep, runReopen, runSleep, runWake,
 } from './row-menu-sleep';
@@ -11,6 +12,8 @@ let calls: unknown[][];
 let said: string[];
 let events: { type: string; detail?: unknown }[];
 let refreshes: number;
+
+let confirmer: AutoAnswer | null = null;
 
 function standUp(api: Win = {}, extra: Win = {}): void {
     calls = []; said = []; events = []; refreshes = 0;
@@ -25,6 +28,7 @@ function standUp(api: Win = {}, extra: Win = {}): void {
 function onGone(e: Event): void { events.push({ type: e.type, detail: (e as CustomEvent).detail }); }
 
 afterEach(() => {
+    confirmer?.stop(); confirmer = null;
     window.removeEventListener('cloude:primary-session-gone', onGone);
     for (const k of ['API', 'App', 'Launchpad', 'SessionSidebar', 'SessionRestartPicker', 'TerminalController', 'NavigationGeneration', 'WakeFocus', 'CloudeI18n']) delete win[k];
     vi.restoreAllMocks();
@@ -148,21 +152,22 @@ describe('runWake', () => {
 
     describe('transcript_missing (#2515)', () => {
         it('a yes starts a fresh conversation through the same route', async () => {
-            const confirm = vi.fn(async () => true);
+            confirmer = autoAnswerConfirm(true);
             standUp({
                 wakeSession: async (...a: unknown[]) => { calls.push(['wake', ...a]); return a[3] ? { status: 'started' } : { status: 'refused', code: 'transcript_missing' }; },
-            }, { App: { showConfirmModal: confirm } });
+            });
             expect(await runWake({ ...CTX, label: 'a' })).toBe(true);
             expect(calls[1]).toEqual(['wake', 'u-a', null, null, true]);
-            expect(confirm).toHaveBeenCalledTimes(1);
+            expect(confirmer.asked).toHaveLength(1);
+            expect(confirmer.asked[0]!.variant).toBe('plain');
         });
 
         it('a no wakes nothing more and shows the refusal', async () => {
-            standUp({ wakeSession: async () => ({ status: 'refused', code: 'transcript_missing', detail: 'no transcript' }) },
-                { App: { showConfirmModal: async () => false } });
+            confirmer = autoAnswerConfirm(false);
+            standUp({ wakeSession: async () => ({ status: 'refused', code: 'transcript_missing', detail: 'no transcript' }) });
             expect(await runWake(CTX)).toBe(false);
             expect(said[0]).toContain('no transcript');
-            standUp({}, { App: { showConfirmModal: async () => false } });
+            standUp({});
             expect(await offerFresh('carnivore_a', 'a', 'u-a')).toBeNull();
         });
     });
@@ -171,23 +176,25 @@ describe('runWake', () => {
 describe('runKillAsleep', () => {
     const asleepCtx = { name: 'carnivore_a', label: 'agent a', sessionUuid: 'u-1' };
     it('confirms (danger styled, naming the agent), then deletes, then re-reads the list', async () => {
-        const confirm = vi.fn(async (..._a: unknown[]) => true);
-        standUp({ killAsleepSession: async (u: string) => { calls.push(['kill', u]); } }, { App: { showConfirmModal: confirm } });
+        confirmer = autoAnswerConfirm(true);
+        standUp({ killAsleepSession: async (u: string) => { calls.push(['kill', u]); } });
         expect(await runKillAsleep(asleepCtx)).toBe(true);
         expect(calls).toEqual([['kill', 'u-1']]);
-        expect(confirm.mock.calls[0]?.[5]).toBe('danger');
-        expect(String(confirm.mock.calls[0]?.[1])).toContain('agent a');
+        expect(confirmer.asked[0]?.variant).toBe('danger');
+        expect(confirmer.asked[0]?.message).toContain('agent a');
         expect(refreshes).toBe(1);
     });
 
     it('a cancel calls nothing', async () => {
-        standUp({ killAsleepSession: async () => { calls.push(['kill']); } }, { App: { showConfirmModal: async () => false } });
+        confirmer = autoAnswerConfirm(false);
+        standUp({ killAsleepSession: async () => { calls.push(['kill']); } });
         expect(await runKillAsleep(asleepCtx)).toBe(false);
         expect(calls).toEqual([]);
     });
 
     it('a refusal is said and the list still refreshes', async () => {
-        standUp({ killAsleepSession: async () => { throw new Error('not asleep'); } }, { App: { showConfirmModal: async () => true } });
+        confirmer = autoAnswerConfirm(true);
+        standUp({ killAsleepSession: async () => { throw new Error('not asleep'); } });
         expect(await runKillAsleep(asleepCtx)).toBe(false);
         expect(said[0]).toContain('not asleep');
         expect(refreshes).toBe(1);

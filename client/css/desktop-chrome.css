@@ -26,11 +26,11 @@
         display: none;
     }
 
-    html[data-popout][data-desktop-chrome]:has(.oc-topbar) body {
+    html[data-popout][data-desktop-chrome].ps-topbar body {
         padding-top: 0;
     }
 
-    html[data-popout][data-desktop-chrome]:has(.oc-topbar)::before {
+    html[data-popout][data-desktop-chrome].ps-topbar::before {
         display: none;
     }
 }

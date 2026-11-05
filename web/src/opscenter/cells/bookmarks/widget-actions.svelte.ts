@@ -1,6 +1,7 @@
 import { ApiError } from '../../api/auth.svelte';
 import { t } from '../../../lib/i18n/index.svelte';
 import { branchFrom, deleteBookmark, rewindTo, type Bookmark, type Point } from '../../../lib/bookmarks/api';
+import { failureReason } from '../../../lib/errors/failure-reason';
 
 export interface Notice {
   text: string;
@@ -8,7 +9,7 @@ export interface Notice {
 }
 
 function messageOf(error: unknown): string {
-  return error instanceof ApiError || error instanceof Error ? error.message : String(error);
+  return failureReason(error);
 }
 
 export class BookmarkWidgetActions {

@@ -1,3 +1,4 @@
+import { confirmOk } from '../confirm-ok/confirm-ok';
 import { authFetch } from '../../opscenter/api/auth.svelte';
 import { listingRows } from '../../opscenter/api/poll.svelte';
 import { packApi, type PackApi } from './pack-api';
@@ -48,7 +49,6 @@ export interface HistorySession {
 }
 
 export type HistoryState = 'running' | 'asleep' | 'closed' | 'removed' | 'unknown';
-export const HISTORY_STATES: readonly HistoryState[] = ['running', 'asleep', 'closed', 'removed', 'unknown'];
 
 export interface HistoryProject {
     readonly id: number | null;
@@ -159,13 +159,15 @@ async function promptText(options: PromptOptions): Promise<string | null> {
     return modal.open(options);
 }
 
-async function confirmDestructive(options: ConfirmOptions): Promise<boolean> {
-    const app = (globalThis as { App?: { showConfirmModal?: (...a: unknown[]) => Promise<boolean> } }).App;
-    if (typeof app?.showConfirmModal !== 'function') {
-        console.error('CloudeOpscenter: App.showConfirmModal is not available, the delete did nothing');
-        return false;
-    }
-    return Boolean(await app.showConfirmModal(options.title, options.message, options.detail, options.confirmLabel, options.cancelLabel, 'danger'));
+function confirmDestructive(options: ConfirmOptions): Promise<boolean> {
+    return confirmOk({
+        title: options.title,
+        message: options.message,
+        details: options.detail,
+        okLabel: options.confirmLabel,
+        cancelLabel: options.cancelLabel,
+        variant: 'danger',
+    });
 }
 
 type RestartFlow = (opts: Record<string, unknown>) => Promise<void>;

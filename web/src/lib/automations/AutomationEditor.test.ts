@@ -290,3 +290,32 @@ test('editing only the name keeps retry_backoff_s and max_runtime_s as stored (u
   expect(stub.updateAutomation).toHaveBeenCalledTimes(1);
   expect(stub.updateAutomation.mock.calls[0]![2]).toMatchObject({ name: 'renamed', retry_backoff_s: 30, max_runtime_s: 90 });
 });
+
+test('the command form takes alert exit codes, sends them, and blocks a bad list (#2709)', async () => {
+  await mountEditor();
+  await type('[data-auto-field="name"]', 'urgent check');
+  await choose('[data-target-kind]', 'command');
+  await choose('[data-command-select]', '/usr/bin/git pull --ff-only');
+  await type('[data-command-alert-codes]', '0, 300');
+  expect(document.body.textContent).toContain('use whole numbers from 1 to 255');
+  expect(q<HTMLButtonElement>('[data-editor-save]').disabled).toBe(true);
+  await type('[data-command-alert-codes]', '10, 11 10');
+  expect(q<HTMLButtonElement>('[data-editor-save]').disabled).toBe(false);
+  await press('[data-editor-save]');
+  expect(stub.createAutomation.mock.calls[0]![0].target).toEqual({ kind: 'command', command: '/usr/bin/git pull --ff-only', project_id: null, alert_exit_codes: [10, 11] });
+});
+
+test('no alert codes leaves the command target as it was, and a sequence step has no such field (#2709)', async () => {
+  await mountEditor();
+  await type('[data-auto-field="name"]', 'plain');
+  await choose('[data-target-kind]', 'command');
+  await choose('[data-command-select]', '/usr/bin/git pull --ff-only');
+  await press('[data-editor-save]');
+  expect(stub.createAutomation.mock.calls[0]![0].target).toEqual({ kind: 'command', command: '/usr/bin/git pull --ff-only', project_id: null });
+  unmount(app!);
+  document.body.innerHTML = '';
+  await mountEditor();
+  await choose('[data-target-kind]', 'sequence');
+  expect(document.querySelector('[data-sequence-step="0"] [data-command-select]')).not.toBeNull();
+  expect(document.querySelector('[data-command-alert-codes]')).toBeNull();
+});

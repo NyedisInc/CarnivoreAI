@@ -1,5 +1,6 @@
 import type { PublishAccount } from './publish';
 import { hostWindow } from '../sessions/env';
+import { legacyApi, legacyGlobal } from '../legacy-globals';
 import { sessionStore } from '../sessions/store.svelte';
 import type { ProjectRow } from '../sessions/types';
 import type { RunningSessionRow } from '../sessions/types';
@@ -132,11 +133,10 @@ export function workingDirOf(info: Record<string, unknown> | null): string | nul
 }
 
 const api = (): LegacyApi =>
-    (hostWindow() as unknown as { API: LegacyApi } | undefined)?.API as LegacyApi;
+    legacyApi<LegacyApi>();
 
 async function viewedProjectPath(): Promise<string | null> {
-    const ctl = (hostWindow() as unknown as { TerminalController?: { _sessionId?: () => string | null } } | undefined)
-        ?.TerminalController;
+    const ctl = legacyGlobal<{ _sessionId?: () => string | null }>('TerminalController');
     const id = typeof ctl?._sessionId === 'function' ? ctl._sessionId() : null;
     if (!id || !id.trim()) return null;
     try {

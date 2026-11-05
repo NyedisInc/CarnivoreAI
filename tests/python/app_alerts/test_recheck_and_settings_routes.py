@@ -70,7 +70,7 @@ def test_recheck_runs_the_producer_and_answers_the_alert_as_it_stands(world, mon
 
 def test_recheck_refuses_a_kind_with_no_recheck_and_an_unknown_id(world):
     other = service.raise_alert("pipeline.llm_all_down", source="save_pipeline", severity="error",
-                                title_key="app_alert.pipeline.llm_all_down.title", db_path=world.db)
+                                title_key="app_alert.self_check.tmux.title", db_path=world.db)
     assert world.client.post(f"{BASE}/{other['id']}/recheck").status_code == 409
     assert world.client.post(f"{BASE}/9999/recheck").status_code == 404
     assert not recheck.supports("pipeline.llm_all_down")

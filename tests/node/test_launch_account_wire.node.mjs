@@ -21,7 +21,7 @@ function loadApi() {
     };
     context.globalThis = context;
     vm.createContext(context);
-    for (const f of ['api.js', 'api-session-lifecycle.js']) {
+    for (const f of ['api.js', 'api-session-restart.js', 'api-session-records.js', 'api-session-adopt.js']) {
         vm.runInContext(fs.readFileSync(path.join(ROOT, 'client', 'js', f), 'utf8'), context, { filename: f });
     }
     return { api: context.window.API, calls };

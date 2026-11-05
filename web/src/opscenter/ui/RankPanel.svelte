@@ -14,6 +14,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import Icon from './Icon.svelte';
+  import Button from '../../lib/base/Button.svelte';
 
   interface Props {
     label: string;
@@ -41,7 +42,7 @@
     <h3 class="oc-rank__label" id="{uid}-label">{label}</h3>
     {#if headExtra}<div class="oc-rank__head-extra">{@render headExtra()}</div>{/if}
     {#if viewAll && onViewAll}
-      <button type="button" class="oc-btn oc-btn--ghost oc-btn--sm" onclick={onViewAll}>{viewAll}</button>
+      <Button variant="quiet" size="sm" onclick={onViewAll}>{viewAll}</Button>
     {/if}
   </header>
   {#if columns}
@@ -62,7 +63,7 @@
             <span class="oc-icon-tile oc-rank__tile">{#if row.iconSvg}{@html row.iconSvg}{:else if row.icon}<Icon name={row.icon} size={12} />{:else}<span class="oc-rank__letter" aria-hidden="true">{row.name.charAt(0).toUpperCase()}</span>{/if}</span>
           </span>
           <span class="oc-rank__text">
-            <span class="oc-rank__name">{#if onSelect}<button type="button" class="oc-rank__open" onclick={() => onSelect(row.id)}>{row.name}</button>{:else}{row.name}{/if}</span>
+            <span class="oc-rank__name">{#if onSelect}<button type="button" class="oc-rank__open" data-btn="row" data-size="auto" onclick={() => onSelect(row.id)}>{row.name}</button>{:else}{row.name}{/if}</span>
             {#if row.tags?.length || row.line}
               <span class="oc-rank__sub">
                 {#each row.tags ?? [] as tag (tag)}<span class="oc-rank__tag">{tag}</span>{/each}

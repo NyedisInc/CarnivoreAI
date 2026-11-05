@@ -16,7 +16,8 @@
     "Close a file with unsaved edits by holding Shift and clicking the red x: it asks before throwing the edits away.",
     "Click a changed file in the files widget's changed files tab: its diff opens read only in the main section.",
     "An agent opens plan.md with color cyan and icon docs: the row in the files list wears a cyan docs icon and name.",
-    "Paste a path to /Users/you/notes.plan.markdown while no session is selected: its file row opens in rendered preview, then edit and save through the usual stale-save guard."
+    "Paste a path to /Users/you/notes.plan.markdown while no session is selected: its file row opens in rendered preview, then edit and save through the usual stale-save guard.",
+    "Open logo.png on the phone, choose download from its row menu, and the browser saves the identical png."
   ],
   "how_to": [
     "Open the files widget (the files key on the right widget bar, or a files component), then click a file, a changed file's open, or a changed file itself for its diff.",
@@ -25,14 +26,16 @@
     "Switch between open files from the files list in the left sidebar; unsaved edits stay with each row until you save or close it.",
     "GET /api/v1/files/open lists the rows; POST opens one; DELETE /api/v1/files/open/{id} closes one; GET and PUT /api/v1/files/open/{id}/content read and save with the sha256 revision check.",
     "An agent opens a file for you with the MCP tool files_open (target, path, root, kind, and optional color and icon); it adds or reuses the row and does not switch your screen unless it also sets front true.",
-    "To make a row easier to spot, an agent can give it a theme color and an icon when it opens it, or later with sidebar_row_look_set (row, color, icon); a row with neither looks as before."
+    "To make a row easier to spot, an agent can give it a theme color and an icon when it opens it, or later with sidebar_row_look_set (row, color, icon); a row with neither looks as before.",
+    "To take a copy of an open file to another computer, press the download key in the file's header, or open the row's menu and choose download. The browser saves the exact file under its own name, text or binary. With unsaved edits it asks: save and download, download the saved copy, or cancel."
   ],
   "id": "open-files",
   "issues": [
     1699,
     1724,
     1767,
-    2697
+    2697,
+    2787
   ],
   "keywords": [
     "files",
@@ -50,10 +53,15 @@
   "surfaces": [
     "web/src/lib/open-files/FileScreen.svelte",
     "web/src/lib/sidebar-shell/BrowserRow.svelte",
-    "client/js/config-editor-panel.js"
+    "client/js/config-editor-panel.js",
+    "web/src/lib/open-files/download.ts",
+    "web/src/lib/open-files/download-row.svelte.ts",
+    "web/src/lib/item-menu/run/download-action.ts",
+    "src/core/open_files/download.py"
   ],
-  "updated": "2026-10-29",
+  "updated": "2026-11-03",
   "where": [
-    "The files list in the left sidebar, under the browsers, and the main section when a file row is selected."
+    "The files list in the left sidebar, under the browsers, and the main section when a file row is selected.",
+    "The download key in an open file's screen header, and download in an open file row's menu."
   ]
 }

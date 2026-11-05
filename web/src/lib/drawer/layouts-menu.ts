@@ -1,5 +1,6 @@
 import { t } from '../i18n/index.svelte';
 import { drawerEnv } from './env';
+import { confirmOk } from '../confirm-ok/confirm-ok';
 import { rowElementFor } from '../item-menu/run/run-env';
 import { togglePinRow } from '../sidebar-shell/row-reorder';
 import * as GroupColor from './group-color';
@@ -8,19 +9,17 @@ import { announce } from '../sidebar-shell/interaction-globals';
 
 export interface MenuItemContext { name: string; label?: string; layoutUuid?: string }
 
-interface AppShell {
-    showConfirmModal?(title: string, message: string, detail: string, confirm: string, cancel: undefined, tone: string): Promise<boolean>;
-}
-
 async function remove(ctx: MenuItemContext): Promise<void> {
     const b = bridge();
     if (!b) return;
-    const app = drawerEnv().App as AppShell | undefined;
     const name = ctx.label || ctx.name;
-    const ok = app && typeof app.showConfirmModal === 'function'
-        ? await app.showConfirmModal(t('layout.remove.title'), t('layout.remove.message', { name }), t('layout.remove.detail'),
-            t('layout.remove.confirm'), undefined, 'danger')
-        : window.confirm(t('layout.remove.message', { name }));
+    const ok = await confirmOk({
+        title: t('layout.remove.title'),
+        message: t('layout.remove.message', { name }),
+        details: t('layout.remove.detail'),
+        okLabel: t('layout.remove.confirm'),
+        variant: 'danger',
+    });
     if (!ok) return;
     try {
         await b.delete(idOf(ctx.name));

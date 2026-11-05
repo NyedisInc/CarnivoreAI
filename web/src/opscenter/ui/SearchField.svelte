@@ -20,6 +20,7 @@
     <input
         bind:this={input}
         class="oc-field"
+        data-base-exempt="bare-search-in-the-page-omnibar"
         type="search"
         autocomplete="off"
         spellcheck="false"

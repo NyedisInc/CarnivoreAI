@@ -11,9 +11,9 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt
 
-from src.cplugs.huddle import client_writes, item_marker, completed_view, old_routes, focus, held, lane, lineage, lists_read, owner_read, push_delta, question_cancel, swarm_tell, progress, reply, review, schedule, scheduled, service, slim, steps, send_queue, sending
+from src.cplugs.huddle import client_writes, item_marker, completed_view, focus, held, lane, lineage, lists_read, owner_read, push_delta, question_cancel, swarm_tell, progress, reply, review, schedule, scheduled, service, slim, steps, send_queue, sending
 from src.cplugs.huddle.groups import UNSET
-from src.cplugs.huddle.rules import ALL_LIST, JOE, OPEN, TaskManagerError, check_list_key
+from src.cplugs.huddle.rules import ALL_LIST, JOE, OPEN, TaskManagerAnswerInvalid, TaskManagerError, check_list_key
 from src.cplugs.sdk import CplugContext, CplugSchemaError, cplug_context, cplug_router
 from src.cplugs.sdk.session_tasks import tasks_for, watch_and_reader
 
@@ -172,6 +172,8 @@ def refusal(exc: TaskManagerError) -> HTTPException:
     blocking = getattr(exc, "blocking", None)
     if blocking is not None:
         body["blocking"] = blocking
+    if isinstance(exc, TaskManagerAnswerInvalid):
+        body["question"] = exc.question
     return HTTPException(status_code=exc.status, detail=body)
 
 
@@ -514,7 +516,7 @@ async def get_progress(ctx: CplugContext = Ctx) -> Dict[str, Any]:
 
 @router.get("/focus")
 async def get_focus(ctx: CplugContext = Ctx) -> Dict[str, Any]:
-    """The rows Claude is pointing at (``huddle_focus``). Output: {focus: {seq, list, items, open, at} | None}."""
+    """The rows Joe's views are pointing at. Output: {focus: {seq, list, items, open, at} | None}."""
     return {"focus": focus.current(ctx)}
 
 
@@ -522,8 +524,8 @@ async def get_focus(ctx: CplugContext = Ctx) -> Dict[str, Any]:
 async def post_focus(body: FocusRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
     """Point every open Task Manager view at rows of one list, or clear the focus.
 
-    Description: the one write behind the ``huddle_focus`` tool and Joe's
-      "touched the list" clear. ``clear`` drops it everywhere; otherwise
+    Description: the one write behind Joe's
+      "touched the list" clear and the reveal. ``clear`` drops it everywhere; otherwise
       ``list`` must name ``all`` or a live project and every id a live item of
       it (404 ``task_manager_not_found`` names the strays). Every change names the
       ``cplug.huddle.focus`` topic, so each open view re-reads once.
@@ -551,7 +553,6 @@ async def get_sessions(key: str, ctx: CplugContext = Ctx) -> Dict[str, Any]:
 
 
 @router.put("/lists/{key}/send-target")
-@router.put("/lists/{key}/tell-target", **old_routes.retired("PUT", "/lists/{key}/tell-target"))
 async def set_send_target(key: str, body: SendTargetRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
     """Pick the agent (a claude or codex session) this list's tell goes to, for every window; null forgets the pick.
 
@@ -573,7 +574,6 @@ async def set_send_target(key: str, body: SendTargetRequest, ctx: CplugContext =
 
 
 @router.post("/lists/{key}/send")
-@router.post("/lists/{key}/tell", **old_routes.retired("POST", "/lists/{key}/tell"))
 async def send_claude(key: str, body: SendRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
     """Deliver the one-line "the Task Manager changed" message to an agent session of this list.
 
@@ -639,7 +639,6 @@ async def delete_held(key: str, ctx: CplugContext = Ctx) -> Dict[str, Any]:
 
 
 @router.post("/send")
-@router.post("/tell", **old_routes.retired("POST", "/tell"))
 async def send_lists(body: SendManyRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
     """Tell claude about SEVERAL lists in one press, each list into its OWN target session (docs/task-manager.md section 20).
 
@@ -667,5 +666,5 @@ async def send_lists(body: SendManyRequest, ctx: CplugContext = Ctx) -> Dict[str
     return {"results": results}
 
 
-from src.cplugs.huddle import routes_actors, routes_artifacts, routes_ask, routes_closed, routes_closure_ops, routes_done, routes_files, routes_fork, routes_inbox, routes_lineage, routes_nudge, routes_schedule_offer, routes_sent, routes_send_queue, routes_wait  # noqa: E402,F401
+from src.cplugs.huddle import routes_actors, routes_artifacts, routes_ask, routes_closed, routes_closure_ops, routes_done, routes_files, routes_fork, routes_inbox, routes_lineage, routes_nudge, routes_schedule_offer, routes_sent, routes_send_queue, routes_skip, routes_wait  # noqa: E402,F401
 from src.cplugs.huddle.roles import routes_roles  # noqa: E402,F401

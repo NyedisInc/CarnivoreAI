@@ -5,8 +5,9 @@ import re
 from dataclasses import dataclass
 from typing import Any, FrozenSet, Iterable, List, Mapping, Optional, Tuple
 
-from src.cplugs.publicboard.headers import api_headers, as_asgi
-from src.cplugs.publicboard.routes import ROUTES, Handler, RouteKey
+from src.cplugs.publicboard.headers import api_headers, as_asgi, header_values
+from src.cplugs.publicboard.respond import Handler
+from src.cplugs.publicboard.routes import PATTERN_ROUTES, ROUTES, PatternRoute, RouteKey
 from src.cplugs.sdk.public_listener import MAX_HEAD_BYTES, canonical_ip
 
 FORBIDDEN, BAD_REQUEST, NOT_FOUND, LENGTH_REQUIRED, TOO_LARGE, UNSUPPORTED_TYPE, MISDIRECTED, HEAD_TOO_LARGE = 403, 400, 404, 411, 413, 415, 421, 431
@@ -35,10 +36,6 @@ class EdgeConfig:
         return cls(frozenset(peers), frozenset(hostnames))
 
 
-def _header_values(scope: Any, name: bytes) -> List[bytes]:
-    return [value for key, value in scope.get("headers") or () if key == name]
-
-
 def peer_refusal(scope: Any, config: EdgeConfig) -> Optional[int]:
     client = scope.get("client")
     peer = canonical_ip(client[0]) if client else None
@@ -46,7 +43,7 @@ def peer_refusal(scope: Any, config: EdgeConfig) -> Optional[int]:
 
 
 def host_refusal(scope: Any, config: EdgeConfig) -> Optional[int]:
-    values = _header_values(scope, b"host")
+    values = header_values(scope, b"host")
     if len(values) != 1:
         return MISDIRECTED
     try:
@@ -72,14 +69,18 @@ def head_refusal(scope: Any) -> Optional[int]:
     return HEAD_TOO_LARGE if size > MAX_HEAD_BYTES else None
 
 
-def route_for(scope: Any, routes: Mapping[RouteKey, Handler]) -> Optional[Handler]:
-    return routes.get((str(scope.get("method")), scope["raw_path"].decode("ascii")))
+def route_for(scope: Any, routes: Mapping[RouteKey, Handler], patterns: Tuple[PatternRoute, ...] = ()) -> Optional[Handler]:
+    method, path = str(scope.get("method")), scope["raw_path"].decode("ascii")
+    exact = routes.get((method, path))
+    if exact is not None:
+        return exact
+    return next((handler for verb, regex, handler in patterns if verb == method and regex.fullmatch(path)), None)
 
 
 def header_refusal(scope: Any) -> Optional[int]:
-    if _header_values(scope, b"transfer-encoding"):
+    if header_values(scope, b"transfer-encoding"):
         return BAD_REQUEST
-    lengths = _header_values(scope, b"content-length")
+    lengths = header_values(scope, b"content-length")
     if len(lengths) > 1 or any(not _DIGITS.fullmatch(v) for v in lengths):
         return BAD_REQUEST
     size = int(lengths[0]) if lengths else None
@@ -89,7 +90,7 @@ def header_refusal(scope: Any) -> Optional[int]:
         return LENGTH_REQUIRED
     if size > MAX_BODY_BYTES:
         return TOO_LARGE
-    return None if _header_values(scope, b"content-type") == [JSON_TYPE] else UNSUPPORTED_TYPE
+    return None if header_values(scope, b"content-type") == [JSON_TYPE] else UNSUPPORTED_TYPE
 
 
 async def refuse(send: Any, status: int) -> None:
@@ -100,9 +101,10 @@ async def refuse(send: Any, status: int) -> None:
 
 class PublicEdge:
 
-    def __init__(self, config: EdgeConfig, routes: Mapping[RouteKey, Handler] = ROUTES) -> None:
+    def __init__(self, config: EdgeConfig, routes: Mapping[RouteKey, Handler] = ROUTES, patterns: Optional[Tuple[PatternRoute, ...]] = None) -> None:
         self.config = config
         self.routes = routes
+        self.patterns = (PATTERN_ROUTES if routes is ROUTES else ()) if patterns is None else patterns
 
     async def _refuse_websocket(self, receive: Any, send: Any) -> None:
         await receive()
@@ -112,7 +114,7 @@ class PublicEdge:
         status = peer_refusal(scope, self.config) or host_refusal(scope, self.config) or target_refusal(scope) or head_refusal(scope)
         if status is not None:
             return status, None
-        handler = route_for(scope, self.routes)
+        handler = route_for(scope, self.routes, self.patterns)
         if handler is None:
             return NOT_FOUND, None
         return header_refusal(scope), handler

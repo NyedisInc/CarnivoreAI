@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -10,12 +10,14 @@ from typing import Any, Callable, Coroutine, List, Optional, Sequence, Set, Tupl
 
 import structlog
 
-from src.core import session_change_notice
+from src.core import resource_push, session_change_notice
 from src.core.attention.listing_marks import marks_stamp
+from src.core.attention.manager_port import AttentionManager
 from src.core.attention.display import activity_hint_for, to_display
 from src.core.attention.evidence import FAMILY_CODEX, REASON_QUESTION, STATE_NEEDS_USER, Evidence, EvidenceIdentity
 from src.core.attention.ledger import Transition
 from src.core.attention.side_effects import AttentionSideEffects
+from src.core.attention.codex_pane_home import pane_codex_home
 from src.core.attention.toast_detail import detail_for
 from src.core.attention.watcher import AttentionWatcher, Observation, WatchTarget
 from src.core.auto_sleep.idle_seed import SeedResult, pick_idle_seed
@@ -26,6 +28,8 @@ from src.core.hook_event_presentation import hook_event_presentation, question_t
 from src.core.mcp import pending
 from src.core.notifications.sources import toast as toast_source
 from src.core.notifications.sources.approvals import ApprovalsSource
+from src.core.session_output import escape_notices
+from src.core.session_output import waits as session_waits
 from src.core.session_status import STATUS_UNKNOWN
 from src.core.unread_store import UnreadStore
 from src.models import SessionRenamedMessage, ToastNewMessage
@@ -53,7 +57,7 @@ def make_announce_rename(send: Send, app_state: Any) -> Callable[[str, str], Non
     return announce_rename
 
 
-def make_list_targets(manager: Any, effects: AttentionSideEffects) -> Callable[[], Sequence[WatchTarget]]:
+def make_list_targets(manager: AttentionManager, effects: AttentionSideEffects) -> Callable[[], Sequence[WatchTarget]]:
     def list_targets() -> Sequence[WatchTarget]:
         targets: List[WatchTarget] = []
         for session_id in manager._registry.listable_ids():
@@ -75,7 +79,7 @@ def make_list_targets(manager: Any, effects: AttentionSideEffects) -> Callable[[
     return list_targets
 
 
-def make_raise_toast(manager: Any, effects: AttentionSideEffects, send: Send, app_state: Any, get_watcher: Callable[[], AttentionWatcher]) -> Callable[[WatchTarget, str, Transition], None]:
+def make_raise_toast(manager: AttentionManager, effects: AttentionSideEffects, send: Send, app_state: Any, get_watcher: Callable[[], AttentionWatcher]) -> Callable[[WatchTarget, str, Transition], None]:
     def raise_toast(
         target: WatchTarget, kind: str, transition: Transition
     ) -> None:
@@ -108,7 +112,7 @@ def make_raise_toast(manager: Any, effects: AttentionSideEffects, send: Send, ap
     return raise_toast
 
 
-def idle_seed_thunk(manager: Any, target: WatchTarget, observation: Observation) -> Callable[[], SeedResult]:
+def idle_seed_thunk(manager: AttentionManager, target: WatchTarget, observation: Observation) -> Callable[[], SeedResult]:
 
     def _seed() -> SeedResult:
         evidence = observation.evidence
@@ -119,6 +123,7 @@ def idle_seed_thunk(manager: Any, target: WatchTarget, observation: Observation)
                 codex=evidence.codex,
                 codex_session_uuid=uuid,
                 session_started_epoch=session_started_epoch,
+                codex_home=pane_codex_home(identity.socket, tmux_name),
             )
         else:
             session = manager._registry.sessions.get(target.session_id)
@@ -140,7 +145,7 @@ def idle_seed_thunk(manager: Any, target: WatchTarget, observation: Observation)
     return _seed
 
 
-def make_read_policy(manager: Any) -> Callable[[WatchTarget], Tuple[bool, Any]]:
+def make_read_policy(manager: AttentionManager) -> Callable[[WatchTarget], Tuple[bool, Any]]:
     def read_policy(target: WatchTarget) -> Tuple[bool, Any]:
         return (True, manager.notification_policy_stamp(target.session_id))
 
@@ -157,7 +162,7 @@ def make_fresh_evidence(list_targets: Callable[[], Sequence[WatchTarget]], read_
     return fresh_evidence
 
 
-def build_inbox(manager: Any, app_state: Any, get_watcher: Callable[[], AttentionWatcher]) -> Tuple[ApprovalsInbox, Callable[[], Path]]:
+def build_inbox(manager: AttentionManager, app_state: Any, get_watcher: Callable[[], AttentionWatcher]) -> Tuple[ApprovalsInbox, Callable[[], Path]]:
     inbox = ApprovalsInbox(lambda frame: session_change_notice.publish(app_state, frame))
     inbox.register(DialogProvider(get_watcher, lambda: manager))
 
@@ -171,6 +176,7 @@ def build_inbox(manager: Any, app_state: Any, get_watcher: Callable[[], Attentio
     agent_actions = pending.get_store()
     inbox.register(pending.AgentActionProvider(agent_actions, lambda: manager))
     agent_actions.subscribe(inbox.refresh)
+    resource_push.add_topic_listener(resource_push.topics.BEAST_MODE, inbox.refresh)
     if app_state is not None:
         app_state.approvals_inbox = inbox
     inbox.on_gain_ids(ApprovalsSource(get_watcher, lambda: manager, pending.get_store).on_gain)
@@ -189,14 +195,47 @@ class ObservationHooks:
     raise_skill_notice: Callable[[WatchTarget, Any], None]
 
 
+@dataclass
+class ObservationMemos:
+
+    published: dict[str, tuple] = field(default_factory=dict)
+    marks: dict[str, tuple] = field(default_factory=dict)
+
+
+def make_on_pass_end(manager: AttentionManager, hooks: ObservationHooks, memos: ObservationMemos) -> Callable[[], None]:
+    seen: Set[Tuple[str, str]] = set()
+
+    def guarded(sweep: str, action: Callable[[], None]) -> None:
+        try:
+            action()
+        except Exception as exc:
+            key = (sweep, type(exc).__name__)
+            emit = logger.debug if key in seen else logger.warning
+            seen.add(key)
+            emit("attention_pass_sweep_failed", sweep=sweep, error=str(exc), error_type=key[1])
+
+    def prune_memos() -> None:
+        for session_id in set(memos.published) - manager._registry.sessions.keys():
+            del memos.published[session_id]
+            memos.marks.pop(session_id, None)
+
+    def on_pass_end() -> None:
+        guarded("prune_memos", prune_memos)
+        guarded("auto_answer_forget", lambda: hooks.auto_answer.forget(manager._registry.sessions.keys()))
+        guarded("inbox_refresh", hooks.inbox.refresh)
+
+    return on_pass_end
+
+
 def make_on_observation(
-    manager: Any, app_state: Any, effects: AttentionSideEffects, hooks: ObservationHooks, idle_clock: Optional[Any],
+    manager: AttentionManager, app_state: Any, effects: AttentionSideEffects, hooks: ObservationHooks,
+    idle_clock: Optional[Any], memos: Optional[ObservationMemos] = None,
 ) -> Callable[[WatchTarget, Observation], None]:
-    inbox, history, died_tracker = hooks.inbox, hooks.history, hooks.died_tracker
+    history, died_tracker = hooks.history, hooks.died_tracker
     beast_prompts, auto_answer, pipeline_feed = hooks.beast_prompts, hooks.auto_answer, hooks.pipeline_feed
     raise_skill_notice = hooks.raise_skill_notice
-    published: dict[str, tuple] = {}
-    marks: dict[str, tuple] = {}
+    memos = memos if memos is not None else ObservationMemos()
+    published, marks = memos.published, memos.marks
 
     async def mirror_native(session_id: str) -> None:
         from src.core.crosstalk.native_mirror import mirror
@@ -212,7 +251,6 @@ def make_on_observation(
             logger.warning('crosstalk_native_mirror_failed', error_type=type(task.exception()).__name__)
 
     def on_observation(target: WatchTarget, observation: Observation) -> None:
-        inbox.refresh()
         history.on_observation(target, observation)
         died_tracker.observe(target, observation)
         beast_prompts.on_observation(target, observation)
@@ -227,10 +265,12 @@ def make_on_observation(
                      reason=verdict.reason, tier=verdict.tier, stale=observation.stale,
                      screen_read=getattr(decision, "read", None), screen_reason=getattr(decision, "reason", None))
         name, epoch = effects.instance_for(target.session_id)
-        read_unread = getattr(manager, "_is_unread", None)
-        unread = bool(read_unread(name, epoch)) if callable(read_unread) and name else False
+        unread = bool(manager._is_unread(name, epoch)) if name else False
         display = to_display(verdict, unread=unread, tmux_status=STATUS_UNKNOWN)
         pipeline_feed.on_observation(target.session_id, observation, display)
+        escape_notices.NOTICES.on_observation(
+            target.session_id, display, observation.evidence.agent_family,
+            getattr(observation.evidence.identity, "tmux_name", None))
         if idle_clock is not None:
             idle_clock.observe(
                 target.session_id, target.key,
@@ -263,10 +303,7 @@ def make_on_observation(
             messaging = getattr(app_state, 'messaging', None)
             if messaging is not None:
                 messaging.on_status(target.session_id, display)
-        for session_id in set(published) - manager._registry.sessions.keys():
-            del published[session_id]
-            marks.pop(session_id, None)
-        auto_answer.forget(manager._registry.sessions.keys())
+            session_waits.REGISTRY.on_status(target.session_id, display)
 
     return on_observation
 

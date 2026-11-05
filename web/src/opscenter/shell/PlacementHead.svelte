@@ -16,6 +16,7 @@
     onRemove,
     menu,
     phone = false,
+    locked = false,
   }: {
     meta: CellMeta;
     header: FrameHeader;
@@ -26,6 +27,7 @@
     onRemove: (() => void) | null;
     menu: Snippet<[MenuSlot]>;
     phone?: boolean;
+    locked?: boolean;
   } = $props();
 
   let open = $state(false);
@@ -37,5 +39,5 @@
 {/snippet}
 
 {#if shown}
-  <WidgetHead {meta} {header} {title} {count} {corner} tap={phone} onClose={onRemove && !phone ? () => onRemove() : null} withRight={false} />
+  <WidgetHead {meta} {header} {title} {count} {corner} tap={phone} onClose={onRemove && !phone ? () => onRemove() : null} withRight={false} {locked} />
 {/if}

@@ -199,7 +199,7 @@ def test_ui_invalidate_names_the_install_topic_at_most_twice_a_second(monkeypatc
         frames: List[Dict[str, Any]] = []
         resource_push.install(lambda f: frames.append(f) or 1, loop=asyncio.get_running_loop(), window_seconds=0.01)
         fake = SimpleNamespace(host=runtime.Host(sidecar_boot.Path("."), None), on_loop=lambda fn, *a: fn(*a), _key=lambda pid: "UUID-1",
-                                _record_activity=None, _plugin_alert=None)
+                                _record_activity=None, _plugin_alert=None, session_create=SimpleNamespace(create=None))
         invalidate = sidecar_boot.SidecarRuntime._services(fake).invalidate_ui
         start = asyncio.get_running_loop().time()
         while asyncio.get_running_loop().time() - start < 2.0:

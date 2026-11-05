@@ -2,6 +2,7 @@
 import { subscribe } from '../../opscenter/api/events.svelte';
 import type { EventFrame } from '../../opscenter/api/types';
 import { t } from '../i18n/index.svelte';
+import { addLocalToast } from '../toast-surface';
 
 export const TRIPWIRE_FRAME = 'stats.tripwire';
 
@@ -16,10 +17,6 @@ interface TripwireFrame {
   comparator?: string;
 }
 
-interface ToastSurface {
-  add(toast: Record<string, unknown>): void;
-}
-
 let started = false;
 
 export function toastFor(frame: TripwireFrame, now: number = Date.now()): Record<string, unknown> | null {
@@ -29,6 +26,7 @@ export function toastFor(frame: TripwireFrame, now: number = Date.now()): Record
     id: `tripwire:${frame.id}:${now}`,
     session_id: null,
     kind: TRIPWIRE_KIND,
+    notify_type: 'stats.tripwire',
     title: t(firing ? 'stats_tripwire.toast.title_firing' : 'stats_tripwire.toast.title_resolved'),
     body: t('stats_tripwire.toast.body', {
       name: frame.name,
@@ -46,8 +44,6 @@ export function startTripwireToasts(): void {
   started = true;
   subscribe(TRIPWIRE_FRAME, (frame: EventFrame) => {
     const toast = toastFor(frame as unknown as TripwireFrame);
-    const surface = (globalThis as { ToastManager?: ToastSurface }).ToastManager;
-    if (!toast || !surface || typeof surface.add !== 'function') return;
-    surface.add(toast);
+    if (toast) addLocalToast(toast);
   });
 }

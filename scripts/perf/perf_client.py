@@ -9,6 +9,8 @@ from typing import Callable, Optional
 import httpx
 import pyotp
 
+from perf_stats import parse_cputime
+
 
 @dataclass
 class ProcessSample:
@@ -35,6 +37,14 @@ def sample_process(pid: int) -> Optional[ProcessSample]:
     )
     child_count = len([ln for ln in children.stdout.splitlines() if ln.strip()])
     return ProcessSample(cpu_percent=cpu, rss_kb=rss_kb, child_count=child_count)
+
+
+def cpu_seconds(pid: int) -> float:
+    out = subprocess.run(["ps", "-o", "cputime=", "-p", str(pid)],
+                         capture_output=True, text=True, check=False)
+    if out.returncode != 0 or not out.stdout.strip():
+        raise RuntimeError(f"ps could not read pid {pid}")
+    return parse_cputime(out.stdout)
 
 
 def count_descendants(pid: int) -> int:

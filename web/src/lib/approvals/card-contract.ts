@@ -11,7 +11,7 @@ export type CardKind = 'startup' | 'bash' | 'edit' | 'permission' | 'question' |
 
 export type CardTone = 'startup' | 'perm' | 'ask' | 'plan' | 'agent' | 'codex' | 'raw';
 
-export type CardChip = 'beast' | 'waits' | 'mcp' | 'read_only';
+export type CardChip = 'beast' | 'waits' | 'mcp' | 'read_only' | 'none';
 
 export type Words = { key: string; params?: Record<string, string | number> } | { text: string };
 
@@ -60,7 +60,6 @@ const STARTUP_WORDED: ReadonlySet<string> = new Set([
 ]);
 const FOLDER_SCREENS: ReadonlySet<string> = new Set(['trust', 'codex_trust', 'mcp_server', 'external_imports']);
 const CODEX_REASON = /^\s*Reason:\s*(\S.*)$/m;
-const BEAST_FAMILIES: ReadonlySet<string> = new Set(['claude', 'codex']);
 const EDIT_TOOL = /^\s*(?:edit|write|create|update|multi ?edit)\b/i;
 const BASH_TOOL = /^\s*bash\b/i;
 const CUT_MARK = /(?:\.\.\.|\u2026)$/;
@@ -103,12 +102,14 @@ function sayFact(id: FactId, key: string, params?: Record<string, string | numbe
   return { id, value: [{ key, params }], wrap: true };
 }
 
+const RULE_LINE = /^[\s─━╌╍╎╏┄┅┈┉-]{10,}$/;
+
 function squashed(text: string): string {
   return text.replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
 function isClaudeHeader(item: ApprovalItem, tool: string): boolean {
-  if (!tool) return false;
+  if (!tool || RULE_LINE.test(tool)) return false;
   if (CLAUDE_HEADER.test(tool)) return true;
   const question = squashed(item.question ?? '');
   const head = squashed(tool.replace(CUT_MARK, ''));
@@ -148,11 +149,6 @@ function commandFacts(item: ApprovalItem, code: string, folder: string): CardFac
   const risks = codeRisks(code);
   if (risks.length) facts.push({ id: 'risk', value: risks.map((id) => ({ key: `code_review.risk.${id}` })), tone: 'warn' });
   return facts;
-}
-
-export function beastWouldAnswer(item: ApprovalItem): boolean {
-  return canApprove(item) && !isStartupDialog(item) && !isRemote(item) && (item.tabs?.length ?? 0) === 0
-    && BEAST_FAMILIES.has(item.family || 'claude');
 }
 
 export function optionWords(label: string): Words {
@@ -234,13 +230,17 @@ function codexCard(item: ApprovalItem, who: string, folder: string): Pick<CardCo
   };
 }
 
+const FACE_EFFECT_LINES = 2;
+const FULL_FACE_ACTIONS: ReadonlySet<string> = new Set(['plugin_session_create']);
+
 function agentCard(item: ApprovalItem, rows: readonly ListingRowLike[]): Pick<CardContract, 'who' | 'kind' | 'tone' | 'headline' | 'facts' | 'raw' | 'chip'> {
   const who = item.external_client || (sessionNameFor(item.caller, rows) ?? '');
   const display = item.display ?? null;
   const target = targetNameFor(item, rows) ?? '';
   const facts: CardFact[] = [];
   if (display) {
-    for (const line of consequenceLines(display).slice(0, 2)) facts.push({ id: 'effect', value: [{ text: line }], wrap: true });
+    const lines = consequenceLines(display);
+    for (const line of FULL_FACE_ACTIONS.has(item.action ?? '') ? lines : lines.slice(0, FACE_EFFECT_LINES)) facts.push({ id: 'effect', value: [{ text: line }], wrap: true });
     const inUse = inUseLine(display);
     if (inUse) facts.push({ id: 'in_use', value: [{ text: inUse }], wrap: true, tone: display.in_use?.tone === 'alert' ? 'warn' : undefined });
   } else if (item.summary) {
@@ -266,7 +266,7 @@ export function cardContract(item: ApprovalItem, ctx: CardContext = {}): CardCon
   const base = { who: itemSessionName(item), where: item.project ?? '', host: isRemote(item) ? hostName(item) : null };
   const folder = folderOf(item, rows);
   const who = base.who;
-  const chip: CardChip = beastWouldAnswer(item) ? 'beast' : 'waits';
+  const chip: CardChip = item.beast_would_answer === true ? 'beast' : item.kind === 'permission' && item.plain_yes ? 'none' : 'waits';
   let card: Pick<CardContract, 'kind' | 'tone' | 'headline' | 'facts' | 'raw'> & Partial<Pick<CardContract, 'who' | 'chip'>>;
   if (item.source === 'agent_action') {
     card = agentCard(item, rows);

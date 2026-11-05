@@ -1,5 +1,7 @@
 import { mount, unmount, type Component } from 'svelte';
 
+export type PropsArg<Props extends Record<string, unknown>> = Record<string, never> extends Props ? [props?: Props] : [props: Props];
+
 function findContainer(id: string): Element | null {
     if (typeof document === 'undefined' || typeof document.getElementById !== 'function') {
         return null;
@@ -17,7 +19,7 @@ const panels = new Map<string, PanelRecord>();
 export function mountPanel<Props extends Record<string, unknown>>(
     id: string,
     component: Component<Props, Record<string, unknown>>,
-    props?: Props,
+    ...rest: PropsArg<Props>
 ): Record<string, unknown> | null {
     const target = findContainer(id);
     if (!target) {
@@ -28,7 +30,7 @@ export function mountPanel<Props extends Record<string, unknown>>(
     unmountPanel(id);
     const instance = mount(component, {
         target,
-        props: (props ?? {}) as Props,
+        props: (rest[0] ?? {}) as Props ,
     }) as Record<string, unknown>;
     panels.set(id, { target, instance });
     return instance;
@@ -45,16 +47,33 @@ export function unmountPanel(id: string): boolean {
 export function ensurePanel<Props extends Record<string, unknown>>(
     id: string,
     component: Component<Props, Record<string, unknown>>,
-    props?: Props,
+    ...rest: PropsArg<Props>
 ): Record<string, unknown> | null {
     const target = findContainer(id);
     const existing = panels.get(id);
     if (existing && target && existing.target === target) {
         return existing.instance;
     }
-    return mountPanel(id, component, props);
+    return mountPanel(id, component, ...rest);
 }
 
 export function panelInstance(id: string): Record<string, unknown> | null {
     return panels.get(id)?.instance ?? null;
+}
+
+export function mountInto<Props extends Record<string, unknown>>(
+    target: Element,
+    component: Component<Props, Record<string, unknown>>,
+    ...rest: PropsArg<Props>
+): () => void {
+    let instance: Record<string, unknown> | null = mount(component, {
+        target,
+        props: (rest[0] ?? {}) as Props ,
+    }) as Record<string, unknown>;
+    return () => {
+        if (!instance) return;
+        const live = instance;
+        instance = null;
+        unmount(live, { outro: false });
+    };
 }

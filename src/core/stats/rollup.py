@@ -15,7 +15,7 @@ import structlog
 
 from src.core.db import DatastoreUnreadableError, connect, db_path_for, transaction
 from src.core.deepsearch import peer_air_gap
-from src.core.stats import project_groups
+from src.core.stats import agent_names, project_groups
 from src.core.stats.plugin import revision
 from src.core.stats.plugin.extract import project_key
 
@@ -69,7 +69,8 @@ def decode_cursor(cursor: Optional[str]) -> Tuple[int, int, str]:
 
 
 def _group(conn: sqlite3.Connection, conversation_id: str, hour: int, rev: int,
-           excluded: FrozenSet[str], allow: Optional[FrozenSet[str]] = None) -> Optional[Dict[str, Any]]:
+           excluded: FrozenSet[str], allow: Optional[FrozenSet[str]] = None,
+           names: Optional[Dict[str, str]] = None) -> Optional[Dict[str, Any]]:
     stored_usage = conn.execute(_USAGE_SQL, (hour, conversation_id)).fetchall()
     stored_counters = conn.execute(_COUNTER_SQL, (hour, conversation_id)).fetchall()
     usage = [r for r in stored_usage if r[1] not in excluded and (allow is None or r[1] in allow)]
@@ -77,16 +78,20 @@ def _group(conn: sqlite3.Connection, conversation_id: str, hour: int, rev: int,
     if (stored_usage or stored_counters) and not (usage or counters):
         return None
     first = (usage[0][9], usage[0][10]) if usage else ((counters[0][5], counters[0][6]) if counters else (None, None))
-    return {
+    group = {
         "conversation_id": conversation_id, "provider": first[0], "agent_kind": first[1], "hour": hour, "rev": rev,
         "usage": [list(r[:9]) for r in usage], "counters": [list(r[:5]) for r in counters],
     }
+    name = (names or {}).get(agent_names.root_of(conversation_id))
+    if name:
+        group["agent_name"] = name
+    return group
 
 
 def export_rollup(conn: sqlite3.Connection, since_revision: int, *, until_revision: Optional[int] = None,
                   cursor: Optional[str] = None, exclude_projects: FrozenSet[str] = frozenset(),
                   allow_projects: Optional[FrozenSet[str]] = None, revoked_projects: FrozenSet[str] = frozenset(),
-                  max_bytes: int = PAGE_BYTES) -> Dict[str, Any]:
+                  max_bytes: int = PAGE_BYTES, names: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
     current = revision.current(conn)
     reset = since_revision > current or since_revision < 0
     since = 0 if reset else since_revision
@@ -100,7 +105,7 @@ def export_rollup(conn: sqlite3.Connection, since_revision: int, *, until_revisi
     while more and complete:
         chunk = conn.execute(_NEXT_SQL, (since, until, *last, _CHUNK)).fetchall()
         for conversation_id, hour, rev in chunk:
-            group = _group(conn, conversation_id, hour, rev, exclude_projects, allow_projects)
+            group = _group(conn, conversation_id, hour, rev, exclude_projects, allow_projects, names)
             size = len(json.dumps(group, separators=(",", ":"))) if group is not None else 0
             if groups and used + size > budget:
                 complete = False
@@ -172,7 +177,8 @@ def serve(store: Any, *, since_revision: int, until_revision: Optional[int], cur
                 revision.ensure(conn)
         revoked = revision.settle(conn, allow)
         page = export_rollup(conn, since_revision, until_revision=until_revision, cursor=cursor,
-                             allow_projects=allow, revoked_projects=revoked, max_bytes=max_bytes)
+                             allow_projects=allow, revoked_projects=revoked, max_bytes=max_bytes,
+                             names=agent_names.local_names(store))
     return {"available": True, **page}
 
 

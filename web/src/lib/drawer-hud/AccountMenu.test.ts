@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { flushSync, mount, unmount } from 'svelte';
+import { flushSync, mount, tick, unmount } from 'svelte';
 
 import AccountMenu from './AccountMenu.svelte';
 import * as Bar from '../drawer/bar';
@@ -177,22 +177,42 @@ describe('the account menu', () => {
 });
 
 describe('the global swarm switch in the SysOp menu (Joe (ccsliinc), 2026-10-15, docs/swarm.md 4.10)', () => {
-    test('a toggle row after master all, checked as the server says, that flips and stays open', () => {
+    test('a toggle row after master all while Swarm is on, checked, that flips and stays open', () => {
         w.CloudeWeb = { masterAllEnabled: () => false, setMasterAll: () => {} };
-        swarmSwitch.data = { enabled: false };
+        swarmSwitch.data = { enabled: true };
         openMenu();
         expect(items().map((i) => i.dataset.node)).toEqual(['account_page', 'master_all', 'swarm', 'beast_mode', 'signout', 'logout']);
         const swarm = items().find((i) => i.dataset.node === 'swarm')!;
         expect(swarm.getAttribute('role')).toBe('menuitemcheckbox');
-        expect(swarm.getAttribute('aria-checked'), 'off reads unchecked').toBe('false');
+        expect(swarm.getAttribute('aria-checked')).toBe('true');
         expect(swarm.textContent).toContain('swarm');
         swarm.click();
         flushSync();
         expect(toggleSwarm).toHaveBeenCalledTimes(1);
         expect(menu(), 'a flip keeps the menu open').not.toBeNull();
+    });
+
+    test('#2701: Swarm switched off hides the row, and switching it back on shows it again', () => {
+        w.CloudeWeb = { masterAllEnabled: () => false, setMasterAll: () => {} };
+        swarmSwitch.data = { enabled: false };
+        openMenu();
+        expect(items().some((i) => i.dataset.node === 'swarm'), 'no swarm row while off').toBe(false);
+        expect(items().map((i) => i.dataset.node)).toEqual(['account_page', 'master_all', 'beast_mode', 'signout', 'logout']);
         swarmSwitch.data = { enabled: true };
         flushSync();
-        expect(items().find((i) => i.dataset.node === 'swarm')!.getAttribute('aria-checked'), 'the pushed state repaints the row').toBe('true');
+        expect(items().some((i) => i.dataset.node === 'swarm'), 'the pushed on state brings it back').toBe(true);
+    });
+
+    test('#2701: the row going away under focus hands focus to its neighbor, and the menu stays open', async () => {
+        w.CloudeWeb = { masterAllEnabled: () => false, setMasterAll: () => {} };
+        swarmSwitch.data = { enabled: true };
+        openMenu();
+        items().find((i) => i.dataset.node === 'swarm')!.focus();
+        swarmSwitch.data = { enabled: false };
+        flushSync();
+        await tick();
+        expect(menu(), 'the menu stays open').not.toBeNull();
+        expect((document.activeElement as HTMLElement | null)?.dataset.node, 'focus lands on the row above').toBe('master_all');
     });
 
     test('NEGATIVE: no answer from the server yet, no row (never a guessed state)', () => {

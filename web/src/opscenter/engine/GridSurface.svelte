@@ -13,6 +13,7 @@
   import { viewport } from './viewport.svelte';
   import { layoutZoom } from './layout-zoom.svelte';
   import { t } from '../../lib/i18n/index.svelte';
+  import { raiseFlag } from '../../lib/page-flags/page-flags';
 
   let {
     gutter = GUTTER,
@@ -43,6 +44,10 @@
   );
 
   const measured = $derived(store.page === 'home' || (surface.width > 0 && surface.height > 0));
+
+  function flagTerminalGrid(surfaceEl: HTMLElement): (() => void) | undefined {
+    return surfaceEl.parentElement?.id === 'terminal-grid' ? raiseFlag('grid-surface') : undefined;
+  }
 
   function crossed(at: number): [number, number][] {
     const under = tracks.rows[at + 1];
@@ -116,6 +121,7 @@
   class:oc-surface-zoomable={store.page === 'terminal'}
   style={measured ? `--rows: ${tracks.template}${tailFit === null ? '' : ` ${gutter}px`}; --oc-surface-h: ${tracks.contentHeight}px` : '--rows: none'}
   {@attach observeCell(sizeKey)}
+  {@attach flagTerminalGrid}
 >
   {#each measured ? rows : [] as row, index (row.id)}
     <GridRow

@@ -83,8 +83,8 @@
         </div>
     {/each}
     <div class="sp-g oc-focus-host" data-g="sort">
-        <span class="sp-gl">{t('sessions.page.sort.label')}</span>
-        <Select size="sm" aria-label={t('sessions.page.sort.label')} value={projectSort} onchange={(e) => onProjectSort(e.currentTarget.value as ProjectSortKey)}
+        <span class="sp-gl">{t('sessions.page.sort.projects_label')}</span>
+        <Select size="sm" aria-label={t('sessions.page.sort.projects_label')} value={projectSort} onchange={(e) => onProjectSort(e.currentTarget.value as ProjectSortKey)}
             options={PROJECT_SORTS.map((key) => ({ value: key, label: t(`sessions.page.sort.${key}`) }))} />
     </div>
 {/snippet}

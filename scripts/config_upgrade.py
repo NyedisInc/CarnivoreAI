@@ -74,6 +74,7 @@ from src.core.config_merge import (  # noqa: E402
     CANNOT_DETERMINE,
     CONFLICT,
     REMOVED_UPSTREAM,
+    MergeResult,
     apply_import,
     load_json,
     merge_config,
@@ -201,7 +202,7 @@ def render_plan(result, importable_selected: dict) -> str:
     return "\n".join(lines)
 
 
-def main(argv: list[str] | None = None) -> int:
+def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--config", default=str(REPO_ROOT / "config.json"))
     parser.add_argument("--defaults", default=str(REPO_ROOT / "config.example.json"))
@@ -209,85 +210,61 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--import", dest="imports", action="append", default=[])
     parser.add_argument("--json", dest="as_json", action="store_true")
-    args = parser.parse_args(argv)
+    return parser.parse_args(argv)
 
-    config_path = Path(args.config).expanduser()
-    defaults_path = Path(args.defaults).expanduser()
-    state_dir = resolve_state_dir(args.state_dir)
-    base_path = state_dir / BASE_FILENAME
 
+def _load_inputs(config_path: Path, defaults_path: Path, base_path: Path) -> tuple[dict, dict, dict | None] | None:
     try:
         theirs = load_json(defaults_path)
     except json.JSONDecodeError as error:
         print(f"config_upgrade: {defaults_path} is not valid JSON: {error}", file=sys.stderr)
-        return 1
+        return None
     if theirs is None:
         print(f"config_upgrade: no defaults file at {defaults_path}", file=sys.stderr)
-        return 1
-
+        return None
     try:
         mine = load_json(config_path)
     except json.JSONDecodeError as error:
         print(f"config_upgrade: {config_path} is not valid JSON: {error}", file=sys.stderr)
         print("Refusing to merge; fix or move the file first.", file=sys.stderr)
-        return 1
-
-    if mine is None:
-        mine = {}
-
+        return None
     try:
         base = load_json(base_path)
     except json.JSONDecodeError:
         base = None
+    return theirs, ({} if mine is None else mine), base
 
-    supported = model_supported_keys()
-    effective_theirs = effective_shipped_defaults(theirs, mine)
-    stale_roots = frozenset(k for k in effective_theirs if k not in theirs)
 
-    result = merge_config(
-        mine,
-        effective_theirs,
-        base,
-        supported_keys=supported,
-        stale_roots=stale_roots,
+def _select_imports(result: MergeResult, imports: list[str]) -> dict[str, list]:
+    for path in imports:
+        if path not in result.importable:
+            print(
+                f"config_upgrade: nothing to import for '{path}' "
+                "(no new upstream items, or not a list field)",
+                file=sys.stderr,
+            )
+    return {p: result.importable[p] for p in imports if p in result.importable}
+
+
+def _print_plan(result: MergeResult, selected: dict[str, list], as_json: bool) -> None:
+    if not as_json:
+        print(render_plan(result, selected))
+        return
+    print(
+        json.dumps(
+            {
+                "had_base": result.had_base,
+                "changes": [d.__dict__ for d in result.changes()],
+                "attention": [d.__dict__ for d in result.needing_attention()],
+                "importable": result.importable,
+            },
+            indent=2,
+            default=str,
+        )
     )
 
-    selected = {p: result.importable[p] for p in args.imports if p in result.importable}
-    unknown_imports = [p for p in args.imports if p not in result.importable]
-    for path in unknown_imports:
-        print(
-            f"config_upgrade: nothing to import for '{path}' "
-            "(no new upstream items, or not a list field)",
-            file=sys.stderr,
-        )
 
-    merged = result.merged
-    for path, items in selected.items():
-        merged = apply_import(merged, path, items)
-
-    if args.as_json:
-        print(
-            json.dumps(
-                {
-                    "had_base": result.had_base,
-                    "changes": [d.__dict__ for d in result.changes()],
-                    "attention": [d.__dict__ for d in result.needing_attention()],
-                    "importable": result.importable,
-                },
-                indent=2,
-                default=str,
-            )
-        )
-    else:
-        print(render_plan(result, selected))
-
-    attention = result.needing_attention()
-
-    if not args.apply:
-        print("")
-        print("Dry run. Nothing was written. Re-run with --apply to write it.")
-        return 2 if attention else 0
-
+def _write_upgrade(config_path: Path, state_dir: Path, base_path: Path, merged: dict, effective_theirs: dict) -> int:
     try:
         backup_target, outcome = back_up_config(config_path, state_dir)
     except (OSError, RuntimeError) as error:
@@ -306,12 +283,60 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Wrote {config_path}")
     print(f"Backup: {outcome} {backup_target}")
     print(f"Recorded base: {base_path}")
+    return 0
+
+
+def _print_attention(attention: list) -> None:
     if attention:
         print("")
         print(
             f"{len(attention)} field(s) still need your attention. Your values "
             "were kept in every one of them; nothing was auto-merged."
         )
+
+
+def _merge_against_model(theirs: dict, mine: dict, base: dict | None) -> tuple[MergeResult, dict]:
+    effective_theirs = effective_shipped_defaults(theirs, mine)
+    result = merge_config(
+        mine,
+        effective_theirs,
+        base,
+        supported_keys=model_supported_keys(),
+        stale_roots=frozenset(k for k in effective_theirs if k not in theirs),
+    )
+    return result, effective_theirs
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
+    config_path = Path(args.config).expanduser()
+    defaults_path = Path(args.defaults).expanduser()
+    state_dir = resolve_state_dir(args.state_dir)
+    base_path = state_dir / BASE_FILENAME
+
+    loaded = _load_inputs(config_path, defaults_path, base_path)
+    if loaded is None:
+        return 1
+    theirs, mine, base = loaded
+
+    result, effective_theirs = _merge_against_model(theirs, mine, base)
+
+    selected = _select_imports(result, args.imports)
+    merged = result.merged
+    for path, items in selected.items():
+        merged = apply_import(merged, path, items)
+    _print_plan(result, selected, args.as_json)
+
+    attention = result.needing_attention()
+    if not args.apply:
+        print("")
+        print("Dry run. Nothing was written. Re-run with --apply to write it.")
+        return 2 if attention else 0
+
+    status = _write_upgrade(config_path, state_dir, base_path, merged, effective_theirs)
+    if status:
+        return status
+    _print_attention(attention)
     return 2 if attention else 0
 
 

@@ -7,7 +7,7 @@ from contextlib import closing
 from src.core import resource_push
 from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
-from src.core.pack import progress
+from src.core.pack.transport import progress
 from src.core.pack.move import op_status, ops
 from src.core.pack.transport import blobs
 

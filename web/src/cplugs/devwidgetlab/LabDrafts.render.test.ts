@@ -117,7 +117,7 @@ describe('the source folder', () => {
     api.draftApi.list.mockResolvedValue({ ...NONE, source: { root: '', origin: 'none', setting: '', problems: [] } });
     const { menu } = await openBoth();
     expect(menu.querySelectorAll('.dwl-actions-note').length).toBe(1);
-    expect(menu.querySelector('.dwl-actions-note')!.textContent).toBe('no widget lab source folder was found. set one in Settings, under the widget lab plugin.');
+    expect(menu.querySelector('.dwl-actions-note')!.textContent).toBe('no widget lab source folder was found. set one in Settings, under the widget lab feature.');
     expect(menu.querySelector<HTMLButtonElement>('[data-draft-new]')!.disabled).toBe(true);
   });
 

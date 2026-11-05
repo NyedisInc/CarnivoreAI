@@ -37,8 +37,10 @@ async def post_owner_message(app_state: object, agent_id: int, text: str) -> Own
     await asyncio.to_thread(push.notify_thread, agent["thread_key"])
     remember = REF_LINE.format(ref=ref)
     if agent["state"] == "asleep":
-        woke = await body.wake(app_state, agent_id, "owner_message", "owner", orders=f"{text}\n\n{remember}", owner_message_ref=ref)
+        woke = await body.wake(app_state, agent_id, "owner_message", "owner", owner_message_ref=ref)
         if woke.started:
+            delivery.remember_owner_words(agent_id, ref, f"{text}\n\n{remember}")
+            await delivery.deliver_text(app_state, agent_id, f"{text}\n\n{remember}", source="owner_chat", authority="owner", owner_message_ref=ref)
             return OwnerMessageResult(ref, WAKING)
     outcome = await delivery.deliver_text(app_state, agent_id, f"{text}\n\n{remember}", source="owner_chat", authority="owner",
                                           owner_message_ref=ref)

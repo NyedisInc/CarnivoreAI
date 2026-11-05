@@ -1,13 +1,15 @@
 /* the old flat value */
 import { describe, expect, test } from 'vitest';
-import { canSplit, normalizeRail, placeInLayout, railToStored, removeFromRail, resetOptionsInRail, sectionStyle, setOptionInRail, setViewInRail, singleSection, splitAt, stepInRail, type RailLayout } from './rail-sections';
+import { canSplitAt, normalizeRail, placeInLayout, railToStored, removeFromRail, resetOptionsInRail, setOptionInRail, setViewInRail, singleSection, stepInRail, type RailLayout } from './rail-sections';
+import { percent, sectionStyle } from './rail-cuts';
 import { zoneItemKey } from '../drawer-zone/zone-model';
 import { lastUsedKey, pressKey, readLastUsed, shownKeys, writeLastUsed } from './rail-open';
 import { ratioAfterKey, ratioAtPointer } from '../split-divider/split-ratio';
 
 const w = (widget: string) => ({ widget, look: null });
 const ids = (layout: RailLayout) => layout.sections.map((section) => section.map((item) => item.widget));
-const NONE = { section: 0, index: 0, split: null };
+const NONE = { section: 0, index: 0, split: false };
+const SPLIT = { section: 0, index: 0, split: true };
 
 function storage(seed: Record<string, string> = {}) {
   const data = new Map(Object.entries(seed));
@@ -32,61 +34,61 @@ describe('the stored value', () => {
     expect(ids(layout)).toEqual([['core.notes', 'core.files']]);
     expect(layout.sections[0]![1]!.look).toBe('full');
     expect(railToStored(layout)).toEqual({ v: 2, sections: [{ items: [{ widget: 'core.notes' }, { widget: 'core.files', look: 'full' }] }] });
-    expect(normalizeRail({ v: 1, items: [] }, 256)).toEqual({ sections: [[]], ratio: 0.5 });
+    expect(normalizeRail({ v: 1, items: [] }, 256)).toEqual({ sections: [[]], cuts: [] });
     expect(normalizeRail(null, 256)).toBeNull();
     expect(normalizeRail({ v: 1, items: 'core.notes' }, 256)).toBeNull();
   });
 
-  test('v2 keeps two sections and the ratio; a repeat across sections, a third section and an empty half are dropped', () => {
-    const layout = normalizeRail({ v: 2, ratio: 0.3, sections: [{ items: [{ widget: 'core.a' }] }, { items: [{ widget: 'core.a' }, { widget: 'core.b' }] }, { items: [{ widget: 'core.c' }] }] }, 256)!;
+  test('v2 keeps two sections and the ratio (as its one cut); a repeat across sections and an empty half are dropped', () => {
+    const layout = normalizeRail({ v: 2, ratio: 0.3, sections: [{ items: [{ widget: 'core.a' }] }, { items: [{ widget: 'core.a' }, { widget: 'core.b' }] }] }, 256)!;
     expect(ids(layout)).toEqual([['core.a'], ['core.b']]);
-    expect(layout.ratio).toBe(0.3);
+    expect(layout.cuts).toEqual([0.3]);
     expect(railToStored(layout)).toEqual({ v: 2, ratio: 0.3, sections: [{ items: [{ widget: 'core.a' }] }, { items: [{ widget: 'core.b' }] }] });
     expect(ids(normalizeRail({ v: 2, ratio: 0.3, sections: [{ items: [] }, { items: [{ widget: 'core.b' }] }] }, 256)!)).toEqual([['core.b']]);
-    expect(normalizeRail({ v: 2, ratio: 2, sections: [{ items: [{ widget: 'core.a' }] }, { items: [{ widget: 'core.b' }] }] }, 256)!.ratio).toBe(0.85);
+    expect(normalizeRail({ v: 2, ratio: 2, sections: [{ items: [{ widget: 'core.a' }] }, { items: [{ widget: 'core.b' }] }] }, 256)!.cuts).toEqual([0.85]);
   });
 });
 
 describe('splitting and unsplitting', () => {
   const rail = normalizeRail({ v: 1, items: [{ widget: 'core.changes' }, { widget: 'core.files' }] }, 256)!;
 
-  test('a band makes the second section at its end; a moved key leaves its old place', () => {
-    expect(ids(placeInLayout(rail, { ...NONE, split: 'end' }, 'core.notes', undefined, 256))).toEqual([['core.changes', 'core.files'], ['core.notes']]);
-    expect(ids(placeInLayout(rail, { ...NONE, split: 'start' }, 'core.files', undefined, 256))).toEqual([['core.files'], ['core.changes']]);
-    expect(placeInLayout(rail, { ...NONE, split: 'end' }, 'core.notes', undefined, 256).ratio).toBe(0.5);
+  test('a split spot makes the second section after the hovered one; a moved key leaves its old place', () => {
+    expect(ids(placeInLayout(rail, SPLIT, 'core.notes', undefined, 256))).toEqual([['core.changes', 'core.files'], ['core.notes']]);
+    expect(ids(placeInLayout(rail, SPLIT, 'core.files', undefined, 256))).toEqual([['core.changes'], ['core.files']]);
+    expect(placeInLayout(rail, SPLIT, 'core.notes', undefined, 256).cuts).toEqual([0.5]);
   });
 
-  test('a band cannot split off the only widget, and a split rail cannot split again', () => {
+  test('a split cannot take the only widget of an area, and a split rail splits again (the cap is in rail-split-model.test.ts)', () => {
     const lone = normalizeRail({ v: 1, items: [{ widget: 'core.changes' }] }, 256)!;
-    expect(canSplit(lone, 'core.changes')).toBe(false);
-    expect(canSplit(lone, null)).toBe(true);
-    expect(ids(placeInLayout(lone, { ...NONE, split: 'end' }, 'core.changes', undefined, 256))).toEqual([['core.changes']]);
-    const split = placeInLayout(rail, { ...NONE, split: 'end' }, 'core.notes', undefined, 256);
-    expect(canSplit(split, null)).toBe(false);
-    expect(ids(placeInLayout(split, { ...NONE, split: 'start' }, 'core.task-manager', undefined, 256))).toEqual([['core.task-manager', 'core.changes', 'core.files'], ['core.notes']]);
+    expect(canSplitAt(lone, 0, 'core.changes')).toBe(false);
+    expect(canSplitAt(lone, 0, null)).toBe(true);
+    expect(ids(placeInLayout(lone, SPLIT, 'core.changes', undefined, 256))).toEqual([['core.changes']]);
+    const split = placeInLayout(rail, SPLIT, 'core.notes', undefined, 256);
+    expect(canSplitAt(split, 0, null)).toBe(true);
+    expect(ids(placeInLayout(split, SPLIT, 'core.task-manager', undefined, 256))).toEqual([['core.changes', 'core.files'], ['core.task-manager'], ['core.notes']]);
   });
 
   test('the last widget leaving a section takes the split away (removed, or moved to the other section)', () => {
-    const split = { sections: [[w('core.changes')], [w('core.files'), w('core.notes')]], ratio: 0.3 };
+    const split = { sections: [[w('core.changes')], [w('core.files'), w('core.notes')]], cuts: [0.3] };
     const removed = removeFromRail(split, 'core.changes');
     expect(ids(removed)).toEqual([['core.files', 'core.notes']]);
     expect(railToStored(removed)).toEqual({ v: 2, sections: [{ items: [{ widget: 'core.files' }, { widget: 'core.notes' }] }] });
-    expect(ids(placeInLayout(split, { section: 1, index: 0, split: null }, 'core.changes', undefined, 256))).toEqual([['core.changes', 'core.files', 'core.notes']]);
-    expect(ids(placeInLayout(split, { section: 0, index: 1, split: null }, 'core.notes', undefined, 256))).toEqual([['core.changes', 'core.notes'], ['core.files']]);
+    expect(ids(placeInLayout(split, { section: 1, index: 0, split: false }, 'core.changes', undefined, 256))).toEqual([['core.changes', 'core.files', 'core.notes']]);
+    expect(ids(placeInLayout(split, { section: 0, index: 1, split: false }, 'core.notes', undefined, 256))).toEqual([['core.changes', 'core.notes'], ['core.files']]);
   });
 
   test('a step stays inside its section', () => {
-    const split = { sections: [[w('core.a'), w('core.b')], [w('core.c')]], ratio: 0.5 };
+    const split = { sections: [[w('core.a'), w('core.b')], [w('core.c')]], cuts: [0.5] };
     expect(ids(stepInRail(split, 'core.b', 1))).toEqual([['core.a', 'core.b'], ['core.c']]);
     expect(ids(stepInRail(split, 'core.b', -1))).toEqual([['core.b', 'core.a'], ['core.c']]);
   });
 
-  test('sections and the hairline are placed by the same ratio', () => {
-    expect(sectionStyle('y', 0, 2, 0.3)).toBe('top: 0; bottom: calc(100% - 30%); left: 0; right: 0');
-    expect(sectionStyle('y', 1, 2, 0.3)).toBe('top: 30%; bottom: 0; left: 0; right: 0');
-    expect(sectionStyle('x', 1, 2, 0.3)).toBe('left: 30%; right: 0; top: 0; bottom: 0');
-    expect(sectionStyle('y', 0, 1, 0.3)).toBe('top: 0; bottom: 0; left: 0; right: 0');
-    expect(splitAt(0.3)).toBe('30%');
+  test('sections and the hairlines are placed by the same cuts', () => {
+    expect(sectionStyle('y', 0, [0.3])).toBe('top: 0; bottom: calc(100% - 30%); left: 0; right: 0');
+    expect(sectionStyle('y', 1, [0.3])).toBe('top: 30%; bottom: 0; left: 0; right: 0');
+    expect(sectionStyle('x', 1, [0.3])).toBe('left: 30%; right: 0; top: 0; bottom: 0');
+    expect(sectionStyle('y', 0, [])).toBe('top: 0; bottom: 0; left: 0; right: 0');
+    expect(percent(0.3)).toBe('30%');
   });
 });
 
@@ -146,7 +148,7 @@ describe('the shared divider maths', () => {
 });
 
 describe('copies of a widget with views (Joe (ccsliinc), 2026-10-10)', () => {
-  const spot = { section: 0, index: 99, split: null } as const;
+  const spot = { section: 0, index: 99, split: false } as const;
 
   test('a second catalog drop adds a copy and a third another; a singleton moves instead', () => {
     let layout = placeInLayout(singleSection([]), spot, 'core.tasks', undefined, 256);
@@ -160,7 +162,7 @@ describe('copies of a widget with views (Joe (ccsliinc), 2026-10-10)', () => {
   test('each copy has its own view and moving one keeps its copy id', () => {
     let layout = placeInLayout(placeInLayout(singleSection([]), spot, 'core.tasks', undefined, 256), spot, 'core.tasks', undefined, 256);
     layout = setViewInRail(layout, 'core.tasks#i2', 'all');
-    const moved = placeInLayout(layout, { section: 0, index: 0, split: null }, 'core.tasks', undefined, 256, 'i2');
+    const moved = placeInLayout(layout, { section: 0, index: 0, split: false }, 'core.tasks', undefined, 256, 'i2');
     expect(moved.sections[0]!.map((i) => [zoneItemKey(i), i.view])).toEqual([['core.tasks#i2', 'all'], ['core.tasks', undefined]]);
   });
 
@@ -180,7 +182,7 @@ describe('copies of a widget with views (Joe (ccsliinc), 2026-10-10)', () => {
 });
 
 describe('options per copy in a rail (Joe (ccsliinc), 2026-10-11: the questions widget)', () => {
-  const spot = { section: 0, index: 99, split: null } as const;
+  const spot = { section: 0, index: 99, split: false } as const;
   const two = () => placeInLayout(placeInLayout(singleSection([]), spot, 'core.questions', undefined, 256), spot, 'core.questions', undefined, 256);
 
   test('two copies of the widget sit side by side, each with its own options', () => {
@@ -194,7 +196,7 @@ describe('options per copy in a rail (Joe (ccsliinc), 2026-10-11: the questions 
 
   test('moving a copy keeps its options and its copy id', () => {
     const layout = setOptionInRail(two(), 'core.questions#i2', 'kind_huddle', false);
-    const moved = placeInLayout(layout, { section: 0, index: 0, split: null }, 'core.questions', undefined, 256, 'i2');
+    const moved = placeInLayout(layout, { section: 0, index: 0, split: false }, 'core.questions', undefined, 256, 'i2');
     expect(moved.sections[0]!.map((i) => [zoneItemKey(i), i.options])).toEqual([['core.questions#i2', { kind_huddle: false }], ['core.questions', undefined]]);
   });
 

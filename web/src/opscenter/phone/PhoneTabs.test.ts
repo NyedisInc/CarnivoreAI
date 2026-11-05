@@ -4,6 +4,7 @@ import { flushSync, mount, unmount } from 'svelte';
 
 import PhoneTabs from './PhoneTabs.svelte';
 import PhoneTabPane from './PhoneTabPane.svelte';
+import TerminalActions from '../cells/terminal-live/TerminalActions.svelte';
 import { terminalLayout } from '../engine/layout.svelte';
 import { activeTabFor, resetTabCache, setGroups } from '../engine/tab-groups.svelte';
 import { PRIMARY_SLOT } from '../engine/model';
@@ -71,10 +72,10 @@ afterEach(async () => {
   navigate.mockReset();
 });
 
-function draw(component: typeof PhoneTabs | typeof PhoneTabPane): HTMLElement {
+function draw(component: any, props: Record<string, unknown> = {}): HTMLElement {
   const target = document.createElement('div');
   document.body.appendChild(target);
-  apps.push(mount(component, { target }));
+  apps.push(mount(component, { target, props }));
   flushSync();
   return target;
 }
@@ -91,6 +92,14 @@ test('the strip draws the page component\'s tabs at touch size, with the "+" and
   flushSync();
   expect(plus.getAttribute('aria-expanded')).toBe('true');
   expect(document.querySelector('[role="menu"]')).not.toBeNull();
+});
+
+test('the strip raises body.ps-phone-tabs while mounted and clears it on unmount (#1940)', async () => {
+  expect(document.body.classList.contains('ps-phone-tabs')).toBe(false);
+  draw(PhoneTabs);
+  expect(document.body.classList.contains('ps-phone-tabs')).toBe(true);
+  await unmount(apps.pop()!);
+  expect(document.body.classList.contains('ps-phone-tabs')).toBe(false);
 });
 
 test('a tap switches the view: no navigation, one live client, the page pane stops voting', () => {
@@ -119,11 +128,6 @@ test('a tap switches the view: no navigation, one live client, the page pane sto
 test('the strip is the phone top bar: claw first (opens the drawer), tabs scroll between, bell and bare kebab last', () => {
   const toggle = vi.fn();
   (globalThis as Record<string, unknown>).SessionSidebar = { toggle };
-  const menuToggle = document.createElement('button');
-  menuToggle.id = 'header-menu-toggle';
-  const pressed = vi.fn();
-  menuToggle.addEventListener('click', pressed);
-  document.body.appendChild(menuToggle);
 
   const root = draw(PhoneTabs);
   const bar = root.querySelector('[data-phone-tabs]') as HTMLElement;
@@ -135,11 +139,16 @@ test('the strip is the phone top bar: claw first (opens the drawer), tabs scroll
   claw.click();
   expect(toggle).toHaveBeenCalledTimes(1);
 
-  const end = bar.querySelector('[data-phone-tabs-end]') as HTMLElement;
-  const kebab = end.querySelector('[data-phone-tabs-kebab]') as HTMLButtonElement;
-  expect(kebab.className).toContain('tw:border-0');
-  expect(kebab.getAttribute('aria-label')).toBe('more actions');
-  kebab.click();
-  expect(pressed).toHaveBeenCalledTimes(1);
+  const kebab = bar.querySelector('[data-phone-tabs-end] [data-phone-tabs-kebab]') as HTMLElement;
+  expect(kebab.querySelector('[data-tool="overflow"]')).not.toBeNull();
+  const rows = (host: ParentNode): Array<[string | null, string]> =>
+    [...host.querySelectorAll('.cell-options [role="menuitem"]')].map((el) => [el.getAttribute('data-tool'), (el.textContent ?? '').trim()]);
+  const phoneRows = rows(kebab);
+  const desktop = draw(TerminalActions, { slot: PRIMARY_SLOT, sessionId: 'ses_a', width: 0, agentFamily: 'claude', sessionName: 'cloude_ses_a' });
+  expect(phoneRows.length).toBeGreaterThan(3);
+  expect(phoneRows.slice(0, -2)).toEqual(rows(desktop));
+  expect(phoneRows.slice(-2).map(([tool]) => tool)).toEqual(['app-settings', 'app-logout']);
+  expect(phoneRows.at(-3)?.[0]).toBe('actions');
+  expect(rows(desktop).some(([tool]) => tool === 'app-settings' || tool === 'app-logout')).toBe(false);
   delete (globalThis as Record<string, unknown>).SessionSidebar;
 });

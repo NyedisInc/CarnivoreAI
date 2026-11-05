@@ -72,7 +72,7 @@ def test_two_plugins_never_declare_one_tool_name() -> None:
 
 
 def test_a_remote_body_runs_a_task_manager_tool_at_its_home() -> None:
-    assert proxy_client.is_proxied(TOOL) and proxy_client.is_proxied("huddle_list")
+    assert proxy_client.is_proxied(TOOL) and not proxy_client.is_proxied("huddle_list")
     assert not proxy_client.is_proxied("task_managerx_list") and not proxy_client.is_proxied("sessions_list")
 
 

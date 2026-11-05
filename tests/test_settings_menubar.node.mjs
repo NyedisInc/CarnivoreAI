@@ -7,6 +7,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import Module from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const macDir = path.join(__dirname, '..', 'macOS');
@@ -75,6 +76,12 @@ function loadManager(baseDir) {
     return manager;
 }
 
+const { writeConfigBindHost } = createRequire(import.meta.url)(path.join(macDir, 'bind-settings.js'));
+
+function writeBind(dir, ip) {
+    return writeConfigBindHost(path.join(dir, 'config.json'), ip);
+}
+
 function fixture(config) {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-menubar-'));
     if (config !== null) {
@@ -123,8 +130,7 @@ test('writing the preference MERGES into config.json rather than replacing it', 
         agents: { codex_command: 'codex' },
         server_prefs: { tls_preferred: true },
     });
-    const manager = loadManager(dir);
-    assert.equal(manager.writeConfigBindHost('0.0.0.0'), true);
+    assert.equal(writeBind(dir, '0.0.0.0'), true);
 
     const after = JSON.parse(fs.readFileSync(path.join(dir, 'config.json'), 'utf8'));
     assert.equal(after.server_prefs.bind_host, '0.0.0.0');
@@ -134,12 +140,12 @@ test('writing the preference MERGES into config.json rather than replacing it', 
 
 test('a write to a missing config reports failure instead of creating one', () => {
     const dir = fixture(null);
-    assert.equal(loadManager(dir).writeConfigBindHost('0.0.0.0'), false);
+    assert.equal(writeBind(dir, '0.0.0.0'), false);
 });
 
 test('no temp file is left behind by a successful write', () => {
     const dir = fixture({ server_prefs: {} });
-    loadManager(dir).writeConfigBindHost('127.0.0.1');
+    writeBind(dir, '127.0.0.1');
     const stray = fs.readdirSync(dir).filter((f) => f.endsWith('.tmp'));
     assert.deepEqual([...stray], []);
 });

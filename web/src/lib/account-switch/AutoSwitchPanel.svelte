@@ -9,7 +9,7 @@
   import Switch from '../base/Switch.svelte';
   import { authFetch } from '../../opscenter/api/auth.svelte';
   import { restartSession } from '../launchpad/running-actions';
-  import { browserRunningHost, type RunningHost } from '../launchpad/running-host';
+  import { browserRunningHost, type RespawnResult, type RunningHost } from '../launchpad/running-host';
   import type { RunningElsewhere } from './switch-model';
   import { resetAll, runningKey, type BulkPreview } from './reset-all';
   import {
@@ -71,6 +71,12 @@
       },
       refresh: () => loadRunningElsewhere(),
       reopenAfterRestart: async () => ({ status: 'reopened', detail: null }),
+      respawnSession: (name: string, agentType: string | null, confirmLive: boolean) => {
+        const body: Record<string, unknown> = { session_name: name, resume_after_restart: true };
+        if (agentType) body.agent_type = agentType;
+        if (confirmLive) body.confirm_restart_live = true;
+        return authFetch<RespawnResult>('/sessions/respawn', { method: 'POST', body: JSON.stringify(body) });
+      },
     };
     try {
       await restartSession({ name: row.tmux_session, label: row.label, status: row.status }, host, t);
@@ -97,7 +103,7 @@
         ),
         respawn: (name) => authFetch<{ ok?: boolean; detail?: string | null }>('/sessions/respawn', {
           method: 'POST',
-          body: JSON.stringify({ session_name: name, confirm_restart_live: true }),
+          body: JSON.stringify({ session_name: name, confirm_restart_live: true, resume_after_restart: true }),
         }),
       });
       bulkFailures = result.failures.map(({ row, reason, detail }) => t(

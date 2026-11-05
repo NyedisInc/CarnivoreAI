@@ -1,3 +1,4 @@
+import { isFeatureTier } from '../../catalog/app-own';
 import { toCplugItem, type CplugItem, type CplugRow } from '../../plugins-page/cplugs-adapter';
 import { hasPluginSettings } from '../../plugins-page/plugin-settings-link';
 import type { Translate } from '../../sessions/types';
@@ -15,4 +16,11 @@ export function pluginEntries(rows: readonly CplugRow[], t: Translate): PluginEn
         .filter((item) => item.enabled === true && hasPluginSettings(item))
         .map((item): PluginEntry => ({ id: item.cplugId, name: item.name, icon: item.icon ?? 'plug', item }))
         .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function splitEntries(entries: readonly PluginEntry[]): { plugins: PluginEntry[]; features: PluginEntry[] } {
+    return {
+        plugins: entries.filter((entry) => !isFeatureTier(entry.item.tier)),
+        features: entries.filter((entry) => isFeatureTier(entry.item.tier)),
+    };
 }

@@ -1,6 +1,5 @@
-import { t } from '../i18n/index.svelte';
 import { activate as activateBrowserRow } from './browser-rows';
-import { clickEnv, messageOf, type ClickCtrl, type RowLike } from './click-env';
+import { clickEnv, notifyAgentFailure, type ClickCtrl, type RowLike } from './click-env';
 
 const SESSION_CREATED_EVENT = 'session-created';
 
@@ -72,7 +71,7 @@ export async function activateRow(ctrl: ClickCtrl, rowEl: Element | null): Promi
     const sessionId = row.dataset.sessionId || null;
     if (sessionId && env.SoloWindow && await env.SoloWindow.focusIfOpen(sessionId)) return;
     const nav = env.NavigationGeneration ? env.NavigationGeneration.begin('session:' + name) : null;
-    const stillOurs = (): boolean => !env.NavigationGeneration || env.NavigationGeneration.keep(nav, 'sidebar switch to ' + name);
+    const stillOurs = (): boolean => !env.NavigationGeneration || env.NavigationGeneration.keep(nav, 'sidebar-switch:' + name);
     ctrl._pendingSelection = { name, nav };
     paintSelection(ctrl);
     try {
@@ -91,7 +90,7 @@ export async function activateRow(ctrl: ClickCtrl, rowEl: Element | null): Promi
     } catch (err) {
         if (!stillOurs()) return;
         console.error('SessionSidebar: switch failed:', err);
-        window.alert(t('sidebar.row.switch.failed', { detail: messageOf(err) }));
+        notifyAgentFailure(name, 'session.row.switch_agent.failed', err);
     } finally {
         if (ctrl._pendingSelection?.nav === nav) {
             ctrl._pendingSelection = null;

@@ -83,6 +83,9 @@ async def create(app_state: Any, card_id: Optional[int], args: Mapping[str, Any]
     if len(summary) > MAX_SUMMARY_CHARS:
         raise CardRefused("bad_card", f"summary is at most {MAX_SUMMARY_CHARS} characters")
     _no_secrets("card", title, summary, args.get("text"), args.get("how_to_validate"))
+    level = args.get("level")
+    if level is not None and level not in ("task", "feature"):
+        raise CardRefused("bad_card", "level is task or feature")
     parent = await _card(args["parent"]) if args.get("parent") is not None else None
     list_key = args.get("list_key") or (str(args["project_id"]) if args.get("project_id") is not None else None)
     list_key = list_key or (str(parent["list_key"]) if parent else (agent["thread_key"] if agent and agent["rank"] in ("project", "company") else None))
@@ -101,7 +104,7 @@ async def create(app_state: Any, card_id: Optional[int], args: Mapping[str, Any]
         origin = origin or ("owner_message:turn" if guard.turn_authority(agent["id"]) == guard.OWNER else f"agent:{agent['id']}")
     sent = {"list_key": str(list_key), "title": title, "text": args.get("text", ""), "parent": args.get("parent"),
             "how_to_validate": args.get("how_to_validate", ""), "before_id": args.get("before_id"), "origin": origin or "owner",
-            "summary": summary, "queued": bool(args.get("queued")) or (parent is not None and parent["column"] == "in_progress")}
+            "summary": summary, "level": level, "queued": bool(args.get("queued")) or (parent is not None and parent["column"] == "in_progress")}
     result = await card_port.get().act("create", None, sent, by)
     line = {"kind": "post", "card_id": result["card"]["id"], "agent_id": agent["id"], "text": "card_created", "category": "card_created"} if agent else None
     await effects.run(app_state, [*result["effects"], *([line] if line else [])])
@@ -181,8 +184,8 @@ async def close(app_state: Any, card_id: int, args: Mapping[str, Any], *, by: st
     card = await _card(card_id)
     if await _allow(by, "close", card, args) is None:
         raise CardRefused("not_allowed", "close is an agent's tool; the owner moves a card with the board")
-    if card["column"] != "review":
-        raise CardRefused("not_in_review", "only a card in Review is closed")
+    if card["column"] == "done":
+        raise CardRefused("already_done", "that card is already Done")
     reason = " ".join((args.get("reason") or "").split())
     if not reason or len(reason) > MAX_ASK_CHARS:
         raise CardRefused("bad_card", f"reason is required, at most {MAX_ASK_CHARS} characters")
@@ -436,9 +439,17 @@ async def agent_archive(app_state: Any, card_id: int, args: Mapping[str, Any], *
     return card
 
 
+AGENT_MADE_ORIGINS = frozenset({"agent", "spawn", "session"})
+
+
+def agent_made(card: Mapping[str, Any]) -> bool:
+    origin = card.get("origin")
+    return isinstance(origin, Mapping) and origin.get("kind") in AGENT_MADE_ORIGINS
+
+
 async def agent_delete(app_state: Any, card_id: int, args: Mapping[str, Any], *, by: str) -> Dict[str, Any]:
     checked = await curate_check(card_id, args, by=by, op="agent_delete")
-    await card_port.get().act("delete", card_id, {"reason": f"{by}: {checked['reason']}"}, "owner")
+    await card_port.get().act("delete", card_id, {"reason": f"{by}: {checked['reason']}"}, by)
     notices.note(app_state, checked["card"], None)
     return {"id": int(card_id), "deleted": True}
 

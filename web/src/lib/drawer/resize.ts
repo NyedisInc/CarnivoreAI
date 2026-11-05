@@ -1,5 +1,6 @@
 import { BAR_GRAB_MIN_PX, maxBarPx } from '../session-rail/bar-limits';
 import { sideBudget } from '../session-rail/side-budget.svelte';
+import { t } from '../i18n/index.svelte';
 
 export const STORAGE_KEY = 'carnivore.session.sidebar.width';
 export const MIN_WIDTH_PX = BAR_GRAB_MIN_PX;
@@ -69,7 +70,7 @@ function restore(): void {
 
 function announce(px: number): void {
     const region = document.getElementById('session-sidebar-live');
-    if (region) region.textContent = `sidebar width ${Math.round(px)} pixels`;
+    if (region) region.textContent = t('drawer.resize.announce', { px: Math.round(px) });
 }
 
 function onPointerDown(e: PointerEvent): void {

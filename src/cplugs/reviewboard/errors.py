@@ -153,6 +153,21 @@ class UnscannableFile(BoardError):
         super().__init__(message, extra={"files": files})
 
 
+class ActiveContentFile(BoardError):
+
+    status = 422
+    code = "reviewboard_file_active_content"
+
+    def __init__(self, message: str, *, files: List[Dict[str, Any]]) -> None:
+        super().__init__(message, extra={"files": files})
+
+
+class ScannerBusy(BoardError):
+
+    status = 503
+    code = "reviewboard_scanner_busy"
+
+
 class AttachmentNotFound(BoardError):
 
     status = 404

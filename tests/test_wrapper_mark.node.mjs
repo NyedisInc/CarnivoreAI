@@ -4,6 +4,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
+import { installTrOnly } from './helpers/catalog-tr.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const JS = path.join(__dirname, '..', 'client', 'js');
@@ -17,6 +18,7 @@ function load(files, withGlyphs = true, setup = () => {}) {
     const ctx = { window, globalThis: window, console: { log() {}, error() {} } };
     window.window = window;
     vm.createContext(ctx);
+    installTrOnly(ctx);
     for (const f of files) vm.runInContext(fs.readFileSync(path.join(JS, f), 'utf8'), ctx);
     return window;
 }

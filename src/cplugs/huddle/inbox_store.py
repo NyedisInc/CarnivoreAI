@@ -4,11 +4,12 @@ from __future__ import annotations
 import json
 import sqlite3
 from contextlib import closing
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Set
 
 import structlog
 
-from src.cplugs.huddle import inbox, rules, triggers
+from src.cplugs.huddle import inbox, inbox_files, rules, triggers
 from src.cplugs.huddle.rules import TaskManagerInvalid, TaskManagerNotFound
 
 if TYPE_CHECKING:
@@ -44,12 +45,19 @@ class InboxStore:
         self._store._commit_notify(list_key)
         return on
 
-    def add(self, list_key: str, text: str, author: str = inbox.OWNER) -> Dict[str, Any]:
+    def add(self, list_key: str, text: str, author: str = inbox.OWNER, staged: Sequence[Path] = ()) -> Dict[str, Any]:
         rules.check_list_key(list_key)
         clean = rules.clean_text(text, "text", rules.MAX_TEXT)
         with closing(self._store._connect(True)) as conn, conn:
             entry_id = conn.execute("INSERT INTO work_inbox (list_key, raw_text, author, created_at, status) VALUES (?, ?, ?, ?, ?)",
                                     (list_key, clean, author, self._store._clock(), inbox.QUEUED)).lastrowid
+        try:
+            inbox_files.carry(self._store.storage, entry_id, staged)
+        except OSError:
+            with closing(self._store._connect(True)) as conn, conn:
+                conn.execute("DELETE FROM work_inbox WHERE id = ?", (entry_id,))
+            inbox_files.uncarry(self._store.storage, entry_id, staged)
+            raise
         self._store._commit_notify(list_key)
         triggers.nudge()
         logger.info("task_manager_inbox_queued", list=list_key, entry=entry_id)
@@ -60,20 +68,24 @@ class InboxStore:
             row = conn.execute(f"SELECT {_COLS} FROM work_inbox WHERE id = ?", (entry_id,)).fetchone()
         if row is None:
             raise TaskManagerNotFound(f"no inbox entry {entry_id}")
-        return inbox.entry_dict(row)
+        return self._with_files(inbox.entry_dict(row))
+
+    def _with_files(self, entry: Dict[str, Any]) -> Dict[str, Any]:
+        entry["files"] = inbox_files.listing(self._store.storage, entry["id"])
+        return entry
 
     def open_entries(self, list_key: Optional[str] = None) -> List[Dict[str, Any]]:
         where, args = (" AND list_key = ?", (list_key,)) if list_key is not None else ("", ())
         with closing(self._store._read_connection()) as conn:
             rows = conn.execute(f"SELECT {_COLS} FROM work_inbox WHERE {inbox.OPEN_SQL}{where} ORDER BY id", args).fetchall()
-        entries = [inbox.entry_dict(r) for r in rows]
+        entries = [self._with_files(inbox.entry_dict(r)) for r in rows]
         now = self._store._clock()
         return [e for e in entries if e["status"] != inbox.STUCK or not self.adopt_promoted(e["id"], now)]
 
     def active_entries(self) -> List[Dict[str, Any]]:
         with closing(self._store._read_connection()) as conn:
             rows = conn.execute(f"SELECT {_COLS} FROM work_inbox WHERE {inbox.ACTIVE_SQL} ORDER BY id").fetchall()
-        return [inbox.entry_dict(r) for r in rows]
+        return [self._with_files(inbox.entry_dict(r)) for r in rows]
 
     def has_open(self) -> bool:
         with closing(self._store._read_connection()) as conn:
@@ -164,19 +176,27 @@ class InboxStore:
         if row is not None:
             self._store._commit_notify(row["list_key"])
 
-    def link_item(self, entry_id: int, item_id: int) -> None:
+    def keep_file_ids(self, now: float) -> Set[int]:
+        with closing(self._store._read_connection()) as conn:
+            rows = conn.execute(f"SELECT id FROM work_inbox WHERE {inbox.OPEN_SQL} OR filed_at IS NULL OR filed_at > ?", (now - inbox_files.ENTRY_TTL_S,)).fetchall()
+        return {r["id"] for r in rows}
+
+    def link_item(self, entry_id: int, item_id: int, pastes: Optional[Callable[[int], Optional[Path]]] = None) -> None:
         with self._store._immediate() as conn:
             entry = conn.execute("SELECT list_key, item_ids FROM work_inbox WHERE id = ?", (entry_id,)).fetchone()
             if entry is None:
                 raise TaskManagerNotFound(f"no inbox entry {entry_id}")
             found = json.loads(entry["item_ids"] or "[]")
-            if item_id not in found:
+            first = item_id not in found
+            if first:
                 found.append(item_id)
             conn.execute("UPDATE work_inbox SET item_ids = ? WHERE id = ?", (json.dumps(found), entry_id))
             seq = self._store._next_seq(conn)
             conn.execute("UPDATE work_items SET inbox_id = ?, seq = ? WHERE id = ?", (entry_id, seq, item_id))
             list_key = conn.execute("SELECT list_key FROM work_items WHERE id = ?", (item_id,)).fetchone()[0]
         self._store._commit_notify(list_key)
+        if first:
+            inbox_files.attach_to_item(self._store, entry_id, item_id, pastes)
         self.retire_questions(entry_id)
 
     def file_plain(self, entry_id: int, now: float, reason: str) -> Dict[str, Any]:

@@ -21,6 +21,7 @@ NAME = "cloude_x"
 
 def _stub_manager(sessions):
     stub = SimpleNamespace(_registry=SimpleNamespace(sessions=sessions, backends={}))
+    stub.tmux_socket_name = lambda: None
     stub._is_remote_sid = lambda sid: SessionManager._is_remote_sid(stub, sid)
     return stub
 

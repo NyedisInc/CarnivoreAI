@@ -11,14 +11,15 @@ from typing import Any, Callable, Dict, Optional, Set, Tuple
 import structlog
 
 from src.core.agent_family_display import resolve_family_for_display
-from src.core.attention.codex_gather import (
-    DEFAULT_CODEX_HOME, gather_codex_evidence, rollout_path_in_sessions,
-)
+from src.core.attention.codex_gather import gather_codex_evidence, rollout_path_in_sessions
+from src.core.attention.codex_pane_home import pane_codex_home
 from src.core.approvals.extract import DIALOG_SCROLLBACK_LINES, extract_dialog_scrolled
 from src.core.attention.codex_pane import classify_codex_pane
 from src.core.attention.codex_reader import CodexEvidence
 from src.core.attention.codex_stores import resolve_primary_uuid
 from src.core.attention.evidence import Evidence, EvidenceIdentity, FAMILY_CLAUDE, FAMILY_CODEX
+from src.core.attention.manifest_reader import read_manifest
+from src.core.session_output import escape_notices
 from src.core.attention.pane_markers import classify_pane_tail
 from src.core.attention.process_scope import evidence_process_floor
 from src.core.attention.prompt_suggestion import PromptSuggestions
@@ -207,19 +208,20 @@ class AttentionEvidenceReader:
         )
         picked_uuid = None
         codex = None
+        codex_home = pane_codex_home(socket, name) if family_name == FAMILY_CODEX else None
         if family_name == FAMILY_CODEX:
             pane_pid = pane_row.get("pid")
             measured_uuid = None
             if pane_pid is not None:
                 measured_uuid = resolve_primary_uuid(
-                    DEFAULT_CODEX_HOME, pane_current_path=str(cwd or ""), pane_title="",
+                    codex_home, pane_current_path=str(cwd or ""), pane_title="",
                     pane_pid=pane_pid, process_parents=self._process_parents(now),
                 )
                 if measured_uuid and measured_uuid != uuid:
                     picked_uuid = measured_uuid
                     uuid = measured_uuid
             codex = (gather_codex_evidence(
-                measured_uuid, codex_home=DEFAULT_CODEX_HOME, now=now
+                measured_uuid, codex_home=codex_home, now=now
             ) if measured_uuid else None) or CodexEvidence()
         elif registry.instance_present:
             uuid = registry.session_uuid or registry.record_session_uuid or uuid
@@ -232,7 +234,7 @@ class AttentionEvidenceReader:
         background_process = None
         skill_source = None
         if family_name == FAMILY_CODEX and uuid:
-            skill_source = rollout_path_in_sessions(DEFAULT_CODEX_HOME, uuid)
+            skill_source = rollout_path_in_sessions(codex_home, uuid)
         if family_name == FAMILY_CODEX:
             self._remember_codex_rollout(target.session_id, skill_source)
         if family_name in (None, FAMILY_CLAUDE):
@@ -268,6 +270,11 @@ class AttentionEvidenceReader:
             background_process=background_process,
             process_floor_at=evidence_process_floor(epoch, restarted_at),
         )
+        if liveness == LIVENESS_LIVE and family_name not in (None, FAMILY_CLAUDE, FAMILY_CODEX):
+            evidence = replace(evidence, manifest=read_manifest(
+                pane_row.get("pid"), self._process_snapshot(now),
+                lambda: self._screen_text(socket, name, pane_row),
+                escape_notices.NOTICES.status_for(target.session_id)))
         if liveness != LIVENESS_LIVE or family_name not in (None, FAMILY_CLAUDE, FAMILY_CODEX):
             return replace(evidence, startup_screen=self._startup_screen(
                 target.session_id, None, evidence, None, pane_row, now))

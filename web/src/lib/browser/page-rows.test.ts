@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import { autoAnswerConfirm, type AutoAnswer } from '../../test-support/auto-answer';
 import * as BrowserRows from '../drawer/browser-rows';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -38,6 +39,7 @@ function drawn(r: G, band: string): string {
 
 describe('page rows in the browser list', () => {
     let calls: string[];
+    let confirmer: AutoAnswer | undefined;
     const g = globalThis as G;
 
     beforeEach(() => {
@@ -51,13 +53,13 @@ describe('page rows in the browser list', () => {
                 popOut: async (id: string) => { calls.push(`popOut ${id}`); return true; },
             },
         };
-        g.App = { showConfirmModal: vi.fn(async () => { calls.push('confirm'); return true; }) };
+        confirmer = autoAnswerConfirm(() => { calls.push('confirm'); return true; });
         load('i18n/tr.js');
     });
 
     afterEach(() => {
+        confirmer?.stop();
         delete g.CloudeWeb;
-        delete g.App;
     });
 
     test('a page is a browser-kind row named browser:<id>, after the remote browsers, with no host subtitle', () => {

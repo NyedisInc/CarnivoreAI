@@ -5,9 +5,9 @@ import { archivedShown, setArchivedShown } from '../drawer/archived-visibility';
 import { closedShown, setClosedShown } from '../drawer/closed-visibility.svelte';
 import { emptySectionsHidden, setEmptySectionsHidden } from '../drawer/empty-sections.svelte';
 import { leadersShown, setLeadersShown } from '../drawer/leader-visibility';
-import { OPTIONAL_SECTIONS, sectionShown, setSectionShown, type OptionalSection } from '../drawer/section-visibility.svelte';
 import { setStatsShown, statsShown } from '../drawer/stats-visibility.svelte';
 import { t } from '../i18n/index.svelte';
+import { swarmIsOn } from '../swarm-switch/control.svelte';
 import { readViewState, viewState } from './view-state.svelte';
 
 export interface ViewChoice {
@@ -18,10 +18,10 @@ export interface ViewChoice {
   readonly group: 'density' | 'stats' | 'rows' | 'sections';
   on(): boolean;
   run(): void;
+  available?(): boolean;
 }
 
 const DENSITY_IDS: Readonly<Record<DensityMode, string>> = { compact: 'density-compact', cozy: 'density-cozy', detailed: 'density-detailed' };
-const SECTION_IDS: Readonly<Record<OptionalSection, string>> = { open: 'show-open', sleeping: 'show-sleeping' };
 
 const DENSITY_CHOICES: readonly ViewChoice[] = DENSITY_MODES.map((mode) => ({
   id: DENSITY_IDS[mode],
@@ -35,15 +35,6 @@ const DENSITY_CHOICES: readonly ViewChoice[] = DENSITY_MODES.map((mode) => ({
   },
 }));
 
-const SECTION_CHOICES: readonly ViewChoice[] = OPTIONAL_SECTIONS.map((id) => ({
-  id: SECTION_IDS[id],
-  labelKey: `drawer.density.show_${id}`,
-  kind: 'switch',
-  group: 'sections',
-  on: () => sectionShown(id),
-  run: () => setSectionShown(id, !sectionShown(id)),
-}));
-
 export const VIEW_CHOICES: readonly ViewChoice[] = [
   ...DENSITY_CHOICES,
   { id: 'show-stats', labelKey: 'drawer.density.show_stats', kind: 'switch', group: 'stats', on: () => statsShown() !== false, run: () => setStatsShown(statsShown() === false) },
@@ -53,6 +44,7 @@ export const VIEW_CHOICES: readonly ViewChoice[] = [
     titleKey: 'drawer.density.show_leaders_title',
     kind: 'switch',
     group: 'rows',
+    available: swarmIsOn,
     on: () => viewState.leaders,
     run: () => {
       setLeadersShown(!leadersShown());
@@ -71,18 +63,18 @@ export const VIEW_CHOICES: readonly ViewChoice[] = [
     },
   },
   { id: 'show-closed', labelKey: 'drawer.density.show_closed', kind: 'switch', group: 'rows', on: () => closedShown(), run: () => setClosedShown(!closedShown()) },
-  ...SECTION_CHOICES,
   { id: 'hide-empty-sections', labelKey: 'drawer.density.hide_empty_sections', kind: 'switch', group: 'sections', on: () => emptySectionsHidden(), run: () => setEmptySectionsHidden(!emptySectionsHidden()) },
 ];
 
 export function viewMenuNodes(): MenuNode[] {
-  return VIEW_CHOICES.map((choice, at) => ({
+  const offered = VIEW_CHOICES.filter((choice) => choice.available?.() !== false);
+  return offered.map((choice, at) => ({
     id: choice.id,
     label: t(choice.labelKey),
     ...(choice.titleKey ? { title: t(choice.titleKey) } : {}),
     ...(choice.kind === 'switch' ? { toggle: true } : {}),
     checked: choice.on(),
-    ...(at > 0 && VIEW_CHOICES[at - 1]!.group !== choice.group ? { sep: true } : {}),
+    ...(at > 0 && offered[at - 1]!.group !== choice.group ? { sep: true } : {}),
     run: choice.run,
   }));
 }

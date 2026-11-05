@@ -52,14 +52,14 @@ class ResumeDirectory:
 
 
 def _codex_resume_directory(
-    working_dir: str, thread_uuid: str
+    working_dir: str, thread_uuid: str, codex_home: Optional[str] = None
 ) -> ResumeDirectory:
     from src.core.session_transcript_presence import (
         CONVERSATION_PRESENT,
         family_conversation_presence,
     )
 
-    presence = family_conversation_presence(FAMILY_CODEX, thread_uuid)
+    presence = family_conversation_presence(FAMILY_CODEX, thread_uuid, codex_home=codex_home)
     if presence.outcome == CONVERSATION_PRESENT:
         return ResumeDirectory(
             outcome=DIRECTORY_MEASURED,
@@ -83,6 +83,7 @@ def resume_directory(
     *,
     corpus_root: Optional[Path] = None,
     family: Optional[str] = None,
+    codex_home: Optional[str] = None,
 ) -> ResumeDirectory:
     if not working_dir or not claude_session_uuid:
         return ResumeDirectory(
@@ -93,7 +94,7 @@ def resume_directory(
             ),
         )
     if family == FAMILY_CODEX:
-        return _codex_resume_directory(working_dir, claude_session_uuid)
+        return _codex_resume_directory(working_dir, claude_session_uuid, codex_home)
     if corpus_root is not None:
         bases: Sequence[Path] = (corpus_root,)
     else:

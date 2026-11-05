@@ -1,0 +1,4 @@
+html, body { margin: 0; height: 100%; font: 14px/1.4 ui-monospace, Menlo, monospace; }
+main { padding: 16px; }
+h1 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 8px; }
+iframe { width: 100%; height: 80vh; border: 1px solid currentColor; }

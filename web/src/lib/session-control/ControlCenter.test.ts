@@ -3,6 +3,7 @@
 import { afterEach, expect, test, vi } from 'vitest';
 import { flushSync, mount, tick, unmount } from 'svelte';
 import ControlCenter from './ControlCenter.svelte';
+import { resetSessionWork } from '../session-stats/session-work';
 import {
   DEFAULT_SESSION_CONTROL_OPTION, SESSION_CONTROL_OPTIONS, resolveSessionControlOption,
 } from './control-center';
@@ -87,6 +88,7 @@ afterEach(async () => {
   interrupt.mockReset();
   backgroundWorkProcesses = PROCESSES;
   timerRows = LIVE_TIMER;
+  resetSessionWork();
 });
 
 async function settle(): Promise<void> {
@@ -302,7 +304,7 @@ test('tabs layout: the rail is the shared page tabs, one per section, and choosi
   await settle();
   const strip = target.querySelector('.scc-tabs.oc-ptabs');
   expect(strip, 'the rail wears the shared Tabs').not.toBeNull();
-  expect([...strip!.querySelectorAll('[role="tab"]')].map((el) => el.getAttribute('data-tab'))).toEqual(['timers', 'agents', 'processes']);
+  expect([...strip!.querySelectorAll('[role="tab"]')].map((el) => el.getAttribute('data-tab'))).toEqual(['timers', 'agents', 'processes', 'ports']);
   expect(strip!.querySelector('[data-tab="processes"]')!.getAttribute('aria-selected')).toBe('true');
   strip!.querySelector<HTMLElement>('[data-tab="agents"]')!.click();
   flushSync();

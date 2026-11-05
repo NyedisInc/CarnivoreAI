@@ -4,7 +4,7 @@
   import { t } from '../i18n/index.svelte';
   import { widgetBars, type PinEdge } from './bar-settings.svelte';
   import { BAR_SIZES, RAIL_PIN_BOX_PX, RAIL_PIN_GLYPH_PX } from './bar-size';
-  import { barPinned, stripPinsOffered, toggleBarPin } from './bar-pin-action';
+  import { barPinned, railPinOffered, stripPinsOffered, toggleBarPin } from './bar-pin-action';
 
   let { edge }: { edge: PinEdge } = $props();
 
@@ -15,7 +15,7 @@
   const label = $derived(t(`${edge === 'rail' ? 'sidebar.rail.menu' : 'widget_bars.menu'}.${pinned ? 'unpin' : 'pin'}`));
 </script>
 
-{#if stripPinsOffered()}
+{#if edge === 'rail' ? railPinOffered() : stripPinsOffered()}
 <IconButton {label} variant="quiet" pressed={pinned} data-bar-pin style={`--oc-ibtn-size: ${box}px`}
   onclick={() => void toggleBarPin(edge)}><Icon name="bar-pin" size={glyph} strokeWidth={2} /></IconButton>
 {/if}

@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import fs from 'node:fs';
 import path from 'node:path';
-import { beforeAll, describe, expect, test } from 'vitest';
+import { beforeAll, describe, expect, test, vi } from 'vitest';
 import '../plugins/builtin';
 import { sessionCardMenuItems } from '../plugins/session-card-actions';
 import { loadLegacyDrawer, type LegacyWindow } from '../sidebar-shell/legacy-fixture';
@@ -14,6 +14,13 @@ import type { RowMenuCtx } from './row-context';
 const GOLDEN = path.join(__dirname, '__goldens__', 'row-menus.json');
 
 let w: LegacyWindow;
+
+const GOLDEN_FILE = vi.hoisted(() => ( { id: 'f-1', kind: 'file', root: 'workdir', path: 'a.py', session_uuid: 'u-1', title: 'a.py', opened_at: 1, seq: 1 } as const));
+
+vi.mock('../open-files/api.svelte', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('../open-files/api.svelte')>()),
+    fileById: (id: string) => (id === GOLDEN_FILE.id ? GOLDEN_FILE : null),
+}));
 
 beforeAll(() => {
     w = loadLegacyDrawer();

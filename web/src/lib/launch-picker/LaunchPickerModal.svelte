@@ -2,7 +2,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { Button, Field } from '../base';
-    import ModalShell from '../launchpad/ModalShell.svelte';
+    import ModalShell from '../dialog-frame/ModalShell.svelte';
     import type { Translate } from '../sessions/types';
     import { visibleProfiles } from '../launch-profiles-page/visibility';
     import { createLaunchProfilesApi, errorText, type AccountOption, type LaunchProfilesApi, type ModelOption, type ProfileRow } from '../launch-profiles-page/api';
@@ -10,6 +10,8 @@
     import type { AccountAnswer } from './account-model';
     import LaunchChoice from './LaunchChoice.svelte';
     import LaunchNamePin from './LaunchNamePin.svelte';
+    import LaunchWorktree from './LaunchWorktree.svelte';
+    import type { WorktreeAnswer } from './worktree-model';
     import type { LaunchPrefill } from './prefill';
     import { answerFor, farRows, initialSelection, isValidModelId, rowsFromProfiles, type PickerRow } from './picker-model';
 
@@ -27,9 +29,10 @@
         remote?: { key: string; label: string } | null;
         goLabel?: string | null;
         prefill?: LaunchPrefill | null;
-        close: (value: { profileId: string; profileLabel: string; model: string | null; account: AccountAnswer | null; farLauncher?: boolean; name?: string; pinned?: boolean } | null) => void;
+        folder?: string | null;
+        close: (value: { profileId: string; profileLabel: string; model: string | null; account: AccountAnswer | null; farLauncher?: boolean; name?: string; pinned?: boolean; worktree?: WorktreeAnswer | null } | null) => void;
     }
-    const { title, t, preselect = null, projectDefault = null, harness = null, onlyHarnesses = null, onlyIds = null, api: injected, lastModel = '', accounts: withAccounts = true, remote = null, goLabel = null, prefill = null, close }: Props = $props();
+    const { title, t, preselect = null, projectDefault = null, harness = null, onlyHarnesses = null, onlyIds = null, api: injected, lastModel = '', accounts: withAccounts = true, remote = null, goLabel = null, prefill = null, folder = null, close }: Props = $props();
     // svelte-ignore state_referenced_locally
     const api: LaunchProfilesApi = injected ?? createLaunchProfilesApi();
 
@@ -47,6 +50,7 @@
     // svelte-ignore state_referenced_locally
     let pinned = $state(prefill?.pinned ?? false);
     let accountName = $state<string | null>(null);
+    let worktree = $state<WorktreeAnswer | null>(null);
     let farListed = $state(false);
 
     const picked = $derived(rows.find((r) => r.value === value));
@@ -92,7 +96,7 @@
     });
 
     function go(): void {
-        if (canGo && answer && picked) close({ ...answer, profileLabel: picked.label, account, ...(remote ? { farLauncher: farListed } : {}), ...(prefill ? { name: name.trim(), pinned } : {}) });
+        if (canGo && answer && picked) close({ ...answer, profileLabel: picked.label, account, ...(remote ? { farLauncher: farListed } : {}), ...(prefill ? { name: name.trim(), pinned } : {}), ...(worktree ? { worktree } : {}) });
     }
 </script>
 
@@ -121,6 +125,7 @@
                 {/if}
             {/if}
             {#if prefill}<LaunchNamePin {t} bind:name bind:pinned />{/if}
+            {#if folder && !remote}<LaunchWorktree {t} {folder} {name} bind:answer={worktree} />{/if}
         {/if}
     </div>
     {#snippet footer()}

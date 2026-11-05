@@ -39,7 +39,7 @@ const { createUpdateNotice } = require('./update-notice');
 const { tokensCss } = require('./tray-menu/oc-token-values');
 const rebindAfterPair = require('./rebind-after-pair');
 const { createMember } = require('./member-window');
-const { registerDesktopSettings } = require('./desktop-settings');
+const { registerDesktopSettings, senderAllowed } = require('./desktop-settings');
 const { registerOpenInTerminal } = require('./open-in-terminal');
 const { registerFolderTargets } = require('./folder-targets');
 const { createFinderDrop, wireFinderDrop } = require('./finder-drop');
@@ -313,7 +313,8 @@ app.whenReady().then(async () => {
   console.log('Carnivore starting...');
   trayTerminal.sweepAtStartup(); // Open in Terminal
   void require('./app-menu').installApplicationMenu({ app, Menu, shell, appWindow, showAbout: showAboutDialog, quitAndStopEngine,
-    waiting: () => (trayMenu ? trayMenu.longestWaiting() : null), loadTranslator: loadStrings,
+    waiting: () => (trayMenu ? trayMenu.longestWaiting() : null), loadTranslator: loadStrings, ipcMain: require('electron').ipcMain,
+    fromMainPage: (event) => senderAllowed(event, { appWindow }) && appWindow.mainWindow() !== null && event.sender === appWindow.mainWindow().webContents,
     exportDiagnostics: () => { if (trayMenu) trayMenu.runAction({ kind: 'server.export_diagnostics' }); else console.warn('[app-menu] export diagnostics before the tray menu started'); } });
   require('electron').powerMonitor.on('shutdown', () => { systemQuit = true; });
   require('./power-calm').registerPowerCalm({ powerMonitor: require('electron').powerMonitor, app, appWindow, execFile: require('node:child_process').execFile, log: console.warn });

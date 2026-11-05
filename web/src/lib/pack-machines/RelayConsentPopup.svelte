@@ -1,7 +1,7 @@
 
 <script lang="ts">
   import './relay-consent.css';
-  import ModalShell from '../launchpad/ModalShell.svelte';
+  import ModalShell from '../dialog-frame/ModalShell.svelte';
   import { t } from '../i18n/index.svelte';
   import Button from '../base/Button.svelte';
   import RelayConsentList from './RelayConsentList.svelte';

@@ -2,11 +2,12 @@ import type { Attachment } from 'svelte/attachments';
 import { cascadeBandFold, toggleBandFold } from './heading-fold';
 import { watchCascadeHint } from './cascade-hint';
 import { renameGroup } from './heading-group-actions';
-import { openItemMenu } from '../item-menu/open.svelte';
+import { itemMenuState, openItemMenu } from '../item-menu/open.svelte';
 import { isMenuKey } from '../zone-shell/key-nav';
 import type { ItemMenuType } from '../item-menu/types';
 import { groupUuidOf } from '../drawer/group-store';
-import { onSectionKeydown, onSectionPointerDown, sectionDragTookClick } from './section-drag';
+import { focusHeading, onSectionKeydown, onSectionPointerDown, sectionDragTookClick } from './section-drag';
+import { sectionTargetOf } from './section-heading';
 
 const owned = new WeakSet<Element>();
 
@@ -26,6 +27,33 @@ function headingKebab(el: Element | null): { type: ItemMenuType; key: string; el
         if (el.hasAttribute(attr)) return { type, key: el.getAttribute(attr) || '', el };
     }
     return null;
+}
+
+interface MenuTarget {
+    type: ItemMenuType;
+    key: string;
+    el: Element;
+}
+
+function menuTargetOf(row: Element | null): MenuTarget | null {
+    if (!row) return null;
+    const kebab = headingKebab(row.querySelector(KEBAB_SELECTOR));
+    if (kebab) return kebab;
+    const section = sectionTargetOf(row);
+    return section ? { type: 'section', key: section.key, el: row } : null;
+}
+
+function restoreHeadingFocus(key: string): void {
+    queueMicrotask(() => {
+        if (itemMenuState.open) return;
+        const at = document.activeElement;
+        if (!at || at === document.body || !at.isConnected || at.closest('.acm-menu')) focusHeading(key);
+    });
+}
+
+function openMenuFor(target: MenuTarget, at: { x: number; y: number } | null): boolean {
+    const opts = target.type === 'section' ? { onClose: () => restoreHeadingFocus(target.key) } : {};
+    return openItemMenu(target.type, { key: target.key, anchor: target.el }, target.el, at, opts);
 }
 
 export function shellOwnsHeading(target: EventTarget | null): boolean {
@@ -68,9 +96,9 @@ function onContextMenu(e: MouseEvent): void {
     if (e.defaultPrevented || !target || typeof target.closest !== 'function' || target.closest('.session-sidebar-rename-edit')) return;
     const row = target.closest(HEADER_ROW);
     if (!row) return;
-    const kebab = headingKebab(row.querySelector(KEBAB_SELECTOR));
-    if (!kebab) return;
-    const opened = openItemMenu(kebab.type, { key: kebab.key, anchor: kebab.el }, kebab.el, { x: e.clientX, y: e.clientY });
+    const menu = menuTargetOf(row);
+    if (!menu) return;
+    const opened = openMenuFor(menu, { x: e.clientX, y: e.clientY });
     if (!opened) return;
     e.preventDefault();
     e.stopPropagation();
@@ -83,8 +111,8 @@ function onMousedown(e: MouseEvent): void {
 function openFromKeyboard(e: KeyboardEvent, target: Element | null): boolean {
     if (!target || typeof target.closest !== 'function' || target.closest('.session-sidebar-rename-edit')) return false;
     const row = target.closest(HEADER_ROW);
-    const kebab = headingKebab(row ? row.querySelector(KEBAB_SELECTOR) : null);
-    if (!kebab || !openItemMenu(kebab.type, { key: kebab.key, anchor: kebab.el }, kebab.el)) return false;
+    const menu = menuTargetOf(row);
+    if (!menu || !openMenuFor(menu, null)) return false;
     e.preventDefault();
     e.stopPropagation();
     return true;

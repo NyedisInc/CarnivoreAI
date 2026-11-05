@@ -23,6 +23,8 @@
         isBuiltInLogin,
         formatAge,
         formatLoginCountdown,
+        formatRelayCountdown,
+        relayedAsOf,
         loginExpiryTone,
         pokeFailure,
         type LedgerAccount,
@@ -101,6 +103,7 @@
         {@const mark = providerMark(account.provider, 14)}
         {@const loginLeft = formatLoginCountdown(account.login_expires_at, now, t)}
         {@const pokeText = pokeFailure(account, t)}
+        {@const relayLeft = account.relayed === true ? formatRelayCountdown(account.relay_expires_at, now, t) : null}
         {@const editing = openEditorId === account.id}
         {@const notice = editing ? null : (rowNotices[account.id] ?? null)}
         {@const ownError = account.error && account.error !== account.poke?.error ? account.error : null}
@@ -139,7 +142,11 @@
                                 <span class="ledger-identity" class:ledger-unread={account.identity == null}
                                     >{shown(account.identity)}</span
                                 >
-                                {#if loginLeft}
+                                {#if relayLeft}
+                                    <span class="ledger-expiry" data-ledger="relay-expiry"
+                                        data-tone={account.credential_state === 'ok' ? '' : 'warn'}>{relayLeft}</span
+                                    >
+                                {:else if loginLeft}
                                     <span
                                         class="ledger-expiry"
                                         data-tone={loginExpiryTone(account.login_expires_at, now) ?? ''}
@@ -163,7 +170,7 @@
                             <LedgerUsageCell windows={account.windows ?? []} {now} {t} hero />
 
                             {#if sessionsFor && onOpenSession}
-                                <LedgerSessions rows={sessionsFor(account.id)} {t} onOpen={onOpenSession} />
+                                <LedgerSessions rows={sessionsFor(account.id)} elsewhere={account.sessions_elsewhere ?? []} {t} onOpen={onOpenSession} />
                             {/if}
                         </div>
 
@@ -186,6 +193,8 @@
                         <li><Tag>{shown(account.plan)}</Tag></li>
                         {#if isBuiltInLogin(account)}
                             <li><Tag>{t(LEDGER_KEYS.builtInLogin)}</Tag></li>
+                        {:else if account.relayed === true}
+                            <li><Tag data-ledger="relayed-tag">{t(LEDGER_KEYS.tagRelayed)}</Tag></li>
                         {:else if account.managed === true}
                             <li><Tag>{t(LEDGER_KEYS.tagManaged)}</Tag></li>
                         {/if}
@@ -195,6 +204,9 @@
                             ? formatAge(account.fetched_at, now, t)
                             : t(LEDGER_KEYS.fetched, { age: formatAge(account.fetched_at, now, t) })}
                     </span>
+                    {#if relayedAsOf(account, now, t)}
+                        <span class="ledger-card__fetched" data-ledger="relay-as-of">{relayedAsOf(account, now, t)}</span>
+                    {/if}
                     
                     <SwitchAccountButton
                         account={{
@@ -203,7 +215,7 @@
                             provider: account.provider,
                             setup_complete: account.setup_complete,
                         }}
-                        onLogin={onLogin ? () => onLogin(account) : undefined}
+                        onLogin={onLogin && account.relayed !== true ? () => onLogin(account) : undefined}
                     />
 
                     {#if isBuiltInLogin(account)}
@@ -252,7 +264,7 @@
                                 >
                             </form>
                         {/if}
-                    {:else if onRemove}
+                    {:else if onRemove && account.relayed !== true}
                         <div class="ledger-card__actions" data-ledger="actions" role="group" aria-label={t(LEDGER_KEYS.columnActions)}>
                             <LedgerRowActions
                                 {account}

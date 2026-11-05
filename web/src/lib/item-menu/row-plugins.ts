@@ -1,9 +1,10 @@
+import type { SidebarPick } from '../legacy-globals';
 import { runSessionCardAction, sessionCardMenuItems, type SessionCardMenuItem } from '../plugins/session-card-actions';
 import type { PluginContext, SessionCardRow } from '../plugins/types';
 
 interface PluginGlobals {
     UIFlags?: { showMarkUnreadControl(): boolean };
-    SessionSidebar?: { _lastSig?: unknown; repaint?(): void };
+    SessionSidebar?: SidebarPick<'repaint'>;
     CloudeWeb?: { runCplugCardAction?(cplugId: string, row: SessionCardRow, context: PluginContext): Promise<boolean> };
 }
 
@@ -15,11 +16,7 @@ export function pluginFlags(): Record<string, boolean> {
 }
 
 export function repaintRows(): void {
-    const bar = g().SessionSidebar;
-    if (bar && typeof bar.repaint === 'function') {
-        bar._lastSig = null;
-        bar.repaint();
-    }
+    g().SessionSidebar?.repaint();
 }
 
 function cardRow(row: Record<string, unknown> | null | undefined): SessionCardRow {

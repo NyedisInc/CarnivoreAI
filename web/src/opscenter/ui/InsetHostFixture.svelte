@@ -6,6 +6,6 @@
 </script>
 
 <Page title="hosts" count="3 items">
-  {#snippet actions()}<button type="button" data-act>refresh</button>{/snippet}
+  {#snippet actions()}<button type="button" data-btn data-act>refresh</button>{/snippet}
   {#snippet bar()}<input data-field />{/snippet}
 </Page>

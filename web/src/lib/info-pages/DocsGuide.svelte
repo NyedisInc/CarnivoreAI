@@ -1,4 +1,4 @@
-
+<!-- the string catalog -->
 <script lang="ts">
     import { t as appT } from '../i18n/index.svelte';
     import type { Translate } from '../sessions/types';

@@ -13,7 +13,7 @@ STALE = re.compile(
 def scanned_files() -> list[Path]:
     ask_dir = REPO_ROOT / "web/src/cplugs/huddle/ask"
     ask_sources = [p for p in sorted(ask_dir.rglob("*")) if p.suffix in {".ts", ".svelte"} and not p.name.endswith(".test.ts")]
-    return [*sorted((REPO_ROOT / "help/task-manager").glob("*.md")), REPO_ROOT / "features/catalog/task-manager.json", *ask_sources]
+    return [REPO_ROOT / "features/catalog/task-manager.json", *ask_sources]
 
 
 def stale_lines(path: Path) -> list[str]:
@@ -24,7 +24,6 @@ def stale_lines(path: Path) -> list[str]:
 def test_scan_reaches_the_surfaces_it_names():
     files = scanned_files()
     names = {p.relative_to(REPO_ROOT).as_posix() for p in files}
-    assert "help/task-manager/questions-and-forms.md" in names
     assert "features/catalog/task-manager.json" in names
     assert "web/src/cplugs/huddle/ask/ask-state.svelte.ts" in names
     assert all(p.is_file() for p in files)

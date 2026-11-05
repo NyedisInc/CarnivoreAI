@@ -1,0 +1,43 @@
+{
+  "api_routes": [
+    "GET /api/v1/sessions/listing",
+    "POST /api/v1/browsers/open"
+  ],
+  "area": "sessions",
+  "description": "When a program a session started listens on a port, the collapsed foot bar under its terminal shows a small plug. Click the bar or the plug and the open bar's PORTS section lists every port, in order, with the program holding it (node, python3.12) and its bind address; a port bound to every address is marked because your network can reach it. Click a port to choose: open here, in Carnivore's browser pane, or open in your browser. The agent's own ports (claude's loopback port) and the pane's shell are never listed, only programs below them. The server reads the listening sockets of the session's process tree through macOS's process-info calls, inside the server and with no subprocess, only while a window is open, at most every 15 seconds and again when a turn ends. A paired computer's ports are listed but not opened. A failed read keeps the last list.",
+  "docs": [
+    "docs/DECISIONS.md"
+  ],
+  "examples": [
+    "open the dev server an agent just started without hunting for its port",
+    "spot a server bound to every address that your network can reach"
+  ],
+  "how_to": [
+    "start a dev server inside a session",
+    "a plug appears in the terminal's foot bar within a few seconds",
+    "click the plug, then click a port and pick open here or open in your browser"
+  ],
+  "id": "session-port-chips",
+  "issues": [
+    2727
+  ],
+  "keywords": [
+    "ports",
+    "dev server",
+    "localhost",
+    "listening",
+    "plug",
+    "foot bar",
+    "url"
+  ],
+  "media_exempt": "moved to the foot bar; screenshots are captured at the next version bump recapture",
+  "name": "listening ports in the terminal foot bar",
+  "since": "2026-10-30",
+  "status": "beta",
+  "summary": "a plug in a terminal's foot bar says a program the session started is listening; the open bar lists each port and opens it here or in your browser.",
+  "updated": "2026-11-02",
+  "where": [
+    "the foot bar under a session's terminal: the plug at the right",
+    "the open foot bar: the PORTS section"
+  ]
+}

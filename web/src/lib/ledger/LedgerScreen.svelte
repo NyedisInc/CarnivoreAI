@@ -1,5 +1,6 @@
 <!-- the page frame -->
 <script lang="ts">
+    import { failureReason } from '../errors/failure-reason';
     import { onMount, tick } from 'svelte';
     import { t as reactiveT } from '../i18n/index.svelte';
     import type { Translate } from '../sessions/types';
@@ -110,7 +111,7 @@
             failure = null;
         } else {
             const error = measured.reason;
-            failure = error instanceof Error ? error.message : String(error);
+            failure = failureReason(error);
         }
         configured = listed.status === 'fulfilled' ? storedAccounts(listed.value) : null;
         loading = false;

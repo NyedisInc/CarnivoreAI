@@ -4,6 +4,7 @@ export const SCREEN_TABS: Readonly<Record<ScreenKind, readonly string[]>> = {
     'launch-profiles': [],
     keys: [],
     desktop: [],
+    features: [],
 };
 
 export function tabsOf(section: SectionId): readonly string[] {

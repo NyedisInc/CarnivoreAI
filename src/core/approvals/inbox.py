@@ -14,6 +14,7 @@ from src.core.approvals.extract import unreadable_dialog
 from src.core.approvals.plain_answer import plain_no_label, plain_yes_label, summary_line
 from src.core.attention.evidence import REASON_INPUT, STATE_NEEDS_USER
 from src.core.attention.startup_screen import shown_screen
+from src.core.beast_prompts.wiring import would_answer
 from src.core.resource_push import topics as resource_topics
 
 logger = structlog.get_logger()
@@ -63,7 +64,12 @@ class DialogProvider:
             self._first_seen.setdefault(key, now)
         for key in set(self._first_seen) - keys:
             del self._first_seen[key]
-        return frozenset(("dialog", item_id(sid, d.fingerprint), d.fingerprint) for sid, d in current)
+        return frozenset(("dialog", item_id(sid, d.fingerprint), d.fingerprint + (":beast" if self._beast(sid) else ""))
+                         for sid, d in current)
+
+    def _beast(self, session_id: str) -> bool:
+        watcher = self._watcher()
+        return watcher is not None and would_answer(session_id, watcher.observation_for(session_id))
 
     async def items(self) -> List[Dict[str, Any]]:
         manager = self._manager()
@@ -90,6 +96,7 @@ class DialogProvider:
                 "plain_yes": plain_yes_label(dialog), "plain_no": plain_no_label(dialog),
                 "summary": summary_line(dialog) if plain_yes_label(dialog) else None,
                 "created_at": self._first_seen.get((session_id, dialog.fingerprint)),
+                "beast_would_answer": self._beast(session_id),
             }
             out.append({**item, **await served_fields(info, self._watcher(), dialog)})
         return out

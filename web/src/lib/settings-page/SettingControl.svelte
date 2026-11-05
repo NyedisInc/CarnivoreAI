@@ -3,6 +3,7 @@
     import type { Translate } from '../sessions/types';
     import ToastModePanel from '../toast-mode/ToastModePanel.svelte';
     import ScreenReaderPanel from '../screen-reader/ScreenReaderPanel.svelte';
+    import TerminalFontPanel from '../terminal-font/TerminalFontPanel.svelte';
     import TimeZonePanel from '../time-zone/TimeZonePanel.svelte';
     import SettingRow from './SettingRow.svelte';
     import TextControl from './controls/TextControl.svelte';
@@ -11,6 +12,7 @@
     import SwitchControl from './controls/SwitchControl.svelte';
     import MinutesControl from './controls/MinutesControl.svelte';
     import LinkControl from './controls/LinkControl.svelte';
+    import RailMagnifyControl from './controls/RailMagnifyControl.svelte';
     import MotionPanel from './MotionPanel.svelte';
     import RowIconsPanel from './RowIconsPanel.svelte';
     import FootBarLayoutPanel from './FootBarLayoutPanel.svelte';
@@ -44,6 +46,7 @@
     import CallsPanel from '../byoai/CallsPanel.svelte';
     import PipelineStatusPanel from '../pipeline-status/PipelineStatusPanel.svelte';
     import DeepSearchScopePanel from './DeepSearchScopePanel.svelte';
+    import CheckpointsUsagePanel from './CheckpointsUsagePanel.svelte';
     import { minutesRange } from './controls/minutes-range';
     import { isWideControl, type SettingDef } from './settings-registry';
 
@@ -76,12 +79,16 @@
         <MinutesControl {t} {inputId} settingId="auto_sleep_minutes" field="idle_minutes" />
     {:else if def.control.kind === 'auto-sleep-unread-minutes'}
         <MinutesControl {t} {inputId} settingId="auto_sleep_unread_minutes" field="unread_idle_minutes" />
-    {:else if def.control.kind === 'config-toggle' || def.control.kind === 'crosstalk-card' || def.control.kind === 'auto-sleep' || def.control.kind === 'auto-sleep-unread'}
+    {:else if def.control.kind === 'config-toggle' || def.control.kind === 'crosstalk-card' || def.control.kind === 'auto-sleep' || def.control.kind === 'auto-sleep-unread' || def.control.kind === 'quiet-watched' || def.control.kind === 'row-lights' || def.control.kind === 'rail-dock-names' || def.control.kind === 'sidebar-section'}
         <SwitchControl {def} {t} />
+    {:else if def.control.kind === 'rail-magnify'}
+        <RailMagnifyControl {def} {t} />
     {:else if def.control.kind === 'animations'}
         <MotionPanel {def} {t} />
     {:else if def.control.kind === 'toast-mode'}
         <div class="st-legacy"><ToastModePanel /></div>
+    {:else if def.control.kind === 'terminal-font'}
+        <TerminalFontPanel />
     {:else if def.control.kind === 'screen-reader'}
         <div class="st-legacy"><ScreenReaderPanel /></div>
     {:else if def.control.kind === 'time-zone'}
@@ -150,6 +157,8 @@
         <PipelineStatusPanel {t} />
     {:else if def.control.kind === 'deepsearch-scope'}
         <DeepSearchScopePanel {t} />
+    {:else if def.control.kind === 'checkpoints-usage'}
+        <CheckpointsUsagePanel {t} />
     {:else if def.control.kind === 'link'}
         <LinkControl action={def.control.action} {t} />
     {/if}

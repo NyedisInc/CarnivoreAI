@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 
 import { Doc, results, test } from './lib-sidebar-sessions.mjs';
+import { installTrOnly } from './helpers/catalog-tr.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLIENT_JS = path.join(__dirname, '..', 'client', 'js');
@@ -58,6 +59,7 @@ function harness({ label = RICH_LABEL, name = HANDLE, rendered = null } = {}) {
         alert() {},
     };
     vm.createContext(ctx);
+    installTrOnly(ctx);
     // terminal-header-rename.js is the page-chrome half of this
     // control, lifted out of terminal.js when the terminal became
     // instantiable: one header, however many terminals the page holds.

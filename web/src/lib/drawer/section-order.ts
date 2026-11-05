@@ -1,7 +1,7 @@
 
 import { PAGE_SECTION_SLOT, pageSectionMeta } from './page-sections';
 
-export const SECTION_IDS = ['pinned', 'layouts', 'groups', 'companies', 'rogue', 'terminals', 'browsers', PAGE_SECTION_SLOT, 'pack'] as const;
+export const SECTION_IDS = ['pinned', 'layouts', 'groups', 'companies', 'rogue', 'terminals', 'browsers', 'files', PAGE_SECTION_SLOT, 'pack'] as const;
 
 export type SectionId = (typeof SECTION_IDS)[number];
 
@@ -14,7 +14,7 @@ export function isSectionId(value: unknown): value is SectionId {
 export function sectionOfBand(key: string): SectionId | null {
     if (key === 'groups') return 'groups';
     if (key === PAGE_SECTION_SLOT || pageSectionMeta(key) !== null) return PAGE_SECTION_SLOT;
-    return key === 'pinned' || key === 'layouts' || key === 'rogue' || key === 'terminals' || key === 'browsers' ? key : null;
+    return key === 'pinned' || key === 'layouts' || key === 'rogue' || key === 'terminals' || key === 'browsers' || key === 'files' ? key : null;
 }
 
 export function resolveSectionOrder(stored?: readonly string[] | null): SectionId[] {

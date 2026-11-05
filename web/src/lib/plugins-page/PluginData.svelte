@@ -2,6 +2,7 @@
 <script lang="ts">
     import { ApiError } from '../../opscenter/api/auth.svelte';
     import Button from '../base/Button.svelte';
+    import { failureDetail, nonEmptyErrorMessageOr } from '../errors/failure-reason';
     import type { Translate } from '../sessions/types';
     import type { CplugItem } from './cplugs-adapter';
     import { bytesText, purgeBlocked, purgeCplug, type PurgePrice } from './plugin-pane';
@@ -42,7 +43,7 @@
         const code = failure instanceof ApiError ? ((failure.payload as { detail?: { code?: unknown } } | null)?.detail?.code ?? failure.code) : null;
         if (code === 'purge_stale') return t('plugins.page.data.stale');
         if (code === 'cplug_enabled') return t('plugins.page.data.blocked_on', { name: plugin.name });
-        return failure instanceof Error && failure.message ? failure.message : t('plugins.page.data.failed');
+        return failureDetail(failure) || nonEmptyErrorMessageOr(failure, t('plugins.page.data.failed'));
     }
 
     async function askPrice(): Promise<void> {

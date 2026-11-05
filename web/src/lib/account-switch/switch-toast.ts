@@ -3,6 +3,7 @@ import { subscribe } from '../../opscenter/api/events.svelte';
 import type { EventFrame } from '../../opscenter/api/types';
 import { t } from '../i18n/index.svelte';
 import { accountName, accountSwitch } from './switch-store.svelte';
+import { addLocalToast } from '../toast-surface';
 
 export const SWITCHED_FRAME = 'provider_account.switched';
 
@@ -19,10 +20,6 @@ interface SwitchedFrame {
   session?: string;
   limit_kind?: string;
   at?: string;
-}
-
-interface ToastSurface {
-  add(toast: Record<string, unknown>): void;
 }
 
 let started = false;
@@ -60,6 +57,7 @@ export function toastFor(frame: SwitchedFrame): Record<string, unknown> | null {
     id: `acctswitch:${frame.provider}:${frame.to_account_id}:${frame.at ?? Date.now()}`,
     session_id: null,
     kind: SWITCHED_KIND,
+    notify_type: 'account.switched',
     title: t(`account_switch.toast.title_${kind}`),
     body: t(`account_switch.toast.body_${kind}`, params),
     session_label: t('account_switch.toast.surface'),
@@ -73,8 +71,6 @@ export function startSwitchToasts(): void {
   subscribe(SWITCHED_FRAME, (frame: EventFrame) => {
     void accountSwitch.refresh(true);
     const toast = toastFor(frame as unknown as SwitchedFrame);
-    const surface = (globalThis as { ToastManager?: ToastSurface }).ToastManager;
-    if (!toast || !surface || typeof surface.add !== 'function') return;
-    surface.add(toast);
+    if (toast) addLocalToast(toast);
   });
 }

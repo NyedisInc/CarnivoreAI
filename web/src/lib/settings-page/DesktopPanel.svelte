@@ -24,7 +24,7 @@
     }
     const { t = reactiveT, bridge = desktopBridge(), prefs = livePrefs, effectiveBind }: Props = $props();
 
-    const PERMISSION_STATES: readonly NotificationState[] = ['allowed', 'not_asked', 'denied', 'unknown'];
+    const PERMISSION_STATES: readonly NotificationState[] = ['allowed', 'not_asked', 'denied', 'unknown', 'blocked'];
 
     // svelte-ignore state_referenced_locally
     const present = hasDesktopCapability('desktopState', bridge);
@@ -142,7 +142,7 @@
             {#if values.desktop_banners && permission === 'unknown' && shell?.notifications?.waiting === true}
                 <p class="tm__sub" role="status" data-desktop="banners-waiting">{t('desktop.settings.banners_waiting')}</p>
             {/if}
-            {#if (permission === 'denied' || permission === 'unknown') && hasDesktopCapability('openNotificationSettings', bridge)}
+            {#if (permission === 'denied' || permission === 'unknown' || permission === 'blocked') && hasDesktopCapability('openNotificationSettings', bridge)}
                 <div class="tm__actions">
                     <Button size="sm" data-desktop="open-settings" onclick={() => void openSettings()}>
                         {t('desktop.settings.permission_open_settings')}

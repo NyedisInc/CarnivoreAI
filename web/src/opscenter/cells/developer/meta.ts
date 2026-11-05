@@ -1,3 +1,4 @@
+/* the string catalog */
 
 import type { Component } from 'svelte';
 import { metaFor } from '../../engine/meta';

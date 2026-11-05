@@ -1,0 +1,61 @@
+{
+  "api_routes": [
+    "GET /api/v1/sessions/{session}/checkpoints",
+    "GET /api/v1/sessions/{session}/checkpoints/{id}/changes",
+    "GET /api/v1/sessions/{session}/checkpoints/{id}/diff",
+    "GET /api/v1/checkpoints/usage",
+    "GET /api/v1/sessions/{session}/checkpoints/{id}/revert/preview",
+    "POST /api/v1/sessions/{session}/checkpoints/{id}/revert",
+    "POST /api/v1/bookmarks/{id}/rewind/files"
+  ],
+  "area": "sessions",
+  "docs": [
+    "docs/turn-checkpoints.md"
+  ],
+  "examples": [
+    "See exactly which files the agent's last turn touched, including files it changed through shell commands, and read each diff.",
+    "Step back through the last 20 turns of a session to find the turn that broke a file.",
+    "Check how much disk the snapshots take for each repository in Settings.",
+    "Put the files back to how they were after an earlier turn, see first exactly what changes, and undo it from the snapshot taken just before."
+  ],
+  "how_to": [
+    "Open the file browser from a Claude Code terminal in a git repository and choose the changed files tab.",
+    "Pick a turn in the picker above the list: \"now\" is the live git status, each turn shows the files it changed against the turn before.",
+    "Click a path to read that turn's diff; files that look like secrets or are over 20 MB are never captured, and the list says how many were left out.",
+    "With a turn picked, \"revert files to this point\" opens a preview of what changes, comes back and gets deleted; revert is refused while another live session works in the same folder, and a snapshot of the files as they are is taken first, so \"before the revert\" in the picker undoes it.",
+    "In a Claude Code terminal's bookmarks popup, pick conversation, files or both beside the arm box: both rewinds the conversation first, then puts the files back to the end of the bookmarked turn; a mid-turn bookmark keeps the conversation only and its rewind key says why. A Codex session reverts its files from the changed files tab and is told in its prompt that its files went back to turn N.",
+    "Settings > general > turn checkpoints shows the snapshot count and disk use per repository."
+  ],
+  "id": "turn-checkpoints",
+  "issues": [
+    2736
+  ],
+  "keywords": [
+    "checkpoint",
+    "snapshot",
+    "turn",
+    "changes",
+    "diff",
+    "revert",
+    "git"
+  ],
+  "media_exempt": "needs a real Claude conversation with finished turns in a git repository; no recording is captured yet",
+  "name": "Turn checkpoints",
+  "since": "2026-10-30",
+  "status": "beta",
+  "summary": "a snapshot of the files at the end of every Claude Code turn that used tools, in git repos, kept in a private store that never touches your index, branch or HEAD; the file browser shows what each turn changed and can put the files back to a turn after a preview.",
+  "surfaces": [
+    "src/core/checkpoints/capture.py",
+    "src/api/checkpoint_routes.py",
+    "web/src/lib/file-drawer/FileDrawerGit.svelte",
+    "web/src/lib/settings-page/CheckpointsUsagePanel.svelte",
+    "src/core/checkpoints/revert.py",
+    "src/api/checkpoint_revert_routes.py",
+    "web/src/lib/checkpoints/RevertConfirm.svelte"
+  ],
+  "updated": "2026-10-30",
+  "where": [
+    "The changed files tab of the file browser, through its turn picker.",
+    "Settings > general > turn checkpoints."
+  ]
+}

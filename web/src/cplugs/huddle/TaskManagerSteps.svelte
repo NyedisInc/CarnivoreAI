@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Icon, TaskRows } from '../sdk/ui';
+  import { Icon, TaskRows, buttonAttrs } from '../sdk/ui';
   import { t } from '../sdk';
   import { summarize, type StepsEntry } from './task-manager-steps';
 
@@ -12,7 +12,7 @@
 
 {#if entry && summary}
   <div class="hds" data-task-manager-steps data-open={expanded ? 'on' : undefined}>
-    <button type="button" class="hds-fold" aria-expanded={expanded} aria-label={t('cplug.huddle.steps.label')}
+    <button type="button" class="hds-fold" {...buttonAttrs('row', 'bare')} aria-expanded={expanded} aria-label={t('cplug.huddle.steps.label')}
             onclick={() => (expanded = !expanded)}>
       <Icon name={expanded ? 'chevron-down' : 'chevron-right'} size={10} />
       <span class="hds-count" data-task-manager-steps-count>{t('cplug.huddle.steps.count', { done: summary.done, total: summary.total })}</span>
@@ -34,10 +34,12 @@
       display: flex;
       align-items: baseline;
       gap: var(--oc-space-2);
+      --_bd: currentColor;
       width: 100%;
       min-width: 0;
+      margin: -1px;
       padding: 0;
-      border: 0;
+      border: 1px solid transparent;
       background: none;
       color: var(--oc-text-secondary);
       font: inherit;

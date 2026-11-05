@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t } from '../i18n/index.svelte';
+  import { sessionSidebar, type SidebarPick } from '../legacy-globals';
   import MiniRailFooter from '../mini-rail/MiniRailFooter.svelte';
   import MiniRailUsage from '../mini-rail/MiniRailUsage.svelte';
   import { type RailItem } from '../../opscenter/shell/rail-items';
@@ -10,21 +11,22 @@
   import { RAIL_SPLIT, zoneSequence } from './rail-zones';
   import { layoutEditor } from '../../opscenter/layout-editor/editor.svelte';
   import EditCell from '../zone-shell/EditCell.svelte';
-  import { onMenuMoveKey, onMenuPointerDown, type MenuDragHost } from '../drawer-tabs/menu-drag';
-  import { railIconHidden, railIconsShown, setRailIconHidden, startRailIcons } from './rail-icons.svelte';
+  import { menuDragActive, onMenuMoveKey, onMenuPointerDown, type MenuDragHost } from '../drawer-tabs/menu-drag';
+  import { RAIL_PIN_ID, railIconHidden, railIconsShown, setRailIconHidden, startRailIcons } from './rail-icons.svelte';
   import { menuPageState } from '../menu-page/menu-page-shell.svelte';
   import { menuPage } from '../menu-page/menu-pages';
-  import { motionReduced } from '../motion/motion';
-  import { animationTypeOff } from '../motion/animation-types';
   import { activeFlyout, handleFlyoutEscape } from './flyout.svelte';
   import TabKey, { keyFace } from '../zone-shell/TabKey.svelte';
   import type { KeyFace } from '../zone-shell/zone-types';
   import { FLYOUT_CONTAINER_ID } from './rail-dom';
   import { railKeyTarget } from './rail-keys.svelte';
-  import { barPinned } from '../widget-bars/bar-pin-action';
+  import { barPinned, railPinOffered } from '../widget-bars/bar-pin-action';
+  import { createDock, DOCK_ZOOM } from './rail-dock';
+  import { railMagnify, railPeakScale } from './rail-magnify';
+  import { railDockNames, startRailDockNames } from './rail-dock-names.svelte';
   import type { Snippet } from 'svelte';
 
-  let { pin, pinName, stats = false }: { pin?: Snippet; pinName?: string; stats?: boolean } = $props();
+  let { pin, pinName, stats = false, pinHideable = true }: { pin?: Snippet; pinName?: string; stats?: boolean; pinHideable?: boolean } = $props();
 
   const editing = $derived(layoutEditor.active);
   const zones = $derived(railZoneItems());
@@ -33,7 +35,13 @@
   const items = $derived<RailItem[]>([...top, ...bottom]);
   onMount(() => {
     startRailIcons();
-    return startMenuOrder();
+    const stopOrder = startMenuOrder();
+    const stopWatch = dock.watch();
+    return () => {
+      stopOrder();
+      stopWatch();
+      dock.destroy();
+    };
   });
 
   function refocusAfterPaint(id: string): void {
@@ -63,14 +71,14 @@
   }
 
   function faceOf(item: RailItem): KeyFace {
-    return keyFace({ ariaLabel: nameOf(item), icon: item.icon, count: item.badge?.() ?? null });
+    return keyFace({ ariaLabel: nameOf(item), icon: item.icon });
   }
 
   function press(item: RailItem, event: MouseEvent): void {
     if (leadIds.has(item.id)) {
       item.run?.();
       if (item.pressed && document.body.classList.contains('session-sidebar-railed')) {
-        (globalThis as { SessionSidebar?: { open?: () => void } }).SessionSidebar?.open?.();
+        sessionSidebar<SidebarPick<'open'>>()?.open();
       }
       if (activeFlyout() !== null && event.detail === 0) {
         queueMicrotask(() => document.querySelector<HTMLElement>(`#${FLYOUT_CONTAINER_ID} [data-flyout-close]`)?.focus());
@@ -108,53 +116,31 @@
     focusKey(next);
   }
 
-  const RADIUS_PX = 76;
-  const PEAK = 0.5;
   let label = $state<HTMLElement | null>(null);
   let labelText = $state('');
   let labelOn = $state(false);
-  let cells: { el: HTMLElement; y: number }[] = [];
-  let frame = 0;
-  let pointerY = 0;
+  const dock = createDock({ nav: () => nav, editing: () => editing, onRest: () => (labelOn = false) });
 
-  function measure(): void {
-    cells = [...(nav?.querySelectorAll<HTMLElement>('[data-dock-name]') ?? [])].map((el) => {
-      const r = el.getBoundingClientRect();
-      return { el, y: r.top + r.height / 2 };
-    });
-  }
+  let peak = $state(railPeakScale());
+  $effect(() => railMagnify.follow((percent) => (peak = percent / 100)));
 
-  function magnify(): void {
-    frame = 0;
-    for (const c of cells) {
-      const d = Math.abs(pointerY - c.y);
-      const k = d >= RADIUS_PX ? 0 : (Math.cos((Math.PI * d) / RADIUS_PX) + 1) / 2;
-      c.el.style.setProperty('--dock-s', String(1 + PEAK * k));
-    }
-  }
+  $effect(() => {
+    if (editing) dock.stop();
+  });
 
-  function onPointerMove(event: PointerEvent): void {
-    if (event.pointerType === 'touch' || motionReduced() || animationTypeOff('transitions')) return;
-    if (cells.length === 0) measure();
-    pointerY = event.clientY;
-    if (frame === 0) frame = requestAnimationFrame(magnify);
-  }
-
-  function rest(): void {
-    if (frame !== 0) cancelAnimationFrame(frame);
-    frame = 0;
-    for (const c of cells) c.el.style.removeProperty('--dock-s');
-    cells = [];
-    labelOn = false;
-  }
+  startRailDockNames();
 
   function showLabel(cell: HTMLElement | null): void {
     if (!cell || !nav || !label) return;
-    const resting = cells.find((c) => c.el === cell)?.y;
+    if (editing || !railDockNames.on) {
+      labelOn = false;
+      return;
+    }
+    const resting = dock.restingY(cell);
     const box = cell.getBoundingClientRect();
     const y = resting ?? box.top + box.height / 2;
     labelText = cell.dataset.dockName ?? '';
-    label.style.transform = `translate(${nav.getBoundingClientRect().right + 8}px, ${y}px) translateY(-50%)`;
+    label.style.transform = `translate(${Math.max(nav.getBoundingClientRect().right, box.left + box.width * railPeakScale()) + 8}px, ${y}px) translateY(-50%)`;
     labelOn = true;
   }
 
@@ -179,17 +165,25 @@
   />
 {/snippet}
 
-{#snippet railButton(item: RailItem)}
-  <span class="sbr-rail__cell" data-dock-name={t(item.labelKey)}>
-    <span class="oc-nav-label" hidden>{t(item.labelKey)}</span>
-    {#if editing}
-      <EditCell hidden={railIconHidden(item.id)} name={t(item.labelKey)} ontoggle={() => void setRailIconHidden(item.id, !railIconHidden(item.id))}>
-        {@render railKey(item)}
-      </EditCell>
-    {:else}
+
+{#snippet dockCell(name: string, body: Snippet)}
+  <span class="sbr-rail__cell" data-dock-name={name}><span class="sbr-rail__dock">{@render body()}</span></span>
+{/snippet}
+
+{#snippet railButtonBody(item: RailItem)}
+  <span class="oc-nav-label" hidden>{t(item.labelKey)}</span>
+  {#if editing}
+    <EditCell hidden={railIconHidden(item.id)} name={t(item.labelKey)} ontoggle={() => void setRailIconHidden(item.id, !railIconHidden(item.id))}>
       {@render railKey(item)}
-    {/if}
-  </span>
+    </EditCell>
+  {:else}
+    {@render railKey(item)}
+  {/if}
+{/snippet}
+
+{#snippet railButton(item: RailItem)}
+  {@render dockCell(t(item.labelKey), itemBody)}
+  {#snippet itemBody()}{@render railButtonBody(item)}{/snippet}
 {/snippet}
 
 
@@ -202,26 +196,46 @@
   </ul>
 {/snippet}
 
+
+{#snippet pinCell(body: Snippet)}
+  {#if !pinHideable}
+    {@render dockCell(pinLabel, body)}
+  {:else if !railPinOffered()}
+    
+  {:else if editing}
+    {@render dockCell(pinLabel, editedPin)}
+  {:else if !railIconHidden(RAIL_PIN_ID)}
+    {@render dockCell(pinLabel, body)}
+  {/if}
+  {#snippet editedPin()}
+    <EditCell hidden={railIconHidden(RAIL_PIN_ID)} name={pinLabel} ontoggle={() => void setRailIconHidden(RAIL_PIN_ID, !railIconHidden(RAIL_PIN_ID))}>
+      {@render body()}
+    </EditCell>
+  {/snippet}
+{/snippet}
+
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <nav
   class="sbr-rail"
   aria-label={t(editing ? 'sidebar.rail.edit.label' : 'sidebar.rail.label')}
   data-editing={editing ? '' : undefined}
+  style:--dock-zoom={DOCK_ZOOM}
+  style:--dock-peak={peak}
   bind:this={nav}
   data-menu-zones
   onpointerdowncapture={(event) => { if (editing) onMenuPointerDown(event, dragHost); }}
   onkeydown={onKeydown}
-  onpointerenter={measure}
-  onpointermove={onPointerMove}
-  onpointerleave={rest}
-  onpointerover={(event) => showLabel(cellOf(event.target))}
+  onpointerenter={dock.measure}
+  onpointermove={dock.onPointerMove}
+  onpointerleave={dock.rest}
+  onpointerover={(event) => { if (!menuDragActive()) showLabel(cellOf(event.target)); }}
   onfocusin={(event) => { if ((event.target as HTMLElement).matches(':focus-visible')) showLabel(cellOf(event.target)); }}
   onfocusout={() => (labelOn = false)}
 >
   {@render zone('top', top, RAIL_SPLIT)}
   <span class="sbr-rail__fill" aria-hidden="true"></span>
   {@render zone('bottom', bottom, undefined)}
-  {#if pin}<span class="sbr-rail__cell" data-dock-name={pinLabel}>{@render pin()}</span>{/if}
+  {#if pin}{@render pinCell(pin)}{/if}
   {#if stats}
     <MiniRailFooter railed />
     <MiniRailUsage />
@@ -232,6 +246,7 @@
 <style>
   @layer components {
     .sbr-rail {
+      --dock-ease: var(--oc-motion-fast);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -246,6 +261,12 @@
       box-shadow: inset calc(-1 * var(--oc-border)) 0 0 0 var(--oc-line-faint);
     }
 
+    .sbr-rail:global([data-dock-spill]) {
+      position: relative;
+      z-index: 5;
+      overflow: visible;
+    }
+
     .sbr-rail::-webkit-scrollbar {
       display: none;
     }
@@ -254,15 +275,28 @@
       position: relative;
       display: inline-flex;
       flex: none;
-      transform: scale(var(--dock-s, 1));
-      transition: transform 90ms ease-out;
     }
 
-    @media (min-width: 701px) {
-      .sbr-rail__cell :global(.sbr-rail__btn) {
-        width: 28px;
-        height: 28px;
-      }
+    .sbr-rail:global([data-docking]) .sbr-rail__cell {
+      align-items: center;
+      justify-content: flex-start;
+      width: var(--dock-w);
+      height: var(--dock-h);
+    }
+
+    .sbr-rail__dock {
+      display: inline-flex;
+      flex: none;
+    }
+
+    .sbr-rail:global([data-docking]) .sbr-rail__dock {
+      transform-origin: 0 50%;
+      zoom: var(--dock-zoom);
+      transform: scale(calc(var(--dock-s, 1) / var(--dock-zoom)));
+    }
+
+    .sbr-rail:global([data-dock-live]) .sbr-rail__dock {
+      transition: transform var(--dock-ease) ease-out;
     }
 
     .sbr-rail__zone {
@@ -282,8 +316,8 @@
     }
 
     .sbr-rail[data-editing] .sbr-rail__zone[data-empty] {
-      width: 28px;
-      min-height: 28px;
+      width: var(--oc-rail-key);
+      min-height: var(--oc-rail-key);
       border: var(--oc-border) dashed var(--oc-cyan);
       border-radius: var(--oc-radius-sm);
       box-sizing: border-box;
@@ -294,21 +328,6 @@
       touch-action: none;
     }
 
-    .sbr-rail__zone > li:global([data-menu-lifted]) {
-      opacity: 0.5;
-    }
-
-    .sbr-rail__zone > li:global([data-menu-drop='before']) {
-      box-shadow: 0 calc(-1 * var(--oc-border)) 0 0 var(--oc-orange);
-    }
-
-    .sbr-rail__zone > li:global([data-menu-drop='after']) {
-      box-shadow: 0 var(--oc-border) 0 0 var(--oc-orange);
-    }
-
-    .sbr-rail__zone:global([data-menu-drop]) {
-      box-shadow: 0 var(--oc-border) 0 0 var(--oc-orange);
-    }
 
     .sbr-rail__sep {
       flex: none;
@@ -355,7 +374,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .sbr-rail__cell,
+      .sbr-rail__dock,
       .sbr-rail__label,
       .sbr-rail__label-text {
         transition: none;

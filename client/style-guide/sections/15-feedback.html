@@ -5,7 +5,7 @@ a row. Loading is a word, never a spinner. Empty is a sentence and, when there i
 
 <h3 class="sg-h3" id="feedback-toasts">toasts</h3>
 <div class="sg-specimen">
-    <div class="sg-specimen__label"><span>markup copied from</span><code>client/js/toast-render.js</code><span>styles live</span></div>
+    <div class="sg-specimen__label"><span>markup copied from</span><code>web/src/lib/toast-stack/ToastCard.svelte</code><span>styles live</span></div>
     <div class="sg-specimen__body sg-specimen__body--flush">
         <div class="sg-stage">
             <div class="toast-container" data-oc-base aria-live="polite">
@@ -40,7 +40,12 @@ a row. Loading is a word, never a spinner. Empty is a sentence and, when there i
     <dt>use</dt>
     <dd>Something happened in a session you are not looking at: a permission request, a finished turn, a notification.
         Toasts group per session and kind (<code>toast-grouping.js</code>), show a <code>&times;N</code> count, collapse into an
-        overflow row when there are too many (fewer and full width under 640px), (the clickable card rule lives in <code>toast-collapse.css</code>). Clicking a toast navigates to its session (<code>toast-navigate.js</code>).</dd>
+        overflow row when there are too many (fewer and full width under 640px), (the phone collapse rule lives in <code>toast-collapse.css</code>). Clicking a toast navigates to its session (<code>toast-navigate.js</code>).</dd>
+    <dt>painted by</dt>
+    <dd><code>ToastStack.svelte</code> (the stack, mounted into <code>#toast-container</code>) and <code>ToastCard.svelte</code> (one
+        card), from the view the legacy <code>ToastManager</code> publishes (<code>client/js/toast-view.js</code>). The model, grouping,
+        timers, acks and every click rule stay in the framework-free <code>client/js/toast*.js</code>; the stack only draws and calls
+        back by group key. Its buttons wear the base layer (<code>data-btn</code>) under the toast classes, which win.</dd>
     <dt>not for</dt>
     <dd>A field error, a confirmation of the user's own click on this screen, or anything the user must act on to continue:
         those are inline or a dialog.</dd>
@@ -55,7 +60,7 @@ a row. Loading is a word, never a spinner. Empty is a sentence and, when there i
         <code>--oc-text-primary</code> instead of a kind carrying its own hardcoded color.</dd>
     <dt>action</dt>
     <dd>A local card (<code>local: true</code>, raised from this browser) may carry one action: <code>action_label</code> plus
-        <code>on_action</code>, drawn by <code>toast-render.js</code> as the quiet <code>.modal-btn-secondary</code> with
+        <code>on_action</code>, drawn by <code>ToastCard.svelte</code> as the quiet <code>.modal-btn-secondary</code> with
         <code>.toast__action</code>. Pressing it runs the action and retires the card. The widgets page's "undo" is the user.</dd>
     <dt>themes</dt>
     <dd>The card is <code>--oc-ground-card</code>, the one ground every theme lifts off its own terminal, so a toast reads
@@ -93,7 +98,7 @@ a row. Loading is a word, never a spinner. Empty is a sentence and, when there i
 </div>
 <dl class="sg-facts">
     <dt>use</dt>
-    <dd>Every card whose toast carries a registered <code>notify_type</code> gets <code>.toast__mute</code> at its bottom right, drawn by the ONE shared renderer (<code>client/js/toast-render.js</code> calls <code>window.NotifyMute.attach</code>), never per call site. Action feedback cards (no type) get none.</dd>
+    <dd>Every card whose toast carries a registered <code>notify_type</code> gets <code>.toast__mute</code> at its bottom right, drawn by the ONE shared painter (<code>ToastCard.svelte</code> calls the mute module's <code>attach</code>), never per call site. Action feedback cards (no type) get none.</dd>
     <dt>how</dt>
     <dd>The button opens <code>.notify-mute-pop</code>, which wears <code>popup-focus</code> and holds two <code>.notify-mute-pop__item</code> rows: "mute here" (this device; a phone also stops its own push) and "mute everywhere" (every device and destination). A mute confirms with a <code>NotifyMuted</code> card whose one action is <code>.toast__mute-undo</code>, a quiet outline like <code>.modal-btn-secondary</code>. <code>.toast--mutable</code> gives a one-line card room for the x and the control.</dd>
     <dt>never</dt>
@@ -102,7 +107,7 @@ a row. Loading is a word, never a spinner. Empty is a sentence and, when there i
 
 <h3 class="sg-h3" id="feedback-toasts-detailed">toasts, detailed style</h3>
 <div class="sg-specimen">
-    <div class="sg-specimen__label"><span>markup copied from</span><code>client/js/toast-mode.js</code><span>styles live</span></div>
+    <div class="sg-specimen__label"><span>markup copied from</span><code>web/src/lib/toast-stack/ToastStack.svelte</code><span>styles live</span></div>
     <div class="sg-specimen__body sg-specimen__body--flush">
         <div class="sg-stage">
             <div class="toast-container" data-oc-base aria-live="polite">

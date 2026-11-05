@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Mapping, MutableMapping, Optional, Protocol
+from typing import Any, List, Mapping, MutableMapping, Optional, Protocol
+
+from src.models import SessionInfo, Toast
+from src.models.notifications import ToastDetail
 
 
 class _BackendRegistry(Protocol):
 
     backends: Mapping[str, Any]
+    sessions: Mapping[str, Any]
+
+    def listable_ids(self) -> List[str]:
+        pass
 
 
 class _HookTokens(Protocol):
@@ -24,6 +31,9 @@ class _UnreadStore(Protocol):
 class _ToastInbox(Protocol):
 
     def ack(self, session_id: str, toast_id: str, reason: str) -> bool:
+        pass
+
+    def describe(self, session_id: str, toast_id: str, detail: Optional[ToastDetail]) -> Optional[Toast]:
         pass
 
 
@@ -62,4 +72,21 @@ class SideEffectsManager(Protocol):
     def _persist_settled_activity_state(
         self, tmux_name: Optional[str], state: Optional[str], tmux_created_epoch: Optional[int],
     ) -> None:
+        pass
+
+
+class AttentionManager(SideEffectsManager, Protocol):
+
+    def _is_unread(self, tmux_name: Optional[str], epoch: Optional[int] = None, row_id: Optional[int] = None) -> bool:
+        pass
+
+    def record_toast(
+        self, session_id: str, kind: str, title: str, body: Optional[str] = None, *, notify_type: Optional[str] = None,
+    ) -> Toast:
+        pass
+
+    def notification_policy_stamp(self, session_id: str) -> Any:
+        pass
+
+    async def get_session_info(self, session_id: Optional[str] = None) -> Optional[SessionInfo]:
         pass

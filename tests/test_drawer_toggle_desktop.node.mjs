@@ -63,7 +63,7 @@ const html = read('client', 'index.html');
 const mobileMax = Number((pinJs.match(/export const MOBILE_MAX_PX = (\d+);/) || [])[1]);
 const desktopMin = mobileMax + 1;
 
-const HIDE_OPEN = /body:has\(\.session-sidebar-panel--open\)\s+#session-sidebar-toggle\s*\{([^}]*)\}/;
+const HIDE_OPEN = /body\.ps-drawer-open\s+#session-sidebar-toggle\s*\{([^}]*)\}/;
 
 test('the docking breakpoint is read from web/src/lib/drawer/pin.ts', () => {
     assert.ok(Number.isInteger(mobileMax) && mobileMax > 0,
@@ -84,7 +84,7 @@ test('desktop: the drawer toggle is hidden while the drawer is open', () => {
 });
 
 test('desktop: the rule sits beside #header-icon\'s, not in another file', () => {
-    const iconAt = headerActions.indexOf('body:has(.session-sidebar-panel--open) #header-icon');
+    const iconAt = headerActions.indexOf('body.ps-drawer-open #header-icon');
     const toggleAt = headerActions.search(HIDE_OPEN);
     assert.ok(iconAt >= 0 && toggleAt > iconAt, 'toggle rule must follow the #header-icon rule');
     assert.doesNotMatch(sidebarCss, /session-sidebar-panel--open\)\s+#session-sidebar-toggle/);
@@ -121,8 +121,8 @@ test('the drawer\'s OWN wordmark carries no hide-while-open rule anywhere (the r
 
 test('the sibling marks keep their hide-while-open rules at every width', () => {
     assert.match(headerActions,
-        /(^|\n)body:has\(\.session-sidebar-panel--open\) #header-icon \{\s*visibility: hidden;\s*pointer-events: none;/);
-    assert.match(topBar, /:global\(body:has\(\.session-sidebar-panel--open\)\) \.oc-topbar-word/);
+        /(^|\n)body\.ps-drawer-open #header-icon \{\s*visibility: hidden;\s*pointer-events: none;/);
+    assert.match(topBar, /:global\(body\.ps-drawer-open\) \.oc-topbar-word/);
 });
 
 console.log(`\n${passes} passed, ${failures} failed`);

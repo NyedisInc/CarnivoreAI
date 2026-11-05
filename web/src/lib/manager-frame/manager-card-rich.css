@@ -3,7 +3,7 @@
     gap: var(--oc-space-2);
     padding: var(--oc-space-3);
     border-color: var(--oc-line-surface);
-    --_bd: var(--oc-line-surface);
+    --_bd: var(--oc-focus-quiet);
     background: var(--oc-surface-1);
 }
 
@@ -156,7 +156,7 @@
 .mgr .mgr-card__star {
     display: inline-flex;
     flex: none;
-    padding: 2px;
+    padding: var(--oc-space-0-5);
     border: 0;
     background: none;
     color: inherit;
@@ -177,7 +177,7 @@
 .mgr .mgr-card__chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: var(--oc-space-1);
     margin: 0;
     padding: 0;
     list-style: none;

@@ -50,6 +50,7 @@
             remote: (opts && opts.remote) || null,
             goLabel: (opts && opts.goLabel) || null,
             prefill: (opts && opts.prefill) || null,
+            folder: (opts && opts.folder) || null,
         }).then(function (pick) {
             if (!pick) return null;
             if (pick.model) rememberChoice(pick.model);
@@ -61,6 +62,7 @@
                 farLauncher: !!pick.farLauncher,
                 name: typeof pick.name === 'string' ? pick.name : null,
                 pinned: pick.pinned === true,
+                worktree: pick.worktree || null,
             };
         });
     }

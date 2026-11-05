@@ -40,11 +40,11 @@ def test_another_project_is_refused_with_both_names_and_nothing_is_written(manag
 @pytest.mark.parametrize("tool,extra", [
     ("task_manager_update", {"state": "working"}), ("task_manager_ask", {"text": "which one?"}), ("task_manager_answered_set", {}),
     ("task_manager_progress_set", {"phase": "running"}), ("task_manager_move", {"list": "12"}),
-    ("task_manager_fork", {}), ("huddle_focus", {"list": "7", "items": []}),
+    ("task_manager_fork", {}),
 ])
 def test_every_write_tool_is_guarded(manager, tool, extra):
     item = blog_item(manager)
-    args = dict(extra) if tool == "huddle_focus" else {"item": item, **extra}
+    args = {"item": item, **extra}
     ok, text = call(manager, tool, args)
     assert not ok and "not your project Carnivore" in text and "cross_project: true" in text, (tool, text)
 

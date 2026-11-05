@@ -1,10 +1,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import importlib
 import inspect
 import json
+import weakref
 from dataclasses import dataclass, field
 from types import SimpleNamespace
 from typing import Any, Awaitable, Callable, Iterable, Optional
@@ -61,6 +63,7 @@ class RouteTool:
     summary: Optional[Callable[[dict, Optional[session_target.SessionTarget]], str]] = None
     precheck: Optional[Callable[[dict, Optional[session_target.SessionTarget]], Awaitable[None]]] = None
     request_check: Optional[Callable[[Any], None]] = None
+    redact: bool = False
     example: dict = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -97,20 +100,39 @@ def _check_args(spec: RouteTool, args: dict) -> None:
         raise ToolError(f"{spec.name} needs {', '.join(missing)}")
 
 
+_REDACTION_GATES: "weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Semaphore]" = weakref.WeakKeyDictionary()
+
+
+def _redaction_gate() -> asyncio.Semaphore:
+    loop = asyncio.get_running_loop()
+    gate = _REDACTION_GATES.get(loop)
+    if gate is None:
+        gate = _REDACTION_GATES[loop] = asyncio.Semaphore(1)
+    return gate
+
+
 async def _answer(spec: RouteTool, call: Call) -> dict:
     from fastapi import HTTPException
 
+    from src.core.mcp import read_tools
     from src.core.mcp.write_tools import _detail
+
+    def safe(text: str) -> str:
+        return read_tools.scrub(text, False) if spec.redact else text
 
     try:
         answer = spec.invoke(call)
         if inspect.isawaitable(answer):
             answer = await answer
     except HTTPException as exc:
-        raise ToolError(_detail(exc)) from exc
+        raise ToolError(_detail(exc, safe)) from exc
     except ValueError as exc:
-        raise ToolError(f"{spec.name}: invalid arguments: {' '.join(str(exc).split())[:300]}") from exc
-    return _ok(jsonable_encoder(answer))
+        raise ToolError(f"{spec.name}: invalid arguments: {safe(' '.join(str(exc).split()))[:300]}") from exc
+    encoded = jsonable_encoder(answer)
+    if spec.redact:
+        async with _redaction_gate():
+            encoded = await asyncio.to_thread(read_tools.scrub, encoded, False)
+    return _ok(encoded)
 
 
 def _handler(spec: RouteTool) -> Callable[[Any, AgentCaller, dict], Awaitable[dict]]:

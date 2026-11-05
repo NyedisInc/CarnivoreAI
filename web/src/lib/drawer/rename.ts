@@ -1,5 +1,7 @@
 import { t } from '../i18n/index.svelte';
 import { drawerEnv } from './env';
+import { nonEmptyErrorMessageOr } from '../errors/failure-reason';
+import type { SidebarPick } from '../legacy-globals';
 import * as Layouts from './layouts-model';
 import { isBrowserName, rename as renameBrowser } from './browser-rows';
 
@@ -28,7 +30,7 @@ interface Editor extends EditorOptions {
 
 interface RenameEnv {
     SessionLabel?: LabelRule;
-    SessionSidebar?: { listEl: HTMLElement | null; forceRefresh(): Promise<void> };
+    SessionSidebar?: SidebarPick<'listEl' | 'forceRefresh'>;
     CloudeWeb?: { sidebarShell?: { owns?(t: unknown): boolean; beginRowRename?(row: Element): boolean; isEditing?(): boolean } };
     API?: { renameSession(id: string, value: string): Promise<unknown> };
 }
@@ -146,8 +148,7 @@ async function commit(ed: Editor): Promise<void> {
         result = await ed.save(verdict.value);
     } catch (err) {
         ed.settled = false;
-        const e = err as { message?: string; detail?: string } | null;
-        const detail = (e && (e.message || e.detail)) || t('sidebar.heading.rename.refused');
+        const detail = nonEmptyErrorMessageOr(err, t('sidebar.heading.rename.refused'));
         showError(ed, t('sidebar.heading.rename.failed_inline', { detail }));
         announce(t('sidebar.heading.rename.failed', { name: ed.seed, detail }));
         return;

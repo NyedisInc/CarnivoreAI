@@ -98,6 +98,9 @@ class Screens:
     def is_screen_active(self) -> bool:
         return self.active
 
+    def is_watched(self, session_id) -> bool:
+        return False
+
 
 OK = DeliveryResult(ok=True)
 

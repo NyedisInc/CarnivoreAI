@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence
 
-from src.cplugs.huddle import inbox, perceived_ask, rules, service, title as titles
+from src.cplugs.huddle import inbox, perceived_ask, rules, service, task_files, title as titles
 from src.cplugs.huddle.inbox_store import InboxStore
 from src.cplugs.huddle.rules import TaskManagerInvalid
 from src.cplugs.sdk import CplugContext
@@ -38,7 +38,7 @@ def parse_specs(raw: object, *, allowed_states: Sequence[str] = STATES) -> List[
         unknown = sorted(set(one) - SPEC_KEYS)
         if unknown:
             raise TaskManagerInvalid(f"item {at}: unknown field(s) {', '.join(unknown)}")
-        state = rules.canonical_state(one.get("state", OPEN))
+        state = one.get("state", OPEN)
         if state not in allowed_states:
             raise TaskManagerInvalid(f"item {at}: state must be one of {', '.join(allowed_states)}")
         ask = one.get("ask")
@@ -60,7 +60,7 @@ def file_as_owner(ctx: CplugContext, entry_id: int, specs: Sequence[ItemSpec]) -
         for spec in specs:
             group = service.groups(ctx).find_or_create(entry["list"], spec.group, actor=rules.JOE)
             added = store.add(entry["list"], spec.text, actor=rules.JOE, title=spec.title, group=group, perceived_ask=spec.perceived_ask)
-            inboxes.link_item(entry_id, added["id"])
+            inboxes.link_item(entry_id, added["id"], task_files.pastes_for(ctx))
             if spec.state == TODO:
                 store.update(added["id"], actor=rules.JOE, state=TODO)
             items.append(store.item(added["id"]))

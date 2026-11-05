@@ -313,6 +313,14 @@ function statGroups(target: HTMLElement): string[][] {
     [...group.querySelectorAll('.oc-tfs-item')].map((item) => item.getAttribute('data-stat') ?? ''));
 }
 
+test('EXPANDED: a measured cache split adds its cell to the first group, and nothing measured leaves it out (#2773)', () => {
+  const target = setup(usage({ cache_read_input_tokens: 440000, cache_creation_input_tokens: 5200000 }), 390);
+  toggle(target).click();
+  flushSync();
+  expect(statGroups(target)[0]).toEqual(['context', 'model', 'tokens', 'cache']);
+  expect(stats(target)?.querySelector('[data-stat="cache"] .oc-tfs-value')?.textContent?.trim()).toBe('440k/5.2M');
+});
+
 test('EXPANDED: three groups in #422 order - context/model/tokens, then the two windows, then cost/account', () => {
   const target = setup(usage(), 390);
   toggle(target).click();

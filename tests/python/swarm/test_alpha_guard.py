@@ -153,7 +153,7 @@ def test_a_non_alpha_caller_is_untouched(env, calls):
 
 def test_swarm_say_is_data_safe_and_swarm_rewind_is_not():
     assert "swarm_say" in guard.DATA_SAFE and "swarm_rewind" not in guard.DATA_SAFE
-    assert guard.DATA_SAFE == {"swarm_ask", "swarm_answer", "swarm_pass", "swarm_remember", "swarm_forget", "swarm_suggest", "swarm_report", "swarm_say", "swarm_conflict"} | (CARD_TOOLS - OWNER_ONLY_CARD_TOOLS)
+    assert guard.DATA_SAFE == {"swarm_ask", "swarm_withdraw", "swarm_answer", "swarm_pass", "swarm_remember", "swarm_forget", "swarm_suggest", "swarm_report", "swarm_say", "swarm_conflict"} | (CARD_TOOLS - OWNER_ONLY_CARD_TOOLS)
 
 
 def test_an_idle_that_predates_the_newest_delivery_never_closes_the_turn(env):

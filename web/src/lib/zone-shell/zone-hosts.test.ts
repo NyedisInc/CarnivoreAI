@@ -96,7 +96,7 @@ describe('host work stays in the zone shell', () => {
       { path: 'lib/x/Dialog.svelte', text: '<div class="x popup-focus" role="dialog" aria-label="x">body</div>' },
       { path: 'lib/x/Alert.svelte', text: '<section\n  class="x"\n  onclick={() => go()}\n  role="alertdialog">' },
       { path: 'lib/x/Modal.svelte', text: '<div class="modal-overlay" aria-modal="true">' },
-      { path: 'lib/launchpad/ModalShell.svelte', text: '<div class="modal-overlay" {role} aria-modal="true">' },
+      { path: 'lib/dialog-frame/ModalShell.svelte', text: '<div class="modal-overlay" {role} aria-modal="true">' },
       { path: 'lib/dialog-frame/AnchoredPopup.svelte', text: '<div class="popup-focus" role="dialog">' },
       { path: 'lib/x/Uses.svelte', text: '<ModalShell title="x" role="alertdialog" onCancel={c}>body</ModalShell>' },
       { path: 'lib/elite/Sheet.svelte', text: '<div class="m1-sheet" role="dialog" aria-modal="true">' },

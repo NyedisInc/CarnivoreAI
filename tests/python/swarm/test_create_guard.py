@@ -50,10 +50,10 @@ def _pane(name: str) -> AgentCaller:
 
 
 @pytest.mark.parametrize("rank", ["company", "alpha"])
-def test_a_settings_file_denies_both_spellings_of_every_renamed_create_tool(rank):
+def test_a_settings_file_denies_the_current_name_of_every_renamed_create_tool_and_no_retired_one(rank):
     deny = json.loads(definition.render_settings(Path("/memory"), rank))["permissions"]["deny"]
     for new, old in RENAMED.items():
-        assert f"mcp__carnivore__{new}" in deny and f"mcp__carnivore__{old}" in deny, (rank, new)
+        assert f"mcp__carnivore__{new}" in deny and f"mcp__carnivore__{old}" not in deny, (rank, new)
     assert "mcp__carnivore__swarm_spawn" in deny
 
 

@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, beforeEach, it } from 'vitest';
 import { drawList, loadLegacyDrawer, resetDrawer } from './legacy-fixture';
+import * as EmptySections from '../drawer/empty-sections.svelte';
 import * as Density from '../drawer/density';
 import * as Store from '../drawer/store';
 import * as GroupStore from '../drawer/group-store';
@@ -73,6 +74,7 @@ function headerLed(html: string, key: string): { inner: string; outer: string } 
 }
 
 it('ITEM 64: an EMPTY pinned group renders nothing, not a bare header', () => {
+    EmptySections.setEmptySectionsHidden(false);
     const html = G.bodyHtml([row({ name: 'a' }), row({ name: 'b' })], 'cozy', null, {});
     assert.ok(!html.includes('data-group="pinned"'),
         'a header for a band the user has never put anything in asks a question nobody asked');

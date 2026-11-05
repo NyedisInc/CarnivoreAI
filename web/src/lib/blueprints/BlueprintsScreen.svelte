@@ -6,6 +6,7 @@
     import { MANAGER_KEYS } from '../manager-frame/manager-model';
     import type { ManagerAdapter, ManagerItem } from '../manager-frame/types';
     import { t as appT } from '../i18n/index.svelte';
+    import { confirmOk } from '../confirm-ok/confirm-ok';
     import type { Translate } from '../sessions/types';
     import { providerMark } from '../sessions/agent-marks';
     import { openModal } from '../modal';
@@ -125,16 +126,13 @@
     }
 
     function confirmRemoval(name: string): Promise<boolean> {
-        const app = (globalThis as { App?: { showConfirmModal?: (...args: string[]) => Promise<boolean> } }).App;
-        if (!app?.showConfirmModal) return Promise.resolve(false);
-        return app.showConfirmModal(
-            t('blueprint.remove'),
-            t('blueprint.remove.message', { name }),
-            '',
-            t('blueprint.remove'),
-            t('blueprint.cancel'),
-            'danger',
-        );
+        return confirmOk({
+            title: t('blueprint.remove'),
+            message: t('blueprint.remove.message', { name }),
+            okLabel: t('blueprint.remove'),
+            cancelLabel: t('blueprint.cancel'),
+            variant: 'danger',
+        });
     }
 
     async function removeOne(blueprint: Blueprint): Promise<void> {

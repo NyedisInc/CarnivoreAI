@@ -34,7 +34,7 @@
     "web/src/lib/drawer/GroupRulePanel.svelte",
     "web/src/lib/drawer/group-rule.ts",
     "web/src/lib/drawer/group-rule-popup.ts",
-    "src/core/session_group_rule.py"
+    "src/core/session_groups/session_group_rule.py"
   ],
   "updated": "2026-10-28",
   "where": [

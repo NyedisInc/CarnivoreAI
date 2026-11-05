@@ -14,7 +14,7 @@ const toastSrc = read('client', 'js', 'toast.js');
 // issue #55 split ToastManager's class body across three files that each
 // extend ToastManager.prototype (client/js/api-toasts.js's pattern for
 const toastGroupingSrc = read('client', 'js', 'toast-grouping.js');
-const toastRenderSrc = read('client', 'js', 'toast-render.js');
+const toastRenderSrc = read('client', 'js', 'toast-view.js');
 const toastLifecycleSrc = read('client', 'js', 'toast-lifecycle.js');
 const inputKindSrc = read('client', 'js', 'terminal-input-kind.js');
 const sessionLabelSrc = read('client', 'js', 'session-label.js');
@@ -196,56 +196,24 @@ test('an svg is an image by type but is not drawn through a canvas', () => {
 });
 
 
-test('a toast with a preview renders an img named after the file', () => {
+test('the preview is made by the compiled tree, and its absence degrades to the chip', async () => {
+    const none = stagedManager('ses_a', { filename: 'shot.png' });
+    none.s.AttachmentToast.show(termFor('ses_a'), { blob: { type: 'image/png' }, filename: 'shot.png' });
+    await new Promise((r) => setTimeout(r, 5));
+    const heldNone = [...none.mgr._byId.values()].find((t) => t.attachment_name === 'shot.png');
+    assert.equal(heldNone.thumb_url, null, 'with no compiled tree loaded the card keeps its chip');
+
     const s = makeSandbox();
-    const card = new El('div');
-    s.AttachmentToast.renderThumbs(card, [
-        { attachment_name: 'shot.png', thumb_url: 'data:image/webp;base64,AA', thumb_label: 'PNG' },
-    ]);
-    const img = card.querySelector('toast__thumb-img');
-    assert.ok(img, 'an attachment with a preview must render a picture');
-    assert.equal(img.getAttribute('src'), 'data:image/webp;base64,AA');
-    assert.equal(img.getAttribute('alt'), 'shot.png');
-    assert.equal(card.querySelector('toast__thumb-name').textContent, 'shot.png');
+    s.CloudeWeb = { attachmentPreviewDataUrl: (blob) => Promise.resolve(`data:fake;${blob.type}`) };
+    s.ToastManager._render = () => {};
+    s.AttachmentToast.show(termFor('ses_a'), { blob: { type: 'image/png' }, filename: 'shot.png' });
+    await new Promise((r) => setTimeout(r, 5));
+    const held = [...s.ToastManager._byId.values()][0];
+    assert.equal(held.thumb_url, 'data:fake;image/png', 'the preview the compiled tree made lands on the live record');
 });
 
-test('a toast with no preview renders a chip and no img at all', () => {
-    const s = makeSandbox();
-    const card = new El('div');
-    s.AttachmentToast.renderThumbs(card, [
-        { attachment_name: 'spec.pdf', thumb_url: null, thumb_label: 'PDF' },
-    ]);
-    assert.equal(card.querySelector('toast__thumb-img'), null,
-        'a file with no preview must not produce an <img> that cannot load');
-    const chip = card.querySelector('toast__thumb-ext');
-    assert.equal(chip.textContent, 'PDF');
-    assert.equal(chip.getAttribute('aria-hidden'), 'true');
-    assert.equal(card.querySelector('toast__thumb').dataset.noPreview, '1');
-});
-
-test('every member of a coalesced group is drawn, not just the newest', () => {
-    const s = makeSandbox();
-    const card = new El('div');
-    s.AttachmentToast.renderThumbs(card, [
-        { attachment_name: 'a.png', thumb_url: 'data:,1' },
-        { attachment_name: 'b.pdf', thumb_url: null, thumb_label: 'PDF' },
-        { attachment_name: 'c.png', thumb_url: 'data:,2' },
-    ]);
-    assert.equal(card.querySelectorAll('toast__thumb-row').length, 3);
-    assert.equal(card.querySelectorAll('toast__thumb-img').length, 2);
-    assert.equal(card.querySelectorAll('toast__thumb-ext').length, 1);
-});
-
-test('re-rendering rebuilds the strip instead of appending a second one', () => {
-    const s = makeSandbox();
-    const card = new El('div');
-    const group = [{ attachment_name: 'a.png', thumb_url: 'data:,1' }];
-    s.AttachmentToast.renderThumbs(card, group);
-    s.AttachmentToast.renderThumbs(card, group);
-    s.AttachmentToast.renderThumbs(card, group);
-    assert.equal(card.querySelectorAll('toast__thumbs').length, 1,
-        'an append-only strip would grow a duplicate row per render');
-    assert.equal(card.querySelectorAll('toast__thumb-row').length, 1);
+test('the module writes no DOM of its own (the guard in legacy-dom-guard.test.ts)', () => {
+    assert.ok(!/createElement|innerHTML|insertAdjacentHTML/.test(attachSrc.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '')));
 });
 
 
@@ -253,7 +221,6 @@ function stagedManager(sessionId, opts = {}) {
     const s = makeSandbox(opts);
     const mgr = s.ToastManager;
     mgr._render = () => {};
-    mgr._cardFor = () => null;
     s.AttachmentToast.show(termFor(sessionId), {
         blob: { type: 'application/pdf' },
         filename: opts.filename || 'spec.pdf',

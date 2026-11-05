@@ -102,6 +102,8 @@ class Door:
                 yield doc
         elif op == "relay_fail":
             yield self._relay_fail(req)
+        elif op == "await_code":
+            yield await self._await_code(req)
         elif op == "login":
             yield await self._do_login()
         else:
@@ -157,7 +159,7 @@ class Door:
             return
         last = job.status()
         yield last
-        while job.running:
+        while job.running and job.state != "knocked":
             await asyncio.sleep(STREAM_POLL_S)
             now = job.status()
             if now != last:
@@ -175,6 +177,16 @@ class Door:
             return join_job.fail_relay(code, cands, req["job"]).status()
         except join_job.JoinNotAllowed as exc:
             return {"error": exc.code}
+
+    async def _await_code(self, req: Dict[str, Any]) -> Dict[str, Any]:
+        if not isinstance(req.get("job"), str):
+            return {"error": "bad_request"}
+        job = await join_job.await_code(req["job"])
+        if job is None:
+            return {"error": "no_join_waiting"}
+        out = job.status()
+        out.update(join_job.relay_request() or {})
+        return out
 
     async def _do_login(self) -> Dict[str, Any]:
         if membership.first_run_state() != "joined":

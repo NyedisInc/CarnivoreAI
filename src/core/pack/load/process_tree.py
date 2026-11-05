@@ -6,7 +6,7 @@ import threading
 import time
 from typing import Dict, Iterable, List, NamedTuple, Optional, Set, Tuple
 
-from src.core import libproc_snapshot
+from src.core.machine_stats import libproc_snapshot
 
 
 class Proc(NamedTuple):

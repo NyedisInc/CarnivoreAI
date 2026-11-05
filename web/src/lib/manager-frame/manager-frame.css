@@ -17,7 +17,7 @@
     display: flex;
     flex: 1 1 auto;
     align-items: baseline;
-    gap: 10px;
+    gap: var(--oc-gap-parts);
     min-width: 0;
 }
 
@@ -29,7 +29,7 @@
     min-width: 0;
     overflow: hidden;
     color: var(--pl-text);
-    font-size: 13px;
+    font-size: var(--oc-fs-status);
     letter-spacing: 0;
     text-transform: none;
     text-overflow: ellipsis;
@@ -45,14 +45,14 @@
 .mgr .mgr-facts {
     display: grid;
     grid-template-columns: 112px minmax(0, 1fr);
-    gap: 8px 16px;
+    gap: var(--oc-space-2) var(--oc-space-4);
     margin: 0;
 }
 
 .mgr .mgr-facts > dt {
-    padding-top: 1px;
+    padding-top: var(--oc-gap-hair);
     color: var(--pl-muted);
-    font-size: 10px;
+    font-size: var(--oc-fs-micro);
     letter-spacing: var(--oc-tracking-label, 0.6px);
     text-transform: uppercase;
 }
@@ -62,29 +62,29 @@
     margin: 0;
     color: var(--pl-text);
     font-family: var(--pl-mono);
-    font-size: 12px;
+    font-size: var(--oc-fs-body);
     overflow-wrap: anywhere;
 }
 
 .mgr .mgr-actions {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-top: 16px;
-    padding-top: 12px;
+    gap: var(--oc-space-2);
+    margin-top: var(--oc-space-4);
+    padding-top: var(--oc-space-3);
     border-top: 1px solid var(--pl-line);
 }
 
 .mgr .mgr-actions__row {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--oc-space-2);
 }
 
 .mgr .mgr-actions__why {
     margin: 0;
     color: var(--pl-muted);
-    font-size: 11px;
+    font-size: var(--oc-fs-label);
 }
 
 @media (max-width: 1023px) {
@@ -124,7 +124,7 @@
     }
 
     .mgr:not(.settings-page) .oc-page__main {
-        padding-top: 12px;
+        padding-top: var(--oc-space-3);
     }
 
     .oc-titlebar__controls .oc-page__chips {
@@ -141,10 +141,10 @@
         min-width: 44px;
         height: 100%;
         min-height: 0;
-        padding: 0 8px;
+        padding: 0 var(--oc-space-2);
         border: 0;
         border-radius: 0;
-        font-size: 11px;
+        font-size: var(--oc-fs-label);
     }
 
     .oc-titlebar__controls .oc-chip + .oc-chip {

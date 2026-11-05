@@ -12,9 +12,9 @@ it('the detail pane credits the publisher and carries no publisher/name id line'
     expect(m.byLine).not.toContain('nyedis/11-stars');
 });
 
-it('every kind the catalog serves has a kind label, cplug included (a missing key logs an i18n error on #elite)', () => {
+it('every kind the catalog serves has a kind label, cplug included, labeled PLG like plugin (a plugin is a plugin, 2026-10-25; a missing key logs an i18n error on #elite)', () => {
     for (const kind of ['skill', 'theme', 'mod', 'plugin', 'cplug', 'loadout']) {
         expect(i18n.t(`warez.elite.kind.${kind}`)).not.toBe(`warez.elite.kind.${kind}`);
     }
-    expect(i18n.t('warez.elite.kind.cplug')).toBe('CPL');
+    expect(i18n.t('warez.elite.kind.cplug')).toBe('PLG');
 });

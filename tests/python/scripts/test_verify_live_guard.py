@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import re
 import subprocess
 import sys
 from argparse import Namespace
@@ -16,6 +17,8 @@ GUARDED = [
     "agent_kebab_menus", "drawer_colours", "group_icon", "layouts_drawer", "effort_workflow", "drawer_heading_kebab",
     "blueprints", "layout_parking", "focus_edge", "drawer_final", "home_header_span",
 ]
+GUARDED_QA = ["scripts/qa/verify_widgets_page_settings.py"]
+GUARD_CALL = re.compile(r"\b(?:refuse_live_target|require_slot)\(\s*\w+\s*\)")
 
 
 @pytest.mark.parametrize("base", ["http://127.0.0.1:8000", "http://localhost:8000/"])
@@ -44,12 +47,12 @@ def test_refusal_returns_exit_2_and_prints(capsys: pytest.CaptureFixture) -> Non
     assert "CANNOT DETERMINE" in capsys.readouterr().out
 
 
-@pytest.mark.parametrize("name", GUARDED)
-def test_every_mutating_verify_script_calls_the_shared_guard(name: str) -> None:
-    source = (ROOT / "scripts" / f"verify_{name}.py").read_text()
-    calls = [c for c in ("refuse_live_target(args)", "require_slot(args)") if c in source]
-    assert calls, f"verify_{name}.py calls neither guard"
-    assert source.index(calls[0]) > source.index("parse_args()")
+@pytest.mark.parametrize("relative", [f"scripts/verify_{n}.py" for n in GUARDED] + GUARDED_QA)
+def test_every_mutating_verify_script_calls_the_shared_guard(relative: str) -> None:
+    source = (ROOT / relative).read_text()
+    call = GUARD_CALL.search(source)
+    assert call, f"{relative} calls neither guard"
+    assert call.start() > source.index("parse_args()"), f"{relative} calls the guard before it parses its arguments"
 
 
 def test_the_guard_holds_under_python_dash_O() -> None:

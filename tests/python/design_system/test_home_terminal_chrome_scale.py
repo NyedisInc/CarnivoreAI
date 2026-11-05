@@ -22,7 +22,7 @@ UNLAYERED = {
     "opscenter/layout-editor/WidgetDrawer.svelte": 18,
     "opscenter/layout-editor/DrawerHead.svelte": 3,
     "opscenter/layout-editor/DrawerTools.svelte": 3,
-    "opscenter/shell/CellFrame.svelte": 2,
+    "opscenter/shell/CellFrame.svelte": 0,
     "lib/session-control/control-center.css": 0,
     "lib/terminal-search/SearchPanel.svelte": 0,
     "lib/terminal-background/TerminalBackgroundButton.svelte": 0,

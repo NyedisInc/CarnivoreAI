@@ -17,14 +17,16 @@
     "Read the light: green is working, yellow is waiting on you, light blue wants attention, grey is idle, red is dead or disconnected.",
     "A ring around it marks an unread turn; hover for the exact state and where it came from.",
     "A moon means the session is asleep; a green moon means you flagged it unread to follow up.",
-    "A red skull means the session hit its usage limit; hover for when it resets."
+    "A red skull means the session hit its usage limit; hover for when it resets.",
+    "A session running another agent CLI (opencode, gemini, cursor, copilot, amp, droid, kilo or pi) lights up from that CLI's own screen; a screen no rule knows stays grey unknown."
   ],
   "id": "session-status-lights",
   "issues": [
     749,
     762,
     786,
-    1323
+    1323,
+    2733
   ],
   "keywords": [
     "status",
@@ -48,7 +50,7 @@
   "surfaces": [
     "client/js/status-led.js"
   ],
-  "updated": "2026-10-04",
+  "updated": "2026-10-30",
   "where": [
     "On every session: drawer rows, tabs, the running sessions list."
   ]

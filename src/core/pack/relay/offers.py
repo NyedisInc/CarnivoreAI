@@ -18,9 +18,9 @@ def local_offers(open_db: Callable[[], sqlite3.Connection], auth_config_file: st
     from src.core.provider_ledger import accounts_store
 
     try:
-        rows = [a for a in accounts_store.list_accounts(Path(auth_config_file).expanduser()) if a.provider == "claude"]
+        rows = [a for a in accounts_store.list_accounts(Path(auth_config_file).expanduser()) if a.provider in ("claude", "codex")]
         with closing(open_db()) as conn:
-            return consent_mod.clean_offers([{"account_key": a.id, "label": a.name} for a in rows
+            return consent_mod.clean_offers([{"account_key": a.id, "label": a.name, "provider": a.provider} for a in rows
                                              if targets.effective_on(conn, a.id)])
     except (OSError, ValueError, sqlite3.Error):
         return []
@@ -52,18 +52,18 @@ def view(entries: Dict[str, Any], current: consent_mod.Consent, receiving_on: bo
 def signature(entries: Dict[str, Any], peer_id: str) -> Any:
     entry = entries.get(peer_id)
     snapshot = getattr(entry, "snapshot", None)
-    return (str(getattr(entry, "label", "") or ""), tuple((o["account_key"], o["label"]) for o in consent_mod.clean_offers(
+    return (str(getattr(entry, "label", "") or ""), tuple((o["account_key"], o["label"], o.get("provider")) for o in consent_mod.clean_offers(
         snapshot.get("credential_offers") if isinstance(snapshot, dict) else None)))
 
 
 def revoke_keys(keys: List[str]) -> int:
-    from src.core.pack.relay import target_side  # noqa: PLC0415
+    from src.core.pack.relay import codex_target, target_side  # noqa: PLC0415
 
     removed = 0
     for key in keys:
         sender, _, account = key.rpartition(":")
         try:
-            removed += bool(target_side.revoke(sender, account))
+            removed += bool(target_side.revoke(sender, account)) + bool(codex_target.revoke_codex(sender, account))
         except target_side.RelayRefused as exc:
             logger.warning("pack_relay_consent_revoke_failed", sender=sender, account=account, code=exc.code)
     return removed

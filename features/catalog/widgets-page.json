@@ -32,7 +32,8 @@
     765,
     888,
     1551,
-    2055
+    2055,
+    1593
   ],
   "keywords": [
     "components",
@@ -58,10 +59,11 @@
     "web/src/lib/widgets-page/WidgetsScreen.svelte",
     "web/src/lib/widgets-page/places-writes.ts"
   ],
-  "updated": "2026-10-21",
+  "updated": "2026-10-29",
   "where": [
     "Menu tab, Widgets, all widgets.",
-    "The #widgets link."
+    "The #widgets link.",
+    "The settings tab of the widgets page."
   ],
   "media": [
     {

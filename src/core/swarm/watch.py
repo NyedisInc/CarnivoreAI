@@ -137,6 +137,12 @@ async def boot(app_state: Any) -> int:
         return 0
     await reply_mirror.boot()
     try:
+        from src.core.swarm import promotion
+
+        await promotion.settle_open_receipts()
+    except (sqlite3.Error, db.DatastoreUnreadableError, OSError) as exc:
+        logger.warning("swarm_promotion_receipts_unreadable", error_type=type(exc).__name__)
+    try:
         from src.config import settings as app_settings
         from src.core.swarm import body_create
 

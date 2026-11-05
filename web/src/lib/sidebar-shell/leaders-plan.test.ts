@@ -5,8 +5,9 @@ import { setQuery } from '../drawer/search';
 import { buildListPlan, type PaintInput } from './plan';
 import type { RowPlan } from './row-plan';
 import { indexLeaders } from './leaders';
-import { init as initLeaderToggle, setLeadersShown } from '../drawer/leader-visibility';
+import { init as initLeaderToggle, leadersShown, setLeadersShown } from '../drawer/leader-visibility';
 import type { LegacyDrawer, SidebarRow } from './legacy';
+import { swarmSwitch } from '../swarm-switch/control.svelte';
 
 const roster = vi.hoisted(() => ({ agents: [] as unknown[] }));
 vi.mock('./company-source.svelte', () => ({
@@ -121,5 +122,20 @@ describe('leader placement in the plan', () => {
         for (const key of ['cloude_task', 'cloude_feature', 'cloude_worker']) expect(hidden).toContain(key);
         setLeadersShown(true);
         expect(JSON.stringify(buildListPlan(stubs(), input(all))!.parts)).toContain('cloude_alpha');
+    });
+
+    it('with the Swarm switch off no leader is drawn though the toggle stays on; on again, they return', () => {
+        const all = [task, lead, boss, alpha];
+        try {
+            swarmSwitch.data = { enabled: false };
+            const plan = buildListPlan(stubs(), input(all))!;
+            expect(plan.parts.some((p) => p.type === 'leader')).toBe(false);
+            expect(JSON.stringify(plan.parts)).not.toContain('cloude_alpha');
+            expect(leadersShown()).toBe(true);
+            swarmSwitch.data = { enabled: true };
+            expect(JSON.stringify(buildListPlan(stubs(), input(all))!.parts)).toContain('cloude_alpha');
+        } finally {
+            swarmSwitch.data = null;
+        }
     });
 });

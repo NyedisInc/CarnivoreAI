@@ -20,6 +20,7 @@ from src.core.computers import commit, forget, join_job, link_rotate, membership
 from src.core.computers.door import Door
 from src.core.computers.invites import Invites
 from src.core.computers.join_server import JoinServer
+from src.core.computers.knock import KnockDesk
 from src.core.computers.link_addresses import learned_listen, local_addresses
 from src.core.computers.link_dialer import LinkDialer
 from src.core.computers.link_listener import DEFAULT_LINK_PORT, LinkListener, Member
@@ -165,6 +166,7 @@ class ComputersRuntime:
         self.pins = _GatedListener(self)
         self.invites: Optional[Invites] = None
         self.join_server: Optional[JoinServer] = None
+        self.knocks: Optional[KnockDesk] = None
         self.door: Optional[Door] = None
         self._task: Optional["asyncio.Task[None]"] = None
         self._kick = asyncio.Event()
@@ -221,11 +223,13 @@ class ComputersRuntime:
                                               host=ALL_BIND if bind == LOOPBACK_BIND else bind,
                                               on_state=lambda _state: self.notify("computers"))
         self.invites = Invites(on_change=self._invites_changed, on_notice=self._on_notice, is_member=self.is_joiner)
+        self.knocks = KnockDesk(self.invites, self._label, notify=self.notify, emit=owner_notices.knock)
         self.join_server = JoinServer(invites=self.invites, identity=self.identity, fed_key=self.fed_key, public_key=self.public_key,
                                       own_iid=self.iid, own_label=self._label, open_db=self._open_db, listener=self.pins, pack=self.pack,
                                       host=bind, port=self.link_port + 1, addresses=lambda: list(self.addresses),
                                       link_port=self.link_port, app_version=self._version, is_member=self.is_joiner,
-                                      notify=self._notify_fn, on_member=lambda iid: self.dialer.kick(iid))
+                                      notify=self._notify_fn, on_member=lambda iid: self.dialer.kick(iid),
+                                      findable=self.findable, on_knock=self.knocks.handle)
         self._join_deps = join_job.JoinDeps(
             identity=self.identity, fed_key=self.fed_key, public_key=self.public_key, own_iid=self.iid, own_label=self._label,
             open_db=self._open_db, links=self.links, pack=self.pack, reserve_port=self.reserve_listen_port,
@@ -329,6 +333,15 @@ class ComputersRuntime:
 
     def advertised_port(self) -> Optional[int]:
         return self.link_port if self.complete and not self.joined and not self.loopback_bind else None
+
+    def findable(self) -> bool:
+        discovery = self._discovery()
+        return (self.advertised_port() is not None and discovery is not None and discovery.advertising_wanted
+                and discovery.advertise_allowed)
+
+    def kick(self) -> None:
+        if self._loop is not None:
+            self._loop.call_soon_threadsafe(self._kick.set)
 
     @property
     def link_state(self) -> str:
@@ -449,8 +462,8 @@ class ComputersRuntime:
 
     def _invites_changed(self) -> None:
         self.notify("computers")
-        if self._loop is not None:
-            self._loop.call_soon_threadsafe(self._kick.set)
+        self.notify("pack_knocks")
+        self.kick()
 
     def _on_notice(self, event: str, addr: str) -> None:
         log.warning("computer_wrong_code", what=event, addr=addr)

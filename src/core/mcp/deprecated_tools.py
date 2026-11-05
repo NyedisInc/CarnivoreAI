@@ -40,7 +40,6 @@ DEPRECATED: frozenset[str] = frozenset({
     "crosstalk_threads_list",
     "dashboard_rename",
     "deepsearch_context_get",
-    "huddle_focus",
     "item_settings_get",
     "item_settings_update",
     "launch_accounts_list",

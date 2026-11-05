@@ -8,7 +8,7 @@
     import type { Translate } from '../sessions/types';
     import type { FolderChoice } from './modal-types';
     import { validateName } from './project-folder';
-    import ModalShell from './ModalShell.svelte';
+    import ModalShell from '../dialog-frame/ModalShell.svelte';
     import IconButton from '../base/IconButton.svelte';
     import Button from '../base/Button.svelte';
     import Field from '../base/Field.svelte';

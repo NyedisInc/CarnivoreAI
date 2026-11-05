@@ -15,6 +15,7 @@ from src.core.db import DatastoreUnreadableError, connect, db_path_for
 from src.core.hosts.identity import is_remote_root
 from src.core.project_store import list_projects
 from src.core.stats.plugin.extract import project_key
+from src.core.stats.store_port import StatsStoreLike
 
 logger = structlog.get_logger()
 
@@ -133,7 +134,7 @@ def known_folders(app_db: Optional[sqlite3.Connection]) -> List[str]:
     return [p for p in paths if isinstance(p, str) and p and not is_remote_root(p)]
 
 
-def resolve(store) -> ProjectGroups:
+def resolve(store: StatsStoreLike) -> ProjectGroups:
     groups = ProjectGroups()
     try:
         app_db = connect(db_path_for(store.state_dir), create=False)
@@ -171,7 +172,7 @@ _cache_lock = threading.Lock()
 _cache: Dict[str, Tuple[float, ProjectGroups]] = {}
 
 
-def groups_for(store, *, now: Optional[float] = None) -> ProjectGroups:
+def groups_for(store: StatsStoreLike, *, now: Optional[float] = None) -> ProjectGroups:
     clock = time.monotonic() if now is None else now
     key = str(store.state_dir)
     with _cache_lock:

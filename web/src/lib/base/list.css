@@ -28,7 +28,7 @@
   }
 
   .oc-list__row {
-    --_bd: var(--oc-line-hairline);
+    --_bd: var(--oc-focus-quiet);
     position: relative;
     box-sizing: border-box;
     display: flex;
@@ -61,6 +61,14 @@
   }
 
   .oc-list__row[aria-disabled='true'] :is(.oc-list__primary, .oc-list__secondary, .oc-list__meta) {
+    color: inherit;
+  }
+
+  .oc-list__row[data-muted] {
+    color: var(--oc-text-dim);
+  }
+
+  .oc-list__row[data-muted] :is(.oc-list__primary, .oc-list__secondary, .oc-list__meta) {
     color: inherit;
   }
 

@@ -2,12 +2,17 @@ import { t } from '../i18n/index.svelte';
 import { announce } from '../sidebar-shell/interaction-globals';
 import { slop } from '../sidebar-shell/row-drag';
 import { moveBefore } from './menu-order.svelte';
+import { createDragGhost, type DragGhost } from '../drag-preview/ghost';
+import { previewOrder } from '../drag-preview/reflow';
+import '../drag-preview/drag-preview.css';
 
 export const LONG_PRESS_MS = 350;
 
 const ROW_ATTR = 'data-menu-row';
 const LIFTED_ATTR = 'data-menu-lifted';
 const DROP_ATTR = 'data-menu-drop';
+const SIZE_VARS = ['--menu-drag-h', '--menu-drag-w'] as const;
+const GHOST_STRIP: readonly string[] = [ROW_ATTR, LIFTED_ATTR, DROP_ATTR, 'data-rail-key', 'data-rail-close', 'data-rail-widget', 'data-dock-name', 'data-menu-lead'];
 
 export interface MenuDragHost {
   ids(): string[];
@@ -27,6 +32,9 @@ interface Drag {
   pointerType: string;
   active: boolean;
   timer: ReturnType<typeof setTimeout> | null;
+  ghost: DragGhost | null;
+  grab: { x: number; y: number };
+  display: string;
   before: string | null | undefined;
 }
 
@@ -37,12 +45,12 @@ function rowName(li: HTMLElement, fallback: string): string {
 }
 
 function lines(list: HTMLElement): HTMLElement[] {
-  return Array.from(list.querySelectorAll<HTMLElement>(`:scope > li[${ROW_ATTR}]`));
+  return Array.from(list.querySelectorAll<HTMLElement>(`:scope > li[${ROW_ATTR}]:not([${LIFTED_ATTR}])`));
 }
 
 function beforeAt(list: HTMLElement, clientY: number): string | null {
   for (const li of lines(list)) {
-    const r = li.getBoundingClientRect();
+    const r = (li.firstElementChild ?? li).getBoundingClientRect();
     if (clientY < r.top + r.height / 2) return li.getAttribute(ROW_ATTR);
   }
   return null;
@@ -88,8 +96,21 @@ function blockScroll(ev: TouchEvent): void {
 
 function lift(d: Drag): void {
   d.active = true;
+  const box = d.li.getBoundingClientRect();
+  d.grab = { x: d.startX - box.left, y: d.startY - box.top };
+  d.ghost = createDragGhost(d.li, { grab: d.grab, mount: d.list, strip: GHOST_STRIP });
+  for (const zone of d.zones) {
+    zone.style.setProperty(SIZE_VARS[0], `${box.height}px`);
+    zone.style.setProperty(SIZE_VARS[1], `${box.width}px`);
+    zone.style.cursor = 'grabbing';
+  }
   d.li.setAttribute(LIFTED_ATTR, '1');
-  d.list.style.cursor = 'grabbing';
+  d.display = d.li.style.display;
+  d.li.style.display = 'none';
+}
+
+export function menuDragActive(): boolean {
+  return drag?.active === true;
 }
 
 function positionSentence(host: MenuDragHost, next: readonly string[], id: string, name: string): string {
@@ -108,13 +129,18 @@ function finish(drop: boolean): void {
   document.removeEventListener('keydown', onEscape, true);
   document.removeEventListener('touchmove', blockScroll);
   d.li.removeAttribute(LIFTED_ATTR);
-  d.list.style.cursor = '';
   clearDrop(d.zones);
   if (!d.active) return;
+  d.ghost?.destroy();
+  d.li.style.display = d.display;
+  for (const zone of d.zones) {
+    SIZE_VARS.forEach((v) => zone.style.removeProperty(v));
+    zone.style.cursor = '';
+  }
   swallowClick();
   if (!drop || d.before === undefined) return;
   const ids = d.host.ids();
-  const next = moveBefore(ids, d.id, d.before ?? d.list.dataset.menuEnd ?? null);
+  const next = previewOrder(ids, d.id, { before: d.before, end: d.list.dataset.menuEnd ?? null });
   if (next.some((id, i) => id !== ids[i])) {
     d.host.commit(next);
     announce(positionSentence(d.host, next, d.id, rowName(d.li, d.id)));
@@ -131,8 +157,13 @@ function onMove(e: PointerEvent): void {
     lift(d);
   }
   e.preventDefault();
-  const list = d.zones.length > 1 ? pickZone(d.zones, e.clientY) : d.list;
-  const before = beforeAt(list, e.clientY);
+  d.ghost?.move(e.clientX, e.clientY);
+  place(d, e.clientX, e.clientY);
+}
+
+function place(d: Drag, clientX: number, clientY: number): void {
+  const list = d.zones.length > 1 ? pickZone(d.zones, clientY) : d.list;
+  const before = beforeAt(list, clientY);
   if (before !== d.before || list !== d.list) {
     d.list = list;
     d.before = before;
@@ -170,13 +201,14 @@ export function onMenuPointerDown(e: PointerEvent, host: MenuDragHost): void {
   const id = li.getAttribute(ROW_ATTR) as string;
   const d: Drag = {
     id, li, list, zones: zonesOf(list), host, startX: e.clientX, startY: e.clientY, pointerId: e.pointerId, pointerType: e.pointerType,
-    active: false, timer: null, before: undefined,
+    active: false, timer: null, before: undefined, ghost: null, grab: { x: 0, y: 0 }, display: '',
   };
   drag = d;
   if (e.pointerType === 'touch') {
     d.timer = setTimeout(() => {
       if (drag === d) {
         lift(d);
+        place(d, d.startX, d.startY);
         try { navigator.vibrate?.(8); } catch {  }
       }
     }, LONG_PRESS_MS);

@@ -15,6 +15,7 @@ from src.api.auth import require_auth
 from src.config import settings
 from src.core.db import DatastoreUnreadableError, db_path_for
 from src.core.db_reuse.core_read import lend_pooled_or_raise
+from src.core.computers import runtime as computers_runtime
 from src.core.federation import discovery as disc
 from src.core.hosts import roster_push, store
 
@@ -47,7 +48,8 @@ def _known_targets() -> List[str]:
 
 
 def _settings_body(svc: disc.Discovery) -> Dict[str, Any]:
-    return {"advertise": svc.advertising_wanted, "pack_name": disc.read_pack_name(Path(settings.auth_config_file).expanduser()),
+    rt = computers_runtime.active()
+    return {"advertise": svc.advertising_wanted, "findable": rt.findable() if rt is not None else False, "pack_name": disc.read_pack_name(Path(settings.auth_config_file).expanduser()),
             "state": svc.state, "browse_state": svc.browse_state}
 
 
@@ -90,6 +92,9 @@ async def patch_settings(
                                   "detail": "could not write config"})
     if body.advertise is not None:
         svc.set_advertise(body.advertise)
+        rt = computers_runtime.active()
+        if rt is not None:
+            rt.kick()
     if "pack_name" in fields:
         roster_push.announce()
         svc.refresh_link_port()

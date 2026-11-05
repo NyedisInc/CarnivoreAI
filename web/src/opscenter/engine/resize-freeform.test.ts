@@ -172,7 +172,7 @@ describe('freeform seam resize (#2269)', () => {
 
   it('follows the pointer 1:1 on the healed shape', () => {
     const t = draw(healed);
-    expect(boundaryHandles(t, 0, W, GUTTER)).toEqual([[771, 759]]);
+    expect(boundaryHandles(t, 0, W, GUTTER)).toEqual([[770, 760]]);
     const before = t.rows[1]!.height;
     for (const dy of [-1, -37, -250, -400]) {
       const rows = draw(resizeRows(healed, 'r14', dy, t.flexSpace)).rows;

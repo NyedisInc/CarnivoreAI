@@ -3,7 +3,7 @@
     import { t as appT } from '../i18n/index.svelte';
     import type { Translate } from '../sessions/types';
     import type { RestartAccounts } from './account-types';
-    import { answerOf, appliesTo, startAccountId, type AccountAnswer } from './account-model';
+    import { answerOf, appliesTo, startAccountId, viewFor, type AccountAnswer } from './account-model';
     import LaunchAccountChoice from './LaunchAccountChoice.svelte';
     import LaunchProfileDropdown from './LaunchProfileDropdown.svelte';
     import type { PickerRow } from './picker-model';
@@ -26,25 +26,27 @@
     let accountId = $state('');
     let pinned = $state(false);
 
+    const view = $derived(viewFor(rows.find((r) => r.value === value), accounts));
+
     $effect(() => {
-        if (!accounts) return;
-        expanded = accounts.pinned === true;
-        pinned = accounts.pinned === true;
-        accountId = startAccountId(accounts);
+        if (!view) return;
+        expanded = view.pinned === true;
+        pinned = view.pinned === true;
+        accountId = startAccountId(view);
     });
 
-    const show = $derived(appliesTo(rows.find((r) => r.value === value), accounts));
+    const show = $derived(appliesTo(rows.find((r) => r.value === value), view));
     $effect(() => {
         account = answerOf(show, expanded, accountId, pinned);
-        const chosen = expanded ? accounts?.options.find((o) => o.id === accountId) : accounts?.options.find((o) => o.id === accounts?.selected_id);
+        const chosen = expanded ? view?.options.find((o) => o.id === accountId) : view?.options.find((o) => o.id === view?.selected_id);
         accountName = show ? (chosen?.name ?? null) : null;
     });
 </script>
 
 <div class="lch" data-launch-choice>
     <LaunchProfileDropdown {rows} bind:value {compact} {label} {onchange} {t} />
-    {#if show && accounts}
-        <LaunchAccountChoice answer={accounts} bind:expanded bind:accountId bind:pinned {followWords} {t} />
+    {#if show && view}
+        <LaunchAccountChoice answer={view} bind:expanded bind:accountId bind:pinned {followWords} {t} />
     {/if}
 </div>
 

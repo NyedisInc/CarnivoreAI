@@ -18,8 +18,4 @@ export function openSessionsScreen(): boolean {
 
 export const closeSessionsScreen = (): boolean => sessionsHost.close();
 
-export const unmountSessionsScreen = (): boolean => sessionsHost.unmount();
-
-export const isSessionsHash = (hash: string | null | undefined): boolean => sessionsHost.isHash(hash);
-
 export const wireSessionsDeepLinks = (target?: Window | null): (() => void) => sessionsHost.wireDeepLink(target);

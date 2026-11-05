@@ -140,6 +140,10 @@ export function triggerWord(run: { trigger: string; attempt?: number | null }, r
   return run.trigger === 'schedule' || !run.trigger ? '' : triggerLabel(run.trigger);
 }
 
+export function settledStatus(status: string): boolean {
+  return status === 'succeeded' || status === 'failed' || status === 'alerted';
+}
+
 export function isLive(status: string): boolean {
   return status === 'running' || status === 'claimed' || status === 'waiting_on_you';
 }

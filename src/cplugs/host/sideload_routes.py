@@ -14,12 +14,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
 
 from src.api.auth import require_auth
+from src.models.catalog_api import InstallConsent
 from src.core.db import connect, db_path_for
 from src.core.skills import kinds
 from src.core.skills.consent_via_ddl import CONSENT_SHEET
 from src.core.skills.ledger import InstallLedger
 from src.core.skills.ledger_types import GLOBAL_PROJECT_PATH, SCOPE_GLOBAL, InstalledItem
-from src.cplugs.host import identity, risk, runtime, sideload, sideload_git
+from src.cplugs.host import identity, risk, runtime, sideload, sideload_git, sideload_kind, sideload_other
 from src.cplugs.host import state as owner_state
 from src.cplugs.host.owner_switch import _runtime as _sidecar_runtime
 
@@ -31,11 +32,13 @@ CPLUGS_TOPIC = "cplugs"
 
 
 class SyncBody(BaseModel):
-    """The folder to sideload and, optionally, the install name (default: the ``id`` in its ``cplug.json``)."""
+    """The folder to sideload, optionally the install name (default: the id its manifest declares) and, for a folder that runs code
+    (a Claude Code plugin's hooks or MCP servers, a skill's scripts, a theme's ``effects``), the consent naming its staged bytes."""
 
     model_config = ConfigDict(extra="forbid")
     path: StrictStr
     name: Optional[StrictStr] = None
+    consent: Optional[InstallConsent] = None
 
 
 class SwitchBody(BaseModel):
@@ -102,10 +105,13 @@ async def _expired(live: Any) -> None:
 
 def _status(state_dir: Path) -> Dict[str, Any]:
     on = sideload.is_on(state_dir, sideload.wall)
+    rows = [(kinds.KIND_CPLUG, n, v) for n, v in sideload.items(state_dir).items()]
+    rows += [(v["kind"], v["name"], v) for v in sideload.installs(state_dir).values() if "kind" in v and "name" in v]
     return {"enabled": on, "expires_at": sideload.expires_at(state_dir) if on else None, "hours": sideload.duration_hours(state_dir),
-            "items": [{"id": n, "item_id": f"{sideload.LOCAL_PUBLISHER}/{n}", "source": v.get("source", ""), "synced_at": v.get("synced_at"),
-                       "changed": v.get("changed") or [], "git": sideload_git.describe(state_dir, n, v.get("source", ""))}
-                      for n, v in sorted(sideload.items(state_dir).items())]}
+            "items": [{"id": n, "kind": k, "item_id": f"{sideload.LOCAL_PUBLISHER}/{n}", "tier": sideload.TIER_LOCAL, "unverified": True,
+                       "source": v.get("source", ""), "synced_at": v.get("synced_at"), "changed": v.get("changed") or [],
+                       "git": sideload_git.describe(state_dir, n, v.get("source", ""))}
+                      for k, n, v in sorted(rows, key=lambda r: (r[1], r[0]))]}
 
 
 @router.get("/sideload")
@@ -133,6 +139,9 @@ async def put_switch(body: SwitchBody, request: Request) -> Dict[str, Any]:
 
 
 def name_of(source: Path, given: Optional[str]) -> str:
+    kind = sideload_kind.detect(source)
+    if kind != kinds.KIND_CPLUG:
+        return sideload_kind.name_for(kind, source, given)
     if given is not None:
         if not isinstance(given, str) or not identity.INSTALL_NAME.match(given):
             raise sideload.SideloadRefused("name_invalid", f"an install name must match {identity.INSTALL_NAME.pattern}", 409)
@@ -200,11 +209,39 @@ async def post_sideload(body: SyncBody, request: Request) -> Dict[str, Any]:
     """Copy a folder into the code root and register it as ``local/<name>`` (or re-sync it). Output: {id, digest, unchanged, changed, needs_approval}."""
     live = _sidecar_runtime(request)
     require_on(live.state_dir)
-    return await sync_folder(live, Path(body.path), body.name)
+    return await sync_folder(live, Path(body.path), body.name, env=env_of(request, live.state_dir), consent=body.consent)
 
 
-async def sync_folder(live: Any, source: Path, given: Optional[str]) -> Dict[str, Any]:
+def env_of(request: Request, state_dir: Path) -> Optional[sideload_other.Env]:
+    services = getattr(request.app.state, "services", None)
+    roots = getattr(services, "install_roots", None)
+    return None if roots is None else sideload_other.Env(state_dir, roots, getattr(services, "ui_preferences", None))
+
+
+async def _sync_other(live: Any, kind: str, source: Path, given: Optional[str], env: Optional[sideload_other.Env], consent: Optional[InstallConsent]) -> Dict[str, Any]:
+    if env is None:
+        raise HTTPException(status_code=503, detail={"code": "install_roots_unavailable", "detail": f"the app has no {kind} install folders to write into"})
+    try:
+        answer = await asyncio.to_thread(sideload_other.sync, env, kind, source, given, consent)
+    except sideload_other.ConsentRequired as exc:
+        raise HTTPException(status_code=409, detail=exc.sheet) from exc
+    except sideload.SideloadRefused as exc:
+        raise _refuse(exc) from exc
+    except OSError as exc:
+        logger.warning("sideload_failed", kind=kind, error_type=type(exc).__name__)
+        raise HTTPException(status_code=500, detail={"code": "sideload_failed", "detail": "the folder could not be copied or recorded"}) from exc
+    await asyncio.to_thread(_reload, live)
+    return answer
+
+
+async def sync_folder(live: Any, source: Path, given: Optional[str], *, env: Optional[sideload_other.Env] = None, consent: Optional[InstallConsent] = None) -> Dict[str, Any]:
     state_dir = live.state_dir
+    try:
+        kind = await asyncio.to_thread(sideload_kind.detect, source)
+    except sideload.SideloadRefused as exc:
+        raise _refuse(exc) from exc
+    if kind != kinds.KIND_CPLUG:
+        return await _sync_other(live, kind, source, given, env, consent)
     try:
         staged = await asyncio.to_thread(_sync_blocking, state_dir, source, given)
         manifest = staged["manifest"]
@@ -219,7 +256,7 @@ async def sync_folder(live: Any, source: Path, given: Optional[str]) -> Dict[str
         logger.warning("cplug_sideload_failed", error_type=type(exc).__name__)
         raise HTTPException(status_code=500, detail={"code": "sideload_failed", "detail": "the folder could not be copied or recorded"}) from exc
     held = owner_state.get(state_dir, manifest)
-    return {"id": staged["name"], "item_id": f"{sideload.LOCAL_PUBLISHER}/{staged['name']}", "tier": sideload.TIER_LOCAL, "unverified": True,
+    return {"id": staged["name"], "kind": kinds.KIND_CPLUG, "item_id": f"{sideload.LOCAL_PUBLISHER}/{staged['name']}", "tier": sideload.TIER_LOCAL, "unverified": True,
             "digest": staged["digest"], "unchanged": staged["unchanged"], "changed": changed,
             "needs_approval": held.enabled and risk.consent_owed(sideload.TIER_LOCAL, staged["digest"], held.digest)}
 
@@ -237,11 +274,22 @@ def _delete_blocking(state_dir: Path, name: str) -> bool:
 
 
 @router.delete("/sideload")
-async def delete_sideload(request: Request, name: str = Query(..., min_length=1, max_length=64)) -> Dict[str, Any]:
-    """Remove one sideloaded plugin: stop it, then drop its row and its copied code. Its data and grants stay. Output: {removed}."""
+async def delete_sideload(request: Request, name: str = Query(..., min_length=1, max_length=64),
+                          kind: Optional[str] = Query(None, max_length=16)) -> Dict[str, Any]:
+    """Remove one sideloaded plugin of any kind: stop it (a sidecar), then drop its row or move its folder to the trash. Its data and grants stay.
+
+    ``kind`` is needed only when two kinds hold the same name (409 ``kind_required``). Output: {removed}.
+    """
     live = _sidecar_runtime(request)
-    if name not in sideload.items(live.state_dir):
+    held = sideload_other.held_kinds(live.state_dir, name)
+    if kind is not None:
+        held = [k for k in held if k == kind]
+    if not held:
         raise HTTPException(status_code=404, detail={"code": "sideload_unknown", "detail": f"{name} is not sideloaded"})
+    if len(held) > 1:
+        raise HTTPException(status_code=409, detail={"code": "kind_required", "detail": f"{name} is sideloaded as {' and '.join(held)}; say which kind"})
+    if held[0] != kinds.KIND_CPLUG:
+        return await _remove_other(live, request, held[0], name)
     await _stop(live, name, forget=True)
     try:
         found = await asyncio.to_thread(_delete_blocking, live.state_dir, name)
@@ -249,5 +297,24 @@ async def delete_sideload(request: Request, name: str = Query(..., min_length=1,
         raise _refuse(exc) from exc
     if not found:
         raise HTTPException(status_code=404, detail={"code": "sideload_unknown", "detail": f"{name} is not sideloaded"})
+    await asyncio.to_thread(_reload, live)
+    return {"removed": name}
+
+
+async def _remove_other(live: Any, request: Request, kind: str, name: str) -> Dict[str, Any]:
+    env = env_of(request, live.state_dir)
+    if env is None:
+        raise HTTPException(status_code=503, detail={"code": "install_roots_unavailable", "detail": f"the app has no {kind} install folders to remove from"})
+    try:
+        found = await asyncio.to_thread(sideload_other.remove, env, kind, name)
+    except sideload.SideloadRefused as exc:
+        raise _refuse(exc) from exc
+    except (OSError, ValueError) as exc:
+        logger.warning("sideload_remove_failed", kind=kind, error_type=type(exc).__name__)
+        raise HTTPException(status_code=500, detail={"code": "sideload_failed", "detail": "the folder could not be moved to the trash"}) from exc
+    if not found:
+        raise HTTPException(status_code=404, detail={"code": "sideload_unknown", "detail": f"{name} is not sideloaded"})
+    if not sideload_other.held_kinds(live.state_dir, name):
+        await asyncio.to_thread(sideload_git.forget, live.state_dir, name)
     await asyncio.to_thread(_reload, live)
     return {"removed": name}

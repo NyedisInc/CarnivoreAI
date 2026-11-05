@@ -34,13 +34,14 @@ def _setup(tmp_path: Path, bad_file: str | None) -> tuple[Path, dict[str, str]]:
     return script_dir / "fetch.sh", dict(os.environ, PATH=f"{bin_dir}:{os.environ['PATH']}", TMPDIR=str(tmp_path))
 
 
-def test_green_control_installs_all_six(tmp_path: Path) -> None:
+def test_green_control_installs_all_seven(tmp_path: Path) -> None:
     script, env = _setup(tmp_path, bad_file=None)
     done = subprocess.run(["bash", str(script)], env=env, capture_output=True, text=True, timeout=60)
     assert done.returncode == 0, done.stdout + done.stderr
     out = tmp_path / "client" / "vendor" / "xterm"
     assert sorted(p.name for p in out.iterdir()) == sorted(
-        ["xterm.css", "xterm.js", "xterm-addon-fit.js", "xterm-addon-webgl.js", "xterm-addon-unicode11.js", "xterm-addon-search.js"])
+        ["xterm.css", "xterm.js", "xterm-addon-fit.js", "xterm-addon-webgl.js", "xterm-addon-unicode11.js", "xterm-addon-search.js",
+         "xterm-addon-web-links.js"])
     assert (out / "xterm.js").read_bytes() == GOOD
 
 

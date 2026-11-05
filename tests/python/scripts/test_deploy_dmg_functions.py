@@ -8,11 +8,13 @@ from pathlib import Path
 
 import pytest
 
+from tests.python.release.deploy_text import script_text
+
 SCRIPT = Path(__file__).resolve().parents[3] / "scripts" / "deploy-dmg.sh"
 
 
 def _function(name: str) -> str:
-    lines = SCRIPT.read_text().splitlines()
+    lines = script_text(SCRIPT).splitlines()
     start = lines.index(f"{name}() {{")
     end = next(i for i in range(start, len(lines)) if lines[i] == "}")
     return "\n".join(lines[start : end + 1])
@@ -53,13 +55,16 @@ sleep() {{ :; }}
 boot_out_all_carnivore_jobs() {{ echo bootout >> {str(calls)!r}; }}
 stop_detached_engine() {{ echo stopengine >> {str(calls)!r}; }}
 wait_for_port_free() {{ echo portfree >> {str(calls)!r}; }}
-APP=/A.app; OLD_CONTENTS=/old/Contents; SWAP_HELPER=/h.py; CUR=1.0; PLIST=/p.plist; TS=t; UID=501
+stop_stray_engines() {{ echo straysweep >> {str(calls)!r}; }}
+APP=/A.app; OLD=/nonexistent; STAGE=/stage; OLD_CONTENTS=/old/Contents; SWAP_HELPER=/h.py; CUR=1.0; PLIST=/p.plist; TS=t
 {_function("bootstrap_with_retries")}
 {_function("rollback_install")}
 rollback_install
 echo "rc=$?" >> {str(calls)!r}
 """
-    return _bash(body, tmp_path)
+    done = _bash(body, tmp_path)
+    assert (tmp_path / "calls.txt").exists() and "rc=" in (tmp_path / "calls.txt").read_text(), done.stderr
+    return done
 
 
 def test_rollback_swaps_the_previous_contents_back_then_restarts_them(tmp_path: Path) -> None:

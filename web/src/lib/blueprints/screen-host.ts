@@ -11,8 +11,4 @@ export const openBlueprintsScreen = (): boolean => host.open();
 
 export const closeBlueprintsScreen = (): boolean => host.close();
 
-export const unmountBlueprintsScreen = (): boolean => host.unmount();
-
-export const isBlueprintsHash = (hash: string | null | undefined): boolean => host.isHash(hash);
-
 export const wireBlueprintsDeepLink = (target?: Window | null): (() => void) => host.wireDeepLink(target);

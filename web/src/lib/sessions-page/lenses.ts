@@ -1,6 +1,6 @@
 import type { Translate } from '../sessions/types';
 import type { PageRow, Signals } from './filters';
-import { readChoice, writeChoice } from './stored-choice';
+import { readChoice, writeChoice } from '../../opscenter/ui/stored-choice';
 
 export const LENSES = [
     { key: 'project', icon: 'folder', glyph: true },

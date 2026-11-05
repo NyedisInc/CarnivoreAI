@@ -57,7 +57,7 @@ def disposition(name: str) -> str:
     return "inline" if is_image_name(name) else "attachment"
 
 
-def _private_dir(path: Path) -> None:
+def private_dir(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True, mode=0o700)
     path.chmod(0o700)
 
@@ -65,8 +65,8 @@ def _private_dir(path: Path) -> None:
 def save(storage: CplugStorage, item_id: int, name: str, data: bytes, folder: Optional[Path] = None) -> Dict[str, Any]:
     if folder is None:
         folder = item_dir(storage, item_id)
-        _private_dir(root(storage))
-    _private_dir(folder)
+        private_dir(root(storage))
+    private_dir(folder)
     file_id = uuid.uuid4().hex[:8]
     target = folder / f"{file_id}-{name}"
     fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)

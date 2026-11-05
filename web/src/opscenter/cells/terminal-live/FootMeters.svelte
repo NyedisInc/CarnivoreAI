@@ -120,8 +120,8 @@
   {:else}
     
     <span class="oc-tf-bar oc-tf-bar-placeholder" data-usage-state={model.state} role="img" aria-label={t('terminal.context.unmeasured')}></span>
-    <span class="oc-tf-bar oc-tf-bar-placeholder" data-usage-state={model.state} role="img" aria-label="5h window, unmeasured"></span>
-    <span class="oc-tf-bar oc-tf-bar-placeholder" data-usage-state={model.state} role="img" aria-label="7d window, unmeasured"></span>
+    <span class="oc-tf-bar oc-tf-bar-placeholder" data-usage-state={model.state} role="img" aria-label={t('terminal.usage.five_hour_unmeasured')}></span>
+    <span class="oc-tf-bar oc-tf-bar-placeholder" data-usage-state={model.state} role="img" aria-label={t('terminal.usage.seven_day_unmeasured')}></span>
     <span class="oc-tf-state" data-usage-state={model.state}>{model.message}</span>
   {/if}
 {/snippet}

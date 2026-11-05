@@ -6,7 +6,7 @@
   "area": "settings",
   "status": "beta",
   "since": "2026-10-09",
-  "updated": "2026-10-23",
+  "updated": "2026-10-29",
   "surfaces": [
     "drawer menu tab",
     "automations menu page",
@@ -49,7 +49,8 @@
     171,
     1469,
     1490,
-    2288
+    2288,
+    2709
   ],
   "keywords": [
     "automation",
@@ -101,7 +102,8 @@
     "In the drawer, open a session's or a project's menu and choose schedule this; the editor opens with that session (or project) already chosen.",
     "On the automations tab, read the four tiles, then the cards by when they run; the switch on a card turns it on or off, and a card opens a side drawer with run now, the next three runs, edit and open in advanced.",
     "On the sessions tab, read each run as a title and one line, press looks good on the ones you checked or mark all reviewed, and open a run for its drawer; the full report is in advanced.",
-    "In the editor, set when it runs three ways: type a sentence, pick a repeat, weekdays and a time, or write a cron (the third Tuesday is 2#3 in the day-of-week field)."
+    "In the editor, set when it runs three ways: type a sentence, pick a repeat, weekdays and a time, or write a cron (the third Tuesday is 2#3 in the day-of-week field).",
+    "For a command check that exits non-zero on purpose to raise an alert, type its codes (for example 10, 11) into the alert exit codes field. A run that ends with one of them shows as alerted in a calm blue, not as failed, and raises an alert with the first line of its output. Any other non-zero exit still fails."
   ],
   "examples": [
     "Run the Scrooge report every Monday at 07:00 and read last week's findings from the page.",

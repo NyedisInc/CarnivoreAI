@@ -8,7 +8,8 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from src.api import asleep_themes
+from src.api import asleep_themes, session_crud_routes, session_sleep_routes
+from src.core.read_caches.ttl_flight import invalidate_all
 from src.api.session_listing_collections import build_asleep, build_list, build_records
 from src.core.automations import pause
 from src.core.db import connect, db_path_for
@@ -75,6 +76,7 @@ def world(env, monkeypatch, tmp_path):
 
     env.app.state.session_manager.list_session_infos = infos
     env.builds = builds
+    invalidate_all()
     note(env.app, "ses_old", "12", 100.0)
     schedule_port.register(env.ctx)
     roles_port.register(env.ctx)
@@ -151,6 +153,8 @@ def test_a_pass_builds_the_listing_once_and_the_asleep_list_once_with_the_same_a
     seed_schedules(world)
     one_pass(world)
     world.builds.clear()
+    monkeypatch.setattr(session_crud_routes.OWNER_LISTING_CACHE, "ttl", 0)
+    monkeypatch.setattr(session_sleep_routes.ASLEEP_CACHE, "ttl", 0)
     asleep_builds = []
     real_themes = asleep_themes.read_dotfile_themes
     monkeypatch.setattr(asleep_themes, "read_dotfile_themes", lambda rows: asleep_builds.append(1) or real_themes(rows))

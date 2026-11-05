@@ -1,4 +1,4 @@
-import { hostWindow } from '../sessions/env';
+import { legacyApi } from '../legacy-globals';
 import type { Translate } from '../sessions/types';
 import type { CatalogAuthSession, EmailFlowStart } from '../catalog/types';
 
@@ -39,7 +39,7 @@ interface LegacyApi {
 }
 
 export function browserSignInHost(): SignInHost {
-    const api = (): LegacyApi => (hostWindow() as unknown as { API: LegacyApi } | undefined)?.API as LegacyApi;
+    const api = (): LegacyApi => legacyApi<LegacyApi>();
     return {
         startWeb: (body) => api().startCatalogWebFlow(body),
         pollWeb: (flowId) => api().pollCatalogWebFlow(flowId),

@@ -56,12 +56,11 @@ beforeEach(() => {
     runWake = vi.fn().mockResolvedValue(false);
     wake.run = runWake as unknown as typeof wake.run; // cast: a vi.fn mock stands in for the run
     g.NavigationGeneration = { begin: (t: string) => t, isCurrent: () => true, keep: () => true };
-    g.SessionSidebar = {
-        _rows: [
-            { name: 'cloude_a', asleep: true, session_uuid: 'uuid-cloude_a', label: 'label cloude_a' },
-            { name: 'cloude_b', asleep: true, session_uuid: 'uuid-cloude_b', label: 'label cloude_b' },
-        ],
-    };
+    const held = [
+        { name: 'cloude_a', asleep: true, session_uuid: 'uuid-cloude_a', label: 'label cloude_a' },
+        { name: 'cloude_b', asleep: true, session_uuid: 'uuid-cloude_b', label: 'label cloude_b' },
+    ];
+    g.SessionSidebar = { rows: () => held };
     cleanupBand = bandEvents()(container);
 });
 

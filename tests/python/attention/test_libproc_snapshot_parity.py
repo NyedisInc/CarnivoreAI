@@ -7,7 +7,7 @@ import time
 
 import pytest
 
-from src.core import libproc_snapshot
+from src.core.machine_stats import libproc_snapshot
 
 pytestmark = pytest.mark.skipif(sys.platform != "darwin", reason="libproc is macOS only")
 

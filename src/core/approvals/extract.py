@@ -38,13 +38,14 @@ _CLAUDE_FOOTER: Pattern[str] = re.compile(
 _CODEX_FOOTER: Pattern[str] = re.compile(
     r"^\s*Press enter to (?:confirm or esc to cancel|continue)\s*$", re.M | re.I)
 _RULE: Pattern[str] = re.compile(r"^\s*[─━-]{10,}\s*$")
+ANY_RULE: Pattern[str] = re.compile(r"^\s*[─━╌╍╎╏┄┅┈┉-]{10,}\s*$")
 _ROW: Pattern[str] = re.compile(r"^(\s*)([❯›>])?\s*(?:(\d+)\.\s+)?(?:\[([^\]])\]\s+)?(\S.*?)\s*$")
 _NUMBERED: Pattern[str] = re.compile(r"^\s*(?:[❯›>]\s*)?\d+\.\s+\S")
 _KEY_HINT: Pattern[str] = re.compile(r"\s+\((?:[a-z]|esc)\)$")
 _KEY_HINT_SQUASHED: Pattern[str] = re.compile(r"\((?:[a-z]|esc)\)$")
 _QUOTE_BAR: Pattern[str] = re.compile(r"^\s*│\s?")
 _WS: Pattern[str] = re.compile(r"\s+")
-_AUTODENY_CLOCK: Pattern[str] = re.compile(r"(automaticallydenythisrequestin)\d+:\d{2}")
+_AUTODENY_CLOCK: Pattern[str] = re.compile(r"(automatically[A-Za-z]{2,12}thisrequestin)\d+:\d{2}")
 _ANSI: Pattern[str] = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
 _BORDER: Pattern[str] = re.compile("[\u2500-\u259f]")
 _BODY_SCAN_LINES: int = 400
@@ -146,7 +147,7 @@ def _substance(lines: List[str], q_at: int, first: int, ask: bool) -> str:
         if _RULE.match(lines[i]):
             top = i + 1
             break
-    return _AUTODENY_CLOCK.sub(r"\1", normalize_body([ln for ln in lines[top:first] if not _RULE.match(ln)]))
+    return _AUTODENY_CLOCK.sub(r"\1", normalize_body([ln for ln in lines[top:first] if not ANY_RULE.match(ln)]))
 
 
 def _footer_index(lines: List[str], family: str) -> Tuple[Optional[int], Optional[str]]:
@@ -388,6 +389,12 @@ def _footerless_ok(tail: List[str], cursor: Optional[int], question: str) -> boo
 def extract_dialog(text: str, family: Optional[str]) -> Optional[Dialog]:
     fam = FAMILY_CODEX if family == FAMILY_CODEX else FAMILY_CLAUDE
     lines = (text or "").splitlines()
+    if fam == FAMILY_CLAUDE and "new MCP servers found in this project" in (text or ""):
+        from src.core.approvals import mcp_multi
+
+        plural = mcp_multi.decode(lines)
+        if plural is not None:
+            return plural
     foot, tag = _footer_index(lines, fam)
     if foot is None and fam == FAMILY_CLAUDE:
         foot, tag = _footerless_end(lines), "claude"
@@ -422,7 +429,7 @@ def extract_dialog(text: str, family: Optional[str]) -> Optional[Dialog]:
     keys = [r.key for r in rows]
     kind = _classify(fam, tag, question, keys)
     tabs, qidx = _tab_strip(lines, q_at, any(r.checked for r in rows)) if tag == "ask" else ((), None)
-    body_lines = [ln.rstrip() for ln in lines[top:foot] if ln.strip() and not _RULE.match(ln)]
+    body_lines = [ln.rstrip() for ln in lines[top:foot] if ln.strip() and not ANY_RULE.match(ln)]
     body = redact("\n".join(body_lines)).encode("utf-8")[:BODY_MAX_BYTES].decode("utf-8", "ignore")
     step = f"step:{qidx}/{len(tabs)}" if qidx else ""
     return Dialog(

@@ -13,8 +13,10 @@ import { buildListPlan, type PaintInput } from '../sidebar-shell/plan';
 import type { LegacyDrawer, SidebarRow } from '../sidebar-shell/legacy';
 import BrowserRow from '../sidebar-shell/BrowserRow.svelte';
 import { fileDrawerRows } from './rows';
+import { autoAnswerConfirm, type AutoAnswer } from '../../test-support/auto-answer';
 import { workdirRelative } from './paths';
-import { OPEN_FILES_TOPIC, type OpenFileInfo } from './api.svelte';
+import { OPEN_FILES_TOPIC, openFiles, type OpenFileInfo } from './api.svelte';
+import { downloadRoute, setDownloading } from './download-row.svelte';
 import { ROW_ITEMS } from '../item-menu/menus/row-items';
 
 vi.mock('../sidebar-shell/pack-source.svelte', () => ({ packSource: () => [], watchPack: () => {} }));
@@ -122,6 +124,7 @@ describe('a file row as drawn', () => {
 
 describe('the legacy browsers module with a file row', () => {
     let calls: string[];
+    let confirmer: AutoAnswer | undefined;
     const g = globalThis as G;
 
     beforeEach(() => {
@@ -137,11 +140,12 @@ describe('the legacy browsers module with a file row', () => {
         g.CloudeWeb.rowMenu = {
             contextFromTrigger: () => ({ name: `browser:${FILE.id}`, label: 'main.py', isPage: false, isFile: true }),
         };
-        g.App = { showConfirmModal: vi.fn(async () => { calls.push('profile confirm'); return true; }) };
+        confirmer = autoAnswerConfirm(() => { calls.push('profile confirm'); return true; });
         g.CloudeI18n = { t: (k: string, p?: { path?: string }) => (p?.path ? `${k}:${p.path}` : k) };
     });
 
     afterEach(() => {
+        confirmer?.stop();
         delete g.CloudeI18n;
     });
 
@@ -173,6 +177,26 @@ describe('the row menu for a file', () => {
         expect(popout?.available({ kind: 'browser', isPage: true })).toBe(true);
         expect(kill?.label({ kind: 'browser', isFile: true })).toBe('files.menu.close');
         delete g.CloudeI18n;
+    });
+});
+
+describe('the download item of the row menu (#2787)', () => {
+    test('a file row offers it, a diff row, a closed row and an agent row do not', () => {
+        const item = (ROW_ITEMS as unknown as G[]).find((i) => i.id === 'download')!;
+        openFiles.push!([FILE, DIFF]);
+        expect(item.available({ kind: 'browser', isFile: true, name: `browser:${FILE.id}` })).toBe(true);
+        expect(item.enabled({ kind: 'browser', isFile: true, name: `browser:${FILE.id}` })).toBe(true);
+        setDownloading(FILE.id, true);
+        expect(item.enabled({ kind: 'browser', isFile: true, name: `browser:${FILE.id}` })).toBe(false);
+        setDownloading(FILE.id, false);
+        expect(item.available({ kind: 'browser', isFile: true, name: `browser:${DIFF.id}` })).toBe(false);
+        expect(item.available({ kind: 'browser', isFile: true, name: 'browser:ffffffffffffffff' })).toBe(false);
+        expect(item.available({ kind: 'browser', isPage: true, name: `browser:${FILE.id}` })).toBe(false);
+        expect(item.available({ kind: 'session', name: 'carnivore_a' })).toBe(false);
+    });
+
+    test('its route is the row\'s download route', () => {
+        expect(downloadRoute(FILE.id)).toBe(`/files/open/${FILE.id}/download`);
     });
 });
 

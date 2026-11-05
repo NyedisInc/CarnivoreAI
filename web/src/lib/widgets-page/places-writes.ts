@@ -54,7 +54,7 @@ async function writeBoard(boardId: string, cellId: string, op: 'show' | 'hide'):
 export async function addToPlace(widget: string, name: string, place: PlaceId, boardId: string | null, cell: string | null, t: Translate): Promise<boolean> {
     const text = t('widgets.places.toast.added', { widget: name, place: where(place, boardId, t) });
     if (place === 'right' || place === 'bottom') {
-        editBars(() => void placeInRail(EDGE[place], widget), text, t);
+        void editBars(() => void placeInRail(EDGE[place], widget), text, t);
         return true;
     }
     if (place === 'drawer' || place === 'glance') {
@@ -80,7 +80,7 @@ export async function removeFromPlace(widget: string, name: string, place: Place
         const rail = railStores[EDGE[place]];
         const row = rail.items.find((item) => item.widget === widget && (key === null || zoneItemKey(item) === key));
         if (!row) return false;
-        editBars(() => void rail.remove(zoneItemKey(row)), text, t);
+        void editBars(() => void rail.remove(zoneItemKey(row)), text, t);
         return true;
     }
     if (place === 'drawer' || place === 'glance') {
@@ -120,7 +120,7 @@ export function moveInPlace(place: Exclude<PlaceId, 'board'>, key: string, to: n
         const item = rail.items.find((one) => zoneItemKey(one) === key);
         if (!item) return;
         const spot = spotFor(rail.sections, key, to, (one: never) => zoneItemKey(one));
-        editBars(() => void rail.place({ ...spot, split: null }, item.widget, item.target, item.instance ?? null), text, t);
+        void editBars(() => void rail.place({ ...spot, split: false }, item.widget, item.target, item.instance ?? null), text, t);
         return;
     }
     const restore = drawerSnapshot();

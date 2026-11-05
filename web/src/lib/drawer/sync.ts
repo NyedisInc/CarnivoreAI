@@ -495,7 +495,3 @@ export function reset(): void {
     writeTimer = null;
     heldTimer = null;
 }
-
-export function isApplying(): boolean {
-    return applying;
-}

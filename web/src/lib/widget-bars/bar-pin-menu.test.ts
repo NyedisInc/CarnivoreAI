@@ -20,7 +20,10 @@ import { emptyMenu, emptyMenuNodes } from '../../opscenter/layout-editor/empty-s
 import { railMenu, railMenuItems } from '../sidebar-widgets/rail-menu.svelte';
 import { barLead } from './bar-lead.svelte';
 import { widgetBars } from './bar-settings.svelte';
-import { offerStripPins } from './bar-pin-action';
+import { barPinIconId, offerStripPins } from './bar-pin-action';
+import { layoutEditor } from '../../opscenter/layout-editor/editor.svelte';
+import { PREFERENCE_FIELD } from '../sidebar-widgets/rail-icons.svelte';
+import { written } from '../session-rail/rail-test-harness';
 
 // jsdom has no popover API; the cascade menu shows its levels through it.
 const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
@@ -55,6 +58,8 @@ beforeEach(() => {
   });
 });
 afterEach(() => {
+  layoutEditor.active = false;
+  follow(PREFERENCE_FIELD, null);
   emptyMenu.at = null;
   railMenu.at = null;
   railMenu.keyId = null;
@@ -151,4 +156,65 @@ test('on a host with no pins (the Widget Lab) the icon is not drawn', () => {
   } finally {
     offerStripPins(true);
   }
+});
+
+
+const pinIn = (edge: 'side' | 'bottom'): HTMLElement | null => navOf(edge).querySelector<HTMLElement>('[data-bar-pin]');
+const badgeOf = (edge: 'side' | 'bottom'): HTMLButtonElement | null => pinIn(edge)?.closest('[data-edit-cell]')?.querySelector<HTMLButtonElement>('[data-edit-badge]') ?? null;
+
+test('each bar pin has its own stable id in the hidden-icons list', () => {
+  expect(barPinIconId('side')).toBe('pin:side');
+  expect(barPinIconId('bottom')).toBe('pin:bottom');
+  expect(barPinIconId('rail')).toBe('pin:rail');
+});
+
+test('in edit layout both bar pins show with the shown/hidden badge, though the bars are not out', () => {
+  for (const edge of ['side', 'bottom'] as const) expect(pinIn(edge), `${edge}: no pin outside edit layout while closed`).toBeNull();
+  layoutEditor.active = true;
+  flushSync();
+  for (const edge of ['side', 'bottom'] as const) {
+    expect(pinIn(edge), `${edge}: pin in edit layout`).not.toBeNull();
+    expect(badgeOf(edge), `${edge}: badge`).not.toBeNull();
+    expect(badgeOf(edge)!.getAttribute('data-state')).toBe('shown');
+  }
+});
+
+test('the badge hides the pin: it is stored under the edge id, dimmed in edit layout, and not drawn outside it', () => {
+  layoutEditor.active = true;
+  flushSync();
+  const before = written.length;
+  click(badgeOf('side')!);
+  expect(written.slice(before).map((w) => w.field)).toEqual([PREFERENCE_FIELD]);
+  expect(written.at(-1)!.value).toEqual([barPinIconId('side')]);
+  expect(pinIn('side')!.closest('[data-edit-cell]')!.hasAttribute('data-hidden'), 'dimmed while editing').toBe(true);
+  expect(pinIn('bottom')!.closest('[data-edit-cell]')!.hasAttribute('data-hidden'), 'the other bar is untouched').toBe(false);
+  layoutEditor.active = false;
+  flushSync();
+  click(navOf('side').querySelector<HTMLElement>('[data-bar-handle]')!);
+  expect(stateOf()).toBe('peek');
+  expect(pinIn('side'), 'a hidden pin is not drawn outside edit layout').toBeNull();
+  click(navOf('bottom').querySelector<HTMLElement>('[data-bar-handle]')!);
+  expect(pinIn('bottom'), 'the other bar still draws its pin').not.toBeNull();
+});
+
+test('a hidden pin never leaves the bar impossible to pin or unpin: the strip menu offers it and the badge brings the pin back', async () => {
+  follow(PREFERENCE_FIELD, [barPinIconId('side')]);
+  click(handle());
+  expect(pinIn('side')).toBeNull();
+  rightClick(nav());
+  const pin = emptyMenuNodes().find((n) => n.id === 'pin-bar');
+  expect(pin?.label).toBe('pin bar');
+  pin!.run!();
+  await vi.waitFor(() => expect(widgetBars.view.side.mode).toBe('pinned'));
+  flushSync();
+  expect(stateOf()).toBe('pinned');
+  expect(pinIn('side'), 'pinned with the icon hidden').toBeNull();
+  rightClick(nav());
+  expect(emptyMenuNodes().find((n) => n.id === 'pin-bar')?.label).toBe('unpin bar');
+  layoutEditor.active = true;
+  flushSync();
+  expect(pinIn('side')).not.toBeNull();
+  expect(badgeOf('side')!.getAttribute('data-state')).toBe('hidden');
+  click(badgeOf('side')!);
+  expect(written.at(-1)!.value, 'showing it again clears the list').toBeNull();
 });

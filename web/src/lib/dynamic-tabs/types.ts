@@ -28,7 +28,7 @@ export interface DynamicTabDef {
   popout?: boolean;
   popoutParams?: () => Record<string, string>;
   popoutMulti?: boolean;
-  body: { containers: readonly string[] } | { component: Component; titleKey?: string; titleActions?: Component<{ popout?: boolean }> };
+  body: { containers: readonly string[] } | { component: Component; titleKey?: string; titleActions?: Component<{ popout?: boolean; tabId?: string }> };
 }
 
 export function toneOf(def: Pick<DynamicTabDef, 'tone'>): TabTone {

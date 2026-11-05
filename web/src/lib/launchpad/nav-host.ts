@@ -26,7 +26,7 @@ export interface NavHost {
     detachSession(): Promise<unknown>;
     createSession(payload: Record<string, unknown>): Promise<SessionLike>;
     createProject(row: Record<string, unknown>): Promise<unknown>;
-    chooseProvider(projectDefault?: string | null, accounts?: boolean, prefill?: LaunchPrefill | null): Promise<Record<string, unknown> | null>;
+    chooseProvider(projectDefault?: string | null, accounts?: boolean, prefill?: LaunchPrefill | null, folder?: string | null): Promise<Record<string, unknown> | null>;
     pinSession?(tmuxName: string): void;
     terminalDims(): Record<string, unknown>;
     reloadProjects(): Promise<unknown>;
@@ -124,12 +124,12 @@ export function browserNavHost(): NavHost {
         createSession: (payload) => api().createSession(payload),
         createProject: (row) => api().createProject(row),
         pinSession: (tmuxName) => { pinSession(tmuxName); },
-        chooseProvider: (projectDefault, accounts, prefill) => {
+        chooseProvider: (projectDefault, accounts, prefill, folder) => {
             const lp = win()?.Launchpad as
-                | { showProviderModal?: (opts?: { projectDefault?: string | null; accounts?: boolean; prefill?: LaunchPrefill | null }) => Promise<Record<string, unknown> | null> }
+                | { showProviderModal?: (opts?: { projectDefault?: string | null; accounts?: boolean; prefill?: LaunchPrefill | null; folder?: string | null }) => Promise<Record<string, unknown> | null> }
                 | undefined;
             return lp?.showProviderModal
-                ? lp.showProviderModal({ projectDefault: projectDefault ?? null, accounts: accounts !== false, prefill: prefill ?? null })
+                ? lp.showProviderModal({ projectDefault: projectDefault ?? null, accounts: accounts !== false, prefill: prefill ?? null, folder: folder ?? null })
                 : Promise.resolve<Record<string, unknown> | null>(null);
         },
         terminalDims: () => {

@@ -10,6 +10,9 @@ vi.mock('../api', () => ({
   transport: { state: 'unknown' },
 }));
 
+const palette = vi.hoisted(() => ({ toggle: vi.fn(() => true) }));
+vi.mock('../../lib/palette/palette-host', () => ({ togglePalette: palette.toggle }));
+
 import TopBar from './TopBar.svelte';
 import { viewport } from '../engine/viewport.svelte';
 
@@ -65,5 +68,16 @@ describe('the dead bell and avatar are gone; there is no gear', () => {
     expect(SOURCE).not.toMatch(/TunePopover/);
     expect(SOURCE).not.toMatch(/tune\.svelte/);
     expect(SOURCE).not.toMatch(/name="gear"/);
+  });
+  test('a phone or iPad gets the palette search button, which opens the palette; a desktop does not', () => {
+    viewport.wide = true;
+    viewport.phone = false;
+    expect(render().querySelector('[data-palette-open]')).toBeNull();
+    viewport.wide = false;
+    viewport.phone = true;
+    const button = render().querySelector<HTMLButtonElement>('[data-palette-open]');
+    expect(button).not.toBeNull();
+    button!.click();
+    expect(palette.toggle).toHaveBeenCalledWith('go');
   });
 });

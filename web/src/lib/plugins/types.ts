@@ -25,7 +25,6 @@ export interface SessionCardRow {
 }
 
 export interface SessionCardAction {
-    readonly shortcut: string;
     label(row: SessionCardRow): string;
     run(row: SessionCardRow, context: PluginContext): void | Promise<void>;
     hidden?(row: SessionCardRow): boolean;

@@ -2,9 +2,11 @@
 import subprocess
 from pathlib import Path
 
+from tests.python.release.deploy_text import script_text
+
 ROOT = Path(__file__).resolve().parents[3]
 DEPLOY = ROOT / "scripts" / "deploy-dmg.sh"
-TEXT = DEPLOY.read_text()
+TEXT = script_text(DEPLOY)
 
 DEV = 'identifier "ai.carnivore.menubar" and certificate root = H"aaaa"'
 

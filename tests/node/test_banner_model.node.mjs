@@ -317,7 +317,6 @@ test('a denied or not-asked permission, the pref off, no api or a focused window
     rig({ state: { items }, permission: 'denied' }),
     rig({ state: { items }, permission: 'not_asked' }),
     rig({ state: { items, prefs: { desktop_banners: false } } }),
-    rig({ state: { items, prefs: {} } }),
     rig({ state: { items }, api: null }),
   ];
   for (const c of cases) {
@@ -326,9 +325,10 @@ test('a denied or not-asked permission, the pref off, no api or a focused window
     assert.equal(await c.banners.posting(), false);
   }
   assert.equal(await rig({ state: { items } }).banners.posting(), true);
-  const front = rig({ state: { items }, focused: true });
+  assert.equal(await rig({ state: { items, prefs: {} } }).banners.posting(), true, 'an absent setting is on (Q22)');
+  const front = rig({ state: { items, prefs: { desktop_banners: true, notify_quiet_watched: false } }, focused: true });
   await front.banners.onApprovals();
-  assert.equal(front.made.length, 0, 'the page already shows the card while the Carnivore window is in front');
+  assert.equal(front.made.length, 0, 'quiet off (#10): the page already shows the card while the Carnivore window is in front');
   assert.equal(await front.banners.posting(), true, 'a window in front does not turn the banners off');
 });
 

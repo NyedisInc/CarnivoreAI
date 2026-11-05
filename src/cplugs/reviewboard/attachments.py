@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import structlog
 
-from src.cplugs.reviewboard import attachment_guard, attachment_secrets, ports, revisions, scratch, service, store, wire
+from src.cplugs.reviewboard import attachment_guard, attachment_pdf, attachment_secrets, ports, revisions, scratch, service, store, wire
 from src.cplugs.reviewboard.errors import (BadRequest, BoardError, TaskManagerRefused, NoTaskManager, ReadOnlyBoard, ScratchBoard, StoreFailed,
                                            TaskNotFound, TooLarge, Unlinked)
 from src.cplugs.reviewboard.scratch import Upload
@@ -189,6 +189,7 @@ async def attach(ctx: CplugContext, slug: str, uploads: Sequence[Upload], *, not
                  caller: Optional[AgentCaller] = None, cross_project: bool = False) -> Dict[str, Any]:
     checked = check_uploads(uploads)
     await asyncio.to_thread(attachment_secrets.refuse_secrets, checked, slug=slug)
+    await attachment_pdf.refuse_active_content(checked, slug=slug)
     note = (note or "").replace("\r\n", "\n").replace("\r", "\n").strip()
     if len(note) > MAX_NOTE:
         raise BadRequest(f"note is at most {MAX_NOTE} characters")

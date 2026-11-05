@@ -21,6 +21,7 @@
   import { layoutEditor } from '../layout-editor/editor.svelte';
   import FrameFitBody from '../widgets/chrome/FrameFitBody.svelte';
   import { t } from '../../lib/i18n/index.svelte';
+  import { raiseFlag } from '../../lib/page-flags/page-flags';
 
   let {
     meta,
@@ -73,10 +74,6 @@
 
   const terminal = $derived(kindOf(meta.id) === 'terminal');
 
-  const selected = $derived(
-    terminal && (focused || (inputFocus.owner === null && inputFocus.selected === instance)),
-  );
-
   const phoneCollapsible = $derived(viewport.phone && meta.chrome === 'card');
   const phoneShut = $derived(phoneCollapsible && collapsed);
 
@@ -117,6 +114,11 @@
 
   let corner = $state<HTMLElement | null>(null);
   let frameEl = $state<HTMLElement | null>(null);
+
+  $effect(() => {
+    if (!focused || !frameEl?.closest('#terminal-grid')) return;
+    return raiseFlag('grid-focus');
+  });
   const editing = $derived(layoutEditor.active && layoutEditor.page === store.page);
   let wrap = $state<HTMLElement | null>(null);
   let menuOpen = $state(false);
@@ -171,9 +173,6 @@
       class="oc-frame"
       class:oc-frame-bare={meta.chrome === 'bare'}
       class:oc-frame-terminal={terminal}
-      class:popup-focus={selected}
-      class:popup-focus-turn={selected}
-      class:popup-focus-ring={selected && meta.chrome === 'bare'}
       data-cell={meta.id}
       data-instance={instance}
       data-width-state={widthState}
@@ -187,10 +186,6 @@
       data-zone-visible={zone.visibility(tabKey)}
       {@attach watchOnScreen}
     >
-      {#if selected}
-        
-        <span class="pf-sheen" aria-hidden="true"></span>
-      {/if}
       {#if focused}
         
         <span class="oc-visually-hidden">{t('opscenter.frame.input_focus')}</span>
@@ -283,6 +278,7 @@
         <button
           type="button"
           class="oc-frame-more"
+          data-btn="row"
           aria-expanded={expanded}
           aria-controls={bodyId}
           onclick={onToggleExpanded}
@@ -304,7 +300,7 @@
       grid-template-rows: var(--oc-titlerow) minmax(0, 1fr);
       min-width: 0;
       min-height: 0;
-      border-radius: var(--oc-radius);
+      border-radius: var(--oc-radius-frame);
       overflow: hidden;
       container: oc-cell oc-head / inline-size;
     }
@@ -467,18 +463,6 @@
   }
   }
 
-  .oc-frame-terminal.popup-focus {
-    --pf-ground: var(--oc-ground-panel);
-    --pf-edge-top: var(--oc-orange);
-    --pf-edge-bottom: var(--oc-orange);
-    --pf-glow: color-mix(in srgb, var(--oc-orange) 60%, transparent);
-    border-width: var(--oc-border);
-    box-shadow: 0 0 5px var(--pf-glow), inset 0 0 5px var(--pf-glow);
-  }
-
-  :global([data-oc-still]) .oc-frame.popup-focus-turn > :global(.pf-sheen)::before {
-    animation-play-state: paused;
-  }
 
   @layer components {
     :global(:root[data-motion="off"]) .oc-frame[data-oc-focus]:not(.oc-frame-terminal)::before {

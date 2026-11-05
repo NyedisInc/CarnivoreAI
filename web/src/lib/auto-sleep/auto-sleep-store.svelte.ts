@@ -3,6 +3,7 @@ import { authFetch } from '../../opscenter/api/auth.svelte';
 import { resource, type Resource } from '../../opscenter/api/poll.svelte';
 import { t } from '../i18n/index.svelte';
 import { errorMessageOr } from '../errors/failure-reason';
+import { addLocalToast } from '../toast-surface';
 
 export interface AutoSleepState {
   enabled: boolean;
@@ -70,12 +71,7 @@ export async function setKeepAwake(name: string, on: boolean): Promise<void> {
 }
 
 function toastFailure(text: string): void {
-  const surface = (globalThis as { ToastManager?: { add(toast: Record<string, unknown>): void } }).ToastManager;
-  if (!surface || typeof surface.add !== 'function') {
-    console.warn('[auto-sleep]', text);
-    return;
-  }
-  surface.add({
+  const shown = addLocalToast({
     id: `autosleep-error:${Date.now()}`,
     session_id: null,
     kind: 'AutoSleepError',
@@ -84,6 +80,7 @@ function toastFailure(text: string): void {
     session_label: t('auto_sleep.toast.surface'),
     local: true,
   });
+  if (!shown) console.warn('[auto-sleep]', text);
 }
 
 export async function saveAutoSleep(enabled: boolean, minutes: number): Promise<boolean> {

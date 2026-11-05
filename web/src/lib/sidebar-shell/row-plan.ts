@@ -1,3 +1,5 @@
+import { str } from './row-field';
+import { badgeSlotPlan, bellLit, type BadgeSlotPlan } from '../session-badges';
 import { t } from '../i18n/index.svelte';
 import { hostOffline, usageLimitLabel } from '../led';
 import type { Membership } from '../swarm-membership/member-face';
@@ -84,6 +86,7 @@ export interface SessionRowPlan {
     workflow: GlyphChip | null;
     wake: GlyphChip | null;
     auto: TextChip | null;
+    badges: BadgeSlotPlan | null;
     messaging: unknown;
     context: ContextPlan | null;
     provider: GlyphChip;
@@ -163,6 +166,42 @@ function bandAttrs(name: string, band: string | undefined): Attrs {
     };
 }
 
+function sessionRowAttrs(r: SidebarRow, band: string | undefined, renameState: string): Attrs {
+    return {
+        class: 'session-sidebar-row',
+        'data-name': r.name,
+        ...bandAttrs(r.name, band),
+        'data-active': r.is_this_tab ? '1' : '0',
+        'data-asleep': r.asleep ? '1' : undefined,
+        'data-archived': r.archived === true ? '1' : undefined,
+        'data-closed': r.closed === true ? '1' : undefined,
+        'data-pinned': r.is_pinned ? '1' : '0',
+        'data-rename-state': renameState,
+        ...workAttrs(r),
+        role: 'option',
+        'aria-selected': r.is_this_tab ? 'true' : 'false',
+        tabindex: '-1',
+        'data-session-id': r.session_id ? String(r.session_id) : undefined,
+        'data-session-uuid': r.session_uuid ? String(r.session_uuid) : undefined,
+        'data-bell': bellLit(r.session_id ? String(r.session_id) : null) ? '1' : undefined,
+    };
+}
+
+function ledPlanFor(r: SidebarRow, host: RowHost): LedPlan | null {
+    if (r.agent_family === 'shell' || r.closed === true || r.archived === true) return null;
+    return {
+        status: str(r.status),
+        unread: !!r.unread,
+        startupGate: str(r.startup_gate),
+        statusSource: str(r.status_source),
+        activityHint: str(r.activity_hint),
+        parkedSummary: str(r.parked_summary),
+        transport: host.transport ? host.transport.stateFor(r.name) : 'unknown',
+        hostOffline: hostOffline(r),
+        usageLimit: usageLimitLabel(r),
+    };
+}
+
 function sessionRowPlan(
     r: SidebarRow, density: string, band: string | undefined, subtitle: string | null | undefined, host: RowHost,
 ): SessionRowPlan {
@@ -170,58 +209,28 @@ function sessionRowPlan(
     const rename = renameState(r, host);
     const resolved = host.label ? host.label.resolve(r) : null;
     const offersMenu = !!(host.actions && host.actions.offersMenu(r.status));
-    const cupVisible = iconVisible(mode, 'cup');
-    const pinVisible = iconVisible(mode, 'pin');
-    const menuVisible = iconVisible(mode, 'menu');
+    const [cupVisible, pinVisible, menuVisible] = [iconVisible(mode, 'cup'), iconVisible(mode, 'pin'), iconVisible(mode, 'menu')];
     const keepAwakeChip = keepAwakePlan(r, host);
     const awakeHiddenNote = (keepAwakeChip && !cupVisible) ? t('sidebar.row.kept_awake.hidden_note') : '';
     const noteReason = rename.state === 'renameable' ? '' : rename.reason;
-    const nameTitle = awakeHiddenNote
-        ? (noteReason ? `${noteReason} - ${awakeHiddenNote}` : awakeHiddenNote)
-        : noteReason;
+    const nameTitle = awakeHiddenNote ? [noteReason, awakeHiddenNote].filter(Boolean).join(' - ') : noteReason;
     const menu = (offersMenu && host.menu)
         ? host.menu.triggerSpec(host.menu.contextFromRow(r, {
             surface: 'sidebar',
             renameable: rename.state === 'renameable',
-            renameReason: rename.state === 'renameable' ? '' : rename.reason,
+            renameReason: noteReason,
             band,
             menuHidden: !menuVisible,
         }))
         : null;
-    const led: LedPlan | null = r.agent_family === 'shell' || r.closed === true || r.archived === true ? null : {
-        status: (r.status as string | undefined) ?? null,
-        unread: !!r.unread,
-        startupGate: (r.startup_gate as string | undefined) ?? null,
-        statusSource: (r.status_source as string | undefined) ?? null,
-        activityHint: (r.activity_hint as string | undefined) ?? null,
-        parkedSummary: (r.parked_summary as string | undefined) ?? null,
-        transport: host.transport ? host.transport.stateFor(r.name) : 'unknown',
-        hostOffline: hostOffline(r),
-        usageLimit: usageLimitLabel(r),
-    };
+    const led = ledPlanFor(r, host);
     const body = rowBodyPlan(r, mode, led);
     const legacyMode = body ? 'compact' : mode;
     const cozyOrigin = legacyMode === 'cozy' ? originBadge(r, false) : null;
     return {
         type: 'session',
         key: r.name,
-        attrs: {
-            class: 'session-sidebar-row',
-            'data-name': r.name,
-            ...bandAttrs(r.name, band),
-            'data-active': r.is_this_tab ? '1' : '0',
-            'data-asleep': r.asleep ? '1' : undefined,
-            'data-archived': r.archived === true ? '1' : undefined,
-            'data-closed': r.closed === true ? '1' : undefined,
-            'data-pinned': r.is_pinned ? '1' : '0',
-            'data-rename-state': rename.state,
-            ...workAttrs(r),
-            role: 'option',
-            'aria-selected': r.is_this_tab ? 'true' : 'false',
-            tabindex: '-1',
-            'data-session-id': r.session_id ? String(r.session_id) : undefined,
-            'data-session-uuid': r.session_uuid ? String(r.session_uuid) : undefined,
-        },
+        attrs: sessionRowAttrs(r, band, rename.state),
         led,
         agentsIcon: !body && iconVisible(mode, 'agents') ? agentsIconPlan(r) : null,
         shellsIcon: !body && iconVisible(mode, 'shells') ? shellsIconPlan(r) : null,
@@ -233,6 +242,7 @@ function sessionRowPlan(
         wake: wakeIconPlan(r),
         auto: automationChip(r),
         messaging: r.messaging ?? null,
+        badges: badgeSlotPlan(r as Record<string, unknown>),
         context: iconVisible(mode, 'context') ? contextPlan(r) : null,
         provider: providerPlan(r),
         model: body ? null : modelPlan(r),

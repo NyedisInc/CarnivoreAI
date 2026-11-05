@@ -80,7 +80,7 @@ async function settle(): Promise<void> {
 }
 
 function order(root: HTMLElement): string[] {
-    return [...root.querySelectorAll<HTMLElement>('.command-chip .command-button')].map(
+    return [...root.querySelectorAll<HTMLElement>('.command-chip [data-fav-chip]')].map(
         (b) => b.dataset.command ?? '',
     );
 }
@@ -113,7 +113,7 @@ afterEach(() => {
 describe('the row', () => {
     test('a tap on a chip inserts its command when not arranging', () => {
         const root = paint(body(['/clear', '/diff']));
-        chip(root, '/diff').querySelector<HTMLButtonElement>('.command-button')?.click();
+        chip(root, '/diff').querySelector<HTMLButtonElement>('[data-fav-chip]')?.click();
         expect(selected).toEqual(['/diff']);
         expect(calls).toEqual([]);
     });
@@ -139,7 +139,7 @@ describe('a colour per favorite', () => {
     test('picking a swatch persists it and repaints from the answer', async () => {
         const root = paint(body(['/clear', '/diff']));
         arrange(root);
-        chip(root, '/diff').querySelector<HTMLButtonElement>('.command-button')?.click();
+        chip(root, '/diff').querySelector<HTMLButtonElement>('[data-fav-chip]')?.click();
         flushSync();
         expect(selected).toEqual([]);
         answers.push(body(['/clear', '/diff'], { '/diff': 'cyan' }));
@@ -157,7 +157,7 @@ describe('a colour per favorite', () => {
     test('the none swatch sends null', async () => {
         const root = paint(body(['/clear'], { '/clear': 'violet' }));
         arrange(root);
-        chip(root, '/clear').querySelector<HTMLButtonElement>('.command-button')?.click();
+        chip(root, '/clear').querySelector<HTMLButtonElement>('[data-fav-chip]')?.click();
         flushSync();
         answers.push(body(['/clear']));
         root.querySelector<HTMLButtonElement>('.fav-swatch[data-color=""]')?.click();
@@ -169,7 +169,7 @@ describe('a colour per favorite', () => {
     test('every swatch is a labelled button, reachable by the keyboard', () => {
         const root = paint(body(['/clear']));
         arrange(root);
-        chip(root, '/clear').querySelector<HTMLButtonElement>('.command-button')?.click();
+        chip(root, '/clear').querySelector<HTMLButtonElement>('[data-fav-chip]')?.click();
         flushSync();
         const swatches = [...root.querySelectorAll<HTMLButtonElement>('.fav-swatch')];
         expect(swatches).toHaveLength(6);
@@ -183,7 +183,7 @@ describe('a colour per favorite', () => {
     test('a stale colour write repaints the current row and says so', async () => {
         const root = paint(body(['/clear', '/diff']));
         arrange(root);
-        chip(root, '/diff').querySelector<HTMLButtonElement>('.command-button')?.click();
+        chip(root, '/diff').querySelector<HTMLButtonElement>('[data-fav-chip]')?.click();
         flushSync();
         answers.push(
             new FakeApiError('stale', 409, null, {
@@ -200,7 +200,7 @@ describe('a colour per favorite', () => {
 describe('reordering', () => {
     test('alt+arrow moves the focused favorite, persists, and keeps focus on it', async () => {
         const root = paint(body(['/a', '/b', '/c']));
-        const button = chip(root, '/a').querySelector<HTMLButtonElement>('.command-button')!;
+        const button = chip(root, '/a').querySelector<HTMLButtonElement>('[data-fav-chip]')!;
         button.focus();
         answers.push(body(['/b', '/a', '/c']));
         button.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true }));
@@ -214,7 +214,7 @@ describe('reordering', () => {
 
     test('a bare arrow is not a move', async () => {
         const root = paint(body(['/a', '/b']));
-        const button = chip(root, '/a').querySelector<HTMLButtonElement>('.command-button')!;
+        const button = chip(root, '/a').querySelector<HTMLButtonElement>('[data-fav-chip]')!;
         button.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
         await settle();
         expect(calls).toEqual([]);
@@ -245,7 +245,7 @@ describe('reordering', () => {
 
     test('a failed reorder puts the row back and says why', async () => {
         const root = paint(body(['/a', '/b']));
-        const button = chip(root, '/a').querySelector<HTMLButtonElement>('.command-button')!;
+        const button = chip(root, '/a').querySelector<HTMLButtonElement>('[data-fav-chip]')!;
         answers.push(new FakeApiError('disk full', 500, null, null));
         button.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', altKey: true, bubbles: true }));
         await settle();

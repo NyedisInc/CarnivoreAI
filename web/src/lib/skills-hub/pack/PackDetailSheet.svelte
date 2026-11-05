@@ -1,7 +1,8 @@
 
 <script lang="ts">
+  import { failureReason } from '../../errors/failure-reason';
   import { onMount } from 'svelte';
-  import ModalShell from '../../launchpad/ModalShell.svelte';
+  import ModalShell from '../../dialog-frame/ModalShell.svelte';
   import type { Translate } from '../../sessions/types';
   import * as api from './pack-skills-api';
 
@@ -13,7 +14,7 @@
 
   onMount(() => {
     for (const family of families) {
-      api.getDetail(family, name).then((d) => (details = [...details, d].sort((a, b) => families.indexOf(a.family) - families.indexOf(b.family))), (e: unknown) => (error = e instanceof Error ? e.message : String(e)));
+      api.getDetail(family, name).then((d) => (details = [...details, d].sort((a, b) => families.indexOf(a.family) - families.indexOf(b.family))), (e: unknown) => (error = failureReason(e)));
     }
   });
 </script>

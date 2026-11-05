@@ -133,7 +133,6 @@
     "src/cplugs/reviewboard/state.py",
     "web/src/cplugs/reviewboard/ClosedReviews.svelte",
     "web/src/cplugs/sdk/project-panels.ts",
-    "web/src/lib/projects-shared/GroupHeader.svelte",
     "src/cplugs/reviewboard/frame/layer-core.js",
     "src/cplugs/reviewboard/frame/layer-fields.js",
     "src/cplugs/reviewboard/frame/layer-fields-more.js",

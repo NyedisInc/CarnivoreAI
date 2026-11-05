@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 
 import structlog
 
-from src.core.pack import progress
+from src.core.pack.transport import progress
 from src.core.pack.move import inflight
 from src.core.pack.identity import home
 from src.core.pack.migrate import ops as migrate_ops

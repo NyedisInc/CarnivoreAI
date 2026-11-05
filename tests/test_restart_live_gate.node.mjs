@@ -7,6 +7,7 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { rowsHtml } from './helpers/launch_choice_fake.mjs';
+import { installTrOnly } from './helpers/catalog-tr.mjs';
 
 function plain(value) {
     return JSON.parse(JSON.stringify(value));
@@ -58,6 +59,7 @@ function load(names) {
     };
     sandbox.window = sandbox;
     vm.createContext(sandbox);
+    installTrOnly(sandbox);
     for (const name of names) {
         vm.runInContext(
             fs.readFileSync(

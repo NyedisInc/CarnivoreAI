@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, it } from 'vitest';
+import { flushSync } from 'svelte';
 import * as Bar from './bar';
 import { versionFooterStub } from './test-support';
 import { cplugBarIndicators } from '../../cplugs/host/readers';
@@ -45,11 +46,11 @@ describe('plugin bar indicators', () => {
     });
 
     it('the beast bolt is drawn right of the crown, before the version, only while armed, and its words say until when', () => {
-        Bar.paint();
+        Bar.paint(); flushSync();
         const slot = document.getElementById('session-sidebar-bar-slot')!;
         assert.equal(slot.querySelector('[data-bar-indicator="beast.armed"]'), null, 'disarmed: no bolt');
         beastStatus.data = { enabled: true, prompts: true, since: null, until: null, pending_count: 0 };
-        Bar.paint();
+        Bar.paint(); flushSync();
         const right = slot.querySelector('.session-sidebar-bar__version')!;
         const order = [...right.children].map((el) => el.id || el.getAttribute('data-bar-indicator') || el.getAttribute('data-bar-action') || el.className);
         assert.deepEqual(order, ['sidebarMasterAllBtn', 'beast.armed', 'version-footer']);
@@ -63,26 +64,26 @@ describe('plugin bar indicators', () => {
     it('disarmed with a beast off auto-approve box ticked, the same bolt shows quiet and says so (#1792 finding 2)', () => {
         const slot = document.getElementById('session-sidebar-bar-slot')!;
         beastStatus.data = { enabled: false, since: null, pending_count: 0, auto_off_rows: [] };
-        Bar.paint();
+        Bar.paint(); flushSync();
         assert.equal(slot.querySelector('[data-bar-indicator="beast.armed"]'), null, 'nothing ticked: no bolt');
         beastStatus.data = { enabled: false, since: null, pending_count: 0, auto_off_rows: ['agent_writes'] };
-        Bar.paint();
+        Bar.paint(); flushSync();
         const bolt = slot.querySelector('[data-bar-indicator="beast.armed"]')!;
         assert.ok(bolt.hasAttribute('data-bar-indicator-quiet'));
         assert.match(bolt.getAttribute('title') ?? '', /auto approving with beast off/);
         beastStatus.data = { enabled: true, since: null, pending_count: 0, auto_off_rows: ['agent_writes'] };
-        Bar.paint();
+        Bar.paint(); flushSync();
         assert.ok(!slot.querySelector('[data-bar-indicator="beast.armed"]')!.hasAttribute('data-bar-indicator-quiet'),
             'armed: the lit bolt');
     });
 
-    it('the armed bolt is painted in the danger token, the quiet one is not, and the bolt sits closer to the crown', () => {
+    it('the armed bolt is painted in the danger token, the quiet one is not, and the footer icons sit together', () => {
         const css = readFileSync(resolve(process.cwd(), '../client/css/session-sidebar.css'), 'utf8');
         assert.match(css, /\.session-sidebar-bar__version > \[data-bar-indicator\]:not\(\[data-bar-indicator-quiet\]\) \{\s*color: var\(--oc-coral\);/,
             'armed: coral, stronger than the bar button rule');
-        assert.match(css, /\.session-sidebar-bar__version > \[data-bar-indicator\] \{\s*margin-left: -4px;/, 'closer to the crown');
+        assert.match(css, /\.session-sidebar-bar__version > \[data-bar-action\] \+ \[data-bar-action\] \{\s*margin-left: calc\(-1 \* var\(--oc-space-1\)\);/, 'closer to the crown (#2701)');
         beastStatus.data = { enabled: false, since: null, pending_count: 0, auto_off_rows: ['agent_writes'] };
-        Bar.paint();
+        Bar.paint(); flushSync();
         const bolt = document.querySelector('[data-bar-indicator="beast.armed"]')!;
         assert.ok(bolt.hasAttribute('data-bar-indicator-quiet'), 'quiet bolt carries the marker the coral rule excludes');
     });

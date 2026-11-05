@@ -1,6 +1,8 @@
+import { elapsedSeconds } from '../../api';
 import type { SessionTokenUsage, UsageContextView, UsagePanelModel, UsageRow, UsageWindowView } from '../../api';
 import { t } from '../../../lib/i18n/index.svelte';
 import { clockText } from '../../lib/clock';
+import { elapsed } from '../../lib/format';
 
 const DAY_MS = 86_400_000;
 
@@ -16,7 +18,19 @@ export function resetClock(resetsAt: string | null | undefined, nowMs: number): 
   return t('usage.window.reset_at', { time: clockText(at) });
 }
 
-export function statsGroups(model: UsagePanelModel, payload: SessionTokenUsage | null, nowMs: number): StatsCell[][] {
+function ageCell(createdAt: string | null, nowMs: number): StatsCell[] {
+  const seconds = elapsedSeconds(createdAt, nowMs);
+  if (seconds === null) return [];
+  const label = t('usage.foot.age');
+  return [{ kind: 'text', key: 'age', label, row: { key: 'age', label, text: elapsed(seconds) } }];
+}
+
+export function statsGroups(
+  model: UsagePanelModel,
+  payload: SessionTokenUsage | null,
+  nowMs: number,
+  createdAt: string | null = null,
+): StatsCell[][] {
   if (model.state !== 'ok') return [];
   const rows: Record<string, UsageRow> = Object.fromEntries(model.rows.map((r) => [r.key, r]));
   const text = (key: string): StatsCell[] => (rows[key] ? [{ kind: 'text', key, label: rows[key].label, row: rows[key] }] : []);
@@ -28,7 +42,7 @@ export function statsGroups(model: UsagePanelModel, payload: SessionTokenUsage |
     first.push({ kind: 'model', key: 'model', label: modelRow.label, row: modelRow,
       effort: hasEffort ? (modelRow.spans[2]?.text ?? null) : null });
   }
-  first.push(...text('tokens'));
+  first.push(...text('tokens'), ...text('cache'));
 
   const raw = payload?.account?.windows ?? [];
   const windows: StatsCell[] = model.windows.map((view) => ({
@@ -36,7 +50,7 @@ export function statsGroups(model: UsagePanelModel, payload: SessionTokenUsage |
     resetAt: resetClock(raw.find((w) => `window:${w.kind}` === view.key)?.resets_at, nowMs),
   }));
 
-  const last: StatsCell[] = [...text('cost')];
+  const last: StatsCell[] = [...text('cost'), ...ageCell(createdAt, nowMs)];
   if (payload?.account) last.push(...text('account'));
   last.push(...text('login'), ...text('limits'));
 

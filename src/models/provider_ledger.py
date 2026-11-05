@@ -76,6 +76,18 @@ class UsageWindow(BaseModel):
     resets_at: Optional[datetime] = None
 
 
+class ElsewhereSession(BaseModel):
+    """One open session on this account that runs on ANOTHER Pack computer (issue #2800).
+
+    Fields: computer - that computer's label (for example ``nostromo``); name - the session's display name; session_id - an id
+    this computer can open it by (a ``remote:peer-...`` id), or None when only that computer's own screen can.
+    """
+
+    computer: str
+    name: str
+    session_id: Optional[str] = None
+
+
 class AccountUsage(BaseModel):
     """One configured account, as the ledger last measured it.
 
@@ -149,6 +161,10 @@ class AccountUsage(BaseModel):
     poke: Optional[PokeStatus] = None
     short_name: Optional[str] = None
     setup_complete: Optional[bool] = None
+    relayed: bool = False
+    relay_expires_at: Optional[datetime] = None
+    synced_at: Optional[datetime] = None
+    sessions_elsewhere: List[ElsewhereSession] = Field(default_factory=list)
 
 
 class LedgerTotalWindow(BaseModel):

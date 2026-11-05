@@ -113,10 +113,10 @@ function matchOne(selector, el) {
     let rest = selector;
     let scopeOk = true;
     let scopeSpec = 0;
-    const scope = /^body:has\(#([\w-]+)\.active\)\s+/.exec(rest);
+    const scope = /^body\.ps-terminal-active\s+/.exec(rest);
     if (scope) {
-        scopeOk = el.screen === scope[1];
-        scopeSpec = 100 + 10 + 1;
+        scopeOk = el.screen === 'terminal-screen';
+        scopeSpec = 10 + 1;
         rest = rest.slice(scope[0].length);
     }
     const pseudo = /::[\w-]+$/.exec(rest);

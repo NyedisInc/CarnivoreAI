@@ -24,7 +24,7 @@
    "spacing": 4
   },
   "web/src/cplugs/huddle/HuddleReview.svelte": {
-   "spacing": 6
+   "spacing": 4
   },
   "web/src/cplugs/huddle/HuddleThread.svelte": {
    "spacing": 3
@@ -107,9 +107,6 @@
   "web/src/cplugs/huddle/agents/AgentChatFrame.svelte": {
    "spacing": 2
   },
-  "web/src/cplugs/huddle/agents/HuddleAgentRows.svelte": {
-   "spacing": 3
-  },
   "web/src/cplugs/huddle/ask/ask-form.css": {
    "spacing": 1
   },
@@ -140,15 +137,6 @@
   },
   "web/src/cplugs/huddle/chat/TrafficCard.svelte": {
    "spacing": 6
-  },
-  "web/src/cplugs/huddle/style-guide/ChatEntries.svelte": {
-   "spacing": 1
-  },
-  "web/src/cplugs/huddle/style-guide/SwarmPageBoard.svelte": {
-   "spacing": 1
-  },
-  "web/src/cplugs/huddle/style-guide/SwarmPanelBoard.svelte": {
-   "spacing": 2
   },
   "web/src/cplugs/huddle/swarm/SwarmLedger.svelte": {
    "spacing": 7
@@ -579,9 +567,6 @@
   "web/src/lib/info-pages/DocsGuide.svelte": {
    "spacing": 4
   },
-  "web/src/lib/info-pages/InfoScreen.svelte": {
-   "spacing": 3
-  },
   "web/src/lib/info-tip/InfoTip.svelte": {
    "font": 2
   },
@@ -620,7 +605,7 @@
    "font": 4,
    "spacing": 12
   },
-  "web/src/lib/launchpad/ModalShell.svelte": {
+  "web/src/lib/dialog-frame/ModalShell.svelte": {
    "spacing": 1
   },
   "web/src/lib/ledger-drawer/DrawerLedger.svelte": {
@@ -644,17 +629,6 @@
   },
   "web/src/lib/live-status/OfflineMarker.svelte": {
    "spacing": 3
-  },
-  "web/src/lib/manager-frame/manager-card-rich.css": {
-   "spacing": 2
-  },
-  "web/src/lib/manager-frame/manager-card.css": {
-   "font": 5,
-   "spacing": 7
-  },
-  "web/src/lib/manager-frame/manager-frame.css": {
-   "font": 5,
-   "spacing": 9
   },
   "web/src/lib/markdown-editor/MarkdownEditor.svelte": {
    "spacing": 7
@@ -693,8 +667,7 @@
    "spacing": 26
   },
   "web/src/lib/pack-machines/pack-settings.css": {
-   "font": 1,
-   "spacing": 5
+   "spacing": 4
   },
   "web/src/lib/pack-machines/pack-work.css": {
    "font": 2,
@@ -953,9 +926,6 @@
   "web/src/lib/zone-shell/TabKey.svelte": {
    "spacing": 3
   },
-  "web/src/lib/zone-shell/ZoneBadge.svelte": {
-   "spacing": 1
-  },
   "web/src/opscenter/App.svelte": {
    "spacing": 2
   },
@@ -1017,7 +987,6 @@
    "spacing": 5
   },
   "web/src/opscenter/engine/LiveRegion.svelte": {
-   "font": 1,
    "spacing": 1
   },
   "web/src/opscenter/fields.css": {
@@ -1055,41 +1024,6 @@
    "font": 2,
    "spacing": 3
   },
-  "web/src/opscenter/shell/TabStrip.svelte": {
-   "spacing": 3
-  },
-  "web/src/opscenter/shell/TopBar.svelte": {
-   "spacing": 4
-  },
-  "web/src/opscenter/shell/WidgetHead.svelte": {
-   "spacing": 4
-  },
-  "web/src/opscenter/ui/AgentTier.svelte": {
-   "spacing": 1
-  },
-  "web/src/opscenter/ui/DataTable.svelte": {
-   "spacing": 4
-  },
-  "web/src/opscenter/ui/PhoneSummary.svelte": {
-   "spacing": 1
-  },
-  "web/src/opscenter/ui/StatusPill.svelte": {
-   "spacing": 1
-  },
-  "web/src/opscenter/ui/log-viewer.css": {
-   "spacing": 4
-  },
-  "web/src/opscenter/ui/page-kit.css": {
-   "font": 3,
-   "spacing": 3
-  },
-  "web/src/opscenter/ui/tabs.css": {
-   "color": 3,
-   "spacing": 2
-  },
-  "web/src/opscenter/ui/tile.css": {
-   "spacing": 2
-  },
   "web/src/opscenter/widgets/chrome/RefusalPlate.svelte": {
    "spacing": 2
   },
@@ -1101,28 +1035,13 @@
    "font": 4,
    "spacing": 12
   },
-  "web/src/style-guide/specimens/BarSizesDemo.svelte": {
-   "spacing": 4
-  },
-  "web/src/style-guide/specimens/BarVisibilityDemo.svelte": {
-   "spacing": 4
-  },
-  "web/src/style-guide/specimens/PinnedPanelDemo.svelte": {
-   "spacing": 6
-  },
-  "web/src/widget-harness/DefectProbe.svelte": {
-   "font": 3
-  },
-  "web/src/widget-harness/FitProbe.svelte": {
-   "font": 1
-  },
   "web/src/widget-harness/Harness.svelte": {
    "spacing": 1
   }
  },
  "totals": {
-  "color": 10,
-  "font": 460,
-  "spacing": 1637
+  "color": 7,
+  "font": 441,
+  "spacing": 1562
  }
 }

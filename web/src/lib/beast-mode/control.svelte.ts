@@ -5,6 +5,7 @@ import { openModal } from '../modal';
 import { toggleAccountMenu } from '../drawer-hud/account-menu.svelte';
 import type { AccountMenuItem, BarIndicator } from '../../cplugs/sdk/types';
 import BeastConfirm from './BeastConfirm.svelte';
+import { addLocalToast } from '../toast-surface';
 
 export interface BeastStatus {
   enabled: boolean;
@@ -36,6 +37,14 @@ export function beastAutoOff(status: BeastStatus | null | undefined): boolean {
   return status?.enabled !== true && (status?.auto_off_rows?.length ?? 0) > 0;
 }
 
+export function autoOffChoice(status: BeastStatus | null | undefined, now: number = Date.now()): string {
+  const until = status?.enabled ? status.until : null;
+  if (!until) return '';
+  const left = (new Date(until).getTime() - now) / 3_600_000;
+  const choices = BEAST_AUTO_OFF_HOURS.filter((h): h is number => h !== null);
+  return String(choices.reduce((best, h) => (Math.abs(h - left) < Math.abs(best - left) ? h : best), choices[0]!));
+}
+
 export function beastPromptsOn(status: BeastStatus | null | undefined): boolean {
   return status?.enabled === true && status.prompts === true;
 }
@@ -57,13 +66,25 @@ export function startBeastStatus(): void {
 
 function reportError(cause: unknown): void {
   const text = cause instanceof Error ? cause.message : t('beast.error');
-  const toast = (globalThis as { ToastManager?: { add(item: Record<string, unknown>): void } }).ToastManager;
-  if (toast) toast.add({ id: `beast-error:${Date.now()}`, session_id: null, kind: 'BeastError', title: t('beast.error'), body: text, local: true });
-  else console.warn('[beast-mode]', text);
+  const shown = addLocalToast({ id: `beast-error:${Date.now()}`, session_id: null, kind: 'BeastError', title: t('beast.error'), body: text, local: true });
+  if (!shown) console.warn('[beast-mode]', text);
 }
 
 export async function armBeast(prompts: boolean, hours: number | null): Promise<void> {
   await authFetch(BEAST_ROUTE, { method: 'PUT', body: JSON.stringify({ enabled: true, prompts, hours }) });
+}
+
+export interface BeastAdjust {
+  prompts?: boolean;
+  hours?: number | null;
+}
+
+export async function adjustBeast(change: BeastAdjust, fetcher: typeof authFetch = authFetch): Promise<void> {
+  try {
+    await fetcher(BEAST_ROUTE, { method: 'PATCH', body: JSON.stringify(change) });
+  } finally {
+    await refreshBeastStatus();
+  }
 }
 
 export async function disarmBeast(): Promise<void> {

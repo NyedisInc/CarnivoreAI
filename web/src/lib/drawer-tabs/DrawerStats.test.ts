@@ -29,6 +29,7 @@ import { applyDrawerTab, DRAWER_STATS_ID, DRAWER_STATS_RATE_KEY, DRAWER_STATS_WI
 import { BUILTIN_TABS } from '../dynamic-tabs/builtin';
 import { publishFloorRows } from '../drawer/floor-feed.svelte';
 import { activeCountFilter, setCountFilter } from '../drawer/count-filter.svelte';
+import { noteSleepingCount, sectionShown, setSectionShown } from '../drawer/section-visibility.svelte';
 import { packMachines } from '../pack-machines/pack-machines-store.svelte';
 import { statsFeed } from '../stats-feed/store.svelte';
 import { setLocale } from '../i18n/index.svelte';
@@ -99,18 +100,14 @@ async function render(): Promise<HTMLElement> {
 }
 
 const text = (el: Element | null): string => (el?.textContent ?? '').replace(/\s+/g, ' ').trim();
-const rateText = (bar: Element): string => {
-  const copy = bar.querySelector('.dst-rate')?.cloneNode(true) as Element | undefined;
-  copy?.querySelector('.dst-unit-short')?.remove();
-  return text(copy ?? null);
-};
+const rateText = (bar: Element): string => text(bar.querySelector('.dst-rate'));
 
-test('counts come from the pushed rows and the rate reads up = out, down = in, per min', async () => {
+test('counts come from the pushed rows and the rate reads up = out, down = in, /m', async () => {
   const bar = await render();
   expect(text(bar.querySelector('[data-kind="active"]'))).toBe('3');
   expect(text(bar.querySelector('[data-kind="working"]'))).toBe('2');
   expect(text(bar.querySelector('[data-kind="unread"]'))).toBe('2');
-  expect(rateText(bar)).toBe('120 / 600 per min');
+  expect(rateText(bar)).toBe('120 / 600 /m');
   expect(calls).toEqual(['/stats/feed?window=1h']);
 });
 
@@ -119,11 +116,11 @@ test('clicking the rate walks sec > min > hour > day with no request; clicking t
   const rate = (): string => rateText(bar);
   const click = (sel: string): void => { bar.querySelector<HTMLButtonElement>(sel)!.click(); flushSync(); };
   click('.dst-rate');
-  expect(rate()).toBe('7.2k / 36k per hour');
+  expect(rate()).toBe('7k / 36k /h');
   click('.dst-rate');
-  expect(rate()).toBe('172.8k / 864k per day');
+  expect(rate()).toBe('173k / 864k /d');
   click('.dst-rate');
-  expect(rate()).toBe('2 / 10 per sec');
+  expect(rate()).toBe('2 / 10 /s');
   expect(calls).toEqual(['/stats/feed?window=1h']);
   expect(localStorage.getItem(DRAWER_STATS_RATE_KEY)).toBe('sec');
 
@@ -392,7 +389,7 @@ test('the strip has no box, the token readout sits right with one decimal, and t
   expect(text(bar.querySelector('.dst-pack'))).toBe('3');
   expect(bar.querySelector('.dst-pack svg'), 'the wolf glyph').not.toBeNull();
   expect(bar.querySelector('.dst-pack')!.getAttribute('aria-label')).toBe('3 computers in the pack');
-  expect(rateText(bar)).toBe('4.5M / 58.8k per min');
+  expect(rateText(bar)).toBe('4M / 59k /m');
   for (const size of [1, 0, null]) {
     bar = await run(size);
     await settle();
@@ -418,4 +415,25 @@ test('the stats bar shows no tooltip, leads with the wolf and has no automations
   expect(bar.querySelector('[data-kind="automations"]')).toBeNull();
   expect(bar.querySelector('.dst-spacer')).toBeNull();
   for (const b of bar.querySelectorAll('.dst-count')) expect((b.getAttribute('aria-label') ?? '').length, 'count button names itself').toBeGreaterThan(0);
+});
+
+test('the moon shows the sleeping count like the other stats; a click hides them and the figure dims, a second click shows them', async () => {
+  setSectionShown('sleeping', true);
+  noteSleepingCount(4);
+  const bar = await render();
+  const moon = bar.querySelector<HTMLButtonElement>('.dst-count[data-kind="sleeping"]')!;
+  expect(moon, 'the moon is drawn').not.toBeNull();
+  expect(text(moon)).toBe('4');
+  expect(moon.getAttribute('aria-label')).toBe('sleeping agents: 4');
+  expect(moon.getAttribute('aria-pressed')).toBe('true');
+  expect(moon.dataset.hidden).toBeUndefined();
+  moon.click(); flushSync();
+  expect(sectionShown('sleeping')).toBe(false);
+  expect(moon.getAttribute('aria-pressed')).toBe('false');
+  expect(moon.dataset.hidden).toBe('true');
+  expect(text(moon), 'a hidden set keeps its number').toBe('4');
+  expect(moon.dataset.filter, 'never the yellow filter frame').toBeUndefined();
+  moon.click(); flushSync();
+  expect(sectionShown('sleeping')).toBe(true);
+  expect(moon.dataset.hidden).toBeUndefined();
 });

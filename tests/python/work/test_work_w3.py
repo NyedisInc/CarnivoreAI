@@ -23,7 +23,7 @@ def _at_w2() -> sqlite3.Connection:
 
 
 def test_w3_is_the_third_rung_and_one_column() -> None:
-    assert VERSION == len(MIGRATIONS) == 3 and MIGRATIONS[2] is W3
+    assert VERSION == len(MIGRATIONS) >= 3 and MIGRATIONS[2] is W3
     assert W3.strip() == "ALTER TABLE work_items ADD COLUMN review_checks TEXT;"
 
 

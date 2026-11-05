@@ -4,10 +4,6 @@ console.log('[AttachmentToast Module] Loading...');
 (function () {
     'use strict';
 
-    var THUMB_PX = 88;
-
-    var THUMB_QUALITY = 0.72;
-
     var MAX_EXT_CHARS = 4;
 
     var GENERIC_EXT_LABEL = 'file';
@@ -49,114 +45,11 @@ console.log('[AttachmentToast Module] Loading...');
     }
 
     function previewDataUrl(blob) {
-        return new Promise(function (resolve) {
-            if (!blob || typeof FileReader !== 'function'
-                || typeof Image !== 'function'
-                || !document || typeof document.createElement !== 'function') {
-                resolve(null);
-                return;
-            }
-            var reader = new FileReader();
-            reader.onerror = function () { resolve(null); };
-            reader.onload = function () {
-                var img = new Image();
-                img.onerror = function () { resolve(null); };
-                img.onload = function () { resolve(drawThumb(img)); };
-                img.src = String(reader.result || '');
-            };
-            try {
-                reader.readAsDataURL(blob);
-            } catch (err) {
-                console.warn('[AttachmentToast] preview unavailable:',
-                    err && err.message);
-                resolve(null);
-            }
-        });
-    }
-
-    function drawThumb(img) {
-        var w = img.naturalWidth || img.width || 0;
-        var h = img.naturalHeight || img.height || 0;
-        if (!w || !h) return null;
-        var scale = Math.min(1, THUMB_PX / Math.max(w, h));
-        var canvas = document.createElement('canvas');
-        canvas.width = Math.max(1, Math.round(w * scale));
-        canvas.height = Math.max(1, Math.round(h * scale));
-        var ctx = typeof canvas.getContext === 'function'
-            ? canvas.getContext('2d') : null;
-        if (!ctx) return null;
-        try {
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            return canvas.toDataURL('image/webp', THUMB_QUALITY);
-        } catch (err) {
-            console.warn('[AttachmentToast] thumbnail draw failed:',
-                err && err.message);
-            return null;
+        var web = window.CloudeWeb;
+        if (!blob || !web || typeof web.attachmentPreviewDataUrl !== 'function') {
+            return Promise.resolve(null);
         }
-    }
-
-    function renderThumbs(cardEl, toasts) {
-        if (!cardEl || !Array.isArray(toasts)) return;
-        var old = cardEl.querySelector('.toast__thumbs');
-        if (old) old.remove();
-        var strip = document.createElement('div');
-        strip.className = 'toast__thumbs';
-        for (var i = 0; i < toasts.length; i++) {
-            strip.appendChild(thumbRow(toasts[i]));
-        }
-        cardEl.appendChild(strip);
-    }
-
-    function thumbRow(toast) {
-        var row = document.createElement('div');
-        row.className = 'toast__thumb-row';
-
-        var frame = document.createElement('div');
-        frame.className = 'toast__thumb';
-        var name = String((toast && toast.attachment_name) || '');
-        if (toast && toast.thumb_url) {
-            var img = document.createElement('img');
-            img.className = 'toast__thumb-img';
-            img.setAttribute('alt', name || 'attached image');
-            img.setAttribute('src', toast.thumb_url);
-            if (toast.full_blob) {
-                var btn = document.createElement('button');
-                btn.setAttribute('type', 'button');
-                btn.className = 'toast__thumb-btn';
-                btn.setAttribute('aria-label',
-                    catalogText('toast.attachment.open_full', { name: name }));
-                btn.appendChild(img);
-                btn.addEventListener('click', function (ev) {
-                    ev.stopPropagation();
-                    var web = window.CloudeWeb;
-                    if (web && typeof web.openAttachmentLightbox === 'function') {
-                        web.openAttachmentLightbox(toast.full_blob, name, btn);
-                    }
-                });
-                frame.appendChild(btn);
-            } else {
-                frame.appendChild(img);
-            }
-        } else {
-            var chip = document.createElement('span');
-            chip.className = 'toast__thumb-ext';
-            chip.setAttribute('aria-hidden', 'true');
-            chip.textContent = String((toast && toast.thumb_label)
-                || GENERIC_EXT_LABEL.toUpperCase());
-            frame.appendChild(chip);
-            frame.dataset.noPreview = '1';
-        }
-        row.appendChild(frame);
-
-        var label = document.createElement('div');
-        label.className = 'toast__thumb-name';
-        label.textContent = name || '(unnamed file)';
-        row.appendChild(label);
-        return row;
-    }
-
-    function catalogText(key, params) {
-        return globalThis.CloudeTr(key, params);
+        return web.attachmentPreviewDataUrl(blob);
     }
 
     function headerSessionLabel() {
@@ -208,11 +101,9 @@ console.log('[AttachmentToast Module] Loading...');
     }
 
     window.AttachmentToast = {
-        THUMB_PX: THUMB_PX,
         isPromptSubmit: isPromptSubmit,
         thumbSpecFor: thumbSpecFor,
         extensionOf: extensionOf,
-        renderThumbs: renderThumbs,
         show: show,
         noteUserInput: noteUserInput,
     };

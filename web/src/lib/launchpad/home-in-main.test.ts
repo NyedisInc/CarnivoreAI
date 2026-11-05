@@ -1,23 +1,28 @@
 /** @vitest-environment jsdom */
 import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { HOME_IN_MAIN_CLASS, initHomeInMain } from './home-in-main';
+import { HOME_SLOT_ATTR, initHomeInMain } from './home-in-main';
 
 let stop: () => void = () => {};
 let pause = vi.fn();
 
-function page(): { terminal: HTMLElement; home: HTMLElement; surface: HTMLElement } {
+/* the home screen */
+function page(): { terminal: HTMLElement; home: HTMLElement; grid: HTMLElement } {
   document.body.innerHTML = `
     <div id="terminal-screen" class="screen active"><div id="terminal-grid"><div class="oc-surface"></div><div data-session-rail></div></div></div>
     <div id="launchpad-screen" class="screen"></div>`;
-  const surface = document.querySelector<HTMLElement>('#terminal-grid > .oc-surface')!;
-  surface.getBoundingClientRect = () => ({ top: 10, left: 300, right: 1200, bottom: 700, width: 900, height: 690 }) as DOMRect;
-  return { terminal: document.getElementById('terminal-screen')!, home: document.getElementById('launchpad-screen')!, surface };
+  return { terminal: document.getElementById('terminal-screen')!, home: document.getElementById('launchpad-screen')!, grid: document.getElementById('terminal-grid')! };
 }
 
 function showHome(terminal: HTMLElement, home: HTMLElement): void {
   terminal.classList.remove('active');
   home.classList.add('active');
+}
+
+async function resizeTo(width: number): Promise<void> {
+  vi.stubGlobal('innerWidth', width);
+  window.dispatchEvent(new Event('resize'));
+  await Promise.resolve();
 }
 
 beforeEach(() => {
@@ -29,50 +34,93 @@ afterEach(() => {
   stop();
   vi.unstubAllGlobals();
   document.body.innerHTML = '';
-  document.documentElement.removeAttribute('style');
 });
 
-it('keeps the terminal screen and its rails up and lays Home over the surface', async () => {
-  const { terminal, home, surface } = page();
+it('moves Home into the grid, beside the rails, with the terminal screen still up', async () => {
+  const { terminal, home, grid } = page();
   stop = initHomeInMain(document, pause);
   showHome(terminal, home);
   await Promise.resolve();
   expect(pause).toHaveBeenCalledOnce();
+  expect(home.parentElement).toBe(grid);
+  expect(grid.hasAttribute(HOME_SLOT_ATTR)).toBe(true);
   expect(terminal.classList.contains('active')).toBe(true);
-  expect(document.body.classList.contains(HOME_IN_MAIN_CLASS)).toBe(true);
-  expect(surface.hasAttribute('inert')).toBe(true);
-  expect(document.querySelector('[data-session-rail]')!.closest('[inert]')).toBeNull();
-  expect(document.documentElement.style.getPropertyValue('--menu-surface-left')).toBe('300px');
-  expect(document.documentElement.style.getPropertyValue('--menu-surface-right')).toBe('100px');
+  expect(document.querySelector('[data-session-rail]')!.contains(home)).toBe(false);
 });
 
-it('leaves the main area when another screen takes over', async () => {
-  const { terminal, home, surface } = page();
+it('puts Home back in the body where it was when another screen takes over', async () => {
+  const { terminal, home, grid } = page();
   stop = initHomeInMain(document, pause);
   showHome(terminal, home);
   await Promise.resolve();
   home.classList.remove('active');
-  terminal.classList.add('active');
   await Promise.resolve();
-  expect(document.body.classList.contains(HOME_IN_MAIN_CLASS)).toBe(false);
-  expect(surface.hasAttribute('inert')).toBe(false);
+  expect(home.parentElement).toBe(document.body);
+  expect(home.previousElementSibling).toBe(terminal);
+  expect(grid.hasAttribute(HOME_SLOT_ATTR)).toBe(false);
   expect(pause).toHaveBeenCalledOnce();
 });
 
-it('stays as it was on a phone width', async () => {
+it('stays the plain full screen on a phone width and when it did not come from a session', async () => {
   vi.stubGlobal('innerWidth', 600);
+  const narrow = page();
+  stop = initHomeInMain(document, pause);
+  showHome(narrow.terminal, narrow.home);
+  await Promise.resolve();
+  expect(narrow.home.parentElement).toBe(document.body);
+  expect(narrow.terminal.classList.contains('active')).toBe(false);
+  stop();
+
+  vi.stubGlobal('innerWidth', 1300);
+  const cold = page();
+  cold.terminal.classList.remove('active');
+  stop = initHomeInMain(document, pause);
+  cold.home.classList.add('active');
+  await Promise.resolve();
+  expect(cold.home.parentElement).toBe(document.body);
+  expect(pause).not.toHaveBeenCalled();
+});
+
+it('does not take the slot over the empty "no session" terminal screen', async () => {
+  const { terminal, home } = page();
+  terminal.classList.add('terminal-screen--empty');
+  stop = initHomeInMain(document, pause);
+  showHome(terminal, home);
+  await Promise.resolve();
+  expect(home.parentElement).toBe(document.body);
+});
+
+it('leaves the slot below 1024 and takes it again when the window widens, with no screen change (#2774)', async () => {
+  const { terminal, home, grid } = page();
+  stop = initHomeInMain(document, pause);
+  showHome(terminal, home);
+  await Promise.resolve();
+  await resizeTo(900);
+  expect(home.parentElement).toBe(document.body);
+  expect(terminal.classList.contains('active')).toBe(false);
+  await resizeTo(1440);
+  expect(home.parentElement).toBe(grid);
+  expect(terminal.classList.contains('active')).toBe(true);
+});
+
+it('keeps no measured state, and only the surface under Home is inert, never the rails', async () => {
   const { terminal, home } = page();
   stop = initHomeInMain(document, pause);
   showHome(terminal, home);
   await Promise.resolve();
-  expect(terminal.classList.contains('active')).toBe(false);
-  expect(document.body.classList.contains(HOME_IN_MAIN_CLASS)).toBe(false);
-  expect(pause).not.toHaveBeenCalled();
+  expect(document.documentElement.getAttribute('style') ?? '').toBe('');
+  expect(document.querySelector('.oc-surface')!.hasAttribute('inert')).toBe(true);
+  expect(document.querySelector('[data-session-rail]')!.closest('[inert]')).toBeNull();
+  home.classList.remove('active');
+  await Promise.resolve();
+  expect(document.querySelector('[inert]')).toBeNull();
 });
 
-it('the stylesheet pins Home to the measured main-area insets, not the whole window', () => {
+it('the stylesheet gives Home the surface cell of the grid, with no stacking context of its own', () => {
   const css = readFileSync('src/lib/launchpad/home-in-main.css', 'utf8');
-  expect(css).toMatch(/body\.home-in-main #launchpad-screen\.active/);
-  expect(css).toMatch(/position:\s*fixed/);
-  for (const side of ['top', 'left', 'right', 'bottom']) expect(css).toContain(`var(--menu-surface-${side})`);
+  const rules = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  expect(rules).toMatch(/#terminal-grid\.ps-grid-surface > #launchpad-screen\.active/);
+  expect(rules).toMatch(/grid-row:\s*1 \/ 2/);
+  expect(rules).toMatch(/position:\s*absolute/);
+  expect(rules).not.toMatch(/z-index|contain:|transform:|position:\s*fixed|--menu-surface/);
 });

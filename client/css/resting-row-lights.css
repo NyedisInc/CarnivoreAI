@@ -1,0 +1,16 @@
+
+@layer legacy {
+    :root[data-row-lights="still"] .session-sidebar-row:not([aria-selected="true"], :hover, :focus-within) .status-led,
+    :root[data-row-lights="still"] .session-sidebar-row:not([aria-selected="true"], :hover, :focus-within) .status-led::before,
+    :root[data-row-lights="still"] .session-sidebar-row:not([aria-selected="true"], :hover, :focus-within) .status-led::after,
+    :root[data-row-lights="still"] .session-sidebar-row:not([aria-selected="true"], :hover, :focus-within) .status-dot,
+    :root[data-row-lights="still"] .session-sidebar-row:not([aria-selected="true"], :hover, :focus-within) .status-dot::before,
+    :root[data-row-lights="still"] .session-sidebar-row:not([aria-selected="true"], :hover, :focus-within) .status-dot::after {
+        animation: none !important;
+    }
+
+    :root[data-row-lights="still"] .session-sidebar-row:not([aria-selected="true"], :hover, :focus-within) .session-sidebar-row-keep-awake[data-keep-awake="1"] .kaw-steam {
+        animation: none !important;
+        opacity: 0.6;
+    }
+}

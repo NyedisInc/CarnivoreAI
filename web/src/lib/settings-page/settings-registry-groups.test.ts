@@ -77,19 +77,20 @@ describe('settings groups', () => {
         expect(settingsInGroup('notifications.web_push').map((s) => s.id)).toEqual(['web_push']);
         expect(settingsInGroup('notifications.delivery').map((s) => s.id)).toEqual([
             'toast_style',
+            'quiet_watched',
         ]);
         expect(settingsInGroup('notifications.channels').map((s) => s.id)).toEqual([
             'notification_destinations',
         ]);
     });
 
-    test('appearance groups: colors, agent rows, status bar, control center, motion; the header shortcuts are gone (Alex (Example-owner), 2026-10-03)', () => {
+    test('appearance groups: colors, agent rows, left rail (#2772), status bar, control center, motion; the header shortcuts are gone (Alex (Example-owner), 2026-10-03)', () => {
         expect(groupsIn('appearance')).toEqual([
-            'appearance.colors', 'appearance.sidebar', 'appearance.status_bar', 'appearance.control_center', 'appearance.motion',
+            'appearance.colors', 'appearance.sidebar', 'appearance.rail', 'appearance.status_bar', 'appearance.control_center', 'appearance.motion',
         ]);
         expect(SETTINGS.map((s) => s.id)).not.toContain('header_quicklinks');
         expect(settingsInGroup('appearance.status_bar').map((s) => s.id)).toEqual(['foot_bar_layout', 'foot_bar_items']);
         expect(settingsInGroup('appearance.control_center').map((s) => s.id)).toEqual(['foot_bar_layout_open']);
-        expect(settingsInGroup('appearance.motion').map((s) => s.id)).toEqual(['animations']);
+        expect(settingsInGroup('appearance.motion').map((s) => s.id)).toEqual(['animations', 'row_lights']);
     });
 });

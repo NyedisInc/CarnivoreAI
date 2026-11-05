@@ -19,7 +19,6 @@ DEFAULT_QUIET_S, MIN_QUIET_S, MAX_QUIET_S = 10.0, 1.0, 300.0
 DEFAULT_CAP_S, MIN_CAP_S, MAX_CAP_S = 45.0, 5.0, 600.0
 MIN_SLEEP_S = 0.05
 TOPIC = "sendq"
-RETIRED_TOPIC = "tellq"
 QUEUED = "queued"
 NOTHING = "nothing"
 
@@ -114,7 +113,6 @@ def state(ctx: CplugContext, only: Optional[Iterable[str]] = None) -> Dict[str, 
 def _push(ctx: CplugContext) -> None:
     try:
         ctx.notify(TOPIC)
-        ctx.notify(RETIRED_TOPIC)
     except (RuntimeError, ValueError) as exc:
         logger.warning("task_manager_send_queue_notify_failed", error=str(exc))
 

@@ -1,0 +1,35 @@
+Symbols Nerd Font Mono, Regular (Nerd Fonts v3.4.0, "Symbols Only" release,
+https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/NerdFontsSymbolsOnly.zip).
+
+The file here is SymbolsNerdFontMono-Regular.ttf from that archive
+(sha256 f0f624d9b474bea1662cf7e862d44aebe1ae1f6c7f9cb7a0ca5d0e5ac9561c60)
+re-wrapped as WOFF2 with fontTools, glyphs unchanged
+(sha256 46c365afb00af49cc42b74fd27cf0c8d5476a62f6572ba8b12432be8aa225970).
+Carnivore uses it as the last fallback in the terminal font stack so prompt
+themes (starship, powerlevel10k) draw their icons; it covers only the icon
+code points (Private Use Area plus a few symbols) through unicode-range.
+
+The Nerd Fonts patcher and the font build are MIT (LICENSE.txt beside this
+file, Copyright (c) 2014 Ryan L McIntyre). The glyphs come from these
+projects, each under its own licence (Nerd Fonts license-audit.md, v3.4.0):
+
+| Project                                 | Licence                                  |
+|-----------------------------------------|------------------------------------------|
+| Codicons (Microsoft)                    | Creative Commons Attribution 4.0 (CC BY 4.0) |
+| Devicons                                | MIT                                      |
+| Font Awesome (Fonticons, Inc.)          | Creative Commons Attribution 4.0 (CC BY 4.0) |
+| Font Awesome Extension                  | MIT                                      |
+| Font Logos                              | Unlicense                                |
+| IEC Power Symbols                       | MIT                                      |
+| Material Design Icons (Google, Pictogrammers) | Apache License 2.0                 |
+| Seti-UI (modified)                      | MIT                                      |
+| Octicons (GitHub)                       | MIT                                      |
+| Pomicons (Gabriele Lana)                | SIL Open Font License 1.1                |
+| Powerline Extra Symbols                 | MIT                                      |
+| Powerline Symbols                       | Free licence (as published by Powerline) |
+| Weather Icons (Erik Flowers)            | SIL Open Font License 1.1                |
+
+Attribution for the CC BY 4.0 glyphs: Codicons, Copyright (c) Microsoft
+Corporation; Font Awesome Free icons by Fonticons, Inc. (https://fontawesome.com).
+The SIL Open Font License 1.1 text: https://openfontlicense.org. The Apache
+License 2.0 text: https://www.apache.org/licenses/LICENSE-2.0.

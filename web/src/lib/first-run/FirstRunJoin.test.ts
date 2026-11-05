@@ -262,6 +262,28 @@ describe('joining', () => {
         expect(postBodies()).toEqual([{ code: '123456', candidate_fid: 'bbbb' }]);
     });
 
+    test('the choose screen finds a pack, join this pack knocks, the code step names the main, the code posts to /join/code (#2799)', async () => {
+        const candidates = [{ name: 'studio', fid: 'aaaa', fid_short: 'aa11', label: 'studio aa11' }];
+        install({
+            [STATUS]: [() => status('idle'), () => status('finding', { candidates })],
+            '/api/v1/auth/join/look': () => json(202, { state: 'waiting_relay', error: null, main_label: null, candidates: [] }),
+            '/api/v1/auth/join/knock': () => json(202, { state: 'knocked', error: null, main_label: 'nostromo', candidates: [], expires_in: 840, own_fid_short: 'dd44ee' }),
+            '/api/v1/auth/join/code': () => json(202, { state: 'waiting_relay', error: null, main_label: 'nostromo', candidates: [] }),
+        });
+        await render();
+        await elapse(1000);
+        expect(q('[data-first-run="found"]')!.textContent).toBe('found studio aa11 on this network.');
+        await click('[data-first-run="found-join"]');
+        expect(JSON.parse(String(calls.find((c) => c.url === '/api/v1/auth/join/knock')!.init?.body))).toEqual({ candidate_fid: 'aaaa' });
+        expect(q('[data-first-run="knock-title"]')!.textContent).toBe('type the code showing on nostromo');
+        expect(q('p.first-run__text')!.textContent).toContain('dd44ee');
+        expect(q('p.first-run__text')!.textContent).toContain('14 min');
+        await paste('482915');
+        const sent = calls.find((c) => c.url === '/api/v1/auth/join/code')!;
+        expect(JSON.parse(String(sent.init?.body))).toEqual({ code: '482915' });
+        expect(count(POST)).toBe(0);
+    });
+
     test('a reload while several packs are held opens on the code cells, not on rows that would post an empty code (P9)', async () => {
         const candidates = [{ name: 'studio', fid: 'aaaa', fid_short: 'aa11' }, { name: 'laptop', fid: 'bbbb', fid_short: 'bb22' }];
         install({ [STATUS]: () => status('finding', { candidates }) });

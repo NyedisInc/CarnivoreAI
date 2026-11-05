@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional
 
 from src.core.db import transaction
+from src.core.pack.relay.codex_target import codex_relay_profile_name
 from src.core.pack.relay.target_side import relay_profile_name
 
 
@@ -54,7 +55,12 @@ def effective_on(conn: sqlite3.Connection, account_key: str) -> bool:
     return default_mode(conn, account_key) or bool(enabled_for(conn, account_key))
 
 
-def arm_default(conn: sqlite3.Connection, account_key: str, install_ids: Iterable[str], sender_install_id: str) -> None:
+def profile_name_for(provider: str, account_key: str, sender_install_id: str) -> str:
+    return (codex_relay_profile_name if provider == "codex" else relay_profile_name)(account_key, sender_install_id)
+
+
+def arm_default(conn: sqlite3.Connection, account_key: str, install_ids: Iterable[str], sender_install_id: str,
+                provider: str = "claude") -> None:
     with transaction(conn):
         if not default_mode(conn, account_key):
             return
@@ -62,14 +68,15 @@ def arm_default(conn: sqlite3.Connection, account_key: str, install_ids: Iterabl
                      "VALUES (?, ?, '', 'on')", (account_key, DEFAULT_MARK))
         for iid in install_ids:
             conn.execute("INSERT OR IGNORE INTO pack_relay_targets (account_key, target_install_id, target_profile, state) "
-                         "VALUES (?, ?, ?, 'on')", (account_key, iid, relay_profile_name(account_key, sender_install_id)))
+                         "VALUES (?, ?, ?, 'on')", (account_key, iid, profile_name_for(provider, account_key, sender_install_id)))
 
 
 def is_owner_of(conn: sqlite3.Connection, account_key: str) -> bool:
     return bool(enabled_for(conn, account_key))
 
 
-def set_machines(conn: sqlite3.Connection, account_key: str, install_ids: Iterable[str], sender_install_id: str) -> List[str]:
+def set_machines(conn: sqlite3.Connection, account_key: str, install_ids: Iterable[str], sender_install_id: str,
+                 provider: str = "claude") -> List[str]:
     wanted = list(dict.fromkeys(install_ids))
     with transaction(conn):
         dropped = [r[0] for r in conn.execute(
@@ -82,7 +89,7 @@ def set_machines(conn: sqlite3.Connection, account_key: str, install_ids: Iterab
                 "INSERT INTO pack_relay_targets (account_key, target_install_id, target_profile, state) "
                 "VALUES (?, ?, ?, 'on') ON CONFLICT(account_key, target_install_id) DO UPDATE SET state = "
                 "CASE WHEN state IN ('off', 'refused') THEN 'on' ELSE state END",
-                (account_key, iid, relay_profile_name(account_key, sender_install_id)))
+                (account_key, iid, profile_name_for(provider, account_key, sender_install_id)))
         marks = ",".join("?" * len(wanted))
         conn.execute(
             "UPDATE pack_relay_targets SET state = 'off', last_expiry_pushed = NULL "

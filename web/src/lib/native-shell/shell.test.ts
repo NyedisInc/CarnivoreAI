@@ -45,10 +45,24 @@ describe('messages', () => {
         expect(sent).toEqual([
             { v: 1, type: 'ready' },
             { v: 1, type: 'theme', id: 'dracula' },
+            { v: 1, type: 'viewing', session: '' },
         ]);
         document.documentElement.dataset.theme = 'nord';
         await Promise.resolve();
         expect(sent.at(-1)).toEqual({ v: 1, type: 'theme', id: 'nord' });
+    });
+    test('viewing names the session on screen when the pane binds one (#17 part 2), once per change', async () => {
+        fakeShell();
+        bootNativeShell();
+        (globalThis as { TerminalController?: unknown }).TerminalController = { _currentTmuxName: () => 'carnivore_api' };
+        window.dispatchEvent(new CustomEvent('cloude:primary-session-bound', { detail: { sessionId: 'ses_1' } }));
+        window.dispatchEvent(new CustomEvent('cloude:primary-session-bound', { detail: { sessionId: 'ses_1' } }));
+        await Promise.resolve();
+        expect(sent.filter((m) => (m as { type?: string }).type === 'viewing')).toEqual([
+            { v: 1, type: 'viewing', session: '' },
+            { v: 1, type: 'viewing', session: 'carnivore_api' },
+        ]);
+        delete (globalThis as { TerminalController?: unknown }).TerminalController;
     });
     test('native messages are validated', () => {
         const token = { v: 1, type: 'pushToken', token: 'ab12', environment: 'sandbox', payload_key: 'k', bundle_id: 'ai.carnivore.ios', app_version: '1' };

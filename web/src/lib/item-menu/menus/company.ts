@@ -4,6 +4,7 @@ import { deleteCompanyConfirm, renameCompanyPrompt } from '../../sidebar-shell/c
 import { announceFailure, reasonOf } from '../../sidebar-shell/interaction-globals';
 import { entryNodes, spaced } from '../entries';
 import { defineItemMenu } from '../registry';
+import { foldInsideEntry } from './fold-inside';
 import { companyColorEntry } from './color';
 
 defineItemMenu('company', {
@@ -19,6 +20,7 @@ defineItemMenu('company', {
                     onPick: () => { setCompanyColor(company.id, null).catch((err: unknown) => announceFailure(t('sidebar.color.failed', { name: company.name, reason: reasonOf(err) }))); },
                 }] : []),
             ],
+            [foldInsideEntry(key)],
             [{ label: t('sidebar.company.menu.delete'), icon: 'close', id: 'delete-company', danger: true, onPick: () => { void deleteCompanyConfirm(company); } }],
         ]);
         return { nodes: entryNodes(entries, env.glyph, env.close), ariaLabel: t('sidebar.company.menu.title', { name: company.name }) };

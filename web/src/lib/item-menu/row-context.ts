@@ -4,6 +4,7 @@ import { memberOf } from '../swarm-membership/member-face';
 import { escHtml } from '../drawer/row-controls';
 
 export interface RowMenuCtx {
+    anchor?: Element | null;
     name: string;
     label: string;
     sessionId: string | null;

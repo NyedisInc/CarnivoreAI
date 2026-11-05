@@ -13,12 +13,11 @@ describe('layoutsBridge.addMember', () => {
   beforeEach(() => {
     wake.mockClear();
     add.mockClear();
-    (globalThis as Record<string, unknown>).SessionSidebar = {
-      _rows: [
-        { session_uuid: 'asleep-1', asleep: true, name: 'carnivore_a', label: 'A' },
-        { session_uuid: 'live-1', asleep: false, name: 'carnivore_b' },
-      ],
-    };
+    const held = [
+      { session_uuid: 'asleep-1', asleep: true, name: 'carnivore_a', label: 'A' },
+      { session_uuid: 'live-1', asleep: false, name: 'carnivore_b' },
+    ];
+    (globalThis as Record<string, unknown>).SessionSidebar = { rows: () => held };
   });
 
   it('wakes an asleep session exactly once', async () => {

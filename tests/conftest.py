@@ -422,12 +422,12 @@ def pytest_collection_modifyitems(config, items) -> None:
 def no_builtin_default_login(monkeypatch: pytest.MonkeyPatch) -> None:
     from src.core.provider_ledger import poller_scan
 
-    monkeypatch.setattr(poller_scan, "with_auto_default", lambda accounts, label=None: accounts)
+    monkeypatch.setattr(poller_scan, "with_auto_default", lambda accounts, label=None, **_kw: accounts)
 
 
 @pytest.fixture(autouse=True)
 def _drop_listing_caches():
-    from src.core.ttl_flight import invalidate_all
+    from src.core.read_caches.ttl_flight import invalidate_all
 
     invalidate_all()
     yield

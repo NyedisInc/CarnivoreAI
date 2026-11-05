@@ -1,5 +1,6 @@
 
 <script lang="ts">
+  import { failureReason } from '../../errors/failure-reason';
   import ManagerFrame from '../../manager-frame/ManagerFrame.svelte';
   import { viewport } from '../../../opscenter/engine/viewport.svelte';
   import { t as appT } from '../../i18n/index.svelte';
@@ -45,7 +46,7 @@
       for (const row of rows) await api.postHeld(row.family, row.name, action);
       await refresh();
     } catch (error) {
-      notice = t('skills.pack.failed', { reason: error instanceof Error ? error.message : String(error) });
+      notice = t('skills.pack.failed', { reason: failureReason(error) });
     }
   }
 
@@ -55,7 +56,7 @@
       await api.syncNow();
       await refresh();
     } catch (error) {
-      notice = t('skills.pack.failed', { reason: error instanceof Error ? error.message : String(error) });
+      notice = t('skills.pack.failed', { reason: failureReason(error) });
     }
   }
 </script>

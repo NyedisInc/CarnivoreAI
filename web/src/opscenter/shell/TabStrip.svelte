@@ -1,5 +1,4 @@
 <script lang="ts" module>
-import type { WidgetManifest } from '../widgets/types';
 import type { AgentMarkFacts } from '../../lib/sessions/agent-marks';
 
 export interface TabItem {
@@ -7,10 +6,11 @@ export interface TabItem {
   name: string;
   family: string | null;
   tint?: string | null;
+  bar?: string | null;
   face?: AgentMarkFacts;
   workflow?: boolean;
   glyph?: string;
-  badge?: { manifest: WidgetManifest; global?: boolean } | null;
+  badge?: { global?: boolean } | null;
   agent?: Record<string, unknown> | null;
   nameStyle?: string;
 }
@@ -43,6 +43,7 @@ export const LONG_PRESS_MS = 500;
   let {
     items,
     active,
+    holdsInput = true,
     onSelect,
     onNew,
     newOpen = false,
@@ -63,6 +64,7 @@ export const LONG_PRESS_MS = 500;
   }: {
     items: TabItem[];
     active: string;
+    holdsInput?: boolean;
     onSelect: (id: string) => void;
     onClose?: (id: string) => void;
     onKill?: (id: string) => void;
@@ -175,6 +177,10 @@ export const LONG_PRESS_MS = 500;
     measureFade();
   });
 
+  function safeBar(bar: string | null | undefined): string | null {
+    return bar && /^(#[0-9a-f]{3,8}|oklch\([\d. ]+\)|var\(--[\w-]+\))$/i.test(bar) ? bar : null;
+  }
+
   function safeTint(tint: string | null | undefined): string | null {
     return tint && /^#[0-9a-f]{3,8}$/i.test(tint) ? tint : null;
   }
@@ -246,6 +252,8 @@ export const LONG_PRESS_MS = 500;
       class:oc-tabwrap-active={selected}
       class:oc-tabwrap-tinted={tint !== null && !selected}
       style:--oc-tab-tint={tint}
+      style:--oc-tab-bar={selected && holdsInput ? safeBar(item.bar) : null}
+      class:oc-tabwrap-idle={selected && !holdsInput}
       role="presentation"
       onmousedown={onClose ? suppressMiddleAutoscroll : undefined}
       onauxclick={onClose ? (event) => onMiddleClick(event, () => void confirmClose(item.id, item.name)) : undefined}
@@ -255,6 +263,9 @@ export const LONG_PRESS_MS = 500;
       <button
         type="button"
         class="oc-tab-icon oc-tab-icon--action"
+        data-btn="row"
+        data-size="bare"
+        data-overflow="visible"
         data-corner=""
         tabindex="-1"
         aria-haspopup="menu"
@@ -268,7 +279,7 @@ export const LONG_PRESS_MS = 500;
         }}
       >
         
-        {#if mark}<span class="oc-tab-mark" aria-hidden="true">{@html mark}</span>{:else if item.badge}<span class="oc-tab-badgehost"><Icon name={cellIcon} size={14} /><ZoneBadge manifest={item.badge.manifest} global={item.badge.global} /></span>{:else}<Icon name={cellIcon} size={14} />{/if}
+        {#if mark}<span class="oc-tab-mark" aria-hidden="true">{@html mark}</span>{:else if item.badge}<span class="oc-tab-badgehost"><Icon name={cellIcon} size={14} /><ZoneBadge global={item.badge.global} /></span>{:else}<Icon name={cellIcon} size={14} />{/if}
       </button>
       {/if}
       <TabKey
@@ -328,7 +339,7 @@ export const LONG_PRESS_MS = 500;
       --oc-tab-ground: var(--oc-ground-tab-inactive);
       display: flex;
       align-items: stretch;
-      gap: 6px;
+      gap: var(--oc-space-1-5);
       min-width: 0;
       flex: 1 1 auto;
     }
@@ -336,7 +347,7 @@ export const LONG_PRESS_MS = 500;
     .oc-tabs {
       display: flex;
       align-items: stretch;
-      gap: 1px;
+      gap: var(--oc-gap-hair);
       min-width: 0;
       flex: 0 1 auto;
       overflow-x: auto;
@@ -385,9 +396,28 @@ export const LONG_PRESS_MS = 500;
 
     .oc-tabwrap-active,
     .oc-tabwrap-active:hover {
+      position: relative;
       background: var(--oc-ground-titlerow);
-      border-top-color: var(--oc-orange);
+      border-top-color: var(--oc-tab-bar, var(--oc-text-dim));
       border-bottom-color: transparent;
+    }
+
+    .oc-tabwrap-active::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 1px;
+      pointer-events: none;
+      background: color-mix(in srgb, var(--oc-text-primary) 35%, transparent);
+    }
+
+    .oc-tabwrap-idle,
+    .oc-tabwrap-idle:hover {
+      border-top-color: var(--oc-line-panel);
+    }
+
+    .oc-tabwrap-idle::before {
+      display: none;
     }
 
 
@@ -410,7 +440,7 @@ export const LONG_PRESS_MS = 500;
 
     .oc-tab-icon--action {
       justify-content: center;
-      padding: 0 3px 0 14px;
+      padding: 0 var(--oc-pad-snug) 0 var(--oc-tab-end-pad);
       background: none;
       border: 0;
       color: var(--oc-text-dim);
@@ -423,7 +453,7 @@ export const LONG_PRESS_MS = 500;
 
     .oc-tabwrap-active .oc-tab-icon--action,
     .oc-tabwrap-active:hover .oc-tab-icon--action {
-      color: var(--oc-orange);
+      color: var(--oc-text-primary);
     }
 
     .oc-tab-workflow {

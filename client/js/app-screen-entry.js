@@ -56,6 +56,9 @@
         if (window.NavigationGeneration
             && !window.NavigationGeneration.keep(nav, what)) return;
         connect(nav);
+        if (window.TerminalPrimaryHold) {
+            window.TerminalPrimaryHold.navigatedTo([session && session.id, inner && inner.id, tmuxNameOf(session, inner)]);
+        }
         app.focusTerminal();
     }
 

@@ -51,6 +51,7 @@ STARTUP_SCREEN_MARKERS: tuple[tuple[str, Marker], ...] = (
     (SCREEN_EXTERNAL_IMPORTS, re.compile(r"Yes,\s+allow\s+external\s+imports")),
     (SCREEN_MCP_SERVER, re.compile(r"New\s+MCP\s+server\s+found\s+in\s+this\s+project")),
     (SCREEN_MCP_SERVER, re.compile(r"Continue\s+without\s+using\s+this\s+MCP\s+server")),
+    (SCREEN_MCP_SERVER, re.compile(r"\d+\s+new\s+MCP\s+servers\s+found\s+in\s+this\s+project")),
     (SCREEN_BYPASS_PERMISSIONS, re.compile(r"WARNING:\s+Claude\s+Code\s+running\s+in\s+Bypass\s+Permissions\s+mode")),
     (SCREEN_RESUME_PICKER, re.compile(r"Ctrl\+A\s+to\s+show\s+all\s+projects")),
     (SCREEN_ONBOARDING_THEME, re.compile(r"Choose\s+the\s+text\s+style\s+that\s+looks\s+best\s+with\s+your\s+terminal")),

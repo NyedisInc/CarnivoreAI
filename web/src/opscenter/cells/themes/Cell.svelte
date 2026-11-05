@@ -116,7 +116,7 @@
     >
       {#each tiles as theme (theme.id)}
         <li class="oc-tile" data-tile={theme.id} class:oc-tile-current={theme.current}>
-          <button type="button" class="oc-theme-choice" onclick={() => selectTheme(theme.id)} aria-pressed={theme.current} aria-label={`use ${theme.name} as page theme`}>
+          <button type="button" class="oc-theme-choice" data-btn="row" data-size="auto" onclick={() => selectTheme(theme.id)} aria-pressed={theme.current} aria-label={`use ${theme.name} as page theme`}>
           {#if showsGrid}
             <span
               class="oc-tile-swatch"
@@ -168,7 +168,7 @@
 
 <style>
   @layer components {
-    .oc-theme-choice { display:block; width:100%; border:0; padding:0; background:transparent; font:inherit; color:inherit; cursor:pointer; text-align:inherit; }
+    .oc-theme-choice { display:block; width:calc(100% + 2 * var(--oc-border)); margin:calc(-1 * var(--oc-border)); border:var(--oc-border) solid transparent; border-radius:var(--oc-radius-sm); padding:0; background:transparent; font:inherit; color:inherit; cursor:pointer; text-align:inherit; }
 
     .oc-tile-art { position:absolute; left:0; top:0; width:100%; height:100%; object-fit:cover; opacity:.65; }
 

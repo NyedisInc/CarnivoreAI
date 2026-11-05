@@ -61,6 +61,8 @@ from pathlib import Path
 from typing import Optional
 
 REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO))
+from scripts.lib.testsrv_client import TestsrvTokenError, access_token, api as testsrv_api  # noqa: E402
 ROOT = Path("~/dev-worktrees/.testsrv").expanduser()
 SLOTS = int(os.environ.get("TESTSRV_SLOTS", "6"))
 BASE_PORT = 8100
@@ -225,13 +227,9 @@ def apply_bonjour_mode(slot: Slot, on: bool) -> bool:
 
 
 def api(slot: Slot, method: str, path: str, body: Optional[dict] = None, timeout: float = 300):
-    items = json.loads(slot.auth.read_text())["origins"][0]["localStorage"]
-    tok = next(i["value"] for i in items if i["name"] == "claude_tunnel_token")
-    req = urllib.request.Request(slot.base + path, method=method, data=None if body is None else json.dumps(body).encode(),
-                                 headers={"Authorization": "Bearer " + tok, "Content-Type": "application/json"})
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            return json.loads(r.read() or b"{}")
+        answer = testsrv_api(slot.base, access_token(slot.auth), path, body, method, timeout=timeout)
+        return {} if answer is None else answer
     except urllib.error.HTTPError as err:
         raise RuntimeError(f"slot {slot.n} {method} {path} answered {err.code}: {err.read()[:200]!r}") from None
 
@@ -354,11 +352,10 @@ def ensure_up(slot: Slot, timeout: float) -> Optional[float]:
 
 def auth_valid(slot: Slot) -> bool:
     try:
-        items = json.loads(slot.auth.read_text())["origins"][0]["localStorage"]
-        tok = next(i["value"] for i in items if i["name"] == "claude_tunnel_token")
+        tok = access_token(slot.auth)
         seg = tok.split(".")[1]
         exp = json.loads(base64.urlsafe_b64decode(seg + "=" * (-len(seg) % 4)))["exp"]
-    except (OSError, ValueError, KeyError, IndexError, StopIteration):
+    except (OSError, ValueError, KeyError, IndexError, TestsrvTokenError):
         return False
     if exp - time.time() < 5400:
         return False

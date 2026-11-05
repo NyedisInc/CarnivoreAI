@@ -150,7 +150,7 @@ describe('widgetBars', () => {
 
   test('customized is true when the field or either rail is present', () => {
     expect(widgetBars.customized).toBe(false);
-    railStores.bottom.stored = { sections: [[{ widget: 'core.notes', look: null }]], ratio: 0.5 };
+    railStores.bottom.stored = { sections: [[{ widget: 'core.notes', look: null }]], cuts: [] };
     expect(widgetBars.customized).toBe(true);
     expect(widgetBars.isDefault('bottom')).toBe(false);
     expect(widgetBars.isDefault('side')).toBe(true);

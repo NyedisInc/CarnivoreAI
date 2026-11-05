@@ -6,6 +6,8 @@ const HASH = /^#?settings\/([a-z_]+)(?:\/([a-z_]+))?$/;
 
 const PLUGIN_HASH = /^#?settings\/plugin\/([a-z0-9_.-]+)$/;
 
+const FEATURE_HASH = /^#?settings\/features\/([a-z0-9_.-]+)(?:\/(settings))?$/;
+
 const HIGHLIGHT = /\?highlight=([a-z0-9_.-]+)$/;
 
 const withoutHighlight = (hash: string): string => hash.trim().replace(HIGHLIGHT, '');
@@ -66,4 +68,19 @@ export function settingsPluginOf(hash: string | null | undefined): string | null
 
 export function settingsPluginFragment(cplugId: string): string {
     return `#settings/plugin/${cplugId}`;
+}
+
+export interface FeatureLink {
+    readonly id: string;
+    readonly settings: boolean;
+}
+
+export function settingsFeatureOf(hash: string | null | undefined): FeatureLink | null {
+    if (typeof hash !== 'string') return null;
+    const match = FEATURE_HASH.exec(withoutHighlight(hash));
+    return match ? { id: match[1]!, settings: match[2] === 'settings' } : null;
+}
+
+export function settingsFeatureFragment(id: string, settings = false): string {
+    return `#settings/features/${id}${settings ? '/settings' : ''}`;
 }

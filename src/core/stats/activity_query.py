@@ -5,6 +5,7 @@ import time
 from typing import Callable, NamedTuple
 
 from src.core.stats.plugin.schema import FLOOR_SQL
+from src.core.stats.store_port import StatsStoreLike
 
 PLAIN_METRICS = ("observed_seconds", "working_seconds", "running_seconds", "starts", "completions",
                  "waiting_seconds", "subagent_seconds")
@@ -19,7 +20,7 @@ class Scan(NamedTuple):
     observed: dict | None
 
 
-def _memoised(store, key: tuple, compute: Callable[[], object]) -> object:
+def _memoised(store: StatsStoreLike, key: tuple, compute: Callable[[], object]) -> object:
     memo = getattr(store, "scan_memo", None)
     if memo is None:
         return compute()
@@ -37,8 +38,8 @@ def _conversation_count(filters: dict, start: int, end: int) -> tuple[str, list]
     return sql, [*args, start, end, start, end]
 
 
-def _run(store, sql: str, params: list, deadline: float, max_rows: int, limit: type[Exception],
-         scalar: bool = False):
+def _run(store: StatsStoreLike, sql: str, params: list, deadline: float, max_rows: int, limit: type[Exception],
+         scalar: bool = False) -> list[sqlite3.Row] | float | int | None:
     db = store.connect(readonly=True)
     try:
         db.set_progress_handler(lambda: 1 if time.monotonic() > deadline else 0, 1000)
@@ -57,7 +58,7 @@ def _run(store, sql: str, params: list, deadline: float, max_rows: int, limit: t
         db.close()
 
 
-def fetch_aggregated(store, metric: str, where: str, args: list, filters: dict, start: int, end: int,
+def fetch_aggregated(store: StatsStoreLike, metric: str, where: str, args: list, filters: dict, start: int, end: int,
                      group_by: str | None, deadline: float, max_rows: int, limit: type[Exception],
                      want_conversations: bool) -> tuple["Scan", int]:
     group_column = group_by or "''"

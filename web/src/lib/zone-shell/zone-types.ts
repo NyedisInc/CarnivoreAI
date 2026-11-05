@@ -1,9 +1,7 @@
 import type { ResolvedPlacement } from '../../opscenter/widgets/placement-resolve';
-import type { PlacementOptions } from '../../opscenter/widgets/placement-options';
 import type { FrameHeader } from '../../opscenter/shell/frame-header.svelte';
 import type { MenuHost } from './placement-menu';
 import type { PlacementSource } from './source';
-import type { WidgetManifest } from '../../opscenter/widgets/types';
 
 export type TabKind = 'terminal' | 'page' | 'widget' | 'panel';
 
@@ -16,7 +14,6 @@ export interface TabRef {
   kind: TabKind;
   placement?: ResolvedPlacement;
   source?: PlacementSource | null;
-  options?: PlacementOptions;
   unseen?: boolean;
 }
 
@@ -44,9 +41,6 @@ export interface KeyFace {
   tip: string;
   label: string;
   icon: string;
-  badge?: WidgetManifest;
-  count?: number | null;
-  options?: PlacementOptions;
   chip: boolean;
   letter: string;
   tone: string;

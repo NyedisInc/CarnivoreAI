@@ -1,6 +1,7 @@
 
 <script lang="ts">
     import type { Translate } from '../sessions/types';
+    import Button from '../base/Button.svelte';
     import { MANAGER_KEYS } from './manager-model';
     import type { ManagerActionState, ManagerItem } from './types';
 
@@ -29,28 +30,27 @@
         {#if asking === item.id}
             <p class="oc-notice oc-notice--error" role="alert" data-mgr-question>{t(MANAGER_KEYS.removeQuestion, { name: item.name })}</p>
             <div class="mgr-actions__row">
-                <button type="button" class="oc-btn oc-btn--danger" data-mgr-remove-confirm onclick={confirm}
-                    >{t(MANAGER_KEYS.removeConfirm, { name: item.name })}</button
+                <Button variant="danger" data-mgr-remove-confirm="" onclick={confirm}
+                    >{t(MANAGER_KEYS.removeConfirm, { name: item.name })}</Button
                 >
-                <button type="button" class="oc-btn" data-mgr-remove-cancel onclick={() => (asking = null)}
-                    >{t(MANAGER_KEYS.removeCancel)}</button
+                <Button data-mgr-remove-cancel="" onclick={() => (asking = null)}
+                    >{t(MANAGER_KEYS.removeCancel)}</Button
                 >
             </div>
         {:else}
             <div class="mgr-actions__row">
                 {#if onExport}
-                    <button type="button" class="oc-btn" data-mgr-export disabled={busy} onclick={() => onExport(item.id)}
-                        >{busy ? t(MANAGER_KEYS.working) : t(MANAGER_KEYS.exportAction)}</button
+                    <Button data-mgr-export="" disabled={busy} onclick={() => onExport(item.id)}
+                        >{busy ? t(MANAGER_KEYS.working) : t(MANAGER_KEYS.exportAction)}</Button
                     >
                 {/if}
                 {#if onRemove}
-                    <button
-                        type="button"
-                        class="oc-btn oc-btn--danger"
-                        data-mgr-remove
+                    <Button
+                        variant="danger"
+                        data-mgr-remove=""
                         disabled={busy || blocked !== null}
                         aria-describedby={blocked !== null ? `mgr-blocked-${item.id}` : undefined}
-                        onclick={() => (asking = item.id)}>{t(MANAGER_KEYS.removeAction)}</button
+                        onclick={() => (asking = item.id)}>{t(MANAGER_KEYS.removeAction)}</Button
                     >
                 {/if}
             </div>

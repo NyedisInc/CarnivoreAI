@@ -138,3 +138,5 @@ client/widget-harness-build/
 ios/Carnivore.xcodeproj/
 ios/build/
 ios/DerivedData/
+
+.dev-build

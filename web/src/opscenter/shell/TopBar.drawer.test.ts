@@ -45,6 +45,6 @@ test('the button is shown only while the drawer is closed, above phone width', (
   const src = fs.readFileSync(path.join(process.cwd(), 'src/lib/zone-shell/TabKey.svelte'), 'utf8');
   expect(src).toMatch(/\.oc-topbar-drawer \{\s*display: none;/);
   expect(src).toMatch(
-    /@media \(min-width: 701px\) \{\s*:global\(body:not\(:has\(\.session-sidebar-panel--open\)\)\) \.oc-topbar-drawer \{\s*display: inline-flex;/,
+    /@media \(min-width: 701px\) \{\s*:global\(body:not\(\.ps-drawer-open\)\) \.oc-topbar-drawer \{\s*display: inline-flex;/,
   );
 });

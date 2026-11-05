@@ -21,6 +21,7 @@ logger = structlog.get_logger()
 _move_lock = threading.Lock()
 _walk_lock = threading.Lock()
 _walk_failed: Dict[Path, Tuple[Tuple[int, int], str]] = {}
+_PRIVATE_DIR, _PRIVATE_FILE = 0o700, 0o600
 _SIDE_SUFFIXES = ("-wal", "-shm", "-journal")
 
 
@@ -47,6 +48,7 @@ class StorageSpec:
     migrations: Sequence[str]
     legacy_db: Optional[str] = None
     backup_before: Optional[Mapping[int, str]] = None
+    private: bool = False
 
 
 @dataclass(frozen=True)
@@ -63,6 +65,7 @@ class CplugStorage:
     def __init__(self, folder: Path, spec: Optional[StorageSpec], state_dir: Optional[Path] = None) -> None:
         self.path = Path(folder)
         self._spec = spec
+        self._private = bool(spec and spec.private)
         self._state_dir = Path(state_dir) if state_dir is not None else None
         self._scope = threading.local()
         self._reads = ReadPool(lambda _path: self._open(False))
@@ -148,7 +151,9 @@ class CplugStorage:
             conn = sqlite3.connect(":memory:")
         else:
             assert_test_write_allowed(path)
-            path.parent.mkdir(parents=True, exist_ok=True)
+            path.parent.mkdir(mode=_PRIVATE_DIR if self._private else 0o777, parents=True, exist_ok=True)
+            if self._private:
+                os.chmod(path.parent, _PRIVATE_DIR)
             conn = sqlite3.connect(str(path), timeout=5.0)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
@@ -163,7 +168,9 @@ class CplugStorage:
                 except PostBackupFailure as exc:
                     _walk_failed[path] = (_signature(path), str(exc))
                     raise
-        except (CplugSchemaError, sqlite3.Error):
+            if self._private and write:
+                os.chmod(path, _PRIVATE_FILE)
+        except (CplugSchemaError, sqlite3.Error, OSError):
             conn.close()
             raise
         return conn

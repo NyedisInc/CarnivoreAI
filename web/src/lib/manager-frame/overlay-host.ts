@@ -24,14 +24,14 @@ export function createOverlayHost(
     containerId: string,
     component: Component<Record<string, never>, Record<string, unknown>> | Component<Record<string, never>>,
     hash: string,
-    options: { aliases?: readonly string[] } = {},
+    options: { aliases?: readonly string[]; props?: Record<string, unknown> } = {},
 ): OverlayHost {
     const panel = component as unknown as Component<Record<string, never>, Record<string, unknown>>;
     const name = hash.replace(/^#/, '');
     const names = [name, ...(options.aliases ?? []).map((alias) => alias.replace(/^#/, ''))];
 
     function mount(): Record<string, unknown> | null {
-        return ensurePanel(containerId, panel, {});
+        return ensurePanel(containerId, panel, (options.props ?? {}) as Record<string, never>);
     }
 
     const pageId = MENU_PAGES.find((p) => p.containerId === containerId)?.id ?? null;

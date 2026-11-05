@@ -39,12 +39,6 @@
     font-size: 13px;
 }
 
-.na-flow .provider-item-more {
-    color: var(--oc-text-muted);
-    font-size: 11px;
-    letter-spacing: 0.2px;
-}
-
 .na-flow .provider-item-remove {
     border-color: var(--oc-line-rule);
     color: var(--oc-text-muted);

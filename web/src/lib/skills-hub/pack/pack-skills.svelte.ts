@@ -1,5 +1,6 @@
 import { resourcePush } from '../../resource-push/boot';
 import * as api from './pack-skills-api';
+import { failureReason } from '../../errors/failure-reason';
 
 export const PACK_TOPICS = ['pack_skills', 'local_skills'] as const;
 const POLL_MS = 15000;
@@ -19,7 +20,7 @@ export async function refresh(): Promise<void> {
     data.error = '';
   } catch (error) {
     data.status = 'error';
-    data.error = error instanceof Error ? error.message : String(error);
+    data.error = failureReason(error);
   }
 }
 

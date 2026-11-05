@@ -3,6 +3,8 @@ import { layoutEditor } from '../../opscenter/layout-editor/editor.svelte';
 
 export const PREFERENCE_FIELD = 'rail_hidden_icons';
 
+export const RAIL_PIN_ID = 'pin:rail';
+
 const view = $state<{ ids: string[] }>({ ids: [] });
 
 function clean(value: unknown): string[] {

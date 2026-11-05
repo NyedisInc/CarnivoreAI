@@ -222,6 +222,52 @@ def _unchanged_files(files: AgentFilesSignature, state: SpanState) -> FrozenSet[
     return frozenset(name for name, times in files if times is not None and before.get(name) == times)
 
 
+def _count_subagent_line(line: bytes, state: SpanState) -> None:
+    try:
+        record = json.loads(line)
+    except ValueError:
+        return
+    if not isinstance(record, dict) or record.get("type") != "assistant":
+        return
+    stamp = record.get("timestamp")
+    if isinstance(stamp, str) and ((state.start_ts and stamp < state.start_ts)
+                                   or (state.end_ts and stamp > state.end_ts)):
+        return
+    content = _blocks(record)
+    for block in content if isinstance(content, list) else []:
+        if isinstance(block, dict) and block.get("type") == "tool_use":
+            for category in classify_call(str(block.get("name") or ""), block.get("input")):
+                state.facts.categories[category] = state.facts.categories.get(category, 0) + 1
+
+
+def _read_subagent_file(fd: int, fpath: str, start: Optional[float], state: SpanState) -> None:
+    info = os.fstat(fd)
+    if not stat.S_ISREG(info.st_mode):
+        return
+    prev = state.subs.get(fpath)
+    pos = prev[1] if prev and prev[0] == info.st_ino and info.st_size >= prev[1] else 0
+    if pos == 0 and start is not None and info.st_mtime < start:
+        return
+    with os.fdopen(os.dup(fd), "rb") as handle:
+        handle.seek(pos)
+        while state.sub_read < MAX_SPAN_BYTES:
+            line = handle.readline(MAX_LINE + 1)
+            if not line or (not line.endswith(b"\n") and len(line) <= MAX_LINE):
+                break
+            state.sub_read += len(line)
+            pos = handle.tell()
+            if len(line) > MAX_LINE:
+                while not line.endswith(b"\n") and state.sub_read < MAX_SPAN_BYTES:
+                    line = handle.readline(MAX_LINE)
+                    state.sub_read += len(line)
+                    if not line:
+                        break
+                pos = handle.tell()
+                continue
+            _count_subagent_line(line, state)
+    state.subs[fpath] = (info.st_ino, pos)
+
+
 def _read_subagents(path: str, state: SpanState) -> None:
     root = os.path.join(path[:-6] if path.endswith(".jsonl") else path, "subagents")
     listed = agent_files_signature(Path(root))
@@ -246,45 +292,7 @@ def _read_subagents(path: str, state: SpanState) -> None:
             failed.add(name)
             continue
         try:
-            info = os.fstat(fd)
-            if not stat.S_ISREG(info.st_mode):
-                continue
-            prev = state.subs.get(fpath)
-            pos = prev[1] if prev and prev[0] == info.st_ino and info.st_size >= prev[1] else 0
-            if pos == 0 and start is not None and info.st_mtime < start:
-                continue
-            with os.fdopen(os.dup(fd), "rb") as handle:
-                handle.seek(pos)
-                while state.sub_read < MAX_SPAN_BYTES:
-                    line = handle.readline(MAX_LINE + 1)
-                    if not line or (not line.endswith(b"\n") and len(line) <= MAX_LINE):
-                        break
-                    state.sub_read += len(line)
-                    pos = handle.tell()
-                    if len(line) > MAX_LINE:
-                        while not line.endswith(b"\n") and state.sub_read < MAX_SPAN_BYTES:
-                            line = handle.readline(MAX_LINE)
-                            state.sub_read += len(line)
-                            if not line:
-                                break
-                        pos = handle.tell()
-                        continue
-                    try:
-                        record = json.loads(line)
-                    except ValueError:
-                        continue
-                    if not isinstance(record, dict) or record.get("type") != "assistant":
-                        continue
-                    stamp = record.get("timestamp")
-                    if isinstance(stamp, str) and ((state.start_ts and stamp < state.start_ts)
-                                                   or (state.end_ts and stamp > state.end_ts)):
-                        continue
-                    content = _blocks(record)
-                    for block in content if isinstance(content, list) else []:
-                        if isinstance(block, dict) and block.get("type") == "tool_use":
-                            for category in classify_call(str(block.get("name") or ""), block.get("input")):
-                                state.facts.categories[category] = state.facts.categories.get(category, 0) + 1
-            state.subs[fpath] = (info.st_ino, pos)
+            _read_subagent_file(fd, fpath, start, state)
         except OSError as exc:
             failed.add(name)
             logger.debug("skill_subagent_unreadable", error_type=type(exc).__name__)

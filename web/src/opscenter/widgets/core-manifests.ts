@@ -71,13 +71,6 @@ const BOOKMARKS_SETTINGS: WidgetSettingsSchema = {
   groups: [{ labelKey: 'widgets.setting.bookmarks.group.preview', fields: ['showPreview', 'previewTurns'] }],
 };
 
-const ALERT_BADGE_FIELD = {
-  kind: 'boolean',
-  labelKey: 'widgets.setting.alert_badge.show',
-  hintKey: 'widgets.setting.alert_badge.show.hint',
-  default: true,
-} as const;
-
 const FILES_SETTINGS: WidgetSettingsSchema = {
   version: 1,
   fields: {
@@ -95,20 +88,8 @@ const FILES_SETTINGS: WidgetSettingsSchema = {
       default: 'global',
       control: 'segmented',
     },
-    showBadge: ALERT_BADGE_FIELD,
   },
-  groups: [
-    { labelKey: 'widgets.setting.files.group.roots', fields: ['showGlobalFolder', 'topFolder'] },
-    { labelKey: 'widgets.setting.alert_badge.group', fields: ['showBadge'] },
-  ],
-};
-
-const ALERT_BADGE_SETTINGS: WidgetSettingsSchema = {
-  version: 1,
-  fields: {
-    showBadge: ALERT_BADGE_FIELD,
-  },
-  groups: [{ labelKey: 'widgets.setting.alert_badge.group', fields: ['showBadge'] }],
+  groups: [{ labelKey: 'widgets.setting.files.group.roots', fields: ['showGlobalFolder', 'topFolder'] }],
 };
 
 const LEDGER_LOOKS: WidgetLooks = { names: ['compact', 'full'], defaults: { home: 'full', drawer: 'compact' } };
@@ -138,16 +119,16 @@ const EXTRAS: Readonly<Record<CellId | CoreKind, CoreExtras>> = {
   'activity-log': { category: 'monitoring', type: 'feed', capabilities: [], settings: ACTIVITY_LOG_SETTINGS },
   notes: { category: 'tools', type: 'tool', capabilities: ['server-write'], scope: 'session' },
   files: { category: 'tools', type: 'tool', capabilities: ['navigate', 'server-write'], scope: 'session', settings: FILES_SETTINGS },
-  changes: { category: 'tools', type: 'list', capabilities: [], scope: 'session', settings: ALERT_BADGE_SETTINGS },
-  'task-manager': { category: 'tools', type: 'feed', capabilities: ['server-write'], scope: 'session', settings: ALERT_BADGE_SETTINGS, views: viewsFor('task-manager'), remembers: TASK_MANAGER_REMEMBERS },
-  'task-manager-mk2': { category: 'tools', type: 'feed', capabilities: ['server-write'], scope: 'session', settings: ALERT_BADGE_SETTINGS, views: viewsFor('task-manager-mk2'), remembers: TASK_MANAGER_REMEMBERS },
-  'task-manager-mk2-all': { category: 'tools', type: 'feed', capabilities: ['server-write'], settings: ALERT_BADGE_SETTINGS, viewOf: 'core.task-manager-mk2', remembers: TASK_MANAGER_REMEMBERS },
-  'task-manager-all': { category: 'tools', type: 'feed', capabilities: ['server-write'], settings: ALERT_BADGE_SETTINGS, viewOf: 'core.task-manager', remembers: TASK_MANAGER_REMEMBERS },
+  changes: { category: 'tools', type: 'list', capabilities: [], scope: 'session' },
+  'task-manager': { category: 'tools', type: 'feed', capabilities: ['server-write'], scope: 'session', views: viewsFor('task-manager'), remembers: TASK_MANAGER_REMEMBERS },
+  'task-manager-mk2': { category: 'tools', type: 'feed', capabilities: ['server-write'], scope: 'session', views: viewsFor('task-manager-mk2'), remembers: TASK_MANAGER_REMEMBERS },
+  'task-manager-mk2-all': { category: 'tools', type: 'feed', capabilities: ['server-write'], viewOf: 'core.task-manager-mk2', remembers: TASK_MANAGER_REMEMBERS },
+  'task-manager-all': { category: 'tools', type: 'feed', capabilities: ['server-write'], viewOf: 'core.task-manager', remembers: TASK_MANAGER_REMEMBERS },
   crosstalk: { category: 'tools', type: 'feed', capabilities: [], scope: 'session' },
-  tasks: { category: 'tools', type: 'list', capabilities: [], scope: 'session', settings: ALERT_BADGE_SETTINGS, views: viewsFor('tasks') },
-  'tasks-all': { category: 'tools', type: 'list', capabilities: [], settings: ALERT_BADGE_SETTINGS, viewOf: 'core.tasks' },
+  tasks: { category: 'tools', type: 'list', capabilities: [], scope: 'session', views: viewsFor('tasks') },
+  'tasks-all': { category: 'tools', type: 'list', capabilities: [], viewOf: 'core.tasks' },
   automations: { category: 'tools', type: 'list', capabilities: ['server-write'], scope: 'session', views: viewsFor('automations') },
-  'automations-all': { category: 'tools', type: 'list', capabilities: ['server-write'], settings: ALERT_BADGE_SETTINGS, viewOf: 'core.automations' },
+  'automations-all': { category: 'tools', type: 'list', capabilities: ['server-write'], viewOf: 'core.automations' },
   timeline: { category: 'tools', type: 'list', capabilities: ['server-write', 'navigate'], scope: 'session' },
   bookmarks: { category: 'tools', type: 'list', capabilities: ['server-write'], scope: 'session', settings: BOOKMARKS_SETTINGS, views: viewsFor('bookmarks') },
   'bookmarks-all': { category: 'tools', type: 'list', capabilities: ['server-write'], viewOf: 'core.bookmarks' },
@@ -157,10 +138,10 @@ const EXTRAS: Readonly<Record<CellId | CoreKind, CoreExtras>> = {
   'machine-stats': { category: 'monitoring', type: 'monitor', capabilities: [] },
   'keep-awake': { category: 'monitoring', type: 'monitor', capabilities: ['server-write'] },
   // waiting on you
-  'task-list': { category: 'tools', type: 'feed', capabilities: ['server-write', 'navigate'], settings: ALERT_BADGE_SETTINGS },
+  'task-list': { category: 'tools', type: 'feed', capabilities: ['server-write', 'navigate'] },
   'session-contents': { category: 'tools', type: 'list', capabilities: [], scope: 'session' },
   warroom: { category: 'monitoring', type: 'monitor', capabilities: [] },
-  questions: { category: 'monitoring', type: 'feed', capabilities: ['server-write', 'navigate'], settings: ALERT_BADGE_SETTINGS },
+  questions: { category: 'monitoring', type: 'feed', capabilities: ['server-write', 'navigate'] },
   shell: { category: 'tools', type: 'pane', capabilities: ['terminal-input'], scope: 'session' },
   terminal: {
     category: 'live',

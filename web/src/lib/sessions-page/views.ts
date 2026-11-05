@@ -1,4 +1,4 @@
-import { readChoice, writeChoice } from './stored-choice';
+import { readChoice, writeChoice } from '../../opscenter/ui/stored-choice';
 
 export const VIEWS = ['list', 'pivot', 'timeline'] as const;
 export type SessionsView = (typeof VIEWS)[number];

@@ -4,7 +4,7 @@
     import { PROJECT_CREATE_KEYS } from '../../../../client/js/labels/project-create.js';
     import type { Translate } from '../sessions/types';
     import type { ProjectDetails } from './modal-types';
-    import ModalShell from './ModalShell.svelte';
+    import ModalShell from '../dialog-frame/ModalShell.svelte';
     import IconButton from '../base/IconButton.svelte';
     import Button from '../base/Button.svelte';
     import Field from '../base/Field.svelte';

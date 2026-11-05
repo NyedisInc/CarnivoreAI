@@ -6,7 +6,7 @@ import uuid as _uuid
 from dataclasses import dataclass
 from typing import List, Optional
 
-from src.core import session_group_rule as rule_store
+from src.core.session_groups import session_group_rule as rule_store
 from src.core import session_group_style as style_store
 from src.core.db import column_exists, table_exists, transaction
 from src.core.session_group_style_ddl import SESSION_GROUP_STYLES_TABLE

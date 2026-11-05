@@ -48,9 +48,9 @@
   "status": "stable",
   "summary": "see at a glance whether a session is running claude, codex or another supported harness.",
   "surfaces": [
-    "web/src/lib/launchpad/AgentFamilyPill.svelte"
+    "web/src/lib/sessions/AgentMarks.svelte"
   ],
-  "updated": "2026-09-27",
+  "updated": "2026-10-30",
   "where": [
     "Next to each session in the drawer and in the running sessions list."
   ]

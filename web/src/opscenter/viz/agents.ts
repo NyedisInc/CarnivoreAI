@@ -61,12 +61,41 @@ export function agentChart(result: QueryResult | null): { result: QueryResult | 
   return { result: { ...result, series }, lines };
 }
 
+const BUCKET_MINUTES: Partial<Record<QueryResult['resolution'], number>> = { minute: 1, '5minute': 5, hour: 60, day: 1440, week: 10080 };
+
+function bucketMinutes(result: QueryResult): number {
+  const fixed = BUCKET_MINUTES[result.resolution];
+  if (fixed) return fixed;
+  let gap = Infinity;
+  for (const item of result.series) {
+    for (let at = 1; at < item.points.length; at++) {
+      const step = Date.parse(item.points[at]!.time) - Date.parse(item.points[at - 1]!.time);
+      if (step > 0 && step < gap) gap = step;
+    }
+  }
+  return Number.isFinite(gap) ? gap / 60000 : 0;
+}
+
+export function agentP95(result: QueryResult | null): number {
+  if (!result) return 0;
+  const minutes = bucketMinutes(result);
+  if (!(minutes > 0)) return 0;
+  const rates: number[] = [];
+  for (const item of result.series) {
+    if (item.key === OTHER_KEY) continue;
+    for (const point of item.points) if (point.value && point.value > 0) rates.push(point.value / minutes);
+  }
+  if (!rates.length) return 0;
+  rates.sort((a, b) => a - b);
+  return rates[Math.ceil(0.95 * rates.length) - 1]!;
+}
+
 export interface LiveAgent { key: string; name: string; color: string; perMinute: number; share: number }
 
-export function liveAgents<T extends { activity_status?: string | null; claude_session_uuid?: string | null }>(live: LivePayload | null, sessions: readonly T[] | null): LiveAgent[] {
+export function liveAgents<T extends { activity_status?: string | null; claude_session_uuid?: string | null }>(live: LivePayload | null, sessions: readonly T[] | null, reference = 0): LiveAgent[] {
   const rows = (live?.agents_5m ?? [])
     .filter((row) => row.tokens_per_minute > 0 && liveSessionFor(row.conversation_id, sessions))
     .sort((a, b) => b.tokens_per_minute - a.tokens_per_minute || a.name.localeCompare(b.name));
-  const top = rows[0]?.tokens_per_minute ?? 0;
-  return rows.map((row) => ({ key: row.conversation_id, name: row.name, color: agentColor(row.conversation_id), perMinute: row.tokens_per_minute, share: top > 0 ? row.tokens_per_minute / top : 0 }));
+  const top = reference > 0 ? reference : rows[0]?.tokens_per_minute ?? 0;
+  return rows.map((row) => ({ key: row.conversation_id, name: row.name, color: agentColor(row.conversation_id), perMinute: row.tokens_per_minute, share: top > 0 ? Math.min(1, row.tokens_per_minute / top) : 0 }));
 }

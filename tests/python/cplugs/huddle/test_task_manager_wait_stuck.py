@@ -146,3 +146,32 @@ def test_an_agent_can_not_ask_a_datetime_with_a_recommendation():
     assert ok[0]["type"] == "datetime"
     with pytest.raises(TaskManagerInvalid, match="recommendation"):
         rich_ask.normalize([{"type": "datetime", "prompt": "when?", "recommend": {"text": "2030-01-01T00:00:00Z"}}])
+
+
+
+@pytest.mark.parametrize("typed,rule", [("friday 9am", "time"), ("2030-10-30T09:00:00", "time_offset"), ("2020-01-01T09:00:00+00:00", "time_past"), (None, "time_needed")])
+def test_a_refused_time_answer_names_its_task_and_question_in_the_error_body(client, env, told, typed, rule):  # noqa: F811
+    item = stuck(env, client)
+    question = question_of(env.store.item(item))
+    answers = {"q1": {"choice": "until"}, **({"q2": {"text": typed}} if typed else {})}
+    refused = client.post(f"/api/v1/cplugs/huddle/questions/{question['id']}/answer", json={"answers": answers})
+    assert refused.status_code == 400
+    detail = refused.json()["detail"]
+    assert detail["code"] == "task_manager_invalid" and detail["question"] == {"id": "q2", "rule": rule, "item": item}
+
+
+@pytest.mark.parametrize("picked", ["2030-10-30T09:00:00-04:00", "2030-10-30T09:00:00+05:30", "2030-10-30T09:00:00+00:00", "2030-03-10T02:30:00-04:00"])
+def test_every_time_the_picker_builds_is_taken(client, env, told, picked):  # noqa: F811
+    item = stuck(env, client)
+    done = AnswerWriter(env.store).submit(question_of(env.store.item(item))["id"], {"q1": {"choice": "until"}, "q2": {"text": picked}})
+    assert done["carnivore"]["choice"] == "until"
+
+
+@pytest.mark.parametrize("text,rule", [("2020-01-01T09:00:00+00:00", "time_past"), ("soon", "time"), ("2030-10-30T09:00:00", "time")])
+def test_owner_time_labels_only_a_past_time_as_past(text, rule):
+    from src.cplugs.huddle.roles import wait_stuck
+    from src.cplugs.huddle.rules import TaskManagerAnswerInvalid
+
+    with pytest.raises(TaskManagerAnswerInvalid) as refused:
+        wait_stuck.owner_time(text, time.time())
+    assert refused.value.question == {"id": "q2", "rule": rule}

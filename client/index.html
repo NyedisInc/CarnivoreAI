@@ -9,7 +9,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Carnivore">
-    <meta name="cloude-app-version" content="{{VERSION}}">
+    <meta name="cloude-app-version" content="{{VERSION}}" data-dev-build="{{DEV_BUILD}}">
     <meta name="cloude-client-build" content="{{CLIENT_BUILD}}">
     <meta name="theme-color" content="#0a0a0a">
     <link rel="manifest" href="/manifest.webmanifest">
@@ -52,11 +52,9 @@
     <link rel="stylesheet" href="/static/css/wrapper-mark.css" />
     <link rel="stylesheet" href="/static/css/text-prompt-modal.css" />
     <link rel="stylesheet" href="/static/css/new-agent-flow.css" />
-    <link rel="stylesheet" href="/static/css/confirm-modal.css" />
     <link rel="stylesheet" href="/static/css/session-restore-offer.css" />
     <link rel="stylesheet" href="/static/css/sidebar-help.css" />
     <link rel="stylesheet" href="/static/css/media-lightbox.css" />
-    <link rel="stylesheet" href="/static/css/recent-deleted.css" />
     <link rel="stylesheet" href="/static/css/terminal-tools.css" />
     <link rel="stylesheet" href="/static/css/phone-tabs-bar.css" />
     <link rel="stylesheet" href="/static/css/copy-output.css" />
@@ -84,6 +82,7 @@
     <link rel="stylesheet" href="/static/css/deep-link-notice.css" />
     <link rel="stylesheet" href="/static/css/effort-level.css" />
     <link rel="stylesheet" href="/static/css/animation-pause.css" />
+    <link rel="stylesheet" href="/static/css/resting-row-lights.css" />
     <link rel="stylesheet" href="/static/css/animation-calm.css" />
     <link rel="stylesheet" href="/static/css/animation-types.css" />
     <link rel="stylesheet" href="/static/dist/app.css" />
@@ -251,6 +250,7 @@
     <div id="huddle-swarm-screen"></div>
     <div id="sessions-screen"></div>
     <div id="settings-screen"></div>
+    <div id="command-palette"></div>
 
     <div id="menu-page-bar"></div>
 
@@ -289,6 +289,7 @@
     <script src="/static/vendor/xterm/xterm-addon-webgl.js"></script>
     <script src="/static/vendor/xterm/xterm-addon-unicode11.js"></script>
     <script src="/static/vendor/xterm/xterm-addon-search.js"></script>
+    <script src="/static/vendor/xterm/xterm-addon-web-links.js"></script>
 
     <script src="/static/js/dismiss-guard.js"></script>
     <script src="/static/js/navigation-generation.js"></script>
@@ -305,11 +306,16 @@
     <script src="/static/js/module-families.js"></script>
     <script src="/static/js/api-toasts.js"></script>
     <script src="/static/js/api-catalog.js"></script>
+    <script src="/static/js/api-catalog-community.js"></script>
+    <script src="/static/js/api-catalog-publish.js"></script>
+    <script src="/static/js/api-catalog-account.js"></script>
     <script src="/static/js/api-session-groups.js"></script>
     <script src="/static/js/api-provider-ledger.js"></script>
     <script src="/static/js/api-config-files.js"></script>
     <script src="/static/js/api-projects.js"></script>
-    <script src="/static/js/api-session-lifecycle.js"></script>
+    <script src="/static/js/api-session-restart.js"></script>
+    <script src="/static/js/api-session-records.js"></script>
+    <script src="/static/js/api-session-adopt.js"></script>
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/preferences.js"></script>
     <script src="/static/js/preferences-transport.js"></script>
@@ -321,14 +327,13 @@
     <script src="/static/js/toast-version-arbitration.js"></script>
     <script src="/static/js/toast.js"></script>
     <script src="/static/js/toast-grouping.js"></script>
-    <script src="/static/js/toast-render.js"></script>
+    <script src="/static/js/toast-view.js"></script>
     <script src="/static/js/toast-lifecycle.js"></script>
     <script src="/static/js/toast-mode.js"></script>
     <script src="/static/js/toast-dismissed-ring.js"></script>
     <script src="/static/js/toast-navigate.js"></script>
     <script src="/static/js/toast-global-poll.js"></script>
     <script src="/static/js/attachment-toast.js"></script>
-    <script src="/static/js/toast-collapse.js"></script>
     <script src="/static/js/write-failure-notice.js"></script>
     <script src="/static/js/status-led.js"></script>
     <script src="/static/js/visibility-observer.js"></script>
@@ -362,6 +367,7 @@
     <script src="/static/js/terminal-metrics.js"></script>
     <script src="/static/js/terminal-layout-wait.js"></script>
     <script src="/static/js/terminal-socket-abandon.js"></script>
+    <script src="/static/js/terminal-primary-hold.js"></script>
     <script src="/static/js/terminal-size-master.js"></script>
     <script src="/static/js/terminal-size-vote.js"></script>
     <script src="/static/js/terminal-resize-settle.js"></script>
@@ -385,8 +391,10 @@
     <script src="/static/js/terminal-header-rename.js"></script>
     <script src="/static/js/terminal-client-factory.js"></script>
     <script src="/static/js/terminal-addons.js"></script>
+    <script src="/static/js/terminal-links.js"></script>
     <script src="/static/js/terminal-option-meta.js"></script>
     <script src="/static/js/terminal-screen-reader.js"></script>
+    <script src="/static/js/terminal-font.js"></script>
     <script src="/static/js/terminal-paint-gate.js"></script>
     <script src="/static/js/terminal-teardown.js"></script>
     <script src="/static/js/terminal-session-bind.js"></script>
@@ -416,6 +424,7 @@
     <script src="/static/js/screen-chrome.js"></script>
 
     <script src="/static/js/session-key.js"></script>
+    <script src="/static/js/theme-scheme.js"></script>
     <script src="/static/js/theme-var-writer.js"></script>
     <script src="/static/js/theme-consent.js"></script>
     <script src="/static/js/themes/registry.js"></script>
@@ -484,7 +493,7 @@
     <div id="pack-op-toast-container"></div>
     <div id="perf-overlay-container"></div>
 
-    <div id="toast-container" class="toast-container" data-oc-base aria-live="polite"></div>
+    <div id="toast-container" class="toast-container" data-oc-base aria-live="polite" aria-relevant="additions text"></div>
 
     <input type="file" id="cloude-image-attach-input" hidden />
 

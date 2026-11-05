@@ -1,4 +1,5 @@
 import { t } from '../i18n/index.svelte';
+import type { SidebarPick } from '../legacy-globals';
 import { confirmOk, onMiddleClick } from '../confirm-ok/confirm-ok';
 import { KIND_BROWSER, KIND_LAYOUT, kindOf } from '../drawer/bucketing';
 import { sleepRows } from './heading-project-actions';
@@ -20,8 +21,8 @@ export type MiddleAction = 'sleep' | 'close-sleeping' | 'close-live' | 'close-me
 function drawerRowOf(rowEl: Element): DrawerRow | null {
     const name = dataOf(rowEl, 'name');
     const uuid = dataOf(rowEl, 'sessionUuid');
-    const rows = (drawer() as { _rows?: DrawerRow[] } | null)?._rows;
-    if (!Array.isArray(rows)) return null;
+    const rows = (drawer() as SidebarPick<'rows'> | null)?.rows<DrawerRow>();
+    if (!rows) return null;
     if (uuid) return rows.find((r) => r.session_uuid === uuid) ?? null;
     return name ? rows.find((r) => r.name === name) ?? null : null;
 }

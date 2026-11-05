@@ -209,7 +209,7 @@
       display: flex;
       align-items: center;
       min-width: 0;
-      padding: 0 10px;
+      padding: 0 var(--oc-cell-pad-x);
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
@@ -224,16 +224,16 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 2px;
+      gap: var(--oc-space-0-5);
       height: auto;
       min-height: var(--oc-tap);
-      padding: 6px 10px;
+      padding: var(--oc-space-1-5) var(--oc-cell-pad-x);
     }
 
     .oc-table-line {
       display: grid;
       align-items: center;
-      gap: 10px;
+      gap: var(--oc-gap-parts);
       min-width: 0;
     }
 

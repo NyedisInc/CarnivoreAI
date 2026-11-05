@@ -1,4 +1,5 @@
 import { authFetch } from '../../opscenter/api/auth.svelte';
+import { WATCHED_EVENT, watchedSessionId } from './quiet-watched.svelte';
 
 export const BEAT_MS = 30000;
 export const IDLE_MS = 5 * 60 * 1000;
@@ -7,7 +8,8 @@ const INPUT_EVENTS = ['pointerdown', 'keydown', 'wheel', 'touchstart', 'pointerm
 
 export interface PresenceDeps {
     clientId?: () => string | null;
-    post?: (clientId: string, active: boolean) => void;
+    post?: (clientId: string, active: boolean, watched: string) => void;
+    watched?: () => string;
     now?: () => number;
     doc?: Document;
     win?: Window;
@@ -22,8 +24,8 @@ function pageClientId(): string | null {
     }
 }
 
-function postBeat(clientId: string, active: boolean): void {
-    void authFetch('/notifications/presence', { method: 'POST', body: JSON.stringify({ client_id: clientId, active }), keepalive: true }).catch(() => undefined);
+function postBeat(clientId: string, active: boolean, watched: string): void {
+    void authFetch('/notifications/presence', { method: 'POST', body: JSON.stringify({ client_id: clientId, active, watched }), keepalive: true }).catch(() => undefined);
 }
 
 export function startPresenceBeacon(deps: PresenceDeps = {}): () => void {
@@ -32,6 +34,7 @@ export function startPresenceBeacon(deps: PresenceDeps = {}): () => void {
     const now = deps.now ?? Date.now;
     const idOf = deps.clientId ?? pageClientId;
     const post = deps.post ?? postBeat;
+    const watched = deps.watched ?? watchedSessionId;
     let lastInput = Number.NEGATIVE_INFINITY;
     let announced = false;
 
@@ -42,10 +45,10 @@ export function startPresenceBeacon(deps: PresenceDeps = {}): () => void {
         if (!id) return;
         if (present()) {
             announced = true;
-            post(id, true);
+            post(id, true, watched());
         } else if (announced) {
             announced = false;
-            post(id, false);
+            post(id, false, '');
         }
     };
 
@@ -59,18 +62,20 @@ export function startPresenceBeacon(deps: PresenceDeps = {}): () => void {
         const id = idOf();
         if (id && announced) {
             announced = false;
-            post(id, false);
+            post(id, false, '');
         }
     };
 
     for (const name of INPUT_EVENTS) doc.addEventListener(name, onInput, { passive: true });
     doc.addEventListener('visibilitychange', onVisibility);
     win.addEventListener('pagehide', onHide);
+    win.addEventListener(WATCHED_EVENT, onVisibility);
     const timer = win.setInterval(beat, BEAT_MS);
     return () => {
         for (const name of INPUT_EVENTS) doc.removeEventListener(name, onInput);
         doc.removeEventListener('visibilitychange', onVisibility);
         win.removeEventListener('pagehide', onHide);
+        win.removeEventListener(WATCHED_EVENT, onVisibility);
         win.clearInterval(timer);
     };
 }

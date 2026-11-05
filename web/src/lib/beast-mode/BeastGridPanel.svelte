@@ -4,6 +4,8 @@
     import type { Translate } from '../sessions/types';
     import { authFetch } from '../../opscenter/api/auth.svelte';
     import SettingsForm from '../item-settings/SettingsForm.svelte';
+    import BeastSwitchStrip from './BeastSwitchStrip.svelte';
+    import { beastStatus } from './control.svelte';
     import SettingsMatrix from '../item-settings/SettingsMatrix.svelte';
     import type { SettingValue } from '../item-settings/api';
     import '../settings-page/panel-kit/panel-kit.css';
@@ -15,6 +17,8 @@
         fetcher?: typeof authFetch;
     }
     const { t = reactiveT, fetcher = authFetch }: Props = $props();
+
+    const promptsIdle = $derived(beastStatus.data?.enabled === true && beastStatus.data.prompts !== true);
 
     const ROUTE = '/beast-mode/rules';
     let rules = $state<BeastRules | null>(null);
@@ -48,8 +52,9 @@
 </script>
 
 <div class="tm" data-beast-grid="panel">
+    <BeastSwitchStrip {t} {fetcher} />
     {#if rules}
-        <SettingsMatrix matrix={gridMatrix(rules)} fields={gridFields(rules)} values={gridValues(rules)} {t} onChange={(key, value) => void change(key, value)}
+        <SettingsMatrix matrix={gridMatrix(rules, promptsIdle)} fields={gridFields(rules)} values={gridValues(rules)} {t} onChange={(key, value) => void change(key, value)}
             {busy} error={problem} idPrefix="beast-grid" />
         <SettingsForm schema={scopeSchema(rules)} values={rules.trust_scope === 'projects' ? {} : { [TRUST_SCOPE_KEY]: rules.trust_scope }} {t} onChange={(key, value) => void change(key, value)}
             busyKey={busy ? TRUST_SCOPE_KEY : null} error={problem} idPrefix="beast-scope" heading={false} />

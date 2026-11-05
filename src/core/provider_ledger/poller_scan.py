@@ -9,7 +9,7 @@ from typing import Callable, Dict, List, Optional, Set
 import structlog
 
 from src.config.provider_accounts import DEFAULT_CLAUDE_CONFIG_DIR, ProviderAccount
-from src.core.provider_ledger import credential_signal
+from src.core.provider_ledger import credential_signal, relay_accounts
 from src.core.provider_ledger.default_login import default_login_is_configured
 from src.core.provider_ledger.poller_state import AccountState
 
@@ -49,11 +49,11 @@ async def read_accounts(
 
 
 def with_auto_default(
-    accounts: List[ProviderAccount], label: Optional[str] = None
+    accounts: List[ProviderAccount], label: Optional[str] = None, *, include_relay: bool = True
 ) -> List[ProviderAccount]:
-    if default_login_is_configured(accounts):
-        return accounts
-    return [*accounts, default_login_row(label)]
+    if not default_login_is_configured(accounts):
+        accounts = [*accounts, default_login_row(label)]
+    return relay_accounts.with_relay(accounts) if include_relay else accounts
 
 
 def default_login_row(label: Optional[str] = None) -> ProviderAccount:

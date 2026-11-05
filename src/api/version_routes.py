@@ -15,7 +15,7 @@ from src.core.db_models import CURRENT_SCHEMA_VERSION
 from src.core.db_state import DatastoreState
 from src.core.static_asset_keys import client_build_key
 from src.core.update_check import UpdateChecker
-from src.core.version import resolve_version
+from src.core.version import dev_build, resolve_version
 
 router = APIRouter()
 
@@ -111,6 +111,7 @@ async def get_version() -> dict:
             }),
             "data": _datastore_block(),
             "client_build": client_build_key(),
+            "dev_build": dev_build(),
         }
     status = _checker.status()
     return {
@@ -118,4 +119,5 @@ async def get_version() -> dict:
         "update": _folded_update(status.to_dict() if _checker.applicable() else None),
         "data": _datastore_block(),
         "client_build": client_build_key(),
+        "dev_build": dev_build(),
     }

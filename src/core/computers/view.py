@@ -123,6 +123,7 @@ def build_view(rt: Any, links: Any) -> Dict[str, Any]:
                      "join_open": bool(rt.join_server is not None and rt.join_server.port is not None),
                      "addresses": list(rt.addresses) if role != "member" else [],
                      "code_paused_until": iso(rt.invites.code_paused_until) if rt.invites is not None and rt.invites.code_paused() else None},
+            "findable": None if role == "member" else rt.findable(),
             "main": ({"label": main["label"], "state": main["state"], "last_link_at": main["last_link_at"], "reachable_note": _main_note(main)}
                      if main is not None else None),
         },

@@ -12,6 +12,7 @@ from src.core.db import connect, db_path_for
 from src.core.flow_data import live
 from src.core.skills.ledger import InstallLedger
 from src.cplugs.host import activity_log, capabilities, dependencies, flow_port, owner_switch, sidecar_index, sidecar_registry, sidecar_topics
+from src.cplugs.host.session_create_port import SessionCreatePort, standing_of
 from src.cplugs.host.mcp_health_port import PLUGIN_ID as MCP_HEALTH_ID, HostMcpHealth
 from src.cplugs.host.runtime import CPLUGS_TOPIC
 from src.cplugs.runtime import guards, sandbox
@@ -61,10 +62,14 @@ class SidecarRuntime:
         self.effects = SideEffects()
         self.children = ChildLedger(self.state_dir)
         self._activity = activity_log.ActivityLog(self.state_dir)
+        self._create_standing: Callable[[str], str] = lambda _pid: "not_running"
+        self.session_create = SessionCreatePort(app, standing=lambda pid: self._create_standing(pid))
+        self.effects.register("inbox", self.session_create.withdraw_for)
         self.dispatcher = HostDispatcher(self._services(), self.tokens)
         self.supervisor = Supervisor(self.state_dir, app_version if app_version is not None else (dependencies.app_version() or "0"),
                                      self.dispatcher, self._supervisor_alert, self.effects.cancel, self._record_activity,
                                      safe_mode=True, children=self.children)
+        self._create_standing = standing_of(self.supervisor, self.state_dir)
         self.supervisor.on_stopped = self._on_stopped
         self.index = sidecar_index.IndexAdapter(self, self._catalog_cache)
         self.mcp_health: Optional[HostMcpHealth] = None
@@ -180,6 +185,7 @@ class SidecarRuntime:
         return HostServices(activity=self._record_activity, list_sessions=list_sessions, get_session=get_session, toast=toast,
                             alert=self._plugin_alert, publish_topic=publish_topic, invalidate_ui=invalidate_ui,
                             process_snapshot=process_snapshot, mcp_config=mcp_config, mcp_links=mcp_links,
+                            create_session=self.session_create.create,
                             flow_run=flow.run, flow_run_part=flow.part, flow_feed=flow.feed, flow_tasks=flow.tasks)
 
 

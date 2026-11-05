@@ -45,6 +45,7 @@ function el() {
 
 function load() {
     const opens = [];
+    const variants = [];
     const state = { open: 0, maxConcurrent: 0 };
     const sandbox = {
         console: { log() {}, warn() {}, error() {} },
@@ -62,6 +63,7 @@ function load() {
         fetch: () => Promise.reject(new Error('no network in this harness')),
         WebSocket: function WebSocketShim() { this.close = () => {}; },
         CloudeI18n: { t: (key) => key },
+        CloudeTr: (key) => key,
     };
     sandbox.window = sandbox;
     vm.createContext(sandbox);
@@ -78,6 +80,7 @@ function load() {
         state.open += 1;
         state.maxConcurrent = Math.max(state.maxConcurrent, state.open);
         opens.push(args.slice(0, 2));
+        variants.push(args[5]);
         await new Promise((r) => setTimeout(r, 1));
         state.open -= 1;
         return true;
@@ -93,7 +96,7 @@ function load() {
     sandbox.API = { destroySession: () => Promise.resolve({}) };
     sandbox.Auth = { logout() { sandbox.__loggedOut = true; } };
 
-    return { sandbox, opens, state };
+    return { sandbox, opens, state, variants };
 }
 
 await test('the harness can actually observe a dialog (positive control)', async () => {
@@ -114,6 +117,12 @@ await test('logging out with an active session raises exactly ONE confirmation',
         'confirmations must never be on screen at the same time');
     assert.equal(sandbox.__loggedOut, true,
         'the logout must still complete after the single confirmation');
+});
+
+await test('the logout confirm is destructive: its 6th argument is danger', async () => {
+    const { sandbox, variants } = load();
+    await sandbox.App.logout();
+    assert.deepEqual(variants, ['danger']);
 });
 
 await test('the one dialog shown is the LOGOUT question, not the close-session one', async () => {

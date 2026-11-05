@@ -138,6 +138,10 @@ async def upload_file(
         raise HTTPException(status_code=409, detail="Active session has no working directory")
     refuse_remote(session_manager, session.id, "a file upload")
 
+    return await store_upload(file, session.working_dir)
+
+
+async def store_upload(file: UploadFile, working_dir: str) -> UploadImageResponse:
     declared_filename = file.filename or ""
     uploads_cfg = settings.load_auth_config().uploads
     data = await read_capped_upload(
@@ -159,7 +163,7 @@ async def upload_file(
 
     try:
         target_path = save_upload_to_session_dir(
-            validated_bytes, safe_name, session.working_dir
+            validated_bytes, safe_name, working_dir
         )
     except HTTPException:
         raise

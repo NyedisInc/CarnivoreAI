@@ -27,6 +27,7 @@ function readPayload(event) {
     title: title || 'carnivore',
     body: text || 'approval needed',
     path: safePath(obj.path),
+    tag: typeof obj.tag === 'string' && obj.tag && obj.tag.length <= 300 ? obj.tag : null,
     typed: Boolean(title || text),
   };
 }
@@ -39,6 +40,9 @@ self.addEventListener('push', (event) => {
   const options = { body: p.body, icon: '/apple-touch-icon.png', data: { path: p.path } };
   if (!p.typed) {
     options.tag = 'approval';
+    options.renotify = true;
+  } else if (p.tag) {
+    options.tag = p.tag;
     options.renotify = true;
   }
   event.waitUntil(self.registration.showNotification(p.title, options));

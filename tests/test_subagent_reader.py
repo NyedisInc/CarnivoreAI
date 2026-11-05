@@ -198,4 +198,53 @@ def test_the_parent_index_resumes_from_where_it_stopped(corpus):
 
 def test_a_cold_parent_over_the_cap_is_refused(corpus):
     assert read_completion_index(_transcript(corpus), cache=IncrementalCache(),
-                                 max_cold_bytes=10) is None
+                                 slice_bytes=10) is None
+
+
+SLICE = 300
+MAX_CALLS = 500
+
+
+def _warm(read, path, cache, **kwargs):
+    answers = []
+    for _ in range(MAX_CALLS):
+        answers.append(read(path, cache=cache, **kwargs))
+        if answers[-1] is not None:
+            break
+    assert len(answers) > 1 and answers[-1] is not None, "never converged"
+    assert all(answer is None for answer in answers[:-1])
+    return answers[-1]
+
+
+def test_a_parent_over_the_slice_size_is_warmed_not_refused_forever(corpus):
+    from src.core.timers.index import read_timer_index
+
+    path = _transcript(corpus)
+    warmed = _warm(read_completion_index, path, IncrementalCache(), slice_bytes=SLICE)
+    assert warmed.by_agent_id == read_completion_index(path, cache=IncrementalCache()).by_agent_id
+    assert C in warmed.by_agent_id
+    timers = _warm(read_timer_index, path, IncrementalCache(), slice_bytes=SLICE)
+    assert timers == read_timer_index(path, cache=IncrementalCache())
+
+
+def test_the_parked_launch_ledger_warms_in_slices_too(corpus, monkeypatch):
+    from src.core.subagents import parked_launches as pl
+
+    path = _transcript(corpus)
+    monkeypatch.setattr(pl, "PARENT_SLICE_BYTES", SLICE)
+    cache = IncrementalCache()
+
+    def read(p, cache):
+        return pl._incremental(p, cache, pl._Ledger, pl._scan_launches, "")
+
+    warmed = _warm(read, path, cache)
+    monkeypatch.undo()
+    assert warmed == pl._incremental(path, IncrementalCache(), pl._Ledger, pl._scan_launches, "")
+
+
+def test_an_unread_parent_makes_the_whole_listing_unchecked_not_ok(corpus, monkeypatch):
+    from src.core.subagents import reader
+
+    monkeypatch.setattr(reader, "read_completion_index", lambda path: None)
+    result = read_subagents(_transcript(corpus), conversation_uuid="u")
+    assert result.state == "unchecked"

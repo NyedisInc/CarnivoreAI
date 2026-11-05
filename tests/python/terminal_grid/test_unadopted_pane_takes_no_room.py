@@ -30,7 +30,7 @@ def _grid_html() -> str:
         "[data-cell]{flex:1;display:flex;flex-direction:column;min-height:0}.oc-frame-body{flex:1}"
         ".terminal-container{flex:1;display:flex;flex-direction:column;min-height:0}"
         f"{css}</style></head><body>"
-        '<div id="terminal-screen"><div id="terminal-grid">'
+        '<div id="terminal-screen"><div id="terminal-grid" class="ps-grid-surface">'
         '<div id="browser-screen"></div>'
         f'<div class="terminal-container" id="terminal-container"><div class="xterm" style="height:{XTERM_HEIGHT}px"></div></div>'
         '<div class="oc-surface"><div data-cell="terminal:@primary"><div class="oc-frame-body"></div></div></div>'

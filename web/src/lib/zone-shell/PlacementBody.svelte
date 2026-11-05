@@ -96,7 +96,7 @@
   const surface = $derived(look.surface);
   const headShown = $derived(
     surface === 'rail'
-      ? !!placementKey && placementHeaderShown('rail', shownOptions, widget.id)
+      ? !!meta?.ownHead || (!!placementKey && placementHeaderShown('rail', shownOptions, widget.id))
       : surface === 'drawer'
         ? !!meta?.ownHead || placementHeaderShown('drawer', shownOptions)
         : true,
@@ -174,7 +174,7 @@
       {source}
       extras={{
         header: meta?.ownHead ? null : { shown: headShown, toggle: () => source?.setOption(placementKey, HEADER_OPTION, !headShown) },
-        close: meta?.closable === false ? null : { run: remove },
+        close: { run: remove },
         ...(configurable ? { settings: [[{ id: CORE_ID.settings, label: t('widgets.menu.settings'), icon: 'settings', run: () => openConfigure(key as SlotId) }]] } : {}),
       }}
       anchor={slot.anchor}
@@ -194,7 +194,8 @@
       icon={surface === 'drawer' ? (headDecl?.icon ?? widget.icon) : (headDecl?.icon ?? null)}
       shown={headShown}
       phone={viewport.phone}
-      onRemove={meta.closable === false ? null : remove}
+      locked={pinRowId != null}
+      onRemove={remove}
       menu={copyMenu}
     />
   {/if}
@@ -241,7 +242,7 @@
 {/snippet}
 
 {#if look.card}
-  <section class="dzc" bind:this={card} data-zone-cell={manifest.id} data-zone-target={target ?? undefined} aria-label={title}>
+  <section class="dzc" data-zone-card="" bind:this={card} data-zone-cell={manifest.id} data-zone-target={target ?? undefined} aria-label={title}>
     {@render headRow()}
     {@render bodyRow()}
   </section>

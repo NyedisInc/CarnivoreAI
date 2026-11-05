@@ -1,18 +1,21 @@
 
 from __future__ import annotations
 
-import json
 import os
 import sqlite3
 import subprocess
 import sys
 import traceback
-import urllib.request
 from pathlib import Path
-from typing import Any, Callable, Optional, Protocol
+from typing import TYPE_CHECKING, Any, Callable, Optional, Protocol
 
+from scripts.lib.testsrv_client import access_token, api
 from src.core import product_identity
 
+if TYPE_CHECKING:
+    from playwright.sync_api import Page
+
+CALL_TIMEOUT_S = 30
 EXIT_PASS, EXIT_FAIL, EXIT_CANNOT_DETERMINE = 0, 1, 2
 EXIT_REFUSED = EXIT_CANNOT_DETERMINE
 LIVE_PORT = 8000
@@ -26,36 +29,42 @@ class LiveInstallRefused(RuntimeError):
 
 class SupportsCheck(Protocol):
 
-    def check(self, ok: bool, name: str, detail: str = "") -> Any: ...
+    def check(self, ok: bool, name: str, detail: Any = "") -> Any: ...
 
 
-def token_of(storage_state: str, base: str) -> str:
-    with open(storage_state) as fh:
-        state = json.load(fh)
-    for origin in state.get("origins", []):
-        if origin.get("origin") == base:
-            for item in origin.get("localStorage", []):
-                if item.get("name") == "claude_tunnel_token":
-                    return item["value"]
-    raise RuntimeError("no access token in the storage state")
+class Report:
+
+    def __init__(self) -> None:
+        self.failures: list[str] = []
+        self.lines: list[str] = []
+        self.undetermined: list[str] = []
+
+    def check(self, ok: bool, name: str, detail: Any = "") -> None:
+        tag = "PASS" if ok else "FAIL"
+        self.lines.append(f"{tag}: {name}" + (f"  [{detail}]" if detail not in ("", None) else ""))
+        if not ok:
+            self.failures.append(name)
+
+    def exit_status(self) -> int:
+        if not self.lines or (self.undetermined and not self.failures):
+            return EXIT_CANNOT_DETERMINE
+        return EXIT_FAIL if self.failures else EXIT_PASS
+
+    def note(self, text: str) -> None:
+        self.lines.append(f"      {text}")
 
 
-def call(args, path: str, method: str = "GET", body: dict | None = None):
-    req = urllib.request.Request(
-        args.base + "/api/v1" + path, method=method,
-        data=json.dumps(body).encode() if body is not None else None,
-        headers={"Content-Type": "application/json",
-                 "Authorization": "Bearer " + token_of(args.storage_state, args.base)},
-    )
-    return json.loads(urllib.request.urlopen(req, timeout=30).read() or b"null")
+def call(args: Any, path: str, method: str = "GET", body: Optional[dict] = None) -> Any:
+    token = access_token(args.storage_state, args.base)
+    return api(args.base, token, "/api/v1" + path, body, method, timeout=CALL_TIMEOUT_S)
 
 
-def set_theme(args, theme: str | None) -> None:
+def set_theme(args: Any, theme: str | None) -> None:
     rev = call(args, "/preferences")["revision"]
     call(args, "/preferences", "PATCH", {"changes": {"theme": theme}, "expected_revision": rev})
 
 
-def dismiss_offers(page) -> None:
+def dismiss_offers(page: Page) -> None:
     no = page.locator("#restore-offer-no")
     try:
         no.wait_for(state="visible", timeout=1500)
@@ -196,7 +205,7 @@ _TERMINAL_STATE_JS = (
 )
 
 
-def wait_terminal_ready(page, tries: int = 60) -> bool:
+def wait_terminal_ready(page: Page, tries: int = 60) -> bool:
     for _ in range(tries):
         page.wait_for_timeout(1000)
         state = page.evaluate(_TERMINAL_STATE_JS)
@@ -205,7 +214,7 @@ def wait_terminal_ready(page, tries: int = 60) -> bool:
     return False
 
 
-def opened_tmux_name(page) -> str | None:
+def opened_tmux_name(page: Page) -> str | None:
     name = page.evaluate(OPENED_TMUX_JS)
     return name if isinstance(name, str) and name else None
 

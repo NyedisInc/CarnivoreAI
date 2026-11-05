@@ -300,6 +300,10 @@ class Discovery:
     def advertising_wanted(self) -> bool:
         return self._advertising_wanted
 
+    @property
+    def advertise_allowed(self) -> bool:
+        return self._advertise_allowed
+
     @advertising_wanted.setter
     def advertising_wanted(self, value: bool) -> None:
         self._set("_advertising_wanted", value)

@@ -11,6 +11,8 @@ export interface Bookmark {
   created_at: string;
   snippet: string;
   entry_timestamp: string;
+  files_checkpoint_id?: number | null;
+  files_unavailable?: 'mid_turn' | 'no_snapshot' | null;
 }
 
 export interface SessionBookmark extends Bookmark {
@@ -77,6 +79,21 @@ export interface RewindResult {
   detail: string | null;
 }
 
+export type RewindMode = 'conversation' | 'files' | 'both';
+
+export interface RewindFilesResult {
+  mode: 'files' | 'both';
+  conversation: RewindResult | null;
+  checkpoint_id: number;
+  files_restored: boolean;
+  files_error: string | null;
+  why: string | null;
+  safety_id: number | null;
+  changed: string[];
+  created: string[];
+  deleted: string[];
+}
+
 export type Point = { bookmarkId: number } | { entryUuid: string };
 
 export const TURNS_PAGE = 50;
@@ -119,4 +136,8 @@ export function rewindTo(rowId: number, point: Point, confirm: boolean): Promise
 
 export function getPreview(id: number, turns?: number): Promise<BookmarkPreview> {
   return authFetch<BookmarkPreview>(`/bookmarks/${id}/preview${turns === undefined ? '' : `?turns=${turns}`}`);
+}
+
+export function rewindFiles(bookmarkId: number, mode: 'files' | 'both', confirm: boolean): Promise<RewindFilesResult> {
+  return authFetch<RewindFilesResult>(`/bookmarks/${bookmarkId}/rewind/files`, json({ mode, confirm }));
 }

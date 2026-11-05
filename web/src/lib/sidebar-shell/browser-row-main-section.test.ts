@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import { autoAnswerConfirm } from '../../test-support/auto-answer';
 import { flushSync, mount, unmount } from 'svelte';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SessionSidebarController } from '../drawer/controller';
@@ -138,27 +139,23 @@ describe('shift turns the kebab into a red close x (#1697)', () => {
             browsers: { list: () => [], pages: () => [], close: async (id: string) => { calls.push(`close ${id}`); return true; } },
             rowMenu: rowMenuBridge,
         };
-        const confirms: string[] = [];
-        const app = (w as unknown as Record<string, any>).App;
-        (w as unknown as Record<string, any>).App = {
-            ...app,
-            showConfirmModal: async (title: string, subject: string) => { confirms.push(`${title} ${subject}`); return true; },
-        };
+        const confirmer = autoAnswerConfirm(true);
+        const confirms = (): string[] => confirmer.asked.map((a) => `${a.title} ${a.message}`);
         try {
             const page = draw(browserRow(PAGE, true));
             const browser = draw(browserRow(BROWSER, false));
             shift(true);
             await BrowserRows.onKeyClick(closeKey(page.el)!);
             expect(calls).toEqual([`close ${PAGE.slice(8)}`]);
-            expect(confirms).toEqual([]);
+            expect(confirms()).toEqual([]);
 
             await BrowserRows.onKeyClick(closeKey(browser.el)!);
             page.stop();
             browser.stop();
-            expect(confirms).toEqual(['close this proxy browser? x']);
+            expect(confirms()).toEqual(['close this proxy browser? x']);
             expect(calls).toEqual([`close ${PAGE.slice(8)}`, `close ${BROWSER.slice(8)}`]);
         } finally {
-            (w as unknown as Record<string, any>).App = app;
+            confirmer.stop();
         }
     });
 });

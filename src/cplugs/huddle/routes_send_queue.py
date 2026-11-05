@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import Query
 from pydantic import BaseModel, ConfigDict
 
-from src.cplugs.huddle import old_routes, send_queue
+from src.cplugs.huddle import send_queue
 from src.cplugs.huddle.routes import Ctx, router
 from src.cplugs.sdk import CplugContext
 
@@ -19,7 +19,6 @@ class FlushRequest(BaseModel):
 
 
 @router.get("/send-queue")
-@router.get("/tell-queue", **old_routes.retired("GET", "/tell-queue"))
 async def get_send_queue(lists: Optional[str] = Query(None), ctx: CplugContext = Ctx) -> Dict[str, Any]:
     """The pending queue of plain-change tells, its window and when it sends.
 
@@ -30,11 +29,10 @@ async def get_send_queue(lists: Optional[str] = Query(None), ctx: CplugContext =
 
 
 @router.post("/send-queue/flush")
-@router.post("/tell-queue/flush", **old_routes.retired("POST", "/tell-queue/flush"))
 async def flush_send_queue(body: FlushRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
     """Send the queued tells now, each list into its own session, and empty the queue (the key's click).
 
-    Description: the same per-list outcomes as ``POST /tell`` (``sent``, ``no_session`` with candidates, ``refused``, ``held``), plus
+    Description: the same per-list outcomes as ``POST /send`` (``sent``, ``no_session`` with candidates, ``refused``, ``held``), plus
       ``nothing`` for a list another path had already told. With nothing queued the answer is an empty ``results``.
     Output: {results: [...], queue: the snapshot after}.
     """

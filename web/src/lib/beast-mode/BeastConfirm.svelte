@@ -3,7 +3,7 @@
 
   import { t } from '../i18n/index.svelte';
   import Check from '../../opscenter/ui/Check.svelte';
-  import ModalShell from '../launchpad/ModalShell.svelte';
+  import ModalShell from '../dialog-frame/ModalShell.svelte';
   import { armBeast, BEAST_AUTO_OFF_HOURS, type BeastStatus } from './control.svelte';
 
   interface Props {

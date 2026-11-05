@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t } from '../sdk';
+  import { buttonAttrs } from '../sdk/ui';
   import { openArtifact, openArtifactInTab } from './task-manager-artifact.svelte';
   import type { TaskManagerArtifact } from './huddle-model';
   import { sizeLabel } from './task-manager-files';
@@ -13,10 +14,10 @@
     {#if artifact.description}<span class="hda-desc">{artifact.description}</span>{/if}
     <span class="hda-size">{sizeLabel(artifact.size)}</span>
   </div>
-  <button type="button" class="modal-btn modal-btn-secondary hda-open" data-task-manager-artifact-tab={artifact.id}
+  <button type="button" class="hda-open" {...buttonAttrs('secondary', 'sm')} data-task-manager-artifact-tab={artifact.id}
           aria-label={t('cplug.huddle.artifact.open_in_tab_named', { title: artifact.title })}
           onclick={() => void openArtifactInTab(itemId, artifact)}>{t('cplug.huddle.artifact.open_in_tab')}</button>
-  <button type="button" class="modal-btn modal-btn-secondary hda-open" data-task-manager-artifact-open={artifact.id}
+  <button type="button" class="hda-open" {...buttonAttrs('secondary', 'sm')} data-task-manager-artifact-open={artifact.id}
           aria-label={t('cplug.huddle.artifact.open_named', { title: artifact.title })}
           onclick={() => void openArtifact(itemId, artifact)}>{t('cplug.huddle.artifact.open')}</button>
 </div>

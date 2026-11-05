@@ -6,10 +6,12 @@
   import Fold from '../../lib/base/Fold.svelte';
   import OptionList, { type OptionItem } from '../../lib/base/OptionList.svelte';
   import Tag from '../../lib/base/Tag.svelte';
+  import Keycap from '../../lib/base/Keycap.svelte';
   import List, { type ListDensity } from '../../lib/base/List.svelte';
   import MenuItem from '../../lib/base/MenuItem.svelte';
   import ListRow from '../../lib/base/ListRow.svelte';
   import Toolbar from '../../lib/base/Toolbar.svelte';
+  import Tree, { type TreeNode } from '../../lib/base/Tree.svelte';
   import State from '../../lib/base/State.svelte';
   import StatusLed from '../../lib/StatusLed.svelte';
   import SearchField from '../../opscenter/ui/SearchField.svelte';
@@ -19,6 +21,13 @@
     { value: 'pg', label: 'postgres', reason: 'the one the team already runs', recommended: true },
     { value: 'sqlite', label: 'sqlite', reason: 'a single file, no server to keep up' },
     { value: 'none', label: 'no database yet', disabled: true },
+  ];
+  const TREE: TreeNode[] = [
+    { id: 'menus', label: 'menus', children: [
+      { id: 'sidebar', label: 'sidebar', children: [{ id: 'rename', label: 'rename' }, { id: 'delete', label: 'delete' }] },
+      { id: 'widgets', label: 'widgets', children: [{ id: 'close', label: 'close' }] },
+    ] },
+    { id: 'pages', label: 'pages', children: [{ id: 'open', label: 'open' }] },
   ];
   const GROUPS = [
     { value: 'running', label: 'running', count: 3 },
@@ -66,6 +75,7 @@
     <div class="sg-row">
       <Tag>required</Tag><Tag tone="accent">new</Tag><Tag tone="ok">rec</Tag><Tag tone="warn">stale</Tag>
       <Tag tone="danger">failed</Tag><Tag tone="info">beta</Tag>
+      <Keycap caps={['cmd', 'k']} /><Keycap caps={['shift', 'cmd', 'enter']} /><Keycap caps={['esc']} hit />
     </div>
   </div>
 
@@ -108,6 +118,13 @@
     <Accordion items={GROUPS} type="single" value="waiting">
       {#snippet panel(item)}<p>{item.label}: rows would sit here.</p>{/snippet}
     </Accordion>
+  </div>
+
+  <div class="sg-bc__group sg-bc__fields">
+    <span class="sg-bc__label">tree</span>
+    <Tree label="tree" nodes={TREE} defaultOpen={() => true}>
+      {#snippet leaf(node)}<span>{node.label}</span>{/snippet}
+    </Tree>
   </div>
 
   <div class="sg-bc__group sg-bc__fields">

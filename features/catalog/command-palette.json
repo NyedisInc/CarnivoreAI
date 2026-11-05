@@ -1,0 +1,54 @@
+{
+  "api_routes": [
+    "GET /pipeline/prompts/search"
+  ],
+  "area": "home",
+  "docs": [
+    "docs/third-party-notices.md"
+  ],
+  "examples": [
+    "Press Cmd+K, type auth, press Enter: the session auth-refactor opens, wherever it runs.",
+    "Press Cmd+K then Enter: back to the session you were on before, like Alt-Tab.",
+    "Type @studio :waiting to list only the sessions on studio that wait on you.",
+    "Type >restart to restart the session in view; Tab on any session row lists what you can do to it."
+  ],
+  "how_to": [
+    "Cmd+K opens it on a Mac, Ctrl+Shift+K elsewhere; Shift+Cmd+P opens it on actions. The same chord closes it, and so does Esc.",
+    "An empty box lists recent places, sessions waiting on you and the pages. Typing searches sessions, projects, layouts, dashboards, pages, browser pages, open files, settings, themes and the help sections.",
+    "> lists actions; @computer, #project and :state (waiting, working, idle, asleep, blocked, unread) at the start of a word become filters with Tab or Enter; ? searches inside conversations.",
+    "Up and Down (or Ctrl+P and Ctrl+N) move, Enter goes, Cmd+Enter pops a session out, Tab opens a row's actions, Cmd+1 to 5 run the first five rows, Backspace in an empty box removes the last filter."
+  ],
+  "id": "command-palette",
+  "issues": [
+    2743,
+    2746
+  ],
+  "keywords": [
+    "command palette",
+    "cmd+k",
+    "jump to",
+    "quick open",
+    "go to",
+    "search",
+    "shortcut",
+    "help search"
+  ],
+  "media_exempt": "recapture pending: the capture spec lands with the next pre-version-bump recapture",
+  "name": "Command palette",
+  "since": "2026-10-30",
+  "status": "beta",
+  "summary": "Press Cmd+K, or the search button on a phone or iPad, and type to jump to any session, project, layout, dashboard, page, browser page, open file, setting, theme or help section, run an action, or search inside conversations.",
+  "surfaces": [
+    "web/src/lib/palette/Palette.svelte",
+    "web/src/lib/palette/palette-sources.ts",
+    "web/src/lib/palette/palette-rank.ts",
+    "web/src/lib/palette/palette-actions.ts",
+    "web/src/lib/app-keys/chords.ts",
+    "web/src/opscenter/shell/TopBar.svelte"
+  ],
+  "updated": "2026-10-30",
+  "where": [
+    "Anywhere in the app: Cmd+K (Ctrl+Shift+K off a Mac).",
+    "On a phone or iPad: the search button in the top bar opens it as a full-screen sheet."
+  ]
+}

@@ -20,6 +20,7 @@ from src.models.session_git import GitFile, SessionGitDiff
 log = structlog.get_logger()
 
 MAX_BYTES = 256 * 1024
+MAX_PATH_CHARS = 4096
 TIMEOUT_S = 8.0
 _BINARY_SNIFF = 8000
 _BINARY_LINE = re.compile(r"^Binary files .* differ$", re.MULTILINE)

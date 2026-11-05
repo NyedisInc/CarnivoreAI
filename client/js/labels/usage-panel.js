@@ -1,5 +1,5 @@
-
 import { paceOf } from './pace.js';
+import { withCacheRow } from './usage-cache-row.js';
 
 export const USAGE_PANEL_KEYS = {
     title: 'usage.tokens.title',
@@ -290,7 +290,7 @@ export function usagePanelLabels(usage, t, options) {
     return {
         state: 'ok',
         title,
-        rows,
+        rows: withCacheRow(rows, usage, t),
         context: contextLabels(usage, t),
         windows: windowLabels(usage.account, t, opts.now),
     };

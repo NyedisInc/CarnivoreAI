@@ -3,6 +3,7 @@ import { authFetch } from './auth.svelte';
 import { resource, type Resource } from './poll.svelte';
 import type { SessionTokenUsage } from './types';
 import { t } from '../../lib/i18n/index.svelte';
+import { contextUsedPct } from '../../lib/session-stats/context-gauge';
 import {
   usagePanelLabels,
   scaleStep,
@@ -68,7 +69,7 @@ const cache = new Map<string, { resource: Resource<SessionTokenUsage>; refs: num
 const MOVING_STATUSES = new Set(['working', 'working_subagent']);
 
 interface ListingSource {
-  rows?(name: string): { activity_status?: string | null; session?: { id?: string } }[] | null;
+  rows?(name: string): { activity_status?: string | null; agent_family?: string | null; session?: { id?: string } }[] | null;
   onChange?(fn: (names: string[]) => void): () => void;
 }
 
@@ -78,6 +79,14 @@ function pushedStatus(sessionId: string): string | null | undefined {
   if (!rows) return undefined;
   const row = rows.find((r) => r?.session?.id === sessionId);
   return row ? row.activity_status ?? null : null;
+}
+
+function usageTopics(sessionId: string): readonly string[] | undefined {
+  if (sessionId.startsWith('remote:')) return undefined;
+  const push = (globalThis as { ListingPush?: ListingSource }).ListingPush;
+  const rows = push && typeof push.rows === 'function' ? push.rows('list') : null;
+  const row = rows?.find((r) => r?.session?.id === sessionId);
+  return row?.agent_family === 'claude' ? [`session_usage:${sessionId}`, 'provider_ledger'] : undefined;
 }
 
 function followStatus(sessionId: string, usage: Resource<SessionTokenUsage>): () => void {
@@ -99,6 +108,7 @@ export function sessionUsage(sessionId: string): Resource<SessionTokenUsage> {
     entry = {
       resource: resource<SessionTokenUsage>(() => readSessionUsage(sessionId), {
         intervalMs: SESSION_USAGE_POLL_MS,
+        topics: usageTopics(sessionId),
         name: `session-usage:${sessionId}`,
         pollWhile: () => {
           const status = pushedStatus(sessionId);
@@ -143,7 +153,9 @@ export function sessionUsageLabels(
   usage: SessionTokenUsage | null,
   sessionName: string | null = null,
 ): UsagePanelModel {
-  const result: unknown = usagePanelLabels(usage, t, { sessionName });
+  const used = contextUsedPct(usage?.context_used_tokens, usage?.context_window_tokens);
+  const snapped = usage && used !== null ? { ...usage, context_remaining_pct: 100 - used } : usage;
+  const result: unknown = usagePanelLabels(snapped, t, { sessionName });
   if (isUsagePanelModel(result)) return result;
   console.warn('CloudeOpscenter: usagePanelLabels returned an unexpected shape', result);
   const title = sessionName && sessionName.trim() !== '' ? sessionName : t(USAGE_PANEL_KEYS.title);

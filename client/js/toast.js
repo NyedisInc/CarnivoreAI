@@ -1,6 +1,7 @@
 
 console.log('[Toast Module] Loading...');
 
+/* Claude is waiting */
 const ATTACHMENT_KIND = 'Attachment';
 
 const WRITE_FAILED_KIND = 'WriteFailed';
@@ -22,7 +23,7 @@ const CAP_DESKTOP = 3;
 const CAP_NARROW = 2;
 const NARROW_QUERY = '(max-width: 640px)';
 
-/* of its own - */
+/* grouped by session of its own - */
 const COALESCE_KEY = {
   [ATTACHMENT_KIND]: (t) => `${t.session_id}|${ATTACHMENT_KIND}`,
 };
@@ -37,7 +38,10 @@ class ToastManager {
     this._now = () => Date.now();
     this._expanded = false;
     this._renderPending = false;
-    this._containerPrepared = false;
+    this._view = Object.freeze({ cards: [], dismissAll: null, waiting: null, overflow: null });
+    this._viewListeners = new Set();
+    this._fading = new Map();
+    this._uidGen = new Map();
     this._narrowQuery = null;
     this._bindViewportWatch();
   }
@@ -58,13 +62,7 @@ class ToastManager {
   }
 
   _container() {
-    const el = document.getElementById(this.containerId);
-    if (el && !this._containerPrepared) {
-      el.setAttribute('aria-live', 'polite');
-      el.setAttribute('aria-relevant', 'additions text');
-      this._containerPrepared = true;
-    }
-    return el;
+    return document.getElementById(this.containerId);
   }
 }
 

@@ -43,6 +43,7 @@ vi.mock('./pop-out', () => ({
 
 import { t } from '../i18n/index.svelte';
 import BrowserScreen from './BrowserScreen.svelte';
+import { autoAnswerConfirm } from '../../test-support/auto-answer';
 import { openPages } from './pages.svelte';
 
 const PAGE_ID = 'fedcba9876543210';
@@ -109,6 +110,18 @@ describe('the browser screen with pages', () => {
         expect((document.querySelector('.bscreen iframe') as HTMLIFrameElement).getAttribute('src')).toBe('/api/v1/cplugs/huddle/artifact-view/t2.sig');
     });
 
+    test('the shown screen raises body.ps-browser-screen and closing it clears the class (#1940)', async () => {
+        expect(document.body.classList.contains('ps-browser-screen')).toBe(false);
+        screen.show(PAGE_ID);
+        await settle();
+        expect(document.querySelector('.bscreen')).not.toBeNull();
+        expect(document.body.classList.contains('ps-browser-screen')).toBe(true);
+        screen.close();
+        await settle();
+        expect(document.querySelector('.bscreen')).toBeNull();
+        expect(document.body.classList.contains('ps-browser-screen')).toBe(false);
+    });
+
     test('an id the pages list does not carry is a remote browser: its socket opens, no frame', async () => {
         screen.show(BROWSER_ID);
         await settle();
@@ -167,8 +180,7 @@ describe('the proxy browser screen close key (#2607)', () => {
     test('a close key on the proxy browser asks first, then calls DELETE once and dismisses', async () => {
         vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} unobserve() {} });
         server.writes = [];
-        const confirm = vi.fn(async () => true);
-        (window as unknown as { App: unknown }).App = { showConfirmModal: confirm };
+        const confirmer = autoAnswerConfirm(true);
         let dismissed = 0;
         const target = document.createElement('div');
         document.body.appendChild(target);
@@ -177,11 +189,12 @@ describe('the proxy browser screen close key (#2607)', () => {
         await settle();
         (document.querySelector('[data-bv-close]') as HTMLButtonElement).click();
         await settle();
-        expect(confirm).toHaveBeenCalledTimes(1);
+        expect(confirmer.asked).toHaveLength(1);
+        expect(confirmer.asked[0]!.variant).toBe('danger');
+        confirmer.stop();
         expect(server.writes.filter((c) => c === `DELETE /browsers/${BROWSER_ID}`)).toHaveLength(1);
         expect(dismissed).toBe(1);
         unmount(app as never);
-        delete (window as unknown as { App?: unknown }).App;
         document.body.innerHTML = '';
         vi.unstubAllGlobals();
     });

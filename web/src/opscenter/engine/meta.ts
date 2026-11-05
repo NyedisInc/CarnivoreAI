@@ -231,6 +231,7 @@ export const META: MetaMap = {
     defaultHeight: 279,
     minPx: 200,
     minHeight: 44,
+    // tokens.
     widthStates: [
       { name: 'name', min: 172 },
       { name: 'provider', min: 286 },

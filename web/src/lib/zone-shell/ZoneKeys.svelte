@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sectionStyle, splitAt } from '../session-rail/rail-sections';
+  import { halveAt, percent, sectionStyle } from '../session-rail/rail-cuts';
   import TabKey from './TabKey.svelte';
   import EditCell from './EditCell.svelte';
   import { nextKey } from './key-nav';
@@ -9,7 +9,10 @@
   let {
     zones,
     axis,
-    ratio,
+    cuts,
+    ghostAfter = null,
+    ghostAimed = false,
+    carriedKey = null,
     labelAt,
     iconPx,
     compact,
@@ -29,7 +32,10 @@
   }: {
     zones: readonly Zone[];
     axis: 'x' | 'y';
-    ratio: number;
+    cuts: readonly number[];
+    ghostAfter?: number | null;
+    ghostAimed?: boolean;
+    carriedKey?: string | null;
     labelAt: string;
     iconPx: number;
     compact: boolean;
@@ -51,7 +57,9 @@
   let root = $state<HTMLElement | null>(null);
   let stop = $state<string | null>(null);
 
-  const split = $derived(zones.length > 1);
+  const shownCuts = $derived(ghostAfter === null ? cuts : halveAt(cuts, ghostAfter));
+  const areaOf = (zone: number): number => (ghostAfter !== null && zone > ghostAfter ? zone + 1 : zone);
+  const lastZone = $derived(zones.length - 1);
   const allKeys = $derived(zones.flatMap((zone) => zone.tabs.map((tab) => tab.key)));
   const tabbable = (key: string): boolean => {
     if (stop !== null && allKeys.includes(stop)) return stop === key;
@@ -95,26 +103,38 @@
 <div class="rail__sections" data-rail-sections data-axis={axis} data-editing={editing} data-flow={flow ? '' : undefined} bind:this={root}>
   {#each zones as zone, s (s)}
     {@const tabs = zone.tabs}
-    <div class="rail__keys" data-rail-keys data-rail-section={s} data-rail-pin-end={s === zones.length - 1 ? 'true' : undefined} style={flow ? undefined : sectionStyle(axis, s, zones.length, ratio)}>
+    {@const lifted = tabs.filter((tab) => tab.key !== carriedKey)}
+    <div class="rail__keys" data-rail-keys data-rail-section={s} data-rail-pin-end={s === lastZone && ghostAfter !== lastZone ? 'true' : undefined} style={flow ? undefined : sectionStyle(axis, areaOf(s), shownCuts)}>
       {#each tabs as tab, i (tab.key)}
         {@const look = face(tab)}
-        {#if editing && mark?.index === i && mark.section === s}<div class="rail__mark" data-zone-mark></div>{/if}
-        {#if editing && ontoggle}
-          <EditCell hidden={hiddenKey?.(tab.key) ?? false} name={look.title} ontoggle={() => ontoggle(tab.key, !(hiddenKey?.(tab.key) ?? false))}>
+        {@const gone = tab.key === carriedKey}
+        {#if editing && !gone && mark?.section === s && mark.index === lifted.indexOf(tab)}<div class="rail__slot" data-zone-mark></div>{/if}
+        
+        <span class="rail__cell" data-carried={gone ? '' : undefined}>
+          {#if editing && ontoggle}
+            <EditCell hidden={hiddenKey?.(tab.key) ?? false} name={look.title} ontoggle={() => ontoggle(tab.key, !(hiddenKey?.(tab.key) ?? false))}>
+              {@render keyOf(tab, look, zone)}
+            </EditCell>
+          {:else}
             {@render keyOf(tab, look, zone)}
-          </EditCell>
-        {:else}
-          {@render keyOf(tab, look, zone)}
-        {/if}
+          {/if}
+        </span>
       {/each}
-      {#if editing && mark?.index === tabs.length && mark.section === s && tabs.length > 0}<div class="rail__mark" data-zone-mark></div>{/if}
+      {#if editing && mark?.index === lifted.length && mark.section === s && tabs.length > 0}<div class="rail__slot" data-zone-mark></div>{/if}
       {#if empty}
         <p class="rail__empty" data-rail-empty>{empty}</p>
       {/if}
     </div>
   {/each}
-  {#if split && !flow}
-    <div class="rail__split" data-rail-split={splitAt(ratio)} style={axis === 'x' ? `left: ${splitAt(ratio)}` : `top: ${splitAt(ratio)}`}></div>
+  {#if ghostAfter !== null && !flow}
+    <div class="rail__newarea" data-rail-ghost={ghostAfter} data-aimed={ghostAimed} data-rail-pin-end={ghostAfter === lastZone ? 'true' : undefined} style={sectionStyle(axis, ghostAfter + 1, shownCuts)} aria-hidden="true">
+      <div class="rail__newarea-box"></div>
+    </div>
+  {/if}
+  {#if shownCuts.length > 0 && !flow}
+    {#each shownCuts as cut, c (c)}
+      <div class="rail__split" data-rail-split={percent(cut)} data-preview={ghostAfter === c ? '' : undefined} style={axis === 'x' ? `left: ${percent(cut)}` : `top: ${percent(cut)}`}></div>
+    {/each}
   {/if}
 </div>
 
@@ -167,6 +187,18 @@
       padding-right: calc(var(--rail-pad, var(--oc-space-2)) + var(--rail-pin-slot, 0px));
     }
 
+    .rail__cell {
+      display: contents;
+    }
+
+    .rail__cell[data-carried] {
+      display: block;
+      position: absolute;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+    }
+
     .rail__split {
       position: absolute;
       left: 0;
@@ -184,16 +216,58 @@
       height: auto;
     }
 
-    .rail__mark {
-      flex: none;
-      width: 24px;
-      height: 2px;
-      background: var(--oc-orange);
+    .rail__split[data-preview] {
+      height: 0;
+      background: none;
+      border-top: var(--oc-border) dashed var(--oc-cyan);
     }
 
-    [data-axis='x'] .rail__mark {
-      width: 2px;
-      height: 24px;
+    [data-axis='x'] .rail__split[data-preview] {
+      width: 0;
+      height: auto;
+      border-top: 0;
+      border-left: var(--oc-border) dashed var(--oc-cyan);
+    }
+
+    .rail__slot {
+      flex: none;
+      box-sizing: border-box;
+      width: var(--rail-key-w, 28px);
+      height: var(--rail-key-h, 28px);
+      min-width: var(--rail-key-minw, 0px);
+      min-height: var(--rail-key-minh, 0px);
+      border: var(--oc-border) dashed var(--oc-cyan);
+      border-radius: var(--oc-radius-sm);
+      background: color-mix(in oklab, var(--oc-cyan) 8%, transparent);
+    }
+
+    .rail__newarea {
+      position: absolute;
+      display: flex;
+      box-sizing: border-box;
+      padding: var(--rail-pad, var(--oc-space-2));
+    }
+
+    .rail__newarea[data-rail-pin-end='true'] {
+      padding-bottom: calc(var(--rail-pad, var(--oc-space-2)) + var(--rail-pin-slot, 0px));
+    }
+
+    [data-axis='x'] .rail__newarea[data-rail-pin-end='true'] {
+      padding-bottom: var(--rail-pad, var(--oc-space-2));
+      padding-right: calc(var(--rail-pad, var(--oc-space-2)) + var(--rail-pin-slot, 0px));
+    }
+
+    .rail__newarea-box {
+      flex: 1 1 auto;
+      min-width: 0;
+      min-height: 0;
+      border: var(--oc-border) dashed var(--oc-cyan);
+      border-radius: var(--oc-radius-sm);
+      background: color-mix(in oklab, var(--oc-cyan) 6%, transparent);
+    }
+
+    .rail__newarea[data-aimed='true'] .rail__newarea-box {
+      background: color-mix(in oklab, var(--oc-cyan) 22%, transparent);
     }
 
     .rail__empty {

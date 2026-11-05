@@ -1,9 +1,10 @@
 import { t } from '../i18n/index.svelte';
+import { confirmOk } from '../confirm-ok/confirm-ok';
 import {
     setProjectCompany, createCompany, deleteCompany, renameCompany, unassignProjectCompany,
     type Company,
 } from '../companies';
-import { announce, announceFailure, hg, reasonOf } from './interaction-globals';
+import { announce, announceFailure, reasonOf } from './interaction-globals';
 
 export interface PromptOptions {
     title: string;
@@ -96,16 +97,14 @@ export async function renameCompanyPrompt(company: Company): Promise<boolean> {
 }
 
 export async function deleteCompanyConfirm(company: Company): Promise<boolean> {
-    const app = hg().App;
-    if (!app) return false;
-    const ok = await app.showConfirmModal(
-        t('sidebar.company.delete.title'),
-        t('sidebar.company.delete.message', { name: company.name }),
-        t('sidebar.company.delete.detail'),
-        t('sidebar.company.delete.confirm'),
-        t('sidebar.company.cancel'),
-        'danger',
-    );
+    const ok = await confirmOk({
+        title: t('sidebar.company.delete.title'),
+        message: t('sidebar.company.delete.message', { name: company.name }),
+        details: t('sidebar.company.delete.detail'),
+        okLabel: t('sidebar.company.delete.confirm'),
+        cancelLabel: t('sidebar.company.cancel'),
+        variant: 'danger',
+    });
     if (!ok) return false;
     try {
         const res = await deleteCompany(company.id);

@@ -1,7 +1,7 @@
 
 <script lang="ts">
     import { onDestroy } from 'svelte';
-    import ModalShell from '../launchpad/ModalShell.svelte';
+    import ModalShell from '../dialog-frame/ModalShell.svelte';
     import Button from '../base/Button.svelte';
     import IconButton from '../base/IconButton.svelte';
     import { t } from '../i18n/index.svelte';

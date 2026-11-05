@@ -155,6 +155,9 @@ test('every dismissal gesture goes through the unsaved-changes guard', () => {
         modalJs, /async function closeGuarded\(\) \{\n\s*if \(!\(await confirmDiscardIfDirty\(\)\)\) return;/,
         'the guard must come before the close, not after');
     assert.match(modalJs, /'discard unsaved changes\?'/);
+    assert.match(
+        modalJs, /'discard unsaved changes\?',[\s\S]*?'discard',\s*'keep editing',\s*'danger'\s*\)/,
+        'the discard confirm must ask with the danger variant');
 });
 
 test('the picker refuses to close over an unsaved editor too', () => {
@@ -181,7 +184,7 @@ test('background scroll stays locked while anything is stacked', () => {
     assert.match(stackJs, /BODY_LOCK_CLASS, stack\.length > 0/);
     assert.match(
         stackCss,
-        /body\.modal-stack-locked,\s*\n\s*html:has\(body\.modal-stack-locked\) \{[^}]*overflow:\s*hidden/);
+        /body\.modal-stack-locked,\s*\n\s*html\.modal-stack-locked \{[^}]*overflow:\s*hidden/);
 });
 
 test('the covered surface underneath is inert and off screen on a phone', () => {

@@ -30,7 +30,8 @@ _CONFIRM_INFO = b"carnivore join v1 confirm"
 _SIG_PREFIX = b"carnivore federation v1 join-identity\x00"
 
 MODES = ("code", "invite")
-ERROR_CODES = ("wrong_code", "expired", "no_invite", "busy", "rate_limited", "refused", "incompatible")
+ERROR_CODES = ("wrong_code", "expired", "no_invite", "busy", "rate_limited", "refused", "incompatible", "paused")
+KNOCK_VERSION = 1
 ABORT_CODES = ("main_mismatch", "refused", "needs_owner", "join_has_peers")
 
 
@@ -234,6 +235,35 @@ def check_hello(msg: Dict[str, Any]) -> Dict[str, Any]:
         raise ProtoError("code mode takes no invite id")
     return {"mode": mode, "invite_id": invite_id, "msg_a": b64d(msg.get("msg"), field="msg"),
             "fid": _need(msg, "fid", str, max_len=64)}
+
+
+def knock(*, fid: str, iid: str, label: str) -> Dict[str, Any]:
+    return {"t": "knock", "v": KNOCK_VERSION, "fid": fid, "iid": iid, "label": label[:80]}
+
+
+def check_knock(msg: Dict[str, Any]) -> Dict[str, str]:
+    if msg.get("t") != "knock":
+        raise ProtoError("not a knock")
+    if msg.get("v") != KNOCK_VERSION:
+        raise Incompatible("knock of another version")
+    out = {key: _need(msg, key, str, max_len=limit) for key, limit in (("fid", 64), ("iid", 64), ("label", 80))}
+    if not out["fid"] or not out["iid"]:
+        raise ProtoError("knock identity missing")
+    return out
+
+
+def knock_ok(*, main_label: str, expires_in: int, knock_id: str) -> Dict[str, Any]:
+    return {"t": "knock_ok", "main_label": main_label[:64], "expires_in": int(expires_in), "knock_id": knock_id}
+
+
+def check_knock_ok(msg: Dict[str, Any]) -> Dict[str, Any]:
+    if msg.get("t") != "knock_ok":
+        raise ProtoError("not a knock answer")
+    expires = msg.get("expires_in")
+    if not isinstance(expires, int) or isinstance(expires, bool) or not 0 < expires <= 3600:
+        raise ProtoError("expires_in malformed")
+    _need(msg, "knock_id", str, max_len=32)
+    return {"main_label": _need(msg, "main_label", str, max_len=64), "expires_in": expires}
 
 
 def spake(*, msg_b: bytes, join_id: str) -> Dict[str, Any]:

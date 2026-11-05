@@ -38,6 +38,9 @@ vi.mock('../../opscenter/api/auth.svelte', async (importOriginal) => {
   };
 });
 
+const view = vi.hoisted(() => ({ phone: false }));
+vi.mock('../drawer/phone-view.svelte', () => ({ phoneView: () => view.phone }));
+
 const terminal = vi.hoisted(() => ({ opened: [] as number[] }));
 vi.mock('../../cplugs/huddle/agents/agent-terminal', () => ({ openAgentTerminal: async (id: number) => { terminal.opened.push(id); return true; } }));
 
@@ -58,7 +61,7 @@ import { huddle } from '../../cplugs/huddle/huddle.svelte';
 import { AGGREGATE } from '../../cplugs/huddle/huddle-model';
 import HuddleReply from '../../cplugs/huddle/HuddleReply.svelte';
 import { openAgentDrawerHost } from './drawer-host';
-import { agentDrawer, AGENT_DRAWER_DOCKED_CLASS, AGENT_DRAWER_WIDTH_KEY, closeAgentDrawer, dockBesideTerminal, drawerAnchorLeft, widthFromPointer, leftDrawerWidth, setDrawerWidth } from './agent-drawer.svelte';
+import { agentDrawer, AGENT_DRAWER_DOCKED_CLASS, AGENT_DRAWER_WIDTH_KEY, PHONE_LOCK_CLASS, closeAgentDrawer, dockBesideTerminal, drawerAnchorLeft, widthFromPointer, leftDrawerWidth, setDrawerWidth } from './agent-drawer.svelte';
 import { STORAGE_KEY as LEFT_WIDTH_KEY } from '../drawer/resize';
 
 // jsdom has no popover API; the one item menu shows its levels through it (#2613).
@@ -82,6 +85,7 @@ beforeEach(() => {
   server.calls.length = 0;
   agentPage.id = null;
   agentDrawer.id = null; agentDrawer.tab = 'chat'; agentDrawer.width = null;
+  view.phone = false;
   huddle.selected = AGGREGATE;
   registerCplugPage(AGENT_PAGE, openAgentDrawerHost);
 });
@@ -349,5 +353,60 @@ describe('#1408: the open drawer docks beside the terminal', () => {
     wide(820);
     expect(dockBesideTerminal(true, 360)).toBe(false);
     expect(document.body.classList.contains(AGENT_DRAWER_DOCKED_CLASS)).toBe(false);
+  });
+});
+
+describe('#2749: on a phone the chat slides over the agent list beside the pinned rail', () => {
+  const touch = (type: string, x: number, y: number): Event => {
+    const event = new MouseEvent(type, { bubbles: true, clientX: x, clientY: y });
+    Object.defineProperty(event, 'pointerType', { value: 'touch' });
+    return event;
+  };
+
+  test('list to chat and back: full width right of the rail, no resize, no stored width, the page locked; back and an edge swipe return', async () => {
+    view.phone = true;
+    localStorage.setItem(AGENT_DRAWER_WIDTH_KEY, '500');
+    const rail = document.createElement('div');
+    rail.id = 'session-sidebar-wrail';
+    rail.getBoundingClientRect = () => ({ top: 44, right: 52, left: 0, bottom: 768, width: 52, height: 724, x: 0, y: 44, toJSON: () => ({}) });
+    document.body.appendChild(rail);
+
+    expect(openAgentPage(5)).toBe(true);
+    await settle();
+    const chat = drawer()!;
+    expect(chat.hasAttribute('data-agent-drawer-phone')).toBe(true);
+    expect(chat.querySelector('[data-agent-drawer-grip]')).toBeNull();
+    expect(chat.style.width).toBe('');
+    expect(chat.hasAttribute('data-agent-drawer-width')).toBe(false);
+    expect([chat.style.left, chat.style.top, chat.style.height]).toEqual(['52px', '44px', `${window.innerHeight - 44}px`]);
+    expect(document.documentElement.classList.contains(PHONE_LOCK_CLASS)).toBe(true);
+    expect(chat.querySelector('[data-agent-drawer-close]')).toBeNull();
+    const back = chat.querySelector<HTMLButtonElement>('[data-chat-bar] [data-agent-drawer-back]')!;
+    expect(back.getAttribute('aria-label')).toBe('back to the agent list');
+
+    back.click();
+    await settle();
+    expect(drawer()).toBeNull();
+    expect(document.documentElement.classList.contains(PHONE_LOCK_CLASS)).toBe(false);
+
+    openAgentPage(5);
+    await settle();
+    drawer()!.dispatchEvent(touch('pointerdown', 200, 300));
+    drawer()!.dispatchEvent(touch('pointerup', 320, 300));
+    await settle();
+    expect(drawer()).not.toBeNull();
+    drawer()!.dispatchEvent(touch('pointerdown', 60, 300));
+    drawer()!.dispatchEvent(touch('pointerup', 160, 310));
+    await settle();
+    expect(drawer()).toBeNull();
+  });
+
+  test('above the phone line the same chat keeps its grip, its width and its close key', async () => {
+    openAgentPage(5);
+    await settle();
+    expect(drawer()!.querySelector('[data-agent-drawer-grip]')).not.toBeNull();
+    expect(drawer()!.querySelector('[data-agent-drawer-close]')).not.toBeNull();
+    expect(drawer()!.querySelector('[data-agent-drawer-back]')).toBeNull();
+    expect(document.documentElement.classList.contains(PHONE_LOCK_CLASS)).toBe(false);
   });
 });

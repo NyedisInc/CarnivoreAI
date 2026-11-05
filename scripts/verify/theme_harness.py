@@ -16,6 +16,8 @@ from typing import Any
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(os.path.dirname(HERE))
 STATIC_SERVER = os.path.join(HERE, "_theme_effect_static_server.py")
+sys.path.insert(0, REPO_ROOT)
+from scripts.lib.verify_harness import harness_errors  # noqa: E402
 
 UNSAFE_PORTS = frozenset({5060, 5061, 6000, 6665, 6666, 6667, 6668, 6669, 6697})
 CHROMIUM_ARGS = ["--force-color-profile=srgb", "--disable-lcd-text",
@@ -93,7 +95,7 @@ def run_theme_sweep(themes: list[str], port: int,
                                       reduced_motion="no-preference")
             try:
                 row = measure_one(ctx.new_page(), base, theme)
-            except Exception as exc:  # noqa: BLE001
+            except harness_errors() as exc:
                 row = {"theme": theme, "error": f"{type(exc).__name__}: {exc}"}
             row = finish_row(row) if finish_row else row
             rows.append(row)

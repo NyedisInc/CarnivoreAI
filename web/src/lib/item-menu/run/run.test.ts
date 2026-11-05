@@ -6,6 +6,8 @@ const sleeper = vi.hoisted(() => ({
 vi.mock('../../drawer/row-menu-sleep', () => sleeper);
 const restartMock = vi.hoisted(() => ({ runRestart: vi.fn(async () => {}) }));
 vi.mock('../../drawer/restart-click', () => restartMock);
+const pinMock = vi.hoisted(() => ({ togglePinRow: vi.fn(() => true) }));
+vi.mock('../../sidebar-shell/row-reorder', () => pinMock);
 import { setDrawerEnv } from '../../drawer/env';
 import type { RowMenuCtx } from '../row-context';
 import { run } from './index';
@@ -64,8 +66,7 @@ describe('mute', () => {
         page({ API: { listSessionRecords: records, call: async () => { throw new Error('nope'); } } });
         await run('mute', ctx({ muted: false }));
         expect(overrides).toEqual([['cloude_a', true], ['cloude_a', false]]);
-        expect(said[0]).toContain('session.menu.run.mute_failed')
-        expect(said[0]).toContain('"message":"nope"');
+        expect(said[0]).toContain('session.menu.mute.failed {"label":"a","detail":"nope"}');
     });
     it('rolls back without a write when no stored record names the session', async () => {
         const call = vi.fn();
@@ -81,11 +82,16 @@ describe('folders refuse with a reason', () => {
         const selectProject = vi.fn();
         page({ Launchpad: { showError: (t: string) => said.push(t), selectProject }, API: { listSessionRecords: async () => [] } });
         await run('new-in-folder', ctx());
-        expect(said[0]).toContain('session.menu.run.folder_unknown_start');
+        expect(said[0]).toContain('session.menu.new_here.no_record');
         page({ Launchpad: { showError: (t: string) => said.push(t), selectProject }, API: { listSessionRecords: async () => [{ tmux_name: 'cloude_a' }] } });
         await run('new-in-folder', ctx());
-        expect(said[1]).toContain('session.menu.run.no_folder');
+        expect(said[1]).toContain('session.menu.new_here.no_folder');
         expect(selectProject).not.toHaveBeenCalled();
+    });
+    it('pin flips the row through the shell pin path', async () => {
+        pinMock.togglePinRow.mockClear();
+        await run('pin', ctx());
+        expect(pinMock.togglePinRow).toHaveBeenCalledWith('cloude_a');
     });
     it('new in folder starts where the record lives', async () => {
         const selectProject = vi.fn();
@@ -137,6 +143,19 @@ describe('the order the table tries things in', () => {
         await run('close', ctx());
         expect(confirm).toHaveBeenCalledWith('close', 'cloude_a');
     });
+    it('close from a menu with no drawn sidebar row deletes the session by the id the menu holds (#2782)', async () => {
+        const destroySession = vi.fn(async (_id: string) => {});
+        const destroyExternalSession = vi.fn(async (_name: string) => {});
+        page({
+            SessionRowActions: { ATTR_ACTION: 'data-a', ATTR_NAME: 'data-n', ACTION_CLOSE: 'close', confirm: vi.fn(async () => true) },
+            SessionSidebar: { listEl: null, _fetchAndRender: vi.fn(async () => {}) },
+            API: { destroySession, destroyExternalSession },
+        });
+        expect(document.querySelector('.session-sidebar-row')).toBeNull();
+        await run('close', ctx({ name: 'carnivore_login_codex', sessionId: 'ses_login' }));
+        expect(destroySession).toHaveBeenCalledWith('ses_login');
+        expect(destroyExternalSession).not.toHaveBeenCalled();
+    });
     it('restart now runs plain while shift is up', async () => {
         const runRestart = restartMock.runRestart;
         runRestart.mockClear();
@@ -160,17 +179,7 @@ describe('the order the table tries things in', () => {
         page();
         await run('restart', ctx());
         expect(runRestart).not.toHaveBeenCalled();
-        expect(said[0]).toContain('session.menu.run.restart_row_gone');
-    });
-});
-
-describe('item ids that are Object.prototype members', () => {
-    it.each(['constructor', 'toString', 'hasOwnProperty', '__proto__'])('%s goes to the plugin bridge, never a prototype member', async (id) => {
-        const runPlugin = vi.fn(async (_id: string, _ctx: RowMenuCtx) => true);
-        page({ CloudeWeb: { rowMenu: { setMuteOverride: () => undefined, shiftHeld: () => false, runPlugin } } });
-        await run(id, ctx());
-        expect(runPlugin).toHaveBeenCalledTimes(1);
-        expect(runPlugin.mock.calls[0]![0]).toBe(id);
+        expect(said[0]).toContain('session.menu.restart.row_gone');
     });
 });
 

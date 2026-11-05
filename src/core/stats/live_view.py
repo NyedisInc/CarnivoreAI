@@ -7,6 +7,7 @@ from src.core.session_token_usage.model_table import readable_model_name
 from src.core.stats import agent_names, project_groups
 from src.core.stats.project_groups import other_label
 from src.core.stats.queries import _REAL_USAGE, _TOKEN_TOTAL
+from src.core.stats.store_port import StatsStoreLike
 
 _LIVE_WINDOWS = (5, 15, 60)
 _AGENTS_LIMIT = 50
@@ -14,7 +15,7 @@ _live_lock = threading.Lock()
 _live_memo: dict[str, tuple[int, int, dict]] = {}
 
 
-def live_v2_cached(store, now: float | None = None) -> dict:
+def live_v2_cached(store: StatsStoreLike, now: float | None = None) -> dict:
     now = time.time() if now is None else now
     path, revision, minute = str(getattr(store, "db_path", None) or id(store)), store.revision(), int(now // 60)
     with _live_lock:
@@ -39,7 +40,7 @@ def _agents_5m(rows: list, current: int, names: dict[str, str]) -> list[dict]:
              "tokens_per_minute": tokens / 5} for conv, tokens in ranked[:_AGENTS_LIMIT]]
 
 
-def live_v2(store, now: float | None = None) -> dict:
+def live_v2(store: StatsStoreLike, now: float | None = None) -> dict:
     now = time.time() if now is None else now
     current = int(now // 60) * 60
     since = current - (max(_LIVE_WINDOWS) - 1) * 60

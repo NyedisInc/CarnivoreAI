@@ -15,7 +15,7 @@ vi.mock('./interaction-globals', () => ({
     announce: () => {},
     announceFailure: (text: string) => { calls.push(`fail ${text}`); },
     hg: () => ({
-        SessionSidebar: { _rows: [{ name: 'a', kind: 'agent', project_id: 5, project_name: 'proj' }] },
+        SessionSidebar: { rows() { return this._rows; }, _rows: [{ name: 'a', kind: 'agent', project_id: 5, project_name: 'proj' }] },
         API: { updateProject: vi.fn(async (name: string, body: { color?: string }) => {
             menuOpenAtWrite = (await import('../item-menu/open.svelte')).itemMenuState.open !== null;
             if (failWith) throw failWith;

@@ -10,7 +10,7 @@ from typing import Dict, List
 
 import pytest
 
-from src.cplugs.huddle import item_owner, lane, lineage, nudges, rules, state_rungs
+from src.cplugs.huddle import item_owner, lane, lineage, nudges, rules, state_request, state_rungs
 from src.cplugs.huddle.store import TaskManagerStore
 from src.core.work.ladder import MIGRATIONS
 from src.core.work import tables
@@ -103,16 +103,15 @@ def test_the_whole_walk_takes_one_verified_backup_before_the_first_rename_and_lo
     assert set(snapshot(old_file)["counts"]) <= set(rules.STATES)
 
 
-def test_every_rename_has_a_backup_entry_a_migration_and_an_alias():
+def test_every_rename_has_a_backup_entry_a_migration_and_a_stored_card_reader():
     assert dict(LEGACY_STORAGE.backup_before)[23] == "pre-cards"
     for rung, label, pairs in state_rungs.RENAME_RUNGS:
         assert LEGACY_STORAGE.backup_before[rung] == label
         assert MIGRATIONS[rung - 1].count("UPDATE items SET state") >= 1
         for old, new in pairs:
-            assert rules.STATE_ALIASES[old] == new
-    assert dict(rules.STATE_ALIASES) == dict(state_rungs.RENAMES)
+            assert state_request.canonical_shown({"from_state": old}) == {"from_state": new}
     assert task_manager_names.RETIRED_STATES == dict(state_rungs.RENAMES)
-    assert all(new in rules.STATES for _, new in state_rungs.RENAMES) and not set(rules.STATE_ALIASES) & set(rules.STATES)
+    assert all(new in rules.STATES for _, new in state_rungs.RENAMES) and not {old for old, _ in state_rungs.RENAMES} & set(rules.STATES)
 
 
 def test_a_tick_clears_the_owner_on_a_migrated_file_and_on_a_fresh_one(tmp_path: Path):
@@ -150,12 +149,9 @@ def test_no_code_writes_items_state_outside_the_known_write_points():
     assert {"store.py", "answer_writer.py", "fork.py"} <= writers
 
 
-def test_core_speaks_the_retired_names_on_the_wire_and_mirrors_the_plugin_rules():
-    for current, retired in task_manager_names.WIRE_STATES.items():
-        assert rules.STATE_ALIASES[retired] == current
-    assert set(task_manager_names.WIRE_STATES) == {new for _, new in state_rungs.RENAMES}
-    assert rules.STATE_ALIASES[task_manager_names.DONE_WITH_NOTE] == rules.DONE
-    assert task_manager_names.STATE_ARGS == rules.STATE_ARGS
+def test_core_reads_the_retired_names_and_mirrors_the_plugin_rules():
+    assert dict(task_manager_names.RETIRED_STATES) == dict(state_rungs.RENAMES)
+    assert not any(hasattr(task_manager_names, name) for name in ("WIRE_STATES", "DONE_WITH_NOTE", "wire_state", "wire_state_args", "STATE_ARGS"))
     assert (task_manager_names.SWARM_KEY, task_manager_names.TASK_MANAGER, task_manager_names.SWARM) == (rules.SWARM_KEY, lane.TASK_MANAGER, lane.SWARM)
     assert (task_manager_names.SWARM_ORIGINS, task_manager_names.AGENT_LIST_PREFIX) == (lane.SWARM_ORIGINS, lane.AGENT_LIST_PREFIX)
     assert task_manager_history.IMPORT_BY == lineage.CARNIVORE

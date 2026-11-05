@@ -99,9 +99,13 @@ def _find(profile_id: str) -> LaunchProfile:
 
 @router.get("", dependencies=[Depends(require_auth)])
 async def list_profiles() -> Dict[str, Any]:
-    """Every launch profile, in stored order, with the block's revision (echo it to write)."""
-    block = await _store_call_read(_store().read)
-    return {"revision": block.revision, "profiles": [_row(p) for p in block.profiles]}
+    """Every launch profile, in stored order, with the block's revision (echo it to write), and ``disabled``: the
+    stored profiles set aside because they no longer validate (#2715), each with its reason and stand-in default."""
+    loaded = await _store_call_read(_store().read_all)
+    disabled = [{"id": s.id, "label": s.label, "harness": s.harness, "reason": s.reason,
+                 "was_default": s.was_default, "fallback_default": s.fallback_default} for s in loaded.set_aside]
+    return {"revision": loaded.block.revision, "profiles": [_row(p) for p in loaded.block.profiles],
+            "disabled": disabled}
 
 
 async def _store_call_read(fn: Any) -> Any:
@@ -164,6 +168,22 @@ async def delete_profile(profile_id: str, expected_revision: Optional[int] = Non
     block = await _store_call(_store().delete, profile_id, expected_revision=expected_revision)
     logger.info("launch_profile_deleted", profile_id=profile_id, harness=profile.harness)
     return {"revision": block.revision, "removed": profile_id}
+
+
+class ResumePrefixBody(BaseModel):
+    """A resume command prefix (a bare program name) to approve on this computer (#2733)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    prefix: str = Field(..., description="The first word of a profile's agent resume command, e.g. opencode")
+
+
+@router.post("/resume-prefixes", dependencies=[Depends(require_auth)])
+async def approve_resume_prefix(body: ResumePrefixBody) -> Dict[str, Any]:
+    """Approve a resume command prefix on this computer, so a profile's agent resume command starting with it may run
+    on restart (feature plan #14). Output: ``{"revision", "approved_resume_prefixes"}``."""
+    block = await _store_call(_store().approve_resume_prefix, body.prefix)
+    return {"revision": block.revision, "approved_resume_prefixes": block.approved_resume_prefixes}
 
 
 @router.post("/{profile_id}/default", dependencies=[Depends(require_auth)])
@@ -377,8 +397,8 @@ async def preview_import(request: Request) -> Dict[str, Any]:
     wanted = profile.endpoint.connection_id
     return {
         "profile": profile.model_dump(mode="json"),
-        "sha256": share.profile_digest(profile),
-        "parts": share.executable_parts(profile),
+        "sha256": share.confirm_digest(profile, existing.get(profile.id)),
+        "parts": share.executable_parts(profile, existing.get(profile.id)),
         "exists": profile.id in existing,
         "existing_is_default": bool(existing.get(profile.id) and existing[profile.id].default),
         "endpoint_connection_missing": bool(wanted and wanted not in connection_ids),
@@ -390,7 +410,7 @@ async def import_profile(request: Request) -> Dict[str, Any]:
     """Write a shared profile after the caller confirmed its exact digest.
 
     Body: ``{"document", "confirm_sha256", "replace": false}``. Raises: 409 ``digest_mismatch`` (not the digest of
-    this profile), ``exists`` (id taken and ``replace`` false), ``reserved_id``; 422 a malformed document. The
+    this profile and whether it replaces the local default, ``share.confirm_digest``), ``exists`` (id taken and ``replace`` false), ``reserved_id``; 422 a malformed document. The
     profile is never a default unless it replaced one.
     """
     body = await _read_body(request)
@@ -399,9 +419,9 @@ async def import_profile(request: Request) -> Dict[str, Any]:
     replace_flag = body.get("replace", False)
     if not isinstance(replace_flag, bool):
         raise _error(422, "invalid", "replace must be true or false")
-    if body.get("confirm_sha256") != share.profile_digest(profile):
-        raise _error(409, "digest_mismatch", "confirm_sha256 does not match this profile; review it and confirm again")
     existing = {p.id: p for p in await _store_call_read(_store().list)}
+    if body.get("confirm_sha256") != share.confirm_digest(profile, existing.get(profile.id)):
+        raise _error(409, "digest_mismatch", "confirm_sha256 does not match this profile; review it and confirm again")
     if profile.id in existing and not replace_flag:
         raise _error(409, "exists", f"a launch profile named {profile.id} already exists")
     default = bool(profile.id in existing and existing[profile.id].default)

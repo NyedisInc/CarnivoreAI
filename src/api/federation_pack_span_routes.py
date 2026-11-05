@@ -138,16 +138,18 @@ class BoardBody(BaseModel):
 
 @router.post("/pack/board/{verb}")
 async def board_verb(verb: str, body: BoardBody, request: Request, principal: Principal = Depends(_require_proxy)) -> Dict[str, Any]:
-    """A replica machine's owner reads or writes the home's board: one ``huddle_*`` tool, run here as an owner-token call (writes park in this machine's inbox).
+    """A replica machine's owner reads or writes the home's board: one Task Manager (``task_manager_*``) tool, run here as an owner-token call (writes park in this machine's inbox).
 
     Raises: 403 ``proxy_binding_refused`` (the caller does not replicate that project), 409 ``tool_not_proxied`` or ``not_local``.
     """
     from src.config import settings as app_settings
-    from src.core.mcp import aliases, tools
+    from src.core.mcp import tools
     from src.core.mcp.protocol import BatchView
+    from src.cplugs.host import runtime
 
     install = _peer(principal)
-    if not (verb.startswith("huddle_") or aliases.was_renamed(verb)) or verb not in tools._TOOLS:
+    huddle = runtime.find("huddle")
+    if huddle is None or verb not in huddle.manifest.surfaces.mcp_tools or verb not in tools._TOOLS:
         raise proxy_server.refused("tool_not_proxied", 409)
     if proxy_server._names_remote(body.args):
         raise proxy_server.refused("not_local", 409)

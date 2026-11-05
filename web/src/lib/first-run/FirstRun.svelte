@@ -2,9 +2,11 @@
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte';
     import { t } from '../i18n/index.svelte';
+    import { legacyAuth } from '../legacy-globals';
     import { Button, Field } from '../base';
     import Icon from '../../opscenter/ui/Icon.svelte';
     import FirstRunAgent from './FirstRunAgent.svelte';
+    import FirstRunFind from './FirstRunFind.svelte';
     import FirstRunJoin from './FirstRunJoin.svelte';
     import FirstRunProfiles from './FirstRunProfiles.svelte';
     import { fetchJoinStatus, type JoinStatus } from './join-api';
@@ -40,10 +42,11 @@
     let restarting = $state(false);
     let manual = $state(false);
     let stopWatch: (() => void) | null = null;
-    let joinStart = $state<'join' | 'resume' | 'joined'>('join');
+    let joinStart = $state<'join' | 'resume' | 'joined' | 'knock' | 'link'>('join');
+    let joinValue = $state('');
     let joinResume = $state<JoinStatus | null>(null);
 
-    const auth = (): AuthHost => (window as unknown as { Auth: AuthHost }).Auth;
+    const auth = (): AuthHost => legacyAuth<AuthHost>();
     const grouped = $derived(enrollment ? (enrollment.secret.match(/.{1,4}/g) ?? []).join(' ') : '');
     const loadKey = $derived(
         loadFailure === 'restart_pending' ? 'first_run.error.restart_pending' : loadFailure === 'config' ? 'first_run.error.config' : 'first_run.error.load',
@@ -71,7 +74,7 @@
 
     async function openEntry(): Promise<void> {
         const status = await fetchJoinStatus();
-        if (status && (status.state === 'finding' || status.state === 'connecting' || status.state === 'linking' || status.state === 'joined')) {
+        if (status && (status.state === 'knocked' || status.state === 'finding' || status.state === 'connecting' || status.state === 'linking' || status.state === 'joined')) {
             joinStart = 'resume';
             joinResume = status;
             phase = 'join';
@@ -160,16 +163,11 @@
         {:else if phase === 'choose'}
             <span class="first-run__icon"><Icon name="authenticator" size={48} strokeWidth={1.5} /></span>
             <h1 class="first-run__head">{t('first_run.title')}</h1>
-            <div class="first-run__actions">
-                <Button variant="confirm" data-go data-first-run="choose-new" onclick={() => void load()}>
-                    {t('first_run.choose.new')}
-                </Button>
-                <Button data-go data-first-run="choose-join" onclick={() => ((joinStart = 'join'), (phase = 'join'))}>
-                    {t('first_run.choose.join')}
-                </Button>
-            </div>
+            <FirstRunFind onNew={() => void load()} onJoinHere={() => ((joinStart = 'join'), (phase = 'join'))}
+                onJoinPack={(fid) => ((joinStart = 'knock'), (joinValue = fid), (phase = 'join'))}
+                onJoinLink={(link) => ((joinStart = 'link'), (joinValue = link), (phase = 'join'))} />
         {:else if phase === 'join'}
-            <FirstRunJoin start={joinStart} resume={joinResume} onBack={() => (phase = 'choose')} />
+            <FirstRunJoin start={joinStart} value={joinValue} resume={joinResume} onBack={() => ((joinValue = ''), (phase = 'choose'))} />
         {:else if phase === 'scan'}
             <span class="first-run__icon"><Icon name="authenticator" size={48} strokeWidth={1.5} /></span>
             <h1 class="first-run__head">{t('first_run.title')}</h1>

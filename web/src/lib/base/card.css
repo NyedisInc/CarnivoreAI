@@ -7,7 +7,7 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
-    --_bd: var(--oc-line-surface);
+    --_bd: var(--oc-focus-quiet);
     border: var(--oc-border) solid var(--oc-line-surface);
     border-radius: var(--oc-radius-panel);
     background: var(--oc-surface-raised);

@@ -1,6 +1,7 @@
 /* element carrying a */
 import type { ThemeRegistry } from '../cplugs/sdk/themes';
 import { scopeVars } from './contrast';
+import { withColorScheme } from '../lib/theme-scheme';
 
 export interface GuideTheme {
     id: string;
@@ -19,7 +20,8 @@ export function guideThemes(): GuideTheme[] {
 export function paintScope(el: HTMLElement, theme: GuideTheme, all: readonly GuideTheme[]): void {
     const names = new Set(all.flatMap((t) => Object.keys(t.cssVars)));
     el.dataset.sessionTheme = theme.id;
-    for (const [name, value] of Object.entries(scopeVars(theme.cssVars, names))) el.style.setProperty(name, value);
+    names.add('--color-scheme');
+    for (const [name, value] of Object.entries(scopeVars(withColorScheme(theme.cssVars), names))) el.style.setProperty(name, value);
 }
 
 export function onGuideTheme(cb: (id: string) => void): () => void {

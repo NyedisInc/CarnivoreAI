@@ -37,7 +37,8 @@ test('mirrorAllowed mirrors only while approval banners are on; asks-only then f
   assert.equal(await on.mirrorAllowed(''), false);
   assert.equal(await on.mirrorAllowed('ses_1'), true);
   assert.equal(await controller({ desktop_banners: true }).mirrorAllowed(''), true);
-  for (const prefs of [{}, { desktop_banners: false, desktop_notify_asks_only: false }, null]) {
+  assert.equal(await controller({}).mirrorAllowed(''), true, 'an absent setting is on (Q22, #17 part 2)');
+  for (const prefs of [{ desktop_banners: false, desktop_notify_asks_only: false }, null]) {
     assert.equal(await controller(prefs).mirrorAllowed(''), false);
     assert.equal(await controller(prefs).mirrorAllowed('ses_1'), false);
   }

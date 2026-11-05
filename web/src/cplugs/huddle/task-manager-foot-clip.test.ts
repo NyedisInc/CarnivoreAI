@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 const css = readFileSync(new URL('./HuddleBody.svelte', import.meta.url), 'utf8').split('<style>')[1] ?? '';
 
+/** The declarations of the LAST rule whose selector is exactly `selector`. */
 function rule(selector: string): string {
   const found = [...css.matchAll(/(^|\n)\s*([^{}\n]+)\{([^}]*)\}/g)].filter((m) => (m[2] as string).trim() === selector);
   return (found[found.length - 1]?.[3] as string | undefined) ?? '';

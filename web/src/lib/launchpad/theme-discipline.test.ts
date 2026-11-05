@@ -10,7 +10,7 @@ const SLICE_FILES = [
     'web/src/lib/Glyph.svelte',
     'web/src/lib/launchpad/running-actions.ts',
     'web/src/lib/launchpad/running-host.ts',
-    'web/src/lib/launchpad/ModalShell.svelte',
+    'web/src/lib/dialog-frame/ModalShell.svelte',
     'web/src/lib/launchpad/ChoiceModal.svelte',
     'web/src/lib/launchpad/CloneModal.svelte',
     'web/src/lib/launchpad/EditProjectModal.svelte',

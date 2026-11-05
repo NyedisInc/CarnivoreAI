@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import sqlite3
 from datetime import datetime, timezone
-from typing import Callable, Optional, Tuple
+from typing import Any, Callable, Optional, Tuple, Union
 
 import structlog
 
@@ -11,6 +11,8 @@ from src.core import resource_push
 from src.core.resource_push import topics as resource_topics
 
 from src.core.subagents.parent_index import parse_timestamp
+from src.core.db_reuse.executor import Executor
+from src.core.sessions.lazy_write import LazyWriteConnection, lazy_datastore
 from src.core.hosts.ddl import LOCAL_HOST_KEY, host_scope
 
 logger = structlog.get_logger(__name__)
@@ -45,14 +47,14 @@ def resolve_instance_row(
     return (int(row[0]), SOURCE_EXACT_EPOCH)
 
 
-def stamp_work(
-    conn: sqlite3.Connection,
+def plan_stamp(
+    conn: Executor,
     tmux_name: str,
     *,
     tmux_socket: str,
     tmux_created_epoch: Optional[int],
     now: Optional[str] = None,
-) -> Optional[str]:
+) -> Optional[Tuple[int, str, str]]:
     if not tmux_name:
         return None
     try:
@@ -82,10 +84,31 @@ def stamp_work(
         current = conn.execute(
             "SELECT last_work_at FROM sessions WHERE id = ?", (row_id,)
         ).fetchone()
-        held = parse_timestamp(current[0]) if current else None
-        offered = parse_timestamp(value)
-        if held is not None and offered is not None and offered <= held:
-            return None
+    except sqlite3.Error as exc:
+        logger.debug("work_stamp_read_failed", tmux_name=tmux_name, error=str(exc))
+        return None
+    held = parse_timestamp(current[0]) if current else None
+    offered = parse_timestamp(value)
+    if held is not None and offered is not None and offered <= held:
+        return None
+    return (row_id, source or SOURCE_EXACT_EPOCH, value)
+
+
+def stamp_work(
+    conn: Executor,
+    tmux_name: str,
+    *,
+    tmux_socket: str,
+    tmux_created_epoch: Optional[int],
+    now: Optional[str] = None,
+) -> Optional[str]:
+    plan = plan_stamp(
+        conn, tmux_name, tmux_socket=tmux_socket, tmux_created_epoch=tmux_created_epoch, now=now
+    )
+    if plan is None:
+        return None
+    row_id, source, value = plan
+    try:
         cur = conn.execute(
             "UPDATE sessions SET last_work_at = ? WHERE id = ?",
             (value, row_id),
@@ -96,8 +119,12 @@ def stamp_work(
     return source if cur.rowcount else None
 
 
+def lazy_stamp_connection(manager: Any) -> Optional[LazyWriteConnection]:
+    return lazy_datastore(manager)
+
+
 def persist_instance_stamp(
-    open_connection: Callable[[], Optional[sqlite3.Connection]],
+    open_connection: Callable[[], Optional[Union[sqlite3.Connection, LazyWriteConnection]]],
     session_id: str,
     tmux_name: str,
     *,
@@ -113,14 +140,23 @@ def persist_instance_stamp(
         conn = open_connection()
         if conn is None:
             return None
-        with transaction(conn):
-            source = stamp_work(
-                conn,
-                tmux_name,
-                tmux_socket=tmux_socket,
-                tmux_created_epoch=tmux_created_epoch,
-                now=at,
-            )
+        plan = plan_stamp(
+            conn,
+            tmux_name,
+            tmux_socket=tmux_socket,
+            tmux_created_epoch=tmux_created_epoch,
+            now=at,
+        )
+        if plan is not None:
+            _row_id, _resolved_by, instant = plan
+            with transaction(conn):
+                source = stamp_work(
+                    conn,
+                    tmux_name,
+                    tmux_socket=tmux_socket,
+                    tmux_created_epoch=tmux_created_epoch,
+                    now=instant,
+                )
         if source is not None:
             resource_push.notify_coalesced(
                 resource_topics.PROJECTS, tmux_name, PROJECTS_NOTIFY_MIN_INTERVAL_SECONDS

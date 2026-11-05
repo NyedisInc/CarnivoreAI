@@ -202,7 +202,20 @@ def _dialog_questions_answer(ctx: _Ctx) -> tuple:
             [{"key": "answer", "value": f"{i + 1}. {_question_pick(a, None) or 'left unanswered'}"} for i, a in enumerate(answers)])
 
 
+def _plugin_session(ctx: _Ctx) -> tuple:
+    a = ctx.args
+    skips, unchecked = a.get("skips_permissions") is True, a.get("unchecked") is True
+    line = "plugin_agent_skips" if skips else "plugin_agent_custom" if unchecked else "plugin_agent"
+    agent = _c(line, agent=a.get("agent_type", ""), profile=a.get("profile_label", ""),
+               badge=a.get("badge", ""))
+    prompt = str(a.get("prompt") or "")
+    return ("start", "session", str(a.get("plugin", "")), DANGER if skips or unchecked else CONFIRM,
+            [_c("plugin_project", project=a.get("project", ""), where=a.get("where", "")), agent,
+             _c("plugin_prompt", prompt=json.dumps(prompt)) if prompt else _c("plugin_no_prompt")], [])
+
+
 _RULES: Dict[str, Rule] = {
+    "plugin_session_create": _plugin_session,
     "session_purge": _purge,
     "session_delete": _delete_session,
     "session_restart": _restart,

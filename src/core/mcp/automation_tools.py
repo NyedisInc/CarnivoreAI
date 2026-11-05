@@ -21,7 +21,7 @@ _RUN = {"type": "string", "description": "run id (run_...) from automation_runs_
 _TARGET = {"type": "object", "description": (
     "kind and its fields: blueprint_launch, recipe (a report, or a system action: sleep_idle_sessions, restart_session, send_notification, "
     "backup_health_check; params per action), swarm_card, agent, session_message (session_uuid, text, if_asleep, if_gone, project_id), command "
-    "(command: exact text from automation_commands_get, optional project_id) or sequence (steps: 2 to 4 targets). automations_list shows examples")}
+    "(command: exact text from automation_commands_get, optional project_id, optional alert_exit_codes: up to 8 exit codes 1 to 255 that mean the check raised an alert on purpose, so the run ends alerted instead of failed) or sequence (steps: 2 to 4 targets). automations_list shows examples")}
 _DELIVERY = {"type": "object", "description": "notify (bool) and notify_on (always, failure or report)"}
 _CONTRACT_PROPS = {
     "description": {"type": "string", "maxLength": 500, "description": "what the automation is for"},

@@ -21,7 +21,7 @@
 .pm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 8px; }
 .pm-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .pm-rules { display: flex; flex-direction: column; gap: 4px; }
-.pm-warn, .pm-error { margin: 0; padding: 6px 8px; border-left: 2px solid var(--pl-warn); background: var(--pl-raised); color: var(--pl-text); }
+.pm-warn, .pm-error { overflow-wrap: anywhere; margin: 0; padding: 6px 8px; border-left: 2px solid var(--pl-warn); background: var(--pl-raised); color: var(--pl-text); }
 .pm-error { border-left-color: var(--pl-high); }
 .pm-reserve { display: flex; flex-direction: column; gap: 8px; }
 .pm-days { display: flex; flex-wrap: wrap; gap: 4px; }

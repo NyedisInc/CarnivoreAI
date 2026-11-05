@@ -12,6 +12,7 @@ import assert from 'node:assert/strict';
 // store. The REAL client/dist/app.js is evaluated in this sandbox rather
 // than stubbed, so these assertions run against the shipped path.
 import { installCloudeWeb } from './helpers/cloude-web-sandbox.mjs';
+import { installCatalogTr } from './helpers/catalog-tr.mjs';
 import { glyphSvg } from '../client/js/icons/glyphs.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -69,8 +70,8 @@ function makeSandbox() {
 
     const fakeWindow = {
         App: {
-            showConfirmModal(title, message, details, primaryLabel, secondaryLabel) {
-                confirmCalls.push([title, message, details, primaryLabel, secondaryLabel]);
+            showConfirmModal(title, message, details, primaryLabel, secondaryLabel, variant) {
+                confirmCalls.push([title, message, details, primaryLabel, secondaryLabel, variant]);
                 return Promise.resolve(true);
             },
         },
@@ -86,6 +87,8 @@ function makeSandbox() {
     context.globalThis = context;
     vm.createContext(context);
     installCloudeWeb(context);
+    // The confirm copy is read from the one catalog at dialog time.
+    installCatalogTr(context);
     vm.runInContext(readClientJs('session-status-ui.js'), context);
     vm.runInContext(readClientJs('session-row-actions-confirm.js'), context);
     vm.runInContext(readClientJs('session-row-actions.js'), context);
@@ -196,9 +199,16 @@ async function confirmCopyFor(action, sessionName) {
     confirmCalls.length = 0;
     const ok = await SessionRowActions.confirm(action, sessionName);
     assert.equal(confirmCalls.length, 1, 'must route through the ONE shared confirm modal');
-    const [title, message, details] = confirmCalls[0];
-    return { title, message, details, ok };
+    const [title, message, details, , , variant] = confirmCalls[0];
+    return { title, message, details, variant, ok };
 }
+
+test('closing and removing a session both confirm with the danger variant (6th argument)', async () => {
+    for (const action of [SessionRowActions.ACTION_CLOSE, SessionRowActions.ACTION_REMOVE]) {
+        const { variant } = await confirmCopyFor(action, 'api-work');
+        assert.equal(variant, 'danger', `${action}: a destructive confirm must pass 'danger'`);
+    }
+});
 
 test('neither copy may claim disk is left untouched', async () => {
     for (const action of [SessionRowActions.ACTION_CLOSE, SessionRowActions.ACTION_REMOVE]) {

@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import * as Density from '../drawer/density';
 import { emptySectionsHidden, setEmptySectionsHidden } from '../drawer/empty-sections.svelte';
-import { init as initSections, sectionShown, setSectionShown } from '../drawer/section-visibility.svelte';
+import { closedShown, init as initClosed, setClosedShown } from '../drawer/closed-visibility.svelte';
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
@@ -33,7 +33,7 @@ beforeEach(() => {
   cplugEnablement.enabled = { huddle: false };
   vi.spyOn(console, 'log').mockImplementation(() => {});
   Density.init();
-  initSections();
+  initClosed();
   win.SessionSidebarDensity = { init: Density.init, apply: Density.apply, setMode: Density.setMode, currentMode: Density.currentMode };
 });
 
@@ -42,8 +42,7 @@ afterEach(async () => {
   for (const c of mounted.splice(0)) await unmount(c);
   document.body.replaceChildren();
   delete win.SessionSidebarDensity;
-  setSectionShown('open', false);
-  setSectionShown('sleeping', false);
+  setClosedShown(false);
   setEmptySectionsHidden(false);
   vi.restoreAllMocks();
 });
@@ -62,44 +61,32 @@ function openMenu(): void {
 const checkboxes = () => [...document.querySelectorAll<HTMLElement>('[role="menuitemcheckbox"]')];
 const item = (key: string) => checkboxes().find((el) => el.textContent?.includes(t(key)))!;
 
-test('both items are checkboxes, drawn with the square check box, checked by default', () => {
+test('the ticks are checkboxes drawn with the square check box, and show open / show sleeping are not among them (they are Settings switches, #2784)', () => {
   openMenu();
-  for (const key of ['drawer.density.show_open', 'drawer.density.show_sleeping']) {
-    expect(item(key).getAttribute('aria-checked'), key).toBe('true');
+  for (const key of ['drawer.density.show_leaders', 'drawer.density.show_closed']) {
     expect(item(key).querySelector('.acm-box'), key).not.toBeNull();
   }
-  expect(checkboxes().length).toBe(7);
+  expect(checkboxes().length).toBe(5);
   expect(document.querySelectorAll('[role="menuitemradio"]').length).toBe(3);
-});
-
-test('choosing each flips only its own section, and the menu then shows it checked', () => {
-  openMenu();
-  item('drawer.density.show_open').click();
-  flushSync();
-  expect(sectionShown('open')).toBe(false);
-  expect(sectionShown('sleeping')).toBe(true);
-  expect(item('drawer.density.show_open').getAttribute('aria-checked')).toBe('false');
-  item('drawer.density.show_sleeping').click();
-  flushSync();
-  expect(sectionShown('sleeping')).toBe(false);
+  expect(document.querySelector('[data-node="show-open"], [data-node="show-sleeping"]')).toBeNull();
 });
 
 const menuOpen = () => document.querySelector('[role="menu"]') !== null;
 
 test('ticking and unticking keeps the menu open, flips the setting, and focus stays on the item', () => {
   openMenu();
-  const open = item('drawer.density.show_open');
-  open.focus();
-  open.click();
+  const closed = item('drawer.density.show_closed');
+  closed.focus();
+  closed.click();
   flushSync();
   expect(menuOpen()).toBe(true);
-  expect(sectionShown('open')).toBe(false);
-  expect(item('drawer.density.show_open').getAttribute('aria-checked')).toBe('false');
-  expect(document.activeElement).toBe(item('drawer.density.show_open'));
-  item('drawer.density.show_open').click();
+  expect(closedShown()).toBe(true);
+  expect(item('drawer.density.show_closed').getAttribute('aria-checked')).toBe('true');
+  expect(document.activeElement).toBe(item('drawer.density.show_closed'));
+  item('drawer.density.show_closed').click();
   flushSync();
   expect(menuOpen()).toBe(true);
-  expect(sectionShown('open')).toBe(true);
+  expect(closedShown()).toBe(false);
 });
 
 test('every other tick and the density radios keep the menu open too', () => {
@@ -116,7 +103,7 @@ test('every other tick and the density radios keep the menu open too', () => {
 
 test('Escape and an outside press still close the menu', () => {
   openMenu();
-  item('drawer.density.show_open').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  item('drawer.density.show_closed').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
   flushSync();
   expect(menuOpen()).toBe(false);
   document.querySelector<HTMLButtonElement>('[data-action="density"]')!.click();
@@ -139,7 +126,7 @@ test('an outside press closes the menu even when the page under it swallows the 
 
 test('a press inside the menu keeps it open', () => {
   openMenu();
-  item('drawer.density.show_open').dispatchEvent(new Event('pointerdown', { bubbles: true }));
+  item('drawer.density.show_closed').dispatchEvent(new Event('pointerdown', { bubbles: true }));
   flushSync();
   expect(menuOpen()).toBe(true);
 });
@@ -165,7 +152,7 @@ test('the window blurring to an iframe closes the menu, a blur to the page does 
 
 test('focus moving outside the menu closes it, focus inside it does not (#1766)', () => {
   openMenu();
-  item('drawer.density.show_open').focus();
+  item('drawer.density.show_closed').focus();
   flushSync();
   expect(menuOpen()).toBe(true);
   const field = document.createElement('input');

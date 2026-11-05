@@ -28,8 +28,7 @@ const openAppAlerts = vi.fn();
 vi.mock('../../../lib/app-alerts/alert-panel.svelte', () => ({ openAppAlerts: () => openAppAlerts(), alertPanel: { open: false }, toggleAppAlerts: () => {} }));
 
 import Cell from './Cell.svelte';
-import { alertCountSource } from '../../../lib/session-rail/alert-counts';
-import '../../../lib/session-rail/alert-count-sources.svelte';
+import { questionCount } from './state.svelte';
 import { titleCount } from './meta';
 import { META } from '../../engine/meta';
 import { approvals, refreshApprovals } from '../../../lib/approvals/approvals.svelte';
@@ -113,10 +112,9 @@ describe('the waiting-on-you widget, one copy at a time', () => {
     expect(keys(taskManagerOnly)).toEqual(['huddle:7:9']);
     expect(keys(noTaskManager)).toEqual(['approval:a1']);
     expect(taskManagerOnly.querySelector('[data-questions-count]')?.textContent).toBe('1 waiting on you');
-    const count = alertCountSource('core.questions')!;
-    expect(count.read(null, { kind_all: false, kind_approvals: false, kind_automations: false })).toBe(1);
-    expect(count.read(null, { kind_all: false, kind_huddle: false })).toBe(1);
-    expect(count.read(null, undefined)).toBe(3);
+    expect(questionCount({ kind_all: false, kind_approvals: false, kind_automations: false })).toBe(1);
+    expect(questionCount({ kind_all: false, kind_huddle: false })).toBe(1);
+    expect(questionCount(undefined)).toBe(3);
   });
 
   test('all on lists everything whatever the kind checks remembered; all off honors them without losing the alerts rule', async () => {

@@ -73,7 +73,7 @@ beforeEach(() => {
     document.body.innerHTML = '<div id="list"></div>';
     list = document.getElementById('list')!;
     ctrl = {
-        listEl: list, _activeTmuxName: null, _pendingSelection: null, _lastSig: 'sig',
+        listEl: list, _activeTmuxName: null, _pendingSelection: null,
         _closeAfterSwitch: vi.fn(), repaint: vi.fn(), _fetchAndRender: vi.fn(async () => {}),
     };
     quietPage();
@@ -256,15 +256,17 @@ describe('activateRow', () => {
         expect(ctrl._closeAfterSwitch).not.toHaveBeenCalled();
     });
 
-    test('a failed switch alerts with the catalog sentence and clears the pending pick', async () => {
-        const alert = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    test('a failed switch raises the failure notice with the reason and clears the pending pick', async () => {
+        const notify = vi.fn();
+        (win as any).WriteFailureNotice = { notify };
         const err = vi.spyOn(console, 'error').mockImplementation(() => {});
         (win.API as any).getSession = vi.fn(async () => { throw new Error('boom'); });
         await activateRow(ctrl as never, addRow('cloude_a', { 'data-session-id': 'ses_a' }));
-        expect(alert).toHaveBeenCalledTimes(1);
-        expect(String(alert.mock.calls[0]![0])).toContain('boom');
+        expect(notify).toHaveBeenCalledTimes(1);
+        expect(notify.mock.calls[0]![0]).toBe('session.row.switch_agent.failed');
+        expect(notify.mock.calls[0]![1]).toEqual({ detail: 'boom' });
         expect(ctrl._pendingSelection).toBeNull();
-        alert.mockRestore();
+        delete (win as any).WriteFailureNotice;
         err.mockRestore();
     });
 });
@@ -324,7 +326,6 @@ describe('onRowActionClick', () => {
         addRow('cloude_a', { 'data-session-id': 'ses_a' });
         await onRowActionClick(ctrl as never, button('cloude_a', 'close', null));
         expect((win.API as any).destroySession).toHaveBeenCalledWith('ses_a');
-        expect(ctrl._lastSig).toBeNull();
         expect(ctrl._fetchAndRender).toHaveBeenCalledTimes(1);
     });
 
@@ -338,14 +339,16 @@ describe('onRowActionClick', () => {
         expect((win.API as any).destroyExternalSession).not.toHaveBeenCalled();
     });
 
-    test('a failed destroy alerts with the action and the reason', async () => {
-        const alert = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    test('a failed destroy raises the failure notice for the action with the reason', async () => {
+        const notify = vi.fn();
+        (win as any).WriteFailureNotice = { notify };
         const err = vi.spyOn(console, 'error').mockImplementation(() => {});
         (win.API as any).destroySession = vi.fn(async () => { throw new Error('nope'); });
         const row = addRow('cloude_a', { 'data-session-id': 'ses_a' });
         await onRowActionClick(ctrl as never, button('cloude_a', 'close', row));
-        expect(String(alert.mock.calls[0]![0])).toMatch(/close.*nope/);
-        alert.mockRestore();
+        expect(notify.mock.calls[0]![0]).toBe('session.row.close.failed');
+        expect(notify.mock.calls[0]![1]).toEqual({ detail: 'nope' });
+        delete (win as any).WriteFailureNotice;
         err.mockRestore();
     });
 });

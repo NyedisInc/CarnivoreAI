@@ -6,7 +6,7 @@ from typing import Dict, Literal, Optional
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from src.api.auth import require_auth
 from src.config import settings
@@ -31,6 +31,25 @@ class BeastSetting(BaseModel):
     enabled: bool
     prompts: bool = False
     hours: Optional[Literal[1, 4, 8]] = None
+
+
+class BeastAdjust(BaseModel):
+    """A change to an armed Beast Mode (#2767); whatever is absent is left alone.
+
+    ``prompts``: the "also answer permission prompts" scope. ``hours``: 1, 4 or 8 restarts the auto-off from now; an explicit null is
+    "until I turn it off". At least one must be sent. Example: {"hours": null} or {"prompts": true, "hours": 4}
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    prompts: Optional[bool] = None
+    hours: Optional[Literal[1, 4, 8]] = None
+
+    @model_validator(mode="after")
+    def _something_to_change(self) -> "BeastAdjust":
+        if not self.model_fields_set:
+            raise ValueError("send prompts and/or hours")
+        return self
 
 
 class BeastGridUpdate(BaseModel):
@@ -106,6 +125,27 @@ async def put_beast_mode(body: BeastSetting) -> dict:
     Raises: HTTPException 500 - config.json unwritable.
     """
     return await set_beast_mode(body, "route")
+
+
+@router.patch("")
+async def patch_beast_mode(body: BeastAdjust) -> dict:
+    """Change the prompts scope and/or the auto-off while Beast Mode is already armed; ``since`` is unchanged.
+
+    A new ``hours`` restarts the auto-off from now, ``null`` clears it. Output: the same body as GET.
+    Raises: HTTPException 409 - not armed (disarmed or auto-off passed); 422 - empty or invalid body; 500 - config.json unwritable.
+    Example: PATCH /api/v1/beast-mode {"prompts": true, "hours": 4} -> {"enabled": true, "prompts": true, "until": "...", ...}
+    """
+    try:
+        async with beast_mode.toggle_lock:
+            await beast_store.adjust(prompts=body.prompts, hours_set="hours" in body.model_fields_set, hours=body.hours)
+    except beast_store.NotArmedError as exc:
+        raise api_error(409, "conflict", exc, step="patch_beast_mode") from exc
+    except (FileNotFoundError, ValueError, OSError) as exc:
+        logger.error("beast_mode_setting_unwritable", error_type=type(exc).__name__)
+        raise HTTPException(status_code=500, detail="config.json could not be updated") from exc
+    current = await get_beast_mode()
+    logger.info("beast_mode_adjusted", prompts=current["prompts"], until=current["until"])
+    return current
 
 
 async def set_beast_mode(body: BeastSetting, source: str) -> dict:

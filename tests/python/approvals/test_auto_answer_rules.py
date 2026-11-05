@@ -21,7 +21,7 @@ SCREENS = Path(__file__).resolve().parents[2] / "fixtures" / "startup_screens"
 AWAITING = "awaiting_startup_prompt"
 PROJECT = "/tmp/autoanswer-project"
 ELSEWHERE = "/tmp/autoanswer-elsewhere"
-NEVER = ["trust_dialog_permissions.txt", "bypass_permissions_warning.txt", "mcp_server_approval.txt", "onboarding_login_method.txt",
+NEVER = ["onboarding_login_method.txt",
          "onboarding_theme.txt", "resume_picker.txt"]
 
 
@@ -42,8 +42,8 @@ class Presses:
     def __init__(self) -> None:
         self.calls: List[tuple] = []
 
-    async def __call__(self, session_id: str, fingerprint: str, label: str) -> None:
-        self.calls.append((session_id, label))
+    async def __call__(self, session_id: str, fingerprint: str, label: str, options: Optional[List[str]] = None) -> None:
+        self.calls.append((session_id, label if options is None else tuple(options)))
 
     @property
     def labels(self) -> List[str]:
@@ -103,8 +103,16 @@ def test_the_never_list_has_no_rule_and_nothing_is_pressed_even_with_everything_
     assert run(screen(name), policy=FixedPolicy("every"), lookup=lambda f: "op", lookup_imports=lambda f: True).labels == []
 
 
-def test_the_permissions_variant_of_trust_is_a_startup_screen_only_the_owner_answers() -> None:
-    dialog = extract_dialog(screen("trust_dialog_permissions.txt"), "claude")
+def test_beast_on_answers_the_permissions_variant_and_the_bypass_warning_beast_off_does_not() -> None:
+    variant, bypass = screen("trust_dialog_permissions.txt", PROJECT), screen("bypass_permissions_warning.txt")
+    both = [catalog.RULE_TRUST_PERMISSIONS, catalog.RULE_BYPASS_ACCEPT]
+    assert run(variant, readings=3).labels == [YES_LABEL]
+    assert run(bypass, readings=3).labels == [rules.BYPASS_ACCEPT_LABEL]
+    assert run(variant, policy=FixedPolicy(off=both)).labels == [] and run(bypass, policy=FixedPolicy(off=both)).labels == []
+    assert run(variant, folder=ELSEWHERE).labels == []
+    assert run(screen("trust_dialog_permissions.txt", ELSEWHERE), folder=PROJECT).labels == []
+    assert run(screen("trust_dialog_permissions.txt", ELSEWHERE), folder=ELSEWHERE, policy=FixedPolicy("every")).labels == [YES_LABEL]
+    dialog = extract_dialog(variant, "claude")
     assert answer_needs_owner(dialog) and eligible_dialog(reading(dialog)) is None
 
 
@@ -122,10 +130,45 @@ def test_a_carried_folder_follows_its_sources_answer_on_imports() -> None:
     assert run(screen("external_imports.txt"), lookup=lambda f: "op", lookup_imports=lambda f: True).labels == [IMPORTS_YES_LABEL]
 
 
-def test_chrome_presses_no_and_never_yes() -> None:
+def test_chrome_yes_under_beast_on_and_no_under_beast_off() -> None:
+    on = FixedPolicy(off=[catalog.RULE_CHROME_DECLINE])
+    off = FixedPolicy(off=[catalog.RULE_CHROME_ACCEPT])
     for readings in (1, 4):
-        presses = run(screen("chrome_extension.txt"), readings=readings)
-        assert presses.labels == [CHROME_DECLINE_LABEL] and CHROME_ACCEPT_LABEL not in presses.labels
+        assert run(screen("chrome_extension.txt"), readings=readings, policy=on).labels == [CHROME_ACCEPT_LABEL]
+        assert run(screen("chrome_extension.txt"), readings=readings, policy=off).labels == [CHROME_DECLINE_LABEL]
+    assert run(screen("chrome_extension.txt"), policy=FixedPolicy()).labels == [CHROME_ACCEPT_LABEL]
+
+
+def test_mcp_server_approved_only_when_already_installed_and_never_for_all_future() -> None:
+    text = screen("mcp_server_approval.txt")
+    assert run(text, mcp_installed=lambda f, n: n == "probe-echo").labels == [rules.MCP_APPROVE_LABEL]
+    assert run(text, mcp_installed=lambda f, n: False).labels == []
+    assert run(text, mcp_installed=lambda f, n: True, policy=FixedPolicy(off=[catalog.RULE_MCP_SERVER])).labels == []
+    assert run(text, mcp_installed=lambda f, n: True, folder=ELSEWHERE).labels == [rules.MCP_APPROVE_LABEL]
+
+
+def test_plural_mcp_screen_decodes_and_is_approved_only_when_every_server_is_installed() -> None:
+    text = screen("mcp_servers_plural.txt")
+    dialog = extract_dialog(text, "claude")
+    assert dialog.multi_select and dialog.startup_kind == "mcp_server" and dialog.options == ("alpha-echo", "beta-echo") and answer_needs_owner(dialog)
+    assert run(text, mcp_installed=lambda f, n: True, readings=3).calls == [("ses_1", ("alpha-echo", "beta-echo"))]
+    assert run(text, mcp_installed=lambda f, n: n == "alpha-echo").labels == []
+    assert run(text, mcp_installed=lambda f, n: True, policy=FixedPolicy(off=[catalog.RULE_MCP_SERVER])).labels == []
+    assert run(text, mcp_installed=lambda f, n: True, gate="unknown").labels == []
+    assert extract_dialog(text.replace("2 new MCP", "3 new MCP"), "claude") is None
+    assert extract_dialog(text.replace("Space to select · Esc to reject all", ""), "claude") is None
+
+
+def test_installed_means_same_name_and_identical_definition(tmp_path) -> None:
+    import json
+    from src.core.approvals.auto_answer import mcp_installed as m
+    own = tmp_path / "claude.json"
+    own.write_text(json.dumps({"mcpServers": {"echo": {"command": "npx", "args": ["echo"]}}}))
+    (tmp_path / ".mcp.json").write_text(json.dumps({"mcpServers": {"echo": {"command": "npx", "args": ["echo"]}, "evil": {"command": "x"}}}))
+    assert m.installed_for(str(tmp_path), "echo", claude_json=own) and not m.installed_for(str(tmp_path), "evil", claude_json=own)
+    (tmp_path / ".mcp.json").write_text(json.dumps({"mcpServers": {"echo": {"command": "curl", "args": ["evil"]}}}))
+    assert not m.installed_for(str(tmp_path), "echo", claude_json=own)
+    assert m.server_name("New MCP server found in this project: probe-echo") == "probe-echo" and m.server_name("New MCP servers found: a, b") is None
 
 
 def test_dev_channels_presses_only_our_channel_on_our_flag() -> None:
@@ -142,7 +185,7 @@ def test_every_box_unticked_answers_nothing_dev_channels_included(name: str) -> 
 
 
 @pytest.mark.parametrize("rule_id, name", [(catalog.RULE_FOLDER_TRUST, "trust_dialog.txt"), (catalog.RULE_EXTERNAL_IMPORTS, "external_imports.txt"),
-                                           (catalog.RULE_CHROME_DECLINE, "chrome_extension.txt"), (catalog.RULE_DEV_CHANNELS, "dev_channels.txt")])
+                                           (catalog.RULE_DEV_CHANNELS, "dev_channels.txt")])
 def test_each_rules_own_switch_silences_only_that_rule(rule_id: str, name: str) -> None:
     text = screen(name, PROJECT) if name == "trust_dialog.txt" else screen(name)
     assert run(text, policy=FixedPolicy(off=[rule_id])).labels == []
@@ -177,5 +220,28 @@ def test_the_press_is_recorded_with_its_rule_and_evidence() -> None:
 
 
 def test_every_rule_label_is_fixed_and_none_is_an_affirmative_chrome_or_bypass_row() -> None:
-    assert [r.label for r in rules.RULES] == [DEV_CHANNELS_ACCEPT, YES_LABEL, IMPORTS_YES_LABEL, CHROME_DECLINE_LABEL]
-    assert [r.info.id for r in rules.RULES] == [i.id for i in catalog.RULE_INFOS]
+    assert [r.label for r in rules.RULES] == [DEV_CHANNELS_ACCEPT, YES_LABEL, IMPORTS_YES_LABEL, CHROME_ACCEPT_LABEL, CHROME_DECLINE_LABEL, YES_LABEL, rules.BYPASS_ACCEPT_LABEL, rules.MCP_APPROVE_LABEL, "Enable selected"]
+    assert list(dict.fromkeys(r.info.id for r in rules.RULES)) == [i.id for i in catalog.RULE_INFOS]
+
+
+def test_folder_trust_looks_again_when_the_first_reading_is_not_yet_plain() -> None:
+    presses = Presses()
+
+    async def info(_sid: str) -> Any:
+        return SimpleNamespace(session=SimpleNamespace(id=_sid, working_dir=PROJECT), agent_family="claude", startup_gate=AWAITING,
+                               tmux_session="t")
+
+    engine = make_engine(answer=presses, info=info, in_projects=lambda f: f.endswith("autoanswer-project"), rows=lambda: [])
+    plain = screen("trust_dialog.txt", PROJECT)
+    painting = plain.replace(" Claude Code'll be able", " still painting\n\n Claude Code'll be able")
+    first = extract_dialog(painting, "claude")
+    assert first is not None and rules.plain_dialog_folder(first) is None
+
+    async def go() -> None:
+        for dialog in (first, extract_dialog(plain, "claude")):
+            task = engine.on_observation(SimpleNamespace(session_id="ses_1"), reading(dialog))
+            if task is not None:
+                await task
+
+    asyncio.run(go())
+    assert presses.labels == [YES_LABEL]

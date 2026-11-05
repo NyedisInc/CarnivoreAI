@@ -52,6 +52,7 @@ def test_work_stamp_path_coalesces(monkeypatch) -> None:
             return "exact_epoch"
 
         monkeypatch.setattr(sws, "stamp_work", fake_stamp)
+        monkeypatch.setattr(sws, "plan_stamp", lambda *a, **k: (1, "exact_epoch", "2026-01-01T00:00:00Z"))
         monkeypatch.setattr(sws, "PROJECTS_NOTIFY_MIN_INTERVAL_SECONDS", 60.0)
         for _ in range(10):
             conn = sqlite3.connect(":memory:")

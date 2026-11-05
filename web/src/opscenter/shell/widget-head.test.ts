@@ -11,16 +11,16 @@ function words(parts: HeadPart[]): string[] {
   return parts.map((part) => (part.kind === 'group' ? `g${part.at}` : part.kind));
 }
 
-describe('the separator rule: the header draws them, between non-empty groups and before the close x', () => {
+describe('the separator rule: the header draws them, between non-empty groups and before EVERY close x (#2777)', () => {
   test.each<[string, boolean[], boolean, string[]]>([
     ['nothing at all', [], false, []],
-    ['the close x alone takes no leading separator', [], true, ['close']],
+    ['the close x alone still takes its separator, so every closable header reads the same', [], true, ['sep', 'close']],
     ['one group and no close: no trailing separator', [true], false, ['g0']],
     ['one group and the close', [true], true, ['g0', 'sep', 'close']],
     ['two groups and the close', [true, true], true, ['g0', 'sep', 'g1', 'sep', 'close']],
     ['an empty group between two never doubles a separator', [true, false, true], true, ['g0', 'sep', 'g2', 'sep', 'close']],
     ['empty groups at either end never lead or trail', [false, true, false], false, ['g1']],
-    ['every group empty, close drawn', [false, false], true, ['close']],
+    ['every group empty, close drawn', [false, false], true, ['sep', 'close']],
   ])('%s', (_name, groups, closable, expected) => {
     expect(words(headParts(groups, closable))).toEqual(expected);
   });
@@ -30,8 +30,9 @@ describe('the separator rule: the header draws them, between non-empty groups an
       const groups = [0, 1, 2, 3].map((bit) => (mask & (1 << bit)) !== 0);
       const closable = (mask & 16) !== 0;
       const drawn = words(headParts(groups, closable));
-      expect(drawn[0]).not.toBe('sep');
+      if (drawn[0] === 'sep') expect(drawn[1]).toBe('close');
       expect(drawn[drawn.length - 1]).not.toBe('sep');
+      if (drawn.includes('close')) expect(drawn[drawn.length - 2]).toBe('sep');
       drawn.forEach((word, at) => {
         if (word === 'sep') expect(drawn[at + 1]).not.toBe('sep');
       });

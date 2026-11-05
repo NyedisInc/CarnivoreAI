@@ -4,8 +4,6 @@ import { ORPHANED } from './route';
 
 export type SessionGroup = 'running' | 'sleeping' | 'closed';
 
-export const SESSION_GROUPS: readonly SessionGroup[] = ['running', 'sleeping', 'closed'];
-
 export const CLOSED_PREVIEW = 6;
 
 export const CLOSED_SLACK = 2;
@@ -132,11 +130,6 @@ export function sessionGroups(
     }
     for (const list of Object.values(out)) list.sort((a, b) => Date.parse(b.last_activity_at ?? '') - Date.parse(a.last_activity_at ?? ''));
     return out;
-}
-
-export function hiddenSessionCount(group: HistoryGroup): number {
-    const automatedOnly = isAutomatedOnly(group);
-    return group.sessions.filter((s) => isHiddenSession(s, automatedOnly)).length;
 }
 
 export type PrimaryId = 'open' | 'wake' | 'resume' | 'restart' | 'none';

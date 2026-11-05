@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 import structlog
 
-from src.core.automations import attachments, command_allowlist, contract, lifecycle
+from src.core.automations import attachments, command_allowlist, contract, lifecycle, notify_policy, run_title
 from src.core.automations import models as m
 
 logger = structlog.get_logger()
@@ -45,6 +45,9 @@ async def run(ctx: Any, automation: Dict[str, Any], run_row: Dict[str, Any]) -> 
     outcome = await _run(ctx, automation, run_row)
     if outcome.status == m.FAILED:
         tell_failure(automation, run_row["run_id"], ctx.store)
+    elif outcome.status == m.ALERTED:
+        report = outcome.report or {}
+        notify_policy.tell_alerted(automation, run_row["run_id"], int(report["exit_code"]), run_title.first_line(report), ctx.store)
     return outcome
 
 
@@ -88,6 +91,8 @@ async def _run(ctx: Any, automation: Dict[str, Any], run_row: Dict[str, Any]) ->
         return m.RunOutcome(status=m.FAILED, reason=R_SPAWN, error=res.spawn_error, report=report)
     if res.timed_out:
         return m.RunOutcome(status=m.FAILED, reason=R_TIMED_OUT, report=report)
+    if res.exit_code in (target.get("alert_exit_codes") or ()):
+        return m.RunOutcome(status=m.ALERTED, reason=f"exit_{res.exit_code}", report=report)
     if res.exit_code != 0:
         return m.RunOutcome(status=m.FAILED, reason=f"exit_{res.exit_code}", report=report)
     return m.RunOutcome(status=m.SUCCEEDED, report=report)

@@ -9,6 +9,7 @@
     import type { Translate } from '../sessions/types';
     import InfoTip from '../info-tip/InfoTip.svelte';
     import IconButton from '../base/IconButton.svelte';
+    import Button from '../base/Button.svelte';
     import Page from '../../opscenter/ui/Page.svelte';
     import { isInset } from '../../opscenter/ui/page-inset';
     import { clearToasts } from '../../opscenter/ui/detail-clearance';
@@ -259,9 +260,9 @@
 
 {#snippet pageActions()}
     {#if onInstall}
-        <button type="button" class="oc-btn oc-btn--confirm" data-mgr-install onclick={onInstall}>
+        <Button variant="confirm" data-mgr-install="" onclick={onInstall}>
             {installLabel ?? t(MANAGER_KEYS.install)}
-        </button>
+        </Button>
     {/if}
     {#if actionsSnippet}{@render actionsSnippet()}{/if}
 {/snippet}
@@ -282,6 +283,7 @@
             <button
                 type="button"
                 class="oc-chip"
+                data-btn="row"
                 aria-pressed={filter.on}
                 onclick={() => onFilter?.(filter.id, !filter.on)}>{filter.label}</button
             >
@@ -368,9 +370,9 @@
                         <p class="oc-page__error-title">{t(MANAGER_KEYS.errorTitle)}</p>
                         <p class="oc-page__error-detail">{status.message}</p>
                         {#if onRetry}
-                            <button type="button" class="oc-btn" onclick={onRetry}>
+                            <Button onclick={onRetry}>
                                 {t(MANAGER_KEYS.errorRetry)}
-                            </button>
+                            </Button>
                         {/if}
                     </div>
                 {:else if grouped && grouped.length > 0}
@@ -408,9 +410,9 @@
                     <div class="oc-page__empty pl-panel">
                         {#if narrowed && items.length > 0}
                             <p class="oc-page__empty-text">{t(MANAGER_KEYS.emptyFiltered)}</p>
-                            <button type="button" class="oc-btn" onclick={clearAll}>
+                            <Button onclick={clearAll}>
                                 {t(MANAGER_KEYS.clear)}
-                            </button>
+                            </Button>
                         {:else}
                             <p class="oc-page__empty-text">{emptyText ?? t(MANAGER_KEYS.empty)}</p>
                         {/if}
@@ -454,9 +456,9 @@
                     {#if detailKicker}
                         <IconButton label={t(MANAGER_KEYS.detailBack)} variant="quiet" icon="arrow-left" iconSize={14} onclick={() => void closeDetail()} />
                     {:else}
-                        <button type="button" class="oc-btn oc-btn--ghost" onclick={() => void closeDetail()}>
+                        <Button variant="quiet" onclick={() => void closeDetail()}>
                             {t(MANAGER_KEYS.detailBack)}
-                        </button>
+                        </Button>
                     {/if}
                 </div>
                 <div class="oc-page__detail-body" class:mgr__detail-body--fill={detailFill}>

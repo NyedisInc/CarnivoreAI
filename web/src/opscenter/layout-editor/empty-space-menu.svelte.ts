@@ -18,6 +18,7 @@ export const emptyMenu: { at: { x: number; y: number } | null; surface: MenuSurf
 export function surfaceOf(target: EventTarget | null): MenuSurface {
   if (target instanceof Element && target.closest('#warroom-screen') !== null) return 'warroom';
   if (document.querySelector('#warroom-screen .oc-surface') !== null) return 'warroom';
+  if (target instanceof Element && target.closest('#launchpad-screen') !== null) return 'home';
   if (target instanceof Element && target.closest('#terminal-screen') !== null) return 'terminal';
   if (document.querySelector('#launchpad-screen.active') !== null) return 'home';
   return document.querySelector('#terminal-screen.active') !== null ? 'terminal' : 'home';

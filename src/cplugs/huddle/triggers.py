@@ -61,6 +61,10 @@ def nudge() -> None:
         listener()
 
 
+class FireAtPast(TaskManagerInvalid):
+    pass
+
+
 def parse_fire_at(value: object, now: float) -> Optional[float]:
     if not isinstance(value, str):
         raise TaskManagerInvalid("fire_at must be an ISO 8601 time with a UTC offset, or an empty string to cancel")
@@ -75,7 +79,7 @@ def parse_fire_at(value: object, now: float) -> Optional[float]:
         raise TaskManagerInvalid("fire_at needs a UTC offset (e.g. -04:00 or Z), so the moment is the same on every machine")
     stamp = float(math.ceil(moment.timestamp()))
     if stamp <= now:
-        raise TaskManagerInvalid("fire_at must be in the future")
+        raise FireAtPast("fire_at must be in the future")
     return stamp
 
 

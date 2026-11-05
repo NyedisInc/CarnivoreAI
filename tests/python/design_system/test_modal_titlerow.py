@@ -80,7 +80,6 @@ PAGE = """<!DOCTYPE html><html><head>
 <link rel="stylesheet" href="/css/modal-titlerow.css">
 <link rel="stylesheet" href="/css/session-restart-picker.css">
 <link rel="stylesheet" href="/css/text-prompt-modal.css">
-<link rel="stylesheet" href="/css/confirm-modal.css">
 <link rel="stylesheet" href="/css/session-restore-offer.css">
 <link rel="stylesheet" href="/css/media-lightbox.css">
 </head><body>%s</body></html>""" % HEADS
@@ -136,10 +135,12 @@ def test_every_strip_measures_like_the_restart_picker_row(measured):
         assert got["shadow"] == reference["shadow"] and got["bg"] == reference["bg"], f".{cls}: {got}"
 
 
-def test_confirm_dialog_strip_is_the_shared_class():
-    markup = (CLIENT / "js" / "app.js").read_text(encoding="utf-8")
-    assert '<div class="modal-titlerow"><span class="confirm-modal__verb">' in markup
-    assert "confirm-modal__head" not in css_of(CLIENT / "css" / "confirm-modal.css")
+def test_confirm_dialog_strip_is_the_text_prompt_strip():
+    svelte = (CLIENT.parent / "web" / "src" / "lib" / "confirm-ok" / "ConfirmOkModal.svelte").read_text(encoding="utf-8")
+    assert 'overlayClass="text-prompt-modal"' in svelte
+    assert '<div class="text-prompt-modal__head">' in svelte
+    app_js = (CLIENT / "js" / "app.js").read_text(encoding="utf-8")
+    assert "confirm-modal__verb" not in app_js, "app.js must not draw a confirm dialog of its own"
 
 
 def test_lightbox_bar_markup_wears_the_shared_class():

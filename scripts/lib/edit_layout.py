@@ -43,11 +43,13 @@ def open_edit_layout(page: Page) -> None:
     if not editor_active(page):
         open_account_menu(page)
         page.locator(EDIT_LAYOUT_ITEM).first.click()
+    entered = False
     try:
         page.locator(EDITOR_DRAWER).first.wait_for(state="visible", timeout=10000)
-    except Exception:  # noqa: BLE001
-        finish_edit_layout(page)
-        raise
+        entered = True
+    finally:
+        if not entered:
+            finish_edit_layout(page)
 
 
 def finish_edit_layout(page: Page) -> None:

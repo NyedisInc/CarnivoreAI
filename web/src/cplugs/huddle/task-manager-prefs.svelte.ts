@@ -15,27 +15,13 @@ export const SHOW_EMPTY_GROUPS = 'showEmptyGroups';
 
 export const BADGE_STATUSES = ['question', 'review', 'open', 'working', 'waiting', 'scheduled'] as const;
 export type BadgeStatus = (typeof BADGE_STATUSES)[number];
-export const BADGE_SETTING: Readonly<Record<BadgeStatus, string>> = {
-  question: 'badgeQuestions', review: 'badgeReviews', open: 'badgeOpen', working: 'badgeWorking', waiting: 'badgeWaiting', scheduled: 'badgeScheduled',
-};
-export const BADGE_DEFAULT: Readonly<Record<BadgeStatus, boolean>> = { question: true, review: true, open: false, working: false, waiting: false, scheduled: false };
-
-export function badgeFrom(settings: Record<string, unknown> | undefined): Record<BadgeStatus, boolean> {
-  const out = { ...BADGE_DEFAULT };
-  for (const status of BADGE_STATUSES) {
-    const stored = settings?.[BADGE_SETTING[status]];
-    if (typeof stored === 'boolean') out[status] = stored;
-  }
-  return out;
-}
-
 interface CplugRow {
   revision?: number;
   settings?: Record<string, unknown>;
 }
 
-export const taskManagerPrefs = $state<{ hideCompleted: boolean; view: TaskManagerViewMode; density: HuddleDensity; accordion: boolean; showTab: boolean; showEmptyGroups: boolean; badge: Record<BadgeStatus, boolean>; revision: number | null; loaded: boolean }>({
-  hideCompleted: false, showTab: true, showEmptyGroups: false, badge: { ...BADGE_DEFAULT }, view: 'status', density: DEFAULT_DENSITY, accordion: false, revision: null, loaded: false,
+export const taskManagerPrefs = $state<{ hideCompleted: boolean; view: TaskManagerViewMode; density: HuddleDensity; accordion: boolean; showTab: boolean; showEmptyGroups: boolean; revision: number | null; loaded: boolean }>({
+  hideCompleted: false, showTab: true, showEmptyGroups: false, view: 'status', density: DEFAULT_DENSITY, accordion: false, revision: null, loaded: false,
 });
 
 const viewListeners = new Set<(view: TaskManagerViewMode) => void>();
@@ -69,7 +55,6 @@ function adopt(row: CplugRow | null | undefined): void {
   taskManagerPrefs.accordion = row.settings?.[ACCORDION] === true;
   taskManagerPrefs.showTab = row.settings?.[SHOW_TAB] !== false;
   taskManagerPrefs.showEmptyGroups = row.settings?.[SHOW_EMPTY_GROUPS] === true;
-  taskManagerPrefs.badge = badgeFrom(row.settings);
   const view = viewFrom(row.settings);
   if (row.settings?.[VIEW] === LEGACY_CLAUDE_VIEW) void writeSetting(VIEW, 'area');
   if (view !== taskManagerPrefs.view) {
@@ -213,16 +198,4 @@ export async function setShowEmptyGroups(on: boolean): Promise<boolean> {
   if (await writeSetting(SHOW_EMPTY_GROUPS, on)) return true;
   taskManagerPrefs.showEmptyGroups = before;
   return false;
-}
-
-export async function setBadgeStatus(status: BadgeStatus, on: boolean): Promise<boolean> {
-  const before = taskManagerPrefs.badge;
-  taskManagerPrefs.badge = { ...before, [status]: on };
-  if (await writeSetting(BADGE_SETTING[status], on)) return true;
-  taskManagerPrefs.badge = before;
-  return false;
-}
-
-export function badgeStatuses(): BadgeStatus[] {
-  return BADGE_STATUSES.filter((status) => taskManagerPrefs.badge[status]);
 }

@@ -17,6 +17,8 @@ from src.core.skill_fires.store import DB_NAME, SkillFireStore
 
 logger = structlog.get_logger(__name__)
 
+MAX_RECENT_FIRES = 50
+DEFAULT_RECENT_FIRES = 20
 STATE_MEASURED = "measured"
 STATE_NOT_MEASURED = "not_measured"
 STATE_UNSUPPORTED = "unsupported"

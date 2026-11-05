@@ -21,8 +21,8 @@ from src.core.work.work_ladder import VERSION as WORK_VERSION, VERSION_KEY  # no
 from src.cplugs.sdk.storage import CplugSchemaError, migrate  # noqa: E402
 
 WORK = "work"
-EXPORTABLE_THROUGH = 3
-DROPPED_COLUMNS = {tables.ITEMS: frozenset({"review_checks"})}
+EXPORTABLE_THROUGH = 4
+DROPPED_COLUMNS = {tables.ITEMS: frozenset({"review_checks", "card_level"})}
 META_ONLY_WHERE = f"k != '{VERSION_KEY}'"
 _SIDE_SUFFIXES = ("", "-wal", "-shm", "-journal")
 

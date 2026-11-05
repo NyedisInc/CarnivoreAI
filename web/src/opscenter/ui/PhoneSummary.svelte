@@ -23,7 +23,7 @@
     .oc-psum {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: var(--oc-gap-parts);
       min-width: 0;
       overflow: hidden;
     }

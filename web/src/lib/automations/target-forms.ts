@@ -8,6 +8,7 @@ import TargetCommand from './TargetCommand.svelte';
 import TargetRecipe from './TargetRecipe.svelte';
 import TargetSequence from './TargetSequence.svelte';
 import TargetSession from './TargetSession.svelte';
+import { codesProblem } from './logic/alert-codes';
 
 export interface TargetForm {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,6 +41,10 @@ function blankCommand(): AutomationTarget {
   return { kind: 'command', command: '', project_id: null };
 }
 
+function commandReady(target: AutomationTarget): boolean {
+  return codesProblem(target.alert_exit_codes) === '';
+}
+
 function blankSession(): AutomationTarget {
   return { kind: 'session_message', session_uuid: '', text: '', if_asleep: 'wake', if_gone: 'start', project_id: null, session_name: '' };
 }
@@ -61,7 +66,7 @@ export const TARGET_FORMS: Record<string, TargetForm> = {
   blueprint_launch: { component: TargetBlueprint, blank: blankBlueprint },
   recipe: { component: TargetRecipe, blank: blankRecipe },
   session_message: { component: TargetSession, blank: blankSession },
-  command: { component: TargetCommand, blank: blankCommand },
+  command: { component: TargetCommand, blank: blankCommand, ready: commandReady },
   sequence: { component: TargetSequence, blank: blankSequence },
   swarm_card: { component: TargetCard, blank: blankCard, ready: cardReady },
   agent: { component: AgentBuilder, blank: blankAgent, ready: agentReady },

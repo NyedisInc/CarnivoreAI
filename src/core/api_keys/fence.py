@@ -11,6 +11,7 @@ FENCED: tuple[tuple[str, str], ...] = (
     ("/api/v1/mcp-admin/tokens", "mcp client tokens"),
     ("/api/v1/cplug-owner", "third-party plugin switch"),
     ("/api/v1/cplugs/safe-mode", "plugin safe mode"),
+    ("/api/v1/cplugs/publicboard/links", "public review links"),
 )
 
 

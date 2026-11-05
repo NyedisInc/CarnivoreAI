@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { fakeHandle } from './helpers/launch_choice_fake.mjs';
+import { installTrOnly } from './helpers/catalog-tr.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -84,6 +85,7 @@ function load(confirmAnswer) {
         },
     };
     vm.createContext(sandbox);
+    installTrOnly(sandbox);
     for (const name of ['session-status-ui.js',
         'session-restart-live.js', 'session-restart-options.js', 'session-restart-picker.js']) {
         vm.runInContext(fs.readFileSync(

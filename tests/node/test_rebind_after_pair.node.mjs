@@ -484,22 +484,11 @@ test('ServerManager.getBindReport copies, never aliases, and is found by name', 
   assert.equal(fake.reportedBind.restart_required, true);
 });
 
-test('otpauth-uri: every row of the shared fixture', () => {
-  const { sanitizeAccount, buildOtpauthUri } = require(path.join(macDir, 'otpauth-uri.js'));
-  assert.ok(fixtureRows.length >= 12);
-  for (const row of fixtureRows) {
-    assert.equal(sanitizeAccount(row.computer_name), row.account, JSON.stringify(row.computer_name));
-    assert.equal(buildOtpauthUri(row.secret, row.computer_name), row.uri, JSON.stringify(row.computer_name));
-  }
-});
-
 test('qr-window: carnivore look from theme.json, safe values only, literal QR plate', async () => {
   const qr = require(path.join(macDir, 'qr-window.js'));
   const row = fixtureRows[0];
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'qrwin-'));
-  const serverDir = path.join(tmp, 'server');
-  fs.mkdirSync(serverDir);
-  fs.writeFileSync(path.join(serverDir, '.env'), `TOTP_SECRET=${row.secret}\n`);
+  const api = { getAuthed: async () => ({ reachable: true, status: 200, data: { otpauth_uri: row.uri, restart_pending: false } }) };
   const themeDir = path.join(tmp, 'root', 'client', 'css', 'themes', 'carnivore');
   const root = path.join(tmp, 'root');
 
@@ -514,9 +503,9 @@ test('qr-window: carnivore look from theme.json, safe values only, literal QR pl
     let uri = null;
     const QRCode = { toString: async (text) => { uri = text; return '<svg id="qr"></svg>'; } };
     const ok = await qr.showQrPairingWindow({
-      serverDir, projectRoot, BrowserWindow: FakeWindow, QRCode, computerName: row.computer_name,
+      api, projectRoot, BrowserWindow: FakeWindow, QRCode,
     });
-    assert.equal(ok, true);
+    assert.equal(ok, 'shown');
     const html = decodeURIComponent(made[0].url.slice('data:text/html;charset=utf-8,'.length));
     return { html, opts: made[0].opts, uri };
   }
@@ -538,4 +527,98 @@ test('qr-window: carnivore look from theme.json, safe values only, literal QR pl
   assert.ok(!r.html.includes('--color-accent'), 'a value containing ;} is left out');
   assert.ok(!r.html.includes('display:none'));
   fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('qr-window: the QR is the secret the server loaded, not what .env now holds (#2707)', async () => {
+  const qr = require(path.join(macDir, 'qr-window.js'));
+  const loadedUri = fixtureRows[0].uri;
+  const envSecret = 'AAAAAAAAAAAAAAAA';
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'qrwin-loaded-'));
+  fs.mkdirSync(path.join(tmp, 'server'));
+  fs.writeFileSync(path.join(tmp, 'server', '.env'), `TOTP_SECRET=${envSecret}\n`);
+  const drawn = [];
+  const QRCode = { toString: async (text) => { drawn.push(text); return '<svg></svg>'; } };
+  const pages = [];
+  class FakeWindow {
+    constructor() { pages.push(this); }
+    loadURL(u) { this.url = decodeURIComponent(u); }
+    once() {}
+    setMenu() {}
+  }
+  const asked = [];
+  const api = { getAuthed: async (route) => { asked.push(route); return { reachable: true, status: 200, data: { otpauth_uri: loadedUri, restart_pending: true } }; } };
+  const outcome = await qr.showQrPairingWindow({ api, projectRoot: tmp, BrowserWindow: FakeWindow, QRCode, restartFooter: 'Restart Carnivore, then reopen' });
+  assert.equal(outcome, 'shown');
+  assert.deepEqual(asked, [qr.LOADED_ENROLLMENT_ROUTE]);
+  assert.deepEqual(drawn, [loadedUri]);
+  assert.ok(pages[0].url.includes('Restart Carnivore'), 'a pending restart is said on the page');
+  assert.ok(!JSON.stringify(drawn).includes(envSecret), '.env secret never reaches the QR');
+
+  const offline = { getAuthed: async () => ({ reachable: false, status: 0, data: null, error: 'fetch failed' }) };
+  for (const dead of [offline, null]) {
+    drawn.length = 0; pages.length = 0;
+    assert.equal(await qr.showQrPairingWindow({ api: dead, projectRoot: tmp, BrowserWindow: FakeWindow, QRCode }), 'offline');
+    assert.deepEqual([drawn.length, pages.length], [0, 0]);
+  }
+  const refusing = { getAuthed: async () => ({ reachable: false, status: 500, data: null, error: 'HTTP 500' }) };
+  assert.equal(await qr.showQrPairingWindow({ api: refusing, projectRoot: tmp, BrowserWindow: FakeWindow, QRCode }), 'refused');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('qr-window: a 401 at login says restart needed, distinct from offline (#2707)', async () => {
+  const qr = require(path.join(macDir, 'qr-window.js'));
+  const { TrayApiClient } = require(path.join(macDir, 'tray-api.js'));
+  const reply = (status) => async () => ({ ok: status >= 200 && status < 300, status, json: async () => ({}) });
+  const refusedLogin = (status) => new TrayApiClient({ baseUrl: 'http://127.0.0.1:5999', getOtp: () => '123456', fetchImpl: reply(status) });
+  const shown = [];
+  class FakeWindow { constructor() { shown.push(this); } loadURL() {} once() {} setMenu() {} }
+  const run = (api) => qr.showQrPairingWindow({ api, projectRoot: os.tmpdir(), BrowserWindow: FakeWindow, QRCode: { toString: async () => '<svg></svg>' } });
+
+  const authed = await refusedLogin(401).getAuthed(qr.LOADED_ENROLLMENT_ROUTE);
+  assert.deepEqual([authed.reachable, authed.status], [false, 401]);
+  assert.equal(await run(refusedLogin(401)), 'restart_needed');
+  const down = new TrayApiClient({ baseUrl: 'http://127.0.0.1:5999', getOtp: () => '123456', fetchImpl: async () => { throw Object.assign(new Error('fetch failed'), { cause: { code: 'ECONNREFUSED' } }); } });
+  assert.equal(await run(down), 'offline');
+  assert.equal(await run(refusedLogin(403)), 'loopback_only');
+  assert.equal(await run(refusedLogin(429)), 'rate_limited');
+  assert.equal(await run(refusedLogin(500)), 'refused');
+  const noSecret = new TrayApiClient({ baseUrl: 'http://127.0.0.1:5999', getOtp: () => null, fetchImpl: reply(200) });
+  assert.equal(await run(noSecret), 'login_failed');
+  assert.equal(shown.length, 0, 'no window for any of them');
+});
+
+test('qr-window: the loaded route is asked at the loopback origin, login included (#2707)', async () => {
+  const qr = require(path.join(macDir, 'qr-window.js'));
+  const { TrayApiClient } = require(path.join(macDir, 'tray-api.js'));
+  const urls = [];
+  const fetchImpl = async (url) => {
+    urls.push(url);
+    const body = url.endsWith('/auth/verify') ? { access_token: 't', expires_in: 600 } : { otpauth_uri: fixtureRows[0].uri, restart_pending: false };
+    return { ok: true, status: 200, json: async () => body };
+  };
+  const api = new TrayApiClient({ baseUrl: 'http://192.168.1.20:5999', getOtp: () => '123456', fetchImpl });
+  const loaded = await qr.fetchLoadedOtpauthUri(api, 'http://127.0.0.1:5999');
+  assert.equal(loaded.state, 'ok');
+  assert.deepEqual(urls, ['http://127.0.0.1:5999/api/v1/auth/verify', 'http://127.0.0.1:5999' + qr.LOADED_ENROLLMENT_ROUTE]);
+});
+
+test('qr-window: loopback unreachable falls back to the configured address once (#2707)', async () => {
+  const qr = require(path.join(macDir, 'qr-window.js'));
+  const { TrayApiClient } = require(path.join(macDir, 'tray-api.js'));
+  const LAN = 'http://192.168.1.20:5999';
+  const LOOP = 'http://127.0.0.1:5999';
+  const client = (lanStatus, urls) => new TrayApiClient({
+    baseUrl: LAN, getOtp: () => '123456',
+    fetchImpl: async (url) => {
+      urls.push(url);
+      if (url.startsWith(LOOP) || lanStatus === 0) throw Object.assign(new Error('fetch failed'), { cause: { code: 'ECONNREFUSED' } });
+      return { ok: false, status: lanStatus, json: async () => ({}) };
+    },
+  });
+  const lanUrls = [];
+  assert.equal((await qr.fetchLoadedOtpauthUri(client(403, lanUrls), LOOP)).state, 'loopback_only');
+  assert.ok(lanUrls.some((u) => u.startsWith(LAN)), 'the configured address was tried');
+  const deadUrls = [];
+  assert.equal((await qr.fetchLoadedOtpauthUri(client(0, deadUrls), LOOP)).state, 'offline');
+  assert.ok(deadUrls.some((u) => u.startsWith(LAN)) && deadUrls.some((u) => u.startsWith(LOOP)));
 });

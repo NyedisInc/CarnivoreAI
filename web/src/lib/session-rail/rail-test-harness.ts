@@ -2,7 +2,7 @@ import { expect } from 'vitest';
 import { flushSync, mount, unmount } from 'svelte';
 import SessionRail from './SessionRail.svelte';
 import { RAIL_FIELD, RAIL_SPECS, type RailEdge } from './rail-model';
-import { OUT_DEFAULT_PX } from './rail-size';
+import { halveAt, spanOf } from './rail-cuts';
 import { railStores } from './rail-store.svelte';
 import { railSlideout } from './slideout.svelte';
 import { lastUsedKey, openKey } from './rail-open';
@@ -43,24 +43,22 @@ export function layOutRail(edge: RailEdge): void {
   const side = edge === 'side';
   rail.getBoundingClientRect = () => box(b.left, b.top, b.width, b.height);
   const length = side ? b.height : b.width;
+  const ghost = rail.querySelector<HTMLElement>('[data-rail-ghost]');
+  const after = ghost ? Number(ghost.dataset['railGhost']) : null;
+  const cuts = after === null ? railStores[edge].cuts : halveAt(railStores[edge].cuts, after);
+  const span = (area: number): { start: number; end: number } => ({ start: spanOf(cuts, area)[0] * length, end: spanOf(cuts, area)[1] * length });
+  const place = (el: HTMLElement, start: number, end: number): void => {
+    el.getBoundingClientRect = () => (side ? box(b.left, b.top + start, b.width, end - start) : box(b.left + start, b.top, end - start, b.height));
+  };
   const sections = [...rail.querySelectorAll<HTMLElement>('[data-rail-section]')];
-  const cut = railStores[edge].ratio * length;
   sections.forEach((section, s) => {
-    const start = sections.length < 2 || s === 0 ? 0 : cut;
-    const end = sections.length < 2 || s === 1 ? length : cut;
-    section.getBoundingClientRect = () => (side ? box(b.left, b.top + start, b.width, end - start) : box(b.left + start, b.top, end - start, b.height));
+    const { start, end } = span(after !== null && s > after ? s + 1 : s);
+    place(section, start, end);
     section.querySelectorAll<HTMLElement>('[data-zone-item]').forEach((key, i) => {
       key.getBoundingClientRect = () => (side ? box(b.left + 4, b.top + start + 10 + i * 32, 28, 28) : box(b.left + start + 10 + i * 32, b.top + 4, 28, 28));
     });
   });
-  const out = OUT_DEFAULT_PX[edge];
-  rail.querySelectorAll<HTMLElement>('[data-rail-band]').forEach((band) => {
-    const first = band.dataset['railBand'] === 'start';
-    band.getBoundingClientRect = () =>
-      side
-        ? box(b.left - out, first ? b.top : b.top + length * 0.7, out, length * 0.3)
-        : box(first ? b.left : b.left + length * 0.7, b.top - out, length * 0.3, out);
-  });
+  if (ghost && after !== null) place(ghost, span(after + 1).start, span(after + 1).end);
 }
 
 export function layOutRails(): void {

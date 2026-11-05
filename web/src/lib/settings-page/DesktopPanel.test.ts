@@ -183,7 +183,7 @@ describe('DesktopPanel', () => {
     });
 
     test('turning banners on with the permission never asked asks main for the one notification', async () => {
-        const { prefs, writes } = fakePrefs({});
+        const { prefs, writes } = fakePrefs({ desktop_banners: false });
         const { bridge, calls } = fakeBridge({ permission: 'not_asked' });
         const root = await render(bridge, prefs);
         row(root, 'banners')!.click();

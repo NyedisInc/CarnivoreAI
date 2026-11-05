@@ -16,17 +16,7 @@ const tests = [];
 function test(name, fn) { tests.push([name, fn]); }
 
 function clickBubbling(el) {
-    let stopped = false;
-    const evt = {
-        stopPropagation() { stopped = true; },
-        preventDefault() {},
-    };
-    let node = el;
-    while (node && !stopped) {
-        const fns = (node._listeners && node._listeners.get('click')) || [];
-        for (const fn of fns.slice()) fn(evt);
-        node = node.parentNode;
-    }
+    el.click();
 }
 
 function sessionNameEl(card) {
@@ -84,7 +74,7 @@ test('NEGATIVE CONTROL: the card is on screen and its name is clickable', async 
         'the control is blind: a card must exist before any click assertion '
         + 'below means anything');
     const name = sessionNameEl(cards(container)[0]);
-    assert.ok((name._listeners.get('click') || []).length > 0,
+    assert.ok(typeof name._on.click === 'function',
         'the name element must carry a click listener, or the bubbling test '
         + 'is measuring an inert node');
 });

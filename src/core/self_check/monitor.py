@@ -74,6 +74,8 @@ def latest() -> Dict[str, dict]:
 def run_once(ctx: Optional[Context] = None, io: Optional[SystemIO] = None) -> List[CheckResult]:
     results = run_checks(ctx or server_context(), io)
     apply(results)
+    from src.core.notifications.sources import agent_update  # noqa: PLC0415
+    agent_update.check_now()
     return results
 
 

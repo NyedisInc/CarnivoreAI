@@ -150,6 +150,24 @@ test('navigating away while naming cancels, and a create already in flight is re
   expect(terminalLayout.session).toBe('cloude_api:1');
 });
 
+test('a cleanup delete that fails is shown to the user, not dropped (ERR-13)', async () => {
+  const report = vi.fn();
+  win.WriteFailureNotice = { report };
+  api.remove.mockRejectedValueOnce(new Error('layouts store is read only'));
+  api.create.mockResolvedValue({ layout: { layout_uuid: 'L3' }, deleted: false, survivor: null, created: true });
+  addSession(terminalLayout, 'terminal', 's-b');
+  await settle();
+  const save = modal.opened[0]!['save'] as (name: string) => Promise<string>;
+  (modal.opened[0]!['watchAbort'] as (cancel: () => void) => void)(() => modal.answer!(false));
+  void save('api + web');
+  abortNaming();
+  await settle();
+  expect(api.remove).toHaveBeenCalledWith('L3');
+  expect(report).toHaveBeenCalledTimes(1);
+  expect(String(report.mock.calls[0]![0])).toContain('layouts store is read only');
+  delete win.WriteFailureNotice;
+});
+
 test('a refused add is not a split: the agent view comes straight back, no modal', async () => {
   const done = splitThrough(() => 'cap' as const, (r) => r === null as never, 'no-row' as never);
   expect(done).toBe('cap');

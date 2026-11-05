@@ -1,11 +1,11 @@
 
 export type ButtonVariant = 'secondary' | 'confirm' | 'danger' | 'quiet' | 'row';
-export type ButtonSize = 'md' | 'sm' | 'icon';
+export type ButtonSize = 'md' | 'sm' | 'icon' | 'auto' | 'bare';
 export type TagTone = 'neutral' | 'accent' | 'ok' | 'warn' | 'danger' | 'info';
 
 export interface ButtonAttrs {
     'data-btn': ButtonVariant;
-    'data-size'?: 'sm' | 'icon';
+    'data-size'?: 'sm' | 'icon' | 'auto' | 'bare';
 }
 
 export function buttonAttrs(variant: ButtonVariant, size: ButtonSize): ButtonAttrs {

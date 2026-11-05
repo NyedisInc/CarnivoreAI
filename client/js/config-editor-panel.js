@@ -3,8 +3,7 @@
 console.log('[ConfigEditorPanel Module] Loading...');
 
 function configEditorT(key, params) {
-    const i18n = window.CloudeI18n;
-    return i18n && typeof i18n.t === 'function' ? i18n.t(key, params) : key;
+    return globalThis.CloudeTr(key, params);
 }
 
 class ConfigEditorPanelController {
@@ -42,7 +41,9 @@ class ConfigEditorPanelController {
         if (this._git) {
             const session = this._target && this._target._currentSession;
             const sessionId = this.isOpen && !this._directory && session ? session.session_id : null;
-            this._git.setTarget(sessionId ? { sessionId, workdir: this._currentProjectPath() || '' } : null);
+            const rowId = sessionId && !String(sessionId).startsWith('remote:') && typeof session.session_row_id === 'number'
+                ? session.session_row_id : null;
+            this._git.setTarget(sessionId ? { sessionId, workdir: this._currentProjectPath() || '', rowId } : null);
         }
         if (typeof window.dispatchEvent !== 'function' || typeof CustomEvent !== 'function') return;
         window.dispatchEvent(new CustomEvent('cloude:file-drawer', {

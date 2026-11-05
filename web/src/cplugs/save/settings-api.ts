@@ -1,4 +1,4 @@
-import { ApiError, authFetch } from '../sdk';
+import { ApiError, authFetch, failureReason } from '../sdk';
 
 const ROUTE = '/cplugs/save';
 
@@ -66,15 +66,7 @@ export function dropsPoints(capGb: number, historyBytes: number): boolean {
 }
 
 export function errorText(error: unknown): string {
-    if (error instanceof ApiError) {
-        const detail = (error.payload as { detail?: unknown } | null)?.detail;
-        if (typeof detail === 'string') return detail;
-        if (detail && typeof detail === 'object' && typeof (detail as { detail?: unknown }).detail === 'string') {
-            return (detail as { detail: string }).detail;
-        }
-        return error.message;
-    }
-    return error instanceof Error ? error.message : String(error);
+    return failureReason(error);
 }
 
 export const CAPTURE_SCOPES = ['human', 'human+subsessions', 'all'] as const;

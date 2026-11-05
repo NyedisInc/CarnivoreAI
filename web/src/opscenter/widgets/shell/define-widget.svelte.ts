@@ -39,6 +39,7 @@ export interface ActionBinding {
   run: () => void;
   on?: boolean;
   blocked?: string;
+  hidden?: boolean;
 }
 
 export type ActionBindings<D extends WidgetDefinition> = { readonly [K in ActionIdOf<D>]: ActionBinding };
@@ -97,7 +98,7 @@ export function useWidget<D extends WidgetDefinition>(definition: D, props: () =
   const actions = $derived.by((): DeclaredAction[] => {
     if (!definition.actions.length) return [];
     const live = (bindings?.() ?? {}) as Readonly<Record<string, ActionBinding>>;
-    return definition.actions.map((spec) => boundAction(spec, live[spec.id]));
+    return definition.actions.filter((spec) => !live[spec.id]?.hidden).map((spec) => boundAction(spec, live[spec.id]));
   });
   $effect(() => {
     const host = frame?.hostId;

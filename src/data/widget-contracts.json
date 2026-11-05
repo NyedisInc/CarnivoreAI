@@ -522,7 +522,7 @@
     {
       "kind": "widget",
       "id": "core.plugins",
-      "name": "recent plugins",
+      "name": "recent features",
       "version": "1.0.0",
       "api_version": 1,
       "min_app_version": "1.16.1",

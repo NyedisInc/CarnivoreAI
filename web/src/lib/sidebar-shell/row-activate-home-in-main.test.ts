@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { activateRow } from './row-activate';
-import { HOME_IN_MAIN_CLASS, initHomeInMain } from '../launchpad/home-in-main';
+import { HOME_SLOT_ATTR, initHomeInMain } from '../launchpad/home-in-main';
 
 const g = globalThis as Record<string, unknown>;
 let stop: () => void = () => {};
@@ -46,13 +46,13 @@ afterEach(() => {
 describe('row click from Home in main-area mode', () => {
     it('an awake row opens the terminal and ends the mode', async () => {
         await Promise.resolve();
-        expect(document.body.classList.contains(HOME_IN_MAIN_CLASS)).toBe(true);
+        expect(document.getElementById('terminal-grid')!.hasAttribute(HOME_SLOT_ATTR)).toBe(true);
         await activateRow(ctrl as never, row);
         await Promise.resolve();
         expect((g.App as { returnToExistingTerminal: unknown }).returnToExistingTerminal).toHaveBeenCalledOnce();
         expect(document.getElementById('launchpad-screen')!.classList.contains('active')).toBe(false);
-        expect(document.body.classList.contains(HOME_IN_MAIN_CLASS)).toBe(false);
-        expect(document.querySelector('.oc-surface')!.hasAttribute('inert')).toBe(false);
+        expect(document.getElementById('terminal-grid')!.hasAttribute(HOME_SLOT_ATTR)).toBe(false);
+        expect(document.getElementById('launchpad-screen')!.parentElement).toBe(document.body);
         expect(document.getElementById('terminal-screen')!.classList.contains('active')).toBe(true);
     });
 

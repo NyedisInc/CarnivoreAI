@@ -1,16 +1,13 @@
-import { onRowActionClick } from '../../drawer/row-action-click';
+import { rowByName, runRowAction } from '../../drawer/row-action-click';
 import { clickEnv, messageOf } from '../../drawer/click-env';
+import { nonEmptyErrorMessageOr } from '../../errors/failure-reason';
 import { commitAssignment } from '../../sidebar-shell/group-assign';
 import { togglePinRow } from '../../sidebar-shell/row-reorder';
 import type { RowMenuCtx } from '../row-context';
 import { recordFor, runEnv, say, tr } from './run-env';
 
 export function repaintSurface(_ctx?: unknown): void {
-    const bar = runEnv().SessionSidebar;
-    if (bar && typeof bar.repaint === 'function') {
-        bar._lastSig = null;
-        bar.repaint();
-    }
+    runEnv().SessionSidebar?.repaint();
 }
 
 export async function runToggleMute(ctx: RowMenuCtx): Promise<void> {
@@ -22,7 +19,7 @@ export async function runToggleMute(ctx: RowMenuCtx): Promise<void> {
     const record = await recordFor(ctx.name);
     if (!record || !record.session_uuid) {
         if (menu) menu.setMuteOverride(ctx.name, was);
-        say(ctx, tr('session.menu.run.mute_unknown_record', { label: ctx.label || ctx.name }));
+        say(ctx, tr('session.menu.mute.no_record', { label: ctx.label || ctx.name }));
         return;
     }
     try {
@@ -34,7 +31,10 @@ export async function runToggleMute(ctx: RowMenuCtx): Promise<void> {
     } catch (error) {
         if (menu) menu.setMuteOverride(ctx.name, was);
         console.error('[SessionRowMenuActions] mute write failed:', error);
-        say(ctx, tr(want ? 'session.menu.run.mute_failed' : 'session.menu.run.unmute_failed', { label: ctx.label || ctx.name, message: messageOf(error) }));
+        say(ctx, tr(want ? 'session.menu.mute.failed' : 'session.menu.unmute.failed', {
+            label: ctx.label || ctx.name,
+            detail: nonEmptyErrorMessageOr(error, tr('error.server_unreachable')),
+        }));
     }
     repaintSurface(ctx);
 }
@@ -70,10 +70,7 @@ export async function runClose(ctx: RowMenuCtx): Promise<void> {
     }
     const ctrl = clickEnv().SessionSidebar;
     if (!ctrl) return;
-    const btn = document.createElement('button');
-    btn.setAttribute(actions.ATTR_ACTION, actions.ACTION_CLOSE);
-    btn.setAttribute(actions.ATTR_NAME, ctx.name);
-    await onRowActionClick(ctrl, btn);
+    await runRowAction(ctrl, actions.ACTION_CLOSE, ctx.name, rowByName(ctx.name), ctx.sessionId);
 }
 
 export async function runRemoveFromGroup(ctx: RowMenuCtx): Promise<void> {
@@ -88,6 +85,6 @@ export async function runToggleKeepAwake(ctx: RowMenuCtx): Promise<void> {
     await store.setKeepAwake(ctx.name, !kept);
 }
 
-export async function runTogglePin(ctx: RowMenuCtx): Promise<void> {
+export function runTogglePin(ctx: RowMenuCtx): void {
     togglePinRow(ctx.name);
 }

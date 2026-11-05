@@ -157,6 +157,36 @@ describe('a contents write is reported as what it was', () => {
         expect(toast.undo).toBeNull();
     });
 
+    test('409: the catalog buttons drop the layer\'s kept local value of the written rail and re-read it', async () => {
+        const discardLocal = vi.fn();
+        (globalThis as Record<string, unknown>)['Preferences'] = { ...((globalThis as Record<string, unknown>)['Preferences'] as object), discardLocal };
+        pressBar({ kind: 'add', edge: 'bottom' }, 'core.notes', 'notes', t);
+        await flush();
+        expect(discardLocal).not.toHaveBeenCalled();
+        finish('conflict');
+        await flush();
+        expect(discardLocal).toHaveBeenCalledWith('session_rail_bottom');
+        expect(world.bottom.reload).toHaveBeenCalled();
+        expect(world.side.reload).not.toHaveBeenCalled();
+    });
+
+    test('409: only the fields THIS press saw refused are dropped, never a field another write left in conflict', async () => {
+        const discardLocal = vi.fn();
+        (globalThis as Record<string, unknown>)['Preferences'] = { ...((globalThis as Record<string, unknown>)['Preferences'] as object), discardLocal };
+        world.side.stored = { sections: [{ items: [{ widget: 'core.notes' }] }] };
+        pressBar({ kind: 'move', edge: 'bottom' }, 'core.notes', 'notes', t);
+        await flush();
+        for (const field of world.open.splice(0)) {
+            const state = field === 'session_rail_bottom' ? 'conflict' : 'committed';
+            for (const listener of [...world.listeners]) listener(field, null, { state });
+            world.states[field] = field === 'session_rail' ? 'conflict' : state;
+        }
+        await flush();
+        expect(discardLocal).toHaveBeenCalledWith('session_rail_bottom');
+        expect(discardLocal).not.toHaveBeenCalledWith('session_rail');
+        expect(world.side.reload).not.toHaveBeenCalled();
+    });
+
     test('a failed save is never shown as saved', async () => {
         pressBar({ kind: 'add', edge: 'side' }, 'core.notes', 'notes', t);
         await flush();
@@ -289,6 +319,20 @@ describe('a hung save never stalls the page (V5)', () => {
         expect(toast.text).toBe('widgets.page.bars.not_confirmed');
         expect(toast.undo).toBeNull();
         expect(world.open, 'the in-flight save is left running').toEqual(['session_rail_bottom']);
+    });
+
+    test('a 409 that arrives after the wait still drops that press\'s own refused value and re-reads the rail', async () => {
+        const discardLocal = vi.fn();
+        (globalThis as Record<string, unknown>)['Preferences'] = { ...((globalThis as Record<string, unknown>)['Preferences'] as object), discardLocal };
+        pressBar({ kind: 'add', edge: 'bottom' }, 'core.notes', 'notes', t);
+        await flush();
+        await vi.advanceTimersByTimeAsync(SAVE_WAIT_MS);
+        expect(discardLocal).not.toHaveBeenCalled();
+        finish('conflict');
+        await flush();
+        expect(discardLocal).toHaveBeenCalledWith('session_rail_bottom');
+        expect(world.bottom.reload).toHaveBeenCalled();
+        expect(world.listeners.size, 'the late watch ends once the save settled').toBe(0);
     });
 
     test('a hung undo write ends not confirmed and frees the queue', async () => {

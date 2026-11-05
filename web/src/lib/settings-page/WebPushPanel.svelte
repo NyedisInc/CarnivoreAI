@@ -71,6 +71,12 @@
             return t('settings.web_push.removed');
         });
 
+    const keepApp = (id: string) =>
+        act(async () => {
+            await removeSubscription(id, fetcher);
+            return t('settings.web_push.double_fixed');
+        });
+
     function resultText(row: PushSubscriptionRow): string {
         return row.last_result
             ? t('settings.web_push.last', { status: row.last_result.status, at: row.last_result.at.slice(0, 16).replace('T', ' ') })
@@ -90,6 +96,16 @@
         <p class="tm__sub" data-wp="install-hint">{t('settings.web_push.install_hint')}</p>
     {/if}
 
+    {#each (rows ?? []).filter((row) => row.app_too) as row (row.id)}
+        <State
+            kind="warn"
+            inline
+            data-wp-double={row.id}
+            title={t('settings.web_push.double')}
+            actionLabel={t('settings.web_push.double_fix')}
+            onAction={busy ? undefined : () => void keepApp(row.id)}
+        />
+    {/each}
     {#if rows && rows.length > 0}
         <List label={t('settings.web_push.what')} data-wp="list">
             {#snippet children()}

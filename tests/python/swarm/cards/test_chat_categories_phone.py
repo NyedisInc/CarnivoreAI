@@ -306,9 +306,9 @@ def test_the_mark_writes_phone_sent_at_through_the_real_store(huddle: SimpleName
     go(huddle.port.mark_phone_sent(99999))
 
 
-def test_the_climbed_question_type_is_a_sessions_type_seeded_on_push_only() -> None:
+def test_the_climbed_question_type_is_a_swarm_type_seeded_on_push_only() -> None:
     row = notify_types.get_type("swarm.question_climbed")
-    assert row.family == notify_types.FAMILY_SESSIONS and "swarm.question_climbed" not in notify_types.NEEDS_YOU
+    assert row.family == notify_types.FAMILY_SWARM and "swarm.question_climbed" not in notify_types.NEEDS_YOU
     assert row.defaults.seed and not row.defaults.screen and not row.defaults.passes_quiet_hours
     assert {k for k in notify_types._ALL_KINDS if "swarm.question_climbed" in notify_types.seed_for_kind(k)} == {"webpush", "apns"}
 

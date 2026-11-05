@@ -130,31 +130,31 @@
     .split-divider--y {
       left: 0;
       right: 0;
-      height: 7px;
-      margin-top: -3px;
+      height: var(--oc-section-hit);
+      margin-top: calc((var(--oc-section-hit) - var(--oc-section-line)) / -2);
       cursor: ns-resize;
     }
 
     .split-divider--y::after {
       left: 0;
       right: 0;
-      top: 3px;
-      height: 2px;
+      top: calc((var(--oc-section-hit) - var(--oc-section-line)) / 2);
+      height: var(--oc-section-line);
     }
 
     .split-divider--x {
       top: 0;
       bottom: 0;
-      width: 7px;
-      margin-left: -3px;
+      width: var(--oc-section-hit);
+      margin-left: calc((var(--oc-section-hit) - var(--oc-section-line)) / -2);
       cursor: ew-resize;
     }
 
     .split-divider--x::after {
       top: 0;
       bottom: 0;
-      left: 3px;
-      width: 2px;
+      left: calc((var(--oc-section-hit) - var(--oc-section-line)) / 2);
+      width: var(--oc-section-line);
     }
 
     @media (prefers-reduced-motion: reduce) {

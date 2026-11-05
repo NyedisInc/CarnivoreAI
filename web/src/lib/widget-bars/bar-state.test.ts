@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
-  PeekController, RETRACT_MS, barOut, barState, foldedEdge, inFlow, peekOut, showsHandle,
+  PeekController, RETRACT_MS, barOut, barState, foldedEdge, inFlow, peekOut, showsHandle, showsPin,
   type BarStateInput, type Clock, type PeekFlags,
 } from './bar-state';
 
@@ -49,6 +49,11 @@ describe('the 4.1 state table, first match wins', () => {
     expect(at({ mode: 'pinned', hover: true })).toBe('pinned');
     for (const flag of ['hover', 'focusIn', 'touchPeek', 'retracting'] as const) expect(at({ [flag]: true })).toBe('peek');
     expect(at({})).toBe('handle');
+  });
+
+  test('the bar pin is drawn while the bar is out and in edit layout, where it can be hidden (Joe (ccsliinc), 2026-11-02, #2766)', () => {
+    for (const state of ['held', 'pinned', 'peek', 'edit'] as const) expect(showsPin(state), state).toBe(true);
+    for (const state of ['absent', 'folded', 'handle'] as const) expect(showsPin(state), state).toBe(false);
   });
 
   test('a panel shown holds the bar in flow whatever else holds it out', () => {

@@ -15,7 +15,7 @@ from typing import Optional
 import pytest
 
 from scripts.maintenance import reap_orphan_agent_processes as r
-from src.core import libproc_snapshot
+from src.core.machine_stats import libproc_snapshot
 
 UID, ME, PARENT = 501, 4000, 3999
 SCRATCH = "/private/tmp/claude-501"

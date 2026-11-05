@@ -42,6 +42,13 @@ from src.models.websocket import WSMessageType
 logger = structlog.get_logger()
 
 
+_snapshot_listeners: List[Callable[[LedgerSnapshot], None]] = []
+
+
+def add_snapshot_listener(listener: Callable[[LedgerSnapshot], None]) -> None:
+    _snapshot_listeners.append(listener)
+
+
 class LedgerPoller:
 
     def __init__(
@@ -152,7 +159,7 @@ class LedgerPoller:
             poller_scan.reconcile(
                 self._states,
                 self._poll_soon,
-                poller_scan.with_auto_default(accounts, self._builtin_login_label()),
+                poller_scan.with_auto_default(accounts, self._builtin_login_label(), include_relay=False),
                 now,
             )
 
@@ -205,7 +212,7 @@ class LedgerPoller:
                 state, credential, now, lambda: self._read_credential(state)
             )
             measured = credentials.credential_state_for(credential, now)
-            if measured == "ok" and account.provider == "claude":
+            if measured == "ok" and account.provider in ("claude", "codex"):
                 refresh_poke.notify_credential(account, credential)
         if measured != "ok":
             changed = state.credential_state != measured
@@ -316,6 +323,11 @@ class LedgerPoller:
             return
         self._pushed_fingerprint = fingerprint
         resource_push.notify(resource_topics.PROVIDER_LEDGER)
+        for listener in list(_snapshot_listeners):
+            try:
+                listener(snapshot)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("provider_ledger_snapshot_listener_failed", error=type(exc).__name__)
         resource_push.notify(resource_topics.ACCOUNT_SWITCH)
 
 

@@ -14,6 +14,7 @@ export interface TabMenuInputs {
   newAgent: () => void;
   openBlueprints: () => void;
   blueprints: readonly Blueprint[];
+  blueprintsFailed?: boolean;
   launchBlueprint: (blueprint: Blueprint) => void;
   newAgentInProject: (project: ProjectResponse) => void;
   newTerminal: () => void;
@@ -107,7 +108,7 @@ export function buildTabMenu(input: TabMenuInputs): MenuNode[] {
   return [
     { id: 'agent', label: t('drawer.new.agent'), children: [newAgent, ...projects] },
     { id: 'terminal', label: t('drawer.new.terminal'), run: input.newTerminal },
-    { id: 'blueprint', label: t('blueprint.title'), children: buildBlueprintChildren(input.blueprints, input.launchBlueprint, input.openBlueprints) },
+    { id: 'blueprint', label: t('blueprint.title'), children: buildBlueprintChildren(input.blueprints, input.launchBlueprint, input.openBlueprints, input.blueprintsFailed) },
     browserNode,
     widgetNode,
   ];
@@ -117,9 +118,12 @@ export function buildBlueprintChildren(
   blueprints: readonly Blueprint[],
   launch: (blueprint: Blueprint) => void,
   manage: () => void,
+  loadFailed = false,
 ): MenuNode[] {
   const items: MenuNode[] = blueprints.length
     ? blueprints.map((bp) => ({ id: `blueprint/${bp.blueprint_uuid}`, label: bp.name, run: () => launch(bp) }))
-    : [{ id: 'blueprint/empty', label: t('blueprint.empty'), blocked: t('blueprint.empty') }];
+    : loadFailed
+      ? [{ id: 'blueprint/failed', label: t('blueprint.load_failed'), blocked: t('blueprint.load_failed') }]
+      : [{ id: 'blueprint/empty', label: t('blueprint.empty'), blocked: t('blueprint.empty') }];
   return [...items, { id: 'blueprint/manage', label: t('opscenter.frame.view_all'), sep: true, run: manage }];
 }

@@ -96,6 +96,7 @@ BY_TITLE: Dict[str, Declared] = {
     f"{_P}widget.report.title": Declared(FYI, (_link("open_widgets", "#widgets"),)),
     f"{_P}automation.report.title": Declared(FYI),
     f"{_P}automation.failed.title": Declared(NEEDS_YOU),
+    f"{_P}automation.alerted.title": Declared(NEEDS_YOU),
     f"{_P}automation.notice.title": Declared(FYI),
     f"{_P}cplug_moved.title": Declared(NEEDS_YOU, (_link("open_warez", "#warez"),)),
     f"{_P}pack_skills.alpha_changed.title": Declared(NEEDS_YOU),

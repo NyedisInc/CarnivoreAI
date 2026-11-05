@@ -118,6 +118,9 @@ console.log('[SessionRowMenuIcons Module] Loading...');
         'move-down':
             '<path d="M8 3v10M4.5 9.5L8 13l3.5-3.5" stroke="currentColor" '
             + 'stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>',
+        fold:
+            '<path d="M4.5 3.5L8 7l3.5-3.5M4.5 12.5L8 9l3.5 3.5" stroke="currentColor" '
+            + 'stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>',
         'send-to':
             '<g transform="scale(.6667)" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'
             + '<path d="M4.2 22.0C4.25 21.5 4.2 20.02 4.5 19.0C4.8 17.98 5.33 16.87 6.0 15.9C6.67 14.93 7.71 14.03 8.5 13.2C9.29 12.37 10.38 11.31 10.75 10.93L7.21 10.85L11.71 7.85C11.84 7.71 12.05 7.29 12.47 7.01C12.89 6.73 13.55 6.64 14.23 6.2C14.91 5.76 15.69 5.1 16.53 4.38C17.38 3.66 18.84 2.3 19.3 1.88L20.27 2.22L17.42 7.74L21.62 5.9C21.59 6.22 21.89 7.06 21.46 7.84C21.03 8.62 19.65 9.7 19.03 10.58C18.41 11.46 17.97 12.69 17.76 13.11C17.92 13.56 18.46 14.85 18.7 15.8C18.94 16.75 19.17 17.77 19.2 18.8C19.23 19.83 18.95 21.47 18.9 22.0L4.2 22.0Z"/>'

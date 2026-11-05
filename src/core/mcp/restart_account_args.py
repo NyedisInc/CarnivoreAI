@@ -27,7 +27,7 @@ def read(args: dict) -> tuple[Optional[str], bool]:
 
 
 async def refuse_bad(account: Optional[str], pin: bool, agent_type: Optional[str], *, remote: bool = False) -> None:
-    from src.core.account_switch import create_account, session_pin
+    from src.core.account_switch import create_account, restart_account, session_pin
     from src.core.account_switch.launch_env import _config_path
 
     if account is None:
@@ -37,7 +37,7 @@ async def refuse_bad(account: Optional[str], pin: bool, agent_type: Optional[str
             account_id=account, account_pinned=pin, agent_type=agent_type, is_peer=False, is_local=not remote)
     except create_account.CreateAccountRefused as exc:
         try:
-            ids = [a.id for a in await asyncio.to_thread(session_pin.launchable_accounts, _config_path())]
+            ids = [a.id for a in await asyncio.to_thread(session_pin.launchable_accounts, _config_path(), restart_account.family_of(agent_type))]
         except (FileNotFoundError, ValueError, OSError):
             ids = []
         raise ToolError(f"{exc}; launchable account ids: {', '.join(ids) or 'none'}") from exc

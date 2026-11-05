@@ -12,6 +12,8 @@ CONTRIBUTION_SEAMS = frozenset({
     "automations.tab", "sidebar.leader", "session.card_action", "session.schedules", "session.roles", "projects.session_tab",
     "projects.panel", "session.member_face",
     "drawer.account_menu", "drawer.bar_indicator",
+    "board.header_key",
+    "page.row_action",
 })
 
 

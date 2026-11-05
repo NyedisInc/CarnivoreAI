@@ -19,7 +19,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 # ruff: noqa: E402
-from src.api.catalog_consent import staged_plugin_declares_code
+from src.core.skills.code_gate import staged_plugin_declares_code
 from src.api.catalog_one_click import REASON_KIND, one_click_precheck
 from src.core.live_install_roots import HARNESS_MOD, LiveInstallRoots
 from src.core.skills import kinds, manifest_rules

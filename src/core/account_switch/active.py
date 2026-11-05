@@ -9,7 +9,9 @@ from src.config.provider_accounts import ProviderAccount
 from src.core.provider_ledger.poller_scan import AUTO_DEFAULT_ACCOUNT_ID
 from src.core.session_token_usage.account_resolve import accounts_for_default_login
 
-PROVIDERS = ("claude",)
+PROVIDERS = ("claude", "codex")
+
+AUTO_SWITCH_PROVIDERS = ("claude",)
 
 POINTER = "pointer"
 DEFAULT_LOGIN = "default_login"

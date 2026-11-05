@@ -37,12 +37,13 @@ from src.core.db_ddl.search_index import DDL_V52, DDL_V55, V55_COLUMNS
 from src.core.transcript_manifest.ddl import DDL_V54
 from src.core.launch_profiles.ddl import V56_COLUMNS
 from src.core.companies.ddl import DDL_V58, V58_COLUMNS, V72_COLUMNS
+from src.core.pack.rollup_import.ddl import V103_COLUMNS
 from src.core.swarm.ddl import DDL_V59, DDL_V62, DDL_V63, DDL_V64, DDL_V65, V60_COLUMNS, V65_COLUMNS, V66_COLUMNS, V67_COLUMNS, V68_COLUMNS, V69_COLUMNS, V70_COLUMNS, V71_COLUMNS, V99_COLUMNS, V100_COLUMNS
 from src.core.project_colors.ddl import V61_COLUMNS
 from src.core.crosstalk.ddl import DDL_V57, DDL_V102
 from src.core.messaging.ddl import DDL_V73, V92_COLUMNS
 from src.core.exports.ddl import DDL_V93
-from src.core.session_group_rule import DDL_V101
+from src.core.session_groups.session_group_rule import DDL_V101
 from src.core.descriptions.ddl import V74_COLUMNS
 from src.core.project_pack.ddl import DDL_V75
 from src.core.pack.machines.ddl import DDL_PACK_MACHINES
@@ -157,6 +158,7 @@ UNGATED_VERSION_COLUMNS: Dict[int, Tuple[Tuple[str, str, str], ...]] = {
     96: V96_COLUMNS,
     99: V99_COLUMNS,
     100: V100_COLUMNS,
+    103: V103_COLUMNS,
 }
 
 SUPERSEDED_OBJECTS: frozenset = frozenset({"ix_sessions_claude_uuid", TRIPLE_INSTANCE_INDEX, *V49_RETIRED})

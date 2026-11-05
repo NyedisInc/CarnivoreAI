@@ -89,11 +89,11 @@ def test_reply_marks_the_item_and_a_bad_marker_posts_nothing(client, setup):
     assert ok and done["item"]["marker"] == "circle"
 
 
-def test_focus_marks_every_focused_row_and_a_batch_op_can_set_and_clear(client, setup):
+def test_update_marks_rows_and_a_batch_op_can_set_and_clear(client, setup):
     manager = setup.manager
     a, b = add(client, "all", "a"), add(client, "all", "b")
-    ok, _ = call(manager, "huddle_focus", {"list": "all", "items": [a, b], "marker": "diamond"})
-    assert ok
+    for item in (a, b):
+        assert call(manager, "task_manager_update", {"item": item, "marker": "diamond"})[0]
     rows = {i["id"]: i for i in client.get(f"{BASE}/lists/all").json()["items"]}
     assert rows[a]["marker"] == rows[b]["marker"] == "diamond"
     ok, answer = call(manager, "task_manager_batch_run", {"list_id": "all", "ops": [
@@ -132,7 +132,7 @@ def test_a_deleted_item_keeps_no_marker_in_its_tombstone(tmp_path: Path):
 
 
 def test_the_marker_field_is_optional_on_every_tool_that_takes_it():
-    for name in ("task_manager_add", "task_manager_update", "task_manager_reply", "huddle_focus"):
+    for name in ("task_manager_add", "task_manager_update", "task_manager_reply"):
         spec = next(d for d in tools.tool_definitions() if d["name"] == name)
         props = spec["inputSchema"]["properties"]
         assert "marker" in props and "flag_color" not in props and "flag_reason" not in props

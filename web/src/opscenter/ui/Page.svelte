@@ -6,6 +6,7 @@
     import { watchScrollAway } from './scroll-away';
     import { t } from '../../lib/i18n/index.svelte';
     import Icon from './Icon.svelte';
+    import { raiseFlag } from '../../lib/page-flags/page-flags';
     import { closeMenuPageGuarded, openMenuPages } from '../../lib/menu-page/menu-page-shell.svelte';
 
     interface Props {
@@ -113,7 +114,7 @@
     {#if !inset && !bare}
         <header class="oc-titlebar" class:oc-titlebar--search={!!search} class:oc-titlebar--back={showBack}>
             {#if showBack}
-                <button type="button" class="oc-titlebar__back" data-page-back aria-label={t('opscenter.components.back')} onclick={goBack}>
+                <button type="button" class="oc-titlebar__back" data-btn="row" data-size="auto" data-overflow="visible" data-page-back aria-label={t('opscenter.components.back')} onclick={goBack} {@attach () => raiseFlag('page-back')}>
                     <Icon name={backIcon} size={backIcon === 'arrow-left' ? 20 : 14} strokeWidth={backIcon === 'arrow-left' ? 1.75 : 1.3} />
                 </button>
             {/if}

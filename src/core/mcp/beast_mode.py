@@ -23,7 +23,6 @@ AGENT_ACTIONS = frozenset({
 ALWAYS_WAITS = frozenset({
     "session_delete", "session_purge", "bookmark_rewind", "swarm_rewind", "project_pack", "project_unpack", "project_delete",
     "dashboard_delete", "pipeline_plugin_rebuild", "company_delete", "mod_remove", "automation_delete", "messaging_binding_delete",
-    "swarm_card_delete",
     "pack_gh_login_add",
     "project_publish_repo", "cplug_update",
     "plugin_sideload_add", "plugin_sideload_remove",
@@ -31,6 +30,8 @@ ALWAYS_WAITS = frozenset({
     "api_key_delete",
 })
 
+
+SWARM_AGENT_ACTIONS = frozenset({"session_restart", "session_wake", "swarm_join"})
 
 WIDENED_ACTIONS = frozenset({
     "project_rename", "project_move", "bookmark_branch", "mod_enabled_set", "company_color_set", "company_create", "company_rename",
@@ -131,6 +132,7 @@ def _safe_reason(exc: BaseException) -> str:
 async def run_unprompted(
     caller: AgentCaller, action: str, run: Callable[[], Awaitable[dict]], *,
     target_id: str = "", target_tmux: str = "", summary: str = "", args: dict | None = None,
+    event: str = "mcp_action_approved_by_beast_mode",
 ) -> dict:
     try:
         result = await run()
@@ -150,7 +152,7 @@ async def run_unprompted(
         target_tmux=target_tmux, action=action, args_summary=summary or action,
         args=args or {}, result=result,
     )
-    logger.info("mcp_action_approved_by_beast_mode", action=action, caller=caller.tmux_name,
+    logger.info(event, action=action, caller=caller.tmux_name,
                 client=caller.token_name or None, target=target_tmux or target_id)
     return result
 

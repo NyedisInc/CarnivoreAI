@@ -17,6 +17,7 @@ import structlog
 
 from src.core.json_artifact import atomic_write_json
 from src.core.live_install_roots import CPLUG_CODE_DIR_NAME
+from src.core.skills.validate_types import EXCLUDED_BASENAME_PREFIXES, EXCLUDED_BASENAMES
 from src.cplugs.host.sidecar_manifest import SidecarManifest, SidecarManifestError, load_sidecar_manifest
 from src.cplugs.runtime.integrity import SIDECAR_NAME
 
@@ -173,37 +174,77 @@ def forget(state_dir: Path, name: str) -> None:
             raise SideloadRefused("sideload_not_saved", "the sideload record could not be written", 500)
 
 
-def _hash_file(path: Path) -> str:
-    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+def installs(state_dir: Path) -> Dict[str, Dict[str, Any]]:
+    found = _read(state_dir).get("installs")
+    return {k: v for k, v in found.items() if isinstance(v, dict)} if isinstance(found, dict) else {}
+
+
+def put_install(state_dir: Path, record: Dict[str, Any]) -> None:
+    with _lock:
+        data = _read(state_dir)
+        data.setdefault("items", {})
+        data.setdefault("installs", {})[f"{record['kind']}/{record['name']}"] = record
+        if not _write(state_dir, data):
+            raise SideloadRefused("sideload_not_saved", "the sideload record could not be written", 500)
+
+
+def forget_install(state_dir: Path, kind: str, name: str) -> None:
+    with _lock:
+        data = _read(state_dir)
+        if isinstance(data.get("installs"), dict) and data["installs"].pop(f"{kind}/{name}", None) is not None and not _write(state_dir, data):
+            raise SideloadRefused("sideload_not_saved", "the sideload record could not be written", 500)
+
+
+def _copy_one(dirfd: int, name: str, dest: Path, budget: int) -> Tuple[str, int]:
+    try:
+        fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=dirfd)
+    except OSError as exc:
+        raise SideloadRefused("source_unsafe", "the folder holds a link or a file that cannot be opened safely", 422) from exc
     with os.fdopen(fd, "rb") as handle:
-        return hashlib.sha256(handle.read()).hexdigest()
+        info = os.fstat(handle.fileno())
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink > 1:
+            raise SideloadRefused("source_unsafe", "the folder holds a link, a special file or a hard-linked file; sideload copies real files only", 422)
+        if info.st_size > budget:
+            raise SideloadRefused("source_too_big", f"a sideload is capped at {MAX_FILES} files and {MAX_BYTES // 1048576} MB", 422)
+        data = handle.read(info.st_size + 1)
+    if len(data) != info.st_size:
+        raise SideloadRefused("source_unsafe", "a file changed while it was being copied", 422)
+    with open(dest, "xb") as out:
+        out.write(data)
+    os.chmod(dest, 0o755 if info.st_mode & stat.S_IXUSR else 0o644)
+    return hashlib.sha256(data).hexdigest(), info.st_size
+
+
+def is_noise(name: str) -> bool:
+    return name in EXCLUDED_BASENAMES or name.startswith(EXCLUDED_BASENAME_PREFIXES)
 
 
 def copy_tree(source: Path, dest: Path) -> Dict[str, str]:
     files: Dict[str, str] = {}
     total = 0
+    pending: set = set()
     dest.mkdir(parents=True)
-    for root, dirs, names in os.walk(source, followlinks=False):
-        here = Path(root)
+    for root, dirs, names, dirfd in os.fwalk(source, follow_symlinks=False):
+        rel_root = Path(root).relative_to(source)
+        pending.discard(rel_root.as_posix())
         dirs[:] = sorted(d for d in dirs if d not in _SKIP_DIRS)
         for d in dirs:
-            st = (here / d).lstat()
-            if not stat.S_ISDIR(st.st_mode):
+            if not stat.S_ISDIR(os.stat(d, dir_fd=dirfd, follow_symlinks=False).st_mode):
                 raise SideloadRefused("source_unsafe", "the folder holds a link; sideload copies real files only", 422)
-            (dest / here.relative_to(source) / d).mkdir(parents=True, exist_ok=True)
+            (dest / rel_root / d).mkdir(parents=True, exist_ok=True)
+            pending.add((rel_root / d).as_posix())
         for n in sorted(names):
-            if n.endswith(_SKIP_SUFFIXES):
+            if n.endswith(_SKIP_SUFFIXES) or is_noise(n):
                 continue
-            path = here / n
-            st = path.lstat()
-            if not stat.S_ISREG(st.st_mode):
+            if not stat.S_ISREG(os.stat(n, dir_fd=dirfd, follow_symlinks=False).st_mode):
                 raise SideloadRefused("source_unsafe", "the folder holds a link or special file; sideload copies real files only", 422)
-            total += st.st_size
-            if len(files) >= MAX_FILES or total > MAX_BYTES:
+            if len(files) >= MAX_FILES:
                 raise SideloadRefused("source_too_big", f"a sideload is capped at {MAX_FILES} files and {MAX_BYTES // 1048576} MB", 422)
-            rel = path.relative_to(source)
-            shutil.copy2(path, dest / rel)
-            files[rel.as_posix()] = _hash_file(dest / rel)
+            rel = rel_root / n
+            files[rel.as_posix()], size = _copy_one(dirfd, n, dest / rel, MAX_BYTES - total)
+            total += size
+    if pending:
+        raise SideloadRefused("source_unsafe", "a folder changed while it was being copied", 422)
     return files
 
 

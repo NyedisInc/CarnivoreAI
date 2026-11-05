@@ -1,7 +1,7 @@
 
 import type { Component } from 'svelte';
 import { META } from '../engine/meta';
-import { openLedger, openPlugins, openThemes } from '../api';
+import { openFeatures, openLedger, openThemes } from '../api';
 import { openSessionsScreen } from '../../lib/sessions-page/screen-host';
 import { kindOf } from '../engine/meta';
 import type { CellId, CellMeta, InstanceKind, PhoneSummary, SlotId } from '../engine/types';
@@ -130,8 +130,7 @@ export const REGISTRY: Readonly<Record<CellId, RegisteredCell>> = {
     component: Plugins,
     count: pluginsCount,
     phoneTotal: pluginsTotal,
-    // the plugins page
-    onRightControl: () => void openPlugins(),
+    onRightControl: () => void openFeatures(),
   },
   themes: {
     meta: META.themes,

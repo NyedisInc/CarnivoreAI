@@ -13,6 +13,10 @@
     import { t as appT } from '../i18n/index.svelte';
     import type { Translate } from '../sessions/types';
     import { railStores } from '../session-rail/rail-store.svelte';
+    import { widgetBars } from '../widget-bars/bar-settings.svelte';
+    import Tabs, { panelAttrs, type TabDef } from '../../opscenter/ui/Tabs.svelte';
+    import BarsSettings from './settings/BarsSettings.svelte';
+    import { commitOnOpen, commitTab, initialTab, tabFromLocation, WIDGETS_TABS, type WidgetsTab } from './settings/tab-route';
     import type { ItemSettingsController } from '../item-settings/item-settings-controller.svelte';
     import { createWidgetsAdapter, type WidgetItem } from './widgets-adapter';
     import PlacesBody from './PlacesBody.svelte';
@@ -43,6 +47,18 @@
     let selectedId = $state<string | null>(null);
     let openMenu = $state<((anchor: HTMLElement, id: string) => void) | undefined>();
 
+    let tab = $state<WidgetsTab>('widgets');
+    const tabDefs = $derived<TabDef[]>(WIDGETS_TABS.map((id) => ({ id, label: t(`widgets.page.tab.${id}`) })));
+
+    function chooseTab(): void {
+        tab = typeof window === 'undefined' ? 'widgets' : initialTab(window.location.hash, window.location.search);
+    }
+
+    function pickTab(id: string): void {
+        tab = id as WidgetsTab;
+        if (!embedded) commitTab(tab);
+    }
+
     resetView();
     // svelte-ignore state_referenced_locally
     if (embedded) void ctl.load();
@@ -51,12 +67,15 @@
         if (!open) return;
         railStores.side.start();
         railStores.bottom.start();
+        widgetBars.start();
     });
 
     export function show(): void {
         if (open) return;
         opener = captureOpener();
         resetView();
+        chooseTab();
+        if (!embedded) commitOnOpen(tab);
         open = true;
         void ctl.load();
     }
@@ -86,6 +105,13 @@
         if (!open) return;
         document.addEventListener('keydown', escape, true);
         return () => document.removeEventListener('keydown', escape, true);
+    });
+
+    $effect(() => {
+        if (!open || embedded) return;
+        const follow = (): void => { if (tabFromLocation(window.location.hash, window.location.search) === 'settings') tab = 'settings'; };
+        window.addEventListener('hashchange', follow);
+        return () => window.removeEventListener('hashchange', follow);
     });
 
     function help(): void {
@@ -151,14 +177,22 @@
         ariaLabel={t('widgets.page.label')}
         {embedded}
         onClose={embedded ? undefined : close}
-        search={narrow ? searchBox : undefined}
-        bar={narrow ? barToolbar : undefined}
+        search={narrow && tab === 'widgets' ? searchBox : undefined}
+        bar={narrow && tab === 'widgets' ? barToolbar : undefined}
     >
-        {#snippet sub()}{#if !narrow}{@render toolbar(true)}{/if}{/snippet}
+        {#snippet tabs()}
+            <Tabs tabs={tabDefs} active={tab} onSelect={pickTab} label={t('widgets.page.tab.label')} idBase="wp" />
+        {/snippet}
+        {#snippet sub()}{#if !narrow && tab === 'widgets'}{@render toolbar(true)}{/if}{/snippet}
         {#snippet actions()}
+            {#if tab === 'widgets'}
             <Button size="sm" data-k="reset-bars" title={t('widgets.places.reset.title')} onclick={() => void resetBars(t)}>{t('widgets.places.reset.label')}</Button>
             <Button size="sm" data-k="help" title={t('widgets.places.help.title')} aria-label={t('widgets.places.help.title')} onclick={help}>{t('widgets.places.help.label')}</Button>
+            {/if}
         {/snippet}
+        {#if tab === 'settings'}
+        <div class="wp-settings-panel" {...panelAttrs('wp', 'settings')}><BarsSettings {t} /></div>
+        {:else}
         <PlacesBody
             items={ctl.items as readonly WidgetItem[]}
             {query}
@@ -190,5 +224,6 @@
                 {/if}
             {/snippet}
         </PlacesBody>
+        {/if}
     </Page>
 {/if}

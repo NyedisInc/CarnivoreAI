@@ -1,3 +1,4 @@
+import { modelShortName } from '../session-stats/context-gauge';
 import { t } from '../i18n/index.svelte';
 import type { SidebarRow } from './legacy';
 import { modelPlan } from './row-chips';
@@ -13,7 +14,7 @@ export function searchRowFacts(row: SidebarRow): SearchRowFacts {
         age: epoch === null ? '' : ageLabel(epoch),
         note,
         model,
-        modelName: model ? String(row.running_model).trim().replace(/^claude-/, '') : '',
+        modelName: model ? modelShortName(row.running_model) : '',
         effort: model && typeof row.running_model_effort === 'string' ? row.running_model_effort.trim() : '',
     };
 }

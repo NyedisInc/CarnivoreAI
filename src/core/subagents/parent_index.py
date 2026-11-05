@@ -6,11 +6,12 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, BinaryIO, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import structlog
 
 from src.core.session_token_usage.cache import HEAD_BYTES, IncrementalCache, stat_signature
+from src.core.transcript_contract.cold_budget import BudgetedHandle, LineSource
 from src.core.session_token_usage.persist_spec import PersistSpec, decode_instant, encode_instant
 from src.core.transcript_contract import (
     LineScan,
@@ -24,7 +25,7 @@ from src.core.transcript_contract.claude_blocks import TextBlock, ToolResultBloc
 
 logger = structlog.get_logger(__name__)
 
-MAX_COLD_PARENT_BYTES: int = 256 * 1024 * 1024
+PARENT_SLICE_BYTES: int = 256 * 1024 * 1024
 
 ASYNC_LAUNCHED: str = "async_launched"
 
@@ -161,7 +162,7 @@ def _keep_newest(target: Dict[str, RecordedEnd], key: str, end: RecordedEnd) -> 
 
 
 def scan_parent_lines(
-    handle: BinaryIO, index: CompletionIndex, *, spawner: bool = False
+    handle: LineSource, index: CompletionIndex, *, spawner: bool = False
 ) -> Tuple[CompletionIndex, int]:
     scan = LineScan(handle, (_NOTIFICATION_MARK, _RESULT_MARK))
     for line in scan:
@@ -255,7 +256,7 @@ def read_completion_index(
     path: Path,
     *,
     cache: Optional[IncrementalCache] = None,
-    max_cold_bytes: int = MAX_COLD_PARENT_BYTES,
+    slice_bytes: int = PARENT_SLICE_BYTES,
     spawner: bool = False,
 ) -> Optional[CompletionIndex]:
     default = SPAWNER_INDEX_CACHE if spawner else PARENT_INDEX_CACHE
@@ -267,9 +268,6 @@ def read_completion_index(
         unchanged = store.unchanged(key, signature)
         if unchanged is not None:
             return unchanged
-        if stat.st_size > max_cold_bytes and not store.knows(key):
-            logger.debug("subagent_parent_too_large_cold", size=stat.st_size)
-            return None
         with open(key, "rb") as handle:
             head = handle.read(HEAD_BYTES)
             resume = store.resume_point(
@@ -282,10 +280,16 @@ def read_completion_index(
                 offset, remembered = resume
                 handle.seek(offset)
                 index = remembered.copy()
-            index, offset = scan_parent_lines(handle, index, spawner=spawner)
+            budgeted = BudgetedHandle(handle, slice_bytes)
+            index, offset = scan_parent_lines(budgeted, index, spawner=spawner)
     except OSError as exc:
         logger.debug("subagent_parent_unreadable", error=str(exc),
                      error_type=type(exc).__name__)
+        return None
+    if budgeted.exhausted:
+        store.remember(key, size=stat.st_size, mtime_ns=stat.st_mtime_ns,
+                       head=head, offset=offset, totals=index)
+        logger.debug("subagent_parent_warming", size=stat.st_size, offset=offset)
         return None
     store.remember(key, size=stat.st_size, mtime_ns=stat.st_mtime_ns,
                    head=head, offset=offset, totals=index, signature=signature)

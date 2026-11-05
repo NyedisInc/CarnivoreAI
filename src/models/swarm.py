@@ -405,7 +405,7 @@ class SwarmEventEntry(BaseModel):
     id: str
     at: float
     category: str = ""
-    event: Literal["spawned", "reported", "accepted", "asked", "answered", "escalated", "learned", "promoted", "card"]
+    event: Literal["spawned", "reported", "accepted", "asked", "answered", "escalated", "learned", "promoted", "done", "card"]
     ref: str
     text: str
     author_path: List[SwarmCrumb] = []
@@ -419,6 +419,27 @@ class SwarmConversationPage(BaseModel):
 
     entries: List[SwarmEntry]
     cursor: Optional[str] = None
+
+
+class SwarmWaitingItem(BaseModel):
+    """One thing waiting on the owner under a chat (``src/core/swarm/waiting.py``, #2768): exactly one of ``entry``, ``card``, ``approval``."""
+
+    kind: Literal["card", "review", "approval"]
+    id: str = Field(..., description="card:<entry id>, review:<card id> or approval:<inbox item id>")
+    agent_id: int = Field(..., description="The agent the item belongs to (the chat's own or a descendant)")
+    author_path: List[Dict[str, Any]] = Field(default_factory=list, description="That agent's breadcrumb")
+    at: float = Field(0, description="When it started waiting, epoch seconds (0 unknown)")
+    entry: Optional[SwarmEntry] = Field(None, description="kind card: the conversation entry, as the chat draws it")
+    card: Optional[Dict[str, Any]] = Field(None, description="kind review: the board card (CardView)")
+    approval: Optional[Dict[str, Any]] = Field(None, description="kind approval: the approvals inbox item")
+
+
+class SwarmWaiting(BaseModel):
+    """``GET /swarm/agents/{id}/waiting``: everything waiting on the owner under that chat, its own items first, then oldest first."""
+
+    agent_id: int
+    items: List[SwarmWaitingItem] = Field(default_factory=list)
+    count: int = 0
 
 
 class SwarmSettings(BaseModel):

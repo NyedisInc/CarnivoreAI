@@ -86,6 +86,7 @@
       {#if advertise !== null}
         <div class="pp-swrow"><span class="pp-swrow__label">{t('roster.sets.advertise')}</span>
           <Switch bare label="" bind:checked={() => advertise === true, (next) => void toggleAdvertise(next)} aria-label={t('roster.sets.advertise')} data-act="advertise" /></div>
+        <p class="pp-hint">{t('roster.sets.findable_hint')}</p>
       {/if}
       {#if linkState === 'port_busy'}<p class="pp-warn">{t('roster.sets.link_port_busy')}</p>
       {:else if linkState === 'off_loopback'}<p class="pp-warn">{t('computers.link.off_loopback')}</p>

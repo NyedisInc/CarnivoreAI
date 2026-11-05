@@ -32,8 +32,14 @@ def _qid(args: Dict[str, Any]) -> int:
     return value
 
 
-def _hop_of(conn: sqlite3.Connection, agent: Dict[str, Any], question_id: int) -> sqlite3.Row:
+def _on_chain(conn: sqlite3.Connection, agent: Dict[str, Any], question_id: int) -> bool:
+    return any(tier["id"] == agent["id"] for asker in routing.askers_of(conn, question_id) for tier in routing.chain_for(conn, asker))
+
+
+def _hop_of(conn: sqlite3.Connection, agent: Dict[str, Any], question_id: int) -> Optional[sqlite3.Row]:
     q = conn.execute("SELECT state FROM swarm_questions WHERE id = ?", (question_id,)).fetchone()
+    if q is not None and q["state"] == "open" and _on_chain(conn, agent, question_id):
+        return None
     last = conn.execute("SELECT * FROM swarm_question_hops WHERE question_id = ? ORDER BY id DESC LIMIT 1",
                         (question_id,)).fetchone()
     if q is None or q["state"] not in routing.WALKING or last is None or last["agent_id"] != agent["id"] \
@@ -52,15 +58,16 @@ def _apply_answer(conn: sqlite3.Connection, agent: Dict[str, Any], question_id: 
         hop = _hop_of(conn, agent, question_id)
         receipt = receipts.build(conn, agent, fact_ids)
         now = utc_now()
-        conn.execute("UPDATE swarm_question_hops SET outcome = 'answered', at = ? WHERE id = ?", (now, hop["id"]))
+        if hop is not None:
+            conn.execute("UPDATE swarm_question_hops SET outcome = 'answered', at = ? WHERE id = ?", (now, hop["id"]))
         conn.execute("UPDATE swarm_questions SET state = 'answered', answer_text = ?, answered_by = ?, answered_at = ? "
                      "WHERE id = ?", (text, f"agent:{agent['id']}", now, question_id))
         receipts.save(conn, question_id, agent["id"], receipt)
         key = fact_life.conversation_key(conn, agent["id"])
         for fact_id in receipt.fact_ids:
             fact_life.record_use(conn, fact_id, key, now)
-    question = conn.execute("SELECT text FROM swarm_questions WHERE id = ?", (question_id,)).fetchone()[0]
-    return {"question": question, "receipt": receipt, "askers": routing.askers_of(conn, question_id)}
+    question, card = conn.execute("SELECT text, card_ref FROM swarm_questions WHERE id = ?", (question_id,)).fetchone()
+    return {"question": question, "receipt": receipt, "askers": routing.askers_of(conn, question_id), "card": card if hop is None else None}
 
 
 async def answer(view: Any, caller: AgentCaller, args: Dict[str, Any]) -> Dict[str, Any]:
@@ -89,6 +96,12 @@ async def answer(view: Any, caller: AgentCaller, args: Dict[str, Any]) -> Dict[s
             sent += 1
         await asyncio.to_thread(push.notify_agent, asker["id"])
     await asyncio.to_thread(push.notify_agent, agent["id"])
+    port = thread_port.get()
+    if port is not None and str(done["card"] or "").isdigit():
+        try:
+            await port.close_card(int(done["card"]), "answered")
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("swarm_question_card_not_closed", question_id=qid, error_type=type(exc).__name__)
     logger.info("swarm_answered", question_id=qid, agent_id=agent["id"], kind=receipt.kind, kept=len(receipt.fact_ids))
     return {"question_id": qid, "state": "answered", "receipt": receipt.rendered, "kind": receipt.kind,
             "fact_ids": receipt.fact_ids, "delivered_to": sent}

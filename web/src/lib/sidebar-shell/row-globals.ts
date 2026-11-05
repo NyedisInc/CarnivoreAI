@@ -9,7 +9,7 @@ export interface PendingSelection {
 
 export interface RowController {
     listEl?: Element | null;
-    _rows?: SidebarRow[];
+    rows?<T = SidebarRow>(): readonly T[];
     _dragging?: boolean;
     _activeTmuxName?: string | null;
     _pendingSelection?: PendingSelection | null;

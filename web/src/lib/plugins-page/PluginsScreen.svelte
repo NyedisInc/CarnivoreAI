@@ -36,35 +36,27 @@
     import { PANE_TAB_MEMORY, PANE_TABS, isPaneTab, type PaneTab, type PurgePrice } from './plugin-pane';
     import { hasPluginSettings, pluginLinkOf, type PluginLink } from './plugin-settings-link';
 
-    import { isBuiltinPlugin } from '../catalog/app-own';
-    import { uninstallPlugin, uninstallableRow } from './plugin-uninstall';
+    import { isFeatureTier } from '../catalog/app-own';
+    import { featureWords } from './feature-words';
+    import type { PluginsScreenProps } from './plugins-screen-props';
+    import { createPluginsPageController } from './plugins-page-controller.svelte';
+    import { featureHandOffFragment, replaceHashWith, rowsInScope } from './plugin-scope';
+    import { SWARM_ITEM_ID, swarmFeatureItem } from './swarm-feature';
+    import { startSwarmSwitch, swarmSwitch, toggleSwarm } from '../swarm-switch/control.svelte';
 
-    interface Props {
-        adapter?: ManagerAdapter;
-        t?: Translate;
-        embedded?: boolean;
-        focusId?: string | null;
-        focusTab?: string | null;
-        onSelect?: (cplugId: string, tab: string) => void;
-        onChanged?: () => void;
-        storeOnly?: boolean;
-        grant?: (cplugId: string, ticks: string[], options: GrantOptions) => Promise<unknown>;
-        loadSheet?: (cplugId: string) => Promise<CplugSheet>;
-        loadActivity?: (cplugId: string) => Promise<ActivityRow[]>;
-        purge?: (cplugId: string, confirmToken?: string) => Promise<PurgePrice>;
-        catalog?: CatalogPlugins | null;
-    }
+    const { adapter, t: tProp = appT, embedded = false, focusId = null, focusTab = null, onSelect: onPick, onChanged, storeOnly = false, scope, developerMode = false, grant = (id, ticks, options) => grantCplug(id, ticks, t, undefined, undefined, options), loadSheet = readSheet, loadActivity = listActivity, purge, catalog: catalogProp }: PluginsScreenProps = $props();
 
-    const { adapter, t = appT, embedded = false, focusId = null, focusTab = null, onSelect: onPick, onChanged, storeOnly = false, grant = (id, ticks, options) => grantCplug(id, ticks, t, undefined, undefined, options), loadSheet = readSheet, loadActivity = listActivity, purge, catalog: catalogProp }: Props = $props();
+    // svelte-ignore state_referenced_locally
+    const t: Translate = scope === 'features' ? featureWords(tProp) : tProp;
 
-    let seenSheets = $state<Record<string, CplugSheet>>({});
+    if (scope === 'features') startSwarmSwitch();
 
     // svelte-ignore state_referenced_locally
     const pageAdapter: ManagerAdapter & Partial<CplugsAdapter> = adapter ?? createCplugsAdapter(t);
     // svelte-ignore state_referenced_locally
     const ctl = createManagerController(pageAdapter, t(MANAGER_KEYS.errorTitle));
     // svelte-ignore state_referenced_locally
-    const actions = createPluginActions({ ctl, adapter: pageAdapter, grant, seenSheet: (id) => seenSheets[id], onAsk: (id) => (selectedId = id) });
+    const actions = createPluginActions({ ctl, adapter: pageAdapter, grant, seenSheet: (id) => page.seenSheets[id], onAsk: (id) => (selectedId = id) });
     // svelte-ignore state_referenced_locally
     const sideloads = adapter ? null : createSideloadStore(undefined, () => void ctl.load());
 
@@ -83,56 +75,12 @@
 
     // svelte-ignore state_referenced_locally
     const catalog: CatalogPlugins | null =
-        catalogProp !== undefined ? catalogProp : adapter ? null : createCatalogPlugins({ host: browserCatalogHost(), t, openSheet: openCatalogSheet });
+        catalogProp !== undefined ? catalogProp : adapter || scope === 'features' ? null : createCatalogPlugins({ host: browserCatalogHost(), t, openSheet: openCatalogSheet });
     const catalogItems = $derived<CatalogPluginItem[]>(catalog ? catalog.items() : []);
-    let catalogToggles = $state<Record<string, ManagerToggleState>>({});
-
-    async function toggleCatalog(id: string, next: boolean): Promise<void> {
-        const item = catalogItems.find((row) => row.id === id);
-        if (!catalog || !item || catalogToggles[id]?.busy) return;
-        catalogToggles = { ...catalogToggles, [id]: { busy: true, error: null } };
-        try {
-            await catalog.setEnabled(item.itemId, next);
-            if (next && !catalog.items().some((row) => row.id === id)) void ctl.load();
-            catalogToggles = { ...catalogToggles, [id]: { busy: false, error: null } };
-        } catch (error) {
-            catalogToggles = { ...catalogToggles, [id]: { busy: false, error: error instanceof Error ? error.message : t('plugins.page.catalog.failed') } };
-        }
-    }
-
-    async function runAct(id: string, run: () => Promise<void>): Promise<void> {
-        if (catalogToggles[id]?.busy) return;
-        catalogToggles = { ...catalogToggles, [id]: { busy: true, error: null } };
-        try {
-            await run();
-            catalogToggles = { ...catalogToggles, [id]: { busy: false, error: null } };
-        } catch (error) {
-            catalogToggles = { ...catalogToggles, [id]: { busy: false, error: error instanceof Error ? error.message : t('plugins.page.catalog.failed') } };
-        }
-    }
+    // svelte-ignore state_referenced_locally
+    const page = createPluginsPageController({ catalog, catalogItems: () => catalogItems, reloadBuiltins: () => ctl.load(), loadSheet, t });
 
     const addProjects = $derived(addProjectsOf(catalog?.projects ?? [], null));
-
-    let uninstallingId = $state<string | null>(null);
-    let uninstallErrors = $state<Record<string, string | null>>({});
-
-    function ledgerRowOf(plugin: CplugItem) {
-        return catalog && plugin.thirdParty && plugin.publisher ? uninstallableRow(catalog.ledger(), `${plugin.publisher}/${plugin.cplugId}`) : undefined;
-    }
-
-    async function uninstallFromPane(plugin: CplugItem): Promise<void> {
-        const row = ledgerRowOf(plugin);
-        if (!row || !catalog || uninstallingId !== null || openModalCount() > 0) return;
-        uninstallingId = plugin.id;
-        uninstallErrors = { ...uninstallErrors, [plugin.id]: null };
-        try {
-            const result = await uninstallPlugin(row, plugin.name, catalog, t);
-            uninstallErrors = { ...uninstallErrors, [plugin.id]: result.error };
-            if (result.done) await Promise.all([catalog.load(), ctl.load()]);
-        } finally {
-            uninstallingId = null;
-        }
-    }
 
     async function loadAll(): Promise<void> {
         void catalog?.load();
@@ -140,8 +88,12 @@
     }
 
     function requestToggle(id: string, next: boolean): void {
+        if (id === SWARM_ITEM_ID) {
+            void toggleSwarm(next);
+            return;
+        }
         if (id.startsWith(CATALOG_ITEM_PREFIX)) {
-            void toggleCatalog(id, next);
+            void page.toggleCatalog(id, next);
             return;
         }
         actions.request(id, next);
@@ -155,7 +107,8 @@
     let selectedId = $state<string | null>(null);
     let sortKey = $state<'featured' | 'name' | 'state'>('featured');
     const sorted = $derived.by(() => {
-        const builtins = ctl.items.filter((row) => !storeOnly || !isBuiltinPlugin((row as CplugItem).tier));
+        const swarmRow = scope === 'features' ? swarmFeatureItem(swarmSwitch.data, t) : null;
+        const builtins: ManagerItem[] = [...rowsInScope(ctl.items as CplugItem[], { scope, developerMode, storeOnly }), ...(swarmRow ? [swarmRow] : [])];
         if (sortKey === 'featured') return [...builtins.sort((a, b) => a.name.localeCompare(b.name)), ...catalogItems];
         return [...builtins, ...catalogItems].sort(
             (a, b) => (sortKey === 'state' ? Number(b.enabled === true) - Number(a.enabled === true) : 0) || a.name.localeCompare(b.name),
@@ -171,16 +124,10 @@
         tellHost();
     }
 
-    let sheetRead = 0;
     $effect(() => {
         const item = ctl.items.find((row) => row.id === selectedId) as CplugItem | undefined;
         if (paneTab !== 'permissions' || !item?.consentRequired || (item.state !== 'disabled' && item.state !== 'needs_approval')) return;
-        const id = item.cplugId;
-        const mine = ++sheetRead;
-        loadSheet(id).then(
-            (sheet) => { if (mine === sheetRead) seenSheets = { ...seenSheets, [id]: sheet }; },
-            () => { if (mine === sheetRead) { const { [id]: _gone, ...rest } = seenSheets; seenSheets = rest; } },
-        );
+        page.readSheetFor(item.cplugId);
     });
 
     function tellHost(): void {
@@ -193,8 +140,19 @@
         tellHost();
     }
 
+    let linkWantsSettings = false;
+
+    $effect(() => {
+        if (scope !== 'plugins' || !selectedId) return;
+        const row = (ctl.items as CplugItem[]).find((item) => item.id === selectedId);
+        if (!row || !isFeatureTier(row.tier)) return;
+        selectedId = null;
+        replaceHashWith(featureHandOffFragment(row, linkWantsSettings));
+    });
+
     function applyLink(link: PluginLink | null, report = true): void {
         if (!link) return;
+        linkWantsSettings = link.settings;
         selectedId = `${CPLUG_ITEM_PREFIX}${link.cplugId}`;
         if (link.settings) paneTab = 'settings';
         if (report) tellHost();
@@ -206,8 +164,15 @@
         applyLink(pluginLinkOf(typeof window !== 'undefined' ? window.location.hash : null), false);
     }
 
+    let hadFocus = false;
     $effect(() => {
-        if (!embedded || !focusId) return;
+        if (!embedded) return;
+        if (!focusId) {
+            if (hadFocus && scope === 'features') selectedId = null;
+            hadFocus = false;
+            return;
+        }
+        hadFocus = true;
         selectedId = `${CPLUG_ITEM_PREFIX}${focusId}`;
         if (focusTab && isPaneTab(focusTab)) paneTab = focusTab;
     });
@@ -307,9 +272,9 @@
         {@const entry = item as CatalogPluginItem}
         {@const act = catalog.act(entry.itemId)}
         {#if act.kind === 'update'}
-            <Button variant="confirm" size="sm" data-act="update" disabled={catalogToggles[item.id]?.busy === true} onclick={() => void runAct(item.id, () => catalog.update(entry.itemId))}>{t(SKILL_KEYS.actionUpdate)}</Button>
+            <Button variant="confirm" size="sm" data-act="update" disabled={page.toggles[item.id]?.busy === true} onclick={() => void page.runAct(item.id, () => catalog.update(entry.itemId))}>{t(SKILL_KEYS.actionUpdate)}</Button>
         {:else if act.kind === 'add'}
-            <AddSplit projects={addProjects} haveGlobal={false} haveAnyProject={false} onAdd={(target, path) => void runAct(item.id, () => catalog.add(entry.itemId, target, path ?? null))} {t} />
+            <AddSplit projects={addProjects} haveGlobal={false} haveAnyProject={false} onAdd={(target, path) => void page.runAct(item.id, () => catalog.add(entry.itemId, target, path ?? null))} {t} />
         {/if}
     {/if}
 {/snippet}
@@ -350,14 +315,14 @@
         error={ctl.toggles[plugin.id]?.error ?? null}
         onConfirmOff={() => actions.confirm()}
         onCancelOff={() => actions.cancel()}
-        sheetStamp={seenSheets[plugin.cplugId] ? sheetStamp(seenSheets[plugin.cplugId]!) : ''}
+        sheetStamp={page.seenSheets[plugin.cplugId] ? sheetStamp(page.seenSheets[plugin.cplugId]!) : ''}
         onGrant={(ticks) => void actions.grantFromSheet(plugin, ticks)}
         {loadActivity}
         {purge}
         onPurged={() => void ctl.load()}
-        onUninstall={ledgerRowOf(plugin) ? () => void uninstallFromPane(plugin) : undefined}
-        uninstalling={uninstallingId === plugin.id}
-        uninstallError={uninstallErrors[plugin.id] ?? null}
+        onUninstall={page.ledgerRowOf(plugin) ? () => void page.uninstallFromPane(plugin) : undefined}
+        uninstalling={page.uninstallingId === plugin.id}
+        uninstallError={page.uninstallErrors[plugin.id] ?? null}
         {t}
     />
 {/snippet}
@@ -396,7 +361,7 @@
         {filters}
         onFilter={(id, on) => (chip = on ? (id as 'on' | 'off') : null)}
         onClearFilters={() => (chip = null)}
-        viewKey="plugins"
+        viewKey={scope === 'features' ? 'features' : 'plugins'}
         defaultView="grid"
         warezCards
         warezKind="plugin"
@@ -409,12 +374,14 @@
         detailFill
         detail={catalog ? detailAny : detailCplug}
         onSelect={(id) => {
-            if (actions.pendingOff !== id) actions.cancel();
-            selectedId = id;
+            const target = id === SWARM_ITEM_ID ? `${CPLUG_ITEM_PREFIX}huddle` : id;
+            if (id === SWARM_ITEM_ID && !ctl.items.some((row) => row.id === target)) return;
+            if (actions.pendingOff !== target) actions.cancel();
+            selectedId = target;
             tellHost();
         }}
         onToggle={requestToggle}
-        toggles={{ ...ctl.toggles, ...catalogToggles }}
+        toggles={{ ...ctl.toggles, ...page.toggles }}
         toolbar={catalog ? toolbar : undefined}
         zone={catalog && !adapter ? developerZone : undefined}
         onRetry={() => void ctl.load()}

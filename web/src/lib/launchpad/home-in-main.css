@@ -1,13 +1,20 @@
-/* the home screen */
-body.home-in-main #launchpad-screen.active {
-    position: fixed;
-    top: var(--menu-surface-top);
-    left: var(--menu-surface-left);
-    right: var(--menu-surface-right);
-    bottom: var(--menu-surface-bottom);
-    z-index: 2;
+/* the bottom rail */
+#terminal-grid > #launchpad-screen.active {
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
     overflow: auto;
     background: var(--oc-ground-content);
+}
+
+#terminal-grid.ps-grid-surface > #launchpad-screen.active {
+    grid-row: 1 / 2;
+    grid-column: 1 / 2;
+}
+
+#terminal-grid[data-home-slot] > .oc-surface,
+#terminal-grid[data-home-slot] > .terminal-container {
+    visibility: hidden;
 }

@@ -124,7 +124,7 @@
     display: none;
 }
 
-body:has(#terminal-screen.active) #headerSessionThemeBtn,
-body:has(#terminal-screen.active) #headerDetachBtn {
+body.ps-terminal-active #headerSessionThemeBtn,
+body.ps-terminal-active #headerDetachBtn {
     display: flex;
 }

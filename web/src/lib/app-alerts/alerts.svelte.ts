@@ -4,6 +4,7 @@ import { subscribe } from '../../opscenter/api/events.svelte';
 import type { EventFrame } from '../../opscenter/api/types';
 import { t } from '../i18n/index.svelte';
 import { ALERT_FRAMES, shouldToast, type AlertCounts, type AlertFrame, type AlertAction, type AlertSourceEntry, type AppAlert } from './alerts-model';
+import { addLocalToast } from '../toast-surface';
 
 export const ALERTS_PATH = '/alerts?state=all&limit=200';
 
@@ -63,10 +64,6 @@ function scheduleRefresh(): void {
   }, COALESCE_MS);
 }
 
-interface ToastSurface {
-  add(toast: Record<string, unknown>): void;
-}
-
 export function toastFor(alert: AppAlert, open: (() => void) | null = null, now: number = Date.now()): Record<string, unknown> {
   return {
     id: `app-alert:${alert.id}:${now}`,
@@ -86,9 +83,8 @@ export async function onFrame(frame: EventFrame): Promise<void> {
   if (shouldToast(alertFrame, toasted)) {
     await refreshAlerts();
     const alert = alertCenter.alerts.find((a) => a.id === alertFrame.id);
-    const surface = (globalThis as { ToastManager?: ToastSurface }).ToastManager;
     const hidden = alert !== undefined && (globalThis as { NotifyScreen?: { shows(t: { notify_type?: unknown }): boolean } }).NotifyScreen?.shows(alert) === false;
-    if (alert && surface && typeof surface.add === 'function' && !hidden) surface.add(toastFor(alert, toastOpener));
+    if (alert && !hidden) addLocalToast(toastFor(alert, toastOpener));
     return;
   }
   scheduleRefresh();

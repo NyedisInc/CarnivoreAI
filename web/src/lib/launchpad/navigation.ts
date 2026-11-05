@@ -4,9 +4,10 @@ import { reasonOf as failureReason } from './failure-reason';
 import { findRunningSessionBySlug } from './deep-link';
 import { refusedWith } from './refusal-shape';
 import { showError, updateStatus, explainRefusedProject } from './status-report';
-import { buildOpenProjectPayload, isRemoteRoot } from './create-flow';
+import { buildOpenProjectPayload, isRemoteRoot } from './open-project-payload';
+import { refreshWorktrees } from '../worktree-cleanup/api';
 import { prefillFor, sourceOfProject } from '../launch-picker/prefill';
-import { beginNav, currentNav, keepNav, withNav } from './nav-generation';
+import { beginNav, currentNav, keepNav, withNav, type NavToken } from './nav-generation';
 import type { NavHost, SessionLike } from './nav-host';
 import type { ProjectRow, RunningSessionRow } from '../sessions/types';
 import type { Translate } from './recent';
@@ -27,8 +28,9 @@ export async function returnToActiveSession(
     sessionId: string | null,
     host: NavHost,
     t: Translate,
+    declared: NavToken = beginNav('session:' + String(sessionId ?? '')),
 ): Promise<void> {
-    const nav = beginNav('session:' + String(sessionId ?? ''));
+    const nav = declared;
     try {
         const { cols, rows } = await host.prepareTerminal();
         const info = await host.getSession(sessionId, {
@@ -49,8 +51,9 @@ export async function attachRunningSession(
     tmuxName: string,
     host: NavHost,
     t: Translate,
+    declared: NavToken = beginNav('attach:' + tmuxName),
 ): Promise<void> {
-    const nav = beginNav('attach:' + tmuxName);
+    const nav = declared;
     try {
         const response = await host.adoptSession(tmuxName, true);
         const session = (response.session || response) as SessionLike;
@@ -163,13 +166,15 @@ export async function selectProject(
         if (choice === undefined) {
             const taken = host.runningSessions().flatMap((r) => [r.name, r.label ?? '']).filter(Boolean);
             const prefill = prefillFor(sourceOfProject(project), taken);
-            choice = await host.chooseProvider((project?.default_launch_profile as string | null | undefined) ?? null, !isRemoteRoot(project?.path), prefill);
+            const local = !isRemoteRoot(project?.path);
+            choice = await host.chooseProvider((project?.default_launch_profile as string | null | undefined) ?? null, local, prefill, local && project?.path ? String(project.path) : null);
             if (!choice) return;
         }
         updateStatus(t(HOME_KEYS.statusOpening, { name }));
 
         const payload = buildOpenProjectPayload(name, String(project.path), choice ?? null, host.terminalDims());
         const session = await host.createSession(payload);
+        if (payload.worktree) void refreshWorktrees();
         if (choice?.pinned === true && session?.tmux_session) host.pinSession?.(session.tmux_session);
         host.announceSessionCreated(withNav({ session, project }, nav));
     } catch (error) {

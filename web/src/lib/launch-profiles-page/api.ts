@@ -1,5 +1,7 @@
 import type { RestartAccounts } from '../launch-picker/account-types';
 import { ApiError, authFetch } from '../../opscenter/api/auth.svelte';
+import { failureReason } from '../errors/failure-reason';
+import type { CommandPart } from '../settings-page/config-bundle/api';
 
 export type Fetcher = typeof authFetch;
 
@@ -31,7 +33,16 @@ export interface ProfileRow extends LaunchProfile {
     installed?: boolean;
 }
 
-export interface ProfileList { revision: number; profiles: ProfileRow[] }
+export interface DisabledProfile {
+    id: string;
+    label: string | null;
+    harness: string | null;
+    reason: string;
+    was_default: boolean;
+    fallback_default: string | null;
+}
+
+export interface ProfileList { revision: number; profiles: ProfileRow[]; disabled?: DisabledProfile[] }
 
 export interface Preview {
     profile_id: string;
@@ -56,7 +67,7 @@ export interface UsageResult { profile_id: string; counts: Record<string, number
 export interface ImportPreview {
     profile: LaunchProfile;
     sha256: string;
-    parts: { kind: string; text: string }[];
+    parts: CommandPart[];
     exists: boolean;
     existing_is_default: boolean;
     endpoint_connection_missing: boolean;
@@ -75,22 +86,7 @@ const seg = (id: string): string => encodeURIComponent(id);
 const json = (body: unknown): string => JSON.stringify(body);
 
 export function errorText(err: unknown): string {
-    if (!(err instanceof ApiError)) return err instanceof Error ? err.message : String(err);
-    const body = err.payload as { detail?: unknown } | null;
-    const detail = body && typeof body === 'object' ? body.detail : undefined;
-    if (Array.isArray(detail)) {
-        const lines = detail.map((d) => {
-            const row = d as { loc?: unknown[]; msg?: string };
-            const where = (row.loc ?? []).filter((p) => p !== 'body').join('.');
-            return where ? `${where}: ${row.msg ?? ''}` : `${row.msg ?? ''}`;
-        });
-        return lines.filter(Boolean).join('; ') || err.message;
-    }
-    if (detail && typeof detail === 'object') {
-        const message = (detail as { message?: unknown }).message;
-        if (typeof message === 'string' && message) return message;
-    }
-    return err.message;
+    return failureReason(err);
 }
 
 export function deleteRefusal(err: unknown): DeleteRefusal | null {

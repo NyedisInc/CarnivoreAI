@@ -1,6 +1,7 @@
 import { ApiError } from '../../opscenter/api/auth.svelte';
 import { widgetSetting } from '../item-settings/store.svelte';
 import { getPreview, type PreviewPart } from './api';
+import { failureReason } from '../errors/failure-reason';
 
 export interface PreviewEntry {
   status: 'loading' | 'ready' | 'error';
@@ -42,7 +43,7 @@ export class BookmarkPreviews {
     try {
       this.entries[key] = { status: 'ready', parts: (await read(turns)).parts, error: '', turns };
     } catch (error) {
-      const text = error instanceof ApiError || error instanceof Error ? error.message : String(error);
+      const text = failureReason(error);
       this.entries[key] = { status: 'error', parts: [], error: text, turns };
     }
   }

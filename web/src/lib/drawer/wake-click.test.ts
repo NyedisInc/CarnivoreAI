@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import type { SidebarPick } from '../legacy-globals';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // The menu's wake run is the sleep module's real one (it calls the server); these cases stand in for it and record how it is called.
 const wake = vi.hoisted(() => ({ run: async (_ctx: unknown): Promise<boolean> => false }));
@@ -10,7 +11,7 @@ import { onAsleepClick } from './wake-click';
 type Win = Record<string, unknown>;
 const win = window as unknown as Win;
 let gen = 0;
-let ctrl: Record<string, any>;
+let ctrl: SidebarPick<'rows'> & { _rows: unknown[] };
 
 function rowEl(name: string, asleep: boolean, uuid = 'u-a'): HTMLElement {
     const el = document.createElement('div');
@@ -25,7 +26,7 @@ function rowEl(name: string, asleep: boolean, uuid = 'u-a'): HTMLElement {
 beforeEach(() => {
     gen = 0;
     document.body.innerHTML = '';
-    ctrl = { _rows: [{ name: 'carnivore_a', asleep: true, session_uuid: 'u-a', label: 'a' }] };
+    ctrl = { _rows: [{ name: 'carnivore_a', asleep: true, session_uuid: 'u-a', label: 'a' }], rows() { return this._rows; } } as typeof ctrl;
     win.NavigationGeneration = { begin: () => ++gen, isCurrent: (t: unknown) => t === gen, keep: (t: unknown) => t === gen };
 });
 afterEach(() => { delete win.NavigationGeneration; wake.run = async () => false; });

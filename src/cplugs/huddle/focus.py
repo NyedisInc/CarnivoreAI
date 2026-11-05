@@ -48,8 +48,7 @@ def live_items(store: "service.TaskManagerStore", list_key: str) -> Dict[int, di
     return {i["id"]: i for body in lists for i in body["items"]}
 
 
-def set_focus(ctx: CplugContext, list_key: str, items: Sequence[int], open_id: Optional[int], *,
-              mark_unread: bool = False) -> dict:
+def set_focus(ctx: CplugContext, list_key: str, items: Sequence[int], open_id: Optional[int]) -> dict:
     check_list_key(list_key)
     wanted: List[int] = []
     for value in list(items) + ([open_id] if open_id is not None else []):
@@ -66,9 +65,6 @@ def set_focus(ctx: CplugContext, list_key: str, items: Sequence[int], open_id: O
     stray = [i for i in wanted if i not in live]
     if stray:
         raise TaskManagerNotFound(f"not live items of list {list_key}: {', '.join(map(str, stray))}")
-    if mark_unread:
-        for key in sorted({live[i]["list"] for i in wanted}):
-            store.mark_unread(key, [i for i in wanted if live[i]["list"] == key])
     focus = {"seq": time.time_ns() // 1000, "list": list_key, "items": wanted, "open": open_id, "at": time.time()}
     with _lock:
         _focus[_key(ctx)] = focus

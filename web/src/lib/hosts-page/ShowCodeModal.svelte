@@ -3,7 +3,7 @@
     import Button from '../base/Button.svelte';
     import IconButton from '../base/IconButton.svelte';
     import { t as reactiveT } from '../i18n/index.svelte';
-    import ModalShell from '../launchpad/ModalShell.svelte';
+    import ModalShell from '../dialog-frame/ModalShell.svelte';
     import type { Translate } from '../sessions/types';
     import { createFederationApi, type FederationApi, type PairCode, type PendingPair } from './federation-api';
     import PairSas from './PairSas.svelte';

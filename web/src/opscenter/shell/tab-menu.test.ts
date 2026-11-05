@@ -3,6 +3,7 @@ import { buildTabMenu, type TabMenuInputs } from './tab-menu';
 import type { ProjectResponse, SessionInfo } from '../api/types';
 import { blankSession } from '../../lib/blueprints/types';
 import type { Blueprint } from '../../lib/blueprints/types';
+import { t } from '../../lib/i18n/index.svelte';
 
 function blueprint(uuid: string, name: string): Blueprint {
   return {
@@ -203,6 +204,14 @@ test('with no saved blueprints the list is one blocked line, not an empty branch
   const children = branch.children ?? [];
   expect(children.map((n) => n.id)).toEqual(['blueprint/empty', 'blueprint/manage']);
   expect(children[0]!.blocked).toBeTruthy();
+});
+
+test('a blueprint list that failed to load says so, in one blocked line, not the empty line (ERR-13)', () => {
+  const root = buildTabMenu(inputs({ openSessionIds: new Set(), blueprints: [], blueprintsFailed: true }));
+  const children = root.find((n) => n.id === 'blueprint')!.children ?? [];
+  expect(children.map((n) => n.id)).toEqual(['blueprint/failed', 'blueprint/manage']);
+  expect(children[0]!.blocked).toBe(t('blueprint.load_failed'));
+  expect(t('blueprint.load_failed')).not.toBe('blueprint.load_failed');
 });
 
 test('projects group: in-layout in tab order, other open, then inactive, a divider between each non-empty group (#1527)', () => {

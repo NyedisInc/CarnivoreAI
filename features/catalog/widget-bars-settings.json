@@ -1,0 +1,57 @@
+{
+  "api_routes": [
+    "PATCH /api/v1/preferences",
+    "POST /api/v1/preferences/widget-bars/reset"
+  ],
+  "area": "settings",
+  "description": "A second tab on the widgets page for the widget bars' own look. Strips of pictures pick each bar's size (compact, cozy, detailed), which bars are shown (both, right only, bottom only, none), each bar's mode (auto-hide or pinned) and whether both bars are out at once or one at a time. Every pick applies at once, answers with a toast and an undo, and writes one sparse leaf of the widget bars preference, so a default stays a default. Under the strips, an \"in this bar\" editor shows your real keys in a framed picture of a terminal layout: select a key, then move it to the other bar or take it out. A \"try it\" scene lets you hover a bar edge, press a key to open a sample panel and press the panel's edge to pin it. A reset button puts both bars back to the default look and contents.",
+  "docs": [
+    "docs/widget-system.md"
+  ],
+  "examples": [
+    "Make the bottom bar compact so it is no taller than the status line.",
+    "Pin the right bar so it keeps its space.",
+    "Move the notes key from the right bar to the bottom bar without dragging.",
+    "Put everything back with reset bars to defaults."
+  ],
+  "how_to": [
+    "Open the menu tab of the agents drawer, choose widgets, then the settings tab (or open the #widgets/settings link).",
+    "Press a picture in a strip; the bar changes at once.",
+    "Press undo in the toast to put the previous setting back.",
+    "In \"in this bar\", select a key, then press move to the other bar or take out of its bar.",
+    "In \"try it\", hover a bar edge, press a key, then press the thin edge of the panel to pin it.",
+    "Press reset bars to defaults to put both bars back to the default look and contents."
+  ],
+  "id": "widget-bars-settings",
+  "issues": [
+    1551,
+    1593,
+    2713
+  ],
+  "keywords": [
+    "bars",
+    "settings",
+    "widgets",
+    "size",
+    "pinned",
+    "auto-hide"
+  ],
+  "media_exempt": "a settings tab of an existing page; its reproducible capture runs against a leased slot before the next version bump",
+  "name": "Widget bars settings",
+  "since": "2026-10-29",
+  "status": "stable",
+  "summary": "choose each widget bar's size, whether it shows, auto-hide or pinned, and both bars or one at a time, from pictures on the widgets page.",
+  "surfaces": [
+    "web/src/lib/widgets-page/settings/BarsSettings.svelte",
+    "web/src/lib/widgets-page/settings/PictureStrip.svelte",
+    "web/src/lib/widgets-page/settings/BarPicture.svelte",
+    "web/src/lib/widgets-page/settings/settings-model.ts",
+    "web/src/lib/widgets-page/settings/settings-writes.ts",
+    "web/src/lib/widgets-page/WidgetsScreen.svelte"
+  ],
+  "updated": "2026-10-29",
+  "where": [
+    "Menu tab, Widgets, all widgets, the settings tab.",
+    "The #widgets/settings link."
+  ]
+}

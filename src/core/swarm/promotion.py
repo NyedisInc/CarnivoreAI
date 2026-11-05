@@ -140,12 +140,9 @@ async def _receipt(agent: Dict[str, Any], parent: Dict[str, Any], promotion_id: 
     port = thread_port.get()
     try:
         if port is not None and parent.get("thread_key"):
-            text = (f"{agent['display_name']} is now a feature agent: task type {agent['task_type']} reached {standing[0]} accepted "
-                    f"reports (the threshold is {standing[1]}). Its memory moved to the project and was committed. "
-                    "approve to keep it, or decline to flip it back to a task agent.")
-            item = await port.post_card(parent["thread_key"], "question", f"promoted: {agent['display_name']}", text,
-                                        f"{PROMOTION_PREFIX}{promotion_id}")
-            await body.run_db(lambda c: promotion_store.set_promotion_card(c, promotion_id, str(item)))
+            await port.post_traffic(parent["thread_key"], f"promoted: {agent['display_name']} is now a feature agent (task type "
+                                    f"{agent['task_type']} reached {standing[0]} accepted reports, the threshold is {standing[1]}); kept",
+                                    f"promotion-kept:{promotion_id}")
             await asyncio.to_thread(push.notify_thread, parent["thread_key"])
     except Exception as exc:  # noqa: BLE001
         logger.warning("swarm_promotion_card_failed", promotion_id=promotion_id, error_type=type(exc).__name__)
@@ -153,6 +150,29 @@ async def _receipt(agent: Dict[str, Any], parent: Dict[str, Any], promotion_id: 
     for agent_id in (agent["id"], parent.get("id")):
         if agent_id is not None:
             await asyncio.to_thread(push.notify_agent, agent_id)
+
+
+KEPT_REF_PREFIX = "kept:"
+
+
+async def settle_open_receipts() -> int:
+    port = thread_port.get()
+    if port is None:
+        return 0
+    rows = await body.run_db(lambda c: [dict(r) for r in c.execute(
+        "SELECT id, receipt_card_ref FROM swarm_promotions WHERE flipped_back_at IS NULL AND receipt_card_ref GLOB '[0-9]*'").fetchall()])
+    closed = 0
+    for row in rows:
+        ref = str(row["receipt_card_ref"])
+        try:
+            await port.close_card(int(ref), "done")
+            closed += 1
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("swarm_promotion_receipt_not_closed", promotion_id=row["id"], error_type=type(exc).__name__)
+        await body.run_db(lambda c, pid=row["id"], ref=ref: promotion_store.set_promotion_card(c, pid, KEPT_REF_PREFIX + ref))
+    if rows:
+        logger.info("swarm_promotion_receipts_settled", found=len(rows), closed=closed)
+    return closed
 
 
 async def teardown_candidate(app_state: Any, parent_id: int, agent_id: int) -> Dict[str, Any]:

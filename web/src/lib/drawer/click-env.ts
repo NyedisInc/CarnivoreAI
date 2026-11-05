@@ -5,7 +5,6 @@ export interface ClickCtrl {
     listEl: HTMLElement | null;
     _activeTmuxName: string | null;
     _pendingSelection: PendingSelection | null;
-    _lastSig: string | null;
     repaint?: () => void;
     _closeAfterSwitch(): void;
     _fetchAndRender(): Promise<void>;
@@ -34,6 +33,7 @@ export interface ClickEnv {
     };
     SessionSidebarLayouts?: { activate(ctrl: ClickCtrl, name: string): boolean };
     SessionRowActions?: RowActionsGlobal;
+    WriteFailureNotice?: { notify(key: string, params: Record<string, unknown>, opts: Record<string, unknown>): void };
     NavigationGeneration?: NavGeneration;
     SoloWindow?: { focusIfOpen(sessionId: string): Promise<boolean> };
     App?: { currentScreen?: string; returnToExistingTerminal(info: unknown): Promise<void> };
@@ -65,6 +65,15 @@ export function elementOf(target: EventTarget | null): ClosestTarget | null {
 
 export function messageOf(err: unknown): string {
     return err instanceof Error && err.message ? err.message : String(err);
+}
+
+export function notifyAgentFailure(name: string, key: string, err: unknown): void {
+    const notice = clickEnv().WriteFailureNotice;
+    if (!notice || typeof notice.notify !== 'function') {
+        console.warn('SessionSidebar:', 'no failure notice module for:', key);
+        return;
+    }
+    notice.notify(key, { detail: messageOf(err) }, { titleKey: 'notice.action_failed.title', surface: name, logPrefix: 'SessionSidebar:' });
 }
 
 export function drawerController(): ClickCtrl | null {

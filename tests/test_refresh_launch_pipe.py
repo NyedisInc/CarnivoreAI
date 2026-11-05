@@ -128,13 +128,10 @@ def test_current_launch_line_closes_the_pipe_promptly(stub_env):
         _kill_pid(pid)
 
 
-def test_deploy_mini_relaunch_line_has_no_bare_and_list_background():
+def test_deploy_mini_has_no_v11_relaunch_line_left():
     text = DEPLOY_MINI_SCRIPT.read_text()
-    match = re.search(r"pkill -f 'CloudeCode-v1\.1.*?sleep 1", text)
-    assert match, "could not find the v1.1 remote relaunch line in deploy-mini.sh"
-    line = match.group(0)
-    assert "exec nohup" in line
-    assert "</dev/null" in line
+    assert "CloudeCode-v1.1" not in text
+    assert "nohup" not in text
 
 
 def _launch_then_kill_group(launch_cmd: str, pidfile: Path, env: dict) -> int:

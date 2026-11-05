@@ -8,8 +8,8 @@
     import '../../settings-page/panel-kit/panel-kit.css';
     import './matrix.css';
     import { SCREEN, type Fetcher } from './api';
-    import { cellOf, DEFAULTS_COLUMN, destinationColumns, groupRows, lockReason, PHONE_QUERY } from './logic';
-    import { attach, matrix, resetCell, setDefault, setTick } from './store.svelte';
+    import { cellOf, DEFAULTS_COLUMN, destinationColumns, groupRows, groupSwitch, lockReason, PHONE_QUERY, type Group } from './logic';
+    import { attach, matrix, resetCell, setDefault, setGroup, setTick } from './store.svelte';
     import MatrixCell from './MatrixCell.svelte';
 
     interface Props {
@@ -20,8 +20,13 @@
 
     let phone = $state(false);
     let picked = $state(SCREEN);
+    let open = $state<Record<string, boolean>>({});
+    const MERGED_SEEN_KEY = 'carnivore.notify.merged_seen';
+    let showMerged = $state(false);
+    try { showMerged = window.localStorage.getItem(MERGED_SEEN_KEY) !== '1'; } catch { showMerged = false; }
 
     onMount(() => {
+        try { window.localStorage.setItem(MERGED_SEEN_KEY, '1'); } catch {  }
         const stop = attach(fetcher);
         const query = typeof window.matchMedia === 'function' ? window.matchMedia(PHONE_QUERY) : null;
         phone = query?.matches === true;
@@ -48,9 +53,26 @@
         return { value: !locked && matrix.settings.defaults[row.id] === true, source: locked ? ('locked' as const) : ('global' as const), locked };
     }
 
+    const switchOf = (group: Group, column: string) =>
+        groupSwitch(group.rows, (row) => cellFor(column, row), (row) => lockReason(row, column === DEFAULTS_COLUMN ? 'outside' : column));
+    function flipGroup(group: Group, column: string): void {
+        const sw = switchOf(group, column);
+        void setGroup(column, sw.flip.map((row) => row.id), sw.next, column === DEFAULTS_COLUMN);
+    }
+    const merged = (id: string): boolean => showMerged && Object.values(matrix.aliases).includes(id);
+
     const toggle = (column: string, typeId: string, next: boolean): Promise<void> =>
         column === DEFAULTS_COLUMN ? setDefault(typeId, next) : setTick(column, typeId, next);
 </script>
+
+{#snippet groupHead(group: Group)}
+    <button type="button" class="mx-group" data-btn="row" aria-expanded={open[group.family.id] === true} data-mx="group-toggle"
+        onclick={() => (open = { ...open, [group.family.id]: open[group.family.id] !== true })}>
+        <span class="mx-group__caret" aria-hidden="true">{open[group.family.id] ? '-' : '+'}</span>
+        <span data-mx="family">{t(group.family.label_key)}</span>
+        <span class="mx-group__count">{t('settings.notify.matrix.group.count', { count: group.rows.length })}</span>
+    </button>
+{/snippet}
 
 <div class="tm" data-mx="matrix">
     <p class="tm__sub">{t('settings.notify.matrix.intro')}</p>
@@ -72,14 +94,21 @@
         </div>
         <div class="mx-list" data-mx="list">
             {#each groups as group (group.family.id)}
-                <h4 class="mx-family-label" data-mx="family">{t(group.family.label_key)}</h4>
-                {#each group.rows as row (row.id)}
+                {@const sw = switchOf(group, activeColumn)}
+                <div class="mx-group-row" data-mx-group={group.family.id}>
+                    {@render groupHead(group)}
+                    <Check label="" ariaLabel={t('settings.notify.matrix.group.toggle', { group: t(group.family.label_key), column: columnTitle(activeColumn) })}
+                        checked={sw.state === 'all'} note={sw.state === 'some' ? t('settings.notify.matrix.group.some') : ''} disabled={sw.disabled}
+                        data-mx="group-check" onToggle={() => flipGroup(group, activeColumn)} />
+                </div>
+                {#each open[group.family.id] ? group.rows : [] as row (row.id)}
                     <div class="mx-item" data-mx-row={row.id}>
                         <MatrixCell {t} cell={cellFor(activeColumn, row)} name={typeLabel(row.label_key)} label={typeLabel(row.label_key)}
                             why={lockReason(row, activeColumn === DEFAULTS_COLUMN ? 'outside' : activeColumn)} showSource={activeColumn !== DEFAULTS_COLUMN}
                             cellId={`${activeColumn}:${row.id}`} onToggle={(next) => void toggle(activeColumn, row.id, next)}
                             onReset={() => void resetCell(activeColumn, row.id)} />
                         <span class="mx-desc">{t(row.description_key)}</span>
+                        {#if merged(row.id)}<span class="mx-merged" data-mx="merged">{t(`settings.notify.matrix.merged.${row.id}`)}</span>{/if}
                     </div>
                 {/each}
             {/each}
@@ -105,12 +134,23 @@
                 </thead>
                 <tbody>
                     {#each groups as group (group.family.id)}
-                        <tr class="mx-family"><th colspan={3 + columns.length} scope="colgroup" data-mx="family">{t(group.family.label_key)}</th></tr>
-                        {#each group.rows as row (row.id)}
+                        <tr class="mx-family" data-mx-group={group.family.id}>
+                            <th class="mx-type" scope="rowgroup">{@render groupHead(group)}</th>
+                            {#each [SCREEN, DEFAULTS_COLUMN, ...columns.map((c) => c.id)] as column (column)}
+                                {@const sw = switchOf(group, column)}
+                                <td>
+                                    <Check label="" ariaLabel={t('settings.notify.matrix.group.toggle', { group: t(group.family.label_key), column: columnTitle(column) })}
+                                        checked={sw.state === 'all'} note={sw.state === 'some' ? t('settings.notify.matrix.group.some') : ''} disabled={sw.disabled}
+                                        data-mx="group-check" data-mx-group-col={column} onToggle={() => flipGroup(group, column)} />
+                                </td>
+                            {/each}
+                        </tr>
+                        {#each open[group.family.id] ? group.rows : [] as row (row.id)}
                             <tr data-mx-row={row.id}>
                                 <th class="mx-type" scope="row">
                                     <span class="mx-label">{t(row.label_key)}</span>
                                     <span class="mx-desc">{t(row.description_key)}{row.defaults.screen_surface === 'approvals_inbox' ? ' ' + t('settings.notify.matrix.inbox') : ''}</span>
+                                    {#if merged(row.id)}<span class="mx-merged" data-mx="merged">{t(`settings.notify.matrix.merged.${row.id}`)}</span>{/if}
                                 </th>
                                 {#each [SCREEN, DEFAULTS_COLUMN, ...columns.map((c) => c.id)] as column (column)}
                                     <td>

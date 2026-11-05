@@ -21,6 +21,7 @@ function applyGroups(): void {
 }
 
 beforeEach(() => {
+    EmptySections.setEmptySectionsHidden(true);
     resetDrawer();
     Density.setMode('compact');
     applyGroups();
@@ -72,12 +73,14 @@ it('a drag in flight keeps an empty group as a drop target', () => {
 });
 
 it('the kind sections still draw with nothing in them', () => {
+    EmptySections.setEmptySectionsHidden(false);
     const html = draw([row('cloude_a')]);
     assert.ok(has(html, 'terminals'), 'TERMINALS stays (#1804)');
     assert.ok(has(html, 'browsers'), 'BROWSERS stays (#1804)');
 });
 
 describe('the hide empty sections setting', () => {
+    beforeEach(() => { EmptySections.setEmptySectionsHidden(false); });
     afterEach(() => { EmptySections.setEmptySectionsHidden(false); });
 
     it('off (the default) draws the empty TERMINALS and BROWSERS sections with their dim line', () => {
@@ -95,6 +98,14 @@ describe('the hide empty sections setting', () => {
         const withShell = draw([row('cloude_a'), { ...row('cloude_t'), agent_family: 'shell', working_dir: '/Users/x/dev', project_id: null }]);
         assert.ok(has(withShell, 'terminals'), 'a section with a row draws');
         assert.ok(!has(withShell, 'browsers'));
+    });
+
+    it('off draws a hand-made group with no member row, on hides it', () => {
+        EmptySections.setEmptySectionsHidden(false);
+        assert.ok(has(draw([row('cloude_a')]), 'g:g2'), 'off: the empty group draws');
+        EmptySections.setEmptySectionsHidden(true);
+        assert.ok(!has(draw([row('cloude_a')]), 'g:g2'), 'on: the empty group is skipped');
+        assert.ok(has(draw([row('cloude_a')]), 'g:g1'), 'a group with a member always draws');
     });
 
     it('on plus a drag in flight draws them as today', () => {

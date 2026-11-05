@@ -5,63 +5,40 @@ console.log('[SessionRowActionsConfirm Module] Loading...');
     var ACTION_CLOSE = 'close';
     var ACTION_REMOVE = 'remove';
 
-    const CONFIRM_COPY = {
-        [ACTION_CLOSE]: {
-            title: 'close session',
-            primaryLabel: 'close',
-            details:
-                'this cannot be undone. the running process is terminated, ' +
-                "the project's uploads folder is deleted with every file in " +
-                'it, including files other sessions in that folder uploaded. ' +
-                'the transcript is kept and stays under ~/.claude/projects.',
-        },
-        [ACTION_REMOVE]: {
-            title: 'remove session',
-            primaryLabel: 'remove',
-            details:
-                'this cannot be undone. this session already exited, so no ' +
-                "running process is stopped, but the project's uploads folder " +
-                'is deleted with every file in it, including files other ' +
-                'sessions in that folder uploaded. the ' +
-                'leftover tmux shell is cleared and carnivore forgets the ' +
-                'entry. the transcript is kept and stays under ' +
-                '~/.claude/projects.',
-        },
-    };
+
+    /* see the note above. */
+    function catalogText(key, params) {
+        return globalThis.CloudeTr(key, params);
+    }
 
     function confirm(action, displayName, context) {
-        const copy = CONFIRM_COPY[action] || CONFIRM_COPY[ACTION_CLOSE];
-        const verb = action === ACTION_REMOVE ? 'remove' : 'close';
+        const kind = action === ACTION_REMOVE ? ACTION_REMOVE : ACTION_CLOSE;
+        const prefix = 'session.confirm.' + kind;
         return window.App.showConfirmModal(
-            copy.title,
-            `${verb} "${displayName}"?`,
-            attachmentPreamble(context) + copy.details,
-            copy.primaryLabel,
-            'cancel',
+            catalogText(prefix + '.title'),
+            catalogText(prefix + '.message', { name: displayName }),
+            catalogText(prefix + '.details', { attachment: attachmentPreamble(context) }),
+            catalogText(prefix + '.primary'),
+            catalogText('session.confirm.cancel'),
             'danger'
         );
     }
 
     function attachmentPreamble(context) {
         if (!context) return '';
-        let out = '';
+        const sentences = [];
         if (context.openInApp) {
-            out += 'this session is open in carnivore right now, and that '
-                + 'terminal will disconnect. ';
+            sentences.push(catalogText('session.confirm.open_in_app'));
         }
         const attached = Number(context.attachedClients) || 0;
         if (attached > 0) {
-            out += attached === 1
-                ? '1 tmux client is attached to it right now and will be detached. '
-                : `${attached} tmux clients are attached to it right now and `
-                  + 'will be detached. ';
+            sentences.push(catalogText('session.confirm.attached_clients', { count: attached }));
         }
-        return out;
+        return sentences.map(function (s) { return s + ' '; }).join('');
     }
 
 
     window.SessionRowActionsConfirm = {
-        CONFIRM_COPY: CONFIRM_COPY,
         confirm: confirm,
         attachmentPreamble: attachmentPreamble,
     };

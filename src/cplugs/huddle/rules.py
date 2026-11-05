@@ -1,10 +1,9 @@
 
 from __future__ import annotations
 
-from types import MappingProxyType
-from typing import Any, Mapping, Optional
+from typing import Any, Dict, Mapping, Optional
 
-from src.cplugs.sdk import old_names, work
+from src.cplugs.sdk import work
 
 JOE = "joe"
 CLAUDE = "claude"
@@ -29,16 +28,7 @@ DONE = "done"
 STATES = (OPEN, TODO, WAITING, REVIEW, DONE)
 APPROVED_STATES = frozenset({DONE})
 
-STATE_ALIASES: Mapping[str, str] = MappingProxyType({
-    "approved": DONE,
-    "approved_with_note": DONE,
-    "waiting_install": WAITING,
-    "back_burner": TODO,
-    "done_by_claude": REVIEW,
-})
-old_names.declare(old_names.STATE, list(STATE_ALIASES))
 CLAUDE_STATES = tuple(s for s in STATES if s not in APPROVED_STATES)
-STATE_ARGS = ("state", "fork_state", "parent_state", "to_state")
 
 ANSWERED_SUPERSEDED = 2
 
@@ -65,6 +55,13 @@ class TaskManagerInvalid(TaskManagerError):
 
     code = "task_manager_invalid"
     status = 400
+
+
+class TaskManagerAnswerInvalid(TaskManagerInvalid):
+
+    def __init__(self, message: str, question_id: str, rule: str = "invalid") -> None:
+        super().__init__(message)
+        self.question: Dict[str, Any] = {"id": question_id, "rule": rule}
 
 
 class TaskManagerForbidden(TaskManagerError):
@@ -201,24 +198,13 @@ def clean_text(value: object, field: str, limit: int, *, allow_blank: bool = Fal
     return text
 
 
-def canonical_state(value: Any, *, count: bool = True) -> Any:
-    if not isinstance(value, str):
-        return value
-    current = STATE_ALIASES.get(value, value)
-    if count and current != value:
-        old_names.note(old_names.STATE, value)
-    return current
-
-
-def canonical_state_args(args: Mapping[str, Any]) -> dict:
-    return {k: canonical_state(v) if k in STATE_ARGS else v for k, v in args.items()}
-
-
 def unchecked_state(claude_done: bool, *, swarm_lane: bool = False) -> str:
     return REVIEW if claude_done and swarm_lane else OPEN
 
 
 def check_not_swarm_card(actor: str, swarm_ref: str) -> None:
+    if actor == CLAUDE and swarm_ref.startswith("question:"):
+        raise TaskManagerForbidden(f"this is a Swarm question; answer it with swarm_answer (question_id {swarm_ref.split(':')[1]}) and its card closes")
     if actor == CLAUDE and swarm_ref not in NOT_A_CARD_REFS:
         raise TaskManagerForbidden("this card is the owner's to decide; an agent cannot change it")
 
@@ -226,7 +212,6 @@ def check_not_swarm_card(actor: str, swarm_ref: str) -> None:
 def next_state(actor: str, current: str, *, approve: Optional[bool], state: Optional[str],
                note: str, claude_done: bool, swarm_lane: bool = False) -> str:
     check_actor(actor)
-    state = canonical_state(state)
     if state is not None and state not in STATES:
         raise TaskManagerInvalid(f"state must be one of {', '.join(STATES)}")
     if actor == CLAUDE:

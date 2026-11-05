@@ -193,7 +193,7 @@ def test_agent_update_is_quiet_when_nothing_is_older_or_unmeasurable(monkeypatch
     assert captured == []
 
 
-def test_the_agent_update_loop_survives_a_failed_pass(monkeypatch) -> None:
+def test_the_agent_update_check_runs_on_demand_and_survives_a_failed_pass(monkeypatch) -> None:
     calls: List[int] = []
 
     def flaky(watcher: Any, state_dir: Any = None) -> bool:
@@ -203,14 +203,12 @@ def test_the_agent_update_loop_survives_a_failed_pass(monkeypatch) -> None:
         return False
 
     monkeypatch.setattr(agent_update_source, "check_once", flaky)
-
-    async def scenario() -> None:
-        task = asyncio.create_task(agent_update_source.run(lambda: None, interval=0.01))
-        await asyncio.sleep(0.1)
-        task.cancel()
-
-    asyncio.run(scenario())
-    assert len(calls) >= 2
+    monkeypatch.setattr(agent_update_source, "_get_watcher", None)
+    assert agent_update_source.check_now() is False and calls == []
+    agent_update_source.install(lambda: None)
+    assert agent_update_source.check_now() is False and agent_update_source.check_now() is False
+    assert len(calls) == 2
+    assert not hasattr(agent_update_source, "run")
 
 
 

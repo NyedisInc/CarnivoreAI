@@ -6,7 +6,7 @@ import type {
     SessionListItem,
     SessionRecord,
 } from './types';
-import { hostWindow } from './env';
+import { legacyApi } from '../legacy-globals';
 
 export interface SessionHost {
     getProjects(includeArchived: boolean): Promise<ProjectRow[]>;
@@ -30,7 +30,7 @@ interface LegacyApi {
 
 export function browserSessionHost(): SessionHost {
     const api = (): LegacyApi =>
-        (hostWindow() as unknown as { API: LegacyApi } | undefined)?.API as LegacyApi;
+        legacyApi<LegacyApi>();
     const host: SessionHost = {
         getProjects: (includeArchived) => api().getProjects(includeArchived),
         getProjectsPresence: () => api().getProjectsPresence(),

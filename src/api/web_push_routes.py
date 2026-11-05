@@ -12,7 +12,9 @@ from src.api.auth import require_auth
 from src.config import settings
 from src.core.notifications import kind_specs
 from src.core.notifications.destinations.service import get_service
+from src.core.native_push import wiring as native_wiring
 from src.core.web_push import vapid
+from src.core.web_push.double_delivery import device_labels, doubled_subscriptions
 from src.core.web_push.endpoints import endpoint_allowed
 from src.core.web_push.store import public_view
 from src.core.web_push.wiring import sender_for
@@ -93,9 +95,12 @@ async def _seed_new_subscription(request: Request, sub_id: str) -> None:
 
 @router.get("/subscriptions")
 async def list_subscriptions(request: Request) -> Dict[str, List[Dict[str, Any]]]:
-    """Every subscription with its last push result. Output: {subscriptions}."""
-    rows = await asyncio.to_thread(sender_for(request.app.state).store.list)
-    return {"subscriptions": [public_view(r) for r in rows]}
+    """Every subscription with its last push result and ``app_too`` (double delivery). Output: {subscriptions}."""
+    state = request.app.state
+    rows = await asyncio.to_thread(sender_for(state).store.list)
+    native = await asyncio.to_thread(native_wiring.store_for(state).list)
+    doubled = doubled_subscriptions(rows, native, device_labels(getattr(state, "phone_link", None)))
+    return {"subscriptions": [{**public_view(r), "app_too": r["id"] in doubled} for r in rows]}
 
 
 @router.delete("/subscriptions/{sub_id}", status_code=204)

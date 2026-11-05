@@ -1,6 +1,7 @@
 
 <script lang="ts">
-  import ModalShell from '../../launchpad/ModalShell.svelte';
+  import { failureReason } from '../../errors/failure-reason';
+  import ModalShell from '../../dialog-frame/ModalShell.svelte';
   import type { Translate } from '../../sessions/types';
   import * as api from './pack-skills-api';
 
@@ -17,7 +18,7 @@
     const code = api.refusalCode(error);
     if (code === 'plan_stale') notice = t('skills.pack.sheet.stale');
     else if (code && KNOWN.includes(code)) notice = t(`skills.pack.take_refused.${code}`, { computer: from.label });
-    else notice = t('skills.pack.sheet.failed', { reason: error instanceof Error ? error.message : String(error) });
+    else notice = t('skills.pack.sheet.failed', { reason: failureReason(error) });
   }
 
   async function check(): Promise<void> {

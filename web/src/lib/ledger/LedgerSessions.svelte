@@ -4,22 +4,30 @@
     import Card from '../base/Card.svelte';
     import SessionFace from '../sessions/SessionFace.svelte';
     import type { Translate } from '../sessions/types';
+    import Tag from '../base/Tag.svelte';
     import { sessionTitle, type ProviderSession } from './ledger-sessions';
+    import type { SessionElsewhere } from './ledger-model';
 
     interface Props {
         rows: readonly ProviderSession[];
         t: Translate;
         onOpen: (row: ProviderSession) => void;
+        elsewhere?: readonly SessionElsewhere[];
         heading?: string;
         /* nothing at all */
         hideEmpty?: boolean;
     }
 
-    const { rows, t, onOpen, heading, hideEmpty = false }: Props = $props();
+    const { rows, t, onOpen, elsewhere = [], heading, hideEmpty = false }: Props = $props();
+
+    function openElsewhere(other: SessionElsewhere): void {
+        if (other.session_id == null) return;
+        onOpen({ session: { id: other.session_id }, tmux_session: null, label: other.name } as unknown as ProviderSession);
+    }
 </script>
 
 {#snippet list()}
-    {#if rows.length === 0}
+    {#if rows.length === 0 && elsewhere.length === 0}
         <p class="ledger-sessions__none">{t('ledger.sessions.none')}</p>
     {:else}
         <ul class="ledger-sessions__list">
@@ -36,11 +44,26 @@
                     </Button>
                 </li>
             {/each}
+            {#each elsewhere as other, i (`${other.computer}:${other.session_id ?? i}`)}
+                <li>
+                    <Button
+                        variant="row"
+                        data-ledger="session-elsewhere"
+                        data-session-id={other.session_id ?? undefined}
+                        disabled={other.session_id == null}
+                        aria-label={t('ledger.sessions.open_elsewhere', { name: other.name, computer: other.computer })}
+                        onclick={() => openElsewhere(other)}
+                    >
+                        <span class="ledger-sessions__name">{other.name}</span>
+                        <Tag data-ledger="session-computer">{other.computer}</Tag>
+                    </Button>
+                </li>
+            {/each}
         </ul>
     {/if}
 {/snippet}
 
-{#if rows.length > 0 || !hideEmpty}
+{#if rows.length > 0 || elsewhere.length > 0 || !hideEmpty}
     {#if heading}
         <Card title={heading} headingLevel={2} data-ledger="sessions">
             {#snippet children()}{@render list()}{/snippet}

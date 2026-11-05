@@ -5,6 +5,7 @@ import { RAIL_EDGES, type RailEdge } from './rail-model';
 import { pressKey, readLastUsed, readOpenKeys, shownKeys, writeLastUsed, writeOpenKeys, type LastUsed } from './rail-open';
 import { railHolding, railStores } from './rail-store.svelte';
 import { panelPins } from '../widget-bars/panel-pins.svelte';
+import { barLead } from '../widget-bars/bar-lead.svelte';
 
 function sectionKeys(edge: RailEdge): string[][] {
   return railStores[edge].sections.map((section) => section.filter((item) => manifestById(item.widget)).map((item) => zoneItemKey(item)));
@@ -64,7 +65,7 @@ class RailSlideout {
 
   open(key: string): void {
     const edge = railHolding(key);
-    if (edge && !this.shown(edge).includes(key)) this.press(edge, key);
+    if (edge && !this.shown(edge).includes(key) && this.press(edge, key)) barLead.take(edge);
   }
 
   close(edge?: RailEdge): void {

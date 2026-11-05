@@ -4,7 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import secrets
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import structlog
 
@@ -76,6 +76,15 @@ class BatchView:
 
     def capture_scrollback(self, lines: int, session_id: str) -> bytes:
         return self._manager.capture_scrollback(lines=lines, session_id=session_id)
+
+    def has_session(self, session_id: str) -> bool:
+        return session_id in self._manager._registry.sessions
+
+    def pipe_basis(self, session_id: str) -> Optional[Callable[[], tuple]]:
+        from src.core.tmux_backend import TmuxBackend
+
+        backend = self._manager._registry.get_backend(session_id)
+        return backend.pipe_cursor_basis if isinstance(backend, TmuxBackend) else None
 
 
 def tool_fingerprint(caller: AgentCaller, channel: bool = False) -> str:

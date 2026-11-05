@@ -49,11 +49,11 @@ body.menu-page-open:not(.session-sidebar-pinned):not(.session-sidebar-railed) #m
 }
 
 @media (max-width: 767px) {
-    body.menu-page-open:has([data-page-back]) #menu-page-bar {
+    body.menu-page-open.ps-page-back #menu-page-bar {
         display: none !important;
     }
 
-    body.menu-page-open:has([data-page-back])
+    body.menu-page-open.ps-page-back
         :is(#sessions-screen, #plugins-screen,
             #themes-screen, #warez-screen, #elite-screen, #settings-screen, #widgets-screen, #account-screen, #ledger-screen, #blueprints-screen,
             #docs-screen, #changelog-screen, #logs-screen, #warroom-screen, #dashboards-screen, #automations-screen, #mods-screen, #hosts-screen, #huddle-agent-screen, #huddle-swarm-screen) {

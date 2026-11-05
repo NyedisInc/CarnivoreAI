@@ -1,7 +1,7 @@
 export default {
     'cplug.flow.name': 'flow chart',
     'cplug.flow.page_section': 'review',
-    'cplug.flow.description': 'rebuilds a multi-agent run as a chart (lanes, timeline and board) through the flow_get tool or its route, or as a live chat in the flow tab with a bubble per agent and cards for tasks, crosstalk, spawns, subagents and tool work. nothing runs unless the tab is open or a chart is asked for. needs the swarm plugin.',
+    'cplug.flow.description': 'rebuilds a multi-agent run as a chart (lanes, timeline and board) through the flow_get tool or its route, or as a live chat in the flow tab with a bubble per agent and cards for tasks, crosstalk, spawns, subagents and tool work. nothing runs unless the tab is open or a chart is asked for. needs the swarm feature.',
     'cplug.flow.tab': 'flow',
     'cplug.flow.settings.show_tab': 'show the flow tab',
     'cplug.flow.chat.title': 'flow chat',
@@ -20,7 +20,7 @@ export default {
     'cplug.flow.chat.nothing': 'nothing in this run yet.',
     'cplug.flow.chat.error.not_found': 'no task manager item or session by that name.',
     'cplug.flow.chat.error.invalid': 'that is not a task manager item number or a session reference.',
-    'cplug.flow.chat.error.off': 'the flow plugin is off.',
+    'cplug.flow.chat.error.off': 'the flow feature is off.',
     'cplug.flow.chat.error.unavailable': 'the run could not be read right now.',
     'cplug.flow.chat.owner_to': 'owner to {name}',
     'cplug.flow.chat.role.task': 'task',

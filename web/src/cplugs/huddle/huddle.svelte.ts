@@ -13,6 +13,7 @@ import { followPrefs, prefsSettled, taskManagerPrefs, onHideCompletedChange, onV
 import { boundaryOf } from './task-manager-boundary';
 import { needsSeen } from './task-manager-lights';
 import { POST_KINDS, postKindOf, unreadCount, type TaskManagerPostKind } from './task-manager-posts';
+import { readPaused, startReadPause } from './task-manager-read-pause';
 import { createReadOrder, type TaskManagerReadLane } from './task-manager-read-order';
 import { holdRead, overlayHeldReads } from './task-manager-held-read';
 import { applyAnswered, applyMarkRead, applyReply, applyReviewCheck, applyTick, mergeThread, type Undo } from './task-manager-optimistic';
@@ -258,7 +259,7 @@ function armRead(): void {
 
 async function runQueuedRead(): Promise<void> {
   pending = null;
-  if (!queued.read || startupWait) return;
+  if (!queued.read || startupWait) return; // before the wait
   const lists = queued.lists;
   queued.read = queued.lists = false;
   reading = true;
@@ -387,19 +388,26 @@ function setUnread(item: HuddleItem, kind: TaskManagerPostKind, count: number): 
 const postSeen = (itemId: number, messageId: number): Promise<unknown> =>
   trackWrite(() => authFetch(`/cplugs/huddle/items/${itemId}/seen`, { method: 'POST', body: JSON.stringify({ message: messageId }) }));
 
-export async function readPost(item: HuddleItem, message: TaskManagerMessage): Promise<void> {
+async function readOne(item: HuddleItem, message: TaskManagerMessage): Promise<void> {
   const kind: TaskManagerPostKind | null = postKindOf(message);
   if (!kind || !message.unread) return;
-  const before = unreadCount(item, kind);
   message.unread = false;
-  setUnread(item, kind, before - 1);
+  setUnread(item, kind, unreadCount(item, kind) - 1);
   try {
     await postSeen(item.id, message.id);
   } catch (error) {
     message.unread = true;
-    setUnread(item, kind, before);
+    setUnread(item, kind, unreadCount(item, kind) + 1);
     console.warn('huddle: could not mark the post read', error);
   }
+}
+
+export async function readPost(item: HuddleItem, message: TaskManagerMessage, options: { oneCard?: boolean } = {}): Promise<void> {
+  if (!postKindOf(message) || !message.unread) return;
+  if (!options.oneCard) return readOne(item, message);
+  if (readPaused()) return;
+  startReadPause();
+  await readOne(item, message);
 }
 
 export async function selectList(key: string): Promise<void> {
@@ -445,12 +453,12 @@ export async function write(run: () => Promise<unknown>, undo?: Undo): Promise<b
   return accepted;
 }
 
-export async function addItem(text: string): Promise<TaskManagerAddOutcome> {
+export async function addItem(text: string, fileIds: string[] = []): Promise<TaskManagerAddOutcome> {
   const key = huddle.addTarget;
   let outcome = 'queued' as TaskManagerAddOutcome;
   const landed = await write(async () => {
     const out = await outboxPost({
-      kind: 'add', path: `/cplugs/huddle/lists/${seg(key)}/inbox`, body: { text }, idempotent: true, sendList: key,
+      kind: 'add', path: `/cplugs/huddle/lists/${seg(key)}/inbox`, body: fileIds.length ? { text, file_ids: fileIds } : { text }, idempotent: true, sendList: key,
       where: huddle.lists.find((l) => l.key === key)?.name ?? key, text, list: key, item: null,
     });
     if (out.kept) outcome = 'kept';

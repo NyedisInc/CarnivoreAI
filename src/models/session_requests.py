@@ -6,6 +6,22 @@ from .terminal_dims import TermCols, TermRows
 
 
 
+class WorktreeSpec(BaseModel):
+    """Start the session in a NEW git worktree of the repository ``working_dir`` names (issue #2727).
+
+    ``branch`` is the new branch; ``base_branch`` the one it starts from (None: the repository's current branch);
+    ``setup`` runs the repository's approved ``.carnivore/worktree.json`` setup steps; ``copy`` names files from that
+    file's copy list to copy in. Local computers only.
+    """
+    branch: str = Field(..., min_length=1, max_length=200, description="The new branch the worktree checks out")
+    base_branch: Optional[str] = Field(None, max_length=200, description="The branch it starts from")
+    setup: bool = Field(False, description="Run the approved setup steps")
+    copy_files: list[str] = Field(default_factory=list, alias="copy", max_length=50,
+                                  description="Files from the repository's copy list to copy in")
+
+    model_config = {"populate_by_name": True}
+
+
 class CreateSessionRequest(BaseModel):
     """Request model for creating a new session."""
     working_dir: Optional[str] = Field(
@@ -76,6 +92,9 @@ class CreateSessionRequest(BaseModel):
         from .blueprints import check_opening_prompt
 
         return check_opening_prompt(v)
+
+    worktree: Optional[WorktreeSpec] = Field(
+        None, description="Start in a new git worktree of the repository working_dir names (local only)")
 
     @field_validator("model")
     @classmethod

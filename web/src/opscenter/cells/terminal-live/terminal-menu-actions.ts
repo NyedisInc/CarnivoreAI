@@ -47,30 +47,13 @@ export function tabMenuActions(input: TerminalMenuInput): DeclaredAction[] {
 }
 
 export interface WidgetMenuInput extends TerminalMenuInput {
-  menu: readonly string[];
-  background: (() => void) | null;
-  keepAwake: { on: boolean; run: () => void } | null;
-  bookmarks: (() => void) | null;
-  rowActions: (() => void) | null;
   openInTerminal: (() => void) | null;
-  words: { background: string; keepAwake: string; bookmarks: string; actions: string; openInTerminal: string };
+  words: { openInTerminal: string };
 }
 
-const SESSION = 'session';
-
 export function widgetMenuActions(input: WidgetMenuInput): DeclaredAction[] {
-  const held = new Set(input.menu);
-  const extra: DeclaredAction[] = [];
-  if (held.has('background') && input.background) extra.push({ id: 'background', label: input.words.background, group: SHOWS, run: input.background });
-  if (held.has('utilities') && input.bookmarks) extra.push({ id: 'bookmarks', label: input.words.bookmarks, group: SHOWS, run: input.bookmarks });
-  if (held.has('utilities') && input.keepAwake) {
-    extra.push({ id: 'keep-awake', label: input.words.keepAwake, group: SHOWS, checked: input.keepAwake.on, toggle: true, run: input.keepAwake.run });
-  }
-  if (input.popOut) extra.push({ id: 'pop-out', label: input.popOut.label, group: SHOWS, run: input.popOut.run });
-  if (input.openInTerminal) extra.push({ id: 'open-in-terminal', label: input.words.openInTerminal, group: SHOWS, run: input.openInTerminal });
-  const tools = terminalMenuActions(input).filter((action) => held.has(action.id));
-  const shows = tools.filter((action) => action.group === SHOWS);
-  const drawers = tools.filter((action) => action.group !== SHOWS);
-  const session = input.rowActions ? [{ id: 'actions', label: input.words.actions, group: SESSION, run: input.rowActions }] : [];
-  return [...shows, ...extra, ...drawers, ...session];
+  const open: DeclaredAction[] = input.openInTerminal
+    ? [{ id: 'open-in-terminal', label: input.words.openInTerminal, group: SHOWS, run: input.openInTerminal }]
+    : [];
+  return [...tabMenuActions(input), ...open];
 }

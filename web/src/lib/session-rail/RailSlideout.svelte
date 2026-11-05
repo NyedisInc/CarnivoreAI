@@ -5,9 +5,9 @@
   import type { WidgetManifest } from '../../opscenter/widgets/types';
   import type { ZoneItem } from '../drawer-zone/zone-model';
   import { placementHead } from '../../opscenter/widgets/placement-options';
-  import { RAIL_RATIO_DEFAULT, RAIL_RATIO_MAX, RAIL_RATIO_MIN, RAIL_RATIO_STEP, RAIL_SPECS, type RailEdge } from './rail-model';
+  import { RAIL_RATIO_STEP, RAIL_SPECS, type RailEdge } from './rail-model';
   import { railStores } from './rail-store.svelte';
-  import { sectionStyle } from './rail-sections';
+  import { centreOf, cutBounds, panelCuts, sectionStyle } from './rail-cuts';
   import { railOutSizes } from './rail-out-size.svelte';
   import { railSlideout } from './slideout.svelte';
   import { panelPins } from '../widget-bars/panel-pins.svelte';
@@ -34,7 +34,7 @@
     entries,
     zones,
     sections = 1,
-    ratio = RAIL_RATIO_DEFAULT,
+    cuts = [],
     edge = 'side',
     instant = false,
     onratio,
@@ -44,17 +44,19 @@
     entries: ShownEntry[];
     zones: readonly Zone[];
     sections?: number;
-    ratio?: number;
+    cuts?: readonly number[];
     edge?: RailEdge;
     instant?: boolean;
-    onratio: (ratio: number) => void;
+    onratio: (index: number, value: number) => void;
     onratiosave: () => void;
     onclose: () => void;
   } = $props();
 
   const side = $derived(edge === 'side');
   const axis = $derived(RAIL_SPECS[edge].axis);
+  const shownSections = $derived(entries.map((entry) => entry.section).sort((a, b) => a - b));
   const split = $derived(sections > 1 && entries.length > 1);
+  const seams = $derived(split ? panelCuts(cuts, shownSections) : []);
   let winW = $state(typeof window === 'undefined' ? 1280 : window.innerWidth);
   let winH = $state(typeof window === 'undefined' ? 800 : window.innerHeight);
   const extent = $derived(railOutSizes.shown(edge, side ? winW : winH));
@@ -156,17 +158,18 @@
   {#each entries as entry (entry.section)}
     <div class="rail-out__section" data-rail-out-section={entry.section} data-rail-out-widget={entry.manifest.id}
       role="group" aria-label={nameOf(entry)}
-      style={sectionStyle(axis, entry.section, split ? 2 : 1, ratio)}>
+      style={sectionStyle(axis, shownSections.indexOf(entry.section), seams)}>
       {#key `${entry.key}:${pinOf(entry.section)?.row ?? ''}`}
         <ZoneShell zone={zones[entry.section]!} mount="active" tab={body} />
       {/key}
     </div>
   {/each}
-  {#if split}
-    <SplitDivider {axis} {ratio} min={RAIL_RATIO_MIN} max={RAIL_RATIO_MAX} step={RAIL_RATIO_STEP} reset={RAIL_RATIO_DEFAULT}
-      label={t(side ? 'session_rail.divider' : 'session_rail.divider_bottom')} onpreview={onratio} oncommit={onratiosave} />
-  {/if}
-  <RailResizeHandle {edge} label={edgeLabel} {parts} cut={split ? ratio : null} pinnable={activeAgent().row !== null} onpin={togglePin} />
+  
+  {#each seams as _, j (j)}
+    <SplitDivider {axis} ratio={seams[j]!} min={cutBounds(seams, j).min} max={cutBounds(seams, j).max} step={RAIL_RATIO_STEP} reset={centreOf(seams, j)}
+      label={t(side ? 'session_rail.divider' : 'session_rail.divider_bottom')} onpreview={(next) => onratio(shownSections[j]!, next)} oncommit={onratiosave} />
+  {/each}
+  <RailResizeHandle {edge} label={edgeLabel} {parts} cuts={seams} pinnable={activeAgent().row !== null} onpin={togglePin} />
 </section>
 
 <style>

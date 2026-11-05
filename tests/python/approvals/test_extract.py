@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from src.core.approvals.extract import extract_dialog, extract_review
 from src.core.attention.codex_pane import classify_codex_pane
 from src.core.attention.pane_markers import classify_pane_tail
@@ -335,3 +337,44 @@ def test_footerless_wrapped_permission_parses_and_loose_numbered_lists_do_not() 
     assert d.cursor == 0
     assert extract_dialog(pane.replace("❯", " "), "claude") is None
     assert extract_dialog(pane + "more output\n", "claude") is None
+
+
+@pytest.mark.parametrize("fixture", ["claude_workflow_autodeny_clock", "claude_workflow_autoblock_clock"])
+@pytest.mark.parametrize("with_rule", [True, False])
+def test_unattended_countdown_wording_never_moves_the_fingerprint_but_the_command_does(fixture, with_rule):
+    raw = screen(fixture)
+    if not with_rule:
+        raw = "\n".join(ln for ln in raw.split("\n") if not ln.startswith("────"))
+    prints = {extract_dialog(raw.replace("@@", clock), "claude").fingerprint for clock in ("1:28", "1:27", "0:40")}
+    assert len(prints) == 1
+
+
+@pytest.mark.parametrize("fixture", ["claude_workflow_autodeny_clock", "claude_workflow_autoblock_clock"])
+def test_changing_the_command_changes_the_fingerprint_whatever_the_countdown_wording(fixture):
+    raw = screen(fixture).replace("@@", "1:28")
+    changed = raw.replace("rm -f .tok/*;", "rm -rf /;")
+    assert changed != raw
+    assert extract_dialog(changed, "claude").fingerprint != extract_dialog(raw, "claude").fingerprint
+
+
+def test_a_dashed_rule_framed_bash_dialog_reads_bash_not_dashes():
+    from src.core.approvals.plain_answer import summarize
+
+    dialog = extract_dialog(screen("claude_workflow_autoblock_clock").replace("@@", "1:28"), "claude")
+    assert summarize(dialog) == ("Bash command", "cd /tmp/work; rm -f .tok/*;")
+    assert "╌" not in dialog.body
+
+
+@pytest.mark.parametrize("name,command", [("wrap_bash_80", "touch rigfile-with-a-fairly-long-name.txt"), ("wrap_bash_40", "touch rigfile-with-a-fairly-long-n")])
+def test_a_wrapped_tip_line_is_never_taken_as_the_command(name, command):
+    from src.core.approvals.plain_answer import summarize
+
+    assert summarize(extract_dialog(screen(name), "claude")) == ("Bash command", command)
+
+
+def test_beast_would_answer_survives_the_approvals_response_model():
+    from src.models.dialogs import ApprovalItem, ApprovalsResponse
+
+    item = ApprovalItem(id="d", source="dialog", session_id="ses_1", kind="permission", beast_would_answer=True)
+    out = ApprovalsResponse(items=[item]).model_dump()
+    assert out["items"][0]["beast_would_answer"] is True

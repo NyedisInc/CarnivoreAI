@@ -33,7 +33,7 @@ test('edit layout draws every key with a dashed cell and a badge; the hidden one
   layoutEditor.active = true;
   flushSync();
   expect(has('core.files')).toBe(true);
-  expect(strip().querySelectorAll('[data-edit-cell] [data-edit-badge]')).toHaveLength(2);
+  expect(strip().querySelectorAll('[data-edit-cell] [data-edit-badge]')).toHaveLength(3);
   const cell = keyIn('side', 'core.files').closest<HTMLElement>('[data-edit-cell]')!;
   expect(cell.hasAttribute('data-hidden')).toBe(true);
   cell.querySelector<HTMLButtonElement>('[data-edit-badge]')!.click();

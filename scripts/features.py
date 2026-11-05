@@ -47,6 +47,7 @@ from typing import Any
 
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
+from scripts.lib.changed_paths import ChangedPathsError, changed_paths  # noqa: E402
 from scripts.lib.trunk_remote import TrunkRemoteError, trunk_remote_name  # noqa: E402
 from scripts.features_schema import (  # noqa: E402
     AREA_FIELDS,
@@ -200,19 +201,6 @@ def _branch_reference_date(repo: Path) -> str:
     return datetime.now(timezone.utc).date().isoformat()
 
 
-def _diff_paths(repo: Path, base: str) -> list[str]:
-    def names(*args: str) -> set[str]:
-        done = _git(repo, *args, "-z")
-        if done.returncode != 0:
-            raise RuntimeError(f"git {' '.join(args)} failed: {done.stderr.strip()}")
-        return {p for p in done.stdout.split("\0") if p}
-
-    paths = names("diff", "--name-only", f"{base}...HEAD")
-    paths |= names("diff", "--name-only", "HEAD")
-    paths |= names("ls-files", "--others", "--exclude-standard")
-    return sorted(paths)
-
-
 def _check_branch_rules(repo: Path) -> int:
     try:
         remote = trunk_remote_name(repo)
@@ -233,8 +221,8 @@ def _check_branch_rules(repo: Path) -> int:
         print(f"features.py check --branch: CANNOT DETERMINE - no merge base with {base}", file=sys.stderr)
         return 2
     try:
-        paths = _diff_paths(repo, base)
-    except RuntimeError as exc:
+        paths = changed_paths(repo, base)
+    except ChangedPathsError as exc:
         print(f"features.py check --branch: CANNOT DETERMINE - {exc}", file=sys.stderr)
         return 2
 

@@ -63,34 +63,27 @@ describe('terminal cells: accent border on all, popup focus on the active one', 
     unmount(notes.app);
   });
 
-  test('exactly one terminal is active, and it follows the input record', () => {
+  test('exactly one terminal holds input, follows the input record, and none wears the orange ring (#2777)', () => {
     const a = frame(SLOT_A);
     const b = frame(SLOT_B);
+    const holding = (): number => document.querySelectorAll('.oc-frame[data-oc-focus]').length;
 
     inputFocus.claim(SLOT_A);
     flushSync();
-    expect(a.el.classList.contains('popup-focus')).toBe(true);
-    expect(b.el.classList.contains('popup-focus')).toBe(false);
-    expect(document.querySelectorAll('.oc-frame.popup-focus')).toHaveLength(1);
+    expect(a.el.hasAttribute('data-oc-focus')).toBe(true);
+    expect(b.el.hasAttribute('data-oc-focus')).toBe(false);
+    expect(holding()).toBe(1);
 
     inputFocus.claim(SLOT_B);
     flushSync();
-    expect(a.el.classList.contains('popup-focus')).toBe(false);
-    expect(b.el.classList.contains('popup-focus')).toBe(true);
-    expect(document.querySelectorAll('.oc-frame.popup-focus')).toHaveLength(1);
+    expect(a.el.hasAttribute('data-oc-focus')).toBe(false);
+    expect(b.el.hasAttribute('data-oc-focus')).toBe(true);
+    expect(holding()).toBe(1);
 
-    inputFocus.release(SLOT_B);
-    flushSync();
-    expect(b.el.classList.contains('popup-focus')).toBe(true);
-    expect(document.querySelectorAll('.oc-frame.popup-focus')).toHaveLength(1);
-
-    inputFocus.claim(NOTES);
-    flushSync();
-    expect(document.querySelectorAll('.oc-frame.popup-focus')).toHaveLength(0);
-    inputFocus.release(NOTES);
-
-    inputFocus.forget(SLOT_B);
-    flushSync();
+    for (const el of [a.el, b.el]) {
+      expect(el.classList.contains('popup-focus')).toBe(false);
+      expect(el.querySelector('.pf-sheen')).toBeNull();
+    }
     expect(document.querySelectorAll('.oc-frame.popup-focus')).toHaveLength(0);
     unmount(a.app);
     unmount(b.app);

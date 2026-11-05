@@ -35,8 +35,8 @@ export function prefillFor(source: LaunchSource | null, taken: readonly string[]
 
 /* the project row */
 export function sourceOfProject(project: { name?: unknown; launch_from?: unknown }): LaunchSource | null {
-    const from = project.launch_from as Partial<LaunchSource> | undefined;
-    if (from && from.kind === 'session' && typeof from.name === 'string') return { kind: 'session', name: from.name, pinned: (from as { pinned?: boolean }).pinned === true };
-    if (from && from.kind === 'task' && typeof (from as { title?: unknown }).title === 'string') return { kind: 'task', title: (from as { title: string }).title };
+    const from = (project.launch_from !== null && typeof project.launch_from === 'object' ? project.launch_from : null) as Record<string, unknown> | null;
+    if (from?.kind === 'session' && typeof from.name === 'string') return { kind: 'session', name: from.name, pinned: from.pinned === true };
+    if (from?.kind === 'task' && typeof from.title === 'string') return { kind: 'task', title: from.title };
     return typeof project.name === 'string' && project.name.trim() ? { kind: 'project', name: project.name } : null;
 }

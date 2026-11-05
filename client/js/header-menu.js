@@ -34,8 +34,7 @@ const HEADER_MENU_ROW_LABEL_KEYS = {
 };
 
 function catalogText(key) {
-    const i18n = globalThis.CloudeI18n;
-    return i18n && typeof i18n.t === 'function' ? i18n.t(key) : key;
+    return globalThis.CloudeTr(key);
 }
 
 function foldOrder() {

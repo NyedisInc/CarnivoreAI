@@ -50,3 +50,15 @@ def unlayered_rules(css: str) -> int:
 
 def on_scale_literals(css: str) -> int:
     return len(ON_SCALE.findall(css))
+
+
+def split_selectors(group: str) -> list[str]:
+    parts, depth, cur = [], 0, ""
+    for ch in group:
+        depth += (ch == "(") - (ch == ")")
+        if ch == "," and depth == 0:
+            parts.append(cur)
+            cur = ""
+        else:
+            cur += ch
+    return [p.strip() for p in parts + [cur] if p.strip()]

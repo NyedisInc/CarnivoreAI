@@ -49,6 +49,9 @@
     <button
       type="button"
       class="oc-frame-corner"
+      data-btn="row"
+      data-size="bare"
+      data-overflow="visible"
       class:oc-frame-corner-bare={laid}
       class:oc-frame-corner--edit={editing}
       class:oc-frame-corner--tap={phone}

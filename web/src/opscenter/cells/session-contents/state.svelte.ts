@@ -1,4 +1,5 @@
 import { ApiError } from '../../api/auth.svelte';
+import { keyedLeases } from '../../api/shared-resource';
 import { getContents } from './api';
 import { totalItems } from './model';
 import type { SessionContents } from './types';
@@ -47,9 +48,18 @@ export class ContentsStore {
   }
 }
 
-const held = new Map<number, { store: ContentsStore; users: number }>();
-
 const latest = $state<{ store: ContentsStore | null }>({ store: null });
+
+const stores = keyedLeases<number, ContentsStore>({
+  make(rowId) {
+    const store = new ContentsStore();
+    store.follow(rowId);
+    return store;
+  },
+  dispose(store) {
+    if (latest.store === store) latest.store = null;
+  },
+});
 
 export interface ContentsLease {
   store: ContentsStore;
@@ -61,20 +71,15 @@ export function acquireContents(rowId: number | null): ContentsLease {
     const idle = new ContentsStore();
     return { store: idle, release: () => undefined };
   }
-  const entry = held.get(rowId) ?? { store: new ContentsStore(), users: 0 };
-  if (entry.users === 0) {
-    held.set(rowId, entry);
-    entry.store.follow(rowId);
-  }
-  entry.users += 1;
-  latest.store = entry.store;
+  const store = stores.hold(rowId);
+  latest.store = store;
+  let released = false;
   return {
-    store: entry.store,
+    store,
     release(): void {
-      entry.users -= 1;
-      if (entry.users > 0) return;
-      held.delete(rowId);
-      if (latest.store === entry.store) latest.store = null;
+      if (released) return;
+      released = true;
+      void stores.release(rowId);
     },
   };
 }

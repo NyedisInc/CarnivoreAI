@@ -3,13 +3,16 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import dataclass
+import threading
+from collections import OrderedDict
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, BinaryIO, Dict, Optional, Tuple
 
 import structlog
 
 from src.core.claude_project_dirs import candidate_project_dirs
+from src.core.session_token_usage import transcript_absence
 from src.core.session_token_usage.cache import (
     HEAD_BYTES,
     TRANSCRIPT_CACHE,
@@ -34,10 +37,10 @@ logger = structlog.get_logger()
 
 @dataclass(frozen=True)
 class TranscriptLocation:
-
     outcome: str
     path: Optional[Path] = None
     detail: Optional[str] = None
+    unreadable: bool = False
 
 
 def _locate_in_root(
@@ -62,7 +65,7 @@ def _locate_in_root(
         conversation_uuid, working_dir=working_dir, corpus_root=root
     )
     return TranscriptLocation(
-        presence.outcome, path=presence.path, detail=presence.detail
+        presence.outcome, path=presence.path, detail=presence.detail, unreadable=presence.unreadable
     )
 
 
@@ -73,15 +76,28 @@ def locate_transcript(
     projects_dir: Optional[Path] = None,
 ) -> TranscriptLocation:
     if projects_dir is not None:
-        return _locate_in_root(
-            conversation_uuid, working_dir=working_dir, root=projects_dir
-        )
-    from src.core.claude_config.transcript_roots import claude_transcript_roots
+        roots: Tuple[Path, ...] = (projects_dir,)
+    else:
+        from src.core.claude_config.transcript_roots import claude_transcript_roots
 
+        roots = claude_transcript_roots()
+    stamps = transcript_absence.stamps_for(roots) if conversation_uuid else None
+    detail = transcript_absence.known_absent(str(conversation_uuid), stamps) if stamps else None
+    if detail is not None:
+        return TranscriptLocation(CONVERSATION_ABSENT, detail=detail or None)
+    found = _locate_in_roots(conversation_uuid, working_dir, roots)
+    if stamps and found.outcome == CONVERSATION_ABSENT and not found.unreadable:
+        transcript_absence.remember_absent(str(conversation_uuid), stamps, found.detail)
+    return found
+
+
+def _locate_in_roots(conversation_uuid: Optional[str], working_dir: Optional[str], roots: Tuple[Path, ...]) -> TranscriptLocation:
     first: Optional[TranscriptLocation] = None
     unchecked: Optional[TranscriptLocation] = None
-    for root in claude_transcript_roots():
+    unreadable = False
+    for root in roots:
         found = _locate_in_root(conversation_uuid, working_dir=working_dir, root=root)
+        unreadable = unreadable or found.unreadable
         if found.outcome == CONVERSATION_PRESENT:
             return found
         if first is None:
@@ -90,6 +106,8 @@ def locate_transcript(
             unchecked = found
     if first is not None and first.outcome == CONVERSATION_ABSENT and unchecked is not None:
         return unchecked
+    if first is not None and unreadable:
+        return replace(first, unreadable=True)
     return first
 
 
@@ -204,6 +222,82 @@ def read_transcript_totals(
             "token_usage_transcript_malformed_lines",
             lines=totals.malformed_lines,
         )
+    return totals
+
+
+TAIL_READ_BYTES = 256 * 1024
+
+
+TAIL_READ_MAX_BYTES = 4 * 1024 * 1024
+
+
+def _tail_window_totals(path: Path, tail_bytes: int) -> Optional[TranscriptTotals]:
+    try:
+        with open(os.path.abspath(str(path)), "rb") as handle:
+            size = os.fstat(handle.fileno()).st_size
+            start = max(0, size - tail_bytes)
+            handle.seek(start)
+            if start > 0:
+                handle.readline()
+            totals, _offset = scan_lines(handle, TranscriptTotals())
+    except OSError as exc:
+        logger.debug("token_usage_transcript_tail_unreadable", error=str(exc))
+        return None
+    return totals
+
+
+TAIL_MEMO_ENTRIES = 64
+
+_TAIL_MEMO: "OrderedDict[Tuple[str, int, int], TranscriptTotals]" = OrderedDict()
+_TAIL_MEMO_LOCK = threading.Lock()
+
+_WINDOW_HINTS: "OrderedDict[str, int]" = OrderedDict()
+
+
+def _grow_tail_window(path: Path, key_path: str, size: int, tail_bytes: int, max_bytes: int) -> Optional[TranscriptTotals]:
+    with _TAIL_MEMO_LOCK:
+        hint = _WINDOW_HINTS.get(key_path)
+    window = tail_bytes
+    while True:
+        totals = _tail_window_totals(path, window)
+        if (totals is None or totals.last_usage is not None
+                or window >= max_bytes or window >= size):
+            break
+        window = min(max(window * 2, hint or 0), max_bytes)
+        hint = None
+    with _TAIL_MEMO_LOCK:
+        if totals is not None and window > tail_bytes:
+            _WINDOW_HINTS[key_path] = window
+            _WINDOW_HINTS.move_to_end(key_path)
+        else:
+            _WINDOW_HINTS.pop(key_path, None)
+        while len(_WINDOW_HINTS) > TAIL_MEMO_ENTRIES:
+            _WINDOW_HINTS.popitem(last=False)
+    return totals
+
+
+def read_transcript_tail_totals(
+    path: Path,
+    *,
+    tail_bytes: int = TAIL_READ_BYTES,
+    max_bytes: int = TAIL_READ_MAX_BYTES,
+) -> Optional[TranscriptTotals]:
+    key_path = os.path.abspath(str(path))
+    try:
+        stat = os.stat(key_path)
+    except OSError as exc:
+        logger.debug("token_usage_transcript_tail_unreadable", error=str(exc))
+        return None
+    key = (key_path, stat.st_size, stat.st_mtime_ns)
+    with _TAIL_MEMO_LOCK:
+        if key in _TAIL_MEMO:
+            return _TAIL_MEMO[key]
+    totals = _grow_tail_window(path, key_path, stat.st_size, tail_bytes, max_bytes)
+    if totals is not None:
+        with _TAIL_MEMO_LOCK:
+            _TAIL_MEMO[key] = totals
+            while len(_TAIL_MEMO) > TAIL_MEMO_ENTRIES:
+                _TAIL_MEMO.popitem(last=False)
     return totals
 
 

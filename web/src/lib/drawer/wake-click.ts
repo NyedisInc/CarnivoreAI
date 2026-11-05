@@ -1,14 +1,16 @@
 import { clickEnv } from './click-env';
 import { runWake } from './row-menu-sleep';
 
+import type { SidebarPick } from '../legacy-globals';
+
 interface WakeRow { name?: string; asleep?: boolean; session_uuid?: string; label?: unknown }
 
-interface WakeCtrl { _rows?: WakeRow[] }
+type WakeCtrl = SidebarPick<'rows'>;
 
 const inflight = new Set<string>();
 
 function liveRowElement(ctrl: WakeCtrl, sessionUuid: string): Element | null {
-    const row = (ctrl._rows ?? []).find((r) => r && !r.asleep && r.session_uuid === sessionUuid);
+    const row = ctrl.rows<WakeRow>().find((r) => r && !r.asleep && r.session_uuid === sessionUuid);
     if (!row || typeof document === 'undefined') return null;
     const els = document.querySelectorAll<HTMLElement>('.session-sidebar-row');
     return Array.from(els).find((el) => el.dataset.sessionUuid === sessionUuid && el.dataset.asleep !== '1') ?? null;
@@ -19,7 +21,7 @@ export async function onAsleepClick<C extends WakeCtrl>(
 ): Promise<boolean> {
     const env = clickEnv();
     const sessionUuid = rowEl instanceof HTMLElement ? rowEl.dataset.sessionUuid ?? '' : '';
-    const row = sessionUuid ? (ctrl._rows ?? []).find((r) => r && r.session_uuid === sessionUuid) ?? null : null;
+    const row = sessionUuid ? ctrl.rows<WakeRow>().find((r) => r && r.session_uuid === sessionUuid) ?? null : null;
     if (!row) return false;
     const name = row.name ?? '';
     if (sessionUuid && inflight.has(sessionUuid)) return true;

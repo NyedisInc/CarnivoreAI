@@ -13,6 +13,20 @@ still wins property by property. A screen writes plain markup and inherits; a co
     <dd><code>data-btn</code> (secondary, confirm, danger, quiet, row) with <code>data-size="sm"</code>, and
         <code>data-field</code>, give one element the look anywhere, class or no class. <code>Button.svelte</code> and
         <code>Field.svelte</code> write them; legacy <code>client/js</code> writes the same attributes.</dd>
+    <dt>a control that draws its own box</dt>
+    <dd>A tab, a tool control, a name that is the control or a corner mark keeps the base's colors, focus and states and sizes itself:
+        <code>data-size="auto"</code> takes the height floor away, <code>data-size="bare"</code> also uses the font's natural line height,
+        and <code>data-overflow="visible"</code> lets a badge or dot hang outside it (the base clips an unwrapped label).
+        <code>data-focus="ink"</code> makes the focus edge follow the control's own text color, for a control with no outline whose only
+        visible edge is the focus one (a chart mark, a legend item, a glance tile): reserve a 1px transparent border for it to color.
+        <code>buttonAttrs(variant, 'auto' | 'bare')</code> writes the size. A component never cancels the base by setting its private
+        <code>--_btn-*</code> variables.</dd>
+    <dt>the shells' own spacing</dt>
+    <dd>The manager frame, the widget head, the top bar, the tab strips and the table read a step of <code>--oc-space-*</code> first. A value with
+        a job of its own and no step is a token named for that job in <code>tokens.css</code> (<code>--oc-gap-parts</code>, <code>--oc-gap-hair</code>,
+        <code>--oc-pad-snug</code>, <code>--oc-gap-mark</code>, <code>--oc-card-pad-y</code>, <code>--oc-cell-pad-x</code>, <code>--oc-tab-end-pad</code>,
+        <code>--oc-topbar-pad-left</code>, <code>--oc-topbar-word-gap</code>, <code>--oc-topbar-chip-gap</code>, <code>--oc-head-chevron-room</code>,
+        <code>--oc-fs-tab-numeral</code>). <code>--oc-mask-solid</code> is the opaque black a scroll-fade mask uses (a mask reads only alpha, so it never takes the element's text color). The <code>--oc-pp-space-*</code> scale is the publish page's alone, and a test holds it there.</dd>
     <dt>why not the whole app yet</dt>
     <dd>Measured: some screens style a classless element only through its container (the sessions page view switch,
         the Task Manager yes or no, the markdown preview headings). The base would fill the properties those rules leave

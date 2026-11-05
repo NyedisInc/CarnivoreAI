@@ -5,7 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SCRIPT="$ROOT/scripts/deploy-dmg.sh"
 FAILED=0
 
-FUNC_SRC=$(sed -n '/^wait_for_port_free() {$/,/^}$/p' "$SCRIPT")
+FUNC_SRC=$(sed -n '/^wait_for_port_free() {$/,/^}$/p' "$SCRIPT" "$ROOT/scripts/lib/deploy-engine-stop.sh")
 if [ -z "$FUNC_SRC" ]; then
   echo "FAIL: could not extract wait_for_port_free from $SCRIPT"
   exit 1

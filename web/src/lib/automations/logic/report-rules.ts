@@ -283,6 +283,10 @@ export function face(run: FaceRun, rawSlot: ReportSlot, ctx: RuleContext): Face 
     if (run.error) return { text: firstLine(run.error), rule: 'error' };
     return { text: run.reason ? reasonWords(run.reason) : t('automations.page.face.failed'), rule: 'reason' };
   }
+  if (s === 'alerted' && isObj(rep) && typeof rep.exit_code === 'number') {
+    const out = typeof rep.stdout_tail === 'string' ? firstLine(rep.stdout_tail) : '';
+    return { text: `exit ${rep.exit_code}${out ? `: ${out}` : ''}`, rule: 'exit_code' };
+  }
   const nothing: Face = { text: t('automations.page.face.nothing'), rule: 'nothing' };
   if (rep === null || rep === undefined) return nothing;
   if (isObj(rep)) {

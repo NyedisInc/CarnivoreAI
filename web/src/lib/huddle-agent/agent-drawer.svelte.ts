@@ -85,3 +85,31 @@ export function dockBesideTerminal(open: boolean, width: number): boolean {
 export function widthFromPointer(clientX: number, left: number): number {
   return clientX - left;
 }
+
+const RAIL_SLOT_ID = 'session-sidebar-wrail';
+
+export interface PhoneFrame {
+  top: number;
+  left: number;
+  height: number;
+}
+
+export function phoneFrame(): PhoneFrame {
+  const vv = window.visualViewport;
+  const viewTop = vv ? vv.offsetTop : 0;
+  const viewBottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
+  const rail = document.getElementById(RAIL_SLOT_ID)?.getBoundingClientRect();
+  const railShown = !!rail && rail.right > 0 && rail.height > 0;
+  const top = Math.max(viewTop, railShown ? Math.round(rail.top) : 0);
+  return { top, left: railShown ? Math.max(0, Math.round(rail.right)) : 0, height: Math.max(0, Math.round(viewBottom - top)) };
+}
+
+export const PHONE_LOCK_CLASS = 'had-phone-open';
+
+export const EDGE_SWIPE_START_PX = 24;
+export const EDGE_SWIPE_MIN_PX = 64;
+
+export function isEdgeSwipeBack(start: { x: number; y: number }, end: { x: number; y: number }, left: number): boolean {
+  const dx = end.x - start.x;
+  return start.x - left <= EDGE_SWIPE_START_PX && dx >= EDGE_SWIPE_MIN_PX && dx > Math.abs(end.y - start.y);
+}

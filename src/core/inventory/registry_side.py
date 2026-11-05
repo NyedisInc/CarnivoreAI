@@ -41,6 +41,9 @@ def _bespoke(store: str, table: str, keys: Tuple[str, ...], paths: Tuple[str, ..
 
 CLAIMS: Tuple[Claim, ...] = (
     _bespoke(BOOKMARKS, "bookmarks", ("session_uuid", "session_row_id", "claude_session_uuid", "entry_uuid")),
+    Claim(BOOKMARKS, "turn_checkpoints", S, col_in("session_uuid", SESSION_UUIDS), keys=("session_uuid", "conversation", "prompt_uuid"),
+          paths=("work_tree", "shadow"), purge=DELETE, ignored=("ref", "commit_sha", "tree_sha", "head_sha"),
+          note="a session's per-turn file snapshots (#2736); the shadow refs a purge leaves are dropped by the next engine-start cleanup"),
     _bespoke(ATTENTION, "attention_events", ("session_uuid",)),
     _bespoke(DEEPSEARCH, "session_search_live", ("conversation_id",), ("path",), derived=True,
              ignored=("base_point_id",), note="one row per indexed transcript file; its rows and postings go with it (base_point_id is the marker 'vault': the file is gone and the backup vault serves it)"),
@@ -102,6 +105,8 @@ def _excl(store: str, table: str, kind: str, reason: str, ignored: Tuple[str, ..
 EXCLUSIONS: Tuple[Exclusion, ...] = (
     _excl(AUTOMATIONS, "seed_tombstones", K.GLOBAL, "which built-in automations the owner deleted: install configuration"),
     _excl(DEEPSEARCH, "cache_meta", K.GLOBAL, "the cache's build state"),
+    _excl(BOOKMARKS, "checkpoint_repos", K.GLOBAL, "per repository: last capture time and why capture is off (#2736); no session data",
+          ignored=("shadow", "work_tree")),
     *(_excl(DEEPSEARCH, f"session_search_fts_{s}", K.SHADOW, "internal tables of the session_search_fts index") for s in ("config", "data", "docsize", "idx")),
     *(_excl(STATS, t, K.DERIVED, _STATS_GLOBAL) for t in (
         "stats_meta", "stats_events", "stats_models_seen", "price_versions", "stat_retention", "dim_model", "dim_key",

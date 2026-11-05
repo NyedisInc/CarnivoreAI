@@ -108,7 +108,7 @@ per option, the footer's buttons, nothing else.</p>
 </div>
 <dl class="sg-facts">
     <dt>ModalShell</dt>
-    <dd><code>web/src/lib/launchpad/ModalShell.svelte</code>: the one compiled dialog frame. Props <code>title</code> (already
+    <dd><code>web/src/lib/dialog-frame/ModalShell.svelte</code>: the one compiled dialog frame. Props <code>title</code> (already
         translated), <code>children</code> and <code>footer</code> snippets, <code>dismissable</code> (false while busy),
         <code>onCancel</code>, and for a dialog with its own card look <code>head</code> (a replacement title strip), an optional <code>footer</code> (absent: no footer row), <code>contentClass</code> (extra classes on the panel) and any other attribute, which lands on the overlay (the send-to and move-folder dialogs are built this way). It carries no style of its own and borrows the chassis classes by name, so it changes with the
         legacy dialogs. It takes focus on mount, traps Tab, handles Escape itself and restores focus on unmount.</dd>
@@ -245,13 +245,8 @@ per option, the footer's buttons, nothing else.</p>
         (a base <code>Button</code>, <code>data-show-path-copy</code>, reads "copied" or "copy failed" for a moment), and "close" in the footer.</dd>
     <dt>overlayClass and head</dt>
     <dd>Two optional <code>ModalShell</code> props for a dialog with a scoped look: an extra class on the overlay, and a snippet
-        that replaces the plain header row. Absent, the chassis is unchanged. The legacy
-        <code>App.showConfirmModal</code> (<code>client/js/app.js</code>) carries the matching <code>overlayClass</code>
-        parameter, but since issue #864 it no longer gates the header: every <code>showConfirmModal</code> dialog gets the
-        shared, unscoped <code>.modal-titlerow</code> / <code>.confirm-modal__verb</code> title-row strip and the
-        <code>confirm-modal</code> overlay class UNCONDITIONALLY (<code>client/css/confirm-modal.css</code>).
-        <code>overlayClass</code> stays available only as an extra class for a caller that needs further one-off scoping of
-        its own - no current caller does.</dd>
+        that replaces the plain header row. Absent, the chassis is unchanged. The confirm dialog (<code>ConfirmOkModal</code>) uses both to wear the
+        <code>text-prompt-modal</code> strip.</dd>
     <dt>mounting</dt>
     <dd>A dialog is mounted on demand onto <code>document.body</code> through the launchpad's modal host
         (<code>web/src/lib/launchpad/modals.ts</code>) and unmounted when it resolves. Never mount one at load: it takes focus
@@ -286,16 +281,17 @@ per option, the footer's buttons, nothing else.</p>
 
 <h3 class="sg-h3" id="dialogs-confirm">the confirm dialog</h3>
 <div class="sg-specimen">
-    <div class="sg-specimen__label"><span>markup copied from</span><code>client/js/app.js</code> (<code>showConfirmModal</code>)<span>styles live; <code>confirm-modal.css</code> supplies the title-row strip</span></div>
+    <div class="sg-specimen__label"><span>a danger confirm</span><code>web/src/lib/confirm-ok/ConfirmOkModal.svelte</code><span>styles live; <code>text-prompt-modal.css</code> supplies the title strip</span></div>
     <div class="sg-specimen__body sg-specimen__body--flush">
         <div class="sg-stage sg-stage--short">
-            <div class="modal-overlay confirm-modal">
+            <div class="modal-overlay text-prompt-modal">
                 <div class="modal-content">
-                    <div class="modal-titlerow">
-                        <span class="confirm-modal__verb">remove group "backend"?</span>
+                    <div class="text-prompt-modal__head">
+                        <span class="text-prompt-modal__verb">remove group</span>
                     </div>
                     <div class="modal-body">
-                        <div class="modal-message">every session in the group moves to ungrouped. this cannot be undone.</div>
+                        <div class="modal-message">remove the group "backend"?</div>
+                        <div class="modal-description">every session in the group moves to ungrouped. this cannot be undone.</div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="modal-btn modal-btn-secondary">cancel</button>
@@ -306,10 +302,31 @@ per option, the footer's buttons, nothing else.</p>
         </div>
     </div>
 </div>
-<p class="sg-caption">every <code>showConfirmModal</code> caller wears this unconditionally (#864) - logout, close/remove
-    session, remove project, close browser, remove group, remove layout, discard unsaved changes, reveal credentials, save
-    executable/credentials file, remove provider model. A destructive caller passes <code>primaryVariant: 'danger'</code>
-    for <code>.modal-btn-danger</code> here; the rest keep the calm <code>.modal-btn-primary</code>.</p>
+<p class="sg-caption">a destructive caller passes <code>variant: 'danger'</code> (<code>primaryVariant: 'danger'</code> on the legacy call): the ok button wears <code>.modal-btn-danger</code>, cancel stays <code>.modal-btn-secondary</code>.</p>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>a three-button confirm (<code>confirmChoice</code>)</span><code>web/src/lib/confirm-ok/ConfirmOkModal.svelte</code><span>styles live; <code>text-prompt-modal.css</code> supplies the title strip</span></div>
+    <div class="sg-specimen__body sg-specimen__body--flush">
+        <div class="sg-stage sg-stage--short">
+            <div class="modal-overlay text-prompt-modal">
+                <div class="modal-content">
+                    <div class="text-prompt-modal__head">
+                        <span class="text-prompt-modal__verb">download</span>
+                    </div>
+                    <div class="modal-body">
+                        <div class="modal-message">this file has unsaved edits.</div>
+                        <div class="modal-description">save them first, or download the copy on disk.</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="modal-btn modal-btn-secondary">cancel</button>
+                        <button type="button" class="modal-btn modal-btn-secondary">download saved copy</button>
+                        <button type="button" class="modal-btn modal-btn-confirm">save and download</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<p class="sg-caption">a third, secondary choice sits between cancel and ok and answers <code>'alt'</code>. A plain confirm keeps the calm <code>.modal-btn-confirm</code>. There is ONE confirm dialog (#2776): <code>confirmOk()</code> and <code>confirmChoice()</code> in the bundle; the legacy <code>App.showConfirmModal</code> only forwards to it.</p>
 
 <h3 class="sg-h3" id="dialogs-other">the other dialogs, and where they live</h3>
 <div class="sg-table-wrap">
@@ -317,7 +334,7 @@ per option, the footer's buttons, nothing else.</p>
     <thead><tr><th>dialog</th><th>files</th><th>note</th></tr></thead>
     <tbody>
         <tr><td>text prompt ("new group")</td><td><code>client/js/text-prompt-modal.js</code>, <code>client/css/text-prompt-modal.css</code></td><td>replaces <code>window.prompt</code>; live in <a href="#forms">forms</a></td></tr>
-        <tr><td>confirm dialogs (every <code>showConfirmModal</code> caller)</td><td><code>client/js/app.js</code> (<code>showConfirmModal</code>), <code>client/css/confirm-modal.css</code></td><td>the Military Terminal title-row strip and button variant are the DEFAULT for every caller (#864), including logout, close/remove session, remove project, close browser, remove group, remove layout, discard unsaved changes, reveal credentials, save executable/credentials file and remove provider model; destructive callers pass <code>primaryVariant: 'danger'</code>, the rest keep the calm <code>.modal-btn-primary</code></td></tr>
+        <tr><td>confirm dialogs (every caller, legacy <code>showConfirmModal</code> included)</td><td><code>web/src/lib/confirm-ok/</code>; <code>client/js/app.js</code> (<code>showConfirmModal</code>) only forwards</td><td>the Military Terminal title-row strip and button variant are the DEFAULT for every caller (#864), including logout, close/remove session, remove project, close browser, remove group, remove layout, discard unsaved changes, reveal credentials, save executable/credentials file and remove provider model; destructive callers pass <code>primaryVariant: 'danger'</code>, the rest keep the calm <code>.modal-btn-primary</code></td></tr>
         <tr><td>confirm (legacy)</td><td><code>client/js/session-row-actions-confirm.js</code></td><td>kill, close; a live restart does not ask twice (#441); renders through the row above</td></tr>
         <tr><td>select provider</td><td><code>client/js/providers.js</code></td><td>every real launch's first step (issue #984 restyle); launch profile and model rows; see the new-agent flow above</td></tr>
         <tr><td>select a folder</td><td><code>client/js/folder-picker-modal.js</code>, <code>.folder-picker-*</code>, <code>client/css/new-agent-flow.css</code></td><td>path bar with quiet up/home icon buttons, list, status line (issue #984 restyle); its rows are the File view's rows (<code>.config-editor-toggle</code>, 24px, icon inline, ellipsis, no tooltip); see the new-agent flow above</td></tr>
@@ -334,10 +351,23 @@ per option, the footer's buttons, nothing else.</p>
 <h3 class="sg-h3" id="dialogs-confirm-ok">the ok-first confirm</h3>
 <dl class="sg-facts">
     <dt>ConfirmOkModal (#1799)</dt>
-    <dd><code>web/src/lib/confirm-ok/ConfirmOkModal.svelte</code>, opened by <code>confirmOk()</code>: a <code>ModalShell</code> in the text-prompt
-        look with a quiet <code>.modal-btn-secondary</code> cancel and a <code>.modal-btn-confirm</code> ok that holds focus from the first frame, so Enter
-        confirms and Escape cancels. It answers a middle click that closes a main-area tab or puts a sidebar row to sleep. Not for a destructive
-        action: that stays <code>.modal-btn-danger</code>.</dd>
+    <dd><code>web/src/lib/confirm-ok/ConfirmOkModal.svelte</code>, opened by <code>confirmOk()</code> (true or false) or <code>confirmChoice()</code>
+        (which button ended it: <code>'ok'</code>, <code>'alt'</code> or <code>'cancel'</code>): THE one confirm dialog, a <code>ModalShell</code> in the
+        text-prompt look with a quiet <code>.modal-btn-secondary</code> cancel and a <code>.modal-btn-confirm</code> ok that holds focus from the first
+        frame, so Enter confirms and Escape cancels. Options: a quieter <code>details</code> line under the message, <code>variant: 'danger'</code>
+        (ok wears <code>.modal-btn-danger</code>; focus start is <code>DANGER_START_FOCUS</code> in <code>focus-policy.ts</code>, ok today; Enter acts
+        only with focus on ok), and for <code>confirmChoice</code> a third <code>altLabel</code> button between cancel and ok. Enter on cancel or the
+        alt button presses that button. The legacy <code>App.showConfirmModal</code> forwards here.</dd>
+    <dt>command palette (#2743)</dt>
+    <dd><code>web/src/lib/palette/Palette.svelte</code>, a search overlay, not a menu (Cmd+K, Ctrl+Shift+K off a mac). Mounted only while open,
+        into its own <code>#command-palette</code> container. A fixed panel (<code>.cp</code>) in the one popup look (<code>.popup-focus</code>, its border, ground and shadow; the panel draws none of its own); the title strip
+        (<code>.cp-bar</code>, <code>--oc-ground-titlerow</code>) carries the one accent label (<code>.cp-title</code>) and the base search field
+        (<code>Field variant="search"</code>, <code>.oc-search</code>, the same box as the catalog's search, focus from the one focus rule); the filter chips sit
+        inside it as base <code>Tag</code>s. Rows are the shared <code>ListRow</code> in a <code>List</code> (<code>.cp-list</code>): a kind icon, the title with
+        matched letters in cyan, a dim subtitle and the key that runs it; the active row is the list's selected row, an offline computer's row is dimmed.
+        Small tracked group labels (<code>.cp-group</code>), one footer line of the grammar (<code>.cp-foot</code>). Below 1024px (phone and iPad) it is a
+        full-screen sheet, opened from the top bar's search button (<code>[data-palette-open]</code>, the bell's quiet icon button,
+        <code>data-btn="quiet" data-size="icon"</code>).</dd>
 </dl>
 
 <h3 class="sg-h3" id="dialogs-mistakes">common mistakes</h3>

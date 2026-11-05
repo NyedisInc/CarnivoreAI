@@ -51,7 +51,7 @@ body takes the height under the tabs and scrolls, and every view's sticky rows r
         (<code>.sbb-key--view</code>). The search (<code>.sbb-search</code>, the shared <code>SearchField</code>) sits right and takes a full row below 720px. Loading, off and error lines are <code>.sbb-note</code> (<code>.sbb-note--bad</code> in coral).</dd>
     <dt>view switcher</dt>
     <dd>The picked view is remembered per device (<code>readTab</code>/<code>writeTab</code>, key <code>swarm-board-view</code>). Every view is one component in <code>views.ts</code>'s <code>VIEW_COMPONENTS</code>, mounted with one prop,
-        <code>data</code> (<code>BoardViewProps</code>); a view owns its own folder. A placeholder is <code>&lt;ViewPlaceholder view data /&gt;</code> (<code>.sbp</code>, a tracked label <code>.sbp-label</code> and one line <code>.sbp-text</code>).</dd>
+        <code>data</code> (<code>BoardViewProps</code>); a view owns its own folder.</dd>
     <dt>swimlanes</dt>
     <dd><code>&lt;SwimlanesView data /&gt;</code> (<code>.sbs</code>): a sticky totals row (<code>.sbs-cols</code>, <code>.sbs-col</code>, <code>.sbs-col-name</code>, <code>.sbs-col-n</code>; two by two on a phone), then one lane per project or list
         (<code>&lt;SwimLane&gt;</code>, <code>.sbl</code>). The lane header is one full-width button (<code>.sbl-head</code>, a hairline under it, the focus border from <code>focus.css</code>): caret (<code>.sbl-caret</code>), name in tracked capitals

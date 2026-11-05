@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 
 from tests.python.release import test_deploy_detached_engine as harness
+from tests.python.release.deploy_text import script_text
 
 
 def _block(text: str, name: str) -> str:
@@ -14,7 +15,7 @@ def _block(text: str, name: str) -> str:
 
 
 def _prepare(tmp: Path, port: int, spawned: tuple[int, ...], job: str = "absent", slow_bootstrap: bool = False) -> tuple[Path, dict[str, str], Path]:
-    text = harness.SCRIPT.read_text(encoding="utf-8")
+    text = script_text()
     seg = text[text.index('log "stop $CUR'): text.index('log "install $V')].replace("8000", str(port))
     traps = "\n".join(line for line in text.splitlines() if line.startswith("trap "))
     calls = tmp / "calls.log"
@@ -90,7 +91,7 @@ def test_a_clean_stop_launches_nothing(tmp_path: Path) -> None:
 
 
 def test_the_flag_is_cleared_once_the_swap_succeeds() -> None:
-    text = harness.SCRIPT.read_text(encoding="utf-8")
+    text = script_text()
     assert text.index("ROLLBACK_ARMED=1\nKEEP_STAGE=1") < text.index("OLD_APP_STOPPED=0   #")
     assert text.index('mv "$STAGED_APP/Contents" "$OLD/Contents"') > text.index("OLD_APP_STOPPED=0   #")
 

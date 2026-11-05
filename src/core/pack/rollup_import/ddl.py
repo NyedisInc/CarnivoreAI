@@ -51,6 +51,18 @@ DDL_V89: Tuple[str, ...] = (
 )
 
 
+V103_COLUMNS: Tuple[Tuple[str, str, str], ...] = (
+    (USAGE_TABLE, "agent_name", f"ALTER TABLE {USAGE_TABLE} ADD COLUMN agent_name TEXT"),
+)
+
+
+def apply_v103(conn: sqlite3.Connection) -> None:
+    for table, column, statement in V103_COLUMNS:
+        present = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+        if present and column not in present:
+            conn.execute(statement)
+
+
 def apply_v89(conn: sqlite3.Connection) -> None:
     for statement in DDL_V89:
         conn.execute(statement)

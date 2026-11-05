@@ -96,6 +96,36 @@ def _refuse_ambiguous_wrapper_ids(sections: Mapping[str, Any]) -> None:
         raise ImportRefused(problems)
 
 
+def _drop_machine_local(sections: Dict[str, Any], ignored: List[str]) -> None:
+    session = sections.get("session")
+    if isinstance(session, Mapping) and constants.SESSION_TMUX_SOCKET_KEY in session:
+        sections["session"] = {k: v for k, v in session.items() if k != constants.SESSION_TMUX_SOCKET_KEY}
+        ignored.append(f"session.{constants.SESSION_TMUX_SOCKET_KEY}")
+
+
+def _keep_local_socket(existing: Any, merged: Any) -> Any:
+    if not isinstance(merged, dict):
+        return merged
+    key = constants.SESSION_TMUX_SOCKET_KEY
+    kept = {k: v for k, v in merged.items() if k != key}
+    if isinstance(existing, Mapping) and key in existing:
+        kept[key] = existing[key]
+    return kept
+
+
+def _refuse_unreadable_integers(sections: Mapping[str, Any]) -> None:
+    problems: List[str] = []
+    for name in constants.LOADER_INT_FIELDS:
+        if name not in sections:
+            continue
+        try:
+            int(sections[name])
+        except (TypeError, ValueError):
+            problems.append(f"{name}: must be a whole number")
+    if problems:
+        raise ImportRefused(problems)
+
+
 def prepare(bundle: ConfigBundle) -> Prepared:
     if bundle.schema_version > constants.BUNDLE_SCHEMA_VERSION:
         raise ImportRefused(
@@ -105,7 +135,9 @@ def prepare(bundle: ConfigBundle) -> Prepared:
     allowed = {k: v for k, v in bundle.config.items() if k in constants.EXPORTED_SECTIONS}
     sections, stripped = redact(allowed, "config")
     sections = _migrate_sections(bundle, sections)
+    _drop_machine_local(sections, ignored)
     _refuse_ambiguous_wrapper_ids(sections)
+    _refuse_unreadable_integers(sections)
     _validate_sections(sections)
 
     values = {
@@ -165,6 +197,8 @@ def build_document(
             continue
         merged = deep_merge(existing, incoming) if mode == "merge" else incoming
         candidate[name] = carry_secrets(existing, merged)
+        if name == "session":
+            candidate[name] = _keep_local_socket(existing, candidate[name])
         if name == AGENTS_KEY and isinstance(candidate[name], dict):
             local_wrappers = existing.get(WRAPPERS_KEY) if isinstance(existing, Mapping) else None
             candidate[name] = {**candidate[name],

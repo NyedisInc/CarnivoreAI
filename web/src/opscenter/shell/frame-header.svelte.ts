@@ -10,6 +10,7 @@ export interface StripSlotProps {
 
 export interface FrameHeader {
   content: Snippet | null;
+  status: Snippet | null;
   action: Snippet | null;
   groups: Snippet[];
   strip: Snippet<[StripSlotProps]> | null;
@@ -25,7 +26,7 @@ export interface FrameHeader {
 
 export function createFrameHeader(hostId: string, onGrid = false): FrameHeader {
   const header: FrameHeader = $state({
-    content: null, action: null, groups: [], strip: null, tools: null, title: null, hostId,
+    content: null, status: null, action: null, groups: [], strip: null, tools: null, title: null, hostId,
     takesBars: false, drawn: false, suppressed: false, gridSlot: onGrid ? hostId : null, rowless: null,
   });
   return header;

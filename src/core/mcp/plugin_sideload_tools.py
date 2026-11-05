@@ -13,6 +13,11 @@ _SIDELOAD = "plugin_sideload_add"
 _REMOVE = "plugin_sideload_remove"
 _WARNING_KEY = "plugins.page.sideload.warning.risk"
 SIDELOAD_WARNING: str = read_prefixed((_WARNING_KEY,))[_WARNING_KEY]
+_KIND = {"type": "string", "enum": ["cplug", "theme", "skill", "plugin"], "description": "only when two kinds hold the same name"}
+_PATH_RULES = ("an absolute folder on this computer; the kind (sidecar plugin, theme, skill or Claude Code plugin) is read from its "
+               "manifest. It installs unverified and still needs the owner's consent to run. Refused with sideload_off while the developer sideload switch is off (no tool turns it on). A theme, skill or "
+               "Claude Code plugin that runs code (hooks, MCP servers, scripts, an effects file) is refused with consent_required: only "
+               "the owner gives that consent, on the Plugins page.")
 _NAME = {"name": {"type": "string", "maxLength": 64, "description": "the install name (default: the id in the plugin's cplug.json)"}}
 
 
@@ -54,7 +59,7 @@ async def _run_load(call: ra.Call) -> Any:
 
 async def _remove(call: ra.Call) -> Any:
     _require_on(call.request)
-    return await call.route(call.request, name=call.args["name"])
+    return await call.route(call.request, name=call.args["name"], kind=call.args.get("kind"))
 
 
 def _load_summary(args: dict, _target: Any) -> str:
@@ -71,19 +76,20 @@ def _remove_summary(args: dict, _target: Any) -> str:
 SPECS = (
     ra.RouteTool(
         name=_SIDELOAD, route="src.cplugs.host.sideload_routes:post_sideload", gate=ra.ACT,
-        description="Sideload (or re-sync) a developer's own plugin from a folder on this computer (path, absolute) or from git "
-                    "(git_url, https or ssh, with an optional ref: branch, tag or commit, and subdir). It installs as local/<name>, "
-                    "unverified, and still needs the owner's consent to run. Always waits for the owner. Refused (sideload_off) "
-                    "while the developer sideload switch is off; no tool turns it on. Warning: " + SIDELOAD_WARNING,
-        properties={"path": {"type": "string", "maxLength": 1024}, "git_url": {"type": "string", "maxLength": 2048},
-                    "ref": {"type": "string", "maxLength": 255}, "subdir": {"type": "string", "maxLength": 512}, **_NAME},
+        description="Sideload or re-sync your own plugin from path or git_url as local/<name>. Always waits for the owner. "
+                    "Warning: " + SIDELOAD_WARNING,
+        properties={"path": {"type": "string", "maxLength": 1024, "description": _PATH_RULES},
+                    "git_url": {"type": "string", "maxLength": 2048, "description": "or a git source: https or ssh, with optional ref and subdir"},
+                    "ref": {"type": "string", "maxLength": 255, "description": "branch, tag or commit"},
+                    "subdir": {"type": "string", "maxLength": 512}, **_NAME},
         invoke=_load, summary=_load_summary, request_check=_require_on, example={"path": "/tmp/clock"},
     ),
     ra.RouteTool(
         name=_REMOVE, route="src.cplugs.host.sideload_routes:delete_sideload", gate=ra.ACT,
-        description="Remove one sideloaded plugin by name: it stops, its copied code (and a git checkout) goes; its data and grants "
+        description="Remove one sideloaded plugin of any kind by name (kind only when two kinds share the name): a sidecar plugin stops "
+                    "and its copied code goes; a theme, skill or Claude Code plugin folder moves to the trash; a git checkout goes; data and grants "
                     "stay. Always waits for the owner. Refused (sideload_off) while the developer sideload switch is off.",
-        properties={"name": {"type": "string", "maxLength": 64}}, required=("name",),
+        properties={"name": {"type": "string", "maxLength": 64}, "kind": _KIND}, required=("name",),
         invoke=_remove, summary=_remove_summary, request_check=_require_on, example={"name": "clock"},
     ),
 )

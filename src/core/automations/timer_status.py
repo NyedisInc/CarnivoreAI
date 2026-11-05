@@ -7,7 +7,7 @@ from typing import Any, Dict, Iterable, Mapping, Optional
 from src.core.automations import models as m
 
 NONE, OK, WARNING, ERROR, DISABLED = "none", "ok", "warning", "error", "disabled"
-_WARNING_RUNS = (m.SKIPPED, m.CANCELLED, m.WAITING)
+_WARNING_RUNS = (m.SKIPPED, m.CANCELLED, m.WAITING, m.ALERTED)
 _SEVERITY = (ERROR, WARNING, OK)
 
 

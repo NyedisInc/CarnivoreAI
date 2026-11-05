@@ -11,8 +11,4 @@ export const openAccountScreen = (): boolean => host.open();
 
 export const closeAccountScreen = (): boolean => host.close();
 
-export const unmountAccountScreen = (): boolean => host.unmount();
-
-export const isAccountHash = (hash: string | null | undefined): boolean => host.isHash(hash);
-
 export const wireAccountDeepLink = (target?: Window | null): (() => void) => host.wireDeepLink(target);

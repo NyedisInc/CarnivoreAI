@@ -1,9 +1,9 @@
 <script lang="ts" module>
   import type { KeyFace } from './zone-types';
 
-  export function keyFace(words: { ariaLabel?: string; tip?: string; label?: string; icon?: string; count?: number | null }): KeyFace {
-    const { ariaLabel = '', tip = '', label = '', icon = '', count } = words;
-    return { title: ariaLabel || label, ariaLabel, tip, label, icon, count, chip: false, letter: '', tone: '' };
+  export function keyFace(words: { ariaLabel?: string; tip?: string; label?: string; icon?: string }): KeyFace {
+    const { ariaLabel = '', tip = '', label = '', icon = '' } = words;
+    return { title: ariaLabel || label, ariaLabel, tip, label, icon, chip: false, letter: '', tone: '' };
   }
 </script>
 
@@ -41,15 +41,15 @@
 
   interface CloseLook {
     key: string;
-    ibtn?: boolean;
+    size: 'icon' | 'bare';
     armed: string;
     px: number;
     armedPx: number;
   }
 
   const CLOSE_LOOK: Partial<Record<TabKeyVariant, CloseLook>> = {
-    strip: { key: 'oc-tab-x', armed: 'oc-tab-skull', px: 14, armedPx: 16 },
-    rail: { key: 'sbr-rail__close', ibtn: true, armed: '', px: 10, armedPx: 10 },
+    strip: { key: 'oc-tab-x', size: 'bare', armed: 'oc-tab-skull', px: 14, armedPx: 16 },
+    rail: { key: 'sbr-rail__close', size: 'icon', armed: '', px: 10, armedPx: 10 },
   };
 
   let {
@@ -150,7 +150,7 @@
   oncontextmenu={menu}
   {...(look.ibtn ? buttonAttrs('quiet', 'icon') : {})}
   {...attrs}
->{#if shape === 'tile' && body}{@render body()}{:else if shape === 'tab'}{@render lead?.()}<span class={look.label} style={labelStyle}>{face.label}</span>{@render tail?.()}{:else}{#if body}{@render body()}{:else}<WidgetIcon name={face.icon} widget={null} size={iconPx} />{/if}{#if labelAt !== 'none'}<span class={look.label} aria-hidden="true">{face.label}</span>{/if}{/if}{#if !quiet}<ZoneBadge manifest={face.badge} options={face.options} count={face.count} global={face.global ?? false} markPx={Math.max(8, Math.round(iconPx * 0.6))} />{#if face.letter}<PinnedKeyBadge letter={face.letter} {compact} />{/if}{/if}{#if face.chip}<ViewChip />{/if}</svelte:element>
+>{#if shape === 'tile' && body}{@render body()}{:else if shape === 'tab'}{@render lead?.()}<span class={look.label} style={labelStyle}>{face.label}</span>{@render tail?.()}{:else}{#if body}{@render body()}{:else}<WidgetIcon name={face.icon} widget={null} size={iconPx} />{/if}{#if labelAt !== 'none'}<span class={look.label} aria-hidden="true">{face.label}</span>{/if}{/if}{#if !quiet}<ZoneBadge global={face.global ?? false} markPx={Math.max(8, Math.round(iconPx * 0.6))} />{#if face.letter}<PinnedKeyBadge letter={face.letter} {compact} />{/if}{/if}{#if face.chip}<ViewChip />{/if}</svelte:element>
 {#if close}
   <button
     type="button"
@@ -164,7 +164,7 @@
     onpointerleave={close.onrelease}
     oncontextmenu={(event) => event.preventDefault()}
     onclick={close.run}
-    {...(closeLook.ibtn ? buttonAttrs('quiet', 'icon') : {})}
+    {...buttonAttrs('quiet', closeLook.size)}
     {...close.attrs}
   ><Icon name={close.armed ? 'skull' : 'close'} size={close.armed ? closeLook.armedPx : closeLook.px} /></button>
 {/if}
@@ -241,8 +241,8 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 34px;
-      height: 34px;
+      width: var(--oc-rail-key);
+      height: var(--oc-rail-key);
       padding: 0;
       border: var(--oc-border) solid transparent;
       border-radius: var(--oc-radius-sm);
@@ -263,12 +263,6 @@
       color: var(--oc-orange-bright);
     }
 
-    @media (max-width: 700px) {
-      .sbr-rail__btn {
-        width: 44px;
-        height: 44px;
-      }
-    }
 
     .oc-tab {
       display: inline-flex;
@@ -291,7 +285,7 @@
 
     .oc-tab-active,
     :global(.oc-tabwrap:hover) .oc-tab-active {
-      color: var(--oc-orange);
+      color: var(--oc-text-primary);
     }
 
     .oc-tab-x {
@@ -405,7 +399,7 @@
     }
 
     @media (min-width: 701px) {
-      :global(body:not(:has(.session-sidebar-panel--open))) .oc-topbar-drawer {
+      :global(body:not(.ps-drawer-open)) .oc-topbar-drawer {
         display: inline-flex;
       }
     }

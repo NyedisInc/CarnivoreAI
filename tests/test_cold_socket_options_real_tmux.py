@@ -17,6 +17,13 @@ os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 # ruff: noqa: E402
 from src.core.tmux_backend import HISTORY_LIMIT, TmuxBackend
 from tests.socket_guard import derive_test_socket
+from tests.tmux_support.grid_depth import (
+    flood_command,
+    is_full_depth,
+    is_stock_depth,
+    measured_depth,
+    tmux_version,
+)
 
 pytestmark = pytest.mark.skipif(
     shutil.which("tmux") is None, reason="real tmux binary not available"
@@ -176,30 +183,31 @@ async def test_a_second_session_on_a_warm_socket_still_gets_both_options(
 
 
 
-def test_a_later_set_option_cannot_move_an_existing_panes_scrollback(
+@pytest.mark.skipif(
+    tmux_version() < (3, 8),
+    reason="measured on tmux 3.8 only; docs/tmux-launch-history.md measured the opposite on 3.6a",
+)
+def test_a_later_set_option_deepens_an_existing_pane_on_modern_tmux(
     cold_socket, tmp_path
 ):
     socket = cold_socket
     created = _tmux(
         socket,
         "new-session", "-d", "-s", "cold_grid",
-        "-c", str(tmp_path), "-x", "100", "-y", "40", LONG_LIVED,
+        "-c", str(tmp_path), "-x", "100", "-y", "40", flood_command(HISTORY_LIMIT),
     )
     assert created.returncode == 0, created.stderr
 
-    def depth() -> str:
-        probe = _tmux(socket, "display-message", "-p", "-t", "cold_grid",
-                      "#{history_limit}")
-        return probe.stdout.strip()
-
-    assert depth() == "2000"
+    assert is_stock_depth(measured_depth(socket, "cold_grid", 1))
 
     _tmux(socket, "set-option", "-g", "history-limit", str(HISTORY_LIMIT))
-    assert depth() == "2000"
+    assert is_full_depth(measured_depth(socket, "cold_grid", 2), HISTORY_LIMIT)
 
     _tmux(socket, "set-option", "-t", "cold_grid", "history-limit",
           str(HISTORY_LIMIT))
-    assert depth() == "2000"
+    assert is_full_depth(measured_depth(socket, "cold_grid", 3), HISTORY_LIMIT)
 
-    _tmux(socket, "respawn-pane", "-k", "-t", "cold_grid", LONG_LIVED)
-    assert depth() == "2000"
+    _tmux(socket, "respawn-pane", "-k", "-t", "cold_grid",
+          flood_command(HISTORY_LIMIT))
+    _tmux(socket, "clear-history", "-t", "cold_grid")
+    assert is_full_depth(measured_depth(socket, "cold_grid", 1), HISTORY_LIMIT)

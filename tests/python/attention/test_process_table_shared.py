@@ -2,7 +2,7 @@ import time
 
 import src.core.claude_resume_argv as cra
 from src.core import conversation_writers as cw
-from src.core import libproc_snapshot as lp
+from src.core.machine_stats import libproc_snapshot as lp
 
 START = (1_790_000_000, 0)
 

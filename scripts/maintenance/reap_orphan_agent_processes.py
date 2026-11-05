@@ -17,7 +17,7 @@ are compared again; a change means the pid was reused and it is skipped. Only
 SIGTERM is ever sent. Survivors are reported, never escalated.
 
 The process table, real argv list, start times and cwd come from libproc
-(``src/core/libproc_snapshot.py``). Without libproc the run refuses (exit 2)
+(``src/core/machine_stats/libproc_snapshot.py``). Without libproc the run refuses (exit 2)
 rather than guess from ``ps`` text. An implausible table (no pid 1, no own pid)
 also refuses.
 
@@ -48,7 +48,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from src.core import libproc_snapshot  # noqa: E402
+from src.core.machine_stats import libproc_snapshot  # noqa: E402
 from src.core.stream_redactor import redact_whole  # noqa: E402
 
 SCRATCH_ROOT_TEMPLATES: list[str] = ["/private/tmp/claude-{uid}", "/tmp/claude-{uid}"]

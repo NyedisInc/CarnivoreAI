@@ -699,6 +699,19 @@ class TestTheSnapshotShape:
         assert answer.plan == "plus"
 
     @pytest.mark.asyncio
+    async def test_a_usable_codex_credential_is_offered_to_the_pack_relay_listener(self):
+        from src.core.provider_ledger import refresh_poke
+
+        heard: list = []
+        listener = lambda account, credential: heard.append(account.provider)  # noqa: E731
+        refresh_poke.add_credential_listener(listener)
+        try:
+            await build_poller([codex_account()], codex_fetch=FakeFetcher([ok_outcome()])).run_pass()
+        finally:
+            refresh_poke._credential_listeners.remove(listener)
+        assert heard == ["codex"]
+
+    @pytest.mark.asyncio
     async def test_the_codex_account_id_reaches_the_fetcher(self):
         fetch = FakeFetcher([ok_outcome()])
         poller = build_poller([codex_account()], codex_fetch=fetch)

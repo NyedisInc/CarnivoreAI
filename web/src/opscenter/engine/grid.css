@@ -11,6 +11,8 @@
 
 .oc-surface-zoomable {
   contain: layout;
+  margin: var(--oc-pane-inset);
+  min-height: 0;
 }
 
 /* and the three */

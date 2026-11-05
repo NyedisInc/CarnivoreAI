@@ -2,8 +2,8 @@ import { untrack } from 'svelte';
 import { PreferenceField, bridge } from '../zone-shell/preference-field';
 import type { ZoneItem } from '../drawer-zone/zone-model';
 import type { PlacementOptionValue } from '../../opscenter/widgets/placement-options';
+import { moveCut } from './rail-cuts';
 import {
-  clampRatio,
   flatItems,
   normalizeRail,
   placeInLayout,
@@ -25,7 +25,7 @@ export interface RailStoreOptions {
 }
 
 function copy(layout: RailLayout): RailLayout {
-  return { sections: layout.sections.map((section) => section.map((item) => ({ ...item }))), ratio: layout.ratio };
+  return { sections: layout.sections.map((section) => section.map((item) => ({ ...item }))), cuts: [...layout.cuts] };
 }
 
 export interface RailWrite {
@@ -67,8 +67,8 @@ export class RailStore {
     return this.layout.sections;
   }
 
-  get ratio(): number {
-    return this.layout.ratio;
+  get cuts(): number[] {
+    return this.layout.cuts;
   }
 
   get split(): boolean {
@@ -134,14 +134,15 @@ export class RailStore {
     return this.#commitIfChanged(resetOptionsInRail(untrack(() => this.layout), key));
   }
 
-  previewRatio(ratio: number): number {
+  previewCut(index: number, value: number): number {
     const current = untrack(() => this.layout);
-    const next = clampRatio(ratio);
-    if (current.sections.length > 1) this.stored = { ...copy(current), ratio: next };
-    return next;
+    if (index < 0 || index >= current.cuts.length) return value;
+    const cuts = moveCut(current.cuts, index, value);
+    this.stored = { ...copy(current), cuts };
+    return cuts[index]!;
   }
 
-  saveRatio(): void {
+  saveCuts(): void {
     const current = untrack(() => this.layout);
     if (current.sections.length > 1) void this.commit(current);
   }

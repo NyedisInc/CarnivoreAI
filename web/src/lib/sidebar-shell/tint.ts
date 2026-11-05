@@ -2,6 +2,7 @@ import { companyList } from '../companies';
 import { projectColorVar } from '../project-colors/palette';
 import { projectColorOf } from '../project-colors/store.svelte';
 import { BAND_PROJECT_PREFIX } from '../drawer/group-store';
+import { projects } from '../../opscenter/api/projects.svelte';
 
 export const COMPANY_TINT_LIGHTNESS = 0.74;
 export const COMPANY_TINT_CHROMA = 0.09;
@@ -18,4 +19,12 @@ export function companyTint(companyId: number | null): string | undefined {
     if (companyId === null) return undefined;
     const hue = companyList().find((c) => c.id === companyId)?.hue;
     return typeof hue === 'number' && Number.isFinite(hue) ? `oklch(${COMPANY_TINT_LIGHTNESS} ${COMPANY_TINT_CHROMA} ${hue})` : undefined;
+}
+
+export function sessionBarTint(projectId: number | null | undefined, accent: string | null): string | null {
+    const id = projectId ?? null;
+    const color = projectColorOf(id);
+    if (color) return projectColorVar(color);
+    const companyId = id === null ? null : (projects.data?.find((row) => row.id === id)?.company_id ?? null);
+    return companyTint(companyId) ?? accent;
 }

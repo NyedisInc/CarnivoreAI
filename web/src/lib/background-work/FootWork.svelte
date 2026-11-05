@@ -5,9 +5,12 @@
   import { t } from '../i18n/index.svelte';
   import { timerChip, untilText } from '../timers/timers';
   import { auth } from '../../opscenter/api/auth.svelte';
-  import { fetchSubagents, type SubagentRow } from '../subagents/subagents';
-  import { fetchBackgroundWork, type SessionBackgroundWork } from './background-work';
+  import { measuredRows, type SubagentRow } from '../subagents/subagents';
+  import type { SessionBackgroundWork } from './background-work';
+  import { readSessionWork } from '../session-stats/session-work';
   import { refreshKey, workCounts, type ControlSection } from '../session-control/control-center';
+  import { portLines } from '../session-control/ports';
+  import { IconButton } from '../base';
 
   type Form = 'full' | 'short';
 
@@ -43,14 +46,15 @@
     void key;
     if (!wantsLists || auth.state === 'signed-out') return;
     const mine = ++generation;
-    void Promise.allSettled([fetchSubagents(sessionId), fetchBackgroundWork(sessionId)]).then(([ag, bw]) => {
+    void readSessionWork(sessionId, key).then(({ subagents: ag, work: bw }) => {
       if (mine !== generation) return;
-      agentRows = ag.status === 'fulfilled' ? ag.value.subagents : null;
+      agentRows = ag.status === 'fulfilled' ? measuredRows(ag.value) : null;
       work = bw.status === 'fulfilled' ? bw.value : null;
     });
     return () => { generation += 1; };
   });
   const counts = $derived(workCounts(agentRows, work));
+  const portCount = $derived(portLines(row as Record<string, unknown> | null).length);
   const agentsCount = $derived(!hideAgents && counts.agents ? counts.agents : null);
   const shellsCount = $derived(!hideShells && counts.shells ? counts.shells : null);
   let nowMs = $state(Date.now());
@@ -114,9 +118,16 @@
   {#if agentsCount !== null}<span class="oc-tfw-seg">{@render agentsContent(f)}</span>{/if}
   {#if shellsCount !== null}<span class="oc-tfw-seg">{@render shellsContent(f)}</span>{/if}
   {#if timers !== null}<span class="oc-tfw-seg">{@render timersContent(f)}</span>{/if}
+  {#if portCount > 0}<span class="oc-tfw-seg">{@render portsContent()}</span>{/if}
 {/snippet}
 
-{#if agentsCount !== null || shellsCount !== null || timers !== null}
+
+{#snippet portsContent()}
+  <svg class="oc-tfw-glyph" viewBox="0 0 10 10" aria-hidden="true" focusable="false"
+    ><path d="M3.5 1v2.2M6.5 1v2.2M2.4 3.2h5.2v1.6a2.6 2.6 0 0 1-5.2 0zM5 7.4V9.4" /></svg>
+{/snippet}
+
+{#if agentsCount !== null || shellsCount !== null || timers !== null || portCount > 0}
   <span class="oc-tfw" data-form={form}>
     {#if agentsCount !== null}
       <button data-base-exempt="a segment of the terminal foot bar, drawn flush in the bar strip (foot-plan measures its exact width)" type="button" class="oc-tfw-seg" data-seg="agents"
@@ -137,6 +148,12 @@
         aria-expanded={active === 'timers' ? 'true' : 'false'} data-active={active === 'timers' ? 'true' : 'false'} aria-label={timers.title}
         onmousedown={keepTerminalFocus} onclick={(e) => ask('timers', e)}
         >{@render timersContent(form)}</button>
+    {/if}
+    {#if portCount > 0}
+      <span class="oc-tfw-seg" data-seg="ports" data-active={active === 'ports' ? 'true' : 'false'}
+        ><IconButton variant="quiet" label={t('background_work.foot.ports_title', { count: portCount })}
+          aria-expanded={active === 'ports' ? 'true' : 'false'}
+          onmousedown={keepTerminalFocus} onclick={(e: MouseEvent) => ask('ports', e)}>{@render portsContent()}</IconButton></span>
     {/if}
     <span class="oc-tfw oc-tfw-measure" aria-hidden="true" bind:this={fullCopy}>{@render copy('full')}</span>
     <span class="oc-tfw oc-tfw-measure" aria-hidden="true" bind:this={shortCopy}>{@render copy('short')}</span>
@@ -197,6 +214,10 @@
 
   .oc-tfw-seg[data-seg='agents'] .oc-tfw-num,
   .oc-tfw-seg[data-seg='shells'] .oc-tfw-num {
+    color: var(--oc-green-bright);
+  }
+
+  .oc-tfw-seg[data-seg='ports'] .oc-tfw-glyph {
     color: var(--oc-green-bright);
   }
 

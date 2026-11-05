@@ -58,7 +58,7 @@ const REAL_DELETE_KEY_PREFIXES = [
 ];
 
 const NON_COPY_DELETE_FRAGMENTS = new Map<string, string>([
-    ['client/js/api-catalog.js', '/catalog/account/delete'],
+    ['client/js/api-catalog-account.js', '/catalog/account/delete'],
     ['web/src/admin/moderation.ts', 'deleted account'],
     ['web/src/opscenter/layout-editor/ChartDeleteChip.svelte', '../cells/analytics/delete-chart'],
     ['client/js/menu-keys.js', 'delete (any delete-* id)'],

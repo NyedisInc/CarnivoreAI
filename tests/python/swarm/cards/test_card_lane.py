@@ -45,14 +45,11 @@ def test_auto_done_never_ticks_a_task_manager_task_even_after_a_pass(vw):
     assert owner(ops.done, cid)["column"] == "done"
 
 
-def test_the_swarm_never_deletes_a_task_manager_task_and_the_owner_does(vw):
+def test_a_curating_agent_deletes_a_task_manager_task(vw):
     w = vw
     cid = in_review(w)
     set_lane(w, cid, "task_manager")
-    with pytest.raises(CardRefused):
-        asyncio.run(asyncio.to_thread(driven.delete, w.huddle, cid, {}, "agent:3"))
-    assert sql_rows(w, "SELECT deleted FROM work_items WHERE id = ?", cid)[0]["deleted"] == 0
-    owner(ops.delete, cid)
+    asyncio.run(asyncio.to_thread(driven.delete, w.huddle, cid, {}, "agent:3"))
     assert sql_rows(w, "SELECT deleted FROM work_items WHERE id = ?", cid)[0]["deleted"] == 1
 
 

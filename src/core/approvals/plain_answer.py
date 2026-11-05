@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 from typing import Optional, Tuple
 
-from src.core.approvals.extract import FAMILY_CLAUDE, FAMILY_CODEX, KIND_CODEX, KIND_PERMISSION, Dialog
+from src.core.approvals.extract import FAMILY_CLAUDE, FAMILY_CODEX, KIND_CODEX, KIND_PERMISSION, Dialog, ANY_RULE
 
 APPROVABLE_KINDS: Tuple[str, ...] = (KIND_PERMISSION, KIND_CODEX)
 
@@ -19,6 +19,9 @@ PLAIN_NO = "no"
 _KEY_HINT = re.compile(r"\s*\((?:[a-z]|esc)\)\s*$")
 _SHELL_LINE = re.compile(r"^\s*\$\s+(\S.*)$")
 _TIP = re.compile(r"^\s*tip:", re.I)
+_CLAUDE_HEADER = re.compile(r"^\s*([A-Z][A-Za-z]*(?: [A-Za-z]+)? (?:command|file|edit|request))\b(?:\s*·.*)?$")
+_BAR = re.compile(r"^\s*│\s?")
+_SUBTITLE = re.compile(r"^\s*Run shell command\s*$")
 
 
 def _norm(label: str) -> str:
@@ -74,9 +77,21 @@ def summarize(dialog: Optional[Dialog]) -> Tuple[str, str]:
     question = " ".join(dialog.question.split())
     tool_line: Optional[str] = None
     command = ""
+    header = next((i for i, ln in enumerate(lines) if _CLAUDE_HEADER.match(ln)), None)
+    if header is not None:
+        for line in lines[header + 1:]:
+            text = _BAR.sub("", line).strip()
+            if question and (text == question or question.startswith(text) and len(text) >= 12):
+                break
+            if _indent(line) <= _indent(lines[header]) and not _BAR.match(line):
+                continue
+            if text and not _TIP.match(line) and not _SUBTITLE.match(line):
+                command = text
+                break
+        return _cut(_CLAUDE_HEADER.match(lines[header]).group(1), SUMMARY_TOOL_CHARS), _cut(command, SUMMARY_COMMAND_CHARS)
     for line in lines:
         text = line.strip()
-        if not text:
+        if not text or ANY_RULE.match(line):
             continue
         if question and (text == question or question.startswith(text) and len(text) >= 12):
             break

@@ -12,6 +12,7 @@ export {
   resumeSession,
   openCatalog,
   openThemes,
+  openFeatures,
   openPlugins,
   openWidgets,
   openWrappers,

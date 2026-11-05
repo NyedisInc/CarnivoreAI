@@ -14,7 +14,8 @@
     "Get told the moment an agent asks for permission, even while you are in another session.",
     "Several sessions are waiting while you are away: the detailed style says how many, and each card tells you what it wants (\"wants permission: Bash git push\") without opening it.",
     "Finished-turn cards are noisy while you work: untick the screen column for that notification and the bell and history still record it.",
-    "A finished-turn card keeps popping on your phone while you work at the computer: tap its mute button, pick mute here, and that phone stops showing and pushing it while the computer still does."
+    "A finished-turn card keeps popping on your phone while you work at the computer: tap its mute button, pick mute here, and that phone stops showing and pushing it while the computer still does.",
+    "You are typing in one session while another asks for permission: only the other one bings, and your phone stays quiet about the one you are already looking at."
   ],
   "how_to": [
     "Click a toast to open that session; dismiss it with its x. Click a question or permission toast (also from the history list, a browser push or the desktop notification) to open the approvals popup on that item instead; it closes itself once answered.",
@@ -22,14 +23,18 @@
     "Pick the toast style under settings, notifications, toast style: compact (the default) shows each session's most urgent event; detailed shows its latest event with a descriptive title and a snippet, counts the sessions waiting, and a click opens the session and dismisses only that card.",
     "Attach an image to a session and click the small thumbnail on the attached notice to see it full size; Esc, a click outside the picture or the close button closes it.",
     "Settings, notifications, routing, the screen column: untick a notification to stop its pop-up card. Needs-you cards are always shown. Hiding a card hides the pop-up only; the bell, the history, the status light and the tray still keep it.",
-    "Every notification card has a mute button at its bottom right: mute here silences that type on this device (on a phone, its push too), mute everywhere silences it on every device and destination. A muted card confirms with an undo. Settings, notifications, routing, muted notifications lists each mute with where it holds and an unmute button. Muting never changes the status lights."
+    "Every notification card has a mute button at its bottom right: mute here silences that type on this device (on a phone, its push too), mute everywhere silences it on every device and destination. A muted card confirms with an undo. Settings, notifications, routing, muted notifications lists each mute with where it holds and an unmute button. Muting never changes the status lights.",
+    "A program that prints a notification escape code (OSC 9, 777 or 99) raises a terminal notice card; mute the type here to switch it off for one session.",
+    "Quiet for the session you are looking at (settings, notifications, on by default): the session whose terminal has the keyboard in a focused Carnivore window gets no card, banner or sound, and its phone alerts wait; a needs-you item still open after 2 minutes reaches the phone then. Other sessions that need you still get a Mac banner with sound while Carnivore is in front; their other events stay cards. The iPhone app shows no banner for the session it has open."
   ],
   "id": "notification-toasts",
   "issues": [
     750,
     1208,
     1278,
-    1445
+    1445,
+    2732,
+    2745
   ],
   "keywords": [
     "detailed",
@@ -38,7 +43,8 @@
     "toast style",
     "verbosity",
     "routing",
-    "mute"
+    "mute",
+    "quiet"
   ],
   "media": [
     {
@@ -62,11 +68,14 @@
     "client/js/toast-grouping.js",
     "client/js/toast-mode.js",
     "client/js/toast-session-group.js",
+    "client/js/toast-view.js",
+    "web/src/lib/toast-stack/ToastStack.svelte",
+    "web/src/lib/toast-stack/ToastCard.svelte",
     "web/src/lib/toast-mode/ToastModePanel.svelte",
     "web/src/lib/notifications/mute/mute-control.ts",
     "web/src/lib/notifications/mute/MutesPanel.svelte"
   ],
-  "updated": "2026-10-08",
+  "updated": "2026-10-30",
   "where": [
     "Top right of the screen, when a session needs you.",
     "Settings, notifications tab, toast style.",

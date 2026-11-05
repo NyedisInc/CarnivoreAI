@@ -33,7 +33,7 @@ export function paintSelection(ctrl: RowController): void {
 
 export function wokenRowElement(ctrl: RowController, sessionUuid: string): HTMLElement | null {
     let live: string | null = null;
-    for (const r of ctrl._rows || []) {
+    for (const r of ctrl.rows?.() ?? []) {
         if (r && !r.asleep && r.session_uuid === sessionUuid) { live = r.name; break; }
     }
     if (!live) return null;
@@ -47,7 +47,7 @@ async function performWake(ctrl: RowController, rowEl: Element): Promise<void> {
     const g = rg();
     const name = dataOf(rowEl, 'name');
     let row = null;
-    for (const r of ctrl._rows || []) {
+    for (const r of ctrl.rows?.() ?? []) {
         if (r && r.name === name) { row = r; break; }
     }
     if (!row) return;

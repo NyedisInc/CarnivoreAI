@@ -6,6 +6,7 @@ from typing import Any, Dict, List
 from fastapi import APIRouter, Depends
 
 from src.api.auth import require_auth
+from src.config import settings
 from src.core.notifications import kind_specs, types
 
 router = APIRouter(prefix="/notifications", tags=["notifications"], dependencies=[Depends(require_auth)])
@@ -31,6 +32,7 @@ def _type_view(row: types.NotifyType) -> Dict[str, Any]:
             "screen_surface": d.screen_surface,
         },
         "seed_excluded_kinds": list(row.seed_excluded_kinds),
+        "hidden": row.id in types.DEV_ONLY and not settings.dev_shape_alerts,
     }
 
 
@@ -51,12 +53,14 @@ def _kind_view(spec: kind_specs.KindSpec) -> Dict[str, Any]:
 async def get_notification_types() -> Dict[str, Any]:
     """The ordered type registry and the destination kinds.
 
-    Output: ``{"families": [...], "types": [...], "kinds": [...]}``; every list is in display order.
-    Example: GET /api/v1/notifications/types -> 200 with 29 ``types`` rows.
+    Output: ``{"families": [...], "types": [...], "kinds": [...], "aliases": {...}}``; every list is in display order and
+    ``aliases`` maps a retired type id to the row that absorbed it (a client canonicalises a toast's type through it).
+    Example: GET /api/v1/notifications/types -> 200 with 38 ``types`` rows in 9 ``families`` (the groups).
     """
     families: List[Dict[str, str]] = [{"id": f, "label_key": f"notify.family.{f}"} for f in types.FAMILIES]
     return {
         "families": families,
         "types": [_type_view(t) for t in types.ordered_types()],
         "kinds": [_kind_view(k) for k in kind_specs.ordered_kinds()],
+        "aliases": dict(types.ALIASES),
     }

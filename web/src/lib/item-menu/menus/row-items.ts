@@ -1,4 +1,6 @@
 import type { RowMenuCtx } from '../row-context';
+import { worktreeForSession } from '../../worktree-cleanup/api';
+import { downloadableRow, isDownloadingRow } from '../../open-files/download-row.svelte';
 
 export interface RowItem {
     id: string;
@@ -145,6 +147,13 @@ export const ROW_ITEMS: readonly RowItem[] = [
         enabled: always, reason: noReason,
     },
     {
+        id: 'download', order: 410,
+        label: () => tr('files.menu.download'),
+        available: (c) => c.kind === 'browser' && !!c.isFile && downloadableRow(c.name) !== null,
+        enabled: (c) => !isDownloadingRow(c.name),
+        reason: () => tr('files.download.busy'),
+    },
+    {
         id: 'show-path', order: 410,
         label: () => tr('sidebar.show_path.label'),
         available: (c) => !isSessionless(c),
@@ -221,6 +230,14 @@ export const ROW_ITEMS: readonly RowItem[] = [
         available: (c) => !isSessionless(c) && !c.asleep && !c.archived && !c.closed && !isRemote(c),
         enabled: (c) => !!c.sessionUuid,
         reason: () => tr('session.move.no_uuid'),
+    },
+    {
+        id: 'remove-worktree', order: 770,
+        label: () => tr('session.menu.remove_worktree'),
+        available: (c) => !isSessionless(c) && !c.asleep && !c.archived && !c.closed && !isRemote(c)
+            && worktreeForSession(c.sessionId, c.name) !== null,
+        enabled: () => true,
+        reason: () => '',
     },
     {
         id: 'wake', order: 750,

@@ -1,0 +1,45 @@
+
+  ┃                                                                                                                     New session - 2026-10-30T23:50:39.
+  ┃  write a 40 line poem about tmux                                                                                    170Z
+  ┃
+                                                                                                                        Context
+     ▣  Build · Qwen3 Coder · interrupted                                                                               0 tokens
+                                                                                                                        0% used
+                                                                                                                        $0.00 spent
+
+                                                                                                                        LSP
+                                                                                                                        LSPs are disabled
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ┃
+  ┃
+  ┃                                                                                                                     ~/project
+  ┃  Build · Qwen3 Coder LM Studio LAN                                                                                  Repos/Dev/cloudecode
+  ╹▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+                                                                                         tab agents  ctrl+p commands    • OpenCode 1.15.7
+

@@ -25,7 +25,7 @@
     "The Dock icon shows a red number when sessions are waiting on you, the same count as the menu bar icon's Need You row.",
     "Right-click or hold the Dock icon for New Session, Recent Projects and the sessions waiting on you.",
     "The Dock icon hops once when a new question arrives while Carnivore is behind other windows.",
-    "The menu bar at the top of the screen has Carnivore, File, Edit, View, Session, Window and Help; Help has the macOS search field, and Carnivore Help opens the help page in your browser.",
+    "The menu bar at the top of the screen has Carnivore, File, Edit, View, Go, Session, Window and Help; Help has the macOS search field, and Carnivore Help opens the help page in your browser.",
     "File has New Session, New Window and Open Project; Session has Restart, Stop, Rename and Answer Waiting Question, which act on the session you are looking at.",
     "Settings, desktop app, option key as meta makes Option-B, Option-F and Option-Backspace move and delete by word in every open terminal, with no reload.",
     "Help, Export Diagnostics... (also in the menu bar icon menu) saves a redacted diagnostics zip wherever you choose; crash dumps and crash lines stay on your computer and nothing is sent.",

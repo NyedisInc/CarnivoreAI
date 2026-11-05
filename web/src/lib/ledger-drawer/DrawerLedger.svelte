@@ -224,7 +224,7 @@
   <a href={LEDGER_HASH} class="ldp-empty-link" onclick={openProviders}>{t('ledger.drawer.add_one')}</a>
 </p>
 {:else}
-<section class="ldp" data-fold={fold} data-embedded={embedded ? '1' : undefined} aria-labelledby="ldp-title">
+<section class="ldp" data-zone-card={embedded ? undefined : ''} data-fold={fold} data-embedded={embedded ? '1' : undefined} aria-labelledby="ldp-title">
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class="ldp-head" onclick={onHeadClick}>
     <a

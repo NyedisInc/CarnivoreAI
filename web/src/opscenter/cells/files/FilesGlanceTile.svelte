@@ -3,6 +3,7 @@
   import { sessionGit, releaseSessionGit } from '../../api/session-git.svelte';
   import type { Resource } from '../../api/poll.svelte';
   import type { SessionGitStatus } from '../../api/types';
+  import { buttonAttrs } from '../../../lib/base/classes';
   import WidgetIcon from '../../ui/WidgetIcon.svelte';
   import { fk } from './labels';
   import { glanceOf, glanceWords } from './glance-facts';
@@ -33,7 +34,7 @@
   const whole = $derived(fk('glance.title', { phrase }));
 </script>
 
-<button type="button" class="fgl" bind:this={root} data-files-glance data-glance-kind={words.key} title={whole} aria-label={whole} onclick={onopen}>
+<button type="button" class="fgl" {...buttonAttrs('secondary', 'bare')} data-focus="ink" bind:this={root} data-files-glance data-glance-kind={words.key} title={whole} aria-label={whole} onclick={onopen}>
   <WidgetIcon name="folder" widget="core.files" size={ICON_PX} />
   <span class="fgl-phrase">{phrase}</span>
 </button>

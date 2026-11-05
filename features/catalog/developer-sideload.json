@@ -3,10 +3,11 @@
     "GET /api/v1/cplug-owner/sideload",
     "PUT /api/v1/cplug-owner/sideload/switch",
     "POST /api/v1/cplug-owner/sideload",
-    "DELETE /api/v1/cplug-owner/sideload"
+    "DELETE /api/v1/cplug-owner/sideload",
+    "POST /api/v1/cplug-owner/sideload/git"
   ],
   "area": "settings",
-  "description": "For people writing a plugin. Sideload copies a folder holding a plugin manifest (cplug.json) into the host, installs it as local/<name> with the unverified mark, and runs it like any other sidecar. It has its own switch, separate from developer mode, and the switch expires after twelve hours. Turning it off stops and hides every sideloaded plugin; your source folder is never touched.",
+  "description": "For people writing a plugin. Sideload copies a folder into the app, reads its kind from the manifest (a plugin, a theme or a skill), and installs it as local/<name> with the unverified mark. A plugin that runs on its own runs like any other; a theme or skill goes into the folder that kind already uses. Anything that runs code (hooks, servers, scripts, a theme's effects file) needs the same consent a catalog install needs. It has its own switch, separate from developer mode, and the switch expires after twelve hours. Turning it off stops and hides every sideloaded plugin; your source folder is never touched.",
   "docs": [
     "docs/cplug-runtime.md"
   ],
@@ -19,12 +20,14 @@
     "Turn on developer sideload (it shows twelve hours).",
     "Sideload a folder that holds a plugin manifest (cplug.json); the plugin appears as local/<name> marked unverified, switched off with no permissions.",
     "Turn the switch off to stop and hide every sideloaded plugin; your source folder is never touched.",
-    "A sideloaded plugin whose carnivore.json asks for a page gets its own rail key: the slide-out is its menu and the main area shows its page; on a phone a menu | view switch picks one."
+    "A sideloaded plugin whose carnivore.json asks for a page gets its own rail key: the slide-out is its menu and the main area shows its page; on a phone a menu | view switch picks one.",
+    "Sideload a theme or a skill the same way: the kind is read from theme.json, SKILL.md or the plugin manifest. A folder that runs code answers with a consent sheet first; a theme's script still asks before it runs."
   ],
   "id": "developer-sideload",
   "issues": [
     2063,
-    2562
+    2562,
+    2540
   ],
   "keywords": [
     "plugins",

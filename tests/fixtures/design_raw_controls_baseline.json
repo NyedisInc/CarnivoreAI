@@ -1,5 +1,5 @@
 {
- "about": "hand-written buttons and fields outside web/src/lib/base per web/src file; may only fall (scripts/design/raw_controls.py, issue #2361)",
+ "about": "hand-written buttons and fields outside web/src/lib/base per web/src file, and named data-base-exempt tags; may only fall (scripts/design/raw_controls.py, issue #2361)",
  "files": {
   "web/src/cplugs/huddle/HuddleBody.svelte": {
    "buttons": 9,
@@ -9,16 +9,10 @@
    "buttons": 5,
    "fields": 1
   },
-  "web/src/cplugs/huddle/HuddleReview.svelte": {
-   "buttons": 2
-  },
   "web/src/cplugs/huddle/HuddleViewSwitch.svelte": {
    "buttons": 4
   },
   "web/src/cplugs/huddle/SwarmDecisionKeys.svelte": {
-   "buttons": 2
-  },
-  "web/src/cplugs/huddle/TaskManagerArtifactCard.svelte": {
    "buttons": 2
   },
   "web/src/cplugs/huddle/TaskManagerArtifactDialog.svelte": {
@@ -33,15 +27,9 @@
   "web/src/cplugs/huddle/TaskManagerEmptyGroup.svelte": {
    "buttons": 1
   },
-  "web/src/cplugs/huddle/TaskManagerFiles.svelte": {
-   "buttons": 2
-  },
   "web/src/cplugs/huddle/TaskManagerForkDialog.svelte": {
    "buttons": 2,
    "fields": 3
-  },
-  "web/src/cplugs/huddle/TaskManagerForkedFrom.svelte": {
-   "buttons": 1
   },
   "web/src/cplugs/huddle/TaskManagerInboxRow.svelte": {
    "buttons": 1
@@ -56,15 +44,9 @@
   "web/src/cplugs/huddle/TaskManagerProjectHead.svelte": {
    "buttons": 2
   },
-  "web/src/cplugs/huddle/TaskManagerRoundCard.svelte": {
-   "buttons": 1
-  },
   "web/src/cplugs/huddle/TaskManagerRow.svelte": {
    "buttons": 6,
    "fields": 1
-  },
-  "web/src/cplugs/huddle/TaskManagerRowPosts.svelte": {
-   "buttons": 3
   },
   "web/src/cplugs/huddle/TaskManagerSchedule.svelte": {
    "buttons": 1
@@ -96,9 +78,6 @@
   "web/src/cplugs/huddle/TaskManagerStatusSections.svelte": {
    "buttons": 3
   },
-  "web/src/cplugs/huddle/TaskManagerSteps.svelte": {
-   "buttons": 1
-  },
   "web/src/cplugs/huddle/TaskManagerSubHead.svelte": {
    "buttons": 1
   },
@@ -113,9 +92,6 @@
    "fields": 1
   },
   "web/src/cplugs/huddle/agents/AgentChatFrame.svelte": {
-   "buttons": 1
-  },
-  "web/src/cplugs/huddle/agents/HuddleAgentRows.svelte": {
    "buttons": 1
   },
   "web/src/cplugs/huddle/ask/AskQuestion.svelte": {
@@ -138,6 +114,12 @@
   "web/src/cplugs/huddle/chat/AuthorPath.svelte": {
    "buttons": 1
   },
+  "web/src/cplugs/huddle/chat/ChatAskForm.svelte": {
+   "exempt": 2
+  },
+  "web/src/cplugs/huddle/chat/ChatAvatar.svelte": {
+   "exempt": 1
+  },
   "web/src/cplugs/huddle/chat/ChatBar.svelte": {
    "buttons": 1
   },
@@ -154,9 +136,6 @@
   },
   "web/src/cplugs/huddle/chat/TrafficCard.svelte": {
    "buttons": 1
-  },
-  "web/src/cplugs/huddle/style-guide/ExpressionBoard.svelte": {
-   "buttons": 2
   },
   "web/src/cplugs/huddle/swarm/SwarmLedger.svelte": {
    "buttons": 2
@@ -185,11 +164,20 @@
   "web/src/cplugs/share/ShareModal.svelte": {
    "fields": 3
   },
-  "web/src/lib/account-switch/AutoSwitchIcon.svelte": {
-   "buttons": 1
+  "web/src/lib/approvals/AskForm.svelte": {
+   "exempt": 1
+  },
+  "web/src/lib/approvals/QuestionCardFrame.svelte": {
+   "exempt": 1
   },
   "web/src/lib/auto-sleep/KeepAwakeIcon.svelte": {
    "buttons": 1
+  },
+  "web/src/lib/background-work/FootWork.svelte": {
+   "exempt": 3
+  },
+  "web/src/lib/browser/BrowserView.svelte": {
+   "exempt": 1
   },
   "web/src/lib/catalog/AccountPanel.svelte": {
    "buttons": 7,
@@ -308,6 +296,24 @@
   "web/src/lib/catalog/menu/WarezMenu.svelte": {
    "buttons": 3
   },
+  "web/src/lib/cplug-ui/ViewFrame.svelte": {
+   "exempt": 1
+  },
+  "web/src/lib/drawer-tabs/CascadeMenu.svelte": {
+   "exempt": 1
+  },
+  "web/src/lib/drawer-tabs/DrawerMenu.svelte": {
+   "exempt": 8
+  },
+  "web/src/lib/drawer/DrawerBar.svelte": {
+   "exempt": 1
+  },
+  "web/src/lib/drawer/DrawerHeader.svelte": {
+   "exempt": 1
+  },
+  "web/src/lib/drawer/GroupColorPicker.svelte": {
+   "exempt": 3
+  },
   "web/src/lib/editor-controls/EditorControls.svelte": {
    "buttons": 1
   },
@@ -341,6 +347,9 @@
   "web/src/lib/elite/TaggedPane.svelte": {
    "buttons": 3
   },
+  "web/src/lib/file-drawer/FileDrawerHeader.svelte": {
+   "exempt": 1
+  },
   "web/src/lib/huddle-agent/AgentDrawer.svelte": {
    "buttons": 1
   },
@@ -356,26 +365,35 @@
   "web/src/lib/ledger-drawer/ProviderGlanceTile.svelte": {
    "buttons": 1
   },
+  "web/src/lib/ledger/ColorSwatches.svelte": {
+   "exempt": 1
+  },
+  "web/src/lib/ledger/LedgerRowSwatch.svelte": {
+   "exempt": 1
+  },
   "web/src/lib/live-status/OfflineMarker.svelte": {
    "buttons": 1
-  },
-  "web/src/lib/manager-frame/ManagerCard.svelte": {
-   "buttons": 4
-  },
-  "web/src/lib/manager-frame/ManagerFrame.svelte": {
-   "buttons": 5
-  },
-  "web/src/lib/manager-frame/ManagerItemActions.svelte": {
-   "buttons": 4
-  },
-  "web/src/lib/manager-frame/ViewToggle.svelte": {
-   "buttons": 2
   },
   "web/src/lib/markdown-editor/MarkdownEditor.svelte": {
    "fields": 1
   },
+  "web/src/lib/menu-page/MenuPageBar.svelte": {
+   "exempt": 1
+  },
   "web/src/lib/perf-overlay/PerfOverlay.svelte": {
    "buttons": 1
+  },
+  "web/src/lib/pipeline-status/PipelineSquares.svelte": {
+   "exempt": 1
+  },
+  "web/src/lib/project-colors/ProjectColorSwatches.svelte": {
+   "exempt": 3
+  },
+  "web/src/lib/sessions-page/PanelHead.svelte": {
+   "exempt": 1
+  },
+  "web/src/lib/sessions-page/TimelineView.svelte": {
+   "exempt": 2
   },
   "web/src/lib/settings-page/appearance/ControlCenterPreview.svelte": {
    "buttons": 1
@@ -423,6 +441,12 @@
   "web/src/lib/skills-page/SkillsScreen.svelte": {
    "buttons": 1
   },
+  "web/src/lib/slash-favorites/FavoriteChips.svelte": {
+   "exempt": 2
+  },
+  "web/src/lib/subagents/SubagentBadge.svelte": {
+   "exempt": 1
+  },
   "web/src/lib/swarm-board/CardActionPanel.svelte": {
    "buttons": 3,
    "fields": 2
@@ -465,11 +489,29 @@
   "web/src/lib/swarm-board/views/swimlanes/SwimLane.svelte": {
    "buttons": 3
   },
+  "web/src/lib/terminal-background/TerminalBackgroundButton.svelte": {
+   "exempt": 1
+  },
   "web/src/lib/terminal-notice/TerminalStartupNotice.svelte": {
    "buttons": 1
   },
+  "web/src/lib/terminal-search/PromptHeader.svelte": {
+   "exempt": 1
+  },
+  "web/src/lib/terminal-search/PromptTick.svelte": {
+   "exempt": 1
+  },
+  "web/src/lib/terminal-search/SearchPanel.svelte": {
+   "exempt": 1
+  },
+  "web/src/lib/timers/TimerBadge.svelte": {
+   "exempt": 1
+  },
   "web/src/lib/toast-mode/ToastModePanel.svelte": {
    "radio": 1
+  },
+  "web/src/lib/user-guide/GuideShot.svelte": {
+   "exempt": 1
   },
   "web/src/lib/warroom/WarroomModal.svelte": {
    "buttons": 2
@@ -477,20 +519,11 @@
   "web/src/lib/widget-bars/BarHandle.svelte": {
    "buttons": 1
   },
-  "web/src/lib/zone-shell/PlacementMenuHost.svelte": {
-   "buttons": 1
-  },
-  "web/src/lib/zone-shell/TabKey.svelte": {
-   "buttons": 1
+  "web/src/lib/widgets-page/settings/PictureStrip.svelte": {
+   "exempt": 1
   },
   "web/src/opscenter/App.svelte": {
    "buttons": 1
-  },
-  "web/src/opscenter/art/ArtDensity.svelte": {
-   "fields": 1
-  },
-  "web/src/opscenter/cells/analytics/ChartLegend.svelte": {
-   "buttons": 3
   },
   "web/src/opscenter/cells/analytics/DetailsModal.svelte": {
    "buttons": 2
@@ -499,9 +532,6 @@
    "fields": 1
   },
   "web/src/opscenter/cells/files/Cell.svelte": {
-   "buttons": 1
-  },
-  "web/src/opscenter/cells/files/FilesGlanceTile.svelte": {
    "buttons": 1
   },
   "web/src/opscenter/cells/questions/Cell.svelte": {
@@ -528,102 +558,30 @@
   "web/src/opscenter/cells/terminal-live/TerminalFoot.svelte": {
    "buttons": 1
   },
-  "web/src/opscenter/cells/themes/Cell.svelte": {
-   "buttons": 1
-  },
-  "web/src/opscenter/cells/timeline/Column.svelte": {
-   "buttons": 3
-  },
-  "web/src/opscenter/cells/timeline/KindKey.svelte": {
-   "buttons": 1
-  },
   "web/src/opscenter/cells/warroom/Cell.svelte": {
    "buttons": 1
   },
-  "web/src/opscenter/engine/LiveRegion.svelte": {
-   "buttons": 2
-  },
-  "web/src/opscenter/phone/PhoneTabs.svelte": {
-   "buttons": 1
-  },
-  "web/src/opscenter/shell/CellFrame.svelte": {
-   "buttons": 1
-  },
-  "web/src/opscenter/shell/CornerMenu.svelte": {
-   "buttons": 1
-  },
-  "web/src/opscenter/shell/PopoutBarActions.svelte": {
-   "buttons": 2
-  },
-  "web/src/opscenter/shell/TabStrip.svelte": {
-   "buttons": 1
+  "web/src/opscenter/layouts/LayoutCommandBar.svelte": {
+   "exempt": 1
   },
   "web/src/opscenter/shell/TopBar.svelte": {
-   "buttons": 2
-  },
-  "web/src/opscenter/shell/WidgetHead.svelte": {
-   "buttons": 4
-  },
-  "web/src/opscenter/shell/fixtures/HeadBarProbe.svelte": {
-   "buttons": 1
-  },
-  "web/src/opscenter/shell/fixtures/HeadGroupsProbe.svelte": {
-   "buttons": 3
-  },
-  "web/src/opscenter/ui/Choice.svelte": {
-   "buttons": 1
+   "exempt": 1
   },
   "web/src/opscenter/ui/FacetSelect.svelte": {
-   "fields": 1
-  },
-  "web/src/opscenter/ui/InsetHostFixture.svelte": {
-   "buttons": 1
-  },
-  "web/src/opscenter/ui/Page.svelte": {
-   "buttons": 1
-  },
-  "web/src/opscenter/ui/RankPanel.svelte": {
-   "buttons": 2
+   "exempt": 1
   },
   "web/src/opscenter/ui/SearchField.svelte": {
-   "fields": 1
+   "exempt": 1
   },
-  "web/src/opscenter/ui/SortControl.svelte": {
-   "buttons": 1
-  },
-  "web/src/opscenter/ui/Tabs.svelte": {
-   "buttons": 1
-  },
-  "web/src/style-guide/specimens/AnchoredPopupDemo.svelte": {
-   "buttons": 4
-  },
-  "web/src/style-guide/specimens/BaseComponents.svelte": {
-   "buttons": 2
-  },
-  "web/src/style-guide/specimens/BaseElements.svelte": {
-   "buttons": 2,
-   "checkbox": 1,
-   "fields": 5,
-   "radio": 2
-  },
-  "web/src/style-guide/specimens/BaseThemes.svelte": {
-   "buttons": 5,
-   "fields": 1
-  },
-  "web/src/style-guide/specimens/ContrastMatrix.svelte": {
-   "buttons": 1
-  },
-  "web/src/style-guide/specimens/Modals.svelte": {
-   "buttons": 4
-  },
-  "web/src/style-guide/specimens/ReviewPanel.svelte": {
-   "fields": 1
+  "web/src/opscenter/ui/SplitButton.svelte": {
+   "exempt": 1
   }
  },
  "totals": {
-  "buttons": 382,
-  "checkbox": 9,
-  "fields": 70,
-  "radio": 6
+  "buttons": 297,
+  "checkbox": 8,
+  "exempt": 50,
+  "fields": 60,
+  "radio": 4
  }
 }

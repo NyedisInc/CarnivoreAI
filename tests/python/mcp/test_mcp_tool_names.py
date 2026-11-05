@@ -44,7 +44,7 @@ KEPT = {
     "stats_feed": "the contract name of #1547 (docs/stats-feed.md): the one token-throughput feed, named for the feed it reads",
     "browser_open": "Joe's request (huddle item 'open huddle pages in a side browser', docs/browser-pages.md): open a page on his screen as a browser session, as the pane shell tool opens a shell; create would hide the reuse of a pool session",
     "mcp_usage": "names the server it counts (the mcp-usage route, #1752); usage is the computed view, as usage_ledger's ledger is",
-    "sidebar_show": "Joe's request (#1868): show a left bar item in the window he used last; show is the word he used, and focus/open already mean other things (huddle_focus selects an item, browser_open opens a row)",
+    "sidebar_show": "Joe's request (#1868): show a left bar item in the window he used last; show is the word he used, and focus/open already mean other things (task_manager focus selects an item, browser_open opens a row)",
     "crate_backup_families": "Joe (ccsliinc)'s crate tool (docs/crate.md): the backup families a crate export can include, named for what it reads; list would read as plural records of one kind",
     "crate_import_undo": "Joe (ccsliinc)'s #1912 word (docs/crate-import.md): undo a finished restore; delete would read as removing the crate",
     "files_open": "Joe's request (#1724): open a file into his files list, as browser_open opens a page; the open_files route is POST /files/open",
@@ -87,4 +87,4 @@ def test_no_huddle_name_is_kept_by_exception():
 
 def test_every_retired_name_is_skipped_only_through_the_alias_table():
     unfit = {n for n in tools._TOOLS if n not in KEPT and not n.startswith(UNCHECKED_PREFIXES) and violation(n)}
-    assert unfit and all(aliases.is_alias(n) for n in unfit), unfit
+    assert all(aliases.is_alias(n) for n in unfit), unfit

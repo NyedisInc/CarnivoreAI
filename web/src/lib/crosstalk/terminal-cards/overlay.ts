@@ -1,4 +1,4 @@
-import { mount, unmount } from 'svelte';
+import { mountInto } from '../../mount';
 import type { TerminalOverlayContext } from '../../../cplugs/sdk/terminal';
 import CardStack from './CardStack.svelte';
 
@@ -7,12 +7,9 @@ export function mountCardLayer(context: TerminalOverlayContext): () => void {
   layer.className = 'xtalk-layer-host';
   layer.style.display = 'contents';
   context.host.appendChild(layer);
-  const handle = mount(CardStack, {
-    target: layer,
-    props: { sessionId: () => context.controller._sessionId?.() ?? null },
-  });
+  const stop = mountInto(layer, CardStack, { sessionId: () => context.controller._sessionId?.() ?? null });
   return () => {
-    void unmount(handle, { outro: false });
+    stop();
     layer.remove();
   };
 }

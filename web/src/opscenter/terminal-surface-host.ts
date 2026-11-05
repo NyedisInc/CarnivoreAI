@@ -9,6 +9,7 @@ import { primarySessionId, primaryTmuxEpoch, primaryTmuxName } from './api/host'
 import { noteSurface } from './layouts/page.svelte';
 import { subscribe, openSession } from './api';
 import { t } from '../lib/i18n/index.svelte';
+import { addLocalToast } from '../lib/toast-surface';
 
 const TERMINAL_COMPONENTS_ID = 'terminal-components';
 
@@ -18,8 +19,7 @@ let stopBindWatch: (() => void) | null = null;
 function onAgentOpened(frame: { session_id?: string; name?: string }): void {
     const id = typeof frame.session_id === 'string' ? frame.session_id : '';
     if (!id || globalThis.innerWidth >= 1024) return;
-    const toast = (globalThis as { ToastManager?: { add(item: Record<string, unknown>): void } }).ToastManager;
-    toast?.add({ id: `agent-open:${id}`, session_id: null,
+    addLocalToast({ id: `agent-open:${id}`, session_id: null,
         session_name: frame.name || id, session_label: frame.name || id,
         kind: 'AgentOpen',
         title: t('agent.opened.title'), body: t('agent.opened.open'), local: true,

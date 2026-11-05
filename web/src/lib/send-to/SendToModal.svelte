@@ -2,7 +2,7 @@
   import './send-to.css';
   import { onMount } from 'svelte';
   import { Button, Radio, RadioGroup } from '../base';
-  import ModalShell from '../launchpad/ModalShell.svelte';
+  import ModalShell from '../dialog-frame/ModalShell.svelte';
   import { ApiError } from '../../opscenter/api/auth.svelte';
   import { t } from '../i18n/index.svelte';
   import Check from '../../opscenter/ui/Check.svelte';

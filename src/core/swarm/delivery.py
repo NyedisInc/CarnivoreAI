@@ -316,12 +316,20 @@ async def _post_dialog_card(port: Any, agent: Dict[str, Any], prefix: str, ref: 
     return item_id
 
 
+_engine_deferred_since: Dict[tuple, float] = {}
+
+
 async def _maybe_dialog_card(app_state: Any, agent: Dict[str, Any], wake_id: Optional[int], info: Any) -> None:
-    from src.core.approvals.auto_answer.engine import answers_own_dev_channels
+    from src.core.approvals.auto_answer.engine import answers_own_dev_channels, will_answer
+    from src.core.swarm.auto_trust import CARRIED_WAIT_SECONDS
 
     dialog = await _dialog(app_state, info.session.id)
     if dialog is None or answers_own_dev_channels(dialog):
         return
+    if await will_answer(dialog, info):
+        first = _engine_deferred_since.setdefault((agent["id"], dialog.fingerprint), time.monotonic())
+        if time.monotonic() - first <= CARRIED_WAIT_SECONDS:
+            return
     prefix = _dialog_prefix(dialog)
     if prefix == TRUST_PREFIX:
         if wake_id is None or (wake_id, dialog.fingerprint) in _trust_posted:
@@ -579,6 +587,31 @@ def kickoff_recorded(conn: sqlite3.Connection, agent_id: int, wake_ref: str) -> 
 KICKOFF_GRACE_S = 20.0
 
 
+_owner_words: Dict[int, Tuple[str, str]] = {}
+
+
+def remember_owner_words(agent_id: int, ref: str, text: str) -> None:
+    _owner_words[agent_id] = (ref, text)
+
+
+async def _replay_owner_words(app_state: Any, agent_id: int) -> None:
+    from src.core.swarm import body
+
+    held = _owner_words.get(agent_id)
+    if held is None or _pending.get(agent_id):
+        return
+    ref, text = held
+    done = await body.run_db(lambda c: c.execute("SELECT 1 FROM swarm_deliveries WHERE agent_id = ? AND source = 'owner_chat' "
+                                                 "AND owner_message_ref = ? LIMIT 1", (agent_id, ref)).fetchone())
+    if done is not None:
+        _owner_words.pop(agent_id, None)
+        return
+    logger.info("swarm_owner_words_replayed", agent_id=agent_id, owner_message_ref=ref)
+    outcome = await deliver_text(app_state, agent_id, text, source="owner_chat", authority="owner", owner_message_ref=ref)
+    if not outcome.startswith("refused:"):
+        _owner_words.pop(agent_id, None)
+
+
 async def settle_wake(app_state: Any, agent_id: int) -> bool:
     from src.core.swarm import body
 
@@ -594,6 +627,7 @@ async def settle_wake(app_state: Any, agent_id: int) -> bool:
     started = _parse(wake.get("started_at"))
     if _pending.get(agent_id) or started is None or (datetime.now(timezone.utc) - started).total_seconds() < KICKOFF_GRACE_S:
         return False
+    await _replay_owner_words(app_state, agent_id)
     if await body.run_db(lambda c: kickoff_recorded(c, agent_id, f"wake:{wake['id']}")):
         return True
     logger.info("swarm_kickoff_recovered", agent_id=agent_id, wake_id=wake["id"])
@@ -662,6 +696,13 @@ async def answer_trust(app_state: Any, swarm_ref: str, approve: bool) -> None:
     info = await body.live_info(app_state, agent) if agent else None
     dialog = await _dialog(app_state, info.session.id) if info else None
     label = _yes_label(dialog) if dialog is not None else None
+    if dialog is None and agent is not None:
+        port = thread_port.get()
+        if port is not None:
+            await port.close_open_cards(agent["thread_key"], TRUST_PREFIX)
+        for key in [key for key in _trust_card_at if key[0] == int(wake_id)]:
+            del _trust_card_at[key]
+        raise body.BodyError("the folder question is gone; the card was closed")
     if dialog is None or label is None or dialog.fingerprint != fingerprint:
         if agent is not None and dialog is not None:
             _trust_posted.add((int(wake_id), dialog.fingerprint))

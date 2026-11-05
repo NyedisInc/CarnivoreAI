@@ -60,7 +60,7 @@ class TrayApiClient {
       if (opts.body) headers['Content-Type'] = 'application/json';
       if (opts.token) headers.Authorization = `Bearer ${opts.token}`;
 
-      const response = await this.fetchImpl(this.baseUrl + routePath, {
+      const response = await this.fetchImpl((opts.baseUrl || this.baseUrl) + routePath, {
         method: opts.method || 'GET',
         headers,
         body: opts.body ? JSON.stringify(opts.body) : undefined,
@@ -102,16 +102,16 @@ class TrayApiClient {
     return true;
   }
 
-  ensureToken() {
+  ensureToken(baseUrl) {
     if (this.tokenFlight) return this.tokenFlight;
-    const flight = this._mintToken().finally(() => {
+    const flight = this._mintToken(baseUrl).finally(() => {
       if (this.tokenFlight === flight) this.tokenFlight = null;
     });
     this.tokenFlight = flight;
     return flight;
   }
 
-  async _mintToken() {
+  async _mintToken(baseUrl) {
     const marginMs = TOKEN_REFRESH_MARGIN_SECONDS * 1000;
     if (this.accessToken && this.now() + marginMs < this.accessTokenExpiresAt) {
       return { token: this.accessToken, error: null };
@@ -121,6 +121,7 @@ class TrayApiClient {
       const refreshed = await this.request('/api/v1/auth/refresh', {
         method: 'POST',
         body: { refresh_token: this.refreshToken },
+        baseUrl,
       });
       if (refreshed.ok && this._adoptTokens(refreshed.data)) {
         return { token: this.accessToken, error: null };
@@ -147,6 +148,7 @@ class TrayApiClient {
     const verified = await this.request('/api/v1/auth/verify', {
       method: 'POST',
       body: { code },
+      baseUrl,
     });
     if (verified.ok && this._adoptTokens(verified.data)) {
       return { token: this.accessToken, error: null };
@@ -155,21 +157,23 @@ class TrayApiClient {
     return {
       token: null,
       error: verified.error || 'TOTP verification was rejected',
+      status: verified.status,
     };
   }
 
-  async getAuthed(routePath) {
-    const first = await this.ensureToken();
-    if (!first.token) return { reachable: false, data: null, error: first.error };
+  async getAuthed(routePath, options) {
+    const baseUrl = options && options.baseUrl;
+    const first = await this.ensureToken(baseUrl);
+    if (!first.token) return { reachable: false, status: first.status, data: null, error: first.error };
 
-    let response = await this.request(routePath, { token: first.token });
+    let response = await this.request(routePath, { token: first.token, baseUrl });
     if (response.status === 401) {
       this.forgetToken();
-      const second = await this.ensureToken();
+      const second = await this.ensureToken(baseUrl);
       if (!second.token) {
-        return { reachable: false, data: null, error: second.error };
+        return { reachable: false, status: second.status, data: null, error: second.error };
       }
-      response = await this.request(routePath, { token: second.token });
+      response = await this.request(routePath, { token: second.token, baseUrl });
     }
 
     if (!response.ok) {

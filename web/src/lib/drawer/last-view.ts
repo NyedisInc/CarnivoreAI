@@ -1,5 +1,6 @@
 import { readKey, writeKey } from './storage';
 import { pageWindow } from './env';
+import type { SidebarPick } from '../legacy-globals';
 import { layouts } from '../layouts-bridge/api.svelte';
 import { openSession } from '../../opscenter/api/host';
 
@@ -18,7 +19,7 @@ interface RowLike {
 
 export interface RestoreDeps {
     screen: () => string | undefined;
-    rows: () => RowLike[];
+    rows: () => readonly RowLike[];
     hasLayout: (uuid: string) => boolean | null;
     openSession: (sessionId: string, tmuxName: string) => boolean;
     openLayout: (uuid: string) => unknown;
@@ -70,7 +71,7 @@ export function watchSessionDestroyed(win: EventTarget = pageWindow() as unknown
 
 const liveDeps: RestoreDeps = {
     screen: () => (pageWindow() as { App?: { currentScreen?: string } }).App?.currentScreen,
-    rows: () => (pageWindow() as { SessionSidebar?: { _rows?: RowLike[] } }).SessionSidebar?._rows ?? [],
+    rows: () => (pageWindow() as { SessionSidebar?: SidebarPick<'rows'> }).SessionSidebar?.rows<RowLike>() ?? [],
     hasLayout: (uuid) => {
         const held = layouts.data;
         return held === null ? null : held.some((l) => l.layout_uuid === uuid);

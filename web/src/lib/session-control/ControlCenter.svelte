@@ -7,11 +7,11 @@
   import { rowFor } from '../../opscenter/cells/terminal-viewer/meta';
   import { elapsed } from '../../opscenter/lib/format';
   import { t } from '../i18n/index.svelte';
-  import { fetchSubagents, secondsSince, type SubagentRow } from '../subagents/subagents';
+  import { measuredRows, secondsSince, type SubagentRow } from '../subagents/subagents';
+  import { readSessionWork } from '../session-stats/session-work';
   import { emptyMessage, fetchTimers, type SessionTimers } from '../timers/timers';
   import { splitTimers, type TimerLine } from '../timers/timer-times';
   import {
-    fetchBackgroundWork,
     processesEmpty,
     stopMessage,
     terminateProcess,
@@ -31,6 +31,7 @@
     CONTROL_SECTIONS,
     type ControlSection,
   } from './control-center';
+  import { isRemoteRow, openPort, portLines } from './ports';
 
   let {
     sessionId,
@@ -59,7 +60,10 @@
   let nowMs = $state(Date.now());
   let root = $state<HTMLElement | null>(null);
 
-  const key = $derived(refreshKey(rowFor(sessions.data, sessionId) as Record<string, unknown> | null));
+  const listingRow = $derived(rowFor(sessions.data, sessionId) as Record<string, unknown> | null);
+  const key = $derived(refreshKey(listingRow));
+  const ports = $derived(portLines(listingRow));
+  const portsRemote = $derived(isRemoteRow(listingRow));
   const timerLines = $derived(splitTimers(timers?.timers ?? [], nowMs));
   const liveTimers = $derived(timerLines.live.length);
   let historyOpen = $state(false);
@@ -69,7 +73,8 @@
   const sectionTabs = $derived<TabDef[]>(CONTROL_SECTIONS.map((section) => ({
     id: section,
     label: t(`control_center.section.${section}`),
-    badge: section === 'timers' ? (timers ? liveTimers : null) : section === 'agents' ? counts.agents : counts.shells,
+    badge: section === 'timers' ? (timers ? liveTimers : null) : section === 'agents' ? counts.agents
+      : section === 'ports' ? ports.length : counts.shells,
   })));
   const processesNote = $derived(work ? processesEmpty(work) : null);
   const unownedProcesses = $derived(
@@ -77,19 +82,20 @@
   );
 
   let generation = 0;
-  async function readAll(): Promise<void> {
+  async function readAll(force = false): Promise<void> {
     const mine = ++generation;
-    const [tm, ag, bw] = await Promise.allSettled([
-      fetchTimers(sessionId), fetchSubagents(sessionId), fetchBackgroundWork(sessionId),
-    ]);
+    const [tm, { subagents: ag, work: bw }] = await Promise.all([
+      Promise.allSettled([fetchTimers(sessionId)]).then(([r]) => r), readSessionWork(sessionId, key, { force })]);
     if (mine !== generation) return;
     nowMs = Date.now();
     const why = (r: PromiseRejectedResult): string => (r.reason as Error)?.message ?? String(r.reason);
     const next: Partial<Record<ControlSection, string>> = {};
     if (tm.status === 'fulfilled') timers = tm.value;
     else next.timers = t('timers.list.failed', { reason: why(tm) });
-    if (ag.status === 'fulfilled') agentRows = ag.value.subagents;
-    else next.agents = t('subagents.list.failed', { reason: why(ag) });
+    if (ag.status === 'fulfilled') {
+      agentRows = measuredRows(ag.value);
+      if (agentRows === null) next.agents = t('subagents.list.unchecked');
+    } else next.agents = t('subagents.list.failed', { reason: why(ag) });
     if (bw.status === 'fulfilled') work = bw.value;
     else next.processes = t('background_work.list.failed', { reason: why(bw) });
     failed = next;
@@ -128,7 +134,7 @@
       busy = false;
       armed = null;
     }
-    await readAll();
+    await readAll(true);
   }
 
   const stopOne = (row: BackgroundProcess) => act('processes', () =>
@@ -308,10 +314,52 @@
   </ul>
 {/snippet}
 
+
+{#snippet portsSection()}
+  <div class="scc-section" data-scc-section="ports" data-focused={focus === 'ports' ? 'true' : 'false'}
+    data-open={sectionOpen('ports') ? 'true' : 'false'}>
+    {#if headerVisible('ports')}{@render head('ports', ports.length, null, '')}{/if}
+    {#if sectionOpen('ports')}
+    {#if ports.length === 0}
+      <p class="scc-note" data-scc-empty="ports">{t('control_center.ports.empty')}</p>
+    {:else}
+      <ul class="scc-list">
+        {#each ports as line (line.port)}
+          <li class="scc-row" data-scc-port={line.port}>
+            {#if portsRemote}
+              <span class="scc-type" title={t('control_center.ports.remote')}>:{line.port}</span>
+            {:else}
+              <span class="scc-type"><Button variant="quiet" size="sm" data-scc-port-open
+                aria-expanded={armed === `port:${line.port}` ? 'true' : 'false'}
+                title={t('control_center.ports.open_title', { port: String(line.port) })}
+                onclick={() => { armed = armed === `port:${line.port}` ? null : `port:${line.port}`; }}>:{line.port}</Button></span>
+            {/if}
+            <span class="scc-text">{line.process ?? t('control_center.ports.no_process')}</span>
+            <span class="scc-num" data-lan={line.lan ? 'true' : 'false'}
+              title={line.lan ? t('control_center.ports.lan_title') : undefined}>{line.lan ? t('control_center.ports.lan') : line.address}</span>
+          </li>
+          {#if armed === `port:${line.port}`}
+            <div class="scc-confirm" data-scc-choice role="group">
+              <span class="scc-answers">
+                <Button variant="confirm" size="sm" data-scc-open="here"
+                  onclick={() => { armed = null; void openPort(line.port, 'here'); }}>{t('control_center.ports.open_here')}</Button>
+                <Button size="sm" data-scc-open="browser"
+                  onclick={() => { armed = null; void openPort(line.port, 'browser'); }}>{t('control_center.ports.open_browser')}</Button>
+              </span>
+            </div>
+          {/if}
+        {/each}
+      </ul>
+    {/if}
+    {/if}
+  </div>
+{/snippet}
+
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <section class="scc" data-layout={layout} aria-label={t('control_center.label')} bind:this={root} onkeydown={onKeydown}>
 {#if layout === 'owner-list'}
   {@render ownerList()}
+  {@render portsSection()}
 {:else}
 {#if layout === 'tabs'}{@render tabsRail()}{/if}
   <div class="scc-section" data-scc-section="timers" data-focused={focus === 'timers' ? 'true' : 'false'}
@@ -410,5 +458,6 @@
     {/if}
     {/if}
   </div>
+  {@render portsSection()}
 {/if}
 </section>

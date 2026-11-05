@@ -24,7 +24,7 @@ describe('slide-out edge color', () => {
     expect(grip).not.toContain('--oc-line-panel);\n      transition');
   });
   test('the bars own hairlines use the same token', () => {
-    expect(rule(layer, '.rail__layer')).toContain('inset 1px 0 0 0 var(--oc-line-frame)');
-    expect(rule(layer, '.rail--bottom .rail__layer')).toContain('inset 0 1px 0 0 var(--oc-line-frame)');
+    expect(rule(layer, '.rail__layer')).toContain('inset var(--oc-grip-line) 0 0 0 var(--oc-line-frame)');
+    expect(rule(layer, '.rail--bottom .rail__layer')).toContain('inset 0 var(--oc-grip-line) 0 0 var(--oc-line-frame)');
   });
 });

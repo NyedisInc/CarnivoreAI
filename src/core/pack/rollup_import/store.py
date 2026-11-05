@@ -15,6 +15,7 @@ logger = structlog.get_logger()
 
 MAX_ID_CHARS = 256
 COST_AT = 6
+MAX_NAME_CHARS = 200
 
 
 @dataclass(frozen=True)
@@ -56,6 +57,10 @@ def _text(value: Any) -> Optional[str]:
     return value if isinstance(value, str) and len(value) <= MAX_ID_CHARS else None
 
 
+def _name(value: Any) -> Optional[str]:
+    return value.strip() if isinstance(value, str) and value.strip() and len(value) <= MAX_NAME_CHARS else None
+
+
 def _usage_rows(raw: Any) -> Optional[List[tuple]]:
     out = []
     for row in raw if isinstance(raw, list) else [None]:
@@ -92,10 +97,11 @@ def apply_page(conn: sqlite3.Connection, peer_install_id: str, groups: Iterable[
                 conn.execute(f"DELETE FROM {table} WHERE peer_install_id = ? AND conversation_id = ? AND hour = ?",
                              (peer_install_id, cid, hour))
             provider, kind = _text(group.get("provider")), _text(group.get("agent_kind"))
+            name = _name(group.get("agent_name"))
             conn.executemany(
                 f"INSERT OR REPLACE INTO {USAGE_TABLE} (peer_install_id, conversation_id, hour, provider, agent_kind, model, project, "
-                "input, cache_write, cache_read, output, cost_nano, messages, priced) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                [(peer_install_id, cid, hour, provider, kind, *row) for row in usage])
+                "input, cache_write, cache_read, output, cost_nano, messages, priced, agent_name) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                [(peer_install_id, cid, hour, provider, kind, *row, name) for row in usage])
             conn.executemany(
                 f"INSERT OR REPLACE INTO {COUNTER_TABLE} (peer_install_id, conversation_id, hour, provider, agent_kind, model, project, "
                 "counter, key, value) VALUES (?,?,?,?,?,?,?,?,?,?)",

@@ -186,7 +186,7 @@ def test_the_rungs_triggers_end_a_wait_with_its_token(manager):  # noqa: F811
 
 
 
-def test_expiry_hands_the_task_back_open_with_the_challenge_and_tells_the_parker(client, env, told):  # noqa: F811
+def test_expiry_hands_the_task_back_open_with_the_challenge_and_tells_the_holder(client, env, told):  # noqa: F811
     item = env.add(client)["id"]
     first = park(env.store, item)
     assert first["state"] == "waiting" and first["wait"]["kind"] == "install"

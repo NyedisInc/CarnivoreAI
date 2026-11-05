@@ -7,14 +7,14 @@ import type {
     LaunchPreviewResponse,
     LaunchResponse,
     SkillConsent,
-    WorktreeSettings,
 } from './types';
+import { failureReason } from '../errors/failure-reason';
 
 const ROOT = '/blueprints';
 
 export function blueprintError(error: unknown): BlueprintError {
     if (!(error instanceof ApiError)) {
-        return { code: '', detail: error instanceof Error ? error.message : String(error), status: 0, detectors: [] };
+        return { code: '', detail: failureReason(error), status: 0, detectors: [] };
     }
     const body = error.payload as { detail?: unknown } | null;
     const rawDetail = body?.detail;
@@ -47,10 +47,6 @@ export function blueprintError(error: unknown): BlueprintError {
 
 export function listBlueprints(): Promise<BlueprintList> {
     return authFetch<BlueprintList>(ROOT);
-}
-
-export function getBlueprint(uuid: string): Promise<Blueprint> {
-    return authFetch<Blueprint>(`${ROOT}/${encodeURIComponent(uuid)}`);
 }
 
 export function createBlueprint(spec: BlueprintSpec): Promise<Blueprint> {
@@ -86,17 +82,6 @@ export function importBlueprint(projectPath: string, name?: string): Promise<Blu
     return authFetch<Blueprint>(`${ROOT}/import`, {
         method: 'POST',
         body: JSON.stringify(name ? { project_path: projectPath, name } : { project_path: projectPath }),
-    });
-}
-
-export function getWorktreeSettings(): Promise<WorktreeSettings> {
-    return authFetch<WorktreeSettings>(`${ROOT}/settings`);
-}
-
-export function setWorktreeSettings(worktreeRoot: string): Promise<WorktreeSettings> {
-    return authFetch<WorktreeSettings>(`${ROOT}/settings`, {
-        method: 'PUT',
-        body: JSON.stringify({ worktree_root: worktreeRoot }),
     });
 }
 

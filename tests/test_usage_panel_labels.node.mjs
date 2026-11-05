@@ -312,6 +312,22 @@ test('the tokens row composes all three input surfaces', () => {
     assert.equal(row(half.rows, 'tokens').text, `2k/${t('usage.cost.unavailable')}`);
 });
 
+test('the cache row splits what the in figure folds together', () => {
+    const panel = usagePanelLabels({
+        state: 'ok',
+        input_tokens: 1000,
+        cache_read_input_tokens: 440000,
+        cache_creation_input_tokens: 5200000,
+        output_tokens: 234000,
+    }, t);
+    assert.equal(row(panel.rows, 'cache').label, t('usage.tokens.cache'));
+    assert.equal(row(panel.rows, 'cache').text, '440k/5.2M');
+    const half = usagePanelLabels({ state: 'ok', cache_read_input_tokens: 9000 }, t);
+    assert.equal(row(half.rows, 'cache').text, `9k/${t('usage.cost.unavailable')}`);
+    const none = usagePanelLabels({ state: 'ok', input_tokens: 5 }, t);
+    assert.equal(none.rows.some((r) => r.key === 'cache'), false);
+});
+
 test('the five-stop scale steps at the owner s own thresholds', () => {
     assert.deepEqual(SCALE_STOPS, [25, 50, 80, 95]);
     const pairs = [[0, 1], [24, 1], [25, 2], [49, 2], [50, 3], [79, 3],
@@ -436,7 +452,7 @@ test('NEGATIVE CONTROL: every key these rows print really exists', () => {
     const keys = [
         'usage.tokens.title', 'usage.tokens.model_effort', 'usage.tokens.in_out',
         'usage.tokens.pair_separator', 'usage.tokens.count_separator',
-        'usage.tokens.cost',
+        'usage.tokens.cost', 'usage.tokens.cache',
         'usage.context.title', 'usage.context.meter', 'usage.context.used',
         'usage.context.compact',
         'usage.account.name', 'usage.account.limits',

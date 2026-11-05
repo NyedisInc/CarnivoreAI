@@ -34,3 +34,10 @@ test('a code the catalog does not know keeps the server sentence', async () => {
     const error = (await authFetch('/x').catch((e: unknown) => e)) as ApiError;
     expect(error.message).toBe('the server sentence');
 });
+
+test('a catalog line with a placeholder is filled from the params the refusal body carries (scan_budget_exceeded)', async () => {
+    answer(409, { detail: { code: 'scan_budget_exceeded', detail: 'x', params: { limit: '256 MiB' }, files: ['big.mov'], files_more: 0 } });
+    const error = (await authFetch('/projects/p/publish-repo', { method: 'POST' }).catch((e: unknown) => e)) as ApiError;
+    expect(error.message).toContain('256 MiB');
+    expect(error.message).not.toContain('{');
+});

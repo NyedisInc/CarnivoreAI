@@ -217,6 +217,8 @@ class Evidence:
 
     process_floor_at: Optional[datetime] = None
 
+    manifest: Optional[Any] = None
+
     def active_pane(self) -> Any:
         return self.codex.pane if self.codex is not None else self.pane
 

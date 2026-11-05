@@ -8,6 +8,7 @@ import { foldSpanOnlyRows } from './compact';
 import type { CellId, Layout, LayoutPage, MetaMap, Reservation, RowId, RowKind, RowModel, Slot, SlotId } from './types';
 import { readStoredGrid } from './v7/adapt';
 import { t } from '../../lib/i18n/index.svelte';
+import { addLocalToast } from '../../lib/toast-surface';
 
 export const STORAGE_KEYS: Readonly<Record<LayoutPage, string>> = {
   home: 'cloudecode.opscenter.layout.v1',
@@ -343,16 +344,11 @@ const pending = new Map<string, Layout>();
 let timer: ReturnType<typeof setTimeout> | undefined;
 let frame = 0;
 
-interface ToastSurface {
-  add(toast: Record<string, unknown>): void;
-}
-
 function announceOversizeSave(key: string): void {
   const id = `layout-oversize:${key}`;
   if (oversizeAnnounced.has(id)) return;
   oversizeAnnounced.add(id);
-  const surface = (globalThis as { ToastManager?: ToastSurface }).ToastManager;
-  surface?.add({
+  addLocalToast({
     id,
     session_id: null,
     kind: 'LayoutOversize',

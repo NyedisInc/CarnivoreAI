@@ -81,14 +81,14 @@ def test_mcp_reads_hide_swarm_items_from_a_session_and_keep_them_for_a_swarm_age
     monkeypatch.setattr(SwarmFacade, "thread_for_session", thread_for_session)
 
     def listed(caller) -> set:
-        answer = asyncio.run(tools.call_tool(world.manager, caller, "huddle_list", {"list": "12"}))
+        answer = asyncio.run(tools.call_tool(world.manager, caller, "task_manager_tasks_list", {"list": "12"}))
         assert not answer.get("isError"), answer
         return _ids(json.loads(answer["content"][0]["text"])["items"])
 
     assert listed(CALLER) == {seeded["mine"], seeded["later"]}
     assert listed(AGENT_CALLER) == {seeded["mine"], seeded["card"], seeded["later"]}
 
-    changes = asyncio.run(tools.call_tool(world.manager, CALLER, "huddle_changes", {"since": 0, "list": "12"}))
+    changes = asyncio.run(tools.call_tool(world.manager, CALLER, "task_manager_changes", {"since": 0, "list": "12"}))
     assert seeded["card"] not in _ids(json.loads(changes["content"][0]["text"])["items"])
 
 

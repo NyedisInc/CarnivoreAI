@@ -64,7 +64,7 @@ describe('the Layouts bridge writes', () => {
     const layout = { layout_uuid: 'L1', name: 'api + web' };
     answers = [layout];
     const repaint = vi.fn(async () => {});
-    (globalThis as Record<string, unknown>).SessionSidebar = { _fetchAndRender: repaint, _lastSig: 'x' };
+    (globalThis as Record<string, unknown>).SessionSidebar = { _fetchAndRender: repaint };
     const out = await mod.renameLayout('L1', 'api + web + db');
     expect(calls).toEqual([
       { path: '/layouts/L1', method: 'PATCH', body: { name: 'api + web + db' } },
@@ -96,7 +96,7 @@ describe('the Layouts bridge writes', () => {
     const layout = { layout_uuid: 'L1', colour: 'teal', gradient: 'tide', animation: 'shimmer' };
     answers = [layout];
     const repaint = vi.fn(async () => {});
-    (globalThis as Record<string, unknown>).SessionSidebar = { _fetchAndRender: repaint, _lastSig: 'x' };
+    (globalThis as Record<string, unknown>).SessionSidebar = { _fetchAndRender: repaint };
     const out = await mod.setLayoutStyle('L1', { colour: 'teal', gradient: 'tide', animation: 'shimmer' });
     expect(calls).toEqual([
       { path: '/layouts/L1/style', method: 'PUT', body: { colour: 'teal', gradient: 'tide', animation: 'shimmer' } },
@@ -129,7 +129,7 @@ describe('the Layouts bridge writes', () => {
     const mod = await load();
     mod.wireLayoutsRefresh();
     const repaint = vi.fn(async () => {});
-    (globalThis as Record<string, unknown>).SessionSidebar = { _fetchAndRender: repaint, _lastSig: 'x' };
+    (globalThis as Record<string, unknown>).SessionSidebar = { _fetchAndRender: repaint };
     capturedHandler?.({ reason: 'layouts' });
     await Promise.resolve();
     await Promise.resolve();
@@ -141,7 +141,7 @@ describe('the Layouts bridge writes', () => {
     const mod = await load();
     mod.wireLayoutsRefresh();
     const repaint = vi.fn(async () => {});
-    (globalThis as Record<string, unknown>).SessionSidebar = { _fetchAndRender: repaint, _lastSig: 'x' };
+    (globalThis as Record<string, unknown>).SessionSidebar = { _fetchAndRender: repaint };
     capturedHandler?.({ reason: 'groups' });
     await Promise.resolve();
     expect(refreshCalls).toBe(0);

@@ -8,7 +8,7 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional, Sequence
 import structlog
 
 from src.core import db
-from src.core.swarm import author_path, body, owner_wait, settings as swarm_settings, stream_sources, thread_port
+from src.core.swarm import author_path, body, done_feed, owner_wait, settings as swarm_settings, stream_sources, thread_port
 from src.cplugs.sdk import chat_category
 
 logger = structlog.get_logger()
@@ -31,6 +31,23 @@ def window(entries: List[Dict[str, Any]], since: Optional[str], limit: int,
 
 
 EXTRA_SOURCES.extend(stream_sources.SOURCES)
+EXTRA_SOURCES.append(done_feed.done_entries)
+
+WHOLE_THREAD = 1_000_000
+
+
+async def card_entries(agent: Dict[str, Any], item_ids: Sequence[int]) -> List[Dict[str, Any]]:
+    port = thread_port.get()
+    wanted = {f"item:{int(i)}" for i in item_ids}
+    if port is None or not wanted:
+        return []
+    entries = [e for e in await port.read_thread(agent["thread_key"], WHOLE_THREAD, cards=True) if e["id"] in wanted]
+    try:
+        await body.run_db(lambda c: (author_path.annotate(c, agent, entries), owner_wait.annotate(c, entries)))
+    except (sqlite3.Error, db.DatastoreUnreadableError) as exc:
+        logger.warning("swarm_card_entries_unreadable", agent_id=agent.get("id"), error_type=type(exc).__name__)
+    return entries
+
 
 VIEWS = ("all", "shown")
 

@@ -19,6 +19,8 @@
 <button
   type="button"
   class="asw-icon"
+  data-btn="quiet"
+  data-size="auto"
   data-on={on ? '1' : '0'}
   aria-pressed={known ? on : undefined}
   aria-label={label}

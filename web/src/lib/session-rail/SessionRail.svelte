@@ -8,9 +8,8 @@
   import { t } from '../i18n/index.svelte';
   import { railIconHidden, setRailIconHidden, startRailIcons } from '../sidebar-widgets/rail-icons.svelte';
   import { zoneItemKey } from '../drawer-zone/zone-model';
-  import { RAIL_SPECS, type RailEdge } from './rail-model';
+  import { RAIL_MAX_SECTIONS, RAIL_SPECS, type RailEdge } from './rail-model';
   import { beginRailItemDrag, railAims, railCarry, railDrags, railStores } from './rail-store.svelte';
-  import { canSplit } from './rail-sections';
   import { railSlideout } from './slideout.svelte';
   import { railOutSizes } from './rail-out-size.svelte';
   import { RAIL_PUSH_DEBOUNCE_MS } from './rail-size';
@@ -18,6 +17,8 @@
   import { barLead } from '../widget-bars/bar-lead.svelte';
   import { BAR_SIZES, HANDLE_PX, barLabel, barVars } from '../widget-bars/bar-size';
   import { barOut, inFlow, showsHandle, showsPin } from '../widget-bars/bar-state';
+  import { barPinIconId, stripPinsOffered } from '../widget-bars/bar-pin-action';
+  import EditCell from '../zone-shell/EditCell.svelte';
   import { createBarVisibility } from '../widget-bars/bar-visibility.svelte';
   import ZoneHandle from '../zone-shell/ZoneHandle.svelte';
   import BarPin from '../widget-bars/BarPin.svelte';
@@ -29,14 +30,12 @@
   import { sideBudget } from './side-budget.svelte';
   import { untrack } from 'svelte';
   import RailSlideout from './RailSlideout.svelte';
-  import RailBands from './RailBands.svelte';
   import ZoneKeys from '../zone-shell/ZoneKeys.svelte';
   import { createZone, type Zone } from '../zone-shell/zone.svelte';
   import type { KeyFace, TabRef } from '../zone-shell/zone-types';
   import { railBodyKey } from './rail-body-key';
   import RailKeyMenu from '../widget-menu/RailKeyMenu.svelte';
   import { hasOptions, railTip } from '../widget-menu/option-nodes';
-    import './alert-count-sources.svelte';
   import './rail-layer.css';
 
   let { edge = 'side' }: { edge?: RailEdge } = $props();
@@ -71,7 +70,7 @@
   );
   const sections = $derived(allSections.map((section) => (editing ? section : section.filter((entry) => !railIconHidden(entry.key)))));
   const drawnCount = $derived(sections.reduce((sum, section) => sum + section.length, 0));
-  const ratio = $derived(store.ratio);
+  const cuts = $derived(store.cuts);
   const shown = $derived(
     railSlideout.shown(edge).flatMap((key) => {
       const at = sections.findIndex((section) => section.some((entry) => entry.key === key));
@@ -103,8 +102,12 @@
   const look = $derived(dragLook(visibility.state, barDrag.preview));
   const barPlace = $derived(bar.mode === 'pinned' ? ['compact', 'cozy', 'detailed'].indexOf(bar.size) + 1 : 0);
   const present = $derived(look !== 'absent');
-  const drop = $derived(!editing ? undefined : drag.state.index !== null || aim.band !== null ? 'aimed' : drag.state.carrying ? 'open' : undefined);
-  const bands = $derived(editing && drag.state.carrying && canSplit(store.layout, railCarry.key));
+  const drop = $derived(!editing ? undefined : drag.state.index !== null || aim.split !== null ? 'aimed' : drag.state.carrying ? 'open' : undefined);
+  const ghostAfter = $derived(editing && drag.state.carrying ? aim.split : null);
+  const carriedKey = $derived(editing && drag.state.carrying ? railCarry.key : null);
+  const pinId = $derived(barPinIconId(edge));
+  const pinHidden = $derived(railIconHidden(pinId));
+  const pinDrawn = $derived(showsPin(look) && stripPinsOffered() && (editing || !pinHidden));
 
 
   let winW = $state(typeof window === 'undefined' ? 1280 : window.innerWidth);
@@ -179,17 +182,15 @@
       label: entry.head?.title ?? barLabel(entry.manifest),
       icon: entry.head?.icon ?? entry.manifest.icon,
       global: isGlobalWidget(entry.iconWidget),
-      badge: entry.cell,
-      options: entry.item.options,
       chip: editing && hasOptions(entry.manifest, entry.cell, editing),
       letter: letterOf(entry.key),
       tone: entry.manifest.iconTone,
     };
   }
 
-  const zones: Zone[] = [0, 1].map((s) => createZone({
+  const zones: Zone[] = Array.from({ length: RAIL_MAX_SECTIONS }, (_, s) => createZone({
     key: `bar:${edge}:${s}`,
-    tabs: () => (sections[s] ?? []).map((entry): TabRef => ({ key: entry.key, kind: 'widget', placement: entry.placement, source: store, options: entry.item.options })),
+    tabs: () => (sections[s] ?? []).map((entry): TabRef => ({ key: entry.key, kind: 'widget', placement: entry.placement, source: store })),
     active: () => shown.find((entry) => entry.section === s)?.key ?? null,
     select: press,
     panel: () => (shown.length > 0 && look === 'held' ? 'open' : 'closed'),
@@ -221,13 +222,21 @@
     {/if}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="rail__layer" data-rail-layer data-out={barOut(look)} inert={!barOut(look)} onkeydown={visibility.onkeydown}
-      style={!editing ? `--rail-pin-slot:${Math.min(BAR_SIZES[size][edge].keyW ?? 28, 28) + BAR_SIZES[size][edge].gap}px` : undefined}>
+      style={pinDrawn ? `--rail-pin-slot:${Math.min(BAR_SIZES[size][edge].keyW ?? 28, 28) + BAR_SIZES[size][edge].gap}px` : undefined}>
     {#if !editing && barOut(look)}
       <BarEdge {edge} label={t(horizontal ? 'widget_bars.bar_edge.bottom' : 'widget_bars.bar_edge.side')} place={barPlace} text={t(`widget_bars.size.${barPlace === 0 ? 'closed' : size}`)}
         onpress={(pos, extent) => barDrag.begin(pos, extent)} onkey={(key) => barDrag.key(key)} />
     {/if}
-    {#if showsPin(look)}<div class="rail__pin"><BarPin {edge} /></div>{/if}
-    <ZoneKeys zones={strip_zones} axis={spec.axis} {ratio} {labelAt} iconPx={BAR_SIZES[size][edge].icon} compact={size === 'compact'} {editing} {openKeys} {face} mark={keyMark} hiddenKey={railIconHidden} ontoggle={(key, hide) => void setRailIconHidden(key, hide)}
+    {#if pinDrawn}
+      <div class="rail__pin">
+        {#if editing}
+          <EditCell hidden={pinHidden} name={t('session_rail.pin_name')} ontoggle={() => void setRailIconHidden(pinId, !pinHidden)}><BarPin {edge} /></EditCell>
+        {:else}
+          <BarPin {edge} />
+        {/if}
+      </div>
+    {/if}
+    <ZoneKeys zones={strip_zones} axis={spec.axis} {cuts} {ghostAfter} ghostAimed={aim.onBox} {carriedKey} {labelAt} iconPx={BAR_SIZES[size][edge].icon} compact={size === 'compact'} {editing} {openKeys} {face} mark={keyMark} hiddenKey={railIconHidden} ontoggle={(key, hide) => void setRailIconHidden(key, hide)}
       empty={editing && drawnCount === 0 ? t(horizontal ? 'session_rail.empty_bottom' : 'session_rail.empty') : null}
       onpress={(_zone, key) => press(key)} {onedit} ondragstart={onpointerdown} />
     </div>
@@ -235,12 +244,9 @@
     {#each keyMenu ? [keyMenu] : [] as open (open)}
       <RailKeyMenu {edge} itemKey={open.key} anchor={open.anchor} onClose={() => (keyMenu = null)} />
     {/each}
-    {#if bands}
-      <RailBands {edge} aimed={aim.band} />
-    {/if}
     {#if shown.length && look === 'held'}
-      <RailSlideout entries={shown} zones={strip_zones} instant={railSlideout.restoring} sections={sections.length} {ratio} {edge}
-        onratio={(next) => store.previewRatio(next)} onratiosave={() => store.saveRatio()} onclose={close} />
+      <RailSlideout entries={shown} zones={strip_zones} instant={railSlideout.restoring} sections={sections.length} {cuts} {edge}
+        onratio={(index, next) => store.previewCut(index, next)} onratiosave={() => store.saveCuts()} onclose={close} />
     {/if}
   </nav>
 {/if}

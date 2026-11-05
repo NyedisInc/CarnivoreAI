@@ -106,7 +106,7 @@ def read_remote_evidence(manager: Any, remote_pass: RemotePass, session_id: str,
 
     from src.core.agent_family_display import resolve_family_for_display
     from src.core.attention.codex_pane import classify_codex_pane
-    from src.core.attention.evidence import FAMILY_CLAUDE, FAMILY_CODEX, Evidence
+    from src.core.attention.evidence import FAMILY_CLAUDE, FAMILY_CODEX, Evidence, EvidenceIdentity
     from src.core.attention.pane_markers import classify_pane_tail
     from src.core.listing_attention import attention_reads_for_name
 
@@ -157,5 +157,5 @@ def read_remote_evidence(manager: Any, remote_pass: RemotePass, session_id: str,
     return Evidence(
         tmux_liveness=liveness, agent_family=family_name, registry=registry,
         transcript=transcript, pane=pane, codex=codex, now=now,
-        identity=(backend.socket_name, name, epoch, None, uuid), codex_bind_uuid=codex_bind)
+        identity=EvidenceIdentity(backend.socket_name, name, epoch, None, uuid), codex_bind_uuid=codex_bind)
 

@@ -47,5 +47,3 @@ export function markFor(presetId: string): Mark {
     if (logo !== undefined && LOGOS[logo] !== undefined) return { paths: LOGOS[logo] };
     return { glyph: GLYPHS[presetId] ?? 'plug' };
 }
-
-export const MARKED_PRESETS: readonly string[] = [...Object.keys(LOGO_OF), ...Object.keys(GLYPHS)];

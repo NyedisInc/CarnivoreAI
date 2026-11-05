@@ -69,7 +69,11 @@ skips the wait). Headers: `TTL: 3600`, `Urgency: high`, `Topic: approval` (repea
 
 `GET /push/vapid-public-key`, `POST /push/subscriptions` (endpoint host and key lengths validated, 422 on
 refusal, 409 past 20), `GET /push/subscriptions` (public view: id, service host, device_id (server-set only), created_at,
-last_result; never an endpoint or key), `DELETE /push/subscriptions/{id}`, `POST /push/test` (429 inside a 5 s cooldown).
+last_result, `app_too`; never an endpoint or key), `DELETE /push/subscriptions/{id}`, `POST /push/test` (429 inside a 5 s cooldown).
+`app_too` (#2739) marks a subscription whose phone looks like it also has the iPhone app, so it gets every alert
+twice: same paired device as a native device row, or the same non-generic device label (`iphone`), since a home-screen
+web app and the app pair as separate devices (`src/core/web_push/double_delivery.py`). Settings warns and offers one
+click, keep the app and drop that web push (`DELETE /push/subscriptions/{id}`); nothing is ever dropped on its own.
 
 A paired computer's peer token is a different credential from an owner access token: `require_auth` refuses it with 401, which
 `tests/python/federation/test_federation_route_inventory.py` proves for every route not on its peer allow-list (these are not).

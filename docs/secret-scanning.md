@@ -298,3 +298,7 @@ you skip that step.
 ## Full docs-index description (moved from CLAUDE.md catalog table)
 
 You are touching the pre-commit hook, `.gitleaks.toml`, or `scripts/scan_secrets.py`. Carries the incident that caused all three. 
+
+## The GitHub publish scan (#2551)
+
+`src/core/pack/transport/publish.py:scan_for_secrets` reads every file the first commit would hold, in full (binary files too), before a private repo is created. Compressed archives (zip, gz, docx, xlsx, PDF streams) are scanned as their raw bytes only: a token inside a compressed member is not found, because nothing is unpacked. The ruling and the rest of the rules are in `docs/DECISIONS.md`, "the GitHub publish refuses a file its secret scan cannot read".

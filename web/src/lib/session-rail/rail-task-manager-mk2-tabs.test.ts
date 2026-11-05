@@ -53,7 +53,6 @@ import { huddle } from '../../cplugs/huddle/huddle.svelte';
 import { taskManagerPrefs } from '../../cplugs/huddle/task-manager-prefs.svelte';
 import { setLocale } from '../i18n/index.svelte';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
-import './alert-count-sources.svelte';
 
 setLocale('en');
 installPopoverPolyfill();

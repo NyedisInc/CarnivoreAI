@@ -9,6 +9,14 @@ export async function uploadToSession(sessionId: string, file: File): Promise<Up
   return { id: saved.path, name: saved.filename || file.name, mime: file.type, size: saved.size };
 }
 
+export async function uploadToAgent(agentId: number, file: File): Promise<UploadedFile> {
+  const form = new FormData();
+  form.append('file', file, file.name || `paste.${(file.type.split('/')[1] || 'bin').split(';')[0]}`);
+  const saved = await authFetch<{ path: string; filename: string; size: number }>(
+    `/swarm/agents/${agentId}/upload-file`, { method: 'POST', body: form });
+  return { id: saved.path, name: saved.filename || file.name, mime: file.type, size: saved.size };
+}
+
 export function withPaths(text: string, paths: readonly string[]): string {
   return [text, ...paths].filter(Boolean).join('\n');
 }

@@ -354,6 +354,15 @@ def test_a_staged_copy_with_scripts_outranks_an_index_that_declares_none(
 
         body = dict(GLOBAL)
         body["plan_token"] = sheet["plan_token"]
+        unconsented = app.client.post("/catalog/install", json=body)
+        assert unconsented.status_code == 409, unconsented.text
+        assert refusal(unconsented)["code"] == CONSENT_REQUIRED
+
+        body["consent"] = {
+            "digest": package.digest,
+            "body_sha": _sha_of(BODY),
+            "scripts": True,
+        }
         response = app.client.post("/catalog/install", json=body)
 
         assert ledger_rows(app) == []

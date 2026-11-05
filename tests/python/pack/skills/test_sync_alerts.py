@@ -20,7 +20,7 @@ from src.core.pack.machines.settings_custody import SettingsCustody  # noqa: E40
 from src.core.pack.skills.scan import scan_root  # noqa: E402
 from src.core.pack.skills.targets import receiver_roots  # noqa: E402
 
-LABELS = {"A": "nostromo", "B": "studio", "C": "newt", "X": "ripley"}
+LABELS = {"A": "nostromo", "B": "studio", "C": "newt", "X": "bravo"}
 
 
 class Rt:
@@ -121,7 +121,7 @@ def test_a_replaced_local_edit_raises_once_and_names_the_trash_folder(world) -> 
     doc, bundle = alpha_bundle(world.tmp)
     ap.apply_document(doc, bundle, roots, world.state)
     (row,) = rows(alerts.EDIT_PREFIX)
-    assert row["params"]["name"] == "demo" and row["params"]["alpha"] == "ripley" and row["severity"] == "info"
+    assert row["params"]["name"] == "demo" and row["params"]["alpha"] == "bravo" and row["severity"] == "info"
     assert Path(row["params"]["folder"]).name == ".carnivore-trash" and any(Path(row["params"]["folder"]).glob("demo-*"))
     ap.apply_document(doc, bundle, roots, world.state)
     assert len(rows(alerts.EDIT_PREFIX)) == 1
@@ -140,7 +140,7 @@ def test_placed_skills_alert_survives_a_dismissal_and_trash_placed_resolves_it(w
     for _ in range(3):
         alerts.check_placers(world.state)
     (row,) = rows(alerts.PLACER_PREFIX)
-    assert row["params"] == {"label": "ripley", "count": 1}
+    assert row["params"] == {"label": "bravo", "count": 1}
     remove = next(a for a in row["actions"] if a["id"] == "remove_placed")
     inner = remove["actions"][0]
     assert (inner["route"], inner["body"], inner["tone"]) == ("/pack/skills/trash-placed", {"from_install_id": "X"}, "danger")
@@ -158,7 +158,7 @@ def test_placed_skills_alert_survives_a_dismissal_and_trash_placed_resolves_it(w
     ap.apply_document({**doc2, "gen": 2}, bundle2, roots, world.state)
     alerts.check_placers(world.state)
     view = owner.receiver_view(SimpleNamespace(state=world.state), "B", "studio")
-    assert view["rows"][0]["placed_by"] == {"id": "X", "label": "ripley"}
+    assert view["rows"][0]["placed_by"] == {"id": "X", "label": "bravo"}
 
 
 def test_nothing_crashes_or_raises_without_state_or_a_configured_service(world, tmp_path) -> None:

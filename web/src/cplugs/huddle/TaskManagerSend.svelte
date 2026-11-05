@@ -9,7 +9,7 @@
   import TaskManagerTargetPick from './TaskManagerTargetPick.svelte';
   import TaskManagerMarkdown from './TaskManagerMarkdown.svelte';
 
-  let { compose = null }: { compose?: { text: string; add: () => Promise<void> } | null } = $props();
+  let { compose = null }: { compose?: { text: string; add: () => Promise<void>; blocked?: boolean } | null } = $props();
 
   const view = viewKey();
   let busy = $state(false);
@@ -69,7 +69,7 @@
           data-task-manager-send-queued={queued ? queued.count : 0}
           aria-label={words} title={words}
           aria-haspopup="dialog" aria-expanded={asking !== null}
-          disabled={busy || (waiting === 0 && !queued && !composing)} onclick={() => void press()}>{#if queued && fill}<span class="hdtl-fillbox" aria-hidden="true">{#key queued.resetAt}<span class="hdtl-fill" data-task-manager-send-fill data-task-manager-send-fill-from={queued.resetAt} data-task-manager-send-fill-due={queued.dueAt}
+          disabled={busy || (composing && !!compose?.blocked) || (waiting === 0 && !queued && !composing)} onclick={() => void press()}>{#if queued && fill}<span class="hdtl-fillbox" aria-hidden="true">{#key queued.resetAt}<span class="hdtl-fill" data-task-manager-send-fill data-task-manager-send-fill-from={queued.resetAt} data-task-manager-send-fill-due={queued.dueAt}
               style:--hdtl-dur="{fill.durationS}s" style:--hdtl-delay="-{fill.elapsedS}s" style:--hdtl-p={fill.fraction}></span>{/key}</span>{/if}<Icon name="send" size={FOOTER_ICON_PX} />{#if shown > 0}<span class="hdtl-count" data-task-manager-send-badge>{shown}</span>{/if}</button>
   {#if asking}
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->

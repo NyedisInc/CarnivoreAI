@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import structlog
 
-from src.core.pack.migrate import task_manager_history, task_manager_names
+from src.core.pack.migrate import task_manager_history
 from src.core.work import file_refs, tables
 from src.core.work.import_rows import import_rows
 
@@ -53,8 +53,6 @@ def export_list(state_dir: str, list_key: str) -> Dict[str, Any]:
             messages = _rows(conn.execute(f"SELECT * FROM work_messages WHERE item_id IN ({marks}) ORDER BY id", ids))
         groups = _rows(conn.execute("SELECT * FROM work_item_groups WHERE list_key = ? AND deleted = 0 ORDER BY position, id", (list_key,)))
         history = task_manager_history.export_of(conn, items)
-    for item in items:
-        item["state"] = task_manager_names.wire_state(item["state"], item.get("note"))
     return {"items": items, "messages": messages, "groups": groups, **history}
 
 

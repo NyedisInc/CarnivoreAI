@@ -3,7 +3,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { setDrawerEnv } from './env';
 import { setViewClassSource } from './view-class';
 import { setDrawerController } from './controller-ref';
-import { init, preferenceField, sectionShown, setSectionShown } from './section-visibility.svelte';
+import { init, preferenceField, sectionShown, setSectionShown, sleepingSessions } from './section-visibility.svelte';
+import { load } from './fetch';
 
 /** A preference bridge over a plain object; records every write. */
 function bridge(store: Record<string, unknown>, writes: Array<[string, unknown]>) {
@@ -27,6 +28,7 @@ afterEach(() => {
   setDrawerEnv(null);
   setDrawerController(null);
   vi.restoreAllMocks();
+  delete (globalThis as Record<string, unknown>).API;
 });
 
 test('both filters are on by default and nothing is written to read that', () => {
@@ -91,4 +93,22 @@ test('without the bridge the choice round-trips through this browser\'s own copy
   setSectionShown('open', false);
   init();
   expect(sectionShown('open')).toBe(false);
+});
+
+test('the list build counts the sleeping sessions before the filter, so the count holds while they are hidden', async () => {
+  const live = { tmux_session: 'cloude_live', agent_family: 'claude', session: { id: 'ses_live', working_dir: '/x' } };
+  const rec = (over: Record<string, unknown>) => ({ agent_family: 'claude', project_id: 1, project_name: 'p', working_dir: '/x', ...over });
+  (globalThis as Record<string, unknown>).API = {
+    listAttachableSessions: async () => [], listSessions: async () => [live], listSessionCompanions: async () => [],
+    listSessionRecords: async () => [
+      rec({ session_uuid: 'u-nap', tmux_name: 'carnivore_nap', asleep: true, lifecycle: 'asleep' }),
+      rec({ session_uuid: 'u-doze', tmux_name: 'carnivore_doze', asleep: true, lifecycle: 'asleep' }),
+    ],
+  };
+  setSectionShown('sleeping', true);
+  expect((await load(null)).rows.map((r) => r.name).sort()).toEqual(['carnivore_doze', 'carnivore_nap', 'cloude_live']);
+  expect(sleepingSessions()).toBe(2);
+  setSectionShown('sleeping', false);
+  expect((await load(null)).rows.map((r) => r.name)).toEqual(['cloude_live']);
+  expect(sleepingSessions(), 'hidden, still counted').toBe(2);
 });

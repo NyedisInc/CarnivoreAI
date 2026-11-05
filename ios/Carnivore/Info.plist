@@ -35,6 +35,10 @@
 	<string>carnivore uses the camera to scan the pairing code shown on your computer.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>carnivore connects to your computer on your local network.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>carnivore listens through the microphone when you tap the mic key to dictate into a terminal.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>carnivore turns your speech into text when you dictate into a terminal.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

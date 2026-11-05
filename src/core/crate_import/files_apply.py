@@ -19,6 +19,7 @@ from src.core.crate_import import files_place, undo
 from src.core.crate_import.analysis import Analysis
 from src.core.crate_import.env import ImportEnv
 from src.core.crate_import.hooks import PHASE_FILES, ApplyHooks
+from src.core.session_token_usage.transcript_absence import forget_all
 from src.core.crate_import.model import CLASS_GROW, CLASS_WRITE, ImportFailed
 
 logger = structlog.get_logger()
@@ -135,6 +136,13 @@ def _grow(p: files_place.Placement, reader: CrateReader, home: Path, env: Import
 
 
 def place_files(reader: CrateReader, a: Analysis, env: ImportEnv, hooks: ApplyHooks, import_id: str = "") -> PlacedFiles:
+    try:
+        return _place_files(reader, a, env, hooks, import_id)
+    finally:
+        forget_all()
+
+
+def _place_files(reader: CrateReader, a: Analysis, env: ImportEnv, hooks: ApplyHooks, import_id: str) -> PlacedFiles:
     writing = {c["id"] for c in a.conversations if c["class"] in (CLASS_WRITE, CLASS_GROW)}
     todo = [p for p in a.placements if p.action == files_place.ACT_PLACE and p.dest is not None
             and (p.record.conversation_id is None or p.record.conversation_id in writing)]

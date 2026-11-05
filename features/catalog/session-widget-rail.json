@@ -28,10 +28,9 @@
     "The side and bottom slide-outs open independently, so both can be out at once; the side rail always spans the full height and the bottom rail sits between the left sidebar and the side rail.",
     "Drag the slide-out's inner edge to make it wider (taller for the bottom rail, down to the height of the bottom strip itself), or focus it and use the arrow keys.",
     "Enter edit layout to drag widgets onto either rail from the widget drawer, along it to reorder, onto the other rail to move across, or off both to take them out.",
-    "In edit layout, drag a widget over the slide-out's place and drop it on the top or bottom band (left or right for the bottom rail) to split the rail in two; drag the last widget out of a section to join them again.",
-    "With a split rail, a key opens its widget beside the other section's last-used one; drag or arrow-key the divider between them to resize the two, and press either open key to close.",
+    "In edit layout, drag a widget over a bar: the area under it previews a split inside the bar (a dashed divider and an empty dashed box in the new half). Drop on the box to make a new area holding it. Any area can split again, up to four; drag the last widget out of an area to close it. A copy of the key follows the pointer, and Escape puts everything back.",
+    "With a split rail, a key opens its widget beside the other areas' last-used ones; drag or arrow-key each divider between areas to resize them, and press any open key to close.",
     "To see every task manager list in a rail instead of the selected session's project, drop the all task managers widget from the widget drawer onto either rail; it stays put when you switch sessions.",
-    "The changes, task manager and all task managers keys show a small number for what is waiting (changed files, items needing you); open the widget's settings and turn off 'alert count on the rail key' to hide it.",
     "A widget that has a local and a global variant (all task managers) wears a small globe in the lower right corner of its icon, on the rail keys, the slide-out, the widget drawer and the frame.",
     "To follow an agent's progress, drop the session tasks widget (this session) or the all session tasks widget (every session, with the globe mark) from the widget drawer onto either rail.",
     "To watch the pipeline, drop the pipeline widget (global, with the globe mark) from the widget drawer onto either rail; hover an add-on icon for its lag, conversations behind, last delivery and failures.",
@@ -41,7 +40,8 @@
     "The bottom bar holds the terminal widget by default: press its key to open a plain shell in the folder of the session shown, and press it again, or Escape from outside the terminal, to close it. The shell keeps running while the panel is closed.",
     "Click a slide-out's inner edge to pin it: it keeps the agent it was pinned on, while you open other agents, a layout or Home; the pinned section's stretch of the edge turns the accent color and its bar key shows that agent's letter, unique among the pinned agents. Click the edge again to unpin.",
     "A widget bar hides behind a thin handle: hover or click the handle to slide the bar out over the terminals, and it slides back once the pointer leaves; the pin icon at the end of the bar keeps it out. Right-click the bar (its empty space, handle or edge, or shift+f10 on the handle) and choose pin bar to keep it out; unpin bar lets it hide again.",
-    "Drag a widget bar's own border (the bottom bar's top edge, the right bar's left edge, or the thin auto-hide handle) to snap it to compact, cozy or detailed, or drag it all the way in to auto-hide; focus the border and use the arrow keys to step the size, home for cozy, end for detailed."
+    "Drag a widget bar's own border (the bottom bar's top edge, the right bar's left edge, or the thin auto-hide handle) to snap it to compact, cozy or detailed, or drag it all the way in to auto-hide; focus the border and use the arrow keys to step the size, home for cozy, end for detailed.",
+    "In edit layout the bars' pins show with the same eye badge as a key: hide a pin there and it is not drawn outside edit layout; right-click the bar for pin bar and unpin bar either way."
   ],
   "id": "session-widget-rail",
   "issues": [
@@ -49,7 +49,8 @@
     1492,
     1551,
     1682,
-    1728
+    1728,
+    2766
   ],
   "keywords": [
     "all huddles",
@@ -95,9 +96,13 @@
     "src/api/automation_routes.py",
     "web/src/opscenter/cells/automations/Cell.svelte",
     "web/src/opscenter/cells/automations-all/Cell.svelte",
-    "web/src/opscenter/cells/shell/Cell.svelte"
+    "web/src/opscenter/cells/shell/Cell.svelte",
+    "web/src/lib/session-rail/rail-cuts.ts",
+    "web/src/lib/session-rail/rail-aim.ts",
+    "web/src/lib/drag-preview/ghost.ts",
+    "web/src/lib/zone-shell/ZoneKeys.svelte"
   ],
-  "updated": "2026-10-25",
+  "updated": "2026-11-02",
   "where": [
     "Open a session at 1024 wide or more: the side rail runs down the right edge of the terminal grid and the bottom rail runs under it.",
     "Edit layout: both rails wear the dashed edit outline, an empty rail shows as a drop zone, and both take widgets from the widget drawer."

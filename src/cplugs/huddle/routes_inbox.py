@@ -1,18 +1,20 @@
 
 from __future__ import annotations
 
+import time
 from typing import Any, Dict, List, Optional
 
 import structlog
-from fastapi import HTTPException, Query
+from fastapi import HTTPException, Query, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, StrictBool
 
-from src.cplugs.huddle import client_writes, inbox, inbox_filing, inbox_renudge, send_queue, service
+from src.cplugs.huddle import client_writes, inbox, inbox_files, inbox_filing, inbox_renudge, send_queue, service, task_files
 from src.cplugs.huddle.inbox_store import InboxStore
 from src.cplugs.huddle.routes import Ctx, known_list, mapped_errors, router, run_store
 from src.cplugs.huddle.rules import JOE
 from src.cplugs.sdk import CplugContext
+from src.cplugs.sdk.uploads import read_validated_upload
 
 logger = structlog.get_logger()
 
@@ -24,6 +26,7 @@ class AddBoxRequest(BaseModel):
     text: str
     client_id: Optional[str] = None
     retry_age_s: Optional[float] = Field(None, ge=0, le=client_writes.MAX_RETRY_AGE_S)
+    file_ids: List[str] = Field(default_factory=list, max_length=inbox_files.MAX_PER_ENTRY)
 
 
 class FileRequest(BaseModel):
@@ -63,12 +66,21 @@ async def add_box(key: str, body: AddBoxRequest, ctx: CplugContext = Ctx) -> Dic
     inboxes = InboxStore(store)
 
     async def write() -> Dict[str, Any]:
+        staged = await run_store(lambda: inbox_files.resolve_staged(ctx.storage, key, body.file_ids))
         if key.isdigit() and await run_store(lambda: inboxes.pref(key)):
-            entry = await run_store(lambda: inboxes.add(key, body.text))
+            entry = await run_store(lambda: inboxes.add(key, body.text, staged=staged))
             await _renudge_stuck(inboxes, key)
             send_queue.queue_change(ctx, key)
             return {"queued": True, "entry": entry, "item": None}
-        return {"queued": False, "entry": None, "item": await run_store(lambda: store.add(key, body.text, actor=JOE))}
+        item = await run_store(lambda: store.add(key, body.text, actor=JOE))
+        if staged:
+            pastes = await run_store(lambda: task_files.folder_for(ctx, item["id"], task_files.PASTES))
+            kept = await run_store(lambda: inbox_files.attach_paths(store, item["id"], staged, pastes))
+            if kept == len(staged):
+                await run_store(lambda: inbox_files.discard(staged))
+            else:
+                logger.error("task_manager_inbox_files_kept_staged", item=item["id"], files=[p.name for p in staged])
+        return {"queued": False, "entry": None, "item": item}
 
     async def recover(since: float) -> Optional[Dict[str, Any]]:
         return await run_store(lambda: client_writes.find_inbox(store, key, body.text, since) or client_writes.find_added(store, key, body.text, since))
@@ -79,6 +91,24 @@ async def add_box(key: str, body: AddBoxRequest, ctx: CplugContext = Ctx) -> Dic
     with mapped_errors():
         return await client_writes.once(f"add:{key}", client_writes.check_id(body.client_id), body.retry_age_s,
                                         run=write, recover=recover, ref_of=client_writes.add_ref, replay=replay)
+
+
+@router.post("/lists/{key}/inbox/files")
+async def stage_file(key: str, file: UploadFile, ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """Stage one pasted or dropped file for the add box, before the entry exists (``inbox_files.py``). Output: {id, name, mime, size}. Errors: 400, 404 (unknown list), 413.
+
+    The size limits and bad-type refusals are the reply upload's. An id nobody claims within a day expires.
+    """
+    key, _name = await known_list(ctx, key)
+    data, name = await read_validated_upload(file)
+    saved = await run_store(lambda: inbox_files.stage(ctx.storage, key, name, data))
+    try:
+        keep = await run_store(lambda: InboxStore(service.store(ctx)).keep_file_ids(time.time()))
+        await run_in_threadpool(inbox_files.sweep, ctx.storage, keep)
+    except (OSError, HTTPException) as exc:
+        logger.warning("task_manager_inbox_files_sweep_failed", error=str(exc))
+    logger.info("task_manager_inbox_file_staged", list=key, size=saved["size"])
+    return saved
 
 
 @router.get("/inbox")

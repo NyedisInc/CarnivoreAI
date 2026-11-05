@@ -1,4 +1,7 @@
 import { activeGlobalThemeId } from '../themes-page/global-theme';
+import { primaryTmuxName } from '../../opscenter/api/host';
+import { PRIMARY_BIND_EVENT } from '../../opscenter/engine/primary-bind';
+import { WATCHED_EVENT, quietWatched } from '../notifications/quiet-watched.svelte';
 
 export const SHELL_VERSION = 1;
 
@@ -6,12 +9,17 @@ export type ToNative =
     | { type: 'ready' }
     | { type: 'registerPush' }
     | { type: 'pushRegistered'; id: string }
-    | { type: 'theme'; id: string };
+    | { type: 'theme'; id: string }
+    | { type: 'viewing'; session: string }
+    | { type: 'speechStart' }
+    | { type: 'speechStop' }
+    | { type: 'speechCancel' };
 
 export type FromNative =
     | { type: 'pushToken'; token: string; environment: string; payload_key: string; bundle_id: string; app_version: string }
     | { type: 'pushFailed'; reason: string }
-    | { type: 'openPath'; path: string };
+    | { type: 'openPath'; path: string }
+    | { type: 'speech'; kind: 'text' | 'end' | 'error'; text: string; reason: string };
 
 interface ShellWindow {
     carnivoreShell?: { version?: unknown; platform?: unknown; receive?: (message: unknown) => void };
@@ -56,6 +64,12 @@ export function parseFromNative(raw: unknown): FromNative | null {
     }
     if (m.type === 'pushFailed') return { type: 'pushFailed', reason: typeof m.reason === 'string' ? m.reason : 'failed' };
     if (m.type === 'openPath' && isSafePath(m.path)) return { type: 'openPath', path: m.path };
+    if (m.type === 'speech' && (m.kind === 'text' || m.kind === 'end' || m.kind === 'error')) {
+        return {
+            type: 'speech', kind: m.kind,
+            text: typeof m.text === 'string' ? m.text : '', reason: typeof m.reason === 'string' ? m.reason : 'failed',
+        };
+    }
     return null;
 }
 
@@ -81,5 +95,23 @@ export function bootNativeShell(): boolean {
     };
     sendTheme();
     new MutationObserver(sendTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    viewing = null;
+    sendViewing();
+    if (!viewingWired) {
+        viewingWired = true;
+        window.addEventListener(PRIMARY_BIND_EVENT, () => queueMicrotask(sendViewing));
+        document.addEventListener('visibilitychange', sendViewing);
+        window.addEventListener(WATCHED_EVENT, sendViewing);
+    }
     return true;
+}
+
+let viewing: string | null = null;
+let viewingWired = false;
+
+function sendViewing(): void {
+    const session = document.visibilityState === 'hidden' || !quietWatched.on ? '' : primaryTmuxName();
+    if (session === viewing) return;
+    viewing = session;
+    postToNative({ type: 'viewing', session });
 }

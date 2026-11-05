@@ -14,6 +14,7 @@
     model,
     payload,
     sessionId,
+    createdAt = null,
     focus,
     openOption,
     onclose,
@@ -25,6 +26,7 @@
     model: ReturnType<typeof sessionUsageLabels>;
     payload: SessionTokenUsage | null;
     sessionId: string;
+    createdAt?: string | null;
     focus: ControlSection | null;
     openOption: SessionControlOption;
     onclose: () => void;
@@ -40,7 +42,7 @@
       <IconButton label={t('usage.foot.close')} variant="close" icon="close" iconSize={14} onclick={() => onclose()} />
     </span>
     
-    <FootStats {model} {payload} layout={stacked ? 'tiles' : 'band'} oncollapse={() => onclose()} />
+    <FootStats {model} {payload} {createdAt} layout={stacked ? 'tiles' : 'band'} oncollapse={() => onclose()} />
     <ControlCenter {sessionId} {focus} layout={
       stacked ? 'accordion'
         : openOption === 'b' ? 'tabs'

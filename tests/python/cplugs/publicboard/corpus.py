@@ -152,10 +152,19 @@ def smuggling_cases() -> List[Case]:
     ]
 
 
+def capability_cases() -> List[Case]:
+    token = "pbl_" + "A" * 22 + "." + "B" * 43
+    out = [_get("capability in the query", f"/api/board?token={token}", BAD), _get("capability in a query-like key", f"/api/board?Carnivore-Board-Link={token}", BAD)]
+    out += [_get(f"capability in the path {name}", target, NOT_FOUND) for name, target in {
+        "after-board": f"/api/board/{token}", "as-frame-ticket": f"/f/{token}", "as-root-segment": f"/{token}", "as-asset": f"/app.js/{token}"}.items()]
+    out.append(_get("capability in the path, dot-dot", f"/f/../{token}", BAD))
+    return out
+
+
 def all_cases() -> List[Case]:
     controls = [Case("control: good GET reaches the handler", request("GET", "/api/board"), REACHED)]
     return (controls + encoding_cases() + path_shape_cases() + target_form_cases() + host_cases() + method_cases() + body_header_cases()
-            + upgrade_cases() + smuggling_cases())
+            + upgrade_cases() + smuggling_cases() + capability_cases())
 
 
 def untrusted_peer_cases() -> List[Case]:

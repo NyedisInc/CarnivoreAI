@@ -53,4 +53,15 @@ describe('WebPushPanel', () => {
         expect(calls).toContain('POST /push/test');
         expect(document.querySelector('[data-wp="note"]')?.textContent).toContain('1');
     });
+
+    test('a phone that also has the iphone app gets a warning whose click drops that web push', async () => {
+        const calls = await render({ supported: false, standalone: false }, [ROW, { ...ROW, id: 's2', app_too: true }] as never);
+        expect(document.querySelector('[data-wp-double="s1"]')).toBeNull();
+        (document.querySelector('[data-wp-double="s2"] button') as HTMLButtonElement).click();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        await tick();
+        flushSync();
+        expect(calls).toContain('DELETE /push/subscriptions/s2');
+        expect(calls).not.toContain('DELETE /push/subscriptions/s1');
+    });
 });

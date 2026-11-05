@@ -173,6 +173,11 @@
         }
     }
 
+    var tr = function (key, params) {
+        var n = window.WriteFailureNotice;
+        return n && typeof n.tr === 'function' ? n.tr(key, params) : key;
+    };
+
     function showError(message) {
         var el = document.getElementById('deep-link-error');
         if (!el) {
@@ -286,7 +291,7 @@
 
         var layoutLink = parseLayoutPath(window.location.pathname);
         if (layoutLink && layoutLink.bad !== undefined) {
-            showError('Invalid layout link - returned to home.');
+            showError(tr('router.invalid_layout_link'));
             try {
                 window.history.replaceState({}, '', '/');
             } catch (e) {
@@ -317,7 +322,7 @@
         }
 
         if (parsed.project === null) {
-            showError('Invalid project name in URL - returned to home.');
+            showError(tr('router.invalid_project_name'));
             try {
                 window.history.replaceState({}, '', '/');
             } catch (e) {

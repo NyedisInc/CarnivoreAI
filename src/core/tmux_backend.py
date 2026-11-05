@@ -144,6 +144,9 @@ class TmuxBackend(SessionBackend):
 
         self._viewer_probe: Optional[Callable[[], bool]] = viewer_probe
 
+    def pipe_cursor_basis(self) -> tuple:
+        return self._resolve_pipe_path(), self._rotation_started_at
+
 
     def has_viewers(self) -> bool:
         probe = self._viewer_probe

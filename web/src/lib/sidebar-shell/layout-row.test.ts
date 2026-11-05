@@ -13,7 +13,7 @@ function paint(): void {
         project_name: 'ProjectFoo', session_id: 'ses_a', session_uuid: 'su-a', kind: 'agent', agent_family: 'claude',
     }];
     const rows = base.concat(w.SessionSidebarLayouts.rows(base));
-    const ctrl: Record<string, unknown> = { _rows: rows, _listing: { ok: true }, _lastSig: null, _dragging: false, _missing: [], listEl };
+    const ctrl: Record<string, unknown> = { _rows: rows, _listing: { ok: true }, _dragging: false, _missing: [], listEl };
     ctrl.repaint = () => paintDrawer(ctrl);
     w.SessionSidebar = ctrl;
     unmountPanel(listEl.id);

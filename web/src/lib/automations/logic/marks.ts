@@ -4,7 +4,7 @@ export interface MarkPart {
   attrs: Record<string, string>;
 }
 
-export type MarkName = 'succeeded' | 'failed' | 'skipped' | 'waiting_on_you' | 'running' | 'claimed' | 'future' | 'neutral';
+export type MarkName = 'succeeded' | 'failed' | 'alerted' | 'skipped' | 'waiting_on_you' | 'running' | 'claimed' | 'future' | 'neutral';
 
 const STROKE = { fill: 'none', stroke: 'currentColor', 'stroke-width': '1.5' };
 
@@ -14,6 +14,7 @@ export const RUN_MARKS: Record<MarkName, MarkPart[]> = {
     { tag: 'rect', attrs: { x: '2.5', y: '2.5', width: '9', height: '9', ...STROKE } },
     { tag: 'path', attrs: { d: 'M1.5 12.5 12.5 1.5', stroke: 'currentColor', 'stroke-width': '1.5' } },
   ],
+  alerted: [{ tag: 'path', attrs: { d: 'M7 2 12.5 12h-11Z', ...STROKE } }],
   skipped: [{ tag: 'path', attrs: { d: 'M5.5 2.5h-3v9h9v-9h-3', ...STROKE } }],
   waiting_on_you: [{ tag: 'path', attrs: { d: 'M7 1 13 7 7 13 1 7Z', fill: 'currentColor' } }],
   running: [{ tag: 'rect', attrs: { x: '2.5', y: '2.5', width: '9', height: '9', ...STROKE, 'stroke-dasharray': '5 3' } }],
@@ -53,7 +54,7 @@ export type Light = { kind: 'off' } | { kind: 'ok' } | { kind: 'run'; status: st
 
 export function lightOf(enabled: boolean, schedulerPaused: boolean, newestStatus: string | null): Light {
   if (!enabled || schedulerPaused) return { kind: 'off' };
-  if (newestStatus && ['skipped', 'failed', 'running', 'waiting_on_you', 'claimed'].includes(newestStatus)) {
+  if (newestStatus && ['skipped', 'failed', 'alerted', 'running', 'waiting_on_you', 'claimed'].includes(newestStatus)) {
     return { kind: 'run', status: newestStatus };
   }
   return { kind: 'ok' };

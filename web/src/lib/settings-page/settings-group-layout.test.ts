@@ -69,7 +69,7 @@ test('a row alone in its tab is named by the tab (label kept for assistive tech 
     root.querySelector<HTMLButtonElement>('.oc-ptab[data-tab="sidebar"]')!.click();
     await settle();
     const solo = root.querySelector('[data-group="appearance.sidebar"] [data-setting-id="row_icons"] .st-row__label');
-    expect(solo?.classList.contains('st-row__label--solo')).toBe(true);
+    expect(solo?.classList.contains('st-row__label--solo')).toBe(false);
     root.querySelector<HTMLButtonElement>('.oc-ptab[data-tab="colors"]')!.click();
     await settle();
     expect(root.querySelector('[data-setting-id="theme"] .st-row__label')?.classList.contains('st-row__label--solo')).toBe(false);
@@ -88,17 +88,18 @@ test('panel-sized rows span the group; small controls share its grid', async () 
         await settle();
         const row = appearance.querySelector(`[data-setting-id="${def.id}"]`)!;
         expect(row.classList.contains('oc-wide'), def.id).toBe(isWideControl(def.control));
-        expect(row.classList.contains('oc-wide'), def.id).toBe(def.id !== 'theme');
+        expect(row.classList.contains('oc-wide'), def.id).toBe(def.id !== 'theme' && def.id !== 'row_lights' && def.id !== 'rail_magnify' && def.id !== 'rail_dock_names' && !def.id.startsWith('sidebar_show_'));
     }
     unmount(handle!);
     handle = null;
     document.body.innerHTML = '';
 
     const general = await open('general');
-    general.querySelector<HTMLButtonElement>('.oc-ptab[data-tab="paths"]')!.click();
-    await settle();
-    for (const def of settingsIn('general').filter((d) => d.id !== 'time_zone' && d.id !== 'app_updates')) {
-        expect(general.querySelector(`[data-setting-id="${def.id}"]`)!.classList.contains('oc-wide'), def.id).toBe(false);
+    const panels = new Set(['time_zone', 'checkpoints_usage', 'app_updates']);
+    for (const def of settingsIn('general')) {
+        general.querySelector<HTMLButtonElement>(`.oc-ptab[data-tab="${slugOf(def.group)}"]`)!.click();
+        await settle();
+        expect(general.querySelector(`[data-setting-id="${def.id}"]`)!.classList.contains('oc-wide'), def.id).toBe(panels.has(def.id));
     }
 });
 

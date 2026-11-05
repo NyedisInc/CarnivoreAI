@@ -1,4 +1,5 @@
 import { faceFacts } from '../../../lib/sessions/agent-marks';
+import { sessionBarTint } from '../../../lib/sidebar-shell/tint';
 import { tick } from 'svelte';
 import { terminalLayout } from '../../engine/layout.svelte';
 import { activeTabFor, openTab, removeTab, replaceTab, selectTab, tabsFor } from '../../engine/tab-groups.svelte';
@@ -40,6 +41,7 @@ import { layoutActive } from '../../layouts/mode.svelte';
 import { anchorGone, removeAnchor } from '../../layouts/page.svelte';
 import type { TabSource } from '../../layouts/phone.svelte';
 import { createTabContextMenu } from './tab-context-menu.svelte';
+import { failureReason } from '../../../lib/errors/failure-reason';
 
 function displayName(label: string | null, tmuxName: string | null): string | null {
   const resolver = (globalThis as {
@@ -126,6 +128,7 @@ export function createTabController(instance: () => string, focusPane: (tab: str
         ) || sessionId,
         family: row?.agent_family ?? sleeping?.agent_family ?? null,
         tint: accentFor(row?.pinned_theme ?? sleeping?.pinned_theme ?? null),
+        bar: sessionBarTint(row?.project_id ?? sleeping?.project_id ?? stored?.project_id ?? null, accentFor(row?.pinned_theme ?? sleeping?.pinned_theme ?? null)),
         face: row
           ? faceFacts(row, { transport: transportFor(sessionId) })
           : faceFacts({ agent_family: sleeping?.agent_family ?? null, unread: sleeping?.unread }, { lifecycle: sleeping ? 'asleep' : undefined, transport: transportFor(sessionId) }),
@@ -135,6 +138,10 @@ export function createTabController(instance: () => string, focusPane: (tab: str
     }),
   );
 
+  const holdsInput = $derived(
+    inputFocus.owner === active || (inputFocus.owner === null && inputFocus.selected === active),
+  );
+
   const activePin = $derived.by(() => {
     if (isNonSessionTab(active)) return null;
     const row = rowFor(sessions.data, sessionOf(active));
@@ -142,7 +149,11 @@ export function createTabController(instance: () => string, focusPane: (tab: str
   });
 
   function select(tab: string): void {
-    if (tab === active) return;
+    if (tab === active) {
+      if (!isNonSessionTab(tab)) inputFocus.claim(tab);
+      void tick().then(() => focusPane(tab));
+      return;
+    }
     if (!isNonSessionTab(tab)) inputFocus.claim(tab);
     if (source) source.select(tab);
     else selectTab(terminalLayout, instance(), tab);
@@ -204,13 +215,18 @@ export function createTabController(instance: () => string, focusPane: (tab: str
 
   /* there is nothing */
   let blueprintRows = $state<Blueprint[]>([]);
+  let blueprintsFailed = $state(false);
   $effect(() => {
     if (!newAnchor) return;
     void listBlueprints()
       .then((list) => {
+        blueprintsFailed = list.status !== 'ok';
         if (list.status === 'ok') blueprintRows = list.blueprints;
       })
-      .catch(() => {});
+      .catch((error: unknown) => {
+        blueprintsFailed = true;
+        console.warn('terminal-group: the blueprint list could not be read', error);
+      });
   });
 
   function launchBlueprintFromMenu(blueprint: Blueprint): void {
@@ -247,7 +263,7 @@ export function createTabController(instance: () => string, focusPane: (tab: str
       if (terminalLayout.session === layoutKey) openPage(made.id);
     } catch (err) {
       console.error('tab menu: browser create refused', err);
-      terminalLayout.announce(t('browser.create_failed', { detail: err instanceof Error ? err.message : String(err) }));
+      terminalLayout.announce(t('browser.create_failed', { detail: failureReason(err) }));
     }
   }
 
@@ -317,6 +333,7 @@ export function createTabController(instance: () => string, focusPane: (tab: str
             openBlueprints();
           },
           blueprints: blueprintRows,
+          blueprintsFailed,
           launchBlueprint: launchBlueprintFromMenu,
           openSessionIds: new Set(tabs.filter((tab) => !isNonSessionTab(tab)).map(sessionOf)),
           pages: pagesAllowed
@@ -339,6 +356,9 @@ export function createTabController(instance: () => string, focusPane: (tab: str
     },
     get active() {
       return active;
+    },
+    get holdsInput() {
+      return holdsInput;
     },
     get items() {
       return items;

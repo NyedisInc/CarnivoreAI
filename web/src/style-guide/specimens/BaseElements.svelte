@@ -35,6 +35,12 @@
       <button type="button" data-btn="quiet" data-size="sm">quiet sm</button>
       <a href="#base-elements" data-btn="secondary" data-size="sm">a link as a button</a>
     </div>
+    <div class="sg-be__row">
+      <button type="button" data-btn="row" data-size="auto">row, auto</button>
+      <button type="button" data-btn="quiet" data-size="bare">quiet, bare</button>
+      <button type="button" data-btn="row" data-size="auto" data-overflow="visible">row, auto, visible</button>
+      <button type="button" data-btn="quiet" data-size="bare" data-focus="ink">quiet, bare, focus follows the text</button>
+    </div>
     <div class="sg-be__field"><label for={id('name')}>a text field</label><input id={id('name')} type="text" placeholder="say it in your words" /></div>
     <div class="sg-be__field"><label for={id('pick')}>a select</label><select id={id('pick')}><option>keep it</option><option>replace it</option></select></div>
     <div class="sg-be__field"><label for={id('note')}>a textarea</label><textarea id={id('note')} rows="2" placeholder="a longer note"></textarea></div>

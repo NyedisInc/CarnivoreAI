@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 
 from tests.python.release import test_deploy_detached_engine as harness
+from tests.python.release.deploy_text import script_text
 from tests.python.release.test_deploy_restart_on_refusal import _block
 
 OLD_VERSION = "1.0.0"
@@ -27,7 +28,7 @@ def _installed_version(app: Path) -> str:
 
 
 def _run(tmp: Path, tail: str, mv_fails: bool = False, staged_version: str = NEW_VERSION) -> tuple[subprocess.CompletedProcess, list[str], Path]:
-    text = harness.SCRIPT.read_text(encoding="utf-8")
+    text = script_text()
     app, stage = tmp / "Carnivore.app", tmp / "stage"
     _write_app(app / "Contents", OLD_VERSION)
     _write_app(stage / "Carnivore.app" / "Contents", staged_version)
@@ -61,7 +62,7 @@ def _run(tmp: Path, tail: str, mv_fails: bool = False, staged_version: str = NEW
 
 
 def _swap_segment() -> str:
-    text = harness.SCRIPT.read_text(encoding="utf-8")
+    text = script_text()
     return text[text.index('mkdir "$OLD"\n'): text.index('touch "$APP"')]
 
 

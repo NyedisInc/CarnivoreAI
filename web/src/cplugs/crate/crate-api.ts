@@ -1,4 +1,4 @@
-import { ApiError, authFetch, type Translate } from '../sdk';
+import { ApiError, authFetch, type Translate, failureReason } from '../sdk';
 
 export const ROUTE = '/cplugs/crate';
 export const JOBS_FAMILY = 'cplug.crate.jobs';
@@ -323,7 +323,7 @@ export function errorSentence(error: unknown, t: Translate): string {
     const r = refusal(error);
     const code = str(r?.code);
     if (code) return codeSentence(code, r?.detail, t);
-    return error instanceof Error ? error.message : String(error);
+    return failureReason(error);
 }
 
 export function unencryptedFindings(job: JobView | null): number {

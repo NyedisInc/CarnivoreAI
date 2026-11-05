@@ -1,5 +1,6 @@
 <script lang="ts">
   import SidebarRail from '../sidebar-widgets/SidebarRail.svelte';
+  import { sessionSidebar, type SidebarPick } from '../legacy-globals';
   import AlertBell from '../app-alerts/AlertBell.svelte';
   import TabKey, { keyFace } from '../zone-shell/TabKey.svelte';
   import Icon from '../../opscenter/ui/Icon.svelte';
@@ -22,7 +23,7 @@
   });
 
   function openDrawer(): void {
-    (globalThis as { SessionSidebar?: { open?: () => void } }).SessionSidebar?.open?.();
+    sessionSidebar<SidebarPick<'open'>>()?.open();
   }
 </script>
 
@@ -37,7 +38,7 @@
 <div class="mr" data-tooltip-side="right" role="presentation" onkeydown={onRailShellMenuKey}>
   {#if railed}
     <AlertBell place="rail" />
-    <SidebarRail pin={reopen} pinName={t('drawer.rail.open')} stats />
+    <SidebarRail pin={reopen} pinName={t('drawer.rail.open')} stats pinHideable={false} />
   {/if}
 </div>
 <RailMenu closed />

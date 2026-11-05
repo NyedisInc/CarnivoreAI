@@ -2,21 +2,30 @@
 from __future__ import annotations
 
 import json
-from contextlib import closing
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from contextlib import closing, contextmanager
+from typing import TYPE_CHECKING, Any, Dict, Iterator, Optional
 
 import structlog
 
 from src.cplugs.huddle import answers as answer_wire, kinds, moves, rich_ask, rules, structured, triggers, waits
 from src.cplugs.huddle.roles import ask as carnivore_ask
 from src.cplugs.huddle.cards import flow
-from src.cplugs.huddle.rules import JOE, TaskManagerAnswered, TaskManagerInvalid, TaskManagerNotFound
+from src.cplugs.huddle.rules import JOE, TaskManagerAnswered, TaskManagerAnswerInvalid, TaskManagerInvalid, TaskManagerNotFound
 from src.cplugs.huddle.wire import MSG_COLS, message_dict
 
 if TYPE_CHECKING:
     from src.cplugs.huddle.store import TaskManagerStore
 
 logger = structlog.get_logger()
+
+
+@contextmanager
+def _naming_item(item_id: int) -> Iterator[None]:
+    try:
+        yield
+    except TaskManagerAnswerInvalid as exc:
+        exc.question["item"] = item_id
+        raise
 
 
 class AnswerWriter:
@@ -68,7 +77,8 @@ class AnswerWriter:
             if row["answered"]:
                 return self._replay(conn, row, answers)
             questions = structured.form_of_row(row)
-            checked = answer_wire.validate(questions, answers)
+            with _naming_item(row["item_id"]):
+                checked = answer_wire.validate(questions, answers)
             text = rules.clean_text(answer_wire.text_of(questions, checked), "text", rules.MAX_MESSAGE)
             item = store._row(conn, row["item_id"])
             seq = store._next_seq(conn)
@@ -85,8 +95,9 @@ class AnswerWriter:
                              "revision = revision + 1 WHERE id = ?", (rules.OPEN, item["id"]))
             carnivore = None
             if row["category"] in carnivore_ask.CARNIVORE_CATEGORIES:
-                carnivore = {"category": row["category"], "choice": carnivore_ask.apply(
-                    conn, item, row["category"], checked.get(carnivore_ask.QUESTION_ID, {}).get("choice", ""), store._clock(), checked)}
+                with _naming_item(item["id"]):
+                    carnivore = {"category": row["category"], "choice": carnivore_ask.apply(
+                        conn, item, row["category"], checked.get(carnivore_ask.QUESTION_ID, {}).get("choice", ""), store._clock(), checked)}
             store._mark(conn, item["id"], JOE, seq)
             message = message_dict(conn.execute(f"SELECT {MSG_COLS} FROM work_messages WHERE id = ?", (cur.lastrowid,)).fetchone())
         store._commit_notify(item["list_key"])

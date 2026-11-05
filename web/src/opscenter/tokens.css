@@ -1,5 +1,6 @@
 
 :root {
+  --oc-light-line-l: 0.6;
   --oc-ground-chrome: #02161e;
   --oc-ground-page: #02161e;
   --oc-ground-panel: #02161e;
@@ -162,6 +163,19 @@
   --oc-pp-space-28: 28px;
   --oc-pp-space-40: 40px;
   --oc-pp-space-56: 56px;
+  --oc-mask-solid: #000;
+  --oc-gap-hair: 1px;
+  --oc-pad-snug: 3px;
+  --oc-gap-mark: 7px;
+  --oc-gap-parts: 10px;
+  --oc-card-pad-y: 10px;
+  --oc-cell-pad-x: 10px;
+  --oc-tab-end-pad: 14px;
+  --oc-topbar-pad-left: 22px;
+  --oc-topbar-word-gap: 9px;
+  --oc-topbar-chip-gap: 18px;
+  --oc-head-chevron-room: 21px;
+  --oc-fs-tab-numeral: calc(var(--oc-fs-figure) * 2);
   --oc-fs-control: var(--oc-fs-status);
   --oc-fs-heading: 16px;
   --oc-fs-run-title: 14px;
@@ -207,6 +221,13 @@
   --oc-widget-clear: calc(var(--oc-widget-inset) + var(--oc-space-5));
   --oc-mono-advance: 0.62;
   --oc-tap: 44px;
+  --oc-rail-key: var(--oc-tap);
+  --oc-grip-hit: 8px;
+  --oc-grip-line: 2px;
+  --oc-section-line: 3px;
+  --oc-section-hit: 9px;
+  --oc-radius-frame: 0px;
+  --oc-pane-inset: 2px;
 
   --oc-motion-fast: 120ms;
   --oc-motion: 160ms;
@@ -224,11 +245,13 @@
 :root,
 [data-session-theme] {
   --color-tabstrip-bg: initial;
+  color-scheme: var(--color-scheme, dark);
   --oc-ground-chrome: var(--color-header-bg, #02161e);
   --oc-ground-page: var(--color-bg-page, #02161e);
   --oc-on-accent: var(--color-on-accent, #0a0d0e);
-  --oc-focus-lift: oklch(from var(--oc-ground-page) clamp(0, (0.6 - l) * 1000, 1) 0 0);
+  --oc-focus-lift: oklch(from var(--oc-ground-page) clamp(0, (var(--oc-light-line-l) - l) * 1000, 1) 0 0);
   --oc-focus-keep: 75%;
+  --oc-focus-quiet: color-mix(in oklab, var(--oc-text-muted) 70%, var(--oc-ground-page));
   --oc-ground-panel: var(--color-bg, #02161e);
   --oc-ground-titlerow: var(--color-header-bg, #02161e);
   --oc-ground-band: var(--oc-ground-chrome);
@@ -290,6 +313,7 @@
   --oc-purple-deep: oklch(from var(--color-fg, #cbd6d9) calc(0.22 + 0.5 * l) 0.2 292);
   --oc-violet: oklch(from var(--color-fg, #cbd6d9) calc(0.22 + 0.55 * l) 0.13 295);
   --oc-pink: oklch(from var(--color-fg, #cbd6d9) calc(0.3 + 0.5 * l) 0.16 350);
+  --oc-locked: oklch(from var(--color-fg, #cbd6d9) calc(0.3 + 0.55 * l) 0.14 310);
   --oc-kind-mod: oklch(from var(--color-fg, #cbd6d9) calc(0.30 + 0.40 * l) 0.13 40);
   --oc-kind-skill: oklch(from var(--color-fg, #cbd6d9) calc(0.22 + 0.50 * l) 0.20 292);
   --oc-kind-theme: oklch(from var(--color-fg, #cbd6d9) calc(0.30 + 0.62 * l) 0.02 80);
@@ -338,6 +362,17 @@
   --oc-violet: #743677;
 }
 
+@media (min-width: 701px) {
+  :root {
+    --oc-rail-key: 28px;
+  }
+}
+
+:root[data-theme="dracula"],
+[data-session-theme="dracula"] {
+  --oc-locked: oklch(from var(--color-fg, #cbd6d9) calc(0.3 + 0.55 * l) 0.14 57);
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root {
     --oc-motion-fast: 0ms;
@@ -360,6 +395,7 @@
     --oc-purple-light: #caa5e7;
     --oc-purple-deep: #9672fe;
     --oc-pink: #f08cc0;
+    --oc-locked: #d29cfa;
     --oc-kind-mod: #da7957;
     --oc-kind-skill: #9672fe;
     --oc-kind-theme: #dfd7ca;

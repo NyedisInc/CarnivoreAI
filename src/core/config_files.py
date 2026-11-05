@@ -323,14 +323,19 @@ def _pinned_file(path_text: str, trusted_root: Optional[str] = None) -> tuple[Pa
     return path, Path(path.anchor)
 
 
+def resolve_row_path(root_id: str, rel_path: str, project_path: Optional[str], *, pinned_absolute: bool = False,
+                     trusted_root: Optional[str] = None) -> tuple[Path, Optional[Path]]:
+    if pinned_absolute:
+        return _pinned_file(rel_path, trusted_root)
+    roots = resolve_roots(project_path)
+    root = roots[root_id] if root_id in roots else None
+    return resolve_safe_path(root_id, rel_path, project_path), root
+
+
 def read_file(root_id: str, rel_path: str, project_path: Optional[str], *, _pinned_absolute: bool = False,
               _trusted_root: Optional[str] = None) -> dict:
-    if _pinned_absolute:
-        path, root = _pinned_file(rel_path, _trusted_root)
-    else:
-        roots = resolve_roots(project_path)
-        root = roots[root_id] if root_id in roots else None
-        path = resolve_safe_path(root_id, rel_path, project_path)
+    path, root = resolve_row_path(root_id, rel_path, project_path, pinned_absolute=_pinned_absolute,
+                                  trusted_root=_trusted_root)
     if not path.is_file():
         raise NotAFileError("not a file")
     try:

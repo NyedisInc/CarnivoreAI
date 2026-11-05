@@ -52,7 +52,7 @@ console.log('[SlashFavorites Module] Loading...');
                 }).catch(function (err) {
                     console.error('[SlashFavorites] toggle failed', err);
                     btn.disabled = false;
-                    var tr = window.CloudeI18n && window.CloudeI18n.t ? window.CloudeI18n.t.bind(window.CloudeI18n) : function (k) { return k; };
+                    var tr = globalThis.CloudeTr;
                     var detail = err && err.message ? err.message : tr('slash.favorites.unknown_error');
                     if (window.Router && typeof window.Router.showError === 'function') {
                         window.Router.showError(tr('slash.favorites.toggle_failed', { detail: detail }));

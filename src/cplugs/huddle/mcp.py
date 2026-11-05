@@ -6,7 +6,7 @@ import dataclasses
 from pathlib import Path
 from typing import Any, Optional
 
-from src.cplugs.huddle import actor_log, answers as answers_wire, artifacts, batch, inbox, inbox_filing, mcp_artifact, mcp_inbox, callers, changes_view, files, flags, focus, fork as forks, from_project, github_issue, groups, held, item_marker, item_owner, kinds, lane, lean_read, lifecycle, owner_read, own_list, progress, reply_paths, review, review_checks, rich_ask, rules, schedule, scheduled, service, steer, structured, perceived_ask, title as titles, triggers, your_items
+from src.cplugs.huddle import actor_log, answers as answers_wire, artifacts, batch, inbox, inbox_filing, mcp_artifact, mcp_inbox, callers, changes_view, files, flags, fork as forks, from_project, github_issue, groups, held, item_marker, item_owner, kinds, lane, lean_read, lifecycle, owner_read, own_list, progress, reply_paths, review, review_checks, rich_ask, rules, schedule, scheduled, service, steer, structured, perceived_ask, title as titles, triggers, your_items
 from src.cplugs.huddle import child_hold, mcp_file_remove, mcp_wait, owner_guards, question_toasts, reply_return, review_lock, schedule_offer, state_request, waits
 from src.cplugs.huddle.roles import dnd_gate, mcp_lead, mcp_tags, mcp_roles, service as roles_service
 from src.cplugs.huddle.rules import CLAUDE, JOE, QUESTION, TaskManagerError, TaskManagerNotFound
@@ -35,17 +35,17 @@ _ACTION_SCHEMA = {"type": "string", "enum": list(review.ACTIONS),
 _REVIEW_SCHEMAS = {
     "review_description": {"type": "string", "maxLength": review.MAX_DESCRIPTION, "description": "What to review; renders markdown. '' clears."},
     "review_summary": {"type": "string", "maxLength": review.MAX_SUMMARY,
-                       "description": "ONE plain line (about 140 characters) above the folded description; set it when review_description is long. '' clears."},
-    "review_link": {"type": "string", "maxLength": review.MAX_LINK, "description": "An in-app path starting with / or an http(s) URL, only if one helps. '' clears."},
-    "review_where": {"type": "string", "maxLength": review.MAX_WHERE, "description": "A short place name like 'Settings, Huddle tab', not a click path. '' clears."},
-    "review_action": {**_ACTION_SCHEMA, "description": "What the owner owes: tick, push, answer, read, none. Unset: tick. '' clears."},
+                       "description": "One plain line (about 140 characters) above a long review_description. '' clears."},
+    "review_link": {"type": "string", "maxLength": review.MAX_LINK, "description": "An in-app path starting with / or an http(s) URL. '' clears."},
+    "review_where": {"type": "string", "maxLength": review.MAX_WHERE, "description": "A short place name, not a click path. '' clears."},
+    "review_action": {**_ACTION_SCHEMA, "description": "What the owner owes. Unset: tick. '' clears."},
 }
 _REVIEW_CHECKS_SCHEMA = {
     review_checks.FIELD: {"type": "array", "items": {"type": "string"}, "description": "With review: a checklist the owner ticks. Replaces the list; [] clears."},
 }
 _TITLE_SCHEMA = {
     titles.FIELD: {"type": "string", "maxLength": titles.MAX_TITLE,
-                   "description": f"A short descriptive title (at most {titles.MAX_TITLE} characters) the row shows in place of the text. Any item. '' clears."},
+                   "description": f"A short title (at most {titles.MAX_TITLE} characters) the row shows instead of the text. Any item. '' clears."},
 }
 _PERCEIVED_ASK_SCHEMA = {
     perceived_ask.FIELD: {"type": "string", "maxLength": perceived_ask.MAX_PERCEIVED_ASK,
@@ -53,16 +53,16 @@ _PERCEIVED_ASK_SCHEMA = {
 }
 _MARKER_SCHEMA = {
     item_marker.FIELD: {"type": "string", "enum": [*item_marker.MARKERS, ""],
-                        "description": "Mark the task for the owner with one solid shape (one per task, last write wins; it shows in the row's margin). '' clears. Replaces flag_color."},
+                        "description": "One solid shape marks the task in the owner's row margin (last write wins). '' clears. Replaces flag_color."},
 }
 _LEGACY_FLAG_ARGS = frozenset({"flag_color", "flag_reason"})
 _GITHUB_ISSUE_SCHEMA = {
     github_issue.FIELD: {"type": "string", "maxLength": github_issue.MAX_URL,
-                         "description": "The GitHub issue this item tracks: a full https://github.com/<owner>/<repo>/issues/<number> URL. '' clears."},
+                         "description": "The GitHub issue it tracks: a full https://github.com/<owner>/<repo>/issues/<n> URL. '' clears."},
 }
 _FIRE_AT_SCHEMA = {
     "fire_at": {"type": "string", "maxLength": 40,
-                "description": "Send to the item's session when it is due: ISO 8601 WITH a UTC offset, in the future, e.g. 2026-10-06T15:00:00-04:00; the offset fixes the instant, whatever the app's configured time zone. '' cancels."},
+                "description": "Send to the item's session when it is due: ISO 8601 WITH a UTC offset, in the future, e.g. 2026-10-06T15:00:00-04:00; the offset fixes the instant. '' cancels."},
 }
 FORMAT_HINT = ("Markdown renders: **bold**, *italic*, `code`, ``` fences (drawn as a command area with a copy button), - or 1. lists (one nested level), # and ## headings, "
                "[text](https://...) links, pipe tables. HTML shows as text.")
@@ -104,7 +104,7 @@ _ASK_SCHEMA = {
 _REPEAT_SCHEMA = {
     "repeat": {"type": ["object", "string"], "description": (
         "Re-arm after each fire: {freq: daily, time: 'HH:MM'} | {freq: weekly, byweekday: [0-6, Monday is 0], time} | {freq: hourly, interval: N} | "
-        "{freq: monthly, monthday: 1-31, time}. 24-hour times in the app's configured time zone (default America/New_York; preferences_get time_zone). '' stops; todo pauses it.")},
+        "{freq: monthly, monthday: 1-31, time}. 24-hour times in the app's time zone (default America/New_York). '' stops; todo pauses it.")},
 }
 _PAUSE_SCHEMA = {"paused": {"type": "boolean", "description": "true pauses a repeating schedule, false resumes it."}}
 _FIRE_NOW_SCHEMA = {"fire_now": {"type": "boolean", "description": "true sends to the item's session now (waking it first); a repeat keeps its next time. Refused for an approved or todo item."}}
@@ -127,7 +127,7 @@ _LIST_READ_SCHEMA = {
     "cursor": {"type": ["integer", "string"], "description": "The previous answer's next_cursor (a paging offset, not the change cursor)."},
     "include_thread": {"type": "boolean", "description": "Same as fields thread. Default false."},
 }
-_FORK_STATE_ENUM = [s for s in _CLAUDE_STATE_ENUM if rules.canonical_state(s, count=False) != rules.WAITING]
+_FORK_STATE_ENUM = [s for s in _CLAUDE_STATE_ENUM if s != rules.WAITING]
 _FORK_STATE_SCHEMA = {
     "fork_state": {"type": "string", "enum": _FORK_STATE_ENUM,
                    "description": "OPTIONAL. The fork's own state, task_manager_update's values (approval is the owner's alone). Unset: open."},
@@ -470,7 +470,7 @@ async def _add(ctx: CplugContext, caller: AgentCaller, args: dict) -> dict:
         title=args.get(titles.FIELD), created_key=created_key, fire_at=args.get("fire_at"), repeat=args.get("repeat"),
         marker=_marker_arg(args),
         github_issue_url=args.get(github_issue.FIELD), perceived_ask=args.get(perceived_ask.FIELD),
-        state=rules.canonical_state(args.get("state"))))
+        state=args.get("state")))
     added = await mcp_tags.tag_filer(ctx, added, created_key, external=caller.external)
     if added.get("kind") == rules.QUESTION:
         added = await _question_post(ctx, caller, added)
@@ -493,7 +493,6 @@ async def huddle_add(ctx: CplugContext, caller: AgentCaller, args: dict) -> dict
 
 @own_list.guarded(dnd=True)
 async def _update(ctx: CplugContext, caller: AgentCaller, args: dict) -> dict:
-    args = rules.canonical_state_args(args)
     item = _item_id(args)
     allowed = {"item", "text", "state", "kind", "expected_revision", "fire_at", "repeat", "paused", "fire_now", titles.FIELD, perceived_ask.FIELD, item_marker.FIELD, *_LEGACY_FLAG_ARGS, github_issue.FIELD, *review.FIELDS, review_checks.FIELD, mcp_tags.FIELD, *waits.ARGS}
     unknown = sorted(set(args) - allowed)
@@ -537,7 +536,6 @@ async def huddle_update(ctx: CplugContext, caller: AgentCaller, args: dict) -> d
 
 @own_list.guarded(dnd=True)
 async def _fork(ctx: CplugContext, caller: AgentCaller, args: dict) -> dict:
-    args = rules.canonical_state_args(args)
     item = _item_id(args)
     allowed = {"item", "title", "text", "list", "group", "fork_state", "parent_state", child_hold.FORK_ARG, *review.FIELDS}
     unknown = sorted(set(args) - allowed)
@@ -741,35 +739,6 @@ async def huddle_role_set(ctx: CplugContext, caller: AgentCaller, args: dict) ->
     return tool_result(await mcp_roles.role_set(ctx, caller, args, caller_key=lambda: _caller_key(ctx, caller)))
 
 
-async def huddle_focus(ctx: CplugContext, caller: AgentCaller, args: dict) -> dict:
-    return tool_result(await _focus(ctx, caller, args))
-
-
-@own_list.guarded(records=False)
-async def _focus(ctx: CplugContext, caller: AgentCaller, args: dict) -> dict:
-    unknown = sorted(set(args) - {"list", "items", "open", "clear", item_marker.FIELD, *_LEGACY_FLAG_ARGS})
-    if unknown:
-        raise ToolError(f"unknown argument(s): {', '.join(unknown)}")
-    if flags.flag(args, "clear", False):
-        return focus.clear(ctx)
-    flagging = _check_marker(args)
-    key = await _list_key(ctx, caller, args)
-    items = args.get("items") or []
-    if not isinstance(items, list):
-        raise ToolError("items is a list of item ids from task_manager_tasks_list")
-    open_id = args.get("open")
-    focused = await _run(lambda: focus.set_focus(ctx, key, items, open_id, mark_unread=True))
-    await _touched(ctx, caller, key)
-    pointed = set(items) | ({open_id} if open_id else set())
-    listed = await _run(lambda: focus.live_items(service.store(ctx), key))
-    if flagging:
-        store = service.store(ctx)
-        for item in (i for i in listed.values() if i["id"] in pointed and i["state"] not in rules.APPROVED_STATES):
-            await _run(lambda i=item: store.update(i["id"], actor=CLAUDE, marker=_marker_arg(args)))
-    await _record_read(ctx, caller, [i for i in listed.values() if i["id"] in pointed])
-    return focused
-
-
 async def huddle_guide(ctx: CplugContext, caller: AgentCaller, args: dict) -> dict:
     unknown = sorted(set(args) - {"since_rev", "topic", "detail"})
     if unknown:
@@ -885,14 +854,6 @@ TOOLS: dict = {
         "Mark an item's open question (your task_manager_ask) answered WITHOUT a reply, only when the owner really answered it outside the huddle. The item leaves status question. Safe to repeat. Answers lean unless lean is false.",
         {"item": _ITEM_SCHEMA, **_LEAN_SCHEMA, **own_list.SCHEMA}, ["item"], huddle_mark_answered, "agent",
     ),
-    "huddle_focus": ToolSpec(
-        "DEPRECATED: mark tasks with the marker argument of task_manager_update instead. Still highlights rows and opens one in the owner's views, and marks each row unread for him. clear true removes the highlight.",
-        {"list": _LIST_SCHEMA, "items": {"type": "array", "items": _ITEM_SCHEMA, "maxItems": focus.MAX_FOCUS_ITEMS},
-         "open": {"type": ["integer", "null"], "description": "The item id to open (it is highlighted too); null opens nothing."},
-         "clear": {"type": "boolean", "description": "true drops the current highlight; the other arguments are then ignored."},
-         **_MARKER_SCHEMA, **own_list.SCHEMA},
-        [], huddle_focus, "agent",
-    ),
     "task_manager_progress_set": ToolSpec(
         "Show a worker's live state on a working item's row so the owner need not read your terminal. Set phase (queued, running, testing, installing, blocked, done) and a short note (60 characters shows). One line per worker label; no update for 30 minutes reads stale. Lost on a restart. Also a task_manager_batch_run op.",
         {"item": _ITEM_SCHEMA, "phase": {"type": "string", "enum": list(progress.PHASES)},
@@ -920,7 +881,7 @@ TOOLS: dict = {
         ["item", "title"], huddle_artifact, "agent",
     ),
     "task_manager_entries_list": ToolSpec(
-        "The owner's add-box entries still waiting to be filed (queued or sent to a session): {id, list, text (the raw text as typed), status, created_at}. Read only; file one with task_manager_entry_import. list: all entries when omitted, or mine / a project id.",
+        "The owner's add-box entries still waiting to be filed (queued or sent to a session): {id, list, text (as typed), status, created_at, files: [{name, size, path}] pasted with it (Read the path; filing attaches them to each item)}. Read only; file one with task_manager_entry_import. list: all entries when omitted, or mine / a project id.",
         {"list": _LIST_SCHEMA}, [], huddle_inbox_list, "read",
     ),
     "task_manager_entry_import": ToolSpec(

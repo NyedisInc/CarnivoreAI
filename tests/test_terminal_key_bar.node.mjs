@@ -159,7 +159,7 @@ test('row 1 is the original keys with enter where agent was; row 2 holds the nin
         ['slash', 'esc', 'tab', 'up', 'down', 'left', 'right', 'paste', 'enter']);
     assert.deepEqual(
         rows[1].children.map((c) => c.dataset.keyBarAction),
-        ['shifttab', 'undo', 'stash', 'sleep', 'theme', 'notes', 'coffee', 'files', 'search']);
+        ['shifttab', 'undo', 'stash', 'sleep', 'mic', 'notes', 'coffee', 'files', 'search']);
 });
 
 test('enter sends a carriage return and undo sends ctrl+shift+- (0x1f)', () => {

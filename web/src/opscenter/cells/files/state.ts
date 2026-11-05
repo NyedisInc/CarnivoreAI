@@ -8,6 +8,7 @@ export type SectionChoice = Readonly<Partial<Record<RootId, boolean>>>;
 export const FOLD_SCOPES_KEPT = 24;
 export const FOLDS_PER_SCOPE = 400;
 export const FILTER_MAX = 200;
+export const PATH_MAX = 4096;
 const SELECTION_MAX = 2000;
 
 const isBool = (value: unknown): value is boolean => typeof value === 'boolean';

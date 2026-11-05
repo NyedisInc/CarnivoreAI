@@ -34,7 +34,7 @@
 }
 
 .ps-sq__square {
-    --_bd: var(--oc-line-faint);
+    --_bd: var(--oc-focus-quiet);
     position: relative;
     display: inline-flex;
     align-items: center;

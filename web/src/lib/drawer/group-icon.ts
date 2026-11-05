@@ -1,5 +1,6 @@
 import { t } from '../i18n/index.svelte';
 import { mountIconPicker, unmountIconPicker } from '../icon-picker/icon-picker-host';
+import { createAnchoredPopup } from './anchored-popup';
 import { drawerEnv } from './env';
 import * as GroupStore from './group-store';
 import { refreshGroups, repaintDrawerRows } from '../sidebar-shell/interaction-globals';
@@ -9,9 +10,7 @@ export const MOUNT_ID = 'group-icon-picker-mount';
 
 const MARK_SIZE = 12;
 
-let openPopup: HTMLElement | null = null;
-let returnFocusTo: HTMLElement | null = null;
-let wired = false;
+const popup = createAnchoredPopup({ onClose: () => unmountIconPicker(MOUNT_ID) });
 
 function groupFor(groupUuid: string | null): GroupStore.SessionGroup | null {
     return GroupStore.isUsable() && groupUuid ? GroupStore.groupByUuid(groupUuid) : null;
@@ -36,12 +35,7 @@ export function headingMark(groupUuid: string | null): string {
 }
 
 export function close(restoreFocus = false): void {
-    unmountIconPicker(MOUNT_ID);
-    if (openPopup && openPopup.parentNode) openPopup.parentNode.removeChild(openPopup);
-    openPopup = null;
-    const target = returnFocusTo;
-    returnFocusTo = null;
-    if (restoreFocus && target && target.isConnected) target.focus();
+    popup.close(restoreFocus);
 }
 
 export async function setIcon(groupUuid: string, iconId: string | null): Promise<boolean> {
@@ -83,31 +77,10 @@ export function open(anchor: Element, groupUuid: string): void {
     const group = groupFor(groupUuid);
     if (!group) return;
     const el = buildPopup(group);
-    const box = anchor.getBoundingClientRect();
-    el.style.top = `${Math.round(box.bottom + 2)}px`;
-    document.body.appendChild(el);
-    openPopup = el;
-    returnFocusTo = anchor instanceof HTMLElement ? anchor : null;
-    mountIconPicker(MOUNT_ID, {
+    popup.open(el, anchor, () => mountIconPicker(MOUNT_ID, {
         value: iconOf(groupUuid),
         onChange: (id) => { void setIcon(groupUuid, id); queueMicrotask(() => close(true)); },
         onCancel: () => close(true),
         autofocus: true,
-    });
-    const left = Math.min(box.left, window.innerWidth - el.offsetWidth - 8);
-    el.style.left = `${Math.max(8, Math.round(left))}px`;
-    const bottomGap = window.innerHeight - (box.bottom + 2 + el.offsetHeight) - 8;
-    if (bottomGap < 0) el.style.top = `${Math.max(8, Math.round(box.bottom + 2 + bottomGap))}px`;
-    wire();
-}
-
-function wire(): void {
-    if (wired) return;
-    document.addEventListener('mousedown', (e) => {
-        if (openPopup && !openPopup.contains(e.target as Node)) close();
-    });
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && openPopup) close(true);
-    });
-    wired = true;
+    }));
 }

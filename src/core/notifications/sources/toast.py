@@ -13,7 +13,7 @@ from src.core.session_activity import EVENT_NOTIFICATION, EVENT_PERMISSION_REQUE
 
 logger = structlog.get_logger(__name__)
 
-POSTED_IN_APP_ONLY = ("session.finished", "session.attention", "session.posted")
+POSTED_IN_APP_ONLY = ("session.finished", "session.attention", "agent.message")
 
 
 def attention_notify_type(kind: str, reason: Optional[str]) -> str:

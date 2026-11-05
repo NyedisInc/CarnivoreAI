@@ -16,7 +16,7 @@ export function headParts(groups: readonly boolean[], closable: boolean): HeadPa
     out.push({ kind: 'group', at });
   });
   if (closable) {
-    if (out.length) out.push({ kind: 'sep' });
+    out.push({ kind: 'sep' });
     out.push({ kind: 'close' });
   }
   return out;

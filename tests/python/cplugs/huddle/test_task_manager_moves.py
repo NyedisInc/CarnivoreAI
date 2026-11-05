@@ -34,7 +34,9 @@ def test_an_agent_move_past_an_uncleared_blocker_stops_in_waiting_and_joes_never
 
 def test_a_task_is_born_open_or_todo_and_never_anywhere_else(manager):  # noqa: F811
     store = huddle_store(manager)
-    ok, added = call(manager, "task_manager_add", {"list": "all", "text": "later", "state": "back_burner"}, raw=True)
+    ok, refused = call(manager, "task_manager_add", {"list": "all", "text": "later", "state": "back_burner"}, raw=True)
+    assert not ok
+    ok, added = call(manager, "task_manager_add", {"list": "all", "text": "later", "state": "todo"}, raw=True)
     assert ok and store.item(added["item_id"])["state"] == "todo"
     assert moves(store, added["item_id"])[0][:2] == ("", "todo") and moves(store, added["item_id"])[0][3] == "born"
     with pytest.raises(TaskManagerInvalid):

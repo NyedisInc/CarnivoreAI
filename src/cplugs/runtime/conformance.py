@@ -345,7 +345,40 @@ async def probe_l4_webhooks(h: Harness) -> List[str]:
 
     if not _raises(storm, (webhooks.WebhookRefused,)):
         bad.append("a webhook storm was accepted")
+    bad.extend(_nonce_flood_findings(h, secret, body))
     return bad
+
+
+def _nonce_flood_findings(h: Harness, secret: bytes, body: bytes) -> List[str]:
+    now = [900_000.0]
+    verifier = h.new_verifier(lambda: now[0])
+    now[0] = 1_000_000.0
+
+    signed_at = int(now[0])
+
+    def send(hook: str, nonce: str) -> None:
+        ts = signed_at
+        verifier.verify(hook, secret, {"x-timestamp": str(ts), "x-nonce": nonce, "x-signature": webhooks.sign(secret, ts, nonce, body)}, body)
+
+    refused = (webhooks.WebhookRefused,)
+    for i in range(webhooks.NONCE_CACHE_SIZE):
+        if _raises(lambda i=i: send(f"flood{i // webhooks.PER_HOOK_PER_MINUTE}", f"f{i}"), refused):
+            return [f"positive: flood request {i} was refused before the cache was full"]
+    bad: List[str] = []
+    if not _raises(lambda: send("spare", "one-more"), refused):
+        bad.append("a full nonce cache accepted another request instead of refusing it")
+    now[0] += 61.0
+    if _refusal_code(lambda: send("flood0", "f0")) != "replay":
+        bad.append("a nonce was forgotten while still inside the skew window (a flood reopens replay)")
+    return bad
+
+
+def _refusal_code(call: Callable[[], None]) -> str:
+    try:
+        call()
+    except webhooks.WebhookRefused as err:
+        return err.code
+    return "accepted"
 
 
 async def probe_h9_index(h: Harness) -> List[str]:

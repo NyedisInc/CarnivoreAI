@@ -3,7 +3,7 @@
   import '../send-to/send-to.css';
   import { onMount } from 'svelte';
   import { t } from '../i18n/index.svelte';
-  import ModalShell from '../launchpad/ModalShell.svelte';
+  import ModalShell from '../dialog-frame/ModalShell.svelte';
   import Check from '../../opscenter/ui/Check.svelte';
   import Button from '../base/Button.svelte';
   import Field from '../base/Field.svelte';

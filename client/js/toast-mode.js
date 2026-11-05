@@ -77,23 +77,9 @@ console.log('[ToastMode Module] Loading...');
         return seen.size;
     }
 
-    function renderWaiting(groups, container, anchor) {
-        var row = container.querySelector('.toast-waiting');
+    function waitingRowCount(groups) {
         var n = isDetailed() ? waitingCount(groups) : 0;
-        if (n < 2) {
-            if (row) row.remove();
-            return null;
-        }
-        if (!row) {
-            row = document.createElement('div');
-            row.className = 'toast-waiting';
-            row.setAttribute('role', 'status');
-        }
-        row.dataset.count = String(n);
-        row.textContent = t('toast.detailed.waiting', { count: n });
-        var before = anchor ? anchor.nextSibling : container.firstChild;
-        if (before !== row) container.insertBefore(row, before);
-        return row;
+        return n < 2 ? null : n;
     }
 
     function repaint() {
@@ -133,7 +119,7 @@ console.log('[ToastMode Module] Loading...');
         headline: headline,
         snippet: snippet,
         waitingCount: waitingCount,
-        renderWaiting: renderWaiting,
+        waitingRowCount: waitingRowCount,
     };
     globalThis.ToastMode = api;
     followSetting();

@@ -3,6 +3,7 @@ import { ensureReport, keepReport, lookup, reports } from '../feed-store.svelte'
 import { slotOf, type FeedRow } from '../logic/feed';
 import type { ReportSlot, RunRow } from '../logic/types';
 import { isLive, runTime } from '../logic/words';
+import { failureReason } from '../../errors/failure-reason';
 
 export const RUN_PAGE = 50;
 
@@ -45,7 +46,7 @@ export async function loadPaneRuns(id: string): Promise<void> {
   } catch (error) {
     if (mine !== generation) return;
     pane.status = 'error';
-    pane.error = error instanceof Error ? error.message : String(error);
+    pane.error = failureReason(error);
   }
 }
 

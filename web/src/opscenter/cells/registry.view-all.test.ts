@@ -2,12 +2,12 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 
 const openLedger = vi.fn();
 const openThemes = vi.fn();
-const openPlugins = vi.fn();
+const openFeatures = vi.fn();
 const openSessionsScreen = vi.fn();
 
 vi.mock('../api', async () => {
   const actual = await vi.importActual<Record<string, unknown>>('../api');
-  return { ...actual, openLedger, openThemes, openPlugins };
+  return { ...actual, openLedger, openThemes, openFeatures };
 });
 
 vi.mock('../../lib/sessions-page/screen-host', () => ({ openSessionsScreen }));
@@ -48,11 +48,11 @@ describe('every card whose meta declares rightControl "view-all" has a bound act
     expect(typeof REGISTRY.themes.onRightControl).toBe('function');
   });
 
-  test('plugins opens the plugins page, now that it exists (issues #482, #765)', async () => {
+  test('the recent features card opens Settings > features (issues #482, #765; #2723)', async () => {
     const { META } = await import('../engine/meta');
     expect(META.plugins.rightControl).toBe('view-all');
     expect(typeof REGISTRY.plugins.onRightControl).toBe('function');
     REGISTRY.plugins.onRightControl!();
-    expect(openPlugins).toHaveBeenCalledTimes(1);
+    expect(openFeatures).toHaveBeenCalledTimes(1);
   });
 });

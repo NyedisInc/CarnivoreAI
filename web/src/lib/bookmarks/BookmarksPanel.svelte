@@ -1,17 +1,17 @@
 
 <script lang="ts">
   import { onMount } from 'svelte';
-  import ModalShell from '../launchpad/ModalShell.svelte';
+  import ModalShell from '../dialog-frame/ModalShell.svelte';
   import { t } from '../i18n/index.svelte';
   import { resourcePush } from '../resource-push/boot';
   import { sessions } from '../../opscenter/api';
   import Glyph from '../Glyph.svelte';
   import IconButton from '../base/IconButton.svelte';
-  import { Button, Checkbox, Field, List } from '../base';
+  import { Button, Checkbox, Field, List, Segmented, type SegmentedOption } from '../base';
   import BookmarkRow from './BookmarkRow.svelte';
   import { BookmarksPanelState } from './panel-state.svelte';
   import { BookmarkPreviews, bookmarkPreviewSettings } from './preview-state.svelte';
-  import { bookmarksTopic, type Point } from './api';
+  import { bookmarksTopic, type Bookmark, type Point, type RewindMode } from './api';
 
   interface Props {
     rowId: number;
@@ -29,6 +29,23 @@
     return !!row && row.activity_status !== 'dead';
   });
   const canRewind = $derived(panel.armed && live);
+  const modes = $derived<SegmentedOption[]>([
+    { value: 'conversation', label: t('bookmarks.mode.conversation'), title: t('bookmarks.rewind'), attrs: { 'data-rewind-mode': 'conversation' } },
+    { value: 'files', label: t('bookmarks.mode.files'), title: t('bookmarks.mode.files_title'), attrs: { 'data-rewind-mode': 'files' } },
+    { value: 'both', label: t('bookmarks.mode.both'), title: t('bookmarks.mode.both_title'), attrs: { 'data-rewind-mode': 'both' } },
+  ]);
+  function filesWhy(mark: Bookmark | null): string | null {
+    if (panel.mode === 'conversation') return null;
+    if (mark === null) return t('bookmarks.files_turn_row');
+    if (mark.files_unavailable === 'mid_turn') return t('bookmarks.files_mid_turn');
+    if (mark.files_unavailable === 'no_snapshot' || !mark.files_checkpoint_id) return t('bookmarks.files_no_snapshot');
+    return null;
+  }
+  function rewindLabel(mark: Bookmark | null): string {
+    const why = filesWhy(mark);
+    if (why) return why;
+    return t(panel.mode === 'files' ? 'bookmarks.rewind_files' : panel.mode === 'both' ? 'bookmarks.rewind_both' : 'bookmarks.rewind');
+  }
   const previews = new BookmarkPreviews();
   const previewOn = $derived(bookmarkPreviewSettings().show);
   let name_ = $state('');
@@ -84,7 +101,8 @@
         <List class="bm-panel__list">{#snippet children()}
           {#each panel.bookmarks as mark (mark.id)}
             <BookmarkRow title={mark.label || mark.snippet} by={mark.created_by}
-              meta={when(mark.created_at)} busy={panel.busy !== null} {canRewind}
+              meta={when(mark.created_at)} busy={panel.busy !== null} canRewind={canRewind && filesWhy(mark) === null}
+              rewindLabel={rewindLabel(mark)}
               onBranch={() => void panel.branch({ bookmarkId: mark.id })}
               onRewind={() => void rewind({ bookmarkId: mark.id })}
               onDelete={() => void panel.remove(mark.id)}
@@ -110,7 +128,8 @@
           {#each panel.turns as turn (turn.entry_uuid)}
             <BookmarkRow title={turn.snippet}
               meta={`${t('bookmarks.turn_number', { number: turn.number })} ${when(turn.timestamp)}`}
-              busy={panel.busy !== null} {canRewind}
+              busy={panel.busy !== null} canRewind={canRewind && filesWhy(null) === null}
+              rewindLabel={rewindLabel(null)}
               onMark={() => void panel.mark(turn.entry_uuid)}
               onBranch={() => void panel.branch({ entryUuid: turn.entry_uuid })}
               onRewind={() => void rewind({ entryUuid: turn.entry_uuid })} />
@@ -131,6 +150,9 @@
     <span class="bm-panel__arm">
       <Checkbox tone="danger" label={live ? t('bookmarks.arm') : t('bookmarks.arm_not_live')} bind:checked={panel.armed}
                 disabled={!live || panel.busy !== null} data-arm />
+      <Segmented label={t('bookmarks.mode.label')} value={panel.mode} options={modes}
+                 onchange={(value) => (panel.mode = value as RewindMode)}
+                 disabled={panel.busy !== null} data-rewind-modes />
     </span>
     <Button data-bookmarks-close onclick={() => close(null)}>{t('bookmarks.close')}</Button>
   {/snippet}
@@ -237,7 +259,9 @@
 
     .bm-panel__arm {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
+      gap: var(--oc-space-3);
       margin-right: auto;
       min-height: 2rem;
     }

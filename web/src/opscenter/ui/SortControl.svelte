@@ -20,6 +20,8 @@
   <button
     type="button"
     class="oc-btn oc-btn--tool oc-sort"
+    data-btn="quiet"
+    data-size="auto"
     aria-haspopup="menu"
     aria-expanded={anchor !== null}
     onclick={(event) => (anchor = anchor ? null : (event.currentTarget as HTMLElement))}

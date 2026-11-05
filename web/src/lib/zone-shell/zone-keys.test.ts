@@ -79,15 +79,13 @@ test('a zone with no menu of its own leaves the right-click and the menu key to 
   expect(menuKey.defaultPrevented).toBe(false);
 });
 
-test('flow lays one strip out in normal flow, toggle says pressed, and the badge draws a given count and the global mark', () => {
-  handle = mount(KeysHarness, { target: document.body, props: { flow: true, toggle: true, opened: ['k2'], counts: { k1: 120, k2: null }, globals: ['k2'] } });
+test('flow lays one strip out in normal flow, toggle says pressed, and the key draws the global mark', () => {
+  handle = mount(KeysHarness, { target: document.body, props: { flow: true, toggle: true, opened: ['k2'], globals: ['k2'] } });
   flushSync();
   expect(document.querySelector('[data-rail-sections]')!.hasAttribute('data-flow')).toBe(true);
   expect(document.querySelector('[data-rail-split]')).toBeNull();
   expect(keys()[1]!.getAttribute('aria-pressed')).toBe('true');
   expect(keys()[1]!.hasAttribute('aria-expanded')).toBe(false);
-  expect(keys()[0]!.querySelector('[data-rail-badge]')!.textContent).toBe('99+');
-  expect(keys()[1]!.querySelector('[data-rail-badge]'), 'a null count draws no bubble').toBeNull();
-  expect(keys()[1]!.querySelector('[data-widget-globe]'), 'the global mark rides the badge').not.toBeNull();
+  expect(keys()[1]!.querySelector('[data-widget-globe]'), 'the global mark rides the key').not.toBeNull();
   expect(keys()[0]!.querySelector('[data-widget-globe]')).toBeNull();
 });

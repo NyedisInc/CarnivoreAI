@@ -1,4 +1,4 @@
-import type { RailEdge } from './rail-model';
+import { RAIL_MAX_SECTIONS, type RailEdge } from './rail-model';
 import type { SizeStorage } from './rail-size';
 import { deviceStorage } from './rail-size';
 
@@ -40,7 +40,7 @@ export function readOpenKeys(edge: RailEdge, storage: SizeStorage | null = devic
   try {
     const raw = storage.getItem(openKey(edge));
     const list: unknown = raw ? JSON.parse(raw) : [];
-    return Array.isArray(list) ? list.filter((one): one is string => typeof one === 'string' && one !== '').slice(0, 2) : [];
+    return Array.isArray(list) ? list.filter((one): one is string => typeof one === 'string' && one !== '').slice(0, RAIL_MAX_SECTIONS) : [];
   } catch {
     return [];
   }
@@ -49,7 +49,7 @@ export function readOpenKeys(edge: RailEdge, storage: SizeStorage | null = devic
 export function writeOpenKeys(edge: RailEdge, keys: readonly string[], storage: SizeStorage | null = deviceStorage()): void {
   if (!storage) return;
   try {
-    storage.setItem(openKey(edge), JSON.stringify(keys.slice(0, 2)));
+    storage.setItem(openKey(edge), JSON.stringify(keys.slice(0, RAIL_MAX_SECTIONS)));
   } catch {
   }
 }
@@ -65,7 +65,7 @@ export function readLastUsed(edge: RailEdge, storage: SizeStorage | null = devic
   if (!raw) return [];
   try {
     const list: unknown = JSON.parse(raw);
-    return Array.isArray(list) ? list.slice(0, 2).map((one) => (typeof one === 'string' && one ? one : null)) : [];
+    return Array.isArray(list) ? list.slice(0, RAIL_MAX_SECTIONS).map((one) => (typeof one === 'string' && one ? one : null)) : [];
   } catch {
     return [];
   }
@@ -74,7 +74,7 @@ export function readLastUsed(edge: RailEdge, storage: SizeStorage | null = devic
 export function writeLastUsed(edge: RailEdge, last: LastUsed, storage: SizeStorage | null = deviceStorage()): void {
   if (!storage) return;
   try {
-    storage.setItem(lastUsedKey(edge), JSON.stringify(last.slice(0, 2)));
+    storage.setItem(lastUsedKey(edge), JSON.stringify(last.slice(0, RAIL_MAX_SECTIONS)));
   } catch {
   }
 }

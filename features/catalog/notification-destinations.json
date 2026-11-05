@@ -6,7 +6,7 @@
   "area": "status-notifications",
   "status": "beta",
   "since": "2026-10-03",
-  "updated": "2026-10-07",
+  "updated": "2026-10-30",
   "surfaces": [
     "web/src/lib/notifications/destinations/DestinationsPanel.svelte",
     "web/src/lib/notifications/matrix/MatrixPanel.svelte",
@@ -40,7 +40,8 @@
     "docs/web-push.md"
   ],
   "issues": [
-    1278
+    1278,
+    2734
   ],
   "keywords": [
     "notification",
@@ -79,7 +80,8 @@
     "With a paired computer, settings and secrets sync over the paired link, and each computer keeps secrets in its own Keychain. Pin an item to keep this computer's value.",
     "An agent in a session can call the notify tool to send you one notification of type agent.message, routed by the matrix. The switch is mcp.agent_notify (PUT /api/v1/mcp-admin/agent-notify); off hides the tool.",
     "Existing Slack, ntfy and Pushover settings move into Keychain-backed destinations on their own and the plaintext is removed from config.json and its backup.",
-    "A self-hosted webhook or ntfy server that only speaks http (n8n, Home Assistant) on your own network: on its form turn on allow private addresses, then allow plain http on this network, and use an http:// address. Both switches are for this computer only and never sync. While plain http is on, the message and any auth header cross your network unencrypted; only private addresses are allowed, and a public address stays refused."
+    "A self-hosted webhook or ntfy server that only speaks http (n8n, Home Assistant) on your own network: on its form turn on allow private addresses, then allow plain http on this network, and use an http:// address. Both switches are for this computer only and never sync. While plain http is on, the message and any auth header cross your network unencrypted; only private addresses are allowed, and a public address stays refused.",
+    "The routing matrix folds each group (needs you, sessions, messages, auto-answers, swarm, health, security, automations, app) to one row: its switch under a column ticks or unticks every type of that group there, and clicking the group name opens its types."
   ],
   "examples": [
     "You walk away from your desk: the permission and question notifications go to your phone through ntfy or Pushover, and a quiet-hours window keeps the finished-turn pings off at night while a permission request still gets through.",

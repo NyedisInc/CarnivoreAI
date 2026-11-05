@@ -149,7 +149,7 @@ def _pipeline(tmp_path, monkeypatch, home, *, pane=RESTING_PANE):
         tmux_socket_name=lambda: "cloude",
         _wrappers_reader=lambda: [],
     )
-    monkeypatch.setattr(reader_module, "DEFAULT_CODEX_HOME", str(home))
+    monkeypatch.setattr(reader_module, "pane_codex_home", lambda socket, name: str(home))
     monkeypatch.setattr(reader_module, "read_instance_row", row)
     monkeypatch.setattr(AttentionEvidenceReader, "_capture", staticmethod(lambda *args: pane))
     monkeypatch.setattr(AttentionEvidenceReader, "_process_parents", lambda *args: {})

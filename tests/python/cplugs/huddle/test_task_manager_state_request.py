@@ -59,7 +59,7 @@ def test_reopen_waits_for_the_owner_then_applies_and_records_a_message(client, s
     assert any("approved claude's request to reopen" in t and "the fix regressed" in t for t in thread_of(client, item))
 
 
-def test_reopen_to_waiting_install_and_close_ends_approved(client, setup):
+def test_reopen_to_waiting_and_close_ends_approved(client, setup):
     item = approved_item(client)
     ask(setup, {"item": item, "action": "reopen", "to_state": "waiting", "reason": "needs a reinstall"})
     owner_decides(True)
@@ -167,14 +167,14 @@ def _restored_after_upgrade(setup, shown: dict, tool_args: dict):
     return store, item
 
 
-@pytest.mark.parametrize("shown,tool_args,ends", [
-    ({"from_state": "approved"}, {}, "open"),
-    ({"from_state": "approved_with_note", "to_state": "waiting_install"}, {"to_state": "waiting_install"}, "waiting"),
+@pytest.mark.parametrize("shown,asked,stored,ends", [
+    ({"from_state": "approved"}, {}, {}, "open"),
+    ({"from_state": "approved_with_note", "to_state": "waiting_install"}, {"to_state": "waiting"}, {"to_state": "waiting_install"}, "waiting"),
 ])
-def test_a_card_filed_before_the_renames_is_applied_when_approved_after_them(client, setup, shown, tool_args, ends):
+def test_a_card_filed_before_the_renames_is_applied_when_approved_after_them(client, setup, shown, asked, stored, ends):
     item = approved_item(client)
-    assert ask(setup, {"item": item, "action": "reopen", "reason": "regressed", **tool_args})["status"] == "pending"
-    store, restored = _restored_after_upgrade(setup, shown, tool_args)
+    assert ask(setup, {"item": item, "action": "reopen", "reason": "regressed", **asked})["status"] == "pending"
+    store, restored = _restored_after_upgrade(setup, shown, stored)
     result = asyncio.run(store.approve(restored.id))
     assert result.status == pending.APPROVED, result.reason
     assert state_of(client, item) == ends

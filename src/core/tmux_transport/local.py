@@ -33,6 +33,14 @@ PIPE_SUFFIX: str = ".pipe"
 LIST_TIMEOUT_SECONDS: float = 5.0
 
 
+def _ensure_file(path: Path, truncate: bool) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if truncate:
+        path.write_bytes(b"")
+    elif not path.exists():
+        path.touch()
+
+
 class LocalTransport:
 
     host_key: str = LOCAL_HOST_KEY
@@ -129,14 +137,10 @@ class LocalTransport:
         return str(read_path)
 
     async def ensure_pipe_file(self, read_path: Path, write_path: str, *, truncate: bool) -> None:
-        read_path.parent.mkdir(parents=True, exist_ok=True)
-        if truncate:
-            read_path.write_bytes(b"")
-        elif not read_path.exists():
-            read_path.touch()
+        await asyncio.to_thread(_ensure_file, read_path, truncate)
 
     async def pipe_file_exists(self, write_path: str) -> bool:
-        return Path(write_path).exists()
+        return await asyncio.to_thread(Path(write_path).exists)
 
     def preflight(self, socket_name: str, working_dir: Path) -> None:
         if resolve_tmux_path() is None:

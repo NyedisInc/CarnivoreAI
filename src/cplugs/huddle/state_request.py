@@ -6,7 +6,7 @@ from typing import Any, Dict, Tuple
 
 import structlog
 
-from src.cplugs.huddle import closure_undo, flags, own_list, rules, send_queue, service
+from src.cplugs.huddle import closure_undo, flags, own_list, rules, send_queue, service, state_rungs
 from src.cplugs.huddle.rules import CLAUDE, JOE, TaskManagerError
 from src.cplugs.sdk import AgentCaller, CplugContext, ToolError
 
@@ -17,6 +17,8 @@ REOPEN = "reopen"
 CLOSE = "close"
 DELETE = "delete"
 UNDO = "undo_completion"
+_STORED_STATE_ARGS = ("from_state", "to_state")
+_STORED_RENAMES = dict(state_rungs.RENAMES)
 ACTIONS = (REOPEN, CLOSE, DELETE, UNDO)
 PRIOR = "its prior state"
 DELETED = "deleted"
@@ -51,7 +53,7 @@ def _target_of(action: str, args: dict, item: Dict[str, Any]) -> str:
 
 
 async def prepare(ctx: CplugContext, caller: AgentCaller, args: dict) -> Tuple[dict, str]:
-    clean = rules.canonical_state_args({k: v for k, v in args.items() if k != own_list.FIELD})
+    clean = canonical_shown({k: v for k, v in args.items() if k != own_list.FIELD})
     unknown = sorted(set(clean) - {"item", "action", "reason", "to_state"})
     if unknown:
         raise ToolError(f"unknown argument(s): {', '.join(unknown)}; send item, action, reason and (reopen only) to_state")
@@ -81,10 +83,7 @@ async def prepare(ctx: CplugContext, caller: AgentCaller, args: dict) -> Tuple[d
 
 
 def canonical_shown(args: dict) -> dict:
-    clean = rules.canonical_state_args(args)
-    if "from_state" in clean:
-        clean["from_state"] = rules.canonical_state(clean["from_state"])
-    return clean
+    return {k: _STORED_RENAMES.get(v, v) if k in _STORED_STATE_ARGS and isinstance(v, str) else v for k, v in args.items()}
 
 
 def _record(ctx: CplugContext, item_id: int, text: str) -> None:
@@ -100,7 +99,7 @@ async def apply(ctx: CplugContext, caller: AgentCaller, args: dict) -> dict:
     item_id = args["item"]
     try:
         item = await asyncio.to_thread(store.item, item_id)
-        if item["state"] != rules.canonical_state(args["from_state"]):
+        if item["state"] != _STORED_RENAMES.get(args["from_state"], args["from_state"]):
             note = f"not applied: the item is {item['state']} now, not {args['from_state']}"
             await asyncio.to_thread(_record, ctx, item_id, f"the owner approved claude's request to {_wording(args)}, but {note}.")
             return {"applied": False, "item": item_id, "state": item["state"], "reason": note}

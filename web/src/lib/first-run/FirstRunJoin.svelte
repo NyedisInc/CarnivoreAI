@@ -2,6 +2,7 @@
 <script lang="ts">
     import { onDestroy, onMount, tick } from 'svelte';
     import { t } from '../i18n/index.svelte';
+    import { legacyAuth } from '../legacy-globals';
     import { Button, Field } from '../base';
     import FirstRunAgent from './FirstRunAgent.svelte';
     import CopyField from '../settings-page/CopyField.svelte';
@@ -11,26 +12,30 @@
         errorKeyFor,
         HELPER_LINE,
         pollJoinStatus,
+        postCode,
         startJoin,
+        startKnock,
         startLook,
         type Candidate,
         type JoinErrorKey,
         type JoinStatus,
     } from './join-api';
+    import { countdownText } from '../pack-knock/countdown';
 
     interface AuthHost {
         acceptLogin(response: { access_token: string; refresh_token?: string }): void;
         finishFirstRun(): void;
     }
 
-    type Sub = 'join' | 'pick' | 'joining' | 'join_error' | 'joined' | 'agent';
+    type Sub = 'join' | 'pick' | 'knocked' | 'joining' | 'join_error' | 'joined' | 'agent';
 
     let {
         start = 'join',
+        value = '',
         resume = null,
         setup = false,
         onBack,
-    }: { start?: 'join' | 'resume' | 'joined'; resume?: JoinStatus | null; setup?: boolean; onBack: () => void } = $props();
+    }: { start?: 'join' | 'resume' | 'joined' | 'knock' | 'link'; value?: string; resume?: JoinStatus | null; setup?: boolean; onBack: () => void } = $props();
 
     const CELLS = [0, 1, 2, 3, 4, 5];
     const LOCAL_LOGIN_TRIES = 30;
@@ -45,27 +50,45 @@
     let busy = $state(false);
     let looking = $state(false);
     let offers = $state<Candidate[]>([]);
+    let knockFid = $state<string | null>(null);
+    let knocking = $state(false);
     let stopPoll: (() => void) | null = null;
+    let knockTimer: ReturnType<typeof setTimeout> | undefined;
     let loginTimer: ReturnType<typeof setTimeout> | undefined;
     let loginTries = 0;
     let gone = false;
     let cellsBox = $state<HTMLElement | null>(null);
     const cell = (i: number): HTMLInputElement | undefined => cellsBox?.querySelectorAll<HTMLInputElement>('[data-first-run="cell"]')[i];
 
-    const auth = (): AuthHost => (window as unknown as { Auth: AuthHost }).Auth;
+    const auth = (): AuthHost => legacyAuth<AuthHost>();
     const code = $derived(digits.join(''));
     const packName = $derived(status?.main_label ?? t('first_run.join.main_fallback'));
-    const stepKey = $derived(looking ? 'first_run.join.step.looking' : status?.state === 'waiting_relay' ? 'first_run.join.step.waiting_relay' : status?.state === 'connecting' ? 'first_run.join.step.connecting' : status?.state === 'linking' ? 'first_run.join.step.linking' : 'first_run.join.step.finding');
+    const stepKey = $derived(knocking ? 'first_run.knock.step.knocking' : looking ? 'first_run.join.step.looking' : status?.state === 'waiting_relay' ? 'first_run.join.step.waiting_relay' : status?.state === 'connecting' ? 'first_run.join.step.connecting' : status?.state === 'linking' ? 'first_run.join.step.linking' : 'first_run.join.step.finding');
     const bridge = $derived(desktopBridge());
+
+    const knockErrorKey = $derived(
+        error === 'used_up' || error === 'expired' ? 'first_run.knock.error.gone'
+            : error === 'busy' || error === 'rate_limited' || error === 'refused' || error === 'paused' || error === 'incompatible' ? `first_run.knock.error.${error}`
+                : `first_run.join.error.${error ?? 'refused'}`,
+    );
 
     function apply(next: JoinStatus): boolean {
         status = next;
+        if (next.state === 'knocked') {
+            knocking = false;
+            knockFid = next.knock_fid ?? knockFid;
+            sub = 'knocked';
+            armKnockExpiry(next.expires_in);
+            void tick().then(() => cell(0)?.focus());
+            return true;
+        }
         if (next.state === 'joined') {
             enterJoined();
             return true;
         }
         if (next.state === 'failed') {
             looking = false;
+            knocking = false;
             error = errorKeyFor(next.error);
             clearSecrets();
             sub = 'join_error';
@@ -83,6 +106,35 @@
         }
         sub = 'joining';
         return false;
+    }
+
+    function armKnockExpiry(seconds: number | null): void {
+        clearTimeout(knockTimer);
+        if (seconds === null) return;
+        knockTimer = setTimeout(() => {
+            if (sub !== 'knocked') return;
+            clearSecrets();
+            error = 'expired';
+            sub = 'join_error';
+        }, Math.max(seconds, 0) * 1000);
+    }
+
+    async function knock(fid: string): Promise<void> {
+        if (busy) return;
+        busy = true;
+        error = null;
+        knockFid = fid;
+        picked = fid;
+        knocking = true;
+        const result = await startKnock(fid);
+        busy = false;
+        if (!result.ok) {
+            knocking = false;
+            error = result.error;
+            sub = 'join_error';
+            return;
+        }
+        if (!apply(result.status)) watch();
     }
 
     function clearSecrets(): void {
@@ -121,13 +173,16 @@
     async function go(event?: Event): Promise<void> {
         event?.preventDefault();
         if (busy) return;
-        if (!(linkMode ? link.trim() !== '' : code.length === 6)) return;
+        if (!(linkMode && sub !== 'knocked' ? link.trim() !== '' : code.length === 6)) return;
         busy = true;
         error = null;
-        const result = await startJoin({
-            ...(linkMode ? { link: link.trim() } : { code }),
-            ...(picked !== null ? { candidateFid: picked } : {}),
-        });
+        clearTimeout(knockTimer);
+        const result = sub === 'knocked'
+            ? await postCode(code)
+            : await startJoin({
+                ...(linkMode ? { link: link.trim() } : { code }),
+                ...(picked !== null ? { candidateFid: picked } : {}),
+            });
         busy = false;
         if (!result.ok) {
             error = result.error;
@@ -172,6 +227,11 @@
     }
 
     function again(): void {
+        if (knockFid !== null && error !== 'incompatible') {
+            void knock(knockFid);
+            return;
+        }
+        if (error === 'no_pack') linkMode = true;
         picked = null;
         offers = [];
         error = null;
@@ -205,6 +265,12 @@
         if (start === 'joined') {
             status = resume;
             enterJoined();
+        } else if (start === 'knock') {
+            void knock(value);
+        } else if (start === 'link') {
+            link = value;
+            linkMode = true;
+            void go();
         } else if (start === 'resume' && resume) {
             if (resume.state === 'finding' && resume.candidates.length > 0) {
                 status = resume;
@@ -216,9 +282,20 @@
         gone = true;
         stopPoll?.();
         clearTimeout(loginTimer);
+        clearTimeout(knockTimer);
         clearSecrets();
     });
 </script>
+
+{#snippet cells()}
+            <div class="first-run__cells" role="group" aria-label={t('first_run.join.label')} bind:this={cellsBox}>
+                {#each CELLS as i (i)}
+                    <Field value={digits[i]} oninput={(e) => onCell(i, e)}
+                        onkeydown={(e) => onKey(i, e)} onpaste={onPaste} maxlength={1} inputmode="numeric" pattern="[0-9]*"
+                        autocomplete="one-time-code" autocorrect="off" spellcheck={false} data-first-run="cell" aria-label={`${t('first_run.join.label')} ${i + 1}`} disabled={busy} />
+                {/each}
+            </div>
+{/snippet}
 
 {#if sub === 'join'}
     <h1 class="first-run__head">{t('first_run.title')}</h1>
@@ -230,13 +307,7 @@
             <Field bind:value={link} autocomplete="off" autocorrect="off" spellcheck={false}
                 aria-label={t('first_run.join.paste_link')} data-first-run="link" disabled={busy} />
         {:else}
-            <div class="first-run__cells" role="group" aria-label={t('first_run.join.label')} bind:this={cellsBox}>
-                {#each CELLS as i (i)}
-                    <Field value={digits[i]} oninput={(e) => onCell(i, e)}
-                        onkeydown={(e) => onKey(i, e)} onpaste={onPaste} maxlength={1} inputmode="numeric" pattern="[0-9]*"
-                        autocomplete="one-time-code" autocorrect="off" spellcheck={false} data-first-run="cell" aria-label={`${t('first_run.join.label')} ${i + 1}`} disabled={busy} />
-                {/each}
-            </div>
+            {@render cells()}
         {/if}
         <PackOffers {offers} {picked} {busy} attr="data-first-run" onLook={look} onYes={accept} onNo={decline} />
         <Button data-first-run="toggle-link" onclick={() => (linkMode = !linkMode)}>
@@ -247,6 +318,17 @@
             <Button type="submit" variant="confirm" data-first-run="join-go" disabled={busy || (linkMode ? link.trim() === '' : code.length !== 6)}>
                 {t('first_run.join.go')}
             </Button>
+        </div>
+    </form>
+{:else if sub === 'knocked'}
+    <h1 class="first-run__head">{t('first_run.title')}</h1>
+    <p class="first-run__tag" data-first-run="knock-title">{t('first_run.knock.title', { name: packName })}</p>
+    <p class="first-run__text">{t('first_run.knock.body', { name: packName, fid: status?.own_fid_short ?? '', time: countdownText(status?.expires_in ?? 0, t) })}</p>
+    <form class="first-run__form" onsubmit={go}>
+        {@render cells()}
+        <div class="first-run__actions">
+            <Button data-first-run="back" disabled={busy} onclick={onBack}>{t('first_run.back')}</Button>
+            <Button type="submit" variant="confirm" data-first-run="join-go" disabled={busy || code.length !== 6}>{t('first_run.join.go')}</Button>
         </div>
     </form>
 {:else if sub === 'pick'}
@@ -266,11 +348,11 @@
     <p class="first-run__text" role="status" data-first-run="joining">{t(stepKey)}</p>
 {:else if sub === 'join_error'}
     <h1 class="first-run__head">{t('first_run.title')}</h1>
-    <p class="first-run__problem" role="alert" data-first-run-error={error}>{t(`first_run.join.error.${error ?? 'refused'}`)}</p>
+    <p class="first-run__problem" role="alert" data-first-run-error={error}>{t(knockFid !== null ? knockErrorKey : `first_run.join.error.${error ?? 'refused'}`)}</p>
     {#if error === 'helper_not_started'}
         <CopyField value={HELPER_LINE} {t} label={t('first_run.join.helper_line_label')} valueAttrs={{ 'data-first-run': 'helper-line' }} />
     {/if}
-    <Button data-first-run="retry" onclick={again}>{t('first_run.retry')}</Button>
+    <Button data-first-run="retry" onclick={again}>{knockFid !== null && error !== 'incompatible' ? t('first_run.knock.again') : t('first_run.retry')}</Button>
 {:else if sub === 'agent'}
     <FirstRunAgent onContinue={() => auth().finishFirstRun()} />
 {:else}

@@ -3,6 +3,7 @@ import { resourcePush } from '../../resource-push/boot';
 import {
   threadMessagesPath, threadsPath, type CrosstalkThread, type HistoryFilter, type ThreadsPage,
 } from '../history/history-model';
+import { failureReason } from '../../errors/failure-reason';
 
 export interface ThreadMessage {
   id: string;
@@ -31,7 +32,7 @@ const FALLBACK_MS = 30000;
 export type ReadState = 'loading' | 'ready' | 'failed';
 
 function why(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+  return failureReason(error);
 }
 
 export class Conversations {

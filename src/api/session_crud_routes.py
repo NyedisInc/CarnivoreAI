@@ -8,7 +8,7 @@ from fastapi.concurrency import run_in_threadpool
 from src.api import session_rejoin_capture
 from src.api import (
     agent_update_listing, asleep_brief, automation_listing, automation_timers_listing, description_listing, mcp_health_listing, swarm_member_listing, messaging_listing, parked_work_listing, session_account_listing, session_roles_listing, skill_fire_listing, spectator_listing,
-    sleep_hold_listing, subagent_listing, timer_listing,
+    sleep_hold_listing, subagent_listing, timer_listing, pr_listing,
 )
 from src.api.auth import require_auth
 from src.api import peer_auth
@@ -17,7 +17,8 @@ from src.core.federation import peer_listing
 from src.config import settings
 from src.core import session_change_notice
 from src.core import single_flight
-from src.core.ttl_flight import TtlFlight
+from src.core.read_caches.ttl_flight import TtlFlight
+from src.core.pack.relay import runtime as relay_runtime
 from src.core.account_switch import create_account
 from src.core.launch_profiles import create_seam
 from src.core.sessions.errors import SessionCreateFailed, TmuxError
@@ -104,6 +105,12 @@ async def create_session_with_extra(request: Request, body: CreateSessionRequest
     claude_account = account_plan.account_id or claude_account
     if body.working_dir and host_key == LOCAL_HOST_KEY:
         _refuse_packed_folder(os.path.expanduser(body.working_dir))
+    if body.worktree is not None:
+        is_peer = getattr(getattr(request, "state", None), "peer_grant", None) is not None
+        if is_peer or host_key != LOCAL_HOST_KEY or not body.working_dir or body.project_parent_dir:
+            raise api_error(400, "worktree_local_only", None, host_key=host_key)
+        from src.api.worktree_routes import start_in_worktree
+        body.working_dir = (await start_in_worktree(os.path.expanduser(body.working_dir), body.worktree)).path
     session_manager = request.app.state.session_manager
 
     try:
@@ -212,6 +219,8 @@ async def create_session_with_extra(request: Request, body: CreateSessionRequest
             request.app.state,
             session_change_notice.build_structural_notice("created"),
         )
+        from src.core.notifications.sources import agent_update  # noqa: PLC0415
+        await asyncio.to_thread(agent_update.check_now)
 
         return session
 
@@ -356,8 +365,11 @@ async def _assemble_owner_listing(app_state: Any) -> List[SessionInfo]:
     skill_fire_listing.mark_skill_fires(session_manager, infos)
     parked_work_listing.mark_parked_work(session_manager, infos)
     agent_update_listing.mark_agent_update(session_manager, infos)
+    pr_listing.mark_pr(infos)
     mcp_health_listing.mark_mcp_health(app_state, infos)
     session_account_listing.mark_session_account(app_state, infos)
+    if relay_runtime.SYNC is not None:
+        relay_runtime.SYNC.on_listing(infos)
     automation_listing.mark_automation(app_state, infos)
     messaging_listing.mark_messaging(app_state, infos)
     description_listing.mark_descriptions(app_state, infos)

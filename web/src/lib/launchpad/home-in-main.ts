@@ -1,14 +1,16 @@
-/* the home screen */
-import { insetsOf, SURFACE_INSET_VARS } from '../menu-page/menu-page-surface';
+/* the bottom rail */
 
-export const HOME_IN_MAIN_CLASS = 'home-in-main';
 
-const MIN_WIDTH_PX = 1024;
+import { SURFACE_MIN_WIDTH_PX } from '../menu-page/menu-page-surface';
 
-const SURFACE_SELECTOR = '#terminal-grid > .oc-surface';
+const GRID_ID = 'terminal-grid';
 
 const HOME_ID = 'launchpad-screen';
 const TERMINAL_ID = 'terminal-screen';
+
+const EMPTY_CLASS = 'terminal-screen--empty';
+
+export const HOME_SLOT_ATTR = 'data-home-slot';
 
 export function pausePrimarySocket(): void {
   (globalThis as { TerminalController?: { pauseForHome?: () => void } }).TerminalController?.pauseForHome?.();
@@ -17,77 +19,87 @@ export function pausePrimarySocket(): void {
 export function initHomeInMain(doc: Document = document, pausePrimary: () => void = pausePrimarySocket): () => void {
   const win = doc.defaultView;
   if (!win || typeof win.MutationObserver !== 'function') return () => {};
-  let inMain = false;
+  let inSlot = false;
   let wasTerminal = false;
-  let covered: HTMLElement | null = null;
-  let resizer: ResizeObserver | null = null;
+  let homeParent: Node | null = null;
+  let homeNext: Node | null = null;
 
-  const active = (id: string): boolean => doc.getElementById(id)?.classList.contains('active') === true;
-  const surface = (): HTMLElement | null => doc.querySelector<HTMLElement>(SURFACE_SELECTOR);
+  const el = (id: string): HTMLElement | null => doc.getElementById(id);
+  const active = (id: string): boolean => el(id)?.classList.contains('active') === true;
+  const wide = (): boolean => win.innerWidth >= SURFACE_MIN_WIDTH_PX;
+  const terminalShowsSession = (): boolean => active(TERMINAL_ID) && !el(TERMINAL_ID)!.classList.contains(EMPTY_CLASS);
 
-  const measure = (): boolean => {
-    const el = surface();
-    const box = el?.getBoundingClientRect();
-    if (!el || !box || box.width <= 0 || box.height <= 0 || win.innerWidth < MIN_WIDTH_PX) return false;
-    const insets = insetsOf(el, win);
-    const style = doc.documentElement.style;
-    SURFACE_INSET_VARS.forEach((name, i) => style.setProperty(name, `${[insets.top, insets.left, insets.right, insets.bottom][i]}px`));
-    if (covered !== el) {
-      covered?.removeAttribute('inert');
-      el.setAttribute('inert', '');
-      covered = el;
-      resizer?.disconnect();
-      if (typeof win.ResizeObserver === 'function') {
-        resizer = new win.ResizeObserver(() => refresh());
-        [el, el.parentElement, doc.body].forEach((one) => one && resizer?.observe(one));
-      }
+  const surface = (): HTMLElement | null => doc.querySelector<HTMLElement>(`#${GRID_ID} > .oc-surface`);
+  let gridWatch: MutationObserver | null = null;
+  const coverSurface = (): void => {
+    surface()?.setAttribute('inert', '');
+    const grid = el(GRID_ID);
+    if (grid && !gridWatch) {
+      gridWatch = new win.MutationObserver(() => surface()?.setAttribute('inert', ''));
+      gridWatch.observe(grid, { childList: true });
     }
-    return true;
+  };
+  const uncoverSurface = (): void => {
+    gridWatch?.disconnect();
+    gridWatch = null;
+    surface()?.removeAttribute('inert');
+  };
+
+  const enter = (): void => {
+    const home = el(HOME_ID);
+    const grid = el(GRID_ID);
+    if (!home || !grid) return;
+    inSlot = true;
+    pausePrimary();
+    homeParent = home.parentNode;
+    homeNext = home.nextSibling;
+    el(TERMINAL_ID)?.classList.add('active');
+    grid.setAttribute(HOME_SLOT_ATTR, '');
+    grid.append(home);
+    coverSurface();
   };
 
   const leave = (hideTerminal: boolean): void => {
-    if (!inMain) return;
-    inMain = false;
-    resizer?.disconnect();
-    resizer = null;
-    covered?.removeAttribute('inert');
-    covered = null;
-    doc.body.classList.remove(HOME_IN_MAIN_CLASS);
-    if (hideTerminal) doc.getElementById(TERMINAL_ID)?.classList.remove('active');
+    if (!inSlot) return;
+    inSlot = false;
+    const home = el(HOME_ID);
+    el(GRID_ID)?.removeAttribute(HOME_SLOT_ATTR);
+    uncoverSurface();
+    if (home && homeParent) homeParent.insertBefore(home, homeNext && homeNext.parentNode === homeParent ? homeNext : null);
+    homeParent = null;
+    homeNext = null;
+    if (hideTerminal) el(TERMINAL_ID)?.classList.remove('active');
   };
 
-  function refresh(): void {
-    if (inMain && !measure()) leave(true);
-  }
-
-  const enter = (): void => {
-    inMain = true;
-    pausePrimary();
-    doc.getElementById(TERMINAL_ID)?.classList.add('active');
-    doc.body.classList.add(HOME_IN_MAIN_CLASS);
-    if (!measure()) leave(true);
+  const reconcile = (): void => {
+    const homeUp = active(HOME_ID);
+    if (inSlot) {
+      if (!homeUp) return leave(false);
+      if (!wide()) return leave(true);
+      if (!active(TERMINAL_ID)) el(TERMINAL_ID)?.classList.add('active');
+      return;
+    }
+    if (homeUp && wasTerminal && wide()) enter();
   };
 
   const sync = (): void => {
     if (!active(HOME_ID)) {
       leave(false);
-      wasTerminal = active(TERMINAL_ID);
+      wasTerminal = terminalShowsSession();
       return;
     }
-    if (inMain) {
-      if (!active(TERMINAL_ID)) doc.getElementById(TERMINAL_ID)?.classList.add('active');
-      return refresh();
-    }
-    if (wasTerminal && !active(TERMINAL_ID) && surface() && win.innerWidth >= MIN_WIDTH_PX) enter();
+    reconcile();
   };
 
-  wasTerminal = active(TERMINAL_ID);
+  wasTerminal = terminalShowsSession();
   const observer = new win.MutationObserver(sync);
   for (const id of [HOME_ID, TERMINAL_ID]) {
-    const el = doc.getElementById(id);
-    if (el) observer.observe(el, { attributes: true, attributeFilter: ['class'] });
+    const node = el(id);
+    if (node) observer.observe(node, { attributes: true, attributeFilter: ['class'] });
   }
+  win.addEventListener('resize', reconcile);
   return () => {
+    win.removeEventListener('resize', reconcile);
     observer.disconnect();
     leave(false);
   };

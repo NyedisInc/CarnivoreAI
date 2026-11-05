@@ -32,6 +32,7 @@ _SAFE = re.compile(r"[^A-Za-z0-9 ._-]")
 _DOOR_NAME = re.compile(r"^door-[0-9a-f]{8}\.sock$")
 STALE_RELAY_SECONDS = 30.0
 _door_override: Optional[str] = None
+KNOCKED = -1
 
 Main = Dict[str, Any]
 
@@ -260,15 +261,33 @@ async def serve(out: Printer, *, first_request: Optional[Dict[str, Any]]) -> int
         if doc.get("state") != "waiting_relay":
             out.final(doc)
             return 0
-    status, hold = await ask_held()
+    while True:
+        status, hold = await ask_held()
+        try:
+            if status.get("state") != "waiting_relay" or not isinstance(status.get("job"), str):
+                out.final(status if "state" in status else {"state": "failed", "error": status.get("error") or "no_join_waiting"})
+                return 0
+            code = await _serve_waiting(out, status)
+        finally:
+            if hold is not None:
+                hold.close()
+        if code != KNOCKED or not await _await_code(out, status["job"]):
+            return 0 if code == KNOCKED else code
+
+
+async def _await_code(out: Printer, job: str) -> bool:
+    out.step("knocked", "your main computer shows a code. type it in the carnivore window.")
+    doc: Dict[str, Any] = {"state": "failed", "error": "door_unreachable"}
     try:
-        if status.get("state") != "waiting_relay" or not isinstance(status.get("job"), str):
-            out.final(status if "state" in status else {"state": "failed", "error": status.get("error") or "no_join_waiting"})
-            return 0
-        return await _serve_waiting(out, status)
-    finally:
-        if hold is not None:
-            hold.close()
+        async for answer in ask_door({"op": "await_code", "job": job}, stream=True):
+            doc = answer if "state" in answer else {"state": "failed", "error": answer.get("error") or "failed"}
+            break
+    except (OSError, asyncio.TimeoutError):
+        pass
+    if doc.get("state") == "waiting_relay":
+        return True
+    out.final(doc)
+    return False
 
 
 async def _relay_failed(job: str, code: str, **extra: Any) -> Dict[str, Any]:
@@ -286,6 +305,8 @@ async def _serve_waiting(out: Printer, status: Dict[str, Any]) -> int:
     look = status.get("mode") == "look"
     try:
         mains = await find_targets(status)
+        if status.get("mode") == "knock":
+            mains = mains[:1]
     except discovery.LocalNetworkBlocked:
         out.final(await _relay_failed(job, "local_network_blocked"))
         return 0
@@ -332,6 +353,8 @@ async def _relay(out: Printer, job: str, main: Main, address: str, tcp: Tuple[as
             with contextlib.suppress(FileNotFoundError):
                 os.unlink(path)
         tcp[1].close()
+    if final.get("state") == "knocked":
+        return KNOCKED
     out.final(final)
     return 0
 

@@ -18,11 +18,30 @@ def _owners(values: Set[str], attr: str) -> Dict[str, list]:
     return {v: [t.id for t in T.TYPES if v in getattr(t.match, attr)] for v in values}
 
 
+PLAN_GROUPS = {
+    "needs_you": ["session.permission", "session.question", "session.plan_approval", "session.attention",
+                  "approval.agent_action", "approval.folder_trust"],
+    "sessions": ["session.finished", "session.died", "session.auto_slept", "agent.update_ready", "account.switched",
+                 "app.restore_offer", "session.terminal_notice"],
+    "messages": ["agent.message", "plugin.notice", "session.skill_tripwire"],
+    "auto_answers": ["session.beast_approved", "session.auto_accepted"],
+    "swarm": ["swarm.alert", "swarm.flash", "swarm.question_climbed"],
+    "health": ["alert.self_check", "alert.save_pipeline", "alert.account", "alert.phone_link", "alert.plugin", "pack.skills",
+               "alert.notifications", "provider.needs_login", "alert.other"],
+    "security": ["computer.wrong_code", "computer.knock", "computer.link_cert"],
+    "automations": ["automation_report", "automation_failed", "automation_notice"],
+    "app": ["app.update_available", "stats.tripwire", "dev.shape_unrecognized"],
+}
+
+
 def test_registry_is_the_plan_table() -> None:
     ids = [t.id for t in T.TYPES]
     assert len(ids) == 39 and len(set(ids)) == 39
-    assert "session.finished" in ids and "dev.shape_unrecognized" in ids
-    assert {t.family for t in T.TYPES} == set(T.FAMILIES)
+    assert list(T.FAMILIES) == list(PLAN_GROUPS)
+    assert {g: [t.id for t in T.TYPES if t.family == g] for g in T.FAMILIES} == PLAN_GROUPS
+    assert T.ALIASES == {"session.posted": "agent.message", "session.limit_rotation": "account.switched"}
+    assert all(T.is_registered(new) and not T.is_registered(old) for old, new in T.ALIASES.items())
+    assert T.canonical("session.posted") == "agent.message" and T.canonical("session.died") == "session.died"
 
 
 def test_every_toast_kind_is_a_carrier_and_every_carried_type_names_one() -> None:
@@ -95,7 +114,7 @@ _NOTIFICATION_FRAMES = {"session.auto_slept", "provider_account.switched", "dev.
 _NON_NOTIFICATION_FRAMES = {
     "log", "local_server_detected", "local_server_lost", "session_status", "command", "error", "ping", "pong",
     "pty_data", "pty_resize", "request_dims", "toast.ack", "session.renamed", "terminal_size", "repaint",
-    "size_master", "events.hello", "session.status", "sessions.changed", "listing.delta", "peer.listing", "resources.changed",
+    "size_master", "events.hello", "session.status", "session.progress", "session.bell", "sessions.changed", "listing.delta", "peer.listing", "resources.changed",
     "preferences.changed", "skills.changed", "session.note.changed", "provider_ledger.updated",
     "restore_offer.progress", "auto_sleep.changed", "app_alert.updated", "app_alert.resolved",
     "account.session", "perf.sample", "item_settings.changed",

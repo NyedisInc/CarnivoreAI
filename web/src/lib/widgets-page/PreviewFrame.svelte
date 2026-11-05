@@ -3,6 +3,7 @@
     import type { Attachment } from 'svelte/attachments';
     import { previewDocument, type PreviewMode } from '../../widget-preview/protocol';
     import type { PreviewSize } from './preview-sizes';
+    import { frameScheme } from '../theme-scheme';
 
     interface Props {
         title: string;
@@ -24,6 +25,7 @@
     width={size.w}
     height={size.h}
     style={`transform:scale(${scale})`}
+    style:color-scheme={frameScheme(theme)}
     tabindex="-1"
     inert
     aria-hidden={tile ? 'true' : undefined}

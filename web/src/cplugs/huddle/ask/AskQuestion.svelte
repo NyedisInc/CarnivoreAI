@@ -62,6 +62,7 @@
     {#if question.type === 'yes_no'}<AskYesNo {question} {value} {onChange} />
     {:else if question.type === 'single' || question.type === 'multi'}<AskChoice {question} {value} {busy} {onChange} />
     {:else if question.type === 'rank'}<AskRank {question} {value} {onChange} />
+    {:else if question.type === 'datetime'}<AskWhen {question} {value} {onChange} />
     {:else}<AskText {question} {value} {box} {onChange} />{/if}
     <div class="hdq-qfoot">
       {#if hasRecommendation(question) && !done}<Button size="sm" data-ask-take={question.id} onclick={onTake}>{t('cplug.huddle.ask.take')}</Button>{/if}

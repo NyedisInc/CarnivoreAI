@@ -5,6 +5,7 @@ import { mountPanel, unmountPanel } from '../mount';
 import { setLocale, t } from '../i18n/index.svelte';
 import * as Density from '../drawer/density';
 import { DRAWER_LIST_ID } from '../drawer-tabs/drawer-tabs';
+import { swarmSwitch } from '../swarm-switch/control.svelte';
 import { declaredActionsFor } from '../../opscenter/widgets/menu/declared-actions.svelte';
 import { SESSION_LIST_WIDGET } from '../sidebar-widgets/widget-ids';
 import { closeRailMenu } from '../sidebar-widgets/rail-menu.svelte';
@@ -89,4 +90,17 @@ test('a density pick from the declared choices writes the field it always wrote 
   await settle();
   expect(prefs.store).toEqual({ sidebar_density: 'detailed' });
   expect(declaredActionsFor(HEADER).find((a) => a.id === 'density-detailed')!.checked, 'the tick follows the pick').toBe(true);
+});
+
+test('show leaders is declared on the agents key only while the Swarm switch is on (#2784)', async () => {
+  try {
+    swarmSwitch.data = { enabled: false };
+    await mountList();
+    expect(declaredActionsFor(HEADER).map((a) => a.id)).not.toContain('show-leaders');
+    swarmSwitch.data = { enabled: true };
+    await settle();
+    expect(declaredActionsFor(HEADER).map((a) => a.id)).toContain('show-leaders');
+  } finally {
+    swarmSwitch.data = null;
+  }
 });

@@ -20,7 +20,7 @@
 {#if viewport.narrow}
     {@const next = view === 'grid' ? 'list' : 'grid'}
     {@const label = t(view === 'grid' ? MANAGER_KEYS.viewFlipToList : MANAGER_KEYS.viewFlipToGrid)}
-    <button type="button" class="oc-ibtn oc-page__flip" aria-label={label} title={label} data-view-flip={view} onclick={() => onView(next)}>
+    <button type="button" class="oc-ibtn oc-page__flip" data-btn="secondary" data-size="icon" aria-label={label} title={label} data-view-flip={view} onclick={() => onView(next)}>
         <Icon name={shelf ? `shelf-${view}` : view} size={shelf ? 14 : 16} strokeWidth={shelf ? 1.2 : 1.5} />
     </button>
 {:else}
@@ -29,6 +29,8 @@
         <button
             type="button"
             class="oc-ibtn"
+            data-btn="secondary"
+            data-size="icon"
             aria-pressed={view === id}
             aria-label={t(key)}
             title={t(key)}

@@ -13,13 +13,13 @@ from src.core.provider_ledger import pace
 MAX_ROWS = 50
 
 
-def scrub(value: Any) -> Any:
+def scrub(value: Any, drop_token_keys: bool = True) -> Any:
     from src.core.mcp.tools import redact_text
 
     if isinstance(value, dict):
-        return {k: scrub(v) for k, v in value.items() if "token" not in str(k).lower()}
+        return {k: scrub(v, drop_token_keys) for k, v in value.items() if not drop_token_keys or "token" not in str(k).lower()}
     if isinstance(value, list):
-        return [scrub(v) for v in value]
+        return [scrub(v, drop_token_keys) for v in value]
     return redact_text(value) if isinstance(value, str) else value
 
 

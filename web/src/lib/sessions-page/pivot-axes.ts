@@ -1,6 +1,6 @@
 import type { Translate } from '../sessions/types';
 import { activityMs, CONV_TIERS, needKind, recentBuckets, USED_TIERS } from './lenses';
-import { writeChoice } from './stored-choice';
+import { writeChoice } from '../../opscenter/ui/stored-choice';
 import { matchesFind, type PageRow, type Signals } from './filters';
 
 export const AXIS_ORDER = ['project', 'company', 'provider', 'computer', 'state', 'recency', 'used', 'hour', 'weekday', 'convs'] as const;

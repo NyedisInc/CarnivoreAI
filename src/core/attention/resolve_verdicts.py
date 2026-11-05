@@ -19,6 +19,7 @@ from src.core.attention.evidence import (
     AttentionVerdict,
     Evidence,
 )
+from src.core.subagents.tally import STATE_OK as TALLY_STATE_OK, process_start_for
 from src.core.attention.transcript_facts import FACTS_FOUND, TURN_END_INTERRUPT, TURN_END_NO_MODEL_TURN
 
 
@@ -81,9 +82,47 @@ def _verdict(
     )
 
 
+QUEUED_REINVOKE_FRESH_SECONDS: int = 120
+
+
+def _current_process_start(evidence: Evidence) -> Optional[datetime]:
+    uuid = evidence.identity.conversation_uuid if evidence.identity is not None else None
+    return process_start_for(evidence.registry, uuid)
+
+
+def _queued_reinvoke_is_fresh(reason: str, evidence: Evidence) -> bool:
+    started = _current_process_start(evidence)
+    queued_at = evidence.transcript.queued_reinvoke_at
+    if reason != REASON_QUEUED_REINVOKE or started is None or queued_at is None:
+        return False
+    since_start = _age_seconds(queued_at, started)
+    if since_start is None or since_start < 0:
+        return False
+    age = _age_seconds(evidence.now, queued_at)
+    return age is not None and 0 <= age <= QUEUED_REINVOKE_FRESH_SECONDS
+
+
+def _subagents_confirm_running_work(reason: str, evidence: Evidence) -> bool:
+    tally = evidence.subagents
+    return (
+        reason == REASON_SUBAGENTS
+        and _current_process_start(evidence) is not None
+        and tally is not None
+        and tally.state == TALLY_STATE_OK
+        and (tally.running or 0) > 0
+    )
+
+
 def _busy_unless_resting(
     reason: str, tier: str, detail: str, *, evidence: Evidence
 ) -> AttentionVerdict:
+    if _subagents_confirm_running_work(reason, evidence) or _queued_reinvoke_is_fresh(reason, evidence):
+        why = (
+            "a subagent of this conversation is still writing its own transcript"
+            if reason == REASON_SUBAGENTS
+            else "a background agent finished and claude is about to be re-invoked with its completion"
+        )
+        return _verdict(STATE_BUSY, reason, tier, "%s; %s" % (detail, why), evidence=evidence)
     if evidence.resting_prompt_held and (
         reason in (REASON_SUBAGENTS, REASON_QUEUED_REINVOKE)
         and evidence.registry.confirms_background_work

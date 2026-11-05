@@ -81,6 +81,7 @@ export function removeCompanyImage(id: number): Promise<ImageResult> {
   return authFetch<ImageResult>(`/companies/${id}/image`, { method: 'DELETE' });
 }
 
+/* token), so a */
 export function companyImageUrl(c: Pick<Company, 'id' | 'has_image' | 'image_rev'>): string | null {
   return c.has_image ? `/api/v1/companies/${c.id}/image?rev=${encodeURIComponent(c.image_rev ?? '')}` : null;
 }

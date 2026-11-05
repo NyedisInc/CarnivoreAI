@@ -51,6 +51,7 @@ export interface ApprovalItem {
   plain_yes?: string | null;
   plain_no?: string | null;
   startup_kind?: string | null;
+  beast_would_answer?: boolean;
   created_at?: number | string | null;
   caller?: string;
   external_client?: string;

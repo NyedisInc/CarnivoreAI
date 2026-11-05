@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import time
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Dict, List, Optional
@@ -18,6 +19,8 @@ from src.core.relay_identity.device_key import DeviceKey
 
 RELAY_WAIT_SECONDS = 120.0
 RELAY_FAIL_CODES = ("no_pack", "unreachable", "local_network_blocked", "several")
+KNOCK_FAIL_CODES = ("no_pack", "unreachable", "local_network_blocked")
+KNOCK_GRACE_SECONDS = 30.0
 LOOK_FAIL_CODES = ("no_pack", "local_network_blocked", "found")
 
 log = structlog.get_logger(__name__)
@@ -47,6 +50,7 @@ class JoinDeps:
     app_version: str = ""
     notify: Optional[commit.Notify] = None
     join: Callable[..., Awaitable[join_client.JoinOutcome]] = join_client.join
+    knock: Callable[..., Awaitable[Dict[str, Any]]] = join_client.knock
 
 
 @dataclass
@@ -60,10 +64,17 @@ class JoinJob:
     tries_left: Optional[int] = None
     candidates: List[Dict[str, Any]] = field(default_factory=list)
     running: bool = False
+    expires_in: Optional[int] = None
+    knock_fid: Optional[str] = None
+    knock_deadline: float = 0.0
+    left_knock: asyncio.Event = field(default_factory=asyncio.Event, repr=False, compare=False)
 
     def status(self) -> Dict[str, Any]:
         return {"state": self.state, "error": self.error, "main_label": self.main_label, "main_iid": self.main_iid,
-                "tries_left": self.tries_left, "candidates": list(self.candidates)}
+                "tries_left": self.tries_left, "candidates": list(self.candidates),
+                "expires_in": max(0, int(self.knock_deadline - time.monotonic())) if self.state == "knocked" else None,
+                "knock_fid": self.knock_fid if self.state == "knocked" else None,
+                "own_fid_short": _deps.fed_key.device_id[:6] if _deps is not None else None}
 
 
 _deps: Optional[JoinDeps] = None
@@ -80,6 +91,7 @@ class _Pending:
     candidate_fid: Optional[str]
     require_grant: bool
     look: bool = False
+    knock: bool = False
 
 
 def configure_join(deps: Optional[JoinDeps]) -> None:
@@ -109,8 +121,8 @@ def window_status() -> Dict[str, Any]:
 def start_join(code: Optional[str], link: Optional[str], candidate_fid: Optional[str] = None, *, origin: str,
                totp_ok: bool) -> JoinJob:
     global _job, _task, _pending
-    if _job is not None and _job.running:
-        if _pending is None or not _pending.look:
+    if _job is not None and _job.running and _job.state != "knocked":
+        if _pending is None or not (_pending.look or _pending.knock):
             return _job
     state = first_run_state()
     if state == "join_pending" and _job is not None and _job.state == "joined":
@@ -143,11 +155,12 @@ def _end_look(job: JoinJob) -> None:
         _task.cancel()
     _pending = None
     job.state, job.error, job.running = "failed", "superseded", False
+    job.left_knock.set()
 
 
 def start_look(*, origin: str) -> JoinJob:
     global _job, _task, _pending
-    if _job is not None and _job.running:
+    if _job is not None and _job.running and _job.state != "knocked":
         return _job
     state = first_run_state()
     if state == "join_pending" and _job is not None and _job.state == "joined":
@@ -158,6 +171,8 @@ def start_look(*, origin: str) -> JoinJob:
         raise JoinNotAllowed("undetermined")
     if _deps is None:
         raise JoinNotAllowed("unavailable")
+    if _job is not None and _job.running:
+        _end_look(_job)
     job = JoinJob(state="waiting_relay", running=True)
     _job = job
     _pending = _Pending(None, None, None, require_grant=False, look=True)
@@ -166,11 +181,66 @@ def start_look(*, origin: str) -> JoinJob:
     return job
 
 
+def start_knock(candidate_fid: str, *, origin: str) -> JoinJob:
+    global _job, _task, _pending
+    if _job is not None and _job.running and _job.state != "knocked":
+        return _job
+    state = first_run_state()
+    if state == "join_pending" and _job is not None and _job.state == "joined":
+        return _job
+    if state == "joined":
+        raise JoinNotAllowed("already_joined")
+    if state == "undetermined":
+        raise JoinNotAllowed("undetermined")
+    if not candidate_fid or len(candidate_fid) > 64:
+        raise JoinNotAllowed("bad_request")
+    if _deps is None:
+        raise JoinNotAllowed("unavailable")
+    if _job is not None and _job.running:
+        _end_look(_job)
+    job = JoinJob(state="waiting_relay", running=True, knock_fid=candidate_fid)
+    _job = job
+    _pending = _Pending(None, None, candidate_fid, require_grant=False, knock=True)
+    log.info("computer_knock_start", origin=origin)
+    _task = asyncio.get_running_loop().create_task(_expire(job))
+    return job
+
+
+def submit_code(code: str) -> JoinJob:
+    global _task, _pending
+    job = _job
+    if job is None or job.state != "knocked" or not job.running:
+        raise JoinNotAllowed("no_knock")
+    if not (len(code) == 6 and code.isascii() and code.isdigit()):
+        raise JoinNotAllowed("bad_request")
+    if _task is not None and not _task.done():
+        _task.cancel()
+    job.state, job.expires_in = "waiting_relay", None
+    _pending = _Pending(code, None, job.knock_fid, require_grant=False)
+    set_join_running(True)
+    job.left_knock.set()
+    log.info("computer_knock_code_submitted")
+    _task = asyncio.get_running_loop().create_task(_expire(job))
+    return job
+
+
+async def await_code(job_id: str) -> Optional[JoinJob]:
+    job = _job
+    if job is None or job.id != job_id:
+        return None
+    if job.state == "knocked":
+        try:
+            await asyncio.wait_for(job.left_knock.wait(), (job.expires_in or 0) + KNOCK_GRACE_SECONDS)
+        except asyncio.TimeoutError:
+            pass
+    return job
+
+
 def relay_request() -> Optional[Dict[str, Any]]:
     if _job is None or _pending is None or _job.state != "waiting_relay":
         return None
     parsed = _pending.parsed
-    mode = "look" if _pending.look else "link" if parsed is not None else "code"
+    mode = "look" if _pending.look else "knock" if _pending.knock else "link" if parsed is not None else "code"
     return {"job": _job.id, "mode": mode, "candidate_fid": _pending.candidate_fid,
             "targets": [[h, parsed.link_port + 1] for h in parsed.hosts] if parsed is not None else []}
 
@@ -180,6 +250,7 @@ def _finish(job: JoinJob, state: str, error: Optional[str] = None) -> None:
     _pending = None
     job.state, job.error, job.running = state, error, False
     set_join_running(False)
+    job.left_knock.set()
 
 
 async def _expire(job: JoinJob) -> None:
@@ -203,7 +274,8 @@ async def attach_relay(path: str, address: str, expect_fid: Optional[str], job_i
         _task.cancel()
     job.state, _pending = "connecting", None
     log.info("computer_join_relay_attached", addr=address[:64])
-    _task = asyncio.get_running_loop().create_task(_run_job(job, deps, path, pend, pend.candidate_fid or expect_fid))
+    run = _run_knock(job, deps, path) if pend.knock else _run_job(job, deps, path, pend, pend.candidate_fid or expect_fid)
+    _task = asyncio.get_running_loop().create_task(run)
     return job
 
 
@@ -219,7 +291,7 @@ def fail_relay(code: str, candidates: Optional[List[Dict[str, Any]]] = None, job
     job = _job
     if job is None or _pending is None or job.state != "waiting_relay" or (job_id is not None and job_id != job.id):
         raise JoinNotAllowed("no_join_waiting")
-    if code not in (LOOK_FAIL_CODES if _pending.look else RELAY_FAIL_CODES):
+    if code not in (LOOK_FAIL_CODES if _pending.look else KNOCK_FAIL_CODES if _pending.knock else RELAY_FAIL_CODES):
         raise JoinNotAllowed("bad_request")
     if code in ("several", "found"):
         job.candidates = [_candidate(c) for c in (candidates or [])[:16] if isinstance(c, dict)]
@@ -239,6 +311,30 @@ def end_waiting(job: JoinJob, code: str) -> None:
 def end_waiting_by_id(job_id: str, code: str) -> None:
     if _job is not None and _job.id == job_id:
         end_waiting(_job, code)
+
+
+async def _expire_knock(job: JoinJob, seconds: float) -> None:
+    await asyncio.sleep(seconds)
+    if _job is job and job.state == "knocked":
+        job.state, job.error, job.running, job.expires_in = "failed", "expired", False, None
+        job.left_knock.set()
+        log.info("computer_knock_expired")
+
+
+async def _run_knock(job: JoinJob, deps: JoinDeps, relay_path: str) -> None:
+    global _task
+    try:
+        out = await deps.knock(relay_path=relay_path, fid=deps.fed_key.device_id, iid=deps.own_iid, label=deps.own_label)
+        job.main_label, job.expires_in, job.state = out["main_label"], int(out["expires_in"]), "knocked"
+        job.knock_deadline = time.monotonic() + job.expires_in
+        _task = asyncio.get_running_loop().create_task(_expire_knock(job, float(out["expires_in"])))
+        log.info("computer_knock_accepted", expires_in=job.expires_in)
+    except JoinFailed as exc:
+        job.state, job.error, job.running = "failed", exc.code, False
+        log.info("computer_knock_failed", code=exc.code)
+    except Exception as exc:  # noqa: BLE001
+        job.state, job.error, job.running = "failed", "join_failed", False
+        log.error("computer_knock_crashed", error_type=type(exc).__name__)
 
 
 async def _run_job(job: JoinJob, deps: JoinDeps, relay_path: str, pend: _Pending, expect_fid: Optional[str]) -> None:

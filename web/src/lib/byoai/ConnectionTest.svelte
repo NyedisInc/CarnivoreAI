@@ -1,5 +1,6 @@
 
 <script lang="ts">
+    import { failureReason } from '../errors/failure-reason';
     import { onMount } from 'svelte';
     import { t as reactiveT } from '../i18n/index.svelte';
     import type { Translate } from '../sessions/types';
@@ -82,7 +83,7 @@
         try {
             await playBase64(result.audio);
         } catch (error) {
-            problem = error instanceof Error ? error.message : String(error);
+            problem = failureReason(error);
         } finally {
             playing = false;
         }

@@ -46,8 +46,6 @@ export function resultsOf(gates: readonly ReportGate[] | null, running = false):
 
 export const failedCount = (results: readonly CheckResult[]): number => results.filter((r) => r === 'did_not_pass').length;
 
-export const passedCount = (results: readonly CheckResult[]): number => results.filter((r) => r === 'passed').length;
-
 export function findingLine(finding: ReportFinding): string {
     const where = finding.path ? `${finding.path}${typeof finding.line === 'number' && finding.line > 0 ? `:${finding.line}` : ''}` : '';
     return where ? `${finding.code}  ${where}` : finding.code;

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import sqlite3
 
 import structlog
@@ -10,7 +9,7 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 from src.core import db
 from src.core.crosstalk import bus as crosstalk_bus, store as crosstalk_store
-from src.core.mcp import lean_answers, write_tools
+from src.core.mcp import lean_answers
 from src.core.mcp.caller import AgentCaller
 from src.core.mcp.common import ToolError, _ok
 from src.core.swarm import facts, spawn
@@ -147,7 +146,7 @@ def _create_args(a: dict) -> dict:
         "title": _text(a, "title", required=True, limit=ops.MAX_TITLE_CHARS), "summary": _text(a, "summary", required=True, limit=ops.MAX_SUMMARY_CHARS),
         "text": _text(a, "text", limit=2000) or "",
         "project_id": _int(a, "project_id"), "parent": _int(a, "parent"), "how_to_validate": _text(a, "how_to_validate", limit=4000) or "",
-        "before_id": _int(a, "before_id"), "queued": a.get("queued") is True}
+        "before_id": _int(a, "before_id"), "queued": a.get("queued") is True, "level": _text(a, "level")}
 
 
 async def swarm_card_create(manager: Any, caller: AgentCaller, args: dict) -> dict:
@@ -245,22 +244,13 @@ swarm_card_archive = _writer(ops.agent_archive, lambda a: {"reason": _text(a, "r
 
 
 async def swarm_card_delete(manager: Any, caller: AgentCaller, args: dict) -> dict:
-    async def check() -> Any:
+    async def work() -> Any:
         agent = await _caller(manager, caller)
         card_id = _int(args, "card_id", required=True)
         sent = {"reason": _text(args, "reason", required=True, limit=ops.MAX_ASK_CHARS)}
-        checked = await ops.curate_check(card_id, sent, by=f"agent:{agent['id']}", op="agent_delete")
-        return agent, card_id, checked
+        return await ops.agent_delete(manager.app.state, card_id, sent, by=f"agent:{agent['id']}")
 
-    agent, card_id, checked = await _guard(check(), wrap=False)
-
-    async def run(_approved: bool) -> dict:
-        return await _guard(ops.agent_delete(manager.app.state, card_id, {"reason": checked["reason"]}, by=f"agent:{agent['id']}"))
-
-    summary = (f"DELETE card #{card_id} {json.dumps(checked['card'].get('title') or '')} for good (its history stays; "
-               f"its agent is told to drop it). Reason: {checked['reason']}")
-    return await write_tools.park(manager, caller, "", "", "swarm_card_delete", summary, {"card_id": card_id, "reason": checked["reason"]},
-                                  run, dedupe_key=f"swarm_card_delete:{card_id}", beast_eligible=False)
+    return await _guard(work())
 
 
 _CARD = {"card_id": {"type": "integer", "minimum": 1}}
@@ -272,7 +262,9 @@ _CARD_PROPS = {
     "text": {"type": "string", "maxLength": 2000},
     "project_id": {"type": "integer", "minimum": 1}, "parent": {"type": "integer", "minimum": 1},
     "how_to_validate": {"type": "string", "maxLength": 4000}, "before_id": {"type": "integer", "minimum": 1},
-    "queued": {"type": "boolean", "description": "true: start in In Progress, queued for the deal (the project agent, its own project only)"}}
+    "queued": {"type": "boolean", "description": "true: start in In Progress, queued for the deal (the project agent, its own project only)"},
+    "level": {"type": "string", "enum": ["task", "feature"],
+              "description": "task or feature; default task for a child card, feature for a top-level card. A finished task shows one done line in its project agent's chat, a finished feature also in the company agent's and SysOp's"}}
 
 WRITE_TOOLS: frozenset = frozenset({"swarm_card_create", "swarm_card_start", "swarm_card_handoff", "swarm_card_finish", "swarm_card_close", "swarm_card_release",
                                     "swarm_card_reorder", "swarm_card_deal", "swarm_card_auto_promote", "swarm_card_queue",
@@ -289,7 +281,7 @@ TOOLS: Dict[str, Any] = {
                          {"scope": {"type": "string"}}, [], swarm_card_board),
     "swarm_card_create": (
         "Make a card in Todo (the owner's backlog), or several with cards:[...]. Project and company agents and Alpha make cards where they deal; a task or feature agent makes only child cards of the card it holds. "
-        "A project agent making a card for work to start now passes queued=true (its own project only): the card goes straight to In Progress, queued for the deal.",
+        "A project agent making a card for work to start now passes queued=true (its own project only): the card goes straight to In Progress, queued for the deal. level=task: a small top-level fix.",
         {**_CARD_PROPS, **_DETAIL,
          "cards": {"type": "array", "maxItems": MAX_CREATE, "items": {"type": "object", "properties": _CARD_PROPS, "required": ["title", "summary"]},
                    "description": f"make up to {MAX_CREATE} cards in one call instead of the single-card arguments; each is gated alone and a refused one is listed in errors"}},
@@ -301,20 +293,18 @@ TOOLS: Dict[str, Any] = {
         ["card_id"], swarm_card_handoff),
     "swarm_card_finish": (
         "Finish a card you hold with your result and the steps to validate it; the report to your parent is filed for you. "
-        "needs_owner false (the work is checked and complete): the card goes straight to Done (a child card waits for its parent's accept). "
-        "needs_owner true, only when the owner must answer a question, pick between options (such as mockups) or do something before it can close: "
-        "the card goes to Review showing owner_ask. "
-        "remember (a swarm_remember fact or a list of up to 5, only a lasting rule that meets the memory bar, usually none) is written first; "
-        "if it fails the card is not finished.",
+        "needs_owner false (checked, complete work): straight to Done (a child card waits for its parent's accept). "
+        "needs_owner true only when the owner must answer, pick between options (such as mockups) or do something before it can close: "
+        "to Review showing owner_ask.",
         {**_CARD, "result": {"type": "string", "minLength": 1, "maxLength": 4000},
          "needs_owner": {"type": "boolean", "description": "true only when the owner must answer, pick or do something before the card closes"},
          "owner_ask": {"type": "string", "maxLength": 500, "description": "required with needs_owner true: what the owner must answer, pick or do"},
          "how_to_validate": {"type": "string", "minLength": 1, "maxLength": 4000}, "validate_link": {"type": "string", "maxLength": 500},
-         "remember": {"oneOf": [{"type": "object"}, {"type": "array", "maxItems": MAX_REMEMBER, "items": {"type": "object"}}], "description": "facts as swarm_remember takes them: title, scope, text, kind; leave out unless it is a rule needed again"},
+         "remember": {"oneOf": [{"type": "object"}, {"type": "array", "maxItems": MAX_REMEMBER, "items": {"type": "object"}}], "description": "a swarm_remember fact (title, scope, text, kind) or a list of up to 5, only a lasting rule that meets the memory bar, usually none; written first, and if it fails the card is not finished"},
          **_DETAIL},
         ["card_id", "result", "how_to_validate", "needs_owner"], swarm_card_finish),
     "swarm_card_close": (
-        "Close a card in Review: it moves to Done, with your reason kept in its history. A project agent closes its own project's cards, "
+        "Close a card in any column: it moves to Done, with your reason kept in its history. A project agent closes its own project's cards, "
         "a company agent its company's projects' cards. Close only work that is checked and complete; leave a card that waits on the owner's answer, pick or hands.",
         {**_CARD, "reason": {"type": "string", "minLength": 1, "maxLength": 500}, **_DETAIL}, ["card_id", "reason"], swarm_card_close),
     "swarm_card_release": ("Give a card you hold back to the queue (or on to the agent it was swapped to), with a reason.",
@@ -346,6 +336,6 @@ TOOLS: Dict[str, Any] = {
         {**_CARD, "reason": {"type": "string", "minLength": 1, "maxLength": 500}, **_DETAIL}, ["card_id", "reason"], swarm_card_archive),
     "swarm_card_delete": (
         "Delete a card for good; its history stays and its agent is told to drop it. Same scope as swarm_card_archive. "
-        "Always waits for the owner's approval, even in Beast Mode.",
+        "Runs at once, whoever made the card, the owner included.",
         {**_CARD, "reason": {"type": "string", "minLength": 1, "maxLength": 500}}, ["card_id", "reason"], swarm_card_delete),
 }

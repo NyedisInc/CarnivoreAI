@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+from types import TracebackType
 
 import structlog
 
@@ -13,7 +14,9 @@ logger = structlog.get_logger()
 
 
 class _ClosingConnection(sqlite3.Connection):
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None,
+    ) -> bool | None:
         try:
             return super().__exit__(exc_type, exc_value, traceback)
         finally:
@@ -32,7 +35,7 @@ _READS = ReadPool(_open_read_only)
 
 class StatsStore:
 
-    def __init__(self, state_dir: Path):
+    def __init__(self, state_dir: Path) -> None:
         from src.core.pipeline import plugin_db
         from src.core.stats.plugin.pipeline_plugin import STATS
 

@@ -11,7 +11,7 @@ from urllib.parse import urlsplit
 
 import structlog
 
-from src.cplugs.runtime import fsguard, git_ops, guards, frames
+from src.cplugs.runtime import create_params, fsguard, git_ops, guards, frames
 from src.cplugs.sdk.ai_features import AI_CAPABILITIES
 from src.cplugs.runtime.owner_tokens import OwnerTokens, TokenRefused
 from src.cplugs.runtime.storage import HostStorage, StorageRefused
@@ -215,11 +215,8 @@ class HostDispatcher:
 
     async def _sessions_create(self, ctx: PluginContext, params: Dict[str, Any]) -> Dict[str, Any]:
         self._need(ctx, "sessions.create")
-        project, prompt, family = params.get("project"), params.get("prompt", ""), params.get("family")
-        if not isinstance(project, int) or isinstance(project, bool) or not isinstance(prompt, str) or len(prompt) > 8000 \
-                or (family is not None and not isinstance(family, str)):
-            raise guards.Refused("invalid_params", "project (int), prompt (text) and family (text)")
-        return dict(await self._service("create_session")(ctx.plugin_id, project, guards.strip_invisible(prompt), family))
+        project, prompt, family = create_params.checked(ctx.tier, params)
+        return dict(await self._service("create_session")(ctx.plugin_id, project, prompt, family))
 
     async def _sessions_control(self, ctx: PluginContext, params: Dict[str, Any]) -> Dict[str, Any]:
         self._need(ctx, "sessions.control")

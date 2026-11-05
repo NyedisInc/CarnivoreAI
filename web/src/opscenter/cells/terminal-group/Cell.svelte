@@ -147,6 +147,7 @@
   <TabStrip
     items={ctl.items}
     active={ctl.active}
+    holdsInput={ctl.holdsInput}
     onSelect={ctl.select}
     onClose={ctl.close}
     onKill={(tab) => void ctl.kill(tab)}

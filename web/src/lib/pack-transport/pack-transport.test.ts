@@ -3,11 +3,16 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, unmount, type Component } from 'svelte';
 
 const calls: { path: string; init?: RequestInit }[] = [];
+let publishRefusal: { files: string[]; more: number } | null = null;
 
 vi.mock('../../opscenter/api/auth.svelte', async (original) => ({
   ...(await original<Record<string, unknown>>()),
   authFetch: async (path: string, init?: RequestInit) => {
     calls.push({ path, init });
+    if (init?.method === 'POST' && publishRefusal) {
+      const { ApiError } = await original<{ ApiError: new (m: string, s: number, c: string | null, p: unknown) => Error }>();
+      throw new ApiError('some files could not be opened to check them for a credential. nothing was published.', 409, 'unscannable_files', { detail: { code: 'unscannable_files', files: publishRefusal.files, files_more: publishRefusal.more } });
+    }
     if (init?.method === 'POST') return { url: 'https://github.com/NyedisInc/notes', owner: 'NyedisInc', name: 'notes', private: true };
     if (path.endsWith('/replicas')) return { pack_state: 'home', replicas: [] };
     if (path.endsWith('/github-account')) {
@@ -38,6 +43,7 @@ afterEach(async () => {
   for (const c of mounted.splice(0)) await unmount(c);
   document.body.replaceChildren();
   calls.length = 0;
+  publishRefusal = null;
 });
 
 describe('the machine badge', () => {
@@ -78,5 +84,31 @@ describe('the publish private repo card', () => {
     expect(body).toEqual({ owner: 'NyedisInc', account: 'NyedisAdam' });
     expect('private' in body || 'visibility' in body).toBe(false);
     expect(root.querySelector('[data-pt="publish-done"]')?.textContent).toContain('private');
+  });
+});
+
+describe('a refused publish', () => {
+  test('the card names the files the scan refused, capped, with "and N more"', async () => {
+    publishRefusal = { files: ['assets/logo.png', 'dump.bin'], more: 3 };
+    const root = place(ProjectTransport, { name: 'notes' });
+    (root.querySelector('[data-pt="toggle"]') as HTMLElement).click();
+    await tick();
+    const ownerBox = root.querySelector('[data-pt="publish-owner-input"]') as HTMLInputElement;
+    ownerBox.value = 'NyedisInc';
+    ownerBox.dispatchEvent(new Event('input', { bubbles: true }));
+    const pick = root.querySelector('[data-pt="publish-account-pick"]') as HTMLSelectElement;
+    pick.value = 'NyedisAdam';
+    pick.dispatchEvent(new Event('change', { bubbles: true }));
+    flushSync();
+    (root.querySelector('[data-pt="publish-go"]') as HTMLButtonElement).click();
+    await vi.waitFor(() => {
+      const post = calls.findIndex((c) => c.init?.method === 'POST');
+      expect(post).toBeGreaterThan(-1);
+      expect(calls.slice(post + 1).some((c) => c.path.endsWith('/publish-repo'))).toBe(true);
+    });
+    await tick();
+    const shown = root.querySelector('[data-pt="error"]')?.textContent ?? '';
+    expect(shown).toContain('nothing was published');
+    expect(shown).toContain('files: assets/logo.png, dump.bin and 3 more');
   });
 });

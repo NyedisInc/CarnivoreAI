@@ -135,6 +135,8 @@ class NotifyEngine:
         view = current_view()
         if view is None or view.paused:
             return False
+        if event.type_id in types.ALIASES:
+            event = dataclasses.replace(event, type_id=types.canonical(event.type_id))
         if not types.is_registered(event.type_id):
             log.warning("notify_unregistered_type", type_id=event.type_id)
             return False
@@ -200,7 +202,11 @@ class NotifyEngine:
         self._dedupe[dedupe_key] = now
         if cools:
             self._cooldown[cooldown_key] = now
-        if extras.should_hold_for_away(dest.away, self._screens.is_screen_active()):
+        if self._screens.is_watched(event.session_id):
+            if not needs_you:
+                return False
+            self._spawn(self._held(dest, event))
+        elif extras.should_hold_for_away(dest.away, self._screens.is_screen_active()):
             self._spawn(self._held(dest, event))
         else:
             self._queue(dest, event)

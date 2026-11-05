@@ -66,13 +66,15 @@ function makeSandbox() {
     const body = {
         classList: makeElement('body').classList,
         querySelectorAll(selector) {
-            assert.equal(selector, ':scope > .modal-overlay');
+            assert.equal(selector, '.modal-overlay');
             return bodyOverlays.slice();
         },
     };
 
+    const root = { classList: makeElement('html').classList };
     const fakeDocument = {
         body,
+        documentElement: root,
         activeElement: null,
         addEventListener(type, handler, useCapture) {
             if (type === 'keydown' && useCapture === true) captureHandler = handler;
@@ -101,7 +103,7 @@ function makeSandbox() {
         return event;
     }
 
-    return { ModalStack: fakeWindow.ModalStack, bodyOverlays, fakeDocument, body, pressKey };
+    return { ModalStack: fakeWindow.ModalStack, bodyOverlays, fakeDocument, body, root, pressKey };
 }
 
 test('the escape listener is registered in the CAPTURE phase', () => {
@@ -203,7 +205,7 @@ test('a covered modal is marked, hidden from AT, and made inert', () => {
 });
 
 test('background scroll is locked while stacked and released when empty', () => {
-    const { ModalStack, bodyOverlays, body } = makeSandbox();
+    const { ModalStack, bodyOverlays, body, root } = makeSandbox();
     const a = makeElement('a');
     const b = makeElement('b');
     assert.equal(body.classList.contains(ModalStack.BODY_LOCK_CLASS), false);
@@ -218,6 +220,15 @@ test('background scroll is locked while stacked and released when empty', () => 
     assert.equal(body.classList.contains(ModalStack.BODY_LOCK_CLASS), true, 'one is still open');
     ModalStack.pop(a);
     assert.equal(body.classList.contains(ModalStack.BODY_LOCK_CLASS), false);
+    assert.equal(root.classList.contains(ModalStack.BODY_LOCK_CLASS), false);
+});
+
+test('the root element carries the lock class while stacked (#1940)', () => {
+    const { ModalStack, bodyOverlays, root } = makeSandbox();
+    const a = makeElement('a');
+    bodyOverlays.push(a);
+    ModalStack.push(a, { onEscape() {} });
+    assert.equal(root.classList.contains(ModalStack.BODY_LOCK_CLASS), true);
 });
 
 test('focus is remembered per entry and restored on pop', () => {
@@ -423,15 +434,15 @@ test('trap refuses an element it cannot hold', () => {
     assert.throws(() => ModalStack.trap(null, {}), { name: 'TypeError' });
 });
 
-test('the four dialogs that claim modality no longer bind escape to their own overlay', () => {
+test('the dialogs that claim modality no longer bind escape to their own overlay', () => {
     const confirmSource = readClientJs('app.js');
     assert.ok(
-        /ModalStack\.trap\(overlay/.test(confirmSource),
-        'App.showConfirmModal must claim modality through the shared point',
+        /window\.CloudeWeb\.launchpad\.confirm/.test(confirmSource),
+        'App.showConfirmModal must forward to the bundle confirm',
     );
     assert.ok(
-        !/overlay\.addEventListener\('keydown'/.test(confirmSource),
-        'App.showConfirmModal must not bind escape on the overlay element',
+        !/createElement\('div'\)[\s\S]{0,200}modal-overlay/.test(confirmSource) && !/overlay\.addEventListener\('keydown'/.test(confirmSource),
+        'App.showConfirmModal must not draw an overlay or bind escape itself',
     );
 
     const pickerSource = readClientJs('session-restart-picker.js');
@@ -453,6 +464,47 @@ test('the four dialogs that claim modality no longer bind escape to their own ov
         /ModalStack\.trap\(overlayEl/.test(pasteSource),
         'the paste fallback sheet must trap focus',
     );
+});
+
+async function realPage(bodyHtml) {
+    const { createRequire } = await import('node:module');
+    const { JSDOM } = createRequire(import.meta.url)(path.join(__dirname, '..', 'web', 'node_modules', 'jsdom'));
+    const dom = new JSDOM(`<body>${bodyHtml}</body>`, { runScripts: 'outside-only' });
+    dom.window.console.log = () => {};
+    dom.window.eval(readClientJs('modal-stack.js'));
+    return { window: dom.window, document: dom.window.document, ModalStack: dom.window.ModalStack };
+}
+
+function escapeOnce(page) {
+    page.document.body.dispatchEvent(new page.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+}
+
+test('a hidden overlay that was kept in the page (slash commands) does not block the picker Escape', async () => {
+    const page = await realPage('<div class="modal-overlay" id="picker"></div>');
+    let calls = 0;
+    page.ModalStack.push(page.document.getElementById('picker'), { onEscape: () => { calls++; } });
+    page.document.body.insertAdjacentHTML('beforeend',
+        '<div id="slash-commands-modal" class="modal" style="display:none"><div class="modal-overlay"></div></div>');
+    escapeOnce(page);
+    assert.equal(calls, 1, 'a not-shown overlay must not count as layered above the stack');
+});
+
+test('a `hidden` ancestor also hides an overlay from the scan', async () => {
+    const page = await realPage('<div class="modal-overlay" id="picker"></div>');
+    let calls = 0;
+    page.ModalStack.push(page.document.getElementById('picker'), { onEscape: () => { calls++; } });
+    page.document.body.insertAdjacentHTML('beforeend', '<section hidden><div class="modal-overlay"></div></section>');
+    escapeOnce(page);
+    assert.equal(calls, 1);
+});
+
+test('a SHOWN overlay inside a host div (the bundle\'s openModal shape) still takes the Escape from the stack', async () => {
+    const page = await realPage('<div class="modal-overlay" id="editor"></div>');
+    let calls = 0;
+    page.ModalStack.push(page.document.getElementById('editor'), { onEscape: () => { calls++; } });
+    page.document.body.insertAdjacentHTML('beforeend', '<div><div class="modal-overlay" id="confirm"></div></div>');
+    escapeOnce(page);
+    assert.equal(calls, 0, 'the confirm in its host div is on top; the editor must not close');
 });
 
 await runQueue();

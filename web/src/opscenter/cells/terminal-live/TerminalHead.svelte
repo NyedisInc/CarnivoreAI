@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack, type Snippet } from 'svelte';
   import { inputFocus } from '../../lib/input-focus.svelte';
-  import { useFrameHeader, useHeaderGroup, useTabPane } from '../../shell/frame-header.svelte';
+  import { claimFrameTitle, useFrameHeader, useHeaderGroup, useTabPane } from '../../shell/frame-header.svelte';
   import TerminalUtilities from './TerminalUtilities.svelte';
   import LayoutCellMarks from '../../layouts/LayoutCellMarks.svelte';
   import { toggleWidthFor } from '../../layouts/broadcast.svelte';
@@ -44,6 +44,13 @@
   const framed = $derived(!!frameHeader?.drawn);
   const widgetForm = $derived(!!tabPane && !!frameHeader && frameHeader.gridSlot === null);
   const toolsUp = useHeaderGroup(() => (widgetForm && showsHead ? widgetTools : null), true);
+  $effect(() => {
+    if (!frameHeader || !framed || !showsHead || !widgetForm) return;
+    frameHeader.status = statusMark;
+    return () => {
+      if (frameHeader.status === statusMark) frameHeader.status = null;
+    };
+  });
   const rowToken = Symbol('terminal-head-rowless');
   $effect(() => {
     const rail = tabPane && !widgetForm && showsHead ? barSearch?.rail : null;
@@ -61,10 +68,20 @@
         if (frameHeader.rowless === rowToken) frameHeader.rowless = null;
       };
     }
-    frameHeader.content = headerContent;
+    if (tabPane) {
+      frameHeader.content = headerContent;
+      return () => {
+        if (frameHeader.content === headerContent) frameHeader.content = null;
+        if (frameHeader.tools === toolsContent) frameHeader.tools = null;
+      };
+    }
+    const releaseTitle = claimFrameTitle(frameHeader, name || null);
+    frameHeader.status = statusMark;
+    frameHeader.action = standardActions;
     return () => {
-      if (frameHeader.content === headerContent) frameHeader.content = null;
-      if (frameHeader.tools === toolsContent) frameHeader.tools = null;
+      releaseTitle();
+      if (frameHeader.status === statusMark) frameHeader.status = null;
+      if (frameHeader.action === standardActions) frameHeader.action = null;
     };
   });
 
@@ -114,6 +131,40 @@
   </span>
 {/snippet}
 
+{#snippet statusDot()}
+  
+  {#if showsStatusLight(agentFamily)}
+    <span
+      class="oc-tl-dot"
+      class:oc-tl-dot-hollow={hue === 'grey' && !measured}
+      style={`--oc-dot-color:${dotColor}`}
+    ></span>
+  {/if}
+{/snippet}
+
+{#snippet statusText()}
+  {#if statusWord && showsStatusLight(agentFamily)}
+    {#if showsStatusWord}
+      <span class="oc-tl-status">{statusWord}</span>
+    {:else}
+      <span class="oc-visually-hidden">{statusWord}</span>
+    {/if}
+  {/if}
+{/snippet}
+
+{#snippet statusMark()}
+  {@render statusDot()}{@render statusText()}
+{/snippet}
+
+{#snippet standardActions()}
+  <span class="oc-tl-actions" data-terminal-header={sessionId} onfocusin={() => inputFocus.claim(slot)}>
+    {@render toolsContent()}
+    {#if tail}
+      <span class="oc-tl-tail">{@render tail()}</span>
+    {/if}
+  </span>
+{/snippet}
+
 {#snippet headerContent()}
 <div class="oc-tl-head" class:oc-tl-head-tabbed={!!tabPane} class:oc-tl-head-bare={!framed} data-terminal-header={sessionId} onfocusin={() => inputFocus.claim(slot)}>
   {#if tabPane}
@@ -128,21 +179,9 @@
     </div>
   {:else}
     
-    {#if showsStatusLight(agentFamily)}
-    <span
-      class="oc-tl-dot"
-      class:oc-tl-dot-hollow={hue === 'grey' && !measured}
-      style={`--oc-dot-color:${dotColor}`}
-    ></span>
-    {/if}
+    {@render statusDot()}
     <h2 class="oc-tl-name">{name}</h2>
-    {#if statusWord && showsStatusLight(agentFamily)}
-      {#if showsStatusWord}
-        <span class="oc-tl-status">{statusWord}</span>
-      {:else}
-        <span class="oc-visually-hidden">{statusWord}</span>
-      {/if}
-    {/if}
+    {@render statusText()}
     {@render toolsContent()}
     {#if tail}
       <span class="oc-tl-tail">{@render tail()}</span>
@@ -267,6 +306,13 @@
 
     @container (max-width: 480px) {
       .oc-tl-status { display: none; }
+    }
+
+    .oc-tl-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--oc-space-2);
+      min-width: 0;
     }
 
     .oc-tl-tail {

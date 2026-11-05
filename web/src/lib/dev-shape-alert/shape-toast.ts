@@ -2,6 +2,7 @@
 import { subscribe } from '../../opscenter/api/events.svelte';
 import type { EventFrame } from '../../opscenter/api/types';
 import { t } from '../i18n/index.svelte';
+import { addLocalToast } from '../toast-surface';
 
 export const SHAPE_FRAME = 'dev.shape_unrecognized';
 
@@ -15,10 +16,6 @@ interface ShapeFrame {
   problems?: unknown;
 }
 
-interface ToastSurface {
-  add(toast: Record<string, unknown>): void;
-}
-
 let started = false;
 
 export function toastFor(frame: ShapeFrame, now: number = Date.now()): Record<string, unknown> | null {
@@ -30,6 +27,7 @@ export function toastFor(frame: ShapeFrame, now: number = Date.now()): Record<st
     id: `shape:${frame.file_kind}:${now}`,
     session_id: null,
     kind: SHAPE_KIND,
+    notify_type: 'dev.shape_unrecognized',
     title: t('dev_shape_alert.toast.title'),
     body: t('dev_shape_alert.toast.body', {
       kind: frame.file_kind,
@@ -46,8 +44,6 @@ export function startShapeAlertToasts(): void {
   started = true;
   subscribe(SHAPE_FRAME, (frame: EventFrame) => {
     const toast = toastFor(frame as unknown as ShapeFrame);
-    const surface = (globalThis as { ToastManager?: ToastSurface }).ToastManager;
-    if (!toast || !surface || typeof surface.add !== 'function') return;
-    surface.add(toast);
+    if (toast) addLocalToast(toast);
   });
 }

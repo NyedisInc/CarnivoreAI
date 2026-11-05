@@ -2,10 +2,12 @@
 <script lang="ts">
     import Button from '../base/Button.svelte';
     import type { Translate } from '../sessions/types';
+    import SideloadKinds from './SideloadKinds.svelte';
     import SideloadSwitch from './SideloadSwitch.svelte';
     import ThirdPartySwitch from './ThirdPartySwitch.svelte';
     import type { SideloadStore } from './sideload-store.svelte';
     import { untilWhen } from './sideload-switch';
+    import { readChoice, writeChoice } from '../../opscenter/ui/stored-choice';
 
     const DEVELOPER_ZONE_OPEN_KEY = 'plugins.developerZone.open';
 
@@ -16,12 +18,10 @@
 
     const { t, sideloads }: Props = $props();
 
+    const OPEN_VALUES = ['1', '0'] as const;
+
     function readOpen(): boolean {
-        try {
-            return localStorage.getItem(DEVELOPER_ZONE_OPEN_KEY) === '1';
-        } catch {
-            return false;
-        }
+        return readChoice(DEVELOPER_ZONE_OPEN_KEY, OPEN_VALUES, '0') === '1';
     }
 
     let open = $state(readOpen());
@@ -31,10 +31,7 @@
 
     function toggle(): void {
         open = !open;
-        try {
-            localStorage.setItem(DEVELOPER_ZONE_OPEN_KEY, open ? '1' : '0');
-        } catch {
-        }
+        writeChoice(DEVELOPER_ZONE_OPEN_KEY, open ? '1' : '0');
     }
 </script>
 
@@ -56,6 +53,7 @@
         <ThirdPartySwitch {t} onStatus={(status) => (thirdParty = status.enabled)} />
         {#if sideloads}<SideloadSwitch {t} store={sideloads} showStrip={false} />{/if}
     </div>
+    {#if sideloads}<div hidden={!open}><SideloadKinds store={sideloads} {t} /></div>{/if}
 </section>
 
 <style>

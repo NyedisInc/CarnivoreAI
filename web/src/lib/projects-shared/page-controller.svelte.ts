@@ -280,23 +280,52 @@ export class ProjectsController {
         if (!started) this.notice = t('projects.page.notice.create_unavailable');
     }
 
+    async #runProject(call: () => Promise<unknown>): Promise<void> {
+        this.projectBusy = true;
+        this.notice = '';
+        try {
+            await call();
+            await this.load();
+        } catch (error) {
+            this.notice = this.#words(error);
+        } finally {
+            this.projectBusy = false;
+        }
+    }
+
+    async #turnOnAgent(turnOn: (projectId: number) => Promise<{ display_name: string }>, projectId: number): Promise<void> {
+        this.projectBusy = true;
+        this.notice = '';
+        try {
+            const agent = await turnOn(projectId);
+            this.notice = this.#deps.t('projects.page.notice.agent_on', { name: agent.display_name });
+        } catch (error) {
+            this.notice = reason(error);
+        } finally {
+            this.projectBusy = false;
+        }
+    }
+
+    async #newCompanyForProject(projectName: string): Promise<void> {
+        const { createCompany: create, setProjectCompany: assign } = this.#deps.api;
+        const name = await this.#askName('projects.page.company.create_title', '', 'projects.page.company.create_confirm');
+        if (name && create && assign) await this.#runProject(async () => assign(projectName, (await create(name)).id));
+    }
+
+    #valuedAction(id: string, projectName: string): void {
+        const { api } = this.#deps;
+        const color = id.startsWith(SET_COLOR) ? id.slice(SET_COLOR.length) : null;
+        if (color !== null) void this.#runProject(() => api.setProjectColor(projectName, color));
+        else if (id.startsWith(SET_COMPANY)) void this.#runProject(async () => api.setProjectCompany?.(projectName, Number(id.slice(SET_COMPANY.length))));
+        else console.error('CloudeOpscenter: projects page has no handler for project action', id);
+    }
+
     projectAction(id: string, target?: HistoryGroup): void {
         const group = target ?? this.project;
         const project = group?.project;
         if (!group || !project) return;
         const { api, t } = this.#deps;
-        const run = async (call: () => Promise<unknown>): Promise<void> => {
-            this.projectBusy = true;
-            this.notice = '';
-            try {
-                await call();
-                await this.load();
-            } catch (error) {
-                this.notice = this.#words(error);
-            } finally {
-                this.projectBusy = false;
-            }
-        };
+        const run = (call: () => Promise<unknown>): Promise<void> => this.#runProject(call);
         switch (id) {
             case 'new-session':
                 api.newSession(project);
@@ -304,24 +333,9 @@ export class ProjectsController {
             case 'load-blueprint':
                 api.openBlueprints();
                 return;
-            case 'turn-on-agent': {
-                const turnOn = api.turnOnAgent;
-                const projectId = project.id;
-                if (!turnOn || projectId === null) return;
-                void (async () => {
-                    this.projectBusy = true;
-                    this.notice = '';
-                    try {
-                        const agent = await turnOn(projectId);
-                        this.notice = t('projects.page.notice.agent_on', { name: agent.display_name });
-                    } catch (error) {
-                        this.notice = reason(error);
-                    } finally {
-                        this.projectBusy = false;
-                    }
-                })();
+            case 'turn-on-agent':
+                if (api.turnOnAgent && project.id !== null) void this.#turnOnAgent(api.turnOnAgent, project.id);
                 return;
-            }
             case SWARM_NEW_SESSIONS: {
                 const write = api.setNewSessionsJoin;
                 const projectId = project.id;
@@ -357,18 +371,10 @@ export class ProjectsController {
                 void this.#deleteProject(project.name, group.key);
                 return;
             case 'rename-project':
-                void (async () => {
-                    const name = await this.#askName('projects.page.rename.project_title', project.name);
-                    if (name) await run(() => api.renameProject(project.name, name));
-                })();
+                void this.#askName('projects.page.rename.project_title', project.name).then((name) => (name ? run(() => api.renameProject(project.name, name)) : undefined));
                 return;
             case 'new-company-for-project':
-                void (async () => {
-                    const name = await this.#askName('projects.page.company.create_title', '', 'projects.page.company.create_confirm');
-                    const create = api.createCompany;
-                    const assign = api.setProjectCompany;
-                    if (name && create && assign) await run(async () => assign(project.name, (await create(name)).id));
-                })();
+                void this.#newCompanyForProject(project.name);
                 return;
             case 'remove-from-company':
                 void run(async () => api.setProjectCompany?.(project.name, null));
@@ -383,17 +389,7 @@ export class ProjectsController {
                 void run(async () => api.regenerateProjectImage?.(project.name));
                 return;
             default:
-                if (id.startsWith(SET_COLOR)) {
-                    const color = id.slice(SET_COLOR.length);
-                    void run(() => api.setProjectColor(project.name, color));
-                    return;
-                }
-                if (id.startsWith(SET_COMPANY)) {
-                    const companyId = Number(id.slice(SET_COMPANY.length));
-                    void run(async () => api.setProjectCompany?.(project.name, companyId));
-                    return;
-                }
-                console.error('CloudeOpscenter: projects page has no handler for project action', id);
+                this.#valuedAction(id, project.name);
         }
     }
 

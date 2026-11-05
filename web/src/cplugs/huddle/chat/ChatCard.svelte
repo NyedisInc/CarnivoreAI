@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { t } from '../../sdk';
-  import { setApproved, approveWithNote } from '../huddle.svelte';
+  import { Button } from '../../sdk/ui';
+  import { huddle, setApproved, approveWithNote, write } from '../huddle.svelte';
   import type { HuddleItem } from '../huddle-model';
   import { reviewOf } from '../huddle-review';
   import ChatMarkdown from './ChatMarkdown.svelte';
@@ -11,7 +12,7 @@
   import AuthorPath from './AuthorPath.svelte';
   import ChatAskForm from './ChatAskForm.svelte';
   import { formQuestion } from './chat-ask-rows';
-  import type { SwarmQuestion } from './chat-api';
+  import { skipQuestion, type SwarmQuestion } from './chat-api';
   import { cardVariant, decisionKeys, decisionOf } from './chat-model';
 
   let { item, card, agentName = '', question = null, head, now = Date.now() }: {
@@ -30,6 +31,14 @@
   const look = $derived(variant ?? card);
   const decision = $derived(variant === 'closed' ? 'closed' : decisionOf(item));
   const decidable = $derived(!decision && !variant && !decisionKeys(item) && (card === 'done' || card === 'review'));
+  let skipFailed = $state('');
+  async function skip(): Promise<void> {
+    if (busy) return;
+    busy = true;
+    skipFailed = '';
+    if (!(await write(() => skipQuestion(item.id)))) skipFailed = huddle.notice || t('cplug.huddle.refused.failed');
+    busy = false;
+  }
   async function approve(withNote: boolean): Promise<void> {
     if (busy) return;
     busy = true;
@@ -75,6 +84,12 @@
   {#if form}<ChatAskForm {item} message={form} />{/if}
   <HuddleThread {item} {agentName} noSend closed skip={form?.id ?? null} />
   <SwarmDecisionKeys {item} />
+  {#if variant === 'ask' && !decision}
+    <div class="hdc-card-keys" data-chat-ask-skip-row>
+      <Button size="sm" disabled={busy} title={t('cplug.huddle.chat.ask.skip_title')} data-chat-ask-skip onclick={skip}>{t('cplug.huddle.chat.ask.skip')}</Button>
+    </div>
+    {#if skipFailed}<p class="hdc-ask-refusal" role="status" data-chat-refusal>{skipFailed}</p>{/if}
+  {/if}
   {#if decision && !decisionKeys(item)}
     <p class="hdc-card-decision" data-chat-decision={decision}>{t(`cplug.huddle.chat.decided.${decision}`)}</p>
   {/if}
@@ -268,6 +283,12 @@
       display: flex;
       justify-content: flex-end;
       gap: 8px;
+    }
+
+    .hdc-ask-refusal {
+      margin: 0;
+      color: var(--oc-coral);
+      font-size: var(--oc-fs-micro);
     }
   }
 </style>

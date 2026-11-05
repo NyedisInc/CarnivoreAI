@@ -70,7 +70,7 @@ function _wireHeaderTitleRename() {
         pencilEl.className = 'header-rename-pencil';
         pencilEl.setAttribute('role', 'button');
         pencilEl.setAttribute('tabindex', '0');
-        pencilEl.setAttribute('aria-label', window.CloudeI18n.t('session.rename.short'));
+        pencilEl.setAttribute('aria-label', globalThis.CloudeTr('session.rename.short'));
         pencilEl.textContent = '✎';
         titleEl.insertAdjacentElement('afterend', pencilEl);
     }
@@ -391,8 +391,8 @@ class AppController {
     async logout() {
         const confirmed = await this.showConfirmModal(
             'logout',
-            window.CloudeI18n.t('account.logout.confirm.title'),
-            window.CloudeI18n.t('account.logout.confirm.message'),
+            globalThis.CloudeTr('account.logout.confirm.title'),
+            globalThis.CloudeTr('account.logout.confirm.message'),
             undefined,
             undefined,
             'danger'
@@ -412,65 +412,13 @@ class AppController {
         }
     }
 
-    showConfirmModal(title, message, details = null, primaryLabel = 'confirm', secondaryLabel = 'cancel', primaryVariant = 'primary', overlayClass = null) {
-        return new Promise((resolve) => {
-            const overlay = document.createElement('div');
-            overlay.className = overlayClass
-                ? `modal-overlay confirm-modal ${overlayClass}`
-                : 'modal-overlay confirm-modal';
-
-            const safeTitle = this._escapeHtml(title);
-            const safeMessage = this._escapeHtml(message);
-            const safeDetails = details ? this._escapeHtml(details) : null;
-
-            const headerHtml = `<div class="modal-titlerow"><span class="confirm-modal__verb">${safeTitle}</span></div>`;
-
-            overlay.innerHTML = `
-                <div class="modal-content">
-                    ${headerHtml}
-                    <div class="modal-body">
-                        <div class="modal-message">${safeMessage}</div>
-                        ${safeDetails ? `<div class="modal-description">${safeDetails}</div>` : ''}
-                    </div>
-                    <div class="modal-footer">
-                        <button class="modal-btn modal-btn-secondary" id="modal-cancel">${this._escapeHtml(secondaryLabel)}</button>
-                        <button class="modal-btn modal-btn-${primaryVariant === 'danger' ? 'danger' : 'primary'}" id="modal-confirm">${this._escapeHtml(primaryLabel)}</button>
-                    </div>
-                </div>
-            `;
-
-            document.body.appendChild(overlay);
-
-            const confirmBtn = overlay.querySelector('#modal-confirm');
-            const cancelBtn = overlay.querySelector('#modal-cancel');
-
-            let releaseTrap = () => {};
-            let settled = false;
-
-            const settle = (answer) => {
-                if (settled) return;
-                settled = true;
-                if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-                releaseTrap();
-                resolve(answer);
-            };
-
-            if (window.ModalStack && typeof window.ModalStack.trap === 'function') {
-                releaseTrap = window.ModalStack.trap(overlay, {
-                    onEscape: () => settle(false),
-                });
-            }
-
-            confirmBtn.addEventListener('click', () => settle(true));
-
-            cancelBtn.addEventListener('click', () => settle(false));
-
-            overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) settle(false);
-            });
-
-            setTimeout(() => confirmBtn.focus(), 100);
-        });
+    showConfirmModal(title, message, details = null, primaryLabel = 'confirm', secondaryLabel = 'cancel', primaryVariant = 'primary') {
+        const confirm = window.CloudeWeb && window.CloudeWeb.launchpad && window.CloudeWeb.launchpad.confirm;
+        if (typeof confirm !== 'function') {
+            console.error('App.showConfirmModal: the bundle confirm is not loaded; treated as cancel');
+            return Promise.resolve(false);
+        }
+        return confirm(title, message, details, primaryLabel, secondaryLabel, primaryVariant);
     }
 
     _syncSessionUrl(sessionName, replace) {
@@ -481,12 +429,6 @@ class AppController {
             ? window.Launchpad._deriveRunningSessionDisplayName(sessionName)
             : sessionName;
         window.Router.enterSession(slug, { replace: !!replace });
-    }
-
-    _escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str == null ? '' : String(str);
-        return div.innerHTML;
     }
 }
 

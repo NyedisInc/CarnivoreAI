@@ -14,6 +14,7 @@ interface FakeBridge {
   follow: (field: string, apply: (value: unknown) => void) => () => void;
 }
 
+/** Install a fake `PreferenceBridge` holding one value. Inputs: initial. Output: the fake. */
 function install(initial: unknown): FakeBridge {
   const fake: FakeBridge = {
     value: initial,

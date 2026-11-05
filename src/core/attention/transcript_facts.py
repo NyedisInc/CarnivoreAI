@@ -45,6 +45,7 @@ class TranscriptFacts:
     newest_append_at: Optional[datetime] = None
     blocked_on_tool: Optional[str] = None
     queued_reinvoke: bool = False
+    queued_reinvoke_at: Optional[datetime] = None
     open_async_agents: int = 0
     open_background_tasks: int = 0
     open_background_launched_at: Tuple[Optional[datetime], ...] = ()
@@ -224,6 +225,7 @@ def classify_transcript_records(
         newest_append_at=newest_append_at,
         blocked_on_tool=blocked_on_tool,
         queued_reinvoke=queued_reinvoke,
+        queued_reinvoke_at=newest_enqueue_at if queued_reinvoke else None,
         open_async_agents=open_async,
         open_background_tasks=open_background,
         open_background_launched_at=tuple(open_background_at),

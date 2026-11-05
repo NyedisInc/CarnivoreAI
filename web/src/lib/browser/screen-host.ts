@@ -14,6 +14,7 @@ import { fileById } from '../open-files/api.svelte';
 import { closeFileRow } from '../open-files/open-bridge';
 import { registerMainAreaLayer } from '../sidebar-widgets/main-area-layers';
 import type { Component } from 'svelte';
+import { failureReason } from '../errors/failure-reason';
 
 export const BROWSER_SCREEN_CONTAINER = 'browser-screen';
 
@@ -93,7 +94,7 @@ export async function newBrowser(): Promise<boolean> {
         const made = await createBrowser();
         return openBrowser(made.id);
     } catch (err) {
-        const detail = err instanceof Error ? err.message : String(err);
+        const detail = failureReason(err);
         console.error('newBrowser: create refused', err);
         globalThis.alert?.(t('browser.create_failed', { detail }));
         return false;

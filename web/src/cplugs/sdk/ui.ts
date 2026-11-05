@@ -20,7 +20,7 @@ export { default as Segmented, type SegmentedOption } from '../../lib/base/Segme
 export { default as FoldChevron } from '../../opscenter/ui/FoldChevron.svelte';
 export { watchCascadeHint } from '../../lib/sidebar-shell/cascade-hint';
 export { default as Check } from '../../opscenter/ui/Check.svelte';
-export { default as ModalShell } from '../../lib/launchpad/ModalShell.svelte';
+export { default as ModalShell } from '../../lib/dialog-frame/ModalShell.svelte';
 export { default as AnchoredPopup } from '../../lib/dialog-frame/AnchoredPopup.svelte';
 export { default as ConfirmPopup } from '../../lib/dialog-frame/ConfirmPopup.svelte';
 export { default as Markdown } from './Markdown.svelte';
@@ -35,6 +35,7 @@ export { default as ChoiceDropdown, type ChoiceItem } from '../../lib/dropdown/C
 export { default as CascadeMenu } from '../../lib/drawer-tabs/CascadeMenu.svelte';
 export { default as ApprovalHead } from '../../lib/approvals/ApprovalHead.svelte';
 export { default as TypedConfirm } from '../../lib/approvals/TypedConfirm.svelte';
+export { default as ApprovalCard } from '../../lib/approvals/ApprovalCard.svelte';
 export { default as TaskStatusList } from '../../opscenter/cells/task-list/StatusList.svelte';
 export { default as TaskRows } from '../../opscenter/cells/tasks/TaskRows.svelte';
 export { default as EditorControls } from '../../lib/editor-controls/EditorControls.svelte';

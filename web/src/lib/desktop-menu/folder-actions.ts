@@ -3,6 +3,7 @@ import { rowFor } from '../../opscenter/cells/terminal-viewer/meta';
 import type { SessionInfo } from '../../opscenter/api/types';
 import { showToast } from '../widgets-page/undo-toast';
 import { t } from '../i18n/index.svelte';
+import { failureReason } from '../errors/failure-reason';
 
 export function folderTargetId(target: 'session' | 'project', sessionId: string | null, rows: SessionInfo[] | null): string | null {
     if (!sessionId || sessionId.startsWith('remote:')) return null;
@@ -21,7 +22,7 @@ async function run(method: 'revealById' | 'openInEditor', id: string, failedKey:
         const answer: FolderTargetResult = await call(id);
         if (answer && !answer.ok && answer.reason === 'failed') reason = answer.error ?? answer.reason;
     } catch (error) {
-        reason = error instanceof Error ? error.message : String(error);
+        reason = failureReason(error);
     }
     if (reason !== null) showToast({ kind: 'failed', text: t(failedKey, { reason }), surface: t(surfaceKey) });
 }

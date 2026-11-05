@@ -60,6 +60,14 @@ function phone(): void {
   viewport.phone = true;
 }
 
+test('the top bar raises html.ps-topbar while mounted and clears it on unmount (#1940)', async () => {
+  expect(document.documentElement.classList.contains('ps-topbar')).toBe(false);
+  render();
+  expect(document.documentElement.classList.contains('ps-topbar')).toBe(true);
+  await unmount(mounted.pop()!);
+  expect(document.documentElement.classList.contains('ps-topbar')).toBe(false);
+});
+
 test('phone width: tapping the mark opens the tabbed agents drawer', async () => {
   phone();
   const { panel } = installDrawer();

@@ -31,7 +31,6 @@ KNOWN: Dict[str, Tuple[str, str]] = {
     "web/src/lib/attention-kinds/read.svelte.ts": ("huddle", "bell attention kinds read the huddle store (landed with #1627, after the audit)"),
     "web/src/lib/attention-kinds/rows.ts": ("huddle", "bell attention kinds type their rows with huddle-model (landed with #1627, after the audit)"),
     "web/src/lib/projects-shared/agent-offer.ts": ("huddle", "reads the huddle manifest and agent roster"),
-    "web/src/lib/session-rail/alert-count-sources.svelte.ts": ("huddle", "alert count reads the huddle store"),
     "web/src/lib/swarm-board/board-data.svelte.ts": ("huddle", "swarm board reads the roster, colors, node looks and manifest"),
     "web/src/lib/swarm-board/AgentFace.svelte": ("huddle", "swarm board draws huddle swarm characters"),
     "web/src/lib/swarm-board/views/calendar/BoardKey.svelte": ("huddle", "swarm board draws huddle swarm characters"),

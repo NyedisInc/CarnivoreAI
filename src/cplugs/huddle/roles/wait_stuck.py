@@ -6,7 +6,7 @@ from typing import Any, Dict, Mapping, Optional
 
 from src.cplugs.huddle import actor_log, lineage, rules, triggers, wait_copy, waits
 from src.cplugs.huddle.cards import flow
-from src.cplugs.huddle.rules import TaskManagerInvalid
+from src.cplugs.huddle.rules import TaskManagerAnswerInvalid, TaskManagerInvalid
 
 HANDLE, DROP, CHECK, UNTIL = "handle", "drop", "check", "until"
 PUSH, LONGER = "push", "wait"
@@ -25,8 +25,13 @@ def prompt(what: str, set_at: float) -> str:
 
 def owner_time(text: str, now: float) -> str:
     if not text.strip():
-        raise TaskManagerInvalid("give it until needs a time: pick when")
-    triggers.parse_fire_at(text, now)
+        raise TaskManagerAnswerInvalid("give it until needs a time: pick when", UNTIL_ID, "time_needed")
+    try:
+        triggers.parse_fire_at(text, now)
+    except triggers.FireAtPast as exc:
+        raise TaskManagerAnswerInvalid(f"question {UNTIL_ID}: {exc}", UNTIL_ID, "time_past") from exc
+    except TaskManagerInvalid as exc:
+        raise TaskManagerAnswerInvalid(f"question {UNTIL_ID}: {exc}", UNTIL_ID, "time") from exc
     return text.strip()
 
 

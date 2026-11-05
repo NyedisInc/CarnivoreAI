@@ -61,6 +61,8 @@ def seed_small_stores(w: SimpleNamespace) -> None:
     book = Seeder(w.ledger, "bookmarks.db", w.side["bookmarks.db"])
     for session, row, conv, tags in ((UUID_A, w.row_a, CONV_A, (A,)), (UUID_D, w.row_d, CONV_D, ())):
         book.put("bookmarks", tags, session_uuid=session, session_row_id=row, claude_session_uuid=conv, entry_uuid="e", created_by="owner", created_at=NOW)
+        book.put("turn_checkpoints", tags, session_uuid=session, conversation=conv, prompt_uuid="e", kind="turn", work_tree="/w",
+                 shadow="/st/checkpoints/x.git", ref="refs/checkpoints/x", commit_sha="c", tree_sha="t", created_at=0)
     Seeder(w.ledger, "attention_history.db", w.side["attention_history.db"]).put("attention_events", (A,), session_uuid=UUID_A, kind="question", at=NOW)
     deep = Seeder(w.ledger, "deepsearch.db", w.side["deepsearch.db"])
     live = deep.put("session_search_live", (A,), conversation_id=CONV_A, path="/h/projects/-p/a.jsonl", file_kind="conversation", family="claude",

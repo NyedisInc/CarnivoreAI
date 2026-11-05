@@ -221,8 +221,8 @@ def test_a_stale_call_to_a_hidden_tool_gets_the_named_refusal_not_the_read_only_
 
 
 def test_huddle_and_swarm_keep_their_refusal_words(cfg) -> None:
-    huddle = asyncio.run(tools.call_tool(None, PANE, "huddle_list", {}))["content"][0]["text"]
-    assert huddle == ("huddle_list is off: the owner turned huddle tools off for agents on this computer "
+    huddle = asyncio.run(tools.call_tool(None, PANE, "task_manager_tasks_list", {}))["content"][0]["text"]
+    assert huddle == ("task_manager_tasks_list is off: the owner turned huddle tools off for agents on this computer "
                       "(settings > sessions & agents > mcp server). Do not retry; tell the owner in your reply instead.")
     cfg.agent_swarm_tools = False
     swarm = asyncio.run(tools.call_tool(None, PANE, "swarm_roster", {}))["content"][0]["text"]
@@ -309,7 +309,7 @@ def test_read_tools_carry_the_hint_and_the_excluded_ones_and_every_write_tool_do
     cfg.agent_huddle_tools = cfg.agent_app_settings_tools = True
     listed = {d["name"]: d for d in tools.tool_definitions(WRITE_TOKEN)}
     assert listed["sessions_list"]["annotations"] == {"readOnlyHint": True}
-    for name in ("crosstalk_inbox", "crosstalk_wait", "crosstalk_thread", "perf_profile", "task_manager_changes", "huddle_changes", "session_send_keys"):
+    for name in ("crosstalk_inbox", "crosstalk_wait", "crosstalk_thread", "perf_profile", "task_manager_changes", "session_send_keys"):
         assert "annotations" not in listed[name], name
     assert not [n for n, d in listed.items() if "annotations" in d and n in tools.WRITE_TOOLS]
     registered_reads = set(tools.tool_names()) - tools.WRITE_TOOLS

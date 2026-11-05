@@ -12,7 +12,6 @@ const contribution: Contribution<'session-card-action'> = {
   feature: 'share_link',
   enabled: () => true,
   payload: {
-    shortcut: 'S',
     label: () => t('cplug.share.item'),
     async run(row): Promise<void> {
       const sessionId = row.sessionId;

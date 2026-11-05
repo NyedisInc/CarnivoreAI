@@ -257,7 +257,7 @@ describe('the developer widget tabs', () => {
     (target.querySelector('[data-scope="sessions"]') as HTMLElement).click();
     await settle();
     expect(target.querySelector('[data-scheduled-chart]')).toBeNull();
-    expect(target.querySelector('[data-scheduled-huddle-off]')?.textContent?.trim()).toBe('the task manager plugin is off');
+    expect(target.querySelector('[data-scheduled-huddle-off]')?.textContent?.trim()).toBe('the task manager feature is off');
     expect(reads).not.toContain('/cplugs/huddle/scheduled');
   });
 

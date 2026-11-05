@@ -159,3 +159,22 @@ def test_an_expired_switch_is_written_off_once(monkeypatch):
 
     asyncio.run(run())
     assert rig.expiries == 1
+
+
+def _observation(screen: str, family: str = "claude"):
+    evidence = SimpleNamespace(dialog=extract_dialog(screen, family), startup_screen=None)
+    return SimpleNamespace(stale=False, evidence=evidence)
+
+
+def test_would_answer_follows_the_armed_grid_and_the_ticked_row(monkeypatch):
+    from src.core.beast_prompts import wiring
+
+    obs = _observation(fixture("claude_permission"))
+    monkeypatch.setattr(wiring.beast_mode, "handles", lambda row: True)
+    assert wiring.would_answer("ses_1", obs) is True
+    assert wiring.would_answer("remote:peer-x", obs) is False
+    assert wiring.would_answer("ses_1", None) is False
+    monkeypatch.setattr(wiring.beast_mode, "handles", lambda row: False)
+    assert wiring.would_answer("ses_1", obs) is False
+    monkeypatch.setattr(wiring.beast_mode, "handles", lambda row: True)
+    assert wiring.would_answer("ses_1", _observation(fixture("claude_plan_narrow"))) is False

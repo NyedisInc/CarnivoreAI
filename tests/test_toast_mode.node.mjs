@@ -62,7 +62,7 @@ function pile() {
 }
 
 const text = (card, cls) => {
-    const el = card._all([]).find((e) => e._classes().has(cls));
+    const el = card._all([]).find((e) => e._cls.has(cls));
     return el ? el.textContent : null;
 };
 
@@ -118,7 +118,8 @@ test('detailed: a newer event arriving later replaces the card in place', async 
     await settle();
     const shown = cards(container);
     assert.equal(shown.length, 1);
-    assert.equal(shown[0], before, 'the same card, updated, not a second one');
+    assert.equal(shown[0].getAttribute('data-group-key'), before.getAttribute('data-group-key'),
+        'the same card (same each-key, so the stack reuses its element), updated, not a second one');
     assert.equal(text(shown[0], 'toast__title-text'), 'finished and is waiting on you');
 });
 
@@ -128,7 +129,7 @@ test('detailed: two sessions waiting shows "2 sessions waiting"; compact does no
         mgr.add(at('Stop', 'Your turn', 'A', 1, FINISHED));
         mgr.add(at('PermissionRequest', 'needs your permission', 'B', 2, PERMISSION));
         await settle();
-        const row = container.childNodes.find((e) => e._classes().has('toast-waiting')) || null;
+        const row = container.childNodes.find((e) => e._cls.has('toast-waiting')) || null;
         assert.equal(row ? row.textContent : null, expected, `mode ${mode}`);
         assert.equal(cards(container).length, 2);
     }
@@ -139,7 +140,7 @@ test('detailed: one session waiting shows no aggregate line', async () => {
     mgr.add(at('Stop', 'Your turn', 'A', 1, FINISHED));
     mgr.add(at('Stop', 'Your turn', 'A', 2, FINISHED));
     await settle();
-    assert.equal(container.childNodes.filter((e) => e._classes().has('toast-waiting')).length, 0);
+    assert.equal(container.childNodes.filter((e) => e._cls.has('toast-waiting')).length, 0);
 });
 
 test('detailed: clicking a card opens that session and dismisses only that card', async () => {

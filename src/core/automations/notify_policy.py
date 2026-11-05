@@ -12,6 +12,7 @@ from src.core.automations import models as m
 logger = structlog.get_logger()
 
 REPORT_TYPE, FAILED_TYPE = "automation_report", "automation_failed"
+ALERTED_KIND = "alerted"
 
 DEFAULT_FAILURE = "failure"
 DEFAULT_REPORT = "report"
@@ -46,3 +47,23 @@ def tell(type_id: str, automation: Dict[str, Any], run_id: str, store: Any = Non
             store.update_run(run_id, delivered=delivered.record(kind, key))
         except m.AutomationNotFound:
             pass
+
+
+def decide_alerted(automation: Dict[str, Any]) -> bool:
+    return bool((automation.get("delivery") or {}).get("notify", True))
+
+
+def tell_alerted(automation: Dict[str, Any], run_id: str, code: int, detail: str = "", store: Any = None) -> bool:
+    if not decide_alerted(automation):
+        return False
+    key = f"automation.failed.{run_id}"
+    row = alert_service.raise_alert(
+        key, source="automations", severity=alert_const.SEV_WARN, title_key="app_alert.automation.alerted.title",
+        params={"automation": str(automation.get("name") or ""), "code": str(code), "detail": detail or "no output"}, auto_resolve=False,
+        actions=[{"id": "open", "label_key": "app_alert.automation.open", "href": f"#automations/run/{run_id}"}])
+    if row is not None and store is not None:
+        try:
+            store.update_run(run_id, delivered=delivered.record("report", key))
+        except m.AutomationNotFound:
+            pass
+    return row is not None

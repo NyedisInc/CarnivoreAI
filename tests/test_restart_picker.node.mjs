@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import CATALOG from '../client/js/i18n/catalog.en.js';
 import { rowsHtml } from './helpers/launch_choice_fake.mjs';
+import { installTrOnly } from './helpers/catalog-tr.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -61,6 +62,7 @@ function loadPicker() {
     };
     sandbox.window = sandbox;
     vm.createContext(sandbox);
+    installTrOnly(sandbox);
     for (const file of ['session-restart-options.js',
         'session-restart-picker.js']) {
         vm.runInContext(

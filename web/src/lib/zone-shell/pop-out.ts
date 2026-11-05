@@ -9,12 +9,14 @@ export function popOutFor(
   view: string | null | undefined,
   scope: SessionScope | null,
   options: Readonly<Record<string, unknown>> | undefined,
+  pinned = false,
 ): (() => void) | null {
   if (cell.instancing !== 'singleton' || !isWidgetId(manifest.id)) return null;
   const placement: PopoutPlacement = {
     sessionId: scope?.sessionId ?? null,
     view: viewOfPlacement(manifest, view)?.id ?? null,
     options: options as PopoutPlacement['options'],
+    ...(pinned ? { pinned: true } : {}),
   };
   return () => void openWidgetPopout(manifest.id, manifest.fits, window, placement);
 }

@@ -5,6 +5,7 @@ import path from 'node:path';
 import url from 'node:url';
 import vm from 'node:vm';
 import CATALOG from '../client/js/i18n/catalog.en.js';
+import { installTrOnly } from './helpers/catalog-tr.mjs';
 
 const ROOT = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
 const RENDER_BATCH_SRC = fs.readFileSync(
@@ -17,7 +18,7 @@ const SRC = fs.readFileSync(path.join(ROOT, 'client/js/toast.js'), 'utf8');
 const GROUPING_SRC = fs.readFileSync(
     path.join(ROOT, 'client/js/toast-grouping.js'), 'utf8');
 const RENDER_SRC = fs.readFileSync(
-    path.join(ROOT, 'client/js/toast-render.js'), 'utf8');
+    path.join(ROOT, 'client/js/toast-view.js'), 'utf8');
 const LIFECYCLE_SRC = fs.readFileSync(
     path.join(ROOT, 'client/js/toast-lifecycle.js'), 'utf8');
 const ROW_MENU_ICONS_SRC = fs.readFileSync(
@@ -28,67 +29,26 @@ const GROUP_SRC = fs.readFileSync(
     path.join(ROOT, 'client/js/toast-session-group.js'), 'utf8');
 
 
-export class El {
-    constructor(tag) {
+export class ViewEl {
+    constructor(tag, { cls = [], attrs = {}, text = '', kids = [], on = {} } = {}) {
         this.tagName = String(tag).toUpperCase();
         this.parentNode = null;
-        this.childNodes = [];
-        this._attrs = new Map();
-        this._text = '';
-        this._listeners = new Map();
-        this.dataset = new Proxy({}, {
-            set: (t, k, v) => {
-                t[k] = String(v);
-                this._attrs.set(dashed(k), String(v));
-                return true;
-            },
-            get: (t, k) => t[k],
-        });
-        this.style = { setProperty: (k, v) => { this._css = this._css || {}; this._css[k] = v; } };
+        this.childNodes = kids;
+        kids.forEach((k) => { k.parentNode = this; });
+        this._cls = new Set(cls);
+        this._attrs = new Map(Object.entries(tag === 'button' ? { type: 'button', ...attrs } : attrs).filter(([, v]) => v !== undefined && v !== null).map(([k, v]) => [k, String(v)]));
+        this._text = text;
+        this._on = on;
         const self = this;
-        this.classList = {
-            add(...c) { c.forEach((x) => self._classes().add(x)); self._syncClass(); },
-            remove(...c) { c.forEach((x) => self._classes().delete(x)); self._syncClass(); },
-            contains(c) { return self._classes().has(c); },
-        };
+        this.classList = { contains: (c) => self._cls.has(c) };
+        this.dataset = new Proxy({}, {
+            get: (_t, k) => self._attrs.get('data-' + String(k).replace(/[A-Z]/g, (ch) => '-' + ch.toLowerCase())),
+        });
     }
-    _classes() {
-        if (!this.__cls) this.__cls = new Set(
-            (this._attrs.get('class') || '').split(/\s+/).filter(Boolean));
-        return this.__cls;
-    }
-    _syncClass() { this._attrs.set('class', [...this._classes()].join(' ')); }
-    get className() { return this._attrs.get('class') || ''; }
-    set className(v) { this.__cls = new Set(String(v).split(/\s+/).filter(Boolean)); this._syncClass(); }
-    setAttribute(n, v) { this._attrs.set(n, String(v)); }
+    get className() { return [...this._cls].join(' '); }
     getAttribute(n) { const v = this._attrs.get(n); return v === undefined ? null : v; }
-    set type(v) { this.setAttribute('type', v); }
-    get type() { return this.getAttribute('type') || ''; }
-
-    get textContent() {
-        if (this.childNodes.length === 0) return this._text;
-        return this.childNodes.map((c) => c.textContent).join('');
-    }
-    set textContent(v) { this.childNodes.forEach((c) => { c.parentNode = null; }); this.childNodes = []; this._text = String(v); }
-
-    appendChild(n) {
-        if (n.parentNode) n.parentNode.removeChild(n);
-        n.parentNode = this; this._text = ''; this.childNodes.push(n); return n;
-    }
-    insertBefore(n, ref) {
-        if (!ref) return this.appendChild(n);
-        if (n.parentNode) n.parentNode.removeChild(n);
-        const i = this.childNodes.indexOf(ref);
-        n.parentNode = this; this._text = '';
-        this.childNodes.splice(i === -1 ? this.childNodes.length : i, 0, n);
-        return n;
-    }
-    removeChild(n) {
-        const i = this.childNodes.indexOf(n);
-        if (i !== -1) this.childNodes.splice(i, 1);
-        n.parentNode = null; return n;
-    }
-    remove() { if (this.parentNode) this.parentNode.removeChild(this); }
+    get type() { return 'button'; }
+    get textContent() { return this.childNodes.length ? this.childNodes.map((c) => c.textContent).join('') : this._text; }
     get firstChild() { return this.childNodes[0] || null; }
     get nextSibling() {
         if (!this.parentNode) return null;
@@ -96,41 +56,126 @@ export class El {
         return s[s.indexOf(this) + 1] || null;
     }
     _all(out) { for (const c of this.childNodes) { out.push(c); c._all(out); } return out; }
-    _matches(sel) {
-        const not = /:not\(\.([A-Za-z0-9_-]+)\)$/.exec(sel);
-        if (not) {
-            if (this._classes().has(not[1])) return false;
-            sel = sel.slice(0, not.index);
-        }
-        const m = /^\.([A-Za-z0-9_-]+)(?:\[([a-z-]+)="((?:[^"\\]|\\.)*)"\])?$/.exec(sel);
+    querySelectorAll(sel) {
+        const m = /^\.([A-Za-z0-9_-]+)$/.exec(sel);
         if (!m) throw new Error(`stub selector unsupported: ${sel}`);
-        if (!this._classes().has(m[1])) return false;
-        if (!m[2]) return true;
-        return this.getAttribute(m[2]) === m[3].replace(/\\(.)/g, '$1');
+        return this._all([]).filter((e) => e._cls.has(m[1]));
     }
-    querySelectorAll(sel) { return this._all([]).filter((e) => e._matches(sel)); }
     querySelector(sel) { return this.querySelectorAll(sel)[0] || null; }
-    addEventListener(t, fn) {
-        if (!this._listeners.has(t)) this._listeners.set(t, []);
-        this._listeners.get(t).push(fn);
-    }
-    click() { for (const fn of this._listeners.get('click') || []) fn({}); }
     fire(type, evt = {}) {
         evt.preventDefault = () => { evt.defaultPrevented = true; };
-        for (const fn of this._listeners.get(type) || []) fn(evt);
+        let stopped = false;
+        evt.stopPropagation = () => { stopped = true; };
+        for (let n = this; n && !stopped; n = n.parentNode) {
+            if (n._on[type]) n._on[type](evt);
+        }
         return evt;
     }
+    click() { return this.fire('click', {}); }
 }
 
-function dashed(k) { return 'data-' + String(k).replace(/[A-Z]/g, (c) => '-' + c.toLowerCase()); }
+class ViewContainer {
+    constructor(getManager) {
+        this._getManager = getManager;
+        this._cache = { view: null, nodes: [] };
+        this.tagName = 'DIV';
+    }
+    getAttribute(n) { return n === 'id' ? 'toast-container' : null; }
+    get childNodes() {
+        const view = this._getManager()._view;
+        if (this._cache.view !== view) this._cache = { view, nodes: projectView(this._getManager(), view) };
+        return this._cache.nodes;
+    }
+    get firstChild() { return this.childNodes[0] || null; }
+    querySelectorAll(sel) {
+        const m = /^\.([A-Za-z0-9_-]+)$/.exec(sel);
+        if (!m) throw new Error(`stub selector unsupported: ${sel}`);
+        return this.childNodes.filter((e) => e._cls.has(m[1]));
+    }
+    querySelector(sel) { return this.querySelectorAll(sel)[0] || null; }
+}
+
+function projectView(mgr, view) {
+    const out = [];
+    if (view.dismissAll) {
+        const { total, blocking } = view.dismissAll;
+        out.push(new ViewEl('button', {
+            cls: ['toast-dismiss-all'],
+            attrs: { 'data-total': total, 'data-blocking': blocking,
+                'aria-label': tr(blocking ? 'toast.dismiss_all.label_blocking' : 'toast.dismiss_all.label', { total, blocking }) },
+            text: tr('toast.dismiss_all.text', { total }), on: { click: () => mgr.dismissAll() },
+        }));
+    }
+    if (view.waiting) {
+        out.push(new ViewEl('div', { cls: ['toast-waiting'], attrs: { 'data-count': view.waiting, role: 'status' },
+            text: `${view.waiting} sessions waiting` }));
+    }
+    for (const card of view.cards) out.push(projectCard(mgr, card));
+    if (view.overflow) {
+        const o = view.overflow;
+        const text = o.expanded ? tr('toast.show_fewer')
+            : tr('toast.overflow.more', { count: o.count }) + (o.worstCount !== null ? tr('toast.overflow.worst', { count: o.worstCount }) : '');
+        out.push(new ViewEl('button', {
+            cls: ['toast-overflow'],
+            attrs: { 'data-hidden-count': o.expanded ? 0 : o.count, 'data-worst-severity': o.worst, 'data-severity': o.worst, 'aria-expanded': o.expanded },
+            text, on: { click: () => mgr.toggleOverflow() },
+        }));
+    }
+    return out;
+}
+
+function tr(key, params = {}) { return globalThis.__toastStubWindow.CloudeI18n.t(key, params); }
+
+function projectCard(mgr, card) {
+    const key = card.key;
+    const kids = [];
+    const title = [];
+    if (card.sleepIcon !== null) title.push(new ViewEl('span', { cls: ['toast__title-icon'], text: card.sleepIcon }));
+    title.push(new ViewEl('span', { cls: ['toast__title-text'], text: card.title || tr('toast.untitled') }));
+    if (card.badgeCount > 1) {
+        title.push(new ViewEl('span', { cls: ['toast__count'], attrs: { 'aria-label': tr('toast.count.label', { count: card.badgeCount }) },
+            text: tr('toast.count.badge', { count: card.badgeCount }) }));
+    }
+    kids.push(new ViewEl('div', { cls: ['toast__title'], kids: title }));
+    kids.push(new ViewEl(card.session.canNavigate ? 'button' : 'div', {
+        cls: ['toast__session'], attrs: { 'data-unknown': card.session.unknown ? '1' : undefined },
+        text: card.session.text, on: card.session.canNavigate ? { click: () => mgr.clickSession(key) } : {},
+    }));
+    if (card.body) kids.push(new ViewEl('div', { cls: ['toast__body'], text: card.body }));
+    if (card.actionLabel) {
+        kids.push(new ViewEl('button', { cls: ['toast__action'], text: card.actionLabel,
+            on: { click: (e) => { e.stopPropagation(); mgr.runCardAction(key); } } }));
+    }
+    const dismissLabel = tr(card.count > 1 ? 'toast.dismiss.many' : 'toast.dismiss.one', { count: card.count });
+    kids.push(new ViewEl('button', { cls: ['toast__dismiss'], attrs: { 'aria-label': dismissLabel, title: dismissLabel }, text: '\u00d7',
+        on: { click: (e) => { e.stopPropagation(); mgr.dismissGroup(key); } } }));
+    const open = () => { if (card.clickable) mgr.openGroup(key); };
+    const node = new ViewEl('div', {
+        cls: ['toast', ...(card.dismissing ? ['toast--dismissing'] : []), ...(card.clickable ? ['toast--clickable'] : [])],
+        attrs: {
+            'data-group-key': key, 'data-toast-id': card.id, 'data-kind': card.kind, 'data-severity': card.severity,
+            'data-count': card.count, 'data-mode': card.mode, 'data-session-id': card.sessionId, role: card.role,
+            'data-alert-severity': card.alertSeverity ?? undefined, 'data-themed': card.color ? '1' : undefined,
+            'data-accent': card.color ?? undefined,
+        },
+        kids,
+        on: {
+            click: open,
+            keydown: (e) => { if (card.clickable && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(); } },
+            mousedown: (e) => { if (e.button === 1) e.preventDefault(); },
+            auxclick: (e) => { if (e.button === 1) { e.preventDefault(); mgr.dismissGroup(key); } },
+        },
+    });
+    node._css = card.color ? { '--toast-accent': card.color } : undefined;
+    return node;
+}
 
 export function makeEnv(narrow = false) {
-    const container = new El('div');
-    container.setAttribute('id', 'toast-container');
+    let manager = null;
+    const container = new ViewContainer(() => manager);
     const mql = { matches: !!narrow, _h: [], addEventListener(t, fn) { if (t === 'change') this._h.push(fn); } };
     const acked = [];
     const document = {
-        createElement: (t) => new El(t),
         getElementById: (id) => (id === 'toast-container' ? container : null),
     };
     const window = {
@@ -141,21 +186,23 @@ export function makeEnv(narrow = false) {
         CloudeI18n: { t: (key, params = {}) => String(CATALOG[key] ?? key).replace(/\{(\w+)\}/g, (_, name) => String(params[name] ?? '')) },
     };
     window.window = window;
+    globalThis.__toastStubWindow = window;
     const sandbox = {
-        window, document, console,
+        window, document, console, CloudeI18n: window.CloudeI18n,
         requestAnimationFrame: window.requestAnimationFrame,
         setTimeout, clearTimeout, Promise, CSS: undefined,
         WebSocket: { OPEN: 1 },
         TextEncoder,
     };
     vm.createContext(sandbox);
+    installTrOnly(sandbox);
     vm.runInContext(SUMMARY_SRC, sandbox, { filename: 'session-status-summary.js' });
     vm.runInContext(GROUP_SRC, sandbox, { filename: 'toast-session-group.js' });
     vm.runInContext(RENDER_BATCH_SRC, sandbox, { filename: 'toast-render-batch.js' });
     vm.runInContext(VERSION_ARBITRATION_SRC, sandbox, { filename: 'toast-version-arbitration.js' });
     vm.runInContext(SRC, sandbox, { filename: 'toast.js' });
     vm.runInContext(GROUPING_SRC, sandbox, { filename: 'toast-grouping.js' });
-    vm.runInContext(RENDER_SRC, sandbox, { filename: 'toast-render.js' });
+    vm.runInContext(RENDER_SRC, sandbox, { filename: 'toast-view.js' });
     vm.runInContext(LIFECYCLE_SRC, sandbox, { filename: 'toast-lifecycle.js' });
     vm.runInContext(ROW_MENU_ICONS_SRC, sandbox, { filename: 'session-row-menu-icons.js' });
     if (!sandbox.ToastSessionGroup) {
@@ -164,6 +211,7 @@ export function makeEnv(narrow = false) {
             + 'the manager would silently fall back to per-kind coalescing and '
             + 'every one-card-per-session assertion would measure nothing');
     }
+    manager = window.ToastManager;
     return { sandbox, container, mql, acked, mgr: window.ToastManager };
 }
 
@@ -177,15 +225,15 @@ export function toast(kind, title, body = null, session = 's1', sessionName = nu
 }
 
 export function cards(container) {
-    return container.childNodes.filter((e) => e._classes().has('toast'));
+    return container.childNodes.filter((e) => e._cls.has('toast'));
 }
 export function overflow(container) {
-    return container.childNodes.find((e) => e._classes().has('toast-overflow')) || null;
+    return container.childNodes.find((e) => e._cls.has('toast-overflow')) || null;
 }
 
 
 export function dismissAllRow(container) {
-    return container.childNodes.find((e) => e._classes().has('toast-dismiss-all')) || null;
+    return container.childNodes.find((e) => e._cls.has('toast-dismiss-all')) || null;
 }
 
 export function settle() {

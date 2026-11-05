@@ -32,8 +32,7 @@ test('the terminal tab menu keeps search terminal alone (Alex (Example-owner), 2
 
 test('the widget menu offers open in terminal app only when the page passes it, in the shows group (R1-14)', () => {
   const widget = {
-    ...input, menu: ['theme'], background: null, keepAwake: null, bookmarks: null, rowActions: null,
-    words: { background: 'b', keepAwake: 'k', bookmarks: 'm', actions: 'a', openInTerminal: 'open in terminal app' },
+    ...input, words: { openInTerminal: 'open in terminal app' },
   };
   expect(widgetMenuActions({ ...widget, openInTerminal: null }).map((a) => a.id)).not.toContain('open-in-terminal');
   let ran = 0;

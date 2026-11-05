@@ -61,7 +61,7 @@ async def deliver_one(ctx: CplugContext, store: InboxStore, entry: Dict[str, Any
     name = (await _run(lambda: service.project_names(ctx))).get(key)
     await send_queue.before_immediate(ctx, key, target)
     try:
-        await sending.paste_send(ctx, _run, key, name, rows, target, REASON, aggregate=False, lead=inbox.lead_line(entry["id"], entry["text"]))
+        await sending.paste_send(ctx, _run, key, name, rows, target, REASON, aggregate=False, lead=inbox.lead_line(entry["id"], entry["text"], len(entry.get("files", []))))
     except HTTPException as exc:
         logger.info("task_manager_inbox_not_sent", list=key, entry=entry["id"], target=target, code=held.refusal_code(exc))
         return False

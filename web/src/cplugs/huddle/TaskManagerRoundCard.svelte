@@ -1,6 +1,6 @@
 <script lang="ts">
   import { roundOpener, t } from '../sdk';
-  import { Icon } from '../sdk/ui';
+  import { Icon, buttonAttrs } from '../sdk/ui';
   import type { TaskManagerBoardRound } from './huddle-model';
 
   let { round, text }: { round: TaskManagerBoardRound; text: string } = $props();
@@ -25,7 +25,7 @@
     {#each rest as line, i (i)}<span class="hdrc-line">{line}</span>{/each}
   </div>
   {#if opener}
-  <button type="button" class="hdrc-open" aria-label={t('cplug.huddle.round.open', { revision: round.revision })}
+  <button type="button" class="hdrc-open" {...buttonAttrs('secondary', 'bare')} aria-label={t('cplug.huddle.round.open', { revision: round.revision })}
           title={t('cplug.huddle.round.open', { revision: round.revision })} data-task-manager-round-open={round.round} onclick={() => void open()}>
     <Icon name="external" size={16} />
   </button>
@@ -52,7 +52,7 @@
     .hdrc-line { color: var(--oc-text-secondary); font-size: var(--oc-fs-micro); overflow-wrap: anywhere; }
 
     .hdrc-open {
-      --_bd: transparent;
+      --_bd: currentColor;
       display: inline-grid;
       flex: none;
       place-items: center;
@@ -60,13 +60,13 @@
       width: 28px;
       height: 28px;
       padding: 0;
-      border: 1px solid var(--_bd);
+      border: 1px solid transparent;
       border-radius: var(--oc-radius-sm);
       background: transparent;
       color: var(--oc-text-secondary);
       cursor: pointer;
     }
 
-    .hdrc-open:hover { --_bd: var(--oc-line-frame); background: var(--oc-ground-hover); color: var(--oc-text-primary); }
+    .hdrc-open:hover { border-color: var(--oc-line-frame); background: var(--oc-ground-hover); color: var(--oc-text-primary); }
   }
 </style>

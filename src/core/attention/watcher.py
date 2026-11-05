@@ -25,7 +25,8 @@ from src.core.attention.ledger import AttentionLedger, Transition
 from src.core.attention.diagnostics import ObservationDiagnostic, describe
 from src.core.attention.raise_gate import policy_for, resolve_raise
 from src.core.attention.registry_index import default_registry_directory
-from src.core.attention.resolve import DONE_QUIET_SECONDS, resolve_attention
+from src.core.attention.resolve import resolve_attention
+from src.core.attention.settle_wake import settle_delay
 from src.core.attention.restart_floor import RestartFloors
 from src.core.attention.startup_quiet import StartupQuiet
 from src.core.attention.wake import WakeSources
@@ -42,7 +43,6 @@ DEFAULT_TICK_SECONDS: float = 2.0
 
 RESTING_HOLD_SECONDS: float = 4.0
 MAX_READ_CONCURRENCY: int = 4
-SETTLE_MARGIN_SECONDS: float = 0.1
 MISSED_CYCLES: int = 3
 STALL_BACKSTOP_SECONDS: float = 30.0
 
@@ -108,6 +108,7 @@ class AttentionWatcher:
         registry_directory: Optional[str] = None,
         watch_paths: Optional[Callable[[Set[str]], Mapping[str, Sequence[str]]]] = None,
         restart_floors: Optional[RestartFloors] = None,
+        on_pass_end: Optional[Callable[[], None]] = None,
     ) -> None:
         self._list_targets = list_targets
         self._read_evidence = read_evidence
@@ -115,6 +116,7 @@ class AttentionWatcher:
         self._set_unread = set_unread
         self._on_busy_edge = on_busy_edge
         self._on_observation = on_observation
+        self._on_pass_end = on_pass_end
         self._on_done_edge = on_done_edge
         self._on_transition = on_transition
         self._read_policy = read_policy
@@ -195,21 +197,9 @@ class AttentionWatcher:
         return acted
 
     def _settle_wake(self, session_id: str) -> None:
-        observation = self._observations.get(session_id)
-        if observation is None or observation.verdict.state == STATE_DONE_IDLE:
-            return
-        evidence = observation.evidence
-        if evidence.codex is not None:
-            return
-        appended = getattr(evidence.transcript, "newest_append_at", None)
-        if appended is None:
-            return
-        try:
-            quiet = (evidence.now - appended).total_seconds()
-        except TypeError:
-            return
-        if 0 <= quiet < DONE_QUIET_SECONDS:
-            self._wake.wake_later(session_id, DONE_QUIET_SECONDS - quiet + SETTLE_MARGIN_SECONDS)
+        delay = settle_delay(self._observations.get(session_id))
+        if delay is not None:
+            self._wake.wake_later(session_id, delay)
 
     def _rearm_trigger(self) -> None:
         if not self._wake.file_trigger or self._watch_paths is None:
@@ -239,6 +229,7 @@ class AttentionWatcher:
             self._complete_cycle()
             for target in self._targets.values():
                 self._expire(target, self._now())
+            self._finish_pass()
             return 0
         live_keys = {target.key for target in targets}
         self._prune_resting(live_keys)
@@ -266,6 +257,14 @@ class AttentionWatcher:
         readings = await asyncio.gather(*(read(target) for target in targets))
         if complete_cycle:
             self._complete_cycle()
+        try:
+            return self._apply_readings(targets, readings, now)
+        finally:
+            self._finish_pass()
+
+    def _apply_readings(
+        self, targets: List[WatchTarget], readings: Sequence[Tuple[WatchTarget, Optional[Evidence]]], now: datetime,
+    ) -> int:
         try:
             current = {target.session_id: target for target in self._list_targets()}
         except Exception as exc:
@@ -305,6 +304,14 @@ class AttentionWatcher:
 
     def abandon_process_floor(self, session_id: str) -> None:
         self._restart_floors.abandon(session_id)
+
+    def _finish_pass(self) -> None:
+        if self._on_pass_end is None:
+            return
+        try:
+            self._on_pass_end()
+        except Exception as exc:
+            logger.warning("attention_pass_end_failed", error=str(exc), error_type=type(exc).__name__)
 
     def _complete_cycle(self) -> None:
         self._cycles += 1

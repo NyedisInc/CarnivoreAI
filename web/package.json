@@ -19,7 +19,7 @@
     "@tailwindcss/vite": "4.3.3",
     "@types/node": "24.11.2",
     "jsdom": "27.4.0",
-    "svelte": "5.57.0",
+    "svelte": "5.57.3",
     "svelte-check": "4.7.6",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",

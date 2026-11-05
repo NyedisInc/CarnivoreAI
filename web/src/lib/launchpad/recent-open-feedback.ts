@@ -1,12 +1,9 @@
 import type { Translate } from './recent';
+import { addLocalToast } from '../toast-surface';
 
 export const OPEN_TOAST_KIND = 'RecentOpen';
 
 export type OpenStep = 'opening' | 'opened' | 'failed';
-
-interface ToastSurface {
-    add(toast: Record<string, unknown>): void;
-}
 
 export interface OpenedSession {
     id: string;
@@ -32,10 +29,7 @@ export function openToast(
 }
 
 export function raiseToast(toast: Record<string, unknown>): boolean {
-    const surface = (globalThis as { ToastManager?: ToastSurface }).ToastManager;
-    if (!surface || typeof surface.add !== 'function') return false;
-    surface.add(toast);
-    return true;
+    return addLocalToast(toast);
 }
 
 export function openedSession(result: unknown): OpenedSession | null {

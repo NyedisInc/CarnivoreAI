@@ -1,4 +1,6 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+/** @vitest-environment jsdom */
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { autoAnswerConfirm, type AutoAnswer } from '../../test-support/auto-answer';
 import type { MenuNode } from '../drawer-tabs/add-component-menu';
 import type { ItemMenuType } from '../item-menu/types';
 const filedUnder = new Map<string, number | null>();
@@ -21,8 +23,7 @@ vi.mock('./interaction-globals', () => ({
     announce: (text: string) => { calls.push(`say ${text}`); },
     announceFailure: (text: string) => { calls.push(`fail ${text}`); },
     hg: () => ({
-        SessionSidebar: { _rows: [{ name: 'a', kind: 'agent', project_id: 5, project_name: 'proj' }] },
-        App: { showConfirmModal: vi.fn(async (...args: unknown[]) => { calls.push(`confirm ${String(args[2])} ${String(args[5])}`); return true; }) },
+        SessionSidebar: { rows() { return this._rows; }, _rows: [{ name: 'a', kind: 'agent', project_id: 5, project_name: 'proj' }] },
         TextPromptModal: undefined,
     }),
     reasonOf: (e: unknown) => String((e as Error).message),
@@ -47,18 +48,23 @@ beforeAll(async () => {
     await import('../item-menu/registry');
 }, 60_000);
 
+let confirmer: AutoAnswer;
+
+afterEach(() => confirmer.stop());
+
 beforeEach(() => {
+    confirmer = autoAnswerConfirm(true);
     calls.length = 0;
     filedUnder.clear();
     (globalThis as { TextPromptModal?: unknown }).TextPromptModal = undefined;
 });
 
 describe('a company heading kebab', () => {
-    it('offers rename, the shared color row and delete, and nothing for an unknown company', async () => {
+    it('offers rename, the shared color row, fold everything inside and delete, and nothing for an unknown company', async () => {
         expect(await nodesOf('company', 'c:99')).toBeNull();
         const nodes = (await nodesOf('company', 'c:7'))!;
-        expect(nodes.map((e) => e.glyphHtml)).toEqual(['rename', undefined, 'close']);
-        expect(nodes.map((e) => !!e.sep), 'delete sits alone behind a hairline').toEqual([false, false, true]);
+        expect(nodes.map((e) => e.glyphHtml)).toEqual(['rename', undefined, 'fold', 'close']);
+        expect(nodes.map((e) => !!e.sep), 'delete sits alone behind a hairline').toEqual([false, false, true, true]);
         expect(nodes.at(-1)!.danger).toBe(true);
         expect(nodes.filter((e) => e.swatches)).toHaveLength(1);
     });
@@ -66,7 +72,9 @@ describe('a company heading kebab', () => {
     it('delete confirms with the destructive style and says the projects become orphaned', async () => {
         (await nodesOf('company', 'c:7'))!.find((e) => e.id === 'delete-company')!.run!();
         await vi.waitFor(() => expect(calls).toContain('delete'));
-        expect(calls.some((c) => c.startsWith('confirm') && c.endsWith('danger') && c.includes('orphaned'))).toBe(true);
+        expect(confirmer.asked).toHaveLength(1);
+        expect(confirmer.asked[0]!.variant).toBe('danger');
+        expect(confirmer.asked[0]!.details).toContain('orphaned');
     });
 });
 

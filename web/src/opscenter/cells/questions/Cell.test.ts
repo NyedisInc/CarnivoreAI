@@ -28,8 +28,7 @@ const openAppAlerts = vi.fn();
 vi.mock('../../../lib/app-alerts/alert-panel.svelte', () => ({ openAppAlerts: () => openAppAlerts(), alertPanel: { open: false }, toggleAppAlerts: () => {} }));
 
 import Cell from './Cell.svelte';
-import { alertCountSource } from '../../../lib/session-rail/alert-counts';
-import '../../../lib/session-rail/alert-count-sources.svelte';
+import { questionCount } from './state.svelte';
 import { titleCount } from './meta';
 import { META } from '../../engine/meta';
 import { approvals, refreshApprovals } from '../../../lib/approvals/approvals.svelte';
@@ -199,15 +198,15 @@ describe('copies of the widget are independent (Joe (ccsliinc), 2026-10-11: "mul
     expect(host.querySelector('[data-questions-empty] .oc-state__title')?.textContent).toBe('nothing waiting on you');
   });
 
-  test('the in-widget count and the published rail count follow the copy\'s own checks', async () => {
+  test('the in-widget count and the counted rows follow the copy\'s own checks', async () => {
     everythingWaiting();
     const all = draw(undefined, 'drawer-zone:core.questions');
     const two = draw({ kind_all: false, kind_automations: false }, 'drawer-zone:core.questions#i2');
     await settle();
     expect(all.querySelector('[data-questions-count]')?.textContent).toBe('3 waiting on you');
     expect(two.querySelector('[data-questions-count]')?.textContent).toBe('2 waiting on you');
-    expect(alertCountSource('core.questions')?.read(null, undefined)).toBe(3);
-    expect(alertCountSource('core.questions')?.read(null, { kind_all: false, kind_huddle: false, kind_automations: false })).toBe(1);
-    expect(alertCountSource('core.questions')?.read(null, { counts: false })).toBe(3);
+    expect(questionCount(undefined)).toBe(3);
+    expect(questionCount({ kind_all: false, kind_huddle: false, kind_automations: false })).toBe(1);
+    expect(questionCount({ counts: false })).toBe(3);
   });
 });

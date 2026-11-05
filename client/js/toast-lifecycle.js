@@ -53,11 +53,31 @@ Object.assign(ToastManager.prototype, {
     _desktopNotify(toast) {
       const bridge = window.carnivoreDesktop;
       if (!bridge || typeof bridge.notify !== 'function') return;
-      if (document.hasFocus()) return;
+      const screen = window.NotifyScreen;
+      const group = screen && typeof screen.groupOf === 'function' ? (screen.groupOf(toast.notify_type) || '') : '';
+      if (document.hasFocus()) {
+        const quiet = window.NotifyQuietWatched;
+        if (!(quiet && typeof quiet.on === 'function' && quiet.on() === true && group === 'needs_you')) return;
+      }
       const nav = window.ToastNavigate;
       const ask = nav && typeof nav.isAskToast === 'function' && nav.isAskToast(toast) ? toast.session_id : '';
       if (ask && this._bannersPosting === true) return;
-      bridge.notify(toast.title || '', toast.body || '', ask);
+      if (toast.notify_type === 'app.update_available') return;
+      const label = window.SessionLabel && typeof window.SessionLabel.resolveToast === 'function' ? window.SessionLabel.resolveToast(toast) : null;
+      bridge.notify(toast.title || '', toast.body || '', ask, {
+        id: toast.local ? '' : String(toast.id || ''),
+        group,
+        subtitle: label || '',
+        session_id: typeof toast.session_id === 'string' ? toast.session_id : '',
+        tmux_name: typeof toast.session_name === 'string' ? toast.session_name : '',
+      });
+    },
+
+    /* the card is gone */
+    _desktopUnnotify(toast) {
+      const bridge = window.carnivoreDesktop;
+      if (!bridge || typeof bridge.unnotify !== 'function' || !toast || toast.local || !toast.id) return;
+      bridge.unnotify(String(toast.id));
     },
 
     async _readBannersPosting() {
@@ -112,18 +132,10 @@ Object.assign(ToastManager.prototype, {
       const toast = this._byId.get(toastId);
       if (!toast) return;
       this._byId.delete(toastId);
+      this._desktopUnnotify(toast);
       this._addedAt.delete(toastId);
 
-      const el = this._cardFor(toastId);
-      if (el) {
-        el.classList.add('toast--dismissing');
-        setTimeout(() => {
-          if (el && el.parentNode) el.parentNode.removeChild(el);
-          this._scheduleRender();
-        }, 220);
-      } else {
-        this._scheduleRender();
-      }
+      if (!this._startFade(toastId)) this._scheduleRender();
 
       // no such record
       if (syncToServer && toast && toast.session_id && !toast.local) {
@@ -174,12 +186,6 @@ Object.assign(ToastManager.prototype, {
       }
     },
 
-    _cardFor(toastId) {
-      const container = this._container();
-      if (!container) return null;
-      return container.querySelector(`.toast[data-toast-id="${toastId}"]`);
-    },
-
     dismissBySession(sessionId) {
       if (!sessionId) return;
       for (const [id, toast] of Array.from(this._byId.entries())) {
@@ -204,7 +210,7 @@ Object.assign(ToastManager.prototype, {
       return ids.length;
     },
 
-    /* no evidence at all */
+    /* Claude is waiting no evidence at all */
     dismissForSessionActivity(sessionId, data) {
       if (!sessionId) return 0;
       if (data !== undefined && window.AttachmentToast

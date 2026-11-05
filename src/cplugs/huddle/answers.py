@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from src.cplugs.huddle import rich_ask
 from src.cplugs.huddle.rich_ask import MULTI, RANK, SINGLE, YES_NO
-from src.cplugs.huddle.rules import TaskManagerInvalid
+from src.cplugs.huddle.rules import TaskManagerAnswerInvalid, TaskManagerInvalid
 
 MAX_NOTE = 500
 MAX_OTHER = 500
@@ -19,16 +19,16 @@ MAX_FILES = 5
 
 def _clean(value: Any, qid: str, label: str, limit: int) -> str:
     if not isinstance(value, str):
-        raise TaskManagerInvalid(f"question {qid}: {label} must be text")
+        raise TaskManagerAnswerInvalid(f"question {qid}: {label} must be text", qid)
     value = value.strip()
     if len(value) > limit:
-        raise TaskManagerInvalid(f"question {qid}: {label} is over {limit} characters")
+        raise TaskManagerAnswerInvalid(f"question {qid}: {label} is over {limit} characters", qid)
     return value
 
 
 def _ids(value: Any, qid: str, label: str, valid: Sequence[str]) -> List[str]:
     if not isinstance(value, list) or len(set(value)) != len(value) or any(v not in valid for v in value):
-        raise TaskManagerInvalid(f"question {qid}: {label} must list known option ids once each")
+        raise TaskManagerAnswerInvalid(f"question {qid}: {label} must list known option ids once each", qid)
     return list(value)
 
 
@@ -40,18 +40,18 @@ def _one(question: Mapping[str, Any], raw: Mapping[str, Any]) -> Optional[Dict[s
         if raw.get("value") is None:
             return None
         if not isinstance(raw["value"], bool):
-            raise TaskManagerInvalid(f"question {qid}: value must be true or false")
+            raise TaskManagerAnswerInvalid(f"question {qid}: value must be true or false", qid)
         pair = question.get("labels") or ["yes", "no"]
         out = {"value": raw["value"], "label": pair[0] if raw["value"] else pair[1]}
     elif kind == SINGLE:
         choice, other = raw.get("choice"), raw.get("other")
         if choice is not None:
             if choice not in options:
-                raise TaskManagerInvalid(f"question {qid}: choice must be a known option id")
+                raise TaskManagerAnswerInvalid(f"question {qid}: choice must be a known option id", qid)
             out = {"choice": choice, "label": options[choice]}
         elif other:
             if not question.get("other"):
-                raise TaskManagerInvalid(f"question {qid}: has no other box")
+                raise TaskManagerAnswerInvalid(f"question {qid}: has no other box", qid)
             out = {"choice": None, "other": _clean(other, qid, "other", MAX_OTHER)}
         else:
             return None
@@ -59,19 +59,19 @@ def _one(question: Mapping[str, Any], raw: Mapping[str, Any]) -> Optional[Dict[s
         picks = _ids(raw.get("choices", []), qid, "choices", list(options))
         other = _clean(raw["other"], qid, "other", MAX_OTHER) if raw.get("other") else ""
         if other and not question.get("other"):
-            raise TaskManagerInvalid(f"question {qid}: has no other box")
+            raise TaskManagerAnswerInvalid(f"question {qid}: has no other box", qid)
         if not picks and not other:
             return None
         for name, bad in (("min", len(picks) < question.get("min", 0)), ("max", len(picks) > question.get("max", len(options)))):
             if bad:
-                raise TaskManagerInvalid(f"question {qid}: pick {'at least' if name == 'min' else 'at most'} {question[name]}")
+                raise TaskManagerAnswerInvalid(f"question {qid}: pick {'at least' if name == 'min' else 'at most'} {question[name]}", qid)
         out = {"choices": picks, "labels": [options[p] for p in picks], **({"other": other} if other else {})}
     elif kind == RANK:
         if raw.get("order") is None:
             return None
         order = _ids(raw["order"], qid, "order", list(options))
         if len(order) != len(options):
-            raise TaskManagerInvalid(f"question {qid}: order must rank every option")
+            raise TaskManagerAnswerInvalid(f"question {qid}: order must rank every option", qid)
         out = {"order": order, "labels": [options[o] for o in order]}
     elif kind == rich_ask.DATETIME:
         out = _when(raw, qid)
@@ -92,9 +92,9 @@ def _when(raw: Mapping[str, Any], qid: str) -> Optional[Dict[str, Any]]:
     try:
         moment = datetime.fromisoformat(text)
     except ValueError:
-        raise TaskManagerInvalid(f"question {qid}: the time must be ISO 8601 with a UTC offset") from None
+        raise TaskManagerAnswerInvalid(f"question {qid}: the time must be ISO 8601 with a UTC offset", qid, "time") from None
     if moment.tzinfo is None:
-        raise TaskManagerInvalid(f"question {qid}: the time needs a UTC offset")
+        raise TaskManagerAnswerInvalid(f"question {qid}: the time needs a UTC offset", qid, "time_offset")
     return {"text": text}
 
 
@@ -129,7 +129,7 @@ def validate(questions: Sequence[Mapping[str, Any]], answers: Any) -> Dict[str, 
     for question in questions:
         raw = answers.get(question["id"])
         if raw is not None and not isinstance(raw, Mapping):
-            raise TaskManagerInvalid(f"question {question['id']}: the answer must be an object")
+            raise TaskManagerAnswerInvalid(f"question {question['id']}: the answer must be an object", question["id"])
         raw = raw or {}
         note = _clean(raw["note"], question["id"], "note", MAX_NOTE) if raw.get("note") is not None else ""
         attached = _files(raw.get("files"), question["id"])
@@ -162,9 +162,9 @@ def _files(raw: Any, qid: str) -> List[str]:
     if raw is None:
         return []
     if not isinstance(raw, list) or not all(isinstance(p, str) and p.startswith("/") for p in raw):
-        raise TaskManagerInvalid(f"question {qid}: files must be a list of absolute paths")
+        raise TaskManagerAnswerInvalid(f"question {qid}: files must be a list of absolute paths", qid)
     if len(raw) > MAX_FILES:
-        raise TaskManagerInvalid(f"question {qid}: at most {MAX_FILES} files")
+        raise TaskManagerAnswerInvalid(f"question {qid}: at most {MAX_FILES} files", qid)
     return list(raw)
 
 

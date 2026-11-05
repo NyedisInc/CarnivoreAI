@@ -40,7 +40,26 @@ console.log('[WriteFailureNotice Module] Loading...');
         return true;
     }
 
+    function tr(key, params) {
+        return globalThis.CloudeTr(key, params);
+    }
+
+    function notify(key, params, opts) {
+        if (reportKey(key, params, opts)) return;
+        console.warn((opts && opts.logPrefix) || 'WriteFailureNotice', 'no toast surface for:', tr(key, params));
+    }
+
+    function reportKey(key, params, opts) {
+        return report(tr(key, params), {
+            title: opts && opts.titleKey ? tr(opts.titleKey) : undefined,
+            surface: opts && opts.surface,
+        });
+    }
+
     window.WriteFailureNotice = {
+        reportKey: reportKey,
+        notify: notify,
+        tr: tr,
         TITLE: TITLE,
         DEFAULT_SURFACE: DEFAULT_SURFACE,
         FALLBACK_KIND: FALLBACK_KIND,

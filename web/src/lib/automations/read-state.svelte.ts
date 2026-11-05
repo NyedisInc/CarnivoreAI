@@ -1,4 +1,5 @@
 import { bridge } from '../zone-shell/preference-field';
+import { legacyGlobal } from '../legacy-globals';
 import { appendRead, mergeRead } from './logic/feed';
 
 export const SEEN_FIELD = 'automation_runs_seen_at';
@@ -45,16 +46,16 @@ function entries(): { field: string; value: unknown; localWriter: () => void }[]
 }
 
 async function writeOnce(b: NonNullable<ReturnType<typeof bridge>>): Promise<void> {
-  const first = (await b.writeMany(entries())) as { status?: string } | undefined;
+  const first = await b.writeMany(entries());
   if (first?.status !== 'stale_revision') return;
-  const prefs = (globalThis as { Preferences?: { committedValue?(name: string): unknown } }).Preferences;
+  const prefs = legacyGlobal<{ committedValue?(name: string): unknown }>('Preferences');
   const merged = mergeRead(
     { seenAt: cleanSeen(prefs?.committedValue?.(SEEN_FIELD)), read: cleanRead(prefs?.committedValue?.(READ_FIELD)) },
     { seenAt: unread.seenAt, read: unread.read },
   );
   unread.seenAt = merged.seenAt;
   unread.read = merged.read;
-  const replay = (await b.writeMany(entries())) as { status?: string } | undefined;
+  const replay = await b.writeMany(entries());
   if (replay?.status === 'stale_revision') throw new Error('stale_revision after replay');
 }
 

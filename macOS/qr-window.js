@@ -2,10 +2,9 @@
 'use strict';
 
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
-const { execFileSync } = require('child_process');
-const { buildOtpauthUri } = require('./otpauth-uri');
+
+const LOADED_ENROLLMENT_ROUTE = '/api/v1/auth/enrollment/loaded';
 
 const SAFE_CSS_VALUE = /^[#a-zA-Z0-9(),.%\s'"-]+$/;
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
@@ -14,19 +13,6 @@ const THEME_KEYS = Object.freeze([
   '--color-bg', '--color-fg', '--color-fg-muted', '--color-fg-faint',
   '--color-accent', '--color-border', '--font-mono', '--radius-sm',
 ]);
-
-function readTotpSecret(serverDir) {
-  try {
-    const text = fs.readFileSync(path.join(serverDir, '.env'), 'utf8');
-    for (const line of text.split('\n')) {
-      const m = /^\s*TOTP_SECRET\s*=\s*(.+?)\s*$/.exec(line);
-      if (m) return m[1].replace(/^['"]|['"]$/g, '');
-    }
-    return null;
-  } catch (err) {
-    return null;
-  }
-}
 
 function readThemeVars(projectRoot) {
   try {
@@ -43,22 +29,48 @@ function readThemeVars(projectRoot) {
   }
 }
 
-function computerDisplayName() {
-  try {
-    const name = execFileSync('/usr/sbin/scutil', ['--get', 'ComputerName'],
-      { encoding: 'utf8', timeout: 2000 }).trim();
-    if (name) return name;
-  } catch (err) {
-  }
-  return os.hostname();
-}
-
 const PAIRING_COPY = Object.freeze({
   title: 'pair your authenticator',
   body: 'Scan this QR with Google Authenticator, 1Password, Authy, or any TOTP app.',
   aria: 'TOTP QR code',
   footer: 'Paired already? You can close this window.',
 });
+
+function failureState(status) {
+  if (status === 0) return 'offline';
+  if (status === 401) return 'restart_needed';
+  if (status === 403) return 'loopback_only';
+  if (status === 429) return 'rate_limited';
+  if (status === undefined) return 'login_failed';
+  return 'refused';
+}
+
+const LOADED_CODE_ROUTE = '/api/v1/auth/enrollment/loaded/code';
+
+async function askLoaded(api, route, baseUrl) {
+  if (!api) return { state: 'offline' };
+  let result = await api.getAuthed(route, { baseUrl });
+  if (baseUrl && !result.reachable && result.status === 0) result = await api.getAuthed(route);
+  if (!result.reachable) return { state: failureState(result.status) };
+  return { state: 'ok', data: result.data || {} };
+}
+
+async function fetchLoadedOtpauthUri(api, baseUrl) {
+  const asked = await askLoaded(api, LOADED_ENROLLMENT_ROUTE, baseUrl);
+  if (asked.state !== 'ok') return asked;
+  const data = asked.data;
+  if (typeof data.otpauth_uri !== 'string' || !data.otpauth_uri.startsWith('otpauth://')) return { state: 'refused' };
+  return { state: 'ok', uri: data.otpauth_uri, restartPending: data.restart_pending === true };
+}
+
+async function fetchLoadedCode(api, baseUrl) {
+  const asked = await askLoaded(api, LOADED_CODE_ROUTE, baseUrl);
+  if (asked.state !== 'ok') return asked;
+  if (asked.data.restart_pending === true) return { state: 'restart_pending' };
+  if (asked.data.code === null) return { state: 'no_code_free' };
+  if (typeof asked.data.code !== 'string' || !/^\d{6}$/.test(asked.data.code)) return { state: 'refused' };
+  return { state: 'ok', code: asked.data.code };
+}
 
 function buildHtml(qrSvg, vars, copy) {
   const words = copy || PAIRING_COPY;
@@ -85,15 +97,13 @@ function buildHtml(qrSvg, vars, copy) {
   </body></html>`;
 }
 
-async function showQrPairingWindow({ serverDir, projectRoot, BrowserWindow, QRCode, computerName }) {
+async function showQrPairingWindow({ api, projectRoot, BrowserWindow, QRCode, restartFooter, baseUrl }) {
   try {
-    const secret = readTotpSecret(serverDir);
-    if (!secret) {
-      throw new Error('TOTP secret not readable from the server .env - has setup run?');
-    }
+    const loaded = await fetchLoadedOtpauthUri(api, baseUrl);
+    if (loaded.state !== 'ok') return loaded.state;
     const qr = QRCode || require('qrcode');
     const qrSvg = await qr.toString(
-      buildOtpauthUri(secret, computerName === undefined ? computerDisplayName() : computerName),
+      loaded.uri,
       { type: 'svg', margin: 2, errorCorrectionLevel: 'M',
         color: { dark: '#000000', light: '#ffffff' } }
     );
@@ -108,13 +118,14 @@ async function showQrPairingWindow({ serverDir, projectRoot, BrowserWindow, QRCo
       options.backgroundColor = vars['--color-bg'];
     }
     const qrWindow = new BrowserWindow(options);
-    qrWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(buildHtml(qrSvg, vars))}`);
+    const copy = loaded.restartPending && restartFooter ? { ...PAIRING_COPY, footer: restartFooter } : PAIRING_COPY;
+    qrWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(buildHtml(qrSvg, vars, copy))}`);
     qrWindow.once('ready-to-show', () => qrWindow.show());
     qrWindow.setMenu(null);
-    return true;
+    return 'shown';
   } catch (err) {
     console.warn('[first-run] could not show QR:', err.message);
-    return false;
+    return 'failed';
   }
 }
 
@@ -140,4 +151,4 @@ async function showUrlQrWindow({ url, projectRoot, BrowserWindow, QRCode, copy }
   }
 }
 
-module.exports = { showQrPairingWindow, showUrlQrWindow, readTotpSecret, readThemeVars, buildHtml };
+module.exports = { showQrPairingWindow, showUrlQrWindow, fetchLoadedOtpauthUri, fetchLoadedCode, LOADED_ENROLLMENT_ROUTE, LOADED_CODE_ROUTE, readThemeVars, buildHtml };

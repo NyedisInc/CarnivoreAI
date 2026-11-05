@@ -165,11 +165,11 @@ class Terminal {
                 + 'terminal-client-factory.js is not what built it');
         }
         this.term = new XTerminal(
-            Object.assign({}, this._xtermOptionsBase, { theme: initialXtermTheme }));
+            Object.assign({}, this._xtermOptionsBase, window.TerminalFont ? window.TerminalFont.optionsFor() : null, { theme: initialXtermTheme }));
 
         if (window.Motion && window.Motion.bindCursorBlink) window.Motion.bindCursorBlink(this.term);
         if (window.TerminalOptionMeta) window.TerminalOptionMeta.bind(this.term);
-        if (window.TerminalScreenReader) window.TerminalScreenReader.bind(this.term);
+        if (window.TerminalScreenReader) window.TerminalScreenReader.bind(this.term); if (window.TerminalFont) window.TerminalFont.bind(this.term, (r) => this._m('TerminalLayout')?.requestFit(r));
         this._xtermOpacity = window.TerminalBackgroundOpacity && window.TerminalBackgroundOpacity.attach(this.term);
         if (this._xtermOpacity) {
             this._xtermOpacity.apply(initialXtermTheme);
@@ -194,7 +194,7 @@ class Terminal {
 
         this._webglAddon = window.TerminalAddons
             ? window.TerminalAddons.loadWebgl(this.term, this) : null;
-        if (window.TerminalAddons) window.TerminalAddons.loadUnicode11(this.term);
+        if (window.TerminalAddons) { window.TerminalAddons.loadUnicode11(this.term); if (window.TerminalLinks) window.TerminalLinks.attach(this.term, () => this._sessionId()); }
         else console.error('Terminal: terminal-addons.js missing, no WebGL and no Unicode 11');
 
         const hostEl = this._containerEl();
@@ -643,7 +643,7 @@ class Terminal {
     }
 
     async connectWebSocket(opts = {}) {
-        if (this._disposed || !this.term) return;
+        if (this._disposed || !this.term) return; window.TerminalPrimaryHold?.begun(this._sessionId());
         const connectingTerm = this.term;
         if (this.isReconnecting) {
             if (opts && opts.scheduled) {
@@ -683,7 +683,7 @@ class Terminal {
         if (window.TerminalSessionBind) window.TerminalSessionBind.announce(this, sessionId);
         const wsURL = window.API.getWebSocketURL(sessionId);
         console.log('Terminal: Connecting to WebSocket:', wsURL);
-
+        if (window.TerminalPrimaryHold?.defer(sessionId, () => { if (this._sessionId() === sessionId && !this.ws) this.connectWebSocket(opts); })) return;
         this.ws = window.API.openWebSocket(sessionId);
         this.ws.binaryType = 'arraybuffer';
         this.setupWebSocketHandlers();

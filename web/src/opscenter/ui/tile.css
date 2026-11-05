@@ -15,9 +15,9 @@
 
   .oc-icon-tile--marks {
     grid-auto-flow: column;
-    gap: 6px;
+    gap: var(--oc-space-1-5);
     width: auto;
     min-width: var(--tile-size, 28px);
-    padding: 0 6px;
+    padding: 0 var(--oc-space-1-5);
   }
 }

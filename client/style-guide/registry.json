@@ -76,7 +76,7 @@
     },
     {
       "id": "base-set",
-      "title": "base components: card, fold, field, buttons, option list, tag, list, toolbar, state",
+      "title": "base components: card, fold, field, buttons, option list, tag, keycap, list, toolbar, state",
       "group": "foundations",
       "file": "32-base-components.html"
     },
@@ -256,6 +256,7 @@
     "web/src/lib/ui/PrefsArchive.fixture.svelte": "vitest fixture: reads both archive filters in a derived for prefs-archive.test.ts; never rendered by the app",
     "web/src/lib/base/IconButtonBind.fixture.svelte": "vitest fixture: an IconButton with a bound element for IconButton.test.ts; never rendered by the app",
     "web/src/opscenter/ui/InsetHostFixture.svelte": "vitest fixture: a host that calls provideInset() for Tabs.render.test.ts; never rendered by the app",
+    "web/src/cplugs/reviewboard/fixtures/": "vitest fixture: a stand-in board header key for header-keys.render.test.ts; never rendered by the app",
     "web/src/opscenter/shell/fixtures/": "vitest fixtures that mount CellFrame for tests; never rendered by the app",
     "web/src/opscenter/cells/terminal-group/fixtures/": "vitest fixtures for the page tab tests (Cell.pages.test.ts); never rendered by the app",
     "web/src/cplugs/huddle/style-guide/": "the huddle plugin's own live specimens, listed to the guide through web/src/cplugs/style-guide.ts (#1630)",
@@ -385,6 +386,16 @@
         "screen"
       ]
     },
+    "client/css/resting-row-lights.css": {
+      "section": "motion",
+      "classes": [
+        "kaw-steam",
+        "session-sidebar-row",
+        "session-sidebar-row-keep-awake",
+        "status-dot",
+        "status-led"
+      ]
+    },
     "client/css/animation-types.css": {
       "section": "motion",
       "classes": [
@@ -429,8 +440,7 @@
         "status",
         "status-dot",
         "status-led",
-        "tkm-post-close",
-        "zone-badge"
+        "tkm-post-close"
       ]
     },
     "client/css/effort-level.css": {
@@ -450,22 +460,22 @@
     "client/css/header-actions.css": {
       "section": "chrome",
       "classes": [
-        "bscreen",
         "header",
         "header-icon--wordmark",
-        "session-sidebar-panel--open"
+        "ps-browser-screen",
+        "ps-drawer-open"
       ]
     },
     "client/css/header-menu.css": {
       "section": "chrome",
       "classes": [
-        "active",
         "controls",
         "controls--folded",
         "header",
         "header-menu-panel",
         "header-menu-panel--open",
-        "header-menu-toggle"
+        "header-menu-toggle",
+        "ps-terminal-active"
       ]
     },
     "client/css/home-bar.css": {
@@ -549,24 +559,17 @@
         "popup-focus-turn"
       ]
     },
-    "client/css/recent-deleted.css": {
-      "section": "home",
-      "classes": [
-        "recent-session-deleted",
-        "recent-session-row--deleted"
-      ]
-    },
     "client/css/right-drawer.css": {
       "section": "chrome",
       "classes": [
-        "active",
         "config-editor-picker-content",
         "config-editor-picker-overlay",
         "header",
         "right-drawer-docked",
         "right-drawer-grip",
         "right-drawer-resizing",
-        "xterm"
+        "xterm",
+        "ps-terminal-active"
       ]
     },
     "client/css/screen-chrome.css": {
@@ -575,17 +578,6 @@
         "controls",
         "header",
         "is-authenticated"
-      ]
-    },
-    "client/css/confirm-modal.css": {
-      "section": "dialogs",
-      "classes": [
-        "confirm-modal",
-        "confirm-modal__verb",
-        "modal-body",
-        "modal-btn",
-        "modal-content",
-        "modal-footer"
       ]
     },
     "client/css/session-header-led.css": {
@@ -597,7 +589,7 @@
     "client/css/session-notes.css": {
       "section": "chrome",
       "classes": [
-        "active"
+        "ps-terminal-active"
       ]
     },
     "client/css/modal-titlerow.css": {
@@ -681,11 +673,8 @@
         "session-row-menu__chevron",
         "session-row-menu__icon",
         "session-row-menu__item",
-        "session-row-menu__item--locked",
         "session-row-menu__key",
         "session-row-menu__label",
-        "session-row-menu__lock",
-        "session-row-menu__lock-star",
         "session-row-menu__reason",
         "session-row-menu__sep",
         "session-sidebar-panel",
@@ -796,9 +785,9 @@
     "client/css/session-sidebar-rail.css": {
       "section": "chrome",
       "classes": [
-        "active",
         "header",
-        "session-sidebar-railed"
+        "session-sidebar-railed",
+        "ps-terminal-active"
       ]
     },
     "client/css/session-sidebar-resize.css": {
@@ -997,7 +986,6 @@
     "client/css/slash-command-chips.css": {
       "section": "terminal",
       "classes": [
-        "command-button",
         "command-button-desc",
         "command-button-name",
         "command-chip",
@@ -1065,7 +1053,6 @@
           "visible"
         ],
         "home": [
-          "adopt-attach-btn",
           "adopt-disclosure",
           "adopt-disclosure-body",
           "adopt-disclosure__icon",
@@ -1075,10 +1062,6 @@
           "launchpad-error-card",
           "launchpad-error-dismiss",
           "launchpad-error-text",
-          "launchpad-section",
-          "launchpad-section-count",
-          "launchpad-section-title",
-          "launchpad-section-toggle",
           "new-fab",
           "new-fab--open",
           "new-fab__backdrop",
@@ -1090,49 +1073,16 @@
           "new-fab__plus",
           "new-fab__trigger",
           "project-archived-badge",
-          "project-archived-notice",
-          "project-archived-notice--unknown",
-          "project-authority-banner",
-          "project-authority-banner-unknown",
-          "project-authority-banner-unreadable",
-          "project-description",
           "project-item",
-          "project-item--archived",
           "project-list",
           "project-name",
-          "project-path",
-          "project-presence-badge",
-          "project-presence-badge-missing",
-          "project-presence-badge-unreachable",
-          "project-presence-disabled",
-          "project-presence-missing",
-          "project-presence-unreachable",
-          "project-session-row",
-          "project-session-row--attention",
-          "project-session-row--ended",
-          "project-session-row__attention-reason",
-          "project-session-row__name",
           "recent-session-lifecycle",
-          "recent-session-name",
-          "recent-session-row",
-          "recent-sessions-attention",
-          "recent-sessions-attention__detail",
-          "recent-sessions-attention__title",
-          "running-session-age",
-          "running-session-badges",
-          "running-session-id",
           "running-session-name",
           "running-session-rename",
-          "running-session-rename-error",
           "running-session-rename-unavailable",
           "running-session-row",
           "running-session-top",
-          "running-sessions-attention",
-          "running-sessions-attention__detail",
           "running-sessions-attention__head",
-          "running-sessions-attention__note",
-          "running-sessions-attention__title",
-          "running-sessions-section",
           "session-row-action",
           "session-row-action-restart"
         ],
@@ -1140,7 +1090,6 @@
           "all-commands-list",
           "all-commands-section",
           "cloude-touch-copy",
-          "command-button",
           "command-category",
           "command-description",
           "command-filter-input",
@@ -1183,14 +1132,12 @@
         ],
         "pills": [
           "badge",
-          "badge-ended",
           "badge-external",
           "badge-tmux"
         ],
         "buttons": [
           "btn-icon",
-          "modal-btn",
-          "modal-btn-danger"
+          "modal-btn"
         ],
         "menus": [
           "cloude-attach-menu",
@@ -1205,8 +1152,6 @@
           "folder-picker-icon",
           "folder-picker-item",
           "folder-picker-item-active",
-          "folder-picker-item-disabled",
-          "folder-picker-item-sub",
           "folder-picker-list",
           "folder-picker-modal",
           "folder-picker-name",
@@ -1215,7 +1160,6 @@
           "folder-picker-status--error",
           "folder-picker-status--success",
           "folder-picker-toolbar",
-          "folder-picker-toolbar-btn",
           "modal",
           "modal-body",
           "modal-close",
@@ -1231,7 +1175,6 @@
         ],
         "settings": [
           "provider-family-heading",
-          "provider-item-more",
           "provider-item-name",
           "settings-advanced",
           "settings-advanced-summary",
@@ -1261,15 +1204,13 @@
           "settings-wrapper-row-head",
           "settings-wrapper-row-main",
           "settings-wrapper-script-input",
-          "settings-wrapper-security-note",
-          "theme-selector"
+          "settings-wrapper-security-note"
         ]
       }
     },
     "client/css/terminal-carnivore.css": {
       "section": "terminal",
       "classes": [
-        "active",
         "config-editor-root-label",
         "config-editor-toggle--root",
         "config-editor-toggle-glyph",
@@ -1283,14 +1224,15 @@
         "session-sidebar-row",
         "session-sidebar-row-name",
         "session-sidebar-title",
-        "session-sidebar-toggle"
+        "session-sidebar-toggle",
+        "ps-terminal-active"
       ]
     },
     "client/css/terminal-empty.css": {
       "section": "terminal",
       "classes": [
-        "active",
-        "terminal-screen--empty"
+        "ps-terminal-active",
+        "ps-terminal-empty-active"
       ]
     },
     "client/css/terminal-grid.css": {
@@ -1299,8 +1241,10 @@
         "header",
         "oc-frame-body",
         "oc-surface",
-        "session-sidebar-panel--open",
-        "terminal-container"
+        "terminal-container",
+        "ps-drawer-open",
+        "ps-grid-focus",
+        "ps-grid-surface"
       ]
     },
     "client/css/terminal-mascot.css": {
@@ -1321,7 +1265,8 @@
       "classes": [
         "controls",
         "header",
-        "header-row"
+        "header-row",
+        "ps-phone-tabs"
       ]
     },
     "client/css/terminal-tools.css": {
@@ -1351,9 +1296,6 @@
           "text-prompt-modal",
           "text-prompt-modal__head",
           "text-prompt-modal__verb"
-        ],
-        "buttons": [
-          "modal-btn-confirm"
         ]
       }
     },
@@ -1373,7 +1315,6 @@
         "na-flow",
         "provider-add-input",
         "provider-family-heading",
-        "provider-item-more",
         "provider-item-remove",
         "provider-local-status",
         "text-prompt-modal"
@@ -2640,7 +2581,6 @@
         "dst-slash",
         "dst-tokens",
         "dst-unit",
-        "dst-unit-short",
         "dst-win",
         "dst-word"
       ]
@@ -2670,7 +2610,21 @@
         "fdg-note",
         "fdg-panel",
         "fdg-path",
-        "fdg-tag"
+        "fdg-revert",
+        "fdg-tag",
+        "fdg-turn"
+      ]
+    },
+    "web/src/lib/checkpoints/RevertConfirm.svelte": {
+      "section": "chrome",
+      "classes": [
+        "rvc-blocked",
+        "rvc-failed",
+        "rvc-group",
+        "rvc-label",
+        "rvc-lists",
+        "rvc-path",
+        "rvc-why"
       ]
     },
     "web/src/lib/file-drawer/FileDrawerGitLine.svelte": {
@@ -2687,7 +2641,9 @@
       "section": "chrome",
       "classes": [
         "active",
-        "home-in-main"
+        "oc-surface",
+        "ps-grid-surface",
+        "terminal-container"
       ]
     },
     "web/src/lib/launchpad/ChoiceModal.svelte": {
@@ -2752,7 +2708,7 @@
         "oc-confirm-popup__line"
       ]
     },
-    "web/src/lib/launchpad/ModalShell.svelte": {
+    "web/src/lib/dialog-frame/ModalShell.svelte": {
       "section": "dialogs",
       "classes": [
         "modal-body",
@@ -3205,6 +3161,25 @@
         "sideload-form__warning"
       ]
     },
+    "web/src/lib/plugins-page/SideloadConsent.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "sideload-consent",
+        "sideload-consent__body",
+        "sideload-consent__foot",
+        "sideload-consent__title"
+      ]
+    },
+    "web/src/lib/plugins-page/SideloadKinds.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "sideload-list",
+        "sideload-list__actions",
+        "sideload-list__kind",
+        "sideload-list__name",
+        "sideload-list__row"
+      ]
+    },
     "web/src/lib/plugins-page/SideloadRowActions.svelte": {
       "section": "ledger-catalog",
       "classes": [
@@ -3545,7 +3520,7 @@
     "web/src/lib/terminal-search/search-globals.css": {
       "section": "terminal",
       "classes": [
-        "active"
+        "ps-terminal-active"
       ]
     },
     "web/src/lib/themes-page/BuildYourOwn.svelte": {
@@ -3663,6 +3638,14 @@
       ]
     },
     "web/src/lib/pack-op-toast/PackOpToast.svelte": {
+      "section": "feedback",
+      "classes": []
+    },
+    "web/src/lib/toast-stack/ToastCard.svelte": {
+      "section": "feedback",
+      "classes": []
+    },
+    "web/src/lib/toast-stack/ToastStack.svelte": {
       "section": "feedback",
       "classes": []
     },
@@ -3855,8 +3838,6 @@
       "classes": [
         "cmp-body",
         "cmp-note",
-        "modal-btn",
-        "pk-act",
         "pk-col",
         "pk-meters",
         "pk-tab",
@@ -4195,10 +4176,6 @@
       "classes": [
         "files",
         "files-chip",
-        "files-path-actions",
-        "files-path-form",
-        "files-status",
-        "files-status--error",
         "files-tree",
         "oc-frame-title",
         "oc-frame-title--phone"
@@ -4226,6 +4203,20 @@
       "section": "cells",
       "classes": [
         "ff-row"
+      ]
+    },
+    "web/src/opscenter/cells/files/FilesStatus.svelte": {
+      "section": "cells",
+      "classes": [
+        "files-status",
+        "files-status--error"
+      ]
+    },
+    "web/src/opscenter/cells/files/OpenPathDialog.svelte": {
+      "section": "cells",
+      "classes": [
+        "files-path-actions",
+        "files-path-form"
       ]
     },
     "web/src/opscenter/cells/files/ProjectGit.svelte": {
@@ -4559,6 +4550,7 @@
         "cell-tools",
         "oc-frame-strip",
         "oc-frame-title",
+        "oc-tl-actions",
         "oc-tl-controls",
         "oc-tl-dot",
         "oc-tl-dot-hollow",
@@ -4679,7 +4671,6 @@
       "section": "feedback",
       "classes": [
         "oc-notice",
-        "oc-notice-close",
         "oc-notice-text",
         "oc-notice--refusal"
       ]
@@ -4757,9 +4748,7 @@
         "oc-frame-strip",
         "oc-frame-terminal",
         "oc-frame-topgap",
-        "pf-sheen",
-        "popup-focus",
-        "popup-focus-turn"
+        "popup-focus"
       ]
     },
     "web/src/opscenter/shell/CornerMenu.svelte": {
@@ -4799,6 +4788,12 @@
         "oc-head-sep",
         "oc-psum",
         "oc-sort-wrap"
+      ]
+    },
+    "web/src/opscenter/shell/HeadLockMark.svelte": {
+      "section": "cells",
+      "classes": [
+        "oc-head-lock"
       ]
     },
     "web/src/opscenter/shell/PlacementHead.svelte": {
@@ -4846,6 +4841,7 @@
         "oc-tabs-fade-start",
         "oc-tabwrap",
         "oc-tabwrap-active",
+        "oc-tabwrap-idle",
         "oc-tabwrap-tinted"
       ]
     },
@@ -4862,8 +4858,8 @@
         "oc-topbar-spacer",
         "oc-topbar-title",
         "oc-topbar-word",
-        "session-sidebar-panel--open",
-        "session-sidebar-railed"
+        "session-sidebar-railed",
+        "ps-drawer-open"
       ]
     },
     "web/src/opscenter/ui/AgentTier.svelte": {
@@ -5244,7 +5240,8 @@
         "oc-page--embedded",
         "screen",
         "session-sidebar-pinned",
-        "session-sidebar-railed"
+        "session-sidebar-railed",
+        "ps-page-back"
       ]
     },
     "web/src/opscenter/layouts/LayoutCommandBar.svelte": {
@@ -5484,6 +5481,7 @@
         "sf-matrix__hint",
         "sf-matrix__label",
         "sf-matrix__locked",
+        "sf-matrix__note",
         "sf-matrix__row",
         "sf-matrix__words",
         "wp-screen"
@@ -5819,7 +5817,6 @@
         "st-tabs",
         "st-unit",
         "st-unit__suffix",
-        "theme-selector",
         "tm__actions",
         "toast-mode-option",
         "toast-mode-options"
@@ -5938,6 +5935,10 @@
       "classes": []
     },
     "web/src/lib/settings-page/controls/MinutesControl.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/settings-page/controls/RailMagnifyControl.svelte": {
       "section": "settings",
       "classes": []
     },
@@ -6137,12 +6138,7 @@
     },
     "web/src/lib/info-pages/InfoScreen.svelte": {
       "section": "ledger-catalog",
-      "classes": [
-        "info-keys",
-        "info-keys__list",
-        "info-keys__key",
-        "info-keys__label"
-      ]
+      "classes": []
     },
     "web/src/lib/info-pages/DocsScreen.svelte": {
       "section": "ledger-catalog",
@@ -6307,10 +6303,6 @@
       "section": "controls",
       "classes": []
     },
-    "web/src/opscenter/ui/Choice.svelte": {
-      "section": "controls",
-      "classes": []
-    },
     "web/src/opscenter/ui/OrderList.svelte": {
       "section": "controls",
       "classes": []
@@ -6432,6 +6424,7 @@
       "section": "ledger-catalog",
       "classes": [
         "dz-item",
+        "dz-item--editing",
         "dz-name",
         "dz-strip"
       ]
@@ -6492,12 +6485,6 @@
       "section": "ledger-catalog",
       "classes": []
     },
-    "web/src/lib/projects-shared/StateMark.svelte": {
-      "section": "ledger-catalog",
-      "classes": [
-        "ph-mark"
-      ]
-    },
     "web/src/lib/projects-shared/projects-shared.css": {
       "section": "ledger-catalog",
       "classes": [
@@ -6522,6 +6509,18 @@
         "ph-word--removed",
         "ph-word--running",
         "ph-word--unknown"
+      ]
+    },
+    "web/src/lib/phone-mic/PhoneMic.svelte": {
+      "section": "terminal",
+      "classes": [
+        "pmic",
+        "pmic__dot",
+        "pmic__label",
+        "pmic__row",
+        "pmic__text",
+        "pmic__text--note",
+        "pmic__title"
       ]
     },
     "web/src/lib/native-shell/NativeAlertsPanel.svelte": {
@@ -6974,6 +6973,18 @@
         "acmd__text"
       ]
     },
+    "web/src/lib/beast-mode/BeastSwitchStrip.svelte": {
+      "section": "settings",
+      "classes": [
+        "beast-strip",
+        "beast-strip__head",
+        "beast-strip__live",
+        "beast-strip__off",
+        "beast-strip__problem",
+        "beast-strip__state",
+        "beast-strip__state--on"
+      ]
+    },
     "web/src/lib/beast-mode/BeastGridPanel.svelte": {
       "section": "settings",
       "classes": []
@@ -7002,6 +7013,10 @@
       ]
     },
     "web/src/lib/settings-page/DeepSearchScopePanel.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/settings-page/CheckpointsUsagePanel.svelte": {
       "section": "settings",
       "classes": []
     },
@@ -7127,6 +7142,26 @@
     "web/src/lib/first-run/FirstRunJoin.svelte": {
       "section": "chrome",
       "classes": []
+    },
+    "web/src/lib/first-run/FirstRunFind.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/lib/pack-knock/PackKnock.svelte": {
+      "section": "menus",
+      "classes": [
+        "pk",
+        "pk-scrim",
+        "pk__body",
+        "pk__cell",
+        "pk__cells",
+        "pk__foot",
+        "pk__label",
+        "pk__line",
+        "pk__line--dim",
+        "pk__strip",
+        "pk__title"
+      ]
     },
     "web/src/lib/drawer-hud/AccountMenu.svelte": {
       "section": "chrome",
@@ -7726,8 +7761,11 @@
         "hd",
         "hd-block",
         "hd-add",
+        "hd-add--drop",
         "hd-add--multi",
+        "hd-add-files",
         "hd-add-input",
+        "hd-add-row",
         "hd-add-target",
         "hd-bar",
         "hd-done-ask",
@@ -7830,10 +7868,7 @@
         "tkm-review-line--one",
         "tkm-review-fold",
         "tkm-review-click",
-        "tkm-review-more",
         "tkm-review-todo",
-        "tkm-review-answer",
-        "tkm-review-answer-text",
         "tkm-review-text",
         "tkm-review-key",
         "tkm-review-path",
@@ -7948,17 +7983,6 @@
         "hss-add",
         "hss-none",
         "hss-more"
-      ]
-    },
-    "web/src/cplugs/huddle/agents/HuddleAgentRows.svelte": {
-      "section": "chrome",
-      "classes": [
-        "hdr-agents",
-        "hdr-agents-label",
-        "hdr-agents-list",
-        "hdr-agent",
-        "hdr-agent-name",
-        "hdr-agent-state"
       ]
     },
     "web/src/lib/huddle-agent/HuddleAgentScreen.svelte": {
@@ -8199,6 +8223,21 @@
         "isum-rating-link"
       ]
     },
+    "web/src/lib/launch-profiles-page/DisabledProfiles.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "lp-off",
+        "lp-off__name",
+        "lp-off__sub"
+      ]
+    },
+    "web/src/lib/launch-profiles-page/HiddenToggle.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "lp-hidden",
+        "lp-hint-line"
+      ]
+    },
     "web/src/lib/launch-profiles-page/ImportProfileModal.svelte": {
       "section": "ledger-catalog",
       "classes": [
@@ -8235,8 +8274,6 @@
         "lp-code",
         "lp-detail",
         "lp-detail--none",
-        "lp-hidden",
-        "lp-hint-line",
         "lp-item__facts",
         "lp-item__label",
         "lp-item__main",
@@ -8332,7 +8369,10 @@
         "mx-colsub",
         "mx-desc",
         "mx-family",
-        "mx-family-label",
+        "mx-group",
+        "mx-group-row",
+        "mx-group__caret",
+        "mx-group__count",
         "mx-item",
         "mx-label",
         "mx-legend",
@@ -8341,6 +8381,7 @@
         "mx-link__kind",
         "mx-link__row",
         "mx-list",
+        "mx-merged",
         "mx-picker",
         "mx-scroll",
         "mx-src",
@@ -8385,15 +8426,6 @@
     "web/src/lib/settings-page/SettingsScreenSection.svelte": {
       "section": "settings",
       "classes": []
-    },
-    "web/src/lib/projects-shared/GroupHeader.svelte": {
-      "section": "ledger-catalog",
-      "classes": [
-        "ph-ghead",
-        "ph-ghead--muted",
-        "ph-ghead__name",
-        "ph-ghead__tally"
-      ]
     },
     "web/src/lib/skills-hub/RequiredSkills.svelte": {
       "section": "ledger-catalog",
@@ -8467,11 +8499,6 @@
       "section": "ledger-catalog",
       "classes": [
         "lsk-cell",
-        "lsk-cell--absent",
-        "lsk-cell--differs",
-        "lsk-cell--none_yet",
-        "lsk-cell--present",
-        "lsk-cell--shadowed",
         "lsk-cell__folder",
         "lsk-cell__mark",
         "lsk-col__label",
@@ -8485,27 +8512,21 @@
         "lsk-list",
         "lsk-mark",
         "lsk-mark--warn",
-        "lsk-name",
         "lsk-page",
         "lsk-place",
         "lsk-place__label",
         "lsk-places",
         "lsk-plan",
         "lsk-result",
-        "lsk-result--refused",
-        "lsk-result--use_catalog_install",
-        "lsk-result--use_catalog_uninstall",
         "lsk-result__status",
         "lsk-results",
         "lsk-scroll",
         "lsk-scroll--pack",
         "lsk-sheet",
         "lsk-sheet-overlay",
-        "lsk-sheet__field",
         "lsk-sheet__heading",
         "lsk-table",
         "lsk-table__name",
-        "lsk-targets",
         "oc-btn",
         "pks-controls",
         "pks-fam",
@@ -8970,6 +8991,7 @@
         "hdc-ask-label",
         "hdc-ask-list",
         "hdc-ask-more",
+        "hdc-ask-refusal",
         "hdc-ask-summary",
         "hdc-ask-task",
         "hdc-card-head",
@@ -9012,6 +9034,38 @@
         "hdc-path-time",
         "hdc-crumb--lead",
         "hdc-path--lead"
+      ]
+    },
+    "web/src/cplugs/huddle/chat/WaitingTray.svelte": {
+      "section": "chrome",
+      "classes": [
+        "hdc-wait",
+        "hdc-wait--open",
+        "hdc-wait-age",
+        "hdc-wait-ask",
+        "hdc-wait-count",
+        "hdc-wait-crumb",
+        "hdc-wait-crumb--link",
+        "hdc-wait-failed",
+        "hdc-wait-group",
+        "hdc-wait-group-count",
+        "hdc-wait-group-head",
+        "hdc-wait-head",
+        "hdc-wait-keys",
+        "hdc-wait-kind",
+        "hdc-wait-kind--approval",
+        "hdc-wait-kind--card",
+        "hdc-wait-kind--review",
+        "hdc-wait-label",
+        "hdc-wait-list",
+        "hdc-wait-list--group",
+        "hdc-wait-mix",
+        "hdc-wait-note",
+        "hdc-wait-path",
+        "hdc-wait-row",
+        "hdc-wait-sep",
+        "hdc-wait-strip",
+        "hdc-wait-sub"
       ]
     },
     "web/src/cplugs/huddle/chat/ChatMarkdown.svelte": {
@@ -9250,14 +9304,6 @@
         "sbb-note--bad",
         "sbb-search",
         "sbb-select"
-      ]
-    },
-    "web/src/lib/swarm-board/ViewPlaceholder.svelte": {
-      "section": "swarm-page",
-      "classes": [
-        "sbp",
-        "sbp-label",
-        "sbp-text"
       ]
     },
     "web/src/lib/swarm-board/CardPane.svelte": {
@@ -9592,8 +9638,12 @@
       "section": "chrome",
       "classes": [
         "had",
-        "session-sidebar-panel--open",
-        "had-grip"
+        "had-grip",
+        "had--phone",
+        "had-back",
+        "had-phone-open",
+        "hdc-filter",
+        "ps-drawer-open"
       ]
     },
     "web/src/cplugs/huddle/chat/ChatWidgetHost.svelte": {
@@ -10235,7 +10285,6 @@
     "web/src/lib/zone-shell/ZoneBadge.svelte": {
       "section": "chrome",
       "classes": [
-        "zone-badge",
         "zone-badge-globe"
       ]
     },
@@ -10262,8 +10311,8 @@
         "sbr-rail__btn",
         "sbr-rail__cell",
         "sbr-rail__close",
-        "session-sidebar-panel--open",
-        "session-sidebar-railed"
+        "session-sidebar-railed",
+        "ps-drawer-open"
       ]
     },
     "web/src/lib/zone-shell/EditCell.svelte": {
@@ -10277,9 +10326,12 @@
       "section": "chrome",
       "classes": [
         "rail__empty",
+        "rail__cell",
         "rail__keys",
-        "rail__mark",
+        "rail__newarea",
+        "rail__newarea-box",
         "rail__sections",
+        "rail__slot",
         "rail__split"
       ]
     },
@@ -10336,16 +10388,6 @@
         "rail-grip",
         "rail-grip--bottom",
         "rail-grip--side"
-      ]
-    },
-    "web/src/lib/session-rail/RailBands.svelte": {
-      "section": "chrome",
-      "classes": [
-        "rail-band",
-        "rail-band__label",
-        "rail-bands",
-        "rail-bands--bottom",
-        "rail-bands--side"
       ]
     },
     "web/src/lib/split-divider/SplitDivider.svelte": {
@@ -10548,6 +10590,16 @@
         "lnp-label"
       ]
     },
+    "web/src/lib/launch-picker/LaunchWorktree.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "lwt",
+        "lwt-label",
+        "lwt-note",
+        "lwt-file",
+        "lwt-error"
+      ]
+    },
     "web/src/lib/launch-picker/LaunchChoice.svelte": {
       "section": "ledger-catalog",
       "classes": [
@@ -10603,6 +10655,10 @@
       ]
     },
     "web/src/lib/session-move/MoveFolderModal.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/lib/worktree-cleanup/CleanupModal.svelte": {
       "section": "chrome",
       "classes": []
     },
@@ -10763,8 +10819,8 @@
       "section": "chrome",
       "classes": [
         "sbr-rail",
-        "sbr-rail__btn",
         "sbr-rail__cell",
+        "sbr-rail__dock",
         "sbr-rail__fill",
         "sbr-rail__label",
         "sbr-rail__label--on",
@@ -11458,11 +11514,9 @@
         "w-cal",
         "w-cal__g",
         "w-cal__w",
-        "w-card",
         "w-card__c",
         "w-card__f",
         "w-card__w",
-        "w-day",
         "w-days",
         "w-eg",
         "w-egl",
@@ -12915,7 +12969,7 @@
     "client/css/desktop-chrome.css": {
       "section": "chrome",
       "classes": [
-        "oc-topbar"
+        "ps-topbar"
       ]
     },
     "web/src/opscenter/cells/terminal-live/FootGrown.svelte": {
@@ -13651,6 +13705,7 @@
       "section": "cells",
       "classes": [
         "mk2-actionable",
+        "mk2-actionable-more",
         "mk2-reply",
         "mk2-rows",
         "mk2-sched-keys",
@@ -13786,6 +13841,201 @@
         "lp-examples__row",
         "lp-examples__sets",
         "lp-examples__text"
+      ]
+    },
+    "web/src/lib/widgets-page/settings/BarsSettings.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/widgets-page/settings/PictureStrip.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/widgets-page/settings/BarPicture.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/widgets-page/settings/settings.css": {
+      "section": "ledger-catalog",
+      "classes": [
+        "oc-card__meta",
+        "wp-edit",
+        "wp-edit__actions",
+        "wp-edit__caption",
+        "wp-edit__captions",
+        "wp-edit__hint",
+        "wp-edit__keys",
+        "wp-edit__picked",
+        "wp-edit__slot",
+        "wp-mini",
+        "wp-mini--dim",
+        "wp-mini__bar",
+        "wp-mini__bar--bottom",
+        "wp-mini__bar--side",
+        "wp-mini__cell",
+        "wp-mini__cells",
+        "wp-mini__key",
+        "wp-pic",
+        "wp-pic__caption",
+        "wp-pic__check",
+        "wp-pic__default",
+        "wp-pic__figure",
+        "wp-pic__name",
+        "wp-settings",
+        "wp-settings-panel",
+        "wp-settings__head",
+        "wp-settings__hint",
+        "wp-settings__intro",
+        "wp-settings__lede",
+        "wp-settings__reset",
+        "wp-settings__title",
+        "wp-strip",
+        "wp-strip--dim",
+        "wp-strip__label",
+        "wp-strip__note",
+        "wp-strip__row"
+      ]
+    },
+    "web/src/lib/session-badges/BadgeSlot.svelte": {
+      "section": "chrome",
+      "classes": [
+        "row-badge-slot",
+        "row-badge",
+        "row-badge__fill",
+        "row-badge--more"
+      ]
+    },
+    "web/src/opscenter/cells/terminal-live/FootProgress.svelte": {
+      "section": "chrome",
+      "classes": [
+        "oc-tf-progress",
+        "oc-tf-progress__fill"
+      ]
+    },
+    "web/src/lib/terminal-font/TerminalFontPanel.svelte": {
+      "section": "settings",
+      "classes": [
+        "terminal-font-panel",
+        "terminal-font-panel__error",
+        "terminal-font-panel__label",
+        "terminal-font-panel__preview",
+        "terminal-font-panel__row",
+        "terminal-font-panel__value"
+      ]
+    },
+    "web/src/lib/palette/Palette.svelte": {
+      "section": "dialogs",
+      "classes": [
+        "cp",
+        "cp-bar",
+        "cp-empty",
+        "cp-foot",
+        "cp-group",
+        "cp-list",
+        "cp-scrim",
+        "cp-title",
+        "oc-search"
+      ]
+    },
+    "web/src/lib/widgets-page/settings/BarsEditor.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/widgets-page/settings/MockBar.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/widgets-page/settings/MockLayout.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/widgets-page/settings/TryIt.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/widgets-page/settings/mock.css": {
+      "section": "ledger-catalog",
+      "classes": [
+        "wp-key",
+        "wp-key--under",
+        "wp-key__icon",
+        "wp-key__label",
+        "wp-mock",
+        "wp-mock__body",
+        "wp-mock__cell",
+        "wp-mock__cells",
+        "wp-mock__fit",
+        "wp-mock__head",
+        "wp-mock__line",
+        "wp-mock__lines",
+        "wp-mock__scaler",
+        "wp-mock__stage",
+        "wp-mockbar",
+        "wp-mockbar--bottom",
+        "wp-mockbar--side",
+        "wp-mockbar__end",
+        "wp-try",
+        "wp-try__active",
+        "wp-try__agents",
+        "wp-try__handle",
+        "wp-try__handle--bottom",
+        "wp-try__handle--side",
+        "wp-try__layer",
+        "wp-try__panel",
+        "wp-try__panel--bottom",
+        "wp-try__panel--side",
+        "wp-try__panel-body",
+        "wp-try__panel-note",
+        "wp-try__panel-title",
+        "wp-try__pin",
+        "wp-try__pin--on",
+        "wp-try__pin-line"
+      ]
+    },
+    "web/src/lib/base/Keycap.svelte": {
+      "section": "base-set",
+      "classes": []
+    },
+    "web/src/lib/base/keycap.css": {
+      "section": "base-set",
+      "classes": [
+        "oc-keycap",
+        "oc-keycap--hit",
+        "oc-keycaps"
+      ]
+    },
+    "web/src/lib/keymap/KeymapScreen.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "keymap__label",
+        "keymap__leaf",
+        "keymap__meta"
+      ]
+    },
+    "web/src/lib/base/Tree.svelte": {
+      "section": "base-set",
+      "classes": []
+    },
+    "web/src/lib/base/tree.css": {
+      "section": "base-set",
+      "classes": [
+        "oc-tree",
+        "oc-tree__actions",
+        "oc-tree__branch",
+        "oc-tree__count",
+        "oc-tree__group",
+        "oc-tree__label",
+        "oc-tree__leaf",
+        "oc-tree__line",
+        "oc-tree__row"
+      ]
+    },
+    "web/src/lib/keymap/KeymapEditor.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "keymap-editor__body",
+        "keymap-editor__for",
+        "keymap-editor__line"
       ]
     }
   }

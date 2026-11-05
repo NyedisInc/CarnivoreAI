@@ -7,7 +7,7 @@ import pytest
 import structlog
 
 from src.core.mcp import tools
-from src.cplugs.huddle import lean_read
+from src.cplugs.huddle import CPLUG, lean_read
 from tests.python.cplugs.huddle.test_task_manager_mcp import CALLER, call, huddle_store, manager  # noqa: F401
 
 SUMMARY_KEYS = {"id", "number", "title", "status", "section", "unread"}
@@ -192,7 +192,7 @@ def test_a_plain_message_keeps_its_whole_text(manager):
 
 
 def test_every_huddle_tool_description_is_at_most_400_characters():
-    huddle = {d["name"]: d["description"] for d in tools.tool_definitions() if d["name"].startswith("huddle_")}
+    huddle = {d["name"]: d["description"] for d in tools.tool_definitions() if d["name"] in CPLUG.manifest.surfaces.mcp_tools}
     assert len(huddle) >= 14
     assert {n: len(t) for n, t in huddle.items() if len(t) > 400} == {}
 

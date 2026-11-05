@@ -154,6 +154,7 @@ describe('PhoneLinkPanel', () => {
             (q('[data-pl="paired-revoke"]') as HTMLButtonElement).click();
             await vi.advanceTimersByTimeAsync(10);
             await settle();
+            // cannot be undone
             expect(calls).not.toContain('DELETE /phone-link/devices/d1');
             (q('[data-pl="paired-revoke-keep"]') as HTMLButtonElement).click();
             await settle();

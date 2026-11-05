@@ -29,6 +29,8 @@ class WSMessageType(str, Enum):
     SIZE_MASTER = "size_master"
     EVENTS_HELLO = "events.hello"
     SESSION_STATUS_CHANGED = "session.status"
+    SESSION_PROGRESS = "session.progress"
+    SESSION_BELL = "session.bell"
     SESSIONS_CHANGED = "sessions.changed"
     LISTING_DELTA = "listing.delta"
     PEER_LISTING = "peer.listing"

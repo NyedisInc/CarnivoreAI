@@ -10,13 +10,9 @@ import structlog
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
+from .minisign_wire import ALG_LEGACY, ALG_PREHASHED, PUBLIC_KEY_ALG, TRUSTED_COMMENT_PREFIX, UNTRUSTED_COMMENT_PREFIX
+
 logger = structlog.get_logger(__name__)
-
-ALG_PREHASHED: bytes = b"ED"
-
-ALG_LEGACY: bytes = b"Ed"
-
-_PUBLIC_KEY_ALG: bytes = b"Ed"
 
 _KEY_ID_BYTES: int = 8
 _ED25519_PUBLIC_KEY_BYTES: int = 32
@@ -25,9 +21,6 @@ _ED25519_SIGNATURE_BYTES: int = 64
 _PUBLIC_KEY_BLOB_BYTES: int = 42
 
 _SIGNATURE_BLOB_BYTES: int = 74
-
-_UNTRUSTED_COMMENT_PREFIX: str = "untrusted comment: "
-_TRUSTED_COMMENT_PREFIX: str = "trusted comment: "
 
 
 class MinisignFormatError(ValueError):
@@ -122,7 +115,7 @@ def _base64_line(text: str, *, what: str) -> str:
     lines = [line for line in text.splitlines() if line.strip()]
     if not lines:
         raise MinisignFormatError(f"{what} is empty")
-    if lines[0].startswith(_UNTRUSTED_COMMENT_PREFIX):
+    if lines[0].startswith(UNTRUSTED_COMMENT_PREFIX):
         lines = lines[1:]
     if not lines:
         raise MinisignFormatError(f"{what} carries a comment and no key line")
@@ -138,7 +131,7 @@ def parse_public_key(text: str) -> PublicKey:
             f"public key must be {_PUBLIC_KEY_BLOB_BYTES} bytes, "
             f"got {len(blob)}"
         )
-    if blob[:2] != _PUBLIC_KEY_ALG:
+    if blob[:2] != PUBLIC_KEY_ALG:
         raise MinisignFormatError(
             f"unknown public key algorithm: {blob[:2]!r}"
         )
@@ -151,13 +144,13 @@ def parse_signature(text: str) -> Signature:
         raise MinisignFormatError(
             f"signature file must have 4 lines, got {len(lines)}"
         )
-    if not lines[2].startswith(_TRUSTED_COMMENT_PREFIX):
+    if not lines[2].startswith(TRUSTED_COMMENT_PREFIX):
         raise MinisignFormatError(
             "signature file line 3 is not a trusted comment"
         )
     return _signature_from_blobs(
         _decode_base64(lines[1], what="signature"),
-        lines[2][len(_TRUSTED_COMMENT_PREFIX):],
+        lines[2][len(TRUSTED_COMMENT_PREFIX):],
         _decode_base64(lines[3], what="global signature"),
     )
 

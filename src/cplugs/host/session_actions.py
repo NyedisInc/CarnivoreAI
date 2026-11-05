@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import structlog
 
@@ -31,7 +31,7 @@ async def wake(request: Any, session_uuid: str) -> Dict[str, Any]:
     return {"status": result.status, "detail": getattr(result, "detail", None), "code": result.code}
 
 
-async def start(request: Any, project_id: int) -> str:
+async def start(request: Any, project_id: int, *, opening_prompt: Optional[str] = None, agent_type: Optional[str] = None) -> str:
     from src.api.session_crud_routes import create_session  # noqa: PLC0415
     from src.models import CreateSessionRequest  # noqa: PLC0415
 
@@ -40,7 +40,7 @@ async def start(request: Any, project_id: int) -> str:
         raise LookupError(f"no project {project_id} with a folder")
     body = CreateSessionRequest(working_dir=project["path"], auto_start_claude=True, copy_templates=False,
                                 project_name=project["name"], label=project["name"],
-                                agent_type=project.get("default_launch_profile") or None)
+                                agent_type=agent_type or project.get("default_launch_profile") or None, opening_prompt=opening_prompt)
     session = await create_session(request, body)
     logger.info("cplug_session_started", project=project_id, session_id=session.id)
     return session.id

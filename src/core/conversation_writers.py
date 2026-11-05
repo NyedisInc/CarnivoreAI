@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
-from src.core import libproc_snapshot
+from src.core.machine_stats import libproc_snapshot
 from src.core.claude_resume_argv import read_ps_text
 
 

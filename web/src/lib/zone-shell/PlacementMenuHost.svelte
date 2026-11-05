@@ -7,6 +7,7 @@
   import { writeItem } from '../item-settings/api';
   import { itemSettings, storedNode } from '../item-settings/store.svelte';
   import { untrack } from 'svelte';
+  import { Button } from '../base';
   import type { WidgetManifest } from '../../opscenter/widgets/types';
   import { resolvePlacement } from '../../opscenter/widgets/placement-resolve';
   import { placementOptionsFor, type PlacementOptions } from '../../opscenter/widgets/placement-options';
@@ -114,7 +115,7 @@
 
   const heading = $derived(copyHeading ?? (declaredOptions?.menuHeadingKey ? t(declaredOptions.menuHeadingKey) : undefined));
   const scope = $derived(pinRowId != null ? pinnedScopeFor(cell, pinRowId) : activeScopeFor(cell));
-  const popOut = $derived('popOut' in extras ? extras.popOut : popOutFor(manifest, cell, view, scope, options));
+  const popOut = $derived('popOut' in extras ? extras.popOut : popOutFor(manifest, cell, view, scope, options, pinRowId != null));
 
   const root = $derived(placementMenu({ host, editing, onClose, options: optionInput, declared, copyHeading: heading, lead, copyTail, ...extras, popOut }));
 </script>
@@ -129,7 +130,7 @@
   <AnchoredPopup class="pmh-form" label={t('session_rail.menu.settings_for', { title })} placement="manual" outside="none" {onClose} data-oc-base data-widget-settings-form>
     <header class="pmh-form__bar">
       <span class="pmh-form__title">{title}</span>
-      <button type="button" class="modal-btn modal-btn-secondary" onclick={onClose}>{t('session_rail.close')}</button>
+      <Button onclick={onClose}>{t('session_rail.close')}</Button>
     </header>
     <ItemSettingsPanel kind="widget" id={cell.id} t={(key, params) => t(key, params)} />
   </AnchoredPopup>

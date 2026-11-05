@@ -9,7 +9,6 @@ function ctx(flags: Record<string, boolean> = {}): PluginContext {
 
 function payload(): SessionCardAction {
     return {
-        shortcut: 'X',
         label: () => 'x',
         run: () => {},
     };

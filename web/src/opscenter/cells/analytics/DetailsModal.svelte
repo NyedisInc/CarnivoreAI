@@ -1,7 +1,7 @@
 
 <script lang="ts">
   import { Button, Field, Select } from '../../../lib/base';
-  import ModalShell from '../../../lib/launchpad/ModalShell.svelte';
+  import ModalShell from '../../../lib/dialog-frame/ModalShell.svelte';
   import ChartCanvas from './ChartCanvas.svelte';
   import AnalyticsControls from './Controls.svelte';
   import { analytics } from './state.svelte';

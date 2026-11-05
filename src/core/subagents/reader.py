@@ -179,6 +179,8 @@ def read_subagents(
         base.detail = "the subagents directory could not be listed"
         return base
     index = read_completion_index(transcript_path)
+    if index is None:
+        base.state = "unchecked"
     rows: List[SubagentInfo] = []
     for candidate in candidates[:max_listed]:
         stem = directory / f"{_PREFIX}{candidate.agent_id}"
@@ -200,8 +202,8 @@ def read_subagents(
         internal=internal,
     )
     if index is None:
-        base.detail = ("the parent transcript could not be read, so no status "
-                       "could be proven")
+        base.detail = ("the parent transcript is still being read or could not be "
+                       "read, so no status could be proven")
     elif len(candidates) > len(rows):
         base.detail = (f"the {len(candidates) - len(rows)} oldest subagents "
                        "were not read")

@@ -1,5 +1,5 @@
 import { createPoller, type Poller } from '../sessions/poller';
-import { hostWindow } from '../sessions/env';
+import { legacyApi, legacyGlobal } from '../legacy-globals';
 import { t } from '../i18n/index.svelte';
 import { returnToActiveSession } from '../launchpad/navigation';
 import { browserNavHost } from '../launchpad/nav-host';
@@ -53,7 +53,7 @@ interface LegacyApi {
 
 export function browserLedgerHost(): LedgerHost {
     const api = (): LegacyApi =>
-        (hostWindow() as unknown as { API: LegacyApi } | undefined)?.API as LegacyApi;
+        legacyApi<LegacyApi>();
     return {
         providerLedger: () => api().getProviderLedger(),
         peerLedger: () => authFetch<PeersLedger>('/provider-ledger/peers').catch(() => null),
@@ -62,9 +62,7 @@ export function browserLedgerHost(): LedgerHost {
         removeAccount: (id) => api().deleteProviderAccount(id),
         loginProviderAccount: (id) => api().loginProviderAccount(id),
         renameBuiltInLogin: async (label) => {
-            const prefs = (
-                hostWindow() as unknown as { Preferences?: LegacyPreferences } | undefined
-            )?.Preferences;
+            const prefs = legacyGlobal<LegacyPreferences>('Preferences');
             if (!prefs) throw new Error(t('ledger.account.rename_unavailable'));
             const result = await prefs.set(BUILTIN_LOGIN_LABEL_FIELD, label);
             if (result.status !== 'committed' && result.status !== 'unchanged') {

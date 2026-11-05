@@ -6,7 +6,8 @@ from datetime import datetime
 from typing import Dict, Optional, Set, Tuple
 
 from src.core.attention.evidence import AttentionVerdict, STATE_DONE_IDLE, STATE_NEEDS_USER, STATE_UNKNOWN
-from src.core.attention.resolve import DONE_QUIET_SECONDS, SETTLE_SECONDS
+from src.core.attention.resolve import SETTLE_SECONDS
+from src.core.attention.resolve_rest import DONE_QUIET_SECONDS
 
 
 @dataclass(frozen=True)

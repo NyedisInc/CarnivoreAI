@@ -58,9 +58,9 @@ One fixed name for every kind. It is never counted as "the manifest": the kind i
 
 | Tier | Meaning | Today |
 |---|---|---|
-| `builtin` | first-party, compiled in, removable, off by default unless the manifest says otherwise | every shipped plugin but the dev tier (`tmdevtools`, `devwidgetlab`) |
+| `builtin` | first-party, compiled in, removable, off by default unless the manifest says otherwise. **A FEATURE to the owner, not a plugin** (Joe (ccsliinc), 2026-10-30, #2723): listed in Settings > features with its switch; "plugin" means a store or sideloaded item. The tier names, ids and routes are unchanged | every shipped plugin but the dev tier (`tmdevtools`, `devwidgetlab`) |
 | `catalog` | third party, run out of process in the sandbox, signed and AI-reviewed | designed and built (`src/cplugs/runtime/`), not wired: no `Supervisor(` outside it. Opens after 1.0 behind L2 (G decision Q2) |
-| `dev` | sideloaded or shipped for development, hidden and not loaded until developer mode is on (`host/developer_mode.py`) | `tmdevtools` and Widget Lab (`devwidgetlab`, tier `dev` in `cplug.json` and its sidecar; `tests/python/cplugs/test_dev_tier.py`). The `dev` in the id `devwidgetlab` is the old name prefix; the id cannot change without moving every derived name, so renaming it is a separate migration |
+| `dev` | a feature shipped for development (listed in Settings > features only while developer mode is on), hidden and not loaded until developer mode is on (`host/developer_mode.py`) | `tmdevtools` and Widget Lab (`devwidgetlab`, tier `dev` in `cplug.json` and its sidecar; `tests/python/cplugs/test_dev_tier.py`). The `dev` in the id `devwidgetlab` is the old name prefix; the id cannot change without moving every derived name, so renaming it is a separate migration |
 
 **What happens to `core`.** Core features stop being plugins. No shipped plugin uses `core`. The L0 schema refuses it; `cplug.json` still parses it in 1.0-rc so an old manifest fails with a reason, and it is first-party for `needs_consent` only. It holds none of the first-party-only permissions. It is removed from `MANIFEST_TIERS` at 1.0.
 

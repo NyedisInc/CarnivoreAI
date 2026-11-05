@@ -2,12 +2,11 @@
   import type { Snippet } from 'svelte';
   import Icon from '../../ui/Icon.svelte';
   import { sessions, asleep, sleepSession } from '../../api';
-  import { primarySessionId } from '../../api/host';
+  import { primarySessionId, openSettings } from '../../api/host';
   import { rowFor } from '../terminal-viewer/meta';
   import { terminalAction, toolShowing } from './actions';
   import { splitToolbar, planFolds, menuItems, itemApplies, STRIP_ITEMS, TOOLBAR_ITEMS, type ToolbarItem, type ToolbarSplit } from './toolbar';
-  import { openSessionBookmarks } from '../../../lib/bookmarks/row-actions';
-  import { isKeptAwake, setKeepAwake, SLEEPABLE_FAMILIES } from '../../../lib/auto-sleep/auto-sleep-store.svelte';
+  import { isKeptAwake } from '../../../lib/auto-sleep/auto-sleep-store.svelte';
   import { notesAreOpen, toggleSessionNotes } from '../../../lib/notes-header/mount-notes';
   import { inputFocus } from '../../lib/input-focus.svelte';
   import { activeTerminalSlot } from '../../lib/active-terminal';
@@ -25,9 +24,10 @@
   import { claimOpenMenu } from '../../../lib/drawer-tabs/open-menu';
   import { canOpenInTerminal, openInTerminal } from '../../../lib/desktop-menu/open-in-terminal';
   import { canPopOutSession, popOutSession } from '../../../lib/desktop-menu/pop-out-session';
-  let { slot, sessionId, width = 0, utilities, groupSlot = null, sessionName = null, getPalette, inHeader = false, agentFamily = null }: {
+  let { slot, sessionId, width = 0, utilities, groupSlot = null, sessionName = null, getPalette, inHeader = false, appRows = false, agentFamily = null }: {
     slot: string; sessionId: string; width?: number; utilities?: Snippet; groupSlot?: string | null;
     inHeader?: boolean;
+    appRows?: boolean;
     agentFamily?: string | null;
     sessionName?: string | null;
     getPalette?: () => Record<string, string> | undefined;
@@ -67,7 +67,17 @@
     };
   });
 
-  const kebabHolds = $derived(split.overflow.length > 0 || !!row?.tmux_session);
+  const kebabHolds = $derived(split.overflow.length > 0 || !!row?.tmux_session || appRows);
+
+  function logout(): void {
+    options?.hidePopover();
+    void (globalThis as { App?: { logout?: () => Promise<void> } }).App?.logout?.();
+  }
+
+  function settings(): void {
+    options?.hidePopover();
+    openSettings();
+  }
 
   function naturalTab(tab: HTMLElement): number {
     const name = tab.querySelector<HTMLElement>('.oc-tab-name');
@@ -96,7 +106,7 @@
     const head = tools?.closest<HTMLElement>('[data-widget-head]');
     const spacer = head?.querySelector<HTMLElement>(':scope > .oc-frame-spacer');
     if (!tools || !head || !spacer || !head.clientWidth) return;
-    keep(itemWidths(tools), tools.offsetWidth + spacer.offsetWidth, 0);
+    keep(itemWidths(tools), tools.offsetWidth + spacer.offsetWidth, menuAnchor ? menuAnchor.offsetWidth + 2 : 0);
   }
 
   function measure(): void {
@@ -286,12 +296,9 @@
   }
 
   const frameHeader = useFrameHeader();
-  /* the widget menu */
-  let background = $state<{ toggleAt(anchor: HTMLElement): void } | null>(null);
-  const headIcon = (): HTMLElement | null => tools?.closest('[data-widget-head]')?.querySelector<HTMLElement>('[data-corner]') ?? tools;
   $effect(() => {
     if (!frameHeader) return;
-    const anchor = (): HTMLElement | null => (inHeader ? headIcon() : menuAnchor);
+    const anchor = (): HTMLElement | null => menuAnchor;
     const zoomable = groupSlot !== null && layoutZoom.canZoom;
     const input: TerminalMenuInput = {
       runItem: (id) => {
@@ -311,17 +318,10 @@
       popOut: canPopOutSession(row?.session_row_id) ? { label: t('terminal.menu.pop_out'), run: () => void popOutSession(row!.session_row_id!, slot) } : null,
     };
     if (!inHeader) return declareWidgetActions(frameHeader.hostId, 'terminal', tabMenuActions(input));
-    const kept = isKeptAwake(sessionName);
     return declareWidgetActions(frameHeader.hostId, 'terminal', widgetMenuActions({
       ...input,
-      menu: split.overflow.map((item) => item.id),
-      background: () => { const at = anchor(); if (at) background?.toggleAt(at); },
-      keepAwake: sessionName && agentFamily && SLEEPABLE_FAMILIES.includes(agentFamily) && kept !== null
-        ? { on: kept, run: () => void setKeepAwake(sessionName, !kept) } : null,
-      bookmarks: sessionName && agentFamily === 'claude' ? () => void openSessionBookmarks(sessionName) : null,
-      rowActions: row?.tmux_session ? () => { const at = anchor(); if (at && row) openRowMenu(row, sleepUuid(), at); } : null,
       openInTerminal: canOpenInTerminal(sessionId, row?.host_key, row?.tmux_session) ? () => void openInTerminal(sessionId) : null,
-      words: { background: t('terminal.background.open'), keepAwake: t('session.menu.keep_awake.turn_on'), bookmarks: t('bookmarks.title'), actions: t('terminal.actions.open'), openInTerminal: t('desktop.menu.open_in_terminal') },
+      words: { openInTerminal: t('desktop.menu.open_in_terminal') },
     }));
   });
 
@@ -354,14 +354,11 @@
     {/if}
   {/each}
   
-  {#if inHeader}
-    <TerminalBackgroundButton {sessionName} {getPalette} headless bind:this={background} />
-  {:else if kebabHolds}
+  {#if kebabHolds}
   <button type="button" bind:this={menuAnchor} aria-label={t('terminal.options.label')}
     aria-haspopup="menu" aria-expanded={expanded} data-tool="overflow" onclick={showOptions}><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>
   {/if}
 </div>
-{#if !inHeader}
 
 <div class="cell-options popup-focus" bind:this={options} popover="auto" role="menu" tabindex="-1"
   aria-label={t('terminal.options.label')}
@@ -415,8 +412,15 @@
     onpointerenter={hoverFold} onclick={toggleFold}>
     <span style="flex:1">{t('terminal.actions.open')}</span><Icon name="chevron-right" size={12} />
   </button>
+  {#if appRows}
+    <button type="button" role="menuitem" data-btn="row" data-size="auto" data-tool="app-settings" class="after-tools" onclick={settings}>
+      <Icon name="settings" size={15} />{t('header.menu.settings')}
+    </button>
+    <button type="button" role="menuitem" data-btn="row" data-size="auto" data-tool="app-logout" onclick={logout}>
+      <Icon name="log-out" size={15} />{t('header.menu.logout')}
+    </button>
+  {/if}
 </div>
-{/if}
 <style>
   @layer components {
     .cell-tools { display:flex; align-items:center; gap:2px; }

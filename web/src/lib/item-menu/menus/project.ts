@@ -3,13 +3,14 @@ import { addToNodes } from '../../add-to-menu/host';
 import { companySource } from '../../sidebar-shell/company-source.svelte';
 import { removeFromCompany } from '../../sidebar-shell/company-actions';
 import {
-    newAgentInProject, projectNameFor, removeProject, renameProject, setProjectColor, showProjectPath, sleepProject,
+    newAgentInProject, projectNameFor, archiveProject, renameProject, setProjectColor, showProjectPath, sleepProject,
 } from '../../sidebar-shell/heading-project-actions';
 import { hg } from '../../sidebar-shell/interaction-globals';
 import { projectColorOf } from '../../project-colors/store.svelte';
 import { setProjectColorPreview } from '../../project-colors/preview.svelte';
 import { entryNodes, spaced, type ItemMenuEntry } from '../entries';
 import { defineItemMenu } from '../registry';
+import { foldInsideEntry } from './fold-inside';
 
 defineItemMenu('project', {
     build({ key }, env) {
@@ -40,8 +41,9 @@ defineItemMenu('project', {
             openGroup,
             identityGroup,
             [{ label: t('sidebar.show_path.label'), icon: 'show-path', id: 'show-path', onPick: () => { void showProjectPath(key); } }],
+            [foldInsideEntry(key)],
             [{ label: t('sidebar.heading.sleep'), icon: 'sleep', id: 'sleep', onPick: () => { void sleepProject(key); } }],
-            [{ label: t('sidebar.heading.remove'), icon: 'close', id: 'delete-project', danger: true, onPick: () => { void removeProject(key); } }],
+            [{ label: t('sidebar.heading.archive'), icon: 'close', id: 'archive-project', danger: true, onPick: () => { void archiveProject(key); } }],
         ]);
         return { nodes: entryNodes(entries, env.glyph, env.close), ariaLabel: t('sidebar.project.menu.title', { name }) };
     },

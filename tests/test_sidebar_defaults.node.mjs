@@ -163,6 +163,7 @@ test('show() leaves the panel shut for a user who closed it', () => {
 });
 
 test('show() does not WRITE the default - absent stays absent', () => {
+    // cannot be undone
     const { ctrl, store } = makeSandbox();
     ctrl.show();
     assert.equal(store.has(STORAGE_KEY), true,
@@ -308,7 +309,9 @@ test('the pane is called AGENTS everywhere it is named to the user', () => {
     assert.ok(plan.includes('no other agents'), 'the empty state');
     assert.ok(!plan.includes('no other conversations'));
     const clicks = fs.readFileSync(path.join(__dirname, '..', 'web/src/lib/drawer/row-switch.ts'), 'utf8');
-    assert.ok(clicks.includes('sidebar.row.switch.failed'), 'the switch failure alert (catalog: failed to switch agent)');
+    assert.ok(clicks.includes('session.row.switch_agent.failed'), 'the switch failure notice');
+    assert.ok(fs.readFileSync(path.join(__dirname, '..', 'client', 'js', 'i18n', 'catalog.en.js'), 'utf8')
+        .includes("'session.row.switch_agent.failed': 'failed to switch agent: {detail}'"), 'the switch failure sentence');
     assert.ok(!clicks.includes('failed to switch conversation'));
     assert.ok(clicks.includes('conversation:') === false,
         'and no other alert in the pane still says it');

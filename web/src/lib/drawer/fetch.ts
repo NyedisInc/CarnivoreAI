@@ -2,9 +2,9 @@ import type { UsageLimit } from '../../opscenter/api/types';
 import { addRows } from './asleep';
 import { addClosedRows } from './closed';
 import { closedShown } from './closed-visibility.svelte';
-import { sectionShown } from './section-visibility.svelte';
+import { noteSleepingCount, sectionShown } from './section-visibility.svelte';
 import { searchLists } from './search';
-import { filterAwakeSleeping } from './bucketing';
+import { filterAwakeSleeping, isSleepingSession } from './bucketing';
 import { archivedRows } from './archived-rows';
 import * as Archived from './archived-visibility';
 import { fromError, type ListingVerdict } from './listing-state';
@@ -49,6 +49,8 @@ export interface LiveInfo {
     automations_enabled?: number | null;
     automations_next?: unknown;
     messaging?: { directions: string[]; held: number } | null;
+    local_servers?: { port: number; url: string; address?: string | null }[] | null;
+    pr?: Record<string, unknown> | null;
     notifications_muted?: boolean;
     task_lead?: boolean | null;
     do_not_disturb?: boolean | null;
@@ -155,7 +157,14 @@ export async function load(activeTmuxName: string | null): Promise<{ rows: Drawe
         row.running_model_tier = row.running_model_tier !== undefined ? row.running_model_tier : null;
         row.running_context_used_pct = row.running_context_used_pct !== undefined ? row.running_context_used_pct : null;
     }
-    if (!searchLists()) rows = filterAwakeSleeping(rows, sectionShown('open'), sectionShown('sleeping'));
+    if (generation === loadGeneration) noteSleepingCount(rows.filter(isSleepingSession).length);
+    let viewHidden: DrawerRow[] = [];
+    if (!searchLists()) {
+        const unfiltered = rows;
+        rows = filterAwakeSleeping(rows, sectionShown('open'), sectionShown('sleeping'));
+        const kept = new Set(rows);
+        viewHidden = unfiltered.filter((r) => !kept.has(r));
+    }
     if (Archived.archivedShown()) {
         await Archived.freshen();
         rows.push(...archivedRows(Archived.archivedRecords(), Archived.archivedShown(), new Set(rows.map((r) => r.name))));
@@ -163,7 +172,7 @@ export async function load(activeTmuxName: string | null): Promise<{ rows: Drawe
     rows.push(...(browserRows() as unknown as DrawerRow[]));
     rows.push(...fileDrawerRows(openFiles.data ?? [], isDirty));
     stampLooks(rows, rowLooks.data);
-    if (G.SessionSidebarLayouts) rows.push(...G.SessionSidebarLayouts.rows(rows));
+    if (G.SessionSidebarLayouts) rows.push(...G.SessionSidebarLayouts.rows([...rows, ...viewHidden]));
     const sorted = defaultSort(rows);
     if (G.SessionHeaderLed && typeof G.SessionHeaderLed.update === 'function' && generation === loadGeneration) {
         G.SessionHeaderLed.update(sorted, activeTmuxName, headerRequest);
@@ -225,6 +234,8 @@ function liveFields(info: LiveInfo): Partial<DrawerRow> {
         account_id: orNull(info.account_id),
         automation: orNull(info.automation),
         messaging: orNull(info.messaging),
+        local_servers: orNull(info.local_servers),
+        pr: orNull(info.pr),
         notifications_muted: !!info.notifications_muted,
         task_lead: orNull(info.task_lead),
         do_not_disturb: orNull(info.do_not_disturb),

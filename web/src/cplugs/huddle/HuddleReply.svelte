@@ -11,7 +11,7 @@
   import TaskManagerChips from './TaskManagerChips.svelte';
   import { autogrow, fitHeight } from './autogrow';
   import { createAttachments } from './task-manager-attachments.svelte';
-  import { carriesFiles, filesOf } from './task-manager-files';
+  import { dragOverFiles, dropFiles, pasteFiles } from './task-manager-file-transfer';
   import { uploadFile } from './task-manager-files-api';
 
   let { item, onRow = false, agentName = '', noSend = false, iconSend = false }: { item: HuddleItem; onRow?: boolean; agentName?: string; noSend?: boolean; iconSend?: boolean } = $props();
@@ -62,25 +62,15 @@
 
   const sendPicked = (): Promise<void> => send(mode === 'comment');
 
-  function onPaste(event: ClipboardEvent): void {
-    const files = filesOf(event.clipboardData);
-    if (files.length === 0) return;
-    event.preventDefault();
-    attached.add(files);
-  }
+  const onPaste = (event: ClipboardEvent): void => pasteFiles(event, attached.add);
 
   function onDragOver(event: DragEvent): void {
-    if (!carriesFiles(event.dataTransfer)) return;
-    event.preventDefault();
-    dropping = true;
+    if (dragOverFiles(event)) dropping = true;
   }
 
   function onDrop(event: DragEvent): void {
     dropping = false;
-    const files = filesOf(event.dataTransfer);
-    if (files.length === 0) return;
-    event.preventDefault();
-    attached.add(files);
+    dropFiles(event, attached.add);
   }
 
   function onKeydown(event: KeyboardEvent): void {

@@ -4,7 +4,7 @@ from __future__ import annotations
 import sqlite3
 from contextlib import closing
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Callable, Dict, List, Optional, Protocol
 
 import structlog
 
@@ -69,6 +69,10 @@ def folder_for(ctx: CplugContext, item_id: int, kind: str) -> Optional[Path]:
     except OSError as exc:
         logger.warning("task_manager_task_folder_failed", item=item_id, kind=kind, error=type(exc).__name__, detail=str(exc)[:200])
         return None
+
+
+def pastes_for(ctx: CplugContext) -> Callable[[int], Optional[Path]]:
+    return lambda item_id: folder_for(ctx, item_id, PASTES)
 
 
 def search_dirs(item_id: int) -> List[Path]:

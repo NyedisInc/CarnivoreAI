@@ -93,6 +93,12 @@ def is_local_transport(request: Request) -> bool:
     }
 
 
+def is_local_non_browser(request: Request) -> bool:
+    if not is_local_request(request):
+        return False
+    return not (_raw_headers(request, b"origin") or _raw_headers(request, b"sec-fetch-site"))
+
+
 def is_local_enrollment(request: Request) -> bool:
     state = paired_state()
     if state is None or (state and not repair_hatch_open()):

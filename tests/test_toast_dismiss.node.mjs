@@ -120,7 +120,7 @@ test('dismissing on input CLEARS, it does not mute: the next toast renders', asy
 });
 
 
-test('the Dismiss all control is absent with one toast, present with two', async () => {
+test('the dismiss all control is absent with one toast, present with two', async () => {
     const { container, mgr } = makeEnv();
     mgr.add(toast('Stop', 'Your turn', null, 'A'));
     assert.equal(dismissAllRow(container), null,
@@ -129,7 +129,7 @@ test('the Dismiss all control is absent with one toast, present with two', async
     mgr.add(toast('Notification', 'other', 'b', 'B'));
     const row = dismissAllRow(container);
     assert.ok(row, 'two toasts must offer the control');
-    assert.equal(row.textContent, 'Dismiss all (2)');
+    assert.equal(row.textContent, 'dismiss all (2)');
 });
 
 test('the control counts CARDS, so the number matches what is on screen', () => {
@@ -140,7 +140,7 @@ test('the control counts CARDS, so the number matches what is on screen', () => 
         'one card is not a pile, so the control does not appear');
     mgr.add(toast('Notification', 'other', 'b', 'B'));
     const row = dismissAllRow(container);
-    assert.equal(row.textContent, 'Dismiss all (2)', 'two cards, two counted');
+    assert.equal(row.textContent, 'dismiss all (2)', 'two cards, two counted');
 });
 
 test('the control sits at the head of the stack, above every card', () => {
@@ -162,7 +162,7 @@ test('NEGATIVE CONTROL: without the click, a multi-session stack stays put', asy
         + 'assertion below is measuring the click');
 });
 
-test('clicking Dismiss all clears every session, and acks every record', async () => {
+test('clicking dismiss all clears every session, and acks every record', async () => {
     const { container, mgr, acked } = makeEnv();
     mgr.add(toast('Stop', 'Your turn', null, 'A'));
     mgr.add(toast('Notification', 'other', 'b', 'B'));
@@ -175,7 +175,7 @@ test('clicking Dismiss all clears every session, and acks every record', async (
     assert.equal(acked.length, 3, 'each record acked or it resurrects');
 });
 
-test('Dismiss all CLEARS, it does not mute: a new toast renders after it', async () => {
+test('dismiss all CLEARS, it does not mute: a new toast renders after it', async () => {
     const { container, mgr } = makeEnv();
     mgr.add(toast('Stop', 'Your turn', null, 'A'));
     mgr.add(toast('Notification', 'other', 'b', 'B'));

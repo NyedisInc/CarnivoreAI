@@ -10,10 +10,15 @@
   "tier": "builtin",
   "default_enabled": false,
   "requires": ["reviewboard"],
-  "surfaces": {},
+  "permissions": { "app": ["agent_writes"] },
+  "surfaces": { "routes": true, "mcp_tools": ["publicboard_links_remove"], "storage": true },
   "owns": {
+    "routes": ["/links", "/links/{link_id}", "/status"],
     "strings": ["cplug.publicboard."],
-    "tests": ["tests/python/cplugs/publicboard/", "web/src/cplugs/publicboard/"]
+    "styles": ["share-link.css"],
+    "tests": ["tests/python/cplugs/publicboard/", "web/src/cplugs/publicboard/"],
+    "style_guide": ["web/src/cplugs/publicboard/ShareLinkKey.svelte", "web/src/cplugs/publicboard/ShareLinkModal.svelte", "web/src/cplugs/publicboard/share-link.css"],
+    "contributions": ["board.header_key", "page.row_action"]
   },
   "settings_schema": {
     "version": 1,
@@ -23,5 +28,6 @@
       "hostnames": { "kind": "string", "labelKey": "cplug.publicboard.settings.hostnames", "hintKey": "cplug.publicboard.settings.hostnames_help", "maxLength": 1000, "default": "" },
       "trustedProxies": { "kind": "string", "labelKey": "cplug.publicboard.settings.trusted_proxies", "hintKey": "cplug.publicboard.settings.trusted_proxies_help", "maxLength": 1000, "default": "" }
     }
-  }
+  },
+  "css_prefix": "pbs"
 }

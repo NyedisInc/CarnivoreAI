@@ -23,6 +23,21 @@
     --_btn-tx: all;
   }
 
+  :where(.modal-btn) {
+    --_btn-pad-y: 10px;
+    --_btn-pad: 24px;
+    --_btn-fs: 0.95rem;
+    width: auto;
+    height: auto;
+  }
+
+  :where(.modal-btn-danger, .modal-btn-confirm) {
+    --_btn-pad-y: 6px;
+    --_btn-pad: 12px;
+    --_btn-fs: 0.8rem;
+    --_btn-bw: 1px;
+  }
+
   :where(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *), .oc-btn, .modal-btn, .modal-btn-danger, .modal-btn-confirm) {
     padding: var(--_btn-pad-y) var(--_btn-pad);
     border: var(--_btn-bw) solid currentColor;
@@ -141,7 +156,7 @@
   }
 
   :where([data-btn='quiet']) {
-    --_btn-focus: var(--oc-line-rule);
+    --_btn-focus: var(--oc-focus-quiet);
   }
 
   :where(.oc-btn--tool[aria-expanded='true']) {
@@ -156,12 +171,18 @@
     --_btn-edge-hover: transparent;
     --_btn-fill-hover: transparent;
     --_btn-ink-hover: var(--_btn-ink);
-    --_btn-focus: var(--oc-line-rule);
+    --_btn-focus: var(--oc-focus-quiet);
     display: flex;
     justify-content: flex-start;
     gap: var(--oc-space-2);
     text-align: left;
     white-space: normal;
+  }
+
+  :where([data-btn][data-size='sm']) {
+    --_btn-h: var(--oc-control-h-sm);
+    --_btn-pad: var(--oc-space-2);
+    --_btn-fs: var(--oc-fs-label);
   }
 
   @media (max-width: 1023px) {
@@ -170,10 +191,26 @@
     }
   }
 
-  :where([data-btn][data-size='sm']) {
-    --_btn-h: var(--oc-control-h-sm);
-    --_btn-pad: var(--oc-space-2);
-    --_btn-fs: var(--oc-fs-label);
+  @media (pointer: coarse) {
+    :where([data-btn]:not([data-size='auto'], [data-size='bare'], [data-size='icon'])) {
+      --_btn-h: var(--oc-tap);
+    }
+  }
+
+  :where([data-btn][data-size='auto'], [data-btn][data-size='bare']) {
+    --_btn-h: 0px;
+  }
+
+  :where([data-btn][data-size='bare']) {
+    --_btn-lh: normal;
+  }
+
+  :where([data-btn][data-overflow='visible']:not(.xterm *, .cm-editor *)) {
+    overflow: visible;
+  }
+
+  :where([data-btn][data-focus='ink']) {
+    --_btn-focus: currentColor;
   }
 
   :where(:is([data-oc-base] :is(input:not([type='checkbox'], [type='radio'], [type='range'], [type='color'], [type='file'], [type='hidden'], [type='image'], [type='button'], [type='submit'], [type='reset']), select, textarea):not([class]), :is(input, select, textarea)[data-field]):not(.xterm *, .cm-editor *)) {
@@ -195,6 +232,12 @@
   :where(:is(input, select, textarea)[data-field][data-size='sm']:not(.xterm *, .cm-editor *)) {
     min-height: var(--oc-control-h-sm);
     font-size: var(--oc-fs-label);
+  }
+
+  @media (pointer: coarse) {
+    :where(:is(input, select, textarea)[data-field][data-size='sm']:not(.xterm *, .cm-editor *)) {
+      min-height: var(--oc-tap);
+    }
   }
 
   :where(select[data-field]:not(.xterm *, .cm-editor *)) {

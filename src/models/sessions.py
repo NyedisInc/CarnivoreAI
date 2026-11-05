@@ -1,7 +1,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from src.core.hosts.ddl import HOST_STATE_UP, LOCAL_HOST_KEY, LOCAL_HOST_LABEL
@@ -20,6 +20,8 @@ class LocalServerInfo(BaseModel):
     """A dev-server port detected on the host, surfaced to the UI."""
     port: int = Field(..., description="TCP port the server is bound to (1024-65535)")
     url: str = Field(..., description="Clickable URL the web client should render")
+    address: Optional[str] = Field(None, description="Bind address (127.0.0.1, 0.0.0.0, ::1, ::); None = not measured")
+    process: Optional[str] = Field(None, description="Short name of the program listening (node, python3.12); None = not measured")
     first_seen: datetime = Field(default_factory=utc_now)
     last_seen: datetime = Field(default_factory=utc_now)
 
@@ -246,6 +248,7 @@ class SessionInfo(BaseModel):
     claude_title: Optional[str] = None
     recent_logs: List[LogEntry] = Field(default_factory=list)
     local_servers: List[LocalServerInfo] = Field(default_factory=list)
+    pr: Optional[Dict[str, Any]] = None
     stats: Optional[SessionStats] = Field(default_factory=SessionStats)
     session_backend: str = Field(
         default="none",

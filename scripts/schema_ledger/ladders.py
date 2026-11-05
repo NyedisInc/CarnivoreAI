@@ -21,7 +21,7 @@ def _huddle_rungs() -> List[Rung]:
 def _work_rungs() -> List[Rung]:
     from src.core.work import work_ladder
 
-    return sql_rungs(work_ladder.MIGRATIONS, ["task-manager-tables-in-carnivore-db", "work-held-tells-becomes-work-held-sends", "work-items-review-checks"])
+    return sql_rungs(work_ladder.MIGRATIONS, ["task-manager-tables-in-carnivore-db", "work-held-tells-becomes-work-held-sends", "work-items-review-checks", "work-items-card-level"])
 
 
 LADDERS: Dict[str, LadderSpec] = {

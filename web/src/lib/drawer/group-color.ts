@@ -1,6 +1,7 @@
 import { mountPanel, unmountPanel } from '../mount';
 import { t } from '../i18n/index.svelte';
 import GroupColorPicker from './GroupColorPicker.svelte';
+import { createAnchoredPopup } from './anchored-popup';
 import { drawerEnv } from './env';
 import * as GroupStore from './group-store';
 import type { LayoutsBridge } from './layouts-model';
@@ -22,9 +23,18 @@ interface Subject {
     onFailed(): Promise<void>;
 }
 
-let openPicker: HTMLElement | null = null;
-let returnFocusTo: HTMLElement | null = null;
-let wired = false;
+interface ColorEnv {
+    API: { setSessionGroupStyle(id: string, style: RowStyle): Promise<unknown> };
+    CloudeWeb?: { layouts?: LayoutsBridge };
+    WriteFailureNotice?: { report?(text: string): void };
+    SessionSidebarColorMenu?: { open(anchor: Element, kind: string, id: string): boolean };
+}
+
+function env(): ColorEnv {
+    return drawerEnv() as ColorEnv;
+}
+
+const popup = createAnchoredPopup({ onClose: () => unmountPanel(PICKER_ID), fitVertically: false });
 
 function groupForKey(key: string): GroupStore.SessionGroup | null {
     if (!GroupStore.isUsable()) return null;
@@ -58,7 +68,7 @@ function subjectFor(kind: string, id: string): Subject | null {
             titleKey: 'sidebar.group.colour.title_named',
             failedKey: 'sidebar.group.colour.failed',
             write: async (style) => {
-                const body = await drawerEnv().API.setSessionGroupStyle(id, style);
+                const body = await env().API.setSessionGroupStyle(id, style);
                 GroupStore.apply(body);
                 repaintDrawerRows();
             },
@@ -66,7 +76,7 @@ function subjectFor(kind: string, id: string): Subject | null {
         };
     }
     if (kind === 'layout') {
-        const layouts = drawerEnv().CloudeWeb?.layouts as LayoutsBridge | undefined;
+        const layouts = env().CloudeWeb?.layouts;
         const layout = layouts && typeof layouts.get === 'function' ? layouts.get(id) : null;
         if (!layouts || !layout) return null;
         return {
@@ -82,12 +92,7 @@ function subjectFor(kind: string, id: string): Subject | null {
 }
 
 export function close(restoreFocus = false): void {
-    unmountPanel(PICKER_ID);
-    if (openPicker && openPicker.parentNode) openPicker.parentNode.removeChild(openPicker);
-    openPicker = null;
-    const target = returnFocusTo;
-    returnFocusTo = null;
-    if (restoreFocus && target && target.isConnected) target.focus();
+    popup.close(restoreFocus);
 }
 
 async function commitStyle(kind: string, id: string, style: RowStyle): Promise<boolean> {
@@ -99,7 +104,7 @@ async function commitStyle(kind: string, id: string, style: RowStyle): Promise<b
     } catch (err) {
         await subject.onFailed();
         const reason = err instanceof Error && err.message ? err.message : String(err);
-        drawerEnv().WriteFailureNotice?.report?.(t(subject.failedKey, { reason }));
+        env().WriteFailureNotice?.report?.(t(subject.failedKey, { reason }));
         return false;
     }
 }
@@ -128,43 +133,23 @@ export function openFull(anchor: Element, kind: string, id: string): void {
     el.setAttribute('aria-label', t(subject.titleKey, { name: subject.label }));
     el.dataset.subjectKind = kind;
     el.dataset.subjectId = id;
-    const box = anchor.getBoundingClientRect();
-    el.style.top = `${Math.round(box.bottom + 2)}px`;
-    document.body.appendChild(el);
-    openPicker = el;
-    returnFocusTo = anchor instanceof HTMLElement ? anchor : null;
     const onpick = async (field: string, value: string): Promise<void> => {
         const current = subjectFor(kind, id);
         if (!current) { close(); return; }
         const ok = await commitStyle(kind, id, nextStyle(current.style, field, value));
         const fresh = subjectFor(kind, id);
-        if (ok && fresh && openPicker === el) paintBody(el, fresh.style, onpick);
+        if (ok && fresh && popup.element === el) paintBody(el, fresh.style, onpick);
     };
-    paintBody(el, subject.style, onpick);
-    const left = Math.min(box.left, window.innerWidth - el.offsetWidth - 8);
-    el.style.left = `${Math.max(8, Math.round(left))}px`;
+    popup.open(el, anchor, () => paintBody(el, subject.style, onpick));
     const first = el.querySelector<HTMLElement>('[aria-checked="true"]') || el.querySelector<HTMLElement>('button');
     if (first) first.focus();
-    wire();
 }
 
 export function openFor(anchor: Element, kind: string, id: string): void {
-    const menu = drawerEnv().SessionSidebarColorMenu as { open?(a: Element, k: string, i: string): boolean } | undefined;
-    if (menu && typeof menu.open === 'function' && menu.open(anchor, kind, id)) return;
+    if (env().SessionSidebarColorMenu?.open(anchor, kind, id)) return;
     openFull(anchor, kind, id);
 }
 
 export function open(anchor: Element, groupUuid: string): void {
     openFor(anchor, 'group', groupUuid);
-}
-
-function wire(): void {
-    if (wired) return;
-    document.addEventListener('mousedown', (e) => {
-        if (openPicker && !openPicker.contains(e.target as Node)) close();
-    });
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && openPicker) close(true);
-    });
-    wired = true;
 }

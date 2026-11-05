@@ -8,7 +8,7 @@ import structlog
 
 from src.core import config_writer
 from src.core.launch_profiles import bundle_guard
-from src.core.config_bundle import command_guard
+from src.core.config_bundle import command_guard, reach_guard
 from src.core.config_bundle.bundle import ConfigBundle, clean_pins
 from src.config.launch_profiles import LAUNCH_PROFILES_KEY
 from src.core.config_bundle.importer import (
@@ -51,6 +51,16 @@ _COMMAND_GATES: Tuple[Tuple[str, str, Callable[[Any, Any], List[Dict[str, Any]]]
     ("provider_accounts", "rows", command_guard.written_account_dirs, "an agent config folder"),
     ("common_slash_commands", "rows", command_guard.written_slash_commands, "slash commands sent to agents"),
     ("template_path", "rows", command_guard.written_template_path, "a template folder copied into new projects"),
+    ("relay", "rows", reach_guard.written_relay, "a relay or phone link address, or the relay switched on"),
+    ("catalog", "rows", reach_guard.written_catalog, "a catalog address"),
+    ("auth_rate_limits", "rows", reach_guard.written_rate_limits, "a looser login limit or proxy trust setting"),
+    ("providers", "rows", reach_guard.written_providers, "a local model host"),
+    ("access_token_ttl_seconds", "rows", reach_guard.ttl_guard("access_token_ttl_seconds"),
+     "a longer access token lifetime"),
+    ("refresh_token_ttl_seconds", "rows", reach_guard.ttl_guard("refresh_token_ttl_seconds"),
+     "a longer refresh token lifetime"),
+    ("refresh_grace_seconds", "rows", reach_guard.ttl_guard("refresh_grace_seconds"),
+     "a longer refresh grace window"),
 )
 
 
@@ -86,8 +96,8 @@ def _refuse_unconfirmed(written: Dict[str, List[Dict[str, Any]]], confirms: Dict
         rows = written.get(section)
         if rows and confirms.get(section) != command_guard.digest(rows):
             raise ImportRefused(
-                f"this bundle writes {words}, which run on this machine; preview it and confirm "
-                f"{section}.sha256 to import them", 409)
+                f"this bundle writes {words}, and that needs your consent; preview it and confirm "
+                f"{section}.sha256 to import it", 409)
 
 
 def run_import(
@@ -100,50 +110,46 @@ def run_import(
     themes: Optional[Any],
     host: str,
     confirm_launch_profiles_sha256: Optional[str] = None,
-    confirm_agents_sha256: Optional[str] = None,
-    confirm_workspace_sha256: Optional[str] = None,
-    confirm_browser_sha256: Optional[str] = None,
-    confirm_provider_accounts_sha256: Optional[str] = None,
-    confirm_common_slash_commands_sha256: Optional[str] = None,
-    confirm_template_path_sha256: Optional[str] = None,
+    confirms: Optional[Mapping[str, Optional[str]]] = None,
 ) -> tuple[Dict[str, Any], Optional[Built]]:
     prepared = prepare(bundle)
     summary = _summary(bundle, prepared, host)
     incoming_profiles = prepared.sections.get(LAUNCH_PROFILES_KEY)
-    profiles_digest = bundle_guard.block_digest(incoming_profiles)
+    carries_profiles = bundle_guard.block_digest(incoming_profiles) is not None
 
     if dry_run:
         doc = config_writer.read_config(config_path)
         built = build_document(doc, pins, prepared, mode)
         body = {"status": PREVIEW, "dry_run": True, "mode": mode, **summary, **built.preview}
+        profiles_digest = bundle_guard.block_digest(incoming_profiles, doc.get(LAUNCH_PROFILES_KEY))
         if profiles_digest:
-            body["launch_profiles"] = {"sha256": profiles_digest, "profiles": bundle_guard.review(incoming_profiles)}
+            body["launch_profiles"] = {"sha256": profiles_digest,
+                                      "profiles": bundle_guard.review(incoming_profiles, doc.get(LAUNCH_PROFILES_KEY))}
         written = _written_commands(doc, built)
         for section, key, _guard, _words in _COMMAND_GATES:
             if section in written:
                 body[section] = {"sha256": command_guard.digest(written[section]), key: written[section]}
         if mode == "replace":
             body["kept"] = _kept_count(doc, prepared)
-        body["contains_commands"] = bool(profiles_digest or written)
+        body["contains_commands"] = bool(carries_profiles or written)
         return body, None
 
-    if profiles_digest and confirm_launch_profiles_sha256 != profiles_digest:
-        raise ImportRefused(
-            "this bundle carries launch profiles, which can run shell; preview it and confirm "
-            "launch_profiles.sha256 to import them", 409)
+    def refuse_unconfirmed_profiles(doc: Mapping[str, Any]) -> None:
+        if carries_profiles and confirm_launch_profiles_sha256 != bundle_guard.block_digest(
+                incoming_profiles, doc.get(LAUNCH_PROFILES_KEY)):
+            raise ImportRefused(
+                "this bundle carries launch profiles, which can run shell; preview it and confirm "
+                "launch_profiles.sha256 to import them", 409)
+
+    if carries_profiles and confirm_launch_profiles_sha256 is None:
+        refuse_unconfirmed_profiles({})
 
     captured: Dict[str, Built] = {}
 
     def mutate(doc: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        refuse_unconfirmed_profiles(doc)
         built = build_document(doc, pins, prepared, mode)
-        _refuse_unconfirmed(_written_commands(doc, built), {
-            "agents": confirm_agents_sha256,
-            "workspace": confirm_workspace_sha256,
-            "browser": confirm_browser_sha256,
-            "provider_accounts": confirm_provider_accounts_sha256,
-            "common_slash_commands": confirm_common_slash_commands_sha256,
-            "template_path": confirm_template_path_sha256,
-        })
+        _refuse_unconfirmed(_written_commands(doc, built), confirms or {})
         captured["built"] = built
         return built.document
 

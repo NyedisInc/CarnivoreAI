@@ -5,6 +5,7 @@
   import SidebarControls from '../../lib/sidebar-widgets/SidebarControls.svelte';
   import { mountPanel } from '../../lib/mount';
   import { publishFloorRows } from '../../lib/drawer/floor-feed.svelte';
+  import { noteSleepingCount } from '../../lib/drawer/section-visibility.svelte';
   import type { FeedBody } from '../../lib/stats-feed/types';
 
   let { part = 'header' }: { part?: 'header' | 'stats' } = $props();
@@ -23,6 +24,7 @@
     { name: 'a', status: 'working' }, { name: 'b', status: 'idle', unread: true }, { name: 'c', status: 'working_subagent' },
     { name: 'd', status: 'idle' }, { name: 'e', status: 'idle', unread: true },
   ] as never);
+  noteSleepingCount(2);
 
   onMount(() => {
     if (part === 'header') mountPanel('session-sidebar-topbar-controls', SidebarControls as never);

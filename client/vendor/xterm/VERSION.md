@@ -1,7 +1,9 @@
 # vendored xterm.js bundle
 
 `xterm.css`, `xterm.js`, `xterm-addon-fit.js`, `xterm-addon-webgl.js`,
-`xterm-addon-unicode11.js` and `xterm-addon-search.js` are unmodified files
+`xterm-addon-unicode11.js`, `xterm-addon-search.js` and `xterm-addon-web-links.js`
+(0.9.0, fetched 2026-10-30, #2725; MIT, notice in `macOS/payload/notices/vendored.json`)
+are unmodified files
 pulled straight from jsDelivr at the pinned versions below and committed
 as-is. There is no
 build step here - unlike `client/vendor/codemirror/`, these ship from
@@ -34,6 +36,7 @@ load and stylesheet load. Same reasoning that put CodeMirror under
 | xterm-addon-webgl.js | xterm-addon-webgl | 0.16.0 | https://cdn.jsdelivr.net/npm/xterm-addon-webgl@0.16.0/lib/xterm-addon-webgl.js |
 | xterm-addon-unicode11.js | xterm-addon-unicode11 | 0.6.0 | https://cdn.jsdelivr.net/npm/xterm-addon-unicode11@0.6.0/lib/xterm-addon-unicode11.js |
 | xterm-addon-search.js | xterm-addon-search | 0.13.0 | https://cdn.jsdelivr.net/npm/xterm-addon-search@0.13.0/lib/xterm-addon-search.js |
+| xterm-addon-web-links.js | xterm-addon-web-links | 0.9.0 | https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xterm-addon-web-links.js |
 
 ## sha256
 
@@ -44,6 +47,7 @@ f0aea0f75f48559013ae6643c2479dd737d26da42d5524e6d2b70915ae6523c7  xterm.js
 0c9c48c9391c4cee816eacf95699dbde97e8cc8f191e87f3a571e73d214c8df8  xterm-addon-webgl.js
 ab10d83642883e5e17ea741cd5b6e5f8c0f6a06e3271f2f0c0e043be4fc5e738  xterm-addon-unicode11.js
 6a6db33f16b764552377a2c5ba4327c6dab6beaf25484533afd7dbecd0b03793  xterm-addon-search.js
+d67624ab0e89e1d2ee27b64cc6e9283f4ce206d7343429d87d95370b0c971824  xterm-addon-web-links.js
 ```
 
 ## updating

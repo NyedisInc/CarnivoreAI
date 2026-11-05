@@ -10,18 +10,21 @@
   ],
   "examples": [
     "Mute dealt and handed_off lines with swarm_chat_muted, then read an agent's conversation with view=shown: those lines are gone and your own messages stay.",
-    "An agent asks something no one above it can answer: your web push destination gets one swarm question for you push once you tick that type on the notifications screen, and the card reads sent to your phone; with that type unticked everywhere the card stays unmarked."
+    "An agent asks something no one above it can answer: your web push destination gets one swarm question for you push once you tick that type on the notifications screen, and the card reads sent to your phone; with that type unticked everywhere the card stays unmarked.",
+    "Finish a child card: its done line shows in the project agent's chat only. Finish a top-level card: the line shows in the project, company and SysOp chats, once each."
   ],
   "how_to": [
     "Call GET /api/v1/swarm/agents/{id}/conversation?view=shown to read a conversation without the categories you muted; view=all returns everything, each entry with its category.",
     "PATCH /api/v1/preferences with swarm_chat_muted set to a list of category names to choose what hides; leave it unset for the default of conversation, result, question and important only.",
-    "Tick swarm question for you on a destination in the notifications screen to get the climbed-question push there (an existing destination starts with it off)."
+    "Tick swarm question for you on a destination in the notifications screen to get the climbed-question push there (an existing destination starts with it off).",
+    "Finish a card: one done line shows in its project agent's chat, and for a top-level card (a feature) also in the company agent's and SysOp's chats; click its card icon to open the card."
   ],
   "id": "swarm-cards-c6",
   "issues": [
     1388,
     1395,
-    2595
+    2595,
+    2759
   ],
   "keywords": [
     "swarm",
@@ -36,8 +39,8 @@
   "name": "swarm chat categories, mute and phone",
   "since": "2026-10-07",
   "status": "beta",
-  "summary": "swarm conversations carry a category per line with a mute preference and a shown view, and only a question that climbed to you pushes to your phone.",
-  "updated": "2026-10-28",
+  "summary": "swarm conversations carry a category per line with a mute preference and a shown view, and only a question that climbed to you pushes to your phone, and a finished card bubbles up as one done line: a task to its project agent's chat, a feature also to the company agent's and SysOp's.",
+  "updated": "2026-10-31",
   "where": [
     "Backend only for now: read a conversation at GET /api/v1/swarm/agents/{id}/conversation (view=all or view=shown), set the mute list through the swarm_chat_muted preference, and tick the swarm question for you type on the notifications screen. The chat filter screen arrives with the board UI."
   ]

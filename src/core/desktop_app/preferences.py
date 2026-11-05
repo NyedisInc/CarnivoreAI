@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 
-DEFAULT_BANNERS: bool = False
+DEFAULT_BANNERS: bool = True
 DEFAULT_HIDE_COMMAND: bool = False
 DEFAULT_NOTIFY_ASKS_ONLY: bool = False
 DEFAULT_HOTKEY: str = "Ctrl+Option+Cmd+C"

@@ -18,6 +18,7 @@ import { railSlideout } from '../session-rail/slideout.svelte';
 import { AUTOHIDE_BARS, BOTTOM_FIELD, follow, keyIn, mountRails, remountRails, unmountRails } from '../session-rail/rail-test-harness';
 import { barLead } from './bar-lead.svelte';
 import { widgetBars } from './bar-settings.svelte';
+import { panelPins } from './panel-pins.svelte';
 import { RETRACT_MS } from './bar-state';
 import { matchGolden } from '../zone-shell/fixtures/golden';
 
@@ -229,6 +230,31 @@ test('switching to one at a time with both panels open closes the folded bar pan
   expect(stateOf('bottom')).toBe('held');
   expect(stateOf('side')).toBe('folded');
   expect(railSlideout.shown('side')).toEqual([]);
+});
+
+test('a widget\'s "show it" action takes the lead in one-at-a-time mode, so the fold does not close the panel it opened (#1593)', () => {
+  follow('widget_bars', { ...AUTOHIDE_BARS, together: 'one' });
+  keyIn('bottom', 'core.task-manager').click();
+  flushSync();
+  expect(barLead.edge).toBe('bottom');
+  railSlideout.open('core.files');
+  flushSync();
+  expect(barLead.edge).toBe('side');
+  expect(railSlideout.shown('side')).toEqual(['core.files']);
+});
+
+test('the fold only hides a pinned panel: it is not closed, so its pin survives the other bar taking the lead (#1593)', () => {
+  follow('widget_bars', { ...AUTOHIDE_BARS, together: 'one' });
+  keyIn('bottom', 'core.task-manager').click();
+  flushSync();
+  panelPins.pin('bottom', 'core.task-manager', 7);
+  keyIn('side', 'core.files').click();
+  flushSync();
+  expect(barLead.edge).toBe('side');
+  expect(stateOf('bottom')).toBe('folded');
+  expect(railSlideout.shown('bottom')).toEqual(['core.task-manager']);
+  expect(panelPins.pinnedRow('bottom', 'core.task-manager')).toBe(7);
+  panelPins.unpin('bottom');
 });
 
 test('the handles draw the same DOM before and after the zone handle (golden, wrapper bar-handle rows)', () => {

@@ -6,10 +6,11 @@ import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from src.core.crosstalk import gone as crosstalk_gone
 from src.core.crosstalk import store as crosstalk_store
 from src.core.swarm import body
 
-EVENTS = ("spawned", "reported", "accepted", "asked", "answered", "escalated", "learned", "promoted")
+EVENTS = ("spawned", "reported", "accepted", "asked", "answered", "escalated", "learned", "promoted", "done")
 
 
 def _epoch(stamp: str) -> float:
@@ -51,6 +52,14 @@ def traffic_entry(key: str, msg: Dict[str, Any]) -> Dict[str, Any]:
             "receipt": {"status": msg["status"], "reason": msg["reason"], "delivered_at": msg["delivered_at"]}}
 
 
+EXPIRY_NOTICE_TAIL = "expired after 24 hours"
+
+
+def is_expiry_notice(msg: Dict[str, Any]) -> bool:
+    return (msg.get("source") == "system" and msg.get("sender_key") == "crosstalk-system"
+            and (msg.get("text") or "").endswith((EXPIRY_NOTICE_TAIL, crosstalk_gone.DROP_NOTICE_TAIL)))
+
+
 async def crosstalk_traffic(agent: Dict[str, Any], limit: int) -> List[Dict[str, Any]]:
     row_id = agent.get("session_row_id")
     if row_id is None:
@@ -60,7 +69,7 @@ async def crosstalk_traffic(agent: Dict[str, Any], limit: int) -> List[Dict[str,
     if not key:
         return []
     rows = await asyncio.to_thread(crosstalk_store.recent_for, key, limit)
-    return [traffic_entry(key, m) for m in rows]
+    return [traffic_entry(key, m) for m in rows if not is_expiry_notice(m)]
 
 
 def _events(conn: Any, agent_id: int, limit: int) -> List[Dict[str, Any]]:

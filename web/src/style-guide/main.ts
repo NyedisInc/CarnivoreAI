@@ -19,6 +19,8 @@ import Ledger from './specimens/Ledger.svelte';
 import CellFrameDemo from './specimens/CellFrameDemo.svelte';
 import PlacementHeadDemo from './specimens/PlacementHeadDemo.svelte';
 import BarSizesDemo from './specimens/BarSizesDemo.svelte';
+import BarSplitDemo from './specimens/BarSplitDemo.svelte';
+import MockLayoutDemo from './specimens/MockLayoutDemo.svelte';
 import BarVisibilityDemo from './specimens/BarVisibilityDemo.svelte';
 import PinnedPanelDemo from './specimens/PinnedPanelDemo.svelte';
 import Meters from './specimens/Meters.svelte';
@@ -32,7 +34,7 @@ import PageKitDemo from './specimens/PageKitDemo.svelte';
 import IconPickerDemo from './specimens/IconPickerDemo.svelte';
 import PluginsScreen from '../lib/plugins-page/PluginsScreen.svelte';
 import WidgetsScreen from '../lib/widgets-page/WidgetsScreen.svelte';
-import { pluginsSpecimenAdapter, pluginsSpecimenCatalog } from './specimens/plugins-fixture';
+import { featuresSpecimenAdapter, pluginsSpecimenAdapter, pluginsSpecimenCatalog } from './specimens/plugins-fixture';
 import { specimenSettingsFor, widgetsSpecimenAdapter } from './specimens/widgets-fixture';
 import SettingsFormDemo from './specimens/SettingsFormDemo.svelte';
 import PickerDemo from './specimens/PickerDemo.svelte';
@@ -111,6 +113,7 @@ export const SPECIMENS: readonly Specimen[] = [
     { id: 'sg-live-highlight-tiles', component: as(PageKitDemo), props: { part: 'tiles' } },
     { id: 'sg-live-highlight-pair', component: as(PageKitDemo), props: { part: 'pair' } },
     { id: 'sg-live-plugins-page', component: as(PluginsScreen), props: { embedded: true, adapter: pluginsSpecimenAdapter, catalog: pluginsSpecimenCatalog } },
+    { id: 'sg-live-features-page', component: as(PluginsScreen), props: { embedded: true, scope: 'features', adapter: featuresSpecimenAdapter } },
     { id: 'sg-live-widgets-page', component: as(WidgetsScreen), props: { embedded: true, previews: false, adapter: widgetsSpecimenAdapter, settingsFor: specimenSettingsFor } },
     { id: 'sg-live-settings-form', component: as(SettingsFormDemo) },
     { id: 'sg-live-picker', component: as(PickerDemo) },
@@ -127,6 +130,8 @@ export const SPECIMENS: readonly Specimen[] = [
     { id: 'sg-live-meters-foot', component: as(Meters), props: { part: 'foot' } },
     { id: 'sg-live-cellframe', component: as(CellFrameDemo), props: { slot: 'notes' } },
     { id: 'sg-live-bar-sizes', component: as(BarSizesDemo) },
+    { id: 'sg-live-bar-split', component: as(BarSplitDemo) },
+    { id: 'sg-live-mock-layout', component: as(MockLayoutDemo) },
     { id: 'sg-live-bar-visibility', component: as(BarVisibilityDemo) },
     { id: 'sg-live-pinned-panel', component: as(PinnedPanelDemo) },
     { id: 'sg-live-cellframe-count', component: as(CellFrameDemo), props: { slot: 'closed-sessions', count: 12 } },

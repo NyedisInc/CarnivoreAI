@@ -115,13 +115,6 @@
         gap: var(--oc-space-1-5);
     }
 
-    .ap-page .w-day {
-        flex: 0 0 auto;
-        min-width: 32px;
-        justify-content: center;
-        text-transform: uppercase;
-    }
-
     .ap-page .w-note {
         margin: 0;
         color: var(--oc-text-muted);
@@ -159,19 +152,6 @@
         display: grid;
         gap: var(--oc-space-2);
         min-width: 0;
-    }
-
-    .ap-page .w-card {
-        display: grid;
-        gap: var(--oc-space-2);
-        padding: var(--oc-space-3);
-        min-width: 0;
-        background: var(--oc-ground-panel);
-        box-shadow: inset 0 0 0 1px var(--oc-line-panel);
-    }
-
-    .ap-page .w-card[data-used="true"] {
-        box-shadow: inset 0 0 0 1px var(--oc-green);
     }
 
     .ap-page .w-card__w {
@@ -270,12 +250,6 @@
 
         .ap-page .w-days {
             gap: var(--oc-space-0-5);
-        }
-
-        .ap-page .w-day {
-            flex: 1 1 44px;
-            min-height: 44px;
-            min-width: 44px;
         }
 
         .ap-page .w-eg {

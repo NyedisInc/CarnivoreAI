@@ -1,5 +1,8 @@
 
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import url from 'node:url';
 import vm from 'node:vm';
 
 import { makeEnv, toast, cards, overflow, settle } from './lib_toast_dom_stub.mjs';
@@ -192,11 +195,11 @@ test('a toast arriving mid-fade does not resurrect the card being dismissed', ()
     mgr.add(toast('Stop', 'Your turn', 'first'));
     cards(container)[0].querySelector('.toast__dismiss').click();
     const fading = container.childNodes.filter(
-        (e) => e._classes().has('toast') && e._classes().has('toast--dismissing'));
+        (e) => e._cls.has('toast') && e._cls.has('toast--dismissing'));
     assert.equal(fading.length, 1, 'the dismissed card should be animating out');
     mgr.add(toast('Stop', 'Your turn', 'second'));
     const live = container.childNodes.filter(
-        (e) => e._classes().has('toast') && !e._classes().has('toast--dismissing'));
+        (e) => e._cls.has('toast') && !e._cls.has('toast--dismissing'));
     assert.equal(live.length, 1, 'the arrival gets its OWN card');
     assert.notEqual(live[0], fading[0], 'and never the corpse of the dismissed one');
     assert.equal(live[0].querySelector('.toast__body').textContent, 'second');
@@ -224,8 +227,8 @@ test('the card UPGRADES IN PLACE when a permission prompt arrives', () => {
     mgr.add(toast('PermissionRequest', 'Permission needed', 'Bash: rm -rf /'));
     const after = cards(container);
     assert.equal(after.length, 1, 'the upgrade must not open a second card');
-    assert.equal(after[0], before,
-        'and must happen on the SAME element, not by replacing it');
+    assert.equal(after[0].getAttribute('data-group-key'), before.getAttribute('data-group-key'),
+        'and must happen on the SAME card (same each-key, so the stack reuses its element), not by replacing it');
     assert.equal(after[0].getAttribute('data-kind'), 'PermissionRequest');
     assert.equal(after[0].getAttribute('role'), 'alert',
         'a blocking card interrupts a screen reader');
@@ -254,7 +257,7 @@ test('the badge counts the WINNING kind, not the session pile', () => {
     assert.equal(c[0].getAttribute('data-count'), '7',
         'the card still knows it is holding seven records');
     assert.match(c[0].querySelector('.toast__dismiss').getAttribute('aria-label'),
-        /Dismiss 7 notifications/);
+        /dismiss 7 notifications/);
 });
 
 test('THE SAME EVENT TWICE does not double count and does not split the card', () => {
@@ -289,12 +292,12 @@ test('dismissing the one card acks EVERY record of that session, of every kind',
     assert.equal(cards(container).length, 0);
 });
 
-test('Dismiss all counts CARDS, and discloses only the blocking ones', () => {
+test('dismiss all counts CARDS, and discloses only the blocking ones', () => {
     const { container, mgr } = makeEnv();
     for (let i = 0; i < 6; i++) mgr.add(toast('Stop', 'Your turn', `t${i}`, 'A'));
     mgr.add(toast('PermissionRequest', 'Permission needed', 'cmd', 'A'));
     mgr.add(toast('Notification', 'wants your attention', 'x', 'B'));
-    const row = container.childNodes.find((e) => e._classes().has('toast-dismiss-all'));
+    const row = container.childNodes.find((e) => e._cls.has('toast-dismiss-all'));
     assert.equal(row.getAttribute('data-total'), '2',
         'two cards are on screen, so the control counts two');
     assert.equal(row.getAttribute('data-blocking'), '1',
@@ -323,9 +326,11 @@ test('NEGATIVE CONTROL: with the fold gone, nothing is grouped by session', () =
 });
 
 test('the container is a polite live region', () => {
-    const { container, mgr } = makeEnv();
-    mgr.add(toast('Stop', 'Your turn'));
-    assert.equal(container.getAttribute('aria-live'), 'polite');
+    const html = fs.readFileSync(path.join(path.dirname(url.fileURLToPath(import.meta.url)), '../client/index.html'), 'utf8');
+    const tag = /<div id="toast-container"[^>]*>/.exec(html);
+    assert.ok(tag, 'index.html must carry the stack container');
+    assert.match(tag[0], /aria-live="polite"/);
+    assert.match(tag[0], /aria-relevant="additions text"/);
 });
 
 

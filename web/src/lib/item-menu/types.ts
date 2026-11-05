@@ -29,15 +29,25 @@ export interface GroupPickCtx {
     anchor: Element;
 }
 
+export interface TermPathCtx {
+    sessionId: string;
+    text: string;
+    path: string;
+    kind: 'file' | 'dir';
+    touch: boolean;
+}
+
 export interface ItemMenuContexts {
     project: HeadingMenuCtx;
     company: HeadingMenuCtx;
     group: HeadingMenuCtx;
+    section: HeadingMenuCtx;
     color: ColorMenuCtx;
     leader: LeaderMenuCtx;
     widget: WidgetMenuCtx;
     pagerow: PageRowCtx;
     grouppick: GroupPickCtx;
+    termpath: TermPathCtx;
     session: RowMenuCtx;
     browser: RowMenuCtx;
     page: RowMenuCtx;

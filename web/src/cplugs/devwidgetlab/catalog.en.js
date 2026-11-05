@@ -181,7 +181,7 @@ export default {
     'cplug.devwidgetlab.drafts.title': 'drafts',
     'cplug.devwidgetlab.drafts.new': '+ new',
     'cplug.devwidgetlab.drafts.revise': 'make a revision',
-    'cplug.devwidgetlab.drafts.no_checkout': 'no widget lab source folder was found. set one in Settings, under the widget lab plugin.',
+    'cplug.devwidgetlab.drafts.no_checkout': 'no widget lab source folder was found. set one in Settings, under the widget lab feature.',
     'cplug.devwidgetlab.drafts.source.broken': 'the widget lab source folder in Settings, {path}, does not work: {problems}',
     'cplug.devwidgetlab.drafts.group': 'new items',
     'cplug.devwidgetlab.drafts.prefix.new': 'new',

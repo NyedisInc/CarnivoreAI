@@ -66,9 +66,9 @@ def pending_dict(row: Mapping[str, Any]) -> Dict[str, Any]:
     return {"id": row["id"], "text": row["raw_text"], "status": row["status"], "created_at": row["created_at"]}
 
 
-def lead_line(entry_id: int, text: str) -> str:
+def lead_line(entry_id: int, text: str, files: int = 0) -> str:
     flat = " / ".join(part.strip() for part in text.strip().splitlines() if part.strip())
     quoted = flat if len(flat) <= QUOTE_CHARS else flat[:QUOTE_CHARS - 1].rstrip() + "..."
     return (f"huddle inbox: the owner typed this into the add box; file entry {entry_id} with task_manager_entry_import "
             f"(split it into one item per request, obey a leading backlog, now or ask; see the guide's section on filing inbox entries). "
-            f'Raw text: "{quoted}". ')
+            f'Raw text: "{quoted}". ' + (f"The entry carries {files} file(s) the owner pasted (their paths are on the entry in task_manager_entries_list). " if files else ""))

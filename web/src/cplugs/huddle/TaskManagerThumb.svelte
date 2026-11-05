@@ -13,7 +13,7 @@
 </script>
 
 {#if url}
-  <button type="button" class="hdc-thumb" data-base-exempt="a picture-only thumbnail with no text label for the base look to wrap" data-task-manager-thumb aria-label={t('cplug.huddle.files.preview', { name })}
+  <button type="button" class="hdc-thumb" data-btn="row" data-task-manager-thumb aria-label={t('cplug.huddle.files.preview', { name })}
           onclick={() => void openModal<null, Record<string, unknown>>(ImagePreview as never, { url, name })}>
     <img src={url} alt="" />
   </button>

@@ -1,12 +1,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, Optional, Sequence
 
 from src.core.approvals.answer import AnswerRefused, Choice
 from src.core.approvals.deliver import SOURCE_AUTO, deliver_answer
 
-Answer = Callable[[str, str, str], Awaitable[None]]
+Answer = Callable[..., Awaitable[None]]
 
 
 class AckRefused(Exception):
@@ -17,14 +17,14 @@ class AckRefused(Exception):
 
 
 def route_answer(app_state: Any, get_manager: Callable[[], Any]) -> Answer:
-    async def answer(session_id: str, fingerprint: str, label: str) -> None:
+    async def answer(session_id: str, fingerprint: str, label: str, options: Optional[Sequence[str]] = None) -> None:
         manager = get_manager()
         info = await manager.get_session_info(session_id) if manager is not None else None
         if info is None:
             raise AckRefused("session_gone")
         try:
             await deliver_answer(manager=manager, watcher=getattr(app_state, "attention_watcher", None), info=info,
-                                 fingerprint=fingerprint, choice=Choice(option=label), source=SOURCE_AUTO)
+                                 fingerprint=fingerprint, choice=Choice(options=list(options)) if options else Choice(option=label), source=SOURCE_AUTO)
         except AnswerRefused as exc:
             raise AckRefused(exc.reason) from exc
 

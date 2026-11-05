@@ -3,7 +3,7 @@ import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
 import { askFold, oneLineFold, ONE_LINE_CHARS, postFold } from '../../../cplugs/huddle/task-manager-posts';
 import { taskOf } from '../../../cplugs/huddle/task-manager-design/adapter';
 import { newCount, unread } from '../../../cplugs/huddle/task-manager-design/model';
-import { actionableIdOf } from './mk2-task-tabs';
+import { actionableIdOf, cardsInFrontOf } from './mk2-task-tabs';
 
 const msg = (id: number, kind: string, extra: Record<string, unknown> = {}) => ({ id, item_id: 1, author: 'claude', kind, text: `message ${id}`, created_at: id, unread: true, answered: false, ...extra });
 const mk = (extra: Record<string, unknown> = {}): HuddleItem => ({
@@ -16,11 +16,29 @@ describe('G: what the action tab holds', () => {
   test('an info that is the only news shows', () => {
     expect(actionableIdOf(mk({ thread: [msg(5, 'info')] }))).toBe(5);
   });
-  test('an open question shows, and the info beside it stays in the discussion tab', () => {
+  test('#2724 round 2: the oldest unread message is the card, a question included, in send order', () => {
     expect(actionableIdOf(mk({ thread: [msg(4, 'question'), msg(6, 'info')] }))).toBe(4);
+    expect(actionableIdOf(mk({ thread: [msg(3, 'info'), msg(4, 'question')] }))).toBe(3);
+    expect(actionableIdOf(mk({ thread: [msg(5, 'info'), msg(3, 'attention'), msg(4, 'question')] }))).toBe(3);
   });
-  test('a review waiting on him shows its block and no info beside it', () => {
-    expect(actionableIdOf(mk({ ...REVIEW, thread: [msg(6, 'info')] }))).toBeNull();
+  test('#2724 round 2: a read takes only that one, so the next oldest shows', () => {
+    const item = mk({ thread: [msg(3, 'info'), msg(4, 'question'), msg(6, 'info')] });
+    item.thread[0]!.unread = false;
+    expect(actionableIdOf(item)).toBe(4);
+  });
+  test('#2724 round 2: a review item shows the review card once nothing is unread (null here)', () => {
+    expect(actionableIdOf(mk({ ...REVIEW, thread: [msg(6, 'info')] }))).toBe(6);
+    expect(actionableIdOf(mk({ ...REVIEW, thread: [msg(6, 'info', { unread: false })] }))).toBeNull();
+    expect(actionableIdOf(mk({ ...REVIEW }))).toBeNull();
+  });
+  test('#2724 round 2: the cards in front count the rest, the review card only for a review item, and nothing for 0', () => {
+    const thread = [msg(3, 'info'), msg(4, 'question'), msg(6, 'info')];
+    expect(cardsInFrontOf(mk({ thread }))).toBe(2);
+    expect(cardsInFrontOf(mk({ thread: [msg(3, 'info')] }))).toBe(0);
+    expect(cardsInFrontOf(mk())).toBe(0);
+    expect(cardsInFrontOf(mk({ ...REVIEW, thread: [msg(3, 'info'), msg(6, 'info')] }))).toBe(2);
+    expect(cardsInFrontOf(mk({ ...REVIEW, thread: [msg(3, 'info')] }))).toBe(1);
+    expect(cardsInFrontOf(mk({ ...REVIEW }))).toBe(0);
   });
   test('nothing waiting is nothing', () => {
     expect(actionableIdOf(mk())).toBeNull();

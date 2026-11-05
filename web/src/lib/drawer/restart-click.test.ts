@@ -3,24 +3,24 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runRestart } from './restart-click';
 
 const win = window as unknown as Record<string, any>;
-const KEYS = ['Router', 'SessionRestartPicker', 'SessionRestartReturn', 'SessionKey', 'API', 'Launchpad'];
-let shown: string[];
-let ctrl: { _lastSig: string | null; _fetchAndRender: ReturnType<typeof vi.fn>; _closeAfterSwitch: ReturnType<typeof vi.fn> };
+const KEYS = ['WriteFailureNotice', 'SessionRestartPicker', 'SessionRestartReturn', 'SessionKey', 'API', 'Launchpad'];
+let shown: Array<[string, Record<string, unknown>]>;
+let ctrl: { _fetchAndRender: ReturnType<typeof vi.fn>; _closeAfterSwitch: ReturnType<typeof vi.fn> };
 
 beforeEach(() => {
     shown = [];
-    ctrl = { _lastSig: 'sig', _fetchAndRender: vi.fn(async () => {}), _closeAfterSwitch: vi.fn() };
-    win.Router = { showError: (m: string) => shown.push(m) };
+    ctrl = { _fetchAndRender: vi.fn(async () => {}), _closeAfterSwitch: vi.fn() };
+    win.WriteFailureNotice = { notify: (key: string, params: Record<string, unknown>) => shown.push([key, params]) };
     vi.spyOn(console, 'error').mockImplementation(() => {});
     if (!win.CSS?.escape) win.CSS = { escape: (v: string) => v };
 });
 afterEach(() => { for (const k of KEYS) delete win[k]; vi.restoreAllMocks(); });
 
 describe('runRestart', () => {
-    it('a missing picker is reported on the banner, never alert()', async () => {
+    it('a missing picker is reported through the failure notice, never alert()', async () => {
         win.alert = () => { throw new Error('native alert() must not be used'); };
         await runRestart(ctrl as never, 'demo', null, 'local');
-        expect(shown).toEqual(['could not restart "demo": the restart picker did not load.']);
+        expect(shown).toEqual([['session.restart.picker_missing', { name: 'demo' }]]);
     });
 
     it('a cancelled picker with no error does nothing', async () => {
@@ -34,8 +34,7 @@ describe('runRestart', () => {
         win.SessionRestartPicker = { open: async () => ({ mode: 'restart', agentType: 'claude' }), lastError: () => null };
         win.API = { respawnSession: async () => ({ ok: false, detail: 'pane busy' }) };
         await runRestart(ctrl as never, 'demo', null, 'local');
-        expect(shown[0]).toContain('pane busy');
-        expect(ctrl._lastSig).toBeNull();
+        expect(shown[0]).toEqual(['session.restart.card_failed', { name: 'demo', detail: 'pane busy' }]);
         expect(ctrl._fetchAndRender).toHaveBeenCalledTimes(1);
     });
 

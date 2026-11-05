@@ -5,10 +5,15 @@ function codedMessage(errorData, fallback) {
     const d = errorData && errorData.detail;
     const code = (d && typeof d === 'object' && typeof d.code === 'string' && d.code)
         || (errorData && typeof errorData.code === 'string' && errorData.code) || '';
-    const i18n = typeof window !== 'undefined' ? window.CloudeI18n : null;
-    if (!code || !i18n || typeof i18n.t !== 'function') return fallback;
+    if (!code || typeof globalThis.CloudeTr !== 'function') return fallback;
     const key = `api.error.${code}`;
-    const sentence = i18n.t(key);
+    const params = {};
+    if (d && typeof d === 'object' && d.params && typeof d.params === 'object') {
+        for (const [name, value] of Object.entries(d.params)) {
+            if (typeof value === 'string') params[name] = value;
+        }
+    }
+    const sentence = globalThis.CloudeTr(key, params);
     return sentence && sentence !== key ? sentence : fallback;
 }
 

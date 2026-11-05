@@ -6,8 +6,9 @@ from typing import Sequence
 from src.core.work.work_ladder.w1 import W1
 from src.core.work.work_ladder.w2 import W2
 from src.core.work.work_ladder.w3 import W3
+from src.core.work.work_ladder.w4 import W4
 
-MIGRATIONS: Sequence[str] = (W1, W2, W3)
+MIGRATIONS: Sequence[str] = (W1, W2, W3, W4)
 
 VERSION = len(MIGRATIONS)
 

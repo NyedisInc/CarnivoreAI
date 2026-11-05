@@ -1,4 +1,5 @@
 import { t } from '../i18n/index.svelte';
+import { confirmOk } from '../confirm-ok/confirm-ok';
 import { headingDrawn, openHeadingRename } from './heading-rename.svelte';
 import {
     announce, announceFailure, applyGroups, hg, reasonOf, refreshGroups, usableGroups,
@@ -58,17 +59,17 @@ export async function moveGroup(groupUuid: string, delta: number): Promise<boole
 export async function deleteGroup(groupUuid: string): Promise<boolean> {
     const G = usableGroups();
     const group = G?.groupByUuid(groupUuid);
-    const { API: api, App: app } = hg();
-    if (!group || !api || !app) return false;
+    const { API: api } = hg();
+    if (!group || !api) return false;
     const count = group.members.length;
-    const ok = await app.showConfirmModal(
-        t('sidebar.group.remove.title'),
-        t('sidebar.group.remove.message', { name: group.name }),
-        t('sidebar.group.remove.detail', { count }),
-        t('sidebar.group.remove.confirm'),
-        t('sidebar.group.remove.cancel'),
-        'danger',
-    );
+    const ok = await confirmOk({
+        title: t('sidebar.group.remove.title'),
+        message: t('sidebar.group.remove.message', { name: group.name }),
+        details: t('sidebar.group.remove.detail', { count }),
+        okLabel: t('sidebar.group.remove.confirm'),
+        cancelLabel: t('sidebar.group.remove.cancel'),
+        variant: 'danger',
+    });
     if (!ok) return false;
     try {
         const body = await api.deleteSessionGroup(groupUuid);

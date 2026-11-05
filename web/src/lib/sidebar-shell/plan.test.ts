@@ -6,6 +6,7 @@ import { setQuery } from '../drawer/search';
 import { buildListPlan, parseAttrs, type ListPlan, type PaintInput, type SectionPlan } from './plan';
 import { setPreviewOrder } from '../drawer/section-order';
 import type { LegacyDrawer, SidebarRow } from './legacy';
+import { setEmptySectionsHidden } from '../drawer/empty-sections.svelte';
 import { setCountFilter } from '../drawer/count-filter.svelte';
 import type { PackMachine } from '../pack-machines/pack-machines-store.svelte';
 
@@ -64,10 +65,23 @@ describe('buildListPlan', () => {
         expect(buildListPlan(stubs(), input([A, B], { opts: { query: 'zzz-no-match' } }))!.parts.some((p) => p.key === 'terminals')).toBe(false);
     });
 
+    it('FILES draws a quiet line while empty, and is dropped by hide empty sections or a search (#2801)', () => {
+        const emptyOf = (plan: ListPlan): string | undefined => (plan.parts.find((p) => p.key === 'files') as { empty?: string } | undefined)?.empty;
+        expect(emptyOf(buildListPlan(stubs(), input([A, B]))!)).toBe('no files open');
+        setEmptySectionsHidden(true);
+        try {
+            expect(buildListPlan(stubs(), input([A, B]))!.parts.some((p) => p.key === 'files')).toBe(false);
+        } finally {
+            setEmptySectionsHidden(false);
+        }
+        setQuery('zzz-no-match');
+        expect(buildListPlan(stubs(), input([A, B], { opts: { query: 'zzz-no-match' } }))!.parts.some((p) => p.key === 'files')).toBe(false);
+    });
+
     it('keeps the contract order: pinned, layouts, groups, companies, then the kind bands', () => {
         const layout: SidebarRow = { name: 'layout:l1', kind: 'layout', label: 'focus', project_id: null };
         const plan = buildListPlan(stubs({ layouts: { bandRows: () => ({ label: 'layouts', rows: [layout] }) } }), input([A, B, T, W]))!;
-        expect(plan.parts.map((p) => p.key)).toEqual(['pinned', 'layouts', 'groups', 'companies', 'c:orphaned', 'terminals', 'browsers']);
+        expect(plan.parts.map((p) => p.key)).toEqual(['pinned', 'layouts', 'groups', 'companies', 'c:orphaned', 'terminals', 'browsers', 'files']);
     });
 
     it('draws the sections in the user\'s stored order, a hidden one keeping its place, and a drag preview wins (#1687)', () => {
@@ -76,7 +90,7 @@ describe('buildListPlan', () => {
         const stored = { ...Store.current(), sections: ['browsers', 'terminals', 'companies', 'groups', 'layouts', 'pinned'] };
         const plan = buildListPlan(drawer, input([A, B, T, W], { arrangement: stored }))!;
         const keys = plan.parts.map((p) => p.key);
-        expect(keys).toEqual(['browsers', 'terminals', 'companies', 'c:orphaned', 'groups', 'layouts', 'pinned']);
+        expect(keys).toEqual(['browsers', 'files', 'terminals', 'companies', 'c:orphaned', 'groups', 'layouts', 'pinned']);
         expect(keys.length).toBeGreaterThan(5);
         expect(keys.indexOf('c:orphaned')).toBe(keys.indexOf('companies') + 1);
         setPreviewOrder(['pack', 'pinned', 'layouts', 'groups', 'companies', 'rogue', 'terminals', 'browsers']);
@@ -161,7 +175,7 @@ describe('the pinned heading and the pack section (#1687)', () => {
         expect(group.heading.ledHtml, 'negative control: a folded group keeps its light').toBe('<led>');
         expect(pinned.heading.ledHtml).toBe('');
         const keys = plan.parts.map((p) => p.key);
-        expect(keys.slice(-3)).toEqual(['terminals', 'browsers', 'pack']);
+        expect(keys.slice(-3)).toEqual(['browsers', 'files', 'pack']);
         const pack = plan.parts[plan.parts.length - 1]!;
         expect(pack.type).toBe('pack');
         if (pack.type !== 'pack') return;

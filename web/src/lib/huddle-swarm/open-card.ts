@@ -2,6 +2,7 @@ import { t } from '../i18n/index.svelte';
 import { authFetch, ApiError } from '../../opscenter/api/auth.svelte';
 import { boardFocus } from '../swarm-board/board-focus.svelte';
 import { openHuddleSwarmScreen } from './screen-host';
+import { addLocalToast } from '../toast-surface';
 
 export interface OpenCardDeps {
   read: (path: string) => Promise<{ archived_at?: number | null }>;
@@ -10,9 +11,8 @@ export interface OpenCardDeps {
 }
 
 function toast(title: string): void {
-  const surface = (globalThis as { ToastManager?: { add(item: Record<string, unknown>): void } }).ToastManager;
-  if (surface) surface.add({ id: `swarm-card-gone:${Date.now()}`, session_id: null, kind: 'SwarmCardGone', title, body: null, local: true });
-  else console.warn('[swarm-card]', title);
+  const shown = addLocalToast({ id: `swarm-card-gone:${Date.now()}`, session_id: null, kind: 'SwarmCardGone', title, body: null, local: true });
+  if (!shown) console.warn('[swarm-card]', title);
 }
 
 const DEFAULT_DEPS: OpenCardDeps = { read: (path) => authFetch(path), open: openHuddleSwarmScreen, toast };

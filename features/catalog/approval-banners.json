@@ -17,17 +17,19 @@
     "Reply to an agent's free-text question straight from the banner, even with the Carnivore window closed; a session's banners group together in Notification Center."
   ],
   "how_to": [
-    "In the desktop app, open settings, desktop app, and turn on approval banners. Allow Carnivore under macOS Notifications when asked.",
+    "Banners are on by default: the desktop app asks macOS once at first launch, so allow Carnivore under macOS Notifications. Turn them off in settings, desktop app, approval banners. If the first banner never arrives, the permission line says banners look blocked, with an open system settings button.",
     "When an agent is waiting on you, press a button on its banner. The press answers the dialog the banner showed; if the dialog changed meanwhile, nothing is typed and a 'this question changed' banner opens the app.",
     "A question that takes only a typed reply shows a reply field on its banner: type and send it (2000 characters at most; a longer one is refused and nothing is sent). Multi-select questions open Carnivore instead of offering buttons.",
-    "With desktop notifications: asks only turned on in the desktop app settings, the app mirrors only the toasts that ask you something to macOS."
+    "With desktop notifications: asks only turned on in the desktop app settings, the app mirrors only the toasts that ask you something to macOS.",
+    "Every card the app mirrors is a real banner: grouped by session with the session name under the title, Needs-you cards play their own sound and bounce the Dock, a click opens that session, and the banner leaves Notification Center once the card is answered or cleared anywhere. The development app shows as Carnivore Dev."
   ],
   "id": "approval-banners",
   "issues": [
     2307,
     2354,
     2459,
-    2460
+    2460,
+    2739
   ],
   "keywords": [
     "banner",
@@ -53,7 +55,7 @@
     "src/api/session_dialog_routes.py",
     "macOS/banners/launch.js"
   ],
-  "updated": "2026-10-24",
+  "updated": "2026-10-30",
   "where": [
     "The macOS notification area, while the desktop app is running (the window may be closed)."
   ]

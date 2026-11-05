@@ -151,12 +151,13 @@ def test_review_is_refused_while_an_owner_message_is_unanswered_then_allowed_aft
     assert _review(manager, item)[0]
 
 
-@pytest.mark.parametrize("state", ["review", "done_by_claude"])
-def test_review_and_its_legacy_name_are_both_guarded(manager, state):
+def test_review_is_guarded_and_its_legacy_name_is_refused(manager):
     store, item = _item(manager)
     store.post(item, "q", actor="joe")
-    ok, text = call(manager, "task_manager_update", {"item": item, "state": state})
+    ok, text = call(manager, "task_manager_update", {"item": item, "state": "review"})
     assert not ok and "not ready for review" in text
+    ok, text = call(manager, "task_manager_update", {"item": item, "state": "done_by_claude"})
+    assert not ok and "state must be one of" in text
 
 
 def test_review_is_refused_while_the_agents_own_question_is_open(manager):

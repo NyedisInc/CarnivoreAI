@@ -19,8 +19,8 @@ FIELD = "reason"
 MIN_REASON = 15
 MAX_REASON = 500
 SCHEMA = {FIELD: {"type": "string", "maxLength": MAX_REASON, "description": (
-    f"Only on do not disturb, for a task not assigned to you (else refused: {CODE}; ask with task_manager_ask first): "
-    f"why you must take it, {MIN_REASON}+ characters. Posted on the task for the owner.")}}
+    f"On do not disturb, for a task not assigned to you (else refused: {CODE}; ask with task_manager_ask first): "
+    f"why you take it, {MIN_REASON}+ characters. Posted for the owner.")}}
 TOOLS = frozenset({"task_manager_update", "task_manager_reply", "task_manager_fork", "task_manager_artifact_add", "task_manager_progress_set"})
 
 

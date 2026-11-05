@@ -88,15 +88,6 @@ export async function listSkillMdVersions(locationId: string, context: SkillsCon
     return { versions: Array.isArray(answer.versions) ? answer.versions : [], current: answer.current ?? null };
 }
 
-export function readSkillMdVersion(
-    locationId: string,
-    versionId: number,
-    context: SkillsContext,
-    fetcher: Fetcher = authFetch,
-): Promise<{ content: string; sha256: string }> {
-    return fetcher(`${base(locationId)}/versions/${encodeURIComponent(String(versionId))}${query(context)}`);
-}
-
 export function restoreSkillMdVersion(
     locationId: string,
     versionId: number,

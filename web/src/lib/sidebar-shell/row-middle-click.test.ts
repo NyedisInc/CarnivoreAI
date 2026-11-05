@@ -49,7 +49,7 @@ describe('sidebar row middle click', () => {
         ask.answer = true; ask.calls = [];
         Object.values(api).forEach((f) => f.mockClear()); menuClose.mockClear();
         Object.assign(globalThis, {
-            SessionSidebar: { _rows: ROWS, _fetchAndRender: async () => {}, close() {} },
+            SessionSidebar: { rows() { return this._rows; }, _rows: ROWS, _fetchAndRender: async () => {}, close() {} },
             API: api,
             SessionRowMenuActions: { run: menuClose },
         });

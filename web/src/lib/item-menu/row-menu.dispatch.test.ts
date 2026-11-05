@@ -34,6 +34,7 @@ vi.mock('../sidebar-shell/row-reorder', () => ({
 
 import { contextFromRow, triggerHtml } from './row-context';
 import { bench, loadRunTable, win } from './row-test-env';
+import catalog from '../../../../client/js/i18n/catalog.en.js';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 
@@ -79,6 +80,7 @@ beforeEach(() => {
     registry.ran = [];
     restart.override = (ctrl: unknown, name: unknown, el: unknown) => { calls.push(['runRestart', ctrl, name, !!el]); };
     bench({
+        CloudeI18n: { t: (key: string, params?: Record<string, unknown>) => String((catalog as Record<string, string>)[key] ?? key).replace(/\{(\w+)\}/g, (_m, n: string) => String(params?.[n] ?? '')) },
         SessionLabel: { LABEL_MAX_CHARS: 200 },
         SessionSidebar: { id: 'the-controller' },
         CloudeWeb: {

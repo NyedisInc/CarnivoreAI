@@ -2,19 +2,22 @@
 <script lang="ts">
     import { captureOpener, restoreOpenerFocus } from '../dialog-frame/opener-focus';
     import { onMount } from 'svelte';
+    import { latestOnly } from '../resource-push/latest-only';
     import { registerPageDirty } from '../menu-page/menu-page-dirty';
     import '../ledger/ledger-chrome.css';
     import Page from '../../opscenter/ui/Page.svelte';
-    import { Button, Card, Checkbox, List, ListRow, Select, State, Tag } from '../base';
+    import { Button, Card, List, ListRow, Select, State, Tag } from '../base';
     import { t as appT } from '../i18n/index.svelte';
     import type { Translate } from '../sessions/types';
     import { LAUNCH_MARK_PX, providerMark, wrapperMark } from '../sessions/agent-marks';
     import { openModal } from '../modal';
+    import DisabledProfiles from './DisabledProfiles.svelte';
+    import HiddenToggle from './HiddenToggle.svelte';
     import ImportProfileModal from './ImportProfileModal.svelte';
     import LaunchProfileEditor from './LaunchProfileEditor.svelte';
     import {
         createLaunchProfilesApi, deleteRefusal, errorText,
-        type AccountOption, type CheckResult, type ConnectionOption, type DeleteRefusal, type LaunchProfilesApi,
+        type AccountOption, type CheckResult, type ConnectionOption, type DeleteRefusal, type DisabledProfile, type LaunchProfilesApi,
         type ModelOption, type Preview, type ProfileRow, type UsageResult,
     } from './api';
     import { EXAMPLES, exampleForm } from './examples';
@@ -36,6 +39,7 @@
     let open = $state(embedded);
     let opener: HTMLElement | null = null;
     let rows = $state<ProfileRow[]>([]);
+    let disabled = $state<DisabledProfile[]>([]);
     let revision = $state(0);
     let loading = $state(false);
     let failure = $state<string | null>(null);
@@ -65,7 +69,7 @@
 
     async function load(): Promise<void> {
         loading = true;
-        try { const out = await api.list(); rows = out.profiles; revision = out.revision; failure = null; }
+        try { const out = await api.list(); rows = out.profiles; disabled = out.disabled ?? []; revision = out.revision; failure = null; }
         catch (err) { failure = errorText(err); }
         loading = false;
     }
@@ -142,19 +146,19 @@
         adopt(copy);
     }
 
-    let previewSeq = 0;
+    const previewGate = latestOnly();
     $effect(() => {
         if (!form) return;
         const draft = formToProfile(form);
         const model = previewModel || null;
         if (!draft.id) { preview = null; previewError = null; return; }
-        const seq = ++previewSeq;
+        const isNewest = previewGate.begin();
         const timer = setTimeout(async () => {
             try {
                 const out = await api.previewDraft(draft, model);
-                if (seq === previewSeq) { preview = out; previewError = null; }
+                if (isNewest()) { preview = out; previewError = null; }
             } catch (err) {
-                if (seq === previewSeq) { preview = null; previewError = errorText(err); }
+                if (isNewest()) { preview = null; previewError = errorText(err); }
             }
         }, 350);
         return () => clearTimeout(timer);
@@ -277,12 +281,7 @@
                     <Card title={t('launch_profiles.list.title')} headingLevel={2} data-lp-list>
                         {#snippet children()}
                             {#if shownRows.length === 0 && !loading}<State inline title={t('launch_profiles.list.empty')} data-lp-empty />{/if}
-                            {#if hidden > 0}
-                                <div class="lp-hidden" data-lp-hidden>
-                                    <Checkbox label={t('launch_profiles.list.show_hidden', { count: hidden })} bind:checked={showHidden} data-lp-show-hidden />
-                                    <span class="lp-hint-line">{t('launch_profiles.list.show_hidden_hint')}</span>
-                                </div>
-                            {/if}
+                            <HiddenToggle count={hidden} bind:checked={showHidden} {t} />
                             {#if shownRows.length > 0}
                                 <List density="roomy" label={t('launch_profiles.page.title')}>
                                     {#snippet children()}
@@ -311,6 +310,7 @@
                                     {/snippet}
                                 </List>
                             {/if}
+                            <DisabledProfiles rows={disabled} {t} />
                             {#if !form && shownRows.length > 0}<State inline title={t('launch_profiles.page.pick')} data-lp-pick />{/if}
                         {/snippet}
                     </Card>
@@ -435,8 +435,6 @@
     .lp-item__sub { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; min-width: 0; }
     .lp-item__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lp-item__facts { flex: 1 1 14ch; min-width: 0; color: var(--pl-dim); font-family: var(--pl-mono); font-size: 11px; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .lp-hidden { display: flex; flex-direction: column; gap: var(--oc-space-0-5); padding-bottom: var(--oc-space-2); }
-    .lp-hint-line { color: var(--pl-dim); font-size: var(--oc-fs-hint); }
     .lp-templates { display: flex; flex-wrap: wrap; gap: 8px; }
     .lp-result { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
     .lp-result .oc-label { margin: 0; }

@@ -274,7 +274,7 @@
         font-size: 14px;
         line-height: 1;
         cursor: pointer;
-        --_bd: var(--oc-line-rule);
+        --_bd: var(--oc-focus-quiet);
     }
 
     .wm--phone .wm__elite {
@@ -325,7 +325,7 @@
         line-height: 1.3;
         cursor: pointer;
         border: 1px solid transparent;
-        --_bd: var(--oc-line-rule);
+        --_bd: var(--oc-focus-quiet);
     }
 
     .wm__row--child::before {

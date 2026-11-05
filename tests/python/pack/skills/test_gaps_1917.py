@@ -167,12 +167,12 @@ def _sync(doc, peers, gen=3):
 def test_the_preview_the_matrix_and_the_receiver_view_know_catalog_references():
     ref = ["claude", "sme", "alex/sme", "skill", "1.0.0", "d" * 64, BODY]
     same = owner.Inventory("t", "studio", "ok", warez=(("claude", "sme", "alex/sme", "1.0.0"),))
-    older = owner.Inventory("r", "ripley", "ok", warez=(("claude", "sme", "alex/sme", "0.9.0"),))
+    older = owner.Inventory("r", "bravo", "ok", warez=(("claude", "sme", "alex/sme", "0.9.0"),))
     none = owner.Inventory("n", "newt", "ok")
     other = owner.Inventory("o", "ovo", "ok", warez=(("claude", "sme", "eve/other", "1.0.0"),))
     out = owner.preview(Choices(mode="all"), {}, [same, older, none, other], [ref], {("claude", "sme")})
     words = {c["label"]: c["skills"]["claude/sme"] for c in out["computers"]}
-    assert words["studio"] == "already the same" and words["ripley"] == "will change alex/sme to 1.0.0"
+    assert words["studio"] == "already the same" and words["bravo"] == "will change alex/sme to 1.0.0"
     assert words["newt"] == "will install alex/sme 1.0.0 from warez" and words["ovo"].startswith("conflict: another catalog item")
     assert out["skills"][0]["warez"] is True and out["skills"][0]["size"] == 0 and out["total_bytes"] == 0
     peer = {"state": "in sync", "conflicts": []}

@@ -39,6 +39,10 @@
         color: var(--oc-coral);
     }
 
+    .ap-page .ap-mk-run[data-status='alerted'] {
+        color: var(--oc-cyan);
+    }
+
     .ap-page .ap-mk-run[data-status='skipped'],
     .ap-page .ap-mk-run[data-status='waiting_on_you'] {
         color: var(--oc-yellow);
@@ -319,6 +323,10 @@
 
     .ap-page .ap-lr[data-status='failed'] {
         color: var(--oc-coral);
+    }
+
+    .ap-page .ap-lr[data-status='alerted'] {
+        color: var(--oc-cyan);
     }
 
     .ap-page .ap-lr[data-status='waiting_on_you'] {

@@ -6,11 +6,11 @@ import secrets
 import ssl
 import uuid
 from contextlib import closing
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Sequence, Tuple
 
 import structlog
 
-from src.core.computers import commit, join_identity, join_proto, store
+from src.core.computers import commit, join_identity, join_proto, knock, store
 from src.core.computers.commit import JoinRefused, PackSettingsPort, PeerId, PinListener
 from src.core.computers.invites import Invite, Invites
 from src.core.computers.join_limits import PRE_PER_SOURCE, PRE_TOTAL, Rates, Slots
@@ -28,12 +28,15 @@ class JoinServer:
                  open_db: commit.OpenDb, listener: PinListener, pack: PackSettingsPort, host: str = "0.0.0.0", port: int = 0,
                  addresses: Callable[[], Sequence[str]] = lambda: (), link_port: int = 0, app_version: str = "",
                  is_member: Callable[[], bool] = lambda: False, notify: Optional[commit.Notify] = None, fail_delay: float = 1.0,
-                 rates: Optional[Rates] = None, on_member: Optional[Callable[[str], None]] = None, lan_only: bool = True) -> None:
+                 rates: Optional[Rates] = None, on_member: Optional[Callable[[str], None]] = None, lan_only: bool = True,
+                 findable: Callable[[], bool] = lambda: False,
+                 on_knock: Optional[Callable[[knock.Knock, str], Awaitable[Dict[str, Any]]]] = None) -> None:
         self._inv, self._ident, self._key, self._pub = invites, identity, fed_key, public_key
         self._iid, self._label, self._open_db, self._listener, self._pack = own_iid, own_label, open_db, listener, pack
         self._host, self._want_port, self._addresses, self._link_port = host, port, addresses, link_port
         self._app_version, self._is_member, self._notify, self._delay = app_version, is_member, notify, fail_delay
         self._on_member, self._lan_only = on_member, lan_only
+        self._findable, self._on_knock = findable, on_knock
         self._slots, self._rates = Slots(), rates or Rates()
         self._server: Optional[asyncio.AbstractServer] = None
         self._session_busy = False
@@ -52,7 +55,7 @@ class JoinServer:
 
     async def sync(self) -> bool:
         async with self._sync_lock:
-            if self._is_member() or not self._inv.any_live():
+            if self._is_member() or not (self._inv.any_live() or self._findable()):
                 await self.stop()
                 return False
             if self._server is None:
@@ -98,13 +101,19 @@ class JoinServer:
                 await join_proto.read_magic(reader, join_proto.FIRST_MESSAGE_TIMEOUT)
                 return await join_proto.read_message(reader, join_proto.FIRST_MESSAGE_TIMEOUT)
 
-            hello = join_proto.check_hello(await asyncio.wait_for(first(), join_proto.FIRST_MESSAGE_TIMEOUT))
+            first_msg = await asyncio.wait_for(first(), join_proto.FIRST_MESSAGE_TIMEOUT)
+            knocked = join_proto.check_knock(first_msg) if first_msg.get("t") == "knock" else None
+            hello = None if knocked is not None else join_proto.check_hello(first_msg)
         except join_proto.Incompatible:
             log.info("computer_join_incompatible")
             await self._refuse(writer, "incompatible")
             return
         finally:
             self._slots.leave(addr)
+        if knocked is not None:
+            await self._knock(writer, knock.Knock.from_message(knocked), addr)
+            return
+        assert hello is not None
         if self._session_busy:
             await self._refuse(writer, "busy")
             return
@@ -123,6 +132,19 @@ class JoinServer:
             self._session_busy = False
             if not state["resolved"]:
                 self._inv.finish_attempt(inv, ok=False, mode=hello["mode"], addr=addr)
+
+    async def _knock(self, writer: asyncio.StreamWriter, asked: knock.Knock, addr: str) -> None:
+        if self._on_knock is None or not self._findable():
+            await self._refuse(writer, "refused")
+            return
+        doc = await self._on_knock(asked, addr)
+        if doc.get("t") == "error":
+            await self._refuse(writer, str(doc.get("code")))
+            return
+        try:
+            await join_proto.write_message(writer, doc)
+        except (ConnectionError, ssl.SSLError, OSError):
+            pass
 
     async def _refuse(self, writer: asyncio.StreamWriter, code: str, left: Optional[int] = None) -> None:
         await asyncio.sleep(self._delay)

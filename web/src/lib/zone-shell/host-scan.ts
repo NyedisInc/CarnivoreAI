@@ -28,7 +28,7 @@ export const HOST_RULES: readonly HostRule[] = [
   { name: 'core-manifest-read', pattern: /CORE_MANIFESTS\[/, owners: ['opscenter/widgets/core-manifests.ts'] },
   { name: 'cell-manifest-core-table', pattern: /cellManifestFor\([^)]*CORE_MANIFESTS/, owners: [] },
   { name: 'bar-handle', pattern: /<BarHandle\b/, owners: ['lib/zone-shell/'] },
-  { name: 'bar-pin', pattern: /<BarPin[\s/>]/, owners: ['lib/session-rail/SessionRail.svelte', 'lib/sidebar-widgets/SidebarRailShell.svelte', 'style-guide/specimens/BarVisibilityDemo.svelte', 'lib/drawer-tabs/DrawerMenu.svelte'] },
+  { name: 'bar-pin', pattern: /<BarPin[\s/>]/, owners: ['lib/session-rail/SessionRail.svelte', 'lib/sidebar-widgets/SidebarRailShell.svelte', 'style-guide/specimens/BarVisibilityDemo.svelte', 'lib/drawer-tabs/DrawerMenu.svelte', 'lib/widgets-page/settings/TryIt.svelte'] },
   {
     name: 'bar-pin-action',
     pattern: /toggleBarPin\(|pinStripNode\(|pinBarNode\(/,
@@ -56,7 +56,7 @@ export const HOST_RULES: readonly HostRule[] = [
   {
     name: 'dialog-frame',
     pattern: /<[a-z][\w-]*\s[^<]*?\s(?:role=["'](?:alert)?dialog["']|aria-modal=)/,
-    owners: ['lib/launchpad/ModalShell.svelte', 'lib/dialog-frame/AnchoredPopup.svelte', 'lib/elite/', ...Object.keys(DIALOG_OPT_OUT)],
+    owners: ['lib/dialog-frame/ModalShell.svelte', 'lib/dialog-frame/AnchoredPopup.svelte', 'lib/elite/', ...Object.keys(DIALOG_OPT_OUT)],
   },
   {
     name: 'page-row-menu',

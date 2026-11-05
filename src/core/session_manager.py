@@ -18,6 +18,8 @@ import structlog
 
 if TYPE_CHECKING:
     from src.core.session_adopt_identity import AdoptIdentity
+    from src.core.session_agent_provenance import StoredLaunch
+    from src.core.session_instance_index import InstanceIndex
     from src.core.session_adopt_persist import AdoptPersistResult
     from src.core.session_create_persist import CreatePersistResult
     from src.core.session_lifecycle import ReconcileOutcome
@@ -58,6 +60,7 @@ from src.core.sessions.name_locks import NameLocks
 from src.core.sessions.pending_registration import hold_pending_registration
 from src.core.sessions.theme_store import ThemeStore
 from src.core.sessions.toast_inbox import ToastInbox
+from src.core.session_output import tap as output_tap
 from src.core.sessions import remote_sessions
 from src.core.hosts.ddl import LOCAL_HOST_KEY
 from src.core.hosts.identity import is_remote_backend, parse_remote_session_id
@@ -77,12 +80,13 @@ from src.core.session_agent_evidence import (
 )
 from src.core.session_theme_resolution import resolve_theme
 from src.core import listing_gather
+from src.core.auto_sleep.pane_ports import PORT_WATCH
 from src.core.db_reuse.core_read import lend_for_state_dir, lend_pooled_or_raise
 from src.core.sessions.listing_connection import lend_name_read_connection
 from src.core import session_ghost_reap, session_name_claim, session_sleep
 from src.core.pack.identity import home as project_home
 from src.core.listing_prefetch import ListingPrefetch
-from src.core.session_token_usage.listing_model_facts import ModelListingFacts
+from src.core.session_token_usage.listing_model_facts import ModelListingFacts, facts_matching_family
 from src.core import session_agent_infer_apply
 from src.core.session_agent_infer import restart_agent_type
 from src.core.session_agent_infer_resweep import AgentResweep
@@ -267,6 +271,7 @@ class SessionManager:
     ) -> Callable[[bytes], None]:
         def _on_output(data: bytes) -> None:
             self._registry.publish(session_id, data)
+            output_tap.TAP.emit(session_id, data)
         return _on_output
 
     def _make_viewer_probe(self, session_id: str) -> Callable[[], bool]:
@@ -737,10 +742,10 @@ class SessionManager:
         epoch = self._work_stamp_epoch(session_id, tmux_name)
         if epoch is None:
             return True
-        from src.core.session_work_stamp import persist_instance_stamp
+        from src.core.session_work_stamp import lazy_stamp_connection, persist_instance_stamp
 
         persist_instance_stamp(
-            self._writable_datastore_connection,
+            lambda: lazy_stamp_connection(self),
             session_id,
             tmux_name,
             tmux_socket=self.tmux_socket_name(),
@@ -1024,7 +1029,9 @@ class SessionManager:
             self._pending_agent_registration[session_id] = (tmux_session_name, registration)
             spawn_env = self.get_env_for_spawn(session_id)
             if auto_start_claude:
-                spawn_env = await launch_env.new_pane_env(spawn_env, claude_account=claude_account)
+                spawn_env = await launch_env.new_pane_env(
+                    spawn_env, claude_account=claude_account,
+                    family=launch_record(resolved_agent_type, self._wrappers_reader()).family)
             if extra_env:
                 spawn_env = {**spawn_env, **dict(extra_env)}
 
@@ -1799,12 +1806,12 @@ class SessionManager:
         running_context_used_pct: Optional[float] = None
         resolved_family_name = display_family.name if display_family else None
         if model_facts is not None and tmux_session_name in model_facts:
-            row_model_facts = model_facts[tmux_session_name]
-            if row_model_facts.family == resolved_family_name:
-                running_model = row_model_facts.model
-                running_model_effort = row_model_facts.model_effort
-                running_model_tier = row_model_facts.model_tier
-                running_context_used_pct = row_model_facts.context_used_pct
+            row_model_facts = facts_matching_family(
+                model_facts[tmux_session_name], resolved_family_name, tmux_name=tmux_session_name)
+            running_model = row_model_facts.model
+            running_model_effort = row_model_facts.model_effort
+            running_model_tier = row_model_facts.model_tier
+            running_context_used_pct = row_model_facts.context_used_pct
 
         pane_epoch = unread_identity.remember(
             self._unread_epochs,
@@ -1841,7 +1848,7 @@ class SessionManager:
                     unread=unread,
                     tmux_status=raw_tmux_status,
                     working_dir=sess.working_dir,
-                    now=datetime.now(timezone.utc),
+                    now=datetime.now(timezone.utc), socket=self.tmux_socket_name(),
                     restarted_at=watcher.process_floor_for(session_id) if watcher is not None else None,
                 )
             )
@@ -1865,7 +1872,7 @@ class SessionManager:
         return SessionInfo(
             session=sess_out,
             recent_logs=self.get_recent_logs(session_id=session_id),
-            local_servers=[],
+            local_servers=PORT_WATCH.servers(live_pid),
             stats=stats,
             session_backend=backend_name,
             tmux_session=tmux_session_name,
@@ -2460,7 +2467,7 @@ class SessionManager:
             return None
         return detect_agent_type(scrollback_text)
 
-    def _stored_launch_for_listing(self, *, socket, name, epoch):
+    def _stored_launch_for_listing(self, *, socket: str, name: str, epoch: Optional[int]) -> "StoredLaunch":
         from src.core.session_agent_provenance import (
             NOT_KNOWN,
             stored_launch_for,
@@ -2486,7 +2493,7 @@ class SessionManager:
             except sqlite3.Error:
                 pass
 
-    def _label_for_tmux_name(self, tmux_name):
+    def _label_for_tmux_name(self, tmux_name: Optional[str]) -> Optional[str]:
         from src.core.session_label import label_for_name
 
         if not tmux_name:
@@ -2509,21 +2516,21 @@ class SessionManager:
                 except sqlite3.Error:
                     pass
 
-    def _label_identity_for_names(self, names):
+    def _label_identity_for_names(self, names: List[Optional[str]]) -> dict[str, tuple[Optional[str], Optional[dict]]]:
         with lend_name_read_connection(self):
             return {
                 name: (self._label_for_tmux_name(name), self._identity_for_live_name(name))
                 for name in names
             }
 
-    def _name_read_connection(self):
+    def _name_read_connection(self) -> Tuple[Optional[sqlite3.Connection], bool]:
         lent = getattr(self._borrowed, "conn", None)
         if lent is not None:
             return lent, False
         fresh = lend_for_state_dir(lambda: settings.get_state_dir())
         return fresh, fresh is not None
 
-    def _identity_for_live_name(self, tmux_name):
+    def _identity_for_live_name(self, tmux_name: Optional[str]) -> Optional[dict]:
         from src.core.session_store import identity_for_live_name
 
         if not tmux_name:
@@ -2546,11 +2553,8 @@ class SessionManager:
                 except sqlite3.Error:
                     pass
 
-    def _instance_index_for_listing(self, *, socket, names):
-        from src.core.session_instance_index import (
-            InstanceIndex,
-            build_instance_index,
-        )
+    def _instance_index_for_listing(self, *, socket: str, names: List[Optional[str]]) -> "InstanceIndex":
+        from src.core.session_instance_index import InstanceIndex, build_instance_index
 
         wanted = [n for n in names if n]
         if not wanted:
@@ -2571,7 +2575,7 @@ class SessionManager:
                 except sqlite3.Error:
                     pass
 
-    def _identity_for_instance(self, tmux_name, epoch):
+    def _identity_for_instance(self, tmux_name: str, epoch: Optional[int]) -> Optional[dict]:
         from src.core.session_store import identity_for_instance
 
         if not tmux_name or epoch is None:
@@ -2597,7 +2601,7 @@ class SessionManager:
                 except sqlite3.Error:
                     pass
 
-    def _label_for_instance(self, tmux_name, epoch):
+    def _label_for_instance(self, tmux_name: str, epoch: Optional[int]) -> Optional[str]:
         from src.core.session_label import label_for_instance
 
         if not tmux_name or epoch is None:
@@ -3125,14 +3129,14 @@ class SessionManager:
             working_dir = row_working_dir
 
         try:
-            from src.core.attention.codex_gather import DEFAULT_CODEX_HOME
+            from src.core.attention.codex_pane_home import pane_codex_home
             from src.core.attention.codex_stores import resolve_primary_uuid
 
             upgraded = upgrade_codex_adopted_target(
                 target,
                 working_dir=working_dir,
                 pick=lambda wd: resolve_primary_uuid(
-                    DEFAULT_CODEX_HOME, pane_current_path=wd, pane_title=""
+                    pane_codex_home(self.tmux_socket_name(), name), pane_current_path=wd, pane_title=""
                 ),
             )
         except Exception as exc:  # noqa: BLE001
@@ -3293,7 +3297,8 @@ class SessionManager:
             launch_env._config_path(), session_uuid=self._row_identity_for_tmux_name(name, socket_name).get("session_uuid"),
             family=resume_family, requested=account_id, pinned_box=account_pinned, persist=persist_account)
         if agent_command or chosen_command:
-            refusal = await launch_env.restart_refusal(socket_name, name, claude_account=account_plan.account_id)
+            refusal = await launch_env.restart_refusal(
+                socket_name, name, claude_account=account_plan.account_id, family=resume_family)
             if refusal:
                 return {
                     "name": name,
@@ -3311,7 +3316,8 @@ class SessionManager:
                     "conversation": resume_target.outcome,
                 }
         if spawn_env is not None and (agent_command or chosen_command):
-            spawn_env = await launch_env.respawn_pane_env(spawn_env, claude_account=account_plan.account_id)
+            spawn_env = await launch_env.respawn_pane_env(
+                spawn_env, claude_account=account_plan.account_id, family=resume_family)
         if replayed and replayed.staged:
             spawn_env = {**(spawn_env or {}), **replayed.staged}
 
@@ -3471,14 +3477,13 @@ class SessionManager:
             if not candidate or candidate in presence_by_uuid:
                 continue
             from src.core.agent_families import resolve_agent_type
-            from src.core.session_transcript_presence import (
-                family_conversation_presence,
-            )
+            from src.core.attention.codex_pane_home import pane_codex_home
+            from src.core.session_transcript_presence import family_conversation_presence
 
             presence = family_conversation_presence(
                 resolve_agent_type(stored_type, settings.load_auth_config().agents.wrappers)[0].name,
                 candidate,
-                working_dir=str(Path(settings.default_working_dir).expanduser()),
+                working_dir=str(Path(settings.default_working_dir).expanduser()), codex_home=pane_codex_home(self.tmux_socket_name(), name),
             )
             presence_by_uuid[candidate] = (presence.outcome, presence.detail)
 

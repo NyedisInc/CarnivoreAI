@@ -333,7 +333,7 @@ test('the version chip left the header and is stamped through a meta tag', () =>
         'the version chip must not be back in the header: it is '
         + 'flex-shrink: 0, so every pixel it takes comes off the title '
         + "truncation budget on every screen including the terminal's");
-    assert.match(indexHtml, /<meta name="cloude-app-version" content="\{\{VERSION\}\}">/,
+    assert.match(indexHtml, /<meta name="cloude-app-version" content="\{\{VERSION\}\}" data-dev-build="\{\{DEV_BUILD\}\}">/,
         'src/main.py substitutes {{VERSION}} by plain string replace; the '
         + 'meta tag is how the runtime-built bar gets the value');
 });

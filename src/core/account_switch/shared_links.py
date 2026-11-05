@@ -73,7 +73,8 @@ def shared_root(provider: str) -> str:
 
 
 def is_default_profile(provider: str, profile_dir: str) -> bool:
-    return _expanded(profile_dir) == _expanded(SHARED_ROOTS[provider])
+    root = SHARED_ROOTS.get(provider)
+    return root is not None and _expanded(profile_dir) == _expanded(root)
 
 
 def entry_status(profile_dir: str, provider: str, entry: str) -> str:

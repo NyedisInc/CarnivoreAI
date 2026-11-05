@@ -687,7 +687,7 @@ def test_a_rotation_never_writes_or_clears_a_pin_through_the_real_persist_path(t
 
     config = tmp_path / "config.json"
     config.write_text(_json.dumps({session_pin.PINS_KEY: {"u1": "old"}}))
-    monkeypatch.setattr(session_pin, "require_launchable", lambda path, account_id: None)
+    monkeypatch.setattr(session_pin, "require_launchable", lambda path, account_id, provider="claude": None)
 
     async def go(persist: bool):
         plan = await restart_account.resolve(
@@ -780,7 +780,7 @@ def test_every_outcome_reaches_destinations_once_with_its_own_words(monkeypatch,
     monkeypatch.setattr(limit_rotate.resource_push, "notify", lambda topic: None)
     limit_rotate.Rotation(None, lambda: None).notify(
         outcome, session="cloude_a", from_account_id="old", to_account_id="new", limit_kind="weekly", moved=True)
-    assert [e.type_id for e in events] == ["session.limit_rotation"]
+    assert [e.type_id for e in events] == ["account.switched"]
     rendered = copy.render(events[0], get_kind("slack"), details_on=True)
     title, phrase = _WORDING[outcome]
     assert rendered.title == title and phrase in rendered.body and "cloude_a" in rendered.body

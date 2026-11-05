@@ -11,8 +11,23 @@ export interface Group {
 
 export function groupRows(families: readonly Family[], types: readonly TypeRow[]): Group[] {
     return families
-        .map((family) => ({ family, rows: types.filter((row) => row.family === family.id) }))
+        .map((family) => ({ family, rows: types.filter((row) => row.family === family.id && row.hidden !== true) }))
         .filter((group) => group.rows.length > 0);
+}
+
+export interface GroupSwitch {
+    readonly state: 'all' | 'none' | 'some';
+    readonly flip: readonly TypeRow[];
+    readonly next: boolean;
+    readonly disabled: boolean;
+}
+
+export function groupSwitch(rows: readonly TypeRow[], cellFor: (row: TypeRow) => Cell | undefined, lockFor: (row: TypeRow) => string): GroupSwitch {
+    const writable = rows.filter((row) => { const c = cellFor(row); return c !== undefined && c.locked !== true && lockFor(row) === ''; });
+    const on = writable.filter((row) => cellFor(row)?.value === true).length;
+    const state = writable.length > 0 && on === writable.length ? 'all' : on === 0 ? 'none' : 'some';
+    const next = state !== 'all';
+    return { state, next, disabled: writable.length === 0, flip: writable.filter((row) => (cellFor(row)?.value === true) !== next) };
 }
 
 export function destinationColumns(settings: RoutingSettings): Column[] {
@@ -30,7 +45,7 @@ export function cellOf(settings: RoutingSettings, column: string, typeId: string
 export function lockReason(row: TypeRow, column: string): '' | 'in_app' | 'health' {
     if (column === SCREEN) return '';
     if (!row.defaults.outside_locked_off) return '';
-    return row.family === 'in_app' ? 'in_app' : 'health';
+    return row.id === 'alert.notifications' ? 'health' : 'in_app';
 }
 
 export function linkReasonKey(reason: string): string {

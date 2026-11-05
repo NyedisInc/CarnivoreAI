@@ -16,6 +16,10 @@ ROW_DEV_CHANNELS: str = "dev_channels"
 ROW_FOLDER_TRUST: str = "folder_trust"
 ROW_EXTERNAL_IMPORTS: str = "external_imports"
 ROW_CHROME_DECLINE: str = "chrome_decline"
+ROW_TRUST_PERMISSIONS: str = "trust_permissions"
+ROW_BYPASS_ACCEPT: str = "bypass_accept"
+ROW_CHROME_ACCEPT: str = "chrome_accept"
+ROW_MCP_SERVER: str = "mcp_server"
 ROW_CLAUDE_PERMISSION: str = "claude_permission"
 ROW_CODEX_APPROVAL: str = "codex_approval"
 ROW_AGENT_WRITES: str = "agent_writes"
@@ -43,7 +47,11 @@ ROWS: Tuple[RowInfo, ...] = (
     RowInfo(ROW_DEV_CHANNELS, "devChannels", KIND_STARTUP, True, True),
     RowInfo(ROW_FOLDER_TRUST, "folderTrust", KIND_STARTUP, True, True),
     RowInfo(ROW_EXTERNAL_IMPORTS, "externalImports", KIND_STARTUP, True, True),
-    RowInfo(ROW_CHROME_DECLINE, "chromeDecline", KIND_STARTUP, True, True),
+    RowInfo(ROW_CHROME_DECLINE, "chromeDecline", KIND_STARTUP, True, False),
+    RowInfo(ROW_TRUST_PERMISSIONS, "trustPermissions", KIND_STARTUP, False, True),
+    RowInfo(ROW_BYPASS_ACCEPT, "bypassAccept", KIND_STARTUP, False, True),
+    RowInfo(ROW_CHROME_ACCEPT, "chromeAccept", KIND_STARTUP, False, True),
+    RowInfo(ROW_MCP_SERVER, "mcpServer", KIND_STARTUP, False, True),
     RowInfo(ROW_CLAUDE_PERMISSION, "claudePermission", KIND_PROMPT, False, True),
     RowInfo(ROW_CODEX_APPROVAL, "codexApproval", KIND_PROMPT, False, True),
     RowInfo(ROW_AGENT_WRITES, "agentWrites", KIND_WRITES, False, True),

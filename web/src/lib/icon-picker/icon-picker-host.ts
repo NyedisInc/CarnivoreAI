@@ -1,3 +1,4 @@
+/* `mountPanel` IS THE ONLY WAY A COMPONENT REACHES THE DOCUMENT */
 import { mountPanel, unmountPanel } from '../mount';
 import IconPicker from './IconPicker.svelte';
 

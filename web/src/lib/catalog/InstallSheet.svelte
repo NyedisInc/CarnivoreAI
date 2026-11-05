@@ -1,7 +1,7 @@
 <!-- could not be read -->
 <script lang="ts">
     import { onMount } from 'svelte';
-    import ModalShell from '../launchpad/ModalShell.svelte';
+    import ModalShell from '../dialog-frame/ModalShell.svelte';
     import PreviewFacts from './InstallPreview.svelte';
     import InstallChoices from './InstallChoices.svelte';
     import { SKILL_KEYS, reasonOf, refusalMessage } from '../../../../client/js/labels/skill.js';

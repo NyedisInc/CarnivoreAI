@@ -196,7 +196,7 @@ class RecordingLink:
         return SimpleNamespace(status_code=200, json=lambda: {"result": {"content": []}})
 
 
-def test_a_remote_bodys_task_manager_call_goes_to_the_home_in_the_state_names_an_older_build_reads(world):
+def test_a_remote_bodys_task_manager_call_goes_to_the_home_in_the_current_names(world):
     world.current["dir"] = world.dirs["B"]
     link = RecordingLink()
     peer_links.LINKS = link
@@ -208,10 +208,10 @@ def test_a_remote_bodys_task_manager_call_goes_to_the_home_in_the_state_names_an
                        ("task_manager_batch_run", {"ops": [{"op": "update", "item": 3, "state": "waiting"}, {"op": "update", "item": 4, "state": "todo"}]}),
                        ("swarm_report", {"summary": "state review", "state": "review"})):
         asyncio.run(proxy_server.proxy_client.maybe_forward(view, caller, name, args))
-    assert link.sent[0]["args"] == {"item": 3, "state": "done_by_claude", "text": "review"}
-    assert [op["state"] for op in link.sent[1]["args"]["ops"]] == ["waiting_install", "back_burner"]
+    assert link.sent[0]["args"] == {"item": 3, "state": "review", "text": "review"}
+    assert [op["state"] for op in link.sent[1]["args"]["ops"]] == ["waiting", "todo"]
     assert link.sent[2]["args"] == {"summary": "state review", "state": "review"}
-    assert [call["tool"] for call in link.sent] == ["huddle_update", "huddle_batch", "swarm_report"]
+    assert [call["tool"] for call in link.sent] == ["task_manager_update", "task_manager_batch_run", "swarm_report"]
 
 
 def test_a_home_that_advertises_the_task_manager_names_hears_them(world):

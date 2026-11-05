@@ -1,0 +1,41 @@
+/* and the three */
+@layer components {
+  .pbs-modal .modal-content { max-width: 460px; }
+
+  .pbs-explain,
+  .pbs-none {
+    margin: 0 0 var(--oc-space-3);
+    font-size: var(--oc-fs-micro, 10px);
+    color: var(--oc-text-muted);
+  }
+
+  .pbs-label {
+    margin: var(--oc-space-4) 0 var(--oc-space-1);
+    font-size: var(--oc-fs-micro, 10px);
+    font-weight: 400;
+    letter-spacing: var(--oc-tracking-label, 0.6px);
+    text-transform: uppercase;
+    color: var(--oc-text-muted);
+  }
+
+  .pbs-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--oc-space-2);
+    margin-top: var(--oc-space-3);
+  }
+
+  .pbs-remove {
+    display: inline-flex;
+    align-items: center;
+    height: var(--oc-row-h-dense);
+  }
+
+  @media (max-width: 1023px) {
+    .pbs-modal [data-share-row] { padding-block: calc((var(--oc-tap) - var(--oc-row-h-dense)) / 2); }
+  }
+
+  .pbs-once { margin-bottom: var(--oc-space-1); }
+  .pbs-warn { margin: var(--oc-space-2) 0 0; font-size: var(--oc-fs-micro, 10px); color: var(--oc-text-muted); }
+  .pbs-error { margin: var(--oc-space-3) 0 0; font-size: var(--oc-fs-micro, 10px); color: var(--oc-coral); }
+}

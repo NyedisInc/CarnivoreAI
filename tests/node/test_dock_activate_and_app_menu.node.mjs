@@ -9,7 +9,8 @@ const require = Module.createRequire(path.join(macDir, 'x.js'));
 const { createActivateHandler } = require(path.join(macDir, 'dock-activate.js'));
 
 const menuDir = path.join(macDir, 'app-menu');
-const { buildTemplate } = require(path.join(menuDir, 'index.js'));
+const { buildTemplate, installApplicationMenu } = require(path.join(menuDir, 'index.js'));
+const go = require(path.join(menuDir, 'go.js'));
 const { MENU_VERBS, MAIN_ACTIONS, sendVerb } = require(path.join(menuDir, 'commands.js'));
 const { auditAccelerators, RESERVED_CHORDS } = require(path.join(menuDir, 'chords.js'));
 
@@ -83,8 +84,8 @@ t('Settings has Cmd-, and Quit has Cmd-Q', () => {
   const m = sub(build().tpl, 'carnivore');
   assert.ok(m.some((i) => i.accelerator === 'Cmd+,')); assert.ok(m.some((i) => i.accelerator === 'Cmd+Q'));
 });
-t('1 top-level order is Carnivore, File, Edit, View, Session, Window, Help (by id)', () => {
-  assert.deepEqual(build().tpl.map((m) => m.id), ['carnivore', 'file', 'edit', 'view', 'session', 'window', 'help']);
+t('1 top-level order is Carnivore, File, Edit, View, Go, Session, Window, Help (by id)', () => {
+  assert.deepEqual(build().tpl.map((m) => m.id), ['carnivore', 'file', 'edit', 'view', 'go', 'session', 'window', 'help']);
   assert.equal(byId(build().tpl, 'carnivore').label, appName);
 });
 t('2 every item is a role, a verb from the fixed list, or a named main action; placeholders are disabled and tagged', () => {
@@ -93,13 +94,14 @@ t('2 every item is a role, a verb from the fixed list, or a named main action; p
   for (const item of real(flat(tpl))) {
     if (item.pending) { assert.equal(item.enabled, false, item.id); pending[item.id] = item.pending; continue; }
     if (item.role) continue;
+    if (item.id === 'go.recent.none') { assert.equal(item.enabled, false); assert.equal(item.click, undefined); continue; }
     assert.equal(typeof item.click, 'function', `${item.id} has no click`);
     assert.ok(MENU_VERBS.includes(item.id) || MAIN_ACTIONS.includes(item.id), `${item.id} is not a verb or main action`);
   }
   assert.deepEqual(pending, {});
 });
 t('2b a verb item sends exactly its verb; an unknown verb is never sent', () => {
-  const { tpl, calls } = build();
+  const { tpl, calls } = build({ recent: () => Array.from({ length: 10 }, (_, i) => `place ${i}`) });
   for (const item of real(flat(tpl)).filter((i) => MENU_VERBS.includes(i.id))) item.click();
   assert.deepEqual(calls.sent.sort(), [...MENU_VERBS].sort());
   const w = { sendMenuCommand: () => assert.fail('sent') };
@@ -113,6 +115,42 @@ t('2c main actions: new window raises the window, answer opens the longest-waiti
   assert.deepEqual(calls.urls, ['https://carnivore.ai/help']);
   const none = build({ waiting: () => null }); real(flat(none.tpl)).find((i) => i.id === 'session.answer').click();
   assert.deepEqual(none.calls.opened, [], 'nothing waiting: nothing visible');
+});
+t('2d Go menu: Back and Forward show the page chords without taking them; recent places are pushed by the main page only', () => {
+  const items = sub(build().tpl, 'go');
+  const back = items.find((i) => i.id === 'go.back'); const fwd = items.find((i) => i.id === 'go.forward');
+  assert.equal(back.accelerator, 'Cmd+['); assert.equal(fwd.accelerator, 'Cmd+]');
+  assert.equal(back.registerAccelerator, false); assert.equal(fwd.registerAccelerator, false);
+  const none = items.find((i) => i.id === 'go.recent.none');
+  assert.equal(none.enabled, false); assert.equal(none.label, 'KEY:menubar.menu.no_recent');
+  let channel = null; let handler = null; const menus = [];
+  const top = {}; const ev = (main, frame = top) => ({ main, sender: { mainFrame: top }, senderFrame: frame });
+  const sent = [];
+  const appWindow = { sendMenuCommand: (v) => { sent.push(v); return true; } };
+  void installApplicationMenu({
+    app: { name: appName, isPackaged: true }, shell: { openExternal: async () => {} }, appWindow, showAbout() {}, quitAndStopEngine() {},
+    waiting: () => null, exportDiagnostics() {}, loadTranslator: () => new Promise(() => {}),
+    Menu: { buildFromTemplate: (tpl) => tpl, setApplicationMenu: (m) => menus.push(m) },
+    ipcMain: { on: (ch, fn) => { channel = ch; handler = fn; } }, fromMainPage: (event) => event.main === true,
+  });
+  assert.equal(channel, go.RECENT_CHANNEL);
+  const goItems = () => byId(menus[menus.length - 1], 'go').submenu.filter((i) => /^go\.recent\.\d$/.test(i.id));
+  assert.equal(menus.length, 1); assert.equal(goItems().length, 0);
+  handler(ev(false), ['popout place']);
+  assert.equal(menus.length, 1, 'a pop-out page is not the main page');
+  handler(ev(true, {}), ['sub frame']);
+  assert.equal(menus.length, 1, 'a sub-frame is refused');
+  handler(ev(true), ['api', 7]);
+  handler(ev(true), Array.from({ length: 11 }, () => 'x'));
+  handler(ev(true), ['api', '  ']);
+  assert.equal(menus.length, 1, 'a bad list is refused whole');
+  handler(ev(true), ['api\u0007', 'review layout', 'y'.repeat(200)]);
+  assert.equal(menus.length, 2);
+  assert.deepEqual(goItems().map((i) => [i.id, i.label]), [['go.recent.0', 'api'], ['go.recent.1', 'review layout'], ['go.recent.2', 'y'.repeat(80)]]);
+  handler(ev(true), ['api', 'review layout', 'y'.repeat(200)]);
+  assert.equal(menus.length, 2, 'the same list does not rebuild');
+  goItems()[1].click();
+  assert.deepEqual(sent, ['go.recent.1']);
 });
 t('3 no literal label: every label is a catalog key; no file over 300 lines; no quoted English in the sources', () => {
   const { tpl } = build({ isPackaged: false });

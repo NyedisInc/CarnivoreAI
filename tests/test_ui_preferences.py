@@ -116,6 +116,11 @@ def test_foot_bar_layout_absent_reads_as_none_both_halves():
     "changes",
     [
         {"sidebar_density": "enormous"},
+        {"rail_magnify": 130},
+        {"rail_magnify": 250},
+        {"rail_magnify": "150"},
+        {"rail_magnify": True},
+        {"rail_dock_names": "yes"},
         {"sidebar_density_mobile": "enormous"},
         {"widget_drawer_view": "grid"},
         {"widget_drawer_view_mobile": 1},
@@ -176,6 +181,9 @@ def test_a_rejected_value_never_carries_pydantics_own_dump(store):
     "changes",
     [
         {"sidebar_density": "compact"},
+        {"rail_magnify": 100},
+        {"rail_magnify": 200},
+        {"rail_dock_names": False},
         {"sidebar_density_mobile": "cozy"},
         {"widget_drawer_view": "type"},
         {"widget_drawer_view_mobile": "name"},

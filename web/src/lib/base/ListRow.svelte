@@ -14,13 +14,14 @@
     children?: Snippet;
     selected?: boolean;
     wrap?: boolean;
+    muted?: boolean;
     density?: ListDensity;
     role?: string;
     class?: string;
   }
 
   let {
-    primary, secondary, meta, lead, actions, below, children, selected = false, wrap = false, density, role = 'listitem', class: extra = '', ...rest
+    primary, secondary, meta, lead, actions, below, children, selected = false, wrap = false, muted = false, density, role = 'listitem', class: extra = '', ...rest
   }: Props = $props();
 </script>
 
@@ -47,8 +48,9 @@
   data-density={density}
   data-selected={selected || undefined}
   data-wrap={wrap || undefined}
+  data-muted={muted || undefined}
   data-below={below ? '' : undefined}
-  data-interactive={rest.onclick && rest['aria-disabled'] !== 'true' && rest['aria-disabled'] !== true ? '' : undefined}
+  data-interactive={(rest.onclick || rest.onmousedown) && rest['aria-disabled'] !== 'true' && rest['aria-disabled'] !== true ? '' : undefined}
 >
   {#if below}
     <span class="oc-list__head">{@render parts()}</span>

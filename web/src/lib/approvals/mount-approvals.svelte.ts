@@ -4,6 +4,7 @@ import QuestionModal from './QuestionModal.svelte';
 import { approvals, inboxFocus, refreshApprovals, startApprovals } from './approvals.svelte';
 import { t } from '../i18n/index.svelte';
 import type { ApprovalItem } from './approvals-model';
+import { toastSurface } from '../toast-surface';
 
 export const APPROVALS_PANEL_ID = 'approvals-panel';
 
@@ -41,10 +42,9 @@ export type OpenApprovalOutcome = 'opened' | 'gone' | 'unknown';
 const GONE_CARD_KIND = 'ApprovalGone';
 const GONE_CARD_MS = 5000;
 
-type ToastSurface = { add(toast: Record<string, unknown>): void; dismiss?(id: string): unknown };
-
 function sayAlreadyAnswered(): void {
-  const surface = (hostWindow() as { ToastManager?: ToastSurface } | null)?.ToastManager;
+  const host = hostWindow();
+  const surface = host ? toastSurface(host) : null;
   if (!surface) return;
   const id = `approval-gone:${Date.now()}:${Math.random().toString(16).slice(2, 8)}`;
   surface.add({

@@ -53,6 +53,7 @@ def test_the_default_state_is_off_at_ninety_nine_with_nothing_chosen(client):
     assert body["threshold_percent"] == 99
     assert [(a["provider"], a["account_id"], a["source"]) for a in body["active"]] == [
         ("claude", "auto-claude-default", "default_login"),
+        ("codex", None, "none"),
     ]
     assert body["restarts_running_sessions"] is False
 

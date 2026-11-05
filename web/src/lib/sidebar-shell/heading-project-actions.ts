@@ -1,4 +1,5 @@
 import { t } from '../i18n/index.svelte';
+import { confirmOk } from '../confirm-ok/confirm-ok';
 import { releaseThisTab } from '../drawer/row-menu-sleep';
 import { companySource } from './company-source.svelte';
 import { closeItemMenu } from '../item-menu/open.svelte';
@@ -19,9 +20,8 @@ type Row = SidebarRow & {
     session_uuid?: string | null;
 };
 
-function allRows(): Row[] {
-    const rows = hg().SessionSidebar?._rows;
-    return Array.isArray(rows) ? (rows as Row[]) : [];
+function allRows(): readonly Row[] {
+    return hg().SessionSidebar?.rows?.<Row>() ?? [];
 }
 
 export function projectRows(key: string): Row[] {
@@ -146,22 +146,22 @@ async function closeRow(row: Row): Promise<void> {
     else await api.destroyExternalSession(row.name);
 }
 
-export async function removeProject(key: string): Promise<boolean> {
+export async function archiveProject(key: string): Promise<boolean> {
     const name = projectNameFor(key);
-    const { API: api, App: app } = hg();
+    const { API: api } = hg();
     if (!name) { announceFailure(t('sidebar.project.no_name')); return false; }
-    if (!api || !app) return false;
+    if (!api) return false;
     const rows = projectRows(key);
-    const ok = await app.showConfirmModal(
-        t('sidebar.project.remove.title'),
-        t('sidebar.project.remove.message', { name }),
-        rows.length
-            ? t('sidebar.project.remove.detail', { count: rows.length })
-            : t('sidebar.project.remove.detail_empty'),
-        t('sidebar.project.remove.confirm'),
-        t('sidebar.group.remove.cancel'),
-        'danger',
-    );
+    const ok = await confirmOk({
+        title: t('sidebar.project.archive.title'),
+        message: t('sidebar.project.archive.message', { name }),
+        details: rows.length
+            ? t('sidebar.project.archive.detail', { count: rows.length })
+            : t('sidebar.project.archive.detail_empty'),
+        okLabel: t('sidebar.project.archive.confirm'),
+        cancelLabel: t('sidebar.group.remove.cancel'),
+        variant: 'danger',
+    });
     if (!ok) return false;
     const failures: string[] = [];
     for (const row of rows) {
@@ -173,7 +173,7 @@ export async function removeProject(key: string): Promise<boolean> {
     }
     if (failures.length) {
         await refetchDrawer();
-        announceFailure(t('sidebar.project.remove_partial', {
+        announceFailure(t('sidebar.project.archive_partial', {
             name, failed: failures.length, total: rows.length, reasons: failures.join('; '),
         }));
         return false;
@@ -182,11 +182,11 @@ export async function removeProject(key: string): Promise<boolean> {
         await api.archiveProject(name);
     } catch (err) {
         await refetchDrawer();
-        announceFailure(t('sidebar.project.remove_failed', { name, reason: reasonOf(err) }));
+        announceFailure(t('sidebar.project.archive_failed', { name, reason: reasonOf(err) }));
         return false;
     }
     await refetchDrawer();
-    announce(t('sidebar.project.removed', { name, count: rows.length }));
+    announce(t('sidebar.project.archived', { name, count: rows.length }));
     return true;
 }
 

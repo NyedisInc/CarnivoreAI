@@ -17,7 +17,8 @@
 
   .rb-position { white-space: nowrap; }
 
-  [data-btn][data-filled='true'] {
+  [data-board-note-key][data-filled='true'],
+  [data-payload-note-key][data-filled='true'] {
     --_btn-ink: var(--oc-orange);
     --_btn-ink-hover: var(--oc-orange);
   }

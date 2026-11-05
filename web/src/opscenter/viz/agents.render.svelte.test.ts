@@ -23,7 +23,7 @@ import AgentsRenderer from './AgentsRenderer.svelte';
 import { agentsUpgrade } from '../cells/analytics/agents-upgrade';
 import { analytics } from '../cells/analytics/state.svelte';
 import ChartLegend from '../cells/analytics/ChartLegend.svelte';
-import { agentChart, agentColor, agentWindow, agentsPlan, liveAgents } from './agents';
+import { agentChart, agentColor, agentP95, agentWindow, agentsPlan, liveAgents } from './agents';
 
 setLocale('en');
 
@@ -148,6 +148,18 @@ describe('the live list', () => {
   test('liveAgents ranks by rate and the top row fills the bar', () => {
     const rows = liveAgents(live([['a', 'a', 10], ['b', 'b', 40]]) as never, [session('a'), session('b')] as never);
     expect(rows.map((row) => [row.name, row.share])).toEqual([['b', 1], ['a', 0.25]]);
+  });
+
+  test('liveAgents scales to the window p95: a lone agent is not full, a faster one is capped, no data falls back', () => {
+    const lone = liveAgents(live([['a', 'a', 10]]) as never, [session('a')] as never, 40);
+    expect(lone[0]!.share).toBe(0.25);
+    const fast = liveAgents(live([['a', 'a', 90], ['b', 'b', 20]]) as never, [session('a'), session('b')] as never, 40);
+    expect(fast.map((row) => row.share)).toEqual([1, 0.5]);
+    const window = answer(10);
+    expect(agentP95(window)).toBeCloseTo(100 / 60);
+    expect(agentP95({ ...window, series: [] })).toBe(0);
+    expect(agentP95(null)).toBe(0);
+    expect(liveAgents(live([['a', 'a', 10]]) as never, [session('a')] as never, agentP95(null))[0]!.share).toBe(1);
   });
 });
 

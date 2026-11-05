@@ -50,11 +50,13 @@ def _index_with(
     )
 
 
-def test_context_used_pct_inverts_the_readers_headroom_and_keeps_unknown_none():
-    assert lmf.context_used_pct(58.5) == 41.5
-    assert lmf.context_used_pct(100.0) == 0.0
-    assert lmf.context_used_pct(-3.0) == 100.0
-    assert lmf.context_used_pct(None) is None
+def test_context_used_pct_is_the_unrounded_share_of_the_window_and_keeps_unknown_none():
+    assert lmf.context_used_pct(415_000, 1_000_000) == 41.5
+    assert lmf.context_used_pct(414_600, 1_000_000) == pytest.approx(41.46)
+    assert lmf.context_used_pct(2_000_000, 1_000_000) == 100.0
+    assert lmf.context_used_pct(None, 1_000_000) is None
+    assert lmf.context_used_pct(5, None) is None
+    assert lmf.context_used_pct(5, 0) is None
 
 
 

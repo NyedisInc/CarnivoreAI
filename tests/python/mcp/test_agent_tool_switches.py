@@ -7,7 +7,8 @@ from types import SimpleNamespace
 import pytest
 
 from src.config.mcp import McpConfig
-from src.core.mcp import agent_tool_switches, aliases, deprecated_tools, instructions, protocol, tool_families, tools
+from src.cplugs.huddle import CPLUG
+from src.core.mcp import agent_tool_switches, deprecated_tools, instructions, protocol, tool_families, tools
 from src.core.mcp.caller import AgentCaller
 from tests.python.mcp.test_mcp_endpoint import _call, _hdr, _rpc, env  # noqa: F401
 
@@ -23,7 +24,7 @@ def switches(monkeypatch):
     return cfg
 
 
-TASK_MANAGER_FAMILY = ("huddle_", "task_manager_")
+TASK_MANAGER_FAMILY = ("task_manager_",)
 
 
 def _names(caller=PANE) -> set:
@@ -49,7 +50,7 @@ def test_defaults_hide_huddle_and_keep_swarm(switches) -> None:
 
 def test_huddle_on_lists_every_huddle_tool(switches) -> None:
     switches.agent_huddle_tools = True
-    huddle_tools = {n for n in tools._TOOLS if n.startswith("huddle_")} | {n for n in aliases.table().values() if n.startswith("task_manager_")}
+    huddle_tools = set(CPLUG.manifest.surfaces.mcp_tools)
     huddle_tools -= deprecated_tools.DEPRECATED
     assert huddle_tools and huddle_tools <= _names()
 
@@ -59,18 +60,18 @@ def test_swarm_off_hides_every_swarm_tool(switches) -> None:
     switches.agent_swarm_tools = False
     names = _names()
     assert not any(n.startswith("swarm_") and n not in tool_families.SWARM_SWITCH_TOOLS for n in names)
-    assert any(n.startswith("huddle_") for n in names) and "crosstalk_send" in names
+    assert any(n.startswith(TASK_MANAGER_FAMILY) for n in names) and "crosstalk_send" in names
 
 
 def test_an_owner_listing_is_never_filtered(switches) -> None:
     switches.agent_swarm_tools = False
     names = _names(caller=None)
-    assert any(n.startswith("huddle_") for n in names) and any(n.startswith("swarm_") for n in names)
+    assert any(n.startswith(TASK_MANAGER_FAMILY) for n in names) and any(n.startswith("swarm_") for n in names)
 
 
 def test_a_called_huddle_tool_is_refused_with_the_owner_reason(env, switches) -> None:  # noqa: F811
     client, mgr, _cfg = env
-    result = _call(client, mgr, "huddle_list", {})
+    result = _call(client, mgr, "task_manager_tasks_list", {})
     assert result["isError"] is True
     assert "owner turned huddle tools off" in result["content"][0]["text"]
 
@@ -86,9 +87,9 @@ def test_a_called_swarm_tool_is_refused_when_swarm_is_off(env, switches) -> None
 def test_tools_list_over_the_wire_follows_the_switch(env, switches) -> None:  # noqa: F811
     client, mgr, _cfg = env
     listed = lambda: {t["name"] for t in client.post("/mcp", json=_rpc("tools/list"), headers=_hdr(mgr)).json()["result"]["tools"]}  # noqa: E731
-    assert "huddle_list" not in listed() and "task_manager_tasks_list" not in listed()
+    assert "task_manager_tasks_list" not in listed()
     switches.agent_huddle_tools = True
-    assert "huddle_list" in listed() and "task_manager_tasks_list" in listed()
+    assert "task_manager_tasks_list" in listed()
 
 
 def test_the_guide_follows_both_switches(switches) -> None:

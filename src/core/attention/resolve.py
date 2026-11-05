@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Dict, Optional
 
 from src.core.attention.background_claims import standing_background_claims
+from src.core.attention.manifest_reader import manifest_verdict
 from src.core.attention.codex_reader import resolve_codex_evidence
 from src.core.attention.evidence import (
     ALL_STATES,
@@ -44,10 +45,10 @@ from src.core.attention.registry_record import (
     REG_SHELL,
     REG_STALE,
     REG_WAITING,
-    REGISTRY_STALE_AFTER_SECONDS,
 )
 from src.core.attention.question_part import with_question_hint
-from src.core.attention.process_scope import never_prompted, transcript_predates_process
+from src.core.attention.process_scope import transcript_predates_process
+from src.core.attention.resolve_rest import rest_reading, rest_refused, rung_8_turn_ended, rung_8b_streaming, rung_8c_unmeasured_agent
 from src.core.attention.resolve_verdicts import (
     _age_seconds,
     _turn_open_at_eof,
@@ -55,20 +56,11 @@ from src.core.attention.resolve_verdicts import (
     _verdict,
     _busy_unless_resting,
     _blocked_tool_reason,
-    idle_turn_ended_verdict,
-)
-from src.core.attention.transcript_facts import (
-    FACTS_FOUND,
-    FACTS_SHAPE_UNRECOGNIZED,
 )
 from src.core.session_status import LIVENESS_GONE
 
 
 SETTLE_SECONDS: float = 1.5
-
-DONE_QUIET_SECONDS: int = 3
-
-STREAMING_LOOKBACK_SECONDS: int = 120
 
 
 WAITING_INPUT_NEEDED: str = "input needed"
@@ -132,6 +124,9 @@ def _rung_other_family(evidence: Evidence) -> Optional[AttentionVerdict]:
     if family is not None and family != FAMILY_CLAUDE:
         if family == FAMILY_CODEX:
             return resolve_codex_evidence(evidence)
+        manifest = manifest_verdict(evidence)
+        if manifest is not None:
+            return manifest
         if pane is not None and pane.shows_dialog:
             reason = (
                 REASON_PERMISSION
@@ -316,90 +311,17 @@ def _rung_registry_busy(evidence: Evidence) -> Optional[AttentionVerdict]:
     return None
 
 
+
 def _rung_registry_rest(evidence: Evidence, previous_process_only: bool) -> Optional[AttentionVerdict]:
-    registry = evidence.registry
-    facts = evidence.transcript
-    parked = None if previous_process_only else evidence.parked_work
-
-    if registry.known and registry.status in (REG_IDLE, REG_SHELL):
-        shell_note = (
-            " (claude also reports a shell command it started still "
-            "running)"
-            if registry.status == REG_SHELL
-            else ""
-        )
-        status_age = _age_seconds(evidence.now, registry.status_updated_at)
-        fresh = status_age is not None and status_age < REGISTRY_STALE_AFTER_SECONDS
-        quiet = _age_seconds(evidence.now, facts.newest_append_at)
-
-        expected_shell_noise = registry.status == REG_SHELL
-        settled = quiet is not None and (
-            expected_shell_noise or quiet >= DONE_QUIET_SECONDS
-        )
-
-        unprompted = never_prompted(evidence)
-        if registry.trusts_pending_count and (
-            previous_process_only
-            or unprompted
-            or (
-                facts.verdict == FACTS_FOUND
-                and _turn_at_rest(evidence)
-                and facts.pending_background_agents == 0
-                and facts.open_async_agents == 0
-                and not facts.queued_reinvoke
-                and settled
-                and not (parked is not None and parked.is_unmeasured)
-            )
-        ):
-            return idle_turn_ended_verdict(
-                evidence, previous_process_only=previous_process_only, unprompted=unprompted, fresh=fresh,
-                status_age=status_age, quiet=quiet, shell_note=shell_note,
-                still_appending=quiet is not None and quiet < DONE_QUIET_SECONDS,
-            )
-
-        if (
-            quiet is not None
-            and quiet < STREAMING_LOOKBACK_SECONDS
-            and not _turn_at_rest(evidence)
-            and facts.verdict != FACTS_SHAPE_UNRECOGNIZED
-        ):
-            return _verdict(
-                STATE_BUSY,
-                REASON_STREAMING,
-                TIER_TRANSCRIPT,
-                "claude reports idle but the transcript appended %.1fs ago "
-                "with no turn end after the last assistant record%s"
-                % (quiet, shell_note),
-                evidence=evidence,
-            )
-
-        if parked is not None and parked.is_unmeasured:
-            return _verdict(STATE_UNKNOWN, REASON_NO_EVIDENCE, TIER_TRANSCRIPT,
-                            parked.detail, evidence=evidence)
-
-        if not fresh and facts.verdict != FACTS_SHAPE_UNRECOGNIZED:
-            return _verdict(
-                STATE_UNKNOWN,
-                REASON_REGISTRY_STALE,
-                TIER_REGISTRY,
-                "claude reports idle but the record has not been updated "
-                "inside %ds and nothing in the transcript corroborates a "
-                "finished turn, so it may sustain a verdict and may not "
-                "start one%s" % (REGISTRY_STALE_AFTER_SECONDS, shell_note),
-                evidence=evidence,
-            )
-        return _verdict(
-            STATE_UNKNOWN,
-            REASON_SHAPE_UNRECOGNIZED
-            if facts.verdict == FACTS_SHAPE_UNRECOGNIZED else REASON_NO_EVIDENCE,
-            TIER_REGISTRY,
-            "claude reports idle and the transcript does not confirm the "
-            "turn ended with no agents pending: %s%s"
-            % (facts.detail, shell_note),
-            evidence=evidence,
-        )
-
-    return None
+    if not (evidence.registry.known and evidence.registry.status in (REG_IDLE, REG_SHELL)):
+        return None
+    reading = rest_reading(evidence, previous_process_only)
+    verdict = rung_8_turn_ended(evidence, previous_process_only, reading)
+    if verdict is None:
+        verdict = rung_8b_streaming(evidence, reading)
+    if verdict is None:
+        verdict = rung_8c_unmeasured_agent(evidence, reading)
+    return verdict if verdict is not None else rest_refused(evidence, reading)
 
 
 def _rung_no_registry(evidence: Evidence, previous_process_only: bool) -> Optional[AttentionVerdict]:

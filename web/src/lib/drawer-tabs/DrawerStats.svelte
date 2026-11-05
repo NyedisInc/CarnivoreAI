@@ -13,9 +13,11 @@
   import { chartBars, compact, mergeBars, missingSpan, nextUnit, nextWindow, rateIn } from '../stats-feed/rate';
   import { FEED_WINDOWS, RATE_UNITS, type FeedBody, type FeedWindow, type RateUnit } from '../stats-feed/types';
   import { DRAWER_STATS_RATE_KEY, DRAWER_STATS_WINDOW_KEY } from './drawer-tabs';
+  import { sectionShown, setSectionShown, sleepingSessions } from '../drawer/section-visibility.svelte';
 
   const WORDS = ['unavailable', 'stats_off', 'plugin_off', 'needs_approval', 'paused'] as const;
   const COUNT_KINDS: readonly CountKind[] = ['active', 'working', 'unread'];
+  const STRIP_KINDS: readonly (CountKind | 'sleeping')[] = [...COUNT_KINDS, 'sleeping'];
   const RELEASE_MS = 5000;
   const CHART_H = 16;
   const BAR_PX = 2;
@@ -36,6 +38,8 @@
   let barCap = $state(MAX_BARS);
 
   const counts = $derived(countAgents(floorFeedRows()));
+  const sleepingShown = $derived(sectionShown('sleeping'));
+  const sleepingCount = $derived(sleepingSessions());
   const filter = $derived(activeCountFilter());
   // there is nothing
   const packSize = $derived(packMachines.data?.machines.length ?? 0);
@@ -120,17 +124,18 @@
           <Icon name="wolf" size={12} /><span class="dst-num">{packSize}</span>
         </span>
       {/if}
-      {#each COUNT_KINDS as kind (kind)}
+      {#each STRIP_KINDS as kind (kind)}
         <button
           type="button"
           class="dst-count" data-btn="quiet"
           data-kind={kind}
-          data-filter={filter === kind ? 'on' : undefined}
-          aria-pressed={filter === kind}
-          aria-label={t(`drawer.stats.${kind}`, { count: counts[kind] })}
-          onclick={() => toggleCountFilter(kind)}
+          data-filter={kind !== 'sleeping' && filter === kind ? 'on' : undefined}
+          data-hidden={kind === 'sleeping' && !sleepingShown ? 'true' : undefined}
+          aria-pressed={kind === 'sleeping' ? sleepingShown : filter === kind}
+          aria-label={kind === 'sleeping' ? t('drawer.stats.sleeping', { count: sleepingCount }) : t(`drawer.stats.${kind}`, { count: counts[kind] })}
+          onclick={() => (kind === 'sleeping' ? setSectionShown('sleeping', !sleepingShown) : toggleCountFilter(kind))}
         >
-          {#if kind === 'active'}<Icon name="bot" size={12} />{:else if kind === 'working'}<StatusLed status="working" size="10px" />{:else}<StatusLed status="idle" unread={true} size="10px" />{/if}<span class="dst-num">{counts[kind]}</span>
+          {#if kind === 'sleeping'}<Icon name="moon" size={12} />{:else if kind === 'active'}<Icon name="bot" size={12} />{:else if kind === 'working'}<StatusLed status="working" size="10px" />{:else}<StatusLed status="idle" unread={true} size="10px" />{/if}<span class="dst-num">{kind === 'sleeping' ? sleepingCount : counts[kind]}</span>
         </button>
       {/each}
     </div>
@@ -146,8 +151,7 @@
           <span class="dst-slash">/</span>
           <span class="dst-figure">{rate ? compact(rate.in) : t('drawer.stats.none')}</span>
           <span class="dst-arrow"><Icon name="chevron-down" size={10} /></span>
-          <span class="dst-unit">{t(`drawer.stats.unit.${unit}`)}</span>
-          <span class="dst-unit-short">{t(`drawer.stats.unit_short.${unit}`)}</span>
+          <span class="dst-unit">{t(`drawer.stats.unit_short.${unit}`)}</span>
           {#if missing}<span class="dst-flag" data-cue={missing.down ? 'down' : 'partial'}></span>{/if}
         </button>
         {#if barCap >= MIN_BARS}
@@ -220,6 +224,9 @@
     .dst-count:hover {
       color: var(--oc-text-primary);
     }
+    .dst-count[data-hidden='true'] {
+      opacity: 0.5;
+    }
     .dst-count[data-filter='on'] {
       border-color: var(--oc-yellow-bright);
       color: var(--oc-text-primary);
@@ -286,16 +293,11 @@
       color: var(--oc-text-primary);
     }
     .dst-slash,
-    .dst-unit,
-    .dst-unit-short {
+    .dst-unit {
       color: var(--oc-text-muted);
     }
-    .dst-unit,
-    .dst-unit-short {
+    .dst-unit {
       margin-left: var(--oc-space-1);
-    }
-    .dst-unit-short {
-      display: none;
     }
     .dst-bars {
       position: relative;
@@ -342,19 +344,11 @@
       height: 100%;
       background: repeating-linear-gradient(135deg, var(--oc-line-rule) 0 1px, transparent 1px 3px);
     }
-    @container (max-width: 360px) {
-      .dst-unit {
-        display: none;
-      }
-      .dst-unit-short {
-        display: inline;
-      }
-    }
     @container (max-width: 250px) {
       .dst-rate {
         padding: 0;
       }
-      .dst-unit-short {
+      .dst-unit {
         margin-left: 0;
       }
       .dst-arrow :global(svg) {

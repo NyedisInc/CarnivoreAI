@@ -14,8 +14,8 @@ import structlog
 
 from src.core.safe_io.readonly_db import READONLY_TIMEOUT_DEFAULT_S, connect_readonly
 from src.core.db import db_path_for
-from src.core.db_reuse.lent import LentConnection
-from src.core.db_reuse.pooled_read import POOL_LIMIT, fresh_for_read, is_corrupt
+from src.core.db_reuse.deadline_loan import DeadlineLoan
+from src.core.db_reuse.pooled_read import POOL_LIMIT, fresh_for_read
 from src.core.db_reuse.thread_connections import ThreadConnections
 from src.core.pack.rollup_import.ddl import COUNTER_TABLE, STATE_TABLE, USAGE_TABLE
 from src.core.stats import project_groups
@@ -43,24 +43,6 @@ _LOCAL_LOSES = "(conversation_id || '|' || (minute_ts / 3600 * 3600)) IN (SELECT
 _PEER_LOSES = "(host || '|' || conversation_id || '|' || minute_ts) IN (SELECT value FROM json_each(?))"
 
 
-class _AppLoan(LentConnection):
-
-    def __init__(self, conn: sqlite3.Connection, path: Path) -> None:
-        super().__init__(conn)
-        self._path = path
-
-    def execute(self, *args: Any, **kwargs: Any) -> Any:
-        try:
-            return self._conn.execute(*args, **kwargs)
-        except sqlite3.DatabaseError as exc:
-            if is_corrupt(exc):
-                _APP_READS.discard(self._path)
-            raise
-
-    def close(self) -> None:
-        self._conn.set_progress_handler(None, 0)
-
-
 def _open_app_read(path: Path) -> sqlite3.Connection:
     conn = connect_readonly(path, timeout=READONLY_TIMEOUT_DEFAULT_S)
     conn.row_factory = sqlite3.Row
@@ -85,7 +67,7 @@ class Arm:
     def connect(self, store: Any) -> Any:
         if self.carnivore is None:
             return store.connect(readonly=True)
-        return _AppLoan(fresh_for_read(_APP_READS.get(self.carnivore)), self.carnivore)
+        return DeadlineLoan(fresh_for_read(_APP_READS.get(self.carnivore)), lambda: _APP_READS.discard(self.carnivore))
 
 
 @dataclass(frozen=True)
@@ -136,6 +118,19 @@ def _open_app(store: Any) -> Optional[sqlite3.Connection]:
 def _rollup_state(app: sqlite3.Connection) -> List[Tuple[str, int, str]]:
     return [(r[0], int(r[1]), str(r[2])) for r in app.execute(
         f"SELECT peer_install_id, revision, scope_digest FROM {STATE_TABLE} ORDER BY peer_install_id")]
+
+
+def rollup_fingerprint(store: Any) -> Optional[str]:
+    app = _open_app(store)
+    if app is None:
+        return None
+    with closing(app):
+        try:
+            states = _rollup_state(app)
+        except sqlite3.Error as exc:
+            _warn_unreadable(exc)
+            return None
+    return digest(states) if states else None
 
 
 def _homes(app: sqlite3.Connection) -> Dict[str, str]:

@@ -50,8 +50,7 @@
     letter-spacing: 0;
 }
 
-.mx-family th,
-.mx-family-label {
+.mx-family th {
     padding-top: var(--oc-space-4);
     text-align: left;
     font-size: var(--oc-fs-label);
@@ -59,11 +58,6 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--oc-orange);
-}
-
-.mx-family-label {
-    margin: var(--oc-space-4) 0 0;
-    padding: 0;
 }
 
 .mx-label {
@@ -153,4 +147,50 @@
 .mx-link__base {
     color: var(--oc-text-secondary);
     overflow-wrap: anywhere;
+}
+
+.mx-group {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--oc-space-2);
+    padding: 0 var(--oc-space-1);
+    border: 1px solid transparent;
+    border-radius: 2px;
+    background: none;
+    color: var(--oc-orange);
+    font: inherit;
+    font-family: var(--font-mono);
+    letter-spacing: inherit;
+    text-transform: inherit;
+    cursor: pointer;
+}
+
+.mx-group__caret {
+    width: 1ch;
+}
+
+.mx-group__count {
+    color: var(--oc-text-dim);
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.mx-family td {
+    padding-top: var(--oc-space-4);
+}
+
+.mx-group-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--oc-space-3);
+    margin-top: var(--oc-space-4);
+    font-size: var(--oc-fs-label);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.mx-merged {
+    display: block;
+    color: var(--oc-cyan);
 }

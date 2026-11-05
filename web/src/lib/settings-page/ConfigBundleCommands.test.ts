@@ -58,6 +58,7 @@ function harness(answer: (call: Call, index: number) => unknown) {
     return { target, handle, calls };
 }
 
+/** Let pending promises and effects run. */
 async function settle(): Promise<void> {
     for (let i = 0; i < 10; i += 1) {
         await Promise.resolve();
@@ -294,6 +295,42 @@ describe('every other runnable setting (an application of the same ruling)', () 
             confirm_browser_sha256: 'f'.repeat(64),
             confirm_common_slash_commands_sha256: '1'.repeat(64),
         });
+        unmount(handle);
+    });
+});
+
+describe('addresses and trust settings are change rows (#2659)', () => {
+    const REACH: ImportAnswer = {
+        ...PLAIN,
+        contains_commands: true,
+        relay: {
+            sha256: '2'.repeat(64),
+            rows: [{ id: 'relay.url', kind: 'address', label: 'relay.url', parts: [{ kind: 'url', text: 'wss://evil.invalid/publish', was: 'wss://relay.carnivore.ai/publish' }] }],
+        },
+        auth_rate_limits: {
+            sha256: '3'.repeat(64),
+            rows: [{ id: 'auth_rate_limits.trust_proxy_headers', kind: 'trust', label: 'auth_rate_limits.trust_proxy_headers', parts: [{ kind: 'trust_proxy_headers', text: 'true', was: 'false' }] }],
+        },
+    };
+
+    test('each needs its own tick, shows the old value, never says commands, and apply echoes both digests', async () => {
+        const { target, handle, calls } = harness((call) =>
+            call.body?.dry_run === false ? { ...REACH, status: 'applied', dry_run: false } : REACH,
+        );
+        await choose(target);
+        const keys = [...target.querySelectorAll<HTMLInputElement>('[data-cb-tick]')].map((b) => b.getAttribute('data-cb-tick'));
+        expect(keys).toEqual(['relay:0', 'auth_rate_limits:0']);
+        const first = target.querySelector('[data-cb-command="relay:0"]')!;
+        expect(first.textContent).toContain('address this mac connects to');
+        expect(first.textContent).toContain('was wss://relay.carnivore.ai/publish');
+        expect(target.querySelector('[data-cb-command="auth_rate_limits:0"]')!.textContent).toContain('security setting');
+        const region = target.querySelector('[data-cb-commands]')!;
+        expect(region.textContent).not.toContain('command');
+        expect(region.querySelector('[data-cb-tick]')!.getAttribute('aria-label')).toBe('allow this change to relay.url');
+        for (const key of keys) tick(target, key!);
+        applyButton(target).click();
+        await settle();
+        expect(calls[1]!.body).toMatchObject({ confirm_relay_sha256: '2'.repeat(64), confirm_auth_rate_limits_sha256: '3'.repeat(64) });
         unmount(handle);
     });
 });

@@ -4,7 +4,7 @@
   "area": "sessions",
   "status": "stable",
   "since": "2026-10-13",
-  "updated": "2026-10-17",
+  "updated": "2026-11-02",
   "summary": "beast mode decides what carnivore answers and approves for you: a grid in Settings, Advanced with a beast off and a beast on box for each kind of prompt, the beast mode switch in the account menu, and a bolt beside the crown while it is on; part of the app, on by default.",
   "description": "Beast mode (formerly the auto answer plugin, core since #1899) holds every automatic answer and approval in one place. Its grid is in Settings, Advanced, beast mode: one row per kind of prompt, with two check boxes, beast off and beast on. A prompt is handled for you only when the box for the mode you are in now is ticked, so a row can be off in both, on in one or on in both. Out of the box it behaves exactly as before: the four startup screens (our development channels warning, plain folder trust and external imports in your projects' folders, and no on the claude in chrome prompt) are answered in both modes, while claude permission prompts, codex approvals and agent writes over MCP are handled only while Beast Mode is on. Some things always ask you and have no box at all: questions, free text, plan approvals, any other startup screen, and the hard safety gates such as deletes, purges and renames. Beast Mode itself is armed from the account menu, with its confirmation and auto-off, and a coral bolt sits right of the crown in the bottom bar while it is on. Unticking every box stops every automatic answer and approval.",
   "surfaces": [

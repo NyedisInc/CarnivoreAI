@@ -2,9 +2,10 @@ import { authFetch, ApiError } from '../../opscenter/api/auth.svelte';
 import { t } from '../i18n/index.svelte';
 import type { BackgroundProcess, SessionBackgroundWork } from '../background-work/background-work';
 import type { SubagentRow } from '../subagents/subagents';
+import { failureReason } from '../errors/failure-reason';
 
-export type ControlSection = 'timers' | 'agents' | 'processes';
-export const CONTROL_SECTIONS: readonly ControlSection[] = ['timers', 'agents', 'processes'];
+export type ControlSection = 'timers' | 'agents' | 'processes' | 'ports';
+export const CONTROL_SECTIONS: readonly ControlSection[] = ['timers', 'agents', 'processes', 'ports'];
 
 export const SESSION_CONTROL_OPTIONS = ['a', 'b', 'c'] as const;
 export type SessionControlOption = (typeof SESSION_CONTROL_OPTIONS)[number];
@@ -107,7 +108,7 @@ export function batchMessage(result: TerminateAllResponse | unknown): string {
         const said = parts.filter(([, count]) => count > 0).map(([key, count]) => t(key, { count }));
         return said.length ? said.join(t('control_center.batch.join')) : t('control_center.batch.nothing');
     }
-    const reason = result instanceof Error ? result.message : String(result);
+    const reason = failureReason(result);
     return t('control_center.batch.failed', { reason });
 }
 

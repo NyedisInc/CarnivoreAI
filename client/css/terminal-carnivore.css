@@ -64,15 +64,15 @@ html {
     font-size: 1.15rem;
 }
 
-body:has(#terminal-screen.active) #header-icon { display: inline-flex; }
-body:has(#terminal-screen.active) :is(#header-title-text, #header-rename-pencil) {
+body.ps-terminal-active #header-icon { display: inline-flex; }
+body.ps-terminal-active :is(#header-title-text, #header-rename-pencil) {
     display: none;
 }
 
 @media (max-width: 768px) {
-    body:has(#terminal-screen.active) #header-icon { display: none; }
-    body:has(#terminal-screen.active) #header-title-text { display: inline; }
-    body:has(#terminal-screen.active) #header-rename-pencil {
+    body.ps-terminal-active #header-icon { display: none; }
+    body.ps-terminal-active #header-title-text { display: inline; }
+    body.ps-terminal-active #header-rename-pencil {
         display: inline-flex;
     }
 }

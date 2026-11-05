@@ -5,7 +5,7 @@ import os
 
 import pytest
 
-from src.core import fs_event_index
+from src.core.attention import fs_event_index
 from src.core.attention import codex_gather
 from src.core.attention.wake import WakeSources
 

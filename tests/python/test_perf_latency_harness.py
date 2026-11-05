@@ -11,8 +11,8 @@ if str(SCRIPTS_PERF) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_PERF))
 
 import latency_harness  # noqa: E402
-from latency_harness import exit_code, idle_cpu_percent, longest_gap_ms, parse_cputime  # noqa: E402
-from perf_stats import nearest_rank_percentile  # noqa: E402
+from latency_harness import exit_code, longest_gap_ms  # noqa: E402
+from perf_stats import idle_cpu_percent, nearest_rank_percentile, parse_cputime  # noqa: E402
 
 
 def test_percentiles_and_stall_math():

@@ -40,7 +40,7 @@
   "summary": "on a desktop, a closed agents drawer becomes a narrow icon rail that still reaches every section.",
   "surfaces": [
     "web/src/lib/mini-rail/MiniRail.svelte",
-    "web/src/lib/mini-rail/sections.ts",
+    "web/src/lib/sidebar-widgets/SidebarRail.svelte",
     "client/css/session-sidebar-rail.css"
   ],
   "updated": "2026-09-27",

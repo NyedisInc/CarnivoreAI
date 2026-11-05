@@ -264,6 +264,7 @@ export interface SessionChoice {
   label?: string;
   title?: string | null;
   lifecycle?: string;
+  /* session put to sleep */
   asleep?: boolean;
   project_id?: number | null;
   archived_at?: unknown;
@@ -390,10 +391,6 @@ export function readLog(automationId: string | null, limit = 100): Promise<{ lin
 
 export function putLogSettings(settings: LogSettings): Promise<LogSettings> {
   return authFetch('/automation-log/settings', json('PUT', settings));
-}
-
-export function getCommands(): Promise<CommandList> {
-  return authFetch('/automation-commands');
 }
 
 export function listSessionRecords(): Promise<SessionChoice[]> {

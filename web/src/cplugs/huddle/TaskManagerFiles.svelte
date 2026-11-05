@@ -1,6 +1,7 @@
 <script lang="ts">
+  /* token), so a */
   import { onDestroy } from 'svelte';
-  import { Icon } from '../sdk/ui';
+  import { Icon, buttonAttrs } from '../sdk/ui';
   import { downloadBlob, openAttachmentLightbox, t } from '../sdk';
   import { fetchFileBlob } from './task-manager-files-api';
   import { sizeLabel } from './task-manager-files';
@@ -40,10 +41,10 @@
   {#each files as file (file.id)}
     <li class="hdf-one" data-task-manager-file={file.id}>
       {#if file.image && urls[file.id]}
-        <button type="button" class="hdf-thumb" data-task-manager-file-open={file.id} aria-label={t('cplug.huddle.files.open', { name: file.name })}
+        <button type="button" class="hdf-thumb" {...buttonAttrs('secondary', 'bare')} data-task-manager-file-open={file.id} aria-label={t('cplug.huddle.files.open', { name: file.name })}
                 onclick={(event) => void open(file, event.currentTarget)}><img src={urls[file.id]} alt={file.name} draggable="false" /></button>
       {:else}
-        <button type="button" class="hdf-chip" data-task-manager-file-save={file.id} aria-label={t('cplug.huddle.files.save', { name: file.name })}
+        <button type="button" class="hdf-chip" {...buttonAttrs('secondary', 'bare')} data-task-manager-file-save={file.id} aria-label={t('cplug.huddle.files.save', { name: file.name })}
                 onclick={() => void save(file)}>
           <Icon name={file.image ? 'image' : 'files'} size={12} strokeWidth={1.75} />
           <span class="hdf-name">{file.name}</span>
@@ -71,6 +72,7 @@
     }
 
     .hdf-thumb {
+      --_bd: currentColor;
       display: block;
       width: calc(var(--oc-space-6) * 2);
       height: calc(var(--oc-space-6) * 2);
@@ -94,6 +96,7 @@
     }
 
     .hdf-chip {
+      --_bd: currentColor;
       display: inline-flex;
       align-items: center;
       gap: var(--oc-space-1);

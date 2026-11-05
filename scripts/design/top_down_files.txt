@@ -3,7 +3,7 @@
 #   pytest <path>   a pytest file, run from the repo root with the venv
 # Every static (no browser) tests/python/design_system/test_*.py is run as well, without a line here; a file that drives a
 # browser (Playwright) is left to the pre-version-bump pipeline. A path listed here that does not exist is CANNOT RUN (exit 2),
-# never a pass. scripts/design/ratchet_guard.py reads this list too: every KNOWN list and ceiling in these files only goes down.
+# never a pass. scripts/design/ratchet_guard.py reads this list too: every KNOWN list and ceiling in these files, and in the *-rules.ts modules they import, only goes down.
 vitest web/src/lib/zone-shell/zone-hosts.test.ts
 vitest web/src/lib/zone-shell/wrapper-rules.test.ts
 vitest web/src/opscenter/widgets/menu/menu-conformance.test.ts
@@ -11,8 +11,17 @@ vitest web/src/opscenter/widgets/shell/shell-conformance.test.ts
 vitest web/src/widget-harness/menu-conformance.test.ts
 vitest web/src/lib/i18n/coverage.test.ts
 vitest web/src/cplugs/boundaries.test.ts
+vitest web/src/lib/legacy-globals.test.ts
 vitest web/src/lib/base/theme-contract.test.ts
 vitest web/src/lib/base/modal-btn-default.test.ts
 vitest web/src/lib/session-list/session-list.widget.test.ts
 pytest tests/test_style_guide_drift.py
 pytest tests/test_no_remote_assets.py
+vitest web/src/lib/legacy-dom-guard.test.ts
+vitest web/src/lib/legacy-alert-guard.test.ts
+vitest web/src/lib/mount-seam.test.ts
+vitest web/src/lib/i18n/coverage-optout.test.ts
+pytest tests/python/design_legacy/test_legacy_listing.py
+vitest web/src/lib/item-menu/menu-conformance.test.ts
+vitest web/src/lib/sidebar-shell/band-conformance.test.ts
+vitest web/src/lib/drawer-tabs/drawer-strips.test.ts

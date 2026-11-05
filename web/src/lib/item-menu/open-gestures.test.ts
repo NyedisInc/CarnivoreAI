@@ -59,7 +59,7 @@ describe('a heading opens one menu from every gesture', () => {
 
         expect(byKebab, 'the kebab opens a menu').not.toBeNull();
         expect(byKebab!.type).toBe('company');
-        expect(byKebab!.ids).toEqual(['rename-company', 'company-color', 'delete-company']);
+        expect(byKebab!.ids).toEqual(['rename-company', 'company-color', 'fold-inside', 'delete-company']);
         for (const [name, got] of [['right-click', byRightClick], ['Shift+F10', byShiftF10], ['menu key', byMenuKey]] as const) {
             expect(got, `${name} opens a menu`).not.toBeNull();
             expect(got!.type, name).toBe(byKebab!.type);

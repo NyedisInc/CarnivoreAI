@@ -5,14 +5,14 @@
   import { Icon } from '../sdk/ui';
   import { currentProjectId, flyoutShowsTab, projectColorOf, projectColorVar, sidebarTabs, t } from '../sdk';
   import { PROJECT_HEAD_HEIGHT_PX, PROJECT_HEAD_HEIGHT_VAR, accordionStackFits, projectHeadHeight, sectionTop, stackSide } from './task-manager-sticky';
-  import { addItem, doneCount, holdAggregate, holdSwarmLane, huddle, openOnProject, refreshTaskManager, removeCompleted, selectList, startTaskManager } from './huddle.svelte';
+  import { doneCount, holdAggregate, holdSwarmLane, huddle, openOnProject, refreshTaskManager, removeCompleted, selectList, startTaskManager } from './huddle.svelte';
   import { setListNudge } from './task-list-prefs';
   import { holdDone } from './task-manager-done.svelte';
   import TaskManagerInboxRow from './TaskManagerInboxRow.svelte';
   import { pinView } from './task-manager-view';
   import { taskManagerPrefs, setHideCompleted, setShowEmptyGroups } from './task-manager-prefs.svelte';
   import {
-    AGGREGATE, ALL_LIST, completedCount, listProjectId, wholeEntry, unreadTotal, visibleItems, waitingQuestions,
+    AGGREGATE, ALL_LIST, completedCount, listProjectId, unreadTotal, visibleItems, waitingQuestions,
     type TaskManagerInboxEntry, type HuddleItem, type TaskManagerItemGroup, type TaskManagerListRow,
   } from './huddle-model';
   import { TASK_MANAGER_TAB } from './huddle-tab-id';
@@ -36,12 +36,14 @@
   import { filterView, viewFilter, viewFilterActive } from './task-manager-view-filter.svelte';
   import TaskManagerNewGroup from './TaskManagerNewGroup.svelte';
   import TaskManagerSend from './TaskManagerSend.svelte';
-  import { BODY_OPTIONS, DEFAULT_BODY_OPTIONS, type BodyOptions } from './task-manager-body-options';
+  import TaskManagerChips from './TaskManagerChips.svelte';
+  import { MULTILINE_ROWS, createAddRow } from './task-manager-add-row.svelte';
   import { baseField } from './task-manager-base-field';
+  import { BODY_OPTIONS, DEFAULT_BODY_OPTIONS, type BodyOptions } from './task-manager-body-options';
   import { createScrollKeeper, isKeeperScroll } from './task-manager-scroll-keep';
   import { applyHold, takeSnapshot } from './task-manager-view-hold';
   import { createViewHold } from './task-manager-view-hold.svelte';
-  import { reopenPick, sendPicks } from './huddle-send-many.svelte';
+  import { noticeClickable, noticeKey, settleNotice } from './task-manager-notice-line.svelte';
   import TaskManagerScheduleEditor from './TaskManagerScheduleEditor.svelte';
   import TaskManagerArtifactDialog from './TaskManagerArtifactDialog.svelte';
   import TaskManagerForkDialog from './TaskManagerForkDialog.svelte';
@@ -61,18 +63,12 @@
   }
   import { startFollow } from './task-manager-follow.svelte';
   import { holdSteps, releaseSteps } from './task-manager-steps.svelte';
-  import { createSentFlash, submitLook } from './task-submit-state.svelte';
-  import { submitNow } from './task-submit';
   import { FOOTER_ICON_PX } from './task-manager-footer';
 
   let { popout = false, agent = null, list = null, bar = undefined }: { popout?: boolean; agent?: number | null; list?: string | null; bar?: Snippet<[HuddleItem[]]> } = $props();
 
   const bodyOptions: Readonly<BodyOptions> = getContext<BodyOptions | undefined>(BODY_OPTIONS) ?? DEFAULT_BODY_OPTIONS;
 
-  const MULTILINE_ROWS = 5;
-
-  let draft = $state('');
-  let multiline = $state(false);
   let confirmRemove = $state(false);
   let root = $state<HTMLElement | null>(null);
   /* hide empty groups */
@@ -82,6 +78,7 @@
   const agentList = $derived(agent === null ? null : (swarmRoster.agents.find((a) => a.id === agent)?.thread_key ?? `agent:${agent}`));
   const pinnedList = $derived(list ?? agentList);
   const pinnedAll = $derived(pinnedList === AGGREGATE);
+  const row = createAddRow(() => ({ pinnedList, pinnedAll }));
   const swarmOn = $derived(!popout && pinnedList === null && swarmView.view === 'swarm');
   const pinnedProject = $derived(pinnedList !== null && pinnedList !== AGGREGATE && agent === null && !isAgentList(pinnedList));
   const viewList = $derived(pinnedAll ? AGGREGATE : pinnedProject ? (pinnedList as string) : huddle.selected);
@@ -178,23 +175,12 @@
   const completed = $derived(allGroups.reduce((n, g) => n + Math.max(completedCount(g.items), doneCount(g.list)), 0));
   const removeWords = $derived(t('cplug.huddle.completed.button', { count: completed }));
   const removeAsk = $derived(t(aggregate ? 'cplug.huddle.completed.confirm_all' : 'cplug.huddle.completed.confirm', { count: completed }));
-  const entry = $derived(wholeEntry(draft));
-  const sent = createSentFlash();
-  const addLook = $derived(submitLook(entry.length > 0, sent.on));
   const options = $derived<TaskManagerListRow[]>([
     { key: AGGREGATE, name: null, project_id: null, items: 0, open: 0, review: 0,
       questions: waitingQuestions(huddle.lists) ?? 0, claude_seq: 0, unread: unreadTotal(huddle.lists) ?? 0 },
     ...(huddle.lists.length ? huddle.lists.filter((r) => offered(r.key, viewList)) : [{ key: ALL_LIST, name: null, project_id: null, items: 0, open: 0,
       review: 0, questions: 0, claude_seq: 0 }]),
   ]);
-  const targets = $derived(huddle.lists.length ? huddle.lists.filter((r) => offered(r.key, huddle.addTarget)) : options.slice(1));
-  const addTargetName = $derived.by(() => {
-    const key = pinnedList !== null && !pinnedAll ? pinnedList : huddle.addTarget;
-    if (!key || key === AGGREGATE || key === ALL_LIST) return null;
-    const row = huddle.lists.find((r) => r.key === key);
-    return row ? groupName(row.key, row.name) : null;
-  });
-  const addPlaceholder = $derived(addTargetName ? t('cplug.huddle.add.placeholder_for', { name: addTargetName }) : t('cplug.huddle.add.placeholder'));
 
   function firstList(): string | null {
     return popout ? firstPopoutList(window.sessionStorage, window.name, window.location.search) : null;
@@ -309,42 +295,6 @@
 
   const groupName = listLabel;
 
-  let adding = $state(false);
-
-  async function add(): Promise<void> {
-    if (!entry || adding) return;
-    adding = true;
-    const save = async (): Promise<boolean> => {
-      const outcome = await addItem(entry); // the server did not answer
-      adding = false;
-      if (outcome !== 'failed') { draft = ''; sent.flash(); }
-      return outcome === 'added';
-    };
-    try {
-      await submitNow(huddle.addTarget, save);
-    } finally {
-      adding = false;
-    }
-  }
-
-  function onLineKey(event: KeyboardEvent): void {
-    if (event.key !== 'Enter' || event.isComposing || event.shiftKey) return;
-    event.preventDefault();
-    (event.currentTarget as HTMLInputElement).form?.requestSubmit();
-  }
-
-  function onAreaKey(event: KeyboardEvent): void {
-    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-      event.preventDefault();
-      void add();
-    }
-  }
-
-  function toggleMultiline(): void {
-    multiline = !multiline;
-    if (!multiline) draft = draft.replace(/\s*\r?\n\s*/g, ' ').trim();
-  }
-
   async function confirmRemoveCompleted(): Promise<void> {
     confirmRemove = false;
     await removeCompleted(viewList);
@@ -383,8 +333,8 @@
   {/if}
   {#if !swarmOn}
   {#if huddle.notice}
-    {#if sendPicks.reopen?.length}
-      <button type="button" class="hd-notice" data-task-manager-notice data-task-manager-notice-pick onclick={reopenPick}>{huddle.notice}</button>
+    {#if noticeClickable()}
+      <button type="button" class="hd-notice" data-task-manager-notice {...noticeKey()} {@attach settleNotice}>{huddle.notice}</button>
     {:else}
       <p class="hd-notice" role="status" data-task-manager-notice>{huddle.notice}</p>
     {/if}
@@ -462,29 +412,33 @@
     </span>
   </div>
 
-  <form class="hd-add" class:hd-add--multi={multiline} onsubmit={(event) => { event.preventDefault(); void add(); }}>
-    {#if pinnedList === null || pinnedAll}
-    <select class="oc-field hd-add-target" use:baseField={'sm'} bind:value={huddle.addTarget} aria-label={t('cplug.huddle.add.target')}
-            title={t('cplug.huddle.add.target')} data-task-manager-add-target>
-      {#each targets as row (row.key)}<option value={row.key}>{groupName(row.key, row.name)}</option>{/each}
-    </select>
-    {/if}
-    {#if multiline}
-      <textarea class="oc-field hd-add-input" use:baseField={'sm'} rows={MULTILINE_ROWS} bind:value={draft} maxlength="40000" onkeydown={onAreaKey}
-                placeholder={addPlaceholder} title={t('cplug.huddle.add.multi_keys_title')} aria-label={addPlaceholder} data-task-manager-add></textarea>
-    {:else}
-      <input class="oc-field hd-add-input" use:baseField={'sm'} type="text" bind:value={draft} maxlength="2000" onkeydown={onLineKey}
-             placeholder={addPlaceholder} title={t('cplug.huddle.add.keys_title')} aria-label={addPlaceholder} data-task-manager-add />
-    {/if}
-    <button type="button" class="oc-ibtn oc-ibtn--bare hd-multi" aria-pressed={multiline} data-task-manager-multiline
-            aria-label={t(multiline ? 'cplug.huddle.add.single' : 'cplug.huddle.add.multi')}
-            title={t(multiline ? 'cplug.huddle.add.single' : 'cplug.huddle.add.multi')} onclick={toggleMultiline}><Icon name="hamburger" size={12} /></button>
-    {#if bodyOptions.sendInAddRow}
-      <TaskManagerSend compose={{ text: draft, add }} />
-    {:else}
-      <button type="submit" class="oc-btn oc-btn--sm" class:oc-btn--confirm={addLook !== 'idle'} onclick={(event) => { event.preventDefault(); void add(); }} data-task-manager-submit-look={addLook}
-              disabled={addLook === 'idle' || adding}>{t(addLook === 'sent' ? 'cplug.huddle.submit.sent' : 'cplug.huddle.add.button')}</button>
-    {/if}
+  <form class="hd-add" class:hd-add--drop={row.files.dropping} data-task-manager-add-form ondragover={row.files.onDragOver} ondragleave={row.files.onDragLeave} ondrop={row.files.onDrop}
+        onsubmit={(event) => { event.preventDefault(); void row.add(); }}>
+    {#if row.files.attached.chips.length}<div class="hd-add-files" data-task-manager-add-files><TaskManagerChips chips={row.files.attached.chips} onRemove={row.files.attached.remove} /></div>{/if}
+    <div class="hd-add-row" class:hd-add--multi={row.multiline}>
+      {#if pinnedList === null || pinnedAll}
+      <select class="oc-field hd-add-target" use:baseField={'sm'} bind:value={huddle.addTarget} aria-label={t('cplug.huddle.add.target')}
+              title={t('cplug.huddle.add.target')} data-task-manager-add-target>
+        {#each row.targets as target (target.key)}<option value={target.key}>{groupName(target.key, target.name)}</option>{/each}
+      </select>
+      {/if}
+      {#if row.multiline}
+        <textarea class="oc-field hd-add-input" use:baseField={'sm'} rows={MULTILINE_ROWS} bind:value={row.draft} maxlength="40000" onkeydown={row.onAreaKey} onpaste={row.files.onPaste}
+                  placeholder={row.placeholder} title={t('cplug.huddle.add.multi_keys_title')} aria-label={row.placeholder} data-task-manager-add></textarea>
+      {:else}
+        <input class="oc-field hd-add-input" use:baseField={'sm'} type="text" bind:value={row.draft} maxlength="2000" onkeydown={row.onLineKey} onpaste={row.files.onPaste}
+               placeholder={row.placeholder} title={t('cplug.huddle.add.keys_title')} aria-label={row.placeholder} data-task-manager-add />
+      {/if}
+      <button type="button" class="oc-ibtn oc-ibtn--bare hd-multi" aria-pressed={row.multiline} data-task-manager-multiline
+              aria-label={t(row.multiline ? 'cplug.huddle.add.single' : 'cplug.huddle.add.multi')}
+              title={t(row.multiline ? 'cplug.huddle.add.single' : 'cplug.huddle.add.multi')} onclick={row.toggleMultiline}><Icon name="hamburger" size={12} /></button>
+      {#if bodyOptions.sendInAddRow}
+        <TaskManagerSend compose={{ text: row.draft, add: row.add, blocked: row.files.staging }} />
+      {:else}
+        <button type="submit" class="oc-btn oc-btn--sm" class:oc-btn--confirm={row.look !== 'idle'} onclick={(event) => { event.preventDefault(); void row.add(); }} data-task-manager-submit-look={row.look}
+                disabled={row.look === 'idle' || row.adding || row.files.staging}>{t(row.look === 'sent' ? 'cplug.huddle.submit.sent' : 'cplug.huddle.add.button')}</button>
+      {/if}
+    </div>
   </form>
   {#if popout}
     
@@ -576,7 +530,14 @@
       justify-content: space-between;
       gap: var(--oc-space-1);
       padding: var(--oc-space-1) var(--oc-space-2);
+    }
+
+    .hd-foot:not(:has(+ .hd-add)) {
       box-shadow: inset 0 1px 0 var(--oc-line-rule);
+    }
+
+    .hd-foot:not(:has(.hd-key)) {
+      display: none;
     }
 
     .hd-foot-left,
@@ -744,15 +705,30 @@
 
     .hd-add {
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: var(--oc-space-1);
-      padding: var(--oc-space-2) var(--oc-space-2) var(--oc-space-3);
+      padding: var(--oc-space-2);
       background: var(--oc-ground-titlerow);
       box-shadow: inset 0 1px 0 var(--oc-line-rule);
     }
 
-    .hd-add--multi {
+    .hd-add--drop {
+      box-shadow: inset 0 1px 0 var(--oc-orange);
+    }
+
+    .hd-add-row {
+      display: flex;
+      align-items: center;
+      gap: var(--oc-space-1);
+    }
+
+    .hd-add-row.hd-add--multi {
       align-items: flex-end;
+    }
+
+    .hd-add-files {
+      display: flex;
+      min-width: 0;
     }
 
     .hd-add-input {

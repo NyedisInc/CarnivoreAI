@@ -12,7 +12,7 @@ import structlog
 from fastapi import HTTPException
 
 from src.cplugs.huddle import blockers, kinds, lineage, rules, service, wait_checks, wait_copy, waits
-from src.cplugs.huddle.roles import ask, unstick, wait_stuck
+from src.cplugs.huddle.roles import ask, port as roles_port, unstick, wait_stuck
 from src.cplugs.huddle.rules import TaskManagerError, TaskManagerStale
 from src.cplugs.sdk import CplugContext
 
@@ -49,7 +49,7 @@ async def _after_hold(ctx: CplugContext, cleared: Mapping[str, Any], text: str, 
         logger.info("task_manager_hold_parent_moved", item=cleared["item_id"])
         return None
     if told_key is not None:
-        await send_parker(ctx, {"set_by": told_key}, item["list"], cleared["item_id"])
+        await send_holder(ctx, {"set_by": told_key}, item["list"], cleared["item_id"])
     return item
 
 
@@ -63,11 +63,11 @@ async def finish_hold(ctx: CplugContext, item_id: int, by: str, text: str, detai
     return item if item is not None else await _run(lambda: store.item(item_id))
 
 
-async def send_parker(ctx: CplugContext, wait: Mapping[str, Any], list_key: str, item_id: int) -> None:
+async def send_holder(ctx: CplugContext, wait: Mapping[str, Any], list_key: str, item_id: int) -> None:
     store = service.store(ctx)
     try:
         key = await _run(lambda: unstick.tag_key(store, item_id)) or wait.get("set_by") or await _run(lambda: unstick.owning_key(store, item_id))
-        told = await unstick.send_session(ctx, _run, key, list_key)
+        told = await unstick.send_session(roles_port.session_ctx(ctx), _run, key, list_key)
         logger.info("task_manager_wait_told", item=item_id, list=list_key, status=told.get("status"))
     except RUN_ERRORS as exc:
         logger.warning("task_manager_wait_tell_failed", item=item_id, error_type=type(exc).__name__, error=str(exc)[:200])
@@ -87,7 +87,7 @@ async def finish(ctx: CplugContext, wait: Mapping[str, Any], status: str, text: 
         return None
     item = await _hand_back_or_reopen(store, wait, text, detail)
     logger.info("task_manager_wait_ended", item=wait["item_id"], wait=wait["id"], status=status)
-    await send_parker(ctx, wait, item["list"], wait["item_id"])
+    await send_holder(ctx, wait, item["list"], wait["item_id"])
     return item
 
 
@@ -140,7 +140,7 @@ class WaitRunner:
         store = self._store()
         item = await _hand_back_or_reopen(store, wait, wait_copy.challenge(wait["waiting_on"], wait["expect_by"]), EXPIRED_DETAIL)
         logger.info("task_manager_wait_expired", item=wait["item_id"], wait=wait["id"], extended=bool(wait["extended"]))
-        await send_parker(self._ctx, wait, item["list"], wait["item_id"])
+        await send_holder(self._ctx, wait, item["list"], wait["item_id"])
 
     async def _escalate(self, wait: Mapping[str, Any]) -> None:
         store = self._store()

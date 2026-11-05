@@ -175,6 +175,8 @@ def _read_claude(
     totals = claude_reader.read_transcript_totals(
         transcript_path, max_cold_bytes=max_cold_bytes
     )
+    if totals is None and max_cold_bytes is not None:
+        totals = claude_reader.read_transcript_tail_totals(transcript_path)
     if totals is None:
         return _unchecked(
             "this session's transcript could not be opened, so its token "

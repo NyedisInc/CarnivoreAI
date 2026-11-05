@@ -5,6 +5,9 @@ import math
 from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
+from src.models.stats import TimeRange
+
+
 class QueryLimit(ValueError):
     pass
 
@@ -13,7 +16,7 @@ def iso_utc(ts: int | float) -> str:
     return datetime.fromtimestamp(ts, UTC).isoformat().replace("+00:00", "Z")
 
 
-def minute_window(value) -> tuple[int, int]:
+def minute_window(value: TimeRange) -> tuple[int, int]:
     start = int(value.from_.timestamp()) // 60 * 60
     end = math.ceil(value.to.timestamp() / 60) * 60
     return start, end

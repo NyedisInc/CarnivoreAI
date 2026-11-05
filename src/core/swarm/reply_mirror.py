@@ -115,18 +115,19 @@ def matcher(ref: str, delivered_at: datetime, sources: Set[str], pointer: str) -
 
 
 def _locate(conn: sqlite3.Connection, agent: Dict[str, Any]) -> Optional[Tuple[str, str]]:
-    row = conn.execute("SELECT claude_session_uuid, working_dir FROM sessions WHERE id = ?", (agent.get("session_row_id"),)).fetchone()
+    row = conn.execute("SELECT claude_session_uuid, working_dir, tmux_socket, tmux_name FROM sessions WHERE id = ?", (agent.get("session_row_id"),)).fetchone()
     uuid = _uuids.get(agent["id"]) or (row[0] if row else None)
     if not uuid:
         return None
     family = str(agent.get("harness") or "claude")
     if family == "codex":
-        from src.core.attention.codex_gather import DEFAULT_CODEX_HOME, rollout_path_in_sessions
+        from src.core.attention.codex_gather import rollout_path_in_sessions
+        from src.core.attention.codex_pane_home import pane_codex_home
 
         if not _UUID.match(str(uuid)):
             return None
 
-        path = rollout_path_in_sessions(DEFAULT_CODEX_HOME, str(uuid))
+        path = rollout_path_in_sessions(pane_codex_home(*(row[2:4] if row else (None, None))), str(uuid))
         return (path, family) if path else None
     from src.core.session_token_usage.claude_reader import locate_transcript
 

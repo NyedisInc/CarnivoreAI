@@ -9,8 +9,9 @@ import type { AccountAnswer } from './account-model';
 import type { RestartAccounts } from './account-types';
 import type { PickerRow } from './picker-model';
 import type { LaunchPrefill } from './prefill';
+import type { WorktreeAnswer } from './worktree-model';
 
-export interface PickerAnswer { profileId: string; profileLabel: string; model: string | null; account: AccountAnswer | null; farLauncher?: boolean; name?: string; pinned?: boolean }
+export interface PickerAnswer { profileId: string; profileLabel: string; model: string | null; account: AccountAnswer | null; farLauncher?: boolean; name?: string; pinned?: boolean; worktree?: WorktreeAnswer | null }
 
 export interface OpenOptions {
     title?: string;
@@ -24,6 +25,7 @@ export interface OpenOptions {
     remote?: { key: string; label: string } | null;
     goLabel?: string | null;
     prefill?: LaunchPrefill | null;
+    folder?: string | null;
 }
 
 export function openLaunchPicker(options: OpenOptions = {}, t: Translate = appT): Promise<PickerAnswer | null> {

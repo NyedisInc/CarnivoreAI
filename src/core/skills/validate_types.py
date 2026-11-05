@@ -9,6 +9,11 @@ SCRIPTS_NOT_SUPPORTED = "scripts_not_supported"
 
 SCRIPTS_DIR = "scripts"
 
+
+def is_script_member(relpath: str, executable: bool) -> bool:
+    return executable or relpath == SCRIPTS_DIR or relpath.startswith(SCRIPTS_DIR + "/")
+
+
 EXCLUDED_SEGMENTS = frozenset({".git", "__MACOSX"})
 EXCLUDED_BASENAMES = frozenset({".DS_Store"})
 EXCLUDED_BASENAME_PREFIXES = ("._",)

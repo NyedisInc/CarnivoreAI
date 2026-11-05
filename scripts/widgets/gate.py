@@ -32,15 +32,14 @@ from typing import Any, Mapping
 
 from scripts.widgets.capture import RunOptions, run_widget, write_catalog_images
 from scripts.widgets.fit_table import read_gates, write_table
-from scripts.widgets.verdicts import cells_of, render_failures
-from scripts.widgets.capture_one import source_revision
+from scripts.widgets.verdicts import GLANCE_HOST, GLANCE_SIZE, POPOUT_HOST, cells_of, render_failures
+from scripts.widgets.common import source_revision
 from scripts.widgets.harness import CHROMIUM_ARGS, REPO, HarnessError, Render, build_if_stale, catalog, serve
 from src.cplugs.sdk.widget_decl import REQUIRED_FIXTURES, ZONE_HOSTS, problems_in
 from src.cplugs.sdk.widget_gate import GATE_SCHEMA, MIN_THEMES, record_digest
 
 RECORDS_PATH = REPO / "src" / "data" / "widget-contracts.json"
 DEFAULT_OUT = REPO / "build" / "widget-gate"
-POPOUT_HOST, GLANCE_HOST, GLANCE_SIZE = "popout", "glance", "glance"
 DRAWER_SIZES = "s,m,l"
 
 
@@ -114,7 +113,7 @@ def _gate_record(record: Mapping[str, Any], widgets: list[dict], renders: list[R
             "fixtures": sorted({r.fixture for r in drawn}), "draws": len(renders),
             "findings": sum(len(r.findings) for r in renders), "errors": sum(1 for r in renders if r.error or r.console),
             "misses": sorted({m for r in renders for m in r.misses}), "failures": failures, "warnings": warnings_in(record),
-            "sizes_mode": sizes_mode, "keys": sorted(keys) if keys else None, "partial": bool(keys), "cells": cells_of(renders, record["hosts"]), "source_revision": source_revision(),
+            "sizes_mode": sizes_mode, "keys": sorted(keys) if keys else None, "partial": bool(keys), "cells": cells_of(renders, record["hosts"]), "source_revision": source_revision(REPO),
             "ran_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")}
 
 
@@ -167,7 +166,7 @@ def main(argv: list[str]) -> int:
                 print(f"gate: {record['id']}: {'PASS' if gate['ok'] else 'FAIL'} ({gate['draws']} draws, {len(gate['failures'])} failures)", flush=True)
                 for warning in gate["warnings"]:
                     print(f"gate: warning: {warning}", flush=True)
-            write_table(args.out, read_gates(args.out), source_revision())
+            write_table(args.out, read_gates(args.out), source_revision(REPO))
             if args.catalog:
                 passed = {g["widget"] for g in results if g["ok"]}
                 skipped = sorted({g["widget"] for g in results} - passed)

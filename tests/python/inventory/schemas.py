@@ -11,6 +11,7 @@ from typing import Dict
 from src.core import message_block_ddl, message_block_search_ddl, message_host_ddl, message_model_ddl
 from src.core.attention_history.store import AttentionHistoryStore
 from src.core.bookmarks.store import BookmarkStore
+from src.core.checkpoints.store import CheckpointStore
 from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
 from src.core.inventory import registry_side as side
@@ -59,6 +60,7 @@ def build_side(state_dir: Path) -> Dict[str, Path]:
     paths = {label: side.side_db_path(state_dir, label) for label in side.SIDE_DBS}
     paths[side.BOOKMARKS].parent.mkdir(parents=True, exist_ok=True)
     BookmarkStore(paths[side.BOOKMARKS]).list_recent(1)
+    CheckpointStore(paths[side.BOOKMARKS]).sessions()
     AttentionHistoryStore(paths[side.ATTENTION]).record("schema-probe", "question", now)
     with closing(sqlite3.connect(paths[side.ATTENTION])) as conn, conn:
         conn.execute("DELETE FROM attention_events")

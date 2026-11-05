@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, tick, unmount } from 'svelte';
 import HuddleReview from './HuddleReview.svelte';
-import { reviewAnswerOf, reviewOf, summarize } from './huddle-review';
+import { reviewOf, summarize } from './huddle-review';
 import { reviewOpen, setReviewOpen } from './task-manager-review-fold';
 
 vi.mock('./huddle.svelte', () => ({ readPost: vi.fn(), reply: vi.fn() }));
@@ -22,8 +22,6 @@ async function draw(props: Record<string, unknown>): Promise<HTMLElement> {
 
 const LONG = '**What changed:** the card now folds. It also does more.\n- bullet one\n- bullet two';
 const item = (extra: Record<string, unknown>) => ({ id: 9, status: 'review', thread: [], ...extra }) as never;
-const m = (id: number, author: string, kind: string, extra: Record<string, unknown> = {}) =>
-  ({ id, item_id: 9, author, kind, text: `t${id}`, answered: false, created_at: id, seq: id, ...extra });
 
 describe('summarize', () => {
   test('first sentence of the first line, markdown stripped', () => {
@@ -124,36 +122,6 @@ describe('the card', () => {
     expect(reviewOpen(1)).toBe(false);
     expect(() => setReviewOpen(1, true)).not.toThrow();
     spy.mockRestore(); set.mockRestore();
-  });
-});
-
-describe('the answer line', () => {
-  const asked = [m(1, 'joe', 'reply'), m(2, 'claude', 'answer', { quote: { id: 1, text: 'q' }, text: 'Yes, it does. Because of x.\nSecond line.' })];
-
-  test('is the newest agent answer quoting a plain reply of Joe', () => {
-    const later = [...asked, m(3, 'joe', 'reply'), m(4, 'claude', 'answer', { quote: { id: 3, text: 'q' }, text: 'ok' })];
-    expect(reviewAnswerOf(item({ thread: later }))?.id).toBe(4);
-    expect(reviewAnswerOf(item({ thread: asked }))).toMatchObject({ id: 2, summary: 'Yes, it does.', hasMore: true });
-  });
-
-  test('none when unanswered, when the answer quotes something that is not his plain reply, or on a form answer', () => {
-    expect(reviewAnswerOf(item({ thread: [m(1, 'joe', 'reply')] }))).toBeNull();
-    expect(reviewAnswerOf(item({ thread: [m(1, 'joe', 'reply', { answers_to: 0, freeform: true }), m(2, 'claude', 'answer', { quote: { id: 1, text: 'q' } })] }))).toBeNull();
-    expect(reviewAnswerOf(item({ thread: [m(2, 'claude', 'answer', { quote: { id: null, text: 'q' } })] }))).toBeNull();
-  });
-
-  test('draws below the card as the last line, compact, the rest behind more', async () => {
-    const block = reviewOf(item({ review_description: 'fixed' }))!;
-    const host = await draw({ id: 9, block, answer: reviewAnswerOf(item({ thread: asked })) });
-    const wrap = host.querySelector('[data-task-manager-review-wrap="9"]')!;
-    const line = wrap.querySelector('[data-task-manager-review-answer]')!;
-    expect(wrap.lastElementChild).toBe(line);
-    expect(line.previousElementSibling).toBe(wrap.querySelector('[data-task-manager-review="9"]'));
-    expect(line.textContent).toContain('Yes, it does.');
-    expect(line.textContent).not.toContain('Second line');
-    line.querySelector<HTMLButtonElement>('[data-task-manager-review-answer-more]')!.click();
-    await settle();
-    expect(line.textContent).toContain('Second line');
   });
 });
 

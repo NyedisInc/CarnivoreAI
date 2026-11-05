@@ -20,20 +20,6 @@
     min-width: 0;
 }
 
-.command-button {
-    flex-direction: column;
-    gap: 2px;
-    line-height: 1.25;
-    min-height: 54px;
-    height: auto;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    width: 100%;
-    min-width: 0;
-    padding-right: 40px;
-    border-radius: var(--oc-radius-sm);
-}
-
 .command-button-name {
     color: var(--oc-text-primary);
     font-weight: 600;
@@ -98,11 +84,6 @@
 @media (max-width: 600px) {
     .command-chip {
         width: 47%;
-    }
-
-    .command-button {
-        padding-left: 6px;
-        padding-right: 40px;
     }
 
     .command-button-desc {

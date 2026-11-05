@@ -2,6 +2,7 @@
 import type { Translate } from '../sessions/types';
 import type { HistoryApi } from './history-api';
 import { confirmText, failedChecks, onlyNeedsLocalOnly, type PackAnswer } from './pack-model';
+import { failureReason } from '../errors/failure-reason';
 
 export interface PackOutcome {
     readonly started: boolean;
@@ -39,6 +40,6 @@ export async function runPackFlow(kind: 'pack' | 'unpack', name: string, api: Hi
         await pack.apply(kind, name, plan.fingerprint, accept);
         return { started: true, notice: t(`projects.page.${kind}.started`, { name }) };
     } catch (error) {
-        return { started: false, notice: error instanceof Error ? error.message : String(error) };
+        return { started: false, notice: failureReason(error) };
     }
 }

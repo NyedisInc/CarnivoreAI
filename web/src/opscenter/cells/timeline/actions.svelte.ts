@@ -6,6 +6,7 @@ import { openConversation } from '../../../lib/conversation-open/open';
 import { BookmarkWidgetActions, type Notice } from '../bookmarks/widget-actions.svelte';
 import { getPeek, openRestorePoint } from './api';
 import type { Mark, SessionTimeline } from './types';
+import { failureReason } from '../../../lib/errors/failure-reason';
 
 export const CPLUG_DISABLED = 'cplug_disabled';
 
@@ -18,7 +19,7 @@ export function isPluginOff(error: unknown): boolean {
 }
 
 function messageOf(error: unknown): string {
-  return error instanceof ApiError || error instanceof Error ? error.message : String(error);
+  return failureReason(error);
 }
 
 export interface Offers {

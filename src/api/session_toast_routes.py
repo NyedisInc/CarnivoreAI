@@ -78,7 +78,7 @@ async def create_session_toast(
             kind=body.kind,
             title=body.title,
             body=body.body,
-            notify_type="session.posted",
+            notify_type="agent.message",
         )
     except ValueError as e:
         raise api_error(404, "not_found", e, step="create_session_toast") from e

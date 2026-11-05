@@ -31,25 +31,6 @@ def is_alias(name: Any) -> bool:
     return isinstance(name, str) and (name in _tables()[0] or name in merged_tools.MERGED)
 
 
-def retired_name(name: str) -> Optional[str]:
-    return _tables()[1].get(name)
-
-
-def was_renamed(name: str) -> bool:
-    forward, reverse = _tables()
-    return name in forward or name in reverse
-
-
-def names_both_ways(names: Tuple[str, ...]) -> Tuple[str, ...]:
-    out: Dict[str, None] = {}
-    for name in names:
-        out[name] = None
-        old = retired_name(name)
-        if old is not None:
-            out[old] = None
-    return tuple(out)
-
-
 def id_table() -> Dict[str, str]:
     current = {name: cap.id for name, cap in registry_index.entries().items()}
     return {**current, **{old: current[new] for old, new in table().items() if new in current}}

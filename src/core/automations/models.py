@@ -3,12 +3,14 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator, model_validator
 
 from src.core.automations.targets.agent_def import AgentDef
 
 CLAIMED, RUNNING, SUCCEEDED, FAILED, SKIPPED, CANCELLED, WAITING = (
     "claimed", "running", "succeeded", "failed", "skipped", "cancelled", "waiting_on_you")
+ALERTED = "alerted"
+MAX_ALERT_EXIT_CODES = 8
 LIVE_STATUSES = (CLAIMED, RUNNING, WAITING)
 
 R_MISSED, R_DISABLED, R_TWO_RUNNING, R_PREV_RUNNING = "missed_slot", "disabled", "two_runs_running", "previous_run_still_running"
@@ -126,6 +128,19 @@ class CommandTarget(BaseModel):
     kind: Literal["command"]
     command: str = Field(min_length=1, max_length=500)
     project_id: Optional[int] = Field(default=None, ge=1)
+    alert_exit_codes: Optional[List[StrictInt]] = None
+
+    @field_validator("alert_exit_codes")
+    @classmethod
+    def _alert_codes(cls, value: Optional[List[int]]) -> Optional[List[int]]:
+        if not value:
+            return None
+        if any(not 1 <= code <= 255 for code in value):
+            raise ValueError("alert exit codes must be 1 to 255")
+        unique = list(dict.fromkeys(value))
+        if len(unique) > MAX_ALERT_EXIT_CODES:
+            raise ValueError(f"at most {MAX_ALERT_EXIT_CODES} alert exit codes")
+        return unique
 
 
 class SequenceTarget(BaseModel):
@@ -159,8 +174,12 @@ def validate_target(raw: Any) -> Dict[str, Any]:
         clean = model.model_validate(raw).model_dump(mode="json")
     except ValueError as exc:
         raise AutomationInvalid("target_invalid", str(exc)[:300]) from exc
+    if kind == "command" and not clean.get("alert_exit_codes"):
+        clean.pop("alert_exit_codes", None)
     if kind == "sequence":
         clean["steps"] = [validate_target(step) for step in clean["steps"]]
+        if any(step.get("alert_exit_codes") for step in clean["steps"]):
+            raise AutomationInvalid("target_invalid", "alert exit codes belong on a command automation, not on a sequence step")
         return clean
     if kind == "agent" and clean.get("login_account_id"):
         from src.core.byoai.contracts import ByoaiError  # noqa: PLC0415
@@ -183,7 +202,7 @@ def validate_delivery(raw: Any) -> Dict[str, Any]:
 class RunOutcome(BaseModel):
     """What a target runner returns; the scheduler writes it onto the run.
 
-    ``status`` is ``succeeded``, ``failed``, ``skipped``, ``cancelled`` or (a run that goes on without the runner, such as a
+    ``status`` is ``succeeded``, ``failed``, ``alerted`` (a command's listed alert exit code), ``skipped``, ``cancelled`` or (a run that goes on without the runner, such as a
     Blueprint's sessions) ``running`` / ``waiting_on_you``, which leaves the run live.
     """
 

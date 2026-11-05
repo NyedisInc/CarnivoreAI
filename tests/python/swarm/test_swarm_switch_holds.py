@@ -224,12 +224,12 @@ def test_a_remote_body_keeps_its_task_manager_tools_and_loses_only_the_swarm_fam
         return proxy_server.ProxyCall(tool=tool, body_session_uuid="body-uuid", project_uid="project-1", home_agent_id=7)
 
     flip[0] = False
-    for tool in ("huddle_progress", "task_manager_reply"):
+    for tool in ("task_manager_progress_set", "task_manager_reply"):
         assert asyncio.run(span.swarm_proxy(call(tool), request, None)) == {"result": "ok"}
     with pytest.raises(HTTPException) as off:
         asyncio.run(span.swarm_proxy(call("swarm_report"), request, None))
     assert off.value.status_code == 409 and off.value.detail["code"] == "swarm_off"
-    assert ran == ["huddle_progress", "task_manager_reply"]
+    assert ran == ["task_manager_progress_set", "task_manager_reply"]
     flip[0] = True
     asyncio.run(span.swarm_proxy(call("swarm_report"), request, None))
     assert ran[-1] == "swarm_report"

@@ -39,7 +39,7 @@ export const showsHandle = (state: BarVisual): boolean => state === 'handle' || 
 
 export const peekOut = (f: Readonly<PeekFlags>): boolean => f.hover || f.focusIn || f.touchPeek || f.retracting;
 
-export const showsPin = (state: BarVisual): boolean => state === 'held' || state === 'pinned' || state === 'peek';
+export const showsPin = (state: BarVisual): boolean => state === 'held' || state === 'pinned' || state === 'peek' || state === 'edit';
 
 export function foldedEdge(together: BarsTogether, lead: RailEdge | null, edge: RailEdge): boolean {
   return together === 'one' && lead !== null && lead !== edge;

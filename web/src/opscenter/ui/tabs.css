@@ -11,7 +11,7 @@
   .oc-ptabs__list {
     display: flex;
     align-items: stretch;
-    gap: 1px;
+    gap: var(--oc-gap-hair);
     min-width: 0;
     flex: 1 1 auto;
     overflow-x: auto;
@@ -34,17 +34,17 @@
 
   .oc-ptabs--fade-start .oc-ptabs__list,
   .oc-fade-start {
-    mask-image: linear-gradient(to right, transparent, #000 24px);
+    mask-image: linear-gradient(to right, transparent, var(--oc-mask-solid) 24px);
   }
 
   .oc-ptabs--fade-end .oc-ptabs__list,
   .oc-fade-end {
-    mask-image: linear-gradient(to left, transparent, #000 24px);
+    mask-image: linear-gradient(to left, transparent, var(--oc-mask-solid) 24px);
   }
 
   .oc-ptabs--fade-start.oc-ptabs--fade-end .oc-ptabs__list,
   .oc-fade-start.oc-fade-end {
-    mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+    mask-image: linear-gradient(to right, transparent, var(--oc-mask-solid) 24px, var(--oc-mask-solid) calc(100% - 24px), transparent);
   }
 
   .oc-ptabs--joined,
@@ -66,12 +66,12 @@
   }
 
   .oc-ptab {
-    --_bd: var(--oc-line-rule);
+    --_bd: var(--oc-focus-quiet);
     box-sizing: border-box;
     display: inline-flex;
     flex: 0 0 auto;
     align-items: center;
-    gap: 6px;
+    gap: var(--oc-space-1-5);
     min-width: 0;
     max-width: 100%;
     padding: 0 var(--oc-space-3);

@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Mapping, NamedTuple, Tuple
 
 from src.cplugs.huddle import guide_sections
 
-TASK_MANAGER_GUIDE_REV = 118
+TASK_MANAGER_GUIDE_REV = 121
 
 
 class Change(NamedTuple):
@@ -214,8 +214,15 @@ TASK_MANAGER_GUIDE_CHANGELOG: Tuple[Change, ...] = (
                 "Only the agent that attached the file (or the owner) may; any other agent is refused task_manager_not_attacher. task_manager_file_unsafe means nothing changed; task_manager_bytes_not_removed means call again.", True),
     Change(118, "task_manager_file_remove (#2660 review): it also refuses, with nothing changed, a file another author's message on the task names or another task names (task_manager_file_shared; the owner can still delete a file shared by messages on one task) "
                 "and a file a review board's attachment list holds (task_manager_file_on_board: remove it with task_manager_board_attachment_remove)."),
+    Change(119, "Joe (ccsliinc), 2026-10-30, #1711 S7: the old huddle_* tool names are gone (a call answers unknown tool; call task_manager_* as the table in section 1 says), "
+                "huddle_focus is removed (mark a task with the marker argument of task_manager_update), and the retired state names approved, approved_with_note, waiting_install, "
+                "back_burner and done_by_claude are refused as input (use done, waiting, todo, review)."),
+    Change(120, "Joe (ccsliinc), 2026-10-30, section 5: the explanation a question depends on goes in that ask's own context, never in a separate info "
+                "or answer before it. Also trimmed under the size cap (#2714): revision notes left the headings, repeats folded into sections 6 and 27."),
+    Change(121, "Joe (ccsliinc), 2026-11-03, #2779: a file pasted into the add box rides its entry. task_manager_entries_list shows files [{id, name, mime, size, path}] on an entry "
+                "(an absolute path you can Read), and every item you file from the entry gets them attached as a quiet note on its thread."),
 )
-TASK_MANAGER_GUIDE_HASH = "2c82426bf1f3efb76ccd7be98c0b231c96df600a7c2fac62a7ca7133af71ae97"
+TASK_MANAGER_GUIDE_HASH = "daeb0036c9f8cd7a5a0a7b72d798ca5093d806ae68a7fb25909bdff8d8cb5a1d"
 
 GUIDE_PATH = Path(__file__).resolve().parents[2] / "core" / "skills" / "bundled" / "huddle" / "SKILL.md"
 

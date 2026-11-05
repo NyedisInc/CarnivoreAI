@@ -91,7 +91,7 @@ export const ROW_CASES: readonly RowCase[] = [
     { name: 'browser', type: 'browser', ctx: { ...BROWSER } },
     { name: 'browser in group', type: 'browser', ctx: { ...BROWSER, groupUuid: 'g-1', groupName: 'crew' } },
     { name: 'page', type: 'page', ctx: { ...BROWSER, name: 'page:p-1', isPage: true } },
-    { name: 'file', type: 'file', ctx: { ...BROWSER, name: 'file:f-1', isFile: true } },
+    { name: 'file', type: 'file', ctx: { ...BROWSER, name: 'browser:f-1', isFile: true } },
     { name: 'layout', type: 'layout', ctx: { ...BROWSER, name: 'layout:l-1', kind: 'layout', layoutUuid: 'l-1' } },
 ];
 

@@ -1,0 +1,43 @@
+{
+  "api_routes": [
+    "GET /api/v1/worktrees/probe",
+    "POST /api/v1/worktrees/setup/approve",
+    "POST /api/v1/sessions"
+  ],
+  "area": "sessions",
+  "description": "When you open a project whose folder is a git repository on this computer, the launch picker offers \"start in a new git worktree\": name a new branch (started from the session name) and the branch it starts from, and the session starts in its own worktree under the worktree folder, as a child project of the repository's project. A repository can carry .carnivore/worktree.json with setup steps (argument lists, run with no shell, in order, inside one 10 minute limit) and files to copy in (such as .env). The setup runs only after you read and approve that exact file once; any edit to it asks again. Copying is per file and opt in: a symlink, a directory, anything outside the repository or over 1 MiB is refused, and a name that looks like a secret starts unticked. A failed setup leaves the worktree and stops the launch with the output's tail.",
+  "docs": [
+    "docs/DECISIONS.md"
+  ],
+  "examples": [
+    "start an agent on a fresh branch without touching your main checkout",
+    "run npm ci and copy .env into every new worktree, after approving the steps once"
+  ],
+  "how_to": [
+    "open a project whose folder is a git repository",
+    "tick \"start in a new git worktree\" in the launch picker",
+    "name the branch, pick the from branch, tick setup and the files to copy, and launch"
+  ],
+  "id": "session-worktree-launch",
+  "issues": [
+    2727
+  ],
+  "keywords": [
+    "git",
+    "worktree",
+    "branch",
+    "launch",
+    "setup",
+    "copy",
+    ".env"
+  ],
+  "media_exempt": "new launch picker row; screenshots are captured at the next version bump recapture",
+  "name": "new git worktree at launch",
+  "since": "2026-10-30",
+  "status": "beta",
+  "summary": "start a session in a new git worktree of its repository, with approved setup steps and opt in file copies.",
+  "updated": "2026-10-30",
+  "where": [
+    "the launch picker when you open a project whose folder is a git repository, under the name field"
+  ]
+}

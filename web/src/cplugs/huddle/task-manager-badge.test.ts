@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest';
 import { AGGREGATE, needsYouTotal } from './huddle-model';
-import { BADGE_DEFAULT, badgeFrom } from './task-manager-prefs.svelte';
 
 const rows: { key: string; attention?: number; status_counts?: Record<string, number> }[] = [
   { key: '12', attention: 2, status_counts: { question: 1, review: 1, open: 4, working: 2, scheduled: 1 } },
@@ -20,15 +19,5 @@ describe('needsYouTotal with ticked statuses', () => {
   });
   test('an older server row without status_counts answers its attention', () => {
     expect(needsYouTotal([{ key: '12', attention: 5 }], '12', ['open'])).toBe(5);
-  });
-});
-
-describe('badgeFrom', () => {
-  test('unset settings read as the default (questions and reviews)', () => {
-    expect(badgeFrom(undefined)).toEqual(BADGE_DEFAULT);
-    expect(badgeFrom({})).toEqual({ question: true, review: true, open: false, working: false, waiting: false, scheduled: false });
-  });
-  test('stored booleans win, anything else is ignored', () => {
-    expect(badgeFrom({ badgeQuestions: false, badgeOpen: true, badgeWorking: 'yes' })).toMatchObject({ question: false, review: true, open: true, working: false });
   });
 });

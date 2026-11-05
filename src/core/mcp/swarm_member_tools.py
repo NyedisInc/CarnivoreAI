@@ -44,7 +44,7 @@ SPECS = (
     ra.RouteTool(
         name="swarm_join", route="src.api.swarm_member_routes:join_swarm", gate=ra.ACT,
         description="Make a session a Swarm member (a feature agent under its project agent). It restarts on the same conversation "
-                    "with the Swarm tools. Waits for the owner's approval every time. A project with no agent refuses unless "
+                    "with the Swarm tools. Waits for the owner's approval, except when a Swarm agent calls it on a session of this computer. A project with no agent refuses unless "
                     "create_project_agent is true.",
         properties={"specialty": {"type": "string", "description": "optional: the domain it owns (60 characters at most)"},
                     "create_project_agent": {"type": "boolean", "description": "turn the project's agent on first when it has none"}},

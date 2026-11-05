@@ -1,3 +1,4 @@
+/* the string catalog */
 
 export type Inline =
   | { kind: 'text'; text: string }

@@ -6,6 +6,8 @@ import { folderTargetId, revealInFinder, openInEditor } from './folder-actions';
 import { hostDocument, hostWindow } from '../sessions/env';
 import { terminalShown } from '../sessions-search/host';
 import { wireMenuCommands, type MenuActions } from './menu-commands';
+import { walk } from '../app-keys/chords';
+import { goRecent, startGoMenu } from './go-menu';
 
 interface RowMenuGlobals {
   TerminalController?: { term?: unknown; _currentTmuxName?(): string | null };
@@ -46,9 +48,12 @@ export function browserMenuActions(): MenuActions {
       const id = folderTargetId(target, primarySessionId(), sessions.data);
       if (id) void openInEditor(id);
     },
+    goStep: (dir) => { walk(dir); },
+    goRecent,
   };
 }
 
 export function startMenuCommands(): void {
   wireMenuCommands(browserMenuActions());
+  startGoMenu();
 }

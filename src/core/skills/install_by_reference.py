@@ -11,6 +11,7 @@ import structlog
 
 from src.core.catalog import install_reporter, release_vouch
 from src.core.catalog.verify import check_digest
+from src.core.skills.code_gate import staged_plugin_declares_code
 from src.core.skills.consent_via_ddl import CONSENT_PACK
 from src.core.skills.digest import hash_file
 from src.core.skills.install_types import CHOICE_REPLACE, InstallRefusal
@@ -210,7 +211,7 @@ def _plan_and_apply(services: Any, item: Any, version: Any, staged: Any, body_sh
 async def install_exact(services: Any, ref: Ref, *, families: Optional[tuple[str, ...]] = None) -> Outcome:
     from fastapi import HTTPException
 
-    from src.api.catalog_consent import install_consent_satisfied, staged_plugin_declares_code
+    from src.api.catalog_consent import install_consent_satisfied
     from src.api.catalog_install_support import discovery_listing
     from src.api.catalog_installed_support import apply_update_with
     from src.core.skills.installer import discard_staging

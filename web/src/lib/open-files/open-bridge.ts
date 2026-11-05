@@ -6,6 +6,7 @@ import { deleteOpenFile, fileById, postOpenFile, postOpenFilePath } from './api.
 import { dropBuffer, isDirty } from './buffers.svelte';
 import { rememberSessionId, sessionUuidFor, type SessionRef } from './session-ref';
 import { appConfirm, type ConfirmFn } from './save-flow';
+import { failureReason } from '../errors/failure-reason';
 
 export interface OpenFromDrawer extends SessionRef {
     root: 'user' | 'workdir';
@@ -29,7 +30,7 @@ export async function openFromDrawer(request: OpenFromDrawer): Promise<OpenResul
         const row = await postOpenFile({ root: request.root, path: request.path, session_uuid: uuid, kind: request.kind ?? 'file' });
         return openBrowser(row.id) ? 'opened' : 'refused';
     } catch (err) {
-        const detail = err instanceof Error ? err.message : String(err);
+        const detail = failureReason(err);
         console.warn('open files: the open was refused', { root: request.root, kind: request.kind, error: detail });
         globalThis.alert?.(t('files.editor.open_failed', { detail }));
         return 'refused';

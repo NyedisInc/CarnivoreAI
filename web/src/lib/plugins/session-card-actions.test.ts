@@ -150,13 +150,10 @@ describe('equivalence with the legacy control', () => {
         expect(() => parse('<span>x')).toThrow();
     });
 
-    test('the shortcut letter does not collide with the native menu table', () => {
-        const native = new Set(['R', 'G', 'F', 'N', 'M', 'T', 'C']);
+    test('an item carries no letter of its own: the one letter registry assigns them (#1785)', () => {
         const items = sessionCardMenuItems(row(), ctx({}));
         expect(items.length).toBeGreaterThan(0);
-        for (const item of items) expect(native.has(item.shortcut)).toBe(false);
-        const letters = items.map((item) => item.shortcut);
-        expect(new Set(letters).size).toBe(letters.length);
+        for (const item of items) expect(Object.keys(item)).not.toContain('shortcut');
     });
 
     test('the order lands in a gap the native table left, not on top of one', () => {
@@ -232,5 +229,26 @@ describe('a session on a paired Mac (issue #163, P8b)', () => {
     expect(ids('peer-studio')).not.toContain('share-read-only');
     expect(ids('peer-studio')).toContain('mark-unread');
     expect(await runSessionCardAction('share-read-only', { name: 'x', unread: false, hostKey: 'peer-studio' }, context)).toBe(false);
+  });
+});
+
+describe('a contribution that still carries the retired shortcut field (#1785, EVERY PLUGIN WORKS ON EVERY APP VERSION)', () => {
+  const legacy = { shortcut: 'Z', label: () => 'legacy item', run: vi.fn() };
+
+  test('registers, lists without the field, and runs: the unknown key is ignored, never refused', async () => {
+    vi.resetModules();
+    const fresh = await import('./registry');
+    const actions = await import('./session-card-actions');
+    const accepted = fresh.register({
+      id: 'legacy-shortcut',
+      contributions: [{ id: 'legacy-shortcut-item', surface: 'session-card-action', order: 990, enabled: () => true, payload: legacy }],
+    });
+    expect(accepted).toBe(true);
+    const item = actions.sessionCardMenuItems(row(), ctx({})).find((i) => i.id === 'legacy-shortcut-item');
+    expect(item?.label).toBe('legacy item');
+    expect(Object.keys(item ?? {})).not.toContain('shortcut');
+    expect(await actions.runSessionCardAction('legacy-shortcut-item', row(), ctx({}))).toBe(true);
+    expect(legacy.run).toHaveBeenCalledOnce();
+    expect(surfacesOf('session-card-action').some((c) => c.id === 'legacy-shortcut-item')).toBe(false);
   });
 });

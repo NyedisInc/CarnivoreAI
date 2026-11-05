@@ -18,13 +18,14 @@
         dirty: ReadonlySet<SectionId>;
         onPick: (id: SectionId) => void;
         plugins?: readonly PluginEntry[];
+        features?: readonly PluginEntry[];
         activePlugin?: string | null;
         pluginCounts?: Readonly<Record<string, number>> | null;
         onPickPlugin?: (id: string) => void;
         search: Snippet;
     }
 
-    const { t, active, counts, dirty, onPick, search, plugins = [], activePlugin = null, pluginCounts = null, onPickPlugin }: Props = $props();
+    const { t, active, counts, dirty, onPick, search, plugins = [], features = [], activePlugin = null, pluginCounts = null, onPickPlugin }: Props = $props();
 
     let list = $state<HTMLElement | null>(null);
 
@@ -33,6 +34,30 @@
         current?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
     });
 </script>
+
+{#snippet entryRows(entries: readonly PluginEntry[])}
+    {#each entries as plugin (plugin.id)}
+        {@const current = !pluginCounts && activePlugin === plugin.id}
+        {@const count = pluginCounts ? (pluginCounts[plugin.id] ?? 0) : null}
+        <ListRow selected={current}>
+            {#snippet children()}
+                <Button
+                    variant="row"
+                    aria-current={current ? 'page' : undefined}
+                    data-plugin={plugin.id}
+                    data-empty={count === 0 || undefined}
+                    onclick={() => onPickPlugin?.(plugin.id)}
+                >
+                    <span class="st-nav__icon"><Icon name={plugin.icon} size={14} /></span>
+                    <span class="st-nav__label">{plugin.name}</span>
+                    {#if count !== null}
+                        <span class="st-nav__count">{count}</span>
+                    {/if}
+                </Button>
+            {/snippet}
+        </ListRow>
+    {/each}
+{/snippet}
 
 <nav class="st-nav" aria-label={t('settings.nav.label')}>
     <div class="st-nav__top">
@@ -48,9 +73,15 @@
                 }}
             >
                 {#snippet children()}
-                    {#each SETTINGS_SECTIONS as section (section.id)}
+                    {#each SETTINGS_SECTIONS.filter((section) => section.id !== 'features') as section (section.id)}
                         <option value={section.id}>{t(sectionKey(section.id, 'label'))}{dirty.has(section.id) ? ' *' : ''}</option>
                     {/each}
+                    <optgroup label={t('settings.features.heading')}>
+                        <option value="features">{t('settings.features.overview')}</option>
+                        {#each features as plugin (plugin.id)}
+                            <option value={`${PLUGIN_OPTION_PREFIX}${plugin.id}`}>{plugin.name}</option>
+                        {/each}
+                    </optgroup>
                     {#if plugins.length > 0}
                         <optgroup label={t('settings.plugins.heading')}>
                             {#each plugins as plugin (plugin.id)}
@@ -66,7 +97,7 @@
     <div class="st-nav__list" bind:this={list}>
         <List label={t('settings.nav.label')}>
             {#snippet children()}
-                {#each SETTINGS_SECTIONS as section (section.id)}
+                {#each SETTINGS_SECTIONS.filter((section) => section.id !== 'features') as section (section.id)}
                     {@const current = !counts && !activePlugin && section.id === active}
                     {@const count = counts ? (counts[section.id] ?? 0) : null}
                     <ListRow selected={current}>
@@ -93,32 +124,29 @@
             {/snippet}
         </List>
     </div>
+    <h3 class="oc-label st-nav__heading" data-st-features-heading>{t('settings.features.heading')}</h3>
+    <div class="st-nav__list" data-st-features-list>
+        <List label={t('settings.features.heading')}>
+            {#snippet children()}
+                {@const overview = !counts && !activePlugin && active === 'features'}
+                <ListRow selected={overview}>
+                    {#snippet children()}
+                        <Button variant="row" aria-current={overview ? 'page' : undefined} data-section="features" onclick={() => onPick('features')}>
+                            <span class="st-nav__icon"><Icon name="plug" size={14} /></span>
+                            <span class="st-nav__label">{t('settings.features.overview')}</span>
+                        </Button>
+                    {/snippet}
+                </ListRow>
+                {@render entryRows(features)}
+            {/snippet}
+        </List>
+    </div>
     {#if plugins.length > 0}
         <h3 class="oc-label st-nav__heading" data-st-plugins-heading>{t('settings.plugins.heading')}</h3>
-        <div class="st-nav__list">
+        <div class="st-nav__list" data-st-plugins-list>
             <List label={t('settings.plugins.heading')}>
                 {#snippet children()}
-                    {#each plugins as plugin (plugin.id)}
-                        {@const current = !pluginCounts && activePlugin === plugin.id}
-                        {@const count = pluginCounts ? (pluginCounts[plugin.id] ?? 0) : null}
-                        <ListRow selected={current}>
-                            {#snippet children()}
-                                <Button
-                                    variant="row"
-                                    aria-current={current ? 'page' : undefined}
-                                    data-plugin={plugin.id}
-                                    data-empty={count === 0 || undefined}
-                                    onclick={() => onPickPlugin?.(plugin.id)}
-                                >
-                                    <span class="st-nav__icon"><Icon name={plugin.icon} size={14} /></span>
-                                    <span class="st-nav__label">{plugin.name}</span>
-                                    {#if count !== null}
-                                        <span class="st-nav__count">{count}</span>
-                                    {/if}
-                                </Button>
-                            {/snippet}
-                        </ListRow>
-                    {/each}
+                    {@render entryRows(plugins)}
                 {/snippet}
             </List>
         </div>

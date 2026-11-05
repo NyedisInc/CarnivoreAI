@@ -183,3 +183,14 @@ def test_client_selection_forces_the_repo_boards_test_for_board_data(tmp_path: P
         assert tier.client_python_selection(tmp_path, changed, set()) == [tier.BOARDS_TEST]
     assert tier.client_python_selection(tmp_path, ["design/boards/x/sidecar.json"], {tier.BOARDS_TEST}) == []
     assert tier.client_python_selection(tmp_path, ["design/other/x.md"], set()) == []
+
+
+def test_features_and_capture_share_the_one_changed_paths_lister() -> None:
+    import scripts.feature_capture as capture  # noqa: PLC0415
+    import scripts.features as features  # noqa: PLC0415
+    from scripts.lib import changed_paths as lib  # noqa: PLC0415
+
+    assert features.changed_paths is lib.changed_paths
+    assert not hasattr(features, "_diff_paths")
+    assert tier._changed_paths is lib.changed_paths
+    assert "_diff_paths" not in Path(capture.__file__).read_text(encoding="utf-8")

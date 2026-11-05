@@ -22,7 +22,7 @@ body.session-sidebar-railed #session-sidebar-toggle {
 }
 
 /* the drawer closed the drawer toggle */
-body.session-sidebar-railed:has(#terminal-screen.active) .header {
+body.session-sidebar-railed.ps-terminal-active .header {
     display: none;
 }
 }

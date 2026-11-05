@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { test } from 'node:test';
 import { JSDOM } from '../web/node_modules/jsdom/lib/api.js';
+import { installTrOnly } from './helpers/catalog-tr.mjs';
 
 const names = (list) => Array.from(list, (n) => n.name);
 const read = (file) => readFileSync(new URL(`../client/js/${file}`, import.meta.url), 'utf8');
@@ -29,6 +30,8 @@ function harness({ tree = {}, ignoreStatus = 'ok' } = {}) {
     const document = dom.window.document;
     const ctx = vm.createContext({ window, document, console, localStorage: window.localStorage,
         setTimeout, clearTimeout, Map, Set, Promise });
+    ctx.CloudeI18n = window.CloudeI18n;
+    installTrOnly(ctx);
     for (const file of ['session-status-ui.js', 'config-editor-tree-state.js', 'config-editor-roots.js',
         'config-editor-lazy.js', 'config-editor-filter.js', 'config-editor-rows.js',
         'config-editor-modal.js', 'config-editor-panel.js', 'config-editor-loader.js']) {

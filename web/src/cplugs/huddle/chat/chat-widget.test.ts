@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, tick, unmount } from 'svelte';
 
 type Call = { path: string; method: string; body: unknown };
-const server = vi.hoisted(() => ({ calls: [] as Call[], entries: [] as unknown[], extra: {} as Record<string, unknown> }));
+const server = vi.hoisted(() => ({ calls: [] as Call[], entries: [] as unknown[], extra: {} as Record<string, unknown>, hang: false }));
 
 vi.mock('../../../opscenter/api/auth.svelte', async (importOriginal) => {
   const real = await importOriginal<typeof import('../../../opscenter/api/auth.svelte')>();
@@ -19,6 +19,9 @@ vi.mock('../../../opscenter/api/auth.svelte', async (importOriginal) => {
       }
       if (path.startsWith('/swarm/agents/7/conversation')) return { entries: server.entries, cursor: null };
       if (path === '/swarm/agents/7/export') return new File(['PK'], 'project-agent-craft.zip', { type: 'application/zip' });
+      if (server.hang && path === '/swarm/agents/7/messages') {
+        return new Promise((_, reject) => init.signal?.addEventListener('abort', () => reject(init.signal?.reason)));
+      }
       if (path === '/swarm/agents/7/messages') return { message_ref: 'huddle:msg:1', outcome: 'waking' };
       return {};
     },
@@ -65,6 +68,7 @@ beforeEach(() => {
   server.calls.length = 0;
   server.entries = [];
   server.extra = {};
+  server.hang = false;
   resourcePush().store.hello({ resource_topics: ['swarm_agent'] });
   registerCplugWidgets(huddleCplug);
 });
@@ -153,7 +157,7 @@ describe('the one keyed store', () => {
     const interval = vi.spyOn(globalThis, 'setInterval');
     server.entries = [card(1, 'question')];
     const host = await mountChat();
-    const reads = () => server.calls.filter((c) => c.method === 'GET' && c.path.startsWith('/swarm/agents/7')).length;
+    const reads = () => server.calls.filter((c) => c.method === 'GET' && c.path.startsWith('/swarm/agents/7') && !c.path.endsWith('/waiting')).length;
     expect(reads()).toBe(2);
     expect(host.querySelector('[data-chat-card="question"]')).not.toBeNull();
     resourcePush().store.frame({ topics: ['swarm_agent:8'] });
@@ -191,6 +195,30 @@ describe('the order box and the menu', () => {
     (host.querySelector('.hdc-send') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(server.calls.some((c) => c.path === '/swarm/agents/7/messages' && c.method === 'POST')).toBe(true));
     expect(server.calls.find((c) => c.path === '/swarm/agents/7/messages')?.body).toEqual({ text: 'build the thing' });
+  });
+
+  test('a post that never answers cannot lock the composer: it times out, unlocks and reads again (#2747)', async () => {
+    const host = await mountChat();
+    const box = host.querySelector('.hdc-input') as HTMLTextAreaElement;
+    const send = host.querySelector('.hdc-send') as HTMLButtonElement;
+    server.hang = true;
+    const real = AbortSignal.timeout;
+    AbortSignal.timeout = () => real.call(AbortSignal, 400);
+    try {
+      box.value = 'whats the overall progress';
+      box.dispatchEvent(new Event('input', { bubbles: true }));
+      flushSync();
+      server.calls.length = 0;
+      send.click();
+      await vi.waitFor(() => expect(send.disabled).toBe(true));
+      await vi.waitFor(() => expect(server.calls.some((c) => c.path.startsWith('/swarm/agents/7/conversation'))).toBe(true));
+      expect(box.value).toBe('whats the overall progress');
+      server.hang = false;
+      flushSync();
+      expect(send.disabled).toBe(false);
+    } finally {
+      AbortSignal.timeout = real;
+    }
   });
 
   test('an asleep agent offers wake fresh and resume, an awake one sleep', () => {

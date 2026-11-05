@@ -90,7 +90,7 @@ export function glanceEntries(): GlanceEntry[] {
 export function createGlanceZone(entries: () => readonly GlanceEntry[], show: (entry: GlanceEntry, anchor: ZoneMenuAnchor) => void): Zone {
   return createZone({
     key: GLANCE_ZONE_KEY,
-    tabs: () => entries().map((entry) => ({ key: entry.key, kind: 'widget', options: entry.options })),
+    tabs: () => entries().map((entry) => ({ key: entry.key, kind: 'widget' })),
     active: () => null,
     select: () => {},
     panel: () => 'collapsed',

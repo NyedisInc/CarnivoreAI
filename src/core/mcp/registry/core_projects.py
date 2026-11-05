@@ -74,6 +74,8 @@ TABLE: Mapping[str, Tuple[str, str]] = {
     "pack_queue_cancel": ("pack.placement.queue.cancel", "Cancel one waiting spawn request in the Pack queue."),
     "pack_relay_status": ("pack.relay.get",
                           "Get the Claude credential relay: per account, which computers it mirrors to and each push's state."),
+    "pack_relay_account_use": ("pack.relay.use",
+                               "Make an account, relayed ones included, the default for new Claude sessions on this computer."),
     "pack_relay_set": ("pack.relay.set",
                        "Set which computers mirror a Claude account's access token; only switching it off is open to agents."),
     "pack_skills_status": ("pack.skills.get",

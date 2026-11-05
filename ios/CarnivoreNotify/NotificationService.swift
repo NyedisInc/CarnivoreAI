@@ -14,8 +14,14 @@ final class NotificationService: UNNotificationServiceExtension {
         let result = PushRewrite.rewrite(userInfo: request.content.userInfo, candidates: PushKeyStore.candidates())
         mutable.title = result.title
         mutable.body = result.body
-        if let path = result.path, let origin = result.origin { mutable.userInfo = ["path": path, "origin": origin] }
-        else { mutable.userInfo = [:] }
+        var info: [String: String] = [:]
+        if let path = result.path, let origin = result.origin { info["path"] = path; info["origin"] = origin }
+        if let thread = result.thread, let origin = result.origin {
+            mutable.threadIdentifier = "\(origin)|\(thread)"
+            info["thread"] = thread
+            info["origin"] = origin
+        }
+        mutable.userInfo = info
         contentHandler(mutable)
     }
 

@@ -9,7 +9,8 @@
   ],
   "how_to": [
     "Turn on auto-switch. When the account a session uses hits its limit, new sessions move to another signed-in account, and a running session frozen on the limit is restarted on that account and sent continue.",
-    "On the Providers page, check the confirmation beside the running sessions, then press reset all to restart those sessions on the active account."
+    "On the Providers page, check the confirmation beside the running sessions, then press reset all to restart those sessions on the active account.",
+    "With Beast Mode on, restart to switch or reset all: each restarted session is sent resume once it is back at its prompt, so it carries on with what it was doing."
   ],
   "id": "account-auto-switch",
   "issues": [],
@@ -34,7 +35,7 @@
     "web/src/lib/account-switch/AutoSwitchPanel.svelte",
     "web/src/lib/account-switch/SwitchAccountButton.svelte"
   ],
-  "updated": "2026-10-21",
+  "updated": "2026-11-02",
   "where": [
     "The switch icon beside PROVIDER LEDGER on the home screen and in the drawer's PROVIDERS panel.",
     "The auto-switch accounts section on the Providers page."

@@ -31,6 +31,7 @@ import { foldPresent } from '../drawer/fold-view';
 import { PAGE_SECTION_SLOT, pageSectionMeta } from '../drawer/page-sections';
 import { previewOrder, resolveSectionOrder, type SectionId } from '../drawer/section-order';
 import { leadersShown } from '../drawer/leader-visibility';
+import { swarmIsOn } from '../swarm-switch/control.svelte';
 import { emptySectionsHidden } from '../drawer/empty-sections.svelte';
 import { companyTint, projectTint } from './tint';
 import { archivedLast } from '../drawer/archived-rows';
@@ -530,7 +531,7 @@ function groupsPlan(ctx: Ctx, drawn: Array<{ key: string; rows: SidebarRow[] }>,
 function bodyParts(ctx: Ctx, list: SidebarRow[], query: string, dragging: boolean, order: readonly SectionId[], packRows: readonly SidebarRow[], off: ReadonlySet<string>): BandPart[] {
     const { L } = ctx;
     const sections = filteredBandSections(bands(list), labelFor, query);
-    const kept = sections.filter((b) => keepBandSection(b.key, b.rows, dragging, query));
+    const kept = sections.filter((b) => keepBandSection(b.key, b.rows, dragging, query, emptySectionsHidden()));
     const parts: BandPart[] = [];
     const alphaRow = ctx.leaders.empty ? null : placeLeaders(list, ctx.leaders).alpha;
     if (alphaRow && (!query || narrow('', [alphaRow], query).length)) {
@@ -553,10 +554,8 @@ function bodyParts(ctx: Ctx, list: SidebarRow[], query: string, dragging: boolea
         companies: () => companyUnit.filter((p) => p.key !== 'rogue'),
         rogue: () => companyUnit.filter((p) => p.key === 'rogue'),
         terminals: () => one(kindPlan(ctx, BAND_TERMINALS, TERMINALS_LABEL, terminalRows(list), query, folderLabel, t('sidebar.terminals.empty'))),
-        browsers: () => [
-            ...one(kindPlan(ctx, BAND_BROWSERS, browserLabel, list.filter(isBrowserBand), query, undefined, t('sidebar.browsers.empty'))),
-            ...one(kindPlan(ctx, BAND_FILES, filesLabel, list.filter(isFileRow), query)),
-        ],
+        browsers: () => one(kindPlan(ctx, BAND_BROWSERS, browserLabel, list.filter(isBrowserBand), query, undefined, t('sidebar.browsers.empty'))),
+        files: () => one(kindPlan(ctx, BAND_FILES, filesLabel, list.filter(isFileRow), query, undefined, t('sidebar.files.empty'))),
         [PAGE_SECTION_SLOT]: () => pageSectionIds(list).flatMap((id) => {
             const meta = pageSectionMeta(id);
             const label = meta && L.i18n && typeof L.i18n.t === 'function' ? L.i18n.t(meta.labelKey) : id;
@@ -574,7 +573,7 @@ export function buildListPlan(L: LegacyDrawer, input: PaintInput): ListPlan | nu
     const notice = arrangementNoticeHtml(input.arrangement);
     const listed = Array.isArray(input.rows) ? input.rows : [];
     const leaders = leaderIndex();
-    const rows = !leadersShown() ? (leaders.empty ? listed : listed.filter((r) => !leaders.of(r)))
+    const rows = !(leadersShown() && swarmIsOn()) ? (leaders.empty ? listed : listed.filter((r) => !leaders.of(r)))
         : input.listing && !input.listing.ok ? listed
         : [...listed, ...ghostLeaderRows(leaderRoster(), listed, leaders, (id) => projectNameOf(id))];
     const dragging = !!(input.opts && input.opts.dragging);

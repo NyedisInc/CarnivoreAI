@@ -14,6 +14,8 @@
   <button
     type="button"
     class="oc-topbar-popout oc-topbar-popout--edit"
+    data-btn="secondary"
+    data-size="bare"
     data-popout-edit-layout
     disabled={!canEdit}
     title={canEdit ? t('opscenter.popout.edit_layout_hint') : t('opscenter.popout.edit_layout_narrow')}
@@ -21,7 +23,7 @@
   ><Icon name="layout" size={13} />{t('opscenter.popout.edit_layout')}</button>
 {/if}
 {#if hasMainWindow()}
-  <button type="button" class="oc-topbar-popout" onclick={() => focusMainWindow()}>
+  <button type="button" class="oc-topbar-popout" data-btn="secondary" data-size="bare" onclick={() => focusMainWindow()}>
     {t('opscenter.popout.focus_main')}
   </button>
 {/if}
@@ -60,6 +62,7 @@
     }
 
     .oc-topbar-popout--edit:disabled {
+      opacity: 1;
       border-color: var(--oc-line-panel);
       color: var(--oc-text-muted);
       cursor: not-allowed;

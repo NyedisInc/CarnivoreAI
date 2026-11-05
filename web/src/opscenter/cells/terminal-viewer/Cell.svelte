@@ -110,6 +110,11 @@
     return view.getComputedStyle(root).getPropertyValue('--font-mono').replace(/\s+/g, ' ').trim();
   }
 
+  interface TerminalFontApi {
+    optionsFor(base?: string): { fontSize: number; fontFamily: string };
+    bind(term: unknown, refit?: (reason: string) => void, base?: string): void;
+  }
+
   const TERM_OPTIONS = {
     fontSize: 14,
     fontWeight: 'normal',
@@ -130,7 +135,8 @@
     const Ctor = (globalThis as { Terminal?: new (options: unknown) => unknown }).Terminal;
     if (!target || typeof Ctor !== 'function') return;
     const face = monoFace();
-    const term = new Ctor(face ? { ...TERM_OPTIONS, fontFamily: face } : TERM_OPTIONS) as {
+    const font = (globalThis as { TerminalFont?: TerminalFontApi }).TerminalFont;
+    const term = new Ctor({ ...TERM_OPTIONS, ...(face ? { fontFamily: face } : {}), ...(font ? font.optionsFor(face || undefined) : {}) }) as {
       open(el: HTMLElement): void;
       resize(cols: number, rows: number): void;
       write(data: Uint8Array | string): void;
@@ -138,6 +144,8 @@
       dispose(): void;
     };
     term.open(target);
+    font?.bind(term, undefined, face || undefined);
+    (globalThis as { TerminalLinks?: { attach(t: unknown, id?: () => string): unknown } }).TerminalLinks?.attach(term, () => sessionId);
 
     const handleWheel = (ev: WheelEvent): void => {
       if (!ev || ev.deltaY === 0) return;

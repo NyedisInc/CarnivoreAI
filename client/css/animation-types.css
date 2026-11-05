@@ -71,7 +71,6 @@
     animation: none !important;
 }
 
-:root[data-anim-off~="attention-cues"] .zone-badge[data-cue='on'],
 :root[data-anim-off~="attention-cues"] .oc-resize-guide-chevron,
 :root[data-anim-off~="attention-cues"] .settings-page .st-highlight-flash,
 :root[data-anim-off~="attention-cues"] .hdtl-fill,

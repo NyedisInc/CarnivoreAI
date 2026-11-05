@@ -48,10 +48,11 @@ def is_dead_pane_stop(row: Optional[Mapping[str, Any]]) -> bool:
 
 def _transcript_absent(row: Mapping[str, Any], uuid: str) -> bool:
     from src.core.attention.evidence import FAMILY_CODEX
+    from src.core.attention.codex_pane_home import pane_codex_home
     from src.core.session_transcript_presence import CONVERSATION_ABSENT, codex_rollout_presence
 
     if row.get("agent_family") == FAMILY_CODEX:
-        return codex_rollout_presence(uuid).missing
+        return codex_rollout_presence(uuid, codex_home=pane_codex_home(row.get("tmux_socket"), row.get("tmux_name"))).missing
     from src.core.session_token_usage.claude_reader import locate_transcript
 
     return locate_transcript(uuid, working_dir=row.get("working_dir")).outcome == CONVERSATION_ABSENT

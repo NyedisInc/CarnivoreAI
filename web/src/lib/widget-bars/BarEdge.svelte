@@ -60,7 +60,7 @@
       top: 0;
       bottom: 0;
       left: 0;
-      width: 6px;
+      width: var(--oc-grip-hit);
       cursor: col-resize;
     }
 
@@ -68,7 +68,7 @@
       left: 0;
       right: 0;
       top: 0;
-      height: 6px;
+      height: var(--oc-grip-hit);
       cursor: row-resize;
     }
 
@@ -79,12 +79,12 @@
 
     .bar-edge--side:hover,
     .bar-edge--side:focus-visible {
-      box-shadow: inset 1px 0 0 0 var(--_line);
+      box-shadow: inset var(--oc-grip-line) 0 0 0 var(--_line);
     }
 
     .bar-edge--bottom:hover,
     .bar-edge--bottom:focus-visible {
-      box-shadow: inset 0 1px 0 0 var(--_line);
+      box-shadow: inset 0 var(--oc-grip-line) 0 0 var(--_line);
     }
   }
 </style>

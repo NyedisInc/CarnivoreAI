@@ -9,6 +9,7 @@ import type { SessionListItem } from '../sessions/types';
 import { isAgentRow, rowsFromGroups, type PageRow, type Signals } from './filters';
 import { closedRowsFrom } from './closed-model';
 import { isAutomatedOnly } from '../projects-shared/ledger-model';
+import { failureReason } from '../errors/failure-reason';
 
 const POLL_MS = 15000;
 
@@ -192,7 +193,7 @@ export class SessionsData implements Signals {
             this.status = 'ready';
         } catch (error) {
             if (mine !== this.#ticket) return;
-            this.errorText = error instanceof Error ? error.message : String(error);
+            this.errorText = failureReason(error);
             this.status = 'error';
             return;
         }

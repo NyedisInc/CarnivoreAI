@@ -42,7 +42,7 @@
 
   .oc-lv-server-level [data-field] {
     min-width: 0;
-    padding-block: 2px;
+    padding-block: var(--oc-space-0-5);
     font-size: var(--oc-fs-label);
   }
 
@@ -62,7 +62,7 @@
 
   .oc-lv-filters .oc-field {
     width: 100%;
-    padding-block: 3px;
+    padding-block: var(--oc-pad-snug);
   }
 
   .oc-lv-filters [data-btn][data-exclude] {
@@ -82,7 +82,7 @@
     flex-wrap: wrap;
     align-items: center;
     gap: var(--oc-space-2);
-    padding: 2px var(--oc-space-2);
+    padding: var(--oc-space-0-5) var(--oc-space-2);
     font-size: var(--oc-fs-label);
     color: var(--oc-text-dim);
     box-shadow: 0 1px 0 var(--oc-line-rule);
@@ -218,7 +218,7 @@
   .oc-lv-json,
   .oc-lv-lines {
     margin: 0;
-    padding: var(--oc-space-1) var(--oc-space-2) var(--oc-space-2) calc(var(--oc-space-2) * 2 + 16px);
+    padding: var(--oc-space-1) var(--oc-space-2) var(--oc-space-2) calc(var(--oc-space-2) * 2 + var(--oc-space-4));
     font-family: var(--font-mono);
     font-size: var(--oc-fs-label);
     color: var(--oc-text-secondary);

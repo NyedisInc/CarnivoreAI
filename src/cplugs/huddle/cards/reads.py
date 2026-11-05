@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from src.cplugs.huddle import groups, rules
 from src.cplugs.huddle.cards import policy, projection, state_log
+from src.cplugs.huddle.cards import columns
 from src.cplugs.huddle.cards.columns import CHAT_KINDS
 from src.cplugs.huddle.wire import ITEM_COLS
 
@@ -87,6 +88,7 @@ def view(row: sqlite3.Row, *, queue: Optional[int], children: Mapping[str, int],
         "phone_sent_at": row["phone_sent_at"], "revision": row["revision"],
         "summary": row["card_summary"], "queued": projection.queued(row), "archived_at": row["card_archived_at"],
         "auto_promote": bool(row["card_auto_promote"]), "owner_note": row["card_owner_note"],
+        "level": columns.level(row["card_level"], row["card_parent"]),
         "stranded": stranded(row, children, owner_seen),
         "created_at": row["created_at"], "updated_at": row["updated_at"],
     }

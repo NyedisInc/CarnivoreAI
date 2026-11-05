@@ -5,7 +5,7 @@ import sqlite3
 import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Tuple
 
 import structlog
 
@@ -315,7 +315,7 @@ def _derived_onto_ancestor(
     return any(prefix.startswith(root + "/") for prefix in prefixes for root in held)
 
 
-def _memo_spellings(path: Optional[str], memo: Dict[str, frozenset]) -> frozenset:
+def _memo_spellings(path: Optional[str], memo: Dict[str, FrozenSet[str]]) -> FrozenSet[str]:
     if not path:
         return frozenset()
     if path not in memo:
@@ -327,14 +327,9 @@ def _memo_spellings(path: Optional[str], memo: Dict[str, frozenset]) -> frozense
     return memo[path]
 
 
-def correct_shallow_derivations(
-    conn: sqlite3.Connection, *, now: Optional[str] = None
-) -> int:
-    roots = matchable_roots(conn)
-    if not roots:
-        return 0
+def _derived_session_rows(conn: sqlite3.Connection) -> Optional[List[Tuple[int, str, int, str]]]:
     try:
-        rows = conn.execute(
+        return conn.execute(
             "SELECT s.id, s.working_dir, s.project_id, p.root FROM sessions s "
             "JOIN projects p ON p.id = s.project_id "
             "WHERE s.archived_at IS NULL AND s.working_dir IS NOT NULL AND s.project_attribution = ?",
@@ -343,21 +338,39 @@ def correct_shallow_derivations(
     except sqlite3.Error as exc:
         logger.warning("project_backfill_unreadable", error=str(exc),
                        note="no session was re-attributed; nothing was written")
+        return None
+
+
+def _deepest_match(
+    held: FrozenSet[str], paths: FrozenSet[str], current_pid: int, root_prefixes: Dict[int, FrozenSet[str]]
+) -> Optional[int]:
+    best_pid, best_len = None, -1
+    for pid, prefixes in root_prefixes.items():
+        if pid == current_pid or not any(p.startswith(h + "/") for p in prefixes for h in held):
+            continue
+        under = [p for p in prefixes if any(c == p or c.startswith(p + "/") for c in paths)]
+        if under and max(map(len, under)) > best_len:
+            best_pid, best_len = pid, max(map(len, under))
+    return best_pid
+
+
+def correct_shallow_derivations(
+    conn: sqlite3.Connection, *, now: Optional[str] = None
+) -> int:
+    roots = matchable_roots(conn)
+    if not roots:
         return 0
-    memo: Dict[str, frozenset] = {}
+    rows = _derived_session_rows(conn)
+    if rows is None:
+        return 0
+    memo: Dict[str, FrozenSet[str]] = {}
     root_prefixes = {pid: _memo_spellings(root, memo) for root, pid in roots.items()}
     stamp = now or utc_now()
     moved = 0
     for row_id, working_dir, current_pid, current_root in rows:
-        held = _memo_spellings(current_root, memo)
-        paths = _memo_spellings(working_dir, memo)
-        best_pid, best_len = None, -1
-        for pid, prefixes in root_prefixes.items():
-            if pid == current_pid or not any(p.startswith(h + "/") for p in prefixes for h in held):
-                continue
-            under = [p for p in prefixes if any(c == p or c.startswith(p + "/") for c in paths)]
-            if under and max(map(len, under)) > best_len:
-                best_pid, best_len = pid, max(map(len, under))
+        best_pid = _deepest_match(
+            _memo_spellings(current_root, memo), _memo_spellings(working_dir, memo), current_pid, root_prefixes
+        )
         if best_pid is None:
             continue
         conn.execute(

@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from src.api.auth import require_auth
 from src.api.remote_route_guard import remote_target
-from src.core.session_git.diff import EscapesRepository, read_file_diff
+from src.core.session_git.diff import MAX_PATH_CHARS, EscapesRepository, read_file_diff
 from src.core.session_git.watch import GitStatusWatch
 from src.core.session_pane_facts import read_pane_facts
 from src.models.session_git import GitFile, SessionGitDiff, SessionGitStatus
@@ -72,7 +72,7 @@ def _listed(status: SessionGitStatus, path: str) -> Optional[GitFile]:
 
 @router.get("/sessions/{session_id}/git-diff", response_model=SessionGitDiff, dependencies=[Depends(require_auth)])
 async def get_session_git_diff(
-    request: Request, session_id: str, path: str = Query(..., min_length=1, max_length=4096),
+    request: Request, session_id: str, path: str = Query(..., min_length=1, max_length=MAX_PATH_CHARS),
     staged: bool = False,
 ) -> SessionGitDiff:
     """One changed file's read-only diff since HEAD (an untracked file shows as all added).

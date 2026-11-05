@@ -18,6 +18,7 @@
     width: auto;
     height: auto;
     padding: 4px;
+    font: revert;
     background: transparent;
     border: none;
     color: var(--oc-text-secondary);

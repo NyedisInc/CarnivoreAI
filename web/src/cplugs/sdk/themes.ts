@@ -15,7 +15,7 @@ export interface ThemeRegistry {
   getActiveGlobal?: () => Manifest | null;
 }
 
-const registry = (): ThemeRegistry | undefined => (globalThis as { Themes?: ThemeRegistry }).Themes;
+export const registry = (): ThemeRegistry | undefined => (globalThis as { Themes?: ThemeRegistry }).Themes;
 
 const TOKEN_PREFIX = '--oc-';
 const MAX_VALUE = 200;

@@ -6,6 +6,7 @@ const { sessionLink } = require('../tray-menu/actions/sessions');
 const MENU_VERBS = Object.freeze([
   'file.new_session', 'file.open_project', 'session.restart', 'session.stop', 'session.rename', 'session.open_in',
   'session.reveal', 'session.open_editor', 'file.reveal_project', 'file.open_project_editor',
+  'go.back', 'go.forward', ...Array.from({ length: 10 }, (_, i) => `go.recent.${i}`),
 ]);
 
 const MAIN_ACTIONS = Object.freeze([

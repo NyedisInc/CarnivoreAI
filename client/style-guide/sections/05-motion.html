@@ -65,7 +65,8 @@ sheen. Everything else moves only enough to explain a change, and every motion s
         <code>.screen</code>, <code>.header</code> and <code>.config-editor-picker-overlay</code>, an inactive tab body
         (<code>.oc-tabpane-hidden</code>) and the terminal parking shelf. A new cover that hides a subtree with
         <code>visibility: hidden</code> is added to that list.
-        Sidebar rows are not special-cased: every row's status light, effort mark and keep-awake steam animate while the window is focused, and calm (below) holds them when it is not.</dd>
+        Sidebar rows are not special-cased: every row's status light, effort mark and keep-awake steam animate while the window is focused, and calm (below) holds them when it is not.
+        One opt-out: the setting "status lights on resting rows" (<code>ui_preferences.row_lights_animate</code>, on by default) set to off puts <code>data-row-lights="still"</code> on <code>&lt;html&gt;</code>, and <code>client/css/resting-row-lights.css</code> then holds the status light and keep-awake steam (<code>.session-sidebar-row-keep-awake</code>, <code>.kaw-steam</code>) of a row that is not selected, hovered or focused still.</dd>
 </dl>
 <h3 class="sg-h3" id="motion-types">animation types</h3>
 <dl class="sg-facts">

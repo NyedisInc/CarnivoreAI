@@ -9,7 +9,7 @@
 .pt-replica-list { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .pt-replica { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; min-width: 0; }
 .pt-actions { display: flex; justify-content: flex-end; }
-.pt-error, .pt-done { margin: 0; padding: 6px 8px; background: var(--oc-ground-raised); color: var(--oc-text-primary); border-left: 2px solid var(--oc-coral); }
+.pt-error, .pt-done { overflow-wrap: anywhere; margin: 0; padding: 6px 8px; background: var(--oc-ground-raised); color: var(--oc-text-primary); border-left: 2px solid var(--oc-coral); }
 .pt-done { border-left-color: var(--oc-green); }
 @media (max-width: 700px) {
   .pt { padding: 4px 8px; }

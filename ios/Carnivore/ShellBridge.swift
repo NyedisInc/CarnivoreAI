@@ -5,11 +5,13 @@ import WebKit
 final class ShellBridge: NSObject, WKScriptMessageHandler {
     static let handlerName = "carnivore"
     static let version = 1
+    private(set) static var viewing: (origin: String, session: String)? = nil
     private weak var webView: WKWebView?
     private let origin: Origin
     let canPush: Bool
     private var ready = false
     private var tapWatch: AnyCancellable?
+    private lazy var dictation = SpeechDictation { [weak self] in self?.send($0) }
 
     init(computer: Computer) {
         self.origin = computer.origin
@@ -32,6 +34,8 @@ final class ShellBridge: NSObject, WKScriptMessageHandler {
     }
 
     func detach(_ view: WKWebView) {
+        Self.viewing = nil
+        dictation.cancel()
         view.configuration.userContentController.removeScriptMessageHandler(forName: Self.handlerName)
         tapWatch = nil
         if PushRegistrar.shared.bridge === self { PushRegistrar.shared.bridge = nil }
@@ -66,6 +70,13 @@ final class ShellBridge: NSObject, WKScriptMessageHandler {
             if canPush, let id = body["id"] as? String { PushKeyStore.setRowId(id, origin: origin.pushId) }
         case "theme":
             if let id = body["id"] as? String { Self.reportTheme(id) }
+        case "viewing":
+            if let session = body["session"] as? String, session.count <= 200 {
+                Self.viewing = session.isEmpty ? nil : (origin.pushId, session)
+            }
+        case "speechStart": dictation.start()
+        case "speechStop": dictation.stop()
+        case "speechCancel": dictation.cancel()
         default:
             break
         }

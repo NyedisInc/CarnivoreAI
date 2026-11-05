@@ -19,7 +19,7 @@ logger = structlog.get_logger()
 CHAT_REF = swarm_stream.CHAT_REF
 CHAT_TEXT = "chat"
 FLIPPED_NOTE = "flipped back to a task agent"
-CLOSE_STATES = ("done", "answered", "flipped")
+CLOSE_STATES = ("done", "answered", "flipped", "closed")
 
 
 class TaskManagerSwarmPort:
@@ -142,6 +142,8 @@ class TaskManagerSwarmPort:
             await self._run(lambda: self._store().update(
                 item_id, actor=JOE, state=rules.DONE, note=FLIPPED_NOTE, title=f"flipped back: {name}".strip(),
                 text=f"{name or 'the agent'} was flipped back to a task agent. Its memory moved back to local scope."))
+        elif state == "closed":
+            await self._close_card(item_id)
         elif state == "done":
             await self._run(lambda: self._store().update(item_id, actor=JOE, state=rules.DONE))
         else:

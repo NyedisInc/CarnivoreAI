@@ -13,7 +13,6 @@ from src.api.catalog_install_support import (
 )
 from src.api.catalog_consent import (
     carries_scripts,
-    staged_plugin_declares_code,
     consent_409,
     consent_carried,
 )
@@ -33,6 +32,7 @@ from src.api.catalog_installed_watch import annotate_watch
 from src.api.catalog_views import installed_view
 from src.core.catalog import install_reporter
 from src.core.catalog.verify import check_digest
+from src.core.skills.code_gate import staged_plugin_declares_code
 from src.core.skills.digest import hash_file
 from src.core.skills.install_types import ALREADY_INSTALLED, DIGEST_MISMATCH
 from src.core.skills.installer import discard_staging

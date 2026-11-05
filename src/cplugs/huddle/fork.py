@@ -34,7 +34,6 @@ def wire(row: Mapping) -> dict:
 
 
 def plan_state(actor: str, row: Mapping, state: Optional[str]) -> Optional[StateChange]:
-    state = rules.canonical_state(state)
     if state is None:
         return None
     working = state == lifecycle.WORKING

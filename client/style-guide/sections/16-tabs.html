@@ -67,6 +67,11 @@ that wants the picked tab to match its panel sets <code>--_tab-on</code> to the 
 active tab wears the title row's ground and joins the band under it; the rest sit on a darker mix of the same ground. A tab
 has no height of its own: it stretches to its host's row. A right click on a tab opens that tab's own menu: the session menu, the asleep menu, the page, file or browser row menu, or a small close-tab menu for a closed page (<a href="#menus-row">menus, "a tab's menu"</a>).</p>
 
+<p><b>how the active tab is marked</b> (Joe (ccsliinc), 2026-11-03, #2777): the selected tab carries a 2px bar across its top in
+its session's own color: the session's project color, else its company hue, else its theme accent
+(<code>sessionBarTint</code>, <code>lib/sidebar-shell/tint.ts</code>; the phone strip inherits it). A hairline under the bar keeps it
+visible when that color sits close to the title row's ground. Only the pane that holds input draws the bar (the others, <code>oc-tabwrap-idle</code>, show a quiet neutral edge), so it says which pane takes the keys. The selected terminal pane has no ring of its own, and the bar is
+never orange.</p>
 <div class="sg-specimen">
     <div class="sg-specimen__label"><span>live</span><code>TabStrip.svelte</code><span>in the real</span><code>CellFrame.svelte</code><span>terminal row: click to select, "x" closes, Shift for the skull</span></div>
     <div class="sg-specimen__body"><div id="sg-live-tabs"></div></div>

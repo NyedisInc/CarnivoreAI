@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from src.cplugs.sdk.sandboxed_html import VIEW_CSP
 
@@ -38,3 +38,7 @@ def api_headers() -> Dict[str, str]:
 
 def as_asgi(headers: Dict[str, str]) -> List[Tuple[bytes, bytes]]:
     return [(name.lower().encode("ascii"), value.encode("ascii")) for name, value in headers.items()]
+
+
+def header_values(scope: Any, name: bytes) -> List[bytes]:
+    return [value for key, value in scope.get("headers") or () if key == name]

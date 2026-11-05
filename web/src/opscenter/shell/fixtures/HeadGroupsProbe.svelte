@@ -7,11 +7,11 @@
 </script>
 
 {#snippet first()}
-  <button type="button" data-probe-group="first">first</button>
+  <button type="button" data-btn data-probe-group="first">first</button>
 {/snippet}
 
 {#snippet second()}
-  <button type="button" data-probe-group="second">second</button>
+  <button type="button" data-btn data-probe-group="second">second</button>
 {/snippet}
 
-<button type="button" data-probe-toggle="" onclick={() => (firstOn = !firstOn)}>toggle</button>
+<button type="button" data-btn data-probe-toggle="" onclick={() => (firstOn = !firstOn)}>toggle</button>

@@ -8,7 +8,7 @@ import structlog
 from src.core.approvals import beast_grid
 from src.core.approvals.extract import FAMILY_CLAUDE, FAMILY_CODEX, Dialog
 from src.core.approvals.plain_answer import summarize, summary_line
-from src.core.beast_prompts.engine import HISTORY_ACTION, NOTIFY_TYPE, BeastPromptsEngine
+from src.core.beast_prompts.engine import HISTORY_ACTION, NOTIFY_TYPE, BeastPromptsEngine, eligible_dialog
 from src.core.mcp import beast_mode, beast_store, pending
 from src.core.notifications import contracts
 from src.core.notifications.sources import common
@@ -47,6 +47,11 @@ PROMPT_ROWS = {FAMILY_CLAUDE: beast_grid.ROW_CLAUDE_PERMISSION, FAMILY_CODEX: be
 def prompt_allowed(dialog: Dialog) -> bool:
     row = PROMPT_ROWS.get(dialog.family)
     return row is not None and beast_mode.handles(row)
+
+
+def would_answer(session_id: str, observation: Any) -> bool:
+    dialog = eligible_dialog(observation)
+    return dialog is not None and not str(session_id).startswith("remote:") and prompt_allowed(dialog)
 
 
 def build_engine(get_manager: Callable[[], Any], get_watcher: Callable[[], Any]) -> BeastPromptsEngine:

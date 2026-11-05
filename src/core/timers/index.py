@@ -7,18 +7,19 @@ import re
 from dataclasses import dataclass, field, replace
 from datetime import datetime
 from pathlib import Path
-from typing import Any, BinaryIO, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 
 from src.core.session_token_usage.cache import HEAD_BYTES, IncrementalCache
+from src.core.transcript_contract.cold_budget import BudgetedHandle, LineSource
 from src.core.session_token_usage.persist_spec import PersistSpec, decode_instant, encode_instant
 from src.core.subagents.parent_index import parse_timestamp
 from src.core.timers.contract import TIMER_TOOLS, TOOL_WAKEUP
 
 logger = structlog.get_logger(__name__)
 
-MAX_COLD_BYTES: int = 256 * 1024 * 1024
+TIMER_SLICE_BYTES: int = 256 * 1024 * 1024
 
 MAX_WAKEUPS: int = 200
 
@@ -180,7 +181,7 @@ def _is_turn_start(record: Dict[str, Any]) -> bool:
     return isinstance(content, str)
 
 
-def scan_lines(handle: BinaryIO, index: TimerIndex) -> Tuple[TimerIndex, int]:
+def scan_lines(handle: LineSource, index: TimerIndex) -> Tuple[TimerIndex, int]:
     offset = handle.tell()
     while True:
         line = handle.readline()
@@ -280,15 +281,12 @@ def read_timer_index(
     path: Path,
     *,
     cache: Optional[IncrementalCache] = None,
-    max_cold_bytes: int = MAX_COLD_BYTES,
+    slice_bytes: int = TIMER_SLICE_BYTES,
 ) -> Optional[TimerIndex]:
     store = cache if cache is not None else TIMER_INDEX_CACHE
     key = os.path.abspath(str(path))
     try:
         stat = os.stat(key)
-        if stat.st_size > max_cold_bytes and not store.knows(key):
-            logger.debug("timer_index_too_large_cold", size=stat.st_size)
-            return None
         with open(key, "rb") as handle:
             head = handle.read(HEAD_BYTES)
             resume = store.resume_point(
@@ -301,10 +299,16 @@ def read_timer_index(
                 offset, remembered = resume
                 handle.seek(offset)
                 index = remembered.copy()
-            index, offset = scan_lines(handle, index)
+            budgeted = BudgetedHandle(handle, slice_bytes)
+            index, offset = scan_lines(budgeted, index)
     except OSError as exc:
         logger.debug("timer_index_unreadable", error=str(exc),
                      error_type=type(exc).__name__)
+        return None
+    if budgeted.exhausted:
+        store.remember(key, size=stat.st_size, mtime_ns=stat.st_mtime_ns,
+                       head=head, offset=offset, totals=index)
+        logger.debug("timer_index_warming", size=stat.st_size, offset=offset)
         return None
     store.remember(key, size=stat.st_size, mtime_ns=stat.st_mtime_ns,
                    head=head, offset=offset, totals=index)

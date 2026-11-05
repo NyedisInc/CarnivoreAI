@@ -8,7 +8,7 @@ from typing import Any, Mapping, Optional
 import structlog
 
 from src.core import theme_script_consent, theme_script_digest
-from src.core.ui_preferences_store import COMMITTED, STALE_REVISION
+from src.core.ui_preferences_store import COMMITTED, STALE_REVISION, UpdateResult
 
 logger = structlog.get_logger()
 
@@ -46,6 +46,18 @@ def stale_grant(
     return granted != effects_digest
 
 
+def _drop_grant_once(store: Any, theme_id: str, theme_dir: Path) -> Optional[UpdateResult]:
+    block = store.read()
+    current = (block.get("values") or {}).get(CONSENT_FIELD) or {}
+    if not isinstance(current, dict):
+        return None
+    entry = current.get(theme_id)
+    if not stale_grant(entry, effects_digest_of(theme_dir)):
+        return None
+    remaining = {key: value for key, value in current.items() if key != theme_id}
+    return store.update({CONSENT_FIELD: remaining or None}, expected_revision=block.get("revision"))
+
+
 def drop_stale_effects_grant(store: Any, theme_id: str, theme_dir: Path) -> bool:
     if not theme_script_consent.is_keyable_theme_id(theme_id):
         return False
@@ -53,20 +65,10 @@ def drop_stale_effects_grant(store: Any, theme_id: str, theme_dir: Path) -> bool
     result = None
     try:
         for _attempt in range(2):
-            block = store.read()
-            current = (block.get("values") or {}).get(CONSENT_FIELD) or {}
-            if not isinstance(current, dict):
+            result = _drop_grant_once(store, theme_id, theme_dir)
+            if result is None:
                 return False
-
-            entry = current.get(theme_id)
-            if not stale_grant(entry, effects_digest_of(theme_dir)):
-                return False
-
-            remaining = {key: value for key, value in current.items() if key != theme_id}
-            result = store.update(
-                {CONSENT_FIELD: remaining or None}, expected_revision=block.get("revision")
-            )
-            if getattr(result, "status", None) != STALE_REVISION:
+            if result.status != STALE_REVISION:
                 break
     except (OSError, ValueError) as exc:
         logger.warning(

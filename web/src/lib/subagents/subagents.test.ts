@@ -16,7 +16,7 @@ vi.mock('../../opscenter/api/auth.svelte', () => ({
 
 import SubagentBadge from './SubagentBadge.svelte';
 import { closeSubagentList, openSubagentList, SUBAGENT_LIST_ID } from './popup';
-import { emptyMessage, measuredRunningTotal, orderRows, runningCount, runningTotal, type SessionSubagents } from './subagents';
+import { emptyMessage, measuredRows, measuredRunningTotal, orderRows, runningCount, runningTotal, type SessionSubagents, type SubagentRow } from './subagents';
 import { setLocale } from '../i18n/index.svelte';
 
 setLocale('en');
@@ -125,7 +125,7 @@ test('not applicable and unreadable are said in words, never as an empty table',
   document.body.append(anchor);
   for (const [state, words] of [
     ['not_applicable', 'this agent writes no subagent files'],
-    ['unchecked', 'the subagent files could not be read'],
+    ['unchecked', 'not measured yet: the transcript is still being read or could not be read'],
   ] as const) {
     reply = payload({ state, counts: null, subagents: [] });
     openSubagentList(anchor, 's', 'n');
@@ -187,4 +187,10 @@ test('measuredRunningTotal: ok rows summed, unmeasured rows ignored, all-unmeasu
   ])).toBe(4);
 
   expect(measuredRunningTotal([])).toBeNull();
+});
+
+test('measuredRows is null for an unchecked answer, so the popup never says no agent is running (#2780)', () => {
+    const row = { id: 'a1', status: 'unknown' } as SubagentRow;
+    expect(measuredRows({ state: 'unchecked', subagents: [row] } as SessionSubagents)).toBeNull();
+    expect(measuredRows({ state: 'ok', subagents: [row] } as SessionSubagents)).toEqual([row]);
 });

@@ -250,7 +250,8 @@ async def post_publish_repo(project_name: str, body: PublishBody) -> Dict[str, A
     Description: the owner's own click on the card. A secret scan runs first; a hit refuses and names the files. The owner
       is the company's saved pointer unless the body gives one; with neither, 409 ``needs_answer`` carries the card.
     Inputs: project_name; body (PublishBody: owner?, account?). Output: {url, owner, name, private: true}.
-    Raises: HTTPException 404, 409 (``air_gap``, ``has_remote``, ``needs_answer``, ``secrets_found`` with ``files``, ``gh_failed``).
+    Raises: HTTPException 404, 409 (``air_gap``, ``has_remote``, ``needs_answer``, ``secrets_found`` and ``unscannable_files`` (a file that cannot be opened) and ``scan_budget_exceeded`` (past 256 MiB), each with ``files`` (at most
+      ``publish.MAX_LISTED_FILES``) and ``files_more``; ``scan_failed``, ``gh_failed``).
     Example: POST /api/v1/projects/notes/publish-repo {"owner": "NyedisInc", "account": "NyedisAdam"}
     """
     def run() -> Dict[str, Any]:
@@ -264,7 +265,9 @@ async def post_publish_repo(project_name: str, body: PublishBody) -> Dict[str, A
             try:
                 made = publish.publish(project["root"], name=card["name"], owner=card["owner"], account=card["account"], air_gap=False)
             except publish.PublishRefused as exc:
-                raise refusal_error(exc, status=409, extra={"files": exc.files}) from exc
+                refused = refusal_error(exc, status=409, extra={**publish.listed_files(exc.files), "params": exc.params})
+                refused.detail["detail"] = publish.fill_params(refused.detail["detail"], exc.params)
+                raise refused from exc
             except github_account.AccountError as exc:
                 raise refusal_error(exc, status=409) from exc
             with transaction(conn):

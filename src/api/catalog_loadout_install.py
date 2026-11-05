@@ -10,10 +10,10 @@ from fastapi import HTTPException, Request
 from src.api.catalog_consent import (
     carries_scripts,
     install_consent_satisfied,
-    staged_plugin_declares_code,
 )
 from src.api.catalog_install_support import apply_now, fetch_and_stage, plan
 from src.core.catalog import release_vouch
+from src.core.skills.code_gate import staged_plugin_declares_code
 from src.core.skills.consent_via_ddl import CONSENT_SHEET
 from src.core.skills.digest import hash_file
 from src.core.skills.install_types import (

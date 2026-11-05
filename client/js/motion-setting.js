@@ -80,6 +80,27 @@
         syncBlink();
     }
 
+    var LIGHTS_FIELD = 'row_lights_animate';
+    var LIGHTS_KEY = 'carnivore.row-lights';
+    var LIGHTS_ATTR = 'data-row-lights';
+
+    function loadLights() {
+        try {
+            return localStorage.getItem(LIGHTS_KEY) !== '0';
+        } catch (_) {
+            return true;
+        }
+    }
+
+    function paintLights(animate) {
+        try {
+            localStorage.setItem(LIGHTS_KEY, animate ? '1' : '0');
+        } catch (_) {  }
+        var root = document.documentElement;
+        if (animate) root.removeAttribute(LIGHTS_ATTR);
+        else root.setAttribute(LIGHTS_ATTR, 'still');
+    }
+
     function paint(on) {
         var root = document.documentElement;
         if (on) root.removeAttribute(ATTR);
@@ -89,12 +110,12 @@
     function apply() {
         paintTypes();
         var bridge = globalThis.PreferenceBridge;
-        var value = bridge && typeof bridge.read === 'function'
-            ? bridge.read(FIELD, function () { return loadLocal(); })
-            : loadLocal();
+        var canRead = bridge && typeof bridge.read === 'function';
+        var value = canRead ? bridge.read(FIELD, function () { return loadLocal(); }) : loadLocal();
         var on = value !== false;
         saveLocal(on);
         paint(on);
+        paintLights((canRead ? bridge.read(LIGHTS_FIELD, loadLights) : loadLights()) !== false);
         return on;
     }
 
@@ -108,6 +129,7 @@
     }
 
     var stop = null;
+    var stopLights = null;
 
     function start() {
         apply();
@@ -119,6 +141,8 @@
             saveLocal(on);
             paint(on);
         });
+        if (stopLights) stopLights();
+        stopLights = bridge.follow(LIGHTS_FIELD, function (value) { paintLights(value !== false); });
     }
 
     window.MotionSetting = { apply: apply, start: start };

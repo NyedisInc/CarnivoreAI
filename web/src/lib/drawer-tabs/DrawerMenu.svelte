@@ -329,32 +329,6 @@
       gap: var(--oc-space-1);
     }
 
-    .oc-nav-line:global([data-menu-lifted]),
-    .oc-nav-line:global([data-menu-drop]) {
-      position: relative;
-    }
-
-    .oc-nav-line:global([data-menu-lifted])::after,
-    .oc-nav-line:global([data-menu-drop])::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-    }
-
-    .oc-nav-line:global([data-menu-lifted])::after {
-      background: var(--oc-ground-hover);
-      box-shadow: inset 0 0 0 1px var(--oc-line-panel);
-      opacity: 0.7;
-    }
-
-    .oc-nav-line:global([data-menu-drop='before'])::after {
-      border-top: 2px solid var(--oc-orange);
-    }
-
-    .oc-nav-line:global([data-menu-drop='after'])::after {
-      border-bottom: 2px solid var(--oc-orange);
-    }
 
     .oc-nav-line > .oc-nav-item {
       flex: 1 1 auto;

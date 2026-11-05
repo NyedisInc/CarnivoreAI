@@ -1,4 +1,4 @@
-import { ApiError, authFetch } from '../sdk';
+import { ApiError, authFetch, failureDetail } from '../sdk';
 import type { DraftRequest, DraftsState, DraftSummary } from './drafts-model';
 import type { CaptureOutcome, CaptureRequest, MatrixState } from './lab-model';
 
@@ -13,8 +13,8 @@ export function labStatus(): Promise<LabStatus> {
 }
 
 export function refusalText(error: ApiError): string {
-  const detail = (error.payload as { detail?: { detail?: string; code?: string } } | null)?.detail;
-  return detail?.detail || detail?.code || error.code || error.message;
+  const detail = (error.payload as { detail?: { code?: string } } | null)?.detail;
+  return failureDetail(error) || detail?.code || error.code || error.message;
 }
 
 export async function runCapture(request: CaptureRequest): Promise<CaptureOutcome> {

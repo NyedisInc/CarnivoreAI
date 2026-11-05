@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t } from '../sdk';
+  import { buttonAttrs } from '../sdk/ui';
   import { findItem } from './huddle.svelte';
   import { jumpToParent } from './task-manager-fork.svelte';
   import type { HuddleItem } from './huddle-model';
@@ -14,7 +15,7 @@
 {#if parent !== null}
   <p class="tkm-fork" data-task-manager-forked={item.id}>
     {#if here}
-      <button type="button" class="tkm-fork-link" data-task-manager-forked-open={item.id} onclick={() => jumpToParent(parent)}>{label}</button>
+      <button type="button" class="tkm-fork-link" {...buttonAttrs('quiet', 'bare')} data-task-manager-forked-open={item.id} onclick={() => jumpToParent(parent)}>{label}</button>
     {:else}
       <span class="tkm-fork-plain">{label}</span>
     {/if}
@@ -26,6 +27,7 @@
     .tkm-fork {
       min-width: 0;
       margin: 0;
+      padding: var(--oc-border);
       overflow: hidden;
       color: var(--oc-text-muted);
       font-size: var(--oc-fs-micro);
@@ -36,11 +38,14 @@
     }
 
     .tkm-fork-link {
+      --_bd: currentColor;
+      display: inline-block;
       max-width: 100%;
+      margin: -1px;
       overflow: hidden;
       padding: 0;
       background: none;
-      border: 0;
+      border: 1px solid transparent;
       color: inherit;
       font: inherit;
       letter-spacing: inherit;

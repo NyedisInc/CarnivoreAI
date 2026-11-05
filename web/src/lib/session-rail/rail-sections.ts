@@ -1,37 +1,63 @@
 import { freshInstance, isRepeatable, normalizeZone, resetItemOptions, setItemOption, setItemView, toStored, zoneItemKey, type ZoneItem } from '../drawer-zone/zone-model';
 import type { PlacementOptionValue } from '../../opscenter/widgets/placement-options';
-import { RAIL_MAX_SECTIONS, RAIL_RATIO_DEFAULT, RAIL_RATIO_MAX, RAIL_RATIO_MIN, type RailBand } from './rail-model';
+import { RAIL_MAX_SECTIONS, RAIL_MIN_SHARE, RAIL_RATIO_DEFAULT, RAIL_V2_MAX_SECTIONS } from './rail-model';
+import { canHalve, dropCut, halveAt, repairCuts, round3 } from './rail-cuts';
 
 export interface RailLayout {
   sections: ZoneItem[][];
-  ratio: number;
+  cuts: number[];
 }
 
 export interface RailSpot {
   section: number;
   index: number;
-  split: RailBand | null;
+  split: boolean;
 }
 
-export interface StoredRail {
+type StoredSection = { items: ReturnType<typeof toStored>['items'] };
+
+export interface StoredRailV2 {
   v: 2;
-  sections: { items: ReturnType<typeof toStored>['items'] }[];
+  sections: StoredSection[];
   ratio?: number;
 }
 
+export interface StoredRailV3 {
+  v: 3;
+  sections: StoredSection[];
+  cuts: number[];
+}
+
+export type StoredRail = StoredRailV2 | StoredRailV3;
+
 export function clampRatio(raw: unknown): number {
   if (typeof raw !== 'number' || !Number.isFinite(raw)) return RAIL_RATIO_DEFAULT;
-  return Math.round(Math.min(RAIL_RATIO_MAX, Math.max(RAIL_RATIO_MIN, raw)) * 1000) / 1000;
+  return round3(Math.min(1 - RAIL_MIN_SHARE, Math.max(RAIL_MIN_SHARE, raw)));
 }
 
 export function singleSection(items: readonly ZoneItem[]): RailLayout {
-  return { sections: [items.map((item) => ({ ...item }))], ratio: RAIL_RATIO_DEFAULT };
+  return { sections: [items.map((item) => ({ ...item }))], cuts: [] };
 }
 
 export function tidyRail(layout: RailLayout): RailLayout {
-  const kept = layout.sections.filter((section) => section.length > 0).slice(0, RAIL_MAX_SECTIONS);
-  if (kept.length < 2) return { sections: [kept[0] ?? []], ratio: RAIL_RATIO_DEFAULT };
-  return { sections: kept, ratio: clampRatio(layout.ratio) };
+  const sections = layout.sections.map((section) => [...section]);
+  let cuts = repairCuts(layout.cuts, sections.length);
+  for (let i = sections.length - 1; i >= 0 && sections.length > 1; i -= 1) {
+    if (sections[i]!.length > 0) continue;
+    sections.splice(i, 1);
+    cuts = dropCut(cuts, i);
+  }
+  if (sections.length > RAIL_MAX_SECTIONS) {
+    sections.length = RAIL_MAX_SECTIONS;
+    cuts = cuts.slice(0, RAIL_MAX_SECTIONS - 1);
+  }
+  return { sections, cuts };
+}
+
+function storedCuts(raw: object, count: number): number[] {
+  const { cuts, ratio } = raw as { cuts?: unknown; ratio?: unknown };
+  if (Array.isArray(cuts)) return cuts as number[];
+  return count === 2 ? [clampRatio(ratio)] : [];
 }
 
 export function normalizeRail(raw: unknown, max: number): RailLayout | null {
@@ -55,13 +81,15 @@ export function normalizeRail(raw: unknown, max: number): RailLayout | null {
     });
     kept.push(list);
   }
-  return tidyRail({ sections: kept, ratio: clampRatio((raw as { ratio?: unknown }).ratio) });
+  return tidyRail({ sections: kept, cuts: storedCuts(raw, kept.length) });
 }
 
 export function railToStored(layout: RailLayout): StoredRail {
   const tidy = tidyRail(layout);
-  const stored: StoredRail = { v: 2, sections: tidy.sections.map((section) => ({ items: toStored(section).items })) };
-  if (tidy.sections.length === 2) stored.ratio = tidy.ratio;
+  const sections = tidy.sections.map((section) => ({ items: toStored(section).items }));
+  if (sections.length > RAIL_V2_MAX_SECTIONS) return { v: 3, sections, cuts: tidy.cuts };
+  const stored: StoredRailV2 = { v: 2, sections };
+  if (sections.length === 2) stored.ratio = tidy.cuts[0]!;
   return stored;
 }
 
@@ -73,13 +101,14 @@ export function sectionOf(layout: RailLayout, key: string): number {
   return layout.sections.findIndex((section) => section.some((item) => zoneItemKey(item) === key));
 }
 
-export function canSplit(layout: RailLayout, carried: string | null): boolean {
-  if (layout.sections.length >= RAIL_MAX_SECTIONS) return false;
-  return flatItems(layout).some((item) => zoneItemKey(item) !== carried);
+export function canSplitAt(layout: RailLayout, section: number, carried: string | null): boolean {
+  const here = layout.sections[section];
+  if (!here || layout.sections.length >= RAIL_MAX_SECTIONS || !canHalve(layout.cuts, section)) return false;
+  return here.some((item) => zoneItemKey(item) !== carried);
 }
 
 export function removeFromRail(layout: RailLayout, key: string): RailLayout {
-  return tidyRail({ sections: layout.sections.map((section) => section.filter((item) => zoneItemKey(item) !== key)), ratio: layout.ratio });
+  return tidyRail({ sections: layout.sections.map((section) => section.filter((item) => zoneItemKey(item) !== key)), cuts: layout.cuts });
 }
 
 export function placeInLayout(layout: RailLayout, spot: RailSpot, widget: string, target: string | undefined, max: number, instance?: string | null, carried?: ZoneItem): RailLayout {
@@ -92,27 +121,32 @@ export function placeInLayout(layout: RailLayout, spot: RailSpot, widget: string
     own = freshInstance(held, widget, target);
     key = zoneItemKey({ widget, target, instance: own });
   }
-  if (!moving && held.length >= max) return { ...layout, sections: layout.sections.map((s) => [...s]) };
+  if (!moving && held.length >= max) return copyOf(layout);
   const old = moving ? held.find((item) => zoneItemKey(item) === key) : carried;
   const base: ZoneItem = old ? { ...old } : target ? { widget, look: null, target } : { widget, look: null };
   const { instance: _drop, ...bare } = base;
   const item: ZoneItem = own ? { ...bare, instance: own } : bare;
   const sections = layout.sections.map((section) => section.filter((one) => zoneItemKey(one) !== key));
-  if (spot.split) {
-    const rest = sections.filter((section) => section.length > 0);
-    if (rest.length < RAIL_MAX_SECTIONS) {
-      const ratio = layout.sections.length === RAIL_MAX_SECTIONS ? layout.ratio : RAIL_RATIO_DEFAULT;
-      return tidyRail({ sections: spot.split === 'start' ? [[item], ...rest] : [...rest, [item]], ratio });
-    }
-    const at = spot.split === 'start' ? 0 : sections.length - 1;
-    sections[at] = spot.split === 'start' ? [item, ...sections[at]!] : [...sections[at]!, item];
-    return tidyRail({ sections, ratio: layout.ratio });
-  }
+  if (spot.split) return splitInto(layout, sections, spot.section, item);
   const at = Math.max(0, Math.min(spot.section, sections.length - 1));
   const list = sections[at]!;
   const index = Math.max(0, Math.min(spot.index, list.length));
   sections[at] = [...list.slice(0, index), item, ...list.slice(index)];
-  return tidyRail({ sections, ratio: layout.ratio });
+  return tidyRail({ sections, cuts: layout.cuts });
+}
+
+function copyOf(layout: RailLayout): RailLayout {
+  return { sections: layout.sections.map((section) => [...section]), cuts: [...layout.cuts] };
+}
+
+function splitInto(layout: RailLayout, without: ZoneItem[][], section: number, item: ZoneItem): RailLayout {
+  const at = Math.max(0, Math.min(section, without.length - 1));
+  const cuts = repairCuts(layout.cuts, without.length);
+  if (!canHalve(cuts, at)) return copyOf(layout);
+  const next = without.map((one) => [...one]);
+  next.splice(at + 1, 0, [item]);
+  if (next.filter((one) => one.length > 0).length > RAIL_MAX_SECTIONS) return copyOf(layout);
+  return tidyRail({ sections: next, cuts: halveAt(cuts, at) });
 }
 
 export function stepInRail(layout: RailLayout, key: string, direction: -1 | 1): RailLayout {
@@ -125,17 +159,6 @@ export function stepInRail(layout: RailLayout, key: string, direction: -1 | 1): 
   const next = [...list];
   [next[from], next[to]] = [next[to]!, next[from]!];
   return { ...layout, sections: layout.sections.map((section, i) => (i === at ? next : section)) };
-}
-
-export function sectionStyle(axis: 'x' | 'y', section: number, count: number, ratio: number): string {
-  const [start, end, a, b] = axis === 'y' ? ['top', 'bottom', 'left', 'right'] : ['left', 'right', 'top', 'bottom'];
-  const cut = splitAt(ratio);
-  const share = count < 2 ? `${start}: 0; ${end}: 0` : section === 0 ? `${start}: 0; ${end}: calc(100% - ${cut})` : `${start}: ${cut}; ${end}: 0`;
-  return `${share}; ${a}: 0; ${b}: 0`;
-}
-
-export function splitAt(ratio: number): string {
-  return `${Math.round(clampRatio(ratio) * 1000) / 10}%`;
 }
 
 export function setViewInRail(layout: RailLayout, key: string, view: string): RailLayout {

@@ -39,6 +39,7 @@ from pathlib import Path
 from playwright.sync_api import Error as PlaywrightError
 
 from scripts.widgets import defect_allow
+from scripts.widgets.common import key_matches, key_slug, viewport_for
 from scripts.widgets.harness import (CHROMIUM_ARGS, REPO, HarnessError, build_harness, catalog, defects, open_widget,
                                      serve, shoot, show)
 
@@ -60,19 +61,6 @@ def parse(argv: list[str]) -> argparse.Namespace:
                          "widgets page's preview frame draws it (below 1024px the app hands a cell its phone budget)")
     ap.add_argument("--no-build", action="store_true", help="reuse client/widget-harness-build/")
     return ap.parse_args(argv)
-
-
-def wanted(key: str, only: list[str]) -> bool:
-    return not only or any(key == o or (o.endswith(":") and key.startswith(o)) for o in only)
-
-
-STAGE_MARGIN_PX = 16
-
-
-def viewport_for(size: dict, mode: str) -> dict:
-    if mode == "box" and size.get("h"):
-        return {"width": size["w"] + 2 * STAGE_MARGIN_PX, "height": size["h"] + 2 * STAGE_MARGIN_PX}
-    return {"width": size["viewport"], "height": 1100 if size["viewport"] > 500 else 844}
 
 
 def sweep_widget(page, base: str, widget: dict, themes: list[str], shapes: list[str], out: Path,
@@ -103,7 +91,7 @@ def sweep_widget(page, base: str, widget: dict, themes: list[str], shapes: list[
                     continue
                 draw.update(findings=report["findings"], checked=report["checked"])
                 if any(f["severity"] == "fail" for f in report["findings"]):
-                    name = f"{widget['key'].replace(':', '--')}/{size['name']}-{shape}-{theme}-{viewport}.png"
+                    name = f"{key_slug(widget['key'])}/{size['name']}-{shape}-{theme}-{viewport}.png"
                     draw["shot"] = str(shoot(page, out / "shots" / name))
                 draws.append(draw)
     return draws
@@ -183,7 +171,7 @@ def main(argv: list[str]) -> int:
             page = browser.new_page(device_scale_factor=1, reduced_motion="reduce", timezone_id="UTC", locale="en-US")
             widgets, harness_themes = catalog(page, base)
             themes = args.themes.split(",") if args.themes else list(harness_themes)
-            chosen = [w for w in widgets if wanted(w["key"], args.only)]
+            chosen = [w for w in widgets if key_matches(w["key"], args.only)]
             if not chosen:
                 raise HarnessError(f"no widget matches {args.only}")
             for widget in chosen:

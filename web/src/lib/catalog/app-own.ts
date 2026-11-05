@@ -10,4 +10,6 @@ export const isBuiltinTheme = (source: string | null | undefined): boolean => so
 
 export const isBuiltinPlugin = (tier: string | null | undefined): boolean => tier === 'builtin' || tier === 'core';
 
+export const isFeatureTier = (tier: string | null | undefined): boolean => isBuiltinPlugin(tier) || tier === 'dev';
+
 export const isBundledSkill = (managedItemIds: readonly (string | null | undefined)[]): boolean => managedItemIds.some((id) => isFirstParty(id));

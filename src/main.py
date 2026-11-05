@@ -8,6 +8,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
+
+from src.core.launch_profiles.agent_resume import ResumePrefixNotApproved
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -16,6 +18,7 @@ from src.config import settings, StateDirUnavailableError
 from src.core.server_log import redact as log_redaction
 from src.security_headers import stamp_security_headers
 from src.api.account_gates import AccountRequired, account_required_handler
+from src.api import resume_prefix_card
 from src.api.peer_route_guard import PeerForwarded, peer_route_guard
 from src.api.request_log import RequestLogMiddleware
 from src.api.host_guard import HostGuardMiddleware
@@ -122,6 +125,7 @@ app = FastAPI(
 )
 app.add_exception_handler(PeerForwarded, lambda _request, exc: exc.response)
 app.add_exception_handler(AccountRequired, account_required_handler)
+app.add_exception_handler(ResumePrefixNotApproved, resume_prefix_card.refused)
 
 
 _VALIDATION_ERROR_KEYS = ("loc", "msg", "type")
@@ -208,7 +212,7 @@ if __name__ == "__main__":
 
     faulthandler.enable(all_threads=True)
 
-    from src.core.dev_lease import start_watch
+    from src.core.dev_tools.dev_lease import start_watch
 
     start_watch()
 

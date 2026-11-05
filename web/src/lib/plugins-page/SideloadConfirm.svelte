@@ -2,7 +2,7 @@
 <script lang="ts">
     import Button from '../base/Button.svelte';
     import IconButton from '../base/IconButton.svelte';
-    import ModalShell from '../launchpad/ModalShell.svelte';
+    import ModalShell from '../dialog-frame/ModalShell.svelte';
     import type { Translate } from '../sessions/types';
     import './plugin-pane.css';
 

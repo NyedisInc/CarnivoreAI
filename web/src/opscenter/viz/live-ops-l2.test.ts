@@ -26,13 +26,13 @@ describe('fleetModel', () => {
     expect(model.rows.map((r) => r.sessionId)).toEqual(['d', 'c', 'a', 'e']);
     expect(model.counts).toEqual({ waiting: 1, working: 1, idle: 1, unknown: 1 });
     const working = model.rows.find((r) => r.sessionId === 'c')!;
-    expect(working).toMatchObject({ contextPct: 41.5, subagents: 2, model: 'opus', project: 'proj', led: { status: 'working', unread: true, statusSource: 'registry', startupGate: null } });
+    expect(working).toMatchObject({ context: { pct: 41.5, scale: 2 }, contextSpoken: 42, subagents: 2, model: 'opus', project: 'proj', led: { status: 'working', unread: true, statusSource: 'registry', startupGate: null } });
     expect(model.rows.find((r) => r.sessionId === 'a')!.name).toBe('zed');
   });
 
   test('unmeasured context and subagents stay null', () => {
     const only = fleetModel([row('a', { running_context_used_pct: null, subagents_state: 'unmeasured', subagents_running: 3 })]).rows[0]!;
-    expect(only.contextPct).toBeNull();
+    expect(only.context).toBeNull();
     expect(only.subagents).toBeNull();
   });
 });

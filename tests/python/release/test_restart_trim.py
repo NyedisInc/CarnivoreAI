@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.python.release.deploy_text import script_text
+
 ROOT = Path(__file__).resolve().parents[3]
 DEPLOY = ROOT / "scripts" / "deploy-dmg.sh"
 
@@ -71,7 +73,7 @@ class TestUnchangedResync:
 class TestDeployStagesBeforeStop:
     @pytest.fixture(scope="class")
     def lines(self):
-        return DEPLOY.read_text().splitlines()
+        return script_text(DEPLOY).splitlines()
 
     @staticmethod
     def _first(lines, pattern):

@@ -1,6 +1,8 @@
 import { toCplugItem, type CplugRow } from '../../lib/plugins-page/cplugs-adapter';
 import type { ManagerAdapter, ManagerItem } from '../../lib/manager-frame/types';
 import { t } from '../../lib/i18n/index.svelte';
+import { featureWords } from '../../lib/plugins-page/feature-words';
+import type { Translate } from '../../lib/sessions/types';
 import { createCatalogPlugins, type CatalogPlugins } from '../../lib/plugins-page/catalog-plugins.svelte';
 import type { CatalogHost } from '../../lib/catalog/catalog';
 import type { InstallRequest, InstalledItem } from '../../lib/catalog/types';
@@ -19,14 +21,18 @@ let rows: CplugRow[] = [
     { ...row('mcphealth', true, ['sessions.read', 'sessions.message'], { icon: 'chart', author: 'Joe (ccsliinc)', surfaces: { plugins: ['session-card-action'] } }), state: 'needs_approval', grants: { app: [] }, risks: { 'sessions.read': 'low', 'sessions.message': 'high' } },
 ];
 
-export const pluginsSpecimenAdapter: ManagerAdapter = {
-    list: async () => rows.map((r) => toCplugItem(r, t)),
+const specimenAdapter = (tr: Translate): ManagerAdapter => ({
+    list: async () => rows.map((r) => toCplugItem(r, tr)),
     setEnabled: async (id: string, enabled: boolean): Promise<ManagerItem> => {
         const plain = id.replace(/^cplug:/, '');
         rows = rows.map((r) => (r.id === plain ? { ...r, enabled, state: enabled ? 'active' : 'disabled' } : r));
-        return toCplugItem(rows.find((r) => r.id === plain)!, t);
+        return toCplugItem(rows.find((r) => r.id === plain)!, tr);
     },
-};
+});
+
+export const pluginsSpecimenAdapter: ManagerAdapter = specimenAdapter(t);
+
+export const featuresSpecimenAdapter: ManagerAdapter = specimenAdapter(featureWords(t));
 
 const ledger: InstalledItem[] = [];
 const catalogHost = {

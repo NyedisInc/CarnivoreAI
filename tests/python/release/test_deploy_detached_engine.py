@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 import socket
 import subprocess
 import sys
@@ -9,6 +10,8 @@ import time
 from pathlib import Path
 
 import pytest
+
+from tests.python.release.deploy_text import script_text
 
 REPO = Path(__file__).resolve().parents[3]
 REPO_SCRIPT = REPO / "scripts" / "deploy-dmg.sh"
@@ -39,7 +42,7 @@ FUNCTIONS = (
 
 
 def _function_source(text: str | None = None) -> str:
-    text = text if text is not None else SCRIPT.read_text(encoding="utf-8")
+    text = text if text is not None else script_text()
     assert "stop_detached_engine() {" in text, "deploy-dmg.sh has no stop_detached_engine"
     out = []
     for name in FUNCTIONS:

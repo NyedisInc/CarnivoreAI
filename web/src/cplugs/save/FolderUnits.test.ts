@@ -70,7 +70,7 @@ async function render(fetcher: Fetcher): Promise<HTMLElement> {
     return target;
 }
 
-describe('plugin folders region', () => {
+describe('feature folders region', () => {
     test('one row per folder unit with the plugin name, size, restore points and a relative last backup', async () => {
         const el = await render(harness().fetcher);
         const rows = el.querySelectorAll('[data-tm="folder"]');
@@ -107,9 +107,9 @@ describe('plugin folders region', () => {
         expect(calls.filter((c) => c.path === '/cplugs/save/folders').length).toBe(2);
     });
 
-    test('says so in one line when there are no plugin folders', async () => {
+    test('says so in one line when there are no feature folders', async () => {
         const el = await render(harness([]).fetcher);
-        expect(el.querySelector('[data-tm="folders-empty"]')?.textContent).toBe('no plugin folders are backed up yet.');
+        expect(el.querySelector('[data-tm="folders-empty"]')?.textContent).toBe('no feature folders are backed up yet.');
         expect(el.querySelector('[data-tm="folder"]')).toBeNull();
     });
 

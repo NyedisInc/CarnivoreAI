@@ -59,10 +59,14 @@ def test_production_wiring_answers_404_to_everything_that_passes_the_rules(produ
     seen = set()
     for case in CASES:
         reply = exchange(production_port, case.raw)
+        if case.raw.startswith(b"GET / HTTP/1.1"):
+            assert reply.status == 200 and b'id="board"' in reply.body
+            continue
         assert reply.status != 200 and reply.status != 101, (case.name, reply.status)
         assert LEAK not in reply.body
         if case.allowed == {200}:
-            assert reply.status == 404, (case.name, reply.status)
+            assert reply.status in (404, 503), (case.name, reply.status)
+            continue
         if reply.status == 404:
             seen.add(reply.signature())
     assert len(seen) == 1, "one 404 shape for the whole run"

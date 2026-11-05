@@ -44,7 +44,7 @@
 <style>
   @layer components {
     .bar-handle {
-      --_bd: var(--oc-line-frame);
+      --_bd: var(--oc-focus-quiet);
       position: relative;
       display: flex;
       align-items: center;

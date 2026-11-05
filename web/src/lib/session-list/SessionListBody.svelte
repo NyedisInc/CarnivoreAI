@@ -12,7 +12,7 @@
   $effect(() => watchViewState());
 
   const widget = useWidget(SESSION_LIST_WIDGET_DEF, () => ({}), () =>
-    Object.fromEntries(VIEW_CHOICES.map((choice) => [choice.id, { run: choice.run, on: choice.on() }])),
+    Object.fromEntries(VIEW_CHOICES.map((choice) => [choice.id, { run: choice.run, on: choice.on(), hidden: choice.available?.() === false }])),
   );
 </script>
 

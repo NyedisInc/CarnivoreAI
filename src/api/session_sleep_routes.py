@@ -16,7 +16,7 @@ from src.api.peer_auth import require_peer_sessions
 from src.api.session_record_payload import _session_record_payload, attach_host_labels
 from src.core import restart_inflight, session_change_notice, session_sleep, unread_follow_up
 from src.core.pipeline import triggers as save_triggers
-from src.core.ttl_flight import TtlFlight
+from src.core.read_caches.ttl_flight import TtlFlight
 from src.core.session_recreate_presence import TMUX_GONE, TMUX_PRESENT, TMUX_UNKNOWN
 from src.models import SessionRecord, SuccessResponse
 from src.api.error_response import api_error

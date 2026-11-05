@@ -49,7 +49,7 @@ function applyGroups(): void {
 }
 
 function ctrl(listEl: Element, rows: Record<string, unknown>[], extra: Record<string, unknown> = {}) {
-    return { _rows: rows, _listing: { ok: true }, _lastSig: null, _dragging: false, _missing: [], listEl, ...extra };
+    return { _rows: rows, _listing: { ok: true }, _dragging: false, _missing: [], listEl, ...extra };
 }
 
 function paintBoth(rows: Record<string, unknown>[], extra: Record<string, unknown> = {}) {
@@ -128,7 +128,7 @@ describe('the shell and the legacy paint draw the same drawer', () => {
     it('every band open: pinned, layouts, groups, projects, rogue, terminals', () => {
         const { shellEl } = expectParity(withLayouts(baseRows()));
         const bands = Array.from(shellEl.querySelectorAll('[data-group]')).map((e) => e.getAttribute('data-group'));
-        expect(bands).toEqual(['pinned', 'layouts', 'g:g1', 'g:g2', 'p:10', 'p:20', 'rogue', 'terminals', 'browsers']);
+        expect(bands).toEqual(['pinned', 'layouts', 'g:g1', 'g:g2', 'p:10', 'p:20', 'rogue', 'terminals', 'browsers', 'files']);
         expect(shellEl.querySelector('[data-group="g:g1"]')!.getAttribute('data-group-colour')).toBe('violet');
     });
 
@@ -232,7 +232,6 @@ describe('the shell and the legacy paint draw the same drawer', () => {
         const again = el.querySelector('.session-sidebar-row[data-name="cloude_b"]');
         expect(again).toBe(first);
         expect(again!.querySelector('.status-led')!.getAttribute('data-inner')).toBe('working');
-        expect(c._lastSig).toBeNull();
     });
 
     it('a group rename repaints the heading (the legacy defect #726 slice 4 fixed in both renderers)', () => {

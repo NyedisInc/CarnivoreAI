@@ -14,7 +14,7 @@
     flex-direction: column;
     width: var(--rail-w, 36px);
     background: var(--oc-rail-header-ground);
-    box-shadow: inset 1px 0 0 0 var(--oc-line-frame);
+    box-shadow: inset var(--oc-grip-line) 0 0 0 var(--oc-line-frame);
     transition: transform 140ms ease-out, visibility 0s linear 140ms;
   }
 
@@ -24,7 +24,7 @@
     flex-direction: row;
     width: auto;
     height: var(--rail-h);
-    box-shadow: inset 0 1px 0 0 var(--oc-line-frame);
+    box-shadow: inset 0 var(--oc-grip-line) 0 0 var(--oc-line-frame);
   }
 
   .rail__layer[data-out='false'] {

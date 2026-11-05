@@ -15,3 +15,9 @@ export function displayKind(kind: string | null | undefined): string | null {
 export function isCplugIndexKind(kind: string | null | undefined): boolean {
     return kind === INDEX_KIND_CPLUG;
 }
+
+export type CplugIndexKind = typeof INDEX_KIND_CPLUG;
+
+export function legacySideloadKind(): CplugIndexKind {
+    return INDEX_KIND_CPLUG;
+}

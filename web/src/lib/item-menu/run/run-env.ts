@@ -1,4 +1,6 @@
 import { drawerEnv } from '../../drawer/env';
+import type { SidebarPick } from '../../legacy-globals';
+import type { ListingPushGlobal } from '../../listing-push/boot';
 import type { RowMenuCtx } from '../row-context';
 
 export interface SessionRecord {
@@ -46,9 +48,8 @@ export interface CloudeWebRun {
 }
 
 export interface RunEnv {
-    CloudeI18n?: { t(key: string, params?: Record<string, string>): string };
-    Launchpad?: { showError?(text: string): void; selectProject?(o: { name: string; path: string; launch_from?: { kind: 'session'; name: string; pinned: boolean } }): Promise<unknown> };
-    SessionSidebarArrangement?: { isPinned?(name: string): boolean };
+    CloudeI18n?: { t(key: string, params?: Record<string, unknown>): string };
+    Launchpad?: { showError?(text: string): void; selectProject?(o: { name: string; path: string; launch_from?: { kind: string; name: string; pinned: boolean } }): Promise<unknown> };
     API?: {
         listSessionRecords?(): Promise<SessionRecord[]>;
         getProjects?(): Promise<ProjectRow[]>;
@@ -58,7 +59,9 @@ export interface RunEnv {
     };
     TextPromptModal?: { open?(o: PromptOptions): Promise<string | null> };
     SessionLabel?: { validate?(raw: string): { ok: boolean; value?: string; reason?: string } };
-    SessionSidebar?: { _rows?: { asleep?: boolean; session_uuid?: string; session_id?: string }[]; _lastSig?: string | null; repaint?(): void };
+    SessionSidebar?: SidebarPick<'repaint' | 'rows' | 'forceRefresh'>;
+    ListingPush?: Pick<ListingPushGlobal, 'isLive' | 'rows' | 'onChange'>;
+    SessionSidebarArrangement?: { isPinned?(name: string): boolean };
     SessionRowActions?: { ATTR_ACTION: string; ATTR_NAME: string; ACTION_CLOSE: string };
     CopyCompat?: { copyText?(text: string): Promise<{ ok?: boolean } | undefined> };
     CloudeWeb?: CloudeWebRun;
@@ -80,7 +83,7 @@ export function navToken(): number {
     return navSeq;
 }
 
-export function tr(key: string, params?: Record<string, string>): string {
+export function tr(key: string, params?: Record<string, unknown>): string {
     const i18n = runEnv().CloudeI18n;
     return i18n && typeof i18n.t === 'function' ? i18n.t(key, params) : key;
 }

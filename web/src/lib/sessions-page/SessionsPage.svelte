@@ -1,5 +1,6 @@
 <!-- the overlay host -->
 <script lang="ts">
+    import { failureReason } from '../errors/failure-reason';
     import { captureOpener, restoreOpenerFocus } from '../dialog-frame/opener-focus';
     import { onMount, tick } from 'svelte';
     import { t as reactiveT } from '../i18n/index.svelte';
@@ -124,7 +125,7 @@
                     if (result?.status === 'refused' && result.detail) notice = result.detail;
                 },
                 (error: unknown) => {
-                    notice = error instanceof Error ? error.message : String(error);
+                    notice = failureReason(error);
                 },
             );
         } else if (!(r.projectRef ? api.newSession(r.projectRef) : api.createSession?.())) {

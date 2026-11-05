@@ -24,7 +24,7 @@ BLOCKED, REPEAT_TICK, SUPERSEDED = "blocked", "repeat_tick", "superseded"
 
 
 def born_state(value: object) -> str:
-    state = rules.canonical_state(value) if value not in (None, "") else rules.OPEN
+    state = value if value not in (None, "") else rules.OPEN
     if state not in BORN_STATES:
         raise rules.TaskManagerInvalid(f"an item is born {' or '.join(BORN_STATES)}, not {value!r}; move it after adding")
     return str(state)

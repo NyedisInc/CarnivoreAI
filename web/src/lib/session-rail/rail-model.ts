@@ -37,15 +37,14 @@ export const RAIL_SPECS: Readonly<Record<RailEdge, RailSpec>> = Object.freeze({
   bottom: { field: 'session_rail_bottom', id: RAIL_BOTTOM_ID, axis: 'x', defaults: DEFAULT_BOTTOM_ITEMS },
 });
 
-export const RAIL_MAX_SECTIONS = 2;
+export const RAIL_MAX_SECTIONS = 4;
+
+export const RAIL_V2_MAX_SECTIONS = 2;
 
 export const RAIL_RATIO_DEFAULT = 0.5;
 
-export const RAIL_RATIO_MIN = 0.15;
-export const RAIL_RATIO_MAX = 0.85;
+export const RAIL_MIN_SHARE = 0.15;
+
+export const RAIL_CUT_EPSILON = 1e-6;
 
 export const RAIL_RATIO_STEP = 0.02;
-
-export type RailBand = 'start' | 'end';
-
-export const RAIL_BANDS: readonly RailBand[] = Object.freeze(['start', 'end'] as RailBand[]);

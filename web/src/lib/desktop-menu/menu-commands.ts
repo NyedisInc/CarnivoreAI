@@ -9,6 +9,8 @@ export interface MenuActions {
   openInTerminal(): void;
   reveal(target: 'session' | 'project'): void;
   openInEditor(target: 'session' | 'project'): void;
+  goStep(dir: -1 | 1): void;
+  goRecent(n: number): void;
 }
 
 const VERBS: Readonly<Record<string, (actions: MenuActions) => void>> = Object.freeze({
@@ -22,6 +24,9 @@ const VERBS: Readonly<Record<string, (actions: MenuActions) => void>> = Object.f
   'session.open_editor': (a) => a.openInEditor('session'),
   'file.reveal_project': (a) => a.reveal('project'),
   'file.open_project_editor': (a) => a.openInEditor('project'),
+  'go.back': (a) => a.goStep(-1),
+  'go.forward': (a) => a.goStep(1),
+  ...Object.fromEntries(Array.from({ length: 10 }, (_, n) => [`go.recent.${n}`, (a: MenuActions) => a.goRecent(n)])),
 });
 
 export const KNOWN_VERBS: readonly string[] = Object.freeze(Object.keys(VERBS));

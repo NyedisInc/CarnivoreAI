@@ -10,6 +10,7 @@ export interface TypeRow {
     readonly family: string;
     readonly label_key: string;
     readonly description_key: string;
+    readonly hidden?: boolean;
     readonly defaults: {
         readonly outside_locked_off: boolean;
         readonly screen_surface: string;
@@ -57,9 +58,10 @@ export const EMPTY_SETTINGS: RoutingSettings = {
 const BASE = '/notifications';
 const json = (body: unknown): string => JSON.stringify(body);
 
-export async function fetchRegistry(fetcher: Fetcher = authFetch): Promise<{ families: Family[]; types: TypeRow[] }> {
-    const body = await fetcher<{ families?: Family[]; types?: TypeRow[] } | null>(`${BASE}/types`);
-    return { families: Array.isArray(body?.families) ? body.families : [], types: Array.isArray(body?.types) ? body.types : [] };
+export async function fetchRegistry(fetcher: Fetcher = authFetch): Promise<{ families: Family[]; types: TypeRow[]; aliases: Record<string, string> }> {
+    const body = await fetcher<{ families?: Family[]; types?: TypeRow[]; aliases?: Record<string, string> } | null>(`${BASE}/types`);
+    const aliases = body?.aliases && typeof body.aliases === 'object' ? body.aliases : {};
+    return { families: Array.isArray(body?.families) ? body.families : [], types: Array.isArray(body?.types) ? body.types : [], aliases };
 }
 
 export async function fetchRouting(fetcher: Fetcher = authFetch): Promise<RoutingSettings> {

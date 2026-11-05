@@ -42,7 +42,7 @@ export interface SurfaceTracks {
   spanHeight: Map<SlotId, number>;
 }
 
-export const GUTTER = 12;
+export const GUTTER = 9;
 
 /* and stopping at */
 export const CELL_SQUEEZE_MIN = 44;

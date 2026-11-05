@@ -12,6 +12,8 @@ from src.api.remote_route_guard import refuse_remote
 from src.config import settings
 from src.core.account_switch import pane_account, store
 from src.core.provider_ledger.login_command import PROFILE_ENV_VARS
+from src.core.attention.codex_pane_home import pane_codex_home
+from src.core.attention.evidence import FAMILY_CODEX
 from src.core.session_token_usage.account_resolve import resolve_session_account
 from src.core.session_token_usage.reader import (
     SessionSubject,
@@ -65,7 +67,10 @@ async def get_session_token_usage(
         conversation_uuid=conversation_uuid,
         working_dir=working_dir,
     )
-    usage = await asyncio.to_thread(read_session_token_usage, subject)
+    read_kwargs = {}
+    if info.agent_family == FAMILY_CODEX and tmux_name:
+        read_kwargs["codex_home"] = await asyncio.to_thread(pane_codex_home, session_manager.tmux_socket_name(), tmux_name)
+    usage = await asyncio.to_thread(read_session_token_usage, subject, **read_kwargs)
 
     config_path = Path(settings.auth_config_file).expanduser()
     profile_dir = None

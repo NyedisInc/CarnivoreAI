@@ -84,9 +84,10 @@ def _storage_by_project(view: ProjectsView) -> Dict[int, Dict[str, Any]]:
 def views_to_responses(view: ProjectsView, response_cls: Any) -> List[Any]:
     from src.core.companies import hero_images
     from src.core.project_lineage.parents import parent_project_ids
+    from src.core.worktrees import store as worktree_store
 
     revs = hero_images.index(hero_images.PROJECT)
-    parents = parent_project_ids(view.projects)
+    parents = parent_project_ids(view.projects, worktree_store.default_store().repo_by_path())
     storage = _storage_by_project(view)
     return [
         response_cls(

@@ -1,4 +1,3 @@
-/* show open sessions */
 import { drawerController } from './controller-ref';
 import { createDeviceClassToggle, type DeviceClassToggle } from './device-class-toggle.svelte';
 import type { ViewClass } from './view-class';
@@ -41,6 +40,16 @@ const toggles: Readonly<Record<OptionalSection, DeviceClassToggle<boolean>>> = O
 
 export function sectionShown(id: OptionalSection): boolean {
     return toggles[id].value();
+}
+
+let sleepingCount = $state(0);
+
+export function noteSleepingCount(count: number): void {
+    sleepingCount = count;
+}
+
+export function sleepingSessions(): number {
+    return sleepingCount;
 }
 
 export function setSectionShown(id: OptionalSection, next: boolean): boolean {

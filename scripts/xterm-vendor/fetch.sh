@@ -7,6 +7,7 @@ FIT_VERSION="0.8.0"
 WEBGL_VERSION="0.16.0"
 UNICODE11_VERSION="0.6.0"
 SEARCH_VERSION="0.13.0"
+WEB_LINKS_VERSION="0.9.0"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUT_DIR="$SCRIPT_DIR/../../client/vendor/xterm"
@@ -18,6 +19,7 @@ xterm-addon-fit.js|https://cdn.jsdelivr.net/npm/xterm-addon-fit@${FIT_VERSION}/l
 xterm-addon-webgl.js|https://cdn.jsdelivr.net/npm/xterm-addon-webgl@${WEBGL_VERSION}/lib/xterm-addon-webgl.js|0c9c48c9391c4cee816eacf95699dbde97e8cc8f191e87f3a571e73d214c8df8
 xterm-addon-unicode11.js|https://cdn.jsdelivr.net/npm/xterm-addon-unicode11@${UNICODE11_VERSION}/lib/xterm-addon-unicode11.js|ab10d83642883e5e17ea741cd5b6e5f8c0f6a06e3271f2f0c0e043be4fc5e738
 xterm-addon-search.js|https://cdn.jsdelivr.net/npm/xterm-addon-search@${SEARCH_VERSION}/lib/xterm-addon-search.js|6a6db33f16b764552377a2c5ba4327c6dab6beaf25484533afd7dbecd0b03793
+xterm-addon-web-links.js|https://cdn.jsdelivr.net/npm/xterm-addon-web-links@${WEB_LINKS_VERSION}/lib/xterm-addon-web-links.js|d67624ab0e89e1d2ee27b64cc6e9283f4ce206d7343429d87d95370b0c971824
 "
 
 sha256_of() {
@@ -66,8 +68,8 @@ done <<EOF
 $ASSETS
 EOF
 
-if [ "$count" -ne 6 ]; then
-    echo "FAIL: verified $count assets, expected 6 - the asset list did not parse" >&2
+if [ "$count" -ne 7 ]; then
+    echo "FAIL: verified $count assets, expected 7 - the asset list did not parse" >&2
     exit 1
 fi
 
@@ -78,4 +80,4 @@ done <<EOF
 $ASSETS
 EOF
 
-echo "all six xterm assets verified against pinned sha256"
+echo "all seven xterm assets verified against pinned sha256"

@@ -39,10 +39,9 @@ MCP_PREFIX = "mcp__carnivore__"
 
 
 def denied_create_tools() -> tuple:
-    from src.core.mcp import aliases  # noqa: PLC0415
+    return tuple(CREATE_TOOLS)
 
-    bare = aliases.names_both_ways(tuple(t.removeprefix(MCP_PREFIX) for t in CREATE_TOOLS))
-    return tuple(f"{MCP_PREFIX}{t}" for t in bare)
+
 SWARM_JSON_SCHEMA = 1
 NAMING_RULES = (f"{naming_rules.RULES_TEXT} Give every swarm_spawn a name, and a feature agent its specialty; a spawn whose specialty a "
                 "live feature agent holds answers that agent (suggested_agent) instead. Promote with the specialty the agent will own. "
@@ -50,6 +49,9 @@ NAMING_RULES = (f"{naming_rules.RULES_TEXT} Give every swarm_spawn a name, and a
 PROJECT_RULES = ("Delegation rule: you never edit this project's files yourself. Hand every change to a task or feature agent "
                  "through swarm_spawn; you have no file-writing tools, so a lasting rule goes through swarm_remember, and only a rule: "
                  + fact_life.MEMORY_BAR + " "
+                 "The owner tells you what to do and you do it, then report when it is done: close, delete and answer the cards and "
+                 "questions in your scope yourself (the owner's and Task Manager tasks included), and restart, wake or join this computer's "
+                 "sessions yourself; none of it waits for his approval. "
                  "You run this project's queue for the owner. When the server sends a deal request, read the queue with "
                  "`swarm_card_list` and deal the queued cards (In Progress with nobody holding them), top first, to agents that fit with "
                  "`swarm_card_deal` (a child you have, or a new one through `swarm_spawn` with `card`); a pinned card goes only to its agent. "
@@ -62,10 +64,11 @@ PROJECT_RULES = ("Delegation rule: you never edit this project's files yourself.
                  "own backlog alone. Every card you make with `swarm_card_create` takes a one-line plain "
                  "`summary` of what it is for; pass `queued` for a card made for work that starts now. When nothing should "
                  "start now, answer with `swarm_card_deal` and `hold`. Split a big card into child cards with `swarm_card_create` "
-                 "and `parent`; pass `cards` to make several in one call. Check your children's work: accept or reject their reports with `swarm_accept_report`; an accepted "
+                 "and `parent`; pass `cards` to make several in one call. A child card is a task and a top-level card a feature; pass `level` `task` for a small top-level fix. "
+                 "When a card reaches Done the owner's chats show one done line for it (a task in the project chat, a feature also in the company and SysOp chats): never post your own done note. Check your children's work: accept or reject their reports with `swarm_accept_report`; an accepted "
                  "child counts as done for its parent, and the parent moves itself to Review. Close out every finished task agent: accept its report to tear it down, or promote it with `swarm_promote` and let it sleep; no task agent stays awake after its work is done. One promotion rule: a task agent becomes a promotion candidate only when its task type's accepted reports reach the project's promotion threshold. A report you leave undecided past the close-out window is accepted for you by the server, so the agent is torn down (or sleeps as a candidate when it earned a promotion) and a close-out card tells you. To change the order use "
                  "`swarm_card_reorder`; it is a suggestion unless the owner set agents reorder to auto. To clear a card off the board, "
-                 "`swarm_card_archive` archives it at once and `swarm_card_delete` deletes it for good after the owner approves; both take "
+                 "`swarm_card_archive` archives it at once and `swarm_card_delete` deletes it for good, at once, whoever made it; both take "
                  "a `reason`, kept in the card's history. Follow the pace and slots "
                  "the deal request names. " + NAMING_RULES)
 _CAPACITY_RULES = ("You hand out capacity. `swarm_card_capacity` reads CPU busy and the usage windows; `swarm_card_grant` sets how many agents "

@@ -41,7 +41,8 @@ async def test_typed_payload_is_decryptable_and_fixed(rig) -> None:
     assert req.headers["Topic"] != "approval" and len(req.headers["Topic"]) <= 32
     got = json.loads(_decrypt(req.content, phone.private, phone.auth))
     assert got == {"title": "turn finished", "body": "my build (carnivore) on studio finished its turn.",
-                   "path": "/session/cloude_my-build"}
+                   "path": "/session/cloude_my-build",
+                   "tag": "session.finished:cloude_my-build", "thread": "cloude_my-build"}
     assert "secret words" not in json.dumps(got) and "https://" not in json.dumps(got)
 
 
@@ -62,7 +63,9 @@ async def test_other_types_keep_the_session_path(rig) -> None:
 async def test_path_falls_back_to_root_without_a_session(rig) -> None:
     service, _, phone, _, _, cfg = rig
     await webpush.WebPushSender().send(ev(session_ref="", tmux_name=None), cfg, {})
-    assert json.loads(_decrypt(service.requests[0].content, phone.private, phone.auth))["path"] == "/"
+    got = json.loads(_decrypt(service.requests[0].content, phone.private, phone.auth))
+    assert got["path"] == "/"
+    assert got["tag"] == "session.finished" and "thread" not in got, "no session: the type alone tags it, no thread"
 
 
 @pytest.mark.parametrize("status", [404, 410])

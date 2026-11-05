@@ -3,6 +3,8 @@
 
 const loginItems = require('./login-items');
 const permission = require('./notification-permission');
+
+const PROBE_DELAY_MS = 3000;
 const focus = require('./banners/focus');
 const policy = require('./app-window-policy');
 const strings = require('./tray-menu/strings');
@@ -47,7 +49,7 @@ function registerDesktopSettings(deps) {
   };
   const snapshot = async () => ({
     login: loginItems.readLogin({ installer: deps.getInstaller(), dir: deps.dataDir(), service: deps.getLoginService ? deps.getLoginService() : null }),
-    notifications: { state: permission.readState({ dir: deps.dataDir() }), waiting: permission.isWaiting({ dir: deps.dataDir() }), banners: { posting: await bannersPosting() } },
+    notifications: { state: await permission.probe({ dir: deps.dataDir(), Notification: deps.Notification }), waiting: permission.isWaiting({ dir: deps.dataDir() }), banners: { posting: await bannersPosting() } },
     hotkey,
     network: { tls: tlsLevel() },
   });
@@ -70,7 +72,11 @@ function registerDesktopSettings(deps) {
   });
   guarded(CHANNELS.request, async () => {
     const t = await translate();
-    const state = permission.request({ dir: deps.dataDir(), Notification: deps.Notification, t });
+    let state = permission.request({ dir: deps.dataDir(), Notification: deps.Notification, t });
+    if (state === 'unknown') {
+      await new Promise((resolve) => setTimeout(resolve, PROBE_DELAY_MS));
+      state = await permission.probe({ dir: deps.dataDir(), Notification: deps.Notification });
+    }
     return { state, waiting: permission.isWaiting({ dir: deps.dataDir() }) };
   });
   guarded(CHANNELS.openSettings, async () => {

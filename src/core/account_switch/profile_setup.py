@@ -15,7 +15,7 @@ from src.config.provider_accounts import (
 )
 from src.core import config_writer
 from src.core.account_switch import shared_mcp
-from src.core.provider_ledger import accounts_store, refresh_guard
+from src.core.provider_ledger import accounts_store, refresh_guard, relay_accounts
 from src.core.provider_ledger.credentials import claude_identity_path, read_claude_identity
 from src.models.provider_ledger import AccountUsage, LedgerSnapshot
 
@@ -43,6 +43,8 @@ UNAVAILABLE = "unavailable"
 
 
 def setup_done(account: ProviderAccount) -> bool:
+    if relay_accounts.is_relay_account(account):
+        return relay_accounts.setup_complete(account)
     identity = read_claude_identity(profile_dir_for(account))
     return identity is not None and identity.setup_complete
 

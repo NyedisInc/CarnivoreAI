@@ -3,6 +3,7 @@
 
   let { store }: { store: LayoutStore } = $props();
   import { t } from '../../lib/i18n/index.svelte';
+  import { IconButton } from '../../lib/base';
   import { dismissRefusal, placementRefusal } from '../widgets/chrome/refusal-toast.svelte';
 </script>
 
@@ -12,16 +13,12 @@
   
   <div class="oc-notice oc-notice--refusal" role="status" data-placement-refusal>
     <span class="oc-notice-text">{placementRefusal.line}</span>
-    <button type="button" class="oc-notice-close" onclick={dismissRefusal} aria-label={t('layout_editor.refuse.dismiss')}>
-      <span aria-hidden="true">×</span>
-    </button>
+    <IconButton label={t('layout_editor.refuse.dismiss')} variant="close" icon="close" onclick={dismissRefusal} />
   </div>
 {:else if store.state.warning}
   <div class="oc-notice" role="status">
     <span class="oc-notice-text">{store.state.warning}</span>
-    <button type="button" class="oc-notice-close" onclick={() => store.setWarning('')} aria-label={t('opscenter.notice.dismiss')}>
-      <span aria-hidden="true">×</span>
-    </button>
+    <IconButton label={t('opscenter.notice.dismiss')} variant="close" icon="close" onclick={() => store.setWarning('')} />
   </div>
 {/if}
 
@@ -56,33 +53,5 @@
     .oc-notice-text {
       min-width: 0;
     }
-
-    .oc-notice-close {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 20px;
-      padding: 0;
-      background: none;
-      border: 0;
-      border-radius: var(--oc-radius-sm);
-      color: var(--oc-text-dim);
-      font: inherit;
-      font-size: 15px;
-      cursor: pointer;
-    }
-
-    .oc-notice-close:hover {
-      background: var(--oc-ground-hover);
-      color: var(--oc-text-primary);
-    }
-
-    @media (max-width: 1023px) {
-      .oc-notice-close {
-        min-width: var(--oc-tap);
-        min-height: var(--oc-tap);
-      }
-  }
   }
 </style>

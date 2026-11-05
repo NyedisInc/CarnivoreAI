@@ -10,7 +10,7 @@ from collections import Counter
 from contextlib import closing
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, ContextManager, Dict, List, Optional, Sequence, Tuple
 
 import structlog
 
@@ -163,6 +163,62 @@ def _spawned(conn: sqlite3.Connection) -> int:
                               created_at=created) == "added" for parent, child, created in scan.spawned_sessions(conn))
 
 
+_Pending = Tuple[Path, str, List[int], Optional[scan.ScanResume]]
+
+
+def _pending_files(sources: Sequence[Tuple[Path, bool]], cursor: Dict[str, List[int]], report: SweepReport) -> List[_Pending]:
+    todo: List[_Pending] = []
+    for path, _is_codex in sources:
+        stamp = _stamp(path)
+        key = cursor_key(path)
+        seen = cursor.get(key) or cursor.get(path.stem, [])
+        if stamp is not None and stamp_of(seen) == stamp:
+            cursor[key] = seen
+        if stamp is None or stamp_of(seen) == stamp:
+            report.unchanged += 1
+        elif scan.is_dataless(path):
+            report.dataless_skipped += 1
+        else:
+            todo.append((path, key, stamp, resume_of(seen)))
+    return todo
+
+
+TransactionFactory = Callable[[sqlite3.Connection], ContextManager[Any]]
+"""``src.core.db.transaction``: wraps a block in BEGIN IMMEDIATE ... COMMIT."""
+
+
+@dataclass
+class _SweepContext:
+
+    conn: sqlite3.Connection
+    session_of: Dict[str, str]
+    kind_of: Dict[Path, bool]
+    apply: bool
+    transaction: TransactionFactory
+    cursor: Dict[str, List[int]]
+    report: SweepReport
+
+
+def _write_files(*, ctx: _SweepContext, todo: Sequence[_Pending]) -> None:
+    for path, key, stamp, resume in todo:
+        try:
+            plan = (plan_codex(path) if ctx.kind_of[path]
+                    else plan_file(path, resume_while_stored(ctx.conn, path.stem, resume)))
+        except OSError as exc:
+            ctx.report.unreadable += 1
+            logger.warning("lineage_live_unreadable", path=str(path), error=str(exc))
+            continue
+        ctx.report.examined += 1
+        if plan is None:
+            ctx.cursor[key] = stamp
+            continue
+        written = _write(ctx.conn, plan, ctx.session_of, ctx.apply, ctx.transaction)
+        ctx.report.counts.update(written)
+        if ctx.apply and written.get("compacts"):
+            _announce_compaction(ctx.session_of.get(plan.conversation_id))
+        ctx.cursor[key] = stamp + _resume_entry(ctx.conn, plan, ctx.apply)
+
+
 def sweep(db_path: Path, state_dir: Path, *, roots: Optional[Sequence[Path]] = None, limit: Optional[int] = None,
           apply: bool = True, codex_root: Optional[Path] = None, include_codex: bool = True) -> SweepReport:
     from src.core.db import DatastoreUnreadableError, connect, transaction
@@ -179,41 +235,15 @@ def sweep(db_path: Path, state_dir: Path, *, roots: Optional[Sequence[Path]] = N
         if not graph.ready(conn):
             raise LineageLiveError("the datastore predates schema v49 (no lineage tables)")
         session_of = scan.session_of_conversation(conn)
-        todo: List[Tuple[Path, str, List[int], Optional[scan.ScanResume]]] = []
         sources = [(p, False) for p in scan.transcripts(search)]
         if include_codex:
             sources += [(p, True) for p in codex.rollouts(codex_root or default_codex_root())]
-        for path, is_codex in sources:
-            stamp = _stamp(path)
-            key = cursor_key(path)
-            seen = cursor.get(key) or cursor.get(path.stem, [])
-            if stamp is not None and stamp_of(seen) == stamp:
-                cursor[key] = seen
-            if stamp is None or stamp_of(seen) == stamp:
-                report.unchanged += 1
-            elif scan.is_dataless(path):
-                report.dataless_skipped += 1
-            else:
-                todo.append((path, key, stamp, resume_of(seen)))
-        kind_of = {p: c for p, c in sources}
+        todo = _pending_files(sources, cursor, report)
         report.deferred = max(0, len(todo) - limit) if limit is not None else 0
-        for path, key, stamp, resume in todo[:limit]:
-            try:
-                plan = (plan_codex(path) if kind_of[path]
-                        else plan_file(path, resume_while_stored(conn, path.stem, resume)))
-            except OSError as exc:
-                report.unreadable += 1
-                logger.warning("lineage_live_unreadable", path=str(path), error=str(exc))
-                continue
-            report.examined += 1
-            if plan is None:
-                cursor[key] = stamp
-                continue
-            written = _write(conn, plan, session_of, apply, transaction)
-            report.counts.update(written)
-            if apply and written.get("compacts"):
-                _announce_compaction(session_of.get(plan.conversation_id))
-            cursor[key] = stamp + _resume_entry(conn, plan, apply)
+        _write_files(
+            ctx=_SweepContext(conn, session_of, {p: c for p, c in sources}, apply, transaction, cursor, report),
+            todo=todo[:limit],
+        )
         if apply:
             with transaction(conn):
                 report.counts["spawned_by"] += _spawned(conn)
@@ -250,7 +280,8 @@ def default_codex_root() -> Path:
     return _root()
 
 
-def _write(conn: sqlite3.Connection, plan: FilePlan, session_of: Dict[str, str], apply: bool, transaction) -> Counter:
+def _write(conn: sqlite3.Connection, plan: FilePlan, session_of: Dict[str, str], apply: bool,
+           transaction: TransactionFactory) -> Counter:
     if apply:
         with transaction(conn):
             return apply_file(conn, plan, session_of)

@@ -91,6 +91,7 @@ console.log('[CloudeTerminal Module] Loading...');
         PAGE_CHROME_IDS: PAGE_CHROME_IDS,
         PRIMARY_INPUT_OWNER: PRIMARY_INPUT_OWNER,
         XTERM_OPTIONS: XTERM_OPTIONS,
+        openTerminalLink: openTerminalLink,
         SCROLLBACK_ROWS: SCROLLBACK_ROWS
     };
 }(typeof window !== 'undefined' ? window : globalThis));

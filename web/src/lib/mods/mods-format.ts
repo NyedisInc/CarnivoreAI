@@ -1,5 +1,6 @@
 import { t } from '../i18n/index.svelte';
 import { ApiError } from '../../opscenter/api/auth.svelte';
+import { failureReason } from '../errors/failure-reason';
 import type { GroupResult, ModEntry, ModGroup } from './mods-api';
 
 export function codeLabel(prefix: string, code: string, params: Record<string, string | number> = {}): string {
@@ -31,5 +32,5 @@ export function refusalText(error: unknown): string {
     const known = codeLabel('mods.refused', code);
     if (known !== code) return known;
   }
-  return error instanceof Error ? error.message : String(error);
+  return failureReason(error);
 }

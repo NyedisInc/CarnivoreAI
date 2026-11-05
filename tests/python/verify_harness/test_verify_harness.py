@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import types
+import urllib.request
 from typing import Any
 
 import pytest
@@ -19,21 +20,26 @@ def _state(tmp_path, token: str | None = "tok", origin: str = BASE) -> str:
     return str(path)
 
 
-def test_token_of_reads_the_token_for_the_base_origin(tmp_path) -> None:
-    assert vh.token_of(_state(tmp_path), BASE) == "tok"
+def test_token_of_is_gone_so_access_token_is_the_one_reader() -> None:
+    assert not hasattr(vh, "token_of")
 
 
-def test_token_of_raises_when_origin_or_token_is_missing(tmp_path) -> None:
+def test_call_raises_when_the_state_holds_no_token_for_the_base(tmp_path) -> None:
+    args = types.SimpleNamespace(base=BASE, storage_state=_state(tmp_path, token=None))
     with pytest.raises(RuntimeError):
-        vh.token_of(_state(tmp_path, origin="http://other"), BASE)
-    with pytest.raises(RuntimeError):
-        vh.token_of(_state(tmp_path, token=None), BASE)
+        vh.call(args, "/x")
 
 
 def test_call_sends_bearer_json_and_decodes_the_answer(tmp_path, monkeypatch) -> None:
     seen: dict[str, Any] = {}
 
     class _Answer:
+        def __enter__(self) -> "_Answer":
+            return self
+
+        def __exit__(self, *exc: object) -> None:
+            seen["closed"] = True
+
         def read(self) -> bytes:
             return b'{"ok": true}'
 
@@ -42,11 +48,13 @@ def test_call_sends_bearer_json_and_decodes_the_answer(tmp_path, monkeypatch) ->
                     body=req.data, timeout=timeout)
         return _Answer()
 
-    monkeypatch.setattr(vh.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
     args = types.SimpleNamespace(base=BASE, storage_state=_state(tmp_path))
     assert vh.call(args, "/x", "POST", {"a": 1}) == {"ok": True}
     assert seen["url"] == BASE + "/api/v1/x" and seen["method"] == "POST"
     assert seen["auth"] == "Bearer tok" and json.loads(seen["body"]) == {"a": 1}
+    assert seen["closed"], "the response must be closed"
+    assert seen["timeout"] == vh.CALL_TIMEOUT_S == 30
 
 
 def test_set_theme_patches_with_the_current_revision(monkeypatch) -> None:
@@ -224,3 +232,16 @@ def test_require_slot_reads_the_options_a_script_has() -> None:
         vh.require_slot(types.SimpleNamespace(base="http://127.0.0.1:8102", socket="cloude"))
     with pytest.raises(vh.LiveInstallRefused):
         vh.require_slot(types.SimpleNamespace(base="http://127.0.0.1:8000"))
+
+
+def test_report_exit_status_is_2_when_only_undetermined_cases_remain() -> None:
+    report = vh.Report()
+    report.check(True, "ok")
+    report.undetermined.append("a case that could not be set up")
+    assert report.exit_status() == vh.EXIT_CANNOT_DETERMINE
+    report.check(False, "bad")
+    assert report.exit_status() == vh.EXIT_FAIL
+    assert vh.Report().exit_status() == vh.EXIT_CANNOT_DETERMINE
+    clean = vh.Report()
+    clean.check(True, "ok")
+    assert clean.exit_status() == vh.EXIT_PASS

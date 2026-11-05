@@ -39,17 +39,24 @@ export function toggleBandFold(key: string): boolean {
     if (!key) return false;
     const nowPresent = toggleCollapsed(key);
     repaintDrawerRows();
-    const expandedWhenPresent = key.indexOf(LAYOUT_ITEM_PREFIX) === 0 || isSpawnedFoldKey(key);
+    const expandedWhenPresent = invertedFoldKey(key);
     const folded = expandedWhenPresent ? !nowPresent : nowPresent;
     announce(t(folded ? 'sidebar.heading.fold.collapsed' : 'sidebar.heading.fold.expanded', { key: bandLabel(key) }));
     return true;
 }
 
+function invertedFoldKey(key: string): boolean {
+    return key.indexOf(LAYOUT_ITEM_PREFIX) === 0 || isSpawnedFoldKey(key);
+}
+
+export function isBandFolded(key: string): boolean {
+    return invertedFoldKey(key) ? !isCollapsed(key) : isCollapsed(key);
+}
+
 export function cascadeBandFold(key: string): boolean {
     if (!key) return false;
-    const inverted = key.indexOf(LAYOUT_ITEM_PREFIX) === 0 || isSpawnedFoldKey(key);
-    const foldedNow = inverted ? !isCollapsed(key) : isCollapsed(key);
-    const fold = !foldedNow;
+    const inverted = invertedFoldKey(key);
+    const fold = !isBandFolded(key);
     const under = cascadeKeysFor(key, liveCascadeWorld());
     const own = inverted ? [] : [key];
     const ownInverted = inverted ? [key] : [];

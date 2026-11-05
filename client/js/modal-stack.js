@@ -37,13 +37,28 @@ console.log('[ModalStack Module] Loading...');
             }
         });
         document.body.classList.toggle(BODY_LOCK_CLASS, stack.length > 0);
+        document.documentElement.classList.toggle(BODY_LOCK_CLASS, stack.length > 0);
     }
 
     function topIsOutermost() {
         if (stack.length === 0) return false;
-        const overlays = document.body.querySelectorAll(':scope > .modal-overlay');
-        if (overlays.length === 0) return false;
-        return overlays[overlays.length - 1] === stack[stack.length - 1].overlayEl;
+        const topEl = stack[stack.length - 1].overlayEl;
+        const shown = Array.prototype.filter.call(
+            document.body.querySelectorAll('.modal-overlay'),
+            (el) => el === topEl || isShown(el),
+        );
+        if (shown.length === 0) return false;
+        return shown[shown.length - 1] === topEl;
+    }
+
+    function isShown(el) {
+        const view = (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') ? window : null;
+        for (let node = el; node && node !== document.body; node = node.parentElement) {
+            if (node.hidden === true) return false;
+            const display = view ? view.getComputedStyle(node).display : (node.style && node.style.display);
+            if (display === 'none') return false;
+        }
+        return true;
     }
 
     function stops(overlayEl) {

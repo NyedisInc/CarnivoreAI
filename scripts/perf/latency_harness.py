@@ -53,7 +53,8 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 from perf_budget import BUDGET_MAX_LOAD_1M, budget_exit_code, budget_lines  # noqa: E402
-from perf_stats import fmt_ms, summarize  # noqa: E402
+from perf_client import cpu_seconds  # noqa: E402
+from perf_stats import fmt_ms, idle_cpu_percent, summarize  # noqa: E402
 
 METRICS = ("keystroke", "burst", "idle_cpu", "boot")
 OVERFLOW_CLOSE_CODE = 4429
@@ -65,22 +66,6 @@ def longest_gap_ms(arrivals: Sequence[float]) -> Optional[float]:
     if len(arrivals) < 2:
         return None
     return max(b - a for a, b in zip(arrivals, arrivals[1:])) * 1000.0
-
-
-def parse_cputime(text: str) -> float:
-    parts = text.strip().split(":")
-    if not 2 <= len(parts) <= 3:
-        raise ValueError(f"not a cputime: {text!r}")
-    total = 0.0
-    for part in parts:
-        total = total * 60.0 + float(part)
-    return total
-
-
-def idle_cpu_percent(cpu_start_s: float, cpu_end_s: float, wall_s: float) -> float:
-    if wall_s <= 0 or cpu_end_s < cpu_start_s:
-        raise ValueError("bad idle window")
-    return (cpu_end_s - cpu_start_s) / wall_s * 100.0
 
 
 def read_loadavg_1m() -> Optional[float]:
@@ -98,14 +83,6 @@ def exit_code(results: dict, selected: Sequence[str]) -> int:
         if not res or res.get("error") or not res.get("measured"):
             return 1
     return 0
-
-
-def _cpu_seconds(pid: int) -> float:
-    out = subprocess.run(["ps", "-o", "cputime=", "-p", str(pid)],
-                         capture_output=True, text=True, check=False)
-    if out.returncode != 0 or not out.stdout.strip():
-        raise RuntimeError(f"ps could not read pid {pid}")
-    return parse_cputime(out.stdout)
 
 
 class Terminal:
@@ -247,9 +224,9 @@ async def measure_burst(term: Terminal, total_bytes: int, reopen) -> dict:
 
 
 async def measure_idle_cpu(pid: int, seconds: float) -> dict:
-    c0, t0 = _cpu_seconds(pid), time.monotonic()
+    c0, t0 = cpu_seconds(pid), time.monotonic()
     await asyncio.sleep(seconds)
-    c1, t1 = _cpu_seconds(pid), time.monotonic()
+    c1, t1 = cpu_seconds(pid), time.monotonic()
     pct = idle_cpu_percent(c0, c1, t1 - t0)
     return {"measured": 1, "window_s": round(t1 - t0, 1), "cpu_s": round(c1 - c0, 3),
             "cpu_percent_of_core": round(pct, 2)}

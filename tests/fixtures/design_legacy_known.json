@@ -1,0 +1,178 @@
+{
+ "about": "legacy listings the top-down gate does not read; may only fall (scripts/design/legacy_listing.py, site review TDC-3)",
+ "sections": {
+  "css_raw_values": {
+   "client/css/config-editor-modal.css": {
+    "font": 10,
+    "spacing": 29
+   },
+   "client/css/config-editor.css": {
+    "font": 7,
+    "spacing": 10
+   },
+   "client/css/copy-output.css": {
+    "font": 11,
+    "spacing": 13
+   },
+   "client/css/deep-link-notice.css": {
+    "font": 2,
+    "spacing": 3
+   },
+   "client/css/header-menu.css": {
+    "font": 1,
+    "spacing": 4
+   },
+   "client/css/home-bar.css": {
+    "font": 1,
+    "spacing": 4
+   },
+   "client/css/media-lightbox.css": {
+    "spacing": 2
+   },
+   "client/css/modal-glow.css": {
+    "color": 3,
+    "spacing": 1
+   },
+   "client/css/modal-titlerow.css": {
+    "spacing": 1
+   },
+   "client/css/new-agent-flow.css": {
+    "font": 4,
+    "spacing": 11
+   },
+   "client/css/paste-fallback.css": {
+    "font": 4,
+    "spacing": 7
+   },
+   "client/css/popup-focus.css": {
+    "color": 3,
+    "spacing": 1
+   },
+   "client/css/session-header-led.css": {
+    "spacing": 1
+   },
+   "client/css/session-restart-picker.css": {
+    "font": 5,
+    "spacing": 15
+   },
+   "client/css/session-restore-offer.css": {
+    "font": 8,
+    "spacing": 17
+   },
+   "client/css/session-row-menu.css": {
+    "font": 3,
+    "spacing": 7
+   },
+   "client/css/session-sidebar-band-structure.css": {
+    "font": 3,
+    "spacing": 1
+   },
+   "client/css/session-sidebar-colours.css": {
+    "font": 1,
+    "spacing": 5
+   },
+   "client/css/session-sidebar-density.css": {
+    "font": 9,
+    "spacing": 13
+   },
+   "client/css/session-sidebar-groups.css": {
+    "font": 5,
+    "spacing": 7
+   },
+   "client/css/session-sidebar-row-bodies.css": {
+    "font": 2,
+    "spacing": 5
+   },
+   "client/css/session-sidebar-rows.css": {
+    "font": 2,
+    "spacing": 4
+   },
+   "client/css/session-sidebar.css": {
+    "font": 1,
+    "spacing": 2
+   },
+   "client/css/sidebar-help.css": {
+    "font": 21,
+    "spacing": 60
+   },
+   "client/css/slash-command-chips.css": {
+    "font": 3,
+    "spacing": 4
+   },
+   "client/css/status-dot.css": {
+    "color": 1
+   },
+   "client/css/styles.css": {
+    "color": 3,
+    "font": 63,
+    "spacing": 134
+   },
+   "client/css/subagent-count.css": {
+    "spacing": 4
+   },
+   "client/css/terminal-carnivore.css": {
+    "font": 1
+   },
+   "client/css/terminal-grid.css": {
+    "spacing": 1
+   },
+   "client/css/terminal-key-bar.css": {
+    "font": 1,
+    "spacing": 2
+   },
+   "client/css/terminal-tools.css": {
+    "font": 3,
+    "spacing": 4
+   },
+   "client/css/text-prompt-modal.css": {
+    "font": 2,
+    "spacing": 7
+   },
+   "client/css/timer-chip.css": {
+    "spacing": 3
+   },
+   "client/css/toast-collapse.css": {
+    "spacing": 1
+   },
+   "client/css/toast.css": {
+    "font": 12,
+    "spacing": 19
+   },
+   "client/css/version-footer.css": {
+    "font": 1,
+    "spacing": 1
+   },
+   "client/css/wrapper-mark.css": {
+    "spacing": 1
+   }
+  },
+  "dialog_frames": {
+   "client/index.html": 1,
+   "client/js/config-editor-modal.js": 2,
+   "client/js/config-editor-new-file.js": 1,
+   "client/js/copy-output.js": 1,
+   "client/js/paste-fallback.js": 1,
+   "client/js/session-restart-picker.js": 1,
+   "client/js/session-restore-offer.js": 1,
+   "client/js/sidebar-help.js": 1,
+   "client/js/themes/registry.js": 1
+  },
+  "tablists": {
+   "client/js/config-editor-modal.js": 1,
+   "client/js/sidebar-help.js": 1
+  },
+  "ts_controls": {
+   "web/src/lib/drawer/rename.ts": 1,
+   "web/src/lib/launchpad/status-report.ts": 1,
+   "web/src/lib/notifications/mute/mute-control.ts": 3,
+   "web/src/lib/projects-shared/image-picker.ts": 1,
+   "web/src/widget-harness/sidebar/lab-drawer-import.ts": 1
+  }
+ },
+ "totals": {
+  "css_raw_values": 600,
+  "dialog_frames": 10,
+  "tablists": 2,
+  "ts_controls": 7
+ }
+}

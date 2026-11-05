@@ -33,7 +33,7 @@ export function browserHost(): WakeFocusHost {
     const page = () => g.CloudeWeb?.layoutPage;
     return {
         keep: (nav) => !g.NavigationGeneration || g.NavigationGeneration.keep(nav, 'focus after wake'),
-        isLive: (uuid) => !!g.SessionSidebar?._rows?.some((r) => r && !r.asleep && r.session_uuid === uuid),
+        isLive: (uuid) => !!g.SessionSidebar?.rows?.().some((r) => r && !r.asleep && r.session_uuid === uuid),
         inShowingLayout: () => window.innerWidth >= DESKTOP_MIN && page()?.isActive?.() === true,
         focusMember: (uuid) => page()?.focusMember?.(uuid, true) === true,
         openRow: async (uuid) => {

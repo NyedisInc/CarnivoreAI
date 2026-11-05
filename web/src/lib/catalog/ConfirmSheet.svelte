@@ -1,6 +1,6 @@
 <!-- the detail pane -->
 <script lang="ts">
-    import ModalShell from '../launchpad/ModalShell.svelte';
+    import ModalShell from '../dialog-frame/ModalShell.svelte';
     import CplugFacts from './CplugFacts.svelte';
     import UpdateDiffView from './UpdateDiffView.svelte';
     import type { CplugFactsData, UpdateDiff } from './types';

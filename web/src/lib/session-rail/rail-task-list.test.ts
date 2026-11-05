@@ -46,7 +46,6 @@ import { follow, keyIn, mountRails, unmountRails, written } from './rail-test-ha
 import { railSlideout } from './slideout.svelte';
 import { setLocale } from '../i18n/index.svelte';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
-import './alert-count-sources.svelte';
 
 setLocale('en');
 installPopoverPolyfill();
@@ -113,15 +112,6 @@ describe('the right-click menu of the key', () => {
 });
 
 describe('the key and the title row', () => {
-  test('the key badge is the rows the copy lists', async () => {
-    follow(RAIL_FIELD, one({ widget: 'core.task-list', options: { st_open: false } }, { widget: 'core.task-list', instance: 'i2' }));
-    keyIn('side', 'core.task-list').click();
-    await settle();
-    const badge = (id: string): string | null => keyIn('side', id).querySelector('[data-rail-badge]')?.textContent?.trim() ?? null;
-    expect(badge('core.task-list')).toBe('3');
-    expect(badge('core.task-list#i2')).toBe('5');
-  });
-
   test('with the header ticked the title row carries the count and NO hover keys; density is a radio set of the menu and writes the copy\'s density', async () => {
     follow(RAIL_FIELD, one({ widget: 'core.task-list', options: { show_header: true, st_open: false } }));
     keyIn('side', 'core.task-list').click();

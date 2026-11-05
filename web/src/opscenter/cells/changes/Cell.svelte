@@ -5,9 +5,8 @@
 </script>
 
 <script lang="ts">
-  import { mount, unmount } from 'svelte';
   import type { CellProps } from '../../lib/cell';
-  import GitDiffView from '../terminal-live/GitDiffView.svelte';
+  import { mountDiffInto } from '../terminal-live/mount-diff';
   import { sessionGit, releaseSessionGit } from '../../api/session-git.svelte';
   import type { Resource } from '../../api/poll.svelte';
   import type { SessionGitFile, SessionGitStatus } from '../../api/types';
@@ -59,10 +58,7 @@
     const id = sessionId;
     if (!id) return;
     if (await openAsRow(id, { path, kind: 'diff' }) !== 'unavailable') return;
-    openDiff(path, t('git.diff.subtitle'), (body) => {
-      const shown = mount(GitDiffView, { target: body, props: { sessionId: id, path } });
-      return () => { void unmount(shown); };
-    }, placement());
+    openDiff(path, t('git.diff.subtitle'), (body) => mountDiffInto(body, { sessionId: id, path }), placement());
   }
 
   async function showFile(file: SessionGitFile, status: SessionGitStatus): Promise<void> {

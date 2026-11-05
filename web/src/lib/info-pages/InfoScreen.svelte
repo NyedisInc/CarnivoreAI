@@ -10,7 +10,7 @@
     import { readFuzzyPref, writeFuzzyPref } from '../help/fuzzy-pref';
     import { t as appT } from '../i18n/index.svelte';
     import type { Translate } from '../sessions/types';
-    import { keySections } from './key-bindings';
+    import KeymapScreen from '../keymap/KeymapScreen.svelte';
 
     interface Props {
         view: 'docs' | 'keys' | 'changelog';
@@ -68,12 +68,12 @@
     }
 
     $effect(() => {
-        if ((view !== 'changelog' && view !== 'docs') || !open || typeof window === 'undefined') return;
+        if (!open || typeof window === 'undefined') return;
         window.addEventListener('keydown', onSlash);
         return () => window.removeEventListener('keydown', onSlash);
     });
 
-    const sections = $derived(view === 'keys' ? keySections() : []);
+    const searchKind = $derived(view === 'keys' ? 'keys' : view === 'docs' ? 'docs' : 'changelog');
 </script>
 
 {#snippet fuzzyToggle()}
@@ -88,8 +88,10 @@
         status={{ kind: 'ready' }}
         {query}
         onQuery={(next) => (query = next)}
-        searchable={view === 'changelog' || view === 'docs'}
-        searchText={{ label: t(`info.page.${view === 'docs' ? 'docs' : 'changelog'}.search.label`), placeholder: t(`info.page.${view === 'docs' ? 'docs' : 'changelog'}.search.placeholder`) }}
+        searchable
+        searchText={searchKind === 'keys'
+            ? { label: t('keymap.find.name.label'), placeholder: t('keymap.find.name.placeholder') }
+            : { label: t(`info.page.${searchKind}.search.label`), placeholder: t(`info.page.${searchKind}.search.placeholder`) }}
         bind:searchInput
         toolbar={view === 'changelog' ? fuzzyToggle : undefined}
         showCount={false}
@@ -103,46 +105,9 @@
             {:else if view === 'changelog'}
                 <HelpReleases {query} {fuzzy} onClearQuery={() => (query = '')} />
             {:else}
-                {#each sections as section (section.id)}
-                    <section class="info-keys" data-keys-section={section.id}>
-                        <h2 class="oc-label">{t(section.titleKey)}</h2>
-                        <dl class="info-keys__list">
-                            {#each section.rows as row (row.keys + row.labelKey)}
-                                <dt class="info-keys__key">{row.keys}</dt>
-                                <dd class="info-keys__label">{t(row.labelKey)}</dd>
-                            {/each}
-                        </dl>
-                    </section>
-                {/each}
+                <KeymapScreen {query} {t} />
             {/if}
         {/snippet}
     </ManagerFrame>
 {/if}
 
-<style>
-  @layer components {
-    .info-keys {
-        padding: 12px 0;
-        border-bottom: var(--oc-border, 1px) solid var(--oc-line-rule);
-    }
-
-    .info-keys__list {
-        display: grid;
-        grid-template-columns: max-content 1fr;
-        gap: 6px 16px;
-        margin: 8px 0 0;
-        font-family: var(--font-mono);
-        font-size: var(--oc-fs-nav, 13px);
-    }
-
-    .info-keys__key {
-        color: var(--oc-text-primary);
-        white-space: nowrap;
-    }
-
-    .info-keys__label {
-        margin: 0;
-        color: var(--oc-text-secondary);
-    }
-  }
-</style>

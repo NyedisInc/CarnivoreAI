@@ -68,6 +68,7 @@ function claudeStyleStream(rows, steps) {
     return out;
 }
 
+/** Write and wait for xterm to finish parsing. */
 function write(term, data) {
     return new Promise((resolve) => term.write(data, resolve));
 }

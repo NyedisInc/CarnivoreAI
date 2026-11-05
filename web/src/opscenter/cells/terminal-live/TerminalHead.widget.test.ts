@@ -44,17 +44,15 @@ function controlRows(root: HTMLElement): Element[] {
   return [...heads, ...loose];
 }
 
-function menuWords(head: Element): string[] {
-  head.querySelector<HTMLButtonElement>('[data-corner]')!.click();
-  flushSync();
-  return [...document.querySelectorAll<HTMLElement>('[role^="menuitem"]')].map((item) => (item.textContent ?? '').trim());
+function kebabTools(): Set<string> {
+  return new Set([...document.querySelectorAll<HTMLElement>('.cell-options [data-tool]')].map((item) => item.dataset.tool!));
 }
 
 beforeEach(() => mountRails());
 afterEach(() => unmountRails());
 
 describe('the terminal widget in a bar', () => {
-  test('header on: exactly one header row, the tools are in it, and there is no kebab', () => {
+  test('header on: exactly one header row, the tools and the kebab are in it', () => {
     follow(RAIL_FIELD, one({ widget: 'core.notes', options: { show_header: true } }));
     open();
     const rows = controlRows(section());
@@ -62,20 +60,19 @@ describe('the terminal widget in a bar', () => {
     const head = rows[0]!;
     expect(head.matches('[data-widget-head]')).toBe(true);
     expect(head.querySelector('.cell-tools [data-tool="search"]'), 'search is a title strip control').not.toBeNull();
-    expect(section().querySelector('[data-tool="overflow"]'), 'a widget draws no kebab of its own').toBeNull();
+    expect(head.querySelector('.cell-tools [data-tool="overflow"]'), 'the terminal kebab ends the title strip').not.toBeNull();
   });
 
-  test('header on: every control is in the title strip or the widget menu, never both and never neither', () => {
+  test('header on: every control is in the title strip or the kebab, never both and never neither', () => {
     follow(RAIL_FIELD, one({ widget: 'core.notes', options: { show_header: true } }));
     open();
     const head = section().querySelector('[data-widget-head]')!;
     const inHead = new Set([...head.querySelectorAll<HTMLElement>('.cell-tools [data-tool]')].map((el) => el.dataset.tool!));
-    const words = menuWords(head);
-    const label = (id: string): string => (id === 'sleep' ? 'sleep this session' : id === 'background' ? 'background' : t(id));
+    const inKebab = kebabTools();
     for (const item of TOOLBAR_ITEMS.filter((one) => one.label || one.id === 'background')) {
       const there = inHead.has(item.id);
-      const listed = words.some((word) => word.startsWith(label(item.id)));
-      expect(there !== listed, `${item.id}: strip ${there}, menu ${listed}`).toBe(true);
+      const listed = inKebab.has(item.id);
+      expect(there !== listed, `${item.id}: strip ${there}, kebab ${listed}`).toBe(true);
     }
   });
 
@@ -89,11 +86,3 @@ describe('the terminal widget in a bar', () => {
     expect(rows[0]!.querySelector('[data-tool="search"]')).not.toBeNull();
   });
 });
-
-function t(id: string): string {
-  const words: Record<string, string> = {
-    search: 'search terminal', theme: 'session theme', skills: 'session skills', plugins: 'session plugins',
-    files: 'session files', notes: 'session notes', 'size-master': 'size master',
-  };
-  return words[id] ?? id;
-}

@@ -159,6 +159,18 @@ async def _stop_index_refresher(ctx: "BootContext", _tasks: _Tasks) -> None:
     await ctx.app.state.catalog_index_refresher.stop()
 
 
+def _start_turn_checkpoints(ctx: "BootContext", _tasks: _Tasks) -> None:
+    from src.api import checkpoint_capture
+
+    checkpoint_capture.subscribe(ctx.session_manager)
+
+
+async def _stop_turn_checkpoints(_ctx: "BootContext", _tasks: _Tasks) -> None:
+    from src.api import checkpoint_capture
+
+    checkpoint_capture.unsubscribe()
+
+
 def steps() -> list[BootStep]:
     tasks = _Tasks()
 
@@ -178,4 +190,6 @@ def steps() -> list[BootStep]:
                  stop=bind(_stop_skill_journal), stop_order=teardown_slot(37)),
         BootStep(name="skill_auto_update", order=410, stop_name="catalog_index_refresher", start=bind(_start_auto_update), stop=bind(_stop_index_refresher),
                  stop_order=teardown_slot(23)),
+        BootStep(name="turn_checkpoints", order=415, stop_name="turn_checkpoints", start=bind(_start_turn_checkpoints),
+                 stop=bind(_stop_turn_checkpoints), stop_order=teardown_slot(30)),
     ]

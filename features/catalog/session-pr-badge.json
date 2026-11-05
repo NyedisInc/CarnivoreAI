@@ -1,0 +1,42 @@
+{
+  "api_routes": [
+    "GET /api/v1/sessions/listing"
+  ],
+  "area": "sessions",
+  "description": "Each local session row, in the sidebar and on the Sessions page, shows the pull request for the session's branch as one badge after the port chips, for example #142 \u00b7 open \u00b7 ci red \u00b7 2 unresolved; draft, merged and closed show too, and a red CI or a merge conflict paints it red. A click opens the PR in your system browser. The server asks GitHub with gh, one call per repository for every branch that has a session, only while a window is open: 60 seconds between reads while a PR is open, 2 minutes when there is none, 10 minutes once merged or closed, and up to 10 minutes of back-off on a rate limit. A failed read keeps the last badge and the tooltip says it is not current. The gh account is the project's own (project, company, then the remote owner) and its token goes only into gh's environment. Air-gapped projects never call GitHub; a project with no gh account shows one quiet connect gh badge.",
+  "docs": [
+    "docs/DECISIONS.md"
+  ],
+  "examples": [
+    "see that an agent's PR went red without leaving the sidebar",
+    "open the PR for a session's branch in one click"
+  ],
+  "how_to": [
+    "work on a branch that has a pull request on github",
+    "its PR shows on the session row within a minute",
+    "click it to open the PR in your browser"
+  ],
+  "id": "session-pr-badge",
+  "issues": [
+    2727
+  ],
+  "keywords": [
+    "pull request",
+    "pr",
+    "github",
+    "gh",
+    "ci",
+    "review",
+    "badge"
+  ],
+  "media_exempt": "new row badge; screenshots are captured at the next version bump recapture",
+  "name": "PR badge on session rows",
+  "since": "2026-10-30",
+  "status": "beta",
+  "summary": "session rows show the pull request for their branch: state, ci, conflicts and unresolved threads.",
+  "updated": "2026-10-30",
+  "where": [
+    "a session row in the sidebar: after the port chips",
+    "a row on the Sessions page: after the port chips"
+  ]
+}

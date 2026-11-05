@@ -1,4 +1,5 @@
 <script lang="ts" module>
+  import { failureReason } from '../../../lib/errors/failure-reason';
   import { defineWidget } from '../../widgets/shell/define-widget.svelte';
   import type { TopFolder } from '../../../lib/file-drawer/roots-prefs.svelte';
   import { FILES_STATE } from './state';
@@ -33,19 +34,20 @@
   import { titlelessHost } from '../../shell/frame-header.svelte';
   import { useWidget, type WidgetHandle } from '../../widgets/shell/define-widget.svelte';
   import WidgetShell from '../../widgets/shell/WidgetShell.svelte';
-  import ModalShell from '../../../lib/launchpad/ModalShell.svelte';
-  import { Button, Field } from '../../../lib/base';
+  import { Button } from '../../../lib/base';
   import { buildGitTags, gitTagFor, GIT_LETTERS, GIT_TONES, type GitTag } from '../../../lib/file-drawer/git-tags';
   import { writeRootPrefs } from '../../../lib/file-drawer/roots-prefs.svelte';
-  import { findIn, openInFilesList, openPathInFilesList, readLevel } from '../../../lib/file-drawer/tree-api';
+  import { findIn, openInFilesList, readLevel } from '../../../lib/file-drawer/tree-api';
   import { workdirRelative } from '../../../lib/open-files/paths';
   import { t } from '../../../lib/i18n/index.svelte';
   import { buildRows, focusable, levelKey, parentOf, rootOrder, splitLevelKey, stepFocus, unreadLevels, type FxRow, type Level, type RootId } from './model';
   import { fk, GLOBAL_PATH, labelOf, subOf, titleOf } from './labels';
   import { FILTER_MAX, foldScope, sectionIsOpen, withFold, withoutScopes } from './state';
   import { watchOnScreen } from './on-screen';
+  import FilesStatus from './FilesStatus.svelte';
   import FileRow from './FileRow.svelte';
   import FilesFilter from './FilesFilter.svelte';
+  import OpenPathDialog from './OpenPathDialog.svelte';
   import ProjectGit from './ProjectGit.svelte';
 
   let props: CellProps = $props();
@@ -118,7 +120,7 @@
       const answer = await readLevel(root, folder, path);
       if (asked === generation) levels[key] = { status: 'ready', nodes: answer.tree ?? [], error: null };
     } catch (err) {
-      if (asked === generation) levels[key] = { status: 'error', nodes: [], error: err instanceof Error ? err.message : String(err) };
+      if (asked === generation) levels[key] = { status: 'error', nodes: [], error: failureReason(err) };
     }
   }
 
@@ -151,7 +153,7 @@
         if ((root === 'workdir' && !folder) || (root === 'user' && !withGlobal)) continue;
         findIn(root, folder, q).then(
           (answer) => { if (search && query === q) search[root] = { status: 'ready', nodes: answer.tree ?? [], error: null, truncated: !!answer.truncated }; },
-          (err) => { if (search && query === q) search[root] = { status: 'error', nodes: [], error: err instanceof Error ? err.message : String(err), truncated: false }; },
+          (err) => { if (search && query === q) search[root] = { status: 'error', nodes: [], error: failureReason(err), truncated: false }; },
         );
       }
     }, FILTER_DEBOUNCE_MS);
@@ -190,24 +192,6 @@
 
   let status = $state<{ text: string; tone: 'muted' | 'error' } | null>(null);
   let pathDialog = $state(false);
-  let pathValue = $state('');
-  let pathError = $state('');
-  let pathBusy = $state(false);
-
-  async function submitPath(): Promise<void> {
-    if (pathBusy) return;
-    pathBusy = true;
-    pathError = '';
-    try {
-      await openPathInFilesList(pathValue);
-      pathDialog = false;
-      say(fk('path.opened'));
-    } catch (err) {
-      pathError = err instanceof Error ? err.message : String(err);
-    } finally {
-      pathBusy = false;
-    }
-  }
 
   function say(text: string, tone: 'muted' | 'error' = 'muted'): void {
     status = { text, tone };
@@ -265,7 +249,7 @@
     try {
       await writeRootPrefs(change);
     } catch (err) {
-      const detail = err instanceof Error ? err.message : String(err);
+      const detail = failureReason(err);
       console.warn('files widget: the folder setting was not stored', { change, error: detail });
       say(fk('settings_failed', { detail }), 'error');
     }
@@ -331,14 +315,18 @@
   >{changeCount > 0 ? fk('changed.chip', { n: changeCount }) : fk('changed.chip_none')}</button>
 {/snippet}
 
+{#snippet openPathButton()}
+  <Button size="sm" variant="quiet" data-files-open-path onclick={() => (pathDialog = true)}>{fk('path.action')}</Button>
+{/snippet}
+
 {#snippet controls(place: 'header' | 'body' | 'corner')}
   {#if place === 'header'}{@render chip()}{/if}
-  <Button size="sm" variant="quiet" data-files-open-path onclick={() => (pathDialog = true)}>{fk('path.action')}</Button>
+  {@render openPathButton()}
 {/snippet}
 
 {#snippet filterActions()}
   {#if !corner && !widget.frame?.suppressed}{@render chip()}{/if}
-  <Button size="sm" variant="quiet" data-files-open-path onclick={() => (pathDialog = true)}>{fk('path.action')}</Button>
+  {@render openPathButton()}
 {/snippet}
 
 {#snippet projectSummary()}
@@ -385,28 +373,14 @@
       {/each}
     </div>
 
-    <p class="files-status" class:files-status--error={status?.tone === 'error'} role="status" aria-live="polite" hidden={!status}>
-      {status?.text ?? ''}
-    </p>
+    <FilesStatus {status} />
   </div>
 </WidgetShell>
 
-{#if pathDialog}
-  <ModalShell title={fk('path.title')} onCancel={() => { if (!pathBusy) pathDialog = false; }} dismissable={!pathBusy}>
-    <form class="files-path-form" onsubmit={(event) => { event.preventDefault(); void submitPath(); }}>
-      <Field label={fk('path.label')} placeholder={fk('path.placeholder')} bind:value={pathValue} maxlength={4096} error={pathError} block />
-      <div class="files-path-actions">
-        <Button type="button" variant="quiet" onclick={() => (pathDialog = false)} disabled={pathBusy}>{t('files.editor.cancel')}</Button>
-        <Button type="submit" variant="confirm" disabled={pathBusy || !pathValue.trim()}>{fk('path.open')}</Button>
-      </div>
-    </form>
-  </ModalShell>
-{/if}
+<OpenPathDialog bind:open={pathDialog} onOpened={() => say(fk('path.opened'))} />
 
 <style>
   @layer components {
-    .files-path-form { display: grid; gap: var(--oc-space-3); }
-    .files-path-actions { display: flex; justify-content: flex-end; gap: var(--oc-space-2); }
     .files {
       box-sizing: border-box;
       display: flex;
@@ -428,26 +402,6 @@
       overflow-x: hidden;
       padding: 0 0 var(--oc-space-1);
       outline: none;
-    }
-
-    .files-status {
-      flex: 0 0 auto;
-      margin: 0;
-      padding: var(--oc-space-0-5) var(--oc-space-2);
-      font-size: var(--oc-fs-label);
-      color: var(--oc-text-secondary);
-      box-shadow: inset 0 1px 0 0 var(--oc-line-faint);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .files-status[hidden] {
-      display: none;
-    }
-
-    .files-status--error {
-      color: var(--oc-coral);
     }
 
     .files-chip {

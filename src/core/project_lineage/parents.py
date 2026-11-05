@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import posixpath
-from typing import Any, Dict, Iterable, Optional, Tuple
+from typing import Any, Dict, Iterable, Mapping, Optional, Tuple
 
 LOCAL_HOST = "local"
 
@@ -13,7 +13,8 @@ def _clean_root(root: Any) -> Optional[str]:
     return posixpath.normpath(root)
 
 
-def parent_project_ids(projects: Iterable[Dict[str, Any]]) -> Dict[int, Optional[int]]:
+def parent_project_ids(projects: Iterable[Dict[str, Any]],
+                      folder_parents: Optional[Mapping[str, str]] = None) -> Dict[int, Optional[int]]:
     rows = [p for p in projects if isinstance(p.get("id"), int) and not isinstance(p.get("id"), bool)]
     holders: Dict[Tuple[str, str], int] = {}
     for p in rows:
@@ -28,6 +29,10 @@ def parent_project_ids(projects: Iterable[Dict[str, Any]]) -> Dict[int, Optional
         host = p.get("host_key") or LOCAL_HOST
         parent: Optional[int] = None
         current = root
+        linked = _clean_root((folder_parents or {}).get(root)) if root is not None and host == LOCAL_HOST else None
+        if linked is not None and holders.get((host, linked)) not in (None, p["id"]):
+            out[p["id"]] = holders[(host, linked)]
+            continue
         while current is not None and current != "/":
             current = posixpath.dirname(current)
             found = holders.get((host, current))

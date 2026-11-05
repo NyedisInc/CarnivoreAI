@@ -293,3 +293,9 @@
     opacity: 0.6;
     cursor: default;
 }
+
+@layer components {
+    .session-sidebar-row[data-bell='1'] {
+        box-shadow: inset 2px 0 0 var(--oc-yellow);
+    }
+}

@@ -73,6 +73,8 @@ def clean_pins(pins: Mapping[str, Any]) -> Dict[str, str]:
 def project(config_doc: Mapping[str, Any], pins: Mapping[str, Any]) -> Dict[str, Any]:
     sections = {k: config_doc[k] for k in constants.EXPORTED_SECTIONS if k in config_doc}
     config, dropped = redact(sections, "config")
+    if isinstance(config.get("session"), dict):
+        config["session"] = {k: v for k, v in config["session"].items() if k != constants.SESSION_TMUX_SOCKET_KEY}
     values = dict(ui_preferences.read_block(dict(config_doc))["values"])
     for name in constants.REFUSED_PREFERENCE_FIELDS:
         values.pop(name, None)

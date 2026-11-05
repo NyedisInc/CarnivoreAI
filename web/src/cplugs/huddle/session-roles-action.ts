@@ -31,7 +31,6 @@ const lead: Contribution<'session-card-action'> = {
   order: 520,
   enabled: () => true,
   payload: {
-    shortcut: 'P',
     label: (row) => t(sessionLeads(row.sessionUuid ?? '', row.projectId) ? 'cplug.huddle.role.lead_off' : 'cplug.huddle.role.lead_on'),
     hidden: leadHidden,
     async run(row, context): Promise<void> {

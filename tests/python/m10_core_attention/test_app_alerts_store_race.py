@@ -69,7 +69,7 @@ def _state(db: Path, alert_id: int) -> str:
 
 def _snoozed(db: Path) -> int:
     conn = connect(db, create=False)
-    spec = store.AlertSpec(key="x.k", source="t", severity="warn", title_key="app_alert.pipeline.llm_all_down.title")
+    spec = store.AlertSpec(key="x.k", source="t", severity="warn", title_key="app_alert.self_check.tmux.title")
     row, _ = store.raise_alert(conn, spec)
     store.snooze(conn, row["id"], 1)
     conn.close()
@@ -90,7 +90,7 @@ def test_wake_does_not_undo_a_racing_dismiss(db: Path) -> None:
 
 def test_resolve_does_not_undo_a_racing_dismiss(db: Path) -> None:
     conn = connect(db, create=False)
-    spec = store.AlertSpec(key="x.r", source="t", severity="warn", title_key="app_alert.pipeline.llm_all_down.title")
+    spec = store.AlertSpec(key="x.r", source="t", severity="warn", title_key="app_alert.self_check.tmux.title")
     row, _ = store.raise_alert(conn, spec)
     rid = row["id"]
     landed: List[bool] = []

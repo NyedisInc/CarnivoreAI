@@ -16,19 +16,31 @@ class PresenceLeases:
     def __init__(self, clock: Callable[[], float] = time.monotonic) -> None:
         self._clock = clock
         self._leases: Dict[str, float] = {}
+        self._watched: Dict[str, str] = {}
         self._lock = threading.Lock()
 
-    def beacon(self, client_id: str, active: bool) -> bool:
+    def beacon(self, client_id: str, active: bool, watched: str = "") -> bool:
         if not valid_client_id(client_id):
             return False
         with self._lock:
             self._leases.pop(client_id, None)
+            self._watched.pop(client_id, None)
             if active:
                 self._prune()
                 while len(self._leases) >= MAX_LEASES:
+                    self._watched.pop(next(iter(self._leases)), None)
                     self._leases.pop(next(iter(self._leases)))
                 self._leases[client_id] = self._clock() + LEASE_SECONDS
+                if watched:
+                    self._watched[client_id] = watched
         return True
+
+    def is_watched(self, session_id: Optional[str], now: Optional[float] = None) -> bool:
+        if not session_id:
+            return False
+        with self._lock:
+            self._prune(now)
+            return session_id in self._watched.values()
 
     def is_screen_active(self, now: Optional[float] = None) -> bool:
         with self._lock:
@@ -39,6 +51,7 @@ class PresenceLeases:
         now = self._clock() if now is None else now
         for key in [k for k, exp in self._leases.items() if exp <= now]:
             del self._leases[key]
+            self._watched.pop(key, None)
 
 
 presence = PresenceLeases()

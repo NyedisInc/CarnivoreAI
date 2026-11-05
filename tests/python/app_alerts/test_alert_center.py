@@ -19,7 +19,7 @@ from src.core.db import db_path_for  # noqa: E402
 from src.core.db_migration import ensure_db_migrated  # noqa: E402
 
 BASE = "/api/v1/alerts"
-TITLE = "app_alert.pipeline.llm_all_down.title"
+TITLE = "app_alert.self_check.tmux.title"
 KEY_LLM_ALL_DOWN = "pipeline.llm_all_down"
 
 

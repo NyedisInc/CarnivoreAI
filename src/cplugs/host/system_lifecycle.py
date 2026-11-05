@@ -1,10 +1,13 @@
 
 from __future__ import annotations
 
+import asyncio
 import sqlite3
 from typing import Any, Awaitable, Callable, Dict, Tuple
 
 import structlog
+
+from src.cplugs.sdk import CplugDefinition
 
 logger = structlog.get_logger()
 
@@ -35,6 +38,18 @@ PURGE_HOOKS: Dict[str, SystemHook] = {
 
 
 async def before_purge(app: Any, cplug_id: str) -> None:
+    from src.cplugs.host import runtime  # noqa: PLC0415
+
     hook = PURGE_HOOKS.get(cplug_id)
     if hook is not None:
         await hook(app)
+    found = runtime.find(cplug_id)
+    if not isinstance(found, CplugDefinition) or found.before_purge is None:
+        return
+    try:
+        await asyncio.wait_for(found.before_purge(runtime.host_for(app).context(cplug_id, background=True)), timeout=runtime.HOOK_TIMEOUT_S)
+    except PurgeHookFailed:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        logger.error("cplug_purge_hook_failed", cplug=cplug_id, error_type=type(exc).__name__, error=str(exc)[:300], exc_info=True)
+        raise PurgeHookFailed(f"{cplug_id}: its pre-purge step could not finish") from exc

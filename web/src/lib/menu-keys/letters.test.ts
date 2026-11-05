@@ -35,7 +35,7 @@ function builtMenus(): Record<string, MenuNode[]> {
 const COMPONENT_MENUS: Record<string, { files: string[]; ids: string[] }> = {
   'view menu': {
     files: ['../session-list/view-choices.ts'],
-    ids: ['density-compact', 'density-cozy', 'density-detailed', 'show-leaders', 'show-archived', 'show-stats', 'show-open', 'show-sleeping'],
+    ids: ['density-compact', 'density-cozy', 'density-detailed', 'show-leaders', 'show-archived', 'show-stats'],
   },
   'new (+) menu': { files: ['../drawer-tabs/NewSessionButton.svelte'], ids: ['agent', 'terminal', 'browser', 'project', 'group'] },
   'account menu': {
@@ -104,7 +104,6 @@ describe('the real menus draw the registry', () => {
   test('every component menu: its ids are registered, on distinct letters, and really are in its source', () => {
     const templated: Record<string, string> = {
       'density-compact': 'density-${mode}', 'density-cozy': 'density-${mode}', 'density-detailed': 'density-${mode}',
-      'show-open': '`show-${id}`', 'show-sleeping': '`show-${id}`',
       agent: 'newSessionKinds()', terminal: 'newSessionKinds()', browser: 'newSessionKinds()',
     };
     for (const [name, { files, ids }] of Object.entries(COMPONENT_MENUS)) {

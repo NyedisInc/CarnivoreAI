@@ -1,4 +1,5 @@
 import { authFetch } from '../../opscenter/api/auth.svelte';
+import { isOneOf } from '../../opscenter/ui/stored-choice';
 import type { TabDef } from '../../opscenter/ui/Tabs.svelte';
 import { scaleBytes } from '../../opscenter/viz/health';
 import type { Translate } from '../sessions/types';
@@ -29,7 +30,7 @@ export interface SurfaceChip {
 }
 
 export function isPaneTab(value: string): value is PaneTab {
-    return (PANE_TABS as readonly string[]).includes(value);
+    return isOneOf(value, PANE_TABS);
 }
 
 export function stateWord(plugin: CplugItem, t: Translate): string {

@@ -8,6 +8,8 @@ const opened: string[] = [];
 const listing: { data: Array<{ session: { id: string }; tmux_session: string | null; host_key?: string }> } = { data: [] };
 let inView = '';
 vi.mock('../../opscenter/api/host', () => ({ primarySessionId: () => inView }));
+vi.mock('../app-keys/chords', () => ({ walk: () => true }));
+vi.mock('./go-menu', () => ({ goRecent: () => {}, startGoMenu: () => {} }));
 vi.mock('./open-in-terminal', () => ({
   canOpenInTerminal: (_id: string, hostKey: string | undefined, tmux: string | null | undefined) => (!hostKey || hostKey === 'local') && !!tmux,
   openInTerminal: async (id: string) => { opened.push(id); },
@@ -32,6 +34,8 @@ function recorder(): { actions: MenuActions; log: string[] } {
       openInTerminal: () => log.push('openInTerminal'),
       reveal: (target) => log.push(`reveal:${target}`),
       openInEditor: (target) => log.push(`editor:${target}`),
+      goStep: (dir) => log.push(`step:${dir}`),
+      goRecent: (n) => log.push(`recent:${n}`),
     },
   };
 }
@@ -44,6 +48,8 @@ describe('handleMenuMessage', () => {
       'session.restart': 'item:restart', 'session.stop': 'item:close', 'session.open_in': 'openInTerminal',
       'session.reveal': 'reveal:session', 'session.open_editor': 'editor:session',
       'file.reveal_project': 'reveal:project', 'file.open_project_editor': 'editor:project',
+      'go.back': 'step:-1', 'go.forward': 'step:1',
+      ...Object.fromEntries(Array.from({ length: 10 }, (_, n) => [`go.recent.${n}`, `recent:${n}`])),
     };
     expect([...KNOWN_VERBS].sort()).toEqual(Object.keys(expected).sort());
     for (const [verb, call] of Object.entries(expected)) {

@@ -91,6 +91,8 @@
         <button
             type="button"
             class="mgr-card__star"
+            data-btn="row"
+            data-size="bare"
             data-act="card-star"
             aria-pressed={item.starred === true}
             aria-label={t('skills.card.star', { name: item.name })}
@@ -122,7 +124,7 @@
                 <div class="mgr-card__over mgr-card__over--title" data-card-title>
                     {#if item.iconSvg}<span class="mgr-card__over-mark" aria-hidden="true">{@html item.iconSvg}</span>{/if}
                     {#if onOpen}
-                        <button type="button" class="mgr-card__name mgr-card__open" aria-expanded={selected} onclick={() => onOpen(item.id)}>{item.name}</button>
+                        <button type="button" class="mgr-card__name mgr-card__open" data-btn="row" data-size="bare" aria-expanded={selected} onclick={() => onOpen(item.id)}>{item.name}</button>
                     {:else}
                         <span class="mgr-card__name">{item.name}</span>
                     {/if}
@@ -130,6 +132,8 @@
                         <button
                             type="button"
                             class="mgr-card__star"
+                            data-btn="row"
+                            data-size="bare"
                             data-act="card-star"
                             aria-pressed={item.starred === true}
                             aria-label={t('skills.card.star', { name: item.name })}
@@ -160,6 +164,8 @@
             <button
                 type="button"
                 class="mgr-card__name mgr-card__open"
+                data-btn="row"
+                data-size="bare"
                 aria-expanded={selected}
                 onclick={() => onOpen(item.id)}>{item.name}</button
             >

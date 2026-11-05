@@ -54,6 +54,7 @@ OMITTED_BY_DESIGN: Tuple[str, ...] = (
     "provider credentials (accounts are exported as pointers only)",
     "notification channel secrets (slack webhook, pushover keys, ntfy topic)",
     "theme_script_consent (a per-install trust decision)",
+    "session.tmux_socket_name (the tmux socket is per machine; changing it is a migration, never an edit)",
     "project theme defaults (.cc.theme files live in each project folder)",
     "sessions, transcripts and databases (not configuration)",
 )
@@ -93,3 +94,16 @@ ACCOUNT_DIR_FIELDS: Tuple[str, ...] = ("claude_config_dir", "codex_home")
 """``provider_accounts.accounts[]`` folders handed to a spawned agent as
 ``CLAUDE_CONFIG_DIR`` / ``CODEX_HOME``: they pick the settings, hooks and
 credentials the agent runs with, so a new or changed one is a command write."""
+
+SESSION_TMUX_SOCKET_KEY = "tmux_socket_name"
+"""``session.tmux_socket_name``: the ``tmux -L`` socket Carnivore drives. A flip is a migration, never an edit
+(CLAUDE.md), and the value is per machine like ``server_prefs``, so a bundle neither carries nor imports it: export
+omits it, import ignores it and keeps the local value (#2659)."""
+
+ACCOUNT_MANAGED_KEY = "managed"
+"""``provider_accounts.accounts[].managed``: turns on launching agents with the account's folder and creating symlinks
+inside it, so turning it on, new or flipped, needs consent (#2659)."""
+
+LOADER_INT_FIELDS: Tuple[str, ...] = ("access_token_ttl_seconds", "refresh_token_ttl_seconds", "refresh_grace_seconds")
+"""Top-level numbers ``auth_loader.load`` reads with a bare ``int()``. The config model accepts a string such as
+``"100000.0"`` that ``int()`` cannot read, and the server then fails to start, so an import refuses one (#2659)."""

@@ -108,13 +108,13 @@ def test_huddle_changes_is_a_read_too_and_a_later_change_waits_again(manager):
     assert status(manager, item["id"]) == "open"
 
 
-def test_huddle_focus_records_the_read_of_the_rows_it_points_at(manager):
+def test_reading_one_item_records_the_read_of_that_row_only(manager):
     store = huddle_store(manager)
     a = store.add("12", "one", actor=JOE)
     b = store.add("12", "two", actor=JOE)
     tell(manager, "12")
     store.update(b["id"], actor=JOE, note="after the tell")
-    ok, _ = call(manager, "huddle_focus", {"list": "12", "items": [a["id"]]})
+    ok, _ = call(manager, "task_manager_tasks_list", {"list": "12", "item": a["id"]})
     assert ok and status(manager, a["id"]) == "open" and status(manager, b["id"]) == "waiting_to_send"
 
 

@@ -3,7 +3,7 @@
     import { onMount, tick } from 'svelte';
     import { t } from '../i18n/index.svelte';
     import { Button, IconButton } from '../base';
-    import ModalShell from '../launchpad/ModalShell.svelte';
+    import ModalShell from '../dialog-frame/ModalShell.svelte';
     import type { RealPageReach } from './pop-out-reach';
 
     type Choice = 'proxy' | 'real';

@@ -232,12 +232,12 @@ test('T10: the agents icon returns to agents from any slide-out', async () => {
   }
 });
 
-test('T11: a question arriving shows the yellow count on the rail and never opens questions', async () => {
+test('T11: a question arriving shows the questions key with no number on it (#2757) and never opens questions', async () => {
   await railOn();
   approvals.items = [{ id: 'q1', session_id: 's1', title: 'deploy?', created_at: new Date().toISOString() } as never];
   await settle();
-  const badge = railBtn(QUESTIONS_FLYOUT).querySelector<HTMLElement>('[data-rail-badge]');
-  expect(badge?.textContent).toBe('1');
+  expect(railBtn(QUESTIONS_FLYOUT).querySelector('[data-rail-badge], .zone-badge'), 'no counter on the key').toBeNull();
+  expect(railBtn(QUESTIONS_FLYOUT).textContent ?? '').not.toMatch(/\d/);
   expect(railBtn(QUESTIONS_FLYOUT).getAttribute('aria-label')).toBe('questions, 1 waiting');
   expect(activeFlyout()).toBeNull();
 });
@@ -515,13 +515,6 @@ test('gap 3: the menu hotkeys fire from any rail key (the menu has no key of its
   railBtn(SESSION_LIST_WIDGET).focus();
   const event = await keyOn(railBtn(SESSION_LIST_WIDGET), 'h');
   expect(event.defaultPrevented, 'a menu hotkey was handled').toBe(true);
-});
-
-test('gap 4: a question arriving brightens its rail key for a moment; keys whose count did not grow stay quiet', async () => {
-  await railOn();
-  await askOne();
-  expect(railBtn(QUESTIONS_FLYOUT).querySelector<HTMLElement>('[data-rail-badge]')?.dataset.cue, 'the one badge pulses').toBe('on');
-  expect(railBtn(SESSION_LIST_WIDGET).querySelector('[data-rail-badge]'), 'a key with no count wears no badge').toBeNull();
 });
 
 test("gap 4: a closable tab's key carries a close key, and Delete on the key closes it as in the tab strip", async () => {

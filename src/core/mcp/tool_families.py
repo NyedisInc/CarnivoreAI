@@ -27,7 +27,7 @@ class Family:
 
 _PACK = frozenset({
     "pack_gh_login_add", "pack_machines_list", "pack_master_set", "pack_op_get", "pack_queue_cancel", "pack_queue_items_list",
-    "pack_refresh_run", "pack_relay_set", "pack_relay_status", "pack_reserve_get", "pack_skills_status", "pack_reserve_set", "pack_restrictions_get",
+    "pack_refresh_run", "pack_relay_account_use", "pack_relay_set", "pack_relay_status", "pack_reserve_get", "pack_skills_status", "pack_reserve_set", "pack_restrictions_get",
     "pack_restrictions_set", "pack_settings_update", "pack_tracks_master_get", "pack_tracks_master_set", "placement_explain",
     "project_replica_list", "project_replica_add", "project_replica_remove", "project_sync", "project_migrate",
     "project_migrate_back", "project_migrate_plan", "company_migrate", "company_migrate_plan", "session_move", "session_send",
@@ -56,7 +56,7 @@ _RESTART = "A Codex or plain-HTTP pane needs a restart or /mcp reconnect to see 
 FAMILIES: tuple[Family, ...] = (
     Family(
         key="huddle", label="huddle tools", kind=SWITCH,
-        prefixes=("huddle_", TASK_MANAGER_PREFIX),
+        prefixes=(TASK_MANAGER_PREFIX,),
         why="the owner turned huddle tools off for agents on this computer",
         how=f"The owner turns them on in {_PANEL}."),
     Family(

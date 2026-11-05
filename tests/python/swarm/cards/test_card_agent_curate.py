@@ -57,27 +57,33 @@ def test_swarm_card_archive_runs_at_once_in_scope_and_refuses_outside_it(world, 
     assert told == [(card, told[0][1])] and told[0][1]["archived_at"] is not None
 
 
-def test_swarm_card_delete_always_waits_for_the_owner_and_refuses_outside_scope(world, told, monkeypatch):
-    assert "swarm_card_delete" in beast_mode.ALWAYS_WAITS and "swarm_card_delete" in call_context.GATED_TOOLS
+def test_swarm_card_delete_deletes_any_card_in_scope_at_once_and_refuses_outside_scope(world, told, monkeypatch):
+    assert "swarm_card_delete" not in beast_mode.ALWAYS_WAITS and "swarm_card_delete" not in call_context.GATED_TOOLS
     parked: List[dict] = []
 
     async def owner_approves(manager: Any, caller: Any, target_id: str, target_tmux: str, action: str, summary: str, args: dict,
                              run: Any, **kw: Any) -> dict:
-        parked.append({"action": action, "summary": summary, "args": args, **kw})
+        parked.append({"action": action})
         return await run(True)
 
     monkeypatch.setattr(write_tools, "park", owner_approves)
-    card = held_card(world.store, "leftover")
+    card = asyncio.run(ops.create(None, None, {"title": "the owner's own card", "project_id": 16}, by="owner"))["id"]
     as_agent(monkeypatch, 6)
     with pytest.raises(ToolError, match="not_allowed"):
         asyncio.run(card_tools.swarm_card_delete(MANAGER, None, {"card_id": card, "reason": "stale"}))
-    assert not parked and asyncio.run(card_port.get().card(card)) is not None
+    assert asyncio.run(card_port.get().card(card)) is not None
 
     as_agent(monkeypatch, 5)
     asyncio.run(card_tools.swarm_card_delete(MANAGER, None, {"card_id": card, "reason": "a leftover test card"}))
-    assert [(p["action"], p["args"], p["beast_eligible"]) for p in parked] == [("swarm_card_delete", {"card_id": card, "reason": "a leftover test card"}, False)]
     assert asyncio.run(card_port.get().card(card)) is None
     assert events(world, card, "deleted") == [("owner", "agent:5: a leftover test card")]
     assert told == [(card, None)]
     with pytest.raises(ToolError, match="not_a_card"):
         asyncio.run(card_tools.swarm_card_delete(MANAGER, None, {"card_id": card, "reason": "again"}))
+
+    mine = held_card(world.store, "an agent's own card")
+    assert ops.agent_made(asyncio.run(card_port.get().card(mine)))
+    asyncio.run(card_tools.swarm_card_delete(MANAGER, None, {"card_id": mine, "reason": "my scratch card"}))
+    assert not parked and asyncio.run(card_port.get().card(mine)) is None
+    assert told[-1] == (mine, None)
+    assert not ops.agent_made({"origin": {"kind": "before_cards", "ref": ""}}) and not ops.agent_made({})

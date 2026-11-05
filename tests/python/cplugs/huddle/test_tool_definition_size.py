@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 
 from src.core.mcp import tools
+from src.cplugs.huddle import CPLUG
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 
 MAX_DEFINITION_BYTES = 5000
@@ -14,7 +15,7 @@ def definition_bytes(definition: dict) -> int:
 
 
 def test_every_huddle_tool_definition_is_under_5000_bytes():
-    sizes = {d["name"]: definition_bytes(d) for d in tools.tool_definitions(None) if d["name"].startswith("huddle_")}
+    sizes = {d["name"]: definition_bytes(d) for d in tools.tool_definitions(None) if d["name"] in CPLUG.manifest.surfaces.mcp_tools}
     assert len(sizes) >= 20
     assert {name: size for name, size in sizes.items() if size >= MAX_DEFINITION_BYTES} == {}
 

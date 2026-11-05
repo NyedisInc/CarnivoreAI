@@ -116,7 +116,6 @@ console.log('[SessionRestartPicker Module] Loading...');
                 + 'aria-live="polite"></div>'
                 + '</div>'
                 + '<div class="modal-footer restart-picker__foot">'
-                // live pane.
                 + (preview.pane_state === 'alive' && window.SessionRestartLive
                     ? window.SessionRestartLive.armHtml(
                         armedByGesture === true ? { armedByGesture: true } : undefined)

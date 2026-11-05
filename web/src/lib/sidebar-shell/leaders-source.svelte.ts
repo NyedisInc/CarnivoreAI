@@ -2,6 +2,7 @@ import { swarmRoster, startSwarmRoster } from '../../cplugs/huddle/agents/agent-
 import { projects } from '../../opscenter/api/projects.svelte';
 import { indexLeaders, type LeaderIndex, type RosterWithCompany } from './leaders';
 import { repaintDrawerRows } from './interaction-globals';
+import { startSwarmSwitch, swarmIsOn } from '../swarm-switch/control.svelte';
 
 export function leaderIndex(): LeaderIndex {
     return indexLeaders(swarmRoster.agents);
@@ -21,6 +22,7 @@ let stopWatching: (() => void) | null = null;
 export function watchLeaders(): void {
     if (stopWatching) return;
     const stopRoster = startSwarmRoster();
+    startSwarmSwitch();
     let first = true;
     const stopEffect = $effect.root(() => {
         const signature = $derived(JSON.stringify(swarmRoster.agents
@@ -31,6 +33,7 @@ export function watchLeaders(): void {
             .map((a) => [a.id, a.rank, a.parent_id ?? null, a.session_row_id ?? null, a.session_uuid ?? null])));
         $effect(() => {
             void signature;
+            void swarmIsOn();
             void spawnedSignature;
             if (first) { first = false; return; }
             repaintDrawerRows();

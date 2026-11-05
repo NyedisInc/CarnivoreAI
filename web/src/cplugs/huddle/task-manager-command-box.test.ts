@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, tick, unmount } from 'svelte';
 import TaskManagerMarkdown from './TaskManagerMarkdown.svelte';
-import { copyToClipboard } from './task-manager-copy';
+import { copyToClipboard } from '../sdk';
 
 let app: ReturnType<typeof mount> | null = null;
 const SRC = 'run this:\n\n```bash\nls -la\necho hi\n```\n\nthen tell me.';

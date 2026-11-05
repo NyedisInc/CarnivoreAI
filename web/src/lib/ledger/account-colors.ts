@@ -33,8 +33,6 @@ export const ACCOUNT_COLORS: readonly AccountColor[] = Object.freeze([
     { hex: '#ee268f', name: 'pink_deep' },
 ] as const);
 
-export const SWATCHES_PER_ROW = 8;
-
 export const CUSTOM_COLOR_KEY = 'ledger.color.custom';
 
 const HEX_SHAPE = /^#[0-9a-f]{6}$/;

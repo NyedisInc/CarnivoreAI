@@ -92,6 +92,35 @@ async def join(*, relay_path: str, listen_port: int, listen_addresses: Sequence[
             pass
 
 
+async def knock(*, relay_path: str, fid: str, iid: str, label: str) -> Dict[str, Any]:
+    try:
+        reader, writer = await asyncio.wait_for(
+            asyncio.open_unix_connection(relay_path, ssl=client_join_ctx(), server_hostname="",
+                                         ssl_handshake_timeout=join_proto.TLS_HANDSHAKE_TIMEOUT),
+            join_proto.TLS_HANDSHAKE_TIMEOUT + 2)
+    except (OSError, asyncio.TimeoutError, ssl.SSLError) as exc:
+        log.info("computer_knock_relay_connect_failed", reason=type(exc).__name__)
+        raise JoinFailed("unreachable") from None
+    try:
+        writer.write(join_proto.MAGIC)
+        await join_proto.write_message(writer, join_proto.knock(fid=fid, iid=iid, label=label))
+        reply = await join_proto.read_message(reader, join_proto.MESSAGE_TIMEOUT)
+        _error_of(reply)
+        return join_proto.check_knock_ok(reply)
+    except (ProtoError, ConnectionError) as exc:
+        log.info("computer_knock_no_answer", reason=type(exc).__name__)
+        raise JoinFailed("incompatible") from None
+    except (asyncio.TimeoutError, ssl.SSLError, OSError) as exc:
+        log.info("computer_knock_dropped", reason=type(exc).__name__)
+        raise JoinFailed("unreachable") from None
+    finally:
+        writer.close()
+        try:
+            await writer.wait_closed()
+        except (ConnectionError, ssl.SSLError, OSError):
+            pass
+
+
 async def _run(reader: asyncio.StreamReader, writer: asyncio.StreamWriter, pw: bytes, *, mode: str, invite_id: Optional[str],
                expect_cert_k: Optional[str], expect_fid: Optional[str], require_existing_grant: bool, identity: LinkIdentity, fed_key: DeviceKey, public_key: str,
                own_iid: str, own_label: str, open_db: commit.OpenDb, links: Links, pack: PackSettingsPort, app_version: str,

@@ -5,6 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { installCloudeWeb, unrefTimer } from './helpers/cloude-web-sandbox.mjs';
+import { installTrOnly } from './helpers/catalog-tr.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.join(__dirname, '..');
@@ -241,6 +242,7 @@ export function loadModules(names, opts = {}) {
     };
     context.window = context;
     vm.createContext(context);
+    installTrOnly(context);
     let bundle = false;
     for (const name of names) {
         if (MOVED_TO_BUNDLE.has(name)) { bundle = true; continue; }

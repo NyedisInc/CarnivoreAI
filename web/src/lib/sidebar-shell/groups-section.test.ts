@@ -2,6 +2,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as GroupStore from '../drawer/group-store';
 import * as Store from '../drawer/store';
+import * as EmptySections from '../drawer/empty-sections.svelte';
 import { setQuery } from '../drawer/search';
 import { isBandOrderKey, isFoldKey } from '../drawer/store-keys';
 import { buildListPlan, type GroupsPlan, type ListPlan, type PaintInput } from './plan';
@@ -48,6 +49,7 @@ function planWith(collapsed: string[], over: Partial<PaintInput> = {}): ListPlan
 
 beforeEach(() => {
     localStorage.clear();
+    EmptySections.setEmptySectionsHidden(true);
     Store.load();
     setQuery('');
     GroupStore.apply({ status: 'ok', groups: GROUPS });
@@ -86,6 +88,14 @@ describe('the GROUPS part of the plan', () => {
         expect(groupsPart(planWith([]))).toBeUndefined();
     });
 
+    it('with hide empty sections off, GROUPS draws over groups that are all empty', () => {
+        EmptySections.setEmptySectionsHidden(false);
+        GroupStore.apply({ status: 'ok', groups: [GROUPS[2]!] });
+        expect(groupsPart(planWith([]))?.sections.map((s) => s.key)).toEqual(['g:z']);
+        EmptySections.setEmptySectionsHidden(true);
+        expect(groupsPart(planWith([]))).toBeUndefined();
+    });
+
     it('a search narrows the groups under it and drops GROUPS when nothing matches', () => {
         setQuery('b');
         const hit = groupsPart(planWith([], { opts: { query: 'b' } }));
@@ -120,7 +130,7 @@ describe('moving a group and moving the GROUPS section', () => {
             ...r, label: r.name, created_by_cloude: true, status: 'idle', unread: false, session_id: `ses_${r.name}`,
             session_uuid: `su-${r.name}`, kind: r.kind ?? 'agent', agent_family: r.agent_family ?? 'claude',
         }));
-        const ctrl: Record<string, unknown> = { _rows: rows, _listing: { ok: true }, _lastSig: null, _dragging: false, _missing: [], listEl };
+        const ctrl: Record<string, unknown> = { _rows: rows, _listing: { ok: true }, _dragging: false, _missing: [], listEl };
         ctrl.repaint = () => paintDrawer(ctrl);
         w.SessionSidebar = ctrl;
         unmountPanel(listEl.id);

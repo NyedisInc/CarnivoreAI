@@ -90,6 +90,10 @@ export function isListedSession(row: BucketRow): boolean {
     return (kind === KIND_AGENT || kind === KIND_TERMINAL) && row.archived !== true && !ghost;
 }
 
+export function isSleepingSession(row: BucketRow): boolean {
+    return isListedSession(row) && row.closed !== true && row.asleep === true;
+}
+
 export function filterAwakeSleeping<T extends BucketRow>(rows: readonly T[], open: boolean, sleeping: boolean): T[] {
     const list = Array.isArray(rows) ? rows : [];
     if (open && sleeping) return [...list];
@@ -207,7 +211,6 @@ export function filteredProjectBuckets<T extends BucketRow>(
         .filter((b) => b.rows.length > 0);
 }
 
-export function keepBandSection(key: string, rows: readonly unknown[], dragging: boolean, _q: string): boolean {
-    void key;
-    return rows.length > 0 || dragging;
+export function keepBandSection(key: string, rows: readonly unknown[], dragging: boolean, q: string, hideEmpty = true): boolean {
+    return rows.length > 0 || dragging || (!hideEmpty && !q && key !== 'pinned');
 }

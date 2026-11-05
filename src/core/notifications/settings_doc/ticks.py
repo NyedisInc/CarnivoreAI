@@ -40,6 +40,7 @@ def write_value(doc: Doc, me: str, path: str, value: Any, scope: Optional[str], 
 def put_tick(store: SettingsDocStore, column: str, type_id: str, value: bool, scope: Optional[str] = None) -> view.Cell:
     if scope not in (None, SCOPE_GLOBAL, SCOPE_LOCAL):
         raise ValueError("scope must be global or local")
+    type_id = types.canonical(type_id)
     if not types.is_registered(type_id):
         raise ValueError(f"not a notification type: {type_id!r}")
 
@@ -53,6 +54,7 @@ def put_tick(store: SettingsDocStore, column: str, type_id: str, value: bool, sc
 
 
 def put_default(store: SettingsDocStore, type_id: str, value: bool) -> Dict[str, bool]:
+    type_id = types.canonical(type_id)
     if not types.is_registered(type_id):
         raise ValueError(f"not a notification type: {type_id!r}")
     doc = store.update(lambda d, me: doc_model.set_global(d, doc_model.default_path(type_id), bool(value), me))

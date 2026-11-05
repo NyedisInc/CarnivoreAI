@@ -35,6 +35,7 @@
     <span class="oc-facet__key">{label}</span>
     <select
         class="oc-facet__select"
+        data-base-exempt="bare-select-in-the-facet-frame"
         aria-label={ariaLabel ?? label}
         data-facet={id}
         {value}

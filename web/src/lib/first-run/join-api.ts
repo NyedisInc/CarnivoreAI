@@ -1,7 +1,7 @@
 import { detailReasonOf } from './detail-reason';
 import type { Fetch } from './first-run-api';
 
-export type JoinState = 'idle' | 'waiting_relay' | 'finding' | 'connecting' | 'linking' | 'joined' | 'failed';
+export type JoinState = 'idle' | 'waiting_relay' | 'knocked' | 'finding' | 'connecting' | 'linking' | 'joined' | 'failed';
 
 export interface Candidate {
     readonly name: string;
@@ -17,11 +17,14 @@ export interface JoinStatus {
     readonly error: string | null;
     readonly main_label: string | null;
     readonly candidates: readonly Candidate[];
+    readonly expires_in: number | null;
+    readonly own_fid_short: string | null;
+    readonly knock_fid: string | null;
 }
 
 export type JoinErrorKey =
     | 'wrong_code_many' | 'used_up' | 'expired' | 'no_pack' | 'unreachable' | 'local_network_blocked'
-    | 'main_mismatch' | 'helper_not_started' | 'incompatible' | 'busy' | 'rate_limited' | 'refused' | 'needs_owner' | 'bad_link';
+    | 'main_mismatch' | 'helper_not_started' | 'incompatible' | 'busy' | 'rate_limited' | 'refused' | 'paused' | 'needs_owner' | 'bad_link';
 
 const ERROR_KEYS: Readonly<Record<string, JoinErrorKey>> = {
     wrong_code: 'wrong_code_many',
@@ -37,6 +40,7 @@ const ERROR_KEYS: Readonly<Record<string, JoinErrorKey>> = {
     busy: 'busy',
     rate_limited: 'rate_limited',
     refused: 'refused',
+    paused: 'paused',
     needs_owner: 'needs_owner',
     bad_link: 'bad_link',
     join_has_peers: 'refused',
@@ -48,8 +52,8 @@ export function errorKeyFor(code: string | null): JoinErrorKey {
 }
 
 function parseStatus(body: unknown): JoinStatus | null {
-    const doc = body as { state?: unknown; error?: unknown; main_label?: unknown; candidates?: unknown } | null;
-    const states: readonly string[] = ['idle', 'waiting_relay', 'finding', 'connecting', 'linking', 'joined', 'failed'];
+    const doc = body as { state?: unknown; error?: unknown; main_label?: unknown; candidates?: unknown; expires_in?: unknown; own_fid_short?: unknown; knock_fid?: unknown } | null;
+    const states: readonly string[] = ['idle', 'waiting_relay', 'knocked', 'finding', 'connecting', 'linking', 'joined', 'failed'];
     if (!doc || typeof doc.state !== 'string' || !states.includes(doc.state)) return null;
     const candidates = Array.isArray(doc.candidates)
         ? doc.candidates
@@ -61,6 +65,9 @@ function parseStatus(body: unknown): JoinStatus | null {
         error: typeof doc.error === 'string' ? doc.error : null,
         main_label: typeof doc.main_label === 'string' ? doc.main_label : null,
         candidates,
+        expires_in: typeof doc.expires_in === 'number' ? doc.expires_in : null,
+        own_fid_short: typeof doc.own_fid_short === 'string' ? doc.own_fid_short : null,
+        knock_fid: typeof doc.knock_fid === 'string' ? doc.knock_fid : null,
     };
 }
 
@@ -88,6 +95,14 @@ export async function startLook(fetcher: Fetch = fetch): Promise<StartResult> {
     return postStart('/api/v1/auth/join/look', {}, fetcher);
 }
 
+export async function startKnock(candidateFid: string, fetcher: Fetch = fetch): Promise<StartResult> {
+    return postStart('/api/v1/auth/join/knock', { candidate_fid: candidateFid }, fetcher);
+}
+
+export async function postCode(code: string, fetcher: Fetch = fetch): Promise<StartResult> {
+    return postStart('/api/v1/auth/join/code', { code }, fetcher);
+}
+
 async function postStart(url: string, body: Record<string, string>, fetcher: Fetch): Promise<StartResult> {
     let reply: Response;
     try {
@@ -102,6 +117,7 @@ async function postStart(url: string, body: Record<string, string>, fetcher: Fet
     }
     const doc: unknown = await reply.json().catch(() => null);
     if (reply.status === 429) return { ok: false, error: 'rate_limited' };
+    if (reply.status === 409 && url.endsWith('/code')) return { ok: false, error: 'used_up' };
     if (reply.status === 422) return { ok: false, error: detailReasonOf(doc) === 'bad_link' ? 'bad_link' : 'wrong_code_many' };
     const status = reply.ok ? parseStatus(doc) : null;
     return status ? { ok: true, status } : { ok: false, error: 'refused' };

@@ -4,7 +4,6 @@ import type { PluginContext, SessionCardRow } from './types';
 
 export interface SessionCardMenuItem {
     readonly id: string;
-    readonly shortcut: string;
     readonly label: string;
     readonly order: number;
     readonly locked: boolean;
@@ -30,7 +29,6 @@ export function sessionCardMenuItems(
         .filter((c) => c.enabled(context) && !refusedForPeer(c.id, row, c.payload.hidden))
         .map((c) => ({
             id: c.id,
-            shortcut: c.payload.shortcut,
             label: c.payload.label(row),
             order: c.order ?? 0,
             locked: c.feature !== undefined && isLocked(c.feature),

@@ -40,6 +40,10 @@ class TaskManagerStore(StoreReads, StoreClaims, StoreFiles, StoreTriggers):
         self._notify = notify
         self._clock = clock
 
+    @property
+    def storage(self) -> "CplugStorage":
+        return self._storage
+
     def _connect(self, write: bool) -> sqlite3.Connection:
         return self._storage.connect(write)
 
@@ -120,17 +124,6 @@ class TaskManagerStore(StoreReads, StoreClaims, StoreFiles, StoreTriggers):
             self._commit_notify(row["list_key"])
         self._acted_on(item_id)
         return self.item(item_id)
-
-    def mark_unread(self, list_key: str, ids: Sequence[int]) -> None:
-        if not ids:
-            return
-        marks = ",".join("?" * len(ids))
-        with closing(self._connect(True)) as conn, conn:
-            seq = self._next_seq(conn)
-            conn.execute(f"UPDATE work_items SET attention_seq = ? WHERE list_key = ? AND deleted = 0 AND id IN ({marks})",
-                         (seq, list_key, *ids))
-        self._commit_notify(list_key)
-
 
 
     @staticmethod
@@ -254,7 +247,6 @@ class TaskManagerStore(StoreReads, StoreClaims, StoreFiles, StoreTriggers):
                perceived_ask: Optional[str] = None, decided: Optional[lineage.Decided] = None,
                wait: Optional[Mapping[str, object]] = None, wait_by: str = "", review_checks: Optional[Sequence[str]] = None) -> dict:
         rules.check_actor(actor)
-        state = rules.canonical_state(state)
         with self._immediate() as conn:
             row = self._row(conn, item_id)
             rules.check_not_swarm_card(actor, row["swarm_ref"])

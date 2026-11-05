@@ -1,0 +1,56 @@
+{
+  "api_routes": [],
+  "area": "sessions",
+  "docs": [
+    "docs/DECISIONS.md"
+  ],
+  "examples": [
+    "You were in session api, opened your review layout, then session web. Cmd+[ takes you back to the review layout, Cmd+[ again to api, and Cmd+] forward to the layout.",
+    "With three layout tabs open in the layout bar, Cmd+2 opens the second and Cmd+9 the last, from anywhere in the app."
+  ],
+  "how_to": [
+    "Cmd+[ goes back to the session or layout you were on before; Cmd+] goes forward again. Like a browser: a fresh jump drops the forward list, and closed sessions and deleted layouts are skipped.",
+    "Each window keeps its own history, in memory, at most 50 places. Only what you opened counts.",
+    "Cmd+1 to Cmd+8 open layout tab 1 to 8 in the layout bar, in its saved order; Cmd+9 opens the last tab. No tab N: nothing happens.",
+    "A text box keeps its keys: these chords do nothing while you type in one. A browser pane keeps its own keys too. The keys are listed on the keyboard shortcuts page.",
+    "Mac only. In Safari, and for Cmd+digits in some Chrome builds, the browser may take the key first; the desktop app always gets it.",
+    "In the Mac app the Go menu has Back and Forward (Cmd+[ and Cmd+]) and the last 10 sessions and layouts this window was on; pick one to jump there."
+  ],
+  "id": "session-history-keys",
+  "issues": [
+    2728,
+    2741
+  ],
+  "keywords": [
+    "back",
+    "forward",
+    "history",
+    "cmd [",
+    "cmd ]",
+    "cmd 1",
+    "layout tabs",
+    "keyboard shortcut",
+    "go menu"
+  ],
+  "media_exempt": "keyboard only: a still image cannot show a chord moving between sessions",
+  "name": "Session history and layout tab keys",
+  "since": "2026-10-30",
+  "status": "beta",
+  "summary": "Cmd+[ and Cmd+] step back and forward through the sessions and layouts you opened, and Cmd+1 to 9 open layout tab N.",
+  "surfaces": [
+    "web/src/lib/app-keys/router.ts",
+    "web/src/lib/app-keys/chords.ts",
+    "web/src/lib/app-keys/install.svelte.ts",
+    "web/src/lib/focus-history/focus-history.ts",
+    "web/src/lib/nav-items/nav-items.ts",
+    "web/src/lib/info-pages/key-bindings.ts",
+    "macOS/app-menu/chords.js",
+    "macOS/app-menu/go.js",
+    "web/src/lib/desktop-menu/go-menu.ts"
+  ],
+  "updated": "2026-10-30",
+  "where": [
+    "Anywhere in the app on a Mac, terminal focused or not.",
+    "The Go menu in the Mac app's menu bar."
+  ]
+}

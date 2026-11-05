@@ -40,17 +40,18 @@ def _read_row(session_uuid: str) -> Optional[dict]:
     return {"tmux_name": row["tmux_name"], "socket": row["tmux_socket"], "agent_type": row["agent_type"]}
 
 
-def _build(config_path: Path, session_uuid: Optional[str], accounts_all, options, current_id: Optional[str]):
+def _build(config_path: Path, session_uuid: Optional[str], accounts_all, options, current_id: Optional[str],
+           provider: str = session_pin.PIN_PROVIDER):
     pinned_id = session_pin.pin_for(config_path, session_uuid)
     ids = {o.id for o in options}
     pinned = pinned_id in ids
     selected = pinned_id if pinned else None
-    active = effective_active(accounts_all, store.read_switch(config_path), session_pin.PIN_PROVIDER).account_id
+    active = effective_active(accounts_all, store.read_switch(config_path), provider).account_id
     active_id = active if active in ids else None
     if selected is None:
         selected = active_id or (current_id if current_id in ids else None)
     out: List[RestartAccountOption] = [
-        RestartAccountOption(id=a.id, name=a.name, color=a.color, is_current=a.id == current_id)
+        RestartAccountOption(id=a.id, name=a.name, color=a.color, is_current=a.id == current_id, provider=a.provider)
         for a in options
     ]
     return RestartAccountsResponse(options=out, selected_id=selected, current_id=current_id, active_id=active_id, pinned=pinned)
@@ -77,17 +78,18 @@ async def restart_accounts(session_uuid: str) -> RestartAccountsResponse:
         row = await run_in_threadpool(_read_row, session_uuid)
     except DatastoreUnreadableError as exc:
         raise api_error(503, "datastore_unavailable", exc, step="restart_accounts") from exc
-    if row is None or restart_account.family_of(row["agent_type"]) != restart_account.ACCOUNT_FAMILY:
+    family = restart_account.family_of(row["agent_type"]) if row is not None else None
+    if row is None or family not in restart_account.ACCOUNT_FAMILIES:
         return EMPTY
     config_path = _config_path()
     try:
         accounts_all = await run_in_threadpool(session_pin.all_accounts, config_path)
-        options = await run_in_threadpool(session_pin.launchable_accounts, config_path)
+        options = await run_in_threadpool(session_pin.launchable_accounts, config_path, family)
         current_id = None
         if row["tmux_name"]:
             current_id = await pane_account.resolve_pane_account(
-                row["socket"], row["tmux_name"], session_pin.PIN_PROVIDER, accounts_all)
-        return await run_in_threadpool(_build, config_path, session_uuid, accounts_all, options, current_id)
+                row["socket"], row["tmux_name"], family, accounts_all)
+        return await run_in_threadpool(_build, config_path, session_uuid, accounts_all, options, current_id, family)
     except (FileNotFoundError, ValueError) as exc:
         logger.error("restart_accounts_unreadable", error=type(exc).__name__)
         raise HTTPException(status_code=500, detail="the account list could not be read")
@@ -97,17 +99,23 @@ async def restart_accounts(session_uuid: str) -> RestartAccountsResponse:
 async def launch_accounts() -> RestartAccountsResponse:
     """The accounts a NEW agent can launch on (the launch picker's account dropdown), owner only.
 
-    Description: the same launchable list the restart dialog offers (``session_pin.launchable_accounts``);
-      ``selected_id`` is the effective active account when it is launchable, else None; ``current_id`` is None
-      and ``pinned`` false, since no session exists yet. Read only.
+    Description: the same launchable lists the restart dialog offers (``session_pin.launchable_accounts``), claude
+      first then relayed codex logins, each option tagged with its ``provider``; ``selected_id`` is the effective
+      active CLAUDE account when it is launchable, else None, and ``selected_by_provider`` holds each provider's;
+      ``current_id`` is None and ``pinned`` false, since no session exists yet. Read only.
     Output: RestartAccountsResponse.
     Raises: HTTPException 500 (config.json unusable).
     """
     config_path = _config_path()
     try:
         accounts_all = await run_in_threadpool(session_pin.all_accounts, config_path)
-        options = await run_in_threadpool(session_pin.launchable_accounts, config_path)
-        return await run_in_threadpool(_build, config_path, None, accounts_all, options, None)
+        claude = await run_in_threadpool(session_pin.launchable_accounts, config_path)
+        codex = await run_in_threadpool(session_pin.launchable_accounts, config_path, "codex")
+        built = await run_in_threadpool(_build, config_path, None, accounts_all, claude, None)
+        picked = await run_in_threadpool(_build, config_path, None, accounts_all, codex, None, "codex")
+        return built.model_copy(update={
+            "options": [*built.options, *picked.options],
+            "selected_by_provider": {"claude": built.selected_id, "codex": picked.selected_id}})
     except (FileNotFoundError, ValueError) as exc:
         logger.error("launch_accounts_unreadable", error=type(exc).__name__)
         raise HTTPException(status_code=500, detail="the account list could not be read")

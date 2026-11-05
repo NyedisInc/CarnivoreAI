@@ -40,6 +40,11 @@ class ConfigImportRequest(BaseModel):
       confirm_browser_sha256, confirm_provider_accounts_sha256, confirm_common_slash_commands_sha256,
         confirm_template_path_sha256 (str | None): the same for ``browser.executable``, an account's agent config
         folders, quick slash commands and ``template_path``; each preview block names its own ``sha256``.
+      confirm_relay_sha256, confirm_catalog_sha256, confirm_auth_rate_limits_sha256, confirm_providers_sha256,
+        confirm_access_token_ttl_seconds_sha256, confirm_refresh_token_ttl_seconds_sha256,
+        confirm_refresh_grace_seconds_sha256 (str | None): the same for
+        relay and phone-link addresses and the relay switch, catalog addresses, proxy trust and login limits, the
+        local model host and token lifetimes (#2659).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -54,6 +59,18 @@ class ConfigImportRequest(BaseModel):
     confirm_provider_accounts_sha256: Optional[str] = None
     confirm_common_slash_commands_sha256: Optional[str] = None
     confirm_template_path_sha256: Optional[str] = None
+    confirm_relay_sha256: Optional[str] = None
+    confirm_catalog_sha256: Optional[str] = None
+    confirm_auth_rate_limits_sha256: Optional[str] = None
+    confirm_providers_sha256: Optional[str] = None
+    confirm_access_token_ttl_seconds_sha256: Optional[str] = None
+    confirm_refresh_token_ttl_seconds_sha256: Optional[str] = None
+    confirm_refresh_grace_seconds_sha256: Optional[str] = None
+
+    def confirms(self) -> Dict[str, Optional[str]]:
+        prefix, suffix = "confirm_", "_sha256"
+        return {name[len(prefix):-len(suffix)]: value for name, value in self
+                if name.startswith(prefix) and name.endswith(suffix) and name != "confirm_launch_profiles_sha256"}
 
 
 def _config_path() -> Path:
@@ -106,8 +123,9 @@ async def import_config(request: Request, body: ConfigImportRequest) -> Dict[str
     Inputs: request (Request); body (ConfigImportRequest).
     Output: ``{"status": "preview"|"applied"|"unchanged", "changes": [...],
       "counts", "truncated", "source", "stripped", "ignored", "backup"}``; a preview adds
-      ``contains_commands`` and, when commands would be written, ``agents``, ``workspace``, ``browser``, ``provider_accounts``,
-      ``common_slash_commands``, ``template_path`` and ``launch_profiles``
+      ``contains_commands`` and, when commands would be written, ``agents``, ``workspace``, ``browser``,
+      ``provider_accounts``, ``common_slash_commands``, ``template_path``, ``launch_profiles`` and the reach and
+      trust sections
       blocks with the digest a real import must echo.
     Raises: HTTPException 413 (too large), 422 (not a valid bundle, or a
       section fails validation; the detail names fields, never values), 409
@@ -134,12 +152,7 @@ async def import_config(request: Request, body: ConfigImportRequest) -> Dict[str
             themes=themes,
             host=socket.gethostname(),
             confirm_launch_profiles_sha256=body.confirm_launch_profiles_sha256,
-            confirm_agents_sha256=body.confirm_agents_sha256,
-            confirm_workspace_sha256=body.confirm_workspace_sha256,
-            confirm_browser_sha256=body.confirm_browser_sha256,
-            confirm_provider_accounts_sha256=body.confirm_provider_accounts_sha256,
-            confirm_common_slash_commands_sha256=body.confirm_common_slash_commands_sha256,
-            confirm_template_path_sha256=body.confirm_template_path_sha256,
+            confirms=body.confirms(),
         )
     except ImportRefused as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.detail)

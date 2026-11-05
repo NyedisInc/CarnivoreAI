@@ -73,9 +73,12 @@ test('phone: choosing a menu destination closes the slide-out AND the overlay dr
 });
 
 test('phone: the keys are tap targets (44px) and the rail column fits them; the slide-out width is never fixed in px', () => {
+  const tokens = fs.readFileSync(path.join(REPO, 'web', 'src', 'opscenter', 'tokens.css'), 'utf8');
+  expect(tokens, 'the key size defaults to the tap token').toMatch(/--oc-rail-key:\s*var\(--oc-tap\)/);
+  expect(/@media \(min-width: 701px\)\s*\{\s*:root\s*\{\s*--oc-rail-key:\s*28px/.test(tokens), 'and shrinks only from 701px').toBe(true);
   const keys = fs.readFileSync(path.join(REPO, 'web', 'src', 'lib', 'zone-shell', 'TabKey.svelte'), 'utf8');
-  const keyRule = phoneBlock(keys.slice(keys.indexOf('<style>')));
-  const size = Number(/\.sbr-rail__btn\s*\{[^}]*?width:\s*(\d+)px/s.exec(keyRule)?.[1] ?? 0);
+  expect(keys, "TabKey's rail key reads the token").toMatch(/\.sbr-rail__btn\s*\{[^}]*width:\s*var\(--oc-rail-key\)/s);
+  const size = Number(/--oc-tap:\s*(\d+)px/.exec(tokens)?.[1] ?? 0);
   expect(size, 'a rail key is at least a tap target under 700px').toBeGreaterThanOrEqual(TAP_PX);
   const css = fs.readFileSync(path.join(WIDGETS, 'sidebar-rail.css'), 'utf8');
   const column = Number(/--sidebar-rail-w:\s*(\d+)px/.exec(phoneBlock(css))?.[1] ?? 0);

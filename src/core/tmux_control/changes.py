@@ -37,7 +37,7 @@ def emit(socket_name: str, name: str, delay: float = DEBOUNCE_SECONDS) -> None:
 
 def wake_listener(wake: Callable[[], None]) -> Callable[[str], None]:
     def listener(socket_name: str) -> None:
-        from src.core import ttl_flight
+        from src.core.read_caches import ttl_flight
         from src.core.sessions.pane_listing_cache import invalidate_pane_listing
 
         invalidate_pane_listing(socket_name)

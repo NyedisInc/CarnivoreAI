@@ -1,20 +1,23 @@
 
 import asyncio
 import base64
+import hmac
 import io
+import time
 import os
 from pathlib import Path
 from typing import Any, Optional
 
+import pyotp
 import structlog
 from dotenv import dotenv_values
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from qrcode import ERROR_CORRECT_M, make as make_qr
 from qrcode.exceptions import DataOverflowError
 from qrcode.image.svg import SvgPathFillImage
 
 from src.api import enrollment_gate as gate
-from src.api.auth import limiter
+from src.api.auth import _totp_seen_cache, _totp_seen_lock, limiter, require_auth
 from src.config import settings
 from src.core import setup_state
 from src.core.computers import membership
@@ -42,11 +45,12 @@ def _disk_secret_differs(memory_secret: str) -> bool:
         return False
     try:
         values = dotenv_values(env_file_path())
-    except OSError:
+    except (OSError, UnicodeDecodeError) as exc:
+        logger.warning("enrollment_env_unreadable", error_type=type(exc).__name__)
         return False
     for key, value in values.items():
         if key.lower() == "totp_secret" and value and value.strip():
-            return value.strip() != memory_secret.strip()
+            return not hmac.compare_digest(value.strip().encode(), memory_secret.strip().encode())
     return False
 
 
@@ -55,6 +59,28 @@ def _render_qr(uri: str) -> str:
     buffer = io.BytesIO()
     image.save(buffer)
     return "data:image/svg+xml;base64," + base64.b64encode(buffer.getvalue()).decode("ascii")
+
+
+def _loaded_secret_for_local_program(request: Request) -> str:
+    if not gate.is_local_non_browser(request):
+        raise _refuse(403, "enrollment_local_only")
+    try:
+        return settings.load_auth_config().totp_secret
+    except (FileNotFoundError, ValueError, OSError) as exc:
+        raise _refuse(503, "config_unreadable", error_type=type(exc).__name__)
+
+
+_TOTP_STEP_SECONDS = 30
+
+
+async def _unspent_code(secret: str) -> Optional[str]:
+    totp = pyotp.TOTP(secret)
+    async with _totp_seen_lock:
+        for offset in (0, _TOTP_STEP_SECONDS):
+            code = totp.at(time.time() + offset)
+            if code not in _totp_seen_cache:
+                return code
+    return None
 
 
 @router.get("/auth/enrollment/status")
@@ -123,6 +149,53 @@ async def get_enrollment(request: Request, response: Response) -> dict[str, Any]
         "issuer": ISSUER,
         "account": sanitize_account(name),
     }
+
+
+@router.get("/auth/enrollment/loaded", dependencies=[Depends(require_auth)])
+@limiter.limit("10/minute")
+async def get_loaded_enrollment(request: Request, response: Response) -> dict[str, Any]:
+    """The otpauth URI of the secret THIS running server verifies codes against (tray QR, #2707).
+
+    The tray used to read ``.env`` itself, which after a rotation that was never loaded shows a secret
+    this server rejects. Unlike ``/auth/enrollment`` this serves a paired install: the caller already
+    holds a login token (an API key is fenced out by ``/api/v1/auth/``) AND must be a local program:
+    loopback, main listener, no link tag, no forwarding header, and no ``Origin`` or ``Sec-Fetch-Site``
+    (so no browser page). ``restart_pending`` says the env file now holds a different secret than the
+    one served. Inputs: request; response. Output: ``{"otpauth_uri": str, "restart_pending": bool}``,
+    no-store. Refusals: 403 ``enrollment_local_only``, 503 ``config_unreadable``,
+    500 ``qr_generation_failed``. No log line carries the secret or URI.
+    """
+    secret = _loaded_secret_for_local_program(request)
+    name = await asyncio.to_thread(computer_display_name)
+    try:
+        uri = build_otpauth_uri(secret, name)
+    except ValueError as exc:
+        raise _refuse(500, "qr_generation_failed", error_type=type(exc).__name__)
+    pending = await asyncio.to_thread(_disk_secret_differs, secret)
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+    logger.info("enrollment_loaded_served", restart_pending=pending)
+    return {"otpauth_uri": uri, "restart_pending": pending}
+
+
+@router.get("/auth/enrollment/loaded/code", dependencies=[Depends(require_auth)])
+@limiter.limit("10/minute")
+async def get_loaded_code(request: Request, response: Response) -> dict[str, Any]:
+    """The current one-time code of the secret THIS running server verifies against (tray Copy OTP, #2712).
+
+    The tray used to compute the code from ``.env``, which after an unloaded rotation is a code this server
+    rejects. The server computes it instead, so the secret never leaves the process. Same fences as
+    ``/auth/enrollment/loaded`` (login token, local non-browser caller). While ``.env`` holds a different
+    secret (``restart_pending``) no code is served: it would stop working at the restart. Inputs: request;
+    response. Output: ``{"code": str | None, "restart_pending": bool}``, no-store. Refusals as the URI route.
+    The code is not consumed here; a code the replay cache already holds is skipped for the next step's. No log line carries it.
+    """
+    secret = _loaded_secret_for_local_program(request)
+    pending = await asyncio.to_thread(_disk_secret_differs, secret)
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+    logger.info("enrollment_loaded_code_served", restart_pending=pending)
+    return {"code": None if pending else await _unspent_code(secret), "restart_pending": pending}
 
 
 @router.get("/auth/qr")

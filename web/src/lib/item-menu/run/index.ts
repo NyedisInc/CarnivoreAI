@@ -1,7 +1,8 @@
 import { runMenuItem as runLayoutMenuItem } from '../../drawer/layouts-menu';
 import { runMenuItem as runBrowserMenuItem } from '../../drawer/browser-rows';
 import type { RowMenuCtx } from '../row-context';
-import { runNewInFolder, runNewTerminalHere, runSchedule, runShowPath, runCopySessionId, runMoveToFolder } from './folder-actions';
+import { runNewInFolder, runNewTerminalHere, runSchedule, runShowPath, runCopySessionId, runMoveToFolder, runRemoveWorktree } from './folder-actions';
+import { runDownload } from './download-action';
 import { runAddTo, runMoveToGroup, runRestart, runSendTo } from './open-actions';
 import { runFork, runRename } from './rename-fork';
 import { runArchive, runKillAsleep, runReopen, runSleep, runWake } from '../../drawer/row-menu-sleep';
@@ -60,11 +61,13 @@ const SIMPLE_ITEMS = new Map<string, (ctx: RowMenuCtx) => unknown>(Object.entrie
     'add-members': runAddTo,
     'send-to': runSendTo,
     'move-to-folder': runMoveToFolder,
+    'remove-worktree': runRemoveWorktree,
     'remove-from-group': runRemoveFromGroup,
     'fork': runFork,
     'new-in-folder': runNewInFolder,
     'new-terminal-here': runNewTerminalHere,
     'show-path': runShowPath,
+    'download': runDownload,
     'copy-session-id': runCopySessionId,
     'mute': runToggleMute,
     'mark-read': runMarkRead,

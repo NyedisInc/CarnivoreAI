@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence
 import structlog
 
 from src.core.agent_families import AGENT_FAMILY_BY_NAME
-from src.core.launch_profiles import create_seam
+from src.core.launch_profiles import agent_resume, create_seam
 from src.core.launch_profiles.plan import LaunchDisplay
 from src.core.launch_profiles.resolve import LaunchProfileNotFound
 from src.core.launch_record import write_launch_record
@@ -103,11 +103,35 @@ async def replay_for_restart(
         finally:
             conn.close()
     try:
-        return await replay(settings, row, model=model, extra_args=extra_args, preview=preview)
+        replayed = await replay(settings, row, model=model, extra_args=extra_args, preview=preview)
+        recorded = _record_profile(replayed.record) or _record_profile((row or {}).get("launch_record")) if replayed else None
+        return await _with_agent_resume(settings, replayed, name, recorded or "") if replayed else replayed
+    except agent_resume.ResumePrefixNotApproved as exc:
+        exc.tmux_name, exc.ask = name, not preview
+        raise
     except LaunchProfileNotFound:
         if not picked:
             raise
         return None
+
+
+async def _with_agent_resume(settings: Any, replayed: ReplayedLaunch, name: str, profile_id: str) -> ReplayedLaunch:
+    from pathlib import Path
+
+    from src.core.launch_profiles import agent_resume
+    from src.core.launch_profiles.store import LaunchProfileStore
+    from src.core.session_output.escape_notices import NOTICES
+
+    resume_id = NOTICES.resume_id_for_tmux(name)
+    if not profile_id or resume_id is None:
+        return replayed
+    block = await asyncio.to_thread(LaunchProfileStore(Path(settings.auth_config_file).expanduser()).read)
+    profile = next((p for p in block.profiles if p.id == profile_id), None)
+    command = agent_resume.resume_command(profile.agent if profile else None, resume_id, block.approved_resume_prefixes)
+    if command is None:
+        return replayed
+    logger.info("restart_agent_resume", profile=profile_id, name=name)
+    return ReplayedLaunch(command=command, staged=replayed.staged, record=replayed.record, display=replayed.display)
 
 
 def _with_account(record: str, account_id: str) -> str:

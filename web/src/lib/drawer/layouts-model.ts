@@ -5,7 +5,7 @@ import { filterActive } from './search';
 
 export const PREFIX = 'layout:';
 
-export interface LayoutMemberRef { session_uuid?: string }
+export interface LayoutMemberRef { session_uuid?: string; session_row_id?: number | null }
 
 export interface BridgeLayout {
     layout_uuid: string;
@@ -26,7 +26,7 @@ export interface LayoutsBridge {
     reorder(order: string[]): Promise<unknown>;
 }
 
-export interface MemberRow { session_uuid?: string; name?: string; label?: string; [key: string]: unknown }
+export interface MemberRow { session_uuid?: string; session_row_id?: number | null; name?: string; label?: string; [key: string]: unknown }
 
 export interface LayoutRow {
     name: string;
@@ -68,11 +68,21 @@ export function isOpenLayout(row: { layout_uuid: string }): boolean {
 
 function memberRows(layout: BridgeLayout, allRows: unknown): MemberRow[] {
     const byUuid = new Map<string, MemberRow>();
+    const byRowId = new Map<number, MemberRow>();
     for (const r of Array.isArray(allRows) ? (allRows as MemberRow[]) : []) {
-        if (r && r.session_uuid) byUuid.set(r.session_uuid, r);
+        if (!r) continue;
+        if (r.session_uuid) byUuid.set(r.session_uuid, r);
+        if (typeof r.session_row_id === 'number') byRowId.set(r.session_row_id, r);
     }
     const members = Array.isArray(layout.members) ? layout.members : [];
-    return members.map((m) => (m.session_uuid ? byUuid.get(m.session_uuid) : undefined)).filter((r): r is MemberRow => !!r);
+    const seen = new Set<MemberRow>();
+    const out: MemberRow[] = [];
+    for (const m of members) {
+        const hit = (m.session_uuid && byUuid.get(m.session_uuid))
+            || (typeof m.session_row_id === 'number' ? byRowId.get(m.session_row_id) : undefined);
+        if (hit && !seen.has(hit)) { seen.add(hit); out.push(hit); }
+    }
+    return out;
 }
 
 export function rows(allRows: unknown): LayoutRow[] {

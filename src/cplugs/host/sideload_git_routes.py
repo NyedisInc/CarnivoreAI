@@ -11,8 +11,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, StrictStr
 
 from src.api.auth import require_auth
+from src.models.catalog_api import InstallConsent
 from src.core.dev_tools import git_guard
-from src.cplugs.host import identity, sideload, sideload_git, sideload_routes
+from src.cplugs.host import identity, sideload, sideload_git, sideload_kind, sideload_routes
 from src.cplugs.host.owner_switch import _runtime as _sidecar_runtime
 
 logger = structlog.get_logger()
@@ -29,11 +30,12 @@ class GitBody(BaseModel):
     ref: Optional[StrictStr] = None
     subdir: Optional[StrictStr] = None
     name: Optional[StrictStr] = None
+    consent: Optional[InstallConsent] = None
 
 
 def _check_name(given: Optional[str]) -> None:
-    if given is not None and not identity.INSTALL_NAME.match(given):
-        raise sideload.SideloadRefused("name_invalid", f"an install name must match {identity.INSTALL_NAME.pattern}", 409)
+    if given is not None and not (identity.INSTALL_NAME.match(given) or sideload_kind.NAME_RE.match(given)):
+        raise sideload.SideloadRefused("name_invalid", "an install name is a plain file name", 409)
 
 
 def _fetch_blocking(state_dir: Path, url: str, ref: Optional[str], parts: tuple, given: Optional[str]) -> Dict[str, Any]:
@@ -78,7 +80,7 @@ async def post_sideload_git(body: GitBody, request: Request) -> Dict[str, Any]:
             logger.warning("cplug_sideload_git_checkout_failed", url=sideload_git.redacted(url), error_type=type(exc).__name__)
             raise HTTPException(status_code=500, detail={"code": "sideload_failed", "detail": "the checkout could not be written"}) from exc
         try:
-            answer = await sideload_routes.sync_folder(live, got["source"], got["name"])
+            answer = await sideload_routes.sync_folder(live, got["source"], got["name"], env=sideload_routes.env_of(request, state_dir), consent=body.consent)
         except BaseException:
             if got["fresh"]:
                 await asyncio.to_thread(shutil.rmtree, got["checkout"], True)

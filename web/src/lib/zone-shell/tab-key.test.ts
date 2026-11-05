@@ -8,7 +8,7 @@ import TabKey from './TabKey.svelte';
 import type { KeyFace } from './zone-types';
 
 let handle: ReturnType<typeof mount> | null = null;
-const face: KeyFace = { title: 'files', ariaLabel: 'open files', tip: 'files tip', label: 'files', icon: 'file', count: 4, chip: false, letter: '', tone: 'oc-cyan' };
+const face: KeyFace = { title: 'files', ariaLabel: 'open files', tip: 'files tip', label: 'files', icon: 'file', chip: false, letter: '', tone: 'oc-cyan' };
 const key = (): HTMLButtonElement => document.querySelector<HTMLButtonElement>('[data-zone-item]')!;
 
 function draw(props: Record<string, unknown>): void {
@@ -25,7 +25,7 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-test('an icon key wears the bar look, its words, its badge and its state', () => {
+test('an icon key wears the bar look, its words and its state', () => {
   draw({});
   expect(key().className).toContain('rail__key--open');
   expect(key().getAttribute('aria-label')).toBe('open files');
@@ -33,7 +33,6 @@ test('an icon key wears the bar look, its words, its badge and its state', () =>
   expect(key().getAttribute('aria-expanded')).toBe('true');
   expect(key().hasAttribute('aria-pressed')).toBe(false);
   expect(key().querySelector('[data-icon="file"]')).not.toBeNull();
-  expect(key().querySelector('[data-rail-badge]')!.textContent).toBe('4');
   expect(key().hasAttribute('tabindex')).toBe(false);
   expect(key().hasAttribute('role'), 'an icon key stays a plain button').toBe(false);
 });
@@ -42,7 +41,6 @@ test('pressed and selected states, a quiet key and a key that is not the Tab sto
   draw({ state: 'pressed', active: false, quiet: true, tabbable: false });
   expect(key().getAttribute('aria-pressed')).toBe('false');
   expect(key().hasAttribute('aria-expanded')).toBe(false);
-  expect(key().querySelector('[data-rail-badge]'), 'quiet draws no badge').toBeNull();
   expect(key().getAttribute('tabindex')).toBe('-1');
   unmount(handle!);
   draw({ state: 'selected' });

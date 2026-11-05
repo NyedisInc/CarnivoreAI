@@ -34,13 +34,13 @@
     "Untick \"show stats\" in the view menu to hide the counts and token bar under the tabs; hidden, it is not drawn and does not read the stats feed. On by default, kept separately for the desktop and the phone.",
     "Project, company, group and layout colors are drawn whenever one is set. Pick one from the heading's menu (swatches or any custom color).",
     "The pack section under browsers lists this computer first, then each paired one, as rows that look like the agent rows and follow the drawer's compact, cozy or detailed view: the computer icon, a red wolf on the alpha, a light summing up that computer's agents, the name, then cpu, ram and disk flush right (as percents, then small meters, and in detailed a second line with the model, cores, memory and the reserve in use); click a row to open pack. Its heading folds like the others. The pinned heading shows no status light, folded or not.",
-    "Drag a section heading (pinned, layouts, groups, companies, rogue agents, terminals, browsers, pack) to put the sections in any order; on a phone drag from the little icon at the heading's left, and the rest of the heading still scrolls. A focused heading moves one slot with alt plus the up or down arrow. Escape cancels a drag. The order is the same on every device, and a section added later joins at its usual place until you move it.",
+    "Drag a section heading (pinned, layouts, groups, companies, rogue agents, terminals, browsers, files, pack) to put the sections in any order; on a phone drag from the little icon at the heading's left, and the rest of the heading still scrolls. A focused heading moves one slot with alt plus the up or down arrow. Escape cancels a drag. The order is the same on every device, and a section added later joins at its usual place until you move it.",
     "Every group you made sits under one groups heading, built like layouts: click it to fold all the groups out of the way, and each group keeps its own fold, color and members. Drag a group's heading, or press alt plus the up or down arrow on it, to reorder the groups among themselves; drag the groups heading to move the whole block. While you drag a session row the groups heading stays open so every group is a drop target. Shift+click it to fold or open every group at once.",
     "The view menu (the three bars button) has show open sessions and show sleeping sessions, both ticked by default. Open lists your awake sessions and sleeping lists your asleep ones; they are independent, so untick one to hide that set, and with both unticked no awake or sleeping session shows. Show archived and show closed sessions are unticked by default. All are kept per device, so your phone can differ from your desktop.",
     "Right-click a project, company or group heading for the same menu its three dots open; every menu closes when you click away, and only one is open at a time.",
     "Terminals and browsers always have a heading; empty, each says no terminals open or no browsers open. An agent's own shell lists under terminals with its folder.",
-    "A group you made with no sessions in it is not drawn (it also hides when the view's filters leave it no row, such as sleeping members with sleeping hidden), and it returns the moment a session is in it. While you drag a row every group shows so you can drop into an empty one. The group itself stays saved.",
-    "The view menu's hide empty sections tick, off by default, also hides the terminals and browsers headings while they hold nothing; a drag still shows them.",
+    "A group you made with no sessions in it is drawn by default, so you can see it and file sessions into it. Tick hide empty sections in the view menu and it is not drawn (it also hides when the view's filters leave it no row, such as sleeping members with sleeping hidden); it returns the moment a session is in it. While you drag a row every group shows so you can drop into an empty one. The group itself stays saved.",
+    "The view menu's hide empty sections tick, off by default, hides the empty groups and the terminals and browsers headings while they hold nothing; a drag still shows them.",
     "Type in the search box and the list becomes two sections: AGENTS (every agent whose name, project or folder holds the text, asleep ones included even when show sleeping is off; a pinned agent is listed once, the match is in the accent, and each row offers open session and look around, with its three dots for the rest) and the top CONVERSATIONS (saved conversation hits, each with read around, go to session or resume, copy link and more). Under the box, similar terms from your saved conversations show from 2 letters: arrow down enters them, left and right move, enter takes one, escape goes back to the box. Enter opens the highlighted result. Starting a drag keeps the text.",
     "In the pack section, click a computer to switch it off: its agents and projects leave the list and its row dims with the name struck through; click it again to bring them back. Every computer starts on, and a phone keeps its own switches.",
     "Right-click a session row (or press shift+f10) and pick join the swarm to make it a swarm agent under its project agent, keeping its conversation: a warning says joining restarts it and stops what it is doing, and ok goes ahead; a project with no project agent first says so plainly, and ok creates the project agent. A member's row shows its little swarm character in place of the status light, in its swarm color, its animation telling its status (working, a question, waiting to be read, asleep and the rest); hover it for the status in words. Leave the swarm, in the same menu, makes it a plain session again.",
@@ -64,7 +64,8 @@
     1687,
     1785,
     1863,
-    2604
+    2604,
+    2778
   ],
   "keywords": [
     "sidebar",
@@ -110,7 +111,9 @@
     "web/src/lib/item-menu/menus/row-items.ts",
     "web/src/lib/item-menu/run/index.ts",
     "web/src/lib/item-menu/row-open.ts",
-    "src/core/ui_preferences/drawer.py",
+    "src/core/ui_preferences/drawer_arrangement.py",
+    "src/core/ui_preferences/drawer_row_icons.py",
+    "src/core/ui_preferences/drawer_zone.py",
     "src/core/sessions/agent_update.py",
     "src/core/sessions/agent_update_warn.py",
     "src/core/sessions/codex_update.py",
@@ -122,7 +125,7 @@
     "web/src/lib/sidebar-shell/section-drag.ts",
     "web/src/lib/drawer/section-order.ts"
   ],
-  "updated": "2026-10-28",
+  "updated": "2026-11-03",
   "where": [
     "The left panel, agents tab.",
     "Hide or show it with the panel button beside the logo.",

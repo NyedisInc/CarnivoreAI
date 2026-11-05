@@ -103,10 +103,9 @@ class ItemState(_Check):
     @field_validator("state")
     @classmethod
     def _state(cls, value: str) -> str:
-        state = rules.canonical_state(value)
-        if state not in rules.STATES:
+        if value not in rules.STATES:
             raise ValueError(f"state must be one of {', '.join(rules.STATES)}")
-        return str(state)
+        return value
 
 
 class SessionIdle(_Check):

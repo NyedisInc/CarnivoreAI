@@ -11,13 +11,13 @@ afterEach(() => {
     document.body.innerHTML = '';
 });
 
-test('embedded keys view has no inset bar or lone label, and still lists its sections', () => {
+test('embedded keys view has no inset end or lone label, a find-an-action search, and still lists its tree', () => {
     const target = document.createElement('div');
     document.body.append(target);
     handle = mount(SettingsScreenSection, { target, props: { kind: 'keys' } });
     flushSync();
     expect(target.querySelector('.oc-page__inset-end')).toBeNull();
-    expect(target.querySelector('.oc-page__bar')).toBeNull();
+    expect(target.querySelector('.oc-page__bar input[aria-label="find an action"]')).not.toBeNull();
     expect(target.textContent).not.toMatch(/\bkeys\b\s*$/);
-    expect(target.querySelectorAll('[data-keys-section]').length).toBeGreaterThan(0);
+    expect(target.querySelectorAll('[data-tree-branch]').length).toBeGreaterThan(0);
 });

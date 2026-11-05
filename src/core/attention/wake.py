@@ -8,7 +8,7 @@ from typing import Callable, Dict, Iterable, Mapping, Optional, Set
 
 import structlog
 
-from src.core import fs_event_index
+from src.core.attention import fs_event_index
 from src.core.attention.fs_trigger import FsTrigger
 from src.core.pipe_wakeup import PipeWaiter
 

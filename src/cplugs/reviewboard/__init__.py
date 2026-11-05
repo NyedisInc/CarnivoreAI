@@ -4,7 +4,7 @@ from typing import Any, Callable, Optional
 
 import structlog
 
-from src.cplugs.reviewboard import artifact_port, attachments_port, artifact_source, capabilities, mcp, mcp_attachments, mcp_live, mcp_scratch, migrate, pages_port, relink_port, root_port, routes
+from src.cplugs.reviewboard import artifact_port, attachments_port, artifact_source, capabilities, mcp, mcp_attachments, mcp_live, mcp_scratch, migrate, pages_port, public_port, relink_port, root_port, routes
 from src.cplugs.sdk import CplugDefinition, load_manifest, ports, with_capabilities
 
 logger = structlog.get_logger()
@@ -47,6 +47,7 @@ async def _start(ctx: Any) -> None:
     attachments_port.register(ctx)
     relink_port.register(ctx)
     pages_port.register()
+    public_port.register(ctx)
     artifact_port.register(ctx)
     _copy_when_task_manager_is_up(ctx)
 
@@ -57,6 +58,7 @@ async def _stop(ctx: Any) -> None:
     attachments_port.unregister()
     relink_port.unregister()
     pages_port.unregister()
+    public_port.unregister()
     artifact_port.unregister()
     if _unlisten is not None:
         _unlisten()

@@ -54,6 +54,8 @@
   }
 
   .oc-chip {
+    --_btn-h: 0px;
+    --_btn-lh: normal;
     padding: 2px 8px;
     border: 1px solid var(--oc-line-button);
     border-radius: var(--oc-radius-sm);
@@ -70,7 +72,7 @@
     color: var(--oc-orange);
   }
 
-  @media (max-width: 1023px) {
+  @media (pointer: coarse) {
     .oc-field,
     .oc-chip {
       min-height: var(--oc-tap, 44px);

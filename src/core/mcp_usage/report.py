@@ -40,7 +40,9 @@ def old_names_block(store: usage_store.UsageStore, first: date, today: date) -> 
         (kind, name): {"total": 0, "calls_7d": 0, "by_via": {}}
         for kind, names in sdk_old_names.declared().items() for name in names}
     for day, kind, name, via, calls in store.old_names_between(first.isoformat(), today.isoformat()):
-        row = per.setdefault((kind, name), {"total": 0, "calls_7d": 0, "by_via": {}})
+        row = per.get((kind, name))
+        if row is None:
+            continue
         row["total"] += calls
         row["calls_7d"] += calls if day >= recent_from else 0
         row["by_via"][via] = row["by_via"].get(via, 0) + calls

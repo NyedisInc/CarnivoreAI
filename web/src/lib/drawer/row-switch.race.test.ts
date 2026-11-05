@@ -26,7 +26,7 @@ function rowFor(name: string, id: string): HTMLElement {
     return el;
 }
 
-const ctrl = { listEl: null, _activeTmuxName: null, _pendingSelection: null, _lastSig: null, _closeAfterSwitch() {}, async _fetchAndRender() {} };
+const ctrl = { listEl: null, _activeTmuxName: null, _pendingSelection: null, _closeAfterSwitch() {}, async _fetchAndRender() {} };
 
 beforeEach(() => {
     entered = [];

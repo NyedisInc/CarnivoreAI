@@ -20,6 +20,7 @@
     onNotice?: (text: string) => void;
     extra?: ChatMenuExtra[];
     tabs?: Snippet;
+    lead?: Snippet;
     trail?: Snippet;
     onBarDown?: (event: PointerEvent) => void;
     framed?: boolean;
@@ -28,7 +29,7 @@
 
   let {
     agentId, agent, chat, waitingOnly = $bindable(false), waiting = 0, store, onOpenedTerminal, onNotice = () => {},
-    extra = [], tabs, trail, onBarDown, framed = false, titled = false,
+    extra = [], tabs, lead, trail, onBarDown, framed = false, titled = false,
   }: Props = $props();
 
   const name = $derived(agent?.display_name ?? '');
@@ -152,6 +153,7 @@
 <header class="hdc-bar" class:hdc-bar--framed={framed} class:hdc-bar--titled={titled} class:hdc-bar--drag={!!onBarDown}
         data-chat-bar onpointerdown={barDown} bind:this={bar} onkeydown={(event) => forwardMenuKey(event, hasMenu ? bar : null)}
         {...menuRightClick(agentMenu)}>
+  {@render lead?.()}
   {#if !titled}
     <span class="hdc-who-led" data-chat-bar-led={status ?? 'none'}>
       <SessionFace row={{ ...(row ?? {}), activity_status: status }} />

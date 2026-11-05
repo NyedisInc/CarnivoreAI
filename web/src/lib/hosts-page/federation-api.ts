@@ -1,7 +1,5 @@
 import { ApiError, authFetch } from '../../opscenter/api/auth.svelte';
 
-export const PEER_STATES = ['connecting', 'connected', 'disconnected', 'incompatible', 'unpaired', 'identity_changed'] as const;
-
 export interface PeerRow {
     readonly key: string;
     readonly label: string;

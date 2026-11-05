@@ -75,7 +75,7 @@ def _check_type(type_id: Any) -> str:
 
 def set_mute(store: SettingsDocStore, type_id: str, scope: str, muted: bool, *,
              device: Optional[str] = None, label: str = "", now: Optional[float] = None) -> Doc:
-    _check_type(type_id)
+    type_id = _check_type(types.canonical(type_id))
     if scope not in SCOPES:
         raise ValueError("unknown scope")
     if scope == SCOPE_HERE:

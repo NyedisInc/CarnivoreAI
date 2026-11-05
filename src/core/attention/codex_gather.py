@@ -9,7 +9,7 @@ from typing import Optional
 
 import structlog
 
-from src.core import fs_event_index
+from src.core.attention import fs_event_index
 from src.core.attention.codex_reader import (
     CodexEvidence,
     CodexRecordFacts,

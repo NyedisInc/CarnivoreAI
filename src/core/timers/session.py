@@ -76,7 +76,7 @@ def read_session_timers(
     index = read_timer_index(location.path)
     if index is None:
         return SessionTimers(state="unchecked",
-                             detail="the transcript could not be read", **base)
+                             detail="the transcript is still being read or could not be read", **base)
     rows, counts, upcoming = derive_timers(index, process, instant)
     if process.state == PROCESS_UNKNOWN and counts.unknown > 0:
         return SessionTimers(

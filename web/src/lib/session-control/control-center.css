@@ -17,7 +17,7 @@
 
   .scc[data-layout='columns'] {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     grid-template-rows: minmax(0, 1fr);
     overflow: hidden;
     box-shadow: none;
@@ -177,6 +177,14 @@
     padding: 6px 10px;
     background: color-mix(in oklab, var(--oc-coral) 8%, transparent);
     box-shadow: 0 1px 0 0 var(--oc-line-rule);
+  }
+
+  .scc .scc-confirm[data-scc-choice] {
+    background: var(--oc-ground-hover);
+  }
+
+  .scc .scc-num[data-lan='true'] {
+    color: var(--oc-amber);
   }
 
   .scc .scc-ask {

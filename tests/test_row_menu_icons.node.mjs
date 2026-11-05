@@ -23,6 +23,11 @@ function load(withBridge) {
     return context.SessionRowMenuIcons;
 }
 
+test('the fold item (fold everything inside, #1785) draws a non-empty svg', () => {
+    const drawn = load(true).svg('fold', 14);
+    assert.ok(/^<svg[\s\S]*<path/.test(drawn), 'the fold id drew no svg with a path');
+});
+
 test('the share item borrows the SHARED telescope, byte for byte', () => {
     const icons = load(true);
     const borrowed = icons.svg('share-read-only', 14);

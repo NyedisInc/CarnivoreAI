@@ -45,14 +45,14 @@ describe('pane facts', () => {
 
     store.hello({ resource_topics: ['pane_facts'] });
     await vi.advanceTimersByTimeAsync(0);
-    expect(count()).toBe(2);
+    expect(count()).toBe(2); // the resync read on hello
 
     await vi.advanceTimersByTimeAsync(20 * mod.PANE_FACTS_POLL_MS);
-    expect(count()).toBe(2);
+    expect(count()).toBe(2); // twenty polling periods, nothing timed
 
     store.frame({ topics: ['pane_facts:ses_2'] });
     await vi.advanceTimersByTimeAsync(0);
-    expect(count()).toBe(2);
+    expect(count()).toBe(2); // another session's frame is not ours
 
     store.frame({ topics: ['pane_facts:ses_1'] });
     await vi.advanceTimersByTimeAsync(0);

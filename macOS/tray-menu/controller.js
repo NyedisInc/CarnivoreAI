@@ -85,8 +85,15 @@ function createTrayMenu(deps) {
   banners = createBanners({ platform: process.platform, getApi: () => data.api(), Notification: electron.Notification,
     readPermission: () => notificationPermission.readState({ dir: electron.app.getPath('userData') }), t: (k, p) => t(k, p),
     isWindowFocused: () => !!(deps.appWindow && deps.appWindow.isFocused && deps.appWindow.isFocused()),
+    watchedSession: () => (deps.appWindow && typeof deps.appWindow.watchedSession === 'function' ? deps.appWindow.watchedSession() : ''),
     openApproval: (sessionId) => { if (deps.appWindow) deps.appWindow.openApproval(sessionId); },
-    isLocked: createScreenLock(electron.powerMonitor).isLocked });
+    isLocked: createScreenLock(electron.powerMonitor).isLocked,
+    requestPermission: async () => {
+      const dir = electron.app.getPath('userData');
+      notificationPermission.request({ dir, Notification: electron.Notification, t: (k, p) => t(k, p) });
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      await notificationPermission.probe({ dir, Notification: electron.Notification });
+    } });
   void banners.coldLaunch(bannerLaunch.take()).catch((error) => console.warn('[banners] cold launch failed:', error && error.message));
   if (typeof electron.app.on === 'function') electron.app.on('browser-window-blur', () => banners.onApprovals());
 

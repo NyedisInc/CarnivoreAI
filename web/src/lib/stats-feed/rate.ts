@@ -26,7 +26,7 @@ const SI_STEPS: readonly [number, string][] = [[1e12, 'viz.si_t'], [1e9, 'viz.si
 
 export function compact(value: number): string {
   const abs = Math.abs(value);
-  const digits = (n: number): string => new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(n);
+  const digits = (n: number): string => new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n);
   for (const [size, key] of SI_STEPS) if (abs >= size) return t(key, { value: digits(value / size) });
   return digits(value);
 }

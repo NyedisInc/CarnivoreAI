@@ -7,6 +7,7 @@ export type SectionId =
     | 'appearance'
     | 'sessions'
     | 'launch_profiles'
+    | 'features'
     | 'terminal'
     | 'notifications'
     | 'byoai'
@@ -17,7 +18,7 @@ export type SectionId =
     | 'keys'
     | 'advanced';
 
-export type ScreenKind = 'launch-profiles' | 'keys' | 'desktop';
+export type ScreenKind = 'launch-profiles' | 'keys' | 'desktop' | 'features';
 
 export interface SettingsSection {
     readonly id: SectionId;
@@ -30,6 +31,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
     { id: 'appearance', icon: 'palette' },
     { id: 'sessions', icon: 'session' },
     { id: 'launch_profiles', icon: 'rocket', screen: 'launch-profiles' },
+    { id: 'features', icon: 'plug', screen: 'features' },
     { id: 'terminal', icon: 'terminal-glyph' },
     { id: 'notifications', icon: 'bell' },
     { id: 'byoai', icon: 'spark' },
@@ -45,6 +47,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
 export type GroupId =
     | 'appearance.colors'
     | 'appearance.sidebar'
+    | 'appearance.rail'
     | 'appearance.status_bar'
     | 'appearance.control_center'
     | 'appearance.motion'
@@ -52,6 +55,7 @@ export type GroupId =
     | 'sessions.agents'
     | 'terminal.startup'
     | 'terminal.tui'
+    | 'terminal.text'
     | 'terminal.accessibility'
     | 'terminal.crosstalk_cards'
     | 'notifications.delivery'
@@ -67,6 +71,7 @@ export type GroupId =
     | 'account.privacy'
     | 'general.paths'
     | 'general.time'
+    | 'general.checkpoints'
     | 'general.updates'
     | 'remote.access'
     | 'remote.phone_link'
@@ -97,8 +102,14 @@ export type SettingControl =
     | { readonly kind: 'auto-sleep-unread' }
     | { readonly kind: 'auto-sleep-unread-minutes' }
     | { readonly kind: 'animations' }
+    | { readonly kind: 'quiet-watched' }
+    | { readonly kind: 'row-lights' }
+    | { readonly kind: 'rail-dock-names' }
+    | { readonly kind: 'rail-magnify' }
+    | { readonly kind: 'sidebar-section'; readonly section: 'open' | 'sleeping' }
     | { readonly kind: 'toast-mode' }
     | { readonly kind: 'screen-reader' }
+    | { readonly kind: 'terminal-font' }
     | { readonly kind: 'time-zone' }
     | { readonly kind: 'row-icons' }
     | { readonly kind: 'theme-picker' }
@@ -130,6 +141,7 @@ export type SettingControl =
     | { readonly kind: 'ai-calls' }
     | { readonly kind: 'pipeline-status' }
     | { readonly kind: 'deepsearch-scope' }
+    | { readonly kind: 'checkpoints-usage' }
     | { readonly kind: 'link'; readonly action: LinkAction };
 
 export interface SettingDef {
@@ -152,10 +164,15 @@ export const SETTINGS: readonly SettingDef[] = [
 
     { id: 'theme', section: 'appearance', group: 'appearance.colors', saves: 'instant', control: { kind: 'theme-picker' } },
     { id: 'row_icons', section: 'appearance', group: 'appearance.sidebar', saves: 'instant', control: { kind: 'row-icons' } },
+    { id: 'rail_magnify', section: 'appearance', group: 'appearance.rail', saves: 'instant', control: { kind: 'rail-magnify' } },
+    { id: 'rail_dock_names', section: 'appearance', group: 'appearance.rail', saves: 'instant', control: { kind: 'rail-dock-names' } },
+    { id: 'sidebar_show_open', section: 'appearance', group: 'appearance.sidebar', saves: 'instant', control: { kind: 'sidebar-section', section: 'open' } },
+    { id: 'sidebar_show_sleeping', section: 'appearance', group: 'appearance.sidebar', saves: 'instant', control: { kind: 'sidebar-section', section: 'sleeping' } },
     { id: 'foot_bar_layout', section: 'appearance', group: 'appearance.status_bar', saves: 'instant', control: { kind: 'foot-bar-layout', half: 'collapsed' } },
     { id: 'foot_bar_items', section: 'appearance', group: 'appearance.status_bar', saves: 'instant', control: { kind: 'foot-bar-items' } },
     { id: 'foot_bar_layout_open', section: 'appearance', group: 'appearance.control_center', saves: 'instant', control: { kind: 'foot-bar-layout', half: 'open' } },
     { id: 'animations', section: 'appearance', group: 'appearance.motion', saves: 'instant', control: { kind: 'animations' } },
+    { id: 'row_lights', section: 'appearance', group: 'appearance.motion', saves: 'instant', control: { kind: 'row-lights' } },
 
     { id: 'auto_sleep', section: 'sessions', group: 'sessions.auto_sleep', saves: 'instant', control: { kind: 'auto-sleep' }, info: true },
     { id: 'auto_sleep_minutes', section: 'sessions', group: 'sessions.auto_sleep', saves: 'batch', control: { kind: 'auto-sleep-minutes' }, parent: 'auto_sleep' },
@@ -169,6 +186,7 @@ export const SETTINGS: readonly SettingDef[] = [
     { id: 'default_shell', section: 'terminal', group: 'terminal.startup', saves: 'batch', control: { kind: 'text', field: ws('default_shell'), placeholder: '/bin/zsh' } },
     { id: 'environment', section: 'terminal', group: 'terminal.startup', saves: 'batch', control: { kind: 'env' } },
     { id: 'tui_cli', section: 'terminal', group: 'terminal.tui', saves: 'panel', control: { kind: 'tui-cli' } },
+    { id: 'terminal_font', section: 'terminal', group: 'terminal.text', saves: 'instant', control: { kind: 'terminal-font' } },
     { id: 'screen_reader', section: 'terminal', group: 'terminal.accessibility', saves: 'instant', control: { kind: 'screen-reader' } },
     { id: 'crosstalk_cards', section: 'terminal', group: 'terminal.crosstalk_cards', saves: 'instant', control: { kind: 'crosstalk-card', switch: 'enabled' } },
     { id: 'crosstalk_card_sender', section: 'terminal', group: 'terminal.crosstalk_cards', saves: 'instant', control: { kind: 'crosstalk-card', switch: 'senderCards' }, parent: 'crosstalk_cards' },
@@ -176,6 +194,7 @@ export const SETTINGS: readonly SettingDef[] = [
     { id: 'crosstalk_card_keep', section: 'terminal', group: 'terminal.crosstalk_cards', saves: 'instant', control: { kind: 'crosstalk-card', switch: 'keepCards' }, parent: 'crosstalk_cards' },
 
     { id: 'toast_style', section: 'notifications', group: 'notifications.delivery', saves: 'instant', control: { kind: 'toast-mode' } },
+    { id: 'quiet_watched', section: 'notifications', group: 'notifications.delivery', saves: 'instant', control: { kind: 'quiet-watched' } },
     { id: 'notification_destinations', section: 'notifications', group: 'notifications.channels', saves: 'panel', control: { kind: 'notify-destinations' } },
     { id: 'notification_link', section: 'notifications', group: 'notifications.routing', saves: 'panel', control: { kind: 'notify-link' } },
     { id: 'notification_matrix', section: 'notifications', group: 'notifications.routing', saves: 'panel', control: { kind: 'notify-matrix' } },
@@ -194,6 +213,7 @@ export const SETTINGS: readonly SettingDef[] = [
     { id: 'development_root', section: 'general', group: 'general.paths', saves: 'batch', control: { kind: 'text', field: ws('development_root'), placeholder: '~/Development' } },
     { id: 'default_editor', section: 'general', group: 'general.paths', saves: 'batch', control: { kind: 'text', field: ws('default_editor'), placeholder: 'code -w' } },
     { id: 'time_zone', section: 'general', group: 'general.time', saves: 'instant', control: { kind: 'time-zone' } },
+    { id: 'checkpoints_usage', section: 'general', group: 'general.checkpoints', saves: 'panel', control: { kind: 'checkpoints-usage' } },
 
     { id: 'app_updates', section: 'general', group: 'general.updates', saves: 'panel', control: { kind: 'app-update' } },
 
@@ -256,5 +276,5 @@ export function rowDomId(id: string): string {
 
 export function isWideControl(control: SettingControl): boolean {
     if (control.kind === 'stats-collection' && control.part === 'lifecycle') return false;
-    return !['text', 'secret', 'bind', 'theme-picker', 'custom-domain-remove', 'auto-sleep', 'auto-sleep-minutes', 'auto-sleep-unread', 'auto-sleep-unread-minutes', 'config-toggle', 'crosstalk-card', 'link'].includes(control.kind);
+    return !['text', 'secret', 'bind', 'theme-picker', 'custom-domain-remove', 'auto-sleep', 'auto-sleep-minutes', 'auto-sleep-unread', 'auto-sleep-unread-minutes', 'config-toggle', 'crosstalk-card', 'row-lights', 'rail-dock-names', 'rail-magnify', 'sidebar-section', 'link'].includes(control.kind);
 }

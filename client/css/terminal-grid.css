@@ -13,35 +13,35 @@
 }
 
 /* slide-out PUSHES the grid the bottom bar */
-#terminal-grid:has(> .oc-surface) {
+#terminal-grid.ps-grid-surface {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: minmax(0, 1fr);
     grid-auto-rows: auto;
 }
 
-#terminal-grid:has(> .oc-surface) > .oc-surface {
+#terminal-grid.ps-grid-surface > .oc-surface {
     grid-row: 1;
     grid-column: 1;
     min-width: 0;
 }
 
-#terminal-grid:has(> .oc-surface) > [data-session-rail][data-rail-edge="side"] {
+#terminal-grid.ps-grid-surface > [data-session-rail][data-rail-edge="side"] {
     grid-row: 1 / span 2;
     grid-column: 2;
 }
 
-#terminal-grid:has(> .oc-surface) > [data-session-rail][data-rail-edge="bottom"] {
+#terminal-grid.ps-grid-surface > [data-session-rail][data-rail-edge="bottom"] {
     grid-row: 2;
     grid-column: 1;
 }
 
-#terminal-grid:has(> .oc-surface) > :not(.oc-surface, [data-session-rail]) {
+#terminal-grid.ps-grid-surface > :not(.oc-surface, [data-session-rail]) {
     grid-row: 3;
     grid-column: 1 / -1;
 }
 
-#terminal-grid:has(> .oc-surface) > .terminal-container {
+#terminal-grid.ps-grid-surface > .terminal-container {
     display: none;
 }
 
@@ -67,11 +67,11 @@
     display: none;
 }
 
-body:has(#terminal-grid > .oc-surface) .header :is(
+body.ps-grid-surface .header :is(
     #configEditorBtn, #terminalSearchBtn, #headerSessionThemeBtn, #headerDetachBtn,
     #sessionNotesBtn
 ) { display: none; }
-#terminal-grid:has([data-oc-focus]) [data-cell^="terminal:"]:not([data-oc-focus]) .oc-frame-body {
+#terminal-grid.ps-grid-focus [data-cell^="terminal:"]:not([data-oc-focus]) .oc-frame-body {
     opacity: 0.88;
 }
 #terminal-grid [data-cell^="terminal:"] .terminal-container {
@@ -88,7 +88,7 @@ body:has(#terminal-grid > .oc-surface) .header :is(
 
 
 @media (min-width: 1024px) {
-    body:has(#terminal-grid > .oc-surface):has(.session-sidebar-panel--open) .header {
+    body.ps-grid-surface.ps-drawer-open .header {
         display: none;
     }
 }
@@ -106,7 +106,7 @@ body:has(#terminal-grid > .oc-surface) .header :is(
     pointer-events: none;
 }
 
-#terminal-grid:has(> .oc-surface) > #browser-screen {
+#terminal-grid.ps-grid-surface > #browser-screen {
     grid-row: 1 / 2;
     grid-column: 1 / 2;
 }

@@ -3,7 +3,7 @@ import { canOpen } from '../../opscenter/layout-editor/empty-space-menu.svelte';
 import { t } from '../i18n/index.svelte';
 import type { MenuNode } from '../drawer-tabs/add-component-menu';
 import { railMenuNodes } from '../widget-menu/rail-menu';
-import { barPinned, stripPinsOffered, toggleBarPin } from '../widget-bars/bar-pin-action';
+import { barPinned, railPinOffered, toggleBarPin } from '../widget-bars/bar-pin-action';
 import { railEntries } from './rail-model';
 import { declaredActionsFor } from '../../opscenter/widgets/menu/declared-actions.svelte';
 import { declaredGroups } from '../widget-menu/declared-nodes';
@@ -57,7 +57,7 @@ export function railNodesFor(keyId: string | null, onClose: () => void, declared
   const root = rootZone();
   const declared = keyId === SESSION_LIST_WIDGET ? declaredGroups(declaredActionsFor(root.headerIdOf({ key: SESSION_LIST_TAB, kind: 'panel' }))) : [];
   return railMenuNodes({
-    pin: keyId === null && stripPinsOffered() && !drawerClosed() ? { pinned: barPinned('rail'), toggle: () => void toggleBarPin('rail') } : null,
+    pin: keyId === null && railPinOffered() && !drawerClosed() ? { pinned: barPinned('rail'), toggle: () => void toggleBarPin('rail') } : null,
     declared: [...declared, ...declaredMore],
     editing: layoutEditor.active,
     toggleEdit: canOpen() ? () => void toggleLayoutEditor() : null,

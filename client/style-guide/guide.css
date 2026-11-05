@@ -43,8 +43,7 @@
     margin-left: auto;
 }
 
-.sg-theme-picker__label,
-.sg-label {
+.sg-theme-picker__label {
     font-size: var(--oc-fs-micro, 10px);
     letter-spacing: var(--oc-tracking-label, 0.6px);
     text-transform: uppercase;
@@ -705,48 +704,6 @@
     }
 }
 
-.sg-swarm-wrap {
-    overflow-x: auto;
-    padding-block: 0 40px;
-    --pk-kl: var(--oc-ground-panel);
-}
-
-.sg-swarm-board {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
-    gap: 0 32px;
-}
-
-.sg-swarm-row {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    min-height: 96px;
-    border-bottom: 1px solid var(--oc-line-faint);
-}
-
-.sg-swarm-name {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex: 1 1 120px;
-    min-width: 0;
-    font-size: 11px;
-}
-
-.sg-swarm-name span {
-    font-size: 10px;
-    color: var(--oc-text-dim);
-}
-
-.sg-swarm-cell {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    min-width: 72px;
-}
-
 .sg-ex-stage { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 16px; padding: 12px 0; }
 .sg-ex-now { display: flex; flex-direction: column; gap: 6px; font-size: 11px; min-width: 0; }
 .sg-ex-picker { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 0; border-top: 1px solid var(--oc-line-faint); }
@@ -906,25 +863,11 @@
     font-family: var(--font-mono);
 }
 
-.sg-anchored__body,
-.sg-anchored__foot {
+.sg-anchored__body {
     display: flex;
     flex-wrap: wrap;
     gap: var(--oc-space-2);
     padding: var(--oc-space-2) var(--oc-space-3);
-}
-
-.sg-anchored__foot {
-    justify-content: flex-end;
-    box-shadow: inset 0 1px 0 var(--oc-line-rule);
-}
-
-.sg-anchored__line {
-    margin: 0;
-    padding: var(--oc-space-3);
-    color: var(--oc-text-primary);
-    font-size: var(--oc-fs-label);
-    line-height: 1.45;
 }
 
 .sg-automations-demo .ap-page {

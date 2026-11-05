@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import platform
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,6 +13,7 @@ from src.core.notifications import contracts, engine as engine_mod, links, routi
 from src.core.notifications.destinations import migration, switch_origin, tick_backfill
 from src.core.notifications.destinations.service import NotificationService, get_service
 from src.core.notifications.kinds import apns, registry, webpush
+from src.core.notifications.settings_doc import aliases
 from src.core.notifications.sources import open_checks
 
 log = structlog.get_logger(__name__)
@@ -68,6 +70,7 @@ async def install(app_state: Any, manager: Any) -> Installed:
         installed.migration = await _run_migration(app_state, service)
         await switch_origin.backfill(service.docs, service.secrets)
         await tick_backfill.backfill_type_ticks(service.docs)
+        await asyncio.to_thread(aliases.fold_store, service.docs)
 
         async def link_base() -> str:
             return (await links.resolver.resolve(getattr(app_state, "phone_link", None))).base

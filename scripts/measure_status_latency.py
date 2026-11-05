@@ -46,6 +46,9 @@ from typing import Dict, List, Optional
 
 import websockets
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from scripts.lib.testsrv_client import access_token  # noqa: E402
+
 JWT_SUBPROTOCOL = "cloude.jwt.v1"
 CLAUDE_VERSION = "2.1.283"
 TRIAL_TIMEOUT_SECONDS = 15.0
@@ -72,9 +75,7 @@ def _iso(at: Optional[datetime] = None) -> str:
 
 
 def _token(auth_state: Path) -> str:
-    state = json.loads(auth_state.read_text())
-    items = state["origins"][0]["localStorage"]
-    return next(i["value"] for i in items if i["name"] == "claude_tunnel_token")
+    return access_token(auth_state)
 
 
 def _api(base: str, token: str, method: str, path: str, body: Optional[dict] = None) -> dict:

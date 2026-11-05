@@ -3,7 +3,7 @@ import { zoneItemKey, type ZoneItem } from '../drawer-zone/zone-model';
 import { placeInRail, railEnd, railStores } from '../session-rail/rail-store.svelte';
 import { RAIL_SPECS, type RailEdge } from '../session-rail/rail-model';
 import type { Translate } from '../sessions/types';
-import { barActionsFor, restorePlan, type BarAction } from './bar-placement';
+import { barActionsFor, other, restorePlan, type BarAction } from './bar-placement';
 import { bounded, contents, performContents, stillAt, type SaveResult } from './save-outcome';
 import { closeToast, showToast } from './undo-toast';
 
@@ -53,8 +53,8 @@ function undo(result: SaveResult, t: Translate): void {
     });
 }
 
-export function editBars(run: () => void, text: string, t: Translate, stillValid: () => boolean = () => true): void {
-    void contents.enqueue(async () => {
+export function editBars(run: () => void, text: string, t: Translate, stillValid: () => boolean = () => true): Promise<void> {
+    return contents.enqueue(async () => {
         if (!stillValid()) return;
         const result = await performContents(run);
         if (result.verdict === 'none') return;
@@ -73,7 +73,21 @@ export function editBars(run: () => void, text: string, t: Translate, stillValid
 }
 
 export function pressBar(action: BarAction, widget: string, name: string, t: Translate): void {
-    editBars(() => apply(action, widget), savedText(action, name, t), t, () =>
+    void editBars(() => apply(action, widget), savedText(action, name, t), t, () =>
         barActionsFor(widget, railStores.side.items, railStores.bottom.items).actions.some((one) => one.kind === action.kind && one.edge === action.edge),
     );
+}
+
+const holds = (edge: RailEdge, key: string): boolean => railStores[edge].items.some((item) => zoneItemKey(item) === key);
+
+export function moveKey(from: RailEdge, key: string, name: string, t: Translate): Promise<void> {
+    const to = other(from);
+    return editBars(() => {
+        const held = railStores[from].items.find((item) => zoneItemKey(item) === key);
+        if (held) placeInRail(to, held.widget, railEnd(to), held.target, held);
+    }, t('widgets.page.bars.moved', { widget: name, bar: barName(to, t) }), t, () => holds(from, key));
+}
+
+export function takeOutKey(from: RailEdge, key: string, name: string, t: Translate): Promise<void> {
+    return editBars(() => void railStores[from].remove(key), t('widgets.page.bars.taken_out', { widget: name, bar: barName(from, t) }), t, () => holds(from, key));
 }

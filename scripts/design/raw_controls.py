@@ -5,10 +5,14 @@ import re
 import sys
 from pathlib import Path
 
+from scripts.design.harness_paths import is_harness
+
 REPO = Path(__file__).resolve().parents[2]
 WEB_SRC = REPO / "web" / "src"
 BASELINE = REPO / "tests" / "fixtures" / "design_raw_controls_baseline.json"
 KINDS = ("buttons", "fields", "checkbox", "radio")
+EXEMPT_KIND = "exempt"
+BASELINE_KINDS = KINDS + (EXEMPT_KIND,)
 BASE_DIR = "web/src/lib/base/"
 NON_FIELD_INPUT_TYPES = frozenset({"range", "color", "file", "hidden", "image"})
 PICK_INPUT_TYPES = frozenset({"checkbox", "radio"})
@@ -94,7 +98,7 @@ def scan_text(text: str) -> tuple[dict[str, list[int]], list[tuple[int, str]]]:
 def is_scanned(rel: str) -> bool:
     name = rel.rsplit("/", 1)[-1]
     return (rel.endswith(".svelte") and not rel.startswith(BASE_DIR) and ".test." not in name
-            and "/__tests__/" not in rel and "node_modules" not in rel)
+            and "/__tests__/" not in rel and "node_modules" not in rel and not is_harness(rel))
 
 
 def scan_detail(root: Path = WEB_SRC, base: Path = REPO) -> tuple[dict[str, dict[str, list[int]]], dict[str, list[tuple[int, str]]]]:
@@ -118,8 +122,38 @@ def scan_detail(root: Path = WEB_SRC, base: Path = REPO) -> tuple[dict[str, dict
     return raw, exempt
 
 
+def counts(raw: dict[str, dict[str, list[int]]], exempt: dict[str, list[tuple[int, str]]]) -> dict[str, dict[str, int]]:
+    out: dict[str, dict[str, int]] = {rel: {k: len(v) for k, v in kinds.items()} for rel, kinds in raw.items()}
+    for rel, tags in exempt.items():
+        out.setdefault(rel, {})[EXEMPT_KIND] = len(tags)
+    return out
+
+
 def scan(root: Path = WEB_SRC, base: Path = REPO) -> dict[str, dict[str, int]]:
-    return {rel: {k: len(v) for k, v in kinds.items()} for rel, kinds in scan_detail(root, base)[0].items()}
+    return counts(*scan_detail(root, base))
+
+
+_CREATED_CONTROL = re.compile(r"""createElement\(\s*[`'"](button|input)[`'"]\s*[,)]""")
+
+
+def scan_created_controls(root: Path = WEB_SRC, base: Path = REPO) -> dict[str, int]:
+    if not root.is_dir():
+        raise ScanError(f"scan root {root} does not exist")
+    out: dict[str, int] = {}
+    seen = 0
+    for path in sorted(root.rglob("*.ts")):
+        rel = path.relative_to(base).as_posix()
+        name = rel.rsplit("/", 1)[-1]
+        if ".test." in name or "/__tests__/" in rel or "node_modules" in rel or name.endswith(".d.ts"):
+            continue
+        seen += 1
+        code = (ln for ln in path.read_text(encoding="utf-8").splitlines() if not ln.lstrip().startswith(("*", "//", "/*")))
+        count = sum(len(_CREATED_CONTROL.findall(ln)) for ln in code)
+        if count:
+            out[rel] = count
+    if not seen:
+        raise ScanError(f"no scannable .ts file under {root}")
+    return out
 
 
 def load_baseline(path: Path = BASELINE) -> dict[str, dict[str, int]]:
@@ -134,10 +168,10 @@ def compare(found: dict[str, dict[str, int]], baseline: dict[str, dict[str, int]
     grown: list[str] = []
     stale: list[str] = []
     for rel in sorted(set(found) | set(baseline)):
-        for kind in KINDS:
+        for kind in BASELINE_KINDS:
             have, allowed = found.get(rel, {}).get(kind, 0), baseline.get(rel, {}).get(kind, 0)
             if have > allowed:
-                where = f" (lines {', '.join(map(str, lines[rel][kind]))})" if lines and rel in lines else ""
+                where = f" (lines {', '.join(map(str, lines[rel][kind]))})" if lines and kind in lines.get(rel, {}) else ""
                 grown.append(f"{rel} {kind}: {have} > {allowed}{where}")
             elif have < allowed:
                 stale.append(f"{rel} {kind}: {have} < {allowed}")
@@ -145,11 +179,11 @@ def compare(found: dict[str, dict[str, int]], baseline: dict[str, dict[str, int]
 
 
 def totals(found: dict[str, dict[str, int]]) -> dict[str, int]:
-    return {k: sum(c.get(k, 0) for c in found.values()) for k in KINDS}
+    return {k: sum(c.get(k, 0) for c in found.values()) for k in BASELINE_KINDS}
 
 
 def write_baseline(found: dict[str, dict[str, int]], path: Path = BASELINE) -> None:
-    doc = {"about": "hand-written buttons and fields outside web/src/lib/base per web/src file; may only fall "
+    doc = {"about": "hand-written buttons and fields outside web/src/lib/base per web/src file, and named data-base-exempt tags; may only fall "
                     "(scripts/design/raw_controls.py, issue #2361)", "totals": totals(found), "files": found}
     path.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n", encoding="utf-8")
 
@@ -157,14 +191,14 @@ def write_baseline(found: dict[str, dict[str, int]], path: Path = BASELINE) -> N
 def main(argv: list[str]) -> int:
     try:
         raw, exempt = scan_detail(WEB_SRC, REPO)
-        found = {rel: {k: len(v) for k, v in kinds.items()} for rel, kinds in raw.items()}
+        found = counts(raw, exempt)
         if "--write" in argv:
             write_baseline(found)
         grown, stale = compare(found, load_baseline(), raw)
     except ScanError as exc:
         print(f"raw_controls: CANNOT SCAN - {exc}", file=sys.stderr)
         return 2
-    print(f"files with raw controls: {len(found)}; totals {totals(found)}; named exemptions {sum(map(len, exempt.values()))}")
+    print(f"files with raw controls or exemptions: {len(found)}; totals {totals(found)}")
     if "--lines" in argv:
         for rel, kinds in raw.items():
             for kind, nums in kinds.items():

@@ -101,7 +101,7 @@ export function dayChanged(day: { entries: FeedEntry[] }, info: Map<string, RunI
 }
 
 
-export const STATUS_OPTIONS = ['succeeded', 'failed', 'skipped', 'running', 'claimed', 'waiting_on_you'] as const;
+export const STATUS_OPTIONS = ['succeeded', 'failed', 'alerted', 'skipped', 'running', 'claimed', 'waiting_on_you'] as const;
 export const TRIGGER_OPTIONS = ['schedule', 'run_now', 'retry', 'catch_up'] as const;
 
 export interface Opt {

@@ -9,6 +9,12 @@ export function uploadFile(itemId: number, file: File): Promise<UploadedFile> {
   return authFetch<UploadedFile>(`/cplugs/huddle/items/${itemId}/files`, { method: 'POST', body: form });
 }
 
+export function stageFile(listKey: string, file: File): Promise<UploadedFile> {
+  const form = new FormData();
+  form.append('file', file, file.name);
+  return authFetch<UploadedFile>(`/cplugs/huddle/lists/${encodeURIComponent(listKey)}/inbox/files`, { method: 'POST', body: form });
+}
+
 const blobs = new Map<string, Promise<Blob>>();
 
 export function fetchFileBlob(itemId: number, fileId: string): Promise<Blob> {

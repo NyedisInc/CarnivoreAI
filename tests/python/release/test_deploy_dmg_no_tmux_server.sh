@@ -3,7 +3,7 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 SCRIPT="$ROOT/scripts/deploy-dmg.sh"
 FAILED=0
-FUNC_SRC=$(sed -n '/^list_cloude_sessions() {$/,/^}$/p' "$SCRIPT")
+FUNC_SRC=$(sed -n '/^list_cloude_sessions() {$/,/^}$/p' "$SCRIPT" "$(dirname "$SCRIPT")/lib/deploy-backup.sh")
 [ -n "$FUNC_SRC" ] || { echo "FAIL: cannot extract list_cloude_sessions"; exit 1; }
 
 run() {

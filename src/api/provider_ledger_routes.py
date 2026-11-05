@@ -16,7 +16,9 @@ from src.api.auth import require_auth
 from src.config import settings
 from src.config.provider_accounts import ProviderAccount, pointer_field_for, profile_dir_for
 from src.core import session_change_notice
-from src.core.provider_ledger import accounts_store, managed_profiles, poller, poller_scan
+from src.core.pack.relay import ledger_sync_view
+from src.core.provider_ledger import accounts_store, managed_profiles, poller, poller_scan, relay_accounts
+from src.core.provider_ledger.total import compute_total
 from src.api.enrollment_gate import is_local_request
 from src.core.provider_ledger.login_command import login_env_for, login_profile_dir
 from src.core.provider_ledger.login_guard import live_login_session
@@ -104,7 +106,14 @@ async def get_provider_ledger() -> LedgerSnapshot:
     live loop with old readings and a dead loop with the same readings
     need different actions from the person looking at them.
     """
-    return poller.snapshot()
+    snap = poller.snapshot()
+    relayed = await asyncio.to_thread(relay_accounts.all_relay_rows)
+    local = await asyncio.to_thread(ledger_sync_view.decorate_local, snap.accounts)
+    if not relayed:
+        return snap.model_copy(update={"accounts": local})
+    rows = [*local, *relayed]
+    keys = await asyncio.to_thread(ledger_sync_view.identity_keys, rows)
+    return snap.model_copy(update={"accounts": rows, "total": compute_total(rows, keys)})
 
 
 @router.get(
@@ -584,50 +593,54 @@ async def activate_provider_account(account_id: str, request: Request) -> Accoun
                 "detail": "switching is not available for this provider yet",
             },
         )
-    default = shared_links.is_default_profile(account.provider, profile_dir_for(account))
-    if not account.managed and not default:
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "code": "profile_not_managed",
-                "detail": "only an account this app logged in can be switched to",
-            },
+    if account.provider == "codex":
+        if not relay_accounts.is_codex_relay_account(account):
+            raise HTTPException(status_code=409, detail={"code": "provider_not_switchable", "detail": "only a relayed codex login can be switched to"})
+    else:
+        default = shared_links.is_default_profile(account.provider, profile_dir_for(account))
+        if not account.managed and not default:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "profile_not_managed",
+                    "detail": "only an account this app logged in can be switched to",
+                },
+            )
+        await asyncio.to_thread(profile_setup.converge, poller.snapshot().accounts, [account])
+        if not default and not await asyncio.to_thread(profile_setup.setup_done, account):
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "profile_needs_setup",
+                    "detail": (
+                        "claude's one-time setup is not done on this account yet, so a "
+                        "session moved onto it would open on the sign-in screen"
+                    ),
+                },
+            )
+        report = await asyncio.to_thread(
+            shared_links.ensure_shared_links,
+            profile_dir_for(account),
+            account.provider,
+            managed=account.managed,
         )
-    await asyncio.to_thread(profile_setup.converge, poller.snapshot().accounts, [account])
-    if not default and not await asyncio.to_thread(profile_setup.setup_done, account):
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "code": "profile_needs_setup",
-                "detail": (
-                    "claude's one-time setup is not done on this account yet, so a "
-                    "session moved onto it would open on the sign-in screen"
-                ),
-            },
-        )
-    report = await asyncio.to_thread(
-        shared_links.ensure_shared_links,
-        profile_dir_for(account),
-        account.provider,
-        managed=account.managed,
-    )
-    if not report.resume_safe:
-        logger.warning(
-            "provider_account_activate_refused",
-            account_id=account.id,
-            provider=account.provider,
-            required=report.entries.get(shared_links.REQUIRED_ENTRY[account.provider]),
-        )
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "code": "profile_not_shared",
-                "detail": (
-                    "this account's profile keeps its own conversation history, so "
-                    "a session moved onto it could not resume"
-                ),
-            },
-        )
+        if not report.resume_safe and not relay_accounts.is_relay_account(account):
+            logger.warning(
+                "provider_account_activate_refused",
+                account_id=account.id,
+                provider=account.provider,
+                required=report.entries.get(shared_links.REQUIRED_ENTRY[account.provider]),
+            )
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "profile_not_shared",
+                    "detail": (
+                        "this account's profile keeps its own conversation history, so "
+                        "a session moved onto it could not resume"
+                    ),
+                },
+            )
     previous = await asyncio.to_thread(
         effective_active, accounts, before, account.provider
     )

@@ -21,15 +21,18 @@ export interface BeastRules {
   always_asks: readonly string[];
 }
 
+const PROMPT_GATED_ROWS: readonly string[] = ['claude_permission', 'codex_approval'];
+
 export const TRUST_SCOPE_KEY = 'trustScope';
 
-export function gridMatrix(rules: BeastRules): SettingsMatrix {
+export function gridMatrix(rules: BeastRules, promptsIdle = false): SettingsMatrix {
   const rows: SettingsMatrixRow[] = rules.rows.map((row) => {
     const ask = rules.unconfirmed_rows.includes(row.id);
     return {
       labelKey: `beast.settings.row.${row.id}`,
       hintKey: `beast.settings.row.${row.id}_help`,
       fields: [row.cells.off, row.cells.on],
+      ...(promptsIdle && PROMPT_GATED_ROWS.includes(row.id) ? { noteKey: 'beast.settings.prompts_idle' } : {}),
       ...(ask ? { confirm: { [row.cells.off]: `beast.settings.confirm.${row.id}_off` } } : {}),
     };
   });

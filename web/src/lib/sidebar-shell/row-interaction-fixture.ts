@@ -3,11 +3,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { flushSync } from 'svelte';
 import { timerChip } from '../timers/timers';
+import { confirmPositional } from '../confirm-ok/confirm-ok';
+import { autoAnswerConfirm, type AutoAnswer } from '../../test-support/auto-answer';
 import { loadLegacyDrawer, paintDrawer, type LegacyWindow } from './legacy-fixture';
 import * as Clicks from '../drawer/clicks';
 import * as Density from '../drawer/density';
 import { watchKeepAwakeRepaint } from '../drawer/keep-awake-repaint';
-import { publishRunTable } from '../item-menu/run';
+import { runTable } from '../item-menu/run';
 import { rowMenuBridge } from '../item-menu/row-bridge';
 import { closeRowMenu, installRowMenuOpener } from '../item-menu/row-open';
 
@@ -24,6 +26,7 @@ export const ROW_PX = 24;
 let w: LegacyWindow;
 let list: HTMLElement;
 let events: Event[] = [];
+let confirmer: AutoAnswer | undefined;
 const kept: Record<string, boolean> = {};
 
 export function row(name: string, over: Record<string, unknown> = {}): Record<string, unknown> {
@@ -91,7 +94,7 @@ export function loadRowInteractions(sidebarShell: unknown): LegacyWindow {
     } finally {
         console.log = log;
     }
-    publishRunTable(globalThis as unknown as Record<string, unknown>);
+    Object.assign(globalThis, { SessionRowMenuActions: runTable });
     installRowMenuOpener();
     stubLayout();
     const g = globalThis as { CSS?: { escape?(v: string): string } };
@@ -99,7 +102,7 @@ export function loadRowInteractions(sidebarShell: unknown): LegacyWindow {
         g.CSS = { ...(g.CSS || {}), escape: (v: string) => String(v).replace(/["\\\]\[]/g, '\\$&') };
     }
     const ctrl: Record<string, any> = {
-        listEl: list, _rows: [], _listing: { ok: true }, _lastSig: null, _dragging: false,
+        listEl: list, rows() { return this._rows; }, _rows: [], _listing: { ok: true }, _dragging: false,
         _activeTmuxName: null, _pendingSelection: null,
         repaint() { paintDrawer(ctrl); },
         setDragging(on: boolean) {
@@ -107,7 +110,7 @@ export function loadRowInteractions(sidebarShell: unknown): LegacyWindow {
             ctrl._dragging = !!on;
             ctrl.repaint();
         },
-        async _fetchAndRender() { events.push(['refetch']); ctrl._lastSig = null; ctrl.repaint(); },
+        async _fetchAndRender() { events.push(['refetch']); ctrl.repaint(); },
         _closeAfterSwitch() { events.push(['close-after-switch']); },
         activateRow(rowEl: Element) { return Clicks.activateRow(ctrl as never, rowEl); },
         close() { events.push(['close']); },
@@ -127,7 +130,7 @@ export function loadRowInteractions(sidebarShell: unknown): LegacyWindow {
     };
     w.App = {
         returnToExistingTerminal: rec('app.returnToExistingTerminal', undefined),
-        showConfirmModal: rec('app.confirm', true),
+        showConfirmModal: confirmPositional,
     };
     w.SessionRestartPicker = { open: rec('restart-picker.open', null), lastError: () => null };
     w.CloudeWeb = {
@@ -150,6 +153,11 @@ export function loadRowInteractions(sidebarShell: unknown): LegacyWindow {
 }
 
 export function startRowRun(groups: unknown[] = []) {
+    confirmer?.stop();
+    confirmer = autoAnswerConfirm((a) => {
+        events.push(['app.confirm', a.title, a.message, a.details, a.okLabel, a.cancelLabel, a.variant === 'danger' ? 'danger' : 'primary']);
+        return true;
+    });
     w.SessionSidebarStore.save([], [], [], {}, {});
     w.SessionSidebarGroupStore.apply({ status: 'ok', groups });
     const live = document.getElementById('session-sidebar-live');
@@ -159,7 +167,6 @@ export function startRowRun(groups: unknown[] = []) {
     kept.cloude_c = true;
     const ctrl = w.SessionSidebar;
     ctrl._rows = startRows();
-    ctrl._lastSig = null;
     ctrl._activeTmuxName = null;
     ctrl._pendingSelection = null;
     ctrl.repaint();

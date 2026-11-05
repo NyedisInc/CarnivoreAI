@@ -8,7 +8,7 @@ from typing import Any
 
 import structlog
 
-from src.core.crosstalk import directory, store
+from src.core.crosstalk import directory, gone, store
 from src.core.mcp.caller import AgentCaller
 from src.core.mcp.common import ToolError
 
@@ -62,6 +62,8 @@ async def _wake_agent(app_state: Any, agent_id: int) -> None:
     except TimeoutError:
         raise WakePending(agent_id, task) from None
     except body.BodyError as exc:
+        if 'torn down' in str(exc):
+            raise ToolError(gone.gone_message(f'agent:{agent_id}')) from None
         raise ToolError(str(exc)) from None
 
 
@@ -141,6 +143,9 @@ async def identities(view: Any, caller: AgentCaller, to: str, *, asleep: str = '
     to = await _agent_handle(to, view.app.state if getattr(view, 'app', None) is not None else None)
     cards = await directory.list_cards(view, self_tmux=None if caller.external else caller.tmux_name, include_asleep=True)
     result = await directory.resolve_handle_async(to, cards)
+    unmatched = not result.matches or (not result.ambiguous and result.tier not in directory.EXACT_TIERS)
+    if unmatched and await asyncio.to_thread(gone.is_known_gone, to):
+        raise ToolError(gone.gone_message(to))
     if not result.matches:
         raise ToolError(f'no agent matches {to!r}')
     if result.ambiguous:

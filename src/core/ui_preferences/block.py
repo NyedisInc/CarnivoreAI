@@ -111,7 +111,7 @@ def _forget_absent_carried(typed: Dict[str, Any], normalised: Dict[str, Any]) ->
     value = normalised.get("drawer_arrangement")
     if isinstance(raw, dict) and isinstance(value, dict):
         for key in _CARRIED_DRAWER_KEYS:
-            if key not in raw:
+            if key not in raw or (key == "sections" and raw[key] and value.get(key) is None):
                 value.pop(key, None)
 
 

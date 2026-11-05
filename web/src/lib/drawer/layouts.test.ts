@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setDrawerEnv } from './env';
+import { autoAnswerConfirm, type AutoAnswer } from '../../test-support/auto-answer';
 import * as GroupStore from './group-store';
 import * as Model from './layouts-model';
 import { menuContext, rowParts } from './layouts-row-html';
@@ -16,6 +17,8 @@ const LAYOUTS = [
     { layout_uuid: 'L1', name: 'first', colour: 'indigo', gradient: null, animation: 'none', created_at: '2026-01-01T00:00:00Z', members: [] },
 ];
 
+let confirmer: AutoAnswer | null = null;
+
 function page(extra: Record<string, unknown> = {}, list = LAYOUTS) {
     const bridge = { list: () => list, rename: vi.fn(async () => ({})), delete: vi.fn(async () => {}), reorder: vi.fn(async () => ({})) };
     setDrawerEnv({ CloudeWeb: { layouts: bridge, rowMenu: { triggerHtml: (c: { name: string }) => `<i data-menu="${c.name}"></i>` } }, ...extra });
@@ -27,7 +30,7 @@ beforeEach(() => {
     const g = globalThis as { CSS?: { escape?(v: string): string } };
     if (!g.CSS || typeof g.CSS.escape !== 'function') g.CSS = { ...(g.CSS || {}), escape: (v: string) => String(v) };
 });
-afterEach(() => { setDrawerEnv(null); GroupStore.reset(); document.body.innerHTML = ''; });
+afterEach(() => { confirmer?.stop(); confirmer = null; setDrawerEnv(null); GroupStore.reset(); document.body.innerHTML = ''; });
 
 describe('rows and the band', () => {
     it('lists rows in the bridge order and resolves members by session_uuid, dropping the missing', () => {
@@ -97,12 +100,16 @@ describe('the row parts', () => {
 
 describe('menu items', () => {
     it('remove confirms, then deletes by the uuid in ctx.name (never ctx.layoutUuid)', async () => {
-        const bridge = page({ App: { showConfirmModal: vi.fn(async () => true) } });
+        const bridge = page();
+        confirmer = autoAnswerConfirm(true);
         await runMenuItem('close', { name: 'layout:L2', label: 'second' });
         expect(bridge.delete).toHaveBeenCalledWith('L2');
+        expect(confirmer.asked).toHaveLength(1);
+        expect(confirmer.asked[0]!.variant).toBe('danger');
     });
     it('a declined confirm deletes nothing', async () => {
-        const bridge = page({ App: { showConfirmModal: vi.fn(async () => false) } });
+        const bridge = page();
+        confirmer = autoAnswerConfirm(false);
         await runMenuItem('close', { name: 'layout:L2' });
         expect(bridge.delete).not.toHaveBeenCalled();
     });
@@ -225,7 +232,8 @@ describe('blueprint items and a failed remove', () => {
     it('a remove the bridge refuses is reported with an alert naming the reason', async () => {
         const alert = vi.spyOn(window, 'alert').mockImplementation(() => {});
         vi.spyOn(console, 'error').mockImplementation(() => {});
-        const bridge = page({ App: { showConfirmModal: vi.fn(async () => true) } });
+        const bridge = page();
+        confirmer = autoAnswerConfirm(true);
         bridge.delete.mockRejectedValueOnce(new Error('server said no'));
         await runMenuItem('close', { name: 'layout:L2', label: 'second' });
         expect(String(alert.mock.calls[0]?.[0])).toContain('server said no');

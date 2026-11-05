@@ -54,6 +54,7 @@ from pathlib import Path
 
 from scripts.widgets import defect_allow
 from scripts.widgets.catalog_meta import write_catalog_metadata
+from scripts.widgets.common import key_matches, key_slug, page_height
 from scripts.widgets.fit_report import merge_previous, write_reports
 from scripts.widgets.harness import (CHROMIUM_ARGS, REPO, HarnessError, Render, build_harness, catalog, defects, open_widget,
                                      serve, shoot, show)
@@ -99,7 +100,7 @@ def parse(argv: list[str]) -> argparse.Namespace:
 def selected(widgets: list[dict], only: list[str]) -> list[dict]:
     if not only:
         return widgets
-    return [w for w in widgets if any(w["key"] == o or (o.endswith(":") and w["key"].startswith(o)) for o in only)]
+    return [w for w in widgets if key_matches(w["key"], only)]
 
 
 def size_wanted(size: dict, sizes: str) -> bool:
@@ -123,7 +124,7 @@ def run_widget(page, base: str, widget: dict, options: RunOptions, themes: list[
             for size in widget["sizes"][zone]:
                 if not size_wanted(size, options.sizes):
                     continue
-                page.set_viewport_size({"width": size["viewport"], "height": 1100 if size["viewport"] > 500 else 844})
+                page.set_viewport_size({"width": size["viewport"], "height": page_height(size["viewport"])})
                 for theme in themes:
                     if first:
                         loaded = open_widget(page, base, widget["key"], fixture,
@@ -151,18 +152,18 @@ def write_catalog_images(browser, base: str, widgets: list[dict], theme: str) ->
         for size in widget["sizes"]["home"]:
             if size["name"].startswith(OFF_SIZE_PREFIX) or size.get("declared"):
                 continue
-            page.set_viewport_size({"width": size["viewport"], "height": 1100 if size["viewport"] > 500 else 844})
+            page.set_viewport_size({"width": size["viewport"], "height": page_height(size["viewport"])})
             if not loaded:
                 open_widget(page, base, widget["key"], "data", {"zone": "home", "size": size["name"], "theme": theme})
                 loaded = True
             if show(page, widget["key"], "data", "home", size["name"], theme).error:
                 continue
-            dest = shoot(page, CATALOG_MEDIA / widget["key"].replace(":", "--") / f"{size['name']}.png")
+            dest = shoot(page, CATALOG_MEDIA / key_slug(widget["key"]) / f"{size['name']}.png")
             if shutil.which("pngquant"):
                 subprocess.run(["pngquant", "--force", "--skip-if-larger", "--ext", ".png", "--strip", str(dest)],
                                capture_output=True, timeout=60)
             written += 1
-        write_catalog_metadata(CATALOG_MEDIA / widget["key"].replace(":", "--"), widget["key"], theme)
+        write_catalog_metadata(CATALOG_MEDIA / key_slug(widget["key"]), widget["key"], theme)
     page.close()
     return written
 

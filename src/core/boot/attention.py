@@ -124,11 +124,22 @@ def _start_listing_push(ctx: "BootContext", held: _Held) -> None:
     from src.core.static_asset_keys import client_build_key
     from src.core.tmux_control import changes as tmux_changes
 
+    from src.core.auto_sleep.pane_ports import PORT_WATCH
+    from src.core.session_git.pr_status import PR_WATCH
+    from src.cplugs.sdk import turn_events
+
     app = ctx.app
+    build_watch = ClientBuildWatch(client_build_key)
+
+    def after_pass() -> None:
+        build_watch.check()
+        PORT_WATCH.tick(listing_publisher.wake)
+        PR_WATCH.tick(listing_publisher.wake)
+
     listing_publisher = ListingPublisher(
         listing_collections(app.state), app.state.event_hub.publish,
         lambda: app.state.event_hub.client_count,
-        after_pass=ClientBuildWatch(client_build_key).check,
+        after_pass=after_pass,
         feed=tmux_changes.control_feed(
             ctx.session_manager.tmux_socket_name,
             lambda: not any(is_remote_backend(b) for b in ctx.session_manager._registry.backends.values())),
@@ -136,6 +147,7 @@ def _start_listing_push(ctx: "BootContext", held: _Held) -> None:
     app.state.event_hub.add_listener(listing_publisher.on_hub_publish)
     tmux_changes.add_listener(tmux_changes.wake_listener(listing_publisher.wake))
     app.state.listing_publisher = listing_publisher
+    turn_events.subscribe(lambda _sid: PORT_WATCH.invalidate())
     app.state.peer_listing_feed = PeerListingFeed(lambda: peer_view(app.state))
     app.state.event_hub.add_listener(app.state.peer_listing_feed.on_hub_publish)
     resource_push.add_topic_listener(resource_topics.AUTOMATIONS, listing_publisher.wake)

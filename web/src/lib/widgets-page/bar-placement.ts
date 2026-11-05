@@ -12,7 +12,7 @@ export type BarStatus = { kind: 'none' } | { kind: 'in'; edge: RailEdge } | { ki
 
 export type RailSnap = Record<RailEdge, RailLayout | null>;
 
-function other(edge: RailEdge): RailEdge {
+export function other(edge: RailEdge): RailEdge {
     return edge === 'side' ? 'bottom' : 'side';
 }
 

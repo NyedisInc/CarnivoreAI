@@ -1,0 +1,42 @@
+{
+  "api_routes": [
+    "GET /api/v1/worktrees",
+    "POST /api/v1/worktrees/cleanup"
+  ],
+  "area": "sessions",
+  "description": "Worktrees Carnivore made at launch can be removed from Carnivore. A session row working in one gets \"remove worktree...\" on its menu, and the Sessions page title strip gets \"clean up finished worktrees\" for every worktree that is merged into its base and has no uncommitted changes. Both read a plan first that changes nothing: the folder, the branch, merged or how many commits are not merged, pushed or not, the changed files, and the exact steps. Remove re-checks that plan and refuses if anything changed. It stops the agent, runs git worktree remove (never forced unless you tick remove anyway under the listed changed files), prunes, deletes the branch only when it is merged (or when you tick the second box), and archives the session rows and the child project. Worktrees made by hand, Swarm bodies and Pack carries are never offered. Automatic removal is off.",
+  "docs": [
+    "docs/DECISIONS.md"
+  ],
+  "examples": [
+    "clear out the worktrees of branches that already merged",
+    "remove one finished agent's worktree from its own menu"
+  ],
+  "how_to": [
+    "right-click a session working in a worktree Carnivore made and pick remove worktree...",
+    "or on the Sessions page click the branch icon, clean up finished worktrees",
+    "read the plan, tick the boxes you mean, and click remove"
+  ],
+  "id": "session-worktree-cleanup",
+  "issues": [
+    2727
+  ],
+  "keywords": [
+    "git",
+    "worktree",
+    "cleanup",
+    "remove",
+    "branch",
+    "merged"
+  ],
+  "media_exempt": "new dialog; screenshots are captured at the next version bump recapture",
+  "name": "worktree cleanup",
+  "since": "2026-10-30",
+  "status": "beta",
+  "summary": "remove worktrees Carnivore made, with a plan first; dirty trees and unmerged branches are kept unless you say so.",
+  "updated": "2026-10-30",
+  "where": [
+    "a session row's menu: remove worktree...",
+    "the Sessions page title strip: the branch icon"
+  ]
+}

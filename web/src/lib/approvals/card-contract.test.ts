@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { setLocale } from '../i18n/index.svelte';
 import {
-  ASK_REVIEW_QUESTION, MAX_FACTS, askReviewKey, beastWouldAnswer, cardContract, cardOptionTone, factText, foldKey, midCut, optionWords, say,
+  ASK_REVIEW_QUESTION, MAX_FACTS, askReviewKey, cardContract, cardOptionTone, factText, foldKey, midCut, optionWords, say,
   type CardContract, type ListingRowLike,
 } from './card-contract';
 import type { ApprovalItem } from './approvals-model';
@@ -28,7 +28,7 @@ const BASH: ApprovalItem = {
   family: 'claude', kind: 'permission', question: 'Do you want to proceed?', plain_yes: 'Yes', plain_no: 'No',
   summary: 'Bash command: rm -rf build && npm run build',
   body: ' Bash command\n\n   rm -rf build && npm run build\n\n Do you want to proceed?\n ❯ 1. Yes\n   2. No',
-  rows: [{ label: 'Yes', role: 'option' }, { label: 'No', role: 'option' }],
+  rows: [{ label: 'Yes', role: 'option' }, { label: 'No', role: 'option' }], beast_would_answer: true,
 };
 
 function facts(card: CardContract): Record<string, string> {
@@ -115,7 +115,7 @@ describe('a permission prompt', () => {
   });
 
   test('another tool names the tool; a prompt whose only yes is "Yes, and ..." waits for you', () => {
-    const card = cardContract({ ...BASH, plain_yes: null, summary: null, body: ' Web fetch request\n   https://example.com\n Do you want to allow?\n ❯ 1. Yes, and don\'t ask again\n   2. No' });
+    const card = cardContract({ ...BASH, plain_yes: null, beast_would_answer: false, summary: null, body: ' Web fetch request\n   https://example.com\n Do you want to allow?\n ❯ 1. Yes, and don\'t ask again\n   2. No' });
     expect(card.kind).toBe('permission');
     expect(say(card.headline)).toBe('nova wants permission to use web fetch request.');
     expect(facts(card).tool).toBe('web fetch request');
@@ -142,7 +142,7 @@ describe('a codex approval', () => {
       kind: 'codex_approval', question: 'Would you like to run the following command?', plain_yes: 'Yes, proceed',
       summary: 'command: pip install -r requirements.txt',
       body: 'Would you like to run the following command?\nEnvironment: local\nReason: needs network to download packages\n$ pip install -r requirements.txt\n1. Yes, proceed (y)\n2. No (esc)',
-      rows: [{ label: 'Yes, proceed (y)', role: 'option' }, { label: 'No (esc)', role: 'option' }],
+      rows: [{ label: 'Yes, proceed (y)', role: 'option' }, { label: 'No (esc)', role: 'option' }], beast_would_answer: true,
     });
     expect(card.kind).toBe('codex');
     expect(card.tone).toBe('codex');
@@ -248,12 +248,10 @@ describe('the rules every card shares', () => {
     expect(many.facts.find((f) => f.id === 'in_use')?.tone).toBe('warn');
   });
 
-  test('beast mode answers only a local plain yes that is no startup screen and no multi-question ask', () => {
-    expect(beastWouldAnswer(BASH)).toBe(true);
-    expect(beastWouldAnswer({ ...BASH, host: 'studio' })).toBe(false);
-    expect(beastWouldAnswer({ ...BASH, startup_kind: 'trust' })).toBe(false);
-    expect(beastWouldAnswer({ ...BASH, plain_yes: null })).toBe(false);
-    expect(beastWouldAnswer({ ...BASH, tabs: [{ title: 'a', answered: false }] })).toBe(false);
+  test('the beast chip follows the server field and an absent field shows none', () => {
+    expect(cardContract({ ...BASH, beast_would_answer: true }).chip).toBe('beast');
+    expect(cardContract({ ...BASH, beast_would_answer: false }).chip).toBe('none');
+    expect(cardContract({ ...BASH, beast_would_answer: undefined }).chip).toBe('none');
     expect(cardContract({ ...BASH, host: 'studio' }).host).toBe('studio');
   });
 

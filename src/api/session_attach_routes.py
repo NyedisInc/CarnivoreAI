@@ -250,6 +250,10 @@ async def respawn_session(request: Request, body: RespawnSessionRequest):
         account_id=body.account_id,
         account_pinned=body.account_pinned,
     )
+    if body.resume_after_restart and result.get("ok"):
+        from src.core.account_switch import resume_after_restart  # noqa: PLC0415
+
+        resume_after_restart.schedule(request.app.state, body.session_name)
     return RespawnSessionResponse(**result)
 
 

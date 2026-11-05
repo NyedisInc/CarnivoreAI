@@ -255,12 +255,6 @@
               "project"
             ],
             "control": "segmented"
-          },
-          "showBadge": {
-            "kind": "boolean",
-            "labelKey": "widgets.setting.alert_badge.show",
-            "hintKey": "widgets.setting.alert_badge.show.hint",
-            "default": true
           }
         },
         "groups": [
@@ -269,12 +263,6 @@
             "fields": [
               "showGlobalFolder",
               "topFolder"
-            ]
-          },
-          {
-            "labelKey": "widgets.setting.alert_badge.group",
-            "fields": [
-              "showBadge"
             ]
           }
         ]
@@ -333,25 +321,6 @@
         ],
         "anySize": true,
         "max_per_surface": 1
-      },
-      "settings": {
-        "version": 1,
-        "fields": {
-          "showBadge": {
-            "kind": "boolean",
-            "labelKey": "widgets.setting.alert_badge.show",
-            "hintKey": "widgets.setting.alert_badge.show.hint",
-            "default": true
-          }
-        },
-        "groups": [
-          {
-            "labelKey": "widgets.setting.alert_badge.group",
-            "fields": [
-              "showBadge"
-            ]
-          }
-        ]
       }
     },
     {
@@ -366,25 +335,6 @@
         ],
         "anySize": true,
         "max_per_surface": 1
-      },
-      "settings": {
-        "version": 1,
-        "fields": {
-          "showBadge": {
-            "kind": "boolean",
-            "labelKey": "widgets.setting.alert_badge.show",
-            "hintKey": "widgets.setting.alert_badge.show.hint",
-            "default": true
-          }
-        },
-        "groups": [
-          {
-            "labelKey": "widgets.setting.alert_badge.group",
-            "fields": [
-              "showBadge"
-            ]
-          }
-        ]
       }
     },
     {
@@ -399,25 +349,6 @@
         ],
         "anySize": true,
         "max_per_surface": 1
-      },
-      "settings": {
-        "version": 1,
-        "fields": {
-          "showBadge": {
-            "kind": "boolean",
-            "labelKey": "widgets.setting.alert_badge.show",
-            "hintKey": "widgets.setting.alert_badge.show.hint",
-            "default": true
-          }
-        },
-        "groups": [
-          {
-            "labelKey": "widgets.setting.alert_badge.group",
-            "fields": [
-              "showBadge"
-            ]
-          }
-        ]
       }
     },
     {
@@ -432,25 +363,6 @@
         ],
         "anySize": true,
         "max_per_surface": 1
-      },
-      "settings": {
-        "version": 1,
-        "fields": {
-          "showBadge": {
-            "kind": "boolean",
-            "labelKey": "widgets.setting.alert_badge.show",
-            "hintKey": "widgets.setting.alert_badge.show.hint",
-            "default": true
-          }
-        },
-        "groups": [
-          {
-            "labelKey": "widgets.setting.alert_badge.group",
-            "fields": [
-              "showBadge"
-            ]
-          }
-        ]
       }
     },
     {
@@ -465,25 +377,6 @@
         ],
         "anySize": true,
         "max_per_surface": 1
-      },
-      "settings": {
-        "version": 1,
-        "fields": {
-          "showBadge": {
-            "kind": "boolean",
-            "labelKey": "widgets.setting.alert_badge.show",
-            "hintKey": "widgets.setting.alert_badge.show.hint",
-            "default": true
-          }
-        },
-        "groups": [
-          {
-            "labelKey": "widgets.setting.alert_badge.group",
-            "fields": [
-              "showBadge"
-            ]
-          }
-        ]
       }
     },
     {
@@ -512,25 +405,6 @@
         ],
         "anySize": true,
         "max_per_surface": 1
-      },
-      "settings": {
-        "version": 1,
-        "fields": {
-          "showBadge": {
-            "kind": "boolean",
-            "labelKey": "widgets.setting.alert_badge.show",
-            "hintKey": "widgets.setting.alert_badge.show.hint",
-            "default": true
-          }
-        },
-        "groups": [
-          {
-            "labelKey": "widgets.setting.alert_badge.group",
-            "fields": [
-              "showBadge"
-            ]
-          }
-        ]
       }
     },
     {
@@ -545,25 +419,6 @@
         ],
         "anySize": true,
         "max_per_surface": 1
-      },
-      "settings": {
-        "version": 1,
-        "fields": {
-          "showBadge": {
-            "kind": "boolean",
-            "labelKey": "widgets.setting.alert_badge.show",
-            "hintKey": "widgets.setting.alert_badge.show.hint",
-            "default": true
-          }
-        },
-        "groups": [
-          {
-            "labelKey": "widgets.setting.alert_badge.group",
-            "fields": [
-              "showBadge"
-            ]
-          }
-        ]
       }
     },
     {
@@ -662,25 +517,6 @@
         ],
         "anySize": true,
         "max_per_surface": 1
-      },
-      "settings": {
-        "version": 1,
-        "fields": {
-          "showBadge": {
-            "kind": "boolean",
-            "labelKey": "widgets.setting.alert_badge.show",
-            "hintKey": "widgets.setting.alert_badge.show.hint",
-            "default": true
-          }
-        },
-        "groups": [
-          {
-            "labelKey": "widgets.setting.alert_badge.group",
-            "fields": [
-              "showBadge"
-            ]
-          }
-        ]
       }
     },
     {
@@ -722,25 +558,6 @@
         ],
         "anySize": true,
         "max_per_surface": 1
-      },
-      "settings": {
-        "version": 1,
-        "fields": {
-          "showBadge": {
-            "kind": "boolean",
-            "labelKey": "widgets.setting.alert_badge.show",
-            "hintKey": "widgets.setting.alert_badge.show.hint",
-            "default": true
-          }
-        },
-        "groups": [
-          {
-            "labelKey": "widgets.setting.alert_badge.group",
-            "fields": [
-              "showBadge"
-            ]
-          }
-        ]
       }
     },
     {
@@ -769,25 +586,6 @@
         ],
         "anySize": true,
         "max_per_surface": 1
-      },
-      "settings": {
-        "version": 1,
-        "fields": {
-          "showBadge": {
-            "kind": "boolean",
-            "labelKey": "widgets.setting.alert_badge.show",
-            "hintKey": "widgets.setting.alert_badge.show.hint",
-            "default": true
-          }
-        },
-        "groups": [
-          {
-            "labelKey": "widgets.setting.alert_badge.group",
-            "fields": [
-              "showBadge"
-            ]
-          }
-        ]
       }
     },
     {

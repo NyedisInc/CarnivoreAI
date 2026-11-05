@@ -4,25 +4,55 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, BinaryIO, Dict, Iterator, List, Optional, Tuple
 
 import structlog
 
+from src.core import message_model_secrets as secrets
 from src.core.message_model_secrets import scan_text
 from src.core.pack.transport import github_account, ladder
 
 logger = structlog.get_logger()
 
 _NAME_RE = re.compile(r"^[A-Za-z0-9._-]{1,100}$")
-MAX_SCAN_BYTES = 1024 * 1024
+MAX_LISTED_FILES = 20
+SCAN_CHUNK_BYTES = 1024 * 1024
+SCAN_OVERLAP_BYTES = 64 * 1024
+MAX_TOTAL_SCAN_BYTES = 256 * 1024 * 1024
+BUDGET_DETAIL = "the files total more than the scan limit; nothing was published"
+BINARY_PASS_DETECTORS = (
+    secrets.DETECTOR_GITHUB_TOKEN, secrets.DETECTOR_AWS_ACCESS_KEY_ID, secrets.DETECTOR_GOOGLE_API_KEY, secrets.DETECTOR_SLACK_TOKEN,
+    secrets.DETECTOR_PEM_PRIVATE_KEY, secrets.DETECTOR_ANTHROPIC_API_KEY, secrets.DETECTOR_OPENAI_API_KEY,
+    secrets.DETECTOR_CARNIVORE_API_KEY, secrets.DETECTOR_STRIPE_KEY, secrets.DETECTOR_HUGGINGFACE_TOKEN, secrets.DETECTOR_NPM_TOKEN,
+    secrets.DETECTOR_GITLAB_TOKEN, secrets.DETECTOR_SENDGRID_KEY, secrets.DETECTOR_SLACK_APP_TOKEN, secrets.DETECTOR_CATALOG_BOT_TOKEN,
+    secrets.DETECTOR_JWT,
+)
+BOUNDARY_KEPT_DETECTORS = frozenset((
+    secrets.DETECTOR_STRIPE_KEY, secrets.DETECTOR_OPENAI_API_KEY, secrets.DETECTOR_HUGGINGFACE_TOKEN, secrets.DETECTOR_NPM_TOKEN,
+    secrets.DETECTOR_SENDGRID_KEY, secrets.DETECTOR_SLACK_TOKEN, secrets.DETECTOR_SLACK_APP_TOKEN,
+))
 DEFAULT_GITIGNORE = "node_modules/\n.venv/\nvenv/\n__pycache__/\n.DS_Store\n.env\n.env.*\n"
 
 
 class PublishRefused(Exception):
 
-    def __init__(self, code: str, detail: str, files: Optional[List[str]] = None) -> None:
+    def __init__(self, code: str, detail: str, files: Optional[List[str]] = None, params: Optional[Dict[str, str]] = None) -> None:
         super().__init__(detail)
-        self.code, self.detail, self.files = code, detail, files or []
+        self.code, self.detail, self.files, self.params = code, detail, files or [], params or {}
+
+
+def budget_params() -> Dict[str, str]:
+    return {"limit": f"{MAX_TOTAL_SCAN_BYTES // (1024 * 1024)} MiB"}
+
+
+def fill_params(sentence: str, params: Dict[str, str]) -> str:
+    for key, value in params.items():
+        sentence = sentence.replace("{" + key + "}", value)
+    return sentence
+
+
+def listed_files(files: List[str]) -> Dict[str, Any]:
+    return {"files": files[:MAX_LISTED_FILES], "files_more": max(0, len(files) - MAX_LISTED_FILES)}
 
 
 def repo_name(display_name: str) -> str:
@@ -49,23 +79,100 @@ def _git(root: str, *args: str, env: Optional[Dict[str, str]] = None):
     return ladder.run(["git", "-C", root, *args], air_gap=False, env=env, timeout=300.0)
 
 
+class ScanBudgetExceeded(Exception):
+    pass
+
+
+def _windows(handle: BinaryIO, remaining: Optional[List[int]], limit: Optional[int] = None) -> Iterator[Tuple[bytes, bytes]]:
+    tail, consumed = b"", 0
+    while limit is None or consumed < limit:
+        chunk = handle.read(SCAN_CHUNK_BYTES if limit is None else min(SCAN_CHUNK_BYTES, limit - consumed))
+        if not chunk:
+            return
+        consumed += len(chunk)
+        if remaining is not None:
+            remaining[0] -= len(chunk)
+            if remaining[0] < 0:
+                raise ScanBudgetExceeded()
+        window = tail + chunk
+        yield window, chunk
+        tail = window[-SCAN_OVERLAP_BYTES:]
+
+
+def _glued_hit_counts(text: str, offset: int, length: int, detector: str) -> bool:
+    if detector not in BOUNDARY_KEPT_DETECTORS:
+        return True
+    before = text[offset - 1] if offset > 0 else ""
+    if not (before.isascii() and before.isalnum()):
+        return True
+    token = text[offset:offset + length]
+    return any(c.isdigit() for c in token) and any(c.islower() for c in token) and any(c.isupper() for c in token)
+
+
+def _binary_hits(window: bytes) -> bool:
+    for index, view in enumerate((window, window[0::2], window[1::2])):
+        text = view.decode("utf-8", "replace")
+        if any(_glued_hit_counts(text, f.offset, f.length, f.detector) for f in scan_text(text, BINARY_PASS_DETECTORS, trust_vendor_marker=True)):
+            return True
+        if index and scan_text(text):
+            return True
+    return False
+
+
+def _file_holds_secret(path: Path, remaining: List[int]) -> bool:
+    binary, consumed = False, 0
+    with path.open("rb") as handle:
+        for window, chunk in _windows(handle, remaining):
+            if scan_text(window.decode("utf-8", "replace")):
+                return True
+            if not binary and b"\0" in chunk:
+                binary = True
+                if consumed:
+                    with path.open("rb") as again:
+                        if any(_binary_hits(earlier) for earlier, _ in _windows(again, None, consumed)):
+                            return True
+            if binary and _binary_hits(window):
+                return True
+            consumed += len(chunk)
+    return False
+
+
+def _listed_sizes(root: str, listing: List[str]) -> List[Tuple[str, int]]:
+    out: List[Tuple[str, int]] = []
+    for rel in listing:
+        path = Path(root) / rel
+        try:
+            if path.is_symlink() or not path.is_file():
+                continue
+            out.append((rel, path.stat().st_size))
+        except OSError:
+            out.append((rel, 0))
+    return out
+
+
 def scan_for_secrets(root: str) -> List[str]:
     done = _git(root, "ls-files", "-co", "--exclude-standard", "-z")
     if done.returncode != 0:
         raise PublishRefused("scan_failed", "the files could not be listed to scan them; nothing was published")
+    sized = _listed_sizes(root, [rel for rel in done.stdout.decode("utf-8", "replace").split("\0") if rel])
+    if sum(size for _, size in sized) > MAX_TOTAL_SCAN_BYTES:
+        biggest = [rel for rel, _ in sorted(sized, key=lambda entry: entry[1], reverse=True)]
+        raise PublishRefused("scan_budget_exceeded", BUDGET_DETAIL, biggest, budget_params())
     flagged: List[str] = []
-    for rel in filter(None, done.stdout.decode("utf-8", "replace").split("\0")):
-        path = Path(root) / rel
+    unscannable: List[str] = []
+    remaining = [MAX_TOTAL_SCAN_BYTES]
+    for rel, _size in sized:
         try:
-            if not path.is_file() or path.is_symlink() or path.stat().st_size > MAX_SCAN_BYTES:
-                continue
-            raw = path.read_bytes()
+            if _file_holds_secret(Path(root) / rel, remaining):
+                flagged.append(rel)
+        except ScanBudgetExceeded:
+            raise PublishRefused("scan_budget_exceeded", BUDGET_DETAIL, [rel], budget_params()) from None
         except OSError:
-            raise PublishRefused("scan_failed", "a file could not be read to scan it; nothing was published") from None
-        if b"\0" in raw:
-            continue
-        if scan_text(raw.decode("utf-8", "replace")):
-            flagged.append(rel)
+            unscannable.append(rel)
+    if flagged:
+        return flagged
+    if unscannable:
+        raise PublishRefused("unscannable_files", "files that could not be opened to check for a credential; nothing was published", unscannable)
     return flagged
 
 

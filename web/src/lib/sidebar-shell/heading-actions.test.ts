@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import { autoAnswerConfirm, type AutoAnswer } from '../../test-support/auto-answer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const sleepHook = vi.hoisted(() => ({ release: (_name: string): void => {} }));
 vi.mock('../drawer/row-menu-sleep', async (orig) => ({
@@ -6,7 +7,7 @@ vi.mock('../drawer/row-menu-sleep', async (orig) => ({
 }));
 import * as GroupStore from '../drawer/group-store';
 import { deleteGroup } from './heading-group-actions';
-import { removeProject, sleepGroup, sleepProject } from './heading-project-actions';
+import { archiveProject, sleepGroup, sleepProject } from './heading-project-actions';
 
 type Win = Record<string, any>;
 const win = globalThis as unknown as Win;
@@ -23,14 +24,16 @@ const ROWS = () => [
 let calls: unknown[][];
 let spoken: string[];
 let reported: string[];
-let modal: unknown[][];
+let confirmer: AutoAnswer | undefined;
+const modal = (): unknown[][] => (confirmer?.asked ?? []).map((a) => [a.title, a.message, a.details, a.okLabel, a.cancelLabel, a.variant]);
 let confirmAnswer: boolean;
 
 function standUp(o: { failClose?: string; sleepRefuse?: string; deleteFails?: boolean } = {}): void {
-    win.SessionSidebar = { _rows: ROWS(), repaint: () => calls.push(['repaint']), _fetchAndRender: async () => { calls.push(['refresh']); } };
+    win.SessionSidebar = { rows() { return this._rows; }, _rows: ROWS(), repaint: () => calls.push(['repaint']), _fetchAndRender: async () => { calls.push(['refresh']); } };
     win.WriteFailureNotice = { report: (text: string) => reported.push(text) };
     sleepHook.release = (name) => { calls.push(['release', name]); };
-    win.App = { showConfirmModal: async (...args: unknown[]) => { modal.push(args); return confirmAnswer; } };
+    confirmer?.stop();
+    confirmer = autoAnswerConfirm(() => confirmAnswer);
     const reject = (name: string) => { if (o.failClose === name) throw new Error('tmux said no'); };
     win.API = {
         destroySession: async (id: string) => { calls.push(['destroySession', id]); reject(id === 'ses_a' ? 'c_a' : id); },
@@ -56,7 +59,6 @@ beforeEach(() => {
     calls = [];
     spoken = [];
     reported = [];
-    modal = [];
     confirmAnswer = true;
     document.body.innerHTML = '<div id="session-sidebar-live"></div>';
     GroupStore.apply({
@@ -66,8 +68,10 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    confirmer?.stop();
+    confirmer = undefined;
     GroupStore.reset();
-    for (const key of ['SessionSidebar', 'WriteFailureNotice', 'App', 'API']) delete win[key];
+    for (const key of ['SessionSidebar', 'WriteFailureNotice', 'API']) delete win[key];
     vi.restoreAllMocks();
 });
 
@@ -79,8 +83,8 @@ describe('removing a group', () => {
         const confirm = vi.spyOn(win, 'confirm' as never).mockImplementation((() => { throw new Error('window.confirm must never be called'); }) as never);
         await deleteGroup('g1');
         expect(confirm).not.toHaveBeenCalled();
-        expect(modal).toHaveLength(1);
-        const [title, message, detail, ok, cancel, variant] = modal[0] as string[];
+        expect(modal()).toHaveLength(1);
+        const [title, message, detail, ok, cancel, variant] = modal()[0] as string[];
         expect([title, message, ok, cancel, variant]).toEqual(['remove group', 'remove the group "Argent"?', 'remove', 'cancel', 'danger']);
         expect(detail).toMatch(/own project/);
         expect(detail).toMatch(/rogue agents/);
@@ -113,25 +117,25 @@ describe('removing a group', () => {
 });
 
 describe('project and group bulk actions', () => {
-    it('cancelling a project remove sends nothing', async () => {
+    it('cancelling a project archive sends nothing', async () => {
         standUp();
         confirmAnswer = false;
-        expect(await removeProject('p:3')).toBe(false);
-        expect(modal).toHaveLength(1);
-        expect(modal[0]![5]).toBe('danger');
+        expect(await archiveProject('p:3')).toBe(false);
+        expect(modal()).toHaveLength(1);
+        expect(modal()[0]![5]).toBe('danger');
         expect(writes()).toEqual([]);
     });
 
-    it('a confirmed remove closes every session by its own route, then archives', async () => {
+    it('a confirmed archive closes every session by its own route, then archives', async () => {
         standUp();
-        expect(await removeProject('p:3')).toBe(true);
+        expect(await archiveProject('p:3')).toBe(true);
         expect(writes()).toEqual([['destroySession', 'ses_a'], ['destroyExternal', 'c_b'], ['deleteRecord', 'uz'], ['archive', 'Api']]);
         expect(reported).toEqual([]);
     });
 
     it('one failed close keeps the project and says which session', async () => {
         standUp({ failClose: 'c_b' });
-        expect(await removeProject('p:3')).toBe(false);
+        expect(await archiveProject('p:3')).toBe(false);
         expect(calls.some((c) => c[0] === 'archive')).toBe(false);
         expect(reported).toHaveLength(1);
         expect(reported[0]).toContain('c_b: tmux said no');

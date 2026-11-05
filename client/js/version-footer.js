@@ -21,6 +21,8 @@ console.log('[VersionFooter Module] Loading...');
 
     let cachedVersion = null;
 
+    let cachedDev = '';
+
     function esc(value) {
         return String(value == null ? '' : value)
             .replace(/&/g, '&amp;')
@@ -36,11 +38,22 @@ console.log('[VersionFooter Module] Loading...');
         try {
             const meta = document.querySelector(`meta[name="${META_NAME}"]`);
             content = meta ? (meta.getAttribute('content') || '').trim() : '';
+            cachedDev = meta ? (meta.getAttribute('data-dev-build') || '').trim() : '';
         } catch (_) {
             content = '';
         }
         cachedVersion = content;
         return cachedVersion;
+    }
+
+    function readDevBuild() {
+        readVersionText();
+        return cachedDev;
+    }
+
+    function devSuffix() {
+        const dev = readDevBuild();
+        return dev ? ' ' + dev : '';
     }
 
     function resetCache() {
@@ -49,7 +62,7 @@ console.log('[VersionFooter Module] Loading...');
 
     function versionSpanHtml(extraClass) {
         const resolved = readVersionText();
-        const text = resolved || UNKNOWN_TEXT;
+        const text = (resolved || UNKNOWN_TEXT) + devSuffix();
         const cls = extraClass ? `version ${extraClass}` : 'version';
         return `<span class="${cls}">${esc(text)}</span>`;
     }
@@ -65,7 +78,7 @@ console.log('[VersionFooter Module] Loading...');
         const short = resolved ? shortVersion(resolved) : null;
         const span = !short || (short.text === resolved && !short.preview)
             ? versionSpanHtml()
-            : `<span class="version">${esc(short.text)}`
+            : `<span class="version">${esc(short.text + devSuffix())}`
                 + (short.preview ? `<span class="version-footer__preview">${PREVIEW_TEXT}</span>` : '')
                 + '</span>';
         if (!resolved) return `<div class="version-footer">${span}</div>`;
@@ -82,6 +95,7 @@ console.log('[VersionFooter Module] Loading...');
         PREVIEW_TEXT,
         shortVersion,
         readVersionText,
+        readDevBuild,
         resetCache,
         versionSpanHtml,
         sidebarFooterHtml,

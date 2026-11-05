@@ -160,8 +160,7 @@ console.log('[ConfigEditorModal Module] Loading...');
     }
 
     function buildInPlaceShell(host, rootId, relPath, projectPath, onFiles, subtitle) {
-        const t = (key) => (window.CloudeI18n && typeof window.CloudeI18n.t === 'function'
-            ? window.CloudeI18n.t(key) : key);
+        const t = (key) => globalThis.CloudeTr(key);
         const filesBtn = typeof onFiles === 'function'
             ? '<button type="button" class="config-editor-modal-back" id="config-editor-modal-back" ' +
               `aria-label="${esc(t('files.editor.files_label'))}" title="${esc(t('files.editor.files_label'))}">` +
@@ -345,7 +344,7 @@ console.log('[ConfigEditorModal Module] Loading...');
             } catch (err) {
                 errorEl.hidden = false;
                 errorEl.classList.remove('config-editor-success');
-                errorEl.textContent = `invalid json - not saved: ${err.message}`;
+                errorEl.textContent = globalThis.CloudeTr('config_editor.invalid_json', { detail: err.message });
                 return;
             }
         }
@@ -394,7 +393,7 @@ console.log('[ConfigEditorModal Module] Loading...');
         } catch (err) {
             errorEl.hidden = false;
             errorEl.classList.remove('config-editor-success');
-            errorEl.textContent = `save failed: ${err.message || err}`;
+            errorEl.textContent = globalThis.CloudeTr('config_editor.save_failed', { detail: err.message || err });
         }
     }
 

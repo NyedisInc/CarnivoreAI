@@ -15,10 +15,10 @@
     "desktop",
     "lifecycle"
   ],
-  "summary": "Carnivore runs as a regular Mac app in the Dock: closing the window leaves it running, the Dock icon shows how many sessions wait on you, a Dock menu starts new work, and a full menu bar (File, Edit, View, Session, Window, Help) acts on the session in view.",
+  "summary": "Carnivore runs as a regular Mac app in the Dock: closing the window leaves it running, the Dock icon shows how many sessions wait on you, a Dock menu starts new work, and a full menu bar (File, Edit, View, Go, Session, Window, Help) acts on the session in view.",
   "where": [
     "The Dock icon and its right-click menu while the desktop app runs.",
-    "The Mac menu bar at the top of the screen: Carnivore, File, Edit, View, Session, Window, Help."
+    "The Mac menu bar at the top of the screen: Carnivore, File, Edit, View, Go, Session, Window, Help."
   ],
   "how_to": [
     "Click the Dock icon to bring the window back where you left it; closing the window does not quit the app or stop the engine.",

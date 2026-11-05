@@ -85,7 +85,7 @@ def _to_info(raw: Mapping[str, Any], shadow: shadow_rows.Shadow, peer: "peer_hos
     return info.model_copy(update={
         "session": session, "host_key": peer.key, "host_label": peer.label, "host_state": HOST_STATE_UP,
         "session_row_id": shadow.session_id, "parent_session_id": None, "project_id": shadow.project_id,
-        "project_name": shadow.project_name, "local_servers": [], "origin_install_id": peer.peer_install_id,
+        "project_name": shadow.project_name, "origin_install_id": peer.peer_install_id,
         "session_uuid": shadow_rows.shadow_uuid(peer.peer_install_id, str(raw.get("session_uuid")))})
 
 

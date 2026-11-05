@@ -91,28 +91,18 @@ def call(manager, name, args, caller=CALLER, raw=False):
     return (False, text) if result.get("isError") else (True, json.loads(text))
 
 
-def test_the_mcp_tool_is_declared_and_is_the_same_write(client, setup):
+def test_the_mcp_tool_is_removed_and_the_route_stays(client, setup):
     manifest = json.loads((Path(service.__file__).parent / "cplug.json").read_text())
-    assert "huddle_focus" in manifest["surfaces"]["mcp_tools"] and "focus" in manifest["surfaces"]["topics"]
-    spec = next(d for d in tools.tool_definitions() if d["name"] == "huddle_focus")
-    assert set(spec["inputSchema"]["properties"]) == {"list", "items", "open", "clear", "marker", "cross_project"}
-    read_only = {d["name"] for d in tools.tool_definitions(AgentCaller("x", "x", "x", "tok", "read"))}
-    assert "huddle_focus" not in read_only
+    assert "huddle_focus" not in manifest["surfaces"]["mcp_tools"] and "focus" in manifest["surfaces"]["topics"]
+    assert "huddle_focus" not in {d["name"] for d in tools.tool_definitions()}
+    assert not tools.has_tool("huddle_focus")
 
     a, b = add(client, "12", "need your call"), add(client, "12", "waiting on you")
-    ok, body = call(setup.manager, "huddle_focus", {"list": "mine", "items": [a, b], "open": a})
-    assert ok and body["focus"]["items"] == [a, b] and body["focus"]["open"] == a
-    assert client.get(FOCUS).json()["focus"]["items"] == [a, b]
-    ok, text = call(setup.manager, "huddle_focus", {"list": "12", "items": [add(client, "all", "shared")]})
-    assert not ok and "task_manager_not_found" in text
+    assert client.post(FOCUS, json={"list": "12", "items": [a, b], "open": a}).json()["focus"]["items"] == [a, b]
+    assert client.get(FOCUS).json()["focus"]["open"] == a
+    assert client.post(FOCUS, json={"list": "12", "items": [add(client, "all", "shared")]}).status_code == 404
     shared = add(client, "all", "shared two")
-    ok, body = call(setup.manager, "huddle_focus", {"list": "all", "items": [a, shared], "open": shared})
-    assert ok and body["focus"]["items"] == [a, shared] and body["focus"]["list"] == "all"
-    ok, agg = call(setup.manager, "task_manager_tasks_list", {"aggregate": True})
-    flags = {i["id"]: i["unread"] for g in agg["groups"] for i in g["items"]}
-    assert flags[a] and flags[shared]
-    ok, text = call(setup.manager, "huddle_focus", {"list": "12", "items": [a], "approve": True})
-    assert not ok and "unknown argument" in text
-    ok, body = call(setup.manager, "huddle_focus", {"clear": True})
-    assert ok and body["focus"] is None
+    body = client.post(FOCUS, json={"list": "all", "items": [a, shared], "open": shared}).json()
+    assert body["focus"]["items"] == [a, shared] and body["focus"]["list"] == "all"
+    assert client.post(FOCUS, json={"clear": True}).json()["focus"] is None
     assert client.get(FOCUS).json() == {"focus": None}

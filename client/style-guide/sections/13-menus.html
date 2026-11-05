@@ -1,6 +1,6 @@
 <h2 class="sg-h2">menus and popups</h2>
 <p class="sg-lead">Every floating menu is one look (<code>.popup-focus</code>) and, in compiled code, one driver
-(<code>CascadeMenu.svelte</code>). Menus hold actions only: no hint text, no decorative dividers, no explanations. The one addition is a LOCKED action: an item that needs a carnivore account while signed out keeps its place with a dim label, a star in <code>--oc-yellow-bright</code> and a small trailing "sign in" (<code>.acm-locked</code> in the cascade, <code>.session-row-menu__item--locked</code> in the row menu). It stays clickable, never aria-disabled: a click opens the sign in modal and then runs the action.</p>
+(<code>CascadeMenu.svelte</code>). Menus hold actions only: no hint text, no decorative dividers, no explanations. The one addition is a LOCKED action: an item that needs a carnivore account while signed out keeps its place with a dim label, a star in <code>--oc-yellow-bright</code> and a small trailing "sign in" (<code>.acm-locked</code>). It stays clickable, never aria-disabled: a click opens the sign in modal and then runs the action.</p>
 
 <h3 class="sg-h3" id="menus-cascade">the cascade menu, and the "+" tab menu</h3>
 <div class="sg-specimen">
@@ -69,6 +69,11 @@
                     <span class="session-row-menu__icon" aria-hidden="true" data-sg-row-icon="close"></span>
                     <span class="session-row-menu__label">kill session</span>
                     <span class="session-row-menu__key" aria-hidden="true">k</span>
+                </button>
+                <button type="button" class="session-row-menu__item" role="menuitem" tabindex="0">
+                    <span class="session-row-menu__icon" aria-hidden="true" data-sg-row-icon="fold"></span>
+                    <span class="session-row-menu__label">fold everything inside</span>
+                    <span class="session-row-menu__key" aria-hidden="true">f</span>
                 </button>
                 <button type="button" class="session-row-menu__item" role="menuitem" tabindex="0" aria-disabled="true" data-tooltip="close the session first" data-sg-disabled-item>
                     <span class="session-row-menu__icon" aria-hidden="true" data-sg-row-icon="restart"></span>
@@ -162,6 +167,11 @@
         quiet secondary cancel and the coral danger answer, both the base <code>Button</code> at the small size. Focus starts on cancel,
         Escape or a press outside answers no, focus goes back to the key. Never an inline strip with its own
         <code>role="alertdialog"</code>.</dd>
+    <dt>a join request</dt>
+    <dd><code>PackKnock.svelte</code> (#2799) is the centered alertdialog on this frame (<code>placement="manual"</code>, a dim <code>--oc-backdrop</code>
+        scrim under it): a title-row strip with one accent label, the knocking computer named as text with its short id and address, the code large
+        in six mono cells (display only), the time left, then the danger "not me" and the quiet "hide". Opened by the <code>pack_knocks</code> push,
+        closed by the next read that no longer lists the knock.</dd>
     <dt>placement</dt>
     <dd><code>placement="below"</code> (the default) puts it under the anchor, flips it above when the room below is short,
         clamps it to the window and makes it a full-width sheet at phone width, through

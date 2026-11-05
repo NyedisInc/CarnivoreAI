@@ -69,9 +69,6 @@ TABLE: Mapping[str, Tuple[str, str]] = {
                                  "another task names them. The owner or the attaching agent only."),
     "task_manager_wait_update": ("task_manager.tasks.wait.update",
                                  "End a waiting task's wait as cleared or failed (with a reason); the task goes back to open."),
-    "huddle_focus": ("task_manager.tasks.focus",
-                     "Deprecated: highlight tasks and open one in the owner's views. Use the marker argument of "
-                     "task_manager_update instead."),
     "task_manager_leads_list": ("task_manager.leads.list",
                                 "Preview the lead retrofit per project: which lead session would become the Swarm project or "
                                 "company agent, or why it is skipped. Read only."),

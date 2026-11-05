@@ -52,12 +52,13 @@ describe('the registry', () => {
         }
     });
 
-    test('twelve sections, most reached-for first; launch profiles and keyboard shortcuts live inside (Alex (Example-owner), 2026-10-03 and 2026-10-13); pack and plugins are not sections', () => {
+    test('thirteen sections, most reached-for first; launch profiles, features and keyboard shortcuts are whole screens (Alex (Example-owner), 2026-10-03 and 2026-10-13; Joe (ccsliinc), 2026-10-30, #2723); pack is not a section', () => {
         expect(SETTINGS_SECTIONS.map((s) => s.id)).toEqual([
             'account',
             'appearance',
             'sessions',
             'launch_profiles',
+            'features',
             'terminal',
             'notifications',
             'byoai',
@@ -69,6 +70,7 @@ describe('the registry', () => {
         ]);
         expect(SETTINGS_SECTIONS.filter((s) => s.screen).map((s) => [s.id, s.screen])).toEqual([
             ['launch_profiles', 'launch-profiles'],
+            ['features', 'features'],
             ['keys', 'keys'],
         ]);
     });

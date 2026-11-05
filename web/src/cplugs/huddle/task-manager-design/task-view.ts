@@ -19,7 +19,7 @@ export function newMessageIds(item: Pick<HuddleItem, 'unread' | 'thread'>): numb
   item.thread.forEach((m, at) => {
     if (m.author === 'joe' && !isComment(m) && m.id > 0) line = at;
   });
-  return item.thread.slice(line + 1).filter((m) => m.author === 'claude' && m.id > 0 && !isSystemLine(m)).map((m) => m.id);
+  return item.thread.slice(line + 1).filter((m) => m.author === 'claude' && m.id > 0 && m.unread !== false && !isSystemLine(m)).map((m) => m.id);
 }
 
 export function titleOf(item: Pick<HuddleItem, 'title' | 'text'>): string {

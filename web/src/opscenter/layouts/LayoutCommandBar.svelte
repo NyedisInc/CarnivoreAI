@@ -5,6 +5,7 @@
     import CascadeMenu from '../../lib/drawer-tabs/CascadeMenu.svelte';
     import type { MenuNode } from '../../lib/drawer-tabs/add-component-menu';
     import { t } from '../../lib/i18n/index.svelte';
+    import { confirmOk } from '../../lib/confirm-ok/confirm-ok';
     import { uiPrefs } from '../../lib/ui/prefs.svelte';
     import { layoutActive, layoutMode } from './mode.svelte';
     import { broadcastLine, layoutError, type LayoutMember } from './api';
@@ -16,14 +17,13 @@
     import LayoutTabs from './LayoutTabs.svelte';
 
     function confirmBusy(names: string[]): Promise<boolean> {
-        const app = (globalThis as { App?: { showConfirmModal?: (
-            title: string, message: string, details: string | null, primary: string, secondary: string,
-        ) => Promise<boolean> } }).App;
-        if (typeof app?.showConfirmModal !== 'function') return Promise.resolve(true);
-        return app.showConfirmModal(
-            t('layout.bar.busy.title'), t('layout.bar.busy.message', { names: names.join(', ') }),
-            t('layout.bar.busy.detail'), t('layout.bar.busy.confirm'), t('layout.bar.busy.cancel'),
-        );
+        return confirmOk({
+            title: t('layout.bar.busy.title'),
+            message: t('layout.bar.busy.message', { names: names.join(', ') }),
+            details: t('layout.bar.busy.detail'),
+            okLabel: t('layout.bar.busy.confirm'),
+            cancelLabel: t('layout.bar.busy.cancel'),
+        });
     }
 
     const bar = new CommandBar({
@@ -243,8 +243,8 @@
           z-index: 5;
           min-height: 28px;
           padding: 0 var(--oc-space-1) 0 var(--oc-space-0-5);
-          --_bd: var(--oc-line-panel);
-          --oc-focus-keep: 92%;
+          /* The focus edge lifts FROM */
+          --_bd: var(--oc-focus-quiet);
           border: 1px solid var(--oc-line-panel);
           border-radius: 3px;
           background: var(--oc-ground-raised);

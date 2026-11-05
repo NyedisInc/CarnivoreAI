@@ -5,7 +5,7 @@ export interface DesktopLogin {
     background: boolean | null;
 }
 
-export type NotificationState = 'allowed' | 'not_asked' | 'denied' | 'unknown';
+export type NotificationState = 'allowed' | 'not_asked' | 'denied' | 'unknown' | 'blocked';
 
 export interface DesktopHotkey {
     registered: boolean | null;

@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+from src.core.mcp import tools
 from tests.python.cplugs.huddle.test_task_manager_focus import FOCUS, add, call, client, setup  # noqa: F401
 
 LIST = "/api/v1/cplugs/huddle/lists/12"
@@ -49,15 +50,11 @@ def test_claude_writes_mark_unread_and_seen_clears_it_everywhere(client, setup):
     assert row(client, added["id"])["unread"] is False
 
 
-def test_claude_focus_marks_unread_the_owners_focus_does_not(client, setup):
-    a, b, c = add(client, "12", "one"), add(client, "12", "two"), add(client, "12", "three")
-    assert client.post(FOCUS, json={"list": "12", "items": [a]}).status_code == 200
-    assert row(client, a)["unread"] is False
-    setup.published.clear()
-    ok, _ = call(setup.manager, "huddle_focus", {"list": "12", "items": [b], "open": c})
-    assert ok
-    assert [row(client, i)["unread"] for i in (a, b, c)] == [False, True, True]
-    assert "cplug.huddle.list:12" in setup.published and "cplug.huddle.focus" in setup.published
+def test_the_owners_focus_marks_nothing_unread_and_the_claude_focus_tool_is_gone(client, setup):
+    a, b = add(client, "12", "one"), add(client, "12", "two")
+    assert client.post(FOCUS, json={"list": "12", "items": [a, b], "open": b}).status_code == 200
+    assert [row(client, i)["unread"] for i in (a, b)] == [False, False]
+    assert not tools.has_tool("huddle_focus")
 
 
 def test_claude_reads_unread_in_list_and_changes(client, setup):

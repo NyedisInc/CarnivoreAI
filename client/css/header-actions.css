@@ -1,12 +1,12 @@
 
 
-body:has(.session-sidebar-panel--open) #header-icon {
+body.ps-drawer-open #header-icon {
     visibility: hidden;
     pointer-events: none;
 }
 
 @media (min-width: 701px) {
-    body:has(.session-sidebar-panel--open) #session-sidebar-toggle {
+    body.ps-drawer-open #session-sidebar-toggle {
         visibility: hidden;
         pointer-events: none;
     }
@@ -47,6 +47,6 @@ body:has(.session-sidebar-panel--open) #header-icon {
     display: none;
 }
 
-body:has(.bscreen) .header :is(#configEditorBtn, #headerSizeMasterBtn) {
+body.ps-browser-screen .header :is(#configEditorBtn, #headerSizeMasterBtn) {
     display: none;
 }

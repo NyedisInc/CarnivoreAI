@@ -57,7 +57,7 @@
         <Mark status={last.status} size={10} />
         <span class:ap-num={!live}>{live ? statusWord(last.status) : clock.rel(runTime(last), data.now)}</span>
       </span>
-      {#if last.status === 'failed' || last.status === 'skipped'}<span class="ap-sub">{statusWord(last.status)}</span>{/if}
+      {#if last.status === 'failed' || last.status === 'alerted' || last.status === 'skipped'}<span class="ap-sub">{statusWord(last.status)}</span>{/if}
     {/if}
   </span>
   <span class="ap-c-strip" role="gridcell"><RunStrip runs={automation.recent ?? []} {current} /></span>

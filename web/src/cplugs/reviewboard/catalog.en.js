@@ -9,7 +9,7 @@ export default {
     'cplug.reviewboard.page.title': 'review',
     'cplug.reviewboard.page.loading': 'loading the board',
     'cplug.reviewboard.page.not_found': 'no such board in the boards folder.',
-    'cplug.reviewboard.page.no_root': 'the review board has no usable boards folder. set it on the plugins page.',
+    'cplug.reviewboard.page.no_root': 'the review board has no usable boards folder. set it in settings, under features.',
     'cplug.reviewboard.page.failed': 'the board could not be loaded.',
     'cplug.reviewboard.page.invalid': 'this board does not validate, so it is not shown. run the scanner to see why.',
     'cplug.reviewboard.page.newer': 'this board was made by a newer carnivore and is read only here.',

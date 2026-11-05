@@ -1,4 +1,4 @@
-import { mount, unmount } from 'svelte';
+import { mountInto } from '../mount';
 import CascadeMenu from '../drawer-tabs/CascadeMenu.svelte';
 import { buildBlueprintChildren } from '../../opscenter/shell/tab-menu';
 import { t } from '../i18n/index.svelte';
@@ -28,13 +28,10 @@ export async function openBlueprintPicker(anchor: HTMLElement): Promise<void> {
 
     const host = document.createElement('div');
     document.body.appendChild(host);
-    let instance: Record<string, unknown> | null = null;
+    let stop: (() => void) | null = null;
     const close = (): void => {
-        if (instance) unmount(instance, { outro: false });
+        stop?.();
         if (host.parentNode) host.parentNode.removeChild(host);
     };
-    instance = mount(CascadeMenu, {
-        target: host,
-        props: { root, anchor, label: t('blueprint.title'), onClose: close },
-    }) as Record<string, unknown>;
+    stop = mountInto(host, CascadeMenu, { root, anchor, label: t('blueprint.title'), onClose: close });
 }

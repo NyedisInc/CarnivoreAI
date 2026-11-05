@@ -7,6 +7,10 @@
     import { cardSettings, followSettings, setCardSwitch } from '../../crosstalk/terminal-cards/prefs.svelte';
     import { saveAnimations } from '../../motion/animations-pref';
     import { animationsState, refreshAnimations } from '../../motion/animations-state.svelte';
+    import { rowLights, saveRowLights, startRowLights } from '../../motion/row-lights.svelte';
+    import { railDockNames, saveRailDockNames, startRailDockNames } from '../../sidebar-widgets/rail-dock-names.svelte';
+    import { quietWatched, refreshQuietWatched, saveQuietWatched } from '../../notifications/quiet-watched.svelte';
+    import { sectionShown, setSectionShown } from '../../drawer/section-visibility.svelte';
     import { settingsDoc } from '../settings-doc.svelte';
     import { settingKey, type SettingDef } from '../settings-registry';
 
@@ -26,10 +30,17 @@
         if (c.kind === 'auto-sleep') return !!autoSleep.data?.enabled;
         if (c.kind === 'auto-sleep-unread') return autoSleep.data?.unread_blocks_sleep ?? false;
         if (c.kind === 'animations') return animationsState.on;
+        if (c.kind === 'quiet-watched') return quietWatched.on;
+        if (c.kind === 'row-lights') return rowLights.on;
+        if (c.kind === 'rail-dock-names') return railDockNames.on;
+        if (c.kind === 'sidebar-section') return sectionShown(c.section === 'open' ? 'open' : 'sleeping');
         if (c.kind === 'crosstalk-card') return cardSettings[c.switch];
         return false;
     });
     followSettings();
+    refreshQuietWatched();
+    startRowLights();
+    startRailDockNames();
     const busy = $derived(settingsDoc.status[def.id]?.state === 'saving');
     const ready = $derived(def.control.kind !== 'config-toggle' || settingsDoc.summary !== null);
 
@@ -45,6 +56,18 @@
         } else if (c.kind === 'crosstalk-card') {
             const which = c.switch;
             void settingsDoc.track(def.id, async () => (await setCardSwitch(which, next)));
+        } else if (c.kind === 'quiet-watched') {
+            void settingsDoc.track(def.id, async () => await saveQuietWatched(next));
+        } else if (c.kind === 'row-lights') {
+            void settingsDoc.track(def.id, async () => await saveRowLights(next));
+        } else if (c.kind === 'rail-dock-names') {
+            void settingsDoc.track(def.id, async () => await saveRailDockNames(next));
+        } else if (c.kind === 'sidebar-section') {
+            const section = c.section;
+            void settingsDoc.track(def.id, async () => {
+                setSectionShown(section, next);
+                return null;
+            });
         } else if (c.kind === 'animations') {
             void settingsDoc.track(def.id, async () => {
                 const why = await saveAnimations(next);

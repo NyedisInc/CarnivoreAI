@@ -49,15 +49,18 @@ def test_a_manifest_that_carries_a_lane_keeps_it(tmp_path: Path):
     assert sql(target, "SELECT lane FROM work_items")[0]["lane"] == "task_manager"
 
 
-def test_the_export_speaks_the_retired_names_and_a_new_build_reads_them_back(tmp_path: Path):
+def test_the_export_speaks_the_current_names_and_the_import_still_reads_the_retired_ones(tmp_path: Path):
     source, target = machine(tmp_path, "a"), machine(tmp_path, "b")
     for n, (state, note) in enumerate((("done", "read me"), ("done", ""), ("review", ""), ("waiting", ""), ("todo", ""), ("open", ""))):
         sql(source, ITEM_INSERT, ("16", f"item {n}", note, n, state))
     exported = task_manager_side.export_list(source, "16")
-    assert [i["state"] for i in exported["items"]] == ["approved_with_note", "approved", "done_by_claude", "waiting_install", "back_burner", "open"]
-    assert sql(source, "SELECT state FROM work_items ORDER BY id")[0]["state"] == "done"
+    assert [i["state"] for i in exported["items"]] == ["done", "done", "review", "waiting", "todo", "open"]
     task_manager_side.import_list(target, "4", json.loads(json.dumps(exported)), {})
     assert [r["state"] for r in sql(target, "SELECT state FROM work_items ORDER BY id")] == ["done", "done", "review", "waiting", "todo", "open"]
+    older = {"items": [old_item(i + 1, state=s) for i, s in enumerate(("approved_with_note", "approved", "done_by_claude", "waiting_install", "back_burner"))],
+             "messages": [], "groups": []}
+    task_manager_side.import_list(target, "5", older, {})
+    assert [r["state"] for r in sql(target, "SELECT state FROM work_items WHERE list_key = '5' ORDER BY id")] == ["done", "done", "review", "waiting", "todo"]
 
 
 def test_lineage_blockers_and_the_original_ask_travel_with_the_items_and_undo_removes_them(tmp_path: Path):

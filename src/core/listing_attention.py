@@ -210,6 +210,7 @@ def resolve_row_status_live(
     working_dir: Optional[str],
     now: datetime,
     restarted_at: Optional[datetime] = None,
+    socket: Optional[str] = None,
 ) -> Tuple[str, str, Optional[str]]:
     uuid, row_cwd = conversation_for_instance(index, tmux_name, epoch)
     is_codex = family == FAMILY_CODEX
@@ -224,14 +225,12 @@ def resolve_row_status_live(
     )
     codex = None
     if is_codex:
-        from src.core.attention.codex_gather import (
-            DEFAULT_CODEX_HOME,
-            gather_codex_evidence,
-        )
+        from src.core.attention.codex_gather import gather_codex_evidence
+        from src.core.attention.codex_pane_home import pane_codex_home
         from src.core.attention.codex_reader import CodexEvidence
 
         codex = gather_codex_evidence(
-            uuid, codex_home=DEFAULT_CODEX_HOME, now=now
+            uuid, codex_home=pane_codex_home(socket, tmux_name), now=now
         ) or CodexEvidence()
     return resolve_row_status(
         registry=registry,

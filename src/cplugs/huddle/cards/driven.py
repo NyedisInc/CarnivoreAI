@@ -128,9 +128,6 @@ def delete(store: Any, card_id: int, args: Mapping[str, Any], by: str) -> Dict[s
     with closing(store._read_connection()) as conn:
         if reads.one(conn, card_id) is None:
             raise CardRefused("not_a_card", "that item is not a card")
-        lane_of = conn.execute("SELECT lane FROM work_items WHERE id = ?", (card_id,)).fetchone()
-    if by != "owner" and lane.is_task_manager(lane_of):
-        raise CardRefused("refused", "the swarm never deletes a task manager task; only the owner does")
     store.delete(card_id, actor=JOE, reason=str(args.get("reason") or ""))
     return {"card": None, "effects": [], "data": {}}
 

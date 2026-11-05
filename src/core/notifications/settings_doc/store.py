@@ -11,6 +11,7 @@ import structlog
 
 from src.core import config_writer, resource_push
 from src.core.notifications import doc_model, types
+from src.core.notifications.settings_doc import aliases
 from src.core.resource_push import topics
 
 log = structlog.get_logger(__name__)
@@ -85,7 +86,7 @@ class SettingsDocStore:
             if not isinstance(me, str) or not me:
                 me = "n_" + _secrets.token_hex(8)
                 doc = doc_model.set_local(doc, INSTALL_ID_KEY, me)
-            doc = _seed_defaults(doc, me)
+            doc = aliases.fold(_seed_defaults(doc, me), me, self._clock())
             new = mutate(doc, me)
             if new is None:
                 return None

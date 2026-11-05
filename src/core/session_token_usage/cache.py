@@ -219,6 +219,9 @@ class IncrementalCache:
             signature=signature,
         )
         with self._lock:
+            held = self._entries.get(path)
+            if held is not None and held.head == head and offset < held.offset:
+                return
             self._entries[path] = entry
             self._entries.move_to_end(path)
             self._mark(path, entry)

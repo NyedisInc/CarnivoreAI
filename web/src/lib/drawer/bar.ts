@@ -1,5 +1,4 @@
 /* the account chip */
-import { flushSync } from 'svelte';
 import { drawerEnv } from './env';
 import { mountPanel, unmountPanel } from '../mount';
 import { toggleAccountMenu } from '../drawer-hud/account-menu.svelte';
@@ -16,6 +15,7 @@ interface BarGlobals {
         UNKNOWN_TEXT: string;
         PREVIEW_TEXT: string;
         readVersionText(): string;
+        readDevBuild?(): string;
         shortVersion(full: string): { text: string; preview: boolean };
     };
     CloudeWeb?: {
@@ -107,7 +107,8 @@ function versionView(): VersionView | null {
     const resolved = footer.readVersionText();
     if (!resolved) return { text: footer.UNKNOWN_TEXT, preview: false, previewText: footer.PREVIEW_TEXT, href: null };
     const short = footer.shortVersion(resolved);
-    return { text: short.text, preview: short.preview, previewText: footer.PREVIEW_TEXT, href: footer.RELEASE_NOTES_URL };
+    const dev = footer.readDevBuild ? footer.readDevBuild() : '';
+    return { text: dev ? `${short.text} ${dev}` : short.text, preview: short.preview, previewText: footer.PREVIEW_TEXT, href: footer.RELEASE_NOTES_URL };
 }
 
 export function paint(): void {
@@ -130,7 +131,6 @@ export function paint(): void {
         mountPanel(SLOT_ID, DrawerBar, { view: barView });
         mountedIn = slot;
     }
-    flushSync();
 }
 
 export function reset(): void {

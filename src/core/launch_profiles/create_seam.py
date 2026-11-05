@@ -47,14 +47,14 @@ def far_host_agent_type(settings: Any, agent_type: Optional[str]) -> Optional[st
 def _active_account_id(harness: str) -> Optional[str]:
     from src.core.account_switch import launch_env, store
     from src.core.account_switch.active import PROVIDERS, find_account
-    from src.core.provider_ledger import accounts_store
+    from src.core.provider_ledger import accounts_store, relay_accounts
 
     if harness not in PROVIDERS:
         return None
     path: Path = launch_env._config_path()
     try:
         pointer = store.read_switch(path).active_for(harness)
-        account = find_account(accounts_store.list_accounts(path), pointer, harness) if pointer else None
+        account = find_account(relay_accounts.with_relay(accounts_store.list_accounts(path)), pointer, harness) if pointer else None
     except (FileNotFoundError, ValueError, OSError) as exc:
         logger.warning("launch_record_account_unreadable", error=type(exc).__name__)
         return None
@@ -63,13 +63,13 @@ def _active_account_id(harness: str) -> Optional[str]:
 
 def recorded_account_id(harness: str, account_id: Optional[str]) -> Optional[str]:
     from src.core.account_switch import launch_env, session_pin, shared_links
-    from src.core.account_switch.active import find_account
+    from src.core.account_switch.active import PROVIDERS, find_account
     from src.config.provider_accounts import profile_dir_for
 
-    if account_id is None or harness != session_pin.PIN_PROVIDER:
+    if account_id is None or harness not in PROVIDERS:
         return _active_account_id(harness)
     try:
-        account = find_account(session_pin.all_accounts(launch_env._config_path()), account_id, session_pin.PIN_PROVIDER)
+        account = find_account(session_pin.all_accounts(launch_env._config_path()), account_id, harness)
     except (FileNotFoundError, ValueError, OSError) as exc:
         logger.warning("launch_record_account_unreadable", error=type(exc).__name__)
         return account_id

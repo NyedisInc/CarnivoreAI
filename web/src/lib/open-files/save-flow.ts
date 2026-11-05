@@ -1,4 +1,5 @@
 import { t } from '../i18n/index.svelte';
+import { confirmPositional } from '../confirm-ok/confirm-ok';
 import {
     FILE_CHANGED_ON_DISK,
     readOpenFile,
@@ -10,6 +11,7 @@ import {
     type SaveOpenFileResult,
 } from './api.svelte';
 import { bufferOf, markSaved } from './buffers.svelte';
+import { failureReason } from '../errors/failure-reason';
 
 export type SaveOutcome =
     | { kind: 'saved'; backedUp: boolean }
@@ -27,14 +29,7 @@ export interface SaveDeps {
 }
 
 export function appConfirm(): ConfirmFn {
-    return async (title, message, detail, confirmLabel, cancelLabel) => {
-        const app = (globalThis as { App?: { showConfirmModal?: (...a: unknown[]) => Promise<boolean> } }).App;
-        if (typeof app?.showConfirmModal !== 'function') {
-            console.error('open files: the confirm modal is not on the page; the save was not sent');
-            return false;
-        }
-        return app.showConfirmModal(title, message, detail, confirmLabel, cancelLabel);
-    };
+    return (title, message, detail, confirmLabel, cancelLabel) => confirmPositional(title, message, detail, confirmLabel, cancelLabel);
 }
 
 export const liveSaveDeps: SaveDeps = { confirm: appConfirm(), save: saveOpenFile, read: readOpenFile };
@@ -47,7 +42,7 @@ export async function saveFile(id: string, path: string, overwrite = false, deps
         try {
             JSON.parse(content);
         } catch (err) {
-            return { kind: 'invalid_json', detail: err instanceof Error ? err.message : String(err) };
+            return { kind: 'invalid_json', detail: failureReason(err) };
         }
     }
     const body: SaveOpenFileBody = overwrite ? { content, overwrite: true } : { content, expected_sha256: buffer.sha256 };
@@ -70,7 +65,7 @@ export async function saveFile(id: string, path: string, overwrite = false, deps
     } catch (err) {
         if (refusalCode(err) === FILE_CHANGED_ON_DISK) return { kind: 'stale', gone: staleSha256(err) === null };
         console.warn('open files: save refused', { id, error: err });
-        return { kind: 'failed', detail: err instanceof Error ? err.message : String(err) };
+        return { kind: 'failed', detail: failureReason(err) };
     }
 }
 

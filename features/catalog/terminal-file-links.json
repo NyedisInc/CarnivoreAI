@@ -1,0 +1,47 @@
+{
+  "api_routes": [
+    "POST /api/v1/sessions/{session_id}/paths/resolve",
+    "POST /api/v1/sessions/{session_id}/paths/open"
+  ],
+  "area": "terminal",
+  "description": "A file name or path printed in a terminal is a link when it exists: absolute paths, ~ paths, paths relative to the folder the terminal is in, and bare file names, with or without a :line suffix. Hover it and it underlines; Cmd-click it on a Mac (Ctrl-click elsewhere, a tap on a phone) and a small menu opens at the pointer. A file offers open in carnivore (the default, so Enter picks it), open in browser and show in finder. A folder offers open in carnivore, which shows the files browser, and show in finder. The browser and Finder open on the computer the session runs on. On a phone only open in carnivore shows. A paired computer's terminal links no paths.",
+  "docs": [
+    "docs/open-files.md"
+  ],
+  "examples": [
+    "A test fails at src/app.py:42: Cmd-click it and open it in Carnivore's file viewer.",
+    "git status lists a changed file: Cmd-click it and pick show in finder.",
+    "ls prints index.html: Cmd-click it and open it in your browser."
+  ],
+  "how_to": [
+    "Move the pointer over a file name or path in a terminal: it underlines when the file exists.",
+    "Hold Cmd (Ctrl on Windows or Linux) and click it. Pick open in carnivore, open in browser or show in finder.",
+    "On a touch screen, tap the path and pick open in carnivore."
+  ],
+  "id": "terminal-file-links",
+  "issues": [
+    2753
+  ],
+  "keywords": [
+    "file path",
+    "cmd-click",
+    "open file",
+    "show in finder",
+    "terminal"
+  ],
+  "media_exempt": "a hover underline and a pointer menu are not visible in a still capture; recaptured at the version bump",
+  "name": "Clickable file paths in the terminal",
+  "since": "2026-10-31",
+  "status": "beta",
+  "summary": "Cmd-click a file name or path in a terminal to open it in Carnivore, your browser or Finder.",
+  "surfaces": [
+    "client/js/terminal-links.js",
+    "web/src/lib/terminal-paths/links.ts",
+    "web/src/lib/item-menu/menus/termpath.ts",
+    "src/api/terminal_paths_routes.py"
+  ],
+  "updated": "2026-10-31",
+  "where": [
+    "Every terminal on this computer: the session page, dashboard cells and viewers."
+  ]
+}

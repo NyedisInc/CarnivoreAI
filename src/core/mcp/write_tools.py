@@ -58,13 +58,14 @@ def _request(manager: Any) -> Any:
     return SimpleNamespace(app=app)
 
 
-def _detail(exc: HTTPException) -> str:
+def _detail(exc: HTTPException, scrub: Optional[Callable[[str], str]] = None) -> str:
     detail = exc.detail
     if isinstance(detail, dict):
         code, reason = detail.get("code"), detail.get("reason")
         detail = detail.get("message") or detail.get("detail") or (
             f"{code}: {reason}" if code and isinstance(reason, str) and reason else code) or detail
-    return f"refused ({exc.status_code}): {str(detail)[:300]}"
+    text = scrub(str(detail)) if scrub is not None else str(detail)
+    return f"refused ({exc.status_code}): {text[:300]}"
 
 
 async def _via_route(call: Awaitable[Any]) -> Any:
@@ -113,6 +114,19 @@ def _created_counts(live_ids: set[str], caller: AgentCaller, listed_at: float) -
     return mine, len(_created) + len(_reserved)
 
 
+async def counted_create(live_ids: Callable[[], Awaitable[set]], caller: AgentCaller, create: Callable[[], Awaitable[Any]]) -> Any:
+    async with _create_lock:
+        listed_at = time.monotonic()
+        mine, total = _created_counts(await live_ids(), caller, listed_at)
+        if mine >= MAX_CREATED_PER_AGENT:
+            raise ToolError(f"you already have {mine} live sessions you created (limit {MAX_CREATED_PER_AGENT})")
+        if total >= MAX_CREATED_TOTAL:
+            raise ToolError(f"{total} agent-created sessions are live (limit {MAX_CREATED_TOTAL})")
+        session = await create()
+        _created[session.id] = (caller.tmux_name, time.monotonic())
+    return session
+
+
 async def session_create(manager: Any, caller: AgentCaller, args: dict) -> dict:
     from src.api.session_crud_routes import create_session
     from src.models import CreateSessionRequest
@@ -158,16 +172,7 @@ async def session_create(manager: Any, caller: AgentCaller, args: dict) -> dict:
         await _check_account(request)
 
     async def run(_approved: bool) -> dict:
-        async with _create_lock:
-            listed_at = time.monotonic()
-            live = await manager.live_ids_now()
-            mine, total = _created_counts(live, caller, listed_at)
-            if mine >= MAX_CREATED_PER_AGENT:
-                raise ToolError(f"you already have {mine} live sessions you created (limit {MAX_CREATED_PER_AGENT})")
-            if total >= MAX_CREATED_TOTAL:
-                raise ToolError(f"{total} agent-created sessions are live (limit {MAX_CREATED_TOTAL})")
-            session = await _via_route(create_session(_request(manager), request))
-            _created[session.id] = (caller.tmux_name, time.monotonic())
+        session = await counted_create(manager.live_ids_now, caller, lambda: _via_route(create_session(_request(manager), request)))
         logger.info("mcp_session_created", session_id=session.id, creator=caller.tmux_name, launch_profile=picked)
         return _ok({"id": session.id, "working_dir": session.working_dir, "launch": _launch_shown(request.agent_type)})
 
@@ -431,6 +436,22 @@ async def _with_usage(running: Awaitable[dict], usage: Optional[dict]) -> dict:
     return result
 
 
+async def _swarm_agent_skip(manager: Any, caller: AgentCaller, action: str, target_id: str) -> bool:
+    if action not in beast_mode.SWARM_AGENT_ACTIONS or caller.external or str(target_id).startswith("remote:"):
+        return False
+    if getattr(caller, "proxied_agent_id", None) is not None:
+        return False
+    import sqlite3
+
+    from src.core.swarm import spawn
+
+    try:
+        await spawn.parent_agent(manager, caller)
+    except (spawn.SpawnRefused, sqlite3.Error, OSError):
+        return False
+    return True
+
+
 async def park(
     manager: Any, caller: AgentCaller, target_id: str, target_tmux: str, action: str, summary: str, args: dict,
     run: Callable[[bool], Awaitable[dict]], dedupe_key: str = "", beast_eligible: bool = True,
@@ -445,6 +466,9 @@ async def park(
             replay.refused = why
             raise ToolError(why)
         return await _as_result(run(True))
+    if beast_eligible and not confirm_text and await _swarm_agent_skip(manager, caller, action, target_id):
+        return await beast_mode.run_unprompted(caller, action, lambda: _as_result(run(True)), target_id=target_id, target_tmux=target_tmux,
+                                               summary=summary, args=args, event="mcp_action_run_for_swarm_agent")
     if beast_eligible and not confirm_text and not in_use_mod.blocks_beast(in_use, action) and beast_mode.approval_skip(action):
         return await beast_mode.run_unprompted(caller, action, lambda: _as_result(run(True)), target_id=target_id,
                                                target_tmux=target_tmux, summary=summary, args=args)
@@ -563,7 +587,7 @@ TOOLS: dict[str, tuple[str, dict, list, Callable[..., Awaitable[dict]]]] = {
         ["target", "text"], session_send_message,
     ),
     "session_send_keys": (
-        "Type text and press named keys in a session. Aimed at another session, or any session on a paired computer, it waits for the owner's approval.",
+        "Type text and press named keys in a session. Aimed at another session, or any session on a paired computer, it waits for the owner's approval; a Swarm agent restarting a session of this computer runs at once.",
         {"target": _TARGET_SCHEMA, **_KEYS_SCHEMA}, ["target"], session_send_keys,
     ),
     "session_restart": (

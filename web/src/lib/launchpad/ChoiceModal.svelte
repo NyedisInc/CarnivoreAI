@@ -4,7 +4,7 @@
     import { PROJECT_CREATE_KEYS } from '../../../../client/js/labels/project-create.js';
     import type { Translate } from '../sessions/types';
     import type { ChoiceItem } from './modal-types';
-    import ModalShell from './ModalShell.svelte';
+    import ModalShell from '../dialog-frame/ModalShell.svelte';
     import Button from '../base/Button.svelte';
     import List from '../base/List.svelte';
     import ListRow from '../base/ListRow.svelte';

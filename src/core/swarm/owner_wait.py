@@ -56,11 +56,19 @@ def asks_owner(kind: str, swarm_ref: str) -> bool:
     return kind in ASKING_KINDS or swarm_ref.startswith(ASKING_PREFIXES)
 
 
+def card_waits(kind: str, swarm_ref: str, live: Dict[int, Set[int]], live_agents: Set[int]) -> bool:
+    return asks_owner(kind, swarm_ref) and card_counts(swarm_ref, live, live_agents)
+
+
+def live_agent_ids(conn: sqlite3.Connection) -> Set[int]:
+    return {int(r[0]) for r in conn.execute("SELECT id FROM swarm_agents WHERE torn_down_at IS NULL").fetchall()}
+
+
 def _open_thread_question(item: Dict[str, Any]) -> bool:
     return any(m.get("kind") == "question" and not m.get("answered") for m in item.get("thread") or [])
 
 
-def entry_waits(entry: Dict[str, Any], live: Dict[int, Set[int]]) -> bool:
+def entry_waits(entry: Dict[str, Any], live: Dict[int, Set[int]], live_agents: Optional[Set[int]] = None) -> bool:
     if entry.get("kind") != "card":
         return False
     item = entry.get("item") or {}
@@ -69,14 +77,19 @@ def entry_waits(entry: Dict[str, Any], live: Dict[int, Set[int]]) -> bool:
     qid = question_id(str(item.get("swarm_ref") or ""))
     if qid is not None:
         return qid in live
-    return item.get("status") == "question" or _open_thread_question(item)
+    ref = str(item.get("swarm_ref") or "")
+    if live_agents is not None and not card_counts(ref, live, live_agents):
+        return False
+    return (asks_owner(str(item.get("kind") or ""), ref) or item.get("status") == "question"
+            or _open_thread_question(item))
 
 
 def annotate(conn: sqlite3.Connection, entries: Iterable[Dict[str, Any]]) -> None:
     live = live_questions(conn)
+    alive = live_agent_ids(conn)
     for entry in entries:
         if entry.get("kind") == "card":
-            entry["waits_on_owner"] = entry_waits(entry, live)
+            entry["waits_on_owner"] = entry_waits(entry, live, alive)
 
 
 def stale_questions(conn: sqlite3.Connection) -> List[int]:

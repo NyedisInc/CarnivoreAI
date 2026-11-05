@@ -97,7 +97,7 @@ beforeEach(() => {
         groupByUuid: (u: string) => (u === 'g1' ? { group_uuid: 'g1', name: 'Focus' } : null),
     };
     win.SessionSidebarKindGroups = { isAgentKind: () => true };
-    win.SessionSidebar = { _rows: [{ name: 'c_a', project_id: 3, project_name: 'Api' }], _lastSig: null, forceRefresh: vi.fn(async () => {}) };
+    win.SessionSidebar = { _rows: [{ name: 'c_a', project_id: 3, project_name: 'Api' }], forceRefresh: vi.fn(async () => {}) };
     delete win.__fail;
 });
 

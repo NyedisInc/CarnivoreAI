@@ -32,7 +32,7 @@ _HIDING_FRONT_RE = re.compile(
 _FENCE_RE = re.compile(r"^---[^\S\n]*$", re.MULTILINE)
 
 
-def _markdown_runs_code(path: Path) -> bool:
+def markdown_runs_code(path: Path) -> bool:
     try:
         with path.open("rb") as handle:
             text = handle.read(_MAX_MD_BYTES + 1).decode("utf-8", "replace")
@@ -85,7 +85,7 @@ def folder_declares_code(folder: Path, *, plugin: bool = False, exclude: FrozenS
                 return True
             if low == "hooks.json" and "hooks" in parts:
                 return True
-        if any(n.lower().endswith(".md") and _markdown_runs_code(Path(root) / n) for n in files):
+        if any(n.lower().endswith(".md") and markdown_runs_code(Path(root) / n) for n in files):
             return True
     return bool(failed)
 

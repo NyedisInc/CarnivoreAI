@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 import structlog
 
 from src.core.federation.peer_client import PeerRefused, PeerUnreachable
-from src.core.pack import progress
+from src.core.pack.transport import progress
 from src.core.pack.move import inflight
 from src.core.pack.carry import send
 from src.core.pack.identity import home

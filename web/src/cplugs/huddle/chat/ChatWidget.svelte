@@ -9,6 +9,7 @@
   import { reply } from '../huddle.svelte';
   import { createNodeLooks } from '../swarm/node-looks.svelte';
   import ChatBar from './ChatBar.svelte';
+  import WaitingTray from './WaitingTray.svelte';
   import { elapsed } from '../huddle-progress';
   import ChatAvatar from './ChatAvatar.svelte';
   import AuthorPath from './AuthorPath.svelte';
@@ -21,7 +22,7 @@
   import TaskManagerChips from '../TaskManagerChips.svelte';
   import { createAttachments } from '../task-manager-attachments.svelte';
   import { carriesFiles, filesOf } from '../task-manager-files';
-  import { splitSentText, uploadToSession, withPaths } from './chat-upload';
+  import { splitSentText, uploadToAgent, uploadToSession, withPaths } from './chat-upload';
   import ChatSentImages from './ChatSentImages.svelte';
 
   interface Props {
@@ -67,7 +68,7 @@
   const still = $derived(reducedMotion());
 
   const sessionId = $derived(agent?.session_id ?? null);
-  const attached = createAttachments((file) => uploadToSession(sessionId as string, file));
+  const attached = createAttachments((file) => (sessionId ? uploadToSession(sessionId, file) : uploadToAgent(agentId as number, file)));
   const suggestion = $derived(sessionRow(sessionId)?.prompt_suggestion ?? null);
   const ghost = $derived(composerGhost(draft, suggestion));
 
@@ -178,22 +179,23 @@
       pinned = true;
       attached.clear();
       quote = null;
-      await chat?.refresh();
     } catch (error) {
       notice = failure(error, 'cplug.huddle.chat.send_failed');
+    } finally {
+      sending = false;
+      void chat?.refresh();
     }
-    sending = false;
   }
 
   function onPaste(event: ClipboardEvent): void {
     const files = filesOf(event.clipboardData);
-    if (!sessionId || files.length === 0) return;
+    if (agentId === null || files.length === 0) return;
     event.preventDefault();
     attached.add(files);
   }
 
   function onDragOver(event: DragEvent): void {
-    if (!sessionId || !carriesFiles(event.dataTransfer)) return;
+    if (agentId === null || !carriesFiles(event.dataTransfer)) return;
     event.preventDefault();
     dropping = true;
   }
@@ -201,7 +203,7 @@
   function onDrop(event: DragEvent): void {
     dropping = false;
     const files = filesOf(event.dataTransfer);
-    if (!sessionId || files.length === 0) return;
+    if (agentId === null || files.length === 0) return;
     event.preventDefault();
     attached.add(files);
   }
@@ -339,6 +341,7 @@
       <span class="hdc-bubble" class:hdc-bubble--still={still} aria-hidden="true"><i></i><i></i><i></i></span>
     </div>
   {/if}
+  {#if agentId !== null}{#key agentId}<WaitingTray {agentId} rank={agent?.rank ?? null} agentName={name} {now} />{/key}{/if}
   {#if notice}<p class="hdc-notice" role="status">{notice}</p>{/if}
   {#if quote}
     <div class="hdc-quoted" data-chat-quoted={quote.entryId} data-quote-item={quote.item?.id ?? undefined}>
@@ -354,7 +357,7 @@
               placeholder={ghost || t('cplug.huddle.chat.compose_placeholder', { name })} data-chat-ghost={ghost ? '' : undefined}></textarea>
     
     <div class="hdc-keys">
-      {#if sessionId}
+      {#if agentId !== null}
         <input type="file" multiple hidden bind:this={picker} onchange={onPick} data-chat-attach-input />
         <IconButton label={t('cplug.huddle.chat.attach')} icon="paperclip" iconSize={14} variant="quiet" data-chat-attach onclick={() => picker?.click()} />
       {/if}

@@ -30,7 +30,7 @@ OWNER_REPLY = "Yes, rename it to Argent-Walkthrough."
 class Port:
 
     def __init__(self) -> None:
-        self.cards, self.owner_messages = [], []
+        self.cards, self.owner_messages, self.closed = [], [], []
 
     async def post_card(self, key, kind, title, text, ref):
         self.cards.append((key, kind, ref))
@@ -42,7 +42,8 @@ class Port:
         self.owner_messages.append((key, text))
         return f"huddle:msg:{900 + len(self.owner_messages)}"
 
-    async def close_card(self, item_id, state): ...
+    async def close_card(self, item_id, state):
+        self.closed.append((item_id, state))
 
 
 class Cards:
@@ -156,3 +157,17 @@ def test_a_forged_owner_ref_is_refused(env):
     qid = climb_to_owner(env)
     with pytest.raises(routing.QuestionRefused):
         run(answers.owner_answer(object(), qid, "answer", OWNER_REPLY, "huddle:msg:347 or anything"))
+
+
+def test_a_tier_on_the_chain_answers_a_question_escalated_to_the_owner_and_his_card_closes(env):
+    qid = climb_to_owner(env)
+    env.as_agent(env.relay)
+    with pytest.raises(routing.QuestionRefused):
+        run(answers.answer(VIEW, None, {"question_id": qid, "text": "no"}))
+    env.as_agent(env.argent)
+    out = run(answers.answer(VIEW, None, {"question_id": qid, "text": "Rename it."}))
+    assert out["state"] == "answered" and env.told[-1].agent_id == env.fixer["id"] and "> Rename it." in env.told[-1].text
+    assert env.conn.execute("SELECT state, answered_by FROM swarm_questions WHERE id = ?", (qid,)).fetchone()[:] == (
+        "answered", f"agent:{env.argent['id']}")
+    card = env.conn.execute("SELECT card_ref FROM swarm_questions WHERE id = ?", (qid,)).fetchone()[0]
+    assert env.port.closed == [(int(card), "answered")]

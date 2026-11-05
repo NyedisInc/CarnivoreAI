@@ -275,7 +275,7 @@ body.oc-layout-editing .session-sidebar-panel--open {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 6px;
+    gap: 0;
     text-align: right;
     white-space: nowrap;
 }
@@ -296,8 +296,15 @@ body.oc-layout-editing .session-sidebar-panel--open {
     color: var(--oc-coral);
 }
 
-.session-sidebar-bar__version > [data-bar-indicator] {
-    margin-left: -4px;
+/* the base icon button */
+@media (min-width: 1024px) {
+    .session-sidebar-bar__version > [data-bar-action] + [data-bar-action] {
+        margin-left: calc(-1 * var(--oc-space-1));
+    }
+}
+
+.session-sidebar-bar__version > [data-bar-action] + .version-footer {
+    margin-left: var(--oc-space-1);
 }
 
 .session-sidebar-bar__version .version-footer__preview {

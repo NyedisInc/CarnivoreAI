@@ -1,7 +1,8 @@
 .pp-dim { color: var(--oc-text-muted); } .pp-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .pp-k { font-size: var(--oc-fs-micro); letter-spacing: .6px; text-transform: uppercase; color: var(--oc-text-muted); }
 .pp-hint { font-size: var(--oc-fs-label); line-height: 1.45; color: var(--oc-text-secondary); } .pp-dot { color: var(--oc-text-dim); margin: 0 var(--oc-space-1); }
-.pp-wrap { overflow-wrap: anywhere; } code { font-family: inherit; color: var(--oc-text-primary); }
+.pp-wrap { overflow-wrap: anywhere; }
+.m1-copyssh code { font-family: inherit; color: var(--oc-text-primary); }
 .pp-st { display: inline-flex; align-items: center; gap: var(--oc-space-1-5); font-size: var(--oc-fs-label); white-space: nowrap; min-width: 0; }
 .pp-st__mark { flex: none; position: relative; width: 9px; height: 9px; display: inline-block; }
 .pp-st[data-tone="ok"] .pp-st__word { color: var(--oc-green); } .pp-st[data-tone="bad"] .pp-st__word { color: var(--oc-coral); } .pp-st[data-tone="warn"] .pp-st__word { color: var(--oc-yellow); } .pp-st[data-tone="dim"] .pp-st__word { color: var(--oc-text-muted); }
@@ -135,7 +136,6 @@
 .m1-row__name { display: flex; flex-wrap: wrap; align-items: center; gap: var(--oc-space-1) var(--oc-space-2); min-width: 0; }
 .m1-row__txt { min-width: 0; overflow-wrap: break-word; }
 .m1-row__act { justify-self: end; }
-/* on the card and */
 .m1-row__meters { min-width: 0; }
 .m1-row .pp-meters { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--oc-space-1) var(--oc-space-4); }
 .m1-row .pp-meters > p { grid-column: 1 / -1; margin: 0; }

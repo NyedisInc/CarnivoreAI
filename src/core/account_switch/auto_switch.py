@@ -15,10 +15,10 @@ from src.config.provider_accounts import ProviderAccount, profile_dir_for
 from src.core import config_writer, resource_push, session_change_notice
 from src.core.notifications.sources import frames
 from src.core.resource_push import topics as resource_topics
-from src.core.account_switch import profile_setup, shared_links, store
-from src.core.account_switch.active import PROVIDERS, effective_active, find_account, pointer_for
+from src.core.account_switch import profile_setup, relay_candidates, shared_links, store
+from src.core.account_switch.active import AUTO_SWITCH_PROVIDERS, effective_active, find_account, pointer_for
 from src.core.account_switch.decide import SwitchDecision, decide_switch
-from src.core.provider_ledger import accounts_store, poller_scan
+from src.core.provider_ledger import accounts_store, poller_scan, relay_accounts
 from src.models.provider_ledger import LedgerSnapshot
 from src.models.websocket import WSMessageType
 
@@ -88,7 +88,7 @@ def _linkable(account: Optional[ProviderAccount]) -> bool:
     report = shared_links.ensure_shared_links(
         profile_dir_for(account), account.provider, managed=account.managed
     )
-    return report.resume_safe
+    return report.resume_safe or relay_accounts.is_relay_account(account)
 
 
 def plan_switches(
@@ -102,7 +102,7 @@ def plan_switches(
     if not switch.auto_switch:
         return []
     decisions: List[SwitchDecision] = []
-    for provider in PROVIDERS:
+    for provider in AUTO_SWITCH_PROVIDERS:
         active = effective_active(accounts, switch, provider)
         excluded: Set[str] = set()
         while True:
@@ -151,8 +151,10 @@ async def after_pass(
     except (FileNotFoundError, ValueError, OSError) as exc:
         logger.warning("account_auto_switch_config_unreadable", error=type(exc).__name__)
         return []
+    now = clock()
+    snapshot = await asyncio.to_thread(relay_candidates.with_relayed, snapshot, now)
     decisions = await asyncio.to_thread(
-        plan_switches, snapshot, accounts, switch, now=clock()
+        plan_switches, snapshot, accounts, switch, now=now
     )
     applied: List[SwitchDecision] = []
     for decision in decisions:

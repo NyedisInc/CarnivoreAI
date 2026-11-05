@@ -15,6 +15,7 @@ ATTEMPTS = 3
 WRONG_CODE_CAP = 10
 WRONG_CODE_WINDOW_S = 3600.0
 CODE_PAUSE_S = 3600.0
+KNOCK_WRONG_CAP = 10
 KINDS = ("code", "ssh_add")
 
 
@@ -38,6 +39,7 @@ class Invite:
     expires_at: float
     attempts_left: int = ATTEMPTS
     used: bool = False
+    knock: bool = False
 
     @property
     def link_secret(self) -> str:
@@ -67,6 +69,8 @@ class Invites:
         self._items: List[Invite] = []
         self._wrong: Deque[float] = deque()
         self.code_paused_until: float = 0.0
+        self._knock_wrong: Deque[float] = deque()
+        self.knock_paused_until: float = 0.0
 
     def _changed(self) -> None:
         if self._on_change:
@@ -90,6 +94,9 @@ class Invites:
 
     def code_paused(self) -> bool:
         return self._clock() < self.code_paused_until
+
+    def knock_paused(self) -> bool:
+        return self._clock() < self.knock_paused_until
 
     def mint(self, kind: str = "code", job_id: Optional[str] = None) -> Invite:
         if self._is_member():
@@ -141,10 +148,21 @@ class Invites:
                 self._drop(inv)
                 left = 0
             else:
-                counted = mode == "code"
+                counted = mode == "code" and not inv.knock
+                knock_counted = mode == "code" and inv.knock
                 if inv.attempts_left <= 0:
                     self._drop(inv)
                     notices.append("burned")
+                if knock_counted:
+                    self._knock_wrong.append(now)
+                    while self._knock_wrong and self._knock_wrong[0] <= now - WRONG_CODE_WINDOW_S:
+                        self._knock_wrong.popleft()
+                    if len(self._knock_wrong) >= KNOCK_WRONG_CAP:
+                        self.knock_paused_until = now + CODE_PAUSE_S
+                        self._knock_wrong.clear()
+                        for i in [x for x in self._items if x.knock]:
+                            self._drop(i)
+                        notices.append("paused")
                 if counted:
                     self._wrong.append(now)
                     while self._wrong and self._wrong[0] <= now - WRONG_CODE_WINDOW_S:

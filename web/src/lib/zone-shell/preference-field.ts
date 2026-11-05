@@ -1,10 +1,15 @@
 import { t } from '../i18n/index.svelte';
 import { whenLegacyBootComplete } from '../legacy-boot';
 
+export interface WriteOutcome {
+  status?: string;
+  detail?: string;
+}
+
 export interface Bridge {
   read(field: string, localReader: () => unknown): unknown;
-  write(field: string, value: unknown, localWriter: () => void): Promise<unknown>;
-  writeMany(entries: { field: string; value: unknown; localWriter: () => void }[]): Promise<unknown>;
+  write(field: string, value: unknown, localWriter: () => void): Promise<WriteOutcome | null>;
+  writeMany(entries: { field: string; value: unknown; localWriter: () => void }[]): Promise<WriteOutcome | null>;
   follow(field: string, apply: (value: unknown) => void): () => void;
 }
 
@@ -17,13 +22,18 @@ export const WRITE_REFUSED = new Set(['failed', 'refused', 'stale_revision']);
 
 const SAVED = new Set(['committed', 'unchanged']);
 
+export const SAVE_UNAVAILABLE = 'unavailable';
+
+export function isSaved(outcome: WriteOutcome | null | undefined): boolean {
+  return typeof outcome?.status === 'string' && SAVED.has(outcome.status);
+}
+
 export async function savePreference(field: string, value: unknown): Promise<string | null> {
   const found = bridge();
-  if (!found) return 'unavailable';
-  const result = (await found.write(field, value, () => {})) as { status?: string; detail?: string } | null;
-  const status = result && typeof result.status === 'string' ? result.status : '';
-  if (SAVED.has(status)) return null;
-  return (result && result.detail) || status || t('prefs.save.no_answer');
+  if (!found) return SAVE_UNAVAILABLE;
+  const result = await found.write(field, value, () => {});
+  if (isSaved(result)) return null;
+  return result?.detail || result?.status || t('prefs.save.no_answer');
 }
 
 /* there is nothing */
@@ -58,7 +68,7 @@ export class PreferenceField {
   async write(value: unknown): Promise<void> {
     const found = bridge();
     if (!found) return;
-    const result = (await found.write(this.field, value, () => {})) as { status?: string } | null;
+    const result = await found.write(this.field, value, () => {});
     if (result && typeof result.status === 'string' && WRITE_REFUSED.has(result.status)) {
       console.warn('PreferenceField: the server did not take the change, reloading', this.field, result.status);
       this.reload();

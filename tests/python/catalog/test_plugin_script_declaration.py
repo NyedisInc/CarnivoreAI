@@ -6,7 +6,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.api.catalog_consent import consent_carried, staged_plugin_declares_code
+from src.api.catalog_consent import consent_carried
+from src.core.skills.code_gate import staged_plugin_declares_code
 from src.core.skills import kinds
 from src.core.skills.manifest_rules import declares_script
 

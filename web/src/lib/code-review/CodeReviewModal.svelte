@@ -1,6 +1,6 @@
 <script lang="ts">
   import '../ledger/ledger-chrome.css';
-  import ModalShell from '../launchpad/ModalShell.svelte';
+  import ModalShell from '../dialog-frame/ModalShell.svelte';
   import { t } from '../i18n/index.svelte';
   import { Button, IconButton } from '../base';
   import { reviewLines, visibleLines } from './risk';

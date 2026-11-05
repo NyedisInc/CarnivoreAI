@@ -24,12 +24,13 @@ class FixedPolicy:
 
 def make_engine(*, answer: Callable[..., Any], info: Optional[Callable[[str], Any]] = None, rows: Optional[Callable[[], Any]] = None,
                 lookup: Optional[Callable[[str], Optional[str]]] = None, lookup_imports: Optional[Callable[[str], bool]] = None,
-                in_projects: Optional[Callable[[str], bool]] = None, policy: Optional[Any] = None, clock: Optional[Callable[[], float]] = None,
+                in_projects: Optional[Callable[[str], bool]] = None, mcp_installed: Optional[Callable[[str, str], bool]] = None, policy: Optional[Any] = None, clock: Optional[Callable[[], float]] = None,
                 on_pressed: Optional[Callable[..., None]] = None) -> AutoAnswerEngine:
     async def no_info(_sid: str) -> Any:
         return SimpleNamespace(session=SimpleNamespace(id=_sid, working_dir=None), agent_family="claude", startup_gate=None, tmux_session="t")
 
-    seams = Seams(rows or (lambda: None), lookup or (lambda _f: None), lookup_imports or (lambda _f: False), in_projects or (lambda _f: False))
+    seams = Seams(rows or (lambda: None), lookup or (lambda _f: None), lookup_imports or (lambda _f: False), in_projects or (lambda _f: False),
+                  mcp_installed or (lambda _f, _n: False))
     chosen = policy or FixedPolicy()
     return AutoAnswerEngine(None, lambda: None, policy=lambda: chosen, answer=answer, info=info or no_info,
                             seams=seams, on_pressed=on_pressed, clock=clock)

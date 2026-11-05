@@ -2,7 +2,7 @@ import { t } from '../../i18n/index.svelte';
 import { compare, normalizeSlot, stable, usableReport, type DiffRun } from './diff';
 import { face, type RuleContext } from './report-rules';
 import type { ReportLookup, ReportSlot } from './types';
-import { type Clock, bucketByDay, isLive, runStatusWord, runTime, statusWord, triggerWord } from './words';
+import { type Clock, bucketByDay, isLive, runStatusWord, settledStatus, runTime, statusWord, triggerWord } from './words';
 
 export interface FeedRow extends DiffRun {
   automation_id: string;
@@ -72,11 +72,11 @@ export function analyse(runs: FeedRow[], older: FeedRow[], lookup: ReportLookup)
     list.forEach((r, i) => {
       const p = list[i + 1] ?? null;
       if (!p) {
-        const slot = r.status === 'succeeded' || r.status === 'failed' ? slotOf(r, lookup) : null;
+        const slot = settledStatus(r.status) ? slotOf(r, lookup) : null;
         info.set(r.run_id, { pred: null, first: true, same: false, pending: slot?.state === 'pending' });
         return;
       }
-      const own = r.status === 'succeeded' || r.status === 'failed' ? slotOf(r, lookup) : null;
+      const own = settledStatus(r.status) ? slotOf(r, lookup) : null;
       if (own?.state === 'pending') {
         info.set(r.run_id, { pred: p, first: false, same: false, pending: true });
         return;

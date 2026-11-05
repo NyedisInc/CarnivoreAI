@@ -16,6 +16,7 @@ REPO = Path(__file__).resolve().parent.parent
 PYTHON = REPO / "venv" / "bin" / "python3"
 
 sys.path.insert(0, str(REPO))
+from scripts.lib.changed_paths import ChangedPathsError, changed_paths as _changed_paths  # noqa: E402
 from scripts.lib.trunk_remote import TrunkRemoteError, trunk_remote_name  # noqa: E402
 GATE_TESTS = "tests/python/gate"
 SMOKE_LIST = REPO / "tests" / "smoke_files.txt"
@@ -65,18 +66,11 @@ def read_list(path: Path) -> list[str]:
     return entries
 
 
-def _git_paths(repo: Path, *args: str) -> list[str]:
-    done = subprocess.run(["git", *args, "-z"], cwd=repo, capture_output=True)
-    if done.returncode != 0:
-        raise Refusal(f"git {' '.join(args)} failed: {done.stderr.decode(errors='replace').strip()}")
-    return [p for p in done.stdout.decode("utf-8", errors="surrogateescape").split("\0") if p]
-
-
 def changed_paths(repo: Path, base: str) -> list[str]:
-    paths = set(_git_paths(repo, "diff", "--name-only", f"{base}...HEAD"))
-    paths |= set(_git_paths(repo, "diff", "--name-only", "HEAD"))
-    paths |= set(_git_paths(repo, "ls-files", "--others", "--exclude-standard"))
-    return sorted(paths)
+    try:
+        return _changed_paths(repo, base)
+    except ChangedPathsError as exc:
+        raise Refusal(str(exc)) from exc
 
 
 def route(paths: list[str]) -> str:

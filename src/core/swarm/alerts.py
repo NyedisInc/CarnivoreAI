@@ -56,11 +56,12 @@ def derive(cards: Iterable[Dict[str, Any]], agents: Iterable[Dict[str, Any]],
     for card in cards:
         agent_id = by_thread.get(card["thread_key"])
         rung = rung_of(card["kind"], card["swarm_ref"])
-        if agent_id is None or rung is None or not owner_wait.asks_owner(card["kind"], card["swarm_ref"]):
+        if agent_id is None or rung is None:
             continue
-        if owner_wait.subject_agent(card["swarm_ref"]) is not None and not owner_wait.card_counts(card["swarm_ref"], {}, alive):
-            continue
-        if live is not None and owner_wait.question_id(card["swarm_ref"]) is not None and not owner_wait.card_counts(card["swarm_ref"], live, alive):
+        if live is None and owner_wait.question_id(card["swarm_ref"]) is not None:
+            if not owner_wait.asks_owner(card["kind"], card["swarm_ref"]):
+                continue
+        elif not owner_wait.card_waits(card["kind"], card["swarm_ref"], live or {}, alive):
             continue
         rank = RUNGS.index(rung)
         if agent_id not in best or rank > best[agent_id][0]:

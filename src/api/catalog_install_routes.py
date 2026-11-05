@@ -39,7 +39,6 @@ from src.api.catalog_loadout_rules import (
 from src.api.catalog_consent import (
     put_on_sheet,
     carries_scripts,
-    staged_plugin_declares_code,
     consent_409,
     install_consent_satisfied,
     preview_body,
@@ -58,6 +57,7 @@ from src.api.catalog_installed_watch import annotate_watch
 from src.api.catalog_views import installed_view
 from src.core.catalog import install_reporter
 from src.core.catalog.index_cache import IndexSnapshot
+from src.core.skills.code_gate import staged_plugin_declares_code
 from src.core.skills.consent_via_ddl import (
     CONSENT_BLUEPRINT,
     CONSENT_ONE_CLICK,

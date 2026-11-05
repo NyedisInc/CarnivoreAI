@@ -7,8 +7,6 @@ export interface PageSectionMeta {
 
 export const PAGE_SECTION_SLOT = 'review';
 
-export const DEFAULT_PAGE_SECTION_ICON = 'globe';
-
 const registry = new Map<string, PageSectionMeta>();
 
 export function registerPageSections(list: readonly PageSectionMeta[]): void {

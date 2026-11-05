@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte';
     import { refusalMessage } from '../../../../client/js/labels/skill.js';
-    import ModalShell from '../launchpad/ModalShell.svelte';
+    import ModalShell from '../dialog-frame/ModalShell.svelte';
     import Check from '../../opscenter/ui/Check.svelte';
     import { Button, Field } from '../base';
     import Icon from '../../opscenter/ui/Icon.svelte';

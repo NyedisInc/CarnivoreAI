@@ -67,10 +67,10 @@ test('the menu is exactly four groups, a rule before the second, third and fourt
     'density-compact', 'density-cozy', 'density-detailed',
     'show-stats',
     'show-leaders', 'show-archived', 'show-closed',
-    'show-open', 'show-sleeping', 'hide-empty-sections',
+    'hide-empty-sections',
   ]);
   const starts = items().filter((el) => el.classList.contains('acm-sep')).map((el) => el.dataset.node);
-  expect(starts).toEqual(['show-stats', 'show-leaders', 'show-open']);
+  expect(starts).toEqual(['show-stats', 'show-leaders', 'hide-empty-sections']);
 });
 
 function setClipped(el: HTMLElement, cut: boolean): void {

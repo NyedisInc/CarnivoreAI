@@ -11,7 +11,7 @@ import structlog
 
 from src.core import db
 from src.core.db_reuse import datastore_pool
-from src.core.swarm import alerts, alpha, answers, body, company_promote, delivery, facts, learning, project_agent, project_promote, promotion, push, reports, routing, seat_views, sleep_commit, store, suggest, switch, thread_port, turn_off, watch
+from src.core.swarm import alerts, alpha, answers, body, company_promote, delivery, done_feed, facts, learning, project_agent, project_promote, promotion, push, question_close, reports, routing, seat_views, sleep_commit, store, suggest, switch, thread_port, turn_off, watch
 from src.core.swarm.cards import dealer, port as card_port
 from src.core.swarm.names import shown_name
 from src.cplugs.sdk.cards import CardPort
@@ -50,6 +50,7 @@ class SwarmFacade:
     def thread_changed(self, list_key: str) -> None:
         if self.is_agent_key(list_key):
             push.notify_roster()
+        self._read(lambda conn: done_feed.notify_upward(conn, list_key), None)
 
     def agent_names(self, keys: Optional[Iterable[str]] = None) -> Dict[str, str]:
         wanted = None if keys is None else set(keys)
@@ -241,6 +242,9 @@ class SwarmFacade:
     async def _answer_question(self, raw_id: str, decision: str, note: str, owner_message_ref: str,
                                structured: Optional[Dict[str, Any]] = None) -> bool:
         try:
+            if decision == question_close.SKIP_DECISION:
+                await question_close.owner_skip(self._app_state, int(raw_id))
+                return True
             return await answers.owner_answer(self._app_state, int(raw_id), decision, note, owner_message_ref, structured=structured)
         except (ValueError, routing.QuestionRefused) as exc:
             raise SwarmError(str(exc) or "that question card is not valid") from None

@@ -3,7 +3,9 @@ import { submitNow } from '../task-submit';
 import { findItem, huddle } from '../huddle.svelte';
 import { applyAnswered } from '../task-manager-optimistic';
 import type { HuddleItem } from '../huddle-model';
-import { readAsk, submitAsk, type AskRead } from './ask-api';
+import { readAsk, submitAsk, type AskOutcome, type AskRead } from './ask-api';
+import { refusalSentence } from './ask-refusal';
+import { clearAnswerRefusalFor, showAnswerRefusal } from './ask-notice.svelte';
 import { createAttachments } from '../task-manager-attachments.svelte';
 import { uploadFile } from '../task-manager-files-api';
 import { itemWhere } from '../task-manager-outbox';
@@ -110,12 +112,15 @@ export function createAsk(messageId: number): AskController {
     void (async () => {
       let saved = false;
       let reread = false;
+      const last: { refused: AskOutcome | null } = { refused: null };
       const save = async (): Promise<boolean> => {
         const out = await submitAsk(messageId, body, { list: list ?? null, item: target?.id ?? null, title: target ? itemWhere(target) : '', ackThrough: boundaryOf(target) });
         saved = out.ok;
+        if (out.ok) clearAnswerRefusalFor(messageId);
         if (out.kept) huddle.notice = t(keptNoticeKey());
         if (!out.ok) {
-          s.error = out.error;
+          last.refused = out;
+          s.error = sentenceOf(out, target);
           if (out.code === 'task_manager_answered') { reread = true; await load(); }
         }
         return out.ok && !out.kept;
@@ -126,10 +131,17 @@ export function createAsk(messageId: number): AskController {
       if (!saved) {
         undo();
         if (s.read && !reread) s.read.answered = false;
-        if (s.error) huddle.notice = s.error;
+        const named = last.refused?.question;
+        if (s.error && named) showAnswerRefusal(messageId, named.item ?? target?.id ?? null, s.error);
+        else if (s.error) huddle.notice = s.error;
       }
     })();
     return true;
+  }
+
+  function sentenceOf(out: AskOutcome, target: HuddleItem | null): string {
+    if (!out.question) return out.error;
+    return refusalSentence(t, out.question, { title: target ? itemWhere(target) : '', questions: stored(), reason: out.error });
   }
 
   return {

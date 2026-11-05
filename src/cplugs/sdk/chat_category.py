@@ -10,7 +10,7 @@ DEFAULT_SHOWN = ("conversation", "result", "question", "important")
 NEVER_MUTED = ("conversation",)
 EVENT_CATEGORY: Mapping[str, str] = {
     "reported": "result", "accepted": "result", "asked": "question", "escalated": "question", "answered": "receipt",
-    "learned": "learned", "spawned": "info", "promoted": "info",
+    "learned": "learned", "spawned": "info", "promoted": "info", "done": "result",
 }
 CARD_REF_PREFIX = "card:"
 REPORT_PREFIX = "report:"

@@ -6,14 +6,14 @@ import { clickEnv } from '../../drawer/click-env';
 
 function anchorFor(ctx: RowMenuCtx): Element | null {
     const rowEl = rowElementFor(ctx);
-    return rowEl ? rowEl.querySelector('[data-row-menu]') : null;
+    return rowEl ? rowEl.querySelector('[data-row-menu]') : (ctx.anchor ?? null);
 }
 
 /* and the three */
 export async function runRestart(ctx: RowMenuCtx, armedByGesture?: boolean, busyWork?: boolean, direct?: boolean): Promise<void> {
     const rowEl = rowElementFor(ctx);
-    if (!rowEl) {
-        say(ctx, tr('session.menu.run.restart_row_gone', { label: ctx.label || ctx.name }));
+    if (!rowEl && !ctx.anchor) {
+        say(ctx, tr('session.menu.restart.row_gone', { label: ctx.label || ctx.name }));
         return;
     }
     const env = clickEnv();
@@ -23,7 +23,7 @@ export async function runRestart(ctx: RowMenuCtx, armedByGesture?: boolean, busy
 export function runMoveToGroup(ctx: RowMenuCtx): void {
     const anchor = anchorFor(ctx);
     if (!anchor) {
-        say(ctx, tr('session.menu.run.file_row_gone', { label: ctx.label || ctx.name }));
+        say(ctx, tr('session.menu.file.row_gone', { label: ctx.label || ctx.name }));
         return;
     }
     openPickerFor(anchor, ctx.name);
@@ -34,7 +34,7 @@ export function runAddTo(ctx: RowMenuCtx): void {
     if (!bridge) return;
     const anchor = anchorFor(ctx);
     if (!anchor) {
-        say(ctx, tr('session.menu.run.file_row_gone', { label: ctx.label || ctx.name }));
+        say(ctx, tr('session.menu.file.row_gone', { label: ctx.label || ctx.name }));
         return;
     }
     if (ctx.kind === 'layout') {

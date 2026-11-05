@@ -25,7 +25,7 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
     <dd>The rail (<code>SettingsNav.svelte</code>): <code>.st-nav</code>, the search field first (<code>.st-nav__top</code>), then
         one base <code>ListRow</code> per section, holding one whole-row <code>Button</code> (<code>variant="row"</code>, <code>data-section</code>) with its icon (<code>.st-nav__icon</code>), label
         (<code>.st-nav__label</code>), the unsaved dot (<code>.st-nav__dot</code>, the page tabs' <code>.oc-ptab__dot</code>)
-        and, while a search is typed, its match count (<code>.st-nav__count</code>, the button dimmed by <code>data-empty</code> at zero); an item carries no tooltip (no <code>title</code>; the section's hint shows as text in search results). The open section is the selected <code>ListRow</code> (<code>aria-current="page"</code> on its button). Below the sections, <code>.st-nav__heading</code> (an <code>.oc-label</code>, shown only while a plugin that is on has settings) titles one more row per such plugin, which opens the plugin's own settings form in the same frame. That form is the plugins page's own (<code>.plp-region</code>), drawn inside one <code>Card</code> titled with the plugin's name in <code>PluginSettingsSection.svelte</code>. Below 768px the list is gone and a native
+        and, while a search is typed, its match count (<code>.st-nav__count</code>, the button dimmed by <code>data-empty</code> at zero); an item carries no tooltip (no <code>title</code>; the section's hint shows as text in search results). The open section is the selected <code>ListRow</code> (<code>aria-current="page"</code> on its button). Below the sections come two headed groups, each a <code>.st-nav__heading</code> (an <code>.oc-label</code>) over a base <code>List</code>, in this order (Joe (ccsliinc), 2026-10-30, #2723): <b>features</b> (<code>data-st-features-heading</code>, always drawn) opens with its overview entry (<code>data-section="features"</code>, "all features": every built-in with its switch, on or off) and then one row per ENABLED built-in with settings; <b>plugins</b> (<code>data-st-plugins-heading</code>, drawn only while an enabled store plugin has settings) has one row per such plugin. Either kind of row opens that item's own settings form in the same frame. That form is the plugins page's own (<code>.plp-region</code>), drawn inside one <code>Card</code> titled with the plugin's name in <code>PluginSettingsSection.svelte</code>. Below 768px the list is gone and a native
         <code>.st-nav__select</code> sits beside the search field in one 44px row. The content column
         (<code>.st-content</code>) holds the tab strip (<code>.st-tabs</code>), then the open group's panel
         (<code>.st-panel</code>, with its one dim hint line <code>.st-tabhint</code> and its rows in <code>.st-rows</code> inside one <code>Card</code>, <code>[data-st-frame]</code>) or the
@@ -93,7 +93,7 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
         <code>EnvControl.svelte</code> (<code>.st-env</code>, <code>.st-env__row</code> a NAME / value / remove grid that folds
         on a phone, the value field <code>.st-env__value</code>), <code>BindControl.svelte</code> (the address, then its
         measured facts in <code>.st-facts</code>), <code>SwitchControl.svelte</code> (the shared square check as a switch,
-        <code>.st-switch</code>), and <code>MinutesControl.svelte</code>; the toast style's classic-script panel sits in <code>.st-legacy</code>. Every
+        <code>.st-switch</code>), <code>MinutesControl.svelte</code>, and <code>RailMagnifyControl.svelte</code> (the left rail's magnify size: the base segmented picker, off to 200%); the toast style's classic-script panel sits in <code>.st-legacy</code>. Every
         gap is on the one 4 / 8 / 12 / 16 / 24 / 32 px scale, and a classic panel's buttons take the app's outline shape
         (<code>settings-page.css</code>); the toast style
         (<code>web/src/lib/toast-mode/ToastModePanel.svelte</code>) is two radios drawn as choice cards
@@ -192,6 +192,17 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
     <dd><code>DeepSearchScopePanel.svelte</code> (#1901), a client of <code>GET</code> and <code>PUT /deepsearch/settings</code>: three shared
         <code>.oc-choice</code> radio cards (people only, people plus headless sessions, everything) in an even <code>.oc-grid-3</code> in the panel kit's
         <code>.tm</code> frame. It writes as a card is clicked and shows what the server holds; a failed read or write is said in <code>.tm__problem</code>.</dd>
+    <dt>terminal: text size and font</dt>
+    <dd><code>web/src/lib/terminal-font/TerminalFontPanel.svelte</code> (#2726), this device's own value (localStorage, through
+        <code>client/js/terminal-font.js</code>): a row with the small uppercase accent label (<code>.terminal-font-panel__label</code>),
+        two <code>Button size="sm"</code> steppers (a- / a+) around the size in mono (<code>.terminal-font-panel__value</code>) and a quiet
+        reset; a base <code>Field</code> for the font name with a <code>datalist</code> (the desktop app's list installed fonts key fills
+        it); a one-line preview in the chosen stack framed by a 1px hairline (<code>.terminal-font-panel__preview</code>); a refusal in
+        coral (<code>.terminal-font-panel__error</code>). Every terminal follows at once.</dd>
+    <dt>general: turn checkpoints disk use</dt>
+    <dd><code>CheckpointsUsagePanel.svelte</code> (#2736), a client of <code>GET /checkpoints/usage</code>, pushed on <code>checkpoints:*</code>:
+        a <code>.tm__sub</code> total, then a dense base <code>List</code> with one row per repository (its folder, the snapshot count
+        and disk use as the meta, and a secondary line where capture switched itself off). Read only, in the panel kit's <code>.tm</code> frame.</dd>
     <dt>general: time zone</dt>
     <dd><code>TimeZonePanel.svelte</code> (#1984), a client of the <code>time_zone</code> preference (<code>PATCH /preferences</code>): an
         <code>.oc-field</code> search box over the browser's IANA zone names and the list it narrows, in
@@ -231,6 +242,13 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
         (the danger token <code>--oc-coral</code>, like beast mode's risk line) that lists every feature that stops working, with
         <code>.modal-btn-secondary</code> keep it on and <code>.modal-btn-danger</code> turn off; while it is off the same block stays
         in place as the warning. Turning it on is immediate.</dd>
+    <dt>beast mode switch strip (advanced)</dt>
+    <dd><code>BeastSwitchStrip.svelte</code>, a client of <code>PATCH /beast-mode</code>, sits above the beast mode grid as one
+        <code>.beast-strip</code>: the accent <code>.pl-label</code>, the state in mono (<code>.beast-strip__state</code>, the green
+        token while on, with when it turns off) and one danger button, arm (opens the same popup as the account menu) or turn off.
+        While armed a second row (<code>.beast-strip__live</code>) holds the "also answer session permission prompts" switch and the
+        auto-off select (<code>.beast-strip__off</code>), each applied at once; a refusal reads in <code>.beast-strip__problem</code>.
+        A hairline under the strip, never a card.</dd>
     <dt>plugin pane: usage stats (moved out of advanced)</dt>
     <dd><code>StatsCollectionPanel.svelte</code>, a client of <code>PATCH /stats/settings</code>, <code>GET /stats/maintenance</code>,
         <code>POST /stats/clear</code> and <code>POST /stats/backfill</code>, in the panel kit's <code>.tm</code> frame:
@@ -306,14 +324,18 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
     <dd>The <code>notifications.routing</code> group (issue #1278) is two panel rows in the same <code>.tm</code> frame, both clients of
         <code>/api/v1/notifications/*</code>. <code>MatrixPanel.svelte</code> is the routing matrix: <code>.mx-table</code> in an
         <code>.mx-scroll</code> wrapper, one row per notification type (<code>.mx-type</code> label <code>.mx-label</code> and
-        <code>.mx-desc</code>) under a <code>.mx-family</code> heading in the accent, and one column for the screen, one for the global default
+        <code>.mx-desc</code>) under its group, and one column for the screen, one for the global default
         tick set ("what a new destination starts with") and one per destination, web push devices included (<code>.mx-colname</code>,
         <code>.mx-colsub</code>). <code>MatrixCell.svelte</code> is one <code>.mx-cell</code>: a square <code>.oc-check</code>, then its source
         in small type (<code>.mx-src</code>); a cell pinned to this computer shows the <code>.mx-badge</code> "local" with an
         a base quiet "reset to global" button. A locked cell is disabled and says why in short words (<code>.mx-why</code>, "always on" for
         needs-you, "stays here" for in-app only and the notifications-health type), with the full sentences in <code>.mx-legend</code> under the
         matrix. Below 1024px the table is replaced by <code>.mx-picker</code> (a base select) over an <code>.mx-list</code> of
-        <code>.mx-item</code> rows, one column at a time, family headings in <code>.mx-family-label</code>. "This computer only" is an
+        <code>.mx-item</code> rows, one column at a time, each group a <code>.mx-group-row</code> (its heading and its one switch).
+        The nine groups (#2734) each fold to one <code>.mx-family</code> row: a <code>.mx-group</code> heading button in the accent (caret
+        <code>.mx-group__caret</code>, the type count in <code>.mx-group__count</code>, <code>aria-expanded</code>) that opens the group to its
+        types, and one group switch per column (an <code>.oc-check</code> noted "some" when only part of the group is ticked; a flip writes
+        each writable type). A row that absorbed a retired type shows a one-time cyan <code>.mx-merged</code> line. "This computer only" is an
         <code>.oc-check</code> switch above the matrix that writes ticks as local pins. <code>LinkPanel.svelte</code> (<code>.mx-link</code>,
         <code>.mx-link__row</code>, <code>.mx-link__kind</code>, <code>.mx-link__base</code>) shows which kind of link goes into an outside
         notification and why, in plain words from the server's reason code, and the per-computer "pause all outside delivery" switch. Both
@@ -364,6 +386,8 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
         "approve the admin prompt on the computer" while it waits; installed shows the command; a different carnivore command in the way
         shows a coral note and no button. The manual install command and the run-from-a-checkout command are always shown in
         <code>CopyField.svelte</code> boxes.</dd>
+    <dt>features (Joe (ccsliinc), 2026-10-30, #2723)</dt>
+    <dd>The <code>features</code> section is a whole-screen section (<code>SettingsScreenSection.svelte</code>, <code>data-screen="features"</code>): the Plugins page's manager page in its <code>features</code> scope (<code>PluginsScreen.svelte</code>, <code>scope="features"</code>), so it adds no component or class. Every compiled-in item (tier builtin or core, and dev only while developer mode is on) is a card with its own on/off switch, on or off, and the side pane holds what it asks (the permission sheet), what it needs, its data and its settings, all through <code>GET</code> and <code>PUT /api/v1/cplugs</code>. It is the first entry under the rail's <code>features</code> heading; an enabled feature with settings also gets its own rail entry below it, and a store item with settings gets one under the <code>plugins</code> heading. Strings read <code>features.page.*</code> before <code>plugins.page.*</code> (<code>feature-words.ts</code>), so the page says "feature" wherever the plugins page says "plugin". Deep link: <code>#settings/features/&lt;id&gt;[/settings]</code>.</dd>
     <dt>plugins</dt>
     <dd>A plugin's own panel draws inside its side pane as a plugin-specific block (a <code>settings-panel</code> contribution, shown only while the plugin is on; <code>plugin-extras.ts</code>), with the same routes and stored values; each plugin documents its own panel in its own fragment. Usage stats is not a plugin (2026-10-16): its one switch, with the backfill and the confirmed clear, is Settings &gt; advanced &gt; statistics. There is no Settings &gt; plugins index any more (removed 2026-10-13): the gear on a plugin card is the door to its pane. A plugin's own settings are never drawn in Settings.</dd>
     <dt>the save model</dt>
@@ -490,7 +514,7 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
     <dt>use</dt>
     <dd>The Pack page (a menu row, not a settings section) has four tabs: computers (every computer once, this computer first, then
         add a computer and join a pack), work, logins and ssh. A computer's row carries its actions beside its name
-        (<code>.pk-act</code>, the <code>.modal-btn</code> family at small size), never pinned to the far edge, and the page
+        (the base <code>Button</code> at <code>size="sm"</code>), never pinned to the far edge, and the page
         keeps a readable column (<code>.pk-col</code>, <code>.cmp-body</code>, 76ch). The work tab is the exception: a status strip (<code>.pw-strip</code>), then placement and per-computer reserve groups (<code>.pw-group</code>, side by side from 1440 px in <code>.pw-grid</code>), the placement model pickers inline under the enhanced switch (<code>.pw-model</code>, the shared RouteRow, defaults stated in the fields), a <code>.pw-tag</code> on the group header, each computer a <code>.pw-machine</code> row with its real values as <code>.pw-chip</code> chips (<code>.pw-chip--now</code> for the level in force), and the move row (<code>.pw-move</code>) picking project and computer before its button enables.</dd>
     <dt>marks</dt>
     <dd><code>PackMarks.svelte</code>: the alpha badge (<code>.pm-badge</code>, the catalog word "alpha"), one green outline

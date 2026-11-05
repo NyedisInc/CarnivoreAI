@@ -5,6 +5,8 @@ import { flushSync } from 'svelte';
 import { init as initGroupKeys } from '../drawer/group-actions';
 import * as Rename from '../drawer/rename';
 import { closeItemMenu } from '../item-menu/open.svelte';
+import { confirmPositional } from '../confirm-ok/confirm-ok';
+import { autoAnswerConfirm, type AutoAnswer } from '../../test-support/auto-answer';
 import { claim as claimChrome } from '../drawer/chrome-clicks';
 import { loadLegacyDrawer, paintDrawer, type LegacyWindow } from './legacy-fixture';
 
@@ -47,6 +49,7 @@ export interface Harness {
 let w: LegacyWindow;
 let list: HTMLElement;
 let events: Event[] = [];
+let confirmer: AutoAnswer | undefined;
 let groups: FakeGroup[] = [];
 let opts: RunOptions = {};
 
@@ -135,9 +138,9 @@ export function loadInteractions(sidebarShell: unknown): LegacyWindow {
         set(v: string) { events.push(['live', v]); text.set!.call(live, v); },
     });
     const ctrl: Record<string, any> = {
-        listEl: list, _rows: [], _listing: { ok: true }, _lastSig: null, _dragging: false,
+        listEl: list, rows() { return this._rows; }, _rows: [], _listing: { ok: true }, _dragging: false,
         repaint() { paintDrawer(ctrl); },
-        async _fetchAndRender() { events.push(['refetch']); ctrl._lastSig = null; ctrl.repaint(); },
+        async _fetchAndRender() { events.push(['refetch']); ctrl.repaint(); },
     };
     w.SessionSidebar = ctrl;
     list.addEventListener('click', (e) => {
@@ -145,9 +148,7 @@ export function loadInteractions(sidebarShell: unknown): LegacyWindow {
         Rename.onListClick(e);
     });
     w.API = fakeApi();
-    w.App = {
-        showConfirmModal: async (...args: unknown[]) => { events.push(['confirm', ...args]); return opts.confirm !== false; },
-    };
+    w.App = { showConfirmModal: confirmPositional };
     w.WriteFailureNotice = { report(text: string) { events.push(['failure', text]); } };
     w.SessionSidebarGroupColour.open = (anchor: Element, uuid: string) => events.push(['colour-picker', anchor.getAttribute('data-group-menu'), uuid]);
     w.SessionSidebarGroupIcon.open = (anchor: Element, uuid: string) => events.push(['icon-picker', anchor.getAttribute('data-group-menu'), uuid]);
@@ -163,12 +164,16 @@ export function loadInteractions(sidebarShell: unknown): LegacyWindow {
 export function startRun(o: RunOptions = {}): Harness {
     opts = o;
     closeItemMenu();
+    confirmer?.stop();
+    confirmer = autoAnswerConfirm((a) => {
+        events.push(['confirm', a.title, a.message, a.details, a.okLabel, a.cancelLabel, a.variant === 'danger' ? 'danger' : 'primary']);
+        return opts.confirm !== false;
+    });
     w.SessionSidebarStore.save([], [], [], {}, {});
     groups = startGroups();
     w.SessionSidebarGroupStore.apply(body());
     const rows = startRows();
     w.SessionSidebar._rows = rows;
-    w.SessionSidebar._lastSig = null;
     w.SessionSidebar.repaint();
     events = [];
     return { w, list, events, rows, groups: () => groups };

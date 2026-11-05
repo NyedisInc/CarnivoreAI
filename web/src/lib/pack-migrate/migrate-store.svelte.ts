@@ -3,6 +3,7 @@
 import { authFetch } from '../../opscenter/api/auth.svelte';
 import { resource, type Resource } from '../../opscenter/api/poll.svelte';
 import { t } from '../i18n/index.svelte';
+import { withRefusedFiles } from '../errors/failure-reason';
 
 export interface MigrateTarget {
   kind: 'project' | 'company' | 'back';
@@ -198,7 +199,7 @@ export async function publishRepo(owner: string, account: string): Promise<void>
       body: JSON.stringify({ ...(owner ? { owner } : {}), ...(account ? { account } : {}) }),
     });
   } catch (error) {
-    migrate.error = words(error);
+    migrate.error = withRefusedFiles(words(error), error, t);
     migrate.busy = false;
     return;
   }

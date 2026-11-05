@@ -1,5 +1,5 @@
 
-from typing import Optional, List
+from typing import Dict, Optional, List
 from pydantic import BaseModel, Field
 
 
@@ -48,6 +48,14 @@ class RespawnSessionRequest(BaseModel):
             "every later restart and recreate starts on it; false is a "
             "one-time choice and clears any saved account. Ignored without "
             "account_id"
+        ),
+    )
+    resume_after_restart: bool = Field(
+        False,
+        description=(
+            "True: once the restarted session is back at its prompt, type "
+            "'resume' into it, but only while Beast Mode is armed (the "
+            "auto-switch panel's restart to switch and reset all send it)"
         ),
     )
     confirm_restart_live: bool = Field(
@@ -420,13 +428,15 @@ class RestartAccountOption(BaseModel):
     name: str = Field(..., description="What the user calls the account")
     color: Optional[str] = Field(None, description="Its swatch, lowercase hex, or null")
     is_current: bool = Field(False, description="The pane runs on this account now")
+    provider: str = Field("claude", description="The agent family this account launches: claude, or codex for a relayed login")
 
 
 class RestartAccountsResponse(BaseModel):
     """The restart dialog's account dropdown for one session.
 
-    ``options`` is empty when the session has no account to choose (codex or
-    another family, a remote row), and the dialog then draws no control.
+    ``options`` is empty when the session has no account to choose (a family
+    other than claude or codex, a remote row, a codex session with no relayed
+    login), and the dialog then draws no control.
     """
 
     options: List[RestartAccountOption] = Field(default_factory=list)
@@ -438,3 +448,7 @@ class RestartAccountsResponse(BaseModel):
         None, description="The active account when it is launchable, else None: what a launch that names no account uses"
     )
     pinned: bool = Field(False, description="This session has a saved account (the box starts ticked)")
+    selected_by_provider: Dict[str, Optional[str]] = Field(
+        default_factory=dict,
+        description="The new-launch picker only: each provider's active launchable account (claude, codex), so one read serves both families",
+    )

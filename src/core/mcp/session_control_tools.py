@@ -126,9 +126,9 @@ SPECS = (
         name="session_wake", route="src.api.session_sleep_routes:wake_session", gate=ra.ACT,
         description="Wake an asleep session (target its session_uuid or tmux name from sessions_list include_asleep) onto the same "
                     "conversation; a CLOSED one (include_closed) with a known conversation reopens by session_uuid. "
-                    "agent_type picks a launch wrapper. start_fresh starts a new conversation on the same row when the stored one never wrote a transcript. account (with always_use_account) resumes on that claude account. "
-                    "Waits for the owner's approval unless Beast Mode is armed.",
-        properties={"agent_type": {"type": "string"},
+                    "agent_type, start_fresh, account and always_use_account work as their fields say. "
+                    "Waits for the owner's approval unless Beast Mode is armed or a Swarm agent wakes a session of this computer.",
+        properties={"agent_type": {"type": "string", "description": "picks a launch wrapper"},
                     "start_fresh": {"type": "boolean", "description": "Start a new conversation on the same row when the stored "
                                     "conversation never wrote a transcript; otherwise the wake resumes as normal (default false)."},
                     **restart_account_args.PROPERTIES},

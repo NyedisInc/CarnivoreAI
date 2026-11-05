@@ -84,7 +84,8 @@ class TaskManagerCardPort:
                     if op == "create":
                         result = flow.create(conn, list_key=args["list_key"], title=args["title"], text=args.get("text", ""), by=by,
                                              origin=args["origin"], parent=args.get("parent"), how_to_validate=args.get("how_to_validate", ""),
-                                             before_id=args.get("before_id"), now=now, summary=args.get("summary", ""), queued=bool(args.get("queued")))
+                                             before_id=args.get("before_id"), now=now, summary=args.get("summary", ""), queued=bool(args.get("queued")),
+                                             level=args.get("level"))
                     elif op in _FLOW_OPS:
                         result = _FLOW_OPS[op](conn, card_id, args, by, now)
                     else:

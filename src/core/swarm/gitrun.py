@@ -13,6 +13,8 @@ from typing import Dict, Optional
 GRACE_S = 5
 NO_GIT_RC = 127
 MAX_OUT = 8_000_000
+EXTRA_ENV_KEYS = frozenset({"GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY"})
+LOW_PRIORITY_NICE = 10
 _KEEP_PREFIXES = ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM", "GIT_CONFIG_NOSYSTEM", "GIT_SSH", "GIT_ASKPASS")
 
 
@@ -60,7 +62,8 @@ def _filter_flags(repo: Path) -> "list[str]":
 
 
 def run_git(repo: Path, *args: str, timeout: float, optional_locks: bool = True, untrusted_repo: bool = False,
-            max_out: Optional[int] = None) -> "subprocess.CompletedProcess[str]":
+            max_out: Optional[int] = None, extra_env: Optional[Dict[str, str]] = None,
+            low_priority: bool = False, input_bytes: Optional[bytes] = None) -> "subprocess.CompletedProcess[str]":
     if not git_guard.git_available():
         return subprocess.CompletedProcess(["git", *args], NO_GIT_RC, "", "")
     pre: "list[str]" = []
@@ -69,10 +72,25 @@ def run_git(repo: Path, *args: str, timeout: float, optional_locks: bool = True,
         if args and args[0] in ("status", "diff"):
             pre += _filter_flags(repo)
     limit = MAX_OUT if max_out is None else max_out
-    with tempfile.TemporaryFile() as out:
-        proc = subprocess.Popen(["git", "-C", str(repo), "--literal-pathspecs", *pre, *args], stdin=subprocess.DEVNULL,
-                                stdout=out, stderr=subprocess.DEVNULL, env=git_env(optional_locks=optional_locks),
+    env = git_env(optional_locks=optional_locks)
+    if extra_env:
+        unknown = set(extra_env) - EXTRA_ENV_KEYS
+        if unknown:
+            raise ValueError(f"run_git extra_env keys not allowed: {sorted(unknown)}")
+        env.update(extra_env)
+    with tempfile.TemporaryFile() as out, tempfile.TemporaryFile() as feed:
+        if input_bytes is not None:
+            feed.write(input_bytes)
+            feed.seek(0)
+        proc = subprocess.Popen(["git", "-C", str(repo), "--literal-pathspecs", *pre, *args],
+                                stdin=feed if input_bytes is not None else subprocess.DEVNULL,
+                                stdout=out, stderr=subprocess.DEVNULL, env=env,
                                 start_new_session=True)
+        if low_priority:
+            try:
+                os.setpriority(os.PRIO_PROCESS, proc.pid, LOW_PRIORITY_NICE)
+            except OSError:
+                pass
         try:
             proc.wait(timeout=timeout)
         except subprocess.TimeoutExpired:

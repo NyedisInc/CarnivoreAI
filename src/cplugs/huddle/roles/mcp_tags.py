@@ -10,8 +10,8 @@ from src.cplugs.sdk import CplugContext, ToolError
 
 FIELD = "tag"
 SCHEMA = {FIELD: {"type": "string", "description": (
-    "'me' tags your own session, an agents_lookup id another agent, '' clears: the task is sent to that agent first, waking it if asleep "
-    "(a gone agent: the project lead, else the owner). Guide section 29.")}}
+    "'me' tags your own session, an agents_lookup id another agent, '' clears: the task goes to that agent first (woken if asleep) "
+    "(a gone one: the project lead, else the owner). Guide section 29.")}}
 CallerKey = Callable[[], Awaitable[Optional[str]]]
 
 

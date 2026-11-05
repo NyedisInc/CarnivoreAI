@@ -12,7 +12,7 @@
   import TaskManagerRowPosts from '../../../cplugs/huddle/TaskManagerRowPosts.svelte';
   import { decisionKeys } from '../../../cplugs/huddle/chat/chat-model';
   import { wrapperParts } from '../../../cplugs/huddle/huddle-density';
-  import { reviewAnswerOf, reviewOf } from '../../../cplugs/huddle/huddle-review';
+  import { reviewOf } from '../../../cplugs/huddle/huddle-review';
   import { stepsOfItem } from '../../../cplugs/huddle/task-manager-steps.svelte';
   import { taskOf } from '../../../cplugs/huddle/task-manager-design/adapter';
   import { inspectionOf } from '../../../cplugs/huddle/task-manager-design/inspection.svelte';
@@ -27,7 +27,7 @@
   import Mk2ReviewChecks from './Mk2ReviewChecks.svelte';
   import Mk2SharedViewer from './Mk2SharedViewer.svelte';
   import Mk2Subtasks from './Mk2Subtasks.svelte';
-  import { actionableIdOf, actionDataOf, statusLinesOf } from './mk2-task-tabs';
+  import { actionableIdOf, actionDataOf, cardsInFrontOf, statusLinesOf } from './mk2-task-tabs';
   import { progressOf, sinceRead } from '../../../cplugs/huddle/task-manager-progress.svelte';
   import { waitLine } from '../../../cplugs/huddle/task-manager-wait';
 
@@ -41,7 +41,9 @@
   const wait = $derived(waitLine(item, new Date(), { t, due: { today: t('cplug.huddle.schedule.today'), tomorrow: t('cplug.huddle.schedule.tomorrow') } }));
   const action = $derived(actionDataOf(item, wait));
   const workers = $derived(statusLinesOf(progressOf(item.id), sinceRead(), { t }));
+  /* the review card */
   const actionable = $derived(actionableIdOf(item));
+  const inFront = $derived(cardsInFrontOf(item));
   const review = $derived(reviewOf(item));
   const keep = getContext<Mk2ViewHolder | undefined>(MK2_VIEW);
   let restored = false;
@@ -101,8 +103,8 @@
       {:else if view.tab === 'subtasks'}
         <Mk2Subtasks {item} />
       {:else}
-        {#if review}<HuddleReview block={review} id={item.id} answer={reviewAnswerOf(item)} issue={item.github_issue} foldAll unfolded={detailed} />{/if}
-        {#if actionable !== null}<div class="mk2-actionable" data-mk2-actionable={actionable}><TaskManagerRowPosts {item} parts={wrapperParts('opened', item)} only={actionable} unfolded={detailed} oneLine /></div>{/if}
+        {#if review && actionable === null}<HuddleReview block={review} id={item.id} issue={item.github_issue} foldAll unfolded={detailed} />{/if}
+        {#if actionable !== null}<div class="mk2-actionable" data-mk2-actionable={actionable}><TaskManagerRowPosts {item} parts={wrapperParts('opened', item)} only={actionable} unfolded={detailed} oneLine />{#if inFront > 0}<div class="mk2-actionable-more" data-mk2-more={inFront}>{t('cplug.huddle.tm.cards_more', { n: inFront })}</div>{/if}</div>{/if}
         <dl class="mk2-rows">
           {#if workers.length || action.statusKey}
             <dt>{t('opscenter.cell.task_manager_mk2.tab.status')}</dt>
@@ -161,6 +163,13 @@
 
     .mk2-actionable {
       min-width: 0;
+    }
+
+    .mk2-actionable-more {
+      margin-top: var(--oc-space-1);
+      color: var(--oc-text-muted);
+      font-family: var(--font-mono);
+      font-size: var(--oc-fs-label);
     }
   }
 </style>

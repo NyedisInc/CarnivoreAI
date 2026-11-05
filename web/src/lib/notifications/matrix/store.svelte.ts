@@ -2,8 +2,8 @@ import { errorText } from '../../settings-page/panel-kit/error-text';
 import { createPushedStore } from '../../resource-push/pushed-store';
 import { EMPTY_SETTINGS, fetchRegistry, fetchRouting, putDefault, putPaused, putTick, resetTick, SCREEN, type Cell, type Family, type Fetcher, type RoutingSettings, type TypeRow } from './api';
 
-export const matrix = $state<{ families: Family[]; types: TypeRow[]; settings: RoutingSettings; loaded: boolean; problem: string; localOnly: boolean }>({
-    families: [], types: [], settings: EMPTY_SETTINGS, loaded: false, problem: '', localOnly: false,
+export const matrix = $state<{ families: Family[]; types: TypeRow[]; aliases: Record<string, string>; settings: RoutingSettings; loaded: boolean; problem: string; localOnly: boolean }>({
+    families: [], types: [], aliases: {}, settings: EMPTY_SETTINGS, loaded: false, problem: '', localOnly: false,
 });
 
 export const MATRIX_POLL_MS = 15000;
@@ -14,6 +14,7 @@ async function read(fetcher: Fetcher | undefined): Promise<void> {
             const registry = await fetchRegistry(fetcher);
             matrix.families = registry.families;
             matrix.types = registry.types;
+            matrix.aliases = registry.aliases;
         }
         matrix.settings = await fetchRouting(fetcher);
         matrix.problem = '';
@@ -44,6 +45,18 @@ export const setTick = (column: string, typeId: string, value: boolean): Promise
     act(async () => {
         const body = matrix.localOnly ? { column, type_id: typeId, value, scope: 'local' as const } : { column, type_id: typeId, value };
         setCell(column, typeId, (await putTick(body, store.fetcher())).cell);
+    });
+
+export const setGroup = (column: string, typeIds: readonly string[], value: boolean, defaults = false): Promise<void> =>
+    act(async () => {
+        for (const typeId of typeIds) {
+            if (defaults) {
+                matrix.settings = { ...matrix.settings, defaults: (await putDefault(typeId, value, store.fetcher())).defaults };
+                continue;
+            }
+            const body = matrix.localOnly ? { column, type_id: typeId, value, scope: 'local' as const } : { column, type_id: typeId, value };
+            setCell(column, typeId, (await putTick(body, store.fetcher())).cell);
+        }
     });
 
 export const resetCell = (column: string, typeId: string): Promise<void> =>

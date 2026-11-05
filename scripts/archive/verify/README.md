@@ -36,6 +36,8 @@ here and are not expected to still run.
 | `verify_toast_stacking.py` | a burst of toasts stays legible, the cap/overflow row is a real measured box | `021b63d1` | `tests/test_toast_stacking.node.mjs` |
 | `verify_status_led_geometry.py` | that every (inner, outer) LED pair paints one lit diameter, measured in a real Chromium under the app's CSP | the 1.2 merge, 2026-09-09 | `tests/test_status_led.node.mjs` |
 | `verify-adopt-resize.py` | an adopted tmux session resizes like any other | `8b8bd8cd` | `tests/test_adopt_resize.py` |
+| `verify_sidebar_sessions.py`, `verify_sidebar_groups.py`, `verify_sidebar_rename.py`, `verify_sidebar_group_drag.py` (with `sidebar-sessions-geometry-harness.html`) | the session sidebar's pinning, groups, inline rename and group drag, measured in a static geometry harness | M27b (u026-01, u026-14): the harness loads eight `client/js/session-sidebar*.js` modules that #726 slice 6 deleted, so every run was CANNOT DETERMINE; the group-drag script also read a deleted theme | `tests/test_sidebar_sessions.node.mjs`, `tests/test_sidebar_groups_rename.node.mjs`, `scripts/verify_sidebar_shell.py`, `scripts/verify_drawer_final.py` |
+
 
 ## Kept in place, not archived
 
@@ -44,15 +46,6 @@ reasons below. They still live in `scripts/`.
 
 - `verify_header_icons_and_menu.py` - actively invoked (`VERIFIER=`) by
   `scripts/ci/mutate-header-icons-and-menu.sh`.
-- `verify_sidebar_groups.py` - actively invoked by
-  `scripts/ci/mutate-sidebar-groups.sh`.
-- `verify_sidebar_sessions.py` - actively invoked by
-  `scripts/ci/mutate-density-menu-placement.sh`, and
-  `scripts/ci/mutate-sidebar-groups.sh`.
-- `verify_sidebar_rename.py` - imported by `verify_sidebar_groups.py`
-  (`from verify_sidebar_rename import measure_inline_rename`), which is
-  itself called by CI mutation testing above. A load-bearing dependency of
-  an active tool, not a standalone one-off.
 - `verify_lifecycle_reconcile.py` - a parameterised operator tool
   (`--db`, `--listing`), not a proof of one closed bug. Runs the lifecycle
   reaper against an arbitrary real `cloude.db` copy.
@@ -69,12 +62,6 @@ reasons below. They still live in `scripts/`.
   ITEM 53, and `RELEASE-NOTES.md` shows individual items (ITEM 48) still
   open across multiple past releases. Unsure whether every item it
   measures has a permanent-test equivalent; kept rather than guessed at.
-- `verify_sidebar_group_drag.py` - companion to the actively-called
-  `verify_sidebar_groups.py` (imports from `verify_sidebar_sessions.py`
-  itself), last touched 2026-09-07, in a sidebar-groups area of the
-  codebase under active edit as of this archiving pass. Kept rather than
-  archived mid-development.
-
 - `verify_status_led_geometry.py` - arrived from the other line of
   development at the 1.2 merge and was archived on the way in rather than
   landing top-level, per the convention this directory records. IT WAS

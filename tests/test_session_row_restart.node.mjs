@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 
 import { glyphSvg } from '../client/js/icons/glyphs.js';
+import { installCatalogTr } from './helpers/catalog-tr.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -70,6 +71,8 @@ function loadModules() {
         },
     };
     vm.createContext(sandbox);
+    // The confirm copy is read from the one catalog at dialog time.
+    installCatalogTr(sandbox);
     vm.runInContext(readClientJs('session-status-ui.js'), sandbox);
     vm.runInContext(readClientJs('session-row-actions-confirm.js'), sandbox);
     vm.runInContext(readClientJs('session-row-actions.js'), sandbox);

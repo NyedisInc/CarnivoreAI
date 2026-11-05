@@ -6,11 +6,11 @@
   import { panelPins } from '../widget-bars/panel-pins.svelte';
   import { railOutSizes, roomFor } from './rail-out-size.svelte';
   import { RAIL_SPECS } from './rail-model';
-  import { sectionStyle } from './rail-sections';
+  import { sectionStyle } from './rail-cuts';
 
   const CLICK_SLOP_PX = 4;
 
-  let { edge, label, parts = [], cut = null, pinnable = true, onpin }: { edge: RailEdge; label: string; parts?: { section: number; pinned: boolean }[]; cut?: number | null; pinnable?: boolean; onpin?: (section: number) => void } = $props();
+  let { edge, label, parts = [], cuts = [], pinnable = true, onpin }: { edge: RailEdge; label: string; parts?: { section: number; pinned: boolean }[]; cuts?: readonly number[]; pinnable?: boolean; onpin?: (section: number) => void } = $props();
 
   const side = $derived(edge === 'side');
   const pinned = $derived(parts.some((part) => part.pinned));
@@ -18,11 +18,12 @@
   const keySection = $derived(parts.find((part) => part.section === focused)?.section ?? parts[0]?.section ?? 0);
 
   function sectionAt(event: PointerEvent): number {
-    if (cut === null || parts.length < 2) return parts[0]?.section ?? 0;
+    if (cuts.length === 0 || parts.length < 2) return parts[0]?.section ?? 0;
     const box = (event.currentTarget as HTMLElement).getBoundingClientRect();
     const length = side ? box.height : box.width;
     const fraction = length > 0 ? ((side ? event.clientY - box.top : event.clientX - box.left) / length) : 0;
-    return fraction >= cut ? 1 : 0;
+    const at = cuts.filter((cut) => fraction >= cut).length;
+    return parts[at]?.section ?? parts[parts.length - 1]!.section;
   }
   let winW = $state(typeof window === 'undefined' ? 1280 : window.innerWidth);
   let winH = $state(typeof window === 'undefined' ? 800 : window.innerHeight);
@@ -117,14 +118,14 @@
   onlostpointercapture={onpointercancel}
   title={!pinned && !pinnable ? t('widget_bars.pin_refused') : t('widget_bars.edge_keys')}
   {onkeydown}
-><span class="rail-edge__line"></span><span class="rail-edge__pins">{#each parts as part (part.section)}{#if part.pinned}<span class="rail-edge__pin" data-rail-pin-section={part.section} style={sectionStyle(RAIL_SPECS[edge].axis, part.section, parts.length > 1 && cut !== null ? 2 : 1, cut ?? 0.5)}></span>{/if}{/each}</span></div>
+><span class="rail-edge__line"></span><span class="rail-edge__pins">{#each parts as part (part.section)}{#if part.pinned}<span class="rail-edge__pin" data-rail-pin-section={part.section} style={sectionStyle(RAIL_SPECS[edge].axis, parts.findIndex((one) => one.section === part.section), cuts)}></span>{/if}{/each}</span></div>
 
 <style>
   @layer components {
     .rail-grip {
-      --edge-line: 2px;
+      --edge-line: var(--oc-grip-line);
       --edge-reach: 5px;
-      --edge-hit: 8px;
+      --edge-hit: var(--oc-grip-hit);
       position: absolute;
       z-index: 2;
       touch-action: none;

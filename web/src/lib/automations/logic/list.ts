@@ -51,7 +51,7 @@ export function sortRows(rows: ListRow[], k: SortKey, d: 1 | -1): ListRow[] {
 
 export type Pill = { k: 'status'; v: string } | { k: 'kind'; v: string };
 
-export const PILL_STATUSES = ['failed', 'succeeded', 'skipped', 'running', 'waiting_on_you', 'no run'] as const;
+export const PILL_STATUSES = ['failed', 'alerted', 'succeeded', 'skipped', 'running', 'waiting_on_you', 'no run'] as const;
 
 export function pillTest(v: ListRow, f: Pill): boolean {
   const l = v.sig.last;

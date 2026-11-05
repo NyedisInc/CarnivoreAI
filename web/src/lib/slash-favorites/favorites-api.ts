@@ -1,5 +1,6 @@
 import { ApiError, authFetch } from '../../opscenter/api/auth.svelte';
 import { rowFromPayload, type FavoriteColor, type FavoritesRow } from './favorites-model';
+import { failureReason } from '../errors/failure-reason';
 
 export type WriteResult =
     | { kind: 'ok'; row: FavoritesRow }
@@ -20,7 +21,7 @@ async function post(path: string, body: Record<string, unknown>): Promise<WriteR
                 return { kind: 'stale', row: rowFromPayload(detail.current) };
             }
         }
-        return { kind: 'failed', message: error instanceof Error ? error.message : String(error) };
+        return { kind: 'failed', message: failureReason(error) };
     }
 }
 

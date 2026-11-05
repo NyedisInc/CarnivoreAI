@@ -6,8 +6,6 @@ const { isTailscaleIp } = require('../../network-interfaces');
 const trayStatus = require('../../tray-status');
 const tlsStatus = require('../../tls-status');
 
-const OTP_ROLL_HINT_S = 5;
-
 function bindRadios(phone, t) {
   const chosen = phone.bindHost;
   const pick = (ip) => ({ kind: 'phone.bind', ip });
@@ -31,11 +29,9 @@ function phoneMenu(snap, env) {
     maybe(Boolean(url), 'phone.url_qr', t('menubar.phone.url_qr'), { kind: 'phone.url_qr', url }, noUrl),
   ];
   if (!snap.joined) {
-    const otp = phone.otp;
-    const roll = otp && phone.otpRemaining <= OTP_ROLL_HINT_S ? t('menubar.phone.otp_rolls', { count: phone.otpRemaining }) : undefined;
     items.push(
-      maybe(Boolean(otp), 'phone.copy_otp', otp ? t('menubar.phone.copy_otp', { code: otp }) : t('menubar.phone.copy_otp_none'),
-        { kind: 'phone.copy_otp' }, t('menubar.phone.otp_not_configured'), { sublabel: roll }),
+      maybe(phone.otpAvailable === true, 'phone.copy_otp', t('menubar.phone.copy_otp'),
+        { kind: 'phone.copy_otp' }, t('menubar.phone.otp_not_configured')),
       act('phone.totp_qr', t('menubar.phone.totp_qr'), { kind: 'phone.totp_qr' }),
     );
   }
@@ -51,4 +47,4 @@ function phoneMenu(snap, env) {
   return sub('phone', t('menubar.phone'), items, { toolTip: bind.detail });
 }
 
-module.exports = { OTP_ROLL_HINT_S, bindRadios, phoneMenu };
+module.exports = { bindRadios, phoneMenu };

@@ -15,3 +15,8 @@ test('a press on the terminal page is still the terminal', () => {
   document.body.innerHTML = '<div id="terminal-screen" class="screen active"><div id="gap"></div></div><div id="launchpad-screen" class="screen"></div>';
   expect(surfaceOf(document.getElementById('gap'))).toBe('terminal');
 });
+
+test('a press on Home while it lies inside the terminal grid is still Home (#2774)', () => {
+  document.body.innerHTML = '<div id="terminal-screen" class="screen active"><div id="terminal-grid"><div id="launchpad-screen" class="screen active"><div id="gap"></div></div></div></div>';
+  expect(surfaceOf(document.getElementById('gap'))).toBe('home');
+});

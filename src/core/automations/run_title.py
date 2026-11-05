@@ -15,12 +15,20 @@ _REASONS = {
     m.R_TARGET_INVALID: "the target is no longer valid", "timeout": "it ran out of time", "turn_cap": "it hit its turn limit",
     "report_too_large": "the report was too large to keep", "cli_not_started": "the agent could not start"}
 _TITLES = {m.SUCCEEDED: "{} finished", m.FAILED: "{} failed", m.SKIPPED: "{} was skipped", m.CANCELLED: "{} was canceled",
-           m.WAITING: "{} needs you", m.RUNNING: "{} is running", m.CLAIMED: "{} is starting"}
+           m.WAITING: "{} needs you", m.ALERTED: "{} raised an alert", m.RUNNING: "{} is running", m.CLAIMED: "{} is starting"}
 
 
 def _clip(text: str) -> str:
     line = " ".join(redact(text).split())
     return line if len(line) <= SUMMARY_CAP else line[:SUMMARY_CAP - 3].rstrip() + "..."
+
+
+def first_line(report: Any) -> str:
+    tail = report.get("stdout_tail") if isinstance(report, dict) else None
+    for line in (tail or "").splitlines() if isinstance(tail, str) else ():
+        if line.strip():
+            return _clip(line)
+    return ""
 
 
 def _reason_words(reason: Optional[str]) -> str:
@@ -67,6 +75,10 @@ def build(*, name: str, status: str, kind: Optional[str] = None, reason: Optiona
             summary = _detail(kind, report) or ("finished and left a report" if report else "finished")
     elif status == m.FAILED:
         summary = why or "it failed"
+    elif status == m.ALERTED:
+        code = reason[5:] if reason and reason.startswith("exit_") and reason[5:].isdigit() else ""
+        title = f"{label} raised an alert" + (f" (code {code})" if code else "")
+        summary = first_line(report) or why or "the check raised an alert"
     elif status == m.SKIPPED:
         summary = f"skipped because {why}" if why else "skipped"
     elif status == m.WAITING:

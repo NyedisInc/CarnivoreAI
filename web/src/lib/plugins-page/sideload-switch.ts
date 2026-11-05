@@ -1,5 +1,11 @@
 import { ApiError, authFetch } from '../../opscenter/api/auth.svelte';
+import { displayKind, legacySideloadKind, type CplugIndexKind } from '../catalog/kind-display';
+import type { InstallConsent, InstallPreview } from '../catalog/types';
 import type { Translate } from '../sessions/types';
+
+export type SideloadKind = CplugIndexKind | 'plugin' | 'theme' | 'skill';
+
+export type SideloadSheet = InstallPreview & { kind?: string | null; name?: string | null };
 
 export interface SideloadGit {
     url: string;
@@ -11,6 +17,7 @@ export interface SideloadGit {
 
 export interface SideloadItem {
     id: string;
+    kind?: SideloadKind;
     item_id: string;
     source: string;
     synced_at: number | null;
@@ -26,6 +33,7 @@ export interface SideloadStatus {
 }
 
 export interface GitRequest {
+    consent?: InstallConsent | null;
     url: string;
     ref?: string | null;
     subdir?: string | null;
@@ -38,7 +46,8 @@ export const UNTIL_OFF = 'off';
 
 export const KNOWN_REFUSALS = [
     'sideload_off', 'source_missing', 'source_unsafe', 'source_too_big', 'manifest_invalid', 'name_taken', 'name_reserved',
-    'name_invalid', 'git_url_refused', 'ref_invalid', 'subdir_invalid', 'git_failed', 'git_unavailable', 'git_timeout',
+    'name_invalid', 'kind_unknown', 'kind_ambiguous', 'kind_unsupported', 'kind_unsupported_mod', 'kind_required', 'target_changed', 'target_exists', 'root_absent', 'root_unsafe',
+    'install_roots_unavailable', 'staging_busy', 'git_url_refused', 'ref_invalid', 'subdir_invalid', 'git_failed', 'git_unavailable', 'git_timeout',
 ] as const;
 
 export function loadSideload(fetcher: typeof authFetch = authFetch): Promise<SideloadStatus> {
@@ -50,29 +59,48 @@ export function saveSideload(enabled: boolean, hours?: number | null, fetcher: t
     return fetcher<SideloadStatus>('/cplug-owner/sideload/switch', { method: 'PUT', body: JSON.stringify(body) });
 }
 
-export function sideloadFolder(path: string, name?: string | null, fetcher: typeof authFetch = authFetch): Promise<unknown> {
-    return fetcher('/cplug-owner/sideload', { method: 'POST', body: JSON.stringify(name ? { path, name } : { path }) });
+export function sideloadFolder(path: string, name?: string | null, fetcher: typeof authFetch = authFetch, consent?: InstallConsent | null): Promise<unknown> {
+    const body: Record<string, unknown> = name ? { path, name } : { path };
+    if (consent) body.consent = consent;
+    return fetcher('/cplug-owner/sideload', { method: 'POST', body: JSON.stringify(body) });
 }
 
 export function sideloadGit(request: GitRequest, fetcher: typeof authFetch = authFetch): Promise<unknown> {
-    const body: Record<string, string> = { url: request.url };
+    const body: Record<string, unknown> = { url: request.url };
     for (const key of ['ref', 'subdir', 'name'] as const) {
         const value = request[key]?.trim();
         if (value) body[key] = value;
     }
+    if (request.consent) body.consent = request.consent;
     return fetcher('/cplug-owner/sideload/git', { method: 'POST', body: JSON.stringify(body) });
 }
 
-export function removeSideload(name: string, fetcher: typeof authFetch = authFetch): Promise<unknown> {
-    return fetcher(`/cplug-owner/sideload?name=${encodeURIComponent(name)}`, { method: 'DELETE' });
+export function removeSideload(name: string, kind?: SideloadKind | null, fetcher: typeof authFetch = authFetch): Promise<unknown> {
+    const which = kind ? `&kind=${encodeURIComponent(kind)}` : '';
+    return fetcher(`/cplug-owner/sideload?name=${encodeURIComponent(name)}${which}`, { method: 'DELETE' });
 }
 
-export function resyncSideload(item: SideloadItem, fetcher: typeof authFetch = authFetch): Promise<unknown> {
+export function resyncSideload(item: SideloadItem, fetcher: typeof authFetch = authFetch, consent?: InstallConsent | null): Promise<unknown> {
     if (item.git) {
-        return sideloadGit({ url: item.git.url, ref: item.git.ref, subdir: item.git.subdir, name: item.id }, fetcher);
+        return sideloadGit({ url: item.git.url, ref: item.git.ref, subdir: item.git.subdir, name: item.id, consent }, fetcher);
     }
-    return sideloadFolder(item.source, item.id, fetcher);
+    return sideloadFolder(item.source, item.id, fetcher, consent);
 }
+
+export function kindOf(item: SideloadItem): SideloadKind {
+    return item.kind ?? legacySideloadKind();
+}
+
+export function kindKey(kind: SideloadKind): string {
+    return `plugins.page.sideload.kind.${displayKind(kind)}`;
+}
+
+export function consentSheetOf(error: unknown): SideloadSheet | null {
+    if (refusalCode(error) !== 'consent_required' || !(error instanceof ApiError)) return null;
+    const detail = (error.payload as { detail?: unknown } | null)?.detail;
+    return detail && typeof detail === 'object' ? (detail as SideloadSheet) : null;
+}
+
 
 export function durationValue(hours: number | null | undefined): string {
     return hours === null ? UNTIL_OFF : String(hours ?? DEFAULT_HOURS);

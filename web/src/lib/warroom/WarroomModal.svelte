@@ -3,7 +3,7 @@
   import { onMount, untrack } from 'svelte';
   import TerminalLive from '../../opscenter/cells/terminal-live/Cell.svelte';
   import WidgetHead from '../../opscenter/shell/WidgetHead.svelte';
-  import ModalShell from '../launchpad/ModalShell.svelte';
+  import ModalShell from '../dialog-frame/ModalShell.svelte';
   import { WAR_ROOM_H, WAR_ROOM_W } from './modal-size';
   import ZoneShell from '../zone-shell/ZoneShell.svelte';
   import { createZone } from '../zone-shell/zone.svelte';

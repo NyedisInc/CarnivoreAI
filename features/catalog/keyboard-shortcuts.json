@@ -1,0 +1,47 @@
+{
+  "api_routes": [],
+  "area": "settings",
+  "docs": [
+    "docs/DECISIONS.md"
+  ],
+  "examples": [
+    "Type \"zoom\" in the search to find the terminal zoom chord and the middle click that closes a tab.",
+    "Press find by shortcut, then Cmd+K: the list shows the one action bound to it.",
+    "Switch the keyboard to windows or linux to read the chords for that kind of keyboard.",
+    "Open menus, sidebar, agent row menu to see its items and their letters, each branch with a count.",
+    "Press change on history back, press Cmd+K: the editor says it clashes with the command palette and will not save."
+  ],
+  "how_to": [
+    "Open settings, keyboard shortcuts. Branches fold: arrows move, Enter opens.",
+    "Type in the search box to find an action by name, key or gesture; the tree keeps its shape and opens only what matched.",
+    "Press find by shortcut, then press a chord: every action bound to it is listed, in any scope. Escape stops listening.",
+    "Press change on a row (or double click it): press the new chord. A clash in the same place blocks the save; a chord the app may never take is refused. Save, clear, or reset to the default; reset all is at the top.",
+    "Pick mac or windows or linux to read and change the shortcuts for that keyboard."
+  ],
+  "id": "keyboard-shortcuts",
+  "issues": [
+    2783
+  ],
+  "keywords": [
+    "keyboard",
+    "shortcuts",
+    "keybindings",
+    "hotkeys",
+    "keymap",
+    "middle click",
+    "find action",
+    "rebind",
+    "change shortcut",
+    "tree"
+  ],
+  "media_exempt": "settings screen whose proof is its vitest; a screenshot is captured at the next version bump",
+  "name": "Keyboard shortcuts",
+  "since": "2026-11-03",
+  "status": "beta",
+  "summary": "every key and mouse binding of the app as one searchable folding tree, from one registry; menus show as branches that mirror how they are built. Find an action by name or by pressing its shortcut, and change a shortcut with a visible change key.",
+  "surfaces": [],
+  "updated": "2026-11-03",
+  "where": [
+    "Settings, keyboard shortcuts."
+  ]
+}

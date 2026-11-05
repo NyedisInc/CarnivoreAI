@@ -19,6 +19,9 @@ class Bookmark(BaseModel):
     created_at: str
     snippet: str = Field("", description="The text that opened the marked turn: a typed prompt or a peer agent's message.")
     entry_timestamp: str = ""
+    files_checkpoint_id: Optional[int] = Field(None, description="Its turn's end-of-turn file snapshot (#2736 v3).")
+    files_unavailable: Optional[Literal["mid_turn", "no_snapshot"]] = Field(
+        None, description="Why its files cannot be rewound: a mid-turn point, or no snapshot of its turn.")
 
 
 class SessionBookmark(Bookmark):

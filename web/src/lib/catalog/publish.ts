@@ -1,4 +1,4 @@
-import { hostWindow } from '../sessions/env';
+import { legacyApi } from '../legacy-globals';
 import { publishRefusalKey } from '../../../../client/js/labels/skill-publish.js';
 import { reasonOf } from '../../../../client/js/labels/skill.js';
 import { clipChars } from './bounds';
@@ -116,7 +116,7 @@ interface LegacyApi {
 
 export function browserPublishHost(): PublishHost {
     const api = (): LegacyApi =>
-        (hostWindow() as unknown as { API: LegacyApi } | undefined)?.API as LegacyApi;
+        legacyApi<LegacyApi>();
     return {
         catalogSession: () => api().getCatalogSession(),
         listSkills: () => api().getPublishableSkills(),

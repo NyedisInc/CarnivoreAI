@@ -1,9 +1,12 @@
 import './project';
 import './company';
 import './group';
+import './section';
 import './color';
 import './leader';
 import './widget';
 import './row';
 import './pagerow';
 import './grouppick';
+import './termpath';
+import './page-actions';

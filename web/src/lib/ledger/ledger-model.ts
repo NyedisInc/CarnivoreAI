@@ -39,6 +39,7 @@ export const LEDGER_KEYS = {
     percent: 'ledger.percent',
     fetched: 'ledger.fetched',
     tagManaged: 'ledger.tag.managed',
+    tagRelayed: 'ledger.tag.relayed',
     headroomLabel: 'ledger.headroom.label',
     notMeasured: 'ledger.headroom.not_measured',
     valueUnknown: 'ledger.value.unknown',
@@ -137,6 +138,9 @@ export const LEDGER_KEYS = {
     pokeUnknown: 'ledger.poke.unknown',
     pokeNeedsLogin: 'ledger.poke.needs_login',
     loginCountdownDays: 'ledger.login_countdown.days',
+    relayCountdownDays: 'ledger.relay_countdown.days',
+    relayCountdownHours: 'ledger.relay_countdown.hours',
+    relayCountdownExpired: 'ledger.relay_countdown.expired',
     loginCountdownHours: 'ledger.login_countdown.hours',
     loginCountdownExpired: 'ledger.login_countdown.expired',
 } as const;
@@ -165,6 +169,34 @@ export interface LedgerAccount {
     login_expires_at?: string | null;
     poke?: LedgerPoke | null;
     setup_complete?: boolean | null;
+    relayed?: boolean | null;
+    relay_expires_at?: string | null;
+    synced_at?: string | null;
+    sessions_elsewhere?: SessionElsewhere[] | null;
+}
+
+export interface SessionElsewhere {
+    computer: string;
+    name: string;
+    session_id: string | null;
+}
+
+export const RELAY_STALE_SECONDS = 10 * MINUTE;
+
+export function relayedAsOf(
+    account: Pick<LedgerAccount, 'relayed' | 'fetched_at'>,
+    nowMs: number,
+    t: Translate,
+): string | null {
+    if (account.relayed !== true) return null;
+    const delta = deltaSeconds(account.fetched_at, nowMs);
+    if (delta === null || -delta <= RELAY_STALE_SECONDS) return null;
+    const time = new Date(Date.parse(account.fetched_at as string)).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    });
+    return t('ledger.relay_as_of', { time });
 }
 
 export interface LedgerPoke {
@@ -364,6 +396,18 @@ export function formatLoginCountdown(
     if (delta <= 0) return t(LEDGER_KEYS.loginCountdownExpired);
     if (delta >= DAY) return t(LEDGER_KEYS.loginCountdownDays, { count: Math.floor(delta / DAY) });
     return t(LEDGER_KEYS.loginCountdownHours, { count: Math.max(1, Math.floor(delta / HOUR)) });
+}
+
+export function formatRelayCountdown(
+    iso: string | null | undefined,
+    nowMs: number,
+    t: Translate,
+): string | null {
+    const delta = deltaSeconds(iso, nowMs);
+    if (delta === null) return null;
+    if (delta <= 0) return t(LEDGER_KEYS.relayCountdownExpired);
+    if (delta >= DAY) return t(LEDGER_KEYS.relayCountdownDays, { count: Math.floor(delta / DAY) });
+    return t(LEDGER_KEYS.relayCountdownHours, { count: Math.max(1, Math.floor(delta / HOUR)) });
 }
 
 export function removeConfirmKey(account: Pick<LedgerAccount, 'managed'>): string {

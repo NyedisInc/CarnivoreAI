@@ -1,4 +1,4 @@
-import { authFetch } from '../../sdk';
+import { authFetch, type ApprovalItem } from '../../sdk';
 import type { HuddleItem } from '../huddle-model';
 
 export type SwarmAgentState = 'asleep' | 'waking' | 'awake' | 'sleeping' | 'torn_down';
@@ -82,6 +82,9 @@ export interface SwarmConversationPage {
   cursor: string | null;
 }
 
+export const READ_TIMEOUT_MS = 15_000;
+export const SEND_TIMEOUT_MS = 60_000;
+
 export const CONVERSATION_LIMIT = 200;
 
 export interface SwarmMessageResponse {
@@ -90,15 +93,15 @@ export interface SwarmMessageResponse {
 }
 
 export function readAgent(id: number): Promise<SwarmAgentDetail> {
-  return authFetch<SwarmAgentDetail>(`/swarm/agents/${id}`);
+  return authFetch<SwarmAgentDetail>(`/swarm/agents/${id}`, { signal: AbortSignal.timeout(READ_TIMEOUT_MS) });
 }
 
 export function readConversation(id: number): Promise<SwarmConversationPage> {
-  return authFetch<SwarmConversationPage>(`/swarm/agents/${id}/conversation?limit=${CONVERSATION_LIMIT}`);
+  return authFetch<SwarmConversationPage>(`/swarm/agents/${id}/conversation?limit=${CONVERSATION_LIMIT}`, { signal: AbortSignal.timeout(READ_TIMEOUT_MS) });
 }
 
 export function postOrder(id: number, text: string): Promise<SwarmMessageResponse> {
-  return authFetch<SwarmMessageResponse>(`/swarm/agents/${id}/messages`, { method: 'POST', body: JSON.stringify({ text }) });
+  return authFetch<SwarmMessageResponse>(`/swarm/agents/${id}/messages`, { method: 'POST', body: JSON.stringify({ text }), signal: AbortSignal.timeout(SEND_TIMEOUT_MS) });
 }
 
 export async function sleepAgent(id: number): Promise<void> {
@@ -165,4 +168,37 @@ export async function rewindAgent(id: number, sha: string): Promise<void> {
 
 export async function resumeConversation(id: number, conversationUuid: string): Promise<void> {
   await authFetch(`/swarm/agents/${id}/wake`, { method: 'POST', body: JSON.stringify({ conversation_uuid: conversationUuid }) });
+}
+
+export interface SwarmWaitingItem {
+  kind: 'card' | 'review' | 'approval';
+  id: string;
+  agent_id: number;
+  author_path: AuthorCrumb[];
+  at: number;
+  entry?: SwarmEntry | null;
+  card?: { id: number; title?: string; result?: string; revision?: number } | null;
+  approval?: ApprovalItem | null;
+}
+
+export interface SwarmWaiting {
+  agent_id: number;
+  items: SwarmWaitingItem[];
+  count: number;
+}
+
+export function readWaiting(id: number): Promise<SwarmWaiting> {
+  return authFetch<SwarmWaiting>(`/swarm/agents/${id}/waiting`, { signal: AbortSignal.timeout(READ_TIMEOUT_MS) });
+}
+
+export async function acceptReviewCard(id: number, revision?: number): Promise<void> {
+  await authFetch(`/swarm/cards/${id}/done`, { method: 'POST', body: JSON.stringify({ expected_revision: revision ?? null }), signal: AbortSignal.timeout(SEND_TIMEOUT_MS) });
+}
+
+export async function sendBackReviewCard(id: number, note: string): Promise<void> {
+  await authFetch(`/swarm/cards/${id}/send-back`, { method: 'POST', body: JSON.stringify({ note }), signal: AbortSignal.timeout(SEND_TIMEOUT_MS) });
+}
+
+export async function skipQuestion(itemId: number): Promise<void> {
+  await authFetch(`/cplugs/huddle/items/${itemId}/skip`, { method: 'POST', signal: AbortSignal.timeout(SEND_TIMEOUT_MS) });
 }

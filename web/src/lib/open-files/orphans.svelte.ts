@@ -2,6 +2,7 @@ import { t } from '../i18n/index.svelte';
 import { openFiles, postOpenFile, postOpenFilePath, type OpenFileInfo, type OpenFileRequest } from './api.svelte';
 import { bufferIds, dropBuffer, isDirty, moveBuffer } from './buffers.svelte';
 import { appConfirm, type ConfirmFn } from './save-flow';
+import { failureReason } from '../errors/failure-reason';
 
 export interface OrphanDeps {
     confirm: ConfirmFn;
@@ -60,7 +61,7 @@ async function askAbout(id: string, deps: OrphanDeps): Promise<void> {
             lastSeen.set(reopened.id, reopened);
         }
     } catch (err) {
-        const detail = err instanceof Error ? err.message : String(err);
+        const detail = failureReason(err);
         console.warn('open files: reopening a row with edits failed', { id, error: detail });
         deps.alert(t('files.editor.orphan.reopen_failed', { name, detail }));
     }

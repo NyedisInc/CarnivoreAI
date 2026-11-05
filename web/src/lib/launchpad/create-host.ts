@@ -1,6 +1,7 @@
 import { hostWindow } from '../sessions/env';
 import { withNav, type NavToken } from './nav-generation';
 import { t } from '../i18n/index.svelte';
+import { confirmPositional } from '../confirm-ok/confirm-ok';
 import { browserNavHost } from './nav-host';
 import { detachAndCreateNew, selectProject } from './navigation';
 import { showError, updateStatus } from './status-report';
@@ -22,6 +23,7 @@ export interface ProviderChoice {
     pinAccount?: boolean;
     name?: string | null;
     pinned?: boolean;
+    worktree?: { branch: string; base_branch: string | null; setup: boolean; copy: string[] } | null;
     [key: string]: unknown;
 }
 
@@ -179,20 +181,8 @@ export function browserCreateHost(): CreateHost {
         terminalDims: () => browserNavHost().terminalDims(),
         updateStatus,
         showError: (message) => showError(message, t),
-        confirm: (title, message, details, primaryLabel, secondaryLabel) => {
-            const app = win()?.App as
-                | {
-                      showConfirmModal(
-                          title: string,
-                          message: string,
-                          details: string | null,
-                          primaryLabel: string,
-                          secondaryLabel: string,
-                      ): Promise<boolean>;
-                  }
-                | undefined;
-            return app!.showConfirmModal(title, message, details, primaryLabel, secondaryLabel);
-        },
+        confirm: (title, message, details, primaryLabel, secondaryLabel) =>
+            confirmPositional(title, message, details, primaryLabel, secondaryLabel),
         announceSessionCreated(session, nav) {
             const w = hostWindow() as unknown as Window | undefined;
             w?.dispatchEvent(

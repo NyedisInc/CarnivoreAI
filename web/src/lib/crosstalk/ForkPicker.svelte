@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Button, Checkbox, Field, IconButton, Select } from '../base';
-  import ModalShell from '../launchpad/ModalShell.svelte';
+  import ModalShell from '../dialog-frame/ModalShell.svelte';
   import { forkSessionTo } from './fork-to';
   import { t } from '../i18n/index.svelte';
 

@@ -1,0 +1,6 @@
+Agent CLI screen rules
+
+The .toml files in this folder are adapted from herdr (https://github.com/herdrdev/herdr),
+src/detect/manifests/, at commit ee5bfb5041bb3e4a49d591c72308aae3c81ecdde, Copyright the herdr authors, licensed under the
+Apache License, Version 2.0 (the full text is LICENSE-herdr-Apache-2.0 beside this file).
+Each file's header names the changes Carnivore made to it, and the date.

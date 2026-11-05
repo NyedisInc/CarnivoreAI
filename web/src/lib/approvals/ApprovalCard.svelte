@@ -96,7 +96,7 @@
 
 {#snippet foot()}
   <div class="ap-foot" class:ap-foot--pinned={registerFoot !== undefined}>
-    <span class="qc-chip" class:qc-chip--beast={contract.chip === 'beast'} data-qc-chip={contract.chip}>{t(`approvals.card.chip.${contract.chip}`)}</span>
+    {#if contract.chip !== 'none'}<span class="qc-chip" class:qc-chip--beast={contract.chip === 'beast'} data-qc-chip={contract.chip}>{t(`approvals.card.chip.${contract.chip}`)}</span>{/if}
     
     <div class="ap-bar" class:ap-actions={choices} data-ap-bar>
       {#if item.source === 'dialog'}

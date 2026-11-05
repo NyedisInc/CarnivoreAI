@@ -12,6 +12,7 @@ from pydantic import ValidationError
 from src.models.stats import QueryRequest, TripwireWrite
 from . import events, queries
 from .config import NotFound
+from src.core.stats.store_port import StatsStoreLike
 
 logger = structlog.get_logger()
 MAX_TRIPWIRES = 64
@@ -26,12 +27,12 @@ def _out(row: sqlite3.Row) -> dict:
             "last_value": row["last_value"]}
 
 
-def list_tripwires(store) -> list[dict]:
+def list_tripwires(store: StatsStoreLike) -> list[dict]:
     with store.connect(readonly=True) as db:
         return [_out(r) for r in db.execute("SELECT * FROM stats_tripwires ORDER BY created_at,id")]
 
 
-def get_tripwire(store, tripwire_id: str) -> dict:
+def get_tripwire(store: StatsStoreLike, tripwire_id: str) -> dict:
     with store.connect(readonly=True) as db:
         row = db.execute("SELECT * FROM stats_tripwires WHERE id=?", (tripwire_id,)).fetchone()
     if row is None:
@@ -46,7 +47,7 @@ def _values(config: TripwireWrite) -> tuple:
             config.cooldown_minutes, int(config.enabled))
 
 
-def create_tripwire(store, config: TripwireWrite) -> dict:
+def create_tripwire(store: StatsStoreLike, config: TripwireWrite) -> dict:
     now, tripwire_id = int(time.time()), str(uuid.uuid4())
     with store.connect() as db:
         db.execute("BEGIN IMMEDIATE")
@@ -59,7 +60,7 @@ def create_tripwire(store, config: TripwireWrite) -> dict:
     return get_tripwire(store, tripwire_id)
 
 
-def replace_tripwire(store, tripwire_id: str, config: TripwireWrite) -> dict:
+def replace_tripwire(store: StatsStoreLike, tripwire_id: str, config: TripwireWrite) -> dict:
     with store.connect() as db:
         cursor = db.execute(
             "UPDATE stats_tripwires SET chart_id=?,name=?,query=?,window_minutes=?,comparator=?,"
@@ -71,13 +72,13 @@ def replace_tripwire(store, tripwire_id: str, config: TripwireWrite) -> dict:
     return get_tripwire(store, tripwire_id)
 
 
-def delete_tripwire(store, tripwire_id: str) -> None:
+def delete_tripwire(store: StatsStoreLike, tripwire_id: str) -> None:
     with store.connect() as db:
         if db.execute("DELETE FROM stats_tripwires WHERE id=?", (tripwire_id,)).rowcount != 1:
             raise NotFound("tripwire")
 
 
-def _measure(store, row: sqlite3.Row, now: float) -> float | None:
+def _measure(store: StatsStoreLike, row: sqlite3.Row, now: float) -> float | None:
     try:
         body = {**json.loads(row["query"]), "operation": "summary",
                 "from": datetime.fromtimestamp(now - row["window_minutes"] * 60, timezone.utc),
@@ -90,7 +91,7 @@ def _measure(store, row: sqlite3.Row, now: float) -> float | None:
     return float(value) if isinstance(value, (int, float)) else None
 
 
-def _was_firing(store, tripwire_id: str) -> bool:
+def _was_firing(store: StatsStoreLike, tripwire_id: str) -> bool:
     with store.connect(readonly=True) as db:
         row = db.execute("SELECT kind FROM stats_events WHERE subject=? AND kind IN "
                          "('tripwire_fired','tripwire_resolved') ORDER BY id DESC LIMIT 1",
@@ -125,7 +126,7 @@ def _step(row: sqlite3.Row, value: float | None, now: int, was_firing: bool = Fa
     return {"state": state, "since": row["since"], "pending_since": pending, "transition": None}
 
 
-def evaluate_all(store, now: float | None = None) -> list[dict]:
+def evaluate_all(store: StatsStoreLike, now: float | None = None) -> list[dict]:
     stamp = time.time() if now is None else now
     with store.connect(readonly=True) as db:
         rows = db.execute("SELECT * FROM stats_tripwires WHERE enabled=1").fetchall()

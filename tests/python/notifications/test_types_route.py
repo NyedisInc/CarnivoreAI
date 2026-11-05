@@ -24,10 +24,12 @@ def _app(authed: bool) -> TestClient:
     return TestClient(app)
 
 
-def test_authenticated_get_returns_39_types_and_13_kinds() -> None:
+def test_authenticated_get_returns_38_types_in_nine_groups_and_13_kinds() -> None:
     body = _app(True).get(URL).json()
     assert len(body["types"]) == 39 and len(body["kinds"]) == 13
-    assert [f["id"] for f in body["families"]] == ["needs_you", "sessions", "accounts", "health", "app", "in_app"]
+    assert [f["id"] for f in body["families"]] == [
+        "needs_you", "sessions", "messages", "auto_answers", "swarm", "health", "security", "automations", "app"]
+    assert body["aliases"] == {"session.posted": "agent.message", "session.limit_rotation": "account.switched"}
     first = body["types"][0]
     assert first["id"] == "session.permission" and "screen_locked" not in first["defaults"]
     assert first["label_key"] == "notify.type.session.permission.label"

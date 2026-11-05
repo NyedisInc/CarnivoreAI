@@ -6,6 +6,7 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { createEnvironment } from './mini-dom.mjs';
+import { installTrOnly } from './helpers/catalog-tr.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -82,6 +83,7 @@ function load(startWidth) {
     };
     sandbox.globalThis = sandbox;
     vm.createContext(sandbox);
+    installTrOnly(sandbox);
     for (const file of ['kebab-icon.js', 'dismiss-guard.js', 'header-menu.js']) {
         vm.runInContext(readClientFile('js', file), sandbox);
     }

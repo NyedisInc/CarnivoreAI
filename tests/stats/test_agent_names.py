@@ -55,3 +55,27 @@ def test_live_list_is_five_minute_rate_by_name_highest_first(store):
     assert [a["name"] for a in answer["agents_5m"]] == ["api work", "docs", "old", "unnamed agent"]
     quiet = live_view.live_v2(store, now=NOW + 30 * 60)
     assert quiet["agents_5m"] == []
+
+
+def test_peer_rollup_names_resolve_without_names_stay_unnamed_and_local_wins(store, monkeypatch):
+    from src.core.federation import peer_hosts
+    from src.core.pack.rollup_import import store as rstore
+    from src.core.pack.rollup_import.ddl import apply_v89, apply_v103
+
+    monkeypatch.setattr(peer_hosts, "get", lambda conn, peer: object())
+    app = sqlite3.connect(db_path_for(store.state_dir))
+    apply_v89(app)
+    apply_v103(app)
+    usage = [["opus", "p" * 24, 1, 0, 0, 2, 3, 1, 1]]
+
+    def group(cid, **extra):
+        return {"conversation_id": cid, "hour": 3600, "usage": usage, "counters": [], **extra}
+
+    rstore.apply_page(app, "iid-studio", [group("peer1", agent_name="nostromo api"), group("peer1:agent-2", agent_name="nostromo api"),
+                                        group("peer2"), group("aaa", agent_name="peer says otherwise")])
+    app.close()
+    agent_names.forget()
+    names = agent_names.names_for(store)
+    assert names["peer1"] == "nostromo api" and "peer2" not in names
+    assert names["aaa"] == "api work"
+    assert "peer1" not in agent_names.local_names(store)

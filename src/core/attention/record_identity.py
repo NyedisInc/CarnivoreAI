@@ -8,7 +8,7 @@ from typing import Callable, Dict, Iterable, Optional, Tuple
 
 import structlog
 
-from src.core import libproc_snapshot
+from src.core.machine_stats import libproc_snapshot
 from src.core.conversation_writers import same_process_start
 
 logger = structlog.get_logger()

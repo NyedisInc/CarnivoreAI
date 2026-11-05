@@ -1,7 +1,8 @@
 import { t } from '../i18n/index.svelte';
 import { ApiError } from '../../opscenter/api/auth.svelte';
 import { codeWords, reasonWords } from './logic/words';
-import type { Actor, Automation, RunSummary } from './api';
+import { failureReason } from '../errors/failure-reason';
+import type { Actor, RunSummary } from './api';
 
 export function logEventLabel(line: { event: string; status?: unknown }): string {
   const word = codeWords('automations.log.event', line.event);
@@ -22,7 +23,7 @@ export function refusalText(error: unknown): string {
     const known = codeWords('automations.refused', code);
     if (known !== code) return known;
   }
-  return error instanceof Error ? error.message : String(error);
+  return failureReason(error);
 }
 
 export function whenLabel(epoch: number): string {
@@ -60,10 +61,6 @@ export function actorLabel(actor: Actor | null | undefined): string {
   if (!actor) return t('automations.actor.unknown');
   if (actor.kind === 'mcp') return t('automations.actor.mcp', { who: actor.tmux || actor.session_id || actor.client || '?' });
   return codeWords('automations.actor', actor.kind);
-}
-
-export function modifiedLine(automation: Automation): string {
-  return t('automations.modified', { when: whenLabel(automation.updated_at), who: actorLabel(automation.updated_actor) });
 }
 
 export function valueLabel(value: unknown): string {

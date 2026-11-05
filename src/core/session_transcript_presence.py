@@ -50,6 +50,7 @@ class ConversationPresence:
     outcome: str
     path: Optional[Path] = None
     detail: Optional[str] = None
+    unreadable: bool = False
 
     @property
     def missing(self) -> bool:
@@ -93,7 +94,7 @@ def conversation_presence(
     return result
 
 
-def _is_racy(stamp_ns: int) -> bool:
+def is_racy(stamp_ns: int) -> bool:
     return time.time_ns() - stamp_ns < _RACY_WINDOW_NS
 
 
@@ -118,7 +119,7 @@ def _remember_path(root: Path, filename: str, path: Path) -> None:
         stamp = os.stat(root).st_mtime_ns
     except OSError:
         return
-    if _is_racy(stamp):
+    if is_racy(stamp):
         return
     with _locate_lock:
         if len(_found_paths) >= _LOCATE_MAX_ENTRIES:
@@ -131,7 +132,7 @@ def _forget_root_listing(root: Path) -> None:
         _root_listings.pop(str(root), None)
 
 
-def _root_children(root: Path) -> Tuple[Tuple[Path, ...], bool]:
+def root_children(root: Path) -> Tuple[Tuple[Path, ...], bool]:
     stamp = os.stat(root).st_mtime_ns
     key = str(root)
     with _locate_lock:
@@ -139,7 +140,7 @@ def _root_children(root: Path) -> Tuple[Tuple[Path, ...], bool]:
     if hit is not None and hit[0] == stamp:
         return hit[1], True
     children = tuple(sorted(root.iterdir()))
-    if not _is_racy(stamp):
+    if not is_racy(stamp):
         with _locate_lock:
             if len(_root_listings) >= _LOCATE_MAX_ENTRIES:
                 _root_listings.clear()
@@ -205,7 +206,7 @@ def _measure_presence(
 
     for _attempt in (0, 1):
         try:
-            children, from_cache = _root_children(root)
+            children, from_cache = root_children(root)
         except OSError as exc:
             return ConversationPresence(
                 CONVERSATION_UNCHECKED,
@@ -228,6 +229,7 @@ def _measure_presence(
             f"no transcript for claude session {claude_session_uuid} "
             f"exists under {root}, so it cannot be resumed"
         ),
+        unreadable=unreadable,
     )
 
 

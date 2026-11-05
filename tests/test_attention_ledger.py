@@ -21,7 +21,8 @@ from src.core.attention.evidence import (
     TIER_TRANSCRIPT,
 )
 from src.core.attention.ledger import AttentionLedger
-from src.core.attention.resolve import DONE_QUIET_SECONDS, SETTLE_SECONDS
+from src.core.attention.resolve import SETTLE_SECONDS
+from src.core.attention.resolve_rest import DONE_QUIET_SECONDS
 from src.core.unread_store import UnreadStore
 
 T0 = datetime(2026, 9, 13, 12, 0, 0, tzinfo=timezone.utc)

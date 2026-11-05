@@ -82,6 +82,12 @@ def send(app, location: dict):
     return shown, app.client.post("/catalog/submissions", json={**body, "digest": digest})
 
 
+def submitted_body(app) -> dict:
+    posts = [r for r in app.sent if r.method == "POST" and r.url.path.endswith("/submissions")]
+    assert len(posts) == 1, [(r.method, r.url.path) for r in app.sent]
+    return json.loads(posts[0].content)
+
+
 def test_a_theme_is_relayed_with_its_kind_and_its_files(tmp_path, scan):
     folder = make_theme(tmp_path)
     scan["locs"] = [loc("theme", folder)]
@@ -91,7 +97,7 @@ def test_a_theme_is_relayed_with_its_kind_and_its_files(tmp_path, scan):
         shown, sent = send(app, scan["locs"][0])
         assert shown.json()["kind"] == "theme" and shown.json()["can_send"] is True, shown.text
         assert sent.status_code == 200, sent.text
-        body = json.loads(app.sent[-1].content)
+        body = submitted_body(app)
         assert body["kind"] == "theme"
         files = {f["path"]: base64.b64decode(f["content_base64"]) for f in body["files"]}
         assert files == {"theme.json": THEME_JSON.encode(), "background.webp": PNG}
@@ -118,7 +124,7 @@ def test_a_clean_plugin_relays_and_a_theme_with_effects_is_refused_locally(tmp_p
                           include_aggregator=True) as app:
         sign_in(app.state)
         _, sent = send(app, scan["locs"][0])
-        assert sent.status_code == 200 and json.loads(app.sent[-1].content)["kind"] == "plugin"
+        assert sent.status_code == 200 and submitted_body(app)["kind"] == "plugin"
     theme = make_theme(tmp_path)
     (theme / "effects.js").write_text("alert(1)")
     scan["locs"] = [loc("theme", theme)]

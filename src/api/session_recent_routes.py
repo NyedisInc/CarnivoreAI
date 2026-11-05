@@ -1,12 +1,13 @@
 
-from typing import Any
+from typing import Any, List
 
 import structlog
 from fastapi import APIRouter, Depends, Query, Request
 from src.api.auth import require_auth
 from src.config import settings
-from src.core.sessions.closed_time import closed_time, order_recent
-from src.models import RecentSessionsResponse
+from src.core.sessions.probe_health import ProbeHealth
+from src.core.sessions.recent_rows import cached_rows, closed_order
+from src.models import RecentSessionsResponse, SessionRecord
 
 from src.api.session_record_payload import _session_record_payload
 
@@ -15,13 +16,6 @@ from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 router = APIRouter()
-
-
-class _UnfilteredRows(Exception):
-
-    def __init__(self, rows: list) -> None:
-        super().__init__("replaced scan failed")
-        self.rows = rows
 
 
 @router.get(
@@ -90,100 +84,42 @@ async def list_recent_sessions(
                                  include_automated=include_automated)
 
 
+def _unprobed_response(health: ProbeHealth) -> RecentSessionsResponse:
+    state = "never_probed" if health.ok is None else "probe_unavailable"
+    notice = (
+        "Recent sessions CANNOT BE DETERMINED: no tmux probe has "
+        "run yet this session."
+        if state == "never_probed"
+        else "Recent sessions CANNOT BE DETERMINED: the last tmux "
+        f"probe failed (reason: {health.reason or 'unknown'}). "
+        "Stored history is not shown as fact until a probe succeeds."
+    )
+    return RecentSessionsResponse(state=state, sessions=[], notice=notice)
+
+
+def _records(rows: List[dict]) -> List[SessionRecord]:
+    return [
+        _session_record_payload(row).model_copy(update={"closed_at": closed_at, "closed_basis": closed_basis})
+        for row, closed_at, closed_basis in closed_order(rows)
+    ]
+
+
 async def recent_response(app_state: Any, *, include_archived: bool = False,
                           include_automated: bool = False) -> RecentSessionsResponse:
-    from contextlib import closing
-
-
-    from src.core import session_store
     from src.core.db import DatastoreUnreadableError, db_path_for
-    from src.core.db_reuse.change_cache import HOT_READS
-    from src.core.db_reuse.core_read import lend_pooled_or_raise
-    from src.core.session_sleep import is_asleep
-    from src.core.db_models import (
-        SESSION_LIFECYCLE_RUNNING,
-        SESSION_LIFECYCLE_STOPPED,
-    )
 
     health = app_state.services.probe_health.health
-
     if health.ok is not True:
-        state = "never_probed" if health.ok is None else "probe_unavailable"
-        notice = (
-            "Recent sessions CANNOT BE DETERMINED: no tmux probe has "
-            "run yet this session."
-            if state == "never_probed"
-            else "Recent sessions CANNOT BE DETERMINED: the last tmux "
-            f"probe failed (reason: {health.reason or 'unknown'}). "
-            "Stored history is not shown as fact until a probe succeeds."
-        )
-        return RecentSessionsResponse(state=state, sessions=[], notice=notice)
+        return _unprobed_response(health)
 
     db_path = db_path_for(settings.get_state_dir())
     if not db_path.exists():
         return RecentSessionsResponse(state="ok", sessions=[])
 
-    def _load() -> list:
-        with closing(lend_pooled_or_raise(db_path)) as conn:
-            rows = session_store.list_sessions(
-                conn,
-                lifecycle=SESSION_LIFECYCLE_STOPPED,
-                include_archived=include_archived,
-                include_automated=include_automated,
-            )
-            try:
-                replaced = {
-                    int(r["parent_session_id"])
-                    for r in conn.execute(
-                        "SELECT parent_session_id FROM sessions"
-                        " WHERE lifecycle = ?"
-                        " AND parent_session_id IS NOT NULL",
-                        (SESSION_LIFECYCLE_RUNNING,),
-                    ).fetchall()
-                }
-            except Exception as exc:  # noqa: BLE001
-                logger.warning(
-                    "recent_replaced_scan_unavailable",
-                    error=str(exc),
-                    error_type=type(exc).__name__,
-                    note=(
-                        "could not read which rows a running session "
-                        "replaced; nothing excluded, so a duplicate may "
-                        "show rather than a session going missing"
-                    ),
-                )
-                raise _UnfilteredRows(rows)
-            if not replaced:
-                return rows
-            return [
-                row for row in rows
-                if row.get("id") not in replaced
-            ]
-
-    def _read() -> list:
-        try:
-            kept = HOT_READS.fetch(db_path, ("recent_rows", include_archived, include_automated), _load)
-        except _UnfilteredRows as unfiltered:
-            kept = unfiltered.rows
-        return [dict(row) for row in kept]
-
     try:
-        rows = await run_in_threadpool(_read)
+        rows = await run_in_threadpool(cached_rows, db_path, include_archived, include_automated)
     except DatastoreUnreadableError as exc:
         raise api_error(503, "datastore_unavailable", exc, step="_read") from exc
 
-    def _project() -> list:
-        stopped_rows = [
-            row for row in rows
-            if row.get("lifecycle") == SESSION_LIFECYCLE_STOPPED and not is_asleep(row)
-            and row.get("origin") != "peer"
-        ]
-        out = []
-        for row in order_recent(stopped_rows):
-            closed_at, closed_basis = closed_time(row)
-            out.append(_session_record_payload(row).model_copy(
-                update={"closed_at": closed_at, "closed_basis": closed_basis}))
-        return out
-
-    payloads = await run_in_threadpool(_project)
+    payloads = await run_in_threadpool(_records, rows)
     return RecentSessionsResponse(state="ok", sessions=payloads)

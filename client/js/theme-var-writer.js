@@ -4,9 +4,14 @@ console.log('[ThemeVarWriter Module] Loading...');
 (function () {
     'use strict';
 
+    function withScheme(vars) {
+        var scheme = window.ThemeScheme;
+        return scheme ? scheme.withColorScheme(vars) : vars;
+    }
+
     function applyVarDiff(style, previous, next) {
         var prev = previous || {};
-        var nextVars = next || {};
+        var nextVars = withScheme(next || {});
         var nextNames = Object.keys(nextVars);
         var i;
         var nextSet = Object.create(null);

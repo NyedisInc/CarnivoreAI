@@ -1,0 +1,27 @@
+{
+  "files": {
+    "web/src/cplugs/publicboard/ShareLinkKey.svelte": {
+      "section": "dialogs",
+      "classes": []
+    },
+    "web/src/cplugs/publicboard/ShareLinkModal.svelte": {
+      "section": "dialogs",
+      "classes": []
+    },
+    "web/src/cplugs/publicboard/share-link.css": {
+      "section": "dialogs",
+      "classes": [
+        "modal-content",
+        "pbs-actions",
+        "pbs-error",
+        "pbs-explain",
+        "pbs-label",
+        "pbs-modal",
+        "pbs-none",
+        "pbs-once",
+        "pbs-remove",
+        "pbs-warn"
+      ]
+    }
+  }
+}

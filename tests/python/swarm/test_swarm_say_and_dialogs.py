@@ -223,3 +223,25 @@ def test_any_other_dialog_is_one_info_card_with_its_first_line_starred_and_no_bu
     assert "b" * 40 not in card["text"]
     asyncio.run(pane.facade.card_decided(card["swarm_ref"], "approve", "", "huddle:msg:5"))
     assert pane.answers == []
+
+
+def test_the_wake_path_defers_to_the_one_engine_under_beast_on_and_cards_as_before_under_beast_off(world, pane, monkeypatch):
+    from src.core.approvals.auto_answer import catalog, engine, rules
+    from tests.python.approvals.auto_helpers import FixedPolicy
+    from tests.python.approvals.test_auto_answer_rules import screen
+
+    folder = "/tmp/autoanswer-project"
+    pane.info.session.working_dir, pane.info.agent_family, pane.info.startup_gate = folder, "claude", "awaiting_startup_prompt"
+    pane.dialog = extract_dialog(screen("trust_dialog.txt", folder), "claude")
+    seams = rules.Seams(lambda: None, lambda _f: None, lambda _f: False, lambda f: f.endswith("autoanswer-project"))
+    monkeypatch.setattr(engine, "default_seams", lambda: seams)
+
+    def post() -> list:
+        delivery._trust_posted.clear(), delivery._engine_deferred_since.clear()
+        asyncio.run(delivery._maybe_dialog_card(pane.app_state, pane.agent, 1, pane.info))
+        return pane.cards()
+
+    monkeypatch.setattr(engine, "grid_policy", lambda: FixedPolicy())
+    assert post() == []
+    monkeypatch.setattr(engine, "grid_policy", lambda: FixedPolicy(off=[catalog.RULE_FOLDER_TRUST]))
+    assert len(post()) == 1

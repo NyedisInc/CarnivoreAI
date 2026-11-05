@@ -1,5 +1,6 @@
 /* with a plain */
 import { bootStep } from './lib/boot-step';
+import { installScreenFlags } from './lib/page-flags/page-flags';
 import './cplugs/host/early-kinds';
 import './app.css';
 import './opscenter/app.css';
@@ -40,12 +41,16 @@ import { bootListingPush } from './lib/listing-push/boot';
 import { bootResourcePush } from './lib/resource-push/boot';
 import { startOutbox } from './lib/outbox/outbox';
 import { bootNativeShell } from './lib/native-shell/shell';
+import { bootPhoneMic } from './lib/phone-mic/boot';
+import { bootPackKnock } from './lib/pack-knock/boot';
 import { installNotifyScreen } from './lib/notifications/screen-filter';
-import { installNotifyMute } from './lib/notifications/mute/mute-control';
+import { installDesktopClick } from './lib/notifications/desktop-click';
 import { startPresenceBeacon } from './lib/notifications/presence';
+import { startWatchedSession } from './lib/notifications/quiet-watched.svelte';
 import { closeBlueprintsScreen, openBlueprintsScreen, wireBlueprintsDeepLink } from './lib/blueprints/screen-host';
 import { openBlueprintPicker } from './lib/blueprints/blueprint-picker';
 import { askLeaderConfirm } from './lib/leader-confirm/confirm';
+import { confirmPositional } from './lib/confirm-ok/confirm-ok';
 import { closePluginsScreen, openPluginsScreen, wirePluginsDeepLink } from './lib/plugins-page/screen-host';
 import { closeSkillsManagerScreen } from './lib/skills-page/screen-host';
 import {
@@ -61,6 +66,7 @@ import { closeHuddleSwarmScreen, wireHuddleSwarmDeepLink } from './lib/huddle-sw
 import { closeWidgetsScreen, openWidgetsScreen, wireWidgetsDeepLink } from './lib/widgets-page/screen-host';
 import { mountLaunchChoice, openLaunchPicker } from './lib/launch-picker/open';
 import { installSettingsShortcut } from './lib/settings-page/settings-shortcut';
+import { installAppChords } from './lib/app-keys/install.svelte';
 import { closeSettingsScreen, openSettingsScreen, openSettingsSection, wireSettingsDeepLink } from './lib/settings-page/screen-host';
 import { closeDashboardsScreen, wireDashboardsDeepLink } from './lib/dashboards/screen-host';
 import { closeModsScreen, wireModsDeepLink } from './lib/mods/screen-host';
@@ -123,6 +129,7 @@ import { openTimerList } from './lib/timers/popup';
 import { pauseAll as pauseHomePolls, restartAll as resumeHomePolls } from './opscenter/api';
 import { publishLaunchpadShim } from './lib/launchpad/shim';
 import { browserNavHost } from './lib/launchpad/nav-host';
+import { openRunning } from './lib/launchpad/open-running';
 import {
     attachRunningSession as attachRunningSessionFlow,
     connectToExistingSession as connectToExistingSessionFlow,
@@ -148,12 +155,14 @@ import { initMenuPageShell } from './lib/menu-page/menu-page-shell.svelte';
 import './lib/launchpad/home-escape';
 import './lib/launchpad/home-in-main.css';
 import { initHomeInMain } from './lib/launchpad/home-in-main';
+import { initHomeBootRestore } from './lib/launchpad/home-boot-restore';
 import { pageOfHash } from './lib/menu-page/menu-page-hash';
 import MenuPageBar from './lib/menu-page/MenuPageBar.svelte';
 import { mountLayoutEditor } from './opscenter/layout-editor/mount';
 import { layoutEditorBridge } from './opscenter/layout-editor/editor.svelte';
 import { mountFileDrawerGit, mountFileDrawerHeader, showFilesCell } from './lib/file-drawer/file-drawer';
 import { openFromDrawer } from './lib/open-files/open-bridge';
+import { provideLinks as provideTerminalPathLinks } from './lib/terminal-paths/links';
 import { guardUnload } from './lib/open-files/buffers.svelte';
 import { watchOrphans } from './lib/open-files/orphans.svelte';
 import { mountIconPicker, unmountIconPicker } from './lib/icon-picker/icon-picker-host';
@@ -161,6 +170,8 @@ import { installSharedTooltip } from './lib/tooltip/tooltip';
 import VersionBanner from './lib/version-watch/VersionBanner.svelte';
 import RelayConsentPopup from './lib/pack-machines/RelayConsentPopup.svelte';
 import PackOpToast from './lib/pack-op-toast/PackOpToast.svelte';
+import ToastStack from './lib/toast-stack/ToastStack.svelte';
+import { attachmentPreviewDataUrl } from './lib/toast-stack/attachment-preview';
 import OverlayRoot from './lib/cplug-ui/OverlayRoot.svelte';
 import { startVersionWatch } from './lib/version-watch/version-watch.svelte';
 import { startPerfOverlay } from './lib/perf-overlay/boot';
@@ -210,6 +221,7 @@ import { beginDrawerTabDrag } from './opscenter/engine/tab-drag';
 import { startContextLinks } from './lib/deepsearch/context-link.svelte';
 
 installSharedTooltip();
+mountPanel('toast-container', ToastStack, {});
 
 const VERSION_BANNER_CONTAINER = 'version-banner-container';
 
@@ -345,15 +357,7 @@ async function editProjectForLegacy(project: ProjectRow): Promise<void> {
     await editProjectFlow(createHost(), browserModals(), t, project);
 }
 
-function confirmForLegacy(
-    title: string,
-    message: string,
-    details: string | null = null,
-    primaryLabel = 'confirm',
-    secondaryLabel = 'cancel',
-): Promise<boolean> {
-    return createHost().confirm(title, message, details, primaryLabel, secondaryLabel);
-}
+const confirmForLegacy = confirmPositional;
 
 
 
@@ -363,22 +367,12 @@ function navHost() {
 
 /* the home screen */
 async function openRunningSession(sessionId: string, tmuxName: string): Promise<void> {
-    const id = String(sessionId || '').trim();
-    const name = String(tmuxName || '').trim();
-    if (!id && !name) return;
-    let row = id
-        ? sessionStore.runningSessions.find((candidate) => candidate.session_id === id)
-        : undefined;
-    if (!row && id) {
-        await sessionStore.loadRunningSessions(t);
-        row = sessionStore.runningSessions.find((candidate) => candidate.session_id === id);
-    }
-    if (row?.is_active) {
-        await returnToActiveSessionFlow(row.session_id ?? null, browserNavHost(), t);
-        return;
-    }
-    if (!name) return;
-    await attachRunningSessionFlow(name, browserNavHost(), t);
+    await openRunning(sessionId, tmuxName, {
+        rows: () => sessionStore.runningSessions,
+        load: () => sessionStore.loadRunningSessions(t),
+        rejoin: (id, nav) => returnToActiveSessionFlow(id, browserNavHost(), t, nav),
+        attach: (name, nav) => attachRunningSessionFlow(name, browserNavHost(), t, nav),
+    });
 }
 
 function initHomeScreen(): void {
@@ -405,6 +399,7 @@ const CloudeWeb = {
     mountPanel,
     openSubagentList,
     openAttachmentLightbox,
+    attachmentPreviewDataUrl,
     openTimerList,
     closeCatalogScreen,
     closeWarezScreen,
@@ -437,6 +432,7 @@ const CloudeWeb = {
     openLaunchPicker,
     mountLaunchChoice,
     openWrappersScreen: () => openSettingsSection('launch_profiles'),
+    openFeaturesScreen: () => openSettingsSection('features'),
     closeWrappersScreen: closeSettingsScreen,
     openHostsScreen,
     closeHostsScreen,
@@ -545,6 +541,7 @@ const CloudeWeb = {
     closeTerminalComponents,
     terminalComponentsOpen,
     fileDrawer: { mountHeader: mountFileDrawerHeader, mountGit: mountFileDrawerGit, showCell: showFilesCell, openFile: openFromDrawer },
+    terminalPaths: { provideLinks: provideTerminalPathLinks },
     iconPicker: { mount: mountIconPicker, unmount: unmountIconPicker },
     rightDrawer: rightDrawerApi,
     sizeMasterHolder: (sessionId: string): string | null => sizeMasters[sessionId] ?? null,
@@ -573,8 +570,11 @@ bootListingPush();
 bootResourcePush();
 startOutbox();
 bootNativeShell();
+bootPhoneMic();
+bootPackKnock();
 installNotifyScreen();
-installNotifyMute();
+installDesktopClick();
+startWatchedSession();
 startPresenceBeacon();
 mountDrawerHeader();
 publishTerminalProvider();
@@ -607,8 +607,13 @@ installWelcome();
 installRefusalHandler();
 
 mountDrawerTabs();
+bootStep('installScreenFlags', installScreenFlags);
 bootStep('initMenuPageShell', initMenuPageShell);
 bootStep('initHomeInMain', initHomeInMain);
+bootStep('initHomeBootRestore', () => {
+    const stopHomeBootRestore = initHomeBootRestore();
+    window.addEventListener('pagehide', stopHomeBootRestore, { once: true });
+});
 ensurePanel('menu-page-bar', MenuPageBar, {});
 bootStep('mountLayoutEditor', mountLayoutEditor);
 
@@ -624,6 +629,7 @@ bootStep('wirePluginsDeepLink', wirePluginsDeepLink);
 bootStep('wireWidgetsDeepLink', wireWidgetsDeepLink);
 bootStep('wireSettingsDeepLink', wireSettingsDeepLink);
 bootStep('installSettingsShortcut', installSettingsShortcut);
+bootStep('installAppChords', installAppChords);
 bootStep('wireAccountDeepLink', wireAccountDeepLink);
 bootStep('wireSessionsDeepLinks', wireSessionsDeepLinks);
 bootStep('wireInfoPageDeepLinks', wireInfoPageDeepLinks);

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type { MenuNode } from '../drawer-tabs/add-component-menu';
   import { t } from '../i18n/index.svelte';
   import { resolvePlacement } from '../../opscenter/widgets/placement-resolve';
   import { HEADER_OPTION, placementHeaderShown } from '../../opscenter/shell/widget-head';
@@ -7,7 +6,6 @@
   import { canOpen } from '../../opscenter/layout-editor/empty-space-menu.svelte';
   import { terminalLayout } from '../../opscenter/engine/layout.svelte';
   import { zoneItemKey } from '../drawer-zone/zone-model';
-  import { alertCountSource } from '../session-rail/alert-counts';
   import { railStores, otherEdge, placeInRail, railEnd } from '../session-rail/rail-store.svelte';
   import type { RailEdge } from '../session-rail/rail-model';
   import type { ArrangeEntry } from './model';
@@ -22,13 +20,7 @@
   const item = $derived(store.items.find((one) => zoneItemKey(one) === itemKey));
   const resolved = $derived(item ? resolvePlacement({ widget: item.widget, view: item.view }) : null);
   const manifest = $derived(resolved?.manifest);
-  const cell = $derived(resolved?.cell);
   const title = $derived(manifest ? t(manifest.titleKey) : '');
-
-  const badge = $derived.by((): MenuNode[] => {
-    const menu = cell ? alertCountSource(cell.id)?.menu : undefined;
-    return menu ? [{ id: 'count-in-badge', label: t(menu.headingKey), children: menu.nodes().map((node) => ({ ...node, keepOpen: true })) }] : [];
-  });
 
   const sectionOf = $derived(store.sections.find((section) => section.some((one) => zoneItemKey(one) === itemKey)) ?? []);
   const at = $derived(sectionOf.findIndex((one) => zoneItemKey(one) === itemKey));
@@ -66,7 +58,6 @@
     options={item.options}
     placementKey={itemKey}
     source={store}
-    lead={badge.length ? [badge] : []}
     extras={{
       header: { shown: headerShown, toggle: () => store.setOption(itemKey, HEADER_OPTION, !headerShown) },
       arrange,

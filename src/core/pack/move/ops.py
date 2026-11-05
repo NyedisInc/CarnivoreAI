@@ -7,7 +7,7 @@ import uuid
 from typing import Any, Dict, Mapping, Optional
 
 from src.core.db import transaction
-from src.core.pack import progress
+from src.core.pack.transport import progress
 from src.core.trail_entry import utc_now
 
 STEPS_BY_MODE = {"move": ("project", "check", "interrupt", "wait", "code", "sleep", "stop_shells", "carry", "wake", "forward", "continue"),

@@ -8,6 +8,16 @@ export const THEME_TOKENS = [
 
 export const FONT_KEY = 'font-mono';
 const SAFE_VALUE = /^[#a-zA-Z0-9(),.%/ '"_-]{1,160}$/;
+const ALLOWED_FUNCTIONS: ReadonlySet<string> = new Set(['rgb', 'rgba', 'hsl', 'hsla', 'color-mix', 'var']);
+const FUNCTION_CALL = /([-a-zA-Z]+)\s*\(/g;
+
+export function isSafeThemeValue(value: string): boolean {
+    if (!SAFE_VALUE.test(value)) return false;
+    for (const match of value.matchAll(FUNCTION_CALL)) {
+        if (!ALLOWED_FUNCTIONS.has((match[1] ?? '').toLowerCase())) return false;
+    }
+    return true;
+}
 
 export type ThemeValues = Readonly<Record<string, string>>;
 
@@ -16,10 +26,10 @@ export function readTheme(el: Element = document.body ?? document.documentElemen
     const out: Record<string, string> = {};
     for (const name of THEME_TOKENS) {
         const value = style.getPropertyValue(`--oc-${name}`).trim();
-        if (SAFE_VALUE.test(value)) out[name] = value;
+        if (isSafeThemeValue(value)) out[name] = value;
     }
     const font = style.getPropertyValue('--font-mono').trim();
-    if (SAFE_VALUE.test(font)) out[FONT_KEY] = font;
+    if (isSafeThemeValue(font)) out[FONT_KEY] = font;
     return out;
 }
 

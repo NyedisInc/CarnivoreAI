@@ -58,10 +58,9 @@ export function layoutByUuid(uuid: string): Layout | null {
 }
 
 function repaintDrawer(): void {
-  const bar = (globalThis as { SessionSidebar?: { _lastSig?: unknown; _fetchAndRender?: () => Promise<void> } })
+  const bar = (globalThis as { SessionSidebar?: { _fetchAndRender?: () => Promise<void> } })
     .SessionSidebar;
   if (typeof bar?._fetchAndRender !== 'function') return;
-  bar._lastSig = null;
   void bar._fetchAndRender();
 }
 

@@ -1,4 +1,5 @@
 import { t } from '../i18n/index.svelte';
+import { confirmPositional } from '../confirm-ok/confirm-ok';
 
 export type DirtyCheck = () => boolean;
 
@@ -39,12 +40,7 @@ export function isPageDirty(pageId: string): boolean {
     return false;
 }
 
-function liveConfirm(): ConfirmFn | null {
-    const app = (globalThis as { App?: { showConfirmModal?: ConfirmFn } }).App;
-    return typeof app?.showConfirmModal === 'function' ? app.showConfirmModal.bind(app) : null;
-}
-
-export async function mayClosePage(pageId: string | null, confirm: ConfirmFn | null = liveConfirm()): Promise<boolean> {
+export async function mayClosePage(pageId: string | null, confirm: ConfirmFn | null = confirmPositional): Promise<boolean> {
     if (!pageId || !isPageDirty(pageId)) return true;
     if (!confirm) {
         console.error('menu page has unsaved changes and the confirm dialog is not on the page; the page stays open', pageId);

@@ -124,7 +124,9 @@ async def test_kind_sends_the_vector_ciphertext_signed_for_the_relay(rig) -> Non
     req = rig.relay.requests[0]
     assert (req["base"], req["method"], req["path"], req["bearer"]) == ("https://api.carnivore.ai/v1", "POST", "/push/apns", "acct-bearer")
     body = req["body"]
-    assert base64.b64decode(body["payload"]) == bytes.fromhex(rig.case["ciphertext"])
+    plain = {**json.loads(bytes.fromhex(rig.case["plaintext"])), "tag": "session.finished:cloude_my-build", "thread": "cloude_my-build"}
+    assert json.loads(payload_crypto.open_blob(bytes.fromhex(rig.case["key"]), rig.case["device_id"], base64.b64decode(body["payload"]))) == plain
+    assert base64.b64decode(body["payload"])[1:13] == bytes.fromhex(rig.case["nonce"])
     assert body["environment"] == "sandbox" and body["token"] == TOKEN and "secret words" not in json.dumps(body)
     ciphertext, nonce = base64.b64decode(body["payload"]), dk.unb64url(body["nonce"], 16)
     signed = rc_crypto.apns_message(rig.session.dkey.device_id, body["ts"], nonce, "sandbox", TOKEN, body["collapse_id"], ciphertext)

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -41,8 +42,9 @@ def _host_not_connected() -> Exception:
 
 
 def _file_not_created() -> Exception:
+    mirror = Path(tempfile.mkdtemp(prefix="pipe-mirror-")) / "x" / "mirror"
     try:
-        asyncio.run(RemoteTransport(_NoFileHost()).ensure_pipe_file(Path("/tmp/x/mirror"), "/far/pipes/x", truncate=True))
+        asyncio.run(RemoteTransport(_NoFileHost()).ensure_pipe_file(mirror, "/far/pipes/x", truncate=True))
     except Exception as exc:  # noqa: BLE001
         return exc
     raise AssertionError("ensure_pipe_file did not fail")

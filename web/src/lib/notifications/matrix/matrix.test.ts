@@ -20,9 +20,9 @@ const TYPES: TypeRow[] = [
     row('session.permission', 'needs_you'),
     row('session.finished', 'sessions'),
     row('alert.notifications', 'health', { outside_locked_off: true }),
-    row('stats.tripwire', 'in_app', { outside_locked_off: true }),
+    row('stats.tripwire', 'app', { outside_locked_off: true }),
 ];
-const FAMILIES = ['needs_you', 'sessions', 'health', 'in_app'].map((id) => ({ id, label_key: `notify.family.${id}` }));
+const FAMILIES = ['needs_you', 'sessions', 'health', 'app'].map((id) => ({ id, label_key: `notify.family.${id}` }));
 const cell = (value: boolean, source: Cell['source'] = 'global', locked = false): Cell => ({ value, source, locked });
 
 function settingsBody(over: { paused?: boolean; finishedPinned?: boolean; reason?: string; kind?: string } = {}) {
@@ -76,11 +76,12 @@ afterEach(async () => {
     delete (window as { matchMedia?: unknown }).matchMedia;
 });
 
-async function render(component: typeof MatrixPanel | typeof LinkPanel, body: ReturnType<typeof settingsBody>, answers: Record<string, () => unknown> = {}) {
+async function render(component: typeof MatrixPanel | typeof LinkPanel, body: ReturnType<typeof settingsBody>, answers: Record<string, () => unknown> = {}, openAll = true) {
     const rig = fake(body, answers);
     mounted.push(mount(component, { target: document.body, props: { fetcher: rig.fetcher } }));
     await vi.waitFor(() => expect(matrix.loaded).toBe(true));
     flushSync();
+    if (openAll) for (const toggle of document.body.querySelectorAll<HTMLButtonElement>('[data-mx="group-toggle"]')) { toggle.click(); flushSync(); }
     return rig;
 }
 const q = (sel: string) => document.body.querySelector<HTMLElement>(sel);
@@ -90,10 +91,25 @@ const press = async (el: HTMLElement) => { el.click(); flushSync(); await Promis
 describe('the desktop matrix', () => {
     test('rows are grouped by family and columns are screen, defaults, each destination and a web push device', async () => {
         await render(MatrixPanel, settingsBody());
-        expect([...document.body.querySelectorAll('[data-mx="family"]')].map((e) => e.textContent)).toEqual(['needs you', 'sessions', 'health', 'in-app only']);
+        expect([...document.body.querySelectorAll('[data-mx="family"]')].map((e) => e.textContent)).toEqual(['needs you', 'sessions', 'health', 'app']);
         expect([...document.body.querySelectorAll('[data-mx-col]')].map((e) => e.getAttribute('data-mx-col'))).toEqual(['screen', 'defaults', 'd_aaaaaaaaaaaa', 'webpush:abcd1234']);
         expect(document.body.querySelectorAll('[data-mx-row]').length).toBe(TYPES.length);
         expect(q('[data-mx-col="webpush:abcd1234"]')!.textContent).toContain('web push device 1234');
+    });
+
+    test('a group starts folded to one row; its switch sets every writable type in that column', async () => {
+        const rig = await render(MatrixPanel, settingsBody(), {}, false);
+        expect(document.body.querySelectorAll('[data-mx-row]').length).toBe(0);
+        const health = q('[data-mx-group="health"] [data-mx-group-col="d_aaaaaaaaaaaa"]') as HTMLButtonElement;
+        expect(health.disabled).toBe(true);
+        const sessions = q('[data-mx-group="sessions"] [data-mx-group-col="screen"]') as HTMLButtonElement;
+        await press(sessions);
+        await vi.waitFor(() => expect(rig.calls.filter((c) => c.method === 'PUT')).toHaveLength(1));
+        expect(rig.calls.find((c) => c.method === 'PUT')!.body).toEqual({ column: 'screen', type_id: 'session.finished', value: false });
+        const toggle = q('[data-mx-group="sessions"] [data-mx="group-toggle"]') as HTMLButtonElement;
+        await press(toggle);
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+        expect([...document.body.querySelectorAll('[data-mx-row]')].map((e) => e.getAttribute('data-mx-row'))).toEqual(['session.finished']);
     });
 
     test('a locked cell is disabled and says why; an open cell is not disabled', async () => {

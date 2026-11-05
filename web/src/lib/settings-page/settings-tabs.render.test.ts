@@ -90,7 +90,7 @@ test('a deep link opens the named tab with only that group, and a draft on anoth
     expect(root.querySelector('.st-footer')).not.toBeNull();
 });
 
-test('appearance has five tabs and no header shortcuts; a one-group section has no strip', async () => {
+test('appearance has six tabs and no header shortcuts; a one-group section has no strip', async () => {
     const root = mountPage();
     await settle();
     root.querySelector<HTMLButtonElement>('.st-nav button[data-section="appearance"]')!.click();
@@ -98,6 +98,7 @@ test('appearance has five tabs and no header shortcuts; a one-group section has 
     expect([...root.querySelectorAll('.oc-ptab')].map((el) => (el as HTMLElement).dataset.tab)).toEqual([
         'colors',
         'sidebar',
+        'rail',
         'status_bar',
         'control_center',
         'motion',

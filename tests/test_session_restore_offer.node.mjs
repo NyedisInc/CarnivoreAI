@@ -4,6 +4,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
+import { installTrOnly } from './helpers/catalog-tr.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const src = fs.readFileSync(path.join(__dirname, '..', 'client', 'js', 'session-restore-offer.js'), 'utf8');
@@ -11,6 +12,7 @@ const sandbox = { console, setTimeout, Date, globalThis: null };
 sandbox.window = sandbox;
 sandbox.globalThis = sandbox;
 vm.createContext(sandbox);
+installTrOnly(sandbox);
 vm.runInContext(src, sandbox);
 const M = sandbox.SessionRestoreOffer;
 

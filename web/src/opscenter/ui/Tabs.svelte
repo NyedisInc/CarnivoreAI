@@ -98,6 +98,9 @@
                 role="tab"
                 use:titleWhenTruncated={'.oc-ptab__label'}
                 class="oc-ptab"
+                data-btn="row"
+                data-size="auto"
+                data-overflow="visible"
                 id="{idBase}-tab-{def.id}"
                 data-tab={def.id}
                 aria-selected={active === def.id}

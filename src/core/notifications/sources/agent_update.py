@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from typing import Any, Callable, Optional
 
 import structlog
@@ -14,7 +13,6 @@ from src.core.sessions.agent_update import agent_update_status, version_text
 logger = structlog.get_logger(__name__)
 
 TYPE_ID = "agent.update_ready"
-INTERVAL_SECONDS = 60.0
 
 
 def stale_installed_version(watcher: Any) -> Optional[str]:
@@ -47,10 +45,19 @@ def check_once(watcher: Any, state_dir: Optional[Any] = None) -> bool:
     return common.fire_once(TYPE_ID, installed, event, state_dir)
 
 
-async def run(get_watcher: Callable[[], Any], interval: float = INTERVAL_SECONDS) -> None:
-    while True:
-        try:
-            check_once(get_watcher())
-        except (AttributeError, OSError, ValueError) as exc:
-            logger.warning("agent_update_check_failed", error_type=type(exc).__name__)
-        await asyncio.sleep(interval)
+_get_watcher: Optional[Callable[[], Any]] = None
+
+
+def install(get_watcher: Callable[[], Any]) -> None:
+    global _get_watcher
+    _get_watcher = get_watcher
+
+
+def check_now() -> bool:
+    if _get_watcher is None:
+        return False
+    try:
+        return check_once(_get_watcher())
+    except (AttributeError, OSError, ValueError) as exc:
+        logger.warning("agent_update_check_failed", error_type=type(exc).__name__)
+        return False

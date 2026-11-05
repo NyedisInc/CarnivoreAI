@@ -238,6 +238,27 @@ describe('TM Mark II task tabs', () => {
     expect(detail.querySelector('[data-task-manager-mk2-tabs]')).toBeNull();
   });
 
+  test('#2724 a review task shows ONE card: the oldest unread message takes the review card, reading it brings the review card back', async () => {
+    const unread = (id: number, flag: boolean) => ({ id, item_id: 5, author: 'claude', kind: 'info', text: `news ${id}`, answered: false, created_at: 1_700_000_000 + id, seq: id, unread: flag });
+    const draw = async (thread: unknown[]): Promise<HTMLElement> => {
+      const target = document.createElement('div');
+      document.body.appendChild(target);
+      const item = { ...OPEN('7'), ...REVIEW, status: 'review', thread } as unknown as HuddleItem;
+      apps.push(mount(Mk2TaskTabs, { target, props: { item } }));
+      await settle();
+      return target;
+    };
+    const news = await draw([unread(3, true), unread(4, true)]);
+    expect(news.querySelector('.tkm-review')).toBeNull();
+    expect(news.querySelectorAll('[data-task-manager-post]').length).toBe(1);
+    expect(news.querySelector('[data-task-manager-post="3"]')).not.toBeNull();
+    // the review card
+    expect(news.querySelector('[data-mk2-more]')?.textContent?.trim()).toBe('2 more');
+    const read = await draw([unread(3, false)]);
+    expect(read.querySelector('.tkm-review')).not.toBeNull();
+    expect(read.querySelector('[data-task-manager-post]')).toBeNull();
+  });
+
   test('an unread task wears its new count in the discussion tab badge, as the new Task Manager words it', async () => {
     const target = document.createElement('div');
     document.body.appendChild(target);
