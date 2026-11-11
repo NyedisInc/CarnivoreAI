@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "argent_retag_dest_over_cap",
+    "message": "destination paused or over cap"
+  }
+}

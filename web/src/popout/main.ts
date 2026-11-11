@@ -24,6 +24,7 @@ import { BOARD_PARAM } from '../opscenter/engine/home-boards';
 import { bootListingPush } from '../lib/listing-push/boot';
 import { stopHomeCacheWrites } from '../opscenter/engine/persist';
 import { startPopoutEditor } from '../opscenter/layout-editor/popout-editor';
+import { startPopoutCplugs } from '../cplugs/host/popout-start';
 
 export const POPOUT_CONTAINER = 'popout-screen';
 
@@ -83,4 +84,5 @@ installSharedTooltip();
 
 bootListingPush();
 bootPopoutLive();
+startPopoutCplugs();
 bootPopout();

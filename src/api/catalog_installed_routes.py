@@ -6,6 +6,7 @@ import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from src.api.auth import require_auth
+from src.cplugs.host.peer_refusal import refuse_peer_token_writes
 from src.api.catalog_install_support import (
     fetch_and_stage,
     refuse_409,
@@ -52,7 +53,7 @@ router = APIRouter(tags=["catalog"])
 @router.delete(
     "/catalog/installed/{install_id}",
     response_model=UninstallResponse,
-    dependencies=[Depends(require_auth)],
+    dependencies=[Depends(refuse_peer_token_writes), Depends(require_auth)],
 )
 async def uninstall_item(
     request: Request, install_id: str
@@ -98,7 +99,7 @@ async def uninstall_item(
 @router.patch(
     "/catalog/installed/{install_id}",
     response_model=InstalledItemView,
-    dependencies=[Depends(require_auth)],
+    dependencies=[Depends(refuse_peer_token_writes), Depends(require_auth)],
 )
 async def patch_installed(
     request: Request, install_id: str, body: InstalledPatchRequest
@@ -124,7 +125,7 @@ async def patch_installed(
 @router.post(
     "/catalog/installed/{install_id}/update",
     response_model=InstalledItemView,
-    dependencies=[Depends(require_auth)],
+    dependencies=[Depends(refuse_peer_token_writes), Depends(require_auth)],
 )
 async def update_installed(
     request: Request, install_id: str, body: InstalledUpdateRequest
@@ -151,7 +152,7 @@ async def update_installed(
 
     snapshot = await services.catalog.index_cache.get()
     refuse_empty(snapshot)
-    item, version = resolve_item(snapshot, row.item_id)
+    item, version = resolve_item(snapshot, row.item_id, row.kind)
     if not update_available(row, version):
         raise refuse_409(
             ALREADY_INSTALLED,

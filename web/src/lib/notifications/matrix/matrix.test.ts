@@ -34,6 +34,7 @@ function settingsBody(over: { paused?: boolean; finishedPinned?: boolean; reason
         screen: {
             'session.permission': cell(true), 'session.finished': cell(true), 'alert.notifications': cell(true), 'stats.tripwire': cell(true),
         },
+        desktop: { 'session.permission': cell(true), 'session.finished': cell(true, 'default') },
         ticks: {
             d_aaaaaaaaaaaa: {
                 'session.permission': cell(true), 'session.finished': cell(true, over.finishedPinned ? 'local' : 'global'),
@@ -92,7 +93,7 @@ describe('the desktop matrix', () => {
     test('rows are grouped by family and columns are screen, defaults, each destination and a web push device', async () => {
         await render(MatrixPanel, settingsBody());
         expect([...document.body.querySelectorAll('[data-mx="family"]')].map((e) => e.textContent)).toEqual(['needs you', 'sessions', 'health', 'app']);
-        expect([...document.body.querySelectorAll('[data-mx-col]')].map((e) => e.getAttribute('data-mx-col'))).toEqual(['screen', 'defaults', 'd_aaaaaaaaaaaa', 'webpush:abcd1234']);
+        expect([...document.body.querySelectorAll('[data-mx-col]')].map((e) => e.getAttribute('data-mx-col'))).toEqual(['screen', 'desktop', 'defaults', 'd_aaaaaaaaaaaa', 'webpush:abcd1234']);
         expect(document.body.querySelectorAll('[data-mx-row]').length).toBe(TYPES.length);
         expect(q('[data-mx-col="webpush:abcd1234"]')!.textContent).toContain('web push device 1234');
     });
@@ -140,6 +141,14 @@ describe('the desktop matrix', () => {
         expect(check('screen:session.finished').getAttribute('aria-checked')).toBe('false');
     });
 
+    test('the desktop column shows and writes PUT /ticks with column desktop', async () => {
+        const rig = await render(MatrixPanel, settingsBody());
+        expect(q('[data-mx-col="desktop"]')).not.toBeNull();
+        await press(check('desktop:session.finished'));
+        const put = rig.calls.find((c) => c.method === 'PUT' && c.path === '/notifications/ticks')!;
+        expect(put.body).toEqual({ column: 'desktop', type_id: 'session.finished', value: false });
+    });
+
     test('with "this computer only" on, a tick is written as a local pin', async () => {
         const rig = await render(MatrixPanel, settingsBody());
         await press(q('[data-mx="local-only"]')!);
@@ -170,7 +179,7 @@ describe('below 1024px', () => {
         const rig = await render(MatrixPanel, settingsBody());
         expect(q('[data-mx="desktop"]')).toBeNull();
         const picker = q('[data-mx="picker"]') as HTMLSelectElement;
-        expect([...picker.options].map((o) => o.value)).toEqual(['screen', 'defaults', 'd_aaaaaaaaaaaa', 'webpush:abcd1234']);
+        expect([...picker.options].map((o) => o.value)).toEqual(['screen', 'desktop', 'defaults', 'd_aaaaaaaaaaaa', 'webpush:abcd1234']);
         expect(q('[data-mx-cell="screen:session.finished"]')).not.toBeNull();
         expect(q('[data-mx-cell="d_aaaaaaaaaaaa:session.finished"]')).toBeNull();
         picker.value = 'd_aaaaaaaaaaaa';

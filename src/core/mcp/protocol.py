@@ -9,6 +9,7 @@ from typing import Any, Callable, Optional
 import structlog
 
 from src.core.mcp import channel as channel_events
+from src.core.argent import subagent_join
 from src.core.mcp import aliases, federated, instructions, tools
 from src.core.mcp.caller import AgentCaller
 from src.core.mcp_health.first_hand import LINKS
@@ -137,7 +138,11 @@ async def handle_message(msg: Any, manager: Any, caller: AgentCaller, *, channel
             return _error(msg_id, INVALID_PARAMS, f"unknown tool: {name!r}")
         if caller.external:
             logger.info("mcp_external_call", client=caller.token_name, scope=caller.scope, tool=name)
-        return _result(msg_id, await tools.call_tool(manager, caller, name, params.get("arguments")))
+        token = subagent_join.CURRENT_TOOL_USE_ID.set(subagent_join.tool_use_id_from_meta(params))
+        try:
+            return _result(msg_id, await tools.call_tool(manager, caller, name, params.get("arguments")))
+        finally:
+            subagent_join.CURRENT_TOOL_USE_ID.reset(token)
     return _error(msg_id, METHOD_NOT_FOUND, f"method not found: {method[:80]}")
 
 

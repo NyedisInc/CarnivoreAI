@@ -73,7 +73,7 @@ test('no home row; dashboards row first with a caret, no key and no preview; the
   const keys = [...root.querySelectorAll<HTMLElement>('[data-menu-popout]')].map((key) => key.dataset['menuPopout']);
   expect(keys).toEqual(['dashboard:b-3', 'dashboard:home', 'dashboard:b-2']);
   const last = root.querySelector('[data-menu-dashboards-edit]')!;
-  expect(last.closest('li')!.nextElementSibling!.querySelector('[data-rail-item="sessions"]')).not.toBeNull();
+  expect(last.closest('li')!.nextElementSibling!.querySelector('[data-rail-item="warroom"]')).not.toBeNull();
   expect(items[2]!.compareDocumentPosition(last) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   first.click();
   expect(showLaunchpad).toHaveBeenCalledTimes(1);

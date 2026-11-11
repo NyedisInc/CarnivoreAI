@@ -73,7 +73,7 @@ describe('settings groups', () => {
 
     test('notifications groups: Joe specified delivery then channels; web push (#164) follows them', () => {
         expect(groupsIn('notifications')).toEqual(['notifications.delivery', 'notifications.channels', 'notifications.routing', 'notifications.web_push', 'notifications.messaging']);
-        expect(settingsInGroup('notifications.routing').map((s) => s.id)).toEqual(['notification_link', 'notification_matrix', 'notification_mutes', 'notification_sync']);
+        expect(settingsInGroup('notifications.routing').map((s) => s.id)).toEqual(['notification_inspector', 'notification_link', 'notification_matrix', 'notification_mutes', 'notification_sync']);
         expect(settingsInGroup('notifications.web_push').map((s) => s.id)).toEqual(['web_push']);
         expect(settingsInGroup('notifications.delivery').map((s) => s.id)).toEqual([
             'toast_style',

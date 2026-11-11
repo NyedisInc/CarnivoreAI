@@ -39,7 +39,7 @@
     "transcripts"
   ],
   "where": [
-    "Pack, work tab: the move a project or company block. The Projects page: a project's or company's menu (move to another computer), and the move back button beside a moved-away project's tag.",
+    "Pack, work tab: the move a project or company block. The Projects page: a project's or company's menu (move to pack member), and the move back button beside a moved-away project's tag.",
     "Owner API routes: POST /api/v1/projects/{name}/migrate, POST /api/v1/companies/{company}/migrate and POST /api/v1/projects/{name}/migrate-back; progress on GET /api/v1/pack/ops/{op_id}."
   ],
   "how_to": [

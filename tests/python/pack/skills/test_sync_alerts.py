@@ -107,11 +107,28 @@ def test_alpha_changed_raises_once_per_computer_and_never_for_our_own_edit(world
     rt.doc = settings_doc.default_doc("B")
     alerts.check_alpha(state, "check")
     (row3,) = rows(alerts.ALPHA_KEY)
-    assert (row3["count"], row3["params"]["claimed"], row3["params"]["sender"]) == (3, "pairing", "this computer")
+    assert (row3["count"], row3["params"]["claimed"], "sender" in row3["params"]) == (3, "pairing", False)
+    assert row3["detail_key"].endswith("alpha_changed.detail_no_sender")
     service.dismiss(Path(service._db_path), row3["id"])
     rt.doc = settings_doc.default_doc("A")
     alerts.check_alpha(state, "check")
     assert len(rows(alerts.ALPHA_KEY)) == 2
+
+
+def test_a_join_adopt_raises_no_alpha_alert_and_a_member_is_never_offered_itself(world) -> None:
+    rt, state = world.rt, world.state
+    rt.skills_settings_changed = lambda source, sender: alerts.check_alpha(state, source, sender)
+    rt.doc = settings_doc.default_doc("ME")
+    alerts.check_alpha(state, "check")
+    rt.doc = settings_doc.PackSettings(master_install_id="A", rev=(1, "A"))
+    rt.skills_settings_changed("local_edit", "")
+    assert rows(alerts.ALPHA_KEY) == []
+    rt.doc = settings_doc.default_doc("ME")
+    rt.skills_settings_changed("local_edit", "")
+    assert exchange.PackMachines._merge_remote(rt, remote("B", 3, "B"), "B") is True
+    (row,) = rows(alerts.ALPHA_KEY)
+    assert row["params"]["sender"] == "studio"
+    assert [a["id"] for a in row["actions"]] == ["open_pack_skills"]
 
 
 def test_a_replaced_local_edit_raises_once_and_names_the_trash_folder(world) -> None:

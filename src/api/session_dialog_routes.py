@@ -11,7 +11,8 @@ from src.api.remote_route_guard import refuse_remote
 from src.core.approvals.answer import AnswerRefused, Choice
 from src.core.approvals.answer_all import QuestionAnswer
 from src.core.approvals.ask_questions import served_fields
-from src.core.approvals.deliver import SOURCE_OWNER, SOURCE_OWNER_BANNER, deliver_answer, deliver_answers
+from src.core.approvals.deliver import (
+    SOURCE_OWNER, SOURCE_OWNER_BANNER, SOURCE_OWNER_PHONE, deliver_answer, deliver_answers)
 from src.models.dialogs import (
     DialogAnswerRequest, DialogAnswerResponse, DialogResponse, QuestionsAnswerRequest, QuestionsAnswerResponse)
 
@@ -20,7 +21,7 @@ router = APIRouter()
 
 
 def _source(claimed: Optional[str]) -> str:
-    return SOURCE_OWNER_BANNER if claimed == "owner_banner" else SOURCE_OWNER
+    return {"owner_banner": SOURCE_OWNER_BANNER, "owner_phone": SOURCE_OWNER_PHONE}.get(claimed or "", SOURCE_OWNER)
 
 
 def _refuse(session_id: str, reason: str) -> HTTPException:

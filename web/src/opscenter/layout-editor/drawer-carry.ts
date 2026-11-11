@@ -1,9 +1,8 @@
-/* the glance area */
 
-import { beginGesture, captureRows, pickTarget } from '../engine/pointer';
-import type { DropTarget, LayoutStore } from '../engine/layout.svelte';
+import type { LayoutStore } from '../engine/layout.svelte';
 import type { LayoutPage, SlotId } from '../engine/types';
-import { CARD_THRESHOLD, insideBox, surfaceRoot } from './drawer-drag';
+import { dropHostAt } from '../../lib/motion-grid';
+import { beginPress, insideBox } from './drawer-drag';
 import { zoneDrag, zoneIndexAt } from '../../lib/drawer-zone/zone-drag.svelte';
 import { glanceDrag, glanceIndexAt } from '../../lib/drawer-zone/glance-drag.svelte';
 import { aimAtRails, clearRailAims, clearRailDrops, liftRails } from '../../lib/session-rail/rail-store.svelte';
@@ -29,12 +28,10 @@ export interface SidebarHolds {
   zone: readonly string[];
   glance: readonly { id: string; widget: string }[];
   disabled: (widgetId: string) => boolean;
-  /* the glance area */
   repeatable: (widgetId: string) => boolean;
   t: GroupInputs['t'];
 }
 
-/* the glance area */
 export function sidebarOffers(manifest: WidgetManifest, title: string, holds: SidebarHolds): { zone: SidebarOffer; glance: SidebarOffer } {
   if (holds.disabled(manifest.id)) {
     const refusal = refusalWords(title, holds.t).sentence;
@@ -49,7 +46,7 @@ export function sidebarOffers(manifest: WidgetManifest, title: string, holds: Si
 }
 
 export type CarryTarget =
-  | { area: 'surface'; target: DropTarget }
+  | { area: 'surface' }
   | { area: 'zone'; index: number; moves: string | null }
   | { area: 'rail'; edge: RailEdge; spot: RailSpot; moves: string | null }
   | { area: 'glance'; index: number; moves: string | null };
@@ -85,26 +82,25 @@ export function beginDrawerCarry(
   handlers: CarryHandlers,
 ): boolean {
   const doc = card.ownerDocument;
-  const root = offer.surface ? surfaceRoot(page, doc) : null;
-  const scroller = root?.closest<HTMLElement>('.oc-content') ?? null;
-  let rows: ReturnType<typeof captureRows>['rows'] = [];
-  let cells: ReturnType<typeof captureRows>['cells'] = [];
   let verdict: Verdict = { target: null, refusal: '' };
+  void page;
 
-  const overSurface = (x: number, y: number): Verdict => {
-    if (!root || !offer.surface) return { target: null, refusal: '' };
-    if (!insideBox((scroller ?? root).getBoundingClientRect(), x, y)) return { target: null, refusal: '' };
-    const contentY = scroller ? y - scroller.getBoundingClientRect().top + scroller.scrollTop : y;
-    const target = pickTarget(rows, cells, contentY, x, null);
-    if (!target) return { target: null, refusal: '' };
-    if (offer.surface.refusal) return { target: null, refusal: offer.surface.refusal };
-    return { target: { area: 'surface', target }, refusal: '' };
+  const overSurface = (ev: PointerEvent): Verdict | 'handoff' => {
+    const surface = offer.surface;
+    if (!surface) return { target: null, refusal: '' };
+    const kind = String(surface.cell);
+    const found = dropHostAt(ev.clientX, ev.clientY, kind, doc);
+    if (!found) return { target: null, refusal: '' };
+    if (surface.refusal) return { target: null, refusal: surface.refusal };
+    if (kind.startsWith('picker:')) return { target: { area: 'surface' }, refusal: '' };
+    return found.host.accept(kind, ev) ? 'handoff' : { target: null, refusal: '' };
   };
 
-  const judge = (x: number, y: number): Verdict => {
+  const judge = (ev: PointerEvent): Verdict | 'handoff' => {
+    const x = ev.clientX;
+    const y = ev.clientY;
     zoneDrag.index = null;
     glanceDrag.index = null;
-    store.drag.target = null;
     const railOffer = offer.rail ?? offer.zone;
     const rail = aimAtRails(x, y, { side: railOffer.moves, bottom: railOffer.moves }, doc);
     if (rail !== null) {
@@ -128,22 +124,24 @@ export function beginDrawerCarry(
       return { target: { area: 'zone', index: zone, moves: offer.zone.moves }, refusal: '' };
     }
     if (drawer && insideBox(drawer.getBoundingClientRect(), x, y)) return { target: null, refusal: '' };
-    const screen = overSurface(x, y);
-    if (screen.target?.area === 'surface') store.drag.target = screen.target.target;
-    return screen;
+    return overSurface(ev);
   };
 
-  return beginGesture(card, event, {
-    threshold: CARD_THRESHOLD,
+  return beginPress(card, event, {
     onLift: () => {
-      if (root) ({ rows, cells } = captureRows(store, root, scroller, scroller?.scrollTop ?? 0));
       zoneDrag.carrying = true;
       glanceDrag.carrying = true;
       liftRails((offer.rail ?? offer.zone).moves);
     },
-    onMove: (_dx, _dy, move) => {
-      verdict = judge(move.clientX, move.clientY);
-      handlers.onMove(move.clientX, move.clientY, verdict.target !== null);
+    onMove: (ev) => {
+      const next = judge(ev);
+      if (next === 'handoff') {
+        clearAreas(store);
+        handlers.onMove(ev.clientX, ev.clientY, true);
+        return 'handoff';
+      }
+      verdict = next;
+      handlers.onMove(ev.clientX, ev.clientY, verdict.target !== null);
     },
     onDrop: () => {
       const { target, refusal } = verdict;

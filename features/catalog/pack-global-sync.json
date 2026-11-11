@@ -1,0 +1,59 @@
+{
+  "api_routes": [
+    "GET /api/v1/pack/global-sync",
+    "PUT /api/v1/pack/global-sync",
+    "POST /api/v1/pack/global-sync/sync"
+  ],
+  "area": "settings",
+  "docs": [
+    "docs/pack.md",
+    "docs/federation.md"
+  ],
+  "examples": [
+    "Open a new computer in the Pack and run a first prompt that already has your CLAUDE.md, hooks, skills and mods.",
+    "Press sync now after editing a hook on the main computer.",
+    "Turn on automatic sync so the Pack follows the main computer's setup."
+  ],
+  "how_to": [
+    "Open pack, logins, my global setup (on the main computer only) and turn on sync my global setup.",
+    "Say yes to copy there for each computer in the list; the other computer must also allow receiving global setup (the join code turns that on).",
+    "Pick claude code, codex or both, then press sync now, or turn on keep it synced automatically.",
+    "Nothing private travels: conversations, history, logs, caches, databases and logins stay put, secrets in env values are scrubbed, and the receiver keeps a backup of anything it overwrites."
+  ],
+  "id": "pack-global-sync",
+  "issues": [
+    2878
+  ],
+  "keywords": [
+    "pack",
+    "sync",
+    "global",
+    "claude",
+    "codex",
+    "hooks",
+    "mods",
+    "skills",
+    "plugins"
+  ],
+  "media_exempt": "Needs a paired computer that passed the approval gate, which a leased test slot does not have; no capture is defined yet.",
+  "name": "Pack global setup sync",
+  "since": "2026-11-07",
+  "status": "beta",
+  "summary": "the main computer copies your global claude code and codex setup to the approved computers in the Pack, so a new computer behaves like this one from the first prompt.",
+  "surfaces": [
+    "src/core/pack/globalsync/rules.py",
+    "src/core/pack/globalsync/collect.py",
+    "src/core/pack/globalsync/apply.py",
+    "src/core/pack/globalsync/sender.py",
+    "src/core/pack/globalsync/scrub.py",
+    "src/api/pack_global_sync_routes.py",
+    "src/api/federation_pack_global_routes.py",
+    "src/core/mcp/pack_global_sync_tools.py",
+    "web/src/lib/pack-machines/PackGlobalSync.svelte",
+    "web/src/lib/pack-machines/global-sync-store.svelte.ts"
+  ],
+  "updated": "2026-11-07",
+  "where": [
+    "Pack, logins tab: the my global setup block (main computer) and the may receive global setup switch (this computer); the mcp tools pack_global_sync status and sync now."
+  ]
+}

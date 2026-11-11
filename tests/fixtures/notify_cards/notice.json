@@ -1,0 +1,45 @@
+{
+  "kind": "notice",
+  "payload": {
+    "title": "carnivore alert",
+    "body": "something changed, open it to read more",
+    "path": "/sessions/ses_0123456789ab",
+    "thread": "local|ses_0123456789ab",
+    "v": 2,
+    "sub": "alert on nostromo",
+    "kind": "notice",
+    "type": "alert.other",
+    "lv": "a",
+    "snd": "default",
+    "acts": [
+      [
+        "open",
+        "open"
+      ]
+    ],
+    "card": {
+      "strip": [
+        "notice",
+        "carnivore",
+        "nostromo"
+      ],
+      "agent": "carnivore",
+      "computer": "nostromo",
+      "ts": "9:41",
+      "title": "carnivore alert",
+      "body": "something changed, open it to read more"
+    }
+  },
+  "card": {
+    "strip": [
+      "notice",
+      "carnivore",
+      "nostromo"
+    ],
+    "agent": "carnivore",
+    "computer": "nostromo",
+    "ts": "9:41",
+    "title": "carnivore alert",
+    "body": "something changed, open it to read more"
+  }
+}

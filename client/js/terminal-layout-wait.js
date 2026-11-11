@@ -4,6 +4,9 @@
     var SIZE_TIMEOUT_MS = 2000;
     var FRAME_TIMEOUT_MS = 250;
     var FRAME_COUNT = 2;
+    var STABLE_POLL_MS = 40;
+    var STABLE_POLLS = 5;
+    var STABLE_MAX_POLLS = 20;
 
     function nextFrameOrTimeout(ms) {
         return new Promise(function (resolve) {
@@ -53,12 +56,32 @@
             else timedOut = true;
         }
 
+        var settled = sized ? await waitForStableBox(container, o) : false;
+
         return {
             sized: sized,
+            settled: settled,
             framesPainted: framesPainted,
             timedOut: timedOut,
             waitedMs: now() - started
         };
+    }
+
+    async function waitForStableBox(el, opts) {
+        var o = opts || {};
+        var gap = typeof o.stablePollMs === 'number' ? o.stablePollMs : STABLE_POLL_MS;
+        var need = typeof o.stablePolls === 'number' ? o.stablePolls : STABLE_POLLS;
+        var max = typeof o.stableMaxPolls === 'number' ? o.stableMaxPolls : STABLE_MAX_POLLS;
+        var last = (el.offsetWidth | 0) + 'x' + (el.offsetHeight | 0);
+        var same = 0;
+        for (var i = 0; i < max; i++) {
+            await new Promise(function (r) { setTimeout(r, gap); });
+            var cur = (el.offsetWidth | 0) + 'x' + (el.offsetHeight | 0);
+            same = cur === last ? same + 1 : 0;
+            last = cur;
+            if (same >= need) return true;
+        }
+        return false;
     }
 
     async function settleFrames(frames, timeoutMs) {
@@ -78,6 +101,7 @@
 
     global.TerminalLayoutWait = {
         waitForLayout: waitForLayout,
+        waitForStableBox: waitForStableBox,
         settleFrames: settleFrames,
         nextFrameOrTimeout: nextFrameOrTimeout,
         hasBox: hasBox,

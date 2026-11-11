@@ -10,6 +10,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional
 import structlog
 
 from src.core.layouts import store as store
+from src.core.budget_hold.gate import hold_check
 from src.core.db import table_exists, transaction
 from src.core.layouts.broadcast_ddl import LAYOUT_BROADCAST_OFF_TABLE
 from src.core.session_startup_gate import GATE_AWAITING
@@ -112,6 +113,8 @@ async def _send_one(member: store.LayoutMember, info: Any, backend: Any, text: s
 
     if _dialog_open(info):
         return done(FAILED, "pane_dialog_open")
+    if hold_check(info.session_row_id, "\r", info.activity_status, info.startup_gate).held:
+        return done(FAILED, "budget_held")
     try:
         await backend.paste_and_submit(rewrite(info, text) if rewrite else text)
     except PasteNotSettledError:

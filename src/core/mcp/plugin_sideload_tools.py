@@ -15,7 +15,7 @@ _WARNING_KEY = "plugins.page.sideload.warning.risk"
 SIDELOAD_WARNING: str = read_prefixed((_WARNING_KEY,))[_WARNING_KEY]
 _KIND = {"type": "string", "enum": ["cplug", "theme", "skill", "plugin"], "description": "only when two kinds hold the same name"}
 _PATH_RULES = ("an absolute folder on this computer; the kind (sidecar plugin, theme, skill or Claude Code plugin) is read from its "
-               "manifest. It installs unverified and still needs the owner's consent to run. Refused with sideload_off while the developer sideload switch is off (no tool turns it on). A theme, skill or "
+               "manifest. It installs unverified and still needs the owner's consent to run. Refused with sideload_off while developer mode is off (no tool turns it on). A theme, skill or "
                "Claude Code plugin that runs code (hooks, MCP servers, scripts, an effects file) is refused with consent_required: only "
                "the owner gives that consent, on the Plugins page.")
 _NAME = {"name": {"type": "string", "maxLength": 64, "description": "the install name (default: the id in the plugin's cplug.json)"}}
@@ -30,7 +30,7 @@ def _require_on(request: Any) -> None:
     try:
         sideload_routes.require_on(live.state_dir)
     except HTTPException as exc:
-        raise ToolError(f"refused ({exc.status_code}): sideload_off: the developer sideload switch is off; only the owner turns it on, "
+        raise ToolError(f"refused ({exc.status_code}): sideload_off: developer mode is off; only the owner turns it on, "
                         "on the Plugins page") from exc
 
 
@@ -88,7 +88,7 @@ SPECS = (
         name=_REMOVE, route="src.cplugs.host.sideload_routes:delete_sideload", gate=ra.ACT,
         description="Remove one sideloaded plugin of any kind by name (kind only when two kinds share the name): a sidecar plugin stops "
                     "and its copied code goes; a theme, skill or Claude Code plugin folder moves to the trash; a git checkout goes; data and grants "
-                    "stay. Always waits for the owner. Refused (sideload_off) while the developer sideload switch is off.",
+                    "stay. Always waits for the owner. Refused (sideload_off) while developer mode is off.",
         properties={"name": {"type": "string", "maxLength": 64}, "kind": _KIND}, required=("name",),
         invoke=_remove, summary=_remove_summary, request_check=_require_on, example={"name": "clock"},
     ),

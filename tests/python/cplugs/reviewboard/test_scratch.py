@@ -277,3 +277,12 @@ def test_the_clear_removes_the_board_and_every_file(env: Env, client):
     assert not folder.exists() and not list(folder.parent.glob(f".gone-{first['slug']}-*"))
     assert task_manager_store(env).item(first["task"])["id"] == first["task"]
     assert client.delete(f"{BASE}/boards/{first['slug']}").status_code == 404
+
+
+def test_a_scratch_post_files_its_task_under_the_checked_title(env: Env, client):
+    ok, refused = post(env, TOKEN, title="phone\u202e mock")
+    assert not ok and "title may not contain hidden or control characters" in refused
+    ok, answer = post(env, TOKEN, title="phone\u200b mock", summary="first\x7f look")
+    assert ok, answer
+    item = task_manager_store(env).item(answer["task"])
+    assert item["title"].endswith("phone mock") and "\u200b" not in item["title"]

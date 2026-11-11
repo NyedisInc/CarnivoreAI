@@ -11,7 +11,6 @@ import {
     archivedProjectCount,
     isAutomatedOnly,
     primaryAction,
-    projectActions,
     projectLead,
     projectRows,
     sessionGroups,
@@ -106,23 +105,7 @@ describe('the one primary action', () => {
     });
 });
 
-test('project actions: hide leads the rule, a hidden project offers unhide and no new session', () => {
-    expect(projectActions({ archived_at: null, root: '/a' }).map((a) => a.id)).toEqual([
-        'new-session',
-        'rename-project',
-        'copy-path',
-        'load-blueprint',
-        'migrate-project',
-        'set-image',
-        'regenerate-art',
-        'add-to-company',
-        'archive-project',
-        'delete-project',
-    ]);
-    expect(projectActions({ archived_at: 'x', root: '/a' }).map((a) => a.id)).toEqual(['rename-project', 'copy-path', 'set-image', 'regenerate-art', 'add-to-company', 'pack-folder', 'unarchive-project', 'delete-project']);
-    expect(projectActions({ archived_at: null, has_image: true }).map((a) => a.id)).toContain('remove-image');
-    expect(projectActions({ archived_at: null, has_image: false }).map((a) => a.id)).not.toContain('remove-image');
-    expect(projectActions({ archived_at: null, root: null }).map((a) => a.id)).not.toContain('copy-path');
+test('the project lead: a hidden project comes back, any other starts a session', () => {
     expect(projectLead({ archived_at: null }).id).toBe('new-session');
     expect(projectLead({ archived_at: 'x' }).id).toBe('unarchive-project');
 });
@@ -182,18 +165,5 @@ describe('companies', () => {
         expect(names('', 'running')).toEqual(['Acme']);
         expect(names('', 'quiet')).toEqual(['Acme', 'zed co']);
         expect(names('beta', 'running')).toEqual([]);
-    });
-
-    test('+ company is one item whose submenu lists companies A-Z, marks the current, then new company', () => {
-        const items = projectActions({ archived_at: null, root: null, company_id: 1 }, [zed, acme]);
-        expect(items.filter((i) => i.children).map((i) => i.id)).toEqual(['add-to-company']);
-        const company = items.find((i) => i.id === 'add-to-company')!;
-        expect(company.labelKey).toBe('projects.page.action.add_company');
-        expect(company.children!.map((c) => c.id)).toEqual(['set-company:2', 'set-company:1', 'new-company-for-project']);
-        expect(company.children!.map((c) => c.label)).toEqual(['Acme', 'zed co', undefined]);
-        expect(company.children!.map((c) => c.checked)).toEqual([false, true, undefined]);
-        expect(items.map((i) => i.id)).toContain('remove-from-company');
-        expect(projectActions({ archived_at: null, company_id: null }, [acme]).map((i) => i.id)).not.toContain('remove-from-company');
-        expect(projectActions({ archived_at: null }).find((i) => i.id === 'add-to-company')!.children!.map((c) => c.id)).toEqual(['new-company-for-project']);
     });
 });

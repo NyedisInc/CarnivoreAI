@@ -35,8 +35,9 @@ async def peer_search(q: str = Query(..., min_length=1, max_length=SEARCH_QUERY_
                       project: Optional[str] = Query(None, max_length=200),
                       conversation_id: Optional[str] = Query(None, max_length=128),
                       limit: int = Query(GROUP_LIMIT_DEFAULT, ge=1, le=GROUP_LIMIT_MAX),
-                      per_group: int = Query(PER_GROUP_DEFAULT, ge=1, le=PER_GROUP_MAX)) -> Dict[str, Any]:
-    """This computer's own grouped hits. Output: ``{query, total_conversations, total_matches, groups}``, groups cleaned."""
+                      per_group: int = Query(PER_GROUP_DEFAULT, ge=1, le=PER_GROUP_MAX),
+                      sort: str = Query("relevance", pattern="^(relevance|date)$")) -> Dict[str, Any]:
+    """This computer's own grouped hits, exact-phrase conversations first, each tier in ``sort`` order. Output: ``{query, total_conversations, total_matches, groups}``, groups cleaned."""
     global _inflight
     if not q.strip():
         raise HTTPException(status_code=422, detail={"code": "deepsearch_invalid", "detail": "q is empty"})
@@ -55,7 +56,7 @@ async def peer_search(q: str = Query(..., min_length=1, max_length=SEARCH_QUERY_
     _inflight += 1
     search = asyncio.ensure_future(ConversationIndex(state_dir).search(
         terms, kinds=[k.strip() for k in kinds.split(",") if k.strip()] if kinds else None, project=project, conversation_id=conversation_id,
-        limit=limit, offset=0, per_group=per_group, peers=False, for_peer=True))
+        limit=limit, offset=0, per_group=per_group, peers=False, for_peer=True, sort=sort, exact_first=True))
     search.add_done_callback(_release)
     try:
         answer = await asyncio.shield(search)

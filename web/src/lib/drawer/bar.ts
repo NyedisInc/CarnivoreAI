@@ -105,10 +105,10 @@ function versionView(): VersionView | null {
     const footer = g().VersionFooter;
     if (!footer) return null;
     const resolved = footer.readVersionText();
-    if (!resolved) return { text: footer.UNKNOWN_TEXT, preview: false, previewText: footer.PREVIEW_TEXT, href: null };
+    if (!resolved) return { text: footer.UNKNOWN_TEXT, build: '', preview: false, previewText: footer.PREVIEW_TEXT, href: null };
     const short = footer.shortVersion(resolved);
     const dev = footer.readDevBuild ? footer.readDevBuild() : '';
-    return { text: dev ? `${short.text} ${dev}` : short.text, preview: short.preview, previewText: footer.PREVIEW_TEXT, href: footer.RELEASE_NOTES_URL };
+    return { text: short.text, build: dev, preview: short.preview, previewText: footer.PREVIEW_TEXT, href: footer.RELEASE_NOTES_URL };
 }
 
 export function paint(): void {
@@ -126,7 +126,7 @@ export function paint(): void {
     if (barView.crown !== crown) barView.crown = crown;
     const version = versionView();
     const old = barView.version;
-    if (!old || !version || old.text !== version.text || old.preview !== version.preview || old.href !== version.href) barView.version = version;
+    if (!old || !version || old.text !== version.text || old.build !== version.build || old.preview !== version.preview || old.href !== version.href) barView.version = version;
     if (mountedIn !== slot) {
         mountPanel(SLOT_ID, DrawerBar, { view: barView });
         mountedIn = slot;

@@ -152,3 +152,17 @@ test('the strip is the phone top bar: claw first (opens the drawer), tabs scroll
   expect(rows(desktop).some(([tool]) => tool === 'app-settings' || tool === 'app-logout')).toBe(false);
   delete (globalThis as Record<string, unknown>).SessionSidebar;
 });
+
+test('the phone strip mounts the touch motion (tabs pan sideways only) and the skull long press still arms', async () => {
+  vi.useFakeTimers();
+  const root = draw(PhoneTabs);
+  expect(root.querySelector('[data-tab-track]')).not.toBeNull();
+  const x = root.querySelector('.oc-tab-x') as HTMLElement;
+  const down = new MouseEvent('pointerdown', { bubbles: true });
+  Object.defineProperty(down, 'pointerType', { value: 'touch' });
+  x.dispatchEvent(down);
+  vi.advanceTimersByTime(600);
+  flushSync();
+  expect(root.querySelector('[data-tab-action="kill"]')).not.toBeNull();
+  vi.useRealTimers();
+});

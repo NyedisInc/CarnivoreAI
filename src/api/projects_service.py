@@ -103,6 +103,7 @@ def views_to_responses(view: ProjectsView, response_cls: Any) -> List[Any]:
             company_id=item.get("company_id"),
             company_name=item.get("company_name"),
             color=item.get("color"),
+            new_sessions_join_swarm=bool(item.get("new_sessions_join_swarm")),
             parent_project_id=parents.get(item["id"]),
             storage=storage.get(item["id"]),
             uid=item.get("uid"),

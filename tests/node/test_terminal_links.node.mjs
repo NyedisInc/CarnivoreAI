@@ -115,12 +115,13 @@ await test('a URL stops at a box-drawing border', async () => {
     assert.equal(links[0].text, 'https://example.com/a');
 });
 
-await test('Mac: Cmd-click opens http(s); a plain click does not', () => {
+await test('a plain click opens http(s); a right or middle click does not', () => {
     const { ctx, clicked } = makeContext({ platform: 'MacIntel' });
-    ctx.TerminalLinks.activate({ metaKey: false, ctrlKey: true }, 'https://a.example/');
+    ctx.TerminalLinks.activate({ button: 2 }, 'https://a.example/');
+    ctx.TerminalLinks.activate({ button: 1 }, 'https://a.example/');
     assert.deepEqual(clicked, []);
-    ctx.TerminalLinks.activate({ metaKey: true }, 'https://a.example/');
-    ctx.TerminalLinks.activate({ metaKey: true }, 'http://b.example/x');
+    ctx.TerminalLinks.activate({ button: 0 }, 'https://a.example/');
+    ctx.TerminalLinks.activate({ button: 0, metaKey: true }, 'http://b.example/x');
     assert.deepEqual(clicked, ['https://a.example/', 'http://b.example/x']);
 });
 
@@ -132,10 +133,9 @@ await test('javascript:, file: and data: never open, even with Cmd held', () => 
     assert.deepEqual(clicked, []);
 });
 
-await test('elsewhere Ctrl is the modifier; a touch-only device opens on a plain tap', () => {
+await test('any platform opens on a plain click; a touch-only device opens on a plain tap', () => {
     const linux = makeContext({ platform: 'Linux x86_64' });
-    linux.ctx.TerminalLinks.activate({ metaKey: true }, 'https://a.example/');
-    linux.ctx.TerminalLinks.activate({ ctrlKey: true }, 'https://b.example/');
+    linux.ctx.TerminalLinks.activate({ button: 0 }, 'https://b.example/');
     assert.deepEqual(linux.clicked, ['https://b.example/']);
     const phone = makeContext({ platform: 'iPhone', touchOnly: true });
     phone.ctx.TerminalLinks.activate({}, 'https://c.example/');

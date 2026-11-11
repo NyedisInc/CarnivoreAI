@@ -13,7 +13,7 @@ import structlog
 from src.config.provider_account_switch import ProviderAccountSwitchConfig, pointer_field
 from src.config.provider_accounts import ProviderAccount
 from src.core import config_writer, resource_push, session_change_notice
-from src.core.account_switch import session_pin, store
+from src.core.account_switch import continue_ready, session_pin, store
 from src.core.account_switch.active import effective_active, find_account, pointer_for
 from src.core.account_switch.auto_switch import record_switch
 from src.core.account_switch.decide import rank_candidates
@@ -21,6 +21,7 @@ from src.core.notifications.sources import frames
 from src.core.resource_push import topics as resource_topics
 from src.core.session_delivery import bring_up
 from src.core.session_startup_gate import GATE_READY
+from src.core.session_status import STATUS_UNKNOWN
 from src.models.provider_ledger import AccountUsage
 from src.models.websocket import WSMessageType
 
@@ -112,25 +113,34 @@ class Rotation:
         logger.info("limit_rotation_pointer_moved", from_account_id=from_id, to_account_id=to_id)
         return True
 
-    async def wait_ready(self, session_id: str) -> bool:
-        ops = bring_up.ops_for_app(self._app_state)
-        try:
-            await bring_up.wait_ready(
-                ops,
-                lambda info, _keys: info.session.id == session_id and info.startup_gate == GATE_READY,
-                "the restarted session",
-            )
-        except bring_up.BringUpFailed as exc:
-            logger.warning("limit_rotation_not_ready", detail=str(exc))
+    async def ready_to_continue(self, info: Any) -> bool:
+        if info.startup_gate != GATE_READY or info.activity_hint is not None:
             return False
-        return True
+        if info.activity_status in bring_up.READY_STATUSES:
+            return True
+        if info.activity_status != STATUS_UNKNOWN:
+            return False
+        return await continue_ready.settled_at_empty_prompt(self._app_state.session_manager, info)
+
+    async def wait_ready(self, session_id: str) -> bool:
+        manager = self._app_state.session_manager
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + bring_up.READY_TIMEOUT_S
+        while True:
+            info = await manager.get_session_info(session_id)
+            if info is not None and await self.ready_to_continue(info):
+                return True
+            if loop.time() + bring_up.READY_STEP_S > deadline:
+                logger.warning("limit_rotation_not_ready", session_id=session_id)
+                return False
+            await asyncio.sleep(bring_up.READY_STEP_S)
 
     async def paste_continue(self, info: Any, session_uuid: Optional[str]) -> None:
         from src.api.one_shot_routes import paste_through_gates  # noqa: PLC0415
 
         request = SimpleNamespace(app=SimpleNamespace(state=self._app_state))
         await paste_through_gates(
-            request, info.session.id, CONTINUE_WORD, idle_only=True,
+            request, info.session.id, CONTINUE_WORD, idle_only=True, rotation_continue=True,
             expected_epoch=info.session.tmux_created_epoch, expected_uuid=session_uuid,
         )
 

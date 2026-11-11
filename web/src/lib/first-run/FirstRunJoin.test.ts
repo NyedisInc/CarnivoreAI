@@ -199,14 +199,14 @@ describe('joining', () => {
         expect(auth.acceptLogin).not.toHaveBeenCalled();
     });
 
-    test('a used up code shows its words and try again returns to empty cells', async () => {
+    test('a main with no code open shows its own words (not used up) and try again returns to empty cells', async () => {
         install({ [STATUS]: [() => status('idle'), () => status('failed', { error: 'no_invite' })], [POST]: accepted });
         await render();
         await click('[data-first-run="choose-join"]');
         await paste('123456');
         await elapse(1000);
-        expect(q('[data-first-run-error]')!.getAttribute('data-first-run-error')).toBe('used_up');
-        expect(q('[data-first-run-error]')!.textContent).toBe(t('first_run.join.error.used_up'));
+        expect(q('[data-first-run-error]')!.getAttribute('data-first-run-error')).toBe('no_code');
+        expect(q('[data-first-run-error]')!.textContent).toBe(t('first_run.join.error.no_code'));
         await click('[data-first-run="retry"]');
         expect(all('[data-first-run="cell"]').every((c) => c.value === '')).toBe(true);
     });
@@ -306,7 +306,7 @@ describe('joining', () => {
             const key = `first_run.join.error.${errorKeyFor(code)}`;
             expect(t(key), code).not.toBe(key);
         }
-        expect(errorKeyFor('no_invite')).toBe('used_up');
+        expect(errorKeyFor('no_invite')).toBe('no_code');
         expect(errorKeyFor(null)).toBe('refused');
     });
 });

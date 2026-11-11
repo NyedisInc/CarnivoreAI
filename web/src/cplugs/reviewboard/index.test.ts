@@ -20,8 +20,9 @@ describe('reviewboard web plugin', () => {
             'task_manager_boards_list', 'task_manager_board_get', 'task_manager_board_create', 'task_manager_board_revision_add', 'task_manager_board_focus',
             'task_manager_scratch_post', 'task_manager_scratch_clear', 'task_manager_board_attachment_add', 'task_manager_board_attachment_remove',
             'task_manager_board_live_set', 'task_manager_board_milestone_add', 'task_manager_board_live_stop',
+            'task_manager_board_public_links_remove',
         ]);
-        expect(manifest.surfaces.topics).toEqual(['boards', 'drafts']);
+        expect(manifest.surfaces.topics).toEqual(['boards', 'drafts', 'visitors']);
         expect(reviewboardCplug.tabs?.map((t) => t.id)).toEqual(['reviewboard']);
     });
 });

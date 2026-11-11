@@ -63,7 +63,7 @@
       arrange,
       editLayout: canOpen() ? () => void toggleLayoutEditor() : null,
       close: {
-        instance: manifest.instancing !== 'singleton' || !!item.instance,
+        instance: true,
         run: () => {
           if (store.remove(itemKey)) terminalLayout.announce(t('session_rail.announce.removed', { title }));
         },

@@ -14,7 +14,7 @@ from urllib.parse import urlsplit
 
 import structlog
 
-from src.core.json_artifact import atomic_write_json
+from src.core.json_artifact import UnreadableArtifact, atomic_write_json, read_for_update
 from src.cplugs.host import sideload
 from src.cplugs.host.sideload import SideloadRefused
 
@@ -197,10 +197,18 @@ def records(state_dir: Path) -> Dict[str, Dict[str, Any]]:
     return {k: v for k, v in data.items() if isinstance(v, dict)} if isinstance(data, dict) else {}
 
 
+def _records_for_update(state_dir: Path) -> Dict[str, Dict[str, Any]]:
+    try:
+        data = read_for_update(_record_path(state_dir), log_event="cplug_sideload_git_record_unreadable")
+    except UnreadableArtifact as exc:
+        raise SideloadRefused("sideload_unreadable", f"the git sideload record is unreadable and was left as it is: {exc}", 500) from exc
+    return {k: v for k, v in data.items() if isinstance(v, dict)}
+
+
 def record(state_dir: Path, name: str, url: str, ref: Optional[str], subdir: Tuple[str, ...], commit: str) -> Dict[str, Any]:
     entry = {"url": url, "ref": ref, "subdir": "/".join(subdir), "commit": commit, "synced_at": sideload.wall()}
     with _lock:
-        data = records(state_dir)
+        data = _records_for_update(state_dir)
         data[name] = entry
         if not atomic_write_json(_record_path(state_dir), data, log_event="cplug_sideload_git_record_write_failed"):
             raise SideloadRefused("sideload_not_saved", "the git sideload record could not be written", 500)
@@ -220,7 +228,7 @@ def describe(state_dir: Path, name: str, source: str) -> Optional[Dict[str, Any]
 
 def forget(state_dir: Path, name: str) -> None:
     with _lock:
-        data = records(state_dir)
+        data = _records_for_update(state_dir)
         if data.pop(name, None) is not None and not atomic_write_json(_record_path(state_dir), data,
                                                                       log_event="cplug_sideload_git_record_write_failed"):
             raise SideloadRefused("sideload_not_saved", "the git sideload record could not be written", 500)

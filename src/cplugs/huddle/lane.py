@@ -10,6 +10,7 @@ SWARM = "swarm"
 LANES = (TASK_MANAGER, SWARM)
 
 SWARM_ORIGINS = ("agent", "spawn")
+ARGENT_ORIGIN = "argent"
 AGENT_LIST_PREFIX = "agent:"
 REFUSED_CODE = "task_manager_lane"
 

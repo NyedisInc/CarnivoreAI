@@ -6,6 +6,7 @@ import { flushSync, mount, unmount } from 'svelte';
 
 import { resourcePush } from '../sdk';
 import { ApiError } from '../sdk';
+import { registerFixturePlugin } from '../../lib/i18n/test-support/folder-plugin-fixture';
 import { setLocale, t } from '../../lib/i18n/index.svelte';
 import type { Fetcher } from './crate-api';
 import { importBody, parseImportPlan } from './import-api';
@@ -13,6 +14,7 @@ import ImportDialog from './ImportDialog.svelte';
 import plans from './import-plans.fixture.json';
 
 setLocale('en');
+registerFixturePlugin();
 
 interface Call {
     path: string;
@@ -112,7 +114,7 @@ describe('import dialog', () => {
 
     test('the dialog previews by itself at open: lands in, totals and the backup ticks show with no press, and a blocked field says it once', async () => {
         const plan = { ...BLOCKED, conversations: OWN.conversations, project: { ...BLOCKED.project, root_to: '/Users/me/dest' }, backups: { carried: true, restores: true, provider_enabled: true, conversations: [], folders: [
-            { unit: 'reviewboard.boards', plugin: 'reviewboard', points: 2, files: 6, bytes: 100, already: 0, status: 'restore', reason: null }] } };
+            { unit: 'boardfix.boards', plugin: 'boardfix', points: 2, files: 6, bytes: 100, already: 0, status: 'restore', reason: null }] } };
         const { fetcher, calls } = server({ [PLAN]: () => plan });
         const target = await open({ fetcher, originalRoot: BLOCKED.project.root_from });
         expect(calls[0]!.body).toMatchObject({ mode: 'same_paths' });
@@ -349,24 +351,24 @@ describe('import dialog', () => {
     });
 
     test('a crate from elsewhere gets one tick per plugin folder family, on by default, greyed when not restorable, and sends the ticked units', async () => {
-        const folders = [{ unit: 'reviewboard.boards', plugin: 'reviewboard', points: 2, files: 6, bytes: 100, already: 0, status: 'restore', reason: null },
+        const folders = [{ unit: 'boardfix.boards', plugin: 'boardfix', points: 2, files: 6, bytes: 100, already: 0, status: 'restore', reason: null },
             { unit: 'tasks.items', plugin: 'tasks', points: 1, files: 1, bytes: 10, already: 0, status: 'not_restored', reason: 'plugin_store_plugin_off' }];
         const backups = { carried: true, restores: true, provider_enabled: true, conversations: [], folders };
         const { fetcher, calls } = server({ [PLAN]: () => ({ ...OWN, provenance: 'foreign', backups }) });
         const target = await open({ fetcher });
         await click(target, '[data-crt-preview]');
         const asks = () => calls.filter((c) => c.path.endsWith('/imports/plan')).map((c) => c.body);
-        const boards = target.querySelector('[data-crt-import-backup-family="reviewboard.boards"]') as HTMLInputElement;
+        const boards = target.querySelector('[data-crt-import-backup-family="boardfix.boards"]') as HTMLInputElement;
         const locked = target.querySelector('[data-crt-import-backup-family="tasks.items"]') as HTMLInputElement;
         const words = (box: HTMLInputElement) => box.closest('label')!.textContent!;
         expect(boards.checked).toBe(true);
-        expect(words(boards)).toContain('file the review boards backups in my vault');
-        expect(words(boards)).not.toContain('reviewboard.boards');
+        expect(words(boards)).toContain('file the fixture boards backups in my vault');
+        expect(words(boards)).not.toContain('boardfix.boards');
         expect(locked.disabled).toBe(true);
         expect(words(locked)).toContain(t('cplug.crate.import.skip.plugin_store_plugin_off'));
-        expect(target.querySelector('[data-crt-import-backup="reviewboard.boards"]')).not.toBeNull();
-        expect(asks().at(-1)).toMatchObject({ file_backup_units: ['reviewboard.boards'] });
-        await click(target, '[data-crt-import-backup-family="reviewboard.boards"]');
+        expect(target.querySelector('[data-crt-import-backup="boardfix.boards"]')).not.toBeNull();
+        expect(asks().at(-1)).toMatchObject({ file_backup_units: ['boardfix.boards'] });
+        await click(target, '[data-crt-import-backup-family="boardfix.boards"]');
         await new Promise((done) => setTimeout(done, 500));
         await settle();
         expect(asks().at(-1)).not.toHaveProperty('file_backup_units');

@@ -1,0 +1,65 @@
+{
+  "kind": "died",
+  "payload": {
+    "title": "cloudecode-2 died",
+    "body": "the pane exited with code 1",
+    "path": "/sessions/ses_0123456789ab",
+    "thread": "local|ses_0123456789ab",
+    "v": 2,
+    "sub": "session died on studio",
+    "kind": "died",
+    "type": "session.died",
+    "lv": "t",
+    "snd": "alarm",
+    "cap": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ttl": 1794000000,
+    "acts": [
+      [
+        "reopen",
+        "reopen"
+      ],
+      [
+        "open",
+        "open"
+      ]
+    ],
+    "card": {
+      "strip": [
+        "died",
+        "cloudecode-2",
+        "studio"
+      ],
+      "agent": "cloudecode-2",
+      "computer": "studio",
+      "ts": "9:41",
+      "tail": [
+        "> npm run build",
+        "vite v6 building for production",
+        "transforming 412 modules",
+        "rendering chunks",
+        "client/dist/app.js  1.92 MB",
+        "build finished in 14.2 s"
+      ],
+      "exit": 1
+    }
+  },
+  "card": {
+    "strip": [
+      "died",
+      "cloudecode-2",
+      "studio"
+    ],
+    "agent": "cloudecode-2",
+    "computer": "studio",
+    "ts": "9:41",
+    "tail": [
+      "> npm run build",
+      "vite v6 building for production",
+      "transforming 412 modules",
+      "rendering chunks",
+      "client/dist/app.js  1.92 MB",
+      "build finished in 14.2 s"
+    ],
+    "exit": 1
+  }
+}

@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -99,7 +100,7 @@ def pin_fits(config_path: Path, account_id: str, family: str) -> bool:
 
 def is_launchable(account: Optional[ProviderAccount]) -> bool:
     if account is not None and account.provider == "codex":
-        return relay_accounts.is_codex_relay_account(account) and Path(profile_dir_for(account)).is_dir()
+        return Path(os.path.expanduser(profile_dir_for(account))).is_dir()
     if account is None or account.provider != PIN_PROVIDER:
         return False
     default = shared_links.is_default_profile(account.provider, profile_dir_for(account))

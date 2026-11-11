@@ -13,7 +13,7 @@ from src.core.notifications.settings_doc.store import SettingsDocStore
 log = structlog.get_logger()
 Doc = Dict[str, Any]
 
-BACKFILL_TYPES = ("pack.skills",)
+BACKFILL_TYPES = ("pack.skills", "agent.review")
 
 
 def _columns(doc: Doc) -> List[str]:

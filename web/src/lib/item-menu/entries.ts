@@ -9,6 +9,8 @@ export interface ItemMenuEntry {
     colors?: { value: string; onPick: (key: string) => void; allowNone?: boolean; onPreview?: (hex: string | null) => void };
     children?: () => MenuNode[];
     blocked?: string;
+    keyless?: boolean;
+    checked?: boolean;
     danger?: boolean;
     onPick(): void;
 }
@@ -36,6 +38,8 @@ export function entryNodes(entries: readonly ItemMenuEntry[], glyph: (icon: stri
         const html = glyph(entry.icon);
         const node: MenuNode = { id, label: entry.label, sep, ...(html ? { glyphHtml: html } : {}) };
         if (entry.danger) node.danger = true;
+        if (entry.checked !== undefined) node.checked = entry.checked;
+        if (entry.keyless) node.keyless = true;
         if (entry.blocked) node.blocked = entry.blocked;
         if (entry.children) node.children = closing(entry.children(), close);
         else

@@ -65,7 +65,9 @@ def cell(doc: Mapping[str, Any], column: str, type_id: str) -> Cell:
     row = types.get_type(type_id)
     if row is None:
         raise ValueError(f"not a notification type: {type_id!r}")
-    if column == doc_model.COL_SCREEN:
+    if column == doc_model.COL_DESKTOP:
+        fallback = row.defaults.screen or row.defaults.screen_surface == "approvals_inbox"
+    elif column == doc_model.COL_SCREEN:
         fallback = row.defaults.screen
     else:
         if row.defaults.outside_locked_off:

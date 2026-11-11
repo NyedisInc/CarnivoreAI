@@ -12,6 +12,10 @@ const DETACHED_KNOWN: Record<string, string> = {
     'admin/main.ts': 'the admin page is its own entry point and owns its document',
 };
 
+const PLUGIN_ENTRY_KNOWN: Record<string, string> = {
+    'cplugs/reviewboard/public/visitor-page/start.ts': 'the visitor page of public review links is its own entry point (a separate bundle, served by the review board\'s public listener, that never loads the app) and owns its document',
+};
+
 const TEST_ONLY = /\.(test|spec)\.|test-helpers\.ts$|-harness\.ts$/;
 
 const sourceFiles = (dir: string): string[] => walkSources(dir, /\.(ts|svelte)$/, { exclude: TEST_ONLY, base: SRC });
@@ -25,12 +29,17 @@ describe('only mount.ts and modal.ts call Svelte mount()', () => {
     const callers = sourceFiles(SRC).filter((file) => findMountCalls(fs.readFileSync(path.join(SRC, file), 'utf8')));
 
     it('has no caller outside the seam and DETACHED_KNOWN', () => {
-        const bad = callers.filter((file) => !SEAMS.includes(file) && !(file in DETACHED_KNOWN));
+        const bad = callers.filter((file) => !SEAMS.includes(file) && !(file in DETACHED_KNOWN) && !(file in PLUGIN_ENTRY_KNOWN));
         expect(bad, 'go through mountPanel / mountInto (lib/mount.ts) or openModal (lib/modal.ts)').toEqual([]);
     });
 
     it('keeps every DETACHED_KNOWN row true', () => {
         expect(Object.keys(DETACHED_KNOWN).filter((file) => !callers.includes(file))).toEqual([]);
+    });
+
+    it('keeps every PLUGIN_ENTRY_KNOWN row true while its file exists', () => {
+        const stale = Object.keys(PLUGIN_ENTRY_KNOWN).filter((file) => fs.existsSync(path.join(SRC, file)) && !callers.includes(file));
+        expect(stale).toEqual([]);
     });
 
     it('goes red on a fixture (negative control)', () => {

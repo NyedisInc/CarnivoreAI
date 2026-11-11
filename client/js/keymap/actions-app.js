@@ -8,6 +8,8 @@ const MENU_JS = 'macOS/app-menu/';
 const APP = [
     def('history.back', 'app', 'global', { mac: ['cmd+['] }, { owner: CHORDS, labelKey: 'keys.page.app.back', menus: ['go'], rebindable: true }),
     def('history.forward', 'app', 'global', { mac: ['cmd+]'] }, { owner: CHORDS, labelKey: 'keys.page.app.forward', menus: ['go'], rebindable: true }),
+    def('tab.prev', 'app', 'global', { mac: ['cmd+<'] }, { owner: CHORDS, labelKey: 'keys.page.app.tab_prev', rebindable: true }),
+    def('tab.next', 'app', 'global', { mac: ['cmd+>'] }, { owner: CHORDS, labelKey: 'keys.page.app.tab_next', rebindable: true }),
     ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => def(`layout.tab.${n}`, 'app', 'global', { mac: [`cmd+${n}`] }, {
         owner: CHORDS,
         rebindable: true,

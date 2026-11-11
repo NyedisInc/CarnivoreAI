@@ -25,11 +25,12 @@ import { setCellSize, sizeRefusal } from './cell-size';
 import { computeTracks } from './tracks';
 import type { FitSize } from '../widgets/types';
 import type { StackEdge } from './stack';
-import type { ColumnDrop } from './column';
+import type { ColumnDrop, SeamRow } from './column';
 import { applyDrop } from './drop';
 import { showAt } from '../layout-editor/show-at';
 import { canSpanDown, spanDown, type SpanRefusal } from './span-extend';
 import { META, instanceId, metaFor } from './meta';
+import { sizeOf, surfaceKeyOf } from './observe.svelte';
 import { headerShown } from '../shell/widget-head';
 import { clear, flushSave, load, save, validate } from './persist';
 import { arrangementChanged, homeChanged, warroomChanged } from './arrangement-events';
@@ -51,7 +52,10 @@ export interface LayoutState {
 export type DropTarget =
   | { kind: 'row'; row: RowId; index: number }
   | { kind: 'new'; after: RowId | null }
-  | { kind: 'stack'; of: SlotId; edge: StackEdge }
+  | { kind: 'stack'; of: SlotId; edge: StackEdge; width?: number; height?: number }
+  | { kind: 'split'; of: SlotId; side: 'left' | 'right'; width?: number; height?: number }
+  | { kind: 'seam'; rows: SeamRow[]; width?: number; height?: number }
+  | { kind: 'stack-run'; of: SlotId[]; edge: 'below' }
   | ColumnDrop;
 
 export interface DragState {
@@ -81,6 +85,7 @@ export interface LayoutStore {
     leftMinPx: number,
     leftMaxPx: number,
   ): void;
+  commitLayout(next: Layout, from: Layout): void;
   dragRows(snapshot: Layout, aboveId: RowId, dyPx: number, flexSpacePx: number): void;
   dragIntersection(
     snapshot: Layout,
@@ -133,6 +138,11 @@ export interface LayoutStore {
   isHeaderShown(id: SlotId): boolean;
   setHeaderShown(id: SlotId, shown: boolean): void;
   clearDrag(): void;
+}
+
+function measuredBox(page: LayoutPage): { width: number | undefined; height: number | undefined } {
+  const { width, height } = sizeOf(surfaceKeyOf(page));
+  return { width: width > 0 ? width : undefined, height: height > 0 ? height : undefined };
 }
 
 export function createLayoutStore(page: LayoutPage): LayoutStore {
@@ -306,6 +316,11 @@ export function createLayoutStore(page: LayoutPage): LayoutStore {
       );
     },
 
+    commitLayout(next, from): void {
+      if (!current(from)) return;
+      commit(next);
+    },
+
     restore(snapshot): void {
       if (!current(snapshot)) return;
       commit(snapshot);
@@ -372,11 +387,13 @@ export function createLayoutStore(page: LayoutPage): LayoutStore {
     },
 
     hide(id): void {
-      commit(hideCell(state.layout, id));
+      const { width, height } = measuredBox(page);
+      commit(hideCell(state.layout, id, width, height));
     },
 
     remove(id): void {
-      commit(removeCell(state.layout, id));
+      const { width, height } = measuredBox(page);
+      commit(removeCell(state.layout, id, width, height));
     },
 
     show(id): void {

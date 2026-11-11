@@ -88,6 +88,7 @@ async def test_listener_follows_the_rule_and_lp_follows_the_state(world, monkeyp
     for (host, complete, joined), (state, has_lp) in cases:
         rt = _runtime(main, monkeypatch, host=host, complete=complete, joined=joined)
         await rt.prepare(PeerLinks(open_db=main.open_db, listener_path=rt._listener_path))
+        main.pack.default_master = rt.iid
         await rt.start()
         try:
             assert (rt.link_state, rt.advertised_port() == rt.link_port, runtime.advertised_link_port() == rt.advertised_port()) == (

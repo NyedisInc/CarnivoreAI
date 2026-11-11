@@ -10,6 +10,7 @@ export interface CellTrack {
   width: number;
   span: number;
   reserved: boolean;
+  of?: SlotId;
 }
 
 export interface SeamTrack {
@@ -159,6 +160,7 @@ export function computeTracks(input: TrackInput): SurfaceTracks {
     let at = 0;
     while (at < order.length) {
       const pin = pinned[at];
+      const held = order[at];
       if (pin) {
         const hole = Math.round(pin.x) - cursor - gutter;
         if (hole >= 1) {
@@ -167,7 +169,7 @@ export function computeTracks(input: TrackInput): SurfaceTracks {
           cursor += hole + gutter;
         }
         const px = Math.max(0, Math.min(Math.round(pin.width), width - cursor));
-        cells.push({ slotId: null, index: -1, x: cursor, width: px, span: 1, reserved: true });
+        cells.push({ slotId: null, index: -1, x: cursor, width: px, span: 1, reserved: true, ...(held?.kind === 'reserved' ? { of: held.of } : {}) });
         tracks.push(`${px}px`);
         cursor += px + gutter;
         at += 1;

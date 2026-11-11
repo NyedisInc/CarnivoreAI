@@ -7,7 +7,7 @@ from typing import List, Optional
 import structlog
 
 from src.config.provider_accounts import ProviderAccount, profile_dir_for
-from src.core.provider_ledger import accounts_store, poller, poller_scan
+from src.core.provider_ledger import accounts_store, poller, poller_scan, relay_accounts
 from src.core.provider_ledger.default_login import (
     accounts_pointing_at_default,
     canonical_path,
@@ -78,7 +78,7 @@ def resolve_session_account(
         return None
     wanted = matched[0].id
     try:
-        rows = poller.snapshot().accounts
+        rows = [*poller.snapshot().accounts, *relay_accounts.all_relay_rows()]
     except Exception as exc:  # noqa: BLE001
         logger.debug("session_account_snapshot_failed", error=str(exc))
         return None

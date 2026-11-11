@@ -18,6 +18,7 @@
   import LedgerGlanceView from './LedgerGlanceView.svelte';
   import AutoSwitchIcon from '../account-switch/AutoSwitchIcon.svelte';
   import SwitchAccountButton from '../account-switch/SwitchAccountButton.svelte';
+  import DrawerSwitchNote from '../account-switch/DrawerSwitchNote.svelte';
   import { accountSwitch } from '../account-switch/switch-store.svelte';
   import Tag from '../base/Tag.svelte';
   import type { TagTone } from '../base/classes';
@@ -75,7 +76,18 @@
   });
 
   const snapshot = $derived(source.data);
-  const accounts = $derived(snapshot ? sortAccounts(snapshot.accounts, accountSwitch.data) : []);
+  function loginGone(a: AccountUsage): boolean {
+    return (
+      a.credential_state === 'missing' &&
+      a.setup_complete !== false &&
+      (Boolean(a.plan) || Boolean(a.identity) || a.windows.length > 0)
+    );
+  }
+  const accounts = $derived(
+    snapshot
+      ? sortAccounts(snapshot.accounts, accountSwitch.data).filter((a) => !loginGone(a))
+      : [],
+  );
 
   const openCounts = $derived(
     groupSessionsByAccount(
@@ -353,6 +365,7 @@
               </div>
             {/each}
           {/if}
+          <DrawerSwitchNote accountId={account.id} />
         </li>
       {/each}
     </ul>
@@ -383,12 +396,18 @@
     }
 
     .ldp-head,
+    .ldp-head,
     .ldp-id,
     .ldp-caption {
       display: flex;
       align-items: center;
       gap: var(--oc-space-1-5);
       min-width: 0;
+    }
+
+    .ldp-id {
+      flex-wrap: wrap;
+      row-gap: var(--oc-space-1);
     }
 
     .ldp-title {
@@ -421,7 +440,8 @@
     }
 
     .ldp-plan {
-      flex-shrink: 0;
+      flex: 0 1 auto;
+      min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -566,7 +586,7 @@
 
     .ldp-name {
       min-width: 0;
-      flex: 0 1 auto;
+      flex: 0 4 auto;
       overflow: clip;
       text-overflow: ellipsis;
       white-space: nowrap;

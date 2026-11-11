@@ -25,8 +25,16 @@ def _answer(store: Any, card_id: int, effects: List[Effect], data: Optional[Dict
     return {"card": card, "effects": [dataclasses.asdict(e) for e in effects], "data": data or {}}
 
 
+OWNER_ASK_CHARS = 500
+MAX_FINISH_RESULT = flow.MAX_RESULT_CHARS + len("needs you: ") + OWNER_ASK_CHARS + len("\n\n")
+
+
 def finish(store: Any, card_id: int, args: Mapping[str, Any], by: str) -> Dict[str, Any]:
-    act = CardAct("finish", by, {"result": args["result"], "report_id": args.get("report_id")})
+    try:
+        result = rules.clean_text(args["result"], "result", MAX_FINISH_RESULT)
+    except rules.TaskManagerInvalid as exc:
+        raise CardRefused("bad_card", str(exc)) from exc
+    act = CardAct("finish", by, {"result": result, "report_id": args.get("report_id")})
     fields: Dict[str, object] = {"review_description": args["how_to_validate"]}
     if args.get("validate_link"):
         fields["review_link"] = args["validate_link"]

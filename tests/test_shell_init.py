@@ -36,7 +36,8 @@ def test_rc_source_still_sources_the_users_zshrc():
     assert RC_SOURCE.startswith("source ~/.zshrc")
 
 
-def test_redirections_are_scoped_to_the_source_builtin():
+def test_redirections_are_scoped_to_the_source_builtin(monkeypatch):
+    monkeypatch.setattr("src.core.shell_init._install_dirs_on_path", lambda: "")
     built = rc_prefixed("some-agent")
     body = built[len("zsh -c '"):-1]
     before, _, after = body.partition(";")
@@ -46,7 +47,8 @@ def test_redirections_are_scoped_to_the_source_builtin():
     assert after.strip() == "some-agent"
 
 
-def test_rc_prefixed_wraps_in_a_single_zsh_c_string():
+def test_rc_prefixed_wraps_in_a_single_zsh_c_string(monkeypatch):
+    monkeypatch.setattr("src.core.shell_init._install_dirs_on_path", lambda: "")
     assert rc_prefixed("cld") == (
         "zsh -c 'source ~/.zshrc >/dev/null 2>&1 </dev/null; cld'"
     )

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Tuple
 
 import structlog
 
@@ -13,30 +13,27 @@ from src.cplugs.sdk.manifest import Manifest
 
 logger = structlog.get_logger()
 
-FILLED_STORES = (("reviewboard", "boards"),)
-
-
-def blank_defaults(state_dir: Path, manifest: Manifest, settings: Dict[str, object]) -> Dict[str, str]:
+def blank_defaults(state_dir: Path, manifest: Manifest, settings: Dict[str, object], filled: Tuple[str, ...] = ()) -> Dict[str, str]:
     out: Dict[str, str] = {}
     for decl in manifest.data or ():
-        if (manifest.id, decl.id) in FILLED_STORES and decl.root_setting and decl.default and not decl.sub:
+        if decl.id in filled and decl.root_setting and decl.default and not decl.sub:
             value = settings.get(decl.root_setting)
             if not (isinstance(value, str) and value.strip()):
                 out[decl.root_setting] = str(default_store_root(state_dir, decl.default))
     return out
 
 
-def fill(state_dir: Path, manifest: Manifest) -> Dict[str, str]:
+def fill(state_dir: Path, manifest: Manifest, filled: Tuple[str, ...] = ()) -> Dict[str, str]:
     if not manifest.data:
         return {}
-    wanted = blank_defaults(state_dir, manifest, owner_state.get(state_dir, manifest).settings)
+    wanted = blank_defaults(state_dir, manifest, owner_state.get(state_dir, manifest).settings, filled)
     if not wanted:
         return {}
     stored: Dict[str, str] = {}
 
     def mutate(st: owner_state.CplugState) -> owner_state.CplugState:
         stored.clear()
-        stored.update(blank_defaults(state_dir, manifest, st.settings))
+        stored.update(blank_defaults(state_dir, manifest, st.settings, filled))
         return replace(st, settings={**st.settings, **stored}) if stored else st
 
     try:

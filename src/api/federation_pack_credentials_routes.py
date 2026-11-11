@@ -16,7 +16,7 @@ from src.api.peer_auth import Principal, open_db, require_peer
 from src.config import settings
 from src.core import resource_push
 from src.core.pack.machines import capabilities, config_state, restrictions as restrictions_mod
-from src.core.pack.relay import codex_target, consent as consent_mod, ledger_sync_store, owner_side, target_side, targets
+from src.core.pack.relay import adopt_active, codex_target, consent as consent_mod, ledger_sync_store, owner_side, target_side, targets
 from src.core.provider_ledger import accounts_store
 from src.core.resource_push import topics as resource_topics
 from src.core.provider_ledger.credentials import claude_keychain_services
@@ -25,6 +25,7 @@ logger = structlog.get_logger()
 router = APIRouter(prefix="/federation/pack", tags=["federation"])
 capabilities.register(owner_side.CAP_CREDENTIALS)
 capabilities.register(owner_side.CAP_CREDENTIALS_CODEX)
+capabilities.register(owner_side.CAP_CREDENTIALS_USE)
 _require_credentials = require_peer("credentials")
 _NO_STORE = {"Cache-Control": "no-store"}
 
@@ -41,6 +42,7 @@ class CredentialBody(BaseModel):
     scopes: List[str] = Field(default_factory=list, max_length=16)
     subscription_type: Optional[str] = Field(default=None, max_length=64)
     rate_limit_tier: Optional[str] = Field(default=None, max_length=64)
+    use_for_new_sessions: bool = False
 
 
 class CodexCredentialBody(BaseModel):
@@ -55,6 +57,7 @@ class CodexCredentialBody(BaseModel):
     account_id: str = Field(max_length=128)
     expires_at: int = Field(ge=0, le=10 ** 14)
     plan: Optional[str] = Field(default=None, max_length=32)
+    use_for_new_sessions: bool = False
 
 
 def _is_owner_of(account_key: str) -> bool:
@@ -135,6 +138,8 @@ async def receive_credential(request: Request, principal: Principal = Depends(_r
         expiry = await asyncio.to_thread(_receive, principal.grant.peer_install_id, body)
     except target_side.RelayRefused as exc:
         raise HTTPException(exc.status, {"code": exc.code, "detail": "the credential was not written"}) from None
+    if body.use_for_new_sessions:
+        await asyncio.to_thread(adopt_active.adopt, "claude", body.account_key, principal.grant.peer_install_id)
     _tell_ledger()
     out: Dict[str, Any] = {"ok": True, "profile": body.profile, "expires_at": expiry}
     return JSONResponse(out, headers=_NO_STORE)
@@ -192,6 +197,9 @@ async def receive_codex_credential(request: Request, principal: Principal = Depe
         expiry = await asyncio.to_thread(_receive_codex, principal.grant.peer_install_id, body)
     except target_side.RelayRefused as exc:
         raise HTTPException(exc.status, {"code": exc.code, "detail": "the credential was not written"}) from None
+    if body.use_for_new_sessions:
+        await asyncio.to_thread(adopt_active.adopt, "codex", body.account_key, principal.grant.peer_install_id)
+        _tell_ledger()
     return JSONResponse({"ok": True, "profile": body.profile, "expires_at": expiry}, headers=_NO_STORE)
 
 

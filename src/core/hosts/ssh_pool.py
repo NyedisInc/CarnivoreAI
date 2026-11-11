@@ -121,6 +121,13 @@ class SshMasterPool:
     def usage(self) -> Dict[int, int]:
         return {index: slot.used for index, slot in sorted(self._slots.items())}
 
+    @property
+    def is_up(self) -> bool:
+        return self._slots[0].master.is_up
+
+    async def forward_remote_tcp(self, local_path: str) -> int:
+        return await self._slots[0].master.forward_remote(None, local_path)
+
     def set_login_shell(self, login_shell: Optional[str]) -> None:
         self._login_shell = login_shell
 

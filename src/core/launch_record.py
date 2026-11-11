@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional
 
 import structlog
 
@@ -65,15 +65,18 @@ def record_launch_on_row(
     return written
 
 
-def launch_record_json(plan: "LaunchPlan", account_id: Optional[str]) -> str:
+def launch_record_json(plan: "LaunchPlan", account_id: Optional[str], overlay_note: Optional[Mapping[str, Any]] = None) -> str:
     display = plan.display
     endpoint = {"connection_id": plan.connection_id, "label": display.endpoint} if plan.connection_id else None
-    return json.dumps({
+    record: Dict[str, Any] = {
         "profile": plan.profile_id, "digest": plan.digest, "harness": display.harness,
         "account": {"mode": plan.account_mode, "id": account_id},
         "endpoint": endpoint, "model": display.model, "permissions": display.permissions,
         "purpose": plan.purpose,
-    }, sort_keys=True, separators=(",", ":"))
+    }
+    if overlay_note:
+        record["argent"] = dict(overlay_note)
+    return json.dumps(record, sort_keys=True, separators=(",", ":"))
 
 
 def write_launch_record(conn: sqlite3.Connection, *, session_uuid: Optional[str], record: Optional[str]) -> bool:

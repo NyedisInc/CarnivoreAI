@@ -52,7 +52,7 @@ class DialogAnswerRequest(BaseModel):
 
     fingerprint: str = Field(pattern=HEX64)
     choice: AnswerChoice
-    source: Optional[Literal["owner_banner"]] = None
+    source: Optional[Literal["owner_banner", "owner_phone"]] = None
 
 
 class DialogAnswerResponse(BaseModel):
@@ -159,7 +159,7 @@ class QuestionsAnswerRequest(BaseModel):
 
     questions_fingerprint: str = Field(pattern=HEX64)
     answers: List[QuestionAnswerBody] = Field(min_length=1, max_length=8)
-    source: Optional[Literal["owner_banner"]] = None
+    source: Optional[Literal["owner_banner", "owner_phone"]] = None
 
 
 class QuestionsAnswerResponse(BaseModel):

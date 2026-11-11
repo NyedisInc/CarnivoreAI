@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import asyncio
 import sqlite3
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 import structlog
 
-from src.core.account_switch import restart_account
+from src.core.account_switch import codex_follow, restart_account
 from src.core.account_switch.launch_env import _config_path
 from src.core.account_switch.session_pin import PinError
 
@@ -15,7 +15,11 @@ logger = structlog.get_logger()
 
 
 class CreateAccountRefused(ValueError):
-    pass
+
+    def __init__(self, message: str, code: str = "account_refused", accounts: Optional[List[Dict[str, str]]] = None) -> None:
+        super().__init__(message)
+        self.code = code
+        self.accounts = accounts or []
 
 
 async def plan_for_create(
@@ -25,6 +29,8 @@ async def plan_for_create(
     if not account_id:
         if account_pinned:
             raise CreateAccountRefused("account_pinned needs an account_id")
+        if auto_start_claude and not is_peer and is_local and restart_account.family_of(agent_type) == "codex":
+            return await _codex_follow_plan()
         return restart_account.NO_PLAN
     if is_peer or not is_local:
         raise CreateAccountRefused("an account is chosen on the computer that runs the session")
@@ -36,6 +42,16 @@ async def plan_for_create(
             requested=account_id, pinned_box=account_pinned)
     except PinError as exc:
         raise CreateAccountRefused(str(exc)) from exc
+
+
+async def _codex_follow_plan() -> restart_account.AccountPlan:
+    try:
+        account_id = await asyncio.to_thread(codex_follow.follow_active_account, _config_path())
+    except codex_follow.CodexAccountRefused as exc:
+        raise CreateAccountRefused(str(exc), exc.code, exc.accounts) from exc
+    except (FileNotFoundError, ValueError, OSError):
+        return restart_account.NO_PLAN
+    return restart_account.AccountPlan(account_id) if account_id else restart_account.NO_PLAN
 
 
 async def pin_after_create(manager: Any, tmux_name: Optional[str], plan: restart_account.AccountPlan) -> Optional[str]:

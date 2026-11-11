@@ -248,6 +248,7 @@ export const SKILL_KEYS = {
 };
 
 export const REFUSAL_CODES = new Set([
+    'cplug_api_version_unsupported',
     'signature_invalid',
     'index_rollback',
     'index_serial_jump',

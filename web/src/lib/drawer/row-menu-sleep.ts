@@ -37,7 +37,7 @@ interface SleepGlobals {
         _intentionalClose?: boolean;
     };
     NavigationGeneration?: { begin(label: string): unknown };
-    WakeFocus?: { afterWake(sessionUuid: string, nav: unknown): unknown };
+    WakeFocus?: { afterWake(sessionUuid: string, nav: unknown, sessionId?: string | null): unknown };
 }
 
 /* pick a wrapper */
@@ -146,7 +146,7 @@ export async function runWakeWithId(ctx: SleepCtx): Promise<WakeOutcome> {
         say(ctx, tr('session.wake.failed', { name, reason: reasonOf(err) }));
     }
     await refresh();
-    if (started && g().WakeFocus) void g().WakeFocus!.afterWake(ctx.sessionUuid, nav);
+    if (started && g().WakeFocus) void g().WakeFocus!.afterWake(ctx.sessionUuid, nav, sessionId);
     return { started, sessionId };
 }
 

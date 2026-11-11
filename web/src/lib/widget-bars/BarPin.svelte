@@ -27,8 +27,7 @@
       color: var(--oc-text-muted);
     }
 
-    :global([data-bar-pin]:hover:not(:disabled)),
-    :global([data-bar-pin][aria-pressed='true']) {
+    :global([data-bar-pin]:hover:not(:disabled)) {
       color: var(--oc-text-bright);
     }
 

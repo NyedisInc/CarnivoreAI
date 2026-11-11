@@ -303,7 +303,7 @@
         "Every session is listed, grouped, with its light, name and folder.",
         "Click a row to open it; use the three dots or a right click for its actions; F2 renames it; drag it, or press alt and an arrow, to move it; search at the top.",
         "A row's menu shows each item's key at the right end, and pressing it while the menu is open runs that item, with the same letters as every other menu: r rename, n new session in the folder, c colour, b load blueprint; any other item takes the first free letter of its name, never d or v, which stay delete and archive.",
-        "A project heading's three dots lead with new agent, which opens the same select-provider picker every other launch uses, then starts the agent in that project once you choose one; a row's add to files it into a group or a Layout, and a group's or Layout's add pulls agents in.",
+        "A project heading's three dots (or a right click) open the same project menu as the Projects page and lead with new agent, which opens the same select-provider picker every other launch uses, then starts the agent in that project once you choose one; a row's add to files it into a group or a Layout, and a group's or Layout's add pulls agents in.",
         "Show path, in a session row's menu or a project heading's menu, opens a small popup with that session's working folder (or the project folder) in full, with a copy button.",
         "Drag its right edge to resize it; it docks beside the page on a wide screen.",
         "A row shows small icons for what it has: agents running, background shells open, and live timers; hover one for the count and detail. Turn any of the three on or off per density in settings.",
@@ -414,7 +414,7 @@
         "web/src/lib/sidebar-shell/section-drag.ts",
         "web/src/lib/drawer/section-order.ts"
       ],
-      "updated": "2026-11-03",
+      "updated": "2026-11-07",
       "where": [
         "The left panel, agents tab.",
         "Hide or show it with the panel button beside the logo.",
@@ -948,6 +948,70 @@
       "where": [
         "Home screen once added: a cell titled approvals with a check mark.",
         "The drawer's widget area at the bottom of the agents tab, once added."
+      ]
+    },
+    {
+      "api_routes": [
+        "GET /api/v1/argent/status",
+        "GET /api/v1/argent/settings",
+        "PUT /api/v1/argent/settings",
+        "POST /api/v1/argent/login/start",
+        "GET /api/v1/argent/login",
+        "DELETE /api/v1/argent/login"
+      ],
+      "area": "settings",
+      "docs": [
+        "docs/argent.md"
+      ],
+      "examples": [
+        "Turn the feature on with a test tenant, arm the rollout and watch two idle sessions restart as resumes and read tethered.",
+        "Stop the gateway and read the outage banner and the direct fallback warning, then start it and watch the rows re-tether.",
+        "Declare a story from a sub-agent and read the per sub-agent cost split on its Swarm card.",
+        "Commit in a test repo with beast mode off and approve the tracker comment from the review list."
+      ],
+      "how_to": [
+        "Open settings, features, and switch the argent feature on; its pane opens under features.",
+        "Type the argent server address and the gateway address, then save addresses. Press log in, open the page it shows, enter the code and approve.",
+        "Flip the tether switch. It only turns on while the gateway is ready, the body cap is raised and you are logged in; otherwise it says why.",
+        "Read the rollout modal: it counts the sessions that will restart as resumes and lists every session that cannot be routed, by reason. Arm it and watch the rows turn tethered after their first traffic.",
+        "Pick the work a new session serves in the launch picker, or let the classifier suggest it; read cost and budget in the grown status bar and on Swarm cards.",
+        "When an item reaches its budget the next prompt is held. Only the budget owner lifts it, from argent or from the notice here.",
+        "Flip the tether switch off to reverse the rollout; every session restarts direct and its key is revoked."
+      ],
+      "id": "argent",
+      "issues": [
+        2817,
+        2819,
+        2847
+      ],
+      "keywords": [
+        "argent",
+        "gateway",
+        "tether",
+        "budget",
+        "login"
+      ],
+      "media_exempt": "needs the live argent gateway",
+      "name": "Argent",
+      "since": "2026-11-05",
+      "status": "beta",
+      "summary": "the argent gateway feature end to end: every claude and codex session on every computer can be routed through the argent gateway under one switch, with a per-session key kept off argv, a rollout that restarts idle sessions as resumes, work items and stories, per item cost and budgets with a prompt hold, write-back to the tracker, outage fallback and an ssh carry for computers that cannot reach the gateway. off means nothing runs and nothing changes.",
+      "surfaces": [
+        "src/api/argent/status.py",
+        "src/core/argent/client.py",
+        "src/core/argent/device_login.py",
+        "src/core/argent/gateway_reach.py",
+        "src/core/argent/health.py",
+        "src/core/argent/overlay.py",
+        "src/core/argent/rollout.py",
+        "src/core/budget_hold/gate.py",
+        "src/core/mcp/argent_tools.py",
+        "src/cplugs/argent/__init__.py",
+        "web/src/cplugs/argent/ArgentSettings.svelte"
+      ],
+      "updated": "2026-11-05",
+      "where": [
+        "Settings, features, argent."
       ]
     },
     {
@@ -1534,7 +1598,8 @@
         "An agent on one computer lists the paired computer's sessions, reads one, and asks to restart it; the request waits in your inbox.",
         "Ask one agent to send a task to another; it waits safely if the receiver is busy or in a dialog.",
         "An agent calls agents_lookup with view roster and scope around, reads each session's short description and its project and company, and skips the archived ones.",
-        "A lead agent sends a worker a task with session_send_and_wait and is woken the moment the worker's turn ends or it stops on a dialog, instead of polling its status every 30 seconds."
+        "A lead agent sends a worker a task with session_send_and_wait and is woken the moment the worker's turn ends or it stops on a dialog, instead of polling its status every 30 seconds.",
+        "Tell an agent \"send me the link when you're done\": it calls review_send, and a notification with the link shows up on your phone and this computer."
       ],
       "how_to": [
         "Start or restart a claude or codex session: it registers a server named carnivore by itself, ready for the first turn.",
@@ -1542,7 +1607,8 @@
         "The hold is off by default. With it on, an agent's keys, restart or stop aimed at another session wait for your approval (GET /api/v1/agent-actions, then POST /api/v1/agent-actions/{id}/approve or /deny). Turn that hold on or off with PUT /api/v1/agent-actions/settings {\"gate_cross_session_actions\": true}. The server itself is on by default; switching it off in settings lists every feature that stops working first.",
         "To turn the server off, set mcp.enabled to false in config.json and restart the session.",
         "Before messaging another session, ask an agent to call agents_lookup with view roster: scope online (live), around (live and asleep) or all (archived included, marked archived: true); has_description finds sessions with or without a short or long description.",
-        "To wait on another session, ask an agent to call session_wait with until state idle (or output_contains some text); on still_waiting it calls again with since set to the cursor it got, losing no output."
+        "To wait on another session, ask an agent to call session_wait with until state idle (or output_contains some text); on still_waiting it calls again with since set to the cursor it got, losing no output.",
+        "Settings, notifications, routing: the \"for your review\" row (agent.review) is ticked for the screen and the phone push by default; untick it per destination to stop review notifications there. An agent sends one with the review_send tool: text plus a link or a file inside its project."
       ],
       "id": "carnivore-mcp-server",
       "issues": [
@@ -1551,7 +1617,8 @@
         1271,
         1502,
         1752,
-        2731
+        2731,
+        2918
       ],
       "keywords": [
         "mcp",
@@ -1744,17 +1811,17 @@
         "Group the projects of one client under a company, so the sidebar and projects page can show them together.",
         "Delete a company you no longer use: its projects become orphaned and keep all their agents.",
         "Open the projects page, press a company card, and see only that client's projects; an old #projects/<project> link opens at its company path.",
-        "Open the projects page: companies show as hero cards (toggle to a ledger of thumbnails) above the orphaned projects, each section with its own toggle; the kebab's set image replaces a generated hero, remove image brings it back.",
+        "Open the projects page: companies show as hero cards (toggle to a ledger of thumbnails) above the orphaned projects, each section with its own toggle; a company's own menu has set image to replace a generated hero and remove image to bring it back.",
         "Mirror a folder tree: IMC as a company, Amerifund as a company under it, and Org/IMC/Amerifund/support as a project nested under the Amerifund project."
       ],
       "how_to": [
-        "In the agents tab, open a project heading's menu, pick add to, then company, then a company (or new company... to name one).",
+        "In the agents tab, open a project heading's menu, pick company, then a company (or new company to name one).",
         "Open a company heading's menu to rename or delete it; take a filed project out with remove from company in its menu.",
         "Click a company heading to fold it; the fold follows you to your other desktop screens, and a fold made on a phone follows you to your other phone screens.",
         "Call POST /api/v1/companies with a name to create one.",
         "Call PUT /api/v1/projects/{project name}/company with a company_id to file a project, or with null to orphan it.",
         "On the projects page press new company, or the kebab on a company card to rename or delete it.",
-        "On a project's kebab choose add to, then company, then pick a company (or new company...); choose remove from company to orphan it.",
+        "On a project's menu choose company, then pick a company (or new company); choose remove from company, under it, to orphan the project.",
         "Call POST /api/v1/companies with a name and a parent_id to create a company under another; PATCH /api/v1/companies/{id} with parent_id (null for the top level) to move it, or hq_project_id to set its HQ project.",
         "Put a project's folder inside another project's folder and it shows nested under that project in the agents tab, when both are in the same company."
       ],
@@ -1784,10 +1851,10 @@
         "PUT /api/v1/projects/{project}/company",
         "the companies_list MCP tool",
         "the projects page companies level (#projects/c/<company id>)",
-        "the company headings and the add to > company menu in the agents tab",
+        "the company headings and the company menu on a project in the agents tab",
         "PUT/GET/DELETE /api/v1/companies/{id}/image and /api/v1/projects/{project}/image (hero images)"
       ],
-      "updated": "2026-10-13",
+      "updated": "2026-11-07",
       "where": [
         "The agents tab of the sidebar: every top-level company is a foldable heading, A to Z, with its projects and their agents inside it, then its child companies, each one step further in; a project inside another project's folder sits under it; an orphaned projects heading comes last.",
         "The routes under /api/v1/companies.",
@@ -2470,7 +2537,8 @@
         "With a computer paired, results from it carry its name in a small tag; if it is offline the line under the status says it did not answer.",
         "Pick the layout with the small ledger / best hits toggle in the results header; in best hits, the you / agent / tool chips keep one speaker. Read around shows the hit in context; scroll for more, then open the agent or restore the closest bookmark as a clone.",
         "Press \"N more in this conversation\" to load the rest of that conversation's hits in place, or \"only this conversation\" (in the hit's more menu, or right click or long press the hit, or Shift+F10 on the highlighted hit) to search just it.",
-        "Open settings, pipeline tab, and choose what deep search reads (people only, people plus headless sessions, or everything); sub-agent transcripts are read in the background and the search keeps answering meanwhile."
+        "Open settings, pipeline tab, and choose what deep search reads (people only, people plus headless sessions, or everything); sub-agent transcripts are read in the background and the search keeps answering meanwhile.",
+        "Pick relevant or newest with the small sort switch in the results header (both the prompts and the context search); the context search always lists conversations holding your exact words first, then the looser matches, and the switch orders each group."
       ],
       "id": "deep-search",
       "issues": [
@@ -2764,7 +2832,8 @@
         "Turn on approval banners and let macOS ask once for permission to show them.",
         "Change the global hotkey, or turn it off, from settings.",
         "Pick Ghostty as the terminal app, or set your own command and confirm it when the app asks.",
-        "Keep Do Not Disturb on, add Carnivore to its allowed apps, and turn on asks only so only real asks interrupt you."
+        "Keep Do Not Disturb on, add Carnivore to its allowed apps, and turn on asks only so only real asks interrupt you.",
+        "Restart the app after a change and the window comes back on its own."
       ],
       "how_to": [
         "In the desktop app, open settings and pick the desktop app page. It is not in the list in a browser tab.",
@@ -2774,13 +2843,16 @@
         "Click the hotkey box and press the combination you want; turn off clears it and use default brings back Ctrl+Option+Cmd+C.",
         "Use the start the engine at login and open a window at login switches to choose what happens when you log in.",
         "Choose the terminal app open in terminal uses; custom command takes your own command.",
-        "The network rows show which address the server listens on and whether the connection is encrypted."
+        "The network rows show which address the server listens on and whether the connection is encrypted.",
+        "Leave open the window on launch on (the default) and the carnivore window opens as soon as the app starts, after a login, an update or a restart. Turn it off to keep a login start in the menu bar until you open the window.",
+        "On a desktop-width window, menu pages (settings, pack, providers and the rest) slide out to the right of the agents drawer, only as wide as their content needs, with a close icon left of the title that slides the page back. Settings slides out as a list first; pick a section and its page slides out beside the list, which stays open. Opening another menu page slides settings back out of the way."
       ],
       "id": "desktop-settings",
       "issues": [
         2303,
         2307,
-        2459
+        2459,
+        2912
       ],
       "keywords": [
         "desktop",
@@ -2807,9 +2879,10 @@
         "src/core/desktop_app/preferences.py",
         "web/src/lib/settings-page/desktop-network.ts",
         "macOS/banners/mirror.js",
-        "macOS/banners/focus.js"
+        "macOS/banners/focus.js",
+        "scripts/refresh-local-install.sh"
       ],
-      "updated": "2026-10-24",
+      "updated": "2026-11-07",
       "where": [
         "Settings, desktop app (desktop app only)."
       ]
@@ -2823,19 +2896,19 @@
         "POST /api/v1/cplug-owner/sideload/git"
       ],
       "area": "settings",
-      "description": "For people writing a plugin. Sideload copies a folder into the app, reads its kind from the manifest (a plugin, a theme or a skill), and installs it as local/<name> with the unverified mark. A plugin that runs on its own runs like any other; a theme or skill goes into the folder that kind already uses. Anything that runs code (hooks, servers, scripts, a theme's effects file) needs the same consent a catalog install needs. It has its own switch, separate from developer mode, and the switch expires after twelve hours. Turning it off stops and hides every sideloaded plugin; your source folder is never touched.",
+      "description": "For people writing a plugin. Sideload copies a folder into the app, reads its kind from the manifest (a plugin, a theme or a skill), and installs it as local/<name> with the unverified mark. A plugin that runs on its own runs like any other; a theme or skill goes into the folder that kind already uses. Anything that runs code (hooks, servers, scripts, a theme's effects file) needs the same consent a catalog install needs. It is part of developer mode, the one developer switch: turning it on offers a duration (1 hour, 12 hours, 24 hours, 7 days or until turned off, twelve by default), and a sideload is allowed only while developer mode is on and the duration has not run out. Turning it off stops and hides every sideloaded plugin; your source folder is never touched.",
       "docs": [
         "docs/cplug-runtime.md"
       ],
       "examples": [
         "Try a pixel pet you are building without publishing it: sideload the folder, tick its permissions, watch it run.",
-        "Leave the switch on overnight: it turns itself off after twelve hours and the sideloaded plugins stop.",
+        "Leave developer mode on overnight: it turns itself off after the duration you picked and the sideloaded plugins stop.",
         "Build a run viewer: pick a run in the slide-out menu and read it full size on the page beside it."
       ],
       "how_to": [
-        "Turn on developer sideload (it shows twelve hours).",
-        "Sideload a folder that holds a plugin manifest (cplug.json); the plugin appears as local/<name> marked unverified, switched off with no permissions.",
-        "Turn the switch off to stop and hide every sideloaded plugin; your source folder is never touched.",
+        "Turn on developer mode on the plugins page and pick how long it stays on (twelve hours by default).",
+        "Add a folder that holds a plugin manifest (cplug.json) with add from folder, or drop the folder on the page (desktop app); the plugin appears as local/<name> marked unverified, switched off with no permissions.",
+        "Turn developer mode off to stop and hide every sideloaded plugin; your source folder is never touched.",
         "A sideloaded plugin whose carnivore.json asks for a page gets its own rail key: the slide-out is its menu and the main area shows its page; on a phone a menu | view switch picks one.",
         "Sideload a theme or a skill the same way: the kind is read from theme.json, SKILL.md or the plugin manifest. A folder that runs code answers with a consent sheet first; a theme's script still asks before it runs."
       ],
@@ -2843,7 +2916,8 @@
       "issues": [
         2063,
         2562,
-        2540
+        2540,
+        2934
       ],
       "keywords": [
         "plugins",
@@ -2856,7 +2930,7 @@
       "name": "Developer sideload",
       "since": "2026-10-22",
       "status": "beta",
-      "summary": "load a plugin from a local folder to try it, behind its own switch that turns itself off after twelve hours.",
+      "summary": "load a plugin from a local folder to try it, under developer mode, which turns itself off after the duration you pick.",
       "surfaces": [
         "web/src/lib/plugins-page/SideloadSwitch.svelte",
         "src/cplugs/host/sideload_routes.py",
@@ -2864,11 +2938,12 @@
         "web/src/lib/cplug-ui/page-views.svelte.ts",
         "web/src/lib/cplug-ui/PageMenu.svelte",
         "web/src/lib/cplug-ui/PageMain.svelte",
-        "src/cplugs/host/sidecar_page.py"
+        "src/cplugs/host/sidecar_page.py",
+        "web/src/lib/plugins-page/drop-folder.ts"
       ],
-      "updated": "2026-10-27",
+      "updated": "2026-11-09",
       "where": [
-        "The plugins page, the developer sideload row beside the third-party switch."
+        "The plugins page, the developer mode row beside the third-party switch."
       ]
     },
     {
@@ -3226,7 +3301,7 @@
         "Press edit layout at the bottom of the drawer.",
         "Drag any row of the widget drawer's one list into the area, or press it to add it.",
         "Use the strip above each widget to reorder it, switch its look between compact and full, or remove it.",
-        "Under the widgets, edit layout shows the glance area in yellow dashes: drag any row of the widget drawer's list into it; drag a glance's grip to reorder it, use its options to choose what it shows (the providers glance: which account), or remove it.",
+        "Under the widgets sits the glance row: drag any row of the widget drawer's list into it; drag a glance's grip to reorder it, use its options to choose what it shows (the providers glance: which account), or remove it.",
         "Press done to keep the arrangement; it follows you to every device.",
         "Drag the thin handle above the area to move it between closed, glance (one row of small tiles) and full; while it is closed, click the small upward chevron to open it full.",
         "Each tab remembers its own state on this device: agents and edit layout show it full, menu and questions at a glance.",
@@ -3252,7 +3327,6 @@
         "web/src/lib/drawer-zone/zone-store.svelte.ts",
         "web/src/lib/dynamic-tabs/WidgetAreaBar.svelte",
         "web/src/lib/dynamic-tabs/widget-area.svelte.ts",
-        "web/src/lib/drawer-zone/GlanceArea.svelte",
         "web/src/lib/drawer-zone/glance-model.ts"
       ],
       "updated": "2026-10-03",
@@ -3778,17 +3852,17 @@
         "testflight",
         "web view"
       ],
-      "media_exempt": "no TestFlight build exists yet (the upload and device test wait on Alex's Apple steps), so there is nothing reproducible to capture; the picture is a simulator screenshot",
+      "media_exempt": "the app runs on a phone, so there is no web page to capture; the picture is a simulator screenshot",
       "name": "iPhone App",
       "since": "2026-10-07",
-      "status": "beta",
+      "status": "stable",
       "summary": "A native iPhone shell that lists your computers and opens each in a web view locked to its own origin.",
       "surfaces": [
         "ios/"
       ],
-      "updated": "2026-10-07",
+      "updated": "2026-11-08",
       "where": [
-        "The Carnivore app on an iPhone (TestFlight, once uploaded)."
+        "The Carnivore app on an iPhone (the App Store)."
       ]
     },
     {
@@ -4029,7 +4103,8 @@
         "Click the mode toggle to switch to command mode: its icon swaps from the magnifying glass to \">\".",
         "Turn a terminal's \">\" off in its title bar to leave it out, type a command and press Enter: it runs in every live terminal whose \">\" is on, with no confirmation beyond the send itself.",
         "Escape clears the box, and a second Escape leaves it.",
-        "In command mode, start the line with \"/\" (Claude Code) or \"$\" (Codex) to list skills: every global skill plus the project skills each receiving terminal shares. Keep typing to filter, Up and Down to move, Tab or Enter to insert, Escape to close, or click a row."
+        "In command mode, start the line with \"/\" (Claude Code) or \"$\" (Codex) to list skills: every global skill plus the project skills each receiving terminal shares. Keep typing to filter, Up and Down to move, Tab or Enter to insert, Escape to close, or click a row.",
+        "Press \"add widgets\" at the top right of the bar (desktop widths) to open the widget drawer from the side, then drag any widget into the Layout like a terminal; press it again to close the drawer."
       ],
       "id": "layout-command-bar",
       "issues": [
@@ -4082,7 +4157,7 @@
         "web/src/opscenter/layouts/LayoutSkillMenu.svelte",
         "web/src/opscenter/layouts/skill-complete.svelte.ts"
       ],
-      "updated": "2026-09-30",
+      "updated": "2026-11-09",
       "where": [
         "Open a saved Layout (a LAYOUTS row in the agents drawer): the bar sits in the tab row above its terminals, to the right of the Layout's name tab.",
         "Each terminal in the Layout carries a \">\" toggle in its title bar, beside its tools - the one recipients control, on every width including a phone."
@@ -4118,10 +4193,10 @@
         "On the terminal page, drag or press the session, terminal or browser card to pick one of your live ones from a list and add it the same way.",
         "Press arrange layout, in the components list, to open edit mode and rearrange by hand.",
         "Press the small arrow beside a widget's top left icon to list what that widget can do; outside edit layout the same menu opens from the icon itself.",
-        "Press a widget's remove control to take it off; drag the splitters to resize.",
+        "Press a widget's remove control to take it off; drag the dividers to resize. On the terminal page, the war room, the tab strips, the sidebar areas and the bars the same drag and resize work at any time, no edit layout needed: pick a widget up by its title strip. Only a dashboard needs edit layout on.",
         "Press done or Escape to leave; every change was saved when you made it. Drag a removed widget from the drawer to put it back.",
         "Press done, or the layout button again, to keep it.",
-        "Drag a widget's side edge to resize it: a widget covering several rows has the full height edge to grab, and its four corners move the side and the row boundary together.",
+        "Resize a widget by dragging its edges and corners (a dashboard is a free 24 column grid, so a widget goes anywhere and any size above its floor; the terminal page's dividers are pixel exact). The widgets glide to make room as you drag and settle when you let go.",
         "Turn on \"show what can't go here\" to see why a widget is missing from this screen; press one of its dimmed rows to read the full reason.",
         "A plugin's panel view (a developer-sideloaded plugin that declares the panel surface) is listed in the drawer while the plugin is on; press it to add it. It lands at large, or at its smallest size when it does not offer large, and the cell menu size gear lists only the sizes the view declares."
       ],
@@ -4677,10 +4752,12 @@
         "PUT /api/v1/notifications/sync/peers/{key}",
         "POST /api/v1/notifications/sync/now",
         "POST /api/v1/sessions/{session_id}/agent-message",
-        "PUT /api/v1/mcp-admin/agent-notify"
+        "PUT /api/v1/mcp-admin/agent-notify",
+        "GET /api/v1/notifications/styles",
+        "PUT /api/v1/notifications/styles/{type_id}"
       ],
       "area": "status-notifications",
-      "description": "Twelve kinds of destination, many instances of each: slack, discord, microsoft teams (workflows webhook), telegram, ntfy, pushover, a generic signed webhook, email (smtp), sms through aws sns, sms through twilio, pagerduty, and every web push device. Every secret, recipient and number lives in the Keychain and is write-only. One matrix lists 29 notification types in families (needs you, sessions, accounts, health, app, in-app only) against a screen column plus one column per destination. Every cell can be unticked, needs-you included; needs-you starts ticked. Hiding a card hides the pop-up only: the bell, the history, the status light and the tray keep everything. Each destination can add away mode, quiet hours, a reminder and a project filter, and can opt in to details (tool and target, or the question snippet; scrubbed, capped at 200 characters, never on sms). The message carries a link back, tried in order: the mobile sync public address, then the local name, then the network address, then no link. A pause switch holds all outside delivery on one computer. Settings and secrets sync to paired computers over the paired link, secrets landing in each computer's Keychain; any tick or destination can be pinned to one computer. An agent can send you a notification with the notify tool. The old Slack, ntfy and Pushover secrets move into the Keychain.",
+      "description": "Twelve kinds of destination, many instances of each: slack, discord, microsoft teams (workflows webhook), telegram, ntfy, pushover, a generic signed webhook, email (smtp), sms through aws sns, sms through twilio, pagerduty, and every web push device. Every secret, recipient and number lives in the Keychain and is write-only. One matrix lists 29 notification types in families (needs you, sessions, accounts, health, app, in-app only) against a screen column plus one column per destination. Every cell can be unticked, needs-you included; needs-you starts ticked. Hiding a card hides the pop-up only: the bell, the history, the status light and the tray keep everything. Each destination can add away mode, quiet hours, a reminder and a project filter, and can opt in to details (tool and target, or the question snippet; scrubbed, capped at 200 characters, never on sms). The message carries a link back, tried in order: the mobile sync public address, then the local name, then the network address, then no link. A pause switch holds all outside delivery on one computer. Settings and secrets sync to paired computers over the paired link, secrets landing in each computer's Keychain; any tick or destination can be pinned to one computer. An agent can send you a notification with the notify tool. The old Slack, ntfy and Pushover secrets move into the Keychain. Settings > notifications opens on an inspector: pick any of the 39 notification types and see its card drawn as it arrives, then set its sound (with a play button), urgency (passive, active or time-sensitive), which devices get it (each iPhone, this computer, the screen card) and whether the corner card shows on this computer, or send a test of that type to your iPhone. The routing grid stays under it.",
       "docs": [
         "docs/notifications.md",
         "docs/mcp-server.md",
@@ -4753,11 +4830,12 @@
       "status": "beta",
       "summary": "send the notifications you pick to places outside the app, with one routing matrix that says which notification goes where.",
       "surfaces": [
+        "web/src/lib/notifications/inspector/Inspector.svelte",
         "web/src/lib/notifications/destinations/DestinationsPanel.svelte",
         "web/src/lib/notifications/matrix/MatrixPanel.svelte",
         "web/src/lib/notifications/matrix/LinkPanel.svelte"
       ],
-      "updated": "2026-10-30",
+      "updated": "2026-11-07",
       "where": [
         "Settings, notifications tab, destinations: add, test, edit and delete each destination.",
         "Settings, notifications tab, routing: the matrix, the link back, and the pause switch.",
@@ -5084,7 +5162,9 @@
         "GET /api/v1/pack/relay-consent",
         "PUT /api/v1/pack/relay-consent",
         "GET /api/v1/provider-ledger",
-        "POST /api/v1/provider-ledger/accounts/{account_id}/activate"
+        "POST /api/v1/provider-ledger/accounts/{account_id}/activate",
+        "GET /api/v1/pack/relay-approval",
+        "PUT /api/v1/pack/relay-approval/{install_id}"
       ],
       "area": "settings",
       "docs": [
@@ -5141,9 +5221,68 @@
         "src/core/provider_ledger/relay_accounts.py",
         "web/src/lib/ledger/LedgerCards.svelte"
       ],
-      "updated": "2026-11-03",
+      "updated": "2026-11-06",
       "where": [
         "Pack, logins tab: the credential relay block and the this computer receives block; the allow logins popup; the providers page (relayed cards); the mcp tools pack_relay_status and pack_relay_account_use."
+      ]
+    },
+    {
+      "api_routes": [
+        "GET /api/v1/pack/global-sync",
+        "PUT /api/v1/pack/global-sync",
+        "POST /api/v1/pack/global-sync/sync"
+      ],
+      "area": "settings",
+      "docs": [
+        "docs/pack.md",
+        "docs/federation.md"
+      ],
+      "examples": [
+        "Open a new computer in the Pack and run a first prompt that already has your CLAUDE.md, hooks, skills and mods.",
+        "Press sync now after editing a hook on the main computer.",
+        "Turn on automatic sync so the Pack follows the main computer's setup."
+      ],
+      "how_to": [
+        "Open pack, logins, my global setup (on the main computer only) and turn on sync my global setup.",
+        "Say yes to copy there for each computer in the list; the other computer must also allow receiving global setup (the join code turns that on).",
+        "Pick claude code, codex or both, then press sync now, or turn on keep it synced automatically.",
+        "Nothing private travels: conversations, history, logs, caches, databases and logins stay put, secrets in env values are scrubbed, and the receiver keeps a backup of anything it overwrites."
+      ],
+      "id": "pack-global-sync",
+      "issues": [
+        2878
+      ],
+      "keywords": [
+        "pack",
+        "sync",
+        "global",
+        "claude",
+        "codex",
+        "hooks",
+        "mods",
+        "skills",
+        "plugins"
+      ],
+      "media_exempt": "Needs a paired computer that passed the approval gate, which a leased test slot does not have; no capture is defined yet.",
+      "name": "Pack global setup sync",
+      "since": "2026-11-07",
+      "status": "beta",
+      "summary": "the main computer copies your global claude code and codex setup to the approved computers in the Pack, so a new computer behaves like this one from the first prompt.",
+      "surfaces": [
+        "src/core/pack/globalsync/rules.py",
+        "src/core/pack/globalsync/collect.py",
+        "src/core/pack/globalsync/apply.py",
+        "src/core/pack/globalsync/sender.py",
+        "src/core/pack/globalsync/scrub.py",
+        "src/api/pack_global_sync_routes.py",
+        "src/api/federation_pack_global_routes.py",
+        "src/core/mcp/pack_global_sync_tools.py",
+        "web/src/lib/pack-machines/PackGlobalSync.svelte",
+        "web/src/lib/pack-machines/global-sync-store.svelte.ts"
+      ],
+      "updated": "2026-11-07",
+      "where": [
+        "Pack, logins tab: the my global setup block (main computer) and the may receive global setup switch (this computer); the mcp tools pack_global_sync status and sync now."
       ]
     },
     {
@@ -5339,7 +5478,7 @@
       ],
       "updated": "2026-10-13",
       "where": [
-        "Pack, work tab: the move a project or company block. The Projects page: a project's or company's menu (move to another computer), and the move back button beside a moved-away project's tag.",
+        "Pack, work tab: the move a project or company block. The Projects page: a project's or company's menu (move to pack member), and the move back button beside a moved-away project's tag.",
         "Owner API routes: POST /api/v1/projects/{name}/migrate, POST /api/v1/companies/{company}/migrate and POST /api/v1/projects/{name}/migrate-back; progress on GET /api/v1/pack/ops/{op_id}."
       ]
     },
@@ -6389,14 +6528,15 @@
     },
     {
       "api_routes": [
-        "src/cplugs/publicboard/routes_owner.py",
-        "src/cplugs/publicboard/read.py"
+        "src/cplugs/reviewboard/public/routes_owner.py",
+        "src/cplugs/reviewboard/public/read.py",
+        "src/cplugs/reviewboard/public/write.py"
       ],
       "area": "sessions",
-      "description": "Public review links is a plugin, off by default, that will let people outside your network open one review board through your own reverse proxy, look at it, and leave answers and comments, and nothing else. It starts with the guarded door, and now you can make the links themselves: a link opens one board, lasts one hour, one day or seven days, and is pinned to the revision you shared or follows newer ones, as you choose. When you turn it on and fill in a port, a bind address, your public host name and your proxy's address, it opens a second small listener. A person holding a link opens the page and sees that one board, read only, with no account: its title, summary, pages, questions and marked spots, and nothing else of yours. Before a request is looked at, the door checks that it comes from your proxy, names your host, has a plain path with no encodings, dot segments or query, and matches an exact route; websockets and protocol upgrades are never accepted, bodies and headers are capped, and every answer carries the strict security headers. Turning the plugin off closes the socket. The link is shown once when you make it and only a fingerprint of it is kept, so a copy of the data opens nothing. Before a link exists the board's pages, prompts and title are scanned, and anything that looks like a password or key refuses the share. You can end one link, all of a board's links, or every link, and Claude can end links too but never make them. The finished public page, and answers and comments from visitors, come in later versions. The link is checked again on every look: a link you ended, one that ran out, or one whose board was edited after it was scanned shows only that it has ended, exactly like a link that never existed, and a link set to follow newer revisions shows a newer one only after it passes the same credential scan. Each visitor address and each link is rate limited.",
+      "description": "Public review links is a setting of the review board plugin, off by default, that will let people outside your network open one review board through your own reverse proxy, look at it, and leave answers and comments, and nothing else. It starts with the guarded door, and now you can make the links themselves: a link opens one board, lasts one hour, one day or seven days, and is pinned to the revision you shared or follows newer ones, as you choose. When you turn it on and fill in a port, a bind address, your public host name and your proxy's address, it opens a second small listener. A person holding a link opens the page and sees that one board, read only, with no account: its title, summary, pages, questions and marked spots, and nothing else of yours. Before a request is looked at, the door checks that it comes from your proxy, names your host, has a plain path with no encodings, dot segments or query, and matches an exact route; websockets and protocol upgrades are never accepted, bodies and headers are capped, and every answer carries the strict security headers. Turning the plugin off closes the socket. The link is shown once when you make it and only a fingerprint of it is kept, so a copy of the data opens nothing. Before a link exists the board's pages, prompts and title are scanned, and anything that looks like a password or key refuses the share. You can end one link, all of a board's links, or every link, and Claude can end links too but never make them. The visitor page draws the board in the house look and takes the secret out of the address bar as soon as it opens. A visitor can answer the board's questions and leave a comment, on the whole board or on one of its marked spots, with an optional name; nothing else. Each post is checked against the board's own rules, scanned for passwords and keys (a match is refused and nothing is kept), rate limited per visitor, capped per board, per link and per day, and a double tap lands once. What visitors send goes into the plugin's own store and stops there: it is never a reply on the task, never typed into a session, never seen by Claude, and visitors never see each other's words. A visitors key in the board's title strip shows you what came in, as plain text, every sender marked unverified, and updates on its own: the key counts the answers you have not forwarded yet, and a board with new visitor posts gets one alert, toasted when it opens, counting the answers you have not forwarded and closing when none are left; only your own press of forward to claude posts the new answers on the board's task as your reply, fenced and labeled as unverified outside input. The link is checked again on every look: a link you ended, one that ran out, or one whose board was edited after it was scanned shows only that it has ended, exactly like a link that never existed, and a link set to follow newer revisions shows a newer one only after it passes the same credential scan. Each visitor address and each link is rate limited.",
       "docs": [
         "docs/cplugs.md",
-        "docs/publicboard.md"
+        "docs/reviewboard-public-links.md"
       ],
       "examples": [
         "Make a one-day link for a board; the link text appears once, and asking for two days is refused.",
@@ -6404,13 +6544,20 @@
         "End every link of a board in one step.",
         "Open the link: the board shows read only. End the link, reload, and it says the link has ended.",
         "A link set to follow newer revisions keeps showing the old one when the new revision holds a password.",
-        "Press the share key on a board, pick one day, press make link, copy the link; close the window and the link can never be shown again, only removed."
+        "Press the share key on a board, pick one day, press make link, copy the link; close the window and the link can never be shown again, only removed.",
+        "Open a link: the page shows the board's title, its revision, the summary, the mockup and the questions, read only, and the address bar no longer shows the secret.",
+        "Open a link that has ended, was removed, or was copied short: the page says so in one plain sentence and shows nothing else.",
+        "A visitor answers two questions and leaves a comment on the send button; the board's visitors window shows both, marked unverified, and the task hears nothing until you press forward to claude.",
+        "A visitor pastes an access key into a comment: the page says it was not sent, and nothing is stored.",
+        "A visitor types markup into a comment: the visitors window shows the characters exactly as typed."
       ],
       "how_to": [
-        "Turn on the review board plugin, then public review links, on the plugins page.",
-        "Set the port, the one address to listen on, your public host name and your reverse proxy's exact address in the plugin's settings.",
+        "Turn on the review board plugin, then its public links setting, on the plugins page.",
+        "Set the port, the one address to listen on, your public host name and your reverse proxy's exact address in the review board plugin's settings.",
         "Point your proxy at that address and port. Turning the plugin off closes the port.",
-        "Make, list and end links from the share key (the globe icon) in the review board page's header or from \"share link\" in an open board row's menu in the left sidebar, or with the plugin's routes; API keys cannot do this, only you. Send the person the link; the secret part never leaves their browser except in a header to your own proxy."
+        "Make, list and end links from the share key (the globe icon) in the review board page's title strip or from \"share link\" in an open board row's menu in the left sidebar, or with the plugin's routes; API keys cannot do this, only you. Send the person the link; the secret part never leaves their browser except in a header to your own proxy.",
+        "Send the visitor the whole link, including the part after the # sign. Their browser removes that part from the address bar as soon as the page opens.",
+        "Open the visitors key (the people icon, with the count of answers not yet forwarded) in the review board page's title strip to read what visitors sent; new posts also show as one alert per board, with a toast when it opens; press forward to claude to post the new ones on the board's task. API keys and Claude cannot forward."
       ],
       "id": "publicboard",
       "issues": [
@@ -6424,44 +6571,61 @@
         "reverse proxy",
         "security"
       ],
-      "media_exempt": "no screen yet: the public page arrives in the next slice; this one is the read routes, which a still image cannot show; the share window needs a running board with the plugin on and a host name set, so its harness shots live with the change evidence",
+      "media_exempt": "the visitor page is served from the plugin's own public port behind the owner's reverse proxy, which the capture harness cannot lease; the share window needs a running board with the plugin on and a host name set, so render shots of both live with the change evidence",
       "name": "Public review links",
       "since": "2026-10-29",
       "status": "beta",
-      "summary": "off by default: opens a guarded second port for your own reverse proxy and makes short-lived, revocable, secret-scanned links that show one board, read only.",
+      "summary": "off by default: opens a guarded second port for your own reverse proxy and makes short-lived, revocable, secret-scanned links that show one board and take visitors' answers and comments, which reach Claude only when you forward them.",
       "surfaces": [
-        "src/cplugs/publicboard/edge.py",
-        "src/cplugs/publicboard/service.py",
-        "src/cplugs/publicboard/settings.py",
-        "src/cplugs/publicboard/headers.py",
-        "src/cplugs/sdk/public_listener.py",
-        "src/cplugs/publicboard/links.py",
-        "src/cplugs/publicboard/minting.py",
-        "src/cplugs/publicboard/routes_owner.py",
-        "src/cplugs/publicboard/mcp.py",
+        "src/cplugs/reviewboard/public/edge.py",
+        "src/cplugs/reviewboard/public/service.py",
+        "src/cplugs/reviewboard/public/settings.py",
+        "src/cplugs/reviewboard/public/headers.py",
+        "src/cplugs/reviewboard/public/listener.py",
+        "src/cplugs/reviewboard/public/links.py",
+        "src/cplugs/reviewboard/public/minting.py",
+        "src/cplugs/reviewboard/public/routes_owner.py",
+        "src/cplugs/reviewboard/public/mcp.py",
         "src/cplugs/reviewboard/public_port.py",
-        "src/cplugs/sdk/board_public.py",
-        "src/cplugs/publicboard/routes.py",
-        "src/cplugs/publicboard/read.py",
-        "src/cplugs/publicboard/resolve.py",
-        "src/cplugs/publicboard/respond.py",
-        "src/cplugs/publicboard/capability.py",
-        "src/cplugs/publicboard/ratelimit.py",
-        "src/cplugs/publicboard/assets.py",
-        "src/cplugs/publicboard/deps.py",
-        "src/cplugs/publicboard/wiring.py",
-        "web/src/cplugs/publicboard/ShareLinkModal.svelte",
-        "web/src/cplugs/publicboard/ShareLinkKey.svelte",
+        "src/cplugs/reviewboard/public/port.py",
+        "src/cplugs/reviewboard/public/routes.py",
+        "src/cplugs/reviewboard/public/read.py",
+        "src/cplugs/reviewboard/public/resolve.py",
+        "src/cplugs/reviewboard/public/respond.py",
+        "src/cplugs/reviewboard/public/capability.py",
+        "src/cplugs/reviewboard/public/ratelimit.py",
+        "src/cplugs/reviewboard/public/assets.py",
+        "src/cplugs/reviewboard/public/deps.py",
+        "src/cplugs/reviewboard/public/wiring.py",
+        "web/src/cplugs/reviewboard/public/ShareLinkModal.svelte",
+        "web/src/cplugs/reviewboard/public/ShareLinkKey.svelte",
         "web/src/cplugs/sdk/board-header-keys.ts",
-        "web/src/cplugs/publicboard/page-row-action.ts",
+        "web/src/cplugs/reviewboard/public/page-row-action.ts",
         "web/src/cplugs/sdk/page-row-actions.ts",
-        "web/src/lib/item-menu/menus/page-actions.ts"
+        "web/src/lib/item-menu/menus/page-actions.ts",
+        "src/cplugs/reviewboard/public/public/index.html",
+        "web/src/cplugs/reviewboard/public/public/main.ts",
+        "web/src/cplugs/reviewboard/public/public/PublicBoard.svelte",
+        "web/src/cplugs/reviewboard/public/public/fragment.ts",
+        "web/src/cplugs/reviewboard/public/public/board-client.ts",
+        "web/src/cplugs/reviewboard/vite.bundle.config.ts",
+        "src/cplugs/reviewboard/public/write.py",
+        "src/cplugs/reviewboard/public/submission.py",
+        "src/cplugs/reviewboard/public/responses.py",
+        "src/cplugs/reviewboard/public/visitors.py",
+        "src/cplugs/reviewboard/visitor_checks.py",
+        "web/src/cplugs/reviewboard/public/VisitorsKey.svelte",
+        "web/src/cplugs/reviewboard/public/VisitorsModal.svelte",
+        "web/src/cplugs/reviewboard/public/visitors-api.ts",
+        "web/src/cplugs/reviewboard/public/public/VisitorForm.svelte"
       ],
       "updated": "2026-10-30",
       "where": [
         "The public review links plugin on the plugins page, with its settings.",
         "The share key (globe icon) in a review board page's header, while the plugin is on.",
-        "\"Share link\" in the menu of an open review board's row in the left sidebar (right click or Shift+F10), while the plugin is on."
+        "\"Share link\" in the menu of an open review board's row in the left sidebar (right click or Shift+F10), while the plugin is on.",
+        "The page a visitor opens from a shared link, on the plugin's own public port (the address your proxy forwards).",
+        "The visitors key (people icon) in a review board page's header, while the plugin is on."
       ]
     },
     {
@@ -8694,7 +8858,7 @@
         "In timeline, pick 1 hour, 6 hours, 24 hours or 7 days, move the playhead to read the counts at that moment, and read the yellow, blue and green underlines for waiting on a question, a notice and done.",
         "Waiting history and most used start empty when this ships and are not backfilled; a session whose transcript Claude Code pruned (about 30 days) shows its stored facts but cannot resume.",
         "Press the three dots at the far right of a session row, or right click the row (or press the context-menu key or Shift+F10 on the list), for the same session menu the sidebar rows have; it never opens the panel. The state icons (needs you, working, running, asleep) are independent toggles: press one to hide or show the sessions in that state, and the eye icon turns every state back on. The title strip has new project and new session icons (they open the usual dialogs) and one icon that expands or collapses every project group; list, pivot and timeline are icons at the right end of the filter row, beside the count. In the left panel, projects with no running session sit under one collapsed inactive item.",
-        "Open a project's menu (right click on its heading) and choose project settings for air-gap, the GitHub account, the transport rung, publish a private repo and the replicas list, or closed reviews and crates (export) when those plugins are on. Projects of a paired computer have no menu."
+        "Open a project's menu (right click on its heading, the same menu the sidebar's project heading has) and choose project settings for air-gap, the GitHub account, the transport rung, publish a private repo and the replicas list, or closed reviews and crates (export) when those plugins are on. Projects of a paired computer have no menu."
       ],
       "id": "sessions-page",
       "issues": [
@@ -8749,7 +8913,7 @@
         "web/src/lib/sessions-page/SessionsScreen.svelte",
         "web/src/lib/sessions-page/inactive-projects.ts"
       ],
-      "updated": "2026-10-21",
+      "updated": "2026-11-07",
       "where": [
         "Menu tab, Projects.",
         "Home screen, the running sessions panel's View all.",
@@ -8999,7 +9163,7 @@
         "Plugin page tabs such as flow get an icon too, once the tab is on; a closable one has a small x on its icon, or press delete on it.",
         "From the keyboard, tab to the rail once, then use the arrow keys, home and end to move between icons and enter or space to open one.",
         "Right-click the rail or its handle (or press shift+f10 on the handle) for its menu: pin rail, edit layout or done editing.",
-        "Every icon shows in its default order until you choose otherwise. Turn on edit layout (the rail's menu or the layout bar): every icon of the rail and of the right and bottom bars gets a dashed border, so you know it can move, and a small eye badge that hides or shows it (a hidden icon is dimmed while editing and gone otherwise). Drag an icon, or press Alt with the arrow keys, to move it; on the left rail an icon can cross between the top zone (agents through pack) and the bottom zone (documentation, changelog, settings), so settings can go up and anything can go down. The choice is saved for every device."
+        "Every icon shows in its default order until you choose otherwise. Turn on edit layout (the rail's menu or the layout bar): every icon of the rail and of the right and bottom bars gets a dashed border, so you know it can move, and a small eye badge that hides or shows it (a hidden icon is dimmed while editing and gone otherwise). Drag an icon at any time, edit layout or not, or press Alt with the arrow keys, to move it; on the left rail an icon can cross between the top zone (agents through pack) and the bottom zone (documentation, changelog, settings), so settings can go up and anything can go down. The choice is saved for every device."
       ],
       "id": "sidebar-rail",
       "issues": [
@@ -9007,7 +9171,8 @@
         1785,
         1790,
         2047,
-        2689
+        2689,
+        2908
       ],
       "keywords": [
         "icon rail",
@@ -9031,7 +9196,7 @@
         "web/src/lib/widget-menu/rail-menu.ts",
         "web/src/lib/sidebar-widgets/rail-icons.svelte.ts"
       ],
-      "updated": "2026-10-28",
+      "updated": "2026-11-09",
       "where": [
         "The left sidebar, down its left edge under the top bar."
       ]
@@ -10716,7 +10881,8 @@
       "examples": [
         "Keep a plain shell in a tab next to the agent you are working with.",
         "Keep a review board in a tab next to the agent that is working on it, and split it out beside the terminal.",
-        "Keep the Task Manager list in a tab beside the agent that is working on it."
+        "Keep the Task Manager list in a tab beside the agent that is working on it.",
+        "Drag a tab to the right edge of the page to see a new full-height column on the right, then drag it into the gap between two windows to make it a column there."
       ],
       "how_to": [
         "Press the + at the end of a terminal's tab strip.",
@@ -10725,7 +10891,12 @@
         "A tab shows a small cyan workflow icon right of its title while that session has a workflow running.",
         "Pick browser in the + menu for a new proxy browser, or any page, file or browser already open (a review board is a page); it opens as a tab. Drag a row from the sidebar's browsers, files or review list onto a strip, a pane edge or the middle of a pane to do the same. A plain click on one of those rows still takes over the main area.",
         "Pick widget in the + menu to open any widget (notes, tasks, files...) as a tab beside your terminals; it wears the widget's icon, title and alert badge, and a right-click on it (or its icon) opens the widget's own menu, including the selected session | all sessions switch and close tab. A tab you are not looking at fetches nothing. Widget tabs open on a larger screen; the phone strip shows sessions only.",
-        "Right-click a tab (or focus it and press the Menu key or Shift+F10) for that session's menu, drawn in the tab's own theme. In the kebab on the strip's right, actions folds out beside the menu, which stays open."
+        "Right-click a tab (or focus it and press the Menu key or Shift+F10) for that session's menu, drawn in the tab's own theme. In the kebab on the strip's right, actions folds out beside the menu, which stays open.",
+        "Drag a tab or a window by its strip: a small ghost follows the pointer and a labelled outlined box shows exactly where it will land. Rest on a spot for a moment and the other windows glide aside into their new places; let go and nothing moves again.",
+        "Drop on a strip to insert the tab at the caret, anywhere over a window's body to open its compass of five icons, then on the middle icon to add it there as a tab (a whole window adds all its tabs) or on the up, down, left or right icon to split it that way (an icon that would leave a window under 240px wide is dimmed).",
+        "Drop on the left or right edge of the page for a new full-height column, on the top or bottom edge for a new full-width row, or in a gap between windows for a new column or row exactly as tall or wide as that gap.",
+        "A drop that would overlap or crush a window is never offered: the box moves on to the next spot that fits, or disappears and the ghost dims. Escape puts everything back. Dragging a window's only tab moves the window.",
+        "A terminal keeps its size while you drag; it resizes once, after the drop settles."
       ],
       "id": "terminal-component-tabs",
       "issues": [
@@ -10733,20 +10904,14 @@
         1153,
         1787,
         1838,
-        2008
+        2008,
+        2917
       ],
       "keywords": [
         "tabs",
         "components"
       ],
-      "media": [
-        {
-          "alt": "A terminal's new tab menu open, offering agent, terminal, blueprint and browser",
-          "caption": "Adding a tab",
-          "file": "menu.png",
-          "kind": "screenshot"
-        }
-      ],
+      "media_exempt": "drag targets and previews are captured at the next version bump recapture",
       "name": "Terminal component tabs",
       "since": "2026-09-22",
       "status": "stable",
@@ -10761,9 +10926,10 @@
         "web/src/opscenter/cells/terminal-group/WidgetTabBody.svelte",
         "web/src/opscenter/engine/widget-tabs.ts"
       ],
-      "updated": "2026-10-19",
+      "updated": "2026-11-08",
       "where": [
-        "The + (new tab) at the end of a terminal's tab strip, on the terminal page."
+        "The + (new tab) at the end of a terminal's tab strip, on the terminal page.",
+        "The terminal page: drag a tab (or a window's title strip, or its only tab) anywhere on the page, including the page's own edges and the gaps between windows."
       ]
     },
     {
@@ -10894,6 +11060,7 @@
         "The context meter is a colored gauge: green, blue, yellow, orange, then red as the conversation fills, with the percent in the same color.",
         "The model leads on the left, then the three limits (ctx, 5h, 7d) as one group; the timers segment sits on the right, drawn only when it has something to say; the agents and shells segments are off by default and appear there only once you turn them on in settings. On a narrow cell the lowest priority pieces give way first (the 7d reset, the context fraction, the effort, then the 5h reset and the bars); the percentages and the work segments always stay. The agents and shells numbers are exactly the lengths of the control center's AGENTS (running) and SHELLS lists.",
         "Click the bar to grow it into the session control center, full width and never resizing the session: every figure as a labeled band across the top (context/model/tokens, the two windows, cost/account), with timers, agents and shells as three equal columns underneath, each with its own count and stop-all. On a phone the band becomes tiles and the three lists become an accordion, one section open at a time.",
+        "A terminal running on another computer shows the computers-linked mark and that computer's name just left of the account name at the right edge, so you can tell at a glance which computer it runs on; a local terminal shows no such tag.",
         "Which items the collapsed bar shows (model, effort, context, either rate-limit window, agents, shells, timers) can be turned on or off individually (agents and shells start off, the rest start on); the grown view always shows everything regardless.",
         "Three layouts are built for the collapsed bar and three for the grown one, picked independently in settings (next to the status bar items list): collapsed A (meters first, default), B (a text status line grouped into session/account scopes) or C (attention-first, one meter for whichever limit is closest to its end); open A (a summary band plus three columns, default), B (a tabs rail: usage/timers/agents/shells) or C (one merged list grouped by owner, with filter chips)."
       ],
@@ -38572,7 +38739,7 @@
         "theme-system"
       ],
       "issue": 2033,
-      "release": "v1.16.7",
+      "release": "v1.16.8",
       "summary": "design base slice 3: the shared shells (the .oc-btn and .modal-btn families) now draw from one button recipe in the base, and the shells opt into the base (data-oc-base) so their classless controls take the house look. A bare .modal-btn with no variant class wears the quiet outline secondary instead of the browser's white block. The style guide gains a live review of the shells. The raw-values baseline was regenerated on the merge because master gained raw values in the same files",
       "type": "fixed"
     },
@@ -46584,6 +46751,39 @@
     {
       "date": "2026-10-30",
       "features": [
+        "publicboard"
+      ],
+      "issue": 2696,
+      "landed_at": "2026-10-30T17:42:56Z",
+      "release": "v1.16.8",
+      "summary": "public review links, slice 3b: the page a person opens from a shared link now shows the board read only in the house look (title strip, revision, summary, the mockup in a locked frame, the questions as text), removes the link secret from the address bar at once, and says in one plain sentence when a link was not found, has ended, is rate limited or is not set up correctly",
+      "type": "added"
+    },
+    {
+      "date": "2026-10-30",
+      "features": [
+        "publicboard"
+      ],
+      "issue": 2696,
+      "landed_at": "2026-10-30T19:21:06Z",
+      "release": "v1.16.8",
+      "summary": "public review links, slice 4: a visitor with a link can answer the board's questions and leave a comment (optional name); posts are checked against the board, scanned for credentials, rate limited, capped and idempotent, and land in the plugin's own store only. a visitors key on the board shows them as plain text, and only the owner's forward to claude posts them on the task, fenced as unverified outside input",
+      "type": "added"
+    },
+    {
+      "date": "2026-10-30",
+      "features": [
+        "publicboard"
+      ],
+      "issue": 2696,
+      "landed_at": "2026-10-30T22:23:34Z",
+      "release": "v1.16.8",
+      "summary": "public review links: the share and visitors keys now show on every board page, as icons in the board's title strip, because the pop-out page now starts the plugin parts it draws. visitor answers are live: the visitors key counts the ones not yet forwarded and the window updates on its own, and each board has one alert counting its unforwarded answers, with a toast when it first opens, a short cleaned preview, and closing once nothing is left to forward",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-10-30",
+      "features": [
         "notification-toasts"
       ],
       "issue": 2745,
@@ -46809,6 +47009,18 @@
       "release": "v1.16.6",
       "summary": "the project heading menu now reads archive project on v, and the project, company and group heading menus each offer fold everything inside on f, the menu twin of Shift+click",
       "type": "changed"
+    },
+    {
+      "date": "2026-10-30",
+      "features": [
+        "reviewboard",
+        "task-manager"
+      ],
+      "issue": 2696,
+      "landed_at": "2026-10-30T22:18:12Z",
+      "release": "v1.16.8",
+      "summary": "the review board's forms and agent-written board text, and every task manager text, now clean what a paste carries by accident (CR line ends, terminal colors, zero-width spaces, DEL, C1 controls, odd spaces) and refuse right-to-left overrides, tag characters and stray controls with a plain message naming the field, using the same text rule as the public board; long pasted logs and code blocks are still accepted",
+      "type": "fixed"
     },
     {
       "date": "2026-10-30",
@@ -47151,6 +47363,18 @@
       "type": "added"
     },
     {
+      "date": "2026-11-01",
+      "features": [
+        "publicboard",
+        "reviewboard"
+      ],
+      "issue": 2696,
+      "landed_at": "2026-11-01T16:34:35Z",
+      "release": "v1.16.8",
+      "summary": "public review links: a link is made as can answer (the default) or read only, and a read only link refuses every visitor write on the server. the visitor page and its questions and rows wear the owner's theme from when the link was made. visitors get the board's own controls, every change saves as that browser's draft, and send is optional with no comment needed. each browser is its own visitor, shown on the owner's history bar as a u1, u2 chip after the revision it answered, live as they edit; opening one or the visitor answers toggle shows their answers read only. a follow link shows the visitor a newer version key when the owner posts the next revision. the visitors window lists who answered, each row opening their answers or removing them. answers land on the revision the visitor saw even after the link moved on, a read only link draws a questions or rows layer disabled, and visitor drafts are kept 30 days after their last edit",
+      "type": "added"
+    },
+    {
       "date": "2026-11-02",
       "features": [
         "session-widget-rail"
@@ -47290,6 +47514,17 @@
       "landed_at": "2026-11-02T17:01:19Z",
       "release": "v1.16.6",
       "summary": "native controls follow the theme's own light or dark ground: the date and time picker's calendar button, select popups and scrollbars no longer draw dark on a dark theme, and a session pinned to another theme draws them in that theme's scheme",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-02",
+      "features": [
+        "publicboard"
+      ],
+      "issue": 2696,
+      "landed_at": "2026-11-02T12:37:31Z",
+      "release": "v1.16.8",
+      "summary": "public review links, fixes from the first real link: the visitor page autosaves and has no send key for answers, a refusal that is not the server's own answer no longer reads as a dead link or drops the link, and a questions or rows layer in the visitor's frame wears the owner's colors and shows words instead of raw keys. forward to claude now carries each visitor's current autosaved answers, fenced as untrusted like comments, and the old send route is retired. the visitor page has an anchored thin title bar: the comment and name entry moved behind two small icon keys with popouts, the autosave word and the newer version key sit in the bar. one forward posts every visitor's answers over as many replies as it takes. the share window can copy an existing link again (links.db migration 3 keeps the full token; links made before it keep only the hash and say so). each board can have its own theme, kept on the server: the owner's view and every public link wear it, and it wins over the theme a link captured. the owner sees who is on the page now: a live dot on the visitor's u chip and a viewing now tag in the visitors window, cleared shortly after they leave (the visitor page's held ask is the heartbeat). the share window has a clear ended key that deletes expired and removed links, shown even when none is live. a visitor sees a strip of the revisions their link served, marked where they answered; they can review an older one, and a newer one moves them on automatically unless they are reviewing",
       "type": "fixed"
     },
     {
@@ -47509,6 +47744,17 @@
       "release": "v1.16.6",
       "summary": "paste or drop a file on the Task Manager add row and it shows as a removable chip outside the field, then goes with the entry and is attached to every task filed from it",
       "type": "added"
+    },
+    {
+      "date": "2026-11-03",
+      "features": [
+        "publicboard"
+      ],
+      "issue": 2696,
+      "landed_at": "2026-11-03T16:01:24Z",
+      "release": "v1.16.8",
+      "summary": "public review links are now a setting of the review board plugin, off by default, instead of a plugin of their own: one plugin to manage, self contained and deletable. while the setting is off nothing listens, nothing answers and no keys are drawn. turning it on carries the old plugin's links and visitor answers over once (backed up and verified first, refused with a plain reason if anything looks wrong, the old folder left in place), keeps the same public addresses, and asks for the notify permission again with one click. the agent tool is now named task_manager_board_public_links_remove.",
+      "type": "changed"
     },
     {
       "date": "2026-11-03",
@@ -47810,6 +48056,200 @@
     {
       "date": "2026-11-05",
       "features": [
+        "launch-picker"
+      ],
+      "issue": 2812,
+      "landed_at": "2026-11-06T13:43:02Z",
+      "pr": 2812,
+      "release": "v1.16.8",
+      "summary": "a codex account made in Carnivore now launches: new codex sessions use its login instead of landing on the sign-in screen, and with several codex logins the launch asks which one",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "landed_at": "2026-11-06T01:17:43Z",
+      "release": "v1.16.8",
+      "summary": "a deleted session's name reused by a new session now gets a fresh argent session id, so two sessions' spend no longer merge",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2819,
+      "landed_at": "2026-11-05T23:03:09Z",
+      "release": "v1.16.8",
+      "summary": "a new argent feature, off by default: settings for the argent server and gateway addresses, a device login whose token stays in the keychain, a gateway health state, and a tether switch that refuses to turn on until the gateway is ready. no session is routed through argent yet",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "beast-mode"
+      ],
+      "issue": 2860,
+      "landed_at": "2026-11-06T02:22:03Z",
+      "release": "v1.16.8",
+      "summary": "a question beast mode will answer raises no alert, no push and no sound and the light stays green, and its own approved notification is gone (the history record stays); if the answer is late, declined or beast mode goes off, the normal alert is raised",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "session-token-usage"
+      ],
+      "issue": 2820,
+      "landed_at": "2026-11-05T22:38:54Z",
+      "release": "v1.16.8",
+      "summary": "a read-only route and an MCP tool list one row per model request of a session (main, sub-agent and workflow-agent transcripts: request id, agent, model, four token classes, never dollars)",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "landed_at": "2026-11-06T02:50:03Z",
+      "release": "v1.16.8",
+      "summary": "a session whose launch profile uses its own api url now goes through the argent gateway only when that host is registered in argent; an unregistered host or a lan or loopback address launches direct and says why",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2836,
+      "landed_at": "2026-11-06T02:41:07Z",
+      "release": "v1.16.8",
+      "summary": "a swarm board card now shows its holder's argent cost, budget bar and a held chip on one line, its detail pane lists the tracker item and the cost split by agent, and a held agent's org node wears a small held square",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "terminal-component-tabs"
+      ],
+      "issue": 2815,
+      "landed_at": "2026-11-05T20:05:45Z",
+      "release": "v1.16.8",
+      "summary": "adding a tab to a terminal component no longer tears down and rebuilds every terminal on screen: the other terminals keep their screen, socket and scroll position, and only the new tab is built",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2838,
+      "landed_at": "2026-11-06T01:47:23Z",
+      "release": "v1.16.8",
+      "summary": "agents can now tell argent which work item they are on with a declare tool, and while the argent feature is on every agent is told to pass that item to the sub-agents it starts, so each sub-agent's spend lands on the right work",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "subagent-counts"
+      ],
+      "issue": 2820,
+      "landed_at": "2026-11-05T22:38:54Z",
+      "release": "v1.16.8",
+      "summary": "agents that ran inside a workflow are now listed and counted with the other sub-agents of a conversation, where before only the plain ones showed",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2846,
+      "landed_at": "2026-11-06T03:32:53Z",
+      "release": "v1.16.8",
+      "summary": "an ssh computer that cannot reach the argent gateway now gets it carried over its existing ssh link with tls kept end to end, and a computer that cannot reach argent receives this computer's poll results",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "landed_at": "2026-11-06T03:05:10Z",
+      "release": "v1.16.8",
+      "summary": "argent alert kinds, mcp tools and budget notices are registered so their drift checks pass: the 80 percent and 100 percent budget notices are two notification kinds",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2826,
+      "landed_at": "2026-11-06T00:43:49Z",
+      "pr": 2826,
+      "release": "v1.16.8",
+      "summary": "argent can rebuild the launch command of adopted and older sessions so a restart puts them on the gateway, and lists any it cannot rebuild",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2831,
+      "landed_at": "2026-11-06T01:01:27Z",
+      "pr": 2831,
+      "release": "v1.16.8",
+      "summary": "argent can roll every idle session onto the gateway (or back off it) by restarting it as a resume, three at a time, and skips any that are busy, too large or cannot be rebuilt",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "landed_at": "2026-11-06T04:40:04Z",
+      "release": "v1.16.8",
+      "summary": "argent re-tag and close refusals now say why in plain words, a peer can no longer freeze switch sync with a far-future clock, and clearing or retargeting an argent address while the switch is on is refused or checked first",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "landed_at": "2026-11-06T04:34:33Z",
+      "release": "v1.16.8",
+      "summary": "argent review fixes: a peer can no longer set or retarget an address or turn the feature on where the owner has no login, a carried gateway must be a public name on 443, a row only reads tethered after argent meters its first request (else not tethered: gateway not reached), resume launches over the gateway cap go direct, held panes get no layout broadcast or codex note, spend is reported under the argent ref and flushed at session end, renames follow while logged out, and a 401 pushes the status",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "landed_at": "2026-11-06T04:18:31Z",
+      "release": "v1.16.8",
+      "summary": "argent tracker notices and tools are declared everywhere they must be, a story is carded when its argent project name matches a project ignoring case, spaces, dashes and dots, the classifier notice's change opens with that session chosen, and the work classifier row says when the helper ai has no connection",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "landed_at": "2026-11-06T03:57:18Z",
+      "release": "v1.16.8",
+      "summary": "argent's helper ai now picks a work item on its own for a session nobody picked one for, at a turn end and after each commit, and tells you quietly with a change button; a work item you picked is never changed, and an ask-every-time switch makes it only suggest",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
         "beastmode"
       ],
       "issue": 2761,
@@ -47817,6 +48257,108 @@
       "release": "v1.16.7",
       "summary": "claude code's startup effort screen (keep your level or switch to high effort) is now seen as a dialog, and with beast mode on it keeps your current level once per launch; with beast off it waits for you",
       "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "keyboard-shortcuts"
+      ],
+      "issue": 2813,
+      "landed_at": "2026-11-05T18:14:48Z",
+      "release": "v1.16.8",
+      "summary": "cmd < and cmd > (shift cmd comma and period) step to the previous and next tab of the active terminal component, wrapping at both ends, and work while typing in a terminal; both are listed and rebindable on the keys screen",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "keyboard-shortcuts"
+      ],
+      "issue": 2813,
+      "landed_at": "2026-11-05T22:05:29Z",
+      "release": "v1.16.8",
+      "summary": "cmd < and cmd > always step the tabs (the focused component, else the page terminal) and never fall through to the app menu, so cmd < no longer opens settings",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "time-machine"
+      ],
+      "issue": 2804,
+      "landed_at": "2026-11-05T12:38:12Z",
+      "pr": 2804,
+      "release": "v1.16.8",
+      "summary": "conversation backups protect a conversation whose original vanished even while the backup queue is busy, warn once when ten or more originals vanish within an hour, and restore files with no recorded mode as 0644",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "layout-editor",
+        "sidebar-rail",
+        "dashboards",
+        "warroom",
+        "terminal-component-tabs"
+      ],
+      "landed_at": "2026-11-05T19:26:08Z",
+      "release": "v1.16.8",
+      "summary": "every widget surface moves on one motion engine: dashboards are a free grid, and the terminal page, tab strips, sidebar areas and bars drag and resize at any time without edit layout",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2837,
+      "landed_at": "2026-11-06T01:11:43Z",
+      "release": "v1.16.8",
+      "summary": "internal: the argent feature can now tell which sub-agent made a story declaration by finding its call in the agent's transcript, and falls back to the main agent when it cannot be sure",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "terminal-component-tabs"
+      ],
+      "issue": 2816,
+      "landed_at": "2026-11-05T21:26:55Z",
+      "release": "v1.16.8",
+      "summary": "moving a cell to another row, dragging a tab to another group or closing a tab no longer rebuilds the other terminals, and past 16 terminals a new one never takes the screen of a visible one: hidden terminals give up their graphics context first",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "session-theme-pinning"
+      ],
+      "issue": 2814,
+      "landed_at": "2026-11-05T18:19:56Z",
+      "release": "v1.16.8",
+      "summary": "picking a theme for a terminal window repaints it at once instead of 5 to 10 seconds later: the window paints the pick before the save returns, a failed save puts the old theme back, and the server pushes the new pin right away",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "claude-code-mods"
+      ],
+      "issue": 2809,
+      "landed_at": "2026-11-05T08:14:15Z",
+      "release": "v1.16.8",
+      "summary": "publishing a mod refuses hidden files such as .claude/settings.local.json (only .claude-plugin/plugin.json is allowed), in the app and in the hosted check, and a plugin view's menu request with its header off no longer opens a neighbouring widget's menu",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "landed_at": "2026-11-06T04:16:10Z",
+      "release": "v1.16.8",
+      "summary": "sessions created or restarted on an ssh computer are now tethered to argent like local ones: the gateway is carried over the ssh link when that computer cannot reach it, the key is minted here and delivered by stdin into the far tmux, and a launch that cannot tether says why",
+      "type": "fixed"
     },
     {
       "date": "2026-11-05",
@@ -47844,6 +48386,209 @@
     {
       "date": "2026-11-05",
       "features": [
+        "argent"
+      ],
+      "issue": 2843,
+      "landed_at": "2026-11-06T03:46:30Z",
+      "release": "v1.16.8",
+      "summary": "the argent feature can close a work item (and a swarm card made from an argent story closes its story) and re-tag your own spend in a time window to another work item, with a reason kept in argent's change log",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2839,
+      "landed_at": "2026-11-06T01:34:18Z",
+      "release": "v1.16.8",
+      "summary": "the argent feature can now ask your own helper ai which work item a session is on, from the git branch, changed files and last prompt, and moves the session only when it is sure",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2847,
+      "landed_at": "2026-11-06T04:05:56Z",
+      "release": "v1.16.8",
+      "summary": "the argent feature is now documented end to end with an isolated proof of its launch env, rollout plan, prompt hold and off switch; the live proof against a real argent gateway is a written runbook",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2841,
+      "landed_at": "2026-11-06T03:09:12Z",
+      "release": "v1.16.8",
+      "summary": "the argent feature now comments on the work item your session is on when you pick it, commit or end the session, with the commit subjects, changed files, the cost of that window and one helper ai sentence; with beast mode on the comment posts by itself, with it off it waits in a review list in the argent settings for you to approve, edit or discard",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2840,
+      "landed_at": "2026-11-06T01:55:25Z",
+      "release": "v1.16.8",
+      "summary": "the argent feature now notices the commits a session and each of its sub-agents make, at the end of a turn, so a later step can write them back to the work item",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2842,
+      "landed_at": "2026-11-06T03:21:28Z",
+      "release": "v1.16.8",
+      "summary": "the argent feature now puts the stories assigned to you on the swarm board as cards, and when your tracker backlogs or closes a story mid-work its card leaves the active column and its agent is told",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2833,
+      "landed_at": "2026-11-06T01:00:13Z",
+      "release": "v1.16.8",
+      "summary": "the argent feature now records which work item each session and its sub-agents are on, and keeps those changes queued until argent takes them, so nothing is lost while argent is down",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2844,
+      "landed_at": "2026-11-06T02:15:33Z",
+      "release": "v1.16.8",
+      "summary": "the argent feature now shows a banner when the gateway stops answering or sessions get gateway errors, offers a restart these direct button, pauses a running rollout on a 413, warns before per-session keys expire, and tethers sessions again only after the gateway has been healthy for a while",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2834,
+      "landed_at": "2026-11-06T01:35:00Z",
+      "release": "v1.16.8",
+      "summary": "the argent feature now watches the cost and budget of every work item your sessions are on, warns at 80 percent, holds the next prompt at 100 percent until the budget owner raises the cap or grants a one-time overage, and lets you ask for more budget from the notice",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [],
+      "issue": 2829,
+      "landed_at": "2026-11-05T23:39:12Z",
+      "release": "v1.16.8",
+      "summary": "the argent gateway feature keeps a local copy of the owner's argent projects, features and stories, with routes and mcp tools to list them and create new ones, and an optional story_ref on session create; inert until the argent feature is on",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2845,
+      "landed_at": "2026-11-06T01:56:33Z",
+      "release": "v1.16.8",
+      "summary": "the argent switch now follows every computer the federation lists, and a computer whose owner allows receiving credentials gets the argent login copied over instead of logging in again",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "beast-mode"
+      ],
+      "issue": 2862,
+      "landed_at": "2026-11-06T02:58:34Z",
+      "release": "v1.16.8",
+      "summary": "the auto answer engine no longer sends a notification when it presses a startup screen (folder trust, dev channels warning, Claude in Chrome, project MCP server); the approvals history row stays",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "landed_at": "2026-11-06T03:41:33Z",
+      "release": "v1.16.8",
+      "summary": "the budget owner can lift a prompt hold right from the hold notice or the held card, by raising the cap or allowing a one-time overage; everyone else sees ask the budget owner",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [],
+      "issue": 2828,
+      "landed_at": "2026-11-05T23:38:19Z",
+      "release": "v1.16.8",
+      "summary": "the fallback spend reporter for the argent gateway feature: requests Argent never metered (a pane that lost the gateway mid-turn, a row launched direct) are reported once per request with their sub-agent, in batches of 200; inert until the argent switch is on",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2835,
+      "landed_at": "2026-11-06T02:16:19Z",
+      "release": "v1.16.8",
+      "summary": "the grown terminal status bar now shows a session's argent cost and its work item's budget bar next to the usage cost, and nothing about it appears in the collapsed bar",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2830,
+      "landed_at": "2026-11-06T00:18:45Z",
+      "release": "v1.16.8",
+      "summary": "the launch picker gains a story row while the argent feature is on: pick the project, feature or story the new session serves (active sprint first), make one inline, or skip to leave it unassigned",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "pack-placement"
+      ],
+      "issue": 2805,
+      "landed_at": "2026-11-05T18:23:31Z",
+      "pr": 2805,
+      "release": "v1.16.8",
+      "summary": "the local refresh restarts the app through its login agent so it runs at interactive priority instead of the clamped 20",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "mobile-key-bar"
+      ],
+      "issue": 2858,
+      "landed_at": "2026-11-06T02:05:08Z",
+      "release": "v1.16.8",
+      "summary": "the phone mic key no longer sits on listening forever in an older iPhone app build: the app now says it can dictate, a dictation engine that does not start within three seconds hands over to recording or ends with a clear message, and a page that is not https says so",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [],
+      "issue": 2821,
+      "landed_at": "2026-11-05T22:48:32Z",
+      "release": "v1.16.8",
+      "summary": "the prompt hold gate for the argent gateway feature: a session whose work item is at its budget refuses its next prompt on every input path (terminal enter and paste, command route, one-shot paste, mcp send keys) with a held line above the foot bar and a toast; inert until the argent switch is on",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
         "skills-catalog-publish",
         "claude-code-mods"
       ],
@@ -47857,6 +48602,16 @@
     {
       "date": "2026-11-05",
       "features": [
+        "argent"
+      ],
+      "landed_at": "2026-11-06T02:56:21Z",
+      "release": "v1.16.8",
+      "summary": "the swarm card detail and the grown status bar split an argent session's cost by agent (the main agent and each sub-agent), rolled up per tracker item, asked of argent only while that view is open",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
         "terminal-text-size"
       ],
       "issue": 2807,
@@ -47864,6 +48619,1477 @@
       "release": "v1.16.7",
       "summary": "the terminal font box now saves as you type or pick and says applying, saved or why not; an installed fonts list shows each font in its own face (the desktop app may now list fonts); and a light, normal, medium or bold weight picker restyles every terminal on this device",
       "type": "fixed"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2832,
+      "landed_at": "2026-11-06T01:29:58Z",
+      "pr": 2832,
+      "release": "v1.16.8",
+      "summary": "turning the argent switch on or off opens a rollout window that counts what will restart, warns about sub-agents and background jobs, lists what cannot be routed, and restarts only after you tick the box; the settings show how many sessions are tethered",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2827,
+      "landed_at": "2026-11-06T00:47:30Z",
+      "release": "v1.16.8",
+      "summary": "with the argent feature on, every session is registered with argent when it starts (create, adopt, restart of the app) and deregistered when it ends, under one stable argent session id that survives renames, restarts, clear and forks. nothing runs with the feature off",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2822,
+      "landed_at": "2026-11-06T00:06:56Z",
+      "release": "v1.16.8",
+      "summary": "with the argent tether switch on, a new claude session launches through the argent gateway with its own per-session key, delivered without ever appearing on a command line; a gateway that is down, too small or overridden by claude settings launches direct with the reason recorded. nothing changes while the switch is off",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2823,
+      "landed_at": "2026-11-06T00:18:18Z",
+      "release": "v1.16.8",
+      "summary": "with the argent tether switch on, a new codex session launches through the argent gateway with its own per-session key sent as a header, never on a command line; a codex too old to send the header launches direct and says so. nothing changes while the switch is off",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2824,
+      "landed_at": "2026-11-06T00:32:29Z",
+      "release": "v1.16.8",
+      "summary": "with the argent tether switch on, a restarted session gets a fresh key and the old one is revoked only after the new pane started; a session that launched without argent says so once; a read-only check flags sessions whose settings override the gateway. nothing changes while the switch is off",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-05",
+      "features": [
+        "argent"
+      ],
+      "issue": 2825,
+      "landed_at": "2026-11-06T00:31:52Z",
+      "release": "v1.16.8",
+      "summary": "with the argent tether switch on, a session whose launch profile uses its own api url (a connection or an env row) goes through the argent gateway to that upstream, with the profile's own key sent as a header and never on a command line; a loopback upstream the gateway cannot reach, or a gateway that cannot chain yet, launches direct and says why. nothing changes while the switch is off",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "pack-credential-relay"
+      ],
+      "issue": 2870,
+      "landed_at": "2026-11-07T00:14:32Z",
+      "release": "v1.16.8",
+      "summary": "a computer that joins the pack with receiving logins on opens its first agent already signed in on the main computer's active account: the relay arms the account new sessions use for a computer paired after the owner's list was written, asks the ledger for a credential the moment a link comes up, and the new computer selects that relayed account for its own new sessions when it has none selected and no login",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "app-alert-center",
+        "pack-skill-sync"
+      ],
+      "issue": 2870,
+      "landed_at": "2026-11-06T23:50:01Z",
+      "pr": 2870,
+      "release": "v1.16.8",
+      "summary": "a computer that just joined the pack no longer shows a false tmux alert or a false alpha alert",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "provider-ledger"
+      ],
+      "issue": 2870,
+      "landed_at": "2026-11-07T00:25:14Z",
+      "release": "v1.16.8",
+      "summary": "a computer that never signed Claude Code in no longer shows a 'this device's claude login' row marked missing on the providers page; the add account button is how a login appears, and accounts you added by name keep their real states",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "launch-picker",
+        "pack-machines"
+      ],
+      "issue": 2870,
+      "landed_at": "2026-11-06T23:52:00Z",
+      "pr": 2870,
+      "release": "v1.16.8",
+      "summary": "a failed agent launch says why: claude not installed, tmux missing, a bad folder, or the agent exited",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "terminal-file-links"
+      ],
+      "issue": 2873,
+      "landed_at": "2026-11-07T01:30:49Z",
+      "release": "v1.16.8",
+      "summary": "a printed ~name token with no such home no longer makes the terminal's path check answer a 500; it is simply not a link",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "terminal-reconnect"
+      ],
+      "landed_at": "2026-11-07T03:53:50Z",
+      "release": "v1.16.8",
+      "summary": "a reloaded terminal no longer comes back two rows off: the first resize sent after connecting is measured fresh instead of reusing a stale grid taken before the foot bar mounted, and the connect waits for the page layout to stop moving, so tmux is no longer shrunk right after it was grown",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "launch-picker",
+        "pack-machines"
+      ],
+      "issue": 2870,
+      "landed_at": "2026-11-07T00:22:21Z",
+      "pr": 2870,
+      "release": "v1.16.8",
+      "summary": "a restarted session finds a natively installed claude or codex too: the respawn path adds the agents' install folders to the pane's PATH like a new session does",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "session-status-lights"
+      ],
+      "issue": 2877,
+      "landed_at": "2026-11-07T04:18:47Z",
+      "pr": 2877,
+      "release": "v1.16.8",
+      "summary": "a session you are watching no longer turns to the hollow green ring when a turn ends",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "argent"
+      ],
+      "issue": 0,
+      "landed_at": "2026-11-07T03:10:26Z",
+      "pr": 0,
+      "release": "v1.16.8",
+      "summary": "a tethered session settles from Argent's own gateway count instead of the request-ids list, so a session that is metering fine no longer flips to not tethered: gateway not reached after 90 seconds; a missing route or an unexpected answer leaves the row pending",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "argent"
+      ],
+      "issue": 0,
+      "landed_at": "2026-11-07T02:33:30Z",
+      "pr": 0,
+      "release": "v1.16.8",
+      "summary": "a work-context post that Argent refuses with its own not_found (another login's session, or an item outside the fence) is dropped instead of retried forever; a bare 404 still means the route is not deployed and keeps the row queued",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "argent"
+      ],
+      "issue": 0,
+      "landed_at": "2026-11-07T02:19:58Z",
+      "release": "v1.16.8",
+      "summary": "creating an argent work item now says whether it is new or joined an existing one, a parent you cannot see is a clear 404, the state filter means sprint state like argent's, and a pull cut off by the page bound keeps the cached rows",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "layout-editor"
+      ],
+      "landed_at": "2026-11-07T00:10:38Z",
+      "release": "v1.16.8",
+      "summary": "dragging a row divider moves only the cells it separates, so the columns beside it keep their sizes; every cell edge and corner with a neighbour can be dragged, each corner showing its own diagonal arrow, and dashboard cells resize from all eight edges; a tab merge no longer leaves a gap, and a corner drag reaches the full extent and keeps its size on release",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "computers"
+      ],
+      "issue": 2870,
+      "landed_at": "2026-11-06T23:44:44Z",
+      "pr": 2870,
+      "release": "v1.16.8",
+      "summary": "one pack shows as one row on a new computer, and a missing join code no longer reads as used up",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "argent"
+      ],
+      "issue": 2879,
+      "landed_at": "2026-11-07T04:34:29Z",
+      "release": "v1.16.8",
+      "summary": "the Argent usage poster no longer loses spend when Argent rate-limits it: a 429 waits the Retry-After it names (at most 60 seconds) and resends the same batch, and a longer ask or three tries leave the batch queued for the next pass",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "argent"
+      ],
+      "issue": 2817,
+      "landed_at": "2026-11-07T00:55:08Z",
+      "release": "v1.16.8",
+      "summary": "the argent gateway counts as ready on its settled answer (no ok or mints_accepted field needed, only an explicit false refuses), key expiry warnings use the expiry argent gives at mint instead of a fixed 12 hours, and the argent token is copied only to computers this computer's owner approved",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "argent"
+      ],
+      "issue": 2876,
+      "landed_at": "2026-11-07T03:21:27Z",
+      "release": "v1.16.8",
+      "summary": "the computer that did the argent login now keeps its token alive by refreshing at 80 percent of its life, and paired computers get short-lived delegate tokens that cannot refresh instead of a copy of the owner token",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "deep-search"
+      ],
+      "issue": 2865,
+      "landed_at": "2026-11-06T07:24:09Z",
+      "pr": 2865,
+      "release": "v1.16.8",
+      "summary": "the conversation window opened from a drawer search result is wide on a desktop, lands on the matched words even in a long message, and marks them",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "deep-search"
+      ],
+      "issue": 2866,
+      "landed_at": "2026-11-06T07:14:19Z",
+      "release": "v1.16.8",
+      "summary": "the drawer search has a relevant or newest sort switch (prompts and context), and the context search lists exact phrase matches first, then the fuzzy matches, each group in the chosen order",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "session-sleep"
+      ],
+      "issue": 2875,
+      "landed_at": "2026-11-07T02:22:15Z",
+      "pr": 2875,
+      "release": "v1.16.8",
+      "summary": "the drawer's wake guard no longer blocks adopting a genuine external tmux session that a stale record gave a session uuid; only one of our own just-woken rows is held back",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "terminal-foot-bar"
+      ],
+      "issue": 2869,
+      "landed_at": "2026-11-06T21:31:06Z",
+      "release": "v1.16.8",
+      "summary": "the grown terminal foot drawer is tidied: stat labels and values sit in aligned columns with a gap, the stat blocks are equal columns, and the timers, agents, shells and ports strip has taller header rows with the stop buttons on the right edge of every row",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "terminal-foot-bar"
+      ],
+      "issue": 2869,
+      "landed_at": "2026-11-06T23:07:32Z",
+      "release": "v1.16.8",
+      "summary": "the grown terminal foot drawer wears the house look: a session title strip with the close x, four stat columns on the same column lines as timers, agents, shells and ports, one label column, and one size for every stop button",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "terminal-foot-bar"
+      ],
+      "issue": 2869,
+      "landed_at": "2026-11-06T21:46:11Z",
+      "release": "v1.16.8",
+      "summary": "the grown terminal foot drawer's usage limits block now lines up with the context and cost blocks on the same four columns as the timers, agents, shells and ports strip, and an agent row with no pid line no longer draws an empty row under it",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "pack-credential-relay"
+      ],
+      "issue": 2870,
+      "landed_at": "2026-11-07T00:39:54Z",
+      "pr": 2870,
+      "release": "v1.16.8",
+      "summary": "the main computer asks 'copy your accounts to <computer>?' once per paired computer and copies nothing until the owner clicks yes; computers that already receive count as yes",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "pack-roster"
+      ],
+      "issue": 2870,
+      "landed_at": "2026-11-06T23:38:16Z",
+      "pr": 2870,
+      "release": "v1.16.8",
+      "summary": "the pack page counts a computer linked over ssh as in the pack",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "argent"
+      ],
+      "issue": 0,
+      "landed_at": "2026-11-07T02:54:09Z",
+      "pr": 0,
+      "release": "v1.16.8",
+      "summary": "the per-turn usage post skips every request the Argent gateway already meters (a tethered row after its key mint) and posts only bypassed ones; a bare 404 keeps turns queued, Argent's own not_found drops them, work_item_ignored is delivery, and turns carry the declared work item",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "notification-toasts"
+      ],
+      "landed_at": "2026-11-07T04:54:30Z",
+      "release": "v1.16.8",
+      "summary": "the sign in needed alert no longer fires when an idle login's short lived access token merely lapses or the keychain blips during a restart: it fires only on a proven sign out (a refresh that came back needs_login, a refused or dead refresh token, or a credential missing for two minutes)",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-06",
+      "features": [
+        "session-sleep"
+      ],
+      "issue": 2875,
+      "landed_at": "2026-11-07T01:54:58Z",
+      "release": "v1.16.8",
+      "summary": "waking an agent from the drawer opens the woken terminal by the session id the wake returned instead of adopting a half-listed row, so the screen no longer flashes and bounces to the home dashboard",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "agents-sidebar",
+        "sessions-page",
+        "companies"
+      ],
+      "issue": 2880,
+      "landed_at": "2026-11-07T05:59:08Z",
+      "release": "v1.16.8",
+      "summary": "The agents drawer and the Sessions page now share one project menu: new agent, rename, color and company submenus, show path, sleep, swarm, move to another computer, project settings, archive and delete, every item with an icon.",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "agents-sidebar",
+        "sessions-page"
+      ],
+      "issue": 2880,
+      "landed_at": "2026-11-08T03:52:54Z",
+      "pr": 2880,
+      "release": "v1.16.8",
+      "summary": "The project menu's company item wears the company building, drops fold everything inside, and move to pack member now opens its window from the agents drawer.",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "pack-global-sync"
+      ],
+      "issue": 2878,
+      "landed_at": "2026-11-07T05:16:04Z",
+      "release": "v1.16.8",
+      "summary": "a computer that has not turned on receiving the main's global setup now answers the main with the rule that refuses it, so the Pack page says receiving is off instead of a bare sign-in error",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "terminal-cells-and-tabs"
+      ],
+      "issue": 2916,
+      "landed_at": "2026-11-08T02:47:40Z",
+      "release": "v1.16.8",
+      "summary": "a focused terminal can no longer go deaf: a keystroke or press inside a terminal cell takes input back, a second cell on the same session (war room modal, a moved tab's old copy) closing no longer clears the live cell's claim, and a restore hold re-issues every refused connect",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "notification-toasts",
+        "carnivore-mcp-server"
+      ],
+      "issue": 2918,
+      "landed_at": "2026-11-08T04:00:00Z",
+      "release": "v1.16.8",
+      "summary": "a for-your-review notification type and an MCP tool, review_send, that sends the owner a link or file as a notification on the phone and this computer",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "provider-ledger"
+      ],
+      "issue": 2910,
+      "landed_at": "2026-11-08T04:21:45Z",
+      "release": "v1.16.8",
+      "summary": "a logged-out account no longer reads rate limited, and the drawer's providers panel hides an account whose login is gone",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "notification-toasts"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T09:43:12Z",
+      "release": "v1.16.8",
+      "summary": "a message card from another agent now shows that session's last three agent messages (dropped when details are off), the phone is told to fetch the full card whenever it holds more than the banner shows, the app update strip reads just the computer and a link banner ends with the link's host, and a swarm card carries its huddle item for this computer's own banner",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "desktop-settings"
+      ],
+      "issue": 2912,
+      "landed_at": "2026-11-08T02:34:33Z",
+      "release": "v1.16.8",
+      "summary": "a new desktop setting, open the window on launch, is on by default: the carnivore window opens as soon as the app starts, including a login start, an update or a restart; turning it off keeps a login start in the menu bar",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "phone-link"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T07:35:48Z",
+      "release": "v1.16.8",
+      "summary": "a notification's reply, reopen and install buttons now do their work from the phone through the same cores the app uses, and a press on a paired computer's session is forwarded to that computer",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "phone-link"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T07:20:23Z",
+      "release": "v1.16.8",
+      "summary": "a push on the phone can now carry a one-use capability so an action button answers the ask from a locked phone with no login; the link gate lets exactly three notify paths through without the pairing cookie, the answer goes through the dialog core as owner_phone, and nothing is in a URL or a log",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "notification-destinations"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T07:45:49Z",
+      "release": "v1.16.8",
+      "summary": "a push to your own iPhone now carries a per-kind card: the ask and the dialog's real answer buttons, each backed by a one-use capability, and an ask answered anywhere else settles the phone's banner",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "notification-toasts"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T20:17:03Z",
+      "release": "v1.16.8",
+      "summary": "a real agent-update notification now reaches this computer's banner with an id, so pressing restart them on it restarts the sessions the card names",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "account-auto-switch"
+      ],
+      "issue": 2915,
+      "landed_at": "2026-11-08T03:44:04Z",
+      "release": "v1.16.8",
+      "summary": "a session restarted by the limit rotation always gets its continue: it is owed to the restarted pane and typed once when the pane is ready, even if the listing reads it unknown because stale notifications came in; frozen sessions restart up to four at a time; and the pane check now knows claude's rate limit menu",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "details": "The status resolver retires the claim of a live shell whose launching subagent is done, so a resting session shows its true state with no schedule or alert. The background-work list reports leftovers and owner_finished; POST /sessions/{id}/background-work/stop-leftovers (MCP session_leftover_shells_stop) stops only the pids it measures as leftovers, each re-checked at kill time.",
+      "features": [
+        "terminal-background-work",
+        "session-status-lights"
+      ],
+      "issue": 2874,
+      "landed_at": "2026-11-07T13:28:40Z",
+      "release": "v1.16.8",
+      "summary": "a shell left behind by a finished subagent no longer holds a session at busy or unknown; the info window marks it owner finished and offers stop leftovers",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "provider-ledger"
+      ],
+      "issue": 2914,
+      "landed_at": "2026-11-08T03:46:02Z",
+      "release": "v1.16.8",
+      "summary": "a switch click in the drawer providers panel always answers: the button shows it is switching, a click refused because another step is running says so, an error shows its plain message, and a success says new sessions moved and how many running sessions are still on the old login, with the confirm box and restart them",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "terminal-component-tabs",
+        "terminal-size-master"
+      ],
+      "issue": 2920,
+      "landed_at": "2026-11-08T04:37:45Z",
+      "release": "v1.16.8",
+      "summary": "a tab or window drop on the terminal page is refused when it would leave a window under the pane height or column floor, or a hole nothing fills, a stored layout with a zero width window heals on load, and a paired computer's terminal is told the pane's real grid even when that computer's app is older",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "terminal-text-size"
+      ],
+      "issue": 2919,
+      "landed_at": "2026-11-08T04:03:16Z",
+      "release": "v1.16.8",
+      "summary": "a terminal on a paired computer no longer garbles after a hard refresh: after the connect and after every resize the owner tells the window the pane's real measured size, and the window shows exactly that grid, scaled to fit",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "session-widget-rail"
+      ],
+      "issue": 2911,
+      "landed_at": "2026-11-08T04:21:35Z",
+      "release": "v1.16.8",
+      "summary": "a terminal widget in a bar with no session, or whose session is gone, opens a plain shell in your home folder instead of saying the session was removed, and reopens on the same shell",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "argent"
+      ],
+      "landed_at": "2026-11-07T08:39:34Z",
+      "release": "v1.16.8",
+      "summary": "a throttled argent write-back (429) or one held by a disconnected tracker is retried instead of dropped, the resend carries the same idempotency key, and a rate-limited card close is tried again after the wait",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "notification-toasts"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T10:00:13Z",
+      "release": "v1.16.8",
+      "summary": "a web push carries only its title, body, path, tag and thread and never a card field the full card keeps to itself, and the iPhone push is checked for the same; the unused sound note string is gone",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "pack-global-sync"
+      ],
+      "issue": 2878,
+      "landed_at": "2026-11-07T06:00:24Z",
+      "release": "v1.16.8",
+      "summary": "after a global setup sync the receiving computer installs the dependencies of carried skills and plugins itself from their lockfiles, so they run on the first prompt; Codex's own bundled plugins and Claude's temp download leftovers no longer travel, and a sync never touches a receiver's own node_modules, .git or bundled plugins",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "notification-toasts"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T08:08:23Z",
+      "release": "v1.16.8",
+      "summary": "an agent can attach a file, image, video or https link to its notify message (the notify tool and the agent-message route); the file is copied into a private store after project, size and credential checks, and it is shown only on the owner's iPhone and this computer",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "argent"
+      ],
+      "landed_at": "2026-11-07T07:14:44Z",
+      "release": "v1.16.8",
+      "summary": "an argent close no longer posts two tracker comments, and write-back comments are deduplicated exactly: every one carries an idempotency key that stays the same across retries",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "notification-destinations"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-08T00:56:09Z",
+      "release": "v1.16.8",
+      "summary": "an iPhone registered with the app now shows as a device chip, and the send a test button appears, in the notification settings inspector: the page looked for the phone in the destination list, but the server only lists it as a tick column",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "argent"
+      ],
+      "issue": 2882,
+      "landed_at": "2026-11-07T06:24:36Z",
+      "release": "v1.16.8",
+      "summary": "an item that Argent says has no budget governing it no longer stays held: the hold clears quietly, while an Argent that does not have the route yet or does not answer keeps the last decision",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "terminal-cells-and-tabs"
+      ],
+      "issue": 2917,
+      "landed_at": "2026-11-08T03:42:03Z",
+      "release": "v1.16.8",
+      "summary": "dragging a tab or a window on the terminal page splits and adds columns again, the drop overlay no longer sticks after a drop, a merge gives the emptied window's area to its neighbours, and a window can no longer be pushed off the side or squeezed to nothing",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "notification-destinations"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T07:44:35Z",
+      "release": "v1.16.8",
+      "summary": "each notification type now has its own sound and urgency (synced to your other computers) and a corner card switch (this computer only); the routing grid gains a this computer column for OS banners that never syncs, and a test send can take a type and sends that type's sample card",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "approval-banners"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T10:39:31Z",
+      "release": "v1.16.8",
+      "summary": "iPhone acceptance fixes: the link card no longer draws a dim \"title from agent\" line under its page row, the notification service resets its card and attachments for every push so a reused extension never shows the last push's card, and a link banner body ends with the mockup's middle dot before the host",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "argent"
+      ],
+      "issue": 2882,
+      "landed_at": "2026-11-07T06:15:28Z",
+      "release": "v1.16.8",
+      "summary": "lifting a budget hold now happens in Argent: the raise and overage buttons are one lift in argent button that opens Argent's own page for the item, because Argent only accepts those actions from a browser session and the old buttons could sign the owner out of Argent; someone who is not the budget owner sees what governs the hold, and a session id another person owns launches untethered and is not retried",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "desktop-settings"
+      ],
+      "issue": 2908,
+      "landed_at": "2026-11-08T03:58:39Z",
+      "release": "v1.16.8",
+      "summary": "menu pages slide out as drawers to the right of the agents drawer instead of covering the main area: settings opens a list drawer and a page drawer beside it, every page gets a close icon left of its title, and a closed page slides back left",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "notification-toasts"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T08:23:05Z",
+      "release": "v1.16.8",
+      "summary": "notification cards fill more of what the mockup shows from real sources: a finished turn's minutes and per-file line counts, a permission's folder and tool, a PDF's page count, agent and app update versions, the sign-in account and reason, the swarm question and asker path, and the settle push now says whether the ask was answered on the computer, the phone, by the auto answer or elsewhere",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "approval-banners"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T10:44:58Z",
+      "release": "v1.16.8",
+      "summary": "notification cards: the file card shows its first page row, the app update strip reads just the computer, the sign-in card names the provider, and the agent update card offers only what the server can act on (a lone later keeps the quiet style)",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [],
+      "issue": 2883,
+      "landed_at": "2026-11-07T07:20:06Z",
+      "release": "v1.16.8",
+      "summary": "notification overhaul slice 0: the card contract (15 kinds, the payload, the actions), the four notification sounds and their strings, generated for the iphone and the web card",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [],
+      "issue": 2883,
+      "landed_at": "2026-11-07T07:53:52Z",
+      "release": "v1.16.8",
+      "summary": "notification overhaul slice 5: the web notification card, one component that draws all 15 card kinds in the Military Terminal look (clipped long content, an empty state, a settled state), plus the corner card page the Mac app will show",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "approval-banners"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T08:36:43Z",
+      "release": "v1.16.8",
+      "summary": "notification overhaul slice 6: the mac app posts a banner per card kind with its own icon, subtitle and named sound (passive ones silent), keeps the card's button order, and shows a corner card window that never takes focus",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "approval-banners"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T09:10:29Z",
+      "release": "v1.16.8",
+      "summary": "notification overhaul slice 6b: image, video and file banners and corner cards show the real picture or first-page poster, and the mac banner and corner card now offer reopen, install and the swarm pick and answer through the same owner routes the app uses",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "approval-banners"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T09:50:02Z",
+      "release": "v1.16.8",
+      "summary": "notification overhaul slice 6c: a climbed swarm question, an immediate alert and a flash now also reach this computer's banner and corner card under the desktop column of their type (the phone still gets one push), the banner answers the exact huddle item instead of matching the question text, and the permission card's deny button is drawn in the destructive style",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "notification-destinations"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T08:17:46Z",
+      "release": "v1.16.8",
+      "summary": "notification overhaul slice 7: settings > notifications opens on an inspector with all 39 types, each with its live card, sound and play button, urgency, devices, corner card switch and a test send; the routing grid stays under it",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "approval-banners"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T10:14:18Z",
+      "release": "v1.16.8",
+      "summary": "notification settings page, second literal fix round: type list rows 30px with 5px group headings and wrapped (never cut) long names, selects drawn as the mockup draws them with the native chevron, 12px and 26px tall, and a white select fill in the light themes",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "notification-toasts"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T07:45:35Z",
+      "release": "v1.16.8",
+      "summary": "phone notification buttons stop working after the phone is unpaired or the ask is answered on the computer, never press twice after a restart mid-answer, and a blocked address no longer locks out a valid button",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "notification-toasts"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T19:55:52Z",
+      "release": "v1.16.8",
+      "summary": "pressing restart them on an agent-update notification, on the phone or the Mac, now restarts the idle sessions the card names and skips busy ones",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "notification-toasts"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T20:04:57Z",
+      "release": "v1.16.8",
+      "summary": "pressing restart them on this computer's agent-update notification now restarts only the sessions that card names, never a fresh guess of which are stale, and a test card restarts nothing",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "notification-toasts"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T20:24:41Z",
+      "release": "v1.16.8",
+      "summary": "swarm, agent-update and agent-message toasts also ride the events channel, so the Mac banner shows them while the Carnivore window is hidden",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "pack-global-sync"
+      ],
+      "issue": 2878,
+      "landed_at": "2026-11-07T04:46:54Z",
+      "release": "v1.16.8",
+      "summary": "the Pack's main computer can copy your whole global claude code and codex setup (instructions, settings, hooks, skills, agents, mods, plugins, your own folders) to approved computers: secrets scrubbed, backups kept, a sync now button and an automatic option",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "notification-destinations"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T08:25:47Z",
+      "release": "v1.16.8",
+      "summary": "the answer buttons on a phone notification now do their job for every card: swarm question picks and typed answers reach the agent like a reply typed in the app, and an old notification can no longer answer a repeat of the same prompt once the first was answered anywhere",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "drawer-widget-area"
+      ],
+      "landed_at": "2026-11-08T04:21:32Z",
+      "pr": 2909,
+      "release": "v1.16.8",
+      "summary": "the drawer's providers widget folds in one smooth slide with no flickering scrollbar, its rows fit the box, and the widget area header (just the + button) shows only in edit layout mode",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "web-push"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T08:27:43Z",
+      "release": "v1.16.8",
+      "summary": "the iPhone app draws notifications as terminal cards: a content extension expands each of the 15 kinds, with per-kind subtitle, urgency, sound, Face ID actions and in-card answers, and a Simulator acceptance harness",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "notification-destinations"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T08:50:24Z",
+      "release": "v1.16.8",
+      "summary": "the iPhone died card now shows the pane's last lines and exit code, a text file's card shows its first lines, the sign-in card names the provider and the sessions running on that account, and agent media is kept under one 7 day rule",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "ios-app"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T09:15:49Z",
+      "release": "v1.16.8",
+      "summary": "the iPhone notification card draws the real data it is sent: per-file added and removed lines, a PDF's page count and first page, swarm side labels, a died card's last lines and exit code, update versions, the sign in provider, and where a settled ask was answered",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "notification-toasts"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T08:47:55Z",
+      "release": "v1.16.8",
+      "summary": "the web and Mac corner notification card draws the real data it is sent: per-file added and removed lines, a PDF's page count, the swarm side labels, where a settled ask was answered, and a small real image, video poster or file first page from new owner-login media routes instead of a placeholder; the corner page no longer logs a missing icon",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-07",
+      "features": [
+        "notification-toasts"
+      ],
+      "issue": 2883,
+      "landed_at": "2026-11-07T19:45:36Z",
+      "release": "v1.16.8",
+      "summary": "this computer's corner cards draw again: the card route read a toast container that was deleted in September and answered 404 for every toast, so no banner, image, link or question card appeared; it now reads the toast inbox",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-08",
+      "features": [
+        "terminal-foot-bar"
+      ],
+      "issue": 2925,
+      "landed_at": "2026-11-09T01:36:24Z",
+      "release": "v1.16.8",
+      "summary": "a session running on a Pack-relayed login now reports that account and its usage windows in its usage answer, so the bottom bar of a terminal on a paired computer shows the time left meter and the account; the paired computer needs this version to answer it",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-08",
+      "features": [
+        "desktop-settings"
+      ],
+      "issue": 2908,
+      "landed_at": "2026-11-08T07:33:49Z",
+      "release": "v1.16.8",
+      "summary": "a settings page drawer slides out from underneath the settings list, menu page drawers can be up to three times wider and start three times wider (never more than 60 percent of the space beside the agents drawer), and a drawer's right edge drags to resize it, double-click to reset",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-08",
+      "features": [
+        "terminal-component-tabs",
+        "terminal-cells-and-tabs"
+      ],
+      "issue": 2917,
+      "landed_at": "2026-11-08T09:14:53Z",
+      "release": "v1.16.8",
+      "summary": "dragging a tab or a whole window on the terminal page is one smooth gesture: a labelled box shows the exact spot and size it will land, other windows glide aside into their new places after a short rest and stay framed at their real size, and what you see is what lands. you can make a new column or row on every side of the page and in any gap between windows, split any side of a window, and drop a tab at the caret in a strip. dragging a window's only tab moves the window, a drop that cannot fit is never offered, escape puts everything back, and a pane keeps its size until you let go",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-08",
+      "features": [
+        "terminal-component-tabs",
+        "terminal-cells-and-tabs"
+      ],
+      "issue": 2921,
+      "landed_at": "2026-11-08T21:34:22Z",
+      "release": "v1.16.8",
+      "summary": "dragging a tab or window over a terminal window now shows a small plate of five icons at its centre (add as tab, split up, down, left, right); the icon under the pointer previews its result and releasing on it does it, so there is no hidden edge to find, and a split that would not fit is a dimmed icon",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-08",
+      "features": [
+        "terminal-cells-and-tabs"
+      ],
+      "issue": 2924,
+      "landed_at": "2026-11-08T22:43:57Z",
+      "release": "v1.16.8",
+      "summary": "dragging a window divider down past the divider of the next column no longer drops the drag; it keeps following the pointer the whole way, as it already did moving up",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-08",
+      "features": [
+        "terminal-cells-and-tabs"
+      ],
+      "issue": 2922,
+      "landed_at": "2026-11-08T21:28:21Z",
+      "release": "v1.16.8",
+      "summary": "dragging a window divider level with the divider in the next column no longer makes a window vanish, the two dividers join for a moment and then each column moves on its own again",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-08",
+      "features": [
+        "desktop-settings"
+      ],
+      "issue": 2908,
+      "landed_at": "2026-11-08T07:42:34Z",
+      "release": "v1.16.8",
+      "summary": "opening a section such as providers or pack while settings is open slides settings back left and keeps it, closing the section brings it back out; the settings list is as wide as its content; drawer widths never drop below the old minimums",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-08",
+      "features": [
+        "desktop-settings"
+      ],
+      "issue": 2923,
+      "landed_at": "2026-11-08T22:54:21Z",
+      "pr": 2923,
+      "release": "v1.16.8",
+      "summary": "slide-out pages stop at the width of the warez menu, three theme columns and the theme panel, and cast a soft shadow to their right over the terminals",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-08",
+      "features": [
+        "terminal-foot-bar"
+      ],
+      "issue": 2925,
+      "landed_at": "2026-11-09T01:19:56Z",
+      "release": "v1.16.8",
+      "summary": "the bottom bar of a terminal on a paired computer shows the account that computer named for the session, taken from that computer's own usage answer, instead of drawing no account at all",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-08",
+      "features": [
+        "ios-app"
+      ],
+      "issue": 2926,
+      "landed_at": "2026-11-09T01:59:56Z",
+      "release": "v1.16.8",
+      "summary": "the iPhone app is released: inside it the google and github sign-in buttons, warez and publishing are hidden, and a theme's script never runs",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-08",
+      "features": [
+        "theme-system"
+      ],
+      "issue": 2923,
+      "landed_at": "2026-11-08T22:54:21Z",
+      "pr": 2923,
+      "release": "v1.16.8",
+      "summary": "the installed themes page in warez opens with no detail panel until you click a theme, like the store",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-08",
+      "features": [
+        "mobile-key-bar"
+      ],
+      "issue": 2927,
+      "landed_at": "2026-11-09T03:28:45Z",
+      "pr": 2927,
+      "release": "v1.16.8",
+      "summary": "the phone mic delivers the words it showed live when the speech engine ends with empty text, instead of saying it heard nothing",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-08",
+      "features": [
+        "mobile-key-bar"
+      ],
+      "issue": 2928,
+      "landed_at": "2026-11-09T04:52:44Z",
+      "pr": 2928,
+      "release": "v1.16.8",
+      "summary": "the phone mic keeps every word of a long dictation instead of only the words after the last pause",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [],
+      "issue": 2916,
+      "landed_at": "2026-11-09T18:42:33Z",
+      "pr": 2916,
+      "release": "v1.16.8",
+      "summary": "a dropped or held keystroke in a terminal cell now logs terminal_input_dropped with its cause",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "plugins-page"
+      ],
+      "issue": 2934,
+      "landed_at": "2026-11-09T22:22:00Z",
+      "release": "v1.16.8",
+      "summary": "a failed plugin install puts back the removed install's record, a plugin folder that links outside its root is refused, and the git sideload record is never written over an unreadable file",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "terminal-cells-and-tabs"
+      ],
+      "issue": 2933,
+      "landed_at": "2026-11-09T23:23:02Z",
+      "pr": 2933,
+      "release": "v1.16.8",
+      "summary": "a gap between windows now arms only when you rest the pointer on it, so sweeping past one no longer shuffles the windows",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "plugins-page",
+        "developer-sideload"
+      ],
+      "issue": 2934,
+      "landed_at": "2026-11-09T21:41:29Z",
+      "release": "v1.16.8",
+      "summary": "a paired computer's token can no longer install, enable, sideload, update or remove a plugin on this computer: those routes answer 403 peer_forbidden, a test now fails when any plugin write tool is missing from the always-waits list, and the plugin API as it stands today is written down in docs/plugins/api-v1.md",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "developer-sideload"
+      ],
+      "issue": 2934,
+      "landed_at": "2026-11-09T21:43:13Z",
+      "release": "v1.16.8",
+      "summary": "a plugin can be written as one carnivore.json and packed into the exact files older apps read, with a new plugin tool to start, check, pack, test and link one",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "plugins-page"
+      ],
+      "issue": 2934,
+      "landed_at": "2026-11-09T22:14:41Z",
+      "release": "v1.16.8",
+      "summary": "a plugin id must be a clean publisher and name, sideloads are always local, a reinstall gets its old data back only from the same publisher key, and the sandbox profile now lives outside the plugin's data folder",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "plugins-page"
+      ],
+      "issue": 2934,
+      "landed_at": "2026-11-09T22:14:41Z",
+      "release": "v1.16.8",
+      "summary": "a plugin settings, sideload or process file that cannot be read is never written over, so one torn read no longer wipes every plugin's switches, grants and settings",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "agents-sidebar"
+      ],
+      "issue": 2908,
+      "landed_at": "2026-11-09T20:24:03Z",
+      "pr": 2908,
+      "release": "v1.16.8",
+      "summary": "a press outside an open menu page closes it, and the menu's letter keys work while the menu is slid out",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "plugins-page"
+      ],
+      "issue": 2934,
+      "landed_at": "2026-11-09T21:45:36Z",
+      "release": "v1.16.8",
+      "summary": "a read-only plugin health report says for every feature, plugin and Claude Code plugin whether it is on, off, needs approval or is held and why, lists data folders no install owns, and logs one line at boot",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "carnivore-mcp-server"
+      ],
+      "issue": 1470,
+      "landed_at": "2026-11-09T23:12:29Z",
+      "pr": 1470,
+      "release": "v1.16.8",
+      "summary": "agents can now preview a restart or recreate, list stored session rows and logs, undo an archive, adopt an outside tmux session, and stop a session's background processes; recreating a session, restarting an imported conversation, killing an outside tmux session and stopping a background process always wait for the owner's approval, even with Beast Mode on; forks stay out of reach",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "skills-catalog-install"
+      ],
+      "issue": 2931,
+      "landed_at": "2026-11-09T15:22:44Z",
+      "pr": 2931,
+      "release": "v1.16.8",
+      "summary": "an item installed under a legacy publisher handle (nyedis) now shows the update badge, updates from the store and auto-updates to its carnivore successor's signed release, then relabels to carnivore",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "layout-command-bar"
+      ],
+      "issue": 2929,
+      "landed_at": "2026-11-09T05:32:00Z",
+      "release": "v1.16.8",
+      "summary": "an open Layout's top bar gains an add widgets button at its top right that opens the widget drawer so any widget can be dragged into the Layout",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "layouts"
+      ],
+      "issue": 2937,
+      "landed_at": "2026-11-10T08:33:38Z",
+      "pr": 2937,
+      "release": "v1.16.8",
+      "summary": "closing or hiding a window no longer shrinks the windows beside it, at any window size",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "plugins-page"
+      ],
+      "issue": 1963,
+      "landed_at": "2026-11-09T14:46:49Z",
+      "release": "v1.16.8",
+      "summary": "core no longer imports a plugin: a phone press answers a swarm question through a registered owner reply port, and the money format lives in core lib behind the plugin sdk; argent and a few routes answer a code and a fixed sentence instead of raw exception text",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "plugins-page"
+      ],
+      "issue": 2934,
+      "landed_at": "2026-11-09T21:55:29Z",
+      "release": "v1.16.8",
+      "summary": "deleting a plugin's folder now removes the plugin at boot and while the app runs, with its data and a catalog install's grants kept and one notice; the plugin runtime copy is written with folders the Trash can take",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "developer-sideload",
+        "plugins-page"
+      ],
+      "issue": 2934,
+      "landed_at": "2026-11-09T22:03:19Z",
+      "release": "v1.16.8",
+      "summary": "developer mode and the sideload switch are now one switch with one duration: the plugins page has a single developer mode switch, a sideload is allowed only while it is on and its time has not run out, a clock set back switches it off, and a plugin folder can be added with add from folder or dropped on the page and still goes through the consent sheet; a folder with iCloud files not downloaded is refused with download the folder first",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "terminal-cells-and-tabs"
+      ],
+      "issue": 2921,
+      "landed_at": "2026-11-09T20:44:43Z",
+      "pr": 2921,
+      "release": "v1.16.8",
+      "summary": "dragging a widget from the add widgets drawer onto a window now shows that window's compass with every arm usable, and nothing moves while you aim",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "plugins-page"
+      ],
+      "issue": 2938,
+      "landed_at": "2026-11-09T23:49:44Z",
+      "release": "v1.16.8",
+      "summary": "every change to a plugin's switch, grants, settings, install record or sideload now goes through one writer under a cross-process lock, and the app keeps a readable plugins.json beside the old files that says for every feature and plugin whether it is on, what it was granted and where it came from; the plugin health report also says which generation of that file was last written",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "layouts"
+      ],
+      "issue": 2935,
+      "landed_at": "2026-11-09T23:23:02Z",
+      "pr": 2935,
+      "release": "v1.16.8",
+      "summary": "every compass arm on a window with room for two halves now drops, and an up or down drop cuts the window in two",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [],
+      "issue": 2916,
+      "landed_at": "2026-11-09T17:59:59Z",
+      "pr": 2916,
+      "release": "v1.16.8",
+      "summary": "input ownership now decides from a plain copy of the owner, so a cell teardown in the same update cannot null a claim another cell just made",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "layouts"
+      ],
+      "issue": 2937,
+      "landed_at": "2026-11-10T08:33:38Z",
+      "pr": 2937,
+      "release": "v1.16.8",
+      "summary": "lifting a window out of the terminal page no longer shrinks or squeezes the windows beside it",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "plugins-page"
+      ],
+      "issue": 2938,
+      "landed_at": "2026-11-10T00:35:19Z",
+      "release": "v1.16.8",
+      "summary": "plugins.json is now the file the app reads and writes for every plugin switch, grant, setting and install record, with the old files kept as current mirrors; the first boot after this version backs up the old files, checks that every setting reads the same from the new file, and moves installed plugins' code to plugins/ and their data to plugin-data/, and a damaged or older plugins.json is repaired from a backup or opens read only with an alert instead of being trusted",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "layout-editor"
+      ],
+      "issue": 2936,
+      "landed_at": "2026-11-10T02:03:13Z",
+      "pr": 2936,
+      "release": "v1.16.8",
+      "summary": "the add widgets drawer comes back the moment you drop or press escape, not after the windows finish gliding",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "layout-editor"
+      ],
+      "issue": 2936,
+      "landed_at": "2026-11-09T23:23:02Z",
+      "pr": 2936,
+      "release": "v1.16.8",
+      "summary": "the add widgets drawer slides out of the way while you drag, so the right edge and right column can be aimed at",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "terminal-foot-bar"
+      ],
+      "issue": 2930,
+      "landed_at": "2026-11-09T05:32:01Z",
+      "release": "v1.16.8",
+      "summary": "the bottom bar of a terminal on a paired computer shows the computers-linked mark and that computer's name beside the account name, so a far session is told apart at a glance",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "plugins-page"
+      ],
+      "issue": 2938,
+      "landed_at": "2026-11-10T00:41:10Z",
+      "release": "v1.16.8",
+      "summary": "the first-boot move to plugins.json no longer gets undone when an old per-boot step writes a setting, a busy registry lock now raises the read only alert, a full disk or permission error during the move is a refusal with an alert instead of a crash, a repeated refusal keeps one backup, and the migration marker heals after a crash",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "plugins-page"
+      ],
+      "issue": 2934,
+      "landed_at": "2026-11-09T21:36:52Z",
+      "release": "v1.16.8",
+      "summary": "the order plugins are listed in is written once, in src/cplugs/order.json: the server sorts by it, and the web bundle imports the same file instead of keeping its own copy",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "sidebar-rail"
+      ],
+      "issue": 2908,
+      "landed_at": "2026-11-09T20:24:08Z",
+      "pr": 2908,
+      "release": "v1.16.8",
+      "summary": "the pinned icon rail and the full menu share one row grid: every rail icon sits beside its menu row, dividers follow swarm and pack, the pin icons are muted, pinning from the open menu puts the menu away, and the icons no longer magnify",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-10",
+      "features": [
+        "account-auto-switch"
+      ],
+      "issue": 2940,
+      "landed_at": "2026-11-10T14:58:49Z",
+      "pr": 2940,
+      "release": "v1.16.8",
+      "summary": "a limit-stopped session is now recognized from claude code's usage limit warning line alone, so a change to claude's countdown wording can no longer stop the account auto-switch",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-10",
+      "features": [
+        "developer-sideload"
+      ],
+      "issue": 2941,
+      "landed_at": "2026-11-10T21:52:21Z",
+      "release": "v1.16.8",
+      "summary": "a plugin that names a plugin api version this app does not serve is refused at install and sideload, the health report shows each plugin's api version, an authored plugin can state the app versions it supports in engines.carnivore, anything a plugin logs or prints has credentials starred before it reaches the log, and leftover sandbox profiles from before the folder move are moved into the migration backup",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-10",
+      "features": [
+        "account-auto-switch"
+      ],
+      "issue": 2940,
+      "landed_at": "2026-11-10T06:06:26Z",
+      "pr": 2940,
+      "release": "v1.16.8",
+      "summary": "a session stopped on its usage limit now moves to the next account when claude code's countdown line reads Esc to cancel with a capital E; before, such a session stayed on the full account until the limit reset",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-10",
+      "features": [],
+      "landed_at": "2026-11-10T22:11:36Z",
+      "release": "v1.16.8",
+      "summary": "export gates round 2: argent style guide ownership lists name the renamed budget panel, registry test fixtures use neutral grant, shape and address values",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-10",
+      "features": [],
+      "landed_at": "2026-11-10T21:47:00Z",
+      "release": "v1.16.8",
+      "summary": "public-release export gates green for 1.16.8: sample data, fixtures, test names and one env var name no longer carry live-state names or hosts, the argent cost split module is cost_split, argent transcript fixtures end in .jsonl.txt",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-10",
+      "features": [
+        "carnivore-mcp-server",
+        "plugins-page"
+      ],
+      "issue": 2941,
+      "landed_at": "2026-11-10T21:56:14Z",
+      "pr": 2941,
+      "release": "v1.16.8",
+      "summary": "the plugin api v1 document is now a checked contract with a stable or experimental label on every row, and agents can restart or stop a plugin (always asking the owner first) and read its recent capability calls and outbound requests",
+      "type": "added"
     }
   ]
 }

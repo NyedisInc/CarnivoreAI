@@ -14,7 +14,7 @@ from src.cplugs.host import identity
 from src.cplugs.host.preview_check import PreviewError, read_preview
 from src.cplugs.host.sidecar_manifest import (
     MANIFEST_FILE, SidecarManifest, SidecarManifestError, _views, clean_text, load_sidecar_manifest, sidecar_reasons)
-from src.cplugs.sdk import sidecar
+from src.cplugs.sdk import api_contract, sidecar
 from src.cplugs.sdk.manifest import RESERVED_IDS
 from src.cplugs.sdk.permission_registry import TIER_CATALOG, risk_of
 
@@ -33,6 +33,7 @@ MANIFEST_INVALID = "cplug_manifest_invalid"
 SIDECAR_INVALID = "cplug_sidecar_invalid"
 FACTS_CHANGED = "cplug_facts_changed"
 NOT_ACCEPTED = "cplug_not_accepted"
+API_VERSION_UNSUPPORTED = "cplug_api_version_unsupported"
 
 
 class CplugGateRefusal(Exception):
@@ -153,6 +154,11 @@ def evaluate(item_id: str, staged_path: Path, publisher_key_id: str = "", pinned
         side = json.loads((root / sidecar.SIDECAR_NAME).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         side = None
+    if isinstance(side, dict):
+        try:
+            api_contract.require_served(side)
+        except api_contract.ApiVersionUnsupported as exc:
+            raise CplugGateRefusal(API_VERSION_UNSUPPORTED, str(exc)) from exc
     reasons = sidecar_reasons(side)
     envelope = replace(manifest, id=item_id, author=side.get("author", "") if isinstance(side, dict) else "",
                        min_app_version=side.get("min_app_version", "") if isinstance(side, dict) else "",
@@ -168,13 +174,17 @@ def evaluate(item_id: str, staged_path: Path, publisher_key_id: str = "", pinned
 def name_problem(state_dir: Path, name: str, catalog_id: str, shipped_ids: Any) -> Optional[CplugGateRefusal]:
     if not identity.INSTALL_NAME.match(name):
         return CplugGateRefusal("name_invalid", f"an install name must match {identity.INSTALL_NAME.pattern}")
+    try:
+        identity.check_catalog_id(catalog_id, name, shipped_ids)
+    except identity.InstallRefused as exc:
+        return CplugGateRefusal(exc.code, str(exc))
     owner = catalog_id == f"{identity.OWNER_PUBLISHER}/{name}"
     reserved = (frozenset(RESERVED_IDS) | identity.HOST_WORDS) if owner else identity.reserved_names(shipped_ids)
     if name in reserved:
         return CplugGateRefusal("name_reserved", f"{name} is reserved")
     held = identity.lookup(state_dir, name)
     if held is not None and held.catalog_id != catalog_id:
-        return CplugGateRefusal("name_taken", f"{name} is held by another plugin")
+        return CplugGateRefusal("name_taken", f"the name {name} belongs to {held.catalog_id}; rename yours")
     return None
 
 

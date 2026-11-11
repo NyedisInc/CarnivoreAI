@@ -14,7 +14,7 @@
     "Every session is listed, grouped, with its light, name and folder.",
     "Click a row to open it; use the three dots or a right click for its actions; F2 renames it; drag it, or press alt and an arrow, to move it; search at the top.",
     "A row's menu shows each item's key at the right end, and pressing it while the menu is open runs that item, with the same letters as every other menu: r rename, n new session in the folder, c colour, b load blueprint; any other item takes the first free letter of its name, never d or v, which stay delete and archive.",
-    "A project heading's three dots lead with new agent, which opens the same select-provider picker every other launch uses, then starts the agent in that project once you choose one; a row's add to files it into a group or a Layout, and a group's or Layout's add pulls agents in.",
+    "A project heading's three dots (or a right click) open the same project menu as the Projects page and lead with new agent, which opens the same select-provider picker every other launch uses, then starts the agent in that project once you choose one; a row's add to files it into a group or a Layout, and a group's or Layout's add pulls agents in.",
     "Show path, in a session row's menu or a project heading's menu, opens a small popup with that session's working folder (or the project folder) in full, with a copy button.",
     "Drag its right edge to resize it; it docks beside the page on a wide screen.",
     "A row shows small icons for what it has: agents running, background shells open, and live timers; hover one for the count and detail. Turn any of the three on or off per density in settings.",
@@ -125,7 +125,7 @@
     "web/src/lib/sidebar-shell/section-drag.ts",
     "web/src/lib/drawer/section-order.ts"
   ],
-  "updated": "2026-11-03",
+  "updated": "2026-11-07",
   "where": [
     "The left panel, agents tab.",
     "Hide or show it with the panel button beside the logo.",

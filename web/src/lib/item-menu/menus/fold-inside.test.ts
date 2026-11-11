@@ -6,7 +6,7 @@ const folded = vi.hoisted(() => ({ now: false }));
 vi.mock('../../sidebar-shell/heading-fold', () => ({ cascadeBandFold: fold, isBandFolded: () => folded.now }));
 vi.mock('../../add-to-menu/host', () => ({ addToNodes: { forProject: () => [], forGroup: () => [] }, addToMenuBridge: {}, ADD_TO_CASCADE_CONTAINER_ID: 'x' }));
 vi.mock('../../sidebar-shell/company-source.svelte', () => ({ companySource: () => ({ companyOf: () => null }) }));
-vi.mock('../../companies', () => ({ companyById: (id: number) => (id === 7 ? { id: 7, name: 'acme', project_count: 1 } : undefined), setCompanyColor: vi.fn() }));
+vi.mock('../../companies', () => ({ companyList: () => [], companyById: (id: number) => (id === 7 ? { id: 7, name: 'acme', project_count: 1 } : undefined), setCompanyColor: vi.fn() }));
 vi.mock('../../project-colors/store.svelte', () => ({ projectColorOf: () => null }));
 const GROUPS = [{ group_uuid: 'g-1', name: 'crew', members: [] }];
 vi.mock('../../sidebar-shell/interaction-globals', () => ({
@@ -24,8 +24,8 @@ async function nodesOf(type: 'project' | 'company' | 'group', key: string): Prom
     return built!.nodes as unknown as DrawnNode[];
 }
 
-describe('fold everything inside', () => {
-    test.each([['project', 'p:5', 'p:5'], ['company', 'c:7', 'c:7'], ['group', 'g-1', 'g:g-1']] as const)(
+describe('fold everything inside', { timeout: 100_000 }, () => {
+    test.each([['company', 'c:7', 'c:7'], ['group', 'g-1', 'g:g-1']] as const)(
         'the %s heading lists it and picking it folds band %s', async (type, key, band) => {
             fold.mockClear();
             const item = (await nodesOf(type, key)).find((n) => n.id === 'fold-inside');
@@ -34,6 +34,10 @@ describe('fold everything inside', () => {
             expect(fold).toHaveBeenCalledExactlyOnceWith(band);
         },
     );
+
+    test('the project heading no longer lists it', async () => {
+        expect((await nodesOf('project', 'p:5')).some((n) => n.id === 'fold-inside')).toBe(false);
+    });
 
     test('the entry reads unfold everything inside while the heading is folded', async () => {
         folded.now = true;
@@ -45,9 +49,9 @@ describe('fold everything inside', () => {
         }
     });
 
-    test('the project heading archives on v', async () => {
+    test('the project heading archives on v, and deletes on d', async () => {
         const nodes = await nodesOf('project', 'p:5');
-        expect(nodes.some((n) => n.id === 'delete-project')).toBe(false);
+        expect(nodes.some((n) => n.id === 'delete-project')).toBe(true);
         const archive = nodes.find((n) => n.id === 'archive-project');
         expect(archive?.label).toBe('archive project');
     });

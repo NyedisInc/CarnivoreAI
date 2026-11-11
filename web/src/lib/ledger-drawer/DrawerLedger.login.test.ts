@@ -118,3 +118,28 @@ describe('DrawerLedger: re-add after a refresh that is never retried', () => {
     expect(el.querySelector('.ldp-readd')).toBeNull();
   });
 });
+
+describe('DrawerLedger: an account whose login is gone is not listed', () => {
+  test('a removed login that once had a plan is hidden', async () => {
+    const el = render(account({ credential_state: 'missing', setup_complete: null }));
+    await expand(el);
+    expect(el.querySelector('.ldp-account')).toBeNull();
+  });
+
+  test.each([null, true, false] as const)(
+    'a never signed in account (no plan, identity or usage) stays when setup_complete is %s',
+    async (setup) => {
+      const el = render(
+        account({ credential_state: 'missing', setup_complete: setup, plan: null, identity: null, name: 'fresh' }),
+      );
+      await expand(el);
+      expect(el.querySelector('.ldp-account')).not.toBeNull();
+    },
+  );
+
+  test('a live rate limited account keeps its rate limited tag', async () => {
+    const el = render(account({ credential_state: 'rate_limited' }));
+    await expand(el);
+    expect(el.querySelector('.ldp-account')?.textContent?.toLowerCase()).toContain('rate limited');
+  });
+});

@@ -6,7 +6,7 @@ from typing import Any
 
 import structlog
 
-from src.cplugs.huddle import artifact_browser, artifact_port, board_port, capabilities, client_writes, conversation_release, devtools_port, held, held_resume, mcp, routes, schedule, schedule_port, service, send_queue, task_sweep, told_log, legacy_approvals, push_delta, turn_return
+from src.cplugs.huddle import artifact_browser, artifact_port, board_port, capabilities, client_writes, conversation_release, devtools_port, held, held_resume, mcp, routes, schedule, schedule_port, service, send_queue, task_sweep, told_log, legacy_approvals, owner_phone, push_delta, turn_return
 from src.cplugs.huddle.nudge import scheduler as nudge_scheduler
 from src.cplugs.huddle.roles import port as roles_port
 from src.cplugs.huddle.cards import policy as card_policy, tx as card_tx
@@ -85,6 +85,7 @@ async def _start(ctx: Any) -> None:
     nudge_scheduler.start(ctx)
     devtools_port.register(ctx)
     artifact_port.register(ctx)
+    owner_phone.register(ctx)
     board_port.register(ctx)
     await send_queue.rearm_untold(ctx)
     await held_resume.resume(ctx)
@@ -99,6 +100,7 @@ async def _stop(ctx: Any) -> None:
     turn_return.stop()
     schedule_port.unregister()
     nudge_scheduler.stop()
+    owner_phone.unregister()
     board_port.unregister()
     artifact_port.unregister()
     devtools_port.unregister()

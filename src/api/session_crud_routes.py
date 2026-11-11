@@ -21,6 +21,7 @@ from src.core.read_caches.ttl_flight import TtlFlight
 from src.core.pack.relay import runtime as relay_runtime
 from src.core.account_switch import create_account
 from src.core.launch_profiles import create_seam
+from src.core.launch_failure import classify_launch_failure
 from src.core.sessions.errors import SessionCreateFailed, TmuxError
 from src.core.launch_profiles.resolve import LaunchProfileNotFound
 from src.core.launch_profiles.secrets import SecretError
@@ -101,7 +102,8 @@ async def create_session_with_extra(request: Request, body: CreateSessionRequest
             is_peer=getattr(getattr(request, "state", None), "peer_grant", None) is not None,
             is_local=host_key == LOCAL_HOST_KEY)
     except create_account.CreateAccountRefused as exc:
-        raise api_error(400, "account_refused", exc, account_id=body.account_id) from exc
+        raise api_error(400, exc.code, exc, extra={"accounts": exc.accounts} if exc.accounts else None,
+                        account_id=body.account_id) from exc
     claude_account = account_plan.account_id or claude_account
     if body.working_dir and host_key == LOCAL_HOST_KEY:
         _refuse_packed_folder(os.path.expanduser(body.working_dir))
@@ -208,6 +210,11 @@ async def create_session_with_extra(request: Request, body: CreateSessionRequest
 
         await create_account.pin_after_create(session_manager, session.tmux_session, account_plan)
 
+        if body.story_ref and host_key == LOCAL_HOST_KEY and session.tmux_session:
+            from src.core.argent import declare as argent_declare  # noqa: PLC0415
+
+            await argent_declare.declare_at_create(session.tmux_session, body.story_ref)
+
         if session.working_dir and host_key == LOCAL_HOST_KEY:
             from src.api import projects_service
 
@@ -235,11 +242,11 @@ async def create_session_with_extra(request: Request, body: CreateSessionRequest
         logger.warning("session_creation_launch_secret_unavailable", error=str(e))
         raise api_error(409, "launch_secret_unavailable", e)
     except SessionCreateFailed as e:
-        raise api_error(502, "session_launch_failed", e, step="spawn", session_id=session_id) from e
+        raise api_error(502, classify_launch_failure(e, body.agent_type), e, step="spawn", session_id=session_id) from e
     except ValueError as e:
         raise api_error(400, "session_create_invalid", e, step="validation") from e
     except TmuxError as e:
-        raise api_error(502, "session_launch_failed", e, step="backend", session_id=session_id) from e
+        raise api_error(502, classify_launch_failure(e, body.agent_type), e, step="backend", session_id=session_id) from e
     except Exception as e:  # noqa: BLE001
         raise api_error(500, "session_create_failed", e, session_id=session_id) from e
 

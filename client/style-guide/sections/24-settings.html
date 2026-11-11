@@ -93,7 +93,7 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
         <code>EnvControl.svelte</code> (<code>.st-env</code>, <code>.st-env__row</code> a NAME / value / remove grid that folds
         on a phone, the value field <code>.st-env__value</code>), <code>BindControl.svelte</code> (the address, then its
         measured facts in <code>.st-facts</code>), <code>SwitchControl.svelte</code> (the shared square check as a switch,
-        <code>.st-switch</code>), <code>MinutesControl.svelte</code>, and <code>RailMagnifyControl.svelte</code> (the left rail's magnify size: the base segmented picker, off to 200%); the toast style's classic-script panel sits in <code>.st-legacy</code>. Every
+        <code>.st-switch</code>), and <code>MinutesControl.svelte</code>; the toast style's classic-script panel sits in <code>.st-legacy</code>. Every
         gap is on the one 4 / 8 / 12 / 16 / 24 / 32 px scale, and a classic panel's buttons take the app's outline shape
         (<code>settings-page.css</code>); the toast style
         (<code>web/src/lib/toast-mode/ToastModePanel.svelte</code>) is two radios drawn as choice cards
@@ -536,6 +536,26 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
         when the tool is missing; shown in the first specimen under each computer with a snapshot.</dd>
     <dt>fields</dt>
     <dd>Pack fields and pickers are the base <code>Field</code>, <code>NumberField</code> and <code>Select</code>.</dd>
+</dl>
+
+<h3 class="sg-h3" id="settings-notify-inspector">notification inspector</h3>
+<dl class="sg-facts">
+    <dt>what it is</dt>
+    <dd><code>web/src/lib/notifications/inspector/Inspector.svelte</code>, the first block of settings > notifications > routing: the accepted
+        notification mockup's settings view. A framed pair of columns (<code>.ins__frame</code>): the types in their groups on the left
+        (<code>.ins__list</code>, each group a tracked <code>h4</code> band, each type the base <code>row</code> Button with its
+        <code>.nc-led</code> square, its name in <code>.ins__name</code> and its word on or off in <code>.ins__st</code>, the picked one
+        marked by the accent edge), the picked type on the right.</dd>
+    <dt>the pane</dt>
+    <dd>A title strip (<code>.ins__title</code>: the type in the accent, its id dim), a base <code>Segmented</code> shape switcher for a type that comes in
+        several shapes, then the previews in <code>.ins__walls</code> (dimmed while no device is on): one per ticked device, each on a
+        <code>.pv-wall</code> gradient built from tokens (<code>Previews.svelte</code>): the iPhone banner and the computer banner as HTML stand-ins
+        (<code>.pv-note</code>) and the iPhone card, the live <code>NotifyCard</code> without its action row, in a rounded <code>.pv-sheet</code>.
+        Then the controls in <code>.ins__ctl</code>: a tracked label (<code>.ins__lab</code>) and the control (<code>.ins__row</code>, a quiet note in
+        <code>.ins__hint</code>). On and the corner card are the base <code>Switch</code>; sound and urgency the base <code>Select</code> on the field
+        ground with a drawn chevron; play a cyan base <code>Button</code>; send a test the base <code>Button</code>; each device (<code>.ins__dev</code>)
+        a small outlined chip, a base <code>Button</code> with <code>aria-pressed</code>, cyan when on, labelled by the computer's own name or the iPhone's name.
+        Below 1024 px the frame is one column and the list becomes a short scrolling box above the pane.</dd>
 </dl>
 
 <h3 class="sg-h3" id="settings-mistakes">common mistakes</h3>

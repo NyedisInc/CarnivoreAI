@@ -68,6 +68,9 @@ class HostRegistry:
         record = self._records.get(host_key)
         return record.label if record is not None else host_key
 
+    def connected(self) -> Dict[str, RemoteHost]:
+        return dict(self._hosts)
+
     def state(self, host_key: str) -> str:
         if host_key == LOCAL_HOST_KEY:
             return HOST_STATE_UP

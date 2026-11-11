@@ -5,7 +5,7 @@ export const POLL_MS = 60_000;
 export const CPLUGS_TOPIC = 'cplugs';
 const DEFAULT_GRANTED = new Set(['sessions.read', 'notify']);
 
-export const cplugEnablement = $state<{ read: boolean; enabled: Record<string, boolean> }>({ read: false, enabled: {} });
+export const cplugEnablement = $state<{ read: boolean; enabled: Record<string, boolean>; settings: Record<string, Record<string, unknown>> }>({ read: false, enabled: {}, settings: {} });
 
 export function defaultEnabled(manifest: CplugManifest): boolean {
   if (manifest.tier === 'dev') return false;
@@ -19,14 +19,23 @@ export function cplugEnabled(manifest: CplugManifest): boolean {
   return known ?? defaultEnabled(manifest);
 }
 
+export function cplugSetting<T>(manifest: CplugManifest, key: string, fallback: T): T {
+  const value = cplugEnablement.settings[manifest.id]?.[key];
+  return value === undefined ? fallback : (value as T);
+}
+
 export async function refreshEnablement(): Promise<void> {
   try {
-    const body = await authFetch<{ cplugs: { id: string; enabled: boolean; state?: string }[] }>('/cplugs');
+    const body = await authFetch<{ cplugs: { id: string; enabled: boolean; state?: string; settings?: Record<string, unknown> }[] }>('/cplugs');
     const next: Record<string, boolean> = {};
+    const settings: Record<string, Record<string, unknown>> = {};
     for (const row of Array.isArray(body.cplugs) ? body.cplugs : []) {
-      if (row.state !== 'removed') next[row.id] = row.enabled === true;
+      if (row.state === 'removed') continue;
+      next[row.id] = row.enabled === true;
+      settings[row.id] = row.settings && typeof row.settings === 'object' ? row.settings : {};
     }
     cplugEnablement.enabled = next;
+    cplugEnablement.settings = settings;
     cplugEnablement.read = true;
   } catch {
   }

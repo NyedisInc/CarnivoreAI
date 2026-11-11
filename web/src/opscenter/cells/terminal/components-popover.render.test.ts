@@ -39,9 +39,8 @@ describe('the list the terminal page opens is the engine\'s own', () => {
     expect(panel.getAttribute('role')).toBe('dialog');
 
     const items = Array.from(host.querySelectorAll('button')).map((b) => (b.textContent || '').trim());
-    expect(items.some((text) => /add/i.test(text))).toBe(false);
-    expect(items.filter((text) => /^arrange in /i.test(text)).length).toBe(0);
-    expect(items.some((text) => text === 'arrange layout')).toBe(true);
+    expect(items.filter((text) => /^arrange/i.test(text)).length).toBe(0);
+    expect(items.some((text) => text === 'add widget')).toBe(true);
     expect(items.some((text) => /reset/i.test(text))).toBe(true);
     expect(items.some((text) => /fit rows/i.test(text))).toBe(false);
     expect(items.some((text) => /all widgets/i.test(text))).toBe(true);
@@ -49,7 +48,7 @@ describe('the list the terminal page opens is the engine\'s own', () => {
       expect(items.some((text) => hidden.test(text))).toBe(false);
     }
     expect(host.querySelector('[data-layout-editor-pointer]')?.textContent).toBe(
-      'add widgets in edit layout, bottom left of the drawer',
+      'add widgets with the + button, or drag them in from the widget drawer',
     );
     expect(items.length).toBe(3);
 
@@ -58,14 +57,14 @@ describe('the list the terminal page opens is the engine\'s own', () => {
     expect(host.querySelector('.oc-popover')).toBe(null);
   });
 
-  test('"arrange layout" opens edit mode instead of touching either layout directly', () => {
+  test('"add widget" opens the widget drawer instead of touching either layout directly', () => {
     const { host, anchor } = page();
     const beforeHome = JSON.stringify(homeLayout.state.layout);
     const beforeTerminal = JSON.stringify(terminalLayout.state.layout);
     const app = open(host, anchor, () => {});
 
     const arrange = Array.from(host.querySelectorAll('button'))
-      .find((b) => (b.textContent || '').trim() === 'arrange layout') as HTMLButtonElement;
+      .find((b) => (b.textContent || '').trim() === 'add widget') as HTMLButtonElement;
     expect(arrange).not.toBe(undefined);
     arrange.click();
     flushSync();

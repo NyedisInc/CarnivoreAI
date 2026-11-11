@@ -3,6 +3,7 @@ import {
     removeSideload,
     resyncSideload,
     saveSideload,
+    setDeveloperMode,
     sideloadFolder,
     sideloadGit,
     type GitRequest,
@@ -17,6 +18,7 @@ import type { InstallConsent } from '../catalog/types';
 export interface SideloadApi {
     load: () => Promise<SideloadStatus>;
     save: (enabled: boolean, hours?: number | null) => Promise<SideloadStatus>;
+    developerMode?: (on: boolean) => Promise<unknown>;
     folder: (path: string, name?: string | null, consent?: InstallConsent) => Promise<unknown>;
     git: (request: GitRequest) => Promise<unknown>;
     resync: (item: SideloadItem, consent?: InstallConsent) => Promise<unknown>;
@@ -26,6 +28,7 @@ export interface SideloadApi {
 export const LIVE_SIDELOAD_API: SideloadApi = {
     load: () => loadSideload(),
     save: (enabled, hours) => saveSideload(enabled, hours),
+    developerMode: (on) => setDeveloperMode(on),
     folder: (path, name, consent) => sideloadFolder(path, name, undefined, consent),
     git: (request) => sideloadGit(request),
     resync: (item, consent) => resyncSideload(item, undefined, consent),
@@ -88,7 +91,12 @@ export function createSideloadStore(api: SideloadApi = LIVE_SIDELOAD_API, onChan
         get busy() { return busy; },
         refresh,
         async setSwitch(enabled, hours) {
+            if (enabled && status?.developer_mode === false) await api.developerMode?.(true);
             status = await api.save(enabled, hours);
+            if (!enabled && api.developerMode) {
+                await api.developerMode(false);
+                status = await api.load();
+            }
             failed = false;
             onChanged();
         },

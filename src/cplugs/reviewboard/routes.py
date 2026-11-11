@@ -209,3 +209,5 @@ add_public_get(router, "reviewboard", "/view/{ticket_text}", view_page,
 from src.cplugs.reviewboard import routes_posted, routes_scratch  # noqa: E402,F401  pylint
 from src.cplugs.reviewboard import routes_attachments  # noqa: E402,F401  pylint
 from src.cplugs.reviewboard import routes_live  # noqa: E402,F401  pylint
+from src.cplugs.reviewboard import routes_look  # noqa: E402,F401  pylint
+from src.cplugs.reviewboard.public import routes_owner as public_routes  # noqa: E402,F401  pylint

@@ -8,6 +8,7 @@
   /* of its own - */
   import { untrack } from 'svelte';
   import type { CellProps } from '../../lib/cell';
+  import { legacyGlobal } from '../../../lib/legacy-globals';
   import { atLeast } from '../../lib/states';
   import { sessions, statusHue, statusLabel, type StatusHue } from '../../api';
   import { hostOffline, usageLimitLabel } from '../../../lib/led';
@@ -19,6 +20,7 @@
   import TerminalHead from './TerminalHead.svelte';
   import TerminalFoot from './TerminalFoot.svelte';
   import { bindTerminalTheme } from './theme';
+  import { pendingTheme, setPendingTheme } from './pending-theme.svelte';
   import { followTab } from '../terminal-group/tab-vote';
   import { useFrameHeader, useTabPane } from '../../shell/frame-header.svelte';
   import { layoutZoom } from '../../engine/layout-zoom.svelte';
@@ -26,7 +28,7 @@
   import MemberDown from '../../layouts/MemberDown.svelte';
   import { layoutActive } from '../../layouts/mode.svelte';
   import { terminalLayout } from '../../engine/layout.svelte';
-  import { park, parkKey, shouldPark, unpark } from './parking';
+  import { park, parkKey, shouldHoldForMove, shouldPark, unpark } from './parking';
   import SkillsDrawer from '../../../lib/session-skills/SkillsDrawer.svelte';
   import WidgetShell from '../../widgets/shell/WidgetShell.svelte';
   import { useWidget } from '../../widgets/shell/define-widget.svelte';
@@ -39,8 +41,7 @@
 
   // the page terminal
   $effect(() => {
-    const slot = instance;
-    return () => inputFocus.forget(slot);
+    return inputFocus.mount(instance);
   });
 
   const widthState = $derived(widget.widthState);
@@ -80,32 +81,35 @@
 
   const live = $derived(sessionId !== '' && showsPane && !dead && bodyEl !== null);
 
+  const slotKey = $derived(instance);
+
   $effect(() => {
     if (!live || terminalKey === '') return;
     const body = bodyEl;
     const target = untrack(() => row);
     if (!body || !target) return;
+    const slot = slotKey;
     const owner = untrack(() => terminalLayout.session);
-    const key = parkKey(instance, terminalKey);
+    const key = parkKey(slot, terminalKey);
     const kept = unpark(owner, key);
     const el = kept?.host ?? paneElement();
     body.appendChild(el);
-    let handle: LiveTerminal | null = kept?.handle ?? startLiveTerminal(el, instance, target);
+    let handle: LiveTerminal | null = kept?.handle ?? untrack(() => startLiveTerminal(el, slot, target));
     liveClient = handle ? handle.client : null;
     if (!handle) {
       console.error(
         'CloudeOpscenter: the terminal client is not on this page, so cell '
-          + instance + ' drew nothing',
+          + slot + ' drew nothing',
       );
       return () => el.remove();
     }
-    const stopActions = registerTerminalActions(
-      instance, handle.client as ControllerLike, el, false, el.parentElement,
-    );
+    const stopActions = untrack(() => registerTerminalActions(
+      slot, handle!.client as ControllerLike, el, false, el.parentElement,
+    ));
     return () => {
       stopActions();
-      inputFocus.release(instance);
       if (handle && shouldPark(owner, terminalLayout.session)) park(owner, key, el, handle);
+      else if (handle && shouldHoldForMove()) park(owner, key, el, handle, true);
       else {
         handle?.dispose();
         el.remove();
@@ -125,7 +129,7 @@
   const frameHeader = useFrameHeader();
   const groupSlot = $derived(frameHeader?.gridSlot ?? null);
   $effect(() => {
-    if (liveClient) followTab(liveClient, instance, tabPane, layoutZoom.isCovered(groupSlot));
+    if (liveClient) followTab(liveClient, slotKey, tabPane, layoutZoom.isCovered(groupSlot));
   });
 
   const activePane = $derived(row?.tmux_session ?? null);
@@ -140,7 +144,11 @@
     bg?.setActiveSession(name);
   });
 
-  const themePin = $derived(row?.pinned_theme ?? null);
+  const themePin = $derived(pendingTheme(row?.tmux_session) ?? row?.pinned_theme ?? null);
+  $effect(() => {
+    const tmux = row?.tmux_session;
+    if (tmux && pendingTheme(tmux) === (row?.pinned_theme ?? null)) setPendingTheme(tmux, null);
+  });
 
   $effect(() => {
     if (!liveClient || !bodyEl) return;
@@ -153,6 +161,21 @@
     inputFocus.claim(instance);
   }
 
+  let pointedAt = false;
+  function notePointer(event: PointerEvent): void {
+    pointedAt = event.target instanceof Node && (tlEl?.contains(event.target) ?? false);
+  }
+  let tlEl: HTMLDivElement | undefined;
+
+  function noPaneKey(event: KeyboardEvent): void {
+    if (!dead && showsPane) return;
+    if (!pointedAt) return;
+    const t = event.target;
+    if (t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    const drops = legacyGlobal<{ record(reason: string, c: { _inputOwner: string }): void }>('TerminalInputDrops');
+    drops?.record('no_live_pane', { _inputOwner: instance });
+  }
+
   function dropFocus(event: FocusEvent): void {
     const next = event.relatedTarget;
     const body = event.currentTarget;
@@ -162,8 +185,9 @@
 
 </script>
 
+<svelte:window onkeydowncapture={noPaneKey} onpointerdowncapture={notePointer} />
 <WidgetShell {widget} bare>
-<div class="oc-tl" data-foot-area>
+<div class="oc-tl" data-foot-area bind:this={tlEl}>
   <TerminalHead {hue} {name} {statusWord} {showsStatusWord} measured={row !== null}
     {sessionId} {width} slot={instance} controller={liveClient}
     agentFamily={row?.agent_family ?? null} />
@@ -189,6 +213,8 @@
         data-input-owner={owned ? 'true' : null}
         onfocuscapture={takeFocus}
         onfocusincapture={takeFocus}
+        onkeydowncapture={takeFocus}
+        onpointerdowncapture={takeFocus}
         onfocusoutcapture={dropFocus}
       ></div>
     {/if}

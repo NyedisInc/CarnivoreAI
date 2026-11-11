@@ -8,10 +8,8 @@ import structlog
 from src.core.approvals import beast_grid
 from src.core.approvals.extract import FAMILY_CLAUDE, FAMILY_CODEX, Dialog
 from src.core.approvals.plain_answer import summarize, summary_line
-from src.core.beast_prompts.engine import HISTORY_ACTION, NOTIFY_TYPE, BeastPromptsEngine, eligible_dialog
+from src.core.beast_prompts.engine import HISTORY_ACTION, BeastPromptsEngine, eligible_dialog
 from src.core.mcp import beast_mode, beast_store, pending
-from src.core.notifications import contracts
-from src.core.notifications.sources import common
 
 logger = structlog.get_logger()
 
@@ -31,12 +29,6 @@ def record_and_announce(get_manager: Callable[[], Any]) -> Callable[[Any, Dialog
             )
         except (OSError, ValueError) as exc:
             logger.warning("beast_prompt_history_unwritable", session_id=session_id, error_type=type(exc).__name__)
-        event = contracts.NotifyEvent(
-            type_id=NOTIFY_TYPE, kind="beast_prompt", title=common.type_title(NOTIFY_TYPE), ts=common.now(),
-            instance_key=f"beast_prompt:{session_id}:{dialog.fingerprint[:16]}", details=line,
-            **common.session_fields(get_manager(), session_id),
-        )
-        contracts.emit(event)
 
     return on_answered
 

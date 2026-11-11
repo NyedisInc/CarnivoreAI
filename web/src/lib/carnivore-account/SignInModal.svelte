@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte';
+    import { inNativeShell } from '../native-shell/shell';
     import { refusalMessage } from '../../../../client/js/labels/skill.js';
     import ModalShell from '../dialog-frame/ModalShell.svelte';
     import Check from '../../opscenter/ui/Check.svelte';
@@ -260,6 +261,7 @@
                 </Button>
             </div>
         {:else}
+            {#if !inNativeShell()}
             <div class="signin__providers">
                 <Button disabled={working || waiting} onclick={() => begin('google')} data-signin-provider="google">
                     <span class="signin__icon"><Icon name="google" fill="solid" size={16} /></span>{t('account.modal.google')}
@@ -268,6 +270,7 @@
                     <span class="signin__icon"><Icon name="github" fill="solid" size={16} /></span>{t('account.modal.github')}
                 </Button>
             </div>
+            {/if}
 
             {#if waiting}
                 <p class="signin__note" role="status" data-signin-waiting>{t('account.modal.waiting')}</p>
@@ -283,7 +286,9 @@
                 <Button onclick={stopWaiting}>{t('account.modal.stop_waiting')}</Button>
             {/if}
 
+            {#if !inNativeShell()}
             <div class="signin__or" aria-hidden="true"><span>{t('account.modal.or')}</span></div>
+            {/if}
 
             <Field
                 id="signin-email"

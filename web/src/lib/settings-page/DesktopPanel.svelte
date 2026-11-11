@@ -91,7 +91,7 @@
         }
     }
 
-    async function setLogin(which: 'engine' | 'window', next: boolean): Promise<void> {
+    async function setLogin(which: 'engine' | 'window' | 'launchWindow', next: boolean): Promise<void> {
         busy = true;
         problem = '';
         try {
@@ -191,6 +191,8 @@
                 bind:checked={() => shell?.login?.engine === true, (next) => void setLogin('engine', next)} disabled={busy || !hasDesktopCapability('setLoginItem', bridge)} data-desktop="login-engine" />
             <Switch label={t('desktop.settings.login.window')} hint={t('desktop.settings.login.window_hint')}
                 bind:checked={() => shell?.login?.window === true, (next) => void setLogin('window', next)} disabled={busy || !hasDesktopCapability('setLoginItem', bridge)} data-desktop="login-window" />
+            <Switch label={t('desktop.settings.launch_window')} hint={t('desktop.settings.launch_window_hint')}
+                bind:checked={() => shell?.login?.launchWindow !== false, (next) => void setLogin('launchWindow', next)} disabled={busy || !hasDesktopCapability('setLoginItem', bridge)} data-desktop="launch-window" />
 
             <div class="tm__field">
                 <p class="tm__figs">{t('desktop.settings.terminal')}</p>

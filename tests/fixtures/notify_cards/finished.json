@@ -1,0 +1,89 @@
+{
+  "kind": "finished",
+  "payload": {
+    "title": "billing-5 finished",
+    "body": "turn took 6 min, 3 files changed",
+    "path": "/sessions/ses_0123456789ab",
+    "thread": "local|ses_0123456789ab",
+    "v": 2,
+    "sub": "done on nostromo",
+    "kind": "finished",
+    "type": "session.finished",
+    "lv": "a",
+    "snd": "done",
+    "cap": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ttl": 1794000000,
+    "acts": [
+      [
+        "open",
+        "open"
+      ],
+      [
+        "reply",
+        "reply"
+      ]
+    ],
+    "card": {
+      "strip": [
+        "done",
+        "billing-5",
+        "nostromo"
+      ],
+      "agent": "billing-5",
+      "computer": "nostromo",
+      "ts": "9:41",
+      "mins": 6,
+      "files": [
+        "src/core/sessions/resize.py",
+        "web/src/lib/terminal/size-vote.ts",
+        "tests/test_terminal_resize.py"
+      ],
+      "nfiles": 3,
+      "stats": [
+        [
+          18,
+          4
+        ],
+        [
+          9,
+          2
+        ],
+        [
+          31,
+          0
+        ]
+      ]
+    }
+  },
+  "card": {
+    "strip": [
+      "done",
+      "billing-5",
+      "nostromo"
+    ],
+    "agent": "billing-5",
+    "computer": "nostromo",
+    "ts": "9:41",
+    "mins": 6,
+    "files": [
+      "src/core/sessions/resize.py",
+      "web/src/lib/terminal/size-vote.ts",
+      "tests/test_terminal_resize.py"
+    ],
+    "nfiles": 3,
+    "stats": [
+      [
+        18,
+        4
+      ],
+      [
+        9,
+        2
+      ],
+      [
+        31,
+        0
+      ]
+    ]
+  }
+}

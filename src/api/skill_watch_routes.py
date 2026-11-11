@@ -13,7 +13,8 @@ from src.api.catalog_installed_routes import apply_version
 from src.api.catalog_installed_support import row_now, stale_409
 from src.api.catalog_installed_watch import annotate_watch
 from src.api.catalog_routes import refuse_empty
-from src.api.catalog_views import find_item, installed_view
+from src.api.catalog_views import installed_view
+from src.core.catalog.publisher_rename import find_installed_item
 from src.core.skill_fires.tally import default_store
 from src.core.catalog.revocation import version_subject
 from src.core.catalog.verify_types import KEY_UNTRUSTED, VERSION_REVOKED
@@ -82,7 +83,7 @@ async def restore_installed(request: Request, install_id: str,
         raise stale_409(row)
     snapshot = await services.catalog.index_cache.get()
     refuse_empty(snapshot)
-    item, untrusted = find_item(snapshot, row.item_id)
+    item, untrusted = find_installed_item(snapshot, row.item_id, row.kind)
     version = None if item is None or untrusted else next(
         (v for v in item.versions if v.v == row.version and v.digest == row.digest), None)
     if version is None:

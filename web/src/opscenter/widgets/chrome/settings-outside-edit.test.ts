@@ -85,7 +85,7 @@ test('a widget in the sidebar widget area: settings... is an item of its icon me
   plain.querySelector<HTMLButtonElement>('[data-corner]')!.click();
   flushSync();
   expect(document.querySelector('[data-node="settings"]')).toBeNull();
-  expect(document.querySelector('[data-node="close-widget"]')).not.toBeNull();
+  expect(document.querySelector('[data-node="remove-widget"]')).not.toBeNull();
 });
 
 test('a glance placement: no hover gear; a right-click opens its menu, and settings... opens the options outside edit layout', () => {

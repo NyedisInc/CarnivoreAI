@@ -65,8 +65,8 @@ test('(c) the home-indicator inset reaches the panel exactly once', () => {
     let count = 0;
     for (const f of drawerSheets) count += (css(f).match(/safe-area-inset-bottom/g) || []).length;
     const ios = blocksFor(css('ios-chrome.css'), '.session-sidebar-panel')
-        .filter((b) => /padding-bottom:\s*env\(safe-area-inset-bottom\)/.test(b)).length;
-    assert.equal(ios, 1, 'ios-chrome.css must pad .session-sidebar-panel by env(safe-area-inset-bottom)');
+        .filter((b) => /padding-bottom:\s*calc\(env\(safe-area-inset-bottom\)\s*\/\s*2\)/.test(b)).length;
+    assert.equal(ios, 1, 'ios-chrome.css must pad .session-sidebar-panel by half of env(safe-area-inset-bottom)');
     assert.equal(count, 0, `drawer stylesheets restate safe-area-inset-bottom ${count} time(s)`);
 });
 

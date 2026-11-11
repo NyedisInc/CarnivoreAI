@@ -10,10 +10,7 @@ export const SURFACE_INSET_VARS = [
     '--menu-surface-bottom',
 ] as const;
 
-export const SURFACE_SELECTORS = ['#terminal-grid > .oc-surface', '#launchpad-screen .oc-surface'] as const;
-
-/* the bottom bar */
-const COVERED_SELECTOR = [...SURFACE_SELECTORS, '#browser-screen'].join(', ');
+export const SURFACE_SELECTORS = ['#terminal-grid > .oc-surface', '#launchpad-screen .oc-surface', '#launchpad-screen .oc-content'] as const;
 
 export interface SurfaceInsets {
     top: number;
@@ -61,25 +58,9 @@ export function createSurfaceTracker(env: SurfaceEnv): SurfaceTracker {
     let watched: Element | null = null;
     let running = false;
 
-    const covered = new Set<HTMLElement>();
-
-    const setCovered = (on: boolean): void => {
-        const now = on ? [...doc.querySelectorAll<HTMLElement>(COVERED_SELECTOR)] : [];
-        for (const el of [...covered]) {
-            if (now.includes(el)) continue;
-            el.removeAttribute('inert');
-            covered.delete(el);
-        }
-        for (const el of now) {
-            el.setAttribute('inert', '');
-            covered.add(el);
-        }
-    };
-
     const clear = (): void => {
         for (const name of SURFACE_INSET_VARS) doc.documentElement.style.removeProperty(name);
         doc.body?.classList.remove(MENU_PAGE_SURFACE_CLASS);
-        setCovered(false);
     };
 
     const watch = (surface: HTMLElement | null): void => {
@@ -108,7 +89,6 @@ export function createSurfaceTracker(env: SurfaceEnv): SurfaceTracker {
         style.setProperty('--menu-surface-right', `${insets.right}px`);
         style.setProperty('--menu-surface-bottom', `${insets.bottom}px`);
         doc.body?.classList.add(MENU_PAGE_SURFACE_CLASS);
-        setCovered(true);
         watch(surface);
         return true;
     }

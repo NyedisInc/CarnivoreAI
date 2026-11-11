@@ -8,7 +8,7 @@ settings:
   base:
     DEVELOPMENT_TEAM: ARD6KN4BX4
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "0.1.0"
+    MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
     TARGETED_DEVICE_FAMILY: "1"
     SUPPORTS_MACCATALYST: NO
@@ -21,10 +21,12 @@ targets:
       - Carnivore
       - path: Shared
         excludes: [TestVectors]
+      - CarnivoreNotify/NotificationService.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: ai.carnivore.ios
         PRODUCT_NAME: Carnivore
+        EXCLUDED_SOURCE_FILE_NAMES[config=Release]: NotificationService.swift
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_ENTITLEMENTS: Carnivore/Carnivore.entitlements
@@ -53,16 +55,20 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         CarnivorePushEnvironment: $(PUSH_ENVIRONMENT)
         CarnivoreKeychainGroup: $(AppIdentifierPrefix)ai.carnivore.shared
+        NSPhotoLibraryAddUsageDescription: carnivore saves an image an agent sent you to your photos when you tap save.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
     entitlements:
       path: Carnivore/Carnivore.entitlements
       properties:
         aps-environment: $(APS_ENVIRONMENT)
+        com.apple.developer.usernotifications.time-sensitive: true
         com.apple.security.application-groups: [group.ai.carnivore]
         keychain-access-groups: [$(AppIdentifierPrefix)ai.carnivore.shared]
     dependencies:
       - target: CarnivoreNotify
+        embed: true
+      - target: CarnivoreCard
         embed: true
   CarnivoreNotify:
     type: app-extension
@@ -72,9 +78,11 @@ targets:
       - path: Shared
         excludes: [TestVectors]
       - Carnivore/Generated/Strings.swift
+      - Carnivore/Generated/CardTones.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: ai.carnivore.ios.notify
+        ENABLE_DEBUG_DYLIB: NO
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_ENTITLEMENTS: CarnivoreNotify/CarnivoreNotify.entitlements
         GENERATE_INFOPLIST_FILE: NO
@@ -93,12 +101,46 @@ targets:
       properties:
         com.apple.security.application-groups: [group.ai.carnivore]
         keychain-access-groups: [$(AppIdentifierPrefix)ai.carnivore.shared]
+  CarnivoreCard:
+    type: app-extension
+    platform: iOS
+    sources:
+      - CarnivoreCard
+      - path: Shared
+        excludes: [TestVectors]
+      - Carnivore/Generated/Strings.swift
+      - Carnivore/Generated/CardTones.swift
+    dependencies:
+      - sdk: UserNotificationsUI.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.carnivore.ios.card
+        ENABLE_DEBUG_DYLIB: NO
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: NO
+    info:
+      path: CarnivoreCard/Info.plist
+      properties:
+        CFBundleDisplayName: Carnivore
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.usernotifications.content-extension
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).NotificationViewController
+          NSExtensionAttributes:
+            UNNotificationExtensionCategory: [carnivore.yesno, carnivore.choice, carnivore.permission, carnivore.file, carnivore.link, carnivore.image, carnivore.video, carnivore.finished, carnivore.died, carnivore.update, carnivore.appupdate, carnivore.swarm, carnivore.crosstalk, carnivore.signin, carnivore.notice]
+            UNNotificationExtensionDefaultContentHidden: true
+            UNNotificationExtensionUserInteractionEnabled: false
+            UNNotificationExtensionInitialContentSizeRatio: 0.6
   CarnivoreTests:
     type: bundle.unit-test
     platform: iOS
     sources:
       - Tests
       - path: Shared/TestVectors
+        buildPhase: resources
+      - path: ../tests/fixtures/notify_cards
+        type: folder
         buildPhase: resources
     dependencies:
       - target: Carnivore
@@ -107,6 +149,18 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: ai.carnivore.ios.tests
         TARGETED_DEVICE_FAMILY: "1"
+  CarnivoreShotTests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - UITests
+    dependencies:
+      - target: Carnivore
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: ai.carnivore.ios.uitests
+        TARGETED_DEVICE_FAMILY: "1"
 schemes:
   Carnivore:
     build:
@@ -114,3 +168,9 @@ schemes:
         Carnivore: all
     test:
       targets: [CarnivoreTests]
+  CarnivoreAcceptance:
+    build:
+      targets:
+        Carnivore: all
+    test:
+      targets: [CarnivoreShotTests]

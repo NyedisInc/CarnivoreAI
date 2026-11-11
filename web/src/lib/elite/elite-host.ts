@@ -1,3 +1,4 @@
+import { inNativeShell } from '../native-shell/shell';
 import { createOverlayHost } from '../manager-frame/overlay-host';
 import EliteScreen from './EliteScreen.svelte';
 
@@ -7,7 +8,7 @@ export const ELITE_HASH = '#elite';
 
 const host = createOverlayHost(ELITE_SCREEN_CONTAINER, EliteScreen, ELITE_HASH);
 
-export const openEliteScreen = (options: { direct?: boolean } = {}): boolean => host.open({ ...options });
+export const openEliteScreen = (options: { direct?: boolean } = {}): boolean => (inNativeShell() ? false : host.open({ ...options }));
 
 export const closeEliteScreen = (): boolean => host.close();
 

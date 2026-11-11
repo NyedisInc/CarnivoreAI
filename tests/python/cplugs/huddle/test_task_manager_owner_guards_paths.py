@@ -135,6 +135,20 @@ def test_a_board_round_then_a_revision_card_can_request_review(manager):
     assert out["review"]["moved"] is True and store.item(item)["state"] == "review"
 
 
+def test_a_forward_of_visitor_responses_is_not_a_round_and_waits_for_an_answer(manager):
+    store, item = _item(manager)
+    port = board_port.BoardPort(runtime.host_for(manager.app).context("huddle"))
+    out = asyncio.run(port.post_visitors(item, "visitor responses (unverified)\n> hi", {"slug": "s", "revisions": ["r1", "r2"]}))
+    assert out["posted"] is True
+    message = store.item(item)["thread"][-1]
+    assert "board_round" not in message and board.round_wire(message.get("parts") or "") is None
+    plan = owner_guards.plan_reply(store, item, None, False)
+    assert plan.kind == "answer" and plan.quote == out["message_id"]
+    with closing(store._connect(False)) as conn:
+        raw = conn.execute("SELECT parts FROM work_messages WHERE id = ?", (out["message_id"],)).fetchone()[0]
+    assert raw == board.visitors_parts_of({"slug": "s", "revisions": ["r1", "r2"]})
+
+
 
 
 def test_an_archived_handoff_and_a_prose_mention_are_not_pending(handoff_root):

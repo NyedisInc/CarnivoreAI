@@ -55,6 +55,13 @@ async def _agent_message(rig: EmitRig, mp: Any) -> None:
     await agent_message.send(rig.manager, SESSION, "deploy is green")
 
 
+async def _agent_review(rig: EmitRig, mp: Any) -> None:
+    from src.core.notifications import agent_message
+
+    mp.setattr(agent_message, "enabled", lambda: True)
+    await agent_message.send(rig.manager, SESSION, "the mockup is ready", attachment={"url": "https://example.com/mockup"}, review=True)
+
+
 async def _plugin_notice(rig: EmitRig, _mp: Any) -> None:
     from src.cplugs.host.capabilities import toaster
 
@@ -96,7 +103,7 @@ async def _auto_slept(rig: EmitRig, _mp: Any) -> None:
 async def _agent_update(rig: EmitRig, mp: Any) -> None:
     from src.core.notifications.sources import agent_update
 
-    mp.setattr(agent_update, "stale_installed_version", lambda _w: "9.9.9")
+    mp.setattr(agent_update, "stale_sessions", lambda _w: ("9.9.9", []))
     assert agent_update.check_once(None, rig.tmp) is True
 
 
@@ -111,25 +118,6 @@ async def _restore(rig: EmitRig, mp: Any) -> None:
 
     mp.setattr(restore, "_announced", False)
     assert restore.on_offered("o_1") is True
-
-
-async def _beast(rig: EmitRig, mp: Any) -> None:
-    from src.core.beast_prompts import wiring
-
-    mp.setattr(wiring.pending, "get_store", lambda: SimpleNamespace(record_beast=lambda **_k: None))
-    mp.setattr(wiring, "summarize", lambda _d: ("Bash", "ls"))
-    mp.setattr(wiring, "summary_line", lambda _d: "Bash: ls")
-    info = SimpleNamespace(session=SimpleNamespace(id=SESSION), tmux_session="cloude_api")
-    wiring.record_and_announce(lambda: rig.manager)(info, SimpleNamespace(kind="permission", fingerprint="f" * 32))
-
-
-async def _auto_accepted(rig: EmitRig, mp: Any) -> None:
-    from src.core.approvals.auto_answer import record
-
-    mp.setattr(record.pending, "get_store", lambda: SimpleNamespace(record_beast=lambda **_k: None))
-    info = SimpleNamespace(session=SimpleNamespace(id=SESSION), tmux_session="cloude_api")
-    dialog = SimpleNamespace(kind="startup", startup_kind="folder_trust", fingerprint="f" * 32)
-    record.record_and_announce(lambda: rig.manager)(info, dialog, "folder_trust", "Yes, I trust this folder", "project")
 
 
 def _swarm(ref: str) -> Callable[[EmitRig, Any], Awaitable[None]]:
@@ -268,8 +256,8 @@ def _approval(source: str, item: str, dialog_kind: str) -> Callable[[EmitRig, An
 
 
 
-NEEDS, SESS, MSG, AUTO, SWARM, HEALTH, SEC, AUTOM, APP = (
-    "needs_you", "sessions", "messages", "auto_answers", "swarm", "health", "security", "automations", "app")
+NEEDS, SESS, MSG, SWARM, HEALTH, SEC, AUTOM, APP = (
+    "needs_you", "sessions", "messages", "swarm", "health", "security", "automations", "app")
 
 ROWS = (
     Row("session.permission", NEEDS, TOAST, _attention("PermissionRequest", REASON_PERMISSION)),
@@ -286,10 +274,9 @@ ROWS = (
     Row("app.restore_offer", SESS, NONE, _restore),
     Row("session.terminal_notice", SESS, TOAST, _terminal_notice),
     Row("agent.message", MSG, TOAST, _agent_message),
+    Row("agent.review", MSG, TOAST, _agent_review),
     Row("plugin.notice", MSG, TOAST, _plugin_notice),
     Row("session.skill_tripwire", MSG, TOAST, _skill_tripwire),
-    Row("session.beast_approved", AUTO, NONE, _beast),
-    Row("session.auto_accepted", AUTO, NONE, _auto_accepted),
     Row("swarm.alert", SWARM, NONE, _swarm("alert:immediate:stuck:3")),
     Row("swarm.flash", SWARM, NONE, _swarm("alert:flash:3:ab12")),
     Row("swarm.question_climbed", SWARM, NONE, _question_climbed),
@@ -301,6 +288,8 @@ ROWS = (
     Row("pack.skills", HEALTH, BELL, _alert("pack_skills.alpha_changed", "app_alert.pack_skills.alpha_changed.title")),
     Row("alert.notifications", HEALTH, BELL, _destination_disabled, outside=False),
     Row("provider.needs_login", HEALTH, NONE, _needs_login),
+    Row("alert.argent_budget_warn", HEALTH, BELL, _alert("argent.budget.warn:wi_1", "app_alert.argent.budget_warn.title")),
+    Row("alert.argent_budget_hold", HEALTH, BELL, _alert("argent.budget.hold:wi_1", "app_alert.argent.budget_hold.title")),
     Row("alert.other", HEALTH, BELL, _alert("widget.report.emit", "app_alert.widget.report.title")),
     Row("computer.wrong_code", SEC, NONE, _wrong_code),
     Row("computer.knock", SEC, NONE, _knock),
@@ -328,7 +317,7 @@ def test_every_registered_type_has_exactly_one_row() -> None:
     assert len(ROWS) == len(_BY_ID), "a type has two rows"
     assert sorted(_BY_ID) == sorted(registered), (
         f"missing rows: {sorted(set(registered) - set(_BY_ID))}; stale rows: {sorted(set(_BY_ID) - set(registered))}")
-    assert len(registered) == 39
+    assert len(registered) == 40
 
 
 @pytest.mark.parametrize("row", ROWS, ids=[row.type_id for row in ROWS])

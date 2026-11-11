@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { t } from '../../sdk';
+  import { argentHeldRows } from '../../sdk/argent-held.svelte';
   import { colorBook, type ColorBook } from './agent-colors.svelte';
   import { Character, type CharacterPack, DEFAULT_PACK } from './characters';
   import type { FloorItem, FloorTarget } from './floor';
@@ -27,6 +28,7 @@
   }
   const { tree, agents, now, pack = DEFAULT_PACK, colors, still, busy = null, onOpen, foot, onFilter, filtered = null }: Props = $props();
   const book = $derived(colors ?? colorBook(agents, null));
+  const held = $derived(argentHeldRows());
 
   function pressNode(item: FloorItem, event: MouseEvent): void {
     if (onFilter && event.shiftKey) onFilter(item);
@@ -132,6 +134,7 @@
             <span class="pko-seat" data-swarm-roll={it.rollup} style:--pko-s="{size}px"></span>
           {/if}
         </span>
+        {#if held.has(agent?.session_row_id ?? it.row?.session_row_id ?? -1)}<span class="pko-held" data-swarm-node-held role="img" aria-label={t('argent.card.held_node')}></span>{/if}
         <span class="pko-nm"><TaskMark rank={markRankOf(it)} />{it.label}<MachineBadge hostKey={agent?.host_key ?? it.row?.host_key} label={agent?.host_label ?? it.row?.host_label} state={it.row?.host_state} /></span>
       </button>
     {/each}
@@ -165,6 +168,15 @@
 
     .pko:active {
       cursor: grabbing;
+    }
+
+    .pko-held {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 8px;
+      height: 8px;
+      background: var(--oc-coral);
     }
 
     .pko-stage {

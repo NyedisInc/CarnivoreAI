@@ -136,6 +136,30 @@ describe('a redraw posts nothing back', () => {
   });
 });
 
+describe('read only (#2696 slice 5)', () => {
+  it('a mode message draws every control disabled, keeps a saved note readable, and posts nothing on a press', () => {
+    boot();
+    deliver({ type: 'load', payload: { layer: 'questions', v: 1, values: { rail: true }, notes: { dense: 'later' } }, save: null });
+    deliver({ type: 'mode', readonly: true });
+    expect(item('rail').hasAttribute('data-rbl-readonly')).toBe(true);
+    expect(pick('rail', 'yes').disabled).toBe(true);
+    expect((item('name').querySelector('input') as HTMLInputElement).disabled).toBe(true);
+    const note = item('dense').querySelector('.rbl-note') as HTMLTextAreaElement;
+    expect([note.value, note.readOnly, note.hidden]).toEqual(['later', true, false]);
+    expect((item('rail').querySelector('.rbl-notekey') as HTMLButtonElement).hidden).toBe(true);
+    press(pick('rail', 'no'));
+    expect(posted()).toEqual([]);
+  });
+
+  it('leaving read only draws the controls live again', () => {
+    boot();
+    deliver({ type: 'mode', readonly: true });
+    deliver({ type: 'mode', readonly: false });
+    press(pick('rail', 'yes'));
+    expect(posted().at(-1)?.values).toMatchObject({ rail: true });
+  });
+});
+
 describe('placement', () => {
   it('draws an anchored item right after its part and an unknown anchor in the end section', () => {
     boot();

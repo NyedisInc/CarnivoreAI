@@ -1,3 +1,4 @@
+import { inNativeShell } from '../../lib/native-shell/shell';
 import {
   openBlueprints,
   openHome,
@@ -67,7 +68,7 @@ export const RAIL_DESTINATIONS: RailItem[] = [
   row('dashboards', 'layout', 'opscenter.nav.dashboards'),
   row('sessions', 'folder', 'opscenter.nav.sessions'),
   row('automations', 'clock', 'opscenter.nav.automations'),
-  row('warez', 'floppy-525', 'opscenter.nav.warez'),
+  row('warez', 'floppy-525', 'opscenter.nav.warez', () => !inNativeShell()),
   row('widgets', 'grid', 'opscenter.nav.widgets'),
   row('blueprints', 'cube', 'blueprint.title'),
   row('providers', 'activity', 'opscenter.nav.providers'),

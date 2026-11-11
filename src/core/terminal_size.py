@@ -127,6 +127,13 @@ class TerminalSizeNegotiator:
         self._last[session_id] = (cols, rows)
         return True
 
+    def visible_count(self, session_id: str) -> int:
+        clients = self._sizes.get(session_id)
+        if not clients:
+            return 0
+        withdrawn = self._withdrawn.get(session_id, set())
+        return sum(1 for key in clients if key not in withdrawn)
+
     def client_count(self, session_id: str) -> int:
         clients = self._sizes.get(session_id)
         return len(clients) if clients else 0

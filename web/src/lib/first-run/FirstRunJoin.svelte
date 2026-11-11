@@ -67,7 +67,7 @@
     const bridge = $derived(desktopBridge());
 
     const knockErrorKey = $derived(
-        error === 'used_up' || error === 'expired' ? 'first_run.knock.error.gone'
+        error === 'used_up' || error === 'no_code' || error === 'expired' ? 'first_run.knock.error.gone'
             : error === 'busy' || error === 'rate_limited' || error === 'refused' || error === 'paused' || error === 'incompatible' ? `first_run.knock.error.${error}`
                 : `first_run.join.error.${error ?? 'refused'}`,
     );

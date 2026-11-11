@@ -29,7 +29,7 @@ from src.core.theme_catalog_consent import drop_stale_effects_grant
 from src.core.ui_preferences_store import UiPreferencesStore
 from src.models.catalog_api import InstallConsent
 from src.models.themes import ThemeManifest
-from src.cplugs.host import sideload, sideload_kind
+from src.cplugs.host import sideload, sideload_copy, sideload_kind
 from src.cplugs.host.sideload import SideloadRefused
 
 logger = structlog.get_logger()
@@ -139,7 +139,7 @@ def _stage(roots: InstallRoots, source: Path) -> Tuple[Path, Dict[str, str]]:
     except StagingBusy as exc:
         raise SideloadRefused("staging_busy", str(exc), 503) from exc
     try:
-        return holder / "tree", sideload.copy_tree(source, holder / "tree")
+        return holder / "tree", sideload_copy.copy_tree(source, holder / "tree")
     except (SideloadRefused, OSError):
         targets.remove_tree(holder)
         raise
@@ -180,7 +180,7 @@ def _place(staged: Path, dest: Path, incoming: Path, exec_paths: frozenset) -> N
 
 def tree_digest(root: Path) -> Tuple[str, Tuple[folder_digest.DigestEntry, ...]]:
     _all, entries = folder_digest.digest_directory(root)
-    kept = tuple(e for e in entries if not sideload.is_noise(e.relpath.rsplit("/", 1)[-1]))
+    kept = tuple(e for e in entries if not sideload_copy.is_noise(e.relpath.rsplit("/", 1)[-1]))
     return folder_digest.digest_entries(kept), kept
 
 
@@ -249,7 +249,7 @@ def _install(env: Env, kind: str, name: str, source: Path, staged: Path, files: 
         raise ConsentRequired(_sheet(kind, name, staged, digest, body_sha, "this folder runs code; show the sheet and send its digest and body_sha back as consent", executable))
     _check_unmodified(plan, record)
     done = _write(plan, env.roots, staged, executable)
-    changed = sideload.changed_files((record or {}).get("files", {}), files)
+    changed = sideload_copy.changed_files((record or {}).get("files", {}), files)
     try:
         _record(env, kind, name, digest, files, changed, source, answer, consented)
     except BaseException:

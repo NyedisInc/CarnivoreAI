@@ -16,6 +16,7 @@ from src.api.catalog_theme_rules import drop_theme_run_grant_with, prune_theme_p
 from src.core.sessions.ports import InstallRoots
 from src.cplugs.host.adoption import BUILTIN_SOURCE
 from src.core.skill_watch.store import default_watch_store
+from src.core.catalog import publisher_rename
 from src.core.skills.required import mark_declined
 from src.core.skills.legacy_trash import trash_root_for
 from src.core.skills.kinds import KIND_CPLUG, KIND_MOD
@@ -237,6 +238,13 @@ def swap_targets(
         apply_swap(journal, roots=roots)
 
 
+def _relabel_after_update(services: Any, updated: InstalledItem) -> InstalledItem:
+    if not publisher_rename.relabel_install(services.catalog.index_cache.snapshot(), services, updated.install_id):
+        return updated
+    with services.catalog.ledger() as ledger:
+        return ledger.get(updated.install_id) or updated
+
+
 def apply_update_now(
     request: Request,
     *,
@@ -343,6 +351,8 @@ def apply_update_with(
         except InstallNotFound:
             raise not_found_404(row.install_id)
 
+    if row.publisher in publisher_rename.LEGACY_PUBLISHERS:
+        updated = _relabel_after_update(services, updated)
     drop_theme_run_grant_with(services, updated)
     announce_theme_change(updated)
 

@@ -11,6 +11,7 @@ vitest web/src/opscenter/widgets/shell/shell-conformance.test.ts
 vitest web/src/widget-harness/menu-conformance.test.ts
 vitest web/src/lib/i18n/coverage.test.ts
 vitest web/src/cplugs/boundaries.test.ts
+pytest tests/python/cplugs/test_cplug_sections.py
 vitest web/src/lib/legacy-globals.test.ts
 vitest web/src/lib/base/theme-contract.test.ts
 vitest web/src/lib/base/modal-btn-default.test.ts

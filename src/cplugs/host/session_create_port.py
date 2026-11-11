@@ -181,7 +181,7 @@ def standing_of(supervisor: Any, state_dir: Any, ability: str = "sessions.create
             return "not_a_sideload"
         if ability not in ctx.granted:
             return "grant_revoked"
-        if not sideload.is_on(state_dir):
+        if not sideload.allowed(state_dir):
             return "sideload_off"
         return ""
 

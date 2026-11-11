@@ -67,7 +67,7 @@ class ScopeNotGranted(peer_token.PeerTokenError):
 
 
 _SCOPE_ACTION = {"replica": "host_agents", "migrate": "receive_projects", "credentials": "receive_credentials",
-                 "refresh": "update_carnivore"}
+                 "refresh": "update_carnivore", "global-setup": "receive_global_setup"}
 
 
 def _restriction_refusal(scope: str) -> Optional[HTTPException]:

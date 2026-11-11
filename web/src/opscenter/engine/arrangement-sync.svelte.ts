@@ -15,7 +15,7 @@ import { activeTabsFor, adoptGroups, groupsFor, replaceTabs, storedTabKeys } fro
 import { rekeyArrangement, rekeyEntry, type SlotRow } from './slot-identity';
 import { sessions } from '../api';
 import { untrack } from 'svelte';
-import { gestureActive } from './pointer';
+import { surfaceBusy } from './surface-busy';
 import { clear, flushSave, load, save, validate } from './persist';
 import { forgetSession, isBareTerminal, readIndex, touchSession } from './session-layouts';
 import { META } from './meta';
@@ -98,7 +98,7 @@ function applyEntry(key: string, entry: ArrangementEntry): void {
 }
 
 export function applyArrangement(next: Arrangement): void {
-  if (gestureActive()) {
+  if (surfaceBusy()) {
     held = next;
     if (heldTimer === undefined) {
       heldTimer = setTimeout(() => {
@@ -127,7 +127,7 @@ export function applyArrangement(next: Arrangement): void {
 async function flush(): Promise<void> {
   const api = prefs();
   if (pending.size === 0 || !api) return;
-  if (inflight || gestureActive() || api.status() !== api.HYDRATED || synced === null) {
+  if (inflight || surfaceBusy() || api.status() !== api.HYDRATED || synced === null) {
     scheduleWrite(RETRY_DELAY * 4);
     return;
   }
@@ -223,7 +223,7 @@ function rekeyLocal(rows: readonly SlotRow[], drop: boolean): number {
 export async function rekeySlots(rows: readonly SlotRow[]): Promise<void> {
   const api = prefs();
   if (api && (api.status() !== api.HYDRATED || synced === null)) return;
-  if (inflight || gestureActive()) return;
+  if (inflight || surfaceBusy()) return;
   const drop = !droppedOnce && rows.length > 0;
   const droppedHere = rekeyLocal(rows, drop);
   const rewrite = (base: Arrangement): Arrangement => rekeyArrangement(base, rows, drop).map;

@@ -1,15 +1,14 @@
 
 from __future__ import annotations
 
-import json
 import os
-import tempfile
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 import structlog
 
 from src.core import config_writer
+from src.cplugs.host import registry_store
 
 logger = structlog.get_logger()
 
@@ -72,26 +71,23 @@ def _move_folder(state_dir: Path) -> bool:
 
 
 def _move_grant(state_dir: Path) -> bool:
-    path = state_dir / "cplugs" / "state.json"
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError:
+    def rewrite(docs: registry_store.Documents) -> bool:
+        cplugs = docs.load("state").get("cplugs")
+        changed = False
+        for entry in (cplugs or {}).values():
+            grants = entry.get("grants") if isinstance(entry, dict) else None
+            if isinstance(grants, list) and "pack" in grants:
+                entry["grants"] = ["swarm" if g == "pack" else g for g in grants if g != "pack" or "swarm" not in grants]
+                changed = True
+        return changed
+
+    if not registry_store.cplugs_dir(state_dir).is_dir():
         return False
-    cplugs = data.get("cplugs") if isinstance(data, dict) else None
-    changed = False
-    for entry in (cplugs or {}).values():
-        grants = entry.get("grants") if isinstance(entry, dict) else None
-        if isinstance(grants, list) and "pack" in grants:
-            entry["grants"] = ["swarm" if g == "pack" else g for g in grants if g != "pack" or "swarm" not in grants]
-            changed = True
-    if changed:
-        fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=".state-", suffix=".tmp")
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            json.dump(data, handle, indent=2)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(tmp, path)
-    return changed
+    try:
+        return registry_store.commit(state_dir, rewrite, log_event="swarm_legacy_grant_write_failed")
+    except OSError as exc:
+        logger.error("swarm_legacy_grant_move_failed", state_dir=str(state_dir), error_type=type(exc).__name__, error=str(exc)[:200])
+        return False
 
 
 def migrate(config_path: Path, state_dir: Path) -> Dict[str, bool]:

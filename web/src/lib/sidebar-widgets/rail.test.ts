@@ -75,7 +75,7 @@ test('T02: the menu slides over the whole list region; the list and search stay 
   expect(flyout().classList.contains('sbr-flyout--open')).toBe(true);
   expect(flyout().dataset.flyout).toBe(MENU_FLYOUT);
   expect(flyout().querySelector('nav.oc-sidebar'), 'the menu is the existing DrawerMenu').not.toBeNull();
-  expect(flyout().querySelector('.sbr-flyout__name')!.textContent).toBe('menu');
+  expect(flyout().querySelector('.sbr-flyout__name'), 'the menu has no title row (#2908)').toBeNull();
 });
 
 test('T03: picking a destination from the menu closes it in the same interaction', async () => {

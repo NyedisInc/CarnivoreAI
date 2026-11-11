@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "version": "fixture-1",
+  "body_cap_bytes": 1048576,
+  "mints_accepted": true,
+  "dlp": "on",
+  "upstream_chain": false
+}

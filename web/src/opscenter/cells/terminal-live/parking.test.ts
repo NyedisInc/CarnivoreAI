@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import {
-  PARK_MS, PARKED_LAYOUTS, PARKED_TERMINALS, park, parkKey, parkedCount, releaseAll, setParking, shouldPark, unpark,
+  PARK_MS, PARKED_LAYOUTS, PARKED_TERMINALS, TRANSIT_MS, park, parkKey, parkedCount, releaseAll, setParking, shouldPark, unpark,
 } from './parking';
 import type { LiveTerminal } from './client';
 
@@ -84,4 +84,17 @@ test('a parked terminal is ended after its time, and every one when the grid goe
   setParking(false);
   expect(kept.disposed).toBe(true);
   expect(parkedCount()).toBe(0);
+});
+
+test('a terminal held for a move comes back to its cell, ends after TRANSIT_MS, and never counts as a parked Layout', () => {
+  const live = handle();
+  const key = parkKey('terminal:row:2', 'ses_2\ncloude_b');
+  park('cloude_api', key, document.createElement('div'), live, true);
+  expect(unpark('cloude_api', key)?.handle).toBe(live);
+  const ended = handle();
+  park('cloude_api', key, document.createElement('div'), ended, true);
+  for (let i = 0; i < PARKED_LAYOUTS + 1; i += 1) park(`layout:L${i}`, parkKey('terminal:row:9', `ses_${i}\nx`), document.createElement('div'), handle());
+  expect(ended.disposed).toBe(false);
+  vi.advanceTimersByTime(TRANSIT_MS + 1);
+  expect(ended.disposed).toBe(true);
 });

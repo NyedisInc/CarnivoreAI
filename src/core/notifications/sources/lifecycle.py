@@ -9,7 +9,7 @@ from src.core.notifications.sources import agent_update, alerts
 
 def start(app_state: Any, loop: asyncio.AbstractEventLoop) -> None:
     alerts.install(loop)
-    agent_update.install(lambda: getattr(app_state, "attention_watcher", None))
+    agent_update.install(lambda: getattr(app_state, "attention_watcher", None), lambda: getattr(app_state, "session_manager", None), loop, app_state)
 
 
 async def stop(task: Optional["asyncio.Task[None]"] = None) -> None:

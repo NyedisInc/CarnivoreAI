@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import stat
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Optional
@@ -84,7 +85,7 @@ def verify_manifest(blobs: BlobStore, manifest: Manifest) -> int:
     return manifest.raw_bytes()
 
 
-def _write_entry(blobs: BlobStore, entry: FileEntry, dest: Path) -> None:
+def _write_entry(blobs: BlobStore, entry: FileEntry, dest: Path, *, imported: bool = False) -> None:
     tf.assert_test_write_allowed(dest)
     dest.parent.mkdir(parents=True, exist_ok=True)
     temp = dest.with_name(layout.temp_name(".vault-restore-"))
@@ -100,7 +101,7 @@ def _write_entry(blobs: BlobStore, entry: FileEntry, dest: Path) -> None:
         whole = digest.hexdigest() if entry.sha_kind == K.SHA_CONTENT else chain_sha(entry.chunks)
         if total != entry.length or whole != entry.sha256:
             raise RestoreError(f"{entry.rel}: the restored bytes do not match the manifest")
-        _apply_metadata(temp, entry)
+        _apply_metadata(temp, entry, imported=imported)
         try:
             place_no_clobber(temp, dest)
         except PlaceConflict:
@@ -109,9 +110,20 @@ def _write_entry(blobs: BlobStore, entry: FileEntry, dest: Path) -> None:
         temp.unlink(missing_ok=True)
 
 
-def _apply_metadata(temp: Path, entry: FileEntry) -> None:
+def restored_mode(entry: FileEntry, *, imported: bool) -> int:
+    recorded = entry.mode & 0o777
+    if recorded and not imported:
+        return recorded
     try:
-        os.chmod(temp, (entry.mode & 0o777) or K.DEFAULT_RESTORE_MODE)
+        st = os.stat(entry.source_path)
+    except (OSError, ValueError):
+        return K.DEFAULT_RESTORE_MODE
+    return stat.S_IMODE(st.st_mode) if stat.S_ISREG(st.st_mode) else K.DEFAULT_RESTORE_MODE
+
+
+def _apply_metadata(temp: Path, entry: FileEntry, *, imported: bool = False) -> None:
+    try:
+        os.chmod(temp, restored_mode(entry, imported=imported))
         if entry.mtime_ns > 0:
             os.utime(temp, ns=(entry.mtime_ns, entry.mtime_ns))
     except OSError as exc:
@@ -132,7 +144,7 @@ def restore_manifest(blobs: BlobStore, manifest: Manifest, destination: Callable
         elif dest.exists():
             result.already_present.append(dest)
         else:
-            _write_entry(blobs, entry, dest)
+            _write_entry(blobs, entry, dest, imported=manifest.reason == K.REASON_IMPORT)
             result.written.append(dest)
             result.bytes += entry.length
     logger.info("vault_restored", unit=manifest.unit, point_id=manifest.point_id, written=len(result.written),

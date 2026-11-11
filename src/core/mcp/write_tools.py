@@ -13,6 +13,7 @@ from typing import Any, Awaitable, Callable, Optional
 import structlog
 from fastapi import HTTPException
 
+from src.core.budget_hold.gate import hold_check
 from src.core.db import DatastoreUnreadableError
 from src.core.mcp import beast_mode, federated, in_use as in_use_mod, pending, restart_account_args, session_target
 from src.core.mcp.approvals import call_context, runtime as approval_runtime, wording
@@ -328,6 +329,9 @@ async def _own_dialog_open(app: Any, info: Any) -> bool:
 
 async def _do_send_keys(app: Any, target_id: str, epoch: Optional[int], data: bytes) -> dict:
     info = await _resolved_again(app, target_id, epoch)
+    held = hold_check(info.session_row_id, data.decode("utf-8"), info.activity_status, info.startup_gate)
+    if held.held:
+        raise ToolError(f"held: {held.item} is at its budget. ask the budget owner for more. nothing was sent")
     try:
         await asyncio.to_thread(swarm_delivery.record_for_session_row, info.session_row_id, "send_keys", f"send_keys:{target_id}")
     except (DatastoreUnreadableError, sqlite3.Error, OSError):

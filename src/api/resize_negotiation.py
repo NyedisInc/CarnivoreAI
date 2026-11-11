@@ -6,7 +6,7 @@ from typing import Any, Hashable, Optional, Tuple
 
 import structlog
 
-from src.api.attach_settle import NO_RESIZE_ATTEMPTED, ResizeOutcome
+from src.api.attach_settle import NO_RESIZE_ATTEMPTED, ResizeOutcome, read_pane_geometry
 from src.core.terminal_size import TerminalSizeNegotiator
 from src.models import WSMessageType
 
@@ -79,6 +79,14 @@ async def broadcast_size(
         "constrained": client_count > 1,
     })
     await connection_manager.broadcast_to_session(session_id, message)
+
+
+async def measured_size_frame(backend: Any) -> Optional[str]:
+    grid = await read_pane_geometry(backend)
+    if grid is None:
+        return None
+    return json.dumps({
+        "type": WSMessageType.TERMINAL_SIZE, "cols": grid[0], "rows": grid[1], "measured": True})
 
 
 def adopt_grid(

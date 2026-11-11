@@ -1,0 +1,71 @@
+{
+  "kind": "crosstalk",
+  "payload": {
+    "title": "message from api-docs",
+    "body": "tests are green, ready for you",
+    "path": "/sessions/ses_0123456789ab",
+    "thread": "local|ses_0123456789ab",
+    "v": 2,
+    "sub": "crosstalk to home",
+    "kind": "crosstalk",
+    "type": "agent.message",
+    "lv": "a",
+    "snd": "soft",
+    "cap": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ttl": 1794000000,
+    "acts": [
+      [
+        "reply",
+        "reply"
+      ]
+    ],
+    "card": {
+      "strip": [
+        "message",
+        "api-docs",
+        "nostromo"
+      ],
+      "agent": "api-docs",
+      "computer": "nostromo",
+      "ts": "9:41",
+      "text": "tests are green, ready for you"
+    },
+    "more": true
+  },
+  "card": {
+    "strip": [
+      "message",
+      "api-docs",
+      "nostromo"
+    ],
+    "agent": "api-docs",
+    "computer": "nostromo",
+    "ts": "9:41",
+    "text": "tests are green, ready for you"
+  },
+  "full": {
+    "strip": [
+      "message",
+      "api-docs",
+      "nostromo"
+    ],
+    "agent": "api-docs",
+    "computer": "nostromo",
+    "ts": "9:41",
+    "text": "tests are green, ready for you",
+    "thread": [
+      [
+        "home",
+        "did the resize fix land?"
+      ],
+      [
+        "api-docs",
+        "yes, merged to a branch"
+      ],
+      [
+        "api-docs",
+        "tests are green, ready for you"
+      ]
+    ]
+  }
+}

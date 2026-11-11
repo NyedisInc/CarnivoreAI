@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import structlog
 
@@ -39,6 +39,8 @@ _USER_AGENT_ID = re.compile(r"^[0-9a-f]+$")
 _JSONL = ".jsonl"
 _META = ".meta.json"
 _PREFIX = "agent-"
+_WORKFLOWS = "workflows"
+_WORKFLOW_PREFIX = "wf_"
 
 
 @dataclass(frozen=True)
@@ -46,6 +48,7 @@ class _Candidate:
 
     agent_id: str
     mtime: float
+    directory: Path
 
 
 def subagents_dir_for(transcript_path: Path) -> Path:
@@ -58,9 +61,7 @@ def _iso(value: Optional[datetime]) -> Optional[str]:
     return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def _scan(directory: Path) -> Tuple[List[_Candidate], int]:
-    newest: dict = {}
-    internal = set()
+def _scan_one(directory: Path, newest: dict, internal: set) -> None:
     for name in entry_names(directory):
         if not name.startswith(_PREFIX):
             continue
@@ -77,8 +78,25 @@ def _scan(directory: Path) -> Tuple[List[_Candidate], int]:
             mtime = os.stat(os.path.join(directory, name)).st_mtime
         except OSError:
             mtime = 0.0
-        newest[agent_id] = max(mtime, newest.get(agent_id, 0.0))
-    candidates = [_Candidate(agent_id, mtime) for agent_id, mtime in newest.items()]
+        if agent_id not in newest or mtime > newest[agent_id][0]:
+            newest[agent_id] = (mtime, directory)
+
+
+def _scan(directory: Path) -> Tuple[List[_Candidate], int]:
+    newest: dict = {}
+    internal: set = set()
+    _scan_one(directory, newest, internal)
+    workflows = directory / _WORKFLOWS
+    try:
+        folders = [workflows / n for n in entry_names(workflows) if n.startswith(_WORKFLOW_PREFIX)]
+    except OSError:
+        folders = []
+    for folder in folders:
+        try:
+            _scan_one(folder, newest, internal)
+        except OSError as exc:
+            logger.debug("subagents_workflow_dir_unreadable", error=str(exc))
+    candidates = [_Candidate(agent_id, mtime, folder) for agent_id, (mtime, folder) in newest.items()]
     candidates.sort(key=lambda c: (c.mtime, c.agent_id), reverse=True)
     return candidates, len(internal)
 
@@ -183,10 +201,10 @@ def read_subagents(
         base.state = "unchecked"
     rows: List[SubagentInfo] = []
     for candidate in candidates[:max_listed]:
-        stem = directory / f"{_PREFIX}{candidate.agent_id}"
+        stem = candidate.directory / f"{_PREFIX}{candidate.agent_id}"
         meta = read_meta_facts(Path(f"{stem}{_META}"))
         line = read_line_facts(Path(f"{stem}{_JSONL}"))
-        rows.append(_info(directory, candidate.agent_id, meta, line, index,
+        rows.append(_info(candidate.directory, candidate.agent_id, meta, line, index,
                           process_started_at, instant))
     base.subagents = rows
     base.counts = SubagentCounts(
@@ -210,4 +228,26 @@ def read_subagents(
     return base
 
 
-__all__ = ["read_subagents", "classify", "subagents_dir_for"]
+def agent_statuses(
+    transcript_path: Path,
+    agent_ids: Iterable[str],
+    *,
+    process_started_at: Optional[datetime] = None,
+    now: Optional[datetime] = None,
+) -> Optional[Dict[str, str]]:
+    index = read_completion_index(transcript_path)
+    if index is None:
+        return None
+    instant = now or datetime.now(timezone.utc)
+    directory = subagents_dir_for(transcript_path)
+    found: Dict[str, str] = {}
+    for agent_id in dict.fromkeys(agent_ids):
+        stem = directory / f"{_PREFIX}{agent_id}"
+        meta = read_meta_facts(Path(f"{stem}{_META}"))
+        line = read_line_facts(Path(f"{stem}{_JSONL}"))
+        found[agent_id] = _info(directory, agent_id, meta, line, index,
+                                process_started_at, instant).status
+    return found
+
+
+__all__ = ["agent_statuses", "read_subagents", "classify", "subagents_dir_for"]

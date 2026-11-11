@@ -11,7 +11,11 @@ from src.core.mcp.deprecated_tools import DEPRECATED
 
 logger = structlog.get_logger()
 
-DEFAULT_OFF: frozenset[str] = DEPRECATED
+RARELY_USED: frozenset[str] = frozenset({
+    "session_external_stop",
+})
+SHIPPED_DEFAULT_OFF: frozenset[str] = DEPRECATED | RARELY_USED
+DEFAULT_OFF: frozenset[str] = SHIPPED_DEFAULT_OFF
 ALWAYS_ON: frozenset[str] = frozenset({"whoami"})
 PANEL = "settings > advanced > mcp tools"
 

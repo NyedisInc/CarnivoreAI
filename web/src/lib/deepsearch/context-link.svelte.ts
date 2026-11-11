@@ -15,6 +15,7 @@ function show(link: ContextLink): void {
     bookmark: null,
     focus: 'hit',
     hitLine: link.line,
+    hitTerms: [],
   } as unknown as Record<string, unknown>);
 }
 

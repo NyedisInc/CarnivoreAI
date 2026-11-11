@@ -97,4 +97,8 @@ def background_processes_for(watcher: Any, info: Any, now: datetime) -> Optional
     measure = getattr(observation.evidence, "background_process", None)
     if measure is None:
         return None
-    return BackgroundProcessesInfo(state=measure.state, count=measure.count)
+    leftovers = getattr(observation.evidence, "background_leftovers", None)
+    return BackgroundProcessesInfo(
+        state=measure.state, count=measure.count,
+        leftover=None if leftovers is None else len(leftovers),
+    )

@@ -331,6 +331,24 @@ def test_a_session_with_no_tmux_name_sets_no_flag(wired):
     assert manager.unread_writes == []
 
 
+def test_a_visible_viewer_suppresses_the_flag_and_a_hidden_one_does_not(wired):
+    from src.core.terminal_size import TerminalSizeNegotiator
+
+    manager, effects, _calls = wired
+    neg = TerminalSizeNegotiator()
+    manager._terminal_size_negotiator = neg
+    sid = TARGET.session_id
+
+    neg.set_client_size(sid, "ws-hidden", 80, 24, voting=False)
+    effects.set_unread(TARGET)
+    assert manager.unread_writes == [(TMUX_NAME, "auto", True, EPOCH)]
+
+    manager.unread_writes.clear()
+    neg.set_client_size(sid, "ws-visible", 80, 24, voting=True)
+    effects.set_unread(TARGET)
+    assert manager.unread_writes == []
+
+
 
 
 def test_every_reading_makes_the_resolved_state_durable(wired):

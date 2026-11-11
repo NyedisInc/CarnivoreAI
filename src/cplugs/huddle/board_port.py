@@ -229,8 +229,14 @@ class BoardPort:
                 logger.warning("reviewboard_attach_cleanup_failed", item=item_id, file=file_id, error=type(exc).__name__)
 
     async def post_reply(self, item_id: int, text: str, ref: Dict[str, str]) -> Dict[str, Any]:
+        return await self._post_owner(item_id, text, board.round_parts_of(ref))
+
+    async def post_visitors(self, item_id: int, text: str, ref: Dict[str, Any]) -> Dict[str, Any]:
+        return await self._post_owner(item_id, text, board.visitors_parts_of(ref))
+
+    async def _post_owner(self, item_id: int, text: str, parts: str) -> Dict[str, Any]:
         try:
-            posted = await reply.post_reply(self._ctx, item_id, text, parts=board.round_parts_of(ref))
+            posted = await reply.post_reply(self._ctx, item_id, text, parts=parts)
         except TaskManagerNotFound:
             return {"posted": False, "reason": f"item {item_id} no longer exists"}
         except TaskManagerError as exc:

@@ -35,7 +35,7 @@ def wired(monkeypatch):
     sent: list = []
     refusals = [HTTPException(409, "busy")]
 
-    async def paste(request, session_id, text, *, fresh_dialog_check=False):
+    async def paste(request, session_id, text, *, fresh_dialog_check=False, hold_exempt=False):
         if refusals:
             raise refusals.pop()
         sent.append((session_id, text, fresh_dialog_check))

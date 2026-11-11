@@ -5,8 +5,11 @@ import asyncio
 from pathlib import Path
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Request
+from typing import Optional
 
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+
+from src.api.error_response import api_error
 from src.api.peer_auth import require_peer_sessions
 from src.api.remote_route_guard import refuse_remote
 from src.config import settings
@@ -15,10 +18,12 @@ from src.core.provider_ledger.login_command import PROFILE_ENV_VARS
 from src.core.attention.codex_pane_home import pane_codex_home
 from src.core.attention.evidence import FAMILY_CODEX
 from src.core.session_token_usage.account_resolve import resolve_session_account
+from src.core.session_token_usage.per_request import DEFAULT_LIMIT, MAX_LIMIT, read_session_requests
 from src.core.session_token_usage.reader import (
     SessionSubject,
     read_session_token_usage,
 )
+from src.models.per_request_usage import SessionRequestUsage
 from src.models.session_token_usage import SessionTokenUsage
 
 logger = structlog.get_logger()
@@ -99,6 +104,43 @@ async def get_session_token_usage(
         account=usage.account.id if usage.account is not None else None,
     )
     return usage
+
+
+@router.get(
+    "/sessions/{session_id}/token-usage/requests",
+    response_model=SessionRequestUsage,
+    dependencies=[Depends(require_peer_sessions)],
+)
+async def get_session_token_usage_requests(
+    request: Request,
+    session_id: str,
+    since: Optional[str] = Query(None, description="ISO-8601; only requests after this instant"),
+    limit: int = Query(DEFAULT_LIMIT, ge=1, le=MAX_LIMIT),
+) -> SessionRequestUsage:
+    """One row per model request of the session's current conversation, across main, sub-agent and workflow-agent files.
+
+    Description: read-only and generic (no Argent knowledge): request id, agent id by file, model and four token classes,
+      never dollars. Codex answers ``not_applicable``. Oldest first; ``truncated`` and ``next_since`` continue a long answer.
+    Inputs: request (Request); session_id (str); since (str | None); limit (int).
+    Output: SessionRequestUsage.
+    Raises: HTTPException 404 - unknown session; 422 - ``since`` is not ISO-8601.
+    Example: GET /api/v1/sessions/ses_abc/token-usage/requests?since=2026-11-05T10:00:00Z
+    """
+    session_manager = request.app.state.session_manager
+    refuse_remote(session_manager, session_id, "the per-request token usage read")
+    info = await session_manager.get_session_info(session_id)
+    if info is None:
+        raise HTTPException(status_code=404, detail=f"No session with id {session_id!r}")
+    tmux_name = info.tmux_session
+    subject = SessionSubject(
+        agent_family=info.agent_family,
+        conversation_uuid=session_manager.claude_uuid_for_tmux_name(tmux_name) if tmux_name else None,
+        working_dir=info.session.working_dir if info.session is not None else None,
+    )
+    try:
+        return await asyncio.to_thread(read_session_requests, subject, since=since, limit=limit)
+    except ValueError as exc:
+        raise api_error(422, "token_usage_limit_invalid", exc, limit=limit) from exc
 
 
 def _switched_in(config_path: Path, provider: str) -> bool:

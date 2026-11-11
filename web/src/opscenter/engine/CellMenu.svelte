@@ -20,6 +20,7 @@
   import PlacementMenuHost from '../../lib/zone-shell/PlacementMenuHost.svelte';
   import DeclaredTabMenu from '../../lib/zone-shell/DeclaredTabMenu.svelte';
   import { gridHeaderId } from '../shell/grid-zone';
+  import { isDashGridPage } from '../dashgrid/dash-store.svelte';
 
   let {
     id,
@@ -124,7 +125,7 @@
 
   const arrange = $derived.by((): ArrangeEntry[] => {
     const out: ArrangeEntry[] = [];
-    if (viewport.wide) {
+    if (viewport.wide && !isDashGridPage(store.page)) {
       out.push({ item: 'extendRow', blocked: canSpanDown ? undefined : refusalLine, run: onSpanDown });
       out.push({ item: 'pullBackRow', blocked: span < 2 ? t('widgets.menu.one_row') : undefined, run: onSpanUp });
     }
@@ -140,7 +141,7 @@
     header: headerShown === null ? null : { shown: headerShown, toggle: onToggleHeader },
     arrange,
     editLayout: canEdit ? () => void toggleLayoutEditor() : null,
-    close: canLeave ? { instance, run: onCloseWidget } : null,
+    close: canLeave ? { instance: instance || store.page !== 'home', run: onCloseWidget } : null,
   });
   const label = $derived(t('opscenter.frame.options', { title }));
 </script>

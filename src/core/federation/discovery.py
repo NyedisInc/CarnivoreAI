@@ -8,7 +8,7 @@ import re
 import socket
 import subprocess
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Mapping, Optional
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
 
 import structlog
 
@@ -21,13 +21,15 @@ logger = structlog.get_logger()
 SERVICE_TYPE = "_carnivore._tcp"
 PROTOCOL_MAJOR = 1
 SSH_PORT = 22
-TXT_KEYS = ("p", "fid", "mid", "lp", "pn")
+TXT_KEYS = ("p", "fid", "mid", "lp", "pn", "lb", "pm")
+TXT_BUDGET = 250
 PACK_NAME_MAX = 32
 _PACK_NAME_BAD = re.compile(r"[^A-Za-z0-9 ._-]")
 PROBE_TIMEOUT_S = 2.0
 FID_SHORT_LEN = 6
 FID_MAX = 64
 MAX_PEERS = 64
+MAX_MEMBERS = 16
 PROBE_CONCURRENCY = 32
 PROBE_ADDRS_MAX = 4
 _MID_SALT = "carnivore.federation.mid.v1:"
@@ -66,8 +68,22 @@ def validate_pack_name(raw: object) -> Optional[str]:
     return text or None
 
 
+def _txt_size(pairs: List[tuple]) -> int:
+    return sum(1 + len(k) + 1 + len(v) for k, v in pairs)
+
+
+def parse_members(raw: object) -> List[Dict[str, str]]:
+    out: List[Dict[str, str]] = []
+    for entry in str(raw or "").split(",")[:MAX_MEMBERS]:
+        short, _, label = entry.partition(":")
+        if len(short) == FID_SHORT_LEN and short.isalnum() and short.isascii():
+            out.append({"fid_short": short, "label": sanitize_pack_name(label) or short})
+    return out
+
+
 def build_txt_pairs(fid: Optional[str], platform_uuid: Optional[str],
-                    link_port: Optional[int] = None, pack_name: Optional[str] = None) -> List[tuple]:
+                    link_port: Optional[int] = None, pack_name: Optional[str] = None,
+                    label: Optional[str] = None, members: Sequence[tuple] = ()) -> List[tuple]:
     pairs = [
         ("p", str(PROTOCOL_MAJOR)),
         ("fid", fid or ""),
@@ -78,6 +94,19 @@ def build_txt_pairs(fid: Optional[str], platform_uuid: Optional[str],
         name = sanitize_pack_name(pack_name)
         if name:
             pairs.append(("pn", name))
+        own = sanitize_pack_name(label)
+        if own:
+            pairs.append(("lb", own))
+        kept: List[str] = []
+        for member_fid, member_label in members:
+            entry = f"{str(member_fid)[:FID_SHORT_LEN]}:{sanitize_pack_name(member_label) or ''}"
+            if _txt_size([*pairs, ("pm", ",".join([*kept, entry]))]) > TXT_BUDGET:
+                break
+            kept.append(entry)
+        if kept:
+            pairs.append(("pm", ",".join(kept)))
+        if len(kept) < len(members):
+            logger.info("federation_txt_members_dropped", dropped=len(members) - len(kept))
     return pairs
 
 
@@ -254,6 +283,8 @@ class Discovery:
         loader: Optional[Callable[[], object]] = None,
         link_port_provider: Callable[[], Optional[int]] = lambda: None,
         advertise_allowed: bool = True,
+        label_provider: Callable[[], Optional[str]] = lambda: None,
+        members_provider: Callable[[], Sequence[tuple]] = lambda: (),
     ) -> None:
         self._advertise_allowed = advertise_allowed
         self._config_path = Path(config_path)
@@ -262,6 +293,7 @@ class Discovery:
         self._uuid = platform_uuid_provider
         self._name_provider = name_provider
         self._link_port = link_port_provider
+        self._label, self._members = label_provider, members_provider
         self._loader = loader
         self._loop: Optional[asyncio.AbstractEventLoop] = None
         self._register_ref: Optional[bonjour.ServiceRef] = None
@@ -360,7 +392,8 @@ class Discovery:
 
 
     def txt_pairs(self) -> List[tuple]:
-        return build_txt_pairs(self._fid() or self._fid_fallback, self._uuid(), self._link_port(), read_pack_name(self._config_path))
+        return build_txt_pairs(self._fid() or self._fid_fallback, self._uuid(), self._link_port(), read_pack_name(self._config_path),
+                               self._label(), tuple(self._members()))
 
     def _sync_registration(self) -> None:
         if self.state == STATE_UNAVAILABLE or self._loop is None:
@@ -429,6 +462,8 @@ class Discovery:
             "p": str(record.get("p", "")), "fid": str(record.get("fid", ""))[:FID_MAX], "mid": mid,
             "lp": parse_link_port(record.get("lp")),
             "pn": sanitize_pack_name(record.get("pn")),
+            "lb": sanitize_pack_name(record.get("lb")),
+            "pm": parse_members(record.get("pm")),
         }
         if name not in self._peers and len(self._peers) >= MAX_PEERS:
             logger.warning("federation_peer_table_full")
@@ -474,15 +509,20 @@ class Discovery:
         return out
 
     def candidates(self) -> List[Dict[str, Any]]:
-        out = []
+        rows = []
         for peer in sorted(self._peers.values(), key=lambda p: p["name"]):
             if peer.get("lp") is None:
                 continue
             addrs = list(peer["addresses"]) or ([peer["host"].rstrip(".")] if peer["host"] else [])
-            out.append({"name": peer["name"], "fid": peer["fid"],
-                        "fid_short": peer["fid"][:FID_SHORT_LEN], "addresses": addrs,
-                        "lp": peer["lp"], "pack_name": peer.get("pn")})
-        return out
+            rows.append({"name": peer["name"], "fid": peer["fid"], "fid_short": peer["fid"][:FID_SHORT_LEN], "addresses": addrs,
+                         "lp": peer["lp"], "pack_name": peer.get("pn"), "computer_label": peer.get("lb"), "members": []})
+        folded = set()
+        for host in rows:
+            for member in self._peers[host["name"]].get("pm") or []:
+                seen = [r for r in rows if r is not host and r["fid_short"] == member["fid_short"]]
+                folded.update(r["name"] for r in seen)
+                host["members"].append({"label": member["label"], "fid_short": member["fid_short"], "seen": bool(seen)})
+        return [r for r in rows if r["name"] not in folded]
 
 
     def _watch(self, ref: bonjour.ServiceRef) -> None:

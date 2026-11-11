@@ -1,8 +1,10 @@
 
 from __future__ import annotations
 
+import contextvars
 import time
-from typing import Any, Optional
+from collections import OrderedDict
+from typing import Any, Mapping, Optional
 
 import structlog
 
@@ -14,6 +16,23 @@ from src.core.session_activity import EVENT_NOTIFICATION, EVENT_PERMISSION_REQUE
 logger = structlog.get_logger(__name__)
 
 POSTED_IN_APP_ONLY = ("session.finished", "session.attention", "agent.message")
+
+
+SELF_DELIVERED = ("swarm.question_climbed", "swarm.alert", "swarm.flash", "agent.update_ready")
+
+_HINTS: "OrderedDict[str, Mapping[str, Any]]" = OrderedDict()
+MAX_HINTS = 200
+
+
+def remember_hint(toast_id: str, hint: Optional[Mapping[str, Any]]) -> None:
+    if hint:
+        _HINTS[toast_id] = hint
+        _HINTS.move_to_end(toast_id)
+        while len(_HINTS) > MAX_HINTS:
+            _HINTS.popitem(last=False)
+
+
+CARD_HINT: contextvars.ContextVar[Optional[Mapping[str, Any]]] = contextvars.ContextVar("notify_card_hint", default=None)
 
 
 def attention_notify_type(kind: str, reason: Optional[str]) -> str:
@@ -40,24 +59,38 @@ def _is_swarm_body_in_app_only(manager: Any, toast: Any, type_id: str, tmux_name
         return False
 
 
-def emit_event(manager: Any, toast: Any) -> None:
+def event_for_toast_id(manager: Any, toast_id: str) -> Optional[contracts.NotifyEvent]:
+    from src.core import toast_history  # noqa: PLC0415
+
+    toast = next((t for toasts in toast_history.buckets_from_inbox(manager._toast_inbox).values() for t in toasts if t.id == toast_id), None)
+    return build_event(manager, toast) if toast is not None else None
+
+
+def build_event(manager: Any, toast: Any, fields: Optional[dict] = None) -> Optional[contracts.NotifyEvent]:
     type_id = getattr(toast, "notify_type", None)
     if not type_id or not types.is_registered(type_id):
-        return
+        return None
+    fields = fields if fields is not None else common.session_fields(manager, toast.session_id)
+    needs_you = type_id in types.NEEDS_YOU
+    return contracts.NotifyEvent(
+        type_id=type_id, kind=toast.kind, title=toast.title, ts=time.time(),
+        severity=contracts.SEVERITY_WARN if needs_you else contracts.SEVERITY_INFO,
+        instance_key=f"toast:{toast.id}:{toast.version}", toast_id=toast.id, toast_version=toast.version, details=toast.body,
+        open_item=needs_you, card_hint=CARD_HINT.get() or _HINTS.get(toast.id), **{**fields, "session_ref": toast.session_label or fields.get("session_ref", "")},
+    )
+
+
+def emit_event(manager: Any, toast: Any) -> None:
     try:
-        key = f"toast:{toast.id}:{toast.version}"
         fields = common.session_fields(manager, toast.session_id)
-        if _is_swarm_body_in_app_only(manager, toast, type_id, fields.get("tmux_name")):
-            logger.debug("toast_notify_swarm_body_in_app_only", type_id=type_id)
+        event = build_event(manager, toast, fields)
+        if event is None or event.type_id in SELF_DELIVERED:
             return
-        needs_you = type_id in types.NEEDS_YOU
-        if needs_you:
-            open_checks.remember_dialog(key, getattr(manager, "_attention_watcher", None), toast.session_id)
-        contracts.emit(contracts.NotifyEvent(
-            type_id=type_id, kind=toast.kind, title=toast.title, ts=time.time(),
-            severity=contracts.SEVERITY_WARN if needs_you else contracts.SEVERITY_INFO,
-            instance_key=key, toast_id=toast.id, toast_version=toast.version, details=toast.body,
-            open_item=needs_you, **{**fields, "session_ref": toast.session_label or fields.get("session_ref", "")},
-        ))
+        if _is_swarm_body_in_app_only(manager, toast, event.type_id, fields.get("tmux_name")):
+            logger.debug("toast_notify_swarm_body_in_app_only", type_id=event.type_id)
+            return
+        if event.open_item:
+            open_checks.remember_dialog(event.instance_key, getattr(manager, "_attention_watcher", None), toast.session_id)
+        contracts.emit(event)
     except (AttributeError, TypeError, ValueError, OSError) as exc:
         logger.warning("toast_notify_emit_failed", error_type=type(exc).__name__)

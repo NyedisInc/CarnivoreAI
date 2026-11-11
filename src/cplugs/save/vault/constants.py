@@ -12,6 +12,10 @@ REMOVABLE_PARENT: str = "/Volumes"
 
 BLOBS_DIR: str = BLOBS_PREFIX
 STATE_FILE: str = "vault-state.json"
+GONE_FILE: str = "vault-gone.json"
+MASS_GONE_THRESHOLD: int = 10
+MASS_GONE_WINDOW_SECONDS: float = 3600.0
+MASS_GONE_SAMPLES: int = 5
 SUMMARIES_FILE: str = "vault-summaries.z"
 VERIFIED_FILE: str = "vault-verified.json"
 LEGACY_DONE_FILE: str = "legacy-migrated.json"
@@ -29,7 +33,7 @@ WORKDIR_MEMO_MAX: int = 4096
 
 SHA_CONTENT: str = "content"
 SHA_CHAIN: str = "chain"
-DEFAULT_RESTORE_MODE: int = 0o600
+DEFAULT_RESTORE_MODE: int = 0o644
 
 ROLE_TRANSCRIPT: str = "transcript"
 ROLE_SUBAGENT: str = "subagent"

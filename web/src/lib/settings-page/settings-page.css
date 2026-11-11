@@ -10,6 +10,11 @@
     }
 }
 
+.settings-page .st-body--list,
+.settings-page .st-body--stacked {
+    grid-template-columns: minmax(0, 1fr);
+}
+
 .settings-page .st-content {
     display: flex;
     flex-direction: column;
@@ -510,4 +515,9 @@
         flex: 1 1 0;
         min-width: 0;
     }
+}
+
+.settings-page.oc-page--drawer-stacked {
+    --oc-drawer-min-w: 640px;
+    --oc-drawer-grow-w: 1920px;
 }

@@ -6,6 +6,7 @@ from typing import Any, Awaitable, Callable, Optional
 
 import structlog
 
+from src.core.attention.beast_hold import BeastHold
 from src.core.attention.evidence import STATE_NEEDS_USER
 from src.core.attention.ledger import AttentionLedger
 from src.core.attention.restart_floor import RestartFloors
@@ -95,6 +96,7 @@ def build_attention_watcher(
         ledger=ledger,
         tick_seconds=tick_seconds,
         watch_paths=read_evidence.watch_paths,
+        hold_verdict=BeastHold().mask,
     )
     manager._attention_watcher = watcher
     manager._fresh_evidence = make_fresh_evidence(list_targets, read_evidence)

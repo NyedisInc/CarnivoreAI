@@ -1,10 +1,12 @@
 
+import json
+
 import structlog
 from fastapi import APIRouter, Depends, Request
 from src.api import peer_ws_auth
 from src.api.peer_auth import require_peer_sessions
 from src.api.websocket import connection_manager
-from src.core import toast_auto_ack
+from src.core import session_change_notice, toast_auto_ack
 from src.models import (
     CreateToastRequest,
     SuccessResponse,
@@ -88,10 +90,9 @@ async def create_session_toast(
         ) or toast
 
     try:
-        await connection_manager.broadcast_to_session(
-            session_id,
-            ToastNewMessage(toast=toast).model_dump_json(),
-        )
+        payload = ToastNewMessage(toast=toast).model_dump_json()
+        await connection_manager.broadcast_to_session(session_id, payload)
+        session_change_notice.publish(request.app.state, json.loads(payload))
     except Exception as exc:
         logger.warning("toast_broadcast_failed", session_id=session_id, error=str(exc))
 

@@ -73,13 +73,16 @@ def check_alpha(state: ReceiverState, source: str, from_install_id: str = "") ->
             return
         if seen is not None and source != LOCAL_EDIT:
             params = {"new": _label(data, seams, master), "old": _label(data, seams, seen),
-                      "claimed": "pairing" if counter == 0 else _label(data, seams, setter),
-                      "sender": _label(data, seams, from_install_id) if from_install_id else THIS_COMPUTER}
-            actions = [{"id": "open_pack_skills", "label_key": f"{_T}action.open", "href": "#skills"},
-                       {"id": "make_alpha_again", "label_key": f"{_T}action.make_alpha_again", "method": "PUT",
-                        "route": "/pack/master", "body": {"machine": seen}}]
+                      "claimed": "pairing" if counter == 0 else _label(data, seams, setter)}
+            if from_install_id:
+                params["sender"] = _label(data, seams, from_install_id)
+            actions = [{"id": "open_pack_skills", "label_key": f"{_T}action.open", "href": "#skills"}]
+            if seen != seams.install_id:
+                actions.append({"id": "make_alpha_again", "label_key": f"{_T}action.make_alpha_again", "method": "PUT",
+                                "route": "/pack/master", "body": {"machine": seen}})
+            detail = "alpha_changed.detail" if from_install_id else "alpha_changed.detail_no_sender"
             row = service.raise_alert(ALPHA_KEY, source=SOURCE, severity=K.SEV_WARN, title_key=f"{_T}alpha_changed.title",
-                                      detail_key=f"{_T}alpha_changed.detail", params=params, auto_resolve=False, actions=actions)
+                                      detail_key=f"{_T}{detail}", params=params, auto_resolve=False, actions=actions)
             if row is None:
                 return
         marks["alpha_seen"] = master

@@ -232,16 +232,24 @@ facts use the server's period summaries and keep missing data distinct from zero
 
 <h3 class="sg-h3" id="cells-grid">the grid and drag and drop</h3>
 <dl class="sg-facts">
-    <dt>surface</dt>
-    <dd><code>GridSurface.svelte</code> lays rows (<code>GridRow</code>, <code>.oc-row</code>) of slots
-        (<code>.oc-cellslot</code>) with <code>--oc-gutter</code> between them. <code>Gutter.svelte</code> and
-        <code>Intersection.svelte</code> are the resize handles between cells and at crossings; a drag across them resizes the
-        neighbours, and on a shared terminal pane resizes the pane for everyone attached.</dd>
+    <dt>motion surface</dt>
+    <dd>The terminal page and the war room keep a rows and columns layout and draw it as <code>AbsSurface.svelte</code>
+        (<code>.abs-surface</code>): one flat set of absolutely positioned wrappers (<code>.oc-cellslot</code> inside
+        <code>.motion-item</code>) moved by the motion core, so a drag never re-lays out a grid or remounts a widget.
+        <code>DividerHandle.svelte</code> (<code>.abs-handle</code>) is the keyboard-operable divider the core drags;
+        <code>.abs-body</code> is each widget's inner box, sized by the core's throttled render callback so a resize re-measures a widget at most every 70 ms;
+        <code>.abs-zoomed</code> is the zoomed component covering the others and <code>.abs-moving</code> hides the dividers
+        while a widget is carried. Styles: <code>web/src/opscenter/engine/rects/abs-surface.css</code>.</dd>
+    <dt>the dashboard</dt>
+    <dd>Home, every board, the pop-out and the wallboard draw <code>DashGridSurface.svelte</code> (<code>.oc-dash</code>): a free
+        24 column grid on a 40 px row pitch (12 and 1 column below 1100 and 720 px) moved by the motion engine. Each widget wears
+        <code>.oc-dash-item</code> around <code>.oc-dash-body</code>; edit layout turns gestures on, draws the resize handles and
+        <code>.oc-dash-guides</code> and sets <code>.oc-dash-edit</code>, which makes every card a shield you can grab anywhere.</dd>
     <dt>moving a cell</dt>
-    <dd>A cell lifts past a threshold into <code>FlyLayer.svelte</code> (<code>.oc-fly</code>), casting
-        <code>--oc-shadow-lift</code>; the insertion mark (<code>.oc-insert-row</code>, <code>.oc-insert-column</code>) shows
+    <dd>A cell lifts past a threshold (the core moves its wrapper, casting
+        <code>--oc-shadow-lift</code>); <code>FlyLayer.svelte</code> (<code>.oc-fly</code>) now only draws the hide and restore flights; the insertion mark (<code>.oc-insert-row</code>, <code>.oc-insert-column</code>) shows
         where it will land; the page carries <code>body.grid-dragging</code> meanwhile. A tab dragged between components shows
-        <code>DropOverlay.svelte</code>. The <code>grip</code> icon marks a draggable handle in a list (the slash command
+        the labelled landing box (see <a href="#motion-drop-cue">the motion grid</a>). The <code>grip</code> icon marks a draggable handle in a list (the slash command
         chips).</dd>
     <dt>adding and arranging</dt>
     <dd>At 1024 and wider a widget is added in <a href="#cells-edit-layout">edit layout</a> alone; there
@@ -286,8 +294,8 @@ facts use the server's period summaries and keep missing data distinct from zero
         <code>.oc-gutter-inert</code>) are drawn at rest so what resizes is visible (<code>EditOverlay.svelte</code>, CSS
         only). There is no separate remove X and no chevron any more (mock section 1, option A, Joe (ccsliinc)
         2026-09-30). Every surface that takes widgets wears the EDIT OUTLINE, "widgets can go here" (Joe, 2026-10-02):
-        the page's grid surface (<code>.oc-surface</code>) and the sidebar's widget area's widgets (<code>.dz-widgets--editing</code>) get a
-        1px dashed hairline in the edit gear's own token, <code>--oc-cyan</code>, drawn inside the edge.</dd>
+        the page's grid surface (<code>.oc-surface</code>) gets a
+        1px dashed hairline in the edit gear's own token, <code>--oc-cyan</code>, drawn inside the edge. The sidebar's widget area has no edit mode any more: it is always on (see the drawer widget area).</dd>
     <dt>a short title for a narrow row</dt>
     <dd>Task Manager item 51, 2026-10-11: a cell whose record carries <code>titleShortKey</code> prints that word in its title row
         at 400px and under (<code>.oc-frame-name-short</code> in place of <code>.oc-frame-name-full</code>; "closed" for
@@ -419,7 +427,7 @@ facts use the server's period summaries and keep missing data distinct from zero
         (<code>EditLayoutBody.svelte</code>, <code>.le-drawer--docked</code>: in the column's flow, no frame of its own; Joe
         (ccsliinc), 2026-10-01, <a href="#chrome-dynamic-tabs">dynamic tabs</a>). The sidebar docks, so a live pane is
         resized only by the drawer's own width, never by the editor. Undocked (no sidebar) it is fixed over the right edge,
-        folding to its title row (<code>.le-drawer--folded</code>). Copied, not invented: the title row
+        folding to its title row (<code>.le-drawer--folded</code>). While any layout drag is carried (<code>body.grid-carrying</code>, from lift to release or Escape, not the settle glide) the undocked drawer slides off the right edge (transform only) and takes no pointer, so the right band and column can be aimed at; it returns as it was. Copied, not invented: the title row
         (<code>.le-titlebar</code>, <code>.le-title</code>, <code>.le-label</code>) is the ledger's <code>.pl-titlebar</code>
         family; the find field (a bare base <code>Field</code>) shares one line (<code>.le-find</code>) with
         one kind select (<code>.le-kind</code>, an <code>.oc-field</code>; Joe (ccsliinc), 2026-10-03: "under find, i dont

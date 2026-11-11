@@ -1,0 +1,61 @@
+{
+  "kind": "appupdate",
+  "payload": {
+    "title": "carnivore update available",
+    "body": "version 1.16.8 is ready to install",
+    "path": "/sessions/ses_0123456789ab",
+    "thread": "local|ses_0123456789ab",
+    "v": 2,
+    "sub": "app update",
+    "kind": "appupdate",
+    "type": "app.update_available",
+    "lv": "p",
+    "snd": "none",
+    "cap": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ttl": 1794000000,
+    "acts": [
+      [
+        "install",
+        "install"
+      ],
+      [
+        "later",
+        "later"
+      ]
+    ],
+    "card": {
+      "strip": [
+        "app update",
+        "",
+        "nostromo"
+      ],
+      "agent": "carnivore",
+      "computer": "nostromo",
+      "ts": "9:41",
+      "from": "1.16.7",
+      "to": "1.16.8",
+      "notes": [
+        "sign in alert fires only on a proven sign out",
+        "your global ai setup syncs across the pack",
+        "notifications you can answer in place"
+      ]
+    }
+  },
+  "card": {
+    "strip": [
+      "app update",
+      "",
+      "nostromo"
+    ],
+    "agent": "carnivore",
+    "computer": "nostromo",
+    "ts": "9:41",
+    "from": "1.16.7",
+    "to": "1.16.8",
+    "notes": [
+      "sign in alert fires only on a proven sign out",
+      "your global ai setup syncs across the pack",
+      "notifications you can answer in place"
+    ]
+  }
+}

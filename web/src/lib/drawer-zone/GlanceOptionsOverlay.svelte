@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* the glance area */
   import SettingsOverlay from '../../opscenter/widgets/chrome/SettingsOverlay.svelte';
   import { manifestById } from '../../opscenter/widgets/core-manifests';
   import { t } from '../i18n/index.svelte';

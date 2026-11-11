@@ -12,10 +12,10 @@
   }
   const { machine }: Props = $props();
 
-  const RULES: readonly (keyof Restrictions)[] = ['may_host_agents', 'may_receive_projects', 'may_install_tools', 'may_receive_credentials', 'may_update_carnivore'];
+  const RULES: readonly (keyof Restrictions)[] = ['may_host_agents', 'may_receive_projects', 'may_install_tools', 'may_receive_credentials', 'may_receive_global_setup', 'may_update_carnivore'];
   const snap = $derived(machine.snapshot);
   const cfg = $derived(snap?.reserve.config);
-  const rules = $derived(RULES.filter((rule) => !(machine.is_self && rule === 'may_receive_credentials')));
+  const rules = $derived(RULES.filter((rule) => !(machine.is_self && (rule === 'may_receive_credentials' || rule === 'may_receive_global_setup'))));
   let open = $state(false);
 </script>
 

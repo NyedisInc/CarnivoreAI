@@ -26,7 +26,7 @@ def to_incoming(point: PlannedPoint, run_id: str, claude_root: Path, codex_home:
     home = HOME_CODEX if point.family == "codex" else HOME_CLAUDE
     files = tuple(IncomingFile(role=f.role, home=home, rel=f.rel, source_path=original_path(f.rel, claude_root, codex_home),
                                length=f.copy.length, sha256=f.copy.sha256,
-                               mode=0o600, mtime_ns=int(f.copy.captured_epoch * 1e9), lines=0, read=f.copy.opener) for f in point.files)
+                               mode=f.copy.mode, mtime_ns=int(f.copy.captured_epoch * 1e9), lines=0, read=f.copy.opener) for f in point.files)
     attribution = point.attribution
     return FallbackPoint(
         conversation_id=point.unit, point_id=point.point_id, reason=K.REASON_IMPORT, created_epoch=point.stamp,

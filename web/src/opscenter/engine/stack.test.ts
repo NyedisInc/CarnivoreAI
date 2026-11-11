@@ -112,3 +112,23 @@ describe('pickTarget offers the stack', () => {
     expect(pickTarget(rows, cells, 520, 1000, B)?.kind).toBe('row');
   });
 });
+
+describe('stackCell past the span ceiling (#2935)', () => {
+  test('cutting a 64 row window inside a row would make a 65th row: refused, the layout comes back as it was', () => {
+    const C = (n: number): SlotId => `terminal:ses_c${n}` as SlotId;
+    const E = 'terminal:ses_e' as SlotId;
+    const rows: Layout['rows'] = Array.from({ length: 64 }, (_, n) => ({
+      id: `r${n}`,
+      kind: 'flex' as const,
+      size: n === 30 ? 0.9 : 0.1 / 63,
+      slots: [
+        ...(n === 0 ? [{ id: A, fr: 0.3, span: 64 }, { id: B, fr: 0.3, span: 64 }] : []),
+        { id: C(n), fr: 0.4 },
+        ...(n === 30 ? [{ id: E, fr: 0.4 }] : []),
+      ],
+    }));
+    const layout: Layout = { v: 6, rows, hidden: [], heroCollapsed: false, collapsed: [] };
+    expect(stackCell(layout, E, A, 'above')).toBe(layout);
+    expect(stackCell(layout, E, A, 'below')).toBe(layout);
+  });
+});

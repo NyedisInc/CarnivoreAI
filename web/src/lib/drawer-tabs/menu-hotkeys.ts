@@ -11,14 +11,23 @@ export function closeDrawerAfterSwitch(): void {
   (globalThis as { SessionSidebarPin?: { closeAfterSwitch?: () => void } }).SessionSidebarPin?.closeAfterSwitch?.();
 }
 
-function typingTarget(target: EventTarget | null): boolean {
+function typingTarget(target: EventTarget | null, terminalTypes = true): boolean {
   const el = target as HTMLElement | null;
   if (!el || !el.tagName) return false;
+  if (!terminalTypes && el.closest?.('.xterm')) return false;
   return /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable === true;
 }
 
-export function handleMenuHotkey(event: KeyboardEvent): boolean {
-  if (event.metaKey || event.ctrlKey || event.altKey || event.isComposing || typingTarget(event.target)) return false;
+export function listenExpandedMenuHotkeys(win: Window = window): () => void {
+  const onKey = (event: KeyboardEvent): void => {
+    if (handleMenuHotkey(event, true)) event.stopPropagation();
+  };
+  win.addEventListener('keydown', onKey, true);
+  return () => win.removeEventListener('keydown', onKey, true);
+}
+
+export function handleMenuHotkey(event: KeyboardEvent, fromTerminal = false): boolean {
+  if (event.metaKey || event.ctrlKey || event.altKey || event.isComposing || typingTarget(event.target, !fromTerminal)) return false;
   let id: string | undefined;
   if (event.key === '.') {
     const now = Date.now();

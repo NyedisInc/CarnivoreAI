@@ -12,13 +12,16 @@
     import type { LensGroup } from './lenses';
     import { pageRowMenu } from '../item-menu/page-row';
     import { menuNodes } from '../projects-shared/menu-nodes';
-    import ProjectColorSwatches from '../project-colors/ProjectColorSwatches.svelte';
-    import { PICK_COLOR, SET_COLOR, companyActions, projectActions } from '../projects-shared/ledger-model';
+    import { SET_COLOR, companyActions } from '../projects-shared/ledger-model';
     import { agentOffered } from '../projects-shared/agent-offer';
     import { companies, type Company } from '../companies';
     import { packTag } from '../projects-shared/pack-model';
     import { projectPanels } from '../../cplugs/sdk/project-panels';
-    import { withProjectTools } from './project-tools';
+    import { entryNodes } from '../item-menu/entries';
+    import { projectMenuEntries } from '../item-menu/menus/project-entries';
+    import { ITEM_MENU_ENV } from '../item-menu/open.svelte';
+    import { showPath } from '../sidebar-shell/show-path';
+    import { sleepProject } from '../sidebar-shell/heading-project-actions';
 
     interface Props {
         group: LensGroup;
@@ -37,11 +40,10 @@
     }
     const { group, folded, t, onFold, inactive = false, onProjectAction, busy = false, leaf = false, automatedOnly = false, company = null, onCompanyAction, inCompany = false, children }: Props = $props();
 
-    let picking = $state(false);
     const remote = $derived(group.rows.some((r) => !!r.computer));
     const project = $derived(onProjectAction && !remote ? group.project : null);
     const companyMenu = $derived(company && onCompanyAction ? company : null);
-    const items = $derived(project ? withProjectTools(projectActions(project, companies.list, true, agentOffered(project)), project.id != null ? projectPanels() : []) : companyMenu ? companyActions(Boolean(companyMenu.has_image)) : []);
+    const companyItems = $derived(companyMenu ? companyActions(Boolean(companyMenu.has_image)) : []);
     const hasMenu = $derived(Boolean(project || companyMenu));
 
     const archived = $derived(Boolean(group.project?.archived_at));
@@ -50,19 +52,33 @@
 
     function pick(id: string): void {
         if (companyMenu) onCompanyAction?.(id, companyMenu);
-        else if (id === PICK_COLOR) picking = !picking;
+    }
+
+    function projectVerb(id: string): void {
+        if (id === 'show-path') void showPath(project?.root ?? '', group.label);
+        else if (id === 'sleep') void sleepProject(group.key);
         else onProjectAction?.(id, group);
     }
 
-    function setColor(key: string): void {
-        picking = false;
-        onProjectAction?.(`${SET_COLOR}${key}`, group);
+    function projectNodes() {
+        if (!project) return [];
+        const entries = projectMenuEntries({
+            project,
+            companies: companies.list,
+            agentOffered: agentOffered(project),
+            panels: projectPanels(),
+            color: project.id != null ? { value: projectColorOf(project.id) ?? '', onPick: (key) => onProjectAction?.(`${SET_COLOR}${key}`, group) } : null,
+            close: ITEM_MENU_ENV.close,
+            glyph: ITEM_MENU_ENV.glyph,
+            run: projectVerb,
+        });
+        return entryNodes(entries, ITEM_MENU_ENV.glyph, ITEM_MENU_ENV.close);
     }
 
     function menu() {
         if (!hasMenu || busy) return null;
         const label = companyMenu ? t('projects.page.company.menu', { name: group.label }) : t('projects.page.menu.project', { name: group.label });
-        return { type: 'pagerow', ctx: { label, nodes: menuNodes(items, t, pick) } } as const;
+        return { type: 'pagerow', ctx: { label, nodes: companyMenu ? menuNodes(companyItems, t, pick) : projectNodes() } } as const;
     }
 
     const block = $derived(group.project && projectColorOf(group.project.id ?? null) ? projectColorVar(projectColorOf(group.project.id ?? null)) : undefined);
@@ -88,14 +104,8 @@
             <span class="sp-sh-t">{group.measure}</span>
         </Button>
         {#if project && movedTo !== null}
-            <Button size="sm" data-move-back disabled={busy} onclick={() => pick('migrate-back')}>{t('projects.page.tag.move_back')}</Button>
+            <Button size="sm" data-move-back disabled={busy} onclick={() => projectVerb('migrate-back')}>{t('projects.page.tag.move_back')}</Button>
         {/if}
     </div>
-    {#if picking && project}
-        <div class="sp-sec-colors" data-row-colors={group.key}>
-            <span class="ph-sub" id="sp-color-{group.key}">{t('project.color.label')}</span>
-            <ProjectColorSwatches value={projectColorOf(project.id ?? null) ?? ''} labelledBy="sp-color-{group.key}" {t} allowNone onPick={setColor} />
-        </div>
-    {/if}
     {#if !folded && children}{@render children()}{/if}
 </section>

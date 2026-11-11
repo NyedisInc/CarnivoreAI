@@ -19,34 +19,40 @@
         "sep": true
       },
       {
-        "id": "add-to-company",
-        "label": "add to",
-        "key": "a",
+        "id": "pick-color",
+        "label": "color",
+        "key": "c",
         "children": [
           {
-            "id": "acme",
-            "label": "acme",
-            "key": "a"
+            "id": "project-color",
+            "label": "",
+            "key": "",
+            "swatches": true
           }
         ]
       },
       {
-        "id": "project-color",
-        "label": "",
-        "key": "",
-        "swatches": true
+        "id": "add-to-company",
+        "label": "company",
+        "key": "a",
+        "children": [
+          {
+            "id": "set-company:7",
+            "label": "acme",
+            "key": "a"
+          },
+          {
+            "id": "new-company",
+            "label": "new company",
+            "key": "n",
+            "sep": true
+          }
+        ]
       },
       {
         "id": "show-path",
         "label": "show path",
-        "key": "i",
-        "sep": true
-      },
-      {
-        "id": "fold-inside",
-        "label": "fold everything inside",
-        "key": "f",
-        "sep": true
+        "key": "i"
       },
       {
         "id": "sleep",
@@ -55,10 +61,37 @@
         "sep": true
       },
       {
+        "id": "turn-on-agent",
+        "label": "turn on agent",
+        "key": "t"
+      },
+      {
+        "id": "swarm-new-sessions",
+        "label": "new sessions join the swarm",
+        "key": "e",
+        "checked": false
+      },
+      {
+        "id": "migrate-project",
+        "label": "move to pack member...",
+        "key": "m"
+      },
+      {
+        "id": "project-settings",
+        "label": "project settings",
+        "key": "p",
+        "sep": true
+      },
+      {
         "id": "archive-project",
         "label": "archive project",
         "key": "v",
-        "sep": true,
+        "sep": true
+      },
+      {
+        "id": "delete-project",
+        "label": "delete project",
+        "key": "d",
         "danger": true
       }
     ]
@@ -83,39 +116,46 @@
         "sep": true
       },
       {
-        "id": "add-to-company",
-        "label": "add to",
-        "key": "a",
+        "id": "pick-color",
+        "label": "color",
+        "key": "c",
         "children": [
           {
-            "id": "acme",
-            "label": "acme",
-            "key": "a"
+            "id": "project-color",
+            "label": "",
+            "key": "",
+            "swatches": true
           }
         ]
       },
       {
-        "id": "project-color",
-        "label": "",
-        "key": "",
-        "swatches": true
-      },
-      {
-        "id": "remove-from-company",
-        "label": "remove from company",
-        "key": "-"
+        "id": "add-to-company",
+        "label": "company",
+        "key": "a",
+        "children": [
+          {
+            "id": "set-company:7",
+            "label": "acme",
+            "key": "a",
+            "danger": true
+          },
+          {
+            "id": "new-company",
+            "label": "new company",
+            "key": "n",
+            "sep": true
+          },
+          {
+            "id": "remove-from-company",
+            "label": "remove from company",
+            "key": "-"
+          }
+        ]
       },
       {
         "id": "show-path",
         "label": "show path",
-        "key": "i",
-        "sep": true
-      },
-      {
-        "id": "fold-inside",
-        "label": "fold everything inside",
-        "key": "f",
-        "sep": true
+        "key": "i"
       },
       {
         "id": "sleep",
@@ -124,10 +164,37 @@
         "sep": true
       },
       {
+        "id": "turn-on-agent",
+        "label": "turn on agent",
+        "key": "t"
+      },
+      {
+        "id": "swarm-new-sessions",
+        "label": "new sessions join the swarm",
+        "key": "e",
+        "checked": false
+      },
+      {
+        "id": "migrate-project",
+        "label": "move to pack member...",
+        "key": "m"
+      },
+      {
+        "id": "project-settings",
+        "label": "project settings",
+        "key": "p",
+        "sep": true
+      },
+      {
         "id": "archive-project",
         "label": "archive project",
         "key": "v",
-        "sep": true,
+        "sep": true
+      },
+      {
+        "id": "delete-project",
+        "label": "delete project",
+        "key": "d",
         "danger": true
       }
     ]
@@ -154,14 +221,7 @@
       {
         "id": "show-path",
         "label": "show path",
-        "key": "i",
-        "sep": true
-      },
-      {
-        "id": "fold-inside",
-        "label": "fold everything inside",
-        "key": "f",
-        "sep": true
+        "key": "i"
       },
       {
         "id": "sleep",
@@ -170,10 +230,37 @@
         "sep": true
       },
       {
+        "id": "turn-on-agent",
+        "label": "turn on agent",
+        "key": "t"
+      },
+      {
+        "id": "swarm-new-sessions",
+        "label": "new sessions join the swarm",
+        "key": "e",
+        "checked": false
+      },
+      {
+        "id": "migrate-project",
+        "label": "move to pack member...",
+        "key": "m"
+      },
+      {
+        "id": "project-settings",
+        "label": "project settings",
+        "key": "p",
+        "sep": true
+      },
+      {
         "id": "archive-project",
         "label": "archive project",
         "key": "v",
-        "sep": true,
+        "sep": true
+      },
+      {
+        "id": "delete-project",
+        "label": "delete project",
+        "key": "d",
         "danger": true
       }
     ]
@@ -688,7 +775,7 @@
       {
         "id": "turn-off-agent",
         "label": "turn off",
-        "key": "a"
+        "key": "t"
       }
     ]
   }

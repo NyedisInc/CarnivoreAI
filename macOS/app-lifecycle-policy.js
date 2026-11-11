@@ -6,9 +6,9 @@ const ENGINE_SURVIVES_CMDQ = true;
 
 const QUIT_INTENTS = Object.freeze(['app', 'engine']);
 
-function launchDecision({ argv, windowAtLogin, firstRunNeedsWindow = false, startBlocked = false }) {
+function launchDecision({ argv, windowAtLogin, windowOnLaunch = true, firstRunNeedsWindow = false, startBlocked = false }) {
   const loginLaunch = isLoginLaunch(argv);
-  return { loginLaunch, openWindow: startBlocked !== true && (!loginLaunch || windowAtLogin === true || firstRunNeedsWindow === true) };
+  return { loginLaunch, openWindow: startBlocked !== true && (!loginLaunch || windowOnLaunch !== false || windowAtLogin === true || firstRunNeedsWindow === true) };
 }
 
 function quitPlan({ intent, noticeShown, engineSurvivesQuit, systemQuit = false }) {

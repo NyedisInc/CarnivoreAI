@@ -48,6 +48,11 @@
   cursor: row-resize;
 }
 
+[data-abs-divider] > .oc-gutter-col {
+  position: absolute;
+  inset: 0;
+}
+
 .oc-gutter-col::before,
 .oc-gutter-row::before {
   content: '';
@@ -100,6 +105,10 @@
   border-radius: 2px;
   cursor: nwse-resize;
   touch-action: none;
+}
+
+.oc-intersection[data-diag='nesw'] {
+  cursor: nesw-resize;
 }
 
 .oc-intersection:hover,

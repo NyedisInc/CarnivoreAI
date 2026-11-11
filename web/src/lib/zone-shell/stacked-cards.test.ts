@@ -11,7 +11,6 @@ vi.mock('../../opscenter/api', async (importOriginal) => {
 
 import DrawerZone from '../drawer-zone/DrawerZone.svelte';
 import { drawerZone } from '../drawer-zone/zone-store.svelte';
-import { layoutEditor } from '../../opscenter/layout-editor/editor.svelte';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
 
 installPopoverPolyfill();
@@ -36,7 +35,7 @@ function shippedCss(file: string, phone: boolean): string {
   return css;
 }
 
-function mountStack(widgets: string[], phone: boolean, editing: boolean): HTMLElement[] {
+function mountStack(widgets: string[], phone: boolean): HTMLElement[] {
   const stored = { v: 1, items: widgets.map((widget) => ({ widget })) };
   (globalThis as { PreferenceBridge?: unknown }).PreferenceBridge = {
     read: () => stored,
@@ -44,9 +43,8 @@ function mountStack(widgets: string[], phone: boolean, editing: boolean): HTMLEl
     follow: () => () => {},
   };
   drawerZone.reload();
-  layoutEditor.active = editing;
   sheet = document.createElement('style');
-  sheet.textContent = ['zone-shell/PlacementBody.svelte', 'ledger-drawer/DrawerLedger.svelte', 'drawer-zone/ZoneItem.svelte']
+  sheet.textContent = ['zone-shell/PlacementBody.svelte', 'ledger-drawer/DrawerLedger.svelte', 'drawer-zone/DrawerZone.svelte']
     .map((file) => shippedCss(file, phone))
     .join('\n');
   document.head.appendChild(sheet);
@@ -68,7 +66,6 @@ beforeEach(() => {
 afterEach(() => {
   if (instance) unmount(instance as never);
   instance = null;
-  layoutEditor.active = false;
   sheet.remove();
   document.body.replaceChildren();
   delete (globalThis as { PreferenceBridge?: unknown }).PreferenceBridge;
@@ -96,23 +93,12 @@ describe.each([
   ['the usage card last, on a phone', ['core.notes', 'core.files', 'core.ledger'], true],
 ] as const)('%s', (_name, widgets, phone) => {
   test('one hairline and no gap between neighbours; the outer edges of the stack are untouched', () => {
-    const cards = mountStack([...widgets], phone, false);
+    const cards = mountStack([...widgets], phone);
     expect(cards.length).toBe(3);
     for (let at = 0; at < cards.length - 1; at += 1) {
       expect(seam(cards[at]!, cards[at + 1]!)).toEqual({ lines: 1, gap: 0 });
     }
     expect(drawn(getComputedStyle(cards[0]!).borderTopWidth)).toBe(true);
     expect(drawn(getComputedStyle(cards[2]!).borderBottomWidth)).toBe(true);
-  });
-});
-
-describe('edit layout', () => {
-  test.each([[ORDINARY], [['core.ledger', 'core.notes', 'core.files']]])('every card starts the same way: the strip above it separates them', (widgets) => {
-    const cards = mountStack([...widgets], false, true);
-    expect(cards.length).toBe(3);
-    const tops = cards.map((card) => `${getComputedStyle(card).marginTop}|${drawn(getComputedStyle(card).borderTopWidth)}`);
-    expect(new Set(tops).size).toBe(1);
-    expect(host.querySelectorAll('.dz-strip').length).toBe(3);
-    expect(drawn(getComputedStyle(cards[0]!).borderTopWidth)).toBe(true);
   });
 });

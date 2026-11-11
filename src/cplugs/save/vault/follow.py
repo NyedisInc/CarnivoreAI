@@ -21,6 +21,7 @@ from src.cplugs.save.vault.store import STATUS_FAILED, STATUS_PARTIAL, STATUS_UN
 from src.cplugs.save.vault.verified import Verified
 from src.cplugs.save.vault.workdirs import WorkingDirMemo
 from src.cplugs.sdk.vault_sources import VaultFolder
+from src.cplugs.sdk import vault_moves
 from src.cplugs.sdk.blob_codec import Throttle
 from src.cplugs.sdk.vault_sources import SourceUnavailable
 
@@ -29,6 +30,7 @@ logger = structlog.get_logger()
 SWEEP_SECONDS: float = 6 * 3600
 SIDE_DB_SECONDS: float = 3600
 ASSESS_SECONDS: float = 600
+PROTECTION_SECONDS: float = 900
 GC_SECONDS: float = 24 * 3600
 GC_BUSY_RETRY_SECONDS: float = 60
 RETRY_FIRST_SECONDS: float = 120
@@ -270,13 +272,23 @@ class Engine:
             self._dirty_since_assess = True
         cap = self._cap()
         if (self._dirty_since_assess or cap != self._assessed_cap) and now - self._assess_at >= ASSESS_SECONDS:
-            self._assess_at, self._dirty_since_assess, self._assessed_cap = now, False, cap
-            retention.assess(vault, self._cap, now=now, pace=self.throttle)
+            self._assess(vault, now, cap)
         if now - self._gc_at >= GC_SECONDS:
             if retention.collect_garbage(vault, now=now).get("busy"):
                 self._gc_at = now - GC_SECONDS + GC_BUSY_RETRY_SECONDS
             else:
                 self._gc_at = now
+
+    def _assess(self, vault: Vault, now: float, cap: int) -> None:
+        self._assess_at, self._dirty_since_assess, self._assessed_cap = now, False, cap
+        retention.assess(vault, self._cap, now=now, pace=self.throttle,
+                         moved_folders=vault_moves.recent_folders(self._state_dir, now))
+
+    def _protect_on_timer(self, vault: Vault, now: float, *, swept: bool) -> None:
+        since = now - self._assess_at
+        if self.throttle.cancelled or not (swept and since >= ASSESS_SECONDS or since >= PROTECTION_SECONDS):
+            return
+        self._assess(vault, now, self._cap())
 
     def _capture_folders(self, vault: Vault) -> bool:
         rows: List[dict] = []
@@ -318,10 +330,14 @@ class Engine:
             self._verified.load(vault.root)
             self._swept_at = self._index = None
         sources = self._sources()
+        swept = True
         if self._swept_at is None or now - self._swept_at >= SWEEP_SECONDS:
             self._sweep(vault, sources, now)
         elif not self._follow(vault) and not self._queue:
             self._sweep(vault, sources, now)
+        else:
+            swept = False
+        self._protect_on_timer(vault, now, swept=swept)
         captured, unchanged, failed = self._drain(vault, sources, now)
         ready = self._ready(now)
         if not ready and not self.throttle.cancelled:
@@ -331,6 +347,6 @@ class Engine:
         coverage = self._coverage(now) if self._uncovered_units is not None else {}
         health.update(self._state_dir, active=True, unavailable="", started_at=self._started_at, last_ok_at=last_ok,
                       pending=len(self._queue), over_cap=bool(state.get("over_cap")), damaged=self._damaged,
-                      legacy_unmigrated=self._legacy_failed, **coverage)
+                      mass_gone=state.get("mass_gone"), legacy_unmigrated=self._legacy_failed, **coverage)
         self._verified.save(vault.root)
         return SliceResult(captured, unchanged, failed, len(self._queue), bool(ready) or self._legacy_due(now))

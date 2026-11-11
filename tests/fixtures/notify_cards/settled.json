@@ -1,0 +1,73 @@
+{
+  "note": "R18: the settle push for an ask answered elsewhere; one per `where`, same collapse id as the ask, passive and silent",
+  "payloads": {
+    "computer": {
+      "title": "api-docs",
+      "body": "answered on the computer",
+      "path": "/sessions/ses_0123456789ab",
+      "thread": "local|ses_0123456789ab",
+      "v": 2,
+      "sub": "",
+      "kind": "yesno",
+      "type": "session.question",
+      "lv": "p",
+      "snd": "none",
+      "settle": {
+        "where": "computer",
+        "agent": "api-docs",
+        "working": false
+      }
+    },
+    "phone": {
+      "title": "api-docs",
+      "body": "answered on the computer",
+      "path": "/sessions/ses_0123456789ab",
+      "thread": "local|ses_0123456789ab",
+      "v": 2,
+      "sub": "",
+      "kind": "yesno",
+      "type": "session.question",
+      "lv": "p",
+      "snd": "none",
+      "settle": {
+        "where": "phone",
+        "agent": "api-docs",
+        "working": false
+      }
+    },
+    "auto": {
+      "title": "api-docs",
+      "body": "answered on the computer",
+      "path": "/sessions/ses_0123456789ab",
+      "thread": "local|ses_0123456789ab",
+      "v": 2,
+      "sub": "",
+      "kind": "yesno",
+      "type": "session.question",
+      "lv": "p",
+      "snd": "none",
+      "settle": {
+        "where": "auto",
+        "agent": "api-docs",
+        "working": false
+      }
+    },
+    "elsewhere": {
+      "title": "api-docs",
+      "body": "answered on the computer",
+      "path": "/sessions/ses_0123456789ab",
+      "thread": "local|ses_0123456789ab",
+      "v": 2,
+      "sub": "",
+      "kind": "yesno",
+      "type": "session.question",
+      "lv": "p",
+      "snd": "none",
+      "settle": {
+        "where": "elsewhere",
+        "agent": "api-docs",
+        "working": false
+      }
+    }
+  }
+}

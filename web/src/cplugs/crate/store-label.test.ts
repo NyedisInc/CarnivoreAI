@@ -3,18 +3,20 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { setLocale, t } from '../../lib/i18n/index.svelte';
+import { registerFixturePlugin } from '../../lib/i18n/test-support/folder-plugin-fixture';
 import { skipSentence } from './import-api';
 import { storeLabel, unitLabel } from './store-label';
 
 setLocale('en');
+registerFixturePlugin();
 
 describe('store labels', () => {
-    test('the review boards store reads review boards, never the unit id', () => {
-        expect(unitLabel('reviewboard.boards', t)).toBe('review boards');
-        expect(storeLabel('reviewboard', 'boards', t)).toBe('review boards');
+    test('a store with its own label reads that label, never the unit id', () => {
+        expect(unitLabel('boardfix.boards', t)).toBe('fixture boards');
+        expect(storeLabel('boardfix', 'boards', t)).toBe('fixture boards');
     });
     test('a store with no label of its own reads plugin name / data id, and an unknown plugin its id', () => {
-        expect(unitLabel('reviewboard.drafts', t)).toBe('review board / drafts');
+        expect(unitLabel('boardfix.drafts', t)).toBe('board fixture / drafts');
         expect(unitLabel('nosuch.thing', t)).toBe('nosuch / thing');
     });
 });

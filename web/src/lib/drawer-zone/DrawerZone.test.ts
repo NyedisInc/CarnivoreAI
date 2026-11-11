@@ -18,8 +18,9 @@ vi.mock('../../opscenter/api', async (importOriginal) => {
 
 import DrawerZone from './DrawerZone.svelte';
 import { drawerZone } from './zone-store.svelte';
-import { layoutEditor } from '../../opscenter/layout-editor/editor.svelte';
+import { dropHostById } from '../motion-grid';
 import { ZONE_FIELD } from './zone-model';
+import { layoutEditor } from '../../opscenter/layout-editor/editor.svelte';
 
 const ONE: LedgerSnapshot = {
   accounts: [
@@ -56,7 +57,6 @@ beforeEach(() => {
   fakeLedger.data = ONE;
   written = [];
   drawerZone.stored = null;
-  layoutEditor.active = false;
   (globalThis as { PreferenceBridge?: unknown }).PreferenceBridge = {
     read: () => null,
     write: async (field: string, value: unknown) => {
@@ -79,17 +79,12 @@ afterEach(() => {
   instance = null;
   host?.remove();
   host = null;
-  layoutEditor.active = false;
   delete (globalThis as { PreferenceBridge?: unknown }).PreferenceBridge;
 });
 
 const items = (): string[] => [...host!.querySelectorAll<HTMLElement>('[data-zone-item]')].map((e) => e.dataset['zoneItem']!);
-const edit = (on: boolean): void => {
-  layoutEditor.active = on;
-  flushSync();
-};
 
-describe('outside edit layout', () => {
+describe('the area', () => {
   test('defaults to the providers panel in its compact look, with no edit strip', () => {
     expect(items()).toEqual(['core.ledger']);
     expect(host!.querySelector('.ldp')).not.toBeNull();
@@ -116,50 +111,67 @@ describe('outside edit layout', () => {
   });
 });
 
-describe('in edit layout', () => {
-  test('the cyan box wraps the widgets only: the glance area sits under it, and no sizer is drawn (Joe, 2026-10-03)', () => {
-    edit(true);
-    const widgets = host!.querySelector('[data-zone-widgets]')!;
-    expect(widgets.classList.contains('dz-widgets--editing')).toBe(true);
-    const glance = host!.querySelector('[data-glance-area]');
-    expect(glance).not.toBeNull();
-    expect(widgets.contains(glance)).toBe(false);
-    expect(host!.querySelector('[data-zone-grip], .dz-grip, [role="separator"]')).toBeNull();
+describe('an emptied area', () => {
+  test('keeps the nodes the core appended to the column (its landing box and live region) when the last card leaves', () => {
+    const column = host!.querySelector<HTMLElement>('[data-zone-widgets]')!;
+    const core = document.createElement('div');
+    core.dataset['coreOwned'] = '';
+    column.appendChild(core);
+    drawerZone.stored = [];
+    flushSync();
+    expect(items()).toEqual([]);
+    expect(column.contains(core)).toBe(true);
   });
+});
 
-  test('each item shows its strip; reorder, look and remove work and save', () => {
+describe('always on (no edit mode)', () => {
+  test('every card sits in a motion wrapper and no edit strip is drawn', () => {
     drawerZone.add('core.keep-awake');
-    edit(true);
-    expect(host!.querySelectorAll('.dz-strip')).toHaveLength(2);
-
-    host!.querySelectorAll<HTMLElement>('[data-zone-down]')[0]!.click();
     flushSync();
-    expect(items()).toEqual(['core.keep-awake', 'core.ledger']);
-
-    host!.querySelector<HTMLElement>('[data-zone-look="full"]')!.click();
-    flushSync();
-    const ledgerItem = host!.querySelector('[data-zone-item="core.ledger"]')!;
-    expect(ledgerItem.getAttribute('data-look')).toBe('full');
-    expect(ledgerItem.querySelector('[data-zone-cell="core.ledger"]')).not.toBeNull();
-
-    host!.querySelector<HTMLElement>('[data-zone-item="core.keep-awake"] [data-zone-remove]')!.click();
-    flushSync();
-    expect(items()).toEqual(['core.ledger']);
-    expect(written.at(-1)).toEqual({ v: 1, items: [{ widget: 'core.ledger', look: 'full' }] });
+    const cells = [...host!.querySelectorAll<HTMLElement>('[data-zone-widgets] > .dz-cells > .dz-cell')];
+    expect(cells.map((c) => c.getAttribute('data-stack-id'))).toEqual(['core.ledger', 'core.keep-awake']);
+    expect(cells.every((c) => c.classList.contains('motion-item'))).toBe(true);
+    expect(host!.querySelector('.dz-strip')).toBeNull();
   });
 
-  test('only a widget with more than one look shows the look picker', () => {
-    drawerZone.add('core.keep-awake');
-    edit(true);
-    expect(host!.querySelector('[data-zone-item="core.ledger"] [data-zone-look]')).not.toBeNull();
-    expect(host!.querySelector('[data-zone-item="core.keep-awake"] [data-zone-look]')).toBeNull();
+  test('the zone header (only the +, no words) is drawn only while layout editing is on', () => {
+    expect(host!.querySelector('[data-zone-head]')).toBeNull();
+    layoutEditor.active = true;
+    flushSync();
+    const head = host!.querySelector<HTMLElement>('[data-zone-head]');
+    expect(head).not.toBeNull();
+    expect(head!.textContent!.trim()).toBe('');
+    layoutEditor.active = false;
+    flushSync();
+    expect(host!.querySelector('[data-zone-head]')).toBeNull();
   });
 
-  test('an emptied area shows the drop hint, and leaving edit layout hides it', () => {
+  test('the + in the zone header asks the widget drawer to open on this zone', () => {
+    layoutEditor.active = true;
+    flushSync();
+    const seen: unknown[] = [];
+    const on = (e: Event): void => void seen.push((e as CustomEvent).detail);
+    document.addEventListener('oc-widget-drawer-open', on);
+    host!.querySelector<HTMLElement>('[data-zone-add]')!.click();
+    document.removeEventListener('oc-widget-drawer-open', on);
+    layoutEditor.active = false;
+    expect(seen).toEqual([{ surface: 'zone:drawer' }]);
+  });
+
+  test('the zone is a drop host: it takes a widget it does not hold, refuses a held singleton, and add() appends and saves', () => {
+    const zoneHost = dropHostById('zone:drawer')!;
+    expect(zoneHost).not.toBeNull();
+    expect(zoneHost.takes!('core.keep-awake')).toBe(true);
+    expect(zoneHost.takes!('core.ledger')).toBe(false);
+    expect(zoneHost.add!('core.keep-awake')).toBe(true);
+    flushSync();
+    expect(items()).toEqual(['core.ledger', 'core.keep-awake']);
+    expect(written.at(-1)).toEqual({ v: 1, items: [{ widget: 'core.ledger' }, { widget: 'core.keep-awake' }] });
+  });
+
+  test('an emptied area shows the drop hint', () => {
     drawerZone.remove('core.ledger');
-    edit(true);
+    flushSync();
     expect(host!.querySelector('[data-zone-empty]')).not.toBeNull();
-    edit(false);
-    expect(host!.querySelector('[data-zone-empty]')).toBeNull();
   });
 });

@@ -23,6 +23,16 @@ ARGENT_COUNTDOWN = f"""\
   ⏵⏵ bypass permissions on · 1 shell
 """
 
+DEMO_CAPITAL_ESC = f"""\
+{"─" * 40} Sample-Pane ─
+❯ 
+{RULE}
+  ⚠ Usage limit reached · limit resets 8pm
+    Continuing automatically at 8pm · Esc to cancel · /usage-credits to continue now
+  \U0001f4e6/Nyedis/Code/Argent | Opus 5.5 | 22% ~222k/1.0M | think:high
+  ⏵⏵ bypass permissions on (shift+tab to cycle)
+"""
+
 CV_UI_PAUSED = f"""\
 ✻ Waiting for 2 dynamic workflows to finish
 
@@ -65,6 +75,10 @@ def test_the_argent_countdown_footer_is_a_stop() -> None:
     assert limit_detect.pane_stop_label(ARGENT_COUNTDOWN) == "1am"
 
 
+def test_a_capital_esc_countdown_footer_is_a_stop() -> None:
+    assert limit_detect.pane_stop_label(DEMO_CAPITAL_ESC) == "8pm"
+
+
 def test_paused_background_rows_are_a_stop() -> None:
     assert limit_detect.pane_stop_label(CV_UI_PAUSED) == "1am"
 
@@ -79,8 +93,14 @@ def test_a_working_session_is_not_a_stop() -> None:
     assert limit_detect.pane_stop_label(None) is None
 
 
-def test_the_countdown_line_alone_is_not_enough() -> None:
-    assert limit_detect.pane_stop_label(ARGENT_COUNTDOWN.replace("Continuing automatically", "Carrying on")) is None
+def test_the_warning_line_alone_is_a_stop() -> None:
+    screen = ARGENT_COUNTDOWN.replace("Continuing automatically", "Carrying on")
+    assert limit_detect.pane_stop_label(screen) == "1am"
+
+
+def test_the_warning_line_above_the_rule_is_not_a_stop() -> None:
+    screen = f"  \u26a0 Usage limit reached \u00b7 limit resets 1am\n\n{RULE}\n\u276f \n{RULE}\n  plain footer\n"
+    assert limit_detect.pane_stop_label(screen) is None
 
 
 def _evidence(screen: str) -> auto_restart.SessionEvidence:

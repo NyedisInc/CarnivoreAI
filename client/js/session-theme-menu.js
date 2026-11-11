@@ -93,8 +93,13 @@
                 const openedPicker = pickerEl;
                 if (context) {
                     row.disabled = true;
+                    if (typeof context.onPending === 'function') context.onPending(m.id);
                     const saved = await window.Themes.pinThemeForSession(session, m.id);
-                    if (!saved) { row.disabled = false; return; }
+                    if (!saved) {
+                        if (typeof context.onPending === 'function') context.onPending(null);
+                        row.disabled = false;
+                        return;
+                    }
                     if (typeof context.onSelected === 'function') context.onSelected(m.id);
                 } else window.Themes.applyGlobal(m.id);
                 if (pickerEl === openedPicker) close();

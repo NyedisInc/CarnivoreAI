@@ -1,7 +1,8 @@
 <script lang="ts">
   /* the history bar the notes panel the page frame */
   import { onMount, untrack } from 'svelte';
-  import { activeThemeId, ApiError, boardHeaderKeys, markdownPlain, resourcePush, t } from '../sdk';
+  import { boardHeaderKeys } from './board-header-keys';
+import { activeThemeId, ApiError, markdownPlain, resourcePush, t } from '../sdk';
   import { Button, ConfirmPopup, IconButton, Segmented } from '../sdk/ui';
   import { clearScratch, fetchBoard, fetchBoards, rescan } from './board-api';
   import AttachmentsKey from './AttachmentsKey.svelte';
@@ -21,7 +22,11 @@
   import RoundView from './RoundView.svelte';
   import ThemePicker from './ThemePicker.svelte';
   import Tray from './Tray.svelte';
-  import { effectiveTheme, flatChoices, readThemeChoice, themeGroups, tokensFor, writeThemeChoice } from './board-theme';
+  import VisitorAnswers from './VisitorAnswers.svelte';
+  import VisitorToggle from './VisitorToggle.svelte';
+  import { VisitorView } from './visitor-view.svelte';
+  import { BoardLookState } from './board-look.svelte';
+  import { effectiveTheme, flatChoices, themeGroups, tokensFor } from './board-theme';
   import { anchorState, newDraft, setNote, shownRevision, unansweredCount } from './tray-model';
   import {
     BOARDS_TOPIC, DRAFTS_TOPIC, cappedRoom, hasSetWidth, widthCap, MAIN_VIEW, defaultFit, historyItems, isScratch, latestRevision, paramsFromSearch, revisionById, stepRevision, visibleHistory,
@@ -44,7 +49,7 @@
   let room = $state(0);
   let fullWidth = $state(readFullWidth());
   let promptsOpen = $state(false);
-  let themeChoice = $state(readThemeChoice());
+  const boardLook = new BoardLookState();
   let themeSet = $state(themeGroups());
   let appTheme = $state(activeThemeId());
   let reload = $state(0);
@@ -62,9 +67,10 @@
   let frameApi = $state<ReturnType<typeof BoardFrame> | null>(null);
   const loop = new ReviewLoop(() => load());
   const payloadLoop = new PayloadLoop(() => load(), (payload, save) => frameApi?.load(payload, save));
+  const visitors = new VisitorView();
 
   /* the page frame */
-  const frameTheme = $derived(effectiveTheme(themeChoice, flatChoices(themeSet), appTheme));
+  const frameTheme = $derived(effectiveTheme(boardLook.choice, flatChoices(themeSet), appTheme));
 
   function refreshThemes(): void {
     themeSet = themeGroups();
@@ -77,10 +83,10 @@
     if (id && vars) frameApi?.theme(id, vars);
   }
 
+  $effect(() => boardLook.open(slug, paintTheme));
+
   function pickTheme(id: string): void {
-    themeChoice = id;
-    writeThemeChoice(id);
-    paintTheme();
+    boardLook.pick(slug, id, paintTheme);
   }
 
   const sidecar = $derived(withLiveDraft(answer?.sidecar ?? null));
@@ -138,6 +144,16 @@
     const back = noteKeeper.follow(noteKey(slug, id), payloadLoop.note);
     if (back !== null) untrack(() => payloadLoop.setNote(back));
   });
+
+  const visitorShown = $derived(visitors.shown?.revision === revision?.id ? visitors.shown : null);
+  $effect(() => visitors.follow(sidecar && !isScratch(sidecar) ? sidecar.board.slug : null));
+  visitors.bindFrame(() => payloadRevision, () => frameApi, (rev) => payloadLoop.pageReady(rev));
+
+  function openVisitor(id: string, number: number | null): void {
+    if (revision?.id !== id) show(id);
+    visitors.select(id, number);
+    if (number !== null && !payloadRevision) promptsOpen = true;
+  }
 
   function errorKeyFor(error: unknown): string {
     if (error instanceof ApiError && error.status === 404) return 'cplug.reviewboard.page.not_found';
@@ -198,6 +214,7 @@
     themeAware = null;
     flipped = false;
     openRound = null;
+    visitors.select(null, null);
   }
 
   function toggleWidth(): void {
@@ -259,7 +276,9 @@
       void load();
     }, POLL_MS, [BOARDS_TOPIC]);
     const stopDrafts = resourcePush().pushOrPoll(() => void loop.remoteChanged(), POLL_MS, [DRAFTS_TOPIC]);
+    const giveOpener = visitors.claimOpener((board, id, number) => { if (board === slug) openVisitor(id, number); });
     return () => {
+      giveOpener(); visitors.stop();
       document.removeEventListener('visibilitychange', hiding);
       window.removeEventListener('pagehide', leaving);
       leaving();
@@ -284,7 +303,7 @@
       <span class="rb-name">{sidecar?.board.title ?? slug}</span>
       {#if answer && answer.state !== 'your_turn'}<span class="rb-state" data-state={answer.state}>{t(`cplug.reviewboard.state.${answer.state}`)}</span>{/if}
       {#if revision}
-        <ThemePicker groups={themeSet} value={themeChoice} active={appTheme} onchange={pickTheme} onrefresh={refreshThemes} />
+        <ThemePicker groups={themeSet} value={boardLook.choice} active={appTheme} onchange={pickTheme} onrefresh={refreshThemes} />
       {/if}
       {#if payloadRevision}
         <PayloadControls revision={payloadRevision} loop={payloadLoop} {noteOpen} onnote={() => (noteOpen = !noteOpen)} onsend={() => void sendPayload()}
@@ -297,12 +316,15 @@
       {/if}
       {#if sidecar && !isScratch(sidecar)}
         <AttachmentsKey slug={sidecar.board.slug} tick={boardsTick} />
-        {#each boardHeaderKeys() as key (key.id)}
-          {@const Key = key.component}
-          <Key slug={sidecar.board.slug} />
-        {/each}
       {/if}
       <span class="rb-tools">
+        
+        {#if sidecar && !isScratch(sidecar)}
+          {#each boardHeaderKeys() as key (key.id)}
+            {@const Key = key.component}
+            <Key slug={sidecar.board.slug} />
+          {/each}
+        {/if}
         <IconButton label={t('cplug.reviewboard.action.back')} icon="chevron-left" variant="quiet" iconSize={16}
                     disabled={!revision || revision.n <= 1} onclick={() => step(-1)} />
         <IconButton label={t('cplug.reviewboard.action.forward')} icon="chevron-right" variant="quiet" iconSize={16}
@@ -347,31 +369,35 @@
       <p class="rb-note rb-note--error" role="status">{t('cplug.reviewboard.page.invalid')}</p>
     {:else if sidecar && history && revision}
       <HistoryBar items={history.items} folded={history.folded} current={revision.id} total={sidecar.revisions.length}
-                  onpick={show} onround={(id) => (openRound = id)} onunfold={() => (unfolded = true)} />
-      {#if revision.views.length > 1 || !onNewest}
+                  onpick={show} onround={(id) => (openRound = id)} onunfold={() => (unfolded = true)}
+                  visitors={visitors.rows} openVisitor={visitors.number} onvisitor={(row) => openVisitor(row.revision, row.number)} />
+      {#if revision.views.length > 1 || !onNewest || visitors.of(revision.id).length > 0}
         <div class="rb-views">
           {#if revision.views.length > 1}
             <Segmented label={t('cplug.reviewboard.views.label')} value={shownView} options={revision.views.map((one) => ({ value: one.id, label: one.label }))}
                        onchange={(id) => (view = id)} />
           {/if}
+          {#if visitors.of(revision.id).length > 0}<VisitorToggle rows={visitors.of(revision.id)} value={visitors.number} onchange={(n) => openVisitor(revision.id, n)} />{/if}
           {#if !onNewest && latest}
             <span class="rb-back"><Button size="sm" data-back-current onclick={() => show(latest.id)}>{t('cplug.reviewboard.action.back_to_current')}</Button></span>
           {/if}
         </div>
       {/if}
       {#if payloadRevision}<PayloadNotices revision={payloadRevision} loop={payloadLoop} />{/if}
+      {#if visitorShown && payloadRevision}<VisitorAnswers revision={payloadRevision} row={visitorShown} />{/if}
+      {#if visitors.readFailed && visitors.number !== null}<p class="rb-note rb-note--error" role="status" data-visitor-read-failed>{t('cplug.reviewboard.visitors.read_failed')}</p>{/if}
       <div class="rb-body" data-board-body>
         <div class="rb-main">
         {#if !payloadRevision && latest && promptsOpen}
           <Tray {sidecar} {revision} {latest} draft={loop.draft} phase={answer?.state ?? 'your_turn'} {pointed} confirm={loop.confirm}
-                sending={loop.sending} failed={loop.failed} hide={inline ? placed : []} onedit={(change) => loop.edit(change)} onsend={send} onclear={() => { pointed = null; loop.clear(); }}
+                sending={loop.sending} failed={loop.failed} hide={inline ? placed : []} visitor={visitorShown} onedit={(change) => loop.edit(change)} onsend={send} onclear={() => { pointed = null; loop.clear(); }}
                 onmove={() => latest && loop.move(sidecar.revisions.find((r) => r.id === loop.draft?.revision) ?? revision, latest)}
                 onround={(id) => (openRound = id)} />
         {/if}
         <div class="rb-stage" bind:clientWidth={room} data-board-stage>
           <BoardFrame bind:this={frameApi} slug={sidecar.board.slug} revision={frameRevision ?? revision} view={shownView} {mode} room={shownRoom} capped={cap !== null} {reflows} {reload} {marks} {inline}
-                      onready={(info) => { themeAware = info.themeAware; refreshThemes(); paintTheme(); if (payloadRevision) payloadLoop.pageReady(payloadRevision); }}
-                      onanchor={(id) => { pointed = id; if (!payloadRevision) promptsOpen = true; }} onpayload={(payload) => payloadLoop.received(payload)}
+                      onready={(info) => { themeAware = info.themeAware; refreshThemes(); paintTheme(); if (payloadRevision && !visitors.frameReady(frameApi)) payloadLoop.pageReady(payloadRevision); }}
+                      onanchor={(id) => { pointed = id; if (!payloadRevision) promptsOpen = true; }} onpayload={(payload) => { if (!visitorShown) payloadLoop.received(payload); }}
                       ondropped={(reason) => { if (payloadRevision && (reason === 'payload' || reason === 'size')) payloadLoop.rejected(); }} />
         </div>
         <div class="rb-readout" data-board-readout>

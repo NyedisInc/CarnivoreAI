@@ -28,10 +28,10 @@
     "On the terminal page, drag or press the session, terminal or browser card to pick one of your live ones from a list and add it the same way.",
     "Press arrange layout, in the components list, to open edit mode and rearrange by hand.",
     "Press the small arrow beside a widget's top left icon to list what that widget can do; outside edit layout the same menu opens from the icon itself.",
-    "Press a widget's remove control to take it off; drag the splitters to resize.",
+    "Press a widget's remove control to take it off; drag the dividers to resize. On the terminal page, the war room, the tab strips, the sidebar areas and the bars the same drag and resize work at any time, no edit layout needed: pick a widget up by its title strip. Only a dashboard needs edit layout on.",
     "Press done or Escape to leave; every change was saved when you made it. Drag a removed widget from the drawer to put it back.",
     "Press done, or the layout button again, to keep it.",
-    "Drag a widget's side edge to resize it: a widget covering several rows has the full height edge to grab, and its four corners move the side and the row boundary together.",
+    "Resize a widget by dragging its edges and corners (a dashboard is a free 24 column grid, so a widget goes anywhere and any size above its floor; the terminal page's dividers are pixel exact). The widgets glide to make room as you drag and settle when you let go.",
     "Turn on \"show what can't go here\" to see why a widget is missing from this screen; press one of its dimmed rows to read the full reason.",
     "A plugin's panel view (a developer-sideloaded plugin that declares the panel surface) is listed in the drawer while the plugin is on; press it to add it. It lands at large, or at its smallest size when it does not offer large, and the cell menu size gear lists only the sizes the view declares."
   ],

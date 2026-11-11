@@ -9,12 +9,19 @@ export interface ScopeChip {
     update: boolean;
 }
 
+const LEGACY_PUBLISHER = 'nyedis/';
+
 export function groupInstalled(rows: readonly InstalledItem[]): Record<string, InstalledItem[]> {
     const out: Record<string, InstalledItem[]> = {};
     for (const row of rows) {
         const key = row && row.item_id;
         if (!key) continue;
         (out[key] ??= []).push(row);
+    }
+    for (const key of Object.keys(out)) {
+        if (!key.startsWith(LEGACY_PUBLISHER)) continue;
+        const twin = `carnivore/${key.slice(LEGACY_PUBLISHER.length)}`;
+        out[twin] ??= out[key];
     }
     return out;
 }

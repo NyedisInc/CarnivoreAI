@@ -5,11 +5,24 @@
   --sidebar-rail-track: var(--sidebar-rail-handle-w);
   --sidebar-topbar-h: 44px;
   --sidebar-flyout-w: 100%;
+  --sbr-row-h: 33px;
+  --sbr-row-gap: 1px;
+  --sbr-grid-top: 10px;
+  --sbr-sep-h: 9px;
+  --sbr-head-h: 30px;
+  --sbr-grid-bottom: 12px;
+  --sbr-rail-foot: 13px;
 }
 
 @media (max-width: 700px) {
   :root {
     --sidebar-rail-w: 52px;
+  }
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --sbr-row-h: var(--oc-tap);
   }
 }
 
@@ -54,11 +67,12 @@ body.sidebar-layout-rail .session-sidebar-brand img {
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
-  clip-path: inset(calc(-1 * var(--sbr-lift, 0px)) 0 calc(-1 * var(--sbr-drop, 0px)) 0);
+  clip-path: inset(calc(-1 * var(--sbr-lift, 0px)) 0 calc(-1 * var(--sbr-drop, 0px)) calc(-1 * var(--sbr-bleed, 0px)));
 }
 
 .sbr-region[data-sbr-menu] {
   z-index: 2;
+  --sbr-bleed: var(--sidebar-rail-track);
 }
 
 .sbr-region:not(:has(.sbr-flyout--open)):has(.session-sidebar-list[hidden]) {
@@ -67,7 +81,7 @@ body.sidebar-layout-rail .session-sidebar-brand img {
 
 .sbr-flyout-slot {
   position: absolute;
-  inset: calc(-1 * var(--sbr-lift, 0px)) 0 calc(-1 * var(--sbr-drop, 0px)) 0;
+  inset: calc(-1 * var(--sbr-lift, 0px)) 0 calc(-1 * var(--sbr-drop, 0px)) calc(-1 * var(--sbr-bleed, 0px));
   z-index: 2;
   pointer-events: none;
 }

@@ -68,6 +68,19 @@ function sameShape(a: readonly RowModel[], b: readonly RowModel[]): boolean {
   return true;
 }
 
+function orderedByRowAbove(list: readonly Reservation[], above: RowModel | undefined): Reservation[] {
+  if (list.length < 2 || !above) return list.slice().sort((a, b) => a.at - b.at);
+  const drawn = new Map<SlotId, number>();
+  visualOrder(above).forEach((entry, index) => drawn.set(entry.kind === 'slot' ? entry.slot.id : entry.of, index));
+  const pos = (one: Reservation): number => drawn.get(one.of) ?? 1e9;
+  const ordered = list.slice().sort((a, b) => pos(a) - pos(b) || a.at - b.at);
+  let floor = 0;
+  return ordered.map((one) => {
+    floor = Math.max(floor, one.at);
+    return floor === one.at ? one : { ...one, at: floor };
+  });
+}
+
 function onePass(rows: readonly RowModel[]): RowModel[] {
   const owed = new Map<number, Reservation[]>();
   const spans = new Map<SlotId, number>();
@@ -97,7 +110,7 @@ function onePass(rows: readonly RowModel[]): RowModel[] {
   for (let rowAt = 0; rowAt < rows.length; rowAt += 1) {
     const row = rows[rowAt];
     if (!row) continue;
-    const reserved = (owed.get(rowAt) ?? []).slice().sort((a, b) => a.at - b.at);
+    const reserved = orderedByRowAbove(owed.get(rowAt) ?? [], out[out.length - 1]);
     if (row.slots.length === 0 && reserved.length === 0) continue;
     const slots = row.slots.map((slot) => {
       const reach = spans.get(slot.id) ?? 1;
@@ -124,11 +137,50 @@ function trimTail(rows: readonly RowModel[]): readonly RowModel[] {
   while (last >= 0 && rows[last]!.slots.length === 0) last -= 1;
   if (last < 0 || last === rows.length - 1) return rows;
   const home = rows[last]!;
-  const reachesTail = (slot: Slot): boolean => spanOf(slot) >= rows.length - last;
-  if (home.slots.every(reachesTail)) return rows;
+  const reachesTail = (at: number, slot: Slot): boolean => at + spanOf(slot) >= rows.length;
+  const covering = rows.flatMap((row, at) =>
+    at <= last ? row.slots.filter((slot) => at + spanOf(slot) > last).map((slot) => ({ at, slot })) : [],
+  );
+  if (covering.every((one) => reachesTail(one.at, one.slot))) return rows;
   const tail = rows.slice(last + 1);
   const gift = tail.filter((row) => row.kind === home.kind).reduce((sum, row) => sum + row.size, 0);
   return [...rows.slice(0, last), { ...home, size: home.size + gift }];
+}
+
+function closeBareRows(rows: readonly RowModel[]): readonly RowModel[] {
+  let out = rows;
+  for (;;) {
+    const gap = out.findIndex((row, at) => at > 0 && row.slots.length === 0 && out.slice(at).some((later) => later.slots.length > 0));
+    if (gap < 0) return out;
+    const home = out[gap - 1]!;
+    const size = out[gap]!.kind === home.kind ? out[gap]!.size : 0;
+    out = out.flatMap((row, at): RowModel[] => {
+      if (at === gap) return [];
+      const grown = at === gap - 1 ? { ...row, size: row.size + size } : row;
+      if (at >= gap) return [grown];
+      const slots = grown.slots.map((slot) => (at + spanOf(slot) > gap ? { ...slot, span: spanOf(slot) - 1 } : slot));
+      return [{ ...grown, slots }];
+    });
+  }
+}
+
+function capFullSpans(rows: readonly RowModel[]): readonly RowModel[] {
+  return rows.map((row, rowAt) => {
+    if ((row.reserved ?? []).length > 0 || row.slots.length === 0 || row.slots.some((slot) => spanOf(slot) < 2)) return row;
+    const blocked = rows.slice(rowAt + 1).findIndex((under, step) => under.slots.length > 0 && row.slots.every((one) => spanOf(one) > step + 1));
+    if (blocked < 0) return row;
+    return { ...row, slots: row.slots.map((slot) => (blocked + 1 < spanOf(slot) ? { ...slot, span: blocked + 1 } : slot)) };
+  });
+}
+
+export function settleRemoval(layout: Layout): Layout {
+  let now = repairSpans(layout);
+  for (let pass = 0; pass < 6; pass += 1) {
+    const rows = closeBareRows(capFullSpans(now.rows));
+    if (rows === now.rows || sameShape(rows, now.rows)) return now;
+    now = repairSpans({ ...now, rows: rows as RowModel[] });
+  }
+  return now;
 }
 
 export function repairSpans(layout: Layout): Layout {

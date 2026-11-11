@@ -2,12 +2,13 @@
   "id": "notification-destinations",
   "name": "Notification destinations",
   "summary": "send the notifications you pick to places outside the app, with one routing matrix that says which notification goes where.",
-  "description": "Twelve kinds of destination, many instances of each: slack, discord, microsoft teams (workflows webhook), telegram, ntfy, pushover, a generic signed webhook, email (smtp), sms through aws sns, sms through twilio, pagerduty, and every web push device. Every secret, recipient and number lives in the Keychain and is write-only. One matrix lists 29 notification types in families (needs you, sessions, accounts, health, app, in-app only) against a screen column plus one column per destination. Every cell can be unticked, needs-you included; needs-you starts ticked. Hiding a card hides the pop-up only: the bell, the history, the status light and the tray keep everything. Each destination can add away mode, quiet hours, a reminder and a project filter, and can opt in to details (tool and target, or the question snippet; scrubbed, capped at 200 characters, never on sms). The message carries a link back, tried in order: the mobile sync public address, then the local name, then the network address, then no link. A pause switch holds all outside delivery on one computer. Settings and secrets sync to paired computers over the paired link, secrets landing in each computer's Keychain; any tick or destination can be pinned to one computer. An agent can send you a notification with the notify tool. The old Slack, ntfy and Pushover secrets move into the Keychain.",
+  "description": "Twelve kinds of destination, many instances of each: slack, discord, microsoft teams (workflows webhook), telegram, ntfy, pushover, a generic signed webhook, email (smtp), sms through aws sns, sms through twilio, pagerduty, and every web push device. Every secret, recipient and number lives in the Keychain and is write-only. One matrix lists 29 notification types in families (needs you, sessions, accounts, health, app, in-app only) against a screen column plus one column per destination. Every cell can be unticked, needs-you included; needs-you starts ticked. Hiding a card hides the pop-up only: the bell, the history, the status light and the tray keep everything. Each destination can add away mode, quiet hours, a reminder and a project filter, and can opt in to details (tool and target, or the question snippet; scrubbed, capped at 200 characters, never on sms). The message carries a link back, tried in order: the mobile sync public address, then the local name, then the network address, then no link. A pause switch holds all outside delivery on one computer. Settings and secrets sync to paired computers over the paired link, secrets landing in each computer's Keychain; any tick or destination can be pinned to one computer. An agent can send you a notification with the notify tool. The old Slack, ntfy and Pushover secrets move into the Keychain. Settings > notifications opens on an inspector: pick any of the 39 notification types and see its card drawn as it arrives, then set its sound (with a play button), urgency (passive, active or time-sensitive), which devices get it (each iPhone, this computer, the screen card) and whether the corner card shows on this computer, or send a test of that type to your iPhone. The routing grid stays under it.",
   "area": "status-notifications",
   "status": "beta",
   "since": "2026-10-03",
-  "updated": "2026-10-30",
+  "updated": "2026-11-07",
   "surfaces": [
+    "web/src/lib/notifications/inspector/Inspector.svelte",
     "web/src/lib/notifications/destinations/DestinationsPanel.svelte",
     "web/src/lib/notifications/matrix/MatrixPanel.svelte",
     "web/src/lib/notifications/matrix/LinkPanel.svelte"
@@ -31,7 +32,9 @@
     "PUT /api/v1/notifications/sync/peers/{key}",
     "POST /api/v1/notifications/sync/now",
     "POST /api/v1/sessions/{session_id}/agent-message",
-    "PUT /api/v1/mcp-admin/agent-notify"
+    "PUT /api/v1/mcp-admin/agent-notify",
+    "GET /api/v1/notifications/styles",
+    "PUT /api/v1/notifications/styles/{type_id}"
   ],
   "docs": [
     "docs/notifications.md",

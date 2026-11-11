@@ -1,5 +1,5 @@
 <script lang="ts">
-  import GridSurface from '../../opscenter/engine/GridSurface.svelte';
+  import AbsSurface from '../../opscenter/engine/rects/AbsSurface.svelte';
   import CellHost from '../../opscenter/CellHost.svelte';
   import LiveRegion from '../../opscenter/engine/LiveRegion.svelte';
   import EmptySpaceMenu from '../../opscenter/layout-editor/EmptySpaceMenu.svelte';
@@ -13,10 +13,10 @@
   $effect(() => installFlushOnExit());
 </script>
 
-<GridSurface gutter={GUTTER} store={warroomLayout} sizeKey="surface:warroom">
+<AbsSurface gutter={GUTTER} store={warroomLayout} sizeKey="surface:warroom" dropId="warroom">
   {#snippet renderCell(slot)}
     <CellHost id={slot.id} store={warroomLayout} />
   {/snippet}
-</GridSurface>
+</AbsSurface>
 <EmptySpaceMenu surface="warroom" />
 <LiveRegion store={warroomLayout} />

@@ -8,7 +8,6 @@ export const MAX_GLANCE_PLACEMENTS = 12;
 export const MAX_PLACEMENT_OPTIONS = 8;
 
 
-/* the glance area */
 export const FAMILY_TARGET_OPTION = 'target';
 
 export type { PlacementOptionValue };

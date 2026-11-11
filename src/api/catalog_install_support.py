@@ -10,6 +10,7 @@ import structlog
 from fastapi import HTTPException, Request
 
 from src.api.catalog_views import find_item, latest_version
+from src.core.catalog.publisher_rename import find_installed_item
 from src.core.catalog.archive_client import fetch_archive
 from src.core.catalog.fetch_stream import FetchRefusal
 from src.core.catalog.first_party import refuse_theme_code
@@ -56,9 +57,12 @@ def refuse_409(code: str, detail: str, **extra: Any) -> HTTPException:
 
 
 def resolve_item(
-    snapshot: IndexSnapshot, item_id: str
+    snapshot: IndexSnapshot, item_id: str, installed_kind: Optional[str] = None
 ) -> Tuple[CatalogItem, ItemVersion]:
-    item, untrusted = find_item(snapshot, item_id)
+    if installed_kind is None:
+        item, untrusted = find_item(snapshot, item_id)
+    else:
+        item, untrusted = find_installed_item(snapshot, item_id, installed_kind)
     if item is None:
         raise HTTPException(status_code=404, detail=f"no catalog item {item_id!r}")
     if untrusted:

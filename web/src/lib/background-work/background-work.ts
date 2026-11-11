@@ -11,6 +11,7 @@ export interface BackgroundProcess {
     children: number;
     summary: string | null;
     agent_id: string | null;
+    owner_finished: boolean | null;
 }
 
 export interface SessionBackgroundWork {
@@ -20,6 +21,7 @@ export interface SessionBackgroundWork {
     owners: 'ok' | 'absent' | 'unchecked';
     detail: string;
     as_of: string | null;
+    leftovers: number | null;
 }
 
 export interface TerminateResponse {

@@ -44,6 +44,7 @@ from src.core.crosstalk.ddl import DDL_V57, DDL_V102
 from src.core.messaging.ddl import DDL_V73, V92_COLUMNS
 from src.core.exports.ddl import DDL_V93
 from src.core.session_groups.session_group_rule import DDL_V101
+from src.core.plugin_registry.marker import DDL_V104
 from src.core.descriptions.ddl import V74_COLUMNS
 from src.core.project_pack.ddl import DDL_V75
 from src.core.pack.machines.ddl import DDL_PACK_MACHINES
@@ -124,6 +125,7 @@ UNGATED_VERSION_DDL: Dict[int, Tuple[str, ...]] = {
     93: DDL_V93,
     101: DDL_V101,
     102: DDL_V102,
+    104: DDL_V104,
 }
 
 UNGATED_VERSION_COLUMNS: Dict[int, Tuple[Tuple[str, str, str], ...]] = {

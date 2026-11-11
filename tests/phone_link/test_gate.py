@@ -247,7 +247,8 @@ def test_the_pre_cookie_assets_are_exactly_the_pair_bundle_its_css_and_the_three
         "/static/dist/pair.js", "/static/dist/pair.css",
         "/static/fonts/jetbrains-mono/JetBrainsMono-Regular.woff2",
         "/static/fonts/jetbrains-mono/JetBrainsMono-Medium.woff2",
-        "/static/fonts/jetbrains-mono/JetBrainsMono-Bold.woff2"}
+        "/static/fonts/jetbrains-mono/JetBrainsMono-Bold.woff2",
+        "/static/fonts/symbols-nerd-font/SymbolsNerdFontMono-Regular.woff2"}
 
 
 def test_every_asset_the_pair_page_loads_is_on_the_pre_cookie_list():
@@ -261,5 +262,28 @@ def test_every_asset_the_pair_page_loads_is_on_the_pre_cookie_list():
     css = (root / "web/src/pair/pair.css").read_text()
     for name in re.findall(r"@import '\.\./opscenter/([^']+)'", css):
         loaded |= set(re.findall(r"url\('(/static/[^']+)'\)", (root / "web/src/opscenter" / name).read_text()))
-    assert loaded >= {"/static/dist/pair.js", "/static/dist/pair.css"} and len(loaded) == 5, loaded
+    assert loaded >= {"/static/dist/pair.js", "/static/dist/pair.css"} and len(loaded) == 6, loaded
     assert loaded <= g.PUBLIC_PATHS, loaded - g.PUBLIC_PATHS
+
+
+@pytest.mark.asyncio
+async def test_capability_routes_pass_unpaired_and_nothing_else_under_notify(rig):
+    gate, app, *_ = rig
+    mid = "e" * 32
+    for method, path in [("POST", "/api/v1/notify/act"), ("GET", "/api/v1/notify/card"),
+                         ("GET", f"/api/v1/notify/media/{mid}"), ("GET", f"/api/v1/notify/media/{mid}/poster")]:
+        _, sent = await call(gate, path, method=method)
+        assert status(sent) == 200, path
+    for method, path in [("GET", "/api/v1/notify/act"), ("POST", "/api/v1/notify/card"), ("GET", "/api/v1/notify/act/"),
+                         ("GET", "/api/v1/notify/destinations"), ("GET", f"/api/v1/notify/media/{mid}/x"),
+                         ("GET", "/api/v1/notifications/settings")]:
+        _, sent = await call(gate, path, method=method)
+        assert status(sent) in (302, 401), path
+    _, sent = await call(gate, "/api/v1/notify/media/../act")
+    assert status(sent) == 400
+    _, sent = await call(gate, "/api/v1/notify/act", method="POST", host="evil.example")
+    assert status(sent) == 421
+    _, sent = await call(gate, "/api/v1/notify/card\n", method="GET")
+    assert status(sent) == 400
+    _, sent = await call(gate, "/api/v1/notify/card", kind="websocket")
+    assert sent[0]["type"] == "websocket.close"

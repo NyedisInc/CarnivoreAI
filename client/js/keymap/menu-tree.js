@@ -10,11 +10,13 @@ export const MENU_GROUPS = Object.freeze([
                   'sleep', 'send-to', 'move-to-folder', 'close', 'share-read-only', 'huddle-project-lead', 'mark-read', 'mark-unread', 'wake', 'archive', 'update-restart', 'reconnect-mcp', 'remove-from-group'] },
             { id: 'browser-row', files: ['web/src/lib/item-menu/menus/row.ts', 'web/src/lib/item-menu/menus/row-items.ts'], items: ['popout', 'rename', 'pin', 'move-to-group', 'download', 'close', 'remove-from-group'] },
             { id: 'page-row', files: ['web/src/lib/item-menu/menus/page-actions.ts', 'web/src/lib/item-menu/menus/row-items.ts', 'web/src/lib/item-menu/menus/row.ts', 'web/src/cplugs/publicboard/page-row-action.ts'], items: ['popout', 'rename', 'pin', 'move-to-group', 'close', 'share-link'] },
-            { id: 'project-heading', files: ['web/src/lib/item-menu/menus/fold-inside.ts', 'web/src/lib/item-menu/menus/project.ts', 'web/src/lib/projects-shared/ledger-model.ts'], items: ['new-agent', 'load-blueprint', 'rename-project', 'add-to-company', 'show-path', 'fold-inside', 'sleep', 'archive-project', 'remove-from-company'] },
+            { id: 'project-heading', files: ['web/src/lib/item-menu/menus/project.ts', 'web/src/lib/item-menu/menus/project-entries.ts'],
+              items: ['new-agent', 'load-blueprint', 'rename-project', 'pick-color', { branch: 'add-to-company', items: ['new-company', 'remove-from-company'] }, 'show-path', 'sleep',
+                  'turn-on-agent', 'swarm-new-sessions', 'migrate-project', 'migrate-back', 'project-settings', 'archive-project', 'delete-project'] },
             { id: 'company-heading', files: ['web/src/lib/item-menu/menus/fold-inside.ts', 'web/src/lib/item-menu/menus/company.ts'], items: ['rename-company', 'clear-company-color', 'fold-inside', 'delete-company'] },
             { id: 'group-heading', files: ['web/src/lib/item-menu/menus/fold-inside.ts', 'web/src/lib/item-menu/menus/group.ts'], items: [{ branch: 'customize', items: ['rename-group', 'add-members', 'colour', 'group-icon', 'group-rule'] }, 'fold-inside', 'sleep', 'move-up', 'move-down', 'delete-group'] },
             { id: 'section-heading', files: ['web/src/lib/item-menu/menus/fold-inside.ts', 'web/src/lib/item-menu/menus/section.ts'], items: ['fold', 'fold-inside', 'move-up', 'move-down', 'browser', 'edit-layout', 'done-editing'] },
-            { id: 'color-menu', files: ['web/src/lib/item-menu/menus/color.ts', 'web/src/lib/projects-shared/ledger-model.ts'], items: ['color-style', 'pick-color'] },
+            { id: 'color-menu', files: ['web/src/lib/item-menu/menus/color.ts'], items: ['color-style'] },
             { id: 'leader', files: ['web/src/lib/item-menu/menus/leader.ts'], items: ['wake', 'rename-agent', 'turn-off-agent'] },
             { id: 'new-menu', files: ['web/src/lib/drawer-tabs/NewSessionButton.svelte', 'web/src/lib/drawer-tabs/drawer-tabs.ts'], items: ['agent', 'terminal', 'browser', 'project', 'group'] },
             { id: 'view-menu', files: ['web/src/lib/session-list/view-choices.ts'],
@@ -44,12 +46,12 @@ export const MENU_GROUPS = Object.freeze([
             { id: 'terminal', files: ['web/src/opscenter/cells/terminal-live/terminal-menu-actions.ts', 'web/src/opscenter/cells/terminal-live/toolbar.ts'], items: ['open-in-terminal', 'zoom', 'background', 'search'] },
             { id: 'swarm-node', files: ['web/src/cplugs/huddle/swarm/node-menu.ts', 'web/src/lib/projects-shared/ledger-model.ts'], items: ['color', 'shape', 'set-image', 'remove-image'] },
             { id: 'projects-page', files: ['web/src/lib/projects-shared/ledger-model.ts', 'web/src/lib/drawer/layouts-menu.ts'],
-              items: ['pick-color', 'regenerate-art', 'turn-on-agent', 'copy-path', 'save-blueprint', 'set-image', 'remove-image'] },
+              items: ['regenerate-art', 'save-blueprint', 'set-image', 'remove-image'] },
         ],
     },
 ]);
 
-export const UNDRAWN_ITEM_IDS = Object.freeze(['new-session', 'change-agent-type', 'edit-rail-icons', 'done-rail-icons', 'crosstalk', 'messaging', 'show-open']);
+export const UNDRAWN_ITEM_IDS = Object.freeze(['new-session', 'copy-path', 'change-agent-type', 'edit-rail-icons', 'done-rail-icons', 'crosstalk', 'messaging', 'show-open']);
 
 export function flatItemIds(items) {
     return items.flatMap((item) => (typeof item === 'string' ? [item] : [item.branch, ...flatItemIds(item.items)]));

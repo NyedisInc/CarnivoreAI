@@ -4,6 +4,7 @@ import { flushSync, mount, unmount } from 'svelte';
 import { installPopoverPolyfill } from '../../lib/popover-jsdom-polyfill';
 
 installPopoverPolyfill();
+import { registerDropHost } from '../../lib/motion-grid';
 import type { LedgerSnapshot } from '../api/types';
 
 const fakeLedger = vi.hoisted(() => ({
@@ -62,7 +63,7 @@ function boxOf(el: Element): DOMRect {
         ? BOX.row
         : el.id === 'session-sidebar-ledger'
       ? BOX.zone
-      : el.hasAttribute('data-glance-area')
+      : el.hasAttribute('data-zone-glances')
         ? BOX.glance
         : el.hasAttribute('data-zone-item')
           ? BOX.item
@@ -82,7 +83,11 @@ const pointer = (el: HTMLElement, type: string, x: number, y: number): void => {
   flushSync();
 };
 const zoneDrop = (): string | null => zoneHost.querySelector<HTMLElement>('[data-drawer-zone]')!.getAttribute('data-drop');
-const glanceDrop = (): string | null => zoneHost.querySelector<HTMLElement>('[data-glance-area]')!.getAttribute('data-drop');
+const glanceDrop = zoneDrop;
+const showGlance = (): void => {
+  widgetArea.set(sidebarTabs.active(), 'glance');
+  flushSync();
+};
 
 beforeEach(() => {
   (globalThis as { ResizeObserver?: unknown }).ResizeObserver = class {
@@ -133,7 +138,6 @@ describe('a drawer row carried onto the sidebar', () => {
     pointer(card, 'pointerdown', 50, 100);
     pointer(card, 'pointermove', 50, 200);
     expect(zoneDrop()).toBe('open');
-    expect(glanceDrop()).toBe('open');
     pointer(card, 'pointermove', 50, 480);
     expect(zoneDrop()).toBe('aimed');
     expect(zoneHost.querySelector('[data-zone-mark]')).not.toBeNull();
@@ -144,11 +148,13 @@ describe('a drawer row carried onto the sidebar', () => {
   });
 
   test('lands in the glance area', () => {
+    showGlance();
     const card = row('core.questions');
     pointer(card, 'pointerdown', 50, 100);
+    pointer(card, 'pointermove', 50, 200);
+    expect(glanceDrop()).toBe('open');
     pointer(card, 'pointermove', 50, 650);
     expect(glanceDrop()).toBe('aimed');
-    expect(zoneDrop()).toBe('open');
     expect(zoneHost.querySelector('[data-glance-mark]')).not.toBeNull();
     pointer(card, 'pointerup', 50, 650);
     expect(drawerZone.glance.map((placement) => placement.widget)).toContain('core.questions');
@@ -165,6 +171,7 @@ describe('a drawer row carried onto the sidebar', () => {
     pointer(card, 'pointerup', 50, 480);
     expect(drawerZone.items.map((item) => item.widget)).toEqual(['core.ledger', 'core.notes']);
     expect(placementRefusal.line).toBe('');
+    showGlance();
     const again = row('core.notes');
     pointer(again, 'pointerdown', 50, 100);
     pointer(again, 'pointermove', 50, 650);
@@ -203,28 +210,21 @@ describe('a drawer row carried onto the sidebar', () => {
     expect(placementRefusal.line).toBe('');
   });
 
-  test('a row lands on the dashboard grid too', async () => {
-    const screen = document.createElement('div');
-    screen.id = 'launchpad-screen';
+  test('a row carried over the dashboard is handed to its drop host, which takes the pointer from there', async () => {
     const surface = document.createElement('div');
-    surface.className = 'oc-surface';
-    const first = document.createElement('div');
-    first.className = 'oc-row';
-    first.dataset['row'] = homeLayout.state.layout.rows[0]!.id;
-    surface.appendChild(first);
-    screen.appendChild(surface);
-    document.body.appendChild(screen);
-    const onScreen = (): string[] => homeLayout.state.layout.rows.flatMap((r) => r.slots.map((slot) => slot.id));
-    expect(onScreen()).not.toContain('notes');
+    surface.getBoundingClientRect = () => ({ left: 400, top: 0, right: 1200, bottom: 700, width: 800, height: 700, x: 400, y: 0, toJSON() {} }) as DOMRect;
+    document.body.appendChild(surface);
+    const accept = vi.fn((_kind: string, _ev: PointerEvent) => true);
+    const off = registerDropHost(surface, { id: 'dashboard', accept });
     const card = row('core.notes');
     pointer(card, 'pointerdown', 50, 100);
     pointer(card, 'pointermove', 800, 100);
-    expect(document.querySelector('.le-ghost--aimed')).not.toBeNull();
+    expect(accept).toHaveBeenCalledTimes(1);
+    expect(accept.mock.calls[0]![0]).toBe('notes');
+    expect(document.querySelector('.le-ghost')).toBeNull();
     pointer(card, 'pointerup', 800, 100);
-    await Promise.resolve();
-    flushSync();
-    expect(onScreen()).toContain('notes');
     expect(drawerZone.items.map((item) => item.widget)).toEqual(['core.ledger']);
+    off();
   });
 
   test('a press still adds to the screen', () => {
@@ -232,6 +232,17 @@ describe('a drawer row carried onto the sidebar', () => {
     card.click();
     flushSync();
     expect(homeLayout.state.layout.rows.flatMap((r) => r.slots.map((slot) => slot.id))).toContain('keep-awake');
+  });
+});
+
+describe('a drawer opened from a zone + (click-add)', () => {
+  test('a click on a card lands exactly one widget in that zone, the same widget a drag-in lands', () => {
+    unmount(drawerApp!);
+    drawerApp = mount(WidgetDrawer, { target: document.body, props: { store: homeLayout, page: 'home', surface: 'zone:drawer' } });
+    flushSync();
+    row('core.keep-awake').click();
+    flushSync();
+    expect(drawerZone.items.map((item) => item.widget)).toEqual(['core.ledger', 'core.keep-awake']);
   });
 });
 
@@ -253,6 +264,7 @@ describe('a family carried onto the sidebar (Joe (ccsliinc), 2026-10-03: "yes dr
   });
 
   test('the analytics row lands in the glance area with its chart as the placement target', () => {
+    showGlance();
     const card = row('core.analytics');
     pointer(card, 'pointerdown', 50, 100);
     pointer(card, 'pointermove', 50, 650);

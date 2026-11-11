@@ -84,26 +84,32 @@ test('one edit mode: outside edit layout there is no badge and no dashed cell; i
   expect(PREFERENCE_FIELD in store, 'pressing the icon itself hides nothing').toBe(false);
 });
 
-test('two zones: by default the bottom zone holds documentation, changelog, settings; Alt+ArrowUp from settings crosses up and the order is one stored value', async () => {
+test('the rail draws the menu grid: dividers after swarm and pack, the help heading left as empty space, settings last after the fill (#2908)', async () => {
+  await railOn();
+  const seq = [...rail().querySelectorAll<HTMLElement>('nav.sbr-rail > *')].flatMap((el) => {
+    if (el.classList.contains('sbr-rail__fill')) return ['~'];
+    return [...el.querySelectorAll<HTMLElement>(':scope > li')].map((li) => (li.classList.contains('sbr-rail__sep') ? '|' : li.classList.contains('sbr-rail__head') ? 'help' : li.dataset.menuRow!));
+  });
+  expect(seq[seq.indexOf('core.swarm') + 1], 'a divider after swarm').toBe('|');
+  expect(seq.slice(seq.indexOf('hosts')), 'the same tail as the full menu (DrawerMenu.grid.test.ts)').toEqual(['hosts', '|', 'help', 'docs', 'changelog', '~', 'settings']);
+  expect(rail().querySelector('.sbr-rail__dock, [data-docking]'), 'no magnify layer').toBeNull();
+});
+
+test('two zones: by default the top zone ends with documentation and changelog and the bottom zone holds settings; Alt+ArrowUp from settings crosses up and the order is one stored value', async () => {
   await railOn();
   const zone = (name: string): (string | undefined)[] => [...rail().querySelectorAll<HTMLElement>(`[data-rail-zone="${name}"] [data-rail-key]`)].map((el) => el.dataset.railKey);
-  expect(zone('bottom')).toEqual(['docs', 'changelog', 'settings']);
+  expect(zone('top').slice(-2)).toEqual(['docs', 'changelog']);
+  expect(zone('bottom')).toEqual(['settings']);
   expect('menu_order' in store, 'nothing is written until the user moves something').toBe(false);
   layoutEditor.active = true;
   await settle();
-  const bottomFirst = rail().querySelector<HTMLElement>('[data-rail-key="docs"]')!;
-  bottomFirst.focus();
-  bottomFirst.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, bubbles: true, cancelable: true }));
+  const settings = rail().querySelector<HTMLElement>('[data-rail-key="settings"]')!;
+  settings.focus();
+  settings.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, bubbles: true, cancelable: true }));
   await settle();
-  expect(zone('top').at(-1)).toBe('docs');
-  expect(zone('bottom')).toEqual(['changelog', 'settings']);
-  expect(store.menu_order as string[]).toContain(RAIL_SPLIT);
-  for (const id of ['changelog', 'settings']) {
-    rail().querySelector<HTMLElement>(`[data-rail-key="${id}"]`)!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, bubbles: true, cancelable: true }));
-    await settle();
-  }
-  expect(zone('top').slice(-3)).toEqual(['docs', 'changelog', 'settings']);
+  expect(zone('top').at(-1)).toBe('settings');
   expect(zone('bottom')).toEqual([]);
+  expect(store.menu_order as string[]).toContain(RAIL_SPLIT);
 });
 
 test('order: the saved order moves an icon inside its group; a hidden id the rail does not know changes nothing', async () => {

@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
+import dataclasses
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Mapping, Optional
 
 import structlog
 
@@ -13,6 +14,7 @@ from src.core.launch_profiles.plan import LaunchPlan
 from src.core.launch_profiles.resolve import LaunchProfileNotFound
 from src.core.launch_profiles.secrets import materialize
 from src.core.launch_record import launch_record_json
+from src.core.sessions import launch_overlay
 
 logger = structlog.get_logger()
 
@@ -85,16 +87,29 @@ class PreparedLaunch:
 
     staged: Dict[str, str]
     record: str
+    late: Dict[str, str] = field(default_factory=dict)
 
 
-async def record_for(plan: LaunchPlan, account_id: Optional[str] = None) -> str:
+async def record_for(plan: LaunchPlan, account_id: Optional[str] = None, overlay_note: Optional[Mapping[str, Any]] = None) -> str:
     account = await asyncio.to_thread(recorded_account_id, plan.display.harness, account_id)
-    return launch_record_json(plan, account)
+    return launch_record_json(plan, account, overlay_note) if overlay_note else launch_record_json(plan, account)
 
 
-async def prepare(plan: LaunchPlan, *, account_id: Optional[str] = None) -> PreparedLaunch:
+async def prepare(plan: LaunchPlan, *, account_id: Optional[str] = None,
+                  overlay_ctx: Optional[launch_overlay.OverlayContext] = None) -> PreparedLaunch:
     staged = await materialize(plan) if plan.secret_refs else {}
-    return PreparedLaunch(staged=staged, record=await record_for(plan, account_id))
+    late: Dict[str, str] = {}
+    note: Optional[Mapping[str, Any]] = None
+    provider = launch_overlay.get()
+    if plan.overlay is not None and plan.purpose == "pane":
+        if provider is None or overlay_ctx is None:
+            late, note = launch_overlay.direct_secrets(plan.overlay), {"tethered": False, "reason": "argent down at launch"}
+        else:
+            tail = list(plan.argv_tail)
+            resume = next((tail[i + 1] for i, a in enumerate(tail[:-1]) if a in ("--resume", "resume")), "")
+            delivery = await provider.materialize(plan.overlay, dataclasses.replace(overlay_ctx, resume_uuid=resume) if resume else overlay_ctx)
+            late, note = dict(delivery.secrets), delivery.note
+    return PreparedLaunch(staged=staged, record=await record_for(plan, account_id, note), late=late)
 
 
 async def scrub_staging(backend: Any, staged: Dict[str, str]) -> None:
@@ -104,3 +119,17 @@ async def scrub_staging(backend: Any, staged: Dict[str, str]) -> None:
         return
     await backend.set_session_environment(
         f"={backend.tmux_session}", {name: None for name in staged}, note="launch_secret_scrub")
+
+
+def overlay_ctx_for(plan: LaunchPlan, tmux_name: str, working_dir: str, label: Optional[str]) -> launch_overlay.OverlayContext:
+    return launch_overlay.OverlayContext(harness=plan.display.harness, session_ref=tmux_name, working_dir=working_dir,
+                                         display_name=(label or tmux_name))
+
+
+async def deliver_late(backend: Any, prepared: PreparedLaunch) -> None:
+    from src.core.tmux_backend import TmuxBackend
+
+    if not prepared.late or not isinstance(backend, TmuxBackend):
+        return
+    outcome = await backend.set_session_environment(f"={backend.tmux_session}", dict(prepared.late), note="launch_overlay_deliver")
+    logger.info("launch_overlay_delivered", names=sorted(prepared.late), failed=len(outcome.failures))

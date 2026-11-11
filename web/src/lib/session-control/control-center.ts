@@ -82,6 +82,22 @@ export function terminateAll(sessionId: string, processes: readonly BackgroundPr
     );
 }
 
+export function leftoverRows(processes: readonly BackgroundProcess[]): BackgroundProcess[] {
+    return processes.filter((p) => p.owner_finished === true);
+}
+
+export function processText(p: BackgroundProcess): string {
+    const text = p.summary ?? t('background_work.process.no_summary');
+    return p.owner_finished === true ? `${text}${t('control_center.batch.join')}${t('control_center.processes.owner_finished')}` : text;
+}
+
+export function stopLeftovers(sessionId: string, rows: readonly BackgroundProcess[]): Promise<TerminateAllResponse> {
+    return authFetch<TerminateAllResponse>(
+        `/sessions/${encodeURIComponent(sessionId)}/background-work/stop-leftovers`,
+        { method: 'POST', body: JSON.stringify({ targets: rows.map((p) => ({ pid: p.pid, start: p.start })) }) },
+    );
+}
+
 export function interruptSession(sessionId: string): Promise<InterruptResponse> {
     return authFetch<InterruptResponse>(
         `/sessions/${encodeURIComponent(sessionId)}/interrupt`,

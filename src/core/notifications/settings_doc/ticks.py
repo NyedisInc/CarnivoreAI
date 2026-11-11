@@ -20,6 +20,8 @@ class UnknownDestination(LookupError):
 
 
 def _check_column(doc: Doc, column: str) -> bool:
+    if column == doc_model.COL_DESKTOP:
+        return True
     if column == doc_model.COL_SCREEN or kind_specs.is_push_destination_id(column):
         return kind_specs.is_push_destination_id(column)
     if not kind_specs.is_destination_id(column):

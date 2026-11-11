@@ -200,6 +200,9 @@ console.log('[ThemeConsent Module] Loading...');
         const inject = (spec && typeof spec.inject === 'function') ? spec.inject : null;
         const prompt = (spec && typeof spec.prompt === 'function') ? spec.prompt : null;
         if (!manifest || !inject) return SKIP_UNVERIFIABLE;
+        const shell = window.carnivoreShell;
+        const bridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.carnivore;
+        if (shell && shell.version === 1 && bridge && typeof bridge.postMessage === 'function') return SKIP_UNVERIFIABLE;
 
         const held = readRecord();
         const verdict = decide({

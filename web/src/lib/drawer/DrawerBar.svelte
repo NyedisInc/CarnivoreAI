@@ -44,9 +44,9 @@
       {@const v = view.version}
       <div class="version-footer">
         {#if v.href}
-          <a class="version-footer__link" href={v.href} target="_blank" rel="noopener noreferrer"><span class="version">{v.text}{#if v.preview}<span class="version-footer__preview">{v.previewText}</span>{/if}</span></a>
+          <a class="version-footer__link" href={v.href} target="_blank" rel="noopener noreferrer"><span class="version">{v.text}{#if v.build}<span class="version-footer__build"> {v.build}</span>{/if}{#if v.preview}<span class="version-footer__preview">{v.previewText}</span>{/if}</span></a>
         {:else}
-          <span class="version">{v.text}</span>
+          <span class="version">{v.text}{#if v.build}<span class="version-footer__build"> {v.build}</span>{/if}</span>
         {/if}
       </div>
     {/if}

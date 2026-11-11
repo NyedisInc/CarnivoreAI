@@ -6,6 +6,8 @@ import re
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from src.cplugs.huddle.rules import TaskManagerInvalid
+from src.cplugs.sdk.owner_text import owner_text
+from src.cplugs.sdk.visible_text import TextRefused
 
 VERSION = 2
 TYPED_PREFIX = f'{{"v": {VERSION}'
@@ -52,7 +54,10 @@ def _text(value: Any, qid: str, label: str, limit: int, *, required: bool = True
         return ""
     if not isinstance(value, str):
         raise _fail(qid, f"{label} must be text")
-    value = value.strip()
+    try:
+        value = owner_text(value).strip()
+    except TextRefused as exc:
+        raise _fail(qid, f"{label} {exc}") from exc
     if required and not value:
         raise _fail(qid, f"{label} is required")
     if len(value) > limit:

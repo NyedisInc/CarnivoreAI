@@ -3,6 +3,7 @@ export interface DesktopLogin {
     engine: boolean | null;
     window: boolean | null;
     background: boolean | null;
+    launchWindow?: boolean;
 }
 
 export type NotificationState = 'allowed' | 'not_asked' | 'denied' | 'unknown' | 'blocked';
@@ -35,7 +36,7 @@ export interface DesktopBridge {
     contract?: number;
     capabilities?: readonly string[];
     desktopState?: () => Promise<DesktopState>;
-    setLoginItem?: (which: 'engine' | 'window' | 'background', enabled: boolean) => Promise<DesktopLogin>;
+    setLoginItem?: (which: 'engine' | 'window' | 'background' | 'launchWindow', enabled: boolean) => Promise<DesktopLogin>;
     requestNotifications?: () => Promise<{ state: NotificationState; waiting?: boolean }>;
     openNotificationSettings?: () => Promise<void>;
     openFocusSettings?: () => Promise<'focus' | 'notifications' | null>;

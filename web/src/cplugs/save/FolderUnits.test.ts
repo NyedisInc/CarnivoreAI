@@ -3,18 +3,20 @@ import { flushSync, mount, tick, unmount } from 'svelte';
 import { afterEach, describe, expect, test } from 'vitest';
 import { setLocale } from '../../lib/i18n/index.svelte';
 import { ApiError } from '../sdk';
+import { registerFixturePlugin } from '../../lib/i18n/test-support/folder-plugin-fixture';
 import FolderUnits from './FolderUnits.svelte';
 import { agoText } from './folders-api';
 import type { Fetcher } from './folders-api';
 
 setLocale('en');
+registerFixturePlugin();
 
 const NOW = Date.parse('2026-10-18T13:00:00Z');
 const UNIT = {
-    unit: 'reviewboard.boards',
-    plugin: 'reviewboard',
+    unit: 'boardfix.boards',
+    plugin: 'boardfix',
     data_id: 'boards',
-    plugin_name_key: 'cplug.reviewboard.name',
+    plugin_name_key: 'cplug.boardfix.name',
     root: '/state/review-boards/boards',
     marked: true,
     backup_on: true,
@@ -75,7 +77,7 @@ describe('feature folders region', () => {
         const el = await render(harness().fetcher);
         const rows = el.querySelectorAll('[data-tm="folder"]');
         expect(rows).toHaveLength(1);
-        expect(rows[0]!.querySelector('[data-tm="folder-name"]')?.textContent).toBe('review board / boards');
+        expect(rows[0]!.querySelector('[data-tm="folder-name"]')?.textContent).toBe('board fixture / boards');
         const meta = rows[0]!.querySelector('[data-tm="folder-meta"]')?.textContent ?? '';
         expect(meta).toContain('3.0 mb');
         expect(meta).toContain('restore points: 2');
@@ -89,11 +91,11 @@ describe('feature folders region', () => {
         const el = await render(harness([UNIT, marked, gone]).fetcher);
         const rows = [...el.querySelectorAll('[data-tm="folder"]')];
         const switchOf = (unit: string) => rows.find((r) => r.getAttribute('data-unit') === unit)!.querySelector('[data-tm="folder-switch"]');
-        expect(switchOf('reviewboard.boards')?.getAttribute('aria-checked')).toBe('true');
+        expect(switchOf('boardfix.boards')?.getAttribute('aria-checked')).toBe('true');
         expect(switchOf('flow.graph')?.getAttribute('aria-checked')).toBe('false');
         expect(switchOf('old.thing')).toBeNull();
         expect(rows.find((r) => r.getAttribute('data-unit') === 'flow.graph')!.querySelector('[data-tm="folder-off"]')?.textContent).toContain('no new backups');
-        expect(rows.find((r) => r.getAttribute('data-unit') === 'reviewboard.boards')!.querySelector('[data-tm="folder-off"]')).toBeNull();
+        expect(rows.find((r) => r.getAttribute('data-unit') === 'boardfix.boards')!.querySelector('[data-tm="folder-off"]')).toBeNull();
     });
 
     test('flipping a switch writes only that folder into the opted-out setting and keeps the other entries', async () => {
@@ -103,7 +105,7 @@ describe('feature folders region', () => {
         await settle();
         const put = calls.find((c) => c.method === 'PUT')!;
         expect(put.path).toBe('/cplugs/save');
-        expect(put.body).toEqual({ revision: 7, settings: { vaultFolderOptOut: 'gone.plugin,reviewboard.boards' } });
+        expect(put.body).toEqual({ revision: 7, settings: { vaultFolderOptOut: 'boardfix.boards,gone.plugin' } });
         expect(calls.filter((c) => c.path === '/cplugs/save/folders').length).toBe(2);
     });
 
@@ -127,7 +129,7 @@ describe('feature folders region', () => {
         el.querySelector<HTMLButtonElement>('[data-tm="folder-confirm-go"]')!.click();
         await settle();
         const post = calls.find((c) => c.method === 'POST')!;
-        expect(post.path).toBe('/cplugs/save/folders/reviewboard.boards/restore');
+        expect(post.path).toBe('/cplugs/save/folders/boardfix.boards/restore');
         expect(post.body).toEqual({ point_id: POINTS[1]!.point_id });
         expect(el.querySelector('[data-tm="folders-note"]')?.textContent).toContain('/state/review-boards/boards.restored-older');
         expect(el.querySelector('[data-tm="folder-confirm"]')).toBeNull();

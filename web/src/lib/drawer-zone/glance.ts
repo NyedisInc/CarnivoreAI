@@ -28,7 +28,6 @@ export interface GlancePlacementOptions {
 
 export interface GlanceRenderer<T = unknown> {
   tiles(options: PlacementOptions): readonly GlanceTile<T>[];
-  /* the glance area */
   options?: () => GlancePlacementOptions;
   component: Component<GlanceTileProps<T>>;
 }

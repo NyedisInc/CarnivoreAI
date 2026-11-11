@@ -67,7 +67,7 @@ def test_builtin_rows_are_guarded_and_catalog_rows_are_not(tmp_path: Path):
     ) as app:
         roots = app.services.install_roots
         (target,) = roots.targets_for(kinds.KIND_CPLUG, SCOPE_GLOBAL, None)
-        assert target.harness == HARNESS_CPLUG and target.leaf_dir == state / "cplug-code"
+        assert target.harness == HARNESS_CPLUG and target.leaf_dir == state / "plugins"
         from src.api.catalog_loadout_rules import ensure_cplug_root
 
         ensure_cplug_root(SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(services=app.services))))

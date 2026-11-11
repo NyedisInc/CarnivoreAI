@@ -106,6 +106,10 @@ function core(id: string, run: () => void, extras: Partial<MenuNode> = {}): Menu
   return { id, label: t(look.key), icon: look.icon, run, ...extras };
 }
 
+export function removeWidgetNode(run: () => void): MenuNode {
+  return core(CORE_ID.removeWidget, run, { danger: true });
+}
+
 function tabNodes(items: TabItems | null | undefined): MenuNode[] {
   if (!items) return [];
   return [
@@ -161,7 +165,7 @@ export function buildWidgetMenu(ctx: WidgetMenuCtx): MenuNode[] {
     : [];
   const layout: MenuNode[] = ctx.editLayout ? [core(editing ? CORE_ID.doneEditing : CORE_ID.editLayout, ctx.editLayout)] : [];
   const close: MenuNode[] = ctx.close
-    ? [core(ctx.close.instance ? CORE_ID.removeWidget : CORE_ID.closeWidget, ctx.close.run, { danger: true })]
+    ? [ctx.close.instance ? removeWidgetNode(ctx.close.run) : core(CORE_ID.closeWidget, ctx.close.run, { danger: true })]
     : [];
   const rowNodes = arrangeNodes((ctx.arrange ?? []).filter((e) => e.item === 'extendRow' || (e.item === 'pullBackRow' && !e.blocked)));
   const windowGroup: MenuNode[] = [

@@ -3,7 +3,9 @@ import { BUILTIN_CPLUGS } from './builtin';
 import { POPOUT_CPLUGS } from './popout';
 
 const SOURCES = import.meta.glob('./*/**/*.{ts,svelte}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const CPLUG_UI = import.meta.glob('../lib/cplug-ui/**/*.{ts,svelte}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const HOST = new Set(['sdk', 'host']);
+const CPLUGS_DIR = 'cplugs';
 
 function specifiers(source: string): string[] {
   const out: string[] = [];
@@ -48,8 +50,51 @@ const BOUNDARY_KNOWN: readonly string[] = [
 
 const BOUNDARY_KNOWN_CEILING = 12;
 
+const PLATFORM_KNOWN: readonly string[] = [];
+
+const PLATFORM_KNOWN_CEILING = 0;
+
+function fromSrc(key: string): string {
+  return key.startsWith('./') ? `${CPLUGS_DIR}/${key.slice(2)}` : key.slice(3);
+}
+
+export function platformViolations(file: string, source: string, features: ReadonlySet<string>): string[] {
+  return specifiers(source).filter((spec) => {
+    if (!spec.startsWith('.')) return false;
+    const [top, folder] = resolveFrom(file, spec).split('/');
+    return top === CPLUGS_DIR && features.has(folder ?? '');
+  });
+}
+
+describe('platform section', () => {
+  const features = new Set(Object.keys(SOURCES).map((f) => f.split('/')[1] ?? '').filter((id) => !HOST.has(id)));
+  const platform = Object.entries({ ...SOURCES, ...CPLUG_UI })
+    .map(([key, text]) => [fromSrc(key), text] as const)
+    .filter(([file]) => (file.startsWith('cplugs/sdk/') || file.startsWith('cplugs/host/') || file.startsWith('lib/cplug-ui/')) && !file.endsWith('.test.ts'));
+  const found = platform.flatMap(([file, text]) => platformViolations(file, text, features).map((spec) => `${file} -> ${spec}`));
+
+  test('the platform imports no feature', () => {
+    expect(platform.some(([file]) => file.startsWith('lib/cplug-ui/')) && platform.some(([file]) => file.startsWith('cplugs/sdk/'))).toBe(true);
+    expect(features.has('huddle')).toBe(true);
+    expect(found.filter((one) => !PLATFORM_KNOWN.includes(one)), 'the platform never imports a feature; never add to PLATFORM_KNOWN').toEqual([]);
+  });
+
+  test('every PLATFORM_KNOWN row is still true, and the list only shrinks', () => {
+    expect(PLATFORM_KNOWN.filter((one) => !found.includes(one))).toEqual([]);
+    expect(PLATFORM_KNOWN.length).toBe(PLATFORM_KNOWN_CEILING);
+  });
+
+  test('the platform check can fail', () => {
+    const ids = new Set(['huddle', 'flow']);
+    expect(platformViolations('cplugs/sdk/x.ts', "import a from '../huddle/y';\nimport b from './menu';\nimport { mount } from 'svelte';\n", ids)).toEqual(['../huddle/y']);
+    expect(platformViolations('lib/cplug-ui/x.ts', "import a from '../../cplugs/flow/flow-model';\nimport b from '../../cplugs/sdk';\n", ids)).toEqual(['../../cplugs/flow/flow-model']);
+    expect(fromSrc('../lib/cplug-ui/api.ts')).toBe('lib/cplug-ui/api.ts');
+    expect(fromSrc('./sdk/menu.ts')).toBe('cplugs/sdk/menu.ts');
+  });
+});
+
 describe('plugin boundaries', () => {
-  const files = Object.keys(SOURCES).filter((f) => !HOST.has(f.split('/')[1] ?? '') && !f.endsWith('.test.ts'));
+  const files = Object.keys(SOURCES).filter((f) => !HOST.has(f.split('/')[1] ?? '') && !f.endsWith('.test.ts') && !f.endsWith('/vite.bundle.config.ts'));
   const found = files.flatMap((f) => violations(f, SOURCES[f] ?? '').map((spec) => `${f} -> ${spec}`));
 
   test('every plugin module imports only the sdk, itself, its manifest and svelte', () => {

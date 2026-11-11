@@ -117,6 +117,7 @@ class ApprovalsInbox:
         self._timer: Optional[asyncio.TimerHandle] = None
         self._gain_listeners: List[Callable[[], None]] = []
         self._gain_id_listeners: List[Callable[[List[Tuple[str, str]]], None]] = []
+        self._lose_id_listeners: List[Callable[[List[Tuple[str, str]]], None]] = []
         self.version = 0
 
     def on_gain(self, listener: Callable[[], None]) -> None:
@@ -124,6 +125,9 @@ class ApprovalsInbox:
 
     def on_gain_ids(self, listener: Callable[[List[Tuple[str, str]]], None]) -> None:
         self._gain_id_listeners.append(listener)
+
+    def on_lose_ids(self, listener: Callable[[List[Tuple[str, str]]], None]) -> None:
+        self._lose_id_listeners.append(listener)
 
     def register(self, provider: Provider) -> None:
         self._providers.append(provider)
@@ -143,6 +147,8 @@ class ApprovalsInbox:
             return False
         gained = {entry[1] for entry in signature} - {entry[1] for entry in self._last}
         gained_pairs = sorted((e[0], e[1]) for e in signature if e[1] in gained)
+        lost = {entry[1] for entry in self._last} - {entry[1] for entry in signature}
+        lost_pairs = sorted((e[0], e[1]) for e in self._last if e[1] in lost)
         self._last = signature
         self.version += 1
         if gained:
@@ -156,6 +162,11 @@ class ApprovalsInbox:
                 id_listener(gained_pairs)
             except Exception as exc:  # noqa: BLE001
                 logger.warning("approvals_gain_id_listener_failed", error_type=type(exc).__name__)
+        for lose_listener in self._lose_id_listeners if lost else ():
+            try:
+                lose_listener(lost_pairs)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("approvals_lose_id_listener_failed", error_type=type(exc).__name__)
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:

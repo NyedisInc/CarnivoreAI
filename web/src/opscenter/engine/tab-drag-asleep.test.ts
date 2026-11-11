@@ -2,7 +2,6 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 const wake = vi.hoisted(() => vi.fn(() => Promise.resolve(null)));
-const gestures = vi.hoisted(() => ({ list: [] as Array<{ onLift: (l: { clientX: number; clientY: number }) => void; onDrop: (a: number, b: number, up: { clientX: number; clientY: number }) => void }> }));
 vi.mock('../api/asleep.svelte', () => ({
   asleep: { data: [{ id: 7, asleep: true, tmux_name: 'cloude_zz', session_uuid: 'u-7', title: 'zz' }] },
   wakeOrPick: wake,
@@ -10,36 +9,43 @@ vi.mock('../api/asleep.svelte', () => ({
 vi.mock('../api', () => ({
   sessions: { data: [{ tmux_session: 'cloude_live', session: { id: 'ses_live' }, session_row_id: 3 }] },
 }));
-vi.mock('./pointer', async (orig) => ({
-  ...(await orig<typeof import('./pointer')>()),
-  beginGesture: (_el: HTMLElement, _ev: PointerEvent, h: (typeof gestures.list)[number]) => {
-    gestures.list.push(h);
-    return true;
-  },
-}));
-import { beginDrawerTabDrag } from './tab-drag';
+import { registerDropHost } from '../../lib/motion-grid';
+import { beginDrawerTabDrag, commitTabDrop } from './tab-drag';
+import { takeWake } from './tabs-motion/carry';
 import { terminalLayout } from './layout.svelte';
 import { PRIMARY_SLOT } from './model';
 import { resetTabCache, tabsFor } from './tab-groups.svelte';
+
+/** The tabs the page's drop host was asked to carry. */
+const carried: string[] = [];
+let off: () => void = () => {};
 
 const start = (name: string) => ({ name, pointerId: 1, pointerType: 'mouse', clientX: 10, clientY: 10 });
 
 beforeEach(() => {
   resetTabCache();
-  gestures.list.length = 0;
+  carried.length = 0;
+  off = registerDropHost(document.body, {
+    id: 'terminal',
+    accept: (kind) => {
+      carried.push(kind.slice('tab:'.length));
+      return true;
+    },
+  });
   wake.mockClear();
   document.body.innerHTML = '<div id="terminal-grid"><div data-tab-group="' + PRIMARY_SLOT + '"></div></div>';
   const strip = document.querySelector('[data-tab-group]') as HTMLElement;
   strip.getBoundingClientRect = () => ({ left: 0, right: 500, top: 0, bottom: 40, width: 500, height: 40 }) as DOMRect;
 });
 afterEach(() => {
+  off();
   document.body.innerHTML = '';
 });
 
+/** The page's side of the hand-off: the carried tab let go over the strip lands through the one commit, then its wake runs. */
 const drop = () => {
-  const up = { clientX: 250, clientY: 20 };
-  gestures.list[0]!.onLift(up);
-  gestures.list[0]!.onDrop(0, 0, up);
+  const tab = carried[0]!;
+  if (commitTabDrop(tab, { kind: 'strip', slot: PRIMARY_SLOT, index: 0 })) takeWake(tab)?.();
 };
 
 test('an asleep row starts a tab drag, and the landing wakes it exactly once', () => {

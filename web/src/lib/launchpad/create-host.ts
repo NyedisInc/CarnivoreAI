@@ -24,6 +24,7 @@ export interface ProviderChoice {
     name?: string | null;
     pinned?: boolean;
     worktree?: { branch: string; base_branch: string | null; setup: boolean; copy: string[] } | null;
+    story?: string | null;
     [key: string]: unknown;
 }
 

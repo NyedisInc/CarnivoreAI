@@ -1,13 +1,14 @@
 {
   "api_routes": [
-    "src/cplugs/publicboard/routes_owner.py",
-    "src/cplugs/publicboard/read.py"
+    "src/cplugs/reviewboard/public/routes_owner.py",
+    "src/cplugs/reviewboard/public/read.py",
+    "src/cplugs/reviewboard/public/write.py"
   ],
   "area": "sessions",
-  "description": "Public review links is a plugin, off by default, that will let people outside your network open one review board through your own reverse proxy, look at it, and leave answers and comments, and nothing else. It starts with the guarded door, and now you can make the links themselves: a link opens one board, lasts one hour, one day or seven days, and is pinned to the revision you shared or follows newer ones, as you choose. When you turn it on and fill in a port, a bind address, your public host name and your proxy's address, it opens a second small listener. A person holding a link opens the page and sees that one board, read only, with no account: its title, summary, pages, questions and marked spots, and nothing else of yours. Before a request is looked at, the door checks that it comes from your proxy, names your host, has a plain path with no encodings, dot segments or query, and matches an exact route; websockets and protocol upgrades are never accepted, bodies and headers are capped, and every answer carries the strict security headers. Turning the plugin off closes the socket. The link is shown once when you make it and only a fingerprint of it is kept, so a copy of the data opens nothing. Before a link exists the board's pages, prompts and title are scanned, and anything that looks like a password or key refuses the share. You can end one link, all of a board's links, or every link, and Claude can end links too but never make them. The finished public page, and answers and comments from visitors, come in later versions. The link is checked again on every look: a link you ended, one that ran out, or one whose board was edited after it was scanned shows only that it has ended, exactly like a link that never existed, and a link set to follow newer revisions shows a newer one only after it passes the same credential scan. Each visitor address and each link is rate limited.",
+  "description": "Public review links is a setting of the review board plugin, off by default, that will let people outside your network open one review board through your own reverse proxy, look at it, and leave answers and comments, and nothing else. It starts with the guarded door, and now you can make the links themselves: a link opens one board, lasts one hour, one day or seven days, and is pinned to the revision you shared or follows newer ones, as you choose. When you turn it on and fill in a port, a bind address, your public host name and your proxy's address, it opens a second small listener. A person holding a link opens the page and sees that one board, read only, with no account: its title, summary, pages, questions and marked spots, and nothing else of yours. Before a request is looked at, the door checks that it comes from your proxy, names your host, has a plain path with no encodings, dot segments or query, and matches an exact route; websockets and protocol upgrades are never accepted, bodies and headers are capped, and every answer carries the strict security headers. Turning the plugin off closes the socket. The link is shown once when you make it and only a fingerprint of it is kept, so a copy of the data opens nothing. Before a link exists the board's pages, prompts and title are scanned, and anything that looks like a password or key refuses the share. You can end one link, all of a board's links, or every link, and Claude can end links too but never make them. The visitor page draws the board in the house look and takes the secret out of the address bar as soon as it opens. A visitor can answer the board's questions and leave a comment, on the whole board or on one of its marked spots, with an optional name; nothing else. Each post is checked against the board's own rules, scanned for passwords and keys (a match is refused and nothing is kept), rate limited per visitor, capped per board, per link and per day, and a double tap lands once. What visitors send goes into the plugin's own store and stops there: it is never a reply on the task, never typed into a session, never seen by Claude, and visitors never see each other's words. A visitors key in the board's title strip shows you what came in, as plain text, every sender marked unverified, and updates on its own: the key counts the answers you have not forwarded yet, and a board with new visitor posts gets one alert, toasted when it opens, counting the answers you have not forwarded and closing when none are left; only your own press of forward to claude posts the new answers on the board's task as your reply, fenced and labeled as unverified outside input. The link is checked again on every look: a link you ended, one that ran out, or one whose board was edited after it was scanned shows only that it has ended, exactly like a link that never existed, and a link set to follow newer revisions shows a newer one only after it passes the same credential scan. Each visitor address and each link is rate limited.",
   "docs": [
     "docs/cplugs.md",
-    "docs/publicboard.md"
+    "docs/reviewboard-public-links.md"
   ],
   "examples": [
     "Make a one-day link for a board; the link text appears once, and asking for two days is refused.",
@@ -15,13 +16,20 @@
     "End every link of a board in one step.",
     "Open the link: the board shows read only. End the link, reload, and it says the link has ended.",
     "A link set to follow newer revisions keeps showing the old one when the new revision holds a password.",
-    "Press the share key on a board, pick one day, press make link, copy the link; close the window and the link can never be shown again, only removed."
+    "Press the share key on a board, pick one day, press make link, copy the link; close the window and the link can never be shown again, only removed.",
+    "Open a link: the page shows the board's title, its revision, the summary, the mockup and the questions, read only, and the address bar no longer shows the secret.",
+    "Open a link that has ended, was removed, or was copied short: the page says so in one plain sentence and shows nothing else.",
+    "A visitor answers two questions and leaves a comment on the send button; the board's visitors window shows both, marked unverified, and the task hears nothing until you press forward to claude.",
+    "A visitor pastes an access key into a comment: the page says it was not sent, and nothing is stored.",
+    "A visitor types markup into a comment: the visitors window shows the characters exactly as typed."
   ],
   "how_to": [
-    "Turn on the review board plugin, then public review links, on the plugins page.",
-    "Set the port, the one address to listen on, your public host name and your reverse proxy's exact address in the plugin's settings.",
+    "Turn on the review board plugin, then its public links setting, on the plugins page.",
+    "Set the port, the one address to listen on, your public host name and your reverse proxy's exact address in the review board plugin's settings.",
     "Point your proxy at that address and port. Turning the plugin off closes the port.",
-    "Make, list and end links from the share key (the globe icon) in the review board page's header or from \"share link\" in an open board row's menu in the left sidebar, or with the plugin's routes; API keys cannot do this, only you. Send the person the link; the secret part never leaves their browser except in a header to your own proxy."
+    "Make, list and end links from the share key (the globe icon) in the review board page's title strip or from \"share link\" in an open board row's menu in the left sidebar, or with the plugin's routes; API keys cannot do this, only you. Send the person the link; the secret part never leaves their browser except in a header to your own proxy.",
+    "Send the visitor the whole link, including the part after the # sign. Their browser removes that part from the address bar as soon as the page opens.",
+    "Open the visitors key (the people icon, with the count of answers not yet forwarded) in the review board page's title strip to read what visitors sent; new posts also show as one alert per board, with a toast when it opens; press forward to claude to post the new ones on the board's task. API keys and Claude cannot forward."
   ],
   "id": "publicboard",
   "issues": [
@@ -35,43 +43,60 @@
     "reverse proxy",
     "security"
   ],
-  "media_exempt": "no screen yet: the public page arrives in the next slice; this one is the read routes, which a still image cannot show; the share window needs a running board with the plugin on and a host name set, so its harness shots live with the change evidence",
+  "media_exempt": "the visitor page is served from the plugin's own public port behind the owner's reverse proxy, which the capture harness cannot lease; the share window needs a running board with the plugin on and a host name set, so render shots of both live with the change evidence",
   "name": "Public review links",
   "since": "2026-10-29",
   "status": "beta",
-  "summary": "off by default: opens a guarded second port for your own reverse proxy and makes short-lived, revocable, secret-scanned links that show one board, read only.",
+  "summary": "off by default: opens a guarded second port for your own reverse proxy and makes short-lived, revocable, secret-scanned links that show one board and take visitors' answers and comments, which reach Claude only when you forward them.",
   "surfaces": [
-    "src/cplugs/publicboard/edge.py",
-    "src/cplugs/publicboard/service.py",
-    "src/cplugs/publicboard/settings.py",
-    "src/cplugs/publicboard/headers.py",
-    "src/cplugs/sdk/public_listener.py",
-    "src/cplugs/publicboard/links.py",
-    "src/cplugs/publicboard/minting.py",
-    "src/cplugs/publicboard/routes_owner.py",
-    "src/cplugs/publicboard/mcp.py",
+    "src/cplugs/reviewboard/public/edge.py",
+    "src/cplugs/reviewboard/public/service.py",
+    "src/cplugs/reviewboard/public/settings.py",
+    "src/cplugs/reviewboard/public/headers.py",
+    "src/cplugs/reviewboard/public/listener.py",
+    "src/cplugs/reviewboard/public/links.py",
+    "src/cplugs/reviewboard/public/minting.py",
+    "src/cplugs/reviewboard/public/routes_owner.py",
+    "src/cplugs/reviewboard/public/mcp.py",
     "src/cplugs/reviewboard/public_port.py",
-    "src/cplugs/sdk/board_public.py",
-    "src/cplugs/publicboard/routes.py",
-    "src/cplugs/publicboard/read.py",
-    "src/cplugs/publicboard/resolve.py",
-    "src/cplugs/publicboard/respond.py",
-    "src/cplugs/publicboard/capability.py",
-    "src/cplugs/publicboard/ratelimit.py",
-    "src/cplugs/publicboard/assets.py",
-    "src/cplugs/publicboard/deps.py",
-    "src/cplugs/publicboard/wiring.py",
-    "web/src/cplugs/publicboard/ShareLinkModal.svelte",
-    "web/src/cplugs/publicboard/ShareLinkKey.svelte",
+    "src/cplugs/reviewboard/public/port.py",
+    "src/cplugs/reviewboard/public/routes.py",
+    "src/cplugs/reviewboard/public/read.py",
+    "src/cplugs/reviewboard/public/resolve.py",
+    "src/cplugs/reviewboard/public/respond.py",
+    "src/cplugs/reviewboard/public/capability.py",
+    "src/cplugs/reviewboard/public/ratelimit.py",
+    "src/cplugs/reviewboard/public/assets.py",
+    "src/cplugs/reviewboard/public/deps.py",
+    "src/cplugs/reviewboard/public/wiring.py",
+    "web/src/cplugs/reviewboard/public/ShareLinkModal.svelte",
+    "web/src/cplugs/reviewboard/public/ShareLinkKey.svelte",
     "web/src/cplugs/sdk/board-header-keys.ts",
-    "web/src/cplugs/publicboard/page-row-action.ts",
+    "web/src/cplugs/reviewboard/public/page-row-action.ts",
     "web/src/cplugs/sdk/page-row-actions.ts",
-    "web/src/lib/item-menu/menus/page-actions.ts"
+    "web/src/lib/item-menu/menus/page-actions.ts",
+    "src/cplugs/reviewboard/public/public/index.html",
+    "web/src/cplugs/reviewboard/public/public/main.ts",
+    "web/src/cplugs/reviewboard/public/public/PublicBoard.svelte",
+    "web/src/cplugs/reviewboard/public/public/fragment.ts",
+    "web/src/cplugs/reviewboard/public/public/board-client.ts",
+    "web/src/cplugs/reviewboard/vite.bundle.config.ts",
+    "src/cplugs/reviewboard/public/write.py",
+    "src/cplugs/reviewboard/public/submission.py",
+    "src/cplugs/reviewboard/public/responses.py",
+    "src/cplugs/reviewboard/public/visitors.py",
+    "src/cplugs/reviewboard/visitor_checks.py",
+    "web/src/cplugs/reviewboard/public/VisitorsKey.svelte",
+    "web/src/cplugs/reviewboard/public/VisitorsModal.svelte",
+    "web/src/cplugs/reviewboard/public/visitors-api.ts",
+    "web/src/cplugs/reviewboard/public/public/VisitorForm.svelte"
   ],
   "updated": "2026-10-30",
   "where": [
     "The public review links plugin on the plugins page, with its settings.",
     "The share key (globe icon) in a review board page's header, while the plugin is on.",
-    "\"Share link\" in the menu of an open review board's row in the left sidebar (right click or Shift+F10), while the plugin is on."
+    "\"Share link\" in the menu of an open review board's row in the left sidebar (right click or Shift+F10), while the plugin is on.",
+    "The page a visitor opens from a shared link, on the plugin's own public port (the address your proxy forwards).",
+    "The visitors key (people icon) in a review board page's header, while the plugin is on."
   ]
 }

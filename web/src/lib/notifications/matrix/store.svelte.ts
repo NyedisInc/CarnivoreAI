@@ -1,6 +1,6 @@
 import { errorText } from '../../settings-page/panel-kit/error-text';
 import { createPushedStore } from '../../resource-push/pushed-store';
-import { EMPTY_SETTINGS, fetchRegistry, fetchRouting, putDefault, putPaused, putTick, resetTick, SCREEN, type Cell, type Family, type Fetcher, type RoutingSettings, type TypeRow } from './api';
+import { EMPTY_SETTINGS, fetchRegistry, fetchRouting, putDefault, putPaused, putTick, resetTick, DESKTOP, SCREEN, type Cell, type Family, type Fetcher, type RoutingSettings, type TypeRow } from './api';
 
 export const matrix = $state<{ families: Family[]; types: TypeRow[]; aliases: Record<string, string>; settings: RoutingSettings; loaded: boolean; problem: string; localOnly: boolean }>({
     families: [], types: [], aliases: {}, settings: EMPTY_SETTINGS, loaded: false, problem: '', localOnly: false,
@@ -27,6 +27,7 @@ async function read(fetcher: Fetcher | undefined): Promise<void> {
 function setCell(column: string, typeId: string, cell: Cell): void {
     const s = matrix.settings;
     if (column === SCREEN) matrix.settings = { ...s, screen: { ...s.screen, [typeId]: cell } };
+    else if (column === DESKTOP) matrix.settings = { ...s, desktop: { ...s.desktop, [typeId]: cell } };
     else matrix.settings = { ...s, ticks: { ...s.ticks, [column]: { ...(s.ticks[column] ?? {}), [typeId]: cell } } };
 }
 

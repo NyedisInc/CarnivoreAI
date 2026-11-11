@@ -6,6 +6,7 @@ import { subscribe } from '../api';
 import { homeLayout } from './layout.svelte';
 import { onHomeChange } from './arrangement-events';
 import { gestureActive } from './pointer';
+import { blobForSend, dashBusy, loadDashGrid, onGridChange, SETTLE_MS } from '../dashgrid/dash-store.svelte';
 import { STORAGE_KEYS } from './persist';
 import { cacheSeedLevel, homeSeedLevel, seedControl } from './home-seed';
 import { preferencesApi, type PreferencesApi } from './arrangement-sync.svelte';
@@ -98,7 +99,7 @@ function publishBoards(): void {
 }
 
 function liveLayout(): Layout {
-  return $state.snapshot(homeLayout.state.layout) as Layout;
+  return blobForSend($state.snapshot(homeLayout.state.layout) as Layout);
 }
 
 function current(): HomeValue {
@@ -130,14 +131,14 @@ function wantsWrite(): boolean {
   return dirty || seedControl.pending() > (synced?.analytics_seed ?? 0);
 }
 
-function noteLocal(): void {
+function noteLocal(delay = WRITE_DELAY): void {
   if (applying) return;
   if (viewingId) {
-    noteViewEdit();
+    noteViewEdit(delay);
     return;
   }
   dirty = true;
-  scheduleWrite();
+  scheduleWrite(delay);
 }
 
 function scheduleWrite(delay = WRITE_DELAY): void {
@@ -149,7 +150,7 @@ function scheduleWrite(delay = WRITE_DELAY): void {
 }
 
 export function applyHome(next: HomeValue): void {
-  if (gestureActive()) {
+  if (gestureActive() || dashBusy()) {
     held = next;
     if (heldTimer === undefined) {
       heldTimer = setTimeout(() => {
@@ -196,6 +197,7 @@ export function applyHome(next: HomeValue): void {
   let migrated = false;
   applying = true;
   try {
+    loadDashGrid(shownId, layout as { grid?: unknown });
     migrated = homeLayout.adopt(layout);
   } finally {
     applying = false;
@@ -206,7 +208,7 @@ export function applyHome(next: HomeValue): void {
 async function flush(): Promise<void> {
   const api = preferencesApi();
   if (!wantsWrite() || !api || popoutMode) return;
-  if (inflight || gestureActive() || api.status() !== api.HYDRATED || !known) {
+  if (inflight || gestureActive() || dashBusy() || api.status() !== api.HYDRATED || !known) {
     scheduleWrite(RETRY_DELAY * 4);
     return;
   }
@@ -265,7 +267,7 @@ export async function flushHome(): Promise<void> {
   await flush();
 }
 
-function notePopoutEdit(): void {
+function notePopoutEdit(delay = WRITE_DELAY): void {
   if (applying) return;
   dirty = true;
   popoutEdit += 1;
@@ -273,7 +275,7 @@ function notePopoutEdit(): void {
   writeTimer = setTimeout(() => {
     writeTimer = undefined;
     void savePopoutBoard();
-  }, WRITE_DELAY);
+  }, delay);
 }
 
 async function savePopoutBoard(): Promise<void> {
@@ -300,14 +302,14 @@ async function putBoard(id: string | null): Promise<boolean> {
   }
 }
 
-function noteViewEdit(): void {
+function noteViewEdit(delay = WRITE_DELAY): void {
   viewDirty = true;
   viewEdit += 1;
   if (viewTimer !== undefined) clearTimeout(viewTimer);
   viewTimer = setTimeout(() => {
     viewTimer = undefined;
     void saveViewBoard();
-  }, WRITE_DELAY);
+  }, delay);
 }
 
 async function saveViewBoard(): Promise<void> {
@@ -393,7 +395,10 @@ export function startHomeSync(options: { popout?: boolean; board?: string | null
   popoutEdits = popoutMode && options.edit === true && wallboardId !== null;
   const target = options.target === undefined ? (typeof window !== 'undefined' ? window : null) : options.target;
   if (popoutMode) {
-    if (popoutEdits) stops.push(onHomeChange(notePopoutEdit));
+    if (popoutEdits) {
+      stops.push(onHomeChange(notePopoutEdit));
+      stops.push(onGridChange(() => notePopoutEdit(SETTLE_MS)));
+    }
     void pullServer();
     stops.push(subscribe('preferences.changed', () => void pullServer()));
     stops.push(subscribe('events.hello', () => void pullServer()));
@@ -406,6 +411,7 @@ export function startHomeSync(options: { popout?: boolean; board?: string | null
   }
   seedControl.attach(() => scheduleWrite(), referencedAnalytics);
   stops.push(onHomeChange(noteLocal));
+  stops.push(onGridChange(() => noteLocal(SETTLE_MS)));
   const api = preferencesApi();
   if (api) {
     stops.push(

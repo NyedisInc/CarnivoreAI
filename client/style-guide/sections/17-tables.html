@@ -49,7 +49,8 @@ radio menu. Props: <code>buttonText</code>, <code>menuLabel</code>, <code>menu</
         (<code>web/src/lib/deepsearch/DeepSearchResults.svelte</code>, styles in <code>web/src/lib/deepsearch/results.css</code>,
         classes <code>dps__*</code>). A header row (<code>dps__bar</code>) holds the honest count at the left and the A / B toggle at the
         right (<code>dps__seg</code> on the shared <code>oc-seg</code> choice: "ledger" and "best hits", small tracked uppercase labels,
-        remembered per device). Both layouts are one base <code>List</code> (<code>ResultsList.svelte</code>) of base
+        remembered per device), preceded by the same switch for the sort ("relevant" and "newest", <code>SortToggle.svelte</code>, also
+        remembered per device; the context search keeps exact matches first either way). Both layouts are one base <code>List</code> (<code>ResultsList.svelte</code>) of base
         <code>ListRow</code>s with <code>wrap</code> (<code>HitRow.svelte</code>), and NOTHING IS HIDDEN (Joe (ccsliinc), 2026-10-22: "all
         records should show all the buttons at once"): every hit shows its whole snippet, wrapped, the match in the accent
         (<code>sd-mark</code>), and (in the CONTEXT mode only, Joe (ccsliinc), 2026-10-22: names, prompts and all results are just the result and one click opens it) ALL its action buttons at once as icon buttons in the row's actions slot (<code>sd-acts</code>,

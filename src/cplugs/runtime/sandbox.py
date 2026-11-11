@@ -16,6 +16,7 @@ RUNNER_SOURCE = Path(__file__).with_name("runner.py")
 SDK_SOURCE = Path(__file__).resolve().parent.parent / "sdk_py"
 SDK_PACKAGE = "cplug_sdk"
 RUNTIME_DIR_NAME = "cplug-runtime"
+PROFILES_DIR_NAME = "profiles"
 SAFE_PATH = "/usr/bin:/bin"
 UNRESTRICTED_PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
 OPEN_FILES_LIMIT = 64
@@ -42,6 +43,26 @@ class Layout:
     @property
     def files_dir(self) -> Path:
         return self.data_dir / "files"
+
+    @property
+    def profile_path(self) -> Path:
+        return profile_path_for(self.data_dir)
+
+
+def profile_path_for(data_dir: Path) -> Path:
+    return data_dir.parent / PROFILES_DIR_NAME / f"{data_dir.name}.sb"
+
+
+def write_profile(layout: Layout) -> Path:
+    path = layout.profile_path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(render_profile(layout), encoding="utf-8")
+    (layout.data_dir / "profile.sb").unlink(missing_ok=True)
+    return path
+
+
+def remove_profile(data_dir: Path) -> None:
+    profile_path_for(data_dir).unlink(missing_ok=True)
 
 
 def _quote(path: Path) -> str:
@@ -116,8 +137,7 @@ def probe(interpreter: Optional[Path] = None) -> ProbeResult:
         for folder in (runtime, code, data / "files"):
             folder.mkdir(parents=True)
         layout = Layout(interpreter=interp, stdlib_root=stdlib_root(interp), runtime_dir=runtime, code_dir=code, data_dir=data)
-        profile = data / "profile.sb"
-        profile.write_text(render_profile(layout))
+        profile = write_profile(layout)
         argv = ["/usr/bin/sandbox-exec", "-f", str(profile), str(interp), "-I", "-B", "-c", _PROBE_SCRIPT,
                 str(layout.files_dir), str(data / "denied.txt")]
         try:
@@ -147,7 +167,7 @@ def copy_runtime(state_dir: Path, app_version: str) -> Path:
     shutil.copy2(RUNNER_SOURCE, target / "runner.py")
     shutil.copytree(SDK_SOURCE, target / SDK_PACKAGE, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
     for path in [target, *target.rglob("*")]:
-        path.chmod(0o555 if path.is_dir() else 0o444)
+        path.chmod(0o755 if path.is_dir() else 0o444)
     return target
 
 

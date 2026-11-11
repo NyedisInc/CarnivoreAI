@@ -20,7 +20,8 @@ def _apply(verdict: checks.Verdict, db_path: Path) -> str:
 
     if verdict.state == checks.FIRING:
         alerts.raise_alert(verdict.key, source=K.ALERT_SOURCE, severity=verdict.severity or AK.SEV_WARN,
-                           title_key=verdict.title_key, detail_key=verdict.detail_key, params=verdict.params, db_path=db_path)
+                           title_key=verdict.title_key, detail_key=verdict.detail_key, params=verdict.params,
+                           sticky=verdict.sticky, db_path=db_path)
         return "raised"
     if verdict.state == checks.OK:
         alerts.resolve(verdict.key, db_path=db_path)

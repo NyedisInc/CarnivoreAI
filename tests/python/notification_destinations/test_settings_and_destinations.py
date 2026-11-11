@@ -282,7 +282,7 @@ def test_view_is_cached_by_revision(service):
 def test_settings_body_shape_and_defaults_seeded(service):
     client = make_client(service)
     body = client.get(f"{BASE}/settings").json()
-    assert set(body) == {"revision", "paused", "link", "defaults", "screen", "ticks", "destinations", "sync"}
+    assert set(body) == {"revision", "paused", "link", "defaults", "screen", "desktop", "ticks", "destinations", "sync"}
     assert body["sync"] == {"available": False, "peers": []} and body["paused"] is False
     assert set(body["link"]) == {"kind", "base", "reason"}
     assert len(body["defaults"]) == len(types.TYPES) and sum(body["defaults"].values()) == len(types.seed_type_ids())

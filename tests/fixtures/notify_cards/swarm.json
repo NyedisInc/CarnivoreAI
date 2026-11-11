@@ -1,0 +1,78 @@
+{
+  "kind": "swarm",
+  "payload": {
+    "title": "swarm question for you",
+    "body": "two agents disagree on the card order",
+    "path": "/sessions/ses_0123456789ab",
+    "thread": "local|ses_0123456789ab",
+    "v": 2,
+    "sub": "from home on studio",
+    "kind": "swarm",
+    "type": "swarm.question_climbed",
+    "lv": "t",
+    "snd": "ask",
+    "cap": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ttl": 1794000000,
+    "acts": [
+      [
+        "pick.1",
+        "pick home's"
+      ],
+      [
+        "pick.2",
+        "pick api-docs'"
+      ],
+      [
+        "answer",
+        "type an answer"
+      ]
+    ],
+    "card": {
+      "strip": [
+        "swarm",
+        "home",
+        "studio"
+      ],
+      "agent": "home",
+      "computer": "studio",
+      "ts": "9:41",
+      "ask": "which order should the board cards run in?",
+      "asker_path": "home/board"
+    },
+    "more": true
+  },
+  "card": {
+    "strip": [
+      "swarm",
+      "home",
+      "studio"
+    ],
+    "agent": "home",
+    "computer": "studio",
+    "ts": "9:41",
+    "ask": "which order should the board cards run in?",
+    "asker_path": "home/board"
+  },
+  "full": {
+    "strip": [
+      "swarm",
+      "home",
+      "studio"
+    ],
+    "agent": "home",
+    "computer": "studio",
+    "ts": "9:41",
+    "ask": "which order should the board cards run in?",
+    "asker_path": "home/board",
+    "positions": [
+      [
+        "home",
+        "smallest card first, so the board clears fast"
+      ],
+      [
+        "api-docs",
+        "riskiest card first, so a failure shows early"
+      ]
+    ]
+  }
+}

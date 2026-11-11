@@ -141,6 +141,7 @@
   --oc-pad-left: 16px;
   --oc-gutter: 12px;
   --oc-space-1: 4px;
+  --oc-drawer-offset: 0px;
   --oc-space-2: 8px;
   --oc-space-3: 12px;
   --oc-space-4: 16px;
@@ -216,7 +217,7 @@
   --oc-project-block-default: rgb(56 56 56);
   --oc-border: 1px;
   --oc-cell-pad: 14px;
-  /* one side inset */
+  /* one side inset too close to the edge */
   --oc-widget-inset: var(--oc-space-3);
   --oc-widget-clear: calc(var(--oc-widget-inset) + var(--oc-space-5));
   --oc-mono-advance: 0.62;

@@ -107,7 +107,7 @@ describe('a drawer card wears the widget header', () => {
   test('the icon opens the shared menu; the tick takes the row off this copy alone and the same menu puts it back', () => {
     const tick = menuItem('core.activity-log', 'show-header');
     expect(tick.getAttribute('aria-checked')).toBe('true');
-    expect(document.querySelector('.acm-menu [data-node="close-widget"]')).not.toBeNull();
+    expect(document.querySelector('.acm-menu [data-node="remove-widget"]')).not.toBeNull();
     expect(document.querySelector('.acm-menu [data-node="pop-out"]')).not.toBeNull();
     tick.click();
     flushSync();
@@ -198,7 +198,7 @@ describe('a right-click anywhere on the title row opens the icon menu (item 685,
   });
 
   test('edit layout adds settings... to the same menu; normal mode lists none', () => {
-    menuItem('core.activity-log', 'close-widget');
+    menuItem('core.activity-log', 'remove-widget');
     expect(document.querySelector('.acm-menu [data-node="settings"]')).toBeNull();
     document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
     flushSync();

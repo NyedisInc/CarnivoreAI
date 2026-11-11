@@ -121,6 +121,13 @@ class ConfigState:
     def save_skills_sync(self, value: Dict[str, Any]) -> bool:
         return self._commit("skills_sync", value)
 
+    def global_sync(self) -> Dict[str, Any]:
+        value = self._block().get("global_sync")
+        return value if isinstance(value, dict) else {}
+
+    def save_global_sync(self, value: Dict[str, Any]) -> bool:
+        return self._commit("global_sync", value)
+
     def read_all(self) -> Tuple[Optional[settings_doc.PackSettings], restrictions_mod.Restrictions,
                                 reserve_model.ReserveConfig, bool]:
         block = self._block()

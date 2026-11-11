@@ -66,6 +66,26 @@ afterEach(() => {
   localStorage.clear();
 });
 
+describe('a singleton off the dashboard is removed from its own menu, outside edit layout', () => {
+  function lastItem(store: LayoutStore): string | undefined {
+    const slot = 'notes' as SlotId;
+    const target = document.createElement('div');
+    document.body.appendChild(target);
+    mount(CellFrame, { target, props: { meta: metaFor(slot, META), instance: slot, widthState: '', heightState: '', store, body: createRawSnippet(() => ({ render: () => '<p>body</p>' })) } });
+    flushSync();
+    (target.querySelector('.oc-frame-corner') as HTMLButtonElement).click();
+    flushSync();
+    const items = [...document.querySelectorAll<HTMLElement>('.acm-menu [role="menuitem"]')];
+    return items[items.length - 1]?.dataset['node'];
+  }
+
+  test('the terminal page says remove widget, the dashboard keeps close widget', () => {
+    expect(lastItem(terminalLayout)).toBe('remove-widget');
+    document.body.innerHTML = '';
+    expect(lastItem(homeLayout)).toBe('close-widget');
+  });
+});
+
 describe('a corner menu press acts on the store the frame was handed', () => {
   test('remove on the TERMINAL surface takes the terminal slot and leaves home alone', () => {
     expect(slotsOf(terminalLayout)).toContain(SLOT);

@@ -11,7 +11,7 @@ from typing import Any, Awaitable, Callable, Dict, FrozenSet, List, Optional, Se
 
 import structlog
 
-from src.cplugs.runtime import frames, guards, sandbox, watchdog
+from src.cplugs.runtime import frames, guards, log_redaction, sandbox, watchdog
 from src.cplugs.runtime.dispatch import HostDispatcher, PluginContext
 
 logger = structlog.get_logger()
@@ -22,7 +22,6 @@ TOOL_CALL_TIMEOUT = 30.0
 STOP_TIMEOUT = 5.0
 PING_INTERVAL = 10.0
 DISK_INTERVAL = 60.0
-STDERR_CAP = 64 * 1024
 EVENTS_PER_SECOND = 20
 FEED_GRANTS = {"feed.meta": ("feed:meta", "feed:scrub", "feed:raw"), "feed.scrubbed": ("feed:scrub", "feed:raw"),
                "feed.raw": ("feed:raw",),
@@ -66,7 +65,8 @@ class PluginProcess:
         self._next_id = 0
         self._waiting: Dict[int, asyncio.Future] = {}
         self._tasks: Set[asyncio.Task] = set()
-        self.stderr = bytearray()
+        self._stderr_log = log_redaction.StderrLog(spec.ctx.plugin_id)
+        self.stderr = self._stderr_log.kept
         self.ended: Optional[str] = None
         self.started_at = 0.0
         self.startup_seconds = 0.0
@@ -85,8 +85,7 @@ class PluginProcess:
         if self.spec.unrestricted:
             argv = sandbox.build_unrestricted_command(self._layout, self.spec.entry, watchdog.DISK_QUOTA_BYTES)
         else:
-            profile = self._layout.data_dir / "profile.sb"
-            profile.write_text(sandbox.render_profile(self._layout), encoding="utf-8")
+            profile = sandbox.write_profile(self._layout)
             argv = sandbox.build_command(self._layout, profile, self.spec.entry, watchdog.DISK_QUOTA_BYTES)
         began = time.monotonic()
         self._proc = await asyncio.create_subprocess_exec(
@@ -212,11 +211,14 @@ class PluginProcess:
 
     async def _drain_stderr(self) -> None:
         assert self._proc is not None and self._proc.stderr is not None
-        while True:
-            chunk = await self._proc.stderr.read(4096)
-            if not chunk:
-                return
-            self.stderr.extend(chunk[:max(0, STDERR_CAP - len(self.stderr))])
+        try:
+            while True:
+                chunk = await self._proc.stderr.read(4096)
+                if not chunk:
+                    return
+                self._stderr_log.feed(chunk)
+        finally:
+            self._stderr_log.close()
 
     async def _watch(self) -> None:
         began = last_ping = last_disk = time.monotonic()

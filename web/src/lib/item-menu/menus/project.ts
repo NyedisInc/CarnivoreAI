@@ -1,50 +1,34 @@
 import { t } from '../../i18n/index.svelte';
-import { addToNodes } from '../../add-to-menu/host';
+import { companyList } from '../../companies';
 import { companySource } from '../../sidebar-shell/company-source.svelte';
-import { removeFromCompany } from '../../sidebar-shell/company-actions';
-import {
-    newAgentInProject, projectNameFor, archiveProject, renameProject, setProjectColor, showProjectPath, sleepProject,
-} from '../../sidebar-shell/heading-project-actions';
-import { hg } from '../../sidebar-shell/interaction-globals';
+import { agentOffered } from '../../projects-shared/agent-offer';
+import { projectPanels } from '../../../cplugs/sdk/project-panels';
+import { projectNameFor, setProjectColor } from '../../sidebar-shell/heading-project-actions';
+import { drawerProjectOf, runDrawerProjectVerb } from '../../sidebar-shell/project-menu-run.svelte';
 import { projectColorOf } from '../../project-colors/store.svelte';
 import { setProjectColorPreview } from '../../project-colors/preview.svelte';
-import { entryNodes, spaced, type ItemMenuEntry } from '../entries';
+import { entryNodes } from '../entries';
 import { defineItemMenu } from '../registry';
-import { foldInsideEntry } from './fold-inside';
+import { projectMenuEntries } from './project-entries';
 
 defineItemMenu('project', {
     build({ key }, env) {
         const rawName = projectNameFor(key);
         const name = rawName || t('sidebar.project.unnamed');
-        const projectId = key.slice(2);
-        const filed = rawName !== null && companySource().companyOf(projectId) !== null;
-        const openGroup: ItemMenuEntry[] = [
-            { label: t('opscenter.tabs.new_agent'), icon: 'agent', id: 'new-agent', onPick: () => { void newAgentInProject(key); } },
-            { label: t('layout.row.load_blueprint'), icon: 'cube', id: 'load-blueprint', onPick: () => hg().CloudeWeb?.openBlueprintsScreen?.() },
-        ];
-        const identityGroup: ItemMenuEntry[] = [
-            { label: t('sidebar.heading.rename'), icon: 'rename', id: 'rename-project', onPick: () => { renameProject(key); } },
-        ];
-        if (rawName) {
-            identityGroup.push({ label: t('sidebar.project.add_to'), icon: 'add', id: 'add-to-company', children: () => addToNodes.forProject(rawName), onPick: () => undefined });
-        }
-        if (rawName && /^[0-9]+$/.test(projectId)) {
-            identityGroup.push({
-                label: '', id: 'project-color', onPick: () => undefined,
-                colors: { value: projectColorOf(Number(projectId)) ?? '', allowNone: true, onPick: (color) => { void setProjectColor(rawName, color, Number(projectId)); }, onPreview: (hex) => setProjectColorPreview(Number(projectId), hex) },
-            });
-        }
-        if (filed && rawName) {
-            identityGroup.push({ label: t('sidebar.project.remove_from_company'), icon: 'move-up', id: 'remove-from-company', onPick: () => { void removeFromCompany(rawName); } });
-        }
-        const entries = spaced([
-            openGroup,
-            identityGroup,
-            [{ label: t('sidebar.show_path.label'), icon: 'show-path', id: 'show-path', onPick: () => { void showProjectPath(key); } }],
-            [foldInsideEntry(key)],
-            [{ label: t('sidebar.heading.sleep'), icon: 'sleep', id: 'sleep', onPick: () => { void sleepProject(key); } }],
-            [{ label: t('sidebar.heading.archive'), icon: 'close', id: 'archive-project', danger: true, onPick: () => { void archiveProject(key); } }],
-        ]);
-        return { nodes: entryNodes(entries, env.glyph, env.close), ariaLabel: t('sidebar.project.menu.title', { name }) };
+        const label = t('sidebar.project.menu.title', { name });
+        const id = Number(key.slice(2));
+        const base = drawerProjectOf(key) ?? { id, name: rawName ?? '', archived_at: null };
+        const project = { ...base, company_id: companySource().companyOf(String(id)) };
+        const entries = projectMenuEntries({
+            project,
+            companies: companyList(),
+            agentOffered: agentOffered(project),
+            panels: projectPanels(),
+            color: { value: projectColorOf(id) ?? '', onPick: (color) => { void setProjectColor(project.name, color, id); }, onPreview: (hex) => setProjectColorPreview(id, hex) },
+            close: env.close,
+            glyph: env.glyph,
+            run: (verb) => runDrawerProjectVerb(key, verb),
+        });
+        return { nodes: entryNodes(entries, env.glyph, env.close), ariaLabel: label };
     },
 });

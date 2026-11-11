@@ -9,7 +9,10 @@
   import { railIconHidden, setRailIconHidden, startRailIcons } from '../sidebar-widgets/rail-icons.svelte';
   import { zoneItemKey } from '../drawer-zone/zone-model';
   import { RAIL_MAX_SECTIONS, RAIL_SPECS, type RailEdge } from './rail-model';
-  import { beginRailItemDrag, railAims, railCarry, railDrags, railStores } from './rail-store.svelte';
+  import { clearRailAims, clearRailDrops, liftRails, placeInRail, railAims, railCarry, railDrags, railStores } from './rail-store.svelte';
+  import { canSplitAt } from './rail-sections';
+  import { createRailMotion } from '../zone-motion/rail-motion';
+  import { registerDropHost } from '../motion-grid';
   import { railSlideout } from './slideout.svelte';
   import { railOutSizes } from './rail-out-size.svelte';
   import { RAIL_PUSH_DEBOUNCE_MS } from './rail-size';
@@ -50,6 +53,70 @@
     store.start();
     widgetBars.start();
     startRailIcons();
+  });
+
+  const motion = createRailMotion({
+    get edge() { return edge; },
+    get axis() { return spec.axis; },
+    sections: () => sections.map((section) => section.map((entry) => entry.key)),
+    cuts: () => cuts,
+    canSplit: (section, key) => canSplitAt(store.layout, section, key),
+    place(key, spot, kind) {
+      if (kind) {
+        placeInRail(edge, kind, spot);
+        return;
+      }
+      const item = store.items.find((one) => zoneItemKey(one) === key);
+      if (item) placeInRail(edge, item.widget, spot, item.target, item);
+    },
+    leave(key, to) {
+      const item = store.items.find((one) => zoneItemKey(one) === key);
+      if (!item) return;
+      if (to) placeInRail(to.edge as RailEdge, item.widget, to.spot, item.target, item);
+      else if (store.remove(key)) {
+        const entry = entryOf.get(key);
+        terminalLayout.announce(t('session_rail.announce.removed', { title: entry ? entry.head?.title ?? t(entry.manifest.titleKey) : key }));
+      }
+    },
+    onLift: (key) => liftRails(key),
+    onAim(aim) {
+      clearRailAims();
+      if (!aim) return;
+      if (aim.section !== null) {
+        railAims[edge].section = aim.section;
+        railAims[edge].split = aim.offer;
+        railAims[edge].onBox = aim.onBox;
+        drag.state.index = aim.index;
+      }
+      if (aim.across) {
+        const { edge: to, spot, offer } = aim.across;
+        railAims[to as RailEdge].split = offer;
+        railAims[to as RailEdge].onBox = spot.split;
+        if (!spot.split) {
+          railAims[to as RailEdge].section = spot.section;
+          railDrags[to as RailEdge].state.index = spot.index;
+        }
+      }
+    },
+    onEnd: clearRailDrops,
+  });
+  $effect(() => {
+    const keys = strip?.querySelector<HTMLElement>('[data-rail-sections]');
+    return keys ? motion.attach(keys) : undefined;
+  });
+  $effect(() => {
+    void [sections, cuts, size, labelAt, editing];
+    untrack(() => motion.sync());
+  });
+
+  $effect(() => {
+    if (!strip) return;
+    return registerDropHost(strip, {
+      id: `zone:rail-${edge}`,
+      accept: (kind, ev) => motion.accept(kind, ev),
+      takes: (kind) => !!resolvePlacement({ widget: kind }),
+      add: (kind) => placeInRail(edge, kind),
+    });
   });
 
   const barDrag = new BarDrag(edge, () => widgetBars.view[edge], () => visibility.fold());
@@ -102,9 +169,9 @@
   const look = $derived(dragLook(visibility.state, barDrag.preview));
   const barPlace = $derived(bar.mode === 'pinned' ? ['compact', 'cozy', 'detailed'].indexOf(bar.size) + 1 : 0);
   const present = $derived(look !== 'absent');
-  const drop = $derived(!editing ? undefined : drag.state.index !== null || aim.split !== null ? 'aimed' : drag.state.carrying ? 'open' : undefined);
-  const ghostAfter = $derived(editing && drag.state.carrying ? aim.split : null);
-  const carriedKey = $derived(editing && drag.state.carrying ? railCarry.key : null);
+  const drop = $derived(drag.state.index !== null || aim.split !== null ? 'aimed' : drag.state.carrying ? 'open' : undefined);
+  const ghostAfter = $derived(drag.state.carrying ? aim.split : null);
+  const carriedKey = $derived(drag.state.carrying ? railCarry.key : null);
   const pinId = $derived(barPinIconId(edge));
   const pinHidden = $derived(railIconHidden(pinId));
   const pinDrawn = $derived(showsPin(look) && stripPinsOffered() && (editing || !pinHidden));
@@ -142,19 +209,8 @@
     for (const item of strip.querySelectorAll<HTMLElement>('[data-zone-item]')) if (item.dataset['zoneItem'] === key) item.focus();
   }
 
-  function onpointerdown(event: PointerEvent, key: string, title: string): void {
-    if (!editing || event.button !== 0) return;
-    beginRailItemDrag(edge, event.currentTarget as HTMLElement, event, key, () =>
-      terminalLayout.announce(t('session_rail.announce.removed', { title })));
-  }
-
   function onedit(event: KeyboardEvent, key: string, title: string): void {
-    const back = horizontal ? 'ArrowLeft' : 'ArrowUp';
-    const forward = horizontal ? 'ArrowRight' : 'ArrowDown';
-    if (event.key === back || event.key === forward) {
-      event.preventDefault();
-      store.step(key, event.key === back ? -1 : 1);
-    } else if (event.key === 'Delete' || event.key === 'Backspace') {
+    if (event.key === 'Delete' || event.key === 'Backspace') {
       event.preventDefault();
       if (store.remove(key)) terminalLayout.announce(t('session_rail.announce.removed', { title }));
     }
@@ -203,7 +259,7 @@
     },
   }));
   const strip_zones = $derived(zones.slice(0, sections.length));
-  const keyMark = $derived(editing && drag.state.index !== null ? { section: aim.section, index: drag.state.index } : null);
+  const keyMark = $derived(drag.state.index !== null ? { section: aim.section, index: drag.state.index } : null);
 </script>
 
 <svelte:window bind:innerWidth={winW} bind:innerHeight={winH} />
@@ -238,7 +294,7 @@
     {/if}
     <ZoneKeys zones={strip_zones} axis={spec.axis} {cuts} {ghostAfter} ghostAimed={aim.onBox} {carriedKey} {labelAt} iconPx={BAR_SIZES[size][edge].icon} compact={size === 'compact'} {editing} {openKeys} {face} mark={keyMark} hiddenKey={railIconHidden} ontoggle={(key, hide) => void setRailIconHidden(key, hide)}
       empty={editing && drawnCount === 0 ? t(horizontal ? 'session_rail.empty_bottom' : 'session_rail.empty') : null}
-      onpress={(_zone, key) => press(key)} {onedit} ondragstart={onpointerdown} />
+      onpress={(_zone, key) => press(key)} {onedit} {motion} />
     </div>
     
     {#each keyMenu ? [keyMenu] : [] as open (open)}

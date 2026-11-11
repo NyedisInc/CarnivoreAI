@@ -54,7 +54,8 @@ def door_path() -> str:
 
 
 MAX_CANDIDATES = 16
-_CAND_FIELD_MAX = {"name": 64, "fid": 64, "fid_short": 8, "pack_name": 32}
+_CAND_FIELD_MAX = {"name": 64, "fid": 64, "fid_short": 8, "pack_name": 32, "computer_label": 32}
+_MEMBERS_MAX = 6
 
 def _clean(value: Any) -> str:
     if isinstance(value, bool):
@@ -127,7 +128,8 @@ async def find_targets(status: Dict[str, Any]) -> List[Main]:
             await asyncio.sleep(DISCOVERY_POLL_SECONDS)
     finally:
         disc.stop()
-    return [{"name": c["name"], "fid": c["fid"], "fid_short": c["fid_short"], "pack_name": c.get("pack_name"), "addresses": [(c["join_address"], int(c["lp"]) + 1)]}
+    return [{"name": c["name"], "fid": c["fid"], "fid_short": c["fid_short"], "pack_name": c.get("pack_name"), "computer_label": c.get("computer_label"), "members": c.get("members") or [],
+            "addresses": [(c["join_address"], int(c["lp"]) + 1)]}
             for c in answered]
 
 
@@ -316,6 +318,7 @@ async def _serve_waiting(out: Printer, status: Dict[str, Any]) -> int:
     if look or len(mains) != 1 or not mains[0]["addresses"]:
         code = ("found" if mains else "no_pack") if look else "several" if len(mains) > 1 else "no_pack"
         cands = [{k: (None if m.get(k) is None else str(m[k])[:n]) for k, n in _CAND_FIELD_MAX.items()}
+                 | {"members": [{"label": str(x["label"])[:24], "fid_short": str(x["fid_short"])[:8], "seen": bool(x["seen"])} for x in m.get("members", [])[:_MEMBERS_MAX]]}
                  for m in mains[:MAX_CANDIDATES]] if code in ("several", "found") else None
         out.final(await _relay_failed(job, code, **({"candidates": cands} if cands else {})))
         return 0

@@ -16,7 +16,6 @@
     menu = null,
     icon = null,
     phone = false,
-    onGripDown,
     open = $bindable(false),
     anchor = $bindable(null),
   }: {
@@ -27,7 +26,6 @@
     menu?: Snippet<[MenuSlot]> | null;
     icon?: string | null;
     phone?: boolean;
-    onGripDown?: (event: PointerEvent) => void;
     open?: boolean;
     anchor?: HTMLElement | null;
   } = $props();
@@ -56,13 +54,13 @@
       class:oc-frame-corner--edit={editing}
       class:oc-frame-corner--tap={phone}
       data-corner=""
+      data-motion-grab={laid ? '' : undefined}
       data-edit-gear={editing ? '' : undefined}
       bind:this={anchor}
       aria-haspopup="menu"
       aria-expanded={open}
       aria-label={t('opscenter.frame.options', { title })}
       title={t('opscenter.frame.options_hint', { title })}
-      onpointerdown={laid ? onGripDown : undefined}
       onclick={() => (open = !open)}
       oncontextmenu={(event) => {
         event.preventDefault();

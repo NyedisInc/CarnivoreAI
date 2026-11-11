@@ -1,0 +1,12 @@
+{
+  "items": [
+    {
+      "id": "trk_fixture1",
+      "type": "github",
+      "healthy": true,
+      "last_sync": "2026-11-05T11:55:00Z"
+    }
+  ],
+  "next_cursor": null,
+  "rev": 1
+}

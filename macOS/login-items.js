@@ -7,17 +7,20 @@ const { markLoginOff } = require('./engine-host/login-sync');
 
 const WINDOW_FLAG = 'login-window.flag';
 
-const WHICH = Object.freeze(['engine', 'window', 'background']);
+const LAUNCH_WINDOW_OFF_FLAG = 'launch-window-off.flag';
+
+const WHICH = Object.freeze(['engine', 'window', 'background', 'launchWindow']);
 
 function readLogin({ installer, dir, fsImpl, service = null }) {
   const f = fsImpl || fs;
-  if (!installer) return { engine: null, window: null, background: null };
+  const launchWindow = !f.existsSync(path.join(dir, LAUNCH_WINDOW_OFF_FLAG));
+  if (!installer) return { engine: null, window: null, background: null, launchWindow };
   if (service) {
     const background = installer.isEnabled() === true;
-    return { engine: service.isEnabled() === true, window: background && f.existsSync(path.join(dir, WINDOW_FLAG)), background };
+    return { engine: service.isEnabled() === true, window: background && f.existsSync(path.join(dir, WINDOW_FLAG)), background, launchWindow };
   }
   const engine = installer.isEnabled() === true;
-  return { engine, window: engine && f.existsSync(path.join(dir, WINDOW_FLAG)), background: null };
+  return { engine, window: engine && f.existsSync(path.join(dir, WINDOW_FLAG)), background: null, launchWindow };
 }
 
 function validLoginRequest(which, enabled) {
@@ -27,6 +30,11 @@ function validLoginRequest(which, enabled) {
 function setLogin({ installer, launchArgs, dir, which, enabled, fsImpl, service = null }) {
   const f = fsImpl || fs;
   const flag = path.join(dir, WINDOW_FLAG);
+  if (which === 'launchWindow') {
+    if (enabled) removeFlag(f, path.join(dir, LAUNCH_WINDOW_OFF_FLAG));
+    else { f.mkdirSync(dir, { recursive: true }); f.writeFileSync(path.join(dir, LAUNCH_WINDOW_OFF_FLAG), `${new Date().toISOString()}\n`, { mode: 0o600 }); }
+    return readLogin({ installer, dir, fsImpl: f, service });
+  }
   if (service && installer) return setLoginWithService({ installer, service, launchArgs, dir, which, enabled, f, flag });
   if (!installer || which === 'background') return readLogin({ installer, dir, fsImpl: f });
   if (which === 'engine') {
@@ -75,4 +83,4 @@ function removeFlag(f, flag) {
   }
 }
 
-module.exports = { WINDOW_FLAG, WHICH, readLogin, validLoginRequest, setLogin };
+module.exports = { WINDOW_FLAG, LAUNCH_WINDOW_OFF_FLAG, WHICH, readLogin, validLoginRequest, setLogin };

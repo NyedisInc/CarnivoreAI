@@ -32,7 +32,10 @@ def resolve(text: str, cwd: Optional[str]) -> Optional[Resolved]:
     if not raw or len(raw) > MAX_TEXT or "\0" in raw:
         return None
     name, line = split_line(raw)
-    candidate = Path(name).expanduser()
+    try:
+        candidate = Path(name).expanduser()
+    except RuntimeError:
+        return None
     if not candidate.is_absolute():
         if not cwd or not os.path.isabs(cwd):
             return None

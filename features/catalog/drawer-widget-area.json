@@ -18,7 +18,7 @@
     "Press edit layout at the bottom of the drawer.",
     "Drag any row of the widget drawer's one list into the area, or press it to add it.",
     "Use the strip above each widget to reorder it, switch its look between compact and full, or remove it.",
-    "Under the widgets, edit layout shows the glance area in yellow dashes: drag any row of the widget drawer's list into it; drag a glance's grip to reorder it, use its options to choose what it shows (the providers glance: which account), or remove it.",
+    "Under the widgets sits the glance row: drag any row of the widget drawer's list into it; drag a glance's grip to reorder it, use its options to choose what it shows (the providers glance: which account), or remove it.",
     "Press done to keep the arrangement; it follows you to every device.",
     "Drag the thin handle above the area to move it between closed, glance (one row of small tiles) and full; while it is closed, click the small upward chevron to open it full.",
     "Each tab remembers its own state on this device: agents and edit layout show it full, menu and questions at a glance.",
@@ -44,7 +44,6 @@
     "web/src/lib/drawer-zone/zone-store.svelte.ts",
     "web/src/lib/dynamic-tabs/WidgetAreaBar.svelte",
     "web/src/lib/dynamic-tabs/widget-area.svelte.ts",
-    "web/src/lib/drawer-zone/GlanceArea.svelte",
     "web/src/lib/drawer-zone/glance-model.ts"
   ],
   "updated": "2026-10-03",

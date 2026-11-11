@@ -11,6 +11,7 @@
     import PluginData from './PluginData.svelte';
     import PluginOverview from './PluginOverview.svelte';
     import PluginSettings from './PluginSettings.svelte';
+    import type { HealthRow } from './plugin-health';
     import { paneReason, paneTabs, type PaneTab, type PurgePrice } from './plugin-pane';
     import './plugin-pane.css';
 
@@ -31,10 +32,13 @@
         onUninstall?: () => void;
         uninstalling?: boolean;
         uninstallError?: string | null;
+        health?: HealthRow;
+        canActHealth?: boolean;
+        onHealth?: () => void;
         t: Translate;
     }
 
-    const { plugin, tab, onTab, asking = false, busy = false, error = null, onConfirmOff, onCancelOff, onGrant, sheetStamp = '', loadActivity, purge, onPurged, onUninstall, uninstalling = false, uninstallError = null, t }: Props = $props();
+    const { plugin, tab, onTab, asking = false, busy = false, error = null, onConfirmOff, onCancelOff, onGrant, sheetStamp = '', loadActivity, purge, onPurged, onUninstall, uninstalling = false, uninstallError = null, health, canActHealth = false, onHealth, t }: Props = $props();
 
     const reason = $derived(paneReason(plugin, t));
     const tabs = $derived(paneTabs(plugin, t));
@@ -58,7 +62,7 @@
     <div class="plp__panel" {...panelAttrs(idBase, tab)} data-plugin-panel={tab}>
         {#key plugin.id}
             {#if tab === 'overview'}
-                <PluginOverview {plugin} {t} />
+                <PluginOverview {plugin} {health} canAct={canActHealth} onHealth={onHealth} {t} />
             {:else if tab === 'settings'}
                 <PluginSettings {plugin} {t} />
             {:else if tab === 'permissions'}

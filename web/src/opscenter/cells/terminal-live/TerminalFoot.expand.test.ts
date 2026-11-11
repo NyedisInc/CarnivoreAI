@@ -321,14 +321,15 @@ test('EXPANDED: a measured cache split adds its cell to the first group, and not
   expect(stats(target)?.querySelector('[data-stat="cache"] .oc-tfs-value')?.textContent?.trim()).toBe('440k/5.2M');
 });
 
-test('EXPANDED: three groups in #422 order - context/model/tokens, then the two windows, then cost/account', () => {
+test('EXPANDED: four groups in order - context/model/tokens, the two windows, cost, account', () => {
   const target = setup(usage(), 390);
   toggle(target).click();
   flushSync();
   expect(statGroups(target)).toEqual([
     ['context', 'model', 'tokens'],
     ['window:five_hour', 'window:seven_day'],
-    ['cost', 'account'],
+    ['cost'],
+    ['account'],
   ]);
 });
 
@@ -337,7 +338,7 @@ test('EXPANDED: an unhealthy login puts the login row beside cost and account, w
   const target = setup(payload, 390);
   toggle(target).click();
   flushSync();
-  expect(statGroups(target)).toEqual([['context', 'model', 'tokens'], ['cost', 'account', 'login']]);
+  expect(statGroups(target)).toEqual([['context', 'model', 'tokens'], ['cost'], ['account', 'login']]);
 });
 
 test('EXPANDED: a healthy login with no window data puts the limits row beside cost and account (#422)', () => {
@@ -345,7 +346,7 @@ test('EXPANDED: a healthy login with no window data puts the limits row beside c
   const target = setup(payload, 390);
   toggle(target).click();
   flushSync();
-  expect(statGroups(target)).toEqual([['context', 'model', 'tokens'], ['cost', 'account', 'limits']]);
+  expect(statGroups(target)).toEqual([['context', 'model', 'tokens'], ['cost'], ['account', 'limits']]);
 });
 
 test('COLLAPSED: the skinny bar draws the model then the meters group, no grid and no extra rows (#422)', () => {

@@ -14,10 +14,12 @@ from fastapi.concurrency import run_in_threadpool
 from starlette.routing import Match
 from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt
 
-from src.cplugs.host import (activity_log, consent as consent_mod, dependencies, destination_check, gate, identity, net_routes, owner_switch, sideload, sideload_git_routes, sideload_routes, purge_guard, purge_kept, purge_owned, purge_removed,
+from src.cplugs.host import (activity_log, consent as consent_mod, dependencies, destination_check, gate, identity, net_routes, owner_switch, sideload, sideload_git_routes, sideload_routes, purge_guard, purge_kept, registry_routes, purge_owned, purge_removed,
                              risk, runtime, state as owner_state, system_lifecycle)
 from src.cplugs.host import sidecar_routes, sidecar_ui, sidecar_view
+from src.cplugs.host.peer_refusal import refuse_peer_token_writes
 from src.cplugs.host.sidecar_registry import SidecarDefinition
+from src.cplugs.runtime import sandbox
 from src.cplugs.runtime.supervisor import NEEDS_APPROVAL
 from src.cplugs.sdk import permission_registry as registry, settings_aliases
 from src.cplugs.sdk.definition import CplugDefinition, SettingsVerdict, as_warning
@@ -67,7 +69,7 @@ class PurgeBody(BaseModel):
     confirm_token: Optional[str] = None
 
 
-host_router = APIRouter(prefix="/cplugs", tags=["cplugs"], dependencies=[Depends(require_auth)])
+host_router = APIRouter(prefix="/cplugs", tags=["cplugs"], dependencies=[Depends(refuse_peer_token_writes), Depends(require_auth)])
 
 
 host_router.include_router(net_routes.router)
@@ -147,7 +149,7 @@ def _orphans(host: runtime.Host) -> List[Dict[str, Any]]:
     if not root.is_dir():
         return []
     rows = []
-    for folder in sorted(p for p in root.iterdir() if p.is_dir() and ID_PATTERN.match(p.name) and p.name not in shipped):
+    for folder in sorted(p for p in root.iterdir() if p.is_dir() and ID_PATTERN.match(p.name) and p.name not in shipped and p.name not in identity.HOST_WORDS):
         size = sum(f.stat().st_size for f in folder.rglob("*") if f.is_file())
         rows.append({"id": folder.name, "state": "removed", "enabled": False, "storage_bytes": size})
     try:
@@ -409,6 +411,7 @@ async def purge_cplug(cplug_id: str, body: PurgeBody, request: Request) -> Dict[
     folder = host.folder(cplug_id)
     if folder.is_dir():
         await run_in_threadpool(purge_guard.purge, folder, cplug_id, folder.parent, host.install_key(cplug_id))
+    await run_in_threadpool(sandbox.remove_profile, folder)
     await run_in_threadpool(purge_owned.purge, host.state_dir, _owned_files(cplug_id))
     await run_in_threadpool(purge_owned.purge_paths, _removed_roots(host, cplug_id))
     await run_in_threadpool(owner_state.forget, host.state_dir, cplug_id)
@@ -459,6 +462,7 @@ def build_router() -> APIRouter:
     router.include_router(host_router)
     router.include_router(owner_switch.owner_router)
     router.include_router(sideload_routes.router)
+    router.include_router(registry_routes.router)
     router.include_router(sideload_git_routes.router)
     router.include_router(sidecar_routes.router)
     router.include_router(sidecar_ui.router)

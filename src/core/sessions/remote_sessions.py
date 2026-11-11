@@ -12,8 +12,10 @@ from src.core.hosts.remote_listing import (  # noqa: F401
     gather_for, reap_remote, remote_session_info, snapshot_targets)
 from src.core.hosts.remote_readopt import schedule_remote_readopt  # noqa: F401
 from src.core.hosts.remote_resume import respawn_remote  # noqa: F401
+from src.core.hosts import remote_overlay
 from src.core.hosts.probe import AGENT_NAMES
 from src.core.hosts.registry import HostUnavailable
+from src.core.sessions import launch_overlay
 from src.core.sessions.ports import SessionManagerSurface
 from src.core.hosts.remote_host import RemoteHost, RemoteHostUnavailable
 from src.core.hosts.ssh_exec import posix_quote
@@ -142,8 +144,12 @@ async def create_remote_session(
             on_output=manager._make_output_handler(session_id),
             viewer_probe=manager._make_viewer_probe(session_id), session_name=name,
             remote_host=host)
+        command, late, overlay_ref = await remote_overlay.apply(
+            host, family=family, command=command, tmux_name=backend.tmux_session, far_dir=far_dir, label=label)
         await backend.start(command=command, env={"CLOUDECODE_SESSION_ID": session_id},
                             initial_cols=initial_cols, initial_rows=initial_rows)
+        await remote_overlay.deliver(backend, late)
+        await launch_overlay.confirm(overlay_ref)
     except RemoteHostUnavailable as exc:
         await manager._cleanup_failed_create(session_id, backend)
         raise HostUnavailable("host_unreachable", str(exc)) from exc

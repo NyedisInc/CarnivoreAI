@@ -278,3 +278,28 @@ describe('options per copy (Joe (ccsliinc), 2026-10-11: the questions widget, "m
     expect(dirty[0]!.options).toEqual({ kind_huddle: false, s_ok: 'yes' });
   });
 });
+
+describe('the card height option', () => {
+  const H = 'zone_height';
+  const one = [{ widget: 'core.notes', look: null }] as ZoneItem[];
+
+  test('every copy takes it, it survives parse and toStored, and reset keeps it', () => {
+    const set = setItemOption(one, 'core.notes', H, 200);
+    expect(set[0]!.options).toEqual({ [H]: 200 });
+    expect(normalizeZone(toStored(set))![0]!.options).toEqual({ [H]: 200 });
+    expect(resetItemOptions(set, 'core.notes')[0]!.options).toEqual({ [H]: 200 });
+  });
+
+  test('a hand-edited value clamps to the floor and the cap, a non-number is dropped', () => {
+    const read = (v: unknown): unknown => normalizeZone({ v: 1, items: [{ widget: 'core.notes', options: { [H]: v } }] })![0]!.options?.[H];
+    expect(read(3)).toBe(56);
+    expect(read(999999)).toBe(1200);
+    expect(read('tall')).toBeUndefined();
+  });
+
+  test('a copy already at the option cap refuses a new height', () => {
+    const options = Object.fromEntries(Array.from({ length: 32 }, (_, i) => [`k${i}`, true]));
+    const full = [{ widget: 'core.notes', look: null, options }] as ZoneItem[];
+    expect(setItemOption(full, 'core.notes', H, 200)[0]!.options).toEqual(options);
+  });
+});

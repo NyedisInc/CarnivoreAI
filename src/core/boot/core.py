@@ -101,6 +101,9 @@ async def _stop_log_monitoring(ctx: "BootContext") -> None:
 def _publish_components(ctx: "BootContext") -> None:
     state = ctx.app.state
     state.session_manager = ctx.session_manager
+    from src.core.argent import fallback_spend  # noqa: PLC0415
+
+    fallback_spend.bind_session_manager(ctx.session_manager)
     state.log_monitor = ctx.log_monitor
     state.local_servers = ctx.local_servers
     state.refresh_store = ctx.refresh_store

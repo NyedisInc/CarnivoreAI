@@ -8,7 +8,7 @@ import type { LensGroup } from './lenses';
 import { t, setLocale } from '../i18n/index.svelte';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
 import { registerProjectPanel, resetProjectPanels } from '../../cplugs/sdk/project-panels';
-import { toolOf, withProjectTools } from './project-tools';
+import { toolOf } from './project-tools';
 
 setLocale('en');
 installPopoverPolyfill();
@@ -33,12 +33,10 @@ async function menuIds(group: LensGroup, onProjectAction = vi.fn()): Promise<str
     return [...document.querySelectorAll('[data-node]')].map((n) => n.getAttribute('data-node') ?? '');
 }
 
-test('the menu names the tools and the ids map back to them', () => {
-    const ids = withProjectTools([{ id: 'copy-path' }, { id: 'archive-project', sep: true }], [{ id: 'crate.project', labelKey: 'k' }]).map((i) => i.id);
-    expect(ids).toEqual(['copy-path', 'project-settings', 'project-panel:crate.project', 'archive-project']);
+test('the tool ids map back to their tools', () => {
     expect(toolOf('project-settings')).toEqual({ kind: 'settings' });
     expect(toolOf('project-panel:crate.project')).toEqual({ kind: 'panel', panelId: 'crate.project' });
-    expect(toolOf('copy-path')).toBeNull();
+    expect(toolOf('show-path')).toBeNull();
 });
 
 test('a project of this computer gets the tools in its menu and a pick reaches the page', async () => {

@@ -3,6 +3,7 @@ import type { SessionTokenUsage, UsageContextView, UsagePanelModel, UsageRow, Us
 import { t } from '../../../lib/i18n/index.svelte';
 import { clockText } from '../../lib/clock';
 import { elapsed } from '../../lib/format';
+import type { AgentCostGroup, ArgentCostView } from '../../../lib/argent-cost/cost-view';
 
 const DAY_MS = 86_400_000;
 
@@ -10,7 +11,9 @@ export type StatsCell =
   | { kind: 'context'; key: 'context'; label: string; view: UsageContextView }
   | { kind: 'window'; key: string; label: string; view: UsageWindowView; resetAt: string | null }
   | { kind: 'model'; key: 'model'; label: string; row: UsageRow; effort: string | null }
-  | { kind: 'text'; key: string; label: string; row: UsageRow };
+  | { kind: 'text'; key: string; label: string; row: UsageRow }
+  | { kind: 'argent'; key: 'argent'; label: string; view: ArgentCostView }
+  | { kind: 'gateway_agent'; key: string; label: string; costText: string; agentId: string | null };
 
 export function resetClock(resetsAt: string | null | undefined, nowMs: number): string | null {
   const at = resetsAt ? Date.parse(resetsAt) : NaN;
@@ -30,6 +33,8 @@ export function statsGroups(
   payload: SessionTokenUsage | null,
   nowMs: number,
   createdAt: string | null = null,
+  argent: ArgentCostView | null = null,
+  argentAgents: AgentCostGroup[] | null = null,
 ): StatsCell[][] {
   if (model.state !== 'ok') return [];
   const rows: Record<string, UsageRow> = Object.fromEntries(model.rows.map((r) => [r.key, r]));
@@ -50,9 +55,14 @@ export function statsGroups(
     resetAt: resetClock(raw.find((w) => `window:${w.kind}` === view.key)?.resets_at, nowMs),
   }));
 
-  const last: StatsCell[] = [...text('cost'), ...ageCell(createdAt, nowMs)];
-  if (payload?.account) last.push(...text('account'));
-  last.push(...text('login'), ...text('limits'));
+  const argentCell: StatsCell[] = argent ? [{ kind: 'argent', key: 'argent', label: t('argent.cost.foot_label'), view: argent }] : [];
+  const agentCells: StatsCell[] = (argent ? argentAgents ?? [] : []).flatMap((g) => [
+    { kind: 'gateway_agent' as const, key: `argent-item:${g.itemId}`, label: g.itemName || t('argent.card.agent_item_none'), costText: g.totalText, agentId: null },
+    ...g.agents.map((a) => ({ kind: 'gateway_agent' as const, key: `gateway-agent:${g.itemId}:${a.agentId}`, label: a.name ?? t('argent.card.agent_root'), costText: a.costText, agentId: a.agentId })),
+  ]);
+  const spend: StatsCell[] = [...text('cost'), ...argentCell, ...agentCells, ...ageCell(createdAt, nowMs)];
+  const who: StatsCell[] = payload?.account ? text('account') : [];
+  who.push(...text('login'), ...text('limits'));
 
-  return [first, windows, last].filter((group) => group.length > 0);
+  return [first, windows, spend, who].filter((group) => group.length > 0);
 }

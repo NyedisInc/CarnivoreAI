@@ -13,7 +13,8 @@ from src.core.backup_health.checks import FIRING, OK, UNKNOWN, Verdict
 def check_vault(state_dir: Path, now: Optional[float] = None) -> List[Verdict]:
     record = vault_record.read(state_dir)
     facts = vault_record.evaluate(record, now=now if now is not None else time.time())
-    keys = (K.KEY_VAULT_UNAVAILABLE, K.KEY_VAULT_STALE, K.KEY_VAULT_UNCOVERED, K.KEY_VAULT_OVER_CAP, K.KEY_VAULT_DAMAGED)
+    keys = (K.KEY_VAULT_UNAVAILABLE, K.KEY_VAULT_STALE, K.KEY_VAULT_UNCOVERED, K.KEY_VAULT_OVER_CAP, K.KEY_VAULT_DAMAGED,
+            K.KEY_VAULT_MASS_GONE)
     if not record or not facts["active"]:
         return [Verdict(key, OK) for key in keys]
     down = facts["unavailable"]
@@ -34,4 +35,13 @@ def check_vault(state_dir: Path, now: Optional[float] = None) -> List[Verdict]:
                if facts["over_cap"] else Verdict(K.KEY_VAULT_OVER_CAP, OK))
     out.append(Verdict(K.KEY_VAULT_DAMAGED, FIRING, "error", K.TITLE_VAULT_DAMAGED, K.DETAIL_VAULT_DAMAGED,
                        {"count": facts["damaged"]}) if facts["damaged"] else Verdict(K.KEY_VAULT_DAMAGED, OK))
+    gone = facts["mass_gone"]
+    if gone and gone.get("count"):
+        step = int(gone.get("step") or 0)
+        key = K.KEY_VAULT_MASS_GONE if step == 0 else f"{K.KEY_VAULT_MASS_GONE}.{step}"
+        out.append(Verdict(key, FIRING, "error", K.TITLE_VAULT_MASS_GONE, K.DETAIL_VAULT_MASS_GONE,
+                           {"count": int(gone["count"]), "samples": ", ".join(str(s) for s in gone.get("samples") or [])},
+                           sticky=True))
+    else:
+        out.append(Verdict(K.KEY_VAULT_MASS_GONE, OK))
     return out

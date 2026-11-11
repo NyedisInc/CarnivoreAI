@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import structlog
 
@@ -56,12 +56,19 @@ def check_cplug_consent(consent: Any, facts: CplugFacts) -> None:
         raise refuse_409(exc.code, exc.detail)
 
 
-def reserve_install(request: Any, item: Any) -> bool:
+@dataclass(frozen=True)
+class Reservation:
+
+    created: bool = False
+    replaced: Optional[identity.InstallRecord] = None
+
+
+def reserve_install(request: Any, item: Any, publisher_key_id: str = "") -> Reservation:
     state_dir = request.app.state.services.settings_reader.state_dir()
     name = _item_name(item.id)
     try:
-        existed = identity.lookup(state_dir, name) is not None
-        identity.register_install(state_dir, name, item.id, _shipped_ids())
+        before = identity.lookup(state_dir, name)
+        after = identity.register_install(state_dir, name, item.id, _shipped_ids(), publisher_key_id=publisher_key_id)
     except identity.InstallRefused as exc:
         raise refuse_409(exc.code, str(exc))
     except identity.LedgerUnreadable:
@@ -69,13 +76,16 @@ def reserve_install(request: Any, item: Any) -> bool:
     except (StateWriteFailed, OSError) as exc:
         logger.error("cplug_install_reserve_failed", item_id=item.id, error_type=type(exc).__name__)
         raise refuse_409("cplug_ledger_unwritable", "the plugin install ledger could not be written; nothing was installed")
-    return not existed
+    return Reservation(created=before is None, replaced=before if before is not None and before.uuid != after.uuid else None)
 
 
-def release_reservation(request: Any, item: Any) -> None:
+def release_reservation(request: Any, item: Any, reservation: Reservation) -> None:
     state_dir = request.app.state.services.settings_reader.state_dir()
     try:
-        identity.release_install(state_dir, _item_name(item.id))
+        if reservation.replaced is not None:
+            identity.restore_install(state_dir, reservation.replaced)
+        elif reservation.created:
+            identity.release_install(state_dir, _item_name(item.id))
     except (identity.LedgerUnreadable, StateWriteFailed, OSError) as exc:
         logger.warning("cplug_install_release_failed", item_id=item.id, error_type=type(exc).__name__)
 

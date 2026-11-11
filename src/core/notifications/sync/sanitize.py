@@ -8,6 +8,7 @@ import structlog
 from src.core.notifications import doc_model, kind_specs
 from src.core.notifications.destinations import extras as extras_mod
 from src.core.notifications.destinations import validate
+from src.core.notifications.settings_doc import styles_store
 
 log = structlog.get_logger(__name__)
 
@@ -49,6 +50,9 @@ def _clean_value(path: str, raw: Any) -> Tuple[bool, Any]:
         return record is not None, record
     if parsed.kind in (doc_model.KIND_TICK, doc_model.KIND_DEFAULT, doc_model.KIND_MUTE):
         return isinstance(raw, bool), raw
+    if parsed.kind == doc_model.KIND_STYLE:
+        style = styles_store.clean(raw)
+        return style is not None, style
     if parsed.kind == doc_model.KIND_EXTRA and parsed.extra is not None:
         try:
             return True, extras_mod.check_value(_EXTRA_ROUTE_KEY.get(parsed.extra, parsed.extra), raw)
@@ -64,6 +68,8 @@ def clean_entry(path: Any, entry: Any, now: float) -> Optional[Dict[str, Any]]:
         parsed = doc_model.parse_path(path)
         ver = doc_model.parse_version(entry.get("ver"))
     except ValueError:
+        return None
+    if parsed.col == doc_model.COL_DESKTOP:
         return None
     ids = [x for x in (parsed.dest, parsed.col) if x]
     if any(kind_specs.is_push_destination_id(x) for x in ids) or set(entry) - {"val", "tomb", "ver"}:

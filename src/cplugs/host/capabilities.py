@@ -288,7 +288,7 @@ def toast_dismisser(cplug_id: str, app_state: Any) -> Callable[[ToastRef], bool]
 
 def alerter(cplug_id: str, third_party: bool = False) -> Callable[..., Optional[Dict[str, Any]]]:
     def alert(key: str, severity: str, title_key: str, params: Optional[Mapping[str, Any]] = None, *,
-              detail_key: Optional[str] = None, actions: Sequence[Mapping[str, Any]] = ()) -> Optional[Dict[str, Any]]:
+              detail_key: Optional[str] = None, actions: Sequence[Mapping[str, Any]] = (), only_if_open: bool = False) -> Optional[Dict[str, Any]]:
         from src.core.app_alerts.service import raise_alert  # noqa: PLC0415
 
         if third_party:
@@ -302,7 +302,7 @@ def alerter(cplug_id: str, third_party: bool = False) -> Callable[..., Optional[
                 raise ValueError("a third-party alert carries no actions")
             key = f"p.{key}"
         return raise_alert(f"cplug.{cplug_id}.{key}", source=f"cplug.{cplug_id}", severity=severity,
-                           title_key=title_key, params=params, detail_key=detail_key, actions=actions)
+                           title_key=title_key, params=params, detail_key=detail_key, actions=actions, only_if_open=only_if_open)
 
     return alert
 

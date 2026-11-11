@@ -39,6 +39,8 @@ export const LONG_PRESS_MS = 500;
   import ZoneBadge from '../../lib/zone-shell/ZoneBadge.svelte';
   import { nextKey } from '../../lib/zone-shell/key-nav';
   import TabKey, { keyFace } from '../../lib/zone-shell/TabKey.svelte';
+  import { tick } from 'svelte';
+  import { mountStrip, stripOf } from '../engine/tabs-motion/strip-motion';
 
   let {
     items,
@@ -97,6 +99,12 @@ export const LONG_PRESS_MS = 500;
     if (dropIndex === null) return null;
     if (counted[dropIndex]?.id === id) return 'before';
     return dropIndex === counted.length && counted[counted.length - 1]?.id === id ? 'after' : null;
+  }
+
+  function trackMotion(track: HTMLElement): (() => void) | undefined {
+    if (!group) return undefined;
+    const strip = mountStrip(track, group, { touch });
+    return () => strip.destroy();
   }
 
   let buttons = $state<Record<string, HTMLElement | null>>({});
@@ -216,6 +224,16 @@ export const LONG_PRESS_MS = 500;
       else onClose?.(id);
       return;
     }
+    if (event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight') && group) {
+      const tab = items[index]?.id;
+      const track = scroller?.querySelector<HTMLElement>('[data-tab-track]');
+      if (tab && track && stripOf(track)?.nudge(tab, event.key === 'ArrowLeft' ? 'left' : 'right')) {
+        event.preventDefault();
+        void tick().then(() => buttons[tab]?.focus());
+      }
+      return;
+    }
+    if ((event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) && event.key.startsWith('Arrow')) return;
     const id = nextKey(event.key, items.map((item) => item.id), items[index]?.id ?? null, 'x', true);
     if (id === null) return;
     event.preventDefault();
@@ -234,6 +252,7 @@ export const LONG_PRESS_MS = 500;
   bind:this={scroller}
   onscroll={measureFade}
 >
+<div class="oc-tabs-track" data-tab-track={group ? '' : undefined} {@attach trackMotion}>
   {#each items as item, index (item.id)}
     {@const selected = item.id === active}
     {@const mark = item.glyph ? null : markFor(item.family)}
@@ -293,7 +312,7 @@ export const LONG_PRESS_MS = 500;
         state="selected"
         active={selected}
         tabbable={selected}
-        attrs={{ 'data-tab': item.id }}
+        attrs={items.length === 1 && group && !touch ? { 'data-tab': item.id, 'data-motion-grab': '' } : { 'data-tab': item.id }}
         bind:element={buttons[item.id]}
         onpress={onSelect}
         close={onClose
@@ -315,6 +334,7 @@ export const LONG_PRESS_MS = 500;
       </TabKey>
     </div>
   {/each}
+</div>
 </div>
 {#if onNew}
   <TabKey
@@ -347,12 +367,27 @@ export const LONG_PRESS_MS = 500;
     .oc-tabs {
       display: flex;
       align-items: stretch;
-      gap: var(--oc-gap-hair);
       min-width: 0;
       flex: 0 1 auto;
       overflow-x: auto;
       overflow-y: hidden;
       scrollbar-width: none;
+    }
+
+    .oc-tabs-track {
+      display: flex;
+      align-items: stretch;
+      gap: var(--oc-gap-hair);
+      min-width: 0;
+      flex: 0 1 auto;
+    }
+
+    .oc-tabs-track:global(.oc-tabs-live) {
+      display: block;
+      position: relative;
+      flex: none;
+      width: var(--oc-tabs-w);
+      height: var(--oc-tabs-h);
     }
 
     .oc-tabs::-webkit-scrollbar {
@@ -420,6 +455,10 @@ export const LONG_PRESS_MS = 500;
       display: none;
     }
 
+
+    .oc-tabrow-touch .oc-tabwrap {
+      touch-action: pan-x;
+    }
 
     .oc-tabrow-touch .oc-tab-icon--action {
       width: 44px;

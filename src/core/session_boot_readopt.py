@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 
+from src.core.sessions import session_events
 from src.core.session_boot_readopt_plan import (
     ADOPTED_ID_PREFIX,
     CLAIMABLE_ORIGINS,
@@ -263,6 +264,7 @@ async def readopt_surviving_sessions(
             )
             continue
         held.append(target.session_id)
+        session_events.schedule(manager, session_events.STARTED, target.name, reason="readopted")
 
     if manager._registry.last_session_id in set(held):
         if prior_current is not None and prior_current in manager._registry.sessions:

@@ -10,6 +10,7 @@ from src.config import settings
 from src.core import claude_hooks
 from src.core.boot.steps import BootStep, FailureMode, teardown_slot
 from src.core.notifications import install as notifications_install
+from src.core.notify_media import intake as media_intake
 from src.core.session_notification_policy import (
     NotificationPolicyStore,
     hydrate_from_datastore as hydrate_notification_policy,
@@ -37,6 +38,7 @@ def _pipeline_steps() -> list[BootStep]:
         hydrate_notification_policy(ctx.notification_policy_store, _db_path_for(settings.get_state_dir()))
         ctx.session_manager.attach_notification_policy_store(ctx.notification_policy_store)
         held.installed = await notifications_install.install(ctx.app.state, ctx.session_manager)
+        media_intake.prune_at_boot()
 
     async def stop(_ctx: "BootContext") -> None:
         await notifications_install.uninstall(held.installed)

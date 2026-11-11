@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Tuple
 
 import structlog
 
-from src.core.live_install_roots import CPLUG_CODE_DIR_NAME
+from src.core import plugin_layout
 from src.core.skills import kinds
 from src.cplugs.host import identity, sideload
 from src.cplugs.host.sidecar_manifest import SidecarManifest, SidecarManifestError, load_sidecar_manifest, with_sidecar_facts
@@ -49,7 +49,7 @@ class SidecarRegistry:
         self._entries: Dict[str, SidecarDefinition] = {}
 
     def code_root_of(self, name: str) -> Path:
-        return self.state_dir / CPLUG_CODE_DIR_NAME / name
+        return plugin_layout.code_root(self.state_dir, name)
 
     def _load_one(self, row: Any) -> Optional[SidecarDefinition]:
         _, _, name = row.item_id.partition("/")
@@ -62,6 +62,11 @@ class SidecarRegistry:
             logger.warning("cplug_sidecar_skipped", cplug=name, reason="no_install_record")
             return None
         root = self.code_root_of(name)
+        try:
+            sideload.contained(root, root.parent)
+        except sideload.SideloadRefused:
+            logger.warning("cplug_sidecar_skipped", cplug=name, reason="code_root_outside")
+            return None
         try:
             manifest = with_sidecar_facts(load_sidecar_manifest(root, name), root)
         except SidecarManifestError as exc:
@@ -84,7 +89,7 @@ class SidecarRegistry:
         return len(found)
 
     def _visible(self, d: SidecarDefinition) -> bool:
-        return not sideload.is_local(d.item_id) or sideload.is_on(self.state_dir)
+        return not sideload.is_local(d.item_id) or sideload.allowed(self.state_dir)
 
     def find(self, name: str) -> Optional[SidecarDefinition]:
         with self._lock:

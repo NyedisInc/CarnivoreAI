@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import stat
 from pathlib import Path
 from typing import Dict, Iterator, Optional
 
@@ -45,6 +46,7 @@ def iter_copies(root: Path, intake: model.Intake, name: str, recorded: Optional[
             if ident is None:
                 intake.skipped.append(model.Refusal(name, locator, "not a transcript path"))
                 continue
-            copy = model.checked(intake, name, locator, ident, _opener(path), path.stat().st_mtime, want_sha=(recorded or {}).get(locator))
+            copy = model.checked(intake, name, locator, ident, _opener(path), path.stat().st_mtime, want_sha=(recorded or {}).get(locator),
+                                 mode=stat.S_IMODE(path.stat().st_mode))
             if copy is not None:
                 yield copy

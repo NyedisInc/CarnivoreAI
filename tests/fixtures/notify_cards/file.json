@@ -1,0 +1,82 @@
+{
+  "kind": "file",
+  "payload": {
+    "title": "mixdown-2 sent a file",
+    "body": "mix-v3-notes.pdf, 214 KB",
+    "path": "/sessions/ses_0123456789ab",
+    "thread": "local|ses_0123456789ab",
+    "v": 2,
+    "sub": "file on nostromo",
+    "kind": "file",
+    "type": "agent.message",
+    "lv": "a",
+    "snd": "soft",
+    "cap": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ttl": 1794000000,
+    "acts": [
+      [
+        "open_file",
+        "open file"
+      ],
+      [
+        "save_file",
+        "save to files"
+      ]
+    ],
+    "card": {
+      "strip": [
+        "file",
+        "mixdown-2",
+        "nostromo"
+      ],
+      "agent": "mixdown-2",
+      "computer": "nostromo",
+      "ts": "9:41",
+      "name": "mix-v3-notes.pdf",
+      "bytes": 219136,
+      "mime": "application/pdf",
+      "from": "mixdown-2",
+      "pages": 3
+    },
+    "more": true,
+    "media": {
+      "id": "m_0123456789ab",
+      "mime": "application/pdf",
+      "bytes": 219136
+    }
+  },
+  "card": {
+    "strip": [
+      "file",
+      "mixdown-2",
+      "nostromo"
+    ],
+    "agent": "mixdown-2",
+    "computer": "nostromo",
+    "ts": "9:41",
+    "name": "mix-v3-notes.pdf",
+    "bytes": 219136,
+    "mime": "application/pdf",
+    "from": "mixdown-2",
+    "pages": 3
+  },
+  "full": {
+    "strip": [
+      "file",
+      "mixdown-2",
+      "nostromo"
+    ],
+    "agent": "mixdown-2",
+    "computer": "nostromo",
+    "ts": "9:41",
+    "name": "mix-v3-notes.pdf",
+    "bytes": 219136,
+    "mime": "application/pdf",
+    "from": "mixdown-2",
+    "pages": 3,
+    "head": [
+      "mix v3 notes"
+    ],
+    "poster": true
+  }
+}

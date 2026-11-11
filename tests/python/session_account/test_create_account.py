@@ -70,7 +70,7 @@ def test_create_launches_on_the_chosen_account_pins_it_and_records_it(config, tm
     assert manager.create_session.await_count == launches
 
     listed = client.get("/api/v1/launch/accounts").json()
-    assert {"work", "play"} <= {o["id"] for o in listed["options"]} and "cx" not in {o["id"] for o in listed["options"]}
+    assert {"work", "play"} <= {o["id"] for o in listed["options"]} and {o["id"]: o["provider"] for o in listed["options"]}["cx"] == "codex"
     assert (listed["selected_id"], listed["current_id"], listed["pinned"]) == ("play", None, False)
 
     plan = resolve_launch(LaunchRequest(profiles=(), agent_type="claude"))

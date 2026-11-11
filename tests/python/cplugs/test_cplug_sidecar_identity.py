@@ -44,7 +44,7 @@ class FakeKeychain:
 
 
 def _install_code(state: Path, name: str = "clock", raw=None) -> Path:
-    root = state / "cplug-code" / name
+    root = state / "plugins" / name
     root.mkdir(parents=True)
     (root / "cplug.json").write_text(json.dumps(raw or MANIFEST), encoding="utf-8")
     (root / "main.py").write_text("print('hi')\n", encoding="utf-8")
@@ -112,7 +112,7 @@ def test_the_registry_loads_only_held_non_builtin_cplug_rows_and_runtime_falls_t
     found = runtime.find("clock")
     assert found is registry.find("clock") and found.install_key == record.uuid
     assert found.folder == identity.data_dir(state, record.uuid) == registry.folder("clock")
-    assert registry.code_root("clock") == state / "cplug-code" / "clock" and found.manifest.code_digest
+    assert registry.code_root("clock") == state / "plugins" / "clock" and found.manifest.code_digest
     assert runtime.find("huddle") is not found and runtime.find("huddle").id == "huddle"
     assert runtime.find("orphan") is None and runtime.definitions() is before and "clock" not in {d.id for d in before}
     assert found in runtime.listed() and [d.id for d in runtime.listed()][-1] == "clock"

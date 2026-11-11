@@ -27,6 +27,8 @@ vi.mock('../../opscenter/cells/registry', async () => {
   return { entryFor: () => ({ component: PlacementProbe }) };
 });
 
+vi.mock('../launchpad/create-flow', () => ({ createConsoleFlow: () => new Promise(() => {}) }));
+
 import PlacementBody from './PlacementBody.svelte';
 import { CORE_MANIFESTS } from '../../opscenter/widgets/core-manifests';
 import { sessionScopeFor } from '../../opscenter/widgets/session-scope';
@@ -112,5 +114,17 @@ describe('a bar section or drawer card with its header off draws no header (Joe 
   test('a pop-out has no tick, so its body is not made focusable', () => {
     draw({ host: 'popout', placementKey: '', scope: sessionScopeFor(listing.data as never, 'ses_1') });
     expect(document.querySelector('.pb-body')!.hasAttribute('tabindex')).toBe(false);
+  });
+});
+
+describe('a terminal widget with no session (the home shell, #2911)', () => {
+  test.each([null, 'row:999'])('target %s draws the starting state and does not throw while the shell is made', (target) => {
+    const holder = document.createElement('div');
+    document.body.appendChild(holder);
+    const term = CORE_MANIFESTS['core.terminal']!;
+    apps.push(mount(PlacementBody, { target: holder, props: { host: 'rail', manifest: term, target, placementKey: 'core.terminal' } as never }));
+    flushSync();
+    expect(holder.querySelector('.pb-body')).not.toBeNull();
+    expect(holder.textContent).not.toContain('session removed');
   });
 });

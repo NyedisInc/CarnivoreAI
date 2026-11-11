@@ -4,6 +4,8 @@ from __future__ import annotations
 from typing import Any, Dict, Mapping, Optional
 
 from src.cplugs.sdk import work
+from src.cplugs.sdk.owner_text import owner_text, raw_cap, stored_text as _stored_text
+from src.cplugs.sdk.visible_text import TextRefused
 
 JOE = "joe"
 CLAUDE = "claude"
@@ -188,14 +190,21 @@ def check_kind(value: object) -> str:
 def clean_text(value: object, field: str, limit: int, *, allow_blank: bool = False) -> str:
     if not isinstance(value, str):
         raise TaskManagerInvalid(f"{field} must be text")
-    text = value.strip()
+    if len(value) > raw_cap(limit):
+        raise TaskManagerInvalid(f"{field} is over the {limit} character limit")
+    try:
+        text = owner_text(value).strip()
+    except TextRefused as exc:
+        raise TaskManagerInvalid(f"{field} {exc}") from exc
     if not text and not allow_blank:
         raise TaskManagerInvalid(f"{field} must not be empty")
     if len(text) > limit:
         raise TaskManagerInvalid(f"{field} is over the {limit} character limit")
-    if any(ord(c) < 32 and c not in "\n\t" for c in text):
-        raise TaskManagerInvalid(f"{field} may not contain control characters")
     return text
+
+
+def stored_text(value: object) -> object:
+    return _stored_text(value) if isinstance(value, str) else value
 
 
 def unchecked_state(claude_done: bool, *, swarm_lane: bool = False) -> str:

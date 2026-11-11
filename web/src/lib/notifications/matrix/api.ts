@@ -5,6 +5,8 @@ export type Fetcher = typeof authFetch;
 
 export const SCREEN = 'screen';
 
+export const DESKTOP = 'desktop';
+
 export interface TypeRow {
     readonly id: string;
     readonly family: string;
@@ -47,12 +49,13 @@ export interface RoutingSettings {
     readonly link: Link;
     readonly defaults: Readonly<Record<string, boolean>>;
     readonly screen: Readonly<Record<string, Cell>>;
+    readonly desktop: Readonly<Record<string, Cell>>;
     readonly ticks: Readonly<Record<string, Readonly<Record<string, Cell>>>>;
     readonly destinations: readonly Column[];
 }
 
 export const EMPTY_SETTINGS: RoutingSettings = {
-    paused: false, link: { kind: 'none', base: '', reason: '' }, defaults: {}, screen: {}, ticks: {}, destinations: [],
+    paused: false, link: { kind: 'none', base: '', reason: '' }, defaults: {}, screen: {}, desktop: {}, ticks: {}, destinations: [],
 };
 
 const BASE = '/notifications';
@@ -71,6 +74,7 @@ export async function fetchRouting(fetcher: Fetcher = authFetch): Promise<Routin
         link: b?.link ?? EMPTY_SETTINGS.link,
         defaults: b?.defaults ?? {},
         screen: b?.screen ?? {},
+        desktop: b?.desktop ?? {},
         ticks: b?.ticks ?? {},
         destinations: Array.isArray(b?.destinations) ? b.destinations : [],
     };

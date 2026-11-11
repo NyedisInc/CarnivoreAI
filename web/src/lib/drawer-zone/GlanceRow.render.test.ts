@@ -79,6 +79,13 @@ describe('the mini row', () => {
     expect(mark.querySelector('svg')).not.toBeNull();
   });
 
+  test('every tile is a grab region, so a press on its button can lift it (motion core onDown refuses buttons otherwise)', () => {
+    fakeLedger.data = snapshot([acct('a', 'claude', 30)]);
+    draw('core.ledger', 'core.notes');
+    expect(host.querySelector('.pgl')!.closest('[data-motion-grab]')).not.toBeNull();
+    expect(host.querySelector('[data-zone-glance="core.notes"]')!.closest('[data-motion-grab]')).not.toBeNull();
+  });
+
   test('a press on a tile opens the area', () => {
     fakeLedger.data = snapshot([acct('a', 'claude', 30)]);
     draw('core.ledger');

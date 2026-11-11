@@ -83,6 +83,10 @@ BEARER_TOKEN = re.compile(
     r"(?i:bearer)[ \t]+(?P<value>[A-Za-z0-9._~+/\-]{20,%d}=*)" % (512 + BODY_MARGIN)
 )
 
+API_KEY_HEADER = re.compile(
+    r"(?i:x-api-key)[ \t]*:[ \t]*(?P<value>[A-Za-z0-9._~+/\-]{20,%d}=*)" % (512 + BODY_MARGIN)
+)
+
 _JWT_CHAR = r"[A-Za-z0-9_\-]"
 _JWT_HEADER_START = r"eyJ" + _JWT_CHAR + r"{8}"
 _JWT_PART_CHAR = r"(?:(?![\-_]" + _JWT_HEADER_START + r")" + _JWT_CHAR + r")"

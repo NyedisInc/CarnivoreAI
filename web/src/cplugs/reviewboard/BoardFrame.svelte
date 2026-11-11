@@ -65,6 +65,10 @@
     bridge.load(payload, save);
   }
 
+  export function readOnly(readonly: boolean): void {
+    bridge.mode(readonly);
+  }
+
   /* the page frame */
   export function theme(id: string, vars: Record<string, string>): void {
     bridge.theme(id, vars);

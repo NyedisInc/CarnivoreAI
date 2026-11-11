@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, describe, expect, it } from 'vitest';
-import { effectiveTheme, flatChoices, readThemeChoice, registerThemeSource, themeGroups, THEME_KEY, tokensFor, writeThemeChoice } from './board-theme';
+import { effectiveTheme, flatChoices, registerThemeSource, themeGroups, tokensFor } from './board-theme';
 
 const choices = [{ id: 'carnivore', name: 'Carnivore' }, { id: 'dracula', name: 'Dracula' }];
 
@@ -11,17 +11,6 @@ describe('effectiveTheme', () => {
   it('wears the chosen theme', () => expect(effectiveTheme('dracula', choices, 'carnivore')).toBe('dracula'));
   it('falls back to the app theme when the chosen one no longer exists', () => expect(effectiveTheme('gone', choices, 'carnivore')).toBe('carnivore'));
   it('is null when nothing is known', () => expect(effectiveTheme('', [], null)).toBeNull());
-});
-
-describe('the remembered choice', () => {
-  it('is kept per device and forgotten with an empty id', () => {
-    expect(readThemeChoice()).toBe('');
-    writeThemeChoice('dracula');
-    expect(localStorage.getItem(THEME_KEY)).toBe('dracula');
-    expect(readThemeChoice()).toBe('dracula');
-    writeThemeChoice('');
-    expect(localStorage.getItem(THEME_KEY)).toBeNull();
-  });
 });
 
 describe('theme sources', () => {

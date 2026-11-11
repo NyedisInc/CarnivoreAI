@@ -8,6 +8,8 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 from src.cplugs.huddle import rich_ask
 from src.cplugs.huddle.rich_ask import MULTI, RANK, SINGLE, YES_NO
 from src.cplugs.huddle.rules import TaskManagerAnswerInvalid, TaskManagerInvalid
+from src.cplugs.sdk.owner_text import owner_text
+from src.cplugs.sdk.visible_text import TextRefused
 
 MAX_NOTE = 500
 MAX_OTHER = 500
@@ -20,7 +22,10 @@ MAX_FILES = 5
 def _clean(value: Any, qid: str, label: str, limit: int) -> str:
     if not isinstance(value, str):
         raise TaskManagerAnswerInvalid(f"question {qid}: {label} must be text", qid)
-    value = value.strip()
+    try:
+        value = owner_text(value).strip()
+    except TextRefused as exc:
+        raise TaskManagerAnswerInvalid(f"question {qid}: {label} {exc}", qid) from exc
     if len(value) > limit:
         raise TaskManagerAnswerInvalid(f"question {qid}: {label} is over {limit} characters", qid)
     return value

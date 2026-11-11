@@ -21,7 +21,6 @@ const account = { id: 'joe', name: 'joe', short_name: null, provider: 'claude', 
 let instance: ReturnType<typeof mount> | null = null;
 const placed: string[] = [];
 
-/* the glance area */
 function draw(widgets: string[], options = true): HTMLElement {
   const entries = widgets.map((widget) => {
     const key = drawerZone.addGlance(widget, true)!;

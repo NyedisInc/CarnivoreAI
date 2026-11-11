@@ -175,13 +175,18 @@ test('THE REMOVED FEATURE: no sound control is reachable here any more', () => {
 for (const save of [true, false]) {
     const { api, calls, created } = load({ session: 'primary', save });
     const selected = [];
+    const pending = [];
     api.open(fakeEl('secondary-theme'), {
+        onPending: id => pending.push(id),
         sessionName: 'secondary', pinnedTheme: 'matrix', agentType: null,
         onSelected: id => selected.push(id),
     });
     const rows = created.filter(el => el.handlers.click);
     assert.equal(rows[1].getAttribute('aria-checked'), 'true');
-    await rows[0].handlers.click();
+    const clicked = rows[0].handlers.click();
+    assert.deepEqual(pending, ['claude']);
+    await clicked;
+    assert.deepEqual(pending, save ? ['claude'] : ['claude', null]);
     assert.deepEqual(calls.pins, [['secondary', 'claude']]);
     assert.deepEqual(calls.applyGlobal, []);
     assert.deepEqual(selected, save ? ['claude'] : []);

@@ -6,6 +6,10 @@ export const PARKED_TERMINALS = 8;
 
 export const PARK_MS = 5 * 60_000;
 
+export const TRANSIT_MS = 1500;
+
+export const TRANSIT_TERMINALS = 24;
+
 const LAYOUT_PREFIX = 'layout:';
 
 interface Parked {
@@ -15,6 +19,7 @@ interface Parked {
   box: HTMLElement;
   handle: LiveTerminal;
   timer: ReturnType<typeof setTimeout>;
+  transit: boolean;
 }
 
 const shelf: Parked[] = [];
@@ -38,6 +43,10 @@ export function shouldPark(owner: string, current: string): boolean {
   return enabled && owner.startsWith(LAYOUT_PREFIX) && !owner.startsWith(LAYOUT_PREFIX + '@') && owner !== current;
 }
 
+export function shouldHoldForMove(): boolean {
+  return enabled;
+}
+
 function shelfElement(): HTMLElement {
   if (shelfEl && shelfEl.isConnected) return shelfEl;
   const el = document.createElement('div');
@@ -59,17 +68,19 @@ function drop(entry: Parked): void {
 }
 
 function enforce(): void {
+  const parked = shelf.filter((entry) => !entry.transit);
   const owners: string[] = [];
-  for (let i = shelf.length - 1; i >= 0; i -= 1) {
-    const owner = shelf[i]!.owner;
+  for (let i = parked.length - 1; i >= 0; i -= 1) {
+    const owner = parked[i]!.owner;
     if (!owners.includes(owner)) owners.push(owner);
   }
   const keep = owners.slice(0, PARKED_LAYOUTS);
-  for (const entry of [...shelf]) if (!keep.includes(entry.owner)) drop(entry);
-  while (shelf.length > PARKED_TERMINALS) drop(shelf[0]!);
+  for (const entry of parked) if (!keep.includes(entry.owner)) drop(entry);
+  while (shelf.filter((entry) => !entry.transit).length > PARKED_TERMINALS) drop(shelf.find((entry) => !entry.transit)!);
+  while (shelf.filter((entry) => entry.transit).length > TRANSIT_TERMINALS) drop(shelf.find((entry) => entry.transit)!);
 }
 
-export function park(owner: string, key: string, host: HTMLElement, handle: LiveTerminal): void {
+export function park(owner: string, key: string, host: HTMLElement, handle: LiveTerminal, transit = false): void {
   const rect = host.getBoundingClientRect();
   const box = document.createElement('div');
   box.style.position = 'absolute';
@@ -82,7 +93,7 @@ export function park(owner: string, key: string, host: HTMLElement, handle: Live
   box.appendChild(host);
   shelfElement().appendChild(box);
   for (const old of shelf.filter((one) => one.owner === owner && one.key === key)) drop(old);
-  const entry: Parked = { owner, key, host, box, handle, timer: setTimeout(() => drop(entry), PARK_MS) };
+  const entry: Parked = { owner, key, host, box, handle, transit, timer: setTimeout(() => drop(entry), transit ? TRANSIT_MS : PARK_MS) };
   shelf.push(entry);
   enforce();
 }

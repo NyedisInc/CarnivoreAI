@@ -9,6 +9,7 @@ function entryFor(built: AppChord, chord: string): AppChord {
     const { mods, key } = parse(chord) as { mods: string[]; key: string };
     return {
         ...built,
+        code: undefined,
         key,
         meta: mods.includes('cmd'),
         ctrl: mods.includes('ctrl'),

@@ -303,7 +303,7 @@
    "exempt": 1
   },
   "web/src/lib/drawer-tabs/DrawerMenu.svelte": {
-   "exempt": 8
+   "exempt": 7
   },
   "web/src/lib/drawer/DrawerBar.svelte": {
    "exempt": 1
@@ -580,7 +580,7 @@
  "totals": {
   "buttons": 297,
   "checkbox": 8,
-  "exempt": 50,
+  "exempt": 49,
   "fields": 60,
   "radio": 4
  }

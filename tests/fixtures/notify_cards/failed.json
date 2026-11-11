@@ -1,0 +1,27 @@
+{
+  "note": "the extension ran past 30 s or the attachment failed: the OS shows its plain view with the v2 actions",
+  "payload": {
+    "title": "cloudecode-2 wants to run",
+    "body": "npm run build in web/",
+    "path": "/sessions/ses_0123456789ab",
+    "thread": "local|ses_0123456789ab",
+    "v": 2,
+    "sub": "permission on studio",
+    "kind": "permission",
+    "type": "session.permission",
+    "lv": "t",
+    "snd": "ask",
+    "cap": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ttl": 1794000000,
+    "acts": [
+      [
+        "opt.1",
+        "allow"
+      ],
+      [
+        "opt.2",
+        "deny"
+      ]
+    ]
+  }
+}

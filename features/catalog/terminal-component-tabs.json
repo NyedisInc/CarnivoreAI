@@ -7,7 +7,8 @@
   "examples": [
     "Keep a plain shell in a tab next to the agent you are working with.",
     "Keep a review board in a tab next to the agent that is working on it, and split it out beside the terminal.",
-    "Keep the Task Manager list in a tab beside the agent that is working on it."
+    "Keep the Task Manager list in a tab beside the agent that is working on it.",
+    "Drag a tab to the right edge of the page to see a new full-height column on the right, then drag it into the gap between two windows to make it a column there."
   ],
   "how_to": [
     "Press the + at the end of a terminal's tab strip.",
@@ -16,7 +17,12 @@
     "A tab shows a small cyan workflow icon right of its title while that session has a workflow running.",
     "Pick browser in the + menu for a new proxy browser, or any page, file or browser already open (a review board is a page); it opens as a tab. Drag a row from the sidebar's browsers, files or review list onto a strip, a pane edge or the middle of a pane to do the same. A plain click on one of those rows still takes over the main area.",
     "Pick widget in the + menu to open any widget (notes, tasks, files...) as a tab beside your terminals; it wears the widget's icon, title and alert badge, and a right-click on it (or its icon) opens the widget's own menu, including the selected session | all sessions switch and close tab. A tab you are not looking at fetches nothing. Widget tabs open on a larger screen; the phone strip shows sessions only.",
-    "Right-click a tab (or focus it and press the Menu key or Shift+F10) for that session's menu, drawn in the tab's own theme. In the kebab on the strip's right, actions folds out beside the menu, which stays open."
+    "Right-click a tab (or focus it and press the Menu key or Shift+F10) for that session's menu, drawn in the tab's own theme. In the kebab on the strip's right, actions folds out beside the menu, which stays open.",
+    "Drag a tab or a window by its strip: a small ghost follows the pointer and a labelled outlined box shows exactly where it will land. Rest on a spot for a moment and the other windows glide aside into their new places; let go and nothing moves again.",
+    "Drop on a strip to insert the tab at the caret, anywhere over a window's body to open its compass of five icons, then on the middle icon to add it there as a tab (a whole window adds all its tabs) or on the up, down, left or right icon to split it that way (an icon that would leave a window under 240px wide is dimmed).",
+    "Drop on the left or right edge of the page for a new full-height column, on the top or bottom edge for a new full-width row, or in a gap between windows for a new column or row exactly as tall or wide as that gap.",
+    "A drop that would overlap or crush a window is never offered: the box moves on to the next spot that fits, or disappears and the ghost dims. Escape puts everything back. Dragging a window's only tab moves the window.",
+    "A terminal keeps its size while you drag; it resizes once, after the drop settles."
   ],
   "id": "terminal-component-tabs",
   "issues": [
@@ -24,20 +30,14 @@
     1153,
     1787,
     1838,
-    2008
+    2008,
+    2917
   ],
   "keywords": [
     "tabs",
     "components"
   ],
-  "media": [
-    {
-      "alt": "A terminal's new tab menu open, offering agent, terminal, blueprint and browser",
-      "caption": "Adding a tab",
-      "file": "menu.png",
-      "kind": "screenshot"
-    }
-  ],
+  "media_exempt": "drag targets and previews are captured at the next version bump recapture",
   "name": "Terminal component tabs",
   "since": "2026-09-22",
   "status": "stable",
@@ -52,8 +52,9 @@
     "web/src/opscenter/cells/terminal-group/WidgetTabBody.svelte",
     "web/src/opscenter/engine/widget-tabs.ts"
   ],
-  "updated": "2026-10-19",
+  "updated": "2026-11-08",
   "where": [
-    "The + (new tab) at the end of a terminal's tab strip, on the terminal page."
+    "The + (new tab) at the end of a terminal's tab strip, on the terminal page.",
+    "The terminal page: drag a tab (or a window's title strip, or its only tab) anywhere on the page, including the page's own edges and the gaps between windows."
   ]
 }

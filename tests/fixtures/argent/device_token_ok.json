@@ -1,0 +1,7 @@
+{
+  "access_token": "FIXTURE-asicli-not-a-secret",
+  "expires_in": 43200,
+  "tenant_id": "ten_fixture1",
+  "identity_id": "idn_fixture1",
+  "display_name": "Fixture Person"
+}

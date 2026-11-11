@@ -8,6 +8,7 @@ from fastapi.concurrency import run_in_threadpool
 
 from src.api.checkpoint_capture import codex_rollout
 from src.core.bookmarks import rows
+from src.core.budget_hold.gate import live_hold_check
 from src.core.checkpoints.store import Checkpoint
 from src.core.checkpoints.turns import codex_turn_number
 
@@ -39,6 +40,8 @@ async def tell_codex(manager: Any, app: Any, row: rows.SessionRow, cp: Checkpoin
         return False, "the session is not running"
     if await dialog_verdict(app, session_id) != CLEAR:
         return False, "a dialog is open in the session"
+    if (await live_hold_check(manager, session_id, "\r")).held:
+        return False, "the session is held at its budget"
     note = NOTE.format(turn=await run_in_threadpool(turn_label, cp))
     try:
         await manager.send_command(note, session_id=session_id)

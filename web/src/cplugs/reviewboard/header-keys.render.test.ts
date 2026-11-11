@@ -15,7 +15,7 @@ vi.mock('../../lib/resource-push/boot', () => ({
 const sdk = vi.hoisted(() => ({ themeChoices: vi.fn(() => []), activeThemeId: vi.fn(() => 'carnivore'), themeTokens: vi.fn(() => ({})) }));
 vi.mock('../sdk', async (importOriginal) => ({ ...(await importOriginal<typeof import('../sdk')>()), ...sdk }));
 
-import { registerBoardHeaderKey, resetBoardHeaderKeys } from '../sdk/board-header-keys';
+import { registerBoardHeaderKey, resetBoardHeaderKeys } from './board-header-keys';
 import BoardScreen from './BoardScreen.svelte';
 import DummyKey from './fixtures/DummyHeaderKey.svelte';
 

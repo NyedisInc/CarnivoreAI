@@ -1,5 +1,5 @@
 
-import { cellOf, landColumnOrRow, neighboursAt, type ColumnDrop } from './column';
+import { cellOf, landColumnOrRow, landSeam, landSplit, neighboursAt, type ColumnDrop } from './column';
 import { settleDrop } from './compact';
 import type { DropTarget } from './layout.svelte';
 import { META } from './meta';
@@ -13,15 +13,27 @@ interface Landing {
   rows: RowId[];
 }
 
+function rawLanding(layout: Layout, id: SlotId, target: DropTarget, metas: MetaMap): Layout {
+  switch (target.kind) {
+    case 'row':
+      return landColumnOrRow(layout, id, target.row, target.index);
+    case 'column':
+      return landColumnOrRow(layout, id, target.at, target.index);
+    case 'stack':
+      return stackCell(layout, id, target.of, target.edge, metas, target.width, target.height);
+    case 'stack-run':
+      return stackCell(layout, id, target.of, target.edge, metas);
+    case 'split':
+      return landSplit(layout, id, target.of, target.side, target.width, metas, target.height);
+    case 'seam':
+      return landSeam(layout, id, target.rows, target.width, metas, target.height);
+    default:
+      return moveCellToNewRow(layout, id, target.after, metas);
+  }
+}
+
 export function landing(layout: Layout, id: SlotId, target: DropTarget, metas: MetaMap = META): Landing | null {
-  const raw =
-    target.kind === 'row'
-      ? landColumnOrRow(layout, id, target.row, target.index)
-      : target.kind === 'column'
-        ? landColumnOrRow(layout, id, target.at, target.index)
-        : target.kind === 'stack'
-          ? stackCell(layout, id, target.of, target.edge, metas)
-          : moveCellToNewRow(layout, id, target.after, metas);
+  const raw = rawLanding(layout, id, target, metas);
   if (raw === layout) return null;
   const settled = settleDrop(layout, raw, id, metas);
   if (!settled) return null;

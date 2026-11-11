@@ -1,10 +1,8 @@
 <script lang="ts">
   import TopBar from './shell/TopBar.svelte';
   import HomeOpenMenu from './shell/HomeOpenMenu.svelte';
-  import GridSurface from './engine/GridSurface.svelte';
-  import { GUTTER } from './engine/tracks';
+  import DashGridSurface from './dashgrid/DashGridSurface.svelte';
   import { observeCell, sizeOf } from './engine/observe.svelte';
-  import CellHost from './CellHost.svelte';
   import FlyLayer from './engine/FlyLayer.svelte';
   import LiveRegion from './engine/LiveRegion.svelte';
   import { homeLayout } from './engine/layout.svelte';
@@ -85,11 +83,7 @@
     {#if wallboard && surfaceStore.state.layout.rows.length === 0}
       <p class="oc-wallboard-empty" role="status">{t('opscenter.wallboard.empty')}</p>
     {/if}
-    <GridSurface gutter={GUTTER} store={surfaceStore}>
-      {#snippet renderCell(slot)}
-        <CellHost id={slot.id} store={surfaceStore} />
-      {/snippet}
-    </GridSurface>
+    <DashGridSurface store={surfaceStore} readOnly={wallboard} />
   </main>
 </div>
 

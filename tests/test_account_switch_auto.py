@@ -211,6 +211,10 @@ def recorder(monkeypatch, planted):
                         raise AssertionError(f"the switch read a credential: {_name}")
 
                     monkeypatch.setattr(module, name, trap)
+
+    from src.core.provider_ledger import poller_scan
+
+    monkeypatch.setattr(poller_scan, "read_claude_credential", lambda _config_dir: None)
     return rec
 
 

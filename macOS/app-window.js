@@ -25,7 +25,12 @@ function bannerOptions(title, body, meta) {
   return opts;
 }
 
-function createAppWindow({ getUrl, windowState, shouldMirror, guard }) {
+function idOf(meta, field) {
+  const v = meta && typeof meta === 'object' ? meta[field] : '';
+  return typeof v === 'string' && ASK_ID_PATTERN.test(v) ? v : '';
+}
+
+function createAppWindow({ getUrl, windowState, shouldMirror, toastBanner, guard }) {
   const host = createWindowHost({ getUrl, windowState, guard });
   let handlersWired = false;
 
@@ -52,7 +57,16 @@ function createAppWindow({ getUrl, windowState, shouldMirror, guard }) {
     }
     if (!Notification.isSupported()) return;
     const opts = bannerOptions(title, body, meta);
-    if (watched && win.isFocused() && meta && typeof meta === 'object' && meta.session_id === watched) { opts.silent = true; delete opts.sound; }
+    const quiet = !!(watched && win.isFocused() && meta && typeof meta === 'object' && meta.session_id === watched);
+    if (quiet) { opts.silent = true; delete opts.sound; }
+    if (toastBanner && opts.id) {
+      try {
+        const open = () => (askSessionId ? openApproval(askSessionId) : openTarget(meta));
+        if (await toastBanner.present({ title: opts.title, body: opts.body, askSessionId, meta: { id: opts.id, session_id: idOf(meta, 'session_id'), tmux_name: idOf(meta, 'tmux_name') }, silent: quiet, open })) return;
+      } catch (error) {
+        console.warn('[app-window] the per-kind banner failed, posting the plain one:', error && error.message);
+      }
+    }
     const note = new Notification(opts);
     note.on('click', () => (askSessionId ? openApproval(askSessionId) : openTarget(meta)));
     if (opts.id) shown.set(opts.id, note);
@@ -83,6 +97,7 @@ function createAppWindow({ getUrl, windowState, shouldMirror, guard }) {
     if (policy.originOf(event.senderFrame.url) !== host.mainOrigin()) return;
     if (typeof id !== 'string' || !ASK_ID_PATTERN.test(id)) return;
     shown.delete(id);
+    if (toastBanner) toastBanner.close(id);
     if (typeof Notification.remove === 'function') Notification.remove(id);
   }
 

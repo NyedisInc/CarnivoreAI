@@ -1,5 +1,5 @@
 <script lang="ts">
-  import GridSurface from './engine/GridSurface.svelte';
+  import AbsSurface from './engine/rects/AbsSurface.svelte';
   import { GUTTER } from './engine/tracks';
   import CellHost from './CellHost.svelte';
   import LiveRegion from './engine/LiveRegion.svelte';
@@ -9,6 +9,13 @@
   import { watchZoomKeys } from './engine/layout-zoom.svelte';
   import EmptySpaceMenu from './layout-editor/EmptySpaceMenu.svelte';
   import SessionRail from '../lib/session-rail/SessionRail.svelte';
+  import { componentMerge } from './engine/tab-drag';
+  import { kindOf } from './engine/meta';
+  import type { SlotId } from './engine/types';
+
+  function mergeFor(id: SlotId) {
+    return kindOf(id) === 'terminal' ? componentMerge(id) : undefined;
+  }
 
   $effect(() => watchViewport());
   $effect(() => watchStillness());
@@ -16,11 +23,11 @@
   $effect(() => watchZoomKeys());
 </script>
 
-<GridSurface gutter={GUTTER} store={terminalLayout}>
+<AbsSurface gutter={GUTTER} store={terminalLayout} dropId="terminal" merge={mergeFor}>
   {#snippet renderCell(slot)}
     <CellHost id={slot.id} store={terminalLayout} />
   {/snippet}
-</GridSurface>
+</AbsSurface>
 
 <SessionRail edge="bottom" />
 

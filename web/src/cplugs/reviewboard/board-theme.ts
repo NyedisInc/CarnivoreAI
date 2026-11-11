@@ -1,23 +1,5 @@
 import { t, themeChoices, themeTokens, type ThemeChoice } from '../sdk';
 
-export const THEME_KEY = 'carnivore.reviewboard.theme';
-
-export function readThemeChoice(): string {
-  try {
-    return localStorage.getItem(THEME_KEY) ?? '';
-  } catch {
-    return '';
-  }
-}
-
-export function writeThemeChoice(id: string): void {
-  try {
-    if (id) localStorage.setItem(THEME_KEY, id);
-    else localStorage.removeItem(THEME_KEY);
-  } catch {
-  }
-}
-
 export function effectiveTheme(choice: string, choices: readonly ThemeChoice[], active: string | null): string | null {
   return choice && choices.some((c) => c.id === choice) ? choice : active;
 }

@@ -6,6 +6,9 @@ const { createPresenter } = require('./presenter-electron');
 const { createAnswerer } = require('./answer');
 const { shouldMirror } = require('./mirror');
 const { createColdLaunch } = require('./launch');
+const { createCorner } = require('./corner');
+const { createToastBanner } = require('./toast-banner');
+const { installNamedSounds } = require('./sounds');
 
 const APPROVALS_ROUTE = '/api/v1/approvals';
 const PREFERENCES_ROUTE = '/api/v1/preferences';
@@ -17,6 +20,8 @@ const NOOP = Object.freeze({
   coldLaunch: async () => ({ outcome: 'ignored' }),
   posting: async () => false,
   mirrorAllowed: async () => true,
+  presentToast: async () => false,
+  closeToast: () => {},
   closeAll: () => {},
 });
 
@@ -30,9 +35,17 @@ function createBanners(deps) {
   let again = false;
 
   const ids = (entry) => entry.plan.buttons.map((_b, i) => model.encodeActionId(entry.item.session_id, model.keyFingerprint(entry.item), entry.step, i));
+  let toasts = null;
+  if (deps.BrowserWindow && deps.ipcMain && deps.nativeImage) {
+    const corner = createCorner({ BrowserWindow: deps.BrowserWindow, screen: deps.screen, ipcMain: deps.ipcMain, getUrl: deps.getUrl,
+      partitionFor: deps.partitionFor, onPress: (key, id) => toasts.press(key, id), onClose: (key) => toasts.cornerClosed(key) });
+    toasts = createToastBanner({ getApi: deps.getApi, Notification: deps.Notification, nativeImage: deps.nativeImage, shell: deps.shell,
+      clipboard: deps.clipboard, corner, isLocked: deps.isLocked });
+    installNamedSounds({ isPackaged: deps.isPackaged === true });
+  }
   const answerer = createAnswerer({
     entries, getApi: deps.getApi, openApproval: deps.openApproval, isLocked: deps.isLocked,
-    closeBanner: (entry) => presenter.close(entry.key),
+    closeBanner: (entry) => { presenter.close(entry.key); if (toasts) toasts.close(entry.key); },
     showStep: (entry) => showStep(entry),
     notice: (kind, entry) => notice(kind, entry),
   });
@@ -42,10 +55,26 @@ function createBanners(deps) {
     onReply: (key, text) => { answerer.reply(key, text).catch((error) => console.warn('[banners] reply failed:', error && error.message)); },
     onClick: (key) => {
       const entry = entries.get(key);
-      if (entry) { entry.done = true; presenter.close(key); deps.openApproval(entry.item.session_id); }
+      if (entry) onClickEntry(entry);
     },
     onFailed: (key, error) => console.warn('[banners] macOS refused a banner:', key.slice(0, 24), String((error && error.message) || error)),
   });
+
+  function answerFromCorner(entry, action) {
+    const match = /^opt\.(\d+)$/.exec(action);
+    let index = match ? Number(match[1]) - 1 : -1;
+    if (action === 'yes' || action === 'no') index = entry.plan.buttons.findIndex((b) => new RegExp(`^${action}`, 'i').test(b.label));
+    const id = index >= 0 && entry.step === 0 ? model.encodeActionId(entry.item.session_id, model.keyFingerprint(entry.item), 0, index) : null;
+    if (id) answerer.press(id).catch((error) => console.warn('[banners] corner press failed:', error && error.message));
+    else onClickEntry(entry);
+  }
+
+  function onClickEntry(entry) {
+    entry.done = true;
+    presenter.close(entry.key);
+    if (toasts) toasts.close(entry.key);
+    deps.openApproval(entry.item.session_id);
+  }
 
   function showStep(entry) {
     entry.plan = model.planFor(entry.item, { t: deps.t, hideCommand: entry.hideCommand, step: entry.step, cap });
@@ -77,6 +106,7 @@ function createBanners(deps) {
 
   function closeAll() {
     presenter.closeAll();
+    if (toasts) for (const key of entries.keys()) toasts.close(key);
     entries.clear();
   }
 
@@ -133,6 +163,7 @@ function createBanners(deps) {
     for (const [key, entry] of [...entries]) {
       if (wanted.has(key)) continue;
       presenter.close(key);
+      if (toasts) toasts.close(key);
       entries.delete(key);
       entry.held = [];
     }
@@ -157,6 +188,10 @@ function createBanners(deps) {
       if (!plan.post) continue;
       entries.set(key, entry);
       showStep(entry);
+      if (toasts) {
+        toasts.cornerForAsk({ key, sessionId: item.session_id, stillOpen: () => entries.get(key) === entry && !entry.done, answer: (action) => answerFromCorner(entry, action) })
+          .catch((error) => console.warn('[banners] corner card failed:', error && error.message));
+      }
     }
   }
 
@@ -198,7 +233,8 @@ function createBanners(deps) {
     return shouldMirror({ asksOnly: prefs.asksOnly, askSessionId });
   }
 
-  return { onApprovals, press: answerer.press, reply: answerer.reply, coldLaunch: coldLaunch.handle, posting, mirrorAllowed, closeAll };
+  return { onApprovals, press: answerer.press, reply: answerer.reply, coldLaunch: coldLaunch.handle, posting, mirrorAllowed, closeAll,
+    presentToast: toasts ? toasts.present : NOOP.presentToast, closeToast: toasts ? toasts.close : NOOP.closeToast };
 }
 
 module.exports = { APPROVALS_ROUTE, PREFERENCES_ROUTE, NOOP, createBanners };

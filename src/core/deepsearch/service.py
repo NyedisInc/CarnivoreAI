@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from src.core.deepsearch.reader import ConversationIndex
 
 MAX_QUERY_CHARS: int = 500
+SORT_RELEVANCE, SORT_DATE = "relevance", "date"
 SCOPE_LOCAL, SCOPE_PEERS, SCOPE_ALL = "local", "peers", "all"
 LIMIT_DEFAULT: int = 20
 LIMIT_MAX: int = 50
@@ -28,12 +29,14 @@ def parse_kinds(raw: Optional[str]) -> Optional[List[str]]:
 
 async def search(index: ConversationIndex, q: str, *, kinds: Optional[List[str]] = None, project: Optional[str] = None,
                  conversation_id: Optional[str] = None, limit: int = LIMIT_DEFAULT, offset: int = 0,
-                 per_group: int = PER_GROUP_DEFAULT, scope: str = SCOPE_ALL) -> Dict[str, Any]:
+                 per_group: int = PER_GROUP_DEFAULT, scope: str = SCOPE_ALL,
+                 sort: str = SORT_RELEVANCE) -> Dict[str, Any]:
     if scope == SCOPE_PEERS:
         return await index.search_peers(q, kinds=kinds, project=project, conversation_id=conversation_id,
-                                        limit=limit, offset=offset, per_group=per_group)
+                                        limit=limit, offset=offset, per_group=per_group, sort=sort)
     answer = await index.search(q, kinds=kinds, project=project, conversation_id=conversation_id,
-                                limit=limit, offset=offset, per_group=per_group, peers=scope == SCOPE_ALL)
+                                limit=limit, offset=offset, per_group=per_group, peers=scope == SCOPE_ALL, sort=sort,
+                                exact_first=True)
     answer["ingest"] = await index.status()
     return answer
 

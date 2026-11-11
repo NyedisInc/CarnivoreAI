@@ -37,7 +37,7 @@ def world(tmp_path, monkeypatch):
 
     monkeypatch.setattr(signed_links, "settings", SimpleNamespace(load_auth_config=lambda: SimpleNamespace(jwt_secret="test-secret")))
     state = tmp_path / "state"
-    root = state / "cplug-code" / NAME
+    root = state / "plugins" / NAME
     (root / "views" / "walk" / "art").mkdir(parents=True)
     (root / "cplug.json").write_text(json.dumps(CPLUG))
     (root / "main.py").write_text("x = 1\n")

@@ -16,14 +16,13 @@
   import { createWidgetTabSource } from './widget-tab-source.svelte';
   import PlacementMenuHost from '../../../lib/zone-shell/PlacementMenuHost.svelte';
   import { viewWidgetId } from '../../widgets/views';
-  import DropOverlay from './DropOverlay.svelte';
   import TabStrip from '../../shell/TabStrip.svelte';
   import type { StripSlotProps } from '../../shell/frame-header.svelte';
   import WidgetShell from '../../widgets/shell/WidgetShell.svelte';
   import { useWidget } from '../../widgets/shell/define-widget.svelte';
   import { bindTerminalTheme } from '../terminal-live/theme';
   import { beginTabDrag } from '../../engine/tab-drag';
-  import { dropIndexFor, tabDrag, zoneFor } from '../../engine/tab-drag-state.svelte';
+  import { dropIndexFor, tabDrag } from '../../engine/tab-drag-state.svelte';
   import CascadeMenu from '../../../lib/drawer-tabs/CascadeMenu.svelte';
   import { t } from '../../../lib/i18n/index.svelte';
   import { createTabController } from './tab-controller.svelte';
@@ -190,7 +189,6 @@
       {/if}
     {/snippet}
   </ZoneShell>
-  <DropOverlay zone={zoneFor(props.instance)} />
   {#if widgetMenu}{@render widgetMenuHost(widgetMenu)}{/if}
 </div>
 </WidgetShell>

@@ -75,9 +75,15 @@ class AttentionSideEffects:
         return is_remote_backend(self._manager._registry.backends.get(session_id))
 
 
+    def _visible_viewer(self, session_id: str) -> bool:
+        negotiator = getattr(self._manager, "_terminal_size_negotiator", None)
+        return negotiator is not None and negotiator.visible_count(session_id) > 0
+
     def set_unread(self, target: WatchTarget) -> None:
         tmux_name, _epoch = self.instance_for(target.session_id)
         if not tmux_name:
+            return
+        if self._visible_viewer(target.session_id):
             return
         self._manager._unread_store.set_flag(
             tmux_name,

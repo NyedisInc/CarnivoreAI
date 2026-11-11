@@ -37,6 +37,7 @@ export function buildOpenProjectPayload(
     if (resolved) payload.agent_type = resolved;
     if (isLocal && choice?.model) payload.model = choice.model;
     if (isLocal && choice?.worktree) payload.worktree = choice.worktree;
+    if (isLocal && choice?.story) payload.story_ref = choice.story;
     Object.assign(payload, accountFields(choice, isLocal));
     return payload;
 }

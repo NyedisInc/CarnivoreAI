@@ -239,7 +239,7 @@ test('a menu row picked with a mouse closes the menu and it stays closed: the la
   expect(activeFlyout()).toBeNull();
 });
 
-test('the menu flyout has no title row and the rail no keys while auto-hiding; a pinned rail has icon keys, no menu key, and the title row on a slide-out (#1801, #2047)', async () => {
+test('the menu flyout has no title row and the rail no keys while auto-hiding; a pinned rail has icon keys and no menu key; pinning from the open menu puts the menu away, and the menu never has a title row (#1801, #2047, #2908)', async () => {
   const titleRow = (): Element | null => document.querySelector('#session-sidebar-flyout [data-flyout="core.menu"] .sbr-flyout__title');
   await railOn();
   vi.useFakeTimers();
@@ -254,10 +254,11 @@ test('the menu flyout has no title row and the rail no keys while auto-hiding; a
   shared['widget_bars'] = { v: 1, rail: { mode: 'pinned' } };
   widgetBars.reload();
   await settle();
+  expect(activeFlyout(), 'pinning from the open menu closes the menu: never the menu and the rail side by side').toBeNull();
   expect(railBtn(MENU_FLYOUT), 'the menu has no key').toBeNull();
   expect(railBtn(SESSION_LIST_WIDGET), 'the icon keys are drawn').not.toBeNull();
   await press(MENU_FLYOUT);
-  expect(titleRow(), 'the title row is back').not.toBeNull();
+  expect(titleRow(), 'no title row pinned either: its rows start where the rail icons do').toBeNull();
 });
 
 test('a pinned rail wears the pin icon last in its column; it toggles pin rail and follows the mode (Joe, 2026-10-20, item 1041; #2047)', async () => {

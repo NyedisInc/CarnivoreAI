@@ -50,6 +50,7 @@ def _discovery_steps() -> list[BootStep]:
 
         from src.core.computers import runtime as _computers_runtime
         from src.core.federation.fed_key import local_fid
+        from src.core.computers.this_label import this_label
 
         _platform_uuid = await asyncio.to_thread(ioreg_platform_uuid)
         _federation_fid = await asyncio.to_thread(local_fid, settings.get_state_dir())
@@ -59,6 +60,8 @@ def _discovery_steps() -> list[BootStep]:
             fid_provider=lambda: _computers_runtime.advertised_fid() or _federation_fid,
             platform_uuid_provider=lambda: _platform_uuid,
             link_port_provider=_computers_runtime.advertised_link_port,
+            label_provider=this_label,
+            members_provider=_computers_runtime.advertised_members,
             advertise_allowed=not os.environ.get("CARNIVORE_SETTINGS_ENV_FILE") or _slot_name is not None,
             **({"name_provider": lambda: _slot_name} if _slot_name else {}),
         )
@@ -87,6 +90,12 @@ def _byoai_feature_steps() -> list[BootStep]:
         from src.core.automations import schedule_nl as _automations_schedule_nl
 
         _automations_schedule_nl.register_feature()
+        from src.core.argent import classifier as _argent_classifier
+
+        _argent_classifier.register_feature()
+        from src.core.argent import summarizer as _argent_summarizer
+
+        _argent_summarizer.register_feature()
         from src.api.skill_card_art_backfill import queue_missing as _queue_card_art
 
         ctx.app.state.card_art_backfill = asyncio.create_task(_queue_card_art(ctx.app))
@@ -153,12 +162,18 @@ async def _start_pack_layer(ctx: "BootContext", held: _LinkHandles) -> None:
     from src.core.pack.relay import runtime as _pack_relay
 
     _pack_relay.start(_peer_auth.open_db, lambda: _peer_links.LINKS)
+    from src.core.argent import pair_sync as _argent_pair
+
+    _argent_pair.start(lambda: _peer_links.LINKS)
     from src.core.pack.skills import wiring as _pack_skills
 
     from src.core.pack.skills.watch import raise_open_file_limit as _raise_nofile
 
     _raise_nofile()
     _pack_skills.start(lambda: _peer_links.LINKS, services)
+    from src.core.pack.globalsync import wiring as _pack_global_sync
+
+    _pack_global_sync.start(_peer_auth.open_db, lambda: _peer_links.LINKS)
     from src.core.pack.placement import enhanced as _pack_placement_ai, maintain as _pack_maintain
 
     _pack_placement_ai.register_feature()

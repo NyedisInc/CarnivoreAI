@@ -7,7 +7,10 @@
     import { t } from '../../lib/i18n/index.svelte';
     import Icon from './Icon.svelte';
     import { raiseFlag } from '../../lib/page-flags/page-flags';
-    import { closeMenuPageGuarded, openMenuPages } from '../../lib/menu-page/menu-page-shell.svelte';
+    import { closeMenuPageGuarded, menuPageState, openMenuPages } from '../../lib/menu-page/menu-page-shell.svelte';
+    import { MENU_PAGES } from '../../lib/menu-page/menu-pages';
+    import IconButton from '../../lib/base/IconButton.svelte';
+    import { drawerResize } from '../../lib/menu-page/menu-page-resize';
 
     interface Props {
         title: string;
@@ -23,6 +26,7 @@
         root?: HTMLDivElement | undefined;
         titleEl?: HTMLHeadingElement | undefined;
         onkeydown?: (event: KeyboardEvent) => void;
+        onDrawerClose?: () => void;
         sub?: Snippet;
         actions?: Snippet;
         search?: Snippet;
@@ -33,6 +37,7 @@
         notes?: Snippet;
         foot?: Snippet;
         children?: Snippet;
+        style?: string;
         [attribute: `data-${string}`]: string | undefined;
     }
 
@@ -50,6 +55,7 @@
         root = $bindable(),
         titleEl = $bindable(),
         onkeydown,
+        onDrawerClose,
         sub,
         actions,
         search,
@@ -71,6 +77,8 @@
         if (openMenuPages().length) void closeMenuPageGuarded();
         else onClose?.();
     }
+    const isMenuPage = $derived(!!root && MENU_PAGES.some((p) => p.containerId === root?.parentElement?.id));
+    const drawer = $derived(!inset && !embedded && !bare && !viewport.narrow && menuPageState.surface && isMenuPage);
     let omni = $state<HTMLElement | undefined>();
     let rowsEl = $state<HTMLElement | undefined>();
     let away = $state(false);
@@ -112,7 +120,11 @@
     {...rest}
 >
     {#if !inset && !bare}
-        <header class="oc-titlebar" class:oc-titlebar--search={!!search} class:oc-titlebar--back={showBack}>
+        <header class="oc-titlebar" class:oc-titlebar--search={!!search} class:oc-titlebar--back={showBack} class:oc-titlebar--drawer={drawer}>
+            {#if drawer}
+                <IconButton label={t('sidebar.flyout.close', { name: title })} variant="close" icon="close" iconSize={14}
+                    data-drawer-close onclick={() => (onDrawerClose ? onDrawerClose() : void closeMenuPageGuarded())} />
+            {/if}
             {#if showBack}
                 <button type="button" class="oc-titlebar__back" data-btn="row" data-size="auto" data-overflow="visible" data-page-back aria-label={t('opscenter.components.back')} onclick={goBack} {@attach () => raiseFlag('page-back')}>
                     <Icon name={backIcon} size={backIcon === 'arrow-left' ? 20 : 14} strokeWidth={backIcon === 'arrow-left' ? 1.75 : 1.3} />
@@ -164,5 +176,10 @@
 
     {#if foot}
         <div class="oc-page__foot">{@render foot()}</div>
+    {/if}
+    {#if drawer && !extra.includes('oc-page--drawer-list')}
+        
+        <div class="oc-page__resize" role="separator" aria-orientation="vertical" tabindex="0" aria-label={t('drawer.resize.label')}
+            aria-valuemin={0} {@attach drawerResize(() => root)}></div>
     {/if}
 </div>

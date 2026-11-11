@@ -131,6 +131,7 @@ export function buildCreatePayload(
     if (resolved) payload.agent_type = resolved;
     if (!isLocal && resolved && choice?.farLauncher === true && !agentType) payload.agent_type_is_far = true;
     if (isLocal && choice?.model) payload.model = choice.model;
+    if (isLocal && choice?.story) payload.story_ref = choice.story;
     Object.assign(payload, accountFields(choice, isLocal));
     return payload;
 }
@@ -235,15 +236,22 @@ export async function createProjectFlow(
     }
 }
 
+export interface ConsoleFlowOptions {
+    sessionName?: string;
+    quiet?: boolean;
+}
+
 export async function createConsoleFlow(
     host: CreateHost,
     t: Translate,
     workingDir: string = '~',
+    options: ConsoleFlowOptions = {},
 ): Promise<CreateResult> {
-    const sessionName = `console-${Date.now().toString(36)}`;
-    const nav = beginNav('console');
+    const sessionName = options.sessionName ?? `console-${Date.now().toString(36)}`;
+    const quiet = options.quiet === true;
+    const nav = quiet ? undefined : beginNav('console');
     try {
-        host.updateStatus(t(PROJECT_CREATE_KEYS.createConsoleStatus));
+        if (!quiet) host.updateStatus(t(PROJECT_CREATE_KEYS.createConsoleStatus));
         const payload: CreatePayload = {
             auto_start_claude: true,
             copy_templates: false,
@@ -258,15 +266,15 @@ export async function createConsoleFlow(
             path: String(session.working_dir ?? ''),
         }, t, false);
         await refreshProjects(host);
-        host.announceSessionCreated(session, nav);
+        if (!quiet) host.announceSessionCreated(session, nav);
         return { outcome: 'created', session, payload };
     } catch (error) {
         console.error('CloudeWeb: failed to create console session:', error);
-        if (isAlreadyRunning(error)) {
+        if (!quiet && isAlreadyRunning(error)) {
             host.detachAndCreateNew('shell');
             return { outcome: 'detached_and_retried', session: null, payload: null };
         }
-        host.showError(t(PROJECT_CREATE_KEYS.createFailed, { reason: reasonOf(error, t) }));
+        if (!quiet) host.showError(t(PROJECT_CREATE_KEYS.createFailed, { reason: reasonOf(error, t) }));
         return { outcome: 'failed', session: null, payload: null };
     }
 }

@@ -74,6 +74,10 @@ export function createRailVisibility(nav: () => HTMLElement | null, clock: Clock
     activeWas = activeFlyout();
     before = now;
     menuWas = menuNow;
+    if (now === 'pinned' && wasState !== 'pinned' && menuNow) {
+      closeFlyout();
+      return;
+    }
     if (now === 'peek' && wasState !== 'peek' && !core.flags.retracting && !barPinned('rail') && activeFlyout() !== MENU_FLYOUT && !(activeFlyout() === null && wasActive !== null)) openFlyout(MENU_FLYOUT);
     else if (now === 'handle' && wasState === 'peek' && menuNow) closeFlyout();
     else if (now === 'peek' && wasMenu && !menuNow && !core.pointerInside()) core.fold();

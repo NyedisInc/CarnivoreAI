@@ -35,3 +35,12 @@ def test_existing_destinations_get_the_pack_skills_tick_once_and_an_untick_stays
     service.docs.update(lambda doc, me: doc_model.set_global(doc, doc_model.tick_path(dest, TYPE), False, me))
     assert asyncio.run(tick_backfill.backfill_type_ticks(service.docs)) == 0
     assert view.cell(service.docs.snapshot(), dest, TYPE).value is False
+
+
+def test_a_phone_paired_before_agent_review_gets_that_tick_and_an_untick_stays(service):
+    phone = "apns:7"
+    service.docs.update(lambda doc, me: doc_model.set_local(doc, doc_model.tick_path(phone, "session.finished"), True))
+    assert view.cell(service.docs.snapshot(), phone, "agent.review").value is False
+    assert asyncio.run(tick_backfill.backfill_type_ticks(service.docs)) >= 1
+    assert view.cell(service.docs.snapshot(), phone, "agent.review").value is True
+    assert asyncio.run(tick_backfill.backfill_type_ticks(service.docs)) == 0

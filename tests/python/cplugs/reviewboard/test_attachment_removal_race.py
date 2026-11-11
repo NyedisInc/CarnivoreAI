@@ -13,6 +13,7 @@ from src.cplugs.huddle.store_files import Located
 from tests.python.cplugs.reviewboard.harness import BASE, task_manager_store
 from tests.python.cplugs.reviewboard.test_attachment_removal import _message, two  # noqa: F401
 from tests.python.cplugs.reviewboard.test_attachments import board, client, env  # noqa: F401
+from tests.python.cplugs.failing_commit import FailingCommit
 
 
 def test_a_reply_posted_while_the_removal_is_paused_before_the_unlink_never_dangles(env, client, board, two, monkeypatch):
@@ -47,21 +48,6 @@ def test_a_reply_posted_while_the_removal_is_paused_before_the_unlink_never_dang
     else:
         assert answers["refused"].code == "task_manager_file_removed" and answers["refused"].status == 409
 
-
-class FailingCommit:
-
-    def __init__(self, conn: sqlite3.Connection):
-        self._conn = conn
-
-    def __getattr__(self, name: str):
-        return getattr(self._conn, name)
-
-    def __enter__(self) -> "FailingCommit":
-        return self
-
-    def __exit__(self, *exc) -> None:
-        self._conn.rollback()
-        raise sqlite3.OperationalError("database is locked")
 
 
 def test_a_commit_that_fails_after_the_rename_puts_the_bytes_back(env, client, board, two, monkeypatch):

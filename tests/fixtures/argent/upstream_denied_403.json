@@ -1,0 +1,7 @@
+{
+  "_http_status": 403,
+  "error": {
+    "code": "argent_upstream_not_registered",
+    "message": "upstream host is not registered on this tenant"
+  }
+}

@@ -10,6 +10,7 @@ from typing import Any, List
 import pytest
 import pytest_asyncio
 
+from src.core.notifications import card_contract as cc
 from src.config import settings
 from src.core.attention_wiring import build_attention_watcher
 from src.core.federation import peer_event_stream
@@ -154,5 +155,6 @@ async def test_a_web_push_device_gets_the_typed_payload_through_the_installed_se
     await wired.emit("session.permission", 1)
     assert len(wired.service.requests) == 1
     body = json.loads(_decrypt(wired.service.requests[0].content, wired.phone.private, wired.phone.auth))
-    assert set(body) == {"title", "body", "path"} and body["title"] and body["body"]
+    assert set(body) == {"title", "body", "path", "tag", "thread"} and body["title"] and body["body"]
+    assert not set(body) & (cc.FULL_ONLY_FIELDS - {"thread"}) and set(body) <= set(cc.WEB_PUSH_KEYS)
     assert body["path"] == "/?approvals=ses_1"

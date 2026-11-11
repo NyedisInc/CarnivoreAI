@@ -56,9 +56,9 @@ test('the terminal surface keeps its row when the home surface goes hidden under
   const home = surfaceIn(homeHost);
 
   await resize(terminal, 468, 883);
-  expect(terminal.querySelector('.oc-row'), 'the terminal surface never drew its row').not.toBeNull();
+  expect(terminal.querySelector('[data-abs-slot]'), 'the terminal surface never drew its cells').not.toBeNull();
 
   await resize(home, 468, 883);
   await resize(home, 0, 0);
-  expect(terminal.querySelector('.oc-row'), 'the terminal surface lost its row when Home went hidden').not.toBeNull();
+  expect(terminal.querySelector('[data-abs-slot]'), 'the terminal surface lost its cells when Home went hidden').not.toBeNull();
 });

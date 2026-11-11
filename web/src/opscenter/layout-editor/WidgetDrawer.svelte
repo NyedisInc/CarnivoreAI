@@ -1,5 +1,5 @@
 <script lang="ts">
-  /* the glance area the widgets page */
+  /* the widgets page */
   import type { LayoutStore } from '../engine/layout.svelte';
   import type { CellId, InstanceKind, LayoutPage, SlotId } from '../engine/types';
   import { isWidgetDisabled } from '../../lib/item-settings/store.svelte';
@@ -18,10 +18,12 @@
   import { isPopoutWindow } from '../widgets/fits';
   import { refusePlacement } from '../widgets/chrome/refusal-toast.svelte';
   import { beginDrawerCarry, sidebarOffers, type CarryTarget } from './drawer-carry';
+  import { dropHostById } from '../../lib/motion-grid';
   import { repeatableInGlance } from '../../lib/drawer-zone/glance';
   import {
     addSessionWidget,
     addWidget,
+    closeWidgetDrawer,
     finishLayoutEditor,
     layoutEditor,
   } from './editor.svelte';
@@ -39,7 +41,15 @@
   import DrawerList from './DrawerList.svelte';
   import { addToRail, landRow } from './drawer-landing';
 
-  let { store, page, docked = false }: { store: LayoutStore; page: LayoutPage; docked?: boolean } = $props();
+  let { store, page, docked = false, surface = null }: { store: LayoutStore; page: LayoutPage; docked?: boolean; surface?: string | null } = $props();
+
+  async function addRow(row: GroupRow, cell: SlotId): Promise<void> {
+    if (surface && surface !== 'dashboard') {
+      dropHostById(surface)?.add?.(surface.startsWith('zone:') ? row.widgetId : cell);
+      return;
+    }
+    await addWidget(cell);
+  }
 
   type PickerKind = WindowKind;
 
@@ -118,7 +128,7 @@
       if (!pickerRefusal) pickerTarget = null;
       return;
     }
-    const refusal = await addSessionWidget(engineKind(kind), id, target?.area === 'surface' ? target.target : null);
+    const refusal = await addSessionWidget(engineKind(kind), id, null);
     pickerRefusal = refusalLine(refusal, engineKind(kind));
     if (!pickerRefusal) pickerTarget = null;
   }
@@ -254,7 +264,7 @@
       return;
     }
     if (row.state !== 'addable' || !row.cell) return;
-    void addWidget(row.cell);
+    void addRow(row, row.cell);
   }
 
   function panelRowRect(widgetId: string): DOMRect | null {
@@ -359,7 +369,7 @@
 
   <footer class="le-foot">
     <div class="le-foot__row">
-      <Button variant="confirm" data-layout-editor-done onclick={finishLayoutEditor}>{t('layout_editor.done')}</Button>
+      <Button variant="confirm" data-layout-editor-done onclick={surface ? closeWidgetDrawer : finishLayoutEditor}>{t('layout_editor.done')}</Button>
     </div>
   </footer>
   <DuplicatePrompt />
@@ -392,6 +402,23 @@
     border-radius: var(--oc-radius, 2px);
     color: var(--oc-text-primary);
     font-family: var(--font-mono);
+  }
+
+  @layer components {
+    .le-drawer {
+      transition: transform 160ms ease-out;
+    }
+
+    :global(body.grid-carrying) .le-drawer:not(.le-drawer--docked) {
+      transform: translateX(calc(100% + 24px));
+      pointer-events: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .le-drawer {
+        transition: none;
+      }
+    }
   }
 
   .le-drawer--folded {

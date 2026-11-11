@@ -55,7 +55,7 @@ def _real_instant(value: str) -> str:
 Time = Annotated[str, StringConstraints(pattern=TIME_PATTERN), AfterValidator(_real_instant)]
 
 
-def _nesting(value: Any) -> int:
+def nesting(value: Any) -> int:
     deepest, stack = 0, [(value, 0)]
     while stack:
         node, depth = stack.pop()
@@ -74,7 +74,7 @@ class ExtBlock(BaseModel):
 
     @model_validator(mode="after")
     def _shallow_enough(self) -> "ExtBlock":
-        if _nesting(self.model_extra or {}) > MAX_EXT_DEPTH:
+        if nesting(self.model_extra or {}) > MAX_EXT_DEPTH:
             raise ValueError(f"an extension block may nest at most {MAX_EXT_DEPTH} levels")
         return self
 
@@ -91,7 +91,7 @@ def _json_object(value: Any) -> Dict[str, Any]:
         raise ValueError(f"a payload is plain JSON data ({exc})") from exc
     if size > MAX_PAYLOAD_BYTES:
         raise ValueError(f"a payload is at most {MAX_PAYLOAD_BYTES} bytes; this one is {size}")
-    if _nesting(value) > MAX_EXT_DEPTH:
+    if nesting(value) > MAX_EXT_DEPTH:
         raise ValueError(f"a payload nests at most {MAX_EXT_DEPTH} levels")
     return value
 

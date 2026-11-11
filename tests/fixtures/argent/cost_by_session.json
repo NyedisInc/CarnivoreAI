@@ -1,0 +1,23 @@
+{
+  "items": [
+    {
+      "id": "ses_fixture1",
+      "cost_micros": 1234500,
+      "fallback_cost_micros": 20000,
+      "input_tokens": 12000,
+      "output_tokens": 3400,
+      "cache_read_tokens": 90000,
+      "cache_write_tokens": 5000
+    }
+  ],
+  "as_of": "2026-11-05T12:10:00Z",
+  "price_per_mtok": {
+    "fixture-model": {
+      "input_micros": 3000000,
+      "output_micros": 15000000,
+      "cache_read_micros": 300000,
+      "cache_write_micros": 3750000
+    }
+  },
+  "rev": 11
+}

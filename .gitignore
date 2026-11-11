@@ -67,6 +67,7 @@ refresh_tokens.db
 *.sqlite-wal
 *.sqlite-shm
 *.jsonl
+!tests/fixtures/argent/**/*.jsonl
 
 .worktrees/
 

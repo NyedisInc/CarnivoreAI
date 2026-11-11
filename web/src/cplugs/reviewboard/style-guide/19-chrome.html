@@ -23,7 +23,13 @@
         A live board (issue #1725) adds a <code>live</code> state word in <code>.rb-state</code>, a draft mark at the end of the history track, and
         <code>LiveBar.svelte</code>: a quiet row of <code>IconButton</code> keys (bookmark, end) that opens one inline form (<code>.rb-live-form</code>, a
         base <code>Field</code> name box plus base <code>Button</code>s go and cancel). <code>InlineLayer.svelte</code> draws the tray's prompts
-        right under their anchored row over the page: <code>.rb-inline</code> is the layer, <code>.rb-inline-block</code> one block (hairline, dark fill, no card).</dd>
+        right under their anchored row over the page: <code>.rb-inline</code> is the layer, <code>.rb-inline-block</code> one block (hairline, dark fill, no card).
+        Visitors' answers through a public link (issue #2696 slice 5) are u revisions: on the history track a u chip follows the revision it answers
+        (<code>[data-history="visitor"]</code>, the base small <code>Button</code> with a 1px <code>--oc-cyan</code> edge, dashed until the visitor sent it, solid once sent, never the revision's orange; the
+        <code>u</code> is a small filled badge, <code>.rb-ubadge</code>, before the number; a small live dot, <code>.rb-upresent</code>, follows it while that visitor is on the public page). <code>VisitorToggle.svelte</code> (<code>.rb-uselect</code>, a quiet base
+        select in <code>.rb-views</code>) picks whose answers show under the owner's own: a read only line per prompt (<code>.rb-uline</code>, the badge then the
+        answer in secondary text), and for a layer or payload page <code>VisitorAnswers.svelte</code> (<code>.rb-uanswers</code>, a hairline row with a cyan rule at
+        its left edge) lists the visitor's values while the page shows them filled in.</dd>
     <dt id="chrome-review-payload">review board header controls</dt>
     <dd>The board has NO sidebar (issue #1760, <code>docs/reviewboard.md</code>, "Payload pages"): its controls live in the title strip (<code>.rb-strip</code>, which wraps onto a
         second row on a narrow board) and the page frame takes the full width under it. Styled in <code>web/src/cplugs/reviewboard/header.css</code>. They are OUTSIDE the sandboxed

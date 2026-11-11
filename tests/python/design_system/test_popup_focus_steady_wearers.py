@@ -30,6 +30,7 @@ TRANSIENT = {
     "web/src/lib/drawer/group-rule-popup.ts": "editor built on open, removed on close",
     "web/src/lib/dropdown/ChoiceDropdown.svelte": "{#if open}",
     "web/src/lib/notifications/mute/mute-control.ts": "popover built on open, removed on close",
+    "web/src/lib/sidebar-shell/ProjectMenuWindows.svelte": "{#if projectWindows.migrate && migrate.target}",
     "web/src/lib/send-to/SendToModal.svelte": "modal mounted by its opener while shown",
     "web/src/lib/session-move/MoveFolderModal.svelte": "modal mounted by its opener while shown",
     "web/src/lib/worktree-cleanup/CleanupModal.svelte": "modal mounted by openModal while shown",

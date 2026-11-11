@@ -10,7 +10,7 @@ import type { RailSpot } from '../../lib/session-rail/rail-sections';
 import { addChart } from '../cells/analytics/state.svelte';
 import type { CarryTarget } from './drawer-carry';
 import type { GroupRow } from './drawer-groups';
-import { addAnalyticsWidget, dropWidget } from './editor.svelte';
+import { addAnalyticsWidget, addWidget } from './editor.svelte';
 import { askDuplicate, duplicateKind } from './duplicate-prompt.svelte';
 
 export function landRow(store: LayoutStore, row: GroupRow, target: CarryTarget, pointer: { x: number; y: number }): void {
@@ -44,7 +44,7 @@ function fixedTarget(row: GroupRow): string | undefined {
 
 export function moveExisting(row: GroupRow, target: CarryTarget, inGlance: string | null): void {
   if (target.area === 'surface') {
-    if (row.cell) void dropWidget(row.cell, target.target);
+    return;
   } else if (target.area === 'zone') {
     drawerZone.move(target.moves ?? row.manifest.id, target.index);
   } else if (target.area === 'rail') {
@@ -57,7 +57,7 @@ export function moveExisting(row: GroupRow, target: CarryTarget, inGlance: strin
 
 export function landNow(store: LayoutStore, row: GroupRow, target: CarryTarget): void {
   if (target.area === 'surface') {
-    if (row.cell) void dropWidget(row.cell, target.target);
+    if (row.cell) void addWidget(row.cell);
   } else if (target.area === 'zone') {
     if (target.moves) drawerZone.move(target.moves, target.index);
     else addToZone(store, row.manifest, target.index, fixedTarget(row));
@@ -72,7 +72,7 @@ export function landNow(store: LayoutStore, row: GroupRow, target: CarryTarget):
 
 export function landFamilyCopy(store: LayoutStore, row: GroupRow, target: CarryTarget): void {
   if (target.area === 'surface') {
-    if (addAnalyticsWidget(undefined, target.target)) store.announce(t('layout_editor.announce.added', { title: row.title }));
+    if (addAnalyticsWidget(undefined)) store.announce(t('layout_editor.announce.added', { title: row.title }));
     return;
   }
   const chart = addChart();

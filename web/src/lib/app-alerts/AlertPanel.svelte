@@ -51,8 +51,8 @@
     try {
       await runAlertAction(action);
       notes[alert.id] = action.id === 'recheck' ? t('app_alert.row.rechecked') : '';
-    } catch {
-      notes[alert.id] = t('app_alert.row.recheck_failed');
+    } catch (error) {
+      notes[alert.id] = (error as { status?: number }).status === 403 ? t('app_alert.row.forbidden') : t('app_alert.row.recheck_failed');
     }
     await refreshAlerts();
   }
@@ -149,7 +149,7 @@
                 <Button size="sm" variant={tone} href={action.href} data-app-alert-action={action.id} onclick={() => onClose()}>{t(action.label_key)}</Button>
               {:else}
                 <Button size="sm" variant={tone} disabled={busy}
-                  data-app-alert-action={action.id} onclick={() => act(() => runAction(alert, action))}>{t(action.label_key)}</Button>
+                  data-app-alert-action={action.id} onclick={() => act(() => runAction(alert, action))}>{t(action.label_key, alert.params)}</Button>
               {/if}
             {/each}
             {#if alert.state === 'active'}

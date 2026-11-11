@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "id": "argent",
+  "name_key": "cplug.argent.name",
+  "description_key": "cplug.argent.description",
+  "version": "0.1.0",
+  "icon": "plug",
+  "author": "Carnivore",
+  "min_app_version": "1.16.1",
+  "tier": "builtin",
+  "default_enabled": false,
+  "surfaces": { "plugins": ["settings-panel"] },
+  "owns": {
+    "strings": ["cplug.argent."],
+    "tests": ["tests/python/cplugs/argent/", "web/src/cplugs/argent/"],
+    "style_guide": ["web/src/cplugs/argent/ArgentSettings.svelte", "web/src/cplugs/argent/RolloutModal.svelte", "web/src/cplugs/argent/TetheredRow.svelte", "web/src/cplugs/argent/OutageBanner.svelte", "web/src/cplugs/argent/ArgentBudgetPanel.svelte", "web/src/cplugs/argent/ArgentWriteback.svelte", "web/src/cplugs/argent/ClassifierChange.svelte", "web/src/cplugs/argent/RetagDialog.svelte"],
+    "contributions": ["settings.panel"]
+  }
+}

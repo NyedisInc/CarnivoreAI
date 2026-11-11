@@ -195,7 +195,7 @@ class HeaderMenu {
                 host.closeTerminalComponents();
                 return;
             }
-            host.openTerminalComponents(this.toggle);
+            host.openTerminalComponents(components.offsetParent !== null ? components : this.toggle);
         });
 
         const sizeMaster = this._buildSizeMasterRow();

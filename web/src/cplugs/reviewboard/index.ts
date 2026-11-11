@@ -1,9 +1,11 @@
 import manifest from '../../../../src/cplugs/reviewboard/cplug.json';
 import type { CplugManifest, CplugWeb } from '../sdk';
-import { ApiError, authFetch, cplugEnabled, registerPostedPageOpener, registerProjectPanel, registerRoundOpener } from '../sdk';
+import { ApiError, authFetch, cplugEnabled, registerPageRowAction, registerPostedPageOpener, registerProjectPanel, registerRoundOpener } from '../sdk';
 import { openRound } from './board-api';
 import { reviewboardTab } from './board-tab';
 import ClosedReviews from './ClosedReviews.svelte';
+import { sharePageRowAction } from './public/page-row-action';
+import { publicLinksOn } from './public/public-links-on';
 
 export const CLOSED_PANEL_ID = 'reviewboard.closed';
 
@@ -26,5 +28,6 @@ export const reviewboardCplug: CplugWeb = {
       id: CLOSED_PANEL_ID, labelKey: 'cplug.reviewboard.closed.group', hintKey: 'cplug.reviewboard.closed.hint', component: ClosedReviews,
       enabled: on,
     });
+    registerPageRowAction(sharePageRowAction(publicLinksOn));
   },
 };

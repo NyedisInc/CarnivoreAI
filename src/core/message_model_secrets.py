@@ -37,6 +37,7 @@ DETECTOR_ANTHROPIC_API_KEY: str = "anthropic_api_key"
 DETECTOR_OPENAI_API_KEY: str = "openai_api_key"
 DETECTOR_CARNIVORE_API_KEY: str = "carnivore_api_key"
 DETECTOR_BEARER_TOKEN: str = "bearer_token"
+DETECTOR_API_KEY_HEADER: str = "api_key_header"
 DETECTOR_JWT: str = "jwt"
 DETECTOR_STRIPE_KEY: str = "stripe_key"
 DETECTOR_HUGGINGFACE_TOKEN: str = "huggingface_token"
@@ -74,6 +75,7 @@ EXTRA_VENDOR_DETECTORS: Tuple[str, ...] = (
 ALL_DETECTORS: Tuple[str, ...] = VENDOR_DETECTORS + EXTRA_VENDOR_DETECTORS + (
     DETECTOR_HIGH_ENTROPY_ASSIGNMENT,
     DETECTOR_BEARER_TOKEN,
+    DETECTOR_API_KEY_HEADER,
     DETECTOR_JWT,
 )
 
@@ -177,6 +179,10 @@ _BEARER_RE = re.compile(
     r"(?i:bearer)[ \t]+(?P<value>[A-Za-z0-9._~+/\-]{20,}=*)"
 )
 
+_API_KEY_HEADER_RE = re.compile(
+    r"(?i:x-api-key|x-argent-upstream-key)[ \t]*:[ \t]*(?P<value>[A-Za-z0-9._~+/\-]{20,}=*)"
+)
+
 JWT_RE = re.compile(_redact.JWT_SOURCE)
 
 _VENDOR_PATTERNS: Tuple[_VendorPattern, ...] = (
@@ -252,6 +258,7 @@ _VENDOR_PATTERNS: Tuple[_VendorPattern, ...] = (
         DETECTOR_SLACK_APP_TOKEN, _SLACK_APP_RE, _redact.SLACK_APP_TOKEN,
     ),
     _VendorPattern(DETECTOR_BEARER_TOKEN, _BEARER_RE, _redact.BEARER_TOKEN),
+    _VendorPattern(DETECTOR_API_KEY_HEADER, _API_KEY_HEADER_RE, _redact.API_KEY_HEADER),
     _VendorPattern(DETECTOR_JWT, JWT_RE, _redact.JWT, placeholder_check=is_placeholder_jwt),
 )
 

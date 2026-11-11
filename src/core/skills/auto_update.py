@@ -86,11 +86,12 @@ def candidate_rows(services: Any) -> List[InstalledItem]:
 
 
 def _find_version(
-    snapshot: Any, item_id: str
+    snapshot: Any, item_id: str, kind: str
 ) -> Tuple[Optional[CatalogItem], Optional[ItemVersion]]:
-    from src.api.catalog_views import find_item, latest_version
+    from src.api.catalog_views import latest_version
+    from src.core.catalog.publisher_rename import find_installed_item
 
-    item, untrusted = find_item(snapshot, item_id)
+    item, untrusted = find_installed_item(snapshot, item_id, kind)
     if item is None or untrusted:
         return None, None
     return item, latest_version(item)
@@ -141,7 +142,7 @@ async def _one_row(
     from src.core.skills.installer import discard_staging
     from src.core.skills.validate import ArchiveRefused
 
-    item, version = _find_version(snapshot, row.item_id)
+    item, version = _find_version(snapshot, row.item_id, row.kind)
     if item is None or version is None:
         return AutoUpdateRow(
             install_id=row.install_id,

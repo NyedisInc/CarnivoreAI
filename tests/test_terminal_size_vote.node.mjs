@@ -293,3 +293,19 @@ test('sendResize flags every frame from a client behind a hidden component tab',
     assert.deepEqual(frames[1], { type: 'pty_resize', cols: 82, rows: 30 },
         'a flag, never a faked size: the grid is the real one both times');
 });
+
+
+test('a measured terminal_size frame makes a lone voter show the pane grid, not its box', () => {
+    const sandbox = makeSandbox();
+    const resizes = [];
+    const ctl = {
+        _fitGrid: { cols: 160, rows: 47 },
+        term: { cols: 160, rows: 47, resize(c, r) { resizes.push([c, r]); this.cols = c; this.rows = r; } },
+    };
+    sandbox.TerminalSizeVote.onTerminalSize(ctl, { type: 'terminal_size', cols: 120, rows: 40, measured: true });
+    assert.deepEqual(resizes, [[120, 40]], 'the emulator must take the pane grid exactly');
+    ctl._paneLimit = null;
+    ctl.term.cols = 160; ctl.term.rows = 47;
+    sandbox.TerminalSizeVote.onTerminalSize(ctl, { type: 'terminal_size', cols: 120, rows: 40, clients: 1 });
+    assert.deepEqual([ctl.term.cols, ctl.term.rows], [160, 47]);
+});

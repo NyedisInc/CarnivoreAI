@@ -31,6 +31,7 @@ OTHER = {"accountUuid": "acct-other", "organizationUuid": "org-other"}
 def home(tmp_path: Path, monkeypatch) -> Path:
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setattr(default_login, "_IDENTITY_CACHE", {}, raising=False)
+    monkeypatch.setattr(poller_scan, "read_claude_credential", lambda _dir: object())
     return tmp_path
 
 
@@ -59,6 +60,13 @@ def test_an_empty_list_gets_the_default_row(home):
     assert (row.provider, row.claude_config_dir, row.managed) == (
         "claude", DEFAULT_CLAUDE_CONFIG_DIR, False,
     )
+
+
+def test_no_login_on_this_machine_means_no_default_row(home, monkeypatch):
+    monkeypatch.setattr(poller_scan, "read_claude_credential", lambda _dir: None)
+    assert _ids(poller_scan.with_auto_default([])) == []
+    named = _managed(home, "work", OTHER)
+    assert _ids(poller_scan.with_auto_default([named])) == ["work"]
 
 
 def test_a_managed_row_gets_the_default_row_beside_it(home):

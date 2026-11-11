@@ -148,7 +148,7 @@ def test_changing_the_cap_reassesses_over_cap_at_once(rig):
     boards.mkdir()
     for i in range(3):
         (boards / "board.json").write_text('{"round": %d, "pad": "%s"}' % (i, os.urandom(2048).hex()))
-        assert RUNTIME.vault().capture_folder("reviewboard.boards", boards).status == "written"
+        assert RUNTIME.vault().capture_folder("boardfix.boards", boards).status == "written"
     assert client.put(f"{BASE}/settings", json={"cap_gb": 1e-7}).json()["over_cap"] is True
     assert client.put(f"{BASE}/settings", json={"cap_gb": 5}).json()["over_cap"] is False
 
@@ -160,11 +160,11 @@ def test_the_folder_routes_list_a_unit_and_restore_it_into_a_new_folder(rig):
     boards = tmp / "boards"
     (boards / "b1").mkdir(parents=True)
     (boards / "b1" / "board.json").write_text('{"round": 1}')
-    assert RUNTIME.vault().capture_folder("reviewboard.boards", boards).status == "written"
+    assert RUNTIME.vault().capture_folder("boardfix.boards", boards).status == "written"
     (boards / "b1" / "board.json").write_text('{"round": 2}')
     listed = {f["unit"]: f for f in client.get(f"{BASE}/folders").json()["folders"]}
-    assert listed["reviewboard.boards"]["points"] == 1 and listed["reviewboard.boards"]["root"] == str(boards)
-    done = client.post(f"{BASE}/folders/reviewboard.boards/restore", json={})
+    assert listed["boardfix.boards"]["points"] == 1 and listed["boardfix.boards"]["root"] == str(boards)
+    done = client.post(f"{BASE}/folders/boardfix.boards/restore", json={})
     assert done.status_code == 200, done.text
     target = Path(done.json()["target"])
     assert target.parent == tmp and target != boards and (target / "b1" / "board.json").read_text() == '{"round": 1}'
@@ -179,16 +179,16 @@ def test_the_folder_listing_names_the_plugin_and_the_points_route_lists_the_rest
     boards = tmp / "boards"
     (boards / "b1").mkdir(parents=True)
     (boards / "b1" / "board.json").write_text('{"round": 1}')
-    assert RUNTIME.vault().capture_folder("reviewboard.boards", boards).status == "written"
+    assert RUNTIME.vault().capture_folder("boardfix.boards", boards).status == "written"
     (boards / "b1" / "board.json").write_text('{"round": 2, "more": "bytes"}')
-    assert RUNTIME.vault().capture_folder("reviewboard.boards", boards).status == "written"
-    row = {f["unit"]: f for f in client.get(f"{BASE}/folders").json()["folders"]}["reviewboard.boards"]
-    assert (row["plugin"], row["data_id"], row["plugin_name_key"]) == ("reviewboard", "boards", "cplug.reviewboard.name")
+    assert RUNTIME.vault().capture_folder("boardfix.boards", boards).status == "written"
+    row = {f["unit"]: f for f in client.get(f"{BASE}/folders").json()["folders"]}["boardfix.boards"]
+    assert (row["plugin"], row["data_id"], row["plugin_name_key"]) == ("boardfix", "boards", "cplug.boardfix.name")
     assert row["points"] == 2 and row["last_point_at"] and row["bytes"] > 0
-    listed = client.get(f"{BASE}/folders/reviewboard.boards/points").json()
+    listed = client.get(f"{BASE}/folders/boardfix.boards/points").json()
     ids = [p["point_id"] for p in listed["points"]]
     assert len(ids) == 2 and ids == sorted(ids, reverse=True) and listed["points"][0]["bytes"] > listed["points"][1]["bytes"]
-    older = client.post(f"{BASE}/folders/reviewboard.boards/restore", json={"point_id": ids[1]}).json()
+    older = client.post(f"{BASE}/folders/boardfix.boards/restore", json={"point_id": ids[1]}).json()
     assert older["point_id"] == ids[1] and (Path(older["target"]) / "b1" / "board.json").read_text() == '{"round": 1}'
     assert client.get(f"{BASE}/folders/nosuch.unit/points").status_code == 404
     assert client.get(f"{BASE}/folders/{CONV}/points").status_code == 404

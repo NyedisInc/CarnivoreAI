@@ -8,21 +8,19 @@ from typing import List, Tuple
 import structlog
 
 from src.cplugs.sdk import CplugDefinition
+from src.cplugs.ship_order import ship_order
 
 logger = structlog.get_logger()
 
 PLUGINS_ROOT = Path(__file__).resolve().parent
 MANIFEST_FILE = "cplug.json"
-ORDER_HINT: Tuple[str, ...] = ("huddle", "unread", "share", "save", "flow", "reviewboard", "publicboard", "tmdevtools", "crate", "devwidgetlab")
-
-
 class ShipListError(Exception):
     pass
 
 
 def plugin_folders(root: Path = PLUGINS_ROOT) -> List[str]:
     found = sorted(p.parent.name for p in root.glob(f"*/{MANIFEST_FILE}") if (p.parent / "__init__.py").is_file())
-    rank = {name: i for i, name in enumerate(ORDER_HINT)}
+    rank = {name: i for i, name in enumerate(ship_order())}
     return sorted(found, key=lambda n: (rank.get(n, len(rank)), n))
 
 

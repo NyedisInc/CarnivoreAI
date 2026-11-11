@@ -59,20 +59,22 @@ async def search_body(q: str = Query(..., min_length=1, max_length=SEARCH_QUERY_
         raise api_error(503, "search_index_unavailable", exc)
 
 
-def prompt_search(state_dir, q: str, *, project: Optional[str], limit: int, offset: int, per_group: int) -> Dict[str, Any]:
+def prompt_search(state_dir, q: str, *, project: Optional[str], limit: int, offset: int, per_group: int,
+                  sort: str = "relevance") -> Dict[str, Any]:
     from src.core.deepsearch import prompts
     from src.core.deepsearch.cache import db as cache_db
 
     with closing(cache_db.reader(state_dir)) as conn:
         return prompts.search_prompts(conn, state_dir, q, project=project, limit=limit, offset=offset,
-                                      per_group=per_group)
+                                      per_group=per_group, sort=sort)
 
 
 @router.get("/pipeline/prompts/search")
 async def search_prompts_route(q: str = Query(..., min_length=1, max_length=SEARCH_QUERY_MAX_CHARS),
                                project: Optional[str] = Query(None, max_length=200),
                                limit: int = Query(20, ge=1, le=50), offset: int = Query(0, ge=0, le=100_000),
-                               per_group: int = Query(3, ge=1, le=10)) -> Dict[str, Any]:
+                               per_group: int = Query(3, ge=1, le=10),
+                               sort: str = Query("relevance", pattern="^(relevance|date)$")) -> Dict[str, Any]:
     """Search only the user's own prompts, grouped by conversation. Output: see the module docstring."""
     import sqlite3
 
@@ -82,7 +84,7 @@ async def search_prompts_route(q: str = Query(..., min_length=1, max_length=SEAR
         raise HTTPException(status_code=422, detail={"code": "search_invalid", "detail": "q is empty"})
     try:
         return await asyncio.to_thread(prompt_search, _state_dir(), q.strip(), project=project, limit=limit,
-                                       offset=offset, per_group=per_group)
+                                       offset=offset, per_group=per_group, sort=sort)
     except (DatastoreUnreadableError, sqlite3.Error, OSError) as exc:
         logger.error("prompt_search_unavailable", error=str(exc), error_type=type(exc).__name__)
         raise api_error(503, "search_index_unavailable", exc)

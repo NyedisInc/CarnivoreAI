@@ -195,12 +195,12 @@ class TaskManagerStore(StoreReads, StoreClaims, StoreFiles, StoreTriggers):
             parent_change = forks.plan_state(actor, parent, rules.WAITING if parent_waits else parent_state)
             parent_change, parent_decided = forks.gate(conn, parent, parent_change, actor, now)
             target = target or parent["list_key"]
-            reviewing = {**review.clean_fields(review_fields or {}), **titles.clean_fields(title if title is not None else parent["title"]),
-                         **perceived_ask_mod.clean_fields(parent[perceived_ask_mod.FIELD])}
+            reviewing = {**review.clean_fields(review_fields or {}), **titles.clean_fields(title if title is not None else rules.stored_text(parent["title"])),
+                         **perceived_ask_mod.clean_fields(rules.stored_text(parent[perceived_ask_mod.FIELD]))}
             group_id = forks.default_group(parent, target) if group is groups.UNSET else groups.check_group(conn, target, group)
             seq = self._next_seq(conn)
             fork_id = self._insert_item(
-                conn, target, rules.clean_text(text if text is not None else parent["text"], "text", rules.MAX_TEXT), actor=actor,
+                conn, target, rules.clean_text(text if text is not None else rules.stored_text(parent["text"]), "text", rules.MAX_TEXT), actor=actor,
                 seq=seq, now=now, group_id=group_id, created_key=claimed_by, reviewing=reviewing, forked_from=item_id)
             if parent_change is not None:
                 review_lock.check_tick(conn, parent, parent_change.state, actor, decided=parent_decided, now=now, before_id=fork_id)

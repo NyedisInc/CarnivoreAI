@@ -13,6 +13,7 @@ export { default as ListRow } from '../../lib/base/ListRow.svelte';
 export { default as Radio } from '../../lib/base/Radio.svelte';
 export { default as RadioGroup, type RadioOption } from '../../lib/base/RadioGroup.svelte';
 export { default as State } from '../../lib/base/State.svelte';
+export { default as Switch } from '../../lib/base/Switch.svelte';
 export { default as Tag } from '../../lib/base/Tag.svelte';
 export type { TagTone } from '../../lib/base/classes';
 export { default as Select, type SelectChoice } from '../../lib/base/Select.svelte';

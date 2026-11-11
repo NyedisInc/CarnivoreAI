@@ -1,0 +1,57 @@
+{
+  "kind": "signin",
+  "payload": {
+    "title": "sign in to nyedis",
+    "body": "the renewal was refused, sign in again",
+    "path": "/sessions/ses_0123456789ab",
+    "thread": "local|ses_0123456789ab",
+    "v": 2,
+    "sub": "claude account needs you",
+    "kind": "signin",
+    "type": "provider.needs_login",
+    "lv": "t",
+    "snd": "alarm",
+    "cap": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ttl": 1794000000,
+    "acts": [
+      [
+        "sign_in",
+        "sign in"
+      ]
+    ],
+    "card": {
+      "strip": [
+        "sign in",
+        "nyedis",
+        "nostromo"
+      ],
+      "agent": "nyedis",
+      "computer": "nostromo",
+      "ts": "9:41",
+      "account": "nyedis",
+      "provider": "claude",
+      "reason": "renewal refused",
+      "sessions": [
+        "home",
+        "mixdown-2"
+      ]
+    }
+  },
+  "card": {
+    "strip": [
+      "sign in",
+      "nyedis",
+      "nostromo"
+    ],
+    "agent": "nyedis",
+    "computer": "nostromo",
+    "ts": "9:41",
+    "account": "nyedis",
+    "provider": "claude",
+    "reason": "renewal refused",
+    "sessions": [
+      "home",
+      "mixdown-2"
+    ]
+  }
+}

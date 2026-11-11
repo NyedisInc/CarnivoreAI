@@ -70,7 +70,9 @@ def locate(manifest: Any, decl: Any, settings: Mapping[str, Any], state_dir: Pat
     if decl.state_path:
         return PluginStore(manifest.id, decl, state / decl.state_path)
     if decl.path:
-        return PluginStore(manifest.id, decl, state / PLUGINS_DIR / manifest.id / decl.path)
+        from src.cplugs.host import data_roots  # noqa: PLC0415
+
+        return PluginStore(manifest.id, decl, data_roots.data_folder(state, manifest.id) / decl.path)
     fields = manifest.settings_schema.get("fields", {}) if isinstance(manifest.settings_schema, Mapping) else {}
     text = _setting_text(settings, fields, decl.root_setting)
     from src.cplugs.sdk.data_decl import default_store_root, is_default_value  # noqa: PLC0415

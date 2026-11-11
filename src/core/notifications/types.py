@@ -7,14 +7,13 @@ from typing import Dict, List, Optional, Tuple
 FAMILY_NEEDS_YOU = "needs_you"
 FAMILY_SESSIONS = "sessions"
 FAMILY_MESSAGES = "messages"
-FAMILY_AUTO_ANSWERS = "auto_answers"
 FAMILY_SWARM = "swarm"
 FAMILY_HEALTH = "health"
 FAMILY_SECURITY = "security"
 FAMILY_AUTOMATIONS = "automations"
 FAMILY_APP = "app"
 FAMILIES: Tuple[str, ...] = (
-    FAMILY_NEEDS_YOU, FAMILY_SESSIONS, FAMILY_MESSAGES, FAMILY_AUTO_ANSWERS, FAMILY_SWARM, FAMILY_HEALTH,
+    FAMILY_NEEDS_YOU, FAMILY_SESSIONS, FAMILY_MESSAGES, FAMILY_SWARM, FAMILY_HEALTH,
     FAMILY_SECURITY, FAMILY_AUTOMATIONS, FAMILY_APP,
 )
 
@@ -28,7 +27,7 @@ CARRIER_FRAMES: Tuple[str, ...] = ("toast.new", "app_alert.raised", "approvals")
 CARRIER_CLIENT_KINDS: Tuple[str, ...] = ("AppAlert",)
 FEEDBACK_CLIENT_KINDS: Tuple[str, ...] = (
     "AutoSleepError", "RecentOpen", "AccountSignedIn", "Attachment", "WriteFailed", "AgentOpen", "BeastError",
-    "NotifyMuted", "ApprovalGone", "Bookmark", "PackSend",
+    "NotifyMuted", "ApprovalGone", "Bookmark", "PackSend", "BudgetHold",
     "WidgetsBars", "SwarmSwitchError",
 )
 
@@ -133,10 +132,9 @@ TYPES: Tuple[NotifyType, ...] = (
     _row("app.restore_offer", FAMILY_SESSIONS, "restore", Match(), _SHOWN),
     _row("session.terminal_notice", FAMILY_SESSIONS, "toast", Match(carrier="Notification"), _SHOWN),
     _row("agent.message", FAMILY_MESSAGES, "toast", Match(carrier="Notification"), _SHOWN),
+    _row("agent.review", FAMILY_MESSAGES, "toast", Match(carrier="Notification"), _SEED, _NO_FINISHED_SEED),
     _row("plugin.notice", FAMILY_MESSAGES, "toast", Match(carrier="Notification"), _SHOWN),
     _row("session.skill_tripwire", FAMILY_MESSAGES, "toast", Match(carrier="Notification"), _SHOWN),
-    _row("session.beast_approved", FAMILY_AUTO_ANSWERS, "beast_prompts", Match(), _SEED, _NO_FINISHED_SEED),
-    _row("session.auto_accepted", FAMILY_AUTO_ANSWERS, "auto_answer", Match(), _SHOWN),
     _row("swarm.alert", FAMILY_SWARM, "swarm", Match(), _SWARM_ALERT,
          tuple(k for k in _ALL_KINDS if k not in _ALERT_SEED_KINDS)),
     _row("swarm.flash", FAMILY_SWARM, "swarm", Match(), _SWARM_ALERT,
@@ -152,6 +150,8 @@ TYPES: Tuple[NotifyType, ...] = (
     _row("alert.notifications", FAMILY_HEALTH, "alerts", Match(alert_keys=("notifications.destination_disabled", "notifications.migration_skipped")),
          _NO_OUT),
     _row("provider.needs_login", FAMILY_HEALTH, "login", Match(), _SEED),
+    _row("alert.argent_budget_warn", FAMILY_HEALTH, "alerts", Match(alert_prefixes=("argent.budget.warn:",)), _SHOWN),
+    _row("alert.argent_budget_hold", FAMILY_HEALTH, "alerts", Match(alert_prefixes=("argent.budget.hold:",)), _SHOWN),
     _row("alert.other", FAMILY_HEALTH, "alerts", Match(alert_fallback=True), _SHOWN),
     _row("computer.wrong_code", FAMILY_SECURITY, "computers", Match(), _SHOWN),
     _row("computer.knock", FAMILY_SECURITY, "computers", Match(), _SHOWN),

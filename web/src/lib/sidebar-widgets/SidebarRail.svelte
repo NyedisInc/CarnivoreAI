@@ -5,7 +5,7 @@
   import MiniRailUsage from '../mini-rail/MiniRailUsage.svelte';
   import { type RailItem } from '../../opscenter/shell/rail-items';
   import { closeDrawerAfterSwitch, handleMenuHotkey } from '../drawer-tabs/menu-hotkeys';
-  import { menuLeadItems, railZoneItems } from '../drawer-tabs/menu-rows';
+  import { menuLeadItems, railZoneItems, zoneEntries } from '../drawer-tabs/menu-rows';
   import { onMount, tick } from 'svelte';
   import { saveRailOrder, startMenuOrder } from '../drawer-tabs/menu-order.svelte';
   import { RAIL_SPLIT, zoneSequence } from './rail-zones';
@@ -21,8 +21,6 @@
   import { FLYOUT_CONTAINER_ID } from './rail-dom';
   import { railKeyTarget } from './rail-keys.svelte';
   import { barPinned, railPinOffered } from '../widget-bars/bar-pin-action';
-  import { createDock, DOCK_ZOOM } from './rail-dock';
-  import { railMagnify, railPeakScale } from './rail-magnify';
   import { railDockNames, startRailDockNames } from './rail-dock-names.svelte';
   import type { Snippet } from 'svelte';
 
@@ -36,12 +34,7 @@
   onMount(() => {
     startRailIcons();
     const stopOrder = startMenuOrder();
-    const stopWatch = dock.watch();
-    return () => {
-      stopOrder();
-      stopWatch();
-      dock.destroy();
-    };
+    return stopOrder;
   });
 
   function refocusAfterPaint(id: string): void {
@@ -119,14 +112,6 @@
   let label = $state<HTMLElement | null>(null);
   let labelText = $state('');
   let labelOn = $state(false);
-  const dock = createDock({ nav: () => nav, editing: () => editing, onRest: () => (labelOn = false) });
-
-  let peak = $state(railPeakScale());
-  $effect(() => railMagnify.follow((percent) => (peak = percent / 100)));
-
-  $effect(() => {
-    if (editing) dock.stop();
-  });
 
   startRailDockNames();
 
@@ -136,11 +121,9 @@
       labelOn = false;
       return;
     }
-    const resting = dock.restingY(cell);
     const box = cell.getBoundingClientRect();
-    const y = resting ?? box.top + box.height / 2;
     labelText = cell.dataset.dockName ?? '';
-    label.style.transform = `translate(${Math.max(nav.getBoundingClientRect().right, box.left + box.width * railPeakScale()) + 8}px, ${y}px) translateY(-50%)`;
+    label.style.transform = `translate(${Math.max(nav.getBoundingClientRect().right, box.right) + 8}px, ${box.top + box.height / 2}px) translateY(-50%)`;
     labelOn = true;
   }
 
@@ -167,7 +150,7 @@
 
 
 {#snippet dockCell(name: string, body: Snippet)}
-  <span class="sbr-rail__cell" data-dock-name={name}><span class="sbr-rail__dock">{@render body()}</span></span>
+  <span class="sbr-rail__cell" data-dock-name={name}>{@render body()}</span>
 {/snippet}
 
 {#snippet railButtonBody(item: RailItem)}
@@ -189,9 +172,10 @@
 
 {#snippet zone(name: string, list: RailItem[], end: string | undefined)}
   <ul class="sbr-rail__zone" data-menu-zone data-rail-zone={name} data-menu-end={end} data-empty={list.length === 0 ? '' : undefined}>
-    {#each list as item, i (item.id)}
-      {#if i > 0 && leadIds.has(list[i - 1]!.id) && !leadIds.has(item.id)}<li class="sbr-rail__sep" aria-hidden="true"></li>{/if}
-      <li data-menu-row={item.id}>{@render railButton(item)}</li>
+    {#each zoneEntries(list) as entry, i (entry.kind === 'row' ? entry.item.id : `${entry.kind}:${i}`)}
+      {#if entry.kind === 'sep'}<li class="sbr-rail__sep" aria-hidden="true"></li>
+      {:else if entry.kind === 'head'}<li class="sbr-rail__head" aria-hidden="true"></li>
+      {:else}<li data-menu-row={entry.item.id}>{@render railButton(entry.item)}</li>{/if}
     {/each}
   </ul>
 {/snippet}
@@ -219,15 +203,11 @@
   class="sbr-rail"
   aria-label={t(editing ? 'sidebar.rail.edit.label' : 'sidebar.rail.label')}
   data-editing={editing ? '' : undefined}
-  style:--dock-zoom={DOCK_ZOOM}
-  style:--dock-peak={peak}
   bind:this={nav}
   data-menu-zones
   onpointerdowncapture={(event) => { if (editing) onMenuPointerDown(event, dragHost); }}
   onkeydown={onKeydown}
-  onpointerenter={dock.measure}
-  onpointermove={dock.onPointerMove}
-  onpointerleave={dock.rest}
+  onpointerleave={() => (labelOn = false)}
   onpointerover={(event) => { if (!menuDragActive()) showLabel(cellOf(event.target)); }}
   onfocusin={(event) => { if ((event.target as HTMLElement).matches(':focus-visible')) showLabel(cellOf(event.target)); }}
   onfocusout={() => (labelOn = false)}
@@ -246,25 +226,18 @@
 <style>
   @layer components {
     .sbr-rail {
-      --dock-ease: var(--oc-motion-fast);
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: var(--oc-space-0-5);
+      gap: var(--sbr-row-gap);
       height: 100%;
-      padding: var(--oc-space-2) 0;
+      padding: var(--sbr-grid-top) 0 var(--sbr-rail-foot);
       box-sizing: border-box;
       overflow-x: hidden;
       overflow-y: auto;
       scrollbar-width: none;
       background: var(--oc-ground-chrome);
       box-shadow: inset calc(-1 * var(--oc-border)) 0 0 0 var(--oc-line-faint);
-    }
-
-    .sbr-rail:global([data-dock-spill]) {
-      position: relative;
-      z-index: 5;
-      overflow: visible;
     }
 
     .sbr-rail::-webkit-scrollbar {
@@ -275,28 +248,10 @@
       position: relative;
       display: inline-flex;
       flex: none;
-    }
-
-    .sbr-rail:global([data-docking]) .sbr-rail__cell {
       align-items: center;
-      justify-content: flex-start;
-      width: var(--dock-w);
-      height: var(--dock-h);
-    }
-
-    .sbr-rail__dock {
-      display: inline-flex;
-      flex: none;
-    }
-
-    .sbr-rail:global([data-docking]) .sbr-rail__dock {
-      transform-origin: 0 50%;
-      zoom: var(--dock-zoom);
-      transform: scale(calc(var(--dock-s, 1) / var(--dock-zoom)));
-    }
-
-    .sbr-rail:global([data-dock-live]) .sbr-rail__dock {
-      transition: transform var(--dock-ease) ease-out;
+      justify-content: center;
+      width: var(--sidebar-rail-w);
+      height: var(--sbr-row-h);
     }
 
     .sbr-rail__zone {
@@ -304,7 +259,7 @@
       flex: none;
       flex-direction: column;
       align-items: center;
-      gap: var(--oc-space-0-5);
+      gap: var(--sbr-row-gap);
       list-style: none;
       margin: 0;
       padding: 0;
@@ -313,6 +268,8 @@
     .sbr-rail__zone > li {
       display: flex;
       flex: none;
+      width: var(--sidebar-rail-w);
+      justify-content: center;
     }
 
     .sbr-rail[data-editing] .sbr-rail__zone[data-empty] {
@@ -330,11 +287,19 @@
 
 
     .sbr-rail__sep {
-      flex: none;
+      align-items: center;
+      height: var(--sbr-sep-h);
+    }
+
+    .sbr-rail__sep::before {
+      content: '';
       width: 22px;
       height: var(--oc-border);
-      margin: var(--oc-space-0-5) 0;
       background: var(--oc-line-rule);
+    }
+
+    .sbr-rail__head {
+      height: var(--sbr-head-h);
     }
 
     .sbr-rail__fill {
@@ -374,7 +339,6 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .sbr-rail__dock,
       .sbr-rail__label,
       .sbr-rail__label-text {
         transition: none;

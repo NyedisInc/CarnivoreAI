@@ -306,15 +306,6 @@
         padding-left: var(--oc-space-5);
     }
 
-    .sp-sec-colors {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: var(--oc-space-2);
-        margin: 0 0 var(--oc-space-1) var(--ind);
-        color: var(--oc-text-muted);
-    }
-
     .sp-list [data-closed-head] {
         display: flex;
         align-items: center;

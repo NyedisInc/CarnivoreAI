@@ -107,6 +107,26 @@ await check('a painted tab waits out a container that gains its box late', async
     assert.equal(result.timedOut, false);
 });
 
+await check('the wait outlasts a container whose box keeps changing, then reports settled', async () => {
+    const { api } = load({ painting: true });
+    const box = el(900, 741);
+    const steps = [[900, 762], [900, 746], [900, 801], [900, 797]];
+    steps.forEach(([w, h], i) => setTimeout(() => { box.offsetWidth = w; box.offsetHeight = h; }, 30 * (i + 1)));
+    const result = await api.waitForLayout(box, { frameTimeoutMs: 500, stablePollMs: 15, stablePolls: 4 });
+    assert.equal(result.settled, true);
+    assert.equal(box.offsetHeight, 797, 'returned only after the last step landed');
+    assert.ok(result.waitedMs >= 120, 'waited past the final change');
+});
+
+await check('a box that never stops changing still lets the connect through', async () => {
+    const { api } = load({ painting: true });
+    const box = el(900, 700);
+    const t = setInterval(() => { box.offsetHeight += 1; }, 5);
+    const result = await api.waitForLayout(box, { frameTimeoutMs: 500, stablePollMs: 15, stablePolls: 4, stableMaxPolls: 6 });
+    clearInterval(t);
+    assert.equal(result.settled, false);
+});
+
 
 await check('nextFrameOrTimeout reports which one won', async () => {
     const painted = load({ painting: true });
@@ -154,6 +174,13 @@ await check('terminal.js has no bare rAF await left on the connect path', async 
         src.indexOf('await new Promise(requestAnimationFrame)'), -1,
         'a bare single-rAF await is the same defect'
     );
+});
+
+await check('the onopen resize is preceded by a fresh guarded fit (the server takes it as the handshake)', async () => {
+    const src = fs.readFileSync(path.join(HERE, '..', 'client', 'js', 'terminal.js'), 'utf8');
+    const send = src.indexOf("this.sendResize('ws.onopen')");
+    const fit = src.lastIndexOf('TerminalMetrics.guardedFit(this)', send);
+    assert.ok(send > 0 && fit > 0 && send - fit < 200, 'a stale vote reaches tmux two rows taller than the box');
 });
 
 await check('hasBox refuses zero and missing elements', async () => {

@@ -50,7 +50,7 @@ describe('a closed key\'s menu holds its widget\'s declared actions', () => {
     follow(RAIL_FIELD, one({ widget: 'core.files' }));
     expect(panelOf('core.files')).toBeNull();
     rightClick(keyIn('side', 'core.files'));
-    expect(nodes()).toEqual(expect.arrayContaining([DECLARED_PROBE_ACTION, 'pop-out', 'show-header', 'close-widget']));
+    expect(nodes()).toEqual(expect.arrayContaining([DECLARED_PROBE_ACTION, 'pop-out', 'show-header', 'remove-widget']));
     expect(panelOf('core.files')).toBeNull();
   });
 
@@ -63,7 +63,7 @@ describe('a closed key\'s menu holds its widget\'s declared actions', () => {
     registerDraftWidget({ spec, component: (() => undefined) as never, fixtures: { data: {}, empty: {} } as never });
     follow(RAIL_FIELD, one({ widget: 'core.closed-probe' }));
     rightClick(keyIn('side', 'core.closed-probe'));
-    expect(nodes()).toEqual(expect.arrayContaining([DECLARED_PROBE_ACTION, 'close-widget']));
+    expect(nodes()).toEqual(expect.arrayContaining([DECLARED_PROBE_ACTION, 'remove-widget']));
   });
 
   test('the unseen copy lives only while the menu is open', () => {
@@ -108,7 +108,7 @@ describe('a widget that owns a live pane is never mounted unseen', () => {
     follow(BOTTOM_FIELD, one({ widget: 'core.shell' }));
     rightClick(keyIn('bottom', 'core.shell'));
     expect(declaringLog.made).toBe(0);
-    expect(nodes()).toEqual(expect.arrayContaining(['close-widget']));
+    expect(nodes()).toEqual(expect.arrayContaining(['remove-widget']));
     expect(nodes()).not.toContain(DECLARED_PROBE_ACTION);
   });
 });

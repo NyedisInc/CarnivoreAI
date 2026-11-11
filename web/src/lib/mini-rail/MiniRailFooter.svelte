@@ -74,9 +74,13 @@
       flex: 0 0 auto;
       flex-direction: column;
       gap: 3px;
-      max-width: 40px;
+      max-width: 100%;
       margin-left: 0;
-      font-size: 9px;
+      font-size: 13px;
+    }
+
+    :global(.mr-footer .version-footer__build) {
+      display: block;
     }
   }
 </style>

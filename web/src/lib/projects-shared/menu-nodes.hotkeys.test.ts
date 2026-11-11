@@ -2,10 +2,10 @@
 import { afterEach, expect, test, vi } from 'vitest';
 import { flushSync } from 'svelte';
 
-import { menuNodes } from './menu-nodes';
+import { entryNodes } from '../item-menu/entries';
+import { projectMenuEntries } from '../item-menu/menus/project-entries';
 import { closeItemMenu } from '../item-menu/open.svelte';
 import { openPageRowMenu } from '../item-menu/page-row';
-import { projectActions } from './ledger-model';
 import { setLocale, t } from '../i18n/index.svelte';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
 import { assignMenuKeys, pressMenuKey } from '../menu-keys/menu-keys';
@@ -28,9 +28,11 @@ function openMenu(onPick: (id: string) => void): HTMLElement {
     const row = document.createElement('div');
     row.tabIndex = 0;
     document.body.append(row);
-    const project = { archived_at: null, root: '/a', company_id: null, has_image: true };
-    const items = projectActions(project, [{ id: 7, name: 'acme' } as never], true, true);
-    const menu = { type: 'pagerow', ctx: { label: 'project menu', nodes: menuNodes(items, t, onPick) } } as const;
+    const entries = projectMenuEntries({
+        project: { id: 4, archived_at: null, root: '/a', company_id: null }, companies: [{ id: 7, name: 'acme' } as never], agentOffered: true, panels: [],
+        color: { value: '', onPick: () => {} }, close: () => {}, glyph: () => '', run: onPick,
+    });
+    const menu = { type: 'pagerow', ctx: { label: 'project menu', nodes: entryNodes(entries, () => '', () => {}) } } as const;
     openPageRowMenu(menu, row, { x: 10, y: 10 });
     flushSync();
     return row;
@@ -42,17 +44,17 @@ test('the project heading menu draws the registry letters, one per item', () => 
         [...document.querySelectorAll<HTMLElement>('[data-level="0"] [data-node]')].map((el) => [el.dataset.node, el.dataset.menuKey]),
     );
     expect(keys).toEqual({
-        'new-session': 'n',
-        'migrate-project': 'm',
+        'new-agent': 'n',
+        'load-blueprint': 'b',
         'rename-project': 'r',
         'pick-color': 'c',
-        'copy-path': 'y',
-        'load-blueprint': 'b',
-        'turn-on-agent': 'a',
-        'set-image': 'i',
-        'remove-image': 'x',
-        'regenerate-art': 'g',
-        'add-to-company': 'o',
+        'add-to-company': 'a',
+        'show-path': 'i',
+        sleep: 's',
+        'turn-on-agent': 't',
+        'swarm-new-sessions': 'e',
+        'migrate-project': 'm',
+        'project-settings': 'p',
         'archive-project': 'v',
         'delete-project': 'd',
     });
@@ -78,7 +80,7 @@ test('a key picks its item only while the menu is open and focused', () => {
     expect(onPick).toHaveBeenCalledTimes(1);
 
     openMenu(onPick);
-    press('o');
+    press('a');
     expect(document.querySelector('[data-level="1"]'), 'company submenu open').not.toBeNull();
     expect(onPick).toHaveBeenCalledTimes(1);
     press('a');

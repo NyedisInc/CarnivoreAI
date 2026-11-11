@@ -78,3 +78,12 @@ def test_old_install_boots_into_swarm_names_and_a_second_boot_changes_nothing(tm
     assert (state / "swarm" / "settings" / "1.json").exists() and not (state / "pack").exists()
     assert json.loads((state / "cplugs" / "state.json").read_text())["cplugs"]["huddle"]["grants"] == ["swarm", "other"]
     assert legacy.migrate(config, state) == {"config": False, "folder": False, "grant": False}
+
+
+def test_move_grant_keeps_the_module_contract_and_never_raises_on_an_unreadable_store(tmp_path):
+    state = tmp_path / "state"
+    (state / "cplugs").mkdir(parents=True)
+    broken = state / "cplugs" / "state.json"
+    broken.write_text("{ not json")
+    assert legacy._move_grant(state) is False
+    assert broken.read_text() == "{ not json"

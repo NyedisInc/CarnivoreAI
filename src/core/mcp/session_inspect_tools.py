@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 
 from src.core.mcp import route_adapters as ra, session_target
@@ -69,6 +70,19 @@ async def _subagents(call: ra.Call) -> Any:
     return {**answer, "subagents": ordered[:limit], "returned": min(limit, len(ordered)), "truncated": len(ordered) > limit}
 
 
+async def _token_usage_requests(call: ra.Call) -> Any:
+    from src.core.session_token_usage.per_request import DEFAULT_LIMIT, MAX_LIMIT
+
+    since = call.args.get("since")
+    if since is not None and not isinstance(since, str):
+        raise ToolError("since must be an ISO-8601 string")
+    limit = _limit(call.args, DEFAULT_LIMIT, MAX_LIMIT)
+    try:
+        return await call.route(call.request, call.session_id, since=since, limit=limit)
+    except HTTPException as exc:
+        raise ToolError(str(exc.detail)) from exc
+
+
 def _background_agents(call: ra.Call) -> Any:
     cwd = call.args.get("cwd")
     if cwd is not None and not isinstance(cwd, str):
@@ -107,6 +121,14 @@ SPECS = (
     _per_session(
         "session_token_usage_get", "src.api.session_token_usage_routes:get_session_token_usage",
         "Token spend, cost estimate and context headroom (how full the context window is) of a live agent.",
+    ),
+    _per_session(
+        "session_token_usage_requests", "src.api.session_token_usage_routes:get_session_token_usage_requests",
+        "One row per model request of a live Claude agent's current conversation (main, subagent and workflow-agent files): request "
+        "id, agent id, model and four token classes, oldest first, never dollars. since: ISO-8601, only later requests; limit: "
+        "1 to 5000, default 1000; truncated and next_since continue a long answer. Codex answers not_applicable.",
+        properties={"since": {"type": "string"}, "limit": {"type": "integer", "minimum": 1, "maximum": 5000}},
+        invoke=_token_usage_requests, example={"limit": 5},
     ),
     _per_session(
         "session_prompts_list", "src.api.session_prompt_texts_routes:get_prompt_texts",

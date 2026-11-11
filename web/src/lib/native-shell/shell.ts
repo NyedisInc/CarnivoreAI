@@ -19,10 +19,10 @@ export type FromNative =
     | { type: 'pushToken'; token: string; environment: string; payload_key: string; bundle_id: string; app_version: string }
     | { type: 'pushFailed'; reason: string }
     | { type: 'openPath'; path: string }
-    | { type: 'speech'; kind: 'text' | 'end' | 'error'; text: string; reason: string };
+    | { type: 'speech'; kind: 'text' | 'ready' | 'end' | 'error'; text: string; reason: string };
 
 interface ShellWindow {
-    carnivoreShell?: { version?: unknown; platform?: unknown; receive?: (message: unknown) => void };
+    carnivoreShell?: { version?: unknown; platform?: unknown; speech?: unknown; receive?: (message: unknown) => void };
     webkit?: { messageHandlers?: { carnivore?: { postMessage?: (message: unknown) => void } } };
     location: Location;
 }
@@ -34,6 +34,10 @@ export function inNativeShell(): boolean {
     return (
         shell?.version === SHELL_VERSION && typeof win().webkit?.messageHandlers?.carnivore?.postMessage === 'function'
     );
+}
+
+export function shellHasSpeech(): boolean {
+    return inNativeShell() && win().carnivoreShell?.speech === true;
 }
 
 export function postToNative(message: ToNative): boolean {
@@ -64,7 +68,7 @@ export function parseFromNative(raw: unknown): FromNative | null {
     }
     if (m.type === 'pushFailed') return { type: 'pushFailed', reason: typeof m.reason === 'string' ? m.reason : 'failed' };
     if (m.type === 'openPath' && isSafePath(m.path)) return { type: 'openPath', path: m.path };
-    if (m.type === 'speech' && (m.kind === 'text' || m.kind === 'end' || m.kind === 'error')) {
+    if (m.type === 'speech' && (m.kind === 'text' || m.kind === 'ready' || m.kind === 'end' || m.kind === 'error')) {
         return {
             type: 'speech', kind: m.kind,
             text: typeof m.text === 'string' ? m.text : '', reason: typeof m.reason === 'string' ? m.reason : 'failed',

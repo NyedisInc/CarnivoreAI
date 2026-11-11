@@ -1,0 +1,95 @@
+{
+  "kind": "choice",
+  "payload": {
+    "title": "billing-5 asks",
+    "body": "which plan should I build: A, B or C?",
+    "path": "/sessions/ses_0123456789ab",
+    "thread": "local|ses_0123456789ab",
+    "v": 2,
+    "sub": "pick one on nostromo",
+    "kind": "choice",
+    "type": "session.question",
+    "lv": "t",
+    "snd": "ask",
+    "cap": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ttl": 1794000000,
+    "acts": [
+      [
+        "opt.1",
+        "plan a"
+      ],
+      [
+        "opt.2",
+        "plan b"
+      ],
+      [
+        "opt.3",
+        "plan c"
+      ],
+      [
+        "reply",
+        "type an answer"
+      ]
+    ],
+    "card": {
+      "strip": [
+        "pick one",
+        "billing-5",
+        "nostromo"
+      ],
+      "agent": "billing-5",
+      "computer": "nostromo",
+      "ts": "9:41",
+      "ask": "which plan should I build: A, B or C?",
+      "opts": [
+        [
+          "a",
+          "plan a",
+          "patch the widget engine in place, smallest diff, 1 file"
+        ],
+        [
+          "b",
+          "plan b",
+          "split the engine into two modules, 4 files, one new test"
+        ],
+        [
+          "c",
+          "plan c",
+          "rewrite on the shared store, 9 files, needs a migration"
+        ]
+      ],
+      "multi": false,
+      "qcount": 1
+    }
+  },
+  "card": {
+    "strip": [
+      "pick one",
+      "billing-5",
+      "nostromo"
+    ],
+    "agent": "billing-5",
+    "computer": "nostromo",
+    "ts": "9:41",
+    "ask": "which plan should I build: A, B or C?",
+    "opts": [
+      [
+        "a",
+        "plan a",
+        "patch the widget engine in place, smallest diff, 1 file"
+      ],
+      [
+        "b",
+        "plan b",
+        "split the engine into two modules, 4 files, one new test"
+      ],
+      [
+        "c",
+        "plan c",
+        "rewrite on the shared store, 9 files, needs a migration"
+      ]
+    ],
+    "multi": false,
+    "qcount": 1
+  }
+}

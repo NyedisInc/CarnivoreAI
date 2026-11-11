@@ -8,6 +8,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from src.api.auth import require_auth
+from src.cplugs.host.peer_refusal import refuse_peer_token_writes
 from src.api import catalog_cplug_gates, catalog_mod_gates
 from src.api.catalog_install_support import (
     apply_now,
@@ -262,7 +263,7 @@ async def preview_install(
 @router.post(
     "/catalog/install",
     response_model=InstalledItemView,
-    dependencies=[Depends(require_auth)],
+    dependencies=[Depends(refuse_peer_token_writes), Depends(require_auth)],
 )
 async def install_item(
     request: Request, body: InstallRequest
@@ -319,7 +320,7 @@ async def run_install(
                 raise as_sheet from None
             raise
 
-    cplug_reserved = False
+    cplug_reserved: Optional[catalog_cplug_gates.Reservation] = None
     row_landed = False
     try:
         plugin_code = await asyncio.to_thread(
@@ -405,7 +406,8 @@ async def run_install(
         if item.kind == KIND_MOD and verdict.replaces:
             await asyncio.to_thread(catalog_mod_gates.unregister_planned, verdict)
         if item.kind == KIND_CPLUG:
-            cplug_reserved = await asyncio.to_thread(catalog_cplug_gates.reserve_install, request, item)
+            cplug_reserved = await asyncio.to_thread(catalog_cplug_gates.reserve_install, request, item,
+                getattr(getattr(version, "sig", None), "key_id", "") or "")
         try:
             row = await asyncio.to_thread(
                 apply_now, request, verdict, index_url, consent_via
@@ -421,8 +423,8 @@ async def run_install(
             )
     finally:
         await asyncio.to_thread(discard_staging, staging)
-        if cplug_reserved and not row_landed:
-            await asyncio.to_thread(catalog_cplug_gates.release_reservation, request, item)
+        if cplug_reserved is not None and not row_landed:
+            await asyncio.to_thread(catalog_cplug_gates.release_reservation, request, item, cplug_reserved)
 
     if row.kind == KIND_CPLUG:
         await asyncio.to_thread(catalog_cplug_gates.reload_and_push, request)

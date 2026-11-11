@@ -96,6 +96,7 @@ function fits(prompt: BoardPrompt, a: AnswerRow): boolean {
   return true;
 }
 
+/* a newer revision */
 export function carryDraft(draft: Draft, from: BoardRevision, to: BoardRevision, words: { yes: string; no: string }): Draft {
   const answers: AnswerRow[] = [];
   const spill: string[] = [];

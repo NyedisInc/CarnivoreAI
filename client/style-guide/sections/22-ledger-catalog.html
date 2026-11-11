@@ -50,12 +50,11 @@ under the header with one scrolling box, a header row, a capped and centred colu
     <dt>drawer widget area</dt>
     <dd>The drawer's bottom area is a widget zone, not a fixed panel (Joe (ccsliinc), 2026-09-29):
         <code>web/src/lib/drawer-zone/</code>, an ordered list of widget instances that defaults to the providers panel.
-        <code>DrawerZone.svelte</code> is the list (<code>.dz</code>, the empty drop hint <code>.dz-empty</code> and the
-        insertion mark <code>.dz-mark</code>; while a widget drawer row is carried the area's widgets region shows it is a
-        drop area by its <code>data-drop</code> state, a faint cyan tint, deeper with a solid inner hairline under the pointer,
-        Joe (ccsliinc), 2026-10-03; nothing is drawn refused); <code>ZoneItem.svelte</code> wraps one widget and, only in edit layout, draws
-        its strip (<code>.dz-strip</code>: drag handle <code>[data-zone-handle]</code> (each strip key a base quiet <code>IconButton</code>, remove its close variant), name, look picker (a base <code>Segmented</code>),
-        up, down, remove); <code>zone-shell/PlacementBody.svelte</code> (<code>.dzc</code>; stacked cards, the compact usage card included, sit in <code>.dz-item</code> wrappers (<code>ZoneItem.svelte</code>), touch and share ONE hairline, the lower card giving up its top edge, #2779) draws any other core widget's cell in the
+        <code>DrawerZone.svelte</code> is the list (<code>.dz</code>) and it is ALWAYS ON, with no edit mode (the widget engine, slice S5): a header row
+        (<code>.dz-head</code>, only a quiet + base <code>IconButton</code> that opens the widget drawer on this zone, drawn ONLY while layout editing is on), the
+        column the motion core owns (<code>.dz-widgets</code>, each card in a wrapper <code>.dz-cell</code> over <code>.dz-cell__body</code>), the empty drop hint
+        <code>.dz-empty</code> and the dashed placeholder <code>.dz-pending</code> of a widget being dragged in, with the accent insertion lines <code>.dz-mark</code> (column) and <code>.dz-gmark</code> (glance row) where it would land. A card is picked up by its own title row, reordered with springs and
+        written once on release; look, view and remove live in the widget's own menu; <code>ZoneItem.svelte</code> wraps one widget body; <code>zone-shell/PlacementBody.svelte</code> (<code>.dzc</code>; stacked cards, the compact usage card included, sit in <code>.dz-cell</code> wrappers (<code>DrawerZone.svelte</code>), touch and share ONE hairline, the lower card giving up its top edge, #2779) draws any other core widget's cell in the
         same card look as <code>.ldp</code>; it is also the body of a bar slide-out (<code>.rail-body</code>) and of a pop-out window. Any one-copy widget drops here from the widget drawer's
         one list (no zone list since 2026-10-03, Joe (ccsliinc): "anything can be dropped anywhere"); its
         <code>looks</code> (compact, full) are chosen per instance.
@@ -104,7 +103,10 @@ under the header with one scrolling box, a header row, a capped and centred colu
         <code>SwitchAccountButton.svelte</code> is the per-card "switch" or "active", right-justified on the title line
         (the base button and the info tag, both carrying <code>data-asw</code>), or the words "needs one-time setup" in
         the ledger's warn colour (the same base button, <code>data-tone="setup"</code>), for an account signed in but not set up, which the server refuses to
-        switch onto (#671). A refusal in words, never a disabled button.
+        switch onto (#671). A refusal in words, never a disabled button: a click while another step runs says so.
+        <code>DrawerSwitchNote.svelte</code> (<code>.dsn</code>, <code>.dsn-line</code>, <code>.dsn-actions</code>) is the drawer's
+        answer to a switch click under the account row: the error in words, one line that it switched, and the running sessions
+        still on the old login with the panel's confirm box and bulk restart (#2914).
         Auto sleep (#559) is two rows of the settings page now (a switch and the idle minutes). These are not mounted live
         here because they read and write real account settings.</dd>
     <dt>scopes and cost</dt>
@@ -571,6 +573,11 @@ under the header with one scrolling box, a header row, a capped and centred colu
         needs and what needs it in hairline rows (<code>.plp-rows</code>, <code>.plp-row</code>, <code>.plp-row__main</code>,
         <code>.plp-row__sub</code>, an empty side in <code>.plp-row--empty</code>), each with a tracked word (<code>.plp-tag</code>: ok green, a
         plugin that is off yellow, a missing feature or version coral, which refuses turning it on), then version, author and id.
+        <b>Health</b> (issue #2934, <code>GET /api/v1/cplug-owner/health</code>): a <code>.pl-label</code> region on the overview with ONE line
+        from <code>PluginHealthLine.svelte</code>: the pane's state word (<code>.plp-state</code>, green on, yellow held or needs approval, dim off),
+        the reason in a sentence (<code>.plp-actions__note</code>) and the one button that fixes it, drawn only when the page has a door for it. Claude
+        Code plugins have no card, so <code>ClaudeCodeHealth.svelte</code> lists their lines in the zone under the bar. The report is read when the
+        page opens and after a change, never on a timer.
         <b>Settings</b>: <code>PluginSettings.svelte</code>, the schema-driven <code>SettingsForm</code> bound to the plugin's
         <code>settings_schema</code> and written through <code>PUT /api/v1/cplugs/{id}</code>, plus a plugin's extra block
         (<code>plugin-extras.ts</code>; Task Manager's is <code>HuddleSwarmSettings.svelte</code>); a plugin with nothing to set says so in one dim
@@ -935,6 +942,12 @@ under the header with one scrolling box, a header row, a capped and centred colu
         name), the from branch, and, from the repository's <code>.carnivore/worktree.json</code>, the setup box and the files to
         copy. An unapproved or edited setup file shows its full text in the left-ruled <code>.lwt-file</code> with an "approve
         setup" quiet button first; a secret-looking copy name starts unticked. The look copies <code>LaunchNamePin</code>.</dd>
+    <dt>story</dt>
+    <dd><code>LaunchStory.svelte</code> (<code>.lst</code>, <code>.lst-label</code>, <code>.lst-note</code>, <code>.lst-error</code>,
+        <code>.lst-actions</code>; argent slice P7b) follows the worktree row and shows only while the argent feature is on: a
+        title search over a native select grouped active sprint, recent, all (a phone gets its own full-width list), "skip" for
+        unassigned, and an inline "new item" that lists Argent's near-duplicates to join on a conflict. The look copies
+        <code>LaunchWorktree</code>.</dd>
 </dl>
 
 <h3 class="sg-h3" id="projects-shared">project marks and the project menu</h3>

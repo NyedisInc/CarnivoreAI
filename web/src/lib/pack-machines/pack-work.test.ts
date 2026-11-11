@@ -20,7 +20,7 @@ setLocale('en');
 const CFG = { in_use: { cpu_pct: 20, mem_pct: 25 }, away: { cpu_pct: 5, mem_pct: 6 }, schedule: { in_use_from: '08:00', in_use_to: '18:00', days: [0, 1] }, keyboard_rule: { enabled: false, idle_minutes: 10 } };
 const snap = { load: { cores: 10, load_1: 5, memory_percent: 58, disk_percent: 40 }, battery: null,
   reserve: { level: 'away', cpu_pct: 5, mem_pct: 6, source: 'schedule', config: CFG },
-  restrictions: { may_host_agents: true, may_receive_projects: true, may_install_tools: false, may_receive_credentials: false, may_update_carnivore: true, max_agents: 3, allowed_projects: [], allowed_companies: [] } };
+  restrictions: { may_host_agents: true, may_receive_projects: true, may_install_tools: false, may_receive_credentials: false, may_receive_global_setup: false, may_update_carnivore: true, max_agents: 3, allowed_projects: [], allowed_companies: [] } };
 const machine = (id: string, over: Record<string, unknown> = {}) => ({ install_id: id, label: id, is_self: false, is_master: false, paired: true, state: 'connected',
   capabilities: [], specs: null, snapshot: snap, age_seconds: 2, ...over });
 

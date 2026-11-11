@@ -32,11 +32,10 @@ describe('pr badge', () => {
         open.mockRestore();
     });
 
-    test('merged is calm, no gh account is one inert hint, and no pr draws nothing', () => {
+    test('merged is calm, no gh account draws nothing, and no pr draws nothing', () => {
         expect(draw({ pr: { number: 9, state: 'merged', url: 'https://github.com/me/app/pull/9' } })
             .querySelector('[data-badge-kind="pr"]')?.getAttribute('data-tone')).toBe('good');
-        const hint = draw({ pr: { hint: 'connect_gh' } }).querySelector('[data-badge-kind="pr"]') as HTMLElement;
-        expect(hint.tagName).toBe('SPAN');
+        expect(draw({ pr: { hint: 'connect_gh' } }).querySelector('[data-badge-kind="pr"]')).toBeNull();
         expect(draw({ pr: null }).querySelector('[data-badge-kind="pr"]')).toBeNull();
     });
 });

@@ -67,7 +67,8 @@ def test_candidates_need_lp_carry_fid_short_and_exclude_self(tmp_path, lib, monk
                   bonjour.encode_txt([("p", "1"), ("fid", "x"), ("mid", discovery.hash_machine_id(UUID)),
                                       ("lp", "9443")]))
     assert d.candidates() == [{"name": "alpha", "fid": "abcdef123456", "fid_short": "abcdef",
-                               "addresses": ["10.0.0.5"], "lp": 9443, "pack_name": None}]
+                               "addresses": ["10.0.0.5"], "lp": 9443, "pack_name": None,
+                               "computer_label": None, "members": []}]
 
 
 def test_probe_picks_only_the_one_with_its_join_port_open():

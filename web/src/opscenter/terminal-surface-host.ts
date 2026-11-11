@@ -36,10 +36,11 @@ export function mountTerminalGrid(containerId: string): boolean {
     return mountPanel(containerId, TerminalSurface) !== null;
 }
 
-export function openTerminalComponents(anchor: HTMLElement | null): boolean {
+export function openTerminalComponents(anchor: HTMLElement | null, placement: 'beside' | 'below' = 'beside'): boolean {
     return (
         mountPanel(TERMINAL_COMPONENTS_ID, ComponentsPopover, {
             anchor,
+            placement,
             store: terminalLayout,
             onClose: () => closeTerminalComponents(),
         }) !== null

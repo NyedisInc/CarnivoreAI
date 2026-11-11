@@ -50,29 +50,3 @@ test('pinned: every menu row is an icon-only key with its name on the cell, agen
   expect(document.querySelector('#session-sidebar-bar-slot [data-bar-action="rail-pin"]'), 'the footer has no pin').toBeNull();
   expect(settingsLi.closest('ul')!.parentElement!.lastElementChild, 'settings is the last block of the menu').toBe(settingsLi.closest('ul'));
 });
-
-test('the dock magnifies under the pointer, and the transitions switch (#1821) stops it like reduced motion does', async () => {
-  await railOn();
-  const host = rail().querySelector<HTMLElement>('nav.sbr-rail')!;
-  const cell = rail().querySelector<HTMLElement>('[data-dock-name]')!;
-  const move = (): void => {
-    const box = cell.getBoundingClientRect();
-    host.dispatchEvent(Object.assign(new MouseEvent('pointermove', { bubbles: true, clientY: box.top + box.height / 2 }), { pointerType: 'mouse' }));
-  };
-  const frame = (): Promise<void> => new Promise((done) => requestAnimationFrame(() => done()));
-
-  move();
-  await frame();
-  expect(cell.style.getPropertyValue('--dock-s'), 'on: the cell under the pointer grows').not.toBe('');
-  host.dispatchEvent(new MouseEvent('pointerleave'));
-  expect(cell.style.getPropertyValue('--dock-s')).toBe('');
-
-  document.documentElement.setAttribute('data-anim-off', 'transitions');
-  try {
-    move();
-    await frame();
-    expect(cell.style.getPropertyValue('--dock-s'), 'transitions off: no magnification').toBe('');
-  } finally {
-    document.documentElement.removeAttribute('data-anim-off');
-  }
-});

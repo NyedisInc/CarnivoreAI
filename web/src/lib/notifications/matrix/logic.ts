@@ -1,4 +1,4 @@
-import { SCREEN, type Cell, type Column, type Family, type RoutingSettings, type TypeRow } from './api';
+import { DESKTOP, SCREEN, type Cell, type Column, type Family, type RoutingSettings, type TypeRow } from './api';
 
 export const PHONE_QUERY = '(max-width: 1023px)';
 
@@ -39,11 +39,12 @@ export function destinationColumns(settings: RoutingSettings): Column[] {
 }
 
 export function cellOf(settings: RoutingSettings, column: string, typeId: string): Cell | undefined {
+    if (column === DESKTOP) return settings.desktop[typeId];
     return column === SCREEN ? settings.screen[typeId] : settings.ticks[column]?.[typeId];
 }
 
 export function lockReason(row: TypeRow, column: string): '' | 'in_app' | 'health' {
-    if (column === SCREEN) return '';
+    if (column === SCREEN || column === DESKTOP) return '';
     if (!row.defaults.outside_locked_off) return '';
     return row.id === 'alert.notifications' ? 'health' : 'in_app';
 }

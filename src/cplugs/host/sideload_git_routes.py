@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, StrictStr
 
 from src.api.auth import require_auth
+from src.cplugs.host.peer_refusal import refuse_peer_token_writes
 from src.models.catalog_api import InstallConsent
 from src.core.dev_tools import git_guard
 from src.cplugs.host import identity, sideload, sideload_git, sideload_kind, sideload_routes
@@ -18,7 +19,7 @@ from src.cplugs.host.owner_switch import _runtime as _sidecar_runtime
 
 logger = structlog.get_logger()
 
-router = APIRouter(prefix="/cplug-owner", tags=["cplugs"], dependencies=[Depends(require_auth)])
+router = APIRouter(prefix="/cplug-owner", tags=["cplugs"], dependencies=[Depends(refuse_peer_token_writes), Depends(require_auth)])
 _one_at_a_time = asyncio.Lock()
 
 
@@ -80,7 +81,8 @@ async def post_sideload_git(body: GitBody, request: Request) -> Dict[str, Any]:
             logger.warning("cplug_sideload_git_checkout_failed", url=sideload_git.redacted(url), error_type=type(exc).__name__)
             raise HTTPException(status_code=500, detail={"code": "sideload_failed", "detail": "the checkout could not be written"}) from exc
         try:
-            answer = await sideload_routes.sync_folder(live, got["source"], got["name"], env=sideload_routes.env_of(request, state_dir), consent=body.consent)
+            answer = await sideload_routes.sync_folder(live, got["source"], got["name"], env=sideload_routes.env_of(request, state_dir), consent=body.consent,
+                                                       root=got["checkout"])
         except BaseException:
             if got["fresh"]:
                 await asyncio.to_thread(shutil.rmtree, got["checkout"], True)

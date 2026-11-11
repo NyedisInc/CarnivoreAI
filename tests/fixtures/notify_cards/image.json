@@ -1,0 +1,60 @@
+{
+  "kind": "image",
+  "payload": {
+    "title": "home sent an image",
+    "body": "dashboard screenshot, 1170 by 2532",
+    "path": "/sessions/ses_0123456789ab",
+    "thread": "local|ses_0123456789ab",
+    "v": 2,
+    "sub": "image on studio",
+    "kind": "image",
+    "type": "agent.message",
+    "lv": "a",
+    "snd": "soft",
+    "cap": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ttl": 1794000000,
+    "acts": [
+      [
+        "open",
+        "open"
+      ],
+      [
+        "save",
+        "save"
+      ]
+    ],
+    "card": {
+      "strip": [
+        "image",
+        "home",
+        "studio"
+      ],
+      "agent": "home",
+      "computer": "studio",
+      "ts": "9:41",
+      "w": 1170,
+      "h": 2532,
+      "caption": "dashboard screenshot"
+    },
+    "media": {
+      "id": "m_1123456789ab",
+      "mime": "image/png",
+      "bytes": 884736,
+      "w": 1170,
+      "h": 2532
+    }
+  },
+  "card": {
+    "strip": [
+      "image",
+      "home",
+      "studio"
+    ],
+    "agent": "home",
+    "computer": "studio",
+    "ts": "9:41",
+    "w": 1170,
+    "h": 2532,
+    "caption": "dashboard screenshot"
+  }
+}

@@ -14,6 +14,7 @@ from src.api.capped_reads import read_capped_upload
 from src.api.remote_route_guard import refuse_remote
 from src.api.uploads import save_upload_to_session_dir, validate_upload
 from src.config import settings
+from src.core.budget_hold.gate import live_hold_check
 from src.core.sessions.errors import SessionInputFailed, SessionNotRunning
 from src.models import CommandRequest, SuccessResponse, UploadImageResponse
 from src.api.error_response import api_error
@@ -58,6 +59,9 @@ async def send_command(request: Request, body: CommandRequest):
     """
     session_manager = request.app.state.session_manager
     checked_id = await _refuse_open_dialog(request)
+    held = await live_hold_check(session_manager, checked_id, body.command + "\r") if checked_id else None
+    if held and held.held:
+        raise HTTPException(status_code=409, detail={"code": "budget_held", "item": held.item})
 
     try:
         logger.info("api_send_command", length=len(body.command))

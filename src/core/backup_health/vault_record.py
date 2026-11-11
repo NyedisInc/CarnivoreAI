@@ -128,6 +128,7 @@ def evaluate(record: Dict[str, Any], *, now: Optional[float] = None, stale_hours
         "unavailable": record.get("unavailable") or None,
         "over_cap": bool(record.get("over_cap")),
         "damaged": int(record.get("damaged") or 0),
+        "mass_gone": record.get("mass_gone") if isinstance(record.get("mass_gone"), dict) else None,
         "pending": int(record.get("pending") or 0),
         "legacy_unmigrated": int(record.get("legacy_unmigrated") or 0),
         "folders": [row for row in record.get("folders") or [] if isinstance(row, dict)],

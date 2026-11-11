@@ -192,7 +192,6 @@ export function transcriptPath(session: HistorySession): string | null {
 export type ProjectActionId =
     | 'new-session'
     | 'rename-project'
-    | 'copy-path'
     | 'load-blueprint'
     | 'turn-on-agent'
     | 'archive-project'
@@ -218,7 +217,6 @@ export interface MenuItem {
 
 export const SET_COMPANY = 'set-company:';
 
-export const PICK_COLOR = 'pick-color';
 export const SET_COLOR = 'set-color:';
 
 export function companyKeyOf(group: HistoryGroup): string {
@@ -269,47 +267,6 @@ export function projectPassesState(r: ProjectRow, state: string): boolean {
 }
 
 export const SWARM_NEW_SESSIONS = 'swarm-new-sessions';
-
-export function projectActions(
-    project: { readonly archived_at: string | null; readonly root?: string | null; readonly company_id?: number | null; readonly has_image?: boolean; readonly storage?: { readonly state: string; readonly packed_in?: number | null } | null; readonly pack_state?: string | null; readonly id?: number | null; readonly new_sessions_join_swarm?: boolean },
-    companies: readonly Company[] = [],
-    withColor = false,
-    agentOffered = false,
-): readonly MenuItem[] {
-    const hidden = Boolean(project.archived_at);
-    const out: MenuItem[] = [];
-    if (!hidden) out.push({ id: 'new-session', labelKey: 'projects.page.action.new_session_here' });
-    out.push({ id: 'rename-project', labelKey: 'projects.page.action.rename_project' });
-    if (withColor) out.push({ id: PICK_COLOR, labelKey: 'projects.page.action.color' });
-    if (project.root) out.push({ id: 'copy-path', labelKey: 'projects.page.action.copy_path' });
-    if (!hidden) out.push({ id: 'load-blueprint', labelKey: 'layout.row.load_blueprint' });
-    if (agentOffered && !hidden) out.push({ id: 'turn-on-agent', labelKey: 'projects.page.action.turn_on_agent' });
-    if (typeof project.id === 'number' && !hidden) out.push({ id: SWARM_NEW_SESSIONS, labelKey: 'projects.page.action.new_sessions_join_swarm', checked: project.new_sessions_join_swarm === true });
-    if (project.pack_state === 'moved_away') out.push({ id: 'migrate-back', labelKey: 'projects.page.action.move_back' });
-    else if (!hidden) out.push({ id: 'migrate-project', labelKey: 'projects.page.action.move_computer' });
-    out.push({ id: 'set-image', labelKey: 'projects.page.action.set_image' });
-    if (project.has_image) out.push({ id: 'remove-image', labelKey: 'projects.page.action.remove_image' });
-    out.push({ id: 'regenerate-art', labelKey: 'projects.page.action.regenerate_art' });
-    const byName = [...companies].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
-    out.push({
-        id: 'add-to-company',
-        labelKey: 'projects.page.action.add_company',
-        children: [
-            ...byName.map((c) => ({ id: `${SET_COMPANY}${c.id}`, label: c.name, checked: c.id === project.company_id })),
-            { id: 'new-company-for-project', labelKey: 'projects.page.action.new_company_ellipsis', sep: byName.length > 0 },
-        ],
-    });
-    if (typeof project.company_id === 'number') out.push({ id: 'remove-from-company', labelKey: 'projects.page.action.remove_from_company' });
-    const state = project.storage?.state ?? 'unpacked';
-    const packed = state === 'packed';
-    const busy = !packed && state !== 'unpacked';
-    if (hidden && !busy && !packed) out.push({ id: 'pack-folder', labelKey: 'projects.page.action.pack_folder', sep: true });
-    if (packed && !project.storage?.packed_in) out.push({ id: 'unpack-folder', labelKey: 'projects.page.action.unpack_folder', sep: true });
-    if (hidden && !packed && !busy) out.push({ id: 'unarchive-project', labelKey: 'projects.page.action.unarchive_project', sep: !out.at(-1)?.sep });
-    if (!hidden) out.push({ id: 'archive-project', labelKey: 'projects.page.action.archive_project', sep: true });
-    out.push({ id: 'delete-project', labelKey: 'projects.page.action.delete_project' });
-    return out;
-}
 
 export function companyActions(hasImage = false): readonly MenuItem[] {
     return [

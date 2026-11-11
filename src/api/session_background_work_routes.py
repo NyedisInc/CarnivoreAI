@@ -15,11 +15,13 @@ from src.core.background_work import batch as bw_batch
 from src.core.background_work import guard as bw_guard
 from src.core.background_work import tree as bw_tree
 from src.core.background_work.attribution import LaunchOwners, read_owners
-from src.core.background_work.listing import list_processes
+from src.core.background_work import leftovers as bw_leftovers
+from src.core.background_work.listing import ListedProcess, list_processes
 from src.core.background_work.terminate import LivenessUnmeasured, terminate
 from src.models.background_work import (
     BackgroundProcess,
     SessionBackgroundWork,
+    StopLeftoversRequest,
     TargetResult,
     TerminateAllRequest,
     TerminateAllResponse,
@@ -81,22 +83,42 @@ async def get_session_background_work(request: Request, session_id: str) -> Sess
                                      detail="no claude process runs in this pane")
     listed = await asyncio.to_thread(list_processes, tree)
     owners = await _owners(session_manager, info, tmux_name) if listed else LaunchOwners("ok")
+    marks = await _owner_marks(session_manager, info, tmux_name, listed, owners)
     return SessionBackgroundWork(
         state="ok", family=family, as_of=now, owners=owners.state,
+        leftovers=bw_leftovers.leftover_count(marks),
         detail="tool shells under the agent process; a monitor or sub-agent with "
                "no process of its own is not listed here",
         processes=[
             BackgroundProcess(pid=p.pid, start=p.start, task_id=p.task_id,
                               started_at=_iso(p.started_at), children=p.children,
-                              summary=p.summary, agent_id=owners.owner_of(p.task_id))
+                              summary=p.summary, agent_id=owners.owner_of(p.task_id),
+                              owner_finished=marks.get(p.pid))
             for p in listed
         ],
     )
 
 
-async def _owners(session_manager: Any, info: Any, tmux_name: str) -> LaunchOwners:
-    conversation_uuid = session_manager.claude_uuid_for_tmux_name(tmux_name)
+def _conversation_ref(session_manager: Any, info: Any, tmux_name: str) -> tuple[Optional[str], Optional[str]]:
     working_dir = info.session.working_dir if info.session is not None else None
+    return session_manager.claude_uuid_for_tmux_name(tmux_name), working_dir
+
+
+async def _owner_marks(session_manager: Any, info: Any, tmux_name: str,
+                       listed: list[ListedProcess], owners: LaunchOwners) -> dict[int, Optional[bool]]:
+    agents = [owners.owner_of(p.task_id) for p in listed]
+    wanted = [a for a in agents if a]
+    finished = None
+    if owners.state == "ok" and wanted:
+        uuid, working_dir = _conversation_ref(session_manager, info, tmux_name)
+        path = await asyncio.to_thread(bw_leftovers.locate_conversation, uuid, working_dir)
+        finished = await asyncio.to_thread(bw_leftovers.finished_agent_ids, path, wanted)
+    return dict(bw_leftovers.owner_finished_by_pid(
+        listed, owners.by_task, owners.state == "ok", finished if wanted else frozenset()))
+
+
+async def _owners(session_manager: Any, info: Any, tmux_name: str) -> LaunchOwners:
+    conversation_uuid, working_dir = _conversation_ref(session_manager, info, tmux_name)
     return await asyncio.to_thread(read_owners, conversation_uuid, working_dir=working_dir)
 
 
@@ -204,6 +226,71 @@ async def terminate_background_processes(
         refused={a.pid: a.code for a in answers if a.code},
         term=result.term if result else [], kill=result.kill if result else [],
         survivors=result.survivors if result else [],
+    )
+    return TerminateAllResponse(
+        results=[TargetResult(pid=a.pid, outcome=a.outcome, code=a.code, detail=a.detail)
+                 for a in answers],
+        term=result.term if result else [], kill=result.kill if result else [],
+        survivors=result.survivors if result else [],
+    )
+
+
+def guarded_stop_leftovers(tmux_name: str, socket: str, listed: list[ListedProcess],
+                           marks: dict[int, Optional[bool]],
+                           requested: Optional[list[tuple[int, str]]]) -> tuple[bw_leftovers.StopPlan, list, Any]:
+    plan = bw_leftovers.plan_stop(listed, marks, requested)
+    verdicts, result = guarded_terminate_all(tmux_name, socket, plan.targets) if plan.targets else ([], None)
+    return plan, verdicts, result
+
+
+@router.post(
+    "/sessions/{session_id}/background-work/stop-leftovers",
+    response_model=TerminateAllResponse,
+    dependencies=[Depends(require_peer_sessions)],
+)
+async def stop_leftover_shells(
+    request: Request, session_id: str, body: Optional[StopLeftoversRequest] = None,
+) -> TerminateAllResponse:
+    """Stop the tool shells a finished sub-agent left behind (issue #2874).
+
+    Description: measures the session's shells and which of them belong to
+      a sub-agent that is done, then stops exactly those pids, each
+      through the single-stop guard. Never a pattern; nothing runs this on
+      its own, the owner chooses. A requested pid that is not a measured
+      leftover is reported ``refused`` with code ``not_leftover``.
+    Inputs: request (Request). session_id (str). body (StopLeftoversRequest
+      | None) - the (pid, start) pairs shown to the user, or none for all.
+    Output: TerminateAllResponse.
+    Raises: HTTPException 404 - unknown session or pane; 409 - remote;
+      422 - an oversized list; 503 - not measurable.
+    Example: POST /api/v1/sessions/ses_abc/background-work/stop-leftovers
+      {"targets": [{"pid": 89199, "start": "Mon Sep 28 08:58:46 2026"}]}
+    """
+    session_manager, info, tmux_name = await _resolve(request, session_id, "stopping leftover shells")
+    family = info.agent_family
+    if family is not None and family != DEFAULT_FAMILY:
+        return TerminateAllResponse(results=[])
+    socket = session_manager.tmux_socket_name()
+    requested = [(t.pid, t.start) for t in body.targets] if body and body.targets else None
+    try:
+        tree = await asyncio.to_thread(bw_tree.measure, tmux_name, socket)
+        listed = await asyncio.to_thread(list_processes, tree) if tree.agent_pid is not None else []
+        owners = await _owners(session_manager, info, tmux_name) if listed else LaunchOwners("ok")
+        marks = await _owner_marks(session_manager, info, tmux_name, listed, owners)
+        plan, verdicts, result = await asyncio.to_thread(
+            guarded_stop_leftovers, tmux_name, socket, listed, marks, requested)
+    except bw_tree.PaneNotFound as exc:
+        raise api_error(404, "not_found", exc, step="stop_leftover_shells") from exc
+    except (bw_tree.TreeUnmeasured, LivenessUnmeasured) as exc:
+        logger.warning("background_work_stop_leftovers_unmeasured", session_id=session_id,
+                       tmux=tmux_name, error=str(exc))
+        raise api_error(503, "service_unavailable", exc, step="stop_leftover_shells") from exc
+    answers = plan.refused + bw_batch.outcomes(verdicts, result)
+    logger.info(
+        "background_work_stopped_leftovers", session_id=session_id, tmux=tmux_name,
+        targets=[pid for pid, _ in plan.targets],
+        refused={a.pid: a.code for a in answers if a.code},
+        term=result.term if result else [], kill=result.kill if result else [],
     )
     return TerminateAllResponse(
         results=[TargetResult(pid=a.pid, outcome=a.outcome, code=a.code, detail=a.detail)

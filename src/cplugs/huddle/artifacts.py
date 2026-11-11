@@ -7,7 +7,9 @@ from typing import Any, Dict, Optional, Tuple
 
 from src.cplugs.huddle import files
 from src.cplugs.huddle.rules import TaskManagerInvalid
+from src.cplugs.sdk.owner_text import owner_text
 from src.cplugs.sdk.sandboxed_html import view_headers
+from src.cplugs.sdk.visible_text import TextRefused
 
 MAX_BYTES = 2 * 1024 * 1024
 MAX_TITLE = 120
@@ -21,11 +23,19 @@ VIEW_HEADERS = view_headers(FILE_NAME)
 def clean(title: Any, description: Any, html: Any) -> Tuple[str, str, bytes]:
     if not isinstance(title, str) or not title.strip():
         raise TaskManagerInvalid("an artifact needs a title")
-    if len(title.strip()) > MAX_TITLE:
-        raise TaskManagerInvalid(f"the title is at most {MAX_TITLE} characters")
     if description is None:
         description = ""
-    if not isinstance(description, str) or len(description.strip()) > MAX_DESCRIPTION or "\n" in description.strip():
+    if not isinstance(description, str):
+        raise TaskManagerInvalid(f"the description is one line of at most {MAX_DESCRIPTION} characters")
+    try:
+        title, description = owner_text(title), owner_text(description)
+    except TextRefused as exc:
+        raise TaskManagerInvalid(f"the title or description {exc}") from exc
+    if not title.strip():
+        raise TaskManagerInvalid("an artifact needs a title")
+    if len(title.strip()) > MAX_TITLE:
+        raise TaskManagerInvalid(f"the title is at most {MAX_TITLE} characters")
+    if len(description.strip()) > MAX_DESCRIPTION or "\n" in description.strip():
         raise TaskManagerInvalid(f"the description is one line of at most {MAX_DESCRIPTION} characters")
     if not isinstance(html, str) or not html.strip():
         raise TaskManagerInvalid("an artifact needs its html page")

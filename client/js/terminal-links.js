@@ -3,14 +3,6 @@
 
     var URL_REGEX = /https?:[/]{2}[^\s"'!*(){}|\\\^<>`─-╿]*[^\s"':,.!?{}|\\\^~\[\]`()<>─-╿]/;
 
-    /* reads the ambient navigator */
-    function isMac() {
-        var nav = global.navigator;
-        if (!nav) return false;
-        var p = (nav.userAgentData && nav.userAgentData.platform) || nav.platform || '';
-        return /mac|iphone|ipad|ipod/i.test(p);
-    }
-
     function isTouchOnly() {
         return !!(global.matchMedia && global.matchMedia('(hover: none)').matches);
     }
@@ -18,7 +10,7 @@
     function shouldOpen(event) {
         if (isTouchOnly()) return true;
         if (!event) return false;
-        return isMac() ? !!event.metaKey : !!event.ctrlKey;
+        return event.button === undefined || event.button === 0;
     }
 
     function activate(event, uri) {

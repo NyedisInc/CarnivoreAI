@@ -65,11 +65,12 @@ class ApnsSender:
             return None
         return decoded if len(decoded) == payload_crypto.KEY_BYTES else None
 
-    async def send_typed(self, row_id: str, type_id: str, payload: Dict[str, str], instance: str = "") -> Optional[int]:
+    async def send_typed(self, row_id: str, type_id: str, payload: Dict[str, Any], instance: str = "",
+                         settle: bool = False) -> Optional[int]:
         row = next((r for r in await asyncio.to_thread(self._store.list) if r["id"] == row_id), None)
         if row is None:
             return None
-        if self._coalesced(row_id, type_id, instance):
+        if not settle and self._coalesced(row_id, type_id, instance):
             return 200
         try:
             key = await self._payload_key(row_id)
@@ -85,7 +86,7 @@ class ApnsSender:
             logger.warning("apns_seal_failed", device=row_id, error_type=type(exc).__name__)
             return STATUS_INVALID
         status = await self._post(row, blob, hashlib.sha256(f"{type_id}\0{instance}".encode("utf-8")).hexdigest()[:24])
-        if status == 200:
+        if status == 200 and not settle:
             self._record_delivered(row_id, type_id, instance)
         elif status == 410:
             await self._forget(row_id)

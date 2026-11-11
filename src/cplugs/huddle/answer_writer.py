@@ -79,7 +79,7 @@ class AnswerWriter:
             questions = structured.form_of_row(row)
             with _naming_item(row["item_id"]):
                 checked = answer_wire.validate(questions, answers)
-            text = rules.clean_text(answer_wire.text_of(questions, checked), "text", rules.MAX_MESSAGE)
+            text = rules.clean_text(rules.stored_text(answer_wire.text_of(questions, checked)), "text", rules.MAX_MESSAGE)
             item = store._row(conn, row["item_id"])
             seq = store._next_seq(conn)
             kinds.acknowledge(conn, item["id"], None if moves.is_swarm_lane(item) else ack_through)

@@ -3,14 +3,19 @@
     import type { Translate } from '../sessions/types';
     import type { CplugItem } from './cplugs-adapter';
     import DependencyPanel from './DependencyPanel.svelte';
+    import PluginHealthLine from './PluginHealthLine.svelte';
+    import type { HealthRow } from './plugin-health';
     import { surfaceChips } from './plugin-pane';
 
     interface Props {
         plugin: CplugItem;
+        health?: HealthRow;
+        canAct?: boolean;
+        onHealth?: () => void;
         t: Translate;
     }
 
-    const { plugin, t }: Props = $props();
+    const { plugin, health, canAct = false, onHealth = () => {}, t }: Props = $props();
 
     const chips = $derived(surfaceChips(plugin.surfaces, t));
     const removed = $derived(plugin.state === 'removed');
@@ -36,6 +41,12 @@
         {/if}
     </dl>
 </div>
+{#if health}
+    <div class="plp-region" data-plugin-health-region>
+        <h3 class="pl-label">{t('plugins.page.health.label')}</h3>
+        <PluginHealthLine row={health} {canAct} onAct={onHealth} {t} />
+    </div>
+{/if}
 {#if !removed}
     <div class="plp-region">
         <h3 class="pl-label">{t('plugins.page.pane.adds')}</h3>

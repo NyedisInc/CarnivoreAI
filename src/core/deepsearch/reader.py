@@ -44,29 +44,30 @@ class ConversationIndex:
 
     async def search(self, q: str, *, kinds: Optional[List[str]] = None, project: Optional[str] = None,
                      conversation_id: Optional[str] = None, limit: int = 20, offset: int = 0,
-                     per_group: int = 3, peers: bool = False, for_peer: bool = False) -> Dict[str, Any]:
+                     per_group: int = 3, peers: bool = False, for_peer: bool = False,
+                     sort: str = "relevance", exact_first: bool = False) -> Dict[str, Any]:
         def work(conn: sqlite3.Connection) -> Dict[str, Any]:
             gate = peer_air_gap.load_gate(self._state_dir) if for_peer else None
             return grouped.search_grouped(conn, self._state_dir, q, kinds=kinds, project=project,
                                           conversation_id=conversation_id, limit=limit, offset=offset,
-                                          per_group=per_group, peer_gate=gate)
+                                          per_group=per_group, peer_gate=gate, sort=sort, exact_first=exact_first)
 
         try:
             local = asyncio.to_thread(self._read, work)
             if peers and peer_deepsearch.peers_wanted(project, offset):
                 return await peer_deepsearch.with_peers(self._state_dir, local, q=q, kinds=kinds, project=project,
-                                                        conversation_id=conversation_id, limit=limit, per_group=per_group)
+                                                        conversation_id=conversation_id, limit=limit, per_group=per_group, sort=sort)
             return await local
         except grouped.InvalidKinds as exc:
             raise InvalidSearch(str(exc)) from exc
 
     async def search_peers(self, q: str, *, kinds: Optional[List[str]] = None, project: Optional[str] = None,
                            conversation_id: Optional[str] = None, limit: int = 20, offset: int = 0,
-                           per_group: int = 3) -> Dict[str, Any]:
+                           per_group: int = 3, sort: str = "relevance") -> Dict[str, Any]:
         if not peer_deepsearch.peers_wanted(project, offset):
             return {"groups": [], "total_conversations": 0, "total_matches": 0, "peer_unavailable": []}
         return await peer_deepsearch.peers_only(self._state_dir, q=q, kinds=kinds, project=project,
-                                                conversation_id=conversation_id, limit=limit, per_group=per_group)
+                                                conversation_id=conversation_id, limit=limit, per_group=per_group, sort=sort)
 
     async def suggest(self, prefix: str, limit: int = 8) -> Dict[str, Any]:
         try:

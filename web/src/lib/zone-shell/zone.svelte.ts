@@ -21,7 +21,23 @@ export function createZone(spec: ZoneSpec): Zone {
   const headers = new Map<string, FrameHeader>();
   const offScreen = $state<Record<string, boolean>>({});
 
-  const tabOf = (key: string): TabRef | undefined => spec.tabs().find((one) => one.key === key);
+  const kept = new Map<string, TabRef>();
+  const sameRef = (a: TabRef, b: TabRef): boolean =>
+    a.kind === b.kind && a.placement === b.placement && a.source === b.source && a.unseen === b.unseen;
+  const stableTabs = (): readonly TabRef[] => {
+    const fresh = spec.tabs();
+    const seen = new Set<string>();
+    const out = fresh.map((one) => {
+      seen.add(one.key);
+      const prev = kept.get(one.key);
+      if (prev && sameRef(prev, one)) return prev;
+      kept.set(one.key, one);
+      return one;
+    });
+    for (const key of [...kept.keys()]) if (!seen.has(key)) kept.delete(key);
+    return out;
+  };
+  const tabOf = (key: string): TabRef | undefined => stableTabs().find((one) => one.key === key);
   const headerIdOf = (tab: TabRef): string => spec.headerId?.(tab) ?? `${spec.key}#${tab.key}`;
   const setOnScreen = (tabKey: string, onScreen: boolean): void => {
     offScreen[tabKey] = !onScreen;
@@ -30,7 +46,7 @@ export function createZone(spec: ZoneSpec): Zone {
   return {
     spec,
     get tabs() {
-      return spec.tabs();
+      return stableTabs();
     },
     get active() {
       const key = spec.active();

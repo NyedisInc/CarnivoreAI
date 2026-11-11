@@ -10,6 +10,7 @@ import structlog
 
 from src.config.provider_accounts import DEFAULT_CLAUDE_CONFIG_DIR, ProviderAccount
 from src.core.provider_ledger import credential_signal, relay_accounts
+from src.core.provider_ledger.credentials import read_claude_credential
 from src.core.provider_ledger.default_login import default_login_is_configured
 from src.core.provider_ledger.poller_state import AccountState
 
@@ -51,7 +52,7 @@ async def read_accounts(
 def with_auto_default(
     accounts: List[ProviderAccount], label: Optional[str] = None, *, include_relay: bool = True
 ) -> List[ProviderAccount]:
-    if not default_login_is_configured(accounts):
+    if not default_login_is_configured(accounts) and read_claude_credential(DEFAULT_CLAUDE_CONFIG_DIR) is not None:
         accounts = [*accounts, default_login_row(label)]
     return relay_accounts.with_relay(accounts) if include_relay else accounts
 
@@ -100,6 +101,7 @@ async def mark_changed_signals(
         state
         for state in states.values()
         if state.credential_state in SIGNAL_WATCHED_STATES
+        or state.credential_state == "rate_limited"
     ]
     if not watched:
         return
@@ -117,4 +119,7 @@ async def mark_changed_signals(
         stamp = stamps[state.account.id]
         if stamp != state.last_signal:
             state.last_signal = stamp
-            state.next_poll_at = now
+            if state.credential_state == "rate_limited":
+                state.refresh_check_at = now
+            else:
+                state.next_poll_at = now

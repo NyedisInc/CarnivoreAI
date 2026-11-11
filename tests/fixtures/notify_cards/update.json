@@ -1,0 +1,59 @@
+{
+  "kind": "update",
+  "payload": {
+    "title": "claude code update ready",
+    "body": "2 sessions run an older version",
+    "path": "/sessions/ses_0123456789ab",
+    "thread": "local|ses_0123456789ab",
+    "v": 2,
+    "sub": "agent update on nostromo",
+    "kind": "update",
+    "type": "agent.update_ready",
+    "lv": "p",
+    "snd": "none",
+    "cap": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ttl": 1794000000,
+    "acts": [
+      [
+        "restart_agents",
+        "restart them"
+      ],
+      [
+        "later",
+        "later"
+      ]
+    ],
+    "card": {
+      "strip": [
+        "agent update",
+        "claude code",
+        "nostromo"
+      ],
+      "agent": "claude code",
+      "computer": "nostromo",
+      "ts": "9:41",
+      "from": "2.1.301",
+      "to": "2.1.312",
+      "sessions": [
+        "billing-5",
+        "api-docs"
+      ]
+    }
+  },
+  "card": {
+    "strip": [
+      "agent update",
+      "claude code",
+      "nostromo"
+    ],
+    "agent": "claude code",
+    "computer": "nostromo",
+    "ts": "9:41",
+    "from": "2.1.301",
+    "to": "2.1.312",
+    "sessions": [
+      "billing-5",
+      "api-docs"
+    ]
+  }
+}

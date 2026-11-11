@@ -24,6 +24,7 @@ import MockLayoutDemo from './specimens/MockLayoutDemo.svelte';
 import BarVisibilityDemo from './specimens/BarVisibilityDemo.svelte';
 import PinnedPanelDemo from './specimens/PinnedPanelDemo.svelte';
 import Meters from './specimens/Meters.svelte';
+import NotifyCardDemo from './specimens/NotifyCardDemo.svelte';
 import PackDemo from './specimens/PackDemo.svelte';
 import PackRowsDemo from './specimens/PackRowsDemo.svelte';
 import AccountChipDemo from './specimens/AccountChipDemo.svelte';
@@ -124,6 +125,7 @@ export const SPECIMENS: readonly Specimen[] = [
     { id: 'sg-live-pack-marks', component: as(PackDemo), props: { part: 'marks' } },
     { id: 'sg-live-pack-rows', component: as(PackRowsDemo) },
     { id: 'sg-live-meters-drawer', component: as(Meters), props: { part: 'drawer' } },
+    { id: 'sg-live-notify-card', component: as(NotifyCardDemo) },
     { id: 'sg-live-account-chip', component: as(AccountChipDemo) },
     { id: 'sg-live-drawer-header', component: as(DrawerChromeDemo), props: { part: 'header' } },
     { id: 'sg-live-drawer-stats', component: as(DrawerChromeDemo), props: { part: 'stats' } },

@@ -85,7 +85,8 @@ def clean_group(raw: Any) -> Dict[str, Any]:
             "by_kind": _counts(raw.get("by_kind")), "by_file_kind": _counts(raw.get("by_file_kind")),
             "session_uuid": None, "session": _text(raw.get("session")), "project_id": None, "project": _text(raw.get("project")),
             "first_prompt": _text(raw.get("first_prompt")), "working_dir": None, "last_active": _text(raw.get("last_active")),
-            "family": _text(raw.get("family")), "hits": hits}
+            "family": _text(raw.get("family")), "hits": hits,
+            **({"exact": raw["exact"]} if isinstance(raw.get("exact"), bool) else {})}
 
 
 def clean_context(raw: Any) -> Dict[str, Any]:
@@ -169,6 +170,10 @@ def merge(local: Dict[str, Any], answers: List[PeerAnswer]) -> Dict[str, Any]:
             extra_matches += group["matches"]
         lanes.append(fresh)
     groups = [lane[i] for i in range(max(len(x) for x in lanes)) for lane in lanes if i < len(lane)]
+    if any("exact" in g for g in groups):
+        if local.get("sort") == "date":
+            groups.sort(key=lambda g: g.get("last_active") or "", reverse=True)
+        groups.sort(key=lambda g: g.get("exact") is not True)
     own_total = local.get("total_conversations", 0)
     return {**local, "groups": groups, "count": len(groups), "local_total_conversations": own_total,
             "total_conversations": own_total + sum(len(x) for x in lanes[1:]),
@@ -180,8 +185,8 @@ def peers_wanted(project: Optional[str], offset: int) -> bool:
     return offset == 0 and not (project and project.strip().isdigit())
 
 
-def _path(q: str, kinds: Optional[List[str]], project: Optional[str], conversation_id: Optional[str], limit: int, per_group: int) -> str:
-    params = {"q": q[:SEARCH_QUERY_MAX_CHARS], "limit": limit, "per_group": per_group, **({"kinds": ",".join(kinds)} if kinds else {}),
+def _path(q: str, kinds: Optional[List[str]], project: Optional[str], conversation_id: Optional[str], limit: int, per_group: int, sort: str = "relevance") -> str:
+    params = {"q": q[:SEARCH_QUERY_MAX_CHARS], "limit": limit, "per_group": per_group, "sort": sort, **({"kinds": ",".join(kinds)} if kinds else {}),
               **({"project": project} if project else {}), **({"conversation_id": conversation_id} if conversation_id else {})}
     return f"{PEER_PATH}?{urlencode(params)}"
 
@@ -193,13 +198,14 @@ async def _ask(state_dir: Path, path: str) -> List[PeerAnswer]:
 
 
 async def with_peers(state_dir: Path, local: Awaitable[Dict[str, Any]], *, q: str, kinds: Optional[List[str]],
-                     project: Optional[str], conversation_id: Optional[str], limit: int, per_group: int) -> Dict[str, Any]:
-    answer, answers = await asyncio.gather(local, _ask(state_dir, _path(q, kinds, project, conversation_id, limit, per_group)))
+                     project: Optional[str], conversation_id: Optional[str], limit: int, per_group: int,
+                     sort: str = "relevance") -> Dict[str, Any]:
+    answer, answers = await asyncio.gather(local, _ask(state_dir, _path(q, kinds, project, conversation_id, limit, per_group, sort)))
     return await asyncio.to_thread(merge, answer, answers)
 
 
 async def peers_only(state_dir: Path, *, q: str, kinds: Optional[List[str]], project: Optional[str],
-                     conversation_id: Optional[str], limit: int, per_group: int) -> Dict[str, Any]:
-    answers = await _ask(state_dir, _path(q, kinds, project, conversation_id, limit, per_group))
-    return await asyncio.to_thread(merge, {"groups": [], "total_conversations": 0, "total_matches": 0}, answers)
+                     conversation_id: Optional[str], limit: int, per_group: int, sort: str = "relevance") -> Dict[str, Any]:
+    answers = await _ask(state_dir, _path(q, kinds, project, conversation_id, limit, per_group, sort))
+    return await asyncio.to_thread(merge, {"groups": [], "total_conversations": 0, "total_matches": 0, "sort": sort}, answers)
 

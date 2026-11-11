@@ -4,7 +4,7 @@ import { flushSync, mount, unmount } from 'svelte';
 import { tabVisibility, type VisibilityInput } from './zone-visibility';
 import { declaredActionsFor } from '../../opscenter/widgets/menu/declared-actions.svelte';
 import ZoneHarness from './fixtures/ZoneHarness.svelte';
-import { resetWorld, world } from './fixtures/world.svelte';
+import { resetWorld, world, worldZone } from './fixtures/world.svelte';
 
 const BASE: VisibilityInput = { unseen: false, panel: 'open', active: true, docHidden: false, onScreen: true };
 
@@ -166,5 +166,15 @@ describe('the visibility rune on the pane and in useWidget', () => {
     observer.report(pane, true);
     flushSync();
     expect(visibleOf('a')).toBe('shown');
+  });
+});
+
+describe('stable tab refs', () => {
+  test('a tab whose fields did not change keeps the same ref object when the list is rebuilt', () => {
+    resetWorld();
+    const zone = worldZone();
+    const first = zone.tabs[0];
+    world.tabs = world.tabs.map((one) => ({ ...one }));
+    expect(zone.tabs[0]).toBe(first);
   });
 });

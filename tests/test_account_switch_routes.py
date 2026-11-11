@@ -39,6 +39,13 @@ def config(tmp_path, monkeypatch):
 
 
 @pytest.fixture()
+def signed_in(monkeypatch):
+    from src.core.provider_ledger import poller_scan
+
+    monkeypatch.setattr(poller_scan, "read_claude_credential", lambda _config_dir: object())
+
+
+@pytest.fixture()
 def client(config):
     app = FastAPI()
     app.include_router(api_router, prefix="/api/v1")
@@ -47,7 +54,7 @@ def client(config):
         yield test_client
 
 
-def test_the_default_state_is_off_at_ninety_nine_with_nothing_chosen(client):
+def test_the_default_state_is_off_at_ninety_nine_with_nothing_chosen(client, signed_in):
     body = client.get(SWITCH_URL).json()
     assert body["auto_switch"] is False
     assert body["threshold_percent"] == 99
@@ -167,7 +174,7 @@ def test_setup_refuses_a_hand_written_profile_and_an_unknown_id(client, config, 
     assert client.post(SETUP_URL.format("nobody")).status_code == 404
 
 
-def test_activating_the_built_in_login_clears_the_pointer(client, config):
+def test_activating_the_built_in_login_clears_the_pointer(client, config, signed_in):
     client.post("/api/v1/provider-ledger/accounts/work/activate")
     response = client.post("/api/v1/provider-ledger/accounts/auto-claude-default/activate")
     assert response.status_code == 200

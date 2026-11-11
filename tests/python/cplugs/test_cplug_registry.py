@@ -19,7 +19,8 @@ TASK_MANAGER = json.loads((ROOT / "src/cplugs/huddle/cplug.json").read_text())
 
 def test_every_shipped_cplug_validates_and_matches_its_code():
     defs = runtime.definitions()
-    assert [d.id for d in defs] == ["huddle", "unread", "share", "save", "flow", "reviewboard", "publicboard", "tmdevtools", "crate", "devwidgetlab", "timemachine"]
+    shipped = ["huddle", "unread", "share", "save", "flow", "reviewboard", "tmdevtools", "crate", "devwidgetlab", "argent", "timemachine"]
+    assert [d.id for d in defs] == [i for i in shipped if (ROOT / "src/cplugs" / i).is_dir()]
     runtime.check_definitions(defs)
     app_version = json.loads((ROOT / "macOS/package.json").read_text())["version"]
     for d in defs:

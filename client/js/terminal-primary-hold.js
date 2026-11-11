@@ -22,7 +22,7 @@
     function defer(sessionId, retry) {
         if (!held(sessionId)) return false;
         delete started[sessionId];
-        refused[sessionId] = retry;
+        (refused[sessionId] = refused[sessionId] || []).push(retry);
         return true;
     }
 
@@ -32,7 +32,7 @@
         heldIds = [];
         refused = {};
         started = {};
-        Object.keys(pending).forEach(function (id) { if (!inFlight[id]) pending[id](); });
+        Object.keys(pending).forEach(function (id) { if (!inFlight[id]) pending[id].forEach(function (retry) { retry(); }); });
     }
 
     function navigatedTo(ids) {

@@ -3,11 +3,11 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette.concurrency import run_in_threadpool
 
 from src.api.auth import require_auth
+from src.api.error_response import api_error
 from src.api.remote_route_guard import refuse_remote
 from src.core.session_pane_facts import read_pane_facts
 from src.core.terminal_paths import open_app
@@ -15,7 +15,6 @@ from src.core.terminal_paths.resolve import resolve
 from src.models.terminal_paths import (OpenPathRequest, OpenPathResponse, ResolvedPath, ResolvePathsRequest,
                                        ResolvePathsResponse)
 
-logger = structlog.get_logger()
 router = APIRouter(tags=["terminal-paths"], dependencies=[Depends(require_auth)])
 
 
@@ -68,6 +67,5 @@ async def open_path(request: Request, session_id: str, body: OpenPathRequest) ->
     try:
         await open_app.open_path(found.path, body.app)
     except open_app.OpenFailed as exc:
-        logger.warning("terminal_path_open_failed", app=body.app, error=str(exc))
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+        raise api_error(502, "terminal_path_open_failed", exc, app=body.app) from exc
     return OpenPathResponse(path=found.path, app=body.app)

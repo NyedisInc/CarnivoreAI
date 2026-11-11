@@ -25,7 +25,7 @@ from src.api import peer_ws_auth, ws_credential
 from src.core.federation import peer_terminal_proxy
 from src.api.ws_connections import ConnectionManager, connection_manager, _resolve_backend
 from src.api.ws_viewer_drain import _drain_viewer, _pump_text
-from src.api.resize_negotiation import apply_negotiated_resize
+from src.api.resize_negotiation import apply_negotiated_resize, measured_size_frame
 from src.api import size_master
 from src.api.ws_startup_paint import paint_on_attach
 from src.api.ws_receive import receive_messages
@@ -175,6 +175,14 @@ async def websocket_terminal(websocket: WebSocket):
                 settled=verdict.settle,
                 reason=verdict.reason,
             )
+
+            if not handshake_hidden:
+                size_frame = await measured_size_frame(_resolve_backend(registry, target_sid))
+                if size_frame is not None:
+                    try:
+                        await websocket.send_text(size_frame)
+                    except (WebSocketDisconnect, RuntimeError) as exc:
+                        logger.info("ws_measured_size_not_delivered", error=str(exc))
 
             _strategy = await paint_on_attach(
                 websocket, _resolve_backend(registry, target_sid))

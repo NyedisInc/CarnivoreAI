@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import timedelta
+import dataclasses
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, List
@@ -33,9 +34,8 @@ def test_login_does_not_fire_at_boot_even_when_an_account_is_already_signed_out(
 def test_login_fires_once_on_the_transition_and_not_while_it_stays(captured) -> None:
     watch = login.LoginWatch()
     watch.observe([_acct("a", "ok")])
-    assert watch.observe([_acct("a", "expired")]) == ["a"]
-    assert watch.observe([_acct("a", "expired")]) == []
-    assert watch.observe([_acct("a", "missing")]) == []
+    assert watch.observe([_acct("a", "refused")]) == ["a"]
+    assert watch.observe([_acct("a", "refused")]) == []
     assert [e.type_id for e in captured] == ["provider.needs_login"] and captured[0].session_ref == "a"
     watch.observe([_acct("a", "ok")])
     assert watch.observe([_acct("a", "refused")]) == ["a"]
@@ -60,7 +60,7 @@ def test_login_counts_a_needs_login_poke_as_the_state(captured) -> None:
 
 @pytest.mark.asyncio
 async def test_the_poller_publish_feeds_the_login_watch(captured, no_builtin_default_login) -> None:
-    creds = {"c": live_claude_credential()}
+    creds = {"c": dataclasses.replace(live_claude_credential(), refresh_token_expires_at=datetime.now(timezone.utc) + timedelta(days=30))}
     clock = FakeClock()
     poller = poller_module.LedgerPoller(
         config_path=lambda: Path("/nonexistent/config.json"), list_accounts=lambda p: [claude_account()],
@@ -71,7 +71,7 @@ async def test_the_poller_publish_feeds_the_login_watch(captured, no_builtin_def
     await poller.run_pass()
     assert captured == []
     creds["c"] = live_claude_credential().__class__(
-        access_token="x", expires_at=NOW - timedelta(minutes=1), refresh_token_expires_at=NOW + timedelta(days=30),
+        access_token="x", expires_at=NOW - timedelta(minutes=1), refresh_token_expires_at=datetime.now(timezone.utc) - timedelta(minutes=1),
         scopes=("user:profile",), subscription_type="max", rate_limit_tier=None, source="keychain")
     clock.advance(3600)
     await poller.run_pass()
@@ -112,7 +112,7 @@ def test_update_checker_store_calls_the_source_only_for_an_available_answer(monk
     from src.core.update_check import UpdateChecker, UpdateStatus
 
     calls: List[str] = []
-    monkeypatch.setattr(update_check.update_source, "on_available", lambda version, state_dir=None: calls.append(version))
+    monkeypatch.setattr(update_check.update_source, "on_available", lambda version, state_dir=None, current_version="": calls.append(version))
     checker = UpdateChecker(config_path=tmp_path / "c.json", root=tmp_path, cache_path=tmp_path / "cache.json")
     for status, latest in (("current", "1.0.0"), ("unknown", ""), ("update_available", "1.2.0")):
         checker._store(UpdateStatus(status, "1.0.0", latest, "r", 0.0, "", "cmd"))
@@ -196,7 +196,7 @@ def test_agent_update_is_quiet_when_nothing_is_older_or_unmeasurable(monkeypatch
 def test_the_agent_update_check_runs_on_demand_and_survives_a_failed_pass(monkeypatch) -> None:
     calls: List[int] = []
 
-    def flaky(watcher: Any, state_dir: Any = None) -> bool:
+    def flaky(watcher: Any, state_dir: Any = None, manager: Any = None) -> bool:
         calls.append(1)
         if len(calls) == 1:
             raise ValueError("boom")

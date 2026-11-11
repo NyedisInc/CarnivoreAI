@@ -26,6 +26,8 @@ from src.api import browser_routes
 from src.api import browser_open_routes
 from src.api import open_files_routes
 from src.api import ui_show_routes
+from src.api import notify_cap_routes
+from src.api import argent as argent_api
 from src.api import row_looks_routes
 from src.api import filesystem_routes
 from src.api import health_routes
@@ -41,6 +43,7 @@ from src.api import agent_fork_routes
 from src.api import crosstalk_peer_routes
 from src.api import dashboard_routes
 from src.cplugs.host import routes as cplugs_host_routes
+from src.api import plugin_health_routes
 from src.api import (
     catalog_contents_routes,
     catalog_theme_palette_routes,
@@ -81,12 +84,13 @@ from src.api import swarm_card_routes
 from src.api import swarm_waiting_routes
 from src.api import swarm_node_order_routes
 from src.api import swarm_switch_routes
+from src.api import argent as argent_api
 from src.api import swarm_member_routes
 from src.api import pack_machines_routes
 from src.api import computers_routes
 from src.api import pack_placement_routes
 from src.api import federation_link_cert_routes, federation_pack_machine_routes, federation_pack_rollup_routes
-from src.api import federation_pack_carry_routes, federation_pack_credentials_routes, federation_pack_gh_login_routes, federation_pack_ledger_routes, federation_pack_migrate_routes, federation_pack_move_routes, federation_pack_skills_routes, federation_pack_span_routes, pack_skills_routes, federation_pack_transport_routes, pack_gh_login_routes, pack_migrate_routes, pack_move_routes, pack_ops_routes, pack_refresh_routes, pack_send_routes, pack_relay_consent_routes, pack_relay_routes
+from src.api import federation_pack_carry_routes, federation_pack_credentials_routes, federation_pack_gh_login_routes, federation_pack_ledger_routes, federation_pack_migrate_routes, federation_pack_move_routes, federation_pack_skills_routes, federation_pack_span_routes, pack_skills_routes, federation_pack_global_routes, pack_global_sync_routes, federation_pack_transport_routes, pack_gh_login_routes, pack_migrate_routes, pack_move_routes, pack_ops_routes, pack_refresh_routes, pack_send_routes, pack_relay_approval_routes, pack_relay_consent_routes, pack_relay_routes
 from src.api import hero_image_routes
 from src.api import provider_account_removal_routes
 from src.api import filesystem_peer_routes, launchers_peer_routes, provider_ledger_peer_routes, provider_ledger_routes
@@ -94,7 +98,7 @@ from src.api import features_routes
 from src.api import whats_new_routes
 from src.api import feature_media_routes
 from src.api import agent_action_routes
-from src.api import app_update_routes, app_update_peer_routes
+from src.api import app_update_routes, app_update_peer_routes, agent_update_restart_routes
 from src.api import beast_mode_routes
 from src.api import mcp_admin_routes
 from src.api import api_keys_routes
@@ -151,7 +155,7 @@ from src.api import scheduled_tasks_routes
 from src.api import session_git_routes
 from src.api import session_tasks_routes
 from src.api import session_pane_facts_routes
-from src.api import terminal_paths_routes
+from src.api import terminal_input_drop_routes, terminal_paths_routes
 from src.api import warroom_screen_routes
 from src.api import session_records_routes
 from src.api import session_purge_routes
@@ -244,6 +248,7 @@ router.include_router(web_push_routes.router)
 router.include_router(native_device_routes.router)
 router.include_router(scheduled_tasks_routes.router)
 router.include_router(session_pane_facts_routes.router)
+router.include_router(terminal_input_drop_routes.router)
 router.include_router(terminal_paths_routes.router)
 router.include_router(warroom_screen_routes.router)
 router.include_router(session_git_routes.router)
@@ -268,22 +273,28 @@ router.include_router(swarm_card_routes.router)
 router.include_router(swarm_waiting_routes.router)
 router.include_router(swarm_node_order_routes.router)
 router.include_router(swarm_switch_routes.router)
+router.include_router(argent_api.router)
 router.include_router(pack_machines_routes.router)
 router.include_router(pack_skills_routes.router)
+router.include_router(pack_global_sync_routes.router)
 router.include_router(computers_routes.router)
 router.include_router(pack_placement_routes.router)
 router.include_router(federation_link_cert_routes.router)
 router.include_router(federation_pack_machine_routes.router)
 router.include_router(federation_pack_rollup_routes.router)
+router.include_router(pack_relay_approval_routes.router)
 router.include_router(pack_relay_consent_routes.router)
 router.include_router(pack_relay_routes.router)
 router.include_router(federation_pack_credentials_routes.router)
 router.include_router(federation_pack_ledger_routes.router)
+router.include_router(argent_api.reach.federation_router)
+router.include_router(argent_api.pair.federation_router)
 router.include_router(pack_gh_login_routes.router)
 router.include_router(federation_pack_gh_login_routes.router)
 router.include_router(federation_pack_span_routes.router)
 router.include_router(pack_refresh_routes.router)
 router.include_router(federation_pack_transport_routes.router)
+router.include_router(federation_pack_global_routes.router)
 router.include_router(federation_pack_skills_routes.router)
 router.include_router(pack_migrate_routes.router)
 router.include_router(federation_pack_migrate_routes.router)
@@ -344,6 +355,7 @@ router.include_router(machine_stats_routes.router)
 router.include_router(agent_action_routes.router)
 router.include_router(beast_mode_routes.router)
 router.include_router(app_update_routes.router)
+router.include_router(agent_update_restart_routes.router)
 router.include_router(app_update_peer_routes.served)
 router.include_router(app_update_peer_routes.asked)
 router.include_router(mcp_admin_routes.router)
@@ -363,6 +375,7 @@ router.include_router(agent_spawn_routes.router)
 router.include_router(crosstalk_peer_routes.router)
 router.include_router(dashboard_routes.router)
 router.include_router(cplugs_host_routes.router)
+router.include_router(plugin_health_routes.router)
 router.include_router(config_bundle_routes.router)
 router.include_router(launch_profiles_routes.router)
 router.include_router(dev_shape_alerts_routes.router)
@@ -406,3 +419,5 @@ from src.api import deepsearch_peer_routes, deepsearch_routes
 router.include_router(deepsearch_peer_routes.router)
 router.include_router(deepsearch_routes.router)
 router.include_router(ui_show_routes.router)
+router.include_router(notify_cap_routes.router)
+router.include_router(argent_api.router)

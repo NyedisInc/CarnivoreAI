@@ -22,7 +22,8 @@
     "With a computer paired, results from it carry its name in a small tag; if it is offline the line under the status says it did not answer.",
     "Pick the layout with the small ledger / best hits toggle in the results header; in best hits, the you / agent / tool chips keep one speaker. Read around shows the hit in context; scroll for more, then open the agent or restore the closest bookmark as a clone.",
     "Press \"N more in this conversation\" to load the rest of that conversation's hits in place, or \"only this conversation\" (in the hit's more menu, or right click or long press the hit, or Shift+F10 on the highlighted hit) to search just it.",
-    "Open settings, pipeline tab, and choose what deep search reads (people only, people plus headless sessions, or everything); sub-agent transcripts are read in the background and the search keeps answering meanwhile."
+    "Open settings, pipeline tab, and choose what deep search reads (people only, people plus headless sessions, or everything); sub-agent transcripts are read in the background and the search keeps answering meanwhile.",
+    "Pick relevant or newest with the small sort switch in the results header (both the prompts and the context search); the context search always lists conversations holding your exact words first, then the looser matches, and the switch orders each group."
   ],
   "id": "deep-search",
   "issues": [

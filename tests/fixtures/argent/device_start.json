@@ -1,0 +1,8 @@
+{
+  "device_code": "FIXTURE-DEVICE-CODE",
+  "user_code": "ABCD-EFGH",
+  "verification_uri": "https://argent.example.test/device",
+  "verification_uri_complete": "https://argent.example.test/device?user_code=ABCD-EFGH",
+  "expires_in": 600,
+  "interval": 5
+}

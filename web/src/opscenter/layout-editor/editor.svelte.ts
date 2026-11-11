@@ -2,12 +2,14 @@
 import { tick } from 'svelte';
 import { flipCells, measureCells } from '../engine/flip';
 import type { DropTarget, LayoutStore } from '../engine/layout.svelte';
+import { restoreDash, snapshotDash } from '../dashgrid/dash-store.svelte';
+import type { OrderedGrid } from '../dashgrid/grid-data';
 import { META, isInstanceId, kindOf, metaFor } from '../engine/meta';
 import { PRIMARY_SLOT, type AddRefusal } from '../engine/model';
 import { addSession, sessionInstanceId } from '../engine/components-actions';
 import { flushSave } from '../engine/persist';
 import { viewport } from '../engine/viewport.svelte';
-import type { InstanceKind, LayoutPage, SlotId } from '../engine/types';
+import type { InstanceKind, Layout, LayoutPage, SlotId } from '../engine/types';
 import { storeFor, surfacePage } from '../../lib/drawer-tabs/drawer-surface.svelte';
 import { t } from '../../lib/i18n/index.svelte';
 import { panels } from '../engine/plugin-kinds';
@@ -17,6 +19,7 @@ import { addChart, flushChartView, saveChartSettings } from '../cells/analytics/
 import type { ChartConfig } from '../cells/analytics/types';
 import { presetConfig, type Preset } from '../viz/presets';
 import { galleryTarget } from './gallery-place';
+import { isDashGridPage } from '../dashgrid/dash-store.svelte';
 
 export const EDITING_CLASS = 'oc-layout-editing';
 
@@ -27,7 +30,21 @@ export const layoutEditor: {
   focusSlot: SlotId | null;
 } = $state({ active: false, page: null, revision: 0, focusSlot: null });
 
-let editing: { store: LayoutStore; session: string } | null = null;
+let editing: { store: LayoutStore; session: string; entry: Layout; entryGrid: OrderedGrid } | null = null;
+
+export const surfaceDrawer: { surface: string | null } = $state({ surface: null });
+
+export function openWidgetDrawer(surface: string): void {
+  if (surface === 'dashboard') {
+    enterLayoutEditor();
+    return;
+  }
+  surfaceDrawer.surface = surface;
+}
+
+export function closeWidgetDrawer(): void {
+  surfaceDrawer.surface = null;
+}
 
 export const editorSeams: {
   page: () => LayoutPage | null;
@@ -67,7 +84,7 @@ export function editingStore(): LayoutStore | null {
 export function editablePage(): LayoutPage | null {
   if (!editorSeams.wide()) return null;
   const page = editorSeams.page();
-  return page && editorSeams.store(page) ? page : null;
+  return page === 'home' && editorSeams.store(page) ? page : null;
 }
 
 export function enterLayoutEditor(): boolean {
@@ -75,7 +92,7 @@ export function enterLayoutEditor(): boolean {
   const page = editablePage();
   const store = page ? editorSeams.store(page) : null;
   if (!page || !store) return false;
-  editing = { store, session: store.session };
+  editing = { store, session: store.session, entry: store.snapshot(), entryGrid: snapshotDash(store.state.layout) };
   layoutEditor.active = true;
   layoutEditor.page = page;
   layoutEditor.focusSlot = null;
@@ -101,6 +118,14 @@ function end(line: string): void {
 export function finishLayoutEditor(): void {
   if (!layoutEditor.active) return;
   end(t('layout_editor.announce.saved'));
+}
+
+export function cancelLayoutEditor(): void {
+  if (!layoutEditor.active || !editing) return;
+  const { store, entry, entryGrid } = editing;
+  store.restore(entry);
+  restoreDash(entryGrid);
+  end(t('layout_editor.announce.cancelled'));
 }
 
 export function toggleLayoutEditor(): boolean {
@@ -147,6 +172,7 @@ function seatPanel(store: LayoutStore, id: SlotId): 'ready' | 'added' | 'refused
 }
 
 function sizeSeated(store: LayoutStore, id: SlotId): void {
+  if (isDashGridPage(store.page)) return;
   const width = document.querySelector(`${GRID_ROOT[layoutEditor.page ?? 'home'] ?? ''} .oc-cellslot`)?.parentElement?.clientWidth ?? 0;
   const kind = kindOf(id);
   if (width > 0 && kind) store.setCellSize(id, panels().fit(kind), width, GUTTER);
@@ -169,6 +195,24 @@ export async function addWidget(id: SlotId): Promise<boolean> {
     t('layout_editor.announce.added', { title: slotTitle(id) }),
   );
   return done;
+}
+
+export function addForDrop(kind: string): SlotId | null {
+  const store = live();
+  if (!store) return null;
+  let id = kind as SlotId;
+  if (kind === 'analytics:new') {
+    const chart = addChart();
+    if (store.add('analytics', chart.id)) return null;
+    id = `analytics:${chart.id}` as SlotId;
+  } else {
+    if (store.state.layout.rows.some((row) => row.slots.some((slot) => slot.id === id))) return null;
+    if (seatPanel(store, id) === 'refused') return null;
+    store.show(id);
+  }
+  layoutEditor.revision += 1;
+  store.announce(t('layout_editor.announce.added', { title: slotTitle(id) }));
+  return id;
 }
 
 export async function dropWidget(id: SlotId, target: DropTarget): Promise<'landed' | 'placed' | 'unchanged'> {

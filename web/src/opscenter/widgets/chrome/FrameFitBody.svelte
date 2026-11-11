@@ -10,8 +10,11 @@
   import { rowFloor } from '../../engine/model';
   import { GUTTER } from '../../engine/tracks';
   import { layoutEditor } from '../../layout-editor/editor.svelte';
+  import { colsFor } from '../../dashgrid/dash-adapter';
+  import { growDashItem, isDashGridPage } from '../../dashgrid/dash-store.svelte';
   import {
     checkFit,
+    FIT_TOLERANCE_PX,
     fitsForSlot,
     isPopoutWindow,
     SIZE_UNIT_PX,
@@ -80,13 +83,22 @@
   const editing = $derived(layoutEditor.active && layoutEditor.page === store.page);
   const plateShown = $derived(!check.ok || guideFrame.plates > 0);
 
+  const onGrid = $derived(isDashGridPage(store.page));
+
   const canFix = $derived(
-    !check.ok && check.reason === 'too-small' && !!pixelRow && !!check.has && !!fits && check.has.w >= fits.min.w,
+    !check.ok &&
+      check.reason === 'too-small' &&
+      !!fits &&
+      (onGrid || (!!pixelRow && !!check.has && check.has.w >= fits.min.w)),
   );
 
   function fix(size: FitSize): void {
-    if (!pixelRow) return;
-    store.setRowHeight(pixelRow.id, (target?.h ?? size.h) * SIZE_UNIT_PX.h);
+    if (onGrid && fits) {
+      const width = sizeOf(surfaceKeyOf(store.page)).width;
+      const minPx = { w: fits.min.w * SIZE_UNIT_PX.w - FIT_TOLERANCE_PX, h: fits.min.h * SIZE_UNIT_PX.h - FIT_TOLERANCE_PX };
+      if (!growDashItem(store.state.layout, colsFor(width), width, meta.id, minPx)) return;
+    } else if (pixelRow) store.setRowHeight(pixelRow.id, (target?.h ?? size.h) * SIZE_UNIT_PX.h);
+    else return;
     store.announce(t('widgets.refusal.fixed', { title: meta.titleName ?? t(meta.titleKey) }));
   }
 
@@ -111,7 +123,7 @@
 {:else}
   <RefusalPlate {check} sizes={fits?.sizes ?? []} onFix={canFix ? fix : undefined} onReport={report} />
 {/if}
-{#if guideFrame.guide && (plateShown || editing)}
+{#if guideFrame.guide && !onGrid && (plateShown || editing)}
   <ResizeGuide guide={guideFrame.guide} message={!plateShown} />
 {/if}
 {#if open === 'settings' && manifest && (hasSchema || panel)}

@@ -82,7 +82,7 @@ describe('any valid tree adapts without losing a leaf', () => {
 });
 
 describe('what v6 cannot say is named, never silent', () => {
-  it('two spanners meeting in reverse home-row order clear a span and keep every leaf', () => {
+  it('two spanners meeting in reverse home-row order are placed exactly and keep every leaf', () => {
     const [a1, b, c, a2, q, p] = ['a1', 'b', 'c', 'a2', 'q', 'p'].map(term) as SlotId[];
     const root: LayoutNode = {
       t: 'split', id: 's1', dir: 'h', unit: 'fr', sizes: [0.3, 0.2, 0.5],
@@ -95,14 +95,14 @@ describe('what v6 cannot say is named, never silent', () => {
       ],
     };
     const adapted = toV6(doc(root), 'terminal');
-    expect(adapted.outcome).toBe('adapted_lossy');
-    expect(adapted.shortenedSpans.length).toBeGreaterThan(0);
+    expect(adapted.outcome).toBe('adapted');
+    expect(adapted.shortenedSpans).toEqual([]);
+    expect(placementDrift(adapted.layout, rectsOf(root))).toBeLessThanOrEqual(ADAPT_DRIFT);
     expect(new Set(adapted.layout.rows.flatMap((row) => row.slots.map((one) => one.id)))).toEqual(
       new Set([a1, b, c, a2, q, p]),
     );
     const checked = validate(JSON.parse(JSON.stringify(doc(root))), META, 'terminal');
     expect(checked.refusal).toBeNull();
-    expect(checked.repaired).toBe(true);
   });
 });
 

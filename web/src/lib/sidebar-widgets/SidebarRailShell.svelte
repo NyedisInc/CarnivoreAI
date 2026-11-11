@@ -9,6 +9,8 @@
   import { onRailShellContextMenu, onRailShellMenuKey } from './rail-menu.svelte';
   import { RAIL_LAYER_ID, setRailPinnedClass } from './rail-dom';
   import { createRailVisibility } from './rail-visibility.svelte';
+  import { activeFlyout } from './flyout.svelte';
+  import { MENU_FLYOUT } from './widget-ids';
 
   let shell = $state<HTMLElement | null>(null);
   const visibility = createRailVisibility(() => shell);
@@ -26,6 +28,7 @@
 <div
   class="sbr-shell"
   data-rail-state={look}
+  data-menu-over={look === 'pinned' && activeFlyout() === MENU_FLYOUT ? '' : undefined}
   bind:this={shell}
   role="presentation"
   onpointerenter={visibility.onpointerenter}
@@ -80,6 +83,10 @@
 
     .sbr-shell__pin {
       display: inline-flex;
+    }
+
+    .sbr-shell[data-menu-over] .sbr-shell__layer {
+      visibility: hidden;
     }
 
     @media (prefers-reduced-motion: reduce) {

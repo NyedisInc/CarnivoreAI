@@ -1,7 +1,7 @@
 import { whenLegacyBootComplete } from '../../lib/legacy-boot';
 import { warroomLayout } from './layout.svelte';
 import { onWarroomChange } from './arrangement-events';
-import { gestureActive } from './pointer';
+import { surfaceBusy } from './surface-busy';
 import { preferencesApi } from './arrangement-sync.svelte';
 import type { Layout } from './types';
 
@@ -45,7 +45,7 @@ function noteLocal(): void {
 }
 
 export function applyWarroom(next: Layout): void {
-  if (gestureActive()) {
+  if (surfaceBusy()) {
     held = next;
     if (heldTimer === undefined) {
       heldTimer = setTimeout(() => {
@@ -71,7 +71,7 @@ export function applyWarroom(next: Layout): void {
 async function flush(): Promise<void> {
   const api = preferencesApi();
   if (!dirty || !api) return;
-  if (inflight || gestureActive() || api.status() !== api.HYDRATED) {
+  if (inflight || surfaceBusy() || api.status() !== api.HYDRATED) {
     scheduleWrite(RETRY_DELAY * 4);
     return;
   }

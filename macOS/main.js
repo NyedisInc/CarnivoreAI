@@ -184,6 +184,7 @@ const appWindow = createAppWindow({
   guard: windowGuard,
   getUrl: () => (serverManager ? serverManager.getAppWindowUrl() : null),
   shouldMirror: (ask) => (trayMenu ? trayMenu.mirrorAllowed(ask) : true),
+  toastBanner: { present: (input) => (trayMenu ? trayMenu.presentToast(input) : Promise.resolve(false)), close: (id) => { if (trayMenu) trayMenu.closeToast(id); } },
   windowState: createWindowState({
     dir: () => app.getPath('userData'), key: 'main', getDisplays: () => require('electron').screen.getAllDisplays(),
   }),
@@ -453,8 +454,8 @@ app.whenReady().then(async () => {
 });
 
 function openWindowForThisLaunch() {
-  const windowAtLogin = loginItems.readLogin({ installer: launchAgentInstaller, dir: app.getPath('userData') }).window === true;
-  const launch = lifecycle.launchDecision({ argv: process.argv, windowAtLogin, startBlocked: !!serverManager.startBlockedReason });
+  const login = loginItems.readLogin({ installer: launchAgentInstaller, dir: app.getPath('userData') });
+  const launch = lifecycle.launchDecision({ argv: process.argv, windowAtLogin: login.window === true, windowOnLaunch: login.launchWindow, startBlocked: !!serverManager.startBlockedReason });
   console.log(`[launch] ${launch.loginLaunch ? 'login launch' : 'user launch'}, window ${launch.openWindow ? 'opens' : 'stays closed'}`);
   if (!launch.openWindow) return;
   waitForServerHealth().then(async (up) => {
@@ -462,6 +463,7 @@ function openWindowForThisLaunch() {
     if (serverManager.startBlockedReason) return;
     if (!appWindow.isOpen()) appWindow.open();
     appWindow.restore();
+    console.log('[launch] window opened at launch');
   }).catch((err) => console.warn('[launch] window not opened:', err && err.message));
 }
 

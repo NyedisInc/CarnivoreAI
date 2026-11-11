@@ -31,6 +31,8 @@ const RESERVED_CHORDS = Object.freeze([
   { chord: 'Cmd+,', owner: 'web/src/lib/settings-page/settings-shortcut.ts:27 (same destination: Settings)', shared: { id: 'carnivore.settings' } },
   { chord: 'Cmd+[', owner: 'web/src/lib/app-keys/chords.ts (history back)' },
   { chord: 'Cmd+]', owner: 'web/src/lib/app-keys/chords.ts (history forward)' },
+  { chord: 'Cmd+<', owner: 'web/src/lib/app-keys/chords.ts (previous tab)' },
+  { chord: 'Cmd+>', owner: 'web/src/lib/app-keys/chords.ts (next tab)' },
   ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => ({ chord: `Cmd+${n}`, owner: 'web/src/lib/app-keys/chords.ts (layout tab)' })),
   { chord: 'Cmd+K', owner: 'web/src/lib/app-keys/chords.ts (command palette)' },
   { chord: 'Ctrl+Shift+K', owner: 'web/src/lib/app-keys/chords.ts (command palette, off a mac)' },

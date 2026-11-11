@@ -71,6 +71,16 @@ def arm_default(conn: sqlite3.Connection, account_key: str, install_ids: Iterabl
                          "VALUES (?, ?, ?, 'on')", (account_key, iid, profile_name_for(provider, account_key, sender_install_id)))
 
 
+def arm_active(conn: sqlite3.Connection, account_key: str, install_ids: Iterable[str], sender_install_id: str,
+               provider: str = "claude") -> None:
+    with transaction(conn):
+        if default_mode(conn, account_key) or not enabled_for(conn, account_key):
+            return
+        for iid in install_ids:
+            conn.execute("INSERT OR IGNORE INTO pack_relay_targets (account_key, target_install_id, target_profile, state) "
+                         "VALUES (?, ?, ?, 'on')", (account_key, iid, profile_name_for(provider, account_key, sender_install_id)))
+
+
 def is_owner_of(conn: sqlite3.Connection, account_key: str) -> bool:
     return bool(enabled_for(conn, account_key))
 

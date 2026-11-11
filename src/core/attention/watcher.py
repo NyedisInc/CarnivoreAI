@@ -109,7 +109,9 @@ class AttentionWatcher:
         watch_paths: Optional[Callable[[Set[str]], Mapping[str, Sequence[str]]]] = None,
         restart_floors: Optional[RestartFloors] = None,
         on_pass_end: Optional[Callable[[], None]] = None,
+        hold_verdict: Optional[Callable[[WatchTarget, "Observation"], AttentionVerdict]] = None,
     ) -> None:
+        self._hold_verdict = hold_verdict
         self._list_targets = list_targets
         self._read_evidence = read_evidence
         self._raise_toast = raise_toast
@@ -431,6 +433,8 @@ class AttentionWatcher:
         self._revision += 1
         observation = Observation(verdict, evidence, new_prompt_at, appended,
                                   self._revision, cycle=self._cycles)
+        if self._hold_verdict is not None and (held := self._hold_verdict(target, observation)) is not verdict:
+            verdict, observation = held, replace(observation, verdict=held)
         self._observations[target.session_id] = observation
         if new_prompt_at is not None:
             self._startup_quiet.end(target.session_id)

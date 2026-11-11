@@ -31,7 +31,7 @@ def _assert_fixed(response, status: int, code: str, events: list) -> None:
 
 
 @pytest.mark.parametrize("exc, status, code", [
-    (TmuxError(f"agent failed to launch: {LEAK}"), 502, "session_launch_failed"),
+    (TmuxError(f"tmux new-session failed: {LEAK}"), 502, "session_launch_failed"),
     (RuntimeError(f"unexpected {LEAK}"), 500, "session_create_failed"),
     (OSError(f"no such file {LEAK}"), 500, "session_create_failed"),
 ])

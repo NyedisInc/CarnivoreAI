@@ -27,6 +27,7 @@ export interface SideloadItem {
 
 export interface SideloadStatus {
     enabled: boolean;
+    developer_mode?: boolean;
     expires_at: number | null;
     hours?: number | null;
     items: SideloadItem[];
@@ -45,9 +46,9 @@ export const DEFAULT_HOURS = 12;
 export const UNTIL_OFF = 'off';
 
 export const KNOWN_REFUSALS = [
-    'sideload_off', 'source_missing', 'source_unsafe', 'source_too_big', 'manifest_invalid', 'name_taken', 'name_reserved',
+    'sideload_off', 'source_missing', 'source_unsafe', 'source_too_big', 'manifest_invalid', 'api_version_unsupported', 'name_taken', 'name_reserved',
     'name_invalid', 'kind_unknown', 'kind_ambiguous', 'kind_unsupported', 'kind_unsupported_mod', 'kind_required', 'target_changed', 'target_exists', 'root_absent', 'root_unsafe',
-    'install_roots_unavailable', 'staging_busy', 'git_url_refused', 'ref_invalid', 'subdir_invalid', 'git_failed', 'git_unavailable', 'git_timeout',
+    'install_roots_unavailable', 'staging_busy', 'developer_mode_off', 'source_not_downloaded', 'git_url_refused', 'ref_invalid', 'subdir_invalid', 'git_failed', 'git_unavailable', 'git_timeout',
 ] as const;
 
 export function loadSideload(fetcher: typeof authFetch = authFetch): Promise<SideloadStatus> {
@@ -57,6 +58,11 @@ export function loadSideload(fetcher: typeof authFetch = authFetch): Promise<Sid
 export function saveSideload(enabled: boolean, hours?: number | null, fetcher: typeof authFetch = authFetch): Promise<SideloadStatus> {
     const body = enabled && hours !== undefined ? { enabled, hours } : { enabled };
     return fetcher<SideloadStatus>('/cplug-owner/sideload/switch', { method: 'PUT', body: JSON.stringify(body) });
+}
+
+/* there is nothing */
+export function setDeveloperMode(on: boolean, fetcher: typeof authFetch = authFetch): Promise<unknown> {
+    return fetcher('/config/settings', { method: 'PATCH', body: JSON.stringify({ server_prefs: { developer_mode: on } }) });
 }
 
 export function sideloadFolder(path: string, name?: string | null, fetcher: typeof authFetch = authFetch, consent?: InstallConsent | null): Promise<unknown> {

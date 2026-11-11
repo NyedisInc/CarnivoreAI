@@ -27,7 +27,7 @@
     withRight = true,
     locked = false,
     bare = false,
-    onGripDown,
+    grip = false,
     onToggleCollapse,
     onRightControl,
   }: {
@@ -48,7 +48,7 @@
     withRight?: boolean;
     locked?: boolean;
     bare?: boolean;
-    onGripDown?: (event: PointerEvent) => void;
+    grip?: boolean;
     onToggleCollapse?: () => void;
     onRightControl?: () => void;
   } = $props();
@@ -138,7 +138,7 @@
 
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<header class="oc-frame-title" class:oc-frame-title--grip={!!onGripDown} class:oc-frame-title--phone={phone || tap} class:oc-frame-title--bare={bare} data-widget-head="" data-oc-base style:--oc-head-row={`${HEAD_ROW_PX}px`} bind:this={head} onpointerdown={onGripDown} oncontextmenu={onContextMenu}>
+<header class="oc-frame-title" class:oc-frame-title--grip={grip} class:oc-frame-title--phone={phone || tap} class:oc-frame-title--bare={bare} data-widget-head="" data-oc-base style:--oc-head-row={`${HEAD_ROW_PX}px`} bind:this={head} oncontextmenu={onContextMenu}>
   {#if corner}{@render corner()}{/if}
   {#if header.content}
     {@render header.content()}

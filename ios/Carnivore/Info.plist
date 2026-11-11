@@ -37,6 +37,8 @@
 	<string>carnivore connects to your computer on your local network.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>carnivore listens through the microphone when you tap the mic key to dictate into a terminal.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>carnivore saves an image an agent sent you to your photos when you tap save.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>carnivore turns your speech into text when you dictate into a terminal.</string>
 	<key>UIApplicationSceneManifest</key>

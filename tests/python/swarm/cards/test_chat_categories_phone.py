@@ -272,6 +272,43 @@ def test_a_question_no_tier_answered_is_pushed_once_and_marked_sent(env, phone_e
     assert len(rig.sent()) == 1 and marked == [1]
 
 
+def test_a_climbed_question_reaches_this_computers_banner_and_the_phone_gets_one_push(
+        env, phone_engine: Callable[..., SimpleNamespace], sink: List[contracts.NotifyEvent], monkeypatch: pytest.MonkeyPatch) -> None:
+    rig = phone_engine()
+    recorded: List[Any] = []
+
+    def record_toast(session_id: str, kind: str, title: str, body: Any, *, notify_type: str) -> Any:
+        toast = SimpleNamespace(id="t-climb", version=1, kind=kind, title=title, body=body, session_id=session_id, session_label="Fixer",
+                                notify_type=notify_type)
+        recorded.append(toast)
+        return toast
+
+    manager = SimpleNamespace(record_toast=record_toast, _registry=SimpleNamespace(sessions={"ses_9": SimpleNamespace(tmux_session="carnivore_Fixer")}),
+                              _identity_for_live_name=lambda name: {"project_name": "api"}, _label_for_tmux_name=lambda name: name)
+    fanned: List[Any] = []
+
+    async def live_info(app_state: Any, agent: Any) -> Any:
+        return SimpleNamespace(session=SimpleNamespace(id="ses_9"))
+
+    async def fan(toast: Any, **_: Any) -> None:
+        fanned.append(toast)
+
+    climbed = routing.phone.question_climbed
+    monkeypatch.setattr(routing.phone.mac_toast.body, "live_info", live_info)
+    monkeypatch.setattr(routing.phone.mac_toast.agent_message, "_broadcast", fan)
+    monkeypatch.setattr(routing.phone, "question_climbed",
+                        lambda _state, item, qid, text: climbed(SimpleNamespace(session_manager=manager), item, qid, text))
+    marked = _record_marks(env)
+    open_q = ask(env, UNCOVERED)
+    assert escalate(env, open_q["question_id"]) == "open"
+    assert len(rig.sent()) == 1 and marked == [1]
+    assert [(t.session_id, t.notify_type, t.kind) for t in recorded] == [("ses_9", "swarm.question_climbed", "Notification")] and fanned == recorded
+    event = toast_source.build_event(manager, recorded[0])
+    assert event.type_id == "swarm.question_climbed" and event.card_hint["item"] == "1" and event.card_hint["ask"]
+    toast_source.emit_event(manager, recorded[0])
+    assert sink == []
+
+
 @pytest.mark.parametrize("case", ["type_unticked", "quiet_hours", "routing_paused"])
 def test_a_push_the_engine_drops_leaves_the_card_unmarked(env, phone_engine: Callable[..., SimpleNamespace], case: str) -> None:
     rig = phone_engine(ticked=case != "type_unticked", quiet=case == "quiet_hours", paused=case == "routing_paused")

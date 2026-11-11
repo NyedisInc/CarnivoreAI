@@ -63,7 +63,8 @@ def _connect(db_path: Path) -> sqlite3.Connection:
 def raise_alert(key: str, *, source: str, severity: str, title_key: str,
                 params: Optional[Mapping[str, Any]] = None, detail_key: Optional[str] = None,
                 sticky: bool = False, auto_resolve: bool = True,
-                actions: Sequence[Mapping[str, Any]] = (), db_path: Optional[Path] = None) -> Optional[Dict[str, Any]]:
+                actions: Sequence[Mapping[str, Any]] = (), db_path: Optional[Path] = None,
+                only_if_open: bool = False) -> Optional[Dict[str, Any]]:
     path = db_path or _db_path
     if path is None:
         logger.debug("app_alert_unconfigured", key=key)
@@ -72,9 +73,11 @@ def raise_alert(key: str, *, source: str, severity: str, title_key: str,
                      detail_key=detail_key, sticky=sticky, auto_resolve=auto_resolve, actions=tuple(actions))
     try:
         with closing(_connect(path)) as conn:
-            row, event = store.raise_alert(conn, spec)
+            row, event = store.raise_alert(conn, spec, only_if_open=only_if_open)
     except (sqlite3.Error, OSError, AlertInputError) as exc:
         logger.error("app_alert_raise_failed", key=key, source=source, error=str(exc), error_type=type(exc).__name__)
+        return None
+    if row is None:
         return None
     if event == store.EV_RAISED:
         logger.info("app_alert_raised", key=key, source=source, severity=severity, alert_id=row["id"])

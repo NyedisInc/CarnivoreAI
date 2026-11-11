@@ -12,6 +12,7 @@ BLOCK = "notification_routing"
 DOC_VERSION = 1
 TOMBSTONE_TTL_SECONDS = 30 * 24 * 3600
 COL_SCREEN = "screen"
+COL_DESKTOP = "desktop"
 EXTRAS: Tuple[str, ...] = ("away", "quiet", "reminder", "projects", "details")
 LOCAL_PREFIX = "local/"
 
@@ -20,6 +21,7 @@ KIND_TICK = "tick"
 KIND_EXTRA = "extra"
 KIND_DEFAULT = "default"
 KIND_MUTE = "mute"
+KIND_STYLE = "style"
 KIND_LOCAL = "local"
 
 Version = Tuple[int, str]
@@ -54,7 +56,7 @@ def dest_path(dest: str) -> str:
 
 
 def tick_path(col: str, type_id: str) -> str:
-    if col != COL_SCREEN:
+    if col not in (COL_SCREEN, COL_DESKTOP):
         _check_dest(col)
     return f"{KIND_TICK}/{col}/{_check_type(type_id)}"
 
@@ -73,6 +75,14 @@ def mute_path(type_id: str) -> str:
     return f"{KIND_MUTE}/{_check_type(type_id)}"
 
 
+def style_path(type_id: str) -> str:
+    return f"{KIND_STYLE}/{_check_type(type_id)}"
+
+
+def corner_key(type_id: str) -> str:
+    return local_key(f"corner.{_check_type(type_id)}")
+
+
 def local_key(name: str) -> str:
     if not name or "/" in name:
         raise ValueError(f"not a local key name: {name!r}")
@@ -89,9 +99,11 @@ def parse_path(path: str) -> ParsedPath:
         return ParsedPath(KIND_DEFAULT, type_id=_check_type(rest))
     if head == KIND_MUTE:
         return ParsedPath(KIND_MUTE, type_id=_check_type(rest))
+    if head == KIND_STYLE:
+        return ParsedPath(KIND_STYLE, type_id=_check_type(rest))
     if head == KIND_TICK:
         col, _, type_id = rest.partition("/")
-        if col != COL_SCREEN:
+        if col not in (COL_SCREEN, COL_DESKTOP):
             _check_dest(col)
         return ParsedPath(KIND_TICK, col=col, type_id=_check_type(type_id))
     if head == KIND_EXTRA:

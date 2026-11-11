@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from src.cplugs.sdk import data_decl
+
 from src.core.backup_health import vault_record
 from src.core.inventory.locations import Locations
 from src.core.inventory.vault_claims import vault_root
@@ -86,7 +88,8 @@ def test_the_one_resolver_answers_every_shape_and_the_purge_price_uses_it(tmp_pa
     vault = next(d for d in save.data if d.id == "vault")
     assert data_roots.decl_root(tmp_path, "save", vault, {}) == tmp_path / "vault"
     assert data_roots.decl_root(tmp_path, "save", vault, {"vaultLocation": "/Volumes/B/v"}) == Path("/Volumes/B/v")
-    drafts = next(d for d in runtime.find("reviewboard").manifest.data if d.id == "drafts")
-    assert data_roots.decl_root(tmp_path, "reviewboard", drafts, {}) == tmp_path / "cplugs" / "reviewboard" / "drafts"
+    drafts = data_decl.parse_data([{"id": "drafts", "kind": "folder", "path": "drafts", "scope_by": "install",
+                                    "policy": {"own": "carried", "share": "excluded", "reason": "fixture"}}], {})[0]
+    assert data_roots.decl_root(tmp_path, "fixture", drafts, {}) == tmp_path / "cplugs" / "fixture" / "drafts"
     rows = {r["id"]: r["location"] for r in purge_kept.kept_stores(tmp_path, save.data, {"vaultLocation": "/Volumes/B/v"})}
     assert rows == {"vault": "/Volumes/B/v", "legacy_points": str(tmp_path / "time-machine")}

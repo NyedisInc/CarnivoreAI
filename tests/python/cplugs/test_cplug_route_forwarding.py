@@ -46,7 +46,7 @@ def world(tmp_path, monkeypatch):
     from src.main import app
 
     state = tmp_path / "state"
-    root = state / "cplug-code" / NAME
+    root = state / "plugins" / NAME
     root.mkdir(parents=True)
     (root / "cplug.json").write_text(json.dumps(CPLUG))
     (root / "main.py").write_text("x = 1\n")

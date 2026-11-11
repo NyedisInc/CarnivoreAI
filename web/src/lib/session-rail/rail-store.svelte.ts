@@ -1,13 +1,10 @@
-import { createAreaDrag, indexInArea, ZONE_DRAG_THRESHOLD, type AreaDrag } from '../drawer-zone/zone-drag.svelte';
+import { createAreaDrag, indexInArea, type AreaDrag } from '../zone-motion/area-drag.svelte';
 import { isRepeatable, zoneItemKey, type ZoneItem } from '../drawer-zone/zone-model';
-import { beginGesture } from '../../opscenter/engine/pointer';
 import { RAIL_EDGES, RAIL_MAX_ITEMS, RAIL_SPECS, type RailEdge } from './rail-model';
 import { RailStore, saveRailWrites } from './rail-layout-store.svelte';
 import { canSplitAt, type RailSpot } from './rail-sections';
 import { keysEndOf, splitOffer, type SplitOffer } from './rail-aim';
-import { createDragGhost, type DragGhost } from '../drag-preview/ghost';
 
-const GHOST_STRIP: readonly string[] = ['data-zone-item', 'data-edit-badge'];
 
 export const railStores: Readonly<Record<RailEdge, RailStore>> = {
   side: new RailStore({ field: RAIL_SPECS.side.field, defaults: RAIL_SPECS.side.defaults, max: RAIL_MAX_ITEMS }),
@@ -149,38 +146,4 @@ export function aimAtRails(x: number, y: number, skips: Partial<Record<RailEdge,
     return { edge, ...spot };
   }
   return null;
-}
-
-export function beginRailItemDrag(from: RailEdge, handle: HTMLElement, event: PointerEvent, key: string, onRemoved: () => void): boolean {
-  let aimed: ({ edge: RailEdge } & RailSpot) | null = null;
-  let ghost: DragGhost | null = null;
-  const cell = handle.closest<HTMLElement>('[data-edit-cell]') ?? handle;
-  const box = cell.getBoundingClientRect();
-  const grab = { x: event.clientX - box.left, y: event.clientY - box.top };
-  return beginGesture(handle, event, {
-    threshold: ZONE_DRAG_THRESHOLD,
-    onLift: () => {
-      liftRails(key);
-      ghost = createDragGhost(cell, { grab, mount: handle.closest<HTMLElement>('[data-session-rail]') ?? undefined, strip: GHOST_STRIP });
-    },
-    onMove: (_dx, _dy, move) => {
-      aimed = aimAtRails(move.clientX, move.clientY, { [from]: key }, handle.ownerDocument);
-      ghost?.move(move.clientX, move.clientY);
-    },
-    onDrop: () => {
-      const target = aimed;
-      clearRailDrops();
-      if (!target) {
-        if (railStores[from].remove(key)) onRemoved();
-        return;
-      }
-      const item = railStores[from].items.find((one) => zoneItemKey(one) === key);
-      if (item) placeInRail(target.edge, item.widget, { section: target.section, index: target.index, split: target.split }, item.target, item);
-    },
-    onEnd: () => {
-      ghost?.destroy();
-      ghost = null;
-      clearRailDrops();
-    },
-  });
 }

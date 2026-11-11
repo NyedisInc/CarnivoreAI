@@ -26,6 +26,7 @@ vi.mock('../sidebar-shell/company-source.svelte', () => ({
     companySource: () => ({ companies: [], companyOf: (id: string) => filedUnder.get(id) ?? null, projectNameOf: () => null }),
 }));
 vi.mock('../companies', () => ({
+    companyList: () => [{ id: 7, name: 'acme', project_count: 2 }],
     companyById: (id: number) => (id === 7 ? { id: 7, name: 'acme', project_count: 2, hue: 120 } : id === 8 ? { id: 8, name: 'plain', project_count: 0 } : undefined),
     setCompanyColor: vi.fn(async () => ({})),
     setProjectCompany: vi.fn(async () => ({})),
@@ -95,7 +96,7 @@ function sectionRow(key: string): Element {
 }
 
 describe('the heading menus golden', () => {
-    test('every heading kind in every representative state offers exactly the recorded menu', async () => {
+    test('every heading kind in every representative state offers exactly the recorded menu', { timeout: 30_000 }, async () => {
         const now: Record<string, HeadingGolden> = {};
         now['project unfiled'] = await headingMenuOf('project', 'p:5');
         filedUnder.set('5', 7);

@@ -256,6 +256,7 @@ EXCLUSIONS: Tuple[Exclusion, ...] = (
           absent_ok=True),
     _excl("blueprints", K.GLOBAL, "reusable Swarm blueprints, owned by the install, not by a project or session"),
     _excl("browser_sessions", K.UNKEYED, "the in-app browser's tabs"),
+    _excl("plugin_registry_marker", K.GLOBAL, "which generation of plugins.json this database last saw (plugin settings, schema v104): install configuration, restored with the settings file, never with a project"),
     _excl("catalog_index_state", K.UNKEYED, "catalog index verification state"),
     _excl("catalog_revocations_seen", K.UNKEYED, "catalog revocation list state"),
     _excl("computer_links", K.GLOBAL, "paired-computer links and their certificates: machine identity, never carried between installs"),

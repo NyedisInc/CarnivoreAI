@@ -62,21 +62,32 @@ def _host_steps() -> list[BootStep]:
         from src.cplugs.host import runtime as cplugs_host
 
         held.host = cplugs_host.install(app, settings.get_state_dir())
-        from src.cplugs.host.legacy_disabled import import_disabled_plugins
+        state_dir = held.host.state_dir
 
-        import_disabled_plugins(
-            held.host.state_dir,
-            app.state.ui_preferences_store.read()["values"].get("disabled_plugins") or [],
-            {d.id: d.manifest for d in cplugs_host.definitions()},
-        )
-        from src.core.approvals import beast_grid_migration, beast_lifecycle
+        def retired() -> None:
+            from src.cplugs.host.legacy_disabled import import_disabled_plugins
 
-        beast_grid_migration.migrate(held.host.state_dir, Path(settings.auth_config_file).expanduser())
-        beast_lifecycle.start(held.host.state_dir)
-        from src.core.crosstalk import card_prefs_migration
+            import_disabled_plugins(
+                state_dir,
+                app.state.ui_preferences_store.read()["values"].get("disabled_plugins") or [],
+                {d.id: d.manifest for d in cplugs_host.definitions()},
+            )
+            from src.core.approvals import beast_grid_migration, beast_lifecycle
 
-        card_prefs_migration.migrate(held.host.state_dir, app.state.ui_preferences_store)
-        _run_one_time_migrations(ctx, held.host.state_dir)
+            beast_grid_migration.migrate(state_dir, Path(settings.auth_config_file).expanduser())
+            beast_lifecycle.start(state_dir)
+            from src.core.crosstalk import card_prefs_migration
+
+            card_prefs_migration.migrate(state_dir, app.state.ui_preferences_store)
+            _run_one_time_migrations(ctx, state_dir)
+
+        from src.cplugs.host import registry_boot
+
+        outcome = registry_boot.run(state_dir, retired=retired)
+        logger.info("plugin_registry_boot", action=outcome.action, detail=outcome.detail, read_only=outcome.read_only)
+        from src.cplugs.host import retired_profiles
+
+        retired_profiles.retire_old_profiles(state_dir)
         await held.host.start()
 
     async def stop(ctx: "BootContext") -> None:

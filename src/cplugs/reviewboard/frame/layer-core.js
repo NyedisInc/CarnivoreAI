@@ -16,6 +16,7 @@
   var cards = {};
   var mounted = [];
   var parts = null;
+  var readonly = false; // a read only link
 
   function str(key) {
     var full = STRING_PREFIX + key;
@@ -80,12 +81,14 @@
   }
 
   function changed(item, value) {
+    if (readonly) return;
     if (value === undefined) delete state.values[item.id]; else state.values[item.id] = value;
     refreshCount();
     post();
   }
 
   function noted(item, text) {
+    if (readonly) return;
     if (text === '') delete state.notes[item.id]; else state.notes[item.id] = text;
     post();
   }
@@ -142,7 +145,18 @@
     });
     note.addEventListener('input', function () { noted(item, note.value); paintKey(); });
     root.appendChild(note);
+    if (readonly) lock(root, note, noteKey);
     return root;
+  }
+
+  function lock(root, note, noteKey) {
+    root.setAttribute('data-rbl-readonly', '');
+    var controls = root.querySelectorAll('input, select, button, textarea');
+    for (var i = 0; i < controls.length; i++) {
+      if (controls[i] !== note && !controls[i].classList.contains('rbl-show') && controls[i] !== noteKey) controls[i].disabled = true;
+    }
+    note.readOnly = true;
+    noteKey.hidden = note.value === '';
   }
 
   function header() {
@@ -217,6 +231,12 @@
     var map = event.detail && event.detail.map;
     if (!map || typeof map !== 'object') return;
     strings = map;
+    build();
+  });
+  window.addEventListener('rb-mode', function (event) {
+    var next = !!(event.detail && event.detail.readonly === true);
+    if (next === readonly) return;
+    readonly = next;
     build();
   });
   window.addEventListener('rb-load', function (event) {

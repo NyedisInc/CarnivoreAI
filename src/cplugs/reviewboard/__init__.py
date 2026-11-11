@@ -4,8 +4,10 @@ from typing import Any, Callable, Optional
 
 import structlog
 
+from src.cplugs.reviewboard.public import capabilities as public_capabilities, lifecycle as public_lifecycle, links as public_links, mcp as public_mcp
+from src.cplugs.reviewboard.public.settings import check_settings as check_public_settings
 from src.cplugs.reviewboard import artifact_port, attachments_port, artifact_source, capabilities, mcp, mcp_attachments, mcp_live, mcp_scratch, migrate, pages_port, public_port, relink_port, root_port, routes
-from src.cplugs.sdk import CplugDefinition, load_manifest, ports, with_capabilities
+from src.cplugs.sdk import CplugDefinition, StorageSpec, load_manifest, ports, with_capabilities
 
 logger = structlog.get_logger()
 
@@ -50,10 +52,12 @@ async def _start(ctx: Any) -> None:
     public_port.register(ctx)
     artifact_port.register(ctx)
     _copy_when_task_manager_is_up(ctx)
+    await public_lifecycle.start(ctx)
 
 
 async def _stop(ctx: Any) -> None:
     global _copy, _unlisten
+    await public_lifecycle.stop(ctx)
     root_port.unregister()
     attachments_port.unregister()
     relink_port.unregister()
@@ -68,6 +72,11 @@ async def _stop(ctx: Any) -> None:
     _copy = None
 
 
-CPLUG = CplugDefinition(manifest=load_manifest(__file__), router=routes.router, tools=with_capabilities({**mcp.TOOLS, **mcp_scratch.TOOLS, **mcp_attachments.TOOLS, **mcp_live.TOOLS}, capabilities.TABLE), on_start=_start, on_stop=_stop)
+CPLUG = CplugDefinition(
+    manifest=load_manifest(__file__), router=routes.router,
+    tools=with_capabilities({**mcp.TOOLS, **mcp_scratch.TOOLS, **mcp_attachments.TOOLS, **mcp_live.TOOLS, **public_mcp.TOOLS}, {**capabilities.TABLE, **public_capabilities.TABLE}),
+    storage=StorageSpec(db="links.db", migrations=public_links.MIGRATIONS, private=True),
+    on_start=_start, on_stop=_stop, on_settings=public_lifecycle.settings_saved, before_purge=public_lifecycle.before_purge, settings_check=check_public_settings,
+    filled_roots=("boards",))
 
 __all__ = ["CPLUG"]

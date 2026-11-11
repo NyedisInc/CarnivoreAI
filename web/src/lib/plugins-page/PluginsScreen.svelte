@@ -35,6 +35,10 @@
     import { CPLUG_ITEM_PREFIX, createCplugsAdapter, listActivity, type ActivityRow, type CplugItem, type CplugSheet, type CplugsAdapter } from './cplugs-adapter';
     import { PANE_TAB_MEMORY, PANE_TABS, isPaneTab, type PaneTab, type PurgePrice } from './plugin-pane';
     import { hasPluginSettings, pluginLinkOf, type PluginLink } from './plugin-settings-link';
+    import ClaudeCodeHealth from './ClaudeCodeHealth.svelte';
+    import { createPluginHealth } from './plugin-health.svelte';
+    import { canRun, OPEN_DEVELOPER_ZONE_EVENT, runHealthButton, type HealthDoors, type HealthSubject } from './plugin-health-actions';
+    import type { HealthRow } from './plugin-health';
 
     import { isFeatureTier } from '../catalog/app-own';
     import { featureWords } from './feature-words';
@@ -60,12 +64,18 @@
     // svelte-ignore state_referenced_locally
     const sideloads = adapter ? null : createSideloadStore(undefined, () => void ctl.load());
 
+    // svelte-ignore state_referenced_locally
+    const health = adapter ? null : createPluginHealth();
+
     let seenSig: string | null = null;
     $effect(() => {
         const sig = ctl.items.map((row) => `${row.id}:${row.enabled ?? ''}`).join('|');
         const before = seenSig;
         seenSig = sig;
-        if (before !== null && before !== sig) onChanged?.();
+        if (before !== null && before !== sig) {
+            onChanged?.();
+            void health?.load();
+        }
     });
 
     async function openCatalogSheet(card: CardView, prefill: { scope: 'project'; projectPath: string } | { scope: 'global'; projectPath: null }): Promise<SheetOutcome | null> {
@@ -80,10 +90,26 @@
     // svelte-ignore state_referenced_locally
     const page = createPluginsPageController({ catalog, catalogItems: () => catalogItems, reloadBuiltins: () => ctl.load(), loadSheet, t });
 
+    const claudeRows = $derived<HealthRow[]>(scope === 'features' ? [] : (health?.claudeCode ?? []));
+
+    const healthDoors: HealthDoors = {
+        toggle: (itemId, next) => requestToggle(itemId, next),
+        openPane: (itemId, tab) => { selectedId = itemId; paneTab = tab; tellHost(); },
+        select: (itemId) => { selectedId = itemId; tellHost(); },
+        openDeveloperZone: () => window.dispatchEvent(new Event(OPEN_DEVELOPER_ZONE_EVENT)),
+        openCatalog: () => replaceHashWith('#warez'),
+        leaveSafeMode: async () => { await health?.leaveSafeMode(); },
+    };
+
+    function subjectOf(plugin: CplugItem): HealthSubject {
+        return { itemId: plugin.id, blockedBy: plugin.blockedBy };
+    }
+
     const addProjects = $derived(addProjectsOf(catalog?.projects ?? [], null));
 
     async function loadAll(): Promise<void> {
         void catalog?.load();
+        void health?.load();
         await ctl.load();
     }
 
@@ -291,11 +317,6 @@
     {/if}
 {/snippet}
 
-
-{#snippet developerZone()}
-    <DeveloperZone {t} {sideloads} />
-{/snippet}
-
 {#snippet detailCatalog(item: ManagerItem)}
     <div class="plugin-catalog-pane">
         {#if item.brief}<p>{item.brief}</p>{/if}
@@ -323,6 +344,20 @@
         onUninstall={page.ledgerRowOf(plugin) ? () => void page.uninstallFromPane(plugin) : undefined}
         uninstalling={page.uninstallingId === plugin.id}
         uninstallError={page.uninstallErrors[plugin.id] ?? null}
+        health={health?.rowOf(plugin)}
+        canActHealth={health?.rowOf(plugin) ? canRun(health.rowOf(plugin)!, subjectOf(plugin)) : false}
+        onHealth={() => { const row = health?.rowOf(plugin); if (row) void runHealthButton(row, subjectOf(plugin), healthDoors); }}
+        {t}
+    />
+{/snippet}
+
+
+{#snippet healthZone()}
+    {#if catalog && !adapter}<DeveloperZone {t} {sideloads} />{/if}
+    <ClaudeCodeHealth
+        rows={claudeRows}
+        canAct={(row: HealthRow) => canRun(row, null)}
+        onAct={(row: HealthRow) => void runHealthButton(row, null, healthDoors)}
         {t}
     />
 {/snippet}
@@ -383,7 +418,7 @@
         onToggle={requestToggle}
         toggles={{ ...ctl.toggles, ...page.toggles }}
         toolbar={catalog ? toolbar : undefined}
-        zone={catalog && !adapter ? developerZone : undefined}
+        zone={(catalog && !adapter) || claudeRows.length > 0 ? healthZone : undefined}
         onRetry={() => void ctl.load()}
         onClose={embedded ? undefined : close}
         emptyText={t('plugins.page.empty')}

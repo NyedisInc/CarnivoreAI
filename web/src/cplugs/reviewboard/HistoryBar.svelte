@@ -2,7 +2,9 @@
   import { tick } from 'svelte';
   import { t } from '../sdk';
   import { Button, IconButton } from '../sdk/ui';
+  import type { VisitorRevision } from './board-visitor-revisions.svelte';
   import type { HistoryItem } from './board-model';
+  import { visitorsOf } from './visitor-lines';
   import { isLiveDraft } from './live-model';
 
   interface Props {
@@ -13,9 +15,12 @@
     onpick: (revision: string) => void;
     onround?: (round: string) => void;
     onunfold: () => void;
+    visitors?: VisitorRevision[];
+    openVisitor?: number | null;
+    onvisitor?: (row: VisitorRevision) => void;
   }
 
-  let { items, folded, current, total, onpick, onround, onunfold }: Props = $props();
+  let { items, folded, current, total, onpick, onround, onunfold, visitors = [], openVisitor = null, onvisitor }: Props = $props();
 
   let track = $state<HTMLDivElement | null>(null);
 
@@ -44,6 +49,12 @@
       {#if item.kind === 'revision'}
         <Button size="sm" aria-current={item.id === current} aria-label={revisionLabel(item)} title={item.milestone ?? undefined}
                 data-history="revision" data-live-draft={isLiveDraft(item.id) ? '' : undefined} data-milestone={item.milestone ? '' : undefined} onclick={() => onpick(item.id)}>{item.id}</Button>
+        {#each visitorsOf(visitors, item.id) as row (row.number)}
+          <Button size="sm" data-history="visitor" data-visitor={row.label} data-present={row.present ? '' : undefined}
+                  aria-current={item.id === current && openVisitor === row.number}
+                  aria-label={t(row.present ? 'cplug.reviewboard.history.visitor_here' : 'cplug.reviewboard.history.visitor', { label: row.label, id: item.id })}
+                  onclick={() => onvisitor?.(row)}><span class="rb-ubadge">u</span>{row.number}{#if row.present}<span class="rb-upresent" aria-hidden="true"></span>{/if}</Button>
+        {/each}
       {:else}
         <IconButton variant="quiet" data-undelivered={item.undelivered} data-history="round"
                     label={t(item.undelivered ? 'cplug.reviewboard.history.round_undelivered' : 'cplug.reviewboard.history.round', { id: item.id, revision: item.revision })}

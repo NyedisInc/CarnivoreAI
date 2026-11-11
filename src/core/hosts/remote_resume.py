@@ -8,8 +8,10 @@ from typing import Any, Dict, Optional, Tuple
 
 import structlog
 
+from src.core.hosts import remote_overlay
 from src.core.hosts.identity import is_remote_backend, parse_remote_session_id
 from src.core.hosts.probe import AGENT_NAMES
+from src.core.sessions import launch_overlay
 
 logger = structlog.get_logger()
 
@@ -63,14 +65,27 @@ async def respawn_remote(manager: Any, remote_id: str, *, agent_type: Optional[s
         agent_command, _ = remote_command(paths, backend.host_key, stored, None, resume_args)
     if agent_type:
         chosen_command, _ = remote_command(paths, backend.host_key, agent_type, None, resume_args)
+    host = backend.host
+    far_dir = str((row or {}).get("working_dir") or backend.working_dir)
+    late: Dict[str, str] = {}
+    overlay_ref = remote_overlay.session_ref_for(backend.host_key, backend.tmux_session)
+    if chosen_command:
+        chosen_command, late, overlay_ref = await remote_overlay.apply(
+            host, family=agent_type, command=chosen_command, tmux_name=backend.tmux_session, far_dir=far_dir, label=None)
+    elif agent_command:
+        agent_command, late, overlay_ref = await remote_overlay.apply(
+            host, family=stored, command=agent_command, tmux_name=backend.tmux_session, far_dir=far_dir, label=None)
     logger.info("remote_respawn_request", host=backend.host_key, session_id=session_id,
                 conversation=target.outcome, chosen=bool(chosen_command))
     with restart_bracket(manager._attention_watcher, backend, session_id) as window:
         result = await backend.respawn(
             agent_command=agent_command, chosen_agent_command=chosen_command,
             chosen_agent_type=agent_type if chosen_command else None,
-            resume_outcome=target.outcome, live_restart_confirmed=bool(live_restart_confirmed))
+            resume_outcome=target.outcome, live_restart_confirmed=bool(live_restart_confirmed),
+            spawn_env=late or None)
         window.replaced = result.ok or bool(result.killed_live_pane)
+    if result.ok:
+        await launch_overlay.confirm(overlay_ref)
     if result.epoch_before is not None and result.epoch_after not in (None, result.epoch_before):
         logger.warning("remote_respawn_epoch_moved", host=backend.host_key, session_id=session_id)
     return {

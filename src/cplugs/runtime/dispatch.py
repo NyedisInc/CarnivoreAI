@@ -11,7 +11,7 @@ from urllib.parse import urlsplit
 
 import structlog
 
-from src.cplugs.runtime import create_params, fsguard, git_ops, guards, frames
+from src.cplugs.runtime import create_params, fsguard, git_ops, guards, frames, log_redaction
 from src.cplugs.sdk.ai_features import AI_CAPABILITIES
 from src.cplugs.runtime.owner_tokens import OwnerTokens, TokenRefused
 from src.cplugs.runtime.storage import HostStorage, StorageRefused
@@ -402,9 +402,7 @@ class HostDispatcher:
 
     async def _log(self, ctx: PluginContext, params: Dict[str, Any]) -> Dict[str, Any]:
         level = params.get("level") if params.get("level") in ("debug", "info", "warning", "error") else "info"
-        event = str(params.get("event", "plugin_log"))[:64]
-        fields = params.get("fields") if isinstance(params.get("fields"), dict) else {}
-        safe = {str(k)[:32]: str(v)[:200] for k, v in list(fields.items())[:10]}
+        event, safe = log_redaction.redact_log_params(params)
         getattr(logger.bind(cplug=ctx.plugin_id), level)(f"cplug_{event}", fields=safe)
         return {}
 

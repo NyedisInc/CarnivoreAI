@@ -12,6 +12,7 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 
 from src.core.safe_io.readonly_db import connect_readonly
 from src.core.db_models import SESSION_LIFECYCLE_RUNNING
+from src.core.hosts.ddl import host_scope
 from src.core.product_identity import is_owned_session_name
 from src.core.self_check import constants as K
 from src.core.tmux_listing import REASON_PROBE_ERROR, TmuxListing, classify_listing_failure
@@ -97,8 +98,9 @@ class SystemIO:
     def live_session_count(self, db_file: Path) -> Optional[int]:
         try:
             with closing(connect_readonly(db_file, timeout=K.COMMAND_TIMEOUT_SECONDS)) as conn:
-                row = conn.execute("SELECT COUNT(*) FROM sessions WHERE lifecycle = ?",
-                                   (SESSION_LIFECYCLE_RUNNING,)).fetchone()
+                scope, scope_params = host_scope(conn)
+                row = conn.execute("SELECT COUNT(*) FROM sessions WHERE lifecycle = ?" + scope,
+                                   (SESSION_LIFECYCLE_RUNNING, *scope_params)).fetchone()
         except sqlite3.Error:
             return None
         return int(row[0])

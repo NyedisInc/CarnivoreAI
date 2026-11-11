@@ -7,6 +7,7 @@ struct RewrittenPush: Equatable {
     let path: String?
     var origin: String? = nil
     var thread: String? = nil
+    var envelope: NotifyEnvelope? = nil
 }
 
 enum PushRewrite {
@@ -26,7 +27,8 @@ enum PushRewrite {
             guard let payload = try? PayloadCrypto.open(blob: blob, key: c.key, rowId: c.rowId) else { continue }
             let thread = payload.thread.flatMap { $0.isEmpty || $0.count > 200 ? nil : $0 }
             return RewrittenPush(title: payload.title ?? generic.title, body: payload.body ?? generic.body,
-                                 path: PathGuard.isSafe(payload.path) ? payload.path : nil, origin: c.origin, thread: thread)
+                                 path: PathGuard.isSafe(payload.path) ? payload.path : nil, origin: c.origin, thread: thread,
+                                 envelope: payload.envelope)
         }
         return generic
     }

@@ -29,6 +29,7 @@ logger = structlog.get_logger()
 CPLUGS_TOPIC = "cplugs"
 HOOK_TIMEOUT_S = 5.0
 _UNAUDITED = frozenset({"work"})
+_UNGATED = frozenset({"alert_resolve"})
 _AUDIT_PERMISSION: Dict[str, Any] = {
     "projects": "sessions.read", "activity": "activity.read",
     "swarm": "swarm", "work": "work", "toast": "notify", "toast_dismiss": "notify", "alert": "notify", "alert_resolve": "notify", "ai": "ai_features",
@@ -273,6 +274,7 @@ class Host:
                              else capabilities.toaster(cplug_id, app_state))
             caps["toast_dismiss"] = capabilities.toast_dismisser(cplug_id, app_state)
             caps["alert"] = capabilities.alerter(cplug_id, outside)
+        if "notify" in d.manifest.permissions:
             caps["alert_resolve"] = capabilities.alert_resolver(cplug_id, outside)
         granted_ai = {feature_id(d.id, n): f for n, f in d.manifest.ai_features.items()
                       if permission_name(d.id, n) in grants}
@@ -286,7 +288,8 @@ class Host:
                                                    egress_log.EgressLog(self.state_dir), _RATE)
         log = activity_log.ActivityLog(self.state_dir)
         permissions = {**_AUDIT_PERMISSION, "sessions": audit.sessions_permission_for(outside)}
-        caps = {name: cap if name in _UNAUDITED else audit.audited(cap, log, key, name, permissions[name], live) for name, cap in caps.items()}
+        caps = {name: cap if name in _UNAUDITED else audit.audited(cap, log, key, name, permissions[name], None if name in _UNGATED else live)
+                for name, cap in caps.items()}
         defaults = settings_defaults(d.manifest.settings_schema)
         aliases = d.manifest.settings_aliases
         settings_aliases.declare(aliases)
@@ -320,7 +323,7 @@ class Host:
     async def _hook(self, d: CplugDefinition, which: str, *, at_boot: bool = False) -> None:
         system = system_lifecycle.HOOKS.get(d.id)
         if which == "start":
-            default_roots.fill(self.state_dir, d.manifest)
+            default_roots.fill(self.state_dir, d.manifest, d.filled_roots)
         hook = {"start": d.on_start, "stop": d.on_stop, "settings": d.on_settings}[which]
         if hook is None and (system is None or which == "settings"):
             return

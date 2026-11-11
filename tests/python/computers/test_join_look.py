@@ -36,9 +36,10 @@ def test_hostile_pn_is_cleaned_on_read():
 
 
 def test_label_is_the_pack_name_else_name_and_fid_short():
-    assert join_job._candidate({"name": "air", "fid": "abcdef123", "fid_short": "abcdef", "pack_name": "Home"})["label"] == "Home abcdef"
+    assert join_job._candidate({"name": "air", "fid": "abcdef123", "fid_short": "abcdef", "pack_name": "Home"})["label"] == "Home"
     got = join_job._candidate({"name": "air", "fid": "abcdef123", "fid_short": "abcdef", "pack_name": "<>"})
-    assert got == {"name": "air", "fid": "abcdef123", "fid_short": "abcdef", "pack_name": None, "label": "air abcdef"}
+    assert got == {"name": "air", "fid": "abcdef123", "fid_short": "abcdef", "pack_name": None, "members": [], "label": "air"}
+    assert join_job._candidate({"name": "air", "computer_label": "dock", "fid_short": "abcdef"})["label"] == "dock"
 
 
 @pytest.mark.asyncio
@@ -89,8 +90,8 @@ async def test_a_look_ends_finding_with_candidates_and_never_blocks_a_join(env, 
     status = join_job.current_job().status()
     assert status["state"] == "finding" and status["error"] is None
     assert status["candidates"] == [
-        {"name": "air", "fid": "abcdef123456", "fid_short": "abcdef", "pack_name": "Home Pack", "label": "Home Pack abcdef"},
-        {"name": "studio", "fid": "123456abcdef", "fid_short": "123456", "pack_name": None, "label": "studio 123456"}]
+        {"name": "air", "fid": "abcdef123456", "fid_short": "abcdef", "pack_name": "Home Pack", "members": [], "label": "Home Pack"},
+        {"name": "studio", "fid": "123456abcdef", "fid_short": "123456", "pack_name": None, "members": [], "label": "studio"}]
     assert join_job.candidate_view() == status["candidates"] and not spake
 
     nobody = join_job.start_look(origin="local")

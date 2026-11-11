@@ -1,8 +1,11 @@
 <script lang="ts">
-  import { t } from '../sdk';
+  /* a newer revision */
+  import { type VisitorRevisionAnswers } from './board-visitor-revisions.svelte';
+import { t } from '../sdk';
   import { Button, Field, Icon, IconButton, List, ListRow, Markdown } from '../sdk/ui';
   import type { BoardRevision, BoardSidecar } from './board-model';
   import PromptRow from './PromptRow.svelte';
+  import { promptWords } from './visitor-lines';
   import { confirmKey, type Confirm } from './round-confirm';
   import {
     anchorNoteOf, answerOf, copyGhost, ghostFor, isDraftEmpty, newDraft, pickOption, setAnchorNote, setChecked, setNote, setPromptNote, setText, shownRevision,
@@ -20,6 +23,7 @@
     sending: boolean;
     failed: boolean;
     hide?: string[];
+    visitor?: VisitorRevisionAnswers | null;
     onedit: (change: (draft: Draft | null) => Draft | null) => void;
     onsend: () => void;
     onclear: () => void;
@@ -27,7 +31,7 @@
     onround: (id: string) => void;
   }
 
-  let { sidecar, revision, latest, draft, phase, pointed, confirm, sending, failed, hide = [], onedit, onsend, onclear, onmove, onround }: Props = $props();
+  let { sidecar, revision, latest, draft, phase, pointed, confirm, sending, failed, hide = [], visitor = null, onedit, onsend, onclear, onmove, onround }: Props = $props();
 
   let openAnchors = $state<string[]>([]);
 
@@ -70,7 +74,15 @@
     {/if}
     {#if failed}<p class="rb-warn" role="status" data-send-failed>{t('cplug.reviewboard.tray.send_failed')}</p>{/if}
 
+    {#snippet visitorLine(row: VisitorRevisionAnswers, prompt: BoardRevision['prompts'][number])}
+      {@const words = promptWords(prompt, row.body, t('cplug.reviewboard.tray.yes'), t('cplug.reviewboard.tray.no'))}
+      <p class="rb-uline" data-visitor-line={prompt.id}><span class="rb-ubadge">{row.label}</span>{words || t('cplug.reviewboard.visitors.no_answer')}</p>
+    {/snippet}
     {#if !editable}
+      
+      {#if visitor && visitor.revision === revision.id}
+        {#each revision.prompts as prompt (prompt.id)}<p class="rb-label">{prompt.label}</p>{@render visitorLine(visitor, prompt)}{/each}
+      {/if}
       <p class="rb-label">{t('cplug.reviewboard.tray.rounds_here', { id: revision.id })}</p>
       {#if roundsHere.length === 0}<p class="rb-note-text">{t('cplug.reviewboard.tray.none_sent')}</p>{/if}
       <List>
@@ -109,6 +121,7 @@
                    onpick={(o) => edit((d) => pickOption(d, prompt, o))} oncheck={(c) => edit((d) => setChecked(d, prompt, c))}
                    ontext={(x) => edit((d) => setText(d, prompt, x))} onnote={(x) => edit((d) => setPromptNote(d, prompt, x))}
                    oncopy={() => ghost && edit((d) => copyGhost(d, prompt, ghost))} />
+        {#if visitor && visitor.revision === shown.id}{@render visitorLine(visitor, prompt)}{/if}
       {/each}
 
       {#if shown.anchors.length > 0}

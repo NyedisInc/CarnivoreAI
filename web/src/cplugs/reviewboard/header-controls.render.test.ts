@@ -13,6 +13,8 @@ const api = vi.hoisted(() => ({
   fetchAttachments: vi.fn(async (slug: string) => ({ slug, attachments: [] })), fetchAttachmentBlob: vi.fn(),
 }));
 vi.mock('./board-api', () => api);
+const look = vi.hoisted(() => ({ fetchBoardLook: vi.fn(), saveBoardLook: vi.fn() }));
+vi.mock('./board-look-api', () => look);
 vi.mock('../../lib/resource-push/boot', () => ({
   resourcePush: () => ({ pushOrPoll: () => () => {}, onChange: () => () => {}, isLive: () => true }),
 }));
@@ -85,6 +87,8 @@ beforeEach(() => {
   api.fetchDraft.mockResolvedValue(null);
   api.savePayloadDraft.mockResolvedValue({ revision: 'r3', draft: { at: '2026-10-14T09:00:00Z' }, etag: 'e2', changed: true });
   api.sendRoundKept.mockResolvedValue({ round: { ...round(2, 'r3'), save: 4, payload: {} }, etag: 'e', delivery: { state: 'posted' }, state: 'with_claude', duplicate: false });
+  look.fetchBoardLook.mockResolvedValue(null);
+  look.saveBoardLook.mockResolvedValue(undefined);
   themeApi.themeChoices.mockReturnValue(THEMES);
   themeApi.activeThemeId.mockReturnValue('carnivore');
   themeApi.themeTokens.mockImplementation((id: string) => TOKENS[id] ?? { '--oc-orange': 'rgb(1, 2, 3)' });
@@ -198,7 +202,7 @@ describe('autosave: one overwriting draft, never a numbered save', () => {
 
   it('ignores a state the page posts before it was told where to start, and the echo of a state the board handed it', async () => {
     await open();
-    await post({ early: true });
+    await post({ early: true }); // before ready
     await passDebounce();
     expect(api.savePayloadDraft).not.toHaveBeenCalled();
     await readyAt();
@@ -413,7 +417,7 @@ describe('the theme picker repaints only the page frame', () => {
     expect(spy).toHaveBeenCalledWith({ rb: 1, type: 'theme', id: 'carnivore', vars: TOKENS.carnivore }, '*');
   });
 
-  it('a chosen theme sends that theme\'s resolved tokens to the frame, is remembered per device, and changes nothing around the page', async () => {
+  it('a chosen theme sends that theme\'s resolved tokens to the frame, is kept for the BOARD on the server (id and palette), and changes nothing around the page', async () => {
     await open();
     await ready();
     const spy = vi.spyOn(frame().contentWindow!, 'postMessage');
@@ -422,7 +426,8 @@ describe('the theme picker repaints only the page frame', () => {
     picker.dispatchEvent(new Event('change', { bubbles: true }));
     await settle();
     expect(spy).toHaveBeenLastCalledWith({ rb: 1, type: 'theme', id: 'dracula', vars: TOKENS.dracula }, '*');
-    expect(localStorage.getItem('carnivore.reviewboard.theme')).toBe('dracula');
+    expect(look.saveBoardLook).toHaveBeenLastCalledWith('20261013-bottom-bar', { theme: 'dracula', palette: TOKENS.dracula });
+    expect(localStorage.getItem('carnivore.reviewboard.theme')).toBeNull();
     expect(document.documentElement.getAttribute('data-session-theme')).toBeNull();
     picker.value = 'matrix';
     picker.dispatchEvent(new Event('change', { bubbles: true }));
@@ -431,8 +436,21 @@ describe('the theme picker repaints only the page frame', () => {
     expect(spy.mock.calls.filter((c) => (c[0] as { type: string }).type === 'theme')).toHaveLength(2);
   });
 
-  it('reopens on the remembered theme, and choosing the first entry follows the app again', async () => {
-    localStorage.setItem('carnivore.reviewboard.theme', 'dracula');
+  it('a pick made before the first look fetch lands is never repainted with the older server value (R7-4)', async () => {
+    let late: (v: { theme: string; palette: Record<string, string> } | null) => void = () => undefined;
+    look.fetchBoardLook.mockReturnValue(new Promise((done) => { late = done; }));
+    await open();
+    const picker = q<HTMLSelectElement>('[data-theme-picker]');
+    picker.value = 'matrix';
+    picker.dispatchEvent(new Event('change', { bubbles: true }));
+    await settle();
+    late({ theme: 'dracula', palette: TOKENS.dracula });
+    await settle();
+    expect(q<HTMLSelectElement>('[data-theme-picker]').value).toBe('matrix');
+  });
+
+  it('reopens on the board\'s own theme from the server, and choosing the first entry clears it so the board follows the app again', async () => {
+    look.fetchBoardLook.mockResolvedValue({ theme: 'dracula', palette: TOKENS.dracula });
     await open();
     const spy = vi.spyOn(frame().contentWindow!, 'postMessage');
     await ready();
@@ -442,7 +460,7 @@ describe('the theme picker repaints only the page frame', () => {
     picker.value = '';
     picker.dispatchEvent(new Event('change', { bubbles: true }));
     await settle();
-    expect(localStorage.getItem('carnivore.reviewboard.theme')).toBeNull();
+    expect(look.saveBoardLook).toHaveBeenLastCalledWith('20261013-bottom-bar', null);
     expect(spy).toHaveBeenLastCalledWith({ rb: 1, type: 'theme', id: 'carnivore', vars: TOKENS.carnivore }, '*');
   });
 });

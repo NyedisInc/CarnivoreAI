@@ -7,7 +7,7 @@
     import Check from '../../../opscenter/ui/Check.svelte';
     import '../../settings-page/panel-kit/panel-kit.css';
     import './matrix.css';
-    import { SCREEN, type Fetcher } from './api';
+    import { DESKTOP, SCREEN, type Fetcher } from './api';
     import { cellOf, DEFAULTS_COLUMN, destinationColumns, groupRows, groupSwitch, lockReason, PHONE_QUERY, type Group } from './logic';
     import { attach, matrix, resetCell, setDefault, setGroup, setTick } from './store.svelte';
     import MatrixCell from './MatrixCell.svelte';
@@ -41,11 +41,12 @@
     const typeLabel = (key: string): string => t(key);
     function columnTitle(column: string): string {
         if (column === SCREEN) return t('settings.notify.matrix.col.screen');
+        if (column === DESKTOP) return t('settings.notify.matrix.col.desktop');
         if (column === DEFAULTS_COLUMN) return t('settings.notify.matrix.col.defaults');
         const c = columns.find((d) => d.id === column);
         return colName(column, c?.name ?? '', c?.kind ?? '');
     }
-    const activeColumn = $derived(picked === SCREEN || picked === DEFAULTS_COLUMN || columns.some((c) => c.id === picked) ? picked : SCREEN);
+    const activeColumn = $derived(picked === SCREEN || picked === DESKTOP || picked === DEFAULTS_COLUMN || columns.some((c) => c.id === picked) ? picked : SCREEN);
 
     function cellFor(column: string, row: { id: string; defaults: { outside_locked_off: boolean } }) {
         if (column !== DEFAULTS_COLUMN) return cellOf(matrix.settings, column, row.id);
@@ -87,6 +88,7 @@
             <label class="tm__sub" for="mx-column">{t('settings.notify.matrix.pick')}</label>
             <Select id="mx-column" bind:value={picked} data-mx="picker" options={[
                 { value: SCREEN, label: t('settings.notify.matrix.col.screen') },
+                { value: DESKTOP, label: t('settings.notify.matrix.col.desktop') },
                 { value: DEFAULTS_COLUMN, label: t('settings.notify.matrix.col.defaults') },
                 ...columns.map((c) => ({ value: c.id, label: colName(c.id, c.name, c.kind) })),
             ]} />
@@ -120,6 +122,10 @@
                     <tr>
                         <th class="mx-type" scope="col">{t('settings.notify.matrix.col.type')}</th>
                         <th scope="col" data-mx-col={SCREEN}>{t('settings.notify.matrix.col.screen')}</th>
+                        <th scope="col" data-mx-col={DESKTOP}>
+                            {t('settings.notify.matrix.col.desktop')}
+                            <span class="mx-colsub">{t('settings.notify.matrix.col.desktop.hint')}</span>
+                        </th>
                         <th scope="col" data-mx-col={DEFAULTS_COLUMN}>
                             {t('settings.notify.matrix.col.defaults')}
                             <span class="mx-colsub">{t('settings.notify.matrix.col.defaults.hint')}</span>
@@ -136,7 +142,7 @@
                     {#each groups as group (group.family.id)}
                         <tr class="mx-family" data-mx-group={group.family.id}>
                             <th class="mx-type" scope="rowgroup">{@render groupHead(group)}</th>
-                            {#each [SCREEN, DEFAULTS_COLUMN, ...columns.map((c) => c.id)] as column (column)}
+                            {#each [SCREEN, DESKTOP, DEFAULTS_COLUMN, ...columns.map((c) => c.id)] as column (column)}
                                 {@const sw = switchOf(group, column)}
                                 <td>
                                     <Check label="" ariaLabel={t('settings.notify.matrix.group.toggle', { group: t(group.family.label_key), column: columnTitle(column) })}
@@ -152,7 +158,7 @@
                                     <span class="mx-desc">{t(row.description_key)}{row.defaults.screen_surface === 'approvals_inbox' ? ' ' + t('settings.notify.matrix.inbox') : ''}</span>
                                     {#if merged(row.id)}<span class="mx-merged" data-mx="merged">{t(`settings.notify.matrix.merged.${row.id}`)}</span>{/if}
                                 </th>
-                                {#each [SCREEN, DEFAULTS_COLUMN, ...columns.map((c) => c.id)] as column (column)}
+                                {#each [SCREEN, DESKTOP, DEFAULTS_COLUMN, ...columns.map((c) => c.id)] as column (column)}
                                     <td>
                                         <MatrixCell {t} cell={cellFor(column, row)} name={`${t(row.label_key)}, ${columnTitle(column)}`}
                                             why={lockReason(row, column === DEFAULTS_COLUMN ? 'outside' : column)} showSource={column !== DEFAULTS_COLUMN}

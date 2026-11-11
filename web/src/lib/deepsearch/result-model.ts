@@ -5,6 +5,11 @@ export const LAYOUTS: readonly Layout[] = ['ledger', 'best'];
 export const DEFAULT_LAYOUT: Layout = 'ledger';
 export const LAYOUT_KEY = 'carnivore.deepsearch.layout';
 
+export type SortChoice = 'relevance' | 'date';
+export const SORTS: readonly SortChoice[] = ['relevance', 'date'];
+export const DEFAULT_SORT: SortChoice = 'relevance';
+export const SORT_KEY = 'carnivore.deepsearch.sort';
+
 export const HITS_COLLAPSED = 2;
 export const NAME_CHARS = 80;
 
@@ -40,6 +45,22 @@ export function readLayout(storage: StorageRead | null = browserStorage()): Layo
 export function writeLayout(layout: Layout, storage: StorageWrite | null = browserStorage()): void {
   try {
     storage?.setItem(LAYOUT_KEY, layout);
+  } catch {
+  }
+}
+
+export function readSort(storage: StorageRead | null = browserStorage()): SortChoice {
+  try {
+    const stored = storage?.getItem(SORT_KEY);
+    return stored === 'relevance' || stored === 'date' ? stored : DEFAULT_SORT;
+  } catch {
+    return DEFAULT_SORT;
+  }
+}
+
+export function writeSort(sort: SortChoice, storage: StorageWrite | null = browserStorage()): void {
+  try {
+    storage?.setItem(SORT_KEY, sort);
   } catch {
   }
 }

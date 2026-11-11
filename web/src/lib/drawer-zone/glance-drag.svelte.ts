@@ -1,7 +1,7 @@
-/* a wrapping row the glance area */
+/* a wrapping row */
 
 import { beginGesture } from '../../opscenter/engine/pointer';
-import { ZONE_DRAG_THRESHOLD, type ZoneDragHandlers } from './zone-drag.svelte';
+import { ZONE_DRAG_THRESHOLD, type ZoneDragHandlers } from '../zone-motion/area-drag.svelte';
 
 export const glanceDrag: { index: number | null; carrying: boolean } = $state({
   index: null,
@@ -9,7 +9,7 @@ export const glanceDrag: { index: number | null; carrying: boolean } = $state({
 });
 
 export function glanceAreaElement(doc: Document = document): HTMLElement | null {
-  return doc.querySelector<HTMLElement>('[data-glance-area]');
+  return doc.querySelector<HTMLElement>('[data-zone-glances]');
 }
 
 export function glanceIndexAt(x: number, y: number, skip: string | null = null, doc: Document = document): number | null {
@@ -18,8 +18,8 @@ export function glanceIndexAt(x: number, y: number, skip: string | null = null, 
   const box = root.getBoundingClientRect();
   if (x < box.left || x > box.right || y < box.top || y > box.bottom) return null;
   let index = 0;
-  for (const item of root.querySelectorAll<HTMLElement>('[data-glance-place]')) {
-    if (item.dataset['glancePlace'] === skip) continue;
+  for (const item of root.querySelectorAll<HTMLElement>('[data-glance-row-place]')) {
+    if (item.dataset['glanceRowPlace'] === skip) continue;
     const rect = item.getBoundingClientRect();
     const rowAbove = rect.bottom <= y;
     const sameRow = y >= rect.top && y < rect.bottom;
@@ -52,7 +52,6 @@ function beginGlanceDrag(element: HTMLElement, event: PointerEvent, skip: string
   });
 }
 
-/* the glance area */
 export function beginGlancePlacementDrag(handle: HTMLElement, event: PointerEvent, id: string, handlers: ZoneDragHandlers): boolean {
   return beginGlanceDrag(handle, event, id, handlers);
 }

@@ -10,12 +10,13 @@
   import { sessions } from '../../api';
   import { ledger } from '../../api/ledger.svelte';
   import { accountSwitch } from '../../../lib/account-switch/switch-store.svelte';
-  import { footAccount } from './foot-account';
+  import { footAccount, remoteFootAccount } from './foot-account';
   import { rowFor } from '../terminal-viewer/meta';
   import ShellFoot from './ShellFoot.svelte';
   import FootWork from '../../../lib/background-work/FootWork.svelte';
   import FootGrown from './FootGrown.svelte';
   import FootProgress from './FootProgress.svelte';
+  import FootHold from './FootHold.svelte';
   import type { ControlSection } from '../../../lib/session-control/control-center';
   import { splitFoot } from './foot-toolbar';
   import {
@@ -33,6 +34,7 @@
   import { resolveSessionControlOption, DEFAULT_SESSION_CONTROL_OPTION, type SessionControlOption }
     from '../../../lib/session-control/control-center';
   import { t } from '../../../lib/i18n/index.svelte';
+  import Icon from '../../ui/Icon.svelte';
   import FootMeters from './FootMeters.svelte';
   import { fillPct, type Admit } from './foot-meter-math';
 
@@ -145,10 +147,15 @@
   let measured = $state<FootMeasure | null>(null);
   const footRow = $derived(rowFor(sessions.data, sessionId));
   const account = $derived(
-    footAccount(footRow?.agent_family, footRow?.account_id, ledger.data?.accounts, accountSwitch.data?.active),
+    sessionId.startsWith('remote:')
+      ? remoteFootAccount(payload?.account)
+      : footAccount(footRow?.agent_family, footRow?.account_id, ledger.data?.accounts, accountSwitch.data?.active),
   );
+  const hostKey = $derived((footRow?.host_key as string | undefined) || '');
+  const hostName = $derived(hostKey && hostKey !== 'local' ? ((footRow?.host_label as string | undefined) || hostKey) : '');
+  const hostDim = $derived(((footRow?.host_state as string | undefined) || 'up') !== 'up');
   let accountW = $state(0);
-  const planWidth = $derived(Math.max(1, width - (account ? accountW : 0)));
+  const planWidth = $derived(Math.max(1, width - (account || hostName ? accountW : 0)));
   const plan = $derived(planFoot(planWidth, measured));
   let labelsShortEl = $state<HTMLElement | null>(null);
   let labelsFullEl = $state<HTMLElement | null>(null);
@@ -262,6 +269,7 @@
 {:else if !noStats}
 <div class="oc-tf-slot" bind:this={slot} onkeydown={onKeydown} role="presentation">
   <FootProgress {sessionId} />
+  <FootHold {sessionId} />
   <div class="oc-tf-line" data-foot-bar>
   <button
     type="button"
@@ -279,12 +287,21 @@
   <FootWork {sessionId} form={activeWorkForm} active={expanded ? focus : null}
     hideAgents={!footBarItems.agents} hideShells={!footBarItems.shells} hideTimers={!footBarItems.timers}
     onwidths={(w) => { workWidths = w; }} onopen={openSection} />
+  {#if account || hostName}
+  <span class="oc-tf-edge" bind:offsetWidth={accountW}>
+  {#if hostName}
+    <span class="oc-tf-host" role="img" aria-label={t('usage.foot.host', { name: hostName })} data-host-state={hostDim ? (footRow?.host_state as string) : undefined}>
+      <Icon name="computers-linked" size={12} /><span class="oc-tf-host-name" aria-hidden="true">{hostName}</span>
+    </span>
+  {/if}
   {#if account}
-    <span class="oc-tf-acct" bind:offsetWidth={accountW}>
+    <span class="oc-tf-acct">
       {#if account.mismatch}<span class="oc-tf-acct-warn" role="img" title={t('usage.foot.account.mismatch')}
         aria-label={t('usage.foot.account.mismatch')}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3 2 20h20Z"/><path d="M12 10v5M12 18v.01"/></svg></span>{/if}
       <span class="oc-tf-acct-name">{account.name}</span>
     </span>
+  {/if}
+  </span>
   {/if}
   </div>
   
@@ -410,8 +427,31 @@
       border-top: 0;
     }
 
-    .oc-tf-line > .oc-tf-acct {
+    .oc-tf-edge {
+      display: flex;
+      align-items: center;
       align-self: center;
+      flex: 0 0 auto;
+    }
+
+    .oc-tf-host {
+      display: flex;
+      align-items: center;
+      gap: var(--oc-space-1);
+      padding: 0 var(--oc-space-2) 0 0;
+      font-size: var(--oc-fs-label);
+      color: var(--oc-text-secondary);
+      white-space: nowrap;
+    }
+
+    .oc-tf-host[data-host-state] {
+      opacity: 0.6;
+    }
+
+    .oc-tf-host-name {
+      max-width: 16ch;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
   }

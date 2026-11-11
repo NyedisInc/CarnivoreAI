@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import stat
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -30,6 +31,7 @@ class ExtraFile:
     length: int
     sha256: str
     mtime: float
+    mode: int = 0
 
 
 def _opener(path: Path):
@@ -57,7 +59,7 @@ def find(root: Path, intake: model.Intake) -> List[ExtraFile]:
                 continue
             try:
                 length, sha = model.measure(_opener(path))
-                found.append(ExtraFile(path, rel, length, sha, path.stat().st_mtime))
+                found.append(ExtraFile(path, rel, length, sha, path.stat().st_mtime, stat.S_IMODE(path.stat().st_mode)))
             except OSError as exc:
                 intake.refused.append(model.Refusal("extras", str(path), f"unreadable: {type(exc).__name__}"))
     return found
@@ -73,7 +75,7 @@ def point_of(root: Path, files: List[ExtraFile], run: str, taken: Optional[set] 
     stamp = max(f.mtime for f in files)
     point_id = layout.new_point_id(K.REASON_IMPORT, datetime.fromtimestamp(stamp, timezone.utc), taken or set())
     incoming = tuple(IncomingFile(role=K.ROLE_FOLDER_FILE, home=HOME_FOLDER, rel=f.rel, source_path=str(f.path), length=f.length,
-                                  sha256=f.sha256, mode=0o600, mtime_ns=int(f.mtime * 1e9), lines=0, read=_opener(f.path)) for f in files)
+                                  sha256=f.sha256, mode=f.mode, mtime_ns=int(f.mtime * 1e9), lines=0, read=_opener(f.path)) for f in files)
     tags: Dict[str, object] = {"imported": True, "kind": "extras", "run": run, "sources": ["recovered-transcripts"], "labels": [],
                                "files": len(files), "digest": hashlib.sha256("".join(f.sha256 for f in files).encode()).hexdigest()}
     return FallbackPoint(conversation_id=UNIT, point_id=point_id, reason=K.REASON_IMPORT, created_epoch=stamp,

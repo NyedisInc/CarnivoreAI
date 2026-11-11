@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "argent_retag_window_empty",
+    "message": "no spend in that window"
+  }
+}

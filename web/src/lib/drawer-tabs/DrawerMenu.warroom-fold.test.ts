@@ -40,13 +40,14 @@ function render(): HTMLElement {
   return target;
 }
 
-test('wide, fold open: the first line under dashboards is war room, the main rows have none, and c still opens it', () => {
+test('wide, fold open: war room is the main row after the fold-out, not a line in it, and c still opens it', () => {
   const root = render();
-  const mainIds = [...root.querySelectorAll<HTMLElement>('li.oc-nav-line:not(.oc-nav-sub)[data-menu-row]')].map((l) => l.dataset.menuRow);
-  expect(mainIds).not.toContain('warroom');
+  expect(root.querySelector('li.oc-nav-sub [data-rail-item="warroom"]')).toBeNull();
   const subs = [...root.querySelectorAll<HTMLElement>('li.oc-nav-sub')];
-  expect(subs[0]?.querySelector('[data-rail-item="warroom"]')?.textContent).toContain('war room');
-  expect(subs[1]?.querySelector('[data-menu-dashboard]')).not.toBeNull();
+  expect(subs[0]?.querySelector('[data-menu-dashboard]')).not.toBeNull();
+  const war = root.querySelector('[data-rail-item="warroom"]')!;
+  expect(war.textContent).toContain('war room');
+  expect(subs.at(-1)!.compareDocumentPosition(war) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   const key = new KeyboardEvent('keydown', { key: 'c', bubbles: true, cancelable: true });
   root.querySelector('[data-rail-item="dashboards"]')!.dispatchEvent(key);
   expect(openWarroomScreen).toHaveBeenCalledTimes(1);

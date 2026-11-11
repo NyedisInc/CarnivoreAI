@@ -20,7 +20,7 @@ const realSeams = { ...editorSeams };
 beforeEach(async () => {
   await setupRail();
   editorSeams.wide = () => true;
-  editorSeams.page = () => ({}) as never;
+  editorSeams.page = () => 'home' as never;
   editorSeams.store = () => ({}) as never;
 });
 
@@ -72,11 +72,24 @@ test('the focused icon takes the same event (Shift+F10 in a browser)', async () 
   expect(document.querySelector('.acm-menu')).not.toBeNull();
 });
 
-test('a page with nothing to edit and nothing declared leaves the icon inert, never an empty menu', async () => {
+test('a page with nothing to edit still offers remove widget, written once, and no edit layout', async () => {
   Object.assign(editorSeams, realSeams);
   editorSeams.wide = () => false;
   await railOn();
   await press(SWARM_FLYOUT);
-  expect(corner()).toBeNull();
-  expect(flyout().querySelector('.sbr-flyout__title .oc-frame-corner--still')).not.toBeNull();
+  const icon = corner()!;
+  expect(icon, 'the icon is a live menu button, not inert').not.toBeNull();
+  rightClick(icon);
+  const menu = document.querySelector('.acm-menu')!;
+  expect(menu.querySelector('[data-node="edit-layout"]')).toBeNull();
+  const remove = menu.querySelector<HTMLElement>('[data-node="remove-widget"]');
+  expect(remove, 'remove widget is offered outside edit layout').not.toBeNull();
+  const writes: unknown[] = [];
+  const g = globalThis as unknown as { PreferenceBridge?: unknown };
+  g.PreferenceBridge = { read: (_f: string, fb: () => unknown) => fb(), write: async (f: string, v: unknown, local: () => void) => { writes.push([f, v]); local(); return { status: 'committed' }; }, follow: () => () => {} };
+  remove!.click();
+  flushSync();
+  await Promise.resolve();
+  expect(writes).toEqual([['rail_hidden_icons', [SWARM_FLYOUT]]]);
+  delete g.PreferenceBridge;
 });

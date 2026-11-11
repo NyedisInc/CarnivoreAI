@@ -49,6 +49,7 @@ class TranscriptFacts:
     open_async_agents: int = 0
     open_background_tasks: int = 0
     open_background_launched_at: Tuple[Optional[datetime], ...] = ()
+    open_background_task_ids: Tuple[Optional[str], ...] = ()
     open_workflows: int = 0
     newest_user_prompt_at: Optional[datetime] = None
     detail: str = ""
@@ -154,6 +155,7 @@ def classify_transcript_records(
     open_async = 0
     open_background = 0
     open_background_at: List[Optional[datetime]] = []
+    open_background_ids: List[Optional[str]] = []
     open_workflows = 0
     for key, launch in launches.items():
         ids = {launch.task_id, launch.tool_use_id} - {None}
@@ -165,6 +167,7 @@ def classify_transcript_records(
         else:
             open_background += 1
             open_background_at.append(launch_at.get(key))
+            open_background_ids.append(launch.task_id)
     if open_async:
         notes.append(
             str(open_async)
@@ -229,6 +232,7 @@ def classify_transcript_records(
         open_async_agents=open_async,
         open_background_tasks=open_background,
         open_background_launched_at=tuple(open_background_at),
+        open_background_task_ids=tuple(open_background_ids),
         open_workflows=open_workflows,
         newest_user_prompt_at=newest_user_prompt_at,
         detail="; ".join([head] + notes),

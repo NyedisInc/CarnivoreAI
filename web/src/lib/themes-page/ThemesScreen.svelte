@@ -92,6 +92,11 @@
         onSelect?.(id);
     }
 
+    function closeSheet(): void {
+        sheetOpen = false;
+        if (embedded) selectedId = null;
+    }
+
     function apply(id: string): void {
         applyGlobalTheme(id);
     }
@@ -139,7 +144,6 @@
             const next = document.documentElement.dataset.theme ?? null;
             const moved = pageTheme !== null && next !== pageTheme;
             pageTheme = next;
-            if (embedded && !selectedId) selectedId = pageTheme;
             if (embedded && moved) onChanged?.();
         };
         read();
@@ -203,7 +207,7 @@
         sub={pageSub}
         bar={pageBar}
     >
-        <div class="oc-page__body themes-body" class:themes-body--detail={sheetOpen} bind:this={bodyEl}>
+        <div class="oc-page__body themes-body" class:themes-body--detail={sheetOpen} data-embedded={embedded ? '' : undefined} bind:this={bodyEl}>
             <div class="oc-page__scroll">
                 <section class="oc-page__main" aria-label={t('themes.page.grid')}>
                     {#if notice}
@@ -228,9 +232,10 @@
                 </section>
             </div>
 
+            {#if !embedded || sheetOpen}
             <aside class="oc-page__detail themes-side" use:clearToasts aria-label={t(panel === 'guide' ? 'themes.page.guide.title' : 'themes.page.inspector.title')}>
                 <div class="oc-page__detail-body">
-                    <Button data-themes-back onclick={() => (sheetOpen = false)}>{t('themes.page.sheet.close')}</Button>
+                    <Button data-themes-back onclick={closeSheet}>{t('themes.page.sheet.close')}</Button>
                     {#if panel === 'guide'}
                         <BuildYourOwn onrescan={() => void themes.refresh(true)} onlibrary={openLibrary} onsubmit={() => openPublishPage('themes')} />
                     {:else}
@@ -238,6 +243,7 @@
                     {/if}
                 </div>
             </aside>
+            {/if}
         </div>
     </Page>
 {/if}
@@ -320,6 +326,10 @@
 
     .themes-side {
         flex: 0 0 380px;
+    }
+
+    .themes-body[data-embedded] :global([data-themes-back]) {
+        display: block;
     }
 
     :global([data-themes-back]) {

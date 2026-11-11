@@ -7,6 +7,7 @@ from typing import Iterator
 
 import structlog
 
+from src.core import plugin_layout
 from src.core.sessions.ports import SettingsReader, Target
 from src.core.skills import kinds
 from src.core.theme_paths import user_themes_dir
@@ -39,7 +40,6 @@ REQUIRED_MANIFEST = kinds.MANIFEST_FOR
 SKILLS_DIR_NAME = "skills"
 LOADOUTS_DIR_NAME = "loadouts"
 MODS_DIR_NAME = "mods"
-CPLUG_CODE_DIR_NAME = "cplug-code"
 CLAUDE_DIR_NAME = ".claude"
 CODEX_DIR_NAME = ".codex"
 AGENTS_DIR_NAME = ".agents"
@@ -72,7 +72,7 @@ class LiveInstallRoots:
         return self._settings_reader.state_dir() / LOADOUTS_DIR_NAME
 
     def _state_cplug_dir(self) -> Path:
-        return self._settings_reader.state_dir() / CPLUG_CODE_DIR_NAME
+        return plugin_layout.code_parent(self._settings_reader.state_dir())
 
     def targets_for(
         self, kind: str, scope: str, project_path: str | None

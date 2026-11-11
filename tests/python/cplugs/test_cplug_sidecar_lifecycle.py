@@ -74,7 +74,7 @@ def children(state: Path) -> Dict[str, Any]:
 
 
 def lay_code(state: Path) -> None:
-    root = state / "cplug-code" / NAME
+    root = state / "plugins" / NAME
     root.mkdir(parents=True)
     (root / "cplug.json").write_text(json.dumps(CPLUG))
     (root / "carnivore.json").write_text(json.dumps(SIDE))
@@ -137,7 +137,10 @@ def test_enable_restart_kill_disable_uninstall_purge_leave_no_residue(tmp_path, 
                 secret_store.SecretStore(state).set(key, sidecar_registry.find(NAME).manifest, "token", "abc123")
                 egress_log.EgressLog(state).record(key, host="api.example.com", method="GET", permission="network_hosts:api.example.com",
                                                    status=200, bytes_out=1, bytes_in=2, ms=3, outcome="ok")
-                assert (data / "files").is_dir() and (data / "profile.sb").is_file()
+                assert (data / "files").is_dir() and not (data / "profile.sb").exists()
+                profile = data.parent / "profiles" / f"{data.name}.sb"
+                assert profile.is_file()
+                (data / "files" / "note.txt").write_text("the plugin's own data")
 
                 restarted = await http.post(f"{base}/restart")
                 assert restarted.status_code == 200 and restarted.json()["process"] == "running"
@@ -185,7 +188,7 @@ def test_enable_restart_kill_disable_uninstall_purge_leave_no_residue(tmp_path, 
                 done = await http.post(f"{base}/purge", json={"dry_run": False, "confirm_token": price["confirm_token"]})
                 assert done.status_code == 200, done.text
 
-            assert not data.exists()
+            assert not data.exists() and not profile.exists()
             assert owner_state.stored_entry(state, NAME) is None
             assert not KEYCHAIN
             assert egress_log.EgressLog(state).recent(key, 50) == [] and activity_log.ActivityLog(state).recent(key, 50) == []

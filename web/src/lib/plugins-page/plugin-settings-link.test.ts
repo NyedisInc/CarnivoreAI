@@ -111,7 +111,7 @@ describe('the panels that moved out of Settings', () => {
     const bare = (id: string): CplugRow => ({ id, enabled: true, state: 'active', revision: 1, settings: {}, settings_schema: { version: 1, fields: {} } });
 
     test('the gear rule and the extras map name the same plugins', () => {
-        expect([...EXTRA_SETTINGS_PLUGINS].sort()).toEqual([...Object.keys(PLUGIN_SETTINGS_EXTRAS), 'crate', 'save'].sort());
+        expect([...EXTRA_SETTINGS_PLUGINS].sort()).toEqual([...Object.keys(PLUGIN_SETTINGS_EXTRAS), 'argent', 'crate', 'save'].sort());
         for (const id of ['save']) expect(hasPluginSettings(toCplugItem(bare(id), t)), id).toBe(true);
         expect(hasPluginSettings(toCplugItem(bare('unread'), t))).toBe(false);
     });

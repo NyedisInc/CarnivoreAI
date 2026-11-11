@@ -84,6 +84,61 @@
 
   [data-history='fold'] { border-style: dashed; }
 
+  [data-history='visitor'] {
+    flex: none;
+    gap: var(--oc-space-0-5);
+    padding-inline: var(--oc-space-0-5) var(--oc-space-1);
+    font-size: var(--oc-fs-micro);
+    --_btn-edge: var(--oc-cyan);
+    --_btn-edge-hover: var(--oc-cyan);
+    --_btn-ink: var(--oc-cyan);
+  }
+
+  .rb-upresent {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-left: var(--oc-space-1);
+    border-radius: 50%;
+    background: var(--oc-green);
+  }
+
+  [data-history='visitor'][aria-current='true'] { --_btn-ink: var(--oc-text-bright); }
+
+  .rb-ubadge {
+    padding: 0 var(--oc-space-0-5);
+    border-radius: 2px;
+    background: var(--oc-cyan);
+    color: var(--oc-ground-page);
+  }
+
+  .rb-uline {
+    display: flex;
+    gap: var(--oc-space-1-5);
+    margin: var(--oc-space-0-5) 0 0;
+    color: var(--oc-text-secondary);
+    font-size: var(--oc-fs-micro);
+    overflow-wrap: anywhere;
+  }
+
+  .rb-uline .rb-ubadge { flex: none; align-self: flex-start; }
+
+  .rb-uanswers {
+    display: flex;
+    flex-direction: column;
+    gap: var(--oc-space-0-5);
+    padding: var(--oc-space-1-5) var(--oc-space-2);
+    box-shadow: inset 0 -1px 0 0 var(--oc-line-faint), inset 2px 0 0 0 var(--oc-cyan);
+  }
+
+  .rb-uselect {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--oc-space-1-5);
+    color: var(--oc-text-muted);
+    font-size: var(--oc-fs-micro);
+  }
+
   .rb-diamond {
     display: block;
     width: 9px;

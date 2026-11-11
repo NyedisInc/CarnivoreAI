@@ -9,9 +9,9 @@ from pydantic import BaseModel, ConfigDict
 
 from src.api import notification_sync_routes as sync_routes
 from src.api.auth import require_auth
-from src.core.notifications import doc_model, links, routing_view, types
+from src.core.notifications import card_contract, doc_model, links, routing_view, styles, types
 from src.core.notifications.destinations.service import NotificationService, get_service
-from src.core.notifications.settings_doc import ticks, view
+from src.core.notifications.settings_doc import styles_store, ticks, view
 
 router = APIRouter(prefix="/notifications", tags=["notifications"], dependencies=[Depends(require_auth)])
 
@@ -33,6 +33,16 @@ class TickBody(BaseModel):
     type_id: str
     value: bool
     scope: Optional[str] = None
+
+
+class StyleBody(BaseModel):
+    """``PUT /styles/{type_id}``: any of sound, urgency (global, synced) and corner (this computer only)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    sound: Optional[str] = None
+    urgency: Optional[str] = None
+    corner: Optional[bool] = None
 
 
 class DefaultBody(BaseModel):
@@ -65,6 +75,7 @@ def settings_body(service: NotificationService, link: Dict[str, str], sync: Opti
         "revision": int(doc["rev"]), "paused": view.paused(doc), "link": link,
         "defaults": {r.id: view.default_tick(doc, r.id) for r in rows},
         "screen": {r.id: view.cell(doc, doc_model.COL_SCREEN, r.id).as_dict() for r in rows},
+        "desktop": {r.id: view.cell(doc, doc_model.COL_DESKTOP, r.id).as_dict() for r in rows},
         "ticks": {c: {r.id: view.cell(doc, c, r.id).as_dict() for r in rows} for c in columns},
         "destinations": destinations, "sync": sync,
     }
@@ -132,3 +143,34 @@ async def delete_override(request: Request, path: str = Query(...)) -> Dict[str,
     service = get_service(request.app.state)
     reset = await _write(ticks.reset_override, service.docs, path)
     return {"revision": service.docs.revision, "reset": reset}
+
+
+def styles_body(doc: Dict[str, Any]) -> Dict[str, Any]:
+    out: Dict[str, Any] = {}
+    for row in types.ordered_types():
+        style = styles.effective_style_in(doc, row.id)
+        out[row.id] = {"sound": style.sound, "urgency": card_contract.LEVELS[style.level],
+                       "source": "global" if styles_store.stored(doc, row.id) else "default",
+                       "corner": styles_store.corner(doc, row.id)}
+    return {"revision": int(doc["rev"]), "styles": out, "sounds": list(card_contract.SOUNDS),
+            "urgencies": list(card_contract.LEVELS.values())}
+
+
+@router.get("/styles")
+async def get_styles(request: Request) -> Dict[str, Any]:
+    """Every type's sound, urgency and corner switch, plus the allowed sounds and urgencies."""
+    service = get_service(request.app.state)
+    return styles_body(await asyncio.to_thread(service.docs.snapshot))
+
+
+@router.put("/styles/{type_id}")
+async def put_style(type_id: str, body: StyleBody, request: Request) -> Dict[str, Any]:
+    """Set a type's sound and urgency (synced to the Pack) and/or its corner switch (local). 422 for a bad type or value."""
+    service = get_service(request.app.state)
+    if body.sound is None and body.urgency is None and body.corner is None:
+        raise _invalid("bad_value")
+    if body.sound is not None or body.urgency is not None:
+        await _write(styles_store.put_style, service.docs, type_id, body.sound, body.urgency)
+    if body.corner is not None:
+        await _write(styles_store.put_corner, service.docs, type_id, body.corner)
+    return styles_body(await asyncio.to_thread(service.docs.snapshot))

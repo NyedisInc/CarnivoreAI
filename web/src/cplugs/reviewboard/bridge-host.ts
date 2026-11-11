@@ -52,6 +52,7 @@ export interface BridgeHost {
   load(payload: Payload, save: number | null): void;
   strings(map: Record<string, string>): void;
   theme(id: string, vars: Record<string, string>): void;
+  mode(readonly: boolean): void;
 }
 
 export function createBridgeHost(options: BridgeOptions): BridgeHost {
@@ -135,5 +136,6 @@ export function createBridgeHost(options: BridgeOptions): BridgeHost {
     load: (payload, save) => post('load', { payload: JSON.parse(JSON.stringify(payload)) as Payload, save }),
     strings: (map) => post('strings', { map }),
     theme: (id, vars) => post('theme', { id, vars }),
+    mode: (readonly) => post('mode', { readonly }),
   };
 }

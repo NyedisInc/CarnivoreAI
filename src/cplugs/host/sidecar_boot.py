@@ -11,10 +11,10 @@ import structlog
 from src.core.db import connect, db_path_for
 from src.core.flow_data import live
 from src.core.skills.ledger import InstallLedger
-from src.cplugs.host import activity_log, capabilities, dependencies, flow_port, owner_switch, sidecar_index, sidecar_registry, sidecar_topics
+from src.cplugs.host import activity_log, capabilities, dependencies, flow_port, folder_watch, owner_switch, prune_gone, sidecar_index, sidecar_registry, sidecar_topics
 from src.cplugs.host.session_create_port import SessionCreatePort, standing_of
 from src.cplugs.host.mcp_health_port import PLUGIN_ID as MCP_HEALTH_ID, HostMcpHealth
-from src.cplugs.host.runtime import CPLUGS_TOPIC
+from src.cplugs.host.runtime import CPLUGS_TOPIC, Host
 from src.cplugs.runtime import guards, sandbox
 from src.cplugs.runtime.children import ChildLedger
 from src.cplugs.runtime.dispatch import HostDispatcher, HostServices
@@ -23,7 +23,8 @@ from src.cplugs.runtime.supervisor import Supervisor, safe_mode_from_env
 
 logger = structlog.get_logger()
 
-ALERT_SEVERITY = {"crash_loop": "error", "revoked": "error", "integrity": "error", "index_expired": "warn", "safe_mode": "warn"}
+ALERT_SEVERITY = {"crash_loop": "error", "revoked": "error", "integrity": "error", "index_expired": "warn", "safe_mode": "warn",
+                  "removed": "info"}
 TITLE_PREFIX = "app_alert.cplug_runtime."
 SANDBOX_ALERT_KEY = "cplug.sandbox"
 UI_INVALIDATE_INTERVAL = 0.5
@@ -72,6 +73,7 @@ class SidecarRuntime:
         self._create_standing = standing_of(self.supervisor, self.state_dir)
         self.supervisor.on_stopped = self._on_stopped
         self.index = sidecar_index.IndexAdapter(self, self._catalog_cache)
+        self.folder_watch = folder_watch.FolderWatch(self)
         self.mcp_health: Optional[HostMcpHealth] = None
 
 
@@ -289,11 +291,27 @@ class SidecarRuntime:
         finally:
             conn.close()
 
+    def installed_rows(self) -> List[Any]:
+        return self._ledger_rows()
+
+    def removed_notice(self, plugin_id: str, *, data_folder: str, sideload: bool) -> None:
+        detail = "detail_sideload" if sideload else "detail_catalog"
+        self._alert_writer()(f"cplug.{plugin_id}.removed", source=f"cplug.{plugin_id}", severity=ALERT_SEVERITY["removed"],
+                             title_key=f"{TITLE_PREFIX}removed.title", detail_key=f"{TITLE_PREFIX}removed.{detail}",
+                             params={"plugin": plugin_id, "folder": data_folder}, sticky=True, auto_resolve=False)
+
     def load_registry(self) -> int:
         registry = sidecar_registry.SidecarRegistry(self.state_dir, self._ledger_rows)
         count = registry.reload()
         sidecar_registry.install(registry)
+        self._aim_folder_watch()
         return count
+
+    def _aim_folder_watch(self) -> None:
+        try:
+            self.loop.call_soon_threadsafe(self.folder_watch.refresh)
+        except RuntimeError:
+            logger.debug("cplug_folder_watch_not_aimed", reason="loop_closed")
 
     async def start(self) -> None:
         try:
@@ -308,13 +326,20 @@ class SidecarRuntime:
             if reaped:
                 logger.info("cplug_orphans_reaped", outcomes=reaped)
         await self._apply()
+        await prune_gone.prune_pass(self)
         await self.index.sync()
         await self.activate_enabled()
         from src.cplugs.host import sideload_routes  # noqa: PLC0415
 
         sideload_routes.arm_expiry(self.app, self)
+        if isinstance(self.host, Host):
+            from src.core.plugin_health.boot import run_boot_report  # noqa: PLC0415
+
+            await run_boot_report(self.host, self)
+        self.folder_watch.start()
 
     async def stop(self) -> None:
+        await self.folder_watch.stop()
         await self.mcp_health_switched(MCP_HEALTH_ID, False)
         await self.supervisor.shutdown()
 

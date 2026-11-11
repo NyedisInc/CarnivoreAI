@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import os
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
@@ -14,19 +15,20 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
 
 from src.api.auth import require_auth
+from src.cplugs.host.peer_refusal import refuse_peer_token_writes
 from src.models.catalog_api import InstallConsent
 from src.core.db import connect, db_path_for
 from src.core.skills import kinds
 from src.core.skills.consent_via_ddl import CONSENT_SHEET
 from src.core.skills.ledger import InstallLedger
 from src.core.skills.ledger_types import GLOBAL_PROJECT_PATH, SCOPE_GLOBAL, InstalledItem
-from src.cplugs.host import identity, risk, runtime, sideload, sideload_git, sideload_kind, sideload_other
+from src.cplugs.host import developer_mode, identity, risk, runtime, sideload, sideload_git, sideload_kind, sideload_other
 from src.cplugs.host import state as owner_state
 from src.cplugs.host.owner_switch import _runtime as _sidecar_runtime
 
 logger = structlog.get_logger()
 
-router = APIRouter(prefix="/cplug-owner", tags=["cplugs"], dependencies=[Depends(require_auth)])
+router = APIRouter(prefix="/cplug-owner", tags=["cplugs"], dependencies=[Depends(refuse_peer_token_writes), Depends(require_auth)])
 SOURCE = "sideload"
 CPLUGS_TOPIC = "cplugs"
 
@@ -86,6 +88,12 @@ async def stop_all_local(live: Any) -> None:
     await asyncio.to_thread(_reload, live)
 
 
+async def stop_on_developer_mode_off(app: Any) -> None:
+    live = getattr(app.state, "sidecar_runtime", None)
+    if live is not None:
+        await stop_all_local(live)
+
+
 def arm_expiry(app: Any, live: Any) -> None:
     handle = getattr(app.state, "sideload_expiry", None)
     if handle is not None:
@@ -99,15 +107,15 @@ def arm_expiry(app: Any, live: Any) -> None:
 
 
 async def _expired(live: Any) -> None:
-    if not sideload.is_on(live.state_dir, sideload.wall):
+    if not sideload.allowed(live.state_dir, sideload.wall):
         await stop_all_local(live)
 
 
 def _status(state_dir: Path) -> Dict[str, Any]:
-    on = sideload.is_on(state_dir, sideload.wall)
+    on = sideload.allowed(state_dir, sideload.wall)
     rows = [(kinds.KIND_CPLUG, n, v) for n, v in sideload.items(state_dir).items()]
     rows += [(v["kind"], v["name"], v) for v in sideload.installs(state_dir).values() if "kind" in v and "name" in v]
-    return {"enabled": on, "expires_at": sideload.expires_at(state_dir) if on else None, "hours": sideload.duration_hours(state_dir),
+    return {"enabled": on, "developer_mode": developer_mode.is_on(), "expires_at": sideload.expires_at(state_dir) if on else None, "hours": sideload.duration_hours(state_dir),
             "items": [{"id": n, "kind": k, "item_id": f"{sideload.LOCAL_PUBLISHER}/{n}", "tier": sideload.TIER_LOCAL, "unverified": True,
                        "source": v.get("source", ""), "synced_at": v.get("synced_at"), "changed": v.get("changed") or [],
                        "git": sideload_git.describe(state_dir, n, v.get("source", ""))}
@@ -128,7 +136,13 @@ async def put_switch(body: SwitchBody, request: Request) -> Dict[str, Any]:
     if not sideload.valid_duration(hours):
         raise HTTPException(status_code=422, detail={"code": "duration_invalid",
                                                      "detail": f"hours is one of {list(sideload.DURATION_HOURS)}, or null for until turned off"})
-    if not await asyncio.to_thread(sideload.set_switch, live.state_dir, body.enabled, sideload.wall, hours):
+    if body.enabled and not developer_mode.is_on():
+        raise HTTPException(status_code=409, detail={"code": "developer_mode_off", "detail": "turn developer mode on first"})
+    try:
+        saved = await asyncio.to_thread(sideload.set_switch, live.state_dir, body.enabled, sideload.wall, hours)
+    except sideload.SideloadRefused as exc:
+        raise _refuse(exc) from exc
+    if not saved:
         raise HTTPException(status_code=500, detail={"code": "switch_not_saved", "detail": "the switch could not be written; it is unchanged"})
     arm_expiry(request.app, live)
     if not body.enabled:
@@ -165,7 +179,7 @@ def _sync_blocking(state_dir: Path, source: Path, given: Optional[str]) -> Dict[
             sideload.touch(state_dir, name, source, sideload.wall)
             return {"name": name, "digest": digest, "unchanged": True, "staging": None, "manifest": manifest}
         shipped = frozenset(d.id for d in runtime.definitions())
-        identity.register_install(state_dir, name, f"{sideload.LOCAL_PUBLISHER}/{name}", shipped)
+        identity.register_install(state_dir, name, f"{sideload.LOCAL_PUBLISHER}/{name}", shipped, sideload=True, source=str(source))
     except identity.InstallRefused as exc:
         shutil.rmtree(staging, ignore_errors=True)
         raise HTTPException(status_code=409, detail={"code": exc.code, "detail": str(exc)}) from exc
@@ -200,8 +214,8 @@ def _commit_blocking(state_dir: Path, source: Path, staged: Dict[str, Any]) -> l
 
 
 def require_on(state_dir: Path) -> None:
-    if not sideload.is_on(state_dir, sideload.wall):
-        raise HTTPException(status_code=409, detail={"code": "sideload_off", "detail": "the developer sideload switch is off"})
+    if not sideload.allowed(state_dir, sideload.wall):
+        raise HTTPException(status_code=409, detail={"code": "sideload_off", "detail": "developer mode is off"})
 
 
 @router.post("/sideload")
@@ -234,9 +248,14 @@ async def _sync_other(live: Any, kind: str, source: Path, given: Optional[str], 
     return answer
 
 
-async def sync_folder(live: Any, source: Path, given: Optional[str], *, env: Optional[sideload_other.Env] = None, consent: Optional[InstallConsent] = None) -> Dict[str, Any]:
+async def sync_folder(live: Any, source: Path, given: Optional[str], *, env: Optional[sideload_other.Env] = None, consent: Optional[InstallConsent] = None,
+                      root: Optional[Path] = None) -> Dict[str, Any]:
     state_dir = live.state_dir
+    if not source.is_symlink():
+        source = Path(os.path.realpath(source))
     try:
+        if root is not None:
+            sideload.contained(source, root)
         kind = await asyncio.to_thread(sideload_kind.detect, source)
     except sideload.SideloadRefused as exc:
         raise _refuse(exc) from exc

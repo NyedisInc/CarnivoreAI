@@ -69,8 +69,26 @@ t('Dock click: a window that cannot open falls through to the tray menu, popped 
 
 t('login launch: no window unless "open a window at login" is on', () => {
   const argv = ['/x/Carnivore', '--login-launch'];
-  assert.deepEqual(policy.launchDecision({ argv, windowAtLogin: false }), { loginLaunch: true, openWindow: false });
-  assert.deepEqual(policy.launchDecision({ argv, windowAtLogin: true }), { loginLaunch: true, openWindow: true });
+  assert.deepEqual(policy.launchDecision({ argv, windowAtLogin: false, windowOnLaunch: false }), { loginLaunch: true, openWindow: false });
+  assert.deepEqual(policy.launchDecision({ argv, windowAtLogin: true, windowOnLaunch: false }), { loginLaunch: true, openWindow: true });
+});
+t('open the window on launch (LAUNCH-WINDOW, #2912): unset reads on, off keeps today\'s tray-only login launch', async () => {
+  const argv = ['/x/Carnivore', '--login-launch'];
+  assert.equal(policy.launchDecision({ argv, windowAtLogin: false }).openWindow, true, 'a login launch with the setting never chosen opens the window');
+  assert.equal(policy.launchDecision({ argv, windowAtLogin: false, windowOnLaunch: true }).openWindow, true);
+  assert.equal(policy.launchDecision({ argv: ['/x/Carnivore'], windowAtLogin: false, windowOnLaunch: false }).openWindow, true, 'a user launch always opens');
+  assert.equal(policy.launchDecision({ argv, windowAtLogin: false, startBlocked: true }).openWindow, false, 'a refused engine start still opens none');
+  assert.deepEqual(policy.secondInstanceDecision(argv), { focus: false, toggle: false, links: [] });
+  assert.match(fs.readFileSync(path.join(macDir, 'main.js'), 'utf8'), /service-entry'\)\.runIfRequested\([^\n]*\) return;[\s\S]*whenReady/);
+  const loginItems = require(path.join(macDir, 'login-items.js'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'launch-window-'));
+  try {
+    assert.equal(loginItems.readLogin({ installer: null, dir }).launchWindow, true);
+    assert.deepEqual(fs.readdirSync(dir), []);
+    assert.equal(loginItems.setLogin({ installer: null, launchArgs: () => [], dir, which: 'launchWindow', enabled: false }).launchWindow, false);
+    assert.equal(loginItems.setLogin({ installer: null, launchArgs: () => [], dir, which: 'launchWindow', enabled: true }).launchWindow, true);
+    assert.deepEqual(fs.readdirSync(dir), []);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
 t('a Dock, Finder or open launch (no marker) opens the window', () => {
   assert.deepEqual(policy.launchDecision({ argv: ['/x/Carnivore'], windowAtLogin: false }), { loginLaunch: false, openWindow: true });

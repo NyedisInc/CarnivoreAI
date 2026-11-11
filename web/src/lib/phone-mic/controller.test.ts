@@ -37,6 +37,15 @@ describe('phone mic controller', () => {
         expect(mic.state.phase).toBe('idle');
     });
 
+    it('an engine that ends with empty text still delivers the words shown live', () => {
+        const { fake, mic, deliver } = setup();
+        mic.start();
+        fake.probe.events!.text('hello world');
+        mic.done();
+        fake.probe.events!.end('');
+        expect(deliver).toHaveBeenCalledWith('hello world', 'ticket-1');
+    });
+
     it('cancel discards and stops the engine', () => {
         const { fake, mic, deliver } = setup();
         mic.start();
@@ -76,5 +85,38 @@ describe('phone mic controller', () => {
         await Promise.resolve();
         expect(mic.state.reason).toBe('no_transcribe');
         expect(deliver).not.toHaveBeenCalled();
+    });
+
+    it('a live engine that never says ready falls through to recording, or ends in a message with a reason', () => {
+        vi.useFakeTimers();
+        try {
+            const dead = fakeEngine();
+            const rec = fakeEngine();
+            const withRec = createMic({ claim: () => 't', deliver: vi.fn(), speech: dead.starter, record: rec.starter, transcribeReady: async () => true });
+            withRec.start();
+            vi.advanceTimersByTime(3100);
+            expect(dead.probe.aborted).toBe(true);
+            expect(rec.probe.events).not.toBeNull();
+            expect(withRec.state.phase).toBe('listening');
+            withRec.cancel();
+            const only = fakeEngine();
+            const mic = createMic({ claim: () => 't', deliver: vi.fn(), speech: only.starter, record: null, transcribeReady: async () => true });
+            mic.start();
+            vi.advanceTimersByTime(3100);
+            expect(mic.state.phase).toBe('message');
+            expect(mic.state.reason).toBe('no_response');
+        } finally { vi.useRealTimers(); }
+    });
+
+    it('an insecure page says insecure even when a speech engine exists', () => {
+        const g = globalThis as { isSecureContext?: boolean };
+        g.isSecureContext = false;
+        try {
+            const { mic, fake } = setup();
+            mic.start();
+            expect(mic.state.phase).toBe('message');
+            expect(mic.state.reason).toBe('insecure');
+            expect(fake.probe.events).toBeNull();
+        } finally { delete g.isSecureContext; }
     });
 });

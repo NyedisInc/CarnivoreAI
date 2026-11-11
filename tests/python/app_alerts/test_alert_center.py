@@ -154,3 +154,16 @@ def test_widget_report_raises_one_warn_per_widget_zone_and_size(world):
 def test_list_carries_the_sender_registry(world):
     body = world.client.get(BASE).json()
     assert body["sources"] == kinds.source_catalog()
+
+
+def test_an_update_only_raise_never_opens_a_new_alert(world):
+    frames_before = len(world.frames)
+    assert _raise(only_if_open=True) is None
+    assert len(world.frames) == frames_before and world.client.get(BASE).json()["alerts"] == []
+    row = _raise()
+    bumped = _raise(only_if_open=True, params={"waiting": 9})
+    assert bumped["id"] == row["id"] and bumped["params"] == {"waiting": 9} and world.frames[-1]["type"] == K.FRAME_UPDATED
+    assert bumped["count"] == row["count"]
+    service.resolve(KEY_LLM_ALL_DOWN)
+    frames_before = len(world.frames)
+    assert _raise(only_if_open=True) is None and len(world.frames) == frames_before

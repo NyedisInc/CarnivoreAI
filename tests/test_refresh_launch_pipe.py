@@ -181,3 +181,27 @@ def test_current_launch_line_survives_callers_process_group_kill(stub_env):
         assert pgid == pid, "launched app is not the leader of its own process group/session"
     finally:
         _kill_pid(pid)
+
+
+@pytest.mark.skipif(os.uname().sysname != "Darwin", reason="plutil and launchd are macOS only")
+def test_launchd_detection_names_only_this_checkouts_login_agent(tmp_path):
+    text = REFRESH_SCRIPT.read_text()
+    func = re.search(r"^launchd_manages_checkout\(\) \{.*?^\}", text, re.MULTILINE | re.DOTALL)
+    assert func, "launchd_manages_checkout missing from refresh-local-install.sh"
+
+    def run(plist: Path, electron: str) -> int:
+        script = f'LAUNCHD_PLIST="{plist}"; ELECTRON_BIN="{electron}"\n{func.group(0)}\nlaunchd_manages_checkout'
+        return subprocess.run(["bash", "-c", script], timeout=10).returncode
+
+    def write(exe: str) -> Path:
+        plist = tmp_path / "agent.plist"
+        plist.write_text(
+            '<?xml version="1.0" encoding="UTF-8"?><plist version="1.0"><dict><key>ProgramArguments</key>'
+            f"<array><string>{exe}</string><string>macOS</string></array></dict></plist>"
+        )
+        return plist
+
+    mine = "/x/this checkout/macOS/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron"
+    assert run(write(mine), mine) == 0
+    assert run(write("/y/other/Electron"), mine) != 0
+    assert run(tmp_path / "absent.plist", mine) != 0

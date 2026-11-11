@@ -30,7 +30,7 @@ async def recreate_by_uuid(
     account_id: Optional[str] = None,
     account_pinned: bool = False,
     fresh: bool = False,
-    extra_env: Optional[Dict[str, str]] = None,
+    extra_env: Optional[Dict[str, Optional[str]]] = None,
     fresh_if_transcript_absent: bool = False,
     fork: bool = False,
     swarm_args: Optional[List[str]] = None,
@@ -109,6 +109,22 @@ async def recreate_by_uuid(
             requested=account_id, pinned_box=account_pinned)
     except PinError as exc:
         raise api_error(400, "account_refused", exc, session_uuid=session_uuid) from exc
+    if not account_plan.account_id and restart_account.family_of(agent_type) == "codex":
+        from src.core.account_switch import codex_follow, launch_env
+
+        try:
+            kept = await run_in_threadpool(codex_follow.recorded_home, _config_path(), row.get("launch_record"))
+            if kept is None:
+                await run_in_threadpool(codex_follow.follow_active_account, _config_path())
+        except codex_follow.CodexAccountRefused as exc:
+            raise api_error(400, exc.code, exc, extra={"accounts": exc.accounts} if exc.accounts else None,
+                            session_uuid=session_uuid) from exc
+        except (FileNotFoundError, ValueError, OSError):
+            kept = None
+        if kept is not None and kept.account_id:
+            account_plan = restart_account.AccountPlan(kept.account_id)
+        elif kept is not None and extra_env is None:
+            extra_env = launch_env.codex_removals()
     if extra_env is None and not account_id and restart_account.family_of(agent_type) == restart_account.ACCOUNT_FAMILY:
         launch = await run_in_threadpool(account_launch.launch_for_session, _config_path(), session_uuid)
         if launch is None:

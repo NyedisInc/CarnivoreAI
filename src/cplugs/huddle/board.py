@@ -38,3 +38,12 @@ def round_wire(raw: str) -> Optional[Dict[str, str]]:
         return {k: str(ref[k]) for k in ROUND_FIELDS} if isinstance(ref, dict) else None
     except (ValueError, KeyError, TypeError):
         return None
+
+
+VISITORS_KEY = "board_visitors"
+VISITORS_FIELDS = ("slug", "revisions")
+
+
+def visitors_parts_of(ref: Dict[str, Any]) -> str:
+    return json.dumps({VISITORS_KEY: {"slug": str(ref["slug"]), "revisions": [str(r) for r in ref["revisions"]]}}, ensure_ascii=False)
+

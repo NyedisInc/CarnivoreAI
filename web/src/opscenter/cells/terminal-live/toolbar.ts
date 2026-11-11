@@ -42,6 +42,8 @@ export const TOOLBAR_ITEMS: readonly ToolbarItem[] = [
 
 export const MENU_HOME: ReadonlySet<string> = new Set(['skills', 'plugins', 'files', 'notes', 'theme', 'background']);
 
+export const KEY_BAR_KEYS: ReadonlySet<string> = new Set(['search', 'notes', 'files', 'sleep']);
+
 export const AGENT_ONLY: ReadonlySet<string> = new Set(['skills', 'plugins']);
 
 export function itemApplies(id: string, family: string | null | undefined): boolean {

@@ -21,6 +21,7 @@ import {
   type ZoneItem,
 } from './zone-model';
 import type { WidgetLook } from '../../opscenter/widgets/types';
+import { ZONE_HEIGHT_OPTION, clampZoneHeight } from '../../opscenter/widgets/placement-options';
 import {
   addPlacement,
   derivedGlance,
@@ -67,7 +68,6 @@ export class DrawerZoneStore {
     return this.stored ?? this.#defaults.map((item) => ({ ...item }));
   }
 
-  /* the glance area */
   get glance(): GlancePlacement[] {
     return this.glanceStored ?? derivedGlance(this.items);
   }
@@ -176,6 +176,16 @@ export class DrawerZoneStore {
 
   setOption(key: string, option: string, value: PlacementOptionValue | null): void {
     void this.commit(setItemOption(untrack(() => this.items), key, option, value));
+  }
+
+  setHeight(key: string, px: number): boolean {
+    const h = clampZoneHeight(px);
+    const read = (list: readonly ZoneItem[]): unknown => list.find((item) => zoneItemKey(item) === key)?.options?.[ZONE_HEIGHT_OPTION];
+    const before = untrack(() => this.items);
+    const next = setItemOption(before, key, ZONE_HEIGHT_OPTION, h);
+    if (read(next) !== h) return false;
+    if (read(before) !== h) void this.commit(next);
+    return true;
   }
 
   resetOptions(key: string): void {

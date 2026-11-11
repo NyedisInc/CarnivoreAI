@@ -23,6 +23,8 @@
     import SettingControl from './SettingControl.svelte';
     import { settingsDoc } from './settings-doc.svelte';
     import { registerPageDirty } from '../menu-page/menu-page-dirty';
+    import { menuPageState } from '../menu-page/menu-page-shell.svelte';
+    import { findSurface } from '../menu-page/menu-page-surface';
     import { dirtySectionsOf, dirtyTabsOf } from './dirty-places';
     import { searchPluginSettings, searchScreenSections, searchSettings, type PluginMatch } from './settings-search';
     import PluginSettingsSection from './plugin-settings/PluginSettingsSection.svelte';
@@ -72,8 +74,21 @@
     let query = $state('');
     let flashId = $state<string | null>(null);
     let flashTimer: ReturnType<typeof setTimeout> | null = null;
+    // svelte-ignore state_referenced_locally
+    let contentOpen = $state(embedded);
+    let listRoot = $state<HTMLDivElement | undefined>();
+    let listW = $state(240);
+    $effect(() => {
+        const el = listRoot;
+        if (!el || typeof ResizeObserver !== 'function') return;
+        const ro = new ResizeObserver(() => (listW = el.getBoundingClientRect().width || listW));
+        ro.observe(el);
+        return () => ro.disconnect();
+    });
 
     const phoneBar = $derived(viewport.narrow && !embedded);
+    const drawerMode = $derived(menuPageState.surface && !embedded && !phoneBar);
+    const wantsDrawers = (): boolean => !embedded && typeof window !== 'undefined' && findSurface(document, window) !== null;
     const matches = $derived(searchSettings(query, t));
     const sectionHits = $derived(searchScreenSections(query, t));
     const entryKinds = $derived(splitEntries(pluginEntries(pluginSettingsIndex.rows, t)));
@@ -118,6 +133,10 @@
     // svelte-ignore state_referenced_locally
     if (embedded) void settingsDoc.load();
 
+    $effect(() => {
+        if (searching) contentOpen = true;
+    });
+
     $effect(() => (open ? pluginSettingsIndex.start() : undefined));
 
     $effect(() => {
@@ -148,12 +167,14 @@
         void settingsDoc.load();
         const wantedPlugin = typeof window === 'undefined' ? null : settingsPluginOf(window.location.hash);
         if (wantedPlugin) {
+            contentOpen = true;
             query = '';
             activePlugin = wantedPlugin;
             pluginAnchor = null;
         }
         const wantedFeature = typeof window === 'undefined' ? null : features.follow(window.location.hash);
         const wanted = typeof window === 'undefined' ? null : settingsTabOf(window.location.hash);
+        if (wanted || wantedFeature) contentOpen = true;
         if (wanted && !wantedFeature) {
             activePlugin = null;
             settingsView.section = wanted.section;
@@ -165,7 +186,7 @@
             window.history?.replaceState?.(window.history.state, '', settingsHashWithoutHighlight(window.location.hash));
             void tick().then(() => highlightControl(document, mark));
         }
-        if (!embedded && typeof window !== 'undefined' && !mark && !wantedPlugin && !wantedFeature) {
+        if (!embedded && typeof window !== 'undefined' && !mark && !wantedPlugin && !wantedFeature && (contentOpen || !wantsDrawers())) {
             writeSettingsFragment(settingsFragment(settingsView.section, settingsView.tabOf(settingsView.section)));
         }
         if (open) return;
@@ -178,6 +199,7 @@
     export function close(): void {
         if (!open || embedded) return;
         open = false;
+        contentOpen = false;
         query = '';
         if (opener && typeof document !== 'undefined' && document.contains(opener)) opener.focus();
         opener = null;
@@ -188,6 +210,7 @@
     }
 
     function pick(id: SectionId): void {
+        contentOpen = true;
         query = '';
         activePlugin = null;
         features.clear();
@@ -197,6 +220,7 @@
     }
 
     function pickPlugin(id: string, anchor: string | null = null): void {
+        contentOpen = true;
         query = '';
         activePlugin = id;
         pluginAnchor = anchor;
@@ -211,6 +235,7 @@
     async function jump(id: string): Promise<void> {
         const def = settingById(id);
         if (!def) return;
+        contentOpen = true;
         query = '';
         activePlugin = null;
         pluginAnchor = null;
@@ -226,6 +251,15 @@
         row?.scrollIntoView?.({ block: 'center' });
         const control = row?.querySelector<HTMLElement>('input, select, textarea, button');
         control?.focus({ preventScroll: true });
+    }
+
+    function closeContent(): void {
+        contentOpen = false;
+        query = '';
+        activePlugin = null;
+        pluginAnchor = null;
+        features.clear();
+        writeSettingsFragment('#settings', 'replace');
     }
 
     function onKeydown(event: KeyboardEvent): void {
@@ -317,21 +351,8 @@
     {/if}
 {/snippet}
 
-{#if open}
-    <Page
-        class="pledger mgr settings-page"
-        {embedded}
-        title={t('settings.page.title')}
-        onClose={embedded ? undefined : close}
-        closeLabel={t(MANAGER_KEYS.close)}
-        onkeydown={onKeydown}
-        bind:titleEl
-        search={phoneBar ? railSearch : undefined}
-        tabs={phoneBar ? phoneTabs : undefined}
-    >
-        <div class="oc-page__body st-body" class:st-body--phone={phoneBar}>
-            {#if !phoneBar}
-                <SettingsNav
+{#snippet nav()}
+    <SettingsNav
                     {t}
                     {active}
                     {counts}
@@ -344,7 +365,9 @@
                     {pluginCounts}
                     onPickPlugin={(id) => pickPlugin(id)}
                 />
-            {/if}
+{/snippet}
+
+{#snippet contentBody()}
             <div class="st-content">
                 {#if searching}
                     <div class="oc-page__scroll">
@@ -411,6 +434,48 @@
                     </section>
                 {/if}
             </div>
+{/snippet}
+
+{#if open && drawerMode}
+    <Page
+        class="pledger mgr settings-page oc-page--drawer-list"
+        title={t('settings.page.title')}
+        onClose={close}
+        closeLabel={t(MANAGER_KEYS.close)}
+        onkeydown={onKeydown}
+        bind:titleEl
+        bind:root={listRoot}
+    >
+        <div class="oc-page__body st-body st-body--list">{@render nav()}</div>
+    </Page>
+    {#if contentOpen}
+        <Page
+            class="pledger mgr settings-page oc-page--drawer-stacked"
+            style="--oc-drawer-offset: {listW}px"
+            title={pluginEntry ? pluginEntry.name : searching ? t('settings.search.label') : t(sectionKey(active, 'label'))}
+            onDrawerClose={closeContent}
+            onkeydown={onKeydown}
+        >
+            <div class="oc-page__body st-body st-body--stacked">{@render contentBody()}</div>
+        </Page>
+    {/if}
+{:else if open}
+    <Page
+        class="pledger mgr settings-page"
+        {embedded}
+        title={t('settings.page.title')}
+        onClose={embedded ? undefined : close}
+        closeLabel={t(MANAGER_KEYS.close)}
+        onkeydown={onKeydown}
+        bind:titleEl
+        search={phoneBar ? railSearch : undefined}
+        tabs={phoneBar ? phoneTabs : undefined}
+    >
+        <div class="oc-page__body st-body" class:st-body--phone={phoneBar}>
+            {#if !phoneBar}
+                {@render nav()}
+            {/if}
+            {@render contentBody()}
         </div>
     </Page>
 {/if}

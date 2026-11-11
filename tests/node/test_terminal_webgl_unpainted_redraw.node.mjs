@@ -182,21 +182,52 @@ test('an evicted pane that is painted again re-arms once a context is free', asy
     assert.deepEqual(term.refreshes, [[0, 23]], 'one full redraw, the covered frames included');
 });
 
-test('an evicted pane stays on the DOM renderer while 16 contexts are live, and returns when one frees', async () => {
+test('a 17th terminal never evicts a painted one: it stays on the DOM renderer and returns when one frees', async () => {
     const sb = makeSandbox();
     const cap = sb.TerminalAddons.WEBGL_CONTEXT_CAP;
     const others = Array.from({ length: cap }, () => loadHeld(sb));
     const { term, holder, addon } = loadHeld(sb);
-    addon.lose();
+    assert.equal(addon, null, 'no context taken from a painted terminal');
+    assert.equal(sb.addons.length, cap, 'no new WebglAddon at the cap');
+    assert.ok(others.every((one) => one.addon.disposed === 0), 'nobody was evicted');
     await settle(sb, 6);
-    assert.equal(sb.addons.length, cap + 1, 'no new WebglAddon at the cap');
-    assert.equal(holder._webglAddon, null);
+    assert.equal(sb.addons.length, cap, 'still none while 16 are live');
 
     others[3].addon.dispose();
     await settle(sb, 6);
-    assert.equal(sb.addons.length, cap + 2, 'the evicted pane re-armed');
-    assert.equal(holder._webglAddon, sb.addons[cap + 1]);
+    assert.equal(sb.addons.length, cap + 1, 'the waiting pane took the freed context');
+    assert.equal(holder._webglAddon, sb.addons[cap]);
     assert.equal(term.refreshes.length, 1);
+});
+
+test('at the cap a painted terminal takes the context of one nobody can see, and that one returns when shown', async () => {
+    const sb = makeSandbox();
+    const cap = sb.TerminalAddons.WEBGL_CONTEXT_CAP;
+    const others = Array.from({ length: cap }, () => loadHeld(sb));
+    others[5].term.element.painted = false;
+    const fresh = loadHeld(sb);
+    assert.ok(fresh.addon, 'the painted newcomer got a context');
+    assert.equal(others[5].addon.disposed, 1, 'taken from the hidden one');
+    assert.equal(others.filter((one) => one.addon.disposed).length, 1, 'only the hidden one gave up');
+    assert.equal(others[5].holder._webglAddon, null);
+
+    others[7].term.element.painted = false;
+    others[5].term.element.painted = true;
+    others[5].term.render();
+    await settle(sb, 6);
+    assert.ok(others[5].holder._webglAddon, 'the shown pane re-armed');
+    assert.equal(others[7].addon.disposed, 1);
+    assert.equal(others[5].term.refreshes.length, 1);
+});
+
+test('a terminal created while hidden takes no context at the cap', () => {
+    const sb = makeSandbox();
+    const cap = sb.TerminalAddons.WEBGL_CONTEXT_CAP;
+    Array.from({ length: cap }, () => loadHeld(sb));
+    const hidden = fakeTerm();
+    hidden.element.painted = false;
+    assert.equal(loadHeld(sb, hidden).addon, null);
+    assert.equal(sb.addons.length, cap);
 });
 
 test('a pane evicted while the tab was hidden re-arms once, and redraws once, when shown', async () => {

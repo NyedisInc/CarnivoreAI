@@ -77,7 +77,7 @@ def render_structured(profile: LaunchProfile, model: Optional[str], app_args: Se
                       secret_names: Sequence[str] = (), env_set: Sequence[Tuple[str, str]] = (),
                       env_unset: Sequence[str] = (), codex_server_args: Sequence[str] = (),
                       codex_fallback: Optional[Path] = None, fallback_args: Sequence[str] = (),
-                      refuse_fallback: bool = False) -> str:
+                      refuse_fallback: bool = False, overlay_preamble: str = "") -> str:
     harness = profile.harness
     permissions = list(permission_flags(harness, profile.permissions))
     flags = [*permissions, *profile.flags, *extra_flags]
@@ -105,6 +105,8 @@ def render_structured(profile: LaunchProfile, model: Optional[str], app_args: Se
     preamble = env_preamble(env_set, env_unset, secret_names)
     if preamble:
         steps.append(preamble)
+    if overlay_preamble:
+        steps.append(overlay_preamble)
     if disable_alternate_screen:
         steps.append(_DISABLE_ALTERNATE_SCREEN)
     if profile.before_launch and profile.before_launch.strip():

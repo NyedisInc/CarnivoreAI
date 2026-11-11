@@ -44,8 +44,7 @@
 
   // the page terminal
   $effect(() => {
-    const slot = instance;
-    return () => inputFocus.forget(slot);
+    return inputFocus.mount(instance);
   });
 
   const sessionId = $derived(sessionIdOf(instance, sessions.data));
@@ -192,7 +191,6 @@
     return () => {
       typing.dispose();
       target.removeEventListener('wheel', handleWheel, { capture: true });
-      inputFocus.release(instance);
       observer?.disconnect();
       view?.destroy();
       view = null;
@@ -275,6 +273,8 @@
       data-input-owner={owned ? 'true' : null}
       onfocuscapture={takeFocus}
       onfocusincapture={takeFocus}
+      onkeydowncapture={takeFocus}
+      onpointerdowncapture={takeFocus}
       onfocusoutcapture={dropFocus}
     >
       <div

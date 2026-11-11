@@ -46,6 +46,12 @@ async def test_typed_payload_is_decryptable_and_fixed(rig) -> None:
     assert "secret words" not in json.dumps(got) and "https://" not in json.dumps(got)
 
 
+def test_build_payload_keeps_only_the_contract_web_push_keys() -> None:
+    from src.core.notifications import card_contract as cc
+    got = webpush.build_payload(ev(card_hint={"head": ["x"], "thread": [["a", "b"]], "positions": [["a", "b"]]}))
+    assert set(got) <= set(cc.WEB_PUSH_KEYS) and not set(got) & (cc.FULL_ONLY_FIELDS - {"thread"})
+
+
 @pytest.mark.parametrize("type_id", ["session.question", "session.permission", "session.plan_approval"])
 async def test_ask_types_link_to_the_approvals_popup_not_the_terminal(rig, type_id) -> None:
     service, _, phone, _, _, cfg = rig

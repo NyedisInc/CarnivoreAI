@@ -1,17 +1,24 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 from dataclasses import dataclass
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Callable, Dict, Iterator, List, Mapping, Optional, Tuple
 
-from src.cplugs.reviewboard import layout, viewer, wire
+import structlog
+
+from src.cplugs.reviewboard import board_look, layout, ports, viewer, visitor_checks, wire
 from src.cplugs.reviewboard.errors import BoardError
 from src.cplugs.reviewboard.layers import inject as layer_inject
 from src.cplugs.reviewboard.schema import MAX_VIEW_BYTES, Revision
-from src.cplugs.sdk import CplugContext, ports
-from src.cplugs.sdk.board_public import PORT, PublicBoardMissing, PublicBoardUnavailable, PublicRevision, RevisionTexts
+from src.cplugs.reviewboard.topics import TOPIC
+from src.cplugs.sdk import CplugContext
+from src.cplugs.sdk import ports as sdk_ports
+from src.cplugs.reviewboard.public.port import PORT, PublicBoardMissing, PublicBoardUnavailable, PublicRevision, RevisionTexts
+from src.cplugs.sdk.computer import local_computer
 
+logger = structlog.get_logger()
 NAME = PORT
 
 
@@ -57,6 +64,10 @@ def _projection(title: str, rev: Revision) -> Dict[str, Any]:
         "anchors": [{"id": a.id, "label": a.label} for a in rev.anchors],
         "layer": rev.layer.model_dump(mode="json") if rev.layer is not None else None,
     }
+
+
+def _revision_number(revision: str) -> int:
+    return int(revision[1:])
 
 
 def _public_page(data: bytes, rev: Revision, view_id: str) -> bytes:
@@ -109,10 +120,46 @@ class PublicPort:
             page = _public_page(loaded.pages[view], loaded.revision, view)
         return PublicRevision(slug, loaded.wanted, loaded.latest, loaded.texts, _projection(loaded.title, loaded.revision), page)
 
+    def latest(self, slug: str) -> str:
+        try:
+            return viewer.load_sidecar(wire.board_root(self._ctx), slug).revisions[-1].id
+        except BoardError as exc:
+            raise PublicBoardMissing(str(exc)) from exc
+
+    def board_theme(self, slug: str) -> Optional[Dict[str, str]]:
+        look = board_look.read(self._ctx.storage.path, slug)
+        return dict(look["palette"]) if look else None
+
+    def check_post(self, slug: str, revision: str, kind: str, body: Mapping[str, Any]) -> List[str]:
+        return visitor_checks.problems(self._load(slug, revision).revision, kind, body)
+
+    def follow(self, listener: Callable[[], None]) -> Callable[[], None]:
+        return self._ctx.follow(TOPIC, lambda topics: listener())
+
+    async def forward(self, slug: str, text: str, revisions: List[str]) -> Dict[str, Any]:
+        try:
+            sidecar = await asyncio.to_thread(viewer.load_sidecar, wire.board_root(self._ctx), slug)
+        except BoardError as exc:
+            raise PublicBoardMissing(str(exc)) from exc
+        task = sidecar.task
+        if task is None:
+            return {"posted": False, "reason": "the board has no task"}
+        here = local_computer()
+        if task.computer and here and task.computer != here:
+            return {"posted": False, "reason": f"the task is on {task.computer}"}
+        port = ports.find()
+        if port is None:
+            return {"posted": False, "reason": "the task manager is off"}
+        posted = await port.post_visitors(task.item_id, text, {"slug": slug, "revisions": sorted(set(revisions), key=_revision_number)})
+        logger.info("reviewboard_visitors_forwarded", slug=slug, item=task.item_id, posted=bool(posted.get("posted")))
+        if not posted.get("posted"):
+            return {"posted": False, "reason": str(posted.get("reason") or "the task did not take the reply")[:300]}
+        return {"posted": True, "message_id": posted["message_id"], "item_id": task.item_id}
+
 
 def register(ctx: CplugContext) -> None:
-    ports.register(NAME, PublicPort(ctx))
+    sdk_ports.register(NAME, PublicPort(ctx))
 
 
 def unregister() -> None:
-    ports.unregister(NAME)
+    sdk_ports.unregister(NAME)

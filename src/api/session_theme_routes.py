@@ -26,6 +26,11 @@ router = APIRouter()
 _PINNED_THEME_ALIAS_WARNED: bool = False
 
 
+def _wake(publisher) -> None:
+    if publisher is not None:
+        publisher.wake()
+
+
 async def _apply_session_theme(
     session_manager,
     themes,
@@ -33,12 +38,14 @@ async def _apply_session_theme(
     registry,
     session_name: str,
     theme_id: Optional[str],
+    publisher=None,
 ) -> SessionInfo:
     remote = routed_remote(session_manager, session_name)
     if remote is not None:
         from src.core.hosts.remote_controls import set_pin
 
         set_pin(session_manager, remote, theme_id)
+        _wake(publisher)
         logger.info("api_set_remote_session_theme", host=remote.backend.host_key,
                     session_id=remote.session_id, theme_id=theme_id)
         info = await session_manager.get_session_info(session_id=remote.session_id)
@@ -71,6 +78,7 @@ async def _apply_session_theme(
             break
 
     session_manager.set_pinned_theme(session_name, theme_id)
+    _wake(publisher)
 
     logger.info(
         "api_set_session_theme",
@@ -146,6 +154,7 @@ async def set_session_theme(
         request.app.state.services.registry,
         session_name,
         body.theme_id,
+        getattr(request.app.state, "listing_publisher", None),
     )
 
 
@@ -218,4 +227,5 @@ async def set_pinned_theme(
         request.app.state.services.registry,
         session_name,
         body.pinned_theme,
+        getattr(request.app.state, "listing_publisher", None),
     )

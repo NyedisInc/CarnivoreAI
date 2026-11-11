@@ -1,0 +1,50 @@
+{
+  "items": [
+    {
+      "ts": "2026-11-07T05:57:37Z",
+      "kind": "context",
+      "session_id": "ses_fixture1",
+      "sub_agent_id": "",
+      "work_item_id": "wi_story1",
+      "reason": "picker"
+    },
+    {
+      "ts": "2026-11-07T05:58:37Z",
+      "kind": "spend",
+      "session_id": "ses_fixture1",
+      "sub_agent_id": "",
+      "work_item_id": "wi_story1",
+      "reason": "spend",
+      "cost_micros": 7,
+      "provider": "openrouter",
+      "model": "openai/gpt-4o-mini",
+      "tag": ""
+    },
+    {
+      "ts": "2026-11-07T07:03:18.219039Z",
+      "kind": "retag",
+      "session_id": "w13a-1794035117",
+      "sub_agent_id": "",
+      "work_item_id": "157ed864-b8dc-4051-bffb-9d10f4125897",
+      "reason": "retag",
+      "cost_micros": -250000,
+      "provider": "",
+      "model": "",
+      "tag": ""
+    },
+    {
+      "ts": "2026-11-07T07:03:18.219039Z",
+      "kind": "retag",
+      "session_id": "w13a-1794035117",
+      "sub_agent_id": "",
+      "work_item_id": "24bafcfe-2036-4963-83cf-841186ce46d7",
+      "reason": "retag",
+      "cost_micros": 250000,
+      "provider": "",
+      "model": "",
+      "tag": ""
+    }
+  ],
+  "next_cursor": null,
+  "rev": 3
+}

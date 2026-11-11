@@ -5,22 +5,27 @@
   import LimitGauge from '../../ui/LimitGauge.svelte';
   import { effortClass } from '../../../lib/effort/effort-level';
   import { statsGroups } from './foot-stats';
+  import type { AgentCostGroup, ArgentCostView } from '../../../lib/argent-cost/cost-view';
 
   let {
     model,
     payload,
     layout = 'band',
     createdAt = null,
+    argent = null,
+    argentAgents = null,
     oncollapse = undefined,
   }: {
     model: UsagePanelModel;
     payload: SessionTokenUsage | null;
     layout?: 'band' | 'tiles';
     createdAt?: string | null;
+    argent?: ArgentCostView | null;
+    argentAgents?: AgentCostGroup[] | null;
     oncollapse?: () => void;
   } = $props();
 
-  const groups = $derived(statsGroups(model, payload, Date.now(), createdAt));
+  const groups = $derived(statsGroups(model, payload, Date.now(), createdAt, argent, argentAgents));
 
   function fillPct(meter: UsageMeter): number {
     return meter.segments > 0 ? (meter.filled / meter.segments) * 100 : 0;
@@ -70,6 +75,17 @@
                 {#if cell.effort}
                   <span class="oc-tfs-effort {effortClass(payload?.effort)}" data-word={cell.effort}>{cell.effort}</span>
                 {/if}
+              {:else if cell.kind === 'argent'}
+                <span class="oc-tfs-num" data-argent-cost data-measured={cell.view.measured ? 'true' : 'false'}>{cell.view.costText}</span>
+                {#if cell.view.pct !== null}
+                  <span class="oc-tfs-bar" data-scale={cell.view.scale ?? ''} data-argent-budget role="img"
+                    aria-label={t('argent.cost.foot_budget', { pct: cell.view.pctText })}>
+                    <span class="oc-tfs-bar-fill" style={`width:${Math.min(cell.view.pct, 100)}%`}></span>
+                  </span>
+                  <span class="oc-tfs-pct" data-scale={cell.view.scale ?? ''}>{cell.view.pctText}</span>
+                {/if}
+              {:else if cell.kind === 'gateway_agent'}
+                <span class="oc-tfs-num" data-gateway-agent={cell.agentId ?? ''} data-gateway-agent-item={cell.agentId === null ? 'true' : 'false'} data-measured={cell.costText === '-' ? 'false' : 'true'}>{cell.costText}</span>
               {:else if cell.row.parts}
                 <span class="oc-tfs-num">{cell.row.parts.lead}<span class="oc-tfs-dim">{cell.row.parts.dim}</span></span>
               {:else}
@@ -103,8 +119,9 @@
     }
 
     .oc-tfs[data-layout='band'] {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      column-gap: 0;
       align-items: stretch;
       overflow: visible;
       padding: 0;
@@ -133,13 +150,25 @@
 
     .oc-tfs[data-layout='band'] .oc-tfs-group {
       grid-column: auto;
-      grid-template-columns: max-content minmax(0, 1fr);
-      flex: 0 0 auto;
-      padding: var(--oc-space-1) var(--oc-space-4);
+      grid-template-columns: 17ch minmax(0, 1fr);
+      align-content: start;
+      column-gap: var(--oc-space-2);
+      row-gap: var(--oc-space-1);
+      padding: var(--oc-space-2) var(--oc-space-3);
     }
 
     .oc-tfs[data-layout='band'] .oc-tfs-group + .oc-tfs-group {
       box-shadow: -1px 0 0 0 var(--oc-line-rule);
+    }
+
+    .oc-tfs[data-layout='band'] .oc-tfs-group {
+      container-type: inline-size;
+    }
+
+    @container (max-width: 330px) {
+      .oc-tfs-value > .oc-tfs-dim {
+        display: none;
+      }
     }
 
     .oc-tfs[data-layout='tiles'] .oc-tfs-group {
@@ -165,6 +194,9 @@
 
     .oc-tfs-label {
       align-self: center;
+      min-height: 18px;
+      display: flex;
+      align-items: center;
       white-space: nowrap;
       font-size: var(--oc-fs-micro, var(--oc-fs-micro));
       letter-spacing: var(--oc-tracking-label, 0.6px);
@@ -179,6 +211,7 @@
       min-width: 0;
       margin: 0;
       min-height: 18px;
+      color: var(--oc-text-primary);
     }
 
     .oc-tfs-num {

@@ -1,0 +1,4 @@
+[
+  {"host": "openrouter.ai", "kinds": ["anthropic", "openai"]},
+  {"host": "api.example.com", "kinds": ["anthropic"]}
+]

@@ -9,7 +9,8 @@ from typing import Any, Optional
 
 import structlog
 
-from src.core.notifications import contracts, engine as engine_mod, links, routing_view
+from src.core.notifications import contracts, engine as engine_mod, links, routing_view, styles
+from src.core.notifications.cards import live as card_live, sources as card_sources
 from src.core.notifications.destinations import migration, switch_origin, tick_backfill
 from src.core.notifications.destinations.service import NotificationService, get_service
 from src.core.notifications.kinds import apns, registry, webpush
@@ -65,8 +66,10 @@ async def install(app_state: Any, manager: Any) -> Installed:
         service = get_service(app_state)
         installed.service = service
         routing_view.install_routing(service.routing.view, service.routing)
+        styles.install_source(service.docs.snapshot)
         webpush.install_push_sender(lambda: sender_for(app_state))
         apns.install_apns_sender(lambda: apns_sender_for(app_state))
+        card_sources.install(card_live.LiveSources(app_state))
         installed.migration = await _run_migration(app_state, service)
         await switch_origin.backfill(service.docs, service.secrets)
         await tick_backfill.backfill_type_ticks(service.docs)
@@ -101,7 +104,9 @@ async def uninstall(installed: Optional[Installed]) -> None:
     contracts.uninstall_sink()
     engine_mod.install_engine(None)
     routing_view.uninstall_routing()
+    styles.install_source(None)
     webpush.install_push_sender(None)
     apns.install_apns_sender(None)
+    card_sources.install(None)
     if installed is not None and installed.engine is not None:
         await installed.engine.stop()

@@ -1,0 +1,7 @@
+{
+  "ok": true,
+  "moved_micros": 450000,
+  "from_work_item_id": "wi_story1",
+  "to_work_item_id": "wi_story2",
+  "log_id": "rtg_fixture1"
+}

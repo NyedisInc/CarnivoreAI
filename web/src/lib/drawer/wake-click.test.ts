@@ -47,7 +47,7 @@ describe('onAsleepClick', () => {
 
     it('wakes by session_uuid, then opens the live row the controller now lists', async () => {
         const runWake = vi.fn(async () => {
-            ctrl._rows = [{ name: 'carnivore_a', asleep: false, session_uuid: 'u-a' }];
+            ctrl._rows = [{ name: 'carnivore_a', asleep: false, session_uuid: 'u-a', session_id: 'ses_a' }];
             return true;
         });
         wake.run = runWake;
@@ -70,7 +70,7 @@ describe('onAsleepClick', () => {
     it('a navigation during the wake is not overridden', async () => {
         wake.run = async () => {
             gen += 1;
-            ctrl._rows = [{ name: 'carnivore_a', asleep: false, session_uuid: 'u-a' }];
+            ctrl._rows = [{ name: 'carnivore_a', asleep: false, session_uuid: 'u-a', session_id: 'ses_a' }];
             return true;
         };
         const asleep = rowEl('carnivore_a', true);

@@ -45,7 +45,7 @@
       active={false}
       tabbable={null}
       style={`width: ${GLANCE_TILE_WIDTH_PX}px; height: ${glance.height}px;`}
-      attrs={{ 'data-zone-glance': widget, 'data-glance-placement': placement, 'data-glance-tile': tile.key }}
+      attrs={{ 'data-zone-glance': widget, 'data-glance-placement': placement, 'data-glance-tile': tile.key, 'data-motion-grab': '' }}
       onmenu={menu}
     >
       {#snippet body()}<Tile data={tile.data} {onopen} />{/snippet}
@@ -67,7 +67,7 @@
     active={false}
     tabbable={null}
     style={`width: ${GLANCE_TILE_WIDTH_PX}px; height: ${GLANCE_TILE_HEIGHT_PX}px; color: var(--${manifest.iconTone});`}
-    attrs={{ 'data-zone-glance': widget, 'data-glance-placement': placement, 'data-widget-unavailable': glance ? undefined : '' }}
+    attrs={{ 'data-zone-glance': widget, 'data-glance-placement': placement, 'data-widget-unavailable': glance ? undefined : '', 'data-motion-grab': '' }}
     onpress={onopen}
     onmenu={menu}
   >

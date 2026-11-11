@@ -1,12 +1,7 @@
 
-import { tick } from 'svelte';
-import { META, metaFor } from './meta';
-import { flipCells, measureCells } from './flip';
-import { columnDropAt } from './drop';
 import type { DropTarget, LayoutStore } from './layout.svelte';
 import type { RowId, SlotId } from './types';
 import { t } from '../../lib/i18n/index.svelte';
-import { tearOffCell } from '../../lib/tearoff/tearoff';
 
 export interface GestureHandlers {
   threshold?: number;
@@ -201,8 +196,6 @@ export interface CellDragMerge {
   end(): void;
 }
 
-const CELL_THRESHOLD = 6;
-
 const EDGE = 6;
 
 const STACK_BAND = 0.25;
@@ -213,15 +206,6 @@ export interface CellTarget {
   right: number;
   top: number;
   bottom: number;
-}
-
-const AUTOSCROLL_EDGE = 48;
-
-const AUTOSCROLL_DIVISOR = 4;
-
-function cellTitle(id: SlotId): string {
-  const meta = metaFor(id, META);
-  return meta.titleName ?? t(meta.titleKey);
 }
 
 /* at the same time */
@@ -297,99 +281,4 @@ export function pickTarget(
     if (clientX > centre) index += 1;
   }
   return { kind: 'row', row: row.id, index };
-}
-
-export function beginCellDrag(
-  handle: HTMLElement,
-  event: PointerEvent,
-  id: SlotId,
-  store: LayoutStore,
-  merge?: CellDragMerge,
-): boolean {
-  let rows: RowTarget[] = [];
-  let cells: CellTarget[] = [];
-  const dragState = store.drag;
-  const root: ParentNode = handle.closest('.oc-surface') ?? handle.ownerDocument;
-  const scroller = handle.closest<HTMLElement>('.oc-content');
-  let frame = 0;
-  let lastX = 0;
-  let lastY = 0;
-
-  const contentY = (clientY: number): number =>
-    scroller ? clientY - scroller.getBoundingClientRect().top + scroller.scrollTop : clientY;
-
-  const aim = (): void => {
-    if (merge?.aim(lastX, lastY)) {
-      dragState.target = null;
-      return;
-    }
-    const picked = pickTarget(rows, cells, contentY(lastY), lastX, id);
-    const column = picked?.kind === 'row' ? columnDropAt(store.state.layout, picked.row, picked.index, id) : null;
-    dragState.target = column ?? picked;
-  };
-
-  const creep = (): void => {
-    frame = 0;
-    if (!scroller) return;
-    const box = scroller.getBoundingClientRect();
-    let step = 0;
-    if (lastY < box.top + AUTOSCROLL_EDGE) step = -(box.top + AUTOSCROLL_EDGE - lastY) / AUTOSCROLL_DIVISOR;
-    else if (lastY > box.bottom - AUTOSCROLL_EDGE) step = (lastY - (box.bottom - AUTOSCROLL_EDGE)) / AUTOSCROLL_DIVISOR;
-    if (step !== 0) {
-      scroller.scrollTop += step;
-      aim();
-    }
-    frame = requestAnimationFrame(creep);
-  };
-
-  return beginGesture(handle, event, {
-    threshold: CELL_THRESHOLD,
-    onLift: () => {
-      ({ rows, cells } = captureRows(store, root, scroller, scroller?.scrollTop ?? 0));
-      dragState.id = id;
-      dragState.dx = 0;
-      dragState.dy = 0;
-      dragState.target = null;
-      if (scroller && typeof requestAnimationFrame === 'function') frame = requestAnimationFrame(creep);
-    },
-    onMove: (dx, dy, moveEvent) => {
-      dragState.dx = dx;
-      dragState.dy = dy;
-      lastX = moveEvent.clientX;
-      lastY = moveEvent.clientY;
-      aim();
-    },
-    onDrop: (_dx, _dy, up) => {
-      if (tearOffCell(id, up)) return;
-      if (merge?.drop()) return;
-      const target = dragState.target;
-      if (!target) return;
-      const before = measureCells();
-      const scrolledFrom = scroller?.scrollTop ?? 0;
-      const moved = store.moveTo(id, target);
-      store.clearDrag();
-      if (!moved) return;
-      if (target.kind === 'stack') {
-        store.announce(
-          t(target.edge === 'above' ? 'opscenter.layout.cell_stacked_above' : 'opscenter.layout.cell_stacked_below', {
-            title: cellTitle(id),
-            other: cellTitle(target.of),
-          }),
-        );
-      } else {
-        store.announce(
-          t(target.kind === 'new' ? 'opscenter.layout.row_added' : 'opscenter.layout.cell_moved', {
-            title: cellTitle(id),
-          }),
-        );
-      }
-      void tick().then(() => flipCells(before, (scroller?.scrollTop ?? 0) - scrolledFrom));
-    },
-    onEnd: () => {
-      merge?.end();
-      if (frame && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(frame);
-      frame = 0;
-      store.clearDrag();
-    },
-  });
 }

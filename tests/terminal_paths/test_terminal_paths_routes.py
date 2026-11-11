@@ -109,3 +109,9 @@ def test_default_browser_reads_the_https_handler(tmp_path):
                                                      {"LSHandlerURLScheme": "https", "LSHandlerRoleAll": "com.brave.browser"}]}))
     assert open_app.default_browser(plist) == "com.brave.browser"
     assert open_app.default_browser(tmp_path / "none.plist") == open_app.FALLBACK_BROWSER
+
+
+def test_unresolvable_tilde_user_is_not_a_path() -> None:
+    from src.core.terminal_paths.resolve import resolve
+
+    assert resolve("~no_such_user_w11/x.py", "/tmp") is None

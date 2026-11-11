@@ -2,7 +2,7 @@
   "kind": "cplug",
   "id": "reviewboard",
   "name": "review board",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "api_version": 1,
   "min_app_version": "1.16.1",
   "author": "Carnivore",
@@ -22,6 +22,9 @@
   "permissions": [
     {
       "name": "agent_writes"
+    },
+    {
+      "name": "notify"
     }
   ],
   "owns": {
@@ -36,6 +39,7 @@
       "/boards/{slug}/live/end",
       "/boards/{slug}/live/milestone",
       "/boards/{slug}/live/send",
+      "/boards/{slug}/look",
       "/boards/{slug}/open",
       "/boards/{slug}/payload-draft",
       "/boards/{slug}/revisions",
@@ -48,7 +52,15 @@
       "/rescan",
       "/root",
       "/scratch",
-      "/view/{ticket_text}"
+      "/view/{ticket_text}",
+      "/public/status",
+      "/public/links",
+      "/public/links/{link_id}",
+      "/public/links/{link_id}/token",
+      "/public/visitors",
+      "/public/visitors/forward",
+      "/public/visitors/u/{number}",
+      "/public/visitors/{response_id}"
     ],
     "strings": [
       "cplug.reviewboard."
@@ -56,7 +68,10 @@
     "styles": [
       "board.css",
       "header.css",
-      "tray.css"
+      "tray.css",
+      "public/share-link.css",
+      "public/visitors.css",
+      "public/visitor-page/public.css"
     ],
     "tests": [
       "tests/python/cplugs/reviewboard/",
@@ -79,12 +94,27 @@
       "web/src/cplugs/reviewboard/RoundView.svelte",
       "web/src/cplugs/reviewboard/ThemePicker.svelte",
       "web/src/cplugs/reviewboard/Tray.svelte",
+      "web/src/cplugs/reviewboard/VisitorAnswers.svelte",
+      "web/src/cplugs/reviewboard/VisitorToggle.svelte",
       "web/src/cplugs/reviewboard/board.css",
       "web/src/cplugs/reviewboard/header.css",
-      "web/src/cplugs/reviewboard/tray.css"
+      "web/src/cplugs/reviewboard/tray.css",
+      "web/src/cplugs/reviewboard/public/ShareLinkKey.svelte",
+      "web/src/cplugs/reviewboard/public/ShareLinkModal.svelte",
+      "web/src/cplugs/reviewboard/public/VisitorsKey.svelte",
+      "web/src/cplugs/reviewboard/public/VisitorsModal.svelte",
+      "web/src/cplugs/reviewboard/public/visitor-page/PublicBoard.svelte",
+      "web/src/cplugs/reviewboard/public/visitor-page/VisitorForm.svelte",
+      "web/src/cplugs/reviewboard/public/visitor-page/VisitorKeys.svelte",
+      "web/src/cplugs/reviewboard/public/visitor-page/VisitorRevisions.svelte",
+      "web/src/cplugs/reviewboard/public/visitor-page/public.css",
+      "web/src/cplugs/reviewboard/public/share-link.css",
+      "web/src/cplugs/reviewboard/public/visitors.css"
     ],
     "contributions": [
-      "projects.panel"
+      "projects.panel",
+      "board.header_key",
+      "page.row_action"
     ]
   },
   "data": [

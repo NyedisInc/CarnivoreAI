@@ -18,6 +18,7 @@ from src.core.byoai.contracts import Connection
 from src.core.launch_profiles.endpoints import EndpointLaunch, UnsupportedEndpoint, endpoint_launch
 from src.core.launch_profiles.plan import PURPOSES, LaunchDisplay, LaunchPlan, Purpose, ScriptFile
 from src.core.launch_profiles.render import render_custom, render_structured
+from src.core.sessions import launch_overlay
 from src.core.launch_profiles.seed_from_wrappers import profile_from_wrapper
 from src.core.launch_wrappers.family_defaults import standard_wrapper
 
@@ -132,6 +133,19 @@ def _split_codex_server_args(app_args: list[str]) -> tuple[tuple[str, ...], list
     return tuple(server_args), rest
 
 
+def _own_route(harness: str, env_set: tuple, secret_names: list, endpoint_flags: tuple) -> Optional[launch_overlay.UpstreamRoute]:
+    if harness == "claude":
+        base = dict(env_set).get("ANTHROPIC_BASE_URL", "").strip()
+        key = next((n for n in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN") if n in secret_names), "")
+        return launch_overlay.UpstreamRoute(base, key) if base else None
+    words = {k: v for k, v in (w.split("=", 1) for w in endpoint_flags if "=" in w)}
+    base_key = next((k for k in words if k.startswith("model_providers.") and k.endswith(".base_url")), "")
+    if not base_key:
+        return None
+    env_key = words.get(base_key[:-len("base_url")] + "env_key", "")
+    return launch_overlay.UpstreamRoute(json.loads(words[base_key]), json.loads(env_key) if env_key else "", tuple(endpoint_flags))
+
+
 def resolve_launch(request: LaunchRequest, purpose: Purpose = "pane") -> LaunchPlan:
     if purpose not in PURPOSES:
         raise ValueError(f"purpose must be one of {PURPOSES}")
@@ -163,6 +177,11 @@ def resolve_launch(request: LaunchRequest, purpose: Purpose = "pane") -> LaunchP
     secret_names = [name for name, _ in secret_refs]
     env_set = (*((row.name, row.value) for row in profile.env), *(endpoint.env_set if endpoint else ()))
     env_unset = endpoint.env_unset if endpoint else ()
+    overlay = None
+    if profile.harness in ("claude", "codex") and launch_profile.custom_command is None:
+        route = _own_route(profile.harness, env_set, secret_names, endpoint.flags if endpoint else ())
+        overlay = (launch_overlay.chain_plan_for(profile.harness, purpose, route) if route is not None
+                   else launch_overlay.plan_for(profile.harness, purpose) if endpoint is None else None)
     script_file: Optional[ScriptFile] = None
     if launch_profile.custom_command is not None:
         path = request.scripts_dir / f"{profile.id}.zsh"
@@ -175,9 +194,10 @@ def resolve_launch(request: LaunchRequest, purpose: Purpose = "pane") -> LaunchP
             path = request.scripts_dir / f"{profile.id}.zsh"
             script_file = ScriptFile(str(path), profile.custom_command.script)
         command = render_structured(launch_profile, model, app_args, request.disable_alternate_screen,
-                                    endpoint.flags if endpoint else (), secret_names, env_set, env_unset,
+                                    (*(endpoint.flags if endpoint and not (overlay and overlay.replaces_flags) else ()), *(overlay.flags if overlay else ())), secret_names, env_set, env_unset,
                                     codex_server_args, path if transparent_codex else None,
-                                    fallback_args, request.model_is_explicit and bool(model))
+                                    fallback_args, request.model_is_explicit and bool(model),
+                                    overlay.preamble if overlay else "")
         tail = [a for a in app_args if a]
     return LaunchPlan(
         command=command,
@@ -197,4 +217,5 @@ def resolve_launch(request: LaunchRequest, purpose: Purpose = "pane") -> LaunchP
         profile_id=profile.id,
         account_mode=profile.account.mode,
         connection_id=(profile.endpoint.connection_id or "") if endpoint else "",
+        overlay=overlay,
     )

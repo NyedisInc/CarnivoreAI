@@ -41,6 +41,7 @@ import { layoutActive } from '../../layouts/mode.svelte';
 import { anchorGone, removeAnchor } from '../../layouts/page.svelte';
 import type { TabSource } from '../../layouts/phone.svelte';
 import { createTabContextMenu } from './tab-context-menu.svelte';
+import { registerTabGroup } from './tab-step';
 import { failureReason } from '../../../lib/errors/failure-reason';
 
 function displayName(label: string | null, tmuxName: string | null): string | null {
@@ -85,6 +86,8 @@ export function createTabController(instance: () => string, focusPane: (tab: str
     globalThis.addEventListener(PRIMARY_SESSION_GONE_EVENT, onGone);
     return () => globalThis.removeEventListener(PRIMARY_SESSION_GONE_EVENT, onGone);
   });
+
+  $effect(() => (source ? undefined : registerTabGroup(instance(), { tabs: () => tabs, active: () => active, select })));
 
   let themeRevision = $state(0);
   $effect(() => themes()?.onXtermThemeChange?.(() => (themeRevision += 1)));

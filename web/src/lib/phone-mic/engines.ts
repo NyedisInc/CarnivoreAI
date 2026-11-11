@@ -1,6 +1,6 @@
 import { authFetch } from '../../opscenter/api/auth.svelte';
 import { fetchConfig } from '../byoai/api';
-import { inNativeShell, onNativeMessage, postToNative } from '../native-shell/shell';
+import { onNativeMessage, shellHasSpeech, postToNative } from '../native-shell/shell';
 import type { EngineEvents, EngineStarter } from './controller.svelte';
 
 interface SpeechResultList { length: number; [i: number]: { 0: { transcript: string }; length: number } }
@@ -8,6 +8,7 @@ interface Recognizer {
     continuous: boolean; interimResults: boolean; lang: string;
     onresult: ((ev: { results: SpeechResultList }) => void) | null;
     onerror: ((ev: { error: string }) => void) | null;
+    onstart: (() => void) | null;
     onend: (() => void) | null;
     start(): void; stop(): void; abort(): void;
 }
@@ -27,6 +28,7 @@ export function speechStarter(): EngineStarter | null {
         rec.continuous = true;
         rec.interimResults = true;
         rec.lang = navigator.language || 'en-US';
+        rec.onstart = () => { if (!dead) events.ready(); };
         rec.onresult = (ev) => {
             let all = '';
             for (let i = 0; i < ev.results.length; i += 1) all += ev.results[i]?.[0]?.transcript ?? '';
@@ -46,16 +48,36 @@ export function speechStarter(): EngineStarter | null {
     };
 }
 
+export function utteranceJoiner(): { feed(text: string): string; value(): string } {
+    let committed = '';
+    let prev = '';
+    const joined = () => [committed, prev].filter(Boolean).join(' ');
+    return {
+        feed(text: string): string {
+            if (!text) {
+                if (prev) { committed = joined(); prev = ''; }
+                return joined();
+            }
+            if (!prev && committed && text.startsWith(committed)) committed = '';
+            prev = text;
+            return joined();
+        },
+        value: joined,
+    };
+}
+
 export function nativeStarter(): EngineStarter | null {
-    if (!inNativeShell()) return null;
+    if (!shellHasSpeech()) return null;
     return (events: EngineEvents) => {
         let off: (() => void) | null = null;
+        const joiner = utteranceJoiner();
         const close = () => { off?.(); off = null; };
         off = onNativeMessage((m) => {
             if (m.type !== 'speech') return;
-            if (m.kind === 'text') { events.text(m.text); return; }
+            if (m.kind === 'ready') { events.ready(); return; }
+            if (m.kind === 'text') { events.text(joiner.feed(m.text)); return; }
             close();
-            if (m.kind === 'end') { events.end(m.text); return; }
+            if (m.kind === 'end') { events.end(joiner.feed(m.text)); return; }
             events.error(m.reason === 'denied' || m.reason === 'restricted' ? 'blocked' : m.reason === 'unavailable' ? 'unavailable' : 'failed');
         });
         postToNative({ type: 'speechStart' });

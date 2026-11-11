@@ -2,6 +2,7 @@
 <script lang="ts">
     import { captureOpener, restoreOpenerFocus } from '../dialog-frame/opener-focus';
     import Page from '../../opscenter/ui/Page.svelte';
+    import Button from '../base/Button.svelte';
     import { onContextMenu, onMenuKey } from '../../opscenter/layout-editor/empty-space-menu.svelte';
     import { t } from '../i18n/index.svelte';
     import WarRoomGrid from './WarRoomGrid.svelte';
@@ -27,13 +28,21 @@
         return open;
     }
 
+    function addWidget(): void {
+        document.dispatchEvent(new CustomEvent('oc-widget-drawer-open', { detail: { surface: 'warroom' } }));
+    }
+
     $effect(() => {
         if (open && !warroomAvailable()) close();
     });
 </script>
 
 {#if open}
-    <Page title={t('warroom.page.title')} bare onClose={close} data-warroom-page="">
+    <Page title={t('warroom.page.title')} onClose={close} data-warroom-page="">
+        {#snippet actions()}
+            
+            <Button variant="quiet" size="sm" aria-label={t('opscenter.awe_s3.add_widget')} onclick={addWidget}>+</Button>
+        {/snippet}
         <div class="oc-page__body wr-body">
             {@render surface()}
         </div>

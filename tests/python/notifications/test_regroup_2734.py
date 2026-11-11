@@ -17,7 +17,7 @@ def _old(doc, path, val, me="n_old", counter=1):
 def test_doc_tables_are_generated_from_the_registry() -> None:
     text = types_doc.DOC_PATH.read_text(encoding="utf-8")
     assert types_doc.current(text) == types_doc.render(), "run: python3 -m src.core.notifications.types_doc --write"
-    assert f"{len(types.TYPES)} types in 9 groups." in types_doc.render()
+    assert f"{len(types.TYPES)} types in 8 groups." in types_doc.render()
 
 
 def test_an_old_tick_or_mute_carries_over_and_an_explicit_survivor_wins() -> None:

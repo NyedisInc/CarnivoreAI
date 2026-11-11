@@ -270,9 +270,26 @@
     "web/src/lib/right-drawer/fixtures/": "vitest fixtures: a notes cell stand-in for right-drawer-zone.test.ts; never rendered by the app",
     "web/src/opscenter/ui/fixtures/": "vitest fixture: mounts RunChartTable with a cell snippet for RunChartTable.render.test.ts; never rendered by the app",
     "web/src/lib/automations/fixtures/": "vitest fixture: the open-state caller pattern for RowMenu.close.test.ts; never rendered by the app",
-    "web/src/opscenter/cells/task-manager-mk2/fixtures/": "vitest fixtures that mount a TM Mark II cell under a frame header for Cell.render.test.ts; never rendered by the app"
+    "web/src/opscenter/cells/task-manager-mk2/fixtures/": "vitest fixtures that mount a TM Mark II cell under a frame header for Cell.render.test.ts; never rendered by the app",
+    "web/src/opscenter/engine/rects/AbsSurface.fixture.svelte": "vitest fixture: a host that mounts AbsSurface with bare cells for AbsSurface.render.test.ts; never rendered by the app",
+    "web/src/opscenter/engine/rects/AbsSurface.terminal.fixture.svelte": "vitest fixture: a host that mounts AbsSurface with the terminal page's real CellHost cells for AbsSurface.terminal.test.ts; never rendered by the app"
   },
   "files": {
+    "web/src/opscenter/dashgrid/DashGridSurface.svelte": {
+      "section": "cells",
+      "classes": []
+    },
+    "web/src/opscenter/dashgrid/dashgrid.css": {
+      "section": "cells",
+      "classes": [
+        "oc-dash",
+        "oc-dash-body",
+        "oc-dash-edit",
+        "oc-dash-guides",
+        "oc-dash-item",
+        "oc-frame-strip"
+      ]
+    },
     "client/css/config-drawer.css": {
       "section": "chrome",
       "classes": [
@@ -1392,6 +1409,13 @@
         "bcm-ring"
       ]
     },
+    "web/src/lib/argent-cost/HeldLift.svelte": {
+      "section": "swarm-page",
+      "classes": [
+        "hl",
+        "hl-said"
+      ]
+    },
     "web/src/lib/base/Accordion.svelte": {
       "section": "base-set",
       "classes": []
@@ -1571,6 +1595,14 @@
         "asw-running-name",
         "asw-running-row",
         "asw-running-title"
+      ]
+    },
+    "web/src/lib/account-switch/DrawerSwitchNote.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "dsn",
+        "dsn-actions",
+        "dsn-line"
       ]
     },
     "web/src/lib/account-switch/SwitchAccountButton.svelte": {
@@ -2527,17 +2559,18 @@
         "oc-nav-badge",
         "oc-nav-components",
         "oc-nav-edit",
+        "oc-nav-fill",
+        "oc-nav-head",
         "oc-nav-hint",
         "oc-nav-icon",
         "oc-nav-item",
         "oc-nav-item--active",
         "oc-nav-label",
         "oc-nav-label--name",
-        "oc-nav-lead",
         "oc-nav-line",
         "oc-nav-settings",
         "oc-nav-pin",
-        "oc-nav-quick",
+        "oc-nav-sep",
         "oc-nav-star",
         "oc-nav-sub",
         "oc-sidebar",
@@ -3023,7 +3056,11 @@
     "web/src/lib/mini-rail/MiniRail.svelte": {
       "section": "chrome",
       "classes": [
-        "mr"
+        "mr",
+        "mr-claw",
+        "mr-head",
+        "sbr-rail",
+        "sbr-rail__head"
       ]
     },
     "web/src/lib/app-alerts/AlertBadge.svelte": {
@@ -3097,6 +3134,14 @@
       ]
     },
     "web/src/lib/plugins-page/PermissionSheet.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/plugins-page/PluginHealthLine.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/plugins-page/ClaudeCodeHealth.svelte": {
       "section": "ledger-catalog",
       "classes": []
     },
@@ -3815,6 +3860,10 @@
       "section": "settings",
       "classes": []
     },
+    "web/src/lib/pack-machines/PackGlobalSync.svelte": {
+      "section": "settings",
+      "classes": []
+    },
     "web/src/lib/pack-machines/PackLoginsTab.svelte": {
       "section": "settings",
       "classes": []
@@ -4439,10 +4488,6 @@
         "oc-tg-spot"
       ]
     },
-    "web/src/opscenter/cells/terminal-group/DropOverlay.svelte": {
-      "section": "tabs",
-      "classes": []
-    },
     "web/src/opscenter/cells/terminal-group/PageTabBody.svelte": {
       "section": "tabs",
       "classes": [
@@ -4541,6 +4586,9 @@
         "oc-tf",
         "oc-tf-acct",
         "oc-tf-acct-warn",
+        "oc-tf-edge",
+        "oc-tf-host",
+        "oc-tf-host-name",
         "oc-tf-caption",
         "oc-tf-grown",
         "oc-tf-labels-measure",
@@ -4658,22 +4706,6 @@
         "oc-fly",
         "oc-fly-icon"
       ]
-    },
-    "web/src/opscenter/engine/GridRow.svelte": {
-      "section": "cells",
-      "classes": []
-    },
-    "web/src/opscenter/engine/GridSurface.svelte": {
-      "section": "cells",
-      "classes": []
-    },
-    "web/src/opscenter/engine/Gutter.svelte": {
-      "section": "cells",
-      "classes": []
-    },
-    "web/src/opscenter/engine/Intersection.svelte": {
-      "section": "cells",
-      "classes": []
     },
     "web/src/opscenter/engine/LiveRegion.svelte": {
       "section": "feedback",
@@ -4847,6 +4879,8 @@
         "oc-tabs",
         "oc-tabs-fade-end",
         "oc-tabs-fade-start",
+        "oc-tabs-live",
+        "oc-tabs-track",
         "oc-tabwrap",
         "oc-tabwrap-active",
         "oc-tabwrap-idle",
@@ -5249,13 +5283,17 @@
         "screen",
         "session-sidebar-pinned",
         "session-sidebar-railed",
-        "ps-page-back"
+        "ps-page-back",
+        "oc-page--drawer-list",
+        "oc-page--ghost",
+        "oc-page__resize"
       ]
     },
     "web/src/opscenter/layouts/LayoutCommandBar.svelte": {
       "section": "terminal",
       "classes": [
         "lcb",
+        "lcb--add",
         "lcb__box",
         "lcb__count",
         "lcb__extra",
@@ -5345,6 +5383,10 @@
       "classes": [
         "hm-anchor"
       ]
+    },
+    "web/src/lib/sidebar-shell/ProjectMenuWindows.svelte": {
+      "section": "chrome",
+      "classes": []
     },
     "web/src/lib/sidebar-shell/HeadingRenameEditor.svelte": {
       "section": "chrome",
@@ -5624,6 +5666,7 @@
     "web/src/opscenter/layout-editor/WidgetDrawer.svelte": {
       "section": "cells",
       "classes": [
+        "grid-carrying",
         "le-card__meta",
         "le-card__name",
         "le-card__text",
@@ -5768,6 +5811,7 @@
     "web/src/lib/settings-page/settings-page.css": {
       "section": "settings",
       "classes": [
+        "oc-page--drawer-stacked",
         "mgr",
         "mgr-mark",
         "modal-btn",
@@ -5827,7 +5871,9 @@
         "st-unit__suffix",
         "tm__actions",
         "toast-mode-option",
-        "toast-mode-options"
+        "toast-mode-options",
+        "st-body--list",
+        "st-body--stacked"
       ]
     },
     "web/src/lib/settings-page/config-bundle/CommandConsent.svelte": {
@@ -5943,10 +5989,6 @@
       "classes": []
     },
     "web/src/lib/settings-page/controls/MinutesControl.svelte": {
-      "section": "settings",
-      "classes": []
-    },
-    "web/src/lib/settings-page/controls/RailMagnifyControl.svelte": {
       "section": "settings",
       "classes": []
     },
@@ -6385,7 +6427,8 @@
         "oc-titlebar__sub",
         "oc-titlebar__title",
         "session-sidebar-pinned",
-        "session-sidebar-railed"
+        "session-sidebar-railed",
+        "oc-titlebar--drawer"
       ]
     },
     "web/src/opscenter/ui/Page.svelte": {
@@ -6408,7 +6451,10 @@
     "web/src/lib/drawer-zone/GlanceRow.svelte": {
       "section": "ledger-catalog",
       "classes": [
+        "dz-gcell",
         "dz-glances",
+        "dz-glances--motion",
+        "dz-gpending",
         "dz-gwrap"
       ]
     },
@@ -6416,10 +6462,17 @@
       "section": "ledger-catalog",
       "classes": [
         "dz",
+        "dz-cell",
+        "dz-cell__body",
+        "dz-cells",
         "dz-empty",
-        "dz-empty--aimed",
+        "dz-gmark",
+        "dz-head",
         "dz-mark",
-        "dz-widgets--editing"
+        "dz-notice",
+        "dz-pending",
+        "dz-widgets",
+        "motion-handle--s"
       ]
     },
     "web/src/popout/SingleWidget.svelte": {
@@ -6431,10 +6484,7 @@
     "web/src/lib/drawer-zone/ZoneItem.svelte": {
       "section": "ledger-catalog",
       "classes": [
-        "dz-item",
-        "dz-item--editing",
-        "dz-name",
-        "dz-strip"
+        "dz-item"
       ]
     },
     "web/src/lib/user-guide/GuideBody.svelte": {
@@ -7190,6 +7240,12 @@
     "web/src/lib/drawer-tabs/NewSessionButton.svelte": {
       "section": "chrome",
       "classes": []
+    },
+    "web/src/lib/drawer-tabs/AddWidgetButton.svelte": {
+      "section": "chrome",
+      "classes": [
+        "ps-grid-surface"
+      ]
     },
     "web/src/opscenter/shell/HomeOpenMenu.svelte": {
       "section": "chrome",
@@ -8398,6 +8454,43 @@
         "mx-why"
       ]
     },
+    "web/src/lib/notifications/inspector/Inspector.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/notifications/inspector/Previews.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/notifications/inspector/inspector.css": {
+      "section": "settings",
+      "classes": [
+        "ins",
+        "ins__ctl",
+        "ins__dev",
+        "ins__frame",
+        "ins__hint",
+        "ins__lab",
+        "ins__list",
+        "ins__name",
+        "ins__prev",
+        "ins__row",
+        "ins__st",
+        "ins__title",
+        "ins__walls",
+        "nc-acts",
+        "pv-body",
+        "pv-level",
+        "pv-note",
+        "pv-pic",
+        "pv-sheet",
+        "pv-sheet--card",
+        "pv-text",
+        "pv-title",
+        "pv-ts",
+        "pv-wall"
+      ]
+    },
     "web/src/lib/launch-picker/LaunchPickerModal.svelte": {
       "section": "ledger-catalog",
       "classes": [
@@ -8602,18 +8695,6 @@
       "section": "ledger-catalog",
       "classes": [
         "dz-glance-none"
-      ]
-    },
-    "web/src/lib/drawer-zone/GlanceArea.svelte": {
-      "section": "ledger-catalog",
-      "classes": [
-        "dz-garea",
-        "dz-garea--aimed",
-        "dz-garea--open",
-        "dz-gctl",
-        "dz-gmark",
-        "dz-gplace",
-        "dz-gtiles"
       ]
     },
     "web/src/opscenter/ui/tile.css": {
@@ -9208,8 +9289,9 @@
       "classes": [
         "pko",
         "pko-ctl",
-        "pko-foot",
         "pko-face",
+        "pko-foot",
+        "pko-held",
         "pko-key",
         "pko-link",
         "pko-links",
@@ -9570,7 +9652,9 @@
         "sbc--open",
         "sbc--queued",
         "sbc--review",
+        "sbc-argent",
         "sbc-bar",
+        "sbc-budget",
         "sbc-chip",
         "sbc-chip--bad",
         "sbc-chip--go",
@@ -10518,6 +10602,10 @@
       "section": "dialogs",
       "classes": []
     },
+    "web/src/lib/pack-machines/RelayApprovalPopup.svelte": {
+      "section": "dialogs",
+      "classes": []
+    },
     "web/src/lib/pack-machines/RelayConsentList.svelte": {
       "section": "dialogs",
       "classes": []
@@ -10606,6 +10694,16 @@
         "lwt-note",
         "lwt-file",
         "lwt-error"
+      ]
+    },
+    "web/src/lib/launch-picker/LaunchStory.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "lst",
+        "lst-label",
+        "lst-note",
+        "lst-error",
+        "lst-actions"
       ]
     },
     "web/src/lib/launch-picker/LaunchChoice.svelte": {
@@ -10828,8 +10926,8 @@
       "classes": [
         "sbr-rail",
         "sbr-rail__cell",
-        "sbr-rail__dock",
         "sbr-rail__fill",
+        "sbr-rail__head",
         "sbr-rail__label",
         "sbr-rail__label--on",
         "sbr-rail__label-text",
@@ -11047,7 +11145,6 @@
         "sp-row",
         "sp-row--closed",
         "sp-sec",
-        "sp-sec-colors",
         "sp-sec-head",
         "sp-selbox",
         "sp-selbox--instant",
@@ -11396,6 +11493,10 @@
       "classes": []
     },
     "web/src/lib/deepsearch/LayoutToggle.svelte": {
+      "section": "tables",
+      "classes": []
+    },
+    "web/src/lib/deepsearch/SortToggle.svelte": {
       "section": "tables",
       "classes": []
     },
@@ -12364,7 +12465,8 @@
         "session-sidebar-bar__account-chevron",
         "session-sidebar-bar__account-name",
         "session-sidebar-bar__group",
-        "session-sidebar-bar__version"
+        "session-sidebar-bar__version",
+        "version-footer__build"
       ]
     },
     "web/src/lib/catalog/WarezCard.svelte": {
@@ -12974,7 +13076,9 @@
       "section": "cells",
       "classes": [
         "oc-tf-close",
-        "oc-tf-grown"
+        "oc-tf-grown",
+        "oc-tf-head",
+        "oc-tf-title"
       ]
     },
     "web/src/opscenter/cells/terminal-live/FootMeters.svelte": {
@@ -13910,6 +14014,12 @@
         "oc-tf-progress__fill"
       ]
     },
+    "web/src/opscenter/cells/terminal-live/FootHold.svelte": {
+      "section": "chrome",
+      "classes": [
+        "oc-tf-hold"
+      ]
+    },
     "web/src/lib/terminal-font/TerminalFontPanel.svelte": {
       "section": "settings",
       "classes": [
@@ -14038,6 +14148,130 @@
         "keymap-editor__for",
         "keymap-editor__line"
       ]
+    },
+    "web/src/lib/motion-grid/motion-grid.css": {
+      "section": "motion",
+      "classes": [
+        "motion-busy",
+        "motion-enabled",
+        "motion-handle",
+        "motion-handle--e",
+        "motion-handle--n",
+        "motion-handle--ne",
+        "motion-handle--nw",
+        "motion-handle--s",
+        "motion-handle--se",
+        "motion-handle--sw",
+        "motion-handle--w",
+        "motion-item",
+        "motion-landing",
+        "motion-lifted",
+        "motion-live",
+        "motion-resizing"
+      ]
+    },
+    "web/src/opscenter/engine/rects/AbsSurface.svelte": {
+      "section": "cells",
+      "classes": []
+    },
+    "web/src/opscenter/engine/rects/DockCompass.svelte": {
+      "section": "cells",
+      "classes": []
+    },
+    "web/src/opscenter/engine/rects/DividerHandle.svelte": {
+      "section": "cells",
+      "classes": [
+        "abs-handle",
+        "oc-gutter",
+        "oc-intersection"
+      ]
+    },
+    "web/src/opscenter/engine/rects/abs-surface.css": {
+      "section": "cells",
+      "classes": [
+        "abs-body",
+        "abs-ghost",
+        "abs-handle",
+        "abs-moving",
+        "abs-surface",
+        "abs-zoomed",
+        "dock-compass",
+        "dock-compass__fill",
+        "dock-compass__frame",
+        "dock-compass__icon",
+        "dock-compass__icon--hot",
+        "dock-compass__icon--off",
+        "motion-busy",
+        "motion-item"
+      ]
+    },
+    "web/src/lib/notify-card/Clip.svelte": {
+      "section": "feedback",
+      "classes": []
+    },
+    "web/src/lib/notify-card/NotifyCard.svelte": {
+      "section": "feedback",
+      "classes": []
+    },
+    "web/src/lib/notify-card/NotifyCorner.svelte": {
+      "section": "feedback",
+      "classes": []
+    },
+    "web/src/lib/notify-card/notify-card.css": {
+      "section": "feedback",
+      "classes": [
+        "nc",
+        "nc-acts",
+        "nc-ans",
+        "nc-ans-d",
+        "nc-ans-t",
+        "nc-art",
+        "nc-bar",
+        "nc-body",
+        "nc-c",
+        "nc-chg",
+        "nc-clip",
+        "nc-cmd",
+        "nc-delta",
+        "nc-dom",
+        "nc-ds",
+        "nc-exit",
+        "nc-file",
+        "nc-files",
+        "nc-fnm",
+        "nc-frow",
+        "nc-glyph",
+        "nc-k",
+        "nc-key",
+        "nc-led",
+        "nc-media",
+        "nc-more",
+        "nc-mt",
+        "nc-nm",
+        "nc-opt",
+        "nc-opts",
+        "nc-p",
+        "nc-play",
+        "nc-pos",
+        "nc-pv",
+        "nc-q",
+        "nc-reply",
+        "nc-row",
+        "nc-rows",
+        "nc-tail",
+        "nc-thread",
+        "nc-ty",
+        "nc-v",
+        "nc-vbar",
+        "nc-ver",
+        "nc-warn",
+        "nc-where",
+        "nc-word"
+      ]
+    },
+    "web/src/lib/notify-card/Glyph.svelte": {
+      "section": "feedback",
+      "classes": []
     }
   }
 }

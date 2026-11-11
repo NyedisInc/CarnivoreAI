@@ -23,6 +23,8 @@
   import { HEADER_OPTION, placementHeaderShown, type MenuSlot } from '../../opscenter/shell/widget-head';
   import { terminalLayout } from '../../opscenter/engine/layout.svelte';
   import { t } from '../i18n/index.svelte';
+  import State from '../base/State.svelte';
+  import { useHomeTerminal } from './home-terminal.svelte';
   import { panelPins } from '../widget-bars/panel-pins.svelte';
   import { pinnedAgent, pinnedScopeFor } from '../widget-bars/pinned-scope';
   import { CORE_ID } from '../widget-menu/model';
@@ -69,7 +71,8 @@
   const rail = $derived(host === 'rail');
   const popout = $derived(host === 'popout');
 
-  const resolved = $derived(resolvePlacement({ widget, view, target, instance: copy }));
+  const home = useHomeTerminal(() => ({ active: widget.id === 'core.terminal' && !unseen, target, claimKey: placementKey || `${host}:${widget.id}` }));
+  const resolved = $derived(resolvePlacement({ widget, view, target: home.target ?? (home.pending || home.failed ? 'pending' : null), instance: copy }));
   const manifest = $derived(resolved?.cell ?? widget);
   const slot = $derived((resolved?.slot ?? widget.id.slice('core.'.length)) as SlotId);
   const family = $derived(manifest.instancing !== 'singleton');
@@ -174,7 +177,7 @@
       {source}
       extras={{
         header: meta?.ownHead ? null : { shown: headShown, toggle: () => source?.setOption(placementKey, HEADER_OPTION, !headShown) },
-        close: { run: remove },
+        close: { run: remove, instance: true },
         ...(configurable ? { settings: [[{ id: CORE_ID.settings, label: t('widgets.menu.settings'), icon: 'settings', run: () => openConfigure(key as SlotId) }]] } : {}),
       }}
       anchor={slot.anchor}
@@ -224,6 +227,10 @@
       />
     {:else if held}
       
+    {:else if home.failed}
+      <State kind="error" title={t('terminal.home.failed')} onAction={() => home.retry()} />
+    {:else if home.pending}
+      <State kind="loading" inline title={t('terminal.home.starting')} />
     {:else if Cell && meta}
       <Cell
         width={box.width}

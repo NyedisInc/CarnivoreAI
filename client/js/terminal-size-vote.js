@@ -89,7 +89,7 @@ console.log('[TerminalSizeVote Module] Loading...');
         var fit = voteGrid(ctl);
         var lim = ctl && ctl._paneLimit;
         if (!fit || !lim) return fit;
-        if (showsPane(ctl)) return { cols: lim.cols, rows: lim.rows };
+        if (showsPane(ctl) || lim.measured) return { cols: lim.cols, rows: lim.rows };
         if (lim.lone) return fit;
         return { cols: Math.min(fit.cols, lim.cols), rows: Math.min(fit.rows, lim.rows) };
     }
@@ -105,7 +105,7 @@ console.log('[TerminalSizeVote Module] Loading...');
         var g = shownGrid(ctl);
         if (!t || !g || typeof t.resize !== 'function') return false;
         var master = global.TerminalSizeMaster;
-        if (master) master.applyScale(ctl, master.scaleFor(voteGrid(ctl), g, showsPane(ctl)));
+        if (master) master.applyScale(ctl, master.scaleFor(voteGrid(ctl), g, showsPane(ctl) || !!(lim && lim.measured)));
         if (t.cols === g.cols && t.rows === g.rows) return false;
         try {
             if (global.TerminalProvider) global.TerminalProvider.wrap(t).clearRenderer();
@@ -119,7 +119,7 @@ console.log('[TerminalSizeVote Module] Loading...');
 
     function setPaneLimit(ctl, message) {
         if (!ctl || !message || !(message.cols > 0) || !(message.rows > 0)) return false;
-        ctl._paneLimit = { cols: message.cols, rows: message.rows, lone: message.clients === 1 };
+        ctl._paneLimit = { cols: message.cols, rows: message.rows, lone: message.clients === 1, measured: message.measured === true };
         return true;
     }
 

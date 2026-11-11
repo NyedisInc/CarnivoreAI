@@ -12,7 +12,6 @@
     import SwitchControl from './controls/SwitchControl.svelte';
     import MinutesControl from './controls/MinutesControl.svelte';
     import LinkControl from './controls/LinkControl.svelte';
-    import RailMagnifyControl from './controls/RailMagnifyControl.svelte';
     import MotionPanel from './MotionPanel.svelte';
     import RowIconsPanel from './RowIconsPanel.svelte';
     import FootBarLayoutPanel from './FootBarLayoutPanel.svelte';
@@ -39,6 +38,7 @@
     import DestinationsPanel from '../notifications/destinations/DestinationsPanel.svelte';
     import MessagingScreen from '../messaging/MessagingScreen.svelte';
     import LinkPanel from '../notifications/matrix/LinkPanel.svelte';
+    import Inspector from '../notifications/inspector/Inspector.svelte';
     import MatrixPanel from '../notifications/matrix/MatrixPanel.svelte';
     import MutesPanel from '../notifications/mute/MutesPanel.svelte';
     import SyncPanel from '../notifications/sync/SyncPanel.svelte';
@@ -81,8 +81,6 @@
         <MinutesControl {t} {inputId} settingId="auto_sleep_unread_minutes" field="unread_idle_minutes" />
     {:else if def.control.kind === 'config-toggle' || def.control.kind === 'crosstalk-card' || def.control.kind === 'auto-sleep' || def.control.kind === 'auto-sleep-unread' || def.control.kind === 'quiet-watched' || def.control.kind === 'row-lights' || def.control.kind === 'rail-dock-names' || def.control.kind === 'sidebar-section'}
         <SwitchControl {def} {t} />
-    {:else if def.control.kind === 'rail-magnify'}
-        <RailMagnifyControl {def} {t} />
     {:else if def.control.kind === 'animations'}
         <MotionPanel {def} {t} />
     {:else if def.control.kind === 'toast-mode'}
@@ -141,6 +139,8 @@
         <MessagingScreen {t} />
     {:else if def.control.kind === 'notify-link'}
         <LinkPanel {t} />
+    {:else if def.control.kind === 'notify-inspector'}
+        <Inspector {t} />
     {:else if def.control.kind === 'notify-matrix'}
         <MatrixPanel {t} />
     {:else if def.control.kind === 'notify-mutes'}

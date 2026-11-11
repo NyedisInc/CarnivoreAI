@@ -9,6 +9,9 @@ final class SpeechDictation {
     private var task: SFSpeechRecognitionTask?
     private var recognizer: SFSpeechRecognizer?
     private var transcript = ""
+    private var committed = ""
+    private var current = ""
+    private var utteranceEnded = false
     private var generation = 0
     private var backgroundWatch: NSObjectProtocol?
 
@@ -29,6 +32,7 @@ final class SpeechDictation {
         cancel()
         generation += 1
         let mine = generation
+        report(["type": "speech", "kind": "ready"])
         SFSpeechRecognizer.requestAuthorization { [weak self] status in
             DispatchQueue.main.async {
                 guard let self, mine == self.generation else { return }
@@ -62,12 +66,17 @@ final class SpeechDictation {
         self.recognizer = recognizer
         self.request = request
         transcript = ""
+        committed = ""
+        current = ""
+        utteranceEnded = false
         let mine = generation
         task = recognizer.recognitionTask(with: request) { [weak self] result, error in
             DispatchQueue.main.async {
                 guard let self, mine == self.generation else { return }
                 if let result {
-                    self.transcript = result.bestTranscription.formattedString
+                    let heard = result.bestTranscription.formattedString
+                    self.absorb(heard)
+                    if result.speechRecognitionMetadata != nil { self.utteranceEnded = true }
                     if result.isFinal { self.finish(); return }
                     self.report(["type": "speech", "kind": "text", "text": self.transcript])
                 } else if error != nil {
@@ -89,6 +98,20 @@ final class SpeechDictation {
         } catch {
             fail("failed")
         }
+    }
+
+    private func absorb(_ heard: String) {
+        if heard.isEmpty {
+            if !current.isEmpty { committed = transcript; current = "" }
+            return
+        }
+        if utteranceEnded {
+            utteranceEnded = false
+            if !current.isEmpty && !heard.hasPrefix(current) { committed = transcript }
+        }
+        if current.isEmpty && !committed.isEmpty && heard.hasPrefix(committed) { committed = "" }
+        current = heard
+        transcript = committed.isEmpty ? current : committed + " " + current
     }
 
     func stop() {

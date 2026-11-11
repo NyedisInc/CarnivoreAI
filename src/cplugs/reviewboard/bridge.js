@@ -242,6 +242,7 @@
     else if (data.type === 'load') onLoad(data);
     else if (data.type === 'strings') onStrings(data);
     else if (data.type === 'gaps') onGaps(data);
+    else if (data.type === 'mode') window.dispatchEvent(new CustomEvent('rb-mode', { detail: { readonly: data.readonly === true } }));
   });
 
   window.addEventListener('scroll', scheduleLayout, true);

@@ -9,6 +9,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from src.api.peer_auth import require_peer_sessions
+from src.core.account_switch import continue_ready
+from src.core.budget_hold.gate import raise_if_held
 from src.core.attention.pane_agent_proof import registered_agent_in_foreground
 from src.core.session_one_shot_gate import (
     DIALOG_UNREADABLE,
@@ -136,16 +138,19 @@ class GatedBody(NamedTuple):
 async def paste_through_gates(
     request: Request, session_id: str, text: str, *, idle_only: bool = False,
     expected_epoch: int | None = None, expected_uuid: str | None = None, fresh_dialog_check: bool = False,
+    hold_exempt: bool = False, rotation_continue: bool = False,
 ) -> OneShotResponse:
     gated = await check_through_gates(request, session_id, text, idle_only=idle_only,
                                       expected_epoch=expected_epoch, expected_uuid=expected_uuid,
-                                      fresh_dialog_check=fresh_dialog_check)
+                                      fresh_dialog_check=fresh_dialog_check, hold_exempt=hold_exempt,
+                                      rotation_continue=rotation_continue)
     return await paste_gated(gated, session_id)
 
 
 async def check_through_gates(
     request: Request, session_id: str, text: str, *, idle_only: bool = False,
     expected_epoch: int | None = None, expected_uuid: str | None = None, fresh_dialog_check: bool = False,
+    hold_exempt: bool = False, rotation_continue: bool = False,
 ) -> GatedBody:
     services = request.app.state.services
     registry = services.registry
@@ -214,7 +219,10 @@ async def check_through_gates(
                 raise OneShotRefused(PANE_DIALOG_OPEN, "a dialog is open in the pane right now")
             if verdict != CLEAR:
                 raise OneShotRefused(DIALOG_UNREADABLE, "the pane's dialog state could not be read")
-        if idle_only and status not in PROMPT_READY_STATUSES:
+        if idle_only and status not in PROMPT_READY_STATUSES and not (
+            rotation_continue and status == STATUS_UNKNOWN and info.activity_hint is None
+            and await continue_ready.at_empty_prompt(request.app.state.session_manager, info)
+        ):
             raise OneShotRefused(PANE_DIALOG_OPEN, "crosstalk paste waits for a ready prompt (idle, or finished but unread)")
         if fresh_dialog_check or status == STATUS_NOTICE:
             if verdict is None:
@@ -223,6 +231,7 @@ async def check_through_gates(
                 raise OneShotRefused(PANE_DIALOG_OPEN, "a dialog is open in the pane right now")
             if verdict != CLEAR:
                 raise OneShotRefused(DIALOG_UNREADABLE, "the pane's dialog state could not be read")
+        raise_if_held(info, exempt=hold_exempt)
         return (pane_command, status, gate_state)
 
     async def locked_gate() -> None:

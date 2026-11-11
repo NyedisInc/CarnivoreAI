@@ -40,6 +40,12 @@ class CreateSessionRequest(BaseModel):
         None,
         description="Optional human-readable project display name"
     )
+    story_ref: Optional[str] = Field(
+        None,
+        max_length=200,
+        description="Optional argent work item id (project, feature or story) the session serves; "
+                    "absent means unassigned. Only the Launch picker sends it."
+    )
     label: Optional[str] = Field(
         None,
         description="Name for the new session; also passed to claude as --name"

@@ -10,7 +10,7 @@ const FEATURE_HASH = /^#?settings\/features\/([a-z0-9_.-]+)(?:\/(settings))?$/;
 
 const HIGHLIGHT = /\?highlight=([a-z0-9_.-]+)$/;
 
-const withoutHighlight = (hash: string): string => hash.trim().replace(HIGHLIGHT, '');
+const withoutHighlight = (hash: string): string => hash.trim().replace(HIGHLIGHT, '').replace(/\?session=[^&#]*$/, '');
 
 const MOVED = /^#?(wrappers|launch-profiles|shortcuts)(?:\/([a-z_]+))?$/;
 const MOVED_SECTION: Record<string, SectionId> = { wrappers: 'launch_profiles', 'launch-profiles': 'launch_profiles', shortcuts: 'keys' };

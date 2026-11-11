@@ -23,6 +23,7 @@ export type LegacyGlobalName =
   | 'LayoutDeepLinkTarget'
   | 'TerminalController'
   | 'TerminalInputOwnership'
+  | 'TerminalInputDrops'
   | 'ClipboardTools'
   | `SessionSidebar${string}`;
 

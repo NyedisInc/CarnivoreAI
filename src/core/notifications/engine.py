@@ -13,7 +13,7 @@ import structlog
 
 from src.core import resource_push
 from src.core.app_alerts import service as alert_service
-from src.core.notifications import extras, kind_specs, links, types
+from src.core.notifications import extras, kind_specs, links, sample_card, types
 from src.core.notifications.contracts import (
     NOT_COUNTED, ORIGIN_LOCAL, DeliveryResult, FailureClass, NotifyEvent, Sender,
 )
@@ -358,7 +358,7 @@ class NotifyEngine:
         resource_push.notify(STATUS_TOPIC)
 
 
-    async def send_test(self, dest_id: str) -> SendTestOutcome:
+    async def send_test(self, dest_id: str, type_id: Optional[str] = None) -> SendTestOutcome:
         view = current_view()
         dest = next((d for d in view.destinations() if d.id == dest_id), None) if view is not None else None
         if dest is None:
@@ -368,8 +368,10 @@ class NotifyEngine:
         if last is not None and now - last < TEST_INTERVAL_SECONDS:
             return SendTestOutcome(found=True, limited=True)
         self._last_test[dest_id] = now
-        event = NotifyEvent(type_id=TEST_TYPE_ID, kind="test", title=TEST_TITLE, ts=now,
-                            computer=self._computer_name())
+        computer = self._computer_name()
+        hint = sample_card.sample_hint(type_id, computer) if type_id else None
+        event = NotifyEvent(type_id=type_id or TEST_TYPE_ID, kind="test", title=TEST_TITLE, ts=now,
+                            computer=computer, card_hint=hint)
         result = await self._lane(dest, kind_specs.get_kind(dest.kind)).send_now(Item(dest, event))
         status = self._status.get(dest_id, DestinationStatus())
         if result.ok:

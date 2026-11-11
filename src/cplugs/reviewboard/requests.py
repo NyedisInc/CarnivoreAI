@@ -1,14 +1,16 @@
 
 from __future__ import annotations
 
-from typing import Annotated, List, Optional
+from typing import Annotated, Any, List, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator, model_validator
 
 from src.cplugs.sdk import browser_pages
+from src.cplugs.sdk.owner_text import owner_text
+from src.cplugs.sdk.visible_text import TextRefused, clean_json
 from src.cplugs.reviewboard.layers.models import CanvasLayer, RequestLayer
-from src.cplugs.reviewboard.schema import (MAX_ANCHORS, MAX_MAX_WIDTH, MIN_MAX_WIDTH, MAX_PROMPTS, MAX_ROUND_NOTES, MAX_TEXT, MAX_VIEWS, Anchor, AnchorNote, Answer, Commit, Label,
-                                           Payload, Prompt, RevisionId, RoundContext, RoundId, Uuid, ViewId)
+from src.cplugs.reviewboard.schema import (MAX_ANCHORS, MAX_EXT_DEPTH, MAX_MAX_WIDTH, MIN_MAX_WIDTH, MAX_PAYLOAD_BYTES, MAX_PROMPTS, MAX_ROUND_NOTES, MAX_TEXT, MAX_VIEWS, Anchor, AnchorNote, Answer, Commit, Label,
+                                           Payload, Prompt, RevisionId, RoundContext, RoundId, Uuid, ViewId, nesting)
 
 SlugName = Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9-]{0,47}$")]
 Page = Annotated[str, StringConstraints(min_length=1)]
@@ -43,6 +45,34 @@ class LookChecked(BaseModel):
         return checked_look_name(value, True)
 
 
+MAX_BODY_DEPTH = MAX_EXT_DEPTH + 4
+MAX_RAW_STRING = MAX_PAYLOAD_BYTES
+
+
+def is_page(path: Tuple[Any, ...], value: Any) -> bool:
+    if not isinstance(value, str):
+        return False
+    return path == ("html",) or (len(path) == 3 and path[0] == "views" and isinstance(path[1], int) and path[2] == "html")
+
+
+def _body_string(text: str) -> str:
+    if len(text) > MAX_RAW_STRING:
+        raise TextRefused(f"is over {MAX_RAW_STRING} characters")
+    return owner_text(text)
+
+
+class _TextChecked(_Body):
+
+    @model_validator(mode="before")
+    @classmethod
+    def _owner_text(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        if nesting(data) > MAX_BODY_DEPTH:
+            raise ValueError(f"the body nests deeper than {MAX_BODY_DEPTH} levels")
+        return clean_json(data, _body_string, is_page)
+
+
 class ExtraView(_Body):
 
     id: ViewId
@@ -50,7 +80,7 @@ class ExtraView(_Body):
     html: Page
 
 
-class RevisionBody(_Body):
+class RevisionBody(_TextChecked):
 
     summary: Annotated[str, StringConstraints(min_length=1, max_length=2000)]
     html: Optional[Page] = None
@@ -117,7 +147,7 @@ class OpenBody(LookChecked, _Body):
 Etag = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
 
 
-class DraftBody(_Body):
+class DraftBody(_TextChecked):
 
     rev: int = Field(ge=0)
     revision: RevisionId
@@ -127,7 +157,7 @@ class DraftBody(_Body):
     client_round_id: Uuid
 
 
-class RoundBody(_Body):
+class RoundBody(_TextChecked):
 
     base_etag: Optional[Etag] = None
     client_round_id: Uuid
@@ -139,7 +169,7 @@ class RoundBody(_Body):
     payload: Optional[Payload] = None
 
 
-class SaveBody(_Body):
+class SaveBody(_TextChecked):
 
     base_etag: Optional[Etag] = None
     revision: RevisionId
@@ -147,7 +177,7 @@ class SaveBody(_Body):
     note: Optional[Annotated[str, StringConstraints(max_length=MAX_TEXT)]] = None
 
 
-class PayloadDraftBody(_Body):
+class PayloadDraftBody(_TextChecked):
 
     revision: RevisionId
     payload: Payload

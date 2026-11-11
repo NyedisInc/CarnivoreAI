@@ -19,6 +19,7 @@ export interface ReserveConfig {
 export interface Restrictions {
   may_install_tools: boolean;
   may_receive_credentials: boolean;
+  may_receive_global_setup: boolean;
   may_update_carnivore: boolean;
   may_host_agents: boolean;
   may_receive_projects: boolean;

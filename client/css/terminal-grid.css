@@ -67,6 +67,10 @@
     display: none;
 }
 
+body.ps-grid-surface #headerComponentsBtn {
+    display: flex;
+}
+
 body.ps-grid-surface .header :is(
     #configEditorBtn, #terminalSearchBtn, #headerSessionThemeBtn, #headerDetachBtn,
     #sessionNotesBtn

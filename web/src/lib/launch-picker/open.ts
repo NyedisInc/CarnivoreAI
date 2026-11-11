@@ -11,7 +11,7 @@ import type { PickerRow } from './picker-model';
 import type { LaunchPrefill } from './prefill';
 import type { WorktreeAnswer } from './worktree-model';
 
-export interface PickerAnswer { profileId: string; profileLabel: string; model: string | null; account: AccountAnswer | null; farLauncher?: boolean; name?: string; pinned?: boolean; worktree?: WorktreeAnswer | null }
+export interface PickerAnswer { profileId: string; profileLabel: string; model: string | null; account: AccountAnswer | null; farLauncher?: boolean; name?: string; pinned?: boolean; worktree?: WorktreeAnswer | null; story?: string | null }
 
 export interface OpenOptions {
     title?: string;

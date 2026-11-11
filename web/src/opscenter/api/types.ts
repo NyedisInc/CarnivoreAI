@@ -176,6 +176,8 @@ export interface ProjectResponse {
   parent_project_id?: number | null;
   has_image?: boolean;
   image_rev?: string | null;
+  new_sessions_join_swarm?: boolean;
+  storage?: { state: string; packed_in?: number | null } | null;
   pack_state?: string | null;
   moved_to_label?: string | null;
 }

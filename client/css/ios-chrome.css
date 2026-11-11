@@ -22,10 +22,14 @@
 /* there is nothing */
 
 
-.session-sidebar-panel,
 .config-editor-picker-content {
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
+}
+
+.session-sidebar-panel {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: calc(env(safe-area-inset-bottom) / 2);
 }
 
 .toast-container {

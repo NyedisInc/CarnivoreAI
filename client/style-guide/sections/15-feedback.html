@@ -260,3 +260,21 @@ a row. Loading is a word, never a spinner. Empty is a sentence and, when there i
     <dt>fold</dt>
     <dd>The quiet <code>IconButton</code> folds a card to its title line so it never covers the terminal input for long.</dd>
 </dl>
+
+<h3 class="sg-h3" id="feedback-notify-card">notification card</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/notify-card/NotifyCard.svelte</code></div>
+    <div class="sg-specimen__body"><div id="sg-live-notify-card"></div></div>
+</div>
+<dl class="sg-facts">
+    <dt>what it is</dt>
+    <dd><code>NotifyCard.svelte</code> draws one notification from its card JSON (<code>docs/notify-cards.md</code>): a strip with the status square, the kind word and
+        "agent . computer", a body shaped by the kind, and the action buttons. The settings preview and the Mac corner window
+        (<code>client/notify-corner.html</code>) both draw it; the iPhone card is its native twin.</dd>
+    <dt>look</dt>
+    <dd>The Military Terminal card of the accepted mockup: the titlerow strip with the accent word, hairline rows, a command box, outlined options with a yellow key,
+        and the base <code>Button</code> (calm confirm for the first action). Long content clips at 12 lines with "open to read all"; a settled card shows the answer.
+        It draws every field the card JSON carries and leaves out one that is absent, never a placeholder: a finished turn's per-file <code>+added -removed</code> counts
+        (<code>nc-delta</code>, green), a PDF's page count, a swarm position's <code>on &lt;computer&gt;</code> side, and where a settled ask was answered. The picture of
+        an image, a video poster or a file's first page comes from the owner's media routes (<code>mediaUrl</code>, <code>media.ts</code>), the placeholder when none loads.</dd>
+</dl>

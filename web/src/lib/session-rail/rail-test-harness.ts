@@ -32,6 +32,7 @@ export function ptr(type: string, x: number, y: number): PointerEvent {
   return event;
 }
 
+/** A DOMRect-shaped box. */
 export function box(left: number, top: number, width: number, height: number): DOMRect {
   return { left, top, width, height, right: left + width, bottom: top + height, x: left, y: top, toJSON: () => ({}) };
 }

@@ -1,0 +1,8 @@
+{
+  "state": "paused",
+  "spent_micros": 10000000,
+  "cap_micros": 10000000,
+  "owner_name": "Fixture Owner",
+  "resets_at": "2026-12-01T00:00:00Z",
+  "rev": 5
+}

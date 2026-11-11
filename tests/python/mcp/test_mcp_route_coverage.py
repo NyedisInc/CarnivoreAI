@@ -54,8 +54,9 @@ REASONS = frozenset({
     "plumbing",
     "ui-asset",
     "superseded",
+    "forks-session",
 })
-DEFERRED_RATCHET = 216
+DEFERRED_RATCHET = 197
 _ROUTE_REF = re.compile(r"(src\.[a-z_.]+):([A-Za-z_0-9]+)")
 _ROW = re.compile(r"^(tool|retired|out|deferred):(.+)$")
 

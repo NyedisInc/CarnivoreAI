@@ -21,6 +21,7 @@ CREDENTIALS_PATH = "/federation/pack/credentials"
 CAP_CREDENTIALS = "pack.credentials"
 CODEX_CREDENTIALS_PATH = "/federation/pack/credentials/codex"
 CAP_CREDENTIALS_CODEX = "pack.credentials.codex"
+CAP_CREDENTIALS_USE = "pack.credentials.use"
 PROVIDERS = ("claude", "codex")
 RETRY_SECONDS = 30.0
 NOT_ACCEPTED = "relay_not_accepted"
@@ -28,19 +29,23 @@ PostFn = Callable[[str, str, Optional[dict]], Awaitable[Tuple[int, Any]]]
 PeerFn = Callable[[str], Optional[Tuple[PostFn, List[str]]]]
 AllowsFn = Callable[[str], Optional[bool]]
 AcceptsFn = Callable[[str, str], bool]
+ApprovedFn = Callable[[str], bool]
+ActiveFn = Callable[[str], Optional[str]]
 
 
 class Relay:
 
     def __init__(self, *, open_db: Callable[[], sqlite3.Connection], peer: PeerFn, notify: Callable[[], None],
-                 self_id: str, allows: Optional[AllowsFn] = None, accepts: Optional[AcceptsFn] = None, candidates: Optional[Callable[[], List[str]]] = None,
-                 on_pushed: Optional[Callable[[str, List[str]], None]] = None, clock: Callable[[], float] = time.time) -> None:
+                 self_id: str, allows: Optional[AllowsFn] = None, accepts: Optional[AcceptsFn] = None, approved: Optional[ApprovedFn] = None, candidates: Optional[Callable[[], List[str]]] = None,
+                 on_pushed: Optional[Callable[[str, List[str]], None]] = None, active: Optional[ActiveFn] = None, clock: Callable[[], float] = time.time) -> None:
         self._open_db, self._peer, self._notify, self._clock = open_db, peer, notify, clock
         self._self_id = self_id
         self._allows: AllowsFn = allows or (lambda _iid: True)
         self._accepts: AcceptsFn = accepts or (lambda _iid, _account: True)
+        self._approved: ApprovedFn = approved or (lambda _iid: True)
         self._candidates: Callable[[], List[str]] = candidates or (lambda: [])
         self._on_pushed = on_pushed
+        self._active: ActiveFn = active or (lambda _provider: None)
         self._retry_at: Dict[Tuple[str, str], float] = {}
         self._busy: set = set()
         self._tasks: set = set()
@@ -70,20 +75,26 @@ class Relay:
 
         def read() -> List[targets_mod.Target]:
             with closing(self._open_db()) as conn:
+                if not targets_mod.default_mode(conn, account_key):
+                    ready = [iid for iid in self._candidates() if (link := self._peer(iid)) is not None and cap in link[1]
+                             and self._allows(iid) is True and self._accepts(iid, account_key) and self._approved(iid)]
+                    if ready:
+                        targets_mod.arm_active(conn, account_key, ready, self._self_id, provider)
                 if targets_mod.default_mode(conn, account_key):
                     ready = []
                     for iid in self._candidates():
                         link = self._peer(iid)
                         if link is not None and cap in link[1] and self._allows(iid) is True \
-                                and self._accepts(iid, account_key):
+                                and self._accepts(iid, account_key) and self._approved(iid):
                             ready.append(iid)
                     if ready:
                         targets_mod.arm_default(conn, account_key, ready, self._self_id, provider)
-                return targets_mod.enabled_for(conn, account_key)
+                return [r for r in targets_mod.enabled_for(conn, account_key) if self._approved(r.target_install_id)]
 
         rows = await asyncio.to_thread(read)
         if not rows:
             return []
+        use_hint = await asyncio.to_thread(self._active, provider) == account_key
         expires = getattr(credential, "expires_at", None)
         token = getattr(credential, "access_token", None)
         if expires is None or not token:
@@ -106,7 +117,7 @@ class Relay:
             gate = (account_key, row.target_install_id)
             if self._retry_at.get(gate, 0.0) > self._clock():
                 continue
-            outcome = await self._push_one(row, account_key, credential, expiry_ms, provider)
+            outcome = await self._push_one(row, account_key, credential, expiry_ms, provider, use_hint)
             await asyncio.to_thread(self._record, account_key, row.target_install_id, outcome, expiry_ms)
             if outcome == "pushed":
                 pushed.append(row.target_install_id)
@@ -121,7 +132,7 @@ class Relay:
             targets_mod.record(conn, account_key, install_id, outcome, expiry_ms, self._clock())
 
     async def _push_one(self, row: targets_mod.Target, account_key: str, credential: Any, expiry_ms: int,
-                        provider: str = "claude") -> str:
+                        provider: str = "claude", use_hint: bool = False) -> str:
         peer = self._peer(row.target_install_id)
         if peer is None:
             return "failed"
@@ -137,6 +148,8 @@ class Relay:
                     "account_id": credential.account_id, "expires_at": expiry_ms, "plan": getattr(credential, "plan", None)}
         else:
             body = self._claude_body(account_key, credential, expiry_ms)
+        if use_hint and CAP_CREDENTIALS_USE in capabilities:
+            body["use_for_new_sessions"] = True
         try:
             status, data = await post("POST", CODEX_CREDENTIALS_PATH if codex else CREDENTIALS_PATH, body)
         except (asyncio.TimeoutError, OSError, ValueError, PeerUnreachable, PeerRefused) as exc:

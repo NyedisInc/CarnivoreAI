@@ -17,7 +17,7 @@ from src.cplugs.crate.handle import JobHandle
 from src.cplugs.crate.plan import build_plan
 from src.cplugs.crate.project_files import walk_project
 from src.cplugs.crate.writer import run_export
-from src.cplugs.reviewboard import CPLUG as REVIEWBOARD
+from src.cplugs.registry import CPLUGS
 from src.cplugs.sdk import crate_format as cf
 from src.cplugs.sdk import crate_sources as cs
 from src.cplugs.sdk import data_decl
@@ -40,7 +40,7 @@ SLUG_MINE, SLUG_THEIRS, SLUG_LOOSE, SLUG_NESTED = "20261013-mine", "20261013-the
 def manifest_with(declared: Optional[List[Dict[str, Any]]]) -> Any:
     fields = dict(SETTINGS)
     data = None if declared is None else data_decl.parse_data(declared, fields)
-    return dataclasses.replace(REVIEWBOARD.manifest, id=PLUGIN, data=data, settings_schema={"version": 1, "fields": fields})
+    return dataclasses.replace(CPLUGS[0].manifest, id=PLUGIN, data=data, settings_schema={"version": 1, "fields": fields})
 
 
 def board(root: Path, rel: str, task: Optional[int]) -> None:
@@ -181,10 +181,10 @@ def test_a_declaration_beats_a_core_row_for_the_same_place(rig: SimpleNamespace,
 
 def test_the_shipped_stores_are_declared_not_listed_in_core(tmp_path: Path) -> None:
     core = {s.store for s in registry_side.EXCLUDED_STORES}
-    assert not core & {"cplugs/flow/flow.db", "cplugs/reviewboard/*", "cplugs/crate/jobs", "cplugs/crate/extract"}
+    assert not core & {"cplugs/flow/flow.db", "cplugs/crate/jobs", "cplugs/crate/extract"}
     locs = Locations(state_dir=tmp_path, config_path=tmp_path / "config.json", plugin_settings={})
     rels = plugin_stores.declared_state_rels(locs)
-    assert {"cplugs/flow/flow.db", "cplugs/crate/jobs", "cplugs/crate/extract", "cplugs/reviewboard/drafts"} <= set(rels)
+    assert {"cplugs/flow/flow.db", "cplugs/crate/jobs", "cplugs/crate/extract"} <= set(rels)
     (tmp_path / "cplugs/flow").mkdir(parents=True)
     (tmp_path / "cplugs/flow/flow.db").write_bytes(b"")
     assert state_files.unaccounted(tmp_path) == []

@@ -3,14 +3,14 @@ import { runWake } from './row-menu-sleep';
 
 import type { SidebarPick } from '../legacy-globals';
 
-interface WakeRow { name?: string; asleep?: boolean; session_uuid?: string; label?: unknown }
+interface WakeRow { name?: string; asleep?: boolean; session_uuid?: string; session_id?: string | null; label?: unknown }
 
 type WakeCtrl = SidebarPick<'rows'>;
 
 const inflight = new Set<string>();
 
 function liveRowElement(ctrl: WakeCtrl, sessionUuid: string): Element | null {
-    const row = ctrl.rows<WakeRow>().find((r) => r && !r.asleep && r.session_uuid === sessionUuid);
+    const row = ctrl.rows<WakeRow>().find((r) => r && !r.asleep && r.session_uuid === sessionUuid && !!r.session_id);
     if (!row || typeof document === 'undefined') return null;
     const els = document.querySelectorAll<HTMLElement>('.session-sidebar-row');
     return Array.from(els).find((el) => el.dataset.sessionUuid === sessionUuid && el.dataset.asleep !== '1') ?? null;

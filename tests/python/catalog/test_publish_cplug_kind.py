@@ -20,6 +20,7 @@ from validate_upload import UploadRefused  # noqa: E402
 from index_builder import cplugs as index_cplugs  # noqa: E402
 from index_builder.kind_errors import KindRefused  # noqa: E402
 from src.cplugs.host import install_gates
+from src.cplugs.sdk import api_contract
 from src.core import message_model_secrets
 
 
@@ -236,3 +237,10 @@ def test_source_scan_keeps_vendor_tokens_but_ignores_generic_function_call(tmp_p
     (folder / "data.json").write_text(json.dumps({"key": "".join(['Q7vN2mK9', 'xP4rL6tY', '8wB0cD3e', 'F5gH1j'])}))
     refusals = kinds.prepare_kind("cplug", str(folder), "1.0.0", "harbor").refusals
     assert any("high_entropy_assignment" in r.detail and r.path == "data.json" for r in refusals)
+
+
+def test_publish_refuses_an_unserved_api_version_with_the_install_code(tmp_path: Path) -> None:
+    unserved = max(api_contract.SERVED_API_VERSIONS) + 1
+    prepared = kinds.prepare_kind("cplug", str(_copy(tmp_path, api_version=unserved)), "1.0.0", "harbor")
+    assert install_gates.API_VERSION_UNSUPPORTED in _codes(prepared)
+    assert kinds.prepare_kind("cplug", str(_copy(tmp_path / "ok", api_version=1)), "1.0.0", "harbor").refusals == []

@@ -232,6 +232,7 @@ class AttentionEvidenceReader:
         parked = None
         background_open = None
         background_process = None
+        leftovers = None
         skill_source = None
         if family_name == FAMILY_CODEX and uuid:
             skill_source = rollout_path_in_sessions(codex_home, uuid)
@@ -241,17 +242,24 @@ class AttentionEvidenceReader:
             transcript_path = self._subagents.transcript_path(uuid, str(cwd) if cwd else None)
             skill_source = transcript_path
             self._remember_paths(target.session_id, registry, transcript_path)
-            parked = self._parked.read(
-                family_name, transcript_path,
-                registry, transcript, now, process_started_at=started,
-                process_parents=lambda: self._process_parents(now),
-            )
             claude_pid = registry.pid if started is not None else None
             background_open = self._background.read(
                 transcript_path,
                 claude_pid=claude_pid,
                 process_parents=self._process_parents(now),
                 process_started_at=started, now=now,
+            )
+            leftovers = self._background.read_leftovers(
+                transcript_path,
+                claude_pid=claude_pid,
+                process_parents=self._process_parents(now),
+                process_started_at=started, now=now,
+            )
+            parked = self._parked.read(
+                family_name, transcript_path,
+                registry, transcript, now, process_started_at=started,
+                process_parents=lambda: self._process_parents(now),
+                skip_task_ids=leftovers or frozenset(),
             )
             if family_name == FAMILY_CLAUDE or registry.known:
                 background_process = measure_background(
@@ -267,7 +275,7 @@ class AttentionEvidenceReader:
             now=now, identity=EvidenceIdentity(socket, name, epoch, pane_row.get("pid"), uuid),
             codex_bind_uuid=picked_uuid, subagents=subagents, timers=timers, skills=skills,
             parked_work=parked, background_open=background_open,
-            background_process=background_process,
+            background_process=background_process, background_leftovers=leftovers,
             process_floor_at=evidence_process_floor(epoch, restarted_at),
         )
         if liveness == LIVENESS_LIVE and family_name not in (None, FAMILY_CLAUDE, FAMILY_CODEX):

@@ -190,3 +190,11 @@ def test_a_moved_container_is_not_re_created_on_the_manager():
 
     assert_no_offenders("moved container not re-created",
                         sorted(DELETED_ATTRIBUTES), check)
+
+
+def test_no_tolerant_lookup_of_a_deleted_name_on_the_manager() -> None:
+    gone = DELETED_FORWARDERS | DELETED_ATTRIBUTES
+    calls = (n for f in (ROOT / "src").rglob("*.py") for n in ast.walk(ast.parse(f.read_text(encoding="utf-8"))) if isinstance(n, ast.Call))
+    bad = [c.lineno for c in calls if isinstance(c.func, ast.Name) and c.func.id in {"getattr", "hasattr", "setattr"} and len(c.args) > 1
+           and isinstance(c.args[0], (ast.Name, ast.Attribute)) and "manager" in ast.unparse(c.args[0]) and isinstance(c.args[1], ast.Constant) and c.args[1].value in gone]
+    assert not bad, f"tolerant lookup of a deleted manager name at lines {bad}"

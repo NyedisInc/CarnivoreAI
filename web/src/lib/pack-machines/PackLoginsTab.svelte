@@ -6,10 +6,12 @@
   import Check from '../../opscenter/ui/Check.svelte';
   import PackRelayBlock from './PackRelayBlock.svelte';
   import PackReceiveConsent from './PackReceiveConsent.svelte';
+  import PackGlobalSync from './PackGlobalSync.svelte';
   import { packActivity, packMachines, saveRestrictions } from './pack-machines-store.svelte';
 
   const self = $derived(packMachines.data?.machines.find((m) => m.is_self));
   const receives = $derived(self?.snapshot?.restrictions.may_receive_credentials === true);
+  const receivesSetup = $derived(self?.snapshot?.restrictions.may_receive_global_setup === true);
 </script>
 
 <section class="pm-panel pl-panel pledger" aria-labelledby="pl-logins-title" data-pack-logins>
@@ -25,8 +27,12 @@
         <Check label={t('pack.machines.rule.may_receive_credentials')} hint={t('pack.logins.receive_help')} checked={receives} role="switch"
           disabled={packActivity.busy !== null} data-rule="may_receive_credentials"
           onToggle={(next) => void saveRestrictions(self.install_id, { may_receive_credentials: next })} />
+        <Check label={t('pack.machines.rule.may_receive_global_setup')} hint={t('pack.globalsync.receive_help')} checked={receivesSetup} role="switch"
+          disabled={packActivity.busy !== null} data-rule="may_receive_global_setup"
+          onToggle={(next) => void saveRestrictions(self.install_id, { may_receive_global_setup: next })} />
       </div>
     {/if}
     <PackReceiveConsent />
+    <PackGlobalSync />
   </div>
 </section>

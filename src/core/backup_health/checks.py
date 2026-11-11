@@ -25,6 +25,7 @@ class Verdict:
     title_key: str = ""
     detail_key: Optional[str] = None
     params: Dict[str, Any] = field(default_factory=dict)
+    sticky: bool = False
 
 
 def _env_file_volume() -> Optional[str]:

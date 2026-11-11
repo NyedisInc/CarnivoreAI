@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from http.cookies import CookieError, SimpleCookie
 from typing import Any, Awaitable, Callable, Dict, List, Optional
@@ -31,9 +32,13 @@ PUBLIC_PATHS = frozenset({
     "/static/fonts/jetbrains-mono/JetBrainsMono-Regular.woff2",
     "/static/fonts/jetbrains-mono/JetBrainsMono-Medium.woff2",
     "/static/fonts/jetbrains-mono/JetBrainsMono-Bold.woff2",
+    "/static/fonts/symbols-nerd-font/SymbolsNerdFontMono-Regular.woff2",
     "/static/assets/icons/icon-180.png", "/static/assets/icons/icon-192.png",
     "/static/assets/icons/icon-512.png", "/static/assets/icons/icon-512-maskable.png",
 })
+
+CAP_ROUTES = frozenset({("POST", "/api/v1/notify/act"), ("GET", "/api/v1/notify/card")})
+_CAP_MEDIA = re.compile(r"/api/v1/notify/media/[0-9a-f]{32}(/poster)?")
 
 Send = Callable[[Dict[str, Any]], Awaitable[None]]
 
@@ -90,6 +95,10 @@ def read_cookie(scope: Dict[str, Any], name: str = COOKIE_NAME) -> Optional[str]
 
 def is_public(path: str) -> bool:
     return path in PUBLIC_PATHS
+
+
+def is_cap_route(method: Optional[str], path: str) -> bool:
+    return (method, path) in CAP_ROUTES or (method == "GET" and _CAP_MEDIA.fullmatch(path) is not None)
 
 
 def has_control(value: str) -> bool:
@@ -152,7 +161,7 @@ class LinkGate:
         if is_denied(path):
             await self._refuse(scope, send, 403, "not available over the link")
             return
-        if not is_public(path):
+        if not is_public(path) and not (scope["type"] == "http" and is_cap_route(scope.get("method"), path)):
             cookie = read_cookie(scope)
             device = (self._pairing.device_for_cookie(cookie, host, self._hostname) if cookie else None)
             if device is None:

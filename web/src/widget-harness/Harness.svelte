@@ -74,7 +74,7 @@
           onopen={() => undefined}
         />
       {:else if manifest}
-        <ZoneItem item={zoneItem} {manifest} index={0} count={1} editing={false} />
+        <ZoneItem item={zoneItem} {manifest} />
       {/if}
     </div>
   {:else if zone === 'popout'}

@@ -10,8 +10,8 @@
   import { viewport } from './viewport.svelte';
   import { openWidgets } from '../api/host';
   import type { SlotId } from './types';
-  import { enterLayoutEditor } from '../layout-editor/editor.svelte';
   import { t } from '../../lib/i18n/index.svelte';
+  import { isDashGridPage } from '../dashgrid/dash-store.svelte';
 
   let {
     anchor,
@@ -66,7 +66,7 @@
 
   const room = $derived(sizeOf('content').height);
 
-  const fittable = $derived(store.state.layout.rows.some((row) => row.kind === 'px'));
+  const fittable = $derived(!isDashGridPage(store.page) && store.state.layout.rows.some((row) => row.kind === 'px'));
 
   function onReset(): void {
     resetSurface(store);
@@ -86,9 +86,9 @@
     close();
   }
 
-  function onArrangeLayout(): void {
+  function onAddWidget(): void {
     close();
-    enterLayoutEditor();
+    document.dispatchEvent(new CustomEvent('oc-widget-drawer-open', { detail: { surface: store.page === 'home' ? 'dashboard' : store.page } }));
   }
 
 </script>
@@ -128,8 +128,8 @@
     </ul>
   {/if}
   {#if viewport.wide}
-    <button type="button" class="oc-popover-item oc-popover-arrange" data-btn="row" onclick={onArrangeLayout}
-      >{t('opscenter.components.arrange_layout')}</button
+    <button type="button" class="oc-popover-item oc-popover-arrange" data-btn="row" onclick={onAddWidget}
+      >{t('opscenter.awe_s3.add_widget')}</button
     >
   {/if}
   {#if viewport.wide && fittable}

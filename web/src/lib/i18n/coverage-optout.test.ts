@@ -56,8 +56,12 @@ describe('every UI source file is covered by the string guard by default', () =>
     });
 
     it('keeps every row true (a ported or cleaned file lowers its row; see I18N_KNOWN_WRITE)', () => {
+        const pluginGone = (rel: string): boolean => {
+            const m = /^web\/src\/cplugs\/([^/]+)\//.exec(rel);
+            return m !== null && !fs.existsSync(path.join(ROOT, 'web/src/cplugs', m[1]!));
+        };
         const stale = Object.entries(known)
-            .filter(([rel, ceiling]) => (actual[rel] ?? 0) < ceiling)
+            .filter(([rel, ceiling]) => !pluginGone(rel) && (actual[rel] ?? 0) < ceiling)
             .map(([rel, ceiling]) => `${rel}: ceiling ${ceiling}, now ${actual[rel] ?? 0}`);
         expect(stale).toEqual([]);
     });

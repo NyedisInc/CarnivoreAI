@@ -73,6 +73,7 @@ export interface CplugPopout {
   manifest: CplugManifest;
   tabs: DynamicTabDef[];
   widgets?: CplugWidget[];
+  start?: () => void;
 }
 
 export interface PluginSpecimen {

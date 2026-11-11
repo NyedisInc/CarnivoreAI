@@ -29,14 +29,15 @@ async def search(q: str = Query(..., min_length=1, max_length=service.MAX_QUERY_
                  limit: int = Query(service.LIMIT_DEFAULT, ge=1, le=service.LIMIT_MAX),
                  offset: int = Query(0, ge=0, le=100_000),
                  per_group: int = Query(service.PER_GROUP_DEFAULT, ge=1, le=service.PER_GROUP_MAX),
-                 scope: str = Query(service.SCOPE_ALL, pattern="^(local|peers|all)$")) -> Dict[str, Any]:
+                 scope: str = Query(service.SCOPE_ALL, pattern="^(local|peers|all)$"),
+                 sort: str = Query(service.SORT_RELEVANCE, pattern="^(relevance|date)$")) -> Dict[str, Any]:
     """Search conversation text, grouped by conversation. Output: see the module docstring."""
     if not q.strip():
         raise HTTPException(status_code=422, detail={"code": "deepsearch_invalid", "detail": "q is empty"})
     try:
         return await service.search(reader.default_index(), q.strip(), kinds=service.parse_kinds(kinds), project=project,
                                     conversation_id=conversation_id, limit=limit, offset=offset, per_group=per_group,
-                                    scope=scope)
+                                    scope=scope, sort=sort)
     except InvalidSearch as exc:
         raise api_error(422, "deepsearch_invalid", exc) from exc
     except ConversationsUnavailable as exc:

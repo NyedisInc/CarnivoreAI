@@ -6,7 +6,7 @@ from urllib.parse import quote
 
 import structlog
 
-from src.core.notifications import copy, links
+from src.core.notifications import card_contract, copy, links
 from src.core.notifications.contracts import DeliveryResult, FailureClass, NotifyEvent
 from src.core.notifications.kind_specs import KIND_WEBPUSH, WEBPUSH_PREFIX, get_kind
 from src.core.notifications.kinds import base
@@ -36,7 +36,7 @@ def build_payload(event: NotifyEvent) -> dict:
     payload["tag"] = f"{event.type_id}:{thread}" if thread else event.type_id
     if thread:
         payload["thread"] = thread
-    return payload
+    return {k: v for k, v in payload.items() if k in card_contract.WEB_PUSH_KEYS}
 
 
 class WebPushSender:

@@ -1,53 +1,35 @@
 
 from __future__ import annotations
 
-import ast
 import sys
-from pathlib import Path
 from typing import List
 
-ROOT = Path(__file__).resolve().parents[3]
-CPLUGS = ROOT / "src" / "cplugs"
-HOST_DIRS = {"sdk", "host", "runtime", "sdk_py"}
-THIRD_PARTY = {"fastapi", "pydantic", "structlog", "backports", "compression"}
-CORE_EXTENSION_POINTS = {"save": {"src.core.deepsearch.fallback_hook"}, "crate": {"src.core.deepsearch.fallback_hook"},
-                         "flow": {"src.core.flow_data.collect.build", "src.core.flow_data.collect.participants", "src.core.flow_data.collect.transcript",
-                          "src.core.flow_data.feed", "src.core.flow_data.live", "src.core.flow_data.tail"}}
+from tests.python.cplugs.sections import CPLUGS, CPLUGS_PACKAGE, ROOT, SDK_PACKAGE, feature_ids, imported_modules
+from tests.python.cplugs.test_cplug_sections import feature_core_known
 
-
-def cplug_ids() -> List[str]:
-    return sorted(p.name for p in CPLUGS.iterdir() if p.is_dir() and p.name not in HOST_DIRS and (p / "__init__.py").exists())
+THIRD_PARTY = {"fastapi", "pydantic", "structlog", "backports", "compression", "uvicorn"}
 
 
 def violations(source: str, cplug_id: str) -> List[str]:
+    known = feature_core_known(cplug_id)
+    own = f"{CPLUGS_PACKAGE}.{cplug_id}"
     bad = []
-    for node in ast.walk(ast.parse(source)):
-        if isinstance(node, ast.Import):
-            names = [a.name for a in node.names]
-        elif isinstance(node, ast.ImportFrom):
-            if node.level:
-                continue
-            names = [node.module or ""]
-            declared = [f"{node.module}.{a.name}" for a in node.names]
-            if all(d in CORE_EXTENSION_POINTS.get(cplug_id, ()) for d in declared):
-                names = declared
-        else:
-            continue
-        for name in names:
-            top = name.split(".")[0]
-            ok = (name == "__future__" or top in sys.stdlib_module_names or top in THIRD_PARTY
-                  or name == "src.cplugs.sdk" or name.startswith("src.cplugs.sdk.")
-                  or name == f"src.cplugs.{cplug_id}" or name.startswith(f"src.cplugs.{cplug_id}.")
-                  or name in CORE_EXTENSION_POINTS.get(cplug_id, ()))
-            if not ok:
-                bad.append(name)
+    for name in imported_modules(source, known):
+        top = name.split(".")[0]
+        ok = (name == "__future__" or top in sys.stdlib_module_names or top in THIRD_PARTY
+              or name == SDK_PACKAGE or name.startswith(f"{SDK_PACKAGE}.")
+              or name == own or name.startswith(f"{own}.")
+              or name in known)
+        if not ok:
+            bad.append(name)
     return bad
 
 
 def test_every_cplug_imports_only_the_sdk_and_itself():
-    assert cplug_ids() == ["crate", "devwidgetlab", "flow", "huddle", "publicboard", "reviewboard", "save", "share", "timemachine", "tmdevtools", "unread"]
+    shipped = ["argent", "crate", "devwidgetlab", "flow", "huddle", "reviewboard", "save", "share", "timemachine", "tmdevtools", "unread"]
+    assert feature_ids() == [i for i in shipped if (ROOT / "src" / "cplugs" / i).is_dir()]
     found = {}
-    for cplug_id in cplug_ids():
+    for cplug_id in feature_ids():
         for path in (CPLUGS / cplug_id).rglob("*.py"):
             bad = violations(path.read_text(), cplug_id)
             if bad:
@@ -66,11 +48,11 @@ def test_the_boundary_check_can_fail():
 
 
 def core_importers(text: str, ids: List[str]) -> bool:
-    return any(f"src.cplugs.{i}" in text or f"from src.cplugs import {i}" in text for i in ids)
+    return any(f"{CPLUGS_PACKAGE}.{i}" in text or f"from {CPLUGS_PACKAGE} import {i}" in text for i in ids)
 
 
 def test_core_never_imports_an_cplug_except_the_ship_list():
-    ids = cplug_ids()
+    ids = feature_ids()
     offenders = []
     for path in (ROOT / "src").rglob("*.py"):
         rel = path.relative_to(ROOT / "src")

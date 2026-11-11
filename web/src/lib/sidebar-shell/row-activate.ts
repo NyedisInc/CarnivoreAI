@@ -34,7 +34,7 @@ export function paintSelection(ctrl: RowController): void {
 export function wokenRowElement(ctrl: RowController, sessionUuid: string): HTMLElement | null {
     let live: string | null = null;
     for (const r of ctrl.rows?.() ?? []) {
-        if (r && !r.asleep && r.session_uuid === sessionUuid) { live = r.name; break; }
+        if (r && !r.asleep && r.session_uuid === sessionUuid && r.session_id) { live = r.name; break; }
     }
     if (!live) return null;
     for (const el of Array.from(document.querySelectorAll<HTMLElement>('.session-sidebar-row'))) {
@@ -157,6 +157,7 @@ export async function activateRow(ctrl: RowController, rowEl: Element): Promise<
             }
             return;
         }
+        if (dataOf(rowEl, 'sessionUuid') && ctrl.rows?.().some((r) => r && r.name === name && r.created_by_cloude !== false)) return;
         const response = await api.adoptSession(name, true);
         if (!stillOurs()) return;
         const session = (response && response.session) || response;

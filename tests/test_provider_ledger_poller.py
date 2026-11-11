@@ -462,6 +462,27 @@ class TestACredentialWriteIsNoticedOnTheNextTick:
         assert row(poller.snapshot(), "ok-one").credential_state == "ok"
 
 
+class TestARateLimitedLoginThatWasRemovedStopsReadingRateLimited:
+
+    @pytest.mark.asyncio
+    async def test_a_changed_login_file_rechecks_the_credential_without_a_usage_request(self, tmp_path):
+        account = ProviderAccount(id="gone", name="Gone", provider="claude", claude_config_dir=str(tmp_path))
+        fetch = FakeFetcher([FetchOutcome(state="rate_limited", error="rate_limited")])
+        clock = FakeClock()
+        poller = build_poller([account], clock=clock, claude_fetch=fetch)
+        await poller.run_pass()
+        assert row(poller.snapshot(), "gone").credential_state == "rate_limited"
+
+        poller._read_claude_credential = lambda config_dir: None
+        (tmp_path / ".claude.json").write_text("{}")
+        clock.advance(5.0)
+        await poller.run_pass()
+
+        answer = row(poller.snapshot(), "gone")
+        assert answer.credential_state == "missing"
+        assert len(fetch.calls) == 1
+
+
 class TestTheRateLimitLadderAsTheLoopWalksIt:
 
     @pytest.mark.asyncio

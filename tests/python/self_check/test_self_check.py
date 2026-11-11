@@ -125,3 +125,18 @@ def test_report_carries_the_agents_beside_the_checks(monkeypatch) -> None:
     answer = monitor.report(CTX)
     assert set(answer) == {"status", "checks", "agents"}
     assert answer["agents"] == {"codex": {"found": False, "path": None}}
+
+
+def test_live_session_count_ignores_peer_shadow_rows_but_counts_a_local_running_row(tmp_path) -> None:
+    import sqlite3
+
+    db = tmp_path / "carnivore.db"
+    conn = sqlite3.connect(db)
+    conn.execute("CREATE TABLE sessions (id TEXT, lifecycle TEXT, host_key TEXT NOT NULL DEFAULT 'local')")
+    conn.executemany("INSERT INTO sessions VALUES (?, 'running', ?)", [(f"p{i}", "peer-abc") for i in range(20)])
+    conn.commit()
+    assert SystemIO().live_session_count(db) == 0
+    conn.execute("INSERT INTO sessions VALUES ('mine', 'running', 'local')")
+    conn.commit()
+    conn.close()
+    assert SystemIO().live_session_count(db) == 1

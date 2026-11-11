@@ -25,3 +25,8 @@ export function footAccount(
   const activeId = provider ? (active?.find((a) => a.provider === provider)?.account_id ?? null) : null;
   return { name: row.short_name || row.name, mismatch: !!activeId && activeId !== accountId };
 }
+
+export function remoteFootAccount(account: { name: string; short_name?: string | null } | null | undefined): FootAccount | null {
+  const name = account?.short_name || account?.name;
+  return name ? { name, mismatch: false } : null;
+}

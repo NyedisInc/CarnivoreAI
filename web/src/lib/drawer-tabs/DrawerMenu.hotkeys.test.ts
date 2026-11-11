@@ -54,7 +54,7 @@ test('row order is the one Alex (Example-owner) set on 2026-10-13, dashboards fi
   const root = render();
   const ids = [...root.querySelectorAll<HTMLElement>('[data-rail-item]')].map((b) => b.dataset.railItem);
   expect(ids).toEqual([
-    'dashboards', 'sessions', 'automations', 'warez', 'widgets', 'blueprints',
+    'dashboards', 'warroom', 'sessions', 'automations', 'warez', 'widgets', 'blueprints',
     'providers', 'hosts', 'docs', 'changelog', 'settings',
   ]);
   const heads = [...root.querySelectorAll('h2.oc-sidebar-head')].map((h) => h.textContent?.trim());

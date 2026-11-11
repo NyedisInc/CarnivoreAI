@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Tuple
 
 from src.core.stream_redactor import redact_whole
-from src.core.deepsearch.query import match_expression, tokens_of
+from src.core.deepsearch.query import match_expression, phrase_expression, tokens_of
 from src.core.deepsearch import constants as K
 from src.core.deepsearch import hit_bookmarks, hit_exports, vault_lane
 from src.core.deepsearch import rules as rules_mod
@@ -21,6 +21,8 @@ PER_GROUP_DEFAULT: int = 3
 PER_GROUP_MAX: int = 10
 KINDS: Tuple[str, ...] = (K.KIND_USER, K.KIND_ASSISTANT, K.KIND_TOOL, K.KIND_SUMMARY)
 FIRST_PROMPT_CHARS: int = 160
+SORT_RELEVANCE, SORT_DATE = "relevance", "date"
+SORTS: Tuple[str, ...] = (SORT_RELEVANCE, SORT_DATE)
 _BATCH: int = 500
 
 _AGGREGATE_SQL = (
@@ -161,26 +163,53 @@ def _rank_key(group: Dict[str, Any]) -> Tuple[int, float, int]:
 
 
 def _open_hits(conn: sqlite3.Connection, opener: HitOpener, expr: str, tokens: List[str], conversations: Sequence[str],
-               kinds: Optional[Sequence[str]], per_group: int) -> Tuple[Dict[str, List[Dict[str, Any]]], List[str]]:
+               kinds: Optional[Sequence[str]], per_group: int, exact_expr: Optional[str] = None,
+               exact_convs: Iterable[str] = ()) -> Tuple[Dict[str, List[Dict[str, Any]]], List[str]]:
     hits: Dict[str, List[Dict[str, Any]]] = {c: [] for c in conversations}
-    tried: Dict[str, int] = {c: 0 for c in conversations}
     stale: List[str] = []
+    seen: set = set()
     clause, params = _kinds_clause(kinds)
-    for chunk in _batches(list(conversations)):
-        sql = (HIT_SQL + clause + f" AND {CONVERSATION_EXPR} IN ({', '.join('?' for _ in chunk)}) "
-               f"ORDER BY conversation_id, (r.kind = '{K.KIND_TOOL}'), rank, r.line")
-        for row in conn.execute(sql, [expr, *params, *chunk]):
-            conv = row["conversation_id"]
-            if len(hits[conv]) >= per_group or tried[conv] >= per_group * 4:
-                continue
-            tried[conv] += 1
-            opened = opener.open_with_time(row, tokens)
-            if opened is None:
-                if conv not in stale:
-                    stale.append(conv)
-                continue
-            hits[conv].append(hit_of(row, *opened))
+    passes = [(expr, False, list(conversations))]
+    if exact_expr:
+        wanted = set(exact_convs)
+        passes.insert(0, (exact_expr, True, [c for c in conversations if c in wanted]))
+    for pass_expr, is_exact, convs in passes:
+        tried: Dict[str, int] = {c: 0 for c in convs}
+        for chunk in _batches(convs):
+            sql = (HIT_SQL + clause + f" AND {CONVERSATION_EXPR} IN ({', '.join('?' for _ in chunk)}) "
+                   f"ORDER BY conversation_id, (r.kind = '{K.KIND_TOOL}'), rank, r.line")
+            for row in conn.execute(sql, [pass_expr, *params, *chunk]):
+                conv = row["conversation_id"]
+                if len(hits[conv]) >= per_group or tried[conv] >= per_group * 4 or row["id"] in seen:
+                    continue
+                tried[conv] += 1
+                opened = opener.open_with_time(row, tokens)
+                if opened is None:
+                    if conv not in stale:
+                        stale.append(conv)
+                    continue
+                seen.add(row["id"])
+                hit = hit_of(row, *opened)
+                if exact_expr:
+                    hit["exact"] = is_exact
+                hits[conv].append(hit)
     return hits, stale
+
+
+def order_groups(groups: List[Dict[str, Any]], meta: Dict[str, Dict[str, Any]], sort: str,
+                 exact_ids: Optional[set] = None) -> List[Dict[str, Any]]:
+    ordered = sorted(groups, key=_rank_key)
+    if sort == SORT_DATE:
+        ordered.sort(key=lambda g: meta[g["conversation_id"]].get("last_active") or "", reverse=True)
+    if exact_ids is not None:
+        ordered.sort(key=lambda g: g["conversation_id"] not in exact_ids)
+    return ordered
+
+
+def order_hits(hits: List[Dict[str, Any]], sort: str) -> List[Dict[str, Any]]:
+    if sort == SORT_DATE:
+        hits = sorted(hits, key=lambda h: h.get("at") or "", reverse=True)
+    return sorted(hits, key=lambda h: not h.get("exact", True))
 
 
 @contextmanager
@@ -199,7 +228,8 @@ def _read_snapshot(conn: sqlite3.Connection, wanted: bool) -> Iterator[None]:
 def search_grouped(conn: sqlite3.Connection, state_dir: Path, query: str, *, kinds: Optional[Iterable[str]] = None,
                    project: Optional[str] = None, conversation_id: Optional[str] = None,
                    limit: int = GROUP_LIMIT_DEFAULT, offset: int = 0, per_group: int = PER_GROUP_DEFAULT,
-                   overrides: Optional[Dict[str, Any]] = None, peer_gate: Optional[PeerGate] = None) -> Dict[str, Any]:
+                   overrides: Optional[Dict[str, Any]] = None, peer_gate: Optional[PeerGate] = None,
+                   sort: str = SORT_RELEVANCE, exact_first: bool = False) -> Dict[str, Any]:
     wanted = check_kinds(kinds)
     tokens = tokens_of(query)
     expr = match_expression(query)
@@ -208,7 +238,9 @@ def search_grouped(conn: sqlite3.Connection, state_dir: Path, query: str, *, kin
     start = max(0, int(offset))
     answer: Dict[str, Any] = {"query": query, "tokens": tokens, "kinds": list(wanted or KINDS),
                               "total_conversations": 0, "total_matches": 0, "offset": start, "count": 0,
-                              "groups": [], "stale": [], "frames_read": 0, "live_bytes_read": 0}
+                              "groups": [], "stale": [], "frames_read": 0, "live_bytes_read": 0,
+                              "sort": sort if sort in SORTS else SORT_RELEVANCE}
+    sort = answer["sort"]
     if expr is None:
         return answer
     with _read_snapshot(conn, peer_gate is not None and peer_gate.active):
@@ -217,15 +249,21 @@ def search_grouped(conn: sqlite3.Connection, state_dir: Path, query: str, *, kin
         if peer_gate is not None and peer_gate.active:
             allowed = peer_gate.admitted(conn, meta)
             groups = {c: g for c, g in groups.items() if c in allowed}
-        ranked = sorted((g for c, g in groups.items() if _matches_project(meta[c], project)), key=_rank_key)
+        exact_expr = phrase_expression(query) if exact_first else None
+        exact_ids = set(_aggregate(conn, exact_expr, wanted, conversation_id)) if exact_expr else None
+        ranked = order_groups([g for c, g in groups.items() if _matches_project(meta[c], project)], meta, sort, exact_ids)
         chosen = ranked[start:start + page]
         opener = HitOpener(rules_mod.read_overrides() if overrides is None else overrides)
-        hits, stale = _open_hits(conn, opener, expr, tokens, [g["conversation_id"] for g in chosen], wanted, per)
+        hits, stale = _open_hits(conn, opener, expr, tokens, [g["conversation_id"] for g in chosen], wanted, per,
+                                  exact_expr, exact_ids or ())
         out = []
         for g in chosen:
             conv = g["conversation_id"]
-            out.append({"conversation_id": conv, "matches": g["matches"], "by_kind": g["by_kind"],
-                        "by_file_kind": g["by_file_kind"], **meta[conv], "hits": hits[conv]})
+            group = {"conversation_id": conv, "matches": g["matches"], "by_kind": g["by_kind"],
+                     "by_file_kind": g["by_file_kind"], **meta[conv], "hits": order_hits(hits[conv], sort)}
+            if exact_ids is not None:
+                group["exact"] = conv in exact_ids
+            out.append(group)
         hit_bookmarks.attach(state_dir, out)
         hit_exports.attach(conn, out)
         answer.update(total_conversations=len(ranked), total_matches=sum(g["matches"] for g in ranked),

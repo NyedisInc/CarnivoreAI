@@ -51,11 +51,11 @@ beforeEach(() => {
 });
 
 describe('the project kebab color row', () => {
-    it('offers one colors entry with the current key, after rename', async () => {
+    it('offers a color submenu holding the swatch row with the current key, after rename', async () => {
         const nodes = await projectNodes('p:5');
-        const at = nodes.findIndex((e) => e.swatches);
-        expect(at).toBeGreaterThan(nodes.findIndex((e) => e.id === 'rename-project'));
-        expect(nodes[at]!.swatches!.value).toBe('#4e69ba');
+        const color = nodes.find((e) => e.id === 'pick-color')!;
+        expect(nodes.indexOf(color)).toBeGreaterThan(nodes.findIndex((e) => e.id === 'rename-project'));
+        expect(color.children![0]!.swatches!.value).toBe('#4e69ba');
     });
 
     it('carries no crosstalk and no schedule this entry (Alex (Example-owner), 2026-10-19)', async () => {
@@ -68,7 +68,7 @@ describe('the project kebab color row', () => {
     it('a swatch writes the color through updateProject and closes the menu', async () => {
         const { itemMenuState } = await import('../item-menu/open.svelte');
         itemMenuState.open = { type: 'project', nodes: [], ariaLabel: 'menu', at: null, anchor: document.body, nestedIn: null, seq: 0 };
-        (await projectNodes('p:5')).find((e) => e.swatches)!.swatches!.onPick('#966356');
+        (await projectNodes('p:5')).find((e) => e.id === 'pick-color')!.children![0]!.swatches!.onPick('#966356');
         await vi.waitFor(() => expect(calls).toContain('patch proj #966356'));
         expect(menuOpenAtWrite, 'the menu was closed before the write').toBe(false);
         expect(itemMenuState.open).toBeNull();
@@ -76,7 +76,7 @@ describe('the project kebab color row', () => {
 
     it('a failed write is announced', async () => {
         failWith = new Error('422');
-        (await projectNodes('p:5')).find((e) => e.swatches)!.swatches!.onPick('nope');
+        (await projectNodes('p:5')).find((e) => e.id === 'pick-color')!.children![0]!.swatches!.onPick('nope');
         await vi.waitFor(() => expect(calls.some((c) => c.startsWith('fail') && c.includes('422'))).toBe(true));
     });
 });

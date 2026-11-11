@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { runPackFlow } from './pack-flow';
 import type { HistoryApi } from './history-api';
 import { confirmText, onlyNeedsLocalOnly, packTag, sizeWord, type PackAnswer } from './pack-model';
-import { projectActions, projectLead } from './ledger-model';
+import { projectLead } from './ledger-model';
+import { projectMenuEntries, type ProjectMenuProject } from '../item-menu/menus/project-entries';
 
 const t = (key: string, params?: Record<string, unknown> | null): string =>
     params ? `${key} ${JSON.stringify(params)}` : key;
@@ -25,7 +26,7 @@ describe('pack tags and menu items (Joe, 2026-10-10)', () => {
     });
 
     it('offers pack on a hidden folder, unpack on a packed one, and unhide only when not packed', () => {
-        const ids = (p: Parameters<typeof projectActions>[0]) => projectActions(p).map((a) => a.id);
+        const ids = (p: ProjectMenuProject) => projectMenuEntries({ project: p, companies: [], agentOffered: false, panels: [], color: null, close: () => undefined, glyph: () => '', run: () => undefined }).map((a) => a.id);
         expect(ids({ archived_at: 'x' })).toContain('pack-folder');
         expect(ids({ archived_at: null })).not.toContain('pack-folder');
         const packed = ids({ archived_at: 'x', storage: { state: 'packed' } });

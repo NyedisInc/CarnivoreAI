@@ -1,5 +1,7 @@
 <script lang="ts">
   import TabStrip from '../shell/TabStrip.svelte';
+  import { stripOf } from '../engine/tabs-motion/strip-motion';
+  import { layoutActive } from '../layouts/mode.svelte';
   import { raiseFlag } from '../../lib/page-flags/page-flags';
   import CascadeMenu from '../../lib/drawer-tabs/CascadeMenu.svelte';
   import LiveRegion from '../engine/LiveRegion.svelte';
@@ -86,6 +88,9 @@
     onNew={(button) => (ctl.newAnchor = ctl.newAnchor ? null : button)}
     onTabMenu={ctl.openTabMenu}
     group={PRIMARY_SLOT}
+    onDragStart={(button, event, id) => {
+      if (!layoutActive()) stripOf(button)?.press(button, event, id);
+    }}
   />
   </div>
   <div class="tw:flex tw:shrink-0 tw:items-center" data-phone-tabs-end>

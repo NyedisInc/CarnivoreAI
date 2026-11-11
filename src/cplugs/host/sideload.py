@@ -5,49 +5,44 @@ import hashlib
 import json
 import os
 import shutil
-import stat
 import threading
 import time
 from dataclasses import replace
+from functools import partial
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
 
 import structlog
 
-from src.core.json_artifact import atomic_write_json
-from src.core.live_install_roots import CPLUG_CODE_DIR_NAME
-from src.core.skills.validate_types import EXCLUDED_BASENAME_PREFIXES, EXCLUDED_BASENAMES
+from src.core.catalog import plugin_pack
+from src.core.json_artifact import UnreadableArtifact
+from src.core import plugin_layout
+from src.cplugs.host.identity import LOCAL_PUBLISHER
+from src.cplugs.host import developer_mode, registry_files, registry_store
+from src.cplugs.host.sideload_copy import changed_files, copy_tree
+from src.cplugs.host.sideload_errors import SideloadRefused
 from src.cplugs.host.sidecar_manifest import SidecarManifest, SidecarManifestError, load_sidecar_manifest
 from src.cplugs.runtime.integrity import SIDECAR_NAME
+from src.cplugs.sdk import api_contract
 
 logger = structlog.get_logger()
 
-FILE_NAME = "sideload.json"
+FILE_NAME = registry_store.SIDELOAD_FILE
 DURATION_HOURS = (1, 12, 24, 168)
 DEFAULT_HOURS = 12
 TTL_SECONDS = DEFAULT_HOURS * 60 * 60
-LOCAL_PUBLISHER = "local"
 TIER_LOCAL = "local"
-MAX_FILES = 2000
-MAX_BYTES = 20 * 1024 * 1024
-_SKIP_DIRS = frozenset({"__pycache__", ".git"})
-_SKIP_SUFFIXES = (".pyc", ".pyo")
+API_VERSION_UNSUPPORTED = "api_version_unsupported"
 
 _lock = threading.RLock()
+_busy = partial(SideloadRefused, "registry_busy", status=503)
 _snapshots: Dict[Path, Tuple[Tuple[int, int, int, int], Mapping[str, Any]]] = {}
 _EMPTY: Mapping[str, Any] = MappingProxyType({})
 
 
 def wall() -> float:
     return time.time()
-
-
-class SideloadRefused(Exception):
-
-    def __init__(self, code: str, detail: str, status: int = 409) -> None:
-        super().__init__(detail)
-        self.code, self.status = code, status
 
 
 def as_local(manifest: SidecarManifest) -> SidecarManifest:
@@ -62,11 +57,21 @@ def switch_path(state_dir: Path) -> Path:
     return Path(state_dir) / "cplugs" / FILE_NAME
 
 
+def contained(path: Path, root: Path) -> Path:
+    real = Path(os.path.realpath(path))
+    if not real.is_relative_to(Path(os.path.realpath(root))):
+        raise SideloadRefused("source_outside_root", "the folder resolves outside the folder it must stay in", 422)
+    return real
+
+
 def code_root_of(state_dir: Path, name: str) -> Path:
-    return Path(state_dir) / CPLUG_CODE_DIR_NAME / name
+    return plugin_layout.code_root(state_dir, name)
 
 
 def _load(state_dir: Path) -> Optional[Dict[str, Any]]:
+    views = registry_files.flipped_views(state_dir)
+    if views is not None:
+        return views["sideload"]
     try:
         data = json.loads(switch_path(state_dir).read_text(encoding="utf-8"))
     except FileNotFoundError:
@@ -78,18 +83,27 @@ def _load(state_dir: Path) -> Optional[Dict[str, Any]]:
 
 
 def _read(state_dir: Path) -> Dict[str, Any]:
-    data = _load(state_dir)
-    return {} if data is None else data
+    try:
+        return registry_store.read_store(state_dir, "sideload", log_event="cplug_sideload_unreadable")
+    except UnreadableArtifact as exc:
+        raise SideloadRefused("sideload_unreadable", f"the sideload record is unreadable and was left as it is: {exc}", 500) from exc
 
 
 def _write(state_dir: Path, data: Dict[str, Any]) -> bool:
     try:
-        return atomic_write_json(switch_path(state_dir), data, log_event="cplug_sideload_write_failed")
+        return registry_store.write_document(state_dir, "sideload", data, log_event="cplug_sideload_write_failed")
     finally:
         _snapshots.pop(switch_path(state_dir), None)
 
 
+def _save(state_dir: Path, data: Dict[str, Any]) -> None:
+    if not _write(state_dir, data):
+        raise SideloadRefused("sideload_not_saved", "the sideload record could not be written", 500)
+
+
 def _snapshot(state_dir: Path) -> Mapping[str, Any]:
+    if registry_files.flipped_views(state_dir) is not None:
+        return MappingProxyType(_load(state_dir) or {})
     path = switch_path(state_dir)
     try:
         st = path.stat()
@@ -127,7 +141,10 @@ def _enabled_in(data: Mapping[str, Any]) -> Optional[float]:
 
 def _expiry_in(data: Mapping[str, Any]) -> Optional[float]:
     stamp, hours = _enabled_in(data), _hours_in(data)
-    return stamp + hours * 3600 if stamp is not None and hours is not None else None
+    if stamp is None or hours is None:
+        return None
+    stored = data.get("expires_at")
+    return float(stored) if isinstance(stored, (int, float)) and not isinstance(stored, bool) else stamp + hours * 3600
 
 
 def duration_hours(state_dir: Path) -> Optional[int]:
@@ -144,112 +161,100 @@ def expires_at(state_dir: Path) -> Optional[float]:
 
 def is_on(state_dir: Path, now: Optional[Callable[[], float]] = None) -> bool:
     data = _snapshot(state_dir)
-    if _enabled_in(data) is None:
+    started = _enabled_in(data)
+    if started is None:
+        return False
+    current = (now or wall)()
+    if current < started:
         return False
     end = _expiry_in(data)
-    return end is None or (now or wall)() < end
+    return end is None or current < end
+
+
+def allowed(state_dir: Path, now: Optional[Callable[[], float]] = None) -> bool:
+    return developer_mode.is_on() and is_on(state_dir, now)
 
 
 def set_switch(state_dir: Path, on: bool, now: Optional[Callable[[], float]] = None, hours: Optional[int] = DEFAULT_HOURS) -> bool:
     if on and not valid_duration(hours):
         raise SideloadRefused("duration_invalid", f"the duration is one of {list(DURATION_HOURS)} hours, or null for until turned off", 422)
-    with _lock:
+    with registry_store.locked(state_dir, _lock, _busy):
         data = _read(state_dir)
-        data["enabled_at"] = (now or wall)() if on else None
+        started = (now or wall)() if on else None
+        data["enabled_at"] = started
         if on:
             data["hours"] = hours
+            data["expires_at"] = None if hours is None else started + hours * 3600
+        else:
+            data["expires_at"] = None
         data.setdefault("items", {})
         return _write(state_dir, data)
 
 
 def items(state_dir: Path) -> Dict[str, Dict[str, Any]]:
-    found = _read(state_dir).get("items")
+    found = (_load(state_dir) or {}).get("items")
     return {n: v for n, v in found.items() if isinstance(v, dict)} if isinstance(found, dict) else {}
 
 
 def forget(state_dir: Path, name: str) -> None:
-    with _lock:
+    with registry_store.locked(state_dir, _lock, _busy):
         data = _read(state_dir)
-        if isinstance(data.get("items"), dict) and data["items"].pop(name, None) is not None and not _write(state_dir, data):
-            raise SideloadRefused("sideload_not_saved", "the sideload record could not be written", 500)
+        if isinstance(data.get("items"), dict) and data["items"].pop(name, None) is not None:
+            _save(state_dir, data)
 
 
 def installs(state_dir: Path) -> Dict[str, Dict[str, Any]]:
-    found = _read(state_dir).get("installs")
+    found = (_load(state_dir) or {}).get("installs")
     return {k: v for k, v in found.items() if isinstance(v, dict)} if isinstance(found, dict) else {}
 
 
 def put_install(state_dir: Path, record: Dict[str, Any]) -> None:
-    with _lock:
+    with registry_store.locked(state_dir, _lock, _busy):
         data = _read(state_dir)
         data.setdefault("items", {})
         data.setdefault("installs", {})[f"{record['kind']}/{record['name']}"] = record
-        if not _write(state_dir, data):
-            raise SideloadRefused("sideload_not_saved", "the sideload record could not be written", 500)
+        _save(state_dir, data)
 
 
 def forget_install(state_dir: Path, kind: str, name: str) -> None:
-    with _lock:
+    with registry_store.locked(state_dir, _lock, _busy):
         data = _read(state_dir)
-        if isinstance(data.get("installs"), dict) and data["installs"].pop(f"{kind}/{name}", None) is not None and not _write(state_dir, data):
-            raise SideloadRefused("sideload_not_saved", "the sideload record could not be written", 500)
+        if isinstance(data.get("installs"), dict) and data["installs"].pop(f"{kind}/{name}", None) is not None:
+            _save(state_dir, data)
 
 
-def _copy_one(dirfd: int, name: str, dest: Path, budget: int) -> Tuple[str, int]:
+def pack_authored_in_place(staging: Path, files: Dict[str, str]) -> None:
+    side = staging / plugin_pack.CARNIVORE_FILE
     try:
-        fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=dirfd)
-    except OSError as exc:
-        raise SideloadRefused("source_unsafe", "the folder holds a link or a file that cannot be opened safely", 422) from exc
-    with os.fdopen(fd, "rb") as handle:
-        info = os.fstat(handle.fileno())
-        if not stat.S_ISREG(info.st_mode) or info.st_nlink > 1:
-            raise SideloadRefused("source_unsafe", "the folder holds a link, a special file or a hard-linked file; sideload copies real files only", 422)
-        if info.st_size > budget:
-            raise SideloadRefused("source_too_big", f"a sideload is capped at {MAX_FILES} files and {MAX_BYTES // 1048576} MB", 422)
-        data = handle.read(info.st_size + 1)
-    if len(data) != info.st_size:
-        raise SideloadRefused("source_unsafe", "a file changed while it was being copied", 422)
-    with open(dest, "xb") as out:
-        out.write(data)
-    os.chmod(dest, 0o755 if info.st_mode & stat.S_IXUSR else 0o644)
-    return hashlib.sha256(data).hexdigest(), info.st_size
+        authored = json.loads(side.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return
+    if not plugin_pack.is_authored(authored):
+        return
+    try:
+        present = {plugin_pack.CARNIVORE_FILE: side.read_bytes()}
+        if plugin_pack.CPLUG_FILE in files:
+            present[plugin_pack.CPLUG_FILE] = b""
+        packed_files, _ = plugin_pack.pack_files(present)
+    except plugin_pack.PackError as exc:
+        raise SideloadRefused("manifest_invalid", str(exc), 422) from exc
+    for name in (plugin_pack.CPLUG_FILE, plugin_pack.CARNIVORE_FILE):
+        (staging / name).write_bytes(packed_files[name])
+        os.chmod(staging / name, 0o644)
+        files[name] = hashlib.sha256(packed_files[name]).hexdigest()
 
 
-def is_noise(name: str) -> bool:
-    return name in EXCLUDED_BASENAMES or name.startswith(EXCLUDED_BASENAME_PREFIXES)
-
-
-def copy_tree(source: Path, dest: Path) -> Dict[str, str]:
-    files: Dict[str, str] = {}
-    total = 0
-    pending: set = set()
-    dest.mkdir(parents=True)
-    for root, dirs, names, dirfd in os.fwalk(source, follow_symlinks=False):
-        rel_root = Path(root).relative_to(source)
-        pending.discard(rel_root.as_posix())
-        dirs[:] = sorted(d for d in dirs if d not in _SKIP_DIRS)
-        for d in dirs:
-            if not stat.S_ISDIR(os.stat(d, dir_fd=dirfd, follow_symlinks=False).st_mode):
-                raise SideloadRefused("source_unsafe", "the folder holds a link; sideload copies real files only", 422)
-            (dest / rel_root / d).mkdir(parents=True, exist_ok=True)
-            pending.add((rel_root / d).as_posix())
-        for n in sorted(names):
-            if n.endswith(_SKIP_SUFFIXES) or is_noise(n):
-                continue
-            if not stat.S_ISREG(os.stat(n, dir_fd=dirfd, follow_symlinks=False).st_mode):
-                raise SideloadRefused("source_unsafe", "the folder holds a link or special file; sideload copies real files only", 422)
-            if len(files) >= MAX_FILES:
-                raise SideloadRefused("source_too_big", f"a sideload is capped at {MAX_FILES} files and {MAX_BYTES // 1048576} MB", 422)
-            rel = rel_root / n
-            files[rel.as_posix()], size = _copy_one(dirfd, n, dest / rel, MAX_BYTES - total)
-            total += size
-    if pending:
-        raise SideloadRefused("source_unsafe", "a folder changed while it was being copied", 422)
-    return files
-
-
-def changed_files(before: Dict[str, str], after: Dict[str, str]) -> List[str]:
-    return sorted(p for p in set(before) | set(after) if before.get(p) != after.get(p))
+def require_served_contract(staging: Path) -> None:
+    try:
+        doc = json.loads((staging / plugin_pack.CARNIVORE_FILE).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return
+    if not isinstance(doc, dict):
+        return
+    try:
+        api_contract.require_served(doc)
+    except api_contract.ApiVersionUnsupported as exc:
+        raise SideloadRefused(API_VERSION_UNSUPPORTED, str(exc), 422) from exc
 
 
 def stage(state_dir: Path, name: str, source: Path) -> "tuple[Path, Dict[str, str], SidecarManifest]":
@@ -259,6 +264,8 @@ def stage(state_dir: Path, name: str, source: Path) -> "tuple[Path, Dict[str, st
     staging.parent.mkdir(parents=True, exist_ok=True)
     try:
         files = copy_tree(source, staging)
+        pack_authored_in_place(staging, files)
+        require_served_contract(staging)
         (staging / SIDECAR_NAME).unlink(missing_ok=True)
         files.pop(SIDECAR_NAME, None)
         manifest = as_local(load_sidecar_manifest(staging, name))
@@ -276,19 +283,20 @@ def unchanged(state_dir: Path, name: str, digest: str) -> bool:
 
 
 def touch(state_dir: Path, name: str, source: Path, now: Optional[Callable[[], float]] = None) -> None:
-    with _lock:
+    with registry_store.locked(state_dir, _lock, _busy):
         data = _read(state_dir)
         data["items"][name]["synced_at"] = (now or wall)()
         data["items"][name]["source"] = str(source)
-        if not _write(state_dir, data):
-            raise SideloadRefused("sideload_not_saved", "the sideload record could not be written", 500)
+        _save(state_dir, data)
 
 
 def install_staged(state_dir: Path, name: str, staging: Path, files: Dict[str, str], digest: str, source: Path,
                    now: Optional[Callable[[], float]] = None) -> List[str]:
     root = code_root_of(state_dir, name)
     old = code_root_of(state_dir, f".sideload-old-{name}-{os.getpid()}")
-    with _lock:
+    if os.path.lexists(root):
+        contained(root, root.parent)
+    with registry_store.locked(state_dir, _lock, _busy):
         data = _read(state_dir)
         data.setdefault("items", {})
         previous = data["items"].get(name)
@@ -298,6 +306,5 @@ def install_staged(state_dir: Path, name: str, staging: Path, files: Dict[str, s
         os.replace(staging, root)
         shutil.rmtree(old, ignore_errors=True)
         data["items"][name] = {"files": files, "digest": digest, "changed": changed, "source": str(source), "synced_at": (now or wall)()}
-        if not _write(state_dir, data):
-            raise SideloadRefused("sideload_not_saved", "the sideload record could not be written", 500)
+        _save(state_dir, data)
     return changed

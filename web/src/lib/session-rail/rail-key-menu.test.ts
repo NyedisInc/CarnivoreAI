@@ -80,7 +80,7 @@ describe('the bar sizes are in the bar\'s own menu only (tweak 8c8a373ef: they l
     follow(RAIL_FIELD, one({ widget: 'core.files' }, { widget: 'core.notes' }));
     rightClick(keyIn('side', 'core.files'));
     expect(nodes().filter((id) => /^bar-size-/.test(id ?? ''))).toEqual([]);
-    expect(nodes()).toEqual(expect.arrayContaining(['pop-out', 'close-widget']));
+    expect(nodes()).toEqual(expect.arrayContaining(['pop-out', 'remove-widget']));
   });
 
   test('the bottom bar\'s own menu writes the bottom bar\'s leaf', async () => {
@@ -96,7 +96,7 @@ describe('every key opens the menu, in either mode', () => {
     const key = keyIn('side', 'core.files');
     key.dispatchEvent(new KeyboardEvent('keydown', { key: 'F10', shiftKey: true, bubbles: true, cancelable: true }));
     flushSync();
-    expect(nodes()).toEqual(expect.arrayContaining(['pop-out', 'show-header', 'close-widget']));
+    expect(nodes()).toEqual(expect.arrayContaining(['pop-out', 'show-header', 'remove-widget']));
     expect(nodes().filter((id) => /pin|lock/.test(id ?? ''))).toEqual([]);
   });
 
@@ -110,10 +110,10 @@ describe('every key opens the menu, in either mode', () => {
     expect(document.querySelector('.acm-menu')).toBeNull();
   });
 
-  test('close widget takes the key out of the bar', () => {
+  test('remove widget takes the key out of the bar', () => {
     follow(RAIL_FIELD, one({ widget: 'core.files' }, { widget: 'core.notes' }));
     rightClick(keyIn('side', 'core.files'));
-    at('close-widget').click();
+    at('remove-widget').click();
     flushSync();
     expect(keysIn('side')).toEqual(['core.notes']);
   });
@@ -210,7 +210,7 @@ describe('a Widget Lab draft\'s rail key works like a shipped widget\'s (widget 
     follow(RAIL_FIELD, one({ widget: 'core.rail-probe' }));
     const menu = mount(RailKeyMenu, { target: document.body, props: { edge: 'side', itemKey: 'core.rail-probe', anchor: document.body, onClose: () => {} } });
     flushSync();
-    expect(nodes()).toEqual(expect.arrayContaining(['probe-refresh', 'close-widget']));
+    expect(nodes()).toEqual(expect.arrayContaining(['probe-refresh', 'remove-widget']));
     unmount(menu);
     withdraw();
   });

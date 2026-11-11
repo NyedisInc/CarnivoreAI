@@ -60,7 +60,7 @@ def alive(pgid: int) -> bool:
 
 
 def lay_code(state: Path, version: str, answer: str) -> None:
-    root = state / "cplug-code" / NAME
+    root = state / "plugins" / NAME
     root.mkdir(parents=True, exist_ok=True)
     (root / "cplug.json").write_text(json.dumps(cplug_json(version)))
     (root / "carnivore.json").write_text(json.dumps({**SIDE, "version": version}))
@@ -181,7 +181,7 @@ def test_update_and_revocation_and_freshness_stop_the_process(tmp_path, monkeypa
                 await rt.index.sync()
                 assert (await http.post(f"{base}/restart")).json()["process"] == "running"
 
-                (state / "cplug-code" / NAME / "main.py").write_text(plugin_source("hacked"))
+                (state / "plugins" / NAME / "main.py").write_text(plugin_source("hacked"))
                 await http.post(f"{base}/restart")
                 assert f"cplug.{NAME}.integrity" in alerts and rt.supervisor._safe_mode is True
                 assert rt.supervisor.process(NAME) is None

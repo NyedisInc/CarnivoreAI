@@ -50,7 +50,7 @@ class FakeProc:
 
 @pytest.fixture
 def world(tmp_path: Path):
-    root = tmp_path / "cplug-code" / NAME
+    root = tmp_path / "plugins" / NAME
     root.mkdir(parents=True)
     (root / "cplug.json").write_text(json.dumps(CPLUG))
     (root / "main.py").write_text("")

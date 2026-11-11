@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Callable, Dict, FrozenSet, Iterable, List, Mapping, Optional, Tuple
@@ -12,6 +12,7 @@ import structlog
 
 from src.core.attention.output_holders import open_file_path
 from src.core.attention.turn_counts import KIND_MONITOR, KIND_SHELL
+from src.core.background_work.leftovers import finished_agent_ids, leftover_task_ids
 from src.core.background_work.listing import task_id_of
 from src.core.subagents.parked_launches import OpenLaunch, conversation_launches
 from src.core.subagents.reader import subagents_dir_for
@@ -28,6 +29,7 @@ class RecordedLaunches:
 
     shell_ids: FrozenSet[str] = frozenset()
     monitors: Tuple[OpenLaunch, ...] = ()
+    shell_owners: Mapping[str, str] = field(default_factory=dict)
 
 
 def recorded_launches(
@@ -36,14 +38,17 @@ def recorded_launches(
     process_started_at: Optional[datetime],
 ) -> RecordedLaunches:
     shells = set()
+    owners: Dict[str, str] = {}
     monitors: List[OpenLaunch] = []
     for launch, retired in launches:
         if launch.kind == KIND_SHELL:
             shells.add(launch.task_id)
+            if launch.agent_id:
+                owners[launch.task_id] = launch.agent_id
         elif launch.kind == KIND_MONITOR and not retired:
             if process_started_at is None or launch.launched_at >= process_started_at:
                 monitors.append(launch)
-    return RecordedLaunches(frozenset(shells), tuple(monitors))
+    return RecordedLaunches(frozenset(shells), tuple(monitors), owners)
 
 
 def live_task_ids(
@@ -109,6 +114,30 @@ class BackgroundCountReader:
         if recorded is None:
             return None
         return count_open(live, recorded, now)
+
+    def read_leftovers(
+        self,
+        parent_path: Optional[Path],
+        *,
+        claude_pid: Optional[int],
+        process_parents: Optional[Mapping[int, int]],
+        process_started_at: Optional[datetime],
+        now: datetime,
+    ) -> Optional[FrozenSet[str]]:
+        if parent_path is None or claude_pid is None or not process_parents:
+            return None
+        live = live_task_ids(claude_pid, process_parents, stdout_of=self._stdout_of)
+        recorded = self._recorded(parent_path, live, process_started_at, now)
+        if recorded is None:
+            return None
+        owned = {t: recorded.shell_owners[t] for t in live if t in recorded.shell_owners}
+        if not owned:
+            return frozenset()
+        finished = finished_agent_ids(parent_path, owned.values(),
+                                      process_started_at=process_started_at)
+        if finished is None:
+            return None
+        return leftover_task_ids(live, owned, finished)
 
     def _recorded(self, parent_path: Path, live: FrozenSet[str],
                   process_started_at: Optional[datetime],

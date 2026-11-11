@@ -6,7 +6,7 @@
   import { navAnchors } from '../../opscenter/engine/navAnchors.svelte';
   import { homeLayout } from '../../opscenter/engine/layout.svelte';
   import { viewport } from '../../opscenter/engine/viewport.svelte';
-  import { WARROOM_ROW, railItemVisible, type RailItem } from '../../opscenter/shell/rail-items';
+  import { RAIL_HELP_LINKS, WARROOM_ROW, type RailItem } from '../../opscenter/shell/rail-items';
   import { closeDrawerAfterSwitch, handleMenuHotkey } from './menu-hotkeys';
   import { drawerSurface, storeFor } from './drawer-surface.svelte';
   import { t } from '../i18n/index.svelte';
@@ -18,7 +18,8 @@
   import { onMount } from 'svelte';
   import { saveMenuOrder, startMenuOrder } from './menu-order.svelte';
   import BarPin from '../widget-bars/BarPin.svelte';
-  import { menuDestinations, menuHelpLinks, menuLeadItems, menuSettings } from './menu-rows';
+  import { menuLeadItems, railZoneItems, zoneEntries, type MenuEntry } from './menu-rows';
+  import { railIconsShown } from '../sidebar-widgets/rail-icons.svelte';
   import { onMenuMoveKey, onMenuPointerDown, type MenuDragHost } from './menu-drag';
   import {
     hideMenuPreview,
@@ -41,10 +42,16 @@
     closeDrawerAfterSwitch();
   }
 
-  const rows = $derived(menuDestinations());
-  const leadRows = $derived(menuLeadItems());
-  const settingsRow = menuSettings();
-  const dragHost: MenuDragHost = { ids: () => rows.map((r) => r.id), commit: saveMenuOrder };
+  const zones = $derived(railZoneItems());
+  const topEntries = $derived(zoneEntries(railIconsShown(zones.top)));
+  const bottomEntries = $derived(zoneEntries(railIconsShown(zones.bottom)));
+  const leadIds = $derived(new Set(menuLeadItems().map((i) => i.id)));
+  const helpIds = new Set(RAIL_HELP_LINKS.map((i) => i.id));
+  const fixedIds = $derived(new Set([...leadIds, ...helpIds, 'settings', WARROOM_ROW.id]));
+  const dragHost: MenuDragHost = {
+    ids: () => [...topEntries, ...bottomEntries].flatMap((e) => (e.kind === 'row' && !fixedIds.has(e.item.id) ? [e.item.id] : [])),
+    commit: saveMenuOrder,
+  };
   onMount(startMenuOrder);
 
   function onMenuKeydown(event: KeyboardEvent): void {
@@ -71,12 +78,15 @@
   });
 </script>
 
-
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<nav class="oc-sidebar" aria-label={t('opscenter.nav.primary')} onkeydown={onMenuKeydown} onpointerdown={(e) => onMenuPointerDown(e, dragHost)}>
-  <ul class="oc-nav oc-nav-lead">
-    {#each leadRows as item (item.id)}
-      {@const count = item.badge?.() ?? null}
+{#snippet line(entry: MenuEntry)}
+  {#if entry.kind === 'sep'}
+    <li class="oc-nav-sep" role="separator"></li>
+  {:else if entry.kind === 'head'}
+    <li class="oc-nav-head"><h2 class="oc-sidebar-head">{t('opscenter.nav.help')}</h2></li>
+  {:else}
+    {@const item = entry.item}
+    {@const count = item.badge?.() ?? null}
+    {#if leadIds.has(item.id)}
       <li class="oc-nav-line" data-menu-lead={item.id}>
         <button data-base-exempt="rail-nav-row-base-has-no-nav-row" type="button" class="oc-nav-item" aria-pressed={item.pressed?.() ?? false}
                 data-rail-item={item.id} onclick={() => item.run?.()}>
@@ -85,10 +95,37 @@
           {#if count}<span class="oc-nav-badge">{count}</span>{/if}
         </button>
       </li>
-    {/each}
-  </ul>
-  <ul class="oc-nav">
-    {#each rows as item (item.id)}
+    {:else if item.id === WARROOM_ROW.id}
+      
+      {@const warPopOut = menuRowPopout(WARROOM_ROW.id)}
+      <li class="oc-nav-line">
+        <button data-base-exempt="rail-nav-row-base-has-no-nav-row" type="button" class="oc-nav-item" class:oc-nav-item--active={activeRow === WARROOM_ROW.id}
+                aria-current={activeRow === WARROOM_ROW.id ? 'page' : undefined}
+                data-rail-item={WARROOM_ROW.id} onclick={() => activate(WARROOM_ROW)}>
+          <span class="oc-nav-icon"><Icon name={WARROOM_ROW.icon} size={17} /></span>
+          <span class="oc-nav-label">{t(WARROOM_ROW.labelKey)}</span>
+          <span class="oc-nav-hint">{item.hint}</span>
+        </button>
+        {#if warPopOut}
+          <IconButton label={t('opscenter.nav.pop_out', { name: t(WARROOM_ROW.labelKey) })} variant="quiet" icon="external"
+                      data-menu-popout={WARROOM_ROW.id} onclick={warPopOut} />
+        {/if}
+      </li>
+    {:else if helpIds.has(item.id) || item.id === 'settings'}
+      <li class:oc-nav-settings={item.id === 'settings'}>
+        <button data-base-exempt="rail-nav-row-base-has-no-nav-row" type="button" class="oc-nav-item" class:oc-nav-item--active={activeRow === item.id}
+                aria-current={activeRow === item.id ? 'page' : undefined}
+                data-rail-item={item.id} onclick={() => activate(item)}>
+          <span class="oc-nav-icon"><Icon name={item.icon} size={17} /></span>
+          <span class="oc-nav-label">{t(item.labelKey)}</span>
+          <span class="oc-nav-hint">{item.hint}</span>
+        </button>
+        {#if item.id === 'settings'}
+          
+          <span class="oc-nav-pin"><BarPin edge="rail" /></span>
+        {/if}
+      </li>
+    {:else}
       {@const popOut = menuRowPopout(item.id)}
       <li class="oc-nav-line" data-menu-row={item.id}>
         <button data-base-exempt="rail-nav-row-base-has-no-nav-row" type="button" class="oc-nav-item" class:oc-nav-item--active={activeRow === item.id}
@@ -107,22 +144,6 @@
         {/if}
       </li>
       {#if item.id === 'dashboards' && menuDashboardsFold.open}
-        
-        {#if railItemVisible(WARROOM_ROW)}
-          {@const warPopOut = menuRowPopout(WARROOM_ROW.id)}
-          <li class="oc-nav-line oc-nav-sub" data-menu-row={WARROOM_ROW.id}>
-            <button data-base-exempt="rail-nav-row-base-has-no-nav-row" type="button" class="oc-nav-item" class:oc-nav-item--active={activeRow === WARROOM_ROW.id}
-                    aria-current={activeRow === WARROOM_ROW.id ? 'page' : undefined}
-                    data-rail-item={WARROOM_ROW.id} onclick={() => activate(WARROOM_ROW)}>
-              <span class="oc-nav-icon"><Icon name={WARROOM_ROW.icon} size={13} /></span>
-              <span class="oc-nav-label oc-nav-label--name">{t(WARROOM_ROW.labelKey)}</span>
-            </button>
-            {#if warPopOut}
-              <IconButton label={t('opscenter.nav.pop_out', { name: t(WARROOM_ROW.labelKey) })} variant="quiet" icon="external"
-                          data-menu-popout={WARROOM_ROW.id} onclick={warPopOut} />
-            {/if}
-          </li>
-        {/if}
         {#each dashboardRows as row (row.id)}
           <li class="oc-nav-line oc-nav-sub">
             <button data-base-exempt="rail-nav-row-base-has-no-nav-row" type="button" class="oc-nav-item" class:oc-nav-item--active={row.viewing}
@@ -175,6 +196,20 @@
         {/if}
       </li>
       {/if}
+    {/if}
+  {/if}
+{/snippet}
+
+
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<nav class="oc-sidebar" aria-label={t('opscenter.nav.primary')} onkeydown={onMenuKeydown} onpointerdown={(e) => onMenuPointerDown(e, dragHost)}>
+  <ul class="oc-nav">
+    {#each topEntries as entry, i (entry.kind === 'row' ? entry.item.id : `${entry.kind}:${i}`)}
+      {@render line(entry)}
+    {/each}
+    <li class="oc-nav-fill" aria-hidden="true"></li>
+    {#each bottomEntries as entry, i (entry.kind === 'row' ? entry.item.id : `${entry.kind}:${i}`)}
+      {@render line(entry)}
     {/each}
   </ul>
 
@@ -183,35 +218,6 @@
                  home={previewRow.home} />
   {/if}
 
-  <h2 class="oc-sidebar-head">{t('opscenter.nav.help')}</h2>
-  <ul class="oc-nav oc-nav-quick">
-    {#each menuHelpLinks() as item (item.id)}
-      <li>
-        <button data-base-exempt="rail-nav-row-base-has-no-nav-row" type="button" class="oc-nav-item" class:oc-nav-item--active={activeRow === item.id}
-                aria-current={activeRow === item.id ? 'page' : undefined}
-                data-rail-item={item.id} onclick={() => activate(item)}>
-          <span class="oc-nav-icon"><Icon name={item.icon} size={15} /></span>
-          <span class="oc-nav-label">{t(item.labelKey)}</span>
-          <span class="oc-nav-hint">{item.hint}</span>
-        </button>
-      </li>
-    {/each}
-  </ul>
-  {#if settingsRow}
-    <ul class="oc-nav oc-nav-settings">
-      <li>
-        <button data-base-exempt="rail-nav-row-base-has-no-nav-row" type="button" class="oc-nav-item" class:oc-nav-item--active={activeRow === settingsRow.id}
-                aria-current={activeRow === settingsRow.id ? 'page' : undefined}
-                data-rail-item={settingsRow.id} onclick={() => activate(settingsRow)}>
-          <span class="oc-nav-icon"><Icon name={settingsRow.icon} size={17} /></span>
-          <span class="oc-nav-label">{t(settingsRow.labelKey)}</span>
-          <span class="oc-nav-hint">{settingsRow.hint}</span>
-        </button>
-        
-        <span class="oc-nav-pin"><BarPin edge="rail" /></span>
-      </li>
-    </ul>
-  {/if}
 </nav>
 
 <style>
@@ -220,19 +226,46 @@
       display: flex;
       flex-direction: column;
       flex: 1 1 auto;
-      padding: 10px var(--oc-space-2) var(--oc-space-3);
+      padding: var(--sbr-grid-top) var(--oc-space-2) var(--sbr-grid-bottom) 0;
       overflow-y: auto;
       overflow-x: hidden;
     }
 
     .oc-nav {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      gap: var(--sbr-row-gap);
       list-style: none;
       margin: 0;
       padding: 0;
     }
 
-    .oc-nav-lead {
-      margin-bottom: calc(var(--oc-space-0-5) / 2);
+    .oc-nav-fill {
+      flex: 1 1 0;
+      min-height: 0;
+    }
+
+    .oc-nav-sep {
+      display: flex;
+      align-items: center;
+      flex: none;
+      height: var(--sbr-sep-h);
+      padding: 0 var(--oc-space-2);
+    }
+
+    .oc-nav-sep::before {
+      content: '';
+      flex: 1 1 auto;
+      height: var(--oc-border);
+      background: var(--oc-line-rule);
+    }
+
+    .oc-nav-head {
+      display: flex;
+      align-items: flex-end;
+      flex: none;
+      height: var(--sbr-head-h);
     }
 
     .oc-nav-item[aria-pressed='true'] {
@@ -242,11 +275,6 @@
     }
 
     .oc-nav-settings {
-      margin-top: auto;
-      padding-top: var(--oc-space-3);
-    }
-
-    .oc-nav-settings li {
       position: relative;
     }
 
@@ -262,17 +290,13 @@
       display: flex;
     }
 
-    .oc-nav li + li {
-      margin-top: 1px;
-    }
-
     .oc-nav-item {
       display: flex;
       align-items: center;
       gap: 20px;
       width: 100%;
-      height: 33px;
-      padding: 0 10px 0 13px;
+      height: var(--sbr-row-h);
+      padding: 0 10px 0 calc((var(--sidebar-rail-w) - 17px) / 2 - var(--oc-border));
       background: none;
       border: var(--oc-border) solid transparent;
       border-radius: var(--oc-radius);
@@ -387,23 +411,12 @@
 
     .oc-sidebar-head {
       text-transform: uppercase;
-      margin: 22px 0 var(--oc-space-2);
-      padding: 0 13px;
+      margin: 0;
+      padding: 0 13px 6px calc((var(--sidebar-rail-w) - 17px) / 2);
       font-size: var(--oc-fs-label);
       font-weight: 400;
       letter-spacing: var(--oc-tracking-label);
       color: var(--oc-text-dim);
-    }
-
-    .oc-nav-quick .oc-nav-item {
-      height: 29px;
-    }
-
-    @media (max-width: 1023px) {
-      .oc-nav-item,
-      .oc-nav-quick .oc-nav-item {
-        height: var(--oc-tap);
-      }
     }
   }
 </style>

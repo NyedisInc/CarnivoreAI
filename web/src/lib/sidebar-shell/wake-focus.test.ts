@@ -49,4 +49,18 @@ describe('wake focus', () => {
         expect(await afterWake('u1', 'nav', h)).toBe('timeout');
         expect(spy).not.toHaveBeenCalled();
     });
+
+    it('an attachable-only row (uuid, no session_id) never counts as live: no open, no adopt; the wake id opens by id', async () => {
+        const rows = [{ name: 'carnivore_x', session_uuid: 'u1', session_id: null as string | null }];
+        const isLive = (u: string, id?: string | null) => !!id || rows.some((r) => r.session_uuid === u && !!r.session_id);
+        const polls: number[] = [];
+        const h = host({ isLive, openRow: async (u, id) => { h.calls.push(`open:${u}:${id ?? ''}:${polls.length}`); } });
+        h.sleep = async () => { polls.push(1); if (polls.length === 2) rows[0]!.session_id = 'ses_1'; };
+        expect(await afterWake('u1', 'nav', h)).toBe('opened');
+        expect(h.calls).toEqual(['open:u1::2']);
+        const h2 = host({ isLive, openRow: async (u, id) => { h2.calls.push(`open:${u}:${id}`); } });
+        rows[0]!.session_id = null;
+        expect(await afterWake('u1', 'nav', h2, 'ses_9')).toBe('opened');
+        expect(h2.calls).toEqual(['open:u1:ses_9']);
+    });
 });

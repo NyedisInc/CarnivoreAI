@@ -21,7 +21,7 @@ final class ShellBridge: NSObject, WKScriptMessageHandler {
 
     func install(on config: WKWebViewConfiguration) {
         let script = WKUserScript(
-            source: "window.carnivoreShell = { version: \(Self.version), platform: 'ios' };",
+            source: "window.carnivoreShell = { version: \(Self.version), platform: 'ios', speech: true };",
             injectionTime: .atDocumentStart, forMainFrameOnly: true)
         config.userContentController.addUserScript(script)
         config.userContentController.add(self, name: Self.handlerName)

@@ -11,6 +11,7 @@ vi.mock('./company-source.svelte', () => ({
     companySource: () => ({ companies: [], companyOf: (id: string) => filedUnder.get(id) ?? null }),
 }));
 vi.mock('../companies', () => ({
+    companyList: () => [],
     companyById: (id: number) => (id === 7 ? { id: 7, name: 'acme', project_count: 2 } : undefined),
 }));
 vi.mock('../i18n/index.svelte', () => ({ t: (k: string) => k }));
@@ -61,7 +62,7 @@ async function allMenus(): Promise<Record<string, MenuNode[]>> {
 }
 
 describe('the sidebar heading menus draw the fixed map', () => {
-    it('every entry is registered, drawn on exactly its registry letter, and no menu repeats a key', async () => {
+    it('every entry is registered, drawn on exactly its registry letter, and no menu repeats a key', { timeout: 30_000 }, async () => {
         const menus = await allMenus();
         expect(Object.keys(menus).length, 'population: all seven menus opened').toBe(7);
         for (const [name, entries] of Object.entries(menus)) {

@@ -60,6 +60,7 @@ class RestrictionsBody(BaseModel):
 
     may_install_tools: Optional[StrictBool] = None
     may_receive_credentials: Optional[StrictBool] = None
+    may_receive_global_setup: Optional[StrictBool] = None
     may_update_carnivore: Optional[StrictBool] = None
     may_host_agents: Optional[StrictBool] = None
     may_receive_projects: Optional[StrictBool] = None

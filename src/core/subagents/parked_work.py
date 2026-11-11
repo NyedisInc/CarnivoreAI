@@ -6,7 +6,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, Mapping, Optional, Tuple
+from typing import Any, Callable, Dict, FrozenSet, Mapping, Optional, Tuple
 
 import structlog
 
@@ -102,8 +102,9 @@ def judge(
     *,
     claude_pid: Optional[int],
     process_parents: Callable[[], Optional[Mapping[int, int]]],
+    skip_task_ids: FrozenSet[str] = frozenset(),
 ) -> ParkedWork:
-    launches = open_launches.launches
+    launches = tuple(l for l in open_launches.launches if l.task_id not in skip_task_ids)
     if not launches:
         return NOTHING
     shells = [l for l in launches if l.kind == KIND_SHELL and l.output_path]
@@ -172,6 +173,7 @@ class ParkedWorkReader:
         *,
         process_started_at: Optional[datetime],
         process_parents: Callable[[], Optional[Mapping[int, int]]],
+        skip_task_ids: FrozenSet[str] = frozenset(),
     ) -> Optional[ParkedWork]:
         if family is not None and family != DEFAULT_FAMILY:
             return None
@@ -182,7 +184,7 @@ class ParkedWorkReader:
         try:
             launches = self._launches(parent_path, facts, process_started_at, now)
             result = judge(launches, claude_pid=getattr(registry, "pid", None),
-                           process_parents=process_parents)
+                           process_parents=process_parents, skip_task_ids=skip_task_ids)
         except OSError as exc:
             logger.warning("parked_work_unreadable", path=str(parent_path), error=str(exc))
             return None

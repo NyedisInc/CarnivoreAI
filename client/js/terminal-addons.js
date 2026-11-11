@@ -21,9 +21,25 @@ console.log('[TerminalAddons Module] Loading...');
         return n;
     }
 
+    function canvasesOf(term) {
+        var el = term.element;
+        return el && typeof el.querySelectorAll === 'function' ? Array.prototype.slice.call(el.querySelectorAll('canvas')) : [];
+    }
+
+    function loseContext(canvas) {
+        if (!canvas) return;
+        try {
+            var gl = canvas.getContext('webgl2');
+            var ext = gl && gl.getExtension('WEBGL_lose_context');
+            if (ext && !gl.isContextLost()) ext.loseContext();
+        } catch (err) {  }
+    }
+
     function attach(rec) {
         var addon = new WebglAddon.WebglAddon();
+        var before = canvasesOf(rec.term);
         rec.term.loadAddon(addon);
+        var canvas = canvasesOf(rec.term).filter(function (c) { return before.indexOf(c) < 0; })[0] || null;
         rec.addon = addon;
         rec.live = true;
         if (rec.holder) rec.holder._webglAddon = addon;
@@ -41,7 +57,8 @@ console.log('[TerminalAddons Module] Loading...');
         var dispose = addon.dispose;
         addon.dispose = function () {
             var result = dispose.apply(addon, arguments);
-            if (release()) { rec.retired = true; schedulePass(); }
+            loseContext(canvas);
+            if (release()) { if (!rec.released) rec.retired = true; schedulePass(); }
             return result;
         };
         addon.onContextLoss(function () {
@@ -56,19 +73,35 @@ console.log('[TerminalAddons Module] Loading...');
 
     function loadWebgl(term, holder) {
         var rec = { term: term, holder: holder || null, addon: null, live: false,
-            rearms: 0, retired: false, lastAt: -Infinity };
-        var addon = null;
-        try {
-            addon = attach(rec);
-        } catch (err) {
-            console.warn('Terminal: WebGL addon unavailable - using DOM renderer', err);
-            return null;
-        }
+            rearms: 0, retired: false, released: false, lastAt: -Infinity };
         prune();
+        var addon = null;
+        if (makeRoom(isPainted(term.element, global.document))) {
+            try {
+                addon = attach(rec);
+            } catch (err) {
+                console.warn('Terminal: WebGL addon unavailable - using DOM renderer', err);
+                return null;
+            }
+        } else {
+            rec.released = true;
+        }
         records.push(rec);
         listenOnce();
         redrawWhenPaintedAgain(term, rec);
         return addon;
+    }
+
+    function makeRoom(painted) {
+        if (liveCount() < WEBGL_CONTEXT_CAP) return true;
+        if (!painted) return false;
+        for (var i = 0; i < records.length && liveCount() >= WEBGL_CONTEXT_CAP; i += 1) {
+            var other = records[i];
+            if (!other.live || !other.addon || isPainted(other.term.element, global.document)) continue;
+            other.released = true;
+            try { other.addon.dispose(); } catch (err) {  }
+        }
+        return liveCount() < WEBGL_CONTEXT_CAP;
     }
 
     var UNPAINTED_POLL_MS = 100;
@@ -121,6 +154,8 @@ console.log('[TerminalAddons Module] Loading...');
                 if (pollTimer === null) pollTimer = setTimeout(poll, UNPAINTED_POLL_MS);
             } else if (dirty) {
                 scheduleRedraw();
+            } else if (rec && !rec.live && !rec.retired) {
+                schedulePass();
             }
         });
     }
@@ -132,11 +167,13 @@ console.log('[TerminalAddons Module] Loading...');
     }
 
     function rearm(rec) {
-        if (rec.live || rec.retired || rec.rearms >= MAX_REARMS) return false;
+        if (rec.live || rec.retired) return false;
+        if (!rec.released && rec.rearms >= MAX_REARMS) return false;
         if (!isPainted(rec.term.element, global.document)) return false;
-        if (liveCount() >= WEBGL_CONTEXT_CAP) return false;
-        if (Date.now() - rec.lastAt < REARM_MIN_INTERVAL_MS) return false;
-        rec.rearms += 1;
+        if (!makeRoom(true)) return false;
+        if (!rec.released && Date.now() - rec.lastAt < REARM_MIN_INTERVAL_MS) return false;
+        if (!rec.released) rec.rearms += 1;
+        rec.released = false;
         rec.lastAt = Date.now();
         try {
             attach(rec);

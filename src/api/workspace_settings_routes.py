@@ -1,6 +1,8 @@
 
+import sqlite3
+
 import structlog
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from src.config import settings
 from src.core.workspace_settings import (
     WorkspaceValidationError,
@@ -46,7 +48,7 @@ async def get_settings():
 
 
 @router.patch("/config/settings", dependencies=[Depends(require_auth)])
-async def update_settings(body: ConfigSettingsUpdateRequest):
+async def update_settings(body: ConfigSettingsUpdateRequest, request: Request):
     """
     Apply a partial update to the ``workspace`` and
     ``server_prefs`` blocks of config.json. A body carrying ``agents`` is
@@ -132,7 +134,6 @@ async def update_settings(body: ConfigSettingsUpdateRequest):
             server_prefs_update=server_prefs_update or None,
         )
         summary["workspace_warnings"] = env_warnings
-        return summary
     except FileNotFoundError as e:
         logger.error("settings_update_config_missing", error=str(e))
         raise HTTPException(
@@ -144,3 +145,16 @@ async def update_settings(body: ConfigSettingsUpdateRequest):
         raise api_error(400, "settings_invalid", e, step="update_settings") from e
     except Exception as e:
         raise api_error(500, "settings_write_failed", None, error_type=type(e).__name__) from e
+
+    if server_prefs_update.get("developer_mode") is False:
+        await _stop_sideloads_after_save(request)
+    return summary
+
+
+async def _stop_sideloads_after_save(request: Request) -> None:
+    from src.cplugs.host import sideload_routes  # noqa: PLC0415
+
+    try:
+        await sideload_routes.stop_on_developer_mode_off(request.app)
+    except (OSError, sqlite3.Error) as exc:
+        logger.error("developer_mode_off_stop_sideloads_failed", error_type=type(exc).__name__, error=str(exc))

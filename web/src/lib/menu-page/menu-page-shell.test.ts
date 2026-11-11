@@ -158,3 +158,23 @@ test('the index page carries every container the shell watches, plus the bar', (
         expect(html, id).toContain(`<div id="${id}"></div>`);
     }
 });
+
+test('where pages are drawers, a section coming up parks settings (stays mounted, inert) and closing it brings settings back', async () => {
+    deps.surface = { start: () => true, stop: () => {} } as unknown as ShellDeps['surface'];
+    const settings = document.getElementById('settings-screen')!;
+    const section = document.getElementById('ledger-screen')!;
+    openPage('settings-screen');
+    await settle();
+    openPage('ledger-screen');
+    await settle();
+    expect(closers.settings).not.toHaveBeenCalled();
+    expect(settings.firstElementChild).not.toBeNull();
+    expect(settings.hasAttribute('data-menu-parked')).toBe(true);
+    expect(settings.hasAttribute('inert')).toBe(true);
+    expect(menuPageState.open).toBe('ledger');
+    section.replaceChildren();
+    await settle();
+    expect(settings.hasAttribute('data-menu-parked')).toBe(false);
+    expect(settings.hasAttribute('inert')).toBe(false);
+    expect(menuPageState.open).toBe('settings');
+});

@@ -112,24 +112,26 @@ def _agent_for_thread(thread_key: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def announce(thread_key: str, swarm_ref: str) -> None:
+def announce(thread_key: str, swarm_ref: str) -> Optional[Tuple[Dict[str, Any], contracts.NotifyEvent]]:
     flash = swarm_ref.startswith(FLASH_REF)
     if not flash and not swarm_ref.startswith(IMMEDIATE_PREFIXES):
-        return
+        return None
     agent = _agent_for_thread(thread_key)
     if agent is None:
-        return
+        return None
     if swarm_ref.startswith(IMMEDIATE_REF):
         cfg = swarm_settings.read_current()
         if not LIMITS.take("push", agent["id"], cfg.flash_per_agent_per_hour, cfg.flash_per_swarm_per_hour):
             logger.info("swarm_alert_push_limited", agent_id=agent["id"])
-            return
+            return None
     type_id = TYPE_TEXT if flash else TYPE_PUSH
-    contracts.emit(contracts.NotifyEvent(
+    event = contracts.NotifyEvent(
         type_id=type_id, kind="swarm", title=notify_common.type_title(type_id), ts=notify_common.now(),
         session_ref=shown_name(agent), session_uuid=agent.get("body_session_uuid"), severity=contracts.SEVERITY_ERROR,
-        instance_key=swarm_ref, open_item=True))
+        instance_key=swarm_ref, open_item=True)
+    contracts.emit(event)
     logger.info("swarm_alert_announced", agent_id=agent["id"], type_id=type_id)
+    return agent, event
 
 
 def episode_prefix(swarm_ref: str) -> str:
@@ -140,8 +142,9 @@ def episode_prefix(swarm_ref: str) -> str:
 
 class AlertingPort:
 
-    def __init__(self, inner: Any) -> None:
+    def __init__(self, inner: Any, app_state: Any = None) -> None:
         self._inner = inner
+        self._app_state = app_state
 
     @property
     def inner(self) -> Any:
@@ -157,7 +160,11 @@ class AlertingPort:
                 if card["thread_key"] == thread_key and card["swarm_ref"].startswith(episode):
                     return int(card["id"])
         item_id = await self._inner.post_card(thread_key, kind, title, text, swarm_ref)
-        await asyncio.to_thread(announce, thread_key, swarm_ref)
+        sent = await asyncio.to_thread(announce, thread_key, swarm_ref)
+        if sent is not None:
+            from src.core.swarm import mac_toast
+
+            await mac_toast.record(self._app_state, sent[0], sent[1])
         return item_id
 
 

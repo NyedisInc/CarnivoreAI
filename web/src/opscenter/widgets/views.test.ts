@@ -1,3 +1,4 @@
+/* views (Joe (ccsliinc), 2026-10-10) */
 import { describe, expect, test } from 'vitest';
 import { CORE_MANIFESTS } from './core-manifests';
 import { validateManifest } from './validate';

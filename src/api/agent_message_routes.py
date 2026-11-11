@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, Literal, Optional
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -18,9 +18,17 @@ router = APIRouter(tags=["agent-message"])
 
 
 class AgentMessageBody(BaseModel):
-    """The message text (at most 280 characters once control characters are stripped)."""
+    """The message text (at most 280 characters once control characters are stripped) and an optional attachment.
+
+    ``type`` is ``agent.message`` or ``agent.review``; a review needs an ``attachment`` (422 ``bad_attachment`` without one).
+    ``attachment`` is ``{"path": "/abs/file"}`` (a file, image or video inside the session's project) or ``{"url": "https://..."}``
+    (a link, never fetched), each with an optional ``title`` (120 characters, shown as the agent's words). It is checked in
+    ``notify_media.intake``: 422 ``outside_project``, ``secret_found``, ``bad_url``, ``bad_attachment``; 413 ``too_large``.
+    """
 
     text: str
+    attachment: Optional[Dict[str, Any]] = None
+    type: Literal["agent.message", "agent.review"] = "agent.message"
 
 
 def refusal_for(caller: AgentCaller) -> str:
@@ -39,7 +47,7 @@ async def post_agent_message(
 
     Inputs: session_id (path); body (AgentMessageBody); caller (from the token).
     Output: {sent, toast_id}. Raises: 403 (external or read token, another session's path, switch off),
-      404 (session not live), 422 (empty or over-long text), 429 with Retry-After.
+      404 (session not live), 413 (attachment too large), 422 (empty or over-long text, refused attachment), 429 with Retry-After.
     """
     why = refusal_for(caller)
     if why:
@@ -47,7 +55,8 @@ async def post_agent_message(
     if session_id not in (caller.session_id, caller.current_session_id):
         raise HTTPException(status_code=403, detail="an agent may only notify about its own session")
     try:
-        return await agent_message.send(request.app.state.session_manager, caller.current_session_id, body.text)
+        return await agent_message.send(request.app.state.session_manager, caller.current_session_id, body.text, attachment=body.attachment, app_state=request.app.state, review=body.type == "agent.review")
     except agent_message.AgentNotifyError as exc:
         headers = {"Retry-After": str(exc.retry_after)} if exc.retry_after is not None else None
-        raise api_error(exc.status, "agent_notify_refused", exc, headers=headers, session=caller.session_id) from exc
+        raise api_error(exc.status, "agent_notify_refused", exc, headers=headers,
+                        extra={"reason": exc.reason} if exc.reason else None, session=caller.session_id) from exc

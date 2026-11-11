@@ -26,6 +26,21 @@ export function hasPlacementOptions(widgetId: string): boolean {
   return PLACEMENT_OPTION_WIDGETS.has(widgetId) || SINGLE_COPY_OPTION_WIDGETS.has(widgetId);
 }
 
+export const ZONE_HEIGHT_OPTION = 'zone_height';
+
+export const ZONE_HEIGHT_MIN = 56;
+
+export const ZONE_HEIGHT_CAP = 1200;
+
+export function clampZoneHeight(px: number): number {
+  return Math.round(Math.min(ZONE_HEIGHT_CAP, Math.max(ZONE_HEIGHT_MIN, px)));
+}
+
+export function zoneHeightOf(options: PlacementOptions | undefined): number | null {
+  const stored = options?.[ZONE_HEIGHT_OPTION];
+  return typeof stored === 'number' && Number.isFinite(stored) ? clampZoneHeight(stored) : null;
+}
+
 export function hasRepeatableOptions(widgetId: string): boolean {
   return PLACEMENT_OPTION_WIDGETS.has(widgetId);
 }

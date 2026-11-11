@@ -40,6 +40,7 @@ const row = (root: HTMLElement, id: string) =>
 
 const FORMER_RAIL: Array<[string, string]> = [
   ['dashboards', 'dashboard'],
+  ['warroom', 'war room'],
   ['sessions', 'projects'],
   ['automations', 'automations'],
   ['warez', 'warez'],

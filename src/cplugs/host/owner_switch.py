@@ -10,11 +10,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, StrictBool
 
 from src.api.auth import require_auth
-from src.core.json_artifact import atomic_write_json
+from src.cplugs.host.peer_refusal import refuse_peer_token_writes
+from src.cplugs.host import registry_files, registry_store
 
 logger = structlog.get_logger()
 
-FILE_NAME = "third-party.json"
+FILE_NAME = registry_store.THIRD_PARTY_FILE
 
 
 def switch_path(state_dir: Path) -> Path:
@@ -22,6 +23,9 @@ def switch_path(state_dir: Path) -> Path:
 
 
 def read(state_dir: Path) -> bool:
+    views = registry_files.flipped_views(state_dir)
+    if views is not None:
+        return views["third_party"]["enabled"] is True
     try:
         data = json.loads(switch_path(state_dir).read_text(encoding="utf-8"))
     except FileNotFoundError:
@@ -33,7 +37,7 @@ def read(state_dir: Path) -> bool:
 
 
 def write(state_dir: Path, enabled: bool) -> bool:
-    return atomic_write_json(switch_path(state_dir), {"enabled": bool(enabled)}, log_event="cplug_owner_switch_write_failed")
+    return registry_store.write_document(state_dir, "third_party", {"enabled": bool(enabled)}, log_event="cplug_owner_switch_write_failed")
 
 
 class SwitchBody(BaseModel):
@@ -50,7 +54,7 @@ class SafeModeBody(BaseModel):
     on: StrictBool
 
 
-owner_router = APIRouter(prefix="/cplug-owner", tags=["cplugs"], dependencies=[Depends(require_auth)])
+owner_router = APIRouter(prefix="/cplug-owner", tags=["cplugs"], dependencies=[Depends(refuse_peer_token_writes), Depends(require_auth)])
 safe_mode_router = APIRouter()
 
 

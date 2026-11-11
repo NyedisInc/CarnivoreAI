@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional
 
 from src.core.backup_health.vault_record import OPT_OUT_SETTING, SAVE_PLUGIN_ID, opt_out_units
+from src.core import plugin_layout
+from src.cplugs.host import identity
 from src.cplugs.host import state as owner_state
 from src.cplugs.sdk.data_decl import DataDecl, default_store_root
 
@@ -20,6 +22,14 @@ class VaultFolder:
     opted_out: bool = False
 
 
+def data_folder(state_dir: Path, plugin_id: str) -> Path:
+    try:
+        record = identity.lookup(state_dir, plugin_id)
+    except identity.LedgerUnreadable:
+        record = None
+    return identity.data_dir(state_dir, record.uuid) if record is not None else plugin_layout.data_root(state_dir, plugin_id)
+
+
 def setting_root(state_dir: Path, value: Any, default: str) -> Optional[Path]:
     chosen = value.strip() if isinstance(value, str) else ""
     if chosen:
@@ -31,7 +41,7 @@ def decl_root(state_dir: Path, plugin_id: str, decl: DataDecl, settings: Mapping
     if decl.state_path:
         return Path(state_dir) / decl.state_path
     if decl.path:
-        return Path(state_dir) / owner_state.STATE_DIR_NAME / plugin_id / decl.path
+        return data_folder(state_dir, plugin_id) / decl.path
     root = setting_root(state_dir, settings.get(decl.root_setting), decl.default)
     return root / decl.sub if root is not None and decl.sub else root
 

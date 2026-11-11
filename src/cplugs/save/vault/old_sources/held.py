@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import stat
 from typing import Callable, Dict, Iterable, Iterator, Optional, Set, Tuple
 
 import structlog
@@ -45,7 +46,8 @@ def vault_copies(vault: Vault, keys: Set[Tuple[str, str]], intake: model.Intake)
                         continue
                 length, sha = measured[entry.sha256]
                 yield model.Copy(VAULT_SOURCE, f"vault:{unit}/{manifest.point_id}/{entry.rel}", ident, length, sha,
-                                 float(manifest.created_epoch), _entry_opener(vault, entry))
+                                 float(manifest.created_epoch), _entry_opener(vault, entry),
+                                 0 if manifest.reason == K.REASON_IMPORT else entry.mode & 0o777)
 
 
 def disk_copies(sources: Sources, keys: Iterable[Tuple[str, str]], intake: model.Intake) -> Iterator[model.Copy]:
@@ -67,6 +69,6 @@ def disk_copies(sources: Sources, keys: Iterable[Tuple[str, str]], intake: model
 
             try:
                 length, sha = model.measure(open_bytes)
-                yield model.Copy(DISK_SOURCE, f"file:{path}", ident, length, sha, path.stat().st_mtime, open_bytes)
+                yield model.Copy(DISK_SOURCE, f"file:{path}", ident, length, sha, path.stat().st_mtime, open_bytes, stat.S_IMODE(path.stat().st_mode))
             except OSError as exc:
                 intake.refused.append(model.Refusal(DISK_SOURCE, f"file:{path}", type(exc).__name__))

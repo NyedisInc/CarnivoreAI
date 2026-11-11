@@ -34,6 +34,29 @@ def atomic_write_json(path: Path, payload: dict, *, log_event: str, mode: int = 
         return False
 
 
+class UnreadableArtifact(OSError):
+
+    def __init__(self, path: Path, reason: str) -> None:
+        super().__init__(f"{path}: {reason}")
+        self.path = path
+        self.reason = reason
+
+
+def read_for_update(path: Path, *, log_event: str) -> dict:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError) as exc:
+        reason = f"{type(exc).__name__}: {exc}"
+    else:
+        if isinstance(data, dict):
+            return data
+        reason = "top level is not an object"
+    logger.error(log_event, path=str(path), error=reason)
+    raise UnreadableArtifact(path, reason)
+
+
 def read_json_object(path: Path, *, log_event: str) -> Optional[dict]:
     try:
         with open(path, encoding="utf-8") as handle:

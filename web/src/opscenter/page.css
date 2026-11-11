@@ -50,6 +50,20 @@
     box-shadow: inset 0 -1px 0 var(--oc-line-rule);
   }
 
+  .oc-titlebar.oc-titlebar--drawer {
+    display: flex;
+    column-gap: var(--oc-space-2);
+    padding: 0 var(--oc-space-3) 0 var(--oc-space-2);
+  }
+
+  .oc-titlebar--drawer .oc-titlebar__sub {
+    flex: 1 1 auto;
+  }
+
+  .oc-titlebar--drawer .oc-titlebar__actions {
+    margin-left: auto;
+  }
+
   @media (min-width: 1024px) {
     .oc-titlebar .oc-btn {
       height: var(--oc-rowheight, 26px);

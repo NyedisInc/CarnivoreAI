@@ -47,6 +47,20 @@ async def _stop_ledger(_ctx: "BootContext") -> None:
     await provider_ledger_poller.stop()
 
 
+async def _start_argent_rollout(ctx: "BootContext") -> None:
+    from src.core.argent import cards_sync, rollout
+
+    rollout.bind(ctx.app.state)
+    cards_sync.bind(ctx.app.state)
+    await rollout.resume_at_boot()
+
+
+async def _stop_argent_rollout(_ctx: "BootContext") -> None:
+    from src.core.argent import rollout
+
+    await rollout.stop()
+
+
 def _build_integrity_scheduler(ctx: "BootContext") -> None:
     ctx.app.state.db_integrity_scheduler = DatabaseIntegrityScheduler(settings.get_state_dir())
 
@@ -132,6 +146,8 @@ def steps() -> list[BootStep]:
         BootStep(name="provider_ledger_poller", order=560, start=_start_ledger, stop=_stop_ledger,
                  failure_event="provider_ledger_poller_start_failed", stop_order=teardown_slot(17),
                  stop_after_failed_start=True, **degraded),
+        BootStep(name="argent_rollout", order=565, start=_start_argent_rollout, stop=_stop_argent_rollout, stop_order=teardown_slot(49),
+                 failure_event="argent_rollout_start_failed", stop_after_failed_start=True, **degraded),
         BootStep(name="db_integrity_scheduler", order=570, start=_build_integrity_scheduler,
                  stop=_stop_integrity_scheduler, stop_order=teardown_slot(18)),
         BootStep(name="db_integrity_scheduler_start", order=571, start=_start_integrity_scheduler,

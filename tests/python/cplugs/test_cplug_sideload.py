@@ -9,7 +9,7 @@ from types import SimpleNamespace
 import pytest
 
 from src.core.db_migration import ensure_db_migrated
-from src.cplugs.host import identity, runtime, sideload, sidecar_boot, sidecar_registry
+from src.cplugs.host import developer_mode, identity, runtime, sideload, sidecar_boot, sidecar_registry
 from src.cplugs.host import state as owner_state
 from tests.python.api_keys.conftest import bearer, client, key_store, owner_jwt  # noqa: F401
 
@@ -38,6 +38,7 @@ def world(tmp_path, client, owner_jwt, key_store, monkeypatch):  # noqa: F811
     app.state.cplugs_host = runtime.Host(state, app)
     clock = SimpleNamespace(t=1_000_000.0)
     monkeypatch.setattr(sideload, "wall", lambda: clock.t)
+    monkeypatch.setattr(developer_mode, "is_on", lambda: True)
     src = tmp_path / "src" / NAME
     write_plugin(src)
     _row, secret = key_store.create("script")
@@ -61,14 +62,14 @@ def test_fence_and_switch_then_unverified_local_row_then_edit_needs_approval_the
 
     r = post(w)
     assert r.status_code == 409 and r.json()["detail"]["code"] == "sideload_off", r.text
-    assert not (w.state / "cplug-code" / NAME).exists()
+    assert not (w.state / "plugins" / NAME).exists()
 
     assert w.client.put(f"{URL}/switch", json={"enabled": True}, headers=w.owner).json()["enabled"] is True
     r = post(w)
     assert r.status_code == 200, r.text
     first = r.json()
     assert first["id"] == NAME and first["tier"] == "local" and first["unverified"] is True and first["needs_approval"] is False
-    root = w.state / "cplug-code" / NAME
+    root = w.state / "plugins" / NAME
     assert root.is_dir() and root != w.src and (root / "main.py").read_text() == "print('tick')\n"
     assert identity.lookup(w.state, NAME).catalog_id == f"local/{NAME}"
     found = sidecar_registry.find(NAME)
@@ -158,3 +159,44 @@ def test_delete_of_a_name_that_is_not_a_sideload_stops_nothing_and_local_is_a_re
     r = w.client.delete(f"{URL}?name=somecatalogplugin", headers=w.owner)
     assert r.status_code == 404 and r.json()["detail"]["code"] == "sideload_unknown" and stopped == []
     assert "local" in RESERVED_PUBLISHER_HANDLES
+
+
+def test_developer_mode_off_through_settings_stops_the_sideloads_with_no_timer(world, monkeypatch):
+    from src.config import settings
+    from src.cplugs.host import sideload_routes
+
+    w = world
+    assert w.client.put(f"{URL}/switch", json={"enabled": True, "hours": None}, headers=w.owner).status_code == 200
+    stopped = []
+
+    async def fake_stop_all(live):
+        stopped.append(live)
+
+    monkeypatch.setattr(sideload_routes, "stop_all_local", fake_stop_all)
+    monkeypatch.setattr(type(settings), "update_settings_config", lambda self, **kw: {})
+    r = w.client.patch("/api/v1/config/settings", json={"server_prefs": {"developer_mode": False}}, headers=w.owner)
+    assert r.status_code == 200, r.text
+    assert stopped == [w.rt]
+    stopped.clear()
+    w.client.patch("/api/v1/config/settings", json={"server_prefs": {"developer_mode": True}}, headers=w.owner)
+    assert stopped == []
+
+
+def test_developer_mode_off_stop_failure_still_returns_the_saved_settings_and_logs_error(world, monkeypatch):
+    from structlog.testing import capture_logs
+
+    from src.config import settings
+    from src.cplugs.host import sideload_routes
+
+    w = world
+
+    async def raising_stop_all(live):
+        raise OSError("registry reload failed")
+
+    monkeypatch.setattr(sideload_routes, "stop_all_local", raising_stop_all)
+    monkeypatch.setattr(type(settings), "update_settings_config", lambda self, **kw: {"saved": True})
+    with capture_logs() as logs:
+        r = w.client.patch("/api/v1/config/settings", json={"server_prefs": {"developer_mode": False}}, headers=w.owner)
+    assert r.status_code == 200 and r.json()["saved"] is True, r.text
+    failed = [e for e in logs if e["event"] == "developer_mode_off_stop_sideloads_failed"]
+    assert failed and failed[0]["log_level"] == "error" and failed[0]["error_type"] == "OSError"

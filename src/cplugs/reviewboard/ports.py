@@ -31,6 +31,9 @@ class BoardPort(Protocol):
     async def post_reply(self, item_id: int, text: str, ref: Dict[str, str]) -> Dict[str, Any]:
         pass
 
+    async def post_visitors(self, item_id: int, text: str, ref: Dict[str, Any]) -> Dict[str, Any]:
+        pass
+
     async def tell_session(self, session_id: str, text: str) -> Dict[str, Any]:
         pass
 

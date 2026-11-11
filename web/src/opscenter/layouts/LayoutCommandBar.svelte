@@ -15,6 +15,9 @@
     import { SkillComplete } from './skill-complete.svelte';
     import { layoutSearch } from './layout-search.svelte';
     import LayoutTabs from './LayoutTabs.svelte';
+    import Icon from '../ui/Icon.svelte';
+    import { viewport } from '../engine/viewport.svelte';
+    import { closeWidgetDrawer, openWidgetDrawer, surfaceDrawer } from '../layout-editor/editor.svelte';
 
     function confirmBusy(names: string[]): Promise<boolean> {
         return confirmOk({
@@ -46,6 +49,13 @@
     let inputEl = $state<HTMLTextAreaElement | null>(null);
     let menuOpen = $state(false);
     let menuAnchor = $state<HTMLElement | null>(null);
+
+    const drawerOpen = $derived(surfaceDrawer.surface === 'terminal');
+
+    function toggleAddWidgets(): void {
+        if (drawerOpen) closeWidgetDrawer();
+        else openWidgetDrawer('terminal');
+    }
 
     const shown = $derived(layoutActive() && !layoutMode.naming);
     const searching = $derived(bar.mode === 'search');
@@ -140,7 +150,7 @@
 </script>
 
 {#if shown}
-    <section class="lcb" aria-label={t('layout.bar.label')} data-layout-bar={layoutMode.uuid}>
+    <section class="lcb" class:lcb--add={viewport.wide} aria-label={t('layout.bar.label')} data-layout-bar={layoutMode.uuid}>
         <div class="lcb__tabs"><LayoutTabs /></div>
         <div class="lcb__slot">
         <div class="lcb__box oc-focus-host" data-mode={bar.mode}>
@@ -194,6 +204,11 @@
         </div>
         </div>
         <span class="lcb__line" class:lcb__line--empty={!bar.line} aria-live="polite">{bar.line}</span>
+        {#if viewport.wide}
+            <Button size="sm" data-bar-tool="add-widgets" aria-pressed={drawerOpen} onclick={toggleAddWidgets}>
+                <Icon name="plus" size={13} />{t('layout.bar.add_widgets')}
+            </Button>
+        {/if}
     </section>
     {#if menuOpen && !searching}
         <CascadeMenu root={recipientNodes} anchor={menuAnchor} label={t('layout.bar.recipients_menu')} onClose={() => { menuOpen = false; }} />
@@ -345,7 +360,19 @@
 
           .lcb__line {
               grid-column: 2;
+              grid-row: 1;
               justify-self: end;
+          }
+
+          .lcb--add {
+              grid-template-columns: 1fr auto minmax(0, max(200px, min(410px, calc(100% - 700px)))) auto;
+          }
+
+          :global([data-bar-tool='add-widgets']) {
+              grid-column: 4;
+              grid-row: 1;
+              height: 28px;
+              white-space: nowrap;
           }
   }
 

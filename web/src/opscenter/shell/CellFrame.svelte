@@ -11,9 +11,6 @@
   import { kindOf } from '../engine/meta';
   import type { LayoutStore } from '../engine/layout.svelte';
   import { observeCell } from '../engine/observe.svelte';
-  import { beginCellDrag } from '../engine/pointer';
-  import { layoutZoom } from '../engine/layout-zoom.svelte';
-  import { componentMerge } from '../engine/tab-drag';
   import { reducedMotion, viewport } from '../engine/viewport.svelte';
   import { inputFocus } from '../lib/input-focus.svelte';
   import ZoneShell from '../../lib/zone-shell/ZoneShell.svelte';
@@ -104,7 +101,7 @@
       meta.chrome === 'card' && cellHeader.strip ? '5px' : '',
       meta.chrome === 'card' && cellHeader.strip ? 'var(--oc-titlerow)' : '',
       titleRow ? 'var(--oc-titlerow)' : '',
-      collapsible || viewport.phone ? 'minmax(0, auto)' : 'minmax(0, 1fr)',
+      `[oc-body] ${collapsible || viewport.phone ? 'minmax(0, auto)' : 'minmax(0, 1fr)'}`,
       showMore ? 'auto' : '',
     ]
       .filter(Boolean)
@@ -136,20 +133,6 @@
       for (const running of element.getAnimations()) running.cancel();
       element.animate([{ height: `${from}px` }, { height: `${to}px` }], { duration: COLLAPSE, easing: 'ease' });
     });
-  }
-
-  /* there is nothing */
-  function onGripDown(event: PointerEvent): void {
-    if (!viewport.wide || menuOpen || layoutZoom.isZoomed(meta.id)) return;
-    const target = event.target as HTMLElement | null;
-    if (target?.closest('button, input, select, textarea, a, [role=dialog], [popover]')) return;
-    const merge = terminal && store.page === 'terminal' ? componentMerge(meta.id) : undefined;
-    beginCellDrag(event.currentTarget as HTMLElement, event, meta.id, store, merge);
-  }
-
-  function onBareGripDown(event: PointerEvent): void {
-    if (!viewport.wide || menuOpen || layoutZoom.isZoomed(meta.id)) return;
-    beginCellDrag(event.currentTarget as HTMLElement, event, meta.id, store);
   }
 
   const onCloseWidget = $derived(
@@ -195,7 +178,7 @@
         <div class="oc-frame-topgap" aria-hidden="true"></div>
         
         <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div class="oc-frame-strip" onpointerdown={onGripDown}
+        <div class="oc-frame-strip" data-motion-handle=""
           oncontextmenu={(event) => {
             if (event.target !== event.currentTarget || menuOpen) return;
             const door = event.currentTarget.querySelector<HTMLElement>('[data-corner]');
@@ -236,7 +219,7 @@
           corner={cellHeader.strip ? null : rowCorner}
           bare={chromeOff}
           onClose={onCloseWidget}
-          {onGripDown}
+          grip
           onToggleCollapse={toggleCollapse}
           {onRightControl}
         />
@@ -248,7 +231,6 @@
           {editing}
           place="bare"
           phone={viewport.phone}
-          onGripDown={onBareGripDown}
           bind:open={menuOpen}
           bind:anchor={corner}
         />
@@ -386,6 +368,7 @@
     }
 
     .oc-frame-collapsewrap {
+      grid-row: oc-body;
       display: grid;
       grid-template-rows: minmax(0, 1fr);
       min-width: 0;

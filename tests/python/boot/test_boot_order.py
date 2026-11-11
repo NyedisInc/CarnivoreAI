@@ -14,7 +14,7 @@ START_ORDER = [
     "browsers", "upload_sweeper", "skill_sweeper", "pipe_pruner", "skill_journal_recovery", "skill_auto_update",
     "turn_checkpoints", "mac_awake", "crosstalk_dispatcher", "messaging", "attention_watcher", "notify_sources", "listing_push", "auto_sleep",
     "mcp_bridge_migration", "automations", "work_backfill", "late_watches", "update_checker", "update_checker_route",
-    "provider_ledger_poller", "db_integrity_scheduler", "db_integrity_scheduler_start", "session_journal",
+    "provider_ledger_poller", "argent_rollout", "db_integrity_scheduler", "db_integrity_scheduler_start", "session_journal",
     "lineage_live", "stats", "ready_announcement", "federation_discovery", "byoai_features", "federation_link",
     "plugin_host", "sidecar_runtime", "crosstalk_card_push", "gc_tuning", "request_log_rollup", "engine_clients",
 ]
@@ -28,7 +28,7 @@ STOP_ORDER = [
     "attention_watcher", "turn_checkpoints", "notify_sources", "core_services", "upload_sweeper", "server_log_rotate", "pipe_pruner",
     "skill_sweeper", "skill_journal_recovery", "work_backfill", "refresh_purge_loop", "refresh_store", "phone_link",
     "relay", "spectator_links_store", "browsers", "log_monitoring", "local_servers", "notifications",
-    "engine_clients",
+    "engine_clients", "argent_rollout",
 ]
 
 TEARDOWN_NAMES = [
@@ -44,7 +44,7 @@ TEARDOWN_NAMES = [
     "pipe_pruner_task", "skill_sweeper_task", "skill_journal_task", "work_backfill_task", "refresh_purge_task",
     "refresh_store", "phone_link_boot", "spectator_relay", "spectator_links_store", "browser_sweep_task",
     "browser_manager", "log_monitor", "local_servers", "notifications", "control_input", "tmux_control_readers",
-    "catalog_client",
+    "catalog_client", "argent_rollout",
 ]
 
 STOP_RULES = {name: (False, ()) for name in STOP_ORDER}
@@ -52,6 +52,7 @@ STOP_RULES.update({
     "federation_link": (True, ()),
     "lineage_live": (True, ()),
     "provider_ledger_poller": (True, ()),
+    "argent_rollout": (True, ()),
     "session_journal": (True, ()),
     "spectator_links_store": (False, ("spectator_relay",)),
 })
@@ -61,6 +62,7 @@ DEGRADED = {
     "first_run_import": "first_run_import_failed",
     "claude_hooks_strip": "claude_hooks_strip_failed",
     "provider_ledger_poller": "provider_ledger_poller_start_failed",
+    "argent_rollout": "argent_rollout_start_failed",
     "db_integrity_scheduler_start": "db_integrity_scheduler_start_failed",
     "session_journal": "session_journal_start_failed",
     "lineage_live": "lineage_live_start_failed",

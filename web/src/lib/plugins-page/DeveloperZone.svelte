@@ -2,6 +2,7 @@
 <script lang="ts">
     import Button from '../base/Button.svelte';
     import type { Translate } from '../sessions/types';
+    import { OPEN_DEVELOPER_ZONE_EVENT } from './plugin-health-actions';
     import SideloadKinds from './SideloadKinds.svelte';
     import SideloadSwitch from './SideloadSwitch.svelte';
     import ThirdPartySwitch from './ThirdPartySwitch.svelte';
@@ -25,6 +26,12 @@
     }
 
     let open = $state(readOpen());
+
+    $effect(() => {
+        const show = (): void => { open = true; writeChoice(DEVELOPER_ZONE_OPEN_KEY, '1'); };
+        window.addEventListener(OPEN_DEVELOPER_ZONE_EVENT, show);
+        return () => window.removeEventListener(OPEN_DEVELOPER_ZONE_EVENT, show);
+    });
     let thirdParty = $state<boolean | null>(null);
 
     const until = $derived(untilWhen(sideloads?.status ?? null, t));

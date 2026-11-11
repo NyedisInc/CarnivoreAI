@@ -585,7 +585,7 @@ never gets the stamp, so it shows no strip and no inset.</p>
         (<code>.split-divider--dragging</code>), the rail grip's look. A drag reports every step and saves once at the end;
         Escape during a drag puts the start back; the arrows along its axis step it and Home resets; a focusable
         separator whose value is the first pane's percentage. Use it for any ratio split that is not the terminal grid:
-        the grid's own divider (<code>Gutter.svelte</code>) is a grid track bound to the layout store and divides nothing
+        the grid's own divider (<code>DividerHandle.svelte</code>) is a divider bound to the layout store and divides nothing
         else. Do not: use it where the panes are grid tracks, or give it a border or ring for focus.</dd>
     <dt>the agent drawer</dt>
     <dd>A click on a Swarm agent slides a drawer out from UNDER the left (Swarm) drawer toward the right (<code>AgentDrawer.svelte</code>, <code>.had</code>, #1363) instead of opening the agent's full page. It is anchored at the left drawer's right edge (the window edge when that drawer is shut), one layer under it, over the main area, and slides back under it on close; at the left drawer's own width by default (<code>agent-drawer.svelte.ts</code> reads the same per-device value), dragged on its right edge (<code>.had-grip</code>, a 7px column-resize handle that lights in the accent on hover or focus; arrow keys step it, Home and End jump, a double-click resets) and remembered per device. A 5px ground gap on top (<code>.had-topgap</code>), then ONE row (<code>.had-barwrap</code>) that is the chat's own bar (<code>ChatBar.svelte</code>, framed) carrying the Military Terminal tabs "chat" and "tasks" (<code>.had-tabs</code>, each a <code>.had-tabwrap</code> around a <code>.had-tab</code>, the selected one <code>.had-tabwrap--active</code>: the terminal tab strip's pattern, <code>TabStrip</code>'s <code>.oc-tabrow</code> ground with the active tab lifted onto the body ground) and the shared bare close key at its right end. Escape closes it. The body (<code>.had-body</code>) holds the ONE chat component, <code>ChatWidget.svelte</code>, or on the second tab the Task Manager lists view filtered to that agent (<code>.had-tasks</code>, <code>HuddleBody</code> with its <code>agent</code> prop), never a copy. It is no menu page, so the left drawer stays on its tab. SLICE B: the bar and body live in <code>AgentChatFrame.svelte</code>, which the drawer, the <code>huddle.chat</code> widget cell (<code>ChatWidgetHost.svelte</code>, <code>.hdw</code>, its own tab state) and the pop-out window (<code>AgentPopout.svelte</code>, <code>.ap</code>, <code>.ap-notice</code>, address <code>popout.html?agent=&lt;id&gt;</code>, chat and tasks viewer tabs, no layout writes) both draw. The drawer has no kebab of its own: its "pop out", "agent terminal" and "make widget" are items in the chat bar's ONE menu; make widget adds the <code>huddle.chat:agent:&lt;id&gt;</code> widget to the current layout and closes the drawer, and dragging the title row drops the same widget through the engine's own drop hints (<code>agent-dock.ts</code>). Dropping as a tab is not offered: tab groups hold terminals only. ON A PHONE (700 px and under, #2749) the rail is always pinned and the chat is no slide-out: it slides OVER the agent list in the same panel (<code>.had--phone</code>), right of the rail to the window's right edge and down to the visual viewport's bottom, so the keyboard lifts the composer; no grip and no stored width; the drawer spans the window while it shows and the page under it is locked (<code>html.had-phone-open</code>); the bar's left end carries the back key (<code>.had-back</code>, the bare key, Icon <code>back</code>) in place of the close key, the idle "waiting on me" key (<code>.hdc-filter</code>, disabled) steps aside so the agent's name fits, and a swipe from the chat's left edge goes back too.</dd>
@@ -612,30 +612,16 @@ never gets the stamp, so it shows no strip and no inset.</p>
         (<code>.oc-grip</code>, <code>GripPill.svelte</code>), no label and no icons; closed swaps the line for a small pull-up chevron
         (<code>.wab-chevron</code>) and a click then opens FULL. On a phone (below 1024px) a closed bar is at least 44px tall and
         shows the words "tap to enlarge" (<code>.wab-hint</code>); wider screens never draw them. Dragging moves through closed, glance and full and lands on
-        the nearest; Up and Down step, Enter or Space opens or closes full. In edit layout the area wears the edit outline
-        (<code>.dz-widgets--editing</code>: a dashed hairline in the edit gear's <code>--oc-cyan</code> around the widgets only,
-        so the glance area under them shows its yellow dashes on all four sides), the same outline the home and
-        terminal grids wear (<code>EditOverlay.svelte</code>), painted IN FRONT by a <code>::after</code> at z-index 60 so no
-        widget layer covers it (Joe (ccsliinc), 2026-10-02). Defaults: agents full, menu glance, questions glance, edit
+        the nearest; Up and Down step, Enter or Space opens or closes full. Defaults: agents full, menu glance, questions glance, edit
         layout full.</dd>
     <dt>the glance area</dt>
     <dd>Glances are their OWN area, not a size of the widget area (Joe (ccsliinc), 2026-10-02): an ordered list of
         PLACEMENTS (<code>drawer_zone.glance</code>), each with its own placement-scoped options, so the providers widget can
         sit there twice, one account on each. GLANCE draws them (<code>GlanceRow.svelte</code>, each placement's tiles by
-        <code>GlanceTiles.svelte</code>: <code>.dz-glance</code>, <code>.dz-glance--icon</code>; the empty-state tile's label is <code>.dz-glance-none</code>). In edit layout, with the area
-        open, the glance area appears under the widgets (<code>GlanceArea.svelte</code>, <code>.dz-garea</code>) outlined in
-        YELLOW DASHES (<code>--oc-yellow</code>, painted in front by <code>.dz-garea::after</code>) and NO WORDS: the dashes
-        alone say it shows only because of edit mode. Each placement (<code>.dz-gplace</code>) is its tiles
-        (<code>.dz-gtiles</code>) over three bare 16px icon buttons (<code>.dz-gctl</code>): a grip that drags it among the
-        others (arrow keys step it; the insertion mark is <code>.dz-gmark</code>, an upright accent line), options (only for
-        a widget that declares placement options; opens the shared settings overlay on that placement), and remove
-        (<code>[data-glance-remove]</code>, the base <code>IconButton</code> close variant, coral on hover). The widget drawer has no shelf for it: any row of the
-        drawer's one list is carried here (Joe (ccsliinc), 2026-10-03, "one list. anything can be dropped anywhere"): while
-        one is lifted the area takes a faint yellow tint (<code>.dz-garea--open</code>), and under the pointer the tint deepens
-        and the dashes turn solid (<code>.dz-garea--aimed</code>, with the <code>.dz-gmark</code> where it lands). Nothing is
-        drawn refused: a widget already here moves to the mark, a family (terminal, browser, analytics) lands as a fresh copy
-        with its own target (Joe, 2026-10-03: "yes drop anywhere"), and only a switched-off widget gets the calm sentence
-        under the list. The footer bar under it is smaller since (an 18px avatar).</dd>
+        <code>GlanceTiles.svelte</code>: <code>.dz-glance</code>, <code>.dz-glance--icon</code>; the empty-state tile's label is <code>.dz-glance-none</code>). The glance row is ALWAYS ON, with no edit mode (the widget engine, slice S5): the motion core
+        positions each placement (<code>.dz-gcell</code>, in a row <code>.dz-glances--motion</code>), a placement is picked up by pressing its tiles and dragging (a press that does not travel
+        still opens the area), reordered with springs and written once on release; options and remove are items of the placement's right-click menu. A widget dragged in from the widget
+        drawer enters as a dashed placeholder (<code>.dz-gpending</code>). The footer bar under it is smaller since (an 18px avatar).</dd>
     <dt>docking</dt>
     <dd>Above 700px it docks and the content narrows beside it; below, it overlays and opens closed. Width is the ONLY thing
         that decides; the drawer has no pin control (2026-09-22). The pin belongs to the widget bars and the sidebar rail (see the bars and the rail below).</dd>
@@ -648,8 +634,9 @@ never gets the stamp, so it shows no strip and no inset.</p>
     <dd>The collapsed rail's ground fades top to bottom from the accent (<code>--oc-orange</code> at 30% over the chrome ground) to the plain chrome ground (<code>.mr</code>). At 1024px and up a closed drawer collapses to an icon rail (<code>web/src/lib/mini-rail/MiniRail.svelte</code>, issue
         #990) instead of vanishing: <code>body.session-sidebar-railed</code> (set by <code>web/src/lib/drawer/pin.ts</code>) pads
         the screens by <code>--sidebar-rail-w</code> (<code>client/css/session-sidebar-rail.css</code>). Top to bottom:
-        the bell (only while an alert is up), then the very rail the open drawer draws (<code>SidebarRail.svelte</code>: the same icons in the same order,
-        each opening the drawer and its slide-out when it has one), whose pin place holds a key that reopens the drawer, then the account chip, the
+        the red claw (<code>.mr-claw</code>, the brand mark, which goes to the default dashboard), a space under it the hamburger key that
+        reopens the drawer, then the bell (only while an alert is up), all centred in <code>.mr-head</code>, then the very rail the open drawer draws (no "+", and no empty help heading band, <code>.sbr-rail__head</code>, since nothing beside a closed rail lines up with it) (<code>SidebarRail.svelte</code>: the same icons in the same order,
+        each opening the drawer and its slide-out when it has one) with no pin, then the account chip, the
         version and the C / 5h / 7d meters (<code>MiniRailFooter.svelte</code>, <code>MiniRailUsage.svelte</code>), the same block the open drawer's rail ends with. Icons are named by <code>aria-label</code> and show the rail's dock label to the right. The rail replaces the header's
         drawer toggle, so the terminal page's top bar is gone and the page starts at the top. Below 1024 nothing changes.</dd>
     <dt>a row</dt>
@@ -741,6 +728,11 @@ never gets the stamp, so it shows no strip and no inset.</p>
         a 2px line along the foot's top edge in <code>--oc-cyan</code>, absolutely placed so it takes no width from the bar.
         A <code>session.bell</code> frame lights the sidebar row (<code>.session-sidebar-row[data-bell="1"]</code>) with a static
         2px <code>--oc-yellow</code> left hairline for 1.5 s: no sound, no card. Strings <code>session.progress.*</code>.</dd>
+    <dt>the budget hold line</dt>
+    <dd>Argent slice P3: when a budget hold refuses a prompt, <code>FootHold.svelte</code> draws one line,
+        <code>.oc-tf-hold</code>, above the foot bar: mono, <code>--oc-fs-hint</code>, <code>--oc-yellow</code> (stopped, waiting on you), a 1px
+        <code>--oc-line-faint</code> top hairline, no card, no animation. It goes when the budget owner lifts the hold. The typed
+        text stays in the pane's box. Strings <code>argent.hold.*</code>.</dd>
     <dt>messaging badge</dt>
     <dd><code>MessagingBadge.svelte</code> with <code>.messaging-badge</code> (issue #1499): a session bound to a messaging
         conversation wears ONE icon-only mark in the 16px slot the provider, agents and timers marks share, so compact gains
@@ -1247,7 +1239,9 @@ and writes <code>/beast-mode</code>. THE CROSSTALK TRAIL (#1907, <code>Crosstalk
     <dt>the version</dt>
     <dd>At the bar's right, never truncated: the short form <code>v1.12.21</code> (major.minor.patch) and, for a
         preview build only, a tiny tracked <code>.version-footer__preview</code> marker; the full build string is not
-        shown (<code>client/js/version-footer.js</code>). The chip's name gives way first.</dd>
+        shown (<code>client/js/version-footer.js</code>). A developer build's number (<code>r322</code>) follows in its own
+        <code>.version-footer__build</code> span, which the closed drawer's rail (<code>MiniRailFooter.svelte</code>) drops to a
+        line of its own so the text can be bigger. The chip's name gives way first.</dd>
     <dt>the menu</dt>
     <dd><code>AccountMenu.svelte</code>, a <code>CascadeMenu</code> with <code>above</code> and a <code>heading</code>
         (<a href="#menus-cascade">menus</a>): the heading (the handle and the email when signed in, or "not signed in"), then "sign in or create your free account" (signed out, opens the sign in modal) or your account (signed in, opens <code>#account</code>), then settings, edit layout (inert with its reason on a screen with no layout to edit), help;
@@ -1570,12 +1564,16 @@ and writes <code>/beast-mode</code>. THE CROSSTALK TRAIL (#1907, <code>Crosstalk
     (<code>.sbr-rail__btn</code>, <code>aria-pressed</code>; the pressed one wears <code>--oc-orange-tint</code> and the
     bright accent glyph, the one accent on the rail): menu and agents fixed at the top, a hairline
     (<code>.sbr-rail__sep</code>), the registered slide-outs, then the gear after a spring (<code>.sbr-rail__fill</code>).
+    The pinned rail and the full menu share ONE ROW GRID (#2908): every icon is static at one size (no magnify), a row is <code>--sbr-row-h</code>,
+    a divider after swarm and one before the help links is <code>--sbr-sep-h</code> (<code>.sbr-rail__sep</code> here, <code>.oc-nav-sep</code> in the menu),
+    the help heading's band is <code>--sbr-head-h</code> (<code>.sbr-rail__head</code> empty, <code>.oc-nav-head</code> printing "help"), and settings sits last after the
+    spring (<code>.oc-nav-fill</code> in the menu), so each rail icon sits at its menu row's y; the menu covers the rail's column rather than sitting beside it.
     No key carries a number counter (#2757). The keys are ONE tab stop
     (roving <code>tabindex</code>): the arrows, Home and End move focus, Enter or Space opens, Escape closes the slide-out while focus is inside it or on the rail; an UNPINNED rail and its slide-out also hide on an Escape from the main area (never from a terminal), a pinned rail's slide-out does not. Every plugin
     page tab with no slide-out of its own (flow, review, edit layout) gets a key and a slide-out in <code>--oc-cyan</code>
     (<code>tab-flyouts.ts</code>); a closable tab's key wears <code>.sbr-rail__close</code> in its cell
-    (<code>.sbr-rail__cell</code>), and Delete closes it. The cell is the key's own box and holds <code>.sbr-rail__dock</code>, the dock layer (<code>rail-dock.ts</code>): plain at rest, and while the pointer is on the rail laid out at twice size and drawn scaled down (it enters at its resting size, then the transition turns on), so the magnified icon is sharp and nothing flashes (issue #2772); edit layout never magnifies. EDIT LAYOUT IS THE ONE EDIT MODE for the icons of all three drawers (issue #2689): the rail has two zones, each a list
-    (<code>.sbr-rail__zone</code>) of lines the drag moves, a top (agents through pack) and a bottom (documentation, changelog, settings), and an icon
+    (<code>.sbr-rail__cell</code>), and Delete closes it. The cell is one full row of the grid (<code>--sbr-row-h</code>) with the key centred in it, always at one static size (the magnify dock of issue #2772 is gone, #2908). EDIT LAYOUT IS THE ONE EDIT MODE for the icons of all three drawers (issue #2689): the rail has two zones, each a list
+    (<code>.sbr-rail__zone</code>) of lines the drag moves, a top (agents through the help links) and a bottom (settings), and an icon
     drags across both; the right and bottom bars' keys do the same in their strip. While editing, each icon wears <code>.oc-edit-cell</code>
     (<code>EditCell.svelte</code>: a dashed 1px border in <code>--oc-cyan</code>, the layout editor's own edit hairline, which says it is movable) and
     <code>.oc-edit-badge</code>, a small square shown/hidden toggle at its corner (an eye in <code>--oc-cyan</code> when shown, the struck eye in
@@ -1589,7 +1587,8 @@ and writes <code>/beast-mode</code>. THE CROSSTALK TRAIL (#1907, <code>Crosstalk
     <code>MiniRailUsage.svelte</code> and <code>MiniRailFooter.svelte</code>, each key opening the drawer and its slide-out. The top
     bar's view menu and "+" are <code>SidebarControls.svelte</code> (<code>.sbr-controls</code>): <code>ViewMenu.svelte</code>
     (<code>[data-action="density"]</code>) and <code>NewSessionButton.svelte</code>, base quiet IconButtons at 28px, with a hairline spacer before the
-    bell. A slide-out (<code>SidebarFlyoutHost.svelte</code>, <code>.sbr-flyout</code>, open as
+    bell. On the terminal page, where the header is hidden (the drawer open, or closed to its rail), <code>AddWidgetButton.svelte</code> is the page's
+    "+" (add widget): a third key after the "+" in the top bar, and a key under the alert bell in the rail; it opens the Components list against itself. A slide-out (<code>SidebarFlyoutHost.svelte</code>, <code>.sbr-flyout</code>, open as
     <code>.sbr-flyout--open</code>) is ONE element, so the title row and the body slide together; its width is ONE
     variable, <code>--sidebar-flyout-w</code>. NO BORDERS: the title row (<code>.sbr-flyout__title</code>) is the
     title-row ground washed with the widget's MANDATORY tint at 16% (<code>color-mix</code>), with the icon in the solid
@@ -1658,8 +1657,12 @@ and writes <code>/beast-mode</code>. THE CROSSTALK TRAIL (#1907, <code>Crosstalk
     the destructive remove button.</p>
 
 <h3 class="sg-h3" id="chrome-menu-page">the menu page shell</h3>
-<p class="sg-p">A menu page (sessions, projects, skills, plugins, wrappers, hosts, themes, settings, widgets, the ledger, blueprints) LIES OVER
-    THE MAIN CONTENT AREA; it does not take the screen and it does not replace what is under it (Joe (ccsliinc), 2026-10-14). The one
+<p class="sg-p">A menu page (sessions, projects, skills, plugins, wrappers, hosts, themes, settings, widgets, the ledger, blueprints) is a DRAWER:
+    from 1024px up it slides out to the right of the agents drawer (from underneath it), only as wide as its content needs
+    (floor at least 420px, 640px for the settings page, growing to 3x that (1260, 1920px) while that is under 60% of the space beside the agents drawer; ceiling 2640px; the settings list is as wide as its content, 240 to 420px, and parks, still mounted, when a section opens; drag its right edge, <code>.oc-page__resize</code>, to resize, double-click to reset, width kept per browser), with a close icon (<code>.oc-titlebar--drawer</code>, a base close <code>IconButton</code>) left of its title flush at the top left,
+    and slides back left when closed (<code>menu-page-ghost.ts</code>, <code>.oc-page--ghost</code>). Settings is two drawers: the section list
+    (<code>.oc-page--drawer-list</code>) and, beside it, the picked section's page (<code>--oc-drawer-offset</code>); the list stays open
+    (owner ruling, 2026-11-07, #2908, reversing the 2026-10-14 cover below). The one
     list is <code>web/src/lib/menu-page/menu-pages.ts</code>; <code>menu-page-shell.svelte.ts</code> watches each page's static
     container and puts <code>body.menu-page-open</code> on while one is up, keeps it to one page at a time, and switches the drawer
     to its menu tab with that page's row marked (<code>.oc-nav-item--active</code> in the drawer, <code>.oc-ibtn--bare[aria-current="page"]</code>
@@ -1668,7 +1671,7 @@ and writes <code>/beast-mode</code>. THE CROSSTALK TRAIL (#1907, <code>Crosstalk
     screen's own with no session up) and writes its rect as four root custom properties; <code>body.menu-page-surface</code> then
     points the page's root (<code>.oc-page</code>, <code>position: fixed</code>, so it re-lays nothing out) at that rect in
     <code>menu-page.css</code>. The left sidebar or rail, the right drawers (files, notes), the session rails and the bars stay painted
-    and usable, the terminal keeps its grid and its stream, the screens under the page are only <code>inert</code>, and the rect
+    and usable, the terminal keeps its grid and its stream, nothing under the page is inert any more (the main area beside the drawer stays live), and the rect
     follows the surface when a drawer opens or the window resizes. Escape (rail layout) and the phone back arrow close the page; a page
     that holds a typed value waiting for a save registers a check (<code>menu-page-dirty.ts</code>, today Settings) and the close first asks
     through the app's confirm dialog. Below 1024px (no surface to measure) the page keeps the old full-screen cover:

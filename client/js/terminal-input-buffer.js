@@ -19,6 +19,12 @@ console.log('[TerminalInputBuffer Module] Loading...');
 
         var generation = 0;
 
+        /** @type {number} When the current generation was armed (ms), for the held-too-long tripwire. */
+        var armedAt = 0;
+
+        /** @type {number} Held this long with no ready is reported as a drop (client/js/terminal-input-drops.js). */
+        var HELD_REPORT_MS = 2000;
+
         var phase = 'idle';
 
         /** @type {Array<Uint8Array>} Chunks held, oldest first. */
@@ -35,6 +41,7 @@ console.log('[TerminalInputBuffer Module] Loading...');
                 return generation;
             }
             generation += 1;
+            armedAt = Date.now();
             phase = 'buffering';
             held = [];
             heldBytes = 0;
@@ -130,12 +137,25 @@ console.log('[TerminalInputBuffer Module] Loading...');
             return gen;
         }
 
+        function tripwire(verdict, controller) {
+            var reason = {
+                rejected_overflow: 'buffer_overflow', refused_overflowed: 'buffer_poisoned',
+                stale_generation: 'stale_generation'
+            }[verdict];
+            if (verdict === 'buffered' && Date.now() - armedAt >= HELD_REPORT_MS) reason = 'held_pre_ready';
+            if (reason && global.TerminalInputDrops) {
+                global.TerminalInputDrops.record(reason, controller, { phase: phase });
+            }
+        }
+
         function send(controller, bytes) {
             var verdict = offer(controller ? controller._connGen : null, bytes);
             if (verdict === 'rejected_overflow') report(controller, RETYPE_MESSAGE);
+            tripwire(verdict, controller);
             if (verdict !== 'send_now') return false;
             var ws = controller && controller.ws;
             if (!ws || ws.readyState !== 1 ) {
+                if (global.TerminalInputDrops) global.TerminalInputDrops.record('no_socket', controller, { phase: phase });
                 if (!gapReported) {
                     gapReported = true;
                     report(controller, RETYPE_MESSAGE);

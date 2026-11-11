@@ -1,0 +1,55 @@
+{
+  "kind": "link",
+  "payload": {
+    "title": "carnivore_ai-2 sent a link",
+    "body": "preview is ready · carnivore.ai",
+    "path": "/sessions/ses_0123456789ab",
+    "thread": "local|ses_0123456789ab",
+    "v": 2,
+    "sub": "link on nostromo",
+    "kind": "link",
+    "type": "agent.message",
+    "lv": "a",
+    "snd": "soft",
+    "cap": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ttl": 1794000000,
+    "acts": [
+      [
+        "open_link",
+        "open link"
+      ],
+      [
+        "copy_link",
+        "copy link"
+      ]
+    ],
+    "card": {
+      "strip": [
+        "link",
+        "carnivore_ai-2",
+        "nostromo"
+      ],
+      "agent": "carnivore_ai-2",
+      "computer": "nostromo",
+      "ts": "9:41",
+      "host": "carnivore.ai",
+      "url": "https://carnivore.ai/preview",
+      "title": "carnivore.ai preview build",
+      "mixed_script": false
+    }
+  },
+  "card": {
+    "strip": [
+      "link",
+      "carnivore_ai-2",
+      "nostromo"
+    ],
+    "agent": "carnivore_ai-2",
+    "computer": "nostromo",
+    "ts": "9:41",
+    "host": "carnivore.ai",
+    "url": "https://carnivore.ai/preview",
+    "title": "carnivore.ai preview build",
+    "mixed_script": false
+  }
+}

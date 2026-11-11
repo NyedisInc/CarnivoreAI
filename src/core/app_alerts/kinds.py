@@ -69,6 +69,8 @@ SOURCES: Dict[str, Source] = {
     "automations": _src("automations", "bolt"),
     "messaging": _src("messaging", "chat"),
     "pack_skills": _src("pack_skills", "users"),
+    "argent": _src("argent", "link"),
+    "plugin_registry": _src("plugin_registry", "wrench"),
 }
 FALLBACK_SOURCE = Source(f"{_P}source.other", "bell")
 
@@ -87,6 +89,7 @@ BY_TITLE: Dict[str, Declared] = {
     f"{_P}backup_health.vault_uncovered.title": Declared(NEEDS_YOU, (_recheck(), _link("open_backups", _BACKUPS))),
     f"{_P}backup_health.vault_over_cap.title": Declared(NEEDS_YOU, (_recheck(), _link("open_backups", _BACKUPS))),
     f"{_P}backup_health.vault_damaged.title": Declared(NEEDS_YOU, (_recheck(), _link("open_backups", _BACKUPS))),
+    f"{_P}backup_health.vault_mass_gone.title": Declared(NEEDS_YOU, (_recheck(), _link("open_backups", _BACKUPS))),
     f"{_P}notifications.destination_disabled.title": Declared(NEEDS_YOU, (_link("open_notification_settings", "#settings/notifications"),)),
     f"{_P}notifications.migration_skipped.title": Declared(NEEDS_YOU, (_link("open_notification_settings", "#settings/notifications"),)),
     f"{_P}account.signed_out.title": Declared(NEEDS_YOU, (_link("sign_in", "#account"),)),
@@ -104,8 +107,26 @@ BY_TITLE: Dict[str, Declared] = {
     f"{_P}pack_skills.edit_replaced.title": Declared(FYI),
     f"{_P}pack_skills.edits_replaced.title": Declared(FYI),
     f"{_P}pack_skills.settings_refused.title": Declared(NEEDS_YOU),
+    f"{_P}plugin_registry.migration_refused.title": Declared(FYI, default_detail_key=f"{_P}plugin_registry.migration_refused.detail"),
+    f"{_P}plugin_registry.older_copy.title": Declared(NEEDS_YOU, default_detail_key=f"{_P}plugin_registry.older_copy.detail"),
+    f"{_P}plugin_registry.restored_backup.title": Declared(FYI, default_detail_key=f"{_P}plugin_registry.restored_backup.detail"),
+    f"{_P}plugin_registry.read_only.title": Declared(NEEDS_YOU, default_detail_key=f"{_P}plugin_registry.read_only.detail"),
+    f"{_P}argent.untethered_launch.title": Declared(FYI, (), f"{_P}argent.untethered_launch.detail"),
+    f"{_P}argent.queue_overflow.title": Declared(FYI, (), f"{_P}argent.queue_overflow.detail"),
+    f"{_P}argent.budget_warn.title": Declared(FYI, (), f"{_P}argent.budget_warn.detail"),
+    f"{_P}argent.budget_hold.title": Declared(NEEDS_YOU, (), f"{_P}argent.budget_hold.detail"),
+    f"{_P}argent.hold_lifted.title": Declared(FYI, (), f"{_P}argent.hold_lifted.detail"),
+    f"{_P}argent.classifier_fix.title": Declared(FYI, (), f"{_P}argent.classifier_fix.detail"),
+    f"{_P}argent.pair_login.title": Declared(NEEDS_YOU, (), f"{_P}argent.pair_login.detail"),
+    f"{_P}argent.key_expiring.title": Declared(FYI, (), f"{_P}argent.key_expiring.detail"),
+    f"{_P}argent.outage.title": Declared(NEEDS_YOU, (), f"{_P}argent.outage.detail"),
+    f"{_P}argent.writeback_review.title": Declared(FYI, (), f"{_P}argent.writeback_review.detail"),
+    f"{_P}argent.writeback_refused.title": Declared(FYI, (), f"{_P}argent.writeback_refused.detail"),
+    f"{_P}argent.writeback_blocked_secret.title": Declared(FYI, (), f"{_P}argent.writeback_blocked_secret.detail"),
+    f"{_P}argent.tracker_wins.title": Declared(FYI, (), f"{_P}argent.tracker_wins.detail"),
     **{f"{_P}cplug_runtime.{name}.title": Declared(NEEDS_YOU, (_link("open_plugins", "#plugins"),))
        for name in ("crash_loop", "revoked", "integrity", "index_expired", "safe_mode", "plugin_alert", "sandbox")},
+    f"{_P}cplug_runtime.removed.title": Declared(FYI, (), f"{_P}cplug_runtime.removed.detail_catalog"),
 }
 
 BY_KEY_PREFIX: Tuple[Tuple[str, Declared], ...] = (

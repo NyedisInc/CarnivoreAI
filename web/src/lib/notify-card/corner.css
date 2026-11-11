@@ -1,0 +1,18 @@
+@import '../../opscenter/tokens.css';
+@import '../../opscenter/focus.css';
+@import '../../opscenter/controls.css';
+@import '../../opscenter/fields.css';
+@import '../../opscenter/type.css';
+@import '../base/base.css';
+
+:root {
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--oc-ground-page);
+  color: var(--oc-text-primary);
+  font-family: var(--font-mono);
+}

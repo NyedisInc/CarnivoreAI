@@ -16,6 +16,7 @@ from src.core.computers.commit import JoinRefused, Links, PackSettingsPort, Peer
 from src.core.computers.join_proto import JoinKeys, JoinPake, ProtoError
 from src.core.computers.tls_identity import CertRejected, LinkIdentity, client_join_ctx, validate_peer_cert
 from src.core.federation import grants
+from src.core.pack.relay import join_consent
 from src.core.relay_identity.device_key import DeviceKey
 
 log = structlog.get_logger(__name__)
@@ -180,6 +181,8 @@ async def _run(reader: asyncio.StreamReader, writer: asyncio.StreamWriter, pw: b
     except BaseException:
         await _abort(writer, "refused", raises=False)
         raise
+    if kind == "new":
+        await asyncio.to_thread(join_consent.accept_on_join)
     try:
         await join_proto.write_message(writer, join_proto.done())
     except (ConnectionError, ssl.SSLError, OSError):

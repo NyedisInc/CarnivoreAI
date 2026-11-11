@@ -88,7 +88,7 @@ def test_preview_then_install_leaves_a_disabled_registered_plugin_then_uninstall
         assert facts["tools"][0]["description"] == TOOL_TEXT
         assert [p["name"] for p in facts["permissions"]] == ["notify"] and facts["permissions"][0]["reason"]
         assert sheet["cplug_facts_sha"]
-        assert not (state / "cplug-code" / NAME).exists() and ledger_rows(app) == []
+        assert not (state / "plugins" / NAME).exists() and ledger_rows(app) == []
         assert identity.lookup(state, NAME) is None
 
         consent = {"digest": package.digest, "body_sha": sheet["body_sha"], "scripts": True, "cplug_accepted": True,
@@ -104,10 +104,10 @@ def test_preview_then_install_leaves_a_disabled_registered_plugin_then_uninstall
 
         (row,) = ledger_rows(app)
         assert row.kind == kinds.KIND_CPLUG and row.item_id == ITEM_ID
-        root = state / "cplug-code" / NAME
+        root = state / "plugins" / NAME
         assert (root / "cplug.json").is_file() and (root / "main.py").is_file()
         (skill_target,) = app.services.install_roots.targets_for(kinds.KIND_SKILL, SCOPE_GLOBAL, None)[:1]
-        assert skill_target.leaf_dir != state / "cplug-code"
+        assert skill_target.leaf_dir != state / "plugins"
 
         definition = sidecar_registry.find(NAME)
         assert definition is not None and definition.code_root == root

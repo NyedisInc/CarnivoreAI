@@ -26,6 +26,9 @@
     processesOf,
     refreshKey,
     terminateAll,
+    leftoverRows,
+    processText,
+    stopLeftovers,
     revealInside,
     workCounts,
     CONTROL_SECTIONS,
@@ -69,6 +72,7 @@
   let historyOpen = $state(false);
   const agents = $derived(agentRows ? listedAgents(agentRows, work) : null);
   const processes = $derived(work?.state === 'ok' ? work.processes : []);
+  const leftovers = $derived(leftoverRows(processes));
   const counts = $derived(workCounts(agentRows, work));
   const sectionTabs = $derived<TabDef[]>(CONTROL_SECTIONS.map((section) => ({
     id: section,
@@ -141,6 +145,8 @@
     terminateProcess(sessionId, row).then(stopMessage, stopMessage));
   const stopMany = (section: ControlSection, rows: BackgroundProcess[]) => act(section, () =>
     terminateAll(sessionId, rows).then(batchMessage, batchMessage));
+  const stopLeft = () => act('processes', () =>
+    stopLeftovers(sessionId, leftovers).then(batchMessage, batchMessage));
   const interrupt = () => act('agents', () =>
     interruptSession(sessionId).then(interruptMessage, interruptMessage));
 
@@ -177,11 +183,24 @@
 
 {#snippet processCells(p: BackgroundProcess)}
   <span class="scc-type">{p.task_id ?? t('background_work.process.shell')}</span>
-  <span class="scc-text">{p.summary ?? t('background_work.process.no_summary')}</span>
+  <span class="scc-text">{processText(p)}</span>
   <span class="scc-num">{age(p.started_at)}</span>
   {#if armed !== `proc:${p.pid}`}
     <Button variant="danger" size="sm" data-scc-stop disabled={busy}
       onclick={() => arm(`proc:${p.pid}`, 'processes')}>{t('background_work.stop.arm')}</Button>
+  {/if}
+{/snippet}
+
+
+{#snippet leftoverAction()}
+  {#if leftovers.length > 0}
+    {#if armed === 'leftovers'}
+      {@render confirm(t('control_center.processes.leftovers_ask', { count: leftovers.length }),
+        t('control_center.processes.leftovers_yes'), () => void stopLeft())}
+    {:else}
+      <Button variant="danger" size="sm" data-scc-leftovers disabled={busy}
+        onclick={() => arm('leftovers', 'processes')}>{t('control_center.processes.leftovers')}</Button>
+    {/if}
   {/if}
 {/snippet}
 
@@ -267,6 +286,7 @@
       {:else if processes.length > 0}
         <Button variant="danger" size="sm" data-scc-act disabled={busy} onclick={() => arm('all:processes', 'processes')}>{t('control_center.processes.all')}</Button>
       {/if}
+      {@render leftoverAction()}
     </div>
   </div>
   {#if notice.agents}<p class="scc-note scc-notice" role="status">{notice.agents}</p>{/if}
@@ -438,6 +458,7 @@
       {@render confirm(t('control_center.processes.all_ask', { count: processes.length }), t('control_center.processes.all_yes'),
         () => void stopMany('processes', processes))}
     {/if}
+    {#if leftovers.length > 0}<div class="scc-owner-actions">{@render leftoverAction()}</div>{/if}
     {#if notice.processes}<p class="scc-note scc-notice" role="status">{notice.processes}</p>{/if}
     {#if failed.processes}
       <p class="scc-note" role="status">{failed.processes}</p>

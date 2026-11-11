@@ -6,6 +6,8 @@ import time
 from typing import Any, Callable, Dict, List, Optional
 
 from src.cplugs.huddle.rules import TaskManagerInvalid
+from src.cplugs.sdk.owner_text import owner_text
+from src.cplugs.sdk.visible_text import TextRefused
 from src.cplugs.sdk import CplugContext
 
 PHASES = ("queued", "running", "testing", "installing", "blocked", "done")
@@ -39,8 +41,11 @@ def clean(phase: Any, note: Any, worker: Any) -> Dict[str, str]:
         raise TaskManagerInvalid("note must be text")
     if worker is not None and not isinstance(worker, str):
         raise TaskManagerInvalid("worker must be text")
-    text = " ".join((note or "").split())
-    label = " ".join((worker or "").split()) or DEFAULT_WORKER
+    try:
+        text = " ".join(owner_text(note or "").split())
+        label = " ".join(owner_text(worker or "").split()) or DEFAULT_WORKER
+    except TextRefused as exc:
+        raise TaskManagerInvalid(f"note and worker {exc}") from exc
     if len(text) > MAX_NOTE:
         raise TaskManagerInvalid(f"note: over {MAX_NOTE} characters")
     if len(label) > MAX_WORKER:

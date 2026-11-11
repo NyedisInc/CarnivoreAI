@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, expect, test, vi } from 'vitest';
-import { createRawSnippet, flushSync, mount, tick, unmount } from 'svelte';
+import { flushSync, mount, tick, unmount } from 'svelte';
 import type { CplugRow } from '../../lib/plugins-page/cplugs-adapter';
 
 vi.mock('../../lib/cplug-ui/api', () => ({
@@ -18,7 +18,7 @@ test('metaFor answers a placeholder for an unregistered plugin slot and still th
     expect(() => metaFor('nosuchcell' as never, META)).toThrow(/no meta for cell/);
 });
 
-test('the grid mounted from a stored layout with an unregistered panel slot draws it, then the cell swaps to the panel when the kind registers', async () => {
+test('a cell for an unregistered panel slot draws a placeholder, then swaps to the panel when the kind registers', async () => {
     (globalThis as any).ResizeObserver = class { observe() {} unobserve() {} disconnect() {} };
     const { setPanels } = await import('../../lib/cplug-ui/panel-views.svelte');
     const { resetLayout } = await import('./model');
@@ -29,15 +29,7 @@ test('the grid mounted from a stored layout with an unregistered panel slot draw
     localStorage.setItem(STORAGE_KEYS.home, JSON.stringify({ ...base, v: SCHEMA_VERSION }));
     const { createLayoutStore } = await import('./layout.svelte');
     const store = createLayoutStore('home');
-    const { default: GridSurface } = await import('./GridSurface.svelte');
     const { default: CellHost } = await import('../CellHost.svelte');
-    const target = document.createElement('div');
-    document.body.appendChild(target);
-    const renderCell = createRawSnippet((id: () => string) => ({ render: () => `<div data-slot="${id()}"></div>` })) as any;
-    mounted = mount(GridSurface, { target, props: { store, renderCell } });
-    flushSync();
-    expect(target.querySelectorAll('.oc-cellslot').length).toBeGreaterThan(1);
-
     const host = document.createElement('div');
     document.body.appendChild(host);
     const cell = mount(CellHost, { target: host, props: { id: SLOT, store } });

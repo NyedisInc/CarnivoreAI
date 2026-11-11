@@ -6,6 +6,7 @@ import { t } from '../i18n/index.svelte';
 import { errorMessageOr } from '../errors/failure-reason';
 import { browserLedgerHost } from '../ledger/ledger-host';
 import { startLogin, type RowActionDeps } from '../ledger/row-actions';
+import { resetAll, type BulkPreview } from './reset-all';
 import {
   refusalCode,
   type AccountActivated,
@@ -37,7 +38,15 @@ export const switchActivity = $state<{
   busy: string | null;
   error: string | null;
   running: RunningElsewhere[];
-}>({ busy: null, error: null, running: [] });
+  target: string | null;
+  switched: string | null;
+}>({ busy: null, error: null, running: [], target: null, switched: null });
+
+function refuseWhileBusy(id: string): void {
+  switchActivity.target = id;
+  switchActivity.switched = null;
+  switchActivity.error = t('account_switch.error.busy');
+}
 
 export function accountName(id: string | null): string {
   if (!id) return t('opscenter.value.unknown');
@@ -63,8 +72,13 @@ export async function setAutoSwitch(enabled: boolean): Promise<void> {
 }
 
 export async function switchTo(id: string): Promise<AccountActivated | null> {
-  if (switchActivity.busy) return null;
+  if (switchActivity.busy) {
+    refuseWhileBusy(id);
+    return null;
+  }
   switchActivity.busy = id;
+  switchActivity.target = id;
+  switchActivity.switched = null;
   switchActivity.error = null;
   try {
     const answer = await authFetch<AccountActivated>(
@@ -72,6 +86,7 @@ export async function switchTo(id: string): Promise<AccountActivated | null> {
       { method: 'POST' },
     );
     switchActivity.running = answer.running_elsewhere;
+    switchActivity.switched = id;
     return answer;
   } catch (error) {
     const code = error instanceof ApiError ? refusalCode(error.payload) : null;
@@ -114,8 +129,13 @@ export async function finishSetup(
   id: string,
   login?: () => void | Promise<void>,
 ): Promise<SetupOutcome | null> {
-  if (switchActivity.busy) return null;
+  if (switchActivity.busy) {
+    refuseWhileBusy(id);
+    return null;
+  }
   switchActivity.busy = id;
+  switchActivity.target = id;
+  switchActivity.switched = null;
   switchActivity.error = null;
   let outcome: SetupOutcome | null = null;
   try {
@@ -138,6 +158,34 @@ export async function finishSetup(
   if (outcome === 'login') await (login ? login() : openLogin(id));
   else if (outcome) setTimeout(() => void ledger.refresh(true), SETUP_REREAD_MS);
   return outcome;
+}
+
+export async function restartRunningBulk(
+  captured: RunningElsewhere[],
+): Promise<{ failures: string[]; result: string }> {
+  switchActivity.busy = 'bulk';
+  try {
+    const done = await resetAll(captured, {
+      running: () => authFetch<RunningElsewhere[]>('/provider-ledger/switch/running'),
+      preview: (name): Promise<BulkPreview> => authFetch<BulkPreview>(
+        `/sessions/restart/preview?session_name=${encodeURIComponent(name)}`,
+      ),
+      respawn: (name) => authFetch<{ ok?: boolean; detail?: string | null }>('/sessions/respawn', {
+        method: 'POST',
+        body: JSON.stringify({ session_name: name, confirm_restart_live: true, resume_after_restart: true }),
+      }),
+    });
+    return {
+      failures: done.failures.map(({ row, reason, detail }) => t(
+        `account_switch.running.reset_${reason}`,
+        { session: row.label || row.tmux_session, reason: detail || t('opscenter.value.read_failed') },
+      )),
+      result: t('account_switch.running.reset_result', { restarted: done.restarted, total: captured.length }),
+    };
+  } finally {
+    switchActivity.busy = null;
+    await loadRunningElsewhere();
+  }
 }
 
 export async function loadRunningElsewhere(): Promise<void> {

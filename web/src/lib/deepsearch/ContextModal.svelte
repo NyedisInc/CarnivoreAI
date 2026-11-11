@@ -10,6 +10,7 @@
   import { branchBookmark, fetchContext, WINDOW_SIZE, type ContextMark, type ContextMessage, type ContextRequest } from './context-api';
   import type { HitBookmark } from './deepsearch-api';
   import { hitTime } from './when';
+  import { landingTop, markPieces } from './context-marks';
 
   interface Props {
     close: (value: null) => void;
@@ -20,8 +21,9 @@
     bookmark: HitBookmark | null;
     focus: 'hit' | 'bookmark';
     hitLine: number | null;
+    hitTerms?: string[];
   }
-  let { close, title, request, target, hostLabel, bookmark, focus, hitLine }: Props = $props();
+  let { close, title, request, target, hostLabel, bookmark, focus, hitLine, hitTerms = [] }: Props = $props();
 
   type Phase = 'loading' | 'ready' | 'failed' | 'gone';
   let phase = $state<Phase>('loading');
@@ -66,7 +68,12 @@
       return;
     }
     const landing = anchor === null ? null : messages.find((m) => m.line >= anchor!);
-    if (landing) root.querySelector<HTMLElement>(`[data-line="${landing.line}"]`)?.scrollIntoView?.({ block: 'center' });
+    const hit = landing ? root.querySelector<HTMLElement>(`[data-line="${landing.line}"]`) : null;
+    if (!hit) return;
+    const box = root.getBoundingClientRect();
+    const offset = (el: HTMLElement): number => el.getBoundingClientRect().top - box.top + root.scrollTop;
+    const mark = hit.querySelector<HTMLElement>('mark');
+    root.scrollTop = landingTop(root.clientHeight, offset(hit), hit.offsetHeight, mark ? offset(mark) : null, mark?.offsetHeight ?? 0);
   }
 
   async function load(): Promise<void> {
@@ -167,7 +174,7 @@
   });
 </script>
 
-<ModalShell {title} overlayClass="dps-ctx-modal" onCancel={() => close(null)}>
+<ModalShell {title} overlayClass="dps-ctx-modal" width="min(1100px, 92vw)" onCancel={() => close(null)}>
   {#snippet children()}
     {#if hostLabel}<p class="dps-ctx__host" data-testid="context-host">{hostLabel}</p>{/if}
     {#if phase === 'loading'}
@@ -189,7 +196,7 @@
         {#each messages as m (m.line)}
           <div class="dps-ctx__msg" class:is-hit={m.line === (focus === 'hit' ? anchor : hitLine)} data-line={m.line} data-role={m.role}>
             <p class="dps-ctx__who">{t(`deepsearch.kind.${m.kind}`)}{#if hitTime(m.at)}{' · '}{hitTime(m.at)}{/if}</p>
-            <p class="dps-ctx__text">{m.text}</p>
+            <p class="dps-ctx__text">{#if m.line === anchor && focus === 'hit'}{#each markPieces(m.text, hitTerms) as piece, i (i)}{#if piece.match}<mark class="sd-mark">{piece.text}</mark>{:else}{piece.text}{/if}{/each}{:else}{m.text}{/if}</p>
           </div>
           {#each marks.filter((x) => x.afterLine === m.line) as mk (`${mk.id ?? 'r'}:${mk.at}`)}
             <p class="dps-ctx__mark" data-mark-at={mk.at}>{markText(mk)}</p>
@@ -216,8 +223,6 @@
 <style>
   @layer components {
     :global(.dps-ctx-modal .modal-content) {
-      width: min(720px, 94vw);
-      max-width: 94vw;
       border-radius: 2px;
       font-family: var(--font-mono);
     }
@@ -241,7 +246,7 @@
     }
 
     .dps-ctx__scroll {
-      max-height: min(60vh, 560px);
+      max-height: min(70vh, 760px);
       overflow-y: auto;
       overscroll-behavior: contain;
       font-size: var(--oc-fs-body);

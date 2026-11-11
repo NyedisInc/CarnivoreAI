@@ -3,7 +3,7 @@ import { META, isInstanceId } from './meta';
 import { MAX_VIEWERS, PRIMARY_SLOT, ROW_MAX, isViewerSlot, normalizeRow, resetLayout, rowFloor } from './model';
 import { dropRetiredCells } from './retired-cells';
 import { replaceCells } from './replaced-cells';
-import { MAX_SPAN, repairSpans } from './spans';
+import { MAX_SPAN, settleRemoval } from './spans';
 import { foldSpanOnlyRows } from './compact';
 import type { CellId, Layout, LayoutPage, MetaMap, Reservation, RowId, RowKind, RowModel, Slot, SlotId } from './types';
 import { readStoredGrid } from './v7/adapt';
@@ -269,7 +269,7 @@ export function validate(
   }
 
   const heroCollapsed = blob['heroCollapsed'] === true;
-  const spanFixed = repairSpans({ v: SCHEMA_VERSION, rows, hidden, heroCollapsed, collapsed, ...(headerOff.length ? { headerOff } : {}) });
+  const spanFixed = settleRemoval({ v: SCHEMA_VERSION, rows, hidden, heroCollapsed, collapsed, ...(headerOff.length ? { headerOff } : {}) });
   const reconciled = foldSpanOnlyRows(spanFixed);
   if (reconciled.rows.length === 0) return { layout: null, refusal: 'rows', repaired: false };
   if (spanFixed.rows !== rows) repaired = true;

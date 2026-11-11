@@ -6,6 +6,10 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
         PushKeyStore.migrateAccessibility()
+        UNUserNotificationCenter.current().setNotificationCategories(NotifyCategories.all())
+        #if DEBUG && targetEnvironment(simulator)
+        NotifySeed.run()
+        #endif
         return true
     }
 
@@ -20,7 +24,10 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
         TapRouter.shared.tapped(userInfo: response.notification.request.content.userInfo)
-        completionHandler()
+        Task {
+            await NotifyActions.handle(response)
+            completionHandler()
+        }
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,

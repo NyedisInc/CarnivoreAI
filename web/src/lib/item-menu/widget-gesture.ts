@@ -9,11 +9,7 @@ export interface MenuPoint {
 export type OpenWidgetMenu = (at: MenuPoint | null, from: HTMLElement) => void;
 
 function headerDoor(from: HTMLElement): HTMLElement | null {
-    for (let up = from.parentElement; up; up = up.parentElement) {
-        const door = up.querySelector<HTMLElement>('[data-corner]');
-        if (door) return door;
-    }
-    return null;
+    return from.closest<HTMLElement>('[data-cell]')?.querySelector<HTMLElement>('[data-corner]') ?? null;
 }
 
 /* the widget menu */

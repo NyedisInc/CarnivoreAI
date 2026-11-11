@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, NamedTuple, Optional
+from typing import TYPE_CHECKING, Any, FrozenSet, NamedTuple, Optional
 
 from src.core.agent_families import DEFAULT_FAMILY
 from src.core.attention.registry_record import RegistryRecord
@@ -214,6 +214,8 @@ class Evidence:
     background_open: Optional[int] = None
 
     background_process: Optional[BackgroundMeasure] = None
+
+    background_leftovers: Optional[FrozenSet[str]] = None
 
     process_floor_at: Optional[datetime] = None
 

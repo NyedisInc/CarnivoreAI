@@ -221,3 +221,19 @@ def test_an_unreadable_config_answers_none_rather_than_raising():
         )
         is None
     )
+
+
+def test_a_session_on_a_relay_profile_resolves_to_the_relay_row_with_its_windows(home, monkeypatch):
+    relay = _profile(home, "pack-nyedis-relay", NYEDIS)
+    home["accounts"] = [relay]
+    monkeypatch.setattr(account_resolve.poller, "snapshot", lambda: SimpleNamespace(accounts=[]))
+    row = AccountUsage(id=relay.id, name="Nyedis (relayed)", provider="claude", credential_state="ok", relayed=True)
+    monkeypatch.setattr(account_resolve.relay_accounts, "all_relay_rows", lambda: [row])
+    resolved = account_resolve.resolve_session_account(
+        Path("/unused/config.json"), agent_family="claude", profile_dir=str(Path(relay.claude_config_dir))
+    )
+    assert resolved is not None and resolved.id == relay.id and resolved.relayed is True
+    monkeypatch.setattr(account_resolve.relay_accounts, "all_relay_rows", lambda: [])
+    assert account_resolve.resolve_session_account(
+        Path("/unused/config.json"), agent_family="claude", profile_dir=str(Path(relay.claude_config_dir))
+    ) is None

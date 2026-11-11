@@ -9,7 +9,7 @@ VERBS = frozenset({
     "list", "get", "create", "update", "delete", "set", "rename", "move", "archive", "unarchive", "add", "remove", "copy",
     "pin", "unpin", "wake", "stop", "restart", "interrupt", "purge", "run", "cancel", "continue", "preview", "fix", "rebuild",
     "import", "export", "activate", "dismiss", "snooze", "send", "reply", "wait", "watch", "ask", "fork", "spawn", "focus",
-    "answer", "lookup", "search", "check", "chat", "embed", "decide", "branch", "rewind", "pack", "unpack", "reconnect", "request",
+    "answer", "adopt", "recreate", "lookup", "search", "check", "chat", "embed", "decide", "branch", "rewind", "pack", "unpack", "reconnect", "request",
 })
 VIEW_NOUNS = frozenset({"status", "output", "log", "changes", "guide", "inbox", "thread", "backlog", "ledger", "manifest", "profile",
                         "roster"})
@@ -27,6 +27,9 @@ KEPT = {
     "alerts_dismiss_resolved": "one bulk verb over a filter; a verb-last spelling reads worse",
     "alert_open_system_settings": "verb-object phrase naming the macOS settings pane an alert's fix opens; open is not a record verb",
     "beastmode_off": "deliberately one-way (no tool turns it on), so no _set",
+    "argent_switch_off": "deliberately one-way (no tool turns it on), so no _set",
+    "argent_story_declare": "the argent plan's contract name (docs/argent.md, P12b): declare the work item the calling agent is on; set would read as a write of a stored value",
+    "session_token_usage_requests": "the argent P2 contract name (#2820): the per-request token usage of one session, a computed read of requests, not a record verb",
     "autonomy_off": "the tray's Stand Down (#1897): deliberately one-way (beast off, swarm off, scheduler paused), so no _set",
     "skills_command_center": "names the screen it reads",
     "project_replica_list": "the P2 contract name (docs/pack.md 5): the replicas of one project, a per-project read",

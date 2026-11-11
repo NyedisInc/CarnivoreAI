@@ -12,6 +12,7 @@ vi.mock('./company-source.svelte', () => ({
     companySource: () => ({ companies: [], companyOf: (id: string) => filedUnder.get(id) ?? null }),
 }));
 vi.mock('../companies', () => ({
+    companyList: () => [],
     companyById: (id: number) => (id === 7 ? { id: 7, name: 'acme', project_count: 2 } : undefined),
     setProjectCompany: vi.fn(async () => ({})),
     unassignProjectCompany: vi.fn(async (name: string) => { calls.push(`unassign ${name}`); return {}; }),
@@ -79,14 +80,16 @@ describe('a company heading kebab', () => {
 });
 
 describe('a project heading kebab', () => {
-    it('has add to as a branch, and remove from company only when the project is filed', async () => {
+    it('has company as one branch; remove from company sits in it only when the project is filed', async () => {
         const bare = (await nodesOf('project', 'p:5'))!;
-        expect(bare.find((e) => e.children)?.label).toBe('add to');
-        expect(bare.some((e) => e.label === 'remove from company')).toBe(false);
+        const branch = (nodes: typeof bare) => nodes.find((e) => e.id === 'add-to-company')!;
+        expect(branch(bare).label).toBe('company');
+        expect(branch(bare).children!.some((e) => e.label === 'remove from company')).toBe(false);
         filedUnder.set('5', 7);
         const filed = (await nodesOf('project', 'p:5'))!;
-        expect(filed.some((e) => e.label === 'remove from company')).toBe(true);
-        filed.find((e) => e.label === 'remove from company')!.run!();
+        const remove = branch(filed).children!.find((e) => e.label === 'remove from company');
+        expect(remove).toBeDefined();
+        remove!.run!();
         await vi.waitFor(() => expect(calls).toContain('unassign proj'));
     });
 });

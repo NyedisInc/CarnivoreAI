@@ -1,0 +1,17 @@
+{
+  "_http_status": 409,
+  "error": {
+    "code": "conflict",
+    "message": "similar work item exists",
+    "details": {
+      "candidates": [
+        {
+          "id": "wi_feat1",
+          "title": "Fixture Feature",
+          "kind": "feature",
+          "score": 0.93
+        }
+      ]
+    }
+  }
+}

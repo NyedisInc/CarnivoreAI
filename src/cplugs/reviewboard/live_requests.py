@@ -5,12 +5,12 @@ from typing import Annotated, List, Literal, Optional
 
 from pydantic import Field, StringConstraints
 
-from src.cplugs.reviewboard.requests import Etag, ExtraView, Page, SlugName, TaskRef, _Body, LookChecked
+from src.cplugs.reviewboard.requests import Etag, ExtraView, Page, SlugName, TaskRef, _Body, _TextChecked, LookChecked
 from src.cplugs.reviewboard.schema import (MAX_ANCHORS, MAX_MAX_WIDTH, MAX_PROMPTS, MAX_ROUND_NOTES, MAX_VIEWS, MIN_MAX_WIDTH, Anchor, AnchorNote, Answer,
                                            Label, Prompt, RoundContext, Uuid)
 
 
-class LiveBody(_Body):
+class LiveBody(_TextChecked):
 
     summary: Annotated[str, StringConstraints(min_length=1, max_length=2000)]
     html: Page
@@ -34,7 +34,7 @@ class LiveCreateBody(LookChecked, LiveBody):
     icon: Optional[str] = None
 
 
-class MilestoneBody(_Body):
+class MilestoneBody(_TextChecked):
 
     name: Optional[Label] = None
     summary: Optional[Annotated[str, StringConstraints(min_length=1, max_length=2000)]] = None
@@ -42,13 +42,13 @@ class MilestoneBody(_Body):
     base_etag: Optional[Etag] = None
 
 
-class LiveEndBody(_Body):
+class LiveEndBody(_TextChecked):
 
     milestone: Optional[Label] = None
     request_review: bool = True
 
 
-class LiveSendBody(_Body):
+class LiveSendBody(_TextChecked):
 
     client_round_id: Uuid
     revision: Literal["draft"] = "draft"

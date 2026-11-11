@@ -25,7 +25,7 @@ export function pluginLinkOf(hash: string | null | undefined): PluginLink | null
     return match ? { cplugId: match[1]!, settings: match[2] === SETTINGS_SEGMENT } : null;
 }
 
-export const EXTRA_SETTINGS_PLUGINS: ReadonlySet<string> = new Set(['crate', 'huddle', 'save']);
+export const EXTRA_SETTINGS_PLUGINS: ReadonlySet<string> = new Set(['argent', 'crate', 'huddle', 'save']);
 
 export function hasPluginSettings(plugin: Pick<CplugItem, 'cplugId' | 'settingsSchema' | 'state'>): boolean {
     return (plugin.settingsSchema !== null || EXTRA_SETTINGS_PLUGINS.has(plugin.cplugId)) && plugin.state !== 'removed';

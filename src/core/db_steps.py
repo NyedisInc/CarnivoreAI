@@ -97,6 +97,7 @@ from src.core.pack.trust_carry.ddl import apply_v87, apply_v88
 from src.core.flow_data.ddl import apply_mcp_surface, apply_v90
 from src.core.exports.ddl import apply_v93
 from src.core.session_groups.session_group_rule import apply_v101
+from src.core.plugin_registry.marker import apply_v104
 from src.core.skills.consent_via_ddl import (
     CONSENT_VIA_COLUMN,
     DDL_V41_ADD_CONSENT_VIA,
@@ -827,6 +828,10 @@ def _step_v102_to_v103(conn: sqlite3.Connection) -> None:
     apply_v103(conn)
 
 
+def _step_v103_to_v104(conn: sqlite3.Connection) -> None:
+    apply_v104(conn)
+
+
 STEPS: Dict[int, Callable[[sqlite3.Connection], None]] = {
     0: _step_v0_to_v1,
     1: _step_v1_to_v2,
@@ -931,6 +936,7 @@ STEPS: Dict[int, Callable[[sqlite3.Connection], None]] = {
     100: _step_v100_to_v101,
     101: _step_v101_to_v102,
     102: _step_v102_to_v103,
+    103: _step_v103_to_v104,
 }
 
 

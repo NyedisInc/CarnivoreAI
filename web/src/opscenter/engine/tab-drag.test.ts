@@ -1,6 +1,5 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, expect, test } from 'vitest';
-import { pickDrop, pickStripDrop, type StripTarget } from './tab-drag';
 import { terminalLayout } from './layout.svelte';
 import { activeTabFor, placeTab, resetTabCache, selectTab, setGroups, tabsFor } from './tab-groups.svelte';
 import { takenSlots } from './components-actions';
@@ -9,44 +8,6 @@ import { PRIMARY_SLOT } from './model';
 const B = 'terminal:ses_b';
 const C = 'terminal:ses_c';
 const D = 'terminal:ses_d';
-
-const STRIPS: StripTarget[] = [
-  {
-    slot: PRIMARY_SLOT,
-    left: 0,
-    right: 500,
-    top: 0,
-    bottom: 40,
-    tabs: [
-      { id: PRIMARY_SLOT, centre: 50 },
-      { id: B, centre: 150 },
-      { id: C, centre: 250 },
-    ],
-  },
-  { slot: 'terminal:ses_x', left: 510, right: 1000, top: 0, bottom: 40, tabs: [{ id: D, centre: 560 }] },
-];
-
-test('the index counts the tab centres left of the pointer', () => {
-  expect(pickStripDrop(STRIPS, 10, 20, 'terminal:new')).toEqual({ kind: 'strip', slot: PRIMARY_SLOT, index: 0 });
-  expect(pickStripDrop(STRIPS, 200, 20, 'terminal:new')).toEqual({ kind: 'strip', slot: PRIMARY_SLOT, index: 2 });
-  expect(pickStripDrop(STRIPS, 490, 20, 'terminal:new')).toEqual({ kind: 'strip', slot: PRIMARY_SLOT, index: 3 });
-});
-
-test('the dragged tab is not counted, so dragging it right past one neighbour is index 1', () => {
-  expect(pickStripDrop(STRIPS, 160, 20, PRIMARY_SLOT)).toEqual({ kind: 'strip', slot: PRIMARY_SLOT, index: 1 });
-});
-
-test('another strip answers with its own slot', () => {
-  expect(pickStripDrop(STRIPS, 600, 20, B)).toEqual({ kind: 'strip', slot: 'terminal:ses_x', index: 1 });
-  expect(pickStripDrop(STRIPS, 520, 20, B)).toEqual({ kind: 'strip', slot: 'terminal:ses_x', index: 0 });
-});
-
-test('off every strip, and in the gap between two, there is no drop', () => {
-  const surface = { strips: STRIPS, bodies: [], out: () => null };
-  expect(pickDrop(surface, 200, 41, B)).toBeNull();
-  expect(pickDrop(surface, 505, 20, B)).toBeNull();
-  expect(pickDrop({ ...surface, strips: [] }, 10, 10, B)).toBeNull();
-});
 
 beforeEach(() => {
   terminalLayout.add('terminal', 'ses_x');

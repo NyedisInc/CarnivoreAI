@@ -103,38 +103,18 @@ test('the Home screen\'s surface is the one measured when no session grid is up'
     expect(findSurface(document, window)).toBe(homeSurface);
 });
 
-test('what is under the page stays mounted, shown and the same size: it is only made inert', () => {
+test('what is under the page stays mounted, shown, the same size and LIVE: the page is a drawer, nothing is inert (#2908)', () => {
     const tracker = createSurfaceTracker({ doc: document, win: window });
     tracker.start();
     expect(terminal.isConnected).toBe(true);
-    expect(surface.hasAttribute('inert')).toBe(true);
+    expect(surface.hasAttribute('inert')).toBe(false);
     expect(screen.hidden).toBe(false);
     expect(screen.style.display).toBe('');
     expect(screen.style.visibility).toBe('');
     expect(surface.getAttribute('style')).toBeNull();
     expect(box).toEqual({ x: 320, y: 0, width: 1110, height: 890 });
     tracker.stop();
-    expect(surface.hasAttribute('inert')).toBe(false);
     expect(terminal.isConnected).toBe(true);
-});
-
-test('only the surface is inert: the widget drawers, their rails and the bottom bar stay live and scrollable (#1774)', () => {
-    const tracker = createSurfaceTracker({ doc: document, win: window });
-    tracker.start();
-    expect(surface.hasAttribute('inert')).toBe(true);
-    expect(screen.hasAttribute('inert')).toBe(false);
-    const live = document.querySelectorAll('[data-session-rail], .info');
-    expect(live.length).toBe(3);
-    for (const el of live) expect(el.closest('[inert]'), el.outerHTML).toBeNull();
-    const next = document.createElement('div');
-    next.className = 'oc-surface';
-    lay(next, () => box);
-    surface.replaceWith(next);
-    tracker.refresh();
-    expect(next.hasAttribute('inert')).toBe(true);
-    expect(surface.hasAttribute('inert')).toBe(false);
-    tracker.stop();
-    expect(next.hasAttribute('inert')).toBe(false);
 });
 
 test('the page follows the surface when a drawer opens or the window resizes', () => {
@@ -228,9 +208,11 @@ test('the stylesheet points the page at the surface and stops hiding what is und
     const css = readFileSync(resolve(__dirname, 'menu-page.css'), 'utf8');
     const rule = css.match(/body\.menu-page-surface \.oc-page:not\(\.oc-page--embedded\)\s*\{([^}]*)\}/);
     expect(rule, 'the surface rule exists').not.toBeNull();
-    for (const [prop, name] of [['top', 'top'], ['left', 'left'], ['right', 'right'], ['bottom', 'bottom']]) {
-        expect(rule![1]).toContain(`${prop}: var(--menu-surface-${name})`);
-    }
+    expect(rule![1]).toContain('top: var(--menu-surface-top)');
+    expect(rule![1]).toContain('bottom: var(--menu-surface-bottom)');
+    expect(rule![1]).toContain('--_left: calc(var(--menu-surface-left) + var(--oc-drawer-offset, 0px))');
+    expect(rule![1]).toContain('left: var(--_left)');
+    expect(rule![1]).toContain('width: var(--oc-drawer-w, fit-content)');
     expect(rule![1]).toContain('padding-left: 0');
     const hide = css.match(/([^{}]*)\{\s*visibility: hidden;\s*\}/);
     expect(hide![1]).toContain(':not(.menu-page-surface)');

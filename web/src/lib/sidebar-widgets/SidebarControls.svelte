@@ -1,12 +1,14 @@
 <script lang="ts">
   import ViewMenu from '../drawer-tabs/ViewMenu.svelte';
   import NewSessionButton from '../drawer-tabs/NewSessionButton.svelte';
+  import AddWidgetButton from '../drawer-tabs/AddWidgetButton.svelte';
   import { t } from '../i18n/index.svelte';
 </script>
 
 <div class="sbr-controls" role="toolbar" aria-label={t('drawer.tabs.actions')}>
   <ViewMenu />
   <NewSessionButton />
+  <AddWidgetButton place="drawer" />
 </div>
 
 <style>

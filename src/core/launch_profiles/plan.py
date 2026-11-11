@@ -4,6 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, Optional, Tuple
 
+from src.core.sessions.launch_overlay import OverlayPlan
+
 Purpose = Literal["pane", "headless", "preview"]
 PURPOSES = ("pane", "headless", "preview")
 
@@ -42,3 +44,4 @@ class LaunchPlan:
     profile_id: str = ""
     account_mode: str = "follow_active"
     connection_id: str = ""
+    overlay: Optional[OverlayPlan] = None

@@ -12,6 +12,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from src.core import host_metrics
 from src.core.dev_tools import git_guard
+from src.core.launch_profiles.installed import harness_installed
 
 SNAPSHOT_VERSION = 1
 TOOLS = (("python3.12", "python3.12"), ("python3", "python3"), ("node", "node"), ("npm", "npm"), ("git", "git"),
@@ -43,6 +44,7 @@ def read_specs() -> Dict[str, Any]:
 
 def read_toolchain() -> Dict[str, Any]:
     found = {name: git_guard.tool_available(binary) for name, binary in TOOLS}
+    found["claude"] = found["claude"] or harness_installed("claude")
     cache = Path.home() / "Library" / "Caches" / "ms-playwright"
     found["playwright_browsers"] = cache.is_dir() and any(cache.iterdir())
     return found

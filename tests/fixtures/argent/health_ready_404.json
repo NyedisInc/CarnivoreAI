@@ -1,0 +1,8 @@
+{
+  "_http_status": 404,
+  "error": {
+    "code": "not_found",
+    "message": "no such route",
+    "details": {}
+  }
+}

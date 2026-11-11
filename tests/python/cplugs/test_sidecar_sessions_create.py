@@ -377,7 +377,7 @@ async def test_the_runtime_wires_the_port_and_checks_the_live_supervisor_at_appr
     proc = SimpleNamespace(ended=None, spec=SimpleNamespace(ctx=_ctx()))
     live = {"local/flow": proc}
     monkeypatch.setattr(rt.supervisor, "process", lambda pid: live.get(pid))
-    monkeypatch.setattr(sideload, "is_on", lambda state_dir: True)
+    monkeypatch.setattr(sideload, "allowed", lambda state_dir, now=None: True)
     call = asyncio.create_task(rt.dispatcher.handle(_ctx(), "sessions.create", dict(ARGS)))
     await _parked(store)
     assert store.list()[0]["caller_tmux"] == "cplug:local/flow"
@@ -397,7 +397,7 @@ def test_standing_of_reads_process_tier_grant_and_switch(monkeypatch) -> None:
     ctx = _ctx()
     procs: Dict[str, Any] = {}
     check = standing_of(SimpleNamespace(process=procs.get), Path("."))
-    monkeypatch.setattr(sideload, "is_on", lambda state_dir: True)
+    monkeypatch.setattr(sideload, "allowed", lambda state_dir, now=None: True)
     assert check("local/flow") == "not_running"
     procs["local/flow"] = SimpleNamespace(ended="exited", spec=SimpleNamespace(ctx=ctx))
     assert check("local/flow") == "not_running"
@@ -407,7 +407,7 @@ def test_standing_of_reads_process_tier_grant_and_switch(monkeypatch) -> None:
     assert check("local/flow") == "grant_revoked"
     procs["local/flow"] = SimpleNamespace(ended=None, spec=SimpleNamespace(ctx=ctx))
     assert check("local/flow") == ""
-    monkeypatch.setattr(sideload, "is_on", lambda state_dir: False)
+    monkeypatch.setattr(sideload, "allowed", lambda state_dir, now=None: False)
     assert check("local/flow") == "sideload_off"
 
 

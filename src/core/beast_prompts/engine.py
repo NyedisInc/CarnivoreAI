@@ -17,7 +17,6 @@ logger = structlog.get_logger()
 
 SETTLE_SECONDS: float = 2.0
 HISTORY_ACTION = "session_prompt"
-NOTIFY_TYPE = "session.beast_approved"
 
 _FAMILIES = (FAMILY_CLAUDE, FAMILY_CODEX)
 

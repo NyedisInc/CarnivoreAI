@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { footAccount } from './foot-account';
+import { footAccount, remoteFootAccount } from './foot-account';
 
 const rows = [
   { id: 'a', name: 'Work account', short_name: 'work' },
@@ -24,4 +24,10 @@ test('not measured, or not in the ledger, draws nothing', () => {
 test('an unknown active account never raises the warning', () => {
   expect(footAccount('codex', 'b', rows, active)).toEqual({ name: 'Personal', mismatch: false });
   expect(footAccount('claude', 'b', rows, undefined)?.mismatch).toBe(false);
+});
+
+test('a paired computer session shows the account its own computer named, never a warning', () => {
+  expect(remoteFootAccount({ name: 'Nyedis', short_name: null })).toEqual({ name: 'Nyedis', mismatch: false });
+  expect(remoteFootAccount({ name: 'Work account', short_name: 'work' })).toEqual({ name: 'work', mismatch: false });
+  expect(remoteFootAccount(null)).toBeNull();
 });

@@ -74,6 +74,7 @@ def _row_to_view(row: Dict[str, Any]) -> Dict[str, Any]:
         "company_id": row.get("company_id"),
         "company_name": row.get("company_name"),
         "color": row.get("color"),
+        "new_sessions_join_swarm": bool(row.get("new_sessions_join_swarm")),
         "uid": row.get("uid"),
         "pack_state": row.get("pack_state"),
         "home_install_id": row.get("home_install_id"),

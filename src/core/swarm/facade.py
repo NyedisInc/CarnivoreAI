@@ -252,7 +252,7 @@ class SwarmFacade:
             raise SwarmError("the answer could not be saved; try again") from exc
 
     def register_thread_port(self, port: Optional[ThreadPort]) -> None:
-        thread_port.register(alerts.AlertingPort(port) if port is not None else None)
+        thread_port.register(alerts.AlertingPort(port, self._app_state) if port is not None else None)
         if port is not None:
             alpha.schedule_ensure()
             if self._app_state is not None:

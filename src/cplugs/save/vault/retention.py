@@ -6,7 +6,7 @@ import os
 import sqlite3
 import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple, Union
 
@@ -14,6 +14,7 @@ import structlog
 
 from src.cplugs.save.engine import layout
 from src.cplugs.save.vault import constants as K
+from src.cplugs.save.vault import gone_watch
 from src.cplugs.save.vault.manifest import Manifest, ManifestError, ManifestStore
 from src.cplugs.save.vault.summary import PointSummary, probe_of
 from src.cplugs.sdk import exports as sx
@@ -127,17 +128,6 @@ _LAST_PROTECTION: Dict[str, Optional[str]] = {}
 
 
 def _note_protection(unit: str, reason: Optional[str], points: int) -> None:
-    if _LAST_PROTECTION.get(unit, None) == reason and unit in _LAST_PROTECTION:
-        return
-    _LAST_PROTECTION[unit] = reason
-    if reason is not None:
-        logger.info("vault_unit_protected", unit=unit, reason=reason, points=points)
-
-
-_LAST_PROTECTION: Dict[str, Optional[str]] = {}
-
-
-def _note_protection(unit: str, reason: Optional[str], points: int) -> None:
     if unit in _LAST_PROTECTION and _LAST_PROTECTION[unit] == reason:
         return
     _LAST_PROTECTION[unit] = reason
@@ -169,6 +159,7 @@ class _Tally:
     keep: Set[str]
     other: Set[str]
     counts: Dict[str, int]
+    gone: Dict[str, str] = field(default_factory=dict)
 
 
 def _walk_unit(vault: "Vault", unit: str, exported: Mapping[str, float], max_points: int, tally: Optional[_Tally]) -> List[str]:
@@ -181,6 +172,9 @@ def _walk_unit(vault: "Vault", unit: str, exported: Mapping[str, float], max_poi
     reason = protection(vault, unit, newest, exported)
     whole = reason is not None
     _note_protection(unit, reason, len(ids))
+    if tally is not None and reason == "original_gone":
+        probe = probe_of(newest)
+        tally.gone[unit] = os.path.dirname(probe[0]) if probe else ""
     survivors = [p for p in (_summary_logged(store, unit, pid) for pid in ids[:newest_at]) if p is not None] + [newest]
     at = export_time(vault, unit, newest, exported) if newest.conversation_id and not whole else None
     source = export_source(survivors, at) if at is not None else None
@@ -226,8 +220,13 @@ def _history(vault: "Vault", tally: _Tally) -> Dict[str, int]:
 _ASSESS_LOCK = threading.Lock()
 
 
+def _moved_units(gone: Mapping[str, str], moved_folders: Sequence[str]) -> Set[str]:
+    return {unit for unit, folder in gone.items()
+            if any(folder == moved or folder.startswith(moved.rstrip("/") + "/") for moved in moved_folders)}
+
+
 def assess(vault: "Vault", cap_bytes: Union[int, Callable[[], int]] = K.DEFAULT_HISTORY_CAP_BYTES, *,
-           now: Optional[float] = None, pace: Optional[Throttle] = None) -> Dict[str, Any]:
+           now: Optional[float] = None, pace: Optional[Throttle] = None, moved_folders: Sequence[str] = ()) -> Dict[str, Any]:
     with _ASSESS_LOCK:
         cap = cap_bytes() if callable(cap_bytes) else cap_bytes
         store = vault.manifests
@@ -242,6 +241,8 @@ def assess(vault: "Vault", cap_bytes: Union[int, Callable[[], int]] = K.DEFAULT_
             if pace is not None:
                 pace.rest(time.monotonic() - started)
         state = _history(vault, tally)
+        state["mass_gone"] = gone_watch.observe(vault.root, tally.gone, time.time() if now is None else now,
+                                                   intentional=_moved_units(tally.gone, moved_folders))
         state.update(cap_bytes=cap, over_cap=state["history_bytes"] > cap, checked_at=time.time() if now is None else now)
         if state["over_cap"]:
             logger.warning("vault_over_cap", history_bytes=state["history_bytes"], cap_bytes=cap,

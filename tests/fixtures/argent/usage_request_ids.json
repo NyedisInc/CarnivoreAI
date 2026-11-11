@@ -1,0 +1,8 @@
+{
+  "items": [
+    "req_fixture_a",
+    "req_fixture_b"
+  ],
+  "next_cursor": null,
+  "rev": 2
+}

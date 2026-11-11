@@ -1,6 +1,8 @@
 
+import { foldLifted } from './compact';
 import { META } from './meta';
-import { freeRowId, normalizeRow, rowHeightFor, rowOfCell, withoutCell } from './model';
+import { freeRowId, liftedRows, normalizeRow, rowHeightFor, rowOfCell } from './model';
+import { NOMINAL_HEIGHT, cutAtMidpoint, keepRowPx } from './stack-mid';
 import { MAX_SPAN, clearSpan, placeOf, repairSpans, spanOf, visualOrder } from './spans';
 import type { Layout, MetaMap, Reservation, RowModel, Slot, SlotId } from './types';
 
@@ -15,26 +17,48 @@ function evenFlex(rows: RowModel[]): RowModel[] {
 export function stackCell(
   layout: Layout,
   id: SlotId,
-  of: SlotId,
+  of: SlotId | readonly SlotId[],
   edge: StackEdge,
   metas: MetaMap = META,
+  width?: number,
+  height?: number,
 ): Layout {
-  if (id === of) return layout;
+  const run: readonly SlotId[] = typeof of === 'string' ? [of] : of;
+  if (run.length === 0 || run.includes(id) || (run.length > 1 && edge === 'above')) return layout;
   const lifted = clearSpan(layout, id);
   const from = rowOfCell(lifted, id);
   if (!from) return layout;
-  const base = repairSpans({
-    ...lifted,
-    rows: evenFlex(lifted.rows.map((row) => (row.id === from.id ? normalizeRow(withoutCell(row, id)) : row))),
-  });
+  const base = foldLifted(
+    layout,
+    repairSpans({
+      ...lifted,
+      rows: evenFlex(liftedRows(layout, id, width, true, height)),
+    }),
+    id,
+    metas,
+    width,
+    height,
+  );
 
-  const place = placeOf(base, of);
-  if (!place) return layout;
-  const target = base.rows[place.rowAt]?.slots[place.slotAt];
-  if (!target) return layout;
-  const refAt = edge === 'below' ? place.rowAt + spanOf(target) - 1 : place.rowAt;
+  if (run.length === 1) {
+    const cut = cutAtMidpoint(base, id, run[0]!, edge, width, height);
+    if (cut === 'refused') return layout;
+    if (cut) return repairSpans({ ...cut, rows: evenFlex(cut.rows) });
+  }
+
+  const refRows = run.map((cell) => {
+    const place = placeOf(base, cell);
+    const slot = place ? base.rows[place.rowAt]?.slots[place.slotAt] : undefined;
+    return place && slot ? (edge === 'below' ? place.rowAt + spanOf(slot) - 1 : place.rowAt) : -1;
+  });
+  const refAt = refRows[0] ?? -1;
+  if (refRows.some((at) => at !== refAt)) return layout;
   const ref = base.rows[refAt];
+  const of0 = run[0]!;
   if (!ref) return layout;
+  const ofSet = new Set<SlotId>(run);
+  const drawnRun = visualOrder(ref).flatMap((entry, at) => (ofSet.has(entry.kind === 'slot' ? entry.slot.id : entry.of) ? [at] : []));
+  if (drawnRun.length !== run.length || drawnRun.some((at, step) => at !== (drawnRun[0] ?? 0) + step)) return layout;
 
   const grown = new Map<SlotId, number>();
   const spanById = new Map<SlotId, number>();
@@ -46,8 +70,8 @@ export function stackCell(
   let passed = false;
   for (const entry of visualOrder(ref)) {
     const cell = entry.kind === 'slot' ? entry.slot.id : entry.of;
-    if (cell === of) {
-      minted.push({ id, fr: edge === 'above' && entry.kind === 'slot' ? entry.slot.fr : 1 });
+    if (ofSet.has(cell)) {
+      if (!passed) minted.push({ id, fr: edge === 'above' && entry.kind === 'slot' ? entry.slot.fr : 1 });
       passed = true;
       continue;
     }
@@ -84,7 +108,7 @@ export function stackCell(
     };
     if (at === refAt) {
       if (edge === 'above') {
-        const kept = row.slots.find((slot) => slot.id === of);
+        const kept = row.slots.find((slot) => slot.id === of0);
         const { reserved: _dropped, ...rest } = row;
         next = { ...rest, slots: kept ? [{ ...kept, fr: 1 }] : [] };
         if (refHeld.length) next.reserved = refHeld;
@@ -97,5 +121,5 @@ export function stackCell(
     }
     rows.push(next);
   });
-  return repairSpans({ ...base, rows: evenFlex(rows) });
+  return repairSpans({ ...base, rows: evenFlex(flex ? keepRowPx(rows, refAt, height ?? NOMINAL_HEIGHT) : rows) });
 }

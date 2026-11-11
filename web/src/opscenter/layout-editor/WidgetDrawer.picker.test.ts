@@ -20,7 +20,7 @@ vi.mock('../../lib/help/feature-media', () => ({
 }));
 
 import WidgetDrawer from './WidgetDrawer.svelte';
-import { terminalLayout } from '../engine/layout.svelte';
+import { homeLayout as terminalLayout } from '../engine/layout.svelte';
 import { editorSeams, enterLayoutEditor, finishLayoutEditor } from './editor.svelte';
 
 const real = { ...editorSeams };
@@ -30,11 +30,11 @@ const slots = (): string[] => terminalLayout.state.layout.rows.flatMap((row) => 
 
 beforeEach(() => {
   terminalLayout.resetAll();
-  editorSeams.page = () => 'terminal';
-  editorSeams.store = (p) => (p === 'terminal' ? terminalLayout : null);
+  editorSeams.page = () => 'home';
+  editorSeams.store = (p) => (p === 'home' ? terminalLayout : null);
   editorSeams.wide = () => true;
   enterLayoutEditor();
-  app = mount(WidgetDrawer, { target: document.body, props: { store: terminalLayout, page: 'terminal' } });
+  app = mount(WidgetDrawer, { target: document.body, props: { store: terminalLayout, page: 'home' } });
   flushSync();
 });
 

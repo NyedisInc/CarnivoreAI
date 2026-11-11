@@ -5,6 +5,7 @@ import type { MenuNode } from '../drawer-tabs/add-component-menu';
 import { railMenuNodes } from '../widget-menu/rail-menu';
 import { barPinned, railPinOffered, toggleBarPin } from '../widget-bars/bar-pin-action';
 import { railEntries } from './rail-model';
+import { setRailIconHidden } from './rail-icons.svelte';
 import { declaredActionsFor } from '../../opscenter/widgets/menu/declared-actions.svelte';
 import { declaredGroups } from '../widget-menu/declared-nodes';
 import { rootZone, SESSION_LIST_TAB } from '../drawer-layout/root-zone.svelte';
@@ -61,6 +62,7 @@ export function railNodesFor(keyId: string | null, onClose: () => void, declared
     declared: [...declared, ...declaredMore],
     editing: layoutEditor.active,
     toggleEdit: canOpen() ? () => void toggleLayoutEditor() : null,
+    remove: entry && entry.kind === 'registered' ? () => void setRailIconHidden(entry.id, true) : null,
     close: entry && closeTab ? { label: t('sidebar.rail.menu.close_tab'), run: closeTab } : null,
     onClose,
   });

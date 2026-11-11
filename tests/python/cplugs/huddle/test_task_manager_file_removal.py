@@ -20,7 +20,7 @@ from src.cplugs.sdk import ports, task_folders
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
 from tests.python.cplugs.huddle.test_task_manager_files import BASE, app, caps, client, folder, item, upload  # noqa: F401
-from tests.python.cplugs.reviewboard.test_attachment_removal_race import FailingCommit
+from tests.python.cplugs.failing_commit import FailingCommit
 
 ATTACHER = AgentCaller("ses_1", "cloude_a", "ses_1")
 OTHER_AGENT = AgentCaller("ses_2", "cloude_b", "ses_2")

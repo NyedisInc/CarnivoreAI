@@ -51,15 +51,14 @@ def test_a_root_of_slash_or_home_puts_nothing_in_scope(tmp_path: Path) -> None:
     assert not projects.inside(os.path.join(os.path.expanduser("~"), "anything"), [os.path.expanduser("~")])
 
 
-def test_a_press_leaves_a_history_row_and_a_notification(monkeypatch) -> None:
+def test_a_press_leaves_a_history_row_and_no_notification(monkeypatch) -> None:
     rows, events = [], []
     store = SimpleNamespace(record_beast=lambda **kw: rows.append(kw))
     monkeypatch.setattr(record.pending, "get_store", lambda: store)
-    monkeypatch.setattr(record.contracts, "emit", lambda event: events.append(event))
-    monkeypatch.setattr(record.common, "session_fields", lambda manager, sid: {})
+    monkeypatch.setattr("src.core.notifications.contracts.emit", lambda event: events.append(event))
     info = SimpleNamespace(session=SimpleNamespace(id="ses_1"), tmux_session="t1")
     dialog = extract_dialog(text("chrome_extension.txt"), "claude")
     record.record_and_announce(lambda: None)(info, dialog, "chrome_decline", "No, keep browser tools off", "decline_only")
     assert rows[0]["approval_source"] == "auto answered by rule chrome_decline" and rows[0]["action"] == "startup_screen"
     assert rows[0]["args"] == {"rule": "chrome_decline", "screen": "chrome_extension", "evidence": "decline_only"}
-    assert events[0].type_id == "session.auto_accepted" and "path" not in events[0].details
+    assert events == [] and not hasattr(record, "NOTIFY_TYPE")

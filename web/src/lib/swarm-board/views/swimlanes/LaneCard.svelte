@@ -9,6 +9,8 @@
   import { collapsed, dragging } from '../../card-actions.svelte';
   import type { CardView } from '../../board-types';
   import type { BoardData, RosterAgent } from '../../board-data.svelte';
+  import { argentCost } from '../../../argent-cost/cost-store.svelte';
+  import { cardCostView } from '../../../argent-cost/cost-view';
 
   interface Props {
     card: CardView;
@@ -38,6 +40,7 @@
   });
   const progress = $derived(card.column === 'in_progress' && typeof card.progress === 'number' ? Math.max(0, Math.min(100, Math.round(card.progress))) : null);
   const kids = $derived(glyph && card.children.total > 0 ? t('swarm.board.list.children', { done: card.children.done, total: card.children.total, review: card.children.in_review }) : '');
+  const cost = $derived(cardCostView(argentCost().data, holder?.session_row_id));
   const summary = $derived(card.summary && card.summary.trim() !== card.title.trim() ? card.summary : '');
 
   function dragStart(event: DragEvent): void {
@@ -81,6 +84,18 @@
       </div>
     {/if}
     {#if kids}<p class="sbc-kids" data-swarm-card-children>{kids}</p>{/if}
+    {#if cost}
+      <div class="sbc-foot sbc-argent" data-swarm-card-argent>
+        <span class="sbc-cost" data-argent-cost data-measured={cost.measured ? 'true' : 'false'} aria-label={t('argent.card.cost', { cost: cost.costText })}>{cost.costText}</span>
+        {#if cost.pct !== null}
+          <span class="sbc-progress sbc-budget" data-scale={cost.scale ?? ''} data-argent-budget role="img" aria-label={t('argent.card.budget', { pct: cost.pctText })}>
+            <span class="sbc-track"><span class="sbc-bar" style:width="{Math.min(cost.pct, 100)}%"></span></span>
+            <span class="sbc-pct">{cost.pctText}</span>
+          </span>
+        {/if}
+        {#if cost.held}<span class="sbc-chip sbc-chip--bad" data-swarm-board-chip="argent_held"><span class="sbc-dot"></span>{t('argent.card.held')}</span>{/if}
+      </div>
+    {/if}
     <div class="sbc-foot">
       {#if progress !== null}
         <span class="sbc-progress" role="img" aria-label={t('swarm.board.progress', { pct: progress })}>
@@ -237,6 +252,13 @@
       color: var(--oc-text-secondary);
       font-size: var(--oc-fs-label);
     }
+    .sbc-argent {
+      color: var(--oc-text-secondary);
+      font-size: var(--oc-fs-label);
+    }
+    .sbc-budget[data-scale='3'] .sbc-bar,
+    .sbc-budget[data-scale='4'] .sbc-bar { background: var(--oc-yellow); }
+    .sbc-budget[data-scale='5'] .sbc-bar { background: var(--oc-coral); }
     .sbc-line {
       display: flex;
       align-items: center;

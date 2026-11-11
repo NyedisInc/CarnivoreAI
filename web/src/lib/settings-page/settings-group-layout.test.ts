@@ -88,7 +88,7 @@ test('panel-sized rows span the group; small controls share its grid', async () 
         await settle();
         const row = appearance.querySelector(`[data-setting-id="${def.id}"]`)!;
         expect(row.classList.contains('oc-wide'), def.id).toBe(isWideControl(def.control));
-        expect(row.classList.contains('oc-wide'), def.id).toBe(def.id !== 'theme' && def.id !== 'row_lights' && def.id !== 'rail_magnify' && def.id !== 'rail_dock_names' && !def.id.startsWith('sidebar_show_'));
+        expect(row.classList.contains('oc-wide'), def.id).toBe(def.id !== 'theme' && def.id !== 'row_lights' && def.id !== 'rail_dock_names' && !def.id.startsWith('sidebar_show_'));
     }
     unmount(handle!);
     handle = null;

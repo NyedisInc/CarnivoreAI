@@ -22,6 +22,7 @@ class WSMessageType(str, Enum):
     TOAST_NEW = "toast.new"
     TOAST_ACK = "toast.ack"
     SESSION_RENAMED = "session.renamed"
+    HOLD_REFUSED = "hold.refused"
     TERMINAL_SIZE = "terminal_size"
     REPAINT = "repaint"
     PAUSE = "pause"
@@ -80,6 +81,12 @@ class SessionRenamedMessage(BaseModel):
     type: WSMessageType = WSMessageType.SESSION_RENAMED
     session_id: str = Field(..., description="Session id whose name changed")
     new_name: str = Field(..., description="New tmux session name")
+
+
+class HoldRefusedMessage(BaseModel):
+    """WS server -> client: an Enter or paste was refused by the budget hold; the client shows one banner line."""
+    type: WSMessageType = WSMessageType.HOLD_REFUSED
+    item: str = Field(..., description="Name of the work item that is at its budget")
 
 
 class WSLogMessage(BaseModel):

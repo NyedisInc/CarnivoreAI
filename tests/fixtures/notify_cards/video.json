@@ -1,0 +1,63 @@
+{
+  "kind": "video",
+  "payload": {
+    "title": "api-docs sent a video",
+    "body": "repro of the resize bug, 0:24",
+    "path": "/sessions/ses_0123456789ab",
+    "thread": "local|ses_0123456789ab",
+    "v": 2,
+    "sub": "video on nostromo",
+    "kind": "video",
+    "type": "agent.message",
+    "lv": "a",
+    "snd": "soft",
+    "cap": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ttl": 1794000000,
+    "acts": [
+      [
+        "play",
+        "play"
+      ],
+      [
+        "open",
+        "open"
+      ]
+    ],
+    "card": {
+      "strip": [
+        "video",
+        "api-docs",
+        "nostromo"
+      ],
+      "agent": "api-docs",
+      "computer": "nostromo",
+      "ts": "9:41",
+      "dur": 24,
+      "w": 1170,
+      "h": 2532,
+      "caption": "repro of the resize bug"
+    },
+    "media": {
+      "id": "m_2123456789ab",
+      "mime": "video/mp4",
+      "bytes": 4194304,
+      "w": 1170,
+      "h": 2532,
+      "dur": 24
+    }
+  },
+  "card": {
+    "strip": [
+      "video",
+      "api-docs",
+      "nostromo"
+    ],
+    "agent": "api-docs",
+    "computer": "nostromo",
+    "ts": "9:41",
+    "dur": 24,
+    "w": 1170,
+    "h": 2532,
+    "caption": "repro of the resize bug"
+  }
+}

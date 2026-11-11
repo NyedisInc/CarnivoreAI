@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections import OrderedDict
 from typing import Any, Dict, List, Optional
 
 import structlog
@@ -17,8 +18,27 @@ logger = structlog.get_logger()
 
 SOURCE_OWNER = "owner"
 SOURCE_OWNER_BANNER = "owner_banner"
+SOURCE_OWNER_PHONE = "owner_phone"
 SOURCE_BEAST = "beast"
 SOURCE_AUTO = "auto"
+
+_ANSWERED_BY: "OrderedDict[str, str]" = OrderedDict()
+_ANSWERED_BY_MAX = 256
+
+
+def note_answered(session_id: str, fingerprint: str, source: str) -> None:
+    from src.core.approvals.inbox import item_id  # noqa: PLC0415
+
+    key = item_id(session_id, fingerprint)
+    _ANSWERED_BY[key] = source
+    _ANSWERED_BY.move_to_end(key)
+    while len(_ANSWERED_BY) > _ANSWERED_BY_MAX:
+        _ANSWERED_BY.popitem(last=False)
+
+
+def answered_by(ident: str) -> Optional[str]:
+    return _ANSWERED_BY.get(ident)
+
 
 _LOCKS: Dict[str, asyncio.Lock] = {}
 
@@ -60,6 +80,7 @@ async def deliver_answer(*, manager: Any, watcher: Optional[Any], info: Any, fin
     async with _LOCKS.setdefault(session_id, asyncio.Lock()):
         dialog = await answer_dialog(family=info.agent_family, fingerprint=fingerprint,
                                      choice=choice, capture=capture, send=send)
+        note_answered(session_id, fingerprint, source)
         if not choice.dismiss:
             await _show_next_question(watcher, session_id, dialog)
     tool, command = summarize(dialog) if dialog.kind in APPROVABLE_KINDS else ("", "")
@@ -95,6 +116,10 @@ async def deliver_answers(*, manager: Any, watcher: Optional[Any], info: Any, qu
         if asked.fingerprint != questions_fingerprint:
             raise AnswerRefused("questions_changed")
         via = await answer_all(asked=asked, answers=answers, capture=capture, send=send)
+        seen = watcher.observation_for(session_id) if watcher is not None else None
+        shown = getattr(getattr(seen, "evidence", None), "dialog", None)
+        if shown is not None:
+            note_answered(session_id, shown.fingerprint, source)
         await _show_next_question(watcher, session_id, unreadable_dialog("claude"))
     logger.info("session_dialog_answered_all", session_id=session_id, questions=len(answers), via=via,
                 fingerprint=questions_fingerprint[:12], source=source)

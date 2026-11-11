@@ -26,8 +26,10 @@ ALWAYS_WAITS = frozenset({
     "pack_gh_login_add",
     "project_publish_repo", "cplug_update",
     "plugin_sideload_add", "plugin_sideload_remove",
+    "plugin_restart", "plugin_stop",
     "computer_invite", "computer_remove", "computer_leave", "computer_add",
     "api_key_delete",
+    "session_external_stop",
 })
 
 

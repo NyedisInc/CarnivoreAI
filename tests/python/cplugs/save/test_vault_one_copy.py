@@ -67,7 +67,7 @@ def test_a_plugin_folder_unit_still_keeps_its_history_up_to_ten(tmp_path):
     boards.mkdir()
     for i in range(K.MAX_POINTS_PER_UNIT + 3):
         (boards / "board.json").write_text('{"round": %d}' % i)
-        assert world.vault.capture_folder("reviewboard.boards", boards).status == "written"
-    assert len(world.vault.manifests.point_ids("reviewboard.boards")) == K.MAX_POINTS_PER_UNIT + 3
+        assert world.vault.capture_folder("boardfix.boards", boards).status == "written"
+    assert len(world.vault.manifests.point_ids("boardfix.boards")) == K.MAX_POINTS_PER_UNIT + 3
     retention.assess(world.vault, cap_bytes=1 << 40)
-    assert len(world.vault.manifests.point_ids("reviewboard.boards")) == K.MAX_POINTS_PER_UNIT
+    assert len(world.vault.manifests.point_ids("boardfix.boards")) == K.MAX_POINTS_PER_UNIT

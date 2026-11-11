@@ -33,18 +33,6 @@ const panel = (): HTMLElement | null => document.querySelector<HTMLElement>('[da
 const shownWidgets = (): string[] => [...document.querySelectorAll<HTMLElement>('[data-rail-out-section]')].map((s) => s.dataset['railOutWidget']!);
 const divider = (): HTMLElement => document.querySelector<HTMLElement>('[data-split-divider]')!;
 
-function carryKey(edge: RailEdge, id: string, from: [number, number], to: [number, number]): void {
-  const handle = keyIn(edge, id);
-  handle.dispatchEvent(ptr('pointerdown', ...from));
-  handle.dispatchEvent(ptr('pointermove', from[0] - 20, from[1] - 20));
-  flushSync();
-  layOutRails();
-  handle.dispatchEvent(ptr('pointermove', ...to));
-  flushSync();
-  handle.dispatchEvent(ptr('pointerup', ...to));
-  flushSync();
-}
-
 beforeEach(() => { mountRails(); follow(BOTTOM_FIELD, { v: 1, items: [] }); });
 afterEach(() => unmountRails());
 
@@ -63,125 +51,6 @@ function hold(edge: RailEdge, id: string, from: [number, number], to: [number, n
 }
 
 describe('splitting in place', () => {
-  test('a key dropped on the far end of the side rail makes a second area holding it, in the rail itself, with no bands', () => {
-    layoutEditor.active = true;
-    flushSync();
-    layOutRails();
-    expect(document.querySelector('[data-rail-bands]')).toBeNull();
-    expect(document.querySelector('[data-rail-band]')).toBeNull();
-    carryKey('side', 'core.notes', [1018, 52], [1018, 380]);
-    expect(sectionKeysIn('side')).toEqual([['core.files', 'core.bookmarks'], ['core.notes']]);
-    expect(written.at(-1)).toEqual({ field: RAIL_FIELD, value: split(0.5, ['core.files', 'core.bookmarks'], ['core.notes']) });
-    expect(ghostBox('side')).toBeNull();
-  });
-
-  test('over the far end the area previews its halving: a dashed divider at the cut and an empty dashed box in the new half, inside the rail', () => {
-    layoutEditor.active = true;
-    flushSync();
-    layOutRails();
-    const handle = hold('side', 'core.notes', [1018, 52], [1018, 380]);
-    const box = ghostBox('side')!;
-    expect(box).not.toBeNull();
-    expect(box.dataset['aimed']).toBe('true');
-    expect(box.querySelector('.rail__newarea-box')).not.toBeNull();
-    expect([box.style.top, box.style.bottom]).toEqual(['50%', '0px']);
-    const kept = rail('side').querySelector<HTMLElement>('[data-rail-section="0"]')!;
-    expect([kept.style.top, kept.style.bottom]).toEqual(['0px', 'calc(50%)']);
-    expect(rail('side').querySelector('[data-rail-split][data-preview]')).not.toBeNull();
-    expect(box.closest('[data-session-rail]')).toBe(rail('side'));
-    expect(written).toEqual([]);
-    handle.dispatchEvent(ptr('pointermove', 400, 60));
-    flushSync();
-    expect(ghostBox('side')).toBeNull();
-    handle.dispatchEvent(ptr('pointerup', 400, 60));
-    flushSync();
-  });
-
-  test('over the keys the area still offers the split (the dashed box, not aimed) and the key goes in at a placeholder slot', () => {
-    layoutEditor.active = true;
-    flushSync();
-    layOutRails();
-    const handle = hold('side', 'core.notes', [1018, 52], [1018, 100]);
-    expect(ghostBox('side')).not.toBeNull();
-    expect(ghostBox('side')!.dataset['aimed']).toBe('false');
-    const slots = rail('side').querySelectorAll('[data-zone-mark]');
-    expect(slots).toHaveLength(1);
-    expect(slots[0]!.classList.contains('rail__slot')).toBe(true);
-    handle.dispatchEvent(ptr('pointerup', 1018, 100));
-    flushSync();
-    expect(sectionKeysIn('side')).toEqual([['core.files', 'core.bookmarks', 'core.notes']]);
-  });
-
-  test('an area whose keys reach past its middle offers nothing over the keys, only past them', () => {
-    follow(RAIL_FIELD, { v: 2, sections: [items('core.files', 'core.notes', 'core.bookmarks', 'core.changes', 'core.task-manager', 'core.ledger', 'core.shell')] });
-    layoutEditor.active = true;
-    flushSync();
-    layOutRails();
-    const handle = hold('side', 'core.files', [1018, 20], [1018, 100]);
-    expect(ghostBox('side')).toBeNull();
-    handle.dispatchEvent(ptr('pointermove', 1018, 380));
-    flushSync();
-    expect(ghostBox('side')!.dataset['aimed']).toBe('true');
-    handle.dispatchEvent(ptr('pointerup', 1018, 380));
-    flushSync();
-    expect(sectionKeysIn('side')).toEqual([['core.notes', 'core.bookmarks', 'core.changes', 'core.task-manager', 'core.ledger', 'core.shell'], ['core.files']]);
-  });
-
-  test('the carried key leaves its slot (collapsed, still in the document) and a copy follows the pointer', () => {
-    layoutEditor.active = true;
-    flushSync();
-    layOutRails();
-    const handle = hold('side', 'core.notes', [1018, 52], [1018, 100]);
-    expect(handle.closest('.rail__cell')!.hasAttribute('data-carried')).toBe(true);
-    expect(handle.isConnected).toBe(true);
-    const copy = document.querySelector<HTMLElement>('[data-drag-ghost]')!;
-    expect(copy.parentElement).toBe(rail('side'));
-    expect(copy.getAttribute('aria-hidden')).toBe('true');
-    expect(copy.querySelector('[data-zone-item]')).toBeNull();
-    handle.dispatchEvent(ptr('pointermove', 1010, 150));
-    expect(copy.style.transform).toMatch(/translate\(/);
-    handle.dispatchEvent(ptr('pointerup', 1010, 150));
-    flushSync();
-    expect(document.querySelector('[data-drag-ghost]')).toBeNull();
-  });
-
-  test('Escape in the air restores everything and writes nothing, even off both rails', () => {
-    layoutEditor.active = true;
-    flushSync();
-    layOutRails();
-    const handle = hold('side', 'core.notes', [1018, 52], [1018, 380]);
-    expect(ghostBox('side')).not.toBeNull();
-    handle.dispatchEvent(ptr('pointermove', 400, 300));
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
-    flushSync();
-    expect(written).toEqual([]);
-    expect(ghostBox('side')).toBeNull();
-    expect(document.querySelector('[data-drag-ghost]')).toBeNull();
-    expect(document.querySelector('[data-carried]')).toBeNull();
-    expect(sectionKeysIn('side')).toEqual([['core.files', 'core.notes', 'core.bookmarks']]);
-  });
-
-  test('it splits again the same way: any area of a split bar can be halved, up to four, and a fifth is never offered', () => {
-    follow(RAIL_FIELD, { v: 2, ratio: 0.5, sections: [items('core.files', 'core.notes', 'core.bookmarks'), items('core.changes', 'core.task-manager')] });
-    layoutEditor.active = true;
-    flushSync();
-    layOutRails();
-    carryKey('side', 'core.bookmarks', [1018, 82], [1018, 390]);
-    expect(sectionKeysIn('side')).toEqual([['core.files', 'core.notes'], ['core.changes', 'core.task-manager'], ['core.bookmarks']]);
-    expect(written.at(-1)!.value).toEqual({ v: 3, cuts: [0.5, 0.75], sections: [items('core.files', 'core.notes'), items('core.changes', 'core.task-manager'), items('core.bookmarks')] });
-    layOutRails();
-    const handle = hold('side', 'core.notes', [1018, 52], [1018, 190]);
-    expect(ghostBox('side')!.dataset['railGhost']).toBe('0');
-    handle.dispatchEvent(ptr('pointerup', 1018, 190));
-    flushSync();
-    expect(sectionKeysIn('side')).toEqual([['core.files'], ['core.notes'], ['core.changes', 'core.task-manager'], ['core.bookmarks']]);
-    expect(railStores.side.cuts).toEqual([0.25, 0.5, 0.75]);
-    layOutRails();
-    const full = hold('side', 'core.task-manager', [1018, 262], [1018, 280]);
-    expect(ghostBox('side')).toBeNull();
-    full.dispatchEvent(ptr('pointerup', 1018, 280));
-    flushSync();
-  });
 
   test('an area narrower than twice the minimum share offers no preview', () => {
     follow(RAIL_FIELD, { v: 2, ratio: 0.85, sections: [items('core.files', 'core.notes'), items('core.changes', 'core.task-manager')] });
@@ -218,25 +87,6 @@ describe('splitting in place', () => {
     card.dispatchEvent(ptr('pointerup', 1018, 390));
     expect(landed).toEqual([{ area: 'rail', edge: 'side', spot: { section: 0, index: 0, split: true }, moves: null }]);
     card.remove();
-  });
-});
-
-describe('unsplitting', () => {
-  test('dragging the last widget out of a section removes the split, whether it is taken out or moved across', () => {
-    follow(RAIL_FIELD, split(0.4, ['core.changes'], ['core.files', 'core.notes']));
-    layoutEditor.active = true;
-    flushSync();
-    layOutRails();
-    carryKey('side', 'core.changes', [1018, 20], [1018, 235]);
-    expect(sectionKeysIn('side')).toEqual([['core.files', 'core.notes', 'core.changes']]);
-    expect(hairline('side')).toBeNull();
-    expect(written.at(-1)!.value).toEqual({ v: 2, sections: [items('core.files', 'core.notes', 'core.changes')] });
-
-    follow(RAIL_FIELD, split(0.4, ['core.changes'], ['core.files']));
-    layOutRails();
-    carryKey('side', 'core.files', [1018, 180], [500, 200]);
-    expect(sectionKeysIn('side')).toEqual([['core.changes']]);
-    expect(written.at(-1)!.value).toEqual({ v: 2, sections: [items('core.changes')] });
   });
 });
 
@@ -372,25 +222,22 @@ describe('the old flat value', () => {
     flushSync();
     keyIn('side', 'core.task-manager').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
     flushSync();
+    expect(written).toEqual([]);
+    keyIn('side', 'core.task-manager').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    flushSync();
+    expect(written).toHaveLength(1);
     expect(written.at(-1)).toEqual({ field: RAIL_FIELD, value: { v: 2, sections: [items('core.notes', 'core.task-manager', 'core.files')] } });
   });
 });
 
 describe('the bottom rail mirror', () => {
-  test('the far end of the bar splits in place, a vertical hairline at the cut, areas side by side, the divider on the left and right arrows', () => {
-    follow(BOTTOM_FIELD, { v: 1, items: [{ widget: 'core.notes' }, { widget: 'core.ledger' }] });
-    layoutEditor.active = true;
+  test('a split bottom bar has a vertical hairline at the cut, areas side by side, the divider on the left and right arrows', () => {
+    follow(BOTTOM_FIELD, split(0.5, ['core.notes'], ['core.ledger']));
     flushSync();
-    layOutRails();
-    carryKey('bottom', 'core.ledger', [56, 718], [850, 718]);
     expect(sectionKeysIn('bottom')).toEqual([['core.notes'], ['core.ledger']]);
-    expect(written.at(-1)).toEqual({ field: BOTTOM_FIELD, value: split(0.5, ['core.notes'], ['core.ledger']) });
     expect(hairline('bottom')!.style.left).toBe('50%');
     const second = rail('bottom').querySelectorAll<HTMLElement>('[data-rail-section]')[1]!;
     expect([second.style.left, second.style.right]).toEqual(['50%', '0px']);
-
-    layoutEditor.active = false;
-    flushSync();
     keyIn('bottom', 'core.ledger').click();
     flushSync();
     expect(shownWidgets()).toEqual(['core.notes', 'core.ledger']);

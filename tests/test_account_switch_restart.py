@@ -179,6 +179,9 @@ class Evidence:
     async def body_started_at(self, i):
         return self._started
 
+    async def body_pid(self, i):
+        return 4242
+
     async def resumable(self, name):
         return self._resumable
 
@@ -219,6 +222,9 @@ class Rotation:
         return True
 
     async def wait_ready(self, session_id):
+        return self.ready
+
+    async def ready_to_continue(self, info):
         return self.ready
 
     async def paste_continue(self, info, session_uuid):
@@ -358,16 +364,19 @@ def test_after_the_reset_the_session_restarts_in_place_on_its_own_account(state)
     assert rotation.notices == [("limit_continued", "cloude_a", "old", "old", "session")]
 
 
-def test_a_failed_paste_is_told_once_and_retried_as_continue_only(state):
+def test_a_refused_paste_keeps_the_continue_owed_and_a_later_pass_types_it_once(state):
     manager = Manager([info("cloude_a")])
     refusing = Rotation(refuse_paste=True)
     run(manager, state, rotation=refusing)
-    assert refusing.pasted == [] and [n[0] for n in refusing.notices] == ["limit_failed"]
-    assert not state.continue_sent("rec-1")
+    assert refusing.pasted == [] and refusing.notices == []
+    assert not state.continue_sent("rec-1") and state.owed("rec-1") is not None
     manager.rows = [info("cloude_a", status="idle")]
     working = Rotation()
-    run(manager, state, rotation=working, evidence=Evidence(started=STOP.timestamp + timedelta(minutes=5)), clock=200.0)
+    run(manager, state, rotation=working, clock=200.0)
     assert working.pasted == [("id_cloude_a", "uuid-1")] and len(manager.respawned) == 1
+    assert [n[0] for n in working.notices] == ["limit_rotated"] and state.owed("rec-1") is None
+    run(manager, state, rotation=working, clock=300.0)
+    assert len(working.pasted) == 1
 
 
 @pytest.mark.parametrize("status,hint", [("dead", None), ("idle", "shell")])
@@ -477,7 +486,10 @@ def test_a_pane_that_never_reaches_its_prompt_is_told_not_typed_into(state):
     manager = Manager([info()])
     rotation = Rotation(ready=False)
     run(manager, state, rotation=rotation)
-    assert rotation.pasted == [] and [n[0] for n in rotation.notices] == ["limit_failed"]
+    assert rotation.pasted == [] and rotation.notices == [] and state.owed("rec-1") is not None
+    state._clock = lambda: NOW.timestamp() + 11 * 60
+    run(manager, state, rotation=rotation)
+    assert rotation.pasted == [] and [n[0] for n in rotation.notices] == ["limit_failed"] and state.owed("rec-1") is None
 
 
 def test_the_attempts_and_cooldown_survive_a_server_restart(tmp_path):

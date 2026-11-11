@@ -702,3 +702,73 @@ def test_relay_consent_gates_push_and_write_migrates_and_lists_pending(receive_a
     assert r.status_code == 403 and r.json()["detail"]["code"] == "relay_not_accepted"
     cs.save_relay_consent(consent_mod.Consent("all"))
     assert TestClient(gh_app).post(gh_url, json=gh_body).status_code == 200
+
+
+def test_active_account_reaches_a_member_paired_after_the_owner_list_and_the_member_selects_it(tmp_path, monkeypatch):
+    from src.core.pack.relay import adopt_active
+
+    db = tmp_path / "relay.db"
+
+    def open_db() -> sqlite3.Connection:
+        conn = sqlite3.connect(str(db))
+        conn.isolation_level = None
+        return conn
+
+    with open_db() as conn:
+        apply_pack_relay(conn)
+        targets.set_machines(conn, "main", ["dock"], "iid-owner")
+        targets.set_machines(conn, "gone", [], "iid-owner")
+        targets.set_machines(conn, "main", ["dock"], "iid-owner")
+        conn.execute("INSERT INTO pack_relay_targets (account_key, target_install_id, target_profile, state) VALUES "
+                     "('main', 'no-thanks', '', 'off')")
+    bodies: Dict[str, dict] = {}
+
+    def peer(iid: str):
+        async def post(method: str, path: str, body: Optional[dict]) -> Tuple[int, Any]:
+            bodies[iid] = body
+            return 200, {"ok": True}
+        caps = [owner_side.CAP_CREDENTIALS] + ([owner_side.CAP_CREDENTIALS_USE] if iid == "new" else [])
+        return post, caps
+
+    relay = owner_side.Relay(open_db=open_db, peer=peer, notify=lambda: None, self_id="iid-owner",
+                             candidates=lambda: ["dock", "new", "no-thanks"], active=lambda provider: "other")
+    when, _ = _expiry_ms()
+    credential = FakeCredential(FAKE_TOKEN, when)
+    assert sorted(asyncio.run(relay.push_account("main", credential))) == ["dock", "new"]
+    assert "use_for_new_sessions" not in bodies["new"]
+    relay._active = lambda provider: "main"
+    relay._retry_at.clear()
+    asyncio.run(relay.push_account("main", FakeCredential(FAKE_TOKEN, when + timedelta(hours=8))))
+    assert bodies["new"]["use_for_new_sessions"] is True and "use_for_new_sessions" not in bodies["dock"]
+    assert "refresh_token" not in json.dumps(bodies) and "no-thanks" not in bodies
+    assert asyncio.run(relay.push_account("gone", credential)) == []
+
+    monkeypatch.setattr(adopt_active.settings, "auth_config_file", str(tmp_path / "config.json"), raising=False)
+    (tmp_path / "config.json").write_text("{}")
+    monkeypatch.setattr(adopt_active, "_own_login_present", lambda provider: False)
+    name = target_side.relay_profile_name("main", "iid-owner")
+    profile = tmp_path / "home" / ".carnivore" / "accounts" / name
+    profile.mkdir(parents=True)
+    (profile / ".claude.json").write_text('{"hasCompletedOnboarding": true}')
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("CARNIVORE_ACCOUNTS_DIR", str(tmp_path / "home" / ".carnivore" / "accounts"))
+    assert adopt_active.adopt("claude", "main", "iid-owner") is True
+    assert json.loads((tmp_path / "config.json").read_text())["provider_account_switch"]["active_claude"] == name
+    assert adopt_active.adopt("claude", "main", "iid-owner") is False
+
+
+def test_joining_counts_as_the_members_own_yes_only_when_it_never_answered(monkeypatch):
+    from types import SimpleNamespace
+    from src.core.pack.relay import join_consent
+
+    saved: List[Any] = []
+    restrictions: List[dict] = []
+    state = SimpleNamespace(mode=None)
+    wired = SimpleNamespace(
+        state=SimpleNamespace(relay_consent=lambda: SimpleNamespace(mode=state.mode), save_relay_consent=saved.append),
+        runtime=SimpleNamespace(set_restrictions=lambda changes, **kw: restrictions.append(changes)), sync_scopes=lambda: None)
+    monkeypatch.setattr(join_consent.machines_runtime, "wiring", lambda: wired)
+    assert join_consent.accept_on_join() is True
+    assert saved[0].mode == "all" and restrictions == [{"may_receive_credentials": True}]
+    state.mode = "none"
+    assert join_consent.accept_on_join() is False and len(saved) == 1

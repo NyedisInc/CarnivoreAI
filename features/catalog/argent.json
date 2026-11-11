@@ -1,0 +1,64 @@
+{
+  "api_routes": [
+    "GET /api/v1/argent/status",
+    "GET /api/v1/argent/settings",
+    "PUT /api/v1/argent/settings",
+    "POST /api/v1/argent/login/start",
+    "GET /api/v1/argent/login",
+    "DELETE /api/v1/argent/login"
+  ],
+  "area": "settings",
+  "docs": [
+    "docs/argent.md"
+  ],
+  "examples": [
+    "Turn the feature on with a test tenant, arm the rollout and watch two idle sessions restart as resumes and read tethered.",
+    "Stop the gateway and read the outage banner and the direct fallback warning, then start it and watch the rows re-tether.",
+    "Declare a story from a sub-agent and read the per sub-agent cost split on its Swarm card.",
+    "Commit in a test repo with beast mode off and approve the tracker comment from the review list."
+  ],
+  "how_to": [
+    "Open settings, features, and switch the argent feature on; its pane opens under features.",
+    "Type the argent server address and the gateway address, then save addresses. Press log in, open the page it shows, enter the code and approve.",
+    "Flip the tether switch. It only turns on while the gateway is ready, the body cap is raised and you are logged in; otherwise it says why.",
+    "Read the rollout modal: it counts the sessions that will restart as resumes and lists every session that cannot be routed, by reason. Arm it and watch the rows turn tethered after their first traffic.",
+    "Pick the work a new session serves in the launch picker, or let the classifier suggest it; read cost and budget in the grown status bar and on Swarm cards.",
+    "When an item reaches its budget the next prompt is held. Only the budget owner lifts it, from argent or from the notice here.",
+    "Flip the tether switch off to reverse the rollout; every session restarts direct and its key is revoked."
+  ],
+  "id": "argent",
+  "issues": [
+    2817,
+    2819,
+    2847
+  ],
+  "keywords": [
+    "argent",
+    "gateway",
+    "tether",
+    "budget",
+    "login"
+  ],
+  "media_exempt": "needs the live argent gateway",
+  "name": "Argent",
+  "since": "2026-11-05",
+  "status": "beta",
+  "summary": "the argent gateway feature end to end: every claude and codex session on every computer can be routed through the argent gateway under one switch, with a per-session key kept off argv, a rollout that restarts idle sessions as resumes, work items and stories, per item cost and budgets with a prompt hold, write-back to the tracker, outage fallback and an ssh carry for computers that cannot reach the gateway. off means nothing runs and nothing changes.",
+  "surfaces": [
+    "src/api/argent/status.py",
+    "src/core/argent/client.py",
+    "src/core/argent/device_login.py",
+    "src/core/argent/gateway_reach.py",
+    "src/core/argent/health.py",
+    "src/core/argent/overlay.py",
+    "src/core/argent/rollout.py",
+    "src/core/budget_hold/gate.py",
+    "src/core/mcp/argent_tools.py",
+    "src/cplugs/argent/__init__.py",
+    "web/src/cplugs/argent/ArgentSettings.svelte"
+  ],
+  "updated": "2026-11-05",
+  "where": [
+    "Settings, features, argent."
+  ]
+}

@@ -86,6 +86,7 @@ class CplugDefinition:
     on_settings: Optional[LifecycleHook] = None
     before_purge: Optional[LifecycleHook] = None
     settings_check: Optional[SettingsCheck] = None
+    filled_roots: Tuple[str, ...] = ()
 
     @property
     def id(self) -> str:

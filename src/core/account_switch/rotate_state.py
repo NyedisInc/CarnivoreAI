@@ -13,6 +13,8 @@ MAX_ATTEMPTS = 2
 
 COOLDOWN_SECONDS = 30 * 60
 
+OWED_SECONDS = 10 * 60
+
 RETENTION_SECONDS = 9 * 24 * 3600
 
 CAPS_KEY = "_caps"
@@ -70,8 +72,38 @@ class RotationState:
         return bool(self._all().get(record_id, {}).get("continue_sent"))
 
     def mark_continue_sent(self, record_id: str) -> None:
-        self._entry(record_id)["continue_sent"] = True
+        entry = self._entry(record_id)
+        entry["continue_sent"] = True
+        entry.pop("owed", None)
         self._save()
+
+    def owe_continue(self, record_id: str, pane: Dict[str, Any]) -> None:
+        entry = self._entry(record_id)
+        if entry.get("continue_sent") or "owed" in entry:
+            return
+        entry["owed"] = {**pane, "since": self._clock()}
+        self._save()
+
+    def owed(self, record_id: str) -> Optional[Dict[str, Any]]:
+        return self._all().get(record_id, {}).get("owed")
+
+    def owed_records(self) -> Dict[str, Dict[str, Any]]:
+        return {k: v["owed"] for k, v in self._all().items() if not k.startswith("_") and isinstance(v.get("owed"), dict)}
+
+    def bind_owed_pid(self, record_id: str, pid: int) -> None:
+        owed = self.owed(record_id)
+        if owed is not None and owed.get("pid") is None:
+            owed["pid"] = pid
+            self._save()
+
+    def owed_expired(self, record_id: str) -> bool:
+        owed = self.owed(record_id)
+        return owed is not None and self._clock() - float(owed.get("since", 0)) > OWED_SECONDS
+
+    def drop_owed(self, record_id: str) -> None:
+        entry = self._all().get(record_id)
+        if entry is not None and entry.pop("owed", None) is not None:
+            self._save()
 
     def claim_notice(self, record_id: str, outcome: str) -> bool:
         entry = self._entry(record_id)

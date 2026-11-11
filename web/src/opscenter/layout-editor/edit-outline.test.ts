@@ -4,7 +4,6 @@ import { describe, expect, test } from 'vitest';
 const read = (path: string): string => readFileSync(new URL(path, import.meta.url), 'utf8');
 const overlay = read('./EditOverlay.svelte');
 const zone = read('../../lib/drawer-zone/DrawerZone.svelte');
-const glanceArea = read('../../lib/drawer-zone/GlanceArea.svelte');
 const frame = read('../shell/CellFrame.svelte');
 const corner = read('../shell/CornerMenu.svelte');
 
@@ -49,22 +48,12 @@ describe('the edit outline', () => {
     }
   });
 
-  test('outlines the sidebar widget area\'s widgets while editing, in front, drawn inside their edge', () => {
-    expect(zone).toContain('class:dz-widgets--editing={editing}');
-    expect(ruleFor(zone, '.dz-widgets--editing {')).toMatch(/position:\s*relative/);
-    for (const re of inFront('oc-cyan')) expect(ruleFor(zone, '.dz-widgets--editing::after {')).toMatch(re);
-  });
-
-  test('the glance area wears yellow dashes in front on all four sides (Joe, 2026-10-03; placement: DrawerZone.test.ts)', () => {
-    for (const re of inFront('oc-yellow')) expect(ruleFor(glanceArea, '.dz-garea::after {')).toMatch(re);
-  });
-
   test('the widget area draws no sizer under its widgets (Joe, 2026-10-03)', () => {
     expect(zone).not.toMatch(/dz-grip|data-zone-grip|item-resize|role="separator"/);
   });
 
   test('no literal colour sneaks into any rule', () => {
-    for (const rule of [ruleFor(zone, '.dz-widgets--editing::after {'), ruleFor(glanceArea, '.dz-garea::after {'), ruleFor(overlay, "#launchpad-screen .oc-surface)::after")]) {
+    for (const rule of [ruleFor(overlay, "#launchpad-screen .oc-surface)::after")]) {
       expect(rule).not.toMatch(/#[0-9a-f]{3,8}\b|rgb\(|hsl\(/i);
     }
   });

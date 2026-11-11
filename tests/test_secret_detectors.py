@@ -11,6 +11,7 @@ from src.core.message_model_secrets import (
     DETECTOR_AWS_ACCESS_KEY_ID,
     DETECTOR_AWS_SECRET_ACCESS_KEY,
     DETECTOR_BEARER_TOKEN,
+    DETECTOR_API_KEY_HEADER,
     DETECTOR_JWT,
     DETECTOR_CLOUDFLARE_API_TOKEN,
     DETECTOR_GITHUB_TOKEN,
@@ -112,6 +113,10 @@ CASES = {
             "Authorization: Bearer <token>",
             "the bearer of good news",
         ],
+    ),
+    DETECTOR_API_KEY_HEADER: (
+        f"ANTHROPIC_CUSTOM_HEADERS=x-api-key: {FAKE_BEARER}",
+        ["x-api-key: $_ak", 'x-api-key: "$CARNIVORE_ARGENT_KEY"', "x-api-key: <key>", "the x-api-key header"],
     ),
     DETECTOR_JWT: (
         f"session {FAKE_JWT} end",

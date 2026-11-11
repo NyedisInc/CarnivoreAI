@@ -11,11 +11,12 @@
   import { restartSession } from '../launchpad/running-actions';
   import { browserRunningHost, type RespawnResult, type RunningHost } from '../launchpad/running-host';
   import type { RunningElsewhere } from './switch-model';
-  import { resetAll, runningKey, type BulkPreview } from './reset-all';
+  import { runningKey } from './reset-all';
   import {
     accountName,
     accountSwitch,
     loadRunningElsewhere,
+    restartRunningBulk,
     setAutoSwitch,
     switchActivity,
   } from './switch-store.svelte';
@@ -91,33 +92,15 @@
     const captured = switchActivity.running.map((row) => ({ ...row }));
     if (!captured.length || runningKey(captured) !== confirmedKey) return;
     resettingAll = true;
-    switchActivity.busy = 'bulk';
     confirmedKey = null;
     bulkFailures = [];
     bulkResult = null;
     try {
-      const result = await resetAll(captured, {
-        running: () => authFetch<RunningElsewhere[]>('/provider-ledger/switch/running'),
-        preview: (name): Promise<BulkPreview> => authFetch<BulkPreview>(
-          `/sessions/restart/preview?session_name=${encodeURIComponent(name)}`,
-        ),
-        respawn: (name) => authFetch<{ ok?: boolean; detail?: string | null }>('/sessions/respawn', {
-          method: 'POST',
-          body: JSON.stringify({ session_name: name, confirm_restart_live: true, resume_after_restart: true }),
-        }),
-      });
-      bulkFailures = result.failures.map(({ row, reason, detail }) => t(
-        `account_switch.running.reset_${reason}`,
-        { session: row.label || row.tmux_session, reason: detail || t('opscenter.value.read_failed') },
-      ));
-      bulkResult = t('account_switch.running.reset_result', {
-        restarted: result.restarted,
-        total: captured.length,
-      });
+      const done = await restartRunningBulk(captured);
+      bulkFailures = done.failures;
+      bulkResult = done.result;
     } finally {
-      switchActivity.busy = null;
       resettingAll = false;
-      await loadRunningElsewhere();
     }
   }
 </script>

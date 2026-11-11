@@ -84,6 +84,7 @@ from src.core.auto_sleep.pane_ports import PORT_WATCH
 from src.core.db_reuse.core_read import lend_for_state_dir, lend_pooled_or_raise
 from src.core.sessions.listing_connection import lend_name_read_connection
 from src.core import session_ghost_reap, session_name_claim, session_sleep
+from src.core.sessions import session_events
 from src.core.pack.identity import home as project_home
 from src.core.listing_prefetch import ListingPrefetch
 from src.core.session_token_usage.listing_model_facts import ModelListingFacts, facts_matching_family
@@ -118,7 +119,7 @@ from src.core.session_startup_gate_ledger import (
     capture_pane_tail,
 )
 from src.core import unread_follow_up, unread_identity
-from src.core.sessions import startup_tail_prefetch
+from src.core.sessions import launch_overlay, startup_tail_prefetch
 from src.core import session_view_clears
 from src.core import toast_auto_ack
 from src.core.bounded_stream import OFFER_ACCEPTED, OFFER_OVERFLOWED
@@ -901,7 +902,7 @@ class SessionManager:
         agent_extra_args: Optional[List[str]] = None,
         label: Optional[str] = None,
         reuse_session_id: Optional[int] = None,
-        extra_env: Optional[Mapping[str, str]] = None,
+        extra_env: Optional[Mapping[str, Optional[str]]] = None,
         host_key: str = LOCAL_HOST_KEY,
         claude_account: Optional[str] = None,
     ) -> Session:
@@ -1054,7 +1055,8 @@ class SessionManager:
                     extra_args=(agent_extra_args or []) + name_args,
                 )
                 if plan_sink:
-                    prepared = await create_seam.prepare(plan_sink[0], account_id=claude_account)
+                    prepared = await create_seam.prepare(plan_sink[0], account_id=claude_account, overlay_ctx=create_seam.overlay_ctx_for(
+                        plan_sink[0], tmux_session_name, str(work_path), label))
                     spawn_env, launch_record_json = {**spawn_env, **prepared.staged}, prepared.record
                 ran = launch_record(resolved_agent_type, self._wrappers_reader())
                 launched_family, recorded_agent_type = ran.family, ran.agent_type
@@ -1065,7 +1067,9 @@ class SessionManager:
                     initial_rows=initial_rows,
                 )
                 if plan_sink:
+                    await create_seam.deliver_late(backend, prepared)
                     await create_seam.scrub_staging(backend, prepared.staged)
+                    await launch_overlay.confirm(tmux_session_name)
             else:
                 await backend.start(
                     env=spawn_env,
@@ -1150,6 +1154,8 @@ class SessionManager:
                 origin_persist=create_persist_outcome,
             )
             _record_stats_event("session_created", session_id)
+            if owned_name and not is_remote_backend(backend):
+                session_events.schedule(self, session_events.STARTED, owned_name, reason="created", display_name=label or owned_name)
 
             return new_session
 
@@ -1265,6 +1271,8 @@ class SessionManager:
                 self._owned.names.discard(owned_name)
                 self._theme_store.discard_pin(owned_name)
 
+            if owned_name and not remote:
+                await session_events.announce(self, session_events.ENDED, owned_name, reason="destroyed")
             if backend is not None:
                 await backend.stop()
 
@@ -1539,6 +1547,7 @@ class SessionManager:
                 error=str(exc),
             )
 
+        await session_events.announce(self, session_events.RENAMED, new_name, old_name=old_name)
         logger.info(
             "session_renamed",
             session_id=session_id,
@@ -2742,7 +2751,7 @@ class SessionManager:
         status_map = status_map_from_listing(
             status_listing, socket=self._probe_health.socket
         )
-        self.reconcile_lifecycle(listing, status_map)
+        session_events.schedule_stopped(self, self.reconcile_lifecycle(listing, status_map).stopped_uuids)
         rows = listing.sessions
         wrappers = self._wrappers_reader()
         instance_index = self._instance_index_for_listing(
@@ -2985,6 +2994,7 @@ class SessionManager:
                 scrollback_bytes=len(scrollback),
             )
 
+            session_events.schedule(self, session_events.STARTED, name, reason="adopted")
             return {
                 "session": adopted_session,
                 "initial_scrollback_b64": sb_b64,
@@ -3009,6 +3019,7 @@ class SessionManager:
         socket_name = self.tmux_socket_name()
 
         logger.info("destroying_external_session", name=name, socket=socket_name)
+        await session_events.announce(self, session_events.ENDED, name, reason="external_destroyed")
 
         proc = await asyncio.create_subprocess_exec(
             *tmux_argv_prefix(socket_name), "kill-session", "-t", target,
@@ -3215,7 +3226,7 @@ class SessionManager:
         live_restart_confirmed: bool = False,
         require_agent_resume: bool = False,
         account_id: Optional[str] = None, account_pinned: bool = False, persist_account: bool = True,
-        live_restart_reason: Optional[str] = None, start_directory: Optional[str] = None,
+        live_restart_reason: Optional[str] = None, start_directory: Optional[str] = None, argent_rebuild: bool = False,
     ) -> dict:
         from src.core.tmux_backend import TmuxBackend
         from src.core.tmux_transport.target import check_target_name
@@ -3240,7 +3251,9 @@ class SessionManager:
 
         replayed = await restart_seam.replay_for_restart(
             settings, self._datastore_connection(), socket_name, name, model=self._model_for_tmux_name(name),
-            extra_args=resume_args, picked=bool(agent_type and str(agent_type).strip()))
+            extra_args=resume_args, picked=bool(agent_type and str(agent_type).strip()),
+            rebuild_adopted=argent_rebuild, conversation_uuid=resume_target.claude_session_uuid)
+        require_agent_resume = require_agent_resume or bool(argent_rebuild and replayed)
         agent_command = replayed.command if replayed else self._agent_command_for_tmux_name(
             name, socket_name=socket_name, extra_args=resume_args
         )
@@ -3321,7 +3334,7 @@ class SessionManager:
                 }
         if spawn_env is not None and (agent_command or chosen_command):
             spawn_env = await launch_env.respawn_pane_env(
-                spawn_env, claude_account=account_plan.account_id, family=resume_family)
+                spawn_env, claude_account=account_plan.account_id, family=resume_family, pane=(socket_name, name))
         if replayed and replayed.staged:
             spawn_env = {**(spawn_env or {}), **replayed.staged}
 
@@ -3361,6 +3374,7 @@ class SessionManager:
         account_pin = await restart_account.persist(
             launch_env._config_path(), identity.get("session_uuid"), account_plan) if result.ok else None
         if result.ok and result.kind == "agent":
+            await launch_overlay.confirm(name)
             await restart_seam.write_record(
                 settings, self._writable_datastore_connection(fresh=True), replayed, chosen_type, identity.get("session_uuid"),
                 model=self._model_for_tmux_name(name), extra_args=resume_args, account_id=account_plan.account_id)

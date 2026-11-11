@@ -43,6 +43,7 @@ class Copy:
     sha256: str
     captured_epoch: float
     opener: Callable[[], Iterator[bytes]]
+    mode: int = 0
 
     @property
     def key(self) -> tuple:
@@ -58,9 +59,9 @@ def measure(opener: Callable[[], Iterator[bytes]]) -> tuple:
 
 
 def checked(intake: Intake, source: str, locator: str, ident: names.Ident, opener: Callable[[], Iterator[bytes]], captured: float, *,
-            want_sha: Optional[str] = None, want_length: Optional[int] = None, errors: tuple = (OSError,), trust: bool = False) -> Optional[Copy]:
+            want_sha: Optional[str] = None, want_length: Optional[int] = None, errors: tuple = (OSError,), trust: bool = False, mode: int = 0) -> Optional[Copy]:
     if trust and want_sha and want_length is not None:
-        return Copy(source, locator, ident, int(want_length), want_sha, captured, opener)
+        return Copy(source, locator, ident, int(want_length), want_sha, captured, opener, mode)
     try:
         length, sha = measure(opener)
     except errors as exc:
@@ -71,4 +72,4 @@ def checked(intake: Intake, source: str, locator: str, ident: names.Ident, opene
         intake.refused.append(Refusal(source, locator, "the bytes are not what the source recorded"))
         logger.warning("old_source_mismatch", source=source, locator=locator)
         return None
-    return Copy(source, locator, ident, length, sha, captured, opener)
+    return Copy(source, locator, ident, length, sha, captured, opener, mode)

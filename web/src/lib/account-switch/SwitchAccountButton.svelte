@@ -39,7 +39,8 @@
     data-tone="setup"
     title={t('account_switch.row.needs_setup_title', { name: account.name })}
     aria-label={t('account_switch.row.needs_setup_title', { name: account.name })}
-    disabled={switchActivity.busy !== null}
+    disabled={busy}
+    aria-disabled={switchActivity.busy !== null}
     onclick={() => void setUp()}
     >{busy ? t('account_switch.row.setting_up') : t('account_switch.row.needs_setup')}</Button
   >
@@ -48,7 +49,8 @@
     data-asw
     title={t('account_switch.row.switch_title', { provider, name: account.name })}
     aria-label={t('account_switch.row.switch_title', { provider, name: account.name })}
-    disabled={switchActivity.busy !== null}
+    disabled={busy}
+    aria-disabled={switchActivity.busy !== null}
     onclick={() => void switchTo(account.id)}
     >{busy ? t('account_switch.row.switching') : t('account_switch.row.switch')}</Button
   >

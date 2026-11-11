@@ -12,7 +12,7 @@ from src.core import theme_script_consent as ladder
 from src.core.db_migration import ensure_db_migrated
 from src.core.theme_catalog_consent import CONSENT_FIELD, effects_digest_of
 from src.core.ui_preferences_store import COMMITTED
-from src.cplugs.host import runtime, sideload, sidecar_boot, sidecar_registry
+from src.cplugs.host import developer_mode, runtime, sideload, sideload_copy, sidecar_boot, sidecar_registry
 from tests.python.api_keys.conftest import bearer, client, key_store, owner_jwt  # noqa: F401
 from tests.test_skill_installer import FakeInstallRoots
 
@@ -76,6 +76,7 @@ def world(tmp_path, client, owner_jwt, monkeypatch):  # noqa: F811
     monkeypatch.setenv("CARNIVORE_USER_THEMES_DIR", str(roots.home / "themes"))
     clock = SimpleNamespace(t=1_000_000.0)
     monkeypatch.setattr(sideload, "wall", lambda: clock.t)
+    monkeypatch.setattr(developer_mode, "is_on", lambda: True)
     owner = bearer(owner_jwt)
     assert client.put(f"{URL}/switch", json={"enabled": True}, headers=owner).json()["enabled"] is True
     try:
@@ -421,7 +422,7 @@ def test_a_folder_swapped_for_a_link_during_the_copy_is_refused_not_followed(tmp
 
     monkeypatch.setattr(os, "fwalk", swapping)
     with pytest.raises(sideload.SideloadRefused) as caught:
-        sideload.copy_tree(src, tmp_path / "copy")
+        sideload_copy.copy_tree(src, tmp_path / "copy")
     assert caught.value.code == "source_unsafe"
     assert not list((tmp_path / "copy").rglob("secret.txt"))
 
@@ -431,9 +432,9 @@ def test_the_remaining_byte_budget_is_checked_before_a_file_is_read(tmp_path, mo
     src.mkdir()
     (src / "a.txt").write_text("12345678")
     (src / "b.txt").write_text("12345678")
-    monkeypatch.setattr(sideload, "MAX_BYTES", 12)
+    monkeypatch.setattr(sideload_copy, "MAX_BYTES", 12)
     with pytest.raises(sideload.SideloadRefused) as caught:
-        sideload.copy_tree(src, tmp_path / "copy")
+        sideload_copy.copy_tree(src, tmp_path / "copy")
     assert caught.value.code == "source_too_big"
 
 

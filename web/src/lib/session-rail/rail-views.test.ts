@@ -60,7 +60,7 @@ describe('the right-click view menu', () => {
     follow(RAIL_FIELD, one({ widget: 'core.notes' }));
     const event = rightClick(keyIn('side', 'core.notes'));
     expect(event.defaultPrevented).toBe(true);
-    expect(nodes()).toEqual(expect.arrayContaining(['pop-out', 'show-header', 'close-widget']));
+    expect(nodes()).toEqual(expect.arrayContaining(['pop-out', 'show-header', 'remove-widget']));
     expect(document.querySelector('[data-node="session"], [data-node="all"]')).toBeNull();
   });
 
@@ -110,7 +110,7 @@ describe('right-click on any key, in either mode', () => {
     for (const id of ['core.files', 'core.crosstalk', 'core.tasks']) {
       expect(rightClick(keyIn('side', id)).defaultPrevented).toBe(true);
       const ids = nodes();
-      expect(ids).toEqual(expect.arrayContaining(['pop-out', 'show-header', 'close-widget']));
+      expect(ids).toEqual(expect.arrayContaining(['pop-out', 'show-header', 'remove-widget']));
       if (id === 'core.tasks') expect(ids).toEqual(expect.arrayContaining(['session', 'all']));
       else expect(ids).not.toEqual(expect.arrayContaining(['session']));
       expect(ids).not.toContain('settings');
@@ -123,7 +123,7 @@ describe('right-click on any key, in either mode', () => {
     layoutEditor.active = true;
     flushSync();
     expect(rightClick(keyIn('side', 'core.files')).defaultPrevented).toBe(true);
-    expect(nodes()).toEqual(expect.arrayContaining(['showGlobalFolder', 'topFolder', 'show-header', 'widget-move-up', 'widget-move-down', 'move-to-bar', 'done-editing', 'close-widget']));
+    expect(nodes()).toEqual(expect.arrayContaining(['showGlobalFolder', 'topFolder', 'show-header', 'widget-move-up', 'widget-move-down', 'move-to-bar', 'done-editing', 'remove-widget']));
     expect(nodes()).not.toContain('pop-out');
     expect(document.querySelector('[data-node="widget-move-up"]')!.getAttribute('aria-disabled')).toBe('true');
     expect(document.querySelector('[data-node="widget-move-down"]')!.getAttribute('aria-disabled')).toBeNull();

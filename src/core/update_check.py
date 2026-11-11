@@ -270,7 +270,7 @@ class UpdateChecker:
         except OSError as exc:
             logger.warning("update_check_cache_write_failed", error=str(exc))
         if status.status == STATUS_UPDATE_AVAILABLE:
-            update_source.on_available(status.latest_version)
+            update_source.on_available(status.latest_version, current_version=status.current_version)
         return status
 
     def _load_cache(self) -> Optional[UpdateStatus]:

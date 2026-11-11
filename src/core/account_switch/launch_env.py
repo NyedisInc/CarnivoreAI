@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
-from typing import Callable, Dict, List, Mapping, Optional
+from typing import TYPE_CHECKING, Callable, Dict, List, Mapping, Optional, Tuple
 
 import structlog
 
@@ -13,6 +13,9 @@ from src.core.account_switch import profile_setup, shared_links, store
 from src.core.account_switch.active import PROVIDERS, find_account
 from src.core.provider_ledger import accounts_store, poller_scan, relay_accounts
 from src.core.provider_ledger.login_command import PROFILE_ENV_VARS, login_profile_dir
+
+if TYPE_CHECKING:
+    from src.core.account_switch.codex_follow import KeptHome
 
 logger = structlog.get_logger()
 
@@ -24,7 +27,7 @@ def profile_env_for(account: ProviderAccount) -> AccountEnv:
     if provider not in PROVIDERS:
         return {}
     if provider == "codex":
-        return _codex_relay_launch_env(account)
+        return _codex_launch_env(account)
     variable = PROFILE_ENV_VARS[provider]
     profile = profile_dir_for(account)
     if shared_links.is_default_profile(provider, profile):
@@ -47,17 +50,31 @@ def profile_env_for(account: ProviderAccount) -> AccountEnv:
     return {variable: login_profile_dir(account)}
 
 
-def _codex_relay_launch_env(account: ProviderAccount) -> AccountEnv:
+def _codex_launch_env(account: ProviderAccount) -> AccountEnv:
     from src.core.pack.relay.codex_target import codex_relay_env
 
-    if not relay_accounts.is_codex_relay_account(account):
-        logger.warning("account_switch_codex_not_relayed", account_id=account.id)
-        return {}
     home = login_profile_dir(account)
     if not Path(home).is_dir():
         logger.warning("account_switch_codex_home_missing", account_id=account.id)
         return {}
-    return dict(codex_relay_env(home))
+    if relay_accounts.is_codex_relay_account(account):
+        return dict(codex_relay_env(home))
+    return {"CODEX_HOME": home}
+
+
+def _codex_follow_env(config_path: Path, accounts: List[ProviderAccount]) -> AccountEnv:
+    from src.core.account_switch import codex_follow
+
+    try:
+        account_id = codex_follow.follow_active_account(config_path)
+    except codex_follow.CodexAccountRefused:
+        return {}
+    account = find_account(relay_accounts.with_relay(accounts), account_id, "codex")
+    return profile_env_for(account) if account is not None else {}
+
+
+def codex_removals() -> AccountEnv:
+    return _removals("codex")
 
 
 def _removals(provider: str) -> AccountEnv:
@@ -97,9 +114,16 @@ def account_env(
     for provider in providers:
         pointer = switch.active_for(provider)
         if pointer is None:
+            if provider == "codex":
+                env.update(_codex_follow_env(config_path, accounts) or {})
             continue
         account = find_account(relay_accounts.with_relay(accounts), pointer, provider)
         if account is None:
+            if provider == "codex":
+                followed = _codex_follow_env(config_path, accounts)
+                if followed:
+                    env.update(followed)
+                    continue
             logger.info("account_switch_pointer_stale", provider=provider, account_id=pointer)
             env.update(_removals(provider))
             continue
@@ -137,10 +161,35 @@ async def new_pane_env(
     return apply_to_new_pane(spawn_env, env)
 
 
+async def _kept_pane_home(
+    config_path: Path, pane: Optional[Tuple[str, str]], claude_account: Optional[str], family: str, read_profile=None,
+) -> Optional["KeptHome"]:
+    from src.core.account_switch import codex_follow, pane_account
+
+    if family != "codex" or claude_account is not None or pane is None:
+        return None
+    reader = read_profile or pane_account.read_pane_profile
+    current = await reader(pane[0], pane[1], PROFILE_ENV_VARS["codex"])
+    if not current.readable:
+        return None
+    try:
+        return await asyncio.to_thread(codex_follow.kept_home, config_path, current.value)
+    except (FileNotFoundError, ValueError, OSError) as exc:
+        logger.warning("account_switch_codex_keep_unavailable", error=type(exc).__name__)
+        return None
+
+
 async def respawn_pane_env(
-    spawn_env: Mapping[str, str], *, claude_account: Optional[str] = None, family: str = "claude"
+    spawn_env: Mapping[str, str], *, claude_account: Optional[str] = None, family: str = "claude",
+    pane: Optional[Tuple[str, str]] = None, read_profile=None,
 ) -> Dict[str, Optional[str]]:
-    env = await asyncio.to_thread(account_env, _config_path(), claude_account=claude_account, family=family)
+    path = _config_path()
+    kept = await _kept_pane_home(path, pane, claude_account, family, read_profile)
+    if kept is not None and kept.account_id is None:
+        env: AccountEnv = {}
+    else:
+        account = kept.account_id if kept is not None else claude_account
+        env = await asyncio.to_thread(account_env, path, claude_account=account, family=family)
     merged = apply_to_new_pane(spawn_env, env)
     if family == "codex":
         for variable in _removals("codex"):
@@ -149,6 +198,26 @@ async def respawn_pane_env(
 
 
 UNUSABLE_DETAIL = "account profile not usable, pane unchanged"
+
+CODEX_FOLLOW_DETAIL = {
+    "no_codex_account": "no codex account is logged in, so the pane would start on a sign-in screen; log one in under providers, pane unchanged",
+    "codex_account_choice": "more than one codex account is logged in; restart with the account you want, pane unchanged",
+}
+
+
+def _codex_follow_refusal(config_path: Path, claude_account: Optional[str], family: str) -> Optional[str]:
+    from src.core.account_switch import codex_follow
+
+    if family != "codex" or claude_account is not None:
+        return None
+    try:
+        codex_follow.follow_active_account(config_path)
+    except codex_follow.CodexAccountRefused as exc:
+        logger.warning("account_switch_codex_follow_refused", code=exc.code)
+        return CODEX_FOLLOW_DETAIL[exc.code]
+    except (FileNotFoundError, ValueError, OSError):
+        return None
+    return None
 
 
 def _unusable_targets(
@@ -186,6 +255,11 @@ async def restart_refusal(
 
     reader = read_profile or pane_account.read_pane_profile
     path = config_path if config_path is not None else _config_path()
+    if await _kept_pane_home(path, (socket, tmux_name), claude_account, family, reader) is not None:
+        return None
+    follow = await asyncio.to_thread(_codex_follow_refusal, path, claude_account, family)
+    if follow:
+        return follow
     bad = await asyncio.to_thread(_unusable_targets, path, claude_account, family)
     for account in bad:
         current = await reader(socket, tmux_name, PROFILE_ENV_VARS[account.provider])

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+from src.core.launch_profiles.installed import path_with_install_dirs
 import re
 import shlex
 import time
@@ -338,6 +339,8 @@ class TmuxBackend(SessionBackend):
         pane_lang = tmux_env.get("LANG")
         if pane_lang:
             args.extend(["-e", f"LANG={pane_lang}"])
+
+        tmux_env["PATH"] = path_with_install_dirs(tmux_env.get("PATH") or os.environ.get("PATH", ""))
 
         for key, value in sorted((env or {}).items()):
             if value is None:

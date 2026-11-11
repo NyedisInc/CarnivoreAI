@@ -8,6 +8,7 @@ from typing import Callable, Optional
 
 from src.core.agent_families import AGENT_FAMILY_BY_NAME
 from src.core.sessions.agent_update import CLAUDE_INSTALL_CANDIDATES
+from src.core.sessions.codex_update import CODEX_INSTALL_CANDIDATES
 
 _TRANSPARENT = ("command", "exec")
 
@@ -44,3 +45,12 @@ def harness_installed(harness: str, locate: Locator = _locate) -> bool:
         return True
     binary = family_binary(harness)
     return binary is not None and locate(binary) is not None
+
+
+def path_with_install_dirs(path: str) -> str:
+    have = path.split(os.pathsep) if path else []
+    for candidate in CLAUDE_INSTALL_CANDIDATES + CODEX_INSTALL_CANDIDATES:
+        folder = Path(candidate).expanduser().parent
+        if str(folder) not in have and folder.is_dir():
+            have.append(str(folder))
+    return os.pathsep.join(have)

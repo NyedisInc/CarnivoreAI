@@ -5,7 +5,7 @@
   import { primarySessionId, openSettings } from '../../api/host';
   import { rowFor } from '../terminal-viewer/meta';
   import { terminalAction, toolShowing } from './actions';
-  import { splitToolbar, planFolds, menuItems, itemApplies, STRIP_ITEMS, TOOLBAR_ITEMS, type ToolbarItem, type ToolbarSplit } from './toolbar';
+  import { splitToolbar, planFolds, menuItems, itemApplies, KEY_BAR_KEYS, STRIP_ITEMS, TOOLBAR_ITEMS, type ToolbarItem, type ToolbarSplit } from './toolbar';
   import { isKeptAwake } from '../../../lib/auto-sleep/auto-sleep-store.svelte';
   import { notesAreOpen, toggleSessionNotes } from '../../../lib/notes-header/mount-notes';
   import { inputFocus } from '../../lib/input-focus.svelte';
@@ -15,6 +15,7 @@
   import { t } from '../../../lib/i18n/index.svelte';
   import TerminalBackgroundButton from '../../../lib/terminal-background/TerminalBackgroundButton.svelte';
   import SizeMasterCrown from './SizeMasterCrown.svelte';
+  import { setPendingTheme } from './pending-theme.svelte';
   import { closeRowMenu, openRowMenu, uuidOfTmuxName } from './row-menu';
   import Glyph from '../../../lib/Glyph.svelte';
   import { sizeMasterRole, toggleSizeMaster } from '../../api/size-master.svelte';
@@ -54,7 +55,7 @@
     return pressed(item);
   }
 
-  const applies = (item: ToolbarItem): boolean => itemApplies(item.id, agentFamily);
+  const applies = (item: ToolbarItem): boolean => itemApplies(item.id, agentFamily) && !(appRows && KEY_BAR_KEYS.has(item.id));
 
   const split = $derived.by((): ToolbarSplit => {
     if (!fit) return { ...ladder, bar: ladder.bar.filter(applies), overflow: ladder.overflow.filter(applies) };
@@ -237,6 +238,7 @@
     picker.open(anchor, { sessionName: row.tmux_session, hostKey: row.host_key,
       pinnedTheme: row.pinned_theme,
       agentType: row.agent_type, onSelected: () => { void sessions.refresh(true); },
+      onPending: (id: string | null) => setPendingTheme(row!.tmux_session!, id),
       onClose: () => { themeOpen = false; } });
     themeOpen = true;
   }
@@ -356,7 +358,7 @@
   
   {#if kebabHolds}
   <button type="button" bind:this={menuAnchor} aria-label={t('terminal.options.label')}
-    aria-haspopup="menu" aria-expanded={expanded} data-tool="overflow" onclick={showOptions}><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>
+    aria-haspopup="menu" aria-expanded={expanded} data-tool="overflow" data-motion-grab onclick={showOptions}><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>
   {/if}
 </div>
 

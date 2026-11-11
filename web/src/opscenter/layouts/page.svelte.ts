@@ -236,6 +236,7 @@ export async function openLayout(uuid: string, fromUrl = false, focusSession = '
   }
   const nav = beginNav('layout:' + uuid);
   if (layoutActive()) void flushShape();
+  // a newer revision
   const heldRow = layoutByUuid(uuid);
   const held = heldRow ? ($state.snapshot(heldRow) as unknown as SavedLayout) : null;
   const found = held ? { saved: held, held: true } : await fetchLayout(uuid);

@@ -37,6 +37,7 @@ export interface DeepGroup {
   firstPrompt: string | null;
   workingDir: string | null;
   lastActive: string | null;
+  exact: boolean | null;
   family: string | null;
   subagentMatches: number;
   hostKey: string | null;
@@ -117,6 +118,7 @@ function readGroup(raw: unknown): DeepGroup | null {
     firstPrompt: str(raw.first_prompt),
     workingDir: str(raw.working_dir),
     lastActive: str(raw.last_active),
+    exact: typeof raw.exact === 'boolean' ? raw.exact : null,
     family: str(raw.family),
     subagentMatches: num(byFile.subagent) ?? 0,
     hostKey: str(raw.host_key),
@@ -169,6 +171,7 @@ export function readSuggestions(raw: unknown): DeepSuggestion[] {
 export interface SearchScope {
   kinds?: string;
   conversationId?: string;
+  sort?: 'relevance' | 'date';
 }
 
 /* the whole conversation */
@@ -188,6 +191,7 @@ export function groupedSearchApi(path: string, extra: Record<string, string> = {
     filters,
     async search(query, offset, signal, scope) {
       const params = new URLSearchParams({ q: query, limit: String(PAGE_SIZE), offset: String(offset), per_group: String(PER_GROUP), ...extra });
+      if (scope?.sort) params.set('sort', scope.sort);
       if (filters && scope?.kinds) params.set('kinds', scope.kinds);
       if (filters && scope?.conversationId) {
         params.set('conversation_id', scope.conversationId);

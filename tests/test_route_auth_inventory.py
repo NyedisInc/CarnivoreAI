@@ -24,6 +24,10 @@ from src.cplugs.sdk import public_routes  # noqa: E402
 
 PUBLIC_HTTP = {
     ("GET", "/api/v1/cplugs/{cplug_id}/view/{name}/{ticket}/{rest:path}"): "a plugin view frame loads in an iframe, which cannot send a bearer; the signed one-hour ticket in the path is the credential (A15, sidecar_view.py)",
+    ("POST", "/api/v1/notify/act"): "the X-Carnivore-Cap capability token is the credential, checked by notify_caps.verify (unknown, expired or unpaired is a uniform 404/410); passes the phone gate only through is_cap_route, R4",
+    ("GET", "/api/v1/notify/card"): "the X-Carnivore-Cap capability token is the credential, checked by notify_caps.verify (unknown, expired or unpaired is a uniform 404/410); passes the phone gate only through is_cap_route, R4",
+    ("GET", "/api/v1/notify/media/{media_id}"): "the X-Carnivore-Cap capability token is the credential, checked by notify_caps.verify (unknown, expired or unpaired is a uniform 404/410); passes the phone gate only through is_cap_route, R4",
+    ("GET", "/api/v1/notify/media/{media_id}/poster"): "the X-Carnivore-Cap capability token is the credential, checked by notify_caps.verify (unknown, expired or unpaired is a uniform 404/410); passes the phone gate only through is_cap_route, R4",
     ("POST", "/api/v1/auth/verify"): "the TOTP login itself",
     ("POST", "/api/v1/auth/refresh"): "exchanges a refresh token, which is its own credential",
     ("POST", "/api/v1/auth/logout"): "revokes the presented refresh token; harmless unauthenticated",

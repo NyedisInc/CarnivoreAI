@@ -8,6 +8,7 @@
   import { t } from '../i18n/index.svelte';
   import type { DrawerSearchController } from './provider-types';
   import LayoutToggle from './LayoutToggle.svelte';
+  import SortToggle from './SortToggle.svelte';
   import ResultsList from './ResultsList.svelte';
   import { DeepSearchController, KIND_FILTERS, MIN_QUERY_CHARS } from './deepsearch.svelte';
   import { HIT_ID_PREFIX } from './ids';
@@ -75,6 +76,7 @@
 <div class="dps" data-testid="deepsearch" bind:this={rootEl}>
   <div class="dps__bar">
     <p class="dps__status" role="status" aria-live="polite">{statusText()}</p>
+    {#if barShown}<SortToggle value={controller.sort} onChange={(s) => controller.setSort(s)} />{/if}
     {#if barShown}<LayoutToggle value={controller.layout} onChange={(l) => controller.setLayout(l)} />{/if}
   </div>
   {#if controller.phase === 'done' && staleLine(controller.stale.length, t)}

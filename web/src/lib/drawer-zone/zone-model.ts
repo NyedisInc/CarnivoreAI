@@ -2,7 +2,7 @@
 import { CORE_MANIFESTS, manifestById } from '../../opscenter/widgets/core-manifests';
 import type { WidgetLook, WidgetManifest } from '../../opscenter/widgets/types';
 import { hasViews, mergedIds, mergePlacement, viewOfPlacement } from '../../opscenter/widgets/views';
-import { hasPlacementOptions, hasRepeatableOptions, isRetiredPlacementKey, type PlacementOptions, type PlacementOptionValue } from '../../opscenter/widgets/placement-options';
+import { ZONE_HEIGHT_OPTION, clampZoneHeight, hasPlacementOptions, hasRepeatableOptions, isRetiredPlacementKey, type PlacementOptions, type PlacementOptionValue } from '../../opscenter/widgets/placement-options';
 import { OPTION_KEY_RE, normalizeOptionValues } from './option-values';
 import { HEADER_OPTION } from '../../opscenter/shell/widget-head';
 
@@ -82,6 +82,11 @@ export function normalizeZone(raw: unknown, max: number = MAX_ZONE_ITEMS): ZoneI
     if (view) item.view = view;
     if (instance) item.instance = instance;
     const options = normalizeOptionValues(storedOptions, MAX_ZONE_ITEM_OPTIONS);
+    const height = options[ZONE_HEIGHT_OPTION];
+    if (height !== undefined) {
+      if (typeof height === 'number') options[ZONE_HEIGHT_OPTION] = clampZoneHeight(height);
+      else delete options[ZONE_HEIGHT_OPTION];
+    }
     if (Object.keys(options).length > 0) item.options = options;
     items.push(item);
     if (items.length >= max) break;
@@ -159,9 +164,12 @@ export function setItemView(items: readonly ZoneItem[], key: string, view: strin
   });
 }
 
+const CHROME_OPTIONS: ReadonlySet<string> = new Set([HEADER_OPTION, ZONE_HEIGHT_OPTION]);
+
 export function setItemOption(items: readonly ZoneItem[], key: string, option: string, value: PlacementOptionValue | null): ZoneItem[] {
   const found = items.find((item) => zoneItemKey(item) === key);
-  if (!found || (option !== HEADER_OPTION && !hasPlacementOptions(found.widget)) || !OPTION_KEY_RE.test(option)) return [...items];
+  if (!found || (!CHROME_OPTIONS.has(option) && !hasPlacementOptions(found.widget)) || !OPTION_KEY_RE.test(option)) return [...items];
+  if (value !== null && !(option in (found.options ?? {})) && Object.keys(found.options ?? {}).length >= MAX_ZONE_ITEM_OPTIONS) return [...items];
   return items.map((item) => {
     if (zoneItemKey(item) !== key) return item;
     const { options: _old, ...rest } = item;
@@ -176,7 +184,7 @@ export function resetItemOptions(items: readonly ZoneItem[], key: string): ZoneI
   return items.map((item) => {
     if (zoneItemKey(item) !== key) return item;
     const { options: old, ...rest } = item;
-    const header = old?.[HEADER_OPTION];
-    return typeof header === 'boolean' ? { ...rest, options: { [HEADER_OPTION]: header } } : rest;
+    const kept = Object.fromEntries([...CHROME_OPTIONS].filter((k) => typeof old?.[k] === (k === HEADER_OPTION ? 'boolean' : 'number')).map((k) => [k, old![k]!]));
+    return Object.keys(kept).length > 0 ? { ...rest, options: kept } : rest;
   });
 }

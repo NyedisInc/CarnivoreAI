@@ -6,6 +6,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 from urllib.parse import urlparse
 
 from src.core.catalog.index_cache import IndexSnapshot
+from src.core.catalog.publisher_rename import find_installed_item
 from src.core.skills.ledger_types import InstalledItem
 from src.core.skills.updates import update_available
 from src.models.catalog import CatalogItem, ItemVersion
@@ -60,7 +61,7 @@ def find_item(
 
 
 def badge_for(installed: InstalledItem, snapshot: IndexSnapshot) -> bool:
-    item, _untrusted = find_item(snapshot, installed.item_id)
+    item, _untrusted = find_installed_item(snapshot, installed.item_id, installed.kind)
     if item is None:
         return False
     version = latest_version(item)

@@ -23,11 +23,10 @@ PLAN_GROUPS = {
                   "approval.agent_action", "approval.folder_trust"],
     "sessions": ["session.finished", "session.died", "session.auto_slept", "agent.update_ready", "account.switched",
                  "app.restore_offer", "session.terminal_notice"],
-    "messages": ["agent.message", "plugin.notice", "session.skill_tripwire"],
-    "auto_answers": ["session.beast_approved", "session.auto_accepted"],
+    "messages": ["agent.message", "agent.review", "plugin.notice", "session.skill_tripwire"],
     "swarm": ["swarm.alert", "swarm.flash", "swarm.question_climbed"],
     "health": ["alert.self_check", "alert.save_pipeline", "alert.account", "alert.phone_link", "alert.plugin", "pack.skills",
-               "alert.notifications", "provider.needs_login", "alert.other"],
+               "alert.notifications", "provider.needs_login", "alert.argent_budget_warn", "alert.argent_budget_hold", "alert.other"],
     "security": ["computer.wrong_code", "computer.knock", "computer.link_cert"],
     "automations": ["automation_report", "automation_failed", "automation_notice"],
     "app": ["app.update_available", "stats.tripwire", "dev.shape_unrecognized"],
@@ -36,7 +35,7 @@ PLAN_GROUPS = {
 
 def test_registry_is_the_plan_table() -> None:
     ids = [t.id for t in T.TYPES]
-    assert len(ids) == 39 and len(set(ids)) == 39
+    assert len(ids) == 40 and len(set(ids)) == 40
     assert list(T.FAMILIES) == list(PLAN_GROUPS)
     assert {g: [t.id for t in T.TYPES if t.family == g] for g in T.FAMILIES} == PLAN_GROUPS
     assert T.ALIASES == {"session.posted": "agent.message", "session.limit_rotation": "account.switched"}
@@ -95,6 +94,7 @@ def test_alert_producers_are_the_known_set() -> None:
         "src/core/account_notice/runner.py",
         "src/core/app_alerts/conditions.py",
         "src/core/app_alerts/service.py",
+        "src/core/argent/notices.py",
         "src/core/automations/notify_policy.py",
         "src/core/automations/targets/recipe.py",
         "src/core/backup_health/runner.py",
@@ -118,7 +118,7 @@ _NON_NOTIFICATION_FRAMES = {
     "preferences.changed", "skills.changed", "session.note.changed", "provider_ledger.updated",
     "restore_offer.progress", "auto_sleep.changed", "app_alert.updated", "app_alert.resolved",
     "account.session", "perf.sample", "item_settings.changed",
-    "ai.config.changed", "terminal.ready", "terminal.resync", "crosstalk.card", "cplug.data",
+    "ai.config.changed", "hold.refused", "terminal.ready", "terminal.resync", "crosstalk.card", "cplug.data",
 }
 
 

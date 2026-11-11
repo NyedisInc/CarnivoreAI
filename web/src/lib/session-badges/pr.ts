@@ -11,9 +11,6 @@ const TONE: Record<string, string | undefined> = { merged: 'good', closed: 'mute
 export function prBadges(row: Record<string, unknown>): BadgeItem[] {
     const pr = row.pr as PrRecord | null | undefined;
     if (!pr || typeof pr !== 'object') return [];
-    if (pr.hint === 'connect_gh') {
-        return [{ kind: 'pr', key: 'hint', text: t('session.badges.pr.connect'), title: t('session.badges.pr.connect_title'), tone: 'muted' }];
-    }
     if (!Number.isInteger(pr.number) || !pr.state) return [];
     const parts = [`#${pr.number}`, t(`session.badges.pr.state.${pr.state}`)];
     if (pr.ci === 'red') parts.push(t('session.badges.pr.ci_red'));

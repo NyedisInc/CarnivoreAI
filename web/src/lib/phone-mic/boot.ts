@@ -6,11 +6,13 @@ import { createMic, type MicDeps } from './controller.svelte';
 import { nativeStarter, recordStarter, speechStarter, transcribeReady } from './engines';
 
 function realDeps(): MicDeps {
+    const native = nativeStarter();
     return {
         claim: () => legacyGlobal<{ claim(what: string): unknown }>('TerminalInputOwnership')?.claim('mic') ?? null,
         deliver: (text, ticket) => legacyGlobal<{ injectText(term: unknown, text: string, ticket: unknown): void }>('ClipboardTools')
             ?.injectText(legacyGlobal('TerminalController'), text, ticket),
-        speech: nativeStarter() ?? speechStarter(),
+        speech: native ?? speechStarter(),
+        speechNeedsHttps: !native,
         record: recordStarter(),
         transcribeReady,
     };

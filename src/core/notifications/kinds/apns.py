@@ -7,8 +7,8 @@ import structlog
 
 from src.core.notifications.contracts import DeliveryResult, FailureClass, NotifyEvent
 from src.core.notifications.kind_specs import APNS_PREFIX, KIND_APNS
+from src.core.notifications.cards import payload as card_payload, settle
 from src.core.notifications.kinds import base
-from src.core.notifications.kinds.webpush import build_payload
 
 log = structlog.get_logger(__name__)
 _provider: Optional[Callable[[], Any]] = None
@@ -19,6 +19,10 @@ def install_apns_sender(provider: Optional[Callable[[], Any]]) -> None:
     _provider = provider
 
 
+def current_sender() -> Optional[Any]:
+    return _provider() if _provider else None
+
+
 class ApnsKindSender:
 
     async def send(self, event: NotifyEvent, config: Mapping[str, Any], secrets: Mapping[str, Any]) -> DeliveryResult:
@@ -27,8 +31,13 @@ class ApnsKindSender:
         sender = _provider() if _provider else None
         if not row_id or sender is None:
             return base.invalid("no device" if sender else "no apns sender")
-        status = await sender.send_typed(row_id, event.type_id, build_payload(event),
-                                         event.session_id or event.instance_key or "")
+        instance = event.session_id or event.instance_key or ""
+        prepared = await card_payload.prepare(event, dest, row_id)
+        status = await sender.send_typed(row_id, event.type_id, prepared.payload, instance)
+        built = prepared.built
+        if status is not None and 200 <= status < 300 and prepared.cap and built.ask and built.fingerprint:
+            settle.remember(built.session_id, built.fingerprint, settle.Sent(
+                row_id, event.type_id, instance, built.kind, built.card.get("agent", ""), built.path, built.thread, prepared.cap))
         if status is None:
             return DeliveryResult(ok=False, failure=FailureClass.GONE, detail="no device")
         if 200 <= status < 300:

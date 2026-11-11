@@ -24,6 +24,7 @@ const { createBanners } = require('../banners');
 const bannerLaunch = require('../banners/launch');
 const { createScreenLock } = require('../screen-lock');
 const notificationPermission = require('../notification-permission');
+const appWindowPolicy = require('../app-window-policy');
 
 function createNamedIcons(nativeImage) {
   const files = { update: path.join(__dirname, '..', 'assets', 'iconUpdateMenu.png') };
@@ -88,6 +89,9 @@ function createTrayMenu(deps) {
     watchedSession: () => (deps.appWindow && typeof deps.appWindow.watchedSession === 'function' ? deps.appWindow.watchedSession() : ''),
     openApproval: (sessionId) => { if (deps.appWindow) deps.appWindow.openApproval(sessionId); },
     isLocked: createScreenLock(electron.powerMonitor).isLocked,
+    BrowserWindow: electron.BrowserWindow, screen: require('electron').screen, ipcMain: require('electron').ipcMain, nativeImage: electron.nativeImage,
+    shell: electron.shell, clipboard: electron.clipboard, isPackaged: electron.app.isPackaged,
+    getUrl: () => serverManager.getAppWindowUrl(), partitionFor: appWindowPolicy.partitionForOrigin,
     requestPermission: async () => {
       const dir = electron.app.getPath('userData');
       notificationPermission.request({ dir, Notification: electron.Notification, t: (k, p) => t(k, p) });
@@ -132,6 +136,8 @@ function createTrayMenu(deps) {
     onHealth: (health) => data.onHealth(health),
     bannersPosting: () => banners.posting(),
     mirrorAllowed: (askSessionId) => banners.mirrorAllowed(askSessionId),
+    presentToast: (input) => banners.presentToast(input),
+    closeToast: (id) => banners.closeToast(id),
     menuForDock: () => presenter.menuForDock(),
     statusFacts: () => statusFacts(snapshot(false), model(false), t),
     runAction: (action) => dispatch(action),

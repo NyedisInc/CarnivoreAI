@@ -1,6 +1,7 @@
 import type { CplugWeb } from './sdk';
+import { SHIP_ORDER } from './order';
 
-export const ORDER_HINT: readonly string[] = ['huddle', 'unread', 'share', 'save', 'flow', 'reviewboard', 'publicboard', 'tmdevtools', 'crate', 'devwidgetlab'];
+export { SHIP_ORDER };
 
 const ENTRIES = import.meta.glob('./*/index.ts', { eager: true }) as Record<string, Record<string, unknown>>;
 const PLATFORM_FOLDERS: ReadonlySet<string> = new Set(['sdk', 'host']);
@@ -10,7 +11,7 @@ function folderId(path: string): string {
 }
 
 export function buildShipList(entries: Record<string, Record<string, unknown>>): CplugWeb[] {
-  const rank = new Map(ORDER_HINT.map((id, i) => [id, i] as const));
+  const rank = new Map(SHIP_ORDER.map((id, i) => [id, i] as const));
   const ids = Object.keys(entries).map(folderId).filter((id) => id && !PLATFORM_FOLDERS.has(id))
     .sort((a, b) => (rank.get(a) ?? rank.size) - (rank.get(b) ?? rank.size) || a.localeCompare(b));
   return ids.map((id) => {

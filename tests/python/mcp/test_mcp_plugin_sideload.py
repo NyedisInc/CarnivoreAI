@@ -16,7 +16,7 @@ os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 
 from src.core.mcp import beast_mode, pending, plugin_sideload_tools, tools  # noqa: E402
 from src.core.mcp.caller import AgentCaller  # noqa: E402
-from src.cplugs.host import sideload, sideload_git_routes, sideload_routes  # noqa: E402
+from src.cplugs.host import developer_mode, sideload, sideload_git_routes, sideload_routes  # noqa: E402
 from tests.python.beast_mode.grid import arm as arm_beast  # noqa: E402
 
 PANE = AgentCaller("ses_cloude_a", "cloude_a", "ses_cloude_a")
@@ -46,6 +46,7 @@ def world(tmp_path, monkeypatch):
     monkeypatch.setattr(pending, "_store", store)
     monkeypatch.setattr(pending, "MAX_WAIT_SECONDS", 0.05)
     arm_beast(monkeypatch, lambda: True)
+    monkeypatch.setattr(developer_mode, "is_on", lambda: True)
     calls: list = []
 
     async def post(body, request):

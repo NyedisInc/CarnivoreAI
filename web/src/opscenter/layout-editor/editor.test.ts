@@ -12,7 +12,9 @@ import type { LayoutPage } from '../engine/types';
 import {
   EDITING_CLASS,
   addWidget,
+  cancelLayoutEditor,
   checkLayoutEditor,
+  editablePage,
   dropWidget,
   editorSeams,
   enterLayoutEditor,
@@ -145,7 +147,6 @@ describe('a plugin panel view lands like any widget (#2379, #2802)', () => {
   const row = (key: string) => ({ id: 'pillpanic', runtime: 'sidecar', enabled: true, state: 'active', name: 'Pill Panic', install_key: key,
     views: [{ name: 'game', surfaces: ['panel'] }] }) as never;
   const drawerRow = (): GroupRow => groupRows({ onSurface: placed() as never, disabled: () => false, query: '', t: (key) => key }).find((r) => r.widgetId === 'pillpanic.game')!;
-  const atEnd = { kind: 'new', after: null } as const;
   const pointer = { x: 0, y: 0 };
 
   afterEach(async () => (await import('../../lib/cplug-ui/panel-views.svelte')).setPanels([]));
@@ -154,11 +155,11 @@ describe('a plugin panel view lands like any widget (#2379, #2802)', () => {
     const { setPanels } = await import('../../lib/cplug-ui/panel-views.svelte');
     setPanels([row('aaaaaaaa11')]);
     enterLayoutEditor();
-    landRow(homeLayout, drawerRow(), { area: 'surface', target: atEnd }, pointer);
+    landRow(homeLayout, drawerRow(), { area: 'surface' }, pointer);
     await Promise.resolve();
     expect(placed().filter((id) => id.startsWith('pillpanic.game:'))).toEqual(['pillpanic.game:panel-aaaaaaaa']);
     setPanels([row('bbbbbbbb22')]);
-    landRow(homeLayout, drawerRow(), { area: 'surface', target: atEnd }, pointer);
+    landRow(homeLayout, drawerRow(), { area: 'surface' }, pointer);
     await Promise.resolve();
     expect(placed().filter((id) => id.startsWith('pillpanic.game:'))).toEqual(['pillpanic.game:panel-aaaaaaaa']);
   });
@@ -180,5 +181,29 @@ describe('a plugin panel view lands like any widget (#2379, #2802)', () => {
     enterLayoutEditor();
     landRow(homeLayout, drawerRow(), { area: 'zone', index: 0, moves: null }, pointer);
     expect(drawerZone.items.some((item) => item.widget === 'pillpanic.game' && item.target === 'panel-dddddddd')).toBe(true);
+  });
+});
+
+describe('edit mode exists only on a dashboard', () => {
+  test('editablePage is null off the home surface, even on a wide window with a store', () => {
+    editorSeams.store = () => homeLayout;
+    page = 'terminal';
+    expect(editablePage()).toBeNull();
+    expect(enterLayoutEditor()).toBe(false);
+    page = 'warroom';
+    expect(editablePage()).toBeNull();
+    page = 'home';
+    expect(editablePage()).toBe('home');
+  });
+
+  test('cancel puts back the layout the edit started with', async () => {
+    enterLayoutEditor();
+    const entry = placed().join();
+    const gone = placed().find((id) => id !== 'running-sessions')!;
+    await removeWidget(gone as never);
+    expect(placed().join()).not.toBe(entry);
+    cancelLayoutEditor();
+    expect(layoutEditor.active).toBe(false);
+    expect(placed().join()).toBe(entry);
   });
 });

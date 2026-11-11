@@ -342,17 +342,6 @@ export class ProjectsController {
                 if (write && projectId !== null) void run(() => write(projectId, project.new_sessions_join_swarm !== true));
                 return;
             }
-            case 'copy-path':
-                if (!project.root) {
-                    this.notice = t('projects.page.notice.no_path');
-                    return;
-                }
-                this.notice = '';
-                void api.copyText(project.root).then(
-                    () => (this.notice = t('projects.page.notice.copied', { path: project.root ?? '' })),
-                    (error: unknown) => (this.notice = t('projects.page.notice.copy_failed', { reason: reason(error) })),
-                );
-                return;
             case 'migrate-project':
             case 'migrate-back':
                 openMigrate({ kind: id === 'migrate-back' ? 'back' : 'project', name: project.name });
@@ -378,15 +367,6 @@ export class ProjectsController {
                 return;
             case 'remove-from-company':
                 void run(async () => api.setProjectCompany?.(project.name, null));
-                return;
-            case 'set-image':
-                void this.#setImage((file) => api.setProjectImage?.(project.name, file));
-                return;
-            case 'remove-image':
-                void run(async () => api.removeProjectImage?.(project.name));
-                return;
-            case 'regenerate-art':
-                void run(async () => api.regenerateProjectImage?.(project.name));
                 return;
             default:
                 this.#valuedAction(id, project.name);

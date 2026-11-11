@@ -74,6 +74,14 @@
       "section": "chrome",
       "classes": []
     },
+    "web/src/cplugs/reviewboard/VisitorAnswers.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/VisitorToggle.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
     "web/src/cplugs/reviewboard/board.css": {
       "section": "chrome",
       "classes": [
@@ -100,6 +108,11 @@
         "rb-strip",
         "rb-tools",
         "rb-track",
+        "rb-uanswers",
+        "rb-ubadge",
+        "rb-upresent",
+        "rb-uline",
+        "rb-uselect",
         "rb-views"
       ]
     },
@@ -156,6 +169,110 @@
         "rb-sent",
         "rb-sent-note",
         "rb-warn"
+      ]
+    },
+    "web/src/cplugs/reviewboard/public/ShareLinkKey.svelte": {
+      "section": "dialogs",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/public/ShareLinkModal.svelte": {
+      "section": "dialogs",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/public/VisitorsKey.svelte": {
+      "section": "dialogs",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/public/VisitorsModal.svelte": {
+      "section": "dialogs",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/public/visitor-page/PublicBoard.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/public/visitor-page/VisitorForm.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/public/visitor-page/VisitorKeys.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/public/visitor-page/VisitorRevisions.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/reviewboard/public/visitor-page/public.css": {
+      "section": "chrome",
+      "classes": [
+        "oc-segmented",
+        "pb",
+        "pb-bar-end",
+        "pb-box",
+        "pb-fit",
+        "pb-foot",
+        "pb-frame",
+        "pb-hint",
+        "pb-key",
+        "pb-keys",
+        "pb-label",
+        "pb-meta",
+        "pb-newer",
+        "pb-note",
+        "pb-note--state",
+        "pb-pop",
+        "pb-pop--wide",
+        "pb-prompt-label",
+        "pb-prompts",
+        "pb-rev",
+        "pb-revs",
+        "pb-save",
+        "pb-section",
+        "pb-stage",
+        "pb-summary",
+        "pb-title",
+        "pb-titlebar",
+        "pbf",
+        "pbf-about",
+        "pbf-actions",
+        "pbf-options",
+        "pbf-prompt",
+        "pbf-said",
+        "pbf-text"
+      ]
+    },
+    "web/src/cplugs/reviewboard/public/share-link.css": {
+      "section": "dialogs",
+      "classes": [
+        "modal-content",
+        "pbs-actions",
+        "pbs-error",
+        "pbs-explain",
+        "pbs-label",
+        "pbs-modal",
+        "pbs-none",
+        "pbs-once",
+        "pbs-remove",
+        "pbs-warn"
+      ]
+    },
+    "web/src/cplugs/reviewboard/public/visitors.css": {
+      "section": "dialogs",
+      "classes": [
+        "modal-content",
+        "pbs-here",
+        "pbs-ubadge",
+        "pbs-urow",
+        "pbs-ulist",
+        "pbs-vcount",
+        "pbs-vhead",
+        "pbs-vline",
+        "pbs-vlist",
+        "pbs-vmeta",
+        "pbs-vmodal",
+        "pbs-vrow",
+        "pbs-vwho"
       ]
     }
   }

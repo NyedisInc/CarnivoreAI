@@ -52,7 +52,7 @@ beforeEach(async () => {
   shared = {};
   // A page whose layout can be edited, so the menu has its edit layout item.
   editorSeams.wide = () => true;
-  editorSeams.page = () => ({}) as never;
+  editorSeams.page = () => 'home' as never;
   editorSeams.store = () => ({}) as never;
   await setupRail();
   g.PreferenceBridge = {

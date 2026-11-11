@@ -72,6 +72,7 @@ its session's own color: the session's project color, else its company hue, else
 (<code>sessionBarTint</code>, <code>lib/sidebar-shell/tint.ts</code>; the phone strip inherits it). A hairline under the bar keeps it
 visible when that color sits close to the title row's ground. Only the pane that holds input draws the bar (the others, <code>oc-tabwrap-idle</code>, show a quiet neutral edge), so it says which pane takes the keys. The selected terminal pane has no ring of its own, and the bar is
 never orange.</p>
+<p>Tabs sit in <code>oc-tabs-track</code>, a flex row at rest. While a tab is dragged the motion core measures the tabs, the track becomes the block <code>oc-tabs-live</code> and each tab glides on a spring to its place; releasing writes the order once.</p>
 <div class="sg-specimen">
     <div class="sg-specimen__label"><span>live</span><code>TabStrip.svelte</code><span>in the real</span><code>CellFrame.svelte</code><span>terminal row: click to select, "x" closes, Shift for the skull</span></div>
     <div class="sg-specimen__body"><div id="sg-live-tabs"></div></div>
@@ -177,8 +178,8 @@ never orange.</p>
         (<code>SidebarRail.svelte</code>), icon only - see <a href="#chrome-sidebar-rail">the sidebar rail</a>.</li>
     <li><strong>Settings sections.</strong> Not tabs any more: the settings page has a section rail (a column, and a chip
         strip on a phone) - see <a href="#settings">settings</a>.</li>
-    <li><strong>Drop overlay.</strong> <code>DropOverlay.svelte</code> marks where a dragged tab would land in another
-        component.</li>
+    <li><strong>Drop cue.</strong> A dragged tab or window is aimed with the labelled landing box and the ghost, see
+        <a href="#motion-drop-cue">the motion grid</a>; a strip shows a 2px <code>--oc-orange</code> caret.</li>
 </ul>
 
 <h3 class="sg-h3" id="tabs-mistakes">common mistakes</h3>

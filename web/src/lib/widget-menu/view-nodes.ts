@@ -1,3 +1,4 @@
+/* views (Joe (ccsliinc), 2026-10-10) */
 import type { MenuNode } from '../drawer-tabs/add-component-menu';
 import { viewOfPlacement, viewsOf } from '../../opscenter/widgets/views';
 import type { WidgetManifest } from '../../opscenter/widgets/types';

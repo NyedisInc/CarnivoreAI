@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "id": "wi_proj1",
+      "kind": "project",
+      "parent_id": null,
+      "title": "Fixture Project",
+      "status": "open",
+      "source": "argent",
+      "external_key": "",
+      "assignee_name": "",
+      "merged_into": null,
+      "sprint_id": "",
+      "sprint_state": "none",
+      "updated_at": "2026-11-05T12:00:00Z"
+    },
+    {
+      "id": "wi_feat1",
+      "kind": "feature",
+      "parent_id": "wi_proj1",
+      "title": "Fixture Feature",
+      "status": "open",
+      "source": "argent",
+      "external_key": "",
+      "assignee_name": "",
+      "merged_into": null,
+      "sprint_id": "spr_fixture1",
+      "sprint_state": "active",
+      "updated_at": "2026-11-05T12:00:00Z"
+    },
+    {
+      "id": "wi_story1",
+      "kind": "story",
+      "parent_id": "wi_feat1",
+      "title": "Fixture Story",
+      "status": "in_progress",
+      "source": "github",
+      "external_key": "FIXTURE#12",
+      "assignee_name": "Fixture Person",
+      "merged_into": null,
+      "sprint_id": "spr_fixture1",
+      "sprint_state": "active",
+      "updated_at": "2026-11-05T12:00:00Z"
+    }
+  ],
+  "next_cursor": null,
+  "rev": 7
+}

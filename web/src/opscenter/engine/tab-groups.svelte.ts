@@ -154,7 +154,7 @@ export function splitTabOut(store: LayoutStore, tab: string, target: DropTarget)
   return refusal === 'cap' || refusal === 'limit' ? refusal : null;
 }
 
-export function mergeComponent(store: LayoutStore, from: string, into: string): 'merged' | 'primary' | null {
+export function mergeComponent(store: LayoutStore, from: string, into: string, index?: number): 'merged' | 'primary' | null {
   if (from === into) return null;
   if (from === PRIMARY_SLOT) return 'primary';
   const record = recordFor(store);
@@ -162,6 +162,12 @@ export function mergeComponent(store: LayoutStore, from: string, into: string): 
   if (!groups[from] || !groups[into]) return null;
   const shown = activeOf(groups, record.active, from);
   record.groups = mergeGroup(groups, from, into);
+  if (index !== undefined) {
+    const all = record.groups[into]!.tabs;
+    const kept = all.length - tabsOf(groups, from).length;
+    const at = Math.max(0, Math.min(Math.floor(index), kept));
+    record.groups = { ...record.groups, [into]: { tabs: [...all.slice(0, at), ...all.slice(kept), ...all.slice(at, kept)] } };
+  }
   delete record.active[from];
   record.active[into] = shown;
   persist(store.session, record);

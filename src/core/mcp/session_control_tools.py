@@ -88,6 +88,15 @@ def _mcp_reconnect_summary(args: dict, target: Any) -> str:
     return f"type /mcp reconnect into {target.shown if target else args.get('target')} ({which}); refused if it is busy"
 
 
+def _stop_leftovers(call: ra.Call) -> Any:
+    return call.route(call.request, call.session_id, None)
+
+
+def _stop_leftovers_summary(args: dict, target: Any) -> str:
+    return (f"stop the shells left behind by finished subagents in {target.shown if target else args.get('target')} "
+            "(only pids measured as leftovers of this session)")
+
+
 SPECS = (
     ra.RouteTool(
         name="session_rename", route="src.api.session_rename_routes:rename_session_endpoint", gate=ra.ARRANGE,
@@ -121,6 +130,13 @@ SPECS = (
                     "Idle sessions only; busy is refused. Waits for the owner's approval unless Beast Mode is armed.",
         properties={"server": {"type": "string", "maxLength": 200}}, reach=session_target.LIVE,
         invoke=_mcp_reconnect, summary=_mcp_reconnect_summary, example={},
+    ),
+    ra.RouteTool(
+        name="session_leftover_shells_stop", route="src.api.session_background_work_routes:stop_leftover_shells", gate=ra.ACT,
+        description="Stop the background shells a live Claude session's FINISHED subagents left behind (see leftovers and "
+                    "owner_finished in session_background_jobs_list). Signals only pids it measures as leftovers of that "
+                    "session, each re-checked at kill time; never a pattern. Waits for the owner's approval unless Beast Mode is armed.",
+        properties={}, reach=session_target.LIVE, invoke=_stop_leftovers, summary=_stop_leftovers_summary, example={},
     ),
     ra.RouteTool(
         name="session_wake", route="src.api.session_sleep_routes:wake_session", gate=ra.ACT,

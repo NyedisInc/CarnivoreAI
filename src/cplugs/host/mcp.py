@@ -74,9 +74,12 @@ def _installed_catalog_plugins(state_dir: Any) -> list:
 async def plugins_list(manager: Any, caller: AgentCaller, args: dict) -> dict:
     from src.cplugs.host.routes import cplug_row  # noqa: PLC0415
 
+    from src.core.plugin_health.gather import build_report  # noqa: PLC0415
+
     host = _host(manager)
     rows = [{**cplug_row(host, d), "kind": "cplug"} for d in runtime.listed()]
-    return _ok({"plugins": rows + await asyncio.to_thread(_installed_catalog_plugins, host.state_dir)})
+    health = await asyncio.to_thread(build_report, host, host.sidecar_runtime())
+    return _ok({"plugins": rows + await asyncio.to_thread(_installed_catalog_plugins, host.state_dir), "health": health.as_wire()})
 
 
 def narrowing_refusal(host: runtime.Host, d: CplugDefinition, fields: dict) -> Optional[str]:
@@ -127,7 +130,8 @@ async def cplug_update(manager: Any, caller: AgentCaller, args: dict) -> dict:
 HOST_READS: Dict[str, ToolRow] = {
     "plugins_list": ("Every plugin in this build: state (disabled, needs_approval, unavailable, active), the app "
                      "permissions it asks and what the owner granted, its surfaces and its revision, plus the plugins "
-                     "installed from the catalog.", {}, [], plugins_list),
+                     "installed from the catalog, and a health report: each item's health word (on, off, needs_approval, held) with its reason "
+                     "and the button that fixes it, orphan data folders and removed installs.", {}, [], plugins_list),
 }
 HOST_WRITES: Dict[str, ToolRow] = {
     "cplug_update": (

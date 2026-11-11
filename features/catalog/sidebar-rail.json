@@ -22,7 +22,7 @@
     "Plugin page tabs such as flow get an icon too, once the tab is on; a closable one has a small x on its icon, or press delete on it.",
     "From the keyboard, tab to the rail once, then use the arrow keys, home and end to move between icons and enter or space to open one.",
     "Right-click the rail or its handle (or press shift+f10 on the handle) for its menu: pin rail, edit layout or done editing.",
-    "Every icon shows in its default order until you choose otherwise. Turn on edit layout (the rail's menu or the layout bar): every icon of the rail and of the right and bottom bars gets a dashed border, so you know it can move, and a small eye badge that hides or shows it (a hidden icon is dimmed while editing and gone otherwise). Drag an icon, or press Alt with the arrow keys, to move it; on the left rail an icon can cross between the top zone (agents through pack) and the bottom zone (documentation, changelog, settings), so settings can go up and anything can go down. The choice is saved for every device."
+    "Every icon shows in its default order until you choose otherwise. Turn on edit layout (the rail's menu or the layout bar): every icon of the rail and of the right and bottom bars gets a dashed border, so you know it can move, and a small eye badge that hides or shows it (a hidden icon is dimmed while editing and gone otherwise). Drag an icon at any time, edit layout or not, or press Alt with the arrow keys, to move it; on the left rail an icon can cross between the top zone (agents through pack) and the bottom zone (documentation, changelog, settings), so settings can go up and anything can go down. The choice is saved for every device."
   ],
   "id": "sidebar-rail",
   "issues": [
@@ -30,7 +30,8 @@
     1785,
     1790,
     2047,
-    2689
+    2689,
+    2908
   ],
   "keywords": [
     "icon rail",
@@ -54,7 +55,7 @@
     "web/src/lib/widget-menu/rail-menu.ts",
     "web/src/lib/sidebar-widgets/rail-icons.svelte.ts"
   ],
-  "updated": "2026-10-28",
+  "updated": "2026-11-09",
   "where": [
     "The left sidebar, down its left edge under the top bar."
   ]

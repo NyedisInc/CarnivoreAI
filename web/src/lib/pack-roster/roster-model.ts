@@ -65,7 +65,7 @@ export function buildRoster(input: RosterInputs): RosterComputer[] {
     const peer = peerByIid.get(id) ?? null;
     const local = input.hosts.find((h) => h.local) ?? null;
     out.push({
-      id, name, kind: entry?.transport === 'ssh' && !isSelf ? 'paired-older' : 'pack',
+      id, name, kind: entry?.transport === 'ssh' && !isSelf && machine?.paired !== true ? 'paired-older' : 'pack',
       transport: isSelf ? 'local' : (entry?.transport ?? (peer ? 'tls' : 'ssh')), isSelf, isAlpha: machine?.is_master === true,
       machine, entry, host, matchedBy: by, peer,
       hostKeys: [...(isSelf && local ? [local.key] : []), ...(peer ? [peer.key] : []), ...(host ? [host.key] : [])],
@@ -98,7 +98,7 @@ export function inFilter(c: RosterComputer, key: FilterKey): boolean {
   if (key === 'inpack') return c.kind === 'pack';
   if (key === 'overssh') return c.transport === 'ssh' && !c.isSelf;
   if (key === 'sshonly') return c.kind === 'ssh-only';
-  if (key === 'older') return c.kind === 'paired-older';
+  if (key === 'older') return c.transport === 'ssh' && !c.isSelf && c.kind !== 'ssh-only';
   return lookFlags(c)[key];
 }
 

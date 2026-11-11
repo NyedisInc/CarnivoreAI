@@ -166,6 +166,11 @@ per option, the footer's buttons, nothing else.</p>
                 </div></div>
             </div>
         </div></dd>
+    <dt>RelayApprovalPopup</dt>
+    <dd><code>web/src/lib/pack-machines/RelayApprovalPopup.svelte</code> (owner ruling, 2026-11-06, #2870): the "copy your accounts to &lt;computer&gt;?"
+        card on the main computer, mounted once at boot (<code>#relay-approval-container</code>) for the first paired computer with no answer.
+        Same chassis and classes as <code>RelayConsentPopup</code> (<code>ModalShell</code> not dismissable, <code>.rc-desc</code>, <code>.rc-error</code>,
+        <code>.modal-btn-secondary</code> no, <code>.modal-btn-confirm</code> yes). Owner click only. No classes of its own.</dd>
     <dt>RegisterModal</dt>
     <dd><code>web/src/lib/carnivore-account/RegisterModal.svelte</code> (issue #1200): the handle step for a refused call with no
         register gate around it. <code>ModalShell</code> holding the catalog <code>RegisterDialog</code>; opened by the central

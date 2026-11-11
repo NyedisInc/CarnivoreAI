@@ -73,10 +73,23 @@ def _recorded_home(socket: str, tmux_name: str) -> Optional[str]:
     except (OSError, ValueError, TypeError, AttributeError, sqlite3.Error) as exc:
         logger.debug("codex_pane_home_record_unreadable", error=type(exc).__name__)
         return None
-    if not isinstance(account_id, str) or not CODEX_RELAY_NAME_RE.fullmatch(account_id):
+    if not isinstance(account_id, str) or not account_id:
         return None
-    home = managed_dir_for(account_id)
-    return home if os.path.isdir(home) else None
+    home = managed_dir_for(account_id) if CODEX_RELAY_NAME_RE.fullmatch(account_id) else _local_account_home(account_id)
+    return home if home and os.path.isdir(home) else None
+
+
+def _local_account_home(account_id: str) -> Optional[str]:
+    from src.core.account_switch import launch_env, session_pin
+    from src.core.account_switch.active import find_account
+    from src.core.provider_ledger.login_command import login_profile_dir
+
+    try:
+        account = find_account(session_pin.all_accounts(launch_env._config_path()), account_id, "codex")
+    except (FileNotFoundError, ValueError, OSError) as exc:
+        logger.debug("codex_pane_home_accounts_unreadable", error=type(exc).__name__)
+        return None
+    return os.path.expanduser(login_profile_dir(account)) if account is not None else None
 
 
 def _measure(socket: str, tmux_name: str) -> Tuple[str, bool]:

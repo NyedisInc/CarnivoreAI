@@ -11,10 +11,11 @@ from typing import Any, Dict, List, Optional
 import structlog
 
 from src.core import message_model_secrets
-from src.core.catalog import publish_prepare, submission_preview
+from src.core.catalog import plugin_pack, publish_prepare, submission_preview
 from src.core.catalog import submission_rules as rules
 from src.core.skills.plugin_safe_subset import CODE_MANIFEST_KEYS, mcp_problems, plugin_declares_nonmcp_code
 from src.cplugs.host import install_gates
+from src.cplugs.sdk import api_contract
 from src.cplugs.sdk.manifest import ID_PATTERN as CPLUG_ID_PATTERN, RESERVED_IDS as CPLUG_RESERVED_IDS
 
 logger = structlog.get_logger()
@@ -213,6 +214,8 @@ def _check_mod(paths: List[str], read: Dict[str, bytes], prepared: publish_prepa
         parts = path.split("/")
         if "node_modules" in parts or parts[-1].lower() == "package.json":
             problems.append(f"{path} (path not allowed)")
+        elif path != PLUGIN_MANIFEST and any(part.startswith(".") for part in parts):
+            problems.append(f"{path} (hidden path not allowed)")
         elif not path.lower().endswith(_MOD_FILE_EXT):
             problems.append(f"{path} (extension not allowed)")
         elif path in read and read[path].lstrip(b"\xef\xbb\xbf").startswith(b"#!"):
@@ -236,6 +239,25 @@ def _json_text(value: Dict[str, Any]) -> bytes:
     return (json.dumps(value, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
 
 
+def _pack_authored(read: Dict[str, bytes], paths: List[str], prepared: publish_prepare.Prepared, handle: str) -> bool:
+    authored = _json_object(read[CPLUG_SIDECAR]) if CPLUG_SIDECAR in read else None
+    if authored is None or not plugin_pack.is_authored(authored):
+        return True
+    try:
+        packed_files, _ = plugin_pack.pack_files(read, handle or None)
+    except plugin_pack.PackError as exc:
+        _refuse(prepared, rules.SUBMISSION_INVALID, str(exc), CPLUG_SIDECAR)
+        return False
+    for path in (CPLUG_MANIFEST, CPLUG_SIDECAR):
+        prepared.total_bytes += len(packed_files[path]) - len(read.get(path, b""))
+    prepared.members = [(p, c) for p, c in prepared.members if p not in (CPLUG_MANIFEST, CPLUG_SIDECAR)]
+    prepared.members += [(p, packed_files[p]) for p in (CPLUG_MANIFEST, CPLUG_SIDECAR)]
+    read.update({p: packed_files[p] for p in (CPLUG_MANIFEST, CPLUG_SIDECAR)})
+    if CPLUG_MANIFEST not in paths:
+        paths.append(CPLUG_MANIFEST)
+    return True
+
+
 def _check_cplug(folder: Path, paths: List[str], read: Dict[str, bytes], prepared: publish_prepare.Prepared, handle: str, version: str = "") -> None:
     try:
         install_gates.check_files(folder)
@@ -244,6 +266,8 @@ def _check_cplug(folder: Path, paths: List[str], read: Dict[str, bytes], prepare
     clash = sorted(p for p in paths if p.lower() in CPLUG_OTHER_KIND_MANIFESTS)
     if clash:
         _refuse(prepared, rules.SUBMISSION_INVALID, f"a plugin may not also carry another kind's manifest: {', '.join(clash)}", clash[0])
+    if not _pack_authored(read, paths, prepared, handle):
+        return
     manifest = _json_object(read[CPLUG_MANIFEST]) if CPLUG_MANIFEST in read else None
     sidecar = _json_object(read[CPLUG_SIDECAR]) if CPLUG_SIDECAR in read else None
     if manifest is None:
@@ -276,6 +300,10 @@ def _check_cplug(folder: Path, paths: List[str], read: Dict[str, bytes], prepare
                 "carnivore.json needs network_hosts for a process runtime (an empty list is allowed)", CPLUG_SIDECAR)
     if not isinstance(sidecar.get("data"), list):
         _refuse(prepared, rules.SUBMISSION_INVALID, "carnivore.json needs a data list (an empty list is allowed)", CPLUG_SIDECAR)
+    try:
+        api_contract.require_served(sidecar)
+    except api_contract.ApiVersionUnsupported as exc:
+        _refuse(prepared, install_gates.API_VERSION_UNSUPPORTED, str(exc), CPLUG_SIDECAR)
     prepared.name = name
     manifest["default_enabled"] = False
     sidecar.update({"kind": "cplug", "id": f"{handle}/{name}", "tier": "catalog", "default_enabled": False})

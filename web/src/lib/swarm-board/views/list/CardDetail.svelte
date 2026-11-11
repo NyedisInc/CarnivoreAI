@@ -7,6 +7,10 @@
   import StatusGlyph from '../../StatusGlyph.svelte';
   import type { BoardData } from '../../board-data.svelte';
   import type { CardView } from '../../board-types';
+  import { argentCost } from '../../../argent-cost/cost-store.svelte';
+  import { agentSplitView, cardCostView } from '../../../argent-cost/cost-view';
+  import HeldLift from '../../../argent-cost/HeldLift.svelte';
+  import { useAgentWatch } from '../../../argent-cost/agent-watch.svelte';
   import CardVerdict from './CardVerdict.svelte';
   import { historyLines, phases, stamp, type CardEvent, type Who } from './list-model';
 
@@ -42,6 +46,9 @@
   });
 
   const holder = $derived(card.holder ? (data.agent(card.holder.agent_id) ?? null) : null);
+  const cost = $derived(cardCostView(argentCost().data, holder?.session_row_id));
+  const agentSplit = $derived(agentSplitView(argentCost().data, holder?.session_row_id));
+  useAgentWatch(() => holder?.session_row_id);
   const strip = $derived(phases(card, events));
   const lines = $derived(historyLines(events));
   const progress = $derived(card.column === 'in_progress' && typeof card.progress === 'number' ? Math.max(0, Math.min(100, Math.round(card.progress))) : null);
@@ -98,6 +105,29 @@
         <span class="sbd-pct">{t('swarm.board.progress', { pct: progress })}</span>
       </div>
     {/if}
+  {/if}
+
+  {#if cost}
+    <div class="sbd-label">{t('argent.card.heading')}</div>
+    <div class="sbd-box" data-swarm-detail-argent>
+      <div class="sbd-sub">{t('argent.card.item')}</div>
+      {#each cost.items as item (item.id)}
+        <p class="sbd-text" data-argent-item={item.id}>{t('argent.card.item_row', { name: item.name, cost: item.costText, pct: item.pctText })}{#if item.held} <span class="sbd-bad">{t('argent.card.held')}</span> <HeldLift itemId={item.id} lift={item.lift} />{/if}</p>
+      {/each}
+      <div class="sbd-sub">{t('argent.card.split')}</div>
+      {#each cost.split as share (share.rowId)}
+        <p class="sbd-text" data-argent-split={share.rowId}>{t('argent.card.split_row', { name: data.agents.find((a) => a.session_row_id === share.rowId)?.display_name ?? t('argent.card.agent_unknown', { id: share.rowId }), cost: share.costText })}</p>
+      {/each}
+      {#if agentSplit}
+        <div class="sbd-sub">{t('argent.card.agents')}</div>
+        {#each agentSplit as group (group.itemId)}
+          <p class="sbd-text" data-gateway-agent-item={group.itemId}>{t('argent.card.split_row', { name: group.itemName || t('argent.card.agent_item_none'), cost: group.totalText })}</p>
+          {#each group.agents as agent (agent.agentId)}
+            <p class="sbd-text sbd-quiet" data-gateway-agent={agent.agentId}>{t('argent.card.split_row', { name: agent.name ?? holder?.display_name ?? t('argent.card.agent_root'), cost: agent.costText })}</p>
+          {/each}
+        {/each}
+      {/if}
+    </div>
   {/if}
 
   <div class="sbd-label">{t('swarm.board.list.result')}</div>

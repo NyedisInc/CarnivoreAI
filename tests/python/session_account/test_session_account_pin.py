@@ -104,9 +104,12 @@ def test_the_session_account_beats_the_global_pointer(config):
     assert launch_env.account_env(config) == {"CLAUDE_CONFIG_DIR": managed_dir_for("work")}
 
 
-def test_the_built_in_login_removes_the_variable_even_when_another_is_active(config):
+def test_the_built_in_login_removes_the_variable_even_when_another_is_active(config, monkeypatch):
     store.set_active(config, "claude", "work")
+    from src.core.provider_ledger import poller_scan
     from src.core.provider_ledger.poller_scan import AUTO_DEFAULT_ACCOUNT_ID
+
+    monkeypatch.setattr(poller_scan, "read_claude_credential", lambda _dir: object())
 
     assert launch_env.account_env(config, claude_account=AUTO_DEFAULT_ACCOUNT_ID) == {"CLAUDE_CONFIG_DIR": None}
 
@@ -218,13 +221,13 @@ def test_an_unlaunchable_active_account_falls_back_to_current_but_is_not_called_
     assert (body["selected_id"], body["active_id"], body["pinned"]) == ("play", None, False)
 
 
-def test_the_dropdown_is_empty_for_shell_codex_without_a_relay_and_unknown_rows(client):
+def test_the_dropdown_is_empty_for_shell_and_unknown_rows_and_lists_local_codex_logins(client):
     url = "/api/v1/sessions/u1/restart/accounts"
     with patch("src.api.restart_account_routes._read_row", return_value=_row("shell")):
         assert client.get(url).json()["options"] == []
     with patch("src.api.restart_account_routes._read_row", return_value=_row("codex")), \
             patch("src.core.account_switch.pane_account.resolve_pane_account", new=AsyncMock(return_value=None)):
-        assert client.get(url).json()["options"] == []
+        assert [o["id"] for o in client.get(url).json()["options"]] == ["cx"]
     with patch("src.api.restart_account_routes._read_row", return_value=None):
         assert client.get(url).json()["options"] == []
 

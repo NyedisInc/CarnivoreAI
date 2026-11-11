@@ -5,7 +5,7 @@ import json
 import re
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Any, Dict, Mapping, Optional, Tuple
+from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
 
 import structlog
 
@@ -127,15 +127,16 @@ def _tool_family(cplug_id: str, raw: Any) -> str:
     return raw
 
 
-def _tool_aliases(cplug_id: str, raw: Any, surfaces: Surfaces) -> Dict[str, str]:
+def _tool_aliases(cplug_id: str, raw: Any, surfaces: Surfaces, legacy_ids: Sequence[str] = ()) -> Dict[str, str]:
     where = f"{cplug_id}: mcp_tool_aliases"
     if raw is None:
         return {}
     if not isinstance(raw, dict) or not all(isinstance(k, str) and isinstance(v, str) for k, v in raw.items()):
         raise ManifestError(f"{where} must map an old tool name to a current one")
     for old, current in raw.items():
-        if not old.startswith(f"{cplug_id}_") or old == f"{cplug_id}_" or not re.match(r"^[a-z][a-z0-9_]*$", old):
-            raise ManifestError(f"{where}: {old} must be named {cplug_id}_<verb>")
+        owners = (cplug_id, *legacy_ids)
+        if not any(old.startswith(f"{o}_") and old != f"{o}_" for o in owners) or not re.match(r"^[a-z][a-z0-9_]*$", old):
+            raise ManifestError(f"{where}: {old} must be named {cplug_id}_<verb>" + (f" or {'/'.join(legacy_ids)}_<verb>" if legacy_ids else ""))
         if current not in surfaces.mcp_tools:
             raise ManifestError(f"{where}: {old} points at {current}, which is not in surfaces.mcp_tools")
         if old in surfaces.mcp_tools:
@@ -292,7 +293,8 @@ def parse_manifest(raw: Any) -> Manifest:
         raise ManifestError(f"{cplug_id}: permission_reasons must map declared permissions to a reason of at most 200 characters")
     tool_family = _tool_family(cplug_id, raw.get("tool_family"))
     surfaces = _surfaces(cplug_id, raw.get("surfaces", {}), tool_family)
-    aliases = _tool_aliases(cplug_id, raw.get("mcp_tool_aliases"), surfaces)
+    legacy_raw = raw.get("legacy_ids")
+    aliases = _tool_aliases(cplug_id, raw.get("mcp_tool_aliases"), surfaces, tuple(legacy_raw) if isinstance(legacy_raw, dict) else ())
     widgets = _widgets(cplug_id, raw.get("widgets", {}), surfaces.widgets, tier)
     settings_schema = raw.get("settings_schema", {"version": 1, "fields": {}})
     from src.core.item_settings_schema import SettingsSchemaError, parse_schema  # noqa: PLC0415

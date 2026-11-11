@@ -37,10 +37,22 @@ def claims_after_epoch(evidence: Any) -> int:
     return kept
 
 
+def leftover_claims(evidence: Any) -> int:
+    leftovers = getattr(evidence, "background_leftovers", None)
+    facts = getattr(evidence, "transcript", None)
+    ids = tuple(getattr(facts, "open_background_task_ids", ()) or ())
+    count = int(getattr(facts, "open_background_tasks", 0) or 0)
+    if not leftovers or count <= 0 or len(ids) != count:
+        return 0
+    return sum(1 for task_id in ids if task_id in leftovers)
+
+
 def standing_background_claims(evidence: Any) -> int:
     if measurement_overrules_claims(evidence):
         return 0
-    return claims_after_epoch(evidence)
+    return max(claims_after_epoch(evidence) - leftover_claims(evidence), 0)
 
 
-__all__ = ["claims_after_epoch", "measurement_overrules_claims", "standing_background_claims"]
+__all__ = [
+    "claims_after_epoch", "leftover_claims", "measurement_overrules_claims", "standing_background_claims",
+]

@@ -43,6 +43,9 @@ TABLE: Mapping[str, Tuple[str, str]] = {
     "notify": ("notifications.send",
                "Notify the owner: send a short notification about this session, routed by his settings (280 characters, rate "
                "limited)."),
+    "review_send": ("notifications.review.send",
+                    "Send the owner something to review (a link or a file in this project) as a notification on his iPhone and "
+                    "this computer; use it when he asked to be sent something when done."),
     "notification_settings_get": ("notifications.settings.get",
                                   "Get notification settings: pause switch, per-type defaults and each destination's ticks."),
     "notification_destinations_list": ("notifications.destinations.list",

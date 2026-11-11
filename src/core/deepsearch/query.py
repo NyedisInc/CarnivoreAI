@@ -17,3 +17,8 @@ def tokens_of(query: str) -> List[str]:
 def match_expression(query: str) -> Optional[str]:
     tokens = tokens_of(query)
     return " ".join(f'"{t}"*' for t in tokens) if tokens else None
+
+
+def phrase_expression(query: str) -> Optional[str]:
+    tokens = tokens_of(query)
+    return '"' + " ".join(tokens) + '"' if tokens else None

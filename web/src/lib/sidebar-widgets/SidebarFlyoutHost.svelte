@@ -24,8 +24,8 @@
   import ZonePane from '../zone-shell/ZonePane.svelte';
   import { leftRailZone, setDrawnFlyout } from '../zone-shell/left-rail-zone.svelte';
   import type { TabRef } from '../zone-shell/zone-types';
-  import { widgetBars } from '../widget-bars/bar-settings.svelte';
   import { RAIL_CONTAINER_ID } from './rail-dom';
+  import { listenExpandedMenuHotkeys } from '../drawer-tabs/menu-hotkeys';
   import { phoneFlag } from '../drawer/phone-flag.svelte';
   import { hideMainView, showMainView } from './main-view';
   import { MENU_FLYOUT } from './widget-ids';
@@ -59,6 +59,8 @@
     document.addEventListener('pointerdown', onPress, true);
     return () => document.removeEventListener('pointerdown', onPress, true);
   });
+
+  $effect(() => (active === MENU_FLYOUT ? listenExpandedMenuHotkeys() : undefined));
 
   const widget = $derived<SidebarWidget | null>(flyoutWidget(shown));
   $effect(() => {
@@ -97,7 +99,7 @@
     showMainView(view, def?.id);
     return () => hideMainView();
   });
-  const titleRow = $derived(!(widget?.id === MENU_FLYOUT && widgetBars.rail.mode === 'autohide'));
+  const titleRow = $derived(widget?.id !== MENU_FLYOUT);
 
   const body = $derived.by<{ component: Component<{ tabId?: string }> | null; actions: Component<{ popout?: boolean; tabId?: string }> | null; tabId?: string }>(() => {
     const part = widget?.parts.body;

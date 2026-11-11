@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 from typing import Callable, List, Optional
 
@@ -11,10 +12,12 @@ from src.core.computers import direction
 from src.core.federation import peer_links
 from src.core.pack.machines import runtime as machines_runtime
 from src.core.pack.machines.exchange import post_via
-from src.core.pack.relay import ledger_sync_store
+from src.core.pack.relay import approval, ledger_sync_store
 from src.core.pack.relay.ledger_sync_push import LedgerSync
 from src.core.pack.relay.owner_side import PeerFn, Relay
-from src.core.provider_ledger import poller, poller_core, refresh_poke
+from src.core.account_switch import store as account_store
+from src.core.account_switch.active import effective_active
+from src.core.provider_ledger import accounts_store, poller, poller_core, poller_scan, refresh_poke
 from src.core.resource_push import topics
 
 RELAY: Optional[Relay] = None
@@ -27,6 +30,21 @@ def candidate_ids() -> List[str]:
         return []
     return [p.install_id for p in wired.peers()
             if p.install_id != wired.runtime.install_id and not direction.contained(p.install_id)]
+
+
+def active_account(provider: str) -> Optional[str]:
+    path = Path(settings.auth_config_file).expanduser()
+    try:
+        accounts = poller_scan.with_auto_default(accounts_store.list_accounts(path))
+        return effective_active(accounts, account_store.read_switch(path), provider).account_id
+    except (OSError, ValueError):
+        return None
+
+
+def poll_owned_soon(_install_id: str) -> None:
+    for account in poller.snapshot().accounts:
+        if not account.relayed and account.provider in ("claude", "codex"):
+            poller.poll_soon(account.id)
 
 
 def start(open_db: Callable[[], sqlite3.Connection], links_getter: Callable[[], Optional[peer_links.PeerLinks]]) -> Relay:
@@ -43,6 +61,8 @@ def start(open_db: Callable[[], sqlite3.Connection], links_getter: Callable[[], 
     wired = machines_runtime.wiring()
     if wired is None:
         raise RuntimeError("the Pack machine layer must start before the credential relay")
+    with closing(open_db()) as conn:
+        approval.ensure(conn)
     lookup: PeerFn = peer
     ledger_sync_store.PATH = lambda: Path(settings.get_state_dir()) / "ledger_sync.db"
     SYNC = LedgerSync(open_db=open_db, peer=lookup, snapshot=poller.snapshot, self_id=wired.runtime.install_id,
@@ -51,8 +71,9 @@ def start(open_db: Callable[[], sqlite3.Connection], links_getter: Callable[[], 
     links = links_getter()
     if links is not None:
         links.add_connect_listener(SYNC.on_connect)
+        links.add_connect_listener(poll_owned_soon)
     RELAY = Relay(open_db=open_db, peer=lookup, notify=lambda: resource_push.notify(topics.PACK_RELAY),
-                  self_id=wired.runtime.install_id, allows=allows, candidates=candidate_ids, on_pushed=SYNC.on_credential_pushed,
-                  accepts=lambda iid, account: machines_runtime.peer_relay_accepts(iid, account, wired.runtime.install_id))
+                  self_id=wired.runtime.install_id, allows=allows, candidates=candidate_ids, on_pushed=SYNC.on_credential_pushed, active=active_account,
+                  approved=approval.reader(open_db), accepts=lambda iid, account: machines_runtime.peer_relay_accepts(iid, account, wired.runtime.install_id))
     refresh_poke.add_credential_listener(RELAY.on_credential)
     return RELAY

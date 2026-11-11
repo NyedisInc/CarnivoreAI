@@ -12,17 +12,17 @@
     "Group the projects of one client under a company, so the sidebar and projects page can show them together.",
     "Delete a company you no longer use: its projects become orphaned and keep all their agents.",
     "Open the projects page, press a company card, and see only that client's projects; an old #projects/<project> link opens at its company path.",
-    "Open the projects page: companies show as hero cards (toggle to a ledger of thumbnails) above the orphaned projects, each section with its own toggle; the kebab's set image replaces a generated hero, remove image brings it back.",
+    "Open the projects page: companies show as hero cards (toggle to a ledger of thumbnails) above the orphaned projects, each section with its own toggle; a company's own menu has set image to replace a generated hero and remove image to bring it back.",
     "Mirror a folder tree: IMC as a company, Amerifund as a company under it, and Org/IMC/Amerifund/support as a project nested under the Amerifund project."
   ],
   "how_to": [
-    "In the agents tab, open a project heading's menu, pick add to, then company, then a company (or new company... to name one).",
+    "In the agents tab, open a project heading's menu, pick company, then a company (or new company to name one).",
     "Open a company heading's menu to rename or delete it; take a filed project out with remove from company in its menu.",
     "Click a company heading to fold it; the fold follows you to your other desktop screens, and a fold made on a phone follows you to your other phone screens.",
     "Call POST /api/v1/companies with a name to create one.",
     "Call PUT /api/v1/projects/{project name}/company with a company_id to file a project, or with null to orphan it.",
     "On the projects page press new company, or the kebab on a company card to rename or delete it.",
-    "On a project's kebab choose add to, then company, then pick a company (or new company...); choose remove from company to orphan it.",
+    "On a project's menu choose company, then pick a company (or new company); choose remove from company, under it, to orphan the project.",
     "Call POST /api/v1/companies with a name and a parent_id to create a company under another; PATCH /api/v1/companies/{id} with parent_id (null for the top level) to move it, or hq_project_id to set its HQ project.",
     "Put a project's folder inside another project's folder and it shows nested under that project in the agents tab, when both are in the same company."
   ],
@@ -52,10 +52,10 @@
     "PUT /api/v1/projects/{project}/company",
     "the companies_list MCP tool",
     "the projects page companies level (#projects/c/<company id>)",
-    "the company headings and the add to > company menu in the agents tab",
+    "the company headings and the company menu on a project in the agents tab",
     "PUT/GET/DELETE /api/v1/companies/{id}/image and /api/v1/projects/{project}/image (hero images)"
   ],
-  "updated": "2026-10-13",
+  "updated": "2026-11-07",
   "where": [
     "The agents tab of the sidebar: every top-level company is a foldable heading, A to Z, with its projects and their agents inside it, then its child companies, each one step further in; a project inside another project's folder sits under it; an orphaned projects heading comes last.",
     "The routes under /api/v1/companies.",

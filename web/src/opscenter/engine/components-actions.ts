@@ -9,6 +9,7 @@ import { GUTTER } from './tracks';
 import type { InstanceKind, SlotId } from './types';
 import { t } from '../../lib/i18n/index.svelte';
 import { splitThrough } from '../layouts/transition.svelte';
+import { isDashGridPage, resetDashGrid } from '../dashgrid/dash-store.svelte';
 
 export function takenSlots(store: LayoutStore): SlotId[] {
   return [
@@ -59,5 +60,6 @@ export function refusalLine(refusal: AddRefusal, kind?: InstanceKind): string {
 
 export function resetSurface(store: LayoutStore): void {
   store.resetAll(sizeOf('content').height, GUTTER);
+  if (isDashGridPage(store.page)) resetDashGrid();
   store.announce(t('opscenter.components.layout_reset'));
 }

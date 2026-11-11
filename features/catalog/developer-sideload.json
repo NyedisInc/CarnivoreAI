@@ -7,19 +7,19 @@
     "POST /api/v1/cplug-owner/sideload/git"
   ],
   "area": "settings",
-  "description": "For people writing a plugin. Sideload copies a folder into the app, reads its kind from the manifest (a plugin, a theme or a skill), and installs it as local/<name> with the unverified mark. A plugin that runs on its own runs like any other; a theme or skill goes into the folder that kind already uses. Anything that runs code (hooks, servers, scripts, a theme's effects file) needs the same consent a catalog install needs. It has its own switch, separate from developer mode, and the switch expires after twelve hours. Turning it off stops and hides every sideloaded plugin; your source folder is never touched.",
+  "description": "For people writing a plugin. Sideload copies a folder into the app, reads its kind from the manifest (a plugin, a theme or a skill), and installs it as local/<name> with the unverified mark. A plugin that runs on its own runs like any other; a theme or skill goes into the folder that kind already uses. Anything that runs code (hooks, servers, scripts, a theme's effects file) needs the same consent a catalog install needs. It is part of developer mode, the one developer switch: turning it on offers a duration (1 hour, 12 hours, 24 hours, 7 days or until turned off, twelve by default), and a sideload is allowed only while developer mode is on and the duration has not run out. Turning it off stops and hides every sideloaded plugin; your source folder is never touched.",
   "docs": [
     "docs/cplug-runtime.md"
   ],
   "examples": [
     "Try a pixel pet you are building without publishing it: sideload the folder, tick its permissions, watch it run.",
-    "Leave the switch on overnight: it turns itself off after twelve hours and the sideloaded plugins stop.",
+    "Leave developer mode on overnight: it turns itself off after the duration you picked and the sideloaded plugins stop.",
     "Build a run viewer: pick a run in the slide-out menu and read it full size on the page beside it."
   ],
   "how_to": [
-    "Turn on developer sideload (it shows twelve hours).",
-    "Sideload a folder that holds a plugin manifest (cplug.json); the plugin appears as local/<name> marked unverified, switched off with no permissions.",
-    "Turn the switch off to stop and hide every sideloaded plugin; your source folder is never touched.",
+    "Turn on developer mode on the plugins page and pick how long it stays on (twelve hours by default).",
+    "Add a folder that holds a plugin manifest (cplug.json) with add from folder, or drop the folder on the page (desktop app); the plugin appears as local/<name> marked unverified, switched off with no permissions.",
+    "Turn developer mode off to stop and hide every sideloaded plugin; your source folder is never touched.",
     "A sideloaded plugin whose carnivore.json asks for a page gets its own rail key: the slide-out is its menu and the main area shows its page; on a phone a menu | view switch picks one.",
     "Sideload a theme or a skill the same way: the kind is read from theme.json, SKILL.md or the plugin manifest. A folder that runs code answers with a consent sheet first; a theme's script still asks before it runs."
   ],
@@ -27,7 +27,8 @@
   "issues": [
     2063,
     2562,
-    2540
+    2540,
+    2934
   ],
   "keywords": [
     "plugins",
@@ -40,7 +41,7 @@
   "name": "Developer sideload",
   "since": "2026-10-22",
   "status": "beta",
-  "summary": "load a plugin from a local folder to try it, behind its own switch that turns itself off after twelve hours.",
+  "summary": "load a plugin from a local folder to try it, under developer mode, which turns itself off after the duration you pick.",
   "surfaces": [
     "web/src/lib/plugins-page/SideloadSwitch.svelte",
     "src/cplugs/host/sideload_routes.py",
@@ -48,10 +49,11 @@
     "web/src/lib/cplug-ui/page-views.svelte.ts",
     "web/src/lib/cplug-ui/PageMenu.svelte",
     "web/src/lib/cplug-ui/PageMain.svelte",
-    "src/cplugs/host/sidecar_page.py"
+    "src/cplugs/host/sidecar_page.py",
+    "web/src/lib/plugins-page/drop-folder.ts"
   ],
-  "updated": "2026-10-27",
+  "updated": "2026-11-09",
   "where": [
-    "The plugins page, the developer sideload row beside the third-party switch."
+    "The plugins page, the developer mode row beside the third-party switch."
   ]
 }

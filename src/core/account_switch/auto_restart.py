@@ -25,6 +25,7 @@ from src.core.launch_profiles.resolve import LaunchProfileNotFound
 from src.core.launch_profiles.secrets import SecretError
 from src.core.provider_ledger import accounts_store, poller_scan
 from src.core.provider_ledger.login_command import PROFILE_ENV_VARS
+from src.core.session_delivery import bring_up
 from src.core.session_delivery.bring_up import READY_STATUSES
 from src.core.session_respawn import LIVE_RESTART_REASON_USAGE_LIMIT_ROTATION
 from src.core.session_resume_target import CONVERSATION_RESUMED
@@ -43,7 +44,7 @@ QUIET_SECONDS = 120
 
 MAX_RECORD_AGE_SECONDS = 8 * 24 * 3600
 
-MAX_RESTARTS_PER_PASS = 3
+MAX_RESTARTS_PER_PASS = 4
 
 SKIP_LOG_REPEAT_SECONDS = 10 * 60
 
@@ -195,6 +196,14 @@ class SessionEvidence:
         except TypeError:
             return None
 
+    async def body_pid(self, info: Any) -> Optional[int]:
+        watcher = getattr(self._manager, "_attention_watcher", None)
+        observation = watcher.observation_for(info.session.id) if watcher is not None else None
+        if observation is None:
+            return None
+        registry = observation.evidence.registry
+        return registry.pid if registry.known else None
+
     async def resumable(self, name: str) -> bool:
         socket = self._manager.tmux_socket_name()
         target = await asyncio.to_thread(
@@ -269,12 +278,18 @@ async def _pass(manager, snapshot, accounts, switch, *, now, monotonic, evidence
     rows = [row for row in snapshot.accounts if row.provider == PROVIDER]
     socket = manager.tmux_socket_name()
     made: List[Restart] = []
+    jobs: List[_Job] = []
     seen: Set[str] = set()
     names = {row.id: row.name for row in rows if row.name}
     infos = await manager.list_session_infos()
     panes = await asyncio.to_thread(manager._build_tmux_status_map)
     if not state.baselined():
         await _take_baseline(infos, evidence, state, now)
+    local = {i.tmux_session: i for i in infos if i.tmux_session and i.session is not None and not is_remote_info(i)}
+    await asyncio.gather(*(
+        _deliver_owed(manager, evidence, rotation, state, record_id, owed, local.get(owed.get("tmux")), names)
+        for record_id, owed in state.owed_records().items()
+    ))
     for info in infos:
         name = info.tmux_session
         if info.agent_family != PROVIDER or not name or info.session is None:
@@ -303,6 +318,9 @@ async def _pass(manager, snapshot, accounts, switch, *, now, monotonic, evidence
         if state.continue_sent(record_id):
             skip("already_continued")
             continue
+        if state.owed(record_id) is not None:
+            skip("continue_owed")
+            continue
         account_id = pane_account.account_for_profile(
             accounts, PROVIDER, await read_profile(socket, name, PROFILE_ENV_VARS[PROVIDER])
         )
@@ -316,11 +334,7 @@ async def _pass(manager, snapshot, accounts, switch, *, now, monotonic, evidence
             skip("no_durable_key")
             continue
 
-        def notice(outcome: str, to_id: str, moved: bool = False) -> None:
-            if state.claim_notice(record_id, outcome):
-                rotation.notify(outcome, session=name, from_account_id=account_id, to_account_id=to_id,
-                                limit_kind=stop.kind, moved=moved, from_name=names.get(account_id, ""),
-                                to_name=names.get(to_id, ""))
+        notice = _notifier(state, rotation, record_id, name, account_id, stop.kind, names)
 
         try:
             pinned = await rotation.pin_for(session_uuid)
@@ -345,7 +359,7 @@ async def _pass(manager, snapshot, accounts, switch, *, now, monotonic, evidence
             else:
                 skip("continue_not_sent")
             continue
-        if len(made) >= MAX_RESTARTS_PER_PASS:
+        if len(jobs) >= MAX_RESTARTS_PER_PASS:
             skip("pass_limit")
             continue
         allowed, gate = state.may_restart(record_id)
@@ -363,52 +377,12 @@ async def _pass(manager, snapshot, accounts, switch, *, now, monotonic, evidence
         if target_id is None:
             skip("no_target")
             continue
-        if not (await asyncio.to_thread(current_switch)).auto_switch:
-            skip("recheck_switch_changed")
-            continue
-        fresh = await manager.get_session_info(info.session.id)
-        fresh_stop = (
-            await evidence.limit_stop(fresh, force=True) if fresh is not None and fresh.activity_status != "dead" else None
-        )
-        if fresh is None or not _restartable(fresh, fresh_stop):
-            skip("recheck_not_restartable")
-            continue
-        if fresh_stop is None or fresh_stop.uuid != record_id:
-            skip("recheck_new_last_turn")
-            continue
-        quiet = await _quiet_for(evidence, name, fresh_stop, now)
-        if quiet is None or quiet < QUIET_SECONDS:
-            skip("recheck_quiet_window")
-            continue
-        try:
-            if await rotation.pin_for(session_uuid):
-                skip("recheck_pinned")
-                continue
-        except limit_rotate.PinUnreadable:
-            skip("pin_unreadable")
-            continue
-        _SKIP_LOGGED.pop(name, None)
-        state.record_attempt(record_id)
-        moved = False
-        if not in_place:
-            moved = await rotation.move_pointer(accounts, switch, account_id, target_id)
-        ok = await _restart(manager, socket, name, accounts, target_id, read_profile, skip)
-        logger.info(
-            "provider_account_auto_restarted", tmux_session=name, from_account_id=account_id,
-            to_account_id=target_id, ok=ok, in_place=in_place,
-        )
-        made.append(Restart(name, info.session.id, account_id, target_id, ok))
-        if not ok:
-            notice(limit_rotate.FAILED, target_id)
-            continue
-        if not await rotation.wait_ready(info.session.id):
-            notice(limit_rotate.FAILED, target_id)
-            continue
-        ready = await manager.get_session_info(info.session.id)
-        if ready is not None and await _continue(manager, evidence, rotation, state, ready, stop, session_uuid):
-            notice(limit_rotate.CONTINUED if in_place else limit_rotate.ROTATED, target_id, moved)
-        else:
-            notice(limit_rotate.FAILED, target_id)
+        jobs.append(_Job(info, name, stop, account_id, target_id, in_place, session_uuid, notice, skip, names))
+    results = await asyncio.gather(*(
+        _rotate_one(manager, socket, evidence, rotation, state, read_profile, accounts, switch, current_switch, now, job)
+        for job in jobs
+    ))
+    made.extend(r for r in results if r is not None)
     for gone in [n for n in _SKIP_LOGGED if n not in seen]:
         del _SKIP_LOGGED[gone]
     return made
@@ -468,14 +442,144 @@ async def _continue(manager, evidence, rotation, state, info, stop, session_uuid
         if fresh is None or not _ready(fresh) or fresh_stop is None or fresh_stop.uuid != stop.uuid \
                 or quiet is None or quiet < QUIET_SECONDS:
             return False
+    return await _type_continue(rotation, state, info, stop.uuid, session_uuid) is None
+
+
+async def _type_continue(rotation, state, info, record_id: str, session_uuid: Optional[str]) -> Optional[str]:
     try:
         await rotation.paste_continue(info, session_uuid)
     except HTTPException as exc:
         detail = exc.detail if isinstance(exc.detail, dict) else {}
-        logger.info("limit_rotation_continue_refused", tmux_session=info.tmux_session, code=detail.get("code", "refused"))
-        return False
-    state.mark_continue_sent(stop.uuid)
-    return True
+        code = str(detail.get("code", "refused"))
+        logger.info("limit_rotation_continue_refused", tmux_session=info.tmux_session, code=code)
+        return code
+    state.mark_continue_sent(record_id)
+    return None
+
+
+@dataclass
+class _Job:
+
+    info: Any
+    name: str
+    stop: LimitStop
+    account_id: str
+    target_id: str
+    in_place: bool
+    session_uuid: str
+    notice: Callable[..., None]
+    skip: Callable[..., None]
+    names: Dict[str, str]
+
+
+def _notifier(state, rotation, record_id: str, name: str, from_id: str, kind: str, names: Dict[str, str]):
+    def notice(outcome: str, to_id: str, moved: bool = False) -> None:
+        if state.claim_notice(record_id, outcome):
+            rotation.notify(outcome, session=name, from_account_id=from_id, to_account_id=to_id, limit_kind=kind,
+                            moved=moved, from_name=names.get(from_id, ""), to_name=names.get(to_id, ""))
+
+    return notice
+
+
+async def _rotate_one(manager, socket, evidence, rotation, state, read_profile, accounts, switch, current_switch,
+                      now: datetime, job: _Job) -> Optional[Restart]:
+    info, name, stop, skip, notice = job.info, job.name, job.stop, job.skip, job.notice
+    record_id, account_id, target_id = stop.uuid, job.account_id, job.target_id
+    if not (await asyncio.to_thread(current_switch)).auto_switch:
+        skip("recheck_switch_changed")
+        return None
+    fresh = await manager.get_session_info(info.session.id)
+    fresh_stop = (
+        await evidence.limit_stop(fresh, force=True) if fresh is not None and fresh.activity_status != "dead" else None
+    )
+    if fresh is None or not _restartable(fresh, fresh_stop):
+        skip("recheck_not_restartable")
+        return None
+    if fresh_stop is None or fresh_stop.uuid != record_id:
+        skip("recheck_new_last_turn")
+        return None
+    quiet = await _quiet_for(evidence, name, fresh_stop, now)
+    if quiet is None or quiet < QUIET_SECONDS:
+        skip("recheck_quiet_window")
+        return None
+    try:
+        if await rotation.pin_for(job.session_uuid):
+            skip("recheck_pinned")
+            return None
+    except limit_rotate.PinUnreadable:
+        skip("pin_unreadable")
+        return None
+    _SKIP_LOGGED.pop(name, None)
+    state.record_attempt(record_id)
+    moved = False
+    if not job.in_place:
+        moved = await rotation.move_pointer(accounts, switch, account_id, target_id)
+    ok = await _restart(manager, socket, name, accounts, target_id, read_profile, skip)
+    logger.info(
+        "provider_account_auto_restarted", tmux_session=name, from_account_id=account_id,
+        to_account_id=target_id, ok=ok, in_place=job.in_place,
+    )
+    restart = Restart(name, info.session.id, account_id, target_id, ok)
+    if not ok:
+        notice(limit_rotate.FAILED, target_id)
+        return restart
+    landed = await manager.get_session_info(info.session.id)
+    if landed is None:
+        notice(limit_rotate.FAILED, target_id)
+        return restart
+    state.owe_continue(record_id, {
+        "tmux": name, "epoch": landed.session.tmux_created_epoch, "pid": None, "uuid": job.session_uuid,
+        "outcome": limit_rotate.CONTINUED if job.in_place else limit_rotate.ROTATED, "from_id": account_id,
+        "to_id": target_id, "kind": stop.kind, "moved": moved,
+    })
+    if await rotation.wait_ready(info.session.id):
+        ready = await manager.get_session_info(info.session.id)
+        await _deliver_owed(manager, evidence, rotation, state, record_id, state.owed(record_id), ready, job.names)
+    return restart
+
+
+async def _deliver_owed(manager, evidence, rotation, state, record_id: str, owed: Optional[Dict[str, Any]],
+                        info: Optional[Any], names: Dict[str, str]) -> None:
+    if owed is None or state.continue_sent(record_id):
+        return
+    notice = _notifier(state, rotation, record_id, owed["tmux"], owed["from_id"], owed["kind"], names)
+
+    def abandon(reason: str) -> None:
+        logger.warning("limit_rotation_continue_abandoned", tmux_session=owed["tmux"], reason=reason)
+        state.drop_owed(record_id)
+        notice(limit_rotate.FAILED, owed["to_id"])
+
+    if info is None:
+        if state.owed_expired(record_id):
+            abandon("pane_gone")
+        return
+    if info.activity_status == "dead":
+        abandon("pane_dead")
+        return
+    if info.session.tmux_created_epoch != owed["epoch"]:
+        abandon("different_pane")
+        return
+    pid = await evidence.body_pid(info)
+    if pid is not None and owed["pid"] is not None and pid != owed["pid"]:
+        abandon("different_claude")
+        return
+    if pid is not None and owed["pid"] is None:
+        state.bind_owed_pid(record_id, pid)
+        owed = state.owed(record_id)
+    if pid is None or not await rotation.ready_to_continue(info):
+        if state.owed_expired(record_id):
+            abandon("not_ready")
+        return
+    code = await _type_continue(rotation, state, info, record_id, owed["uuid"])
+    if code is None:
+        notice(owed["outcome"], owed["to_id"], owed["moved"])
+    elif code in bring_up.GONE_CODES:
+        abandon(code)
+    elif code == "paste_not_submitted":
+        state.mark_continue_sent(record_id)
+        abandon(code)
+    elif state.owed_expired(record_id):
+        abandon(code)
 
 
 def _config_path() -> Path:

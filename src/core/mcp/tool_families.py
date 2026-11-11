@@ -26,7 +26,7 @@ class Family:
 
 
 _PACK = frozenset({
-    "pack_gh_login_add", "pack_machines_list", "pack_master_set", "pack_op_get", "pack_queue_cancel", "pack_queue_items_list",
+    "pack_gh_login_add", "pack_global_sync_status", "pack_global_sync_now", "pack_machines_list", "pack_master_set", "pack_op_get", "pack_queue_cancel", "pack_queue_items_list",
     "pack_refresh_run", "pack_relay_account_use", "pack_relay_set", "pack_relay_status", "pack_reserve_get", "pack_skills_status", "pack_reserve_set", "pack_restrictions_get",
     "pack_restrictions_set", "pack_settings_update", "pack_tracks_master_get", "pack_tracks_master_set", "placement_explain",
     "project_replica_list", "project_replica_add", "project_replica_remove", "project_sync", "project_migrate",

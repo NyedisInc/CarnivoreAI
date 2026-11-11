@@ -6,6 +6,7 @@ struct PushPayload: Equatable {
     let body: String?
     let path: String?
     var thread: String? = nil
+    var envelope: NotifyEnvelope? = nil
 }
 
 enum PayloadError: Error, Equatable {
@@ -48,7 +49,8 @@ enum PayloadCrypto {
             throw PayloadError.notJSON
         }
         return PushPayload(title: object["title"] as? String, body: object["body"] as? String,
-                           path: object["path"] as? String, thread: object["thread"] as? String)
+                           path: object["path"] as? String, thread: object["thread"] as? String,
+                           envelope: NotifyEnvelope.parse(object))
     }
 
     static func open(blob: Data, key: SymmetricKey, rowId: String) throws -> PushPayload {

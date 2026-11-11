@@ -112,6 +112,43 @@ sheen. Everything else moves only enough to explain a change, and every motion s
         derived purples, <code>--oc-purple-light</code> and <code>--oc-purple-deep</code>.</dd>
 </dl>
 
+<h3 class="sg-h3" id="motion-grid">motion grid (drag, resize, rearrange)</h3>
+<p class="sg-note">One framework-free engine (<code>web/src/lib/motion-grid/</code>, styles in <code>web/src/lib/motion-grid/motion-grid.css</code>) moves items for every surface. Hosts register each item wrapper, which wears <code>.motion-item</code>; the container wears <code>.motion-enabled</code> while gestures are on and <code>.motion-busy</code> from drag start until the settle finishes.</p>
+<dl class="sg-dl">
+    <dt>lifted</dt>
+    <dd><code>.motion-lifted</code> is the item under the pointer: a shadow from <code>--oc-shadow-lift</code>, tilt, scale and reduced opacity written by the springs. <code>.motion-resizing</code> marks an item being sized.</dd>
+    <dt>landing box</dt>
+    <dd><code>.motion-landing</code> is a dashed hairline in <code>--oc-orange</code> with a faint fill, drawn where the item will land.</dd>
+    <dt id="motion-drop-cue">drop cue (terminal page)</dt>
+    <dd>On the terminal page the landing box is the placeholder: it carries <code>data-label</code> and is drawn at the exact rect the drop produces, a solid 1px <code>--oc-orange</code> hairline, a faint fill and a small uppercase label in the top left. A carried tab rides under the pointer as one pre-mounted <code>.abs-ghost</code> (220 x 32, title-row ground, hairline, the tab name in <code>--oc-orange</code>). A whole window shrinks to a thumbnail instead.
+        <div class="sg-specimen">
+            <div class="sg-specimen__label"><span>live</span><code>web/src/lib/motion-grid/motion-grid.css</code><code>web/src/opscenter/engine/rects/abs-surface.css</code></div>
+            <div class="sg-specimen__body" style="position: relative; height: 104px;">
+                <div class="motion-landing" data-label="split to the right" style="opacity: 1; left: 12px; top: 12px; width: 220px; height: 80px;"></div>
+                <div class="abs-ghost" style="opacity: 0.86; left: 160px; top: 40px; z-index: 30;">terminal</div>
+            </div>
+        </div></dd>
+    <dt id="motion-dock-compass">dock compass (terminal page)</dt>
+    <dd>While a tab or window is dragged over a terminal window's body, <code>.dock-compass</code> shows five square icons in a plus shape at the body's centre: <code>.dock-compass__icon</code> centre adds a tab, up, down, left and right split that way. The plate is title-row ground with a 1px hairline; the icon under the pointer wears <code>.dock-compass__icon--hot</code> (<code>--oc-orange</code>, the one accent on the plate) and shows the landing box for its result; an icon that cannot take the drop wears <code>.dock-compass__icon--off</code>. Icons are 40 px with a 4 px gap, <code>.dock-compass__frame</code> and <code>.dock-compass__fill</code> draw the glyph. The plate takes no pointer and fades in only when motion is welcome.
+        <div class="sg-specimen">
+            <div class="sg-specimen__label"><span>live</span><code>web/src/opscenter/engine/rects/abs-surface.css</code></div>
+            <div class="sg-specimen__body" style="position: relative; height: 152px;">
+                <div class="motion-landing" data-label="split to the left" style="opacity: 1; left: 12px; top: 12px; width: 110px; height: 128px;"></div>
+                <div class="dock-compass" style="left: 12px; top: 12px; width: 140px; height: 140px;">
+                <span class="dock-compass__icon" style="left: 50px; top: 50px; width: 40px; height: 40px;"><svg viewBox="0 0 16 16" focusable="false"><rect class="dock-compass__frame" x="1.5" y="1.5" width="13" height="13"/><rect class="dock-compass__fill" x="1.5" y="1.5" width="7" height="4"/></svg></span>
+                <span class="dock-compass__icon dock-compass__icon--off" style="left: 50px; top: 6px; width: 40px; height: 40px;"><svg viewBox="0 0 16 16" focusable="false"><rect class="dock-compass__frame" x="1.5" y="1.5" width="13" height="13"/><rect class="dock-compass__fill" x="1.5" y="1.5" width="13" height="6"/></svg></span>
+                <span class="dock-compass__icon" style="left: 50px; top: 94px; width: 40px; height: 40px;"><svg viewBox="0 0 16 16" focusable="false"><rect class="dock-compass__frame" x="1.5" y="1.5" width="13" height="13"/><rect class="dock-compass__fill" x="1.5" y="8.5" width="13" height="6"/></svg></span>
+                <span class="dock-compass__icon dock-compass__icon--hot" style="left: 6px; top: 50px; width: 40px; height: 40px;"><svg viewBox="0 0 16 16" focusable="false"><rect class="dock-compass__frame" x="1.5" y="1.5" width="13" height="13"/><rect class="dock-compass__fill" x="1.5" y="1.5" width="6" height="13"/></svg></span>
+                <span class="dock-compass__icon" style="left: 94px; top: 50px; width: 40px; height: 40px;"><svg viewBox="0 0 16 16" focusable="false"><rect class="dock-compass__frame" x="1.5" y="1.5" width="13" height="13"/><rect class="dock-compass__fill" x="8.5" y="1.5" width="6" height="13"/></svg></span>
+                </div>
+            </div>
+        </div></dd>
+    <dt>handles</dt>
+    <dd><code>.motion-handle</code> with <code>.motion-handle--n</code>, <code>--s</code>, <code>--e</code>, <code>--w</code>, <code>--ne</code>, <code>--nw</code>, <code>--se</code> and <code>--sw</code> are 16 px hit areas on all four sides and corners of an item in edit mode, with the matching resize cursor; the thin mark shows on hover, the corner always shows on touch.</dd>
+    <dt>announcements</dt>
+    <dd><code>.motion-live</code> is the polite live region, text from the <code>motion.*</code> catalog keys.</dd>
+</dl>
+
 <h3 class="sg-h3" id="motion-mistakes">common mistakes</h3>
 <ul class="sg-mistakes">
     <li><strong>A focus ring of any colour, or any added thickness.</strong> An accent ring made PR #598's dialog read

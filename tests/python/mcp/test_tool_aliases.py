@@ -5,6 +5,8 @@ import asyncio
 
 import pytest
 
+from src.cplugs.host import runtime
+
 from src.core.mcp import aliases, merged_tools, protocol, tools
 from src.core.mcp.caller import AgentCaller
 from src.cplugs.host import mcp as cplug_mcp, runtime
@@ -27,7 +29,8 @@ GONE = sorted([*REMOVED, "huddle_focus", "huddle_delete"])
 
 
 def test_the_alias_table_holds_only_the_merged_tools_now():
-    assert aliases.table() == {old: m.into for old, m in merged_tools.MERGED.items()}
+    others = {old: new for d in runtime.definitions() if d.id != "huddle" for old, new in d.manifest.mcp_tool_aliases.items()}
+    assert aliases.table() == {**{old: m.into for old, m in merged_tools.MERGED.items()}, **others}
     assert dict(CPLUG.manifest.mcp_tool_aliases) == {}
     assert not any(name.startswith("huddle_") for name in aliases.table())
 

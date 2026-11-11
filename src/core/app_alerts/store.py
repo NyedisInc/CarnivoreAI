@@ -115,7 +115,7 @@ def _write(conn: sqlite3.Connection, sql: str, args: Tuple[Any, ...]) -> int:
 
 
 def raise_alert(conn: sqlite3.Connection, spec: AlertSpec, *,
-                now: Optional[datetime] = None) -> Tuple[Dict[str, Any], str]:
+                now: Optional[datetime] = None, only_if_open: bool = False) -> Tuple[Optional[Dict[str, Any]], str]:
     validate(spec)
     stamp = iso(now)
     params, actions = json.dumps(dict(spec.params), sort_keys=True), json.dumps([dict(a) for a in spec.actions])
@@ -130,6 +130,9 @@ def raise_alert(conn: sqlite3.Connection, spec: AlertSpec, *,
                                "AND resolved_at IS NULL ORDER BY id DESC LIMIT 1",
                                (spec.key, K.STATE_DISMISSED)).fetchone()
             event = EV_NONE
+        if row is None and only_if_open:
+            conn.execute("COMMIT")
+            return None, EV_NONE
         if row is None:
             rid = conn.execute(
                 f"INSERT INTO {K.TABLE} (dedupe_key, source, severity, title_key, params_json, detail_key, "
@@ -140,7 +143,8 @@ def raise_alert(conn: sqlite3.Connection, spec: AlertSpec, *,
             event = EV_RAISED
         else:
             rid = row[0]
-            conn.execute(f"UPDATE {K.TABLE} SET count = count + 1, last_seen = ?, severity = ?, title_key = ?, "
+            bump = "count" if only_if_open else "count + 1"
+            conn.execute(f"UPDATE {K.TABLE} SET count = {bump}, last_seen = ?, severity = ?, title_key = ?, "
                          "params_json = ?, detail_key = ?, actions_json = ? WHERE id = ?",
                          (stamp, spec.severity, spec.title_key, params, spec.detail_key, actions, rid))
     except sqlite3.Error:

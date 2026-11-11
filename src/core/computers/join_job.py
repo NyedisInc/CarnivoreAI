@@ -283,8 +283,10 @@ def _candidate(raw: Dict[str, Any]) -> Dict[str, Any]:
     fid = str(raw.get("fid") or "")[:64]
     name, short = (sanitize_pack_name(raw.get(k)) or "" for k in ("name", "fid_short"))
     pack_name = sanitize_pack_name(raw.get("pack_name"))
-    return {"name": name, "fid": fid, "fid_short": short, "pack_name": pack_name,
-            "label": f"{pack_name} {short}".strip() if pack_name else f"{name} {short}".strip()}
+    members = [{"label": sanitize_pack_name(m.get("label")) or "", "fid_short": sanitize_pack_name(m.get("fid_short")) or "", "seen": m.get("seen") is True}
+               for m in (raw.get("members") if isinstance(raw.get("members"), list) else [])[:6] if isinstance(m, dict)]
+    return {"name": name, "fid": fid, "fid_short": short, "pack_name": pack_name, "members": members,
+            "label": pack_name or sanitize_pack_name(raw.get("computer_label")) or name}
 
 
 def fail_relay(code: str, candidates: Optional[List[Dict[str, Any]]] = None, job_id: Optional[str] = None) -> JoinJob:
@@ -295,6 +297,10 @@ def fail_relay(code: str, candidates: Optional[List[Dict[str, Any]]] = None, job
         raise JoinNotAllowed("bad_request")
     if code in ("several", "found"):
         job.candidates = [_candidate(c) for c in (candidates or [])[:16] if isinstance(c, dict)]
+        labels = [c["label"] for c in job.candidates]
+        for c in job.candidates:
+            if labels.count(c["label"]) > 1:
+                c["label"] = f"{c['label']} {c['fid_short']}".strip()
         _finish(job, "finding" if job.candidates else "failed", None if job.candidates else "no_pack")
     else:
         _finish(job, "failed", code)

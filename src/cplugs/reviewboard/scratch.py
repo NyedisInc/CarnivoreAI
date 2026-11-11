@@ -161,9 +161,9 @@ async def post(ctx: CplugContext, request: ScratchPost, caller: Optional[AgentCa
             title = (request.title or "").strip() or request.name
             fields = {"slug_name": request.name, "title": title, "kind": "other", "summary": summary, "html": request.html,
                       "viewport": request.viewport or DEFAULT_VIEWPORT, "request_review": False}
-            _valid(CreateBody, {**fields, "task": {"item_id": 1}})
+            checked = _valid(CreateBody, {**fields, "task": {"item_id": 1}})
             await asyncio.to_thread(_refuse_taken, root, request.name)
-            task = await _scratch_task(caller, title, request.name)
+            task = await _scratch_task(caller, checked.title, request.name)
             answer = await publish.create_board(ctx, _valid(CreateBody, {**fields, "task": {"item_id": task}}), caller, cross_project, decorate)
     n = int(answer["revision"][1:])
     logger.info("reviewboard_scratch_post", slug=answer["slug"], revision=answer["revision"], created=row is None, **_who(caller),

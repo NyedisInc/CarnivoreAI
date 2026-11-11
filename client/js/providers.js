@@ -63,6 +63,7 @@
                 name: typeof pick.name === 'string' ? pick.name : null,
                 pinned: pick.pinned === true,
                 worktree: pick.worktree || null,
+                story: pick.story || null,
             };
         });
     }

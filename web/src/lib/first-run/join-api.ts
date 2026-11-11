@@ -8,6 +8,7 @@ export interface Candidate {
     readonly fid: string;
     readonly fid_short: string;
     readonly label: string;
+    readonly members?: readonly { readonly label: string; readonly fid_short: string; readonly seen: boolean }[];
 }
 
 export const HELPER_LINE = 'bash -c "$(curl -fsSL --proto \'=https\' --tlsv1.2 https://carnivore.ai/install.sh)" _ --join';
@@ -23,12 +24,12 @@ export interface JoinStatus {
 }
 
 export type JoinErrorKey =
-    | 'wrong_code_many' | 'used_up' | 'expired' | 'no_pack' | 'unreachable' | 'local_network_blocked'
+    | 'wrong_code_many' | 'used_up' | 'no_code' | 'expired' | 'no_pack' | 'unreachable' | 'local_network_blocked'
     | 'main_mismatch' | 'helper_not_started' | 'incompatible' | 'busy' | 'rate_limited' | 'refused' | 'paused' | 'needs_owner' | 'bad_link';
 
 const ERROR_KEYS: Readonly<Record<string, JoinErrorKey>> = {
     wrong_code: 'wrong_code_many',
-    no_invite: 'used_up',
+    no_invite: 'no_code',
     expired: 'expired',
     no_pack: 'no_pack',
     unreachable: 'unreachable',
@@ -51,6 +52,12 @@ export function errorKeyFor(code: string | null): JoinErrorKey {
     return (code !== null && ERROR_KEYS[code]) || 'refused';
 }
 
+function parseMembers(raw: unknown): NonNullable<Candidate['members']> {
+    return Array.isArray(raw)
+        ? raw.filter((m) => !!m && typeof m.label === 'string' && typeof m.fid_short === 'string').map((m) => ({ label: m.label, fid_short: m.fid_short, seen: m.seen === true }))
+        : [];
+}
+
 function parseStatus(body: unknown): JoinStatus | null {
     const doc = body as { state?: unknown; error?: unknown; main_label?: unknown; candidates?: unknown; expires_in?: unknown; own_fid_short?: unknown; knock_fid?: unknown } | null;
     const states: readonly string[] = ['idle', 'waiting_relay', 'knocked', 'finding', 'connecting', 'linking', 'joined', 'failed'];
@@ -58,7 +65,7 @@ function parseStatus(body: unknown): JoinStatus | null {
     const candidates = Array.isArray(doc.candidates)
         ? doc.candidates
             .filter((c) => !!c && typeof c.name === 'string' && typeof c.fid === 'string' && typeof c.fid_short === 'string')
-            .map((c): Candidate => ({ name: c.name, fid: c.fid, fid_short: c.fid_short, label: typeof c.label === 'string' && c.label !== '' ? c.label : `${c.name} ${c.fid_short}` }))
+            .map((c): Candidate => ({ name: c.name, fid: c.fid, fid_short: c.fid_short, label: typeof c.label === 'string' && c.label !== '' ? c.label : `${c.name} ${c.fid_short}`, members: parseMembers(c.members) }))
         : [];
     return {
         state: doc.state as JoinState,

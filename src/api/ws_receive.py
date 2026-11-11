@@ -13,13 +13,16 @@ from src.models import (
     WSErrorMessage,
 )
 from src.api.ws_connections import connection_manager
-from src.api.resize_negotiation import apply_negotiated_resize
+from src.api.resize_negotiation import apply_negotiated_resize, measured_size_frame
 from src.api import ws_repaint
 from src.api import terminal_socket_role as socket_role
 from src.core import db, viewer_fanout
 from src.core.pack.reserve import session_demote
 from src.core.perf_hooks.monitor import PERF
 from src.api.ws_input_pipeline import InputPipeline
+from src.core.budget_hold.gate import live_hold_check
+from src.core.budget_hold.submit_detect import SubmitDetector
+from src.models.websocket import HoldRefusedMessage
 
 logger = structlog.get_logger()
 
@@ -64,7 +67,16 @@ async def receive_messages(
                 WSErrorMessage(error="input_failed", message=sentence_for("input_failed", 500)).model_dump_json(),
             )
 
+    hold_detector = SubmitDetector()
+
     async def deliver_input(text: str) -> None:
+        held = await live_hold_check(session_manager, session_id, text, hold_detector)
+        if held.held:
+            if viewer_fanout.is_viewer_stream(stream):
+                viewer_fanout.offer_text(stream, HoldRefusedMessage(item=held.item).model_dump_json())
+            text = held.passable
+            if not text:
+                return
         await session_manager.send_input(text, session_id=session_id)
         if text:
             session_demote.note_viewer_input(session_manager.tmux_name_for(session_id))
@@ -114,6 +126,11 @@ async def receive_messages(
                                     connection_manager,
                                     hidden=resize_msg.hidden,
                                 )
+                                if session_id and not resize_msg.hidden and viewer_fanout.is_viewer_stream(stream):
+                                    frame = await measured_size_frame(
+                                        websocket.app.state.services.registry.get_backend(session_id))
+                                    if frame is not None:
+                                        viewer_fanout.offer_text(stream, frame)
                             except Exception as e:
                                 logger.error("resize_failed", error=str(e))
 

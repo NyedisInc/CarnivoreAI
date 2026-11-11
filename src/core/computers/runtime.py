@@ -29,7 +29,7 @@ from src.core.computers.member_listener import LISTENING, MemberListener, Rendez
 from src.core.computers.tls_identity import LinkIdentity, ensure_link_identity, link_stem, pinned_certs
 from src.core.db import get_meta
 from src.core.db_models import META_INSTALL_ID
-from src.core.federation import fed_key, peer_hosts
+from src.core.federation import fed_key, peer_hosts, peer_listing
 from src.core.federation.peer_links import PeerLinks
 from src.core.notifications.sources import computers as owner_notices
 from src.core.pack.machines import settings_doc
@@ -53,6 +53,11 @@ def active() -> Optional["ComputersRuntime"]:
 def advertised_link_port() -> Optional[int]:
     rt = _ACTIVE
     return rt.advertised_port() if rt is not None else None
+
+
+def advertised_members() -> Tuple[Tuple[str, str], ...]:
+    rt = _ACTIVE
+    return rt.pack_members if rt is not None else ()
 
 
 def advertised_fid() -> Optional[str]:
@@ -113,7 +118,10 @@ class LazyPack:
         return self._wired().runtime.custody.mint(changes, base=base)
 
     def adopt(self, doc: settings_doc.PackSettings, signature: Optional[Dict[str, Any]] = None) -> bool:
-        return self._wired().runtime.custody.adopt(doc, signature)
+        rt = self._wired().runtime
+        changed = rt.custody.adopt(doc, signature)
+        rt.skills_settings_changed("local_edit", "")
+        return changed
 
 
 class _GatedListener:
@@ -171,7 +179,9 @@ class ComputersRuntime:
         self._task: Optional["asyncio.Task[None]"] = None
         self._kick = asyncio.Event()
         self._loop: Optional[asyncio.AbstractEventLoop] = None
-        self._advertised: Optional[int] = None
+        self._advertised: Optional[Tuple[Optional[int], Tuple[Tuple[str, str], ...]]] = None
+        self.pack_member = False
+        self.pack_members: Tuple[Tuple[str, str], ...] = ()
         self._rekeyed = False
         self._waiting_told: Optional[str] = None
 
@@ -332,7 +342,16 @@ class ComputersRuntime:
         self.complete, self.joined = state.is_complete, state.joined is True
 
     def advertised_port(self) -> Optional[int]:
-        return self.link_port if self.complete and not self.joined and not self.loopback_bind else None
+        return self.link_port if self.complete and not self.joined and not self.pack_member and not self.loopback_bind else None
+
+    def refresh_pack_view(self) -> None:
+        peers = peer_listing.read_peers(self._open_db)
+        try:
+            master = self.pack.settings().master_install_id if peers else None
+        except RuntimeError:
+            master = None
+        self.pack_member = master is not None and master != self.iid
+        self.pack_members = tuple((r.peer_fid, r.label) for r in peers if r.peer_fid) if master is not None and master == self.iid else ()
 
     def findable(self) -> bool:
         discovery = self._discovery()
@@ -359,6 +378,7 @@ class ComputersRuntime:
 
         members = await asyncio.to_thread(build)
         await asyncio.to_thread(self.refresh_flags)
+        await asyncio.to_thread(self.refresh_pack_view)
         wanted = tuple(sorted(m.peer_install_id + m.cert.cert_sha256 for m in members)) if self.complete and not self.joined else ()
         if force or wanted != self.last_pins:
             await self.pins.set_members(members)
@@ -409,13 +429,13 @@ class ComputersRuntime:
         want = self.complete and not self.joined and self._main_row() is None
         if want != self._discovery_on and self._loop is not None:
             self._discovery_on = want
-            self._advertised = self.advertised_port()
+            self._advertised = (self.advertised_port(), self.pack_members)
             if want:
                 discovery.start(self._loop)
             else:
                 discovery.stop()
             return
-        port = self.advertised_port()
+        port = (self.advertised_port(), self.pack_members)
         if want and port != self._advertised:
             self._advertised = port
             discovery.refresh_link_port()

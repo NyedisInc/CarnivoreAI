@@ -49,7 +49,8 @@
 {#snippet utilityButtons()}
   
   {#if agentFamily === 'claude'}<BookmarkButtons {sessionName} />{/if}
-  {#if agentFamily && SLEEPABLE_FAMILIES.includes(agentFamily)}<KeepAwakeIcon {sessionName} />{/if}
+  
+  {#if !appRows && agentFamily && SLEEPABLE_FAMILIES.includes(agentFamily)}<KeepAwakeIcon {sessionName} />{/if}
 {/snippet}
 <div class="oc-terminal-utilities" data-session-id={sessionId}>
   <TerminalActions

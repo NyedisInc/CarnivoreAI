@@ -197,6 +197,13 @@ class BackgroundProcessesInfo(BaseModel):
         default=None,
         description="Claude Code tool shells running under claude; null when unknown",
     )
+    leftover: Optional[int] = Field(
+        default=None,
+        description=(
+            "Of those shells, how many belong to a sub-agent that already finished "
+            "(left behind, issue #2874); null when not measured, never a fake zero"
+        ),
+    )
 
 
 class UsageLimitInfo(BaseModel):

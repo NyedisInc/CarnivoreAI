@@ -105,7 +105,6 @@ export type SettingControl =
     | { readonly kind: 'quiet-watched' }
     | { readonly kind: 'row-lights' }
     | { readonly kind: 'rail-dock-names' }
-    | { readonly kind: 'rail-magnify' }
     | { readonly kind: 'sidebar-section'; readonly section: 'open' | 'sleeping' }
     | { readonly kind: 'toast-mode' }
     | { readonly kind: 'screen-reader' }
@@ -133,6 +132,7 @@ export type SettingControl =
     | { readonly kind: 'notify-destinations' }
     | { readonly kind: 'notify-link' }
     | { readonly kind: 'messaging' }
+    | { readonly kind: 'notify-inspector' }
     | { readonly kind: 'notify-matrix' }
     | { readonly kind: 'notify-mutes' }
     | { readonly kind: 'notify-sync' }
@@ -164,10 +164,9 @@ export const SETTINGS: readonly SettingDef[] = [
 
     { id: 'theme', section: 'appearance', group: 'appearance.colors', saves: 'instant', control: { kind: 'theme-picker' } },
     { id: 'row_icons', section: 'appearance', group: 'appearance.sidebar', saves: 'instant', control: { kind: 'row-icons' } },
-    { id: 'rail_magnify', section: 'appearance', group: 'appearance.rail', saves: 'instant', control: { kind: 'rail-magnify' } },
-    { id: 'rail_dock_names', section: 'appearance', group: 'appearance.rail', saves: 'instant', control: { kind: 'rail-dock-names' } },
     { id: 'sidebar_show_open', section: 'appearance', group: 'appearance.sidebar', saves: 'instant', control: { kind: 'sidebar-section', section: 'open' } },
     { id: 'sidebar_show_sleeping', section: 'appearance', group: 'appearance.sidebar', saves: 'instant', control: { kind: 'sidebar-section', section: 'sleeping' } },
+    { id: 'rail_dock_names', section: 'appearance', group: 'appearance.rail', saves: 'instant', control: { kind: 'rail-dock-names' } },
     { id: 'foot_bar_layout', section: 'appearance', group: 'appearance.status_bar', saves: 'instant', control: { kind: 'foot-bar-layout', half: 'collapsed' } },
     { id: 'foot_bar_items', section: 'appearance', group: 'appearance.status_bar', saves: 'instant', control: { kind: 'foot-bar-items' } },
     { id: 'foot_bar_layout_open', section: 'appearance', group: 'appearance.control_center', saves: 'instant', control: { kind: 'foot-bar-layout', half: 'open' } },
@@ -196,6 +195,7 @@ export const SETTINGS: readonly SettingDef[] = [
     { id: 'toast_style', section: 'notifications', group: 'notifications.delivery', saves: 'instant', control: { kind: 'toast-mode' } },
     { id: 'quiet_watched', section: 'notifications', group: 'notifications.delivery', saves: 'instant', control: { kind: 'quiet-watched' } },
     { id: 'notification_destinations', section: 'notifications', group: 'notifications.channels', saves: 'panel', control: { kind: 'notify-destinations' } },
+    { id: 'notification_inspector', section: 'notifications', group: 'notifications.routing', saves: 'panel', control: { kind: 'notify-inspector' } },
     { id: 'notification_link', section: 'notifications', group: 'notifications.routing', saves: 'panel', control: { kind: 'notify-link' } },
     { id: 'notification_matrix', section: 'notifications', group: 'notifications.routing', saves: 'panel', control: { kind: 'notify-matrix' } },
     { id: 'notification_mutes', section: 'notifications', group: 'notifications.routing', saves: 'panel', control: { kind: 'notify-mutes' } },
@@ -276,5 +276,5 @@ export function rowDomId(id: string): string {
 
 export function isWideControl(control: SettingControl): boolean {
     if (control.kind === 'stats-collection' && control.part === 'lifecycle') return false;
-    return !['text', 'secret', 'bind', 'theme-picker', 'custom-domain-remove', 'auto-sleep', 'auto-sleep-minutes', 'auto-sleep-unread', 'auto-sleep-unread-minutes', 'config-toggle', 'crosstalk-card', 'row-lights', 'rail-dock-names', 'rail-magnify', 'sidebar-section', 'link'].includes(control.kind);
+    return !['text', 'secret', 'bind', 'theme-picker', 'custom-domain-remove', 'auto-sleep', 'auto-sleep-minutes', 'auto-sleep-unread', 'auto-sleep-unread-minutes', 'config-toggle', 'crosstalk-card', 'row-lights', 'rail-dock-names', 'sidebar-section', 'link'].includes(control.kind);
 }

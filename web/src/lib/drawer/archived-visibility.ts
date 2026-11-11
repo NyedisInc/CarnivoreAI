@@ -16,6 +16,8 @@ export interface ArchivedProject {
     parent_project_id: number | null;
     pack_state?: string | null;
     moved_to_label?: string | null;
+    root?: string | null;
+    storage?: { state: string; packed_in?: number | null } | null;
 }
 
 interface ArchivedGlobals {
@@ -69,13 +71,15 @@ export function archivedProjectsOf(got: unknown): ArchivedProject[] {
     if (!Array.isArray(got)) return [];
     const out: ArchivedProject[] = [];
     for (const raw of got) {
-        const p = raw as { id?: unknown; name?: unknown; archived_at?: unknown; company_id?: unknown; parent_project_id?: unknown } | null;
+        const p = raw as { id?: unknown; name?: unknown; archived_at?: unknown; company_id?: unknown; parent_project_id?: unknown; root?: unknown; storage?: unknown } | null;
         if (!p || !p.archived_at || typeof p.id !== 'number') continue;
         out.push({
             id: p.id,
             name: typeof p.name === 'string' ? p.name : '',
             company_id: typeof p.company_id === 'number' ? p.company_id : null,
             parent_project_id: typeof p.parent_project_id === 'number' ? p.parent_project_id : null,
+            root: typeof p.root === 'string' ? p.root : null,
+            storage: p.storage && typeof (p.storage as { state?: unknown }).state === 'string' ? (p.storage as { state: string; packed_in?: number | null }) : null,
         });
     }
     return out;

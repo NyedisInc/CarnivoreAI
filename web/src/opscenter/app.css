@@ -17,6 +17,9 @@
 @import './art/ascii-art.css';
 @import './type.css';
 @import './engine/grid.css';
+@import '../lib/motion-grid/motion-grid.css';
+@import './engine/rects/abs-surface.css';
+@import './dashgrid/dashgrid.css';
 
 .oc-app,
 .oc-app *,

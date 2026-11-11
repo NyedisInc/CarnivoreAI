@@ -115,9 +115,15 @@ class Terminal {
 
     _sendUserBytes(bytes) {
         if (window.TerminalInputOwnership
-            && !window.TerminalInputOwnership.surfacePermits(this._inputOwner)) return false;
+            && !window.TerminalInputOwnership.surfacePermits(this._inputOwner)) {
+            if (window.TerminalInputDrops) window.TerminalInputDrops.record('owner_refused', this);
+            return false;
+        }
         if (this._m('TerminalInputBuffer')) return this._m('TerminalInputBuffer').send(this, bytes);
-        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false;
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            if (window.TerminalInputDrops) window.TerminalInputDrops.record('no_socket', this);
+            return false;
+        }
         this.ws.send(bytes);
         return true;
     }
@@ -785,6 +791,7 @@ class Terminal {
 
             if (globalThis.PreferencesTransport) globalThis.PreferencesTransport.refreshOnReconnect();
 
+            if (window.TerminalMetrics?.guardedFit) window.TerminalMetrics.guardedFit(this);
             this.sendResize('ws.onopen');
 
             this._needsReplayCtrlL = false;
@@ -930,6 +937,8 @@ class Terminal {
             if (window.ToastManager && message && message.toast_id) {
                 window.ToastManager.dismiss(message.toast_id, { syncToServer: false });
             }
+        } else if (type === 'hold.refused') {
+            window.dispatchEvent(new CustomEvent('carnivore:hold-refused', { detail: { sessionId: this._sessionId(), item: message.item } }));
         } else if (type === 'session.renamed') {
             try {
                 const myId = this._sessionId();

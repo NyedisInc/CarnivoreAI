@@ -115,3 +115,12 @@ def test_writes_notify_companies_and_projects(client, monkeypatch):
     client.put(f"{API}/projects/alpha/company", json={"company_id": a["id"]})
     assert {"companies", "projects"} <= set(seen)
     assert "companies" in __import__("src.core.resource_push.topics", fromlist=["x"]).RESOURCE_TOPICS
+
+
+def test_project_list_carries_new_sessions_join_swarm(client, world):
+    assert _project(client, "alpha")["new_sessions_join_swarm"] is False
+    with closing(connect(world.db, create=False)) as conn:
+        conn.execute("UPDATE projects SET new_sessions_join_swarm = 1 WHERE id = ?", (_project(client, "alpha")["id"],))
+        conn.commit()
+    assert _project(client, "alpha")["new_sessions_join_swarm"] is True
+    assert _project(client, "beta")["new_sessions_join_swarm"] is False

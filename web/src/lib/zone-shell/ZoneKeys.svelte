@@ -29,6 +29,7 @@
     ondragstart,
     hiddenKey,
     ontoggle,
+    motion = null,
   }: {
     zones: readonly Zone[];
     axis: 'x' | 'y';
@@ -49,9 +50,10 @@
     home?: string | null;
     onpress: (zone: Zone, key: string) => void;
     onedit: (event: KeyboardEvent, key: string, title: string) => void;
-    ondragstart: (event: PointerEvent, key: string, title: string) => void;
+    ondragstart?: (event: PointerEvent, key: string, title: string) => void;
     hiddenKey?: (key: string) => boolean;
     ontoggle?: (key: string, hide: boolean) => void;
+    motion?: { cell(node: HTMLElement, key: string): { update?(key: string): void; destroy?(): void } | void } | null;
   } = $props();
 
   let root = $state<HTMLElement | null>(null);
@@ -75,8 +77,28 @@
   }
 
   function keydown(event: KeyboardEvent, key: string, title: string): void {
+    if (motion && event.key.startsWith('Arrow')) return;
     if (editing) onedit(event, key, title);
     else roving(event, key);
+  }
+
+  $effect(() => {
+    if (!motion || !root) return;
+    const strip = root;
+    /* with a plain */
+    const walkWithArrows = (event: KeyboardEvent): void => {
+      if (editing || event.altKey || !event.key.startsWith('Arrow')) return;
+      const key = (event.target as Element).closest<HTMLElement>('[data-zone-item]')?.dataset['zoneItem'];
+      if (!key) return;
+      roving(event, key);
+      event.stopPropagation();
+    };
+    strip.addEventListener('keydown', walkWithArrows, true);
+    return () => strip.removeEventListener('keydown', walkWithArrows, true);
+  });
+
+  function cellAction(node: HTMLElement, key: string): { update?(key: string): void; destroy?(): void } | void {
+    return motion?.cell(node, key);
   }
 </script>
 
@@ -96,21 +118,21 @@
           onfocus={(key) => (stop = key)}
           onkey={(event, key) => keydown(event, key, look.title)}
           onmenu={zone.spec.openMenu ? (key, anchor) => zone.openMenu(key, anchor) : undefined}
-          ondragstart={(event, key) => ondragstart(event, key, look.title)}
+          ondragstart={ondragstart ? (event, key) => ondragstart(event, key, look.title) : undefined}
         />
 {/snippet}
 
-<div class="rail__sections" data-rail-sections data-axis={axis} data-editing={editing} data-flow={flow ? '' : undefined} bind:this={root}>
+<div class="rail__sections" data-motion={motion ? '' : undefined} data-rail-sections data-axis={axis} data-editing={editing} data-flow={flow ? '' : undefined} bind:this={root}>
   {#each zones as zone, s (s)}
     {@const tabs = zone.tabs}
     {@const lifted = tabs.filter((tab) => tab.key !== carriedKey)}
     <div class="rail__keys" data-rail-keys data-rail-section={s} data-rail-pin-end={s === lastZone && ghostAfter !== lastZone ? 'true' : undefined} style={flow ? undefined : sectionStyle(axis, areaOf(s), shownCuts)}>
       {#each tabs as tab, i (tab.key)}
         {@const look = face(tab)}
-        {@const gone = tab.key === carriedKey}
-        {#if editing && !gone && mark?.section === s && mark.index === lifted.indexOf(tab)}<div class="rail__slot" data-zone-mark></div>{/if}
+        {@const gone = !motion && tab.key === carriedKey}
+        {#if editing && !motion && !gone && mark?.section === s && mark.index === lifted.indexOf(tab)}<div class="rail__slot" data-zone-mark></div>{/if}
         
-        <span class="rail__cell" data-carried={gone ? '' : undefined}>
+        <span class="rail__cell" data-motion={motion ? '' : undefined} data-motion-grab={motion ? '' : undefined} data-carried={gone ? '' : undefined} use:cellAction={tab.key}>
           {#if editing && ontoggle}
             <EditCell hidden={hiddenKey?.(tab.key) ?? false} name={look.title} ontoggle={() => ontoggle(tab.key, !(hiddenKey?.(tab.key) ?? false))}>
               {@render keyOf(tab, look, zone)}
@@ -120,7 +142,7 @@
           {/if}
         </span>
       {/each}
-      {#if editing && mark?.index === lifted.length && mark.section === s && tabs.length > 0}<div class="rail__slot" data-zone-mark></div>{/if}
+      {#if editing && !motion && mark?.index === lifted.length && mark.section === s && tabs.length > 0}<div class="rail__slot" data-zone-mark></div>{/if}
       {#if empty}
         <p class="rail__empty" data-rail-empty>{empty}</p>
       {/if}
@@ -188,6 +210,19 @@
     }
 
     .rail__cell {
+      display: contents;
+    }
+
+    .rail__cell[data-motion] {
+      display: block;
+    }
+
+    .rail__sections[data-motion] {
+      overflow: auto;
+      scrollbar-width: thin;
+    }
+
+    .rail__sections[data-motion] .rail__keys {
       display: contents;
     }
 

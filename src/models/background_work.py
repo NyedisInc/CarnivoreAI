@@ -26,6 +26,7 @@ class BackgroundProcess(BaseModel):
     children: int = 0
     summary: Optional[str] = None
     agent_id: Optional[str] = None
+    owner_finished: Optional[bool] = None
 
 
 class SessionBackgroundWork(BaseModel):
@@ -37,6 +38,7 @@ class SessionBackgroundWork(BaseModel):
     owners: OwnersState = "unchecked"
     detail: str = ""
     as_of: Optional[str] = None
+    leftovers: Optional[int] = None
 
 
 class TerminateRequest(BaseModel):
@@ -71,6 +73,17 @@ class TerminateAllRequest(BaseModel):
     """
 
     targets: List[TerminateTarget] = Field(min_length=1, max_length=MAX_BATCH_TARGETS)
+
+
+class StopLeftoversRequest(BaseModel):
+    """``POST .../background-work/stop-leftovers``'s body (issue #2874).
+
+    ``targets`` omitted stops every shell measured as a leftover right now.
+    Given, it names the (pid, start) pairs the user was shown; a pair that
+    is not a measured leftover of this session is refused, never stopped.
+    """
+
+    targets: Optional[List[TerminateTarget]] = Field(default=None, min_length=1, max_length=MAX_BATCH_TARGETS)
 
 
 class TargetResult(BaseModel):

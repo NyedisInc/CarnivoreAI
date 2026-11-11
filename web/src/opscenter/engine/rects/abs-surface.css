@@ -1,0 +1,117 @@
+
+.abs-surface > .motion-item {
+  cursor: auto;
+}
+
+.abs-surface > .abs-zoomed {
+  z-index: 20;
+}
+
+.abs-surface.abs-moving > .abs-handle {
+  visibility: hidden;
+}
+
+.abs-surface.motion-busy > .motion-item {
+  will-change: transform;
+}
+
+.abs-ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: 220px;
+  height: 32px;
+  padding: 0 var(--oc-space-2);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  opacity: 0;
+  border: 1px solid var(--oc-line-rule);
+  background: var(--oc-ground-titlerow);
+  color: var(--oc-orange);
+  font-family: var(--font-mono);
+  font-size: var(--oc-fs-micro);
+}
+
+.abs-body {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+}
+
+.dock-compass {
+  position: absolute;
+  z-index: 130;
+  box-sizing: border-box;
+  pointer-events: none;
+  background: var(--oc-ground-titlerow);
+  box-shadow: 0 0 0 1px var(--oc-line-rule);
+}
+
+.dock-compass__icon {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--oc-space-1);
+  color: var(--oc-line-button);
+  background: var(--oc-ground-panel);
+  box-shadow: inset 0 0 0 1px var(--oc-line-rule);
+}
+
+.dock-compass__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.dock-compass__frame {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+}
+
+.dock-compass__fill {
+  fill: currentColor;
+  fill-opacity: 0.45;
+}
+
+.dock-compass__icon--hot {
+  color: var(--oc-orange);
+  background: color-mix(in srgb, var(--oc-orange) 14%, var(--oc-ground-panel));
+  box-shadow: inset 0 0 0 1px var(--oc-orange);
+}
+
+.dock-compass__icon--hot .dock-compass__fill {
+  fill-opacity: 0.85;
+}
+
+.dock-compass__icon--off {
+  opacity: 0.3;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dock-compass {
+    animation: dock-compass-in var(--oc-motion-fast, 120ms) var(--oc-ease, ease-out);
+  }
+
+  @keyframes dock-compass-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}

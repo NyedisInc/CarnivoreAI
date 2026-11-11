@@ -27,6 +27,8 @@ from src.core.approvals.startup_prompt_provider import StartupPromptProvider, jo
 from src.core.hook_event_presentation import hook_event_presentation, question_toast_title
 from src.core.mcp import pending
 from src.core.notifications.sources import toast as toast_source
+from src.core.notifications.cards import settle as card_settle
+from src.core.notify_caps import retire as caps_retire
 from src.core.notifications.sources.approvals import ApprovalsSource
 from src.core.session_output import escape_notices
 from src.core.session_output import waits as session_waits
@@ -180,6 +182,8 @@ def build_inbox(manager: AttentionManager, app_state: Any, get_watcher: Callable
     if app_state is not None:
         app_state.approvals_inbox = inbox
     inbox.on_gain_ids(ApprovalsSource(get_watcher, lambda: manager, pending.get_store).on_gain)
+    inbox.on_lose_ids(caps_retire.on_lost)
+    inbox.on_lose_ids(card_settle.on_lost)
     return inbox, journal_state_dir
 
 

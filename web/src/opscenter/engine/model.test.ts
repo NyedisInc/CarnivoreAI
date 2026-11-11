@@ -33,6 +33,7 @@ import {
 import { OLD_DEFAULT_LAYOUT } from './old-default.fixture';
 import { canSpanDown, spanDown } from './span-extend';
 import { repairSpans, spanUp, visualOrder } from './spans';
+import { layoutGeometry } from './rects/layout-rects';
 import { columnSpace, computeTracks } from './tracks';
 import { META, metaFor, phoneOrderOf } from './meta';
 import type { CellId, Layout, RowId, RowModel, SlotId } from './types';
@@ -473,13 +474,15 @@ describe('spanning a cell down a row', () => {
     expect(rowOf(layout, 'r5')?.reserved).toHaveLength(1);
   });
 
-  it('keeps a row emptied of its own cells while a spanner still reaches it', () => {
-    let layout = spanDown(OLD_DEFAULT_LAYOUT, 'running-sessions', ROW_WIDTH, GUTTER, META);
-    for (const id of ['projects', 'skills', 'plugins'] as CellId[]) layout = hideCell(layout, id);
-    expect(rowOf(layout, 'r4')?.slots).toEqual([]);
-    expect(rowOf(layout, 'r4')?.reserved).toEqual([{ of: 'running-sessions', at: 0 }]);
-    expect(rowOf(layout, 'r3')?.slots[0]?.span).toBe(2);
-    expect(rowOf(spanUp(layout, 'running-sessions'), 'r4')).toBeUndefined();
+  it('folds a row a hide emptied of its own cells into the spanner above it, which keeps its height', () => {
+    const spanned = spanDown(OLD_DEFAULT_LAYOUT, 'running-sessions', ROW_WIDTH, GUTTER, META);
+    const high = (l: Layout): number => layoutGeometry(l, ROW_WIDTH, 800, 9).rects.get('running-sessions' as SlotId)?.h ?? 0;
+    let layout = spanned;
+    for (const id of ['projects', 'skills', 'plugins'] as CellId[]) layout = hideCell(layout, id, ROW_WIDTH, 800);
+    expect(rowOf(layout, 'r4')).toBeUndefined();
+    expect(rowOf(layout, 'r3')?.slots[0]?.span).toBeUndefined();
+    expect(high(spanned)).toBeGreaterThan(100);
+    expect(Math.abs(high(layout) - high(spanned))).toBeLessThanOrEqual(2);
   });
 
   it('clamps a stored span that reaches past the last row', () => {

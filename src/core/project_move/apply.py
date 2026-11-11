@@ -18,6 +18,7 @@ from src.core.project_move.claude_side import files_under
 from src.core.project_move.ledgers import rewrite_install_rows
 from src.core.project_move.swarm_rows import rewrite_agent_dirs
 from src.core.project_move.paths import JOURNAL_PATH_KEYS, is_within, prefix_params, prefix_where, rebase
+from src.core.backup_health import vault_moves
 from src.core.project_move.transcript_rekey import forget_moved_in_cache, rekey_transcript_rows
 from src.core.project_move.plan import LOCAL_HOST, MovePlan
 from src.core.resource_push import topics as resource_topics
@@ -209,6 +210,7 @@ def apply_plan(conn: sqlite3.Connection, plan: MovePlan, *, state_dir: Path) -> 
             step = "folder rename"
             log.rename(plan.old_root, plan.new_root)
         step = "transcript folder move"
+        vault_moves.note_moved(state_dir, [m["from"] for m in plan.transcript_moves])
         for move in plan.transcript_moves:
             if move["mode"] == "merge":
                 _merge(move["from"], move["to"], log)

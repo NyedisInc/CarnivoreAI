@@ -42,8 +42,8 @@ export function railDestinations(): RailItem[] {
 
 export function railZoneItems(): { top: RailItem[]; bottom: RailItem[] } {
   const settings = menuSettings();
-  const topDefault = [...menuLeadItems(), ...menuDestinations()];
-  const bottomDefault = [...menuHelpLinks(), ...(settings ? [settings] : [])];
+  const topDefault = [...menuLeadItems(), ...menuDestinations(), ...menuHelpLinks()];
+  const bottomDefault = settings ? [settings] : [];
   const byId = new Map([...topDefault, ...bottomDefault].map((item) => [item.id, item]));
   const ids = resolveRailZones(topDefault, bottomDefault, storedMenuOrder());
   const items = (list: string[]): RailItem[] => list.map((id) => byId.get(id) as RailItem);
@@ -53,4 +53,20 @@ export function railZoneItems(): { top: RailItem[]; bottom: RailItem[] } {
   const at = home.findIndex((r) => r.id === 'dashboards');
   home.splice(at === -1 ? 0 : at + 1, 0, WARROOM_ROW);
   return zones;
+}
+
+export type MenuEntry = { kind: 'row'; item: RailItem } | { kind: 'sep' } | { kind: 'head' };
+
+export function zoneEntries(list: readonly RailItem[]): MenuEntry[] {
+  const lead = new Set(menuLeadItems().map((i) => i.id));
+  const help = new Set(RAIL_HELP_LINKS.map((i) => i.id));
+  const out: MenuEntry[] = [];
+  list.forEach((item, i) => {
+    const prev = list[i - 1];
+    const opensHelp = help.has(item.id) && !(prev && help.has(prev.id));
+    if (prev && ((lead.has(prev.id) && !lead.has(item.id)) || opensHelp)) out.push({ kind: 'sep' });
+    if (opensHelp) out.push({ kind: 'head' });
+    out.push({ kind: 'row', item });
+  });
+  return out;
 }

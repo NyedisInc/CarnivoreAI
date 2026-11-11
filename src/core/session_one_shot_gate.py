@@ -20,6 +20,7 @@ PROMPT_READY_STATUSES: tuple[str, ...] = (STATUS_IDLE, STATUS_FINISHED_UNREAD)
 PANE_NOT_AN_AGENT: str = "pane_not_an_agent"
 PANE_DIALOG_OPEN: str = "pane_dialog_open"
 DIALOG_UNREADABLE: str = "dialog_unreadable"
+BUDGET_HELD: str = "budget_held"
 BODY_HAS_ESCAPE: str = "body_has_escape"
 BODY_EMPTY: str = "body_empty"
 BODY_TOO_LARGE: str = "body_too_large"

@@ -29,16 +29,16 @@
     "testflight",
     "web view"
   ],
-  "media_exempt": "no TestFlight build exists yet (the upload and device test wait on Alex's Apple steps), so there is nothing reproducible to capture; the picture is a simulator screenshot",
+  "media_exempt": "the app runs on a phone, so there is no web page to capture; the picture is a simulator screenshot",
   "name": "iPhone App",
   "since": "2026-10-07",
-  "status": "beta",
+  "status": "stable",
   "summary": "A native iPhone shell that lists your computers and opens each in a web view locked to its own origin.",
   "surfaces": [
     "ios/"
   ],
-  "updated": "2026-10-07",
+  "updated": "2026-11-08",
   "where": [
-    "The Carnivore app on an iPhone (TestFlight, once uploaded)."
+    "The Carnivore app on an iPhone (the App Store)."
   ]
 }

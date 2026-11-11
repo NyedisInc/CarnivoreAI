@@ -1,3 +1,4 @@
+// the shipped artifact
 // agrees with whatever it was built to agree with.
 import test from 'node:test';
 import assert from 'node:assert/strict';

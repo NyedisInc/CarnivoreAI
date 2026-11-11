@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from src.api.auth import require_auth
 from src.api.swarm_routes import NEEDS_ON, NEEDS_PORT, _manager, _project_missing, _refused
 from src.core import db
+from src.core.resource_push import notify, topics
 from src.core.swarm import body, membership, project_agent, views
 from src.core.swarm.body import BodyError
 from src.models.swarm import SwarmAgentDetail, SwarmJoinRequest, SwarmLeaveRequest, SwarmLeaveResponse, SwarmMembershipSetting
@@ -84,7 +85,9 @@ async def get_project_membership(project_id: int) -> Dict[str, Any]:
 async def put_project_membership(project_id: int, payload: SwarmMembershipSetting) -> Dict[str, Any]:
     """Turn "new sessions join the swarm" on or off for the project. Raises: 404 ``project_not_found``, 503 (datastore unreadable)."""
     try:
-        return await body.run_db(lambda c: _membership(c, project_id, payload.new_sessions_join_swarm))
+        result = await body.run_db(lambda c: _membership(c, project_id, payload.new_sessions_join_swarm))
+        notify(topics.PROJECTS)
+        return result
     except LookupError:
         raise _project_missing() from None
     except (db.DatastoreUnreadableError, sqlite3.Error) as exc:

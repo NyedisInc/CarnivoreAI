@@ -15,7 +15,7 @@ from websockets.exceptions import ConnectionClosed, InvalidHandshake, WebSocketE
 
 from src.api import peer_auth
 from src.api.deps import SUBPROTOCOL_MARKER
-from src.core.federation import peer_hosts, peer_links
+from src.core.federation import peer_hosts, peer_links, peer_listing
 from src.core.federation.peer_client import PeerClient, PeerRefused, PeerUnreachable
 from src.core.federation.peer_sockets import PEER_REVOKED_CODE, PEER_REVOKED_REASON
 from src.core.hosts.identity import parse_remote_session_id
@@ -30,6 +30,8 @@ UNKNOWN_SESSION_CODE = 4404
 MAX_FRAME_BYTES = 4 * 1024 * 1024
 MAX_CONTROL_BYTES = 4096
 CONNECT_TIMEOUT = 5.0
+MEASURE_GRACE = 1.5
+RESIZE_SETTLE = 0.6
 FORWARDED_QUERY = ("client_id", "observer", "interactive")
 
 DOWN_TYPES = frozenset({
@@ -122,7 +124,53 @@ class PeerUnavailable(Exception):
     pass
 
 
-async def _up(websocket: WebSocket, upstream: Any) -> None:
+class _Measure:
+
+    def __init__(self, client: PeerClient, host_key: str, name: str) -> None:
+        self.client = client
+        self.host_key = host_key
+        self.name = name
+        self.owner_sends = False
+        self.tasks: set = set()
+
+    def schedule(self, websocket: WebSocket, delay: float) -> None:
+        if self.owner_sends:
+            return
+        task = asyncio.create_task(self._read(websocket, delay))
+        self.tasks.add(task)
+        task.add_done_callback(self.tasks.discard)
+
+    async def _read(self, websocket: WebSocket, delay: float) -> None:
+        await asyncio.sleep(delay)
+        if self.owner_sends:
+            return
+        frame = await measured_frame_from_peer(self.client, peer_listing.owner_session_id(self.host_key, self.name) or self.name)
+        if frame is not None and not self.owner_sends:
+            try:
+                await websocket.send_text(frame)
+            except (WebSocketDisconnect, RuntimeError):
+                pass
+
+    def cancel(self) -> None:
+        for task in list(self.tasks):
+            task.cancel()
+
+
+async def measured_frame_from_peer(client: PeerClient, owner_id: str) -> Optional[str]:
+    try:
+        response = await client.request("GET", f"/sessions/{quote(owner_id, safe='')}/pane-facts", timeout=CONNECT_TIMEOUT)
+    except (PeerUnreachable, PeerRefused):
+        return None
+    data = _json_or_empty(response) if response.status_code == 200 else {}
+    cols = data.get("cols") if isinstance(data, dict) else None
+    rows = data.get("rows") if isinstance(data, dict) else None
+    if not (isinstance(cols, int) and isinstance(rows, int) and not isinstance(cols, bool) and not isinstance(rows, bool)
+            and 1 <= cols <= 1000 and 1 <= rows <= 1000):
+        return None
+    return json.dumps({"type": WSMessageType.TERMINAL_SIZE.value, "cols": cols, "rows": rows, "measured": True})
+
+
+async def _up(websocket: WebSocket, upstream: Any, measure: _Measure) -> None:
     while True:
         message = await websocket.receive()
         if message["type"] == "websocket.disconnect":
@@ -133,15 +181,20 @@ async def _up(websocket: WebSocket, upstream: Any) -> None:
             frame = up_text(message["text"])
             if frame is not None:
                 await upstream.send(frame)
+                sent = json.loads(frame)
+                if sent["type"] == WSMessageType.PTY_RESIZE.value and not sent.get("hidden"):
+                    measure.schedule(websocket, RESIZE_SETTLE)
 
 
-async def _down(websocket: WebSocket, upstream: Any, wire_id: str) -> None:
+async def _down(websocket: WebSocket, upstream: Any, wire_id: str, measure: _Measure) -> None:
     async for frame in upstream:
         if isinstance(frame, bytes):
             await websocket.send_bytes(frame)
             continue
         text = down_text(frame, wire_id)
         if text is not None:
+            if '"measured"' in text and json.loads(text).get("measured") is True:
+                measure.owner_sends = True
             await websocket.send_text(text)
 
 
@@ -157,11 +210,14 @@ async def dispatch(websocket: WebSocket, registry: Any, requested_sid: Optional[
 async def relay(websocket: WebSocket, host_key: str, name: str, wire_id: str) -> None:
     client = _peer_client(host_key)
     upstream = None
+    measure: Optional[_Measure] = None
     try:
         if client is None:
             raise PeerUnavailable()
         upstream = await connect_upstream(client, _upstream_url(name, websocket.query_params))
-        tasks = [asyncio.create_task(_up(websocket, upstream)), asyncio.create_task(_down(websocket, upstream, wire_id))]
+        measure = _Measure(client, host_key, name)
+        measure.schedule(websocket, MEASURE_GRACE)
+        tasks = [asyncio.create_task(_up(websocket, upstream, measure)), asyncio.create_task(_down(websocket, upstream, wire_id, measure))]
         done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
         for task in pending:
             task.cancel()
@@ -179,6 +235,8 @@ async def relay(websocket: WebSocket, host_key: str, name: str, wire_id: str) ->
     except (OSError, WebSocketException):
         await _close_browser(websocket, PEER_UNAVAILABLE_CODE, PEER_UNAVAILABLE_REASON)
     finally:
+        if measure is not None:
+            measure.cancel()
         if upstream is not None:
             await upstream.close()
 

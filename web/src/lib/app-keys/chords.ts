@@ -7,6 +7,7 @@ import { goTo } from '../nav-items/nav-items';
 import type { AppChord } from './router';
 import { stepTerminalFont } from '../terminal-font/terminal-font';
 import { onMac, togglePalette } from '../palette/palette-host';
+import { stepActiveTabs } from '../../opscenter/cells/terminal-group/tab-step';
 
 export function isLive(entry: FocusEntry): boolean {
     if (entry.kind === 'layout') return !layouts.data || layouts.data.some((l) => l.layout_uuid === entry.uuid);
@@ -40,6 +41,8 @@ const PALETTE_ACTIONS_KEYS = ['shift', 'cmd', 'p'].join(' ');
 export const APP_CHORDS: readonly AppChord[] = [
     { id: 'history.back', key: '[', meta: true, accelerator: 'Cmd+[', keys: 'cmd [', labelKey: 'keys.page.app.back', run: () => walk(-1) },
     { id: 'history.forward', key: ']', meta: true, accelerator: 'Cmd+]', keys: 'cmd ]', labelKey: 'keys.page.app.forward', run: () => walk(1) },
+    { id: 'tab.prev', key: '<', code: 'Comma', meta: true, inFields: true, accelerator: 'Cmd+<', keys: 'cmd <', labelKey: 'keys.page.app.tab_prev', run: () => stepActiveTabs(-1) },
+    { id: 'tab.next', key: '>', code: 'Period', meta: true, inFields: true, accelerator: 'Cmd+>', keys: 'cmd >', labelKey: 'keys.page.app.tab_next', run: () => stepActiveTabs(1) },
     ...DIGITS.map((n): AppChord => ({
         id: `layout.tab.${n}`, key: String(n), meta: true, accelerator: `Cmd+${n}`, keys: `cmd ${n}`,
         labelKey: n === 9 ? 'keys.page.app.layout_last' : 'keys.page.app.layout_tab', run: () => openLayoutTab(n),
@@ -56,6 +59,8 @@ export const APP_CHORDS: readonly AppChord[] = [
 export const APP_KEY_ROWS: readonly { keys: string; labelKey: string }[] = [
     { keys: 'cmd [', labelKey: 'keys.page.app.back' },
     { keys: 'cmd ]', labelKey: 'keys.page.app.forward' },
+    { keys: 'cmd <', labelKey: 'keys.page.app.tab_prev' },
+    { keys: 'cmd >', labelKey: 'keys.page.app.tab_next' },
     { keys: 'cmd 1 to 8', labelKey: 'keys.page.app.layout_tab' },
     { keys: 'cmd 9', labelKey: 'keys.page.app.layout_last' },
     { keys: 'cmd k', labelKey: 'keys.page.app.palette' },

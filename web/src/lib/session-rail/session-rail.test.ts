@@ -219,71 +219,19 @@ describe('the session-based flag', () => {
 });
 
 describe('edit layout owns the rails', () => {
-  test('a key carried down the rail moves there; a key carried off both rails is taken out', () => {
-    follow(RAIL_FIELD, { v: 1, items: [{ widget: 'core.changes' }, { widget: 'core.files' }, { widget: 'core.notes' }, { widget: 'core.task-manager' }] });
-    layoutEditor.active = true;
-    flushSync();
-    layOut();
-    expect(railDrag.indexAt(1018, 60, 'core.changes')).toBe(1);
-    const first = document.querySelector<HTMLElement>('[data-zone-item="core.changes"]')!;
-    first.dispatchEvent(ptr('pointerdown', 1018, 20));
-    first.dispatchEvent(ptr('pointermove', 1018, 60));
-    first.dispatchEvent(ptr('pointermove', 1018, 90));
-    flushSync();
-    expect(document.querySelector(`#${RAIL_ID} [data-zone-mark]`)).not.toBeNull();
-    first.dispatchEvent(ptr('pointerup', 1018, 90));
-    flushSync();
-    expect(keys()).toEqual(['core.files', 'core.notes', 'core.changes', 'core.task-manager']);
-
-    layOut();
-    const huddle = document.querySelector<HTMLElement>('[data-zone-item="core.task-manager"]')!;
-    huddle.dispatchEvent(ptr('pointerdown', 1018, 120));
-    huddle.dispatchEvent(ptr('pointermove', 600, 120));
-    huddle.dispatchEvent(ptr('pointerup', 600, 120));
-    flushSync();
-    expect(keys()).toEqual(['core.files', 'core.notes', 'core.changes']);
-    expect(written.at(-1)).toEqual({ field: RAIL_FIELD, value: one('core.files', 'core.notes', 'core.changes') });
-  });
-
-  test('a key dragged from the side rail onto the bottom rail moves across, and back again', () => {
-    follow(BOTTOM_FIELD, { v: 1, items: [{ widget: 'core.task-manager' }] });
-    layoutEditor.active = true;
-    flushSync();
-    layOut();
-    layOutBottom();
-    expect(railDrags.bottom.indexAt(100, 718)).toBe(1);
-
-    const dragged = document.querySelector<HTMLElement>('[data-zone-item="core.files"]')!;
-    dragged.dispatchEvent(ptr('pointerdown', 1018, 20));
-    dragged.dispatchEvent(ptr('pointermove', 400, 718));
-    flushSync();
-    expect(railDrags.bottom.state.index).toBe(1);
-    dragged.dispatchEvent(ptr('pointerup', 400, 718));
-    flushSync();
-    expect(keys()).toEqual(['core.notes', 'core.bookmarks']);
-    expect(bottomKeys()).toEqual(['core.task-manager', 'core.files']);
-    expect(written.map((w) => w.field).sort()).toEqual([RAIL_FIELD, BOTTOM_FIELD].sort());
-    expect(batches).toHaveLength(1);
-    expect(batches[0]!.slice().sort()).toEqual([RAIL_FIELD, BOTTOM_FIELD].sort());
-
-    layOut();
-    layOutBottom();
-    const notes = document.querySelector<HTMLElement>(`#${RAIL_BOTTOM_ID} [data-zone-item="core.task-manager"]`)!;
-    notes.dispatchEvent(ptr('pointerdown', 20, 718));
-    notes.dispatchEvent(ptr('pointermove', 1018, 5));
-    notes.dispatchEvent(ptr('pointerup', 1018, 5));
-    flushSync();
-    expect(keys()).toEqual(['core.task-manager', 'core.notes', 'core.bookmarks']);
-    expect(bottomKeys()).toEqual(['core.files']);
-  });
 
   test('without a pointer: arrows along the strip move the focused key and del takes it out', () => {
     follow(RAIL_FIELD, { v: 1, items: [{ widget: 'core.changes' }, { widget: 'core.files' }, { widget: 'core.notes' }, { widget: 'core.task-manager' }] });
     layoutEditor.active = true;
     flushSync();
     const key = (id: string) => document.querySelector<HTMLElement>(`[data-zone-item="${id}"]`)!;
+    const writesBefore = written.length;
     key('core.task-manager').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
     flushSync();
+    expect(written.length).toBe(writesBefore);
+    key('core.task-manager').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    flushSync();
+    expect(written.length).toBe(writesBefore + 1);
     expect(keys()).toEqual(['core.changes', 'core.files', 'core.task-manager', 'core.notes']);
     key('core.files').dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
     flushSync();
@@ -293,7 +241,33 @@ describe('edit layout owns the rails', () => {
     document.querySelector<HTMLElement>(`#${RAIL_BOTTOM_ID} [data-zone-item="core.ledger"]`)!
       .dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
     flushSync();
+    expect(bottomKeys()).toEqual(['core.files', 'core.ledger']);
+    document.querySelector<HTMLElement>(`#${RAIL_BOTTOM_ID} [data-zone-item="core.ledger"]`)!
+      .dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    flushSync();
     expect(bottomKeys()).toEqual(['core.ledger', 'core.files']);
+  });
+
+  test('the keys are on the motion core at any time: Alt plus an arrow moves the focused key outside edit layout, a plain arrow only walks focus', () => {
+    follow(RAIL_FIELD, { v: 1, items: [{ widget: 'core.changes' }, { widget: 'core.files' }, { widget: 'core.notes' }] });
+    layoutEditor.active = false;
+    flushSync();
+    const cells = document.querySelectorAll<HTMLElement>(`#${RAIL_ID} [data-stack-id]`);
+    expect([...cells].map((c) => c.dataset['stackId'])).toEqual(['core.changes', 'core.files', 'core.notes']);
+    expect(cells[0]!.classList.contains('motion-item')).toBe(true);
+    const files = document.querySelector<HTMLElement>('[data-zone-item="core.files"]')!;
+    files.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+    flushSync();
+    expect(keys()).toEqual(['core.changes', 'core.files', 'core.notes']);
+    const writesBefore = written.length;
+    files.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true, cancelable: true }));
+    flushSync();
+    expect(written.length).toBe(writesBefore);
+    files.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    flushSync();
+    expect(written.length).toBe(writesBefore + 1);
+    expect(keys()).toEqual(['core.changes', 'core.notes', 'core.files']);
+    expect(written.at(-1)).toEqual({ field: RAIL_FIELD, value: one('core.changes', 'core.notes', 'core.files') });
   });
 
   test('a widget carried in from the layout editor drawer lands at the rail insertion point, on whichever rail it is over', () => {

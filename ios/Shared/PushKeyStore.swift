@@ -40,7 +40,7 @@ enum PushKeyStore {
     }
 
     @discardableResult
-    private static func save(_ list: [Entry]) -> Bool {
+    fileprivate static func save(_ list: [Entry]) -> Bool {
         guard !list.isEmpty else {
             let status = SecItemDelete(query() as CFDictionary)
             return status == errSecSuccess || status == errSecItemNotFound
@@ -136,3 +136,11 @@ enum PushKeyStore {
         value.range(of: "^d_[0-9a-f]{12}$", options: .regularExpression) != nil
     }
 }
+
+#if DEBUG && targetEnvironment(simulator)
+extension PushKeyStore {
+    static func seedTestVector(origin: String, key: Data, rowId: String) {
+        _ = save([Entry(origin: origin, key: key, rowId: rowId)])
+    }
+}
+#endif

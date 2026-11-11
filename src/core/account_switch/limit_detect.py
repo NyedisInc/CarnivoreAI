@@ -48,21 +48,45 @@ PANE_FOOTER_LINES = 20
 _RULE = re.compile(r"^\s*[\u2500\u2501]{8,}\s*$")
 
 _BANNER = re.compile(r"^\s*\u26a0\s+Usage limit reached\s+\u00b7\s+limit resets\s+(?P<at>\S.*?)\s*$")
-_CONTINUING = re.compile(r"^\s*Continuing automatically at\s+\S.*?\s+\u00b7\s+esc to cancel\b")
 
 _PAUSED_ROW = re.compile(r"^\s*\u23f8\s+\S.*?\s+paused\s+\u00b7\s+usage limit resets at\s+(?P<at>\S.*?)\s*$")
+
+
+_MENU_HEADER = re.compile(r"^\s*What do you want to do\?\s*$")
+_MENU_STOP = re.compile(r"^\s*[\u276f>]?\s*\d\.\s+Stop and wait for limit to reset\s*$")
+_MENU_WAIT = re.compile(r"^\s*[\u276f>]?\s*\d\.\s+Wait here, then continue automatically at\s+(?P<at>\S.*?)\s*$")
+_MENU_CREDITS = re.compile(r"^\s*[\u276f>]?\s*\d\.\s+Switch to usage credits\s*$")
+
+_MENU_OPTION_LINES = 4
+
+MENU_LABEL = "menu"
+
+
+def _menu_label(screen: str) -> Optional[str]:
+    lines = [line for line in screen.splitlines() if line.strip()]
+    tail = lines[-PANE_TAIL_LINES:]
+    for index, line in enumerate(tail):
+        if not _MENU_HEADER.match(line):
+            continue
+        options = tail[index + 1:index + 1 + _MENU_OPTION_LINES]
+        if any(_MENU_STOP.match(o) for o in options) and any(_MENU_CREDITS.match(o) for o in options):
+            return next((m.group("at") for m in map(_MENU_WAIT.match, options) if m), MENU_LABEL)
+    return None
 
 
 def pane_stop_label(screen: Optional[str]) -> Optional[str]:
     if not screen:
         return None
+    menu = _menu_label(screen)
+    if menu is not None:
+        return menu
     lines = screen.splitlines()
     rules = [i for i, line in enumerate(lines) if _RULE.match(line)]
     if not rules:
         return None
     footer = [line for line in lines[rules[-1] + 1:] if line.strip()][:PANE_FOOTER_LINES]
     banner = next((m.group("at") for m in map(_BANNER.match, footer) if m), None)
-    if banner is not None and any(_CONTINUING.match(line) for line in footer):
+    if banner is not None:
         return banner
     return next((m.group("at") for m in map(_PAUSED_ROW.match, footer) if m), None)
 

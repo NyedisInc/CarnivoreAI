@@ -81,6 +81,7 @@ class ProjectResponse(BaseModel):
     color: Optional[str] = Field(
         None, description="The project's color, a #rrggbb hex (``projects.color``; see src/core/project_colors/palette.py), null when none is picked; legacy color names were converted to hex at schema v98"
     )
+    new_sessions_join_swarm: bool = Field(False, description="A new session of this project launches as a Swarm member (#2589)")
     parent_project_id: Optional[int] = Field(
         None,
         description=(

@@ -50,6 +50,19 @@ class ConfigChoices:
                                       "exclude": sorted([list(p) for p in choices.exclude])})
 
 
+def _link_label(install_id: str) -> str:
+    from src.api import peer_auth
+    from src.core.federation import peer_hosts
+
+    try:
+        with closing(peer_auth.open_db()) as conn:
+            row = peer_hosts.get(conn, install_id)
+    except sqlite3.Error as exc:
+        logger.warning("pack_skills_link_label_failed", error_type=type(exc).__name__)
+        return ""
+    return row.label if row is not None else ""
+
+
 def start(links_getter: Callable[[], Optional[peer_links.PeerLinks]], services: Any = None) -> SkillsSync:
     global SYNC, WATCHER
     from src.api import federation_pack_skills_routes as receiving
@@ -104,7 +117,8 @@ def start(links_getter: Callable[[], Optional[peer_links.PeerLinks]], services: 
         return doc.master_install_id, str(doc.rev[1]), int(doc.rev[0])
 
     def label_of(install_id: str) -> str:
-        return next((v.label for v in peers() if v.peer_id == install_id), "")
+        live = next((v.label for v in peers() if v.peer_id == install_id), "")
+        return live or _link_label(install_id)
 
     def grant_live(install_id: str) -> bool:
         from src.api import peer_auth

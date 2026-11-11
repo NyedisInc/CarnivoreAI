@@ -6,9 +6,10 @@ import type { DrawerSearchController } from './provider-types';
 import ContextModal from './ContextModal.svelte';
 import type { ContextRequest } from './context-api';
 import { browserDeepSearchApi, PAGE_SIZE, type DeepAnswer, type DeepGroup, type DeepHit, type DeepIngest, type DeepSearchApi, type DeepSuggestion, type PeerDown, type SearchScope } from './deepsearch-api';
+import { hitTerms } from './context-marks';
 import { HitRunner, targetOf } from './hit-runner';
 import { mergePeerAnswer } from './peer-merge';
-import { conversationName, conversationState, needsFetch, readLayout, walk, writeLayout, type ConvState, type Layout, type WalkedHit } from './result-model';
+import { conversationName, conversationState, needsFetch, readLayout, readSort, walk, writeLayout, writeSort, type ConvState, type Layout, type SortChoice, type WalkedHit } from './result-model';
 
 export const DEBOUNCE_MS = 250;
 export const MIN_QUERY_CHARS = 2;
@@ -35,6 +36,7 @@ export interface ContextShow {
   bookmark: DeepHit['bookmark'];
   focus: 'hit' | 'bookmark';
   hitLine: number | null;
+  hitTerms: string[];
 }
 
 export type ContextOpener = (show: ContextShow) => void;
@@ -61,6 +63,7 @@ export class DeepSearchController implements DrawerSearchController {
   onReplaceQuery?: (text: string) => void;
   notes = $state.raw<Record<string, OpenOutcome>>({});
   layout = $state<Layout>(readLayout());
+  sort = $state<SortChoice>(readSort());
   kind = $state<KindFilter>('all');
   scope = $state.raw<{ conversationId: string; name: string } | null>(null);
   expanded = $state.raw<Record<string, true>>({});
@@ -113,6 +116,13 @@ export class DeepSearchController implements DrawerSearchController {
     writeLayout(layout);
   }
 
+  setSort(sort: SortChoice): void {
+    if (sort === this.sort) return;
+    this.sort = sort;
+    writeSort(sort);
+    if (this.#searched) void this.run(this.#searched, 0);
+  }
+
   setKind(kind: KindFilter): void {
     if (kind === this.kind) return;
     this.kind = kind;
@@ -130,7 +140,7 @@ export class DeepSearchController implements DrawerSearchController {
   }
 
   #scopeArg(): SearchScope {
-    return { kinds: this.kind === 'all' ? undefined : this.kind, conversationId: this.scope?.conversationId };
+    return { kinds: this.kind === 'all' ? undefined : this.kind, conversationId: this.scope?.conversationId, sort: this.sort };
   }
 
   async expand(group: DeepGroup): Promise<void> {
@@ -310,7 +320,7 @@ export class DeepSearchController implements DrawerSearchController {
   }
 
   #mergePeerAnswer(answer: DeepAnswer): void {
-    const merged = mergePeerAnswer(this.groups, answer);
+    const merged = mergePeerAnswer(this.groups, answer, this.sort);
     this.groups = merged.groups;
     this.total += merged.fresh.length;
     this.matches += merged.fresh.reduce((n, g) => n + g.matches, 0);
@@ -416,7 +426,7 @@ export class DeepSearchController implements DrawerSearchController {
       : hit.line !== null ? { ...base, line: hit.line } : null;
     if (request === null) return false;
     this.#contextOpener({ title, request, target: targetOf(group), hostLabel: group.hostKey !== null && group.hostKey !== 'local' ? (group.hostLabel ?? group.hostKey) : null,
-      bookmark: hit.bookmark, focus, hitLine: hit.line });
+      bookmark: hit.bookmark, focus, hitLine: hit.line, hitTerms: hitTerms(hit.snippet) });
     return true;
   }
 

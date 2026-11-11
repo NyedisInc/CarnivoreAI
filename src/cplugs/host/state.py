@@ -14,12 +14,13 @@ from src.cplugs.host.permission_renames import current_names
 from src.cplugs.sdk.manifest import Manifest
 from src.cplugs.sdk.permission_registry import DEFAULT_GRANTED, FIRST_PARTY_TIERS, PLATFORM_GRANTED
 from src.cplugs.host import developer_mode
-from src.core.json_artifact import atomic_write_json
+from src.core.json_artifact import UnreadableArtifact
+from src.cplugs.host import registry_files, registry_store
 
 logger = structlog.get_logger()
 
-STATE_DIR_NAME = "cplugs"
-STATE_FILE = "state.json"
+STATE_DIR_NAME = registry_store.STATE_DIR_NAME
+STATE_FILE = registry_store.STATE_FILE
 STATE_VERSION = 1
 
 _lock = threading.RLock()
@@ -33,6 +34,10 @@ class StaleRevision(Exception):
 
 
 class StateWriteFailed(OSError):
+    pass
+
+
+class StateUnreadable(StateWriteFailed):
     pass
 
 
@@ -73,6 +78,9 @@ _file_cache: Dict[str, Tuple[int, int, int, Dict[str, Any]]] = {}
 
 
 def _load(state_dir: Path) -> Optional[Dict[str, Any]]:
+    views = registry_files.flipped_views(state_dir)
+    if views is not None:
+        return views["state"]["cplugs"]
     path = state_path(state_dir)
     key = str(path)
     try:
@@ -103,6 +111,19 @@ def _load(state_dir: Path) -> Optional[Dict[str, Any]]:
 def _read_file(state_dir: Path) -> Dict[str, Any]:
     loaded = _load(state_dir)
     return {} if loaded is None else loaded
+
+
+def _cplugs_for_update(state_dir: Path) -> Dict[str, Any]:
+    path = state_path(state_dir)
+    try:
+        data = registry_store.read_store(state_dir, "state", log_event="cplug_host_state_unreadable")
+    except UnreadableArtifact as exc:
+        raise StateUnreadable(str(exc)) from exc
+    cplugs = data.get("cplugs", {})
+    if not isinstance(cplugs, dict):
+        logger.error("cplug_host_state_unreadable", path=str(path), error="cplugs is not an object")
+        raise StateUnreadable(f"{path}: cplugs is not an object")
+    return dict(cplugs)
 
 
 def _from_entry(manifest: Manifest, entry: Dict[str, Any]) -> CplugState:
@@ -158,17 +179,17 @@ def stored_ids(state_dir: Path) -> Tuple[str, ...]:
 def update(state_dir: Path, manifest: Manifest, expected_revision: Optional[int],
            mutate: Callable[[CplugState], CplugState]) -> CplugState:
     path = state_path(state_dir)
-    with _lock:
+    with registry_store.locked(state_dir, _lock, StateWriteFailed):
         current = get(state_dir, manifest)
         if expected_revision is not None and expected_revision != current.revision:
             raise StaleRevision(current)
         changed = replace(mutate(current), revision=current.revision + 1, stored=True)
-        cplugs = dict(_read_file(state_dir))
+        cplugs = _cplugs_for_update(state_dir)
         cplugs[manifest.id] = {"enabled": changed.enabled, "grants": list(changed.grants),
                                "settings": changed.settings, "revision": changed.revision, "digest": changed.digest,
                                "updated_at": time.time()}
         _file_cache.pop(str(path), None)
-        if not atomic_write_json(path, {"version": STATE_VERSION, "cplugs": cplugs}, log_event="cplug_host_state_write_failed"):
+        if not registry_store.write_document(state_dir, "state", {"version": STATE_VERSION, "cplugs": cplugs}, log_event="cplug_host_state_write_failed"):
             raise StateWriteFailed(str(path))
         _file_cache.pop(str(path), None)
         return changed
@@ -176,14 +197,29 @@ def update(state_dir: Path, manifest: Manifest, expected_revision: Optional[int]
 
 def strip_consent(state_dir: Path, cplug_id: str) -> bool:
     path = state_path(state_dir)
-    with _lock:
-        cplugs = dict(_read_file(state_dir))
+    with registry_store.locked(state_dir, _lock, StateWriteFailed):
+        cplugs = _cplugs_for_update(state_dir)
         entry = cplugs.get(cplug_id)
         if not isinstance(entry, dict) or (not entry.get("grants") and not entry.get("digest")):
             return False
         cplugs[cplug_id] = {**entry, "grants": [], "digest": "", "revision": int(entry.get("revision") or 0) + 1, "updated_at": time.time()}
         _file_cache.pop(str(path), None)
-        if not atomic_write_json(path, {"version": STATE_VERSION, "cplugs": cplugs}, log_event="cplug_host_state_write_failed"):
+        if not registry_store.write_document(state_dir, "state", {"version": STATE_VERSION, "cplugs": cplugs}, log_event="cplug_host_state_write_failed"):
+            raise StateWriteFailed(str(path))
+        _file_cache.pop(str(path), None)
+        return True
+
+
+def switch_off(state_dir: Path, cplug_id: str) -> bool:
+    path = state_path(state_dir)
+    with registry_store.locked(state_dir, _lock, StateWriteFailed):
+        loaded = _load(state_dir)
+        entry = loaded.get(cplug_id) if loaded is not None else None
+        if not isinstance(entry, dict) or entry.get("enabled") is not True:
+            return False
+        cplugs = {**loaded, cplug_id: {**entry, "enabled": False, "revision": int(entry.get("revision") or 0) + 1, "updated_at": time.time()}}
+        _file_cache.pop(str(path), None)
+        if not registry_store.write_document(state_dir, "state", {"version": STATE_VERSION, "cplugs": cplugs}, log_event="cplug_host_state_write_failed"):
             raise StateWriteFailed(str(path))
         _file_cache.pop(str(path), None)
         return True
@@ -191,12 +227,12 @@ def strip_consent(state_dir: Path, cplug_id: str) -> bool:
 
 def forget(state_dir: Path, cplug_id: str) -> bool:
     path = state_path(state_dir)
-    with _lock:
-        cplugs = dict(_read_file(state_dir))
+    with registry_store.locked(state_dir, _lock, StateWriteFailed):
+        cplugs = _cplugs_for_update(state_dir)
         if cplugs.pop(cplug_id, None) is None:
             return False
         _file_cache.pop(str(path), None)
-        if not atomic_write_json(path, {"version": STATE_VERSION, "cplugs": cplugs}, log_event="cplug_host_state_write_failed"):
+        if not registry_store.write_document(state_dir, "state", {"version": STATE_VERSION, "cplugs": cplugs}, log_event="cplug_host_state_write_failed"):
             raise StateWriteFailed(str(path))
         _file_cache.pop(str(path), None)
         return True

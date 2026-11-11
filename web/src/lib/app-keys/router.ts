@@ -14,6 +14,7 @@ export interface AppKeyEvent {
 export interface AppChord {
     id: string;
     key: string;
+    code?: string;
     meta?: boolean;
     ctrl?: boolean;
     alt?: boolean;
@@ -37,9 +38,9 @@ export function isTextField(target: EventTarget | null | undefined): boolean {
 
 export function matches(chord: AppChord, event: AppKeyEvent): boolean {
     const physical = event.altKey && /^(Key[A-Z]|Digit[0-9])$/.test(event.code ?? '') ? String(event.code).slice(-1).toLowerCase() : String(event.key).toLowerCase();
-    if (physical !== chord.key) return false;
+    if (chord.code ? event.code !== chord.code || !event.shiftKey : physical !== chord.key) return false;
     return !!event.metaKey === !!chord.meta && !!event.ctrlKey === !!chord.ctrl
-        && !!event.altKey === !!chord.alt && (chord.anyShift === true || !!event.shiftKey === !!chord.shift);
+        && !!event.altKey === !!chord.alt && (chord.anyShift === true || !!chord.code || !!event.shiftKey === !!chord.shift);
 }
 
 export function pick(chords: readonly AppChord[], event: AppKeyEvent): AppChord | null {

@@ -107,9 +107,9 @@ def _plugin_copy(plugin_id: str, tmp_path: Path, data: Any = "keep") -> Path:
 
 
 def test_the_loaded_manifest_carries_the_checked_block() -> None:
-    boards = load_manifest(str(PLUGINS / "reviewboard" / "__init__.py")).data
-    assert boards is not None and {d.id for d in boards} == {"boards", "drafts", "locks"}
-    assert next(d for d in boards if d.id == "boards").root_setting == "boardsRoot"
+    crate = load_manifest(str(PLUGINS / "crate" / "__init__.py")).data
+    assert crate is not None and {"bundles", "second_copies"} <= {d.id for d in crate}
+    assert next(d for d in crate if d.id == "bundles").root_setting is not None
     assert load_manifest(str(PLUGINS / "share" / "__init__.py")).data == ()
     assert load_manifest(str(PLUGINS / "huddle" / "__init__.py")).data == ()
     assert parse_manifest(json.loads((PLUGINS / "share" / "cplug.json").read_text())).data is None
@@ -119,7 +119,7 @@ def test_a_broken_block_leaves_data_undeclared_and_warns() -> None:
     import tempfile
 
     with tempfile.TemporaryDirectory() as tmp, structlog.testing.capture_logs() as logs:
-        folder = _plugin_copy("reviewboard", Path(tmp), data=[DB, DB])
+        folder = _plugin_copy("save", Path(tmp), data=[DB, DB])
         assert load_manifest(str(folder / "__init__.py")).data is None
     assert [e["log_level"] for e in logs if e["event"] == "cplug_data_invalid"] == ["warning"]
 
@@ -223,8 +223,8 @@ def test_policy_backup_vault_is_only_for_a_folder_that_is_not_a_destination() ->
     del dest["path"]
     assert any("policy.backup" in p for p in problems_in([dest], {}))
     assert problems_in([{**base, "policy": {**base["policy"], "backup": "cloud"}}], {})
-    rb = _declared()["reviewboard"]
-    assert rb["boards"].wants_vault and rb["drafts"].wants_vault and not rb["locks"].wants_vault
+    fixture = data_decl.parse_data([base, {**base, "id": "b", "path": "b", "policy": {**base["policy"], "backup": "none"}}], {})
+    assert fixture[0].wants_vault and not fixture[1].wants_vault
 
 
 
@@ -289,10 +289,9 @@ def test_kept_inside_the_plugin_folder_and_a_destination_that_is_not_a_placed_fo
 
 
 def test_shipped_stores_outside_the_plugin_folder_say_what_a_purge_does() -> None:
-    kept = {(i, d.id): d.policy.purge for i, decls in _declared().items() for d in decls.values() if d.root_setting or d.state_path}
-    assert kept == {("reviewboard", "boards"): "kept", ("crate", "bundles"): "kept", ("crate", "second_copies"): "kept", ("save", "legacy_points"): "kept",
+    kept = {(i, d.id): d.policy.purge for i, decls in _declared().items() if i != "reviewboard" for d in decls.values() if d.root_setting or d.state_path}
+    assert kept == {("crate", "bundles"): "kept", ("crate", "second_copies"): "kept", ("save", "legacy_points"): "kept",
                     ("save", "vault"): "kept"}
     roles = {(i, d.id) for i, decls in _declared().items() for d in decls.values() if d.role == "backup_destination"}
     assert roles == {("crate", "bundles"), ("crate", "second_copies"), ("save", "vault")}
     assert _declared()["crate"]["bundles"].default == "crates"
-    assert _declared()["reviewboard"]["drafts"].scope_by == "install" and "locks" in _declared()["reviewboard"]

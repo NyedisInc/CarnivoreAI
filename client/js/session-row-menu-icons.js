@@ -140,6 +140,10 @@ console.log('[SessionRowMenuIcons Module] Loading...');
         'huddle-project-lead': 'star',
         // Move to folder the project folder
         'move-to-folder': 'folder',
+        archive: 'archive',
+        'project-settings': 'gear',
+        swarm: 'users',
+        company: 'building',
     };
 
     function svg(id, size) {

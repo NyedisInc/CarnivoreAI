@@ -1,0 +1,36 @@
+{
+  "files": {
+    "web/src/cplugs/argent/ArgentSettings.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/cplugs/argent/RolloutModal.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/cplugs/argent/TetheredRow.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/cplugs/argent/OutageBanner.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/cplugs/argent/ArgentBudgetPanel.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/cplugs/argent/ArgentWriteback.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/cplugs/argent/ClassifierChange.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/cplugs/argent/RetagDialog.svelte": {
+      "section": "settings",
+      "classes": []
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { BUILTIN_CPLUGS, buildShipList, ORDER_HINT } from './builtin';
+import { BUILTIN_CPLUGS, buildShipList, SHIP_ORDER } from './builtin';
 import type { CplugWeb } from './sdk';
 
 const fake = (id: string) => ({ id }) as unknown as CplugWeb;
@@ -7,7 +7,7 @@ const fake = (id: string) => ({ id }) as unknown as CplugWeb;
 describe('web ship list discovery', () => {
   test('the real list is every shipped plugin, in the hinted order', () => {
     const ids = BUILTIN_CPLUGS.map((c) => c.id);
-    expect(ids).toEqual(ORDER_HINT.filter((id) => ids.includes(id)).concat(ids.filter((id) => !ORDER_HINT.includes(id)).sort()));
+    expect(ids).toEqual(SHIP_ORDER.filter((id) => ids.includes(id)).concat(ids.filter((id) => !SHIP_ORDER.includes(id)).sort()));
     expect(ids).toContain('huddle');
   });
 

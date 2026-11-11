@@ -13,7 +13,8 @@
     "Turn on approval banners and let macOS ask once for permission to show them.",
     "Change the global hotkey, or turn it off, from settings.",
     "Pick Ghostty as the terminal app, or set your own command and confirm it when the app asks.",
-    "Keep Do Not Disturb on, add Carnivore to its allowed apps, and turn on asks only so only real asks interrupt you."
+    "Keep Do Not Disturb on, add Carnivore to its allowed apps, and turn on asks only so only real asks interrupt you.",
+    "Restart the app after a change and the window comes back on its own."
   ],
   "how_to": [
     "In the desktop app, open settings and pick the desktop app page. It is not in the list in a browser tab.",
@@ -23,13 +24,16 @@
     "Click the hotkey box and press the combination you want; turn off clears it and use default brings back Ctrl+Option+Cmd+C.",
     "Use the start the engine at login and open a window at login switches to choose what happens when you log in.",
     "Choose the terminal app open in terminal uses; custom command takes your own command.",
-    "The network rows show which address the server listens on and whether the connection is encrypted."
+    "The network rows show which address the server listens on and whether the connection is encrypted.",
+    "Leave open the window on launch on (the default) and the carnivore window opens as soon as the app starts, after a login, an update or a restart. Turn it off to keep a login start in the menu bar until you open the window.",
+    "On a desktop-width window, menu pages (settings, pack, providers and the rest) slide out to the right of the agents drawer, only as wide as their content needs, with a close icon left of the title that slides the page back. Settings slides out as a list first; pick a section and its page slides out beside the list, which stays open. Opening another menu page slides settings back out of the way."
   ],
   "id": "desktop-settings",
   "issues": [
     2303,
     2307,
-    2459
+    2459,
+    2912
   ],
   "keywords": [
     "desktop",
@@ -56,9 +60,10 @@
     "src/core/desktop_app/preferences.py",
     "web/src/lib/settings-page/desktop-network.ts",
     "macOS/banners/mirror.js",
-    "macOS/banners/focus.js"
+    "macOS/banners/focus.js",
+    "scripts/refresh-local-install.sh"
   ],
-  "updated": "2026-10-24",
+  "updated": "2026-11-07",
   "where": [
     "Settings, desktop app (desktop app only)."
   ]

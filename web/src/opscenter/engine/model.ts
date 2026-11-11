@@ -3,8 +3,11 @@ import type { CellId, InstanceKind, Layout, LayoutPage, MetaMap, Reservation, Ro
 import { isPluginSlot } from './plugin-kinds';
 import { INSTANCE_KINDS, META, instanceId, isInstanceId, kindOf, metaFor } from './meta';
 import { FIT_DECLARATIONS } from '../widgets/fit-declarations';
-import { clearSpan, repairSpans, visualOrder } from './spans';
-import { sharePixels } from './tracks';
+import { NOMINAL_HEIGHT, NOMINAL_WIDTH, keepTrailingRowPixels } from './fold-size';
+import { foldLifted } from './compact';
+import { fillLiftedGaps, giveFreedWidth, keepCoveredWidths, riseIntoLeaver } from './lift-fill';
+import { clearSpan, repairSpans, settleRemoval, spanOf, visualOrder } from './spans';
+import { GUTTER, computeTracks, sharePixels, type RowTracks } from './tracks';
 import { COL_MIN, ROW_MIN } from './floors';
 
 export const ROW_MAX = 1600;
@@ -65,6 +68,27 @@ export function normalizeRow(row: RowModel): RowModel {
   if (slots.length === row.slots.length && Math.abs(total - 1) < 1e-9) return row;
   const scale = total > 0 ? 1 / total : 1 / slots.length;
   return { ...row, slots: slots.map((slot) => ({ ...slot, fr: total > 0 ? slot.fr * scale : scale })) };
+}
+
+export function liftedRow(row: RowModel, id: SlotId, span: number = 1, track?: RowTracks): RowModel {
+  return normalizeRow(withoutCell(giveFreedWidth(row, id, span, track) ?? row, id));
+}
+
+export function liftedRows(layout: Layout, id: SlotId, width: number = NOMINAL_WIDTH, foldEmpty: boolean = false, height: number = NOMINAL_HEIGHT): RowModel[] {
+  const cleared = clearSpan(layout, id);
+  const from = rowOfCell(cleared, id);
+  const span = spanOf(rowOfCell(layout, id)?.slots.find((slot) => slot.id === id) ?? { id, fr: 1 });
+  const drawn = computeTracks({ rows: layout.rows, width, height, gutter: GUTTER, metas: META }).rows;
+  const track = drawn[layout.rows.findIndex((row) => row.id === from?.id)];
+  const tall = span > 1;
+  const risen = from && (tall || giveFreedWidth(from, id, span, track) === null) ? riseIntoLeaver(tall ? layout.rows : cleared.rows, id, META, width, height) : null;
+  const rows = risen ?? keepCoveredWidths(cleared.rows.map((row) => (row.id === from?.id ? liftedRow(row, id, span, track) : row)), layout.rows, id, META, width, height);
+  return foldEmpty ? keepTrailingRowPixels(rows, height) : rows;
+}
+
+export function liftedPicture(layout: Layout, id: SlotId, width: number = NOMINAL_WIDTH, height: number = NOMINAL_HEIGHT): Layout {
+  const lifted = repairSpans({ ...clearSpan(layout, id), rows: liftedRows(layout, id, width, true, height) });
+  return foldLifted(layout, lifted, id, META, width, height);
 }
 
 function withRow(layout: Layout, rowId: RowId, next: RowModel): Layout {
@@ -254,7 +278,7 @@ export function moveCell(layout: Layout, id: SlotId, toRow: RowId, toVisual: num
   scaled.splice(at, 0, { id, fr: share });
   const held = shiftedForInsert(target, at, toVisual);
   const rows = base.rows.map((row) => {
-    if (row.id === from.id) return normalizeRow(withoutCell(row, id));
+    if (row.id === from.id) return liftedRow(row, id);
     if (row.id === toRow) return held ? { ...row, slots: scaled, reserved: held } : { ...row, slots: scaled };
     return row;
   });
@@ -296,7 +320,7 @@ export function moveCellToNewRow(layout: Layout, id: SlotId, after: RowId | null
   const rows: RowModel[] = [];
   if (after === null) rows.push(minted);
   for (const row of base.rows) {
-    rows.push(row.id === from.id ? normalizeRow(withoutCell(row, id)) : row);
+    rows.push(row.id === from.id ? liftedRow(row, id) : row);
     if (row.id === after) rows.push(minted);
   }
   const flexCount = rows.filter((one) => one.kind === 'flex').length;
@@ -314,16 +338,11 @@ export function moveCellToNewRow(layout: Layout, id: SlotId, after: RowId | null
   return repairSpans({ ...base, rows: shared });
 }
 
-export function hideCell(layout: Layout, id: SlotId): Layout {
+export function hideCell(layout: Layout, id: SlotId, width: number = NOMINAL_WIDTH, height: number = NOMINAL_HEIGHT): Layout {
   if (isInstanceId(id) && !id.startsWith('analytics:')) return layout;
   if (layout.hidden.includes(id)) return layout;
-  const base = clearSpan(layout, id);
-  const from = rowOfCell(base, id);
-  if (!from) return layout;
-  const rows = base.rows.map((row) =>
-    row.id === from.id ? normalizeRow(withoutCell(row, id)) : row,
-  );
-  return repairSpans({ ...base, rows, hidden: [...base.hidden, id] });
+  if (!rowOfCell(clearSpan(layout, id), id)) return layout;
+  return { ...liftedPicture(layout, id, width, height), hidden: [...layout.hidden, id] };
 }
 
 export function showCell(layout: Layout, id: SlotId, metas: MetaMap = META): Layout {
@@ -544,17 +563,15 @@ export function addInstance(
 }
 
 /* there is nothing */
-export function removeCell(layout: Layout, id: SlotId): Layout {
+export function removeCell(layout: Layout, id: SlotId, width: number = NOMINAL_WIDTH, height: number = NOMINAL_HEIGHT): Layout {
   if (id === PRIMARY_SLOT) return layout;
   const base = clearSpan(layout, id);
   const from = rowOfCell(base, id);
   if (!from) return layout;
-  const rows = base.rows.map((row) =>
-    row.id === from.id ? normalizeRow(withoutCell(row, id)) : row,
-  );
-  const { headerOff: held, ...rest } = base;
+  const picture = liftedPicture(layout, id, width, height);
+  const { headerOff: held, ...rest } = picture;
   const headerOff = held?.filter((one) => one !== id);
-  return repairSpans({ ...rest, rows, ...(headerOff?.length ? { headerOff } : {}) });
+  return fillLiftedGaps(settleRemoval({ ...rest, ...(headerOff?.length ? { headerOff } : {}) }), width, height, META);
 }
 
 function withRows(layout: Layout, groups: SlotId[][], metas: MetaMap): Layout {

@@ -1,0 +1,18 @@
+{
+  "_note": "KEY NAMES only, never values. Source shape: claude-env.snippet.json and codex-provider.snippet.toml (see docs/argent.md).",
+  "claude_env_keys": [
+    "ANTHROPIC_BASE_URL",
+    "ANTHROPIC_CUSTOM_HEADERS",
+    "NODE_EXTRA_CA_CERTS"
+  ],
+  "claude_custom_header_name": "x-api-key",
+  "codex_provider_id": "argent",
+  "codex_selector_key": "model_provider",
+  "codex_provider_table_keys": [
+    "base_url",
+    "requires_openai_auth",
+    "wire_api",
+    "http_headers"
+  ],
+  "codex_wire_api": "responses"
+}

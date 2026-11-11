@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Mapping, Optional, Protocol, runtime_checkable
 
@@ -40,6 +40,7 @@ class NotifyEvent:
     session_uuid: Optional[str] = None
     copy_variant: str = ""
     copy_fields: tuple = ()
+    card_hint: Optional[Mapping[str, Any]] = field(default=None, compare=False, hash=False)
 
 
 class FailureClass(str, Enum):

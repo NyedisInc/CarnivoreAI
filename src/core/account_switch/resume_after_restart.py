@@ -59,7 +59,7 @@ async def resume_when_ready(app_state: Any, tmux_name: str, *, settle: float = S
     request = SimpleNamespace(app=SimpleNamespace(state=app_state))
     for attempt in range(1, ATTEMPTS + 1):
         try:
-            await paste_through_gates(request, session_id, RESUME_WORD, fresh_dialog_check=True)
+            await paste_through_gates(request, session_id, RESUME_WORD, fresh_dialog_check=True, hold_exempt=True)
         except HTTPException as exc:
             logger.info("resume_after_restart_refused", name=tmux_name, attempt=attempt, detail=str(exc.detail))
             if attempt < ATTEMPTS:

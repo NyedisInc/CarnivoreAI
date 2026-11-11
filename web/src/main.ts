@@ -168,6 +168,7 @@ import { watchOrphans } from './lib/open-files/orphans.svelte';
 import { mountIconPicker, unmountIconPicker } from './lib/icon-picker/icon-picker-host';
 import { installSharedTooltip } from './lib/tooltip/tooltip';
 import VersionBanner from './lib/version-watch/VersionBanner.svelte';
+import RelayApprovalPopup from './lib/pack-machines/RelayApprovalPopup.svelte';
 import RelayConsentPopup from './lib/pack-machines/RelayConsentPopup.svelte';
 import PackOpToast from './lib/pack-op-toast/PackOpToast.svelte';
 import ToastStack from './lib/toast-stack/ToastStack.svelte';
@@ -660,6 +661,7 @@ mountSpectateIfNeeded();
 
 mountVersionBanner();
 mountPanel('relay-consent-container', RelayConsentPopup, {});
+mountPanel('relay-approval-container', RelayApprovalPopup, {});
 mountPanel('pack-op-toast-container', PackOpToast, {});
 mountPanel('cplug-overlay-container', OverlayRoot, {});
 

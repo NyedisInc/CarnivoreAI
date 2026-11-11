@@ -8,6 +8,7 @@ import { metaFor } from '../../engine/meta';
 import type { SlotId } from '../../engine/types';
 import { inputFocus } from '../../lib/input-focus.svelte';
 
+/** One fake listing row: only the fields this cell reads. */
 interface FakeRow {
   session: { id: string };
   tmux_session: string | null;
@@ -18,17 +19,25 @@ interface FakeRow {
   unread: boolean;
 }
 
+/**
+ * The one reactive holder both fake getters read, shaped like the real
+ * resource's own `held` record: a status and the rows it answered with.
+ */
 const listing = new SvelteMap<string, unknown>([
   ['status', 'ok'],
   ['rows', [] as FakeRow[]],
 ]);
 
+/** The session id handed to each `startLiveTerminal` call, in order. */
 const built: string[] = [];
+/** The tmux name handed to each `startLiveTerminal` call, in order. */
 const builtPanes: (string | null)[] = [];
+/** How many terminals were torn down. */
 let disposed = 0;
 
 // The cell's heavy collaborators. None of them is what this file measures, and
 // each one builds or holds something real: an xterm on a div, a socket, a
+// palette written onto a frame. The client stands in for all of it and counts.
 vi.mock('./client', () => ({
   startLiveTerminal: (_host: HTMLElement, _slot: string, session: unknown) => {
     const row = session as FakeRow;
@@ -55,6 +64,7 @@ vi.mock('../../api', async (importOriginal) => {
   };
 });
 
+/** Every tmux name the background painter was pointed at, in order. */
 const pointedAt: string[] = [];
 
 const mounted: ReturnType<typeof mount>[] = [];
@@ -72,6 +82,18 @@ afterEach(async () => {
   vi.clearAllMocks();
 });
 
+/**
+ * One listing row, freshly built.
+ *
+ * Description: EVERY CALL RETURNS A NEW OBJECT, which is the whole subject of
+ *   this file. `poll.svelte.ts` parses `/sessions/list` and assigns the result
+ *   over `held.data`, so identical fields arrive in a different object every
+ *   five seconds; a fixture that handed back one cached object would be
+ *   testing a listing this app does not have.
+ * Inputs: id - the session id; pane - its tmux name.
+ * Output: the row, in the wrapper shape `/sessions/list` answers with.
+ * Example: row('ses_a', 'carnivore_a').session.id === 'ses_a'
+ */
 function row(id: string, pane: string): FakeRow {
   return {
     session: { id },
@@ -84,12 +106,35 @@ function row(id: string, pane: string): FakeRow {
   };
 }
 
+/**
+ * Hand the cell one listing answer, the way the poll does.
+ *
+ * Description: ONE ATOMIC HAND-OVER, because the real resource assigns the
+ *   whole array at once. Writing the rows one at a time with a flush between
+ *   them would show the cell a moment with no row at all and tear the terminal
+ *   down for a reason no poll ever produces.
+ * Inputs: rows - the rows the listing carries; status - how the read went.
+ * Output: nothing; effects are flushed before returning.
+ * Example: poll([row('ses_a', 'carnivore_a')])
+ */
 function poll(rows: FakeRow[], status = 'ok'): void {
   listing.set('status', status);
   listing.set('rows', rows);
   flushSync();
 }
 
+/**
+ * Mount one live terminal cell, in a box tall enough for a pane.
+ *
+ * Description: the height clears `TERMINAL_META`'s `pane` step (120px) and the
+ *   width clears its `wide` step, so the cell renders its host element and the
+ *   build effect has something to open a terminal into. Below the pane step the
+ *   cell prints a line instead and nothing is ever built, which would make
+ *   every count here a zero.
+ * Inputs: instance - the slot id, whose tail is the session id.
+ * Output: nothing; the mount is registered for teardown.
+ * Example: render('terminal:ses_a')
+ */
 function render(instance: string): void {
   const target = document.createElement('div');
   document.body.append(target);

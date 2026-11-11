@@ -1,0 +1,53 @@
+{
+  "kind": "yesno",
+  "payload": {
+    "title": "api-docs asks",
+    "body": "merge exp/argent-widget-engine into master?",
+    "path": "/sessions/ses_0123456789ab",
+    "thread": "local|ses_0123456789ab",
+    "v": 2,
+    "sub": "question on nostromo",
+    "kind": "yesno",
+    "type": "session.question",
+    "lv": "t",
+    "snd": "ask",
+    "cap": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ttl": 1794000000,
+    "acts": [
+      [
+        "yes",
+        "yes"
+      ],
+      [
+        "no",
+        "no"
+      ],
+      [
+        "reply",
+        "type an answer"
+      ]
+    ],
+    "card": {
+      "strip": [
+        "question",
+        "api-docs",
+        "nostromo"
+      ],
+      "agent": "api-docs",
+      "computer": "nostromo",
+      "ts": "9:41",
+      "ask": "merge exp/argent-widget-engine into master?"
+    }
+  },
+  "card": {
+    "strip": [
+      "question",
+      "api-docs",
+      "nostromo"
+    ],
+    "agent": "api-docs",
+    "computer": "nostromo",
+    "ts": "9:41",
+    "ask": "merge exp/argent-widget-engine into master?"
+  }
+}
