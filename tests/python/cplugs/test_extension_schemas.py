@@ -7,8 +7,8 @@ from typing import Any, Dict, List
 
 import pytest
 
-from src.cplugs.sdk.schema_check import SchemaError, SchemaSet
-from src.cplugs.sdk.sidecar import SCHEMA_DIR, schemas, validate_document
+from src.plugins.sdk.schema_check import SchemaError, SchemaSet
+from src.plugins.sdk.sidecar import SCHEMA_DIR, schemas, validate_document
 
 ROOT = Path(__file__).resolve().parents[3]
 KINDS = ("cplug", "widget", "theme", "skill", "claude-code-plugin", "mod", "loadout")

@@ -2,11 +2,12 @@ import { describe, expect, test } from 'vitest';
 
 import { SORT_KEYS, statusPriority, sortRows } from './sort.svelte';
 import type { SessionInfo } from '../../api';
+import type { ActivityStatus } from '../../../lib/activity-status';
 
 function row(opts: {
   id: string;
   label?: string;
-  activity_status?: string | null;
+  activity_status?: ActivityStatus | null;
   unread?: boolean | null;
   startup_gate?: string | null;
   workingDir?: string;

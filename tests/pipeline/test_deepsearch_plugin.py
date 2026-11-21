@@ -133,7 +133,7 @@ def live_rows(state: Path) -> Dict[str, Tuple[int, int, int, int]]:
 
 def test_the_plugin_is_registered_and_keeps_its_file_beside_the_database(world):
     ids = [p.id for p in registry.plugins()]
-    assert ids == ["stats", "deepsearch"]
+    assert ids == ["stats", "deepsearch", "timeline"]
     assert plugin_db.db_path(world.new, dp.DEEPSEARCH) == world.new / "deepsearch.db"
     assert plugin_db.db_path(world.new, registry.find("stats")) == world.new / "pipeline-plugins" / "stats.db"
 

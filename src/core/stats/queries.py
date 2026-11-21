@@ -32,7 +32,7 @@ MAX_ROWS = 250_000
 DEADLINE_SECONDS = 2.0
 BATCH_CAP_SECONDS = 6.0
 _FILTER_COLUMNS = {
-    "host": "host", "provider": "provider", "project": "project",
+    "host": "host", "hosts": "host", "provider": "provider", "project": "project",
     "model": "model", "agent_kind": "agent_kind", "conversation_id": "conversation_id",
     "account_id": "account_id", "window": "window", "subagent_type": "subagent_type",
 }
@@ -147,6 +147,10 @@ def _where(table: str, filters: StatsFilters, start: int, end: int,
     for key, value in fields.items():
         if key not in allowed:
             raise ValueError(f"{key} is unavailable for {table}")
+        if key == "hosts":
+            parts.append(f"host IN ({','.join('?' * len(value))})")
+            args.extend(value)
+            continue
         parts.append(f"{_FILTER_COLUMNS[key]}=?")
         args.append(value)
     return " AND ".join(parts), args

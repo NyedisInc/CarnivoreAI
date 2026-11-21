@@ -4,9 +4,9 @@
     import ManagerFrame from '../manager-frame/ManagerFrame.svelte';
     import { t as appT } from '../i18n/index.svelte';
     import type { Translate } from '../sessions/types';
-    import ChatWidget from '../../cplugs/huddle/chat/ChatWidget.svelte';
-    import { chatSlotId } from '../../cplugs/huddle/chat/chat-model';
-    import { agentIdFromHash, agentPage } from '../../cplugs/huddle/agents/agent-page.svelte';
+    import ChatWidget from '../../plugins/huddle/chat/ChatWidget.svelte';
+    import { chatSlotId } from '../../plugins/huddle/chat/chat-model';
+    import { agentIdFromHash, agentPage } from '../../plugins/huddle/agents/agent-page.svelte';
 
     interface Props {
         t?: Translate;

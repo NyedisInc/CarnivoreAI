@@ -17,10 +17,10 @@ from src.core.deepsearch import constants as K
 from src.core.db import connect
 from src.core.deepsearch import context, grouped, vault_lane
 from src.core.deepsearch.cache import db as cache_db
-from src.cplugs.save.fallback import BackupTranscripts
-from src.cplugs.save.vault import units
-from src.cplugs.save.vault.identity import Identity
-from src.cplugs.save.vault.store import Vault
+from src.plugins.save.fallback import BackupTranscripts
+from src.plugins.save.vault import units
+from src.plugins.save.vault.identity import Identity
+from src.plugins.save.vault.store import Vault
 from src.core.deepsearch import fallback_hook as fb
 
 CODEX_LINES = (b'{"type":"event_msg","payload":{"type":"user_message","message":"the codex thread discussed the okapiprotocol"}}\n'

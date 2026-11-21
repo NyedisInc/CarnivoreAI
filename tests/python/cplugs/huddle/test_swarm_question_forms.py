@@ -12,10 +12,10 @@ from PIL import Image
 
 from src.api.auth import require_auth
 from src.config.uploads import UploadsConfig
-from src.cplugs.host import runtime
-from src.cplugs.huddle import routes as huddle_routes, service, swarm_forms
-from src.cplugs.huddle.swarm_port import TaskManagerSwarmPort
-from src.cplugs.sdk import uploads as sdk_uploads
+from src.plugins.host import runtime
+from src.plugins.huddle import routes as huddle_routes, service, swarm_forms
+from src.plugins.huddle.swarm_port import TaskManagerSwarmPort
+from src.plugins.sdk import uploads as sdk_uploads
 from tests.python.cplugs.owner import turn_on
 
 BASE = "/api/v1/cplugs/huddle"

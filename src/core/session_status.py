@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import Optional
 
+from src.models.activity_status import ACTIVITY_STATUSES
+
 STATUS_RUNNING: str = "running"
 STATUS_IDLE: str = "idle"
 STATUS_DEAD: str = "dead"
@@ -23,18 +25,7 @@ STATUS_WORKING_SUBAGENT: str = "working_subagent"
 
 STATUS_FINISHED_UNREAD: str = "finished_unread"
 
-ALL_ACTIVITY_STATUSES: frozenset[str] = frozenset(
-    {
-        STATUS_DEAD,
-        STATUS_QUESTION,
-        STATUS_NOTICE,
-        STATUS_WORKING,
-        STATUS_WORKING_SUBAGENT,
-        STATUS_FINISHED_UNREAD,
-        STATUS_IDLE,
-        STATUS_UNKNOWN,
-    }
-)
+ALL_ACTIVITY_STATUSES: frozenset[str] = ACTIVITY_STATUSES
 
 ACTIVITY_STATUS_PRIORITY: tuple[str, ...] = (
     STATUS_DEAD,

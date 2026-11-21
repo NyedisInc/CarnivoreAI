@@ -3,9 +3,9 @@ from __future__ import annotations
 
 from contextlib import closing
 
-from src.cplugs.huddle import inbox, rules
-from src.cplugs.huddle.inbox_store import InboxStore
-from src.cplugs.huddle.rules import JOE
+from src.plugins.huddle import inbox, rules
+from src.plugins.huddle.inbox_store import InboxStore
+from src.plugins.huddle.rules import JOE
 from tests.python.cplugs.huddle.test_task_manager_inbox import BASE, call, env, manager, tool_store  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_inbox_stuck import app, client, stick  # noqa: F401
 

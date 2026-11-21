@@ -4,7 +4,7 @@
     "GET /api/v1/cplugs/{id}/view/{name}/{ticket}/{file}"
   ],
   "area": "settings",
-  "description": "A plugin's own script runs only inside a sandboxed frame with no network, no cookies, no storage and no access to the app around it. It talks to its own plugin through a small bridge that reaches only the routes the plugin declared. The overlay surface is live: one transparent layer under every popover that is clipped to a few declared rectangles and never covers the terminal. The panel surface (a view as a widget or tab) is not offered yet because it needs the layout owner's hooks.",
+  "description": "A plugin's own script runs only inside a sandboxed frame with no network, no cookies, no storage and no access to the app around it. It talks to its own plugin through a small bridge that reaches only the routes the plugin declared. The overlay surface is live: one transparent layer under every popover that is clipped to a few declared rectangles and never covers the terminal. The panel surface is live too: a view that declares it is a widget and can also open as a tab beside your terminals.",
   "docs": [
     "docs/cplug-platform.md",
     "docs/cplug-runtime.md",
@@ -16,7 +16,8 @@
   "how_to": [
     "Install a plugin that declares a view and turn it on with third-party plugins enabled.",
     "Its overlay view appears; clicks outside its declared rectangles go to the app underneath.",
-    "Turn the plugin or the master switch off and the frame is removed."
+    "Turn the plugin or the master switch off and the frame is removed.",
+    "A view that declares the panel surface can also open as a tab of a terminal group: plus menu, widget, plugins, then the plugin's name."
   ],
   "id": "custom-view-frame",
   "issues": [

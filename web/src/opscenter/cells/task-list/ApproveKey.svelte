@@ -1,8 +1,8 @@
 <script lang="ts">
   import Icon from '../../ui/Icon.svelte';
   import { t } from '../../../lib/i18n/index.svelte';
-  import { tickItem } from '../../../cplugs/huddle/task-manager-tick-confirm.svelte';
-  import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
+  import { tickItem } from '../../../plugins/huddle/task-manager-tick-confirm.svelte';
+  import type { HuddleItem } from '../../../plugins/huddle/huddle-model';
 
   let { item }: { item: HuddleItem } = $props();
   let busy = $state(false);

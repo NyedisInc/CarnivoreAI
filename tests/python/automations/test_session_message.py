@@ -8,7 +8,8 @@ import pytest
 from fastapi import HTTPException
 
 import src.config  # noqa: F401
-from src.api import one_shot_routes
+from src.core.sessions import guarded_paste
+from src.core.sessions.guarded_paste import PasteRefused
 from src.core.automations import gates, run_sessions, targets
 from src.core.automations import models as m
 from src.core.automations.scheduler import Scheduler
@@ -16,7 +17,7 @@ from src.core.automations.store import AutomationStore
 from src.core.automations.store_schema import storage_for
 from src.core.automations.targets import session_message
 from src.core.session_delivery import bring_up
-from src.cplugs.sdk import turn_events
+from src.plugins.sdk import turn_events
 
 UUID = "0f6c2d6e-1111-4c4c-9e9e-000000000001"
 TARGET = {"kind": "session_message", "session_uuid": UUID, "text": "run the weekly checks", "project_id": 3}
@@ -30,7 +31,7 @@ class Ops:
     async def list(self):
         if self.state != "live":
             return []
-        return [SimpleNamespace(tmux_session=None, session=SimpleNamespace(id="ses_1"), activity_status=self.status, session_row_id=1)]
+        return [SimpleNamespace(tmux_session=None, session=SimpleNamespace(id="ses_1"), activity_status=self.status, startup_gate="ready", session_row_id=1)]
 
     async def durable_keys(self, infos=None):
         return {"ses_1": UUID}
@@ -58,16 +59,16 @@ def world(tmp_path, monkeypatch):
     monkeypatch.setattr("src.core.automations.notify_policy.tell", lambda *a, **k: None)
     pasted, w = [], SimpleNamespace(busy=0, ops=None)
 
-    async def paste(request, session_id, text, *, idle_only=False, **_):
-        assert idle_only is True
+    async def paste(app_state, session_id, text, options):
+        assert options.idle_only is True
         if w.busy:
             w.busy -= 1
             asyncio.get_running_loop().call_later(0.05, turn_events.publish_turn_end, session_id)
-            raise HTTPException(409, detail={"code": "pane_dialog_open"})
+            raise PasteRefused("pane_dialog_open", "a dialog is open")
         pasted.append((session_id, text))
         return SimpleNamespace(pasted_bytes=len(text), submitted=True)
 
-    monkeypatch.setattr(one_shot_routes, "paste_through_gates", paste)
+    monkeypatch.setattr(guarded_paste, "paste_through_gates", paste)
     monkeypatch.setattr(bring_up, "ops_for_app", lambda app_state: w.ops)
     store = AutomationStore(storage_for(tmp_path), notify=lambda _t: None)
     w.store, w.pasted = store, pasted

@@ -1,10 +1,11 @@
-/* the terminal grid */
 import { t } from '../../i18n/index.svelte';
 import { newBrowser } from '../../browser/screen-host';
 import { BAND_BROWSERS } from '../../drawer/bucketing';
+import { COMPANIES_FOLD_KEY } from '../../drawer/store-keys';
 import { layoutEditor, toggleLayoutEditor } from '../../../opscenter/layout-editor/editor.svelte';
 import { canOpen } from '../../../opscenter/layout-editor/empty-space-menu.svelte';
 import { isBandFolded, toggleBandFold } from '../../sidebar-shell/heading-fold';
+import { newCompanyPrompt } from '../../sidebar-shell/company-actions';
 import { canStepSection, stepSectionBy } from '../../sidebar-shell/section-drag';
 import { sectionIdOfKey } from '../../sidebar-shell/section-heading';
 import { entryNodes, spaced, type ItemMenuEntry } from '../entries';
@@ -48,6 +49,7 @@ defineItemMenu('section', {
                 },
             ],
             key === BAND_BROWSERS ? [{ label: t('sidebar.section.menu.new_browser'), icon: 'browser', id: 'browser', onPick: () => { void newBrowser(); } }] : [],
+            key === COMPANIES_FOLD_KEY ? [{ label: t('sidebar.company.new.leaf'), icon: 'add', id: 'new-company', onPick: () => { void newCompanyPrompt(null); } }] : [],
             [editLayoutEntry()].filter((entry): entry is ItemMenuEntry => entry !== null),
         ]);
         return { nodes: entryNodes(entries, env.glyph, env.close), ariaLabel: t('sidebar.section.menu.label', { name }) };

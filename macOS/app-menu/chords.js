@@ -27,10 +27,10 @@ const RESERVED_CHORDS = Object.freeze([
   { chord: 'Shift+Cmd+G', owner: 'web/src/lib/terminal-search/search-keys.ts:174' },
   { chord: 'Cmd+S', owner: 'web/src/lib/open-files/FileScreen.svelte:205' },
   { chord: 'Shift+Cmd+Enter', owner: 'web/src/opscenter/engine/layout-zoom.svelte.ts:146' },
-  { chord: 'Cmd+Enter', owner: 'web/src/cplugs/huddle/HuddleBody.svelte:416, TaskManagerAskForm.svelte:85, DrawerSearch.svelte:242' },
+  { chord: 'Cmd+Enter', owner: 'web/src/plugins/huddle/HuddleBody.svelte:416, TaskManagerAskForm.svelte:85, DrawerSearch.svelte:242' },
   { chord: 'Cmd+,', owner: 'web/src/lib/settings-page/settings-shortcut.ts:27 (same destination: Settings)', shared: { id: 'carnivore.settings' } },
-  { chord: 'Cmd+[', owner: 'web/src/lib/app-keys/chords.ts (history back)' },
-  { chord: 'Cmd+]', owner: 'web/src/lib/app-keys/chords.ts (history forward)' },
+  { chord: 'Cmd+[', owner: 'web/src/lib/app-keys/chords.ts (history back)', shared: { id: 'go.back' } },
+  { chord: 'Cmd+]', owner: 'web/src/lib/app-keys/chords.ts (history forward)', shared: { id: 'go.forward' } },
   { chord: 'Cmd+<', owner: 'web/src/lib/app-keys/chords.ts (previous tab)' },
   { chord: 'Cmd+>', owner: 'web/src/lib/app-keys/chords.ts (next tab)' },
   ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => ({ chord: `Cmd+${n}`, owner: 'web/src/lib/app-keys/chords.ts (layout tab)' })),
@@ -60,34 +60,56 @@ function isFunctionKey(key) {
   return /^f([1-9]|1[0-9]|20)$/.test(key);
 }
 
+const CARET_KEYS = new Set(['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'up', 'down', 'left', 'right', 'home', 'end', 'pageup', 'pagedown']);
+const DELETE_KEYS = new Set(['backspace', 'delete']);
+
+function isTextEditing(mods, key) {
+  const edits = mods.includes('cmd') || mods.includes('alt');
+  return edits && (CARET_KEYS.has(key) || DELETE_KEYS.has(key));
+}
+
+function refusalFor(item, accelerator, taken) {
+  const { canon, mods, key } = normalize(accelerator);
+  if (!mods.includes('cmd') && !isFunctionKey(key)) {
+    return mods.includes('ctrl') ? 'Ctrl without Cmd is a terminal control code'
+      : mods.includes('alt') ? 'Option without Cmd is the terminal Meta key' : 'a key without Cmd belongs to the terminal';
+  }
+  if (isTextEditing(mods, key)) return 'text editing: the caret and delete keys belong to the focused field';
+  const reserved = RESERVED_BY_CHORD.get(canon);
+  if (reserved) {
+    const shared = reserved.shared;
+    if (!(shared && ((shared.role && shared.role === item.role) || (shared.id && shared.id === item.id)))) return `read by ${reserved.owner}`;
+  }
+  const holder = taken && taken.get(canon);
+  if (holder && holder !== item.id) return `already the shortcut of the menu item ${holder}`;
+  const builtIn = Object.entries(ROLE_ACCELERATORS).find(([role, acc]) => role !== item.role && normalize(acc).canon === canon);
+  return builtIn ? `the built-in accelerator of the ${builtIn[0]} role` : null;
+}
+
+function explicitAccelerators(template) {
+  const taken = new Map();
+  const walk = (items) => {
+    for (const item of items || []) {
+      if (item.accelerator && item.id) taken.set(normalize(item.accelerator).canon, item.id);
+      walk(item.submenu);
+    }
+  };
+  walk(template);
+  return taken;
+}
+
 function auditAccelerators(template) {
   const found = [];
   const walk = (items) => {
     for (const item of items || []) {
-      const explicit = item.accelerator;
-      const inherited = !explicit && item.role && item.registerAccelerator !== false ? ROLE_ACCELERATORS[item.role] : undefined;
-      const accelerator = explicit || inherited;
-      if (accelerator && item.registerAccelerator !== false) check(item, accelerator);
+      const accelerator = item.accelerator || (item.role ? ROLE_ACCELERATORS[item.role] : undefined);
+      const reason = accelerator ? refusalFor(item, accelerator) : null;
+      if (reason) found.push({ id: item.id || item.role || String(accelerator), chord: accelerator, reason });
       walk(item.submenu);
     }
-  };
-  const check = (item, accelerator) => {
-    const id = item.id || item.role || String(accelerator);
-    const { canon, mods, key } = normalize(accelerator);
-    if (!mods.includes('cmd') && !isFunctionKey(key)) {
-      const reason = mods.includes('ctrl') ? 'Ctrl without Cmd is a terminal control code'
-        : mods.includes('alt') ? 'Option without Cmd is the terminal Meta key' : 'a key without Cmd belongs to the terminal';
-      found.push({ id, chord: accelerator, reason });
-      return;
-    }
-    const reserved = RESERVED_BY_CHORD.get(canon);
-    if (!reserved) return;
-    const shared = reserved.shared;
-    if (shared && ((shared.role && shared.role === item.role) || (shared.id && shared.id === item.id))) return;
-    found.push({ id, chord: accelerator, reason: `read by ${reserved.owner}` });
   };
   walk(template);
   return found;
 }
 
-module.exports = { RESERVED_CHORDS, ROLE_ACCELERATORS, normalize, auditAccelerators };
+module.exports = { explicitAccelerators, refusalFor, RESERVED_CHORDS, ROLE_ACCELERATORS, normalize, auditAccelerators };

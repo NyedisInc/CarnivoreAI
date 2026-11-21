@@ -1,4 +1,4 @@
-import type { UsageLimit } from '../../opscenter/api/types';
+import type { LoginExpired, UsageLimit } from '../../opscenter/api/types';
 import { addRows } from './asleep';
 import { addClosedRows } from './closed';
 import { closedShown } from './closed-visibility.svelte';
@@ -25,6 +25,7 @@ export type DrawerRow = Record<string, unknown> & { name: string };
 
 export interface LiveInfo {
     tmux_session?: string;
+    session_uuid?: string | null;
     session?: { id?: string; working_dir?: string | null } | null;
     activity_status?: string;
     unread?: boolean;
@@ -35,8 +36,10 @@ export interface LiveInfo {
     host_state?: string;
     parked_summary?: string | null;
     usage_limit?: UsageLimit | null;
+    login_expired?: LoginExpired | null;
     background_open?: number | null;
     agent_update?: { running: string; installed: string; ready: boolean } | null;
+    codex_helpers?: { verdict: string; version: string | null; text: string | null; checked_at: string } | null;
     mcp_health?: {
         servers?: { name: string; transport: string; state: string; reason: string; source: string;
                     detail?: string | null; at?: string | null; exact?: boolean }[];
@@ -131,16 +134,19 @@ export async function load(activeTmuxName: string | null): Promise<{ rows: Drawe
     }
 
     let workByName = new Map<string, string>();
+    let workByUuid = new Map<string, string>();
     let records: unknown[] = [];
     try {
         if (api && typeof api.listSessionRecords === 'function') {
             const got = await api.listSessionRecords();
             records = Array.isArray(got) ? got : [];
             workByName = workStampIndex(records);
+            workByUuid = workStampByUuid(records);
         }
     } catch (err) {
         console.warn('SessionSidebar: session records unavailable:', (err as Error)?.message);
     }
+    Identity.stamp(rows, records as Identity.SessionRecord[]);
     addRows(rows, records, G.SessionSidebarLayouts?.memberUuids?.());
     if (closedShown()) addClosedRows(rows, records);
     noteIdentities(rows, records as Identity.SessionRecord[]);
@@ -148,7 +154,7 @@ export async function load(activeTmuxName: string | null): Promise<{ rows: Drawe
     const inLayout = inLayoutPage();
     for (const row of rows) {
         row.is_this_tab = !inLayout && !!activeTmuxName && row.name === activeTmuxName;
-        row.last_work_at = workByName.get(row.name) || null;
+        row.last_work_at = workStampFor(row, workByUuid, workByName);
         row.project_id = row.project_id !== undefined ? row.project_id : null;
         row.project_name = row.project_name !== undefined ? row.project_name : null;
         row.working_dir = row.working_dir !== undefined ? row.working_dir : null;
@@ -167,7 +173,7 @@ export async function load(activeTmuxName: string | null): Promise<{ rows: Drawe
     }
     if (Archived.archivedShown()) {
         await Archived.freshen();
-        rows.push(...archivedRows(Archived.archivedRecords(), Archived.archivedShown(), new Set(rows.map((r) => r.name))));
+        rows.push(...archivedRows(Archived.archivedRecords(), Archived.archivedShown(), rows));
     }
     rows.push(...(browserRows() as unknown as DrawerRow[]));
     rows.push(...fileDrawerRows(openFiles.data ?? [], isDirty));
@@ -211,6 +217,7 @@ function liveFields(info: LiveInfo): Partial<DrawerRow> {
         activity_hint: orNull(info.activity_hint),
         parked_summary: orNull(info.parked_summary),
         usage_limit: orNull(info.usage_limit),
+        login_expired: orNull(info.login_expired),
         project_id: orNull(info.project_id),
         project_name: orNull(info.project_name),
         claude_session_uuid: orNull(info.claude_session_uuid),
@@ -221,6 +228,7 @@ function liveFields(info: LiveInfo): Partial<DrawerRow> {
         spectator_expires_at: orNull(info.spectator_expires_at),
         subagents_running: orNull(info.subagents_running),
         subagents_total: orNull(info.subagents_total),
+        subagents_stalled: orNull(info.subagents_stalled),
         workflow_active: orNull(info.workflow_active),
         timers_live: orNull(info.timers_live),
         timers_next_fire_at: orNull(info.timers_next_fire_at),
@@ -230,6 +238,7 @@ function liveFields(info: LiveInfo): Partial<DrawerRow> {
         automations_next: orNull(info.automations_next),
         background_open: orNull(info.background_open),
         agent_update: orNull(info.agent_update),
+        codex_helpers: orNull(info.codex_helpers),
         mcp_health: orNull(info.mcp_health),
         account_id: orNull(info.account_id),
         automation: orNull(info.automation),
@@ -253,6 +262,7 @@ export function mergeLiveRow(rows: DrawerRow[], info: LiveInfo): void {
     if (existing) {
         Object.assign(existing, liveFields(info));
         if (rowId !== null) existing.session_row_id = rowId;
+        existing.session_uuid = info.session_uuid || existing.session_uuid || null;
         if (info.label !== undefined) existing.label = info.label;
         if (info.agent_family !== undefined) existing.agent_family = info.agent_family;
         if (info.agent_family_source !== undefined) existing.agent_family_source = info.agent_family_source;
@@ -265,6 +275,7 @@ export function mergeLiveRow(rows: DrawerRow[], info: LiveInfo): void {
         label: orNull(info.label),
         created_at_epoch: 0,
         session_row_id: rowId,
+        session_uuid: orNull(info.session_uuid),
         agent_family: orNull(info.agent_family),
         agent_family_source: orNull(info.agent_family_source),
         agent_wrapper_icon: orNull(info.agent_wrapper_icon),
@@ -282,6 +293,21 @@ export function workStampIndex(records: readonly unknown[]): Map<string, string>
         if (!seen || row.last_work_at > seen) index.set(row.tmux_name, row.last_work_at);
     }
     return index;
+}
+
+export function workStampByUuid(records: readonly unknown[]): Map<string, string> {
+    const index = new Map<string, string>();
+    for (const raw of Array.isArray(records) ? records : []) {
+        const row = raw as { session_uuid?: string; last_work_at?: string } | null;
+        if (row && row.session_uuid && row.last_work_at) index.set(row.session_uuid, row.last_work_at);
+    }
+    return index;
+}
+
+export function workStampFor(row: DrawerRow, byUuid: ReadonlyMap<string, string>, byName: ReadonlyMap<string, string>): string | null {
+    if ('last_work_at' in row) return (row.last_work_at as string | null | undefined) || null;
+    if (typeof row.session_uuid === 'string' && row.session_uuid) return byUuid.get(row.session_uuid) ?? null;
+    return byName.get(row.name) ?? null;
 }
 
 export function defaultSort(rows: DrawerRow[]): DrawerRow[] {

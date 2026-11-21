@@ -1,4 +1,5 @@
 import type { ProjectResponse, SessionInfo, SessionRecord } from '../../api/types';
+import type { ActivityStatus } from '../../../lib/activity-status';
 import type { AttachableSession } from '../../../lib/sessions/types';
 import { ago, DAY, epochAgo, HOUR, MIN } from './clock';
 
@@ -34,7 +35,7 @@ interface SessionSeed {
   tmux: string;
   label: string;
   project: MadeUpProject;
-  status: string;
+  status: ActivityStatus;
   unread: boolean;
   agent: 'claude' | 'codex';
   model: string;

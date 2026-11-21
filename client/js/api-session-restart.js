@@ -1,5 +1,5 @@
 
-Object.assign(API.prototype, {
+extendPrototype(API, {
     async destroyExternalSession(sessionName) {
         return await this._leaderSafe((confirmName) => this.call(
             `/sessions/external/${encodeURIComponent(sessionName)}${confirmName ? '?confirm_name=' + encodeURIComponent(confirmName) : ''}`,
@@ -52,4 +52,4 @@ Object.assign(API.prototype, {
             { method: 'POST' }
         );
     },
-});
+}, 'api-session-restart.js');

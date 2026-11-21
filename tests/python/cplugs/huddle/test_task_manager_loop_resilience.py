@@ -5,8 +5,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.cplugs.huddle import schedule, send_queue
-from src.cplugs.huddle.roles import port as roles_port
+from src.plugins.huddle import schedule, send_queue
+from src.plugins.huddle.roles import port as roles_port
 
 
 def test_the_schedule_loop_survives_a_pass_that_raises_a_key_error(monkeypatch: pytest.MonkeyPatch) -> None:

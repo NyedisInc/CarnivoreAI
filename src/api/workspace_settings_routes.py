@@ -38,7 +38,7 @@ async def get_settings():
     try:
         return settings.get_settings_summary()
     except FileNotFoundError as e:
-        logger.error("settings_summary_config_missing", error=str(e))
+        logger.error("settings_summary_config_missing", error=str(e), error_type=type(e).__name__)
         raise HTTPException(
             status_code=500,
             detail="Configuration not found. Run setup_auth.py first."
@@ -135,7 +135,7 @@ async def update_settings(body: ConfigSettingsUpdateRequest, request: Request):
         )
         summary["workspace_warnings"] = env_warnings
     except FileNotFoundError as e:
-        logger.error("settings_update_config_missing", error=str(e))
+        logger.error("settings_update_config_missing", error=str(e), error_type=type(e).__name__)
         raise HTTPException(
             status_code=500,
             detail="Configuration not found. Run setup_auth.py first."
@@ -152,7 +152,7 @@ async def update_settings(body: ConfigSettingsUpdateRequest, request: Request):
 
 
 async def _stop_sideloads_after_save(request: Request) -> None:
-    from src.cplugs.host import sideload_routes  # noqa: PLC0415
+    from src.plugins.host import sideload_routes  # noqa: PLC0415
 
     try:
         await sideload_routes.stop_on_developer_mode_off(request.app)

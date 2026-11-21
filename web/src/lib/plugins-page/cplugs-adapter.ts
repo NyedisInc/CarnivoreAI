@@ -1,7 +1,7 @@
 /* the detail pane the plugins page */
 import { ApiError, authFetch } from '../../opscenter/api/auth.svelte';
 import { icons } from '../../opscenter/ui/icons';
-import { refreshEnablement } from '../../cplugs/host/enablement.svelte';
+import { refreshEnablement } from '../../plugins/host/enablement.svelte';
 import type { ManagerAdapter, ManagerItem } from '../manager-frame/types';
 import type { Translate } from '../sessions/types';
 import type { WidgetSettingsSchema } from '../../opscenter/widgets/types';
@@ -64,6 +64,7 @@ export interface CplugRow {
     readonly routes?: readonly string[] | null;
     readonly declared_tools?: readonly string[] | null;
     readonly install_key?: string | null;
+    readonly unrendered_surfaces?: readonly string[] | null;
     readonly views?: readonly CplugViewRow[] | null;
     readonly page?: { readonly menu: string; readonly main: string } | null;
     readonly page_problem?: string | null;
@@ -158,6 +159,7 @@ export interface CplugItem extends ManagerItem {
     readonly changedFiles: readonly string[];
     readonly publisher: string | null;
     readonly installKey?: string | null;
+    readonly unrenderedSurfaces?: readonly string[];
     readonly declared?: { readonly routes: readonly string[]; readonly tools: readonly string[] };
     readonly views?: readonly CplugViewRow[];
     readonly page?: { readonly menu: string; readonly main: string } | null;
@@ -263,6 +265,7 @@ export function toCplugItem(row: CplugRow, t: Translate): CplugItem {
         changedFiles: row.unverified === true ? (row.changed_files ?? []) : [],
         publisher: thirdParty ? (row.publisher ?? null) : null,
         installKey: thirdParty ? (row.install_key ?? null) : null,
+        unrenderedSurfaces: thirdParty ? (row.unrendered_surfaces ?? []) : undefined,
         declared: thirdParty ? { routes: row.routes ?? [], tools: row.declared_tools ?? [] } : undefined,
         views: thirdParty ? (row.views ?? []) : undefined,
         page: thirdParty ? (row.page ?? null) : undefined,

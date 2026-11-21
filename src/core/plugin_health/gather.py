@@ -13,14 +13,14 @@ from src.core.plugin_health.claude_plugins import measured_digest
 from src.core.plugin_health.classify import SidecarFacts, classify_claude_plugin, classify_listing_state, classify_sidecar
 from src.core.plugin_health.model import HealthReport, HealthRow, RemovedInstall, Verdict
 from src.core.plugin_health.presence import PRESENT, folder_presence
-from src.core import plugin_layout
+from src.core.plugin_registry import plugin_layout
 from src.core.plugin_health.sizes import dir_bytes, orphan_folders
 from src.core.skills import kinds
 from src.core.skills.ledger import InstallLedger
 from src.core.skills.ledger_types import InstalledItem
-from src.cplugs.host import gate, identity, install_folder, registry_store, risk, runtime, sideload, sidecar_registry
-from src.cplugs.sdk.api_contract import read_api_version
-from src.cplugs.host import state as owner_state
+from src.plugins.host import gate, identity, install_folder, registry_store, risk, runtime, sideload, sidecar_registry
+from src.plugins.sdk.api_contract import read_api_version
+from src.plugins.host import state as owner_state
 
 logger = structlog.get_logger()
 
@@ -48,7 +48,7 @@ def _verdict_row(verdict: Verdict, *, id: str, kind: str, source: str, version: 
 
 
 def _feature_rows(host: Any) -> List[HealthRow]:
-    from src.cplugs.host.routes import cplug_row  # noqa: PLC0415
+    from src.plugins.host.routes import cplug_row  # noqa: PLC0415
 
     rows: List[HealthRow] = []
     for d in runtime.definitions():

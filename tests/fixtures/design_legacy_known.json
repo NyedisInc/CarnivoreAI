@@ -2,147 +2,285 @@
  "about": "legacy listings the top-down gate does not read; may only fall (scripts/design/legacy_listing.py, site review TDC-3)",
  "sections": {
   "css_raw_values": {
+   "client/css/config-drawer.css": {
+    "border-width": 1,
+    "duration": 1
+   },
    "client/css/config-editor-modal.css": {
+    "border-width": 14,
+    "duration": 1,
     "font": 10,
-    "spacing": 29
+    "line-height": 2,
+    "spacing": 29,
+    "weight": 1
    },
    "client/css/config-editor.css": {
+    "border-width": 3,
+    "duration": 1,
     "font": 7,
+    "line-height": 3,
     "spacing": 10
    },
    "client/css/copy-output.css": {
     "font": 11,
+    "line-height": 2,
     "spacing": 13
    },
    "client/css/deep-link-notice.css": {
+    "border-width": 1,
     "font": 2,
+    "line-height": 2,
     "spacing": 3
+   },
+   "client/css/effort-level.css": {
+    "duration": 10
    },
    "client/css/header-menu.css": {
     "font": 1,
     "spacing": 4
    },
    "client/css/home-bar.css": {
+    "border-width": 2,
+    "duration": 1,
     "font": 1,
     "spacing": 4
    },
    "client/css/media-lightbox.css": {
-    "spacing": 2
+    "fallback": 2,
+    "spacing": 2,
+    "z-index": 1
    },
    "client/css/modal-glow.css": {
     "color": 3,
+    "duration": 1,
     "spacing": 1
    },
+   "client/css/modal-stack.css": {
+    "duration": 1
+   },
    "client/css/modal-titlerow.css": {
+    "fallback": 1,
     "spacing": 1
    },
    "client/css/new-agent-flow.css": {
+    "fallback": 6,
     "font": 4,
-    "spacing": 11
+    "spacing": 11,
+    "weight": 1
    },
    "client/css/paste-fallback.css": {
     "font": 4,
-    "spacing": 7
+    "line-height": 2,
+    "spacing": 7,
+    "weight": 1
    },
    "client/css/popup-focus.css": {
+    "border-width": 1,
     "color": 3,
+    "duration": 2,
     "spacing": 1
    },
+   "client/css/right-drawer.css": {
+    "duration": 1,
+    "z-index": 1
+   },
    "client/css/session-header-led.css": {
+    "line-height": 1,
     "spacing": 1
    },
    "client/css/session-restart-picker.css": {
-    "font": 5,
-    "spacing": 15
+    "fallback": 5,
+    "font": 4,
+    "spacing": 14
    },
    "client/css/session-restore-offer.css": {
-    "font": 8,
-    "spacing": 17
+    "fallback": 2,
+    "font": 7,
+    "spacing": 16,
+    "weight": 1
    },
    "client/css/session-row-menu.css": {
+    "border-width": 1,
+    "duration": 3,
     "font": 3,
-    "spacing": 7
+    "line-height": 3,
+    "spacing": 7,
+    "tracking": 1
+   },
+   "client/css/session-sidebar-account-chip.css": {
+    "border-width": 2,
+    "duration": 1,
+    "line-height": 2
    },
    "client/css/session-sidebar-band-structure.css": {
+    "border-width": 2,
     "font": 3,
-    "spacing": 1
+    "spacing": 1,
+    "tracking": 1
    },
    "client/css/session-sidebar-colours.css": {
+    "border-width": 2,
+    "duration": 4,
+    "fallback": 3,
     "font": 1,
     "spacing": 5
    },
    "client/css/session-sidebar-density.css": {
+    "border-width": 2,
     "font": 9,
-    "spacing": 13
+    "line-height": 3,
+    "spacing": 13,
+    "tracking": 1,
+    "weight": 2
    },
    "client/css/session-sidebar-groups.css": {
+    "border-width": 1,
+    "duration": 2,
+    "fallback": 1,
     "font": 5,
-    "spacing": 7
+    "line-height": 3,
+    "spacing": 7,
+    "tracking": 1,
+    "weight": 2
+   },
+   "client/css/session-sidebar-keep-awake.css": {
+    "border-width": 1,
+    "duration": 4,
+    "fallback": 2
+   },
+   "client/css/session-sidebar-layouts.css": {
+    "duration": 1
+   },
+   "client/css/session-sidebar-resize.css": {
+    "duration": 1
    },
    "client/css/session-sidebar-row-bodies.css": {
     "font": 2,
+    "line-height": 1,
     "spacing": 5
    },
+   "client/css/session-sidebar-row-controls.css": {
+    "border-width": 2,
+    "duration": 5,
+    "line-height": 3
+   },
    "client/css/session-sidebar-rows.css": {
+    "border-width": 3,
+    "duration": 3,
     "font": 2,
-    "spacing": 4
+    "line-height": 5,
+    "spacing": 4,
+    "tracking": 1,
+    "weight": 1
    },
    "client/css/session-sidebar.css": {
+    "border-width": 2,
+    "duration": 4,
     "font": 1,
     "spacing": 2
    },
+   "client/css/session-theme-tint.css": {
+    "border-width": 1
+   },
    "client/css/sidebar-help.css": {
+    "border-width": 4,
+    "duration": 1,
+    "fallback": 35,
     "font": 21,
-    "spacing": 60
+    "line-height": 7,
+    "spacing": 60,
+    "weight": 5
    },
    "client/css/slash-command-chips.css": {
     "font": 3,
-    "spacing": 4
+    "spacing": 4,
+    "weight": 1
    },
    "client/css/status-dot.css": {
-    "color": 1
+    "color": 1,
+    "duration": 5,
+    "fallback": 3
+   },
+   "client/css/status-led.css": {
+    "color-def": 1,
+    "duration": 2,
+    "fallback": 9
    },
    "client/css/styles.css": {
+    "border-width": 26,
     "color": 3,
+    "color-def": 69,
+    "duration": 39,
+    "fallback": 21,
     "font": 63,
-    "spacing": 134
+    "line-height": 10,
+    "radius": 1,
+    "spacing": 134,
+    "tracking": 9,
+    "weight": 10,
+    "z-index": 2
    },
    "client/css/subagent-count.css": {
-    "spacing": 4
+    "border-width": 1,
+    "fallback": 5,
+    "line-height": 2,
+    "spacing": 4,
+    "weight": 2
    },
    "client/css/terminal-carnivore.css": {
-    "font": 1
+    "border-width": 2,
+    "font": 1,
+    "weight": 4
    },
    "client/css/terminal-grid.css": {
     "spacing": 1
    },
    "client/css/terminal-key-bar.css": {
+    "duration": 3,
     "font": 1,
-    "spacing": 2
+    "line-height": 1,
+    "spacing": 2,
+    "z-index": 1
+   },
+   "client/css/terminal-mascot.css": {
+    "z-index": 1
    },
    "client/css/terminal-tools.css": {
     "font": 3,
     "spacing": 4
    },
    "client/css/text-prompt-modal.css": {
-    "font": 2,
-    "spacing": 7
+    "fallback": 6,
+    "font": 1,
+    "spacing": 6,
+    "weight": 1
    },
    "client/css/timer-chip.css": {
-    "spacing": 3
+    "border-width": 1,
+    "fallback": 4,
+    "line-height": 1,
+    "spacing": 3,
+    "weight": 1
    },
    "client/css/toast-collapse.css": {
+    "duration": 1,
     "spacing": 1
    },
    "client/css/toast.css": {
+    "border-width": 5,
+    "duration": 1,
     "font": 12,
-    "spacing": 19
+    "line-height": 7,
+    "spacing": 19,
+    "tracking": 2,
+    "weight": 4
    },
    "client/css/version-footer.css": {
     "font": 1,
     "spacing": 1
    },
    "client/css/wrapper-mark.css": {
+    "line-height": 1,
     "spacing": 1
    }
   },
@@ -157,6 +295,136 @@
    "client/js/sidebar-help.js": 1,
    "client/js/themes/registry.js": 1
   },
+  "js_controls": {
+   "client/js/app.js": {
+    "dom-write": 3
+   },
+   "client/js/auth.js": {
+    "button": 1,
+    "dom-write": 1,
+    "field": 1
+   },
+   "client/js/clipboard-compat.js": {
+    "dom-write": 1
+   },
+   "client/js/config-editor-modal.js": {
+    "button": 8,
+    "dom-write": 9
+   },
+   "client/js/config-editor-new-file.js": {
+    "button": 2,
+    "dom-write": 3,
+    "field": 2
+   },
+   "client/js/config-editor-panel.js": {
+    "button": 2,
+    "dom-write": 10
+   },
+   "client/js/config-editor-rows.js": {
+    "dom-write": 4
+   },
+   "client/js/copy-output.js": {
+    "button": 3,
+    "dom-write": 18,
+    "field": 1
+   },
+   "client/js/fab-menu.js": {
+    "button": 1,
+    "dom-write": 6
+   },
+   "client/js/folder-picker-modal.js": {
+    "button": 4,
+    "dom-write": 6,
+    "field": 1
+   },
+   "client/js/header-menu.js": {
+    "button": 6,
+    "dom-write": 13
+   },
+   "client/js/header-title-fit.js": {
+    "dom-write": 1
+   },
+   "client/js/modal-ring.js": {
+    "dom-write": 1
+   },
+   "client/js/module-loader.js": {
+    "dom-write": 1
+   },
+   "client/js/paste-fallback.js": {
+    "button": 1,
+    "dom-write": 7,
+    "field": 1
+   },
+   "client/js/session-header-led.js": {
+    "dom-write": 3
+   },
+   "client/js/session-restart-direct.js": {
+    "dom-write": 1
+   },
+   "client/js/session-restart-live.js": {
+    "field": 1
+   },
+   "client/js/session-restart-options.js": {
+    "dom-write": 1
+   },
+   "client/js/session-restart-picker.js": {
+    "button": 2,
+    "dom-write": 2
+   },
+   "client/js/session-restore-offer.js": {
+    "button": 4,
+    "dom-write": 5,
+    "field": 2
+   },
+   "client/js/session-row-actions.js": {
+    "button": 1,
+    "dom-write": 1
+   },
+   "client/js/session-theme-menu.js": {
+    "button": 1,
+    "dom-write": 4
+   },
+   "client/js/sidebar-help.js": {
+    "button": 4,
+    "dom-write": 2
+   },
+   "client/js/slash-commands.js": {
+    "button": 2,
+    "dom-write": 2,
+    "field": 1
+   },
+   "client/js/slash-favorites.js": {
+    "button": 1,
+    "dom-write": 2
+   },
+   "client/js/terminal-client-factory.js": {
+    "dom-write": 1
+   },
+   "client/js/terminal-header-rename.js": {
+    "dom-write": 2,
+    "field": 1
+   },
+   "client/js/terminal-key-bar.js": {
+    "button": 1,
+    "dom-write": 5
+   },
+   "client/js/terminal-mascot.js": {
+    "dom-write": 1
+   },
+   "client/js/text-prompt-modal.js": {
+    "button": 2,
+    "dom-write": 2,
+    "field": 1
+   },
+   "client/js/themes/registry.js": {
+    "button": 3,
+    "dom-write": 2
+   },
+   "client/js/touch-select.js": {
+    "button": 1,
+    "dom-write": 1
+   }
+  },
   "tablists": {
    "client/js/config-editor-modal.js": 1,
    "client/js/sidebar-help.js": 1
@@ -170,8 +438,9 @@
   }
  },
  "totals": {
-  "css_raw_values": 600,
+  "css_raw_values": 1069,
   "dialog_frames": 10,
+  "js_controls": 183,
   "tablists": 2,
   "ts_controls": 7
  }

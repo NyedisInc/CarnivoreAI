@@ -29,3 +29,7 @@ class BudgetedHandle:
 
     def tell(self) -> int:
         return self._handle.tell()
+
+    @property
+    def name(self) -> str:
+        return self._handle.name

@@ -139,3 +139,46 @@ def test_session_status_answers_an_asleep_session(view):
 def test_a_live_only_tool_answers_asleep_as_a_typed_error(view):
     answer = asyncio.run(tools.call_tool(view, PANE, "session_read_output", {"target": ASLEEP}))
     assert answer["isError"] is True and "session_wake" in answer["content"][0]["text"]
+
+
+
+STOPPED_UUID = "dddddddd-4444-4444-8444-444444444444"
+CLOSED_UUID = "eeeeeeee-5555-4555-8555-555555555555"
+
+
+@pytest.fixture()
+def stored_view(view, monkeypatch):
+    from src.core.crosstalk import directory
+
+    stopped = {"id": 4, "session_uuid": STOPPED_UUID, "tmux_name": "cloude_gone", "legacy_session_id": "ses_8a095b40"}
+    closed = {"id": 5, "session_uuid": CLOSED_UUID, "tmux_name": "cloude_closed", "legacy_session_id": "ses_c10sed01",
+              "lifecycle_source": "tmux_missing"}
+    monkeypatch.setattr(directory, "_stopped_rows", lambda: [stopped])
+    monkeypatch.setattr(directory, "_closed_rows", lambda: [closed])
+    return view
+
+
+def test_a_stopped_row_resolves_by_its_ses_id(stored_view):
+    got = _resolve(stored_view, "ses_8a095b40", session_target.RECORD)
+    assert got.session_uuid == STOPPED_UUID
+
+
+def test_a_closed_row_resolves_by_its_ses_id(stored_view):
+    got = _resolve(stored_view, "ses_c10sed01", session_target.CLOSED)
+    assert (got.kind, got.session_uuid) == (session_target.KIND_CLOSED, CLOSED_UUID)
+
+
+def test_a_closed_row_is_never_matched_by_name_or_by_a_guessed_id(stored_view):
+    for target in ("cloude_closed", "ses_c10sed0", "ses_cloude_closed", "adopted:cloude_closed"):
+        with pytest.raises(ToolError, match="no closed session"):
+            _resolve(stored_view, target, session_target.CLOSED)
+
+
+def test_an_asleep_row_resolves_by_its_ses_id_and_a_name_is_not_an_id(view, monkeypatch):
+    from src.core.crosstalk import directory
+
+    row = {"id": 6, "session_uuid": ASLEEP, "tmux_name": "cloude_sleepy", "legacy_session_id": "ses_5133p001"}
+    monkeypatch.setattr(directory, "_asleep_rows", lambda: [row])
+    assert _resolve(view, "ses_5133p001", session_target.STORED).session_uuid == ASLEEP
+    with pytest.raises(ToolError):
+        _resolve(view, "ses_cloude_sleepy", session_target.STORED)

@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from src.core.mcp.registry import core_projects, core_sessions, core_swarm, core_system, core_ui
 from src.core.mcp.registry.model import Capability, problems as rule_problems
-from src.cplugs.host import runtime
+from src.plugins.host import runtime
 
 _CORE_TABLES = (core_sessions.TABLE, core_projects.TABLE, core_swarm.TABLE, core_ui.TABLE, core_system.TABLE)
 

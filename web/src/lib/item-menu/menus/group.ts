@@ -2,6 +2,7 @@ import { t } from '../../i18n/index.svelte';
 import { open as openGroupRule } from '../../drawer/group-rule-popup';
 import { bandKeyFor } from '../../drawer/group-store';
 import { addToNodes } from '../../add-to-menu/host';
+import { createGroupThenAssign } from '../../sidebar-shell/group-assign';
 import { deleteGroup, moveGroup, renameGroup } from '../../sidebar-shell/heading-group-actions';
 import { sleepGroup } from '../../sidebar-shell/heading-project-actions';
 import { hg, usableGroups } from '../../sidebar-shell/interaction-globals';
@@ -27,6 +28,7 @@ defineItemMenu('group', {
             [{ label: t('sidebar.group.menu.customize'), icon: 'colour', id: 'customize', children: () => entryNodes(customize, env.glyph, env.close), onPick: () => undefined }],
             [foldInsideEntry(bandKeyFor(groupUuid))],
             [{ label: t('sidebar.heading.sleep'), icon: 'sleep', id: 'sleep', onPick: () => { void sleepGroup(groupUuid); } }],
+            [{ label: t('sidebar.group.menu.new'), icon: 'add', id: 'group', onPick: () => { void createGroupThenAssign(null); } }],
             [
                 {
                     label: t('sidebar.group.menu.move_up'), icon: 'move-up', id: 'move-up',

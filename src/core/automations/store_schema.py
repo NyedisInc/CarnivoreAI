@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Dict, Iterator, Set
 
-from src.cplugs.sdk.storage import CplugStorage, StorageSpec
+from src.plugins.sdk.storage import CplugStorage, StorageSpec
 
 DB_NAME = "automations.db"
 FOLDER_NAME = "automations"

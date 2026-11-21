@@ -112,6 +112,15 @@ console.log('[StatusLed Module] Loading...');
         return 'over limit, resets ' + LIMIT_MONTHS[at.getMonth()] + ' ' + at.getDate() + ' ' + clock;
     }
 
+    function loginExpiredLabel(r) {
+        const l = r && r.login_expired;
+        if (!l || typeof l !== 'object') return null;
+        const words = typeof l.message === 'string' && l.message
+            ? ['session.status.login_expired_with', { message: l.message }]
+            : ['session.status.login_expired', null];
+        return typeof globalThis.CloudeTr === 'function' ? globalThis.CloudeTr(words[0], words[1]) : words[0];
+    }
+
     function ledStateFor(signals) {
         const s = signals || {};
         const status = s.activity_status;
@@ -132,6 +141,10 @@ console.log('[StatusLed Module] Loading...');
 
         if (s.usage_limit) {
             return { inner: 'limit', outer: 'off' };
+        }
+
+        if (s.login_expired) {
+            return { inner: 'notice', outer: 'steady' };
         }
 
         if (gate === 'awaiting_startup_prompt') {
@@ -177,6 +190,7 @@ console.log('[StatusLed Module] Loading...');
         ledStateFor: ledStateFor,
         hostOffline: hostOffline,
         usageLimitLabel: usageLimitLabel,
+        loginExpiredLabel: loginExpiredLabel,
         ledLabel: ledLabel,
         normalizeInner: normalizeInner,
         normalizeOuter: normalizeOuter,

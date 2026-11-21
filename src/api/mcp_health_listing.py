@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 from typing import Any, Iterable, Optional
 
 from src.core.mcp_health.fold import McpHealth
-from src.cplugs.sdk import ports
-from src.cplugs.sdk.mcp_health import PORT_NAME
+from src.plugins.sdk import ports
+from src.plugins.sdk.mcp_health import PORT_NAME
 from src.models import CarnivoreLinkInfo, McpDropInfo, McpHealthInfo, SessionInfo
 from src.models.sessions import McpServerHealthInfo
 

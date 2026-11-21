@@ -1,9 +1,9 @@
 import { errorText } from '../../settings-page/panel-kit/error-text';
 import { createPushedStore } from '../../resource-push/pushed-store';
-import { EMPTY_SETTINGS, fetchRegistry, fetchRouting, putDefault, putPaused, putTick, resetTick, DESKTOP, SCREEN, type Cell, type Family, type Fetcher, type RoutingSettings, type TypeRow } from './api';
+import { EMPTY_SETTINGS, fetchRegistry, fetchRouting, putPaused, type Family, type Fetcher, type RoutingSettings, type TypeRow } from './api';
 
-export const matrix = $state<{ families: Family[]; types: TypeRow[]; aliases: Record<string, string>; settings: RoutingSettings; loaded: boolean; problem: string; localOnly: boolean }>({
-    families: [], types: [], aliases: {}, settings: EMPTY_SETTINGS, loaded: false, problem: '', localOnly: false,
+export const matrix = $state<{ families: Family[]; types: TypeRow[]; aliases: Record<string, string>; settings: RoutingSettings; loaded: boolean; problem: string }>({
+    families: [], types: [], aliases: {}, settings: EMPTY_SETTINGS, loaded: false, problem: '',
 });
 
 export const MATRIX_POLL_MS = 15000;
@@ -24,13 +24,6 @@ async function read(fetcher: Fetcher | undefined): Promise<void> {
     }
 }
 
-function setCell(column: string, typeId: string, cell: Cell): void {
-    const s = matrix.settings;
-    if (column === SCREEN) matrix.settings = { ...s, screen: { ...s.screen, [typeId]: cell } };
-    else if (column === DESKTOP) matrix.settings = { ...s, desktop: { ...s.desktop, [typeId]: cell } };
-    else matrix.settings = { ...s, ticks: { ...s.ticks, [column]: { ...(s.ticks[column] ?? {}), [typeId]: cell } } };
-}
-
 async function act(work: () => Promise<void>): Promise<void> {
     matrix.problem = '';
     try {
@@ -41,36 +34,6 @@ async function act(work: () => Promise<void>): Promise<void> {
         matrix.problem = problem;
     }
 }
-
-export const setTick = (column: string, typeId: string, value: boolean): Promise<void> =>
-    act(async () => {
-        const body = matrix.localOnly ? { column, type_id: typeId, value, scope: 'local' as const } : { column, type_id: typeId, value };
-        setCell(column, typeId, (await putTick(body, store.fetcher())).cell);
-    });
-
-export const setGroup = (column: string, typeIds: readonly string[], value: boolean, defaults = false): Promise<void> =>
-    act(async () => {
-        for (const typeId of typeIds) {
-            if (defaults) {
-                matrix.settings = { ...matrix.settings, defaults: (await putDefault(typeId, value, store.fetcher())).defaults };
-                continue;
-            }
-            const body = matrix.localOnly ? { column, type_id: typeId, value, scope: 'local' as const } : { column, type_id: typeId, value };
-            setCell(column, typeId, (await putTick(body, store.fetcher())).cell);
-        }
-    });
-
-export const resetCell = (column: string, typeId: string): Promise<void> =>
-    act(async () => {
-        await resetTick(column, typeId, store.fetcher());
-        await refresh();
-    });
-
-export const setDefault = (typeId: string, value: boolean): Promise<void> =>
-    act(async () => {
-        const answer = await putDefault(typeId, value, store.fetcher());
-        matrix.settings = { ...matrix.settings, defaults: answer.defaults };
-    });
 
 export const setPaused = (paused: boolean): Promise<void> =>
     act(async () => {

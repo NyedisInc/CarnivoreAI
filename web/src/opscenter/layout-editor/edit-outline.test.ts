@@ -1,10 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
+import { resolveZ, zRungs } from '../z-scale';
 
 const read = (path: string): string => readFileSync(new URL(path, import.meta.url), 'utf8');
 const overlay = read('./EditOverlay.svelte');
 const zone = read('../../lib/drawer-zone/DrawerZone.svelte');
 const frame = read('../shell/CellFrame.svelte');
+const rungs = zRungs(read('../tokens.css'));
 const corner = read('../shell/CornerMenu.svelte');
 
 function ruleFor(source: string, selector: string): string {
@@ -18,12 +20,12 @@ const inFront = (token: string): RegExp[] => [
   new RegExp(`border:\\s*var\\(--oc-border\\)\\s+dashed\\s+var\\(--${token}\\)`),
   /position:\s*absolute/,
   /inset:\s*0/,
-  /z-index:\s*60/,
+  /z-index:\s*var\(--oc-z-sheet\)/,
   /pointer-events:\s*none/,
 ];
 
 function highestFrameLayer(): number {
-  return Math.max(...[...frame.matchAll(/z-index:\s*(\d+)/g)].map((m) => Number(m[1])));
+  return Math.max(...[...frame.matchAll(/z-index:\s*([^;}]+)/g)].map((m) => resolveZ(m[1], rungs)));
 }
 
 describe('the edit outline', () => {
@@ -42,7 +44,7 @@ describe('the edit outline', () => {
     for (const selector of ["#terminal-grid .oc-cellslot[data-slot])::after", "#launchpad-screen .oc-cellslot[data-slot])::after"]) {
       const rule = ruleFor(overlay, selector);
       expect(rule).toMatch(/border:\s*1px dashed var\(--oc-cyan\);/);
-      const z = Number(/z-index:\s*(\d+)/.exec(rule)?.[1]);
+      const z = resolveZ(/z-index:\s*([^;}]+)/.exec(rule)?.[1] ?? 'missing', rungs);
       expect(z).toBeGreaterThan(highestFrameLayer());
       expect(rule).toMatch(/pointer-events:\s*none/);
     }

@@ -5,8 +5,8 @@ import asyncio
 import socket
 from typing import Any, Dict, List
 
-from src.cplugs.reviewboard.public.service import PublicBoardService
-from src.cplugs.reviewboard.public.listener import ListenerSpec, PublicListener
+from src.plugins.reviewboard.public.service import PublicBoardService
+from src.plugins.reviewboard.public.listener import ListenerSpec, PublicListener
 from tests.python.cplugs.reviewboard.public.harness import HOST, LOOPBACK, edge_for
 
 SETTLE = 0.4

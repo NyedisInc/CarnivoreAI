@@ -86,6 +86,7 @@ NYEDIS = {"accountUuid": "acct-nyedis", "organizationUuid": "org-nyedis"}
 def home(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setattr(default_login, "_IDENTITY_CACHE", {}, raising=False)
+    monkeypatch.setattr(poller_scan, "read_claude_credential", lambda _dir: object())
     state = {"accounts": []}
     monkeypatch.setattr(
         account_resolve.accounts_store, "list_accounts", lambda _p: state["accounts"]

@@ -15,6 +15,7 @@ from typing import Iterator, List
 import pytest
 
 from src.core.auto_sleep import pane_listeners
+from src.core.auto_sleep.pane_ports import pid_holds_listener
 from src.core.tmux_backend import TmuxBackend
 from tests.socket_guard import TEST_SOCKET_NAME
 from tests.test_auto_sleep_sleeper import _add, _run, world  # noqa: F401
@@ -110,7 +111,7 @@ def test_a_listening_child_of_the_pane_keeps_it_awake(world, spawned):  # noqa: 
     pane_pid = backend.pid
     assert pane_pid is not None
     snapshot = pane_listeners.take_snapshot()
-    assert snapshot.pane_listeners(pane_pid), "the real lsof did not see the pane's listener"
+    assert snapshot.pane_listeners(pane_pid), "the kernel read did not see the pane's listener"
     assert _run(world) == []
     assert world.calls == []
 
@@ -126,5 +127,5 @@ def test_a_listener_outside_the_pane_does_not_keep_it_awake(world, spawned):  # 
     outside = spawned["loose"](listen=True)
     backend = spawned["pane"](listen=False)
     _serve_from(world, backend)
-    assert outside in pane_listeners.take_snapshot().listeners
+    assert pid_holds_listener(outside)
     assert _run(world) == ["row-uuid-1"]

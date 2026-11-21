@@ -3,7 +3,8 @@ import subprocess
 
 import pytest
 
-from src.core import conversation_writers, libproc_snapshot
+from src.core import conversation_writers
+from src.core.machine_stats import libproc_snapshot
 from src.core.pack.load import process_tree
 
 T = libproc_snapshot.TaskRow

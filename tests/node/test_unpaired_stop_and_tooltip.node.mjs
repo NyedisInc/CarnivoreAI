@@ -178,3 +178,94 @@ test('tooltip on an unfinished setup with an unread session list says cannot det
   const s = describeSignals({ serverState: 'running', setupStatus: 'incomplete', sessionsReachable: false, sessions: null });
   assert.equal(s.sessions, 'cannot determine');
 });
+
+const NETSTAT_HEAD = 'Proto Recv-Q Send-Q  Local Address          Foreign Address        (state)          rxbytes      txbytes  rhiwat  shiwat          process:pid    state  options           gencnt    flags   flags1 usecnt rtncnt fltrs\n';
+const netstatRow = (local, proc, pid) => `tcp4       0      0  ${local}  *.*  LISTEN  0  0  131072  131072  ${proc}:${pid}  00100 00000106 00000000000069a7 00000000 00000800  1  0 000000\n`;
+const sleepNow = async () => {};
+function rigExec({ netstat, ps = '501\n', lsof = '' }) {
+  const calls = { netstat: 0, ps: 0, lsof: 0 };
+  const answer = (v) => (typeof v === 'function' ? v() : v);
+  const execFileFake = (file, args, opts, cb) => {
+    const kind = file.split('/').pop();
+    calls[kind] += 1;
+    const v = answer({ netstat, ps, lsof }[kind]);
+    if (v instanceof Error) cb(v, ''); else cb(null, v);
+  };
+  return { execFileFake, calls };
+}
+
+test('netstat listeners: pid, command and uid of every LISTEN row on the port, any user, one entry per pid', async () => {
+  const table = NETSTAT_HEAD + netstatRow('127.0.0.1.8000', 'Python', 77) + netstatRow('*.8000', 'Python', 77) + netstatRow('*.8001', 'Other', 9)
+    + netstatRow('127.0.0.1.18000', 'Other', 10);
+  const { execFileFake, calls } = rigExec({ netstat: table, ps: '0\n' });
+  assert.deepEqual(await portTrust.listeners(8000, { execFile: execFileFake }), [{ pid: 77, command: 'Python', uid: 0 }]);
+  assert.equal(calls.lsof, 0, 'a netstat read never touches lsof');
+  assert.deepEqual(portTrust.parseNetstat(NETSTAT_HEAD + netstatRow('::1.587', 'Brave Browser', 12), 587), [{ pid: 12, command: 'Brave Browser' }]);
+});
+
+test('a netstat read that could not run falls back to lsof; a read that RAN and saw nothing is [] and does not', async () => {
+  const fall = rigExec({ netstat: new Error('boom'), lsof: 'p5\ncpython3\nu501\n' });
+  assert.deepEqual(await portTrust.listeners(8000, { execFile: fall.execFileFake }), [{ pid: 5, command: 'python3', uid: 501 }]);
+  const none = rigExec({ netstat: NETSTAT_HEAD });
+  assert.deepEqual(await portTrust.listeners(8000, { execFile: none.execFileFake }), []);
+  assert.equal(none.calls.lsof, 0);
+  const psFails = rigExec({ netstat: NETSTAT_HEAD + netstatRow('*.8000', 'Python', 77), ps: new Error('timed out'), lsof: new Error('timed out') });
+  assert.equal(await portTrust.listeners(8000, { execFile: psFails.execFileFake }), null, 'an unreadable uid is could-not-tell, never a listener list or none');
+});
+
+test('strict read: one failed read then a good one proceeds; every read failing refuses after exactly N tries and logs it', async () => {
+  const logs = [];
+  let n = 0;
+  const flaky = rigExec({ netstat: () => (++n === 1 ? new Error('timed out') : NETSTAT_HEAD + netstatRow('*.8000', 'Python', 77)), lsof: new Error('timed out') });
+  const got = await portTrust.listenersStrict(8000, { execFile: flaky.execFileFake, sleep: sleepNow, log: (m) => logs.push(m) });
+  assert.deepEqual(got, [{ pid: 77, command: 'Python', uid: 501 }]);
+  assert.equal(portTrust.holderRefusal(got, 501), null);
+  const dead = rigExec({ netstat: new Error('timed out'), lsof: new Error('timed out') });
+  assert.equal(await portTrust.listenersStrict(8000, { execFile: dead.execFileFake, sleep: sleepNow, log: (m) => logs.push(m) }), null);
+  assert.equal(dead.calls.netstat, portTrust.STRICT_ATTEMPTS);
+  assert.equal(dead.calls.lsof, portTrust.STRICT_ATTEMPTS);
+  assert.match(logs.at(-1), /could not run after 3 tries/);
+});
+
+test('strict read: a read that RAN and saw a stranger or nothing is final, never retried into a pass', async () => {
+  const stranger = rigExec({ netstat: NETSTAT_HEAD + netstatRow('*.8000', 'Python', 77), ps: '0\n' });
+  const seen = await portTrust.listenersStrict(8000, { execFile: stranger.execFileFake, sleep: sleepNow });
+  assert.equal(portTrust.holderRefusal(seen, 501).reason, 'not_yours');
+  assert.equal(stranger.calls.netstat, 1);
+  const none = rigExec({ netstat: NETSTAT_HEAD });
+  assert.deepEqual(await portTrust.listenersStrict(8000, { execFile: none.execFileFake, sleep: sleepNow }), []);
+  assert.equal(none.calls.netstat, 1);
+});
+
+test('the stop gate: one failed holder read is retried and the credential then goes; every read failing refuses and sends nothing; the poll path reads once', async () => {
+  const { stopEngineViaRoute } = require(path.join(macDir, 'engine', 'engine-stop.js'));
+  const { verifyEngineHolder } = require(path.join(macDir, 'engine', 'engine-lifecycle.js'));
+  const good = NETSTAT_HEAD + netstatRow('*.8000', 'Python', 77);
+  const gate = (rig) => () => portTrust.listenersStrict(8000, { execFile: rig.execFileFake, sleep: sleepNow, log: () => {} })
+    .then((found) => portTrust.holderRefusal(found, 501));
+  const run = async (rig) => {
+    const sent = [];
+    let up = true;
+    const api = { sendAuthed: async (route) => { sent.push(route); up = false; return { reachable: true }; } };
+    const r = await stopEngineViaRoute({ getApi: () => api, isUp: async () => up, verifyHolder: gate(rig), sleep: sleepNow, log: () => {} });
+    return { r, sent };
+  };
+  let n = 0;
+  const flaky = await run(rigExec({ netstat: () => (++n === 1 ? new Error('timed out') : good), lsof: new Error('timed out') }));
+  assert.equal(flaky.r.outcome, 'stopped');
+  assert.deepEqual(flaky.sent, ['/api/v1/shutdown']);
+  const dead = await run(rigExec({ netstat: new Error('timed out'), lsof: new Error('timed out') }));
+  assert.equal(dead.r.outcome, 'holder-refused');
+  assert.match(dead.r.error, /unreadable/);
+  assert.deepEqual(dead.sent, [], 'no credential on a check that never ran');
+  const stranger = await run(rigExec({ netstat: good, ps: '0\n' }));
+  assert.equal(stranger.r.outcome, 'holder-refused');
+  assert.deepEqual(stranger.sent, []);
+  const realListeners = portTrust.listeners;
+  let reads = 0;
+  portTrust.listeners = async () => { reads += 1; return null; };
+  try {
+    assert.equal((await verifyEngineHolder({ getPort: () => 5099 })).reason, 'unreadable');
+    assert.equal(reads, 1);
+  } finally { portTrust.listeners = realListeners; }
+});

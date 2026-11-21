@@ -31,11 +31,12 @@ afterEach(() => {
 const slot = (): HTMLElement => document.getElementById('session-sidebar-bar-slot')!;
 
 describe('the account chip', () => {
-    test('the spiral steps on the ambient ticker (no infinite animation) and rests under reduced motion', () => {
+    test('the spiral turns smoothly inside a still mask, and rests under reduced motion', () => {
         const css = readFileSync(resolve(__dirname, '../../../../client/css/session-sidebar-account-chip.css'), 'utf8');
-        expect(css).toMatch(/\.spiral-turn\s*\{[^}]*transform: rotate\(calc\(var\(--amb-step, 0\) \* 15deg\)\)/);
-        expect(css).not.toMatch(/\.spiral-turn\s*\{[^}]*infinite/);
-        expect(css).toMatch(/prefers-reduced-motion: reduce\)\s*\{[^}]*\.spiral-turn\s*\{\s*transform: none/);
+        expect(css).toMatch(/\.spiral-turn\s*\{[^}]*animation: avatar-spiral-turn 2s linear infinite/);
+        expect(css).toMatch(/@keyframes avatar-spiral-turn\s*\{\s*to \{ transform: rotate\(-360deg\); \}/);
+        expect(css).toMatch(/\.session-sidebar-bar__avatar > \.spiral-mask\s*\{[^}]*overflow: hidden/);
+        expect(css).toMatch(/prefers-reduced-motion: reduce\)\s*\{[^}]*\.spiral-turn\s*\{\s*animation: none/);
     });
 
     test('signed out: SysOp with the turning spiral, no identicon, no status dot', () => {
@@ -44,7 +45,7 @@ describe('the account chip', () => {
         expect(slot().querySelector('.session-sidebar-bar__account-name')!.textContent).toBe('SysOp');
         const avatar = slot().querySelector('.session-sidebar-bar__avatar')!;
         expect(avatar.getAttribute('data-kind')).toBe('lurker');
-        expect(avatar.querySelector('svg.spiral.spiral-turn[data-spiral] path')).not.toBeNull();
+        expect(avatar.querySelector('.spiral-mask > svg.spiral.spiral-turn[data-spiral] path')).not.toBeNull();
         expect(avatar.querySelector('svg.anon path[fill="currentColor"]')).toBeNull();
         expect(avatar.querySelector('svg.ident')).toBeNull();
         expect(slot().querySelector('.session-sidebar-bar__conn')).toBeNull();

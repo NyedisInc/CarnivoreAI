@@ -7,6 +7,7 @@ import { setLocale } from '../i18n/index.svelte';
 import { ApiError } from '../../opscenter/api/auth.svelte';
 import type { Fetcher } from './phone-link/api';
 import { refreshAccount } from '../carnivore-account/account-store.svelte';
+import { resourcePush } from '../resource-push/boot';
 import { registerSignInOpener, cancelPendingAccount } from '../carnivore-account/funnel';
 
 setLocale('en');
@@ -34,7 +35,7 @@ afterEach(async () => {
     document.body.replaceChildren();
 });
 
-const live: { pairing: { state: string; device: unknown; locked?: boolean }; qrSecondsLeft: number } = { pairing: { state: 'none', device: null }, qrSecondsLeft: 120 };
+const live: { pairing: { state: string; device: unknown; locked?: boolean }; qrSecondsLeft: number; gate: Promise<void> | null } = { pairing: { state: 'none', device: null }, qrSecondsLeft: 120, gate: null };
 
 async function render(status: Omit<typeof STATUS, 'cert' | 'pairing'> & { cert: typeof STATUS.cert | null } = STATUS, devices: (Omit<typeof DEVICE, 'last_seen'> & { last_seen: number | null })[] = [DEVICE]) {
     const calls: string[] = [];
@@ -51,6 +52,7 @@ async function render(status: Omit<typeof STATUS, 'cert' | 'pairing'> & { cert: 
         if (path === '/phone-link/pairing-window') return { closed: true };
         if (path === '/phone-link/devices') return init?.method === 'DELETE' ? { revoked: true } : devices;
         if (path === '/phone-link/devices/d1') return { revoked: true };
+        if (path === '/phone-link' && init?.method !== 'PUT' && live.gate) await live.gate;
         if (path === '/phone-link') return init?.method === 'PUT' ? { ...status, enabled: false } : { ...status, window_open: live.pairing.state === 'open', pairing: live.pairing };
         return {};
     }) as unknown as Fetcher;
@@ -190,11 +192,124 @@ describe('PhoneLinkPanel', () => {
         }
     });
 
-    test('a hidden tab does not poll, and polling resumes when the tab is shown', async () => {
+    test('an idle panel with the phone_link topic live never polls, and re-reads on a phone_link frame (#2553)', async () => {
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+        try {
+            const store = resourcePush().store;
+            store.hello({ resource_topics: ['phone_link'] });
+            const calls = await render();
+            await settle();
+            const panelReads = () => calls.filter((c) => c === 'GET /phone-link' || c === 'GET /phone-link/devices').length;
+            const before = panelReads();
+            expect(before).toBeGreaterThan(0);
+            await vi.advanceTimersByTimeAsync(30000);
+            await settle();
+            expect(panelReads()).toBe(before);
+            store.frame({ topics: ['phone_link'] });
+            await settle();
+            expect(panelReads()).toBeGreaterThan(before);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('a phone_link frame that lands mid-read is read once more when that read ends, not lost (#2553)', async () => {
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+        try {
+            const store = resourcePush().store;
+            store.hello({ resource_topics: ['phone_link'] });
+            const calls = await render();
+            await settle();
+            const reads = () => calls.filter((c) => c === 'GET /phone-link').length;
+            let release: () => void = () => undefined;
+            live.gate = new Promise<void>((resolve) => (release = resolve));
+            store.frame({ topics: ['phone_link'] });
+            await settle();
+            const inFlight = reads();
+            store.frame({ topics: ['phone_link'] });
+            await settle();
+            expect(reads()).toBe(inFlight);
+            live.gate = null;
+            release();
+            await settle();
+            expect(reads()).toBe(inFlight + 1);
+        } finally {
+            live.gate = null;
+            vi.useRealTimers();
+        }
+    });
+
+    test('a phone_link frame that lands while the tab is hidden is read when the tab is shown (#2553)', async () => {
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+        const visibility = vi.spyOn(document, 'visibilityState', 'get');
+        try {
+            const store = resourcePush().store;
+            store.hello({ resource_topics: ['phone_link'] });
+            const calls = await render();
+            await settle();
+            const reads = () => calls.filter((c) => c === 'GET /phone-link').length;
+            const before = reads();
+            visibility.mockReturnValue('hidden');
+            store.frame({ topics: ['phone_link'] });
+            await settle();
+            expect(reads()).toBe(before);
+            visibility.mockReturnValue('visible');
+            document.dispatchEvent(new Event('visibilitychange'));
+            await settle();
+            expect(reads()).toBe(before + 1);
+        } finally {
+            visibility.mockRestore();
+            vi.useRealTimers();
+        }
+    });
+
+    test('when the server says the window is over (none, nothing scanned) the window clears and polling stops (#2553)', async () => {
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+        try {
+            resourcePush().store.hello({ resource_topics: ['phone_link'] });
+            const calls = await render();
+            (q('[data-pl="pair"]') as HTMLButtonElement).click();
+            await vi.advanceTimersByTimeAsync(10);
+            await settle();
+            expect(q('[data-pl="qr"]')).not.toBeNull();
+            live.pairing = { state: 'none', device: null };
+            await vi.advanceTimersByTimeAsync(3000);
+            await settle();
+            expect(q('[data-pl="qr"]')).toBeNull();
+            const reads = () => calls.filter((c) => c === 'GET /phone-link').length;
+            const before = reads();
+            await vi.advanceTimersByTimeAsync(15000);
+            await settle();
+            expect(reads()).toBe(before);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('with the socket down the panel falls back to its 3 s poll', async () => {
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+        try {
+            resourcePush().store.closed();
+            const calls = await render();
+            await settle();
+            const reads = () => calls.filter((c) => c === 'GET /phone-link').length;
+            const before = reads();
+            await vi.advanceTimersByTimeAsync(9000);
+            await settle();
+            expect(reads()).toBeGreaterThan(before);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('while a pairing window is open a hidden tab does not poll, and polling resumes when the tab is shown', async () => {
         vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
         const visibility = vi.spyOn(document, 'visibilityState', 'get');
         try {
             const calls = await render();
+            (q('[data-pl="pair"]') as HTMLButtonElement).click();
+            await vi.advanceTimersByTimeAsync(10);
+            await settle();
             const reads = () => calls.filter((c) => c === 'GET /phone-link').length;
             const before = reads();
             visibility.mockReturnValue('hidden');

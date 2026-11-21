@@ -25,14 +25,30 @@ MAX_PATHS: int = 512
 
 
 @dataclass
-class _Entry:
+class HistoryEntry:
 
     seen_to: int = 0
     events: List[McpEvent] = field(default_factory=list)
 
+    def is_stale(self, file_size: int) -> bool:
+        return file_size < self.seen_to
 
-_TABLE: Dict[str, _Entry] = {}
+    def scan_start(self, scanned_from: int) -> int:
+        return max(self.seen_to, scanned_from - SCAN_MAX_BYTES, 0)
+
+    def record(self, merged: Sequence[McpEvent], file_size: int) -> None:
+        self.events = list(merged)
+        self.seen_to = max(self.seen_to, file_size)
+
+
+_TABLE: Dict[str, HistoryEntry] = {}
 _LOCK = threading.Lock()
+
+
+def entry_copy(path: str) -> Optional[HistoryEntry]:
+    with _LOCK:
+        entry = _TABLE.get(path)
+        return HistoryEntry(entry.seen_to, list(entry.events)) if entry is not None else None
 
 
 def reset_history() -> None:
@@ -89,7 +105,7 @@ def _parse_marked(lines: Sequence[bytes]) -> List[dict]:
     return out
 
 
-def _combine(old: Sequence[McpEvent], new: Sequence[McpEvent]) -> List[McpEvent]:
+def combine_mcp_events(old: Sequence[McpEvent], new: Sequence[McpEvent]) -> List[McpEvent]:
     by_key = {_event_key(e): e for e in list(old) + list(new)}
     merged = sorted(by_key.values(), key=lambda e: (e.at is not None, e.at or datetime.min))
     newest_heal: Dict[str, McpEvent] = {}
@@ -103,6 +119,10 @@ def _combine(old: Sequence[McpEvent], new: Sequence[McpEvent]) -> List[McpEvent]
     return sorted(kept + list(newest_heal.values()), key=lambda e: (e.at is not None, e.at or datetime.min))
 
 
+def join_history(old: Sequence[McpEvent], found: Sequence[McpEvent], window_events: Sequence[McpEvent]) -> List[McpEvent]:
+    return combine_mcp_events(combine_mcp_events(old, found), window_events)
+
+
 def merge_mcp_history(
     path: Optional[str], window_events: Sequence[McpEvent], *, scanned_from: int, file_size: int
 ) -> Tuple[McpEvent, ...]:
@@ -110,15 +130,14 @@ def merge_mcp_history(
         return tuple(window_events)
     with _LOCK:
         entry = _TABLE.get(path)
-        if entry is None or file_size < entry.seen_to:
+        if entry is None or entry.is_stale(file_size):
             if len(_TABLE) >= MAX_PATHS:
                 _TABLE.clear()
-            entry = _TABLE[path] = _Entry()
-        scan_from = max(entry.seen_to, scanned_from - SCAN_MAX_BYTES, 0)
+            entry = _TABLE[path] = HistoryEntry()
+        scan_from = entry.scan_start(scanned_from)
         old = tuple(entry.events)
     found = scan_mcp_events(path, scan_from, scanned_from) if scanned_from > scan_from else ()
-    merged = _combine(_combine(old, found), window_events)
+    merged = join_history(old, found, window_events)
     with _LOCK:
-        entry.events = merged
-        entry.seen_to = max(entry.seen_to, file_size)
+        entry.record(merged, file_size)
     return tuple(merged)

@@ -5,7 +5,7 @@ import { load } from './fetch';
 import { init, setSectionShown } from './section-visibility.svelte';
 import * as Layouts from './layouts-model';
 
-const live = (name: string, rowId: number, label: string) => ({ tmux_session: name, label, agent_family: 'claude', session_row_id: rowId, session: { id: `ses_${rowId}`, working_dir: '/x' } });
+const live = (name: string, rowId: number, label: string, uuid: string) => ({ tmux_session: name, label, agent_family: 'claude', session_row_id: rowId, session_uuid: uuid, session: { id: `ses_${rowId}`, working_dir: '/x' } });
 const rec = (id: number, uuid: string, name: string, epoch: number) => ({ id, session_uuid: uuid, tmux_name: name, tmux_created_epoch: epoch, lifecycle: 'running' });
 const asleepRec = { id: 120, session_uuid: 'u-asleep', tmux_name: 'carnivore_Orion-2', tmux_created_epoch: 1, lifecycle: 'stopped', asleep: true };
 
@@ -14,7 +14,7 @@ afterEach(() => { setDrawerEnv(null); vi.restoreAllMocks(); });
 it('lists every member of a Layout while the view menu hides the open sessions', async () => {
     const API = {
         listAttachableSessions: async () => [],
-        listSessions: async () => [live('carnivore_Orion-3', 121, 'Argent-CVEs'), live('carnivore_Orion-4', 122, 'Argent-Logs')],
+        listSessions: async () => [live('carnivore_Orion-3', 121, 'Argent-CVEs', 'u-3'), live('carnivore_Orion-4', 122, 'Argent-Logs', 'u-4')],
         listSessionRecords: async () => [asleepRec, rec(121, 'u-3', 'carnivore_Orion-3', 11), rec(122, 'u-4', 'carnivore_Orion-4', 12)],
         listSessionCompanions: async () => [],
     };

@@ -11,10 +11,10 @@ from typing import List, Optional, Set, Tuple
 
 import pytest
 
-from src.cplugs.huddle import files, store_identity, task_sweep
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import files, store_identity, task_sweep
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work.storage import WorkStorage
-from src.cplugs.sdk import ports, task_folders
+from src.plugins.sdk import ports, task_folders
 
 DAY = files.ORPHAN_AGE_S
 OLD = 3 * DAY
@@ -429,7 +429,7 @@ def test_a_write_with_no_store_id_uses_an_unstamped_folder_before_making_one(tmp
 
 
 def test_a_hard_delete_with_a_known_store_id_removes_only_its_own_stamped_folder(store, storage, root):
-    from src.cplugs.huddle import moves
+    from src.plugins.huddle import moves
 
     ports.register(task_folders.ROOT_PORT, FakeRoot(root))
     try:

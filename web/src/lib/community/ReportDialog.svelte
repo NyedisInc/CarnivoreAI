@@ -73,7 +73,7 @@
         gap: 6px;
         padding: 8px 10px;
         border: 1px solid var(--cat-line);
-        border-radius: 3px;
+        border-radius: var(--oc-radius-tight);
         background: var(--cat-raised);
     }
     .rep__heading {

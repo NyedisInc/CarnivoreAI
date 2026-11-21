@@ -34,7 +34,7 @@ const archived = [
 
 function loaded(shown: boolean): SidebarRow[] {
     const rows = listed();
-    return [...rows, ...archivedRows(archived, shown, new Set(rows.map((r) => r.name)))] as SidebarRow[];
+    return [...rows, ...archivedRows(archived, shown, rows)] as SidebarRow[];
 }
 
 function projectKeys(rows: SidebarRow[], query = ''): string[] {

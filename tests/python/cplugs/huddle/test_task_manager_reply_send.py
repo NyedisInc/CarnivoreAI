@@ -1,10 +1,10 @@
 
 from __future__ import annotations
 
-from src.cplugs.huddle import reply_send, service
-from src.cplugs.huddle.rules import CLAUDE, JOE, REPLY
-from src.cplugs.host import runtime
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import reply_send, service
+from src.plugins.huddle.rules import CLAUDE, JOE, REPLY
+from src.plugins.host import runtime
+from src.plugins.huddle.store import TaskManagerStore
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, pasted  # noqa: F401
 
 SEND = "/api/v1/cplugs/huddle/lists/12/send"

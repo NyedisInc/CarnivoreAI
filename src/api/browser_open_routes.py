@@ -13,7 +13,7 @@ from src.core import row_looks
 from src.core.browser_pages import app_open, open_pages, page_tab, pool, resolvers, select
 from src.core.browsers import store
 from src.core.browsers.manager import BrowserUnavailable, CapReached
-from src.cplugs.host import page_owner, runtime
+from src.plugins.host import page_owner, runtime
 from src.core.browsers.url_policy import UrlRefused, normalize_url, origin_of, storable_url
 from src.models.browsers import BrowserInfo, CreateBrowserRequest, OpenPageRequest
 from src.api.error_response import api_error
@@ -113,7 +113,7 @@ async def list_pages(request: Request) -> Dict[str, Any]:
     """The pages opened for the owner, oldest first, minus those of a plugin that is off.
 
     Output: {pages: [{id, key, frame, title, opened_at, src, section}]}; ``section`` is the owning plugin's
-      ``surfaces.page_section`` or None. A page whose plugin is off is left out and its row kept (``cplugs/host/page_owner.py``).
+      ``surfaces.page_section`` or None. A page whose plugin is off is left out and its row kept (``plugins/host/page_owner.py``).
     """
     host = runtime.host_for(request.app)
     listed = []

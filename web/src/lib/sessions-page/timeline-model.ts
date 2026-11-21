@@ -1,6 +1,7 @@
 import type { SessionTimeline } from '../../opscenter/cells/timeline/types';
 import { projectColorVar } from '../project-colors/palette';
 import { needsYou, type PageRow, type Signals } from './filters';
+import { ASKING, BUSY, STATUS } from '../activity-status';
 
 export const WINDOWS = [
     { key: '1h', min: 60 },
@@ -102,7 +103,7 @@ export function momentOf(tl: SessionTimeline | null, minBefore: number, nowMs: n
     if (tl.gaps.some((g) => within(t, g.start, g.end))) return { cat: 'asleep', status: 'asleep', unread: false };
     const wait = (tl.attention ?? []).find((w) => within(t, w.start, w.end));
     if (wait) {
-        if (wait.kind === 'done') return { cat: 'waiting', status: 'finished_unread', unread: true };
+        if (wait.kind === 'done') return { cat: 'waiting', status: STATUS.finished_unread, unread: true };
         return { cat: 'waiting', status: wait.kind === 'notice' ? 'notice' : 'question', unread: false };
     }
     for (const bar of tl.bars) {
@@ -216,8 +217,8 @@ export function liveMoment(asleep: boolean, asleepUnread: boolean, live: { activ
     const status = live.activity_status ?? 'unknown';
     const unread = live.unread === true;
     if (live.startup_gate === 'awaiting_startup_prompt') return { cat: 'waiting', status: 'question', unread };
-    if (status === 'working' || status === 'working_subagent') return { cat: 'working', status, unread };
-    if (status === 'question' || status === 'notice' || status === 'finished_unread') return { cat: 'waiting', status, unread };
+    if (BUSY.has(status)) return { cat: 'working', status, unread };
+    if (ASKING.has(status) || status === STATUS.finished_unread) return { cat: 'waiting', status, unread };
     if (status === 'idle') return { cat: 'quiet', status, unread };
     if (status === 'dead') return { cat: 'dead', status, unread };
     return { cat: 'unknown', status: 'unknown', unread };

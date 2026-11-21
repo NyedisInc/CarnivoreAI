@@ -171,10 +171,12 @@ def test_command_route_logs_only_the_length(manager, every_log_line, monkeypatch
 
 
 @pytest.mark.real_tmux
-def test_a_failed_tmux_write_logs_no_keystrokes(tmp_path, every_log_line):
+def test_a_failed_tmux_write_logs_no_keystrokes(tmp_path, every_log_line, monkeypatch):
     from src.core.tmux_backend import TmuxBackend
     from tests.socket_guard import TEST_SOCKET_NAME
 
+    monkeypatch.setenv("CARNIVORE_CONTROL_INPUT", "0")
+    monkeypatch.delenv("CLOUDE_CONTROL_INPUT", raising=False)
     entries, caplog = every_log_line
     canary = _canary()
     backend = TmuxBackend(

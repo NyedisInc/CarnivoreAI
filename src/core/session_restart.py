@@ -9,7 +9,7 @@ import structlog
 
 from src.core.hosts.ddl import LOCAL_HOST_KEY, host_scope
 from src.core.session_label import label_from_tmux_name
-from src.core.session_store import sessions_table_ready
+from src.core.session_store import sessions_table_ready, uuid_for_row
 from src.config import wrapper_reader
 
 logger = structlog.get_logger()
@@ -53,7 +53,7 @@ def resolve_restart_source(
             detail="no session_uuid was supplied, so no row can be named",
         )
     row = conn.execute(
-        "SELECT id, claude_session_uuid, working_dir, title, tmux_name, "
+        "SELECT id, claude_session_uuid, working_dir, title, tmux_name, tmux_socket, "
         "agent_type, model, project_id, launch_record FROM sessions "
         "WHERE session_uuid = ? LIMIT 1",
         (session_uuid,),
@@ -89,12 +89,15 @@ def resolve_restart_source(
             ),
         )
     from src.core.agent_families import resolve_agent_type
+    from src.core.attention.codex_pane_home import codex_home_for_row, gone_identity
     from src.core.session_transcript_presence import family_conversation_presence
 
+    family = resolve_agent_type(data.get("agent_type"), wrapper_reader.configured_wrappers())[0].name
     presence = family_conversation_presence(
-        resolve_agent_type(data.get("agent_type"), wrapper_reader.configured_wrappers())[0].name,
+        family,
         uuid,
         working_dir=data.get("working_dir"),
+        codex_home=codex_home_for_row(family, data.get("tmux_socket"), data.get("tmux_name"), identity=gone_identity(data)),
     ) if check_transcript else None
     if presence is not None and presence.missing:
         logger.warning(
@@ -177,15 +180,12 @@ def rebind_instance(
             detail="datastore predates the sessions table",
         )
 
-    row = conn.execute(
-        "SELECT session_uuid FROM sessions WHERE id = ? LIMIT 1", (row_id,)
-    ).fetchone()
-    if row is None:
+    session_uuid = uuid_for_row(conn, row_id)
+    if session_uuid is None:
         return RebindResult(
             REBIND_UNRESOLVED,
             detail=f"no session row with id {row_id} to reuse",
         )
-    session_uuid = row["session_uuid"] if not isinstance(row, tuple) else row[0]
 
     scope_sql, scope_params = host_scope(conn, host_key)
     clash = conn.execute(

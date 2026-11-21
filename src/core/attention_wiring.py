@@ -34,6 +34,8 @@ from src.core.notifications.sources.died import DiedTracker
 from src.core.pipeline.feed import LiveFeed
 from src.core.session_output import escape_notices
 from src.core.skill_watch.wiring import attach_tripwire, make_notice_raiser
+from src.core.attention.login_notice import make_login_notice_raiser
+from src.core.subagents.stall_notice import make_stall_notice_raiser
 from src.models import ToastAckMessage
 
 logger = structlog.get_logger()
@@ -76,6 +78,8 @@ def build_attention_watcher(
         auto_answer=AutoAnswerEngine(app_state, lambda: manager, on_pressed=record_and_announce(lambda: manager)),
         pipeline_feed=LiveFeed(paths_for=lambda: read_evidence.paths_for, rollout_for=lambda: read_evidence.rollout_for),
         raise_skill_notice=make_notice_raiser(manager, app_state, send),
+        raise_stall_notice=make_stall_notice_raiser(manager, app_state, send),
+        raise_login_notice=make_login_notice_raiser(manager, app_state, send),
     )
 
     policy_store = getattr(manager, "_notification_policy_store", None)

@@ -5,7 +5,7 @@ import sqlite3
 
 import pytest
 
-from src.cplugs.huddle import answers, files, rich_ask
+from src.plugins.huddle import answers, files, rich_ask
 
 
 def _matches(parts: str) -> bool:

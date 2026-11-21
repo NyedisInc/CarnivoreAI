@@ -9,7 +9,7 @@ const groupFlow = vi.hoisted(() => ({ create: vi.fn(async (_name: string | null)
 vi.mock('../sidebar-shell/group-assign', () => ({ createGroupThenAssign: groupFlow.create }));
 import SidebarControls from './SidebarControls.svelte';
 import { drawerSurface } from '../drawer-tabs/drawer-surface.svelte';
-import { cplugEnablement } from '../../cplugs/host/enablement.svelte';
+import { cplugEnablement } from '../../plugins/host/enablement.svelte';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
 
 // jsdom has neither method.

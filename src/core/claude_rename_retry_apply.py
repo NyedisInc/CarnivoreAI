@@ -9,6 +9,7 @@ from typing import Optional
 import structlog
 
 from src.core import claude_rename_retry_store as store
+from src.core.product_identity import test_mode_enabled
 from src.core.claude_rename_retry import (
     RETRY_PUSH,
     RetryDecision,
@@ -33,7 +34,7 @@ def retry_enabled() -> bool:
     raw = os.environ.get(ENABLE_ENV)
     if raw is not None:
         return raw.strip().lower() not in ("", "0", "false", "no", "off")
-    return not os.environ.get("CLOUDE_TEST_MODE")
+    return not test_mode_enabled()
 
 
 def _families_agree(agent_family: Optional[str]) -> bool:

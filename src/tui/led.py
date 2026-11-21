@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from typing import Any, Mapping, Optional
 
 from src.tui.strings import t
+from src.core.session_status import STATUS_DEAD, STATUS_FINISHED_UNREAD, STATUS_IDLE, STATUS_NOTICE, STATUS_QUESTION
+from src.models.activity_status import BUSY
 
 INNER_STATES = (
     "working", "waiting-permission", "waiting-input", "notice", "idle", "done", "dead", "disconnected", "limit",
@@ -71,21 +73,21 @@ def led_states(
 ) -> tuple[str, str]:
     if transport == "disconnected" or host_offline_label:
         return "disconnected", "off"
-    if status in ("dead", "stopped"):
+    if status in (STATUS_DEAD, "stopped"):
         return "dead", "off"
     if usage_limit:
         return "limit", "off"
     if startup_gate == "awaiting_startup_prompt":
         return "waiting-input", "active"
-    if status == "question":
+    if status == STATUS_QUESTION:
         return "waiting-permission", "active"
-    if status == "notice":
+    if status == STATUS_NOTICE:
         return "notice", "active"
-    if status in ("working", "working_subagent", "running"):
+    if status in (*BUSY, "running"):
         return "working", "active"
-    if status == "finished_unread" or (status == "idle" and unread):
+    if status == STATUS_FINISHED_UNREAD or (status == STATUS_IDLE and unread):
         return "done", "unread"
-    if status == "idle":
+    if status == STATUS_IDLE:
         return "idle", "steady"
     return "unknown", "dim"
 

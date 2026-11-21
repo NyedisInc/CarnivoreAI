@@ -9,8 +9,8 @@ import tarfile
 import zlib
 from pathlib import Path
 
-from src.cplugs.save.engine.codec import _zstd as zstd
-from src.cplugs.save.vault.old_sources import archive_db, folder_tree, model, old_store, tar_files
+from src.plugins.save.engine.codec import _zstd as zstd
+from src.plugins.save.vault.old_sources import archive_db, folder_tree, model, old_store, tar_files
 
 A, B, C, D = (f"{n}" * 8 + "-1111-2222-3333-" + f"{n}" * 12 for n in "abcd")
 ENC = "-Users-x-proj"

@@ -23,7 +23,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.api.preferences_routes import PREFERENCES_CHANGED_EVENT
+from src.core.preferences_push.broadcast import PREFERENCES_CHANGED_EVENT
 from src.api.preferences_routes import router as preferences_router
 from src.core.ui_preferences_store import UiPreferencesStore
 

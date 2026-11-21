@@ -106,7 +106,7 @@ def test_restart_replay_carries_the_key_in_the_stdin_staged_env(on, tmp_path):
     from src.core.launch_profiles import restart_seam
 
     class FakeSettings:
-        def pane_launch_command(self, agent_type, *, model, extra_args, plan_sink):
+        def pane_launch_command(self, agent_type, *, model, extra_args, plan_sink, working_dir=None):
             plan = launch(tmp_path)
             plan_sink.append(plan)
             return plan.command

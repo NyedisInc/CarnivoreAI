@@ -12,11 +12,11 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.host import runtime
-from src.cplugs.huddle import files, store_identity
-from src.cplugs.huddle.rules import TaskManagerError
-from src.cplugs.huddle.store import TaskManagerStore
-from src.cplugs.sdk import ports, task_folders
+from src.plugins.host import runtime
+from src.plugins.huddle import files, store_identity
+from src.plugins.huddle.rules import TaskManagerError
+from src.plugins.huddle.store import TaskManagerStore
+from src.plugins.sdk import ports, task_folders
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
 from tests.python.cplugs.huddle.test_task_manager_files import BASE, app, caps, client, folder, item, upload  # noqa: F401

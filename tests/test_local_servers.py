@@ -198,3 +198,21 @@ async def test_snapshot_returns_per_session_map(tracker):
     assert set(snap.keys()) == {"session-a", "session-b"}
     assert snap["session-a"][0].port == 5173
     assert snap["session-b"][0].port == 3000
+
+
+def test_for_manager_uses_the_managers_live_socket() -> None:
+    from types import SimpleNamespace
+
+    from src.core.local_servers import LocalServersTracker
+
+    manager = SimpleNamespace(tmux_socket_name=lambda: "cloude")
+    tracker = LocalServersTracker.for_manager(None, manager)
+    assert tracker._socket_name == "cloude"
+
+
+def test_main_builds_the_tracker_through_for_manager() -> None:
+    from pathlib import Path
+
+    text = (Path(__file__).resolve().parents[1] / "src" / "core" / "boot" / "core.py").read_text()
+    assert "LocalServersTracker.for_manager(" in text
+    assert "LocalServersTracker(loop=" not in text

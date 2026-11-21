@@ -149,6 +149,17 @@ describe('the bar indicators', () => {
         expect(bar.thirdPartyBarIndicators()[0]!.label!()).toContain('Renamed Clock');
     });
 
+    test('a plugin the host says cannot draw glance gets no watcher and no fetch (#2969)', async () => {
+        feed.rows = [row({ unrendered_surfaces: ['glance'] }), row({ id: 'acme-other', install_key: 'key-2' })];
+        const bar = await load();
+        bar.thirdPartyBarIndicators();
+        await vi.waitFor(() => expect(feed.started).toHaveLength(1));
+        expect(feed.started.map((s) => s.cplugId), 'only the plugin that can draw it is asked').toEqual(['acme-other']);
+        feed.rows = [row()];
+        await bar.syncBarIndicators();
+        expect(feed.started.map((s) => s.cplugId)).toEqual(['acme-other', 'acme-clock']);
+    });
+
     test('signed out, it asks for nothing', async () => {
         vi.resetModules();
         const { auth } = await import('../../opscenter/api/auth.svelte');
@@ -169,7 +180,7 @@ describe('jsonSize counts what the server counts', () => {
 
     test('the fixture covers ASCII, accented Latin, CJK, an astral emoji and an escaped quote, and the server still counts json.dumps', () => {
         expect(Object.keys(fixture.documents)).toEqual(expect.arrayContaining(['ascii', 'accented_latin', 'cjk', 'astral_emoji', 'escaped_quote']));
-        const server = readFileSync(resolvePath(__dirname, '../../../../src/cplugs/host/ui_doc.py'), 'utf8');
+        const server = readFileSync(resolvePath(__dirname, '../../../../src/plugins/host/ui_doc.py'), 'utf8');
         expect(server).toContain('size = len(json.dumps(document, allow_nan=False))');
         expect(JSON.stringify(fixture.documents['cjk']!).length).not.toBe(fixture.sizes['cjk']);
     });

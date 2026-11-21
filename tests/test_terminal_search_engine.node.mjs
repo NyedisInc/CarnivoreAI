@@ -34,7 +34,7 @@ function clientFile(...parts) {
 }
 
 function load(opts = {}) {
-    const { withAddon = true, cssVars = {} } = opts;
+    const { withAddon = true, cssVars = {}, paint = null } = opts;
     const calls = { constructed: [], findNext: [], findPrevious: [], clear: 0 };
     const warns = [];
 
@@ -65,6 +65,20 @@ function load(opts = {}) {
         getPropertyValue: (name) => (el === container ? (cssVars[name] || '') : ''),
     });
     if (withAddon) sandbox.SearchAddon = { SearchAddon: FakeSearchAddon };
+    if (paint) {
+        sandbox.OffscreenCanvas = class {
+            getContext() {
+                let pixel = [0, 0, 0, 0];
+                const ctx = {
+                    fillStyle: '#000000',
+                    clearRect() { pixel = [0, 0, 0, 0]; },
+                    fillRect() { pixel = paint(ctx.fillStyle); },
+                    getImageData: () => ({ data: pixel }),
+                };
+                return ctx;
+            }
+        };
+    }
 
     vm.createContext(sandbox);
     vm.runInContext(clientFile('js', 'terminal-search-engine.js'), sandbox,
@@ -246,17 +260,38 @@ test('predicate survives null and undefined text', () => {
 });
 
 
-test('themed hex colours are used, and non-hex values are refused', () => {
+test('a color only a canvas can parse is painted once and read back as hex', () => {
+    const h = load({
+        cssVars: {
+            '--terminal-search-match-bg': 'oklch(0.35 0.04 40)',
+            '--terminal-search-match-border': 'not-a-color',
+        },
+        paint: (fill) => (fill === 'oklch(0.35 0.04 40)' ? [18, 52, 86, 255] : [0, 0, 0, 0]),
+    });
+    h.engine.attach(h.makeTerm());
+    h.engine.find('q', {}, 'next');
+    const d = h.calls.findNext[0][1].decorations;
+    assert.equal(d.matchBackground, '#123456', 'the painted pixel becomes #rrggbb');
+    assert.equal(d.matchBorder, '#8a5a44', 'a value the canvas cannot paint falls back');
+});
+
+test('themed colors reach xterm as hex, and an unreadable value falls back', () => {
     const h = load({ cssVars: {
         '--terminal-search-match-bg': '  #123456 ',
-        '--terminal-search-active-bg': 'rgba(215, 119, 87, 0.15)',
+        '--terminal-search-active-bg': 'rgba(215, 119, 87, 0.5)',
+        '--terminal-search-active-border': 'rgb(232 135 104)',
+        '--terminal-search-match-ruler': 'color(srgb 0.3 0.23 0.19)',
+        '--terminal-search-active-ruler': 'oklch(0.7 0.13 40)',
     } });
     h.engine.attach(h.makeTerm());
     h.engine.find('q', {}, 'next');
     const d = h.calls.findNext[0][1].decorations;
     assert.equal(d.matchBackground, '#123456', 'a hex token is honoured, trimmed');
-    assert.equal(d.activeMatchBackground, '#d77757',
-        'an rgba() token is refused and the built-in default stands');
+    assert.equal(d.activeMatchBackground, '#d7775780', 'a translucent rgba() keeps its alpha byte');
+    assert.equal(d.activeMatchBorder, '#e88768', 'a space-separated rgb() resolves');
+    assert.equal(d.matchOverviewRuler, '#4d3b30', 'a color(srgb ...) resolves');
+    assert.equal(d.activeMatchColorOverviewRuler, '#d77757',
+        'an oklch() with no canvas to paint it leaves the built-in default');
     assert.equal(d.matchBorder, '#8a5a44', 'an absent token falls back too');
     for (const k of ['matchBackground', 'matchBorder', 'matchOverviewRuler',
         'activeMatchBackground', 'activeMatchBorder',
@@ -312,9 +347,9 @@ test('the vendored add-on is present, pinned and served from our own origin', ()
     assert.ok(src.includes('SearchAddon'), 'its UMD global is SearchAddon');
     const version = clientFile('vendor', 'xterm', 'VERSION.md');
     assert.ok(version.includes('xterm-addon-search'), 'and it must be recorded');
-    assert.ok(version.includes('0.13.0'), 'with its pinned version');
+    assert.ok(version.includes('0.15.0'), 'with its pinned version');
     assert.ok(version.includes(
-        '6a6db33f16b764552377a2c5ba4327c6dab6beaf25484533afd7dbecd0b03793'),
+        '3cf52d71d9deb4ba60125087434c53e3fb35bb2249db9b13987991fd2db1c7bd'),
     'and its measured sha256');
     const fetchSh = fs.readFileSync(
         path.join(__dirname, '..', 'scripts', 'xterm-vendor', 'fetch.sh'), 'utf8');

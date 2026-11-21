@@ -15,7 +15,7 @@ from src.core.machine_stats.sample import signature
 from src.core.pack.machines import capabilities as caps_mod
 from src.core.pack.machines import restrictions as restrictions_mod
 from src.core.pack.machines import roster as roster_mod
-from src.core.pack.machines import settings_doc, settings_sign
+from src.core.pack.machines import roster_doc, settings_doc, settings_sign
 from src.core.pack.machines.config_state import ConfigState
 from src.core.pack.machines.settings_custody import SettingsCustody
 from src.core.pack.machines.roster import Entry, PeerInfo, Roster
@@ -28,6 +28,7 @@ logger = structlog.get_logger()
 EXCHANGE_PATH = "/federation/pack/exchange"
 RESERVE_PATH = "/federation/pack/reserve"
 TIGHTEN_PATH = "/federation/pack/restrictions/tighten"
+RESCAN_PATH, LABELS_PATH = "/federation/pack/rescan", "/federation/pack/labels"
 KICK_DELAY_SECONDS = 2.0
 NOTIFY_EVERY_SECONDS = 5.0
 LOAD_NOTIFY_SECONDS = 30.0
@@ -77,7 +78,7 @@ class PackMachines:
         self.state, self.collector, self.roster = state, collector, roster or Roster(clock)
         self._default_master, self._connected, self._notify, self._store = default_master, connected, notify, store
         self.custody = SettingsCustody(install_id=install_id, state=state, default_master=default_master, signing=signing,
-                                       paired=paired)
+                                       paired=paired, clock=clock)
         self._clock, self._local_now = clock, local_now
         self._signatures: Dict[str, Any] = {}
         self._live_signatures: Dict[str, Any] = {}
@@ -100,6 +101,9 @@ class PackMachines:
         self.skills_settings_changed: Callable[[str, str], None] = lambda source, from_install_id: None
         self._offer_signatures: Dict[str, Any] = {}
 
+
+    def content_alpha(self) -> Optional[str]:
+        return self.custody.content_alpha()
 
     def settings(self) -> settings_doc.PackSettings:
         return self.custody.settings()
@@ -144,9 +148,12 @@ class PackMachines:
         reserve = snapshot.get("reserve") or {}
         battery = snapshot.get("battery") or {}
         agents = snapshot.get("agents") or {}
+        pressure, can = snapshot.get("pressure"), snapshot.get("can")
+        pressure, can = pressure if isinstance(pressure, dict) else {}, can if isinstance(can, dict) else {}
         stable = (reserve.get("level"), battery.get("on_battery"), state_word,
                   repr(snapshot.get("restrictions")), repr(reserve.get("config")),
-                  repr(snapshot.get("relay_accept")), repr(snapshot.get("credential_offers")), repr(snapshot.get("skills")))
+                  repr(snapshot.get("relay_accept")), repr(snapshot.get("credential_offers")), repr(snapshot.get("skills")),
+                  can.get("rev"), (pressure.get("pegged"), pressure.get("mem")))
         live = (signature(load), agents_signature(agents))
         now = self._clock()
         if self._signatures.get(install_id) != stable:
@@ -165,13 +172,19 @@ class PackMachines:
         self._stale_timers[install_id] = timer
         timer.start()
 
-    def _merge_remote(self, raw: Any, from_install_id: str = "", raw_sig: Any = None) -> bool:
+    def _merge_remote(self, raw: Any, from_install_id: str = "", raw_sig: Any = None, raw_roster: Any = None) -> bool:
         if direction.contained(from_install_id):
             return False
-        if not self.custody.merge(raw, raw_sig, from_install_id):
+        if not self.custody.merge(raw, raw_sig, from_install_id, raw_roster):
             return False
         self._notify(TOPIC, "settings", NOTIFY_EVERY_SECONDS)
         self.skills_settings_changed("remote_merge", from_install_id)
+        return True
+
+    def _merge_roster(self, raw: Any, from_install_id: str = "") -> bool:
+        if direction.contained(from_install_id) or not self.custody.merge_roster(raw, from_install_id):
+            return False
+        self._notify(TOPIC, "settings", NOTIFY_EVERY_SECONDS)
         return True
 
     def _record(self, install_id: str, label: str, snapshot: Dict[str, Any], remote_settings: Any) -> None:
@@ -209,11 +222,16 @@ class PackMachines:
         self._schedule_pull(caller_id, snapshot)
         if body.get("want_agents"):
             self._peer_want_until = self._clock() + self.LEASE_SECONDS
-        if await asyncio.to_thread(self._merge_remote, body.get("settings"), caller_id, body.get("settings_sig")):
+        if await asyncio.to_thread(self._merge_remote, body.get("settings"), caller_id, body.get("settings_sig"), body.get("roster")):
             self.kick()
+        if "roster" in body:
+            await asyncio.to_thread(self._merge_roster, body.get("roster"), caller_id)
         mine, (doc, sig) = await asyncio.to_thread(lambda: (self.own_snapshot(), self.custody.outgoing()))
         self._announce(self.install_id, mine, roster_mod.STATE_SELF)
-        return {"snapshot": mine, "settings": doc, "settings_sig": sig, "want_agents": self.viewer_live()}
+        reply = {"snapshot": mine, "settings": doc, "settings_sig": sig, "want_agents": self.viewer_live()}
+        if "roster" in body:
+            reply["roster"] = await asyncio.to_thread(self.custody.roster_wire)
+        return reply
 
     async def beat(self, peer_id: str, post: PostFn, peer_capabilities: List[str]) -> bool:
         if not caps_mod.has(peer_capabilities, caps_mod.CAP_MACHINE):
@@ -224,6 +242,8 @@ class PackMachines:
             body = {"snapshot": mine, "settings": doc, "want_agents": self.viewer_live()}
             if caps_mod.has(peer_capabilities, caps_mod.CAP_SETTINGS_SIGNED):
                 body["settings_sig"] = sig
+            if caps_mod.has(peer_capabilities, caps_mod.CAP_ROSTER):
+                body["roster"] = await asyncio.to_thread(self.custody.roster_wire)
             status, data = await post("POST", EXCHANGE_PATH, body)
             if status != 200 or not isinstance(data, dict) or not roster_mod.snapshot_ok(data.get("snapshot"), peer_id):
                 logger.info("pack_exchange_refused", peer=peer_id[:8], status=status)
@@ -233,8 +253,10 @@ class PackMachines:
                 self._peer_want_until = self._clock() + self.LEASE_SECONDS
             self._record(peer_id, label, data["snapshot"], data.get("settings"))
             self._schedule_pull(peer_id, data["snapshot"])
-            if await asyncio.to_thread(self._merge_remote, data.get("settings"), peer_id, data.get("settings_sig")):
+            if await asyncio.to_thread(self._merge_remote, data.get("settings"), peer_id, data.get("settings_sig"), data.get("roster")):
                 self.kick()
+            if "roster" in body:
+                await asyncio.to_thread(self._merge_roster, data.get("roster"), peer_id)
             return True
         except asyncio.CancelledError:
             raise
@@ -299,10 +321,29 @@ class PackMachines:
         return wanted[0] if len(wanted) == 1 else None
 
     def edit_settings(self, changes: Dict[str, Any]) -> settings_doc.PackSettings:
+        held_alpha = self.custody.settings().master_install_id
         doc = self.custody.mint(changes, strict=True)
+        if held_alpha == self.install_id and doc.master_install_id != self.install_id:
+            self.custody.hand_over_roster(doc)
         self._notify(TOPIC, "settings", NOTIFY_EVERY_SECONDS)
         self.skills_settings_changed("local_edit", "")
         return doc
+
+    def refresh_roster(self, inputs: List[roster_doc.RosterInput], *, order: Optional[List[str]] = None,
+                       eligible: Optional[Dict[str, bool]] = None) -> str:
+        result = self.custody.refresh_roster(inputs, order=order, eligible=eligible)
+        if result.startswith("bump:"):
+            self._notify(TOPIC, "settings", NOTIFY_EVERY_SECONDS)
+            self.skills_settings_changed("local_edit", "")
+        elif result:
+            self._notify(TOPIC, "settings", NOTIFY_EVERY_SECONDS)
+        return result
+
+    def is_laptop(self, install_id: str) -> bool:
+        entry = self.roster.entries.get(install_id)
+        snapshot = self.own_snapshot() if install_id == self.install_id else (entry.snapshot if entry is not None else None)
+        battery = snapshot.get("battery") if isinstance(snapshot, dict) else None
+        return bool(isinstance(battery, dict) and battery.get("present"))
 
     def set_reserve(self, patch: Dict[str, Any]) -> reserve_model.ReserveConfig:
         cfg = reserve_model.merged(self.state.reserve(), patch)

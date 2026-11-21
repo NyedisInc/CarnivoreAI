@@ -142,10 +142,19 @@ def test_the_ownership_decision_lives_in_ONE_place_in_session_manager():
     )
 
 
-def test_owned_tmux_sessions_is_still_alive_this_commit():
-    source = LEDGER_PATH.read_text()
-    assert "self.names: set[str] = set()" in source
-    assert 'payload["owned_tmux_sessions"] = sorted(self.names)' in source
+def test_owned_tmux_sessions_is_still_alive_this_commit(tmp_path):
+    import json
+
+    from tests.test_owned_tmux_ledger import _ledger
+
+    ledger = _ledger(tmp_path)
+    ledger.names.update({"cloude_b", "cloude_a"})
+    assert ledger.save({"id": "ses_1"}) is True
+    on_disk = json.loads(ledger.path().read_text())
+    assert on_disk["owned_tmux_sessions"] == ["cloude_a", "cloude_b"]
+    reread = _ledger(tmp_path)
+    reread.load()
+    assert reread.names == {"cloude_a", "cloude_b"}
 
 
 def test_the_adopt_path_now_persists_origin():
@@ -181,15 +190,19 @@ def test_the_adopt_path_now_persists_origin():
             assert stored["adopted_at"] is not None
 
 
-def test_the_backend_resolution_order_is_documented_in_code():
-    source = (ROOT / "src" / "core" / "tmux_listing_parse.py").read_text()
-    assert "if (name, created_at_epoch) in owned_instances:" in source
-    assert "return name in owned_names" in source
-    assert "return bool(prefix) and is_owned_session_name(name)" in source
-    assert "owned_name == name and owned_epoch is not None" in source
-    parser = ATTACHABLE_PARSER_PATH.read_text()
-    assert "created_by_cloude = resolve_ownership(" in parser
-    assert "def resolve_ownership" not in parser
+def test_the_listing_decides_ownership_only_through_resolve_ownership():
+    from src.core import tmux_listing_parse
+
+    tree = ast.parse(ATTACHABLE_PARSER_PATH.read_text())
+    callers = [
+        node.lineno
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and getattr(node.func, "id", getattr(node.func, "attr", None)) == tmux_listing_parse.resolve_ownership.__name__
+    ]
+    assert callers, "the attachable listing no longer calls resolve_ownership; ownership is decided somewhere else"
+    defs = [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == "resolve_ownership"]
+    assert not defs, "the listing fold grew its own copy of resolve_ownership"
 
 
 def test_no_em_or_en_dashes_in_the_files_this_step_authored():

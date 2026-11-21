@@ -19,10 +19,10 @@ from src.core import ui_preferences
 from src.core.notifications import contracts, engine as engine_mod, routing_view, types as notify_types
 from src.core.notifications.sources import open_checks, toast as toast_source
 from src.core.swarm import alerts, reports, routing, stream, thread_port, views, watch
-from src.cplugs.huddle import swarm_port
+from src.plugins.huddle import swarm_port
 from src.core.work.storage import WorkStorage
-from src.cplugs.sdk import chat_category
-from src.cplugs.sdk.chat_category import CATEGORIES, card_ref, derive, is_shown
+from src.plugins.sdk import chat_category
+from src.plugins.sdk.chat_category import CATEGORIES, card_ref, derive, is_shown
 from tests.python.notifications.engine_fakes import LATE, NOON, QUIET_NIGHT, Clock, FakeSender, FakeView, FakeWriter
 from tests.python.notifications.engine_fakes import dest as fake_dest
 from tests.python.swarm.test_swarm_routing_chain import (  # noqa: F401
@@ -30,6 +30,7 @@ from tests.python.swarm.test_swarm_routing_chain import (  # noqa: F401
 )
 
 THREAD = "agent:4"
+AGENT = {"id": 4, "thread_key": THREAD, "rank": "agent", "display_name": "Tester"}
 
 
 @pytest.fixture()
@@ -181,7 +182,7 @@ def route(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(stream, "EXTRA_SOURCES", [])
 
     async def agent_row(agent_id: int) -> Dict[str, Any]:
-        return {"id": agent_id, "thread_key": THREAD}
+        return {**AGENT, "id": agent_id}
 
     monkeypatch.setattr(views, "get_agent_row", agent_row)
     app = FastAPI()
@@ -222,9 +223,9 @@ def test_stream_page_derives_a_category_for_core_entries_that_have_none(monkeypa
     thread_port.register(FakeThread([{"kind": "owner", "id": "msg:1", "at": 1.0, "text": "go", "category": "conversation"}]))
     monkeypatch.setattr(stream, "EXTRA_SOURCES", [source])
     try:
-        page = go(stream.page({"thread_key": THREAD}))
+        page = go(stream.page(AGENT))
         assert [(e["id"], e["category"]) for e in page["entries"]] == [("msg:1", "conversation"), ("ev:1", "result"), ("tr:1", "traffic")]
-        shown = go(stream.page({"thread_key": THREAD}, view="shown"))
+        shown = go(stream.page(AGENT, view="shown"))
         assert [e["id"] for e in shown["entries"]] == ["msg:1", "ev:1"]
     finally:
         thread_port.register(None)

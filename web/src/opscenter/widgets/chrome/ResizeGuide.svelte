@@ -42,7 +42,7 @@
     .oc-resize-guide {
       position: absolute;
       inset: 0;
-      z-index: 50;
+      z-index: var(--oc-z-shell-popover);
       display: grid;
       place-items: center;
       pointer-events: none;

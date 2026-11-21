@@ -125,14 +125,14 @@
         height: 16px;
         padding: 2px;
         border: 1px solid var(--p-border);
-        border-radius: 1px;
+        border-radius: var(--oc-radius-xs);
         background: var(--p-page);
     }
 
     .tp__sw i {
         display: block;
         height: 2px;
-        border-radius: 1px;
+        border-radius: var(--oc-radius-xs);
     }
   }
 </style>

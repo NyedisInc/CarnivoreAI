@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 import structlog
 
 from src.core import config_writer
-from src.cplugs.host import registry_store
+from src.plugins.host import registry_store
 
 logger = structlog.get_logger()
 

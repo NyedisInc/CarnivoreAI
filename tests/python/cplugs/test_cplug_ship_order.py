@@ -9,11 +9,11 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs import registry
-from src.cplugs.host import routes as host_routes, runtime
+from src.plugins import registry
+from src.plugins.host import routes as host_routes, runtime
 
 ROOT = Path(__file__).resolve().parents[3]
-ORDER_FILE = ROOT / "src/cplugs/order.json"
+ORDER_FILE = ROOT / "src/plugins/order.json"
 
 
 @pytest.fixture
@@ -32,6 +32,6 @@ def test_the_listing_carries_no_unread_order_copy(client: TestClient) -> None:
 
 def test_the_registry_sorts_by_the_file_and_has_no_literal_copy() -> None:
     names = json.loads(ORDER_FILE.read_text())["order"]
-    present = [n for n in names if (ROOT / "src/cplugs" / n / "cplug.json").is_file()]
+    present = [n for n in names if (ROOT / "src/plugins" / n / "cplug.json").is_file()]
     assert registry.plugin_folders()[: len(present)] == present
-    assert "huddle\", \"unread\"" not in (ROOT / "src/cplugs/registry.py").read_text()
+    assert "huddle\", \"unread\"" not in (ROOT / "src/plugins/registry.py").read_text()

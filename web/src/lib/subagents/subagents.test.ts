@@ -16,7 +16,7 @@ vi.mock('../../opscenter/api/auth.svelte', () => ({
 
 import SubagentBadge from './SubagentBadge.svelte';
 import { closeSubagentList, openSubagentList, SUBAGENT_LIST_ID } from './popup';
-import { emptyMessage, measuredRows, measuredRunningTotal, orderRows, runningCount, runningTotal, type SessionSubagents, type SubagentRow } from './subagents';
+import { emptyMessage, measuredRows, measuredRunningTotal, orderRows, runningCount, runningTotal, stalledText, type SessionSubagents, type SubagentRow } from './subagents';
 import { setLocale } from '../i18n/index.svelte';
 
 setLocale('en');
@@ -193,4 +193,14 @@ test('measuredRows is null for an unchecked answer, so the popup never says no a
     const row = { id: 'a1', status: 'unknown' } as SubagentRow;
     expect(measuredRows({ state: 'unchecked', subagents: [row] } as SessionSubagents)).toBeNull();
     expect(measuredRows({ state: 'ok', subagents: [row] } as SessionSubagents)).toEqual([row]);
+});
+
+test('a stalled running agent reads "stalled Nm" and nothing else does (issue #2953)', () => {
+  const base = { id: 'a1', last_activity_at: null } as SubagentRow;
+  const now = Date.parse('2026-11-11T12:00:00Z');
+  expect(stalledText({ ...base, status: 'running', stalled_seconds: 360 }, now)).toBe('stalled 6m');
+  expect(stalledText({ ...base, status: 'running', stalled_seconds: 360, last_activity_at: '2026-11-11T11:50:00Z' }, now)).toBe('stalled 10m');
+  expect(stalledText({ ...base, status: 'running', stalled_seconds: null }, now)).toBeNull();
+  expect(stalledText({ ...base, status: 'running' }, now)).toBeNull();
+  expect(stalledText({ ...base, status: 'done', stalled_seconds: 900 }, now)).toBeNull();
 });

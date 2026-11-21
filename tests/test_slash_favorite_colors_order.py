@@ -243,3 +243,12 @@ def test_the_request_model_accepts_exactly_the_core_swatch_set():
     bound = [m for m in ReorderFavoritesRequest.model_fields["commands"].metadata
              if hasattr(m, "max_length")]
     assert bound and bound[0].max_length == slash_favorites.MAX_FAVORITES
+
+
+def test_a_star_decides_from_the_fresh_file_not_an_earlier_read(client, config_path, monkeypatch):
+    _seed(config_path, common_slash_commands=["/clear", "/diff"])
+    stale = (["/clear"], True)
+    monkeypatch.setattr(slash_favorites, "read_raw", lambda path: stale, raising=False)
+    resp = client.post(FAVORITE_URL, json={"command": "/status", "favorite": True})
+    assert resp.status_code == 200
+    assert _disk(config_path)["common_slash_commands"] == ["/clear", "/diff", "/status"]

@@ -104,6 +104,8 @@ def test_a_fallback_host_name_that_fails_validation_is_left_out(monkeypatch):
     def fake_run(argv):
         return "" if "scutil" in argv[0] else "\tinet 10.0.0.5 netmask 0xff"
     monkeypatch.setattr(link_addresses, "_run", fake_run)
+    monkeypatch.setattr(link_addresses, "_platform", lambda: "darwin")
+    monkeypatch.setattr(link_addresses, "_default_route_address", lambda: None)
     monkeypatch.setattr(socket, "gethostname", lambda: "my_mac.local")
     assert link_addresses.local_addresses() == ["10.0.0.5"]
     monkeypatch.setattr(socket, "gethostname", lambda: "air.local")

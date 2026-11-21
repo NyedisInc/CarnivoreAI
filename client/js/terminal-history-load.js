@@ -5,6 +5,8 @@
 
     var MAX_SCROLLBACK = 50000;
 
+    var PARSE_WAIT_MS = 2000;
+
     function countLines(bytes) {
         if (!bytes || !bytes.length) return 0;
         var n = 0;
@@ -119,12 +121,17 @@
         }
 
         raiseScrollback(term, captureLines);
-        var shim = shimFor(term, ctlNow, pinned, distance, sessionId, navToken);
+        var written;
+        var parsed = new Promise(function (resolve) { written = resolve; });
+        var shim = shimFor(term, ctlNow, pinned, distance, sessionId, navToken, written);
         var painted = await painter.paint(shim, b64, 'history',
             { clearScrollback: true });
         if (painted !== 'painted') {
             return result('unavailable', 0, painted);
         }
+        await Promise.race([parsed, new Promise(function (resolve) {
+            setTimeout(resolve, PARSE_WAIT_MS);
+        })]);
         rememberFrom(term, sessionId, navToken);
         return result('painted', captureLines);
     }
@@ -143,11 +150,15 @@
             : 0;
     }
 
-    function shimFor(term, ctl, pinned, distance, sessionId, navToken) {
+    function shimFor(term, ctl, pinned, distance, sessionId, navToken, written) {
         return {
             term: term,
             fitAddon: ctl ? ctl.fitAddon : null,
             _forceScrollToBottom: function () {
+                try { return restore(); } finally { if (written) written(); }
+            }
+        };
+        function restore() {
                 rememberFrom(term, sessionId, navToken);
                 if (pinned) {
                     if (ctl && typeof ctl._forceScrollToBottom === 'function') {
@@ -162,8 +173,7 @@
                     console.warn('TerminalHistory: could not restore the '
                         + 'scroll position after the history paint', err);
                 }
-            }
-        };
+        }
     }
 
     function rememberFrom(term, sessionId, navToken) {

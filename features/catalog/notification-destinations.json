@@ -10,8 +10,8 @@
   "surfaces": [
     "web/src/lib/notifications/inspector/Inspector.svelte",
     "web/src/lib/notifications/destinations/DestinationsPanel.svelte",
-    "web/src/lib/notifications/matrix/MatrixPanel.svelte",
-    "web/src/lib/notifications/matrix/LinkPanel.svelte"
+    "web/src/lib/notifications/inspector/GroupRail.svelte",
+    "web/src/lib/notifications/inspector/ComputerBlocks.svelte"
   ],
   "api_routes": [
     "GET /api/v1/notifications/types",

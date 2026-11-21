@@ -29,9 +29,9 @@
     .sbcp {
       container: swarm-list / inline-size;
       position: sticky;
-      top: 0;
+      top: var(--oc-frame-sticky-top);
       min-width: 0;
-      max-height: 100dvh;
+      max-height: calc(100dvh - var(--oc-frame-sticky-top));
       margin-left: 20px;
       overflow: auto;
       box-shadow: -1px 0 0 var(--oc-line-rule);

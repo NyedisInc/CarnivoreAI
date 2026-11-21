@@ -227,7 +227,7 @@ test('holderRefusal: only a listener of this user passes; a stranger, no listene
   assert.equal(holderRefusal([mine, { pid: 11, command: 'python3', uid: 502 }], 501).reason, 'not_yours');
   assert.equal(holderRefusal([{ pid: 11, command: 'nc', uid: 0 }], 501).reason, 'not_yours');
   assert.equal(holderRefusal([], 501).reason, 'unknown', 'a health answer with no listener of mine is foreign');
-  assert.equal(holderRefusal(null, 501).reason, 'unknown');
+  assert.equal(holderRefusal(null, 501).reason, 'unreadable', 'a check that could not run is its own reason');
   assert.equal(holderRefusal([{ pid: 12, command: 'x', uid: null }], 501).reason, 'not_yours', 'an unreadable owner is not mine');
 });
 

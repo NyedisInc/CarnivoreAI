@@ -11,8 +11,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.huddle import board_port
-from src.cplugs.reviewboard.layers import payload as layer_payload
+from src.plugins.huddle import board_port
+from src.plugins.reviewboard.layers import payload as layer_payload
 from tests.python.cplugs.reviewboard.harness import BASE, task_manager_on, task_manager_store, make_env
 from tests.python.cplugs.reviewboard.layer_fixtures import QUESTIONS, ROWS
 from tests.python.cplugs.reviewboard.test_layers_format import layer_body

@@ -47,10 +47,15 @@ async def test_2_a_rejected_join_leaves_a_running_look_alone(jobs):
     join_job.end_waiting(real, "no_relay")
 
 
-def test_3_two_packs_with_the_same_pn_read_differently():
-    a = join_job._candidate({"name": "air", "fid": "aaaaaaaa", "fid_short": "aaaaaa", "pack_name": "Home"})
-    b = join_job._candidate({"name": "evil", "fid": "bbbbbbbb", "fid_short": "bbbbbb", "pack_name": "Home"})
-    assert a["label"] != b["label"] and a["label"] == "Home aaaaaa"
+@pytest.mark.asyncio
+async def test_3_two_packs_with_the_same_pn_read_differently(jobs):
+    raw = [{"name": "air", "fid": "aaaaaaaa", "fid_short": "aaaaaa", "pack_name": "Home"},
+           {"name": "evil", "fid": "bbbbbbbb", "fid_short": "bbbbbb", "pack_name": "Home"}]
+    assert [join_job._candidate(r)["label"] for r in raw] == ["Home", "Home"]
+    look = join_job.start_look(origin="local")
+    join_job.fail_relay("found", raw, job_id=look.id)
+    labels = [c["label"] for c in look.candidates]
+    assert labels == ["Home aaaaaa", "Home bbbbbb"]
 
 
 @pytest.mark.asyncio
@@ -74,8 +79,15 @@ async def test_4_the_helper_answer_is_bounded_and_the_peer_table_and_probe_are_c
     monkeypatch.setattr(join_helper, "_relay_failed", relay_failed)
     await join_helper._serve_waiting(Out(), {"job": "j", "mode": "look"})
     cands = sent["candidates"]
-    assert len(cands) == 16 and all(len(v) <= 64 for c in cands for v in c.values()) and len(cands[0]["pack_name"]) == 32
+    assert len(cands) == 16 and all(v is None or len(v) <= 64 for c in cands for v in c.values()) and len(cands[0]["pack_name"]) == 32
     assert len(json.dumps({"op": "relay_fail", "job": "j", "code": "found", "candidates": cands})) < 4096
+
+    for pack in packs:
+        pack.update(computer_label="c" * 500, members=[{"label": "m" * 500, "fid_short": "i" * 500, "seen": True}] * 9)
+    await join_helper._serve_waiting(Out(), {"job": "j", "mode": "look"})
+    cands = sent["candidates"]
+    assert 12 <= len(cands) <= 16 and len(json.dumps({"op": "relay_fail", "job": "j", "code": "found", "candidates": cands})) < 4096
+    assert all(len(c["members"]) <= 6 for c in cands)
 
     d = discovery.Discovery(config_path="/nonexistent/config.json")
     for i in range(discovery.MAX_PEERS + 20):
@@ -103,7 +115,7 @@ async def test_4_the_helper_answer_is_bounded_and_the_peer_table_and_probe_are_c
 
 def test_5_the_label_drops_bidi_and_zero_width_characters():
     got = join_job._candidate({"name": "a‮b​c", "fid": "x", "fid_short": "‮12", "pack_name": None})
-    assert got["label"] == "abc 12" and all(ord(ch) < 128 for ch in got["label"])
+    assert got["label"] == "abc" and got["fid_short"] == "12" and all(ord(ch) < 128 for ch in got["label"] + got["fid_short"])
 
 
 @pytest.mark.asyncio

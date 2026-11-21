@@ -13,11 +13,12 @@ from src.core import setup_state
 from src.core.computers import commit, store
 from src.core.federation import grants, peer_hosts, peer_listing, peer_sockets, shadow_rows
 from src.core.federation.peer_client import PeerRefused, PeerUnreachable
+from src.core.resource_push import topics
 
 log = structlog.get_logger(__name__)
 
 COURTESY_TIMEOUT_S = 8.0
-TOPICS = ("computers", "pack_machines", "pack_relay_offer")
+TOPICS = (topics.COMPUTERS, topics.PACK_MACHINES, topics.PACK_RELAY_OFFER)
 
 
 async def tell_peer(links: Any, iid: str) -> bool:
@@ -55,6 +56,7 @@ def _leave_local(config_path: Path, fed_dir: Path, own_iid: str, pack: commit.Pa
     for path in fed_dir.glob("link-" + own_iid[:12] + "-*"):
         path.unlink(missing_ok=True)
     pack.mint({"master_install_id": own_iid})
+    pack.clear_roster()
 
 
 async def forget_computer(iid: str, *, notify_peer: bool, open_db: Callable[[], sqlite3.Connection], links: Any,

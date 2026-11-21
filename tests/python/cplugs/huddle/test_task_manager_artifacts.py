@@ -14,11 +14,11 @@ from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
 from src.config.uploads import UploadsConfig
-from src.cplugs.sdk import uploads as sdk_uploads
-from src.cplugs.host import runtime
-from src.cplugs.huddle.guide_rev import TASK_MANAGER_GUIDE_REV
-from src.cplugs.sdk import sandboxed_html, signed_links
-from src.cplugs.huddle import artifact_ticket, artifacts, routes as huddle_routes, routes_artifacts, service  # noqa: F401
+from src.plugins.sdk import uploads as sdk_uploads
+from src.plugins.host import runtime
+from src.plugins.huddle.guide_rev import TASK_MANAGER_GUIDE_REV
+from src.plugins.sdk import sandboxed_html, signed_links
+from src.plugins.huddle import artifact_ticket, artifacts, routes as huddle_routes, routes_artifacts, service  # noqa: F401
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
 from src.security_headers import OWN_POLICY_HEADER, stamp_security_headers

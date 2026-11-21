@@ -37,6 +37,8 @@
 
         var sendKeys = function () { };
 
+        var getPaneAlternate = function () { return null; };
+
         var settleTimer = null;
 
         function visibleRows(term) {
@@ -90,6 +92,7 @@
                 return 'unknown';
             }
             if (typeof type !== 'string' || typeof baseY !== 'number') return 'unknown';
+            if (type === 'normal' && getPaneAlternate() === false) return 'main';
             if (baseY > 0) return 'main';
 
             var rows = visibleRows(term);
@@ -158,6 +161,7 @@
             if (!rows) return true;
             // there is nothing to scroll
             if (state === 'unknown') return true;
+            if (state === 'live' && rows > 0) return true;
             if (openPending() && state !== 'transcript') return true;
             if (isTyping()) return true;
 
@@ -188,9 +192,10 @@
             return true;
         }
 
-        function init(termGetter, writer) {
+        function init(termGetter, writer, paneAlternateGetter) {
             if (typeof termGetter === 'function') getTerm = termGetter;
             if (typeof writer === 'function') sendKeys = writer;
+            if (typeof paneAlternateGetter === 'function') getPaneAlternate = paneAlternateGetter;
         }
 
         function _reset() {

@@ -17,10 +17,10 @@ from src.core.app_alerts import constants as AK
 from src.core.app_alerts import service as alerts
 from src.core.db import db_path_for
 from src.core.db_migration import ensure_db_migrated
-from src.cplugs.host import capabilities, routes as host_routes, runtime
-from src.cplugs.sdk import CapabilityMissing, context as sdk_context
-from src.cplugs.timemachine import CPLUG, checks, scheduler, service
-from src.cplugs.timemachine import constants as K
+from src.plugins.host import capabilities, routes as host_routes, runtime
+from src.plugins.sdk import CapabilityMissing, context as sdk_context
+from src.plugins.timemachine import CPLUG, checks, scheduler, service
+from src.plugins.timemachine import constants as K
 from tests.python.cplugs.owner import turn_on
 
 NOW = 2_000_000_000.0

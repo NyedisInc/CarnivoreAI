@@ -47,6 +47,14 @@ class FireRow:
     profile: str
 
 
+@dataclass(frozen=True)
+class Snapshot:
+
+    cursor: Optional[Cursor]
+    count: int
+    latest: Optional[FireRow]
+
+
 class SkillFireStore:
 
     def __init__(self, path: Path) -> None:
@@ -98,6 +106,18 @@ class SkillFireStore:
                 "SELECT size, head, off FROM skill_fire_cursors WHERE path = ?", (path,)
             ).fetchone()
         return Cursor(row[0], bytes(row[1]), row[2]) if row else None
+
+    def snapshot(self, path: str) -> Snapshot:
+        with self._session(False) as conn:
+            row = conn.execute(
+                "SELECT size, head, off FROM skill_fire_cursors WHERE path = ?", (path,)).fetchone()
+            count = conn.execute(
+                "SELECT COUNT(*) FROM skill_fires WHERE path = ?", (path,)).fetchone()[0]
+            newest = conn.execute(
+                "SELECT skill, fired_at, source, harness, profile FROM skill_fires "
+                "WHERE path = ? ORDER BY off DESC, skill LIMIT 1", (path,)).fetchone()
+        return Snapshot(Cursor(row[0], bytes(row[1]), row[2]) if row else None, count,
+                        FireRow(*newest) if newest else None)
 
     def apply(self, path: str, *, harness: str, profile: str, session_key: str,
               cursor: Cursor, fires: Sequence[Tuple[int, Fire]], reset: bool) -> None:

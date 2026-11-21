@@ -8,6 +8,7 @@
   import Field from '../../lib/base/Field.svelte';
   import Select from '../../lib/base/Select.svelte';
   import TripwireEditor from './TripwireEditor.svelte';
+  import ComputersPick from './ComputersPick.svelte';
   import { VIZ_SPECS, vizOf } from './specs';
   import { metricOptions, rangeOptions, vizKindOptions } from './settings-options';
   import { declareSettingsPanel } from '../widgets/chrome/settings-panels.svelte';
@@ -40,6 +41,7 @@
     {#if range}
       <Select size="sm" label={t('analytics.range')} value={config.range.preset ?? ''} options={rangeOptions()} onchange={(event) => edit({ range: { ...config.range, preset: (event.currentTarget.value || null) as RangePreset | null, zoom: null } })} />
     {/if}
+    {#if metric}<ComputersPick {config} {edit} />{/if}
     {@render children?.()}
     <Checkbox label={t('analytics.enabled')} checked={config.enabled} onchange={(event) => edit({ enabled: event.currentTarget.checked })} />
     {#if tripwire}<TripwireEditor {config} />{/if}

@@ -6,7 +6,7 @@ import contextlib
 import signal
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Coroutine, Dict, Optional, Sequence, Set
+from typing import Any, Callable, Coroutine, Dict, Mapping, Optional, Sequence, Set, Tuple
 
 import structlog
 
@@ -93,7 +93,9 @@ class SshMasterPool:
                  max_slots: int = DEFAULT_MAX_SLOTS, idle_slot_linger: float = 60.0,
                  connect_timeout: float = 30.0, check_interval: float = 30.0,
                  stable_after: float = 30.0, delay: Callable[[int], float] = backoff_delay,
-                 on_change: Optional[Callable[[MasterStatus], None]] = None) -> None:
+                 on_change: Optional[Callable[[MasterStatus], None]] = None,
+                 pre_options: Sequence[Tuple[str, str]] = (),
+                 child_env: Optional[Mapping[str, str]] = None) -> None:
         if channel_budget < 1 or max_slots < 1:
             raise SshTransportError("a pool needs a channel budget and a slot count of at least 1")
         self.host_key = host_key
@@ -102,12 +104,14 @@ class SshMasterPool:
         self._control_dir = control_dir or default_control_dir()
         self._instance_tag = instance_tag or default_instance_tag()
         self._ssh_binary = ssh_binary
+        self._pre_options = tuple(pre_options)
+        self._child_env = None if child_env is None else dict(child_env)
         self._budget = channel_budget
         self._max_slots = max_slots
         self._linger = idle_slot_linger
         self._master_options = dict(ssh_binary=ssh_binary, connect_timeout=connect_timeout,
                                     check_interval=check_interval, stable_after=stable_after,
-                                    delay=delay)
+                                    delay=delay, pre_options=self._pre_options, child_env=self._child_env)
         self._lock = asyncio.Lock()
         self._channels: Set[RemoteChannel] = set()
         self._tasks: Set[asyncio.Task[None]] = set()
@@ -154,8 +158,9 @@ class SshMasterPool:
         slot = await self._acquire()
         try:
             proc = await asyncio.create_subprocess_exec(
-                *mux_argv(self._dest, slot.master.control_path, command, ssh_binary=self._ssh_binary),
-                stdin=stdin, stdout=stdout, stderr=stderr, start_new_session=True)
+                *mux_argv(self._dest, slot.master.control_path, command, ssh_binary=self._ssh_binary,
+                         pre_options=self._pre_options),
+                stdin=stdin, stdout=stdout, stderr=stderr, start_new_session=True, env=self._child_env)
         except OSError as exc:
             self._release(slot)
             raise SshTransportError(f"ssh could not be started ({type(exc).__name__}: {exc})") from exc
@@ -176,9 +181,10 @@ class SshMasterPool:
         slot = await self._acquire()
         try:
             return await ssh_exec.run_process(
-                mux_argv(self._dest, slot.master.control_path, command, ssh_binary=self._ssh_binary),
+                mux_argv(self._dest, slot.master.control_path, command, ssh_binary=self._ssh_binary,
+                         pre_options=self._pre_options),
                 stdin_data=stdin_data, timeout=timeout, max_output=max_output, verb="run",
-                host=self.host_key)
+                host=self.host_key, env=self._child_env)
         finally:
             self._release(slot)
 

@@ -7,7 +7,7 @@ from typing import Any, Dict
 
 from src.core.approvals import beast_grid_migration as migration
 from src.core.approvals.beast_grid import cell_defaults
-from src.cplugs.host import state as owner_state
+from src.plugins.host import state as owner_state
 
 
 def _state(state_dir: Path, entries: Dict[str, Any]) -> None:

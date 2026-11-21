@@ -12,8 +12,8 @@ from src.core.skills import kinds
 from src.core.skills.ledger_types import GLOBAL_PROJECT_PATH, SCOPE_GLOBAL, InstalledItem, InstallTarget
 from src.core.skills.records import SIDECAR_NAME
 from src.core.skills.updates import SCRIPTS_PRESENT, auto_update_eligible
-from src.cplugs.host.adoption import BUILTIN_SOURCE
-from src.cplugs.runtime.integrity import tree_digest
+from src.plugins.host.adoption import BUILTIN_SOURCE
+from src.plugins.runtime.integrity import tree_digest
 from tests.helpers.catalog_app import StateOnlySettings, catalog_app, ledger_rows
 from tests.test_skill_updates import BODY_SHA, row as skill_row, version as new_version
 
@@ -180,7 +180,7 @@ async def test_preview_and_install_make_the_cplug_root_before_the_planner_runs(m
 
 def test_a_symlink_or_special_file_named_like_the_sidecar_is_refused_not_skipped(tmp_path: Path):
     import os
-    from src.cplugs.runtime.integrity import IntegrityError
+    from src.plugins.runtime.integrity import IntegrityError
 
     link_root = tmp_path / "a"
     link_root.mkdir()

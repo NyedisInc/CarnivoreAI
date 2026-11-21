@@ -50,6 +50,10 @@ def put_tick(store: SettingsDocStore, column: str, type_id: str, value: bool, sc
         always_local = _check_column(doc, column)
         if view.cell(doc, column, type_id).locked:
             raise LockedCell(f"{column}/{type_id} is locked")
+        iid = doc_model.self_iid(doc)
+        if iid is not None and column in (doc_model.COL_SCREEN, doc_model.COL_DESKTOP):
+            target = "app" if column == doc_model.COL_SCREEN else "desk"
+            return doc_model.set_global(doc, doc_model.route_path(iid, target, type_id), bool(value), me)
         return write_value(doc, me, doc_model.tick_path(column, type_id), bool(value), scope, always_local)
 
     return view.cell(store.update(mutate), column, type_id)

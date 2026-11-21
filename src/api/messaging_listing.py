@@ -7,7 +7,7 @@ from src.core.hosts.ddl import LOCAL_HOST_KEY
 from src.core.hosts.identity import REMOTE_ID_PREFIX
 from src.core.messaging import store
 from src.models import SessionInfo
-from src.models.sessions import MessagingMark
+from src.models.session_marks import MessagingMark
 
 
 def mark_messaging(app_state: Any, infos: Iterable[Any]) -> None:

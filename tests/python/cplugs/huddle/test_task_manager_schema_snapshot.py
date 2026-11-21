@@ -8,7 +8,7 @@ from pathlib import Path
 
 from src.core.schema_ledger.snapshot import dump_schema
 from src.core.work.storage import LEGACY_STORAGE
-from src.cplugs.sdk import CplugStorage
+from src.plugins.sdk import CplugStorage
 
 FIXTURE = Path(__file__).resolve().parents[3] / "fixtures" / "task_manager_fresh_schema.sql"
 

@@ -161,3 +161,18 @@ class TestTheOrder:
             "aaa_new",
             "zzz_new",
         ]
+
+
+class TestProviderSplit:
+
+    def test_claude_seven_day_and_codex_primary_stay_two_windows(self):
+        total = compute_total(
+            [
+                account("c", window("seven_day", 0, label="7d")),
+                account("x", UsageWindow(kind="primary", label="7d", used_pct=11, window_seconds=604800), provider="codex"),
+            ]
+        )
+        assert [(w.provider, w.kind, w.window_seconds) for w in total.windows] == [
+            ("claude", "seven_day", None),
+            ("codex", "primary", 604800),
+        ]

@@ -11,8 +11,8 @@ import pytest
 from scripts.plugin import check, templates
 from src.core.catalog import plugin_pack
 from src.core.plugin_health.model import HealthRow
-from src.cplugs.host import install_gates, sideload
-from src.cplugs.sdk import api_contract
+from src.plugins.host import install_gates, sideload
+from src.plugins.sdk import api_contract
 
 UNSERVED = max(api_contract.SERVED_API_VERSIONS) + 1
 CPLUGS_ROOT = Path(api_contract.__file__).resolve().parents[1]

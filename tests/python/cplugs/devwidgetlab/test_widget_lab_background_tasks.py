@@ -9,8 +9,8 @@ from typing import Any
 
 import pytest
 
-from src.cplugs.devwidgetlab import matrix
-from src.cplugs.devwidgetlab.drafts import create, preview, service, store
+from src.plugins.devwidgetlab import matrix
+from src.plugins.devwidgetlab.drafts import create, preview, service, store
 
 
 def _draft(tmp_path: Path) -> tuple[Path, Path]:

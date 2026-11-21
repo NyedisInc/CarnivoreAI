@@ -10,6 +10,7 @@ function entryFor(built: AppChord, chord: string): AppChord {
     return {
         ...built,
         code: undefined,
+        physical: undefined,
         key,
         meta: mods.includes('cmd'),
         ctrl: mods.includes('ctrl'),

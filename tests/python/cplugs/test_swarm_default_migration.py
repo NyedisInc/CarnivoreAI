@@ -6,8 +6,8 @@ from dataclasses import replace
 from pathlib import Path
 
 from src.core.db_migration import ensure_db_migrated
-from src.cplugs.host import gate, runtime, state as owner_state
-from src.cplugs.host.swarm_default_migration import migrate
+from src.plugins.host import gate, runtime, state as owner_state
+from src.plugins.host.swarm_default_migration import migrate
 
 
 def _entry(state_dir: Path) -> dict:

@@ -16,7 +16,7 @@ from src.core.mcp.caller import AgentCaller
 from src.core.mcp.common import ToolError
 from src.core.session_token_usage import claude_reader
 from src.core.session_transcript_presence import CONVERSATION_PRESENT
-from src.cplugs.sdk import ports
+from src.plugins.sdk import ports
 
 NAME = "mcp__carnivore__argent_story_declare"
 PANE = AgentCaller(session_id="ses_1", tmux_name="carnivore_a", current_session_id="ses_1")

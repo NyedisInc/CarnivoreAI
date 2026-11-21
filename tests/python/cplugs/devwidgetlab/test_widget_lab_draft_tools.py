@@ -12,10 +12,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.devwidgetlab import capabilities, mcp
-from src.cplugs.devwidgetlab.drafts import create, files, service, store
-from src.cplugs.devwidgetlab.errors import DraftInvalid, DraftNotFound
-from src.cplugs.sdk import ToolError, signed_links
+from src.plugins.devwidgetlab import capabilities, mcp
+from src.plugins.devwidgetlab.drafts import create, files, service, store
+from src.plugins.devwidgetlab.errors import DraftInvalid, DraftNotFound
+from src.plugins.sdk import ToolError, signed_links
 from tests.python.cplugs.devwidgetlab.test_widget_lab_routes import BASE, host_app  # noqa: F401
 from tests.python.cplugs.owner import turn_on
 

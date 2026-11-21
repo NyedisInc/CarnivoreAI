@@ -53,7 +53,7 @@ def main(arg: Dict[str, object]) -> Dict[str, Tuple[bool, str]]:
 
     from src.api.auth import require_auth  # noqa: PLC0415
     from src.core.mcp import tools  # noqa: PLC0415
-    from src.cplugs.host import mcp as cplug_mcp, routes as host_routes, runtime, state as owner_state  # noqa: PLC0415
+    from src.plugins.host import mcp as cplug_mcp, routes as host_routes, runtime, state as owner_state  # noqa: PLC0415
     from src.config import settings  # noqa: PLC0415
 
     pid = str(arg["plugin_id"])

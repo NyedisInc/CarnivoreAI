@@ -34,7 +34,8 @@ function isCarnivoreHealth(body) {
 }
 
 function holderRefusal(holders, myUid) {
-  if (!Array.isArray(holders) || holders.length === 0) return { reason: 'unknown', holder: null };
+  if (!Array.isArray(holders)) return { reason: 'unreadable', holder: null };
+  if (holders.length === 0) return { reason: 'unknown', holder: null };
   const stranger = holders.find((h) => h.uid !== myUid);
   return stranger ? { reason: 'not_yours', holder: stranger } : null;
 }
@@ -51,7 +52,7 @@ function holderError(refusal, port) {
 function judgePort(input) {
   const holders = Array.isArray(input.holders) ? input.holders : null;
   const refusal = holderRefusal(holders, input.myUid);
-  if (refusal && refusal.reason === 'unknown') return { trusted: null, reason: 'unknown', holder: null };
+  if (refusal && refusal.reason !== 'not_yours') return { trusted: null, reason: 'unknown', holder: null };
   if (refusal) return { trusted: false, reason: 'not_yours', holder: refusal.holder };
   if (!isCarnivoreHealth(input.health)) return { trusted: false, reason: 'not_carnivore', holder: holders[0] };
   return { trusted: true, reason: 'ok', holder: holders[0] };
@@ -73,10 +74,64 @@ function run(execFile, file, args, emptyExit) {
   });
 }
 
-async function listeners(port, deps) {
-  if (!Number.isInteger(port)) return null;
+function parseNetstat(stdout, port) {
+  const text = String(stdout || '');
+  if (!/process:pid/.test(text)) return null;
+  const seen = new Map();
+  for (const line of text.split('\n')) {
+    const fields = line.trim().split(/\s+/);
+    if (fields[5] !== 'LISTEN' || !String(fields[3]).endsWith(`.${port}`)) continue;
+    const m = /LISTEN\s+\d+\s+\d+\s+\d+\s+\d+\s+(.+?):(\d+)\s+[0-9a-f]{5}\s/.exec(line);
+    const pid = m ? parseInt(m[2], 10) : NaN;
+    if (Number.isInteger(pid) && !seen.has(pid)) seen.set(pid, { pid, command: m[1] });
+  }
+  return [...seen.values()];
+}
+
+async function listenersViaNetstat(port, deps) {
+  const found = parseNetstat(await run(deps.execFile, '/usr/sbin/netstat', ['-anv', '-p', 'tcp']), port);
+  if (found === null) return null;
+  const out = [];
+  for (const { pid, command } of found) {
+    const uidText = await run(deps.execFile, '/bin/ps', ['-o', 'uid=', '-p', String(pid)], 1);
+    if (uidText === null) return null;
+    const uid = parseInt(uidText.trim(), 10);
+    if (Number.isInteger(uid)) out.push({ pid, command, uid });
+  }
+  return out;
+}
+
+/* could not be read */
+async function listenersViaLsof(port, deps) {
   const out = await run(deps.execFile, '/usr/sbin/lsof', ['-nP', `-iTCP:${port}`, '-sTCP:LISTEN', '-F', 'pcu'], 1);
   return out === null ? null : parseLsof(out);
+}
+
+async function listeners(port, deps) {
+  if (!Number.isInteger(port)) return null;
+  const viaNetstat = await listenersViaNetstat(port, deps);
+  return viaNetstat !== null ? viaNetstat : listenersViaLsof(port, deps);
+}
+
+const STRICT_ATTEMPTS = 3;
+const STRICT_RETRY_DELAY_MS = 250;
+const STRICT_WINDOW_MS = 6000;
+
+async function listenersStrict(port, deps, attempts = STRICT_ATTEMPTS) {
+  const sleep = deps.sleep || ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+  const now = deps.now || Date.now;
+  const log = deps.log || ((message) => console.log(message));
+  const began = now();
+  let tries = 0;
+  while (tries < attempts) {
+    tries += 1;
+    const found = await listeners(port, deps);
+    if (found !== null) return found;
+    if (tries >= attempts || now() - began >= STRICT_WINDOW_MS) break;
+    await sleep(STRICT_RETRY_DELAY_MS);
+  }
+  log(`[port-trust] the listener check on port ${port} could not run after ${tries} ${tries === 1 ? 'try' : 'tries'}`);
+  return null;
 }
 
 async function processIdentity(pid, deps) {
@@ -129,6 +184,7 @@ async function killHolder(port, confirmed, deps) {
 }
 
 module.exports = {
+  listenersStrict, parseNetstat, STRICT_ATTEMPTS,
   KILL_GRACE_MS, NEVER_KILL, parseLsof, isCarnivoreHealth, holderRefusal, holderError, judgePort, describeHolder, listeners, processIdentity,
   identifyHolder, killRefusal, killHolder,
 };

@@ -1,14 +1,15 @@
 import { str } from './row-field';
 import { badgeSlotPlan, bellLit, type BadgeSlotPlan } from '../session-badges';
 import { t } from '../i18n/index.svelte';
-import { hostOffline, usageLimitLabel } from '../led';
+import { hostOffline, loginExpiredLabel, usageLimitLabel } from '../led';
 import type { Membership } from '../swarm-membership/member-face';
 import { closedPart } from './row-closed';
 import { sessionMark } from '../sessions/agent-marks';
 import { iconVisible } from '../drawer/row-icon-prefs';
 import type { SidebarRow } from './legacy';
 import { colorValue, isRowIcon } from '../open-files/row-looks';
-import { rowBodyPlan, type RowBodyPlan } from './row-body';
+import { codexHelpersFlag } from './codex-helpers-flag';
+import { rowBodyPlan, type BodyFlag, type RowBodyPlan } from './row-body';
 import { contextPlan, type ContextPlan } from './row-context';
 import type { LayoutRowParts } from '../drawer/layouts-row-html';
 import type { RowHost } from './row-host';
@@ -46,6 +47,7 @@ export interface LedPlan {
     transport: string;
     hostOffline: string | null;
     usageLimit: string | null;
+    loginExpired: string | null;
 }
 
 export interface ModelPlan {
@@ -98,6 +100,7 @@ export interface SessionRowPlan {
     cozyBadge: TextChip | null;
     cozyWhen: TextChip | null;
     hostInline: TextChip | null;
+    notice?: BodyFlag | null;
     archived?: GlyphChip;
     closed?: TextChip;
     share: GlyphChip | null;
@@ -199,6 +202,7 @@ function ledPlanFor(r: SidebarRow, host: RowHost): LedPlan | null {
         transport: host.transport ? host.transport.stateFor(r.name) : 'unknown',
         hostOffline: hostOffline(r),
         usageLimit: usageLimitLabel(r),
+        loginExpired: loginExpiredLabel(r),
     };
 }
 
@@ -260,6 +264,7 @@ function sessionRowPlan(
             : null,
         cozyWhen: legacyMode === 'cozy' ? whenChip(r) : null,
         hostInline: legacyMode === 'detailed' ? null : hostChip(r),
+        notice: body?.mode === 'detailed' ? null : codexHelpersFlag(r),
         ...archivedPart(r),
         ...closedPart(r),
         share: sharePlan(r),

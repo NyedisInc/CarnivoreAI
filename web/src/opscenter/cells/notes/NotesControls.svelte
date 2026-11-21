@@ -62,7 +62,7 @@
       position: absolute;
       top: var(--oc-space-1);
       right: var(--oc-space-1);
-      z-index: 1;
+      z-index: var(--oc-z-raised);
       display: flex;
       align-items: center;
       gap: var(--oc-space-1-5);

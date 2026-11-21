@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-import glob
 import json
 import os
 import re
@@ -21,6 +20,7 @@ from src.core.attention.codex_reader import (
     CodexRecordFacts,
     CodexTranscriptFacts,
 )
+from src.core.attention import codex_lock_holders, codex_read_cache
 from src.core.attention.parent_map import descends_from
 from src.core.safe_io.readonly_db import connect_readonly
 from src.core.attention.usage_limit import KIND_OTHER, UsageLimit
@@ -65,7 +65,7 @@ def highest_versioned(matches: List[str]) -> Optional[str]:
 
 
 def latest_history_db(codex_home: str) -> Optional[str]:
-    return highest_versioned(glob.glob(os.path.join(codex_home, "thread_history_*.sqlite")))
+    return highest_versioned(codex_read_cache.glob_in_dir(codex_home, "thread_history_*.sqlite"))
 
 
 def _connect_ro(path) -> Optional[sqlite3.Connection]:
@@ -86,34 +86,10 @@ def read_codex_record(
     lock_live: bool,
     rollout_size: Optional[int] = None,
 ) -> CodexRecordFacts:
-    con = _connect_ro(db_path)
-    if con is None:
+    row = codex_read_cache.remembered_turn_row(_connect_ro, os.fspath(db_path), thread_uuid)
+    if row is None:
         return CodexRecordFacts(verdict=CODEX_RECORD_ABSENT)
-    try:
-        cur = con.execute(
-            "SELECT status FROM thread_turns WHERE thread_id = ? "
-            "ORDER BY rollout_ordinal DESC LIMIT 1",
-            (thread_uuid,),
-        )
-        row = cur.fetchone()
-        if row is None:
-            return CodexRecordFacts(verdict=CODEX_RECORD_ABSENT)
-        status = row[0]
-        next_offset = None
-        try:
-            off = con.execute(
-                "SELECT next_rollout_byte_offset FROM "
-                "thread_history_projection_state WHERE thread_id = ?",
-                (thread_uuid,),
-            ).fetchone()
-            next_offset = off[0] if off is not None else None
-        except sqlite3.Error:
-            next_offset = None
-    except sqlite3.Error as exc:
-        logger.debug("codex_record_read_failed", error=str(exc))
-        return CodexRecordFacts(verdict=CODEX_RECORD_ABSENT)
-    finally:
-        con.close()
+    status, next_offset = row
     return codex_record_facts(status, next_offset, lock_live=lock_live,
                               rollout_size=rollout_size)
 
@@ -295,6 +271,8 @@ def writer_lock_live(
     )
     if not os.path.exists(lock_path):
         return False
+    if holder_pids is None and codex_lock_holders.hinted_holder_live(lock_path):
+        return True
     pids = holder_pids if holder_pids is not None else _lsof_holders(lock_path)
     return any(_pid_is_alive(pid) for pid in pids)
 
@@ -377,16 +355,23 @@ def pick_primary_conversation(
 
 
 def latest_state_db(codex_home: str) -> Optional[str]:
-    return highest_versioned(glob.glob(os.path.join(codex_home, "state_*.sqlite")))
+    return highest_versioned(codex_read_cache.glob_in_dir(codex_home, "state_*.sqlite"))
 
 
 def _read_user_threads_at(codex_home: str, cwd: str) -> List[Dict]:
     state_db = latest_state_db(codex_home)
     if state_db is None:
         return []
+    rows = codex_read_cache.remembered_db_read(
+        state_db, ("user_threads", cwd), lambda: _query_user_threads(state_db, cwd)
+    )
+    return [dict(row) for row in rows]
+
+
+def _query_user_threads(state_db: str, cwd: str) -> Tuple[List[Dict], bool]:
     con = _connect_ro(state_db)
     if con is None:
-        return []
+        return [], False
     try:
         rows = con.execute(
             "SELECT id, thread_source, cwd, name, archived FROM threads "
@@ -394,19 +379,13 @@ def _read_user_threads_at(codex_home: str, cwd: str) -> List[Dict]:
             (cwd,),
         ).fetchall()
     except sqlite3.Error:
-        return []
+        return [], False
     finally:
         con.close()
     return [
-        {
-            "id": r[0],
-            "thread_source": r[1],
-            "cwd": r[2],
-            "name": r[3],
-            "archived": r[4],
-        }
+        {"id": r[0], "thread_source": r[1], "cwd": r[2], "name": r[3], "archived": r[4]}
         for r in rows
-    ]
+    ], True
 
 
 def resolve_primary_uuid(
@@ -437,29 +416,4 @@ def resolve_primary_uuid(
 
 
 def _owned_writer_uuids(codex_home: str, pids: Set[int]) -> Set[str]:
-    import subprocess
-
-    if not pids:
-        return set()
-    try:
-        result = subprocess.run(
-            ["lsof", "-a", "-p", ",".join(str(pid) for pid in sorted(pids)), "-Fn"],
-            capture_output=True, text=True, timeout=1.0, check=False,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return set()
-    if len(result.stdout) > 1024 * 1024:
-        return set()
-    lock_dir = os.path.join(codex_home, "thread-writer-locks") + os.sep
-    prefixes = {"n" + lock_dir, "n" + os.path.realpath(lock_dir.rstrip(os.sep)) + os.sep}
-    owned = set()
-    for line in result.stdout.splitlines():
-        if not line.endswith(".lock"):
-            continue
-        for prefix in prefixes:
-            if line.startswith(prefix):
-                uuid = line[len(prefix):-len(".lock")]
-                if uuid and os.sep not in uuid:
-                    owned.add(uuid)
-                break
-    return owned
+    return codex_lock_holders.owned_lock_uuids(codex_home, pids)

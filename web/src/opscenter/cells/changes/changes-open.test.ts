@@ -19,7 +19,7 @@ vi.mock('../../api/auth.svelte', async (importOriginal) => {
                 return { file: { id: 'c1b2c3d4e5f60718', ...body, title: 'x', opened_at: 1, seq: 1 }, reused: false };
             }
             if (p === '/files/open') return { files: [] };
-            if (p === '/sessions/list') return [{ session_row_id: 3, tmux_session: 'carnivore_a', session: { id: 'ses_1' } }];
+            if (p === '/sessions/list') return [{ session_row_id: 3, session_uuid: 'u-1', tmux_session: 'carnivore_a', session: { id: 'ses_1' } }];
             if (p === '/sessions/records') return [{ id: 3, session_uuid: 'u-1', tmux_name: 'carnivore_a' }];
             return {};
         },

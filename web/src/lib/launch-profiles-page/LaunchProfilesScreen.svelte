@@ -259,9 +259,7 @@
     {/snippet}
 
     <Page class="pledger lp-page" title={t('launch_profiles.page.title')} count={shownRows.length > 0 ? t('launch_profiles.page.count', { count: shownRows.length }) : undefined}
-        onClose={embedded ? undefined : close} closeLabel={t('launch_profiles.page.close')} actions={pageActions} {embedded}>
-        <div class="oc-page__scroll">
-            <div class="oc-page__main oc-page__main--stack">
+        onClose={embedded ? undefined : close} closeLabel={t('launch_profiles.page.close')} actions={pageActions} {embedded} frame="column" stack>
                 {#if failure}<State inline kind="error" title={t('launch_profiles.page.failed', { reason: failure })} data-lp-failure />{/if}
                 {#if notice}<State inline kind={notice.error ? 'error' : 'empty'} title={notice.text} data-lp-notice />{/if}
 
@@ -416,33 +414,31 @@
                         {/if}
                     </div>
                 </div>
-            </div>
-        </div>
     </Page>
 {/if}
 
 <style>
   @layer components {
-    .lp-split { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--pl-gutter, 16px); align-items: start; }
+    .lp-split { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--oc-region-gutter); align-items: start; }
     @container oc-pane (min-width: 820px) { .lp-split { grid-template-columns: 360px minmax(0, 1fr); } }
     .lp-split.lp-split--solo { grid-template-columns: minmax(0, 1fr); }
     .lp-detail.lp-detail--none { display: none; }
-    .lp-detail { display: flex; flex-direction: column; gap: var(--pl-gutter, 16px); min-width: 0; }
-    .lp-split :global([data-lp-row]) { --_btn-ink: var(--pl-text); --_btn-ink-hover: var(--pl-text); flex: 1 1 auto; min-width: 0; align-items: center; gap: 10px; padding-block: 4px; }
-    .lp-item__mark { display: inline-flex; flex: none; width: 24px; height: 24px; line-height: 0; color: var(--pl-muted); }
+    .lp-detail { display: flex; flex-direction: column; gap: var(--oc-region-gutter); min-width: 0; }
+    .lp-split :global([data-lp-row]) { --_btn-ink: var(--oc-text-primary); --_btn-ink-hover: var(--oc-text-primary); flex: 1 1 auto; min-width: 0; align-items: center; gap: 10px; padding-block: 4px; }
+    .lp-item__mark { display: inline-flex; flex: none; width: 24px; height: 24px; line-height: 0; color: var(--oc-text-secondary); }
     .lp-item__main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
     .lp-item__label { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 12px; font-weight: 600; }
     .lp-item__sub { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; min-width: 0; }
     .lp-item__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .lp-item__facts { flex: 1 1 14ch; min-width: 0; color: var(--pl-dim); font-family: var(--pl-mono); font-size: 11px; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lp-item__facts { flex: 1 1 14ch; min-width: 0; color: var(--oc-text-muted); font-family: var(--font-mono); font-size: 11px; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lp-templates { display: flex; flex-wrap: wrap; gap: 8px; }
     .lp-result { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
     .lp-result .oc-label { margin: 0; }
     .lp-refusal { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
     .lp-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; align-items: center; }
-    .lp-line { margin: 0; font-family: var(--pl-mono); font-size: 11px; color: var(--pl-text); overflow-wrap: anywhere; white-space: pre-wrap; }
+    .lp-line { margin: 0; font-family: var(--font-mono); font-size: 11px; color: var(--oc-text-primary); overflow-wrap: anywhere; white-space: pre-wrap; }
     .lp-preview { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
     .lp-preview .oc-label { margin: 0; }
-    .lp-code { max-height: 40vh; overflow: auto; margin: 0; padding: 8px; border: 1px solid var(--pl-line); border-radius: 2px; background: var(--pl-ground); color: var(--pl-text); font-family: var(--pl-mono); font-size: 11px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .lp-code { max-height: 40vh; overflow: auto; margin: 0; padding: 8px; border: 1px solid var(--oc-line-rule); border-radius: var(--oc-radius-control); background: var(--oc-ground-page); color: var(--oc-text-primary); font-family: var(--font-mono); font-size: 11px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
   }
 </style>

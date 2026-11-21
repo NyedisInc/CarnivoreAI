@@ -4,11 +4,13 @@ from __future__ import annotations
 import os
 import sqlite3
 import threading
-from typing import Dict, FrozenSet, List, Tuple
+from contextlib import contextmanager
+from typing import Any, Callable, Dict, FrozenSet, Iterator, List, Tuple
 
 _MAX_ENTRIES = 1024
 
 _LOCK = threading.Lock()
+_PASS = threading.local()
 _CACHE: Dict[Tuple[str, Tuple[int, int], str, str], Tuple[int, FrozenSet[str]]] = {}
 
 
@@ -44,7 +46,36 @@ def _schema_columns(
     return cols
 
 
+@contextmanager
+def schema_pass() -> Iterator[None]:
+    if getattr(_PASS, "facts", None) is not None:
+        yield
+        return
+    _PASS.facts = {}
+    try:
+        yield
+    finally:
+        _PASS.facts = None
+
+
+def pass_memo(conn: sqlite3.Connection, kind: str, key: str, read: Callable[[], Any]) -> Any:
+    facts = getattr(_PASS, "facts", None)
+    if facts is None or conn.in_transaction:
+        return read()
+    slot = (id(conn), kind, key)
+    hit = facts.get(slot)
+    if hit is not None and hit[0] is conn:
+        return hit[1]
+    value = read()
+    facts[slot] = (conn, value)
+    return value
+
+
 def table_columns(conn: sqlite3.Connection, table: str) -> FrozenSet[str]:
+    return pass_memo(conn, "columns", table, lambda: _resolve(conn, table))
+
+
+def _resolve(conn: sqlite3.Connection, table: str) -> FrozenSet[str]:
     schemas: List[Tuple[int, str, str]] = []
     for row in conn.execute("PRAGMA database_list"):
         rank = 0 if row[1] == "temp" else 1 if row[1] == "main" else 2

@@ -67,6 +67,7 @@
     let last = $state('');
     let promptValue = $state('');
     let root = $state<HTMLDivElement | undefined>();
+    let boardEl = $state<HTMLDivElement | undefined>();
     let stage = $state<{ elements: () => { stage: HTMLElement; dial: HTMLElement; splash: HTMLElement } } | null>(null);
     let area = $state<{ focusCommand: () => void; blurCommand: () => void; toBrowse: () => void; page: (dir: number) => void } | null>(null);
     let header = $state<{ logoArt: () => HTMLElement | null; hideLogo: (h: boolean) => void; isPromptFocused: () => boolean; replayLogo: () => void } | null>(null);
@@ -153,6 +154,11 @@
         else void diz?.comment();
     }
 
+    function toTop(): void {
+        if (root) root.scrollTop = 0;
+        if (boardEl) boardEl.scrollTop = 0;
+    }
+
     let rvTimers: ReturnType<typeof setTimeout>[] = [];
     let rvEls: HTMLElement[] = [];
     let dockAnim: Animation | null = null;
@@ -196,7 +202,7 @@
         h1.className = 'sr';
         h1.textContent = tr(K.title);
         hostEl.replaceChildren(inner, cap, h1);
-        if (root) root.scrollTop = 0;
+        toTop();
         const lg = Logo.draw(inner, { baud: 4800, still: o.still, fit: { max: 3, fill: true }, onDone: () => { if (!o.still) { cap.textContent = tr(K.bootCaption); dock(); } } });
 
         function dock(): void {
@@ -204,7 +210,7 @@
             const target = header?.logoArt();
             if (st.done || !stageEl || !target || !root) return;
             const sr = stageEl.getBoundingClientRect();
-            root.scrollTop = 0;
+            toTop();
             const A = lg.art.getBoundingClientRect();
             const T = target.getBoundingClientRect();
             const g = lg.grid;
@@ -274,7 +280,7 @@
             onStart: () => {
                 noCarrier = false;
                 els.stage.classList.remove('dock');
-                if (root) root.scrollTop = 0;
+                toTop();
             },
             onHangup: () => {
                 noCarrier = true;
@@ -286,7 +292,7 @@
                 data.visit();
                 showAll();
                 Keys.view('board');
-                if (root) root.scrollTop = 0;
+                toTop();
             },
         });
     }
@@ -440,9 +446,9 @@
 <svelte:window bind:innerWidth={vw} />
 
 {#if open}
-    <Page title={tr(K.title)} class="elite" data-palette={palette} bind:root>
+    <Page title={tr(K.title)} class="elite" data-palette={palette} bind:root frame="column" scroll="self">
         {#if boardUp}
-        <div class="m1c">
+        <div class="m1c" bind:this={boardEl}>
             <EliteHeader
                 bind:this={header}
                 {data}

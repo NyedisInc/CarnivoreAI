@@ -8,12 +8,12 @@ from typing import List, Tuple
 import pytest
 
 from src.core.flow_data import live, tail
-from src.cplugs.host import flow_port, frame_serving
-from src.cplugs.host.activity_reader import ActivityReader
-from src.cplugs.runtime import guards
-from src.cplugs.runtime.dispatch import HostDispatcher, HostServices, PluginContext
-from src.cplugs.runtime.owner_tokens import OwnerTokens
-from src.cplugs.sdk import transcript_events
+from src.plugins.host import flow_port, frame_serving
+from src.plugins.host.activity_reader import ActivityReader
+from src.plugins.runtime import guards
+from src.plugins.runtime.dispatch import HostDispatcher, HostServices, PluginContext
+from src.plugins.runtime.owner_tokens import OwnerTokens
+from src.plugins.sdk import transcript_events
 from tests.python.cplugs.flow import fixture as fx
 
 

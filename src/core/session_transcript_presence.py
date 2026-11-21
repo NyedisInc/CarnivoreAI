@@ -171,11 +171,6 @@ def _measure_presence(
     working_dir: Optional[str] = None,
     corpus_root: Optional[Path] = None,
 ) -> ConversationPresence:
-    from src.core.claude_transcript_correlate import (
-        default_projects_dir,
-        slugify_project_dir,
-    )
-
     if not claude_session_uuid or not _UUID_RE.match(str(claude_session_uuid)):
         return ConversationPresence(
             CONVERSATION_UNCHECKED,
@@ -185,49 +180,26 @@ def _measure_presence(
             ),
         )
 
-    root = Path(corpus_root) if corpus_root is not None else default_projects_dir()
-    filename = f"{claude_session_uuid}.jsonl"
+    from src.core.claude_config.transcript_root_search import corpus_roots, measure_in_root
 
-    if working_dir:
-        fast = root / slugify_project_dir(str(working_dir)) / filename
-        try:
-            if fast.is_file():
-                return ConversationPresence(CONVERSATION_PRESENT, path=fast)
-        except OSError as exc:
-            logger.debug(
-                "conversation_presence_fast_path_unreadable",
-                path=str(fast),
-                error=str(exc),
-            )
-
-    remembered = _remembered_path(root, filename)
-    if remembered is not None:
-        return ConversationPresence(CONVERSATION_PRESENT, path=remembered)
-
-    for _attempt in (0, 1):
-        try:
-            children, from_cache = root_children(root)
-        except OSError as exc:
-            return ConversationPresence(
-                CONVERSATION_UNCHECKED,
-                detail=(
-                    f"the transcript corpus at {root} could not be read "
-                    f"({exc.strerror or exc}), so whether this conversation "
-                    "still exists could not be determined"
-                ),
-            )
-        found, unreadable = _scan_children(children, filename, root)
-        if found is not None:
-            return ConversationPresence(CONVERSATION_PRESENT, path=found)
-        if not (unreadable and from_cache):
-            break
-        _forget_root_listing(root)
-
+    roots = corpus_roots(corpus_root)
+    unchecked: Optional[ConversationPresence] = None
+    unreadable = False
+    for root in roots:
+        found = measure_in_root(root, str(claude_session_uuid), working_dir)
+        if found.outcome == CONVERSATION_PRESENT:
+            return found
+        if found.outcome == CONVERSATION_UNCHECKED and unchecked is None:
+            unchecked = found
+        unreadable = unreadable or found.unreadable
+    if unchecked is not None:
+        return unchecked
+    where = ", ".join(str(r) for r in roots)
     return ConversationPresence(
         CONVERSATION_ABSENT,
         detail=(
             f"no transcript for claude session {claude_session_uuid} "
-            f"exists under {root}, so it cannot be resumed"
+            f"exists under {where}, so it cannot be resumed"
         ),
         unreadable=unreadable,
     )

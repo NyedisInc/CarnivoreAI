@@ -32,7 +32,7 @@ def edit_manifest(folder: Path, mutate) -> None:
 def test_each_template_passes_check_and_test(tmp_path: Path, template: str, capsys: pytest.CaptureFixture) -> None:
     folder = scaffold(tmp_path, template)
     assert run("check", str(folder)) == 0, capsys.readouterr().out
-    assert run("test", str(folder)) == 0, capsys.readouterr()
+    assert run("test", str(folder)) == 0, capsys.readouterr().out[-1500:]
     assert "plugin test: ok" in capsys.readouterr().out
 
 

@@ -27,7 +27,7 @@ vi.mock('../../../lib/listing-push/boot', async (importOriginal) => ({
 
 import StatusList from './StatusList.svelte';
 import { setLocale } from '../../../lib/i18n/index.svelte';
-import { cplugEnablement } from '../../../cplugs/host/enablement.svelte';
+import { cplugEnablement } from '../../../plugins/host/enablement.svelte';
 
 setLocale('en');
 cplugEnablement.enabled = { huddle: true };

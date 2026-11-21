@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ApiError } from '../../opscenter/api/auth.svelte';
-import { errorText as saveErrorText } from '../../cplugs/save/settings-api';
-import { refusalText as labRefusalText } from '../../cplugs/devwidgetlab/lab-api';
+import { errorText as saveErrorText } from '../../plugins/save/settings-api';
+import { refusalText as labRefusalText } from '../../plugins/devwidgetlab/lab-api';
 import { refusalText as automationsRefusalText } from '../automations/format';
 import { errorText as launchProfilesErrorText } from '../launch-profiles-page/api';
 import { refusalText as modsRefusalText } from '../mods/mods-format';

@@ -116,12 +116,12 @@ test('on/off settings are the shared square check as a bare switch: the box alon
     expect((sw!.getAttribute('aria-label') ?? '').length).toBeGreaterThan(0);
 });
 
-test('the routing matrix gets the whole pane: its tab carries no side heading column', async () => {
+test('the routing screen gets the whole pane: its tab carries no side heading column', async () => {
     const root = await open('notifications');
     root.querySelector<HTMLButtonElement>(`.oc-ptab[data-tab="${slugOf('notifications.routing')}"]`)!.click();
     await settle();
     const routing = root.querySelector('[data-group="notifications.routing"]')!;
     expect(routing).not.toBeNull();
-    expect(routing.querySelector('[data-setting-id="notification_matrix"]')).not.toBeNull();
+    expect(routing.querySelector('[data-setting-id="notification_inspector"]')).not.toBeNull();
     expect(routing.querySelector('.oc-group__side')).toBeNull();
 });

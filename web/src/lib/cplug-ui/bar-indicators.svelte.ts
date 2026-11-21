@@ -1,9 +1,9 @@
 import { auth, authFetch } from '../../opscenter/api/auth.svelte';
 import { resourcePush } from '../resource-push/boot';
-import type { BarIndicator } from '../../cplugs/sdk';
+import type { BarIndicator } from '../../plugins/sdk';
 import { t } from '../i18n/index.svelte';
 import type { CplugRow } from '../plugins-page/cplugs-adapter';
-import { glanceBadge, wantsBar, type GlanceBadge } from './glance';
+import { canDrawGlance, glanceBadge, wantsBar, type GlanceBadge } from './glance';
 import { watchSurface } from './surface.svelte';
 
 const CPLUGS_TOPIC = 'cplugs';
@@ -31,7 +31,7 @@ export async function syncBarIndicators(): Promise<void> {
     } catch {
         return;
     }
-    const live = rows.filter((r) => r.runtime === 'sidecar' && r.enabled && r.state === 'active');
+    const live = rows.filter((r) => r.runtime === 'sidecar' && r.enabled && r.state === 'active' && canDrawGlance(r.unrendered_surfaces));
     for (const id of [...watchers.keys()]) {
         if (!live.some((r) => r.id === id)) {
             watchers.get(id)?.stop();

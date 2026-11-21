@@ -48,11 +48,11 @@ vi.mock('../../../lib/listing-push/boot', async (importOriginal) => ({
 }));
 
 import Mark2 from './Cell.svelte';
-import { cplugEnablement } from '../../../cplugs/host/enablement.svelte';
-import { clearViewFilter } from '../../../cplugs/huddle/task-manager-view-filter.svelte';
-import { findItem, huddle, markRead } from '../../../cplugs/huddle/huddle.svelte';
-import { resetInspections } from '../../../cplugs/huddle/task-manager-design/inspection.svelte';
-import { BASE_FIELDS_HOST } from '../../../cplugs/huddle/task-manager-base-field';
+import { cplugEnablement } from '../../../plugins/host/enablement.svelte';
+import { clearViewFilter } from '../../../plugins/huddle/task-manager-view-filter.svelte';
+import { findItem, huddle, markRead } from '../../../plugins/huddle/huddle.svelte';
+import { resetInspections } from '../../../plugins/huddle/task-manager-design/inspection.svelte';
+import { BASE_FIELDS_HOST } from '../../../plugins/huddle/task-manager-base-field';
 
 cplugEnablement.enabled = { huddle: true };
 const apps: Array<ReturnType<typeof mount>> = [];
@@ -201,7 +201,7 @@ describe('one text box (point 3)', () => {
   });
 
   test('SOURCE: no text box in a component Mark II draws is left on the legacy class without the base action', () => {
-    const roots = ['src/cplugs/huddle', 'src/opscenter/cells/task-manager-mk2'];
+    const roots = ['src/plugins/huddle', 'src/opscenter/cells/task-manager-mk2'];
     const skip = /\/(swarm|chat|agents|style-guide|fixtures)\//;
     const files: string[] = [];
     const walk = (dir: string): void => {

@@ -35,13 +35,20 @@ afterEach(async () => {
   document.body.replaceChildren();
 });
 
-test('the railed terminal page draws one add-widget key in the rail, and it opens the list anchored to itself', () => {
+test('the closed rail draws no add-widget key (the owner, 2026-11-10: "remove the + all together")', () => {
   document.body.classList.add('session-sidebar-railed', 'ps-terminal-active', 'ps-grid-surface');
   mounted.push(mount(MiniRail, { target }));
   flushSync();
+  expect(target.querySelector('.mr'), 'the rail itself is drawn').not.toBeNull();
+  expect(target.querySelectorAll('[data-add-widget]')).toHaveLength(0);
+});
+
+test('the drawer draws one add-widget key, and it opens the list anchored to itself', () => {
+  mounted.push(mount(AddWidgetButton, { target, props: { place: 'drawer' } }));
+  flushSync();
   const keys = target.querySelectorAll<HTMLButtonElement>('[data-add-widget]');
   expect(keys).toHaveLength(1);
-  expect(keys[0]!.dataset.addWidget).toBe('rail');
+  expect(keys[0]!.dataset.addWidget).toBe('drawer');
   expect(keys[0]!.getAttribute('aria-label')).toBe('add widget');
   keys[0]!.click();
   expect(host.open).toHaveBeenCalledWith(keys[0], 'below');
@@ -54,4 +61,12 @@ test('a second press closes the list', () => {
   target.querySelector<HTMLButtonElement>('[data-add-widget]')!.click();
   expect(host.close).toHaveBeenCalledTimes(1);
   expect(host.open).not.toHaveBeenCalled();
+});
+
+test('the key wears the grid mark, not a plus, and the app tooltip names it (#2942)', () => {
+  mounted.push(mount(AddWidgetButton, { target, props: { place: 'drawer' } }));
+  flushSync();
+  const key = target.querySelector<HTMLButtonElement>('[data-add-widget]')!;
+  expect(key.getAttribute('data-tooltip')).toBe('add a widget');
+  expect(key.querySelectorAll('rect')).toHaveLength(4);
 });

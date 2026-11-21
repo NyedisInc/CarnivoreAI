@@ -17,7 +17,7 @@ os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 
 from src.core.mcp import beast_mode, pending, session_target, tools  # noqa: E402
 from src.core.mcp.caller import AgentCaller  # noqa: E402
-from src.cplugs.host import mcp as cplug_mcp  # noqa: E402
+from src.plugins.host import mcp as cplug_mcp  # noqa: E402
 from tests.python.beast_mode.grid import arm as arm_beast  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -188,8 +188,8 @@ def test_always_waits_is_declared_once():
 def test_no_tool_can_turn_beast_mode_on(world, monkeypatch):
     from src.api import beast_mode_routes
     from src.core.mcp import beast_tools
-    from src.cplugs.host import runtime
-    from src.cplugs.sdk import beast_mode as door
+    from src.plugins.host import runtime
+    from src.plugins.sdk import beast_mode as door
 
     sent: list = []
 

@@ -18,7 +18,7 @@ from src.core.argent.store import ArgentStore
 from src.core.argent.token_store import TokenStore
 from src.core.session_resume_target import CONVERSATION_RESUMED, ResumeTarget
 from src.core.session_transcript_presence import CONVERSATION_PRESENT, ConversationPresence
-from src.cplugs.sdk import ports, turn_events
+from src.plugins.sdk import ports, turn_events
 
 NOW = 2_000_000.0
 TENANT = "ten_1"

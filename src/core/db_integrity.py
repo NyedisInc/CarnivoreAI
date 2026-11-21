@@ -26,6 +26,7 @@ from src.core.db import (
 )
 from src.core.db_models import META_INSTALL_ID
 from src.core.json_artifact import atomic_write_json, read_json_object
+from src.core.product_identity import test_mode_enabled
 
 logger = structlog.get_logger()
 
@@ -70,7 +71,7 @@ def integrity_check_enabled() -> bool:
         if value in _TRUTHY:
             return True
         return value not in _FALSEY
-    return not os.environ.get(TEST_MODE_ENV)
+    return not test_mode_enabled()
 
 
 def resolve_interval_seconds() -> int:

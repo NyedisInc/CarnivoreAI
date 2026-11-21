@@ -5,8 +5,9 @@ import socket
 import time
 
 import pytest
+from uvicorn.protocols.http.h11_impl import H11Protocol
 
-from src.cplugs.reviewboard.public.listener import ListenerSpec, PublicListener, PublicListenerError, build_config
+from src.plugins.reviewboard.public.listener import ListenerSpec, PublicListener, PublicListenerError, build_config
 from tests.python.cplugs.reviewboard.public.harness import HOST, LOOPBACK, ServerThread, edge_for, exchange, request
 
 
@@ -25,7 +26,7 @@ def test_the_uvicorn_config_is_all_refusals_and_caps() -> None:
     config = build_config(edge_for(), ListenerSpec(host=LOOPBACK, port=0))
     assert config.ws == "none" and config.lifespan == "off" and config.proxy_headers is False
     assert config.server_header is False and config.access_log is False and config.h11_max_incomplete_event_size == 16 * 1024
-    assert config.limit_concurrency == 64 and config.http2 is False
+    assert config.limit_concurrency == 64 and issubclass(config.http, H11Protocol)
 
 
 def test_responses_carry_no_server_header_and_no_cookie() -> None:

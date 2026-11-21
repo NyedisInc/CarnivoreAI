@@ -1,5 +1,5 @@
 
-Object.assign(API.prototype, {
+extendPrototype(API, {
     async registerCatalogAccount(body) {
         return await this.call('/catalog/account/register', {
             method: 'POST', body,
@@ -113,4 +113,4 @@ Object.assign(API.prototype, {
     async exportCatalogAccount() {
         return await this.call('/catalog/account/export', { expectedStatuses: [403, 413, 429, 502, 503] });
     },
-});
+}, 'api-catalog-account.js');

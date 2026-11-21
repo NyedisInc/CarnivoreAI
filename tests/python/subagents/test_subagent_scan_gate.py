@@ -47,7 +47,7 @@ def _fresh():
 def scans(monkeypatch):
     calls = []
     real = reader._scan
-    monkeypatch.setattr(reader, "_scan", lambda directory: calls.append(directory) or real(directory))
+    monkeypatch.setattr(reader, "_scan", lambda directory, *rest: calls.append(directory) or real(directory, *rest))
     return calls
 
 

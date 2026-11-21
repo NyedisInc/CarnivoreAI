@@ -65,9 +65,9 @@
     }
     .sbli-pane {
       position: sticky;
-      top: 0;
+      top: var(--oc-frame-sticky-top);
       min-width: 0;
-      max-height: 100dvh;
+      max-height: calc(100dvh - var(--oc-frame-sticky-top));
       overflow: auto;
     }
     .sbli-band {

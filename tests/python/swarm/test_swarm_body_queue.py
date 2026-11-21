@@ -23,7 +23,7 @@ from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
 from src.core.swarm import body, delivery, store
 from src.core.swarm.body_create import BodyIdentity
-from src.cplugs.huddle import held, swarm_tell, sending
+from src.plugins.huddle import held, swarm_tell, sending
 
 
 @pytest.fixture()

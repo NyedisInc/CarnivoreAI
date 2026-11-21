@@ -7,10 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.host import flow_port
-from src.cplugs.runtime import guards
-from src.cplugs.runtime.dispatch import HostDispatcher, HostServices, PluginContext
-from src.cplugs.runtime.owner_tokens import OwnerTokens
+from src.plugins.host import flow_port
+from src.plugins.runtime import guards
+from src.plugins.runtime.dispatch import HostDispatcher, HostServices, PluginContext
+from src.plugins.runtime.owner_tokens import OwnerTokens
 
 SCHEMA = ("CREATE TABLE work_items (id INTEGER PRIMARY KEY, list_key TEXT, text TEXT, state TEXT, updated_at REAL, deleted INTEGER DEFAULT 0, title TEXT);")
 

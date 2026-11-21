@@ -8,13 +8,13 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.sdk import ManifestError
-from src.cplugs.sdk import permission_registry as registry
-from src.cplugs.sdk.manifest import parse_manifest
+from src.plugins.sdk import ManifestError
+from src.plugins.sdk import permission_registry as registry
+from src.plugins.sdk.manifest import parse_manifest
 from tests.helpers.catalog_text import catalog_text
 
 ROOT = Path(__file__).resolve().parents[3]
-BASE = json.loads((ROOT / "src/cplugs/unread/cplug.json").read_text())
+BASE = json.loads((ROOT / "src/plugins/unread/cplug.json").read_text())
 
 
 def _with(permissions: list, tier: str = "builtin") -> dict:
@@ -79,7 +79,7 @@ def test_unknown_names_default_deny() -> None:
 def test_default_and_platform_grants_come_from_the_registry_and_match_the_web_store() -> None:
     assert registry.DEFAULT_GRANTED == {"sessions.read", "notify"}
     assert registry.PLATFORM_GRANTED == {"work"}
-    web = (ROOT / "web/src/cplugs/host/enablement.svelte.ts").read_text(encoding="utf-8")
+    web = (ROOT / "web/src/plugins/host/enablement.svelte.ts").read_text(encoding="utf-8")
     match = re.search(r"const DEFAULT_GRANTED = new Set\(\[([^\]]*)\]\)", web)
     assert match, "the web enablement store lost its DEFAULT_GRANTED set"
     assert set(re.findall(r"'([^']+)'", match.group(1))) == set(registry.DEFAULT_GRANTED)

@@ -13,8 +13,8 @@ from src.core.mcp import bookmark_tools, tools
 from src.core.mcp.caller import AgentCaller
 from src.core.resource_push import topics
 from src.core.session_timeline import gather
-from src.cplugs.save.vault import points as vault_points, retention
-from src.cplugs.save.vault.identity import Identity
+from src.plugins.save.vault import points as vault_points, retention
+from src.plugins.save.vault.identity import Identity
 from tests.python.session_timeline.conftest import NOW, OLD
 from tests.python.time_machine import helpers as tm_helpers
 

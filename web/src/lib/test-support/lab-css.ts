@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const LAB_DIR = 'src/cplugs/devwidgetlab';
+const LAB_DIR = 'src/plugins/devwidgetlab';
 
 export function readLabCss(): string {
   const index = readFileSync(join(process.cwd(), LAB_DIR, 'lab.css'), 'utf8');

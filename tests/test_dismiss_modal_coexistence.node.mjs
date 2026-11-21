@@ -61,8 +61,16 @@ function makeSandbox() {
     };
 
     document.body.querySelectorAll = function (selector) {
-        assert.equal(selector, ':scope > .modal-overlay');
-        return document.body.children.filter((el) => el.classList.contains('modal-overlay'));
+        assert.equal(selector, '.modal-overlay');
+        const found = [];
+        const visit = (node) => {
+            for (const el of node.children) {
+                if (el.classList.contains('modal-overlay')) found.push(el);
+                visit(el);
+            }
+        };
+        visit(document.body);
+        return found;
     };
 
     const fakeWindow = env.window;

@@ -15,7 +15,7 @@ from src.core.crate_import import files_place, hooks as hk
 from src.core.crate_import.model import ImportRefused, ImportRequest, new_import_id
 from src.core.crate_import.plan import build_plan
 from src.core.project_move.plan import PaneListing
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.sdk import crate_format as cf
 from tests.python.crate_import.install import Install
 from tests.python.crate_import.test_import_plan import codes
 from tests.python.crate_import.test_import_same_path import Faults, rows_of, run, seeded, world

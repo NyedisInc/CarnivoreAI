@@ -178,6 +178,24 @@ def apply_color(config_path: Path, command: str, color: Optional[str]) -> None:
     logger.info("slash_favorite_color_set", command=key, color=color)
 
 
+def apply_toggle(config_path: Path, command: str, favorite: bool) -> List[Any]:
+    if not config_path.exists():
+        raise FileNotFoundError(f"Auth config file not found: {config_path}")
+    written: List[Any] = []
+
+    def merge(data: dict) -> dict:
+        data = dict(data)
+        entries = toggle(data.get(FAVORITES_KEY), FAVORITES_KEY in data, command, favorite)
+        written[:] = slash_command_labels.storage_form(entries)
+        data[FAVORITES_KEY] = list(written)
+        _store_colors(data, data.get(COLORS_KEY), entries)
+        return data
+
+    config_writer.commit(config_path, merge)
+    logger.info("slash_favorite_toggled", count=len(written))
+    return list(written)
+
+
 def payload(config_path: Path) -> Dict[str, Any]:
     data = _load(config_path)
     raw, declared = data.get(FAVORITES_KEY, []), FAVORITES_KEY in data

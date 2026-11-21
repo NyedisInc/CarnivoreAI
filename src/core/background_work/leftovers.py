@@ -2,14 +2,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import FrozenSet, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 from src.core.background_work.batch import OUTCOME_REFUSED, TargetOutcome
+from src.core.attention.turn_counts import KIND_MONITOR
 from src.core.background_work.listing import ListedProcess
 from src.core.session_token_usage import claude_reader
 from src.core.session_transcript_presence import CONVERSATION_PRESENT
+from src.core.subagents.parked_launches import OpenLaunch, conversation_launches
 from src.core.subagents.reader import agent_statuses
 
 STATUS_DONE: str = "done"
@@ -49,6 +51,7 @@ def finished_agent_ids(
     agent_ids: Iterable[str],
     *,
     process_started_at: Optional[datetime] = None,
+    now: Optional[datetime] = None,
 ) -> Optional[FrozenSet[str]]:
     wanted = tuple(dict.fromkeys(agent_ids))
     if not wanted:
@@ -58,7 +61,33 @@ def finished_agent_ids(
     statuses = agent_statuses(transcript_path, wanted, process_started_at=process_started_at)
     if statuses is None:
         return None
-    return frozenset(agent for agent, status in statuses.items() if status == STATUS_DONE)
+    done = frozenset(agent for agent, status in statuses.items() if status == STATUS_DONE)
+    if not done:
+        return done
+    launches = conversation_launches(transcript_path)
+    if launches is None:
+        return None
+    instant = now or datetime.now(timezone.utc)
+    return done - armed_monitor_owners(launches, done, now=instant, process_started_at=process_started_at)
+
+
+def armed_monitor_owners(
+    launches: Sequence[Tuple[OpenLaunch, bool]],
+    agent_ids: Iterable[str],
+    *,
+    now: datetime,
+    process_started_at: Optional[datetime],
+) -> FrozenSet[str]:
+    wanted = frozenset(agent_ids)
+    return frozenset(
+        launch.agent_id for launch, retired in launches
+        if not retired
+        and launch.kind == KIND_MONITOR
+        and launch.agent_id in wanted
+        and launch.deadline is not None
+        and launch.deadline > now
+        and (process_started_at is None or launch.launched_at >= process_started_at)
+    )
 
 
 def owner_finished_by_pid(
@@ -116,6 +145,6 @@ def plan_stop(
 
 
 __all__ = [
-    "REFUSE_NOT_LEFTOVER", "STATUS_DONE", "StopPlan", "finished_agent_ids",
+    "REFUSE_NOT_LEFTOVER", "STATUS_DONE", "StopPlan", "armed_monitor_owners", "finished_agent_ids",
     "leftover_count", "leftover_task_ids", "locate_conversation", "owner_finished_by_pid", "plan_stop",
 ]

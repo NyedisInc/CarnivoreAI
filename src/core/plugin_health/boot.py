@@ -9,7 +9,7 @@ import structlog
 
 from src.core.plugin_health.gather import build_report
 from src.core.plugin_health.model import HealthReport
-from src.cplugs.host.runtime import RegistryError
+from src.plugins.host.runtime import RegistryError
 
 logger = structlog.get_logger()
 

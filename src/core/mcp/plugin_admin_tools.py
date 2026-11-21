@@ -24,24 +24,24 @@ def _summary(verb: str) -> Callable[[Dict[str, Any], Any], str]:
 
 SPECS = (
     ra.RouteTool(
-        name="plugin_restart", route="src.cplugs.host.routes:restart_cplug", gate=ra.ACT,
+        name="plugin_restart", route="src.plugins.host.routes:restart_cplug", gate=ra.ACT,
         description="Restart a sidecar plugin that is already on: stop its process and start it from its code and grants as they are "
                     "now. Refused when it is off or changed since the owner approved it; never turns one on. Always waits for the owner.",
         properties=_ID, required=("id",), invoke=_by_id, summary=_summary("restart"), example={"id": "clock"},
     ),
     ra.RouteTool(
-        name="plugin_stop", route="src.cplugs.host.routes:kill_cplug", gate=ra.ACT,
+        name="plugin_stop", route="src.plugins.host.routes:kill_cplug", gate=ra.ACT,
         description="Stop a sidecar plugin's process now (SIGKILL of its process group). It stays on, with its data and grants, "
                     "until restarted. Always waits for the owner.",
         properties=_ID, required=("id",), invoke=_by_id, summary=_summary("stop"), example={"id": "clock"},
     ),
     ra.RouteTool(
-        name="plugin_capability_calls_list", route="src.cplugs.host.routes:get_activity", gate=ra.READ,
+        name="plugin_capability_calls_list", route="src.plugins.host.routes:get_activity", gate=ra.READ,
         description="List the newest capability calls one plugin made (method, outcome, time), newest first. Never a query, text or secret.",
         properties={**_ID, **_LIMIT}, required=("id",), invoke=_rows, example={"id": "clock"},
     ),
     ra.RouteTool(
-        name="plugin_requests_list", route="src.cplugs.host.net_routes:get_egress", gate=ra.READ,
+        name="plugin_requests_list", route="src.plugins.host.net_routes:get_egress", gate=ra.READ,
         description="List one plugin's recent outbound network requests and refusals: host, method, permission, status, bytes, time.",
         properties={**_ID, **_LIMIT}, required=("id",), invoke=_rows, example={"id": "clock"},
     ),

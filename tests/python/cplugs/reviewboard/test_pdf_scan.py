@@ -14,10 +14,10 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.reviewboard import attachment_pdf, pdf_actions, pdf_doc, pdf_lexer, pdf_scan, pdf_streams
-from src.cplugs.reviewboard.errors import ActiveContentFile, ScannerBusy, UnscannableFile
-from src.cplugs.reviewboard.pdf_streams import PdfUnreadable
-from src.cplugs.sdk.file_secrets import CpuDeadline, Deadline, ScanTimeout
+from src.plugins.reviewboard import attachment_pdf, pdf_actions, pdf_doc, pdf_lexer, pdf_scan, pdf_streams
+from src.plugins.reviewboard.errors import ActiveContentFile, ScannerBusy, UnscannableFile
+from src.plugins.reviewboard.pdf_streams import PdfUnreadable
+from src.plugins.sdk.file_secrets import CpuDeadline, Deadline, ScanTimeout
 from tests.python.cplugs.reviewboard.pdf_fixtures import BASE, CLEAN_CAT, HIDDEN, T, classic, objstm, stm
 from tests.python.cplugs.reviewboard.test_attachment_secrets import post
 from tests.python.cplugs.reviewboard.test_attachments import MD, PDF, board, client, env, sidecar, tree  # noqa: F401
@@ -385,7 +385,7 @@ def test_a_scan_stuck_past_its_deadline_is_refused_frees_the_slot_and_fails_the_
 def test_a_running_scan_does_not_hold_the_interpreter_at_exit():
     repo = Path(__file__).resolve().parents[4]
     script = ("import sys, time; sys.path.insert(0, %r)\n"
-              "from src.cplugs.reviewboard import attachment_pdf\n"
+              "from src.plugins.reviewboard import attachment_pdf\n"
               "attachment_pdf._WORKER.submit(lambda: time.sleep(30)); attachment_pdf._WORKER.submit(lambda: None); time.sleep(0.3)\n"
               "print(time.time(), flush=True)\n") % str(repo)
     done = subprocess.run([sys.executable, "-c", script], cwd=repo, capture_output=True, text=True, timeout=60, env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})

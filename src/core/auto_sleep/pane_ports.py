@@ -94,7 +94,7 @@ def _children(lib: ctypes.CDLL, pid: int) -> List[int]:
     return [buf[i] for i in range(max(got, 0)) if buf[i] > 0]
 
 
-def _pid_listeners(lib: ctypes.CDLL, pid: int) -> List[Listener]:
+def _pid_listeners(lib: ctypes.CDLL, pid: int, keep: Callable[[Listener], bool] = keep_listener) -> List[Listener]:
     need = lib.proc_pidinfo(pid, _PROC_PIDLISTFDS, 0, None, 0)
     if need <= 0:
         return []
@@ -109,9 +109,13 @@ def _pid_listeners(lib: ctypes.CDLL, pid: int) -> List[Listener]:
         if lib.proc_pidfdinfo(pid, fd, _PROC_PIDFDSOCKETINFO, info, len(info)) <= 0:
             continue
         listener = parse_socket_fdinfo(info.raw)
-        if listener is not None and keep_listener(listener):
+        if listener is not None and keep(listener):
             found.append(listener)
     return found
+
+
+def pid_holds_listener(pid: int) -> bool:
+    return bool(_pid_listeners(_libproc(), pid, lambda _listener: True))
 
 
 def _proc_name(lib: ctypes.CDLL, pid: int) -> Optional[str]:

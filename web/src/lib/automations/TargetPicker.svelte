@@ -13,7 +13,8 @@
     projects = [],
     part = 'all',
     hint,
-  }: { target: AutomationTarget | null; targets: Targets; projects?: ProjectChoice[]; part?: 'all' | 'kind' | 'lead' | 'rest'; hint?: Snippet } = $props();
+    automationId,
+  }: { automationId?: string; target: AutomationTarget | null; targets: Targets; projects?: ProjectChoice[]; part?: 'all' | 'kind' | 'lead' | 'rest'; hint?: Snippet } = $props();
 
   const kinds = $derived(offeredKinds(targets));
   const form = $derived(target ? TARGET_FORMS[target.kind] : undefined);
@@ -48,7 +49,7 @@
   {/if}
   {#if target && Form}
     {#if part === 'all' || (part === 'lead' && inLead) || (part === 'rest' && target.kind !== 'recipe')}
-      <Form bind:target {targets} {projects} {...formPart} />
+      <Form bind:target {targets} {projects} {automationId} {...formPart} />
     {/if}
   {:else if target && part !== 'kind' && part !== 'lead'}
     <p class="auto-form__note">{t('automations.editor.no_form')}</p>

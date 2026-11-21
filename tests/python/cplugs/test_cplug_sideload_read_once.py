@@ -7,7 +7,7 @@ from typing import Callable, List
 
 import pytest
 
-from src.cplugs.host import sideload
+from src.plugins.host import sideload
 
 HOUR = 3600
 

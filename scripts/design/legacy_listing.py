@@ -3,17 +3,28 @@ from __future__ import annotations
 import json
 import re
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
-from scripts.design import raw_controls, raw_values
+from scripts.design import first_measurement, ratchet_reading, raw_controls, raw_values
 
 REPO = Path(__file__).resolve().parents[2]
 CLIENT = REPO / "client"
 CLIENT_CSS = CLIENT / "css"
 FIXTURE = REPO / "tests" / "fixtures" / "design_legacy_known.json"
-SECTIONS = ("dialog_frames", "tablists", "css_raw_values", "ts_controls")
+CLIENT_JS = CLIENT / "js"
+SECTIONS = ("dialog_frames", "tablists", "css_raw_values", "ts_controls", "js_controls")
+JS_KINDS = ("dom-write", "button", "field")
+FIXTURE_REL = ratchet_reading.LEGACY_JSON
+_PREFIX = ratchet_reading.BASELINES[FIXTURE_REL]
 _ROLE = re.compile(r"""\brole\b["']?\s*[=,]\s*\\?["']?(dialog|alertdialog|tablist)\b""")
 _BLOCK_COMMENT = re.compile(r"/\*.*?\*/|<!--.*?-->", re.S)
+_JS_COMMENTS = (re.compile(r"/\*.*?\*/", re.S), re.compile(r"(^|[^:])//.*$", re.M))
+_JS_KIND_PATTERNS = {
+    "dom-write": re.compile(r"\b(?:createElement|createElementNS|createDocumentFragment|insertAdjacentHTML)\s*\(|\b(?:innerHTML|outerHTML)\s*\+?=(?!=)"),
+    "button": re.compile(r"""createElement\(\s*['"`]button['"`]|<button\b"""),
+    "field": re.compile(r"""createElement\(\s*['"`](?:input|select|textarea)['"`]|<(?:input|select|textarea)\b"""),
+}
 
 
 def legacy_markup_files(client: Path = CLIENT) -> list[Path]:
@@ -48,9 +59,27 @@ def scan_css(root: Path = CLIENT_CSS, base: Path = REPO) -> dict[str, dict[str, 
     return raw_values.scan(root, base)
 
 
+def count_js(text: str) -> dict[str, int]:
+    block, line = _JS_COMMENTS
+    code = line.sub(r"\1", block.sub("", text))
+    return {kind: len(pattern.findall(code)) for kind, pattern in _JS_KIND_PATTERNS.items()}
+
+
+def scan_js(root: Path = CLIENT_JS, base: Path = REPO) -> dict[str, dict[str, int]]:
+    files = sorted(p for p in root.rglob("*") if p.is_file() and p.suffix in {".js", ".mjs"})
+    if not files:
+        raise FileNotFoundError(f"no client/js scripts under {root}")
+    out: dict[str, dict[str, int]] = {}
+    for path in files:
+        counts = {k: n for k, n in count_js(path.read_text(encoding="utf-8")).items() if n}
+        if counts:
+            out[path.relative_to(base).as_posix()] = counts
+    return out
+
+
 def scan_all() -> dict[str, dict]:
     roles = scan_roles()
-    return {**roles, "css_raw_values": scan_css(), "ts_controls": raw_controls.scan_created_controls()}
+    return {**roles, "css_raw_values": scan_css(), "ts_controls": raw_controls.scan_created_controls(), "js_controls": scan_js()}
 
 
 def load_known(path: Path = FIXTURE) -> dict[str, dict]:
@@ -97,18 +126,47 @@ def lowered(found: dict[str, dict], known: dict[str, dict]) -> dict[str, dict]:
     return out
 
 
+def _row_key(section: str, rel: str, kind: str) -> str:
+    return f"{_PREFIX}:{section}:{rel}:{kind}"
+
+
+def first_measured(found: dict[str, dict], known: dict[str, dict], measured: Callable[[str], bool] = first_measurement.never_measured) -> dict[str, dict]:
+    out = {name: {rel: dict(v) if isinstance(v, dict) else v for rel, v in section.items()} for name, section in known.items()}
+    held = first_measurement.held(
+        _row_key(name, rel, kind) for name, section in known.items() for rel, v in section.items() if isinstance(v, dict) for kind in v
+    )
+    for name, rows in found.items():
+        for rel, value in rows.items():
+            if not isinstance(value, dict):
+                continue
+            for kind in (k for k, n in value.items() if n and first_measurement.is_first_measurement(_row_key(name, rel, k), held, measured)):
+                out.setdefault(name, {}).setdefault(rel, {})[kind] = value[kind]
+    return out
+
+
+def history_measured(rev: str = "HEAD") -> Callable[[str], bool]:
+    def measured(window: str) -> bool:
+        try:
+            return first_measurement.ever_held(REPO, rev, FIXTURE_REL, window, lambda text: ratchet_reading.ratchets_in_known(FIXTURE_REL, text))
+        except (first_measurement.HistoryError, ratchet_reading.GuardError) as exc:
+            print(f"NOTE  history of {FIXTURE_REL} unreadable ({exc}); {window} treated as measured", file=sys.stderr)
+            return True
+
+    return measured
+
+
 def write_known(lists: dict[str, dict], path: Path = FIXTURE) -> None:
     doc = {
         "about": "legacy listings the top-down gate does not read; may only fall (scripts/design/legacy_listing.py, site review TDC-3)",
-        "totals": {name: sum(_flat(lists[name]).values()) for name in SECTIONS},
-        "sections": {name: lists[name] for name in SECTIONS},
+        "totals": {name: sum(_flat(lists.get(name, {})).values()) for name in SECTIONS},
+        "sections": {name: lists.get(name, {}) for name in SECTIONS},
     }
     path.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def main(argv: list[str]) -> int:
     found = scan_all()
-    known = load_known(FIXTURE)
+    known = first_measured(found, load_known(FIXTURE), history_measured())
     grown, stale = compare(found, known)
     print("totals " + str({name: sum(_flat(found[name]).values()) for name in SECTIONS}))
     for line in grown:

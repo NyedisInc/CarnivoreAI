@@ -73,6 +73,27 @@ describe('app key router', () => {
     });
 });
 
+describe('text size chords on a Mac Ctrl keyboard', () => {
+    it('fire from the physical key when key is a control character or Unidentified', () => {
+        const calls: string[] = [];
+        (globalThis as { TerminalFont?: unknown }).TerminalFont = { step: (d: number) => calls.push(`step${d}`), reset: () => calls.push('reset') };
+        const stop = installAppKeys(APP_CHORDS, document);
+        const fired = (init: KeyboardEventInit): string | null => {
+            const before = calls.length;
+            press(document.body, init);
+            return calls.length > before ? calls[calls.length - 1] : null;
+        };
+        const mods = { ctrlKey: true, metaKey: true };
+        expect(fired({ ...mods, key: '\u001f', code: 'Minus' })).toBe('step-1');
+        expect(fired({ ...mods, key: 'Unidentified', code: 'Equal' })).toBe('step1');
+        expect(fired({ ...mods, shiftKey: true, key: '+', code: 'Equal' })).toBe('step1');
+        expect(fired({ ...mods, key: 'Unidentified', code: 'Digit0' })).toBe('reset');
+        expect(fired({ metaKey: true, key: 'Unidentified', code: 'Minus' })).toBeNull();
+        stop();
+        delete (globalThis as { TerminalFont?: unknown }).TerminalFont;
+    });
+});
+
 describe('focus history', () => {
     const s = (id: string) => ({ kind: 'session' as const, id, tmuxName: id });
     const live = () => true;

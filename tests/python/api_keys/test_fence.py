@@ -63,7 +63,7 @@ def test_every_fence_prefix_still_matches_a_real_route():
     root = Path(__file__).resolve().parents[3]
     for prefix, family in fence.FENCED:
         owner = re.match(r"/api/v1/cplugs/([a-z0-9_-]+)/", prefix)
-        if owner and not (root / "src" / "cplugs" / owner.group(1)).is_dir():
+        if owner and not (root / "src" / "plugins" / owner.group(1)).is_dir():
             continue
         assert any(fence._matches(p, prefix) for p in paths), (prefix, family)
 
@@ -82,7 +82,7 @@ def test_a_key_with_no_request_context_is_refused(key_store, live_key):
     assert refused.value.status_code == 403
 
 
-@pytest.mark.skipif(not (Path(__file__).resolve().parents[3] / "src" / "cplugs" / "reviewboard").is_dir(), reason="the review board plugin folder is deleted: there is no public links route to fence")
+@pytest.mark.skipif(not (Path(__file__).resolve().parents[3] / "src" / "plugins" / "reviewboard").is_dir(), reason="the review board plugin folder is deleted: there is no public links route to fence")
 def test_public_review_links_refuse_a_key_and_the_owner_is_not_fenced(client, owner_jwt, key_store, live_key):
     _, secret = live_key
     base = "/api/v1/cplugs/reviewboard/public/links"

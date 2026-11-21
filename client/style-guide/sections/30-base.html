@@ -71,11 +71,14 @@ section; the last specimen shows every shipped theme side by side.</p>
                 <tr data-sg-token="--oc-row-h-dense"><td><code>--oc-row-h-dense</code></td><td class="sg-token__value"></td><td>new: dense lists</td><td><span class="sg-base-box sg-base-box--row" style="height: var(--oc-row-h-dense)"></span></td></tr>
                 <tr data-sg-token="--oc-row-h"><td><code>--oc-row-h</code></td><td class="sg-token__value"></td><td>new name for <code>--oc-rowheight</code>: list and menu rows</td><td><span class="sg-base-box sg-base-box--row" style="height: var(--oc-row-h)"></span></td></tr>
                 <tr data-sg-token="--oc-row-h-roomy"><td><code>--oc-row-h-roomy</code></td><td class="sg-token__value"></td><td>new: roomy lists, settings rows</td><td><span class="sg-base-box sg-base-box--row" style="height: var(--oc-row-h-roomy)"></span></td></tr>
+                <tr data-sg-token="--oc-btn-pad-y"><td><code>--oc-btn-pad-y</code></td><td class="sg-token__value"></td><td>new: the top and bottom pad of the one medium button, every dialog and panel button (the restart picker footer size)</td><td><button type="button" class="modal-btn modal-btn-secondary">cancel</button></td></tr>
+                <tr data-sg-token="--oc-disabled-opacity"><td><code>--oc-disabled-opacity</code></td><td class="sg-token__value"></td><td>new: the one dim of every disabled control (base button and icon button, check, pick, segment, field, tab)</td><td><button type="button" class="oc-btn" disabled>disabled</button></td></tr>
+                <tr data-sg-token="--oc-mark"><td><code>--oc-mark</code></td><td class="sg-token__value"></td><td>new: the size of the one check mark (mark.css), the box of every checkbox and radio; its middle is half</td><td><button type="button" class="oc-check" role="checkbox" aria-checked="true"><span class="oc-check__box" aria-hidden="true"></span>on</button></td></tr>
                 <tr data-sg-token="--oc-task-pad-x"><td><code>--oc-task-pad-x</code></td><td class="sg-token__value"></td><td>new: the right room around an expanded task (<code>.oc-task</code>)</td><td><span class="sg-base-box" style="height: var(--oc-task-pad-x)"></span></td></tr>
                 <tr data-sg-token="--oc-task-pad-y"><td><code>--oc-task-pad-y</code></td><td class="sg-token__value"></td><td>new: the room above and below an expanded task</td><td><span class="sg-base-box" style="height: var(--oc-task-pad-y)"></span></td></tr>
                 <tr data-sg-token="--oc-task-gap"><td><code>--oc-task-gap</code></td><td class="sg-token__value"></td><td>new: the space between an expanded task's row and its tabs</td><td><span class="sg-base-box" style="height: var(--oc-task-gap)"></span></td></tr>
-                <tr data-sg-token="--oc-radius-control"><td><code>--oc-radius-control</code></td><td class="sg-token__value"></td><td>new: every control; a theme may pick 0 to 4px</td><td><span class="sg-base-box sg-base-box--corner" style="border-radius: var(--oc-radius-control)"></span></td></tr>
-                <tr data-sg-token="--oc-radius-panel"><td><code>--oc-radius-panel</code></td><td class="sg-token__value"></td><td>new: cards, menus, dialogs; a theme may pick 0 to 8px</td><td><span class="sg-base-box sg-base-box--corner" style="border-radius: var(--oc-radius-panel)"></span></td></tr>
+                <tr data-sg-token="--oc-radius-control"><td><code>--oc-radius-control</code></td><td class="sg-token__value"></td><td>new: every control; a theme picks it with <code>--radius-control</code>, 0 to 4px</td><td><span class="sg-base-box sg-base-box--corner" style="border-radius: var(--oc-radius-control)"></span></td></tr>
+                <tr data-sg-token="--oc-radius-panel"><td><code>--oc-radius-panel</code></td><td class="sg-token__value"></td><td>new: cards, menus, dialogs; a theme picks it with <code>--radius-panel</code>, 0 to 8px</td><td><span class="sg-base-box sg-base-box--corner" style="border-radius: var(--oc-radius-panel)"></span></td></tr>
                 <tr data-sg-token="--oc-radius-round"><td><code>--oc-radius-round</code></td><td class="sg-token__value"></td><td>new: status pills and the LED only</td><td><span class="sg-base-box sg-base-box--pill" style="border-radius: var(--oc-radius-round)"></span></td></tr>
             </tbody>
         </table>
@@ -124,13 +127,31 @@ section; the last specimen shows every shipped theme side by side.</p>
             <thead><tr><th>token</th><th>value</th><th>use</th></tr></thead>
             <tbody>
                 <tr data-sg-token="--oc-ease"><td><code>--oc-ease</code></td><td class="sg-token__value"></td><td>new: every transition, with a named property, never <code>transition: all</code></td></tr>
-                <tr data-sg-token="--oc-z-raised"><td><code>--oc-z-raised</code></td><td class="sg-token__value"></td><td>new: a sibling lifted over its neighbors</td></tr>
-                <tr data-sg-token="--oc-z-sticky"><td><code>--oc-z-sticky</code></td><td class="sg-token__value"></td><td>new: a sticky header or column</td></tr>
-                <tr data-sg-token="--oc-z-drawer"><td><code>--oc-z-drawer</code></td><td class="sg-token__value"></td><td>new: a drawer over the page</td></tr>
-                <tr data-sg-token="--oc-z-popover"><td><code>--oc-z-popover</code></td><td class="sg-token__value"></td><td>new: a menu or popover</td></tr>
-                <tr data-sg-token="--oc-z-modal"><td><code>--oc-z-modal</code></td><td class="sg-token__value"></td><td>new: a dialog and its scrim</td></tr>
-                <tr data-sg-token="--oc-z-toast"><td><code>--oc-z-toast</code></td><td class="sg-token__value"></td><td>new: a toast, above a dialog</td></tr>
-                <tr data-sg-token="--oc-z-tooltip"><td><code>--oc-z-tooltip</code></td><td class="sg-token__value"></td><td>new: the one tooltip, above everything</td></tr>
+                <tr data-sg-token="--oc-z-step"><td><code>--oc-z-step</code></td><td class="sg-token__value"></td><td>one step: a layer one above or below a rung is written <code>calc(var(--oc-z-page) + var(--oc-z-step))</code> on its rung, never a number</td></tr>
+                <tr data-sg-token="--oc-z-raised"><td><code>--oc-z-raised</code></td><td class="sg-token__value"></td><td>a sibling lifted over its neighbors</td></tr>
+                <tr data-sg-token="--oc-z-sticky"><td><code>--oc-z-sticky</code></td><td class="sg-token__value"></td><td>a sticky header or column</td></tr>
+                <tr data-sg-token="--oc-z-float"><td><code>--oc-z-float</code></td><td class="sg-token__value"></td><td>a zoomed cell, a region's empty state, a pick list over its row</td></tr>
+                <tr data-sg-token="--oc-z-region-overlay"><td><code>--oc-z-region-overlay</code></td><td class="sg-token__value"></td><td>a layer over one region's content: a prompt header, a sticky strip</td></tr>
+                <tr data-sg-token="--oc-z-page"><td><code>--oc-z-page</code></td><td class="sg-token__value"></td><td>the shell's page layer, a rail slide-out, the layout drawer</td></tr>
+                <tr data-sg-token="--oc-z-shell-menu"><td><code>--oc-z-shell-menu</code></td><td class="sg-token__value"></td><td>a cascade menu or rail layer inside the shell</td></tr>
+                <tr data-sg-token="--oc-z-shell-popover"><td><code>--oc-z-shell-popover</code></td><td class="sg-token__value"></td><td>the top bar, a widget's settings or info popover</td></tr>
+                <tr data-sg-token="--oc-z-notice"><td><code>--oc-z-notice</code></td><td class="sg-token__value"></td><td>the live region's notice</td></tr>
+                <tr data-sg-token="--oc-z-sheet"><td><code>--oc-z-sheet</code></td><td class="sg-token__value"></td><td>a side sheet or drawer over the pages</td></tr>
+                <tr data-sg-token="--oc-z-shell-top"><td><code>--oc-z-shell-top</code></td><td class="sg-token__value"></td><td>the terminal's touch layer</td></tr>
+                <tr data-sg-token="--oc-z-dock-guide"><td><code>--oc-z-dock-guide</code></td><td class="sg-token__value"></td><td>the dock compass while a drag is live</td></tr>
+                <tr data-sg-token="--oc-z-popover"><td><code>--oc-z-popover</code></td><td class="sg-token__value"></td><td>a menu or popover over the shell</td></tr>
+                <tr data-sg-token="--oc-z-scrim"><td><code>--oc-z-scrim</code></td><td class="sg-token__value"></td><td>the backdrop under a free-floating drawer</td></tr>
+                <tr data-sg-token="--oc-z-drawer"><td><code>--oc-z-drawer</code></td><td class="sg-token__value"></td><td>a free-floating drawer, panel, notice or toast</td></tr>
+                <tr data-sg-token="--oc-z-drawer-float"><td><code>--oc-z-drawer-float</code></td><td class="sg-token__value"></td><td>a bar or notice floating over those drawers</td></tr>
+                <tr data-sg-token="--oc-z-menu"><td><code>--oc-z-menu</code></td><td class="sg-token__value"></td><td>a menu or picker opened from a drawer row</td></tr>
+                <tr data-sg-token="--oc-z-picker"><td><code>--oc-z-picker</code></td><td class="sg-token__value"></td><td>a dropdown panel opened from a menu</td></tr>
+                <tr data-sg-token="--oc-z-takeover"><td><code>--oc-z-takeover</code></td><td class="sg-token__value"></td><td>a full-window surface</td></tr>
+                <tr data-sg-token="--oc-z-palette"><td><code>--oc-z-palette</code></td><td class="sg-token__value"></td><td>the command palette and its scrim</td></tr>
+                <tr data-sg-token="--oc-z-dialog"><td><code>--oc-z-dialog</code></td><td class="sg-token__value"></td><td>every dialog and its scrim, so an open drawer never covers one</td></tr>
+                <tr data-sg-token="--oc-z-over-dialog"><td><code>--oc-z-over-dialog</code></td><td class="sg-token__value"></td><td>a dialog or menu opened over a dialog</td></tr>
+                <tr data-sg-token="--oc-z-lightbox"><td><code>--oc-z-lightbox</code></td><td class="sg-token__value"></td><td>the media lightbox</td></tr>
+                <tr data-sg-token="--oc-z-tooltip"><td><code>--oc-z-tooltip</code></td><td class="sg-token__value"></td><td>the one tooltip, above everything</td></tr>
+                <tr data-sg-token="--oc-z-modal"><td><code>--oc-z-modal</code></td><td class="sg-token__value"></td><td>compatibility alias for the drawer rung (the Pack modal reads it); new code reads <code>--oc-z-drawer</code> or <code>--oc-z-dialog</code></td></tr>
             </tbody>
         </table>
         </div>
@@ -147,7 +168,7 @@ judged before the shared class lands in the next slice.</p>
     <thead><tr><th>#</th><th>component</th><th>today</th><th>status</th></tr></thead>
     <tbody>
         <tr><td>1</td><td>button</td><td><code>.oc-btn</code></td><td>exists; sizes move onto the control heights</td></tr>
-        <tr><td>2</td><td>icon button</td><td><code>.oc-ibtn</code></td><td>exists</td></tr>
+        <tr><td>2</td><td>icon button</td><td><code>.oc-ibtn</code></td><td>exists; drawn by <code>icon-button.css</code> since M19</td></tr>
         <tr><td>3</td><td>field</td><td><code>.oc-field</code></td><td>exists; label, help and invalid lines live in <code>.oc-form-field</code>, see <a href="#base-set">base components</a></td></tr>
         <tr><td>4</td><td>select</td><td><code>.oc-field</code> on a native select, <code>ChoiceDropdown.svelte</code></td><td>exists</td></tr>
         <tr><td>5</td><td>checkbox, radio, segmented, switch</td><td><code>.oc-check</code>, <code>.oc-choice</code>, <code>.oc-seg</code></td><td>exist; switch is a draft</td></tr>

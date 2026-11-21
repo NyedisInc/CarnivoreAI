@@ -8,9 +8,9 @@ from typing import Any, Dict, List, Optional
 
 import pytest
 
-from src.cplugs.host import identity, owner_switch, registry_boot, registry_files, registry_migration, registry_projection, registry_store, risk, sideload
-from src.cplugs.host import state as owner_state
-from src.cplugs.runtime.integrity import tree_digest
+from src.plugins.host import identity, owner_switch, registry_boot, registry_files, registry_migration, registry_projection, registry_store, risk, sideload
+from src.plugins.host import state as owner_state
+from src.plugins.runtime.integrity import tree_digest
 from tests.python.cplugs import registry_world as W
 
 

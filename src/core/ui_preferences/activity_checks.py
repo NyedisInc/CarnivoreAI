@@ -7,7 +7,7 @@ from src.core.automations.ui_prefs import check_read_run_ids, check_seen_at
 from src.core.ui_preferences.checks import json_size_cap
 from src.core.ui_preferences.constants import DEEPSEARCH_INDEX_SCOPES, MAX_DISABLED_PLUGINS, MAX_HOME_LAYOUT_BYTES, MAX_TERMINAL_LAYOUTS_BYTES, TERMINAL_SCREEN_READER_MODES, TOAST_MODES
 from src.core.ui_preferences.layouts import HomeLayout, TerminalLayouts
-from src.cplugs.sdk import chat_category
+from src.plugins.sdk import chat_category
 
 
 def check_toast_mode(value: Optional[str]) -> Optional[str]:

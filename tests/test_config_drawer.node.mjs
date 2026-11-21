@@ -99,8 +99,9 @@ test('the drawer takes the safe-area insets as a full-height panel', () => {
     assert.doesNotMatch(iosChrome, /\.config-editor-panel\b/, 'stale class name must not come back');
     assert.match(
         iosChrome,
-        /\.session-sidebar-panel,\s*\n\s*\.config-editor-picker-content \{[^}]*safe-area-inset-top/,
+        /\.config-editor-picker-content \{[^}]*safe-area-inset-top[^}]*safe-area-inset-bottom/,
         'the drawer is a full-height slide-over and owns both insets');
+    assert.match(iosChrome, /\.session-sidebar-panel \{[^}]*safe-area-inset-top/);
 });
 
 

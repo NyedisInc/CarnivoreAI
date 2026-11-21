@@ -1,239 +1,233 @@
 {
- "about": "raw spacing/font-size/color declarations per web/src file; may only fall (scripts/design/raw_values.py, issue #2033 guard G1)",
+ "about": "raw value declarations per web/src and src/plugins file and kind (scripts/design/raw_values.py KINDS); may only fall (scripts/design/raw_values.py, issue #2033 guard G1)",
  "files": {
+  "src/plugins/flow/views/assets/base.css": {
+   "border-width": 2,
+   "color-def": 60,
+   "duration": 2,
+   "font": 16,
+   "line-height": 2,
+   "radius": 9,
+   "spacing": 22,
+   "tracking": 2,
+   "weight": 5
+  },
+  "src/plugins/flow/views/assets/chat.css": {
+   "font": 9,
+   "radius": 6,
+   "spacing": 21,
+   "tracking": 2,
+   "z-index": 1
+  },
+  "src/plugins/flow/views/assets/gantt.css": {
+   "border-width": 4,
+   "font": 7,
+   "line-height": 1,
+   "radius": 3,
+   "spacing": 9,
+   "tracking": 1,
+   "weight": 1
+  },
+  "src/plugins/flow/views/assets/hybrid.css": {
+   "duration": 1,
+   "font": 6,
+   "line-height": 3,
+   "radius": 3,
+   "spacing": 14,
+   "tracking": 1,
+   "weight": 2,
+   "z-index": 1
+  },
+  "src/plugins/flow/views/assets/swim.css": {
+   "border-width": 1,
+   "font": 6,
+   "line-height": 3,
+   "radius": 2,
+   "spacing": 8,
+   "weight": 2,
+   "z-index": 3
+  },
+  "src/plugins/reviewboard/frame/layer.css": {
+   "border-width": 4,
+   "fallback": 3,
+   "font": 9,
+   "line-height": 1,
+   "spacing": 32,
+   "tracking": 7,
+   "weight": 1,
+   "z-index": 1
+  },
   "web/src/admin/admin.css": {
-   "spacing": 23
+   "fallback": 23,
+   "spacing": 23,
+   "tracking": 1,
+   "weight": 5
   },
-  "web/src/cplugs/crate/crate-dialog.css": {
-   "font": 2,
-   "spacing": 12
+  "web/src/browse/browse.css": {
+   "fallback": 2
   },
-  "web/src/cplugs/devwidgetlab/lab.css": {
-   "spacing": 2
+  "web/src/lib/account-switch/AutoSwitchIcon.svelte": {
+   "duration": 3
   },
-  "web/src/cplugs/flow/flow.css": {
-   "spacing": 27
-  },
-  "web/src/cplugs/huddle/CrosstalkTrail.svelte": {
-   "spacing": 4
-  },
-  "web/src/cplugs/huddle/HuddleBody.svelte": {
-   "spacing": 7
-  },
-  "web/src/cplugs/huddle/HuddleReply.svelte": {
-   "spacing": 4
-  },
-  "web/src/cplugs/huddle/HuddleReview.svelte": {
-   "spacing": 4
-  },
-  "web/src/cplugs/huddle/HuddleThread.svelte": {
-   "spacing": 3
-  },
-  "web/src/cplugs/huddle/HuddleViewSwitch.svelte": {
-   "spacing": 3
-  },
-  "web/src/cplugs/huddle/SwarmDecisionKeys.svelte": {
-   "spacing": 4
-  },
-  "web/src/cplugs/huddle/TaskManagerAnswerBox.svelte": {
-   "spacing": 2
-  },
-  "web/src/cplugs/huddle/TaskManagerArtifactCard.svelte": {
-   "spacing": 1
-  },
-  "web/src/cplugs/huddle/TaskManagerAsk.svelte": {
-   "spacing": 3
-  },
-  "web/src/cplugs/huddle/TaskManagerCommandBox.svelte": {
-   "font": 1,
-   "spacing": 1
-  },
-  "web/src/cplugs/huddle/TaskManagerEmptyGroup.svelte": {
-   "spacing": 2
-  },
-  "web/src/cplugs/huddle/TaskManagerFormAnswer.svelte": {
-   "spacing": 2
-  },
-  "web/src/cplugs/huddle/TaskManagerMarkdown.svelte": {
-   "font": 5,
-   "spacing": 8
-  },
-  "web/src/cplugs/huddle/TaskManagerMarkerFilter.svelte": {
-   "spacing": 1
-  },
-  "web/src/cplugs/huddle/TaskManagerNewGroup.svelte": {
-   "spacing": 1
-  },
-  "web/src/cplugs/huddle/TaskManagerProgress.svelte": {
-   "spacing": 1
-  },
-  "web/src/cplugs/huddle/TaskManagerProjectHead.svelte": {
-   "spacing": 5
-  },
-  "web/src/cplugs/huddle/TaskManagerRoundCard.svelte": {
-   "spacing": 1
-  },
-  "web/src/cplugs/huddle/TaskManagerRow.svelte": {
-   "spacing": 15
-  },
-  "web/src/cplugs/huddle/TaskManagerRowPeek.svelte": {
-   "spacing": 3
-  },
-  "web/src/cplugs/huddle/TaskManagerRowPosts.svelte": {
-   "spacing": 1
-  },
-  "web/src/cplugs/huddle/TaskManagerSchedule.svelte": {
-   "spacing": 3
-  },
-  "web/src/cplugs/huddle/TaskManagerSections.svelte": {
-   "spacing": 6
-  },
-  "web/src/cplugs/huddle/TaskManagerSend.svelte": {
-   "spacing": 3
-  },
-  "web/src/cplugs/huddle/TaskManagerStatusFilter.svelte": {
-   "font": 1,
-   "spacing": 2
-  },
-  "web/src/cplugs/huddle/TaskManagerStatusSections.svelte": {
-   "spacing": 5
-  },
-  "web/src/cplugs/huddle/TaskManagerSubHead.svelte": {
-   "spacing": 3
-  },
-  "web/src/cplugs/huddle/TaskManagerTitleEdit.svelte": {
-   "spacing": 4
-  },
-  "web/src/cplugs/huddle/agents/AgentChatFrame.svelte": {
-   "spacing": 2
-  },
-  "web/src/cplugs/huddle/ask/ask-form.css": {
-   "spacing": 1
-  },
-  "web/src/cplugs/huddle/chat/AuthorPath.svelte": {
-   "spacing": 4
-  },
-  "web/src/cplugs/huddle/chat/ChatAvatar.svelte": {
-   "font": 1,
-   "spacing": 1
-  },
-  "web/src/cplugs/huddle/chat/ChatBar.svelte": {
-   "spacing": 2
-  },
-  "web/src/cplugs/huddle/chat/ChatCard.svelte": {
-   "spacing": 12
-  },
-  "web/src/cplugs/huddle/chat/ChatMarkdown.svelte": {
-   "spacing": 9
-  },
-  "web/src/cplugs/huddle/chat/ChatWidget.svelte": {
-   "spacing": 16
-  },
-  "web/src/cplugs/huddle/chat/EventCard.svelte": {
-   "spacing": 2
-  },
-  "web/src/cplugs/huddle/chat/RewindView.svelte": {
-   "spacing": 8
-  },
-  "web/src/cplugs/huddle/chat/TrafficCard.svelte": {
-   "spacing": 6
-  },
-  "web/src/cplugs/huddle/swarm/SwarmLedger.svelte": {
-   "spacing": 7
-  },
-  "web/src/cplugs/huddle/swarm/SwarmOrg.svelte": {
-   "spacing": 3
-  },
-  "web/src/cplugs/huddle/swarm/SwarmPanel.svelte": {
-   "spacing": 11
-  },
-  "web/src/cplugs/huddle/swarm/SwarmSettingsForm.svelte": {
-   "spacing": 5
-  },
-  "web/src/cplugs/huddle/swarm/characters/characters.css": {
-   "spacing": 1
-  },
-  "web/src/cplugs/huddle/task-manager-bubble.css": {
-   "spacing": 7
-  },
-  "web/src/cplugs/huddle/task-manager-tail.css": {
-   "font": 1,
-   "spacing": 2
-  },
-  "web/src/cplugs/reviewboard/ClosedReviews.svelte": {
-   "spacing": 1
-  },
-  "web/src/cplugs/reviewboard/board.css": {
-   "spacing": 15
-  },
-  "web/src/cplugs/reviewboard/header.css": {
-   "spacing": 11
-  },
-  "web/src/cplugs/reviewboard/tray.css": {
-   "spacing": 16
-  },
-  "web/src/cplugs/save/RestorePoints.svelte": {
-   "spacing": 7
-  },
-  "web/src/cplugs/save/SessionTab.svelte": {
-   "spacing": 1
-  },
-  "web/src/cplugs/share/ShareModal.svelte": {
-   "font": 4,
-   "spacing": 9
+  "web/src/lib/account-switch/AutoSwitchPanel.svelte": {
+   "line-height": 2
   },
   "web/src/lib/app-alerts/AlertBadge.svelte": {
+   "fallback": 2,
    "font": 1,
+   "line-height": 1,
    "spacing": 1
   },
+  "web/src/lib/app-alerts/AlertDot.svelte": {
+   "fallback": 2
+  },
   "web/src/lib/app-alerts/AlertPanel.svelte": {
+   "fallback": 1,
    "font": 4,
-   "spacing": 16
+   "line-height": 1,
+   "spacing": 16,
+   "tracking": 2
   },
   "web/src/lib/approvals/ApprovalCard.svelte": {
+   "duration": 1,
+   "fallback": 2,
    "font": 1,
-   "spacing": 3
+   "line-height": 2,
+   "spacing": 3,
+   "tracking": 2
+  },
+  "web/src/lib/approvals/ApprovalDiff.svelte": {
+   "fallback": 1,
+   "tracking": 1
+  },
+  "web/src/lib/approvals/ApprovalHead.svelte": {
+   "fallback": 1,
+   "tracking": 2,
+   "weight": 3
   },
   "web/src/lib/approvals/AskForm.svelte": {
-   "spacing": 4
+   "duration": 1,
+   "fallback": 5,
+   "line-height": 1,
+   "spacing": 4,
+   "tracking": 1
   },
   "web/src/lib/approvals/QuestionCardFrame.svelte": {
-   "spacing": 4
+   "fallback": 6,
+   "line-height": 4,
+   "spacing": 4,
+   "tracking": 4,
+   "weight": 1
   },
   "web/src/lib/approvals/QuestionModal.svelte": {
    "spacing": 2
   },
+  "web/src/lib/auto-sleep/KeepAwakeIcon.svelte": {
+   "border-width": 1,
+   "duration": 4,
+   "fallback": 3
+  },
+  "web/src/lib/automations/auto-list.css": {
+   "border-width": 8,
+   "duration": 4,
+   "line-height": 1,
+   "z-index": 1
+  },
+  "web/src/lib/automations/drawer/drawer.css": {
+   "line-height": 1,
+   "weight": 1
+  },
+  "web/src/lib/automations/feed/feed.css": {
+   "border-width": 2,
+   "duration": 3,
+   "line-height": 1,
+   "weight": 1
+  },
+  "web/src/lib/automations/overview/overview.css": {
+   "duration": 1
+  },
+  "web/src/lib/automations/page.css": {
+   "border-width": 2,
+   "duration": 1,
+   "fallback": 1,
+   "line-height": 1
+  },
+  "web/src/lib/automations/pane/pane.css": {
+   "border-width": 5,
+   "duration": 1,
+   "weight": 1,
+   "z-index": 1
+  },
+  "web/src/lib/automations/report/report.css": {
+   "border-width": 1,
+   "duration": 2,
+   "line-height": 1,
+   "weight": 5
+  },
+  "web/src/lib/automations/review/review.css": {
+   "border-width": 1,
+   "duration": 2,
+   "line-height": 1,
+   "weight": 1
+  },
+  "web/src/lib/automations/schedule/schedule.css": {
+   "border-width": 1,
+   "line-height": 4
+  },
   "web/src/lib/background-work/FootWork.svelte": {
+   "border-width": 1,
    "spacing": 2
+  },
+  "web/src/lib/base/card.css": {
+   "border-width": 1,
+   "weight": 1
+  },
+  "web/src/lib/base/chart-frame.css": {
+   "line-height": 1,
+   "weight": 1
+  },
+  "web/src/lib/base/elements.css": {
+   "weight": 3
+  },
+  "web/src/lib/base/inline-field.css": {
+   "line-height": 1
+  },
+  "web/src/lib/base/search-field.css": {
+   "line-height": 1
+  },
+  "web/src/lib/base/stat-tile.css": {
+   "fallback": 1,
+   "weight": 3
+  },
+  "web/src/lib/base/state.css": {
+   "weight": 1
+  },
+  "web/src/lib/base/toolbar.css": {
+   "fallback": 1
   },
   "web/src/lib/blueprints/BlueprintEditorModal.svelte": {
-   "font": 1,
-   "spacing": 4
+   "border-width": 1,
+   "line-height": 1
   },
   "web/src/lib/blueprints/BlueprintsScreen.svelte": {
-   "font": 2,
-   "spacing": 6
+   "border-width": 1,
+   "fallback": 1,
+   "line-height": 1
   },
   "web/src/lib/blueprints/ExportModal.svelte": {
-   "font": 2,
-   "spacing": 3
+   "border-width": 1
   },
   "web/src/lib/blueprints/ImportModal.svelte": {
-   "font": 1,
-   "spacing": 2
+   "border-width": 1
   },
   "web/src/lib/blueprints/LaunchModal.svelte": {
-   "font": 7,
-   "spacing": 8
-  },
-  "web/src/lib/blueprints/SessionRow.svelte": {
-   "spacing": 6
-  },
-  "web/src/lib/blueprints/SkillsPicker.svelte": {
-   "font": 2,
-   "spacing": 5
+   "border-width": 2,
+   "fallback": 1,
+   "line-height": 1,
+   "weight": 1
   },
   "web/src/lib/bookmarks/BookmarkPreviewList.svelte": {
+   "line-height": 1,
    "spacing": 1
   },
   "web/src/lib/browser/BrowserScreen.svelte": {
@@ -241,299 +235,584 @@
    "spacing": 1
   },
   "web/src/lib/browser/BrowserView.svelte": {
+   "border-width": 1,
+   "fallback": 1,
    "font": 5,
    "spacing": 7
   },
+  "web/src/lib/browser/PageFrame.svelte": {
+   "fallback": 1
+  },
+  "web/src/lib/byoai/byoai.css": {
+   "duration": 2,
+   "fallback": 8,
+   "weight": 1
+  },
   "web/src/lib/byoai/model-picker.css": {
+   "border-width": 1,
    "spacing": 4
   },
   "web/src/lib/carnivore-account/AccountBody.svelte": {
+   "border-width": 1,
    "font": 3,
+   "line-height": 2,
    "spacing": 5
   },
   "web/src/lib/carnivore-account/SignInModal.svelte": {
+   "border-width": 1,
    "font": 4,
-   "spacing": 7
+   "line-height": 2,
+   "spacing": 7,
+   "tracking": 2
   },
   "web/src/lib/carnivore-account/WelcomeModal.svelte": {
+   "border-width": 1,
    "font": 1,
+   "line-height": 1,
    "spacing": 2
   },
   "web/src/lib/catalog/AccountPanel.svelte": {
+   "border-width": 3,
    "font": 5,
-   "spacing": 7
+   "line-height": 1,
+   "radius": 1,
+   "spacing": 7,
+   "tracking": 2
   },
   "web/src/lib/catalog/AddSplit.svelte": {
+   "border-width": 2,
+   "fallback": 2,
    "font": 1,
    "spacing": 3
   },
   "web/src/lib/catalog/AutoUpdateSwitch.svelte": {
+   "border-width": 1,
    "font": 2,
+   "line-height": 1,
    "spacing": 3
   },
   "web/src/lib/catalog/AutopsyFacts.svelte": {
    "font": 2,
-   "spacing": 2
+   "spacing": 2,
+   "tracking": 1
   },
   "web/src/lib/catalog/CardImageRow.svelte": {
    "font": 4,
+   "line-height": 4,
+   "radius": 1,
    "spacing": 3
   },
   "web/src/lib/catalog/CatalogCard.svelte": {
    "font": 3,
+   "radius": 1,
    "spacing": 4
   },
   "web/src/lib/catalog/CatalogDetail.svelte": {
+   "border-width": 3,
+   "fallback": 3,
    "font": 9,
-   "spacing": 17
+   "line-height": 6,
+   "radius": 1,
+   "spacing": 17,
+   "tracking": 1,
+   "weight": 2,
+   "z-index": 1
   },
   "web/src/lib/catalog/CatalogFilterRail.svelte": {
+   "border-width": 1,
+   "fallback": 1,
    "font": 2,
-   "spacing": 6
+   "spacing": 6,
+   "tracking": 1
   },
   "web/src/lib/catalog/CatalogPhoneBar.svelte": {
-   "spacing": 4
+   "spacing": 3
   },
   "web/src/lib/catalog/CatalogRows.svelte": {
+   "border-width": 3,
+   "fallback": 1,
    "font": 6,
-   "spacing": 11
+   "line-height": 3,
+   "radius": 1,
+   "spacing": 11,
+   "tracking": 2
   },
   "web/src/lib/catalog/CatalogScreen.svelte": {
+   "border-width": 2,
+   "fallback": 4,
    "font": 2,
-   "spacing": 5
+   "radius": 1,
+   "spacing": 5,
+   "weight": 1
   },
   "web/src/lib/catalog/CatalogToolbar.svelte": {
    "spacing": 2
   },
   "web/src/lib/catalog/CompatBadges.svelte": {
+   "border-width": 1,
    "font": 4,
-   "spacing": 3
+   "line-height": 1,
+   "radius": 1,
+   "spacing": 3,
+   "tracking": 2
   },
   "web/src/lib/catalog/ConfirmSheet.svelte": {
+   "border-width": 2,
    "font": 5,
-   "spacing": 5
+   "line-height": 5,
+   "radius": 1,
+   "spacing": 5,
+   "tracking": 1
   },
   "web/src/lib/catalog/ConsentInstructions.svelte": {
+   "border-width": 1,
    "font": 2,
+   "line-height": 2,
+   "radius": 1,
    "spacing": 2
   },
   "web/src/lib/catalog/ConsentScripts.svelte": {
+   "border-width": 1,
    "font": 5,
-   "spacing": 4
+   "line-height": 4,
+   "radius": 1,
+   "spacing": 4,
+   "tracking": 1
   },
   "web/src/lib/catalog/ContentsBlock.svelte": {
+   "border-width": 1,
    "font": 4,
-   "spacing": 3
+   "line-height": 2,
+   "radius": 1,
+   "spacing": 3,
+   "tracking": 1
   },
   "web/src/lib/catalog/CostBadge.svelte": {
    "font": 3,
-   "spacing": 2
+   "spacing": 2,
+   "tracking": 1
+  },
+  "web/src/lib/catalog/CplugFacts.svelte": {
+   "border-width": 2,
+   "line-height": 5,
+   "radius": 1,
+   "tracking": 1
   },
   "web/src/lib/catalog/DeprecatedMark.svelte": {
+   "border-width": 1,
    "font": 1,
+   "line-height": 1,
    "spacing": 1
   },
   "web/src/lib/catalog/DetailActions.svelte": {
+   "border-width": 1,
    "font": 3,
-   "spacing": 3
+   "line-height": 2,
+   "spacing": 3,
+   "tracking": 1
+  },
+  "web/src/lib/catalog/DetailGrip.svelte": {
+   "z-index": 1
   },
   "web/src/lib/catalog/DriftFacts.svelte": {
    "font": 2,
-   "spacing": 1
+   "spacing": 1,
+   "tracking": 1
   },
   "web/src/lib/catalog/FilterGroup.svelte": {
+   "border-width": 1,
+   "fallback": 1,
    "font": 2,
-   "spacing": 5
+   "radius": 2,
+   "spacing": 5,
+   "tracking": 1
   },
   "web/src/lib/catalog/GradeBlock.svelte": {
+   "border-width": 4,
    "font": 7,
-   "spacing": 11
+   "line-height": 3,
+   "radius": 2,
+   "spacing": 11,
+   "tracking": 3
   },
   "web/src/lib/catalog/InstallChoices.svelte": {
+   "border-width": 1,
    "font": 3,
+   "radius": 1,
    "spacing": 3
   },
   "web/src/lib/catalog/InstallCount.svelte": {
    "font": 1
   },
   "web/src/lib/catalog/InstallPreview.svelte": {
+   "border-width": 5,
    "font": 8,
-   "spacing": 8
+   "line-height": 2,
+   "radius": 4,
+   "spacing": 8,
+   "tracking": 2
   },
   "web/src/lib/catalog/InstallSheet.svelte": {
+   "border-width": 4,
    "font": 7,
-   "spacing": 11
+   "line-height": 2,
+   "radius": 3,
+   "spacing": 11,
+   "tracking": 1
   },
   "web/src/lib/catalog/InstalledWhere.svelte": {
+   "border-width": 2,
    "font": 3,
-   "spacing": 3
+   "spacing": 3,
+   "tracking": 1
   },
   "web/src/lib/catalog/ItemFeedback.svelte": {
-   "spacing": 3
+   "border-width": 1,
+   "fallback": 3,
+   "line-height": 1,
+   "spacing": 3,
+   "weight": 1
   },
   "web/src/lib/catalog/ItemNoteForm.svelte": {
+   "border-width": 3,
    "font": 8,
-   "spacing": 8
+   "line-height": 3,
+   "radius": 2,
+   "spacing": 8,
+   "tracking": 1
   },
   "web/src/lib/catalog/ItemNotePopup.svelte": {
+   "border-width": 1,
    "font": 1,
-   "spacing": 3
+   "radius": 1,
+   "spacing": 3,
+   "z-index": 1
   },
   "web/src/lib/catalog/ItemRatings.svelte": {
-   "spacing": 4
+   "border-width": 2,
+   "fallback": 3,
+   "spacing": 4,
+   "weight": 1
   },
   "web/src/lib/catalog/ItemSummary.svelte": {
+   "border-width": 2,
+   "fallback": 3,
    "spacing": 4
   },
+  "web/src/lib/catalog/KindMark.svelte": {
+   "border-width": 1,
+   "line-height": 1,
+   "radius": 1
+  },
   "web/src/lib/catalog/LoadoutMembers.svelte": {
+   "border-width": 2,
    "font": 5,
+   "radius": 2,
    "spacing": 7
   },
   "web/src/lib/catalog/ModFacts.svelte": {
+   "border-width": 2,
    "font": 5,
-   "spacing": 6
+   "line-height": 4,
+   "radius": 1,
+   "spacing": 6,
+   "tracking": 1
   },
   "web/src/lib/catalog/OneShotPicker.svelte": {
+   "border-width": 4,
    "font": 3,
-   "spacing": 7
+   "line-height": 4,
+   "radius": 2,
+   "spacing": 7,
+   "tracking": 1
   },
   "web/src/lib/catalog/PacksShelf.svelte": {
+   "border-width": 2,
+   "fallback": 5,
    "font": 2,
-   "spacing": 1
+   "line-height": 1,
+   "spacing": 1,
+   "weight": 1
   },
   "web/src/lib/catalog/PluginFacts.svelte": {
+   "border-width": 3,
    "font": 6,
+   "radius": 3,
    "spacing": 10
   },
   "web/src/lib/catalog/RatingControl.svelte": {
+   "border-width": 4,
    "font": 7,
-   "spacing": 9
+   "line-height": 3,
+   "radius": 2,
+   "spacing": 9,
+   "tracking": 1
   },
   "web/src/lib/catalog/RatingHistogram.svelte": {
    "font": 1,
+   "radius": 1,
    "spacing": 2
   },
+  "web/src/lib/catalog/ReadonlyActions.svelte": {
+   "tracking": 1
+  },
   "web/src/lib/catalog/RegisterDialog.svelte": {
+   "border-width": 1,
    "font": 3,
-   "spacing": 5
+   "line-height": 1,
+   "spacing": 5,
+   "tracking": 1
   },
   "web/src/lib/catalog/RegisterFields.svelte": {
+   "border-width": 1,
    "font": 2,
+   "line-height": 1,
    "spacing": 6
   },
   "web/src/lib/catalog/RegisterGate.svelte": {
    "font": 1,
+   "line-height": 1,
    "spacing": 1
   },
   "web/src/lib/catalog/ReviewBlock.svelte": {
+   "border-width": 4,
    "font": 9,
-   "spacing": 10
+   "line-height": 4,
+   "radius": 2,
+   "spacing": 10,
+   "tracking": 2
   },
   "web/src/lib/catalog/SessionsPanel.svelte": {
+   "border-width": 2,
    "font": 5,
-   "spacing": 6
+   "line-height": 1,
+   "spacing": 6,
+   "tracking": 2
   },
   "web/src/lib/catalog/TrustBlock.svelte": {
+   "border-width": 3,
+   "fallback": 2,
    "font": 8,
-   "spacing": 12
+   "line-height": 4,
+   "radius": 3,
+   "spacing": 12,
+   "tracking": 3,
+   "weight": 2
   },
   "web/src/lib/catalog/TrySheet.svelte": {
+   "border-width": 3,
    "font": 3,
-   "spacing": 5
+   "line-height": 3,
+   "radius": 1,
+   "spacing": 5,
+   "tracking": 1
   },
   "web/src/lib/catalog/UpdateDiffView.svelte": {
+   "border-width": 2,
    "font": 5,
-   "spacing": 5
+   "line-height": 1,
+   "radius": 1,
+   "spacing": 5,
+   "tracking": 2
   },
   "web/src/lib/catalog/UsageFacts.svelte": {
    "font": 2,
-   "spacing": 1
+   "spacing": 1,
+   "tracking": 1
   },
   "web/src/lib/catalog/VerdictMark.svelte": {
    "font": 1,
    "spacing": 1
   },
+  "web/src/lib/catalog/WarezCensus.svelte": {
+   "fallback": 2
+  },
   "web/src/lib/catalog/WarezStatusLine.svelte": {
-   "font": 1
+   "font": 1,
+   "line-height": 1,
+   "weight": 1
   },
   "web/src/lib/catalog/WarezTools.svelte": {
-   "font": 3,
-   "spacing": 4
+   "border-width": 2,
+   "font": 2,
+   "radius": 2,
+   "spacing": 3,
+   "tracking": 1
   },
   "web/src/lib/catalog/catalog-phone-bar.css": {
    "font": 1,
+   "radius": 1,
    "spacing": 1
   },
   "web/src/lib/catalog/menu/InstalledPage.svelte": {
+   "duration": 1,
    "font": 5,
-   "spacing": 8
+   "spacing": 8,
+   "weight": 1
   },
   "web/src/lib/catalog/menu/WarezMenu.svelte": {
+   "border-width": 2,
+   "duration": 3,
    "font": 8,
-   "spacing": 20
+   "line-height": 5,
+   "spacing": 20,
+   "tracking": 1,
+   "weight": 1,
+   "z-index": 1
   },
   "web/src/lib/catalog/warez-card.css": {
+   "border-width": 3,
+   "fallback": 3,
    "font": 4,
+   "line-height": 3,
+   "radius": 2,
    "spacing": 12
   },
+  "web/src/lib/checkpoints/RevertConfirm.svelte": {
+   "tracking": 1
+  },
   "web/src/lib/code-review/CodeReviewModal.svelte": {
+   "fallback": 1,
    "font": 2,
-   "spacing": 8
+   "line-height": 1,
+   "spacing": 8,
+   "tracking": 1
+  },
+  "web/src/lib/community/AuthorLink.svelte": {
+   "border-width": 1,
+   "fallback": 1,
+   "tracking": 1
   },
   "web/src/lib/community/AuthorPage.svelte": {
+   "border-width": 2,
    "font": 7,
-   "spacing": 5
+   "line-height": 2,
+   "spacing": 5,
+   "tracking": 2
   },
   "web/src/lib/community/CommentThread.svelte": {
+   "border-width": 5,
    "font": 7,
-   "spacing": 13
+   "line-height": 2,
+   "spacing": 13,
+   "tracking": 2
   },
   "web/src/lib/community/CommunitySettings.svelte": {
+   "border-width": 1,
    "font": 2,
-   "spacing": 2
+   "line-height": 1,
+   "spacing": 2,
+   "tracking": 1
   },
   "web/src/lib/community/Composer.svelte": {
+   "border-width": 1,
    "font": 2,
+   "line-height": 1,
    "spacing": 4
+  },
+  "web/src/lib/community/Identicon.svelte": {
+   "border-width": 1
   },
   "web/src/lib/community/ReportDialog.svelte": {
+   "border-width": 2,
    "font": 2,
-   "spacing": 4
+   "line-height": 1,
+   "spacing": 4,
+   "tracking": 1
   },
   "web/src/lib/computers/computers.css": {
+   "border-width": 6,
    "font": 5,
-   "spacing": 24
+   "spacing": 24,
+   "tracking": 1
+  },
+  "web/src/lib/cplug-ui/cplug-ui.css": {
+   "border-width": 1,
+   "fallback": 12,
+   "line-height": 1,
+   "z-index": 2
   },
   "web/src/lib/crosstalk/terminal-cards/terminal-cards.css": {
-   "spacing": 5
+   "border-width": 1,
+   "spacing": 5,
+   "tracking": 1,
+   "weight": 1,
+   "z-index": 1
   },
   "web/src/lib/dashboards/BoardPreview.svelte": {
+   "border-width": 1,
+   "fallback": 1,
    "font": 1,
-   "spacing": 1
+   "line-height": 1
   },
   "web/src/lib/dashboards/DashboardCard.svelte": {
-   "spacing": 3
+   "fallback": 5
   },
   "web/src/lib/deepsearch/ContextModal.svelte": {
-   "font": 1,
-   "spacing": 5
+   "line-height": 1,
+   "spacing": 4,
+   "tracking": 3
   },
   "web/src/lib/deepsearch/results.css": {
-   "spacing": 7
+   "border-width": 1,
+   "line-height": 2,
+   "spacing": 7,
+   "tracking": 2,
+   "weight": 1
+  },
+  "web/src/lib/deepsearch/search-d.css": {
+   "tracking": 1,
+   "weight": 1
   },
   "web/src/lib/dialog-frame/ModalShell.svelte": {
    "spacing": 1
   },
+  "web/src/lib/drag-preview/drag-preview.css": {
+   "fallback": 7
+  },
+  "web/src/lib/drawer-tabs/CascadeMenu.svelte": {
+   "line-height": 6
+  },
   "web/src/lib/drawer-tabs/DrawerMenu.svelte": {
-   "spacing": 5
+   "duration": 1,
+   "radius": 1,
+   "spacing": 5,
+   "weight": 1
+  },
+  "web/src/lib/drawer-tabs/DrawerQuestions.svelte": {
+   "fallback": 2
+  },
+  "web/src/lib/drawer-tabs/DrawerSearch.svelte": {
+   "border-width": 1,
+   "fallback": 1
+  },
+  "web/src/lib/drawer-tabs/DrawerStats.svelte": {
+   "border-width": 2,
+   "fallback": 2
+  },
+  "web/src/lib/drawer-tabs/SearchTerms.svelte": {
+   "fallback": 1
   },
   "web/src/lib/drawer-zone/DrawerZone.svelte": {
    "spacing": 2
   },
+  "web/src/lib/drawer-zone/GlanceTiles.svelte": {
+   "line-height": 1
+  },
   "web/src/lib/dropdown/dropdown.css": {
    "spacing": 3
   },
+  "web/src/lib/dynamic-tabs/DynamicTabBody.svelte": {
+   "fallback": 2,
+   "weight": 1
+  },
+  "web/src/lib/dynamic-tabs/WidgetAreaBar.svelte": {
+   "fallback": 1,
+   "line-height": 1,
+   "tracking": 1
+  },
   "web/src/lib/editor-controls/EditorControls.svelte": {
+   "border-width": 1,
    "spacing": 2
   },
   "web/src/lib/file-drawer/FileDrawerGit.svelte": {
@@ -541,263 +820,696 @@
    "spacing": 3
   },
   "web/src/lib/file-drawer/FileDrawerGitLine.svelte": {
+   "border-width": 1,
    "spacing": 3
   },
   "web/src/lib/file-drawer/FileDrawerHeader.svelte": {
+   "border-width": 1,
+   "fallback": 1,
    "font": 3,
    "spacing": 8
   },
   "web/src/lib/first-run/first-run.css": {
+   "border-width": 2,
+   "fallback": 5,
    "font": 4,
-   "spacing": 12
+   "line-height": 1,
+   "spacing": 12,
+   "tracking": 2,
+   "weight": 1
+  },
+  "web/src/lib/hero-art/HeroArt.svelte": {
+   "border-width": 1,
+   "fallback": 2
   },
   "web/src/lib/hosts-page/PairSas.svelte": {
-   "spacing": 1
+   "border-width": 1,
+   "spacing": 1,
+   "tracking": 1
   },
   "web/src/lib/hosts-page/ShowCodeModal.svelte": {
-   "spacing": 1
+   "border-width": 1,
+   "spacing": 1,
+   "tracking": 1
+  },
+  "web/src/lib/huddle-agent/AgentDrawer.svelte": {
+   "z-index": 3
   },
   "web/src/lib/huddle-swarm/SwarmPage.svelte": {
    "spacing": 2
   },
   "web/src/lib/icon-picker/icon-picker.css": {
+   "border-width": 2,
+   "fallback": 5,
    "font": 2,
+   "line-height": 1,
    "spacing": 5
   },
   "web/src/lib/info-pages/DocsGuide.svelte": {
+   "fallback": 3,
+   "line-height": 1,
    "spacing": 4
   },
   "web/src/lib/info-tip/InfoTip.svelte": {
-   "font": 2
+   "border-width": 1,
+   "fallback": 2,
+   "font": 2,
+   "line-height": 2
   },
   "web/src/lib/install-report/InstallReportPrivacyPanel.svelte": {
+   "border-width": 1,
    "font": 1,
+   "line-height": 1,
    "spacing": 3
   },
   "web/src/lib/item-settings/settings-form.css": {
+   "border-width": 2,
+   "fallback": 9,
    "font": 7,
-   "spacing": 18
+   "line-height": 2,
+   "spacing": 18,
+   "weight": 3
   },
   "web/src/lib/launch-picker/LaunchAccountChoice.svelte": {
+   "border-width": 1,
+   "fallback": 2,
    "font": 4,
    "spacing": 5
   },
   "web/src/lib/launch-picker/LaunchChoice.svelte": {
    "spacing": 1
   },
+  "web/src/lib/launch-picker/LaunchNamePin.svelte": {
+   "fallback": 1
+  },
   "web/src/lib/launch-picker/LaunchPickerModal.svelte": {
+   "border-width": 2,
+   "fallback": 1,
    "font": 4,
    "spacing": 3
   },
   "web/src/lib/launch-picker/LaunchProfileDropdown.svelte": {
+   "border-width": 1,
+   "fallback": 1,
    "font": 4,
+   "line-height": 1,
    "spacing": 4
   },
+  "web/src/lib/launch-picker/LaunchStory.svelte": {
+   "border-width": 1,
+   "fallback": 1
+  },
+  "web/src/lib/launch-picker/LaunchWorktree.svelte": {
+   "border-width": 2,
+   "fallback": 1
+  },
+  "web/src/lib/launch-profiles-page/DisabledProfiles.svelte": {
+   "weight": 2
+  },
   "web/src/lib/launch-profiles-page/ImportProfileModal.svelte": {
+   "border-width": 1,
+   "fallback": 1,
    "font": 3,
    "spacing": 2
   },
   "web/src/lib/launch-profiles-page/LaunchProfileEditor.svelte": {
+   "border-width": 1,
    "font": 1,
+   "line-height": 1,
    "spacing": 9
   },
+  "web/src/lib/launch-profiles-page/LaunchProfileExamples.svelte": {
+   "border-width": 2,
+   "weight": 1
+  },
   "web/src/lib/launch-profiles-page/LaunchProfilesScreen.svelte": {
+   "border-width": 1,
    "font": 4,
-   "spacing": 12
+   "line-height": 2,
+   "spacing": 12,
+   "weight": 2
   },
   "web/src/lib/ledger-drawer/DrawerLedger.svelte": {
-   "spacing": 1
+   "duration": 2,
+   "fallback": 1,
+   "line-height": 3,
+   "spacing": 1,
+   "tracking": 2,
+   "weight": 2
   },
   "web/src/lib/ledger-drawer/ProviderGlanceTile.svelte": {
    "font": 1,
+   "line-height": 2,
    "spacing": 3
   },
+  "web/src/lib/ledger/AccountPathFold.svelte": {
+   "line-height": 1
+  },
   "web/src/lib/ledger/ColorSwatches.svelte": {
-   "spacing": 2
+   "border-width": 2,
+   "spacing": 2,
+   "z-index": 1
+  },
+  "web/src/lib/ledger/LedgerAccountsEditor.svelte": {
+   "line-height": 1
+  },
+  "web/src/lib/ledger/LedgerNotices.svelte": {
+   "tracking": 1
+  },
+  "web/src/lib/ledger/LedgerRowActions.svelte": {
+   "line-height": 1
+  },
+  "web/src/lib/ledger/LedgerRowEditor.svelte": {
+   "line-height": 1
+  },
+  "web/src/lib/ledger/LedgerRowSwatch.svelte": {
+   "border-width": 1,
+   "radius": 1
   },
   "web/src/lib/ledger/LedgerScreen.svelte": {
    "spacing": 1
   },
   "web/src/lib/ledger/LedgerUsageCell.svelte": {
-   "spacing": 3
+   "fallback": 6,
+   "line-height": 2,
+   "spacing": 3,
+   "weight": 1
   },
   "web/src/lib/ledger/ledger-chrome.css": {
-   "spacing": 1
+   "fallback": 8,
+   "spacing": 1,
+   "weight": 2
   },
   "web/src/lib/live-status/OfflineMarker.svelte": {
+   "fallback": 1,
+   "line-height": 1,
    "spacing": 3
   },
+  "web/src/lib/manager-frame/manager-card-rich.css": {
+   "border-width": 1,
+   "fallback": 5
+  },
+  "web/src/lib/manager-frame/manager-card.css": {
+   "border-width": 2,
+   "fallback": 5,
+   "line-height": 2,
+   "weight": 1
+  },
+  "web/src/lib/manager-frame/manager-frame.css": {
+   "border-width": 2,
+   "fallback": 3
+  },
   "web/src/lib/markdown-editor/MarkdownEditor.svelte": {
-   "spacing": 7
+   "border-width": 3,
+   "line-height": 2,
+   "spacing": 7,
+   "tracking": 2,
+   "z-index": 1
   },
   "web/src/lib/menu-page/MenuPageBar.svelte": {
+   "fallback": 1,
    "spacing": 1
+  },
+  "web/src/lib/messaging/MessagingBadge.svelte": {
+   "line-height": 1
+  },
+  "web/src/lib/mini-rail/MiniRail.svelte": {
+   "fallback": 1
   },
   "web/src/lib/mini-rail/MiniRailFooter.svelte": {
    "font": 1,
    "spacing": 3
   },
   "web/src/lib/mini-rail/MiniRailUsage.svelte": {
+   "duration": 1,
    "font": 1,
-   "spacing": 1
+   "line-height": 1,
+   "radius": 1,
+   "spacing": 1,
+   "tracking": 1
   },
   "web/src/lib/mods/mods.css": {
+   "border-width": 2,
+   "fallback": 3,
    "spacing": 1
   },
+  "web/src/lib/motion-grid/motion-grid.css": {
+   "border-width": 8,
+   "duration": 1,
+   "line-height": 1,
+   "tracking": 1,
+   "z-index": 1
+  },
+  "web/src/lib/notifications/destinations/destinations.css": {
+   "tracking": 1
+  },
   "web/src/lib/notifications/mute/mute.css": {
+   "border-width": 1,
    "font": 2,
-   "spacing": 5
+   "line-height": 1,
+   "spacing": 5,
+   "z-index": 1
+  },
+  "web/src/lib/notify-card/notify-card.css": {
+   "fallback": 1,
+   "line-height": 6,
+   "weight": 4
   },
   "web/src/lib/open-files/FileScreen.svelte": {
+   "border-width": 2,
+   "fallback": 5,
    "font": 15,
-   "spacing": 7
+   "line-height": 3,
+   "spacing": 7,
+   "weight": 1
+  },
+  "web/src/lib/pack-knock/PackKnock.svelte": {
+   "fallback": 1,
+   "tracking": 1,
+   "z-index": 1
   },
   "web/src/lib/pack-machines/PackMarks.svelte": {
    "spacing": 1
   },
   "web/src/lib/pack-machines/PackMeter.svelte": {
    "font": 3,
-   "spacing": 4
+   "radius": 2,
+   "spacing": 4,
+   "tracking": 2
   },
   "web/src/lib/pack-machines/pack-machines.css": {
+   "border-width": 6,
    "font": 4,
-   "spacing": 26
+   "radius": 2,
+   "spacing": 26,
+   "tracking": 1
   },
   "web/src/lib/pack-machines/pack-settings.css": {
    "spacing": 4
   },
   "web/src/lib/pack-machines/pack-work.css": {
+   "border-width": 5,
    "font": 2,
+   "radius": 2,
    "spacing": 18
   },
   "web/src/lib/pack-machines/relay-consent.css": {
-   "spacing": 4
+   "border-width": 1,
+   "line-height": 2,
+   "spacing": 4,
+   "z-index": 1
   },
   "web/src/lib/pack-migrate/migrate-wizard.css": {
+   "border-width": 5,
+   "duration": 1,
    "font": 1,
    "spacing": 16
   },
   "web/src/lib/pack-offers/pack-offers.css": {
    "spacing": 3
   },
+  "web/src/lib/pack-op-toast/pack-op-toast.css": {
+   "border-width": 4,
+   "duration": 1,
+   "line-height": 1,
+   "tracking": 1,
+   "weight": 1,
+   "z-index": 1
+  },
+  "web/src/lib/pack-roster/roster.css": {
+   "border-width": 26,
+   "duration": 3,
+   "fallback": 21,
+   "line-height": 8,
+   "radius": 15,
+   "tracking": 9,
+   "weight": 4,
+   "z-index": 6
+  },
   "web/src/lib/pack-transport/pack-transport.css": {
+   "border-width": 4,
    "font": 1,
    "spacing": 12
+  },
+  "web/src/lib/palette/Palette.svelte": {
+   "tracking": 1
   },
   "web/src/lib/perf-overlay/PerfOverlay.svelte": {
    "spacing": 6
   },
+  "web/src/lib/phone-mic/PhoneMic.svelte": {
+   "line-height": 1,
+   "tracking": 1
+  },
+  "web/src/lib/pipeline-status/pipeline-squares.css": {
+   "border-width": 2,
+   "line-height": 1,
+   "tracking": 1,
+   "z-index": 2
+  },
+  "web/src/lib/pipeline-status/pipeline-status.css": {
+   "tracking": 1
+  },
+  "web/src/lib/plugins-page/DeveloperZone.svelte": {
+   "border-width": 2,
+   "fallback": 2
+  },
   "web/src/lib/plugins-page/PluginsScreen.svelte": {
+   "fallback": 1,
    "spacing": 3
+  },
+  "web/src/lib/plugins-page/SideloadConsent.svelte": {
+   "fallback": 2
+  },
+  "web/src/lib/plugins-page/SideloadKinds.svelte": {
+   "fallback": 2
+  },
+  "web/src/lib/plugins-page/SideloadLoadForm.svelte": {
+   "fallback": 2
+  },
+  "web/src/lib/plugins-page/SideloadRowActions.svelte": {
+   "fallback": 1
+  },
+  "web/src/lib/plugins-page/SideloadSwitch.svelte": {
+   "fallback": 1
   },
   "web/src/lib/plugins-page/catalog-plugins.css": {
+   "border-width": 1,
    "font": 4,
-   "spacing": 3
+   "spacing": 3,
+   "tracking": 1
   },
   "web/src/lib/plugins-page/plugin-pane.css": {
-   "font": 2,
-   "spacing": 34
+   "border-width": 6,
+   "fallback": 18,
+   "font": 1,
+   "line-height": 1,
+   "spacing": 33,
+   "weight": 1
   },
   "web/src/lib/project-colors/ProjectColorPopover.svelte": {
+   "border-width": 4,
    "color": 2,
-   "spacing": 1
+   "spacing": 1,
+   "tracking": 2
+  },
+  "web/src/lib/project-colors/ProjectColorRow.svelte": {
+   "tracking": 1
   },
   "web/src/lib/project-colors/ProjectColorSwatches.svelte": {
+   "border-width": 1,
    "spacing": 1
   },
   "web/src/lib/projects-shared/projects-shared.css": {
+   "border-width": 3,
+   "fallback": 6,
+   "line-height": 1,
    "spacing": 2
   },
+  "web/src/lib/publish-page/checks.css": {
+   "border-width": 1,
+   "line-height": 5,
+   "weight": 1
+  },
+  "web/src/lib/publish-page/detail.css": {
+   "border-width": 3,
+   "fallback": 1,
+   "line-height": 8,
+   "weight": 1
+  },
+  "web/src/lib/publish-page/list.css": {
+   "duration": 1,
+   "fallback": 2,
+   "line-height": 3
+  },
+  "web/src/lib/publish-page/marks.css": {
+   "line-height": 2
+  },
+  "web/src/lib/publish-page/page.css": {
+   "fallback": 6,
+   "weight": 2,
+   "z-index": 2
+  },
+  "web/src/lib/publish-page/panel.css": {
+   "line-height": 1
+  },
+  "web/src/lib/publish-page/rules.css": {
+   "fallback": 1,
+   "line-height": 2,
+   "weight": 1
+  },
+  "web/src/lib/publish-page/side.css": {
+   "border-width": 2,
+   "duration": 1,
+   "line-height": 4
+  },
+  "web/src/lib/publish-page/wizard.css": {
+   "border-width": 1,
+   "duration": 1,
+   "fallback": 3,
+   "line-height": 7,
+   "radius": 1,
+   "weight": 2
+  },
+  "web/src/lib/rating/RatingGlyph.svelte": {
+   "line-height": 1
+  },
+  "web/src/lib/rating/RatingStars.svelte": {
+   "line-height": 1
+  },
   "web/src/lib/send-to/send-to.css": {
+   "fallback": 1,
    "font": 6,
-   "spacing": 4
+   "spacing": 4,
+   "tracking": 2
+  },
+  "web/src/lib/session-badges/BadgeSlot.svelte": {
+   "border-width": 1,
+   "line-height": 1,
+   "tracking": 1
   },
   "web/src/lib/session-control/control-center.css": {
-   "spacing": 8
+   "fallback": 2,
+   "spacing": 8,
+   "weight": 1
   },
   "web/src/lib/session-move/move-folder.css": {
    "font": 1,
-   "spacing": 1
+   "spacing": 1,
+   "tracking": 1
+  },
+  "web/src/lib/session-rail/RailResizeHandle.svelte": {
+   "duration": 1,
+   "z-index": 1
   },
   "web/src/lib/session-rail/RailSlideout.svelte": {
    "spacing": 2
   },
+  "web/src/lib/session-rail/SessionRail.svelte": {
+   "fallback": 1
+  },
+  "web/src/lib/session-rail/rail-layer.css": {
+   "duration": 2,
+   "fallback": 1
+  },
   "web/src/lib/session-skills/session-skills.css": {
-   "spacing": 7
+   "fallback": 4,
+   "spacing": 7,
+   "z-index": 1
+  },
+  "web/src/lib/sessions-page/ProjectToolWindow.svelte": {
+   "fallback": 4
   },
   "web/src/lib/sessions-page/pivot.css": {
-   "spacing": 7
+   "border-width": 5,
+   "line-height": 1,
+   "spacing": 4,
+   "weight": 3,
+   "z-index": 2
   },
   "web/src/lib/sessions-page/sessions-list.css": {
-   "spacing": 4
+   "border-width": 7,
+   "line-height": 2,
+   "spacing": 2,
+   "tracking": 1,
+   "weight": 2,
+   "z-index": 2
   },
   "web/src/lib/sessions-page/sessions-page.css": {
-   "spacing": 4
+   "border-width": 1,
+   "fallback": 3,
+   "line-height": 1,
+   "spacing": 1,
+   "tracking": 1,
+   "weight": 3
   },
   "web/src/lib/sessions-page/sessions-panel.css": {
-   "spacing": 1
+   "border-width": 2,
+   "line-height": 3,
+   "weight": 1
   },
   "web/src/lib/sessions-page/timeline.css": {
+   "border-width": 11,
+   "duration": 1,
+   "fallback": 4,
    "font": 1,
-   "spacing": 2
+   "line-height": 1,
+   "weight": 2,
+   "z-index": 6
   },
   "web/src/lib/sessions/AgentMarks.svelte": {
+   "line-height": 1,
    "spacing": 1
   },
+  "web/src/lib/settings-page/AgentGatePanel.svelte": {
+   "border-width": 1,
+   "fallback": 2
+  },
+  "web/src/lib/settings-page/MotionPanel.svelte": {
+   "border-width": 1,
+   "duration": 3,
+   "line-height": 2
+  },
   "web/src/lib/settings-page/RowIconsPanel.svelte": {
+   "border-width": 1,
+   "fallback": 2,
    "spacing": 1
+  },
+  "web/src/lib/settings-page/SettingsNav.svelte": {
+   "border-width": 2,
+   "fallback": 1
   },
   "web/src/lib/settings-page/SettingsSearchResults.svelte": {
    "font": 2,
+   "line-height": 1,
    "spacing": 3
   },
   "web/src/lib/settings-page/ThemePicker.svelte": {
+   "border-width": 1,
    "spacing": 2
   },
   "web/src/lib/settings-page/appearance/ControlCenterPreview.svelte": {
+   "border-width": 3,
+   "fallback": 3,
    "font": 2,
-   "spacing": 8
+   "line-height": 2,
+   "spacing": 8,
+   "tracking": 2
   },
   "web/src/lib/settings-page/appearance/FootBarStrip.svelte": {
-   "spacing": 2
+   "fallback": 2,
+   "spacing": 2,
+   "tracking": 1
+  },
+  "web/src/lib/settings-page/phone-link/custom-domain.css": {
+   "border-width": 1,
+   "tracking": 1,
+   "weight": 1
   },
   "web/src/lib/settings-page/phone-link/phone-link.css": {
-   "font": 1
+   "border-width": 2,
+   "font": 1,
+   "tracking": 1,
+   "weight": 1
   },
   "web/src/lib/settings-page/settings-page.css": {
-   "font": 3,
-   "spacing": 7
+   "border-width": 4,
+   "duration": 2,
+   "fallback": 7,
+   "font": 2,
+   "line-height": 4,
+   "spacing": 6,
+   "tracking": 1,
+   "weight": 1
+  },
+  "web/src/lib/sheet/Sheet.svelte": {
+   "fallback": 2
   },
   "web/src/lib/sidebar-shell/PackSection.svelte": {
+   "border-width": 1,
+   "duration": 1,
    "font": 5,
-   "spacing": 4
+   "line-height": 2,
+   "spacing": 4,
+   "tracking": 1
+  },
+  "web/src/lib/sidebar-shell/ShowPathModal.svelte": {
+   "border-width": 1
   },
   "web/src/lib/sidebar-widgets/SidebarControls.svelte": {
    "spacing": 1
   },
+  "web/src/lib/sidebar-widgets/SidebarFlyoutHost.svelte": {
+   "fallback": 1
+  },
   "web/src/lib/sidebar-widgets/SidebarRail.svelte": {
-   "spacing": 1
+   "spacing": 1,
+   "z-index": 1
+  },
+  "web/src/lib/sidebar-widgets/SidebarRailShell.svelte": {
+   "z-index": 1
+  },
+  "web/src/lib/sidebar-widgets/flyout-title.css": {
+   "weight": 1
+  },
+  "web/src/lib/sidebar-widgets/sidebar-rail.css": {
+   "z-index": 2
   },
   "web/src/lib/skill-page/skill-page.css": {
+   "border-width": 16,
+   "fallback": 16,
    "font": 6,
-   "spacing": 1
+   "line-height": 6,
+   "radius": 3,
+   "spacing": 1,
+   "weight": 12
+  },
+  "web/src/lib/skills-hub/RequiredSkills.svelte": {
+   "tracking": 1
+  },
+  "web/src/lib/skills-hub/SkillsHighlights.svelte": {
+   "fallback": 1
   },
   "web/src/lib/skills-hub/local/local-skills.css": {
-   "spacing": 2
+   "border-width": 3,
+   "fallback": 12,
+   "spacing": 2,
+   "tracking": 2,
+   "weight": 1,
+   "z-index": 2
   },
   "web/src/lib/skills-page/skills-page.css": {
+   "border-width": 5,
    "font": 9,
-   "spacing": 17
+   "line-height": 1,
+   "radius": 1,
+   "spacing": 17,
+   "tracking": 2
   },
   "web/src/lib/slash-favorites/FavoriteChips.svelte": {
+   "border-width": 1,
+   "line-height": 1,
    "spacing": 7
   },
+  "web/src/lib/solo/SoloPanel.svelte": {
+   "fallback": 5,
+   "weight": 1
+  },
+  "web/src/lib/split-divider/SplitDivider.svelte": {
+   "duration": 1,
+   "z-index": 1
+  },
   "web/src/lib/subagents/popup-list.css": {
+   "fallback": 8,
    "font": 1,
-   "spacing": 5
+   "spacing": 5,
+   "weight": 2
   },
   "web/src/lib/swarm-board/CardActionPanel.svelte": {
-   "spacing": 6
+   "border-width": 1,
+   "line-height": 1,
+   "spacing": 6,
+   "tracking": 1
   },
   "web/src/lib/swarm-board/CardActions.svelte": {
    "spacing": 1
@@ -806,125 +1518,273 @@
    "spacing": 4
   },
   "web/src/lib/swarm-board/SwarmBoard.svelte": {
-   "spacing": 9
+   "border-width": 1,
+   "spacing": 9,
+   "tracking": 2
   },
   "web/src/lib/swarm-board/views/CalendarView.svelte": {
-   "spacing": 11
+   "border-width": 1,
+   "spacing": 11,
+   "tracking": 4,
+   "weight": 1
   },
   "web/src/lib/swarm-board/views/ColumnsView.svelte": {
    "spacing": 5
   },
   "web/src/lib/swarm-board/views/ListView.svelte": {
-   "spacing": 5
+   "spacing": 5,
+   "tracking": 1
   },
   "web/src/lib/swarm-board/views/SwimlanesView.svelte": {
-   "spacing": 7
+   "border-width": 1,
+   "spacing": 7,
+   "tracking": 2
   },
   "web/src/lib/swarm-board/views/TimelineView.svelte": {
-   "spacing": 9
+   "border-width": 2,
+   "spacing": 9,
+   "tracking": 4,
+   "weight": 1
   },
   "web/src/lib/swarm-board/views/calendar/BoardKey.svelte": {
-   "spacing": 4
+   "border-width": 1,
+   "radius": 1,
+   "spacing": 4,
+   "tracking": 1
   },
   "web/src/lib/swarm-board/views/calendar/CalendarRow.svelte": {
-   "spacing": 11
+   "border-width": 1,
+   "spacing": 11,
+   "tracking": 1,
+   "weight": 2
   },
   "web/src/lib/swarm-board/views/columns/ProjectColumn.svelte": {
-   "spacing": 3
+   "border-width": 1,
+   "spacing": 3,
+   "tracking": 1,
+   "weight": 1
   },
   "web/src/lib/swarm-board/views/list/CardDetail.svelte": {
+   "border-width": 2,
    "font": 1,
-   "spacing": 18
+   "line-height": 5,
+   "radius": 2,
+   "spacing": 18,
+   "tracking": 4,
+   "weight": 1
   },
   "web/src/lib/swarm-board/views/list/CardVerdict.svelte": {
-   "spacing": 5
+   "border-width": 1,
+   "spacing": 5,
+   "tracking": 1
   },
   "web/src/lib/swarm-board/views/list/ListRow.svelte": {
+   "border-width": 2,
    "font": 1,
-   "spacing": 5
+   "spacing": 5,
+   "tracking": 1,
+   "weight": 2
   },
   "web/src/lib/swarm-board/views/swimlanes/LaneCard.svelte": {
+   "border-width": 3,
    "font": 1,
-   "spacing": 13
+   "line-height": 2,
+   "radius": 4,
+   "spacing": 13,
+   "tracking": 1,
+   "weight": 2
   },
   "web/src/lib/swarm-board/views/swimlanes/LaneChat.svelte": {
-   "spacing": 3
+   "spacing": 3,
+   "tracking": 1
   },
   "web/src/lib/swarm-board/views/swimlanes/SwimLane.svelte": {
-   "spacing": 18
+   "border-width": 3,
+   "radius": 1,
+   "spacing": 18,
+   "tracking": 3,
+   "weight": 1
   },
   "web/src/lib/swarm-board/views/timeline/TimelineGroup.svelte": {
-   "spacing": 13
+   "border-width": 3,
+   "radius": 2,
+   "spacing": 13,
+   "tracking": 1,
+   "weight": 1
+  },
+  "web/src/lib/swarm-membership/SwarmRowFace.svelte": {
+   "fallback": 2
   },
   "web/src/lib/terminal-background/TerminalBackgroundButton.svelte": {
+   "duration": 1,
    "spacing": 3
   },
   "web/src/lib/terminal-background/TerminalBackgroundPanel.svelte": {
-   "spacing": 4
+   "border-width": 2,
+   "line-height": 1,
+   "spacing": 4,
+   "tracking": 1
   },
   "web/src/lib/terminal-empty/TerminalEmpty.svelte": {
+   "border-width": 1,
    "font": 2,
-   "spacing": 2
+   "line-height": 1,
+   "spacing": 2,
+   "weight": 1
   },
   "web/src/lib/terminal-notice/TerminalSizeNotice.svelte": {
+   "border-width": 1,
+   "line-height": 1,
    "spacing": 1
   },
   "web/src/lib/terminal-notice/TerminalStartupNotice.svelte": {
+   "border-width": 2,
    "font": 2,
+   "line-height": 2,
    "spacing": 2
   },
   "web/src/lib/terminal-search/PromptHeader.svelte": {
+   "border-width": 2,
+   "line-height": 1,
    "spacing": 3
   },
+  "web/src/lib/terminal-search/PromptTick.svelte": {
+   "border-width": 1,
+   "duration": 1
+  },
   "web/src/lib/terminal-search/SearchPanel.svelte": {
+   "border-width": 2,
    "font": 2,
+   "line-height": 1,
    "spacing": 2
   },
   "web/src/lib/themes-page/BuildYourOwn.svelte": {
+   "border-width": 4,
+   "fallback": 7,
    "font": 1,
-   "spacing": 8
+   "line-height": 2,
+   "spacing": 8,
+   "weight": 3
   },
   "web/src/lib/themes-page/ThemeInspector.svelte": {
+   "border-width": 3,
+   "fallback": 9,
    "font": 2,
-   "spacing": 10
+   "line-height": 3,
+   "spacing": 10,
+   "weight": 2
+  },
+  "web/src/lib/themes-page/ThemePreview.svelte": {
+   "border-width": 4,
+   "line-height": 2
   },
   "web/src/lib/themes-page/ThemesScreen.svelte": {
+   "fallback": 1,
    "font": 1,
+   "line-height": 2,
    "spacing": 1
   },
   "web/src/lib/toast-mode/ToastModePanel.svelte": {
    "spacing": 4
   },
   "web/src/lib/tooltip/tooltip.css": {
+   "border-width": 6,
    "font": 1,
+   "line-height": 1,
    "spacing": 1
   },
   "web/src/lib/ui/SegmentedMeterBar.svelte": {
+   "fallback": 1,
    "spacing": 1
   },
+  "web/src/lib/user-guide/GuideBody.svelte": {
+   "fallback": 3,
+   "line-height": 2,
+   "weight": 1
+  },
+  "web/src/lib/user-guide/GuideShot.svelte": {
+   "fallback": 9,
+   "line-height": 3,
+   "z-index": 2
+  },
+  "web/src/lib/user-guide/LightsLegend.svelte": {
+   "fallback": 1,
+   "line-height": 1,
+   "tracking": 1
+  },
   "web/src/lib/user-guide/McpToolList.svelte": {
-   "font": 1
+   "fallback": 4,
+   "font": 1,
+   "line-height": 1,
+   "tracking": 1
   },
   "web/src/lib/version-watch/VersionBanner.svelte": {
    "color": 1,
-   "spacing": 7
+   "fallback": 11,
+   "line-height": 1,
+   "spacing": 7,
+   "weight": 1
+  },
+  "web/src/lib/warroom/warroom.css": {
+   "border-width": 2,
+   "duration": 1,
+   "fallback": 3,
+   "tracking": 3,
+   "z-index": 1
+  },
+  "web/src/lib/widget-bars/BarEdge.svelte": {
+   "z-index": 1
   },
   "web/src/lib/widget-bars/PinnedKeyBadge.svelte": {
+   "fallback": 4,
+   "line-height": 1,
    "spacing": 1
   },
+  "web/src/lib/widgets-page/settings/mock.css": {
+   "border-width": 2,
+   "fallback": 1,
+   "line-height": 1,
+   "tracking": 2,
+   "z-index": 1
+  },
+  "web/src/lib/widgets-page/settings/settings.css": {
+   "border-width": 6,
+   "tracking": 3
+  },
   "web/src/lib/widgets-page/widgets-page.css": {
-   "color": 3,
-   "font": 23,
-   "spacing": 49
+   "border-width": 5,
+   "color": 1,
+   "duration": 1,
+   "fallback": 29,
+   "font": 2,
+   "line-height": 10,
+   "spacing": 2,
+   "tracking": 2,
+   "weight": 8,
+   "z-index": 2
+  },
+  "web/src/lib/zone-shell/EditCell.svelte": {
+   "z-index": 1
   },
   "web/src/lib/zone-shell/PlacementBody.svelte": {
    "spacing": 1
   },
+  "web/src/lib/zone-shell/PlacementMenuHost.svelte": {
+   "tracking": 1
+  },
   "web/src/lib/zone-shell/TabKey.svelte": {
+   "border-width": 2,
+   "fallback": 2,
+   "line-height": 2,
    "spacing": 3
   },
+  "web/src/lib/zone-shell/ZoneKeys.svelte": {
+   "fallback": 3
+  },
   "web/src/opscenter/App.svelte": {
-   "spacing": 2
+   "border-width": 1,
+   "spacing": 2,
+   "tracking": 1
   },
   "web/src/opscenter/CellHost.svelte": {
    "spacing": 1
@@ -932,103 +1792,821 @@
   "web/src/opscenter/app.css": {
    "spacing": 1
   },
+  "web/src/opscenter/art/ascii-art.css": {
+   "z-index": 1
+  },
+  "web/src/opscenter/cells/activity-log/Cell.svelte": {
+   "weight": 1
+  },
+  "web/src/opscenter/cells/analytics/Cell.svelte": {
+   "border-width": 1
+  },
   "web/src/opscenter/cells/analytics/Controls.svelte": {
-   "spacing": 1
+   "line-height": 1,
+   "spacing": 1,
+   "tracking": 1
   },
   "web/src/opscenter/cells/analytics/DetailsModal.svelte": {
+   "border-width": 1,
+   "fallback": 1,
    "font": 1,
-   "spacing": 7
+   "line-height": 2,
+   "spacing": 7,
+   "tracking": 3,
+   "weight": 2
   },
   "web/src/opscenter/cells/analytics/TimelineView.svelte": {
-   "font": 1
+   "border-width": 1,
+   "font": 1,
+   "line-height": 1,
+   "tracking": 3,
+   "weight": 3
+  },
+  "web/src/opscenter/cells/closed-sessions/Cell.svelte": {
+   "weight": 1
+  },
+  "web/src/opscenter/cells/crosstalk/Cell.svelte": {
+   "border-width": 3,
+   "fallback": 1,
+   "line-height": 1,
+   "z-index": 1
+  },
+  "web/src/opscenter/cells/crosstalk/ThreadList.svelte": {
+   "line-height": 1,
+   "weight": 2
+  },
+  "web/src/opscenter/cells/crosstalk/ThreadView.svelte": {
+   "border-width": 1,
+   "line-height": 1,
+   "tracking": 2
+  },
+  "web/src/opscenter/cells/files/FileRow.svelte": {
+   "border-width": 1,
+   "fallback": 5,
+   "line-height": 2
+  },
+  "web/src/opscenter/cells/files/FilesFilter.svelte": {
+   "fallback": 1
+  },
+  "web/src/opscenter/cells/files/FilesGlanceTile.svelte": {
+   "line-height": 1
+  },
+  "web/src/opscenter/cells/machine-stats/Cell.svelte": {
+   "line-height": 1,
+   "weight": 2
+  },
+  "web/src/opscenter/cells/questions/Cell.svelte": {
+   "tracking": 2
+  },
+  "web/src/opscenter/cells/running-sessions/Cell.svelte": {
+   "weight": 1
+  },
+  "web/src/opscenter/cells/skills/Cell.svelte": {
+   "border-width": 1
   },
   "web/src/opscenter/cells/task-list/ListBody.svelte": {
-   "spacing": 2
+   "spacing": 2,
+   "tracking": 1
   },
   "web/src/opscenter/cells/task-list/ListRow.svelte": {
    "spacing": 5
   },
   "web/src/opscenter/cells/task-list/ListRowOpen.svelte": {
+   "line-height": 1,
    "spacing": 2
+  },
+  "web/src/opscenter/cells/task-list/MissingPopup.svelte": {
+   "line-height": 1
+  },
+  "web/src/opscenter/cells/task-manager-mk2/Mk2Crosstalk.svelte": {
+   "border-width": 1
+  },
+  "web/src/opscenter/cells/task-manager-mk2/Mk2DeleteClosedModal.svelte": {
+   "line-height": 1
+  },
+  "web/src/opscenter/cells/task-manager-mk2/Mk2Frame.svelte": {
+   "border-width": 1
+  },
+  "web/src/opscenter/cells/task-manager-mk2/Mk2Subtasks.svelte": {
+   "tracking": 1
+  },
+  "web/src/opscenter/cells/task-manager-mk2/Mk2TaskTabs.svelte": {
+   "tracking": 1
+  },
+  "web/src/opscenter/cells/task-manager-mk2/mk2-design.css": {
+   "border-width": 11,
+   "fallback": 2,
+   "line-height": 1,
+   "radius": 2,
+   "tracking": 1,
+   "weight": 2
   },
   "web/src/opscenter/cells/task-manager/Cell.svelte": {
    "spacing": 1
   },
+  "web/src/opscenter/cells/tasks-all/Cell.svelte": {
+   "tracking": 1
+  },
+  "web/src/opscenter/cells/tasks/TaskRows.svelte": {
+   "border-width": 1,
+   "line-height": 1
+  },
   "web/src/opscenter/cells/terminal-live/Cell.svelte": {
    "spacing": 1
   },
+  "web/src/opscenter/cells/terminal-live/FootGrown.svelte": {
+   "border-width": 1,
+   "fallback": 1,
+   "weight": 1
+  },
+  "web/src/opscenter/cells/terminal-live/FootHold.svelte": {
+   "line-height": 1
+  },
+  "web/src/opscenter/cells/terminal-live/FootMeters.svelte": {
+   "fallback": 10,
+   "tracking": 1
+  },
   "web/src/opscenter/cells/terminal-live/FootStats.svelte": {
+   "fallback": 1,
    "spacing": 8
   },
   "web/src/opscenter/cells/terminal-live/GitChip.svelte": {
    "spacing": 1
   },
   "web/src/opscenter/cells/terminal-live/ShellFoot.svelte": {
+   "border-width": 1,
    "spacing": 3
   },
+  "web/src/opscenter/cells/terminal-live/SizeMasterCrown.svelte": {
+   "border-width": 1,
+   "fallback": 1
+  },
   "web/src/opscenter/cells/terminal-live/TerminalActions.svelte": {
+   "border-width": 3,
+   "fallback": 2,
    "spacing": 5
   },
   "web/src/opscenter/cells/terminal-live/TerminalFoot.svelte": {
+   "border-width": 3,
    "color": 1,
    "font": 1,
-   "spacing": 6
+   "spacing": 6,
+   "z-index": 1
   },
   "web/src/opscenter/cells/terminal-live/TerminalHead.svelte": {
-   "spacing": 4
+   "spacing": 4,
+   "weight": 1
   },
   "web/src/opscenter/cells/terminal-live/TerminalUtilities.svelte": {
    "spacing": 2
   },
+  "web/src/opscenter/cells/themes/Cell.svelte": {
+   "weight": 1
+  },
+  "web/src/opscenter/cells/timeline/Column.svelte": {
+   "line-height": 1,
+   "z-index": 1
+  },
+  "web/src/opscenter/cells/timeline/KindGlyph.svelte": {
+   "border-width": 1
+  },
   "web/src/opscenter/controls.css": {
-   "spacing": 5
+   "border-width": 5,
+   "fallback": 15,
+   "line-height": 2,
+   "spacing": 5,
+   "tracking": 4
+  },
+  "web/src/opscenter/dashgrid/dashgrid.css": {
+   "fallback": 1
   },
   "web/src/opscenter/engine/LiveRegion.svelte": {
+   "border-width": 1,
    "spacing": 1
   },
+  "web/src/opscenter/engine/grid.css": {
+   "border-width": 2,
+   "fallback": 1,
+   "z-index": 4
+  },
+  "web/src/opscenter/engine/rects/DividerHandle.svelte": {
+   "z-index": 2
+  },
+  "web/src/opscenter/engine/rects/abs-surface.css": {
+   "border-width": 1,
+   "fallback": 1
+  },
   "web/src/opscenter/fields.css": {
+   "border-width": 2,
+   "fallback": 2,
    "font": 1,
+   "line-height": 1,
    "spacing": 4
+  },
+  "web/src/opscenter/focus.css": {
+   "border-width": 1,
+   "fallback": 1
   },
   "web/src/opscenter/layout-editor/AnalyticsFamilyFold.svelte": {
+   "fallback": 2,
+   "line-height": 3,
    "spacing": 9
   },
+  "web/src/opscenter/layout-editor/DrawerHead.svelte": {
+   "fallback": 2,
+   "weight": 1
+  },
+  "web/src/opscenter/layout-editor/DrawerList.svelte": {
+   "fallback": 1,
+   "tracking": 1,
+   "weight": 1
+  },
+  "web/src/opscenter/layout-editor/DuplicatePrompt.svelte": {
+   "line-height": 1
+  },
+  "web/src/opscenter/layout-editor/EditOverlay.svelte": {
+   "border-width": 1
+  },
   "web/src/opscenter/layout-editor/WidgetDrawer.svelte": {
-   "spacing": 7
+   "fallback": 4
   },
   "web/src/opscenter/layout-editor/WidgetRow.svelte": {
-   "spacing": 4
+   "border-width": 2,
+   "fallback": 4
   },
   "web/src/opscenter/layout-editor/WidgetThumb.svelte": {
-   "spacing": 2
+   "fallback": 2
   },
   "web/src/opscenter/layout-editor/WindowRows.svelte": {
+   "border-width": 3,
+   "fallback": 3,
    "spacing": 8
   },
+  "web/src/opscenter/layouts/AllDownModal.svelte": {
+   "border-width": 1
+  },
   "web/src/opscenter/layouts/LayoutCellMarks.svelte": {
+   "border-width": 2,
+   "fallback": 1,
    "spacing": 2
   },
   "web/src/opscenter/layouts/LayoutCommandBar.svelte": {
-   "spacing": 1
+   "border-width": 1,
+   "fallback": 3,
+   "line-height": 1,
+   "spacing": 1,
+   "z-index": 1
   },
   "web/src/opscenter/layouts/LayoutSkillMenu.svelte": {
-   "spacing": 1
+   "border-width": 1,
+   "fallback": 1,
+   "spacing": 1,
+   "z-index": 1
   },
   "web/src/opscenter/layouts/MemberDownRow.svelte": {
+   "border-width": 1,
+   "fallback": 1,
    "spacing": 1
   },
   "web/src/opscenter/page.css": {
+   "border-width": 7,
+   "duration": 2,
+   "fallback": 21,
    "font": 2,
-   "spacing": 3
+   "line-height": 4,
+   "spacing": 3,
+   "tracking": 1,
+   "weight": 5,
+   "z-index": 2
   },
-  "web/src/opscenter/widgets/chrome/RefusalPlate.svelte": {
-   "spacing": 2
+  "web/src/opscenter/shell/CellFrame.svelte": {
+   "border-width": 1,
+   "z-index": 1
+  },
+  "web/src/opscenter/shell/CornerMenu.svelte": {
+   "border-width": 2,
+   "z-index": 1
+  },
+  "web/src/opscenter/shell/HomeOpenMenu.svelte": {
+   "z-index": 1
+  },
+  "web/src/opscenter/shell/TabStrip.svelte": {
+   "border-width": 2,
+   "duration": 1,
+   "line-height": 1
+  },
+  "web/src/opscenter/shell/WidgetHead.svelte": {
+   "weight": 2
+  },
+  "web/src/opscenter/type.css": {
+   "weight": 4
+  },
+  "web/src/opscenter/ui/MachineBadge.svelte": {
+   "border-width": 1,
+   "line-height": 1,
+   "tracking": 1
+  },
+  "web/src/opscenter/ui/log-viewer.css": {
+   "tracking": 2
+  },
+  "web/src/opscenter/ui/outbox-rows.css": {
+   "border-width": 1,
+   "fallback": 1
+  },
+  "web/src/opscenter/ui/page-kit.css": {
+   "border-width": 3,
+   "fallback": 19,
+   "line-height": 5,
+   "weight": 6
+  },
+  "web/src/opscenter/ui/rank-panel.css": {
+   "border-width": 2,
+   "fallback": 16,
+   "line-height": 1,
+   "weight": 3
+  },
+  "web/src/opscenter/ui/run-queue.css": {
+   "fallback": 1,
+   "line-height": 1
+  },
+  "web/src/opscenter/ui/tabs.css": {
+   "fallback": 8,
+   "radius": 1
+  },
+  "web/src/opscenter/ui/tile.css": {
+   "border-width": 1,
+   "fallback": 3
+  },
+  "web/src/opscenter/viz/AgentsRenderer.svelte": {
+   "tracking": 1
+  },
+  "web/src/opscenter/viz/AlarmStrip.svelte": {
+   "tracking": 1,
+   "weight": 1
+  },
+  "web/src/opscenter/viz/EmptyState.svelte": {
+   "tracking": 1
+  },
+  "web/src/opscenter/viz/EventsRenderer.svelte": {
+   "tracking": 3,
+   "weight": 1
+  },
+  "web/src/opscenter/viz/FleetRenderer.svelte": {
+   "tracking": 3,
+   "weight": 1
+  },
+  "web/src/opscenter/viz/FlowRenderer.svelte": {
+   "tracking": 3,
+   "weight": 1
+  },
+  "web/src/opscenter/viz/HealthRenderer.svelte": {
+   "tracking": 3,
+   "weight": 1
+  },
+  "web/src/opscenter/viz/HeatRenderer.svelte": {
+   "tracking": 2,
+   "weight": 1
+  },
+  "web/src/opscenter/viz/HotRenderer.svelte": {
+   "tracking": 2,
+   "weight": 1
+  },
+  "web/src/opscenter/viz/ImpactRenderer.svelte": {
+   "tracking": 3,
+   "weight": 1
+  },
+  "web/src/opscenter/viz/KpiRenderer.svelte": {
+   "border-width": 1
+  },
+  "web/src/opscenter/viz/LeaderboardRenderer.svelte": {
+   "tracking": 2,
+   "weight": 1
+  },
+  "web/src/opscenter/viz/PackRenderer.svelte": {
+   "tracking": 7,
+   "weight": 3
+  },
+  "web/src/opscenter/viz/RunwayRenderer.svelte": {
+   "tracking": 2,
+   "weight": 1
+  },
+  "web/src/opscenter/viz/ScatterRenderer.svelte": {
+   "tracking": 3,
+   "weight": 1
+  },
+  "web/src/opscenter/viz/SwimlanesRenderer.svelte": {
+   "tracking": 3,
+   "weight": 1
+  },
+  "web/src/opscenter/viz/TreemapRenderer.svelte": {
+   "tracking": 2,
+   "weight": 1
+  },
+  "web/src/opscenter/viz/TripwireEditor.svelte": {
+   "tracking": 1
+  },
+  "web/src/opscenter/viz/VitalsRenderer.svelte": {
+   "line-height": 1,
+   "tracking": 3,
+   "weight": 2
+  },
+  "web/src/opscenter/widgets/chrome/ResizeGuide.svelte": {
+   "duration": 1
+  },
+  "web/src/opscenter/widgets/info/WidgetInfoCard.svelte": {
+   "fallback": 7,
+   "line-height": 2,
+   "weight": 1
   },
   "web/src/pair/pair.css": {
+   "border-width": 1,
    "font": 5,
-   "spacing": 5
+   "line-height": 1,
+   "spacing": 5,
+   "tracking": 2,
+   "weight": 1
+  },
+  "web/src/plugins/crate/CratePanel.svelte": {
+   "fallback": 1
+  },
+  "web/src/plugins/crate/crate-dialog.css": {
+   "duration": 1,
+   "fallback": 4,
+   "font": 2,
+   "line-height": 1,
+   "spacing": 12
+  },
+  "web/src/plugins/devwidgetlab/lab-frame.css": {
+   "border-width": 3,
+   "tracking": 6
+  },
+  "web/src/plugins/devwidgetlab/lab-menu.css": {
+   "border-width": 1,
+   "z-index": 1
+  },
+  "web/src/plugins/devwidgetlab/lab-viewer.css": {
+   "tracking": 7,
+   "z-index": 1
+  },
+  "web/src/plugins/devwidgetlab/lab.css": {
+   "spacing": 2
+  },
+  "web/src/plugins/flow/flow.css": {
+   "border-width": 3,
+   "line-height": 2,
+   "spacing": 25,
+   "tracking": 3
+  },
+  "web/src/plugins/huddle/CrosstalkTrail.svelte": {
+   "border-width": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/HuddleBody.svelte": {
+   "fallback": 4,
+   "line-height": 5,
+   "spacing": 2,
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/HuddleReply.svelte": {
+   "border-width": 1,
+   "line-height": 1
+  },
+  "web/src/plugins/huddle/HuddleReview.svelte": {
+   "border-width": 1,
+   "line-height": 2,
+   "tracking": 2
+  },
+  "web/src/plugins/huddle/HuddleThread.svelte": {
+   "border-width": 1,
+   "fallback": 3,
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/HuddleViewSwitch.svelte": {
+   "border-width": 2,
+   "line-height": 1
+  },
+  "web/src/plugins/huddle/SwarmDecisionKeys.svelte": {
+   "spacing": 4,
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/TaskManagerActionTag.svelte": {
+   "line-height": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/TaskManagerAnswerBox.svelte": {
+   "border-width": 1
+  },
+  "web/src/plugins/huddle/TaskManagerArtifactCard.svelte": {
+   "border-width": 1
+  },
+  "web/src/plugins/huddle/TaskManagerChips.svelte": {
+   "border-width": 1
+  },
+  "web/src/plugins/huddle/TaskManagerCommandBox.svelte": {
+   "fallback": 1,
+   "font": 1,
+   "spacing": 1
+  },
+  "web/src/plugins/huddle/TaskManagerEmptyGroup.svelte": {
+   "tracking": 1,
+   "weight": 1
+  },
+  "web/src/plugins/huddle/TaskManagerFiles.svelte": {
+   "border-width": 2
+  },
+  "web/src/plugins/huddle/TaskManagerForkedFrom.svelte": {
+   "border-width": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/TaskManagerFormAnswer.svelte": {
+   "border-width": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/TaskManagerFromInbox.svelte": {
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/TaskManagerFromProject.svelte": {
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/TaskManagerGithubIssue.svelte": {
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/TaskManagerInboxRow.svelte": {
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/TaskManagerMarkdown.svelte": {
+   "border-width": 1,
+   "font": 5,
+   "tracking": 2,
+   "weight": 2
+  },
+  "web/src/plugins/huddle/TaskManagerMarkerFilter.svelte": {
+   "border-width": 2,
+   "spacing": 1
+  },
+  "web/src/plugins/huddle/TaskManagerNewGroup.svelte": {
+   "line-height": 1
+  },
+  "web/src/plugins/huddle/TaskManagerProgress.svelte": {
+   "border-width": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/TaskManagerProjectHead.svelte": {
+   "border-width": 3,
+   "spacing": 1,
+   "tracking": 1,
+   "weight": 2,
+   "z-index": 1
+  },
+  "web/src/plugins/huddle/TaskManagerRoundCard.svelte": {
+   "border-width": 2
+  },
+  "web/src/plugins/huddle/TaskManagerRow.svelte": {
+   "border-width": 2,
+   "line-height": 3,
+   "spacing": 2,
+   "tracking": 1,
+   "weight": 1
+  },
+  "web/src/plugins/huddle/TaskManagerRowPeek.svelte": {
+   "line-height": 2
+  },
+  "web/src/plugins/huddle/TaskManagerRowPosts.svelte": {
+   "border-width": 2,
+   "duration": 1,
+   "line-height": 1,
+   "tracking": 1,
+   "weight": 1
+  },
+  "web/src/plugins/huddle/TaskManagerSchedule.svelte": {
+   "border-width": 1,
+   "line-height": 2,
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/TaskManagerScheduleOffer.svelte": {
+   "border-width": 1
+  },
+  "web/src/plugins/huddle/TaskManagerSections.svelte": {
+   "border-width": 1,
+   "line-height": 1,
+   "tracking": 1,
+   "weight": 1,
+   "z-index": 1
+  },
+  "web/src/plugins/huddle/TaskManagerSend.svelte": {
+   "border-width": 2,
+   "fallback": 1,
+   "line-height": 2,
+   "spacing": 1,
+   "tracking": 2,
+   "z-index": 1
+  },
+  "web/src/plugins/huddle/TaskManagerStatusFilter.svelte": {
+   "duration": 2,
+   "font": 1,
+   "line-height": 1,
+   "spacing": 1,
+   "weight": 1,
+   "z-index": 1
+  },
+  "web/src/plugins/huddle/TaskManagerStatusSections.svelte": {
+   "border-width": 1,
+   "fallback": 2,
+   "z-index": 1
+  },
+  "web/src/plugins/huddle/TaskManagerSteps.svelte": {
+   "border-width": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/TaskManagerSubHead.svelte": {
+   "border-width": 1,
+   "fallback": 1
+  },
+  "web/src/plugins/huddle/TaskManagerTagged.svelte": {
+   "border-width": 1
+  },
+  "web/src/plugins/huddle/TaskManagerThumb.svelte": {
+   "border-width": 1
+  },
+  "web/src/plugins/huddle/TaskManagerTickConfirm.svelte": {
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/TaskManagerTitleEdit.svelte": {
+   "line-height": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/TaskManagerWait.svelte": {
+   "border-width": 1
+  },
+  "web/src/plugins/huddle/agents/AgentChatFrame.svelte": {
+   "border-width": 2,
+   "spacing": 2
+  },
+  "web/src/plugins/huddle/ask/ask-form.css": {
+   "fallback": 4,
+   "line-height": 2,
+   "spacing": 1
+  },
+  "web/src/plugins/huddle/chat/AuthorPath.svelte": {
+   "border-width": 1,
+   "fallback": 1,
+   "tracking": 2,
+   "weight": 1
+  },
+  "web/src/plugins/huddle/chat/ChatAskForm.svelte": {
+   "fallback": 2
+  },
+  "web/src/plugins/huddle/chat/ChatAvatar.svelte": {
+   "border-width": 1,
+   "font": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/chat/ChatBar.svelte": {
+   "fallback": 2,
+   "spacing": 2,
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/chat/ChatCard.svelte": {
+   "border-width": 1,
+   "fallback": 1,
+   "tracking": 5
+  },
+  "web/src/plugins/huddle/chat/ChatMarkdown.svelte": {
+   "border-width": 2,
+   "line-height": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/chat/ChatWidget.svelte": {
+   "border-width": 3,
+   "duration": 3,
+   "fallback": 3,
+   "line-height": 1,
+   "radius": 1,
+   "tracking": 2
+  },
+  "web/src/plugins/huddle/chat/EventCard.svelte": {
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/chat/MemoryPanel.svelte": {
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/chat/RewindView.svelte": {
+   "tracking": 2
+  },
+  "web/src/plugins/huddle/chat/TrafficCard.svelte": {
+   "border-width": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/chat/WaitingTray.svelte": {
+   "tracking": 2
+  },
+  "web/src/plugins/huddle/swarm/SwarmLedger.svelte": {
+   "border-width": 5,
+   "line-height": 1,
+   "radius": 4,
+   "spacing": 7,
+   "tracking": 3,
+   "weight": 1
+  },
+  "web/src/plugins/huddle/swarm/SwarmOrg.svelte": {
+   "border-width": 5,
+   "fallback": 1,
+   "line-height": 1,
+   "radius": 4,
+   "spacing": 3
+  },
+  "web/src/plugins/huddle/swarm/SwarmPanel.svelte": {
+   "border-width": 3,
+   "duration": 1,
+   "fallback": 1,
+   "line-height": 2,
+   "radius": 3,
+   "spacing": 11,
+   "tracking": 2,
+   "weight": 1,
+   "z-index": 1
+  },
+  "web/src/plugins/huddle/swarm/SwarmSettingsForm.svelte": {
+   "fallback": 3,
+   "spacing": 5,
+   "tracking": 1
+  },
+  "web/src/plugins/huddle/swarm/characters/characters.css": {
+   "duration": 50,
+   "fallback": 11,
+   "radius": 7,
+   "spacing": 1,
+   "z-index": 1
+  },
+  "web/src/plugins/huddle/task-manager-tail.css": {
+   "border-width": 1,
+   "font": 1,
+   "line-height": 1,
+   "spacing": 1
+  },
+  "web/src/plugins/reviewboard/ClosedReviews.svelte": {
+   "fallback": 3,
+   "spacing": 1,
+   "weight": 1
+  },
+  "web/src/plugins/reviewboard/board.css": {
+   "border-width": 1,
+   "spacing": 15,
+   "tracking": 3
+  },
+  "web/src/plugins/reviewboard/header.css": {
+   "fallback": 5,
+   "spacing": 11,
+   "z-index": 1
+  },
+  "web/src/plugins/reviewboard/public/share-link.css": {
+   "fallback": 5,
+   "weight": 1
+  },
+  "web/src/plugins/reviewboard/public/visitor-page/public.css": {
+   "border-width": 2,
+   "fallback": 5,
+   "line-height": 1,
+   "weight": 2
+  },
+  "web/src/plugins/reviewboard/public/visitors.css": {
+   "border-width": 1,
+   "fallback": 2
+  },
+  "web/src/plugins/reviewboard/tray.css": {
+   "spacing": 16,
+   "z-index": 1
+  },
+  "web/src/plugins/save/RestorePoints.svelte": {
+   "border-width": 1,
+   "fallback": 3,
+   "spacing": 7,
+   "tracking": 1
+  },
+  "web/src/plugins/save/SessionTab.svelte": {
+   "border-width": 1,
+   "fallback": 1,
+   "line-height": 1,
+   "spacing": 1
+  },
+  "web/src/plugins/share/ShareModal.svelte": {
+   "font": 4,
+   "spacing": 9
+  },
+  "web/src/popout/AgentPopout.svelte": {
+   "tracking": 1
+  },
+  "web/src/popout/BrowserPopout.svelte": {
+   "tracking": 1
+  },
+  "web/src/popout/SingleWidget.svelte": {
+   "tracking": 1
+  },
+  "web/src/popout/TabPopout.svelte": {
+   "tracking": 1
   },
   "web/src/spectate/SpectatePage.svelte": {
+   "border-width": 2,
    "font": 4,
    "spacing": 12
   },
@@ -1037,8 +2615,18 @@
   }
  },
  "totals": {
-  "color": 7,
-  "font": 441,
-  "spacing": 1553
+  "border-width": 585,
+  "color": 5,
+  "color-def": 60,
+  "duration": 122,
+  "fallback": 668,
+  "font": 454,
+  "inline": 0,
+  "line-height": 397,
+  "radius": 135,
+  "spacing": 1386,
+  "tracking": 334,
+  "weight": 224,
+  "z-index": 90
  }
 }

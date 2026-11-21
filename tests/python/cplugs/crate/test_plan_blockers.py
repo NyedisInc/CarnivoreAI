@@ -12,12 +12,12 @@ import pytest
 
 from src.core.claude_transcript_correlate import slugify_project_dir
 from src.core.db import connect, db_path_for
-from src.cplugs.crate import entries_out, folders
-from src.cplugs.crate import forbidden
-from src.cplugs.crate import policy as P
-from src.cplugs.crate.plan import RecipientInvalid, build_plan
-from src.cplugs.sdk import crate_sources as cs
-from src.cplugs.sdk.crate_sources import PaneListing
+from src.plugins.crate import entries_out, folders
+from src.plugins.crate import forbidden
+from src.plugins.crate import policy as P
+from src.plugins.crate.plan import RecipientInvalid, build_plan
+from src.plugins.sdk import crate_sources as cs
+from src.plugins.sdk.crate_sources import PaneListing
 from tests.python.cplugs.crate.crate_world import env_for, make_world, project_request, session_request
 from tests.python.cplugs.crate.forbidden_world import plant_canaries, plant_symlink
 from tests.python.inventory.world import CONV_A, CONV_A0, EPOCH_A, TMUX_A, UUID_A, UUID_B
@@ -129,7 +129,7 @@ def test_encryption_needs_a_valid_recipient(world: SimpleNamespace) -> None:
     assert _codes(plan) == ["no_recipients"]
     with pytest.raises(RecipientInvalid):
         build_plan(env_for(world), session_request(encrypt=True, recipients=("age1notakey",)))
-    from src.cplugs.sdk.crate_format import generate
+    from src.plugins.sdk.crate_format import generate
     _identity, recipient = generate()
     assert build_plan(env_for(world), session_request(encrypt=True, recipients=(recipient,))).ok
 

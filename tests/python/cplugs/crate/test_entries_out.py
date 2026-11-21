@@ -9,10 +9,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.cplugs.crate import constants as K
-from src.cplugs.crate.entries_out import ScopeKeys, read_entries, slice_matching
-from src.cplugs.crate.plan import build_plan
-from src.cplugs.sdk import crate_sources as cs
+from src.plugins.crate import constants as K
+from src.plugins.crate.entries_out import ScopeKeys, read_entries, slice_matching
+from src.plugins.crate.plan import build_plan
+from src.plugins.sdk import crate_sources as cs
 from tests.python.cplugs.crate.crate_world import env_for, make_world, project_request, session_request
 from tests.python.inventory.world import EPOCH_A, TMUX_A, UUID_A
 

@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, expect, test, vi } from 'vitest';
-import type { ThemeRegistry } from '../cplugs/sdk/themes';
+import type { ThemeRegistry } from '../plugins/sdk/themes';
 
 vi.stubGlobal('OffscreenCanvas', class {
   getContext(): object {

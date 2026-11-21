@@ -9,11 +9,11 @@ from typing import Any, Dict, Iterator, Optional
 ARG = "huddle_item"
 
 GATED_TOOLS = frozenset({
-    "session_create", "session_send_keys", "session_restart", "session_stop", "session_delete", "session_purge",
+    "delegate", "job_reply", "session_create", "session_send_keys", "session_restart", "session_stop", "session_delete", "session_purge",
     "agent_spawn", "agent_fork", "crosstalk_send", "crosstalk_reply",
     "bookmark_branch", "bookmark_rewind", "swarm_rewind", "swarm_spawn", "swarm_set_look", "swarm_rename",
     "project_rename", "company_create", "company_rename", "company_parent_set",
-    "company_hq_set", "company_delete", "project_archive", "project_unarchive", "project_move", "project_pack", "project_unpack", "board_import", "pipeline_plugin_rebuild",
+    "company_hq_set", "company_folder_set", "project_company_set", "company_delete", "project_archive", "project_unarchive", "project_move", "project_pack", "project_unpack", "board_import", "pipeline_plugin_rebuild",
     "cplug_update",
     "session_wake", "session_shell_open", "session_interrupt", "session_dialog_answer", "session_dialog_questions_answer", "project_create", "project_delete", "project_replica_add", "project_replica_remove", "project_air_gap_set", "dashboard_delete",
     "project_sync", "project_github_account_set", "project_publish_repo", "pack_gh_login_add",

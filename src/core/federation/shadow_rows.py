@@ -60,12 +60,14 @@ def _moved_home_project(conn: sqlite3.Connection, peer_uuid: str) -> Optional[in
     return int(found[0]) if found is not None else None
 
 
-def _project(conn: sqlite3.Connection, host_key: str, far_dir: str, now: str, peer_uuid: str):
+def _project(conn: sqlite3.Connection, host_key: str, far_dir: str, now: str, peer_uuid: str,
+             project_uid: Optional[str] = None, claimed: Optional[set] = None):
     home = _moved_home_project(conn, peer_uuid)
     if home is not None:
         binding = ProjectBinding(project_id=home, attribution=SESSION_ATTRIBUTION_DERIVED_DEEPEST, rule=BINDING_MATCHED)
     else:
-        binding = bind_remote_project(conn, host_key, far_dir, now=now, root=peer_project_root(host_key, far_dir))
+        binding = bind_remote_project(conn, host_key, far_dir, now=now, root=peer_project_root(host_key, far_dir),
+                                      project_uid=project_uid, claimed=claimed)
     name = None
     if binding.project_id is not None:
         found = conn.execute("SELECT display_name FROM projects WHERE id = ?", (binding.project_id,)).fetchone()
@@ -86,7 +88,7 @@ def _existing(conn: sqlite3.Connection, host_key: str, peer_uuid: str, local_uui
 def sync_peer(conn: sqlite3.Connection, *, host_key: str, peer_install_id: str,
               rows: Sequence[Mapping[str, object]], complete: bool,
               asleep: Optional[Sequence[Mapping[str, object]]] = None) -> Dict[str, Shadow]:
-    now, out, seen, skipped, rested = utc_now(), {}, [], 0, []
+    now, out, seen, skipped, rested, claimed = utc_now(), {}, [], 0, [], set()
     live = {str(r.get("session_uuid")) for r in rows}
     todo = [(r, None) for r in rows] + [(r, r.get("source")) for r in (asleep or ()) if str(r.get("session_uuid")) not in live
                                          and r.get("source") in SLEEP_SOURCES]
@@ -99,7 +101,8 @@ def sync_peer(conn: sqlite3.Connection, *, host_key: str, peer_install_id: str,
                 continue
             name, peer_uuid = str(row["name"]), str(row["session_uuid"])
             local_uuid = shadow_uuid(peer_install_id, peer_uuid)
-            binding, project_name = _project(conn, host_key, str(row["working_dir"]), now, peer_uuid)
+            binding, project_name = _project(conn, host_key, str(row["working_dir"]), now, peer_uuid,
+                                         row.get("project_uid") if isinstance(row.get("project_uid"), str) else None, claimed)
             wanted = (binding.project_id, binding.attribution, row["working_dir"], name, row.get("agent_type"),
                       row.get("agent_family"), row.get("agent_family_source") or "unknown", row.get("label"))
             sid = _existing(conn, host_key, peer_uuid, local_uuid)

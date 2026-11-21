@@ -48,7 +48,7 @@ def test_a_visitor_reaches_only_the_board_the_link_names(read_env, store, folder
 
 
 def test_every_row_the_projection_names_is_a_field_of_the_port(read_env) -> None:
-    from src.cplugs.reviewboard.public.port import port
+    from src.plugins.reviewboard.public.port import port
 
     shown = port().public_revision("20261013-bottom-bar", "r1", "main")
     assert set(shown.projection) == TOP_KEYS - {"expires_at", "frame_ttl", "access", "theme", "draft", "revisions"}
@@ -58,7 +58,7 @@ def test_every_row_the_projection_names_is_a_field_of_the_port(read_env) -> None
 
 @pytest.mark.parametrize("revision,view", [("r9", None), ("r1", "nope"), ("draft", None)])
 def test_the_port_refuses_what_is_not_there(read_env, revision: str, view: Any) -> None:
-    from src.cplugs.reviewboard.public.port import PublicBoardMissing, port
+    from src.plugins.reviewboard.public.port import PublicBoardMissing, port
 
     with pytest.raises(PublicBoardMissing):
         port().public_revision("20261013-bottom-bar", revision, view)

@@ -1,11 +1,11 @@
 <script lang="ts">
   import { t } from '../../../lib/i18n/index.svelte';
-  import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
-  import { itemsOnScreen } from '../../../cplugs/huddle/huddle.svelte';
-  import { stepsOfItem } from '../../../cplugs/huddle/task-manager-steps.svelte';
-  import { jumpToParent } from '../../../cplugs/huddle/task-manager-fork.svelte';
-  import TaskManagerForkedFrom from '../../../cplugs/huddle/TaskManagerForkedFrom.svelte';
-  import TaskManagerSteps from '../../../cplugs/huddle/TaskManagerSteps.svelte';
+  import type { HuddleItem } from '../../../plugins/huddle/huddle-model';
+  import { itemsOnScreen } from '../../../plugins/huddle/huddle.svelte';
+  import { stepsOfItem } from '../../../plugins/huddle/task-manager-steps.svelte';
+  import { jumpToParent } from '../../../plugins/huddle/task-manager-fork.svelte';
+  import TaskManagerForkedFrom from '../../../plugins/huddle/TaskManagerForkedFrom.svelte';
+  import TaskManagerSteps from '../../../plugins/huddle/TaskManagerSteps.svelte';
   import { subtasksOf } from './mk2-subtasks';
 
   let { item }: { item: HuddleItem } = $props();

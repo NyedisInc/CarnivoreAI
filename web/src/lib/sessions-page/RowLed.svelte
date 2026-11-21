@@ -1,7 +1,7 @@
 
 <script lang="ts">
     import SessionFace from '../sessions/SessionFace.svelte';
-    import { swarmRosterAgents } from '../../cplugs/sdk/swarm-roster.svelte';
+    import { swarmRosterAgents } from '../../plugins/sdk/swarm-roster.svelte';
     import { memberOf } from '../swarm-membership/member-face';
     import type { SessionListItem } from '../sessions/types';
     import type { PageRow } from './filters';

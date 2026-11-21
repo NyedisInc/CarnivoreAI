@@ -6,6 +6,6 @@ export const FOOT_BAR_ITEM_DEFAULTS: Readonly<Record<string, boolean>> = {
   window_5h: true,
   window_7d: true,
   agents: false,
-  shells: false,
+  shells: true,
   timers: true,
 };

@@ -33,13 +33,7 @@
   }
 </script>
 
-<ModalShell title={t('beast.confirm.title')} overlayClass="text-prompt-modal na-flow" onCancel={() => close(null)}>
-  {#snippet head()}
-    <div class="text-prompt-modal__head">
-      <span class="text-prompt-modal__verb">{t('beast.confirm.title')}</span>
-      <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close onclick={() => close(null)} />
-    </div>
-  {/snippet}
+<ModalShell look="titlerow" title={t('beast.confirm.title')} overlayClass="na-flow" onCancel={() => close(null)}>
   <p class="modal-description">{t('beast.confirm.body', { count: status?.pending_count ?? 0 })}</p>
   <p class="modal-description beast-risk" data-beast-risk>{t('beast.confirm.risk')}</p>
   <div class="beast-scope" data-beast-scope>

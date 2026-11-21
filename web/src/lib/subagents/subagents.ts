@@ -16,6 +16,7 @@ export interface SubagentRow {
     status: SubagentStatus;
     status_reason: string;
     end_status: string | null;
+    stalled_seconds?: number | null;
 }
 
 export interface SessionSubagents {
@@ -94,6 +95,13 @@ export function secondsSince(iso: string | null, nowMs: number): number | null {
     const at = Date.parse(iso);
     if (!Number.isFinite(at)) return null;
     return Math.max(0, Math.floor((nowMs - at) / 1000));
+}
+
+/* what the server measured */
+export function stalledText(row: SubagentRow, nowMs: number): string | null {
+    if (row.status !== 'running' || typeof row.stalled_seconds !== 'number') return null;
+    const seconds = Math.max(row.stalled_seconds, secondsSince(row.last_activity_at, nowMs) ?? 0);
+    return t('subagents.stalled', { minutes: Math.max(1, Math.floor(seconds / 60)) });
 }
 
 export function emptyMessage(payload: SessionSubagents): string | null {

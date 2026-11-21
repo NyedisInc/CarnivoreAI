@@ -65,12 +65,7 @@
 
 </script>
 
-<ModalShell title={t('keymap.editor.title')} overlayClass="text-prompt-modal keymap-editor" onCancel={() => close(null)} data-keymap-editor>
-    {#snippet head()}
-        <div class="text-prompt-modal__head">
-            <span class="text-prompt-modal__verb">&raquo; {t('keymap.editor.title')}</span>
-        </div>
-    {/snippet}
+<ModalShell look="titlerow" closable={false} title={t('keymap.editor.title')} overlayClass="keymap-editor" onCancel={() => close(null)} data-keymap-editor>
 
     <div class="keymap-editor__body">
         <p class="keymap-editor__for">{t(action.labelKey)} <Tag>{t(scopeTagKey(action.scope))}</Tag></p>

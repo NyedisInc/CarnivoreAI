@@ -6,7 +6,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
-from src.cplugs.sdk import destination_rules as rules
+from src.plugins.sdk import destination_rules as rules
 from tests.python.cplugs.owner import turn_on
 from tests.python.cplugs.removability import _client
 

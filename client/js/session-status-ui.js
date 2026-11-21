@@ -98,6 +98,8 @@ console.log('[SessionStatusUI Module] Loading...');
             ? `${hostOff} offline`
             : (signals || {}).usage_limit && key !== 'asleep' && key !== 'dead' && key !== 'stopped'
             ? (signals || {}).usage_limit
+            : (signals || {}).login_expired && key !== 'asleep' && key !== 'dead' && key !== 'stopped'
+            ? (signals || {}).login_expired
             : labelWithSource(
                 key,
                 (signals || {}).status_source,
@@ -115,6 +117,7 @@ console.log('[SessionStatusUI Module] Loading...');
                 transport: s.transport,
                 host_offline: s.host_offline,
                 usage_limit: s.usage_limit,
+                login_expired: s.login_expired,
             });
             return globalThis.StatusLed.ledHtml({
                 inner: led.inner,

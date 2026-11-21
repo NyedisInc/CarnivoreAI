@@ -290,12 +290,7 @@ test('the stylesheet and the module are both still loaded, in a usable order', (
 });
 
 test('the focus ring is no longer overridden away on a themed row', () => {
-    const density = fs.readFileSync(
-        path.join(ROOT, 'client', 'css', 'session-sidebar-density.css'), 'utf8');
-    assert.match(density, /:focus-visible\s*\{[^}]*box-shadow/,
-        'the focus ring is still a box-shadow, so this file must keep away from '
-        + 'that property on the row');
-    assert.doesNotMatch(liveTintCss(), /box-shadow/);
+    assert.doesNotMatch(liveTintCss(), /box-shadow|outline/);
 });
 
 // ---------------------------------------------------------------------

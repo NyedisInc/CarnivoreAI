@@ -213,7 +213,7 @@
     }
 
     .tlc-band[data-state='busy'] { background: var(--oc-green); }
-    .tlc-band[data-state='waiting'] { z-index: 1; background: var(--oc-yellow); }
+    .tlc-band[data-state='waiting'] { z-index: var(--oc-z-raised); background: var(--oc-yellow); }
 
     .tlc-sleep {
       position: absolute;

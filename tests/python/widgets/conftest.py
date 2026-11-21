@@ -1,9 +1,27 @@
 
 from __future__ import annotations
 
+import fcntl
+import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager
+from pathlib import Path
+
 import pytest
 
 from scripts.widgets import harness
+
+BUILD_LOCK = Path(tempfile.gettempdir()) / "carnivore-widget-harness-build.lock"
+
+
+@contextmanager
+def _one_build_at_a_time() -> Iterator[None]:
+    with open(BUILD_LOCK, "w") as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
 
 
 @pytest.fixture(scope="module")
@@ -12,7 +30,8 @@ def page_and_base():
     if not (harness.WEB / "node_modules").is_dir():
         pytest.skip("web/node_modules is missing: the harness cannot be built (npm ci in web/)")
     try:
-        harness.build_harness()
+        with _one_build_at_a_time():
+            harness.build_if_stale()
     except harness.HarnessError as exc:
         pytest.skip(f"the widget harness did not build: {exc}")
     httpd, base = harness.serve()

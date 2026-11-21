@@ -23,5 +23,10 @@ def warn_once(event: str, key: str, **context: Any) -> bool:
     return True
 
 
+def warn_exc_once(event: str, exc: BaseException, **context: Any) -> bool:
+    cause = f"{type(exc).__name__}:{exc}"
+    return warn_once(event, cause, error=str(exc), error_type=type(exc).__name__, **context)
+
+
 def reset_warnings() -> None:
     _SEEN.clear()

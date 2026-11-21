@@ -15,9 +15,9 @@ import pytest
 from src.core.plugin_health import model
 from src.core.plugin_health.gather import build_report
 from src.core.plugin_health.presence import GONE, PRESENT, UNREADABLE, folder_presence
-from src.cplugs.host import folder_watch, identity, prune_gone, runtime, sidecar_registry, sideload
-from src.cplugs.host import state as owner_state
-from src.cplugs.runtime import sandbox
+from src.plugins.host import folder_watch, identity, prune_gone, runtime, sidecar_registry, sideload
+from src.plugins.host import state as owner_state
+from src.plugins.runtime import sandbox
 from tests.python.api_keys.conftest import bearer, client, key_store, owner_jwt  # noqa: F401
 from tests.python.plugin_health.world import StubProcess, make_world, write_code
 
@@ -238,7 +238,7 @@ def test_a_database_error_on_one_install_skips_it_and_boot_goes_on(served, tmp_p
         return real(state_dir, item_id)
 
     monkeypatch.setattr(prune_gone, "_drop_stores", drop)
-    from src.cplugs.host import owner_switch
+    from src.plugins.host import owner_switch
 
     owner_switch.write(w.state, True)
     w.rt.host = w.host
@@ -283,7 +283,7 @@ def test_a_placeholder_or_a_missing_parent_is_can_not_see_it(tmp_path):
 def test_a_boot_prune_runs_before_anything_activates(served, tmp_path):
     w = served
     shutil.move(str(w.code), str(tmp_path / "Trash-cat"))
-    from src.cplugs.host import owner_switch
+    from src.plugins.host import owner_switch
 
     owner_switch.write(w.state, True)
     w.rt.supervisor._procs.pop("gonedev")

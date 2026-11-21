@@ -174,7 +174,7 @@
     }
 
     .oc-refusal--brief .oc-refusal-plate {
-      gap: 2px;
+      gap: var(--oc-space-0-5);
     }
 
     .oc-refusal--icon {
@@ -182,7 +182,7 @@
     }
 
     .oc-refusal--icon .oc-refusal-plate {
-      padding: 1px;
+      padding: var(--oc-gap-hair);
     }
 
     .oc-visually-hidden {

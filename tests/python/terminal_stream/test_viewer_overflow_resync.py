@@ -1,12 +1,13 @@
 import asyncio
 import base64
 import json
-from pathlib import Path
 from types import SimpleNamespace
 
 from src.api.ws_viewer_drain import _drain_viewer
 from src.core import viewer_fanout
 from src.core.bounded_stream import OFFER_ACCEPTED, OFFER_OVERFLOWED
+from tests.test_ws_handshake_paint import SESSION_ID, _drive_handshake, paint_app  # noqa: F401
+from tests.test_ws_subprotocol_auth import _mint_token, patched_auth_config  # noqa: F401
 
 CLEAR_AND_HOME = b"\x1b[H\x1b[2J"
 BOUND = viewer_fanout.MAX_VIEWER_QUEUE_CHUNKS
@@ -168,6 +169,20 @@ def test_default_stream_still_overflows_and_closes():
     assert stream.overflowed and stream.closed
 
 
-def test_terminal_endpoint_opts_in():
-    src = (Path(__file__).resolve().parents[3] / "src" / "api" / "websocket.py").read_text()
-    assert "registry.subscribe(target_sid, resync=True)" in src
+def test_terminal_endpoint_opts_in(paint_app, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    registry = paint_app.state.services.registry
+    real_subscribe = registry.subscribe
+    asked: list = []
+
+    def spy(session_id, *args, **kwargs):
+        asked.append((session_id, args, kwargs))
+        return real_subscribe(session_id, *args, **kwargs)
+
+    monkeypatch.setattr(registry, "subscribe", spy)
+    with TestClient(paint_app).websocket_connect(
+        f"/ws/terminal?session_id={SESSION_ID}", subprotocols=["cloude.jwt.v1", _mint_token()]
+    ) as ws:
+        _drive_handshake(ws)
+    assert [(sid, kw) for sid, _, kw in asked] == [(SESSION_ID, {"resync": True})]

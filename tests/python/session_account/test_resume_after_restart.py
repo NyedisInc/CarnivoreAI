@@ -4,7 +4,8 @@ import asyncio
 from types import SimpleNamespace
 
 import pytest
-from fastapi import HTTPException
+from src.core.sessions import guarded_paste
+from src.core.sessions.guarded_paste import PasteRefused
 
 from src.core.account_switch import resume_after_restart as rar
 from src.core.session_startup_gate import GATE_READY
@@ -33,15 +34,15 @@ class _Ops:
 def wired(monkeypatch):
     ops = _Ops()
     sent: list = []
-    refusals = [HTTPException(409, "busy")]
+    refusals = [PasteRefused("pane_dialog_open", "busy")]
 
-    async def paste(request, session_id, text, *, fresh_dialog_check=False, hold_exempt=False):
+    async def paste(app_state, session_id, text, options):
         if refusals:
             raise refusals.pop()
-        sent.append((session_id, text, fresh_dialog_check))
+        sent.append((session_id, text, options.fresh_dialog_check))
 
     monkeypatch.setattr(rar.bring_up, "ops_for_app", lambda _state: ops)
-    monkeypatch.setattr("src.api.one_shot_routes.paste_through_gates", paste)
+    monkeypatch.setattr(guarded_paste, "paste_through_gates", paste)
     return sent
 
 

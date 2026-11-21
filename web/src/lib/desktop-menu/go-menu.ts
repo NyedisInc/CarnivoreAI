@@ -5,6 +5,7 @@ import { isLive } from '../app-keys/chords';
 import { goTo } from '../nav-items/nav-items';
 import { t } from '../i18n/index.svelte';
 import { hostWindow } from '../sessions/env';
+import { startGoKeys } from './go-keys.svelte';
 
 export const GO_RECENT_MAX = 10;
 
@@ -44,6 +45,7 @@ export function startGoMenu(): void {
     const bridge = (hostWindow() as { carnivoreDesktop?: GoBridge } | undefined)?.carnivoreDesktop;
     if (started || !bridge || typeof bridge.goRecent !== 'function') return;
     started = true;
+    startGoKeys();
     focusHistory.onChange(() => {
         published = recentPlaces(focusHistory, isLive);
         bridge.goRecent?.(published.map(placeLabel));

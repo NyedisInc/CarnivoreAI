@@ -75,7 +75,7 @@ async def project_color_set(manager: Any, caller: AgentCaller, args: dict) -> di
         done = []
         for pid, color in plan.items():
             try:
-                row = await _via_route(projects_routes.update_project(current[pid], UpdateProjectRequest(color=color)))
+                row = await _via_route(projects_routes.update_project_for(pid, UpdateProjectRequest(color=color)))
             except ToolError as exc:
                 landed = ", ".join(f"{d['id']} ({json.dumps(d['name'])})" for d in done) or "none"
                 raise ToolError(f"{exc}; project colors already changed: {landed}; stopped at project id {pid}") from exc

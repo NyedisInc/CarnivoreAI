@@ -38,7 +38,8 @@
     import type { ManagerView } from '../manager-frame/view-memory';
     import { readPageView, writePageView } from '../../opscenter/ui/page-view';
     import { isPressable, isTyping, keyAction, type KeyAction } from './keys';
-    import { VISIBLE_SORT_KEYS, sortCards, type SortKey } from './sort';
+    import { sortCards, type SortKey } from './sort';
+    import { readSort, writeSort } from './sort-store';
     import InstallSheet from './InstallSheet.svelte';
     import { browserCatalogHost, type CatalogHost } from './catalog';
     import { openPublishPage } from './publish-entry';
@@ -68,24 +69,6 @@
     export const SEARCH_DEBOUNCE_MS = 150;
 
     const VIEW_KEY = 'skills';
-
-    const SORT_STORE_KEY = 'carnivore.warez.sort';
-
-    function readSort(): SortKey {
-        try {
-            const stored = globalThis.localStorage?.getItem(SORT_STORE_KEY) ?? '';
-            return (VISIBLE_SORT_KEYS as readonly string[]).includes(stored) ? (stored as SortKey) : 'featured';
-        } catch {
-            return 'featured';
-        }
-    }
-
-    function writeSort(next: SortKey): void {
-        try {
-            globalThis.localStorage?.setItem(SORT_STORE_KEY, next);
-        } catch {
-        }
-    }
 
     interface Props {
         host?: CatalogHost;
@@ -549,26 +532,30 @@
 {/snippet}
 
 {#if open}
-    
+    <!-- the reading pane -->
     {#snippet pageActions()}
         {@render statusLine(false)}
-        <WarezTools search={searchField} {sortKey} onSort={(next) => { sortKey = next; writeSort(next); }} {view} onView={setView} arrange={!installedPane} {t} />
+        {#if !installedPane}<WarezTools {sortKey} onSort={(next) => { sortKey = next; writeSort(next); }} {view} onView={setView} {t} />{/if}
         <WarezActs refreshing={data.refreshing} onRefresh={() => void data.refreshIndex()} onPublish={() => openPublishPage()} showPublish={menuOn || false} {t} />
     {/snippet}
 
     <Page
-        class={menuOn ? 'cat cat--flush' : 'cat'}
+        class="cat"
         title={title ?? t(SKILL_KEYS.screenTitle)}
         icon="floppy-525"
         {embedded}
         onClose={embedded || readonly ? undefined : close}
         closeLabel={t(MANAGER_KEYS.close)}
+        frame="nav"
+        scroll="self"
         actions={searchInTitle ? undefined : pageActions}
+        find={searchInTitle ? undefined : searchField}
         search={!embedded && searchInTitle && !(menuOn && phoneView === 'menu') ? searchField : undefined}
         backIcon="chevron-left"
         controls={!embedded && searchInTitle && !(menuOn && phoneView === 'menu') ? flipControl : undefined}
         bar={searchInTitle && !embedded && !menuOn && !installedPane ? pageBar : undefined}
     >
+        <div class="cat-col">
         {#if notFoundId}
             <p class="screen__notfound" role="status">
                 {t(BROWSE_KEYS.itemNotFound, { id: notFoundId })}
@@ -630,6 +617,7 @@
         </div>
         {/if}
         {#if readonly}<TrustLine index={data.index} {t} />{/if}
+        </div>
     </Page>
 {/if}
 
@@ -653,6 +641,13 @@
         --cat-gutter: 16px;
     }
 
+    .cat-col {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        min-height: 0;
+    }
+
     .screen__notfound {
         margin: 0 var(--cat-gutter);
         padding: 6px 8px;
@@ -674,11 +669,6 @@
     .screen__body--flush {
         width: 100%;
         margin-inline: 0;
-    }
-
-    :global(.cat--flush .oc-titlebar),
-    :global(.cat--flush .oc-page__bar) {
-        padding-inline: var(--oc-page-gutter);
     }
 
     .screen__body--rail {

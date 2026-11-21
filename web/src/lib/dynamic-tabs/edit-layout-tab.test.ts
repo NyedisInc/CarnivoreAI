@@ -79,7 +79,7 @@ test('entering edit layout opens the tab, shows it, opens a closed drawer, and d
   expect(opened).toHaveBeenCalledWith({ persist: false });
   expect(tabbody().hidden).toBe(false);
   expect(list().hidden).toBe(true);
-  expect(tabbody().querySelector('.le-drawer.le-drawer--docked')).not.toBeNull();
+  expect(tabbody().querySelector('.le-drawer[data-sheet-docked]')).not.toBeNull();
   sidebarTabs.select('agents');
   flushSync();
   expect(layoutEditor.active).toBe(true);

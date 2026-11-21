@@ -9,13 +9,13 @@ from pathlib import Path
 import pytest
 
 from src.core.work.storage import WorkStorage
-from src.cplugs.huddle import answers, artifacts, progress, rich_ask, rules
-from src.cplugs.huddle.cards import driven
-from src.cplugs.huddle.answer_writer import AnswerWriter
-from src.cplugs.huddle.rules import CLAUDE, JOE
-from src.cplugs.huddle.store import TaskManagerStore
-from src.cplugs.sdk.cards import CardRefused
-from src.cplugs.sdk.owner_text import raw_cap
+from src.plugins.huddle import answers, artifacts, progress, rich_ask, rules
+from src.plugins.huddle.cards import driven
+from src.plugins.huddle.answer_writer import AnswerWriter
+from src.plugins.huddle.rules import CLAUDE, JOE
+from src.plugins.huddle.store import TaskManagerStore
+from src.plugins.sdk.cards import CardRefused
+from src.plugins.sdk.owner_text import raw_cap
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client  # noqa: F401
 from tests.python.cplugs.test_owner_text import CLEAN_LOG, COLORED_LOG, REFUSED, STRIPPED
 

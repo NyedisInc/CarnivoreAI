@@ -8,11 +8,11 @@
 
 <script lang="ts">
   import type { CellProps } from '../../lib/cell';
-  import HuddleBody from '../../../cplugs/huddle/HuddleBody.svelte';
-  import { AGGREGATE } from '../../../cplugs/huddle/huddle-model';
+  import HuddleBody from '../../../plugins/huddle/HuddleBody.svelte';
+  import { AGGREGATE } from '../../../plugins/huddle/huddle-model';
   import WidgetShell from '../../widgets/shell/WidgetShell.svelte';
   import { useWidget, type WidgetHandle } from '../../widgets/shell/define-widget.svelte';
-  import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
+  import type { HuddleItem } from '../../../plugins/huddle/huddle-model';
   import Mk2Bar from '../task-manager-mk2/Mk2Bar.svelte';
   import Mk2Count from '../task-manager-mk2/Mk2Count.svelte';
   import Mk2Frame from '../task-manager-mk2/Mk2Frame.svelte';

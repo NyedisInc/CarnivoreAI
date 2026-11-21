@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -19,12 +20,12 @@ def test_accented_name_and_path_come_back_exact_under_lc_all_c(tmp_path: Path) -
     name = "café-naïve"
     socket = derive_test_socket("utf8_names")
     base = ["tmux", "-L", socket, "-f", "/dev/null"]
-    made = subprocess.run([*base, "new-session", "-d", "-s", name, "-c", str(folder), "-x", "80", "-y", "24", "cat"],
-                          capture_output=True, check=False)
+    made = subprocess.run([*base, "-u", "new-session", "-d", "-s", name, "-c", str(folder), "-x", "80", "-y", "24", "cat"],
+                          capture_output=True, check=False, env={**os.environ, "LC_ALL": "en_US.UTF-8"})
     assert made.returncode == 0, made.stderr
     try:
         assert listing_env()["LC_ALL"] == "C"
-        done = subprocess.run([*base, "list-panes", "-a", "-F", "#{session_name}\t#{pane_current_path}"],
+        done = subprocess.run([*base, "-u", "list-panes", "-a", "-F", "#{session_name}\t#{pane_current_path}"],
                               capture_output=True, env=listing_env(), check=False)
         row = done.stdout.decode("utf-8").rstrip("\n").split("\t")
         assert row[0] == name

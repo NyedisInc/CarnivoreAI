@@ -5,7 +5,9 @@ import { motionReduced } from '../../lib/motion/motion';
 
 const QUERY = '(min-width: 1024px)';
 
-const NARROW_QUERY = '(max-width: 767px)';
+export const PHONE_MAX_PX = 767;
+
+const NARROW_QUERY = `(max-width: ${PHONE_MAX_PX}px)`;
 
 export const viewport: { wide: boolean; phone: boolean; narrow: boolean } = $state({ wide: true, phone: false, narrow: false });
 

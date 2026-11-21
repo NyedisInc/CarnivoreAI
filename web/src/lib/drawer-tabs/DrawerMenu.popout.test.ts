@@ -8,7 +8,7 @@ import { homeBoards } from '../../opscenter/engine/home-sync.svelte';
 import { resetLayout } from '../../opscenter/engine/model';
 import { META } from '../../opscenter/engine/meta';
 import { setLocale } from '../i18n/index.svelte';
-import { cplugEnablement } from '../../cplugs/host/enablement.svelte';
+import { cplugEnablement } from '../../plugins/host/enablement.svelte';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
 
 installPopoverPolyfill();

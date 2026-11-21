@@ -78,7 +78,7 @@ from src.core.launch_profiles.ddl import apply_v56
 from src.core.crosstalk.ddl import apply_v57, apply_v94, apply_v102
 from src.core.messaging.ddl import apply_v73, apply_v92
 from src.core.descriptions.ddl import apply_v74
-from src.core.companies.ddl import apply_v58, apply_v72
+from src.core.companies.ddl import apply_v58, apply_v72, apply_v105
 from src.core.project_pack.ddl import apply_v75
 from src.core.swarm.ddl import apply_v59, apply_v60, apply_v62, apply_v63, apply_v64, apply_v65, apply_v66, apply_v67, apply_v68, apply_v69, apply_v70, apply_v71, apply_v99, apply_v100, rename_legacy
 from src.core.pack.machines.ddl import apply_pack_machines
@@ -832,6 +832,10 @@ def _step_v103_to_v104(conn: sqlite3.Connection) -> None:
     apply_v104(conn)
 
 
+def _step_v104_to_v105(conn: sqlite3.Connection) -> None:
+    apply_v105(conn)
+
+
 STEPS: Dict[int, Callable[[sqlite3.Connection], None]] = {
     0: _step_v0_to_v1,
     1: _step_v1_to_v2,
@@ -937,6 +941,7 @@ STEPS: Dict[int, Callable[[sqlite3.Connection], None]] = {
     101: _step_v101_to_v102,
     102: _step_v102_to_v103,
     103: _step_v103_to_v104,
+    104: _step_v104_to_v105,
 }
 
 

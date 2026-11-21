@@ -180,7 +180,7 @@
 
     .fbs-tint {
         padding: 2px var(--oc-space-2);
-        border-radius: 1px;
+        border-radius: var(--oc-radius-xs);
         background: color-mix(in srgb, var(--oc-orange) 14%, transparent);
     }
 
@@ -196,7 +196,7 @@
         width: 56px;
         height: 6px;
         overflow: hidden;
-        border-radius: 1px;
+        border-radius: var(--oc-radius-xs);
         background: color-mix(in srgb, var(--oc-text-primary) 14%, transparent);
     }
 
@@ -213,7 +213,7 @@
     .fbs-dot {
         width: 7px;
         height: 7px;
-        border-radius: 50%;
+        border-radius: var(--oc-radius-circle);
     }
 
     .fbs-c-ok { color: var(--oc-green); }

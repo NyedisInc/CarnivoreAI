@@ -128,7 +128,7 @@
 <ModalShell
   title={t('warroom.modal.label', { name: title })}
   onCancel={dismiss}
-  overlayClass="text-prompt-modal"
+  look="titlerow"
   width={WAR_ROOM_W}
   height={WAR_ROOM_H}
   fill

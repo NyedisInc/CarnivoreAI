@@ -8,10 +8,10 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.host import capabilities, session_actions
-from src.cplugs.huddle import held
-from src.cplugs.huddle.nudge import pick as nudge_pick, planning, scheduler as nudge_scheduler
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.host import capabilities, session_actions
+from src.plugins.huddle import held
+from src.plugins.huddle.nudge import pick as nudge_pick, planning, scheduler as nudge_scheduler
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work.ladder import MIGRATIONS, SCHEMA_VERSION
 from src.core.work.storage import WorkStorage
 from tests.python.cplugs.huddle.test_task_manager_nudge_sweep import ITEMS, LISTS, Rig, rig  # noqa: F401
@@ -216,7 +216,7 @@ def test_a_busy_only_project_wakes_nobody_and_an_asleep_one_is_woken_only_with_n
 def test_a_held_list_and_joes_turn_items_are_still_never_nudged(client, rig):
     from fastapi import HTTPException
     import asyncio
-    from src.cplugs.huddle.nudge import sweep as nudge_sweep
+    from src.plugins.huddle.nudge import sweep as nudge_sweep
     rig.set_rows([rig.fresh("ses_new", idle_hours=3.0)])
     item = rig.add(client)
     outbox = client.post(f"{LISTS}/12/items", json={"text": "joe wrote"}).json()

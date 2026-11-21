@@ -78,7 +78,7 @@
       .prompt-rail-tooltip {
           position: absolute;
           right: 28px;
-          z-index: 32;
+          z-index: calc(var(--oc-z-page) - var(--oc-z-step));
           max-width: min(280px, 60vw);
       }
 

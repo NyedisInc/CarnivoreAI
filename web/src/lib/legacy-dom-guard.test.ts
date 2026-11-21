@@ -6,15 +6,20 @@ import { knownListRatchet, stripComments, walkSources } from '../test-support/so
 /** `client/js`, from web/src/lib. */
 const LEGACY = path.resolve(__dirname, '../../../client/js');
 
-export const LEGACY_DOM_KNOWN: readonly string[] = [
-    'app.js', 'auth.js', 'clipboard-compat.js', 'config-editor-modal.js', 'config-editor-new-file.js',
-    'config-editor-panel.js', 'config-editor-rows.js', 'copy-output.js', 'fab-menu.js', 'folder-picker-modal.js', 'header-menu.js',
-    'header-title-fit.js', 'modal-ring.js', 'module-loader.js', 'paste-fallback.js', 'session-header-led.js', 'session-restart-direct.js',
-    'session-restart-options.js', 'session-restart-picker.js', 'session-restore-offer.js', 'session-row-actions.js', 'session-theme-menu.js',
-    'sidebar-help.js', 'slash-commands.js', 'slash-favorites.js', 'terminal-client-factory.js', 'terminal-header-rename.js',
-    'terminal-key-bar.js', 'terminal-mascot.js', 'text-prompt-modal.js', 'themes/registry.js',
-    'touch-select.js',
-];
+const FIXTURE = path.resolve(__dirname, '../../../tests/fixtures/design_legacy_known.json');
+
+type JsControls = Record<string, Record<string, number>>;
+
+function loadKnown(): string[] {
+    const doc: unknown = JSON.parse(fs.readFileSync(FIXTURE, 'utf8'));
+    const rows = (doc as { sections?: { js_controls?: JsControls } }).sections?.js_controls;
+    if (!rows || Object.keys(rows).length === 0) throw new Error(`${FIXTURE} has no js_controls rows`);
+    return Object.entries(rows)
+        .filter(([, kinds]) => (kinds['dom-write'] ?? 0) > 0)
+        .map(([rel]) => rel.replace(/^client\/js\//, ''));
+}
+
+export const LEGACY_DOM_KNOWN: readonly string[] = loadKnown();
 
 const DOM_WRITE = /\b(createElement|createElementNS|createDocumentFragment|insertAdjacentHTML)\s*\(|\b(innerHTML|outerHTML)\s*\+?=(?!=)/;
 
@@ -25,8 +30,9 @@ export function writesDom(text: string): boolean {
 describe('client/js gets no new DOM-writing file', () => {
     const writers = walkSources(LEGACY, /\.m?js$/).filter((file) => writesDom(fs.readFileSync(path.join(LEGACY, file), 'utf8')));
 
-    it('looked at the legacy tree (a scan of nothing is not a pass)', () => {
+    it('looked at the legacy tree and read the fixture (a scan of nothing is not a pass)', () => {
         expect(writers.length).toBeGreaterThan(20);
+        expect(LEGACY_DOM_KNOWN.length).toBeGreaterThan(20);
     });
 
     it('has no DOM-writing file outside LEGACY_DOM_KNOWN (build new UI in web/)', () => {

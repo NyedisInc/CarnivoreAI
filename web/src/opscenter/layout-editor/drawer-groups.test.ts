@@ -89,3 +89,22 @@ describe('the compact list (Joe (ccsliinc), 2026-10-03)', () => {
     expect(drawerList(inputs()).rows.every((row) => kinds.includes(row.type))).toBe(true);
   });
 });
+
+describe('a plugin view already open as a tab', () => {
+  test('counts as a placed copy of the view, so the grid picker stops offering it', async () => {
+    const { setPanelProvider, panels } = await import('../engine/plugin-kinds');
+    const { manifestById } = await import('../widgets/core-manifests');
+    const kind = 'hello.game';
+    const manifest = { ...manifestById('core.notes')!, id: kind, instancing: 'per-target', category: 'plugins' } as never;
+    const before = panels();
+    setPanelProvider({ ...before, manifests: () => ({ [kind]: manifest }), isPanel: (k) => k === kind, tail: () => 'panel-ab12cd34' });
+    try {
+      const row = (over: Partial<GroupInputs>) => groupRows(inputs({ onSurface: [], ...over })).find((r) => r.widgetId === kind)!;
+      expect(row({}).state).toBe('addable');
+      const withTab = row({ tabs: ['terminal:row:1', 'widget:hello.game@panel-ab12cd34'] });
+      expect(withTab).toMatchObject({ state: 'placed', placed: 1 });
+    } finally {
+      setPanelProvider(before);
+    }
+  });
+});

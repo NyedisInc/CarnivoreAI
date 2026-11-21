@@ -1,4 +1,4 @@
-import { cplugPopoutTabs } from '../../cplugs/host/readers';
+import { cplugPopoutTabs } from '../../plugins/host/readers';
 import type { DynamicTabDef } from './types';
 
 export const POPOUT_TABS: readonly DynamicTabDef[] = [...cplugPopoutTabs()];

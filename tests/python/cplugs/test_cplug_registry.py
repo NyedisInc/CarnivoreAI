@@ -8,24 +8,24 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.host import runtime
+from src.plugins.host import runtime
 from tests.helpers.catalog_text import catalog_text
-from src.cplugs.sdk import ManifestError
-from src.cplugs.sdk.manifest import parse_manifest, version_tuple
+from src.plugins.sdk import ManifestError
+from src.plugins.sdk.manifest import parse_manifest, version_tuple
 
 ROOT = Path(__file__).resolve().parents[3]
-TASK_MANAGER = json.loads((ROOT / "src/cplugs/huddle/cplug.json").read_text())
+TASK_MANAGER = json.loads((ROOT / "src/plugins/huddle/cplug.json").read_text())
 
 
 def test_every_shipped_cplug_validates_and_matches_its_code():
     defs = runtime.definitions()
-    shipped = ["huddle", "unread", "share", "save", "flow", "reviewboard", "tmdevtools", "crate", "devwidgetlab", "argent", "timemachine"]
-    assert [d.id for d in defs] == [i for i in shipped if (ROOT / "src/cplugs" / i).is_dir()]
+    shipped = ["huddle", "unread", "share", "save", "flow", "reviewboard", "tmdevtools", "crate", "devwidgetlab", "argent", "sessionchat", "timemachine"]
+    assert [d.id for d in defs] == [i for i in shipped if (ROOT / "src/plugins" / i).is_dir()]
     runtime.check_definitions(defs)
     app_version = json.loads((ROOT / "macOS/package.json").read_text())["version"]
     for d in defs:
         assert version_tuple(d.manifest.min_app_version) <= version_tuple(app_version), d.id
-        assert (ROOT / "src/cplugs" / d.id / "cplug.json").is_file()
+        assert (ROOT / "src/plugins" / d.id / "cplug.json").is_file()
 
 
 def test_every_manifest_string_key_is_in_the_one_catalog():

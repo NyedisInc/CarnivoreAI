@@ -16,7 +16,8 @@
 
 
 <button type="button" data-btn="quiet" data-size="icon" data-add-widget={place} aria-haspopup="dialog"
-  aria-label={t('opscenter.awe_s3.add_widget')} bind:this={button} onclick={toggle}><Icon name="plus" size={15} /></button>
+  aria-label={t('opscenter.awe_s3.add_widget')} data-tooltip={t('opscenter.awe_s3.add_widget.tip')} bind:this={button}
+  onclick={toggle}><Icon name="grid" size={15} /></button>
 
 <style>
   @layer components {

@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from src.api.auth import require_auth
-from src.api.preferences_routes import broadcast_changed
+from src.core.preferences_push.broadcast import broadcast_changed
 from src.config import settings
 from src.core import config_writer, ui_preferences_store, version
 from src.core.config_bundle import constants
@@ -90,7 +90,7 @@ def _read_config() -> Dict[str, Any]:
     try:
         return config_writer.read_config(_config_path())
     except (FileNotFoundError, ValueError) as exc:
-        logger.error("config_bundle_config_unreadable", error=str(exc))
+        logger.error("config_bundle_config_unreadable", error=str(exc), error_type=type(exc).__name__)
         raise HTTPException(status_code=500, detail="configuration is missing or unreadable")
 
 
@@ -157,12 +157,12 @@ async def import_config(request: Request, body: ConfigImportRequest) -> Dict[str
     except ImportRefused as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.detail)
     except (FileNotFoundError, ValueError) as exc:
-        logger.error("config_bundle_import_config_unreadable", error=str(exc))
+        logger.error("config_bundle_import_config_unreadable", error=str(exc), error_type=type(exc).__name__)
         raise HTTPException(status_code=500, detail="configuration is missing or unreadable")
 
     if built is not None:
         await broadcast_changed(
-            request,
+            request.app.state,
             ui_preferences_store.UpdateResult(
                 ui_preferences_store.COMMITTED, built.revision, built.values, built.moved
             ),

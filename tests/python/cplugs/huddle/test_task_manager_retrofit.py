@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.cplugs.huddle import service
-from src.cplugs.huddle.roles import lead, retrofit
+from src.plugins.huddle import service
+from src.plugins.huddle.roles import lead, retrofit
 from tests.python.cplugs.huddle.roles_rig import BASE, SwarmStub, aged, give_asleep, give_rows, use_swarm
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client  # noqa: F401
 
@@ -49,7 +49,7 @@ def test_the_skip_list_leaves_a_project_alone_by_name_or_id(client, world):
 
 
 def test_a_real_run_promotes_each_planned_session_and_reports_a_refusal_without_stopping(client, world):
-    from src.cplugs.sdk.swarm import SwarmError
+    from src.plugins.sdk.swarm import SwarmError
 
     real = world.promote_session
 
@@ -97,8 +97,8 @@ def test_an_hq_project_plans_promote_company_and_a_real_run_promotes_it_through_
 
 
 def test_a_company_agent_with_an_hq_project_is_that_projects_lead_agent():
-    from src.cplugs.huddle.roles import service as roles_service
-    from src.cplugs.sdk.swarm import SeatRef
+    from src.plugins.huddle.roles import service as roles_service
+    from src.plugins.sdk.swarm import SeatRef
 
     roster = roles_service.Roster(agents=(SeatRef(7, "company", "9", "u-amerifund"), SeatRef(8, "company", None, "u-nohq"), SeatRef(9, "alpha", None, "u-alpha")))
     assert roster.project_agents == {"9": "u-amerifund"}
@@ -107,8 +107,8 @@ def test_a_company_agent_with_an_hq_project_is_that_projects_lead_agent():
 def test_the_approval_sentence_names_each_running_session_that_is_stopped_and_resumed(app, world, monkeypatch):
     import asyncio
 
-    from src.cplugs.host import runtime
-    from src.cplugs.huddle.roles import mcp_lead
+    from src.plugins.host import runtime
+    from src.plugins.huddle.roles import mcp_lead
 
     context = runtime.host_for(app).context("huddle", background=True)
     _args, sentence = asyncio.run(mcp_lead._retrofit_prepare(context, None, {"picks": {"Fleet": "Fleet"}}))

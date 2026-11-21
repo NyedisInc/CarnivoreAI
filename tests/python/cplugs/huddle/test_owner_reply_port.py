@@ -6,10 +6,10 @@ import asyncio
 import pytest
 
 from src.core.notify_caps import owner_reply_port
-from src.cplugs.huddle import owner_phone, reply
-from src.cplugs.huddle.rules import TaskManagerInvalid
-from src.cplugs.sdk import ports
-from src.cplugs.sdk.owner_reply import NAME, OwnerReplyDeclined, OwnerReplyRefused, OwnerReplyUnavailable
+from src.plugins.huddle import owner_phone, reply
+from src.plugins.huddle.rules import TaskManagerInvalid
+from src.plugins.sdk import ports
+from src.plugins.sdk.owner_reply import NAME, OwnerReplyDeclined, OwnerReplyRefused, OwnerReplyUnavailable
 
 
 def _post(monkeypatch: pytest.MonkeyPatch, fn) -> None:

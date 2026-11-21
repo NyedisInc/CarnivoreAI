@@ -12,9 +12,9 @@ from types import SimpleNamespace
 import pytest
 import structlog
 
-from src.cplugs.huddle import wait_checks as checks, wait_runner, waits
-from src.cplugs.huddle.rules import TaskManagerInvalid
-from src.cplugs.huddle.roles import unstick
+from src.plugins.huddle import wait_checks as checks, wait_runner, waits
+from src.plugins.huddle.rules import TaskManagerInvalid
+from src.plugins.huddle.roles import unstick
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import env  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_waits import park, runner_at, wait_row

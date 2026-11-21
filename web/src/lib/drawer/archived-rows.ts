@@ -1,3 +1,4 @@
+import { claimsOf, liveRowIs } from './record-row-name';
 
 export const ARCHIVED_NAME_PREFIX = 'archived:';
 
@@ -23,15 +24,16 @@ interface ArchivedRecord {
 export function archivedRows(
     records: readonly unknown[],
     shown: boolean,
-    taken: ReadonlySet<string>,
+    rows: readonly Record<string, unknown>[],
 ): Array<Record<string, unknown> & { name: string }> {
     if (!shown || !Array.isArray(records)) return [];
+    const claims = claimsOf(rows);
     const seen = new Set<string>();
     const out: Array<Record<string, unknown> & { name: string }> = [];
     for (const raw of records) {
         const rec = raw as ArchivedRecord | null;
         if (!rec || !rec.archived_at || !rec.session_uuid || seen.has(rec.session_uuid)) continue;
-        if (rec.tmux_name && taken.has(rec.tmux_name)) continue;
+        if (liveRowIs(claims, rec.session_uuid, rec.tmux_name)) continue;
         seen.add(rec.session_uuid);
         out.push({
             name: `${ARCHIVED_NAME_PREFIX}${rec.session_uuid}`,

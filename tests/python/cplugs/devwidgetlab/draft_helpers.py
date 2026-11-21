@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict
 
-from src.cplugs.devwidgetlab.drafts import create
+from src.plugins.devwidgetlab.drafts import create
 
 
 def new_draft(storage: Path, name: str = "Pulse board") -> Dict[str, Any]:

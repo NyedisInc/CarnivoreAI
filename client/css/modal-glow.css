@@ -23,9 +23,10 @@
     --mg-sheen: color-mix(in srgb, color-mix(in srgb, var(--oc-orange) 55%, var(--oc-text-bright)) 85%, transparent);
     position: absolute;
     inset: 0;
-    z-index: 1;
+    z-index: var(--oc-z-raised);
     pointer-events: none;
     container-type: size;
+    overflow: clip;
     padding: 1px;
     border-radius: inherit;
     background: linear-gradient(to bottom, var(--oc-line-panel), var(--oc-strip-edge));

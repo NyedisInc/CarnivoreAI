@@ -1,12 +1,12 @@
-import { visibleItems, type TaskManagerGroup, type HuddleItem } from '../../../cplugs/huddle/huddle-model';
-import { statusOf } from '../../../cplugs/huddle/huddle-status';
-import { statusSections, sectionOf, type TaskManagerSectionKey } from '../../../cplugs/huddle/task-manager-status-sections';
-import { postKindOf, unreadPosts, type TaskManagerPostKind } from '../../../cplugs/huddle/task-manager-posts';
-import type { TaskManagerMessage } from '../../../cplugs/huddle/huddle-model';
-import { latestMessage } from '../../../cplugs/huddle/huddle-density';
-import { mdPlain } from '../../../cplugs/huddle/task-manager-markdown';
-import type { BadgeStatus } from '../../../cplugs/huddle/task-manager-prefs.svelte';
-import { listLabel } from '../../../cplugs/huddle/task-manager-schedule-project';
+import { visibleItems, type TaskManagerGroup, type HuddleItem } from '../../../plugins/huddle/huddle-model';
+import { statusOf } from '../../../plugins/huddle/huddle-status';
+import { statusSections, sectionOf, type TaskManagerSectionKey } from '../../../plugins/huddle/task-manager-status-sections';
+import { postKindOf, unreadPosts, type TaskManagerPostKind } from '../../../plugins/huddle/task-manager-posts';
+import type { TaskManagerMessage } from '../../../plugins/huddle/huddle-model';
+import { latestMessage } from '../../../plugins/huddle/huddle-density';
+import { mdPlain } from '../../../plugins/huddle/task-manager-markdown';
+import type { BadgeStatus } from '../../../plugins/huddle/task-manager-prefs.svelte';
+import { listLabel } from '../../../plugins/huddle/task-manager-schedule-project';
 import type { PlacementOptions } from '../../widgets/placement-options';
 
 export const LIST_ORDER: readonly BadgeStatus[] = Object.freeze(['question', 'review', 'working', 'waiting', 'scheduled', 'open'] as BadgeStatus[]);

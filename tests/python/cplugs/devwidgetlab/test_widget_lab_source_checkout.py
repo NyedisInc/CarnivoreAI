@@ -13,10 +13,10 @@ from fastapi.testclient import TestClient
 
 from src import security_headers as sh
 from src.api.auth import require_auth
-from src.cplugs.devwidgetlab import errors
-from src.cplugs.devwidgetlab.drafts import checkout, create, preview, service, ship, store
-from src.cplugs.host import developer_mode
-from src.cplugs.sdk import signed_links
+from src.plugins.devwidgetlab import errors
+from src.plugins.devwidgetlab.drafts import checkout, create, preview, service, ship, store
+from src.plugins.host import developer_mode
+from src.plugins.sdk import signed_links
 from tests.python.cplugs.devwidgetlab.test_widget_lab_routes import BASE, host_app  # noqa: F401
 from tests.python.cplugs.owner import turn_on
 
@@ -197,9 +197,9 @@ def test_there_is_no_route_to_save_a_source_folder_it_is_a_setting(host_app, ins
 def test_the_plugin_declares_the_widget_lab_source_folder_setting_in_plain_words() -> None:
     import json  # noqa: PLC0415
 
-    field = json.loads(Path("src/cplugs/devwidgetlab/cplug.json").read_text())["settings_schema"]["fields"][checkout.SETTING]
+    field = json.loads(Path("src/plugins/devwidgetlab/cplug.json").read_text())["settings_schema"]["fields"][checkout.SETTING]
     assert field["kind"] == "string" and field["default"] == ""
-    catalog = Path("web/src/cplugs/devwidgetlab/catalog.en.js").read_text()
+    catalog = Path("web/src/plugins/devwidgetlab/catalog.en.js").read_text()
     assert "'" + field["labelKey"] + "': 'widget lab source folder'" in catalog
     assert "'" + field["hintKey"] + "': 'the copy of the Carnivore code that drafts are built from'" in catalog
 

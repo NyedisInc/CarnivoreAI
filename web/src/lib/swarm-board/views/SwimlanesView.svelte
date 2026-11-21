@@ -119,8 +119,8 @@
     }
     .sbs-cols {
       position: sticky;
-      top: 0;
-      z-index: 2;
+      top: var(--oc-frame-sticky-top);
+      z-index: var(--oc-z-raised);
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 12px;

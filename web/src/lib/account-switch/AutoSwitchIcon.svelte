@@ -77,7 +77,7 @@
     position: absolute;
     width: 2px;
     height: 2px;
-    border-radius: 50%;
+    border-radius: var(--oc-radius-circle);
     background: var(--asw-ink);
     opacity: 0;
     animation: asw-spark 2.4s ease-out infinite;

@@ -1,0 +1,44 @@
+{
+  "id": "sessionchat",
+  "name": "Session chat",
+  "area": "sessions",
+  "status": "beta",
+  "since": "2026-11-12",
+  "updated": "2026-11-12",
+  "summary": "an optional feature, off until you switch it on in Settings > features, that keeps a small local index of every Claude session transcript (positions, counts and threads, never the text) so a session can be read as a chat.",
+  "description": "Session chat ships off for everyone. While it is off nothing indexes and no timeline.db file exists. Switching it on starts the timeline index: the pipeline reads every Claude transcript once from the start (about 30 MB per second, and the index is about 0.2 percent of the transcript size) and then follows each session as it grows. The index holds only byte positions, ids, counts, kinds and timestamps; a turn's text is read from the transcript when it is shown, and search stays in the deep search index. Switching it off stops indexing at the next batch and keeps the file, so switching it on again resumes where it stopped.",
+  "surfaces": [
+    "src/plugins/sessionchat/__init__.py",
+    "src/core/pipeline/switch.py",
+    "src/core/timeline/plugin.py",
+    "web/src/plugins/sessionchat/index.ts"
+  ],
+  "api_routes": [
+    "PUT /api/v1/cplugs/sessionchat"
+  ],
+  "docs": [
+    "docs/timeline.md",
+    "docs/cplugs.md"
+  ],
+  "issues": [],
+  "keywords": [
+    "session chat",
+    "timeline",
+    "index",
+    "transcript",
+    "off by default",
+    "feature"
+  ],
+  "where": [
+    "Settings > features: the session chat switch."
+  ],
+  "how_to": [
+    "Open Settings > features and switch on session chat; the index builds in the background over the next minutes, with no restart.",
+    "Switch it off to stop indexing; the index file is kept and resumes if you switch it on again."
+  ],
+  "examples": [
+    "A fresh install has no timeline.db and does no timeline work.",
+    "After switching it on, the first pass reads the whole transcript folder once, then each session is followed as it grows."
+  ],
+  "media_exempt": "no screen of its own: a switch drawn by Settings > features over a background index, so there is nothing new to capture"
+}

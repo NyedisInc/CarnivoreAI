@@ -30,22 +30,31 @@ def evidence_process_floor(
 
 
 def transcript_predates_process(evidence: Evidence) -> bool:
-    registry = evidence.registry
     facts = evidence.transcript
-    starts = [
-        at for at in (
-            registry.started_at if registry.known else None,
-            evidence.process_floor_at,
-        ) if at is not None
-    ]
-    if not starts:
-        return False
     if facts.verdict not in (FACTS_FOUND, FACTS_NO_RECORD):
         return False
-    if facts.newest_append_at is None:
+    return _predates_process(facts.newest_append_at, evidence)
+
+
+def queued_reinvoke_is_current(evidence: Evidence) -> bool:
+    facts = evidence.transcript
+    if not facts.queued_reinvoke:
+        return False
+    return not _predates_process(facts.queued_reinvoke_at, evidence)
+
+
+def _predates_process(at: Optional[datetime], evidence: Evidence) -> bool:
+    registry = evidence.registry
+    starts = [
+        start for start in (
+            registry.started_at if registry.known else None,
+            evidence.process_floor_at,
+        ) if start is not None
+    ]
+    if not starts or at is None:
         return False
     try:
-        return facts.newest_append_at < max(starts)
+        return at < max(starts)
     except TypeError:
         return False
 

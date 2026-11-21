@@ -113,7 +113,7 @@ def test_a_jwt_glued_after_a_word_character_is_redacted_whole():
 
 
 def test_a_glued_jwt_is_found_by_the_scan_and_counted_by_the_file_scan():
-    from src.cplugs.sdk import file_secrets
+    from src.plugins.sdk import file_secrets
 
     for glue, token in _glued_tokens():
         found = [f for f in scan_text(f"{glue}{token}", trust_vendor_marker=True) if f.detector == DETECTOR_JWT]
@@ -151,7 +151,7 @@ def _vendor_key(prefix: str, n: int) -> str:
 
 def test_a_jwt_glued_after_a_vendor_key_is_not_hidden_by_the_key():
     from src.core.stream_redactor import redact_whole
-    from src.cplugs.sdk import file_secrets
+    from src.plugins.sdk import file_secrets
 
     token = _seeded_jwt()
     for key, glue in ((_vendor_key("AKIA", 16), "-"), (_vendor_key("ghp_", 36), "_")):
@@ -183,7 +183,7 @@ def test_the_tempered_prefix_compiles_without_an_atomic_group():
 
 
 def test_a_real_jwt_whose_base64_holds_a_placeholder_word_is_still_counted():
-    from src.cplugs.sdk import file_secrets
+    from src.plugins.sdk import file_secrets
 
     for word in ("test", "abcd", "Your", "FAKE", "0000", "xxxx", "dummy", "todo"):
         sig = f"Q9{word}Z7kLm3Pq8Rt2Vw"
@@ -194,7 +194,7 @@ def test_a_real_jwt_whose_base64_holds_a_placeholder_word_is_still_counted():
 
 
 def test_a_jwt_with_an_obvious_stand_in_claim_is_a_placeholder():
-    from src.cplugs.sdk import file_secrets
+    from src.plugins.sdk import file_secrets
 
     header = _b64_json({"alg": "HS256", "typ": "JWT"})
     sig = _b64url(24)
@@ -213,7 +213,7 @@ def test_a_jwt_with_an_obvious_stand_in_claim_is_a_placeholder():
 
 
 def test_real_claims_that_merely_contain_a_stand_in_word_are_still_counted():
-    from src.cplugs.sdk import file_secrets
+    from src.plugins.sdk import file_secrets
 
     header = {"alg": "RS256", "typ": "JWT"}
     for claims in (
@@ -231,7 +231,7 @@ def test_real_claims_that_merely_contain_a_stand_in_word_are_still_counted():
 
 
 def test_a_deeply_nested_payload_does_not_crash_the_scan_and_the_token_is_counted():
-    from src.cplugs.sdk import file_secrets
+    from src.plugins.sdk import file_secrets
 
     noise = re.sub(r"(.)\1{2,}", r"\1", _b64url(300_000))
     deep = f'{{"a":{"[" * 100_000}"{noise}"{"]" * 100_000}}}'.encode()
@@ -242,7 +242,7 @@ def test_a_deeply_nested_payload_does_not_crash_the_scan_and_the_token_is_counte
 
 def test_a_recursion_error_from_the_json_decoder_reads_as_not_a_placeholder(monkeypatch):
     from src.core import message_model_secret_guards as guards
-    from src.cplugs.sdk import file_secrets
+    from src.plugins.sdk import file_secrets
 
     def _too_deep(*_: object, **__: object) -> None:
         raise RecursionError("maximum recursion depth exceeded")
@@ -253,7 +253,7 @@ def test_a_recursion_error_from_the_json_decoder_reads_as_not_a_placeholder(monk
 
 
 def test_one_stand_in_value_elsewhere_never_hides_a_real_token():
-    from src.cplugs.sdk import file_secrets
+    from src.plugins.sdk import file_secrets
 
     real_sub = {"sub": "u-81723"}
     cases = (
@@ -271,7 +271,7 @@ def test_one_stand_in_value_elsewhere_never_hides_a_real_token():
 
 
 def test_a_jwe_is_never_dropped_on_claims():
-    from src.cplugs.sdk import file_secrets
+    from src.plugins.sdk import file_secrets
 
     for header in ({"alg": "dir", "kid": "<your-key>"}, {"sub": "your-user-id", "alg": "dir"}):
         jwe = ".".join([_b64_json(header), _b64url(30), _b64url(12), _b64url(24), _b64url(16)])
@@ -279,7 +279,7 @@ def test_a_jwe_is_never_dropped_on_claims():
 
 
 def test_a_numeric_sub_of_one_repeated_digit_is_a_real_id_and_is_counted():
-    from src.cplugs.sdk import file_secrets
+    from src.plugins.sdk import file_secrets
 
     for sub in ("1111", "77777", "00000000"):
         token = f"{_b64_json({'alg': 'RS256'})}.{_b64_json({'sub': sub})}.{_b64url(64)}"

@@ -29,6 +29,7 @@ class SettingsBody(BaseModel):
     auto: Optional[StrictBool] = None
     claude: Optional[StrictBool] = None
     codex: Optional[StrictBool] = None
+    panel: Optional[StrictBool] = None
 
 
 class SyncBody(BaseModel):
@@ -67,7 +68,7 @@ async def put_global_sync(body: SettingsBody, request: Request) -> Dict[str, Any
     resource_push.notify(topics.PACK_GLOBAL_SYNC)
     if wiring.WATCH is not None:
         await wiring.WATCH.rearm()
-    if after["enabled"] and after != before:
+    if (after["enabled"] or after["panel"]) and after != before:
         wiring.spawn(sync.sync())
     return await asyncio.to_thread(sync.snapshot)
 
@@ -76,7 +77,8 @@ async def put_global_sync(body: SettingsBody, request: Request) -> Dict[str, Any
 async def post_sync(body: SyncBody, request: Request) -> Dict[str, Any]:
     """Sync now: build one bundle and send it to each computer that passes its gates. Output: ``{results: {install id: outcome}}``. Raises 409 ``sync_off`` / ``not_main``."""
     sync = _sync()
-    if not sync.settings().get("enabled"):
+    chosen = sync.settings()
+    if not chosen.get("enabled") and not chosen.get("panel"):
         raise HTTPException(409, {"code": "sync_off", "detail": "turn the global setup sync on first"})
     if not await asyncio.to_thread(sync.is_main):
         raise HTTPException(409, {"code": "not_main", "detail": "only the Pack's main computer sends its setup"})

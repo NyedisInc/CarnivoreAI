@@ -9,21 +9,25 @@ from typing import Any, Dict, Optional, Tuple
 import structlog
 from cryptography.hazmat.primitives.asymmetric import ec
 
+from src.core import resource_push
 from src.core.phone_link import acme, certs, dns01
 from src.core.phone_link.custom_domain.repair import RepairGate
 from src.core.phone_link.custom_domain.service import CustomDomainService
 from src.core.phone_link.gate import LinkGate, StreamTable
 from src.core.phone_link.listener import LoopbackListener
+from src.core.phone_link.pack_relay import PackRelay
 from src.core.phone_link.pairing import PENDING_SECONDS, WINDOW_SECONDS, PairingStore, Window
 from src.core.phone_link.tunnel_client import TunnelClient
 from src.core.catalog import catalog_auth
 from src.core.relay_identity import device_key as dk
 from src.core.relay_identity.account import RelayAccount
 from src.core.relay_identity.session import SIGNIN_REQUIRED, DeviceSession, RelayAuthError
+from src.core.resource_push import topics
 
 logger = structlog.get_logger()
 
 RETRY_SECONDS = 300.0
+NONE, PACK, PHONE = "none", "pack", "phone"
 
 
 class PhoneLinkManager:
@@ -45,9 +49,14 @@ class PhoneLinkManager:
         self._certs: Optional[certs.CertManager] = None
         self._listener: Optional[LoopbackListener] = None
         self._tunnel: Optional[TunnelClient] = None
-        self.hostname = ""
-        self.error = ""
+        self.stream_table = StreamTable()
+        self._pack: Optional[PackRelay] = None
+        self._pack_up = False
+        self._running: Optional[str] = None
+        self._hostname = ""
+        self._error = ""
         self.pairing.on_revoke.append(self._close_device_streams)
+        self.pairing.on_change.append(self.announce)
         self._repair = RepairGate(pairing=self.pairing, revoke_device=self._revoke_everywhere,
                                   link_host=lambda: self.hostname,
                                   on_done=lambda: self._reconcile_later(0.0))
@@ -84,6 +93,31 @@ class PhoneLinkManager:
         if self._tunnel is not None:
             self._tunnel.close_device(device_id)
 
+    def announce(self) -> None:
+        resource_push.notify(topics.PHONE_LINK)
+
+    @property
+    def hostname(self) -> str:
+        return self._hostname
+
+    @hostname.setter
+    def hostname(self, value: str) -> None:
+        changed = value != self._hostname
+        self._hostname = value
+        if changed:
+            self.announce()
+
+    @property
+    def error(self) -> str:
+        return self._error
+
+    @error.setter
+    def error(self, value: str) -> None:
+        changed = value != self._error
+        self._error = value
+        if changed:
+            self.announce()
+
     @property
     def available(self) -> bool:
         return bool(self._config.enabled)
@@ -91,10 +125,24 @@ class PhoneLinkManager:
     def public_host(self) -> str:
         return self.custom.live_host() or self.hostname
 
+    def mode(self) -> str:
+        if not self.available:
+            return NONE
+        if self.pairing.enabled and (self.pairing.device_count() > 0 or self.pairing.window_open() or self.pairing.pending_open()
+                                     or self.custom.needs_tunnel()):
+            return PHONE
+        return PACK if self._pack is not None and self._pack.wanted() else NONE
+
     def wanted(self) -> bool:
-        return (self.available and self.pairing.enabled
-                and (self.pairing.device_count() > 0 or self.pairing.window_open() or self.pairing.pending_open()
-                     or self.custom.needs_tunnel()))
+        return self.mode() != NONE
+
+    def set_pack(self, pack: Optional[PackRelay]) -> None:
+        self._pack = pack
+        if pack is not None:
+            pack.use_table(self.stream_table)
+
+    def device_id(self) -> Optional[str]:
+        return self._session.device_id if self._session is not None else None
 
     def status(self) -> Dict[str, Any]:
         return {"available": self.available, "enabled": self.pairing.enabled,
@@ -109,11 +157,14 @@ class PhoneLinkManager:
 
     async def reconcile(self) -> None:
         async with self._lock:
-            want = self.wanted()
-            if want and self._tunnel is None:
+            mode = self.mode()
+            if mode != NONE and self._tunnel is None:
                 await self._start()
-            elif not want and (self._tunnel is not None or self._listener is not None):
+            elif mode == NONE and (self._tunnel is not None or self._listener is not None):
                 await self._stop()
+            elif self._tunnel is not None and self._running is not None and self._running != mode:
+                await self._switch(mode)
+            await self._sync_pack()
 
     def _reconcile_later(self, delay: float, *, expiry: bool = False) -> None:
         attr = "_expiry_timer" if expiry else "_retry_timer"
@@ -172,45 +223,96 @@ class PhoneLinkManager:
 
     async def _start(self) -> None:
         try:
+            mode = self.mode()
             self._session = await self._session_for()
             device_id = await self._session.ensure_registered()
             self.hostname = certs.link_hostname(device_id, self._config.link_domain)
-            self._certs = certs.CertManager(
-                directory=self._state_dir / "phone_link",
-                directory_url=self._config.link_acme_directory, obtain=self._obtain)
-            context = await self._certs.ensure(self.hostname)
-            self._certs.start_renewals()
-            streams = StreamTable()
-            tunnel: TunnelClient
-            gate = LinkGate(self._app, hostname=self.hostname, streams=streams, pairing=self.pairing,
-                            send_trust=lambda sid: tunnel.trust(sid), custom_host=self.custom.live_host)
-            listener = LoopbackListener(gate, context)
-            await listener.start()
-            self._listener = listener
             tunnel = TunnelClient(url=self._config.link_tunnel_url, session=self._session,
-                                  local_port=lambda: listener.port, streams=streams, custom=self.custom)
+                                  local_port=lambda: self._listener.port if self._listener is not None else None,
+                                  streams=self.stream_table, custom=self.custom, on_status=self.announce)
             self._tunnel = tunnel
-            await self.custom.attach(context, tunnel)
+            self.announce()
+            if mode == PHONE:
+                await self._attach_phone(tunnel)
             tunnel.start()
+            self._running = mode
             self.error = ""
-            logger.info("phone_link_started")
+            logger.info("phone_link_started", mode=mode)
         except (RelayAuthError, acme.AcmeError, dns01.Dns01Error, RuntimeError, OSError, ValueError) as exc:
             self.error = f"{type(exc).__name__}: {exc}"[:200]
             logger.warning("phone_link_start_failed", error=self.error)
             await self._stop()
             self._reconcile_later(RETRY_SECONDS)
 
-    async def _stop(self) -> None:
+    async def _attach_phone(self, tunnel: TunnelClient) -> None:
+        self._certs = certs.CertManager(
+            directory=self._state_dir / "phone_link",
+            directory_url=self._config.link_acme_directory, obtain=self._obtain)
+        context = await self._certs.ensure(self.hostname)
+        self._certs.start_renewals()
+        gate = LinkGate(self._app, hostname=self.hostname, streams=self.stream_table, pairing=self.pairing,
+                        send_trust=lambda sid: tunnel.trust(sid), custom_host=self.custom.live_host)
+        listener = LoopbackListener(gate, context)
+        await listener.start()
+        self._listener = listener
+        await self.custom.attach(context, tunnel)
+
+    async def _drop_phone(self) -> None:
         await self.custom.detach()
-        if self._tunnel is not None:
-            await self._tunnel.stop()
-            self._tunnel = None
         if self._listener is not None:
             await self._listener.stop()
             self._listener = None
         if self._certs is not None:
             await self._certs.stop()
             self._certs = None
+
+    async def _switch(self, mode: str) -> None:
+        assert self._tunnel is not None
+        try:
+            if mode == PHONE:
+                await self._attach_phone(self._tunnel)
+            else:
+                await self._drop_phone()
+            self._running = mode
+            self.error = ""
+        except (RelayAuthError, acme.AcmeError, dns01.Dns01Error, RuntimeError, OSError, ValueError) as exc:
+            self.error = f"{type(exc).__name__}: {exc}"[:200]
+            logger.warning("phone_link_switch_failed", error=self.error)
+            await self._drop_phone()
+            self._running = PACK if self._pack_up else None
+            self._reconcile_later(RETRY_SECONDS)
+
+    async def _sync_pack(self) -> None:
+        pack, tunnel = self._pack, self._tunnel
+        want = pack is not None and tunnel is not None and pack.wanted()
+        if want and not self._pack_up:
+            try:
+                await pack.acceptor.start()
+            except OSError as exc:
+                logger.warning("pack_relay_acceptor_failed", error_type=type(exc).__name__)
+                self._reconcile_later(RETRY_SECONDS)
+                return
+            tunnel.attach_pack(pack)
+            self._pack_up = True
+        elif not want and self._pack_up:
+            await self._detach_pack()
+
+    async def _detach_pack(self) -> None:
+        self._pack_up = False
+        if self._tunnel is not None:
+            self._tunnel.detach_pack()
+        if self._pack is not None:
+            await self._pack.stop()
+
+    async def _stop(self) -> None:
+        await self._detach_pack()
+        await self.custom.detach()
+        if self._tunnel is not None:
+            await self._tunnel.stop()
+            self._tunnel = None
+            self.announce()
+        await self._drop_phone()
+        self._running = None
         logger.info("phone_link_stopped")
 
     async def set_enabled(self, value: bool) -> None:

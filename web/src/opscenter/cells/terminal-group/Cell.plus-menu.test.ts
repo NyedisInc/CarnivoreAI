@@ -8,6 +8,10 @@ import { resetTabCache, setGroups, tabsFor } from '../../engine/tab-groups.svelt
 import { inputFocus } from '../../lib/input-focus.svelte';
 import type { SlotId } from '../../engine/types';
 import { installPopoverPolyfill } from '../../../lib/popover-jsdom-polyfill';
+import { setPanels } from '../../../lib/cplug-ui/panel-views.svelte';
+import type { CplugRow } from '../../../lib/plugins-page/cplugs-adapter';
+import { widgetMenuNodes } from './widget-tab-item';
+import { widgetTabId } from '../../engine/widget-tabs';
 
 // layer (issue #860 / #875); jsdom has neither method.
 installPopoverPolyfill();
@@ -33,6 +37,10 @@ vi.mock('../../api/host', async (importOriginal) => {
     },
   };
 });
+vi.mock('../../../lib/cplug-ui/api', () => ({
+  fetchViewTicket: vi.fn(async () => ({ path: '/cplugs/hello/view/game/t/index.html' })),
+  callViewRoute: vi.fn(),
+}));
 vi.mock('../terminal-live/theme', () => ({ bindTerminalTheme: () => () => {} }));
 vi.mock('../../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../api')>();
@@ -185,3 +193,35 @@ for (const [node, kind] of [['terminal', 'terminal'], ['agent/new', 'agent']] as
     }
   });
 }
+
+const helloRow = { id: 'hello', runtime: 'sidecar', enabled: true, state: 'active', name: 'Hello', install_key: 'ab12cd34zz', views: [{ name: 'game', surfaces: ['panel'] }] } as unknown as CplugRow;
+const PLUGIN_TAB = widgetTabId('hello.game', 'panel-ab12cd34');
+
+test('a live plugin view is offered under widget > plugins by its name and opens as a tab bound to its install (issue #2983)', () => {
+  setPanels([helloRow]);
+  try {
+    const root = draw();
+    openMenu(root);
+    openBranch('widget');
+    openBranch('widget/plugins');
+    expect(item('widget/hello.game').textContent).toContain('Hello');
+    item('widget/hello.game').click();
+    flushSync();
+    expect(tabsFor(terminalLayout, A)).toEqual([A, PLUGIN_TAB]);
+    expect(root.querySelector(`[data-tab="${PLUGIN_TAB}"]`)?.getAttribute('aria-selected')).toBe('true');
+  } finally {
+    setPanels([]);
+  }
+});
+
+test('one copy per terminal page: a plugin view already a tab here or a grid cell on the page is not offered again (issue #2983)', () => {
+  setPanels([helloRow]);
+  try {
+    const ids = (nodes: ReturnType<typeof widgetMenuNodes>): string[] => nodes.flatMap((n) => n.children ?? []).map((n) => n.id);
+    expect(ids(widgetMenuNodes(new Set(), () => {}))).toContain('widget/hello.game');
+    expect(ids(widgetMenuNodes(new Set([PLUGIN_TAB]), () => {}))).not.toContain('widget/hello.game');
+    expect(ids(widgetMenuNodes(new Set(), () => {}, new Set(['hello.game:panel-ab12cd34'])))).not.toContain('widget/hello.game');
+  } finally {
+    setPanels([]);
+  }
+});

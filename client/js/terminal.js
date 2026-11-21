@@ -114,19 +114,14 @@ class Terminal {
     }
 
     _sendUserBytes(bytes) {
-        if (window.TerminalInputOwnership
-            && !window.TerminalInputOwnership.surfacePermits(this._inputOwner)) {
-            if (window.TerminalInputDrops) window.TerminalInputDrops.record('owner_refused', this);
-            return false;
-        }
+        if (window.TerminalInputOwnership && !window.TerminalInputOwnership.surfacePermits(this._inputOwner)) return this._noteInputDrop('owner_refused');
         if (this._m('TerminalInputBuffer')) return this._m('TerminalInputBuffer').send(this, bytes);
-        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-            if (window.TerminalInputDrops) window.TerminalInputDrops.record('no_socket', this);
-            return false;
-        }
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return this._noteInputDrop('no_socket');
         this.ws.send(bytes);
         return true;
     }
+
+    _noteInputDrop(cause) { if (window.TerminalInputDrops) window.TerminalInputDrops.record(cause, this); return false; }
 
     async init() {
         console.log('Terminal: Initializing xterm.js');
@@ -447,9 +442,7 @@ class Terminal {
 
     setupScrollListener() {
         const container = this._containerEl();
-        if (this._m('AltScreenScroll')) {
-            this._m('AltScreenScroll').init(() => this.term, (d) => this._writeSynthetic(d));
-        }
+        if (this._m('AltScreenScroll')) this._m('AltScreenScroll').init(() => this.term, (d) => this._writeSynthetic(d), () => this._paneAlternate ?? null);
         if (this._m('TerminalScroll') && container) {
             this._m('TerminalScroll').init(container, () => this.term);
         }
@@ -690,7 +683,7 @@ class Terminal {
         const wsURL = window.API.getWebSocketURL(sessionId);
         console.log('Terminal: Connecting to WebSocket:', wsURL);
         if (window.TerminalPrimaryHold?.defer(sessionId, () => { if (this._sessionId() === sessionId && !this.ws) this.connectWebSocket(opts); })) return;
-        this.ws = window.API.openWebSocket(sessionId);
+        this._paneAlternate = null; this.ws = window.API.openWebSocket(sessionId);
         this.ws.binaryType = 'arraybuffer';
         this.setupWebSocketHandlers();
     }
@@ -974,6 +967,8 @@ class Terminal {
             }
         } else if (type === 'terminal_size' || type === 'size_master') {
             if (this._m('TerminalSizeVote')) this._m('TerminalSizeVote').onTerminalSize(this, message);
+        } else if (type === 'pane_screen') {
+            this._paneAlternate = typeof message.alternate === 'boolean' ? message.alternate : null;
         } else if (type === 'terminal.ready') {
             if (this._paintHeld && window.TerminalPaintGate) window.TerminalPaintGate.reassert(this);
             // there is nothing

@@ -34,7 +34,7 @@ class PluginStore:
 def manifests_of(locations: Locations) -> List[Any]:
     if locations.plugin_manifests is not None:
         return list(locations.plugin_manifests)
-    from src.cplugs.registry import CPLUGS  # noqa: PLC0415
+    from src.plugins.registry import CPLUGS  # noqa: PLC0415
 
     return [d.manifest for d in CPLUGS]
 
@@ -42,7 +42,7 @@ def manifests_of(locations: Locations) -> List[Any]:
 def settings_of(locations: Locations, manifest: Any) -> Dict[str, Any]:
     if locations.plugin_settings is not None:
         return dict(locations.plugin_settings.get(manifest.id, {}))
-    from src.cplugs.host import state as owner_state  # noqa: PLC0415
+    from src.plugins.host import state as owner_state  # noqa: PLC0415
 
     return dict(owner_state.get(Path(locations.state_dir), manifest).settings)
 
@@ -50,7 +50,7 @@ def settings_of(locations: Locations, manifest: Any) -> Dict[str, Any]:
 def enabled_of(locations: Locations, manifest: Any) -> bool:
     if locations.plugin_enabled is not None:
         return bool(locations.plugin_enabled.get(manifest.id, False))
-    from src.cplugs.host import state as owner_state  # noqa: PLC0415
+    from src.plugins.host import state as owner_state  # noqa: PLC0415
 
     return owner_state.get(Path(locations.state_dir), manifest).enabled
 
@@ -70,12 +70,12 @@ def locate(manifest: Any, decl: Any, settings: Mapping[str, Any], state_dir: Pat
     if decl.state_path:
         return PluginStore(manifest.id, decl, state / decl.state_path)
     if decl.path:
-        from src.cplugs.host import data_roots  # noqa: PLC0415
+        from src.plugins.host import data_roots  # noqa: PLC0415
 
         return PluginStore(manifest.id, decl, data_roots.data_folder(state, manifest.id) / decl.path)
     fields = manifest.settings_schema.get("fields", {}) if isinstance(manifest.settings_schema, Mapping) else {}
     text = _setting_text(settings, fields, decl.root_setting)
-    from src.cplugs.sdk.data_decl import default_store_root, is_default_value  # noqa: PLC0415
+    from src.plugins.sdk.data_decl import default_store_root, is_default_value  # noqa: PLC0415
     if (not text or is_default_value(state, decl.default, text, decl.sub)) and decl.default and _sub_ok(decl.sub):
         return PluginStore(manifest.id, decl, default_store_root(state, decl.default, decl.sub), defaulted=True)
     if not text or not Path(text).expanduser().is_absolute() or not _sub_ok(decl.sub):
@@ -96,7 +96,7 @@ def declared_stores(locations: Locations) -> List[PluginStore]:
 
 
 def backup_provider(locations: Locations) -> Optional[PluginStore]:
-    from src.cplugs.sdk.data_decl import PROVIDES_BACKUP_POINTS  # noqa: PLC0415
+    from src.plugins.sdk.data_decl import PROVIDES_BACKUP_POINTS  # noqa: PLC0415
 
     for manifest in manifests_of(locations):
         if manifest.data is None or not enabled_of(locations, manifest):
@@ -110,7 +110,7 @@ def backup_provider(locations: Locations) -> Optional[PluginStore]:
 
 def backup_opt_out(locations: Locations) -> frozenset:
     from src.core.backup_health.vault_record import OPT_OUT_SETTING, opt_out_units  # noqa: PLC0415
-    from src.cplugs.sdk.data_decl import PROVIDES_BACKUP_POINTS  # noqa: PLC0415
+    from src.plugins.sdk.data_decl import PROVIDES_BACKUP_POINTS  # noqa: PLC0415
 
     for manifest in manifests_of(locations):
         if manifest.data and any(decl.provides == PROVIDES_BACKUP_POINTS for decl in manifest.data):

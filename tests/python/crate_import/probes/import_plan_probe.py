@@ -40,10 +40,10 @@ def throwaway_env(base: Path):
     from src.core.inventory.locations import Locations
     from src.core.project_move.plan import PaneListing
     from src.core.work.storage import storage_for
-    from src.cplugs.registry import CPLUGS
-    from src.cplugs.save.fallback import BackupTranscripts
-    from src.cplugs.save.vault.store import Vault
-    from src.cplugs.sdk.crate_import import plugin_enabled_of, plugin_homes_of
+    from src.plugins.registry import CPLUGS
+    from src.plugins.save.fallback import BackupTranscripts
+    from src.plugins.save.vault.store import Vault
+    from src.plugins.sdk.crate_import import plugin_enabled_of, plugin_homes_of
 
     projects, claude, codex, vault_root = base / "projects", base / "claude", base / "codex", base / "vault"
     for folder in (state, projects, claude / "projects", codex, vault_root):

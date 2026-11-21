@@ -38,7 +38,7 @@
 }
 
 .motion-landing[data-label] {
-  z-index: 25;
+  z-index: calc(var(--oc-z-region-overlay) - var(--oc-z-step));
   border: 1px solid var(--oc-orange);
   background: color-mix(in srgb, var(--oc-orange) 10%, transparent);
 }

@@ -5,11 +5,11 @@ import asyncio
 from pathlib import Path
 
 
-from src.cplugs.host import runtime
-from src.cplugs.reviewboard import CPLUG
-from src.cplugs.reviewboard.routes import router
-from src.cplugs.reviewboard.public import availability
-from src.cplugs.reviewboard.public.service import SERVICE
+from src.plugins.host import runtime
+from src.plugins.reviewboard import CPLUG
+from src.plugins.reviewboard.routes import router
+from src.plugins.reviewboard.public import availability
+from src.plugins.reviewboard.public.service import SERVICE
 from tests.python.cplugs.reviewboard.harness import BASE, make_env
 from tests.python.cplugs.reviewboard.public.carry_fixtures import make_old_folder
 from tests.python.cplugs.reviewboard.public.test_public_links_switch_support import client_for, set_public

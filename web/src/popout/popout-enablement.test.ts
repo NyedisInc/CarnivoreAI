@@ -13,8 +13,8 @@ vi.mock('../opscenter/api/auth.svelte', async (original) => ({
 
 test('a plugin switched off on the server is off in the pop-out', async () => {
   window.history.replaceState(null, '', '/static/popout.html?tab=reviewboard&board=20261013-bottom-bar');
-  const { taskManagerPopout } = await import('../cplugs/huddle/popout');
-  const { cplugEnabled, cplugEnablement } = await import('../cplugs/host/enablement.svelte');
+  const { taskManagerPopout } = await import('../plugins/huddle/popout');
+  const { cplugEnabled, cplugEnablement } = await import('../plugins/host/enablement.svelte');
   expect(cplugEnabled(taskManagerPopout.manifest)).toBe(true);
 
   await import('./main');

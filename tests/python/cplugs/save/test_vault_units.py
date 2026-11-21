@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import os
-from src.cplugs.save.vault import health, restore, units
-from src.cplugs.save.vault.follow import Engine
-from src.cplugs.sdk.blob_codec import Throttle
+from src.plugins.save.vault import health, restore, units
+from src.plugins.save.vault.follow import Engine
+from src.plugins.sdk.blob_codec import Throttle
 from tests.python.cplugs.save.vault_helpers import CONV, ENC, World, jsonl
 
 

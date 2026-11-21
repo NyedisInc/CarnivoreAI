@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, test } from 'vitest';
-import { huddle } from '../../../cplugs/huddle/huddle.svelte';
-import { taskOf } from '../../../cplugs/huddle/task-manager-design/adapter';
-import { entriesOf } from '../../../cplugs/huddle/task-manager-design/entries';
-import type { HuddleItem, TaskManagerGroup } from '../../../cplugs/huddle/huddle-model';
+import { huddle } from '../../../plugins/huddle/huddle.svelte';
+import { taskOf } from '../../../plugins/huddle/task-manager-design/adapter';
+import { entriesOf } from '../../../plugins/huddle/task-manager-design/entries';
+import type { HuddleItem, TaskManagerGroup } from '../../../plugins/huddle/huddle-model';
 import { allTasksOf, headCountOf } from './mk2-head-count';
 import { unreadCount } from './mk2-chips';
-import { newCount } from '../../../cplugs/huddle/task-manager-design/model';
+import { newCount } from '../../../plugins/huddle/task-manager-design/model';
 import { unreadMessageCount } from './mk2-unread';
 
 const mk = (id: number, status: string, unread: boolean, list = '18', extra: Record<string, unknown> = {}) =>

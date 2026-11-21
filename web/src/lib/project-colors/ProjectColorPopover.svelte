@@ -203,7 +203,7 @@
     @layer components {
         :global(.pc-pop) {
             position: fixed;
-            z-index: 1000;
+            z-index: var(--oc-z-popover);
             width: 16rem;
             max-width: calc(100vw - 16px);
             background: var(--oc-ground-panel);
@@ -239,7 +239,7 @@
             position: relative;
             height: 8.5rem;
             border: 1px solid var(--oc-line-frame);
-            border-radius: 2px;
+            border-radius: var(--oc-radius-control);
             background:
                 linear-gradient(to bottom, hsl(0 0% 0% / 0), hsl(0 0% 0%)),
                 linear-gradient(to right, hsl(0 0% 100%), hsl(0 0% 100% / 0)),
@@ -252,7 +252,7 @@
             position: relative;
             height: 0.75rem;
             border: 1px solid var(--oc-line-frame);
-            border-radius: 2px;
+            border-radius: var(--oc-radius-control);
             background: linear-gradient(to right, hsl(0 100% 50%), hsl(60 100% 50%), hsl(120 100% 50%), hsl(180 100% 50%), hsl(240 100% 50%), hsl(300 100% 50%), hsl(360 100% 50%));
             touch-action: none;
             cursor: ew-resize;
@@ -264,14 +264,14 @@
             height: 0.75rem;
             transform: translate(-50%, -50%);
             border: 1px solid var(--oc-text-bright);
-            border-radius: 50%;
+            border-radius: var(--oc-radius-circle);
             box-shadow: 0 0 0 1px var(--oc-ground-panel);
             outline: none;
         }
 
         .pc-pop__handle--hue {
             top: 50%;
-            border-radius: 2px;
+            border-radius: var(--oc-radius-control);
             width: 0.4rem;
             height: 1.1rem;
         }
@@ -291,7 +291,7 @@
             width: 1.9rem;
             height: 1.9rem;
             border: 1px solid var(--oc-line-frame);
-            border-radius: 50%;
+            border-radius: var(--oc-radius-circle);
         }
 
         .pc-pop__rgb {

@@ -8,9 +8,9 @@ import pytest
 import structlog
 
 from src.core.swarm.cards import effects, ops
-from src.cplugs.huddle import lane
-from src.cplugs.huddle.cards import driven
-from src.cplugs.sdk.cards import CardRefused
+from src.plugins.huddle import lane
+from src.plugins.huddle.cards import driven
+from src.plugins.sdk.cards import CardRefused
 # ruff: noqa: F401  (the imported names are pytest fixtures and shared helpers)
 from tests.python.swarm.cards.test_card_enforcement import LIST, approved_rows, call, col, dealt_to, owner, sql_rows, world
 from tests.python.swarm.cards.test_card_validation import card, child_caller, in_review, verdict, vw

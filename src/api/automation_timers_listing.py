@@ -16,7 +16,7 @@ from src.core.db import DatastoreUnreadableError
 from src.core.hosts.ddl import LOCAL_HOST_KEY
 from src.core.hosts.identity import REMOTE_ID_PREFIX
 from src.models import SessionInfo
-from src.models.sessions import ScheduledMark
+from src.models.session_marks import ScheduledMark
 
 logger = structlog.get_logger()
 

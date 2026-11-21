@@ -37,6 +37,24 @@ describe('the rebind', () => {
         expect(saved.ids.carnivore_Mac, 'the uuid is recorded for the next rename').toBe('U-MAC');
     });
 
+    it('a pin stays on its session when a newer twin claims the shared tmux name (#2979)', async () => {
+        const { S, R } = await load({ v: 1, pinned: ['carnivore_X'], order: ['carnivore_X'], collapsed: [], ids: { carnivore_X: 'U-A' } });
+        R.reconcile([
+            { name: 'carnivore_X', session_uuid: 'U-B' },
+            { name: 'asleep:U-A', session_uuid: 'U-A' },
+        ]);
+        expect([...S.current().pinned]).toEqual(['asleep:U-A']);
+        expect([...S.current().order]).toEqual(['asleep:U-A']);
+        expect(S.isPinned('carnivore_X')).toBe(false);
+    });
+
+    it('the pin returns to its session when it is listed again after being hidden (#2979)', async () => {
+        const { S, R } = await load({ v: 1, pinned: ['carnivore_X'], order: [], collapsed: [], ids: { carnivore_X: 'U-A' } });
+        R.reconcile([{ name: 'carnivore_X', session_uuid: 'U-B' }]);
+        R.reconcile([{ name: 'carnivore_X', session_uuid: 'U-B' }, { name: 'asleep:U-A', session_uuid: 'U-A' }]);
+        expect([...S.current().pinned]).toEqual(['asleep:U-A']);
+    });
+
     it('the next rename resolves by uuid, not by prefix', async () => {
         const { S, R } = await load({ v: 1, pinned: ['carnivore_Mac'], order: [], collapsed: [], ids: { carnivore_Mac: 'U-MAC' } });
         R.reconcile([{ name: 'carnivore_Mac-2', session_uuid: 'U-MAC' }]);

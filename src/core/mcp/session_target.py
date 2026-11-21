@@ -7,14 +7,18 @@ from typing import Any, Optional
 
 from src.core.mcp import common
 from src.core.mcp.common import ToolError
+from src.core.session_identity import APP_SESSION_ID_PREFIX
 
 LIVE = "live"
 STORED = "stored"
 PINNED = "pinned"
 CLOSED = "closed"
-_REACHES = (LIVE, STORED, PINNED, CLOSED)
+RECORD = "record"
+_REACHES = (LIVE, STORED, PINNED, CLOSED, RECORD)
 
 COMPANION_TOOLS = frozenset({"session_read_output", "session_send_keys"})
+
+APP_ID_PREFIX = APP_SESSION_ID_PREFIX
 
 KIND_LIVE = "live"
 KIND_ASLEEP = "asleep"
@@ -40,6 +44,12 @@ class SessionTarget:
         if self.info is not None:
             return self.info.tmux_session or self.info.session.id
         return self.tmux_name or self.session_uuid or ""
+
+
+def _row_has_id(row: dict, target: str) -> bool:
+    if str(row["session_uuid"]) == target:
+        return True
+    return target.startswith(APP_ID_PREFIX) and row.get("legacy_session_id") == target
 
 
 def _target_text(args: Any) -> str:
@@ -71,6 +81,7 @@ class TargetResolver:
     _infos: Optional[list] = field(default=None, repr=False)
     _asleep: Optional[list] = field(default=None, repr=False)
     _closed: Optional[list] = field(default=None, repr=False)
+    _stopped: Optional[list] = field(default=None, repr=False)
 
     async def infos(self) -> list:
         if self._infos is None:
@@ -91,12 +102,19 @@ class TargetResolver:
             self._closed = await asyncio.to_thread(directory._closed_rows)
         return self._closed
 
+    async def stopped_row(self, target: str) -> Optional[dict]:
+        if self._stopped is None:
+            from src.core.crosstalk import directory
+
+            self._stopped = await asyncio.to_thread(directory._stopped_rows)
+        return next((r for r in self._stopped if _row_has_id(r, target)), None)
+
     async def closed_row(self, target: str) -> Optional[dict]:
-        return next((r for r in await self.closed_rows() if str(r["session_uuid"]) == target), None)
+        return next((r for r in await self.closed_rows() if _row_has_id(r, target)), None)
 
     async def asleep_row(self, target: str, *, uuid_only: bool = False) -> Optional[dict]:
         rows = await self.asleep_rows()
-        hits = [r for r in rows if str(r["session_uuid"]) == target]
+        hits = [r for r in rows if _row_has_id(r, target)]
         if not hits and not uuid_only:
             hits = [r for r in rows if r.get("tmux_name") == target]
         if len(hits) > 1:
@@ -122,6 +140,11 @@ class TargetResolver:
                                     f"{tool or 'this tool'} needs a live session; wake it with session_wake first") from None
                 return SessionTarget(kind=KIND_ASLEEP, row=row, session_uuid=str(row["session_uuid"]),
                                      tmux_name=row.get("tmux_name"))
+            if reach == RECORD:
+                stopped = await self.stopped_row(target)
+                if stopped is not None:
+                    return SessionTarget(kind=KIND_ASLEEP, row=stopped, session_uuid=str(stopped["session_uuid"]),
+                                         tmux_name=stopped.get("tmux_name"))
             if reach == CLOSED:
                 closed = await self.closed_row(target)
                 if closed is not None:
@@ -135,7 +158,8 @@ class TargetResolver:
                 raise live_miss
             raise ToolError(f"no live or asleep session matches target {target!r}"
                             + (" and no drawer pin carries it" if reach == PINNED else
-                               " and no closed session with that session_uuid has a conversation to resume" if reach == CLOSED else "")) from None
+                               " and no closed session with that session_uuid or ses_ id has a conversation to resume" if reach == CLOSED else
+                               " and no stopped session record carries that session_uuid" if reach == RECORD else "")) from None
 
     async def _companion_info(self, target: str) -> Any:
         from src.core.mcp.protocol import BatchView

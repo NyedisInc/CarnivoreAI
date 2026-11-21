@@ -298,7 +298,7 @@ def start() -> None:
     global _since
     if _state.unsubscribe is not None:
         return
-    from src.cplugs.sdk import turn_events
+    from src.plugins.sdk import turn_events
 
     _since = time.time()
     _state.loop = asyncio.get_running_loop()

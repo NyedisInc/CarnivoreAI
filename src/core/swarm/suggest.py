@@ -13,7 +13,7 @@ from src.core.mcp.caller import AgentCaller
 from src.core.swarm import body, body_create, company_agent, delivery, memory, project_agent, push, seats, spawn, store, thread_port
 from src.core.trail_entry import utc_now
 from src.core.swarm.names import shown_name
-from src.cplugs.sdk.swarm import SwarmError
+from src.plugins.sdk.swarm import SwarmError
 
 logger = structlog.get_logger()
 

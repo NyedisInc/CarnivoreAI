@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { CellProps } from '../../lib/cell';
-  import HuddleBody from '../../../cplugs/huddle/HuddleBody.svelte';
+  import HuddleBody from '../../../plugins/huddle/HuddleBody.svelte';
   import { activeTerminalSessionId } from '../../lib/active-terminal';
   import { sessions } from '../../api';
   import { sessionScopeFor } from '../../widgets/session-scope';

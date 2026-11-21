@@ -1,0 +1,19 @@
+{
+  "files": {
+    "web/src/plugins/share/ShareModal.svelte": {
+      "section": "dialogs",
+      "classes": [
+        "share-active",
+        "share-all",
+        "share-all-text",
+        "share-explain",
+        "share-notice",
+        "share-row",
+        "share-row-link",
+        "share-row-text",
+        "share-select",
+        "share-url"
+      ]
+    }
+  }
+}

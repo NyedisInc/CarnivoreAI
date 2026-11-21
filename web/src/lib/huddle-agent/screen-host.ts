@@ -1,6 +1,6 @@
 import { createOverlayHost } from '../manager-frame/overlay-host';
-import { registerCplugPage } from '../../cplugs/sdk/pages';
-import { AGENT_HASH, AGENT_PAGE } from '../../cplugs/huddle/agents/agent-page.svelte';
+import { registerCplugPage } from '../../plugins/sdk/pages';
+import { AGENT_HASH, AGENT_PAGE } from '../../plugins/huddle/agents/agent-page.svelte';
 import HuddleAgentScreen from './HuddleAgentScreen.svelte';
 import { openAgentDrawerHost } from './drawer-host';
 

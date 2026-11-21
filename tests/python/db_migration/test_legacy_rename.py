@@ -221,7 +221,7 @@ def test_orphan_legacy_sidecars_are_swept(tmp_path: Path) -> None:
 
 
 def test_deploy_backup_never_creates_a_missing_database(tmp_path: Path) -> None:
-    text = (ROOT / "scripts" / "deploy-dmg.sh").read_text()
+    text = (ROOT / "scripts" / "lib" / "deploy-backup.sh").read_text()
     start = text.index("backup_database() {")
     func = text[start : text.index("\n}\n", start) + 3]
     state, backup = tmp_path / "state", tmp_path / "bk"

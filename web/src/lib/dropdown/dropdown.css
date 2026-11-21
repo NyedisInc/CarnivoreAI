@@ -6,7 +6,7 @@
 .cdd__summary { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cdd__chev { position: absolute; right: 10px; display: inline-flex; color: var(--oc-text-muted); pointer-events: none; }
 .cdd--open .cdd__chev { color: var(--oc-text-primary); }
-.cdd__panel { position: fixed; z-index: 1300; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden; border-radius: var(--oc-radius-sm); }
+.cdd__panel { position: fixed; z-index: var(--oc-z-picker); display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden; border-radius: var(--oc-radius-sm); }
 .cdd__panel--sheet { border-radius: 0; }
 .cdd__list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .cdd__opt { display: flex; align-items: center; box-sizing: border-box; min-height: 48px; padding: 6px 10px; box-shadow: 0 1px 0 var(--oc-line-faint); color: var(--oc-text-primary); cursor: pointer; }

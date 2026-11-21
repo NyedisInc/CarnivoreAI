@@ -71,6 +71,7 @@ export interface ApprovalConsequence {
 export interface ApprovalDetailRow {
   key: string;
   value: string;
+  file?: string;
 }
 
 export interface ApprovalDisplay {
@@ -81,6 +82,7 @@ export interface ApprovalDisplay {
   consequences: ApprovalConsequence[];
   detail: ApprovalDetailRow[];
   in_use?: { tone: 'alert' | 'quiet'; parts: ApprovalConsequence[] };
+  beast_hint?: boolean;
 }
 
 export type DialogChoice =

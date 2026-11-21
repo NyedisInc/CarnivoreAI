@@ -1,6 +1,6 @@
 <script lang="ts">
-  import HuddleBody from '../../../cplugs/huddle/HuddleBody.svelte';
-  import { AGGREGATE } from '../../../cplugs/huddle/huddle-model';
+  import HuddleBody from '../../../plugins/huddle/HuddleBody.svelte';
+  import { AGGREGATE } from '../../../plugins/huddle/huddle-model';
 </script>
 
 <div class="oc-hdl-all" data-task-manager-all-cell>

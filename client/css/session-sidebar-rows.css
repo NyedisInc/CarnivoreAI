@@ -116,7 +116,7 @@
 .session-sidebar-row-wake-arm {
     position: absolute;
     inset: 0;
-    z-index: 1;
+    z-index: var(--oc-z-raised);
     display: flex;
     align-items: center;
     justify-content: center;

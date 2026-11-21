@@ -42,7 +42,7 @@
     height: 18px;
     overflow: hidden;
     border: 1px solid var(--oc-line-panel);
-    border-radius: 2px;
+    border-radius: var(--oc-radius-control);
     background: var(--oc-ground-raised);
     color: var(--oc-text-dim);
     line-height: 0;
@@ -54,15 +54,31 @@
 }
 
 
+.session-sidebar-bar__avatar > .spiral-mask {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: inherit;
+}
+
+.spiral-mask > svg {
+    width: 100%;
+    height: 100%;
+}
+
+@keyframes avatar-spiral-turn {
+    to { transform: rotate(-360deg); }
+}
+
 .session-sidebar-bar__avatar .spiral-turn {
     overflow: visible;
     transform-origin: 50% 50%;
-    transform: rotate(calc(var(--amb-step, 0) * 15deg));
-    animation: amb-join-avatar-spiral 1ms;
+    animation: avatar-spiral-turn 2s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .session-sidebar-bar__avatar .spiral-turn { transform: none; }
+    .session-sidebar-bar__avatar .spiral-turn { animation: none; }
 }
 
 .session-sidebar-bar__account:hover .session-sidebar-bar__avatar {
@@ -106,12 +122,6 @@
 .session-sidebar-bar__avatar[data-kind='lurker'] {
     position: relative;
     overflow: visible;
-    border-color: transparent;
-    background: none;
-}
-
-.session-sidebar-bar__account:hover .session-sidebar-bar__avatar[data-kind='lurker'] {
-    border-color: transparent;
 }
 
 .mr-footer .session-sidebar-bar__signin {
@@ -125,7 +135,7 @@
     right: -3px;
     width: 6px;
     height: 6px;
-    border-radius: 50%;
+    border-radius: var(--oc-radius-circle);
     background: var(--oc-yellow-bright);
 }
 

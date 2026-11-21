@@ -99,12 +99,12 @@
 
     .st-hit__label {
         font-size: 13px;
-        color: var(--pl-text);
+        color: var(--oc-text-primary);
     }
 
     .st-hit__help {
         font-size: 11px;
         line-height: 1.45;
-        color: var(--pl-muted);
+        color: var(--oc-text-secondary);
     }
 </style>

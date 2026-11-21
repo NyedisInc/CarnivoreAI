@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from src.api.peer_auth import require_peer_sessions
 from src.api.remote_route_guard import routed_remote
 from src.core.agent_family_display import resolve_family_for_display
-from src.api.session_name_known import known_tmux_names, strip_adopted_prefix
+from src.api.session_name_known import known_tmux_names_async, strip_adopted_prefix
 from src.config import wrapper_reader
 from src.models.utc_time import utc_now
 from src.models import (
@@ -54,7 +54,7 @@ async def _apply_session_theme(
         raise HTTPException(status_code=404, detail=f"Unknown session {session_name!r}")
     session_name = strip_adopted_prefix(session_name)
 
-    known_names: set[str] = known_tmux_names(session_manager, owned_tmux)
+    known_names: set[str] = await known_tmux_names_async(session_manager, owned_tmux)
 
     if session_name not in known_names:
         logger.info(
@@ -182,7 +182,8 @@ async def set_session_unread(
     """
     session_manager = request.app.state.session_manager
     session_name = strip_adopted_prefix(session_name)
-    if body.unread and session_name not in known_tmux_names(session_manager, request.app.state.services.owned_tmux):
+    owned_tmux = request.app.state.services.owned_tmux
+    if body.unread and session_name not in await known_tmux_names_async(session_manager, owned_tmux):
         raise HTTPException(status_code=404, detail=f"Unknown session {session_name!r}")
     session_manager.set_manual_unread(session_name, body.unread)
     return SuccessResponse(

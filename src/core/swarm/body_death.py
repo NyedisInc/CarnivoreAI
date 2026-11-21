@@ -26,14 +26,15 @@ async def _pane_dead(name: str, socket: str) -> bool:
 
 async def measure(row: Dict[str, Any]) -> Optional[str]:
     from src.api import recreate_routes as rr
+    from src.core.session_ops import row_probe
     from src.core.session_recreate_presence import TMUX_GONE, TMUX_PRESENT
 
     if row.get("lifecycle") == "stopped":
         return "stopped"
     if not row.get("tmux_name"):
         return None
-    name, socket = rr._safe(str(row["tmux_name"])), str(row.get("tmux_socket") or rr._socket_name())
-    presence = await asyncio.to_thread(rr._measure_presence, name, socket)
+    name, socket = rr._safe(str(row["tmux_name"])), str(row.get("tmux_socket") or row_probe.socket_name())
+    presence = await asyncio.to_thread(row_probe.measure_presence, name, socket)
     if presence.outcome == TMUX_GONE:
         return "gone"
     return "pane_dead" if presence.outcome == TMUX_PRESENT and await _pane_dead(name, socket) else None

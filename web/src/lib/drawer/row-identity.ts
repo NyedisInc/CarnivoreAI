@@ -17,7 +17,6 @@ export interface IdentityRow {
 }
 
 export interface RecordIndex {
-    byRowId: Map<number, string>;
     byInstance: Map<string, string>;
     byName: Map<string, string | null>;
 }
@@ -28,25 +27,20 @@ export function instanceKey(name: string | undefined, epoch: number | undefined)
 }
 
 export function recordIndex(records: readonly SessionRecord[]): RecordIndex {
-    const byRowId = new Map<number, string>();
     const byInstance = new Map<string, string>();
     const byName = new Map<string, string | null>();
     for (const r of Array.isArray(records) ? records : []) {
         if (!r || !r.session_uuid || !r.tmux_name) continue;
-        if (typeof r.id === 'number') byRowId.set(r.id, r.session_uuid);
         const key = instanceKey(r.tmux_name, r.tmux_created_epoch);
         if (key) byInstance.set(key, r.session_uuid);
         if (r.archived_at) continue;
         byName.set(r.tmux_name, byName.has(r.tmux_name) ? null : r.session_uuid);
     }
-    return { byRowId, byInstance, byName };
+    return { byInstance, byName };
 }
 
 export function uuidFor(row: IdentityRow, index: RecordIndex): string | null {
-    if (!row || !index) return null;
-    if (typeof row.session_row_id === 'number' && index.byRowId.has(row.session_row_id)) {
-        return index.byRowId.get(row.session_row_id) as string;
-    }
+    if (!row || !index || typeof row.session_row_id === 'number') return null;
     const key = instanceKey(row.name, row.created_at_epoch);
     if (key && index.byInstance.has(key)) return index.byInstance.get(key) as string;
     return (row.name && index.byName.get(row.name)) || null;

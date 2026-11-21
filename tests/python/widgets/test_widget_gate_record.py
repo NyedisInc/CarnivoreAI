@@ -6,7 +6,7 @@ from typing import Any, Dict
 
 import pytest
 
-from src.cplugs.sdk.widget_gate import GATE_SCHEMA, GateRefused, record_digest, refusal_reasons, refuse_unless_passing
+from src.plugins.sdk.widget_gate import GATE_SCHEMA, GateRefused, record_digest, refusal_reasons, refuse_unless_passing
 
 RECORD: Dict[str, Any] = {"id": "demo.card", "hosts": ["home", "terminal", "drawer", "popout", "glance"], "sizes": ["small", "wide"],
                           "fixtures": ["data", "empty"]}

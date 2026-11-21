@@ -7,6 +7,7 @@ export interface GroupDetail { count: number; folders: string[]; unnamed: number
 export interface StatsFilters {
   provider?: string;
   host?: string;
+  hosts?: string[];
   project?: string;
   model?: string;
   agent_kind?: string;

@@ -49,6 +49,16 @@ def attention_notify_type(kind: str, reason: Optional[str]) -> str:
     raise ValueError(f"no notification type for toast kind {kind!r}")
 
 
+class UnknownNotificationTypeError(ValueError):
+    pass
+
+
+def event_notify_type(type_id: str) -> str:
+    if not types.is_registered(type_id):
+        raise UnknownNotificationTypeError(f"no registered notification type {type_id!r}")
+    return type_id
+
+
 def _is_swarm_body_in_app_only(manager: Any, toast: Any, type_id: str, tmux_name: Optional[str]) -> bool:
     if type_id not in POSTED_IN_APP_ONLY:
         return False
@@ -60,10 +70,19 @@ def _is_swarm_body_in_app_only(manager: Any, toast: Any, type_id: str, tmux_name
 
 
 def event_for_toast_id(manager: Any, toast_id: str) -> Optional[contracts.NotifyEvent]:
+    toast = _find_toast(manager, toast_id)
+    return build_event(manager, toast) if toast is not None else None
+
+
+def _find_toast(manager: Any, toast_id: str) -> Any:
     from src.core import toast_history  # noqa: PLC0415
 
-    toast = next((t for toasts in toast_history.buckets_from_inbox(manager._toast_inbox).values() for t in toasts if t.id == toast_id), None)
-    return build_event(manager, toast) if toast is not None else None
+    return next((t for toasts in toast_history.buckets_from_inbox(manager._toast_inbox).values() for t in toasts if t.id == toast_id), None)
+
+
+def test_target_for_toast_id(manager: Any, toast_id: str) -> Optional[str]:
+    toast = _find_toast(manager, toast_id)
+    return getattr(toast, "test_target", None) if toast is not None else None
 
 
 def build_event(manager: Any, toast: Any, fields: Optional[dict] = None) -> Optional[contracts.NotifyEvent]:

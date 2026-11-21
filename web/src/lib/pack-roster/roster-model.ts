@@ -1,5 +1,5 @@
 import type { ComputerEntry, ComputersView } from '../computers/computers-api';
-import type { PackMachine } from '../pack-machines/pack-machines-store.svelte';
+import type { PackMachine, PackMachinesView, TakeoverReason } from '../pack-machines/pack-machines-store.svelte';
 import type { DiscoveredMac, PeerRow } from '../hosts-page/federation-api';
 import { machineKey, type HostRow } from '../hosts-page/hosts-adapter';
 
@@ -25,6 +25,10 @@ export interface RosterComputer {
   dial: string;
   since: string | null;
   lastSeen: string | null;
+  viaRelay: boolean;
+  needsUpdate: boolean;
+  rank: number | null;
+  eligible: boolean;
 }
 
 export interface RosterInputs {
@@ -70,13 +74,16 @@ export function buildRoster(input: RosterInputs): RosterComputer[] {
       machine, entry, host, matchedBy: by, peer,
       hostKeys: [...(isSelf && local ? [local.key] : []), ...(peer ? [peer.key] : []), ...(host ? [host.key] : [])],
       dial: dialOf(entry, isSelf), since: entry?.dial?.since ?? null, lastSeen: isSelf ? null : (entry?.last_link_at ?? null),
+      viaRelay: machine?.link_path === 'relay', needsUpdate: !isSelf && machine?.paired === true && machine.roster_v1 === false,
+      rank: machine?.rank ?? null, eligible: machine?.eligible === true,
     });
   };
   [...input.machines].sort((a, b) => Number(b.is_self) - Number(a.is_self)).forEach((m) => add(m, entries.get(m.install_id) ?? null));
   (input.view?.computers ?? []).forEach((c) => add(null, c));
   sshHosts.filter((h) => !claimed.has(h.key)).forEach((host) => {
     out.push({ id: `host:${host.key}`, name: host.label || host.key, kind: 'ssh-only', transport: 'ssh', isSelf: false, isAlpha: false, machine: null, entry: null,
-      host, matchedBy: null, peer: null, hostKeys: [host.key], dial: 'ssh', since: null, lastSeen: host.probed_at });
+      host, matchedBy: null, peer: null, hostKeys: [host.key], dial: 'ssh', since: null, lastSeen: host.probed_at,
+      viaRelay: false, needsUpdate: false, rank: null, eligible: false });
   });
   return out;
 }
@@ -148,3 +155,37 @@ export function unlinkedNearby(found: readonly DiscoveredMac[], list: readonly R
 }
 
 export const canLead = (c: RosterComputer): boolean => !c.isAlpha && !c.isSelf && c.kind !== 'ssh-only' && c.machine?.paired === true;
+
+export type ReconnectSituation = 'main_now' | 'normal' | 'main_offline' | 'looking';
+
+export const MAIN_OFFLINE_SECONDS = 300;
+
+export function situationOf(view: PackMachinesView | null): ReconnectSituation {
+  if (!view) return 'normal';
+  const self = view.machines.find((m) => m.is_self);
+  if (self?.is_master) return view.interim === true ? 'main_now' : 'normal';
+  const main = view.machines.find((m) => m.is_master && !m.is_self);
+  if (!self || !main || main.link_path === 'direct' || main.link_path === 'relay') return 'normal';
+  return main.age_seconds !== null && main.age_seconds > MAIN_OFFLINE_SECONDS ? 'main_offline' : 'looking';
+}
+
+export function takeoverReasonKey(view: PackMachinesView | null): TakeoverReason | 'unknown' {
+  return view?.takeover_available?.reason ?? 'unknown';
+}
+
+export const orderEditable = (view: PackMachinesView | null): boolean =>
+  view?.machines.some((m) => m.is_self && m.is_master) === true && view.interim !== true;
+
+export const successorOrder = (list: readonly RosterComputer[]): RosterComputer[] =>
+  list.filter((c) => c.rank !== null).sort((a, b) => (a.rank as number) - (b.rank as number));
+
+export function moveInOrder(ids: readonly string[], id: string, dir: -1 | 1): string[] {
+  const at = ids.indexOf(id);
+  const to = at + dir;
+  if (at < 0 || to < 0 || to >= ids.length) return [...ids];
+  const next = [...ids];
+  [next[at], next[to]] = [next[to]!, next[at]!];
+  return next;
+}
+
+export const strandedCount = (list: readonly RosterComputer[]): number => list.filter((c) => c.needsUpdate).length;

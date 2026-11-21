@@ -6,7 +6,7 @@ from typing import Any, List
 
 import pytest
 
-from src.cplugs.reviewboard import checkout, root as board_root
+from src.plugins.reviewboard import checkout, root as board_root
 
 REMOTE = '[core]\n\tbare = false\n[remote "origin"]\n\turl = git@example.invalid:me/boards.git\n'
 

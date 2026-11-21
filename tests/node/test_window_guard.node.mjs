@@ -139,3 +139,75 @@ test('every window session is attached to the guard and main.js feeds it health'
   assert.match(main, /guard: windowGuard/);
   assert.match(fs.readFileSync(path.join(macDir, 'window-guard-wire.js'), 'utf8'), /verifyEngineHolder\(getManager\(\)\)/);
 });
+
+test('the wired guard ignores a single missed probe and blocks once the manager counts three (the one consecutive-miss rule)', async () => {
+  const { wireWindowGuard } = require(path.join(macDir, 'window-guard-wire.js'));
+  const m = { misses: 0, stopRequested: false, getPort: () => 8000, healthDown() { return this.misses >= 3; }, getHealth: async () => null };
+  const wired = wireWindowGuard({ getManager: () => m, refreshTray: () => {}, reload: () => {} });
+  m.misses = 1;
+  await wired.onHealth(false, null);
+  assert.equal(wired.isBlocked(), false, 'one miss: nothing blocked');
+  m.misses = 3;
+  await wired.onHealth(false, null);
+  assert.equal(wired.isBlocked(), true, 'three in a row: blocked');
+});
+
+const UNREADABLE = { reason: 'unreadable', holder: null };
+const url = 'http://127.0.0.1:8000/api/v1/auth/refresh';
+
+test('steady state: a check that could not run changes nothing and the next poll checks again (#3017)', async () => {
+  const t = setup([null, UNREADABLE, UNREADABLE, null]);
+  await t.guard.onHealth(true, { uptime: 10 });
+  await t.guard.onHealth(true, { uptime: 25 });
+  assert.equal(t.cancelled(url), false);
+  assert.equal(t.guard.isBlocked(), false);
+  await t.guard.onHealth(true, { uptime: 40 });
+  await t.guard.onHealth(true, { uptime: 55 });
+  assert.equal(t.seen.checks, 4, 'every healthy poll still runs the check');
+  assert.deepEqual([t.seen.refused.length, t.seen.cleared, t.seen.reloads], [0, 0, 0]);
+});
+
+test('steady state: a stranger or a ran-and-empty answer still blocks', async () => {
+  for (const verdict of [{ reason: 'not_yours', holder: { pid: 9, uid: 0 } }, { reason: 'unknown', holder: null }]) {
+    const t = setup([null, verdict, null]);
+    await t.guard.onHealth(true, { uptime: 10 });
+    await t.guard.onHealth(true, { uptime: 25 });
+    assert.equal(t.cancelled(url), true, verdict.reason);
+    assert.equal(t.seen.refused.length, 1);
+    await t.guard.onHealth(true, { uptime: 27 });
+    assert.equal(t.seen.reloads, 1, 'a refusal that ran owes the reload');
+  }
+});
+
+test('already blocked: a could-not-run check stays blocked, and clearing owes no reload by itself', async () => {
+  const t = setup([UNREADABLE, UNREADABLE, null]);
+  await t.guard.onHealth(false);
+  await t.guard.onHealth(true, { uptime: 1 });
+  assert.equal(t.guard.isBlocked(), true, 'strict after an outage');
+  await t.guard.onHealth(true, { uptime: 3 });
+  assert.equal(t.guard.isBlocked(), true);
+  await t.guard.onHealth(true, { uptime: 5 });
+  assert.equal(t.guard.isBlocked(), false);
+  assert.equal(t.seen.cleared, 1, 'the tray state it set is cleared');
+  assert.equal(t.seen.reloads, 0, 'nothing was cancelled and no check that ran refused: no reload');
+  const c = setup([UNREADABLE, null]);
+  await c.guard.onHealth(false);
+  assert.equal(c.cancelled(url), true);
+  await c.guard.onHealth(true, { uptime: 1 });
+  await c.guard.onHealth(true, { uptime: 3 });
+  assert.equal(c.seen.reloads, 1, 'a cancelled request still owes the reload');
+});
+
+test('port-trust: a lsof that timed out or failed is unreadable, an empty list stays unknown', async () => {
+  const portTrust = require(path.join(macDir, 'tray-menu', 'port-trust.js'));
+  const failing = (error) => (_file, _args, _opts, cb) => cb(error, '');
+  const timedOut = await portTrust.listeners(8000, { execFile: failing(Object.assign(new Error('timeout'), { killed: true, code: null })) });
+  assert.equal(timedOut, null);
+  assert.equal(portTrust.holderRefusal(timedOut, 501).reason, 'unreadable');
+  const none = await portTrust.listeners(8000, { execFile: failing(Object.assign(new Error('exit 1'), { code: 1 })) });
+  assert.deepEqual(none, []);
+  assert.equal(portTrust.holderRefusal(none, 501).reason, 'unknown');
+  assert.equal(portTrust.judgePort({ holders: null, myUid: 501, health: null }).trusted, null);
+  const { verifyEngineHolder } = require(path.join(macDir, 'engine', 'engine-lifecycle.js'));
+  assert.equal((await verifyEngineHolder({ getPort: () => 'not-a-port' })).reason, 'unreadable');
+});

@@ -6,11 +6,13 @@ Alex (example-owner), 2026-10-14.</p>
 <h3 class="sg-h3" id="sessions-page-strip">title strip and filter bar</h3>
 <dl class="sg-facts">
     <dt>title strip</dt>
-    <dd>The Page title bar spans <code>TitleStrip.svelte</code> in its sub slot (the Page's own heading is clipped; the strip draws the
-        same word, <code>.sp-tbl</code> with <code>.pl-title</code>, on the phone too): the icon buttons
-        new project, new session, show hidden (an <code>aria-pressed</code> toggle: automated runs and automated-only projects) and expand or collapse all (<code>.sp-acts</code> holding base <code>IconButton</code>s, <code>TitleActions.svelte</code>; each carries an <code>aria-label</code> and a title), the find box centered
-        (<code>.sp-find</code> holding the base search <code>Field</code>, <code>.oc-search</code>) and the fleet summary at the
-        right (<code>.sp-sum</code>, <code>FleetSummary.svelte</code>). The page's buttons are base <code>Button</code>s at the small size. On a phone the find rides the Page omnibar and the summary moves into <code>.sp-phonebar</code>.</dd>
+    <dd>The page wears the shared page frame's nav frame (<code>Page.svelte</code>, <code>frame="nav" scroll="self"</code>), so the
+        title strip is the frame's own: the title, the fleet summary in its sub (<code>.sp-sum</code>, <code>FleetSummary.svelte</code>),
+        the find in the frame's header search slot (the base <code>SearchField</code>; the omnibar search on a phone) and the icon buttons
+        new project, new company, new session, clean up worktrees, show hidden (an <code>aria-pressed</code> toggle: automated runs and
+        automated-only projects) and expand or collapse all as its actions (<code>.sp-acts</code> holding base <code>IconButton</code>s,
+        <code>TitleActions.svelte</code>; each carries an <code>aria-label</code> and a title). They are the frame's header squares: 26px
+        under a mouse, 44px under a touch screen. On a phone the fleet summary rides the frame's tool row.</dd>
     <dt>fleet summary</dt>
     <dd>Icon and number pairs (<code>.sp-pair</code>): running is the terminal mark; needs you, working and asleep wear the real
         status lights (<code>StatusLed.svelte</code>, the same component the rows use); oldest asleep is the clock. With the live
@@ -18,16 +20,16 @@ Alex (example-owner), 2026-10-14.</p>
     <dt>filter bar</dt>
     <dd>ONE row (<code>FilterBar.svelte</code>, the base <code>Toolbar</code> in its band form: the groups in its filters slot, the clear button, view switch and count in its end slot): the state toggles in <code>.sp-seg</code> (five show-these-kinds icons: working, questions, sleep, closed, archived; working and sleep start on; each is an independent on or off button with <code>aria-pressed</code>, an on one bright with no box or border, an off one dimmed), then company, project, computer and provider as labelled hairline groups
         (<code>.sp-g</code>, <code>.sp-gl</code>, a small base <code>Select</code>) copied from the catalog bar, then clear (a base small <code>Button</code>, <code>[data-clear]</code>)
-        the view switch (<code>[data-view-switch]</code>, <code>ViewSwitch.svelte</code>: an icon-only base <code>Segmented</code>, list, pivot, timeline) and the live count <code>.sp-count</code> ("2 of 2") at the right end; pivot and timeline, which have no filter bar, draw the switch and count alone in a band <code>Toolbar</code> . A session row ends in <code>.sp-tail</code>: its action button and the drawer's session menu kebab (a right click on the row opens the same menu). The lens rail folds every inactive project under one inactive item (<code>[data-nested]</code> rows). Under 960px of bar the labels
-        move into each select's "any" option (<code>.sp-bar--compact</code>).</dd>
+        the view switch (<code>[data-view-switch]</code>, <code>ViewSwitch.svelte</code>: an icon-only base <code>Segmented</code>, list, pivot, timeline) and the live count <code>.sp-count</code> ("2 of 2") at the right end; pivot and timeline, which have no filter bar, draw the switch and count alone in a band <code>Toolbar</code> . A session row ends in <code>.sp-tail</code>: its action button and the drawer's session menu kebab (a right click on the row opens the same menu). The lens rail folds every inactive project under one inactive item (<code>[data-nested]</code> rows). When the labelled row, measured, does not fit its bar (<code>fit-bar.ts</code>; not on a phone, which scrolls) the labels
+        move into each select's "any" option (<code>.sp-bar--compact</code>, back only with a margin to spare so the edge does not flicker); a row still too wide wraps its groups onto a second line (the base toolbar's own desktop rule on <code>.oc-toolbar__facets</code>, not a page rule), so it never runs past the bar.</dd>
     <dt>accent bar</dt>
     <dd><code>.sp-sepbar</code>, 2px in <code>--oc-orange</code>, under the filter bar. The bar and "+ start" are two recorded
         exceptions to the one-accent rule (Alex (example-owner), 2026-10-14, <code>docs/DECISIONS.md</code>).</dd>
     <dt>body</dt>
-    <dd><code>.sp-body</code> holds the bar, the accent bar and <code>.sp-hosts</code>: one <code>.sp-host</code> per view, the
+    <dd><code>.sp-body</code>, in the frame body's fixed box, holds the bar, the accent bar and <code>.sp-hosts</code>: one <code>.sp-host</code> per view, the
         list, pivot and timeline hosts, only the active one shown. The empty and loading line is the base <code>State</code> (loading or empty).</dd>
     <dt>files</dt>
-    <dd><code>web/src/lib/sessions-page/</code>: <code>SessionsPage.svelte</code>, <code>TitleStrip.svelte</code>,
+    <dd><code>web/src/lib/sessions-page/</code>: <code>SessionsPage.svelte</code>, <code>TitleActions.svelte</code>,
         <code>FleetSummary.svelte</code>, <code>FilterBar.svelte</code>, <code>sessions-page.css</code>.</dd>
 </dl>
 
@@ -54,8 +56,8 @@ Alex (example-owner), 2026-10-14.</p>
         <code>.sp-sh-m</code>, the measure <code>.sp-sh-t</code>) with its sessions inset under it and a hairline guide down the
         inset. Groups named by words (project, provider, computer) list a to z, case-insensitive; time and rank lenses keep
         their own order. On the project lens an <strong>inactive</strong> project (no running session, including a project with no
-        session at all) is drawn grayed (<code>data-inactive</code>) and collapsed, below every active one, a to z. A project heading ends in the
-        project kebab (<code>RowMenu.svelte</code>, the Projects page's own menu); a right click on the bar opens the same menu at the pointer and
+        session at all) is drawn grayed (<code>data-inactive</code>) and collapsed, below every active one, a to z. A project heading draws no menu
+        button (Joe (ccsliinc), 2026-10-22); a right click or Shift+F10 on the bar opens the one project menu at the pointer and
         neither folds the group. The fold is a base row <code>Button</code> (<code>[data-fold]</code>); the color item opens a swatch submenu to its right, the same one the drawer's project menu draws.
         A project heading also wears small base <code>Tag</code>s (neutral, or the danger tone for a failed pack): archived, packed, moved to a computer
         (with an inline <code>.oc-btn</code> "move back") and automated. Under the inactive projects an <strong>archived</strong> fold (collapsed, grayed) lists the archived

@@ -15,7 +15,7 @@ from src.core.attention.evidence import (
     AttentionVerdict,
     Evidence,
 )
-from src.core.attention.process_scope import never_prompted
+from src.core.attention.process_scope import never_prompted, queued_reinvoke_is_current
 from src.core.attention.registry_record import REG_SHELL, REGISTRY_STALE_AFTER_SECONDS
 from src.core.attention.resolve_verdicts import _age_seconds, _turn_at_rest, _verdict, idle_turn_ended_verdict
 from src.core.attention.transcript_facts import FACTS_FOUND, FACTS_SHAPE_UNRECOGNIZED
@@ -73,7 +73,7 @@ def rung_8_turn_ended(evidence: Evidence, previous_process_only: bool, reading: 
             and _turn_at_rest(evidence)
             and facts.pending_background_agents == 0
             and facts.open_async_agents == 0
-            and not facts.queued_reinvoke
+            and not queued_reinvoke_is_current(evidence)
             and reading.settled
             and not (parked is not None and parked.is_unmeasured)
         )

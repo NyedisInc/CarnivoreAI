@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from src.core.flow_data.collect import build, participants
-from src.cplugs.host.activity_reader import ActivityReader
+from src.plugins.host.activity_reader import ActivityReader
 from tests.python.cplugs.flow import fixture as fx
 
 NOW = fx.BASE + 4 * 3600

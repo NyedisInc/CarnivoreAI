@@ -1,4 +1,4 @@
-import type { ReviewCheckRow } from '../../../cplugs/huddle/huddle-model';
+import type { ReviewCheckRow } from '../../../plugins/huddle/huddle-model';
 
 export function tickedLine(check: ReviewCheckRow, say: (key: string, args: Record<string, string>) => string): string {
   if (!check.checked) return '';

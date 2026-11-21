@@ -45,11 +45,13 @@ from src.core.session_backend import SessionBackend, build_backend
 from src.core.scrollback_replay import with_cursor_restore
 
 from src.core.live_ports import LiveSessionRecordStore, LiveSettings
+from src.core.sessions.agent_update_warn import warn_exc_once
 from src.core.sessions.hook_token_authority import HookTokenAuthority
+from src.core.sessions.metadata_retire import retire_metadata_file
 from src.core.sessions.owned_tmux_ledger import OwnedTmuxLedger
 from src.core.sessions.pane_listing_cache import invalidate_pane_listing
 from src.core.sessions.rehold_after_respawn import rehold_respawned_session
-from src.core.sessions import wrapper_source
+from src.core.sessions import remote_sessions, wrapper_source
 from src.core.sessions.probe_health import ProbeHealth, ProbeHealthRecorder
 from src.core.sessions.registry import SessionRegistry
 from src.core.sessions.sidecars import AttachmentSidecars
@@ -61,10 +63,9 @@ from src.core.sessions.pending_registration import hold_pending_registration
 from src.core.sessions.theme_store import ThemeStore
 from src.core.sessions.toast_inbox import ToastInbox
 from src.core.session_output import tap as output_tap
-from src.core.sessions import remote_sessions
 from src.core.hosts.ddl import LOCAL_HOST_KEY
 from src.core.hosts.identity import is_remote_backend, parse_remote_session_id
-from src.cplugs.sdk import turn_events
+from src.plugins.sdk import turn_events
 from src.core.hosts.registry import HostRegistry
 from src.core.db_models import SESSION_CLAUDE_UUID_SOURCE_HOOK
 from src.core.product_identity import ENV_PREFIX
@@ -592,7 +593,7 @@ class SessionManager:
         try:
             loaded = Session(**load.session)
         except (TypeError, ValueError) as exc:
-            logger.error("failed_to_load_session_metadata", error=str(exc))
+            logger.error("failed_to_load_session_metadata", error=str(exc), error_type=type(exc).__name__)
             return
 
         self._registry.register(loaded, backend=None)
@@ -702,7 +703,7 @@ class SessionManager:
         try:
             session_label = self._label_for_tmux_name(session_name)
         except Exception as exc:
-            logger.debug("toast_label_read_threw", error=str(exc))
+            warn_exc_once("toast_label_read_threw", exc)
             session_label = None
         toast, _superseded = self._toast_inbox.store(
             session_id,
@@ -971,7 +972,7 @@ class SessionManager:
                 else:
                     logger.warning("no_template_path_configured")
             except Exception as e:
-                logger.error("template_copy_error", error=str(e))
+                logger.error("template_copy_error", error=str(e), error_type=type(e).__name__, exc_info=True)
 
         tmux_session_name = session_name_claim.base_name_for_project(project_name)
 
@@ -1052,7 +1053,7 @@ class SessionManager:
                 plan_sink: list = []
                 command = settings.pane_launch_command(
                     resolved_agent_type, model=model, model_is_explicit=True, plan_sink=plan_sink,
-                    extra_args=(agent_extra_args or []) + name_args,
+                    extra_args=(agent_extra_args or []) + name_args, working_dir=str(work_path),
                 )
                 if plan_sink:
                     prepared = await create_seam.prepare(plan_sink[0], account_id=claude_account, overlay_ctx=create_seam.overlay_ctx_for(
@@ -1095,6 +1096,8 @@ class SessionManager:
                 tmux_session=tmux_session_name,
             )
 
+            if reuse_session_id is not None and tmux_session_name:
+                await asyncio.to_thread(self._refuse_reuse_if_row_live, tmux_session_name, int(reuse_session_id))
             self._registry.register(new_session, backend)
             registration.set()
             self._pending_agent_registration.pop(session_id, None)
@@ -1120,7 +1123,7 @@ class SessionManager:
                     label=label,
                     model=model,
                     launch_record=launch_record_json,
-                    project_name=project_name,
+                    project_name=project_name, app_session_id=session_id,
                 )
                 create_persist_outcome = persisted.outcome
                 new_session.tmux_created_epoch = persisted.epoch
@@ -1160,7 +1163,7 @@ class SessionManager:
             return new_session
 
         except (PTYSessionError, OSError) as e:
-            logger.error("session_creation_failed", error=str(e))
+            logger.error("session_creation_failed", error=str(e), error_type=type(e).__name__, session_id=session_id)
             await self._cleanup_failed_create(session_id, backend)
             raise SessionCreateFailed(f"Failed to create session: {e}") from e
         except Exception as e:
@@ -1236,11 +1239,10 @@ class SessionManager:
             if was_persisted:
                 metadata_path = settings.get_session_metadata_path()
                 try:
-                    if metadata_path.exists():
-                        metadata_path.unlink()
+                    retire_metadata_file(metadata_path)
                 except OSError as exc:
                     logger.warning(
-                        "session_metadata_unlink_failed_on_detach",
+                        "session_metadata_retire_failed_on_detach",
                         error=str(exc),
                     )
                 if self._registry.current_session() is not None:
@@ -1250,7 +1252,7 @@ class SessionManager:
             return True
 
         except Exception as e:
-            logger.error("session_detach_failed", error=str(e))
+            logger.error("session_detach_failed", error=str(e), error_type=type(e).__name__, exc_info=True, session_id=sid)
             raise
 
     async def destroy_session(self, session_id: Optional[str] = None) -> bool:
@@ -1304,15 +1306,14 @@ class SessionManager:
                     self._save_session_metadata()
                 else:
                     metadata_path = settings.get_session_metadata_path()
-                    if metadata_path.exists():
-                        metadata_path.unlink()
+                    retire_metadata_file(metadata_path)
 
             logger.info("session_destroyed", session_id=sid)
             _record_stats_event("session_finished", sid)
             return True
 
         except Exception as e:
-            logger.error("session_destruction_failed", error=str(e))
+            logger.error("session_destruction_failed", error=str(e), error_type=type(e).__name__, exc_info=True, session_id=sid)
             raise
 
     def _is_live_tmux_name(self, candidate: str) -> bool:
@@ -1606,7 +1607,7 @@ class SessionManager:
             backend.resize(cols, rows)
             logger.debug("terminal_resized", cols=cols, rows=rows, session_id=sid)
         except Exception as e:
-            logger.error("terminal_resize_failed", error=str(e))
+            logger.error("terminal_resize_failed", error=str(e), error_type=type(e).__name__, exc_info=True, session_id=sid)
 
     def capture_scrollback(
         self, lines: int = 3000, session_id: Optional[str] = None
@@ -1618,7 +1619,7 @@ class SessionManager:
         try:
             return backend.capture_scrollback(lines=lines)
         except Exception as exc:
-            logger.error("capture_scrollback_failed", error=str(exc))
+            logger.error("capture_scrollback_failed", error=str(exc), error_type=type(exc).__name__, exc_info=True, session_id=sid)
             return b""
 
 
@@ -1895,6 +1896,7 @@ class SessionManager:
                 else self._label_for_tmux_name(tmux_session_name)
             ),
             session_row_id=row_identity["id"] if row_identity else None,
+            session_uuid=row_identity.get("session_uuid") if row_identity else None,
             parent_session_id=(
                 row_identity["parent_session_id"] if row_identity else None
             ),
@@ -2066,7 +2068,7 @@ class SessionManager:
                 return None
             return lend_pooled_or_raise(path)
         except Exception as exc:  # noqa: BLE001
-            logger.debug("ownership_datastore_unavailable", error=str(exc))
+            warn_exc_once("ownership_datastore_unavailable", exc)
             return None
 
     def _writable_datastore_connection(self, *, fresh: bool = False) -> Optional[sqlite3.Connection]:
@@ -2236,15 +2238,20 @@ class SessionManager:
 
             probe_socket, listing = self._probe_instances()
             socket = probe_socket or self.tmux_socket_name()
-            measured = measure_adoption(socket, name)
+            measured = measure_adoption(socket, name, listing)
             with transaction(conn):
                 result = persist_adoption(
                     conn, socket=socket, name=name, listing=listing, correlate=False, **measured.persist_probes()
                 )
-            correlate_after_commit(conn, result, socket=socket, name=name, pane_pid=measured.pane_pid)
+            correlate_after_commit(conn, result, socket=socket, name=name, pane_pid=measured.pane_pid, ladder=measured.correlation)
             from src.core.session_agent_infer_sweep import sweep_live_sessions
 
             sweep_live_sessions(self)
+            if result.taken_over_from:
+                try:
+                    self._theme_store.rekey_pin(result.taken_over_from, name)
+                except OSError as exc:
+                    logger.warning("adopt_pin_rekey_failed", old_name=result.taken_over_from, new_name=name, error=str(exc))
             return result
         except Exception as exc:  # noqa: BLE001
             logger.warning(
@@ -2370,6 +2377,22 @@ class SessionManager:
                 except sqlite3.Error:
                     pass
 
+    def _refuse_reuse_if_row_live(self, name: str, row_id: int) -> None:
+        from src.core.sessions.reuse_guard import refuse_reuse_before_register
+
+        conn = self._writable_datastore_connection()
+        if conn is None:
+            return
+        try:
+            probe_socket, listing = self._probe_instances()
+            refuse_reuse_before_register(
+                conn, row_id=row_id, listing=listing, socket=probe_socket or self.tmux_socket_name(), name=name
+            )
+        except sqlite3.Error as exc:
+            logger.warning("reuse_guard_unreadable", tmux_name=name, error=str(exc))
+        finally:
+            conn.close()
+
     def persist_creation(
         self,
         name: str,
@@ -2381,13 +2404,14 @@ class SessionManager:
         label: Optional[str] = None,
         model: Optional[str] = None,
         launch_record: Optional[str] = None,
-        project_name: Optional[str] = None,
+        project_name: Optional[str] = None, app_session_id: Optional[str] = None,
     ) -> "CreatePersistResult":
         from src.core.session_create_persist import (
             CREATE_NO_DATASTORE,
             CreatePersistResult,
             persist_creation,
         )
+        from src.core.sessions.reuse_guard import ReuseRowTakenError
 
         conn = self._writable_datastore_connection()
         if conn is None:
@@ -2425,8 +2449,10 @@ class SessionManager:
                     label=label,
                     model=model,
                     launch_record=launch_record,
-                    project_name=project_name,
+                    project_name=project_name, app_session_id=app_session_id,
                 )
+        except ReuseRowTakenError:
+            raise
         except Exception as exc:  # noqa: BLE001
             logger.warning(
                 "create_persist_failed",
@@ -2498,7 +2524,7 @@ class SessionManager:
                 conn, socket=socket, name=name, epoch=epoch
             )
         except Exception as exc:
-            logger.debug("stored_launch_lookup_threw", error=str(exc))
+            warn_exc_once("stored_launch_lookup_threw", exc)
             return NOT_KNOWN
         finally:
             try:
@@ -2520,7 +2546,7 @@ class SessionManager:
                 conn, socket=self.tmux_socket_name(), name=tmux_name
             )
         except Exception as exc:
-            logger.debug("session_label_read_threw", error=str(exc))
+            warn_exc_once("session_label_read_threw", exc)
             return None
         finally:
             if conn is not None and owned:
@@ -2557,7 +2583,7 @@ class SessionManager:
                 conn, socket=self.tmux_socket_name(), name=tmux_name
             )
         except Exception as exc:
-            logger.debug("session_identity_live_read_threw", error=str(exc))
+            warn_exc_once("session_identity_live_read_threw", exc)
             return None
         finally:
             if conn is not None and owned:
@@ -2579,7 +2605,7 @@ class SessionManager:
                 return InstanceIndex()
             return build_instance_index(conn, socket=socket, names=wanted)
         except Exception as exc:  # noqa: BLE001
-            logger.debug("instance_index_for_listing_threw", error=str(exc))
+            warn_exc_once("instance_index_for_listing_threw", exc)
             return InstanceIndex()
         finally:
             if conn is not None and owned:
@@ -2605,7 +2631,7 @@ class SessionManager:
                 epoch=epoch,
             )
         except Exception as exc:
-            logger.debug("session_identity_instance_read_threw", error=str(exc))
+            warn_exc_once("session_identity_instance_read_threw", exc)
             return None
         finally:
             if conn is not None:
@@ -2631,7 +2657,7 @@ class SessionManager:
                 epoch=epoch,
             )
         except Exception as exc:
-            logger.debug("session_label_instance_read_threw", error=str(exc))
+            warn_exc_once("session_label_instance_read_threw", exc)
             return None
         finally:
             if conn is not None:
@@ -2894,7 +2920,7 @@ class SessionManager:
 
             if initial_cols and initial_rows:
                 try:
-                    backend.resize(initial_cols, initial_rows)
+                    await asyncio.to_thread(backend.resize, initial_cols, initial_rows)
                     logger.info(
                         "adopted_session_resized",
                         session=name,
@@ -3207,6 +3233,7 @@ class SessionManager:
                 agent_type,
                 model=self._model_for_tmux_name(name),
                 extra_args=extra_args,
+                working_dir=self._working_dir_for_tmux_name(name),
             )
         except Exception as exc:
             logger.warning(
@@ -3268,6 +3295,7 @@ class SessionManager:
                 agent_type,
                 model=self._model_for_tmux_name(name),
                 extra_args=resume_args,
+                working_dir=self._working_dir_for_tmux_name(name),
             )
             if not choice.accepted:
                 logger.info(
@@ -3473,7 +3501,8 @@ class SessionManager:
                     stored_command, launch_display = replayed.command, vars(replayed.display)
                 else:
                     stored_command = settings.pane_launch_command(
-                        stored_type, model=model, extra_args=resume_args
+                        stored_type, model=model, extra_args=resume_args,
+                        working_dir=self._working_dir_for_tmux_name(name),
                     )
             except restart_seam.LaunchProfileNotFound as exc:
                 launch_display = {"missing_profile": exc.profile_id, "codes": list(exc.codes)}
@@ -3495,13 +3524,15 @@ class SessionManager:
             if not candidate or candidate in presence_by_uuid:
                 continue
             from src.core.agent_families import resolve_agent_type
-            from src.core.attention.codex_pane_home import pane_codex_home
+            from src.core.attention.codex_pane_home import codex_home_for_row
             from src.core.session_transcript_presence import family_conversation_presence
 
+            family = resolve_agent_type(stored_type, settings.load_auth_config().agents.wrappers)[0].name
             presence = family_conversation_presence(
-                resolve_agent_type(stored_type, settings.load_auth_config().agents.wrappers)[0].name,
+                family,
                 candidate,
-                working_dir=str(Path(settings.default_working_dir).expanduser()), codex_home=pane_codex_home(self.tmux_socket_name(), name),
+                working_dir=str(Path(settings.default_working_dir).expanduser()),
+                codex_home=codex_home_for_row(family, self.tmux_socket_name(), name),
             )
             presence_by_uuid[candidate] = (presence.outcome, presence.detail)
 
@@ -3571,6 +3602,12 @@ class SessionManager:
                 return getattr(session, "model", None)
         return None
 
+    def _working_dir_for_tmux_name(self, name: str) -> Optional[str]:
+        for session in self._registry.sessions.values():
+            if getattr(session, "tmux_session", None) == name and not self._is_remote_sid(session.id):
+                return str(session.working_dir) if getattr(session, "working_dir", None) else None
+        return None
+
     def _persist_respawn_agent_type(
         self, *, name: str, socket_name: str, agent_type: str
     ) -> bool:
@@ -3617,6 +3654,7 @@ class SessionManager:
             from src.core.session_store import (
                 identity_for_live_name,
                 sessions_table_ready,
+                uuid_for_row,
             )
 
             if not sessions_table_ready(conn):
@@ -3626,12 +3664,9 @@ class SessionManager:
             )
             if identity is None:
                 return out
-            row = conn.execute(
-                "SELECT session_uuid FROM sessions WHERE id = ?",
-                (int(identity["id"]),),
-            ).fetchone()
-            if row is not None:
-                out["session_uuid"] = row["session_uuid"]
+            found = uuid_for_row(conn, int(identity["id"]))
+            if found is not None:
+                out["session_uuid"] = found
             return out
         except sqlite3.Error as exc:
             logger.debug("respawn_identity_read_failed", name=name, error=str(exc))
@@ -3643,8 +3678,10 @@ class SessionManager:
                 pass
 
     async def _resolve_external_cwd(self, name: str) -> Path:
+        from src.core.tmux_discovery import TmuxVersionSkewError
+        from src.core.tmux_session_cwd import CWD_PROBE_TIMEOUT_SECONDS
+        from src.core.tmux_transport.run import tmux_run
         from src.core.tmux_transport.target import exact_pane_target
-        from src.core.tmux_discovery import tmux_argv_prefix
 
         if parse_remote_session_id(name) is not None:
             return await remote_sessions.resolve_external_cwd(self, name)
@@ -3660,22 +3697,12 @@ class SessionManager:
             return Path.home()
 
         try:
-            proc = await asyncio.create_subprocess_exec(
-                *tmux_argv_prefix(socket_name), "display-message",
-                "-t", target, "-p", "#{pane_current_path}",
-                stdin=asyncio.subprocess.DEVNULL,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            out, _ = await proc.communicate()
-            if proc.returncode != 0:
-                return Path.home()
-            raw = out.decode("utf-8", errors="replace").strip()
-            if not raw:
-                return Path.home()
-            path = Path(raw)
-            return path if path.exists() else Path.home()
-        except Exception as exc:
+            done = await tmux_run(socket_name, "display-message", "-t", target, "-p",
+                                  "#{pane_current_path}", timeout=CWD_PROBE_TIMEOUT_SECONDS)
+            raw = done.stdout.decode("utf-8", errors="replace").strip() if done.ok else ""
+            path = Path(raw) if raw else None
+            return path if path is not None and path.exists() else Path.home()
+        except (TmuxVersionSkewError, OSError, ValueError) as exc:
             logger.debug("adopt_cwd_probe_failed", name=name, error=str(exc))
             return Path.home()
 

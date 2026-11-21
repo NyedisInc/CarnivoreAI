@@ -227,13 +227,16 @@ async def agent_spawn(manager: Any, caller: AgentCaller, args: dict) -> dict:
 
 WRITE_TOOLS['agent_spawn'] = (
     'Start a visible Claude or Codex agent here or on a paired computer, assign its task through crosstalk, and receive its completion reply. '
-    'The owner approves each spawn unless beast mode is armed. Limits: 5 live per caller, 20 total.',
+    'The owner approves each spawn unless beast mode is armed. In an auto-delegate project placement defaults to auto: the computer with room, else here; say here or peer to choose. Uncommitted changes stay here. Limits: 5 live per caller, 20 total.',
     {'provider': {'type': 'string', 'enum': ['claude', 'codex']},
      'task': {'type': 'string', 'maxLength': 19000},
      'name': {'type': 'string'}, 'model': {'type': 'string'},
      'effort': {'type': 'string', 'enum': ['low', 'medium', 'high', 'xhigh', 'max']},
      'project': {'type': 'string'}, 'working_dir': {'type': 'string'},
      'peer': {'type': 'string'},
-     'worktree': {'type': 'boolean'}, 'report_back': {'type': 'boolean'}},
+     'worktree': {'type': 'boolean'}, 'report_back': {'type': 'boolean'},
+     'placement': {'type': 'string', 'enum': ['here', 'auto'], 'description': 'auto (the default in an auto-delegate project): the computer with room is picked, here when none has. here (the default elsewhere): this computer. Not with peer.'},
+     'needs': {'type': 'array', 'items': {'type': 'string', 'maxLength': 64}, 'maxItems': 8,
+               'description': 'With auto: words the computer must have, such as xcode.'}},
     ['provider', 'task'], agent_spawn,
 )

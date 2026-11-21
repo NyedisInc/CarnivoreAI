@@ -17,6 +17,7 @@ from src.core.pack.transport import github_account, ladder
 logger = structlog.get_logger()
 
 TTL_OPEN, TTL_NONE, TTL_DONE = 60.0, 120.0, 600.0
+TTL_TARGET = 600.0
 CALL_TIMEOUT = 20.0
 BACKOFF_START, BACKOFF_MAX = 60.0, 600.0
 
@@ -113,6 +114,22 @@ def _project_for(folder: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+def head_stamp(folder: str) -> Optional[int]:
+    from src.core.session_pane_facts import find_git_head
+
+    head = find_git_head(folder)
+    if head is None:
+        return None
+    try:
+        return os.stat(head).st_mtime_ns
+    except OSError:
+        return None
+
+
+def _stamps(stamp: Callable[[str], Optional[int]], folders: Set[str]) -> Dict[str, Optional[int]]:
+    return {folder: stamp(folder) for folder in folders}
+
+
 def resolve_target(folder: str) -> Target:
     project = _project_for(folder) or {}
     if project.get("air_gap"):
@@ -169,6 +186,8 @@ class PrWatch:
     resolve: Callable[[str], Target] = resolve_target
     call: Callable[[str, Tuple[str, str]], str] = fetch
     clock: Callable[[], float] = time.monotonic
+    stamp: Callable[[str], Optional[int]] = head_stamp
+    _heads: Dict[str, Optional[int]] = field(default_factory=dict)
     _wanted: Set[str] = field(default_factory=set)
     _targets: Dict[str, Tuple[float, Target]] = field(default_factory=dict)
     _repos: Dict[Tuple[str, str, str], _Repo] = field(default_factory=dict)
@@ -202,13 +221,19 @@ class PrWatch:
     async def _refresh(self, folders: Set[str], wake: Callable[[], None]) -> None:
         now = self.clock()
         changed = False
+        heads = await asyncio.to_thread(_stamps, self.stamp, folders)
         for folder in folders:
-            seen = self._targets.get(folder)
-            if seen is None or now - seen[0] > TTL_NONE:
+            seen, head = self._targets.get(folder), heads.get(folder)
+            age = now - seen[0] if seen is not None else None
+            stale = (age is None or (head is None and age > TTL_NONE)
+                     or (head is not None and head != self._heads.get(folder)) or age > TTL_TARGET)
+            if stale:
                 self._targets[folder] = (now, await asyncio.to_thread(self.resolve, folder))
+                self._heads[folder] = head
                 changed = True
         for gone in set(self._targets) - folders:
             self._targets.pop(gone, None)
+            self._heads.pop(gone, None)
         due = {(t.account, *t.repo) for _, t in self._targets.values() if t.account and t.repo}
         for key in due:
             if key in self._inflight:

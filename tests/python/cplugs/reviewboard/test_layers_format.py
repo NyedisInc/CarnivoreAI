@@ -12,10 +12,10 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 from src.api.auth import require_auth
-from src.cplugs.huddle import board_port
-from src.cplugs.reviewboard import document
-from src.cplugs.reviewboard.layers import shell
-from src.cplugs.reviewboard.requests import ReviseBody
+from src.plugins.huddle import board_port
+from src.plugins.reviewboard import document
+from src.plugins.reviewboard.layers import shell
+from src.plugins.reviewboard.requests import ReviseBody
 from tests.python.cplugs.reviewboard.boards import SIDECAR
 from tests.python.cplugs.reviewboard.harness import BASE, task_manager_on, task_manager_store, make_env
 from tests.python.cplugs.reviewboard.layer_fixtures import OPTIONS, QUESTIONS, ROWS, layer_sidecar
@@ -194,7 +194,7 @@ def test_the_revise_body_needs_a_page_or_a_layer() -> None:
 
 
 def test_the_published_json_schema_names_the_layer() -> None:
-    from src.cplugs.reviewboard.cli.emit_schema import schema_text
+    from src.plugins.reviewboard.cli.emit_schema import schema_text
     text = schema_text()
     assert '"QuestionsLayer"' in text and '"RowsLayer"' in text and OPTIONS
 
@@ -205,15 +205,15 @@ def test_the_shell_page_prints_no_title_of_its_own() -> None:
 
 
 def test_a_closed_note_cannot_be_forced_open_by_a_control_display() -> None:
-    css = (Path(__file__).resolve().parents[4] / "src/cplugs/reviewboard/frame/layer.css").read_text(encoding="utf-8")
+    css = (Path(__file__).resolve().parents[4] / "src/plugins/reviewboard/frame/layer.css").read_text(encoding="utf-8")
     assert re.search(r"\[hidden\][^{]*\{\s*display:\s*none\s*!important", css)
     assert css.count("max-width: var(--rbl-field-max)") >= 3
 
 
 @pytest.mark.parametrize("width,ok", [(None, True), (480, True), (2400, True), (479, False), (2401, False), (0, False), ("wide", False)])
 def test_a_canvas_max_width_is_stored_when_in_range_and_refused_otherwise(width, ok) -> None:
-    from src.cplugs.reviewboard.requests import RevisionBody
-    from src.cplugs.reviewboard.revisions import _revision
+    from src.plugins.reviewboard.requests import RevisionBody
+    from src.plugins.reviewboard.revisions import _revision
     from datetime import datetime, timezone
 
     args = {"summary": "s", "html": "<p>x</p>", "viewport": 520}

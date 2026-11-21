@@ -1,6 +1,9 @@
 <script lang="ts">
   /* the widgets page */
   import type { LayoutStore } from '../engine/layout.svelte';
+  import { takenSlots } from '../engine/components-actions';
+  import { isTabSlot } from '../engine/tabs';
+  import { tabsFor } from '../engine/tab-groups.svelte';
   import type { CellId, InstanceKind, LayoutPage, SlotId } from '../engine/types';
   import { isWidgetDisabled } from '../../lib/item-settings/store.svelte';
   import { addBlocked, refusalLine, sessionInstanceId } from '../engine/components-actions';
@@ -21,6 +24,7 @@
   import { dropHostById } from '../../lib/motion-grid';
   import { repeatableInGlance } from '../../lib/drawer-zone/glance';
   import {
+    addGalleryPreset,
     addSessionWidget,
     addWidget,
     closeWidgetDrawer,
@@ -29,17 +33,19 @@
   } from './editor.svelte';
   import { analytics } from '../cells/analytics/state.svelte';
   import { FAMILY_TARGET_OPTION } from '../../lib/drawer-zone/glance-model';
-  import { PRESETS, presetTitleKey } from '../viz/presets';
+  import { PRESETS, presetConfig, presetTitleKey, type Preset } from '../viz/presets';
+  import { PRESET_KIND } from './drop-kind';
   import { manifestById } from '../widgets/core-manifests';
   import { drawerZone } from '../../lib/drawer-zone/zone-store.svelte';
   import { railStores } from '../../lib/session-rail/rail-store.svelte';
   import Button from '../../lib/base/Button.svelte';
+  import Sheet from '../../lib/sheet/Sheet.svelte';
   import DuplicatePrompt from './DuplicatePrompt.svelte';
   import { askDuplicate, closeDuplicate } from './duplicate-prompt.svelte';
   import DrawerHead from './DrawerHead.svelte';
   import DrawerTools from './DrawerTools.svelte';
   import DrawerList from './DrawerList.svelte';
-  import { addToRail, landRow } from './drawer-landing';
+  import { addToRail, landFamilyCopy, landRow } from './drawer-landing';
 
   let { store, page, docked = false, surface = null }: { store: LayoutStore; page: LayoutPage; docked?: boolean; surface?: string | null } = $props();
 
@@ -194,11 +200,15 @@
   const onSurface = $derived<SlotId[]>(
     store.state.layout.rows.flatMap((row) => row.slots.map((slot) => slot.id)),
   );
+  const layoutTabs = $derived<string[]>(
+    page === 'terminal' ? takenSlots(store).filter(isTabSlot).flatMap((slot) => tabsFor(store, slot)) : [],
+  );
   const chartRows = $derived(Object.values(analytics.charts));
 
   const inputs = $derived({
     page,
     onSurface,
+    tabs: layoutTabs,
     disabled: isWidgetDisabled,
     query,
     category: null,
@@ -221,6 +231,7 @@
 
   const listInputs = $derived({
     onSurface,
+    tabs: layoutTabs,
     disabled: isWidgetDisabled,
     query: '',
     kind,
@@ -313,6 +324,34 @@
 
 
 
+  function onGalleryDown(event: PointerEvent, preset: Preset): void {
+    const row = grouped.rows.find((one) => one.widgetId === 'core.analytics');
+    if (!row) return;
+    const offer = offerFor(row);
+    const surface = offer.surface ? { ...offer.surface, cell: `${PRESET_KIND}${preset.id}` as SlotId } : null;
+    beginDrawerCarry(event.currentTarget as HTMLElement, event, { ...offer, surface }, store, page, panel, {
+      onMove: (x, y, aimed) => {
+        carrying = { title: t(presetTitleKey(preset)), x, y, target: aimed };
+      },
+      onDrop: (target) => landFamilyCopy(store, row, target, presetConfig(preset)),
+      onRefuse: (sentence) => refusePlacement(sentence),
+      onEnd: (lifted) => {
+        carrying = null;
+        swallowClick = lifted;
+        if (lifted) setTimeout(() => (swallowClick = false), 0);
+      },
+    });
+  }
+
+  function onGalleryPick(preset: Preset): void {
+    if (swallowClick) {
+      swallowClick = false;
+      return;
+    }
+    if (surface && surface !== 'dashboard') dropHostById(surface)?.add?.(surface.startsWith('zone:') ? 'core.analytics' : `${PRESET_KIND}${preset.id}`);
+    else addGalleryPreset(preset);
+  }
+
   function onPickerKey(event: KeyboardEvent): void {
     if (event.key !== 'Escape') return;
     event.preventDefault();
@@ -322,12 +361,14 @@
 
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<aside
-  bind:this={panel}
+<Sheet
+  place="float"
+  phone={false}
+  {folded}
+  {docked}
+  width="var(--oc-sheet-w-narrow)"
+  bind:el={panel}
   class="le-drawer"
-  class:le-drawer--folded={folded}
-  class:le-drawer--docked={docked}
   aria-label={t('layout_editor.drawer.label')}
   data-layout-editor-drawer={page}
   onkeydown={(event) => picker && onPickerKey(event)}
@@ -356,6 +397,8 @@
         {familyOpen}
         {onRowDown}
         {onRowClick}
+        onCardDown={onGalleryDown}
+        onCardPick={onGalleryPick}
         {inputs}
         {onSurface}
         {showAnalytics}
@@ -373,7 +416,7 @@
     </div>
   </footer>
   <DuplicatePrompt />
-</aside>
+</Sheet>
 
 {#if carrying}
   <div
@@ -387,54 +430,25 @@
 {/if}
 
 <style>
-  .le-drawer {
-    position: fixed;
-    z-index: 40;
-    top: 56px;
-    right: 12px;
-    bottom: 12px;
-    display: flex;
-    flex-direction: column;
-    width: 300px;
-    min-height: 0;
-    background: var(--oc-ground-panel);
-    border: var(--oc-border, 1px) solid var(--oc-line-panel);
-    border-radius: var(--oc-radius, 2px);
-    color: var(--oc-text-primary);
-    font-family: var(--font-mono);
-  }
 
   @layer components {
-    .le-drawer {
-      transition: transform 160ms ease-out;
+    :global(.le-drawer) {
+      transition: transform var(--oc-motion) ease-out;
     }
 
-    :global(body.grid-carrying) .le-drawer:not(.le-drawer--docked) {
-      transform: translateX(calc(100% + 24px));
+    :global(body.grid-carrying) :global(.le-drawer:not([data-sheet-docked])) {
+      transform: translateX(calc(100% + var(--oc-space-5)));
       pointer-events: none;
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .le-drawer {
+      :global(.le-drawer) {
         transition: none;
       }
     }
   }
 
-  .le-drawer--folded {
-    bottom: auto;
-  }
-
-  .le-drawer--docked {
-    position: static;
-    z-index: auto;
-    flex: 1 1 auto;
-    width: auto;
-    border: 0;
-    border-radius: 0;
-  }
-
-  .le-drawer :global(.le-hint),
+  :global(.le-drawer) :global(.le-hint),
   .le-empty {
     margin: 0;
     font-size: var(--oc-fs-label, var(--oc-fs-label));
@@ -449,34 +463,34 @@
     flex: 1 1 auto;
     min-height: 0;
     margin: 0;
-    padding: 6px;
+    padding: var(--oc-space-1-5);
     overflow-y: auto;
     list-style: none;
   }
 
-  .le-drawer :global([data-le-card]) {
+  :global(.le-drawer) :global([data-le-card]) {
     align-items: center;
-    gap: 10px;
+    gap: var(--oc-gap-parts);
     width: 100%;
-    padding: 6px;
+    padding: var(--oc-space-1-5);
     color: inherit;
     cursor: grab;
     touch-action: none;
   }
 
-  .le-drawer :global([data-le-card][data-placed]) {
+  :global(.le-drawer) :global([data-le-card][data-placed]) {
     cursor: default;
     opacity: 0.6;
   }
 
-  .le-drawer :global(.le-card__text) {
+  :global(.le-drawer) :global(.le-card__text) {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--oc-space-0-5);
     min-width: 0;
   }
 
-  .le-drawer :global(.le-card__name) {
+  :global(.le-drawer) :global(.le-card__name) {
     font-size: var(--oc-fs-body);
     color: var(--oc-text-primary);
     white-space: nowrap;
@@ -484,7 +498,7 @@
     text-overflow: ellipsis;
   }
 
-  .le-drawer :global(.le-card__meta) {
+  :global(.le-drawer) :global(.le-card__meta) {
     font-size: var(--oc-fs-micro, var(--oc-fs-micro));
     letter-spacing: var(--oc-tracking-label, 0.6px);
     text-transform: uppercase;
@@ -495,7 +509,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--oc-space-2);
-    padding: 10px var(--oc-space-3);
+    padding: calc(var(--oc-space-2) + var(--oc-space-0-5)) var(--oc-space-3);
     box-shadow: inset 0 1px 0 0 var(--oc-line-rule);
   }
 
@@ -514,7 +528,7 @@
 
   .le-ghost {
     position: fixed;
-    z-index: 60;
+    z-index: var(--oc-z-sheet);
     padding: var(--oc-space-1) var(--oc-space-2);
     pointer-events: none;
     background: var(--oc-ground-raised);
@@ -530,21 +544,21 @@
     color: var(--oc-text-primary);
   }
 
-  .le-drawer :global(.le-titlebar) {
+  :global(.le-drawer) :global(.le-titlebar) {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--oc-gap-parts);
     min-height: var(--oc-titlerow-h, 37px);
     padding: 0 var(--oc-space-2) 0 var(--oc-space-3);
     background: var(--oc-ground-titlerow);
     box-shadow: inset 0 -1px 0 0 var(--oc-line-rule);
   }
 
-  .le-drawer :global(.le-tools) {
+  :global(.le-drawer) :global(.le-tools) {
     display: flex;
     flex-direction: column;
     gap: var(--oc-space-2);
-    padding: 10px var(--oc-space-3);
+    padding: calc(var(--oc-space-2) + var(--oc-space-0-5)) var(--oc-space-3);
     box-shadow: inset 0 -1px 0 0 var(--oc-line-faint);
   }
 </style>

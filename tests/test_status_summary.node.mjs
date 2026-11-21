@@ -85,7 +85,7 @@ test('one malformed row cannot blank a whole header', () => {
 test('the documented priority order is the one in the table', () => {
     assert.deepEqual(
         plain(Summary.SUMMARY_PRIORITY).map((e) => e.key),
-        ['permission', 'input', 'working', 'unread', 'done', 'dead', 'unknown'],
+        ['permission', 'input', 'working', 'unread', 'done', 'dead', 'asleep', 'unknown'],
     );
 });
 

@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-from contextlib import closing
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -12,7 +11,7 @@ from starlette.concurrency import run_in_threadpool
 
 from src.api.peer_auth import require_peer_sessions
 from src.core.session_agent_evidence import choose_agent_evidence
-from src.core.db import DatastoreUnreadableError, connect, db_path_for
+from src.core.session_ops import row_probe
 from src.core.session_agent_choice import (
     resolve_wrapper_offers,
     validate_agent_choice,
@@ -23,10 +22,8 @@ from src.core.session_imported_restart import (
 )
 from src.core.session_recreate import plan_recreate
 from src.core.session_recreate_presence import (
-    TMUX_UNKNOWN,
     TmuxPresence,
     pane_state_for,
-    tmux_presence,
 )
 from src.models import (
     RestartPlanPreview,
@@ -126,104 +123,24 @@ class RecreateResponse(BaseModel):
     )
 
 
-def _db_path() -> Path:
-    from src.config import settings
-
-    return db_path_for(settings.get_state_dir())
-
-
-def _socket_name() -> str:
-    from src.config import settings
-    from src.core.tmux_backend import DEFAULT_SOCKET_NAME
-
-    try:
-        return settings.load_auth_config().session.tmux_socket_name
-    except (OSError, ValueError, AttributeError):
-        return DEFAULT_SOCKET_NAME
-
-
-def _measure_presence(name: str, socket_name: str) -> TmuxPresence:
-    from src.config import settings
-    from src.core.tmux_backend import SESSION_PREFIX, TmuxBackend
-
-    try:
-        probe = TmuxBackend.for_external(
-            session_name=name,
-            working_dir=Path(settings.default_working_dir).expanduser(),
-            on_output=None,
-            socket_name=socket_name,
-        )
-        listing = probe.discover_existing()
-    except (OSError, ValueError, AttributeError) as exc:
-        logger.warning("recreate_presence_unmeasured", name=name, error=str(exc))
-        return TmuxPresence(
-            outcome=TMUX_UNKNOWN,
-            detail=(
-                "the tmux socket could not be listed, so whether this "
-                "session is still running was not evaluated"
-            ),
-        )
-    return tmux_presence(
-        name,
-        listing_ok=bool(listing.ok),
-        listing_complete=bool(listing.complete),
-        names=list(listing.sessions or []),
-        namespace_prefix=SESSION_PREFIX,
-    )
-
-
-def _read_row(session_uuid: str) -> Dict[str, Any]:
-    try:
-        with closing(connect(_db_path(), create=False)) as conn:
-            found = conn.execute(
-                "SELECT * FROM sessions WHERE session_uuid = ?", (session_uuid,)
-            ).fetchone()
-    except (DatastoreUnreadableError, OSError) as exc:
-        logger.warning(
-            "recreate_row_unreadable", session_uuid=session_uuid, error=str(exc)
-        )
-        return {"row": None, "row_read_ok": False}
-    return {"row": dict(found) if found is not None else None, "row_read_ok": True}
-
-
 def _resolved(state: Dict[str, Any], session_uuid: str) -> Dict[str, Any]:
-    from src.core.session_recreate import has_tmux_identity
-
-    if not state["row_read_ok"]:
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "the datastore could not be read, so this session's "
-                "recreate could not be evaluated"
-            ),
-        )
-    row = state["row"]
-    if row is None:
-        raise HTTPException(
-            status_code=404, detail=f"no session carries the uuid {session_uuid!r}"
-        )
-    if (row.get("host_key") or "local") != "local":
-        raise HTTPException(status_code=409, detail={
-            "code": "remote_host",
-            "detail": f"session {session_uuid!r} runs on host {row['host_key']}; "
-                      "a remote session is never recreated on this machine"})
-    if not has_tmux_identity(row):
-        raise HTTPException(
-            status_code=409,
-            detail=(
-                f"session {session_uuid!r} has never had a tmux session, so "
-                "it restarts through GET /sessions/imported/restart/preview "
-                "and POST /sessions/imported/restart"
-            ),
-        )
-    return row
+    try:
+        return row_probe.resolve_row(state, session_uuid)
+    except row_probe.RowDatastoreUnreadable as exc:
+        raise api_error(503, "datastore_unavailable", exc) from exc
+    except row_probe.RowNotFound as exc:
+        raise api_error(404, "session_not_found", exc) from exc
+    except row_probe.RowOnRemoteHost as exc:
+        raise api_error(409, "remote_host", exc) from exc
+    except row_probe.RowNeverHadTmux as exc:
+        raise api_error(409, "session_has_no_tmux", exc) from exc
 
 
 def _gather(
     session_uuid: str, row_overrides: Optional[Dict[str, Any]] = None, *, fresh: bool = False,
     corpus_root: Optional[Path] = None,
 ) -> Dict[str, Any]:
-    row = _resolved(_read_row(session_uuid), session_uuid)
+    row = _resolved(row_probe.read_row(session_uuid), session_uuid)
     if row_overrides:
         row = dict(row)
         for key in ("claude_session_uuid", "working_dir"):
@@ -231,9 +148,9 @@ def _gather(
                 row[key] = row_overrides[key]
     if fresh:
         row = {**row, "claude_session_uuid": None}
-    socket_name = str(row.get("tmux_socket") or _socket_name())
+    socket_name = str(row.get("tmux_socket") or row_probe.socket_name())
     name = _safe(str(row.get("tmux_name") or ""))
-    presence = _measure_presence(name, socket_name)
+    presence = row_probe.measure_row_presence(row, name, socket_name)
     extra_args = imported_extra_args(row, row_read_ok=True)
     wd, conv = row.get("working_dir"), row.get("claude_session_uuid")
     directory = resume_directory(wd, conv, corpus_root=corpus_root, family=row.get("agent_family"))
@@ -248,11 +165,9 @@ def _gather(
 
 
 def _safe(name: str) -> str:
-    from src.core.tmux_transport.target import check_target_name
-
     try:
-        return check_target_name(name)
-    except ValueError as exc:
+        return row_probe.safe_name(name)
+    except row_probe.UnsafeTmuxName as exc:
         raise api_error(400, "session_name_invalid", exc, name=name) from exc
 
 
@@ -402,11 +317,12 @@ async def recreate_session(
       the v24 group membership all ride along untouched.
 
       THE SAME TMUX NAME IS ASKED FOR so name-scoped per-device browser
-      state survives, and it is free by construction: the gate only
-      passes when that name was measured ABSENT from the socket. The
-      create path's own uniquify-on-collision rule still applies against
-      records this app holds, so the name actually taken is REPORTED
-      rather than assumed.
+      state survives. It is free when that name was measured ABSENT from
+      the socket; when ANOTHER instance holds it (a pane with a known,
+      different creation epoch, #2981) the gate reads this row as gone
+      and the create path's own uniquify-on-collision rule suffixes the
+      name, so the holder's pane is never touched. The name actually
+      taken is REPORTED rather than assumed.
 
       A REFUSAL IS A 200 WITH ``status='refused'``, matching both other
       restart paths: the SERVER worked and a GATE declined, and a 500

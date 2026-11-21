@@ -115,3 +115,27 @@ def test_the_merged_route_returns_list_and_asleep(monkeypatch):
     app.state.session_manager = SimpleNamespace()
     body = TestClient(app).get("/api/v1/sessions/list-and-asleep").json()
     assert [r["session"]["id"] for r in body["list"]] == ["ses_1"] and body["asleep"] == []
+
+
+def test_a_caller_after_an_invalidation_never_joins_a_pass_that_began_before_it():
+    async def go():
+        cache, state, gate, read = TtlFlight("t_stale", 60.0), {"rows": ["killed"]}, asyncio.Event(), asyncio.Event()
+
+        async def work():
+            seen = list(state["rows"])
+            read.set()
+            await gate.wait()
+            return seen
+
+        old_pass = asyncio.ensure_future(cache.get(work))
+        await read.wait()
+        state["rows"] = []
+        cache.invalidate()
+        fresh = asyncio.ensure_future(cache.get(work))
+        await asyncio.sleep(0)
+        gate.set()
+        assert await old_pass == ["killed"]
+        assert await fresh == []
+        assert await cache.get(work) == []
+
+    asyncio.run(go())

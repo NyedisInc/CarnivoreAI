@@ -21,6 +21,10 @@ def _ps_rows():
             yield line, parts
 
 
+def _as_ps_shows(command: str) -> str:
+    return "".join("^" + chr(ord(c) ^ 0x40) if (ord(c) < 32 and c not in "\t\n") or ord(c) == 127 else c for c in command)
+
+
 def test_snapshot_matches_ps_for_pid_ppid_start_and_own_argv():
     before = {r.pid: r for r in libproc_snapshot.snapshot()}
     rows = list(_ps_rows())
@@ -35,7 +39,7 @@ def test_snapshot_matches_ps_for_pid_ppid_start_and_own_argv():
         assert row.ppid == int(parts[1]), line
         assert row.lstart.split() == parts[2:7], line
         if row.uid == os.getuid() and len(parts) > 7 and "\n" not in row.command:
-            assert row.command.split() == parts[7].split(), line
+            assert _as_ps_shows(row.command).split() == parts[7].split(), line
     assert compared > 20
     me = before[os.getpid()]
     started = libproc_snapshot.start_text([os.getpid(), 1, 2 ** 22 + 1])

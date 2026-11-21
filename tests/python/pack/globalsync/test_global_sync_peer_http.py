@@ -46,7 +46,7 @@ class Rig:
         monkeypatch.setattr(routes, "state_dir", lambda: self.state)
         monkeypatch.setattr(routes, "home_dir", lambda: self.home)
         monkeypatch.setattr(routes, "local_accounts", lambda: [])
-        monkeypatch.setattr(routes, "held_alpha", lambda: MAIN_IID)
+        monkeypatch.setattr(routes, "content_alpha", lambda: MAIN_IID)
         monkeypatch.setattr(routes.direction, "contained", lambda _peer: False)
         monkeypatch.setattr(config_state, "default", lambda: type("S", (), {"restrictions": lambda s: restrictions.Restrictions(
             may_receive_global_setup=self.opt_in)})())
@@ -99,7 +99,7 @@ def test_missing_or_wrong_token_is_refused_and_nothing_lands(rig: Rig, token: st
 
 
 def test_a_peer_that_is_not_the_held_alpha_is_refused(rig: Rig, monkeypatch) -> None:
-    monkeypatch.setattr(routes, "held_alpha", lambda: "someone-else")
+    monkeypatch.setattr(routes, "content_alpha", lambda: "someone-else")
     put, applied = rig.push(rig.auth())
     assert put.status_code == 403 and put.json()["detail"]["code"] == "not_alpha" and applied is None
 

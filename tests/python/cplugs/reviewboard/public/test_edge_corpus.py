@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.cplugs.reviewboard.public.edge import EdgeConfig, PublicEdge
+from src.plugins.reviewboard.public.edge import EdgeConfig, PublicEdge
 from tests.python.cplugs.reviewboard.public.corpus import Case, all_cases, judge, run_corpus, untrusted_peer_cases
 from tests.python.cplugs.reviewboard.public.harness import HOST, LEAK, ServerThread, edge_for, exchange
 from tests.python.cplugs.reviewboard.public.loosened import LOOSENINGS

@@ -1,3 +1,4 @@
+import { ACTIVITY_STATUSES } from '../activity-status';
 
 export const MAX_NODES = 500;
 export const MAX_DEPTH = 12;
@@ -10,7 +11,7 @@ export const MAX_PAYLOAD_BYTES = 4096;
 export const SCHEMA = 1;
 
 export const TONES: ReadonlySet<string> = new Set(['normal', 'muted', 'accent', 'warn', 'danger']);
-export const STATUSES: ReadonlySet<string> = new Set(['working', 'working_subagent', 'question', 'notice', 'finished_unread', 'idle', 'dead', 'unknown']);
+export const STATUSES: ReadonlySet<string> = new Set<string>(ACTIVITY_STATUSES);
 
 export const NODE_FIELDS: Readonly<Record<string, readonly string[]>> = {
     section: ['title', 'children'],

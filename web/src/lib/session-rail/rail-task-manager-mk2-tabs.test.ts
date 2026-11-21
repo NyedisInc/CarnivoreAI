@@ -49,8 +49,8 @@ vi.mock('../../lib/listing-push/boot', async (importOriginal) => ({
 
 import { RAIL_FIELD } from './rail-model';
 import { follow, keyIn, mountRails, unmountRails } from './rail-test-harness';
-import { huddle } from '../../cplugs/huddle/huddle.svelte';
-import { taskManagerPrefs } from '../../cplugs/huddle/task-manager-prefs.svelte';
+import { huddle } from '../../plugins/huddle/huddle.svelte';
+import { taskManagerPrefs } from '../../plugins/huddle/task-manager-prefs.svelte';
 import { setLocale } from '../i18n/index.svelte';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
 

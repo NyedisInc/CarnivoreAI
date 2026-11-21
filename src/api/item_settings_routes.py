@@ -57,7 +57,7 @@ async def _call(operation: Callable, *args: Any, **kwargs: Any) -> Any:
     except store.ItemStale as exc:
         raise _error(409, exc.code, str(exc), current=exc.current.as_payload())
     except (ItemCatalogError, SettingsSchemaError) as exc:
-        logger.error("item_catalog_unreadable", error=str(exc))
+        logger.error("item_catalog_unreadable", error=str(exc), error_type=type(exc).__name__)
         raise _error(500, "item_catalog_unreadable", "the declared item list could not be read")
     except (DatastoreUnreadableError, OSError, sqlite3.Error) as exc:
         logger.warning("item_settings_unavailable", error=str(exc))

@@ -11,6 +11,7 @@
     import './panel-kit/panel-kit.css';
     import './phone-link/phone-link.css';
     import { ApiError } from '../../opscenter/api/auth.svelte';
+    import { resourcePush } from '../resource-push/boot';
     import { errorText } from './panel-kit/error-text';
     import PairWindowView from './PairWindow.svelte';
     import CustomDomain from './CustomDomain.svelte';
@@ -62,7 +63,7 @@
             sawPending = false;
             win = await openWindow(fetcher);
             note = t('settings.phone_link.window.retry');
-        } else if (state === 'failed') {
+        } else if (state === 'failed' || state === 'none') {
             sawPending = false;
             win = null;
         } else if (state === 'claimed') sawPending = false;
@@ -75,6 +76,8 @@
     }
 
     let loading = false;
+    let dirty = false;
+    let stopPush: () => void = () => undefined;
 
     async function load(): Promise<void> {
         loading = true;
@@ -89,20 +92,42 @@
             }
             if (error instanceof ApiError && error.status === 403) {
                 overLink = true;
-                clearInterval(timer);
+                stopPush();
                 return;
             }
             problem = errorText(error);
         } finally {
             loading = false;
+            if (dirty && !overLink && document.visibilityState !== 'hidden') {
+                dirty = false;
+                void load();
+            }
         }
     }
     void load();
-    const timer = setInterval(() => {
-        if (!loading && document.visibilityState !== 'hidden') void load();
-    }, REFRESH_MS);
+    const reload = (): void => {
+        if (loading || document.visibilityState === 'hidden') {
+            dirty = true;
+            return;
+        }
+        dirty = false;
+        void load();
+    };
+    stopPush = resourcePush().pushOrPoll(reload, REFRESH_MS, ['phone_link']);
+    $effect(() => {
+        const onVisible = (): void => {
+            if (dirty && document.visibilityState !== 'hidden') reload();
+        };
+        document.addEventListener('visibilitychange', onVisible);
+        return () => document.removeEventListener('visibilitychange', onVisible);
+    });
+    $effect(() => {
+        if (!win || overLink || status?.pairing.state === 'claimed') return;
+        const timer = setInterval(reload, REFRESH_MS);
+        return () => clearInterval(timer);
+    });
     onDestroy(() => {
-        clearInterval(timer);
+        stopPush();
         if (win) void closeWindow(fetcher, true).catch(() => undefined);
     });
 

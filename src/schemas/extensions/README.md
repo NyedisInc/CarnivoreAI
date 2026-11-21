@@ -6,11 +6,11 @@ JSON Schema (draft 2020-12) for the Carnivore Extension Contract 1.0. Read `docs
 - `<kind>.schema.json` is L1 for `cplug`, `widget`, `theme`, `skill`, `claude-code-plugin`, `mod` and `loadout`. Each is `allOf` L0 plus the kind's own rules, closed with `unevaluatedProperties: false`.
 
 - `warez/` is L2, the public front door: `warez/item.schema.json` (the base overlay) and `warez/<kind>.schema.json` per kind, each `allOf` its L1 file, the overlay and the kind's tightening. A `$ref` resolves relative to the referring file.
-- The whole folder's `*.json` files are pinned by one digest, `src/cplugs/sdk/schema_digest.py` (`SCHEMA_SET_DIGEST`); the catalog repo vendors a byte-identical copy. After a schema change run `python3 -m src.cplugs.sdk.schema_digest` and update the constant and the catalog pin.
+- The whole folder's `*.json` files are pinned by one digest, `src/plugins/sdk/schema_digest.py` (`SCHEMA_SET_DIGEST`); the catalog repo vendors a byte-identical copy. After a schema change run `python3 -m src.plugins.sdk.schema_digest` and update the constant and the catalog pin.
 
-They live under `src/` because the packaged app ships `src/` and not a top-level `schemas/` folder. The app reads them with the stdlib checker `src/cplugs/sdk/schema_check.py`, which refuses any keyword it does not apply: a new schema may use only the keywords listed in that module. `tests/python/cplugs/test_extension_schemas.py` proves the layering, every refusal and the catalog vectors.
+They live under `src/` because the packaged app ships `src/` and not a top-level `schemas/` folder. The app reads them with the stdlib checker `src/plugins/sdk/schema_check.py`, which refuses any keyword it does not apply: a new schema may use only the keywords listed in that module. `tests/python/cplugs/test_extension_schemas.py` proves the layering, every refusal and the catalog vectors.
 
-`data` (base, required for a `cplug`) declares the stores an item keeps; its cross-field rules (unique ids, a `root_setting` the plugin declares) are in `src/cplugs/sdk/data_decl.py`. See `docs/extension-contract.md` section 8.
+`data` (base, required for a `cplug`) declares the stores an item keeps; its cross-field rules (unique ids, a `root_setting` the plugin declares) are in `src/plugins/sdk/data_decl.py`. See `docs/extension-contract.md` section 8.
 
 ## `warez/policy.json`
 

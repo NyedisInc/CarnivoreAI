@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import os
 import sqlite3
 import unicodedata
 from dataclasses import dataclass
@@ -10,11 +11,12 @@ from typing import Any, Dict, FrozenSet, List, Optional, Tuple
 import structlog
 
 from src.core.db_models import (
-    PROJECT_SOURCE_ADOPTION,
+    PROJECT_SOURCE_USER,
     SESSION_ATTRIBUTION_DERIVED_DEEPEST,
     SESSION_ATTRIBUTION_NONE,
     SESSION_ATTRIBUTION_UNKNOWN,
 )
+from src.core.claude_config.accounts_folder_cache import accounts_root
 from src.core.project_attribution import attribute, normalize_path_for_match
 from src.core.transcript_import_paths import canonical, git_top_level, is_scratch
 from src.core.trail_entry import utc_now
@@ -25,6 +27,7 @@ BINDING_MATCHED = "matched"
 BINDING_MATCHED_CANONICAL = "matched_canonical"
 BINDING_CREATED = "created"
 BINDING_FALLBACK_SYSOP = "fallback_sysop"
+BINDING_AGENT_SLOT = "agent_slot"
 BINDING_NONE = "none"
 BINDING_UNKNOWN = "unknown"
 
@@ -70,6 +73,45 @@ def _chosen_dir(working_dir: str) -> str:
 
 def fold_path(path: str) -> str:
     return unicodedata.normalize("NFC", path).rstrip("/").casefold()
+
+
+UNMINTABLE_MANAGED = "a Carnivore-managed account folder is never a project root (sign-in and relay profiles)"
+UNMINTABLE_MISSING = "a folder that does not exist on disk is never a project root"
+UNMINTABLE_JOBS = "the pack jobs folder and its job folders are never a project root"
+
+
+def _accounts_root() -> str:
+    root = str(accounts_root())
+    return canonical(root) or root
+
+
+def unmintable_reason(path: str) -> Optional[str]:
+    accounts = fold_path(_accounts_root())
+    for candidate in (path, canonical(path) or path):
+        folded = fold_path(candidate)
+        if folded == accounts or folded.startswith(accounts + "/"):
+            return UNMINTABLE_MANAGED
+    from src.core.pack.jobs import slot_lookup
+
+    if slot_lookup.in_jobs_root(path):
+        return UNMINTABLE_JOBS
+    if not os.path.isdir(path):
+        return UNMINTABLE_MISSING
+    return None
+
+
+def _agent_slot_project(conn: sqlite3.Connection, working_dir: str) -> Optional[Tuple[int, str]]:
+    from src.core.pack.jobs import slot_lookup
+
+    hit = slot_lookup.live_agent_slot(working_dir)
+    if hit is None:
+        return None
+    try:
+        row = conn.execute("SELECT id FROM projects WHERE uid = ? AND archived_at IS NULL", (hit.project_uid,)).fetchone()
+    except sqlite3.Error as exc:
+        logger.warning("session_project_agent_slot_unreadable", error=str(exc))
+        return None
+    return (int(row[0]), hit.slot_path) if row is not None else None
 
 
 def swallows_live_root(root: str, live_roots: Dict[str, int]) -> bool:
@@ -142,7 +184,7 @@ def ensure_project_row(
                 root,
                 root,
                 _display_name_for(root, conn, display_name),
-                PROJECT_SOURCE_ADOPTION,
+                PROJECT_SOURCE_USER,
                 stamp,
                 stamp,
                 stamp,
@@ -198,6 +240,15 @@ def resolve_project_binding(
             detail="the working directory could not be read or situated",
         )
 
+    slot_project = _agent_slot_project(conn, written)
+    if slot_project is not None:
+        return ProjectBinding(
+            project_id=slot_project[0],
+            attribution=SESSION_ATTRIBUTION_DERIVED_DEEPEST,
+            rule=BINDING_AGENT_SLOT,
+            root=slot_project[1],
+        )
+
     matched_id, matched_attr = attribute(written, known)
     if matched_attr == SESSION_ATTRIBUTION_DERIVED_DEEPEST:
         return ProjectBinding(
@@ -236,6 +287,14 @@ def resolve_project_binding(
         )
 
     if allow_create:
+        refusal = unmintable_reason(written)
+        if refusal is not None:
+            return ProjectBinding(
+                project_id=stored_project_id,
+                attribution=SESSION_ATTRIBUTION_NONE,
+                rule=BINDING_NONE,
+                detail=refusal,
+            )
         sysop_project = _sysop_fallback_project(conn, written, known)
         if sysop_project is not None:
             logger.info(

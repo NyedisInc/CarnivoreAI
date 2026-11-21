@@ -80,7 +80,7 @@ async def resolve_replay(
 ) -> Optional[ReplayedLaunch]:
     sink: List[Any] = []
     command = settings.pane_launch_command(
-        agent_type, model=model, extra_args=list(extra_args or ()), plan_sink=sink)
+        agent_type, model=model, extra_args=list(extra_args or ()), plan_sink=sink, working_dir=working_dir or None)
     if not sink:
         return None
     plan = sink[0]

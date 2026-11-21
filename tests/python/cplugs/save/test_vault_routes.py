@@ -10,8 +10,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.host import routes as host_routes, runtime
-from src.cplugs.sdk import save_triggers, transcript_files, vault_sources
+from src.plugins.host import routes as host_routes, runtime
+from src.plugins.sdk import save_triggers, transcript_files, vault_sources
 from tests.python.cplugs.save.vault_helpers import stop_follower
 from tests.python.time_machine.helpers import CONV, FOLDER, WORKDIR, make_corpus
 
@@ -141,7 +141,7 @@ def test_moving_the_vault_says_so_when_the_old_one_holds_a_conversations_only_co
 
 def test_changing_the_cap_reassesses_over_cap_at_once(rig):
     client, _state, _corpus, tmp = rig
-    from src.cplugs.save.service import RUNTIME
+    from src.plugins.save.service import RUNTIME
 
     _kill()
     boards = tmp / "boards"
@@ -154,7 +154,7 @@ def test_changing_the_cap_reassesses_over_cap_at_once(rig):
 
 
 def test_the_folder_routes_list_a_unit_and_restore_it_into_a_new_folder(rig):
-    from src.cplugs.save.service import RUNTIME
+    from src.plugins.save.service import RUNTIME
 
     client, _state, _corpus, tmp = rig
     boards = tmp / "boards"
@@ -173,7 +173,7 @@ def test_the_folder_routes_list_a_unit_and_restore_it_into_a_new_folder(rig):
 
 
 def test_the_folder_listing_names_the_plugin_and_the_points_route_lists_the_restore_choices(rig):
-    from src.cplugs.save.service import RUNTIME
+    from src.plugins.save.service import RUNTIME
 
     client, _state, _corpus, tmp = rig
     boards = tmp / "boards"

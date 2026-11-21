@@ -31,6 +31,8 @@ logger = structlog.get_logger()
 
 RECORD_INSERTED = "inserted"
 
+APP_SESSION_ID_PREFIX = "ses_"
+
 _OPTIONAL_INSERT_COLUMNS: Tuple[str, ...] = (
     "project_id",
     "project_attribution",

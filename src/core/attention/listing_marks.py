@@ -21,7 +21,7 @@ def marks_stamp(evidence: Any) -> tuple:
     subagents, timers, skills = (getattr(evidence, name, None) for name in ("subagents", "timers", "skills"))
     parked = getattr(evidence, "parked_work", None)
     return (
-        _fields(subagents, "state", "running", "total"),
+        _fields(subagents, "state", "running", "total", "stalled"),
         _fields(timers, "state", "live", "next_fire_at"),
         _fields(skills, "state", "fired", "last_skill", "last_at"),
         (getattr(parked, "is_live", False), (getattr(parked, "entries", None) or (None,))[0]),

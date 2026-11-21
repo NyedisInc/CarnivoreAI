@@ -42,8 +42,10 @@ The three agent views draw the SAME floor as the drawer panel (<code>swarm/floor
 <h3 class="sg-h3" id="swarm-page-board">the board</h3>
 <p>The board tab is the Swarm task board (<code>web/src/lib/swarm-board/</code>, <code>docs/swarm-board.md</code>): every card the swarm holds, in five views behind one
 switcher. Swimlanes is the default; list, timeline, calendar and columns by project are built too. Checked under carnivore, dracula and carnivore-light.
-The page body is the board's one scroller (<code>.pkg-body--scroll</code>, on the board tab only): the page frame is a fixed, overflow-hidden column, so the
-body takes the height under the tabs and scrolls, and every view's sticky rows ride on it (#1432).</p>
+The page body (<code>.pkg-body</code>) is the page's one scroller on every tab: the page wears the column frame with <code>scroll="self"</code>, so the
+frame's body region is a fixed box under the tabs, the body fills it and scrolls, and every view's sticky rows ride on it (#1432, #2775).
+Below the 768 phone line the frame lets the body grow with its content and the page itself scrolls, so the body stops scrolling and
+the sticky rows pin under the title strip and the tab row at the frame's measured offset, <code>--oc-frame-sticky-top</code>, rising to the strip when the tab row slides away.</p>
 <dl class="sg-facts">
     <dt>shell</dt>
     <dd><code>&lt;SwarmBoard /&gt;</code> (<code>.sbb</code>): the mockups' slim filter bar (<code>.sbb-bar</code>, a hairline under it): groups (<code>.sbb-group</code>) of small tracked keys (<code>.sbb-key</code>, the pressed one a cyan

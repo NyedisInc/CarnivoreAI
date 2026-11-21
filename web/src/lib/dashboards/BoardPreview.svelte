@@ -47,7 +47,7 @@
       box-sizing: border-box;
       display: flex;
       align-items: flex-start;
-      padding: 3px 4px;
+      padding: var(--oc-pad-snug) var(--oc-space-1);
       border: 2px solid transparent;
       background-clip: padding-box;
       background-color: var(--oc-ground-raised);

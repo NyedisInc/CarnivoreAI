@@ -13,8 +13,10 @@ from src.core.account_switch.active import ActiveAccount
 from src.core.hosts.identity import is_remote_info
 from src.core.provider_ledger.login_command import PROFILE_ENV_VARS
 from src.core.session_token_usage.account_resolve import accounts_for_default_login
-from src.core.tmux_control.reader import control_read_async
+from src.core.tmux_control.read_shape import Answer
+from src.core.tmux_control.reader import control_run_async
 from src.core.tmux_discovery import tmux_argv_prefix
+from src.core.session_status import STATUS_DEAD
 
 logger = structlog.get_logger()
 
@@ -47,12 +49,11 @@ def parse_show_environment(stdout: bytes, returncode: int, variable: str) -> Pan
     return UNREADABLE
 
 
-async def read_pane_profile(socket: str, tmux_name: str, variable: str) -> PaneProfile:
-    answered = await control_read_async(socket, ["show-environment", "-t", f"={tmux_name}", variable])
+async def _show_environment(socket: str, args: List[str]) -> Optional[Answer]:
+    answered = await control_run_async(socket, args)
     if answered is not None:
-        profile = parse_show_environment(answered, 0, variable)
-        return profile if not profile.inherited else await _read_global(socket, variable)
-    argv = tmux_argv_prefix(socket) + ["show-environment", "-t", f"={tmux_name}", variable]
+        return answered
+    argv = tmux_argv_prefix(socket) + args
     try:
         proc = await asyncio.create_subprocess_exec(
             *argv,
@@ -62,46 +63,38 @@ async def read_pane_profile(socket: str, tmux_name: str, variable: str) -> PaneP
         )
     except OSError as exc:
         logger.debug("account_switch_pane_read_failed", error=type(exc).__name__)
-        return UNREADABLE
+        return None
     try:
         stdout, stderr = await asyncio.wait_for(proc.communicate(), READ_TIMEOUT_SECONDS)
     except asyncio.TimeoutError:
         proc.kill()
         await proc.wait()
         logger.debug("account_switch_pane_read_failed", error="TimeoutError")
+        return None
+    return proc.returncode or 0, stdout, stderr
+
+
+async def read_pane_profile(socket: str, tmux_name: str, variable: str) -> PaneProfile:
+    answered = await _show_environment(socket, ["show-environment", "-t", f"={tmux_name}", variable])
+    if answered is None:
         return UNREADABLE
-    if proc.returncode == 1 and b"unknown variable" not in stderr:
+    returncode, stdout, stderr = answered
+    if returncode == 1 and b"unknown variable" not in stderr:
         return UNREADABLE
-    profile = parse_show_environment(stdout, proc.returncode or 0, variable)
+    profile = parse_show_environment(stdout, returncode, variable)
     if not profile.inherited:
         return profile
     return await _read_global(socket, variable)
 
 
 async def _read_global(socket: str, variable: str) -> PaneProfile:
-    answered = await control_read_async(socket, ["show-environment", "-g", variable])
-    if answered is not None:
-        profile = parse_show_environment(answered, 0, variable)
-        return PaneProfile(readable=True, value=profile.value) if profile.readable else UNREADABLE
-    argv = tmux_argv_prefix(socket) + ["show-environment", "-g", variable]
-    try:
-        proc = await asyncio.create_subprocess_exec(
-            *argv,
-            stdin=asyncio.subprocess.DEVNULL,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-    except OSError:
+    answered = await _show_environment(socket, ["show-environment", "-g", variable])
+    if answered is None:
         return UNREADABLE
-    try:
-        stdout, stderr = await asyncio.wait_for(proc.communicate(), READ_TIMEOUT_SECONDS)
-    except asyncio.TimeoutError:
-        proc.kill()
-        await proc.wait()
-        return UNREADABLE
-    if proc.returncode == 1 and b"unknown variable" in stderr:
+    returncode, stdout, stderr = answered
+    if returncode == 1 and b"unknown variable" in stderr:
         return PaneProfile(readable=True, value=None)
-    profile = parse_show_environment(stdout, proc.returncode or 0, variable)
+    profile = parse_show_environment(stdout, returncode, variable)
     return PaneProfile(readable=True, value=profile.value) if profile.readable else UNREADABLE
 
 
@@ -159,7 +152,7 @@ async def running_elsewhere(
             return None
         if is_remote_info(info):
             return None
-        if info.activity_status == "dead":
+        if info.activity_status == STATUS_DEAD:
             return None
         account_id = await resolve_pane_account(
             socket, name, provider, accounts, gate=gate
@@ -196,7 +189,7 @@ async def sessions_on_account(
     async def one(info: Any) -> Optional[str]:
         provider = FAMILY_PROVIDER.get(info.agent_family or "")
         name = info.tmux_session
-        if provider != target.provider or not name or info.activity_status == "dead":
+        if provider != target.provider or not name or info.activity_status == STATUS_DEAD:
             return None
         if is_remote_info(info):
             return None

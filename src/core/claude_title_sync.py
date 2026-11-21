@@ -83,7 +83,7 @@ class TranscriptTailRead:
         return typed_lines(self.records)
 
 
-def _align_to_record_start(handle, start: int, *, max_scan: int) -> Optional[int]:
+def align_to_record_start(handle, start: int, *, max_scan: int) -> Optional[int]:
     if start <= 0:
         return 0
     scanned = 0
@@ -132,7 +132,7 @@ def read_tail_records(
     try:
         with open(path, "rb") as handle:
             if nominal > 0:
-                aligned = _align_to_record_start(
+                aligned = align_to_record_start(
                     handle, nominal, max_scan=max(1, int(tail_bytes))
                 )
                 if aligned is None:

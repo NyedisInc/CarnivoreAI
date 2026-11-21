@@ -4,11 +4,13 @@ import CloneModal from './CloneModal.svelte';
 import EditProjectModal from './EditProjectModal.svelte';
 import ProjectFolderModal from './ProjectFolderModal.svelte';
 import ProjectNameModal from './ProjectNameModal.svelte';
+import NewProjectModal from '../new-project/NewProjectModal.svelte';
 import type {
     ChoiceOptions,
     ClonedProject,
     EditResult,
     FolderChoice,
+    NewProjectChoice,
     ProjectDetails,
 } from './modal-types';
 
@@ -17,6 +19,12 @@ export interface NameRequest {
     confirmLabel: string;
     defaultName?: string;
     pathHint?: string | null;
+}
+
+export interface NewProjectRequest {
+    title: string;
+    confirmLabel: string;
+    defaultName?: string;
 }
 
 export interface FolderRequest {
@@ -48,6 +56,7 @@ export interface CloneRequest {
 
 export interface ModalOpeners {
     name(request: NameRequest): Promise<ProjectDetails | null>;
+    newProject(request: NewProjectRequest): Promise<NewProjectChoice | null>;
     folder(request: FolderRequest): Promise<FolderChoice | null>;
     choice(options: ChoiceOptions): Promise<string | null>;
     edit(request: EditRequest): Promise<EditResult | null>;
@@ -58,6 +67,10 @@ export function browserModals(): ModalOpeners {
     return {
         name: (request) => openModal<ProjectDetails, Record<string, unknown>>(
             ProjectNameModal as never,
+            request as unknown as Record<string, unknown>,
+        ),
+        newProject: (request) => openModal<NewProjectChoice, Record<string, unknown>>(
+            NewProjectModal as never,
             request as unknown as Record<string, unknown>,
         ),
         folder: (request) => openModal<FolderChoice, Record<string, unknown>>(

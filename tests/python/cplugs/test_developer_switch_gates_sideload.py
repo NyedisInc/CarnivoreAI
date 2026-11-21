@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from src.cplugs.host import developer_mode, sideload
+from src.plugins.host import developer_mode, sideload
 from tests.python.api_keys.conftest import bearer, client, key_store, owner_jwt  # noqa: F401
 from tests.python.cplugs.test_cplug_sideload import URL, world  # noqa: F401
 

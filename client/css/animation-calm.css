@@ -17,6 +17,7 @@
         :root *::before,
         :root *::after {
             animation: none !important;
+            transition: none !important;
         }
     }
 }

@@ -232,3 +232,14 @@ test('the group gap shrinks below 600 px and is exactly 28 px from 600 up', () =
   expect(footSpacing(320).groupPx).toBe(4);
   expect(footSpacing(460).groupPx).toBeLessThan(28);
 });
+
+test('compactBars: crowded (a piece dropped or under 112 px slack) shrinks the bars by a third and re-spends', () => {
+  const m = (w: number): FootMeasure => ({ ...measureAt(w), barCount: 3 });
+  expect(planFoot(1440, m(1440))?.compactBars).toBe(false);
+  const narrow = planFoot(760, m(760));
+  expect(narrow?.compactBars).toBe(true);
+  const noCount = planFoot(760, measureAt(760));
+  expect(noCount?.compactBars).toBe(false);
+  expect(FOOT_PRIORITY.filter((k) => narrow?.admit[k]).length).toBeGreaterThanOrEqual(
+    FOOT_PRIORITY.filter((k) => noCount?.admit[k]).length);
+});

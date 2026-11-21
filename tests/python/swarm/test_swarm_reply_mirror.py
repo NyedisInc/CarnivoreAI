@@ -27,9 +27,9 @@ from src.core.db_steps import run_chain
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
 from src.core.swarm import body, owner_message, spawn, store, thread_port, watch
-from src.cplugs.host import runtime
-from src.cplugs.huddle import routes as huddle_routes
-from src.cplugs.huddle.swarm_port import TaskManagerSwarmPort
+from src.plugins.host import runtime
+from src.plugins.huddle import routes as huddle_routes
+from src.plugins.huddle.public import TaskManagerSwarmPort
 from tests.python.cplugs.owner import turn_on
 
 CALLER = AgentCaller("ses_1", "cloude_a", "ses_1")

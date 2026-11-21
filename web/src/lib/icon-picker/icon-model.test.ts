@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import enCatalog from '../../../../client/js/i18n/catalog.en.js';
 import { createI18n } from '../../../../client/js/i18n/runtime.js';
 import { GLYPHS } from '../../../../client/js/icons/glyphs.js';
+import { PICKER_GLYPHS } from '../../../../client/js/icons/picker-glyphs.js';
 import { RETIRED_ICON_IDS, iconSvg } from '../../../../client/js/icons/icon-registry.js';
 import type { Translate } from '../sessions/types';
 import {
@@ -65,6 +66,34 @@ describe('the registry', () => {
     test('a retired id maps to a live one', () => {
         for (const [, next] of Object.entries(RETIRED_ICON_IDS as Record<string, string>)) {
             expect(resolveIcon(next)).not.toBeNull();
+        }
+    });
+});
+
+describe('the general-purpose set', () => {
+    const topics = [
+        'briefcase', 'money', 'home', 'health', 'plane', 'music', 'video', 'photo', 'book', 'school', 'cart', 'chat', 'mail',
+        'phone', 'calendar', 'clock', 'map-pin', 'globe', 'cloud', 'server', 'database', 'lock', 'key', 'shield', 'bug', 'rocket',
+        'lightbulb', 'star', 'heart', 'flag', 'gift', 'car', 'gamepad', 'paint-brush', 'wrench', 'chart', 'leaf', 'coffee',
+    ];
+
+    test('offers an icon for every broad topic the owner named', () => {
+        const ids = PICKABLE_ICONS.map((icon) => icon.id);
+        for (const topic of topics) expect(ids, topic).toContain(topic);
+    });
+
+    test('every new glyph is pickable, is drawn with the shared 1.5 round stroke, and uses path, rect and circle records only', () => {
+        const picked = new Set(PICKABLE_ICONS.map((icon) => icon.glyph));
+        const added = Object.entries(PICKER_GLYPHS as Record<string, Array<Record<string, string>>>);
+        expect(added.length).toBeGreaterThanOrEqual(30);
+        for (const [name, elements] of added) {
+            expect(picked.has(name), `${name} is in the registry`).toBe(true);
+            expect(glyphs[name], `${name} reaches GLYPHS`).toBe(elements);
+            for (const element of elements) {
+                expect(['path', 'rect', 'circle'], `${name} tag`).toContain(element.tag);
+                expect(element['stroke-width'], `${name} stroke width`).toBe('1.5');
+                expect(element['stroke-linecap'], `${name} caps`).toBe('round');
+            }
         }
     });
 });

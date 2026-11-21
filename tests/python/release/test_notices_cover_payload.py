@@ -149,7 +149,7 @@ def test_build_notices_reports_a_web_package_with_no_notice(tmp_path: Path) -> N
 
 
 def vendor_recipe(**over) -> dict:
-    comp = {"name": "liba", "version": "1.0", "license": "MIT", "files": ["lib/a.js"], "text_file": "vendor/xterm-5.3.0.txt"} | over
+    comp = {"name": "liba", "version": "1.0", "license": "MIT", "files": ["lib/a.js"], "text_file": "vendor/xterm-5.5.0.txt"} | over
     return {"components": [comp]}
 
 
@@ -205,7 +205,7 @@ def test_real_browser_side_code_has_notices(tmp_path: Path) -> None:
 def test_vendored_recipe_matches_the_version_files() -> None:
     comps = {c["name"]: c["version"] for c in json.loads(gn.VENDORED.read_text())["components"]}
     xterm_md = (ROOT / "client/vendor/xterm/VERSION.md").read_text()
-    for m in re.finditer(r"^\| \S+ \| (xterm\S*) \| (\S+) \|", xterm_md, re.M):
+    for m in re.finditer(r"^\| \S+ \| (@?xterm\S*) \| (\S+) \|", xterm_md, re.M):
         assert comps.get(m.group(1)) == m.group(2), m.group(0)
     cm_md = (ROOT / "client/vendor/codemirror/VERSION.md").read_text()
     for m in re.finditer(r"^\| (@\S+) \| (\d+\.\d+\.\d+)", cm_md, re.M):

@@ -6,9 +6,9 @@ import time
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-from src.cplugs.save.vault import units
-from src.cplugs.save.vault.stamp_memo import StampMemo
-from src.cplugs.save.vault.workdirs import WorkingDirMemo
+from src.plugins.save.vault import units
+from src.plugins.save.vault.stamp_memo import StampMemo
+from src.plugins.save.vault.workdirs import WorkingDirMemo
 from tests.python.cplugs.save.vault_helpers import CODEX_ID, CONV, ENC, World, jsonl
 
 HOUR_NS = 3600 * 10 ** 9
@@ -133,7 +133,7 @@ def test_a_working_folder_is_read_once_per_file(tmp_path, monkeypatch):
     write_cwd(path, "/Users/x/app")
     opened: List[str] = []
     real = units.peek_working_dir
-    monkeypatch.setattr("src.cplugs.save.vault.workdirs.peek_working_dir", lambda p: opened.append(str(p)) or real(p))
+    monkeypatch.setattr("src.plugins.save.vault.workdirs.peek_working_dir", lambda p: opened.append(str(p)) or real(p))
     memo = WorkingDirMemo()
     assert [memo.get(path) for _ in range(3)] == ["/Users/x/app"] * 3
     with open(path, "ab") as handle:

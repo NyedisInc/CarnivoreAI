@@ -3,14 +3,14 @@ from __future__ import annotations
 
 from contextlib import closing
 
-from src.cplugs.huddle import item_owner, lineage
-from src.cplugs.huddle.answer_writer import AnswerWriter
-from src.cplugs.huddle.roles import ask, lost, route, tag_send
+from src.plugins.huddle import item_owner, lineage
+from src.plugins.huddle.answer_writer import AnswerWriter
+from src.plugins.huddle.roles import ask, lost, route, tag_send
 from tests.python.cplugs.huddle.roles_rig import BASE, give_stored_rows
 from tests.python.cplugs.huddle.test_task_manager_nudge_sweep import ITEMS, LISTS, Rig, rig  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, pasted  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_tags import SEND, World, add, joe_reply, store_of, told_once, world  # noqa: F401
-from src.cplugs.sdk.session_rows import StoredRow
+from src.plugins.sdk.session_rows import StoredRow
 
 
 def questions(store, item: int) -> list:
@@ -68,9 +68,9 @@ def test_an_owner_whose_row_still_stands_is_not_gone(client, world, monkeypatch)
 
 def test_an_archived_row_is_gone_and_an_unreadable_table_decides_nothing(world, monkeypatch):
     import asyncio
-    from src.cplugs.sdk.session_rows import SessionRowsUnreadable
+    from src.plugins.sdk.session_rows import SessionRowsUnreadable
     ctx = world.app.state
-    from src.cplugs.host import runtime
+    from src.plugins.host import runtime
     hctx = runtime.host_for(world.app).context("huddle", background=True)
     give_stored_rows(monkeypatch, {"ses_ghost": StoredRow(12, True)})
     assert asyncio.run(lost.lost_outcome(hctx, "ses_ghost", wake=False)) == route.GONE

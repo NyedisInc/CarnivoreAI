@@ -18,7 +18,7 @@ from src.core.hosts.identity import remote_session_id
 from src.core.mcp.protocol import BatchView
 from src.core.mcp.common import ToolError
 from src.core.crosstalk.spawn import SpawnRequest, _folder, _worktree
-from src.core.crosstalk.spawn_rules import agent_cli_flags
+from src.core.crosstalk.spawn_rules import peer_spawn_flags
 
 router = APIRouter(prefix="/crosstalk", tags=["crosstalk"])
 
@@ -188,7 +188,7 @@ async def peer_spawn(body: PeerSpawn, request: Request,
         raise _refuse(str(exc)) from exc
     try:
         made = await peer_create.create_pane(request, target_dir=target_dir, agent_type=body.provider,
-                                             label=body.name, model=body.model, extra_args=agent_cli_flags(body.provider, body.effort, body.beast))
+                                             label=body.name, model=body.model, extra_args=peer_spawn_flags(body.provider, body.effort, body.beast))
     except peer_create.PeerCreateRefused as exc:
         raise _refuse(exc.code, exc.status) from exc
     made.pop('row_id', None)

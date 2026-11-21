@@ -9,7 +9,7 @@ from types import SimpleNamespace
 import pytest
 from fastapi import FastAPI
 
-from src.cplugs.host import runtime, state as owner_state
+from src.plugins.host import runtime, state as owner_state
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
 from tests.python.cplugs.owner import turn_on

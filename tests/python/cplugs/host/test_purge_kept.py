@@ -4,8 +4,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from src.cplugs.host import purge_kept, runtime
-from src.cplugs.sdk.data_decl import parse_data
+from src.plugins.host import purge_kept, runtime
+from src.plugins.sdk.data_decl import parse_data
 from tests.python.cplugs.owner import turn_on
 from tests.python.cplugs.removability import _client
 

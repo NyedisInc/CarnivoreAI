@@ -13,7 +13,7 @@ const DETACHED_KNOWN: Record<string, string> = {
 };
 
 const PLUGIN_ENTRY_KNOWN: Record<string, string> = {
-    'cplugs/reviewboard/public/visitor-page/start.ts': 'the visitor page of public review links is its own entry point (a separate bundle, served by the review board\'s public listener, that never loads the app) and owns its document',
+    'plugins/reviewboard/public/visitor-page/start.ts': 'the visitor page of public review links is its own entry point (a separate bundle, served by the review board\'s public listener, that never loads the app) and owns its document',
 };
 
 const TEST_ONLY = /\.(test|spec)\.|test-helpers\.ts$|-harness\.ts$/;

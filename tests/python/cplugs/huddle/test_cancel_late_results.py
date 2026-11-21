@@ -5,8 +5,8 @@ from contextlib import closing
 
 import pytest
 
-from src.cplugs.huddle import closure_undo, service
-from src.cplugs.huddle.rules import TaskManagerForbidden
+from src.plugins.huddle import closure_undo, service
+from src.plugins.huddle.rules import TaskManagerForbidden
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import ITEMS, env  # noqa: F401
 

@@ -154,9 +154,11 @@ def test_the_frame_after_skip_next_is_bodyless_and_the_one_after_that_is_not(rig
 
 
 def test_the_computers_and_pack_machines_providers_answer_what_their_routes_answer(monkeypatch):
-    view = {"machines": [{"id": "studio", "load": 0.5}], "master_install_id": "m"}
+    view = {"machines": [{"id": "studio", "install_id": "studio-iid", "roster_v1": False, "load": 0.5}], "master_install_id": "m"}
     touched = []
-    wired = SimpleNamespace(runtime=SimpleNamespace(touch=lambda: touched.append(1), view=lambda peers: view), peers=lambda: [])
+    from src.core.pack.machines.interim_policy import HomeState
+    custody = SimpleNamespace(roster=lambda: None, home_state=HomeState)
+    wired = SimpleNamespace(runtime=SimpleNamespace(touch=lambda: touched.append(1), view=lambda peers: view, custody=custody), peers=lambda: [])
     monkeypatch.setattr(pack_machines_routes, "_wired", lambda: wired)
     computers_view = {"computers": [], "self": {"role": "alpha"}}
     monkeypatch.setattr(computers_routes, "_rt", lambda: object())

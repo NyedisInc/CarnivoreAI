@@ -23,6 +23,7 @@ STANDING: Dict[str, str] = {
         "swarm_card_reorder", "swarm_card_deal", "swarm_card_auto_promote", "swarm_card_queue", "swarm_card_verdict", "swarm_card_archive", "swarm_card_delete",
     )},
     "messaging_send": PANE,
+    "job_stop": PANE,
 }
 
 _NOT_SWARM = "not_a_swarm_agent: {name} is a Swarm agent's own tool; only a Swarm agent's session may call it"

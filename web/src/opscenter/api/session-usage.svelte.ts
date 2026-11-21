@@ -4,6 +4,7 @@ import { resource, type Resource } from './poll.svelte';
 import type { SessionTokenUsage } from './types';
 import { t } from '../../lib/i18n/index.svelte';
 import { contextUsedPct } from '../../lib/session-stats/context-gauge';
+import { isRowTail } from '../engine/slot-identity';
 import {
   usagePanelLabels,
   scaleStep,
@@ -64,6 +65,15 @@ function readSessionUsage(sessionId: string): Promise<SessionTokenUsage> {
   return authFetch<SessionTokenUsage>(`/sessions/${id}/token-usage`);
 }
 
+const NO_SESSION: Resource<SessionTokenUsage> = {
+  status: 'unavailable',
+  data: null,
+  fetchedAt: null,
+  error: null,
+  async refresh() {  },
+  stop() {  },
+};
+
 const cache = new Map<string, { resource: Resource<SessionTokenUsage>; refs: number; off: () => void }>();
 
 const MOVING_STATUSES = new Set(['working', 'working_subagent']);
@@ -103,6 +113,7 @@ function followStatus(sessionId: string, usage: Resource<SessionTokenUsage>): ()
 }
 
 export function sessionUsage(sessionId: string): Resource<SessionTokenUsage> {
+  if (isRowTail(sessionId)) return NO_SESSION;
   let entry = cache.get(sessionId);
   if (!entry) {
     entry = {
@@ -110,6 +121,7 @@ export function sessionUsage(sessionId: string): Resource<SessionTokenUsage> {
         intervalMs: SESSION_USAGE_POLL_MS,
         topics: usageTopics(sessionId),
         name: `session-usage:${sessionId}`,
+        haltOnUnavailable: true,
         pollWhile: () => {
           const status = pushedStatus(sessionId);
           return status === undefined || status === null || MOVING_STATUSES.has(status);

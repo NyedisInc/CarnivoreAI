@@ -5,7 +5,7 @@ from typing import Optional
 
 import structlog
 
-from src.cplugs.sdk.cards import CardPort
+from src.plugins.sdk.cards import CardPort
 
 logger = structlog.get_logger()
 

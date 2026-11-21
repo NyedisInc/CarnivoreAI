@@ -11,9 +11,9 @@ from typing import Any, Callable, List
 import pytest
 
 from src.core.backup_health import vault_record
-from src.cplugs.save.vault.location import open_root
-from src.cplugs.save.vault.manifest import ManifestStore
-from src.cplugs.sdk import dir_listing
+from src.plugins.save.vault.location import open_root
+from src.plugins.save.vault.manifest import ManifestStore
+from src.plugins.sdk import dir_listing
 
 OLD_NS = 10 * dir_listing.TRUST_AFTER_NS
 
@@ -115,14 +115,14 @@ def test_unchanged_folder_is_not_listed_again(tmp_path: Path, monkeypatch: pytes
     _age(folder, 1_000_000_000)
     store = ManifestStore(tmp_path)
     listed: List[Path] = []
-    real = Path.iterdir
+    real = os.scandir
 
-    def counting(self: Path) -> Any:
-        if self == folder:
-            listed.append(self)
-        return real(self)
+    def counting(path: Any) -> Any:
+        if isinstance(path, (str, os.PathLike)) and Path(path) == folder:
+            listed.append(Path(path))
+        return real(path)
 
-    monkeypatch.setattr(Path, "iterdir", counting)
+    monkeypatch.setattr(os, "scandir", counting)
     for _ in range(4):
         assert store.point_ids("conv-ccc") == ["20260101T000000Z"]
     assert len(listed) == 1

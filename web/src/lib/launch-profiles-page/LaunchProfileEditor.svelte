@@ -231,14 +231,14 @@
     .lp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px 12px; }
     .lp-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
     .lp-field--wide { grid-column: 1 / -1; }
-    .lp-hint { color: var(--pl-dim); font-size: 11px; overflow-wrap: anywhere; }
-    .lp-hint--warn { color: var(--pl-warn); }
-    .lp-edit :global(:is(input, select, textarea)[data-field][data-mono]) { font-family: var(--pl-mono); }
-    .lp-icon-mark { display: inline-flex; flex: none; width: 24px; height: 24px; line-height: 0; color: var(--pl-muted); }
+    .lp-hint { color: var(--oc-text-muted); font-size: 11px; overflow-wrap: anywhere; }
+    .lp-hint--warn { color: var(--oc-yellow); }
+    .lp-edit :global(:is(input, select, textarea)[data-field][data-mono]) { font-family: var(--font-mono); }
+    .lp-icon-mark { display: inline-flex; flex: none; width: 24px; height: 24px; line-height: 0; color: var(--oc-text-secondary); }
     .lp-icon-row { display: flex; align-items: center; gap: 8px; min-height: 32px; }
-    .lp-picker { max-width: 420px; color: var(--pl-text); }
+    .lp-picker { max-width: 420px; color: var(--oc-text-primary); }
     .lp-radio { display: inline-flex; }
-    .lp-fold { margin-top: 12px; border-top: 1px solid var(--pl-line-quiet); }
+    .lp-fold { margin-top: 12px; border-top: 1px solid var(--oc-line-faint); }
     .lp-fold__body { display: flex; flex-direction: column; gap: 10px; padding-bottom: 8px; }
     .lp-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: center; }
     .lp-ghost { width: var(--oc-control-h-xs); }

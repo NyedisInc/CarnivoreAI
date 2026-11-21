@@ -1,0 +1,46 @@
+{
+  "api_routes": [
+    "GET /api/v1/sessions/list",
+    "GET /api/v1/sessions/{session_id}/subagents"
+  ],
+  "area": "sessions",
+  "description": "A running sub-agent whose transcript has not moved for five minutes is marked stalled: its age in the control center and in the sub-agent list turns amber and reads \"stalled Nm\", and the listing carries a subagents_stalled count. A sub-agent that is waiting on purpose, holding an armed Monitor inside its deadline, is never stalled, and when the launch ledger cannot be read nothing is marked. Once a stall passes fifteen minutes the app raises one notification per stall, filed under the parent session, with the per-session mute and the per-type switch honored; an agent that writes again and later stalls again is a new stall. Both limits are named constants (STALL_AFTER, STALL_NOTIFY_AFTER in src/core/subagents/stall.py). Nothing is stopped and no timer is added: the mark rides the watcher's own subagent tally and is pushed through the listing.",
+  "docs": [
+    "docs/session-status.md",
+    "docs/notifications.md"
+  ],
+  "examples": [
+    "A builder sub-agent freezes at 21m 35s: after five quiet minutes its age reads stalled 5m in amber, and at fifteen minutes one notification names the stuck agent in the parent session."
+  ],
+  "how_to": [
+    "Open the session control center (click the agents count on the terminal foot bar) or a session's sub-agent list.",
+    "Find a running sub-agent whose age reads stalled Nm in amber.",
+    "Turn the sub-agent stalled type off or mute the session in settings, notifications, if you do not want the notification."
+  ],
+  "id": "subagent-stalled",
+  "issues": [
+    2953
+  ],
+  "keywords": [
+    "subagents",
+    "stalled",
+    "stuck",
+    "notification"
+  ],
+  "media_exempt": "needs a real sub-agent frozen for five minutes; the amber word is covered by the style guide entry and a unit test, and a recapture recipe needs a fake transcript clock the capture harness does not have",
+  "name": "Stalled sub-agents",
+  "since": "2026-11-11",
+  "status": "stable",
+  "summary": "A sub-agent that stops writing turns amber and says stalled, then tells you once.",
+  "surfaces": [
+    "session control center agents list",
+    "sub-agent list popup",
+    "notifications"
+  ],
+  "updated": "2026-11-11",
+  "where": [
+    "Session control center, agents section: the age cell of a running sub-agent reads stalled Nm in amber.",
+    "Sub-agent list popup: the same word in the age column.",
+    "Notifications: a sub-agent stalled card, filed under the parent session."
+  ]
+}

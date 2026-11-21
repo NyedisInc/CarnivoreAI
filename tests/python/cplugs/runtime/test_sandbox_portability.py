@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.runtime import sandbox
+from src.plugins.runtime import sandbox
 
 pytestmark = pytest.mark.skipif(sys.platform != "darwin", reason="the sandbox is macOS only")
 

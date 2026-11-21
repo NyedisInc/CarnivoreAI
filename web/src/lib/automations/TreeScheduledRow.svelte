@@ -5,7 +5,7 @@
   import IconButton from '../base/IconButton.svelte';
   import State from '../base/State.svelte';
   import Tag from '../base/Tag.svelte';
-  import { repeatLabel, type EditorDraft } from '../../cplugs/huddle/task-manager-schedule';
+  import { repeatLabel, type EditorDraft } from '../../plugins/huddle/task-manager-schedule';
   import { deleteItem, isWritable, saveSchedule, setPaused, type Fetcher } from '../task-manager-schedules/scheduled-api';
   import type { TaskManagerSchedule } from '../task-manager-schedules/task-manager-scheduled';
   import { refusalText, whenLabel } from './format';

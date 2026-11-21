@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from src.api.auth import require_auth
 from src.core import icon_registry
 from src.core import session_change_notice
+from src.core.pack.globalsync import wiring as pack_wiring
 from src.core.session_groups import session_group_rule as rule_store
 from src.core import session_group_store as store
 from src.core import session_group_style as style_store
@@ -257,6 +258,7 @@ async def _write(request: Request, operation, *args, **kwargs):
     session_change_notice.publish(
         request.app.state, session_change_notice.build_structural_notice("groups")
     )
+    pack_wiring.groups_changed()
     return result
 
 

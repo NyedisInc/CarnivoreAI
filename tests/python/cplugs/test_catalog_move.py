@@ -9,9 +9,9 @@ from types import SimpleNamespace
 from src.core.skills import kinds
 from src.core.skills.consent_via_ddl import CONSENT_ONE_CLICK
 from src.core.skills.ledger_types import GLOBAL_PROJECT_PATH, SCOPE_GLOBAL, InstalledItem
-from src.cplugs.host import catalog_move, state as owner_state
-from src.cplugs.host.adoption import BUILTIN_SOURCE, NAME_PREFIX
-from src.cplugs.host.sidecar_manifest import load_sidecar_manifest
+from src.plugins.host import catalog_move, state as owner_state
+from src.plugins.host.adoption import BUILTIN_SOURCE, NAME_PREFIX
+from src.plugins.host.sidecar_manifest import load_sidecar_manifest
 
 PACKAGE = Path(__file__).resolve().parents[3] / "packages" / "cplugs" / "mcphealth"
 

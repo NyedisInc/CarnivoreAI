@@ -13,10 +13,10 @@ from src.core.backup_health import constants as HK
 from src.core.backup_health import runner
 from src.core.db import db_path_for
 from src.core.db_migration import ensure_db_migrated
-from src.cplugs.save.vault import constants as K
-from src.cplugs.save.vault import follow, health, retention
-from src.cplugs.save.vault.follow import Engine
-from src.cplugs.sdk.blob_codec import Throttle
+from src.plugins.save.vault import constants as K
+from src.plugins.save.vault import follow, health, retention
+from src.plugins.save.vault.follow import Engine
+from src.plugins.sdk.blob_codec import Throttle
 from tests.python.cplugs.save.vault_helpers import World, jsonl
 
 NOW = 2_000_000_000.0
@@ -162,7 +162,7 @@ def test_ten_gone_raise_one_alert_end_to_end(tmp_path, alerts):
 
 
 def test_a_unit_that_flaps_gone_and_back_counts_once(tmp_path):
-    from src.cplugs.save.vault import gone_watch
+    from src.plugins.save.vault import gone_watch
 
     root = tmp_path
     units = {f"u{i}": f"/p/{i}" for i in range(6)}
@@ -172,7 +172,7 @@ def test_a_unit_that_flaps_gone_and_back_counts_once(tmp_path):
 
 
 def test_units_the_owner_removed_on_purpose_are_remembered_but_not_counted(tmp_path):
-    from src.cplugs.save.vault import gone_watch
+    from src.plugins.save.vault import gone_watch
 
     units = {f"u{i}": f"/p/{i}" for i in range(10)}
     gone_watch.observe(tmp_path, {}, NOW)
@@ -181,7 +181,7 @@ def test_units_the_owner_removed_on_purpose_are_remembered_but_not_counted(tmp_p
 
 
 def test_the_event_gets_a_new_step_each_time_it_grows_by_a_full_threshold(tmp_path):
-    from src.cplugs.save.vault import gone_watch
+    from src.plugins.save.vault import gone_watch
 
     gone_watch.observe(tmp_path, {}, NOW)
     steps = []

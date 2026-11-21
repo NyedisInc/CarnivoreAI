@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
@@ -9,6 +8,7 @@ from typing import Any, Optional
 import structlog
 
 from src.core.attention.evidence import FAMILY_CLAUDE, FAMILY_CODEX
+from src.core.safe_io import realpath_memo
 from src.core.skill_fires.parse import HARNESS_CLAUDE, HARNESS_CODEX
 from src.core.skill_fires.scan import (
     STATE_UNREADABLE, profile_for_path, scan_file,
@@ -59,20 +59,23 @@ class SkillTallyCache:
             return UNSUPPORTED
         if transcript_path is None:
             return NOT_MEASURED
-        path = os.path.realpath(str(transcript_path))
+        path = realpath_memo.realpath(str(transcript_path))
         harness = HARNESS_CODEX if family == FAMILY_CODEX else HARNESS_CLAUDE
         try:
             if self._store is None:
                 self._store = default_store()
-            result = scan_file(self._store, path, harness, profile_for_path(path, self._home))
+            held = self._store.snapshot(path)
+            result = scan_file(self._store, path, harness, profile_for_path(path, self._home),
+                               cursor=held.cursor)
             if result.state == STATE_UNREADABLE:
                 return NOT_MEASURED
-            latest = self._store.recent(path, limit=1)
+            if result.applied:
+                held = self._store.snapshot(path)
             findings = self._probe.scan(path, harness) if self._probe is not None else ()
             return SkillTally(
-                STATE_MEASURED, self._store.count(path),
-                latest[0].skill if latest else None,
-                latest[0].fired_at if latest else None, findings)
+                STATE_MEASURED, held.count,
+                held.latest.skill if held.latest else None,
+                held.latest.fired_at if held.latest else None, findings)
         except Exception as exc:  # noqa: BLE001
             logger.warning("skill_tally_failed", error_type=type(exc).__name__)
             return NOT_MEASURED

@@ -13,6 +13,7 @@
   import { footAccount, remoteFootAccount } from './foot-account';
   import { rowFor } from '../terminal-viewer/meta';
   import ShellFoot from './ShellFoot.svelte';
+  import { delegatedSegment } from '../../../lib/terminal-foot-bar/delegated-segment';
   import FootWork from '../../../lib/background-work/FootWork.svelte';
   import FootGrown from './FootGrown.svelte';
   import FootProgress from './FootProgress.svelte';
@@ -20,7 +21,7 @@
   import type { ControlSection } from '../../../lib/session-control/control-center';
   import { splitFoot } from './foot-toolbar';
   import {
-    FOOT_PRIORITY, admitted, coreVisible, footSpacing, maskAdmitByItems, planFoot, readMeasure,
+    FOOT_BAR_FULL_PX, FOOT_BAR_SAVING_PX, FOOT_PRIORITY, admitted, coreVisible, footSpacing, maskAdmitByItems, planFoot, readMeasure,
     resolveFootBarCollapsedOption, DEFAULT_FOOT_BAR_COLLAPSED_OPTION,
     type CoreVisible, type FootBarCollapsedOption, type FootFeature, type FootMeasure, type WorkForm,
   } from './foot-plan';
@@ -135,9 +136,11 @@
   const rowsByKey = $derived<Record<string, UsageRow>>(
     model.state === 'ok' ? Object.fromEntries(model.rows.map((r) => [r.key, r])) : {},
   );
+  const delegated = $derived(delegatedSegment(payload?.delegated));
   const context = $derived(model.state === 'ok' ? model.context : null);
   const windows = $derived(model.state === 'ok' ? model.windows : []);
 
+  let inlineShells = $state<number | null>(null);
   const hasEffort = $derived(typeof payload?.effort === 'string' && payload.effort.trim() !== '');
 
   let step = $state('');
@@ -256,9 +259,11 @@
   });
 
   const spacing = $derived(footSpacing(width));
-  const spacingStyle = $derived(`--oc-tf-lead:${spacing.leadPx}px;--oc-tf-bar-w:${spacing.barPx}px;--oc-tf-grp:${spacing.groupPx}px;--oc-tf-edge:${spacing.edgePx}px`);
+  const spacingStyle = $derived(`--oc-tf-lead:${spacing.leadPx}px;--oc-tf-bar-w:${spacing.barPx}px;--oc-tf-grp:${spacing.groupPx}px;--oc-tf-edge:${spacing.edgePx}px;--oc-tf-meter-w:${FOOT_BAR_FULL_PX}px`);
   const edgeLiveStyle = $derived(
-    resolvedCollapsedOption === 'a' && plan ? `${spacingStyle};--oc-tf-edge:${plan.edgePx}px` : spacingStyle,
+    resolvedCollapsedOption === 'a' && plan
+      ? `${spacingStyle};--oc-tf-edge:${plan.edgePx}px${plan.compactBars ? `;--oc-tf-meter-w:${FOOT_BAR_FULL_PX - FOOT_BAR_SAVING_PX}px` : ''}`
+      : spacingStyle,
   );
   const edgeMeasureStyle = $derived(`${spacingStyle};--oc-tf-edge:0px`);
 </script>
@@ -283,10 +288,12 @@
     onclick={() => setExpanded(!expanded)}
   >
     <FootMeters option={resolvedCollapsedOption} admit={resolvedCollapsedOption === 'b' ? admB : resolvedCollapsedOption === 'c' ? admC : adm} {core} {model} {payload} {context} {windows} {rowsByKey} {hasEffort}
-      {markPreset} {footBarOrder} {leadScope} {leadWindow} /></button>
+      {markPreset} {footBarOrder} {leadScope} {leadWindow} shells={inlineShells} /></button>
   <FootWork {sessionId} form={activeWorkForm} active={expanded ? focus : null}
     hideAgents={!footBarItems.agents} hideShells={!footBarItems.shells} hideTimers={!footBarItems.timers}
+    shellsInline={footBarItems.shells} onshells={(n) => { inlineShells = n; }}
     onwidths={(w) => { workWidths = w; }} onopen={openSection} />
+  {#if delegated}<span class="oc-tf-acct" style:color={delegated.live ? 'var(--oc-green)' : null} data-foot-delegated role="img" aria-label={delegated.text} title={delegated.title}><Icon name="wolf" size={12} /></span>{/if}
   {#if account || hostName}
   <span class="oc-tf-edge" bind:offsetWidth={accountW}>
   {#if hostName}
@@ -307,13 +314,13 @@
   
   {#if canMeasure && resolvedCollapsedOption === 'b'}<div class="oc-tf oc-tf-measure" aria-hidden="true" style={spacingStyle}
     data-usage-state={model.state} bind:this={measureElB}><FootMeters option={'b'} admit={allMaskedB} {core} {model} {payload} {context} {windows} {rowsByKey} {hasEffort}
-      {markPreset} {footBarOrder} {leadScope} {leadWindow} /></div>
+      {markPreset} {footBarOrder} {leadScope} {leadWindow} shells={inlineShells} /></div>
   {:else if canMeasure && resolvedCollapsedOption === 'c'}<div class="oc-tf oc-tf-measure" aria-hidden="true" style={spacingStyle}
     data-usage-state={model.state} bind:this={measureElC}><FootMeters option={'c'} admit={allMaskedC} {core} {model} {payload} {context} {windows} {rowsByKey} {hasEffort}
-      {markPreset} {footBarOrder} {leadScope} {leadWindow} /></div>
+      {markPreset} {footBarOrder} {leadScope} {leadWindow} shells={inlineShells} /></div>
   {:else if canMeasure}<div class="oc-tf oc-tf-measure" aria-hidden="true" style={edgeMeasureStyle}
     data-usage-state={model.state} bind:this={measureEl}><FootMeters option={'a'} admit={allMasked} {core} {model} {payload} {context} {windows} {rowsByKey} {hasEffort}
-      {markPreset} {footBarOrder} {leadScope} {leadWindow} /></div>
+      {markPreset} {footBarOrder} {leadScope} {leadWindow} shells={inlineShells} /></div>
     
     <span class="oc-tf-label oc-tf-labels-measure" aria-hidden="true" bind:this={labelsShortEl}
       >{t('usage.context.short')}{#each windows as w (w.key)}{w.label}{/each}</span>

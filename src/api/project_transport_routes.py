@@ -250,7 +250,7 @@ async def post_publish_repo(project_name: str, body: PublishBody) -> Dict[str, A
     Description: the owner's own click on the card. A secret scan runs first; a hit refuses and names the files. The owner
       is the company's saved pointer unless the body gives one; with neither, 409 ``needs_answer`` carries the card.
     Inputs: project_name; body (PublishBody: owner?, account?). Output: {url, owner, name, private: true}.
-    Raises: HTTPException 404, 409 (``air_gap``, ``has_remote``, ``needs_answer``, ``secrets_found`` and ``unscannable_files`` (a file that cannot be opened) and ``scan_budget_exceeded`` (past 256 MiB), each with ``files`` (at most
+    Raises: HTTPException 404, 409 (``air_gap``, ``has_remote``, ``needs_answer``, ``secrets_found`` and ``unscannable_files`` (a file that cannot be opened) and ``scan_budget_exceeded`` (past 256 MiB) and ``history_too_big`` (past the object cap), each with ``files`` (at most
       ``publish.MAX_LISTED_FILES``) and ``files_more``; ``scan_failed``, ``gh_failed``).
     Example: POST /api/v1/projects/notes/publish-repo {"owner": "NyedisInc", "account": "NyedisAdam"}
     """

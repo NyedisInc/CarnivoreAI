@@ -34,7 +34,7 @@ function wireWindowGuard({ getManager, refreshTray, reload }) {
   };
   return {
     ...guard,
-    onHealth: (healthy, body) => (getManager().stopRequested ? Promise.resolve() : safely(() => guard.onHealth(healthy, body))),
+    onHealth: (healthy, body) => (getManager().stopRequested || (!healthy && !getManager().healthDown()) ? Promise.resolve() : safely(() => guard.onHealth(healthy, body))),
     fastPoll: (state) => guard.isBlocked() && state !== 'stopped',
     onStopped: () => safely(async () => {
       if (getManager().stopRequested) { if (!guard.isBlocked()) guard.noteDown(); return; }

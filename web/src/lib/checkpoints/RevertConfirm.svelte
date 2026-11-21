@@ -48,13 +48,7 @@
     { time: turnClock(checkpoint.created_at) }));
 </script>
 
-<ModalShell {title} overlayClass="text-prompt-modal na-flow" onCancel={() => close(null)}>
-  {#snippet head()}
-    <div class="text-prompt-modal__head">
-      <span class="text-prompt-modal__verb">{title}</span>
-      <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close onclick={() => close(null)} />
-    </div>
-  {/snippet}
+<ModalShell look="titlerow" {title} overlayClass="na-flow" onCancel={() => close(null)}>
   <p class="modal-description">{t('checkpoints.revert.body')}</p>
   {#if !preview && !failed}
     <p class="modal-description" role="status" data-revert-loading="">{t('checkpoints.revert.loading')}</p>

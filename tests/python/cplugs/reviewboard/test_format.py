@@ -9,8 +9,8 @@ from typing import Any, Callable, Dict
 
 import pytest
 
-from src.cplugs.reviewboard import document, schema
-from src.cplugs.reviewboard.cli import emit_schema
+from src.plugins.reviewboard import document, schema
+from src.plugins.reviewboard.cli import emit_schema
 from tests.python.cplugs.reviewboard.boards import SIDECAR, sidecar
 
 

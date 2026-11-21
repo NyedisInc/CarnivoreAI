@@ -6,8 +6,8 @@ from pathlib import Path
 
 from src.core.crate_import.env import StoreHome
 from src.core.inventory import plugin_stores
-from src.cplugs.host import identity, registry_boot
-from src.cplugs.sdk.crate_import import plugin_homes_of
+from src.plugins.host import identity, registry_boot
+from src.plugins.sdk.crate_import import plugin_homes_of
 from tests.python.cplugs.crate.test_plugin_data import manifest_with
 from tests.python.cplugs.test_registry_migration_full_tuple import Alerts
 from tests.python.crate_import.test_import_boards import BOARDS, KEEP, MEMO, PLUGIN, export_rig

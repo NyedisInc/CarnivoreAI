@@ -5,8 +5,9 @@ from dataclasses import asdict, dataclass
 from typing import Any, Dict, Optional
 
 KIND_LIGHT = "light"
+KIND_SESSION = "session"
 HEAVY_KINDS = ("browser", "suite", "build", "render")
-DEFAULTS: Dict[str, tuple] = {KIND_LIGHT: (0.5, 0.6, 0.0), "browser": (2.0, 3.0, 1.0), "suite": (4.0, 4.0, 1.0),
+DEFAULTS: Dict[str, tuple] = {KIND_LIGHT: (0.5, 0.6, 0.0), KIND_SESSION: (0.5, 0.6, 0.0), "browser": (2.0, 3.0, 1.0), "suite": (4.0, 4.0, 1.0),
                               "build": (4.0, 3.0, 3.0), "render": (6.0, 6.0, 5.0)}
 _HINTS = (("browser", ("browser", "playwright", "e2e", "screenshot", "puppeteer")),
           ("render", ("render", "video", "transcode", "encode")),

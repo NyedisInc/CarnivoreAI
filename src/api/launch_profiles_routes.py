@@ -60,7 +60,7 @@ async def _store_call(fn: Any, *args: Any, **kwargs: Any) -> Any:
     except LaunchProfileError as exc:
         raise _error(422, "invalid", str(exc))
     except (FileNotFoundError, ValueError) as exc:
-        logger.error("launch_profiles_config_unreadable", error=str(exc))
+        logger.error("launch_profiles_config_unreadable", error=str(exc), error_type=type(exc).__name__)
         raise _error(500, "config_unreadable", "configuration is missing or unreadable")
     settings.drop_auth_config_cache()
     return result
@@ -93,7 +93,7 @@ def _find(profile_id: str) -> LaunchProfile:
     except NotFound as exc:
         raise _error(404, "not_found", str(exc))
     except (FileNotFoundError, ValueError, LaunchProfileError) as exc:
-        logger.error("launch_profiles_config_unreadable", error=str(exc))
+        logger.error("launch_profiles_config_unreadable", error=str(exc), error_type=type(exc).__name__, profile_id=profile_id)
         raise _error(500, "config_unreadable", "the launch profiles could not be read")
 
 
@@ -112,7 +112,7 @@ async def _store_call_read(fn: Any) -> Any:
     try:
         return await run_in_threadpool(fn)
     except (FileNotFoundError, ValueError, LaunchProfileError) as exc:
-        logger.error("launch_profiles_config_unreadable", error=str(exc))
+        logger.error("launch_profiles_config_unreadable", error=str(exc), error_type=type(exc).__name__)
         raise _error(500, "config_unreadable", "the launch profiles could not be read")
 
 

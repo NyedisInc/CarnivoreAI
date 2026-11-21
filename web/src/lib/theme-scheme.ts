@@ -1,5 +1,5 @@
 import '../../../client/js/theme-scheme.js';
-import { registry, type ThemeRegistry } from '../cplugs/sdk/themes';
+import { registry, type ThemeRegistry } from '../plugins/sdk/themes';
 
 interface ThemeSchemeApi {
   SCHEME_VAR: string;

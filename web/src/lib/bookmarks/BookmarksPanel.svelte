@@ -70,16 +70,9 @@
   }
 </script>
 
-<ModalShell title={t('bookmarks.title')} overlayClass="text-prompt-modal bm-modal" onCancel={() => close(null)}
+<ModalShell look="titlerow" title={t('bookmarks.title')} overlayClass="bm-modal" onCancel={() => close(null)}
   dismissable={panel.busy === null}>
-  {#snippet head()}
-    <div class="text-prompt-modal__head">
-      <span class="text-prompt-modal__verb">&raquo; {t('bookmarks.title')}</span>
-      <span class="bm-panel__session">{name}</span>
-      <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close
-        onclick={() => close(null)} />
-    </div>
-  {/snippet}
+  {#snippet headExtra()}<span class="bm-panel__session">{name}</span>{/snippet}
 
   <div class="bm-panel" data-bookmarks-panel>
     {#if panel.family !== null && panel.family !== 'claude'}

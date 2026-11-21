@@ -10,7 +10,7 @@ from typing import Any, Awaitable, Callable, Optional, Sequence, Tuple
 import structlog
 
 from src.core.approvals import carried_trust, dev_channels, effort_nudge, mcp_multi
-from src.core.approvals.auto_answer import catalog, mcp_installed
+from src.core.approvals.auto_answer import catalog, desk, mcp_installed
 from src.core.approvals.extract import CHROME_ACCEPT_LABEL, CHROME_DECLINE_LABEL, DEV_CHANNELS_ACCEPT, is_chrome_prompt
 from src.core.session_startup_gate import SCREEN_BYPASS_PERMISSIONS, SCREEN_EFFORT_NUDGE, SCREEN_MCP_SERVER, SCREEN_TRUST
 from src.core.swarm.auto_trust import (GATE_AWAITING, is_claude_trust_dialog, is_plain_imports_dialog, plain_dialog_folder,
@@ -38,6 +38,7 @@ class Seams:
     lookup_imports: Callable[[str], bool]
     in_projects: Callable[[str], bool]
     mcp_installed: Callable[[str, str], bool] = mcp_installed.installed_for
+    in_agent_slot: Callable[[str], bool] = lambda _folder: False
 
 
 @dataclass(frozen=True)
@@ -64,6 +65,7 @@ class ScreenRule:
     needs_gate: bool = False
     needs_pid: bool = False
     pick: Optional[Callable[[Any], str]] = None
+    slot: str = ""
 
     def label_for(self, dialog: Any) -> str:
         return self.pick(dialog) if self.pick is not None else self.label
@@ -99,6 +101,8 @@ async def _folder_trust_guard(ctx: Ctx) -> Verdict:
         return Verdict(WAIT, "not_measured")
     carried = await asyncio.to_thread(ctx.seams.lookup, folder)
     evidence = "carried" if carried is not None else await asyncio.to_thread(_scope_evidence, ctx, folder)
+    if evidence is None and await asyncio.to_thread(ctx.seams.in_agent_slot, folder):
+        evidence = "agent_slot"
     if evidence is None:
         return Verdict(DECLINE, "not_a_project")
     if plain_dialog_folder(ctx.dialog) is None:
@@ -106,6 +110,18 @@ async def _folder_trust_guard(ctx: Ctx) -> Verdict:
     if not shows_folder(ctx.dialog, work):
         return Verdict(DECLINE, "other_folder")
     return Verdict(ALLOW, evidence=evidence)
+
+
+async def _desk_trust_guard(ctx: Ctx) -> Verdict:
+    work, folder = await _measured_folder(ctx)
+    if work is None or folder is None:
+        return Verdict(WAIT, "not_measured")
+    shown = desk.shown_folder(ctx.dialog)
+    if shown is None:
+        return Verdict(RETRY, "not_add_directory")
+    if await asyncio.to_thread(desk.owned_desk_folder, shown) is None:
+        return Verdict(DECLINE, "not_own_desk")
+    return Verdict(ALLOW, evidence="own_desk")
 
 
 async def _external_imports_guard(ctx: Ctx) -> Verdict:
@@ -236,6 +252,8 @@ RULES: Tuple[ScreenRule, ...] = (
     ScreenRule(catalog.info_for(catalog.RULE_MCP_SERVER), is_mcp_server_dialog, MCP_APPROVE_LABEL, _mcp_server_guard, needs_gate=True),
     ScreenRule(catalog.info_for(catalog.RULE_MCP_SERVER), is_mcp_servers_dialog, mcp_multi.SUBMIT_LABEL, _mcp_servers_guard, needs_gate=True),
     ScreenRule(catalog.info_for(catalog.RULE_EFFORT_KEEP), is_effort_dialog, "Keep", _effort_keep_guard, pick=_effort_keep_label),
+    ScreenRule(catalog.info_for(catalog.RULE_FOLDER_TRUST), desk.is_add_directory_dialog, desk.ADD_YES_LABEL,
+               _desk_trust_guard, needs_gate=True, slot="desk"),
 )
 
 

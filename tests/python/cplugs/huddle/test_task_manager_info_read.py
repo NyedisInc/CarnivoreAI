@@ -4,7 +4,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work.ladder import MIGRATIONS, SCHEMA_VERSION
 from src.core.work.storage import WorkStorage
 

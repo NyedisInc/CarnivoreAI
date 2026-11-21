@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
+from contextlib import closing
 from pathlib import Path
 from typing import Any, Callable, List, Optional, Sequence, Set
 
@@ -10,25 +12,29 @@ import structlog
 
 from src.config import settings as app_settings
 from src.core import resource_push
+from src.core import config_writer
 from src.core.attention import fs_trigger
 from src.core.computers import direction
 from src.core.federation import peer_links
 from src.core.federation.peer_links import CONNECTED
-from src.core.pack.globalsync import collect, rules
+from src.core.pack.globalsync import collect, panel_merge, rules
 from src.core.pack.globalsync.sender import (NOT_APPROVED, OFFLINE, RECEIVER_OFF, GlobalSync, PeerView)
 from src.core.pack.globalsync.store import Status, clean_settings
 from src.core.pack.machines import runtime as machines_runtime
 from src.core.pack.relay import approval
 from src.core.pack.transport import blobs
 from src.core.provider_ledger import accounts_store
+from src.core.ui_preferences import read_block
 from src.core.resource_push import topics
 
 logger = structlog.get_logger()
 
 SYNC: Optional[GlobalSync] = None
 WATCH: Optional["AutoWatch"] = None
+KICK: Optional["PanelKick"] = None
 MAX_WATCH_DIRS = 256
 WATCH_QUIET_SECONDS = 5.0
+PANEL_QUIET_SECONDS = 2.0
 RETRYABLE = (NOT_APPROVED, RECEIVER_OFF, OFFLINE)
 _TASKS: Set[asyncio.Task] = set()
 
@@ -76,6 +82,31 @@ class AutoWatch:
         self._trigger.close()
 
 
+def read_arrangement() -> Optional[dict]:
+    try:
+        config = json.loads(Path(app_settings.auth_config_file).expanduser().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    value = read_block(config).get("values", {}).get("drawer_arrangement") if isinstance(config, dict) else None
+    return value if isinstance(value, dict) else None
+
+
+class PanelKick:
+
+    def __init__(self, loop: asyncio.AbstractEventLoop, run: Callable[[], Any]) -> None:
+        self._loop, self._run, self._handle = loop, run, None
+
+    def poke(self) -> None:
+        if self._loop.is_closed():
+            return
+        self._loop.call_soon_threadsafe(self._arm)
+
+    def _arm(self) -> None:
+        if self._handle is not None:
+            self._handle.cancel()
+        self._handle = self._loop.call_later(PANEL_QUIET_SECONDS, lambda: spawn(self._run()))
+
+
 def start(open_db: Callable[[], Any], links_getter: Callable[[], Optional[peer_links.PeerLinks]]) -> GlobalSync:
     global SYNC, WATCH
     wired = machines_runtime.wiring()
@@ -101,11 +132,21 @@ def start(open_db: Callable[[], Any], links_getter: Callable[[], Optional[peer_l
         except (OSError, ValueError):
             return []
 
+    stamps_path = state_dir / "panel-stamps.json"
+
+    def panel_doc() -> dict:
+        with closing(open_db()) as conn:
+            return panel_merge.doc_for_send(conn, read_arrangement, runtime.install_id, stamps_path,
+                                            member=runtime.settings().master_install_id != runtime.install_id)
+
     sync = GlobalSync(
-        settings=lambda: clean_settings(wired.state.global_sync()), is_main=lambda: runtime.settings().master_install_id == runtime.install_id,
+        settings=lambda: clean_settings(wired.state.global_sync()), is_main=lambda: runtime.content_alpha() == runtime.install_id,
         peers=peers, approved=approval.reader(open_db), allows=lambda iid: machines_runtime.peer_restriction(iid, "may_receive_global_setup"),
         contained=direction.contained, accounts=accounts, request_for=request_for, status=Status(state_dir / "global-sync-status.json"),
-        outbox=state_dir / "global-outbox", home=Path.home(), notify=lambda: resource_push.notify(topics.PACK_GLOBAL_SYNC), installs=Status(state_dir / "global-install-status.json"))
+        outbox=state_dir / "global-outbox", home=Path.home(), notify=lambda: resource_push.notify(topics.PACK_GLOBAL_SYNC), installs=Status(state_dir / "global-install-status.json"),
+        panel_doc=panel_doc, panel_status=Status(state_dir / "global-panel-status.json"),
+        main_id=runtime.content_alpha, one_way_toward=direction.is_one_way_toward,
+        panel_pending=lambda: panel_merge.pending(stamps_path), panel_sent=lambda: panel_merge.clear_pending(stamps_path))
     SYNC = sync
     loop = asyncio.get_running_loop()
     watch = AutoWatch(sync, lambda: spawn(sync.sync()))
@@ -115,14 +156,22 @@ def start(open_db: Callable[[], Any], links_getter: Callable[[], Optional[peer_l
 
     async def on_connect(install_id: str) -> None:
         chosen = sync.settings()
-        if not chosen.get("enabled") or not sync.is_main():
+        if not sync.is_main():
+            if chosen.get("panel") and install_id == runtime.content_alpha():
+                await sync.send_changes()
             return
         last = await asyncio.to_thread(sync.status.get, install_id)
-        if chosen.get("auto") or last is None or last.get("state") not in ("synced", "unchanged"):
-            await sync.sync([install_id])
+        files = bool(chosen.get("enabled")) and (chosen.get("auto") or last is None or last.get("state") not in ("synced", "unchanged"))
+        if files or chosen.get("panel"):
+            await sync.sync([install_id], files=files)
 
     async def retry_blocked() -> None:
-        if not sync.settings().get("enabled") or not sync.is_main():
+        if not sync.is_main():
+            await sync.send_changes()
+            return
+        if sync.settings().get("panel"):
+            await sync.sync(files=False)
+        if not sync.settings().get("enabled"):
             return
         records = await asyncio.to_thread(sync.status.all)
         ids = [i for i, r in records.items() if r.get("state") == "refused" and r.get("reason") in RETRYABLE]
@@ -131,11 +180,38 @@ def start(open_db: Callable[[], Any], links_getter: Callable[[], Optional[peer_l
         if ready:
             await sync.sync(ready)
 
+    async def panel_pass() -> None:
+        if not sync.settings().get("panel"):
+            return
+        if sync.is_main():
+            await sync.sync(files=False)
+        else:
+            await sync.send_changes()
+
+    global KICK
+    kick_panel = KICK = PanelKick(loop, panel_pass)
+    resource_push.add_topic_listener(topics.PROJECTS, kick_panel.poke)
+    resource_push.add_topic_listener(topics.COMPANIES, kick_panel.poke)
+    seen = {"arrangement": json.dumps(read_arrangement(), sort_keys=True)}
+
+    def on_config_commit(_path: Path, data: Any) -> None:
+        value = read_block(data).get("values", {}).get("drawer_arrangement") if isinstance(data, dict) else None
+        now = json.dumps(value if isinstance(value, dict) else None, sort_keys=True)
+        if now != seen["arrangement"]:
+            seen["arrangement"] = now
+            kick_panel.poke()
+
+    config_writer.on_commit(on_config_commit)
     links = links_getter()
     if links is not None:
         links.add_connect_listener(lambda iid: spawn(on_connect(iid)))
     resource_push.add_topic_listener(topics.PACK_MACHINES, lambda: spawn(retry_blocked()))
     return sync
+
+
+def groups_changed() -> None:
+    if KICK is not None:
+        KICK.poke()
 
 
 def kick(install_id: str) -> None:

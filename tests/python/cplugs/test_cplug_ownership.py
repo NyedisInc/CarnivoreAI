@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.sdk.manifest import ManifestError, parse_manifest
-from src.cplugs.sdk.ownership import OwnershipError, parse_ownership
+from src.plugins.sdk.manifest import ManifestError, parse_manifest
+from src.plugins.sdk.ownership import OwnershipError, parse_ownership
 from tests.helpers.catalog_text import catalog_text, slice_paths
 from tests.python.cplugs.test_cplug_self_containment import ROOT, plugin_ids
 
@@ -17,7 +17,7 @@ CATALOG_KEY = re.compile(r"""['"](cplug\.([a-z0-9]+)\.[^'"]*)['"]\s*:""")
 
 
 def _manifest(pid: str) -> dict:
-    return json.loads((ROOT / "src" / "cplugs" / pid / "cplug.json").read_text(encoding="utf-8"))
+    return json.loads((ROOT / "src" / "plugins" / pid / "cplug.json").read_text(encoding="utf-8"))
 
 
 def test_a_well_formed_block_parses():
@@ -60,9 +60,9 @@ def test_the_manifest_refuses_a_broken_block():
 @pytest.mark.parametrize("pid", plugin_ids())
 def test_every_declared_file_exists(pid):
     owns = parse_manifest(_manifest(pid)).owns
-    web = ROOT / "web" / "src" / "cplugs" / pid
+    web = ROOT / "web" / "src" / "plugins" / pid
     missing = [str(web / f) for f in (*owns.styles, *owns.assets) if not (web / f).exists()]
-    missing += [t for t in (*owns.tests, *owns.style_guide) if not (ROOT / t).exists()]
+    missing += [t for t in (*owns.tests, *owns.style_guide) if not (ROOT / t.replace("web/src/cplugs/", "web/src/plugins/", 1)).exists()]
     assert missing == []
 
 
@@ -71,7 +71,7 @@ def test_a_plugin_that_declares_styles_keeps_no_undeclared_css(pid):
     owns = parse_manifest(_manifest(pid)).owns
     if not owns.styles:
         pytest.skip("no styles declared")
-    web = ROOT / "web" / "src" / "cplugs" / pid
+    web = ROOT / "web" / "src" / "plugins" / pid
     found = {p.relative_to(web).as_posix() for p in web.rglob("*.css")}
     assert found - set(owns.styles) == set()
 
@@ -91,7 +91,7 @@ def test_a_plugin_catalog_slice_holds_only_its_own_namespace_and_the_shared_file
 
 
 def test_the_five_removable_plugins_all_ship_a_slice_and_declare_owns():
-    five = {pid for pid in ("share", "unread", "flow", "reviewboard", "save") if (Path(__file__).resolve().parents[3] / "src" / "cplugs" / pid).is_dir()}
+    five = {pid for pid in ("share", "unread", "flow", "reviewboard", "save") if (Path(__file__).resolve().parents[3] / "src" / "plugins" / pid).is_dir()}
     assert len(five) >= 4 and five <= set(slice_paths())
     for pid in five:
         owns = parse_manifest(_manifest(pid)).owns

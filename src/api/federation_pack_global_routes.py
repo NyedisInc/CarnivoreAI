@@ -3,9 +3,10 @@ from __future__ import annotations
 
 import asyncio
 import threading
+from contextlib import closing
 from functools import partial
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Optional
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -13,15 +14,18 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.api.federation_pack_skills_routes import _cap_body, _drop_other_alphas, _refuse, held_alpha
-from src.api.peer_auth import Principal, require_peer
+from src.api.federation_pack_skills_routes import _cap_body, _drop_other_alphas, _refuse, content_alpha
+from src.api.peer_auth import Principal, open_db, read_install_id, require_peer
 from src.config import settings
-from src.core import resource_push
+from src.core import resource_push, session_change_notice
 from src.core.computers import direction
-from src.core.pack.globalsync import apply as gs_apply, deps, rules, wiring
-from src.core.pack.globalsync.store import Status
-from src.core.pack.globalsync.sender import CAP
-from src.core.pack.machines import capabilities as pack_capabilities, restrictions as restrictions_mod
+from src.core.db import get_meta, transaction
+from src.core.db_models import META_INSTALL_ID
+from src.core.pack.globalsync import apply as gs_apply, deps, panel as gs_panel, panel_merge, rules, wiring
+from src.core.pack.globalsync.store import Status, clean_settings
+from src.core.pack.globalsync.sender import CAP, PANEL_CHANGE_CAP
+from src.core.pack.machines import capabilities as pack_capabilities, restrictions as restrictions_mod, runtime as machines_runtime
+from src.core.pack.relay import approval
 from src.core.pack.transport import blobs
 from src.core.provider_ledger import accounts_store
 from src.core.resource_push import topics
@@ -29,10 +33,14 @@ from src.core.resource_push import topics
 logger = structlog.get_logger()
 router = APIRouter(prefix="/federation/pack/global", tags=["federation"])
 pack_capabilities.register(CAP)
+pack_capabilities.register(gs_panel.CAP)
+pack_capabilities.register(PANEL_CHANGE_CAP)
 _require_global = require_peer("global-setup")
+_require_machine = require_peer("machine")
 _allowed = restrictions_mod.require_peer_allowed(restrictions_mod.ACTION_RECEIVE_GLOBAL_SETUP)
 _APPLY_LOCK = threading.Lock()
 MAX_BLOB_BYTES = rules.MAX_TOTAL_BYTES + 32 * 1024 * 1024
+MAX_PANEL_BYTES = 4 * 1024 * 1024
 
 
 def state_dir() -> Path:
@@ -59,7 +67,7 @@ async def _main(principal: Principal = Depends(_require_global), _ok: None = Dep
     if not principal.is_peer or principal.grant is None:
         raise HTTPException(403, {"code": "peer_token_required", "detail": "only a paired computer sends a global setup"})
     peer = principal.grant.peer_install_id
-    held = await run_in_threadpool(held_alpha)
+    held = await run_in_threadpool(content_alpha)
     if held != peer:
         raise HTTPException(403, {"code": "not_alpha", "held_alpha": held, "detail": "only the Pack's main computer sends a global setup"})
     if direction.contained(peer):
@@ -163,3 +171,92 @@ async def apply(body: ApplyBody, caller: str = Depends(_main)) -> Any:
     if report.targets:
         wiring.spawn(asyncio.to_thread(_install_deps, report.targets))
     return {"report": report.summary()}
+
+
+class PanelBody(BaseModel):
+    """The alpha's agent panel document (``globalsync/panel.py``); its shape is checked field by field when applied."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    doc: dict
+
+
+def _panel_on() -> bool:
+    wired = machines_runtime.wiring()
+    return bool(clean_settings(wired.state.global_sync() if wired is not None else None).get("panel"))
+
+
+def _apply_panel(doc: dict, request: Request, from_main: bool) -> tuple:
+    store = getattr(request.app.state, "ui_preferences_store", None)
+    path = state_dir() / "pack" / "panel-stamps.json"
+    with panel_merge.LOCK:
+        current = ((store.read() or {}).get("values") or {}).get("drawer_arrangement") if store is not None else None
+        with closing(open_db()) as conn, _APPLY_LOCK:
+            with transaction(conn):
+                iid = get_meta(conn, META_INSTALL_ID)
+                report, arrangement = panel_merge.receive(conn, doc, iid, current, path, from_main=from_main)
+        result = None
+        if arrangement is not None and store is not None:
+            result = store.update({"drawer_arrangement": arrangement})
+            committed = (result.values or {}).get("drawer_arrangement") if result.status in ("committed", "unchanged") else None
+            if isinstance(committed, dict):
+                with closing(open_db()) as conn:
+                    panel_merge.rebaseline(conn, committed, iid, path, member=from_main)
+    return report, arrangement, store, result
+
+
+async def _receive_panel(body: PanelBody, request: Request, *, from_main: bool) -> Any:
+    _cap_body(request, MAX_PANEL_BYTES)
+    if not await run_in_threadpool(_panel_on):
+        return JSONResponse({"detail": {"code": "panel_off"}}, status_code=403)
+    report, arrangement, store, result = await run_in_threadpool(_apply_panel, body.doc, request, from_main)
+    if arrangement is None:
+        return JSONResponse({"detail": {"code": "bad_panel"}}, status_code=422)
+    moved = bool(report["companies_created"] or report["companies_updated"] or report["projects_updated"])
+    if report["groups_changed"]:
+        session_change_notice.publish(request.app.state, session_change_notice.build_structural_notice("groups"))
+        wiring.groups_changed()
+    if result is not None:
+        from src.core.preferences_push.broadcast import broadcast_changed
+
+        if result.status == "committed":
+            moved = True
+            await broadcast_changed(request.app.state, result, None)
+        elif result.status != "unchanged":
+            report["arrangement"] = result.status
+    if moved:
+        resource_push.notify(topics.PROJECTS)
+        resource_push.notify(topics.COMPANIES)
+    logger.info("pack_panel_applied", companies=report["companies_created"], projects=report["projects_updated"], groups=report["groups_changed"], two_way=not from_main)
+    return {"report": report}
+
+
+@router.post("/panel")
+async def apply_panel(body: PanelBody, request: Request, caller: str = Depends(_main)) -> Any:
+    """Apply the alpha's agent panel field by field (the newer edit stamp wins; a tie takes the alpha's value): companies and project names, membership and colors for the projects held here, hand-made session groups (name, members, order, band), and the pins, row order, bands and section order. Folds and every show/hide setting stay this computer's own. Output: ``{report}``. Raises 403 ``panel_off``, 413, 422 ``bad_panel``."""
+    return await _receive_panel(body, request, from_main=True)
+
+
+async def _member(principal: Principal = Depends(_require_machine)) -> str:
+    if not principal.is_peer or principal.grant is None:
+        raise HTTPException(403, {"code": "peer_token_required", "detail": "only a paired computer sends panel changes"})
+    peer = principal.grant.peer_install_id
+
+    def check() -> Optional[str]:
+        with closing(open_db()) as conn:
+            if content_alpha() != read_install_id(conn):
+                return "not_alpha"
+        return None if approval.reader(open_db)(peer) else "not_approved"
+
+    refused = await run_in_threadpool(check)
+    if direction.contained(peer):
+        refused = direction.REFUSAL_CODE
+    if refused:
+        raise HTTPException(403, {"code": refused, "detail": "only the main takes panel changes, from a computer its owner approved and holds two way"})
+    return peer
+
+
+@router.post("/panel-change")
+async def apply_panel_change(body: PanelBody, request: Request, caller: str = Depends(_member)) -> Any:
+    """The main takes a member's panel edits (two-way, #2960): the same field-by-field merge, then its own pass carries the result to every other computer. Output: ``{report}``. Raises 403 ``not_alpha`` / ``not_approved`` / ``computer_one_way`` / ``panel_off``, 413, 422 ``bad_panel``."""
+    return await _receive_panel(body, request, from_main=False)

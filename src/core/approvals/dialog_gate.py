@@ -9,6 +9,7 @@ import structlog
 from src.core.approvals.extract import extract_dialog
 from src.core.attention_reader import AttentionEvidenceReader
 from src.core.session_startup_gate import GATE_READY, startup_screen_kind
+from src.core.session_status import STATUS_QUESTION
 
 logger = structlog.get_logger()
 
@@ -29,12 +30,12 @@ async def _default_capture(manager: Any, tmux_name: str) -> Optional[str]:
     return await asyncio.to_thread(AttentionEvidenceReader._capture, manager.tmux_socket_name(), tmux_name)
 
 
-async def dialog_verdict(app: Any, session_id: str, *, capture: Optional[Capture] = None) -> str:
-    manager = app.state.session_manager
+async def dialog_verdict(app_state: Any, session_id: str, *, capture: Optional[Capture] = None) -> str:
+    manager = app_state.session_manager
     info = await manager.get_session_info(session_id=session_id)
     if info is None:
         return UNREADABLE
-    if info.activity_status == "question":
+    if info.activity_status == STATUS_QUESTION:
         return OPEN
     if not is_agent_pane(info):
         return CLEAR

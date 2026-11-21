@@ -20,7 +20,7 @@ import { RAIL_PINNED_BODY_CLASS, RAIL_CONTAINER_ID, setRailPinnedClass } from '.
 import { MENU_FLYOUT, SESSION_LIST_WIDGET } from './widget-ids';
 import { activeFlyout, closeFlyout } from './flyout.svelte';
 import { press, railBtn, railOn, settle, setupRail, teardownRail } from './fixtures/rail-harness';
-import { registerSwarmFlyout } from '../../cplugs/huddle/swarm-flyout';
+import { registerSwarmFlyout } from '../../plugins/huddle/swarm-flyout';
 
 // The swarm slide-out is the Task Manager plugin's, so the test registers it; the harness no longer does.
 registerSwarmFlyout();

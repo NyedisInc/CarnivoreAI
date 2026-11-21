@@ -27,9 +27,9 @@ from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
 from src.core.swarm import body, body_create, definition, delivery, owner_message, say, spawn, store, thread_port
 from src.core.swarm.facade import SwarmFacade
-from src.cplugs.host import runtime
-from src.cplugs.huddle import routes as huddle_routes
-from src.cplugs.huddle.swarm_port import TaskManagerSwarmPort
+from src.plugins.host import runtime
+from src.plugins.huddle import routes as huddle_routes
+from src.plugins.huddle.public import TaskManagerSwarmPort
 from tests.python.cplugs.owner import turn_on
 
 BASE = "/api/v1/cplugs/huddle"

@@ -10,9 +10,9 @@ from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
 from src.core.api_keys.fence import fenced_family
-from src.cplugs.reviewboard.public import mcp as board_mcp, responses, visitors
-from src.cplugs.reviewboard import public_port
-from src.cplugs.sdk import ports
+from src.plugins.reviewboard.public import mcp as board_mcp, responses, visitors
+from src.plugins.reviewboard import public_port
+from src.plugins.sdk import ports
 from tests.python.cplugs.reviewboard.public.read_harness import edge, get, mint_token
 from tests.python.cplugs.reviewboard.boards import SIDECAR
 

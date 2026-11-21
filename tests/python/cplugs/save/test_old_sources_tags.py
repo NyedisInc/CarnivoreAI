@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.cplugs.save.vault import adopt, retention
+from src.plugins.save.vault import adopt, retention
 from tests.python.cplugs.save.old_sources_helpers import incoming_point
 from tests.python.cplugs.save.vault_helpers import CONV, World, jsonl
 

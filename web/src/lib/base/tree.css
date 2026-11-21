@@ -61,4 +61,17 @@
     font-size: var(--oc-fs-micro);
     font-variant-numeric: tabular-nums;
   }
+
+  .oc-tree__tags {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--oc-space-2);
+  }
+
+  .oc-tree__row[aria-selected='true'] {
+    background: var(--oc-state-selected);
+    box-shadow: inset var(--oc-space-1) 0 0 0 var(--oc-orange);
+    color: var(--oc-orange);
+  }
 }

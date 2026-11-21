@@ -63,6 +63,14 @@ def eligible_action(action: str) -> bool:
     return action in AGENT_ACTIONS or action in scope_tools()
 
 
+HINT_ACTIONS = frozenset({"delegate"})
+
+
+def would_approve(action: str) -> bool:
+    return (action in HINT_ACTIONS and not beast_enabled() and eligible_action(action)
+            and ticked_in(beast_grid.ROW_AGENT_WRITES, beast_grid.MODE_ON))
+
+
 def until_passed(until: Optional[str], now: Optional[datetime] = None) -> bool:
     if not until:
         return False

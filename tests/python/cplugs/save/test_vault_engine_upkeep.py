@@ -5,10 +5,10 @@ import os
 import threading
 import time
 
-from src.cplugs.save.vault import constants as K
-from src.cplugs.save.vault import follow, health, legacy, retention
-from src.cplugs.save.vault.follow import Engine
-from src.cplugs.sdk.blob_codec import Throttle
+from src.plugins.save.vault import constants as K
+from src.plugins.save.vault import follow, health, legacy, retention
+from src.plugins.save.vault.follow import Engine
+from src.plugins.sdk.blob_codec import Throttle
 from tests.python.cplugs.save.vault_helpers import World, jsonl
 
 

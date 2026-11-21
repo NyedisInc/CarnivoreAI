@@ -6,7 +6,7 @@ const { contextBridge, ipcRenderer, webUtils } = require('electron');
 contextBridge.exposeInMainWorld('carnivoreDesktop', {
   contract: 1,
   capabilities: Object.freeze(['notify', 'unnotify', 'watching', 'localLogin', 'desktopState', 'setLoginItem', 'requestNotifications', 'openNotificationSettings', 'openFocusSettings',
-    'openSessionWindow', 'focusSessionWindow', 'showInMain', 'openInTerminal', 'revealById', 'openInEditor', 'droppedPaths', 'raiseWindow', 'windowChrome', 'tearOff', 'goRecent', 'screenReader']),
+    'openSessionWindow', 'focusSessionWindow', 'showInMain', 'openInTerminal', 'revealById', 'openInEditor', 'droppedPaths', 'raiseWindow', 'windowChrome', 'tearOff', 'goRecent', 'goKeys', 'screenReader']),
   notify(title, body, askSessionId, meta) {
     const m = meta && typeof meta === 'object' ? meta : {};
     const str = (v) => (typeof v === 'string' ? v : '');
@@ -81,6 +81,9 @@ contextBridge.exposeInMainWorld('carnivoreDesktop', {
   },
   goRecent(labels) {
     if (Array.isArray(labels)) ipcRenderer.send('carnivore:go-recent', labels.slice(0, 10).map(String));
+  },
+  goKeys(keys) {
+    if (keys && typeof keys === 'object') ipcRenderer.send('carnivore:go-keys', { 'history.back': keys['history.back'], 'history.forward': keys['history.forward'] });
   },
 });
 

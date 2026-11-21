@@ -73,7 +73,7 @@ def test_dot_claude_and_dot_github_are_hot_sync():
 
 def test_review_board_design_paths_are_hot_sync():
     assert classify_paths(["design/boards/20261013-bottom-bar/sidecar.json", "design/boards/README.md"]) == "hot-sync"
-    assert classify_paths(["design/boards/x/sidecar.json", "src/cplugs/reviewboard/scan.py"]) == "restart"
+    assert classify_paths(["design/boards/x/sidecar.json", "src/plugins/reviewboard/scan.py"]) == "restart"
 
 
 
@@ -221,6 +221,7 @@ _STALE_NPM_STUB = """#!/bin/bash
 # (the shape of a surviving Electron respawning python), then serves health.
 printf OLD > "$STUB_SERVER_DIR/src/marker.py"
 echo $$ > "$STUB_PID_FILE"
+echo "[launch] window opened at launch"  # the line the real app logs (#2912) that the refresh waits for before comparing the copy
 exec python3 -c '
 import http.server, os
 class H(http.server.BaseHTTPRequestHandler):

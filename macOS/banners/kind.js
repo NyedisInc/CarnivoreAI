@@ -70,9 +70,8 @@ function planFromCard({ response, desktopOn, corner, silent }) {
 }
 
 function bannerOptions(plan, extra) {
-  const options = { title: plan.title.slice(0, 200), body: plan.body.slice(0, 1000), icon: extra.image(plan.icon), silent: plan.silent };
+  const options = { title: plan.title.slice(0, 200), body: plan.body.slice(0, 1000), icon: extra.image(plan.icon), silent: true };
   if (plan.subtitle) options.subtitle = plan.subtitle.slice(0, 200);
-  if (plan.sound && !plan.silent) options.sound = plan.sound;
   if (extra.id) options.id = extra.id;
   if (extra.groupId) options.groupId = extra.groupId;
   if (plan.buttons.length) options.actions = plan.buttons.map((b) => ({ type: 'button', text: b.label }));

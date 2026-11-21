@@ -21,7 +21,7 @@
           position: absolute;
           top: 8px;
           right: 12px;
-          z-index: 1100;
+          z-index: var(--oc-z-drawer);
           pointer-events: none;
 
           max-width: calc(100% - 24px);

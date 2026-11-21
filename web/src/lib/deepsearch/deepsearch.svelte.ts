@@ -1,6 +1,6 @@
 import { openConversation, type ConversationTarget, type OpenOutcome } from '../conversation-open/open';
 import { openModal } from '../modal';
-import { sessionRowForConversation } from '../../cplugs/sdk/sessions.svelte';
+import { sessionRowForConversation } from '../../plugins/sdk/sessions.svelte';
 import { t } from '../i18n/index.svelte';
 import type { DrawerSearchController } from './provider-types';
 import ContextModal from './ContextModal.svelte';

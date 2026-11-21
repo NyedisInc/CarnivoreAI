@@ -2,7 +2,6 @@
 <script lang="ts">
     import Button from '../base/Button.svelte';
     import Field from '../base/Field.svelte';
-    import IconButton from '../base/IconButton.svelte';
     import { t as reactiveT } from '../i18n/index.svelte';
     import ModalShell from '../dialog-frame/ModalShell.svelte';
     import type { Translate } from '../sessions/types';
@@ -84,13 +83,7 @@
     }
 </script>
 
-<ModalShell title={t('hosts.pair.title')} overlayClass="text-prompt-modal na-flow" dismissable={!busy} onCancel={dismiss}>
-    {#snippet head()}
-        <div class="text-prompt-modal__head">
-            <span class="text-prompt-modal__verb">&raquo; {held ? t('hosts.sas.title') : needsCode === null ? t('hosts.pair.title') : t('hosts.pair.code_title')}</span>
-            <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close disabled={busy} onclick={dismiss} />
-        </div>
-    {/snippet}
+<ModalShell look="titlerow" label={held ? t('hosts.sas.title') : needsCode === null ? t('hosts.pair.title') : t('hosts.pair.code_title')} title={t('hosts.pair.title')} overlayClass="na-flow" dismissable={!busy} onCancel={dismiss}>
     {#if held}
         <PairSas {t} sas={held.sas} label={held.label} fid={held.fid} lead={t('hosts.sas.lead')} />
         {#if held.peer_owner_confirms}

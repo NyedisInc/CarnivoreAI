@@ -26,7 +26,7 @@ LEGACY_SHEETS = (
     "client/css/session-row-menu.css",
 )
 UNLAYERED: dict[str, int] = {"client/css/version-footer.css": 4, "client/css/session-sidebar-rows.css": 3}
-LITERAL_BASELINE = 94
+LITERAL_BASELINE = 71
 PROVIDER_GLANCE = "web/src/lib/ledger-drawer/ProviderGlanceTile.svelte"
 PROVIDER_GLANCE_LITERALS = {
     "padding: 3px 5px;": 1,
@@ -34,7 +34,7 @@ PROVIDER_GLANCE_LITERALS = {
     "font-size: 9px;": 1,
     "padding: 0 1px;": 1,
 }
-COLOUR_LITERALS: dict[str, int] = {"client/css/session-sidebar-colours.css": 1}
+COLOUR_LITERALS: dict[str, int] = {"client/css/session-sidebar-colours.css": 0}
 RETIRED_CLASSES = ("mr-btn", "mr-btn--active")
 
 
@@ -74,13 +74,15 @@ def test_off_scale_literals_only_fall() -> None:
     assert {value: glance.count(value) for value in PROVIDER_GLANCE_LITERALS} == PROVIDER_GLANCE_LITERALS
     assert len(ANY_PX.findall(glance)) == sum(PROVIDER_GLANCE_LITERALS.values())
     total = sum(len(ANY_PX.findall(c)) for rel, c in styles.items() if rel != PROVIDER_GLANCE)
-    assert total <= LITERAL_BASELINE, f"{total} literal spacing/type declarations, baseline {LITERAL_BASELINE}"
+    assert total == LITERAL_BASELINE, f"{total} literal spacing/type declarations, baseline {LITERAL_BASELINE}; fewer: lower it"
 
 
-def test_no_colour_literals_in_drawer_styles() -> None:
+def test_no_color_literals_in_drawer_styles() -> None:
     found = {r: len(COLOUR.findall(c)) for r, c in drawer_styles().items() if COLOUR.search(c)}
     bad = {r: n for r, n in found.items() if n > COLOUR_LITERALS.get(r, 0)}
-    assert not bad, f"colour literals (use --oc-* tokens; tokens.css owns them): {bad}"
+    assert not bad, f"color literals (use --oc-* tokens; tokens.css owns them): {bad}"
+    stale = {r: (n, found.get(r, 0)) for r, n in COLOUR_LITERALS.items() if found.get(r, 0) < n}
+    assert not stale, f"lower or delete these COLOUR_LITERALS entries (allowed, actual): {stale}"
 
 
 def test_retired_rail_button_class_stays_gone() -> None:

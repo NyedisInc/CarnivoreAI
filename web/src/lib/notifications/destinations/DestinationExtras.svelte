@@ -29,9 +29,9 @@
     // svelte-ignore state_referenced_locally
     let end = $state(e.quiet?.end ?? '07:00');
     // svelte-ignore state_referenced_locally
-    let reminderOn = $state(e.reminder_minutes !== null);
+    let reminderOn = $state((e.reminder_minutes ?? 10) > 0);
     // svelte-ignore state_referenced_locally
-    let minutes = $state(String(e.reminder_minutes ?? 10));
+    let minutes = $state(String(e.reminder_minutes || 10));
     // svelte-ignore state_referenced_locally
     let projects = $state(e.projects.join(', '));
     // svelte-ignore state_referenced_locally
@@ -46,7 +46,7 @@
         const out: ExtrasBody = {
             away,
             quiet: quietOn ? { start, end } : null,
-            reminder_minutes: reminderOn ? Number(minutes) : null,
+            reminder_minutes: reminderOn ? Number(minutes) : 0,
             projects: splitList(projects),
         };
         if (detailsAllowed) out.details = details;

@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-from src.cplugs.host import sidecar_manifest
+from src.plugins.host import sidecar_manifest
 
 ROOT = Path(__file__).resolve().parents[3]
 NAMED_SIZES_TS = (ROOT / "web/src/opscenter/widgets/named-sizes.ts").read_text(encoding="utf-8")

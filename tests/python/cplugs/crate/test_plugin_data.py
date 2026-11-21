@@ -11,16 +11,16 @@ import pytest
 
 from src.core.inventory import plugin_claims, plugin_stores, plugin_units, registry, registry_side, state_files
 from src.core.inventory.locations import Locations
-from src.cplugs.crate import constants as K
-from src.cplugs.crate import policy as P
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import build_plan
-from src.cplugs.crate.project_files import walk_project
-from src.cplugs.crate.writer import run_export
-from src.cplugs.registry import CPLUGS
-from src.cplugs.sdk import crate_format as cf
-from src.cplugs.sdk import crate_sources as cs
-from src.cplugs.sdk import data_decl
+from src.plugins.crate import constants as K
+from src.plugins.crate import policy as P
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import build_plan
+from src.plugins.crate.project_files import walk_project
+from src.plugins.crate.writer import run_export
+from src.plugins.registry import CPLUGS
+from src.plugins.sdk import crate_format as cf
+from src.plugins.sdk import crate_sources as cs
+from src.plugins.sdk import data_decl
 from tests.python.cplugs.crate.crate_world import env_for, make_world, project_request, session_request
 from tests.python.inventory.world import UUID_A
 

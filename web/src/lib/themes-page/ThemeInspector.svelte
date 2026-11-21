@@ -189,7 +189,7 @@
     .tins-badge {
         padding: 2px 7px;
         border: 1px solid var(--oc-line-rule);
-        border-radius: 2px;
+        border-radius: var(--oc-radius-control);
         font-size: var(--oc-fs-micro, 10px);
         letter-spacing: var(--oc-tracking-label, 0.08em);
         text-transform: uppercase;
@@ -237,7 +237,7 @@
         width: 16px;
         height: 16px;
         border: 1px solid var(--oc-line-rule);
-        border-radius: 2px;
+        border-radius: var(--oc-radius-control);
     }
 
     .tins-chip-name {
@@ -255,13 +255,13 @@
         margin: 0;
         padding: 4px;
         border: 1px solid var(--oc-line-rule);
-        border-radius: 2px;
+        border-radius: var(--oc-radius-control);
         list-style: none;
     }
 
     .tins-ansi li {
         height: 18px;
-        border-radius: 1px;
+        border-radius: var(--oc-radius-xs);
     }
 
     .tins-actions {

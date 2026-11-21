@@ -56,7 +56,7 @@ REASONS = frozenset({
     "superseded",
     "forks-session",
 })
-DEFERRED_RATCHET = 197
+DEFERRED_RATCHET = 194
 _ROUTE_REF = re.compile(r"(src\.[a-z_.]+):([A-Za-z_0-9]+)")
 _ROW = re.compile(r"^(tool|retired|out|deferred):(.+)$")
 
@@ -112,7 +112,7 @@ def route_strings(text: str, switched_off: Iterable[str] = ()) -> Set[Tuple[str,
 
 
 def called_route_functions(source_dir: Path = MCP_SOURCE, switched_off: Iterable[str] = deprecated_tools.DEPRECATED) -> Set[Tuple[str, str]]:
-    """The (module, function) pairs the SWITCHED-ON MCP tool code calls: a ``RouteTool`` route string, or a function imported from ``src.api`` / ``src.cplugs``.
+    """The (module, function) pairs the SWITCHED-ON MCP tool code calls: a ``RouteTool`` route string, or a function imported from ``src.api`` / ``src.plugins``.
 
     Why source and not runtime: a tool imports its route lazily inside its handler, so only the text says which route it reaches.
     Output: set of (dotted module, function name).
@@ -122,7 +122,7 @@ def called_route_functions(source_dir: Path = MCP_SOURCE, switched_off: Iterable
         text = path.read_text()
         called.update(route_strings(text, switched_off))
         for node in live_nodes(ast.parse(text), switched_off):
-            if isinstance(node, ast.ImportFrom) and node.module and node.module.startswith(("src.api", "src.cplugs")):
+            if isinstance(node, ast.ImportFrom) and node.module and node.module.startswith(("src.api", "src.plugins")):
                 called.update((node.module, alias.name) for alias in node.names)
     return called
 

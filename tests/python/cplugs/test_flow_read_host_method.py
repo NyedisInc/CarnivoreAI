@@ -7,11 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.host import flow_port
-from src.cplugs.host.activity_reader import ActivityReader
-from src.cplugs.runtime import frames, guards
-from src.cplugs.runtime.dispatch import HostDispatcher, HostServices, PluginContext
-from src.cplugs.runtime.owner_tokens import OwnerTokens
+from src.plugins.host import flow_port
+from src.plugins.host.activity_reader import ActivityReader
+from src.plugins.runtime import frames, guards
+from src.plugins.runtime.dispatch import HostDispatcher, HostServices, PluginContext
+from src.plugins.runtime.owner_tokens import OwnerTokens
 from tests.python.cplugs.flow import fixture as fx
 
 

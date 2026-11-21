@@ -6,16 +6,9 @@ from contextvars import ContextVar
 from typing import Optional
 
 from src.core.session_startup_gate import GATE_READY
-from src.core.session_status import (
-    KNOWN_SHELL_COMMANDS,
-    STATUS_FINISHED_UNREAD,
-    STATUS_IDLE,
-    STATUS_NOTICE,
-    STATUS_WORKING,
-    STATUS_WORKING_SUBAGENT,
-)
+from src.models.activity_status import ActivityStatus
+from src.core.session_status import KNOWN_SHELL_COMMANDS
 
-PROMPT_READY_STATUSES: tuple[str, ...] = (STATUS_IDLE, STATUS_FINISHED_UNREAD)
 
 PANE_NOT_AN_AGENT: str = "pane_not_an_agent"
 PANE_DIALOG_OPEN: str = "pane_dialog_open"
@@ -26,15 +19,14 @@ BODY_EMPTY: str = "body_empty"
 BODY_TOO_LARGE: str = "body_too_large"
 BODY_NOT_UTF8: str = "body_not_utf8"
 
-PASTE_SAFE_STATUSES: frozenset[str] = frozenset(
-    {
-        STATUS_IDLE,
-        STATUS_FINISHED_UNREAD,
-        STATUS_WORKING,
-        STATUS_WORKING_SUBAGENT,
-        STATUS_NOTICE,
-    }
+_PASTE_SAFE: tuple[ActivityStatus, ...] = (
+    "idle",
+    "finished_unread",
+    "working",
+    "working_subagent",
+    "notice",
 )
+PASTE_SAFE_STATUSES: frozenset[str] = frozenset(_PASTE_SAFE)
 
 MAX_BODY_BYTES: int = 64 * 1024
 

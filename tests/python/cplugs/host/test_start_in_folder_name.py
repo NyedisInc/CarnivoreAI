@@ -11,7 +11,7 @@ from src.core.swarm.slugs import slugify
 
 @pytest.mark.asyncio
 async def test_tmux_name_is_a_slug_and_label_stays_readable(tmp_path, monkeypatch):
-    from src.cplugs.host import session_actions
+    from src.plugins.host import session_actions
 
     seen = {}
 

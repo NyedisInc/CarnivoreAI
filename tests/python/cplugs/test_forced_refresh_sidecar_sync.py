@@ -12,8 +12,8 @@ from fastapi import FastAPI
 from src.api import catalog_routes
 from src.api.auth import require_auth
 from src.core.catalog.index_refresher import IndexRefresher
-from src.cplugs.runtime.supervisor import Supervisor
-from src.cplugs.host.sidecar_index import IndexAdapter
+from src.plugins.runtime.supervisor import Supervisor
+from src.plugins.host.sidecar_index import IndexAdapter
 from tests.python.cplugs.runtime.test_cplug_lazy import PID, FakeProc, spec, world  # noqa: F401
 
 

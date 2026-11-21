@@ -6,9 +6,9 @@ from dataclasses import replace
 
 import pytest
 
-from src.cplugs.host import owner_switch, sidecar_registry
-from src.cplugs.host import state as owner_state
-from src.cplugs.runtime.supervisor import Supervisor
+from src.plugins.host import owner_switch, sidecar_registry
+from src.plugins.host import state as owner_state
+from src.plugins.runtime.supervisor import Supervisor
 from tests.python.api_keys.conftest import bearer, client, key_store, owner_jwt  # noqa: F401
 from tests.python.cplugs.test_cplug_sideload import NAME, URL, post, world  # noqa: F401
 

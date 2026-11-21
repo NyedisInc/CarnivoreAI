@@ -137,6 +137,7 @@ export function carryTab(tab: string, event: PointerEvent, wake?: () => void): b
 
 export interface DrawerDragStart {
   name: string;
+  sessionUuid?: string | null;
   pointerId: number;
   pointerType: string;
   clientX: number;
@@ -159,20 +160,21 @@ export function beginDrawerTabDrag(start: DrawerDragStart): boolean {
   if (!root || measureStrips(root).length === 0) return false;
   const pageTab = pageTabOfRowName(start.name);
   if (pageTab !== null) return carryTab(pageTab, pointerOf(start));
-  const id = (sessions.data ?? []).find((row) => row.tmux_session === start.name)?.session?.id;
+  const live = (sessions.data ?? []).find((row) => (start.sessionUuid ? row.session_uuid === start.sessionUuid : row.tmux_session === start.name));
+  const id = live?.session?.id;
   if (!id) return beginAsleepTabDrag(start);
   const tab = id === primarySessionId() ? PRIMARY_SLOT : slotForSession(id, sessions.data);
   return carryTab(tab, pointerOf(start));
 }
 
 function beginAsleepTabDrag(start: DrawerDragStart): boolean {
-  const rec = (asleep.data ?? []).find((r) => r.asleep && r.tmux_name === start.name);
+  const rec = (asleep.data ?? []).find((r) => r.asleep && (start.sessionUuid ? r.session_uuid === start.sessionUuid : r.tmux_name === start.name));
   if (!rec || typeof rec.id !== 'number') return false;
   const event = {
     pointerId: start.pointerId, pointerType: start.pointerType, clientX: start.clientX, clientY: start.clientY, button: 0,
   } as PointerEvent;
   const wake = (): void => {
-    wakeOrPick(rec.session_uuid, start.name, rec.title || start.name).catch((err: unknown) => {
+    wakeOrPick(rec.session_uuid, rec.tmux_name ?? start.name, rec.title || start.name).catch((err: unknown) => {
       console.warn('wake after drag of an asleep row failed', err);
     });
   };

@@ -1,6 +1,6 @@
 import { approvals, startApprovals } from '../approvals/approvals.svelte';
 import { isQuestionItem, type ApprovalItem } from '../approvals/approvals-model';
-import { holdAggregate, huddle, startTaskManager } from '../../cplugs/huddle/huddle.svelte';
+import { holdAggregate, huddle, startTaskManager } from '../../plugins/huddle/huddle.svelte';
 import { alertCenter, startAlertCenter } from '../app-alerts/alerts.svelte';
 import { t } from '../i18n/index.svelte';
 import { acquireScheduledRuns, releaseScheduledRuns } from '../../opscenter/api/scheduled-runs.svelte';

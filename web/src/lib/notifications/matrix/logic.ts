@@ -1,8 +1,4 @@
-import { DESKTOP, SCREEN, type Cell, type Column, type Family, type RoutingSettings, type TypeRow } from './api';
-
-export const PHONE_QUERY = '(max-width: 1023px)';
-
-export const DEFAULTS_COLUMN = 'defaults';
+import type { Family, TypeRow } from './api';
 
 export interface Group {
     readonly family: Family;
@@ -13,40 +9,6 @@ export function groupRows(families: readonly Family[], types: readonly TypeRow[]
     return families
         .map((family) => ({ family, rows: types.filter((row) => row.family === family.id && row.hidden !== true) }))
         .filter((group) => group.rows.length > 0);
-}
-
-export interface GroupSwitch {
-    readonly state: 'all' | 'none' | 'some';
-    readonly flip: readonly TypeRow[];
-    readonly next: boolean;
-    readonly disabled: boolean;
-}
-
-export function groupSwitch(rows: readonly TypeRow[], cellFor: (row: TypeRow) => Cell | undefined, lockFor: (row: TypeRow) => string): GroupSwitch {
-    const writable = rows.filter((row) => { const c = cellFor(row); return c !== undefined && c.locked !== true && lockFor(row) === ''; });
-    const on = writable.filter((row) => cellFor(row)?.value === true).length;
-    const state = writable.length > 0 && on === writable.length ? 'all' : on === 0 ? 'none' : 'some';
-    const next = state !== 'all';
-    return { state, next, disabled: writable.length === 0, flip: writable.filter((row) => (cellFor(row)?.value === true) !== next) };
-}
-
-export function destinationColumns(settings: RoutingSettings): Column[] {
-    const named = new Set(settings.destinations.map((d) => d.id));
-    const extra = Object.keys(settings.ticks)
-        .filter((id) => !named.has(id))
-        .map((id): Column => ({ id, name: '', kind: id.startsWith('webpush:') ? 'webpush' : '', enabled: true, scope: 'local' }));
-    return [...settings.destinations, ...extra];
-}
-
-export function cellOf(settings: RoutingSettings, column: string, typeId: string): Cell | undefined {
-    if (column === DESKTOP) return settings.desktop[typeId];
-    return column === SCREEN ? settings.screen[typeId] : settings.ticks[column]?.[typeId];
-}
-
-export function lockReason(row: TypeRow, column: string): '' | 'in_app' | 'health' {
-    if (column === SCREEN || column === DESKTOP) return '';
-    if (!row.defaults.outside_locked_off) return '';
-    return row.id === 'alert.notifications' ? 'health' : 'in_app';
 }
 
 export function linkReasonKey(reason: string): string {

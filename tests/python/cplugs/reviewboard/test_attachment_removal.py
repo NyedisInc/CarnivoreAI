@@ -8,7 +8,7 @@ import json
 import pytest
 
 from src.core.mcp.caller import AgentCaller
-from src.cplugs.huddle import board_port
+from src.plugins.huddle import board_port
 from tests.python.cplugs.reviewboard.harness import BASE, task_manager_on, task_manager_store
 from tests.python.cplugs.reviewboard.test_attachments import MD, PDF, b64, board, client, env, sidecar  # noqa: F401
 
@@ -60,7 +60,7 @@ def test_a_malformed_file_id_is_422_on_both_doors_and_writes_nothing(env, client
 
 
 def test_an_entry_with_any_removed_at_is_removed_everywhere(env, client, board, two):
-    from src.cplugs.reviewboard import attachments  # noqa: PLC0415
+    from src.plugins.reviewboard import attachments  # noqa: PLC0415
 
     entry = {**two[0], "removed_at": None}
     entry.pop("url")
@@ -136,7 +136,7 @@ def test_an_agent_removing_from_another_projects_task_needs_cross_project(env, c
 
 
 def test_a_tombstone_still_counts_toward_the_index_cap(env, client, board, two, monkeypatch):
-    from src.cplugs.reviewboard import attachments  # noqa: PLC0415
+    from src.plugins.reviewboard import attachments  # noqa: PLC0415
 
     monkeypatch.setattr(attachments, "MAX_ATTACHMENTS", 3)
     assert client.delete(f"{BASE}/boards/{board['slug']}/attachments/{two[0]['file_id']}").status_code == 200
@@ -158,7 +158,7 @@ def _message(env, item_id: int, message_id: int) -> dict:
 
 
 def _other_message_parts(entry: dict) -> dict:
-    from src.cplugs.huddle import files as task_manager_files  # noqa: PLC0415
+    from src.plugins.huddle import files as task_manager_files  # noqa: PLC0415
 
     own = {k: entry[k] for k in ("id", "name", "mime", "size", "path")}
     return {"plain": task_manager_files.parts_of([own]),
@@ -198,7 +198,7 @@ def test_bytes_another_message_still_carries_survive_the_removal(env, client, bo
 
 def test_another_task_recording_the_same_path_keeps_the_bytes(env, client, board, two):
     store = task_manager_store(env)
-    from src.cplugs.huddle import files as task_manager_files  # noqa: PLC0415
+    from src.plugins.huddle import files as task_manager_files  # noqa: PLC0415
 
     entry = _message(env, board["item"], two[0]["message_id"])["files"][0]
     absolute = str((env.host.storage("huddle").path / entry["path"]).resolve())
@@ -241,8 +241,8 @@ def test_two_removals_from_one_message_both_land(env, client, board, two):
 
 
 def test_a_file_the_message_never_carried_survives(env, client, board, two):
-    from src.cplugs.huddle import files as task_manager_files  # noqa: PLC0415
-    from src.cplugs.reviewboard.ports import get as port  # noqa: PLC0415
+    from src.plugins.huddle import files as task_manager_files  # noqa: PLC0415
+    from src.plugins.reviewboard.ports import get as port  # noqa: PLC0415
 
     saved = task_manager_files.save(env.host.storage("huddle"), board["item"], "owner-paste.png", b"\x89PNG fake")
     record = two[1]
@@ -349,7 +349,7 @@ def test_a_failed_unlink_answers_503_records_nothing_and_a_retry_deletes(env, cl
 def test_a_locked_thread_write_answers_503_and_records_nothing(env, client, board, two, monkeypatch):
     import sqlite3  # noqa: PLC0415
 
-    from src.cplugs.huddle.store import TaskManagerStore  # noqa: PLC0415
+    from src.plugins.huddle.public import TaskManagerStore  # noqa: PLC0415
 
     real = TaskManagerStore.forget_file
 
@@ -367,7 +367,7 @@ def test_a_locked_thread_write_answers_503_and_records_nothing(env, client, boar
 
 
 def test_a_crash_after_the_file_step_is_finished_by_the_retry(env, client, board, two):
-    from src.cplugs.reviewboard.ports import get as port  # noqa: PLC0415
+    from src.plugins.reviewboard.ports import get as port  # noqa: PLC0415
 
     done = asyncio.run(port().delete_file(board["item"], two[0]["message_id"], two[0]["file_id"], name=two[0]["name"], size=two[0]["bytes"], sha256=two[0]["sha256"]))
     assert done["deleted"] is True
@@ -381,7 +381,7 @@ ROWS = {"ses_1": (101, "uuid-one"), "ses_2": (102, "uuid-two"), "ses_9": (101, "
 def _two_agents_in_project_12(env, monkeypatch, live: list) -> None:
     from types import SimpleNamespace  # noqa: PLC0415
 
-    from src.cplugs.host import capabilities  # noqa: PLC0415
+    from src.plugins.host import capabilities  # noqa: PLC0415
 
     async def infos() -> list:
         return [SimpleNamespace(tmux_session=None, label=None, session=SimpleNamespace(id=sid), project_id=12, host_key="local",

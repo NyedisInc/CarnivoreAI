@@ -6,7 +6,7 @@ from typing import Callable, Dict
 
 import pytest
 
-from src.cplugs.host import dependencies, developer_mode, mcp as cplug_mcp, purge_guard, purge_kept, routes as host_routes, runtime, state as owner_state
+from src.plugins.host import dependencies, developer_mode, mcp as cplug_mcp, purge_guard, purge_kept, routes as host_routes, runtime, state as owner_state
 from tests.python.cplugs import removability
 from tests.python.gate import cycle
 from tests.python.gate.test_plugin_cycle import build_version

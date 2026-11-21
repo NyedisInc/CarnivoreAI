@@ -21,6 +21,7 @@ from src.core.computers.tls_identity import (CertRejected, LinkIdentity, client_
 from src.core.federation import grants, peer_hosts
 from src.core.pack.machines import settings_doc
 from src.core.trail_entry import utc_now
+from src.core.resource_push import topics
 
 log = structlog.get_logger(__name__)
 
@@ -50,6 +51,7 @@ class PackSettingsPort(Protocol):
     def signature(self) -> Optional[Dict[str, Any]]: ...
     def mint(self, changes: Dict[str, Any], base: Optional[settings_doc.PackSettings] = None) -> settings_doc.PackSettings: ...
     def adopt(self, doc: settings_doc.PackSettings, signature: Optional[Dict[str, Any]] = None) -> bool: ...
+    def clear_roster(self) -> bool: ...
 
 
 class PinListener(Protocol):
@@ -224,8 +226,8 @@ def _members_of(open_db: OpenDb, own_link_fid: str) -> List[Member]:
 
 def _notify(notify: Optional[Notify]) -> None:
     if notify is not None:
-        notify("computers")
-        notify("pack_machines")
+        notify(topics.COMPUTERS)
+        notify(topics.PACK_MACHINES)
 
 
 def _joiner_writes(open_db: OpenDb, undo: _Undo, *, identity: LinkIdentity, own_iid: str, main: PeerId, own_grant_id: str, kind: str,

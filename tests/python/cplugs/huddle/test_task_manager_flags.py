@@ -1,7 +1,7 @@
 
 import pytest
 
-from src.cplugs.huddle import flags
+from src.plugins.huddle import flags
 from tests.python.cplugs.huddle.test_task_manager_batch import _items, call, manager  # noqa: F401
 
 

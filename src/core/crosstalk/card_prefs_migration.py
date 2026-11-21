@@ -7,7 +7,7 @@ from typing import Any, Dict, Mapping, Protocol
 import structlog
 
 from src.core.crosstalk.card_push import GATE_FIELD
-from src.cplugs.host import state as plugin_state
+from src.plugins.host import state as plugin_state
 
 logger = structlog.get_logger()
 

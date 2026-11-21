@@ -113,6 +113,21 @@ async def _imported_check(args: dict, _target: Any) -> None:
     _agent_type(args)
 
 
+def _mass_death_resume(call: ra.Call) -> Any:
+    from src.api.mass_death_routes import MassDeathResumeRequest
+
+    listed = call.args.get("session_uuids")
+    if listed is not None and (not isinstance(listed, list) or not all(isinstance(u, str) for u in listed)):
+        raise ToolError("session_uuids must be a list of session UUIDs")
+    return call.route(call.request, MassDeathResumeRequest(session_uuids=listed))
+
+
+def _mass_death_summary(args: dict, _target: Any) -> str:
+    listed = args.get("session_uuids")
+    which = f"{len(listed)} named sessions" if isinstance(listed, list) else "the sessions of the latest mass pane death"
+    return f"wake {which} (each resumes its conversation, as session_wake does) and type a short interruption note into each"
+
+
 SPECS = (
     redacted_read(
         name="session_restart_preview", route="src.api.restart_routes:restart_preview",
@@ -178,6 +193,16 @@ SPECS = (
         required=("session_uuid", "agent_type"), invoke=_imported_restart, precheck=_imported_check,
         summary=lambda args, target: f"start an imported conversation ({args.get('session_uuid')}) under {args.get('agent_type')} and resume it",
         example={"session_uuid": "aaaaaaaa-1111-4111-8111-111111111111", "agent_type": "claude"},
+    ),
+    ra.RouteTool(
+        name="session_mass_death_resume", route="src.api.mass_death_routes:resume_mass_death", gate=ra.ACT,
+        description="After a mass pane death (an alert says N sessions died at once), wake each dead session through the one wake "
+                    "(session_wake, every gate unchanged) and type a short interruption note into each once its pane is ready. "
+                    "session_uuids names the sessions; omitted means the latest mass death. A session a gate declines is reported, not forced. "
+                    "Waits for the owner's approval unless Beast Mode is armed.",
+        properties={"session_uuids": {"type": "array", "items": _UUID_SCHEMA, "maxItems": 50}},
+        invoke=_mass_death_resume, summary=_mass_death_summary,
+        example={"session_uuids": ["aaaaaaaa-1111-4111-8111-111111111111"]},
     ),
     ra.RouteTool(
         name="session_external_stop", route="src.api.session_attach_routes:destroy_external_session", gate=ra.ACT,

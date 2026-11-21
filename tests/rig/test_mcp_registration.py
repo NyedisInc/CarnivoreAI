@@ -98,7 +98,13 @@ def test_real_claude_calls_carnivore_whoami(rig_slot: RigSlot, tmp_path) -> None
         rig_slot.wait_for(cl, "Do you want to proceed?")
         _enter(rig_slot, cl)
         _wait_result(model, "/v1/messages", _session_id(rig_slot, cl))
-        assert TOOL in json.dumps([r.get("tools") for r in model.requests_to("/v1/messages")])
+        def last_blocks(r: Any) -> List[Any]:
+            content = (r.get("messages") or [{}])[-1].get("content")
+            return content if isinstance(content, list) else []
+
+        first_main = [r for r in model.requests_to("/v1/messages")
+                      if r.get("tools") and not any(isinstance(b, dict) and b.get("type") == "tool_result" for b in last_blocks(r))]
+        assert first_main and TOOL in json.dumps(first_main[0])
 
 
 def test_real_codex_calls_carnivore_whoami(rig_slot: RigSlot, tmp_path) -> None:
@@ -110,8 +116,15 @@ def test_real_codex_calls_carnivore_whoami(rig_slot: RigSlot, tmp_path) -> None:
         cx = rig_slot.create_session("rigx", "rigcodex", work)
         rig_slot.wait_for(cx, "Ask Codex to do anything")
         rig_slot.type_line(cx, "RIG:who please")
-        rig_slot.wait_for(cx, 'Allow the carnivore MCP server to run tool "whoami"?')
-        _enter(rig_slot, cx)
+        deadline = time.monotonic() + 60
+        while time.monotonic() < deadline:
+            pane = rig_slot.capture(cx)
+            if 'Allow the carnivore MCP server to run tool "whoami"?' in pane:
+                _enter(rig_slot, cx)
+                break
+            if "Called carnivore.whoami" in pane:
+                break
+            time.sleep(1.0)
         _wait_result(model, "/v1/responses", _session_id(rig_slot, cx))
 
 

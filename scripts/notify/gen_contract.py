@@ -41,7 +41,7 @@ def render_swift() -> str:
            "enum NotifyContract {", f"    static let version = {cc.PAYLOAD_VERSION}", f"    static let maxPlaintextBytes = {payload_crypto.MAX_PLAINTEXT_BYTES}"]
     for key, value in cc.LIMITS.items():
         out.append(f"    static let limit{_pascal(key)} = {value}")
-    out.append("    static let sounds = [" + ", ".join(_q(s) for s in cc.SOUNDS) + "]")
+    out.append("    static let sounds = [" + ", ".join(_q(s) for s in cc.DEVICE_SOUNDS) + "]")
     out.append("    static let earcons = [" + ", ".join(_q(s) for s in cc.EARCONS) + "]")
     out.append("    static let levels: [String: String] = [" + ", ".join(f"{_q(k)}: {_q(v)}" for k, v in cc.LEVELS.items()) + "]")
     out.append("    static let payloadKeys = [" + ", ".join(_q(k) for k in cc.PAYLOAD_KEYS) + "]")

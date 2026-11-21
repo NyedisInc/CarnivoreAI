@@ -7,12 +7,12 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.cplugs.crate import forbidden
-from src.cplugs.crate import plan as plan_module
-from src.cplugs.crate import writer as writer_module
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import build_plan
-from src.cplugs.crate.writer import run_export
+from src.plugins.crate import forbidden
+from src.plugins.crate import plan as plan_module
+from src.plugins.crate import writer as writer_module
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import build_plan
+from src.plugins.crate.writer import run_export
 from tests.python.cplugs.crate.crate_world import crate_text, env_for, make_world, session_request
 from tests.python.cplugs.crate.forbidden_world import plant_canaries, plant_hardlink, plant_symlink
 

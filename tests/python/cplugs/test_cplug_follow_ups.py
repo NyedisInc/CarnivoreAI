@@ -8,8 +8,8 @@ from typing import Dict, List, Set
 
 import pytest
 
-from src.cplugs.host import runtime
-from src.cplugs.sdk.definition import CplugDefinition
+from src.plugins.host import runtime
+from src.plugins.sdk.definition import CplugDefinition
 from tests.helpers.catalog_text import catalog_text, slice_paths
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -73,7 +73,7 @@ def test_a_plugin_that_declares_routes_has_a_router() -> None:
 
 
 def registry_rows(pid: str) -> Set[str]:
-    path = ROOT / "web" / "src" / "cplugs" / pid / "style-guide.json"
+    path = ROOT / "web" / "src" / "plugins" / pid / "style-guide.json"
     if not path.is_file():
         return set()
     return set(json.loads(path.read_text(encoding="utf-8"))["files"])
@@ -81,7 +81,7 @@ def registry_rows(pid: str) -> Set[str]:
 
 @pytest.mark.parametrize("pid", sorted(DEFINITIONS))
 def test_every_registry_row_is_declared_and_every_declared_specimen_has_a_row(pid: str) -> None:
-    declared = set(DEFINITIONS[pid].manifest.owns.style_guide)
+    declared = {p.replace("web/src/cplugs/", "web/src/plugins/", 1) for p in DEFINITIONS[pid].manifest.owns.style_guide}
     rows = registry_rows(pid)
     if not rows and not declared:
         pytest.skip("no style guide specimens")
@@ -104,7 +104,7 @@ def defined_keys() -> Set[str]:
 
 def plugin_sources(pid: str) -> Dict[Path, str]:
     out: Dict[Path, str] = {}
-    for base in (ROOT / "src" / "cplugs" / pid, ROOT / "web" / "src" / "cplugs" / pid):
+    for base in (ROOT / "src" / "plugins" / pid, ROOT / "web" / "src" / "plugins" / pid):
         for path in base.rglob("*"):
             if path.suffix in SOURCE_SUFFIXES and ".test." not in path.name and "fixtures" not in path.parts and path.is_file():
                 out[path] = path.read_text(encoding="utf-8")

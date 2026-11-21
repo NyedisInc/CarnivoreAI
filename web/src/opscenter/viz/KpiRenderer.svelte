@@ -8,6 +8,7 @@
   import Select from '../../lib/base/Select.svelte';
   import StatTile from '../../lib/base/StatTile.svelte';
   import TripwireEditor from './TripwireEditor.svelte';
+  import ComputersPick from './ComputersPick.svelte';
   import { analytics, chartTick } from '../cells/analytics/state.svelte';
   import type { ChartConfig, RangePreset, Viz } from '../cells/analytics/types';
   import { changeAnalyticsConfig } from '../layout-editor/editor.svelte';
@@ -118,6 +119,7 @@
     <Select size="sm" label={t('analytics.range')} value={config.range.preset ?? ''} options={rangeOptions()} onchange={(event) => edit({ range: { ...config.range, preset: (event.currentTarget.value || null) as RangePreset | null, zoom: null } })} />
     <Checkbox label={t('viz.compare_prior')} checked={compare} onchange={(event) => edit({ options: { ...config.options, compare_prior: event.currentTarget.checked } })} />
     <Checkbox label={t('analytics.enabled')} checked={config.enabled} onchange={(event) => edit({ enabled: event.currentTarget.checked })} />
+    <ComputersPick {config} {edit} />
     <TripwireEditor {config} />
   </div>
 {/snippet}

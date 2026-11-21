@@ -33,17 +33,20 @@ def compute_total(accounts: List[AccountUsage], identity_keys: Optional[Dict[str
             seen.add(key)
         counted.append(account)
     accounts = counted
-    buckets: Dict[str, List[UsageWindow]] = {}
+    buckets: Dict[Tuple[str, str], List[UsageWindow]] = {}
     for account in accounts:
         for window in account.windows:
-            buckets.setdefault(window.kind, []).append(window)
+            buckets.setdefault((account.provider, window.kind), []).append(window)
 
     windows: List[LedgerTotalWindow] = []
-    for kind in sorted(buckets, key=_position):
-        reporting = buckets[kind]
+    for provider, kind in sorted(buckets, key=lambda pk: _position(pk[1])):
+        reporting = buckets[(provider, kind)]
+        lengths = {w.window_seconds for w in reporting}
         windows.append(
             LedgerTotalWindow(
+                provider=provider,
                 kind=kind,
+                window_seconds=lengths.pop() if len(lengths) == 1 else None,
                 label=reporting[0].label,
                 used_pct=sum(w.used_pct for w in reporting) / len(reporting),
                 resets_at=_earliest_reset(reporting),

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.cplugs.host.sidecar_manifest import SidecarManifestError, parse_sidecar_manifest
+from src.plugins.host.sidecar_manifest import SidecarManifestError, parse_sidecar_manifest
 
 BASE = {"schema": 1, "id": "pillpanic", "name": "Pill Panic", "description": "d", "version": "1.0.0", "entry": "main.py", "tools": [],
         "permissions": {"app": []}, "default_enabled": False, "routes": []}

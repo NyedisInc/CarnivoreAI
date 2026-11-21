@@ -9,7 +9,7 @@ import structlog
 
 from src.core import db
 from src.core.swarm import author_path, body, done_feed, owner_wait, settings as swarm_settings, stream_sources, thread_port
-from src.cplugs.sdk import chat_category
+from src.plugins.sdk import chat_category
 
 logger = structlog.get_logger()
 

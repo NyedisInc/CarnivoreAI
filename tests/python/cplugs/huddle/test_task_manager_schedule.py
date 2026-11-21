@@ -9,14 +9,14 @@ from types import SimpleNamespace
 import pytest
 from fastapi import HTTPException
 
-from src.api import one_shot_routes
-from src.cplugs.host import capabilities, runtime, session_actions
-from src.cplugs.huddle import fire, held, schedule, service, triggers
+from tests.python.cplugs.huddle.paste_fakes import patch_paste
+from src.plugins.host import capabilities, runtime, session_actions
+from src.plugins.huddle import fire, held, schedule, service, triggers
 from src.core.session_delivery import bring_up as session_bring_up
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
-from src.cplugs.huddle.roles import lead
-from src.cplugs.huddle.roles.store import RoleStore
+from src.plugins.huddle.roles import lead
+from src.plugins.huddle.roles.store import RoleStore
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, row  # noqa: F401
 
 LISTS = "/api/v1/cplugs/huddle/lists"
@@ -44,7 +44,7 @@ class Env:
             self.pasted.append((session_id, text))
             return SimpleNamespace(pasted_bytes=len(text), submitted=True)
 
-        monkeypatch.setattr(one_shot_routes, "paste_through_gates", paste)
+        patch_paste(monkeypatch, paste)
         monkeypatch.setattr(session_bring_up, "READY_STEP_S", 0.02)
         monkeypatch.setattr(held, "POLL_S", 0.02)
 
@@ -296,7 +296,7 @@ def test_a_busy_session_holds_the_scheduled_tell_with_its_words(client, env, mon
             raise HTTPException(status_code=409, detail={"code": "pane_dialog_open", "message": "a dialog is open"})
         return SimpleNamespace(pasted_bytes=len(text), submitted=True)
 
-    monkeypatch.setattr(one_shot_routes, "paste_through_gates", paste)
+    patch_paste(monkeypatch, paste)
 
     async def scenario():
         arm(client, item["id"])

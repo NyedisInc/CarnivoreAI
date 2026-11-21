@@ -92,13 +92,21 @@ function findHits(root) {
 // ---------------------------------------------------------------------
 // ---------------------------------------------------------------------
 const ALLOWED_MATCHES = {
+    'web/src/lib/item-menu/run/rename-fork.ts::.find((r) => r.tmux_session === name':
+        "KNOWN, JUST-WOKEN ROW: the wake was asked for this very tmux name a moment ago and the durable uuid is matched too; the hit only supplies the session id of the row just woken for the fork that follows.",
+    'web/src/lib/item-menu/run/rename-fork.ts::.find((r) => !r.asleep && (r.name === name':
+        "KNOWN, JUST-WOKEN ROW, push-down fallback of the lookup above: awake rows only, by the name the wake asked for or the uuid.",
+    'web/src/plugins/argent/ClassifierChange.svelte::.find((r) => r.tmux_session === preselect':
+        "KNOWN, LINK ONLY: the quiet notice's change link names a session by tmux name (`?session=<tmux name>`) and the hit only preselects a choice in a form the owner confirms; a reused name can at worst preselect the wrong row, never act on it.",
+    'web/src/lib/drawer/fetch-same-name.test.ts::.find((r) => r.name === NAME':
+        'NOT A SESSION LOOKUP: a test fixture about same-name sessions; it picks the one row the loader returned for the fixture name and asserts its uuid and stamp.',
     'web/src/lib/skills-page/SkillsScreen.svelte::.find((row) => row.name === name':
         'NOT A SESSION LOOKUP: matches a skill census row by the skill\'s own name.',
-    'web/src/cplugs/devwidgetlab/lab-selection.ts::.find((one) => one.name === size':
+    'web/src/plugins/devwidgetlab/lab-selection.ts::.find((one) => one.name === size':
         "NOT A SESSION LOOKUP: matches a Widget Lab size, widget or host by its own configuration name or key (dev widget lab).",
-    'web/src/cplugs/devwidgetlab/lab-selection.ts::.find((size) => size.name === sel':
+    'web/src/plugins/devwidgetlab/lab-selection.ts::.find((size) => size.name === sel':
         "NOT A SESSION LOOKUP: matches a Widget Lab size, widget or host by its own configuration name or key (dev widget lab).",
-    'web/src/cplugs/devwidgetlab/lab-selection.ts::.find((one) => one.key === sel.widget)?.hosts.find((host) => host.zone === intent.host)?.sizes.some((size) => size.name === intent':
+    'web/src/plugins/devwidgetlab/lab-selection.ts::.find((one) => one.key === sel.widget)?.hosts.find((host) => host.zone === intent.host)?.sizes.some((size) => size.name === intent':
         "NOT A SESSION LOOKUP: matches a Widget Lab size, widget or host by its own configuration name or key (dev widget lab).",
     "web/src/lib/drawer/last-view.ts::.find((r) => !r.asleep && r.status !== 'dead' && r.status !== 'closed' && (view.sessionId ? r.session_id === view.sessionId : r.name === view":
         "KNOWN, FALLBACK ONLY: the stored last view matches by session_id whenever it has one; the name is used only for a record saved without an id, and the match is among live, not-dead, not-closed rows.",
@@ -116,9 +124,9 @@ const ALLOWED_MATCHES = {
         "NOT A SESSION LOOKUP: matches a skill group by the skill's own name.",
     'web/src/lib/skills-page/skill-actions.svelte.ts::.find((g) => g.name === item':
         "NOT A SESSION LOOKUP: matches a skill group by the skill's own name.",
-    'web/src/cplugs/huddle/style-guide/ExpressionBoard.svelte::.findIndex((x) => x.name === current':
+    'web/src/plugins/huddle/style-guide/ExpressionBoard.svelte::.findIndex((x) => x.name === current':
         'NOT A SESSION LOOKUP: matches a Swarm character eye expression by its own name (style guide specimen).',
-    'web/src/cplugs/huddle/style-guide/ExpressionBoard.svelte::.find((e) => e.name === cell':
+    'web/src/plugins/huddle/style-guide/ExpressionBoard.svelte::.find((e) => e.name === cell':
         'NOT A SESSION LOOKUP: matches a Swarm character eye expression by its own name (style guide specimen).',
     'web/src/lib/widgets-page/preview-sizes.ts::.find((one) => one.name === name':
         'NOT A SESSION LOOKUP: matches a widget preview size by its configuration name.',
@@ -138,7 +146,7 @@ const ALLOWED_MATCHES = {
         'KNOWN: a menu action hands over the tmux name; the hit only fetches the row\'s session_row_id and label, and the bookmark popup is then keyed on that id.',
     'web/src/lib/auto-sleep/KeepAwakeIcon.svelte::.find((row) => row.tmux_session === sessionName':
         'KNOWN, DISPLAY ONLY: the icon\'s prop is the tmux name; the hit only words why a live session is held awake and never routes or mutates by it.',
-    'web/src/opscenter/engine/tab-drag.ts::.find((r) => r.asleep && r.tmux_name === start':
+    'web/src/opscenter/engine/tab-drag.ts::.find((r) => r.asleep && (start.sessionUuid ? r.session_uuid === start.sessionUuid : r.tmux_name === start':
         'KNOWN: the drawer drag start carries only the row name; the match is among ASLEEP records only (a live row is never matched) and the drop re-resolves by record id.',
     'web/src/opscenter/cells/terminal-live/toolbar.ts::.findIndex((s) => s.name === item':
         'NOT A SESSION LOOKUP: matches a static toolbar width step by its configuration name.',
@@ -158,7 +166,7 @@ const ALLOWED_MATCHES = {
         'needs - a durable key on the live row that the attachable row',
         'also carries.',
     ].join(' '),
-    'web/src/opscenter/engine/tab-drag.ts::.find((row) => row.tmux_session === start': [
+    'web/src/opscenter/engine/tab-drag.ts::.find((row) => (start.sessionUuid ? row.session_uuid === start.sessionUuid : row.tmux_session === start': [
         'KNOWN, UNFIXED HERE, RECORDED AS A FOLLOW-UP (parity merge,',
         '2026-09-25, .claude/notes/parity-merge-20260924.md). Terminal tabs',
         'slice 4 (#455) resolves the dragged DRAWER row to a session id by',

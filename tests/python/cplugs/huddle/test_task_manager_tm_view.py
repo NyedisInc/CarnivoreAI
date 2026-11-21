@@ -7,8 +7,8 @@ import json
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
 from src.core.swarm.facade import SwarmFacade
-from src.cplugs.huddle import lane
-from src.cplugs.huddle.swarm_port import TaskManagerSwarmPort
+from src.plugins.huddle import lane
+from src.plugins.huddle.swarm_port import TaskManagerSwarmPort
 from tests.python.cplugs.huddle.test_task_manager_agent_lists import BASE, CALLER, world  # noqa: F401
 
 AGENT_CALLER = AgentCaller("ses_agent", "cloude_agent", "ses_agent")

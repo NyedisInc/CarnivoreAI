@@ -10,8 +10,9 @@ import type { RestartAccounts } from './account-types';
 import type { PickerRow } from './picker-model';
 import type { LaunchPrefill } from './prefill';
 import type { WorktreeAnswer } from './worktree-model';
+import type { SessionPlaceApi } from '../session-place/api';
 
-export interface PickerAnswer { profileId: string; profileLabel: string; model: string | null; account: AccountAnswer | null; farLauncher?: boolean; name?: string; pinned?: boolean; worktree?: WorktreeAnswer | null; story?: string | null }
+export interface PickerAnswer { profileId: string; profileLabel: string; model: string | null; account: AccountAnswer | null; farLauncher?: boolean; name?: string; pinned?: boolean; worktree?: WorktreeAnswer | null; story?: string | null; computer?: 'here' | 'auto' }
 
 export interface OpenOptions {
     title?: string;
@@ -26,6 +27,8 @@ export interface OpenOptions {
     goLabel?: string | null;
     prefill?: LaunchPrefill | null;
     folder?: string | null;
+    /* the computer row */
+    placement?: { workingDir: string; api?: SessionPlaceApi } | null;
 }
 
 export function openLaunchPicker(options: OpenOptions = {}, t: Translate = appT): Promise<PickerAnswer | null> {

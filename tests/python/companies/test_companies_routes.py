@@ -24,7 +24,7 @@ def test_create_list_sorted_trim_and_counts(client):
     a = _make(client, "Acme")
     assert b["name"] == "beta corp" and b["project_count"] == 0
     assert [c["name"] for c in client.get(f"{API}/companies").json()["companies"]] == ["Acme", "beta corp"]
-    assert set(a) == {"id", "name", "project_count", "has_image", "image_rev", "hue", "parent_id", "hq_project_id"}
+    assert set(a) == {"id", "name", "project_count", "has_image", "image_rev", "hue", "parent_id", "hq_project_id", "folder"}
 
 
 def test_name_validation_and_duplicate_409(client):

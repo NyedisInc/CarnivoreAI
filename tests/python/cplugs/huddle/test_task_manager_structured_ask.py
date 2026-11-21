@@ -4,8 +4,8 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from src.cplugs.huddle import service, structured
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import service, structured
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work.ladder import MIGRATIONS, SCHEMA_VERSION
 from src.core.work.storage import WorkStorage
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401

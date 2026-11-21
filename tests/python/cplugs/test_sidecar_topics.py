@@ -9,9 +9,9 @@ import pytest
 
 from src.core.resource_push.notifier import ResourceNotifier
 from src.core.resource_push.topics import CPLUG_TOPIC, all_topics
-from src.cplugs.runtime import guards
-from src.cplugs.runtime.dispatch import HostDispatcher, HostServices, PluginContext
-from src.cplugs.runtime.owner_tokens import OwnerTokens
+from src.plugins.runtime import guards
+from src.plugins.runtime.dispatch import HostDispatcher, HostServices, PluginContext
+from src.plugins.runtime.owner_tokens import OwnerTokens
 
 
 def _ctx(tmp_path: Path, topics=("runs", "feed")) -> PluginContext:
@@ -42,7 +42,7 @@ def test_undeclared_topic_is_refused(tmp_path: Path) -> None:
 
 
 def test_the_burst_ends_with_a_trailing_send_through_the_real_notifier(tmp_path: Path) -> None:
-    from src.cplugs.host import sidecar_topics  # noqa: PLC0415
+    from src.plugins.host import sidecar_topics  # noqa: PLC0415
 
     all_topics()
 
@@ -66,13 +66,13 @@ def test_the_burst_ends_with_a_trailing_send_through_the_real_notifier(tmp_path:
 
 @pytest.mark.parametrize("key,suffix", [(None, ""), ("run-1_a", ":run-1_a"), ("Bad Key", ""), ("x" * 41, ""), ("", "")])
 def test_wire_name_carries_only_a_valid_key(key, suffix) -> None:
-    from src.cplugs.host import sidecar_topics  # noqa: PLC0415
+    from src.plugins.host import sidecar_topics  # noqa: PLC0415
 
     assert sidecar_topics.wire_topic("uuid1", "runs", key) == f"{CPLUG_TOPIC}:uuid1:runs{suffix}"
 
 
 def test_keys_share_one_slot_per_install_and_name_and_the_map_stays_bounded() -> None:
-    from src.cplugs.host import sidecar_topics  # noqa: PLC0415
+    from src.plugins.host import sidecar_topics  # noqa: PLC0415
     from src.core.resource_push import notifier as notifier_module  # noqa: PLC0415
 
     async def run() -> Tuple[List[List[str]], int]:

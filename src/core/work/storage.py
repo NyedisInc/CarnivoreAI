@@ -9,7 +9,7 @@ from src.core.db import db_path_for
 from src.core.test_write_guard import assert_test_write_allowed
 from src.core.work.importer import copy, ready
 from src.core.work.work_ladder import MIGRATIONS, VERSION
-from src.cplugs.sdk.storage import CoreStorageSpec, CplugStorage
+from src.plugins.sdk.storage import CoreStorageSpec, CplugStorage
 
 DB_NAME = ready.LEGACY_DB
 FOLDER_NAME = "huddle"

@@ -48,11 +48,12 @@ def is_dead_pane_stop(row: Optional[Mapping[str, Any]]) -> bool:
 
 def _transcript_absent(row: Mapping[str, Any], uuid: str) -> bool:
     from src.core.attention.evidence import FAMILY_CODEX
-    from src.core.attention.codex_pane_home import pane_codex_home
+    from src.core.attention.codex_pane_home import gone_identity, pane_codex_home
     from src.core.session_transcript_presence import CONVERSATION_ABSENT, codex_rollout_presence
 
     if row.get("agent_family") == FAMILY_CODEX:
-        return codex_rollout_presence(uuid, codex_home=pane_codex_home(row.get("tmux_socket"), row.get("tmux_name"))).missing
+        home = pane_codex_home(row.get("tmux_socket"), row.get("tmux_name"), identity=gone_identity(row))
+        return codex_rollout_presence(uuid, codex_home=home).missing
     from src.core.session_token_usage.claude_reader import locate_transcript
 
     return locate_transcript(uuid, working_dir=row.get("working_dir")).outcome == CONVERSATION_ABSENT
@@ -166,6 +167,14 @@ def asleep_rows(conn: sqlite3.Connection) -> List[Dict[str, Any]]:
         include_automated=False,
     )
     return [row for row in rows if is_asleep(row)]
+
+
+def stopped_rows(conn: sqlite3.Connection) -> List[Dict[str, Any]]:
+    from src.core import session_store
+
+    return session_store.list_sessions(
+        conn, lifecycle=SESSION_LIFECYCLE_STOPPED, include_archived=False, include_automated=False
+    )
 
 
 def closed_rows(conn: sqlite3.Connection) -> List[Dict[str, Any]]:

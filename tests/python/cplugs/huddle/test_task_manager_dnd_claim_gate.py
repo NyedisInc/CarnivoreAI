@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.cplugs.huddle import item_owner
-from src.cplugs.huddle.roles import dnd_gate, tags
+from src.plugins.huddle import item_owner
+from src.plugins.huddle.roles import dnd_gate, tags
 from tests.python.cplugs.huddle.roles_rig import BASE
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, pasted  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_tags import World, add, run, store_of

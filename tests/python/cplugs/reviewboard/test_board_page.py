@@ -11,10 +11,10 @@ from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
 from src.core.browser_pages import open_pages, select
-from src.cplugs.huddle import artifact_ticket
-from src.cplugs.reviewboard import opener, ticket, viewer
-from src.cplugs.reviewboard.mcp import TOOLS
-from src.cplugs.sdk import sandboxed_html, signed_links
+from src.plugins.huddle import artifact_ticket
+from src.plugins.reviewboard import opener, ticket, viewer
+from src.plugins.reviewboard.mcp import TOOLS
+from src.plugins.sdk import sandboxed_html, signed_links
 from src.security_headers import OWN_POLICY_HEADER
 from tests.python.cplugs.reviewboard.boards import PAGE, SIDECAR, make_board
 from tests.python.cplugs.reviewboard.harness import BASE, Env, make_env
@@ -135,7 +135,7 @@ def test_the_mint_route_refuses_an_unknown_revision_page_or_board(client: TestCl
 def test_the_viewer_answers_409_while_the_plugin_is_off(env: Env, client: TestClient):
     url = viewer_url(client)
     from dataclasses import replace  # noqa: PLC0415
-    from src.cplugs.host import runtime, state as owner_state  # noqa: PLC0415
+    from src.plugins.host import runtime, state as owner_state  # noqa: PLC0415
     owner_state.update(env.host.state_dir, runtime.find("reviewboard").manifest, None, lambda st: replace(st, enabled=False))
     off = client.get(url)
     assert off.status_code == 409 and off.json()["detail"]["code"] == "cplug_disabled"

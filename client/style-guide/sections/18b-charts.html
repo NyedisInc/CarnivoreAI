@@ -171,6 +171,8 @@
         percent and stored in the metric's own unit through <code>viz/tripwire-model.ts</code>, window, hold and cooldown minutes, enabled),
         shared <code>.oc-field</code> inputs, <code>.modal-btn-confirm</code> to save and <code>.modal-btn-danger</code> to remove. Saves go straight
         to the tripwire routes, not the layout draft; a chart not yet saved to the server shows a note instead.</dd>
+    <dt>computer picker</dt>
+    <dd><code>ComputersPick.svelte</code> in a usage widget's settings panel: a label and one shared <code>.oc-pick</code> checkbox per Pack computer, no classes of its own, drawn only when the Pack lists a second computer. It stores <code>filters.hosts</code> on the widget's saved config (cleared while every computer is ticked), and an offline computer's label carries its "through" time.</dd>
     <dt>data</dt>
     <dd>Every widget on screen hands its query items to <code>viz/query-client.ts</code>, which sends one
         <code>query-batch</code> request per refresh tick (split at 32), routes results back per widget, shows an item's error on

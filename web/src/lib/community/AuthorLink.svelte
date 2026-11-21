@@ -42,7 +42,7 @@
     .alink__badge {
         padding: 0 var(--oc-space-1);
         border: 1px solid var(--cat-action-edge);
-        border-radius: 2px;
+        border-radius: var(--oc-radius-control);
         color: var(--cat-action);
         font-family: var(--cat-mono);
         font-size: var(--oc-fs-micro, 10px);

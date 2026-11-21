@@ -253,9 +253,9 @@ export function createTabController(instance: () => string, focusPane: (tab: str
     if (replaceTab(terminalLayout, tab, to)) moveWidgetTabOptions(tab, to);
   }
 
-  function openWidget(widgetId: string): void {
+  function openWidget(widgetId: string, target?: string): void {
     newAnchor = null;
-    openTab(terminalLayout, instance(), widgetTabId(widgetId));
+    openTab(terminalLayout, instance(), widgetTabId(widgetId, target));
   }
 
   async function createBrowserTab(): Promise<void> {
@@ -344,7 +344,7 @@ export function createTabController(instance: () => string, focusPane: (tab: str
             : null,
           openPage,
           newBrowser: () => void createBrowserTab(),
-          widgets: pagesAllowed ? widgetMenuNodes(new Set(layoutTabs), openWidget) : null,
+          widgets: pagesAllowed ? widgetMenuNodes(new Set(layoutTabs), openWidget, new Set(takenSlots(terminalLayout))) : null,
           layoutSessionIds,
           projects: projects.data ?? [],
         })

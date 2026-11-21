@@ -1,5 +1,5 @@
 import { pluginItemsFor } from './row-plugins';
-import { swarmRosterAgents } from '../../cplugs/sdk/swarm-roster.svelte';
+import { swarmRosterAgents } from '../../plugins/sdk/swarm-roster.svelte';
 import { memberOf } from '../swarm-membership/member-face';
 import { escHtml } from '../drawer/row-controls';
 

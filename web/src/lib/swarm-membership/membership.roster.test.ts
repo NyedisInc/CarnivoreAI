@@ -6,7 +6,7 @@ vi.mock('../confirm-ok/confirm-ok', () => ({ confirmOk: vi.fn(async () => true) 
 vi.mock('../sidebar-shell/interaction-globals', () => ({ announceFailure: vi.fn() }));
 
 import { joinSwarm } from './membership';
-import { registerSwarmRoster, unregisterSwarmRoster } from '../../cplugs/sdk/swarm-roster.svelte';
+import { registerSwarmRoster, unregisterSwarmRoster } from '../../plugins/sdk/swarm-roster.svelte';
 
 afterEach(() => unregisterSwarmRoster());
 

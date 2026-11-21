@@ -49,14 +49,15 @@ describe('lookNodes (edit mode)', () => {
     expect(lookNodes(input('core.files'))).toEqual([]);
   });
 
-  test('the options rule: views or settings in edit layout, per-copy options any time', () => {
+  test('the options rule: settings in any mode, views in edit layout, per-copy options any time', () => {
     const files = CORE_MANIFESTS['core.files']!;
     const tasks = CORE_MANIFESTS['core.tasks']!;
     const questions = CORE_MANIFESTS['core.questions']!;
     expect(hasOptions(CORE_MANIFESTS['core.crosstalk']!, CORE_MANIFESTS['core.crosstalk']!, true)).toBe(false);
     expect(hasOptions(files, files, true)).toBe(true);
-    expect(hasOptions(files, files, false)).toBe(false);
+    expect(hasOptions(files, files, false)).toBe(true);
     expect(hasOptions(tasks, tasks, true)).toBe(true);
+    expect(hasOptions(tasks, { settings: undefined }, false)).toBe(false);
     expect(hasOptions(questions, questions, false)).toBe(true);
   });
 });

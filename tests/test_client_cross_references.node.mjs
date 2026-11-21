@@ -54,7 +54,7 @@ function aliasedGlobalPublications(source) {
 
 
 const AMBIENT = new Set([
-    'Terminal', 'FitAddon', 'WebglAddon', 'Unicode11Addon', 'SearchAddon',
+    'Terminal', 'FitAddon', 'WebglAddon', 'Unicode11Addon', 'SearchAddon', 'WebLinksAddon',
     'CustomEvent', 'Promise', 'Event', 'Error', 'Math', 'JSON', 'Date', 'Object',
     'Array', 'String', 'Number', 'Boolean', 'Map', 'Set', 'WeakMap', 'WeakSet',
     'RegExp', 'Symbol', 'URL', 'URLSearchParams', 'WebSocket', 'Blob', 'File',
@@ -66,7 +66,7 @@ const AMBIENT = new Set([
     'HTMLElement', 'Node', 'Document', 'Window', 'Storage', 'History', 'Location',
     'Text', 'EventTarget', 'DataTransfer', 'Range', 'Selection', 'Clipboard',
     'ClipboardItem', 'Option', 'MediaQueryList', 'CSS', 'Intersection',
-    'AudioContext', 'OfflineAudioContext', 'SpeechSynthesisUtterance',
+    'AudioContext', 'OfflineAudioContext', 'SpeechSynthesisUtterance', 'OffscreenCanvas',
 ]);
 
 const OPTIONAL_GLOBALS = new Set([
@@ -81,6 +81,9 @@ test('every window.X a client script reads is published by something', () => {
         /(?:window|globalThis|global|root)\s*\.\s*([A-Z][A-Za-z0-9_]*)\s*=(?!=)/g,
     )) published.add(m[1]);
     for (const m of blob.matchAll(/\bpage\(\)\s*\.\s*([A-Z][A-Za-z0-9_]*)\s*=(?!=)/g)) {
+        published.add(m[1]);
+    }
+    for (const m of blob.matchAll(/Object\.assign\(\s*(?:hostWindow\(\)|window|globalThis)[^,]*,\s*\{\s*([A-Z][A-Za-z0-9_]*)\s*:/g)) {
         published.add(m[1]);
     }
     for (const rel of walk('web/src', ['.ts', '.svelte'])) {

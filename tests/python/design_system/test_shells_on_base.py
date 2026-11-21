@@ -26,6 +26,14 @@ def raw_only(rows: dict[str, dict[str, int]]) -> dict[str, dict[str, int]]:
     return {p: kinds for p, kinds in kept.items() if kinds}
 
 
+ZEROED_VALUE_KINDS = tuple(k for k in rv.KINDS if k not in (*rv.SHAPE_AND_MOTION_KINDS, *rv.LITERAL_KINDS))
+
+
+def zeroed_only(rows: dict[str, dict[str, int]]) -> dict[str, dict[str, int]]:
+    kept = {p: {k: n for k, n in kinds.items() if k in ZEROED_VALUE_KINDS} for p, kinds in rows.items()}
+    return {p: kinds for p, kinds in kept.items() if kinds}
+
+
 def _values_baseline() -> dict[str, dict[str, int]]:
     return json.loads(rv.BASELINE.read_text(encoding="utf-8"))["files"]
 
@@ -36,13 +44,13 @@ def test_no_raw_controls_baseline_row_in_the_shell_folders() -> None:
 
 
 def test_no_raw_values_baseline_row_in_the_shell_folders() -> None:
-    rows = shell_rows(_values_baseline())
+    rows = zeroed_only(shell_rows(_values_baseline()))
     assert not rows, f"the shells read --oc-* tokens only; raw-values rows must stay absent, found: {rows}"
 
 
 def test_the_live_scan_finds_nothing_in_the_shell_folders() -> None:
     assert not raw_only(shell_rows(rc.scan())), "a raw button or field is back in a shell folder"
-    assert not shell_rows(rv.scan()), "a raw spacing, font or color value is back in a shell folder"
+    assert not zeroed_only(shell_rows(rv.scan())), "a raw spacing, font or color value is back in a shell folder"
 
 
 def test_negative_control_a_shell_row_in_a_baseline_is_found() -> None:
@@ -56,7 +64,12 @@ def test_negative_control_a_planted_raw_button_in_a_shell_folder_is_found(tmp_pa
     (src / "Planted.svelte").write_text("<button>x</button>\n<style>.a { gap: 5px; }</style>\n")
     root = tmp_path / "web" / "src"
     assert shell_rows(rc.scan(root, tmp_path)) == {"web/src/lib/manager-frame/Planted.svelte": {"buttons": 1}}
-    assert shell_rows(rv.scan(root, tmp_path)) == {"web/src/lib/manager-frame/Planted.svelte": {"spacing": 1}}
+    assert zeroed_only(shell_rows(rv.scan(root, tmp_path))) == {"web/src/lib/manager-frame/Planted.svelte": {"spacing": 1}}
+
+
+def test_negative_control_a_later_kind_is_not_zeroed_but_a_cleared_one_beside_it_is() -> None:
+    assert zeroed_only({"web/src/opscenter/ui/X.svelte": {"radius": 2}}) == {}
+    assert zeroed_only({"web/src/opscenter/ui/X.svelte": {"radius": 2, "color": 1}}) == {"web/src/opscenter/ui/X.svelte": {"color": 1}}
 
 
 def test_negative_control_exempt_is_ignored_but_a_raw_kind_beside_it_is_not() -> None:

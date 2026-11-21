@@ -5,10 +5,10 @@ import os
 import tempfile
 from pathlib import Path
 
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import build_plan
-from src.cplugs.crate.writer import run_export
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import build_plan
+from src.plugins.crate.writer import run_export
+from src.plugins.sdk import crate_format as cf
 from tests.python.cplugs.crate.crate_world import env_for, make_world, session_request
 
 

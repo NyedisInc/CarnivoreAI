@@ -20,6 +20,8 @@ WIDGET_DRAWER_VIEWS = ("type", "name")
 SIDEBAR_LAYOUTS = ("classic", "rail")
 TOAST_MODES = ("compact", "detailed")
 RAIL_MAGNIFY_PERCENTS = (100, 125, 150, 175, 200)
+MENU_PAGE_WIDTH_MIN_PX = 200
+MENU_PAGE_WIDTH_MAX_PX = 8000
 TERMINAL_SCREEN_READER_MODES = ("auto", "on", "off")
 DEEPSEARCH_INDEX_SCOPES = ("human", "human+subsessions", "all")
 """``compact`` is Alex (example-owner)'s toast behaviour and the default; ``detailed``
@@ -52,20 +54,19 @@ carry them (an install from before the retirement, a peer or a stale browser
 tab that still PATCHes one): ``read_block`` never exposes them, so the next
 committed write drops them from disk, and ``validate_changes`` ignores them
 instead of keeping them as unrecognised fields. ``header_quicklinks`` came
-from #1065 (Joe (ccsliinc), 2026-09-28) and was retired by #1285 (Alex
-(Adoom666), 2026-10-03: "delete the dead header_quicklinks field too"). ``automations_show_huddle``
+from #1065 (Joe (ccsliinc), 2026-09-28) and was retired by #1285 (the owner, 2026-10-03: "delete the dead header_quicklinks field too"). ``automations_show_huddle``
 was the Automations page's opt-in task manager tab switch (#1490, 2026-10-09), retired the same day: the tab now follows the
 task manager plugin's own enablement (``docs/automations.md``). ``crosstalk_cards_sent`` and ``crosstalk_cards_received``
 were the two switches of the terminal crosstalk card (Joe (ccsliinc), 2026-10-11), retired the same day when the card and its
-scanner were deleted (Alex (Adoom666), 2026-10-11, ``docs/DECISIONS.md``); an install that stored them keeps working and the
+scanner were deleted (the owner, 2026-10-11, ``docs/DECISIONS.md``); an install that stored them keeps working and the
 next committed write drops them. ``wake_on_click`` (#730, Joe (ccsliinc), 2026-09-26) was the opt-in to wake an asleep row
-straight from a click; Alex (Adoom666), 2026-10-12, "it doesn't do anything", removed it: a click on an asleep row now always
+straight from a click; the owner, 2026-10-12, "it doesn't do anything", removed it: a click on an asleep row now always
 arms the row's wake button (#1505), which is what an install that never stored it already saw. ``sidebar_show_colors`` and
 ``sidebar_show_colors_mobile`` (the drawer's "show colors" tick, Joe (ccsliinc), 2026-10-11) went with Alex (example-owner),
 2026-10-12, "remove the "show colors" menu item": a set color is always drawn now, so an install that stored ``false`` sees
 its group, layout and company colors again. ``sidebar_arrangement`` (superseded 2026-09-26 by ``drawer_arrangement``, #645),
 ``config_editor_pinned`` (the file drawer's pin, removed 2026-09-23), ``warez_modem_sound`` (the Elite Access sound option,
-removed Alex (Adoom666), 2026-10-18), ``install_report_notice_seen`` (the install notice modal, removed the same day),
+removed the owner, 2026-10-18), ``install_report_notice_seen`` (the install notice modal, removed the same day),
 ``sidebar_show_open`` and ``sidebar_show_sleeping`` with their ``_mobile`` twins (the #1766 section toggles, replaced by
 ``sidebar_list_open`` and ``sidebar_list_sleeping``) and ``bell_kinds`` (the top bell is unfiltered; the choice lives in
 ``waiting_kinds``) were typed fields kept so stored files loaded; nothing reads them, so they retire here with the rest."""
@@ -165,7 +166,7 @@ which the event socket bounds at 1 MiB, so it stays well under that."""
 MAX_HOME_LAYOUT_BYTES = 262144
 """The whole ``home_layout`` field serialised: up to ``MAX_HOME_BOARDS`` grids
 (each capped at ``MAX_LAYOUT_BYTES``, so 192 KiB at most) plus names and ids.
-Raised from 32 KiB when Home gained boards (Alex (Adoom666), 2026-09-29); it
+Raised from 32 KiB when Home gained boards (the owner, 2026-09-29); it
 matches ``MAX_TERMINAL_LAYOUTS_BYTES`` and stays well under the 1 MiB the
 event socket bounds a ``preferences.changed`` frame at."""
 MAX_HOME_BOARDS = 12
@@ -182,9 +183,9 @@ PAGE_TAB_ID_RE = re.compile(r"^page:[0-9a-f]{16}$")
 """A page tab id (``web/src/opscenter/engine/page-tabs.ts``, issue #1787): ``page:`` and the 16 lowercase
 hex characters of the browser, page or file it holds. A TAB may be one; a group SLOT never is (a page split
 out lives in a ``terminal:pg-<id>`` component)."""
-WIDGET_TAB_ID_RE = re.compile(r"^widget:[a-z0-9][a-z0-9._-]{0,63}$")
+WIDGET_TAB_ID_RE = re.compile(r"^widget:(?:[a-z0-9][a-z0-9._-]{0,63}|(?!core\.)[a-z0-9][a-z0-9._-]{0,63}@[a-z0-9][a-z0-9-]{0,31})$")
 """A widget tab id (``web/src/opscenter/engine/widget-tabs.ts``, issue #2008 slice 8b): ``widget:`` and a
-widget manifest id such as ``core.tasks``. A TAB may be one; a group SLOT never is. Approved by Joe (ccsliinc),
+widget manifest id such as ``core.tasks``, optionally ``@<panel tail>`` on a NON-core id only (``widget:hello.game@panel-ab12cd34``, a plugin view bound to one install, issue #2983; a core widget never carries a tail). A TAB may be one; a group SLOT never is. Approved by Joe (ccsliinc),
 Task Manager item 1049, message 5669, 2026-10-19 (``docs/DECISIONS.md``)."""
 MAX_UNKNOWN_FIELDS = 64
 MAX_KEY_LENGTH = 128

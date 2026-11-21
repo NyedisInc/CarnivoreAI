@@ -175,7 +175,11 @@ class LedgerTotalWindow(BaseModel):
       not a sum: a sum of percentages is not a percentage.
 
     Fields:
+        provider: which provider's accounts this window averages. A mean never
+            crosses providers: Claude's and Codex's windows are separate entries.
         kind: the window kind being summarised.
+        window_seconds: the window length when every reporting account agrees
+            on it, else ``None`` (callers then fall back to the kind).
         label: the human window, taken from the reporting accounts.
         used_pct: the arithmetic mean of ``used_pct`` over the accounts
             that reported this kind. Accounts that did not report it are
@@ -187,7 +191,9 @@ class LedgerTotalWindow(BaseModel):
             of the mean, stated so a reader can see it.
     """
 
+    provider: Optional[ProviderKind] = None
     kind: str
+    window_seconds: Optional[int] = None
     label: str
     used_pct: float
     resets_at: Optional[datetime] = None

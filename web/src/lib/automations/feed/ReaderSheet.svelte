@@ -1,6 +1,7 @@
 
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import Sheet from '../../sheet/Sheet.svelte';
 
   type Props = { open: boolean; swapKey: string; onWalk: (dir: 1 | -1) => void; children: Snippet };
   let { open, swapKey, onWalk, children }: Props = $props();
@@ -32,11 +33,10 @@
 </script>
 
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="ap-dc" id="ap-dc" data-sheet={open ? 'open' : 'closed'} data-reader-sheet ontouchstart={start} ontouchend={end}>
+<Sheet place="column" tag="div" class="ap-dc" {open} id="ap-dc" data-reader-sheet="" ontouchstart={start} ontouchend={end}>
   <div class="ap-dc-scroll" bind:this={scroller}>
     {#key swapKey}
       <div class="ap-dc-wrap" data-swap>{@render children()}</div>
     {/key}
   </div>
-</div>
+</Sheet>

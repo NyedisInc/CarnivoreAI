@@ -8,7 +8,7 @@ const layer = readFileSync(join(process.cwd(), 'src/lib/session-rail/rail-layer.
 
 describe('the side bar paints over the bottom bar', () => {
   test('the two bars share one layer, so mount order decides who is on top', () => {
-    expect(layer.match(/z-index: 45;/g)).toHaveLength(1);
+    expect(layer.match(/z-index: var\(--oc-z-shell-menu\);/g)).toHaveLength(1);
     expect(layer).not.toMatch(/\.rail--bottom \.rail__layer[^{]*\{[^}]*z-index/);
   });
   test('the side bar mounts after the bottom bar', () => {

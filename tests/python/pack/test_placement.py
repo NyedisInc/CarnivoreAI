@@ -197,25 +197,30 @@ def _pri(pid: int) -> int:
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="the background policy is Darwin's")
 def test_throttle_puts_only_an_agent_tree_in_the_background_policy_and_clears_it():
-    agent = subprocess.Popen(["sleep", "120"], start_new_session=True)
+    parent = subprocess.Popen(["sh", "-c", "sleep 120; :"], start_new_session=True)
     other = subprocess.Popen(["sleep", "120"], start_new_session=True)
     try:
-        time.sleep(0.3)
-        before, other_before = _pri(agent.pid), _pri(other.pid)
+        time.sleep(0.5)
+        kids = subprocess.run(["pgrep", "-P", str(parent.pid)], capture_output=True, text=True).stdout.split()
+        assert kids
+        child = int(kids[0])
+        before, other_before, parent_before = _pri(child), _pri(other.pid), _pri(parent.pid)
         now = [0.0]
         figures = [(9.0, 7.0, 10)]
-        t = throttle.Throttle(measure=lambda: figures[0], roots=lambda: [agent.pid, os.getpid()], clock=lambda: now[0])
+        t = throttle.Throttle(measure=lambda: figures[0], roots=lambda: [parent.pid, os.getpid()], clock=lambda: now[0],
+                              argv_of=lambda pids: {parent.pid: ("claude",)})
         assert t.tick() == 1
-        assert _pri(agent.pid) <= 4 < before
+        assert _pri(child) <= 4 < before
+        assert _pri(parent.pid) == parent_before
         assert _pri(other.pid) == other_before
         figures[0] = (1.0, 7.0, 10)
         now[0] = 30.0
-        assert t.tick() == 1 and _pri(agent.pid) <= 4
+        assert t.tick() == 1 and _pri(child) <= 4
         now[0] = 100.0
         assert t.tick() == 0
-        assert _pri(agent.pid) > 4
+        assert _pri(child) > 4
     finally:
-        for proc in (agent, other):
+        for proc in (parent, other):
             proc.kill()
             proc.wait()
 
@@ -229,17 +234,17 @@ def test_throttle_never_calls_setpriority_on_the_server_or_when_unmeasured():
     assert quiet.tick() == 0 and calls == []
 
 
-def test_agent_pane_pids_includes_a_remote_body_hosted_here(monkeypatch):
+def test_agent_panes_includes_a_remote_body_hosted_here(monkeypatch):
     import sqlite3
     monkeypatch.setattr(throttle, "tmux_argv_prefix", lambda socket: ["/picked/tmux", "-L", socket])
     db = sqlite3.connect(":memory:")
-    db.executescript("""CREATE TABLE sessions (id INTEGER PRIMARY KEY, tmux_socket TEXT, tmux_name TEXT);
+    db.executescript("""CREATE TABLE sessions (id INTEGER PRIMARY KEY, tmux_socket TEXT, tmux_name TEXT, origin TEXT NOT NULL DEFAULT 'created');
         CREATE TABLE swarm_agents (id INTEGER PRIMARY KEY, session_row_id INTEGER, torn_down_at TEXT);
         CREATE TABLE swarm_wakes (id INTEGER PRIMARY KEY, agent_id INTEGER, ended_at TEXT);
         CREATE TABLE swarm_remote_bodies (session_row_id INTEGER PRIMARY KEY, torn_down_at TEXT);
-        INSERT INTO sessions VALUES (1, 'cloude', 'remote_body'), (2, 'cloude', 'gone_body');
+        INSERT INTO sessions (id, tmux_socket, tmux_name) VALUES (1, 'cloude', 'remote_body'), (2, 'cloude', 'gone_body');
         INSERT INTO swarm_remote_bodies VALUES (1, NULL), (2, '2026-10-11T00:00:00Z');""")
     out = "remote_body\t4242\t0\ngone_body\t4343\t0\n"
     seen = []
-    assert throttle.agent_pane_pids(lambda: db, run=lambda argv: seen.append(argv) or out) == [4242]
+    assert throttle.agent_panes(lambda: db, run=lambda argv: seen.append(argv) or out) == ([4242], [])
     assert seen[0][:3] == ["/picked/tmux", "-L", "cloude"], "the Pack read uses the version-matching picker"

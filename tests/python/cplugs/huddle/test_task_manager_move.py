@@ -6,7 +6,7 @@ from pathlib import Path
 
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
-from src.cplugs.huddle import service
+from src.plugins.huddle import service
 from tests.python.cplugs.huddle.test_task_manager_focus import add, call, client, setup  # noqa: F401
 
 BASE = "/api/v1/cplugs/huddle"

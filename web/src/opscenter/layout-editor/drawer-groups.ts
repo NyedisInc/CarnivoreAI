@@ -5,6 +5,7 @@ import { drawingIds, isViewCell } from '../widgets/views';
 import { WIDGET_CATEGORIES, WIDGET_TYPES, type WidgetCategory, type WidgetManifest, type WidgetType } from '../widgets/types';
 import { kindOf } from '../engine/meta';
 import { panels } from '../engine/plugin-kinds';
+import { widgetIdOfTab, widgetTargetOfTab } from '../engine/widget-tabs';
 import type { CellId, SlotId } from '../engine/types';
 import { categoryKey, passesFilter } from './drawer-model';
 
@@ -33,6 +34,7 @@ export interface DrawerGroup {
 
 export interface GroupInputs {
   onSurface: readonly SlotId[];
+  tabs?: readonly string[];
   disabled: (widgetId: string) => boolean;
   query: string;
   kind?: WidgetType | null;
@@ -59,8 +61,11 @@ function panelSlot(kind: string): SlotId | null {
   return tail === undefined ? null : (`${kind}:${tail}` as SlotId);
 }
 
-function copiesOn(manifest: WidgetManifest, onSurface: readonly SlotId[]): number {
-  if (panels().isPanel(manifest.id)) return onSurface.filter((slot) => kindOf(slot) === manifest.id).length;
+function copiesOn(manifest: WidgetManifest, onSurface: readonly SlotId[], tabs: readonly string[] = []): number {
+  if (panels().isPanel(manifest.id)) {
+    const asTab = tabs.filter((tab) => widgetIdOfTab(tab) === manifest.id && widgetTargetOfTab(tab) !== null).length;
+    return onSurface.filter((slot) => kindOf(slot) === manifest.id).length + asTab;
+  }
   const keys = drawingIds(manifest).map((id) => id.slice('core.'.length));
   return onSurface.filter((slot) => keys.includes(kindOf(slot) ?? slot)).length;
 }
@@ -78,7 +83,7 @@ export function groupRows(input: GroupInputs): GroupRow[] {
       ? panelSlot(manifest.id)
       : family || !manifest.id.startsWith('core.') ? null : (key as CellId);
     const title = input.t(manifest.titleKey);
-    const placed = copiesOn(manifest, input.onSurface);
+    const placed = copiesOn(manifest, input.onSurface, input.tabs);
     const refusal: RowRefusal | null = input.disabled(manifest.id) ? 'disabled' : null;
     const words = refusal ? refusalWords(title, input.t) : { reason: '', sentence: '' };
     rows.push({

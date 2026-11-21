@@ -22,7 +22,7 @@ PLAN_GROUPS = {
     "needs_you": ["session.permission", "session.question", "session.plan_approval", "session.attention",
                   "approval.agent_action", "approval.folder_trust"],
     "sessions": ["session.finished", "session.died", "session.auto_slept", "agent.update_ready", "account.switched",
-                 "app.restore_offer", "session.terminal_notice"],
+                 "app.restore_offer", "session.terminal_notice", "session.agent_stalled"],
     "messages": ["agent.message", "agent.review", "plugin.notice", "session.skill_tripwire"],
     "swarm": ["swarm.alert", "swarm.flash", "swarm.question_climbed"],
     "health": ["alert.self_check", "alert.save_pipeline", "alert.account", "alert.phone_link", "alert.plugin", "pack.skills",
@@ -35,7 +35,7 @@ PLAN_GROUPS = {
 
 def test_registry_is_the_plan_table() -> None:
     ids = [t.id for t in T.TYPES]
-    assert len(ids) == 40 and len(set(ids)) == 40
+    assert len(ids) == 41 and len(set(ids)) == 41
     assert list(T.FAMILIES) == list(PLAN_GROUPS)
     assert {g: [t.id for t in T.TYPES if t.family == g] for g in T.FAMILIES} == PLAN_GROUPS
     assert T.ALIASES == {"session.posted": "agent.message", "session.limit_rotation": "account.switched"}
@@ -70,6 +70,7 @@ def test_every_alert_key_maps_to_exactly_one_type() -> None:
                 "notifications.migration_skipped": "alert.notifications"}
     for check in self_k.ALL_CHECKS:
         expected[self_k.ALERT_KEY_PREFIX + check] = "alert.self_check"
+    expected["self_check.codex_helpers.0.170.0"] = "alert.self_check"
     expected.update({"automation.report.run_1": "automation_report", "automation.failed.run_1": "automation_failed"})
     assert len(expected) >= 12 and "self_check.tmux" in expected
     for key, type_id in expected.items():
@@ -98,14 +99,16 @@ def test_alert_producers_are_the_known_set() -> None:
         "src/core/automations/notify_policy.py",
         "src/core/automations/targets/recipe.py",
         "src/core/backup_health/runner.py",
+        "src/core/codex_helpers/alerts.py",
+        "src/core/mass_death/notice.py",
         "src/core/messaging/runtime.py",
         "src/core/notifications/destinations/migration.py",
         "src/core/notifications/engine.py",
         "src/core/pack/skills/alerts.py",
         "src/core/phone_link/custom_domain/repair.py",
         "src/core/self_check/monitor.py",
-        "src/cplugs/host/capabilities.py",
-        "src/cplugs/host/catalog_move.py",
+        "src/plugins/host/capabilities.py",
+        "src/plugins/host/catalog_move.py",
     }, found
 
 
@@ -118,7 +121,8 @@ _NON_NOTIFICATION_FRAMES = {
     "preferences.changed", "skills.changed", "session.note.changed", "provider_ledger.updated",
     "restore_offer.progress", "auto_sleep.changed", "app_alert.updated", "app_alert.resolved",
     "account.session", "perf.sample", "item_settings.changed",
-    "ai.config.changed", "hold.refused", "terminal.ready", "terminal.resync", "crosstalk.card", "cplug.data",
+    "ai.config.changed", "hold.refused", "terminal.ready", "terminal.resync", "pause", "resume", "crosstalk.card", "cplug.data",
+    "timeline.delta", "pack_jobs.delta",
 }
 
 

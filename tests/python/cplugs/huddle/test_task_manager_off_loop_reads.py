@@ -6,8 +6,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.cplugs.huddle import sending, service
-from src.cplugs.huddle.roles import unstick
+from src.plugins.huddle import sending, service
+from src.plugins.huddle.roles import unstick
 
 
 def test_send_session_reads_project_names_off_the_loop(monkeypatch: pytest.MonkeyPatch) -> None:

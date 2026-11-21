@@ -6,7 +6,7 @@ One component draws all of them, <code>Character</code>; the Swarm panel and the
 Record and the full state table: <code>docs/swarm.md</code>, section 13.</p>
 
 <div class="sg-specimen">
-    <div class="sg-specimen__label"><span>live</span><code>web/src/cplugs/huddle/swarm/characters/Character.svelte</code><span>every state at 28, 40 and 64 px, then the reduced-motion pose; the swarm follows the theme switcher</span></div>
+    <div class="sg-specimen__label"><span>live</span><code>web/src/plugins/huddle/swarm/characters/Character.svelte</code><span>every state at 28, 40 and 64 px, then the reduced-motion pose; the swarm follows the theme switcher</span></div>
     <div class="sg-specimen__body"><div id="sg-live-swarm-characters"></div></div>
 </div>
 
@@ -20,7 +20,7 @@ Record and the full state table: <code>docs/swarm.md</code>, section 13.</p>
 random face on it for 1.2 to 2.5 s: only the two eyes change (shape, size, tilt, offset, one quick motion), then they return to normal. Never twice in a row, never on dead, asleep,
 working, a question, the startup gate or an alert, never in reduced motion, and a hidden tab pauses it. Pick any name to play it now; "cycle all" runs the fifty at 1.5 s each; the sheet below holds every face still at 28 and 64 px.</p>
 <div class="sg-specimen">
-    <div class="sg-specimen__label"><span>live</span><code>web/src/cplugs/huddle/swarm/characters/expressions.ts</code><span>the picker plays through the shared clock; the sheet follows the theme switcher (gameboy draws the pixel versions)</span></div>
+    <div class="sg-specimen__label"><span>live</span><code>web/src/plugins/huddle/swarm/characters/expressions.ts</code><span>the picker plays through the shared clock; the sheet follows the theme switcher (gameboy draws the pixel versions)</span></div>
     <div class="sg-specimen__body"><div id="sg-live-swarm-expressions"></div></div>
 </div>
 
@@ -59,7 +59,7 @@ A PRIORITY badge, when there is one, lives on the Swarm drawer tab and never on 
         (<code>.pk-rip</code>) on a ground line (<code>.pk-gl</code>).</dd>
     <dt>one attribute</dt>
     <dd>One <code>data-state</code> per square picks every pose, keyframe and shape in
-        <code>web/src/cplugs/huddle/swarm/characters/characters.css</code>, the <code>status-led.css</code> precedent. Exactly one
+        <code>web/src/plugins/huddle/swarm/characters/characters.css</code>, the <code>status-led.css</code> precedent. Exactly one
         animation per state, held by <code>animation-map.test.ts</code>.</dd>
     <dt>motion</dt>
     <dd>Only <code>transform</code> and <code>opacity</code> animate (plus the individual <code>translate</code>, <code>scale</code> and
@@ -74,7 +74,7 @@ A PRIORITY badge, when there is one, lives on the Swarm drawer tab and never on 
     <dd>Body colors come from the agent's color family (below); the eyes
         are <code>--oc-on-accent</code>. Carnivore's nodes render under every theme through tokens. A theme may name an
         alternate swarm in <code>theme.json</code> (<code>"characters": {"swarm": "pixel"}</code>); gameboy wears the pixel pack,
-        read by <code>readCharacterPack</code> in <code>web/src/cplugs/huddle/swarm/characters/pack-reader.ts</code>, which falls
+        read by <code>readCharacterPack</code> in <code>web/src/plugins/huddle/swarm/characters/pack-reader.ts</code>, which falls
         back to the default swarm for a missing, malformed or unknown block.</dd>
     <dt>color families</dt>
     <dd>Every project, every company and SysOp wears its own hue, and only a project's agents share its tone (Alex,
@@ -89,7 +89,7 @@ A PRIORITY badge, when there is one, lives on the Swarm drawer tab and never on 
         lightness 0.58 or more on any ground); never emit a bare oklch for a square. A hand-set
         color wins as the series token it names (<code>--oc-series-1</code> to <code>--oc-series-8</code>). Each color is
         <code>oklch(from var(--oc-ground-panel) ...)</code> on a bright base read off the ground, so it reads on every theme. ONE helper:
-        <code>createSwarmLive().colors</code> or <code>createAgentColors()</code> (<code>web/src/cplugs/huddle/swarm/agent-colors.svelte.ts</code>),
+        <code>createSwarmLive().colors</code> or <code>createAgentColors()</code> (<code>web/src/plugins/huddle/swarm/agent-colors.svelte.ts</code>),
         passed to a character as <code>color={colors.of(agent)}</code>; the rule is <code>characters/family.ts</code>
         (<code>docs/swarm.md</code> section 13.8).</dd>
     <dt>access</dt>
@@ -99,7 +99,7 @@ A PRIORITY badge, when there is one, lives on the Swarm drawer tab and never on 
 </dl>
 
 <h3 class="sg-h3" id="swarm-panel">the swarm panel</h3>
-<p>The Task Manager drawer tab opens on the Swarm panel (<code>web/src/cplugs/huddle/swarm/SwarmPanel.svelte</code>): SysOp as one big square,
+<p>The Task Manager drawer tab opens on the Swarm panel (<code>web/src/plugins/huddle/swarm/SwarmPanel.svelte</code>): SysOp as one big square,
 then COMPANIES, PROJECTS and AGENTS, each under a hairline divider with a small tracked label and a count of what is shown. It is
 the LIVE FLOOR (S6f): every session the Agents tab lists (remote ones too), every company and project they sit under, and every
 Swarm agent. Below, the panel over a fixture floor (a remote session, a dead pane, an asleep record, a project with no agent) at its

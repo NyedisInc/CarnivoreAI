@@ -17,7 +17,7 @@ import { openWarezScreen } from '../../lib/catalog/warez-host';
 import { openAutomationsScreen } from '../../lib/automations/screen-host';
 import { openWarroomScreen } from '../../lib/warroom/screen-host';
 import { warroomAvailable } from '../../lib/warroom/phone.svelte';
-import { cplugMenuLinks } from '../../cplugs/host/readers';
+import { cplugMenuLinks } from '../../plugins/host/readers';
 
 export interface RailItem {
   id: string;

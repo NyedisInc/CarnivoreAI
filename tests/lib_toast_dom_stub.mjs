@@ -8,6 +8,7 @@ import CATALOG from '../client/js/i18n/catalog.en.js';
 import { installTrOnly } from './helpers/catalog-tr.mjs';
 
 const ROOT = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
+const EXTEND_SRC = fs.readFileSync(path.join(ROOT, 'client/js/extend-prototype.js'), 'utf8');
 const RENDER_BATCH_SRC = fs.readFileSync(
     path.join(ROOT, 'client/js/toast-render-batch.js'), 'utf8');
 const VERSION_ARBITRATION_SRC = fs.readFileSync(
@@ -200,6 +201,7 @@ export function makeEnv(narrow = false) {
     vm.runInContext(GROUP_SRC, sandbox, { filename: 'toast-session-group.js' });
     vm.runInContext(RENDER_BATCH_SRC, sandbox, { filename: 'toast-render-batch.js' });
     vm.runInContext(VERSION_ARBITRATION_SRC, sandbox, { filename: 'toast-version-arbitration.js' });
+    vm.runInContext(EXTEND_SRC, sandbox, { filename: 'extend-prototype.js' });
     vm.runInContext(SRC, sandbox, { filename: 'toast.js' });
     vm.runInContext(GROUPING_SRC, sandbox, { filename: 'toast-grouping.js' });
     vm.runInContext(RENDER_SRC, sandbox, { filename: 'toast-view.js' });
@@ -212,7 +214,7 @@ export function makeEnv(narrow = false) {
             + 'every one-card-per-session assertion would measure nothing');
     }
     manager = window.ToastManager;
-    return { sandbox, container, mql, acked, mgr: window.ToastManager };
+    return { sandbox, container, mql, acked, mgr: window.ToastManager, run: (src) => vm.runInContext(src, sandbox) };
 }
 
 let seq = 0;

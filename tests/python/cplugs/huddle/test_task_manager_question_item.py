@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.cplugs.huddle import service
+from src.plugins.huddle import service
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 
 

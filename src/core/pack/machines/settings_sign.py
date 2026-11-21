@@ -28,10 +28,12 @@ REFUSE_MALFORMED = "malformed"
 REFUSE_UNPINNED = "unpinned"
 REFUSE_BAD_SIGNATURE = "bad_signature"
 REFUSE_NOT_ALPHA = "not_alpha"
+TAKEOVER = "takeover"
 REASON_NOT_NEWER = "not newer"
 REASON_EQUIVOCATION = "equal version, different content"
-ACCEPTED = frozenset({ACCEPT, ACCEPT_TOFU, LEGACY, LEGACY_SIGNED})
-SIGNED_MODE_ON = frozenset({ACCEPT, ACCEPT_TOFU})
+ACCEPTED = frozenset({ACCEPT, ACCEPT_TOFU, LEGACY, LEGACY_SIGNED, TAKEOVER})
+SIGNED_MODE_ON = frozenset({ACCEPT, ACCEPT_TOFU, TAKEOVER})
+CLAIM, VOUCH, HEAL, HOME = "claim", "vouch", "heal", "home"
 
 
 @dataclass(frozen=True)
@@ -64,15 +66,19 @@ def sign(doc: settings_doc.PackSettings, key: DeviceKey, signer: str) -> Signatu
     return Signature(signer, key.sign(signed_bytes(doc)))
 
 
-def verify(doc: settings_doc.PackSettings, signature: Signature, public_key_b64: str) -> bool:
+def verify_bytes(data: bytes, signature: Signature, public_key_b64: str) -> bool:
     raw_sig, raw_pub = unb64url(signature.sig, 64), unb64url(public_key_b64, 32)
     if raw_sig is None or raw_pub is None:
         return False
     try:
-        Ed25519PublicKey.from_public_bytes(raw_pub).verify(raw_sig, signed_bytes(doc))
+        Ed25519PublicKey.from_public_bytes(raw_pub).verify(raw_sig, data)
     except (InvalidSignature, ValueError):
         return False
     return True
+
+
+def verify(doc: settings_doc.PackSettings, signature: Signature, public_key_b64: str) -> bool:
+    return verify_bytes(signed_bytes(doc), signature, public_key_b64)
 
 
 @dataclass(frozen=True)
@@ -90,14 +96,32 @@ class Verdict:
         return not self.accepted and self.outcome != IGNORE
 
 
+def _judge_takeover(kind: str, *, held: settings_doc.PackSettings, remote: settings_doc.PackSettings, signature: Signature,
+                    public_key_for: Callable[[str], Optional[str]]) -> Verdict:
+    if kind not in (CLAIM, VOUCH, HEAL, HOME):
+        return Verdict(REFUSE_MALFORMED, "unknown takeover case")
+    if kind == CLAIM and remote.rev[0] <= held.rev[0]:
+        return Verdict(IGNORE, REASON_NOT_NEWER)
+    if kind in (VOUCH, HEAL) and remote.rev[0] < held.rev[0]:
+        return Verdict(IGNORE, REASON_NOT_NEWER)
+    public_key = public_key_for(signature.signer)
+    if public_key is None:
+        return Verdict(REFUSE_UNPINNED, "signer is not pinned here")
+    if not verify(remote, signature, public_key):
+        return Verdict(REFUSE_BAD_SIGNATURE, "signature does not verify")
+    return Verdict(TAKEOVER, kind)
+
+
 def judge(*, held: settings_doc.PackSettings, remote: settings_doc.PackSettings, signature: Optional[Signature], self_id: str,
-          signed_mode: bool, anchor: str, public_key_for: Callable[[str], Optional[str]]) -> Verdict:
+          signed_mode: bool, anchor: str, public_key_for: Callable[[str], Optional[str]], takeover: Optional[str] = None) -> Verdict:
     if signature is None:
         if not settings_doc.newer(remote, held):
             return Verdict(IGNORE, REASON_NOT_NEWER)
         return Verdict(REFUSE_UNSIGNED, "unsigned after signing began") if signed_mode else Verdict(LEGACY, "unsigned, before signing began")
     if signature.signer != remote.rev[1]:
         return Verdict(REFUSE_MALFORMED, "signer is not the editor in rev")
+    if takeover is not None:
+        return _judge_takeover(takeover, held=held, remote=remote, signature=signature, public_key_for=public_key_for)
     first = not signed_mode and signature.signer == anchor
     if first and settings_doc.digest(remote) == settings_doc.digest(held):
         return Verdict(IGNORE, REASON_NOT_NEWER)
@@ -125,6 +149,7 @@ class Signing:
         self.install_id = install_id
         self._load_key, self._pinned_key, self._clock = load_key, pinned_key, clock
         self._cached: Optional[tuple[float, DeviceKey]] = None
+        self.roster_key: Callable[[str], Optional[str]] = lambda install_id: None
 
     def key(self) -> DeviceKey:
         if self._cached is None or self._clock() - self._cached[0] >= KEY_TTL_SECONDS:
@@ -133,7 +158,7 @@ class Signing:
 
     def public_key_for(self, install_id: str) -> Optional[str]:
         if install_id != self.install_id:
-            return self._pinned_key(install_id)
+            return self._pinned_key(install_id) or self.roster_key(install_id)
         try:
             return b64url(self.key().raw_pub)
         except DeviceKeyUnavailable as exc:

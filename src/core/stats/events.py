@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import os
 import re
 import sqlite3
 import time
@@ -13,6 +12,7 @@ import structlog
 from src.core.session_token_usage.model_table import readable_model_name
 
 from .store import StatsStore
+from src.core.product_identity import test_mode_enabled
 
 logger = structlog.get_logger()
 
@@ -27,7 +27,7 @@ _bound: StatsStore | None = None
 
 def bind(store: StatsStore | None) -> None:
     global _bound
-    _bound = None if os.environ.get("CLOUDE_TEST_MODE") else store
+    _bound = None if test_mode_enabled() else store
 
 
 def _clean(data: dict[str, Any] | None) -> str | None:

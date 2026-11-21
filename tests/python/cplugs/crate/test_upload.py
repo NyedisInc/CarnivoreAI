@@ -8,7 +8,7 @@ from typing import Dict, Tuple
 
 import pytest
 
-from src.cplugs.crate import folders, upload
+from src.plugins.crate import folders, upload
 from tests.python.cplugs.crate.api_world import BASE, ApiWorld, export, stop_runner
 from tests.python.cplugs.crate.crate_world import UUID_A
 

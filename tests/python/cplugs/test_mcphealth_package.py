@@ -19,14 +19,14 @@ from src.core.mcp_health import host_methods, process_match
 from src.core.mcp_health.client_log import LinkState
 from src.core.mcp_health.monitor import Measure, Target
 from src.core.mcp_health.servers import ServerSpec
-from src.cplugs.host import install_gates, ui_doc
-from src.cplugs.host.mcp_health_port import health_from_document
-from src.cplugs.host.sidecar_manifest import load_sidecar_manifest
-from src.cplugs.runtime import sandbox
-from src.cplugs.runtime.dispatch import HostDispatcher, HostServices, PluginContext
-from src.cplugs.runtime.owner_tokens import OwnerTokens
-from src.cplugs.runtime.process import PluginSpec, ProcessEnded
-from src.cplugs.runtime.supervisor import Supervisor
+from src.plugins.host import install_gates, ui_doc
+from src.plugins.host.mcp_health_port import health_from_document
+from src.plugins.host.sidecar_manifest import load_sidecar_manifest
+from src.plugins.runtime import sandbox
+from src.plugins.runtime.dispatch import HostDispatcher, HostServices, PluginContext
+from src.plugins.runtime.owner_tokens import OwnerTokens
+from src.plugins.runtime.process import PluginSpec, ProcessEnded
+from src.plugins.runtime.supervisor import Supervisor
 
 ROOT = Path(__file__).resolve().parents[3]
 PACKAGE = ROOT / "packages" / "cplugs" / "mcphealth"
@@ -183,7 +183,7 @@ def test_nothing_under_src_imports_the_package():
     src = ROOT / "src"
     files = [p for p in src.rglob("*.py")]
     assert len(files) > 500
-    assert sum("from src.cplugs" in p.read_text(errors="replace") for p in files) > 50
+    assert sum("from src.plugins" in p.read_text(errors="replace") for p in files) > 50
     needles = ("packages.cplugs", "packages/cplugs", "mcphealth_main", "mh_combine", "mh_vocab", "mh_notices", "mh_warn_filter")
     hits = [str(p) for p in files if any(n in p.read_text(errors="replace") for n in needles)]
     assert hits == []

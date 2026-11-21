@@ -44,6 +44,8 @@
       <dt>{t('roster.link.state')}</dt><dd>{peerStateLabel(peer.state, t)}</dd>
       <dt>{t('roster.link.key')}</dt><dd>{c.entry?.fid_short ?? peer.fid.slice(0, 8)}</dd>
       <dt>{t('roster.link.protocol')}</dt><dd>{peer.protocol ?? '-'}</dd>
+      {#if c.machine?.link_path && c.machine.link_path !== 'none'}<dt>{t('roster.link.path')}</dt>
+        <dd>{c.viaRelay ? t('roster.reconnect.via_relay') : t('roster.link.path_direct')}{#if c.machine.relay_id_known === false} <span class="pp-dim">{t('roster.reconnect.relay_unknown')}</span>{/if}</dd>{/if}
       <dt>{t('roster.link.dialled_by')}</dt><dd>{peer.initiator ? t('roster.link.dialled_this') : t('roster.link.dialled_them')}</dd>
       {#if c.host}<dt>{t('roster.link.ssh_target')}</dt><dd>{loginOf(c.host)}</dd>{/if}
     </dl>

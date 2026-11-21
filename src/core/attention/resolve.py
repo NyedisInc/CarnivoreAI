@@ -47,7 +47,7 @@ from src.core.attention.registry_record import (
     REG_WAITING,
 )
 from src.core.attention.question_part import with_question_hint
-from src.core.attention.process_scope import transcript_predates_process
+from src.core.attention.process_scope import queued_reinvoke_is_current, transcript_predates_process
 from src.core.attention.resolve_rest import rest_reading, rest_refused, rung_8_turn_ended, rung_8b_streaming, rung_8c_unmeasured_agent
 from src.core.attention.resolve_verdicts import (
     _age_seconds,
@@ -187,7 +187,7 @@ def _rung_blocked_or_dialog(evidence: Evidence, previous_process_only: bool) -> 
 def _rung_queued_reinvoke(evidence: Evidence, previous_process_only: bool) -> Optional[AttentionVerdict]:
     facts = evidence.transcript
 
-    if facts.queued_reinvoke and not previous_process_only:
+    if queued_reinvoke_is_current(evidence) and not previous_process_only:
         return _busy_unless_resting(
             REASON_QUEUED_REINVOKE,
             TIER_TRANSCRIPT,

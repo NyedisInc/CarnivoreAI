@@ -82,7 +82,7 @@ def _joiner_pack(join: Side, keys: Dict[str, DeviceKey]) -> tuple:
     held = custody(join.config, JOIN, keys, default_master=JOIN)
     held.ensure_alpha_signed()
     assert held.state.signed_mode() and held.settings().master_install_id == JOIN
-    pack = LazyPack(lambda: SimpleNamespace(runtime=SimpleNamespace(custody=held, settings=held.settings)))
+    pack = LazyPack(lambda: SimpleNamespace(runtime=SimpleNamespace(custody=held, settings=held.settings, skills_settings_changed=lambda source, iid: None)))
     return held, pack
 
 

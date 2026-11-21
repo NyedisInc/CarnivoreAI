@@ -10,9 +10,9 @@ from typing import List
 
 import pytest
 
-from src.cplugs.save.vault import constants as K, restore
-from src.cplugs.save.vault.store import Vault
-from src.cplugs.save.vault.verified import Verified
+from src.plugins.save.vault import constants as K, restore
+from src.plugins.save.vault.store import Vault
+from src.plugins.save.vault.verified import Verified
 from tests.python.cplugs.save.test_vault_follow import drain, engine_for, rows_of
 from tests.python.cplugs.save.vault_helpers import CONV, World, jsonl
 

@@ -19,7 +19,7 @@ os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 # ruff: noqa: E402
 from src.core import claude_transcript_correlate
 from src.core.agent_families import get_family
-from src.core.attention import codex_gather
+from src.core.attention import codex_gather, codex_pane_home
 from src.core.db import connect, db_path_for, transaction
 from src.core.db_migration import ensure_db_migrated
 from src.core.session_imported_restart import (
@@ -42,6 +42,7 @@ from src.core.session_transcript_presence import (
     family_conversation_presence,
 )
 from src.core.trail_entry import utc_now
+from src.core.session_ops import row_probe
 
 CODEX_UUID = "019a1b2c-3d4e-7f60-8a9b-0c1d2e3f4a5b"
 OTHER_UUID = "019a1b2c-3d4e-7f60-8a9b-ffffffffffff"
@@ -49,7 +50,7 @@ WORKING_DIR = "/Users/x/Development/proj"
 
 
 @pytest.fixture
-def stores(tmp_path, monkeypatch):
+def stores(tmp_path, monkeypatch, request):
     corpus = tmp_path / "projects"
     corpus.mkdir()
     monkeypatch.setattr(
@@ -58,6 +59,9 @@ def stores(tmp_path, monkeypatch):
     codex_home = tmp_path / "codex"
     (codex_home / "sessions").mkdir(parents=True)
     monkeypatch.setattr(codex_gather, "DEFAULT_CODEX_HOME", str(codex_home))
+    monkeypatch.setattr(codex_pane_home, "DEFAULT_CODEX_HOME", str(codex_home))
+    codex_pane_home.clear_cache()
+    request.addfinalizer(codex_pane_home.clear_cache)
     return corpus, codex_home
 
 
@@ -213,10 +217,10 @@ def test_the_recreate_route_passes_the_rows_family(tmp_path, stores, monkeypatch
         "claude_session_uuid": CODEX_UUID,
         "agent_family": "codex",
     }
-    monkeypatch.setattr(recreate_routes, "_read_row", lambda u: {"row": row})
+    monkeypatch.setattr(row_probe, "read_row", lambda u: {"row": row})
     monkeypatch.setattr(recreate_routes, "_resolved", lambda s, u: s["row"])
-    monkeypatch.setattr(recreate_routes, "_measure_presence", lambda n, s: None)
-    monkeypatch.setattr(recreate_routes, "_socket_name", lambda: "cloude")
+    monkeypatch.setattr(row_probe, "measure_row_presence", lambda r, n, s: None)
+    monkeypatch.setattr(row_probe, "socket_name", lambda: "cloude")
 
     gathered = recreate_routes._gather("row-uuid")
 

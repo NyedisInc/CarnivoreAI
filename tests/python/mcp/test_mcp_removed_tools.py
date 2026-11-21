@@ -14,15 +14,17 @@ from src.core.swarm import definition, guard
 
 REMOVED = (
     "ai_chat", "ai_decide", "ai_embed", "agent_fork", "crosstalk_watch",
-    "swarm_alert", "auto_sleep_settings", "session_keep_awake", "project_company_set", "swarm_set_color",
+    "swarm_alert", "auto_sleep_settings", "session_keep_awake", "swarm_set_color",
     "automation_schedule_preview", "ai_presets_list", "company_hue_set",
     "task_manager_delete", "huddle_delete",
+    "session_record_remove",
 )
 
 UNREGISTERED_ON_PURPOSE = {
     "tools.GATED_TOOLS": {"agent_fork": "crosstalk/fork/engine.py still parks and reads Beast Mode under this action name"},
     "call_context.GATED_TOOLS": {"agent_fork": "same engine: a park call site must name a gated action (test_every_park_site_names_a_gated_tool)"},
     "beast_mode.AGENT_ACTIONS": {"agent_fork": "the owner's /sessions/{id}/fork-to route reads approval_skip('agent_fork') for its Beast flags"},
+    "display._RULES": {"plugin_session_create": "an approval action a sideloaded plugin raises through the plugin host port (src/plugins/host/session_create_port.py), never an MCP tool"},
 }
 
 _NAME = re.compile(r"^[a-z][a-z0-9]*(_[a-z0-9]+)+$")

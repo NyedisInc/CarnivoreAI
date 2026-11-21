@@ -15,9 +15,10 @@ from src.core.automations.scheduler import Context
 from src.core.automations.store import AutomationStore
 from src.core.automations.store_schema import storage_for
 from src.core.automations.targets import blueprint
-from src.cplugs.sdk import turn_events
+from src.plugins.sdk import turn_events
 from src.models import Session, SessionInfo
 from src.models.blueprints_launch import LaunchedSession
+from src.core.session_ops import sleep as sleep_ops
 
 TARGET = {"kind": "blueprint_launch", "blueprint_uuid": "bp-1", "members": None}
 
@@ -55,7 +56,7 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setattr(blueprints_routes, "call", fake_call)
     monkeypatch.setattr(blueprints_launch, "launch_member", fake_launch)
     monkeypatch.setattr(blueprints_launch, "worktree_root", lambda: "/tmp/wt")
-    monkeypatch.setattr(session_sleep_routes, "sleep_by_uuid", fake_sleep)
+    monkeypatch.setattr(sleep_ops, "sleep_session", fake_sleep)
     monkeypatch.setattr(session_sleep_routes, "kill_asleep_session", fake_kill)
     monkeypatch.setattr(run_sessions, "_stored_state", lambda row_id, uuid: seen["stored"].get(uuid, "live"))
     app_state = SimpleNamespace(session_manager=Manager())

@@ -20,7 +20,7 @@ from src.core.argent.store import ArgentStore
 from src.core.argent.token_store import TokenStore
 from src.core.federation.peer_client import PeerRefused, PeerUnreachable
 from src.core.resource_push import topics
-from src.cplugs.sdk import ports
+from src.plugins.sdk import ports
 
 logger = structlog.get_logger()
 
@@ -83,7 +83,7 @@ class PairSync:
         self._loop = loop
 
     def on_settings_changed(self, before: ArgentSettings, after: ArgentSettings) -> None:
-        if (before.enabled, before.server_url, before.gateway_url) == (after.enabled, after.server_url, after.gateway_url) or self._loop is None:
+        if (before.enabled, before.server_url, before.gateway_url) == (after.enabled, after.server_url, after.gateway_url) or self._loop is None or self._loop.is_closed():
             return
         self._loop.call_soon_threadsafe(self._spawn, self.export(None, bump=True))
 

@@ -28,7 +28,7 @@
 .mgr .mgr__detail-name {
     min-width: 0;
     overflow: hidden;
-    color: var(--pl-text);
+    color: var(--oc-text-primary);
     font-size: var(--oc-fs-status);
     letter-spacing: 0;
     text-transform: none;
@@ -51,7 +51,7 @@
 
 .mgr .mgr-facts > dt {
     padding-top: var(--oc-gap-hair);
-    color: var(--pl-muted);
+    color: var(--oc-text-secondary);
     font-size: var(--oc-fs-micro);
     letter-spacing: var(--oc-tracking-label, 0.6px);
     text-transform: uppercase;
@@ -60,8 +60,8 @@
 .mgr .mgr-facts > dd {
     min-width: 0;
     margin: 0;
-    color: var(--pl-text);
-    font-family: var(--pl-mono);
+    color: var(--oc-text-primary);
+    font-family: var(--font-mono);
     font-size: var(--oc-fs-body);
     overflow-wrap: anywhere;
 }
@@ -72,7 +72,7 @@
     gap: var(--oc-space-2);
     margin-top: var(--oc-space-4);
     padding-top: var(--oc-space-3);
-    border-top: 1px solid var(--pl-line);
+    border-top: 1px solid var(--oc-line-rule);
 }
 
 .mgr .mgr-actions__row {
@@ -83,7 +83,7 @@
 
 .mgr .mgr-actions__why {
     margin: 0;
-    color: var(--pl-muted);
+    color: var(--oc-text-secondary);
     font-size: var(--oc-fs-label);
 }
 
@@ -99,7 +99,7 @@
     margin-left: auto;
 }
 
-:is(.mgr, .cat) .oc-page__view .oc-ibtn {
+:is(.mgr, .cat) .oc-page__view .oc-ibtn:not([data-btn-density='frame'] *) {
     --oc-ibtn-size: 24px;
 }
 
@@ -110,14 +110,17 @@
 }
 
 @media (max-width: 1023px) {
-    :is(.mgr, .cat) .oc-page__view .oc-ibtn {
+    :is(.mgr, .cat) .oc-page__view .oc-ibtn:not([data-btn-density='frame'] *) {
         --oc-ibtn-size: var(--oc-tap, 44px);
     }
 }
 
 @media (max-width: 767px) {
-    .oc-page__flip {
+    .oc-page__flip:not([data-btn-density='frame'] *) {
         --oc-ibtn-size: 44px;
+    }
+
+    .oc-page__flip {
         flex: none;
         background: transparent;
         color: var(--oc-text-secondary);
@@ -133,7 +136,7 @@
         height: 44px;
         box-sizing: border-box;
         border: 1px solid var(--oc-line-rule);
-        border-radius: var(--oc-control-radius, 2px);
+        border-radius: var(--oc-radius-control);
     }
 
     .oc-titlebar__controls .oc-chip {

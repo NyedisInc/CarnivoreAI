@@ -15,6 +15,7 @@ from src.core.companion_shell.ensure import LIFECYCLE_SOURCE_CLOSED_WITH_AGENT
 from src.core.db import DatastoreError, connect, db_path_for
 from src.core.db_models import SESSION_LIFECYCLE_STOPPED
 from src.core.trail_entry import utc_now
+from src.core.session_ops import row_probe
 
 logger = structlog.get_logger()
 
@@ -60,7 +61,6 @@ async def purge_row(index: Any, shell: Mapping[str, Any]) -> bool:
 
 async def close_shell(manager: Any, index: Any, shell: Mapping[str, Any], *, purge: bool = False,
                       local_servers: Any = None) -> bool:
-    from src.api import recreate_routes as rr
     from src.core.session_recreate_presence import TMUX_GONE
 
     name, socket = shell.get("tmux_name"), shell.get("tmux_socket")
@@ -69,7 +69,7 @@ async def close_shell(manager: Any, index: Any, shell: Mapping[str, Any], *, pur
             if local_servers is not None:
                 await local_servers.clear_session(name)
             await session_sleep.close_for_sleep(manager, name=name, socket=socket)
-            after = await asyncio.to_thread(rr._measure_presence, name, socket)
+            after = await asyncio.to_thread(row_probe.measure_presence, name, socket)
             if after.outcome != TMUX_GONE:
                 logger.error("companion_close_still_present", shell_row=shell["id"], presence=after.outcome)
                 return False

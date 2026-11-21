@@ -10,6 +10,7 @@ import structlog
 from src.core.automations import contract, gates, schedule
 from src.core.automations import models as m
 from src.core.automations import run_title, scheduler_log
+from src.core.automations.store_host import StoreCore
 from src.core.automations.store_schema import Tx, next_number
 from src.core.computers.this_label import this_label
 from src.core.resource_push import topics
@@ -20,7 +21,7 @@ logger = structlog.get_logger()
 
 class ClaimMixin:
 
-    def claim_due(self, now: float, boot_id: str) -> List[Dict[str, Any]]:
+    def claim_due(self: StoreCore, now: float, boot_id: str) -> List[Dict[str, Any]]:
         claimed: List[str] = []
         logged: List[tuple] = []
         with self._write(nudge=False) as tx:
@@ -31,26 +32,26 @@ class ClaimMixin:
                 automation_id, slot = row["automation_id"], row["next_fire_at"]
                 tx.hit.add(topics.AUTOMATIONS)
                 if slot is not None and slot <= now:
-                    upcoming = self._advance(row["cron"], now, automation_id)
+                    upcoming = ClaimMixin._advance(row["cron"], now, automation_id)
                     tx.execute("UPDATE automations SET next_fire_at = ? WHERE automation_id = ?", (upcoming, automation_id))
                     logged.append(("scheduled", {"automation_id": automation_id, "next_fire_at": upcoming}))
                     late = now - slot > m.GRACE_S
                     if late and row["misfire"] != contract.MISFIRE_RUN_ONCE:
-                        run_id = self._fold_skip(tx, automation_id, m.R_MISSED, slot, now)
+                        run_id = ClaimMixin._fold_skip(tx, automation_id, m.R_MISSED, slot, now)
                         logged.append(("skipped", {"automation_id": automation_id, "run_id": run_id, "reason": m.R_MISSED,
                                                    "slot_at": slot}))
                     else:
                         tx.execute("UPDATE automations SET retry_due_at = NULL, retry_attempt = 0 WHERE automation_id = ?",
                                    (automation_id,))
                         trigger = "catch_up" if late else "schedule"
-                        claimed.append(self._insert_claimed(tx, automation_id, trigger, slot, boot_id, now, 1))
+                        claimed.append(ClaimMixin._insert_claimed(tx, automation_id, trigger, slot, boot_id, now, 1))
                         logged.append(("catch_up" if late else "claimed", {"automation_id": automation_id, "run_id": claimed[-1],
                                                                           "trigger": trigger, "slot_at": slot, "attempt": 1}))
                         continue
                 retry_at = row["retry_due_at"]
                 if retry_at is not None and retry_at <= now:
                     tx.execute("UPDATE automations SET retry_due_at = NULL WHERE automation_id = ?", (automation_id,))
-                    claimed.append(self._insert_claimed(tx, automation_id, "retry", retry_at, boot_id, now,
+                    claimed.append(ClaimMixin._insert_claimed(tx, automation_id, "retry", retry_at, boot_id, now,
                                                         int(row["retry_attempt"]) + 1))
                     logged.append(("claimed", {"automation_id": automation_id, "run_id": claimed[-1], "trigger": "retry",
                                                "attempt": int(row["retry_attempt"]) + 1}))
@@ -68,7 +69,7 @@ class ClaimMixin:
         tx.hit.add(topics.AUTOMATION_RUNS)
         return run_id
 
-    def settle_retry(self, automation_id: str, failed: bool, now: float) -> Optional[float]:
+    def settle_retry(self: StoreCore, automation_id: str, failed: bool, now: float) -> Optional[float]:
         with self._write() as tx:
             row = tx.execute("SELECT enabled, target, retry_max, retry_backoff_s, retry_attempt FROM automations "
                              "WHERE automation_id = ?", (automation_id,)).fetchone()
@@ -118,11 +119,11 @@ class ClaimMixin:
                     next_number(tx, automation_id), this_label(), title, summary))
         return run_id
 
-    def finish_skip(self, run_id: str, reason: str) -> str:
+    def finish_skip(self: StoreCore, run_id: str, reason: str) -> str:
         now = self._clock()
         with self._write() as tx:
             row = tx.execute("SELECT automation_id, slot_at, trigger FROM runs WHERE run_id = ?", (run_id,)).fetchone()
             if row is None:
                 raise m.AutomationNotFound(run_id)
             tx.execute("DELETE FROM runs WHERE run_id = ?", (run_id,))
-            return self._fold_skip(tx, row["automation_id"], reason, row["slot_at"], now, row["trigger"])
+            return ClaimMixin._fold_skip(tx, row["automation_id"], reason, row["slot_at"], now, row["trigger"])

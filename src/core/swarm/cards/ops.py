@@ -8,7 +8,7 @@ import structlog
 
 from src.core.swarm import body, guard, memory, owner_message, reports, store
 from src.core.swarm.cards import capacity, dealer, deliver, effects, fit, notices, permits, port as card_port, texts
-from src.cplugs.sdk.cards import CardRefused
+from src.plugins.sdk.cards import CardRefused
 
 logger = structlog.get_logger()
 

@@ -1,25 +1,26 @@
 #!/usr/bin/env bash
 
+
 set -euo pipefail
 
-XTERM_VERSION="5.3.0"
-FIT_VERSION="0.8.0"
-WEBGL_VERSION="0.16.0"
-UNICODE11_VERSION="0.6.0"
-SEARCH_VERSION="0.13.0"
-WEB_LINKS_VERSION="0.9.0"
+XTERM_VERSION="5.5.0"
+FIT_VERSION="0.10.0"
+WEBGL_VERSION="0.18.0"
+UNICODE11_VERSION="0.8.0"
+SEARCH_VERSION="0.15.0"
+WEB_LINKS_VERSION="0.11.0"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUT_DIR="$SCRIPT_DIR/../../client/vendor/xterm"
 
 ASSETS="\
-xterm.css|https://cdn.jsdelivr.net/npm/xterm@${XTERM_VERSION}/css/xterm.css|832f3f2c603b43ad4351ff04970150cc7a873014276db126a6065c6dd81e4872
-xterm.js|https://cdn.jsdelivr.net/npm/xterm@${XTERM_VERSION}/lib/xterm.js|f0aea0f75f48559013ae6643c2479dd737d26da42d5524e6d2b70915ae6523c7
-xterm-addon-fit.js|https://cdn.jsdelivr.net/npm/xterm-addon-fit@${FIT_VERSION}/lib/xterm-addon-fit.js|10f3194c5f17c1786fb7d5db865c1ec8539b6736a318063fd38bdaaf7c46848f
-xterm-addon-webgl.js|https://cdn.jsdelivr.net/npm/xterm-addon-webgl@${WEBGL_VERSION}/lib/xterm-addon-webgl.js|0c9c48c9391c4cee816eacf95699dbde97e8cc8f191e87f3a571e73d214c8df8
-xterm-addon-unicode11.js|https://cdn.jsdelivr.net/npm/xterm-addon-unicode11@${UNICODE11_VERSION}/lib/xterm-addon-unicode11.js|ab10d83642883e5e17ea741cd5b6e5f8c0f6a06e3271f2f0c0e043be4fc5e738
-xterm-addon-search.js|https://cdn.jsdelivr.net/npm/xterm-addon-search@${SEARCH_VERSION}/lib/xterm-addon-search.js|6a6db33f16b764552377a2c5ba4327c6dab6beaf25484533afd7dbecd0b03793
-xterm-addon-web-links.js|https://cdn.jsdelivr.net/npm/xterm-addon-web-links@${WEB_LINKS_VERSION}/lib/xterm-addon-web-links.js|d67624ab0e89e1d2ee27b64cc6e9283f4ce206d7343429d87d95370b0c971824
+xterm.css|https://cdn.jsdelivr.net/npm/@xterm/xterm@${XTERM_VERSION}/css/xterm.css|ba8e6985669488981ccf40c0cefe3aba80722cb6c92de7ad628b0bd717faf2b6
+xterm.js|https://cdn.jsdelivr.net/npm/@xterm/xterm@${XTERM_VERSION}/lib/xterm.js|1f991ac3b4b283ebf96e60ae23a00a52765dd3a2e46fa6fdda9f1aab032f7495
+xterm-addon-fit.js|https://cdn.jsdelivr.net/npm/@xterm/addon-fit@${FIT_VERSION}/lib/addon-fit.js|bdaefa370b1bfc42ee88d46fe6072400902a4d4b2d45cd93438dda9b23c97089
+xterm-addon-webgl.js|https://cdn.jsdelivr.net/npm/@xterm/addon-webgl@${WEBGL_VERSION}/lib/addon-webgl.js|9ffa9ac3ff6d47d4e6216ed1972ca8e0b5336cef744f50ebdc3f67b0ed727cdb
+xterm-addon-unicode11.js|https://cdn.jsdelivr.net/npm/@xterm/addon-unicode11@${UNICODE11_VERSION}/lib/addon-unicode11.js|b0c3be540a9984713aea996966c24ed1a639d11f60d44986b22661e3a8a148d0
+xterm-addon-search.js|https://cdn.jsdelivr.net/npm/@xterm/addon-search@${SEARCH_VERSION}/lib/addon-search.js|3cf52d71d9deb4ba60125087434c53e3fb35bb2249db9b13987991fd2db1c7bd
+xterm-addon-web-links.js|https://cdn.jsdelivr.net/npm/@xterm/addon-web-links@${WEB_LINKS_VERSION}/lib/addon-web-links.js|f230a6c8211ce4614dda5441f27b603c7c1ca95151a655bc0efac6377ee643f0
 "
 
 sha256_of() {

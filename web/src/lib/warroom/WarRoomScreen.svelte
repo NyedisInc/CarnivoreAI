@@ -38,14 +38,12 @@
 </script>
 
 {#if open}
-    <Page title={t('warroom.page.title')} onClose={close} data-warroom-page="">
+    <Page title={t('warroom.page.title')} onClose={close} frame="canvas" data-warroom-page="">
         {#snippet actions()}
             
-            <Button variant="quiet" size="sm" aria-label={t('opscenter.awe_s3.add_widget')} onclick={addWidget}>+</Button>
+            <Button variant="quiet" aria-label={t('opscenter.awe_s3.add_widget')} onclick={addWidget}>+</Button>
         {/snippet}
-        <div class="oc-page__body wr-body">
-            {@render surface()}
-        </div>
+        {@render surface()}
     </Page>
 {/if}
 
@@ -66,10 +64,6 @@
 
 <style>
     @layer components {
-        .wr-body {
-            grid-template-rows: minmax(0, 1fr);
-        }
-
         .wr-surface {
             position: relative;
             min-width: 0;

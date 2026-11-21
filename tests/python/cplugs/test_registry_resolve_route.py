@@ -7,8 +7,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.host import registry_boot, registry_files, registry_routes, runtime
-from src.cplugs.host.peer_refusal import refuse_peer_token_writes
+from src.plugins.host import registry_boot, registry_files, registry_routes, runtime
+from src.plugins.host.peer_refusal import refuse_peer_token_writes
 from tests.python.cplugs import registry_world as W
 from tests.python.cplugs.test_registry_boot_tiebreaks import migrated, set_marker
 from tests.python.cplugs.test_registry_migration_full_tuple import Alerts, boot

@@ -76,6 +76,9 @@ def run_once(ctx: Optional[Context] = None, io: Optional[SystemIO] = None) -> Li
     apply(results)
     from src.core.notifications.sources import agent_update  # noqa: PLC0415
     agent_update.check_now()
+    from src.core.codex_helpers import runtime as codex_helpers  # noqa: PLC0415
+
+    codex_helpers.check_now()
     return results
 
 

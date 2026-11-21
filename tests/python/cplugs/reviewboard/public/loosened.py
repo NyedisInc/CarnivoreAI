@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, Iterator, Optional, Tuple
 from unittest import mock
 
-from src.cplugs.reviewboard.public import edge
-from src.cplugs.reviewboard.public import listener as public_listener
+from src.plugins.reviewboard.public import edge
+from src.plugins.reviewboard.public import listener as public_listener
 
 
 _REAL_TARGET, _REAL_HEADERS = edge.target_refusal, edge.header_refusal

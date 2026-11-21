@@ -9,9 +9,6 @@
   import './roster.css';
   import { t } from '../i18n/index.svelte';
   import Icon from '../../opscenter/ui/Icon.svelte';
-  import SearchField from '../../opscenter/ui/SearchField.svelte';
-  import ViewToggle from '../manager-frame/ViewToggle.svelte';
-  import RosterFacet from './RosterFacet.svelte';
   import RankPanel, { type RankRow } from '../../opscenter/ui/RankPanel.svelte';
   import { computers, stopJoinPoll } from '../computers/computers-store.svelte';
   import { packMachines } from '../pack-machines/pack-machines-store.svelte';
@@ -19,7 +16,7 @@
   import { ageWords } from '../computers/computers-format';
   import { hosts, peers, nearby, discovered, refreshRoster, rosterActivity } from './roster-store.svelte';
   import { closePane, openAdd, openComputer, rosterUi, setSettings } from './roster-ui.svelte';
-  import { buildRoster, countsOf, freeCpu, inFilter, LOOK_FILTERS, matches, PACK_FILTERS, sortRoster, unlinkedNearby, type FilterKey, type SortKey } from './roster-model';
+  import { buildRoster, countsOf, freeCpu, inFilter, LOOK_FILTERS, matches, PACK_FILTERS, sortRoster, unlinkedNearby, type FilterKey } from './roster-model';
   import { clock, startClock } from '../../opscenter/lib/frozen-clock.svelte';
   import RosterCard from './RosterCard.svelte';
   import ComputerPane from './ComputerPane.svelte';
@@ -66,7 +63,6 @@
   const freeRows = $derived<RankRow[]>(list.map((c) => ({ c, f: freeCpu(c) })).filter((x) => x.f !== null).sort((a, b) => (b.f ?? 0) - (a.f ?? 0)).slice(0, 5)
     .map((x) => ({ id: x.c.id, name: x.c.name, tags: x.c.kind === 'ssh-only' ? [t('roster.census.ssh_host')] : [], metric: { value: String(x.f), unit: t('roster.census.free_of', { cores: x.c.machine?.snapshot?.load?.cores ?? '' }) } })));
 
-  const sortOptions = $derived((['status', 'name', 'free', 'seen'] as const).map((k) => ({ value: k, label: t(`roster.sort.${k}`) })));
   function onKeydown(event: KeyboardEvent): void {
     const target = event.target as HTMLElement;
     if (event.key === 'Escape' && detailOpen && !target.closest('.oc-facet, .m1-sets')) { const was = rosterUi.openId; closePane(); if (was) bodyEl?.querySelector<HTMLElement>(`[data-computer-card="${was}"] .m1-name`)?.focus(); return; }
@@ -80,13 +76,6 @@
 
 <svelte:window onkeydown={onKeydown} />
 <div class="rs-screen pledger" data-roster>
-  <div class="oc-page__bar rs-bar"><div class="oc-toolbar" role="search">
-    <div class="oc-toolbar__search"><SearchField value={rosterUi.q} onInput={(v) => (rosterUi.q = v)} placeholder={t('roster.find.placeholder')} ariaLabel={t('roster.find.placeholder')} /></div>
-    <div class="oc-toolbar__end">
-      <RosterFacet label={t('roster.sort.label')} options={sortOptions} value={rosterUi.sort} onChange={(v) => (rosterUi.sort = v as SortKey)} />
-      <ViewToggle view={rosterUi.view === 'list' ? 'list' : 'grid'} onView={(v) => (rosterUi.view = v === 'list' ? 'list' : 'cards')} {t} shelf />
-    </div>
-  </div></div>
   <div class="rs-body" bind:this={bodyEl} data-sets={rosterUi.settings ? '' : null}>
     <nav class="cat-rail" aria-label={t('roster.rail.label')}>
       <div class="cat-rail__group" role="radiogroup" aria-label={t('roster.rail.pack')}><span class="cat-rail__label">{t('roster.rail.pack')}</span>
@@ -182,6 +171,6 @@
         {:else if open}<ComputerPane c={open} computers={list} {nowMs} onClose={closePane} />{/if}
       </div>
     {/if}
-    {#if rosterUi.settings}<SettingsPanel onClose={() => setSettings(false)} {nowMs} />{/if}
+    {#if rosterUi.settings}<SettingsPanel onClose={() => setSettings(false)} {nowMs} {list} />{/if}
   </div>
 </div>

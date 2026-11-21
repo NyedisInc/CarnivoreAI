@@ -1,4 +1,4 @@
-<!-- the detail pane -->
+<!-- the detail pane the page frame -->
 <script lang="ts">
     import type { Snippet } from 'svelte';
     import { tick } from 'svelte';
@@ -343,6 +343,8 @@
 <Page
     bind:root
     class="pledger mgr {className}"
+    frame="column"
+    scroll="self"
     {embedded}
     {title}
     label={countInBar ? undefined : label}
@@ -357,7 +359,7 @@
     bar={searchable && !(searchInTitle && !barHasControls) ? pageBar : undefined}
     notes={(limits.length > 0 && limitsMode === 'strip') || removed || zone ? pageNotes : undefined}
 >
-    <div class="oc-page__body" class:oc-page__body--reading={selected !== null}>
+    <div class="oc-page__split" class:oc-page__split--reading={selected !== null}>
         <div class="oc-page__scroll">
             <div class="oc-page__main">
                 {#if top}{@render top()}{/if}
@@ -447,7 +449,8 @@
 
         {#if selected && detail}
             <section class="oc-page__detail" aria-labelledby="{uid}-detail" use:clearToasts>
-                <div class="pl-titlebar mgr__detail-bar">
+                
+                <div class="pl-titlebar mgr__detail-bar" data-btn-density="frame">
                     <h2 class="pl-title mgr__detail-title" class:mgr__detail-title--kicked={!!detailKicker} id="{uid}-detail" tabindex="-1" bind:this={detailTitle}>
                         {#if detailKicker}<span class="mgr__detail-kicker">{detailKicker}</span>
                             <span class="mgr__detail-name">{selected.name}</span>{:else}{selected.name}{/if}

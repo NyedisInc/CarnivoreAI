@@ -66,7 +66,7 @@
     position: fixed;
     right: 8px;
     bottom: 8px;
-    z-index: 9998;
+    z-index: calc(var(--oc-z-dialog) - var(--oc-z-step));
     width: 340px;
     max-height: 60vh;
     overflow: auto;

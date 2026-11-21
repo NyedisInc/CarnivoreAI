@@ -23,7 +23,7 @@ _BUTTON_CLASS = re.compile(
 )
 _STATE = re.compile(r":(?:hover|active|focus|focus-visible)\b|\[(?:aria-pressed|aria-current|aria-expanded|aria-selected|data-active)")
 OLD_ROOTS = ("client/css", "web/src")
-SCAN_ROOTS = (*OLD_ROOTS, "src/cplugs", "hosted", "macOS")
+SCAN_ROOTS = (*OLD_ROOTS, "src/plugins", "hosted", "macOS")
 
 KNOWN_WIDENED = frozenset({
     "ap-hc", "d-ev__btn", "d-vl__row", "hd-slot-key", "row-badge",
@@ -78,6 +78,8 @@ def _shipped_css(roots: tuple[str, ...]) -> list[str]:
 
 @functools.lru_cache(maxsize=None)
 def _root_css(repo: Path, root: str) -> list[str]:
+    if not (repo / root).is_dir():
+        raise FileNotFoundError(f"{repo / root} does not exist")
     sheets: list[str] = []
     for path in (repo / root).rglob("*"):
         if path.is_file() and "node_modules" not in path.parts and "dist" not in path.parts:
@@ -117,8 +119,8 @@ def test_negative_control_widened_gate_sees_what_the_name_match_cannot() -> None
 
 
 def test_planted_family_in_a_new_root_is_flagged(tmp_path, monkeypatch) -> None:
-    root = tmp_path / "hosted"
-    root.mkdir()
-    (root / "page.css").write_text("button.sneaky-pick:hover { color: red }")
+    for name in SCAN_ROOTS:
+        (tmp_path / name).mkdir(parents=True)
+    (tmp_path / "hosted" / "page.css").write_text("button.sneaky-pick:hover { color: red }")
     monkeypatch.setattr(sys.modules[__name__], "REPO", tmp_path)
     assert widened_families() == {"sneaky-pick"}

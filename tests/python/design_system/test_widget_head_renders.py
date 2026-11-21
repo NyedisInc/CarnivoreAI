@@ -162,7 +162,7 @@ def test_a_drawer_card_wears_the_same_header_under_each_theme(base_url, theme: s
     assert measured["first"], measured
     assert measured["name"] == measured["accent"], measured
     assert measured["icon"] != measured["accent"], measured
-    assert cluster == ["control"], cluster
+    assert cluster == ["sep", "control"], cluster
 
 
 def _placement_page(pw, base_url: str, width: int):

@@ -11,6 +11,7 @@ import structlog
 from src.core.computers import join_proto
 from src.core.computers.invites import Invite, Invites, MemberRefused, TooManyInvites
 from src.core.computers.join_limits import KnockRates
+from src.core.resource_push import topics
 
 log = structlog.get_logger(__name__)
 
@@ -99,7 +100,7 @@ class KnockDesk:
         inv.knock = True
         self._entries[inv.id] = _Entry(inv.id, knock.fid, knock.iid, knock.label, addr, now)
         log.info("computer_knock", knock_id=inv.id, addr=addr)
-        self._notify("pack_knocks")
+        self._notify(topics.PACK_KNOCKS)
         self._emit(knock.label, addr, inv.id)
         return self._ok(inv, now)
 
@@ -115,5 +116,5 @@ class KnockDesk:
         self._inv.cancel(entry.id)
         self._entries.pop(entry.id, None)
         log.info("computer_knock_dismissed", knock_id=knock_id)
-        self._notify("pack_knocks")
+        self._notify(topics.PACK_KNOCKS)
         return True

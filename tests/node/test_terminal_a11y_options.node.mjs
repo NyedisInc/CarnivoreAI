@@ -135,7 +135,7 @@ await t('the wiring: boot sets lang, terminals bind, the preload lists the capab
   assert.match(pre, /capabilities: Object\.freeze\(\[[^\]]*'screenReader'\]/);
   assert.match(pre, /ipcRenderer\.invoke\('carnivore:screen-reader'\)/);
   assert.match(read('macOS/main.js'), /registerScreenReader\(\{/);
-  assert.match(read('src/core/ui_preferences.py'), /terminal_screen_reader: Optional\[str\] = None/);
+  assert.match(read('src/core/ui_preferences/values.py'), /terminal_screen_reader: Optional\[str\] = None/);
 });
 
 await t('the shell answers the page only for a registered window and pushes each OS change to every window', async () => {

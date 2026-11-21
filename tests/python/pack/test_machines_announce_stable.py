@@ -45,3 +45,22 @@ def test_load_only_changes_wait_for_the_slow_cadence_and_stable_changes_name_the
     now[0] += exchange.LOAD_NOTIFY_SECONDS
     rt._announce("b", _snap(cpu=80.0, level="reserved", offers=[{"x": 1}]), roster.STATE_STALE)
     assert len(named) == 5, "RED WHEN: load never refreshes after the slow window (the display would go stale)"
+
+
+def test_a_can_rev_or_a_pegged_or_memory_word_change_names_the_topic_at_once(tmp_path):
+    now = [1000.0]
+    rt, named = _runtime(tmp_path, lambda: now[0])
+    rt._arm_stale_notice = lambda _i: None
+    base = _snap()
+    rt._announce("b", {**base, "can": {"rev": "a" * 16}, "pressure": {"pegged": False, "mem": "normal"}}, roster.STATE_CONNECTED)
+    count = len(named)
+    now[0] += 6
+    rt._announce("b", {**base, "can": {"rev": "a" * 16}, "pressure": {"pegged": False, "mem": "normal", "busy_cores": 4}}, roster.STATE_CONNECTED)
+    assert len(named) == count, "a figure outside the pegged and memory words is load-like and waits"
+    rt._announce("b", {**base, "can": {"rev": "b" * 16}, "pressure": {"pegged": False, "mem": "normal"}}, roster.STATE_CONNECTED)
+    assert len(named) == count + 1, "RED WHEN: a new can.rev waits for the cadence"
+    rt._announce("b", {**base, "can": {"rev": "b" * 16}, "pressure": {"pegged": True, "mem": "normal"}}, roster.STATE_CONNECTED)
+    assert len(named) == count + 2, "RED WHEN: a peg waits for the cadence"
+    rt._announce("b", {**base, "can": {"rev": "b" * 16}, "pressure": {"pegged": True, "mem": "warn"}}, roster.STATE_CONNECTED)
+    assert len(named) == count + 3, "RED WHEN: a memory pressure word waits for the cadence"
+    rt._announce("b", {**base, "can": "junk", "pressure": None}, roster.STATE_CONNECTED)

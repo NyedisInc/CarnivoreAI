@@ -80,7 +80,8 @@ test('the action order is the contract order and a cap drops only the tail', () 
   const options = kind.bannerOptions(plan, { id: 't1', groupId: 'ses_1', image: (f) => f });
   assert.deepEqual(options.actions.map((a) => a.text), ['play', 'open']);
   assert.equal(options.subtitle, 'video on nostromo');
-  assert.equal(options.sound, 'carnivore-soft');
+  assert.equal(options.silent, true, 'the page plays the sound, the banner is always silent');
+  assert.equal('sound' in options, false);
   assert.equal(options.id, 't1');
   const reply = kind.bannerOptions(kind.planFromCard({ response: response('finished') }), { image: (f) => f });
   assert.equal(reply.hasReply, true);
@@ -135,7 +136,8 @@ test('a mirrored toast posts its kind banner and corner card, a reply goes throu
   assert.equal(handled, true);
   assert.equal(posted.length, 1);
   assert.equal(posted[0].options.subtitle, 'done on nostromo');
-  assert.equal(posted[0].options.sound, 'carnivore-done');
+  assert.equal(posted[0].options.silent, true);
+  assert.equal('sound' in posted[0].options, false);
   assert.equal(posted[0].options.hasReply, true);
   assert.equal(shownCorner[0].key, 'toast_1');
   assert.equal(shownCorner[0].shown.kind, 'finished');
@@ -160,6 +162,15 @@ test('the desktop column off, a 404 and a down server', async () => {
   const down = build(response('notice'), { cardStatus: 503 });
   assert.equal(await down.toasts.present({ meta: { id: 'a' }, open() {} }), false);
   assert.equal(await off.toasts.present({ meta: { id: '' }, open() {} }), false);
+});
+
+test('a desktop test toast posts whatever the desktop cell says and an app test toast posts nothing', async () => {
+  const forced = build({ ...response('notice'), test_target: 'desktop' }, { desktop: false });
+  assert.equal(await forced.toasts.present({ meta: { id: 't1' }, open() {} }), true);
+  assert.equal(forced.posted.length, 1, 'the desktop test ignores a desktop cell that is off');
+  const appOnly = build({ ...response('notice'), test_target: 'app' }, { desktop: true });
+  assert.equal(await appOnly.toasts.present({ meta: { id: 't2' }, open() {} }), true);
+  assert.equal(appOnly.posted.length, 0, 'the app test is the page card alone');
 });
 
 test('a link banner opens or copies only an http(s) url; the corner switch off keeps the corner card away', async () => {

@@ -50,7 +50,7 @@ DRAFT_PLUGIN_ID: str = "devwidgetlab"
 
 
 def draft_framing_allowed() -> bool:
-    from src.cplugs.host import developer_mode, runtime  # noqa: PLC0415
+    from src.plugins.host import developer_mode, runtime  # noqa: PLC0415
 
     try:
         return developer_mode.is_on() and runtime.current().enabled(DRAFT_PLUGIN_ID)

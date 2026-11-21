@@ -109,6 +109,7 @@ export type SettingControl =
     | { readonly kind: 'toast-mode' }
     | { readonly kind: 'screen-reader' }
     | { readonly kind: 'terminal-font' }
+    | { readonly kind: 'cell-dim' }
     | { readonly kind: 'time-zone' }
     | { readonly kind: 'row-icons' }
     | { readonly kind: 'theme-picker' }
@@ -130,12 +131,8 @@ export type SettingControl =
     | { readonly kind: 'beast-grid' }
     | { readonly kind: 'custom-domain-remove' }
     | { readonly kind: 'notify-destinations' }
-    | { readonly kind: 'notify-link' }
     | { readonly kind: 'messaging' }
     | { readonly kind: 'notify-inspector' }
-    | { readonly kind: 'notify-matrix' }
-    | { readonly kind: 'notify-mutes' }
-    | { readonly kind: 'notify-sync' }
     | { readonly kind: 'ai-connections' }
     | { readonly kind: 'ai-routing' }
     | { readonly kind: 'ai-calls' }
@@ -186,6 +183,7 @@ export const SETTINGS: readonly SettingDef[] = [
     { id: 'environment', section: 'terminal', group: 'terminal.startup', saves: 'batch', control: { kind: 'env' } },
     { id: 'tui_cli', section: 'terminal', group: 'terminal.tui', saves: 'panel', control: { kind: 'tui-cli' } },
     { id: 'terminal_font', section: 'terminal', group: 'terminal.text', saves: 'instant', control: { kind: 'terminal-font' } },
+    { id: 'cell_dim', section: 'terminal', group: 'terminal.text', saves: 'instant', control: { kind: 'cell-dim' } },
     { id: 'screen_reader', section: 'terminal', group: 'terminal.accessibility', saves: 'instant', control: { kind: 'screen-reader' } },
     { id: 'crosstalk_cards', section: 'terminal', group: 'terminal.crosstalk_cards', saves: 'instant', control: { kind: 'crosstalk-card', switch: 'enabled' } },
     { id: 'crosstalk_card_sender', section: 'terminal', group: 'terminal.crosstalk_cards', saves: 'instant', control: { kind: 'crosstalk-card', switch: 'senderCards' }, parent: 'crosstalk_cards' },
@@ -196,10 +194,6 @@ export const SETTINGS: readonly SettingDef[] = [
     { id: 'quiet_watched', section: 'notifications', group: 'notifications.delivery', saves: 'instant', control: { kind: 'quiet-watched' } },
     { id: 'notification_destinations', section: 'notifications', group: 'notifications.channels', saves: 'panel', control: { kind: 'notify-destinations' } },
     { id: 'notification_inspector', section: 'notifications', group: 'notifications.routing', saves: 'panel', control: { kind: 'notify-inspector' } },
-    { id: 'notification_link', section: 'notifications', group: 'notifications.routing', saves: 'panel', control: { kind: 'notify-link' } },
-    { id: 'notification_matrix', section: 'notifications', group: 'notifications.routing', saves: 'panel', control: { kind: 'notify-matrix' } },
-    { id: 'notification_mutes', section: 'notifications', group: 'notifications.routing', saves: 'panel', control: { kind: 'notify-mutes' } },
-    { id: 'notification_sync', section: 'notifications', group: 'notifications.routing', saves: 'panel', control: { kind: 'notify-sync' } },
     { id: 'web_push', section: 'notifications', group: 'notifications.web_push', saves: 'panel', control: { kind: 'web-push' } },
     { id: 'messaging', section: 'notifications', group: 'notifications.messaging', saves: 'panel', control: { kind: 'messaging' } },
 

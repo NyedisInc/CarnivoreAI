@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.reviewboard import document
-from src.cplugs.reviewboard.cli import scan as scan_cli
-from src.cplugs.reviewboard.scan import MARKER, scan
+from src.plugins.reviewboard import document
+from src.plugins.reviewboard.cli import scan as scan_cli
+from src.plugins.reviewboard.scan import MARKER, scan
 from tests.python.cplugs.reviewboard.boards import PAGE, SIDECAR, make_board, make_root, sidecar
 
 
@@ -210,7 +210,7 @@ def test_a_file_many_revisions_share_is_read_once(tmp_path: Path, monkeypatch: p
 
 
 def test_an_unchanged_view_file_is_hashed_once_and_a_changed_one_again(tmp_path: Path, monkeypatch) -> None:
-    from src.cplugs.reviewboard import scan as scan_module
+    from src.plugins.reviewboard import scan as scan_module
     scan_module._DIGESTS.clear()
     path = tmp_path / "view.html"
     path.write_bytes(b"<p>one</p>")

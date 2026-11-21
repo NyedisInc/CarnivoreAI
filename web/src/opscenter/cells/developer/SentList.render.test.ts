@@ -33,7 +33,7 @@ vi.mock('../../api/events.svelte', () => ({ subscribe: () => () => {} }));
 
 import SentList from './SentList.svelte';
 import { setLocale } from '../../../lib/i18n/index.svelte';
-import { cplugEnablement } from '../../../cplugs/host/enablement.svelte';
+import { cplugEnablement } from '../../../plugins/host/enablement.svelte';
 import { META } from '../../engine/meta';
 import { putEntry, resetStore } from '../../../lib/outbox/outbox-store';
 import { stopOutbox } from '../../../lib/outbox/outbox';

@@ -17,6 +17,11 @@ vi.mock('../../opscenter/layout-editor/editor.svelte', async (orig) => ({
     ...(await orig<typeof import('../../opscenter/layout-editor/editor.svelte')>()), layoutEditor: { get active() { return editor.active; } },
 }));
 
+const createGroupSpy = vi.hoisted(() => vi.fn(async () => {}));
+vi.mock('../sidebar-shell/group-assign', async (orig) => ({
+    ...(await orig<typeof import('../sidebar-shell/group-assign')>()), createGroupThenAssign: createGroupSpy,
+}));
+
 vi.mock('../add-to-menu/host', () => ({
     addToNodes: { forProject: () => [{ id: 'acme', label: 'acme', run: () => {} }], forGroup: () => [{ id: 'agents', label: 'agents', children: [] }] },
     addToMenuBridge: { close: () => {}, openForProject: () => {} },
@@ -144,4 +149,16 @@ describe('the heading menus golden', () => {
         expect(entry?.[0]).toContain('"key":"e"');
         expect(JSON.stringify(menu)).not.toContain('"label":"rule"');
     });
+
+    test('the group menu offers "new group", key g, which runs the drawer\'s create-group flow with no session to file', async () => {
+        const menu = await headingMenuOf('group', 'g-2');
+        const entry = menu.entries.find((e) => e.id === 'group');
+        expect(entry?.label).toBe('new group');
+        expect(entry?.key).toBe('g');
+        const { itemMenu } = await import('./registry');
+        const built = itemMenu('group', { key: 'g-2', anchor: document.createElement('button') }, { close: () => {}, glyph: () => '' });
+        const node = built!.nodes.find((n) => n.id === 'group');
+        node!.run!();
+        expect(createGroupSpy).toHaveBeenCalledWith(null);
+    }, 30_000);
 });

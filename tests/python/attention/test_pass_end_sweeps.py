@@ -47,7 +47,7 @@ def test_the_sweeps_moved_out_of_on_observation(monkeypatch):
     manager = SimpleNamespace(_registry=SimpleNamespace(sessions={"s": 1}), _is_unread=lambda *a: False)
     effects = MagicMock()
     effects.instance_for.return_value = (None, None)
-    hooks = wiring_builders.ObservationHooks(*(MagicMock() for _ in range(7)))
+    hooks = wiring_builders.ObservationHooks(*(MagicMock() for _ in range(8)))
     memos = wiring_builders.ObservationMemos()
     on_observation = wiring_builders.make_on_observation(manager, SimpleNamespace(), effects, hooks, None, memos)
     verdict = SimpleNamespace(state="idle", reason="r", tier=0, activity_hint=None)
@@ -80,7 +80,7 @@ async def test_a_targeted_pass_fires_pass_end_exactly_once():
 
 def _pass_end_parts(refresh):
     manager = SimpleNamespace(_registry=SimpleNamespace(sessions={"live": 1}))
-    hooks = wiring_builders.ObservationHooks(*(MagicMock() for _ in range(7)))
+    hooks = wiring_builders.ObservationHooks(*(MagicMock() for _ in range(8)))
     hooks.inbox.refresh.side_effect = refresh
     memos = wiring_builders.ObservationMemos(published={"gone": (1,)}, marks={"gone": (2,)})
     return wiring_builders.make_on_pass_end(manager, hooks, memos), memos, hooks

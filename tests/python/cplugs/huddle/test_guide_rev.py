@@ -1,8 +1,8 @@
 
 from __future__ import annotations
 
-from src.cplugs.huddle import guide_rev, mcp
-from src.cplugs.huddle.guide_rev import GUIDE_PATH, TASK_MANAGER_GUIDE_CHANGELOG, TASK_MANAGER_GUIDE_HASH, TASK_MANAGER_GUIDE_REV, guide_hash, guide_text
+from src.plugins.huddle import guide_rev, mcp
+from src.plugins.huddle.guide_rev import GUIDE_PATH, TASK_MANAGER_GUIDE_CHANGELOG, TASK_MANAGER_GUIDE_HASH, TASK_MANAGER_GUIDE_REV, guide_hash, guide_text
 from src.core.mcp import instructions
 from src.core.skills import bundled_install
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
@@ -103,7 +103,7 @@ def test_the_changelog_has_the_addon_convention_line():
 
 
 def test_stale_extensions_is_present_only_when_an_addon_is_behind(manager, monkeypatch):
-    from src.cplugs.huddle import mcp as huddle_mcp
+    from src.plugins.huddle import mcp as huddle_mcp
 
     monkeypatch.setattr(huddle_mcp, "stale_extensions", lambda *a, **k: [])
     ok, out = call(manager, "task_manager_tasks_list", {"list": "all"})

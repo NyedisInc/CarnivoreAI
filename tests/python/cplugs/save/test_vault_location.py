@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.save.vault import location
-from src.cplugs.save.vault.location import VaultUnavailable
+from src.plugins.save.vault import location
+from src.plugins.save.vault.location import VaultUnavailable
 
 
 def test_an_unmounted_volume_raises_and_creates_nothing(tmp_path):

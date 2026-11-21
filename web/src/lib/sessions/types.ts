@@ -1,5 +1,5 @@
 
-import type { UsageLimit } from '../../opscenter/api/types';
+import type { LoginExpired, UsageLimit } from '../../opscenter/api/types';
 
 export interface ScheduledMark {
     name: string;
@@ -29,6 +29,7 @@ export interface SessionListItem {
     startup_gate?: string | null;
     status_source?: string | null;
     usage_limit?: UsageLimit | null;
+    login_expired?: LoginExpired | null;
     automation?: { automation_id: string; run_id: string; name: string } | null;
     messaging?: { directions: string[]; held: number } | null;
     /* there is nothing */
@@ -42,6 +43,7 @@ export interface SessionListItem {
     subagents_state?: string | null;
     subagents_running?: number | null;
     subagents_total?: number | null;
+    subagents_stalled?: number | null;
     workflow_active?: boolean | null;
     timers_state?: string | null;
     timers_live?: number | null;
@@ -98,6 +100,7 @@ export interface RunningSessionRow extends AttachableSession {
     activity_hint?: string | null;
     parked_summary?: string | null;
     usage_limit?: UsageLimit | null;
+    login_expired?: LoginExpired | null;
     host_key?: string | null;
     host_label?: string | null;
     host_state?: string | null;

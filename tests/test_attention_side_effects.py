@@ -349,6 +349,31 @@ def test_a_visible_viewer_suppresses_the_flag_and_a_hidden_one_does_not(wired):
     assert manager.unread_writes == []
 
 
+def test_a_resting_session_with_a_visible_viewer_loses_its_stale_auto_flag_only(wired, tmp_path):
+    from src.core.terminal_size import TerminalSizeNegotiator
+    from src.core.unread_store import UnreadStore
+
+    manager, effects, _calls = wired
+    store = UnreadStore(tmp_path / "unread.json")
+    manager._unread_store = store
+    neg = TerminalSizeNegotiator()
+    manager._terminal_size_negotiator = neg
+    sid = TARGET.session_id
+    store.set_flag(TMUX_NAME, "auto", True, epoch=EPOCH)
+    store.set_flag(TMUX_NAME, "manual", True, epoch=EPOCH)
+
+    neg.set_client_size(sid, "ws", 80, 24, voting=False)
+    effects.clear_unread_while_watched(TARGET, observation())
+    assert store.raw[f"{TMUX_NAME}@{EPOCH}"]["auto"] is True
+
+    neg.set_client_size(sid, "ws", 80, 24, voting=True)
+    effects.clear_unread_while_watched(TARGET, observation(state=STATE_BUSY))
+    assert store.raw[f"{TMUX_NAME}@{EPOCH}"]["auto"] is True
+
+    effects.clear_unread_while_watched(TARGET, observation())
+    assert store.raw[f"{TMUX_NAME}@{EPOCH}"] == {"auto": False, "manual": True}
+
+
 
 
 def test_every_reading_makes_the_resolved_state_durable(wired):

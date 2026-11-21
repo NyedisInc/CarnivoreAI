@@ -8,8 +8,8 @@ import pytest
 
 from src.core.mcp import pending, write_tools
 from src.core.mcp.approvals import call_context
-from src.cplugs.host import runtime
-from src.cplugs.huddle import legacy_approvals, lifecycle, rules, service
+from src.plugins.host import runtime
+from src.plugins.huddle import legacy_approvals, lifecycle, rules, service
 from tests.python.cplugs.huddle.test_task_manager_focus import CALLER, add, client, setup  # noqa: F401
 
 LIST = "/api/v1/cplugs/huddle/lists"

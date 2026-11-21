@@ -19,8 +19,8 @@ import validate_kinds  # noqa: E402
 from validate_upload import UploadRefused  # noqa: E402
 from index_builder import cplugs as index_cplugs  # noqa: E402
 from index_builder.kind_errors import KindRefused  # noqa: E402
-from src.cplugs.host import install_gates
-from src.cplugs.sdk import api_contract
+from src.plugins.host import install_gates
+from src.plugins.sdk import api_contract
 from src.core import message_model_secrets
 
 

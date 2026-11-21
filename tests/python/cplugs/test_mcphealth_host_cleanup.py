@@ -7,8 +7,8 @@ from types import SimpleNamespace
 import pytest
 
 from src.core.mcp_health.host_methods import basename
-from src.cplugs.host import sidecar_boot
-from src.cplugs.host.sidecar_boot import MCP_HEALTH_ID
+from src.plugins.host import sidecar_boot
+from src.plugins.host.sidecar_boot import MCP_HEALTH_ID
 
 
 @pytest.mark.parametrize("command,expected", [

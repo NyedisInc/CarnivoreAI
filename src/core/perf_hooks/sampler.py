@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 
-from src.core.perf_hooks import call_counter
+from src.core.perf_hooks import call_counter, job_counter
 from src.core.perf_hooks.call_counter import thread_group
 from src.core.perf_hooks.thread_cpu import ThreadCpu, read_thread_cpu
 
@@ -241,6 +241,7 @@ def run_profile(request: ProfileRequest) -> Dict[str, Any]:
     gc_timer = _GcTimer()
     agg = _Aggregate()
     try:
+        job_counter.reset()
         call_counter.start()
         gc.callbacks.append(gc_timer)
         wall0, cpu0 = time.monotonic(), time.process_time()
@@ -251,6 +252,7 @@ def run_profile(request: ProfileRequest) -> Dict[str, Any]:
             wall = time.monotonic() - wall0
             process_cpu = time.process_time() - cpu0
             calls = call_counter.stop(wall)
+            calls.update(job_counter.report(wall))
         last = read_thread_cpu()
         by_cpu = first is not None
         result: Dict[str, Any] = {
@@ -294,5 +296,10 @@ async def profile(request: ProfileRequest) -> Dict[str, Any]:
             return
         loop.call_soon_threadsafe(deliver, outcome, None)
 
-    threading.Thread(target=body, name="perf-profiler", daemon=True).start()
-    return await future
+    attached = job_counter.attach(loop)
+    try:
+        threading.Thread(target=body, name="perf-profiler", daemon=True).start()
+        return await future
+    finally:
+        if attached:
+            job_counter.detach(loop)

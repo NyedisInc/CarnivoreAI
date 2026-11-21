@@ -135,9 +135,9 @@
   "summary": "a shared list between you and claude: claude posts what is done and what needs your call, you approve, note, reorder and reply, and the tab surfaces when claude posts.",
   "surfaces": [
     "left sidebar huddle tab",
-    "web/src/cplugs/huddle/",
-    "src/cplugs/huddle/routes.py",
-    "src/cplugs/huddle/mcp.py"
+    "web/src/plugins/huddle/",
+    "src/plugins/huddle/routes.py",
+    "src/plugins/huddle/mcp.py"
   ],
   "updated": "2026-10-28",
   "where": [

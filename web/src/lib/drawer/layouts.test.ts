@@ -37,7 +37,7 @@ describe('rows and the band', () => {
         page();
         const out = Model.rows([{ session_uuid: 's1', name: 'cloude_a', label: 'Alpha' }]);
         expect(out.map((r) => r.name)).toEqual(['layout:L2', 'layout:L1']);
-        expect(out[0]?.member_count).toBe(2);
+        expect(out[0]?.member_count).toBe(1);
         expect(out[0]?._members).toHaveLength(1);
         expect(out[0]?.member_names).toEqual(['Alpha']);
     });

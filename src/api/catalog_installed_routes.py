@@ -6,7 +6,7 @@ import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from src.api.auth import require_auth
-from src.cplugs.host.peer_refusal import refuse_peer_token_writes
+from src.plugins.host.peer_refusal import refuse_peer_token_writes
 from src.api.catalog_install_support import (
     fetch_and_stage,
     refuse_409,

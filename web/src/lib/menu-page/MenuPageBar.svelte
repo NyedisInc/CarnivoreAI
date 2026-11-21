@@ -43,7 +43,7 @@
         left: 0;
         right: 0;
         height: var(--menu-page-bar-h);
-        z-index: 41;
+        z-index: calc(var(--oc-z-page) + var(--oc-z-step));
         display: flex;
         align-items: center;
         padding: 0 8px;

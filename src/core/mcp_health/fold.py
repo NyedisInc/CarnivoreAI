@@ -158,56 +158,73 @@ def _blocks(record: Dict[str, Any]) -> List[Dict[str, Any]]:
     return [b for b in content if isinstance(b, dict)] if isinstance(content, list) else []
 
 
-def _worked_events(record: Dict[str, Any], open_calls: Dict[str, str]) -> List[McpEvent]:
-    healed: List[McpEvent] = []
+def _worked_events(
+    record: Dict[str, Any], open_calls: Dict[str, str], origins: Optional[Dict[str, int]] = None, offset: int = -1
+) -> List[Tuple[McpEvent, Optional[int]]]:
+    healed: List[Tuple[McpEvent, Optional[int]]] = []
     at = parse_timestamp(record.get("timestamp"))
     for block in _blocks(record):
         if block.get("type") == "tool_use" and isinstance(block.get("id"), str):
             server = _tool_server(block.get("name"))
             if server is not None:
                 open_calls[block["id"]] = server
+                if origins is not None:
+                    origins[block["id"]] = offset
         elif block.get("type") == "tool_result" and block.get("is_error") is not True:
             call_id = block.get("tool_use_id")
             server = open_calls.pop(call_id, None) if isinstance(call_id, str) else None
             if server is not None:
-                healed.append(McpEvent(at=at, exact=False, reconnect=True, added=(server,)))
+                origin = origins.pop(call_id, None) if origins is not None else None
+                healed.append((McpEvent(at=at, exact=False, reconnect=True, added=(server,)), origin))
     return healed
+
+
+def scan_record(record: Any, open_calls: Dict[str, str]) -> List[McpEvent]:
+    return [event for event, _origin in scan_record_located(record, open_calls)]
+
+
+def scan_record_located(
+    record: Any, open_calls: Dict[str, str], origins: Optional[Dict[str, int]] = None, offset: int = -1
+) -> List[Tuple[McpEvent, Optional[int]]]:
+    if not isinstance(record, dict) or record.get("isSidechain") is True:
+        return []
+    if record.get("type") in ("user", "assistant"):
+        events: List[Tuple[McpEvent, Optional[int]]] = []
+        if record.get("type") == "user":
+            healed = _reconnect_event(record)
+            if healed is not None:
+                events.append((healed, None))
+        events.extend(_worked_events(record, open_calls, origins, offset))
+        return events
+    if record.get("type") != "attachment":
+        return []
+    attachment = record.get("attachment")
+    if not isinstance(attachment, dict):
+        return []
+    kind = attachment.get("type")
+    at = parse_timestamp(record.get("timestamp"))
+    if kind == "mcp_instructions_delta":
+        return [(McpEvent(
+            at=at, exact=True,
+            removed=tuple(_names(attachment.get("removedNames"))),
+            added=tuple(_names(attachment.get("addedNames"))),
+        ), None)]
+    if kind == "deferred_tools_delta":
+        return [(McpEvent(
+            at=at, exact=False,
+            removed=_server_names(_names(attachment.get("removedNames"))),
+            added=_server_names(_names(attachment.get("addedNames")) + _names(attachment.get("readdedNames"))),
+            failed=tuple(_server_list(attachment.get("failedMcpServers"))),
+            needs_auth=tuple(_server_list(attachment.get("needsAuthMcpServers"))),
+        ), None)]
+    return []
 
 
 def extract_mcp_events(records: Iterable[Any] | Sequence[Any]) -> Tuple[McpEvent, ...]:
     events: List[McpEvent] = []
     open_calls: Dict[str, str] = {}
     for record in records or ():
-        if not isinstance(record, dict) or record.get("isSidechain") is True:
-            continue
-        if record.get("type") in ("user", "assistant"):
-            if record.get("type") == "user":
-                healed = _reconnect_event(record)
-                if healed is not None:
-                    events.append(healed)
-            events.extend(_worked_events(record, open_calls))
-            continue
-        if record.get("type") != "attachment":
-            continue
-        attachment = record.get("attachment")
-        if not isinstance(attachment, dict):
-            continue
-        kind = attachment.get("type")
-        at = parse_timestamp(record.get("timestamp"))
-        if kind == "mcp_instructions_delta":
-            events.append(McpEvent(
-                at=at, exact=True,
-                removed=tuple(_names(attachment.get("removedNames"))),
-                added=tuple(_names(attachment.get("addedNames"))),
-            ))
-        elif kind == "deferred_tools_delta":
-            events.append(McpEvent(
-                at=at, exact=False,
-                removed=_server_names(_names(attachment.get("removedNames"))),
-                added=_server_names(_names(attachment.get("addedNames")) + _names(attachment.get("readdedNames"))),
-                failed=tuple(_server_list(attachment.get("failedMcpServers"))),
-                needs_auth=tuple(_server_list(attachment.get("needsAuthMcpServers"))),
-            ))
+        events.extend(scan_record(record, open_calls))
     return tuple(events)
 
 

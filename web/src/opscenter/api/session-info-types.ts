@@ -40,6 +40,13 @@ export interface McpDropInfo {
   source: 'transcript' | 'server' | 'client_log' | 'process' | 'probe';
 }
 
+export interface CodexHelpersInfo {
+  verdict: string;
+  version: string | null;
+  text: string | null;
+  checked_at: string;
+}
+
 export interface McpHealthInfo {
   servers: McpServerHealthInfo[];
   dropped: McpDropInfo[];

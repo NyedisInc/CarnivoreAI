@@ -15,17 +15,17 @@ from src.core.crate_import import analysis, apply as ap, plugin_data_in
 from src.core.crate_import.env import StoreHome
 from src.core.crate_import.model import ImportRequest, new_import_id
 from src.core.crate_import.provenance import Provenance
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import build_plan as build_export_plan
-from src.cplugs.crate.writer import run_export
-from src.cplugs.reviewboard.scan import scan
-from src.cplugs.sdk import crate_format as cf
-from src.cplugs.sdk import task_folders
-from src.cplugs.sdk.crate_import import plugin_homes_of
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import build_plan as build_export_plan
+from src.plugins.crate.writer import run_export
+from src.plugins.reviewboard.scan import scan
+from src.plugins.sdk import crate_format as cf
+from src.plugins.sdk import task_folders
+from src.plugins.sdk.crate_import import plugin_homes_of
 from tests.python.cplugs.crate.crate_world import env_for, make_world, project_request
 from tests.python.cplugs.crate.test_plugin_data import manifest_with, marker
-from src.cplugs.reviewboard import document
-from src.cplugs.sdk.computer import local_computer
+from src.plugins.reviewboard import document
+from src.plugins.sdk.computer import local_computer
 from tests.python.cplugs.reviewboard.boards import SIDECAR, make_board, make_root, sidecar
 from tests.python.crate_import.test_import_same_path import rows_of, run
 from tests.python.crate_import.test_import_work_side import target_install
@@ -262,7 +262,7 @@ def test_a_relink_that_failed_is_retried_and_one_that_worked_is_not_copied_besid
 def test_the_real_import_env_carries_a_relink_hook_that_reaches_the_boards_port(tmp_path: Path) -> None:
     from src.core.crate_import.env import no_relink
     from src.core.project_move.plan import PaneListing
-    from src.cplugs.sdk import crate_import as sdk, ports
+    from src.plugins.sdk import crate_import as sdk, ports
 
     w = make_world(tmp_path)
     env = sdk.import_env(Path(w.state), w.locations, "i", lambda: PaneListing(True))

@@ -32,7 +32,7 @@ def test_the_notes_menu_opens_on_the_themed_popup_surface(page_and_base, theme: 
     assert "linear-gradient" in look["image"] and look["shadow"] != "none", look
 
 
-def test_without_the_sheet_the_same_menu_is_a_white_box_so_the_check_can_fail(page_and_base) -> None:
+def test_without_the_sheet_the_same_menu_loses_its_glow_and_sheen_so_the_check_can_fail(page_and_base) -> None:
     page, base = page_and_base
     page.set_viewport_size({"width": 1600, "height": 1100})
     harness.open_widget(page, base, "core.notes", "data", {"zone": "home", "size": "m", "theme": "carnivore"}, extra={"state": "menu"})
@@ -40,7 +40,7 @@ def test_without_the_sheet_the_same_menu_is_a_white_box_so_the_check_can_fail(pa
     page.evaluate("() => document.querySelectorAll('link[href*=\"popup-focus\"]').forEach((link) => link.remove())")
     bare = page.evaluate(MENU_LOOK)
     assert bare["image"] == "none" and bare["shadow"] == "none"
-    assert luminance(bare["rgb"]) > 0.9, bare
+    assert not ("linear-gradient" in bare["image"] and bare["shadow"] != "none"), bare
 
 
 def test_the_page_links_the_sheet_last(page_and_base) -> None:

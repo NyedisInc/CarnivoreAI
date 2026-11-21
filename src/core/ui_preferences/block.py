@@ -6,10 +6,12 @@ from typing import Any, Dict, List, Tuple
 
 from pydantic import ValidationError
 
+from src.core.keymap.clashes import check_no_new_clash
 from src.core.widget_placement.retired_widgets import migrate_retired_placements
 from src.core.ui_preferences.constants import MAX_KEY_LENGTH, MAX_UNKNOWN_FIELDS, MAX_UNKNOWN_VALUE_BYTES, RETIRED_FIELDS, SCHEMA_VERSION, UI_PREFERENCES_KEY
 from src.core.ui_preferences.values import UiPreferenceValues
 
+KEYMAP_FIELD = "keymap"
 
 _SECRET_KEY_NAMES = frozenset(
     {"claude_tunnel_token", "claude_refresh_token", "provider_accounts"}
@@ -151,6 +153,8 @@ def apply_changes(
     moved: Dict[str, Any] = {}
 
     for name, value in changes.items():
+        if name == KEYMAP_FIELD and value is not None:
+            check_no_new_clash(values.get(KEYMAP_FIELD), value)
         if value is None:
             if name in values:
                 values.pop(name)

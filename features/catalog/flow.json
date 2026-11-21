@@ -1,6 +1,6 @@
 {
   "api_routes": [
-    "src/cplugs/flow/routes.py"
+    "src/plugins/flow/routes.py"
   ],
   "area": "sessions",
   "description": "The flow plugin rebuilds a multi-agent run two ways from one collector. The swimlane flow chart: one lane per agent session with subagents nested under their parent, blocks for the work each did, and arrows for crosstalk messages, spawns, subagent launches and returns, task manager posts and owner replies, every item carrying the ids it came from and an arrow no exact key proves marked inferred; an agent calls flow_get (or the owner its route), and with html set gets one self-contained page to post to the task manager. The flow tab: a live chat of the same run, ordered by cause instead of a time axis, with each agent's words as a bubble in its own color (a subagent stepped in under its parent) and cards between them for tasks, crosstalk, spawns, subagent launches and returns, task manager posts and runs of tool calls (folded, open to see each call). The tab is for testing and stays out of the tab strip until the plugin setting show tab is switched on (it ships off). The tab follows the run as it happens over the push while it is open and does nothing while it is closed. The plugin ships off; finished charts are kept as snapshots in its own flow.db.",
@@ -41,11 +41,11 @@
   "status": "beta",
   "summary": "rebuild a multi-agent run as a swimlane chart on demand, or follow it live as a chat in the flow tab.",
   "surfaces": [
-    "src/cplugs/flow/mcp.py",
-    "src/cplugs/flow/views/page.py",
+    "src/plugins/flow/mcp.py",
+    "src/plugins/flow/views/page.py",
     "src/core/flow_data/feed.py",
     "src/core/flow_data/live.py",
-    "web/src/cplugs/flow/FlowBody.svelte"
+    "web/src/plugins/flow/FlowBody.svelte"
   ],
   "updated": "2026-10-27",
   "where": [

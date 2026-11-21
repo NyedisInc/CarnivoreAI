@@ -12,9 +12,9 @@ from typing import Any, Dict
 import pytest
 
 from src.core.catalog import plugin_pack, publish_prepare_kinds as kinds
-from src.cplugs.host import sideload
-from src.cplugs.host.sidecar_manifest import _TOP_KEYS, parse_sidecar_manifest
-from src.cplugs.sdk.schema_check import SchemaSet
+from src.plugins.host import sideload
+from src.plugins.host.sidecar_manifest import _TOP_KEYS, parse_sidecar_manifest
+from src.plugins.sdk.schema_check import SchemaSet
 
 ROOT = Path(__file__).resolve().parents[3]
 SMOKE = ROOT / "tests" / "fixtures" / "cplugs" / "warezsmoke"

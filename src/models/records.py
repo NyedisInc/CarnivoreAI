@@ -2,7 +2,7 @@
 from typing import Optional, List
 from pydantic import BaseModel, Field
 
-from src.models.sessions import ScheduledMark
+from src.models.session_marks import ScheduledMark
 
 
 

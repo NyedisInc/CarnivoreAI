@@ -15,7 +15,7 @@
       flex: none;
       width: 24px;
       height: 2px;
-      border-radius: 1px;
+      border-radius: var(--oc-radius-xs);
       background: var(--grip-color, var(--oc-line-panel));
     }
 

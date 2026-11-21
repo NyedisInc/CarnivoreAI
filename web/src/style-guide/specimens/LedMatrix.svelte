@@ -1,6 +1,8 @@
 <script lang="ts">
   /* the same words */
   import StatusLed from '../../lib/StatusLed.svelte';
+  import { loginExpiredLabel } from '../../lib/led';
+  import { t } from '../../lib/i18n/index.svelte';
 
   interface LedCase {
     status: string | null;
@@ -8,6 +10,7 @@
     startupGate?: string | null;
     transport?: string | null;
     usageLimit?: string | null;
+    loginExpired?: string | null;
     note: string;
   }
 
@@ -27,6 +30,7 @@
     { status: 'idle', startupGate: 'awaiting_startup_prompt', note: 'startup gate: yellow' },
     { status: 'working', transport: 'disconnected', note: 'socket dropped: red wins' },
     { status: 'working', usageLimit: 'over limit, resets oct 20 9pm', note: 'over its usage limit: the red skull, static (#1902)' },
+    { status: 'idle', loginExpired: loginExpiredLabel({ login_expired: { message: '', since: null } }), note: t('session.status.login_expired') },
     { status: 'working', usageLimit: 'over limit', transport: 'disconnected', note: 'socket dropped outranks the skull' },
   ];
 </script>
@@ -40,12 +44,13 @@
         startupGate={c.startupGate ?? null}
         transport={c.transport ?? null}
         usageLimit={c.usageLimit ?? null}
+        loginExpired={c.loginExpired ?? null}
         showLabel={true}
       />
       <code class="sg-led-props"
         >{c.status ?? 'null'}{c.unread ? ' unread' : ''}{c.startupGate ? ' startupGate' : ''}{c.transport
           ? ' transport=' + c.transport
-          : ''}{c.usageLimit ? ' usageLimit' : ''}</code
+          : ''}{c.usageLimit ? ' usageLimit' : ''}{c.loginExpired ? ' loginExpired' : ''}</code
       >
       <span class="sg-led-note">{c.note}</span>
     </li>

@@ -6,12 +6,12 @@ from contextlib import closing
 
 import pytest
 
-from src.cplugs.host import runtime
-from src.cplugs.huddle import board, board_port, owner_guards, service
-from src.cplugs.huddle.answer_writer import AnswerWriter
-from src.cplugs.huddle.cards import state_log
-from src.cplugs.huddle.roles import ask
-from src.cplugs.huddle.rules import TaskManagerInvalid, TaskManagerLocked
+from src.plugins.host import runtime
+from src.plugins.huddle import board, board_port, owner_guards, service
+from src.plugins.huddle.answer_writer import AnswerWriter
+from src.plugins.huddle.cards import state_log
+from src.plugins.huddle.roles import ask
+from src.plugins.huddle.rules import TaskManagerInvalid, TaskManagerLocked
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_owner_guards import HANDOFF, _item, _reply, _review, handoff_root  # noqa: F401
 

@@ -8,6 +8,7 @@
   import FacetSelect from '../../opscenter/ui/FacetSelect.svelte';
   import FedConfirmModal from '../hosts-page/FedConfirmModal.svelte';
   import AddHostModal from '../hosts-page/AddHostModal.svelte';
+  import SshTargetBlock from '../pack-ssh-targets/SshTargetBlock.svelte';
   import { ageWords } from '../computers/computers-format';
   import { probeVerdict, type HostRow } from '../hosts-page/hosts-adapter';
   import { loginOf, sshCommand, type RosterComputer } from './roster-model';
@@ -88,6 +89,7 @@
     {#if rosterActivity.error}<p class="pp-err" role="alert">{rosterActivity.error}</p>{/if}
   </section>
   {#if !h.local}
+    <SshTargetBlock hostKey={h.key} />
     <div class="m1-copyssh" data-act="copyssh"><code class="pp-wrap">{sshCommand(h)}</code>
       <Button size="sm" onclick={() => void copy(h)}>{t('roster.ssh.copy')}</Button></div>
     {#if copied}<p class="pp-hint" role="status">{copied}</p>{/if}

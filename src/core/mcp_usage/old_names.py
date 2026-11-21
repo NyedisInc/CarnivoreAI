@@ -9,7 +9,7 @@ from typing import Dict, Optional, Tuple
 
 import structlog
 
-from src.cplugs.sdk import old_names as sdk
+from src.plugins.sdk import old_names as sdk
 from src.core.mcp_usage import store as usage_store
 
 logger = structlog.get_logger()

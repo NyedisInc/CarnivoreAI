@@ -21,6 +21,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api import one_shot_routes
+from src.core.sessions import guarded_paste
 from src.api.auth import require_auth
 from src.core.session_one_shot_gate import MAX_BODY_BYTES, PANE_DIALOG_OPEN
 from src.core.session_startup_gate import GATE_AWAITING, GATE_READY, GATE_UNKNOWN
@@ -279,7 +280,7 @@ def test_no_agent_record_on_the_row_answers_pane_not_an_agent() -> None:
 
 
 def test_an_adopted_row_with_a_recorded_launch_passes_without_a_fingerprint(monkeypatch) -> None:
-    monkeypatch.setattr(one_shot_routes, "registered_agent_in_foreground", lambda **_: False)
+    monkeypatch.setattr(guarded_paste, "registered_agent_in_foreground", lambda **_: False)
     client, backend = _client(agent_type="claude-chrome", memory_agent_type=None)
     response = _post(client, "hello")
     assert response.status_code == 200, response.text
@@ -293,7 +294,7 @@ def test_no_record_anywhere_but_a_proven_foreground_claude_passes(monkeypatch) -
         seen.update(kwargs)
         return True
 
-    monkeypatch.setattr(one_shot_routes, "registered_agent_in_foreground", proof)
+    monkeypatch.setattr(guarded_paste, "registered_agent_in_foreground", proof)
     client, backend = _client(agent_type=None)
     response = _post(client, "hello")
     assert response.status_code == 200, response.text
@@ -302,7 +303,7 @@ def test_no_record_anywhere_but_a_proven_foreground_claude_passes(monkeypatch) -
 
 
 def test_no_record_and_no_proof_still_refuses(monkeypatch) -> None:
-    monkeypatch.setattr(one_shot_routes, "registered_agent_in_foreground", lambda **_: False)
+    monkeypatch.setattr(guarded_paste, "registered_agent_in_foreground", lambda **_: False)
     client, backend = _client(agent_type=None)
     response = _post(client, "hello")
     assert response.status_code == 409

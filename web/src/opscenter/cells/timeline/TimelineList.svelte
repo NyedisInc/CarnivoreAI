@@ -119,7 +119,7 @@
 
     .oc-tl-dot[data-kind='compact'] { --_hue: var(--oc-violet); transform: rotate(45deg); }
     .oc-tl-dot[data-kind='bookmark'] { --_hue: var(--oc-yellow); }
-    .oc-tl-dot[data-kind='restart'] { --_hue: var(--oc-green); border-radius: 50%; }
+    .oc-tl-dot[data-kind='restart'] { --_hue: var(--oc-green); border-radius: var(--oc-radius-circle); }
     .oc-tl-dot[data-kind='restore'] { --_hue: var(--oc-cyan); background: none; border: var(--oc-border) solid var(--_hue); }
   }
 </style>

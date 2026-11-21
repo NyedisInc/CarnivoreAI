@@ -13,8 +13,8 @@ from src.api.auth import require_auth
 from src.api.federation_pack_span_routes import BoardBody, board_verb
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
-from src.cplugs.reviewboard import root as board_root
-from src.cplugs.reviewboard.errors import NoRoot
+from src.plugins.reviewboard import root as board_root
+from src.plugins.reviewboard.errors import NoRoot
 from tests.python.cplugs.reviewboard.boards import SIDECAR, make_board, sidecar
 from tests.python.cplugs.reviewboard.harness import BASE, Env, make_env
 
@@ -162,7 +162,7 @@ def test_the_routes_refuse_while_off_or_without_a_usable_folder(env: Env, client
     assert client.post(f"{BASE}/rescan").status_code == 409
     env.set_root(None)
     assert client.get(f"{BASE}/boards").json()["boards"] == []
-    from src.cplugs.host import runtime, state as owner_state
+    from src.plugins.host import runtime, state as owner_state
     from dataclasses import replace
     owner_state.update(env.host.state_dir, runtime.find("reviewboard").manifest, None, lambda st: replace(st, enabled=False))
     off = client.get(f"{BASE}/boards")
@@ -206,7 +206,7 @@ def test_the_tools_say_why_when_the_folder_is_unusable(env: Env):
 def test_a_read_token_sees_the_read_tools_and_a_disabled_plugin_hides_them(env: Env):
     read = {d["name"] for d in tools.tool_definitions(AgentCaller("x", "x", "x", "tok", "read"))}
     assert {"task_manager_boards_list", "task_manager_board_get"} <= read
-    from src.cplugs.host import runtime, state as owner_state
+    from src.plugins.host import runtime, state as owner_state
     from dataclasses import replace
     owner_state.update(env.host.state_dir, runtime.find("reviewboard").manifest, None, lambda st: replace(st, enabled=False))
     assert not {d["name"] for d in tools.tool_definitions()} & {"task_manager_boards_list", "task_manager_board_get"}
@@ -223,7 +223,7 @@ def test_the_federation_board_route_does_not_admit_the_task_manager_family():
 
 
 def test_board_state_follows_whose_turn_it_is():
-    from src.cplugs.reviewboard import document, state
+    from src.plugins.reviewboard import document, state
     parse = lambda raw: document.parse_sidecar(raw)  # noqa: E731
     raw = sidecar()
     assert state.board_state(parse(raw)) == state.WITH_CLAUDE

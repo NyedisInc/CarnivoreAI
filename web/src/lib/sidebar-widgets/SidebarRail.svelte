@@ -17,10 +17,12 @@
   import { menuPage } from '../menu-page/menu-pages';
   import { activeFlyout, handleFlyoutEscape } from './flyout.svelte';
   import TabKey, { keyFace } from '../zone-shell/TabKey.svelte';
+  import Icon from '../../opscenter/ui/Icon.svelte';
   import type { KeyFace } from '../zone-shell/zone-types';
   import { FLYOUT_CONTAINER_ID } from './rail-dom';
   import { railKeyTarget } from './rail-keys.svelte';
   import { barPinned, railPinOffered } from '../widget-bars/bar-pin-action';
+  import { QUESTIONS_FLYOUT } from './widget-ids';
   import { railDockNames, startRailDockNames } from './rail-dock-names.svelte';
   import type { Snippet } from 'svelte';
 
@@ -111,6 +113,7 @@
 
   let label = $state<HTMLElement | null>(null);
   let labelText = $state('');
+  let labelIcon = $state('');
   let labelOn = $state(false);
 
   startRailDockNames();
@@ -123,7 +126,13 @@
     }
     const box = cell.getBoundingClientRect();
     labelText = cell.dataset.dockName ?? '';
-    label.style.transform = `translate(${Math.max(nav.getBoundingClientRect().right, box.right) + 8}px, ${box.top + box.height / 2}px) translateY(-50%)`;
+    labelIcon = cell.dataset.dockIcon ?? '';
+    const at = label.getBoundingClientRect();
+    const originX = at.left - (parseFloat(label.style.left) || 0);
+    const originY = at.top - (parseFloat(label.style.top) || 0);
+    label.style.left = `${(labelIcon ? box.left : Math.max(nav.getBoundingClientRect().right, box.right) + 6) - originX}px`;
+    label.style.top = `${box.top - originY}px`;
+    label.style.height = `${box.height}px`;
     labelOn = true;
   }
 
@@ -141,7 +150,7 @@
     state={item.pressed ? 'pressed' : null}
     active={item.pressed?.() ?? false}
     tabbable={stop === item.id}
-    attrs={{ 'data-rail-widget': item.widgetId, 'data-rail-key': item.id, 'aria-current': !leadIds.has(item.id) && activeRow === item.id ? 'page' : undefined }}
+    attrs={{ 'data-rail-widget': item.widgetId, 'data-rail-attention': item.widgetId === QUESTIONS_FLYOUT ? 'question' : undefined, 'data-rail-key': item.id, 'aria-current': !leadIds.has(item.id) && activeRow === item.id ? 'page' : undefined }}
     close={item.close ? { label: t('drawer.tabs.close', { name: t(item.labelKey) }), run: () => item.close?.(), attrs: { 'data-rail-close': item.id } } : undefined}
     onfocus={() => (focused = item.id)}
     onpress={(_id, event) => press(item, event)}
@@ -149,8 +158,8 @@
 {/snippet}
 
 
-{#snippet dockCell(name: string, body: Snippet)}
-  <span class="sbr-rail__cell" data-dock-name={name}>{@render body()}</span>
+{#snippet dockCell(name: string, body: Snippet, icon?: string)}
+  <span class="sbr-rail__cell" data-dock-name={name} data-dock-icon={icon}>{@render body()}</span>
 {/snippet}
 
 {#snippet railButtonBody(item: RailItem)}
@@ -165,7 +174,7 @@
 {/snippet}
 
 {#snippet railButton(item: RailItem)}
-  {@render dockCell(t(item.labelKey), itemBody)}
+  {@render dockCell(t(item.labelKey), itemBody, item.icon)}
   {#snippet itemBody()}{@render railButtonBody(item)}{/snippet}
 {/snippet}
 
@@ -221,7 +230,7 @@
     <MiniRailUsage />
   {/if}
 </nav>
-<span class="sbr-rail__label" class:sbr-rail__label--on={labelOn} aria-hidden="true" bind:this={label}><span class="sbr-rail__label-text">{labelText}</span></span>
+<span class="sbr-rail__label" class:sbr-rail__label--on={labelOn} class:sbr-rail__label--bare={!labelIcon} aria-hidden="true" bind:this={label}>{#if labelIcon}<span class="sbr-rail__label-icon"><Icon name={labelIcon} size={17} /></span>{/if}<span class="sbr-rail__label-text">{labelText}</span></span>
 
 <style>
   @layer components {
@@ -311,41 +320,48 @@
       top: 0;
       left: 0;
       z-index: 4;
+      display: flex;
+      align-items: center;
+      gap: calc(var(--oc-space-4) + var(--oc-space-1));
+      box-sizing: border-box;
+      padding: 0 var(--oc-space-3) 0 calc((var(--sidebar-rail-w) - 17px) / 2 - var(--oc-border));
+      border: var(--oc-border) solid var(--oc-line-rule);
+      border-radius: var(--oc-radius);
+      background: var(--oc-ground-hover);
+      box-shadow: 0 6px 14px -4px var(--oc-shadow-lift);
+      color: var(--oc-text-primary);
+      font-family: var(--font-mono);
+      font-size: var(--oc-fs-nav);
+      white-space: nowrap;
       pointer-events: none;
-      opacity: 0;
-      transition: opacity var(--oc-motion-fast) ease-out;
+      visibility: hidden;
+      clip-path: inset(-20px calc(100% - var(--sidebar-rail-w)) -20px -20px);
+    }
+
+    .sbr-rail__label--bare {
+      padding-left: var(--oc-space-3);
+      clip-path: inset(-20px 100% -20px -20px);
     }
 
     .sbr-rail__label--on {
-      opacity: 1;
+      visibility: visible;
+      clip-path: inset(-20px -20px -20px -20px);
+      transition: clip-path calc(var(--oc-motion-fast) / 2) cubic-bezier(0.2, 0.9, 0.3, 1);
+    }
+
+    .sbr-rail__label-icon {
+      display: inline-flex;
+      flex: 0 0 auto;
+      color: var(--oc-orange);
     }
 
     .sbr-rail__label-text {
-      display: block;
-      padding: var(--oc-space-1) 9px;
-      border-radius: var(--oc-radius-sm);
-      background: var(--oc-ground-titlerow);
-      box-shadow: inset 0 0 0 var(--oc-border) var(--oc-line-panel);
-      color: var(--oc-text-primary);
-      font-family: var(--font-mono);
-      font-size: var(--oc-fs-label);
-      white-space: nowrap;
-      transform: translateX(-6px);
-      transition: transform var(--oc-motion-fast) ease-out;
-    }
-
-    .sbr-rail__label--on .sbr-rail__label-text {
-      transform: translateX(0);
+      text-transform: capitalize;
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .sbr-rail__label,
-      .sbr-rail__label-text {
+      .sbr-rail__label--on {
         transition: none;
-      }
-
-      .sbr-rail__label-text {
-        transform: none;
       }
     }
   }

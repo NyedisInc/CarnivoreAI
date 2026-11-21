@@ -89,10 +89,12 @@ class Lifecycle:
 
     def __init__(self, db_path: Optional[Path], *, state_dir: Optional[Path] = None,
                  plugins: Sequence[C.Plugin] = (), writer: Optional[Writer] = None,
-                 clock: Callable[[], float] = time.monotonic, retry_delays: Sequence[float] = RETRY_DELAYS) -> None:
+                 clock: Callable[[], float] = time.monotonic, retry_delays: Sequence[float] = RETRY_DELAYS,
+                 is_active: Callable[[C.Plugin], bool] = lambda plugin: True) -> None:
         self._db_path = db_path
         self._state_dir = Path(state_dir) if state_dir is not None else None
         self._hooked = tuple(p for p in plugins if p.on_lifecycle is not None)
+        self._is_active = is_active
         self._writer = writer
         self._clock = clock
         self._delays = tuple(retry_delays) or (1.0,)
@@ -155,7 +157,7 @@ class Lifecycle:
                 item.announced = True
                 self._announcer.put(item)
             for plugin in self._hooked:
-                if plugin.id not in item.plugins_done:
+                if plugin.id not in item.plugins_done and self._is_active(plugin):
                     self._call_hook(plugin, item)
                     item.plugins_done.add(plugin.id)
         except Exception as exc:  # noqa: BLE001
@@ -181,7 +183,7 @@ class Lifecycle:
     @staticmethod
     def _announce(item: _Item) -> None:
         try:
-            from src.cplugs.sdk import save_triggers  # noqa: PLC0415
+            from src.plugins.sdk import save_triggers  # noqa: PLC0415
 
             if not save_triggers.is_lifecycle(item.kind):
                 return

@@ -14,10 +14,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.reviewboard.public import drafts, links, responses, theme, waiting
-from src.cplugs.reviewboard.public.read import READER
-from src.cplugs.reviewboard.public.resolve import Resolver
-from src.cplugs.sdk.storage import CplugStorage, StorageSpec
+from src.plugins.reviewboard.public import drafts, links, responses, theme, waiting
+from src.plugins.reviewboard.public.read import READER
+from src.plugins.reviewboard.public.resolve import Resolver
+from src.plugins.sdk.storage import CplugStorage, StorageSpec
 from tests.python.cplugs.reviewboard.public.read_harness import add_revision, call, edge, get, mint_token, rewrite
 
 SLUG = "20261013-bottom-bar"
@@ -216,7 +216,7 @@ def test_the_owner_lists_summaries_and_opens_one_body(read_env, store, owner) ->
 
 
 def test_the_owner_removes_one_u_revision_or_the_whole_visitor(read_env, store, owner, monkeypatch) -> None:
-    from src.cplugs.reviewboard.public import announce
+    from src.plugins.reviewboard.public import announce
     told: List[str] = []
     monkeypatch.setattr(announce, "changed", lambda ctx, board: told.append(board))
     token = mint_token(store)

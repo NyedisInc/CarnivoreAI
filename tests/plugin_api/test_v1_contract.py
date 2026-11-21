@@ -23,11 +23,11 @@ from tests.plugin_api.mcp_column import mcp_column_problems  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[2]
 DOC = REPO / "docs" / "plugins" / "api-v1.md"
-WEB_SDK = REPO / "web" / "src" / "cplugs" / "sdk"
+WEB_SDK = REPO / "web" / "src" / "plugins" / "sdk"
 BRIDGE = REPO / "web" / "src" / "lib" / "cplug-ui" / "bridge.ts"
 CPLUG_UI = REPO / "web" / "src" / "lib" / "cplug-ui"
-HOST_SOURCES = (REPO / "src" / "cplugs" / "runtime", REPO / "src" / "cplugs" / "host")
-ROUTE_MODULE_DIR = "src/cplugs/host/"
+HOST_SOURCES = (REPO / "src" / "plugins" / "runtime", REPO / "src" / "plugins" / "host")
+ROUTE_MODULE_DIR = "src/plugins/host/"
 OWNER_PREFIX = "/api/v1/cplug-owner/"
 CATALOG_INSTALL = ("/api/v1/catalog/install", "/api/v1/catalog/install/", "/api/v1/catalog/installed")
 WEB_SOURCE_GLOBS = ("*.ts", "*.svelte")
@@ -108,7 +108,7 @@ def _signed_rows(rows: List[Dict[str, str]], key: str, coded: Dict[str, Tuple[st
 
 
 def coded_ctx() -> Dict[str, Tuple[str, str]]:
-    from src.cplugs.sdk.context import CAPABILITY_GRANTS, CplugContext
+    from src.plugins.sdk.context import CAPABILITY_GRANTS, CplugContext
 
     probe = CplugContext("probe", storage=object(), settings={}, notify=lambda n, k: None, log=object(), grants=frozenset(), capabilities={})
     out = {f"ctx.{n}": ("attribute", cp.NONE_CELL) for n in cp.public_instance_attrs(probe)}
@@ -120,7 +120,7 @@ def coded_ctx() -> Dict[str, Tuple[str, str]]:
 
 
 def ctx_problems(text: str) -> List[str]:
-    from src.cplugs.sdk.context import CAPABILITY_GRANTS
+    from src.plugins.sdk.context import CAPABILITY_GRANTS
 
     rows = _rows(text, "2.1")
     if not rows:
@@ -142,7 +142,7 @@ def _module_entry(name: str, value: Any, shown: str) -> Tuple[str, str]:
 
 
 def server_sdk_problems(text: str) -> List[str]:
-    import src.cplugs.sdk as sdk
+    import src.plugins.sdk as sdk
 
     rows = _rows(text, "2.2")
     if not rows:
@@ -151,8 +151,8 @@ def server_sdk_problems(text: str) -> List[str]:
 
 
 def coded_sidecar_sdk() -> Dict[str, Tuple[str, str]]:
-    import src.cplugs.sdk_py as package
-    from src.cplugs.sdk_py import plugin, testing
+    import src.plugins.sdk_py as package
+    from src.plugins.sdk_py import plugin, testing
 
     probes = {plugin.Plugin: plugin.Plugin(), plugin.Host: plugin.Host(lambda m, p: None), plugin.HostError: plugin.HostError(0, "probe"),
               testing.FakeHost: testing.FakeHost()}
@@ -184,7 +184,7 @@ def sidecar_sdk_problems(text: str) -> List[str]:
 
 
 def host_method_problems(text: str) -> List[str]:
-    from src.cplugs.runtime.dispatch import HostDispatcher
+    from src.plugins.runtime.dispatch import HostDispatcher
 
     coded = set(re.findall(r'"([a-z_.]+)": self\._', inspect.getsource(HostDispatcher._table)))
     rows = _rows(text, "2.4")
@@ -199,7 +199,7 @@ def _host_sends(method: str) -> bool:
 
 
 def sidecar_call_problems(text: str) -> List[str]:
-    from src.cplugs.sdk_py.plugin import Plugin
+    from src.plugins.sdk_py.plugin import Plugin
 
     coded = set(re.findall(r'method == "([^"]+)"', inspect.getsource(Plugin.handle)))
     rows = _rows(text, "2.5")
@@ -257,7 +257,7 @@ def _resolve(reference: str) -> Any:
 
 
 def _topic_example() -> str:
-    from src.cplugs.host import runtime
+    from src.plugins.host import runtime
 
     for d in runtime.definitions():
         for name in d.manifest.surfaces.topics:
@@ -266,8 +266,8 @@ def _topic_example() -> str:
 
 
 def event_problems(text: str) -> List[str]:
-    from src.cplugs.host.runtime import CPLUGS_TOPIC
-    from src.cplugs.runtime.process import FEED_GRANTS
+    from src.plugins.host.runtime import CPLUGS_TOPIC
+    from src.plugins.runtime.process import FEED_GRANTS
     from src.models.websocket import WSMessageType
 
     rows = _rows(text, "4")
@@ -316,8 +316,8 @@ def mcp_tool_problems(text: str) -> List[str]:
 
 
 def gate_problems(text: str) -> List[str]:
-    from src.cplugs.host.sidecar_manifest import TOOL_GATES
-    from src.cplugs.sdk.definition import GATES
+    from src.plugins.host.sidecar_manifest import TOOL_GATES
+    from src.plugins.sdk.definition import GATES
 
     rows = _rows(text, "5.2")
     if not rows:
@@ -328,7 +328,7 @@ def gate_problems(text: str) -> List[str]:
 
 
 def permission_problems(text: str) -> List[str]:
-    from src.cplugs.sdk.permission_registry import REGISTRY
+    from src.plugins.sdk.permission_registry import REGISTRY
 
     rows = _rows(text, "6")
     if not rows:

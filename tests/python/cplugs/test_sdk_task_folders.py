@@ -5,7 +5,7 @@ import json
 import stat
 from pathlib import Path
 
-from src.cplugs.sdk import task_folders as tf
+from src.plugins.sdk import task_folders as tf
 
 
 def test_names_are_the_slug_plus_the_id():

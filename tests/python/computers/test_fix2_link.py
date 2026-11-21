@@ -96,6 +96,9 @@ async def test_alerts_count_to_refused_and_anything_else_resets(monkeypatch):
         def connected(self):
             return []
 
+        def relayed(self):
+            return []
+
         async def serve(self, reader, writer):
             return outcomes.pop(0)
 

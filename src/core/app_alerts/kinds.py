@@ -11,10 +11,11 @@ KINDS: Tuple[str, ...] = (NEEDS_YOU, FYI, QUESTION)
 
 SOURCE_NAME_PARAMS: Tuple[str, ...] = ("agent", "session", "plugin", "automation", "provider")
 
-RECHECK_PREFIXES: Tuple[str, ...] = ("backup_health.",)
+RECHECK_PREFIXES: Tuple[str, ...] = ("backup_health.", "self_check.")
 
 SYSTEM_PANES: Dict[str, str] = {
     "full_disk_access": "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles",
+    "privacy_security": "x-apple.systempreferences:com.apple.preference.security",
 }
 
 _P = K.KEY_PREFIX
@@ -35,6 +36,11 @@ def _recheck() -> Dict[str, Any]:
 def _privacy() -> Dict[str, Any]:
     return {"id": "open_privacy", "label_key": _a("open_privacy"), "method": "POST",
             "route": "/alerts/open-system-settings", "body": {"pane": "full_disk_access"}}
+
+
+def _security() -> Dict[str, Any]:
+    return {"id": "open_security", "label_key": _a("open_security"), "method": "POST",
+            "route": "/alerts/open-system-settings", "body": {"pane": "privacy_security"}}
 
 
 _BACKUPS = "#plugins/save/settings"
@@ -71,6 +77,7 @@ SOURCES: Dict[str, Source] = {
     "pack_skills": _src("pack_skills", "users"),
     "argent": _src("argent", "link"),
     "plugin_registry": _src("plugin_registry", "wrench"),
+    "sessions": _src("sessions", "terminal"),
 }
 FALLBACK_SOURCE = Source(f"{_P}source.other", "bell")
 
@@ -95,6 +102,8 @@ BY_TITLE: Dict[str, Declared] = {
     f"{_P}account.signed_out.title": Declared(NEEDS_YOU, (_link("sign_in", "#account"),)),
     f"{_P}phone_link.repair.title": Declared(NEEDS_YOU, (_link("pair_device", "#settings/remote"),)),
     f"{_P}self_check.full_disk_access.title": Declared(NEEDS_YOU, (_privacy(),)),
+    f"{_P}self_check.codex_helpers.blocked.title": Declared(NEEDS_YOU, (_security(), _recheck())),
+    f"{_P}self_check.codex_helpers.host_failed.title": Declared(NEEDS_YOU, (_recheck(),)),
     f"{_P}messaging.gap.title": Declared(FYI, (), f"{_P}detail.messaging_gap"),
     f"{_P}widget.report.title": Declared(FYI, (_link("open_widgets", "#widgets"),)),
     f"{_P}automation.report.title": Declared(FYI),
@@ -124,6 +133,7 @@ BY_TITLE: Dict[str, Declared] = {
     f"{_P}argent.writeback_refused.title": Declared(FYI, (), f"{_P}argent.writeback_refused.detail"),
     f"{_P}argent.writeback_blocked_secret.title": Declared(FYI, (), f"{_P}argent.writeback_blocked_secret.detail"),
     f"{_P}argent.tracker_wins.title": Declared(FYI, (), f"{_P}argent.tracker_wins.detail"),
+    f"{_P}sessions.mass_death.title": Declared(NEEDS_YOU),
     **{f"{_P}cplug_runtime.{name}.title": Declared(NEEDS_YOU, (_link("open_plugins", "#plugins"),))
        for name in ("crash_loop", "revoked", "integrity", "index_expired", "safe_mode", "plugin_alert", "sandbox")},
     f"{_P}cplug_runtime.removed.title": Declared(FYI, (), f"{_P}cplug_runtime.removed.detail_catalog"),

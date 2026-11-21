@@ -6,10 +6,16 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[3]
 _COMMENTS = re.compile(r"/\*.*?\*/|<!--.*?-->", re.S)
 _STYLE = re.compile(r"<style[^>]*>(.*?)</style>", re.S)
+_IMPORT = re.compile(r"""@import\s+(?:url\()?['"](\.[^'"]+)['"]\)?\s*;""")
 
 
 def strip_comments(text: str) -> str:
     return _COMMENTS.sub("", text)
+
+
+def inline_css(path: Path) -> str:
+    text = path.read_text()
+    return _IMPORT.sub(lambda m: inline_css((path.parent / m.group(1)).resolve()), text)
 
 
 def css_of(path: Path) -> str:

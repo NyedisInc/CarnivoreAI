@@ -9,6 +9,8 @@ from typing import Dict, FrozenSet, List, Optional, Tuple
 
 import structlog
 
+from src.core.claude_config import accounts_folder_cache
+
 logger = structlog.get_logger()
 
 ROOTS_TTL_SECONDS = 15.0
@@ -45,16 +47,10 @@ def account_profile_dirs(config_path: Path) -> List[Path]:
     return out
 
 
-ACCOUNTS_DIR_ENV = "CARNIVORE_ACCOUNTS_DIR"
-
-
 def _relay_profile_dirs() -> List[Path]:
-    override = os.environ.get(ACCOUNTS_DIR_ENV, "").strip()
-    root = Path(override).expanduser() if override else Path.home() / ".carnivore" / "accounts"
-    try:
-        return sorted(p for p in root.glob("????????????-*-relay") if p.is_dir())
-    except OSError:
-        return []
+    from src.core.provider_ledger.relay_accounts import RELAY_GLOB
+
+    return accounts_folder_cache.listed_dirs(RELAY_GLOB)
 
 
 def _default_config_path() -> Path:
@@ -116,3 +112,4 @@ def registry_file_path(pid: int) -> str:
 def reset_profile_roots_cache_for_tests() -> None:
     with _lock:
         _cache.clear()
+    accounts_folder_cache.clear()

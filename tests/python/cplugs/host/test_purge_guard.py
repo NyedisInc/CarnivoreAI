@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from src.core.core_owned_files.registry import CORE_OWNED, is_core_owned
-from src.cplugs.host import purge_guard
+from src.plugins.host import purge_guard
 
 
 def _task_manager(tmp_path: Path) -> Path:

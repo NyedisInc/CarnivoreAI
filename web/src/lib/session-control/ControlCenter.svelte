@@ -7,7 +7,7 @@
   import { rowFor } from '../../opscenter/cells/terminal-viewer/meta';
   import { elapsed } from '../../opscenter/lib/format';
   import { t } from '../i18n/index.svelte';
-  import { measuredRows, secondsSince, type SubagentRow } from '../subagents/subagents';
+  import { measuredRows, secondsSince, stalledText, type SubagentRow } from '../subagents/subagents';
   import { readSessionWork } from '../session-stats/session-work';
   import { emptyMessage, fetchTimers, type SessionTimers } from '../timers/timers';
   import { splitTimers, type TimerLine } from '../timers/timer-times';
@@ -216,7 +216,8 @@
 {#snippet agentCells(row: SubagentRow, own: BackgroundProcess[], quietWhenNone: boolean)}
   <span class="scc-type">{row.agent_type ?? t('subagents.list.type_unknown')}</span>
   <span class="scc-text">{row.description ?? t('subagents.list.no_description')}</span>
-  <span class="scc-num">{row.status === 'running' ? age(row.started_at) : t('control_center.agents.finished')}</span>
+  {@const stalled = stalledText(row, nowMs)}
+  <span class="scc-num" class:scc-num--stalled={stalled !== null}>{stalled ?? (row.status === 'running' ? age(row.started_at) : t('control_center.agents.finished'))}</span>
   {#if own.length > 0 && armed !== `agent:${row.id}`}
     <Button variant="danger" size="sm" data-scc-stop disabled={busy}
       onclick={() => arm(`agent:${row.id}`, 'agents')}>{t('background_work.stop.arm')}</Button>

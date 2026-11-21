@@ -37,6 +37,7 @@ class SubagentInfo(BaseModel):
     status: SubagentStatus
     status_reason: SubagentStatusReason
     end_status: Optional[str] = None
+    stalled_seconds: Optional[int] = None
     meta_shape: FileShape
     transcript_shape: FileShape
 

@@ -7,10 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from src.core import plugin_layout
+from src.core.plugin_registry import plugin_layout
 from src.core.db import connect, db_path_for
-from src.cplugs.host import registry_boot, registry_files, registry_migration, registry_store
-from src.cplugs.host import state as owner_state
+from src.plugins.host import registry_boot, registry_files, registry_migration, registry_store
+from src.plugins.host import state as owner_state
 from tests.python.cplugs import registry_world as W
 from tests.python.cplugs.test_registry_migration_full_tuple import Alerts, boot
 

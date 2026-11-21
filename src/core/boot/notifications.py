@@ -8,6 +8,7 @@ import structlog
 
 from src.config import settings
 from src.core import claude_hooks
+from src.core.codex_config import strip_hooks as codex_hooks
 from src.core.boot.steps import BootStep, FailureMode, teardown_slot
 from src.core.notifications import install as notifications_install
 from src.core.notify_media import intake as media_intake
@@ -48,6 +49,7 @@ def _pipeline_steps() -> list[BootStep]:
 
 def _strip_hooks(_ctx: "BootContext") -> None:
     claude_hooks.strip_managed_hooks(claude_hooks.default_settings_path())
+    codex_hooks.strip_codex_managed_hooks(codex_hooks.default_codex_dir())
 
 
 def steps() -> list[BootStep]:

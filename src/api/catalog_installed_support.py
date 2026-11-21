@@ -14,7 +14,7 @@ from src.api import catalog_mod_gates
 from src.api.catalog_install_support import announce_theme_change, refuse_409
 from src.api.catalog_theme_rules import drop_theme_run_grant_with, prune_theme_pins_with
 from src.core.sessions.ports import InstallRoots
-from src.cplugs.host.adoption import BUILTIN_SOURCE
+from src.plugins.host.adoption import BUILTIN_SOURCE
 from src.core.skill_watch.store import default_watch_store
 from src.core.catalog import publisher_rename
 from src.core.skills.required import mark_declined

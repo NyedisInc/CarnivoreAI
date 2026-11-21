@@ -11,7 +11,7 @@ import structlog
 from src.core import db
 from src.core.swarm import body, store, switch, thread_port
 from src.core.swarm.cards import capacity, deliver, port as card_port
-from src.cplugs.sdk import chat_category
+from src.plugins.sdk import chat_category
 
 logger = structlog.get_logger()
 

@@ -1,4 +1,5 @@
 import { validateDocument, type Declared, type UiNode } from './validate';
+import { ASKING, BUSY, STATUS } from '../activity-status';
 
 export interface GlanceBadge {
     readonly status?: string;
@@ -6,7 +7,11 @@ export interface GlanceBadge {
     readonly tone: string;
 }
 
-const ATTENTION = new Set(['working', 'working_subagent', 'question', 'notice', 'finished_unread', 'dead']);
+export function canDrawGlance(unrendered: readonly string[] | null | undefined): boolean {
+    return !unrendered?.includes('glance');
+}
+
+const ATTENTION: ReadonlySet<string> = new Set([...BUSY, ...ASKING, STATUS.finished_unread, STATUS.dead]);
 
 function firstBadge(node: UiNode): Extract<UiNode, { type: 'badge' }> | null {
     if (node.type === 'badge') return node;

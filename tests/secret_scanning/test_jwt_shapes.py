@@ -9,7 +9,7 @@ import pytest
 
 from src.core.message_model_secrets import DETECTOR_JWT, scan_text
 from src.core.stream_redactor import redact_whole
-from src.cplugs.sdk.file_secrets import credential_counts
+from src.plugins.sdk.file_secrets import credential_counts
 
 _ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"
 _RNG = random.Random(2687)

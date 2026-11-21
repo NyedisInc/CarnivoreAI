@@ -5,7 +5,7 @@ from datetime import datetime
 
 from fastapi.testclient import TestClient
 
-from src.cplugs.huddle import service
+from src.plugins.huddle import service
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, row  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import CALLER, Env, call, iso  # noqa: F401
 

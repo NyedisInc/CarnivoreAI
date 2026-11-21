@@ -4,6 +4,7 @@
   "client/css/effort-level.css": 8,
   "client/css/modal-glow.css": 1,
   "client/css/popup-focus.css": 1,
+  "client/css/session-sidebar-account-chip.css": 1,
   "client/css/session-sidebar-colours.css": 4,
   "client/css/session-sidebar-keep-awake.css": 1,
   "client/css/session-sidebar-row-controls.css": 1,
@@ -11,9 +12,6 @@
   "client/css/status-dot.css": 5,
   "client/css/status-led.css": 2,
   "client/css/styles.css": 1,
-  "web/src/cplugs/crate/crate-dialog.css": 1,
-  "web/src/cplugs/huddle/chat/ChatWidget.svelte": 1,
-  "web/src/cplugs/huddle/swarm/characters/characters.css": 18,
   "web/src/lib/account-switch/AutoSwitchIcon.svelte": 1,
   "web/src/lib/auto-sleep/KeepAwakeIcon.svelte": 1,
   "web/src/lib/automations/auto-list.css": 2,
@@ -23,7 +21,10 @@
   "web/src/lib/settings-page/MotionPanel.svelte": 3,
   "web/src/opscenter/shell/CellFrame.svelte": 1,
   "web/src/opscenter/shell/TabStrip.svelte": 1,
-  "web/src/opscenter/widgets/chrome/ResizeGuide.svelte": 1
+  "web/src/opscenter/widgets/chrome/ResizeGuide.svelte": 1,
+  "web/src/plugins/crate/crate-dialog.css": 1,
+  "web/src/plugins/huddle/chat/ChatWidget.svelte": 1,
+  "web/src/plugins/huddle/swarm/characters/characters.css": 18
  },
  "total": 59
 }

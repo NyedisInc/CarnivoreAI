@@ -27,6 +27,14 @@ describe('ScreenFilter.shows', () => {
         expect(f.shows({ notify_type: 'session.posted' })).toBe(true);
     });
 
+    test('a test card for the app always shows, a test card for the desktop never draws a page card', async () => {
+        const f = new ScreenFilter(fetcherOf({ 'session.finished': false }));
+        await f.refresh();
+        expect(f.shows({ notify_type: 'session.finished', test_target: 'app' })).toBe(true);
+        expect(f.shows({ notify_type: 'session.posted', test_target: 'desktop' })).toBe(false);
+        expect(f.shows({ notify_type: 'session.finished' })).toBe(false);
+    });
+
     test('needs-you types hide when their screen cell is unticked and show when ticked', async () => {
         const f = new ScreenFilter(fetcherOf({ 'session.permission': false, 'approval.agent_action': false }));
         await f.refresh();

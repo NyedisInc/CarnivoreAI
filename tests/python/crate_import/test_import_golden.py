@@ -13,7 +13,7 @@ from src.core.crate_import.model import ImportRequest, new_import_id
 from src.core.crate_import.plan import build_plan
 from src.core.db import connect, db_path_for, transaction
 from src.core.project_writes import insert_project_row
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.sdk import crate_format as cf
 from tests.python.crate_format.golden_read import identity_for
 from tests.python.crate_import.install import Install, make_install
 from tests.python.crate_import.test_import_same_path import rows_of

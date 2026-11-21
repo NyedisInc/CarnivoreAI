@@ -100,7 +100,7 @@
   }
 
   .oc-ptab:disabled {
-    opacity: 0.5;
+    opacity: var(--oc-disabled-opacity);
     cursor: default;
   }
 
@@ -147,12 +147,34 @@
     width: 6px;
     height: 6px;
     border-radius: min(var(--oc-radius-sm, 4px), 2px);
-    background: var(--pl-accent, var(--oc-orange));
+    background: var(--oc-orange);
   }
 
   @media (max-width: 1023px) {
     .oc-ptabs {
       height: var(--oc-tap, 44px);
+    }
+  }
+
+  :where([data-btn-density='frame']) .oc-ptabs {
+    height: var(--oc-frame-btn-h);
+    background: transparent;
+  }
+
+  @media (pointer: coarse) {
+    :where([data-btn-density='frame']) .oc-ptabs {
+      height: var(--oc-tap);
+    }
+  }
+
+  .oc-ptabs--frame {
+    flex: none;
+    height: var(--oc-frame-btn-h);
+  }
+
+  @media (pointer: coarse) {
+    .oc-ptabs--frame {
+      height: var(--oc-tap);
     }
   }
 }

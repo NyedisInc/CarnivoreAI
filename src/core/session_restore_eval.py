@@ -60,6 +60,14 @@ def _is_shell_row(row: Mapping[str, Any]) -> bool:
     return str(row.get("agent_family") or "").strip().lower() == SHELL_FAMILY
 
 
+def _name_held_by_other_instance(row: Mapping[str, Any], m: Measurement) -> bool:
+    from src.core.session_recreate_presence import epoch_marks_other_instance
+
+    name, epoch = row.get("tmux_name"), row.get("tmux_created_epoch")
+    held = [p for p in m.panes if p.name == name]
+    return bool(held) and all(epoch_marks_other_instance(epoch, p.epoch) for p in held)
+
+
 def _kind_and_block(row: Mapping[str, Any], m: Measurement) -> Tuple[Optional[str], Optional[str], str]:
     from src.core.session_recreate_presence import TMUX_GONE, TMUX_PRESENT, tmux_presence
     from src.core.tmux_backend import SESSION_PREFIX
@@ -78,6 +86,8 @@ def _kind_and_block(row: Mapping[str, Any], m: Measurement) -> Tuple[Optional[st
     )
     if presence.outcome == TMUX_GONE:
         return KIND_GONE, None, "its tmux session is gone"
+    if presence.outcome == TMUX_PRESENT and _name_held_by_other_instance(row, m):
+        return KIND_GONE, None, "its tmux session is gone; the name now belongs to another session"
     if presence.outcome == TMUX_PRESENT:
         return KIND_GONE, BLOCK_NAME_IN_USE, f"another session is using the name {name}"
     return KIND_GONE, BLOCK_PRESENCE_UNMEASURED, presence.detail

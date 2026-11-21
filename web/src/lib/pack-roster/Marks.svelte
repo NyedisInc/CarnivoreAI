@@ -13,4 +13,5 @@
   {#if c.isAlpha}<span class="rs-leader" data-mark="leader" role="img" aria-label={t('roster.mark.leader')}><Icon name="wolf" size={14} /></span>{/if}
   {#if c.isSelf}<span class="rs-self" data-mark="self" role="img" aria-label={t('roster.mark.self')}><Icon name="computer" size={14} /></span>{/if}
   {#if hasLink}<span class={up ? 'rs-link' : 'rs-leader'} data-mark={up ? 'link' : 'linkdown'} role="img" aria-label={up ? t('roster.mark.linked') : t('roster.mark.linkdown')}><Icon name={up ? 'computers-linked' : 'computers-broken'} size={14} /></span>{/if}
+  {#if c.viaRelay}<span class="pp-dim" data-mark="relay">{t('roster.reconnect.via_relay')}</span>{/if}
 </span>

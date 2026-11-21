@@ -45,7 +45,7 @@ class LogMonitor:
             except asyncio.QueueFull:
                 logger.warning("subscriber_queue_full")
             except Exception as e:
-                logger.error("broadcast_error", error=str(e))
+                logger.error("broadcast_error", error=str(e), error_type=type(e).__name__, exc_info=True)
 
     def _detect_patterns(self, content: str):
         lines = content.split("\n")

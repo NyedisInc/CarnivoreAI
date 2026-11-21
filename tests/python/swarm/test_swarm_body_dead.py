@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import signal
 import subprocess
+import time
 from contextlib import closing
 from types import SimpleNamespace
 
@@ -61,6 +62,7 @@ async def test_a_body_whose_pane_dies_reads_asleep_with_its_wake_closed_and_turn
     transport = httpx.ASGITransport(app=world.app)
     async with httpx.AsyncClient(transport=transport, base_url="http://t/api/v1") as client:
         first = await _woken(client, world, "swap models")
+        born = int(time.time())
         assert _bodies(world.manager) == [first["tmux_session"]]
 
         _kill_pane_process(world.manager, first["tmux_session"], husk=True)
@@ -73,6 +75,7 @@ async def test_a_body_whose_pane_dies_reads_asleep_with_its_wake_closed_and_turn
         assert _bodies(world.manager) == []
         assert (agent["thread_key"], "trust:") in closed
 
+        await _until(lambda: int(time.time()) > born, "the clock to leave the first body's second")
         second = await _woken(client, world, "tidy the docs")
         _kill_pane_process(world.manager, second["tmux_session"], husk=True)
         await _until(lambda: _pane_dead(world.manager, second["tmux_session"]), "the husk to hold a dead pane")

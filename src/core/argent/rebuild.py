@@ -116,6 +116,7 @@ def _measure(socket: str, name: str) -> Tuple[Optional[str], str]:
 
 
 async def rebuild_pane(socket: str, name: str, *, conversation_uuid: Optional[str], working_dir: str) -> Union[Rebuilt, Unrebuildable]:
+    from src.core.attention.codex_pane_home import codex_home_for_row
     from src.core.session_transcript_presence import CONVERSATION_PRESENT, family_conversation_presence
 
     if not conversation_uuid:
@@ -126,7 +127,10 @@ async def rebuild_pane(socket: str, name: str, *, conversation_uuid: Optional[st
     rebuilt = parse_flags(family, command)
     if isinstance(rebuilt, Unrebuildable):
         return rebuilt
-    presence = await asyncio.to_thread(family_conversation_presence, family, conversation_uuid, working_dir=working_dir or None)
+    presence = await asyncio.to_thread(
+        family_conversation_presence, family, conversation_uuid, working_dir=working_dir or None,
+        codex_home=codex_home_for_row(family, socket, name),
+    )
     if presence.outcome != CONVERSATION_PRESENT:
         return Unrebuildable("the conversation transcript was not found")
     return rebuilt

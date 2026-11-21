@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { taskOf } from '../../../cplugs/huddle/task-manager-design/adapter';
-import { entriesOf } from '../../../cplugs/huddle/task-manager-design/entries';
-import type { HuddleItem, TaskManagerGroup, TaskManagerListBody } from '../../../cplugs/huddle/huddle-model';
+import { taskOf } from '../../../plugins/huddle/task-manager-design/adapter';
+import { entriesOf } from '../../../plugins/huddle/task-manager-design/entries';
+import type { HuddleItem, TaskManagerGroup, TaskManagerListBody } from '../../../plugins/huddle/huddle-model';
 import { allTasksOf, headCountOf, headCountText, headCountsOf, listTasksOf } from './mk2-head-count';
 import { MK2_CHIP_TEST, chipCount } from './mk2-chips';
 

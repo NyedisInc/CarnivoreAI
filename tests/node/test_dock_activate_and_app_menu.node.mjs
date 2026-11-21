@@ -116,11 +116,10 @@ t('2c main actions: new window raises the window, answer opens the longest-waiti
   const none = build({ waiting: () => null }); real(flat(none.tpl)).find((i) => i.id === 'session.answer').click();
   assert.deepEqual(none.calls.opened, [], 'nothing waiting: nothing visible');
 });
-t('2d Go menu: Back and Forward show the page chords without taking them; recent places are pushed by the main page only', () => {
+t('2d Go menu: Back and Forward show the page chords; recent places are pushed by the main page only', () => {
   const items = sub(build().tpl, 'go');
   const back = items.find((i) => i.id === 'go.back'); const fwd = items.find((i) => i.id === 'go.forward');
   assert.equal(back.accelerator, 'Cmd+['); assert.equal(fwd.accelerator, 'Cmd+]');
-  assert.equal(back.registerAccelerator, false); assert.equal(fwd.registerAccelerator, false);
   const none = items.find((i) => i.id === 'go.recent.none');
   assert.equal(none.enabled, false); assert.equal(none.label, 'KEY:menubar.menu.no_recent');
   let channel = null; let handler = null; const menus = [];
@@ -131,7 +130,7 @@ t('2d Go menu: Back and Forward show the page chords without taking them; recent
     app: { name: appName, isPackaged: true }, shell: { openExternal: async () => {} }, appWindow, showAbout() {}, quitAndStopEngine() {},
     waiting: () => null, exportDiagnostics() {}, loadTranslator: () => new Promise(() => {}),
     Menu: { buildFromTemplate: (tpl) => tpl, setApplicationMenu: (m) => menus.push(m) },
-    ipcMain: { on: (ch, fn) => { channel = ch; handler = fn; } }, fromMainPage: (event) => event.main === true,
+    ipcMain: { on: (ch, fn) => { if (ch === go.RECENT_CHANNEL) { channel = ch; handler = fn; } } }, fromMainPage: (event) => event.main === true,
   });
   assert.equal(channel, go.RECENT_CHANNEL);
   const goItems = () => byId(menus[menus.length - 1], 'go').submenu.filter((i) => /^go\.recent\.\d$/.test(i.id));

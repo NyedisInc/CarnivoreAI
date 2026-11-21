@@ -50,7 +50,7 @@ One new cell id `<id>` (kebab-case). Touch exactly these, in this order (copy ma
 8. `web/src/opscenter/widgets/fixtures/core.<id>.ts` and its line in `widgets/fixtures/index.ts` (step 5).
 9. i18n keys, style guide, catalog, tests (steps 6, 7, 9, 10).
 
-A third-party or plugin widget does not edit 1 to 3, 5, 6: it goes through the cplug seam (`docs/cplugs.md` section 2.7, `docs/cplug-platform.md`, first example `huddle.chat`): the `widgets.<name>` block in its `cplug.json` carries the `widgets.json` row, and the web contribution is `CplugWidget { name, meta, component, extras }` registered by `web/src/cplugs/host/widgets.ts`. Plugins still need fixtures and the same fit pass.
+A third-party or plugin widget does not edit 1 to 3, 5, 6: it goes through the cplug seam (`docs/cplugs.md` section 2.7, `docs/cplug-platform.md`, first example `huddle.chat`): the `widgets.<name>` block in its `cplug.json` carries the `widgets.json` row, and the web contribution is `CplugWidget { name, meta, component, extras }` registered by `web/src/plugins/host/widgets.ts`. Plugins still need fixtures and the same fit pass.
 
 ## 3. Data source: one authenticated route, one push topic, no timer
 PUSH, NOT PULL is the standing performance rule (CLAUDE.md; `docs/DECISIONS.md`, 2026-09-30, the widget system and its standing performance rule): zero timed polling at idle, one broadcast per update, the backend orchestrates.
@@ -96,7 +96,7 @@ Unit-level companions: `widgets/not-available.test.ts`, `widgets/standard-sizes.
 - Words that are data (account names) go through an `optionLabel`, not the catalog.
 
 ## 8. Pop-out support
-Every singleton may open alone in its own window: `client/popout.html?widget=core.<id>` renders `web/src/popout/SingleWidget.svelte`, which uses the registry's own component, so a cell that reads only its pushed store works with no extra code. It never writes the Home layout, opens no socket but `/ws/events`, and sizes the window from the widget's largest declared size (`web/src/popout/popout.ts::openWidgetPopout`). Your checks: nothing in the cell assumes the home grid, a terminal, or a layout write; it renders under `SingleWidget` (add a case to `web/src/popout/widget-popout.test.ts` modeled on the machine-stats one). The gear menu's "pop out" item appears from the manifest, no wiring. Plugin widgets: `docs/cplugs.md` 2.7 (pop-out ship list `web/src/cplugs/popout.ts`).
+Every singleton may open alone in its own window: `client/popout.html?widget=core.<id>` renders `web/src/popout/SingleWidget.svelte`, which uses the registry's own component, so a cell that reads only its pushed store works with no extra code. It never writes the Home layout, opens no socket but `/ws/events`, and sizes the window from the widget's largest declared size (`web/src/popout/popout.ts::openWidgetPopout`). Your checks: nothing in the cell assumes the home grid, a terminal, or a layout write; it renders under `SingleWidget` (add a case to `web/src/popout/widget-popout.test.ts` modeled on the machine-stats one). The gear menu's "pop out" item appears from the manifest, no wiring. Plugin widgets: `docs/cplugs.md` 2.7 (pop-out ship list `web/src/plugins/popout.ts`).
 
 ## 9. Feature catalog plus capture
 A new widget is a product change (CLAUDE.md "Every product-changing change"):

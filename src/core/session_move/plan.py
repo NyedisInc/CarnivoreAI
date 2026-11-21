@@ -180,6 +180,7 @@ def _check_files(plan: SessionMovePlan) -> None:
 
 
 def _check_resume(plan: SessionMovePlan, row: Mapping[str, Any], preview: Any, corpus_root: Optional[Path]) -> None:
+    from src.core.attention.codex_pane_home import codex_home_for_row, gone_identity
     from src.core.session_transcript_presence import CONVERSATION_ABSENT, family_conversation_presence
 
     plan.pane_state = str(getattr(preview, "pane_state", PANE_UNKNOWN) or PANE_UNKNOWN) if preview else PANE_UNKNOWN
@@ -188,8 +189,9 @@ def _check_resume(plan: SessionMovePlan, row: Mapping[str, Any], preview: Any, c
     if not plan.claude_session_uuid:
         plan.refuse(NO_CONVERSATION, "this session has no recorded conversation to resume after the move")
         return
-    presence = family_conversation_presence(row.get("agent_family"), plan.claude_session_uuid,
-                                            working_dir=plan.source, corpus_root=corpus_root)
+    presence = family_conversation_presence(
+        row.get("agent_family"), plan.claude_session_uuid, working_dir=plan.source, corpus_root=corpus_root,
+        codex_home=codex_home_for_row(row.get("agent_family"), row.get("tmux_socket"), row.get("tmux_name"), identity=gone_identity(row)))
     if presence.outcome == CONVERSATION_ABSENT:
         plan.refuse(CONVERSATION_MISSING, "the conversation's transcript is not on this computer, so it cannot be resumed")
     rung = getattr(preview, "projected", None) if preview else None

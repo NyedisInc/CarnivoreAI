@@ -28,6 +28,8 @@ for f in "${SERIAL_ONLY[@]}"; do
     IGNORE_ARGS+=("--ignore=$f")
 done
 
+export CLOUDE_REQUIRE_NODE=1
+
 WORKERS="${CLOUDE_TEST_WORKERS:-6}"
 
 J1=(); J2=(); JT=()

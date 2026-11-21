@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from src.api.auth import require_auth
 from src.api.peer_auth import require_peer_sessions
 from src.api.remote_route_guard import routed_remote
-from src.api.session_name_known import known_tmux_names, strip_adopted_prefix
+from src.api.session_name_known import known_tmux_names_async, strip_adopted_prefix
 from src.api.themes_routes import _bundled_themes_root, _scan_both_roots, _user_themes_root
 from src.core import terminal_background
 from src.models import (
@@ -106,7 +106,7 @@ async def set_session_background(
     owned_tmux = request.app.state.services.owned_tmux
 
     session_name = remote.key if remote else strip_adopted_prefix(session_name)
-    if remote is None and session_name not in known_tmux_names(session_manager, owned_tmux):
+    if remote is None and session_name not in await known_tmux_names_async(session_manager, owned_tmux):
         logger.info("session_background_set_404", session_name=session_name)
         raise HTTPException(
             status_code=404, detail=f"Unknown session {session_name!r}"

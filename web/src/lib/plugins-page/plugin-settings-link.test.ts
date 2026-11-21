@@ -6,7 +6,7 @@ import { toCplugItem, type CplugRow } from './cplugs-adapter';
 import { EXTRA_SETTINGS_PLUGINS, hasPluginSettings, pluginLinkOf, pluginSettingsHash } from './plugin-settings-link';
 import { PLUGIN_SETTINGS_EXTRAS } from './plugin-extras';
 import '../plugins/builtin';
-import { cplugEnablement } from '../../cplugs/host/enablement.svelte';
+import { cplugEnablement } from '../../plugins/host/enablement.svelte';
 import type { ManagerAdapter } from '../manager-frame/types';
 
 const t = (key: string): string => key;

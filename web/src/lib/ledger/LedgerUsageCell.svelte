@@ -10,6 +10,7 @@
     } from '../../../../client/js/labels/usage-panel.js';
     import LimitGauge from '../../opscenter/ui/LimitGauge.svelte';
     import { paceOf } from '../../../../client/js/labels/pace.js';
+    import { providerMark } from '../sessions/agent-marks';
     import {
         LEDGER_KEYS,
         formatPercent,
@@ -79,8 +80,13 @@
                 {@const percent = formatPercent(window.used_pct, t)}
                 {@const pct = measured(window.used_pct) ? window.used_pct : null}
                 {@const pace = paceOf(window, now, scaleStepFor(pct, WINDOW_SCALE_STOPS))}
+                {@const mark = 'provider' in window && window.provider ? providerMark(window.provider, 12) : null}
                 <tr class="ledger-window">
-                    <th scope="row" class="ledger-window__name">{label}</th>
+                    <th scope="row" class="ledger-window__name"
+                        >{#if mark}<span class="ledger-window__mark" role="img" aria-label={mark.label} title={mark.label}
+                                >{@html mark.svg}</span
+                            >{/if}{label}</th
+                    >
                     <td class="ledger-window__used">
                         <span class="ledger-window__meter">
                             <LimitGauge
@@ -188,6 +194,12 @@
         color: var(--oc-text-secondary);
         text-transform: uppercase;
         letter-spacing: var(--oc-tracking-label, 0.6px);
+    }
+
+    .ledger-window__mark {
+        display: inline-flex;
+        vertical-align: middle;
+        margin-right: var(--oc-space-1);
     }
 
     .ledger-windows .ledger-windows__end {

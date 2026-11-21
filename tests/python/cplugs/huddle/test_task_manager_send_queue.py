@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from src.cplugs.huddle import held, inbox_delivery, service, send_queue
+from src.plugins.huddle import held, inbox_delivery, service, send_queue
 from tests.python.cplugs.huddle.test_task_manager_inbox import queue as add_box_entry
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, row  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import Env

@@ -307,8 +307,8 @@ test('the meters group is centered and every bar is one fixed, equal width', asy
   expect(group).toMatch(/margin-inline:\s*auto/);
   expect(group).toMatch(/justify-content:\s*center/);
   const bar = style.slice(style.indexOf('.oc-tf-meters .oc-tf-bar {'), style.indexOf('}', style.indexOf('.oc-tf-meters .oc-tf-bar {')));
-  const widths = [...bar.matchAll(/(?:flex:\s*0 0|min-width:|max-width:)\s*(\d+)px/g)].map((m) => m[1]);
-  expect(widths).toEqual(['112', '112', '112']);
+  const widths = [...bar.matchAll(/(?:flex:\s*0 0|min-width:|max-width:)\s*var\((--oc-tf-meter-w)\)/g)].map((m) => m[1]);
+  expect(widths).toEqual(['--oc-tf-meter-w', '--oc-tf-meter-w', '--oc-tf-meter-w']);
 });
 
 test('the model name wears the provider mark: anthropic for claude, openai for codex, none for another family', () => {

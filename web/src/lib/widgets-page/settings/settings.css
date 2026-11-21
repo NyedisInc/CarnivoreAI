@@ -11,7 +11,7 @@
 .wp-strip__row { display: flex; flex-wrap: wrap; gap: var(--oc-space-2); min-width: 0; }
 .wp-strip--dim .wp-strip__row { opacity: 0.55; }
 
-.wp-pic { display: flex; flex-direction: column; gap: var(--oc-space-2); padding: var(--oc-space-2); background: var(--oc-surface-1); border: 1px solid var(--oc-line-surface); border-radius: 2px; color: var(--oc-text-primary); font: inherit; cursor: pointer; text-align: left; box-shadow: none; }
+.wp-pic { display: flex; flex-direction: column; gap: var(--oc-space-2); padding: var(--oc-space-2); background: var(--oc-surface-1); border: 1px solid var(--oc-line-surface); border-radius: var(--oc-radius-control); color: var(--oc-text-primary); font: inherit; cursor: pointer; text-align: left; box-shadow: none; }
 .wp-pic:hover { background: var(--oc-ground-hover); }
 .wp-pic[aria-checked='true'] { background: var(--oc-orange-tint); border-color: var(--oc-line-rule); }
 .wp-pic__caption { display: grid; grid-template-columns: 1fr auto; gap: 0 var(--oc-space-2); font-size: var(--oc-fs-label); }

@@ -24,9 +24,9 @@ from src.api.auth import require_auth
 from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
 from src.core.swarm import body, body_create, delivery, project_agent, store, thread_port
-from src.cplugs.host import runtime
-from src.cplugs.huddle import routes as huddle_routes
-from src.cplugs.huddle.swarm_port import TaskManagerSwarmPort
+from src.plugins.host import runtime
+from src.plugins.huddle import routes as huddle_routes
+from src.plugins.huddle.public import TaskManagerSwarmPort
 from tests.python.cplugs.owner import turn_on
 
 BASE = "/api/v1/cplugs/huddle"

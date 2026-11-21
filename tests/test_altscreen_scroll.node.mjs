@@ -385,6 +385,24 @@ test('terminal.js wires the module and the typing guard', () => {
     assert.ok(iAlt > 0 && iAlt < iTerm, 'must load before terminal.js');
 });
 
+test('a pane measured as not alternate is never injected; a down gesture never opens the transcript', () => {
+    const m = load();
+    let alt = false;
+    m.api.init(null, null, () => alt);
+    m.setTerm(fakeTerm('normal', CLAUDE_LIVE, 0));
+    assert.equal(m.api.scrollByRows(-1), false, 'known classic pane falls through to scrollLines');
+    assert.equal(m.api.scrollByRows(1), false);
+    assert.deepEqual(m.sent, []);
+    alt = null;
+    assert.equal(m.api.scrollByRows(2), true, 'down in live view is swallowed');
+    assert.deepEqual(m.sent, [], 'down never opens the transcript');
+    m.api.scrollByRows(-2);
+    assert.deepEqual(m.sent, ['\x0f'], 'up still opens it');
+    alt = true;
+    m.setTerm(fakeTerm('alternate', CLAUDE_LIVE, 0));
+    assert.equal(m.api.detectState(fakeTerm('normal', CLAUDE_LIVE, 0)), 'live', 'a known alternate pane keeps the old rule');
+});
+
 await runQueue();
 console.log(`${passes} passed, ${failures} failed`);
 if (failures > 0) process.exit(1);

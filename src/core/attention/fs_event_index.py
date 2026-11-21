@@ -5,8 +5,9 @@ import asyncio
 import os
 import re
 import threading
+import time
 from pathlib import Path
-from typing import Callable, Dict, Iterable, Optional, Set, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple
 
 import structlog
 
@@ -29,6 +30,10 @@ CODEX = "codex"
 RESYNC = "*"
 
 ARM_SETTLE_SECONDS: float = 0.3
+
+RACY_WINDOW_NS: int = 1_000_000_000
+
+_Listing = Tuple[Tuple[int, int], Tuple[str, ...], Tuple[Tuple[Key, str], ...]]
 
 
 def key_of(path: str) -> Optional[Key]:
@@ -60,6 +65,7 @@ class FsEventIndex:
         self._target: Tuple[str, ...] = ()
         self._stop = asyncio.Event()
         self._rewatch = asyncio.Event()
+        self._listings: Dict[str, _Listing] = {}
 
 
     @staticmethod
@@ -126,32 +132,59 @@ class FsEventIndex:
                 self._entries = seen
 
     def _walk(self, seen: Dict[Key, Entry], known: Dict[Key, Entry]) -> None:
+        previous, self._listings = self._listings, {}
         stack = [r for r in self.roots if os.path.isdir(r)]
         while stack:
             directory = stack.pop()
-            try:
-                with os.scandir(directory) as it:
-                    for item in it:
-                        try:
-                            if item.is_dir(follow_symlinks=False):
-                                stack.append(item.path)
-                                continue
-                        except OSError:
-                            continue
-                        key = key_of(item.name)
-                        if key is None:
-                            continue
-                        try:
-                            st = item.stat()
-                        except OSError:
-                            continue
-                        prior = seen.get(key)
-                        if prior is None or item.path >= prior[0]:
-                            seen[key] = (item.path, st.st_size, st.st_mtime)
-            except OSError:
+            listing, readable = self._listing_of(directory, previous.get(directory))
+            if not readable:
                 for key, prior in known.items():
                     if os.path.dirname(prior[0]) == directory:
                         seen.setdefault(key, prior)
+            if listing is None:
+                continue
+            stack.extend(listing[1])
+            for key, path in listing[2]:
+                try:
+                    st = os.stat(path)
+                except OSError:
+                    continue
+                prior = seen.get(key)
+                if prior is None or path >= prior[0]:
+                    seen[key] = (path, st.st_size, st.st_mtime)
+
+    def _listing_of(self, directory: str, previous: Optional[_Listing]) -> Tuple[Optional[_Listing], bool]:
+        try:
+            stat = os.stat(directory)
+        except OSError:
+            return None, False
+        signature = (stat.st_ino, stat.st_mtime_ns)
+        if previous is not None and previous[0] == signature:
+            self._listings[directory] = previous
+            return previous, True
+        subdirs: List[str] = []
+        files: List[Tuple[Key, str]] = []
+        complete = True
+        readable = True
+        try:
+            with os.scandir(directory) as it:
+                for item in it:
+                    try:
+                        if item.is_dir(follow_symlinks=False):
+                            subdirs.append(item.path)
+                            continue
+                    except OSError:
+                        complete = False
+                        continue
+                    key = key_of(item.name)
+                    if key is not None:
+                        files.append((key, item.path))
+        except OSError:
+            complete = readable = False
+        listing: _Listing = (signature, tuple(subdirs), tuple(files))
+        if complete and time.time_ns() - stat.st_mtime_ns > RACY_WINDOW_NS:
+            self._listings[directory] = listing
+        return listing, readable
 
     def _notify(self, paths: Set[str]) -> None:
         for callback in list(self._subscribers.values()):

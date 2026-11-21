@@ -9,6 +9,7 @@ import type {
     ThemeColors,
 } from './running-host';
 import type { RunningSessionRow } from '../sessions/types';
+import { ASKING, BUSY, RESTING } from '../activity-status';
 
 export interface HostCall {
     method: string;
@@ -48,8 +49,7 @@ export function defaultActionsFor(
         extraClass: id === 'restart' ? 'session-row-action-restart' : '',
     });
     if (key === 'dead') return [make('restart'), make('remove')];
-    const live = ['working', 'working_subagent', 'question', 'notice',
-        'finished_unread', 'idle', 'running'];
+    const live = [...BUSY, ...ASKING, ...RESTING, 'running'];
     if (live.indexOf(key) !== -1) return [make('close'), make('restart')];
     return [make('close')];
 }

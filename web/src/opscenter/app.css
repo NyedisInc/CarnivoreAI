@@ -6,6 +6,8 @@
 @import '../lib/base/base.css';
 @import './colhead.css';
 @import './page.css';
+@import './page-frames.css';
+@import './page-pair.css';
 @import './ui/tabs.css';
 @import './ui/tile.css';
 @import './ui/rank-panel.css';

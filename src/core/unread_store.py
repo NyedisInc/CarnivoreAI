@@ -69,7 +69,7 @@ class UnreadStore:
                         logger.debug("unread_state_fsync_unsupported")
                 os.replace(str(tmp), str(self._path))
             except (OSError, ValueError, TypeError) as exc:
-                logger.error("failed_to_save_unread_state", error=str(exc))
+                logger.error("failed_to_save_unread_state", error=str(exc), error_type=type(exc).__name__)
                 if tmp is not None:
                     try:
                         tmp.unlink()
@@ -220,6 +220,15 @@ class UnreadStore:
         else:
             self._data.pop(key, None)
         self._save()
+
+    def clear_auto(self, tmux_name: str | None, epoch: Optional[int] = None) -> bool:
+        if not tmux_name:
+            return False
+        entry = self._lookup(tmux_name, epoch)
+        if not entry or not entry.get("auto"):
+            return False
+        self.set_flag(tmux_name, "auto", False, epoch=epoch)
+        return True
 
     def clear(
         self,

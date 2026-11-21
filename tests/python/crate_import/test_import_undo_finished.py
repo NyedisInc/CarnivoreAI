@@ -15,7 +15,7 @@ from src.core.crate_import.undo_import import UndoRefused
 from src.core.db import connect, db_path_for
 from src.core.deepsearch import fallback_hook as fb
 from src.core.project_tombstones import tombstoned_roots
-from src.cplugs.save.fallback import BackupTranscripts
+from src.plugins.save.fallback import BackupTranscripts
 from tests.python.crate_import import test_import_folder_backups as boards_rig
 from tests.python.crate_import import test_import_project_files as files_rig
 from tests.python.crate_import.test_import_plan import tree_hash
@@ -205,7 +205,7 @@ def test_project_files_are_undone_to_the_snapshot(tmp_path: Path) -> None:
     request = ImportRequest(include_project_files=True, mode="relocate", new_root=str(install.projects / "moved"))
     from src.core.crate_import import apply as ap
     from src.core.crate_import.plan import build_plan
-    from src.cplugs.sdk import crate_format as cf
+    from src.plugins.sdk import crate_format as cf
 
     with cf.open_crate(crate.path) as reader:
         plan = build_plan(reader, install.env, request, crate_sha256=crate.sha256, encrypted=False)
@@ -222,7 +222,7 @@ def test_the_preview_counts_match_the_result_counts_with_nested_folders(tmp_path
     from src.core.crate_import import apply as ap
     from src.core.crate_import.plan import build_plan
     from src.core.crate_import.undo import log_counts
-    from src.cplugs.sdk import crate_format as cf
+    from src.plugins.sdk import crate_format as cf
 
     crate = files_rig.project_crate(tmp_path)
     install = files_rig.target(tmp_path, crate)
@@ -243,7 +243,7 @@ def test_a_file_logged_twice_is_counted_once_in_the_preview(tmp_path: Path) -> N
     from src.core.crate_import import apply as ap
     from src.core.crate_import.plan import build_plan
     from src.core.crate_import.undo import OP_FILE, log_counts
-    from src.cplugs.sdk import crate_format as cf
+    from src.plugins.sdk import crate_format as cf
 
     crate = files_rig.project_crate(tmp_path)
     install = files_rig.target(tmp_path, crate)

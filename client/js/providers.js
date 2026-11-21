@@ -51,6 +51,7 @@
             goLabel: (opts && opts.goLabel) || null,
             prefill: (opts && opts.prefill) || null,
             folder: (opts && opts.folder) || null,
+            placement: (opts && opts.placement) || null,
         }).then(function (pick) {
             if (!pick) return null;
             if (pick.model) rememberChoice(pick.model);
@@ -64,6 +65,7 @@
                 pinned: pick.pinned === true,
                 worktree: pick.worktree || null,
                 story: pick.story || null,
+                computer: pick.computer || null,
             };
         });
     }

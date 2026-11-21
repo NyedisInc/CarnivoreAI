@@ -12,12 +12,12 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.host import dependencies, routes as host_routes, runtime
-from src.cplugs.sdk import ManifestError, core_features
-from src.cplugs.sdk.manifest import parse_manifest
+from src.plugins.host import dependencies, routes as host_routes, runtime
+from src.plugins.sdk import ManifestError, core_features
+from src.plugins.sdk.manifest import parse_manifest
 
 ROOT = Path(__file__).resolve().parents[3]
-FLOW = json.loads((ROOT / "src/cplugs/flow/cplug.json").read_text())
+FLOW = json.loads((ROOT / "src/plugins/flow/cplug.json").read_text())
 
 
 @pytest.fixture

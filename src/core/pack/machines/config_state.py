@@ -3,12 +3,12 @@ from __future__ import annotations
 
 import copy
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from src.core import config_writer
 from src.core.read_caches.config_stat import CONFIG_READS
-from src.core.pack.machines import restrictions as restrictions_mod
-from src.core.pack.machines import settings_doc
+from src.core.pack.machines import can_block, restrictions as restrictions_mod
+from src.core.pack.machines import roster_doc, settings_doc
 from src.core.pack.relay import consent as consent_mod
 from src.core.pack.reserve import model as reserve_model
 
@@ -16,6 +16,10 @@ CONFIG_KEY = "pack_machines"
 SIG_KEY = "settings_sig"
 SIGNED_MODE_KEY = "settings_signed"
 ANCHOR_KEY = "settings_anchor"
+ROSTER_KEY = "roster"
+TAKEOVER_KEY = "takeover_state"
+LABELS_KEY = "labels"
+KEYBOARD_MIGRATED_KEY = "keyboard_rule_migrated"
 
 
 def _read_block(path: Path) -> Dict[str, Any]:
@@ -72,6 +76,36 @@ class ConfigState:
             values[ANCHOR_KEY] = anchor
         return self._commit_many(values)
 
+    def stored_roster(self) -> Optional[Tuple[Any, Any]]:
+        return roster_doc.from_wire(self._block().get(ROSTER_KEY))
+
+    def save_roster(self, wire: Dict[str, Any]) -> bool:
+        return self._commit(ROSTER_KEY, wire)
+
+    def save_adoption(self, doc: settings_doc.PackSettings, signature: Optional[Dict[str, str]], roster_wire: Dict[str, Any],
+                      home_override: Optional[str], last_home: Optional[Tuple[int, int]]) -> bool:
+        state = {"home_override": home_override, "last_home": list(last_home) if last_home is not None else None} \
+            if (home_override is not None or last_home is not None) else None
+        return self._commit_many({"settings": doc.model_dump(mode="json"), SIG_KEY: signature, SIGNED_MODE_KEY: True,
+                                  ANCHOR_KEY: doc.master_install_id, ROSTER_KEY: roster_wire, TAKEOVER_KEY: state})
+
+    def clear_roster(self) -> bool:
+        return self._commit(ROSTER_KEY, None)
+
+    def takeover_state(self) -> Tuple[Optional[str], Optional[Tuple[int, int]]]:
+        raw = self._block().get(TAKEOVER_KEY)
+        raw = raw if isinstance(raw, dict) else {}
+        override = raw.get("home_override")
+        last = raw.get("last_home")
+        ok = (isinstance(last, list) and len(last) == 2 and all(isinstance(n, int) and not isinstance(n, bool) and n >= 0 for n in last))
+        return (override if isinstance(override, str) and override else None), ((last[0], last[1]) if ok else None)
+
+    def save_takeover_state(self, home_override: Optional[str], last_home: Optional[Tuple[int, int]]) -> bool:
+        value: Optional[Dict[str, Any]] = None
+        if home_override is not None or last_home is not None:
+            value = {"home_override": home_override, "last_home": list(last_home) if last_home is not None else None}
+        return self._commit(TAKEOVER_KEY, value)
+
     def tofu_anchor(self) -> Optional[str]:
         value = self._block().get(ANCHOR_KEY)
         return value if isinstance(value, str) and value else None
@@ -103,6 +137,37 @@ class ConfigState:
 
     def reserve(self) -> reserve_model.ReserveConfig:
         return reserve_model.from_dict(self._block().get("reserve"))
+
+    def labels(self) -> List[str]:
+        try:
+            return can_block.clean_labels(self._block().get(LABELS_KEY, []))
+        except ValueError:
+            return []
+
+    def save_labels(self, labels: List[str]) -> bool:
+        cleaned = can_block.clean_labels(labels)
+        return self._commit(LABELS_KEY, cleaned or None)
+
+    def migrate_keyboard_rule(self) -> bool:
+        def mutate(config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+            block = dict(config.get(CONFIG_KEY) if isinstance(config.get(CONFIG_KEY), dict) else {})
+            if block.get(KEYBOARD_MIGRATED_KEY) is True:
+                return None
+            stored = block.get("reserve")
+            if stored is None:
+                block["reserve"] = reserve_model.ReserveConfig().model_dump()
+            elif isinstance(stored, dict):
+                try:
+                    parsed = reserve_model.ReserveConfig(**stored)
+                except (TypeError, ValueError):
+                    parsed = None
+                if parsed is not None:
+                    parsed.keyboard_rule.enabled = True
+                    block["reserve"] = parsed.model_dump()
+            block[KEYBOARD_MIGRATED_KEY] = True
+            return {**config, CONFIG_KEY: block}
+
+        return config_writer.commit(self._path(), mutate).wrote
 
     def save_reserve(self, value: reserve_model.ReserveConfig) -> bool:
         return self._commit("reserve", value.model_dump())

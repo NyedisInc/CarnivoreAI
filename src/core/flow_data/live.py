@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, Iterable, Optional
 
 import structlog
 
-from src.cplugs.sdk import transcript_events
+from src.plugins.sdk import transcript_events
 
 logger = structlog.get_logger()
 

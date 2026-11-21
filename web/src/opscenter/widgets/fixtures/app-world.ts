@@ -21,7 +21,7 @@ export const SHELL_AMBIENT_ROUTES: ReadonlySet<string> = new Set([
   'GET /cplugs/huddle/lists', 'GET /cplugs/huddle/aggregate', 'GET /catalog/items', 'GET /item-settings',
 ]);
 
-const SHELL_ONLY_ROUTES: readonly string[] = ['GET /layouts', 'GET /toasts/history', 'GET /themes', 'GET /sessions/recent', 'GET /sessions/listing', 'GET /provider-ledger'];
+const SHELL_ONLY_ROUTES: readonly string[] = ['GET /layouts', 'GET /toasts/history', 'GET /themes', 'GET /sessions/recent', 'GET /sessions/listing', 'GET /provider-ledger', 'GET /argent/holds', 'GET /pack/ops'];
 
 export function isShellRoute(route: string): boolean {
   return SHELL_AMBIENT_ROUTES.has(route) || SHELL_ONLY_ROUTES.includes(route) || route in appWorldRoutes('data');

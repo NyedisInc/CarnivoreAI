@@ -54,6 +54,7 @@ function openWindow(search, opts = {}) {
     ctx.window = ctx;
     ctx.addEventListener = (type, fn) => { (listeners[type] ??= []).push(fn); };
     vm.createContext(ctx);
+    vm.runInContext(read('client/js/i18n/tr.js'), ctx, { filename: 'tr.js' });
     vm.runInContext(SOLO_SRC, ctx);
     return { ctx, calls, state, listeners, root };
 }

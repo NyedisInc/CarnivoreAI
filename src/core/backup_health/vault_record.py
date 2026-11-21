@@ -48,7 +48,7 @@ def location_value(config: Dict[str, Any], save_settings: Optional[Mapping[str, 
 
 
 def root_for(state_dir: Path, config: Dict[str, Any], save_settings: Optional[Mapping[str, Any]] = None) -> Path:
-    from src.cplugs.host.data_roots import setting_root  # noqa: PLC0415
+    from src.plugins.host.data_roots import setting_root  # noqa: PLC0415
 
     return setting_root(state_dir, location_value(config, save_settings), DEFAULT_DIR_NAME) or Path(state_dir) / DEFAULT_DIR_NAME
 
@@ -75,13 +75,13 @@ def read_config(config_path: Path) -> Dict[str, Any]:
 
 
 def configured_location(state_dir: Path, config_path: Path) -> str:
-    from src.cplugs.host.data_roots import stored_settings  # noqa: PLC0415
+    from src.plugins.host.data_roots import stored_settings  # noqa: PLC0415
 
     return location_value(read_config(config_path), stored_settings(state_dir, SAVE_PLUGIN_ID))
 
 
 def resolve_root(state_dir: Path, config_path: Path) -> Path:
-    from src.cplugs.host.data_roots import setting_root  # noqa: PLC0415
+    from src.plugins.host.data_roots import setting_root  # noqa: PLC0415
 
     return setting_root(state_dir, configured_location(state_dir, config_path), DEFAULT_DIR_NAME) or Path(state_dir) / DEFAULT_DIR_NAME
 

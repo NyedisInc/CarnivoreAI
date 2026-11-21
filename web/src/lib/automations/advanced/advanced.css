@@ -27,10 +27,6 @@
         overflow-wrap: anywhere;
     }
 
-    .ap-page .ap-adv .ap-subtabs {
-        flex: none;
-    }
-
     .ap-page[data-pane-open] .ap-adv-sum {
         order: 3;
         flex-basis: 100%;
@@ -45,7 +41,7 @@
         }
     }
 
-    @media (max-width: 700px) {
+    @media (max-width: 767px) {
         .ap-page .ap-adv-head .ap-acts {
             order: 4;
             margin-left: 0;
@@ -64,12 +60,9 @@
     padding-inline: max(var(--oc-space-4), env(safe-area-inset-left, 0px)) max(var(--oc-space-4), env(safe-area-inset-right, 0px));
 }
 
-@media (max-width: 700px) {
+@media (max-width: 767px) {
     .ap-page .pl-titlebar.ap-adv-head {
         padding-block: var(--oc-space-1-5);
     }
 }
 
-.ap-page .ap-adv .ap-subtabs {
-    padding-inline: max(var(--oc-space-4), env(safe-area-inset-left, 0px));
-}

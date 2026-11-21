@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.save.vault import adopt, restore
-from src.cplugs.save.vault.store import STATUS_FAILED, STATUS_PARTIAL, STATUS_WRITTEN
+from src.plugins.save.vault import adopt, restore
+from src.plugins.save.vault.store import STATUS_FAILED, STATUS_PARTIAL, STATUS_WRITTEN
 from tests.python.cplugs.save.vault_helpers import CONV, World, jsonl
 
 BIG = 20_000

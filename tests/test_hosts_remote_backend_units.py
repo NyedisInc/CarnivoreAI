@@ -72,12 +72,12 @@ def test_escape_expanded_escapes_exactly_the_expanded_positions() -> None:
 
 
 def test_remote_env_keeps_only_what_a_far_pane_may_have() -> None:
-    env = {"CLOUDECODE_SESSION_ID": "ses_1", "CLAUDE_CONFIG_DIR": "/Users/a/.carnivore/x",
+    env = {"CLOUDECODE_SESSION_ID": "ses_1", "CARNIVORE_SESSION_ID": "ses_1", "CLAUDE_CONFIG_DIR": "/Users/a/.carnivore/x",
            "CLOUDECODE_HOOK_TOKEN": "secret", "CLOUDECODE_HOOK_URL": "http://127.0.0.1:8000",
            "PATH": "/Users/a/bin", "CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN": "1", "LANG": "C.UTF-8",
            "ANTHROPIC_API_KEY": None}
     assert remote_env(env, "/far/bin") == {
-        "CLOUDECODE_SESSION_ID": "ses_1", "CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN": "1",
+        "CLOUDECODE_SESSION_ID": "ses_1", "CARNIVORE_SESSION_ID": "ses_1", "CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN": "1",
         "LANG": "C.UTF-8", "ANTHROPIC_API_KEY": None, "PATH": "/far/bin"}
     assert remote_env(None, None) == {}
 

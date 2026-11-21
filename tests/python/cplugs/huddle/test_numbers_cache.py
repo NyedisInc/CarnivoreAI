@@ -9,8 +9,8 @@ import pytest
 
 from src.core.db_reuse.change_cache import CACHE
 from src.core.work.storage import WorkStorage
-from src.cplugs.huddle import rules
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import rules
+from src.plugins.huddle.store import TaskManagerStore
 
 ITEMS = 500
 

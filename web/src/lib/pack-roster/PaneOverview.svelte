@@ -4,6 +4,7 @@
   import { t } from '../i18n/index.svelte';
   import Check from '../../opscenter/ui/Check.svelte';
   import Meters from './Meters.svelte';
+  import PaneAbilities from './PaneAbilities.svelte';
   import ComputerUpdate from '../computers/ComputerUpdate.svelte';
   import { ageWords, dialWords } from '../computers/computers-format';
   import { setDirection, activity } from '../computers/computers-store.svelte';
@@ -31,6 +32,7 @@
   <p class="m1-setwork"><span class="pp-hint">{t('roster.ov.reserve_hint')}</span>
     <Button variant="quiet" size="sm" onclick={onWork}>{t('roster.ov.set_in_work')}</Button></p>
 {/if}
+<PaneAbilities {c} {onWork} {nowMs} />
 <section class="m1-sec"><h3 class="pp-k">{t('roster.ov.tools')}</h3>
   <div class="pp-tools" data-pm="toolchain">
     {#if chain}

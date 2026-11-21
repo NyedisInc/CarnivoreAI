@@ -15,17 +15,19 @@ from fastapi import HTTPException
 
 from src.core.budget_hold.gate import hold_check
 from src.core.db import DatastoreUnreadableError
-from src.core.mcp import beast_mode, federated, in_use as in_use_mod, pending, restart_account_args, session_target
+from src.core.mcp import beast_mode, federated, in_use as in_use_mod, pending, place_args, restart_account_args, session_target
 from src.core.mcp.approvals import call_context, runtime as approval_runtime, wording
 from src.core.mcp.caller import AgentCaller
 from src.core.swarm import delivery as swarm_delivery
 from src.core.mcp.common import _TARGET_SCHEMA, ToolError, _fail, _ok
+from src.models.activity_status import blocked_on_owner
 
 logger = structlog.get_logger()
 
 MAX_CREATED_PER_AGENT = 5
 MAX_CREATED_TOTAL = 20
-CREATE_ARGS = frozenset({"working_dir", "project", "agent_type", "launch_profile", "name", "peer", "account", "always_use_account"})
+CREATE_ARGS = frozenset({"working_dir", "project", "agent_type", "launch_profile", "name", "peer", "account", "always_use_account",
+                         "placement", "needs"})
 MAX_KEYS_TEXT = 1000
 MAX_KEY_NAMES = 20
 MAX_NOTE_CHARS = 100_000
@@ -149,6 +151,10 @@ async def session_create(manager: Any, caller: AgentCaller, args: dict) -> dict:
     if account is not None and "peer" in args:
         raise ToolError("an account is chosen on the computer that runs the session; a paired computer uses its own "
                         "active account, so leave account out with peer")
+    placement, needs = place_args.read_args(args, has_peer="peer" in args)
+    if placement == "auto" and account is not None:
+        raise ToolError("an account is chosen on the computer that runs the session; with placement auto the new session uses your own "
+                        "account there, so leave account out")
     working_dir = args.get("working_dir")
     project = args.get("project")
     if (working_dir is None) == (project is None):
@@ -171,6 +177,10 @@ async def session_create(manager: Any, caller: AgentCaller, args: dict) -> dict:
     )
     if account is not None:
         await _check_account(request)
+    elif "placement" not in args and "needs" not in args and await place_args.agent_default_auto(working_dir):
+        placement = "auto"
+    if placement == "auto":
+        return await _create_placed(manager, caller, request, needs)
 
     async def run(_approved: bool) -> dict:
         session = await counted_create(manager.live_ids_now, caller, lambda: _via_route(create_session(_request(manager), request)))
@@ -185,6 +195,62 @@ async def session_create(manager: Any, caller: AgentCaller, args: dict) -> dict:
         return await beast_mode.run_unprompted(caller, "session_create", lambda: run(True),
                                                 summary=summary, args=shown)
     return await park(manager, caller, "", "", "session_create", summary, shown, run)
+
+
+def _session_id(session: Any) -> str:
+    return str(session.get("id") if isinstance(session, dict) else session.id)
+
+
+async def _create_placed(manager: Any, caller: AgentCaller, request: Any, needs: list) -> dict:
+    import uuid
+
+    from src.api.session_crud_routes import create_session
+    from src.core.pack.jobs.types import JobError
+    from src.core.pack.session_place import create as create_mod
+
+    app = _request(manager).app
+    req = place_args.place_request(request.working_dir, request.agent_type, needs)
+    starter = await place_args.starter_for(app, caller)
+    plan = await place_args.plan_for(app, req, create_mod.local_only_reason(request))
+    rid = uuid.uuid4().hex
+
+    async def local(body: Any) -> Any:
+        return await _via_route(create_session(_request(manager), body))
+
+    async def run(_approved: bool) -> dict:
+        async with _create_lock:
+            mine, total = _created_counts(await manager.live_ids_now(), caller, time.monotonic())
+            if mine >= MAX_CREATED_PER_AGENT:
+                raise ToolError(f"you already have {mine} live sessions you created (limit {MAX_CREATED_PER_AGENT})")
+            if total >= MAX_CREATED_TOTAL:
+                raise ToolError(f"{total} agent-created sessions are live (limit {MAX_CREATED_TOTAL})")
+            _reserved.append(caller.tmux_name)
+        placed = None
+        try:
+            placed = await create_mod.create_placed(app, req, starter, request, local_create=local, request_id=rid, approved=plan)
+        except JobError as exc:
+            raise ToolError(f"{exc.code}: {exc.detail}") from exc
+        finally:
+            async with _create_lock:
+                _reserved.remove(caller.tmux_name)
+                if placed is not None:
+                    _created[_session_id(placed.session)] = (caller.tmux_name, time.monotonic())
+        sid = _session_id(placed.session)
+        logger.info("mcp_session_created", session_id=sid, creator=caller.tmux_name, decision=placed.placement.get("decision"))
+        shown_dir = placed.session.get("working_dir") if isinstance(placed.session, dict) else placed.session.working_dir
+        result = {"id": sid, "working_dir": shown_dir, "placement": placed.placement}
+        if placed.placement.get("decision") == "here":
+            result["launch"] = _launch_shown(request.agent_type)
+        return _ok(result)
+
+    summary = place_args.summary_of(plan, f"create a session in {request.working_dir}")
+    shown_base = {"working_dir": request.working_dir, "agent_type": request.agent_type, "name": request.label}
+    shown_key = {**shown_base, "needs": list(needs)}
+    shown = place_args.card_args(plan, starter, shown_base)
+    if beast_mode.approval_skip("session_create"):
+        return await beast_mode.run_unprompted(caller, "session_create", lambda: run(True), summary=summary, args=shown)
+    return await park(manager, caller, "", "", "session_create", summary, shown, run,
+                      dedupe_key=place_args.dedupe_key(shown_key), supersede=True)
 
 
 async def _check_account(request: Any) -> None:
@@ -311,12 +377,12 @@ async def _resolved_again(app: Any, target_id: str, epoch: Optional[int]) -> Any
 
 
 async def _pane_live(app: Any, info: Any) -> bool:
-    from src.api.one_shot_routes import _read_pane_signals
+    from src.core.sessions.guarded_paste import read_pane_signals  # noqa: PLC0415
 
     backend = app.state.services.registry.get_backend(info.session.id)
     if backend is None:
         return False
-    _command, dead = await _read_pane_signals(backend, info.tmux_session)
+    _command, dead = await read_pane_signals(backend, info.tmux_session)
     return dead != "1"
 
 
@@ -324,7 +390,7 @@ async def _own_dialog_open(app: Any, info: Any) -> bool:
     fresh = await app.state.session_manager.get_session_info(session_id=info.session.id)
     if fresh is None:
         return True
-    return fresh.activity_status == "question" or fresh.startup_gate != "ready"
+    return blocked_on_owner(fresh)
 
 
 async def _do_send_keys(app: Any, target_id: str, epoch: Optional[int], data: bytes) -> dict:
@@ -358,15 +424,16 @@ def _session_uuid_of_row(row_id: int) -> Optional[str]:
     from contextlib import closing
 
     from src.config import settings
+    from src.core import session_store
     from src.core.db import connect, db_path_for
 
     with closing(connect(db_path_for(settings.get_state_dir()), create=False)) as conn:
-        row = conn.execute("SELECT session_uuid FROM sessions WHERE id = ?", (row_id,)).fetchone()
-    return None if row is None else str(row[0])
+        return session_store.uuid_for_row(conn, row_id)
 
 
 async def _do_stop(app: Any, target_id: str, epoch: Optional[int]) -> dict:
-    from src.api.session_sleep_routes import sleep_by_uuid
+    from src.api.session_sleep_routes import sleep_error_to_http  # noqa: PLC0415
+    from src.core.session_ops import sleep as sleep_ops  # noqa: PLC0415
 
     info = await _resolved_again(app, target_id, epoch)
     if info.session_row_id is None:
@@ -374,7 +441,10 @@ async def _do_stop(app: Any, target_id: str, epoch: Optional[int]) -> dict:
     session_uuid = await asyncio.to_thread(_session_uuid_of_row, info.session_row_id)
     if session_uuid is None:
         raise ToolError("no stored row for that session")
-    result = await _via_route(sleep_by_uuid(app.state, session_uuid))
+    try:
+        result = await sleep_ops.sleep_session(app.state, session_uuid)
+    except sleep_ops.SLEEP_ERRORS as exc:
+        raise ToolError(_detail(sleep_error_to_http(exc))) from exc
     return _ok({"status": result.status, "detail": result.detail})
 
 
@@ -447,11 +517,12 @@ async def _swarm_agent_skip(manager: Any, caller: AgentCaller, action: str, targ
         return False
     import sqlite3
 
+    from src.core.db import DatastoreUnreadableError
     from src.core.swarm import spawn
 
     try:
         await spawn.parent_agent(manager, caller)
-    except (spawn.SpawnRefused, sqlite3.Error, OSError):
+    except (spawn.SpawnRefused, DatastoreUnreadableError, sqlite3.Error, OSError):
         return False
     return True
 
@@ -459,7 +530,7 @@ async def _swarm_agent_skip(manager: Any, caller: AgentCaller, action: str, targ
 async def park(
     manager: Any, caller: AgentCaller, target_id: str, target_tmux: str, action: str, summary: str, args: dict,
     run: Callable[[bool], Awaitable[dict]], dedupe_key: str = "", beast_eligible: bool = True,
-    confirm_text: str = "", in_use: Optional[dict] = None, supersede: bool = False,
+    confirm_text: str = "", in_use: Optional[dict] = None, supersede: bool = False, max_wait: Optional[float] = None,
 ) -> dict:
     epoch, name = await approval_runtime.pin(manager, target_id)
     replay = call_context.take_replay()
@@ -494,7 +565,7 @@ async def park(
         raise ToolError(str(exc)) from exc
     logger.info("mcp_action_pending", id=item.id, action=action, caller=caller.tmux_name, client=caller.token_name or None,
                 target=target_tmux)
-    wait = 0 if (in_use and in_use["in_flight"]) or getattr(manager, "gate_waited", False) else pending.MAX_WAIT_SECONDS
+    wait = 0 if (in_use and in_use["in_flight"]) or getattr(manager, "gate_waited", False) else (pending.MAX_WAIT_SECONDS if max_wait is None else max(0.0, min(max_wait, pending.MAX_WAIT_SECONDS)))
     manager.gate_waited = True
     return _item_result(item, await pending.wait_for(item, wait))
 
@@ -576,13 +647,16 @@ TOOLS: dict[str, tuple[str, dict, list, Callable[..., Awaitable[dict]]]] = {
         ["target", "body", "expected_revision"], session_notes_put,
     ),
     "session_create": (
-        "Start a new session in a folder or project (on a paired computer: peer plus working_dir there; waits for the owner). Limits: 5 live sessions per agent, 20 in total.",
+        "Start a new session in a folder or project (on a paired computer: peer plus working_dir there; waits for the owner). In an auto-delegate project placement defaults to auto: the computer with room, else here; say here or peer to choose; commit first. Limits: 5 live per agent, 20 in total.",
         {"working_dir": {"type": "string"}, "project": {"type": "string"}, "peer": {"type": "string"},
          "agent_type": {"type": "string"},
          "launch_profile": {"type": "string", "description": "A launch profile id from launch_profiles_list; with agent_type they must agree."},
          "name": {"type": "string"},
          "account": {"type": "string", "description": "A claude account id from launch_accounts_list; the agent launches on it instead of the active account. Not with peer."},
-         "always_use_account": {"type": "boolean", "description": "With account: save it as this agent's account (restarts and wakes use it)."}},
+         "always_use_account": {"type": "boolean", "description": "With account: save it as this agent's account (restarts and wakes use it)."},
+         "placement": {"type": "string", "enum": list(place_args.PLACEMENTS), "description": "auto (the default in an auto-delegate project): the computer with room is picked, here when none has. here (the default elsewhere): this computer. Not with peer or account."},
+         "needs": {"type": "array", "items": {"type": "string", "maxLength": place_args.MAX_NEED_CHARS}, "maxItems": place_args.MAX_NEEDS,
+                   "description": "With auto: words the computer must have, such as xcode."}},
         [], session_create,
     ),
     "session_send_message": (

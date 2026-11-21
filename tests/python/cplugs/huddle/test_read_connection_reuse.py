@@ -9,7 +9,7 @@ from pathlib import Path
 
 from src.core.db import connect, db_path_for
 from src.core.db_reuse.core_read import lend_pooled_read
-from src.cplugs.sdk.storage import CplugStorage, StorageSpec
+from src.plugins.sdk.storage import CplugStorage, StorageSpec
 
 READS = 100
 

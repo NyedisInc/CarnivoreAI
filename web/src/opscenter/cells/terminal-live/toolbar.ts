@@ -11,6 +11,7 @@ export const TOOLBAR_STEPS: readonly CellSize[] = [
   { name: 'notes', min: 340 },
   { name: 'sleep', min: 380 },
   { name: 'theme', min: 420 },
+  { name: 'sound', min: 440 },
   { name: 'size-master', min: 460 },
   { name: 'utilities', min: 500 },
   { name: 'skills', min: 540 },
@@ -34,13 +35,14 @@ export const TOOLBAR_ITEMS: readonly ToolbarItem[] = [
   { id: 'search', action: 'search', icon: 'search', label: 'terminal.strip.search', from: 'search' },
   { id: 'notes', action: null, icon: 'docs', label: 'terminal.strip.notes', from: 'notes' },
   { id: 'theme', action: null, icon: 'palette', label: 'terminal.strip.theme', from: 'theme' },
+  { id: 'sound', action: null, icon: 'bell', label: 'terminal.strip.sound', from: 'sound' },
   { id: 'background', action: null, icon: null, label: null, from: 'background' },
   { id: 'utilities', action: null, icon: null, label: null, from: 'utilities' },
   { id: 'sleep', action: null, icon: 'moon', label: 'opscenter.tabs.sleep', from: 'sleep' },
   { id: 'size-master', action: null, icon: 'crown', label: 'terminal.strip.size_master', from: 'size-master' },
 ];
 
-export const MENU_HOME: ReadonlySet<string> = new Set(['skills', 'plugins', 'files', 'notes', 'theme', 'background']);
+export const MENU_HOME: ReadonlySet<string> = new Set(['skills', 'plugins', 'files', 'notes', 'theme', 'sound', 'background']);
 
 export const KEY_BAR_KEYS: ReadonlySet<string> = new Set(['search', 'notes', 'files', 'sleep']);
 

@@ -1,7 +1,7 @@
-import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
-import { NEEDS_JOE_SECTIONS, sectionOf } from '../../../cplugs/huddle/task-manager-status-sections';
+import type { HuddleItem } from '../../../plugins/huddle/huddle-model';
+import { NEEDS_JOE_SECTIONS, sectionOf } from '../../../plugins/huddle/task-manager-status-sections';
 import { isUnreadItem, unreadMessageCount } from './mk2-unread';
-import type { ViewChip } from '../../../cplugs/huddle/task-manager-view-filter.svelte';
+import type { ViewChip } from '../../../plugins/huddle/task-manager-view-filter.svelte';
 
 export const MK2_CHIP_ORDER = ['all', 'needs_you', 'unread', 'scheduled'] as const;
 export type Mk2ChipId = (typeof MK2_CHIP_ORDER)[number];
@@ -46,10 +46,17 @@ export function unreadCount(items: readonly HuddleItem[]): number {
   return items.reduce((sum, item) => sum + unreadMessageCount(item), 0);
 }
 
+export function hasUpcomingRun(item: HuddleItem): boolean {
+  const trigger = item.start_trigger;
+  if (!trigger || sectionOf(item) === 'done') return false;
+  if (trigger.repeat) return trigger.paused !== true;
+  return trigger.fired_at == null && !trigger.last_error;
+}
+
 export const MK2_CHIP_TEST: Readonly<Record<ViewChip, (item: HuddleItem) => boolean>> = Object.freeze({
   needs_you: (item: HuddleItem) => NEEDS_JOE_SECTIONS.includes(sectionOf(item)),
   unread: isUnreadTask,
-  scheduled: (item: HuddleItem) => sectionOf(item) === 'scheduled',
+  scheduled: hasUpcomingRun,
 });
 
 export function chipCount(chip: ViewChip, items: readonly HuddleItem[]): number {

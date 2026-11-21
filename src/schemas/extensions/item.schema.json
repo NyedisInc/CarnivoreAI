@@ -269,7 +269,7 @@
           "minLength": 1,
           "maxLength": 120,
           "pattern": "^[a-z][a-z0-9_.]*(:.*)?$",
-          "description": "A row of src/cplugs/sdk/permission_registry.py. The parser checks the name against the registry."
+          "description": "A row of src/plugins/sdk/permission_registry.py. The parser checks the name against the registry."
         },
         "reason": {
           "type": "string",

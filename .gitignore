@@ -68,6 +68,7 @@ refresh_tokens.db
 *.sqlite-shm
 *.jsonl
 !tests/fixtures/argent/**/*.jsonl
+!tests/python/fixtures/timeline/**/*.jsonl
 
 .worktrees/
 
@@ -122,6 +123,7 @@ scripts/verify/.terminal-opacity-shots/
 !.claude/
 .claude/*
 !.claude/commands/
+!.claude/settings.json
 
 web/node_modules
 web/node_modules.nosync/

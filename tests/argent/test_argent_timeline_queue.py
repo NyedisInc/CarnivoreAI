@@ -21,7 +21,7 @@ from src.core.argent.lifecycle import PORT_NAME
 from src.core.argent.runtime import Runtime, set_runtime
 from src.core.argent.store import ArgentStore
 from src.core.argent.token_store import TokenStore
-from src.cplugs.sdk import ports
+from src.plugins.sdk import ports
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "argent"
 TOKEN = "FIXTURE-asicli-not-a-secret"

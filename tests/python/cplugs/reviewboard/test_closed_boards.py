@@ -9,10 +9,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.huddle import board_port
-from src.cplugs.huddle.store import TaskManagerStore
-from src.cplugs.reviewboard import service, state
-from src.cplugs.sdk import CplugSchemaError, ports
+from src.plugins.huddle import board_port
+from src.plugins.huddle.public import TaskManagerStore
+from src.plugins.reviewboard import service, state
+from src.plugins.sdk import CplugSchemaError, ports
 from tests.python.cplugs.reviewboard.boards import SIDECAR, make_board
 from tests.python.cplugs.reviewboard.harness import BASE, Env, task_manager_on, task_manager_store, make_env
 

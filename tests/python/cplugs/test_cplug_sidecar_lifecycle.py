@@ -14,9 +14,9 @@ import pytest
 from fastapi import FastAPI
 
 from src.api.auth import require_auth
-from src.cplugs.host import activity_log, egress_log, identity, owner_switch, routes as host_routes, runtime, secret_store, sidecar_boot, sidecar_registry
-from src.cplugs.host import state as owner_state
-from src.cplugs.runtime import sandbox
+from src.plugins.host import activity_log, egress_log, identity, owner_switch, routes as host_routes, runtime, secret_store, sidecar_boot, sidecar_registry
+from src.plugins.host import state as owner_state
+from src.plugins.runtime import sandbox
 
 try:
     sandbox.find_interpreter()

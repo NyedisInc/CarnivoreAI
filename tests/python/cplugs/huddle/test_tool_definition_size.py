@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 
 from src.core.mcp import tools
-from src.cplugs.huddle import CPLUG
+from src.plugins.huddle import CPLUG
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 
 MAX_DEFINITION_BYTES = 5000

@@ -33,7 +33,7 @@ let narrow = false;
 
 function loadLegacy(): void {
   const indirectEval = eval;
-  for (const file of ['session-label.js', 'session-status-summary.js', 'toast-session-group.js', 'toast-version-arbitration.js']) indirectEval(read(file));
+  for (const file of ['extend-prototype.js', 'session-label.js', 'session-status-summary.js', 'toast-session-group.js', 'toast-version-arbitration.js']) indirectEval(read(file));
   indirectEval(['toast.js', 'toast-grouping.js', 'toast-view.js', 'toast-lifecycle.js'].map(read).join('\n;\n'));
 }
 

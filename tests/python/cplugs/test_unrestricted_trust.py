@@ -7,11 +7,11 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.cplugs.host import sidecar_spec
-from src.cplugs.host.sidecar_manifest import SidecarManifestError, parse_sidecar_manifest
-from src.cplugs.host.sidecar_registry import SidecarDefinition
-from src.cplugs.runtime import sandbox
-from src.cplugs.runtime.supervisor import Supervisor
+from src.plugins.host import sidecar_spec
+from src.plugins.host.sidecar_manifest import SidecarManifestError, parse_sidecar_manifest
+from src.plugins.host.sidecar_registry import SidecarDefinition
+from src.plugins.runtime import sandbox
+from src.plugins.runtime.supervisor import Supervisor
 
 PINNED = "3463B8E83B44738B"
 

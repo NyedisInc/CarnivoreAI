@@ -127,7 +127,7 @@
             height: 16px;
             border: 2px solid var(--oc-control-line);
             border-top-color: var(--oc-green);
-            border-radius: 50%;
+            border-radius: var(--oc-radius-circle);
             animation: mp-spin 1s linear infinite;
         }
 
@@ -143,7 +143,7 @@
         .mp__dot {
             width: 8px;
             height: 8px;
-            border-radius: 50%;
+            border-radius: var(--oc-radius-circle);
             background: var(--oc-green);
             animation: mp-breathe 1.8s ease-in-out infinite;
         }

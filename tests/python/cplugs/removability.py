@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.host import routes as host_routes, runtime, state as owner_state
+from src.plugins.host import routes as host_routes, runtime, state as owner_state
 from tests.helpers import style_guide_inventory as guide
 from tests.python.cplugs.owner import turn_on
 from tests.helpers.catalog_text import CATALOG_PATH, REPO_ROOT, slice_paths
@@ -96,16 +96,16 @@ def assert_no_dangling_assets(plugin_id: str) -> None:
     assert not {k for k in shared if k.startswith(namespace)}, "the shared catalog still holds the plugin's keys"
     for key in (d.manifest.name_key, d.manifest.description_key):
         assert key in slice_keys, f"{key} is not in the plugin's own slice"
-    web = f"web/src/cplugs/{plugin_id}/"
+    web = f"web/src/plugins/{plugin_id}/"
     registry = json.loads(guide.REGISTRY.read_text(encoding="utf-8"))
     assert not [k for k in registry["files"] if k.startswith(web)], "registry.json still holds the plugin's rows"
     prose = [n for n, html in guide.fragment_text().items() if "/" not in n and web in html]
     assert prose == [], f"shared guide sections name the plugin's files: {prose}"
     rows = guide.plugin_rows().get(plugin_id, {})
-    declared = {p for p in d.manifest.owns.style_guide}
+    declared = {p.replace("web/src/cplugs/", "web/src/plugins/", 1) for p in d.manifest.owns.style_guide}
     assert declared == set(rows), f"owns.style_guide and style-guide.json disagree: {declared ^ set(rows)}"
     prefix = f"/cplugs/{plugin_id}"
     if d.router is not None:
         assert all(r.path.startswith(prefix) for r in d.router.routes), "a route outside the plugin's prefix"
     assert set(d.tools) <= set(d.manifest.surfaces.mcp_tools), "a tool the manifest does not declare"
-    assert REPO_ROOT.joinpath("src", "cplugs", plugin_id, "cplug.json").is_file()
+    assert REPO_ROOT.joinpath("src", "plugins", plugin_id, "cplug.json").is_file()

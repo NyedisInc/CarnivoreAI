@@ -63,7 +63,7 @@ describe('the range label and the expand button', () => {
     test(`${entry.title}: both sit in the header, none in the body`, async () => {
       const root = await card(entry);
       const head = root.querySelector('[data-widget-head]')!;
-      expect(head.querySelector('.analytics-range')?.textContent).toContain('24 hours');
+      expect(head.querySelector('.analytics-range')?.textContent).toContain(entry.id === 'tokens' ? '24h' : '24 hours');
       expect(head.querySelector('.analytics-range')?.textContent).not.toContain('past');
       expect(head.querySelector('[data-analytics-open]')).not.toBeNull();
       expect(root.querySelector('.analytics-cell [data-analytics-open]')).toBeNull();

@@ -6,6 +6,7 @@ import { browserNavHost } from './nav-host';
 import { detachAndCreateNew, selectProject } from './navigation';
 import { showError, updateStatus } from './status-report';
 import { authFetch } from '../../opscenter/api/auth.svelte';
+import { setProjectCompany } from '../companies/api';
 import { HOSTS_ROUTE, LOCAL_HOST_KEY, type HostRow, type HostsListResponse } from '../hosts-page/hosts-adapter';
 import type { ProjectRow } from '../sessions/types';
 import type { ClonedProject, FolderPickerSource, RemoteFolderAnswer } from './modal-types';
@@ -43,7 +44,9 @@ export interface CreateHost {
         name: string;
         path: string;
         description?: string | null;
+        company_id?: number;
     }): Promise<unknown>;
+    setProjectCompany(projectName: string, companyId: number): Promise<unknown>;
     checkProjectRoot(path: string): Promise<unknown>;
     updateProject(name: string, fields: Record<string, unknown>): Promise<unknown>;
     archiveProject(name: string): Promise<unknown>;
@@ -117,6 +120,7 @@ export function browserCreateHost(): CreateHost {
         },
         createSession: (payload) => api().createSession(payload),
         createProject: (row) => api().createProject(row),
+        setProjectCompany: (projectName, companyId) => setProjectCompany(projectName, companyId),
         checkProjectRoot: (path) => api().checkProjectRoot(path),
         updateProject: (name, fields) => api().updateProject(name, fields),
         archiveProject: (name) => api().archiveProject(name),

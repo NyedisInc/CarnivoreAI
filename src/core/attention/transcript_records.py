@@ -31,8 +31,28 @@ QUEUED_COMMAND_ATTACHMENT: str = "queued_command"
 
 __all__ = [
     "record_text", "retired_ids", "is_task_notification", "is_real_user_prompt",
-    "is_interrupt", "is_local_command", "is_resume_placeholder",
+    "is_interrupt", "is_local_command", "is_resume_placeholder", "tag_value", "BOOKKEEPING_RECORD_TYPES",
 ]
+
+BOOKKEEPING_RECORD_TYPES: frozenset = frozenset(
+    {
+        "queue-operation",
+        "attachment",
+        "last-prompt",
+        "custom-title",
+        "ai-title",
+        "agent-name",
+        "mode",
+        "permission-mode",
+        "atis-latch",
+        "bridge-session",
+        "history-suppression",
+        "pr-link",
+        "frame-link",
+        "cost-state",
+    }
+)
+
 
 def record_text(record: Dict[str, Any]) -> str:
     message = record.get("message")
@@ -48,7 +68,7 @@ def record_text(record: Dict[str, Any]) -> str:
     return ""
 
 
-def _tag_value(text: str, tag: str) -> Optional[str]:
+def tag_value(text: str, tag: str) -> Optional[str]:
     opener = "<" + tag + ">"
     closer = "</" + tag + ">"
     start = text.find(opener)
@@ -63,11 +83,11 @@ def _tag_value(text: str, tag: str) -> Optional[str]:
 
 
 def retired_ids(text: str) -> List[str]:
-    if TASK_NOTIFICATION_MARKER not in text or _tag_value(text, "status") is None:
+    if TASK_NOTIFICATION_MARKER not in text or tag_value(text, "status") is None:
         return []
     return [
         value
-        for value in (_tag_value(text, "tool-use-id"), _tag_value(text, "task-id"))
+        for value in (tag_value(text, "tool-use-id"), tag_value(text, "task-id"))
         if value
     ]
 

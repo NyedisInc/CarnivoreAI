@@ -1,6 +1,6 @@
 <script lang="ts">
   import SessionFace from '../sessions/SessionFace.svelte';
-  import type { ListingRow } from '../../cplugs/sdk/sessions.svelte';
+  import type { ListingRow } from '../../plugins/sdk/sessions.svelte';
   import type { LedKind } from './result-model';
 
   interface Props {

@@ -8,9 +8,9 @@ from typing import Any, Dict
 
 import pytest
 
-from src.cplugs.reviewboard import legacy
-from src.cplugs.reviewboard.cli import convert_legacy
-from src.cplugs.reviewboard.scan import scan
+from src.plugins.reviewboard import legacy
+from src.plugins.reviewboard.cli import convert_legacy
+from src.plugins.reviewboard.scan import scan
 from tests.python.cplugs.reviewboard.boards import make_root
 
 NOW = "2026-10-12T22:00:00Z"

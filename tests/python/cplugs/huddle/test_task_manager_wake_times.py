@@ -5,11 +5,11 @@ import asyncio
 
 import pytest
 
-from src.cplugs.huddle.roles.store import RoleStore
+from src.plugins.huddle.roles.store import RoleStore
 
-from src.cplugs.host import runtime
-from src.cplugs.huddle import schedule_port, schedule_wakes, scheduled, triggers, wake_target
-from src.cplugs.huddle.roles import tags
+from src.plugins.host import runtime
+from src.plugins.huddle import schedule_port, schedule_wakes, scheduled, triggers, wake_target
+from src.plugins.huddle.roles import tags
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, pasted  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import iso
 from tests.python.cplugs.huddle.test_task_manager_tagged_schedule import ctx_of

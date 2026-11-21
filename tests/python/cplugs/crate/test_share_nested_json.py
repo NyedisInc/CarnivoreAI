@@ -7,8 +7,8 @@ import string
 
 import pytest
 
-from src.cplugs.crate import share as S
-from src.cplugs.sdk import crate_sources as cs
+from src.plugins.crate import share as S
+from src.plugins.sdk import crate_sources as cs
 
 HOME = "/Users/nobody-here"
 

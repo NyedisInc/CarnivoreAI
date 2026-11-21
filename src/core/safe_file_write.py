@@ -13,10 +13,12 @@ PRIVATE_DIR_MODE = 0o700
 
 _FOREIGN_WRITE_BITS = stat.S_IWGRP | stat.S_IWOTH
 
-_DIR_OPEN_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+_O_DIRECTORY, _O_NOFOLLOW, _O_CLOEXEC = (getattr(os, n, 0) for n in ("O_DIRECTORY", "O_NOFOLLOW", "O_CLOEXEC"))
+
+_DIR_OPEN_FLAGS = os.O_RDONLY | _O_DIRECTORY | _O_NOFOLLOW | _O_CLOEXEC
 
 _TEMP_OPEN_FLAGS = (
-    os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC
+    os.O_WRONLY | os.O_CREAT | os.O_EXCL | _O_NOFOLLOW | _O_CLOEXEC | getattr(os, "O_BINARY", 0)
 )
 
 
@@ -96,9 +98,43 @@ def _check_final_name(directory: Path, name: str, dir_fd: int) -> None:
         raise _refuse(directory / name, "target_not_a_regular_file")
 
 
+def _write_private_file_windows(directory: Path, name: str, data: bytes) -> Path:
+    target = directory / name
+    tmp = directory / f".{name}.{secrets.token_hex(8)}.tmp"
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+        for path, reason in ((directory, "directory_is_symlink"), (target, "target_is_symlink")):
+            try:
+                info = os.lstat(path)
+            except FileNotFoundError:
+                continue
+            if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400):
+                raise _refuse(path, reason)
+        if directory.is_dir() is False:
+            raise _refuse(directory, "directory_not_a_directory")
+        fd = os.open(tmp, _TEMP_OPEN_FLAGS, 0o600)
+        try:
+            with os.fdopen(fd, "wb") as stream:
+                stream.write(data)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(tmp, target)
+        finally:
+            if tmp.exists():
+                tmp.unlink()
+    except OSError as exc:
+        if isinstance(exc, SafeFileWriteError):
+            raise
+        logger.error("safe_file_write_failed", path=str(target), error=str(exc))
+        raise SafeFileWriteError(f"cannot write {target}: {exc}") from exc
+    return target
+
+
 def write_private_file(directory: Path, name: str, data: bytes, mode: int) -> Path:
     if not name or os.sep in name or name in (".", ".."):
         raise ValueError(f"not a plain file name: {name!r}")
+    if os.name == "nt":
+        return _write_private_file_windows(directory, name, data)
     target = directory / name
     dir_fd = _open_private_dir(directory)
     tmp_name = f".{name}.{secrets.token_hex(8)}.tmp"

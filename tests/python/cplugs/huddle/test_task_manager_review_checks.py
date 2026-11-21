@@ -6,9 +6,9 @@ from fastapi.testclient import TestClient
 
 from src.core.mcp import tools
 from src.core.work.storage import WorkStorage
-from src.cplugs.huddle.rules import CLAUDE, JOE, TaskManagerForbidden
-from src.cplugs.huddle.store import TaskManagerStore
-from src.cplugs.huddle import review_checks
+from src.plugins.huddle.rules import CLAUDE, JOE, TaskManagerForbidden
+from src.plugins.huddle.store import TaskManagerStore
+from src.plugins.huddle import review_checks
 from tests.python.cplugs.huddle.test_task_manager_focus import add, call, client, setup  # noqa: F401
 
 BASE = "/api/v1/cplugs/huddle"

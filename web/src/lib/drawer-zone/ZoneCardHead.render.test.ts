@@ -197,9 +197,9 @@ describe('a right-click anywhere on the title row opens the icon menu (item 685,
     expect(document.querySelector('.acm-menu')).toBeNull();
   });
 
-  test('edit layout adds settings... to the same menu; normal mode lists none', () => {
+  test('settings... is in the same menu in normal mode and in edit layout', () => {
     menuItem('core.activity-log', 'remove-widget');
-    expect(document.querySelector('.acm-menu [data-node="settings"]')).toBeNull();
+    expect(document.querySelector('.acm-menu [data-node="settings"]')).not.toBeNull();
     document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
     flushSync();
     layoutEditor.active = true;

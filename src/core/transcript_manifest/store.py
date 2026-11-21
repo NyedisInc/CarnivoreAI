@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import sqlite3
 from dataclasses import asdict, fields
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from src.core.db import transaction
 from src.core.transcript_manifest import constants as K
@@ -22,11 +22,31 @@ def _row(record: Any) -> Row:
     return Row(**data)
 
 
+_SELECT = f"SELECT {', '.join(_COLUMNS)}, id FROM {K.TABLE}"
+_PATH_CHUNK = 500
+
+
+def _fetch(conn: sqlite3.Connection, where: str = "", args: Sequence[Any] = ()) -> Dict[str, Row]:
+    conn.row_factory = sqlite3.Row
+    return {r[0]: Row.from_values(r) for r in conn.execute(f"{_SELECT}{where}", tuple(args))}
+
+
 def load_rows(conn: sqlite3.Connection) -> Dict[str, Row]:
     if not table_present(conn):
         return {}
-    conn.row_factory = sqlite3.Row
-    return {r[0]: Row(*r) for r in conn.execute(f"SELECT {', '.join(_COLUMNS)}, id FROM {K.TABLE}")}
+    return _fetch(conn)
+
+
+def load_scan_rows(conn: sqlite3.Connection, listed: Iterable[str]) -> Dict[str, Row]:
+    if not table_present(conn):
+        return {}
+    rows = _fetch(conn, " WHERE gone_at IS NULL")
+    missing = sorted({path for path in listed if path not in rows})
+    for start in range(0, len(missing), _PATH_CHUNK):
+        chunk = missing[start:start + _PATH_CHUNK]
+        marks = ", ".join("?" for _ in chunk)
+        rows.update(_fetch(conn, f" WHERE gone_at IS NOT NULL AND path IN ({marks})", chunk))
+    return rows
 
 
 def persist(conn: sqlite3.Connection, result: ScanResult, now: str) -> None:

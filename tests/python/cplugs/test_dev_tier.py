@@ -8,8 +8,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.host import developer_mode
-from src.cplugs.host import routes as host_routes, runtime, state as owner_state
+from src.plugins.host import developer_mode
+from src.plugins.host import routes as host_routes, runtime, state as owner_state
 from tests.python.cplugs.owner import turn_on
 
 

@@ -16,6 +16,7 @@ import { panels } from '../engine/plugin-kinds';
 import { GUTTER } from '../engine/tracks';
 import { refusePlacement } from '../widgets/chrome/refusal-toast.svelte';
 import { addChart, flushChartView, saveChartSettings } from '../cells/analytics/state.svelte';
+import { isFreshChartKind, resolveDropKind } from './drop-kind';
 import type { ChartConfig } from '../cells/analytics/types';
 import { presetConfig, type Preset } from '../viz/presets';
 import { galleryTarget } from './gallery-place';
@@ -30,7 +31,7 @@ export const layoutEditor: {
   focusSlot: SlotId | null;
 } = $state({ active: false, page: null, revision: 0, focusSlot: null });
 
-let editing: { store: LayoutStore; session: string; entry: Layout; entryGrid: OrderedGrid } | null = null;
+let editing: { store: LayoutStore; session: string; entry: Layout; entryGrid: OrderedGrid | null } | null = null;
 
 export const surfaceDrawer: { surface: string | null } = $state({ surface: null });
 
@@ -84,7 +85,7 @@ export function editingStore(): LayoutStore | null {
 export function editablePage(): LayoutPage | null {
   if (!editorSeams.wide()) return null;
   const page = editorSeams.page();
-  return page === 'home' && editorSeams.store(page) ? page : null;
+  return page && editorSeams.store(page) ? page : null;
 }
 
 export function enterLayoutEditor(): boolean {
@@ -92,7 +93,8 @@ export function enterLayoutEditor(): boolean {
   const page = editablePage();
   const store = page ? editorSeams.store(page) : null;
   if (!page || !store) return false;
-  editing = { store, session: store.session, entry: store.snapshot(), entryGrid: snapshotDash(store.state.layout) };
+  editing = { store, session: store.session, entry: store.snapshot(),
+    entryGrid: page === 'home' ? snapshotDash(store.state.layout) : null };
   layoutEditor.active = true;
   layoutEditor.page = page;
   layoutEditor.focusSlot = null;
@@ -124,7 +126,7 @@ export function cancelLayoutEditor(): void {
   if (!layoutEditor.active || !editing) return;
   const { store, entry, entryGrid } = editing;
   store.restore(entry);
-  restoreDash(entryGrid);
+  if (entryGrid) restoreDash(entryGrid);
   end(t('layout_editor.announce.cancelled'));
 }
 
@@ -201,10 +203,9 @@ export function addForDrop(kind: string): SlotId | null {
   const store = live();
   if (!store) return null;
   let id = kind as SlotId;
-  if (kind === 'analytics:new') {
-    const chart = addChart();
-    if (store.add('analytics', chart.id)) return null;
-    id = `analytics:${chart.id}` as SlotId;
+  if (isFreshChartKind(kind)) {
+    id = resolveDropKind(kind) as SlotId;
+    if (store.add('analytics', id.slice('analytics:'.length))) return null;
   } else {
     if (store.state.layout.rows.some((row) => row.slots.some((slot) => slot.id === id))) return null;
     if (seatPanel(store, id) === 'refused') return null;

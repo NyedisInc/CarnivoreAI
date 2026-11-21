@@ -45,6 +45,40 @@ console.log('[TerminalSearchEngine Module] Loading...');
         return false;
     }
 
+    function hexByte(n) {
+        var v = Math.max(0, Math.min(255, Math.round(n)));
+        return (v < 16 ? '0' : '') + v.toString(16);
+    }
+
+    function channelsToHex(r, g, b, a) {
+        if (!(a > 0)) return null;
+        return '#' + hexByte(r) + hexByte(g) + hexByte(b) + (a >= 1 ? '' : hexByte(a * 255));
+    }
+
+    var RGB_COLOR = /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)(?:\s*[,/]\s*([\d.]+)(%?))?\s*\)$/;
+    var SRGB_COLOR = /^color\(\s*srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+)(%?))?\s*\)$/;
+
+    function alphaOf(value, percent) {
+        if (value === undefined) return 1;
+        return percent ? parseFloat(value) / 100 : parseFloat(value);
+    }
+
+    function resolveToHex(value) {
+        var m = RGB_COLOR.exec(value);
+        if (m) return channelsToHex(+m[1], +m[2], +m[3], alphaOf(m[4], m[5]));
+        m = SRGB_COLOR.exec(value);
+        if (m) return channelsToHex(m[1] * 255, m[2] * 255, m[3] * 255, alphaOf(m[4], m[5]));
+        if (typeof OffscreenCanvas !== 'function') return null;
+        var ctx = new OffscreenCanvas(1, 1).getContext('2d', { willReadFrequently: true });
+        if (!ctx) return null;
+        ctx.clearRect(0, 0, 1, 1);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+        ctx.fillStyle = value;
+        ctx.fillRect(0, 0, 1, 1);
+        var px = ctx.getImageData(0, 0, 1, 1).data;
+        return channelsToHex(px[0], px[1], px[2], px[3] / 255);
+    }
+
     function themedColour(prop, fallback) {
         try {
             var host = activeTerm && activeTerm.element
@@ -52,7 +86,9 @@ console.log('[TerminalSearchEngine Module] Loading...');
             if (!host || typeof window.getComputedStyle !== 'function') return fallback;
             var value = window.getComputedStyle(host).getPropertyValue(prop);
             value = (value || '').trim();
-            return HEX_COLOUR.test(value) ? value : fallback;
+            if (!value) return fallback;
+            if (HEX_COLOUR.test(value)) return value;
+            return resolveToHex(value) || fallback;
         } catch (err) {
             console.warn('TerminalSearchEngine: could not read ' + prop, err);
             return fallback;

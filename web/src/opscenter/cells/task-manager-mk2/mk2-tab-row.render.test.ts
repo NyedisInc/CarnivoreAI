@@ -6,11 +6,11 @@ import { flushSync, mount, unmount } from 'svelte';
 const markRead = vi.hoisted(() => vi.fn(async () => {}));
 const putBack = vi.hoisted(() => vi.fn());
 const heldRead = vi.hoisted(() => vi.fn((task: { unread: boolean }) => { task.unread = false; return { undo: () => { task.unread = true; putBack(); }, send: markRead }; }));
-vi.mock('../../../cplugs/huddle/huddle.svelte', async (importOriginal) => ({ ...(await importOriginal<typeof import('../../../cplugs/huddle/huddle.svelte')>()), heldRead }));
+vi.mock('../../../plugins/huddle/huddle.svelte', async (importOriginal) => ({ ...(await importOriginal<typeof import('../../../plugins/huddle/huddle.svelte')>()), heldRead }));
 
 import Mk2MarkRead from './Mk2MarkRead.svelte';
 import { markReadHolds, undoMarkRead } from './mk2-mark-read.svelte';
-import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
+import type { HuddleItem } from '../../../plugins/huddle/huddle-model';
 
 const item = (id: number, unread = true) => ({ id, list: '7', text: 'x', state: 'open', thread: [], unread }) as unknown as HuddleItem;
 const apps: object[] = [];

@@ -8,7 +8,7 @@ from typing import Any, Dict
 from src.core import ui_preferences
 from src.core.deepsearch import index_scope, scope_migration as migration
 from src.core.ui_preferences_store import UiPreferencesStore
-from src.cplugs.host import state as owner_state
+from src.plugins.host import state as owner_state
 
 
 def _state(state_dir: Path, entries: Dict[str, Any]) -> None:

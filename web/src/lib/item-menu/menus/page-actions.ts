@@ -1,7 +1,7 @@
 import type { MenuNode } from '../../drawer-tabs/add-component-menu';
 import { BROWSER_PREFIX } from '../../drawer/browser-rows';
 import { pageById } from '../../browser/pages.svelte';
-import { pageRowActions } from '../../../cplugs/sdk/page-row-actions';
+import { pageRowActions } from '../../../plugins/sdk/page-row-actions';
 import { contributeItemMenu } from '../registry';
 
 contributeItemMenu('page', {

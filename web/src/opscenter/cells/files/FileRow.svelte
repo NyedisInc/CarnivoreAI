@@ -114,7 +114,7 @@
     .fx-row[data-kind='section'] {
       position: sticky;
       top: 0;
-      z-index: 1;
+      z-index: var(--oc-z-raised);
       height: 24px;
       line-height: 24px;
       padding-left: var(--oc-space-0-5);

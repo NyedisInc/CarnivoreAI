@@ -10,7 +10,7 @@ from src.core.session_token_usage import claude_reader
 from src.core.session_token_usage.reader import SessionSubject
 from src.core.session_transcript_presence import CONVERSATION_ABSENT, CONVERSATION_PRESENT
 from src.core.subagents.contract import contract_versions
-from src.core.subagents.reader import read_subagents
+from src.core.subagents.stall import read_marked
 from src.models.subagents import SessionSubagents, SubagentCounts
 
 
@@ -51,5 +51,5 @@ def read_session_subagents(
     if location.outcome != CONVERSATION_PRESENT or location.path is None:
         return SessionSubagents(state="unchecked",
                                 detail="the transcript corpus could not be read", **base)
-    return read_subagents(location.path, conversation_uuid=subject.conversation_uuid,
-                          process_started_at=process_started_at, now=instant)
+    return read_marked(location.path, conversation_uuid=subject.conversation_uuid,
+                       process_started_at=process_started_at, now=instant)

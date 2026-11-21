@@ -1,8 +1,8 @@
 
 <script lang="ts">
     import { onMount } from 'svelte';
-    import SwarmSettingsForm from '../../cplugs/huddle/swarm/SwarmSettingsForm.svelte';
-    import { loadSwarmSettings } from '../../cplugs/huddle/swarm/swarm-settings.svelte';
+    import SwarmSettingsForm from '../../plugins/huddle/swarm/SwarmSettingsForm.svelte';
+    import { loadSwarmSettings } from '../../plugins/huddle/swarm/swarm-settings.svelte';
 
     onMount(() => void loadSwarmSettings());
 </script>

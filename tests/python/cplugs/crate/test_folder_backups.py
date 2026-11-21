@@ -10,15 +10,15 @@ from typing import Any, Dict, List
 import pytest
 
 from src.core.deepsearch import fallback_hook as fb
-from src.cplugs.crate import constants as K
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import build_plan
-from src.cplugs.crate.writer import run_export
-from src.cplugs.registry import CPLUGS
-from src.cplugs.save.fallback import BackupTranscripts
-from src.cplugs.save.vault.store import Vault
-from src.cplugs.sdk import crate_format as cf
-from src.cplugs.sdk import crate_sources as cs
+from src.plugins.crate import constants as K
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import build_plan
+from src.plugins.crate.writer import run_export
+from src.plugins.registry import CPLUGS
+from src.plugins.save.fallback import BackupTranscripts
+from src.plugins.save.vault.store import Vault
+from src.plugins.sdk import crate_format as cf
+from src.plugins.sdk import crate_sources as cs
 from tests.python.cplugs.crate.crate_world import env_for, make_world, project_request
 from tests.python.inventory.world import UUID_A
 from tests.python.cplugs.crate.test_plugin_data import (
@@ -83,7 +83,7 @@ def carried_rels(plan: Any) -> List[str]:
 
 
 def test_the_families_come_from_the_contract_and_grey_out_with_a_reason(rig: SimpleNamespace) -> None:
-    from src.cplugs.crate import service
+    from src.plugins.crate import service
 
     inv = cs.resolve("project", rig.root1, rig.locations)
     families = {f["unit"]: f for f in cs.backup_families(inv, rig.locations)}

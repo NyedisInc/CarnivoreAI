@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { providerMark, t } from '../../../cplugs/sdk';
-  import { onEventFrame } from '../../../cplugs/sdk/terminal';
+  import { providerMark, t } from '../../../plugins/sdk';
+  import { onEventFrame } from '../../../plugins/sdk/terminal';
   import { Button } from '../../base';
   import { cardSettings } from './prefs.svelte';
   import { dismissKept, keptFor } from './keep.svelte';

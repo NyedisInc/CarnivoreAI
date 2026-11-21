@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 
-from src.cplugs.sdk.tool_families import TASK_MANAGER_PREFIX
+from src.plugins.sdk.tool_families import TASK_MANAGER_PREFIX
 
 SWITCH, AUTOMATIC = "switch", "automatic"
 
@@ -27,11 +27,12 @@ class Family:
 
 _PACK = frozenset({
     "pack_gh_login_add", "pack_global_sync_status", "pack_global_sync_now", "pack_machines_list", "pack_master_set", "pack_op_get", "pack_queue_cancel", "pack_queue_items_list",
-    "pack_refresh_run", "pack_relay_account_use", "pack_relay_set", "pack_relay_status", "pack_reserve_get", "pack_skills_status", "pack_reserve_set", "pack_restrictions_get",
+    "pack_reconnect_off", "pack_refresh_run", "pack_relay_account_use", "pack_relay_set", "pack_relay_status", "pack_reserve_get", "pack_skills_status", "pack_reserve_set", "pack_restrictions_get",
     "pack_restrictions_set", "pack_settings_update", "pack_tracks_master_get", "pack_tracks_master_set", "placement_explain",
     "project_replica_list", "project_replica_add", "project_replica_remove", "project_sync", "project_migrate",
     "project_migrate_back", "project_migrate_plan", "company_migrate", "company_migrate_plan", "session_move", "session_send",
     "session_send_check", "computer_direction_set", "computer_leave", "computer_remove",
+    "delegate", "delegate_stats", "ssh_targets_list", "job_wait", "job_stop", "job_reply",
 })
 
 _MESSAGING = frozenset({
@@ -44,7 +45,7 @@ _AI = frozenset({"ai_models_list", "ai_features_list", "ai_calls_list"})
 _APP_SETTINGS = frozenset({
     "session_pins_list", "session_pin", "session_unpin", "session_groups_list", "session_group_create", "session_group_move",
     "session_group_rename", "session_group_delete", "session_group_color_set", "preferences_get",
-    "preferences_update", "layout_color_set", "skills_command_center", "skill_copy", "skill_remove", "mods_list",
+    "preferences_update", "layout_color_set", "layouts_list", "layout_member_add", "layout_member_remove", "skills_command_center", "skill_copy", "skill_remove", "mods_list",
     "mod_enabled_set", "mod_remove", "catalog_items_list", "pipeline_plugin_rebuild", "alert_open_system_settings",
 })
 

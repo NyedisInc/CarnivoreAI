@@ -4,7 +4,7 @@
   import ModalShell from '../dialog-frame/ModalShell.svelte';
   import { ApiError } from '../../opscenter/api/auth.svelte';
   import { openConversation } from '../conversation-open/open';
-  import { openSession } from '../../cplugs/sdk/sessions.svelte';
+  import { openSession } from '../../plugins/sdk/sessions.svelte';
   import { t } from '../i18n/index.svelte';
   import type { ConversationTarget } from '../conversation-open/open';
   import { branchBookmark, fetchContext, WINDOW_SIZE, type ContextMark, type ContextMessage, type ContextRequest } from './context-api';
@@ -223,7 +223,7 @@
 <style>
   @layer components {
     :global(.dps-ctx-modal .modal-content) {
-      border-radius: 2px;
+      border-radius: var(--oc-radius-control);
       font-family: var(--font-mono);
     }
 
@@ -329,21 +329,6 @@
     padding: 12px 14px 14px;
   }
 
-  :global(.dps-ctx-modal .modal-footer .modal-btn) {
-    padding: 7px 16px;
-    font-size: 13px;
-  }
-
-  :global(.dps-ctx-modal .modal-footer .modal-btn:disabled) {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-
-  @media (pointer: coarse), (max-width: 600px) {
-    :global(.dps-ctx-modal .modal-footer .modal-btn) {
-      min-height: 44px;
-    }
-  }
 
   @media (max-width: 600px) {
     :global(.dps-ctx-modal .modal-footer .modal-btn) {

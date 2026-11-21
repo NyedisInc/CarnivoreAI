@@ -32,7 +32,8 @@ async def _do_delete(app: Any, target_id: str, epoch: Any) -> dict:
 async def _do_delete_asleep(manager: Any, uuid: str, row_id: Any) -> dict:
     from src.api import session_records_routes
 
-    row = await session_target.TargetResolver(manager).asleep_row(uuid, uuid_only=True)
+    resolver = session_target.TargetResolver(manager)
+    row = await resolver.asleep_row(uuid, uuid_only=True) or await resolver.stopped_row(uuid)
     if not row or row["id"] != row_id:
         raise ToolError("the target is no longer the same asleep session; nothing was done")
     request = _request(manager)
@@ -60,7 +61,7 @@ async def _delete_asleep(manager: Any, caller: AgentCaller, row: dict) -> dict:
 async def session_delete(manager: Any, caller: AgentCaller, args: dict) -> dict:
     if set(args) - {"target"}:
         raise ToolError("session_delete takes only target")
-    target = await session_target.resolve_target(manager, args, reach=session_target.STORED, tool="session_delete")
+    target = await session_target.resolve_target(manager, args, reach=session_target.RECORD, tool="session_delete")
     if not target.live:
         return await _delete_asleep(manager, caller, target.row)
     info = target.info
@@ -83,7 +84,7 @@ async def session_delete(manager: Any, caller: AgentCaller, args: dict) -> dict:
 
 WRITE_TOOLS: dict = {
     "session_delete": (
-        "Delete a session (kills its tmux session), or an ASLEEP one by session_uuid or tmux name (its record leaves your lists, it is unpinned, nothing is killed). Always waits for the owner's approval, even in Beast mode. Refuses your own session and a paired computer's.",
+        "Delete a session (kills its tmux session), or a STOPPED one (asleep, or any stopped record) by session_uuid, or an asleep one by tmux name (its record leaves your lists, it is unpinned, nothing is killed). Always waits for the owner's approval, even in Beast mode. Refuses your own session and a paired computer's.",
         {"target": _TARGET_SCHEMA}, ["target"], session_delete,
     ),
 }

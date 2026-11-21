@@ -54,10 +54,30 @@ async def _names_by_id(*, include_archived: bool = False) -> dict:
 
 
 async def _current_name(project_id: int, *, include_archived: bool = False) -> str:
-    names = await _names_by_id(include_archived=include_archived)
-    if project_id not in names:
+    from contextlib import closing
+
+    from fastapi import HTTPException
+
+    from src.api import projects_service
+    from src.config import settings
+    from src.core.project_writes import ProjectNotFound, resolve_by_id
+
+    def read() -> Optional[str]:
+        try:
+            conn = projects_service.open_db_or_503(settings)
+        except HTTPException as exc:
+            raise ToolError(str(exc.detail)) from exc
+        with closing(conn):
+            try:
+                row = resolve_by_id(conn, project_id)
+            except ProjectNotFound:
+                return None
+        return None if row.get("archived_at") and not include_archived else row["display_name"]
+
+    name = await asyncio.to_thread(read)
+    if name is None:
         raise ToolError(f"no project with id {project_id}; see projects_list")
-    return names[project_id]
+    return name
 
 
 async def project_rename(manager: Any, caller: AgentCaller, args: dict) -> dict:
@@ -71,9 +91,8 @@ async def project_rename(manager: Any, caller: AgentCaller, args: dict) -> dict:
     old_name = await _current_name(project_id, include_archived=True)
 
     async def run(approved: bool) -> dict:
-        current = await _current_name(project_id, include_archived=True)
-        row = await _via_route(projects_routes.update_project(current, UpdateProjectRequest(new_name=name)))
-        return _ok({"project": {"id": row.id, "name": row.name, "path": row.path}, "previous_name": current})
+        row = await _via_route(projects_routes.update_project_for(project_id, UpdateProjectRequest(new_name=name)))
+        return _ok({"project": {"id": row.id, "name": row.name, "path": row.path}, "previous_name": old_name})
 
     summary = f"rename project {json.dumps(old_name)} to {json.dumps(name)} (display name only; folder and sessions untouched)"
     return await park(manager, caller, "", "", "project_rename", summary, {"project": project_id, "name": name}, run,
@@ -90,11 +109,10 @@ def _archive_tool(archive: bool):
             raise ToolError(f"{tool} takes only project")
         project_id = project_id_arg(args)
         name = await _current_name(project_id, include_archived=True)
-        route = projects_routes.archive_project_route if archive else projects_routes.unarchive_project_route
+        route = projects_routes.archive_project_for if archive else projects_routes.unarchive_project_for
 
         async def run(approved: bool) -> dict:
-            current = await _current_name(project_id, include_archived=True)
-            row = await _via_route(route(current))
+            row = await _via_route(route(project_id))
             return _ok({"project": {"id": row.id, "name": row.name, "archived_at": row.archived_at,
                                     "sessions_archived": row.sessions_archived, "sessions_live": row.sessions_live,
                                     "sessions_restored": row.sessions_restored}})
@@ -140,10 +158,9 @@ async def project_move(manager: Any, caller: AgentCaller, args: dict) -> dict:
     request = SimpleNamespace(app=getattr(manager, "app", None))
 
     async def route(apply: bool, fingerprint: Optional[str] = None) -> dict:
-        current = await _current_name(project_id, include_archived=True)
         body = ProjectMoveRequest(new_root=new_root, move_folder=flags["move_folder"],
                                   create_parents=flags["create_parents"], apply=apply, plan_fingerprint=fingerprint)
-        return (await _via_route(project_move_routes.move_project(current, body, request))).model_dump()
+        return (await _via_route(project_move_routes.move_project_for(project_id, body, request))).model_dump()
 
     if not flags["apply"]:
         return _ok(await route(False))

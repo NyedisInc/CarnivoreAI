@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Set, Tuple
 
@@ -157,10 +158,10 @@ def member_texts(path: Path) -> Iterator[Tuple[str, bytes]]:
 
 
 def identity_hits(paths: Sequence[Path], needles: Sequence[str]) -> List[Tuple[str, str, str]]:
-    wanted = [(n, n.encode("utf-8")) for n in needles if n]
+    wanted = [(n, re.compile(rb"(?<![A-Za-z0-9])" + re.escape(n.encode("utf-8")) + rb"(?![A-Za-z0-9])")) for n in needles if n]
     hits = []
     for path in paths:
         texts = member_texts(path) if path.name.endswith((".crate", ".crate.age")) else [("-", path.read_bytes())]
         for member, data in texts:
-            hits += [(path.name, member, text) for text, raw in wanted if raw in data]
+            hits += [(path.name, member, text) for text, raw in wanted if raw.search(data)]
     return hits

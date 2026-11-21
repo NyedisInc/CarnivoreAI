@@ -178,9 +178,11 @@ def test_real_attach_on_throwaway_socket(tmp_path: Any) -> None:
             os.execvpe(plan.argvs[0][0], list(plan.argvs[0]), dict(plan.env, TERM="xterm"))
         _winsize(fd, 20, 60)
         size = ""
+        poller = select.poll()
+        poller.register(fd, select.POLLIN)
         for _ in range(40):
             time.sleep(0.1)
-            if select.select([fd], [], [], 0)[0]:
+            if poller.poll(0):
                 os.read(fd, 65536)
             if tmux("list-clients", "-t", "manual_one"):
                 size = tmux("display-message", "-p", "-t", "manual_one", "#{window_width}x#{window_height}")
@@ -193,7 +195,7 @@ def test_real_attach_on_throwaway_socket(tmp_path: Any) -> None:
         os.write(fd, b"\x02d")
         deadline, status = time.time() + 5, None
         while time.time() < deadline and status is None:
-            if select.select([fd], [], [], 0)[0]:
+            if poller.poll(0):
                 with contextlib.suppress(OSError):
                     os.read(fd, 65536)
             done, st = os.waitpid(pid, os.WNOHANG)

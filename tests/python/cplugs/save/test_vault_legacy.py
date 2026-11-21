@@ -8,8 +8,8 @@ import lzma
 import tarfile
 from pathlib import Path
 
-from src.cplugs.save.vault import legacy, restore
-from src.cplugs.sdk.blob_codec import compress
+from src.plugins.save.vault import legacy, restore
+from src.plugins.sdk.blob_codec import compress
 from tests.python.cplugs.save.vault_helpers import CONV, ENC, World, jsonl
 
 SLUG = "My-App"

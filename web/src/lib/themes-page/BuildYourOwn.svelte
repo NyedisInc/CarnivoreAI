@@ -155,7 +155,7 @@
         margin: 0;
         padding: 8px 10px;
         border: 1px solid var(--oc-line-rule);
-        border-radius: 2px;
+        border-radius: var(--oc-radius-control);
         background: var(--oc-ground-field, var(--oc-ground-page));
         font-family: var(--font-mono, monospace);
         font-size: 11px;
@@ -181,7 +181,7 @@
         gap: 8px;
         padding: 12px;
         border: 1px dashed var(--oc-line-rule);
-        border-radius: 2px;
+        border-radius: var(--oc-radius-control);
     }
 
     .tbyo-row {

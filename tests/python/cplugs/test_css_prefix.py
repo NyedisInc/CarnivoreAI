@@ -8,7 +8,7 @@ from typing import Counter as CounterT, Dict
 
 import pytest
 
-from src.cplugs.host import runtime
+from src.plugins.host import runtime
 
 ROOT = Path(__file__).resolve().parents[3]
 DEFINITIONS = {d.id: d for d in runtime.definitions()}
@@ -30,7 +30,7 @@ def class_families(css: str) -> CounterT[str]:
 
 def families_of(plugin_id: str) -> Dict[str, int]:
     total: CounterT[str] = Counter()
-    for sheet in sorted((ROOT / "web" / "src" / "cplugs" / plugin_id).glob("*.css")):
+    for sheet in sorted((ROOT / "web" / "src" / "plugins" / plugin_id).glob("*.css")):
         total += class_families(sheet.read_text(encoding="utf-8"))
     return dict(total)
 

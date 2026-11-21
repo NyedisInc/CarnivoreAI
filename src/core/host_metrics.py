@@ -5,8 +5,9 @@ import os
 import platform
 import shutil
 import subprocess
+import threading
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import structlog
 
@@ -20,14 +21,16 @@ def unavailable(reason: str) -> Dict[str, Any]:
 
 
 def _run(argv: List[str]) -> Optional[str]:
-    if not argv or not shutil.which(argv[0]):
+    found = shutil.which(argv[0]) if argv else None
+    if not found:
         return None
     try:
         proc = subprocess.run(
-            argv,
+            [found, *argv[1:]],
             capture_output=True,
             check=False,
             timeout=PROBE_TIMEOUT_SECONDS,
+            close_fds=False,
         )
     except (OSError, subprocess.SubprocessError) as exc:
         logger.debug("host_metric_probe_failed", argv=argv[0], error=str(exc))
@@ -68,12 +71,35 @@ def collect_memory() -> Dict[str, Any]:
     return unavailable(f"no memory probe for {system.lower() or 'this os'}")
 
 
+VM_STAT_SHARE_SECONDS = 2.0
+_clock: Callable[[], float] = time.monotonic
+_VM_STAT_LOCK = threading.Lock()
+_VM_STAT: Optional[Tuple[float, str]] = None
+
+
+def clear_vm_stat_cache() -> None:
+    global _VM_STAT
+    with _VM_STAT_LOCK:
+        _VM_STAT = None
+
+
+def _vm_stat_shared() -> Optional[str]:
+    global _VM_STAT
+    with _VM_STAT_LOCK:
+        now = _clock()
+        if _VM_STAT is not None and 0 <= now - _VM_STAT[0] < VM_STAT_SHARE_SECONDS:
+            return _VM_STAT[1]
+        out = _run(["vm_stat"])
+        _VM_STAT = None if out is None else (now, out)
+        return out
+
+
 def _memory_darwin() -> Dict[str, Any]:
     total = _static_sysctl_int("hw.memsize")
     if not total:
         return unavailable("sysctl hw.memsize unreadable")
 
-    out = _run(["vm_stat"])
+    out = _vm_stat_shared()
     if out is None:
         return unavailable("vm_stat unavailable")
 

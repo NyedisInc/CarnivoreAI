@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { TaskManagerGroup, HuddleItem } from '../../../cplugs/huddle/huddle-model';
+import type { TaskManagerGroup, HuddleItem } from '../../../plugins/huddle/huddle-model';
 import { LIST_ORDER, densityOf, groupOf, listRows, sectionsOf, statusOption, statusTicked } from './model';
 
 function item(id: number, status: string, at: number, extra: Partial<HuddleItem> = {}): HuddleItem {

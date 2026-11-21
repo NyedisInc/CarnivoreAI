@@ -10,12 +10,12 @@ from typing import Dict, List
 
 import pytest
 
-from src.cplugs.huddle import item_owner, lane, lineage, nudges, rules, state_request, state_rungs
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import item_owner, lane, lineage, nudges, rules, state_request, state_rungs
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work.ladder import MIGRATIONS
 from src.core.work import tables
 from src.core.work.storage import LEGACY_STORAGE
-from src.cplugs.sdk import CplugStorage, StorageSpec
+from src.plugins.sdk import CplugStorage, StorageSpec
 from src.core.pack.migrate import task_manager_history, task_manager_names
 
 REAL_DB = Path(os.environ.get("HUDDLE_REAL_DB", "~/Library/Application Support/Carnivore/cplugs/huddle/huddle.db")).expanduser()
@@ -142,7 +142,7 @@ def test_a_fresh_file_and_a_migrated_file_end_with_the_same_schema(tmp_path: Pat
 
 def test_no_code_writes_items_state_outside_the_known_write_points():
     allowed = {"store.py", "answer_writer.py", "fork.py", "state_rungs.py", "item_owner.py", "ask.py", "wait_stuck.py", "closure_undo.py", "store_triggers.py"}
-    root = Path(__file__).resolve().parents[4] / "src" / "cplugs" / "huddle"
+    root = Path(__file__).resolve().parents[4] / "src" / "plugins" / "huddle"
     pattern = re.compile(r"UPDATE work_items SET[^\"']*\bstate\s*=", re.S)
     writers = {p.name for p in root.rglob("*.py") if pattern.search(p.read_text(encoding="utf-8"))}
     assert writers <= allowed, writers - allowed

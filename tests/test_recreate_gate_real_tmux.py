@@ -123,3 +123,48 @@ def test_a_name_outside_the_namespace_is_never_measured_gone(tmux_socket):
     verdict = _read(name, tmux_socket)
     assert verdict.gone is False
     assert "namespace" in verdict.detail
+
+
+def _pane_facts(name: str, socket_name: str) -> tuple[str, str]:
+    backend = TmuxBackend.for_external(
+        session_name=name, working_dir=Path(tempfile.gettempdir()), on_output=None, socket_name=socket_name,
+    )
+    rc, out, err = backend._run_tmux_sync(
+        "display-message", "-p", "-t", f"={name}:", "#{pane_pid}|#{session_created}", check=False
+    )
+    assert rc == 0, err
+    text = out.decode() if isinstance(out, bytes) else out
+    pid, epoch = text.strip().split("|")
+    return pid, epoch
+
+
+@requires_tmux
+def test_a_name_held_by_another_instance_recreates_under_a_suffixed_name_and_spares_the_holder(tmux_socket):
+    from src.core.session_name_claim import claim_tmux_name, probe_collision_listing
+    from src.core.session_ops import row_probe
+
+    name = f"{SESSION_PREFIX}held2981"
+    backend = TmuxBackend.for_external(
+        session_name=name, working_dir=Path(tempfile.gettempdir()), on_output=None, socket_name=tmux_socket,
+    )
+    rc, _, err = backend._run_tmux_sync("new-session", "-d", "-s", name, "sh", check=False)
+    assert rc == 0, err
+    holder_pid, holder_epoch = _pane_facts(name, tmux_socket)
+
+    closed = {"tmux_name": name, "tmux_created_epoch": int(holder_epoch) - 100}
+    assert row_probe.measure_row_presence(closed, name, tmux_socket).gone is True
+    own = {"tmux_name": name, "tmux_created_epoch": int(holder_epoch)}
+    assert row_probe.measure_row_presence(own, name, tmux_socket).outcome == TMUX_PRESENT
+    assert row_probe.measure_row_presence({"tmux_name": name}, name, tmux_socket).outcome == TMUX_PRESENT
+
+    claim = claim_tmux_name(
+        name,
+        listing=probe_collision_listing(lambda: backend),
+        active_names=(), owned_names=(), recreate=True,
+    )
+    assert claim.name == f"{name}-2"
+    rc, _, err = backend._run_tmux_sync("new-session", "-d", "-s", claim.name, "sh", check=False)
+    assert rc == 0, err
+
+    assert _pane_facts(name, tmux_socket) == (holder_pid, holder_epoch)
+    assert _read(claim.name, tmux_socket).gone is False

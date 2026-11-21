@@ -1,6 +1,6 @@
 import type { authFetch } from '../../opscenter/api/auth.svelte';
 import { authFetch as defaultFetch } from '../../opscenter/api/auth.svelte';
-import { refreshEnablement } from '../../cplugs/host/enablement.svelte';
+import { refreshEnablement } from '../../plugins/host/enablement.svelte';
 import type { Translate } from '../sessions/types';
 import { CPLUGS_ROUTE, dependencyRefusal, toCplugItem, type CplugItem, type CplugRow, type CplugSheet } from './cplugs-adapter';
 

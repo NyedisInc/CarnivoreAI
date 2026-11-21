@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.cplugs.reviewboard.public.settings import (DEFAULT_BIND, DEFAULT_PORT, SettingsError, check_settings, parse_bind, parse_hostnames, parse_port,
+from src.plugins.reviewboard.public.settings import (DEFAULT_BIND, DEFAULT_PORT, SettingsError, check_settings, parse_bind, parse_hostnames, parse_port,
                                              parse_proxies, parse_settings)
 
 

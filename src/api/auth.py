@@ -140,7 +140,7 @@ def verify_jwt_token(token: str) -> bool:
     except HTTPException:
         return False
     except Exception as e:
-        logger.error("token_verification_error", error=str(e))
+        logger.error("token_verification_error", error=str(e), error_type=type(e).__name__, exc_info=True)
         return False
 
 
@@ -148,7 +148,7 @@ def _decode_with_typ(token: str, expected_typ: str) -> dict:
     try:
         auth_config = settings.load_auth_config()
     except Exception as e:
-        logger.error("auth_config_load_failed", error=str(e))
+        logger.error("auth_config_load_failed", error=str(e), error_type=type(e).__name__, exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="Authentication not configured.",

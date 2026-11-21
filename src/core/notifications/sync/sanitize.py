@@ -48,7 +48,7 @@ def _clean_value(path: str, raw: Any) -> Tuple[bool, Any]:
     if parsed.kind == doc_model.KIND_DEST:
         record = _clean_record(raw)
         return record is not None, record
-    if parsed.kind in (doc_model.KIND_TICK, doc_model.KIND_DEFAULT, doc_model.KIND_MUTE):
+    if parsed.kind in (doc_model.KIND_TICK, doc_model.KIND_DEFAULT, doc_model.KIND_MUTE, doc_model.KIND_ROUTE, doc_model.KIND_ON):
         return isinstance(raw, bool), raw
     if parsed.kind == doc_model.KIND_STYLE:
         style = styles_store.clean(raw)

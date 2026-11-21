@@ -46,7 +46,7 @@ def test_green_control_installs_all_seven(tmp_path: Path) -> None:
 
 
 def test_a_mismatch_leaves_the_committed_tree_untouched(tmp_path: Path) -> None:
-    script, env = _setup(tmp_path, bad_file="xterm-addon-search.js")
+    script, env = _setup(tmp_path, bad_file="addon-search.js")
     done = subprocess.run(["bash", str(script)], env=env, capture_output=True, text=True, timeout=60)
     assert done.returncode == 1 and "sha256 mismatch" in done.stderr, done.stdout + done.stderr
     out = tmp_path / "client" / "vendor" / "xterm"

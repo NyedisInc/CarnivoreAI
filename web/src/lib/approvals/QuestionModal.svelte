@@ -82,10 +82,8 @@
   }
 </script>
 
-<ModalShell title={t('approvals.title')} overlayClass="ask-modal text-prompt-modal" onCancel={onClose}>
-  {#snippet head()}
-    <div class="text-prompt-modal__head">
-      <span class="text-prompt-modal__verb">&raquo; {t('approvals.title')}</span>
+<ModalShell look="titlerow" title={t('approvals.title')} closeLabel={t('approvals.close')} overlayClass="ask-modal" onCancel={onClose}>
+  {#snippet headExtra()}
       {#if items.length > 1}
         <div class="pledger aq-pager" data-approval-pager>
           <Button size="sm" disabled={index === 0}
@@ -95,8 +93,6 @@
             aria-label={t('approvals.pager.next')} onclick={() => step(1)}>&rsaquo;</Button>
         </div>
       {/if}
-      <IconButton variant="close" icon="close" label={t('approvals.close')} onclick={() => onClose()} />
-    </div>
   {/snippet}
   <div class="pledger" data-approval-inbox>
     {#if current && isWholeAsk(current)}
@@ -126,7 +122,7 @@
     :global(.modal-overlay.ask-modal) { align-items: stretch; padding: 0; }
     :global(.modal-overlay.ask-modal .modal-content) { width: 100%; max-width: none; border-radius: 0; margin: 0; }
   }
-  .aq-empty { margin: 0; padding: 18px 14px; color: var(--pl-muted); font-size: var(--oc-fs-run-title); }
+  .aq-empty { margin: 0; padding: 18px 14px; color: var(--oc-text-secondary); font-size: var(--oc-fs-run-title); }
   .aq-foot { display: flex; flex: 1; min-width: 0; }
   .aq-pager { display: flex; align-items: center; gap: var(--oc-space-2); margin-left: auto; }
 </style>

@@ -10,15 +10,15 @@ from typing import Any, Callable, Dict, List, Tuple
 
 import pytest
 
-from src.cplugs.host import runtime
-from src.cplugs.huddle import rules, status_lines, waits
-from src.cplugs.huddle.rules import CLAUDE, JOE, TaskManagerError, TaskManagerForbidden, TaskManagerInvalid, TaskManagerStale
-from src.cplugs.huddle.store import TaskManagerStore
-from src.cplugs.sdk import work
+from src.plugins.host import runtime
+from src.plugins.huddle import rules, status_lines, waits
+from src.plugins.huddle.rules import CLAUDE, JOE, TaskManagerError, TaskManagerForbidden, TaskManagerInvalid, TaskManagerStale
+from src.plugins.huddle.store import TaskManagerStore
+from src.plugins.sdk import work
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import iso
 
-HUDDLE = Path(__file__).resolve().parents[4] / "src" / "cplugs" / "huddle"
+HUDDLE = Path(__file__).resolve().parents[4] / "src" / "plugins" / "huddle"
 PAUSE_SECONDS = 10
 
 

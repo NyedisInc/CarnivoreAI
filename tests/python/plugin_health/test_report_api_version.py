@@ -6,8 +6,8 @@ import json
 import pytest
 
 from src.core.plugin_health.gather import build_report
-from src.cplugs.host import sidecar_registry
-from src.cplugs.sdk import api_contract
+from src.plugins.host import sidecar_registry
+from src.plugins.sdk import api_contract
 from tests.python.plugin_health.world import make_world
 
 SHIPPED_FEATURE = "share"

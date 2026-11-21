@@ -9,11 +9,11 @@ import pytest
 
 from src.core.claude_transcript_correlate import slugify_project_dir
 from src.core.db import connect, db_path_for
-from src.cplugs.crate import write_files, writer as writer_module
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import build_plan
-from src.cplugs.crate.source_read import SourceUnstable
-from src.cplugs.crate.writer import ExportFailed, run_export
+from src.plugins.crate import write_files, writer as writer_module
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import build_plan
+from src.plugins.crate.source_read import SourceUnstable
+from src.plugins.crate.writer import ExportFailed, run_export
 from tests.python.cplugs.crate.crate_world import env_for, make_world, session_request
 from tests.python.inventory.world import CONV_A
 

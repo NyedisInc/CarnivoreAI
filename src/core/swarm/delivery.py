@@ -14,6 +14,7 @@ import structlog
 from fastapi import HTTPException
 
 from src.core import db
+from src.core.sessions import guarded_paste
 from src.core.swarm import push, store, thread_port
 from src.core.swarm.definition import UPPER_RANKS
 from src.core.swarm.names import shown_name
@@ -83,15 +84,11 @@ def discard(delivery_id: int) -> None:
         logger.warning("swarm_delivery_discard_failed", delivery_id=delivery_id, error_type=type(exc).__name__)
 
 
-_BEFORE_WRITE = frozenset({"session_not_found", "pane_dialog_open", "pane_not_an_agent", "session_gone",
-                           "receiver_instance_changed", "paste_unsupported"})
-
-
 def nothing_landed(exc: HTTPException) -> bool:
     if exc.status_code == 404:
         return True
     detail = exc.detail
-    return exc.status_code == 409 and isinstance(detail, dict) and detail.get("code") in _BEFORE_WRITE
+    return exc.status_code == 409 and isinstance(detail, dict) and detail.get("code") in guarded_paste.BEFORE_WRITE_CODES
 
 
 def record_for_key(session_uuid: str, source: str, source_ref: str) -> Optional[int]:
@@ -625,7 +622,9 @@ async def settle_wake(app_state: Any, agent_id: int) -> bool:
     if not await close_gone_trust_cards(app_state, agent, wake["id"]):
         return False
     started = _parse(wake.get("started_at"))
-    if _pending.get(agent_id) or started is None or (datetime.now(timezone.utc) - started).total_seconds() < KICKOFF_GRACE_S:
+    if _pending.get(agent_id) or started is None:
+        return False
+    if (datetime.now(timezone.utc) - started).total_seconds() < KICKOFF_GRACE_S and not await _past_trust_gate(app_state, agent, wake["id"]):
         return False
     await _replay_owner_words(app_state, agent_id)
     if await body.run_db(lambda c: kickoff_recorded(c, agent_id, f"wake:{wake['id']}")):

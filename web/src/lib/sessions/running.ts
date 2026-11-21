@@ -15,7 +15,7 @@ function createdByUs(row: { created_by_us?: boolean | null; created_by_cloude?: 
 
 type LiveFields = Pick<
     RunningSessionRow,
-    | 'startup_gate' | 'status_source' | 'activity_hint' | 'parked_summary' | 'usage_limit'
+    | 'startup_gate' | 'status_source' | 'activity_hint' | 'parked_summary' | 'usage_limit' | 'login_expired'
     | 'host_key' | 'host_label' | 'host_state'
     | 'agent_family' | 'agent_family_source' | 'agent_wrapper_label' | 'launched_with'
     | 'session_row_id' | 'parent_session_id'
@@ -28,6 +28,7 @@ function liveFields(live: SessionListItem): LiveFields {
         activity_hint: live.activity_hint !== undefined ? live.activity_hint : null,
         parked_summary: live.parked_summary !== undefined ? live.parked_summary : null,
         usage_limit: live.usage_limit ?? null,
+        login_expired: live.login_expired ?? null,
         host_key: live.host_key ?? null,
         host_label: live.host_label ?? null,
         host_state: live.host_state ?? null,

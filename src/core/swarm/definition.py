@@ -21,7 +21,7 @@ from src.core.swarm.memory import (
     refuse_secrets,
     require_slug,
 )
-from src.cplugs.sdk.tool_families import TASK_MANAGER_PREFIX
+from src.plugins.sdk.tool_families import TASK_MANAGER_PREFIX
 
 logger = structlog.get_logger(__name__)
 

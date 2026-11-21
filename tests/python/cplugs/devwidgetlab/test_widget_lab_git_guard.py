@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.devwidgetlab.drafts import ship
+from src.plugins.devwidgetlab.drafts import ship
 from tests.python.cplugs.devwidgetlab.draft_helpers import fake_repo, new_draft
 
 

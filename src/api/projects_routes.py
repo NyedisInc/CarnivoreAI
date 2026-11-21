@@ -1,8 +1,12 @@
 
+import sqlite3
+from typing import Optional, Union
+
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from src.api import projects_service
+from src.api.projects_service import ProjectKey
 from src.config import settings
 from src.models import (
     CheckProjectRootRequest,
@@ -15,7 +19,7 @@ from src.models import (
 from src.api.auth import require_auth
 from src.core.project_pack import store as project_pack_store
 from src.core.project_pack.constants import BUSY_STATES, STATE_UNPACKED as PACK_STATE_UNPACKED
-from src.core.companies import hero_images
+from src.core.companies import hero_images, store as companies_store
 from src.core.session_roles import check as session_roles_check
 from src.api.error_response import api_error
 
@@ -149,7 +153,7 @@ async def check_project_root(body: CheckProjectRootRequest):
 
 
 @router.post("/projects", response_model=ProjectResponse, status_code=201, dependencies=[Depends(require_auth)])
-async def create_project(body: CreateProjectRequest):
+async def create_project(body: CreateProjectRequest) -> Union[JSONResponse, ProjectResponse]:
     """
     Add a new project.
 
@@ -164,6 +168,7 @@ async def create_project(body: CreateProjectRequest):
 
     Raises:
         HTTPException 400: a project with that display name already exists.
+        HTTPException 404: ``company_id`` names no company (nothing is created).
         HTTPException 409 (code project_root_refused): the folder is the projects base folder or holds live projects.
         HTTPException 409: a project already exists at that folder. This
             is the refusal that keeps the launcher showing one node per
@@ -185,12 +190,15 @@ async def create_project(body: CreateProjectRequest):
 
     try:
         with closing(projects_service.open_db_or_503(settings)) as conn:
+            company = _company_or_404(conn, body.company_id)
             row = db_create_project(
                 conn,
                 name=body.name,
                 path=body.path,
                 description=body.description,
             )
+            if company is not None:
+                companies_store.assign_project(conn, row["id"], company["id"])
     except ProjectRootConflict as e:
         logger.warning("project_creation_root_conflict", path=body.path, error=str(e))
         return JSONResponse(
@@ -216,37 +224,27 @@ async def create_project(body: CreateProjectRequest):
         description=row["description"],
         root=row["root"],
         default_launch_profile=row["default_agent_type"],
+        company_id=company["id"] if company else None,
+        company_name=company["name"] if company else None,
     )
 
 
+def _company_or_404(conn: sqlite3.Connection, company_id: Optional[int]) -> Optional[dict]:
+    if company_id is None:
+        return None
+    try:
+        return companies_store.get_company(conn, company_id)
+    except companies_store.CompanyNotFound:
+        raise HTTPException(status_code=404, detail=f"Company '{company_id}' not found")
+
+
 @router.delete("/projects/{project_name}", response_model=SuccessResponse, dependencies=[Depends(require_auth)])
-async def delete_project(project_name: str, request: Request):
-    """
-    Delete a project for good: its agents, then its row, then a line to its company's agent.
+async def delete_project(project_name: str, request: Request) -> SuccessResponse:
+    """Delete the project with this display name (see :func:`delete_project_for`)."""
+    return await delete_project_for(project_name, request)
 
-    feat/db-is-authoritative, #1405. The project's agent and every live
-    agent under it are turned off first, leaves first, through the one
-    turn-off path (each body sleeps so its memory commit runs); a refusal
-    there deletes nothing more. Then the ``projects`` row is deleted (with
-    its tombstone) and config.json refreshed, and the live agent of the
-    company it was filed under is told it is gone for good. The folder on
-    disk is never touched.
 
-    Args:
-        project_name: Display name of the project to remove.
-        request: carries ``app.state`` for the turn-off and the tell.
-
-    Returns:
-        Success response.
-
-    Raises:
-        HTTPException 404: no project carries that display name.
-        HTTPException 409: more than one does, so the name does not
-            identify a single project (never resolved by deleting the
-            first match); or ``swarm_refused``, an agent could not be
-            turned off yet (a wake is starting, a body would not close).
-        HTTPException 503: cloude.db is unreachable.
-    """
+async def delete_project_for(project_name: ProjectKey, request: Request) -> SuccessResponse:
     from contextlib import closing
 
     from src.core.swarm import project_removal
@@ -269,12 +267,12 @@ async def delete_project(project_name: str, request: Request):
         db_delete_project(conn, target["id"])
     hero_images.remove(hero_images.PROJECT, target["id"])
     if company_agent is not None:
-        await project_removal.tell_company(request.app.state, company_agent, project_name)
+        await project_removal.tell_company(request.app.state, company_agent, target["display_name"])
 
-    logger.info("project_deleted", name=project_name, root=target["root"], agents_off=len(agents))
+    logger.info("project_deleted", name=target["display_name"], root=target["root"], agents_off=len(agents))
     await session_roles_check.after_change(request.app.state)
 
-    return SuccessResponse(message=f"Project '{project_name}' deleted successfully")
+    return SuccessResponse(message=f"Project '{target['display_name']}' deleted successfully")
 
 
 @router.patch(
@@ -282,34 +280,12 @@ async def delete_project(project_name: str, request: Request):
     response_model=ProjectResponse,
     dependencies=[Depends(require_auth)],
 )
-async def update_project(project_name: str, body: UpdateProjectRequest):
-    """
-    Update a project's display name and/or description.
+async def update_project(project_name: str, body: UpdateProjectRequest) -> ProjectResponse:
+    """Update the project with this display name (see :func:`update_project_for`)."""
+    return await update_project_for(project_name, body)
 
-    feat/db-is-authoritative. Writes the ``projects`` row, then refreshes
-    config.json. Display name only - the folder on disk is never touched,
-    and ``projects.root`` is never rewritten, so a rename cannot move a
-    project onto another project's identity. After a rename, subsequent
-    calls must use the NEW name (the URL path identifier changes).
 
-    Args:
-        project_name: Current display name (URL path).
-        body: Fields to update. ``new_name``, ``description`` (the long one, at most 2000 characters),
-            ``short_description`` (one line, at most 120), ``default_launch_profile`` and ``color`` (a
-            #rrggbb hex only, ``src/core/project_colors/palette.py``; a color NAME such as "cyan" is refused with 422; an empty string removes it) are all optional; sending none yields 400.
-
-    Returns:
-        The updated project (canonical form, post-mutation).
-
-    Raises:
-        HTTPException 400: if no fields are supplied, or a description breaks a text rule (a line break in the
-            short one, a control character in either).
-        HTTPException 422: if ``color`` is not a #rrggbb hex (a legacy color name is refused) nor empty, or a description is over its cap.
-        HTTPException 404: if no project named ``project_name`` exists.
-        HTTPException 409: if ``new_name`` collides with another project,
-            or if ``project_name`` matches more than one project.
-        HTTPException 503: cloude.db is unreachable.
-    """
+async def update_project_for(project_name: ProjectKey, body: UpdateProjectRequest) -> ProjectResponse:
     from contextlib import closing
 
     from src.core.launch_profiles import create_seam
@@ -362,7 +338,7 @@ async def update_project(project_name: str, body: UpdateProjectRequest):
     except ProjectNameConflict:
         logger.warning(
             "project_update_name_conflict",
-            old_name=project_name,
+            old_name=target["display_name"],
             new_name=body.new_name,
         )
         raise HTTPException(
@@ -372,7 +348,7 @@ async def update_project(project_name: str, body: UpdateProjectRequest):
 
     logger.info(
         "project_updated",
-        old_name=project_name,
+        old_name=target["display_name"],
         new_name=row["display_name"],
         description_changed=body.description is not None,
         short_description_changed=body.short_description is not None,
@@ -411,40 +387,12 @@ def _project_archive_response(row: dict, outcome: dict) -> ProjectResponse:
     response_model=ProjectResponse,
     dependencies=[Depends(require_auth)],
 )
-async def archive_project_route(project_name: str):
-    """Retire a project from the default list, keeping it and its work.
+async def archive_project_route(project_name: str) -> ProjectResponse:
+    """Archive the project with this display name (see :func:`archive_project_for`)."""
+    return await archive_project_for(project_name)
 
-    THIS IS NOT DELETE. ``DELETE /projects/{name}`` removes the row and
-    writes a tombstone so the reconcile cannot re-import it. This sets
-    ``archived_at`` and nothing else: the project stays in the database,
-    stays addressable by this exact name (``resolve_by_name`` does not
-    filter on archived state, deliberately, or an archived project would
-    be unreachable by the endpoint that restores it), and comes back with
-    one call to ``/unarchive``.
 
-    IT ARCHIVES THE PROJECT'S ASLEEP AND OTHER NON-LIVE SESSIONS TOO (#1507,
-    Joe (ccsliinc), 2026-10-10), stamped with the project's own
-    ``archived_at``. A session whose lifecycle is ``running`` is left alone
-    and stays listed; the response's ``sessions_live`` counts them. The archive
-    does not refuse a project that has one.
-
-    IDEMPOTENT. Archiving an already-archived project is a 200, not a
-    409 - the user asked for a state and that state holds. The response's
-    ``archived_at`` is the original stamp, because the first stamp wins;
-    the log line says which of the two happened.
-
-    Args:
-        project_name: Display name of the project to archive.
-
-    Returns:
-        The project post-mutation, carrying ``archived_at``.
-
-    Raises:
-        HTTPException 404: no project carries that display name.
-        HTTPException 409: more than one does.
-        HTTPException 503: cloude.db is unreachable, so the change is
-            refused rather than applied to a second store (there is none).
-    """
+async def archive_project_for(project_name: ProjectKey) -> ProjectResponse:
     from contextlib import closing
 
     from src.core.project_archive import archive_project_and_sessions
@@ -463,7 +411,7 @@ async def archive_project_route(project_name: str):
 
     logger.info(
         "project_archive_requested",
-        name=project_name,
+        name=row["display_name"],
         root=row["root"],
         changed=changed,
         archived_at=row["archived_at"],
@@ -478,29 +426,12 @@ async def archive_project_route(project_name: str):
     response_model=ProjectResponse,
     dependencies=[Depends(require_auth)],
 )
-async def unarchive_project_route(project_name: str):
-    """Bring an archived project back into the default list.
+async def unarchive_project_route(project_name: str) -> ProjectResponse:
+    """Restore the project with this display name (see :func:`unarchive_project_for`)."""
+    return await unarchive_project_for(project_name)
 
-    The reverse of ``/archive``, and it exists because an archive without
-    one is a delete wearing a softer word. Clears ``archived_at``; writes
-    the sessions the archive cascaded to (those carrying the project's
-    archive stamp); a session deleted on its own stays deleted.
 
-    IDEMPOTENT in the same shape: unarchiving a live project is a 200
-    whose ``archived_at`` is null, which is the state the caller asked
-    for.
-
-    Args:
-        project_name: Display name of the project to restore.
-
-    Returns:
-        The project post-mutation, with ``archived_at`` null.
-
-    Raises:
-        HTTPException 404: no project carries that display name.
-        HTTPException 409: more than one does.
-        HTTPException 503: cloude.db is unreachable.
-    """
+async def unarchive_project_for(project_name: ProjectKey) -> ProjectResponse:
     from contextlib import closing
 
     from src.core.project_archive import unarchive_project_and_sessions
@@ -523,7 +454,7 @@ async def unarchive_project_route(project_name: str):
 
     logger.info(
         "project_unarchive_requested",
-        name=project_name,
+        name=row["display_name"],
         root=row["root"],
         changed=changed,
     )

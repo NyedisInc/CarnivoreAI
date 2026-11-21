@@ -9,10 +9,10 @@ from typing import Any, Callable, Dict, List
 
 import pytest
 
-from src.cplugs.host import identity, runtime, sidecar_registry
-from src.cplugs.host import state as owner_state
-from src.cplugs.runtime.owner_tokens import OwnerTokens, TokenRefused
-from src.cplugs.runtime.process import ProcessEnded
+from src.plugins.host import identity, runtime, sidecar_registry
+from src.plugins.host import state as owner_state
+from src.plugins.runtime.owner_tokens import OwnerTokens, TokenRefused
+from src.plugins.runtime.process import ProcessEnded
 from tests.python.api_keys.conftest import bearer, client, key_store, owner_jwt  # noqa: F401
 
 NAME, ITEM = "clock", "acme/clock"
@@ -65,7 +65,7 @@ def world(tmp_path, monkeypatch):
                                    ensure=_async(lambda name: proc if flag["running"] and name == NAME else None),
                                    state=lambda name: flag["state"]))
     monkeypatch.setattr(runtime.Host, "enabled", lambda self, cid: flag["on"] if cid == NAME else False)
-    from src.cplugs.host import sidecar_routes
+    from src.plugins.host import sidecar_routes
 
     sidecar_routes._calls.clear()
     yield SimpleNamespace(proc=proc, flag=flag, tokens=tokens, key=record.uuid, routes=sidecar_routes)
@@ -189,7 +189,7 @@ def test_the_act_route_refuses_an_api_key_and_the_token_is_keyed_by_the_install_
 def test_a_route_that_meets_the_catch_all_is_refused_at_build_time():
     from fastapi import APIRouter
 
-    from src.cplugs.host import routes as host_routes, sidecar_routes
+    from src.plugins.host import routes as host_routes, sidecar_routes
 
     ahead = APIRouter()
     ahead.routes.extend([*host_routes.host_router.routes, *sidecar_routes.router.routes])
@@ -234,8 +234,8 @@ def test_a_plugin_401_or_407_never_reaches_the_browser_as_one(client, owner_jwt,
 def test_the_act_body_is_capped_and_an_oversize_frame_leaks_nothing(client, owner_jwt, world):  # noqa: F811
     import asyncio
 
-    from src.cplugs.runtime import frames
-    from src.cplugs.runtime.process import PluginProcess
+    from src.plugins.runtime import frames
+    from src.plugins.runtime.process import PluginProcess
 
     body = {"cplug_id": NAME, "route": "fire", "session_ref": "ses_one", "body": {"a": "x" * world.routes.MAX_REQUEST_BYTES}}
     r = client.post("/api/v1/cplug-owner/act", json=body, headers=bearer(owner_jwt))
@@ -244,7 +244,7 @@ def test_the_act_body_is_capped_and_an_oversize_frame_leaks_nothing(client, owne
     body["body"] = {"a": "x" * 1000}
     assert client.post("/api/v1/cplug-owner/act", json=body, headers=bearer(owner_jwt)).status_code == 200
 
-    p = PluginProcess(None, None, None, "0", None)
+    p = PluginProcess(SimpleNamespace(ctx=SimpleNamespace(plugin_id=NAME)), None, None, "0", None)
     p._proc = SimpleNamespace()
     with pytest.raises(frames.FrameViolation):
         asyncio.run(p.request("route.handle", {"x": "y" * frames.MAX_FRAME_BYTES}))

@@ -151,6 +151,47 @@ several sections, each one gets its own panel (see <a href="#panels-sections">a 
         1920px, under a dark and a light theme (round 4 was judged at 1710x953 dark, 1440, 1920 and 390, both themes).</dd>
 </dl>
 
+<h3 class="sg-h3" id="panels-sheet">a side sheet</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>tokens</span><span>one width scale, one layer</span></div>
+    <div class="sg-specimen__body">
+        <div class="sg-table-wrap">
+        <table class="sg-table">
+            <thead><tr><th>token</th><th>value</th><th>use</th></tr></thead>
+            <tbody>
+                <tr data-sg-token="--oc-sheet-w"><td><code>--oc-sheet-w</code></td><td class="sg-token__value"></td><td>new: a side sheet's width (the sessions panel)</td></tr>
+                <tr data-sg-token="--oc-sheet-w-wide"><td><code>--oc-sheet-w-wide</code></td><td class="sg-token__value"></td><td>new: the same sheet on a wide window (1700px and up)</td></tr>
+                <tr data-sg-token="--oc-sheet-w-narrow"><td><code>--oc-sheet-w-narrow</code></td><td class="sg-token__value"></td><td>new: a tool sheet beside the work (the layout editor's drawer)</td></tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+
+<dl class="sg-facts">
+    <dt>one frame</dt>
+    <dd><code>Sheet.svelte</code> (<code>web/src/lib/sheet/Sheet.svelte</code>, root <code>.oc-sheet</code>) is the one
+        frame for a column that holds a detail or a tool at the right edge: the sessions panel
+        (<code>place="page"</code>), the automations reader (<code>place="column"</code>) and the layout editor's drawer
+        (<code>place="float"</code>, with <code>folded</code> and <code>docked</code>). The sheet brings only its body and its
+        own class for inner layout; the frame owns the edge, the width, the layer and the slide, its defaults in
+        <code>@layer base</code> so a caller's layout rule wins.</dd>
+    <dt>the edge</dt>
+    <dd>A hairline on the leading side plus a soft shadow, both a box-shadow, never a border. A floating sheet rings the
+        hairline all round and takes the theme's corner.</dd>
+    <dt>the layer</dt>
+    <dd><code>--oc-z-sheet</code>: over its page and the page's sticky rows, under the menu page bar.</dd>
+    <dt>on a phone</dt>
+    <dd>At 700px or less every sheet is the same full-screen sheet from the column top (<code>--overlay-top</code>, never
+        under the safe area), on the page ground, sliding in over <code>--oc-motion</code>; a closed column sheet hides.
+        Reduced motion: no slide.</dd>
+    <dt>no backdrop, no close of its own</dt>
+    <dd>A sheet is not modal: the page beside it stays live. Its close lives in its own head.</dd>
+    <dt>the gate</dt>
+    <dd><code>web/src/lib/sheet/one-sheet-frame.test.ts</code>: a stylesheet that places its own side sheet is a known list
+        that only goes down.</dd>
+</dl>
+
 <h3 class="sg-h3" id="panels-mistakes">common mistakes</h3>
 <ul class="sg-mistakes">
     <li><strong>The title in plain bold at 1.3rem.</strong> That is the legacy <code>.modal-header</code>; every restyled

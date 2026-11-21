@@ -25,7 +25,7 @@ test('the committed bundle contains hashchange', () => {
     );
 });
 
-test('booting the bundle with no document at all registers twenty-two hashchange listeners', () => {
+test('booting the bundle with no document at all registers twenty-three hashchange listeners', () => {
     const context = vm.createContext({});
     const calls = [];
     context.window = context;
@@ -43,10 +43,10 @@ test('booting the bundle with no document at all registers twenty-two hashchange
     );
     assert.equal(
         calls.filter((type) => type === 'hashchange').length,
-        22,
-        'expected exactly twenty-two hashchange listeners - #catalog, #ledger, '
+        23,
+        'expected exactly twenty-three hashchange listeners - #catalog, #ledger, '
         + '#themes, #browser/<id>, #blueprints, #plugins, #skills, #widgets, '
         + '#settings, #account, docs, keys, changelog, projects and '
-        + 'sessions, plus the swarm, huddle agent, huddle settings and dashboards pages, plus the mods (#1466) and automations (#1490) pages, plus the pack, logs and war room pages less skills and projects, plus the deep search link opener (#1807) - to be installed at boot',
+        + 'sessions, plus the swarm, huddle agent, huddle settings and dashboards pages, plus the mods (#1466) and automations (#1490) pages, plus the pack, logs and war room pages less skills and projects, plus the deep search link opener (#1807) and the item menu navigation counter - to be installed at boot',
     );
 });

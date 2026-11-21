@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import asyncio
+
+from src.core.session_backend import SessionBackend
 import os
 import re
 import shutil
@@ -168,6 +170,9 @@ class _FakeBackend:
         self._reader_task = task
         self._running = True
         self.tmux_session = "cloude_fake"
+
+    def detach_reader(self) -> bool:
+        return SessionBackend.detach_reader(self)  # type: ignore[arg-type]
 
 
 def _session(sid: str) -> Session:

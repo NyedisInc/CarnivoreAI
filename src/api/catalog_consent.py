@@ -9,7 +9,7 @@ from fastapi import HTTPException, Request
 
 from src.api.catalog_views import host_of
 from src.core.skills.install_types import CONSENT_REQUIRED
-from src.cplugs.host.install_gates import CplugFacts
+from src.plugins.host.install_gates import CplugFacts
 from src.core.skills.code_gate import staged_plugin_declares_code
 from src.core.skills.kinds import KIND_PLUGIN
 from src.core.skills.plugin_safe_subset import staged_mcp_servers

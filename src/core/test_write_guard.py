@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import tempfile
 from pathlib import Path
+from src.core.product_identity import test_mode_enabled
 
 __all__ = [
     "OutsideTempWriteError",
@@ -23,7 +24,7 @@ class OutsideTempWriteError(RuntimeError):
 def running_under_test() -> bool:
     if os.environ.get("PYTEST_CURRENT_TEST"):
         return True
-    return bool(os.environ.get(TEST_MODE_ENV_VAR))
+    return test_mode_enabled()
 
 
 def temp_roots() -> list[Path]:

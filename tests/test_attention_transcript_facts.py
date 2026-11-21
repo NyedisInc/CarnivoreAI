@@ -6,7 +6,7 @@ import json
 import pytest
 from typing import Any, Dict, List, Optional
 
-from src.core.attention.transcript_walk import BOOKKEEPING_RECORD_TYPES
+from src.core.attention.transcript_records import BOOKKEEPING_RECORD_TYPES
 from src.core.attention.transcript_facts import (
     BLOCKING_TOOL_NAMES,
     FACTS_FOUND,

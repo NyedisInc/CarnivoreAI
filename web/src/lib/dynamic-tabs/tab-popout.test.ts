@@ -15,7 +15,7 @@ import { createTabRegistry } from './registry';
 import { sidebarTabs } from './tab-store.svelte';
 import DynamicTabBody from './DynamicTabBody.svelte';
 import TabPopout from '../../popout/TabPopout.svelte';
-import { cplugEnablement } from '../../cplugs/host/enablement.svelte';
+import { cplugEnablement } from '../../plugins/host/enablement.svelte';
 
 // Task Manager is on by default for a clean install since 2026-10-05 (docs/cplugs.md section 9 question 1, superseded);
 // these tests pin its enablement explicitly instead of leaning on the default.

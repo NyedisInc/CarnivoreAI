@@ -7,8 +7,8 @@ import threading
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Mapping, Optional, Tuple
 
-from src.cplugs.reviewboard.public.edge import EdgeConfig, PublicEdge
-from src.cplugs.reviewboard.public.listener import ListenerSpec, PublicListener, PublicListenerError
+from src.plugins.reviewboard.public.edge import EdgeConfig, PublicEdge
+from src.plugins.reviewboard.public.listener import ListenerSpec, PublicListener, PublicListenerError
 
 HOST = "review.example.test"
 LOOPBACK = "127.0.0.1"

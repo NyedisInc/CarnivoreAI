@@ -52,7 +52,7 @@ def test_the_sections_cover_every_package():
     assert all((CPLUGS / name / "__init__.py").exists() for name in PLATFORM_DIRS)
     assert not set(PLATFORM_DIRS) & set(feature_ids())
     assert [name for name in source_dirs() if name not in PLATFORM_DIRS and name not in feature_ids()] == [], (
-        "a folder under src/cplugs belongs to no section: give it an __init__.py (a feature) or add it to PLATFORM_DIRS")
+        "a folder under src/plugins belongs to no section: give it an __init__.py (a feature) or add it to PLATFORM_DIRS")
     assert "flow" in feature_ids()
 
 
@@ -74,20 +74,20 @@ def test_features_reach_core_only_through_the_known_list():
 
 def test_the_section_checks_can_fail():
     features = ["huddle", "save"]
-    assert platform_violations("from src.cplugs.huddle import store\nimport src.cplugs.save.engine\n", features) == [
-        "src.cplugs.huddle", "src.cplugs.save.engine"]
-    assert platform_violations("from src.cplugs import huddle\n", features) == ["src.cplugs.huddle"]
-    assert platform_violations("from src.cplugs.sdk import ToolSpec\nfrom src.core.mcp import tools\nfrom . import x\n", features) == []
+    assert platform_violations("from src.plugins.huddle import store\nimport src.plugins.save.engine\n", features) == [
+        "src.plugins.huddle", "src.plugins.save.engine"]
+    assert platform_violations("from src.plugins import huddle\n", features) == ["src.plugins.huddle"]
+    assert platform_violations("from src.plugins.sdk import ToolSpec\nfrom src.core.mcp import tools\nfrom . import x\n", features) == []
     save_known = feature_core_known("save")
     assert core_imports("from src.core.deepsearch import fallback_hook\n", save_known) == ["src.core.deepsearch.fallback_hook"]
     assert core_imports("from src.core.deepsearch import index_scope\n", save_known) == ["src.core.deepsearch"]
-    assert core_imports("import src.api.auth\nfrom src.cplugs.sdk import x\nimport json\n", feature_core_known("huddle")) == ["src.api.auth"]
+    assert core_imports("import src.api.auth\nfrom src.plugins.sdk import x\nimport json\n", feature_core_known("huddle")) == ["src.api.auth"]
     assert feature_core_known("huddle") == frozenset()
 
 
 def test_the_section_map_doc_names_every_platform_package():
     text = SECTIONS_DOC.read_text()
     for name in PLATFORM_DIRS:
-        assert f"src/cplugs/{name}" in text
-    for name in ("web/src/cplugs/sdk", "web/src/lib/cplug-ui", "web/src/cplugs/host", "tests/python/cplugs/test_cplug_sections.py"):
+        assert f"src/plugins/{name}" in text
+    for name in ("web/src/plugins/sdk", "web/src/lib/cplug-ui", "web/src/plugins/host", "tests/python/cplugs/test_cplug_sections.py"):
         assert name in text

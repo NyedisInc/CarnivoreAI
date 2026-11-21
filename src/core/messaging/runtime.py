@@ -14,6 +14,7 @@ from src.core.app_alerts import service as alert_service
 from src.core.messaging import accept, message_store, notices, store
 from src.core.messaging.client import HttpProviderClient, ProviderClient, ProviderError
 from src.core.messaging.secrets import MessagingSecrets, ProviderSecrets, SecretError
+from src.core.supervise.loop import spawn as spawn_supervised
 
 log = structlog.get_logger(__name__)
 
@@ -88,9 +89,13 @@ class MessagingRuntime:
         if self.start_streams and row["enabled"]:
             from src.core.messaging.stream import run_stream
 
-            state.task = asyncio.create_task(run_stream(self, state))
+            state.task = spawn_supervised(f"messaging-stream-{provider_id}", lambda: run_stream(self, state),
+                                         on_give_up=lambda: self.spawn(self._mark_stream_stopped(provider_id)))
             state.task.add_done_callback(self._task_done)
         return state
+
+    async def _mark_stream_stopped(self, provider_id: str) -> None:
+        await asyncio.to_thread(store.update_provider, provider_id, stream_state="stopped")
 
     async def unload(self, provider_id: str) -> None:
         state = self.providers.pop(provider_id, None)

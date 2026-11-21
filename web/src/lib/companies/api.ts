@@ -9,6 +9,7 @@ export interface Company {
   hue?: number | null;
   parent_id?: number | null;
   hq_project_id?: number | null;
+  folder?: string | null;
 }
 
 export interface ProjectCompany {
@@ -27,8 +28,12 @@ export function listCompanies(): Promise<Company[]> {
   return authFetch<{ companies: Company[] }>('/companies').then((body) => body.companies);
 }
 
-export function createCompany(name: string): Promise<Company> {
-  return authFetch<Company>('/companies', { method: 'POST', body: JSON.stringify({ name }) });
+export function createCompany(name: string, parentId: number | null = null): Promise<Company> {
+  return authFetch<Company>('/companies', { method: 'POST', body: JSON.stringify(parentId === null ? { name } : { name, parent_id: parentId }) });
+}
+
+export function setCompanyFolder(id: number, folder: string | null): Promise<Company> {
+  return authFetch<Company>(`/companies/${id}`, { method: 'PATCH', body: JSON.stringify({ folder }) });
 }
 
 export function renameCompany(id: number, name: string): Promise<Company> {

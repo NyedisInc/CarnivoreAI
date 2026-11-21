@@ -17,7 +17,7 @@ from tests.python.crate_format.helpers import CONV, build_crate
 ROOT = Path(__file__).resolve().parents[3]
 CHECK = ("import sys; from src.core.crate_format.__main__ import main; rc = main(sys.argv[1:]); "
          "assert not [m for m in sys.modules if m.split('.')[0] in ('fastapi', 'uvicorn', 'pydantic') "
-         "or m.startswith(('src.api', 'src.cplugs'))], 'a server module was imported'; sys.exit(rc)")
+         "or m.startswith(('src.api', 'src.plugins'))], 'a server module was imported'; sys.exit(rc)")
 
 
 def run(tmp_path: Path, *args: str, stdin: Optional[str] = None) -> subprocess.CompletedProcess:

@@ -27,7 +27,8 @@ class PlacementUnavailable(RuntimeError):
 class Request:
 
     workload: Workload
-    needs: List[str] = field(default_factory=list)
+    needs: List[Any] = field(default_factory=list)
+    prefer: List[Any] = field(default_factory=list)
     project: Optional[str] = None
     machine: Optional[str] = None
 
@@ -56,7 +57,7 @@ def lookup_project(conn: sqlite3.Connection, project: Optional[str], self_id: st
     return Presence(uid, home, present)
 
 
-def _inputs(wired: Any, presence: Presence, self_snapshot: Dict[str, Any], live_agents: int, remote: bool) -> List[rule.MachineInput]:
+def machine_inputs(wired: Any, presence: Presence, self_snapshot: Dict[str, Any], live_agents: int, remote: bool) -> List[rule.MachineInput]:
     me = wired.runtime
     out = [rule.MachineInput(me.install_id, me.label, self_snapshot, True, True, presence.home_install_id == me.install_id,
                              presence.present_on is None or me.install_id in presence.present_on, live_agents)]
@@ -79,7 +80,7 @@ def _gather(wired: Any, request: Request, remote: bool) -> Dict[str, Any]:
     with closing(wired.open_db()) as conn:
         presence = lookup_project(conn, request.project, me.install_id)
         live = _live_agents(conn)
-    return {"settings": me.settings(), "machines": _inputs(wired, presence, me.own_snapshot(), live, remote), "presence": presence}
+    return {"settings": me.settings(), "machines": machine_inputs(wired, presence, me.own_snapshot(), live, remote), "presence": presence}
 
 
 def _live_agents(conn: sqlite3.Connection) -> int:
@@ -122,7 +123,7 @@ async def place(request: Request, *, wired: Any = None, decide: Optional[enhance
     got = await asyncio.to_thread(_gather, wired, request, use_remote)
     settings, machines, presence = got["settings"], got["machines"], got["presence"]
     decision = rule.decide(machines, request.workload, auto_distribute=settings.auto_distribute, needs=request.needs,
-                           project_uid=presence.uid)
+                           project_uid=presence.uid, prefer=request.prefer)
     if request.machine:
         decision = _explicit(machines, decision, request.machine)
     elif settings.placement_mode == "enhanced" and decision.chosen is not None and not decision.stayed_home:

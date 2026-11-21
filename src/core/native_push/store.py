@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import secrets
 import threading
 from datetime import datetime, timezone
@@ -11,6 +12,8 @@ from typing import Any, Dict, List, Optional
 import structlog
 
 from src.core.config_files_io import atomic_write
+from src.core import resource_push
+from src.core.resource_push import topics
 
 logger = structlog.get_logger()
 
@@ -29,20 +32,36 @@ class NativeDeviceStore:
         self._path = Path(state_dir) / FILE_NAME
         self._lock = threading.Lock()
 
-    def _load(self) -> List[Dict[str, Any]]:
+    def _load(self, *, for_write: bool = False) -> List[Dict[str, Any]]:
         try:
             rows = json.loads(self._path.read_text(encoding="utf-8"))
         except FileNotFoundError:
             return []
-        except (OSError, ValueError) as exc:
+        except OSError as exc:
             logger.warning("native_push_store_unreadable", error_type=type(exc).__name__)
+            if for_write:
+                raise
+            return []
+        except ValueError as exc:
+            logger.warning("native_push_store_unreadable", error_type=type(exc).__name__)
+            if for_write:
+                self._quarantine()
             return []
         if not isinstance(rows, list):
+            if for_write:
+                self._quarantine()
             return []
         return [r for r in rows if isinstance(r, dict) and all(isinstance(r.get(k), str) for k in _REQUIRED)]
 
+    def _quarantine(self) -> None:
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+        aside = self._path.with_name(f"{FILE_NAME}.corrupt-{stamp}")
+        os.replace(self._path, aside)
+        logger.error("native_push_store_quarantined", moved_to=aside.name)
+
     def _save(self, rows: List[Dict[str, Any]]) -> None:
         atomic_write(self._path, json.dumps(rows), mode=0o600)
+        resource_push.notify(topics.PHONE_LINK)
 
     def list(self) -> List[Dict[str, Any]]:
         with self._lock:
@@ -51,7 +70,7 @@ class NativeDeviceStore:
     def upsert(self, device_id: str, platform: str, token: str, environment: str, bundle_id: str,
                app_version: str) -> tuple[Dict[str, Any], bool]:
         with self._lock:
-            rows = self._load()
+            rows = self._load(for_write=True)
             now = now_iso()
             for row in rows:
                 if row["device_id"] == device_id and row["token"] == token:
@@ -74,7 +93,7 @@ class NativeDeviceStore:
 
     def record_result(self, row_id: str, status: int, *, at: Optional[str] = None) -> None:
         with self._lock:
-            rows = self._load()
+            rows = self._load(for_write=True)
             for row in rows:
                 if row["id"] == row_id:
                     row["last_result"] = {"status": status, "at": at or now_iso()}
@@ -83,7 +102,7 @@ class NativeDeviceStore:
 
     def remove(self, row_id: str) -> bool:
         with self._lock:
-            rows = self._load()
+            rows = self._load(for_write=True)
             kept = [r for r in rows if r["id"] != row_id]
             if len(kept) != len(rows):
                 self._save(kept)
@@ -93,7 +112,7 @@ class NativeDeviceStore:
         if not device_id:
             return []
         with self._lock:
-            rows = self._load()
+            rows = self._load(for_write=True)
             gone = [r["id"] for r in rows if r["device_id"] == device_id]
             if gone:
                 self._save([r for r in rows if r["device_id"] != device_id])

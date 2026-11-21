@@ -3,6 +3,7 @@
   import CascadeMenu from './CascadeMenu.svelte';
   import type { MenuNode } from './add-component-menu';
   import { newGroup, newSession, newTerminal, startNewProject } from '../../opscenter/api';
+  import { newCompanyPrompt } from '../sidebar-shell/company-actions';
   import { newBrowser } from '../browser/screen-host';
   import { t } from '../i18n/index.svelte';
   import { newSessionKinds, type NewSessionKind } from './drawer-tabs';
@@ -34,6 +35,7 @@
   }
 
   const root = $derived<MenuNode[]>([
+    { id: 'company', label: t('drawer.new.company'), run: leaf(() => newCompanyPrompt(null)) },
     ...newSessionKinds().map((kind) => ({
       id: kind,
       label: t(`drawer.new.${kind}`),

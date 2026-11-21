@@ -6,6 +6,7 @@ from dataclasses import replace
 from datetime import datetime
 from typing import Callable, Dict, Iterable, List, Mapping, Optional, Tuple
 
+from src.core.attention.record_identity import RecordIdentity
 from src.core.attention.registry_file_cache import RegistryFileCache
 from src.core.attention.registry_record import (
     REG_ABSENT, REG_OK, REG_SHAPE_UNRECOGNIZED, REG_STALE, REG_UNREADABLE,
@@ -53,6 +54,28 @@ def _load_registry_file(path: str, name: str) -> RegistryRecord:
 
 _FILES = RegistryFileCache()
 
+_IDENTITY = RecordIdentity()
+
+
+def _reuse_aware_probe(
+    records: List[Tuple[str, RegistryRecord]],
+) -> Callable[[Optional[int]], Optional[bool]]:
+    starts = {
+        record.pid: record.proc_start
+        for _, record in records
+        if record.verdict == REG_OK and record.pid is not None and record.proc_start
+        and pid_is_running(record.pid) is True
+    }
+    _IDENTITY.refresh(starts.items())
+
+    def probe(pid: Optional[int]) -> Optional[bool]:
+        alive = pid_is_running(pid)
+        if alive is True and pid in starts and _IDENTITY.proven(pid, starts[pid]) is False:
+            return False
+        return alive
+
+    return probe
+
 
 def _keepable(record: RegistryRecord) -> bool:
     return record.verdict != REG_UNREADABLE
@@ -80,9 +103,9 @@ def read_registry_index(
             continue
     entries.sort()
     _FILES.retain_only(path for _, path in entries[:limit])
-    loaded = ((name, _FILES.load(path, name, _load_registry_file, _keepable))
-              for name, path in entries[:limit])
-    return index_registry_records(loaded, pid_is_running)
+    loaded = [(name, _FILES.load(path, name, _load_registry_file, _keepable))
+              for name, path in entries[:limit]]
+    return index_registry_records(loaded, _reuse_aware_probe(loaded))
 
 
 def index_registry_records(
@@ -103,7 +126,7 @@ def index_registry_records(
         if is_running(pid) is False:
             record = _empty_record(
                 REG_STALE,
-                "pid %s in %s is not running" % (pid, name),
+                "pid %s in %s is not running as the process that wrote it" % (pid, name),
                 tmux_name=record.tmux_name,
             )
 

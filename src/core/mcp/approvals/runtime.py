@@ -28,7 +28,7 @@ async def install(app: Any) -> int:
     try:
         file = persist.open_in(settings.get_state_dir())
     except StateDirUnavailableError as exc:
-        logger.error("agent_actions_state_dir_unavailable", error=str(exc))
+        logger.error("agent_actions_state_dir_unavailable", error=str(exc), error_type=type(exc).__name__)
         return 0
     return store.attach(file) if file is not None else 0
 

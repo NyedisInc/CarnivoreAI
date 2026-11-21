@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Dict, Set
 
 ROOT = Path(__file__).resolve().parents[4]
-HOST = ROOT / "src" / "cplugs" / "host"
+HOST = ROOT / "src" / "plugins" / "host"
 ALSO = {"reviewboard", "publicboard"}
 KNOWN: Dict[str, Set[str]] = {
     "activity_reader.py": {"huddle"},
@@ -21,7 +21,7 @@ KNOWN: Dict[str, Set[str]] = {
 
 
 def plugin_ids() -> Set[str]:
-    base = ROOT / "src" / "cplugs"
+    base = ROOT / "src" / "plugins"
     return {p.parent.name for p in base.glob("*/cplug.json")} | ALSO
 
 

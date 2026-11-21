@@ -260,6 +260,28 @@
   }));
   const strip_zones = $derived(zones.slice(0, sections.length));
   const keyMark = $derived(drag.state.index !== null ? { section: aim.section, index: drag.state.index } : null);
+  $effect(() => {
+    if (!strip) return;
+    const bar = strip;
+    const win = bar.ownerDocument.defaultView ?? window;
+    const root = bar.ownerDocument.documentElement;
+    const name = horizontal ? '--oc-free-bottom' : '--oc-free-right';
+    const publish = (): void => {
+      const box = bar.getBoundingClientRect();
+      const inset = horizontal ? win.innerHeight - box.top : win.innerWidth - box.left;
+      root.style.setProperty(name, `${Math.max(0, Math.round(inset))}px`);
+    };
+    publish();
+    const watch = new ResizeObserver(publish);
+    watch.observe(bar);
+    win.addEventListener('resize', publish);
+    return () => {
+      watch.disconnect();
+      win.removeEventListener('resize', publish);
+      root.style.removeProperty(name);
+    };
+  });
+
 </script>
 
 <svelte:window bind:innerWidth={winW} bind:innerHeight={winH} />
@@ -326,7 +348,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      z-index: 60;
+      z-index: var(--oc-z-sheet);
       border: var(--oc-border) dashed var(--oc-cyan);
       pointer-events: none;
     }

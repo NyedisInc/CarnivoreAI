@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.host import install_gates
+from src.plugins.host import install_gates
 
 PACKAGE = Path(__file__).resolve().parents[3] / "packages" / "cplugs" / "mcphealth"
 PINNED = "3463B8E83B44738B"

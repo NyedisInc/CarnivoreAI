@@ -5,7 +5,7 @@ import ProjectToolWindow from './ProjectToolWindow.svelte';
 import FakePanel from './ProjectTools.fake-panel.svelte';
 import { setLocale, t } from '../i18n/index.svelte';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
-import { registerProjectPanel, resetProjectPanels } from '../../cplugs/sdk/project-panels';
+import { registerProjectPanel, resetProjectPanels } from '../../plugins/sdk/project-panels';
 import { recorded, reframed, snapshot } from '../dialog-frame/goldens';
 
 /** The move's only intended change: the frame is `AnchoredPopup`'s, which adds its own class. */

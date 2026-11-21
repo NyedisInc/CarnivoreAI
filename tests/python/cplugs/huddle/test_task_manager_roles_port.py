@@ -11,11 +11,11 @@ from src.api import session_roles_listing
 from src.core.federation import peer_listing
 from src.core.hosts.ddl import LOCAL_HOST_KEY
 from src.core.session_roles import read as roles_read
-from src.cplugs.huddle import schedule_port
-from src.cplugs.huddle.roles import lead, port as roles_port
-from src.cplugs.huddle.roles.store import RoleStore
-from src.cplugs.sdk import ports
-from src.cplugs.sdk.ownership import CONTRIBUTION_SEAMS
+from src.plugins.huddle import schedule_port
+from src.plugins.huddle.roles import lead, port as roles_port
+from src.plugins.huddle.roles.store import RoleStore
+from src.plugins.sdk import ports
+from src.plugins.sdk.ownership import CONTRIBUTION_SEAMS
 from src.models import SessionInfo
 from tests.python.cplugs.huddle.roles_rig import aged, give_asleep
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client  # noqa: F401

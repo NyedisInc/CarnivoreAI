@@ -68,7 +68,7 @@ def _is_empty(path: str) -> bool:
     return not os.path.exists(path) or (os.path.isdir(path) and not os.listdir(path))
 
 
-def _checkout_carried(root: str, sender: str, branch: Optional[str], head: str, *, air_gap: bool) -> None:
+def checkout_carried(root: str, sender: str, branch: Optional[str], head: str, *, air_gap: bool) -> None:
     ref = f"refs/carnivore/{sender}/heads/{branch}" if branch else None
     has_head = _git(root, "rev-parse", "--verify", "HEAD", air_gap=air_gap).returncode == 0
     if not has_head:
@@ -143,7 +143,7 @@ def bring(rung: str, root: str, undo: Dict[str, Any], *, sender: str, meta: Mapp
     elif not bundles.is_repo(root):
         raise CodeError("root_not_empty", "the target folder holds files that are not a git repository")
     bundles.apply_bundle(root, str(archive), sender, air_gap=air_gap)
-    _checkout_carried(root, sender, meta.get("branch"), str(meta["head"]), air_gap=air_gap)
+    checkout_carried(root, sender, meta.get("branch"), str(meta["head"]), air_gap=air_gap)
 
 
 def check(rung: str, root: str, meta: Mapping[str, Any], *, air_gap: bool) -> List[str]:

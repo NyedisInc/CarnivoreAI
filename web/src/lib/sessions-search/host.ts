@@ -1,6 +1,6 @@
 import { drawerController } from '../drawer/click-env';
 import { activateRow } from '../drawer/row-switch';
-import { usageLimitLabel } from '../led';
+import { loginExpiredLabel, usageLimitLabel } from '../led';
 import { hostDocument, hostWindow } from '../sessions/env';
 import { openTerminalSearchAt } from '../terminal-search/mount-search';
 import { transportFor, type AgentMarkFacts } from '../sessions/agent-marks';
@@ -141,6 +141,7 @@ function factsFrom(row: Record<string, unknown>): [string, SessionFacts] | null 
             statusSource: str(row.status_source),
             activityHint: str(row.activity_hint),
             usageLimit: usageLimitLabel(row),
+            loginExpired: loginExpiredLabel(row),
             transport: transportFor(name),
         },
     ];

@@ -28,6 +28,7 @@ def write_companies(ctx: rw.WriteCtx, rows: List[Dict[str, Any]]) -> Dict[int, T
         row = dict(source)
         old_id = row.pop("id", None)
         parent_old, hq_old = row.pop("parent_id", None), row.pop("hq_project_id", None)
+        row.pop("folder", None)
         here = ctx.conn.execute("SELECT id FROM companies WHERE uid = ?", (row.get("uid"),)).fetchone() if row.get("uid") else None
         here = here or ctx.conn.execute("SELECT id FROM companies WHERE name = ? COLLATE NOCASE", (row.get("name"),)).fetchone()
         if here is not None:

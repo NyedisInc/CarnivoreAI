@@ -82,15 +82,17 @@ class Rig:
     async def start(self):
         async def echo(reader, writer):
             port = writer.get_extra_info("peername")[1]
-            info = self.table.lookup(port)
-            self.seen.append((port, info))
-            if info is not None and self.trust_all:
-                info.request_seen = True
-                self.client.trust(info.stream_id)
             try:
-                while data := await reader.read(65536):
+                data = await reader.read(65536)
+                info = self.table.lookup(port)
+                self.seen.append((port, info))
+                if info is not None and self.trust_all:
+                    info.request_seen = True
+                    self.client.trust(info.stream_id)
+                while data:
                     writer.write(data)
                     await writer.drain()
+                    data = await reader.read(65536)
             except ConnectionError:
                 pass
             writer.close()

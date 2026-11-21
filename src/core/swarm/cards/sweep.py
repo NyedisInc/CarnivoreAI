@@ -12,7 +12,7 @@ import structlog
 from src.core import db
 from src.core.swarm import body, store
 from src.core.swarm.cards import capacity, dealer, deliver, effects, lease, nudge, port as card_port
-from src.cplugs.sdk.cards import CardRefused
+from src.plugins.sdk.cards import CardRefused
 
 logger = structlog.get_logger()
 

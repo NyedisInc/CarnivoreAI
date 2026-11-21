@@ -15,7 +15,7 @@ from scripts.crate.client import CrateClient, sha256_of
 from scripts.crate.errors import ApiError, AuthError, IntegrityError, JobFailedError, JobTimeoutError, NetworkError
 from scripts.crate.tokens import EnvToken, OnePasswordToken, StaticToken
 from scripts.crate.transport import Body, HttpTransport, Response
-from src.cplugs.host.routes import host_router
+from src.plugins.host.routes import host_router
 from tests.python.cplugs.crate.api_world import ApiWorld, stop_runner
 from tests.python.crate_headless.test_headless_cycle import exported_and_sent
 from tests.python.crate_headless.world import A, TwoInstalls

@@ -8,7 +8,7 @@ if (typeof API !== 'function') {
     );
 }
 
-Object.assign(API.prototype, {
+extendPrototype(API, {
 
     async listSessionGroups() {
         return await this.call('/session-groups');
@@ -74,4 +74,4 @@ Object.assign(API.prototype, {
             method: 'PUT', body: { flags: rule.flags || [], prefix: rule.prefix || '', suffix: rule.suffix || '' },
         });
     },
-});
+}, 'api-session-groups.js');

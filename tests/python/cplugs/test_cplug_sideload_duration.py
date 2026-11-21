@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from src.cplugs.host import sideload
+from src.plugins.host import sideload
 from tests.python.api_keys.conftest import bearer, client, key_store, owner_jwt  # noqa: F401
 from tests.python.cplugs.test_cplug_sideload import URL, world  # noqa: F401
 
@@ -64,7 +64,7 @@ def test_a_file_without_the_field_keeps_twelve_hours(world):
 
 
 def test_until_turned_off_arms_no_timer_at_boot_and_a_later_duration_arms_one(world, monkeypatch):
-    from src.cplugs.host import sideload_routes
+    from src.plugins.host import sideload_routes
     from src.main import app
 
     w = world

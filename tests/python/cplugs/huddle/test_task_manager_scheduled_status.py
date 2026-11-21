@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 
-from src.cplugs.huddle import lifecycle, schedule
+from src.plugins.huddle import lifecycle, schedule
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import ITEMS, arm, env, iso  # noqa: F401
 

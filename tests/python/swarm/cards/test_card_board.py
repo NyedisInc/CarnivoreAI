@@ -14,11 +14,9 @@ from src.api import swarm_card_routes
 from src.api.auth import require_auth
 from src.core.swarm import body
 from src.core.swarm.cards import board as card_board, port as card_port
-from src.cplugs.huddle import service
-from src.cplugs.huddle.cards import policy
-from src.cplugs.huddle.cards.port import TaskManagerCardPort
-from src.cplugs.huddle.rules import CLAUDE, JOE
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import service
+from src.plugins.huddle.cards import policy
+from src.plugins.huddle.public import CLAUDE, JOE, TaskManagerCardPort, TaskManagerStore
 from src.core.work.storage import WorkStorage
 
 

@@ -8,7 +8,7 @@ if (typeof ToastManager !== 'function') {
     );
 }
 
-Object.assign(ToastManager.prototype, {
+extendPrototype(ToastManager, {
     _isTerminalVisible() {
       if (document.hidden || document.visibilityState === 'hidden') return false;
       if (typeof document.hasFocus !== 'function' || !document.hasFocus()) return false;
@@ -48,6 +48,7 @@ Object.assign(ToastManager.prototype, {
       this._addedAt.set(toast.id, this._now());
       this._scheduleRender();
       this._desktopNotify(toast);
+      if (window.NotifySound && typeof window.NotifySound.forToast === 'function') window.NotifySound.forToast(toast);
     },
 
     _desktopNotify(toast) {
@@ -246,7 +247,7 @@ Object.assign(ToastManager.prototype, {
         this.add(toasts[i]);
       }
     },
-});
+}, 'toast-lifecycle.js');
 
 if (window.carnivoreDesktop && window.ToastManager && typeof window.ToastManager._readBannersPosting === 'function') {
     window.ToastManager._readBannersPosting();

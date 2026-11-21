@@ -9,9 +9,9 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
-from src.cplugs.save.vault import constants as K
-from src.cplugs.save.vault import restore, retention
-from src.cplugs.save.vault.store import Vault
+from src.plugins.save.vault import constants as K
+from src.plugins.save.vault import restore, retention
+from src.plugins.save.vault.store import Vault
 from tests.python.cplugs.save.vault_helpers import CONV, World, jsonl
 
 EXPORTED = "99999999-aaaa-bbbb-cccc-1234567890ab"

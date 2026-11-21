@@ -261,7 +261,7 @@
           /* The focus edge lifts FROM */
           --_bd: var(--oc-focus-quiet);
           border: 1px solid var(--oc-line-panel);
-          border-radius: 3px;
+          border-radius: var(--oc-radius-tight);
           background: var(--oc-ground-raised);
           box-sizing: border-box;
       }

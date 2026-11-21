@@ -38,7 +38,7 @@
     "mod_file_bytes": 262144,
     "mod_total_bytes": 1048576,
     "cplug_members": 500,
-    "cplug_file_bytes": 262144,
-    "cplug_total_bytes": 2097152
+    "cplug_file_bytes": 2097152,
+    "cplug_total_bytes": 3145728
   }
 }

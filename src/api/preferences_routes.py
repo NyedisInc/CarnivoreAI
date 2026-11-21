@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-import json
 from typing import Any, Dict, Optional
 
 import structlog
@@ -9,21 +8,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.api.auth import require_auth
-from src.core import session_change_notice, ui_preferences, ui_preferences_store
-from src.models import WSMessageType
+from src.core import ui_preferences_store
+from src.core.preferences_push.broadcast import broadcast_changed
 
 logger = structlog.get_logger()
 
 router = APIRouter(tags=["preferences"])
-
-PREFERENCES_CHANGED_EVENT = WSMessageType.PREFERENCES_CHANGED.value
-"""The WebSocket frame type other clients receive on a commit.
-
-Read off ``WSMessageType`` rather than spelled again here: that enum is
-the app's ONE message vocabulary, and a literal beside it is how a second
-one starts. The value is unchanged, so nothing on the wire moved.
-"""
-
 
 class PreferencesUpdateRequest(BaseModel):
     """A partial preference update, with the revision it expects.
@@ -105,7 +95,7 @@ async def update_preferences(
     try:
         result = store.update(body.changes, body.expected_revision)
     except FileNotFoundError as exc:
-        logger.error("preferences_config_missing", error=str(exc))
+        logger.error("preferences_config_missing", error=str(exc), error_type=type(exc).__name__)
         raise HTTPException(
             status_code=500, detail="Configuration not found. Run setup_auth.py first."
         )
@@ -117,41 +107,6 @@ async def update_preferences(
         raise HTTPException(status_code=409, detail=result.as_payload())
 
     if result.status == ui_preferences_store.COMMITTED:
-        await broadcast_changed(request, result, body.client_id)
+        await broadcast_changed(request.app.state, result, body.client_id)
 
     return result.as_payload()
-
-
-async def broadcast_changed(
-    request: Request,
-    result: ui_preferences_store.UpdateResult,
-    client_id: Optional[str],
-) -> None:
-    manager = getattr(request.app.state, "connection_manager", None)
-    if manager is None:
-        return
-
-    frame = {
-        "type": PREFERENCES_CHANGED_EVENT,
-        "schema_version": ui_preferences.SCHEMA_VERSION,
-        "revision": result.revision,
-        "changed": result.changed,
-        "origin_client_id": client_id,
-    }
-    session_change_notice.publish(request.app.state, frame)
-
-    try:
-        await manager.broadcast(json.dumps(frame))
-    except (TypeError, ValueError) as exc:
-        logger.error(
-            "preferences_changed_broadcast_unencodable",
-            revision=result.revision,
-            fields=sorted(result.changed.keys()),
-            error=str(exc),
-        )
-    except OSError as exc:
-        logger.warning(
-            "preferences_changed_broadcast_failed",
-            revision=result.revision,
-            error=str(exc),
-        )

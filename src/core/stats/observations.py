@@ -10,6 +10,8 @@ from src.core.db import connect, db_path_for
 from src.core.provider_ledger import poller
 from .activity import ActivityPoint
 from .plugin.extract import project_key
+from src.models.activity_status import ASKING, BUSY, RESTING
+from src.core.session_status import STATUS_DEAD
 
 
 def _epoch(value: datetime) -> float:
@@ -55,15 +57,15 @@ async def sample(manager: Any, state_dir: Any) -> tuple[list[ActivityPoint], dic
         observation = manager._attention_watcher.observation_for(row.id, now=now) if manager._attention_watcher else None
         fresh = observation is not None and not observation.stale and info.host_state == 'up'
         state = info.activity_status if fresh else 'unknown'
-        running = (row.status.value == 'running' and state != 'dead') if info.host_state == 'up' else None
+        running = (row.status.value == 'running' and state != STATUS_DEAD) if info.host_state == 'up' else None
         counts['running_sessions'] += int(running is True)
-        if state in ('working', 'working_subagent'):
+        if state in BUSY:
             counts['working_agents'] += 1
-        elif state in ('question', 'notice'):
+        elif state in ASKING:
             counts['waiting_agents'] += 1
-        elif state in ('idle', 'finished_unread'):
+        elif state in RESTING:
             counts['idle_agents'] += 1
-        elif state != 'dead':
+        elif state != STATUS_DEAD:
             counts['unknown_agents'] += 1
         if info.subagents_running is None:
             subagents_known = False

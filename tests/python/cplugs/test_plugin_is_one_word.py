@@ -9,7 +9,7 @@ from typing import Iterable, List
 ROOT = Path(__file__).resolve().parents[3]
 
 SERVER_MODULES = (
-    "src/cplugs/host/install_gates.py",
+    "src/plugins/host/install_gates.py",
     "src/core/catalog/publish_prepare_kinds.py",
     "src/api/catalog_install_support.py",
     "src/api/catalog_installed_support.py",

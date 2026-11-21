@@ -2,7 +2,7 @@
 
 `xterm.css`, `xterm.js`, `xterm-addon-fit.js`, `xterm-addon-webgl.js`,
 `xterm-addon-unicode11.js`, `xterm-addon-search.js` and `xterm-addon-web-links.js`
-(0.9.0, fetched 2026-10-30, #2725; MIT, notice in `macOS/payload/notices/vendored.json`)
+(`@xterm/addon-web-links` 0.11.0, #2725; MIT, notice in `macOS/payload/notices/vendored.json`)
 are unmodified files
 pulled straight from jsDelivr at the pinned versions below and committed
 as-is. There is no
@@ -26,28 +26,39 @@ entirely: no CDN request, no Shields interaction, no race between script
 load and stylesheet load. Same reasoning that put CodeMirror under
 `client/vendor/`, see that directory's `VERSION.md`.
 
-## pinned versions (first five fetched 2026-08-16, search add-on 2026-09-12)
+## pinned versions (moved from the deprecated `xterm` packages to `@xterm/*` on 2026-11-12, DEP-11)
+
+The files keep their old names (`xterm-addon-*.js`) because the page, the relay viewer, the pop-out and the packaged app's
+notices load them by name; only the source packages changed. The old `xterm@5.3.0` family is deprecated on npm ("Move to
+@xterm/xterm instead") and gets no fixes. The UMD globals (`Terminal`, `FitAddon.FitAddon`, `WebglAddon.WebglAddon`,
+`Unicode11Addon.Unicode11Addon`, `SearchAddon.SearchAddon`, `WebLinksAddon.WebLinksAddon`) are unchanged.
 
 | file | package | version | source URL |
 |---|---|---|---|
-| xterm.css | xterm | 5.3.0 | https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css |
-| xterm.js | xterm | 5.3.0 | https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js |
-| xterm-addon-fit.js | xterm-addon-fit | 0.8.0 | https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js |
-| xterm-addon-webgl.js | xterm-addon-webgl | 0.16.0 | https://cdn.jsdelivr.net/npm/xterm-addon-webgl@0.16.0/lib/xterm-addon-webgl.js |
-| xterm-addon-unicode11.js | xterm-addon-unicode11 | 0.6.0 | https://cdn.jsdelivr.net/npm/xterm-addon-unicode11@0.6.0/lib/xterm-addon-unicode11.js |
-| xterm-addon-search.js | xterm-addon-search | 0.13.0 | https://cdn.jsdelivr.net/npm/xterm-addon-search@0.13.0/lib/xterm-addon-search.js |
-| xterm-addon-web-links.js | xterm-addon-web-links | 0.9.0 | https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xterm-addon-web-links.js |
+| xterm.css | @xterm/xterm | 5.5.0 | https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css |
+| xterm.js | @xterm/xterm | 5.5.0 | https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js |
+| xterm-addon-fit.js | @xterm/addon-fit | 0.10.0 | https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js |
+| xterm-addon-webgl.js | @xterm/addon-webgl | 0.18.0 | https://cdn.jsdelivr.net/npm/@xterm/addon-webgl@0.18.0/lib/addon-webgl.js |
+| xterm-addon-unicode11.js | @xterm/addon-unicode11 | 0.8.0 | https://cdn.jsdelivr.net/npm/@xterm/addon-unicode11@0.8.0/lib/addon-unicode11.js |
+| xterm-addon-search.js | @xterm/addon-search | 0.15.0 | https://cdn.jsdelivr.net/npm/@xterm/addon-search@0.15.0/lib/addon-search.js |
+| xterm-addon-web-links.js | @xterm/addon-web-links | 0.11.0 | https://cdn.jsdelivr.net/npm/@xterm/addon-web-links@0.11.0/lib/addon-web-links.js |
+
+`@xterm/addon-web-links` 0.11.0 was first taken from registry.npmjs.org (Joe (ccsliinc), 2026-11-12, Task Manager "yes"): the
+tarball's sha512 matched the registry's `dist.integrity`
+`sha512-nIHQ38pQI+a5kXnRaTgwqSHnX7KE6+4SVoceompgHL26unAxdfP6IPqUTSYPQgSwM56hsElfoNrrW5V7BUED/Q==`, its peer dependency is
+`@xterm/xterm@^5.0.0` (accepts 5.5.0), and `lib/addon-web-links.js` is the file vendored here. `fetch.sh` re-fetches the same
+file from jsDelivr and pins its sha256.
 
 ## sha256
 
 ```
-832f3f2c603b43ad4351ff04970150cc7a873014276db126a6065c6dd81e4872  xterm.css
-f0aea0f75f48559013ae6643c2479dd737d26da42d5524e6d2b70915ae6523c7  xterm.js
-10f3194c5f17c1786fb7d5db865c1ec8539b6736a318063fd38bdaaf7c46848f  xterm-addon-fit.js
-0c9c48c9391c4cee816eacf95699dbde97e8cc8f191e87f3a571e73d214c8df8  xterm-addon-webgl.js
-ab10d83642883e5e17ea741cd5b6e5f8c0f6a06e3271f2f0c0e043be4fc5e738  xterm-addon-unicode11.js
-6a6db33f16b764552377a2c5ba4327c6dab6beaf25484533afd7dbecd0b03793  xterm-addon-search.js
-d67624ab0e89e1d2ee27b64cc6e9283f4ce206d7343429d87d95370b0c971824  xterm-addon-web-links.js
+ba8e6985669488981ccf40c0cefe3aba80722cb6c92de7ad628b0bd717faf2b6  xterm.css
+1f991ac3b4b283ebf96e60ae23a00a52765dd3a2e46fa6fdda9f1aab032f7495  xterm.js
+bdaefa370b1bfc42ee88d46fe6072400902a4d4b2d45cd93438dda9b23c97089  xterm-addon-fit.js
+9ffa9ac3ff6d47d4e6216ed1972ca8e0b5336cef744f50ebdc3f67b0ed727cdb  xterm-addon-webgl.js
+b0c3be540a9984713aea996966c24ed1a639d11f60d44986b22661e3a8a148d0  xterm-addon-unicode11.js
+3cf52d71d9deb4ba60125087434c53e3fb35bb2249db9b13987991fd2db1c7bd  xterm-addon-search.js
+f230a6c8211ce4614dda5441f27b603c7c1ca95151a655bc0efac6377ee643f0  xterm-addon-web-links.js
 ```
 
 ## updating
@@ -59,8 +70,8 @@ version table and sha256 block above to match what it prints. The script
 re-downloads every file and exits non-zero on the first hash that does not
 match, so a bump you have not recorded here cannot land quietly.
 
-`xterm-addon-search` 0.13.0 is the release that pairs with xterm 5.3.0
-(its `peerDependencies` name `xterm@^5.3.0`). Its UMD bundle defines the
+`@xterm/addon-search` 0.15.0 pairs with `@xterm/xterm` 5.5.0
+(its `peerDependencies` name `@xterm/xterm@^5.0.0`). Its UMD bundle defines the
 global `SearchAddon`, and the class is `SearchAddon.SearchAddon` - the
 same double-name shape the fit and webgl add-ons use.
 

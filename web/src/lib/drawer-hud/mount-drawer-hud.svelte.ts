@@ -5,7 +5,7 @@ import AccountMenu from './AccountMenu.svelte';
 import { paint as paintBar } from '../drawer/bar';
 import { accountChip } from './account-menu.svelte';
 import { followCatalogAccount } from './catalog-account.svelte';
-import { cplugBarIndicators } from '../../cplugs/host/readers';
+import { cplugBarIndicators } from '../../plugins/host/readers';
 import { startSwarmSwitch } from '../swarm-switch/control.svelte';
 import { beastIndicator, startBeastStatus } from '../beast-mode/control.svelte';
 

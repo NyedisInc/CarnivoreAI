@@ -6,8 +6,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.cplugs.reviewboard import root, wire
-from src.cplugs.reviewboard.errors import NoRoot
+from src.plugins.reviewboard import root, wire
+from src.plugins.reviewboard.errors import NoRoot
 
 
 def test_the_filled_default_still_resolves_as_the_default(tmp_path: Path) -> None:

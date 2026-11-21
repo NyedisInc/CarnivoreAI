@@ -143,7 +143,7 @@ describe('the square model', () => {
         expect(square).toMatch(/width:\s*28px/);
         expect(square).toMatch(/height:\s*28px/);
         const mark = rule('.ps-sq__mark');
-        expect(mark).toMatch(/border-radius:\s*50%/);
+        expect(mark).toMatch(/border-radius:\s*var\(--oc-radius-circle\)/);
         expect(mark).toMatch(/background:\s*currentColor/);
         expect(mark).toMatch(/position:\s*absolute/);
         expect(rule(".ps-sq__mark[data-mark='behind']")).toMatch(/background:\s*transparent;\s*border:\s*1\.5px solid currentColor/);

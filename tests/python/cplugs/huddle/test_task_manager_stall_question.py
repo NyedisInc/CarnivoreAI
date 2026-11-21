@@ -5,9 +5,9 @@ from contextlib import closing
 
 import pytest
 
-from src.cplugs.huddle import lineage, service
-from src.cplugs.huddle.answer_writer import AnswerWriter
-from src.cplugs.huddle.nudge_store import NudgeStore
+from src.plugins.huddle import lineage, service
+from src.plugins.huddle.answer_writer import AnswerWriter
+from src.plugins.huddle.nudge_store import NudgeStore
 from tests.python.cplugs.huddle.test_task_manager_nudge_sweep import ITEMS, LISTS, Rig, rig  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, row  # noqa: F401
 

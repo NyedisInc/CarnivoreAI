@@ -25,7 +25,7 @@ def _restore_urls() -> List[str]:
 
 @pytest.fixture
 def anonymous() -> TestClient:
-    from src.cplugs.host.routes import router
+    from src.plugins.host.routes import router
 
     app = FastAPI()
     app.include_router(router, prefix="/api/v1")

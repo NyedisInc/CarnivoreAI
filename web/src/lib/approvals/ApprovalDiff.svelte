@@ -37,7 +37,7 @@
       vertical-align: top;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
-      box-shadow: inset 0 calc(-1 * var(--oc-border, 1px)) 0 var(--pl-line-quiet);
+      box-shadow: inset 0 calc(-1 * var(--oc-border, 1px)) 0 var(--oc-line-faint);
     }
     .ap-diff thead th,
     .ap-diff__field {

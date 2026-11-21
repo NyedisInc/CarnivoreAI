@@ -85,18 +85,23 @@ def _encode(marks: Dict[str, RenameMark]) -> dict:
     }
 
 
-def _evict(marks: Dict[str, RenameMark]) -> Dict[str, RenameMark]:
+def _evict(
+    marks: Dict[str, RenameMark], keep: Optional[str] = None
+) -> Dict[str, RenameMark]:
     if len(marks) <= MAX_ENTRIES:
         return marks
     ordered = sorted(
-        marks.items(),
-        key=lambda item: (
-            item[1].attempted_label is not None,
-            item[1].last_attempt_at or 0.0,
+        enumerate(marks.items()),
+        key=lambda pair: (
+            pair[1][0] == keep,
+            pair[1][1].attempted_label is not None,
+            pair[1][1].last_attempt_at or 0.0,
+            pair[0],
         ),
         reverse=True,
     )
-    return dict(ordered[:MAX_ENTRIES])
+    survivors = sorted(ordered[:MAX_ENTRIES], key=lambda pair: pair[0])
+    return dict(pair[1] for pair in survivors)
 
 
 def load_marks(state_dir: Optional[Path]) -> Dict[str, RenameMark]:
@@ -124,7 +129,7 @@ def save_mark(
         if marks.get(key) == mark:
             return False
         marks[key] = mark
-        trimmed = _evict(marks)
+        trimmed = _evict(marks, keep=key)
         if trimmed is not marks:
             marks.clear()
             marks.update(trimmed)

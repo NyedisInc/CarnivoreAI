@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.reviewboard.public import routes
-from src.cplugs.reviewboard.public.edge import EdgeConfig, PublicEdge
+from src.plugins.reviewboard.public import routes
+from src.plugins.reviewboard.public.edge import EdgeConfig, PublicEdge
 
 FROZEN_ROUTES: frozenset = frozenset({("GET", "/"), ("GET", "/publicboard.js"), ("GET", "/publicboard.css"), ("GET", "/api/board"),
                                       ("POST", "/api/comments"), ("POST", "/api/draft"), ("GET", "/api/next")})

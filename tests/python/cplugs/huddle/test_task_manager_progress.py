@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from src.cplugs.huddle import progress
+from src.plugins.huddle import progress
 from tests.python.cplugs.huddle.test_task_manager_focus import add, call, client, setup  # noqa: F401
 
 PROGRESS = "/api/v1/cplugs/huddle/progress"

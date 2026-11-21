@@ -1,6 +1,6 @@
 import { ledStateFor } from '../led';
-import type { MemberState } from '../../cplugs/sdk/swarm-face.svelte';
-import type { SwarmRosterAgent } from '../../cplugs/sdk/swarm-roster.svelte';
+import type { MemberState } from '../../plugins/sdk/swarm-face.svelte';
+import type { SwarmRosterAgent } from '../../plugins/sdk/swarm-roster.svelte';
 
 export interface MemberSignals {
     status: string | null | undefined;
@@ -9,6 +9,7 @@ export interface MemberSignals {
     transport?: string | null;
     hostOffline?: string | null;
     usageLimit?: string | null;
+    loginExpired?: string | null;
 }
 
 export interface MemberFace {
@@ -25,6 +26,7 @@ export function memberState(s: MemberSignals): MemberFace {
         transport: s.transport ?? null,
         host_offline: s.hostOffline ?? null,
         usage_limit: s.usageLimit ?? null,
+        login_expired: s.loginExpired ?? null,
     } as Parameters<typeof ledStateFor>[0]);
     switch (led.inner) {
         case 'asleep': return { state: 'asleep', unread: false };

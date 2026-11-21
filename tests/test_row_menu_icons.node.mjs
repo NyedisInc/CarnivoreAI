@@ -99,7 +99,7 @@ test('the menu hides the icon WRAPPER, so a borrowed mark is hidden too', () => 
 
 test('the id the menu looks up is the id the plugin contributes', () => {
     const contribution = fs.readFileSync(
-        path.join(__dirname, '..', 'web', 'src', 'cplugs', 'share', 'index.ts'),
+        path.join(__dirname, '..', 'web', 'src', 'plugins', 'share', 'index.ts'),
         'utf8',
     );
     const match = contribution.match(/ACTION_ID = '([^']+)'/);

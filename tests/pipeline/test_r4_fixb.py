@@ -8,7 +8,7 @@ from pathlib import Path
 
 from scripts.time_machine_retire import retire
 from src.core.pipeline import lifecycle
-from src.cplugs.sdk import save_triggers
+from src.plugins.sdk import save_triggers
 from tests.python.time_machine_retire.test_retire import build
 
 

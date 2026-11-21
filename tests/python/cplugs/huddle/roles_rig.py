@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 from types import SimpleNamespace
 from typing import Dict, List, Optional
 
-from src.cplugs.host import session_actions, session_rows
-from src.cplugs.huddle import service
-from src.cplugs.sdk.swarm import AgentRef, SeatRef
+from src.plugins.host import session_actions, session_rows
+from src.plugins.huddle import service
+from src.plugins.sdk.swarm import AgentRef, SeatRef
 from tests.python.cplugs.huddle.test_task_manager_routes import NOW, row
 
 BASE = "/api/v1/cplugs/huddle"

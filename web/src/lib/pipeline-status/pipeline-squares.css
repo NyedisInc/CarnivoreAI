@@ -64,7 +64,7 @@
     height: 6px;
     box-sizing: border-box;
     background: currentColor;
-    border-radius: 50%;
+    border-radius: var(--oc-radius-circle);
 }
 
 .ps-sq__mark[data-mark='behind'] { background: transparent; border: 1.5px solid currentColor; }

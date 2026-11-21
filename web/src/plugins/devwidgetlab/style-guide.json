@@ -1,0 +1,271 @@
+{
+  "files": {
+    "web/src/plugins/devwidgetlab/CaptureFooter.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/CaptureResults.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/ChecksSection.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/ComparePair.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/DockBar.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/DraftActions.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/DraftCompare.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/DraftForm.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/DraftPanel.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/DrawerChrome.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/FindRow.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/FitTable.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/HostBand.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/HostChrome.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/LabControls.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/LabFrame.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/LabMenu.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/LabViewer.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/MenuSection.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/PreviewFrame.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/ResizeBox.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/ScenarioBox.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/SidebarControls.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/PointerMenu.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/WidgetTree.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/WidgetTreeMenu.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/IdleReadout.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/plugins/devwidgetlab/lab-frame.css": {
+      "section": "chrome",
+      "classes": [
+        "dwl",
+        "dwl-band-sizes",
+        "dwl-chip",
+        "dwl-chip--off",
+        "dwl-dot",
+        "dwl-findings",
+        "dwl-fit",
+        "dwl-fit-bar",
+        "dwl-fit-detail",
+        "dwl-fit-scroll",
+        "dwl-fit-table",
+        "dwl-fit-widget",
+        "dwl-frame",
+        "dwl-frame-wrap",
+        "dwl-hint",
+        "dwl-host",
+        "dwl-host-actions",
+        "dwl-host-head",
+        "dwl-host-name",
+        "dwl-label",
+        "dwl-leaf-name",
+        "dwl-note",
+        "dwl-note--error",
+        "dwl-note--ok",
+        "dwl-path",
+        "dwl-preview",
+        "dwl-preview-cap",
+        "dwl-previews",
+        "dwl-result",
+        "dwl-result-head",
+        "dwl-result-list",
+        "dwl-results",
+        "dwl-scenario",
+        "dwl-seg",
+        "dwl-sidebar-controls",
+        "dwl-sidebar-group",
+        "dwl-sizes",
+        "dwl-sizes-table",
+        "dwl-stage",
+        "dwl-strip",
+        "dwl-tree",
+        "dwl-verdict",
+        "dwl-views"
+      ]
+    },
+    "web/src/plugins/devwidgetlab/lab-menu.css": {
+      "section": "chrome",
+      "classes": [
+        "dwl-all-name",
+        "dwl-all-sub",
+        "dwl-all-text",
+        "dwl-check",
+        "dwl-checks",
+        "dwl-choices",
+        "dwl-field",
+        "dwl-filter",
+        "dwl-foot",
+        "dwl-group-fail",
+        "dwl-label",
+        "dwl-legend",
+        "dwl-legend-note",
+        "dwl-link",
+        "dwl-links",
+        "dwl-menu",
+        "dwl-note",
+        "dwl-note--muted",
+        "dwl-open-float",
+        "dwl-pick",
+        "dwl-pick--off",
+        "dwl-pick-note",
+        "dwl-pick-text",
+        "dwl-pointer-menu",
+        "dwl-row",
+        "dwl-rows",
+        "dwl-run-row",
+        "dwl-scroll",
+        "dwl-search",
+        "dwl-sec",
+        "dwl-sec-body",
+        "dwl-sec-label",
+        "dwl-sec-value",
+        "dwl-seg--theme",
+        "dwl-tree",
+        "dwl-tree-empty",
+        "dwl-tree-menu-anchor",
+        "oc-check__label"
+      ]
+    },
+    "web/src/plugins/devwidgetlab/lab-viewer.css": {
+      "section": "chrome",
+      "classes": [
+        "dwl-actions",
+        "dwl-actions-note",
+        "dwl-cap-text",
+        "dwl-chrome",
+        "dwl-chrome--drawer",
+        "dwl-chrome--home",
+        "dwl-chrome--popout",
+        "dwl-chrome--terminal",
+        "dwl-chrome-bar",
+        "dwl-chrome-bar-end",
+        "dwl-chrome-body",
+        "dwl-chrome-key",
+        "dwl-chrome-window",
+        "dwl-chrome-window-title",
+        "dwl-compare",
+        "dwl-compare-strip",
+        "dwl-context",
+        "dwl-context-list",
+        "dwl-dims",
+        "dwl-dock",
+        "dwl-dock--bottom",
+        "dwl-dock--right",
+        "dwl-dock-grip",
+        "dwl-dock-panel",
+        "dwl-dock-panel--bottom",
+        "dwl-dock-panel--side",
+        "dwl-dock-slot",
+        "dwl-draft",
+        "dwl-draft-cat",
+        "dwl-draft-state",
+        "dwl-draft-tag",
+        "dwl-form",
+        "dwl-group-count",
+        "dwl-handle",
+        "dwl-handle--e",
+        "dwl-handle--n",
+        "dwl-handle--s",
+        "dwl-handle--se",
+        "dwl-handle--w",
+        "dwl-hint",
+        "dwl-hosttabs",
+        "dwl-note",
+        "dwl-pair",
+        "dwl-pair-side",
+        "dwl-pair-sides",
+        "dwl-preview",
+        "dwl-preview-cap",
+        "dwl-resize",
+        "dwl-side-cap",
+        "dwl-stage",
+        "dwl-strip-name",
+        "dwl-tree",
+        "dwl-undeclared",
+        "dwl-viewer",
+        "dwl-zoom",
+        "rail__layer"
+      ]
+    },
+    "web/src/plugins/devwidgetlab/lab.css": {
+      "section": "chrome",
+      "classes": [
+        "dwl-open-float",
+        "dwl-strip"
+      ]
+    }
+  }
+}

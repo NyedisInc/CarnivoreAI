@@ -12,8 +12,8 @@ while [ $# -gt 0 ]; do
         *) echo "usage: check_top_down.sh [--root DIR] [--ratchet-range A..B | --staged]" >&2; exit 2 ;;
     esac
 done
-[ -n "${ROOT}" ] || ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-ROOT="$(cd "${ROOT}" 2>/dev/null && pwd)" || { echo "top-down: CANNOT RUN - no directory ${ROOT}" >&2; exit 2; }
+[ -n "${ROOT}" ] || ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+ROOT="$(cd "${ROOT}" 2>/dev/null && pwd -P)" || { echo "top-down: CANNOT RUN - no directory ${ROOT}" >&2; exit 2; }
 MANIFEST="${ROOT}/scripts/design/top_down_files.txt"
 STARTED=$(date +%s)
 
@@ -55,6 +55,8 @@ for candidate in "${CARNIVORE_GATE_PYTHON:-}" "${ROOT}/venv/bin/python3" "${comm
 done
 [ -n "${PY}" ] || cannot_run "no python3 with pytest (looked at CARNIVORE_GATE_PYTHON, ${ROOT}/venv and the main checkout's venv)"
 
+export CLOUDE_REQUIRE_NODE=1
+
 LOGS="$(mktemp -d "${TMPDIR:-/tmp}/top-down.XXXXXX")" || cannot_run "mktemp failed"
 # shellcheck disable=SC2064  # expand now: remove THIS directory
 trap "rm -rf '${LOGS}'" EXIT
@@ -81,6 +83,9 @@ interrupted() {
 trap 'interrupted 130' INT
 trap 'interrupted 143' TERM
 trap 'interrupted 129' HUP
+
+GATE_SCRUBBED_ENV=(MENU_CONFORMANCE_ROOT SHELL_CONFORMANCE_ROOT I18N_KNOWN_WRITE)
+unset "${GATE_SCRUBBED_ENV[@]}"
 
 RUN_STARTED=$(date +%s)
 set -m
@@ -150,6 +155,12 @@ elif [ "${PRC}" -ne 0 ]; then
     UNRUN+=("pytest exited ${PRC}$( [ -n "${p_failed}" ] && printf ' (%s)' "$(printf '%s' "${p_failed}" | head -3 | tr '\n' ' ')")")
 elif [ "${p_passed:-0}" -eq 0 ]; then
     UNRUN+=("pytest passed nothing")
+else
+    passed_files="$( { sed -nE 's/^\[gw[0-9]+\] \[ *[0-9]+%\] PASSED ([^ :]+)::.*/\1/p' "${LOGS}/pytest.log"
+        sed -nE 's/^([^ :]+)::.* PASSED( .*)?$/\1/p' "${LOGS}/pytest.log"; } | sort -u)"
+    for f in "${PYTEST_FILES[@]}"; do
+        grep -qxF -- "${f}" <<< "${passed_files}" || UNRUN+=("pytest file ${f} passed no test")
+    done
 fi
 
 if [ -n "${RANGE}" ]; then
@@ -174,7 +185,7 @@ if [ ${#RED[@]} -gt 0 ]; then
     printf '  %s\n' "${RED[@]}" >&2
     [ ${#UNRUN[@]} -gt 0 ] && printf '  also could not run: %s\n' "${UNRUN[@]}" >&2
     paths="$(cat "${LOGS}/vitest.log" "${LOGS}/pytest.log" \
-        | grep -oE '(web/src/|client/|tests/fixtures/)?(lib|opscenter|cplugs|widget-harness|style-guide|popout|admin|spectate|js|css)/[A-Za-z0-9_./-]+\.(svelte|ts|css|js|html|json)' \
+        | grep -oE '(web/src/|client/|tests/fixtures/)?(lib|opscenter|plugins|widget-harness|style-guide|popout|admin|spectate|js|css)/[A-Za-z0-9_./-]+\.(svelte|ts|css|js|html|json)' \
         | grep -vE '\.(test|spec)\.[a-z]+$' | sort -u | head -40)"
     shown=0
     echo "  offenders and the commit that last touched each:" >&2

@@ -8,10 +8,10 @@ from contextlib import closing
 import pytest
 
 from src.core.mcp import pending, tools
-from src.cplugs.host import runtime
-from src.cplugs.huddle import closure_undo, review_lock
-from src.cplugs.huddle.rules import JOE, TaskManagerLocked, TaskManagerNotAllowed
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.host import runtime
+from src.plugins.huddle import closure_undo, review_lock
+from src.plugins.huddle.rules import JOE, TaskManagerLocked, TaskManagerNotAllowed
+from src.plugins.huddle.store import TaskManagerStore
 from tests.python.cplugs.huddle.test_task_manager_focus import CALLER, add, client, setup  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_mcp import full_echo
 

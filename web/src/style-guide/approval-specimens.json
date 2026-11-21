@@ -898,5 +898,506 @@
     }
    ]
   }
+ },
+ {
+  "id": "delegate",
+  "group": "calm",
+  "label": "delegate a command to another computer",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "delegate",
+   "args": {
+    "computer": "studio",
+    "folder": "/Users/you/Development/trader",
+    "command": "npm run build && npm test -- --runInBand --coverage --reporters=default --reporters=jest-junit && npx playwright test --project=chromium --workers=2 && npm run lint -- --max-warnings=0 && npm run typecheck"
+   },
+   "target": "",
+   "summary": "run on \"studio\": npm run build && npm test -- --runInBand --coverage --reporters=default --report",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "run",
+   "object": "job",
+   "name": "studio",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "delegate_runs",
+     "params": {
+      "command": "npm run build && npm test -- --runInBand --coverage --report...",
+      "computer": "studio"
+     }
+    },
+    {
+     "key": "delegate_copy",
+     "params": {
+      "folder": "~/Development/trader"
+     }
+    }
+   ],
+   "detail": [
+    {
+     "key": "command",
+     "value": "npm run build && npm test -- --runInBand --coverage --reporters=default --reporters=jest-junit && npx playwright test --project=chromium --workers=2 && npm run lint -- --max-warnings=0 && npm run typecheck"
+    },
+    {
+     "key": "path",
+     "value": "/Users/you/Development/trader"
+    },
+    {
+     "key": "summary",
+     "value": "run on \"studio\": npm run build && npm test -- --runInBand --coverage --reporters=default --report"
+    }
+   ]
+  }
+ },
+ {
+  "id": "delegate-ssh",
+  "group": "calm",
+  "label": "delegate a command to a computer reached over ssh",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "delegate",
+   "args": {
+    "computer": "aibox",
+    "folder": "/Users/you/Development/trader",
+    "command": "nvidia-smi && python3 render.py --frames 240",
+    "ssh": true
+   },
+   "target": "",
+   "summary": "run on \"aibox\": nvidia-smi && python3 render.py --frames 240",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "run",
+   "object": "job",
+   "name": "aibox",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "delegate_runs_ssh",
+     "params": {
+      "command": "nvidia-smi && python3 render.py --frames 240",
+      "computer": "aibox"
+     }
+    },
+    {
+     "key": "delegate_copy",
+     "params": {
+      "folder": "~/Development/trader"
+     }
+    }
+   ],
+   "detail": [
+    {
+     "key": "command",
+     "value": "nvidia-smi && python3 render.py --frames 240"
+    },
+    {
+     "key": "path",
+     "value": "/Users/you/Development/trader"
+    },
+    {
+     "key": "summary",
+     "value": "run on \"aibox\": nvidia-smi && python3 render.py --frames 240"
+    }
+   ]
+  }
+ },
+ {
+  "id": "delegate-agent-definition",
+  "group": "calm",
+  "label": "delegate a task to an agent with its own definition",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "delegate",
+   "args": {
+    "computer": "studio",
+    "folder": "/Users/you/Development/trader",
+    "task": "review the retry path in the order service and report what you find",
+    "agent_type": "reviewer",
+    "family": "claude",
+    "permission_mode": "default",
+    "model": "",
+    "time_cap_minutes": 30,
+    "definition": {
+     "file": "reviewer.md",
+     "prompt": "You review code. Read the diff, run the tests that cover it, and report <i>findings only</i>.\nNever edit a file and never push.\nIf a test fails, name the test and the line, and stop."
+    }
+   },
+   "target": "",
+   "summary": "run on \"studio\": reviewer: review the retry path in the order service and report what you find",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "run",
+   "object": "job",
+   "name": "studio",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "delegate_agent_runs",
+     "params": {
+      "agent": "reviewer",
+      "computer": "studio",
+      "task": "review the retry path in the order service and report what you find"
+     }
+    },
+    {
+     "key": "delegate_copy",
+     "params": {
+      "folder": "~/Development/trader"
+     }
+    },
+    {
+     "key": "delegate_mode_ask",
+     "params": {
+      "computer": "studio"
+     }
+    }
+   ],
+   "detail": [
+    {
+     "key": "task",
+     "value": "review the retry path in the order service and report what you find"
+    },
+    {
+     "key": "agent_type",
+     "value": "reviewer"
+    },
+    {
+     "key": "definition",
+     "value": "You review code. Read the diff, run the tests that cover it, and report <i>findings only</i>.\nNever edit a file and never push.\nIf a test fails, name the test and the line, and stop.",
+     "file": "reviewer.md"
+    },
+    {
+     "key": "family",
+     "value": "claude"
+    },
+    {
+     "key": "path",
+     "value": "/Users/you/Development/trader"
+    },
+    {
+     "key": "time_cap",
+     "value": "30"
+    },
+    {
+     "key": "summary",
+     "value": "run on \"studio\": reviewer: review the retry path in the order service and report what you find"
+    }
+   ]
+  }
+ },
+ {
+  "id": "delegate-beast-hint",
+  "group": "calm",
+  "label": "delegate (beast mode off, would approve)",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "delegate",
+   "args": {
+    "computer": "studio",
+    "folder": "/Users/you/Development/trader",
+    "command": "npm run build && npm test -- --runInBand --coverage --reporters=default --reporters=jest-junit && npx playwright test --project=chromium --workers=2 && npm run lint -- --max-warnings=0 && npm run typecheck"
+   },
+   "target": "",
+   "summary": "run on \"studio\": npm run build && npm test -- --runInBand --coverage --reporters=default --report",
+   "plain": "",
+   "confirm_text": "",
+   "live": false,
+   "beast_hint": true
+  },
+  "display": {
+   "verb": "run",
+   "object": "job",
+   "name": "studio",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "delegate_runs",
+     "params": {
+      "command": "npm run build && npm test -- --runInBand --coverage --report...",
+      "computer": "studio"
+     }
+    },
+    {
+     "key": "delegate_copy",
+     "params": {
+      "folder": "~/Development/trader"
+     }
+    }
+   ],
+   "detail": [
+    {
+     "key": "command",
+     "value": "npm run build && npm test -- --runInBand --coverage --reporters=default --reporters=jest-junit && npx playwright test --project=chromium --workers=2 && npm run lint -- --max-warnings=0 && npm run typecheck"
+    },
+    {
+     "key": "path",
+     "value": "/Users/you/Development/trader"
+    },
+    {
+     "key": "summary",
+     "value": "run on \"studio\": npm run build && npm test -- --runInBand --coverage --reporters=default --report"
+    }
+   ],
+   "beast_hint": true
+  }
+ },
+ {
+  "id": "delegate-task",
+  "group": "calm",
+  "label": "delegate a task to an agent on another computer",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "delegate",
+   "args": {
+    "computer": "studio",
+    "folder": "/Users/you/Development/trader",
+    "task": "add a test for the retry path in the sync client and fix whatever it finds. read src/sync/client.py first, change only that file and its tests, and end with a short account of what you changed.",
+    "agent_type": "reviewer",
+    "family": "claude",
+    "permission_mode": "default",
+    "model": "claude-sonnet-5-5",
+    "time_cap_minutes": 60
+   },
+   "target": "",
+   "summary": "run on \"studio\": reviewer: add a test for the retry path in the sync client and fix whatever it finds. read",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "run",
+   "object": "job",
+   "name": "studio",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "delegate_agent_runs",
+     "params": {
+      "agent": "reviewer",
+      "computer": "studio",
+      "task": "add a test for the retry path in the sync client and fix whatever it finds. read src/sync/client.py ..."
+     }
+    },
+    {
+     "key": "delegate_copy",
+     "params": {
+      "folder": "~/Development/trader"
+     }
+    },
+    {
+     "key": "delegate_mode_ask",
+     "params": {
+      "computer": "studio"
+     }
+    }
+   ],
+   "detail": [
+    {
+     "key": "task",
+     "value": "add a test for the retry path in the sync client and fix whatever it finds. read src/sync/client.py first, change only that file and its tests, and end with a short account of what you changed."
+    },
+    {
+     "key": "agent_type",
+     "value": "reviewer"
+    },
+    {
+     "key": "family",
+     "value": "claude"
+    },
+    {
+     "key": "path",
+     "value": "/Users/you/Development/trader"
+    },
+    {
+     "key": "model",
+     "value": "claude-sonnet-5-5"
+    },
+    {
+     "key": "time_cap",
+     "value": "60"
+    },
+    {
+     "key": "summary",
+     "value": "run on \"studio\": reviewer: add a test for the retry path in the sync client and fix whatever it finds. read"
+    }
+   ]
+  }
+ },
+ {
+  "id": "delegate-task-bypass",
+  "group": "calm",
+  "label": "delegate a task, permission checks bypassed (beast mode off, would approve)",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "delegate",
+   "args": {
+    "computer": "studio",
+    "folder": "/Users/you/Development/trader",
+    "task": "add a test for the retry path in the sync client and fix whatever it finds. read src/sync/client.py first, change only that file and its tests, and end with a short account of what you changed.",
+    "agent_type": "",
+    "family": "claude",
+    "permission_mode": "bypassPermissions",
+    "model": "claude-sonnet-5-5"
+   },
+   "target": "",
+   "summary": "run on \"studio\": an agent: add a test for the retry path in the sync client and fix whatever it finds. read",
+   "plain": "",
+   "confirm_text": "",
+   "live": false,
+   "beast_hint": true
+  },
+  "display": {
+   "verb": "run",
+   "object": "job",
+   "name": "studio",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "delegate_agent_runs",
+     "params": {
+      "agent": "an agent",
+      "computer": "studio",
+      "task": "add a test for the retry path in the sync client and fix whatever it finds. read src/sync/client.py ..."
+     }
+    },
+    {
+     "key": "delegate_copy",
+     "params": {
+      "folder": "~/Development/trader"
+     }
+    },
+    {
+     "key": "delegate_mode_bypass",
+     "params": {
+      "computer": "studio"
+     }
+    }
+   ],
+   "detail": [
+    {
+     "key": "task",
+     "value": "add a test for the retry path in the sync client and fix whatever it finds. read src/sync/client.py first, change only that file and its tests, and end with a short account of what you changed."
+    },
+    {
+     "key": "family",
+     "value": "claude"
+    },
+    {
+     "key": "path",
+     "value": "/Users/you/Development/trader"
+    },
+    {
+     "key": "model",
+     "value": "claude-sonnet-5-5"
+    },
+    {
+     "key": "summary",
+     "value": "run on \"studio\": an agent: add a test for the retry path in the sync client and fix whatever it finds. read"
+    }
+   ],
+   "beast_hint": true
+  }
+ },
+ {
+  "id": "delegate-installs",
+  "group": "calm",
+  "label": "delegate a task to a computer that installs a tool first",
+  "caller": "carnivore_ops",
+  "input": {
+   "action": "delegate",
+   "args": {
+    "computer": "studio",
+    "folder": "/Users/you/Development/trader",
+    "task": "add a test for the retry path in the sync client and fix whatever it finds. read src/sync/client.py first, change only that file and its tests, and end with a short account of what you changed.",
+    "agent_type": "reviewer",
+    "family": "claude",
+    "permission_mode": "default",
+    "model": "claude-sonnet-5-5",
+    "time_cap_minutes": 60,
+    "installs": [
+     "ffmpeg"
+    ]
+   },
+   "target": "",
+   "summary": "run on \"studio\": reviewer: add a test for the retry path in the sync client and fix whatever it finds. read",
+   "plain": "",
+   "confirm_text": "",
+   "live": false
+  },
+  "display": {
+   "verb": "run",
+   "object": "job",
+   "name": "studio",
+   "tone": "confirm",
+   "consequences": [
+    {
+     "key": "delegate_agent_runs",
+     "params": {
+      "agent": "reviewer",
+      "computer": "studio",
+      "task": "add a test for the retry path in the sync client and fix whatever it finds. read src/sync/client.py ..."
+     }
+    },
+    {
+     "key": "delegate_installs",
+     "params": {
+      "tools": "ffmpeg",
+      "computer": "studio"
+     }
+    },
+    {
+     "key": "delegate_copy",
+     "params": {
+      "folder": "~/Development/trader"
+     }
+    },
+    {
+     "key": "delegate_mode_ask",
+     "params": {
+      "computer": "studio"
+     }
+    }
+   ],
+   "detail": [
+    {
+     "key": "task",
+     "value": "add a test for the retry path in the sync client and fix whatever it finds. read src/sync/client.py first, change only that file and its tests, and end with a short account of what you changed."
+    },
+    {
+     "key": "agent_type",
+     "value": "reviewer"
+    },
+    {
+     "key": "family",
+     "value": "claude"
+    },
+    {
+     "key": "path",
+     "value": "/Users/you/Development/trader"
+    },
+    {
+     "key": "model",
+     "value": "claude-sonnet-5-5"
+    },
+    {
+     "key": "time_cap",
+     "value": "60"
+    },
+    {
+     "key": "summary",
+     "value": "run on \"studio\": reviewer: add a test for the retry path in the sync client and fix whatever it finds. read"
+    }
+   ]
+  }
  }
 ]

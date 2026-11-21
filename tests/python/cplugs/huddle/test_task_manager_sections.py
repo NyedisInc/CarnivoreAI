@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from src.cplugs.host import runtime, state as owner_state
-from src.cplugs.huddle import lifecycle
-from src.cplugs.huddle.rules import JOE
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.host import runtime, state as owner_state
+from src.plugins.huddle import lifecycle
+from src.plugins.huddle.rules import JOE
+from src.plugins.huddle.store import TaskManagerStore
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, manager  # noqa: F401
 
 

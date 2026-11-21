@@ -46,7 +46,7 @@
     .oc-pill-dot {
       width: 7px;
       height: 7px;
-      border-radius: 50%;
+      border-radius: var(--oc-radius-circle);
       flex: 0 0 auto;
     }
 
@@ -61,7 +61,7 @@
       flex: 0 0 auto;
       width: 10px;
       height: 10px;
-      border-radius: 50%;
+      border-radius: var(--oc-radius-circle);
       background: var(--oc-pill-tone);
     }
 

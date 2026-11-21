@@ -44,12 +44,12 @@
   "summary": "load a plugin from a local folder to try it, under developer mode, which turns itself off after the duration you pick.",
   "surfaces": [
     "web/src/lib/plugins-page/SideloadSwitch.svelte",
-    "src/cplugs/host/sideload_routes.py",
-    "src/cplugs/host/sideload.py",
+    "src/plugins/host/sideload_routes.py",
+    "src/plugins/host/sideload.py",
     "web/src/lib/cplug-ui/page-views.svelte.ts",
     "web/src/lib/cplug-ui/PageMenu.svelte",
     "web/src/lib/cplug-ui/PageMain.svelte",
-    "src/cplugs/host/sidecar_page.py",
+    "src/plugins/host/sidecar_page.py",
     "web/src/lib/plugins-page/drop-folder.ts"
   ],
   "updated": "2026-11-09",

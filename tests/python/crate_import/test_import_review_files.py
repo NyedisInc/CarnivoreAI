@@ -11,7 +11,7 @@ from src.core.crate_import import files_place
 from src.core.crate_import.enc import EncEntry
 from src.core.crate_import.model import ImportRequest
 from src.core.crate_import.plan import build_plan
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.sdk import crate_format as cf
 from tests.python.crate_import.test_import_plan import tree_hash  # noqa: F401
 from tests.python.crate_import.test_import_same_path import run
 from tests.python.crate_import.test_import_work_side import export_world, target_install

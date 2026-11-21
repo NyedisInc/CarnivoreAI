@@ -106,6 +106,11 @@ console.log('[AgentFamilyIcon Module] Loading...');
             + 'stroke-linecap="round" stroke-linejoin="round">'
             + '<path d="M3.4 4.6 6.8 8l-3.4 3.4"/><path d="M8.4 11.6h4.2"/>'
             + '</g>',
+        custom: '<g fill="none" stroke="currentColor" stroke-width="1.3" '
+            + 'stroke-linecap="round" stroke-linejoin="round">'
+            + '<rect x="2.9" y="2.9" width="10.2" height="10.2" rx="1.2"/>'
+            + '<path d="M8 5.7v4.6M5.7 8h4.6"/>'
+            + '</g>',
         unknown: '<circle cx="8" cy="8" r="4.6" fill="none" '
             + 'stroke="currentColor" stroke-width="1.3" stroke-dasharray="2.2 2"/>',
     };
@@ -117,6 +122,7 @@ console.log('[AgentFamilyIcon Module] Loading...');
         openclaw: 'openclaw',
         local: 'local model',
         shell: 'shell',
+        custom: 'custom',
         unknown: 'agent not determined',
     };
 

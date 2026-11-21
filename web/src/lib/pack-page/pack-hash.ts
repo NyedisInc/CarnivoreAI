@@ -1,5 +1,5 @@
 
-export const PACK_TABS = ['computers', 'work', 'logins', 'skills'] as const;
+export const PACK_TABS = ['computers', 'work', 'jobs', 'logins', 'skills'] as const;
 
 export type PackTab = (typeof PACK_TABS)[number];
 

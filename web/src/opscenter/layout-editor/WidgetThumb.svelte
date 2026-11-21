@@ -58,7 +58,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: var(--oc-space-1-5);
       flex: 0 0 auto;
       width: 76px;
       height: 52px;
@@ -87,7 +87,7 @@
     .le-thumb__steps {
       display: flex;
       align-items: flex-end;
-      gap: 2px;
+      gap: var(--oc-space-0-5);
     }
 
     .le-thumb__step {

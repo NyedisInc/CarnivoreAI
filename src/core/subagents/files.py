@@ -21,6 +21,7 @@ from src.core.subagents.contract import (
 )
 from src.core.subagents.parent_index import parse_timestamp
 from src.core.subagents.shape_alert import report_unrecognized
+from src.core.subagents.workflow_ends import reset_journal_cache_for_tests
 from src.core.transcript_contract import complete_lines, decode_json
 
 logger = structlog.get_logger(__name__)
@@ -129,21 +130,30 @@ def _check_and_alert(record: Any) -> ShapeCheck:
     return check
 
 
-def read_line_facts(path: Path) -> LineFacts:
+def mtime_seconds(mtime_ns: int) -> float:
+    seconds, nanos = divmod(mtime_ns, 1_000_000_000)
+    return float(seconds) + nanos * 1e-9
+
+
+def read_line_facts(path: Path, known: Optional[Tuple[int, int]] = None) -> LineFacts:
     key = str(path)
-    try:
-        stat = os.stat(key)
-    except FileNotFoundError:
-        return LineFacts(FILE_ABSENT)
-    except OSError as exc:
-        logger.debug("subagent_line_stat_failed", error=str(exc))
-        return LineFacts(FILE_UNREADABLE)
-    hit = _cached(_line_cache, key, stat.st_size, stat.st_mtime_ns)
+    if known is not None:
+        size, mtime_ns, seconds = known[0], known[1], mtime_seconds(known[1])
+    else:
+        try:
+            stat = os.stat(key)
+        except FileNotFoundError:
+            return LineFacts(FILE_ABSENT)
+        except OSError as exc:
+            logger.debug("subagent_line_stat_failed", error=str(exc))
+            return LineFacts(FILE_UNREADABLE)
+        size, mtime_ns, seconds = stat.st_size, stat.st_mtime_ns, stat.st_mtime
+    hit = _cached(_line_cache, key, size, mtime_ns)
     if hit is not None:
         return hit
-    mtime = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc)
-    facts = _read_line_facts_uncached(key, stat.st_size, mtime)
-    _remember(_line_cache, key, (stat.st_size, stat.st_mtime_ns, facts))
+    mtime = datetime.fromtimestamp(seconds, tz=timezone.utc)
+    facts = _read_line_facts_uncached(key, size, mtime)
+    _remember(_line_cache, key, (size, mtime_ns, facts))
     return facts
 
 
@@ -180,16 +190,20 @@ def _read_line_facts_uncached(key: str, size: int, mtime: datetime) -> LineFacts
     )
 
 
-def read_meta_facts(path: Path) -> MetaFacts:
+def read_meta_facts(path: Path, known: Optional[Tuple[int, int]] = None) -> MetaFacts:
     key = str(path)
-    try:
-        stat = os.stat(key)
-    except FileNotFoundError:
-        return MetaFacts(FILE_ABSENT)
-    except OSError as exc:
-        logger.debug("subagent_meta_stat_failed", error=str(exc))
-        return MetaFacts(FILE_UNREADABLE)
-    hit = _cached(_meta_cache, key, stat.st_size, stat.st_mtime_ns)
+    if known is not None:
+        size, mtime_ns = known
+    else:
+        try:
+            stat = os.stat(key)
+        except FileNotFoundError:
+            return MetaFacts(FILE_ABSENT)
+        except OSError as exc:
+            logger.debug("subagent_meta_stat_failed", error=str(exc))
+            return MetaFacts(FILE_UNREADABLE)
+        size, mtime_ns = stat.st_size, stat.st_mtime_ns
+    hit = _cached(_meta_cache, key, size, mtime_ns)
     if hit is not None:
         return hit
     try:
@@ -208,10 +222,11 @@ def read_meta_facts(path: Path) -> MetaFacts:
         else:
             report_unrecognized(check)
             facts = MetaFacts(SHAPE_UNRECOGNIZED)
-    _remember(_meta_cache, key, (stat.st_size, stat.st_mtime_ns, facts))
+    _remember(_meta_cache, key, (size, mtime_ns, facts))
     return facts
 
 
 def reset_caches_for_tests() -> None:
     _line_cache.clear()
     _meta_cache.clear()
+    reset_journal_cache_for_tests()

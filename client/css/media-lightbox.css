@@ -2,7 +2,7 @@
     .sidebar-help__lightbox {
         position: fixed;
         inset: 0;
-        z-index: 10600;
+        z-index: var(--oc-z-lightbox);
         background: color-mix(in srgb, var(--oc-ground-panel) 85%, transparent);
     }
 

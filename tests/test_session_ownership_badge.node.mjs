@@ -289,15 +289,16 @@ for (const [label, merge] of MERGES) {
 
 const manager = read('src', 'core', 'session_manager.py');
 const backend = read('src', 'core', 'tmux_backend.py');
+const fold = read('src', 'core', 'sessions', 'tmux_listing_fold.py');
 const resolver = read('src', 'core', 'tmux_listing_parse.py');
 
 await test('the server answers ownership from the persisted owned set', () => {
     assert.match(resolver, /return name in owned_names/,
         '/sessions/attachable must keep sourcing the flag from the owned set');
-    assert.match(backend, /created_by_cloude = resolve_ownership\(/,
+    assert.match(fold, /created_by_cloude = resolve_ownership\(/,
         'the backend must delegate to the shared resolver, not grow a '
         + 'second copy of the ownership decision');
-    assert.doesNotMatch(backend, /created_by_cloude = name in owned_names/,
+    assert.doesNotMatch(backend + fold, /created_by_cloude = name in owned_names/,
         'the backend kept an inline copy of the owned-name tier; that is '
         + 'how the badge came to disagree with itself before');
     assert.match(manager, /created_by_cloude=bool\(\s*tmux_session_name/,

@@ -59,7 +59,7 @@ def test_no_host_health_wiring_route_tool_or_strings() -> None:
 
 
 def _tmutil_files(files: list, texts: dict) -> list:
-    plugin = "src/cplugs/timemachine/"
+    plugin = "src/plugins/timemachine/"
     return [rel for p in files if not (rel := p.relative_to(ROOT).as_posix()).startswith(plugin)
             and re.search("tmutil", texts.get(p) or p.read_text(), re.I)]
 

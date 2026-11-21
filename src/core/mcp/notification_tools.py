@@ -66,9 +66,9 @@ SPECS = (
     ),
     ra.RouteTool(
         name="alert_open_system_settings", route="src.api.app_alerts_routes:open_system_settings", gate=ra.ARRANGE,
-        description="Open one macOS System Settings pane on the Mac running Carnivore (pane: full_disk_access), the "
-                    "fix an alert's open_privacy action offers. Changes nothing by itself; the owner grants access there.",
-        properties={"pane": {"type": "string", "enum": ["full_disk_access"]}}, required=("pane",),
+        description="Open one macOS System Settings pane on the Mac running Carnivore (pane: full_disk_access or "
+                    "privacy_security), the fix an alert's open_privacy or open_security action offers. Changes nothing by itself; the owner grants access there.",
+        properties={"pane": {"type": "string", "enum": ["full_disk_access", "privacy_security"]}}, required=("pane",),
         invoke=_open_settings, example={"pane": "full_disk_access"},
     ),
     ra.RouteTool(

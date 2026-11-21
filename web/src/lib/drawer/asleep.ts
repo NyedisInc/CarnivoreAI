@@ -1,9 +1,14 @@
 
+import { claimsOf, liveRowIs, rowNameFor } from './record-row-name';
+
+export const ASLEEP_NAME_PREFIX = 'asleep:';
+
 interface AsleepRecord {
     asleep?: boolean;
     archived_at?: unknown;
     tmux_name?: string;
     title?: string | null;
+    last_work_at?: string | null;
     session_uuid?: string;
     unread?: boolean;
     owned?: boolean;
@@ -29,7 +34,8 @@ export function addRows(
     records: readonly unknown[],
     keep?: ReadonlySet<string>,
 ): number {
-    const taken = new Set((rows || []).map((r) => r && r.name));
+    const claims = claimsOf(rows || []);
+    const seen = new Set<string>();
     let added = 0;
     const list = Array.isArray(records) ? records.slice() : [];
     if (keep && keep.size) {
@@ -39,14 +45,17 @@ export function addRows(
     for (const raw of list) {
         const rec = raw as AsleepRecord | null;
         if (!rec || rec.asleep !== true || rec.archived_at || !rec.tmux_name) continue;
-        if (taken.has(rec.tmux_name)) continue;
-        taken.add(rec.tmux_name);
+        const uuid = rec.session_uuid;
+        if (!uuid ? claims.taken.has(rec.tmux_name) : (seen.has(uuid) || liveRowIs(claims, uuid, rec.tmux_name))) continue;
+        if (uuid) seen.add(uuid);
         rows.push({
-            name: rec.tmux_name,
+            name: rowNameFor(claims, ASLEEP_NAME_PREFIX, uuid || rec.tmux_name, rec.tmux_name),
             label: rec.title != null ? rec.title : null,
             asleep: true,
             status: 'asleep',
             session_uuid: rec.session_uuid,
+            tmux_name: rec.tmux_name,
+            last_work_at: rec.last_work_at || null,
             session_id: null,
             is_active: false,
             unread: rec.unread === true,

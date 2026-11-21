@@ -93,7 +93,7 @@ def _sync_row(raw: Mapping[str, Any]) -> Dict[str, Any]:
     session = raw.get("session") if isinstance(raw.get("session"), Mapping) else {}
     return {"session_uuid": raw.get("session_uuid"), "row_id": raw.get("session_row_id"), "name": raw.get("tmux_session"),
             "working_dir": session.get("working_dir"), "label": raw.get("label"), "agent_type": raw.get("agent_type"),
-            "agent_family": raw.get("agent_family"), "agent_family_source": raw.get("agent_family_source")}
+            "agent_family": raw.get("agent_family"), "agent_family_source": raw.get("agent_family_source"), "project_uid": raw.get("project_uid")}
 
 
 def _asleep_sync_row(raw: Mapping[str, Any]) -> Dict[str, Any]:
@@ -273,9 +273,9 @@ def _state_word(state: str) -> str:
 
 
 _UNMEASURED = ("activity_hint", "parked_summary", "workflow_active", "subagents_state", "subagents_running",
-               "subagents_total", "timers_state", "timers_live", "timers_next_fire_at", "automations_state", "automations_total",
+               "subagents_total", "subagents_stalled", "timers_state", "timers_live", "timers_next_fire_at", "automations_state", "automations_total",
                "automations_enabled", "automations_next", "skills_state", "skills_fired",
-               "skill_last", "background_open", "usage_limit", "background_processes", "agent_update", "mcp_health", "stats",
+               "skill_last", "background_open", "usage_limit", "login_expired", "background_processes", "agent_update", "mcp_health", "stats",
                "task_lead", "do_not_disturb")
 
 

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 PROTOCOL_VERSION = 1
 MAX_PAYLOAD = 16384
-MAX_HELLO = 4096
+MAX_HELLO = 16384
 MAX_SERVICE = 32
 HEADER = struct.Struct(">BII")
 

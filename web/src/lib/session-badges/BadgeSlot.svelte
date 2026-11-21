@@ -36,7 +36,7 @@
             display: inline-flex;
             align-items: center;
             gap: var(--oc-space-0-5);
-            flex: 0 1 auto;
+            flex: 0 0 auto;
             min-width: 0;
             max-width: 22ch;
             overflow: hidden;

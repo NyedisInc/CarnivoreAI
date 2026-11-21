@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STATUS_STATES } from '../../cplugs/huddle/swarm/characters/states';
+import { STATUS_STATES } from '../../plugins/huddle/swarm/characters/states';
 import { memberOf, memberState } from './member-face';
 
 describe('memberState: the light signals as the character state', () => {

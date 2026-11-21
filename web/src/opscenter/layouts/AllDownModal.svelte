@@ -5,7 +5,6 @@
     import { t } from '../../lib/i18n/index.svelte';
     import { asleep, recent, sessions } from '../api';
     import Button from '../../lib/base/Button.svelte';
-    import IconButton from '../../lib/base/IconButton.svelte';
     import MemberDownRow from './MemberDownRow.svelte';
     import type { SavedLayout } from './api';
     import { isLiveRow } from './names';
@@ -34,14 +33,7 @@
     });
 </script>
 
-<ModalShell title={layout.name} overlayClass="text-prompt-modal" onCancel={() => close(false)}>
-    {#snippet head()}
-        <div class="text-prompt-modal__head">
-            <span class="text-prompt-modal__verb">&raquo; {layout.name}</span>
-            <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close
-                onclick={() => close(false)} />
-        </div>
-    {/snippet}
+<ModalShell look="titlerow" title={layout.name} onCancel={() => close(false)}>
     <div class="lad-body" data-all-down-modal>
         <p class="lad-hint">{t('layout.all_down.hint')}</p>
         {#each members as member (member.session_row_id)}

@@ -10,9 +10,9 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.crate import routes, service
-from src.cplugs.crate.jobs import runner, state
-from src.cplugs.host import runtime
+from src.plugins.crate import routes, service
+from src.plugins.crate.jobs import runner, state
+from src.plugins.host import runtime
 from tests.python.cplugs.crate.crate_world import env_for, make_world
 from tests.python.cplugs.owner import turn_on
 

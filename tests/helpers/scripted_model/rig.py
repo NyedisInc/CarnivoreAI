@@ -71,6 +71,10 @@ class RigSlot:
         self.slot.release()
 
     def register_wrapper(self, wrapper_id: str, family: str, script: str) -> None:
+        if family == "codex":
+            default_home = Path(self.slot.auth).parent / "home" / ".codex"
+            default_home.mkdir(parents=True, exist_ok=True)
+            (default_home / "auth.json").write_text(json.dumps({"OPENAI_API_KEY": "rig-placeholder"}))
         profile = {"id": wrapper_id, "harness": family, "label": f"rig {family}", "description": "scripted model rig, test only",
                    "custom_command": {"script": script, "entry": wrapper_id}}
         try:

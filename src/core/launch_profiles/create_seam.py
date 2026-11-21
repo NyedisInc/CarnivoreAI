@@ -97,6 +97,10 @@ async def record_for(plan: LaunchPlan, account_id: Optional[str] = None, overlay
 
 async def prepare(plan: LaunchPlan, *, account_id: Optional[str] = None,
                   overlay_ctx: Optional[launch_overlay.OverlayContext] = None) -> PreparedLaunch:
+    if plan.purpose == "pane" and plan.display.harness == "codex":
+        from src.core.codex_helpers import runtime as codex_helpers  # noqa: PLC0415
+
+        await asyncio.to_thread(codex_helpers.before_launch)
     staged = await materialize(plan) if plan.secret_refs else {}
     late: Dict[str, str] = {}
     note: Optional[Mapping[str, Any]] = None

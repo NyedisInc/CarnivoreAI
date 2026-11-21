@@ -5,9 +5,9 @@ import hashlib
 import time
 from pathlib import Path
 
-from src.cplugs.crate import record
-from src.cplugs.crate.writer import mint_bundle_id
-from src.cplugs.sdk import exports as sx
+from src.plugins.crate import record
+from src.plugins.crate.writer import mint_bundle_id
+from src.plugins.sdk import exports as sx
 from tests.python.cplugs.crate.crate_world import env_for, make_world
 
 DAY = 86_400

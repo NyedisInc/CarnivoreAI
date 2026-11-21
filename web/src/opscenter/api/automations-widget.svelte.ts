@@ -1,6 +1,6 @@
 import { authFetch } from './auth.svelte';
-import { resource, type Resource } from './poll.svelte';
-import { listSessionRecords, type Automation } from '../../lib/automations/api';
+import { listingRows, resource, type Resource } from './poll.svelte';
+import type { Automation } from '../../lib/automations/api';
 
 export const AUTOMATIONS_POLL_MS = 15000;
 export const AUTOMATIONS_WIDGET_TOPICS: readonly string[] = ['automations', 'automation_runs'];
@@ -42,6 +42,6 @@ export function releaseAutomationsList(): void {
 }
 
 export async function sessionUuidOfRow(rowId: number): Promise<string | null> {
-  const records = await listSessionRecords();
-  return records.find((r) => r.id === rowId)?.session_uuid ?? null;
+  const rows = await listingRows<{ session_row_id?: number | null; session_uuid?: string | null }>('list', '/sessions/list');
+  return rows.find((r) => r.session_row_id === rowId)?.session_uuid ?? null;
 }

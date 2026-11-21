@@ -1,4 +1,5 @@
 /* the home screen */
+import { handleWithoutPrefix } from '../product-identity';
 import { HOME_KEYS } from '../../../../client/js/labels/home-screen.js';
 import { reasonOf as failureReason } from './failure-reason';
 import { findRunningSessionBySlug } from './deep-link';
@@ -6,6 +7,8 @@ import { refusedWith } from './refusal-shape';
 import { showError, updateStatus, explainRefusedProject } from './status-report';
 import { buildOpenProjectPayload, isRemoteRoot } from './open-project-payload';
 import { refreshWorktrees } from '../worktree-cleanup/api';
+import { autoDelegateApi } from '../pack-transport/auto-delegate-api';
+import { newRequestId, refusalReason, sessionPlaceApi, startedLine } from '../session-place/api';
 import { prefillFor, sourceOfProject } from '../launch-picker/prefill';
 import { beginNav, currentNav, keepNav, withNav, type NavToken } from './nav-generation';
 import type { NavHost, SessionLike } from './nav-host';
@@ -70,7 +73,7 @@ export async function attachRunningSession(
                 // the project row
                 const rawName = String(session.tmux_session || tmuxName);
                 await host.createProject({
-                    name: rawName.replace(/^cloude_/, ''),
+                    name: handleWithoutPrefix(rawName),
                     path: session.working_dir,
                     description: '',
                 });
@@ -146,6 +149,17 @@ export async function openProjectByName(
     }
 }
 
+async function autoPlacementFor(name: string, folder: string): Promise<{ workingDir: string } | null> {
+    try {
+        const view = await autoDelegateApi.get(name);
+        return view.role === 'home' && view.auto_delegate === true ? { workingDir: folder } : null;
+    } catch (error) {
+        // could not be read
+        console.warn('CloudeWeb: the auto-delegate mark could not be read:', error);
+        return null;
+    }
+}
+
 export async function selectProject(
     project: ProjectRow,
     host: NavHost,
@@ -167,18 +181,30 @@ export async function selectProject(
             const taken = host.runningSessions().flatMap((r) => [r.name, r.label ?? '']).filter(Boolean);
             const prefill = prefillFor(sourceOfProject(project), taken);
             const local = !isRemoteRoot(project?.path);
-            choice = await host.chooseProvider((project?.default_launch_profile as string | null | undefined) ?? null, local, prefill, local && project?.path ? String(project.path) : null);
+            const folder = local && project?.path ? String(project.path) : null;
+            choice = await host.chooseProvider((project?.default_launch_profile as string | null | undefined) ?? null, local, prefill, folder, folder ? await autoPlacementFor(name, folder) : null);
             if (!choice) return;
         }
         updateStatus(t(HOME_KEYS.statusOpening, { name }));
 
         const payload = buildOpenProjectPayload(name, String(project.path), choice ?? null, host.terminalDims());
-        const session = await host.createSession(payload);
+        const placed = choice?.computer === 'auto' ? await sessionPlaceApi.start({ ...payload, request_id: newRequestId() }) : null;
+        const session = placed ? (placed.session as SessionLike) : await host.createSession(payload);
+        if (placed) {
+            const line = startedLine(placed.placement, t);
+            updateStatus(line);
+            if (placed.placement.decision === 'remote') showError(line, t);
+        }
         if (payload.worktree) void refreshWorktrees();
         if (choice?.pinned === true && session?.tmux_session) host.pinSession?.(session.tmux_session);
         host.announceSessionCreated(withNav({ session, project }, nav));
     } catch (error) {
         console.error('CloudeWeb: failed to open project:', error);
+        const refused = refusalReason(error);
+        if (refused) {
+            showError(t('launch_picker.computer.preview_refused', { reason: refused }), t);
+            return;
+        }
         if (refusedWith(error, { code: 'session_already_running', phrase: 'already running' })) {
             await detachAndOpenProject(project, host, t);
         } else {

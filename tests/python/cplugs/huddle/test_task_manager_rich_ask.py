@@ -7,8 +7,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.huddle import answers, rich_ask, service, structured
-from src.cplugs.huddle.rules import TaskManagerInvalid
+from src.plugins.huddle import answers, rich_ask, service, structured
+from src.plugins.huddle.rules import TaskManagerInvalid
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 
 FORM = [
@@ -133,14 +133,14 @@ def test_a_single_other_answer_is_kept_and_a_text_recommendation_compares():
 @pytest.fixture
 def client(manager):
     manager.app.dependency_overrides[require_auth] = lambda: {"sub": "test"}
-    from src.cplugs.huddle import routes
+    from src.plugins.huddle import routes
     manager.app.include_router(routes.router, prefix="/api/v1")
     with TestClient(manager.app) as test_client:
         yield test_client
 
 
 def test_routes_need_auth(manager):
-    from src.cplugs.huddle import routes
+    from src.plugins.huddle import routes
     manager.app.include_router(routes.router, prefix="/api/v1")
     with TestClient(manager.app) as anonymous:
         assert anonymous.get("/api/v1/cplugs/huddle/questions/1").status_code in (401, 403)

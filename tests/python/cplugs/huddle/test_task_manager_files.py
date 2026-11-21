@@ -17,9 +17,9 @@ from PIL import Image
 
 from src.api.auth import require_auth
 from src.config.uploads import UploadsConfig
-from src.cplugs.host import runtime
-from src.cplugs.sdk import uploads as sdk_uploads
-from src.cplugs.huddle import files, routes as huddle_routes, service
+from src.plugins.host import runtime
+from src.plugins.sdk import uploads as sdk_uploads
+from src.plugins.huddle import files, routes as huddle_routes, service
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
 from tests.python.cplugs.owner import turn_on
@@ -184,7 +184,7 @@ def test_the_sweep_drops_an_emptied_item_folder_and_reads_no_db_that_was_never_w
 
 
 def test_purging_the_plugin_removes_every_file(client, app):
-    from src.cplugs.host import routes as host_routes
+    from src.plugins.host import routes as host_routes
 
     item = client.post(f"{BASE}/lists/all/items", json={"text": "x"}).json()["id"]
     upload(client, item, "a.txt", b"hi")

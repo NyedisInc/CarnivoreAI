@@ -1,4 +1,4 @@
-import { onEventFrame } from '../../cplugs/sdk/terminal';
+import { onEventFrame } from '../../plugins/sdk/terminal';
 import { t } from '../i18n/index.svelte';
 import type { BadgeItem } from './slot';
 

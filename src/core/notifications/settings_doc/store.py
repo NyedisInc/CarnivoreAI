@@ -13,6 +13,7 @@ from src.core import config_writer, resource_push
 from src.core.notifications import doc_model, types
 from src.core.notifications.settings_doc import aliases
 from src.core.resource_push import topics
+from src.core.sessions.agent_update_warn import warn_exc_once
 
 log = structlog.get_logger(__name__)
 
@@ -60,7 +61,7 @@ class SettingsDocStore:
         try:
             doc = parse_block(config_writer.read_config(self._path).get(doc_model.BLOCK))
         except (OSError, ValueError) as exc:
-            log.warning("notification_routing_unreadable", error=str(exc), error_type=type(exc).__name__)
+            warn_exc_once("notification_routing_unreadable", exc)
             doc = parse_block(None)
         with self._lock:
             self._doc = doc

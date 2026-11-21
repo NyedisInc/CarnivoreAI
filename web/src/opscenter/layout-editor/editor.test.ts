@@ -184,16 +184,36 @@ describe('a plugin panel view lands like any widget (#2379, #2802)', () => {
   });
 });
 
-describe('edit mode exists only on a dashboard', () => {
-  test('editablePage is null off the home surface, even on a wide window with a store', () => {
+describe('edit layout works on every page that has a layout store (#3040)', () => {
+  test('editablePage and enterLayoutEditor answer the terminal page and the war room, not only home', () => {
     editorSeams.store = () => homeLayout;
     page = 'terminal';
-    expect(editablePage()).toBeNull();
-    expect(enterLayoutEditor()).toBe(false);
+    expect(editablePage()).toBe('terminal');
+    expect(enterLayoutEditor()).toBe(true);
+    expect(layoutEditor.page).toBe('terminal');
+    finishLayoutEditor();
     page = 'warroom';
-    expect(editablePage()).toBeNull();
+    expect(editablePage()).toBe('warroom');
     page = 'home';
     expect(editablePage()).toBe('home');
+  });
+
+  test('a page with no layout store, or a narrow window, is still not editable', () => {
+    page = 'terminal';
+    expect(editablePage()).toBeNull();
+    editorSeams.store = () => homeLayout;
+    wide = false;
+    expect(editablePage()).toBeNull();
+  });
+
+  test('cancelling an edit off the dashboard leaves the dashboard arrangement alone', async () => {
+    const { snapshotDash } = await import('../dashgrid/dash-store.svelte');
+    editorSeams.store = () => homeLayout;
+    const before = JSON.stringify(snapshotDash(homeLayout.state.layout));
+    page = 'terminal';
+    enterLayoutEditor();
+    cancelLayoutEditor();
+    expect(JSON.stringify(snapshotDash(homeLayout.state.layout))).toBe(before);
   });
 
   test('cancel puts back the layout the edit started with', async () => {

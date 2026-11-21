@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 import structlog
 
 from src.core.pipeline.engine import Engine
-from src.cplugs.sdk import pipeline_rows
+from src.plugins.sdk import pipeline_rows
 
 logger = structlog.get_logger()
 

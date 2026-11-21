@@ -45,6 +45,16 @@ class StyleBody(BaseModel):
     corner: Optional[bool] = None
 
 
+class SessionSoundBody(BaseModel):
+    """``PUT /session-sounds``: one session's sound for one type; ``sound`` null clears the override (the global pick applies)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    type_id: str
+    sound: Optional[str] = None
+
+
 class DefaultBody(BaseModel):
     """``PUT /defaults``: one type's global default tick."""
 
@@ -174,3 +184,38 @@ async def put_style(type_id: str, body: StyleBody, request: Request) -> Dict[str
     if body.corner is not None:
         await _write(styles_store.put_corner, service.docs, type_id, body.corner)
     return styles_body(await asyncio.to_thread(service.docs.snapshot))
+
+
+SESSION_SOUND_TYPES = ("session.question", "session.permission", "session.plan_approval", "session.finished", "session.died")
+
+
+def session_sounds_body(doc: Dict[str, Any], name: str) -> Dict[str, Any]:
+    return {"revision": int(doc["rev"]), "sounds": list(card_contract.SOUNDS),
+            "types": {t: {"override": styles_store.session_sound(doc, name, t), "global": styles.effective_style_in(doc, t).sound}
+                      for t in SESSION_SOUND_TYPES}}
+
+
+@router.get("/session-sounds")
+async def get_session_sounds(request: Request, name: str = Query(...)) -> Dict[str, Any]:
+    """One session's per-type sound overrides next to the global picks. 422 for a bad session name."""
+    if not styles_store.SESSION_NAME.match(name):
+        raise _invalid("bad_value")
+    service = get_service(request.app.state)
+    return session_sounds_body(await asyncio.to_thread(service.docs.snapshot), name)
+
+
+@router.put("/session-sounds")
+async def put_session_sound(body: SessionSoundBody, request: Request) -> Dict[str, Any]:
+    """Set or clear one session's sound for a type (this computer only). 422 for a bad session, type or sound."""
+    service = get_service(request.app.state)
+    await _write(styles_store.put_session_sound, service.docs, body.name, body.type_id, body.sound)
+    return session_sounds_body(await asyncio.to_thread(service.docs.snapshot), body.name)
+
+
+@router.get("/play")
+async def get_play(request: Request, type_id: str = Query(...), name: Optional[str] = Query(None)) -> Dict[str, str]:
+    """The sound the page plays for a card of ``type_id`` on session ``name``: the session's override over the global pick, none when passive."""
+    if not types.is_registered(types.canonical(type_id)) or (name and not styles_store.SESSION_NAME.match(name)):
+        raise _invalid("bad_value")
+    service = get_service(request.app.state)
+    return {"sound": styles.playback_in(await asyncio.to_thread(service.docs.snapshot), type_id, name)}

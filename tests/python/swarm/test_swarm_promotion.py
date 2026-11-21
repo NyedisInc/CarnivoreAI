@@ -25,7 +25,7 @@ from src.core.mcp import beast_mode, swarm_tools
 from src.core.mcp.caller import AgentCaller
 from src.core.swarm import body, body_create, create, delivery, desk, promotion, reports, spawn, promotion_store, store, thread_port, wake_prompt
 from src.core.swarm.facade import SwarmFacade
-from src.cplugs.sdk.swarm import SwarmError
+from src.plugins.sdk.swarm import SwarmError
 
 TOKEN = "ghp_" + "a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8"
 

@@ -7,7 +7,7 @@ from src.core.automations import run_sessions
 from src.core.hosts.ddl import LOCAL_HOST_KEY
 from src.core.hosts.identity import REMOTE_ID_PREFIX
 from src.models import SessionInfo
-from src.models.sessions import AutomationMark
+from src.models.session_marks import AutomationMark
 
 
 def mark_automation(app_state: Any, infos: Iterable[Any]) -> None:

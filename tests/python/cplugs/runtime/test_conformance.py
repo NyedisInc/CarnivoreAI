@@ -10,8 +10,8 @@ from typing import Any, Dict
 
 import pytest
 
-from src.cplugs.runtime import conformance as kit
-from src.cplugs.runtime import guards, watchdog, webhooks
+from src.plugins.runtime import conformance as kit
+from src.plugins.runtime import guards, watchdog, webhooks
 
 
 class _Anything:
@@ -87,13 +87,13 @@ def _evict_oldest_by_count(self: webhooks.InboundVerifier, hook: str) -> None:
     (guards, "CONTROL_LEAD", frozenset(), "c2_owner_token_and_control_lines"),
     (guards, "SESSION_FIELDS", guards.SESSION_FIELDS + ("parked_summary", "working_dir"), "h4_session_fields"),
     (guards, "is_remote_row", lambda row: False, "m6_remote_refs"),
-    ("src.cplugs.runtime.git_ops", "HARDENING", (), "l2_git_flags"),
-    ("src.cplugs.runtime.git_ops", "UNSAFE_CONFIG", re.compile(r"^$"), "l2_git_flags"),
-    ("src.cplugs.runtime.webhooks", "MAX_SKEW_SECONDS", 10 ** 9, "l4_webhooks"),
-    ("src.cplugs.runtime.webhooks", "MAX_FUTURE_SECONDS", 10 ** 9, "l4_webhooks"),
-    ("src.cplugs.runtime.webhooks", "_before_start", lambda ts, started: False, "l4_webhooks"),
+    ("src.plugins.runtime.git_ops", "HARDENING", (), "l2_git_flags"),
+    ("src.plugins.runtime.git_ops", "UNSAFE_CONFIG", re.compile(r"^$"), "l2_git_flags"),
+    ("src.plugins.runtime.webhooks", "MAX_SKEW_SECONDS", 10 ** 9, "l4_webhooks"),
+    ("src.plugins.runtime.webhooks", "MAX_FUTURE_SECONDS", 10 ** 9, "l4_webhooks"),
+    ("src.plugins.runtime.webhooks", "_before_start", lambda ts, started: False, "l4_webhooks"),
     (webhooks.InboundVerifier, "_check_room", _evict_oldest_by_count, "l4_webhooks"),
-    ("src.cplugs.runtime.watchdog", "MEMORY_LIMIT_BYTES", 10 ** 12, "m4_limits"),
+    ("src.plugins.runtime.watchdog", "MEMORY_LIMIT_BYTES", 10 ** 12, "m4_limits"),
 ], ids=["c2-control-lead", "h4-fields", "m6-remote", "l2-git", "l2-filter-config", "l4-skew", "l4-future-cap", "l4-restart-floor", "l4-nonce-age", "m4-memory"])
 def test_removing_the_rule_in_the_real_code_turns_its_probe_red(tmp_path, monkeypatch, module, attr, value, rule):
     import importlib
@@ -108,11 +108,11 @@ def test_removing_the_rule_in_the_real_code_turns_its_probe_red(tmp_path, monkey
 
 
 def test_a_changed_code_root_refuses_the_spawn_and_turns_on_safe_mode(tmp_path):
-    from src.cplugs.runtime import integrity
-    from src.cplugs.runtime.dispatch import HostDispatcher, HostServices, PluginContext
-    from src.cplugs.runtime.owner_tokens import OwnerTokens
-    from src.cplugs.runtime.process import PluginSpec
-    from src.cplugs.runtime.supervisor import Supervisor
+    from src.plugins.runtime import integrity
+    from src.plugins.runtime.dispatch import HostDispatcher, HostServices, PluginContext
+    from src.plugins.runtime.owner_tokens import OwnerTokens
+    from src.plugins.runtime.process import PluginSpec
+    from src.plugins.runtime.supervisor import Supervisor
 
     code = tmp_path / "code"
     code.mkdir()
@@ -136,7 +136,7 @@ def test_a_changed_code_root_refuses_the_spawn_and_turns_on_safe_mode(tmp_path):
 
 
 def test_pyc_in_the_code_root_is_refused_not_skipped(tmp_path):
-    from src.cplugs.runtime import integrity
+    from src.plugins.runtime import integrity
 
     code = tmp_path / "code"
     (code / "__pycache__").mkdir(parents=True)
@@ -152,7 +152,7 @@ def test_pyc_in_the_code_root_is_refused_not_skipped(tmp_path):
 
 
 def test_the_command_points_pycache_prefix_at_nothing(tmp_path):
-    from src.cplugs.runtime import sandbox
+    from src.plugins.runtime import sandbox
 
     layout = sandbox.Layout(tmp_path / "py", tmp_path / "fw", tmp_path / "rt", tmp_path / "code", tmp_path / "data")
     argv = sandbox.build_command(layout, tmp_path / "p.sb", "main", 123)
@@ -160,7 +160,7 @@ def test_the_command_points_pycache_prefix_at_nothing(tmp_path):
 
 
 def test_request_flood_and_in_flight_cap_are_violations():
-    from src.cplugs.runtime import frames
+    from src.plugins.runtime import frames
 
     line = lambda i: b'{"jsonrpc":"2.0","id":%d,"method":"log","params":{}}' % i  # noqa: E731
     guard = frames.FrameGuard(clock=lambda: 0.0)
@@ -179,8 +179,8 @@ def test_request_flood_and_in_flight_cap_are_violations():
 
 
 def test_a_refused_or_unknown_call_writes_one_activity_row_per_window(tmp_path):
-    from src.cplugs.runtime.dispatch import HostDispatcher, HostServices, PluginContext
-    from src.cplugs.runtime.owner_tokens import OwnerTokens
+    from src.plugins.runtime.dispatch import HostDispatcher, HostServices, PluginContext
+    from src.plugins.runtime.owner_tokens import OwnerTokens
 
     now, log = [0.0], []
     d = HostDispatcher(HostServices(activity=log.append), OwnerTokens(), clock=lambda: now[0], home=tmp_path)
@@ -199,8 +199,8 @@ def test_a_refused_or_unknown_call_writes_one_activity_row_per_window(tmp_path):
 
 
 def test_log_fields_cannot_shadow_the_plugin_id_or_the_event(tmp_path):
-    from src.cplugs.runtime.dispatch import HostDispatcher, HostServices, PluginContext
-    from src.cplugs.runtime.owner_tokens import OwnerTokens
+    from src.plugins.runtime.dispatch import HostDispatcher, HostServices, PluginContext
+    from src.plugins.runtime.owner_tokens import OwnerTokens
     import structlog
 
     d = HostDispatcher(HostServices(activity=lambda row: None), OwnerTokens(), home=tmp_path)
@@ -211,8 +211,8 @@ def test_log_fields_cannot_shadow_the_plugin_id_or_the_event(tmp_path):
 
 
 def test_storage_is_keyed_by_install_not_by_the_reusable_name(tmp_path):
-    from src.cplugs.runtime.dispatch import HostDispatcher, HostServices, PluginContext
-    from src.cplugs.runtime.owner_tokens import OwnerTokens
+    from src.plugins.runtime.dispatch import HostDispatcher, HostServices, PluginContext
+    from src.plugins.runtime.owner_tokens import OwnerTokens
 
     d = HostDispatcher(HostServices(activity=lambda row: None), OwnerTokens(), home=tmp_path)
     old = PluginContext(plugin_id="same", install_key="a" * 32, data_dir=tmp_path / "old", granted=frozenset())
@@ -221,10 +221,10 @@ def test_storage_is_keyed_by_install_not_by_the_reusable_name(tmp_path):
 
 
 def test_a_refused_log_line_does_not_stop_the_pump_and_events_need_a_subscription_and_a_grant(tmp_path):
-    from src.cplugs.runtime import frames, sandbox
-    from src.cplugs.runtime.dispatch import HostDispatcher, HostServices, PluginContext
-    from src.cplugs.runtime.owner_tokens import OwnerTokens
-    from src.cplugs.runtime.process import PluginProcess, PluginSpec
+    from src.plugins.runtime import frames, sandbox
+    from src.plugins.runtime.dispatch import HostDispatcher, HostServices, PluginContext
+    from src.plugins.runtime.owner_tokens import OwnerTokens
+    from src.plugins.runtime.process import PluginProcess, PluginSpec
 
     d = HostDispatcher(HostServices(activity=lambda row: None), OwnerTokens(), home=tmp_path)
     ctx = PluginContext(plugin_id="ev", install_key="3" * 32, data_dir=tmp_path / "d", granted=frozenset({"feed:meta"}))
@@ -252,9 +252,9 @@ class _FakeProc:
 
 
 def _sup(tmp_path, alerts, index):
-    from src.cplugs.runtime.dispatch import HostDispatcher, HostServices
-    from src.cplugs.runtime.owner_tokens import OwnerTokens
-    from src.cplugs.runtime.supervisor import Supervisor
+    from src.plugins.runtime.dispatch import HostDispatcher, HostServices
+    from src.plugins.runtime.owner_tokens import OwnerTokens
+    from src.plugins.runtime.supervisor import Supervisor
 
     log = []
     return Supervisor(tmp_path / "state", "1.0", HostDispatcher(HostServices(activity=log.append), OwnerTokens()),
@@ -262,8 +262,8 @@ def _sup(tmp_path, alerts, index):
 
 
 def _spec(tmp_path, name="cat", tier="catalog", digest="d", **kw):
-    from src.cplugs.runtime.dispatch import PluginContext
-    from src.cplugs.runtime.process import PluginSpec
+    from src.plugins.runtime.dispatch import PluginContext
+    from src.plugins.runtime.process import PluginSpec
 
     ctx = PluginContext(plugin_id=name, install_key="4" * 32, data_dir=tmp_path / "data", granted=frozenset(), tier=tier)
     return PluginSpec(ctx=ctx, code_dir=tmp_path, entry="main", code_digest=digest, **kw)
@@ -301,7 +301,7 @@ def test_a_catalog_plugin_without_a_code_digest_is_refused_but_a_local_one_is_no
 
 
 def test_exports_refuse_agent_instruction_names_and_agent_control_folders(tmp_path):
-    from src.cplugs.runtime import fsguard
+    from src.plugins.runtime import fsguard
 
     for name in ("CLAUDE.md", "agents.MD", "Gemini.md"):
         with pytest.raises(fsguard.UnsafePath):

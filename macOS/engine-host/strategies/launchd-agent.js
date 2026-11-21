@@ -7,7 +7,7 @@ const MAX_VERSION_CHARS = 64;
 const WAIT_MS = 45000;
 
 async function start(manager, ctx) {
-  const { service, log, sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)), waitMs = WAIT_MS, verifyHolder = verifyEngineHolder, kickstartGuard = null } = ctx;
+  const { service, log, sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)), waitMs = WAIT_MS, verifyHolder = (m) => verifyEngineHolder(m, undefined, { strict: true }), kickstartGuard = null } = ctx;
   if (service && service.isEnabled()) {
     const health = await manager.getHealth();
     const stale = Boolean(health) && Boolean(health.version) && health.version !== manager.getBundleVersion();

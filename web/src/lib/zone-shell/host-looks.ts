@@ -36,7 +36,7 @@ export const HOST_LOOKS: Readonly<Record<BodyHost, HostLook>> = {
     announceRemoved: false,
   },
   tab: {
-    keyFor: (cell) => `widget-tab:${cell.id}`,
+    keyFor: (cell, target) => `widget-tab:${target ? `${cell.id}@${target}` : cell.id}`,
     surface: null,
     zone: 'terminal',
     page: 'terminal',

@@ -15,8 +15,8 @@ from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
 from src.core.json_artifact import UnreadableArtifact
 from src.core.plugin_registry import marker
-from src.cplugs.host import identity, owner_switch, registry_projection, registry_store, sideload
-from src.cplugs.host import state as owner_state
+from src.plugins.host import identity, owner_switch, registry_projection, registry_store, sideload
+from src.plugins.host import state as owner_state
 
 REPO = Path(__file__).resolve().parents[3]
 UUID_A = "0123456789abcdef0123456789abcdef"
@@ -209,7 +209,7 @@ def test_describe_reports_generation_and_source(support, tmp_path):
 HOLDER = """
 import sys
 from pathlib import Path
-from src.cplugs.host import registry_store
+from src.plugins.host import registry_store
 with registry_store.exclusive(Path(sys.argv[1])):
     print("locked", flush=True)
     sys.stdin.readline()

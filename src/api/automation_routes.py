@@ -18,6 +18,7 @@ from src.core.automations import models as m
 from src.core.db import DatastoreUnreadableError
 from src.core.automations import contract, pause, recipes, run_by, run_feed, schedule, schedule_nl, session_tree, targets
 from src.core.byoai import gateway as byoai_gateway
+from src.core.pack.session_place import automation as placement_store
 from src.models.automations import CONTRACT_PATCH_FIELDS, UNATTENDED_PHRASE, AutomationCreate, AutomationPatch, ScheduleParse, SchedulePreview
 
 logger = structlog.get_logger()
@@ -313,6 +314,7 @@ async def delete_automation(request: Request, automation_id: str):
             if run["automation_id"] == automation_id:
                 await scheduler.cancel_run(run["run_id"])
         await asyncio.to_thread(store.delete, automation_id, actor_of(request))
+        await asyncio.to_thread(placement_store.drop, automation_id)
     except (m.AutomationInvalid, m.AutomationNotFound) as exc:
         raise refuse(exc) from exc
     return {"deleted": automation_id}

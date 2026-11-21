@@ -11,10 +11,10 @@ from fastapi.testclient import TestClient
 from src.api import pipeline_plugin_routes
 from src.api.auth import require_auth
 from src.core.pipeline import runtime
-from src.cplugs import save as save_plugin
-from src.cplugs.save import capture_hook, pipeline_row, pipeline_seed, scheduler
-from src.cplugs.save.vault.follow import SliceResult
-from src.cplugs.sdk import pipeline_rows
+from src.plugins import save as save_plugin
+from src.plugins.save import capture_hook, pipeline_row, pipeline_seed, scheduler
+from src.plugins.save.vault.follow import SliceResult
+from src.plugins.sdk import pipeline_rows
 from tests.python.time_machine.helpers import make_corpus
 
 ROW_KEYS = {"plugin", "kind", "scope", "session_uuid", "session", "project_id", "project", "conversation_id", "family",
@@ -190,7 +190,7 @@ def test_the_plugin_start_seeds_the_row_so_it_shows_at_once(tmp_path, clean):
 
 
 def test_a_contributed_row_names_the_plugin_that_offered_it():
-    from src.cplugs.sdk import pipeline_rows
+    from src.plugins.sdk import pipeline_rows
     row = pipeline_rows.PipelineRow(plugin="backups", finished_at=1.0, duration_ms=None, runs=None)
     pipeline_rows._providers["save-test"] = lambda: [row]
     try:

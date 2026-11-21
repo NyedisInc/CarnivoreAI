@@ -3,7 +3,7 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
 import { setLocale } from '../i18n/index.svelte';
 import { cardCostView, heldRowIds, type ArgentCostSnapshot } from '../argent-cost/cost-view';
-import { colorBook } from '../../cplugs/huddle/swarm/agent-colors.svelte';
+import { colorBook } from '../../plugins/huddle/swarm/agent-colors.svelte';
 import type { CardView } from './board-types';
 
 setLocale('en');

@@ -9,14 +9,15 @@ import select
 import subprocess
 import threading
 import time
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import structlog
 
 from src.core.hosts.tmux_control import ControlParser, Notification, _Block, _Desync
 from src.core.hosts.tmux_quote import TmuxQuoteError, command_line
 from src.core.tmux_control.names import CONTROL_INPUT_SESSION_PREFIX, control_input_enabled, is_control_input_session
-from src.core.tmux_discovery import TmuxVersionSkewError, tmux_argv_prefix
+from src.core.tmux_control.read_shape import READ_VERBS, Answer, answer_of, block_stdout, segments, shape
+from src.core.tmux_discovery import TmuxVersionSkewError, register_live_version_source, tmux_argv_prefix
 
 logger = structlog.get_logger()
 
@@ -28,16 +29,17 @@ RESTART_COOLDOWN_SECONDS = 5.0
 IDLE_SERVER_COOLDOWN_SECONDS = 60.0
 CLOSE_LOCK_TIMEOUT_SECONDS = 1.0
 MAX_REPLY_BYTES = 8 * 1024 * 1024
+STALE_REPLY_SECONDS = 5.0
 MAX_LINE_BYTES = 8192
-
-READ_VERBS = frozenset({"list-panes", "list-sessions", "capture-pane", "show-options", "show-environment", "display-message"})
-
-_SEP = "\x1f"
 
 HANDSHAKE = "refresh-client -f ignore-size,no-output"
 
 
 class _Dead(Exception):
+    pass
+
+
+class _Late(_Dead):
     pass
 
 
@@ -57,43 +59,6 @@ def _on_loop_thread() -> bool:
     return True
 
 
-def _segments(args: Sequence[str]) -> Optional[List[List[str]]]:
-    parts: List[List[str]] = [[]]
-    for word in args:
-        if word == ";":
-            parts.append([])
-        else:
-            parts[-1].append(word)
-    return parts if all(parts) else None
-
-
-def _unsafe(args: Sequence[str]) -> bool:
-    return any(a.endswith(";") for a in args)
-
-
-def _display_message(args: Sequence[str]) -> Optional[List[str]]:
-    rest = list(args[1:])
-    if "-p" not in rest or rest.count("-t") != 1:
-        return None
-    rest.remove("-p")
-    at = rest.index("-t")
-    if at + 1 >= len(rest):
-        return None
-    target = rest[at + 1]
-    positional = rest[:at] + rest[at + 2:]
-    if len(positional) != 1 or positional[0].startswith("-") or not target:
-        return None
-    return ["display-message", "-p", "-t", target, f"#{{session_name}}{_SEP}{positional[0]}"]
-
-
-def _strip_session(out: bytes) -> Optional[bytes]:
-    name, sep, rest = out.partition(_SEP.encode())
-    text = name.decode("utf-8", "replace")
-    if not sep or not text or is_control_input_session(text):
-        return None
-    return rest
-
-
 class ControlReader:
 
     def __init__(self, socket_name: str) -> None:
@@ -104,73 +69,59 @@ class ControlReader:
         self._parser: Optional[ControlParser] = None
         self._retry_after = 0.0
         self._warming = False
+        self._late: Optional[Tuple[bytes, float]] = None
+        self._holder: Optional[int] = None
 
-    def run(self, args: Sequence[str]) -> Optional[bytes]:
-        parts = _segments(args)
-        shaped = [self._shape(p) for p in parts] if parts else [None]
+    def query(self, args: Sequence[str]) -> Optional[Answer]:
+        parts = segments(args)
+        shaped = [shape(p) for p in parts] if parts else [None]
         if any(item is None for item in shaped):
             return None
         try:
             lines = [command_line(a[0], a[1:]) for a, _ in shaped]  # type: ignore[misc]
         except TmuxQuoteError:
             return None
+        if self._late is not None or self._holder == threading.get_ident():
+            return None
         on_loop = _on_loop_thread()
-        began = time.monotonic()
         if on_loop:
             got = self._lock.acquire(blocking=False)
         else:
             got = self._lock.acquire(timeout=LOOP_TIMEOUT_SECONDS)
         if not got:
             return None
+        self._holder = threading.get_ident()
         try:
-            if not self._ensure_up(True):
+            if self._late is not None or not self._ensure_up(True):
                 return None
             try:
-                budget = LOOP_TIMEOUT_SECONDS if on_loop else max(0.05, LOOP_TIMEOUT_SECONDS - (time.monotonic() - began))
-                outs = self._exchange(lines, budget)
+                blocks = self._exchange(lines, LOOP_TIMEOUT_SECONDS)
+            except _Late:
+                threading.Thread(target=self._drain_late, name="tmux-control-reader-drain", daemon=True).start()
+                return None
             except _Dead:
                 self._fail(short=True)
                 return None
         finally:
+            self._holder = None
             self._lock.release()
-        if outs is None:
-            return None
-        done = []
-        for out, (_, strip) in zip(outs, shaped):  # type: ignore[misc]
-            out = _strip_session(out) if strip else out
-            if out is None:
-                return None
-            done.append(out)
-        return b"".join(done)
-
-    @staticmethod
-    def _shape(args: List[str]) -> "Optional[tuple[List[str], bool]]":
-        if not args or args[0] not in READ_VERBS or _unsafe(args):
-            return None
-        verb, rest = args[0], args[1:]
-        if verb == "display-message":
-            rewritten = _display_message(args)
-            return (rewritten, True) if rewritten else None
-        if verb == "list-panes" and "-a" not in rest and "-t" not in rest:
-            return None
-        if verb in ("capture-pane", "show-options", "show-environment") and "-t" not in rest and not any(
-                a.startswith("-") and not a.startswith("--") and "g" in a for a in rest):
-            return None
-        return args, False
+        return None if blocks is None else answer_of(blocks, shaped)  # type: ignore[arg-type]
 
     def close(self) -> None:
         got = self._lock.acquire(timeout=CLOSE_LOCK_TIMEOUT_SECONDS)
+        self._holder = threading.get_ident() if got else self._holder
         try:
             self._kill(reap=False)
             if got:
                 self._reap()
         finally:
             if got:
+                self._holder = None
                 self._lock.release()
 
 
     def _kill(self, reap: bool = True) -> None:
-        proc, self._proc, self._parser = self._proc, None, None
+        proc, self._proc, self._parser, self._late = self._proc, None, None, None
         if proc is None:
             return
         with contextlib.suppress(Exception):  # noqa: BLE001
@@ -221,10 +172,12 @@ class ControlReader:
 
     def _warm(self) -> None:
         with self._lock:
+            self._holder = threading.get_ident()
             try:
                 self._ensure_up(False)
             finally:
                 self._warming = False
+                self._holder = None
 
     def _start(self) -> None:
         argv = tmux_argv_prefix(self.socket_name)
@@ -242,15 +195,16 @@ class ControlReader:
             argv + ["-u", "-C", "new-session", "-A", "-s", self._session, "exec cat"],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=env, bufsize=0)
         self._parser = ControlParser(MAX_REPLY_BYTES)
-        if self._exchange([HANDSHAKE], START_TIMEOUT_SECONDS) is None:
+        shook = self._exchange([HANDSHAKE], START_TIMEOUT_SECONDS)
+        if not shook or not shook[0].ok:
             raise _Refused("handshake refused")
         listed = self._exchange([command_line("list-sessions", ["-F", "#{session_name}"])], START_TIMEOUT_SECONDS)
-        names = (listed[0] if listed else b"").decode("utf-8", "replace").split("\n")
+        names = (block_stdout(listed[0]) if listed and listed[0].ok else b"").decode("utf-8", "replace").split("\n")
         if not any(n and not n.startswith("_carnivore_ctl") for n in names):
             raise _Idle("the server has no session but the hidden ones")
         logger.info("tmux_control_reader_started", socket=self.socket_name, session=self._session)
 
-    def _exchange(self, lines: Sequence[str], timeout: float) -> Optional[List[bytes]]:
+    def _exchange(self, lines: Sequence[str], timeout: float) -> Optional[List[_Block]]:
         proc, parser = self._proc, self._parser
         assert proc is not None and proc.stdin is not None and proc.stdout is not None and parser is not None
         nonce = secrets.token_hex(16)
@@ -266,12 +220,35 @@ class ControlReader:
             proc.stdin.write(raw)
         except (OSError, ValueError) as exc:
             raise _Dead("write failed") from exc
-        blocks = self._read(fd, parser, timeout, nonce.encode("ascii"))
-        if len(blocks) != len(lines) + 1:
+        try:
+            blocks = self._read(fd, parser, timeout, nonce.encode("ascii"))
+        except _Late:
+            self._late = (nonce.encode("ascii"), time.monotonic())
+            raise
+        if len(blocks) != len(lines) + 1 or not blocks[-1].ok:
             raise _Dead("ambiguous framing")
-        if any(b.overflow or not b.ok for b in blocks):
-            return None
-        return [b"".join(line + b"\n" for line in b.lines) for b in blocks[:-1]]
+        return blocks[:-1]
+
+    def _drain_late(self) -> None:
+        with self._lock:
+            self._holder = threading.get_ident()
+            try:
+                self._drain_locked()
+            finally:
+                self._holder = None
+
+    def _drain_locked(self) -> None:
+        late, proc, parser = self._late, self._proc, self._parser
+        if late is None or proc is None or proc.stdout is None or parser is None:
+            return
+        nonce, since = late
+        try:
+            self._read(proc.stdout.fileno(), parser, max(0.0, since + STALE_REPLY_SECONDS - time.monotonic()), nonce)
+        except (_Dead, ValueError) as exc:
+            self._fail()
+            logger.debug("tmux_control_reader_late_reply_lost", socket=self.socket_name, reason=str(exc))
+            return
+        self._late = None
 
     @staticmethod
     def _read(fd: int, parser: ControlParser, timeout: float, nonce: Optional[bytes]) -> List[_Block]:
@@ -280,13 +257,15 @@ class ControlReader:
         while True:
             wait = max(0.0, deadline - time.monotonic())
             try:
-                ready, _, _ = select.select([fd], [], [], wait)
+                poller = select.poll()
+                poller.register(fd, select.POLLIN)
+                ready = poller.poll(wait * 1000)
                 data = os.read(fd, 65536) if ready else b""
             except (OSError, ValueError) as exc:
                 raise _Dead("client closed") from exc
             if not ready:
                 if nonce is not None:
-                    raise _Dead("reply timed out")
+                    raise _Late("reply timed out")
                 return blocks
             if not data:
                 raise _Dead("client ended")
@@ -305,20 +284,30 @@ _READERS: Dict[str, ControlReader] = {}
 _READERS_LOCK = threading.Lock()
 
 
-def control_read(socket_name: Optional[str], args: Sequence[str]) -> Optional[bytes]:
+def control_run(socket_name: Optional[str], args: Sequence[str]) -> Optional[Answer]:
     if not socket_name or not control_input_enabled():
         return None
     with _READERS_LOCK:
         reader = _READERS.get(socket_name)
         if reader is None:
             reader = _READERS[socket_name] = ControlReader(socket_name)
-    return reader.run(args)
+    return reader.query(args)
 
 
-async def control_read_async(socket_name: Optional[str], args: Sequence[str]) -> Optional[bytes]:
+def control_server_version(socket_name: Optional[str]) -> Optional[str]:
+    with _READERS_LOCK:
+        reader = _READERS.get(socket_name) if socket_name else None
+    if reader is None or not control_input_enabled():
+        return None
+    answer = reader.query(["display-message", "-p", "#{version}"])
+    text = answer[1].decode("utf-8", "replace").strip() if answer is not None and answer[0] == 0 else ""
+    return text or None
+
+
+async def control_run_async(socket_name: Optional[str], args: Sequence[str]) -> Optional[Answer]:
     if not args or args[0] not in READ_VERBS:
         return None
-    return await asyncio.to_thread(control_read, socket_name, args)
+    return await asyncio.to_thread(control_run, socket_name, args)
 
 
 def close_readers() -> None:
@@ -327,3 +316,6 @@ def close_readers() -> None:
         _READERS.clear()
     for reader in readers:
         reader.close()
+
+
+register_live_version_source(control_server_version)

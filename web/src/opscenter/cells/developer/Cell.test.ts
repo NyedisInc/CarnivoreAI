@@ -39,7 +39,7 @@ import { MONITORS } from './meta';
 import { META } from '../../engine/meta';
 import { setLocale } from '../../../lib/i18n/index.svelte';
 import { resourcePush } from '../../../lib/resource-push/boot';
-import { cplugEnablement } from '../../../cplugs/host/enablement.svelte';
+import { cplugEnablement } from '../../../plugins/host/enablement.svelte';
 
 globalThis.ResizeObserver ??= class { observe(): void {} unobserve(): void {} disconnect(): void {} } as unknown as typeof ResizeObserver;
 

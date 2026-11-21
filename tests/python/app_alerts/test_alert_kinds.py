@@ -42,7 +42,7 @@ def test_an_alert_with_no_fix_says_so_in_its_body() -> None:
         declared = kinds.declared_for(_key_for(title), title)
         if declared is None or declared.actions:
             continue
-        stored_by_producer = title.startswith(("app_alert.automation.", "app_alert.pipeline.", "app_alert.pack_skills."))
+        stored_by_producer = title.startswith(("app_alert.automation.", "app_alert.pipeline.", "app_alert.pack_skills.", "app_alert.sessions.mass_death."))
         if not stored_by_producer:
             assert declared.default_detail_key in CATALOG_KEYS, f"{title}: no action and no explaining body"
 

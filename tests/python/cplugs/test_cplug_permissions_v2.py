@@ -13,11 +13,11 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.host import activity_log, capabilities, consent, risk, routes as host_routes, runtime, session_fields
-from src.cplugs.sdk import permission_registry as registry
-from src.cplugs.host import mcp as host_mcp, state as owner_state
-from src.cplugs.sdk.definition import CplugDefinition
-from src.cplugs.sdk.manifest import parse_manifest
+from src.plugins.host import activity_log, capabilities, consent, risk, routes as host_routes, runtime, session_fields
+from src.plugins.sdk import permission_registry as registry
+from src.plugins.host import mcp as host_mcp, state as owner_state
+from src.plugins.sdk.definition import CplugDefinition
+from src.plugins.sdk.manifest import parse_manifest
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
 from tests.python.cplugs.owner import turn_on
@@ -340,7 +340,7 @@ def test_start_and_wake_ride_their_own_permissions(rig, grant_tp, monkeypatch):
     ctx = rig.host.context("tpdemo", request=request, infos=infos)
     assert hasattr(ctx.sessions, "wake") and hasattr(ctx.sessions, "asleep")
     assert not hasattr(ctx.sessions, "start")
-    from src.cplugs.host import audit
+    from src.plugins.host import audit
     assert [audit.sessions_permission_for(True)(x) for x in ("list", "message", "start", "wake", "asleep")] \
         == ["sessions.read", "sessions.message", "sessions.create", "sessions.control", "sessions.control"]
 
@@ -365,7 +365,7 @@ def test_a_changed_or_missing_code_digest_drops_every_grant(rig, grant_tp, monke
 
 def test_the_activity_write_happens_off_the_event_loop(tmp_path, monkeypatch):
     import threading
-    from src.cplugs.host import audit
+    from src.plugins.host import audit
 
     seen = []
     log = activity_log.ActivityLog(tmp_path)

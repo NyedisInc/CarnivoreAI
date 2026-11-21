@@ -2,11 +2,27 @@
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
+import structlog
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from src.core.hosts.ddl import HOST_STATE_UP, LOCAL_HOST_KEY, LOCAL_HOST_LABEL
+from src.models.activity_status import ActivityStatus, known_or_unknown
 from src.models.auto_sleep import SleepHoldInfo
+from src.models.session_marks import AutomationMark, CodexHelpersMark, MessagingMark, ScheduledMark, SkillLast
 from src.models.utc_time import as_aware_utc, utc_now
+
+logger = structlog.get_logger()
+
+_UNRECOGNIZED_STATUS_SEEN_CAP: int = 64
+_unrecognized_status_seen: set[str] = set()
+
+
+def _warn_unrecognized_status_once(value: object) -> None:
+    key = repr(value)
+    if key in _unrecognized_status_seen or len(_unrecognized_status_seen) >= _UNRECOGNIZED_STATUS_SEEN_CAP:
+        return
+    _unrecognized_status_seen.add(key)
+    logger.warning("activity_status_unrecognized", value=value)
 
 
 class SessionStatus(str, Enum):
@@ -219,34 +235,11 @@ class UsageLimitInfo(BaseModel):
     since: Optional[str] = Field(default=None, description="ISO 8601 with UTC offset: when the hit was recorded.")
 
 
-class SkillLast(BaseModel):
-    """The newest skill use of a session: its name and when (ISO 8601, or null)."""
+class LoginExpiredInfo(BaseModel):
+    """A login lockout the harness recorded (issue #3013). ON THE WRAPPER."""
 
-    name: str
-    at: Optional[str] = None
-
-
-class AutomationMark(BaseModel):
-    """The automation run that started a session (the sidebar's "auto" chip)."""
-
-    automation_id: str
-    run_id: str
-    name: str
-
-
-class ScheduledMark(BaseModel):
-    """One scheduled thing counted in a session's Carnivore timers icon (an automation, or a plugin's scheduled item)."""
-
-    name: str
-    enabled: bool
-    next_fire_at: Optional[float] = None
-
-
-class MessagingMark(BaseModel):
-    """This session's messaging bindings (issue #1499): the directions it is bound in and its held count."""
-
-    directions: List[str] = Field(..., description="'in' and/or 'out', the union over its bindings")
-    held: int = Field(..., description="Inbound texts held for this session (a dialog open, asleep, not running)")
+    message: str = Field(description="The harness's own one-line text, e.g. 'Login reached its time limit · Please run /login'.")
+    since: Optional[str] = Field(default=None, description="ISO 8601 with UTC offset: when the newest lockout record was written.")
 
 
 class SessionInfo(BaseModel):
@@ -352,7 +345,7 @@ class SessionInfo(BaseModel):
             "launchpad rejoin path painting history before the WS opens."
         ),
     )
-    activity_status: str = Field(
+    activity_status: ActivityStatus = Field(
         default="unknown",
         description=(
             "Unified activity status: 'dead' | 'question' | 'notice' | "
@@ -360,6 +353,15 @@ class SessionInfo(BaseModel):
             "'unknown'"
         ),
     )
+
+    @field_validator("activity_status", mode="before")
+    @classmethod
+    def _unrecognized_status_is_unknown(cls, value: object) -> object:
+        known = known_or_unknown(value)
+        if known != value:
+            _warn_unrecognized_status_once(value)
+        return known
+
     unread: bool = Field(
         default=False,
         description="True if this session has an unread Stop or a manual unread pin",
@@ -436,6 +438,10 @@ class SessionInfo(BaseModel):
         description=(
             "Every subagent the current conversation launched; null when not measured."
         ),
+    )
+    subagents_stalled: Optional[int] = Field(
+        default=None,
+        description="Running subagents with no new transcript activity for the stall limit; null when not measured.",
     )
     workflow_active: Optional[bool] = Field(
         default=None,
@@ -541,6 +547,10 @@ class SessionInfo(BaseModel):
         default=None,
         description="The recorded usage-limit hit (kind, resets_at, message, since), or null.",
     )
+    login_expired: Optional[LoginExpiredInfo] = Field(
+        default=None,
+        description="The recorded login lockout (message, since), or null.",
+    )
     agent_update: Optional[AgentUpdateInfo] = Field(
         default=None,
         description=(
@@ -548,6 +558,8 @@ class SessionInfo(BaseModel):
             "claude, else null."
         ),
     )
+    codex_helpers: Optional[CodexHelpersMark] = Field(
+        default=None, description="The Codex helper check of this row's Codex version, else null (not measured).")
     mcp_health: Optional[McpHealthInfo] = Field(
         default=None,
         description="Every MCP server of the session with its measured state, else null (not measured).",
@@ -565,7 +577,7 @@ class SessionInfo(BaseModel):
         description="That host's reachability; 'up' for this machine",
     )
     session_uuid: Optional[str] = Field(
-        default=None, description="sessions.session_uuid; set only on a listing served to a peer")
+        default=None, description="sessions.session_uuid of this row; None when the session has no database row")
     origin_install_id: Optional[str] = Field(
         default=None, description="install id of the computer that owns this row; set on a served or imported row")
     project_uid: Optional[str] = Field(default=None, description="projects.uid; set only on a listing served to a peer")
@@ -575,31 +587,3 @@ class SessionInfo(BaseModel):
     def _mirror_created_by_us(self) -> "SessionInfo":
         self.created_by_us = self.created_by_cloude
         return self
-
-
-class SkillFireOut(BaseModel):
-    """One recorded skill use, as ``GET /sessions/{id}/skill-fires`` lists it."""
-
-    skill: str
-    at: Optional[str] = None
-    source: str = Field(description="tool_use | slash | inferred (a codex SKILL.md read)")
-    harness: str
-    profile: str
-
-
-class SessionSkillFires(BaseModel):
-    """A session's skill fires: the count and the newest uses, newest first."""
-
-    state: str = Field(description="measured | not_measured | unsupported")
-    fired: Optional[int] = None
-    recent: list[SkillFireOut] = Field(default_factory=list)
-
-
-class SkillUsage(BaseModel):
-    """One skill's local fire counts. Null counts mean not measured, never zero."""
-
-    skill: str
-    state: str = Field(description="measured | not_measured")
-    fired_7d: Optional[int] = None
-    fired_30d: Optional[int] = None
-    fired_90d: Optional[int] = None

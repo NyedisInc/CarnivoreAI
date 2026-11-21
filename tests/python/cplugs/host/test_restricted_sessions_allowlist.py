@@ -7,7 +7,7 @@ from typing import Any, List, Set
 
 import pytest
 
-from src.cplugs.host import capabilities
+from src.plugins.host import capabilities
 
 PINNED_READ_ONLY = {"get", "list"}
 

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { GOOD_FOLDER, GOOD_NAME, enT, modals, recorder } from './create-harness';
+import { GOOD_NEW_PROJECT, enT, modals, recorder } from './create-harness';
 import {
     cloneFromGithubFlow,
     existingProjectItems,
@@ -31,12 +31,12 @@ describe('new claude project offers three starting points', () => {
         expect(items.every((i) => typeof i.sub === 'string' && i.sub.length > 0)).toBe(true);
     });
 
-    test('choosing "start empty" runs the create flow, folder step and all', async () => {
+    test('choosing "start empty" runs the create flow, the one new project form (name, company, folder) and all', async () => {
         const rec = recorder();
-        const m = modals({ choice: 'empty', name: [GOOD_NAME], folder: GOOD_FOLDER });
+        const m = modals({ choice: 'empty', newProject: [GOOD_NEW_PROJECT] });
         expect(await startNewClaudeProject(rec.host, m.openers, enT())).toBe('empty');
-        expect(m.asked.map(([kind]) => kind)).toEqual(['choice', 'name', 'folder']);
-        expect(rec.payloads[0]!.project_parent_dir).toBe('/Users/me/Development');
+        expect(m.asked.map(([kind]) => kind)).toEqual(['choice', 'newProject']);
+        expect(rec.payloads[0]!.project_parent_dir).toBe(GOOD_NEW_PROJECT.folder);
     });
 
     test('choosing "clone" runs the clone flow and never the create flow', async () => {

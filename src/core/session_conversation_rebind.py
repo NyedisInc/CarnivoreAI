@@ -10,6 +10,7 @@ from typing import Any, Callable, Optional
 import structlog
 
 from src.core.db_models import SESSION_CLAUDE_UUID_SOURCE_REGISTRY
+from src.core.session_store import uuid_for_row
 
 logger = structlog.get_logger()
 
@@ -260,13 +261,13 @@ def _session_key(manager: Any, row_id: Optional[int]) -> Optional[str]:
     if conn is None:
         return None
     try:
-        row = conn.execute("SELECT session_uuid FROM sessions WHERE id = ?", (int(row_id),)).fetchone()
+        found = uuid_for_row(conn, int(row_id))
     except sqlite3.Error as exc:
         logger.warning("conversation_rebind_key_unreadable", row_id=row_id, error=str(exc), error_type=type(exc).__name__)
         return None
     finally:
         conn.close()
-    return str(row[0]) if row and row[0] else None
+    return found
 
 
 def rebind_conversation_uuid(
@@ -281,7 +282,7 @@ def rebind_conversation_uuid(
     pane_probe: Optional[Callable[[str, str, Optional[int]], Optional[bool]]] = None,
 ) -> RebindResult:
     from src.core.db import transaction
-    from src.cplugs.sdk import conversation_events
+    from src.plugins.sdk import conversation_events
     from src.core.session_claude_correlate_bind import (
         BIND_REBOUND,
         bind_correlated_uuid,

@@ -175,7 +175,8 @@ def test_leaving_writes_the_tombstone_and_a_door_join_then_needs_the_owner(tmp_p
     setup_state.joined_marker_path(cfg).write_text("")
     (tmp_path / setup_state.PAIRED_SENTINEL_NAME).write_text("")
     saved = []
-    pack = SimpleNamespace(settings=lambda: settings_doc.default_doc('own-iid-000000000'), mint=lambda changes, base=None: saved.append(changes) or True)
+    pack = SimpleNamespace(settings=lambda: settings_doc.default_doc('own-iid-000000000'), mint=lambda changes, base=None: saved.append(changes) or True,
+                         clear_roster=lambda: True)
     forget._leave_local(cfg, tmp_path, "own-iid-000000000", pack)
     assert setup_state.pack_left_path(cfg).exists() and not (tmp_path / setup_state.PAIRED_SENTINEL_NAME).exists() and saved
     monkeypatch.setattr(setup_state, "current_setup_state", lambda: setup_state.evaluate_setup_state(cfg, "t", "j"))

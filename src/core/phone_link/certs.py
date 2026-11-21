@@ -17,6 +17,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 
 from src.core.phone_link import acme
+from src.core.supervise.loop import spawn as spawn_supervised
 
 logger = structlog.get_logger()
 
@@ -190,7 +191,7 @@ class CertManager:
 
     def start_renewals(self) -> None:
         if self._task is None or self._task.done():
-            self._task = asyncio.create_task(self._renew_loop(), name="phone-link-renew")
+            self._task = spawn_supervised("phone-link-renew", self._renew_loop)
 
     async def stop(self) -> None:
         if self._task is not None:

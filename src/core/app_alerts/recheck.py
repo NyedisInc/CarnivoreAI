@@ -22,4 +22,14 @@ def run(state_dir: Path, db_path: Path, row: Mapping[str, Any]) -> None:
 
         runner.run_checks(state_dir, db_path)
         return
+    if key.startswith("self_check.codex_helpers."):
+        from src.core.codex_helpers import runtime  # noqa: PLC0415
+
+        runtime.check_now(force=True)
+        return
+    if key.startswith("self_check."):
+        from src.core.self_check import monitor  # noqa: PLC0415
+
+        monitor.run_once()
+        return
     raise NoRecheck(key)

@@ -18,6 +18,7 @@ from src.core.computers.join_link import build_link
 from src.core.federation import grants, peer_hosts, peer_links, peer_sockets
 from src.core.federation.pairing import KeyedWindows
 from src.core.hosts import ssh_exec
+from src.core.resource_push import topics
 
 logger = structlog.get_logger()
 
@@ -210,8 +211,8 @@ async def put_direction(install_id: str, body: DirectionBody, request: Request) 
         await peer_sockets.close_grant(done["grant_id"])
     if rt.dialer is not None:
         rt.dialer.kick(install_id)
-    rt.notify("computers")
-    rt.notify("pack_relay_offer")
+    rt.notify(topics.COMPUTERS)
+    rt.notify(topics.PACK_RELAY_OFFER)
     logger.info("computer_direction_set", iid=install_id[:8], direction=body.direction)
     return done["entry"]
 

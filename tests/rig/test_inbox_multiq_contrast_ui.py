@@ -69,8 +69,10 @@ def test_card_text_is_the_pinned_theme_foreground(rig_slot: RigSlot, tmp_path, p
         expect(cell.locator(".ap-note")).to_have_count(4)
         colours = cell.evaluate(
             """el => { const c = s => [...el.querySelectorAll(s)].map(n => getComputedStyle(n).color);
-                 return {question: c('.ap-question'), label: c('.ap-opt-label'), desc: c('.ap-note'), tab: c('.ap-tab--done, .ap-tab')}; }""")
-        for kind in ("question", "label", "desc"):
+                 return {question: c('.ap-question'), label: c('.ap-opt-label'), btn: c('[data-ap-option]'), btn_opacity: [...el.querySelectorAll('[data-ap-option]')].map(n => getComputedStyle(n).opacity), desc: c('.ap-note'), tab: c('.ap-tab--done, .ap-tab')}; }""")
+        assert colours["label"] and colours["label"] == colours["btn"], (pinned, colours["label"], colours["btn"])
+        assert all(o == "1" for o in colours["btn_opacity"]), colours["btn_opacity"]
+        for kind in ("question", "desc"):
             assert colours[kind] and all(col == want for col in colours[kind]), (pinned, kind, want, colours[kind])
         assert theme_fg_rgb(global_theme) != want
         if shots:

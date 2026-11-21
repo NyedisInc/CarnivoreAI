@@ -24,6 +24,7 @@ console.log('[SessionHeaderLed Module] Loading...');
             activity_hint: row.activity_hint,
             parked_summary: row.parked_summary,
             usage_limit: window.StatusLed ? window.StatusLed.usageLimitLabel(row) : null,
+            login_expired: window.StatusLed ? window.StatusLed.loginExpiredLabel(row) : null,
             size: '10px',
         });
     }
@@ -82,6 +83,7 @@ console.log('[SessionHeaderLed Module] Loading...');
             activity_hint: i.activity_hint,
             parked_summary: i.parked_summary,
             usage_limit: i.usage_limit,
+            login_expired: i.login_expired,
             agent_family: i.agent_family,
         };
     }

@@ -5,8 +5,8 @@ import asyncio
 import subprocess
 from pathlib import Path
 
-from src.cplugs.devwidgetlab.drafts import checkout, create, preview, service, store
-from src.cplugs.sdk import app_info
+from src.plugins.devwidgetlab.drafts import checkout, create, preview, service, store
+from src.plugins.sdk import app_info
 from tests.python.cplugs.devwidgetlab.test_widget_lab_source_checkout import _checkout, _signing, _worktree, installed, no_auto_pick  # noqa: F401
 
 

@@ -99,6 +99,26 @@ def find_violations(root: pathlib.Path = SRC) -> List[Violation]:
 
 EXEMPTIONS = {
     (
+        "src/core/attention/codex_pane_home.py",
+        "_recorded_home",
+    ): (
+        "THE FALLBACK for a live codex pane tmux cannot be asked about "
+        "(#2812). The key is the pane's own (tmux_socket, tmux_name) as the "
+        "watcher found it, and the newest row of that pair is the pane that "
+        "is alive now; the instance epoch is not known to this reader. The "
+        "answer only picks which codex home the pane read, and a wrong "
+        "pick is refused when the folder is gone."
+    ),
+    (
+        "src/core/crosstalk/gone.py",
+        "is_known_gone",
+    ): (
+        "EXISTENCE ONLY. It answers whether this computer ever knew the "
+        "handle, so a send to a torn-down agent is refused instead of "
+        "queued; no row is chosen, no state is read from it, and a tmux "
+        "name matching an older or newer row is the same yes."
+    ),
+    (
         "src/core/session_group_membership_migrate.py",
         "resolve_session_uuid",
     ): (

@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.cplugs.reviewboard import attachment_guard, attachment_types
-from src.cplugs.reviewboard.errors import FileTypeRefused
+from src.plugins.reviewboard import attachment_guard, attachment_types
+from src.plugins.reviewboard.errors import FileTypeRefused
 from tests.python.cplugs.reviewboard.harness import BASE, task_manager_store
 from tests.python.cplugs.reviewboard.test_attachments import MD, PDF, b64, board, client, env, sidecar, tree  # noqa: F401
 

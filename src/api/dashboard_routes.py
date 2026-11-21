@@ -8,7 +8,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.api.auth import require_auth
-from src.api.preferences_routes import _store, broadcast_changed
+from src.api.preferences_routes import _store
+from src.core.preferences_push.broadcast import broadcast_changed
 from src.core import ui_preferences, ui_preferences_store
 from src.core.board_transfer.document import fresh_board_id
 
@@ -90,7 +91,7 @@ async def _commit(request: Request, home: Dict[str, Any], expected: Optional[int
     if result.status == ui_preferences_store.STALE_REVISION:
         raise _refuse(409, "preferences_stale", "the dashboards changed since you read them", revision=result.revision)
     if result.status == ui_preferences_store.COMMITTED:
-        await broadcast_changed(request, result, None)
+        await broadcast_changed(request.app.state, result, None)
     logger.info(event, **context)
     return _answer(home, result.revision)
 

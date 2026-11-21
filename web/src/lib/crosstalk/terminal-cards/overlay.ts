@@ -1,5 +1,5 @@
 import { mountInto } from '../../mount';
-import type { TerminalOverlayContext } from '../../../cplugs/sdk/terminal';
+import type { TerminalOverlayContext } from '../../../plugins/sdk/terminal';
 import CardStack from './CardStack.svelte';
 
 export function mountCardLayer(context: TerminalOverlayContext): () => void {

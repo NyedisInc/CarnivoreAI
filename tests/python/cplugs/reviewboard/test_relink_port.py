@@ -8,11 +8,11 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.huddle import board_port
-from src.cplugs.reviewboard import relink_port
-from src.cplugs.sdk import ports
-from src.cplugs.sdk import crate_import as sdk_import
-from src.cplugs.sdk.computer import local_computer
+from src.plugins.huddle import board_port
+from src.plugins.reviewboard import relink_port
+from src.plugins.sdk import ports
+from src.plugins.sdk import crate_import as sdk_import
+from src.plugins.sdk.computer import local_computer
 from tests.python.cplugs.reviewboard.harness import BASE, Env, task_manager_on, task_manager_store, make_env
 from tests.python.cplugs.reviewboard.test_publish import create_body
 

@@ -17,7 +17,9 @@ from src.core.computers import direction
 from src.core.db_reuse.kept_read import hot_read
 from src.core.pack.machines import runtime as machines_runtime
 from src.core.pack.relay import ledger_sync_store, runtime as relay_runtime, targets
+from src.core import resource_push
 from src.core.provider_ledger import accounts_store
+from src.core.resource_push import topics
 
 router = APIRouter(prefix="/pack/relay", tags=["pack-relay"], dependencies=[Depends(require_auth)])
 
@@ -97,4 +99,5 @@ async def put_relay(account: str, body: RelayBody, request: Request) -> Dict[str
         await relay_runtime.RELAY.revoke(account, dropped, provider)
         for iid in dropped:
             await asyncio.to_thread(ledger_sync_store.forget, iid, provider, account)
+    resource_push.notify(topics.PACK_RELAY)
     return await asyncio.to_thread(_read)

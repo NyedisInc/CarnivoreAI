@@ -8,7 +8,7 @@ if (typeof API !== 'function') {
     );
 }
 
-Object.assign(API.prototype, {
+extendPrototype(API, {
     async getProjects(includeArchived = false) {
         return await this.call(
             includeArchived ? '/projects?include_archived=true' : '/projects'
@@ -86,4 +86,4 @@ Object.assign(API.prototype, {
             body: { path }
         });
     },
-});
+}, 'api-projects.js');

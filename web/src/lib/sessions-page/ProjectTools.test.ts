@@ -7,7 +7,7 @@ import FakePanel from './ProjectTools.fake-panel.svelte';
 import type { LensGroup } from './lenses';
 import { t, setLocale } from '../i18n/index.svelte';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
-import { registerProjectPanel, resetProjectPanels } from '../../cplugs/sdk/project-panels';
+import { registerProjectPanel, resetProjectPanels } from '../../plugins/sdk/project-panels';
 import { toolOf } from './project-tools';
 
 setLocale('en');

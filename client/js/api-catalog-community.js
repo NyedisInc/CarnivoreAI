@@ -1,5 +1,5 @@
 
-Object.assign(API.prototype, {
+extendPrototype(API, {
 
     async getCatalogComments(itemId, cursor) {
         const q = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
@@ -73,4 +73,4 @@ Object.assign(API.prototype, {
             { method: 'PUT', body: { forked } },
         );
     },
-});
+}, 'api-catalog-community.js');

@@ -8,8 +8,8 @@ import subprocess
 import pytest
 
 from src.core.catalog.publish_prepare_kinds import own_cplug_locations
-from src.cplugs.host import sideload, sideload_git
-from src.cplugs.host.sideload import SideloadRefused
+from src.plugins.host import sideload, sideload_git
+from src.plugins.host.sideload import SideloadRefused
 from tests.python.api_keys.conftest import bearer, client, key_store, owner_jwt  # noqa: F401
 from tests.python.cplugs.test_cplug_sideload import NAME, URL, world, write_plugin  # noqa: F401
 

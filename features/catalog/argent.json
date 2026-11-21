@@ -54,8 +54,8 @@
     "src/core/argent/rollout.py",
     "src/core/budget_hold/gate.py",
     "src/core/mcp/argent_tools.py",
-    "src/cplugs/argent/__init__.py",
-    "web/src/cplugs/argent/ArgentSettings.svelte"
+    "src/plugins/argent/__init__.py",
+    "web/src/plugins/argent/ArgentSettings.svelte"
   ],
   "updated": "2026-11-05",
   "where": [

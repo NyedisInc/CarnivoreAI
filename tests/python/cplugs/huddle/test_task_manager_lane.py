@@ -9,7 +9,7 @@ from typing import Dict, List, Tuple
 import pytest
 
 from src.core.work.ladder import data_rungs
-from src.cplugs.huddle import lane
+from src.plugins.huddle import lane
 from src.core.work.ladder import MIGRATIONS
 from src.core.work.storage import LEGACY_STORAGE
 from tests.python.cplugs.huddle.test_task_manager_state_rungs import ITEM_INSERT, real_copy, walk
@@ -89,7 +89,7 @@ def test_joes_real_file_loses_no_row_and_every_task_stays_in_his_lane(tmp_path: 
 
 def test_the_ladder_takes_a_backup_before_the_lane_rung_for_a_file_already_past_the_renames(tmp_path: Path):
     path = synthetic_v37(tmp_path)
-    from src.cplugs.sdk import CplugStorage
+    from src.plugins.sdk import CplugStorage
     CplugStorage(path.parent, LEGACY_STORAGE).connect(True).close()
     copies = [p.name for p in path.parent.iterdir() if p.name.startswith("huddle.db.pre-lane-")]
     assert len(copies) == 1 and LEGACY_STORAGE.backup_before[38] == "pre-lane" == data_rungs.BACKUPS[38]

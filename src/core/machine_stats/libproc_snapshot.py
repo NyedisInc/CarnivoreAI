@@ -166,6 +166,12 @@ def _cwd(lib: ctypes.CDLL, pid: int) -> Optional[str]:
     return path.decode("utf-8", errors="replace") or None
 
 
+def process_cwd(pid: int) -> Optional[str]:
+    with _lock:
+        lib = _load()
+        return None if lib is None else _cwd(lib, int(pid))
+
+
 class ProcDetail(NamedTuple):
 
     start: Tuple[int, int]

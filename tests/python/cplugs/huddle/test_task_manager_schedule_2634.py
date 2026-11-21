@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from src.cplugs.huddle import triggers
+from src.plugins.huddle import triggers
 from tests.python.cplugs.huddle.test_task_manager_recurring import DAILY, repeat_item
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import ITEMS, env, iso  # noqa: F401

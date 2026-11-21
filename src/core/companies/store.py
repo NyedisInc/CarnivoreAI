@@ -53,13 +53,13 @@ def list_companies(conn: sqlite3.Connection) -> List[Dict[str, Any]]:
     if not table_exists(conn, "companies"):
         return []
     present = _company_columns(conn)
-    optional = ", ".join(f"{'c.' + col if col in present else 'NULL'} AS {col}" for col in ("hue", "parent_id", "hq_project_id"))
+    optional = ", ".join(f"{'c.' + col if col in present else 'NULL'} AS {col}" for col in ("hue", "parent_id", "hq_project_id", "folder"))
     rows = conn.execute(
         f"SELECT c.id, c.name, {optional}, COUNT(p.id) AS project_count FROM companies c "
         "LEFT JOIN projects p ON p.company_id = c.id GROUP BY c.id ORDER BY c.name COLLATE NOCASE, c.id"
     ).fetchall()
     return [{"id": r["id"], "name": r["name"], "project_count": r["project_count"], "hue": r["hue"],
-             "parent_id": r["parent_id"], "hq_project_id": r["hq_project_id"]} for r in rows]
+             "parent_id": r["parent_id"], "hq_project_id": r["hq_project_id"], "folder": r["folder"]} for r in rows]
 
 
 def get_company(conn: sqlite3.Connection, company_id: int) -> Dict[str, Any]:
@@ -135,6 +135,16 @@ def set_company_hue(conn: sqlite3.Connection, company_id: int, hue: Optional[int
         if cur.rowcount == 0:
             raise CompanyNotFound(str(company_id))
     logger.info("company_hue_set", company_id=company_id, hue=hue)
+    _notify()
+    return get_company(conn, company_id)
+
+
+def set_company_folder(conn: sqlite3.Connection, company_id: int, folder: Optional[str]) -> Dict[str, Any]:
+    with transaction(conn):
+        cur = conn.execute("UPDATE companies SET folder = ?, updated_at = ? WHERE id = ?", (folder, utc_now(), company_id))
+        if cur.rowcount == 0:
+            raise CompanyNotFound(str(company_id))
+    logger.info("company_folder_set", company_id=company_id, has_folder=folder is not None)
     _notify()
     return get_company(conn, company_id)
 

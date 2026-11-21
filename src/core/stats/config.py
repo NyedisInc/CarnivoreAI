@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 import sqlite3
 import time
 import uuid
@@ -10,6 +9,7 @@ from typing import Any
 from src.core.stats.plugin import usage_revision
 from src.core.stats.store_port import StatsStoreLike
 from src.models.stats import AnnotationWrite, ChartWrite, StatsFilters
+from src.core.product_identity import test_mode_enabled
 
 
 class RevisionConflict(ValueError):
@@ -74,7 +74,7 @@ def ensure_schema(store: StatsStoreLike) -> None:
         );
         """)
         db.execute("INSERT OR IGNORE INTO stats_settings VALUES (1,?,1)",
-                   (0 if os.environ.get("CLOUDE_TEST_MODE", "").lower() in ("1", "true", "yes") else 1,))
+                   (0 if test_mode_enabled() else 1,))
         _migrate_legend_on(db)
 
 
@@ -206,7 +206,7 @@ def list_annotations(store: StatsStoreLike, *, start: int, end: int, limit: int 
     where = ["occurred_at>=?", "occurred_at<?"]
     args = [start, end]
     if filters is not None:
-        for key, value in filters.model_dump(exclude_none=True).items():
+        for key, value in filters.model_dump(exclude_none=True, exclude={"hosts"}).items():
             where.append(f"(json_extract(scope_json,'$.{key}') IS NULL OR "
                          f"json_extract(scope_json,'$.{key}')=?)")
             args.append(value)

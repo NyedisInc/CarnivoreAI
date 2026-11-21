@@ -22,7 +22,7 @@ from src.api.agent_auth import require_agent  # noqa: E402
 from src.config.mcp import McpConfig  # noqa: E402
 from src.core.mcp import protocol, tools  # noqa: E402
 from src.core.sessions.hook_token_authority import HookTokenAuthority  # noqa: E402
-from src.cplugs.host import mcp as mcp_host  # noqa: E402
+from src.plugins.host import mcp as mcp_host  # noqa: E402
 from src.main import app  # noqa: E402
 from src.models import Session, SessionInfo  # noqa: E402
 from tests.python.cplugs.owner import isolated_host
@@ -129,8 +129,8 @@ def test_tools_list_names_every_swarm_tool_and_no_swarm_tool(env):
     names = {t["name"] for t in r.json()["result"]["tools"]}
     assert len(names) > len(SWARM_TOOLS)
     assert SWARM_TOOLS <= names
-    from src.core.mcp import pack_machines_tools, pack_placement_tools, pack_relay_tools, pack_skills_tools, pack_span_tools, pack_transport_tools, pack_migrate_tools, pack_move_tools
-    machine_tools = {n for mod in (pack_machines_tools, pack_placement_tools, pack_relay_tools, pack_skills_tools, pack_span_tools, pack_transport_tools, pack_migrate_tools, pack_move_tools) for n in (*mod.READ_TOOLS, *mod.WRITE_TOOLS)}
+    from src.core.mcp import pack_machines_tools, pack_placement_tools, pack_relay_tools, pack_skills_tools, pack_span_tools, pack_transport_tools, pack_migrate_tools, pack_move_tools, pack_global_sync_tools
+    machine_tools = {n for mod in (pack_machines_tools, pack_placement_tools, pack_relay_tools, pack_skills_tools, pack_span_tools, pack_transport_tools, pack_migrate_tools, pack_move_tools, pack_global_sync_tools) for n in (*mod.READ_TOOLS, *mod.WRITE_TOOLS)}
     from src.core.mcp import merged_tools
 
     machine_tools |= set(merged_tools.MERGED)

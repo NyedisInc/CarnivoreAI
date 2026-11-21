@@ -3,7 +3,7 @@ export const KINDS = ["yesno", "choice", "permission", "file", "link", "image", 
 export type NotifyKind = (typeof KINDS)[number];
 export const PAYLOAD_VERSION = 2;
 export const MAX_PLAINTEXT_BYTES = 1771;
-export const SOUNDS = ["ask", "done", "alarm", "soft", "none", "default"] as const;
+export const SOUNDS = ["ask", "done", "alarm", "soft", "ping", "echo", "chime", "knock", "blip", "bell", "pop", "drop", "sonar", "buzz", "rise", "fall", "none", "default"] as const;
 export const EARCONS = ["ask", "done", "alarm", "soft"] as const;
 export type NotifySound = (typeof SOUNDS)[number];
 export const LEVELS = {"p": "passive", "a": "active", "t": "time-sensitive"} as const;
@@ -80,6 +80,7 @@ export const TYPE_KIND: Record<string, NotifyKind> = {
   "account.switched": "notice",
   "app.restore_offer": "notice",
   "session.terminal_notice": "notice",
+  "session.agent_stalled": "notice",
   "agent.message": "crosstalk",
   "agent.review": "notice",
   "plugin.notice": "notice",
@@ -255,6 +256,18 @@ export const STRING_KEYS = [
   "notify.inspector.sound.alarm",
   "notify.inspector.sound.soft",
   "notify.inspector.sound.none",
+  "notify.inspector.sound.ping",
+  "notify.inspector.sound.echo",
+  "notify.inspector.sound.chime",
+  "notify.inspector.sound.knock",
+  "notify.inspector.sound.blip",
+  "notify.inspector.sound.bell",
+  "notify.inspector.sound.pop",
+  "notify.inspector.sound.drop",
+  "notify.inspector.sound.sonar",
+  "notify.inspector.sound.buzz",
+  "notify.inspector.sound.rise",
+  "notify.inspector.sound.fall",
   "notify.inspector.sound.default",
   "notify.inspector.level.passive",
   "notify.inspector.level.active",

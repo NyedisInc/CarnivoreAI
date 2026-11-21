@@ -354,3 +354,37 @@ def test_the_hook_refuses_rather_than_passing_when_the_scanner_is_missing(
     )
     assert done.returncode == 2
     assert "refusing" in done.stderr
+
+
+def _no_gitleaks_env() -> dict:
+    env = {**os.environ, "PATH": "/usr/bin:/bin"}
+    for d in env["PATH"].split(":"):
+        if (Path(d) / "gitleaks").exists():
+            pytest.skip("gitleaks lives in a system dir")
+    return env
+
+
+def test_the_hook_refuses_when_gitleaks_is_not_on_path(tmp_path):
+    repo = tmp_path / "nogl"
+    (repo / "scripts").mkdir(parents=True)
+    _git(repo, "init", "-q", "-b", "main")
+    (repo / "scripts" / "scan_secrets.py").write_text("import sys; sys.exit(0)\n")
+    hook = REPO_ROOT / "scripts" / "hooks" / "pre-commit-secret-scan.sh"
+    done = subprocess.run(
+        ["sh", str(hook)], cwd=repo, capture_output=True, text=True,
+        check=False, env=_no_gitleaks_env(),
+    )
+    assert done.returncode == 2
+    assert "brew install gitleaks" in done.stderr
+
+
+def test_the_history_scan_exits_2_without_gitleaks(tmp_path):
+    repo = tmp_path / "hist"
+    repo.mkdir()
+    _git(repo, "init", "-q", "-b", "main")
+    script = REPO_ROOT / "scripts" / "release" / "history_secret_scan.sh"
+    done = subprocess.run(
+        ["sh", str(script)], cwd=repo, capture_output=True, text=True,
+        check=False, env=_no_gitleaks_env(),
+    )
+    assert done.returncode == 2

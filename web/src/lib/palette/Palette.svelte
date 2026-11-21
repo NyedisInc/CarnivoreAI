@@ -236,12 +236,12 @@
     .cp-scrim {
         position: fixed;
         inset: 0;
-        z-index: 9000;
+        z-index: var(--oc-z-palette);
         background: var(--oc-backdrop);
     }
     .cp {
         position: fixed;
-        z-index: 9001;
+        z-index: calc(var(--oc-z-palette) + var(--oc-z-step));
         top: 12vh;
         left: 50%;
         transform: translateX(-50%);

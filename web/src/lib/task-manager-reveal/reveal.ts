@@ -1,6 +1,6 @@
 import { focusTaskManagerItem } from './task-manager-open';
 import { t } from '../i18n/index.svelte';
-import { revealWish } from '../../cplugs/sdk/task-manager-reveal.svelte';
+import { revealWish } from '../../plugins/sdk/task-manager-reveal.svelte';
 import { resolvePlacement } from '../../opscenter/widgets/placement-resolve';
 import { zoneItemKey, type ZoneItem } from '../drawer-zone/zone-model';
 import { drawerZone } from '../drawer-zone/zone-store.svelte';

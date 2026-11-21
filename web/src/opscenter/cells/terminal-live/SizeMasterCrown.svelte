@@ -22,7 +22,7 @@
 
 <style>
   @layer components {
-    .size-crown { display:flex; align-items:center; justify-content:center; width:26px; height:var(--cell-tool-h, 26px); padding:0; border:1px solid transparent; border-radius:3px; background:transparent; color:var(--oc-text-dim); cursor:pointer; }
+    .size-crown { display:flex; align-items:center; justify-content:center; width:26px; height:var(--cell-tool-h, 26px); padding:0; border:1px solid transparent; border-radius:var(--oc-radius-tight); background:transparent; color:var(--oc-text-dim); cursor:pointer; }
 
     .size-crown:hover, .size-crown:focus-visible { border-color:var(--oc-orange); background:var(--oc-ground-hover); }
 

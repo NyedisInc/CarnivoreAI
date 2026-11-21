@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, Path as PathParam
 
+from src.api.error_response import api_error
 from src.api.auth import require_auth
 from src.core.pipeline import contract as C
 from src.core.pipeline import plugin_db, runtime
@@ -27,5 +28,7 @@ async def rebuild_plugin(plugin_id: str = PathParam(..., pattern=C.ID_PATTERN)) 
         return await asyncio.to_thread(runtime.rebuild_plugin, plugin_id)
     except new_rebuild.UnknownPlugin as exc:
         raise HTTPException(status_code=404, detail=f"no such plugin: {plugin_id}") from exc
+    except new_rebuild.PluginSwitchedOff as exc:
+        raise api_error(409, "conflict", exc, plugin=plugin_id) from exc
     except plugin_db.PluginUnavailable as exc:
-        raise HTTPException(status_code=409, detail=f"rebuild refused, the old database was kept: {exc}") from exc
+        raise api_error(409, "conflict", exc, plugin=plugin_id) from exc

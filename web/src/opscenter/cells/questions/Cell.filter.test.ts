@@ -32,7 +32,7 @@ import { questionCount } from './state.svelte';
 import { titleCount } from './meta';
 import { META } from '../../engine/meta';
 import { approvals, refreshApprovals } from '../../../lib/approvals/approvals.svelte';
-import { huddle, refreshTaskManager } from '../../../cplugs/huddle/huddle.svelte';
+import { huddle, refreshTaskManager } from '../../../plugins/huddle/huddle.svelte';
 import { alertCenter, refreshAlerts } from '../../../lib/app-alerts/alerts.svelte';
 import { setLocale } from '../../../lib/i18n/index.svelte';
 

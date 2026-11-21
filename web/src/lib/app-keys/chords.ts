@@ -31,7 +31,7 @@ export function openLayoutTab(n: number): boolean {
 
 const DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
-const TEXT_SIZE: readonly [string, string, number][] = [['=', 'bigger', 1], ['-', 'smaller', -1], ['0', 'reset', 0]];
+const TEXT_SIZE: readonly [string, string, number, string][] = [['=', 'bigger', 1, 'Equal'], ['-', 'smaller', -1, 'Minus'], ['0', 'reset', 0, 'Digit0']];
 
 const ctrlCmd = (key: string): string => ['ctrl', 'cmd', key].join(' ');
 
@@ -50,8 +50,8 @@ export const APP_CHORDS: readonly AppChord[] = [
     { id: 'palette.open', key: 'k', meta: true, accelerator: 'Cmd+K', keys: 'cmd k', labelKey: 'keys.page.app.palette', inFields: true, run: () => onMac() && togglePalette('go') },
     { id: 'palette.open.other', key: 'k', ctrl: true, shift: true, accelerator: 'Ctrl+Shift+K', keys: PALETTE_OTHER_KEYS, labelKey: 'keys.page.app.palette_other', inFields: true, run: () => !onMac() && togglePalette('go') },
     { id: 'palette.actions', key: 'p', meta: true, shift: true, accelerator: 'Shift+Cmd+P', keys: PALETTE_ACTIONS_KEYS, labelKey: 'keys.page.app.palette_actions', inFields: true, run: () => togglePalette('actions') },
-    ...TEXT_SIZE.map(([key, name, delta]): AppChord => ({
-        id: `terminal.text.${name}`, key, meta: true, ctrl: true, accelerator: `Ctrl+Cmd+${key}`, keys: ctrlCmd(key),
+    ...TEXT_SIZE.map(([key, name, delta, physical]): AppChord => ({
+        id: `terminal.text.${name}`, key, physical, anyShift: key === '=' || undefined, meta: true, ctrl: true, accelerator: `Ctrl+Cmd+${key}`, keys: ctrlCmd(key),
         labelKey: `keys.page.app.text_${name}`, run: () => stepTerminalFont(delta),
     })),
 ];

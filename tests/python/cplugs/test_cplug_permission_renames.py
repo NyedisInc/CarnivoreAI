@@ -4,8 +4,8 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
-from src.cplugs.host import routes as host_routes, runtime, state as owner_state
-from src.cplugs.host.permission_renames import current_names
+from src.plugins.host import routes as host_routes, runtime, state as owner_state
+from src.plugins.host.permission_renames import current_names
 
 
 def test_current_names_maps_and_is_idempotent():

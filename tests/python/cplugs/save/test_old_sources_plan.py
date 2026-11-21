@@ -3,9 +3,9 @@ from __future__ import annotations
 
 from collections import Counter
 
-from src.cplugs.save.vault import identity
-from src.cplugs.save.vault.old_sources import labels, plan
-from src.cplugs.save.vault.old_sources.attribution import NO_PROJECT_GROUP, Attributor
+from src.plugins.save.vault import identity
+from src.plugins.save.vault.old_sources import labels, plan
+from src.plugins.save.vault.old_sources.attribution import NO_PROJECT_GROUP, Attributor
 from tests.python.cplugs.save.old_sources_helpers import lines, make_copy
 
 G, D, H, S, X, Y = ("11111111-0000-0000-0000-000000000001", "22222222-0000-0000-0000-000000000002",

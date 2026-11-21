@@ -4,16 +4,20 @@ from __future__ import annotations
 import asyncio
 import sqlite3
 import time
-from types import SimpleNamespace
 from typing import Any, Optional
 
 import structlog
-from fastapi import HTTPException
 
 from src.core import db
+from src.core.session_one_shot_gate import PASTE_SAFE_STATUSES
+from src.models.activity_status import RESTING, blocked_on_owner
 from src.core.crosstalk import store
+from src.core.session_status import STATUS_IDLE, STATUS_UNKNOWN
 
 logger = structlog.get_logger()
+
+EXPIRY_RETRY_MIN_S: float = 2.0
+EXPIRY_RETRY_MAX_S: float = 120.0
 
 
 def _header(value: object) -> str:
@@ -38,13 +42,16 @@ class Dispatcher:
         self._tasks: dict[str, asyncio.Task] = {}
         self._timer: asyncio.TimerHandle | None = None
         self._expiry_generation = 0
+        self._expiry_pause = EXPIRY_RETRY_MIN_S
+        self._closed = False
         self._last_status: dict[str, str] = {}
         self._startup_retries: dict[str, list[asyncio.TimerHandle]] = {}
 
     async def start(self) -> None:
         await asyncio.to_thread(store.recover_uncertain)
         self.schedule_expiry()
-        asyncio.create_task(self._recover())
+        task = asyncio.create_task(self._recover())
+        task.add_done_callback(self._task_error)
 
     async def _recover(self) -> None:
         from src.core.mcp.protocol import BatchView
@@ -56,6 +63,7 @@ class Dispatcher:
                 self.on_status(info.session.id, info.activity_status)
 
     def close(self) -> None:
+        self._closed = True
         if self._timer:
             self._timer.cancel()
         for handles in self._startup_retries.values():
@@ -87,21 +95,22 @@ class Dispatcher:
     def schedule_expiry(self) -> None:
         self._expiry_generation += 1
         task = asyncio.create_task(self._arm_expiry(self._expiry_generation))
-        task.add_done_callback(self._task_error)
+        task.add_done_callback(self._expiry_task_done)
 
     async def _arm_expiry(self, generation: int) -> None:
         due = await asyncio.to_thread(store.next_expiry)
-        if generation != self._expiry_generation:
+        if generation != self._expiry_generation or self._closed:
             return
         if self._timer:
             self._timer.cancel()
             self._timer = None
         if due is not None:
             self._timer = asyncio.get_running_loop().call_later(max(0, due - time.time()), self._on_expiry)
+        self._expiry_pause = EXPIRY_RETRY_MIN_S
 
     def _on_expiry(self) -> None:
         task = asyncio.create_task(self._expire_and_schedule())
-        task.add_done_callback(self._task_error)
+        task.add_done_callback(self._expiry_task_done)
 
     async def _expire_and_schedule(self) -> None:
         wake = await asyncio.to_thread(store.expire)
@@ -110,14 +119,18 @@ class Dispatcher:
         self.schedule_expiry()
 
     def on_status(self, session_id: str, status: str) -> None:
-        notify_watch = status == 'idle' and self._last_status.get(session_id) != 'idle'
+        if self._closed:
+            return
+        notify_watch = status == STATUS_IDLE and self._last_status.get(session_id) != STATUS_IDLE
         self._last_status[session_id] = status
-        if status not in ('idle', 'working', 'working_subagent', 'notice', 'finished_unread', 'unknown'):
+        if status not in PASTE_SAFE_STATUSES | {'unknown'}:
             return
         task = asyncio.create_task(self._on_idle(session_id, notify_watch=notify_watch))
         task.add_done_callback(self._task_error)
 
     def on_peer_change(self, session_id: str | None = None) -> None:
+        if self._closed:
+            return
         task = asyncio.create_task(self._on_peer_change(session_id))
         task.add_done_callback(self._task_error)
 
@@ -129,10 +142,23 @@ class Dispatcher:
             if card['id'].startswith('remote:peer-') and (session_id is None or card['id'] == session_id):
                 self.wake(str(card.get('session_uuid') or card['id']))
 
+    def _expiry_task_done(self, task: asyncio.Task) -> None:
+        if task.cancelled():
+            return
+        exc = task.exception()
+        if exc is None or self._closed:
+            return
+        logger.error('crosstalk_expiry_failed', error_type=type(exc).__name__, error=str(exc)[:300],
+                     retry_in_s=self._expiry_pause, exc_info=exc)
+        if self._timer:
+            self._timer.cancel()
+        self._timer = asyncio.get_running_loop().call_later(self._expiry_pause, self._on_expiry)
+        self._expiry_pause = min(EXPIRY_RETRY_MAX_S, self._expiry_pause * 2)
+
     @staticmethod
     def _task_error(task: asyncio.Task) -> None:
-        if not task.cancelled() and task.exception() is not None:
-            logger.warning('crosstalk_dispatch_task_failed', error_type=type(task.exception()).__name__)
+        if not task.cancelled() and (exc := task.exception()) is not None:
+            logger.warning('crosstalk_dispatch_task_failed', error_type=type(exc).__name__, error=str(exc)[:300], exc_info=exc)
 
     async def _on_idle(self, session_id: str, *, notify_watch: bool) -> None:
         from src.core.crosstalk import directory
@@ -140,24 +166,26 @@ class Dispatcher:
         info = await self.app.state.session_manager.get_session_info(session_id=session_id)
         if info is None:
             return
-        if info.activity_status == 'unknown':
+        if info.activity_status == STATUS_UNKNOWN:
             if (info.agent_family != 'codex' or info.startup_gate != 'ready'
                     or not info.claude_session_uuid):
                 return
-        elif info.activity_status not in ('idle', 'working', 'working_subagent', 'notice', 'finished_unread'):
+        elif info.activity_status not in PASTE_SAFE_STATUSES:
             return
         cards = await directory.list_cards(BatchView(self.app.state.session_manager, self.app), include_remote=False)
         card = next((c for c in cards if c['id'] == info.session.id), None)
         if card is None:
             return
         key = card.get('session_uuid') or card['id']
-        if info.activity_status == 'idle' and notify_watch:
+        if info.activity_status == STATUS_IDLE and notify_watch:
             watch_keys = await asyncio.to_thread(store.notify_idle, str(key), info.session.tmux_created_epoch)
             for watch_key in watch_keys:
                 self.wake(watch_key)
         self.wake(str(key))
 
     def wake(self, receiver_key: str) -> None:
+        if self._closed:
+            return
         current = self._tasks.get(receiver_key)
         if current and not current.done():
             return
@@ -230,7 +258,7 @@ class Dispatcher:
             await asyncio.to_thread(store.finish, message['id'], 'failed', 'receiver instance changed before delivery')
             return
         info = fresh
-        if info.activity_status == 'question' or info.startup_gate != 'ready':
+        if blocked_on_owner(info):
             await asyncio.to_thread(store.finish, message['id'], 'held', 'receiver has an open dialog or startup gate')
             self._retry_native_startup(info, message)
             return
@@ -258,42 +286,43 @@ class Dispatcher:
                             await _discard_swarm(row)
                         self._retry_native_startup(info, message)
                     return
-        from src.core.session_one_shot_gate import PROMPT_READY_STATUSES
-        if info.activity_status not in PROMPT_READY_STATUSES:
+        if info.activity_status not in RESTING:
             await _discard_swarm(row)
             await asyncio.to_thread(store.finish, message['id'], 'held', 'waiting for a ready prompt')
             self._retry_native_startup(info, message)
             return
-        from src.api.one_shot_routes import paste_through_gates
         from src.core.mcp.common import ToolError
+        from src.core.sessions import guarded_paste
+        from src.core.sessions.guarded_paste import GateOptions, PasteRefused
         try:
             if federated.is_remote(info):
                 await federated.forward(info, 'POST', '/sessions/{session_id}/skills/one-shot',
                                         {'text': envelope(message), 'idle_only': True})
             else:
-                await paste_through_gates(SimpleNamespace(app=self.app), info.session.id, envelope(message),
-                                          idle_only=True, expected_epoch=message['receiver_epoch'],
-                                          expected_uuid=message['receiver_uuid'])
-        except HTTPException as exc:
-            detail = exc.detail if isinstance(exc.detail, dict) else {}
-            code = detail.get('code', 'paste_refused')
-            from src.core.swarm import delivery as swarm_delivery
-            if swarm_delivery.nothing_landed(exc):
-                await _discard_swarm(row)
-            if code in ('paste_not_settled',):
-                await asyncio.to_thread(store.finish, message['id'], 'failed', 'paste submission uncertain; manual review required')
-            elif code == 'receiver_instance_changed':
-                await asyncio.to_thread(store.finish, message['id'], 'failed', code)
-            elif code in ('pane_dialog_open', 'pane_not_an_agent', 'session_gone'):
-                await asyncio.to_thread(store.finish, message['id'], 'held', code)
-            else:
-                await asyncio.to_thread(store.finish, message['id'], 'failed', code)
+                await guarded_paste.paste_through_gates(
+                    self.app.state, info.session.id, envelope(message),
+                    GateOptions(idle_only=True, expected_epoch=message['receiver_epoch'], expected_uuid=message['receiver_uuid']))
+        except PasteRefused as refusal:
+            await _refuse_delivery(row, message, refusal.code, refusal.nothing_landed)
             return
         except (OSError, RuntimeError, ToolError) as exc:
             logger.warning('crosstalk_delivery_failed', message_id=message['id'], error_type=type(exc).__name__)
             await asyncio.to_thread(store.finish, message['id'], 'failed', 'delivery uncertain; manual review required')
             return
         await asyncio.to_thread(store.finish, message['id'], 'delivered')
+
+
+async def _refuse_delivery(row: Any, message: dict, code: str, nothing_landed: bool) -> None:
+    if nothing_landed:
+        await _discard_swarm(row)
+    if code in ('paste_not_settled',):
+        await asyncio.to_thread(store.finish, message['id'], 'failed', 'paste submission uncertain; manual review required')
+    elif code == 'receiver_instance_changed':
+        await asyncio.to_thread(store.finish, message['id'], 'failed', code)
+    elif code in ('pane_dialog_open', 'pane_not_an_agent', 'session_gone'):
+        await asyncio.to_thread(store.finish, message['id'], 'held', code)
+    else:
+        await asyncio.to_thread(store.finish, message['id'], 'failed', code)
 
 
 async def _record_swarm(receiver_key: str, message: dict) -> Optional[int]:

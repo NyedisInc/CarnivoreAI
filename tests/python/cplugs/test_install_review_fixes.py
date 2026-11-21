@@ -11,8 +11,8 @@ import pytest
 from fastapi import HTTPException
 
 from src.api import catalog_cplug_gates
-from src.cplugs.host import identity, sideload, sideload_git, sideload_routes
-from src.cplugs.host.sidecar_registry import SidecarRegistry
+from src.plugins.host import identity, sideload, sideload_git, sideload_routes
+from src.plugins.host.sidecar_registry import SidecarRegistry
 from tests.python.cplugs.test_cplug_sidecar_identity import _install_code
 
 TORN = b'{"clock": {"url": '

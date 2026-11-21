@@ -66,8 +66,7 @@ vi.mock('../../opscenter/api/auth.svelte', async (importOriginal) => {
                 server.files = server.files.filter((f) => f.id !== row[1]);
                 return undefined;
             }
-            if (p === '/sessions/records') return [{ id: 3, session_uuid: 'u-1', tmux_name: 'carnivore_a' }];
-            if (p === '/sessions/list') return [{ session_row_id: 3, session: { id: 'ses_1' } }];
+            if (p === '/sessions/list') return [{ session_row_id: 3, session_uuid: 'u-1', session: { id: 'ses_1' } }];
             if (p.startsWith('/sessions/ses_1/git-diff')) return { state: 'ok', path: 'README.md', text: '+added line', binary: false };
             return {};
         },

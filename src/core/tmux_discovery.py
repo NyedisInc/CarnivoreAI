@@ -9,7 +9,7 @@ import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import structlog
 
@@ -173,7 +173,14 @@ _selection_cache: Dict[str, Tuple[float, Optional[str], Optional["TmuxVersionSke
 
 _stable_choice: Dict[str, Tuple[Tuple[int, int, int], float]] = {}
 
-_binary_versions: Dict[str, Optional[str]] = {}
+_binary_versions: Dict[str, Tuple[Optional[Tuple[str, int, int]], Optional[str]]] = {}
+
+_live_version_source: Optional[Callable[[str], Optional[str]]] = None
+
+
+def register_live_version_source(source: Optional[Callable[[str], Optional[str]]]) -> None:
+    global _live_version_source
+    _live_version_source = source
 
 
 class TmuxVersionSkewError(TmuxError):
@@ -260,11 +267,20 @@ def _run_text(argv: List[str]) -> Optional[Tuple[int, str, str]]:
 
 
 def binary_version(path: str) -> Optional[str]:
-    if path not in _binary_versions:
+    try:
+        st = os.stat(path)
+        key: Optional[Tuple[str, int, int]] = (os.path.realpath(path), st.st_ino, st.st_mtime_ns)
+    except OSError:
+        key = None
+    hit = _binary_versions.get(path)
+    if hit is None or hit[0] != key:
         got = _run_text([path, "-V"])
         text = got[1].strip().removeprefix("tmux ").strip() if got and got[0] == 0 else ""
-        _binary_versions[path] = text or None
-    return _binary_versions[path]
+        if not text:
+            _binary_versions.pop(path, None)
+            return None
+        hit = _binary_versions[path] = (key, text)
+    return hit[1]
 
 
 def server_version(path: str, socket_name: str) -> Tuple[str, Optional[str]]:
@@ -296,10 +312,14 @@ def _select(socket_name: str) -> Tuple[Optional[str], bool]:
         return None, False
     default = candidates[0]
     state, srv = "unknown", None
-    for path in candidates:
-        state, srv = server_version(path, socket_name)
-        if state in ("answered", "no_server"):
-            break
+    live = _live_version_source(socket_name) if _live_version_source else None
+    if live:
+        state, srv = "answered", live
+    else:
+        for path in candidates:
+            state, srv = server_version(path, socket_name)
+            if state in ("answered", "no_server"):
+                break
     if state != "answered":
         if state == "mismatch":
             raise TmuxVersionSkewError(socket_name, None, default, binary_version(default),

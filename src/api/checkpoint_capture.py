@@ -17,8 +17,8 @@ from src.core.checkpoints import cleanup, pins
 from src.core.checkpoints.store import KIND_TURN, get_store, state_root
 from src.core.checkpoints.turns import newest_codex_turn, newest_turn
 from src.core.swarm.reply_turns import read_tail
-from src.cplugs.host.session_uuid_reads import session_uuids
-from src.cplugs.sdk import turn_events
+from src.plugins.host.session_uuid_reads import session_uuids
+from src.plugins.sdk import turn_events
 
 logger = structlog.get_logger()
 

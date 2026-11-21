@@ -5,7 +5,7 @@ from typing import Any, Dict, Mapping, Optional, Tuple
 
 from src.core.mcp import merged_tools
 from src.core.mcp.registry import index as registry_index
-from src.cplugs.host import runtime
+from src.plugins.host import runtime
 
 _built: Optional[Tuple[Any, Dict[str, str], Dict[str, str]]] = None
 

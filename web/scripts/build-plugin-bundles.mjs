@@ -6,11 +6,11 @@ import { join } from 'node:path';
 const CONFIG_NAME = 'vite.bundle.config.ts';
 
 export function findConfigs(webDir) {
-  const root = join(webDir, 'src', 'cplugs');
+  const root = join(webDir, 'src', 'plugins');
   if (!existsSync(root)) return [];
   return readdirSync(root, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && existsSync(join(root, entry.name, CONFIG_NAME)))
-    .map((entry) => `src/cplugs/${entry.name}/${CONFIG_NAME}`)
+    .map((entry) => `src/plugins/${entry.name}/${CONFIG_NAME}`)
     .sort();
 }
 

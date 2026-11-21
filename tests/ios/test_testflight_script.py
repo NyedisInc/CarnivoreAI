@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import re
 import os
 import stat
 import subprocess
@@ -68,7 +69,8 @@ def test_success_hides_p8_cleans_up_and_exports_with_upload(tmp_path: Path) -> N
     assert "keyhasmarker" in (log / "modes").read_text()
     assert list(tmp.iterdir()) == []
     assert "<key>destination</key><string>upload</string>" in (log / "ExportOptions.plist").read_text()
-    assert "uploaded to App Store Connect: version 0.1.0 build " in proc.stdout
+    version = re.search(r'^\s*MARKETING_VERSION:\s*"?([^"\s]+)"?', (ROOT / "ios" / "project.yml").read_text(), re.M).group(1)
+    assert f"uploaded to App Store Connect: version {version} build " in proc.stdout
     argv = (log / "xcodebuild.argv").read_text()
     assert f"-authenticationKeyID {KEY_ID}" in argv and "-allowProvisioningUpdates" in argv
 

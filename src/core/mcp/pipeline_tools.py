@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import Any
 
 from src.core.mcp.caller import AgentCaller
@@ -12,13 +13,17 @@ from src.core.mcp.write_tools import _via_route, park
 async def pipeline_plugin_rebuild(manager: Any, caller: AgentCaller, args: dict) -> dict:
     from src.api import pipeline_plugin_routes
     from src.core.pipeline import contract as PK
-    from src.core.pipeline import registry
+    from src.config import settings
+    from src.core.pipeline import rebuild, registry, switch
 
     plugin_id = args.get("plugin_id")
     if not isinstance(plugin_id, str) or not re.match(PK.ID_PATTERN, plugin_id):
         raise ToolError("plugin_id must be a plugin id (lowercase letters, digits, underscores)")
-    if registry.find(plugin_id) is None:
+    plugin = registry.find(plugin_id)
+    if plugin is None:
         raise ToolError(f"no such plugin: {plugin_id}")
+    if not switch.is_on(plugin, Path(settings.get_state_dir())):
+        raise ToolError(rebuild.SWITCHED_OFF_MESSAGE.format(plugin_id=plugin_id))
 
     async def run(approved: bool) -> dict:
         return _ok(await _via_route(pipeline_plugin_routes.rebuild_plugin(plugin_id)))

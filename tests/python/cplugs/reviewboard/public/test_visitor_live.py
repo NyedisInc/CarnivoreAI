@@ -11,10 +11,11 @@ from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
 from src.core.app_alerts import service as alert_service
-from src.cplugs.reviewboard.public import announce
-from src.cplugs.sdk.visible_text import keep_visible
-from src.cplugs.host import runtime, state as owner_state
-from src.cplugs.sdk import ports
+from src.plugins.reviewboard import public_port
+from src.plugins.reviewboard.public import announce
+from src.plugins.sdk.visible_text import keep_visible
+from src.plugins.host import runtime, state as owner_state
+from src.plugins.sdk import ports
 from tests.python.cplugs.reviewboard.public.read_harness import edge, get, mint_token
 from tests.python.cplugs.reviewboard.boards import SIDECAR
 
@@ -54,7 +55,8 @@ class ReplyPort:
 
 
 @pytest.fixture
-def task_port() -> Iterator[ReplyPort]:
+def task_port(monkeypatch: pytest.MonkeyPatch) -> Iterator[ReplyPort]:
+    monkeypatch.setattr(public_port, "local_computer", lambda: SIDECAR["task"]["computer"])
     port, previous = ReplyPort(), ports.get("huddle.board")
     ports.register("huddle.board", port)
     yield port

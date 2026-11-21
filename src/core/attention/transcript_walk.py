@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
 from src.core.attention.transcript_records import (
+    BOOKKEEPING_RECORD_TYPES,
     ENQUEUE_OPERATION,
     QUEUED_COMMAND_ATTACHMENT,
     TASK_NOTIFICATION_MARKER,
@@ -27,28 +28,9 @@ from src.core.attention.turn_counts import (
     decode_turn_end_counts,
     stopped_task_id,
 )
+from src.core.attention.login_expired import LoginExpired, login_expired_from_record
 from src.core.attention.usage_limit import UsageLimit, usage_limit_from_record
 from src.core.session_status_seed_records import parse_timestamp
-
-BOOKKEEPING_RECORD_TYPES: frozenset = frozenset(
-    {
-        "queue-operation",
-        "attachment",
-        "last-prompt",
-        "custom-title",
-        "ai-title",
-        "agent-name",
-        "mode",
-        "permission-mode",
-        "atis-latch",
-        "bridge-session",
-        "history-suppression",
-        "pr-link",
-        "frame-link",
-        "cost-state",
-    }
-)
-
 
 def _later(left: Optional[datetime], right: Optional[datetime]) -> Optional[datetime]:
     if left is None:
@@ -84,6 +66,7 @@ class WindowWalk:
     retired_since_turn_end: bool = False
     boundary_outside_window: bool = False
     limit_hit: Optional[UsageLimit] = None
+    login_hit: Optional[LoginExpired] = None
 
     def feed(self, record: Any) -> None:
         if not isinstance(record, dict):
@@ -130,6 +113,7 @@ class WindowWalk:
         self.newest_assistant_at = _later(self.newest_assistant_at, at)
         if record.get("isSidechain") is not True:
             self.limit_hit = usage_limit_from_record(record)
+            self.login_hit = login_expired_from_record(record)
         for block in content_blocks(record, "tool_use"):
             if isinstance(block.get("id"), str) and block.get("id"):
                 self.turn_tool_ids.add(block["id"])

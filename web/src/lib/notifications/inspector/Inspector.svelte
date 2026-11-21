@@ -3,20 +3,22 @@
     import { onMount } from 'svelte';
     import { t as reactiveT } from '../../i18n/index.svelte';
     import type { Translate } from '../../sessions/types';
-    import { Button, Segmented, Select, Switch } from '../../base';
-    import Previews from './Previews.svelte';
+    import { Segmented } from '../../base';
+    import Check from '../../../opscenter/ui/Check.svelte';
     import '../../settings-page/panel-kit/panel-kit.css';
     import '../../notify-card/notify-card.css';
     import './inspector.css';
-    import { isRateLimited } from '../destinations/api';
-    import { DESKTOP, SCREEN } from '../matrix/api';
     import { groupRows } from '../matrix/logic';
-    import { attach as attachMatrix, matrix, setTick } from '../matrix/store.svelte';
-    import type { Fetcher } from './api';
-    import { fetchComputerName, sendTypedTest } from './api';
-    import { cellValue, defaultKind, isOn, kindFor, lightOf, playable, sampleFor, SHAPES, writable } from './logic';
+    import { attach as attachMatrix, matrix } from '../matrix/store.svelte';
+    import type { Fetcher, Target } from './api';
+    import ComputerBlocks from './ComputerBlocks.svelte';
+    import GroupRail from './GroupRail.svelte';
+    import Housekeeping from './Housekeeping.svelte';
+    import { anyTarget, cornerAllowed, groupState, kindOf, known, sampleFor, targetsOn } from './logic';
+    import Previews from './Previews.svelte';
     import { SAMPLES } from './samples';
-    import { attach, inspector, setStyle } from './store.svelte';
+    import Sections from './Sections.svelte';
+    import { attach, inspector, setMaster, setRoute, setStyles } from './store.svelte';
 
     interface Props {
         t?: Translate;
@@ -24,135 +26,90 @@
     }
     const { t = reactiveT, fetcher }: Props = $props();
 
+    const VIEW_KEY = 'carnivore.notify.view';
+    type View = 'basic' | 'advanced';
+    function savedView(): View {
+        try { return localStorage.getItem(VIEW_KEY) === 'advanced' ? 'advanced' : 'basic'; } catch { return 'basic'; }
+    }
+    let view = $state<View>(savedView());
+    let selection = $state<{ family: string; type: string | null }>({ family: '', type: null });
+    let open = $state<Record<string, boolean>>({});
+    let showAs = $state<'app' | 'desk' | 'phone'>('phone');
+
+    function setView(next: View): void {
+        view = next;
+        try { localStorage.setItem(VIEW_KEY, next); } catch {  }
+        open = next === 'advanced' ? Object.fromEntries(groups.map((g) => [g.family.id, true])) : {};
+    }
+
     onMount(() => {
         const stops = [attachMatrix(fetcher), attach(fetcher)];
-        fetchComputerName(fetcher).then((name) => (computerName = name), () => undefined);
+        if (view === 'advanced') open = Object.fromEntries(groups.map((g) => [g.family.id, true]));
         return () => stops.forEach((stop) => stop());
     });
 
-    const groups = $derived(groupRows(matrix.families, matrix.types));
-    const iphones = $derived(Object.keys(matrix.settings.ticks).filter((id) => id.startsWith('apns:')).map((id) => ({ id, name: matrix.settings.destinations.find((d) => d.id === id)?.name ?? '' })));
-    const iphoneIds = $derived(iphones.map((d) => d.id));
+    const routes = $derived(inspector.routes);
+    const groups = $derived(groupRows(matrix.families, matrix.types).map((g) => ({ ...g, rows: g.rows.filter((r) => routes?.types[r.id] !== undefined) })).filter((g) => g.rows.length > 0));
+    const family = $derived(groups.find((g) => g.family.id === selection.family) ?? groups[0]);
+    const row = $derived(selection.type ? matrix.types.find((r) => r.id === selection.type) : undefined);
+    const ids = $derived(row ? [row.id] : (family?.rows.map((r) => r.id) ?? []));
+    const live = $derived(known(routes, ids));
+    const on = $derived(groupState(routes, ids));
+    const style = $derived(inspector.doc.styles[ids[0] ?? '']);
+    const name = $derived(row ? t(row.label_key) : family ? t(family.family.label_key) : '');
+    const sample = $derived(family ? sampleFor(SAMPLES, kindOf(row?.id ?? null, family.family.id), name) : null);
+    const when = $derived(row ? t(row.description_key) : family ? t(`notify.routing.group.when.${family.family.id}`) : '');
+    const level = $derived(style ? t(`notify.inspector.level.${style.urgency === 'time-sensitive' ? 'time_sensitive' : style.urgency}`) : '');
+    const cornerOn = $derived(!!style && cornerAllowed(style.urgency) && anyTarget(routes, ids, 'corner'));
+    const SHOW_TARGET = { app: 'app', desk: 'desk', phone: 'phone' } as const;
+    const ticked = $derived(anyTarget(routes, ids, SHOW_TARGET[showAs]));
+    const WORD: Record<string, string> = { app: 'notify.routing.show.app', desk: 'notify.routing.show.desk', phone: 'notify.routing.show.phone' };
+    const where = $derived((routes?.computers ?? []).map((c) => ({ c, tg: targetsOn(routes, ids, c.install_id) })).filter((x) => x.tg.length > 0)
+        .map((x) => `${x.c.label}: ${x.tg.map((tg) => t(WORD[tg] ?? '')).join(', ')}`).join('; '));
+    const count = $derived(view === 'advanced' ? t('notify.routing.rail.types', { count: groups.reduce((n, g) => n + g.rows.length, 0) }) : t('notify.routing.rail.groups', { count: groups.length }));
+    const paneCount = $derived(row && family ? t('notify.routing.pane.type', { group: t(family.family.label_key) }) : family ? t('notify.routing.pane.group', { count: family.rows.length, blurb: t(`notify.routing.group.blurb.${family.family.id}`) }) : '');
 
-    let picked = $state('');
-    let computerName = $state('');
-    let shapes = $state<Record<string, string>>({});
-    const typeId = $derived(picked && matrix.types.some((row) => row.id === picked) ? picked : (groups[0]?.rows[0]?.id ?? ''));
-    const row = $derived(matrix.types.find((r) => r.id === typeId));
-    const style = $derived(inspector.doc.styles[typeId]);
-    const kind = $derived(kindFor(typeId, shapes[typeId]));
-    const sample = $derived(row ? sampleFor(SAMPLES, kind, t(row.label_key)) : null);
-    const on = $derived(isOn(matrix.settings, typeId, iphoneIds));
-    const iphoneOn = $derived(iphoneIds.some((id) => cellValue(matrix.settings, id, typeId)));
-    const computerOn = $derived(cellValue(matrix.settings, DESKTOP, typeId));
-
-    const URGENCY_KEY: Record<string, string> = { passive: 'passive', active: 'active', 'time-sensitive': 'time_sensitive' };
-    const urgencyLabel = (u: string): string => t(`notify.inspector.level.${URGENCY_KEY[u] ?? 'active'}`);
-    const soundLabel = (s: string): string => t(`notify.inspector.sound.${s}`);
-    const word = (k: string): string => t(`notify.card.word.${k}`);
-
-    const devices = $derived([
-        { column: DESKTOP, label: computerName || t('notify.inspector.device.computer') },
-        { column: SCREEN, label: t('settings.notify.matrix.col.screen') },
-        ...iphones.map((d) => ({ column: d.id, label: d.name || t('notify.inspector.device.iphone') })),
-    ]);
-
-    async function setOn(next: boolean): Promise<void> {
-        for (const d of devices) {
-            if (writable(matrix.settings, d.column, typeId) && cellValue(matrix.settings, d.column, typeId) !== next) await setTick(d.column, typeId, next);
-        }
-    }
-
-    let player: HTMLAudioElement | null = null;
-    function play(sound: string): void {
-        if (!playable(sound)) return;
-        try {
-            player?.pause();
-            player = new Audio(`/static/sounds/carnivore-${sound}.wav`);
-            void player.play().catch(() => undefined);
-        } catch {
-            player = null;
-        }
-    }
-
-    let test = $state<'' | 'sending' | 'ok' | 'failed' | 'wait'>('');
-    async function sendTest(): Promise<void> {
-        const dest = iphoneIds[0];
-        if (!dest) return;
-        test = 'sending';
-        try {
-            test = (await sendTypedTest(dest, typeId, fetcher)).ok ? 'ok' : 'failed';
-        } catch (error) {
-            test = isRateLimited(error) ? 'wait' : 'failed';
-        }
-    }
-    $effect(() => { void typeId; test = ''; });
+    const onGroup = (familyId: string, next: boolean): void => void setMaster(groups.find((g) => g.family.id === familyId)?.rows.map((r) => r.id) ?? [], next);
+    const onRoute = (computer: string, target: Target, next: boolean): void => void setRoute(live, computer, target, next);
 </script>
 
 <div class="ins" data-ins="inspector">
     {#if inspector.problem || matrix.problem}<p class="tm__problem" role="alert" data-ins="problem">{inspector.problem || matrix.problem}</p>{/if}
-    {#if !matrix.loaded || !inspector.loaded}
-        <p class="tm__sub" data-ins="loading">{t('settings.notify.matrix.loading')}</p>
+    {#if !matrix.loaded || !inspector.loaded || !routes}
+        <p class="tm__sub" data-ins="loading">{t('notify.routing.loading')}</p>
     {:else}
-        <div class="ins__frame">
-            <div class="ins__list" data-ins="list">
-                {#each groups as group (group.family.id)}
-                    <h4>{t(group.family.label_key)}</h4>
-                    {#each group.rows as r (r.id)}
-                        <Button variant="row" aria-pressed={r.id === typeId} data-type={r.id} onclick={() => (picked = r.id)}>
-                            <span class="nc-led" data-light={lightOf(r.id)}></span>
-                            <span class="ins__name">{t(r.label_key)}</span>
-                            <span class="ins__st" data-st={r.id}>{isOn(matrix.settings, r.id, iphoneIds) ? t('notify.inspector.col.on') : t('notify.settings.off')}</span>
-                        </Button>
-                    {/each}
-                {/each}
+        <div class="ins-viewswitch">
+            <Segmented label={t('notify.routing.view')} size="sm" value={view} data-ins="view" onchange={(v) => setView(v as View)}
+                options={[{ value: 'basic', label: t('notify.routing.view.basic') }, { value: 'advanced', label: t('notify.routing.view.advanced') }]} />
+        </div>
+        <div class="ins-main">
+            <div class="ins-left">
+                <GroupRail {groups} {routes} {selection} {open} {count} {t}
+                    onSelect={(f, ty) => (selection = { family: f, type: ty })}
+                    onToggleOpen={(f) => (open = { ...open, [f]: !open[f] })}
+                    {onGroup} onType={(id, next) => void setMaster([id], next)} />
+                <Housekeeping advanced={view === 'advanced'} onAdvanced={() => setView('advanced')} {t} />
             </div>
-            {#if row && style}
-                <div class="ins__pane" data-ins="pane">
-                    <div class="ins__title"><h3>{t(row.label_key)}</h3><span>{row.id}</span></div>
-                    <div class="ins__prev" data-off={on ? undefined : ''} data-ins="preview">
-                        {#if SHAPES[typeId]}
-                            <Segmented label={t('notify.inspector.shape')} size="sm" value={kind} options={SHAPES[typeId].map((k) => ({ value: k, label: word(k) }))}
-                                onchange={(v) => (shapes = { ...shapes, [typeId]: v })} data-ins="shapes" />
-                        {/if}
-                        <div class="ins__walls"><Previews {sample} {kind} iphone={iphoneOn} computer={computerOn} level={urgencyLabel(style.urgency)} /></div>
-                        {#if !iphoneOn && !computerOn}<p class="tm__sub" data-ins="no-device">{t('notify.inspector.no_device')}</p>{/if}
+            {#if family && live.length > 0 && style}
+                <section class="ins-panel ins-pane" data-ins="pane">
+                    <div class="ins-bar ins-bar--hot"><h2>{name}</h2><span class="ins-count">{paneCount}</span></div>
+                    <div class="ins-two">
+                        <div class="ins-ctl">
+                            <div class="ins-master" data-v={on} data-ins="master">
+                                <Check role="switch" label="" ariaLabel={name} checked={on === 'all'} mixed={on === 'some'} data-ins="master-switch" onToggle={() => void setMaster(live, on !== 'all')} />
+                                <span class="ins-master__w">{t(`notify.routing.master.${on === 'all' ? 'on' : on === 'none' ? 'off' : 'some'}`)}</span>
+                                <span class="ins-dim">{name}</span>
+                            </div>
+                            <Sections disabled={on === 'none'} sound={style.sound} urgency={style.urgency} sounds={inspector.doc.sounds} urgencies={inspector.doc.urgencies}
+                                testType={live[0] ?? ''} onStyle={(patch) => void setStyles(live, patch)} {fetcher} {t}>
+                                {#snippet children()}<ComputerBlocks {routes} ids={live} urgency={style.urgency} {onRoute} {t} />{/snippet}
+                            </Sections>
+                        </div>
+                        <div class="ins-side">
+                            <Previews {name} {when} {sample} bind:showAs on={on !== 'none'} {ticked} {where} corner={cornerOn} {level} {t} />
+                        </div>
                     </div>
-                    <div class="ins__ctl">
-                        <span class="ins__lab">{t('notify.inspector.col.on')}</span>
-                        <span class="ins__row"><Switch bare label="" checked={on} aria-label={t(row.label_key)} data-ins="on" onchange={(next) => void setOn(next)} /><span class="ins__hint">{t('notify.settings.on.hint')}</span></span>
-                        <span class="ins__lab">{t('notify.inspector.col.sound')}</span>
-                        <span class="ins__row">
-                            <Select size="sm" aria-label={t('notify.inspector.col.sound')} value={style.sound} data-ins="sound"
-                                options={inspector.doc.sounds.map((s) => ({ value: s, label: soundLabel(s) }))}
-                                onchange={(e) => void setStyle(typeId, { sound: (e.currentTarget as HTMLSelectElement).value })} />
-                            <Button size="sm" data-ins="play" disabled={!playable(style.sound)} onclick={() => play(style.sound)}>{t('notify.inspector.play')}</Button>
-                        </span>
-                        <span class="ins__lab">{t('notify.inspector.col.urgency')}</span>
-                        <span class="ins__row">
-                            <Select size="sm" aria-label={t('notify.inspector.col.urgency')} value={style.urgency} data-ins="urgency"
-                                options={inspector.doc.urgencies.map((u) => ({ value: u, label: urgencyLabel(u) }))}
-                                onchange={(e) => void setStyle(typeId, { urgency: (e.currentTarget as HTMLSelectElement).value })} />
-                            <span class="ins__hint">{t(`notify.settings.urgency.${URGENCY_KEY[style.urgency] ?? 'active'}`)}</span>
-                        </span>
-                        <span class="ins__lab">{t('notify.inspector.col.devices')}</span>
-                        <span class="ins__dev" data-ins="devices">
-                            {#each devices as d (d.column)}
-                                <Button size="sm" data-dev={d.column} aria-pressed={cellValue(matrix.settings, d.column, typeId)} disabled={!writable(matrix.settings, d.column, typeId)}
-                                    onclick={() => void setTick(d.column, typeId, !cellValue(matrix.settings, d.column, typeId))}>{d.label}</Button>
-                            {/each}
-                        </span>
-                        <span class="ins__lab">{t('notify.inspector.corner')}</span>
-                        <span class="ins__row"><Switch bare label="" checked={style.corner} aria-label={t('notify.inspector.corner')} data-ins="corner" onchange={(next) => void setStyle(typeId, { corner: next })} /><span class="ins__hint">{t('notify.settings.corner.hint')}</span></span>
-                        {#if iphoneIds.length > 0}
-                            <span class="ins__lab">{t('settings.notify.dest.test.button')}</span>
-                            <span class="ins__row">
-                                <Button size="sm" data-ins="test" disabled={test === 'sending'} onclick={() => void sendTest()}>{t('notify.settings.test')}</Button>
-                                {#if test}<span class="ins__hint" role="status" data-ins="test-state">{t(`settings.notify.dest.test.${test === 'ok' ? 'ok' : test === 'sending' ? 'sending' : test === 'wait' ? 'wait' : 'failed'}`)}</span>{/if}
-                            </span>
-                        {/if}
-                    </div>
-                </div>
+                </section>
             {/if}
         </div>
     {/if}

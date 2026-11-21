@@ -6,8 +6,8 @@ from contextlib import closing
 
 import pytest
 
-from src.cplugs.huddle import blockers, lineage, schedule, wait_runner
-from src.cplugs.huddle.rules import TaskManagerInvalid, TaskManagerLocked
+from src.plugins.huddle import blockers, lineage, schedule, wait_runner
+from src.plugins.huddle.rules import TaskManagerInvalid, TaskManagerLocked
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import env  # noqa: F401
@@ -195,7 +195,7 @@ def test_the_agent_clears_a_hold_with_huddle_wait_update(manager):  # noqa: F811
 
 
 def test_the_owners_route_clears_a_hold_and_a_bare_call_cannot(client, env, told, monkeypatch):  # noqa: F811
-    from src.cplugs.huddle import routes_wait
+    from src.plugins.huddle import routes_wait
 
     parent = env.add(client)["id"]
     fork_held(env.store, parent)

@@ -181,6 +181,10 @@ class MuxSession:
         self._control(f.OPEN, s.id, service.encode("ascii"))
         return s
 
+    def reset_streams(self, reason: int = f.RST_LIMIT) -> None:
+        for stream in list(self._streams.values()):
+            stream.reset(reason)
+
     async def close(self, reason: int = f.GO_NORMAL) -> None:
         if not self.closed.is_set():
             self._ctl.append(f.pack(f.GOAWAY, 0, f.pack_u8(reason)))

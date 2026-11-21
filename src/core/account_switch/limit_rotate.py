@@ -5,7 +5,6 @@ import asyncio
 from datetime import datetime
 from functools import partial
 from pathlib import Path
-from types import SimpleNamespace
 from typing import AbstractSet, Any, Awaitable, Callable, Dict, List, Optional
 
 import structlog
@@ -22,6 +21,9 @@ from src.core.resource_push import topics as resource_topics
 from src.core.session_delivery import bring_up
 from src.core.session_startup_gate import GATE_READY
 from src.core.session_status import STATUS_UNKNOWN
+from src.core.sessions import guarded_paste
+from src.core.sessions.guarded_paste import GateOptions
+from src.models.activity_status import RESTING
 from src.models.provider_ledger import AccountUsage
 from src.models.websocket import WSMessageType
 
@@ -116,7 +118,7 @@ class Rotation:
     async def ready_to_continue(self, info: Any) -> bool:
         if info.startup_gate != GATE_READY or info.activity_hint is not None:
             return False
-        if info.activity_status in bring_up.READY_STATUSES:
+        if info.activity_status in RESTING:
             return True
         if info.activity_status != STATUS_UNKNOWN:
             return False
@@ -136,12 +138,9 @@ class Rotation:
             await asyncio.sleep(bring_up.READY_STEP_S)
 
     async def paste_continue(self, info: Any, session_uuid: Optional[str]) -> None:
-        from src.api.one_shot_routes import paste_through_gates  # noqa: PLC0415
-
-        request = SimpleNamespace(app=SimpleNamespace(state=self._app_state))
-        await paste_through_gates(
-            request, info.session.id, CONTINUE_WORD, idle_only=True, rotation_continue=True,
-            expected_epoch=info.session.tmux_created_epoch, expected_uuid=session_uuid,
+        await guarded_paste.paste_through_gates(
+            self._app_state, info.session.id, CONTINUE_WORD,
+            GateOptions(idle_only=True, rotation_continue=True, expected_epoch=info.session.tmux_created_epoch, expected_uuid=session_uuid),
         )
 
     def notify(

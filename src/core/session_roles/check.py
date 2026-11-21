@@ -5,7 +5,7 @@ from typing import Any
 
 import structlog
 
-from src.cplugs.sdk import ports
+from src.plugins.sdk import ports
 from src.core.session_roles.read import PORT
 
 logger = structlog.get_logger()

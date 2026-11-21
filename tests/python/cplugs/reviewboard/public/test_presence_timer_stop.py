@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-from src.cplugs.reviewboard.public import lifecycle, presence, wiring
+from src.plugins.reviewboard.public import lifecycle, presence, wiring
 from tests.python.cplugs.reviewboard.harness import make_env
 
 

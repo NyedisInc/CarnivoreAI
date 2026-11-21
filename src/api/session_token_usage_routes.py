@@ -17,6 +17,7 @@ from src.core.account_switch import pane_account, store
 from src.core.provider_ledger.login_command import PROFILE_ENV_VARS
 from src.core.attention.codex_pane_home import pane_codex_home
 from src.core.attention.evidence import FAMILY_CODEX
+from src.core.pack.jobs.usage_rollup import delegated_for
 from src.core.session_token_usage.account_resolve import resolve_session_account
 from src.core.session_token_usage.per_request import DEFAULT_LIMIT, MAX_LIMIT, read_session_requests
 from src.core.session_token_usage.reader import (
@@ -95,6 +96,8 @@ async def get_session_token_usage(
         agent_family=info.agent_family,
         profile_dir=profile_dir,
     )
+
+    usage.delegated = await asyncio.to_thread(delegated_for, session_id, info.session_uuid)
 
     logger.debug(
         "session_token_usage_read",

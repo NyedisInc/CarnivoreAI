@@ -33,9 +33,9 @@ vi.mock('../../../lib/listing-push/boot', async (importOriginal) => ({
 }));
 
 import TaskManagerAll from './Cell.svelte';
-import HuddleBody from '../../../cplugs/huddle/HuddleBody.svelte';
-import { cplugEnablement } from '../../../cplugs/host/enablement.svelte';
-import { swarmView } from '../../../cplugs/huddle/huddle-swarm-view.svelte';
+import HuddleBody from '../../../plugins/huddle/HuddleBody.svelte';
+import { cplugEnablement } from '../../../plugins/host/enablement.svelte';
+import { swarmView } from '../../../plugins/huddle/huddle-swarm-view.svelte';
 
 cplugEnablement.enabled = { huddle: true };
 const apps: ReturnType<typeof mount>[] = [];

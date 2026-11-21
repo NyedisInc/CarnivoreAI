@@ -10,6 +10,7 @@ export interface CompanySource {
     projectParentOf?: (projectId: string) => string | null;
     projectArchived?: (projectId: string) => boolean;
     projectMovedTo?: (projectId: string) => string | null;
+    projectDelegate?: (projectId: string) => 'on' | 'leftover' | null;
     projectNameOf?: (projectId: string) => string | null;
     knownProjects?: readonly { id: string; name: string }[];
 }
@@ -21,6 +22,7 @@ export function companySource(): CompanySource {
     const parentProject = new Map<string, string>();
     const movedTo = new Map<string, string>();
     const names = new Map<string, string>();
+    const delegate = new Map<string, 'on' | 'leftover'>();
     const live = new Set((projects.data ?? []).map((p) => String(p.id)));
     const archived = new Set(archivedProjects().map((p) => String(p.id)).filter((id) => !live.has(id)));
     for (const p of [...archivedProjects(), ...(projects.data ?? [])]) {
@@ -33,6 +35,10 @@ export function companySource(): CompanySource {
         else parentProject.delete(id);
         if (p.pack_state === 'moved_away') movedTo.set(id, p.moved_to_label || '');
         else movedTo.delete(id);
+        const mark = p as { auto_delegate?: boolean | null; auto_delegate_leftovers?: number | null };
+        if (mark.auto_delegate === true) delegate.set(id, 'on');
+        else if (mark.auto_delegate === false && (mark.auto_delegate_leftovers ?? 0) > 0) delegate.set(id, 'leftover');
+        else delegate.delete(id);
     }
     const parents = new Map<number, number>();
     for (const c of list) if (c.parent_id != null && known.has(c.parent_id)) parents.set(c.id, c.parent_id);
@@ -43,6 +49,7 @@ export function companySource(): CompanySource {
         projectParentOf: (projectId) => parentProject.get(projectId) ?? null,
         projectArchived: (projectId) => archived.has(projectId),
         projectMovedTo: (projectId) => (movedTo.get(projectId) ?? null),
+        projectDelegate: (projectId) => delegate.get(projectId) ?? null,
         projectNameOf: (projectId) => names.get(projectId) ?? null,
         knownProjects: archivedShown() ? [...names].map(([id, name]) => ({ id, name })) : [],
     };

@@ -27,6 +27,10 @@ def line_serial(line: bytes) -> str:
         record = json.loads(line)
     except ValueError:
         record = None
+    return serial_of_record(record, line)
+
+
+def serial_of_record(record: object, line: bytes) -> str:
     if isinstance(record, dict):
         uuid = record.get("uuid")
         if isinstance(uuid, str) and uuid:

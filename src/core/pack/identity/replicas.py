@@ -4,11 +4,13 @@ from __future__ import annotations
 import os
 import re
 import sqlite3
+import uuid
 from typing import Any, Dict, List, Optional
 
 import structlog
 
 from src.core.db import transaction
+from src.core.hosts.ddl import LOCAL_HOST_KEY
 from src.core.mcp import family_signals
 from src.core.pack.identity import home
 from src.core.pack.identity.ddl import TRANSPORT_RUNGS
@@ -56,6 +58,7 @@ def record_replica(conn: sqlite3.Connection, project_uid: str, install_id: str, 
 def forget_replica(conn: sqlite3.Connection, project_uid: str, install_id: str) -> bool:
     with transaction(conn):
         cur = conn.execute("DELETE FROM project_replicas WHERE project_uid = ? AND install_id = ?", (project_uid, install_id))
+        conn.execute("DELETE FROM pack_bundle_tips WHERE project_uid = ? AND install_id = ?", (project_uid, install_id))
     family_signals.invalidate("pack")
     return cur.rowcount == 1
 
@@ -89,18 +92,36 @@ def accept_replica(conn: sqlite3.Connection, *, home_install_id: str, project_ui
     from src.core.project_writes import ProjectNameConflict, ProjectRootRefused, create_project
 
     existing = conn.execute("SELECT * FROM projects WHERE uid = ?", (project_uid,)).fetchone()
+    if existing is not None and existing["host_key"] != LOCAL_HOST_KEY:
+        with transaction(conn):
+            conn.execute("UPDATE projects SET uid = ? WHERE id = ?", (uuid.uuid4().hex, existing["id"]))
+        existing = None
     if existing is not None:
         if existing["pack_state"] == home.REPLICA and existing["home_install_id"] == home_install_id:
-            return _answer(existing, created=False)
+            return _answer(existing, created=False, folder_made=False)
         raise ReplicaRefused(UID_IS_HOME, f"this machine already holds project {project_uid} and it is not a replica of that machine")
     created = False
+    folder_made = False
     target = normalize_root(root) if root else None
     row = conn.execute("SELECT * FROM projects WHERE root = ?", (target,)).fetchone() if target else None
+    revived = False
+    if row is not None and row["archived_at"] and row["pack_state"] == home.HOME:
+        target, revived = row["root"], True
+    if row is None and not root:
+        default = _default_root(name, project_uid)
+        old = conn.execute("SELECT * FROM projects WHERE root = ?", (default,)).fetchone()
+        if old is not None and old["archived_at"] and old["pack_state"] == home.HOME:
+            row, target, revived = old, default, True
     if row is not None and row["pack_state"] != home.HOME:
         raise ReplicaRefused(ROOT_IN_USE, f"the folder {target} already belongs to a project that is not a plain one here")
+    adopted = row is not None and not revived
+    if revived:
+        existed = os.path.lexists(target)
+        os.makedirs(target, exist_ok=True)
+        folder_made = not existed
     if row is None:
         target = target or _default_root(name, project_uid)
-        existed = os.path.exists(target)
+        existed = os.path.lexists(target)
         os.makedirs(target, exist_ok=True)
         try:
             row = create_project(conn, name=name, path=target)
@@ -109,6 +130,7 @@ def accept_replica(conn: sqlite3.Connection, *, home_install_id: str, project_ui
         except ProjectRootRefused as exc:
             raise ReplicaRefused(ProjectRootRefused.CODE, str(exc)) from exc
         created = True
+        folder_made = not existed
         if source_trusted and not existed:
             from src.config import settings
 
@@ -117,16 +139,18 @@ def accept_replica(conn: sqlite3.Connection, *, home_install_id: str, project_ui
     with transaction(conn):
         conn.execute(
             "UPDATE projects SET uid = ?, pack_state = 'replica', home_install_id = ?, moved_to_install_id = NULL, "
-            "company_id = COALESCE(company_id, ?), updated_at = ? WHERE id = ?",
+            "company_id = COALESCE(company_id, ?), archived_at = NULL, updated_at = ? WHERE id = ?",
             (project_uid, home_install_id, company_id, utc_now(), row["id"]))
     home.notify_changed()
     logger.info("project_replica_registered", project_uid=project_uid, home=home_install_id, created=created)
-    return _answer(conn.execute("SELECT * FROM projects WHERE uid = ?", (project_uid,)).fetchone(), created=created)
+    answer = _answer(conn.execute("SELECT * FROM projects WHERE uid = ?", (project_uid,)).fetchone(), created=created, folder_made=folder_made)
+    answer.update(adopted=adopted, revived=revived)
+    return answer
 
 
-def _answer(row: sqlite3.Row, *, created: bool) -> Dict[str, Any]:
+def _answer(row: sqlite3.Row, *, created: bool, folder_made: bool) -> Dict[str, Any]:
     return {"project_uid": row["uid"], "project_id": row["id"], "name": row["display_name"], "root": row["root"],
-            "state": row["pack_state"], "created": created}
+            "state": row["pack_state"], "created": created, "folder_made": folder_made}
 
 
 def detach_replica(conn: sqlite3.Connection, *, home_install_id: str, project_uid: str) -> bool:

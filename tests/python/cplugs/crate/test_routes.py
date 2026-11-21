@@ -9,9 +9,9 @@ from pathlib import Path
 import pytest
 import structlog
 
-from src.cplugs.crate import constants as K
-from src.cplugs.crate.jobs import runner
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.crate import constants as K
+from src.plugins.crate.jobs import runner
+from src.plugins.sdk import crate_format as cf
 from tests.python.cplugs.crate.api_world import BASE, ApiWorld, export, stop_runner, wait_job
 from tests.python.cplugs.crate.crate_world import UUID_A
 from tests.python.cplugs.crate.test_jobs import _bundle_ids, _forget

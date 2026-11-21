@@ -63,7 +63,7 @@ async def _agent_review(rig: EmitRig, mp: Any) -> None:
 
 
 async def _plugin_notice(rig: EmitRig, _mp: Any) -> None:
-    from src.cplugs.host.capabilities import toaster
+    from src.plugins.host.capabilities import toaster
 
     assert toaster("huddle", rig.app_state)(SESSION, "a question waits") is not None
 
@@ -74,6 +74,16 @@ async def _skill_tripwire(rig: EmitRig, _mp: Any) -> None:
 
     make_notice_raiser(rig.manager, rig.app_state, lambda *_a: None)(
         SimpleNamespace(session_id=SESSION), [TripwireFinding(skill="deploy", category="network")])
+
+
+async def _agent_stalled(rig: EmitRig, _mp: Any) -> None:
+    from datetime import datetime, timezone
+
+    from src.core.subagents.stall import StalledAgent
+    from src.core.subagents.stall_notice import make_stall_notice_raiser
+
+    agent = StalledAgent("a1", "build the index", datetime(2026, 11, 11, 10, 0, tzinfo=timezone.utc), 16 * 60)
+    make_stall_notice_raiser(rig.manager, rig.app_state, lambda *_a: None)(SimpleNamespace(session_id=SESSION), [agent])
 
 
 async def _died(rig: EmitRig, _mp: Any) -> None:
@@ -148,7 +158,7 @@ def _alert(key: str, title_key: str) -> Callable[[EmitRig, Any], Awaitable[None]
 
 async def _plugin_runtime(rig: EmitRig, _mp: Any) -> None:
     from src.core.app_alerts import service
-    from src.cplugs.host.sidecar_boot import SidecarRuntime
+    from src.plugins.host.sidecar_boot import SidecarRuntime
 
     host = SimpleNamespace(_alert_writer=lambda: service.raise_alert, _publish_cplugs_later=lambda: None)
     SidecarRuntime._supervisor_alert(host, "mcphealth", "crash_loop", "3 crashes in 60 s")
@@ -273,6 +283,7 @@ ROWS = (
     Row("account.switched", SESS, FRAME, _account_switched),
     Row("app.restore_offer", SESS, NONE, _restore),
     Row("session.terminal_notice", SESS, TOAST, _terminal_notice),
+    Row("session.agent_stalled", SESS, TOAST, _agent_stalled),
     Row("agent.message", MSG, TOAST, _agent_message),
     Row("agent.review", MSG, TOAST, _agent_review),
     Row("plugin.notice", MSG, TOAST, _plugin_notice),
@@ -317,7 +328,7 @@ def test_every_registered_type_has_exactly_one_row() -> None:
     assert len(ROWS) == len(_BY_ID), "a type has two rows"
     assert sorted(_BY_ID) == sorted(registered), (
         f"missing rows: {sorted(set(registered) - set(_BY_ID))}; stale rows: {sorted(set(_BY_ID) - set(registered))}")
-    assert len(registered) == 40
+    assert len(registered) == 41
 
 
 @pytest.mark.parametrize("row", ROWS, ids=[row.type_id for row in ROWS])

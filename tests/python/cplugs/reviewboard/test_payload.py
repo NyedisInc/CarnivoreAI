@@ -11,10 +11,10 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 from src.api.auth import require_auth
-from src.cplugs.huddle import board_port
-from src.cplugs.reviewboard import document, payloads, round_text
-from src.cplugs.reviewboard.requests import SaveBody
-from src.cplugs.reviewboard.schema import MAX_PAYLOAD_BYTES, MAX_SAVES
+from src.plugins.huddle import board_port
+from src.plugins.reviewboard import document, payloads, round_text
+from src.plugins.reviewboard.requests import SaveBody
+from src.plugins.reviewboard.schema import MAX_PAYLOAD_BYTES, MAX_SAVES
 from tests.python.cplugs.reviewboard.boards import SIDECAR, sidecar as base_sidecar
 from tests.python.cplugs.reviewboard.harness import BASE, Env, task_manager_on, task_manager_store, make_env
 from tests.python.cplugs.reviewboard.test_publish import create_body

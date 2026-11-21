@@ -15,10 +15,7 @@
   });
 </script>
 
-<ModalShell title={t('opscenter.cell.task_manager_mk2.delete_closed.title')} overlayClass="text-prompt-modal mk2-closed-purge" onCancel={() => close(null)}>
-  {#snippet head()}
-    <div class="text-prompt-modal__head"><span class="text-prompt-modal__verb">{t('opscenter.cell.task_manager_mk2.delete_closed.title')}</span></div>
-  {/snippet}
+<ModalShell look="titlerow" closable={false} title={t('opscenter.cell.task_manager_mk2.delete_closed.title')} overlayClass="mk2-closed-purge" onCancel={() => close(null)}>
   {#snippet children()}
     <p class="mk2-closed-purge__ask" data-mk2-delete-closed-ask>{t(everywhere ? 'opscenter.cell.task_manager_mk2.delete_closed.ask_all' : 'opscenter.cell.task_manager_mk2.delete_closed.ask', { count })}</p>
   {/snippet}

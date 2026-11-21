@@ -6,8 +6,8 @@ from types import SimpleNamespace
 import pytest
 from fastapi import HTTPException
 
-from src.api import one_shot_routes
-from src.cplugs.huddle import service
+from tests.python.cplugs.huddle.paste_fakes import patch_paste
+from src.plugins.huddle import service
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, pasted  # noqa: F401
 
 URL = "/api/v1/cplugs/huddle/send"
@@ -67,7 +67,7 @@ def test_a_refused_paste_is_reported_for_that_list_and_the_others_still_go(clien
         sent.append(session_id)
         return SimpleNamespace(pasted_bytes=len(text), submitted=True)
 
-    monkeypatch.setattr(one_shot_routes, "paste_through_gates", paste)
+    patch_paste(monkeypatch, paste)
     client.post("/api/v1/cplugs/huddle/lists/12/items", json={"text": "x"})
     note(app, "ses_old", "12", 100.0)
     body = client.post(URL, json={"lists": ["12", "99"]}).json()["results"]
@@ -140,7 +140,7 @@ def test_a_list_holding_only_deleted_items_is_not_untold_but_a_live_change_is(cl
 
 
 def test_a_tell_to_a_project_whose_agent_is_asleep_wakes_it_then_sends(client, app, pasted, monkeypatch):
-    from src.cplugs.huddle import send_wake
+    from src.plugins.huddle import send_wake
     from tests.python.cplugs.huddle.test_task_manager_routes import row
     client.post("/api/v1/cplugs/huddle/lists/81/items", json={"text": "wake me"})
     rows = [row("ses_other", 99)]
@@ -162,7 +162,7 @@ def test_a_tell_to_a_project_whose_agent_is_asleep_wakes_it_then_sends(client, a
 
 
 def test_a_wake_that_fails_leaves_the_list_untold_and_says_so(client, app, pasted, monkeypatch):
-    from src.cplugs.huddle import send_wake
+    from src.plugins.huddle import send_wake
     client.post("/api/v1/cplugs/huddle/lists/81/items", json={"text": "stays untold"})
 
     async def wake_project(ctx, key):
@@ -175,6 +175,6 @@ def test_a_wake_that_fails_leaves_the_list_untold_and_says_so(client, app, paste
 
 
 def test_needs_wake_only_for_a_project_list_with_no_session_of_its_own():
-    from src.cplugs.huddle.send_wake import needs_wake
+    from src.plugins.huddle.send_wake import needs_wake
     assert needs_wake("6", []) and needs_wake("6", [{"elsewhere": True}])
     assert not needs_wake("6", [{"elsewhere": False}]) and not needs_wake("all", []) and not needs_wake("agent:3", [])

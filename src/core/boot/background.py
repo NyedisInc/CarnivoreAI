@@ -21,9 +21,10 @@ from src.core.skills.auto_update import after_refresh_hook, run_auto_update_pass
 from src.core.skills.journal_recovery import recover_pending
 from src.core.skills.project_scope import ProjectPathRefused, known_project_roots
 from src.core.skills.sweeper import SkillSweeper
+from src.core.supervise.loop import spawn as spawn_supervised
 from src.core.upload_sweeper import UploadSweeper, datastore_project_paths
-from src.cplugs.host.adoption import run_adoption_pass
-from src.cplugs.host.catalog_move import run_catalog_move_pass
+from src.plugins.host.adoption import run_adoption_pass
+from src.plugins.host.catalog_move import run_catalog_move_pass
 
 if TYPE_CHECKING:
     from src.core.boot.context import BootContext
@@ -92,11 +93,12 @@ async def _stop_skill_sweeper(ctx: "BootContext", tasks: _Tasks) -> None:
 
 
 def _start_pipe_pruner(ctx: "BootContext", tasks: _Tasks) -> None:
-    tasks.by_name["pipe_pruner"] = asyncio.create_task(PipePruner(
+    pruner = PipePruner(
         log_dir=settings.get_log_dir(),
         state_dir=settings.get_state_dir(),
         socket_name=ctx.session_manager.tmux_socket_name(),
-    ).run())
+    )
+    tasks.by_name["pipe_pruner"] = spawn_supervised("pipe-pruner", pruner.run)
 
 
 async def _stop_pipe_pruner(_ctx: "BootContext", tasks: _Tasks) -> None:

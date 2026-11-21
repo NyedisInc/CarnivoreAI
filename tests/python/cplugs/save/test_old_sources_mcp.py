@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.save import mcp as save_mcp
-from src.cplugs.save.routes import router
-from src.cplugs.sdk import ToolError
+from src.plugins.save import mcp as save_mcp
+from src.plugins.save.routes import router
+from src.plugins.sdk import ToolError
 
 
 def test_every_import_route_has_a_tool_and_every_tool_is_named_by_a_route() -> None:
@@ -25,8 +25,8 @@ def test_an_apply_card_is_refused_for_a_fingerprint_no_preview_answered() -> Non
 
 
 def test_an_apply_card_replayed_after_a_restart_still_finds_its_preview(rig_state, monkeypatch) -> None:
-    from src.cplugs.save import import_service as svc
-    from src.cplugs.save.vault.old_sources import preview_store
+    from src.plugins.save import import_service as svc
+    from src.plugins.save.vault.old_sources import preview_store
 
     fingerprint, counts = "a" * 64, _COUNTS
     monkeypatch.setattr(svc.tf, "state_dir", lambda: str(rig_state))

@@ -15,6 +15,7 @@ CLAUDE_MCP_CONFIG_FLAG = "--mcp-config"
 CLAUDE_DEV_CHANNELS_FLAG = "--dangerously-load-development-channels"
 CHANNEL_HEADER = "X-Carnivore-Channel"
 CHANNEL_HEADER_VALUE = "1"
+TOOL_TIMEOUT_HEADER = "X-Carnivore-Tool-Timeout"
 
 BRIDGE_SCRIPT = Path(__file__).resolve().parents[1] / "core" / "mcp_bridge" / "stdio_bridge.py"
 BRIDGE_COMMAND = "python3"
@@ -49,9 +50,11 @@ def registration_url(pane_launch: bool, enabled: bool, port: Optional[int]) -> O
 def _http_server_doc(channel: bool) -> dict:
     headers = {"Authorization": "Bearer ${CLOUDECODE_HOOK_TOKEN}",
                "X-Carnivore-Session": "${CLOUDECODE_SESSION_ID}"}
+    headers[TOOL_TIMEOUT_HEADER] = str(CODEX_TOOL_TIMEOUT_SEC)
     if channel:
         headers[CHANNEL_HEADER] = CHANNEL_HEADER_VALUE
-    return {"type": "http", "url": "${" + URL_ENV + "}", "headers": headers}
+    return {"type": "http", "url": "${" + URL_ENV + "}", "headers": headers,
+            "timeout": CODEX_TOOL_TIMEOUT_SEC * 1000}
 
 
 def _stdio_server_doc(channel: bool, script: Path) -> dict:
@@ -81,5 +84,6 @@ def codex_args(url: str) -> List[str]:
         "-c", f"{p}url={json.dumps(url)}",
         "-c", f'{p}bearer_token_env_var="CLOUDECODE_HOOK_TOKEN"',
         "-c", f'{p}env_http_headers={{"X-Carnivore-Session"="CLOUDECODE_SESSION_ID"}}',
+        "-c", f'{p}http_headers={{"{TOOL_TIMEOUT_HEADER}"="{CODEX_TOOL_TIMEOUT_SEC}"}}',
         "-c", f"{p}tool_timeout_sec={CODEX_TOOL_TIMEOUT_SEC}",
     ]

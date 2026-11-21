@@ -6,10 +6,10 @@ import time
 
 import pytest
 
-from src.cplugs.huddle import inbox, inbox_delivery, service
-from src.cplugs.huddle.roles import ask, lead
-from src.cplugs.huddle.roles.store import LeadCannotDnd, RoleStore
-from src.cplugs.sdk import session_bring_up
+from src.plugins.huddle import inbox, inbox_delivery, service
+from src.plugins.huddle.roles import ask, lead
+from src.plugins.huddle.roles.store import LeadCannotDnd, RoleStore
+from src.plugins.sdk import session_bring_up
 from tests.python.cplugs.huddle.test_task_manager_inbox import BASE, env, queue  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, row  # noqa: F401
 
@@ -114,7 +114,7 @@ def test_start_a_session_starts_one_and_offers_the_entry_to_it(client, env, monk
     stuck = stick(client, env)
     started = []
 
-    async def start(ops, project_id):
+    async def start(ops, project_id, lead_key="", wake_lead=None):
         started.append(project_id)
         env.set_rows([row("ses_fresh", 12, minutes_ago=0)])
         return "ses_fresh"
@@ -130,7 +130,7 @@ def test_start_a_session_starts_one_and_offers_the_entry_to_it(client, env, monk
 def test_a_session_that_cannot_start_leaves_the_entry_waiting_not_lost(client, env, monkeypatch):
     stuck = stick(client, env)
 
-    async def fail(ops, project_id):
+    async def fail(ops, project_id, lead_key="", wake_lead=None):
         raise session_bring_up.BringUpFailed("no")
 
     monkeypatch.setattr(session_bring_up, "wake_newest_or_start", fail)

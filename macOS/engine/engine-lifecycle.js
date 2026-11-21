@@ -7,11 +7,12 @@ const { stopEngineViaRoute } = require('./engine-stop');
 const { normalizeVersion } = require('../adoption-decision');
 const setupVerdict = require('../setup-verdict');
 
-async function verifyEngineHolder(manager, port) {
+async function verifyEngineHolder(manager, port, options = {}) {
   try {
-    return portTrust.holderRefusal(await portTrust.listeners(port || manager.getPort(), { execFile }), process.getuid());
+    const read = options.strict ? portTrust.listenersStrict : portTrust.listeners;
+    return portTrust.holderRefusal(await read(port || manager.getPort(), { execFile }), process.getuid());
   } catch (err) {
-    return { reason: 'unknown', holder: null };
+    return { reason: 'unreadable', holder: null };
   }
 }
 
@@ -25,7 +26,7 @@ async function signalEngineHolders(manager) {
   const refuse = (why) => ({ ok: false, error: `${why}; nothing was signalled` });
   if (!rec || !Number.isInteger(rec.pid) || !rec.start) return refuse('no adopted engine is recorded');
   const port = rec.port;
-  const holders = await portTrust.listeners(port, { execFile });
+  const holders = await portTrust.listenersStrict(port, { execFile });
   if (!Array.isArray(holders) || holders.length !== 1) return refuse('the port does not have exactly one listener');
   const [holder] = holders;
   if (holder.pid !== rec.pid || holder.uid !== process.getuid()) return refuse('the listener is not the adopted engine');
@@ -65,7 +66,7 @@ async function stopEngine(manager, options = {}) {
   const recorded = manager.engineRecord ? manager.engineRecord.port : undefined;
   const result = await stopEngineViaRoute({
     getApi: options.getApi || (() => null), isUp: () => engineListening(manager, recorded),
-    verifyHolder: () => verifyEngineHolder(manager, unpaired ? recorded : undefined),
+    verifyHolder: () => verifyEngineHolder(manager, unpaired ? recorded : undefined, { strict: true }),
     setupIncomplete: () => localSetupIncomplete(manager, options.getApi),
     signalHolder: () => signalEngineHolders(manager),
     log: (message) => console.log(message),

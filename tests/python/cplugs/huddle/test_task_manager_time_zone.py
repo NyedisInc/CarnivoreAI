@@ -8,7 +8,7 @@ import pytest
 
 from src.core import ui_preferences
 from src.core.time_zone import app_time_zone
-from src.cplugs.huddle import recurrence
+from src.plugins.huddle import recurrence
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, row  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import ITEMS, Env, call, env, iso  # noqa: F401
 

@@ -3,7 +3,7 @@ import { resourcePush } from '../resource-push/boot';
 import { t } from '../i18n/index.svelte';
 import { openModal } from '../modal';
 import { toggleAccountMenu } from '../drawer-hud/account-menu.svelte';
-import type { AccountMenuItem, BarIndicator } from '../../cplugs/sdk/types';
+import type { AccountMenuItem, BarIndicator } from '../../plugins/sdk/types';
 import BeastConfirm from './BeastConfirm.svelte';
 import { addLocalToast } from '../toast-surface';
 

@@ -8,7 +8,7 @@
   import { closeDrawerAfterSwitch } from '../drawer-tabs/menu-hotkeys';
   import { accountFacts } from '../carnivore-account/account-store.svelte';
   import { openSignInDoor, signOutOfAccount } from '../carnivore-account/sign-in-door';
-  import { cplugAccountMenuItems } from '../../cplugs/host/readers';
+  import { cplugAccountMenuItems } from '../../plugins/host/readers';
   import { swarmSwitch, toggleSwarm } from '../swarm-switch/control.svelte';
   import { beastMenuItem } from '../beast-mode/control.svelte';
 

@@ -27,9 +27,7 @@
 </script>
 
 {#if open}
-    <Page title={t('opscenter.log.page.title')} label={t('opscenter.log.page.label')} onClose={close} data-logs-page="">
-        <div class="oc-page__body oc-lv-page">
-            <LogViewer />
-        </div>
+    <Page title={t('opscenter.log.page.title')} label={t('opscenter.log.page.label')} onClose={close} frame="column" scroll="self" data-logs-page="">
+        <LogViewer />
     </Page>
 {/if}

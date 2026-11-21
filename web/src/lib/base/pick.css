@@ -1,6 +1,6 @@
+@import './mark.css';
 @layer patterns {
   .oc-pick {
-    --oc-pick-mark: var(--oc-space-3);
     display: flex;
     align-items: flex-start;
     gap: var(--oc-space-2);
@@ -20,28 +20,15 @@
   }
 
   .oc-pick[data-disabled] {
-    opacity: 0.45;
+    opacity: var(--oc-disabled-opacity);
     cursor: not-allowed;
   }
 
   .oc-pick__input {
     --_bd: var(--oc-line-control);
     appearance: none;
-    flex: none;
-    box-sizing: border-box;
-    width: var(--oc-pick-mark);
-    height: var(--oc-pick-mark);
-    margin: calc((1lh - var(--oc-pick-mark)) / 2) 0 0;
-    border: var(--oc-border) solid var(--oc-line-control);
-    border-radius: var(--oc-border);
-    background-color: transparent;
-    background-repeat: no-repeat;
-    background-position: center;
+    margin: calc((1lh - var(--oc-mark)) / 2) 0 0;
     cursor: inherit;
-  }
-
-  .oc-pick__input[type='radio'] {
-    border-radius: 50%;
   }
 
   .oc-pick:hover:not([data-disabled]) .oc-pick__input {
@@ -49,23 +36,7 @@
   }
 
   .oc-pick__input:is(:checked, [type='checkbox']:indeterminate) {
-    --_bd: var(--oc-green);
-    border-color: var(--oc-green);
-  }
-
-  .oc-pick__input[type='checkbox']:checked {
-    background-image: linear-gradient(var(--oc-green), var(--oc-green));
-    background-size: 50% 50%;
-  }
-
-  .oc-pick__input[type='radio']:checked {
-    background-image: radial-gradient(circle closest-side, var(--oc-green) 100%, transparent 100%);
-    background-size: 50% 50%;
-  }
-
-  .oc-pick__input[type='checkbox']:indeterminate {
-    background-image: linear-gradient(var(--oc-green), var(--oc-green));
-    background-size: 50% var(--oc-space-0-5);
+    --_bd: var(--_mark-ink, var(--oc-green));
   }
 
   .oc-pick__input[aria-invalid='true'] {
@@ -82,12 +53,9 @@
   .oc-pick[data-tone='danger'] .oc-pick__input,
   .oc-pick[data-tone='danger']:hover:not([data-disabled]) .oc-pick__input,
   .oc-pick[data-tone='danger'] .oc-pick__input:checked {
+    --_mark-ink: var(--oc-coral);
     --_bd: var(--oc-coral);
     border-color: var(--oc-coral);
-  }
-
-  .oc-pick[data-tone='danger'] .oc-pick__input[type='checkbox']:checked {
-    background-image: linear-gradient(var(--oc-coral), var(--oc-coral));
   }
 
   .oc-pick__text {

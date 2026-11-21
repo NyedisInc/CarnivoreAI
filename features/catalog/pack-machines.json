@@ -16,7 +16,10 @@
     "PUT /api/v1/projects/{project_name}/github-account",
     "PUT /api/v1/projects/{project_name}/air-gap",
     "GET /api/v1/projects/{project_name}/publish-repo",
-    "POST /api/v1/projects/{project_name}/publish-repo"
+    "POST /api/v1/projects/{project_name}/publish-repo",
+    "GET /api/v1/pack/machines/{machine}/labels",
+    "PUT /api/v1/pack/machines/{machine}/labels",
+    "POST /api/v1/pack/machines/{machine}/rescan"
   ],
   "area": "settings",
   "docs": [
@@ -38,14 +41,16 @@
     "On the logins tab: switch the credential relay on per Claude account, and this computer's own may receive credentials switch.",
     "On a project's page, open transport... to set air-gap, see which github account the project uses and where that came from, pick one of the logged-in accounts, see how a replica would get the code, and publish a private repo for a folder with no remote.",
     "A session or Swarm agent running on another computer wears that computer's name as a small badge on the Swarm page and in its chat header.",
-    "The ssh tab holds ssh-only machines and the pairing tools."
+    "The ssh tab holds ssh-only machines and the pairing tools.",
+    "Give a computer your own labels (up to 16 short words, from any paired computer) and rescan what it has; the labels and the probe of its tools, Xcode, GPUs and Homebrew ride in its snapshot so placement can ask for them. The idle keyboard rule is now on for every computer: after 10 idle minutes it keeps the smaller away share even inside the schedule."
   ],
   "id": "pack-machines",
   "issues": [
     1514,
     1521,
     1618,
-    1921
+    1921,
+    2990
   ],
   "keywords": [
     "pack",
@@ -75,7 +80,7 @@
     "web/src/lib/pack-machines/PackMeter.svelte",
     "web/src/lib/pack-machines/PackMarks.svelte"
   ],
-  "updated": "2026-10-18",
+  "updated": "2026-11-16",
   "where": [
     "Pack: the computers, work, logins and ssh tabs."
   ],

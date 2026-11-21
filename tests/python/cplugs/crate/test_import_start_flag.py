@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
-from src.cplugs.crate.routes_imports import add_to, has_start_route
+from src.plugins.crate.routes_imports import add_to, has_start_route
 
 
 def test_start_route_flag_follows_the_registered_routes() -> None:

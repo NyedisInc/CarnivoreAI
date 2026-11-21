@@ -146,7 +146,7 @@ def test_the_fallback_directory_refuses_a_symlink_a_loose_mode_and_a_foreign_own
 async def test_a_failed_link_is_logged_with_the_exception_type_and_message(monkeypatch):
     hub = ll.LinkListener(identity=None, fed_dir=Path("/x"), listener_path="/y", addresses=lambda: [])
 
-    async def boom(reader, writer):
+    async def boom(reader, writer, relayed=False):
         raise OSError("AF_UNIX path too long")
 
     monkeypatch.setattr(hub, "_serve", boom)

@@ -5,7 +5,7 @@ import json
 import sqlite3
 import threading
 
-from src.cplugs.host import activity_log, state
+from src.plugins.host import activity_log, state
 
 
 def _write(state_dir, enabled: bool) -> None:

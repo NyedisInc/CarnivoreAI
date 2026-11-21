@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from src.cplugs.save.vault.old_sources import labels
+from src.plugins.save.vault.old_sources import labels
 
 CONV = "aaaaaaaa-0000-0000-0000-00000000000a"
 ALPHA = "d423f808-0854-4c3d-a7fd-bbcf5872bd08"

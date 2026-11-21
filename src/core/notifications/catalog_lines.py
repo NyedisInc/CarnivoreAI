@@ -11,7 +11,7 @@ _LINE = re.compile(
 _ESCAPE = re.compile(r"\\(.)")
 
 DEFAULT_CATALOG_PATH = Path(__file__).resolve().parents[3] / "client" / "js" / "i18n" / "catalog.en.js"
-PLUGINS_ROOT = Path(__file__).resolve().parents[2] / "cplugs"
+PLUGINS_ROOT = Path(__file__).resolve().parents[2] / "plugins"
 PLUGIN_SLICE_NAME = "notify.catalog.en.js"
 
 

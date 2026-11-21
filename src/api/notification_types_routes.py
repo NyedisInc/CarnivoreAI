@@ -78,7 +78,7 @@ async def get_notification_card(toast_id: str, request: Request) -> Dict[str, An
     """The card of one recorded toast, built for the owner's own screens (the web card and this computer's corner card; details on, no capability).
 
     Output: ``{"kind", "type", "title", "body", "sub", "lv", "snd", "acts": [[id, label]], "card": {...full card...}, "media"?}``, the same shapes
-    the sealed phone payload carries (``docs/notify-cards.md``); ``media`` is the attachment descriptor (``id``, ``mime``, ``bytes``, ``w``, ``h``,
+    the sealed phone payload carries (``docs/notify-cards.md``); ``test_target`` ("app" or "desktop") only on a test toast; ``media`` is the attachment descriptor (``id``, ``mime``, ``bytes``, ``w``, ``h``,
     ``dur``) the two media routes below serve, present only on a file, image or video card.
     Raises: HTTPException 404 - no toast with this id, or one that sends no notification.
     Example: GET /api/v1/notifications/cards/3f2a... -> 200 with ``kind`` "permission"
@@ -92,6 +92,9 @@ async def get_notification_card(toast_id: str, request: Request) -> Dict[str, An
     style = effective_style(event.type_id)
     out: Dict[str, Any] = {"kind": built.kind, "type": built.type_id, "title": built.title, "body": built.body, "sub": built.sub,
                            "lv": style.level, "snd": style.sound, "acts": [list(a) for a in built.acts], "card": built.full}
+    test_target = toast_source.test_target_for_toast_id(manager, toast_id)
+    if test_target:
+        out["test_target"] = test_target
     if built.media:
         out["media"] = built.media
     if built.item:

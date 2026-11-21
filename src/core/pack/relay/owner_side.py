@@ -74,12 +74,14 @@ class Relay:
         cap = CAP_CREDENTIALS_CODEX if provider == "codex" else CAP_CREDENTIALS
 
         def read() -> List[targets_mod.Target]:
+            armed = False
             with closing(self._open_db()) as conn:
                 if not targets_mod.default_mode(conn, account_key):
                     ready = [iid for iid in self._candidates() if (link := self._peer(iid)) is not None and cap in link[1]
                              and self._allows(iid) is True and self._accepts(iid, account_key) and self._approved(iid)]
                     if ready:
                         targets_mod.arm_active(conn, account_key, ready, self._self_id, provider)
+                        armed = True
                 if targets_mod.default_mode(conn, account_key):
                     ready = []
                     for iid in self._candidates():
@@ -89,7 +91,11 @@ class Relay:
                             ready.append(iid)
                     if ready:
                         targets_mod.arm_default(conn, account_key, ready, self._self_id, provider)
-                return [r for r in targets_mod.enabled_for(conn, account_key) if self._approved(r.target_install_id)]
+                        armed = True
+                rows = [r for r in targets_mod.enabled_for(conn, account_key) if self._approved(r.target_install_id)]
+            if armed:
+                self._notify()
+            return rows
 
         rows = await asyncio.to_thread(read)
         if not rows:

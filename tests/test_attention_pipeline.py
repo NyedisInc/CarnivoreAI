@@ -68,8 +68,10 @@ class Pipeline:
                             lambda *a, **kw: self.events.append(kw))
         if family == "codex":
             self.home, self.rollout = _make_codex_home(tmp_path)
-            monkeypatch.setattr(attention_reader, "DEFAULT_CODEX_HOME", str(self.home))
-            from src.core.attention import codex_gather, codex_stores
+            from src.core.attention import codex_gather, codex_pane_home, codex_stores
+            monkeypatch.setattr(codex_gather, "DEFAULT_CODEX_HOME", str(self.home))
+            monkeypatch.setattr(codex_pane_home, "DEFAULT_CODEX_HOME", str(self.home))
+            codex_pane_home.clear_cache()
             with sqlite3.connect(self.home / "state_5.sqlite") as db:
                 db.execute("UPDATE threads SET cwd = ?", (str(tmp_path),))
             monkeypatch.setattr(codex_gather, "writer_lock_live", lambda *a: True)

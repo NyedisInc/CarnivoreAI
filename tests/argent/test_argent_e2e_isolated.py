@@ -110,6 +110,7 @@ def test_argent_copy_never_says_plugin():
     catalog = [ln for ln in (root / "client/js/i18n/catalog.en.js").read_text().splitlines() if "argent." in ln]
     assert catalog, "no argent keys found"
     for name, text in (("docs/argent.md", docs), ("argent_tools.py", tools), ("catalog", "\n".join(catalog))):
-        assert not re.search(r"plugin", text, re.I), f"the word plugin appears in {name}"
+        words = re.sub(r"[\w./-]*plugins/[\w./-]*", "", text)
+        assert not re.search(r"plugin", words, re.I), f"the word plugin appears in {name}"
     with pytest.raises(AssertionError):
         assert not re.search(r"plugin", "a plugin", re.I)

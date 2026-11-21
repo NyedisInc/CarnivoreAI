@@ -5,8 +5,8 @@ import io
 import json
 from pathlib import Path
 
-from src.cplugs.host import runtime
-from src.cplugs.huddle.cli import move_files_to_root as cli
+from src.plugins.host import runtime
+from src.plugins.huddle.cli import move_files_to_root as cli
 from tests.python.cplugs.huddle.test_task_manager_task_files import (  # noqa: F401
     BASE, PAGE, add, app, client, no_config, paste, plugin_folder, reply, stored_parts)
 
@@ -93,7 +93,7 @@ def test_a_root_without_the_marker_is_refused(client, app, tmp_path: Path):
 
 
 def test_a_stamped_folder_of_another_store_is_planned_around_and_never_written_into(client, app, tmp_path: Path):
-    from src.cplugs.sdk import task_folders
+    from src.plugins.sdk import task_folders
 
     a, b, f, art = setup_old_files(client, app)
     root = make_root(tmp_path)
@@ -108,8 +108,8 @@ def test_a_stamped_folder_of_another_store_is_planned_around_and_never_written_i
 def test_the_moved_files_go_into_the_tasks_own_stamped_folder(client, app, tmp_path: Path):
     from contextlib import closing
 
-    from src.cplugs.huddle import store_identity
-    from src.cplugs.sdk import task_folders
+    from src.plugins.huddle import store_identity
+    from src.plugins.sdk import task_folders
 
     a, b, f, art = setup_old_files(client, app)
     root = make_root(tmp_path)

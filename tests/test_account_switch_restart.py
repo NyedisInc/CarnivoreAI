@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from typing import Dict, List, Optional
 
 import pytest
-from fastapi import HTTPException
+from src.core.sessions.guarded_paste import PasteRefused
 
 from src.config.provider_account_switch import ProviderAccountSwitchConfig
 from src.config.provider_accounts import ProviderAccount
@@ -229,7 +229,7 @@ class Rotation:
 
     async def paste_continue(self, info, session_uuid):
         if self.refuse_paste:
-            raise HTTPException(status_code=409, detail={"code": "pane_dialog_open"})
+            raise PasteRefused("pane_dialog_open", "a dialog is open")
         self.pasted.append((info.session.id, session_uuid))
 
     def notify(self, outcome, *, session, from_account_id, to_account_id, limit_kind, moved=False, from_name="", to_name=""):
@@ -610,7 +610,7 @@ def test_wait_ready_accepts_a_finished_unread_prompt():
 
     class Ops:
         async def list(self):
-            return [SimpleNamespace(activity_status="finished_unread", session=SimpleNamespace(id="s1"))]
+            return [SimpleNamespace(activity_status="finished_unread", startup_gate="ready", session=SimpleNamespace(id="s1"))]
 
         async def durable_keys(self, infos=None):
             return {}

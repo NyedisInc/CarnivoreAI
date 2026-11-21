@@ -28,12 +28,15 @@
         return derived.length ? derived : null;
     }
 
+    var SYNTHETIC_NAME = /^(asleep|closed):/;
+
     function resolve(row, options) {
         if (!row || typeof row !== 'object') return null;
         var label = cleanString(row.label);
         if (label !== null) return label;
         var strip = !(options && options.stripPrefix === false);
-        return strip ? stripAppPrefix(row.name) : cleanString(row.name);
+        var name = (SYNTHETIC_NAME.test(String(row.name)) && cleanString(row.tmux_name) !== null) ? row.tmux_name : row.name;
+        return strip ? stripAppPrefix(name) : cleanString(name);
     }
 
     function resolveToast(toast) {

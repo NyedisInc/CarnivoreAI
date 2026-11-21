@@ -29,6 +29,6 @@
   @layer components {
     .oc-wicon { position: relative; display: inline-flex; flex: 0 0 auto; vertical-align: middle; }
 
-    .oc-wicon-globe { position: absolute; right: -3px; bottom: -3px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--oc-ground-panel); color: currentColor; pointer-events: none; }
+    .oc-wicon-globe { position: absolute; right: -3px; bottom: -3px; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--oc-radius-circle); background: var(--oc-ground-panel); color: currentColor; pointer-events: none; }
   }
 </style>

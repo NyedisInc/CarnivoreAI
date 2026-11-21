@@ -96,7 +96,7 @@ class DrawerViewState(BaseModel):
 class DrawerArrangement(BaseModel):
     """The sidebar and agents drawer arrangement, shared by every device.
 
-    Alex (Adoom666), 2026-09-26: "pins should not be per device." Keyed by
+    the owner, 2026-09-26: "pins should not be per device." Keyed by
     ``session_uuid``, never by tmux name, because a name is reused and
     changes on a reopen (CLAUDE.md, "a tmux name is not a session's identity
     in the sidebar"). The browser's own localStorage envelope stays its
@@ -131,7 +131,7 @@ class DrawerArrangement(BaseModel):
         shared value. ``apply_changes`` keeps the stored ``mobile`` when an
         incoming value omits the key.
       sections (list[str] | None): the user's order of the drawer's top-level
-        sections, ids from ``SECTION_IDS``, no repeats (Alex (Adoom666),
+        sections, ids from ``SECTION_IDS``, no repeats (the owner,
         2026-10-12, #1687). ONE value for every device. None means the default
         order, which is code; a section a stored list lacks joins at its default
         slot on the client. ``apply_changes`` keeps the stored list when an

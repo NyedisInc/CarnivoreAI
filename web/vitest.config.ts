@@ -32,7 +32,7 @@ export default defineConfig({
         fsModuleCache: true,
         environment: 'node',
         include: ['src/**/*.test.ts'],
-        setupFiles: ['src/cplugs/huddle/task-manager-test-setup.ts'],
+        setupFiles: ['src/plugins/huddle/task-manager-test-setup.ts'],
         reporters: ['default'],
     },
 });

@@ -5,6 +5,7 @@ import json
 import re
 from pathlib import Path
 
+from src.api import session_crud_routes
 from src.api.auth import require_auth
 from src.core.mcp import pending, tools
 from src.core.mcp.approvals import call_context, persist, runtime as approval_runtime
@@ -80,6 +81,7 @@ def test_a_replay_whose_target_is_gone_is_refused(env, tmp_path):
     action_id = _ask_stop(client, mgr)
     pending._store = _store(db)
     mgr.infos = mgr.infos[:1]
+    session_crud_routes.OWNER_LISTING_CACHE.invalidate()
     body = client.post(f"/api/v1/agent-actions/{action_id}/approve").json()
     assert body["status"] == "refused" and body["reason"] and not slept
 
@@ -148,7 +150,7 @@ def test_no_tool_plugin_or_peer_path_can_decide():
     decide = re.compile(r"(?:store|get_store\(\))\.(approve|deny|execute_claimed|claim_for_beast|deny_for_caller|withdraw)\(")
     allowed = {"src/api/agent_action_routes.py", "src/api/mcp_admin_routes.py", "src/core/mcp/beast_mode.py",
                "src/core/mcp/pending.py",
-               "src/cplugs/host/session_create_port.py"}
+               "src/plugins/host/session_create_port.py"}
     callers = {str(p.relative_to(ROOT)) for p in (ROOT / "src").rglob("*.py") if decide.search(p.read_text())}
     assert callers and callers <= allowed, sorted(callers - allowed)
-    assert not (ROOT / "src/cplugs/sdk/approvals.py").exists()
+    assert not (ROOT / "src/plugins/sdk/approvals.py").exists()

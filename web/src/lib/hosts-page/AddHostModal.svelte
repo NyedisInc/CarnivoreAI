@@ -2,7 +2,6 @@
 <script lang="ts">
     import Button from '../base/Button.svelte';
     import Field from '../base/Field.svelte';
-    import IconButton from '../base/IconButton.svelte';
     import { t as reactiveT } from '../i18n/index.svelte';
     import ModalShell from '../dialog-frame/ModalShell.svelte';
     import type { Translate } from '../sessions/types';
@@ -62,14 +61,7 @@
     }
 </script>
 
-<ModalShell title={t('hosts.add.title')} overlayClass="text-prompt-modal na-flow" dismissable={!busy} onCancel={() => close(null)}>
-    {#snippet head()}
-        <div class="text-prompt-modal__head">
-            <span class="text-prompt-modal__verb">&raquo; {t('hosts.add.title')}</span>
-            <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close
-                disabled={busy} onclick={() => close(null)} />
-        </div>
-    {/snippet}
+<ModalShell look="titlerow" title={t('hosts.add.title')} overlayClass="na-flow" dismissable={!busy} onCancel={() => close(null)}>
     <Field
         label={t('hosts.add.label_label')}
         id="modal-host-label"

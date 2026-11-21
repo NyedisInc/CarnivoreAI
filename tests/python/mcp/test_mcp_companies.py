@@ -48,7 +48,7 @@ def test_reads_carry_company_fields(world, gate):  # noqa: F811
     assert _company_of(world, "alpha") == company["id"]
     projects = _payload(_call("projects_list", {}))["projects"]
     assert {(p["name"], p["company_name"]) for p in projects} >= {("alpha", "Acme"), ("beta", None)}
-    assert _payload(_call("companies_list", {}))["companies"] == [{"id": company["id"], "name": "Acme", "project_count": 1, "hue": None, "parent_id": None, "hq_project_id": None}]
+    assert _payload(_call("companies_list", {}))["companies"] == [{"id": company["id"], "name": "Acme", "project_count": 1, "hue": None, "parent_id": None, "hq_project_id": None, "folder": None}]
     names = {t["name"] for t in tools.tool_definitions(READ_ONLY)}
     assert "companies_list" in names and "company_hue_set" not in names
 

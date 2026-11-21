@@ -6,9 +6,9 @@ import hashlib
 from pathlib import Path
 from typing import Any, Dict, List
 
-from src.cplugs.save.fallback import BackupTranscripts
-from src.cplugs.save.vault import adopt, retention
-from src.cplugs.save.vault.ranges import EntryReader
+from src.plugins.save.fallback import BackupTranscripts
+from src.plugins.save.vault import adopt, retention
+from src.plugins.save.vault.ranges import EntryReader
 from src.core.deepsearch.fallback_hook import FallbackPoint, IncomingFile
 from tests.python.cplugs.save.vault_helpers import CONV, World, jsonl
 

@@ -12,14 +12,14 @@ import pytest
 import structlog
 
 from src.core.inventory.registry_side import EXCLUDED_STORES
-from src.cplugs.host import runtime
-from src.cplugs.sdk import data_decl, sidecar
-from src.cplugs.sdk.manifest import load_manifest, parse_manifest
-from src.cplugs.sdk.sidecar import validate_document
+from src.plugins.host import runtime
+from src.plugins.sdk import data_decl, sidecar
+from src.plugins.sdk.manifest import load_manifest, parse_manifest
+from src.plugins.sdk.sidecar import validate_document
 from tests.python.cplugs.test_extension_schemas import good
 
 ROOT = Path(__file__).resolve().parents[3]
-PLUGINS = ROOT / "src" / "cplugs"
+PLUGINS = ROOT / "src" / "plugins"
 SHIPPED = [d.id for d in runtime.definitions()]
 POLICY = {"own": "carried", "share": "excluded", "reason": "the owner's own work"}
 DB = {"id": "summaries", "kind": "db", "path": "ai_summaries.db", "scope_by": "session_uuid", "policy": POLICY, "secret_columns": []}
@@ -200,8 +200,8 @@ def test_the_leftover_list_names_stores_the_tables_really_hold() -> None:
 
 
 def test_the_save_plugin_declares_its_vault_as_a_backup_destination_placed_by_its_own_setting() -> None:
-    from src.cplugs.sdk import crate_sources as cs
-    from src.cplugs.crate import policy
+    from src.plugins.sdk import crate_sources as cs
+    from src.plugins.crate import policy
 
     assert f"{cs.STORE_VAULT}/*" in policy.POLICY and set(_declared()["save"]) == {"vault", "legacy_points"}
     vault = _declared()["save"]["vault"]
@@ -214,7 +214,7 @@ def test_the_save_plugin_declares_its_vault_as_a_backup_destination_placed_by_it
 
 
 def test_policy_backup_vault_is_only_for_a_folder_that_is_not_a_destination() -> None:
-    from src.cplugs.sdk.data_decl import problems_in
+    from src.plugins.sdk.data_decl import problems_in
 
     base = {"id": "a", "kind": "folder", "path": "a", "scope_by": "install", "policy": {"own": "excluded", "share": "excluded", "reason": "r", "backup": "vault"}}
     assert problems_in([base], {}) == []

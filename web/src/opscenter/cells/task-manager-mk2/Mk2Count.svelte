@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { huddle } from '../../../cplugs/huddle/huddle.svelte';
+  import { huddle } from '../../../plugins/huddle/huddle.svelte';
   import './mk2-design.css';
   import { useFrameHeader } from '../../shell/frame-header.svelte';
   import Icon from '../../ui/Icon.svelte';

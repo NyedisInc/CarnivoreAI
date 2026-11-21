@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 
 import pytest
 
+from src.core.attention.record_identity import RecordIdentity
+
 from src.core.attention.registry_record import (
     MIN_PENDING_VERSION,
     REG_ABSENT,
@@ -114,6 +116,12 @@ FOREIGN_RECORD = {
 WAITING_TMUX_NAME = "cloude_cloudecode-2"
 IDLE_TMUX_NAME = "cloude_Shopify"
 SHELL_TMUX_NAME = "cloude_Argent"
+
+
+@pytest.fixture(autouse=True)
+def _no_real_start_time_reads(monkeypatch):
+    from src.core.attention import registry_index as module
+    monkeypatch.setattr(module, "_IDENTITY", RecordIdentity(lstarts=lambda pids: None))
 
 
 def _write_record(directory, payload, *, pid, filename=None) -> int:
@@ -421,3 +429,50 @@ def test_an_empty_object_on_disk_puts_no_ok_record_in_the_index(tmp_path):
     assert registry_for_session(
         tmux_name=IDLE_TMUX_NAME, directory=str(tmp_path)
     ).verdict == REG_ABSENT
+
+
+
+from src.core.attention import registry_index as _registry_index_module  # noqa: E402
+
+
+def _with_lstarts(monkeypatch, answer):
+    monkeypatch.setattr(
+        _registry_index_module, "_IDENTITY", RecordIdentity(lstarts=lambda pids: answer(pids))
+    )
+
+
+def test_a_live_pid_started_at_another_time_than_the_record_is_stale(tmp_path, monkeypatch):
+    pid = os.getpid()
+    _write_record(tmp_path, IDLE_RECORD, pid=pid)
+    _with_lstarts(monkeypatch, lambda pids: {p: "Tue Nov 17 14:29:40 2026" for p in pids})
+
+    record = registry_for_session(tmux_name=IDLE_TMUX_NAME, directory=str(tmp_path))
+
+    assert record.verdict == REG_STALE
+    assert record.known is False
+    assert record.status is None
+    assert record.session_uuid is None
+
+
+def test_a_live_pid_whose_start_matches_the_record_is_indexed(tmp_path, monkeypatch):
+    _write_record(tmp_path, IDLE_RECORD, pid=os.getpid())
+    _with_lstarts(monkeypatch, lambda pids: {p: IDLE_RECORD["procStart"] for p in pids})
+
+    index = read_registry_index(str(tmp_path))
+
+    assert index[IDLE_TMUX_NAME].verdict == REG_OK
+
+
+def test_an_unmeasurable_start_keeps_the_record(tmp_path, monkeypatch):
+    _write_record(tmp_path, IDLE_RECORD, pid=os.getpid())
+    _with_lstarts(monkeypatch, lambda pids: None)
+
+    assert read_registry_index(str(tmp_path))[IDLE_TMUX_NAME].verdict == REG_OK
+
+
+def test_a_record_without_proc_start_is_judged_by_signal_zero_alone(tmp_path, monkeypatch):
+    payload = {k: v for k, v in IDLE_RECORD.items() if k != "procStart"}
+    _write_record(tmp_path, payload, pid=os.getpid())
+    _with_lstarts(monkeypatch, lambda pids: {p: "Tue Nov 17 14:29:40 2026" for p in pids})
+
+    assert read_registry_index(str(tmp_path))[IDLE_TMUX_NAME].verdict == REG_OK

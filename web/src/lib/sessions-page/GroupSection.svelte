@@ -16,7 +16,7 @@
     import { agentOffered } from '../projects-shared/agent-offer';
     import { companies, type Company } from '../companies';
     import { packTag } from '../projects-shared/pack-model';
-    import { projectPanels } from '../../cplugs/sdk/project-panels';
+    import { projectPanels } from '../../plugins/sdk/project-panels';
     import { entryNodes } from '../item-menu/entries';
     import { projectMenuEntries } from '../item-menu/menus/project-entries';
     import { ITEM_MENU_ENV } from '../item-menu/open.svelte';

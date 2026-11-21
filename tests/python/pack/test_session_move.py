@@ -20,7 +20,7 @@ from src.api import federation_pack_move_routes as move_routes  # noqa: E402
 from src.api import federation_pack_transport_routes as transport_routes  # noqa: E402
 from src.api import pack_migrate_env as env_mod  # noqa: E402
 from src.api import pack_move_env, peer_auth, recreate_action  # noqa: E402
-from src.api import recreate_routes as rr  # noqa: E402
+from src.core.session_ops import row_probe  # noqa: E402
 from src.config import settings  # noqa: E402
 from src.core import session_change_notice, session_store  # noqa: E402
 from src.core.account_switch import restart_account  # noqa: E402
@@ -92,7 +92,7 @@ def world(monkeypatch, tmp_path):
         env=dataclasses.replace(env_mod.target_env(), projects_dir=str(current[0].projects), transcripts_root=current[0].claude),
         launch_for=lambda key, sender: account.launch_for(key, sender, tmp_path / "no-config.json")))
     monkeypatch.setattr("src.core.session_imported_restart.default_projects_dir", lambda: current[0].claude)
-    monkeypatch.setattr(rr, "_measure_presence", lambda name, socket: TmuxPresence(TMUX_GONE))
+    monkeypatch.setattr(row_probe, "measure_presence", lambda name, socket: TmuxPresence(TMUX_GONE))
     monkeypatch.setattr(recreate_action.rr, "validate_agent_choice", lambda s, agent, model=None, extra_args=None: SimpleNamespace(
         verdict="accepted", command="claude " + " ".join(extra_args or []), detail=""))
 

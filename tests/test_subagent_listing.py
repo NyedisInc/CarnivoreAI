@@ -95,8 +95,8 @@ def test_a_conversation_with_no_transcript_is_absent_with_zeros(corpus):
 def test_an_unchanged_conversation_is_not_reclassified(corpus, monkeypatch):
     root, parent = corpus
     calls = []
-    real = tally_mod.read_subagents
-    monkeypatch.setattr(tally_mod, "read_subagents",
+    real = tally_mod.read_marked
+    monkeypatch.setattr(tally_mod, "read_marked",
                         lambda *a, **k: calls.append(1) or real(*a, **k))
     clock = _Clock()
     cache = SubagentTallyCache(projects_dir=root, clock=clock)
@@ -219,6 +219,9 @@ def test_the_listing_route_serves_the_fields(monkeypatch):
         _attention_watcher = _Watcher({
             "ses_a": SubagentTally("ok", running=1, total=4, unknown=0),
         })
+
+        def tmux_socket_name(self) -> str:
+            return "cloude"
 
         async def list_session_infos(self):
             return [_info("ses_a"), _info("ses_b"), _info("ses_c", family="codex")]

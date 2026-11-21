@@ -20,6 +20,7 @@ from src.core.swarm.launch import with_swarm_args  # noqa: E402
 from src.core.session_agent_infer import PER_RUN_FLAGS  # noqa: E402
 from src.core.session_recreate_presence import TMUX_GONE, TmuxPresence  # noqa: E402
 from src.core.session_sleep import REFUSED_NO_CONVERSATION, sleep_refusal  # noqa: E402
+from src.core.session_ops import row_probe
 
 CONV = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
@@ -29,8 +30,8 @@ def env(tmp_path, monkeypatch):
     from src.config import settings
 
     monkeypatch.setattr(type(settings), "get_state_dir", lambda self: tmp_path, raising=True)
-    monkeypatch.setattr(rr, "_socket_name", lambda: "cloude", raising=True)
-    monkeypatch.setattr(rr, "_measure_presence", lambda n, s: TmuxPresence(outcome=TMUX_GONE, detail="x"), raising=True)
+    monkeypatch.setattr(row_probe, "socket_name", lambda: "cloude", raising=True)
+    monkeypatch.setattr(row_probe, "measure_presence", lambda n, s: TmuxPresence(outcome=TMUX_GONE, detail="x"), raising=True)
     assert ensure_db_migrated(tmp_path).status == "ok"
     with closing(connect(db_path_for(tmp_path), create=False)) as conn:
         ids = {}

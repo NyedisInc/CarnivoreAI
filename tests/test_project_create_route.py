@@ -65,6 +65,10 @@ def home_parent(tmp_path, monkeypatch):
     parent = tmp_path / "Development"
     parent.mkdir()
     _pin_roots(monkeypatch, tmp_path)
+    from src.config import settings
+    from src.core.db import connect, db_path_for
+
+    connect(db_path_for(settings.get_state_dir())).close()
     return parent
 
 

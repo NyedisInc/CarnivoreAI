@@ -7,7 +7,7 @@ import shutil
 import subprocess
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 
@@ -15,6 +15,7 @@ from src.core.dev_tools import git_guard
 from src.core.host_metrics import PROBE_TIMEOUT_SECONDS, unavailable
 from src.core.sessions.agent_update import CLAUDE_INSTALL_CANDIDATES
 from src.core.tmux_discovery import TmuxVersionSkewError, tmux_argv_prefix
+from src.core.tmux_transport.run import tmux_run_sync
 from src.core.tmux_listing_parse import is_plumbing_session
 
 logger = structlog.get_logger()
@@ -59,6 +60,14 @@ def _run(argv: List[str]) -> Optional[str]:
     if result is None or result[0] != 0:
         return None
     return result[1]
+
+
+def _tmux_full(socket_name: str, *args: str) -> Optional[Tuple[int, str, str]]:
+    done = tmux_run_sync(socket_name, *args, timeout=PROBE_TIMEOUT_SECONDS)
+    if done.error or done.returncode is None:
+        logger.debug("server_status_probe_failed", argv="tmux", error=done.error)
+        return None
+    return done.returncode, done.stdout.decode("utf-8", "replace"), done.stderr.decode("utf-8", "replace")
 
 
 def parse_etime(raw: str) -> Optional[int]:
@@ -154,7 +163,7 @@ def collect_tmux(socket_name: str) -> Dict[str, Any]:
         return dict(unavailable("tmux is not installed"), socket=socket_name,
                     server_running=None, history_limit=None, sessions=[])
 
-    result = _run_full(base + ["list-sessions", "-F", _TMUX_FORMAT])
+    result = _tmux_full(socket_name, "list-sessions", "-F", _TMUX_FORMAT)
     if result is None:
         return dict(unavailable("tmux could not be run"), socket=socket_name,
                     server_running=None, history_limit=None, sessions=[])
@@ -180,17 +189,17 @@ def collect_tmux(socket_name: str) -> Dict[str, Any]:
         "error": None,
         "socket": socket_name,
         "server_running": True,
-        "history_limit": _history_limit(base),
+        "history_limit": _history_limit(socket_name),
         "sessions": parse_sessions(out),
     }
 
 
-def _history_limit(base: List[str]) -> Optional[int]:
-    out = _run(base + ["show-options", "-gv", "history-limit"])
-    if out is None:
+def _history_limit(socket_name: str) -> Optional[int]:
+    result = _tmux_full(socket_name, "show-options", "-gv", "history-limit")
+    if result is None or result[0] != 0:
         return None
     try:
-        return int(out.strip())
+        return int(result[1].strip())
     except ValueError:
         return None
 

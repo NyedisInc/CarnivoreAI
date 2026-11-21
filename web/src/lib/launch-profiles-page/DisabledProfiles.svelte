@@ -37,7 +37,7 @@
   @layer components {
     .lp-off { display: flex; flex-direction: column; gap: var(--oc-space-0-5); min-width: 0; padding-block: var(--oc-space-1); }
     .lp-off__name { min-width: 0; font-size: var(--oc-fs-body); font-weight: 600; overflow-wrap: anywhere; unicode-bidi: isolate; }
-    .lp-off__name code { font-family: var(--pl-mono); font-weight: 400; }
-    .lp-off__sub { color: var(--pl-dim); font-family: var(--pl-mono); font-size: var(--oc-fs-hint); }
+    .lp-off__name code { font-family: var(--font-mono); font-weight: 400; }
+    .lp-off__sub { color: var(--oc-text-muted); font-family: var(--font-mono); font-size: var(--oc-fs-hint); }
   }
 </style>

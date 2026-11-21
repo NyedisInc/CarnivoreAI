@@ -164,7 +164,7 @@ def _wait_until(done, timeout: float = 10.0) -> None:
 
 
 def test_a_lifecycle_event_reaches_the_save_seam_exactly_once_and_only_after_the_milestone_is_written(wired):
-    from src.cplugs.sdk import save_triggers
+    from src.plugins.sdk import save_triggers
 
     seen = []
 
@@ -188,7 +188,7 @@ def test_a_lifecycle_event_reaches_the_save_seam_exactly_once_and_only_after_the
 
 
 def test_a_failing_listener_never_fails_or_repeats_the_milestone(wired):
-    from src.cplugs.sdk import save_triggers
+    from src.plugins.sdk import save_triggers
 
     calls = []
     stop = save_triggers.subscribe(lambda save: calls.append(1) or (_ for _ in ()).throw(RuntimeError("boom")))

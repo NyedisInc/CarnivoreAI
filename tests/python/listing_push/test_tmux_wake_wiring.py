@@ -118,7 +118,7 @@ def _watcher_pass(monkeypatch):
     manager = SimpleNamespace(_registry=SimpleNamespace(sessions={"s": 1}), _is_unread=lambda *a: False)
     effects = MagicMock()
     effects.instance_for.return_value = (None, None)
-    hooks = wiring_builders.ObservationHooks(*(MagicMock() for _ in range(7)))
+    hooks = wiring_builders.ObservationHooks(*(MagicMock() for _ in range(8)))
     on_observation = wiring_builders.make_on_observation(manager, app_state, effects, hooks, None)
     target = SimpleNamespace(session_id="s", key="k")
 

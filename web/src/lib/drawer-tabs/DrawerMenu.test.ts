@@ -7,7 +7,7 @@ import { RAIL_DESTINATIONS, RAIL_HELP_LINKS } from '../../opscenter/shell/rail-i
 import { navAnchors } from '../../opscenter/engine/navAnchors.svelte';
 import { setLocale } from '../i18n/index.svelte';
 import { viewport } from '../../opscenter/engine/viewport.svelte';
-import { cplugEnablement } from '../../cplugs/host/enablement.svelte';
+import { cplugEnablement } from '../../plugins/host/enablement.svelte';
 
 // Task Manager is on by default for a clean install since 2026-10-05 (docs/cplugs.md section 9 question 1, superseded);
 // these tests pin its enablement explicitly instead of leaning on the default.

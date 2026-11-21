@@ -43,7 +43,7 @@ function questionKeys(list, led) {
 
 function createDockPresence(deps) {
   const dock = deps.platform === 'darwin' && deps.app && deps.app.dock ? deps.app.dock : null;
-  if (!dock) return { update() {}, clear() {} };
+  if (!dock) return { update() {}, clear() {}, bounce() {} };
   let badge = null;
   let menuSignature = null;
   let questions = new Set();
@@ -68,6 +68,7 @@ function createDockPresence(deps) {
       if (seeded && arrived && !focused) dock.bounce('informational');
       seeded = true;
     },
+    bounce() { dock.bounce('informational'); },
     clear() {
       dock.setBadge('');
       dock.setMenu(deps.Menu.buildFromTemplate([]));

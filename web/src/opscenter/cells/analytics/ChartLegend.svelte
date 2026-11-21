@@ -94,7 +94,7 @@
 
     .chart-legend__item > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
-    .chart-legend__swatch { flex: none; width: var(--oc-space-2); height: var(--oc-space-1); border-radius: 1px; }
+    .chart-legend__swatch { flex: none; width: var(--oc-space-2); height: var(--oc-space-1); border-radius: var(--oc-radius-xs); }
 
     .chart-legend__pager { display: flex; flex: none; align-items: center; gap: var(--oc-space-1); padding-left: var(--oc-space-2); }
 

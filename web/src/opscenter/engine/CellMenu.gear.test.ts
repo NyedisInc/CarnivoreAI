@@ -74,29 +74,29 @@ test('normal view (no edit layout): the menu lists no fold and no size items (Al
   expect(document.querySelector('[data-menu-phone-fold]')).toBeNull();
 });
 
-test('settings... on a chart opens its settings directly, in edit layout only (item 685, Q3 b: edit mode is arranging plus settings)', async () => {
+test('settings... on a chart is in the normal menu and opens its settings outside edit layout (the owner, 2026-11-19)', async () => {
   const { configureSheet, closeConfigure } = await import('../widgets/chrome/configure.svelte');
   const slot = 'analytics:11111111-1111-4111-8111-111111111111';
   homeLayout.state.layout = row([slot, 'notes']) as never;
   layoutEditor.active = false;
   open(slot);
-  expect(document.querySelector('[data-node="settings"]')).toBeNull();
+  document.querySelector<HTMLElement>('[data-node="settings"]')!.click();
+  flushSync();
+  expect(layoutEditor.active).toBe(false);
+  expect(configureSheet).toMatchObject({ slot, kind: 'settings' });
+  closeConfigure();
   unmount(app!);
   app = null;
   document.body.innerHTML = '';
-  layoutEditor.active = true;
-  open(slot);
-  document.querySelector<HTMLElement>('[data-node="settings"]')!.click();
-  flushSync();
-  expect(layoutEditor.active).toBe(true);
-  expect(configureSheet).toMatchObject({ slot, kind: 'settings' });
-  closeConfigure();
+  homeLayout.state.layout = row(['notes']) as never;
+  open('notes');
+  expect(document.querySelector('[data-node="settings"]')).toBeNull();
 });
 
 test('a plugin widget slot offers pop out and opens its own widget window (S2d, docs/cplugs.md 2.7)', async () => {
   layoutEditor.active = false;
-  const { registerCplugWidgets } = await import('../../cplugs/host/widgets');
-  const { huddleCplug } = await import('../../cplugs/huddle');
+  const { registerCplugWidgets } = await import('../../plugins/host/widgets');
+  const { huddleCplug } = await import('../../plugins/huddle');
   registerCplugWidgets(huddleCplug);
   const slot = 'huddle.chat:agent:7';
   homeLayout.state.layout = row([slot, 'notes']) as never;

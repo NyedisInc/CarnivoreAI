@@ -39,7 +39,7 @@
 
 .ai-pick__panel {
     position: fixed;
-    z-index: 1300;
+    z-index: var(--oc-z-picker);
     display: flex;
     flex-direction: column;
     box-sizing: border-box;

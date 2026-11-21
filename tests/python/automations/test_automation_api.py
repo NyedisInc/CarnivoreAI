@@ -193,12 +193,13 @@ def test_every_store_write_announces_its_topic(world):
     done.append(fires("reconcile_boot", R, lambda: store.reconcile_boot("b2")))
     skipped = store.insert_run(made["a"]["automation_id"], "b2")
     done.append(fires("finish_skip", R, lambda: store.finish_skip(skipped["run_id"], m.R_DISABLED)))
+    done.append(fires("repoint_project", A, lambda: store.repoint_project(made["a"].get("project_id") or 1, 999)))
     done.append(fires("delete", both, lambda: store.delete(made["a"]["automation_id"])))
     assert len(done) >= 10
     writers = {n for n, f in inspect.getmembers(AutomationStore, inspect.isfunction)
                if not n.startswith("_") and ("self._write(" in inspect.getsource(f) or "self.update(" in inspect.getsource(f))}
     assert writers == {"create", "update", "set_enabled", "delete", "claim_due", "finish_skip", "insert_run", "update_run",
-                       "reconcile_boot", "add_run_sessions", "mark_run_session", "settle_retry"}, writers
+                       "reconcile_boot", "add_run_sessions", "mark_run_session", "settle_retry", "repoint_project"}, writers
     assert writers <= {d.split("_on")[0].split("_live")[0].split("_terminal")[0].split("_missed")[0] for d in done}
 
 

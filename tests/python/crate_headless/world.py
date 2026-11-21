@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from scripts.crate.client import CrateClient
 from scripts.crate.transport import CHUNK, Body, Response
 from src.core.db import connect, db_path_for
-from src.cplugs.crate import imports, service
+from src.plugins.crate import imports, service
 from tests.python.cplugs.crate.api_world import ApiWorld
 from tests.python.crate_import.install import Install, make_install
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import platform
+import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
@@ -14,8 +15,9 @@ from src.core.notifications.cards import live as card_live, sources as card_sour
 from src.core.notifications.destinations import migration, switch_origin, tick_backfill
 from src.core.notifications.destinations.service import NotificationService, get_service
 from src.core.notifications.kinds import apns, registry, webpush
-from src.core.notifications.settings_doc import aliases
+from src.core.notifications.settings_doc import aliases, routes
 from src.core.notifications.sources import open_checks
+from src.core.sessions.agent_update_warn import warn_exc_once
 
 log = structlog.get_logger(__name__)
 
@@ -38,7 +40,7 @@ def _subscription_ids(app_state: Any) -> list[str]:
     try:
         return [str(r["id"]) for r in sender_for(app_state).store.list() if r.get("id")]
     except (OSError, ValueError, KeyError) as exc:
-        log.warning("notification_install_subscriptions_unreadable", error=str(exc), error_type=type(exc).__name__)
+        warn_exc_once("notification_install_subscriptions_unreadable", exc)
         return []
 
 
@@ -53,6 +55,32 @@ async def _run_migration(app_state: Any, service: NotificationService) -> Option
     except (OSError, ValueError, KeyError, RuntimeError) as exc:
         log.warning("notification_migration_failed", error_type=type(exc).__name__)
         return None
+
+
+def _federation_install_id() -> Optional[str]:
+    from contextlib import closing  # noqa: PLC0415
+
+    from src.api import peer_auth  # noqa: PLC0415
+
+    try:
+        with closing(peer_auth.open_db()) as conn:
+            return peer_auth.read_install_id(conn) or None
+    except (OSError, ValueError, RuntimeError, sqlite3.Error) as exc:
+        warn_exc_once("notification_install_iid_unreadable", exc)
+        return None
+
+
+async def _migrate_routes(service: NotificationService) -> None:
+    iid = await asyncio.to_thread(_federation_install_id)
+    if iid is None:
+        return
+    try:
+        written = await asyncio.to_thread(routes.migrate_legacy, service.docs, iid)
+    except (OSError, ValueError) as exc:
+        log.warning("notification_routes_migration_failed", error_type=type(exc).__name__)
+        return
+    if written:
+        log.info("notification_routes_migrated", routes=written)
 
 
 async def install(app_state: Any, manager: Any) -> Installed:
@@ -74,6 +102,7 @@ async def install(app_state: Any, manager: Any) -> Installed:
         await switch_origin.backfill(service.docs, service.secrets)
         await tick_backfill.backfill_type_ticks(service.docs)
         await asyncio.to_thread(aliases.fold_store, service.docs)
+        await _migrate_routes(service)
 
         async def link_base() -> str:
             return (await links.resolver.resolve(getattr(app_state, "phone_link", None))).base

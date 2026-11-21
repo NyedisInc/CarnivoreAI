@@ -17,10 +17,10 @@ from src.core.project_tombstones import record_tombstone, tombstoned_roots
 from src.core.session_imported_restart import DIRECTORY_MEASURED, resume_directory
 from src.core.session_journal_store import empty_journal, load_journal, save_journal
 from src.core.session_recreate import RECREATE, TMUX_GONE, TmuxPresence, plan_recreate
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import build_plan as build_export_plan
-from src.cplugs.crate.writer import run_export
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import build_plan as build_export_plan
+from src.plugins.crate.writer import run_export
+from src.plugins.sdk import crate_format as cf
 from tests.python.cplugs.crate.crate_world import env_for, session_request
 from tests.python.crate_import.install import Install
 from tests.python.crate_import.test_import_plan import export_crate, target

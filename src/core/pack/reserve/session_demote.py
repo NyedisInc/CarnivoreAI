@@ -14,13 +14,15 @@ from src.core.machine_stats import libproc_snapshot
 from src.core.pack.load import process_tree
 from src.core.pack.reserve import throttle as throttle_mod
 from src.core.tmux_discovery import TmuxVersionSkewError, tmux_argv_prefix
+from src.core.tmux_transport.run import tmux_argv_stdout
 
 logger = structlog.get_logger()
 
 FOCUS_SECONDS = 120.0
 DEFAULT_BUSY_FRACTION = 0.75
 _AGENT_NAMES = ("claude", "codex")
-_SESSIONS_SQL = "SELECT DISTINCT tmux_socket FROM sessions WHERE tmux_socket IS NOT NULL AND tmux_name IS NOT NULL"
+_SESSIONS_SQL = ("SELECT DISTINCT tmux_socket FROM sessions WHERE tmux_socket IS NOT NULL AND tmux_name IS NOT NULL "
+                 "AND origin != 'peer'")
 
 _last_input: Dict[str, float] = {}
 _input_lock = threading.Lock()
@@ -50,18 +52,28 @@ def is_agent_argv(argv: Iterable[str]) -> bool:
     return "/@openai/codex" in args[0]
 
 
-def select_demotions(procs: List[process_tree.Proc], panes: Mapping[str, List[int]], argv: Mapping[int, Tuple[str, ...]],
-                     focused: Set[str]) -> Tuple[Set[int], Set[int]]:
-    demote: Set[int] = set()
-    scope: Set[int] = set()
+def session_trees(procs: List[process_tree.Proc], panes: Mapping[str, List[int]], argv: Mapping[int, Tuple[str, ...]]) -> Dict[str, Set[int]]:
+    out: Dict[str, Set[int]] = {}
     for name, roots in panes.items():
         for root, tree in process_tree.trees(procs, roots).items():
-            scope |= tree
             agents = {p for p in tree if is_agent_argv(argv.get(p, ()))}
-            if name in focused or not agents:
+            if not agents:
                 continue
             below = set().union(*process_tree.trees(procs, agents).values())
-            demote |= below - agents - {root}
+            out.setdefault(name, set()).update(below - agents - {root})
+    return out
+
+
+def select_demotions(procs: List[process_tree.Proc], panes: Mapping[str, List[int]], argv: Mapping[int, Tuple[str, ...]],
+                     focused: Set[str]) -> Tuple[Set[int], Set[int]]:
+    scope: Set[int] = set()
+    for roots in panes.values():
+        for tree in process_tree.trees(procs, roots).values():
+            scope |= tree
+    demote: Set[int] = set()
+    for name, below in session_trees(procs, panes, argv).items():
+        if name not in focused:
+            demote |= below
     return demote, scope
 
 
@@ -74,7 +86,7 @@ def pane_roots(open_db: Callable[[], sqlite3.Connection], *, run: Optional[Calla
     with closing(open_db()) as conn:
         sockets = [str(r[0]) for r in conn.execute(_SESSIONS_SQL)]
         skip = _excluded_names(conn)
-    reader = run or throttle_mod._run
+    reader = run or tmux_argv_stdout
     panes: Dict[str, List[int]] = {}
     for socket in sockets:
         try:
@@ -88,15 +100,23 @@ def pane_roots(open_db: Callable[[], sqlite3.Connection], *, run: Optional[Calla
     return panes
 
 
+def gather(open_db: Callable[[], sqlite3.Connection], procs: List[process_tree.Proc]
+           ) -> Optional[Tuple[Dict[str, List[int]], Dict[int, Tuple[str, ...]]]]:
+    panes = pane_roots(open_db)
+    trees = process_tree.trees(procs, [r for roots in panes.values() for r in roots])
+    pids = set().union(*trees.values()) if trees else set()
+    details = libproc_snapshot.process_details(pids) if pids else {}
+    if details is None:
+        return None
+    return panes, {p: d.argv for p, d in details.items()}
+
+
 def make_select(open_db: Callable[[], sqlite3.Connection]) -> throttle_mod.Select:
     def select(procs: List[process_tree.Proc]) -> Optional[Tuple[Set[int], Set[int]]]:
-        panes = pane_roots(open_db)
-        trees = process_tree.trees(procs, [r for roots in panes.values() for r in roots])
-        pids = set().union(*trees.values()) if trees else set()
-        details = libproc_snapshot.process_details(pids) if pids else {}
-        if details is None:
+        got = gather(open_db, procs)
+        if got is None:
             return None
-        return select_demotions(procs, panes, {p: d.argv for p, d in details.items()}, focused_sessions())
+        return select_demotions(procs, got[0], got[1], focused_sessions())
     return select
 
 

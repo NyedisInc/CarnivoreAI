@@ -13,7 +13,7 @@ from src.core import (
 )
 from src.core.attention.ask_toasts import AskToasts, HeldAsk
 from src.core.attention.display import to_display
-from src.core.attention.evidence import FAMILY_CODEX, STATE_NEEDS_USER
+from src.core.attention.evidence import FAMILY_CODEX, STATE_DONE_IDLE, STATE_NEEDS_USER
 from src.core.attention.codex_identity import codex_bind_conversation
 from src.core.attention.codex_reader import CODEX_RECORD_ABSENT
 from src.core.attention.ledger import Transition
@@ -31,7 +31,7 @@ from src.core.session_lineage_divergence import SESSION_START_SOURCE_REGISTRY
 from src.core.session_status import STATUS_UNKNOWN
 from src.core.toast_auto_ack import ACK_REASON_ANSWERED
 from src.models.utc_time import as_aware_utc
-from src.cplugs.sdk import transcript_events, turn_events
+from src.plugins.sdk import transcript_events, turn_events
 
 logger = structlog.get_logger()
 
@@ -92,6 +92,17 @@ class AttentionSideEffects:
             epoch=self._manager._unread_epoch(tmux_name),
         )
 
+    def clear_unread_while_watched(self, target: WatchTarget, observation: Observation) -> None:
+        if observation.verdict.state != STATE_DONE_IDLE:
+            return
+        if not self._visible_viewer(target.session_id):
+            return
+        tmux_name, _epoch = self.instance_for(target.session_id)
+        if tmux_name:
+            self._manager._unread_store.clear_auto(
+                tmux_name, self._manager._unread_epoch(tmux_name)
+            )
+
     def on_busy_edge(self, target: WatchTarget, transition: Transition) -> None:
         session_id = target.session_id
         self.withdraw_answered_ask(target, transition)
@@ -135,6 +146,7 @@ class AttentionSideEffects:
             self._guard("attention_conversation_bind_failed", session_id,
                         bind_conversation, self._manager, session_id, observation.evidence)
             return
+        self._guard("attention_unread_while_watched_failed", session_id, self.clear_unread_while_watched, target, observation)
         self._guard("swarm_watch_failed", session_id, swarm_watch.on_observation, target, observation)
         tmux_name, epoch = self.instance_for(session_id)
         if observation.transcript_appended and transcript_events.listening():

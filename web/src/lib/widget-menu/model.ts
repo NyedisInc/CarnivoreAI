@@ -176,7 +176,7 @@ export function buildWidgetMenu(ctx: WidgetMenuCtx): MenuNode[] {
   const groups: (readonly MenuNode[])[] = [
     ...(ctx.content ?? []),
     ctx.scopeViews ?? [],
-    ...(editing ? [ctx.views ?? [], header, ...(ctx.settings ?? []), arrangeNodes(ctx.arrange ?? [])] : [rowNodes, windowGroup]),
+    ...(editing ? [ctx.views ?? [], header, ...(ctx.settings ?? []), arrangeNodes(ctx.arrange ?? [])] : [rowNodes, windowGroup, ...(ctx.settings ?? [])]),
     tabNodes(ctx.tab),
     layout,
     close,

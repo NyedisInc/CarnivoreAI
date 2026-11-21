@@ -9,7 +9,7 @@ const seen: Record<string, unknown>[] = [];
 
 vi.mock('../StatusLed.svelte', () => ({
     default: (_anchor: unknown, props: Record<string, unknown>) => {
-        const keys = ['status', 'unread', 'startupGate', 'statusSource', 'activityHint', 'parkedSummary', 'transport', 'hostOffline', 'usageLimit', 'size', 'bare'];
+        const keys = ['status', 'unread', 'startupGate', 'statusSource', 'activityHint', 'parkedSummary', 'transport', 'hostOffline', 'usageLimit', 'loginExpired', 'size', 'bare'];
         seen.push(Object.fromEntries(keys.filter((k) => k in props).map((k) => [k, props[k]])));
     },
 }));
@@ -34,7 +34,7 @@ function face(props: Record<string, unknown>): HTMLElement {
 
 const ROW = {
     agent_family: 'claude', activity_status: 'question', unread: true, startup_gate: 'awaiting_startup_prompt', status_source: 'registry',
-    activity_hint: 'shell', parked_summary: 'waiting on the build', usage_limit: { resets_at: null },
+    activity_hint: 'shell', parked_summary: 'waiting on the build', usage_limit: { resets_at: null }, login_expired: { message: '', since: null },
     host_key: 'peer-1', host_label: 'studio', host_state: 'disconnected', tmux_session: 'cc_a',
 };
 
@@ -43,7 +43,7 @@ describe('SessionFace hands the light every signal', () => {
         face({ row: ROW, transport: 'disconnected', size: '9px', bare: true });
         expect(seen).toEqual([{
             status: 'question', unread: true, startupGate: 'awaiting_startup_prompt', statusSource: 'registry', activityHint: 'shell',
-            parkedSummary: 'waiting on the build', transport: 'disconnected', hostOffline: 'studio', usageLimit: 'over limit', size: '9px', bare: true,
+            parkedSummary: 'waiting on the build', transport: 'disconnected', hostOffline: 'studio', usageLimit: 'over limit', loginExpired: 'needs login', size: '9px', bare: true,
         }]);
     });
 
@@ -53,8 +53,8 @@ describe('SessionFace hands the light every signal', () => {
     });
 
     test('pre-read facts (the sidebar plan, a menu entry) arrive whole', () => {
-        face({ facts: { family: null, status: 'idle', unread: true, startupGate: 'ready', statusSource: 'transcript', activityHint: null, parkedSummary: 'p', transport: 'connected', hostOffline: 'h', usageLimit: 'l' } });
-        expect(seen[0]).toMatchObject({ status: 'idle', unread: true, startupGate: 'ready', statusSource: 'transcript', parkedSummary: 'p', transport: 'connected', hostOffline: 'h', usageLimit: 'l' });
+        face({ facts: { family: null, status: 'idle', unread: true, startupGate: 'ready', statusSource: 'transcript', activityHint: null, parkedSummary: 'p', transport: 'connected', hostOffline: 'h', usageLimit: 'l', loginExpired: 'n' } });
+        expect(seen[0]).toMatchObject({ status: 'idle', unread: true, startupGate: 'ready', statusSource: 'transcript', parkedSummary: 'p', transport: 'connected', hostOffline: 'h', usageLimit: 'l', loginExpired: 'n' });
     });
 
     test('every signal prop StatusLed declares is one the face passes', () => {

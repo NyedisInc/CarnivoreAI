@@ -236,7 +236,7 @@
       flex: 0 1 140px;
       min-width: 40px;
       height: 6px;
-      border-radius: 3px;
+      border-radius: var(--oc-radius-tight);
       background: var(--oc-ground-hover);
       box-shadow: inset 0 0 0 1px var(--oc-line-rule);
       overflow: hidden;

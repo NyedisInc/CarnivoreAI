@@ -132,7 +132,7 @@ async def receive_messages(
                                     if frame is not None:
                                         viewer_fanout.offer_text(stream, frame)
                             except Exception as e:
-                                logger.error("resize_failed", error=str(e))
+                                logger.error("resize_failed", error=str(e), error_type=type(e).__name__, exc_info=True, session_id=session_id)
 
                         elif msg_type == WSMessageType.REPAINT:
                             await ws_repaint.repaint(websocket, session_id, stream)
@@ -152,23 +152,23 @@ async def receive_messages(
                     except json.JSONDecodeError:
                         logger.warning("invalid_json_received", length=len(data))
                     except Exception as e:
-                        logger.error("message_processing_error", error=str(e))
+                        logger.error("message_processing_error", error=str(e), error_type=type(e).__name__, exc_info=True, session_id=session_id)
 
             except RuntimeError as e:
                 if "Cannot call \"receive\" once a disconnect message has been received" in str(e):
                     logger.debug("websocket_already_disconnected", error=str(e))
                     break
                 else:
-                    logger.error("receive_error", error=str(e))
+                    logger.error("receive_error", error=str(e), error_type=type(e).__name__, session_id=session_id)
                     raise
             except Exception as e:
-                logger.error("receive_error", error=str(e))
+                logger.error("receive_error", error=str(e), error_type=type(e).__name__, exc_info=True, session_id=session_id)
                 raise
 
     except WebSocketDisconnect:
         raise
     except Exception as e:
-        logger.error("receive_messages_error", error=str(e))
+        logger.error("receive_messages_error", error=str(e), error_type=type(e).__name__, exc_info=True, session_id=session_id)
         raise
     finally:
         await pipeline.close()

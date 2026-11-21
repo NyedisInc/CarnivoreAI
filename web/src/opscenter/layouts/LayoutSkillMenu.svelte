@@ -34,7 +34,7 @@
           overflow-y: auto;
           padding: 5px;
           box-sizing: border-box;
-          border-radius: 4px;
+          border-radius: var(--oc-radius-sm);
           color: var(--oc-text-primary);
           font-family: var(--font-mono);
       }

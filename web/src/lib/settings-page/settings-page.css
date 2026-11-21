@@ -1,19 +1,4 @@
 
-.settings-page .st-body {
-    grid-template-columns: 184px minmax(0, 1fr);
-}
-
-@media (max-width: 767px) {
-    .settings-page .st-body {
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: auto minmax(0, 1fr);
-    }
-}
-
-.settings-page .st-body--list,
-.settings-page .st-body--stacked {
-    grid-template-columns: minmax(0, 1fr);
-}
 
 .settings-page .st-content {
     display: flex;
@@ -58,22 +43,12 @@
     padding-inline: var(--oc-page-gutter);
 }
 
-@media (max-width: 1023px) {
-    .settings-page .oc-page__body {
-        flex: 1 0 auto;
-    }
-
-    .settings-page .oc-titlebar__sub {
-        display: none;
-    }
-}
-
 .settings-page .st-main {
     max-width: 1180px;
     margin: 0;
 }
 
-.settings-page .st-body {
+.settings-page .st-content {
     --st-space-1: var(--oc-space-1);
     --st-space-2: var(--oc-space-2);
     --st-space-3: var(--oc-space-3);
@@ -96,6 +71,11 @@
     flex-direction: column;
     gap: var(--st-space-3);
     max-width: 880px;
+}
+
+.settings-page .st-main:has(.st-group[data-group='notifications.routing']),
+.settings-page .st-group[data-group='notifications.routing'] {
+    max-width: none;
 }
 
 .settings-page .st-rows {
@@ -280,7 +260,7 @@
 }
 
 .mgr.settings-page .mgr-mark {
-    border-radius: var(--oc-control-radius);
+    border-radius: var(--oc-radius-control);
 }
 
 .settings-page .st-copy {
@@ -319,16 +299,6 @@
     }
 }
 
-.settings-page .modal-btn {
-    padding: 7px 16px;
-    font-size: 13px;
-}
-
-.settings-page .modal-btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-
 .settings-page .st-legacy .modal-input {
     padding: 7px 10px;
     font-size: 13px;
@@ -349,7 +319,7 @@
 .settings-page .toast-mode-option {
     padding: var(--st-space-3);
     border: 1px solid var(--oc-control-line);
-    border-radius: var(--oc-control-radius);
+    border-radius: var(--oc-radius-control);
     background: transparent;
 }
 
@@ -369,7 +339,7 @@
     height: 12px;
     margin: 2px 0 0;
     border: 1px solid var(--oc-control-line-hi);
-    border-radius: 50%;
+    border-radius: var(--oc-radius-circle);
     background: transparent;
 }
 
@@ -461,21 +431,13 @@
 }
 
 @media (max-width: 767px) {
-    .settings-page .st-body--phone {
-        grid-template-rows: none;
-    }
-
-    .settings-page .oc-page__tabs {
-        padding: 0;
-    }
-
-    .settings-page .st-body--phone .st-section {
+    .settings-page .st-content--phone .st-section {
         padding-top: var(--oc-page-gutter);
     }
 
     .settings-page .st-phonetabs {
         display: flex;
-        height: 44px;
+        height: var(--oc-search-h);
         min-width: 0;
     }
 
@@ -486,7 +448,7 @@
         align-items: center;
         gap: 6px;
         box-sizing: border-box;
-        height: 44px;
+        height: 100%;
         padding: 0 10px 0 var(--oc-page-gutter);
         border: 1px solid transparent;
         box-shadow: inset -1px 0 0 var(--oc-line-rule);
@@ -515,9 +477,4 @@
         flex: 1 1 0;
         min-width: 0;
     }
-}
-
-.settings-page.oc-page--drawer-stacked {
-    --oc-drawer-min-w: 640px;
-    --oc-drawer-grow-w: 1920px;
 }

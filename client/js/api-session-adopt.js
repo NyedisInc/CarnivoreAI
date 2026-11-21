@@ -1,5 +1,5 @@
 
-Object.assign(API.prototype, {
+extendPrototype(API, {
     async forkSession(sessionName) {
         return await this.call(
             `/sessions/${encodeURIComponent(sessionName)}/fork`,
@@ -22,4 +22,4 @@ Object.assign(API.prototype, {
             },
         });
     },
-});
+}, 'api-session-adopt.js');

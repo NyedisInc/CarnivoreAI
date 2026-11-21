@@ -21,7 +21,7 @@
             position: absolute;
             inset: 0 0 auto 0;
             height: 2px;
-            z-index: 1;
+            z-index: var(--oc-z-raised);
             background: var(--oc-line-faint);
             color: var(--oc-cyan);
             pointer-events: auto;

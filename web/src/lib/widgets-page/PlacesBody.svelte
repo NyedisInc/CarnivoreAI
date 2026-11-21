@@ -5,19 +5,19 @@
     import { onMount, type Snippet } from 'svelte';
     import type { Translate } from '../sessions/types';
     import PlaceMenu, { type MenuEntry } from './PlaceMenu.svelte';
-    import { MANAGER_KEYS, visibleItems } from '../manager-frame/manager-model';
+    import { MANAGER_KEYS } from '../manager-frame/manager-model';
     import type { ManagerStatus } from '../manager-frame/types';
     import { sizeNameKey } from '../../opscenter/widgets/named-sizes';
     import { infoKeys } from '../../opscenter/widgets/info/widget-info';
     import { WIDGET_CATEGORIES } from '../../opscenter/widgets/types';
-    import { factKey, type WidgetItem } from './widgets-adapter';
+    import type { WidgetItem } from './widgets-adapter';
     import PlaceCard from './PlaceCard.svelte';
     import PlaceDock from './PlaceDock.svelte';
-    import PlacesRail, { type RailRow } from './PlacesRail.svelte';
     import WidgetCard, { type Mark } from './WidgetCard.svelte';
     import { PLACES, boardCell, fits, missingReason, placeDef, placeName, placedSize, type PlaceId } from './places';
     import { drag, endDrag } from './places-drag.svelte';
-    import { boardList, boardsHolding, liveBoardId, placedAnywhere, placedIn, rowsOf, startPlaceStores } from './places-state.svelte';
+    import { boardList, boardsHolding, liveBoardId, placedIn, rowsOf, startPlaceStores } from './places-state.svelte';
+    import { fitsIn, groupName as nameOfGroup, isOn, matchedItems, passes } from './places-lens';
     import { addToPlace, moveInPlace, removeFromPlace } from './places-writes';
     import { setPlace, view } from './places-view.svelte';
     import { PREVIEW_CAP } from './preview-slots.svelte';
@@ -45,48 +45,18 @@
     const boards = $derived(boardList());
     const board = $derived(boards.some((one) => one.id === view.board) ? view.board : liveBoardId());
     const boardName = $derived(boards.find((one) => one.id === board)?.name ?? '');
-    const on = (item: WidgetItem): boolean => item.enabled !== false;
-    const fitsIn = (item: WidgetItem, place: PlaceId): boolean => fits(item.manifest, on(item), place);
     const heldIn = (item: WidgetItem, place: PlaceId, boardId: string = board): boolean => placedIn(item.id, place, boardCell(item.manifest), boardId);
-    const inAny = (item: WidgetItem): boolean => placedAnywhere(item.id, boardCell(item.manifest));
-    const groupName = (group: string): string => t(factKey('category', group));
+    const groupName = (group: string): string => nameOfGroup(group, t);
 
     function lookup(id: string): { name: string; icon: string; tone: string; group: string } | null {
         const item = byId.get(id);
         return item ? { name: item.name, icon: item.manifest.icon, tone: item.manifest.iconTone, group: item.manifest.category } : null;
     }
 
-    const matched = $derived(visibleItems(items, query, []) as unknown as readonly WidgetItem[]);
-    function stTest(item: WidgetItem, st: string): boolean {
-        return st === 'placed' ? inAny(item) : st === 'off' ? !on(item) : st === 'options' ? item.manifest.settings !== undefined : true;
-    }
-    function pass(item: WidgetItem, skip?: 'group' | 'st' | 'place'): boolean {
-        if (skip !== 'group' && view.group !== 'all' && item.manifest.category !== view.group) return false;
-        if (skip !== 'st' && view.st !== 'all' && !stTest(item, view.st)) return false;
-        if (skip !== 'place' && view.show === 'fits' && view.place !== 'any' && !fitsIn(item, view.place)) return false;
-        return true;
-    }
-    const count = (test: (item: WidgetItem) => boolean, skip: 'group' | 'st' | 'place'): number => matched.filter((item) => pass(item, skip) && test(item)).length;
-
-    const groupRows = $derived<RailRow[]>([
-        { id: 'all', label: t('widgets.places.rail.everything'), count: count(() => true, 'group'), on: view.group === 'all' },
-        ...WIDGET_CATEGORIES.map((group) => ({ id: group, glyph: group, label: groupName(group), count: count((item) => item.manifest.category === group, 'group'), on: view.group === group })),
-    ]);
-    const fitRows = $derived<RailRow[]>(PLACES.map((def) => ({ id: def.id, label: placeName(def.id, t), count: count((item) => fitsIn(item, def.id), 'place'), on: view.place === def.id, mark: { letter: def.mark, place: def.id } })));
-    const stateRows = $derived<RailRow[]>([
-        { id: 'placed', label: t('widgets.places.rail.in_place'), count: count((item) => stTest(item, 'placed'), 'st'), on: view.st === 'placed' },
-        { id: 'off', label: t('widgets.places.rail.off'), count: count((item) => stTest(item, 'off'), 'st'), on: view.st === 'off' },
-        { id: 'options', label: t('widgets.places.rail.options'), count: count((item) => stTest(item, 'options'), 'st'), on: view.st === 'options' },
-    ]);
-
-    function pickRail(group: 'group' | 'place' | 'st', id: string): void {
-        if (group === 'place') setPlace(view.place === id ? 'any' : (id as PlaceId));
-        else if (group === 'group') view.group = view.group === id && id !== 'all' ? 'all' : id;
-        else view.st = view.st === id ? 'all' : (id as typeof view.st);
-    }
+    const matched = $derived(matchedItems(items, query));
 
     const sections = $derived.by(() => {
-        const shown = matched.filter((item) => pass(item));
+        const shown = matched.filter((item) => passes(item));
         const byName = (a: WidgetItem, b: WidgetItem): number => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
         const place = view.place;
         const rank = (item: WidgetItem): number => (place === 'any' || fitsIn(item, place) ? 0 : 1);
@@ -112,7 +82,7 @@
             const size = placedSize(item.manifest, def.id);
             const mark = { letter: def.mark, place: def.id };
             if (have) return { id: def.id, label, mark, disabled: true, sub: t('widgets.places.already') };
-            if (!fit) return { id: def.id, label, mark, disabled: true, sub: missingReason(item.manifest, on(item), def.id, t) };
+            if (!fit) return { id: def.id, label, mark, disabled: true, sub: missingReason(item.manifest, isOn(item), def.id, t) };
             if (noCell) return { id: def.id, label, mark, disabled: true, sub: t('widgets.places.menu.board_cell') };
             return { id: def.id, label, mark, sub: size ? t('widgets.places.menu.fits_as', { size: t(sizeNameKey(size)) }) : undefined, run: () => add(item, def.id) };
         });
@@ -167,7 +137,7 @@
     const nothing = $derived(sections.length === 0);
 </script>
 
-<div class="oc-page__body wp-body" class:wp-body--reading={selectedId !== null && detail !== undefined}>
+<div class="wp-body" class:wp-body--reading={selectedId !== null && detail !== undefined}>
 {#if status.kind === 'loading'}
     <div class="oc-page__scroll"><div class="oc-page__main"><p class="oc-page__state" role="status">{t(MANAGER_KEYS.loading)}</p></div></div>
 {:else if status.kind === 'error'}
@@ -179,7 +149,6 @@
         </div>
     </div></div>
 {:else}
-    <PlacesRail groups={groupRows} fits={fitRows} states={stateRows} busy={false} {t} onPick={pickRail} />
     <div class="oc-page__scroll">
         <div class="oc-page__main wp-main" data-wp-preview-cap={live ? PREVIEW_CAP : undefined}>
             <div class="wp-sectionlabel"><span class="wp-sectionlabel__label">{t('widgets.places.title')}</span><span class="wp-sectionlabel__sub">{t('widgets.places.sub')}</span></div>
@@ -250,12 +219,12 @@
                                 groupName={groupName(item.manifest.category)}
                                 manifest={item.manifest}
                                 brief={t(infoKeys(item.id).about)}
-                                reason={fit ? null : missingReason(item.manifest, on(item), place as PlaceId, t)}
-                                chip={!on(item) ? t('widgets.places.card.off') : held ? t('widgets.places.card.in', { place: placeName(place as PlaceId, t) }) : null}
+                                reason={fit ? null : missingReason(item.manifest, isOn(item), place as PlaceId, t)}
+                                chip={!isOn(item) ? t('widgets.places.card.off') : held ? t('widgets.places.card.in', { place: placeName(place as PlaceId, t) }) : null}
                                 marks={marksOf(item)}
                                 here={place !== 'any'}
                                 blocked={!fit || held}
-                                enabled={on(item)}
+                                enabled={isOn(item)}
                                 selected={selectedId === item.id}
                                 unread={false}
                                 {live}

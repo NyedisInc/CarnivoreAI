@@ -10,10 +10,10 @@ from typing import Any, Dict
 
 import pytest
 
-from src.cplugs.reviewboard import CPLUG
-from src.cplugs.reviewboard.public import lifecycle
-from src.cplugs.reviewboard.public.service import PublicBoardService
-from src.cplugs.reviewboard.public.settings import (DEFAULT_BIND, DEFAULT_PORT, KEY_BIND, KEY_HOSTS, KEY_PORT, KEY_PROXIES, MAX_PORT, MIN_PORT,
+from src.plugins.reviewboard import CPLUG
+from src.plugins.reviewboard.public import lifecycle
+from src.plugins.reviewboard.public.service import PublicBoardService
+from src.plugins.reviewboard.public.settings import (DEFAULT_BIND, DEFAULT_PORT, KEY_BIND, KEY_HOSTS, KEY_PORT, KEY_PROXIES, MAX_PORT, MIN_PORT,
                                              parse_settings)
 from tests.python.cplugs.reviewboard.public.harness import HOST, LOOPBACK
 
@@ -39,12 +39,12 @@ def answers(port: int) -> bool:
 def test_the_plugin_is_off_by_default_and_needs_the_review_board() -> None:
     manifest = CPLUG.manifest
     assert manifest.default_enabled is False and manifest.tier == "builtin"
-    raw = json.loads((Path(__file__).resolve().parents[5] / "src" / "cplugs" / "reviewboard" / "cplug.json").read_text())
+    raw = json.loads((Path(__file__).resolve().parents[5] / "src" / "plugins" / "reviewboard" / "cplug.json").read_text())
     assert raw["requires"] == ["huddle"] and raw["settings_schema"]["fields"]["publicLinksEnabled"]["default"] is False
 
 
 def test_the_manifest_settings_schema_matches_what_the_parser_reads() -> None:
-    raw = json.loads((Path(__file__).resolve().parents[5] / "src" / "cplugs" / "reviewboard" / "cplug.json").read_text())
+    raw = json.loads((Path(__file__).resolve().parents[5] / "src" / "plugins" / "reviewboard" / "cplug.json").read_text())
     fields = raw["settings_schema"]["fields"]
     assert {KEY_PORT, KEY_BIND, KEY_HOSTS, KEY_PROXIES} <= set(fields)
     defaults = {key: fields[key]["default"] for key in (KEY_PORT, KEY_BIND, KEY_HOSTS, KEY_PROXIES)}
@@ -103,7 +103,7 @@ def test_a_taken_port_is_logged_and_leaves_it_off() -> None:
 
 
 def test_the_plugin_hooks_start_and_stop_the_listener(tmp_path) -> None:
-    from src.cplugs.reviewboard.public.service import SERVICE
+    from src.plugins.reviewboard.public.service import SERVICE
 
     async def scenario() -> None:
         config = {**settings(), "publicLinksEnabled": True}

@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 
 from src.core.json_artifact import atomic_write_json
 
-DEFAULTS: Dict[str, bool] = {"enabled": False, "auto": False, "claude": True, "codex": True}
+DEFAULTS: Dict[str, bool] = {"enabled": False, "auto": False, "claude": True, "codex": True, "panel": True}
 
 
 def clean_settings(raw: Any) -> Dict[str, bool]:

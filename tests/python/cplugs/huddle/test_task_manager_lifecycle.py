@@ -4,8 +4,8 @@ from __future__ import annotations
 import sqlite3
 
 from src.core.work.ladder import feature_rungs
-from src.cplugs.huddle import lifecycle
-from src.cplugs.huddle.rules import CLAUDE, JOE
+from src.plugins.huddle import lifecycle
+from src.plugins.huddle.rules import CLAUDE, JOE
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 from src.core.mcp.caller import AgentCaller
 
@@ -294,8 +294,8 @@ def test_a_state_change_after_an_info_files_the_item_by_its_state_never_in_info(
 
 
 def _nudge_line(manager, list_key: str) -> str:
-    from src.cplugs.huddle.nudge_store import NudgeStore
-    from src.cplugs.huddle.nudge import lines, planning, settings
+    from src.plugins.huddle.nudge_store import NudgeStore
+    from src.plugins.huddle.nudge import lines, planning, settings
     cands = [planning.Candidate(*t) for t in NudgeStore(huddle_store(manager)).candidates(list_key) if t[1] == lifecycle.WORKING]
     return lines.claimed_line(cands, max(c.last_activity for c in cands) + 3700, settings.read({}).texts, 5)
 

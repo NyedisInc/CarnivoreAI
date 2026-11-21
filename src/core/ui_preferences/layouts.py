@@ -151,7 +151,7 @@ class HomeBoard(BaseModel):
 class HomeLayout(BaseModel):
     """The Home page's boards, shared by every browser.
 
-    Alex (Adoom666), 2026-09-29: "the layout of the home page and analytics
+    the owner, 2026-09-29: "the layout of the home page and analytics
     settings stay the same between browsers", and (same day) several named
     boards, switched from the edit layout drawer. ABSENT (the whole field)
     means no browser has written one yet; the server never fabricates it. The
@@ -221,7 +221,7 @@ class HomeLayout(BaseModel):
 class WarroomLayout(BaseModel):
     """The war room page's grid, shared by every browser.
 
-    Alex (Adoom666), 2026-10-20, SUPERPLAN for #135: the war room is an editable layout page whose widgets
+    the owner, 2026-10-20, SUPERPLAN for #135: the war room is an editable layout page whose widgets
     can be dropped like Home's. ONE grid (no boards). ABSENT (the whole field) means no browser has written
     one yet; the server never fabricates it, and the browser keeps its default until it saves.
 

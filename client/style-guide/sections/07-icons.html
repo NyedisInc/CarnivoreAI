@@ -133,7 +133,8 @@ pass <code>transform</code> through, so ONE outline draws the Pack everywhere). 
         Enter or Space chooses, Escape calls <code>onCancel</code>. ArrowDown in the search field enters the grid.
         "No icon" is always the first cell.</dd>
     <dt>adding an icon</dt>
-    <dd>Draw it in <code>client/js/icons/glyphs.js</code> on the 16 box, then add one entry to
+    <dd>Draw it in <code>client/js/icons/glyphs.js</code> (the general-purpose set, from briefcase to moon, is in
+        <code>client/js/icons/picker-glyphs.js</code>, which glyphs.js spreads in) on the 16 box, then add one entry to
         <code>icon-registry.js</code> and its <code>icon.*</code> name to the catalog. Action glyphs (trash, close,
         pencil, restart) are never pickable: a group wearing a trash can reads as an instruction.</dd>
 </dl>
@@ -193,7 +194,7 @@ pass <code>transform</code> through, so ONE outline draws the Pack everywhere). 
         spinner, since a looping animation costs CPU on every open list), <code>status-review</code> (a solid circle with a
         tick: waiting on his tick), <code>status-install</code> (an arrow down into a tray: built and committed, waiting to install), <code>status-scheduled</code> (an alarm clock: a todo waiting for its set time), <code>status-back-burner</code> (a clock face: wanted but not today), <code>check</code> (ticked), <code>status-idle</code> (a quiet dot, open) and
         <code>status-info</code> (an unseen Claude info or attention post), drawn at 12px with a 1.75 stroke in the status
-        token. <code>STATUS_ICON</code> in <code>web/src/cplugs/huddle/huddle-status.ts</code> is the one mapping; every mark
+        token. <code>STATUS_ICON</code> in <code>web/src/plugins/huddle/huddle-status.ts</code> is the one mapping; every mark
         carries the status as its aria-label and tooltip (<code>.tkm-status</code>, the chrome section). The Task Manager's list density keys (section 24) draw <code>density-compact</code> (four tight lines), <code>density-normal</code> (a title over one indented sub-line, twice) and <code>density-full</code> (a title over an indented paragraph), at 12px on the list bar.</dd>
 </dl>
 

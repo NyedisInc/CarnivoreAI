@@ -15,6 +15,7 @@ from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
 from src.api.blueprints_routes import router as blueprints_router
+from src.core.sessions.errors import SessionCreateFailed
 from src.api.layouts_routes import router as layouts_router
 from src.api.session_crud_routes import router as sessions_router
 from src.core.db import connect, db_path_for
@@ -86,7 +87,7 @@ class RecordingManager:
     async def create_session(self, session_id: str, **kwargs: Any) -> Session:
         self.calls.append({"session_id": session_id, **kwargs})
         if kwargs.get("label") in self.fail_labels:
-            raise RuntimeError("agent failed to launch: test double")
+            raise SessionCreateFailed("agent failed to launch: test double")
         name = f"cloude_{kwargs.get('project_name')}_{len(self.calls)}"
         self.names.append({"name": name})
         epoch = 5000 + len(self.calls)

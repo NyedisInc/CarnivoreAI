@@ -1,6 +1,6 @@
 {
   "api_routes": [
-    "src/cplugs/tmdevtools/routes.py"
+    "src/plugins/tmdevtools/routes.py"
   ],
   "area": "sessions",
   "description": "task-manager-dev-tools is an experimental plugin of the dev tier: hidden and not loaded until you turn on developer mode (Settings, Advanced), and then off by default. It needs the task manager. It gives Claude three tools for your task manager screen. task_manager_dev_scroll_set scrolls the task manager to the top in every browser you have open (optionally switching to one project first). task_manager_dev_fold_set folds or unfolds a project (its bar, status sections and groups), a named group, or a task, and with action close collapses an opened task card back to its row without changing any task. task_manager_dev_tasks_list lists projects or tasks compactly (id, title, status, project, group, tag), filtered by any mix of project, status, group, tag and kind, so Claude can answer what the open questions are, what tasks are open, or what is open in one project. Scroll and fold are pushed to the browsers, which act on the task manager's own fold state; nothing is polled and nothing new is stored. With the plugin off there are no routes and no tools.",
@@ -37,12 +37,12 @@
   "status": "beta",
   "summary": "experimental, off by default: Claude can scroll your task manager to the top, fold things and list tasks by status.",
   "surfaces": [
-    "src/cplugs/tmdevtools/mcp.py",
-    "src/cplugs/tmdevtools/service.py",
-    "src/cplugs/tmdevtools/commands.py",
-    "src/cplugs/huddle/devtools_port.py",
-    "web/src/cplugs/tmdevtools/commands.ts",
-    "web/src/cplugs/huddle/task-manager-view-commands.ts"
+    "src/plugins/tmdevtools/mcp.py",
+    "src/plugins/tmdevtools/service.py",
+    "src/plugins/tmdevtools/commands.py",
+    "src/plugins/huddle/devtools_port.py",
+    "web/src/plugins/tmdevtools/commands.ts",
+    "web/src/plugins/huddle/task-manager-view-commands.ts"
   ],
   "updated": "2026-10-13",
   "where": [

@@ -11,12 +11,12 @@ from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 from unittest import mock
 
-from src.cplugs.crate import policy as P
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import ExportRequest, build_plan
-from src.cplugs.crate.publish import sha_sidecar
-from src.cplugs.crate.writer import run_export
-from src.cplugs.sdk import crate_sources as cs
+from src.plugins.crate import policy as P
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import ExportRequest, build_plan
+from src.plugins.crate.publish import sha_sidecar
+from src.plugins.crate.writer import run_export
+from src.plugins.sdk import crate_sources as cs
 from tests.python.cplugs.crate import golden_extras as X
 from tests.python.cplugs.crate.crate_world import env_for, make_world
 from tests.python.cplugs.crate.golden_build import (

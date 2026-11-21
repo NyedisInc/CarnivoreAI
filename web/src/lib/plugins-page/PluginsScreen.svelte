@@ -3,6 +3,7 @@
     import { captureOpener, restoreOpenerFocus } from '../dialog-frame/opener-focus';
     import ManagerFrame from '../manager-frame/ManagerFrame.svelte';
     import StatusChip from '../cplug-ui/StatusChip.svelte';
+    import { canDrawGlance } from '../cplug-ui/glance';
     import { createManagerController } from '../manager-frame/manager-controller.svelte';
     import { MANAGER_KEYS } from '../manager-frame/manager-model';
     import type { ManagerAdapter, ManagerFilter, ManagerItem, ManagerToggleState } from '../manager-frame/types';
@@ -256,7 +257,7 @@
         >
             {t('plugins.page.approval.mark')}
         </Button>
-    {:else if plugin.thirdParty && plugin.state === 'active' && plugin.declared}
+    {:else if plugin.thirdParty && plugin.state === 'active' && plugin.declared && canDrawGlance(plugin.unrenderedSurfaces)}
         
         <StatusChip cplugId={plugin.cplugId} installKey={plugin.installKey ?? null} declared={plugin.declared} unverified={plugin.unverified} {t} />
     {/if}

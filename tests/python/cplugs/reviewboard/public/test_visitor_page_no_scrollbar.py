@@ -13,9 +13,9 @@ import pytest
 pytest.importorskip("playwright.sync_api", reason="playwright is not installed, so NO scroll bar was measured.")
 from playwright.sync_api import sync_playwright  # noqa: E402
 
-from src.cplugs.reviewboard.public import assets, minting  # noqa: E402
-from src.cplugs.reviewboard.public.edge import EdgeConfig, PublicEdge  # noqa: E402
-from src.cplugs.reviewboard.public.listener import ListenerSpec, PublicListener  # noqa: E402
+from src.plugins.reviewboard.public import assets, minting  # noqa: E402
+from src.plugins.reviewboard.public.edge import EdgeConfig, PublicEdge  # noqa: E402
+from src.plugins.reviewboard.public.listener import ListenerSpec, PublicListener  # noqa: E402
 from tests.python.cplugs.reviewboard.boards import SIDECAR  # noqa: E402
 
 DIST = Path(__file__).resolve().parents[5] / "client" / "dist"

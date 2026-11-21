@@ -7,7 +7,7 @@ const NAME_MAX = 200;
 const ASK_ID_PATTERN = /^[A-Za-z0-9_:.-]{1,200}$/;
 const SETTINGS_SECTIONS = Object.freeze([
   'account', 'appearance', 'sessions', 'launch_profiles', 'terminal', 'notifications', 'byoai', 'log_processor',
-  'remote', 'general', 'desktop', 'keys', 'advanced',
+  'remote', 'general', 'desktop', 'keys', 'features', 'advanced',
 ]);
 const TAB_PATTERN = /^[a-z_]{1,40}$/;
 const LINK_CHARS = /^[\x21-\x7e]+$/;

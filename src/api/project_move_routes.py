@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.concurrency import run_in_threadpool
 
 from src.api import projects_service
+from src.api.projects_service import ProjectKey
 from src.api.auth import require_auth
 from src.config import settings
 from src.core import session_change_notice
@@ -56,7 +57,7 @@ def _response(plan: MovePlan, done: Any = None) -> ProjectMoveResponse:
     )
 
 
-def _plan_and_maybe_apply(project_name: str, body: ProjectMoveRequest) -> ProjectMoveResponse:
+def _plan_and_maybe_apply(project_name: ProjectKey, body: ProjectMoveRequest) -> ProjectMoveResponse:
     if not body.apply:
         return _plan_then_apply(project_name, body)
     try:
@@ -66,7 +67,7 @@ def _plan_and_maybe_apply(project_name: str, body: ProjectMoveRequest) -> Projec
         raise api_error(409, "move_busy", exc) from exc
 
 
-def _plan_then_apply(project_name: str, body: ProjectMoveRequest) -> ProjectMoveResponse:
+def _plan_then_apply(project_name: ProjectKey, body: ProjectMoveRequest) -> ProjectMoveResponse:
     panes = read_live_panes()
     with closing(projects_service.open_db_or_503(settings)) as conn:
         project = projects_service.resolve_target(conn, project_name)
@@ -91,25 +92,11 @@ def _plan_then_apply(project_name: str, body: ProjectMoveRequest) -> ProjectMove
 
 @router.post("/projects/{project_name}/move", response_model=ProjectMoveResponse, dependencies=[Depends(require_auth)])
 async def move_project(project_name: str, body: ProjectMoveRequest, request: Request) -> ProjectMoveResponse:
-    """Plan or run a move of a project's folder (and its child projects and sessions).
+    """Plan or run a move of the project with this display name (see :func:`move_project_for`)."""
+    return await move_project_for(project_name, body, request)
 
-    Description: re-points ``projects.root`` and ``raw_path`` in place (same id)
-      for the project and every child project under it, prefix-replaces
-      ``sessions.working_dir`` and ``conversation_index.working_dir``, renames
-      the Claude transcript folders, and updates the reboot journal. With
-      ``move_folder`` it renames the folder here first (creating the missing
-      parents the plan lists when ``create_parents``); without it the folder
-      must already be at ``new_root``. Refused while any session under the old
-      folder is live.
-    Inputs: project_name (str, URL) - display name; body (ProjectMoveRequest);
-      request - for the event hub.
-    Output: ProjectMoveResponse - the plan; ``done`` set after an apply.
-    Raises: HTTPException 404 unknown project, 428 an apply quoting no
-      ``plan_fingerprint``, 412 one quoting a plan that has since changed,
-      409 ambiguous name or a refused apply (each detail carries the plan) or
-      another move still running, 500 a step failed (earlier steps undone),
-      503 database unreachable or read-only.
-    """
+
+async def move_project_for(project_name: ProjectKey, body: ProjectMoveRequest, request: Request) -> ProjectMoveResponse:
     if body.apply:
         projects_service.guard_writable(settings)
     response = await run_in_threadpool(_plan_and_maybe_apply, project_name, body)

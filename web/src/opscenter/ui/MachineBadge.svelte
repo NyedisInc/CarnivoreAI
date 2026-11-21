@@ -18,7 +18,7 @@
       margin-left: var(--oc-space-1);
       padding: 0 var(--oc-space-1);
       border: 1px solid var(--oc-line-frame);
-      border-radius: 2px;
+      border-radius: var(--oc-radius-control);
       color: var(--oc-text-secondary);
       font-family: var(--font-mono);
       font-size: var(--oc-fs-micro);

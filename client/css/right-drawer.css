@@ -19,7 +19,7 @@ body.right-drawer-docked .config-editor-picker-overlay {
     width: var(--right-dock-w);
     background: transparent;
     animation: none;
-    z-index: 1100;
+    z-index: var(--oc-z-drawer);
 }
 
 body.right-drawer-docked .config-editor-picker-overlay .config-editor-picker-content {
@@ -37,7 +37,7 @@ body.right-drawer-docked .config-editor-picker-overlay .config-editor-picker-con
     top: var(--desktop-inset-top, 0px);
     right: 0;
     bottom: 0;
-    z-index: 1100;
+    z-index: var(--oc-z-drawer);
     width: min(360px, 88vw);
     display: flex;
     flex-direction: column;

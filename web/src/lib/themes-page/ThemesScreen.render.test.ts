@@ -194,13 +194,24 @@ describe('the themes page on the shared frame', () => {
         expect(document.querySelector('.tbyo-code')).not.toBeNull();
     });
 
+    test('it wears the column frame (#2775): its tool-row buttons take the frame density, the grid and inspector stay inside the body box', () => {
+        const page = document.querySelector('.oc-page.themes-screen')!;
+        expect(page.getAttribute('data-frame')).toBe('column');
+        const library = button('get more on warez');
+        expect(library.closest('.oc-page__bar')?.getAttribute('data-frame-region')).toBe('tools');
+        expect(library.closest('[data-btn-density="frame"]')).not.toBeNull();
+        expect(page.querySelector('.oc-titlebar')?.getAttribute('data-btn-density')).toBe('frame');
+        expect(page.querySelectorAll('.oc-page__body').length).toBe(1);
+        expect(page.querySelector('[data-frame-region="body"][data-scroll="self"] .oc-page__fill > .themes-layout .themes-side')).not.toBeNull();
+    });
+
     test('the back button of a narrow pane lowers the inspector', async () => {
         (document.querySelector('[data-theme-card="rogue"] .catalog-card__open') as HTMLButtonElement).click();
         await settle();
-        const body = document.querySelector('.themes-body') as HTMLElement;
-        expect(body.classList.contains('themes-body--detail')).toBe(true);
+        const body = document.querySelector('.themes-layout') as HTMLElement;
+        expect(body.classList.contains('themes-layout--detail')).toBe(true);
         (document.querySelector('[data-themes-back]') as HTMLButtonElement).click();
         await settle();
-        expect(body.classList.contains('themes-body--detail')).toBe(false);
+        expect(body.classList.contains('themes-layout--detail')).toBe(false);
     });
 });

@@ -16,7 +16,7 @@ const MASTER_SRC = read('client/js/terminal-size-master.js');
 const VOTE_SRC = read('client/js/terminal-size-vote.js');
 const METRICS_SRC = read('client/js/terminal-metrics.js');
 const TERM_SRC = read('client/js/terminal.js');
-const API_SRC = read('client/js/api.js') + ['restart', 'records', 'adopt'].map((n) => read('client/js/api-session-' + n + '.js')).join('');
+const API_SRC = read('client/js/extend-prototype.js') + read('client/js/api.js') + ['restart', 'records', 'adopt'].map((n) => read('client/js/api-session-' + n + '.js')).join('');
 const INDEX_HTML = read('client/index.html');
 
 globalThis.self = globalThis;

@@ -102,7 +102,7 @@
 .r-lines [data-t="del"] { color: var(--oc-coral); }
 .r-compact { display: grid; gap: var(--oc-space-0-5); min-width: 0; color: var(--oc-text-secondary); }
 .r-compact > div { overflow-wrap: anywhere; min-width: 0; }
-@media (max-width: 700px) {
+@media (max-width: 767px) {
   .r-cl > li { grid-template-columns: 2ch minmax(0, 1fr); }
   .r-cl-val { grid-column: 2; }
   .r-lines { grid-column: 1 / -1; }
@@ -128,7 +128,7 @@
 .r-rd { color: var(--oc-text-secondary); overflow-wrap: anywhere; min-width: 0; }
 .r-rows-body { min-width: 0; }
 .r-rows-body[hidden] { display: none; }
-@media (max-width: 700px) { [data-r-toggle] { min-height: var(--oc-tap); } }
-@media (max-width: 700px) { .r-more > summary { display: flex; align-items: center; min-height: var(--oc-tap); } }
+@media (max-width: 767px) { [data-r-toggle] { min-height: var(--oc-tap); } }
+@media (max-width: 767px) { .r-more > summary { display: flex; align-items: center; min-height: var(--oc-tap); } }
 .r-exit { width: min(100%, 220px); }
 }

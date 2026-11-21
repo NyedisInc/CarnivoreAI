@@ -59,6 +59,12 @@ test('no label falls back to the cloude_-stripped tmux name', () => {
     assert.equal(SL.resolve({ name: 'cloude_Media', label: null }), 'Media');
 });
 
+test('a synthetic asleep:/closed: row name is never shown: the real tmux name is (#2979)', () => {
+    assert.equal(SL.resolve({ name: 'asleep:u-2', tmux_name: 'carnivore_Carnivore', label: null }), 'Carnivore');
+    assert.equal(SL.resolve({ name: 'closed:u-3', tmux_name: 'carnivore_Carnivore' }), 'Carnivore');
+    assert.equal(SL.resolve({ name: 'asleep:u-2', tmux_name: 'carnivore_Carnivore', label: 'typed' }), 'typed');
+});
+
 test('an external name with no cloude_ prefix is rendered verbatim', () => {
     assert.equal(SL.resolve({ name: 'someones-shell' }), 'someones-shell');
 });

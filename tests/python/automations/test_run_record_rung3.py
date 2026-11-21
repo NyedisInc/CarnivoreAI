@@ -11,7 +11,7 @@ from src.core.automations.report_empty import report_is_empty
 from src.core.automations.store import AutomationStore
 from src.core.automations.store_schema import MIGRATIONS, storage_for
 from src.core.computers.this_label import this_label
-from src.cplugs.sdk.storage import CplugStorage, StorageSpec
+from src.plugins.sdk.storage import CplugStorage, StorageSpec
 
 NOW = 1_800_000_000.0
 RECIPE = {"kind": "command", "command": "true"}

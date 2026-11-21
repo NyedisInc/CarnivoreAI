@@ -97,6 +97,7 @@ function createTrayData(deps) {
     const port = sm.getPort();
     const pd = deps.portDeps();
     const holders = await portTrust.listeners(port, pd);
+    if (holders === null && trust.trusted === true) return;
     const key = `${port}:${(holders || []).map((h) => h.pid).join(',')}`;
     if (key === trustKey && trust.trusted === true) return;
     const verdict = portTrust.judgePort({ holders, myUid: pd.myUid, health });

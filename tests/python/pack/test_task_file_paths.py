@@ -10,7 +10,7 @@ import pytest
 
 from src.core.pack.migrate import manifest as manifest_mod
 from src.core.pack.migrate import task_manager_history, task_manager_side
-from src.cplugs.sdk import ports, task_folders
+from src.plugins.sdk import ports, task_folders
 from tests.python.pack.test_task_manager_side_compat import ITEM_INSERT, machine, sql
 
 FILE_ID = "abcd1234"

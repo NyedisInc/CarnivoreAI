@@ -7,8 +7,8 @@
     import IconButton from '../base/IconButton.svelte';
     import { t as appT } from '../i18n/index.svelte';
     import type { Translate } from '../sessions/types';
-    import AgentChatFrame from '../../cplugs/huddle/agents/AgentChatFrame.svelte';
-    import { openAgentTerminal } from '../../cplugs/huddle/agents/agent-terminal';
+    import AgentChatFrame from '../../plugins/huddle/agents/AgentChatFrame.svelte';
+    import { openAgentTerminal } from '../../plugins/huddle/agents/agent-terminal';
     import { addAgentWidget, beginAgentBarDrag, popOutAgent } from './agent-dock';
     import { phoneView } from '../drawer/phone-view.svelte';
     import {

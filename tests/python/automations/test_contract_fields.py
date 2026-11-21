@@ -11,7 +11,7 @@ from src.core.automations import contract, targets
 from src.core.automations import models as m
 from src.core.automations.store import AutomationStore
 from src.core.automations.store_schema import MIGRATIONS, storage_for
-from src.cplugs.sdk.storage import CplugStorage, StorageSpec
+from src.plugins.sdk.storage import CplugStorage, StorageSpec
 
 CARD = {"kind": "swarm_card", "project_id": 1, "title": "t", "summary": "s"}
 RECIPE = {"kind": "recipe", "recipe": "scrooge"}

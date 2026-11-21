@@ -67,7 +67,7 @@
       flex: 0 0 auto;
       width: 6px;
       height: 6px;
-      border-radius: 50%;
+      border-radius: var(--oc-radius-circle);
       background: var(--oc-yellow-bright);
     }
 

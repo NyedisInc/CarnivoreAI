@@ -12,12 +12,12 @@ from fastapi import FastAPI
 from src.core.work import lists, seq, tx
 from src.core.work.capability import WorkCapability
 from src.core.work.storage import STORAGE, storage_for
-from src.cplugs.host import runtime, state as owner_state
-from src.cplugs.sdk import permission_registry as registry
-from src.cplugs.sdk import CapabilityMissing
-from src.cplugs.sdk.context import CplugContext
-from src.cplugs.sdk.manifest import ManifestError, parse_manifest
-from src.cplugs.sdk.work import STORAGE as DOOR_STORAGE
+from src.plugins.host import runtime, state as owner_state
+from src.plugins.sdk import permission_registry as registry
+from src.plugins.sdk import CapabilityMissing
+from src.plugins.sdk.context import CplugContext
+from src.plugins.sdk.manifest import ManifestError, parse_manifest
+from src.plugins.sdk.work import STORAGE as DOOR_STORAGE
 from tests.python.cplugs.owner import turn_on
 
 INSERT = ("INSERT INTO work_items (list_key, text, position, created_by, state, created_at, updated_at, created_seq, seq) "
@@ -79,7 +79,7 @@ def test_list_helpers() -> None:
 
 
 def test_the_plugin_rules_ask_core() -> None:
-    from src.cplugs.huddle import rules
+    from src.plugins.huddle import rules
 
     assert rules.ALL_LIST == lists.ALL_LIST and rules.check_list_key("agent:3") == "agent:3" and rules.agent_id_of("agent:3") == 3
     with pytest.raises(rules.TaskManagerInvalid):

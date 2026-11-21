@@ -5,6 +5,7 @@ import { createRawSnippet, flushSync, mount, unmount } from 'svelte';
 import CellFrame from './CellFrame.svelte';
 import { META, metaFor } from '../engine/meta';
 import { homeLayout } from '../engine/layout.svelte';
+import { openTab, placeTab } from '../engine/tab-groups.svelte';
 import type { SlotId } from '../engine/types';
 import { inputFocus } from '../lib/input-focus.svelte';
 
@@ -96,5 +97,48 @@ describe('terminal cells: accent border on all, popup focus on the active one', 
     expect(notes.el.hasAttribute('data-oc-focus')).toBe(true);
     expect(notes.el.classList.contains('popup-focus')).toBe(false);
     unmount(notes.app);
+  });
+});
+
+describe('a tabbed terminal cell lights when one of its tabs holds input', () => {
+  test('the frame of the group is marked, though the owner is the tab key and not the group slot', () => {
+    const tab = 'terminal:ses_pf_tab' as SlotId;
+    openTab(homeLayout, SLOT_A, tab);
+    const a = frame(SLOT_A);
+    inputFocus.claim(tab);
+    flushSync();
+    expect(a.el.hasAttribute('data-oc-focus')).toBe(true);
+    inputFocus.release(tab);
+    flushSync();
+    expect(a.el.hasAttribute('data-oc-focus')).toBe(false);
+    unmount(a.app);
+  });
+});
+
+describe('only one frame is ever the typing cell', () => {
+  test('a tab dragged out of the cell that carries its name lights only the cell that now shows it', () => {
+    const keep = 'terminal:ses_pf_keep' as SlotId;
+    openTab(homeLayout, SLOT_A, keep);
+    expect(placeTab(homeLayout, SLOT_B, SLOT_A, 0)).not.toBeNull();
+    const a = frame(SLOT_A);
+    const b = frame(SLOT_B);
+    const holding = (): number => document.querySelectorAll('.oc-frame[data-oc-focus]').length;
+
+    inputFocus.claim(SLOT_A);
+    flushSync();
+    expect(b.el.hasAttribute('data-oc-focus')).toBe(true);
+    expect(a.el.hasAttribute('data-oc-focus')).toBe(false);
+    expect(holding()).toBe(1);
+
+    inputFocus.claim(keep);
+    flushSync();
+    expect(a.el.hasAttribute('data-oc-focus')).toBe(true);
+    expect(holding()).toBe(1);
+
+    inputFocus.claim(SLOT_B);
+    flushSync();
+    expect(holding()).toBe(1);
+    unmount(a.app);
+    unmount(b.app);
   });
 });

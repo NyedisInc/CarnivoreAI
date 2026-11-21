@@ -18,6 +18,7 @@ from src.core.notifications.destinations import validate
 from src.core.notifications.routing_view import RoutingWriter
 from src.core.notifications.settings_doc import view
 from src.core.notifications.settings_doc.store import Doc, SettingsDocStore
+from src.core.sessions.agent_update_warn import warn_exc_once
 
 log = structlog.get_logger(__name__)
 
@@ -178,7 +179,7 @@ async def migrate(
     try:
         block = await asyncio.to_thread(_read_block, config_path)
     except (OSError, ValueError) as exc:
-        log.warning("notification_migration_config_unreadable", error=str(exc), error_type=type(exc).__name__)
+        warn_exc_once("notification_migration_config_unreadable", exc)
         return result
     doc = await asyncio.to_thread(docs.update, lambda d, me: doc_model.set_local(d, doc_model.local_key("migration_started"), True))
     install_id = doc["local"]["local/install_id"]

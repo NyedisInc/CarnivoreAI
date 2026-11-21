@@ -20,8 +20,8 @@ from src.core.notify_caps import act as act_mod  # noqa: E402
 from src.core.notify_caps import effects, retire  # noqa: E402
 from src.core.notify_caps import store as store_mod  # noqa: E402
 from src.core.notify_caps import verify as verify_mod  # noqa: E402
-from src.cplugs.sdk.owner_reply import NAME as OWNER_REPLY_PORT, OwnerReplyDeclined  # noqa: E402
-from src.cplugs.sdk import ports  # noqa: E402
+from src.plugins.sdk.owner_reply import NAME as OWNER_REPLY_PORT, OwnerReplyDeclined  # noqa: E402
+from src.plugins.sdk import ports  # noqa: E402
 
 CARDS = Path(__file__).resolve().parents[3] / "src" / "core" / "notifications" / "cards"
 FP = "c" * 64

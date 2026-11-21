@@ -34,8 +34,8 @@ vi.mock('../conversation-open/open', async (importOriginal) => ({
     },
 }));
 
-vi.mock('../../cplugs/sdk/sessions.svelte', async (importOriginal) => ({
-    ...(await importOriginal<typeof import('../../cplugs/sdk/sessions.svelte')>()),
+vi.mock('../../plugins/sdk/sessions.svelte', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('../../plugins/sdk/sessions.svelte')>()),
     openSession: async (id: string) => {
         wire.switched.push(id);
         return true;

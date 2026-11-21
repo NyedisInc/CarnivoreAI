@@ -11,7 +11,7 @@ from src.core import db
 from src.core.swarm import body, facts, fact_index, memory, push, store, switch, thread_port
 from src.core.swarm.cards import deliver, port as card_port, texts
 from src.core.swarm.names import shown_name
-from src.cplugs.sdk.cards import CardRefused
+from src.plugins.sdk.cards import CardRefused
 
 logger = structlog.get_logger()
 

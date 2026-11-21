@@ -83,7 +83,7 @@
     top: var(--desktop-inset-top, 0px);
     left: 50%;
     transform: translateX(-50%);
-    z-index: 9999;
+    z-index: var(--oc-z-dialog);
     display: flex;
     flex-direction: column;
     gap: 6px;

@@ -60,7 +60,7 @@
   .solo {
     position: fixed;
     inset: 0;
-    z-index: 40;
+    z-index: var(--oc-z-page);
     display: flex;
     flex-direction: column;
     background: var(--oc-ground-page);

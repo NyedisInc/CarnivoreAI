@@ -8,12 +8,12 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.cplugs.crate import copying as copying_module
-from src.cplugs.crate import publish as publish_module
-from src.cplugs.crate.copying import CopyFailed, copy_crate
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import build_plan
-from src.cplugs.crate.writer import run_export
+from src.plugins.crate import copying as copying_module
+from src.plugins.crate import publish as publish_module
+from src.plugins.crate.copying import CopyFailed, copy_crate
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import build_plan
+from src.plugins.crate.writer import run_export
 from tests.python.cplugs.crate.crate_world import env_for, make_world, session_request
 
 

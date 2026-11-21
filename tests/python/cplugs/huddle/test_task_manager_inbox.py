@@ -12,11 +12,11 @@ from types import SimpleNamespace
 import pytest
 from fastapi import FastAPI, HTTPException
 
-from src.api import one_shot_routes
-from src.cplugs.host import runtime
-from src.cplugs.huddle import held, inbox, inbox_delivery, schedule, send_queue, service
-from src.cplugs.huddle.inbox_store import InboxStore
-from src.cplugs.huddle.store import TaskManagerStore
+from tests.python.cplugs.huddle.paste_fakes import patch_paste
+from src.plugins.host import runtime
+from src.plugins.huddle import held, inbox, inbox_delivery, schedule, send_queue, service
+from src.plugins.huddle.inbox_store import InboxStore
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work.ladder import MIGRATIONS, SCHEMA_VERSION
 from src.core.work.storage import WorkStorage
 from src.core.mcp import tools
@@ -104,7 +104,7 @@ def test_a_busy_session_leaves_it_queued_and_nothing_is_held(client, env, monkey
     async def busy(request, session_id, text):
         raise HTTPException(status_code=409, detail={"code": "session_busy", "detail": "working"})
 
-    monkeypatch.setattr(one_shot_routes, "paste_through_gates", busy)
+    patch_paste(monkeypatch, busy)
     entry = queue(client)["entry"]
     assert asyncio.run(inbox_delivery.deliver_pass(env.ctx)) == 0
     assert env.inbox.get(entry["id"])["status"] == "queued" and not held.is_held("12")

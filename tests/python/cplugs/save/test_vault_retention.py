@@ -7,8 +7,8 @@ import time
 
 import pytest
 
-from src.cplugs.save.vault import restore, retention
-from src.cplugs.save.vault.manifest import SoleCopyError
+from src.plugins.save.vault import restore, retention
+from src.plugins.save.vault.manifest import SoleCopyError
 from tests.python.cplugs.save.vault_helpers import CONV, ENC, World, jsonl
 
 OTHER = "99999999-aaaa-bbbb-cccc-1234567890ab"
@@ -138,7 +138,7 @@ def test_a_capture_that_cannot_read_the_main_file_leaves_the_old_point_untouched
     old_ids = world.vault.manifests.point_ids(CONV)
     with open(main, "ab") as handle:
         handle.write(jsonl(3))
-    monkeypatch.setattr("src.cplugs.save.vault.ingest.dataless.is_dataless_stat", lambda st: st.st_ino == main.stat().st_ino)
+    monkeypatch.setattr("src.plugins.save.vault.ingest.dataless.is_dataless_stat", lambda st: st.st_ino == main.stat().st_ino)
     outcome = world.capture()
     assert outcome.status == "failed" and world.vault.manifests.point_ids(CONV) == old_ids
     restore.verify_manifest(world.vault.blobs, world.vault.manifests.newest(CONV))

@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterable, List, Optional
 
 import structlog
 
-from src.cplugs.sdk import ports
+from src.plugins.sdk import ports
 
 logger = structlog.get_logger()
 

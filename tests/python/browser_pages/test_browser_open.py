@@ -18,8 +18,8 @@ from src.core.browser_pages import open_pages, pool, resolvers, select
 from src.core.browsers.manager import BrowserManager, CapReached
 from src.core.db_migration import ensure_db_migrated
 from src.core.mcp import tools
-from src.cplugs.host import state as owner_state
-from src.cplugs.host.runtime import Host, find
+from src.plugins.host import state as owner_state
+from src.plugins.host.runtime import Host, find
 from src.core.resource_push.topics import BROWSER_PAGES, BROWSER_SELECT, RESOURCE_TOPICS
 
 API = "/api/v1"

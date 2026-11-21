@@ -42,12 +42,12 @@ vi.mock('../../../lib/listing-push/boot', async (importOriginal) => ({
 }));
 
 import Mark2 from './Cell.svelte';
-import { resetInspections } from '../../../cplugs/huddle/task-manager-design/inspection.svelte';
+import { resetInspections } from '../../../plugins/huddle/task-manager-design/inspection.svelte';
 import Mk2Host from './fixtures/Mk2Host.svelte';
-import { cplugEnablement } from '../../../cplugs/host/enablement.svelte';
-import { clearViewFilter } from '../../../cplugs/huddle/task-manager-view-filter.svelte';
-import { huddle } from '../../../cplugs/huddle/huddle.svelte';
-import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
+import { cplugEnablement } from '../../../plugins/host/enablement.svelte';
+import { clearViewFilter } from '../../../plugins/huddle/task-manager-view-filter.svelte';
+import { huddle } from '../../../plugins/huddle/huddle.svelte';
+import type { HuddleItem } from '../../../plugins/huddle/huddle-model';
 
 cplugEnablement.enabled = { huddle: true };
 /** A file under `cells/`, from the web root vitest runs in. Inputs: relative path. Output: absolute path. */

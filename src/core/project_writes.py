@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import re
 import os
 import sqlite3
 from dataclasses import dataclass
@@ -8,13 +9,14 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 
-from src.core import resource_push
+from src.core import project_task_lists, resource_push
 from src.core.resource_push import topics as resource_topics
 
 from src.core.companies.store import attach_company_names
 from src.core.pack.identity.home import attach_machine_labels
 from src.core.db import table_exists, transaction
 from src.core.db_models import PROJECT_SOURCE_USER
+from src.core.library_cleanup.sessions import purge_stopped_rows_of_project
 from src.core.project_colors.palette import normalize_color, is_hex_color
 from src.core.project_store import PROJECTS_TABLE, normalize_root
 from src.core.project_tombstones import clear_tombstone, read_tombstone, record_tombstone
@@ -144,9 +146,15 @@ def list_projects_ordered(
     return rows
 
 
+_ID_KEY = re.compile(r"id:(\d{1,12})")
+
+
 def resolve_by_name(
     conn: sqlite3.Connection, name: str
 ) -> Dict[str, Any]:
+    by_id = _ID_KEY.fullmatch(name)
+    if by_id:
+        return resolve_by_id(conn, int(by_id.group(1)))
     rows = [
         dict(row)
         for row in conn.execute(
@@ -165,6 +173,13 @@ def resolve_by_name(
             f"(roots: {', '.join(r['root'] for r in rows)})"
         )
     return rows[0]
+
+
+def resolve_by_id(conn: sqlite3.Connection, project_id: int) -> Dict[str, Any]:
+    row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+    if row is None:
+        raise ProjectNotFound(str(project_id))
+    return dict(row)
 
 
 def create_project(
@@ -336,6 +351,7 @@ def delete_project(conn: sqlite3.Connection, project_id: int) -> Dict[str, Any]:
         if row is None:
             raise ProjectNotFound(str(project_id))
         removed = dict(row)
+        removed["sessions_removed"] = purge_stopped_rows_of_project(conn, project_id)
         conn.execute(
             "UPDATE sessions SET project_id = NULL, project_attribution = 'none' WHERE project_id = ?", (project_id,)
         )
@@ -344,6 +360,7 @@ def delete_project(conn: sqlite3.Connection, project_id: int) -> Dict[str, Any]:
         record_tombstone(conn, removed["root"], removed["display_name"])
 
     logger.info("project_deleted_from_db", project_id=project_id, root=removed["root"])
+    project_task_lists.clear_for_deleted_project(project_id)
     resource_push.notify(resource_topics.PROJECTS)
     resource_push.notify(resource_topics.COMPANIES)
     return removed

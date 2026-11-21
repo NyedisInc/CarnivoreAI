@@ -26,7 +26,7 @@ vi.mock('../../opscenter/api/auth.svelte', async (importOriginal) => {
     };
 });
 
-import TaskManagerArtifactCard from '../../cplugs/huddle/TaskManagerArtifactCard.svelte';
+import TaskManagerArtifactCard from '../../plugins/huddle/TaskManagerArtifactCard.svelte';
 import { resourcePush } from '../resource-push/boot';
 import { browsers } from './api.svelte';
 import { followBrowserSelect, resetBrowserSelectForTest } from './select-push.svelte';

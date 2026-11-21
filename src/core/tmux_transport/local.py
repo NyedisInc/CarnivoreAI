@@ -11,7 +11,7 @@ import structlog
 from src.core.hosts.ddl import LOCAL_HOST_KEY
 from src.core.hosts.tmux_quote import TmuxQuoteError
 from src.core.iopolicy.materialize import spawn_preexec
-from src.core.tmux_control.reader import control_read, control_read_async
+from src.core.tmux_control.reader import control_run, control_run_async
 from src.core.sessions.pane_listing_cache import args_mutate_sessions, invalidate_pane_listing
 from src.core.tmux_command_batch import COMMAND_SEPARATOR, STDIN_SCRIPT_ARGS, stdin_script
 from src.core.tmux_transport.lifecycle import LocalLifecycle
@@ -66,10 +66,16 @@ class LocalTransport:
 
     async def run(self, socket_name: str, args: Sequence[str], *, stdin_bytes: Optional[bytes] = None,
                   check: bool = True) -> Tuple[int, bytes, bytes]:
-        if stdin_bytes is None:
-            answered = await control_read_async(socket_name, args)
-            if answered is not None:
-                return 0, answered, b""
+        answered = await control_run_async(socket_name, args) if stdin_bytes is None else None
+        if answered is None:
+            answered = await self._spawn(socket_name, args, stdin_bytes)
+        if check and answered[0] != 0:
+            logger.error("tmux_command_failed", socket=socket_name, args=list(args), returncode=answered[0],
+                         stderr=answered[2].decode("utf-8", errors="replace"))
+        return answered
+
+    async def _spawn(self, socket_name: str, args: Sequence[str],
+                     stdin_bytes: Optional[bytes]) -> Tuple[int, bytes, bytes]:
         argv = self.argv_prefix(socket_name) + list(args)
         mutates = args_mutate_sessions(args)
         if mutates:
@@ -83,19 +89,22 @@ class LocalTransport:
         stdout, stderr = await proc.communicate(input=stdin_bytes)
         if mutates:
             invalidate_pane_listing(socket_name)
-        if check and proc.returncode != 0:
-            logger.error("tmux_command_failed", argv=argv, returncode=proc.returncode,
-                         stderr=stderr.decode("utf-8", errors="replace"))
         return proc.returncode or 0, stdout, stderr
 
     def run_sync(self, socket_name: str, args: Sequence[str], *, stdin_bytes: Optional[bytes] = None,
                  check: bool = True, timeout: Optional[float] = None,
                  env: Optional[Dict[str, str]] = None, probe: bool = False) -> Tuple[int, bytes, bytes]:
-        if probe and stdin_bytes is None:
-            answered = control_read(socket_name, args)
-            if answered is not None:
-                return 0, answered, b""
-        argv = self.argv_prefix(socket_name) + list(args)
+        answered = control_run(socket_name, args) if probe and stdin_bytes is None else None
+        if answered is None:
+            answered = self._spawn_sync(socket_name, args, stdin_bytes, timeout, env, probe)
+        if check and answered[0] != 0:
+            logger.debug("tmux_command_nonzero", socket=socket_name, args=list(args), returncode=answered[0],
+                         stderr=answered[2].decode("utf-8", errors="replace")[:200])
+        return answered
+
+    def _spawn_sync(self, socket_name: str, args: Sequence[str], stdin_bytes: Optional[bytes],
+                    timeout: Optional[float], env: Optional[Dict[str, str]], probe: bool) -> Tuple[int, bytes, bytes]:
+        argv = self.argv_prefix(socket_name) + (["-u"] if env is not None else []) + list(args)
         mutates = args_mutate_sessions(args)
         if mutates:
             invalidate_pane_listing(socket_name)
@@ -105,9 +114,6 @@ class LocalTransport:
         finally:
             if mutates:
                 invalidate_pane_listing(socket_name)
-        if check and proc.returncode != 0:
-            logger.debug("tmux_command_nonzero", argv=argv, returncode=proc.returncode,
-                         stderr=proc.stderr.decode("utf-8", errors="replace")[:200])
         return proc.returncode, proc.stdout, proc.stderr
 
     async def spawn_session(self, socket_name: str, args: Sequence[str], tmux_env: Dict[str, str],

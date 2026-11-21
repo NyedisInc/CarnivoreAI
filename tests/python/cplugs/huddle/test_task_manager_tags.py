@@ -4,16 +4,17 @@ from __future__ import annotations
 import asyncio
 import json
 from contextlib import closing
+from typing import List
 
 import pytest
 from fastapi import HTTPException
 
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
-from src.cplugs.host import runtime, session_actions
-from src.cplugs.huddle import item_owner, lineage, service
-from src.cplugs.huddle.roles import ask
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.host import runtime, session_actions
+from src.plugins.huddle import item_owner, lineage, service
+from src.plugins.huddle.roles import ask
+from src.plugins.huddle.store import TaskManagerStore
 from tests.python.cplugs.huddle.roles_rig import BASE, aged, give_asleep, give_rows
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, pasted  # noqa: F401
 
@@ -46,6 +47,11 @@ class World:
 
     def sleeper(self) -> None:
         self.asleep.append({"session_uuid": SLEEPER, "project_id": 12, "name": "sleeper"})
+
+    def project_stops(self) -> List[object]:
+        gone = [r for r in self.live if r.project_id == 12]
+        self.live[:] = [r for r in self.live if r.project_id != 12]
+        return gone
 
 
 @pytest.fixture
@@ -155,7 +161,7 @@ def test_an_asleep_tagged_agent_is_woken_and_then_told_as_a_normal_send(client, 
     item = add(client)
     told_once(client)
     world.sleeper()
-    from src.cplugs.huddle.roles import tags
+    from src.plugins.huddle.roles import tags
     tags.set_tag(store_of(world.app), item, SLEEPER)
     joe_reply(client, item)
     result = client.post(SEND, json={"lists": ["12"]}).json()["results"][0]
@@ -169,7 +175,7 @@ def test_a_gone_tagged_agent_hands_the_task_to_the_lead_in_one_step(client, worl
     item = add(client)
     told_once(client)
     assert client.put(f"{BASE}/lists/12/lead", json={"session": "ses_new"}).status_code == 200
-    from src.cplugs.huddle.roles import tags
+    from src.plugins.huddle.roles import tags
     tags.set_tag(store_of(world.app), item, "ses_ghost")
     store_of(world.app).mark_working(item, "ses_ghost")
     joe_reply(client, item)
@@ -186,14 +192,14 @@ def test_a_gone_tagged_agent_with_no_lead_becomes_one_carnivore_question_and_no_
     monkeypatch.setattr(service, "surface_question", lambda *a, **k: pytest.fail("a Carnivore question raises no toast"))
     item = add(client)
     told_once(client)
-    from src.cplugs.huddle.roles import tags
+    from src.plugins.huddle.roles import tags
     tags.set_tag(store_of(world.app), item, "ses_ghost")
     joe_reply(client, item)
     result = client.post(SEND, json={"lists": ["12"]}).json()["results"][0]
     assert result["status"] == "sent" and pasted[-1][0] == "ses_old"
     questions = [m for m in store_of(world.app).item(item)["thread"] if m["kind"] == "question"]
     assert [(m["author_key"], m["category"]) for m in questions] == [("carnivore", "session_gone")]
-    from src.cplugs.huddle.roles import tag_send
+    from src.plugins.huddle.roles import tag_send
     assert tag_send._ask_for_gone(store_of(world.app), [item], ask.SESSION_GONE) == []
     assert len([m for m in store_of(world.app).item(item)["thread"] if m["kind"] == "question"]) == 1
 
@@ -203,7 +209,7 @@ def test_an_asleep_agent_that_will_not_wake_is_a_wake_failed_question(client, wo
     told_once(client)
     world.sleeper()
     world.refuse_wake = True
-    from src.cplugs.huddle.roles import tags
+    from src.plugins.huddle.roles import tags
     tags.set_tag(store_of(world.app), item, SLEEPER)
     joe_reply(client, item)
     client.post(SEND, json={"lists": ["12"]})
@@ -245,11 +251,12 @@ def test_cancel_and_park_send_no_tell_and_wake_nobody(client, world, pasted, cho
 def test_unstick_on_a_gone_tag_wakes_the_projects_newest_sleeper_tags_it_and_tells_it(client, world, pasted):
     item = add(client)
     told_once(client)
-    from src.cplugs.huddle.roles import tags
+    from src.plugins.huddle.roles import tags
     tags.set_tag(store_of(world.app), item, "ses_ghost")
     joe_reply(client, item)
     client.post(SEND, json={"lists": ["12"]})
     world.sleeper()
+    world.project_stops()
     question = next(m["id"] for m in store_of(world.app).item(item)["thread"] if m["kind"] == "question" and not m["answered"])
     answer(client, question, "unstick")
     assert store_of(world.app).item(item)[item_owner.TAG_COLUMN] == SLEEPER and world.woken == [SLEEPER]
@@ -257,7 +264,7 @@ def test_unstick_on_a_gone_tag_wakes_the_projects_newest_sleeper_tags_it_and_tel
 
 
 def _gone_tag_question(client, world, item: int) -> int:
-    from src.cplugs.huddle.roles import tags
+    from src.plugins.huddle.roles import tags
     told_once(client)
     tags.set_tag(store_of(world.app), item, "ses_ghost")
     joe_reply(client, item)
@@ -268,14 +275,19 @@ def _gone_tag_question(client, world, item: int) -> int:
 def test_unstick_on_a_gone_tag_re_tags_to_the_session_that_takes_the_task(client, world, pasted):
     item = add(client)
     world.sleeper()
-    answer(client, _gone_tag_question(client, world, item), "unstick")
+    question = _gone_tag_question(client, world, item)
+    world.project_stops()
+    answer(client, question, "unstick")
     assert store_of(world.app).item(item)[item_owner.TAG_COLUMN] == SLEEPER and world.woken == [SLEEPER]
 
 
 def test_the_next_fire_after_an_unstick_routes_to_the_session_that_took_the_task(client, world, pasted):
     item = add(client)
     world.sleeper()
-    answer(client, _gone_tag_question(client, world, item), "unstick")
+    question = _gone_tag_question(client, world, item)
+    stopped = world.project_stops()
+    answer(client, question, "unstick")
+    world.live.extend(stopped)
     joe_reply(client, item)
     before = len(pasted)
     assert client.post(SEND, json={"lists": ["12"]}).json()["results"][0]["status"] == "sent"
@@ -286,7 +298,16 @@ def test_unstick_that_hands_the_task_to_no_one_leaves_it_untagged_and_says_so(cl
     item = add(client)
     world.sleeper()
     world.refuse_wake = True
-    answer(client, _gone_tag_question(client, world, item), "unstick")
+    question = _gone_tag_question(client, world, item)
+    world.project_stops()
+    answer(client, question, "unstick")
     now = store_of(world.app).item(item)
     infos = [m["text"] for m in now["thread"] if m["kind"] == "info"]
     assert now[item_owner.TAG_COLUMN] == "" and any("no session" in t for t in infos)
+
+
+def test_unstick_on_a_gone_tag_hands_the_task_to_a_running_agent_and_wakes_no_second_one(client, world, pasted):
+    item = add(client)
+    world.sleeper()
+    answer(client, _gone_tag_question(client, world, item), "unstick")
+    assert world.woken == [] and store_of(world.app).item(item)[item_owner.TAG_COLUMN] in ("ses_old", "ses_new")

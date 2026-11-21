@@ -37,13 +37,19 @@ export interface FootMeasure {
   features: Partial<Record<FootFeature, number>>;
   work: Record<WorkForm, number>;
   labels: Record<'full' | 'short', number>;
+  barCount?: number;
 }
 
 export interface FootPlan {
   admit: Record<FootFeature, boolean>;
   work: WorkForm;
   edgePx: number;
+  compactBars: boolean;
 }
+
+export const FOOT_BAR_FULL_PX = 112;
+export const FOOT_BAR_SAVING_PX = 37;
+export const FOOT_CROWDED_SLACK_PX = 112;
 
 export const FOOT_SAFETY_PX = 8;
 
@@ -70,18 +76,27 @@ export function pieceCost(key: FootFeature, m: FootMeasure): number {
 
 export function planFoot(width: number, m: FootMeasure | null): FootPlan | null {
   if (!m || !(m.core > 0) || !(width > 0)) return null;
+  const full = spend(width, m, 0);
+  const dropped = FOOT_PRIORITY.some((k) => !full.admit[k] && pieceCost(k, m) > 0);
+  const crowded = dropped || full.left < FOOT_CROWDED_SLACK_PX;
+  const saving = crowded && m.features.bars ? (m.barCount ?? 0) * FOOT_BAR_SAVING_PX : 0;
+  const { admit, left } = saving > 0 ? spend(width, m, saving) : full;
+  const edgePx = Math.max(0, Math.min(footSpacing(width).edgePx, Math.floor(left / 2)));
+  return { admit, work: admit.workFull ? 'full' : 'short', edgePx, compactBars: saving > 0 };
+}
+
+function spend(width: number, m: FootMeasure, barSaving: number): { admit: Record<FootFeature, boolean>; left: number } {
   let left = width - FOOT_SAFETY_PX - m.core - m.work.short;
   const admit = Object.fromEntries(FOOT_PRIORITY.map((k) => [k, false])) as Record<FootFeature, boolean>;
   for (const key of FOOT_PRIORITY) {
     const partner = FOOT_REQUIRES[key];
     if (partner && !admit[partner]) continue;
-    const cost = pieceCost(key, m);
+    const cost = key === 'bars' ? Math.max(0, pieceCost(key, m) - barSaving) : pieceCost(key, m);
     if (cost > left && !FOOT_FLOOR.includes(key)) continue;
     admit[key] = true;
     left -= cost;
   }
-  const edgePx = Math.max(0, Math.min(footSpacing(width).edgePx, Math.floor(left / 2)));
-  return { admit, work: admit.workFull ? 'full' : 'short', edgePx };
+  return { admit, left };
 }
 
 export function admitted(
@@ -111,6 +126,7 @@ export function readMeasure(
   if (!(whole > 0)) return null;
   const features: Partial<Record<FootFeature, number>> = {};
   let spent = 0;
+  let barCount = 0;
   for (const el of Array.from(copy.querySelectorAll<HTMLElement>('[data-fw]'))) {
     const key = el.dataset.fw as FootFeature;
     const parent = el.parentElement;
@@ -124,8 +140,9 @@ export function readMeasure(
       spent += cost;
     }
     features[key] = (features[key] ?? 0) + cost;
+    if (key === 'bars') barCount += 1;
   }
-  return { core: Math.max(1, whole - spent), features, work, labels };
+  return { core: Math.max(1, whole - spent), features, work, labels, barCount };
 }
 
 export const FOOT_BAR_ITEM_IDS = [

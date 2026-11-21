@@ -1,9 +1,9 @@
 
 from __future__ import annotations
 
-from src.cplugs.huddle import lifecycle, review
-from src.cplugs.huddle.rules import JOE
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import lifecycle, review
+from src.plugins.huddle.rules import JOE
+from src.plugins.huddle.store import TaskManagerStore
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, manager  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_sections import store
 

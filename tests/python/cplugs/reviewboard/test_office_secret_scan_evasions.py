@@ -9,8 +9,8 @@ import zipfile
 
 import pytest
 
-from src.cplugs.reviewboard import office_text, office_xml
-from src.cplugs.reviewboard.errors import UnscannableFile
+from src.plugins.reviewboard import office_text, office_xml
+from src.plugins.reviewboard.errors import UnscannableFile
 from tests.python.cplugs.reviewboard.test_office_secret_scan import BODY, FAKE, W, counts, docx, make_zip, xlsx
 
 HIT = [("a.docx", {"aws_access_key_id": 1})]

@@ -151,6 +151,7 @@ class Plugin:
     file_kinds_fn: Optional[Callable[[], FrozenSet[str]]] = None
     before_scan: Optional[Callable[[sqlite3.Connection], None]] = None
     per_file_removal: bool = False
+    switch_id: Optional[str] = None
 
     def reads(self, family: str, file_kind: Optional[str] = None) -> bool:
         kinds = self.file_kinds_fn() if self.file_kinds_fn is not None else self.file_kinds
@@ -179,6 +180,8 @@ def validate(plugin: Plugin) -> None:
         raise PluginContractError(f"plugin {plugin.id}: families must be claude and/or codex")
     if not plugin.file_kinds or not plugin.file_kinds <= {FILE_CONVERSATION, FILE_SUBAGENT}:
         raise PluginContractError(f"plugin {plugin.id}: file_kinds must be conversation and/or subagent")
+    if plugin.switch_id is not None and not re.match(ID_PATTERN, plugin.switch_id):
+        raise PluginContractError(f"plugin {plugin.id}: switch_id {plugin.switch_id!r} must match {ID_PATTERN}")
 
 
 def validate_all(plugins: Iterable[Plugin]) -> None:

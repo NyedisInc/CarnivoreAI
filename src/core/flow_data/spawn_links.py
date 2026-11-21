@@ -10,6 +10,7 @@ import structlog
 
 from src.core.db import DatastoreError, transaction
 from src.core.flow_data import main_db
+from src.core.session_store import uuid_for_row
 
 logger = structlog.get_logger()
 
@@ -27,9 +28,9 @@ def _stamp_session_row(conn: sqlite3.Connection, parent_row_id: int, child_row_i
     stamp = utc_now()
     conn.execute("UPDATE sessions SET parent_session_id = ?, fork_kind = ?, updated_at = ? WHERE id = ? AND parent_session_id IS NULL",
                  (parent_row_id, SESSION_FORK_KIND_SPAWN, stamp, child_row_id))
-    parent = conn.execute("SELECT session_uuid FROM sessions WHERE id = ?", (parent_row_id,)).fetchone()
-    if child_uuid and parent is not None and parent[0] and graph.ready(conn):
-        graph.add_edge(conn, LK.NODE_SESSION, parent[0], LK.NODE_SESSION, child_uuid, LK.KIND_SPAWNED_BY, created_at=stamp,
+    parent_uuid = uuid_for_row(conn, parent_row_id)
+    if child_uuid and parent_uuid and graph.ready(conn):
+        graph.add_edge(conn, LK.NODE_SESSION, parent_uuid, LK.NODE_SESSION, child_uuid, LK.KIND_SPAWNED_BY, created_at=stamp,
                        detail={"via": "agent_spawn"})
 
 

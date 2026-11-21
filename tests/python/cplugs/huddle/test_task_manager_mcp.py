@@ -9,9 +9,9 @@ from types import SimpleNamespace
 import pytest
 from fastapi import FastAPI
 
-from src.cplugs.host import runtime
-from src.cplugs.huddle import callers, service
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.host import runtime
+from src.plugins.huddle import callers, service
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
 from tests.python.cplugs.owner import turn_on

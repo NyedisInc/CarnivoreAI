@@ -1,8 +1,8 @@
 <script lang="ts">
   /* the widget menu */
-  import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
-  import { clearViewFilter, setViewChip, setViewQuery, viewFilter, viewFilterActive, type ViewChip } from '../../../cplugs/huddle/task-manager-view-filter.svelte';
-  import { hiddenSections, setSectionHidden } from '../../../cplugs/huddle/task-manager-status-folds.svelte';
+  import type { HuddleItem } from '../../../plugins/huddle/huddle-model';
+  import { clearViewFilter, setViewChip, setViewQuery, viewFilter, viewFilterActive, type ViewChip } from '../../../plugins/huddle/task-manager-view-filter.svelte';
+  import { hiddenSections, setSectionHidden } from '../../../plugins/huddle/task-manager-status-folds.svelte';
   import Icon from '../../ui/Icon.svelte';
   import { titleWhenTruncated } from '../../../lib/base/truncate';
   import { t } from '../../../lib/i18n/index.svelte';

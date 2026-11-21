@@ -5,9 +5,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.cplugs.host import capabilities, session_actions
-from src.cplugs.huddle import service
-from src.cplugs.huddle.roles import route, tags
+from src.plugins.host import capabilities, session_actions
+from src.plugins.huddle import service
+from src.plugins.huddle.roles import route, tags
 
 ASLEEP_KEY = "7f3e-asleep"
 

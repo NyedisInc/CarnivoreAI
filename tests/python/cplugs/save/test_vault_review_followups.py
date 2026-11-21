@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 import time
 
-from src.cplugs.save.vault import follow, restore, units
+from src.plugins.save.vault import follow, restore, units
 from tests.python.cplugs.save.vault_helpers import CONV, World, jsonl
 
 

@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import json
 
-from src.cplugs.huddle import guide_rev, guide_sections, mcp
-from src.cplugs.huddle.guide_rev import TASK_MANAGER_GUIDE_CHANGELOG, TASK_MANAGER_GUIDE_REV, guide_text
-from src.cplugs.huddle.lean_read import ITEM_THREAD_TAIL
+from src.plugins.huddle import guide_rev, guide_sections, mcp
+from src.plugins.huddle.guide_rev import TASK_MANAGER_GUIDE_CHANGELOG, TASK_MANAGER_GUIDE_REV, guide_text
+from src.plugins.huddle.lean_read import ITEM_THREAD_TAIL
 from src.core.mcp import instructions
 from src.core.mcp.caller import AgentCaller
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401

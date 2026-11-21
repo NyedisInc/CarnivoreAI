@@ -1,13 +1,13 @@
 <!-- a dialog is open -->
 <script lang="ts">
-    import Button from '../base/Button.svelte';
+    import IconButton from '../base/IconButton.svelte';
     import '../projects-shared/projects-shared.css';
     import AnchoredPopup from '../dialog-frame/AnchoredPopup.svelte';
     import type { Translate } from '../sessions/types';
-    import ProjectTransport from '../pack-transport/ProjectTransport.svelte';
+    import ProjectTransport, { type DeckPage } from '../pack-transport/ProjectTransport.svelte';
     import { ageFormatter } from '../projects-shared/format';
     import { previewOf } from '../projects-shared/ledger-model';
-    import { projectPanels, type PanelReadState } from '../../cplugs/sdk/project-panels';
+    import { projectPanels, type PanelReadState } from '../../plugins/sdk/project-panels';
     import { openModalCount } from '../modal';
     import type { ProjectTool } from './project-tools';
 
@@ -18,6 +18,8 @@
         onClose: () => void;
     }
     const { tool, project, t, onClose }: Props = $props();
+
+    let page = $state<DeckPage>('home');
 
     const panel = $derived(tool.kind === 'panel' ? (projectPanels().find((p) => p.id === tool.panelId) ?? null) : null);
     const Panel = $derived(panel?.component);
@@ -39,12 +41,16 @@
 <AnchoredPopup class="pw" tabindex={-1} label={title} data-project-tool={tool.kind === 'panel' ? tool.panelId : 'settings'}
     placement="manual" initialFocus="self" dismissable={() => openModalCount() === 0} {onClose}>
     <div class="pw-title">
-        <span class="pw-label">{title}</span>
-        <Button size="sm" data-project-tool-close onclick={onClose}>{t('sessions.page.tool.close')}</Button>
+        {#if tool.kind === 'settings' && page !== 'home'}
+            <IconButton icon="chevron-right" iconSize={14} variant="quiet" label={t('pack.deck.back')} data-back onclick={() => (page = 'home')} />
+        {/if}
+        <span class="pw-label">{title}{#if tool.kind === 'settings' && page !== 'home'}<span class="dk-crumb" data-crumb><i>/</i>{t(`pack.deck.page.${page}`)}</span>{/if}</span>
+        <IconButton icon="close" variant="danger" label={t('sessions.page.tool.close')} data-project-tool-close onclick={onClose} />
     </div>
-    <div class="pw-body ph-page">
+    <div class="pw-body ph-page" class:pw-body--deck={tool.kind === 'settings'}>
         {#if tool.kind === 'settings'}
-            <ProjectTransport name={project.name} startOpen />
+            
+            <ProjectTransport name={`id:${project.id}`} bind:page />
         {:else if Panel}
             {#snippet header(count: number, read: PanelReadState)}
                 <div class="pw-tally" data-project-tool-tally>{tally(count, read)}</div>
@@ -60,7 +66,7 @@
     @layer components {
         :global(.pw[data-project-tool]) {
             position: fixed;
-            z-index: 9000;
+            z-index: var(--oc-z-palette);
             inset: 12vh auto auto 50%;
             transform: translateX(-50%);
             margin: 0;
@@ -77,7 +83,6 @@
             flex: none;
             display: flex;
             align-items: center;
-            justify-content: space-between;
             gap: var(--oc-space-2);
             min-height: 30px;
             padding: 0 var(--oc-space-3);
@@ -86,6 +91,7 @@
         }
 
         .pw-label {
+            flex: 1 1 auto;
             min-width: 0;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -102,6 +108,23 @@
             min-height: 0;
             overflow: auto;
             padding: var(--oc-space-2) 0;
+        }
+
+        .pw-body--deck {
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .pw-body--deck > :global(.dk-body) {
+            flex: 1 1 auto;
+        }
+
+        :global(.pw-title [data-back]) {
+            flex: none;
+            margin-left: -8px;
+            transform: rotate(180deg);
         }
 
         .pw-tally {

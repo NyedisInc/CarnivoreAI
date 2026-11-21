@@ -24,6 +24,7 @@ os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 from fastapi import HTTPException
 
 from src.api import session_restart_apply_routes as apply_routes
+from src.core.session_ops import restart as restart_ops
 from src.core import restart_live_gate, session_restart
 from tests.socket_guard import TEST_SOCKET_NAME
 
@@ -104,7 +105,7 @@ def test_bound_instance_running_reads_the_row(live_session, tmp_path):
 
 def _route_fixture(monkeypatch, tmp_path, running):
     (tmp_path / "carnivore.db").write_bytes(b"")
-    monkeypatch.setattr(type(apply_routes.settings), "get_state_dir", lambda self: tmp_path)
+    monkeypatch.setattr(type(restart_ops.settings), "get_state_dir", lambda self: tmp_path)
     monkeypatch.setattr(
         session_restart, "resolve_restart_source",
         lambda conn, session_uuid: session_restart.RestartSource(

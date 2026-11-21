@@ -11,7 +11,7 @@ import pytest
 from src.api.argent import cost as routes
 from src.core.argent import cost_split, cost_poller
 from src.core.argent.lifecycle import PORT_NAME
-from src.cplugs.sdk import ports
+from src.plugins.sdk import ports
 from src.models.subagents import SessionSubagents, SubagentInfo
 from tests.argent.test_argent_budget_hold import Argent, declare, fixture, poll, sessions, standing, env  # noqa: F401
 

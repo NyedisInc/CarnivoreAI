@@ -143,7 +143,7 @@
       flex: 0 0 auto;
       width: 6px;
       height: 6px;
-      border-radius: 1px;
+      border-radius: var(--oc-radius-xs);
       background: var(--oc-text-dim);
     }
 

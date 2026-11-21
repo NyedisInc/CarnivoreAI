@@ -1,0 +1,26 @@
+{
+  "kind": "cplug",
+  "id": "sessionchat",
+  "name": "session chat",
+  "version": "1.0.0",
+  "api_version": 1,
+  "min_app_version": "1.16.4",
+  "author": "Alex (example-owner)",
+  "license": "MIT",
+  "tier": "builtin",
+  "scope": [
+    "global"
+  ],
+  "icon": "chat",
+  "default_enabled": false,
+  "permissions": [],
+  "owns": {
+    "strings": [
+      "cplug.sessionchat."
+    ],
+    "tests": [
+      "tests/python/cplugs/sessionchat/"
+    ]
+  },
+  "data": []
+}

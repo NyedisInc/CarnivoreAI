@@ -12,8 +12,8 @@ from src.config import settings
 from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
 from src.core.exports import store
-from src.cplugs.save.vault import retention
-from src.cplugs.save.vault.restore import verify_manifest
+from src.plugins.save.vault import retention
+from src.plugins.save.vault.restore import verify_manifest
 from tests.python.cplugs.save.vault_helpers import CONV, World, jsonl
 
 OTHER = "99999999-aaaa-bbbb-cccc-1234567890ab"

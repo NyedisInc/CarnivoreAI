@@ -1,7 +1,13 @@
 /* the detail pane */
+@property --ap-dr-w {
+    syntax: '<length>';
+    inherits: true;
+    initial-value: 0px;
+}
+
 @layer components {
     .ap-page > * {
-        --dr-w: min(420px, 100cqi);
+        --ap-dr-w: min(420px, 100cqi);
     }
 
     .ap-page .ap-dr {
@@ -9,10 +15,10 @@
         top: 0;
         right: 0;
         bottom: 0;
-        z-index: 60;
+        z-index: var(--oc-z-sheet);
         display: flex;
         flex-direction: column;
-        width: var(--dr-w);
+        width: var(--ap-dr-w);
         max-width: 100%;
         min-width: 0;
         background: var(--oc-ground-panel);
@@ -23,6 +29,10 @@
         transition:
             transform var(--oc-motion) ease-out,
             visibility 0s linear var(--oc-motion);
+    }
+
+    .ap-page[data-pane-open] .ap-dr {
+        margin-right: var(--ap-pn-dock);
     }
 
     .ap-page .ap-dr[data-open] {
@@ -42,13 +52,13 @@
 
     @container ap-page (max-width: 1100px) {
         .ap-page > * {
-            --dr-w: 100cqi;
+            --ap-dr-w: 100cqi;
         }
     }
 
     @container ap-page (min-width: 1100.02px) {
         .ap-page[data-drawer-open] > :not(.ap-dr):not(.ap-pn) {
-            margin-right: var(--dr-w);
+            margin-right: var(--ap-dr-w);
         }
     }
 
@@ -109,7 +119,7 @@
         margin: 0;
     }
 
-    @media (max-width: 700px) {
+    @media (max-width: 767px) {
         .ap-page .ap-dr {
             position: sticky;
             order: -1;
@@ -134,7 +144,7 @@
         display: none;
     }
 
-    @media (max-width: 700px) {
+    @media (max-width: 767px) {
         .ap-page [data-dr-back] {
             display: inline-flex;
             min-width: 44px;

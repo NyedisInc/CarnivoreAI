@@ -68,7 +68,7 @@
 
         .lac-name { min-width: 0; overflow-wrap: anywhere; }
 
-        .lac-tag { flex: none; padding: 0 5px; border: 1px solid var(--oc-line-rule); border-radius: 2px; color: var(--oc-text-muted); font-size: 10px; letter-spacing: var(--oc-tracking-label, 0.6px); text-transform: uppercase; white-space: nowrap; }
+        .lac-tag { flex: none; padding: 0 5px; border: 1px solid var(--oc-line-rule); border-radius: var(--oc-radius-control); color: var(--oc-text-muted); font-size: 10px; letter-spacing: var(--oc-tracking-label, 0.6px); text-transform: uppercase; white-space: nowrap; }
 
         @media (max-width: 767px) {
             .lac :global([data-lac-link]) { min-height: 44px; flex: 1 1 100%; justify-content: flex-start; }

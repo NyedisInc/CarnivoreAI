@@ -94,8 +94,10 @@ def decide_conversation_takeover(
     names: Optional[Sequence[str]],
     incumbent_panes_dead: Optional[bool] = None,
     namespace_prefix: str = "cloude_",
+    live_instance_unrecorded: bool = False,
 ) -> TakeoverDecision:
-    if incumbent_row_id is None or live_row_id is None:
+    live_unrecorded = live_instance_unrecorded and live_row_id is None
+    if incumbent_row_id is None or (live_row_id is None and not live_unrecorded):
         return TakeoverDecision(
             may_take=False,
             outcome=TMUX_UNKNOWN,
@@ -105,7 +107,7 @@ def decide_conversation_takeover(
                 "are the same row was not evaluated"
             ),
         )
-    if int(incumbent_row_id) == int(live_row_id):
+    if live_row_id is not None and int(incumbent_row_id) == int(live_row_id):
         return TakeoverDecision(
             may_take=False,
             outcome=TMUX_PRESENT,
@@ -138,6 +140,16 @@ def decide_conversation_takeover(
                 "the row holding this conversation names no tmux session, "
                 "so whether that session is still running was not "
                 "evaluated"
+            ),
+        )
+    if live_unrecorded and incumbent_name == live_name:
+        return TakeoverDecision(
+            may_take=True,
+            outcome=TMUX_GONE,
+            reason=REASON_SUCCESSOR_INSTANCE,
+            detail=(
+                "the tmux session %r on the socket is the live instance no row records yet, and a name is "
+                "unique on a socket, so the holding row's own session is gone" % incumbent_name
             ),
         )
     if not listing_ok:

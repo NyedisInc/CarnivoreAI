@@ -10,11 +10,11 @@
   "surfaces": [
     "packages/cplugs/mcphealth/cplug.json",
     "packages/cplugs/mcphealth/mcphealth_main.py",
-    "src/cplugs/host/mcp_health_port.py",
+    "src/plugins/host/mcp_health_port.py",
     "src/core/mcp_health/monitor.py",
     "src/core/mcp_health/host_methods.py",
-    "src/cplugs/host/catalog_move.py",
-    "src/cplugs/sdk/mcp_health.py",
+    "src/plugins/host/catalog_move.py",
+    "src/plugins/sdk/mcp_health.py",
     "src/api/mcp_health_listing.py"
   ],
   "api_routes": [

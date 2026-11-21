@@ -119,3 +119,15 @@ def test_a_widget_tab_is_carried_but_is_not_a_member_nor_a_page():
     assert rules.page_tab_ids(shape) == []
     assert shape["groups"][row(1)]["tabs"] == [row(1), widget]
     assert not rules.has_enough_members([1], shape)
+
+
+def test_a_targeted_widget_tab_is_carried_like_a_widget_tab():
+    widget = "widget:hello.game@panel-ab12cd34"
+    shape = rules.validate({"layout": None, "groups": {row(1): {"tabs": [row(1), widget]}}})
+    assert shape["groups"][row(1)]["tabs"] == [row(1), widget]
+    assert rules.member_row_ids(shape) == [1]
+
+
+def test_a_core_widget_tab_with_a_tail_is_not_a_widget_tab():
+    with pytest.raises(rules.ShapeInvalid):
+        rules.validate({"layout": None, "groups": {row(1): {"tabs": [row(1), "widget:core.tasks@panel-ab12cd34"]}}})

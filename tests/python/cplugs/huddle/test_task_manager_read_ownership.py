@@ -5,8 +5,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.cplugs.huddle import held
-from src.cplugs.huddle.rules import JOE
+from src.plugins.huddle import held
+from src.plugins.huddle.rules import JOE
 from src.core.mcp.caller import AgentCaller
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 

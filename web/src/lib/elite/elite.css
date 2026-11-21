@@ -117,7 +117,7 @@
 @media (prefers-reduced-motion: reduce) {
 .elite .cur.blink { animation: none; }
 }
-.elite .m1c { padding: 0 12px 16px; min-width: 0; }
+.elite .m1c { padding: 0 12px 16px; min-width: 0; min-height: 0; overflow-x: hidden; overflow-y: auto; }
 .elite .m1c, .elite .m1c * { box-sizing: border-box; }
 .elite .m1h-row1 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: stretch; width: 100%; padding: 8px 0 6px; }
 .elite .m1h-logo { min-width: 0; position: relative; }

@@ -218,7 +218,7 @@ def test_crosstalk_and_send_keys_record_a_data_row_before_delivery(env, monkeypa
     seen = []
 
     async def fake_resolved(app, target_id, epoch):
-        return SimpleNamespace(session_row_id=env.alpha_row)
+        return SimpleNamespace(session_row_id=env.alpha_row, activity_status="idle", startup_gate="ready")
 
     class Manager:
         def tmux_name_for(self, session_id):
@@ -313,8 +313,9 @@ def test_m2_a_500_after_the_paste_keeps_the_row_and_the_turn_lowered(env, monkey
 
 def test_m6_a_tell_whose_lookup_returned_none_still_records_a_data_row_before_the_paste(env, monkeypatch):
     import src.api.one_shot_routes as one_shot
-    from src.cplugs.host import capabilities
-    from src.cplugs.huddle import swarm_tell, service, sending
+    from src.core.sessions import guarded_paste
+    from src.plugins.host import capabilities
+    from src.plugins.huddle import swarm_tell, service, sending
 
     seen = []
 
@@ -336,7 +337,11 @@ def test_m6_a_tell_whose_lookup_returned_none_still_records_a_data_row_before_th
     async def run(fn):
         return fn()
 
+    async def core_paste(app_state, session_id, text, options=None):
+        return await fake_paste(app_state, session_id, text)
+
     monkeypatch.setattr(one_shot, "paste_through_gates", fake_paste)
+    monkeypatch.setattr(guarded_paste, "paste_through_gates", core_paste)
     monkeypatch.setattr(swarm_tell, "target_agent", no_agent)
     monkeypatch.setattr(service, "store", lambda c: store_fake)
     asyncio.run(sending.paste_send(ctx, run, "proj:1", None, [], "ses_alpha", "test", aggregate=False))
@@ -545,8 +550,8 @@ def test_e_the_caller_lookup_makes_no_listing_pass(env, calls):
 
 
 def test_s4_an_agent_cannot_edit_move_or_mark_answered_a_swarm_card_but_the_owner_and_plain_items_work(tmp_path):
-    from src.cplugs.huddle import rules
-    from src.cplugs.huddle.store import TaskManagerStore
+    from src.plugins.huddle import rules
+    from src.plugins.huddle.public import TaskManagerStore
     from src.core.work.storage import WorkStorage
 
     store_ = TaskManagerStore(WorkStorage(tmp_path), notify=lambda key: None)
@@ -568,7 +573,7 @@ def test_s4_an_agent_cannot_edit_move_or_mark_answered_a_swarm_card_but_the_owne
 
 def test_s5_a_wrong_or_missing_delivery_id_records_data_and_a_real_one_pastes_without_a_second_row(env, monkeypatch):
     import src.api.one_shot_routes as one_shot
-    from src.cplugs.host import capabilities
+    from src.plugins.host import capabilities
 
     pasted = []
 
@@ -690,7 +695,7 @@ def test_f_an_edgeless_awake_alpha_refuses_and_posts_exactly_one_resend_card(env
 
 def test_f2_a_failed_card_post_keeps_the_write_refused_logs_and_the_next_refusal_posts_it(env, calls, monkeypatch):
     from src.core.swarm import push
-    from src.cplugs.sdk.swarm import SwarmError
+    from src.plugins.sdk.swarm import SwarmError
 
     cards, logged = [], []
 

@@ -95,15 +95,19 @@ def _uninstall_account_notice(_ctx: "BootContext") -> None:
 
 
 def _install_self_check(ctx: "BootContext") -> None:
+    from src.core.codex_helpers import wiring as codex_helpers_wiring
     from src.core.self_check import monitor as self_check_monitor
 
+    codex_helpers_wiring.install(ctx.app.state, asyncio.get_running_loop())
     self_check_monitor.install(manager=ctx.session_manager)
 
 
 def _uninstall_self_check(_ctx: "BootContext") -> None:
+    from src.core.codex_helpers import wiring as codex_helpers_unwire
     from src.core.self_check import monitor as self_check_unwire
 
     self_check_unwire.uninstall()
+    codex_helpers_unwire.uninstall()
 
 
 def _install_transcript_manifest(_ctx: "BootContext") -> None:

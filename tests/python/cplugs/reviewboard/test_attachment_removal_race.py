@@ -7,9 +7,8 @@ import threading
 import time
 from pathlib import Path
 
-from src.cplugs.huddle import files as huddle_files, store_files
-from src.cplugs.huddle.rules import TaskManagerError
-from src.cplugs.huddle.store_files import Located
+from src.plugins.huddle import files as huddle_files, store_files
+from src.plugins.huddle.public import Located, TaskManagerError
 from tests.python.cplugs.reviewboard.harness import BASE, task_manager_store
 from tests.python.cplugs.reviewboard.test_attachment_removal import _message, two  # noqa: F401
 from tests.python.cplugs.reviewboard.test_attachments import board, client, env  # noqa: F401

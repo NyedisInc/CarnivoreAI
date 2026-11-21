@@ -14,7 +14,7 @@ from src.core.db import connect, db_path_for
 from src.core.inventory import claude_folders
 from src.core.inventory.model import REPORT, Inventory
 from src.core.inventory.resolve import resolve_project, resolve_session
-from src.cplugs.save.vault.units import Scanner, Sources
+from src.plugins.save.vault.units import Scanner, Sources
 from tests.python.inventory.world_build import build_world
 from tests.python.inventory.world import CONV_A, CONV_A0, UUID_A
 

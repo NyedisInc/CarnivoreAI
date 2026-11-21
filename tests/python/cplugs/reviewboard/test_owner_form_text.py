@@ -11,10 +11,10 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 from src.api.auth import require_auth
-from src.cplugs.huddle import board_port
+from src.plugins.huddle import board_port
 from src.main import _validation_error_as_400
-from src.cplugs.reviewboard.live_requests import LiveBody, LiveSendBody, MilestoneBody
-from src.cplugs.reviewboard.requests import MAX_RAW_STRING, ReviseBody
+from src.plugins.reviewboard.live_requests import LiveBody, LiveSendBody, MilestoneBody
+from src.plugins.reviewboard.requests import MAX_RAW_STRING, ReviseBody
 from tests.python.cplugs.reviewboard.harness import BASE, task_manager_on, task_manager_store, make_env
 from tests.python.cplugs.reviewboard.test_publish import create_body
 from tests.python.cplugs.test_owner_text import CLEAN_LOG, COLORED_LOG, REFUSED, STRIPPED

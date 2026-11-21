@@ -26,7 +26,14 @@ CHECKPOINT_RETRY_SECONDS: float = 0.2
 CHECKPOINT_BUSY_SECONDS: float = 5.0
 
 
+SWITCHED_OFF_MESSAGE: str = "{plugin_id} is switched off; turn it on in settings, features, then rebuild"
+
+
 class UnknownPlugin(LookupError):
+    pass
+
+
+class PluginSwitchedOff(Exception):
     pass
 
 
@@ -87,6 +94,8 @@ def rebuild_plugin(engine: "Engine", plugin_id: str) -> Dict[str, Any]:
     plugin = registry.find(plugin_id, engine.plugins)
     if plugin is None:
         raise UnknownPlugin(plugin_id)
+    if not engine.plugin_on(plugin):
+        raise PluginSwitchedOff(SWITCHED_OFF_MESSAGE.format(plugin_id=plugin_id))
     engine.begin_rebuild(plugin_id)
     error: Optional[str] = "interrupted"
     try:

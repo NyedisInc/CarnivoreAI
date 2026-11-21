@@ -26,7 +26,8 @@ from src.api.auth import require_auth
 from src.config import settings
 from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
-from src.core.swarm import delivery, thread_port
+from src.core.swarm import body as swarm_body, delivery, reply_mirror, routing, sleep_commit, thread_port
+from src.core.tmux_control.names import is_control_input_session
 from src.core.swarm.owner_message import REF_LINE
 
 API = "/swarm"
@@ -85,6 +86,7 @@ def world(tmp_path, monkeypatch, tmux_test_socket):
     git(repo, "add", "README")
     git(repo, "commit", "-q", "-m", "init")
 
+    _forget_loop_bound_state()
     pasted, busy = [], {"on": False}
 
     async def fake_paste(request, session_id, text, **kw):
@@ -114,14 +116,25 @@ def world(tmp_path, monkeypatch, tmux_test_socket):
                           argv_log=argv_log)
     thread_port.register(None)
     delivery._pending.clear()
+    _forget_loop_bound_state()
     for name in _bodies(manager):
         subprocess.run(["tmux", "-L", manager.tmux_socket_name(), "kill-session", "-t", f"={name}"], check=False)
     settings._auth_config_cache = None
 
 
+def _forget_loop_bound_state() -> None:
+    for locks in (delivery._locks, swarm_body._agent_locks, routing._locks, reply_mirror._locks, sleep_commit._repo_locks):
+        locks.clear()
+    delivery._dialog_card_lock = asyncio.Lock()
+    delivery._dialog_posted.clear()
+    delivery._trust_posted.clear()
+    delivery._trust_card_at.clear()
+
+
 def _bodies(manager) -> list:
-    return subprocess.run(["tmux", "-L", manager.tmux_socket_name(), "list-sessions", "-F", "#{session_name}"],
-                          capture_output=True, text=True, check=False).stdout.split()
+    names = subprocess.run(["tmux", "-L", manager.tmux_socket_name(), "list-sessions", "-F", "#{session_name}"],
+                           capture_output=True, text=True, check=False).stdout.split()
+    return [name for name in names if not is_control_input_session(name)]
 
 
 def _open_wakes(state: Path) -> int:
@@ -163,11 +176,13 @@ async def test_owner_message_wakes_one_body_queues_a_second_and_sleep_commits_me
         assert _bodies(world.manager) == [detail["tmux_session"]] and _open_wakes(world.state) == 1
         assert world.pasted == []
         world.busy["on"] = False
-        await _until(lambda: len(world.pasted) == 2, "both queued texts to land")
-        assert "desk" in world.pasted[0] and world.pasted[1] == f"and keep the tests green\n\n{REF_LINE.format(ref='huddle:msg:2')}"
+        await _until(lambda: len(world.pasted) == 3, "all three queued texts to land")
+        first_words = f"swap the models\n\n{REF_LINE.format(ref='huddle:msg:1')}"
+        assert world.pasted[-1] == f"and keep the tests green\n\n{REF_LINE.format(ref='huddle:msg:2')}"
+        assert first_words in world.pasted[:2] and any("desk" in text for text in world.pasted[:2])
         with closing(connect(db_path_for(world.state), create=False)) as conn:
             rows = conn.execute("SELECT authority, source FROM swarm_deliveries ORDER BY id").fetchall()
-        assert [(r[0], r[1]) for r in rows] == [("owner", "wake_prompt"), ("owner", "owner_chat")]
+        assert sorted((r[0], r[1]) for r in rows) == [("owner", "owner_chat"), ("owner", "owner_chat"), ("owner", "wake_prompt")]
         page = (await client.get(f"{API}/agents/{agent_id}/conversation")).json()
         assert [e["text"] for e in page["entries"]] == ["swap the models", "and keep the tests green"]
 

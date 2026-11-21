@@ -5,9 +5,9 @@ import os
 import shutil
 import time
 
-from src.cplugs.save.vault import constants as K
-from src.cplugs.save.vault import retention, summary_disk
-from src.cplugs.save.vault.store import Vault
+from src.plugins.save.vault import constants as K
+from src.plugins.save.vault import retention, summary_disk
+from src.plugins.save.vault.store import Vault
 from tests.python.cplugs.save.test_vault_retention_reads import (
     CONV, SMALL, _cold_copy, _counting_reads, _outcome, _pass, _three_units)
 from tests.python.cplugs.save.vault_helpers import World

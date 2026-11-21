@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 
 def plugin_widget_rows() -> List[Dict[str, Any]]:
-    from src.cplugs.registry import CPLUGS  # noqa: PLC0415
+    from src.plugins.registry import CPLUGS  # noqa: PLC0415
 
     return [
         {"id": f"{cplug.manifest.id}.{name}", **block}

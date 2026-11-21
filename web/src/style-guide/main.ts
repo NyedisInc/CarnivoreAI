@@ -1,7 +1,7 @@
 import './offline';
 import type { Component } from 'svelte';
 import { mountPanel } from '../lib/mount';
-import { PLUGIN_SPECIMENS } from '../cplugs/style-guide';
+import { PLUGIN_SPECIMENS } from '../plugins/style-guide';
 import { pluginGuideEntries } from './plugin-entries';
 import { installSharedTooltip } from '../lib/tooltip/tooltip';
 import LedMatrix from './specimens/LedMatrix.svelte';

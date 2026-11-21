@@ -223,7 +223,7 @@ body {
 .admin-badge {
     padding: 0 6px;
     border: var(--oc-border, 1px) solid var(--oc-line-panel);
-    border-radius: 2px;
+    border-radius: var(--oc-radius-control);
     color: var(--oc-text-muted);
     font-size: var(--oc-fs-micro, 10px);
     letter-spacing: var(--oc-tracking-label, 0.6px);

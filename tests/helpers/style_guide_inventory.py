@@ -53,7 +53,7 @@ class PluginGuideError(ValueError):
 
 PLUGIN_ROWS_NAME = "style-guide.json"
 PLUGIN_PROSE_DIR = "style-guide"
-PLUGINS_WEB = WEB_SRC / "cplugs"
+PLUGINS_WEB = WEB_SRC / "plugins"
 
 
 def plugin_rows() -> dict[str, dict]:
@@ -61,9 +61,9 @@ def plugin_rows() -> dict[str, dict]:
     for path in sorted(PLUGINS_WEB.glob(f"*/{PLUGIN_ROWS_NAME}")):
         plugin = path.parent.name
         files = json.loads(path.read_text(encoding="utf-8")).get("files", {})
-        outside = [k for k in files if not k.startswith(f"web/src/cplugs/{plugin}/")]
+        outside = [k for k in files if not k.startswith(f"web/src/plugins/{plugin}/")]
         if outside:
-            raise PluginGuideError(f"{plugin}: style guide rows outside web/src/cplugs/{plugin}/: {outside}")
+            raise PluginGuideError(f"{plugin}: style guide rows outside web/src/plugins/{plugin}/: {outside}")
         found[plugin] = files
     return found
 

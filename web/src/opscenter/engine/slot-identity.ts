@@ -20,6 +20,10 @@ export function rowIdOfSlot(slot: string): number | null {
   return /^\d{1,15}$/.test(digits) ? Number(digits) : null;
 }
 
+export function isRowTail(id: string): boolean {
+  return id.startsWith(ROW_TAIL);
+}
+
 export function sessionForSlot(slot: string, rows: readonly SlotRow[] | null | undefined): string {
   const tail = instanceName(slot as SlotId);
   const rowId = rowIdOfSlot(slot);

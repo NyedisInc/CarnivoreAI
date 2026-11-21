@@ -381,7 +381,7 @@ class _FakeSettings:
     def get_agent_command(self, agent_type, model=None, extra_args=None):
         return self._command
 
-    def pane_launch_command(self, agent_type, model=None, extra_args=None):
+    def pane_launch_command(self, agent_type, model=None, extra_args=None, working_dir=None):
         return self.get_agent_command(agent_type, model=model, extra_args=extra_args)
 
 

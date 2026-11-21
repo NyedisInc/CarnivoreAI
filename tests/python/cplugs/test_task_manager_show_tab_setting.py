@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.host import routes as host_routes, runtime
+from src.plugins.host import routes as host_routes, runtime
 
 
 def make_app(state_dir: Path) -> FastAPI:

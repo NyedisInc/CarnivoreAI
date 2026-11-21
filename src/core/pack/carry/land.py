@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Mapping, Optional
 import structlog
 
 from src.core.pack.carry import wip as wip_mod
-from src.core.pack.migrate.code import CodeError, _checkout_carried
+from src.core.pack.migrate.code import CodeError, checkout_carried
 from src.core.pack.migrate.receive import MigrateRefused
 from src.core.pack.move.receive import _working_dir
 from src.core.pack.transport import bundles, ladder, tarball
@@ -155,7 +155,7 @@ def apply_repo(root: str, sender: str, unit: Mapping[str, Any], blob: Optional[s
             raise MigrateRefused(OWN, f"{unit['rel']} here has changes of its own, so nothing was written over them")
         _room(root, _tree_bytes(path, unit["head"], air_gap) + (_tree_bytes(path, f"{unit['wip']}^{{tree}}", air_gap) if unit.get("wip") else 0))
         try:
-            _checkout_carried(path, sender, unit["branch"], unit["head"], air_gap=air_gap)
+            checkout_carried(path, sender, unit["branch"], unit["head"], air_gap=air_gap)
         except CodeError as exc:
             raise MigrateRefused(OWN, f"{unit['rel']} here has commits of its own that do not line up with the ones sent") from exc
         if _head(path, air_gap) != unit["head"]:

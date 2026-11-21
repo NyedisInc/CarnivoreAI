@@ -4,7 +4,7 @@ import PackKnock from './PackKnock.svelte';
 let host: HTMLElement | null = null;
 
 export function bootPackKnock(): void {
-    if (host) return;
+    if (host || !document.body || typeof document.createElement !== 'function') return;
     host = document.createElement('div');
     host.id = 'pack-knock-host';
     document.body.appendChild(host);

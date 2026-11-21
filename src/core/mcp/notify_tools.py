@@ -51,12 +51,10 @@ _ATTACHMENT: dict = {"type": "object", "additionalProperties": False,
 
 WRITE_TOOLS: dict = {
     NAME: (
-        "Send the owner a short notification about THIS session (it is routed by the owner's notification settings). "
-        "At most 280 characters, secrets are starred, and calls are rate limited (3 a minute, 5 per 10 minutes). "
-        "Optional `attachment` sends one file, image, video or link to the owner's iPhone and this computer only: "
-        "give `path` (an absolute path inside this project; copied, kind read from the file's bytes; image up to 10 MB, "
-        "video 50 MB, other files 25 MB; a text file holding a credential is refused) OR `url` (https, up to 2000 characters, "
-        "never fetched), plus an optional `title` (up to 120 characters, shown as coming from you).",
+        "Send the owner one short notification about THIS session, routed by his notification settings. "
+        "Text up to 280 characters, secrets starred, rate limited (3 a minute, 5 per 10 minutes). "
+        "Optional `attachment` (iPhone and this computer only): `path` (absolute, inside this project; image 10 MB, "
+        "video 50 MB, file 25 MB; credential text refused) or `url` (https, never fetched), plus `title`.",
         {"text": {"type": "string", "maxLength": 280}, "attachment": _ATTACHMENT},
         ["text"], notify),
     REVIEW_NAME: (

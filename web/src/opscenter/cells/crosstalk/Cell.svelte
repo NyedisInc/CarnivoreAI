@@ -243,7 +243,7 @@
     .xr--stack .xr-cap { flex-wrap: wrap; height: auto; min-height: 22px; white-space: normal; }
     .xr--stack .xr-cap__subject { overflow-wrap: anywhere; }
 
-    .xr-divider { position: relative; flex: none; height: 8px; margin: -3px 0 -4px; cursor: row-resize; touch-action: none; border: 1px solid transparent; z-index: 1; }
+    .xr-divider { position: relative; flex: none; height: 8px; margin: -3px 0 -4px; cursor: row-resize; touch-action: none; border: 1px solid transparent; z-index: var(--oc-z-raised); }
     .xr-divider::before { content: ''; position: absolute; left: 0; right: 0; top: 3px; height: 1px; background: var(--oc-line-panel); }
     .xr-divider::after { content: ''; position: absolute; left: 50%; top: 2px; width: 24px; height: 3px; margin-left: -12px; border-top: 1px solid var(--oc-text-dim); border-bottom: 1px solid var(--oc-text-dim); opacity: 0.6; }
     .xr-divider:hover::before, .xr-divider--drag::before { background: var(--oc-text-secondary); }

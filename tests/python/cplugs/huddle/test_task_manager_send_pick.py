@@ -49,7 +49,7 @@ def test_the_pick_is_per_list_and_a_pick_with_no_candidate_left_is_ignored(clien
 
 
 def test_a_pick_notifies_the_list_topic(client, app, monkeypatch):
-    from src.cplugs.huddle import service
+    from src.plugins.huddle import service
     seen = []
     monkeypatch.setattr(service, "store", _recording(service.store, seen))
     put(client, "ses_new")

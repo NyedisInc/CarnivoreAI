@@ -7,7 +7,7 @@ from typing import Callable
 
 import pytest
 
-from src.cplugs.host import runtime, state as owner_state
+from src.plugins.host import runtime, state as owner_state
 
 GARBAGE = b'{"version": 1, "cplugs": {"huddle": {"enabled": tru'
 NOT_AN_OBJECT = b'["a", "list"]'

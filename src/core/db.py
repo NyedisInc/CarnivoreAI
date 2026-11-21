@@ -13,7 +13,7 @@ import structlog
 from src.core import product_identity
 from src.core.db_reuse.executor import Executor
 from src.core.db_rename.legacy import legacy_fallback_for
-from src.core.hosts.table_columns import table_columns
+from src.core.hosts.table_columns import pass_memo, table_columns
 from src.core.db_models import META_INSTALL_ID, META_SCHEMA_VERSION
 from src.core.message_body_codec import register_body_functions
 
@@ -117,7 +117,7 @@ def transaction(conn: Executor) -> Iterator[Executor]:
         try:
             conn.execute("ROLLBACK")
         except sqlite3.Error as exc:
-            logger.error("db_rollback_failed", error=str(exc))
+            logger.error("db_rollback_failed", error=str(exc), error_type=type(exc).__name__)
         raise
     try:
         conn.execute("COMMIT")
@@ -128,12 +128,16 @@ def transaction(conn: Executor) -> Iterator[Executor]:
 
 def table_exists(conn: sqlite3.Connection, name: str) -> bool:
     try:
-        row = conn.execute(
-            "SELECT 1 FROM main.sqlite_master WHERE type IN ('table','view') AND name = ?",
-            (name,),
-        ).fetchone()
+        return pass_memo(conn, "exists", name, lambda: _table_in_master(conn, name))
     except sqlite3.Error:
         return False
+
+
+def _table_in_master(conn: sqlite3.Connection, name: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM main.sqlite_master WHERE type IN ('table','view') AND name = ?",
+        (name,),
+    ).fetchone()
     return row is not None
 
 

@@ -4,7 +4,7 @@ For every widget record in ``src/data/widget-contracts.json`` (``docs/extension-
 widget's fixture scenarios (data and empty) in EVERY host the record declares (home, terminal, drawer; the pop-out is the
 home host in its own window and the glance row is the drawer's mini size), at EVERY size the record calls out, under at
 least two themes (all capture themes by default), runs the fit check and the junk-text scan on each draw, and writes one
-GATE RECORD per widget (``src/cplugs/sdk/widget_gate.py``, format version 1) that a submission path judges with
+GATE RECORD per widget (``src/plugins/sdk/widget_gate.py``, format version 1) that a submission path judges with
 ``refuse_unless_passing``. It uses the harness functions of ``scripts/widgets/harness.py``, the same page, fixture server
 and checks as ``scripts/widgets/capture.py`` and the Widget Lab plugin; no second implementation of any check.
 
@@ -35,8 +35,8 @@ from scripts.widgets.fit_table import read_gates, write_table
 from scripts.widgets.verdicts import GLANCE_HOST, GLANCE_SIZE, POPOUT_HOST, cells_of, render_failures
 from scripts.widgets.common import source_revision
 from scripts.widgets.harness import CHROMIUM_ARGS, REPO, HarnessError, Render, build_if_stale, catalog, serve
-from src.cplugs.sdk.widget_decl import REQUIRED_FIXTURES, ZONE_HOSTS, problems_in
-from src.cplugs.sdk.widget_gate import GATE_SCHEMA, MIN_THEMES, record_digest
+from src.plugins.sdk.widget_decl import REQUIRED_FIXTURES, ZONE_HOSTS, problems_in
+from src.plugins.sdk.widget_gate import GATE_SCHEMA, MIN_THEMES, record_digest
 
 RECORDS_PATH = REPO / "src" / "data" / "widget-contracts.json"
 DEFAULT_OUT = REPO / "build" / "widget-gate"

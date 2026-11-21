@@ -384,6 +384,12 @@
         "sep": true
       },
       {
+        "id": "group",
+        "label": "new group",
+        "key": "g",
+        "sep": true
+      },
+      {
         "id": "move-up",
         "label": "move up",
         "key": "",
@@ -460,6 +466,12 @@
         "sep": true
       },
       {
+        "id": "group",
+        "label": "new group",
+        "key": "g",
+        "sep": true
+      },
+      {
         "id": "move-up",
         "label": "move up",
         "key": "[",
@@ -532,6 +544,12 @@
         "id": "sleep",
         "label": "sleep",
         "key": "s",
+        "sep": true
+      },
+      {
+        "id": "group",
+        "label": "new group",
+        "key": "g",
         "sep": true
       },
       {

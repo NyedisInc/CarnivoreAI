@@ -9,7 +9,7 @@
     top: 0;
     right: 0;
     bottom: 0;
-    z-index: 45;
+    z-index: var(--oc-z-shell-menu);
     display: flex;
     flex-direction: column;
     width: var(--rail-w, 36px);
@@ -49,7 +49,7 @@
 
   .rail__pin {
     position: absolute;
-    z-index: 1;
+    z-index: var(--oc-z-raised);
     bottom: var(--rail-pad, var(--oc-space-2));
     left: 50%;
     transform: translateX(-50%);

@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-from src.cplugs.save.vault.points import SessionIndex
+from src.plugins.save.vault.points import SessionIndex
 
 
 def test_the_scan_reads_one_manifest_per_unit() -> None:

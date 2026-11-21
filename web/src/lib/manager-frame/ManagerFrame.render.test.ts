@@ -124,6 +124,19 @@ describe('the list', () => {
     });
 });
 
+describe('one body (#2775)', () => {
+    test('the list and the reading pane sit inside the frame\'s one body, never a second one', async () => {
+        const root = await show();
+        expect(root.querySelectorAll('.oc-page__body').length, 'list only').toBe(1);
+        expect(root.querySelector('.oc-page__body > .oc-page__fill > .oc-page__split > .oc-page__scroll')).not.toBeNull();
+        root.querySelector<HTMLButtonElement>('[data-item-id="share-read-only"] .mgr-card__open')!.click();
+        await settle();
+        expect(root.querySelectorAll('.oc-page__body').length, 'with the reading pane open').toBe(1);
+        expect(root.querySelector('.oc-page__fill > .oc-page__split.oc-page__split--reading > .oc-page__detail')).not.toBeNull();
+        expect(root.querySelectorAll('.oc-page__scroll').length, 'one list column').toBe(1);
+    });
+});
+
 describe('the detail pane and the keyboard', () => {
     test('the name opens the pane and takes focus; Escape closes it back onto the name', async () => {
         const root = await show();
@@ -272,5 +285,30 @@ describe('every word the frame owns comes from the catalog', () => {
             text(root, '[data-mgr-remove-cancel]'),
         ];
         expect([...before, ...asking].filter((s) => !bracketed(s))).toEqual([]);
+    });
+});
+
+describe('the page frame (#2775: one header button everywhere)', () => {
+    test('a manager page wears the column frame, so its title-strip and tool-row buttons take the frame density', async () => {
+        const root = await show();
+        const page = root.querySelector('.mgr')!;
+        expect(page.getAttribute('data-frame')).toBe('column');
+        const install = root.querySelector('[data-mgr-install]')!;
+        expect(install.closest('.oc-titlebar')?.getAttribute('data-btn-density')).toBe('frame');
+        expect(install.closest('[data-btn-density="frame"]')).not.toBeNull();
+        const bar = root.querySelector('.oc-page__bar')!;
+        expect(bar.getAttribute('data-frame-region')).toBe('tools');
+        expect(bar.getAttribute('data-btn-density')).toBe('frame');
+        expect(root.querySelector('[data-frame-region="body"][data-scroll="self"] .oc-page__fill .mgr-card__open')).not.toBeNull();
+    });
+
+    test('the open pane\'s title strip is a frame header too, so its back button takes the frame density', async () => {
+        const root = await show();
+        (root.querySelector('.mgr-card__open') as HTMLButtonElement).click();
+        await settle();
+        const bar = root.querySelector('.mgr__detail-bar')!;
+        expect(bar.getAttribute('data-btn-density')).toBe('frame');
+        const back = bar.querySelector('[data-btn]')!;
+        expect(back.closest('[data-btn-density]')).toBe(bar);
     });
 });

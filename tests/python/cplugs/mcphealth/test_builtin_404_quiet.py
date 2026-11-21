@@ -5,7 +5,7 @@ import re
 import sys
 from pathlib import Path
 
-from src.cplugs.host import mcp_health_port
+from src.plugins.host import mcp_health_port
 
 PACKAGE = Path(__file__).resolve().parents[4] / "packages" / "cplugs" / "mcphealth"
 sys.path.insert(0, str(PACKAGE))

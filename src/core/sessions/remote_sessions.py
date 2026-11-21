@@ -94,7 +94,8 @@ async def _claim_name(manager: SessionManagerSurface, host: RemoteHost, base: Op
 
 
 def _persist(manager: SessionManagerSurface, backend: Any, *, far_dir: str, family: Optional[str],
-             launched: bool, label: Optional[str], reuse_session_id: Optional[int]) -> Any:
+             launched: bool, label: Optional[str], reuse_session_id: Optional[int],
+             app_session_id: Optional[str] = None) -> Any:
     from src.core.db import transaction
     from src.core.session_create_persist import (
         CREATE_NO_DATASTORE,
@@ -112,7 +113,7 @@ def _persist(manager: SessionManagerSurface, backend: Any, *, far_dir: str, fami
                 conn, socket=backend.host.socket, name=backend.tmux_session, listing=listing,
                 working_dir=far_dir, agent_type=family, agent_family=family,
                 agent_launched=launched, label=label, host_key=backend.host_key,
-                reuse_session_id=reuse_session_id)
+                reuse_session_id=reuse_session_id, app_session_id=app_session_id)
     except Exception as exc:  # noqa: BLE001
         logger.warning("remote_create_persist_failed", host=backend.host_key, error=str(exc))
         return CreatePersistResult(outcome=CREATE_NO_DATASTORE, detail=str(exc))
@@ -163,7 +164,7 @@ async def create_remote_session(
     manager._registry.register(session, backend)
     persisted = await asyncio.to_thread(_persist, manager, backend, far_dir=far_dir,
                                         family=family, launched=auto_start, label=label,
-                                        reuse_session_id=reuse_session_id)
+                                        reuse_session_id=reuse_session_id, app_session_id=session_id)
     session.tmux_created_epoch = persisted.epoch
     if persisted.epoch is not None:
         manager._instance_epochs[session_id] = persisted.epoch

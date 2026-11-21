@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 import time
 
-from src.cplugs.huddle import recurrence, schedule
+from src.plugins.huddle import recurrence, schedule
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, row  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import ITEMS, Env, call, env, iso  # noqa: F401
 

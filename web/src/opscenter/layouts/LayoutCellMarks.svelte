@@ -57,7 +57,7 @@
           min-width: 18px;
           padding: 1px 5px;
           border: 1px solid var(--oc-line-panel);
-          border-radius: 3px;
+          border-radius: var(--oc-radius-tight);
           color: var(--oc-text-secondary);
           font-family: var(--font-mono);
           font-size: var(--oc-fs-micro, var(--oc-fs-micro));

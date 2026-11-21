@@ -140,8 +140,17 @@
   --oc-pad-bottom: 13px;
   --oc-pad-left: 16px;
   --oc-gutter: 12px;
+  --oc-region-gutter: 16px;
   --oc-space-1: 4px;
   --oc-drawer-offset: 0px;
+  --oc-drawer-list-w: 240px;
+  --oc-drawer-list-max-w: 420px;
+  --oc-drawer-min-w: 420px;
+  --oc-drawer-grow-w: 1580px;
+  --oc-drawer-max-w: 1580px;
+  --oc-drawer-shadow: 1px 0 0 var(--oc-line-rule), 14px 0 16px -12px var(--oc-shadow-lift);
+  --oc-drawer-stacked-min-w: 640px;
+  --oc-drawer-stacked-grow-w: 1920px;
   --oc-space-2: 8px;
   --oc-space-3: 12px;
   --oc-space-4: 16px;
@@ -191,28 +200,49 @@
   --oc-row-h-dense: 22px;
   --oc-row-h: var(--oc-rowheight);
   --oc-row-h-roomy: 32px;
+  --oc-btn-pad-y: 7px;
+  --oc-disabled-opacity: 0.45;
+  --oc-mark: var(--oc-space-3);
   --oc-task-pad-x: var(--oc-space-3);
   --oc-task-pad-y: var(--oc-space-3);
   --oc-task-gap: var(--oc-space-3);
-  --oc-radius-control: clamp(0px, var(--radius-control, 2px), 4px);
-  --oc-radius-panel: clamp(0px, var(--radius-panel, 4px), 8px);
   --oc-radius-round: 999px;
+  --oc-radius-circle: 50%;
+  --oc-sheet-w: 480px;
+  --oc-sheet-w-wide: 560px;
+  --oc-sheet-w-narrow: 300px;
   --oc-ease: cubic-bezier(0.2, 0, 0, 1);
+  --oc-z-step: 1;
   --oc-z-raised: 1;
   --oc-z-sticky: 10;
-  --oc-z-drawer: 100;
+  --oc-z-float: 20;
+  --oc-z-region-overlay: 30;
+  --oc-z-page: 40;
+  --oc-z-shell-menu: 45;
+  --oc-z-shell-popover: 50;
+  --oc-z-notice: 55;
+  --oc-z-sheet: 60;
+  --oc-z-shell-top: 70;
+  --oc-z-dock-guide: 130;
   --oc-z-popover: 1000;
-  --oc-z-modal: 1100;
-  --oc-z-toast: 1200;
-  --oc-z-tooltip: 1300;
+  --oc-z-scrim: 1090;
+  --oc-z-drawer: 1100;
+  --oc-z-drawer-float: 1110;
+  --oc-z-menu: 1200;
+  --oc-z-picker: 1300;
+  --oc-z-takeover: 2000;
+  --oc-z-palette: 9000;
+  --oc-z-dialog: 9999;
+  --oc-z-over-dialog: 10000;
+  --oc-z-lightbox: 10600;
+  --oc-z-tooltip: 20000;
+  --oc-z-modal: var(--oc-z-drawer);
   --oc-terminal-inset: 8px;
   --oc-stats-h: 69px;
   --oc-titlerow-h: 37px;
   --oc-titlerow-h-short: 31px;
   --oc-foot-h: 20px;
   --oc-rowheight: 26px;
-  --oc-radius: 6px;
-  --oc-radius-sm: 4px;
   --oc-project-block-mix: 9%;
   --oc-project-block-default: rgb(56 56 56);
   --oc-border: 1px;
@@ -230,6 +260,17 @@
   --oc-radius-frame: 0px;
   --oc-pane-inset: 2px;
 
+  --oc-frame-btn-h: var(--oc-rowheight);
+  --oc-frame-side-w: 208px;
+  --oc-frame-pair-side-w: 184px;
+  --oc-frame-detail-w: clamp(360px, 36cqi, 560px);
+  --oc-frame-find-w: 240px;
+  --oc-frame-sticky-top: 0px;
+  --oc-page-gutter: 16px;
+  --oc-page-max: 1680px;
+  --oc-page-foot-h: 24px;
+  --oc-titlerow-h-phone: 56px;
+
   --oc-motion-fast: 120ms;
   --oc-motion: 160ms;
   --oc-motion-slow: 240ms;
@@ -237,6 +278,7 @@
   --oc-focus-edge: color-mix(in oklab, var(--oc-orange) 65%, transparent);
   --oc-focus-glow: color-mix(in oklab, var(--oc-orange) 45%, transparent);
   --oc-focus-breathe: 6000ms;
+  --oc-cell-dim: 0.8;
 
   --oc-strip-edge: color-mix(in oklab, var(--oc-orange) 55%, var(--oc-line-rule));
   --oc-strip-glow: color-mix(in oklab, var(--oc-orange) 20%, transparent);
@@ -247,6 +289,13 @@
 [data-session-theme] {
   --color-tabstrip-bg: initial;
   color-scheme: var(--color-scheme, dark);
+  --oc-radius-control: clamp(0px, var(--radius-control, 2px), 4px);
+  --oc-radius-xs: calc(var(--oc-radius-control) / 2);
+  --oc-radius-tight: calc(var(--oc-radius-control) * 1.5);
+  --oc-radius-panel: clamp(0px, var(--radius-panel, 4px), 8px);
+  --oc-radius-sm: var(--oc-radius-panel);
+  --oc-radius: calc(var(--oc-radius-panel) * 1.5);
+  --oc-radius-lg: calc(var(--oc-radius-panel) * 2);
   --oc-ground-chrome: var(--color-header-bg, #02161e);
   --oc-ground-page: var(--color-bg-page, #02161e);
   --oc-on-accent: var(--color-on-accent, #0a0d0e);
@@ -291,7 +340,7 @@
   --oc-line-column: var(--color-border-subtle, #1f2e30);
   --oc-line-faint: var(--color-border-subtle, #1f2e30);
   --oc-line-strip: var(--color-border, #1f2e30);
-  --oc-line-frame: #3f4649;
+  --oc-line-frame: color-mix(in srgb, var(--oc-text-primary) 27%, var(--oc-ground-panel));
   --oc-text-bright: var(--color-fg, #ffffff);
   --oc-text-primary: var(--color-fg, #cbd6d9);
   --oc-text-secondary: var(--color-fg-muted, #a3b4bb);
@@ -313,6 +362,14 @@
   --oc-purple-light: oklch(from var(--color-fg, #cbd6d9) calc(0.3 + 0.55 * l) 0.1 310);
   --oc-purple-deep: oklch(from var(--color-fg, #cbd6d9) calc(0.22 + 0.5 * l) 0.2 292);
   --oc-violet: oklch(from var(--color-fg, #cbd6d9) calc(0.22 + 0.55 * l) 0.13 295);
+  --oc-computer-1: color-mix(in oklab, var(--oc-cyan) 22%, var(--oc-ground-field));
+  --oc-computer-1-deep: color-mix(in oklab, var(--oc-cyan) 38%, var(--oc-ground-field));
+  --oc-computer-2: color-mix(in oklab, var(--oc-violet) 22%, var(--oc-ground-field));
+  --oc-computer-2-deep: color-mix(in oklab, var(--oc-violet) 38%, var(--oc-ground-field));
+  --oc-computer-3: color-mix(in oklab, var(--oc-yellow) 22%, var(--oc-ground-field));
+  --oc-computer-3-deep: color-mix(in oklab, var(--oc-yellow) 38%, var(--oc-ground-field));
+  --oc-computer-4: color-mix(in oklab, var(--oc-coral) 22%, var(--oc-ground-field));
+  --oc-computer-4-deep: color-mix(in oklab, var(--oc-coral) 38%, var(--oc-ground-field));
   --oc-pink: oklch(from var(--color-fg, #cbd6d9) calc(0.3 + 0.5 * l) 0.16 350);
   --oc-locked: oklch(from var(--color-fg, #cbd6d9) calc(0.3 + 0.55 * l) 0.14 310);
   --oc-kind-mod: oklch(from var(--color-fg, #cbd6d9) calc(0.30 + 0.40 * l) 0.13 40);
@@ -357,15 +414,21 @@
   --oc-scrollbar-thumb-hover: color-mix(in oklab, var(--oc-orange) 85%, var(--oc-ground-panel));
   --oc-scrollbar-thumb-active: var(--oc-orange);
   --oc-scrollbar-track: color-mix(in oklab, var(--oc-text-primary) 8%, var(--oc-ground-panel));
-}
-
-[data-session-theme="carnivore-light"] {
-  --oc-violet: #743677;
+  --oc-search-match-bg: color-mix(in srgb, var(--oc-orange) 30%, var(--oc-ground-panel));
+  --oc-search-match-border: color-mix(in srgb, var(--oc-orange) 55%, var(--oc-ground-panel));
+  --oc-search-active-bg: var(--oc-orange);
+  --oc-search-active-border: var(--oc-orange-bright);
 }
 
 @media (min-width: 701px) {
   :root {
     --oc-rail-key: 28px;
+  }
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --oc-region-gutter: 12px;
   }
 }
 
@@ -404,4 +467,40 @@
     --oc-focus-lift: var(--oc-text-bright);
     --oc-surface-sunken: var(--oc-ground-content);
   }
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --oc-page-gutter: 12px;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --oc-page-gutter: 16px;
+  }
+}
+
+@property --oc-search-match-bg {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #4e242e;
+}
+
+@property --oc-search-match-border {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #8d303b;
+}
+
+@property --oc-search-active-bg {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #ff4652;
+}
+
+@property --oc-search-active-border {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #ff6872;
 }

@@ -9,6 +9,7 @@
     import Tabs, { panelAttrs, type TabDef } from '../../opscenter/ui/Tabs.svelte';
     import PackPanels from './PackPanels.svelte';
     import RosterActions from '../pack-roster/RosterActions.svelte';
+    import RosterBar from '../pack-roster/RosterBar.svelte';
     import { rosterUi } from '../pack-roster/roster-ui.svelte';
     import { PACK_TABS, packFragment, packTabOf, type PackTab } from './pack-hash';
 
@@ -72,12 +73,11 @@
 
 {#if open}
     {#snippet rosterActions()}<RosterActions />{/snippet}
-    <Page class="pledger mgr pack-page" title={t('pack.page.title')} onClose={close} bind:titleEl actions={tab === 'computers' ? rosterActions : undefined}>
+    {#snippet rosterBar()}<RosterBar />{/snippet}
+    <Page class="pledger mgr pack-page" title={t('pack.page.title')} onClose={close} bind:titleEl frame="column" scroll="self" actions={tab === 'computers' ? rosterActions : undefined} bar={tab === 'computers' ? rosterBar : undefined}>
         {#snippet tabs()}
-            <Tabs tabs={tabDefs} active={tab} onSelect={pick} label={t('pack.tabs.label')} idBase="pack" class="pk-tabs" />
+            <Tabs tabs={tabDefs} active={tab} onSelect={pick} label={t('pack.tabs.label')} idBase="pack" />
         {/snippet}
-        <div class="oc-page__body pk-body">
-            <PackPanels {tab} panel={panelAttrs('pack', tab)} />
-        </div>
+        <PackPanels {tab} panel={panelAttrs('pack', tab)} />
     </Page>
 {/if}

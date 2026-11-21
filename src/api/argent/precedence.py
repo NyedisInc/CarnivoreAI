@@ -10,7 +10,7 @@ from src.api.auth import require_auth
 from src.core.argent import detector
 from src.core.argent.lifecycle import PORT_NAME
 from src.core.argent.runtime import get_runtime
-from src.cplugs.sdk import ports
+from src.plugins.sdk import ports
 
 router = APIRouter(prefix="", tags=["argent"], dependencies=[Depends(require_auth)])
 

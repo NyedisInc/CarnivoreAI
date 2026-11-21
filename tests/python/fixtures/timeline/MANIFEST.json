@@ -1,0 +1,149 @@
+{
+ "agent_main": {
+  "census_keys": [
+   "assistant||",
+   "attachment||task_status",
+   "queue-operation||",
+   "system|turn_duration|",
+   "user||"
+  ],
+  "file": "b0000010-0000-4000-9000-000000000000.jsonl",
+  "records": 9
+ },
+ "agent_sub": {
+  "census_keys": [
+   "assistant||",
+   "attachment||structured_output",
+   "user||"
+  ],
+  "file": "b0000010-0000-4000-9000-000000000000/subagents/agent-a1fixture.jsonl",
+  "records": 3
+ },
+ "basic_turns": {
+  "census_keys": [
+   "ai-title||",
+   "assistant||",
+   "attachment||hook_success",
+   "attachment||total_tokens_reminder",
+   "last-prompt||",
+   "mode||",
+   "system|stop_hook_summary|",
+   "system|turn_duration|",
+   "user||"
+  ],
+  "file": "b0000001-0000-4000-9000-000000000000.jsonl",
+  "records": 15
+ },
+ "compaction_cases": {
+  "census_keys": [
+   "assistant||",
+   "history-suppression||",
+   "system|compact_boundary|",
+   "system|microcompact_boundary|",
+   "system|turn_duration|",
+   "user||"
+  ],
+  "file": "b0000004-0000-4000-9000-000000000000.jsonl",
+  "records": 10
+ },
+ "continue_cases": {
+  "census_keys": [
+   "assistant||",
+   "user||"
+  ],
+  "file": "b0000016-0000-4000-9000-000000000000.jsonl",
+  "records": 11
+ },
+ "delivery_cases": {
+  "census_keys": [
+   "assistant||",
+   "user||"
+  ],
+  "file": "b0000013-0000-4000-9000-000000000000.jsonl",
+  "records": 7
+ },
+ "interrupt_cases": {
+  "census_keys": [
+   "assistant||",
+   "user||"
+  ],
+  "file": "b0000005-0000-4000-9000-000000000000.jsonl",
+  "records": 8
+ },
+ "long_text_cases": {
+  "census_keys": [
+   "assistant||",
+   "user||"
+  ],
+  "file": "b0000015-0000-4000-9000-000000000000.jsonl",
+  "records": 4
+ },
+ "meta_cases": {
+  "census_keys": [
+   "assistant||",
+   "user||"
+  ],
+  "file": "b0000014-0000-4000-9000-000000000000.jsonl",
+  "records": 6
+ },
+ "notice_cases": {
+  "census_keys": [
+   "system|agents_killed|",
+   "system|api_error|",
+   "system|informational|",
+   "system|local_command|",
+   "system|scheduled_task_fire|",
+   "system||",
+   "user||"
+  ],
+  "file": "b0000006-0000-4000-9000-000000000000.jsonl",
+  "records": 7
+ },
+ "paste_cases": {
+  "census_keys": [
+   "assistant||",
+   "system|turn_duration|",
+   "user||"
+  ],
+  "file": "b0000003-0000-4000-9000-000000000000.jsonl",
+  "records": 12
+ },
+ "queue_cases": {
+  "census_keys": [
+   "assistant||",
+   "attachment||queued_command",
+   "queue-operation||",
+   "system|turn_duration|",
+   "user||"
+  ],
+  "file": "b0000002-0000-4000-9000-000000000000.jsonl",
+  "records": 18
+ },
+ "rewind_cases": {
+  "census_keys": [
+   "assistant||",
+   "system|turn_duration|",
+   "user||"
+  ],
+  "file": "b0000007-0000-4000-9000-000000000000.jsonl",
+  "records": 15
+ },
+ "switch_cases": {
+  "census_keys": [
+   "assistant||",
+   "continued-in||",
+   "user||"
+  ],
+  "file": "b0000008-0000-4000-9000-000000000000.jsonl",
+  "records": 4
+ },
+ "unknown_kinds": {
+  "census_keys": [
+   "attachment||zz_new_attachment",
+   "system|zz_new_subtype|",
+   "zz-new-kind||"
+  ],
+  "file": "b0000011-0000-4000-9000-000000000000.jsonl",
+  "records": 3
+ }
+}

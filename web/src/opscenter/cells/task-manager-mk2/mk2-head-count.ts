@@ -1,9 +1,9 @@
-import { taskOf } from '../../../cplugs/huddle/task-manager-design/adapter';
-import { entriesOf } from '../../../cplugs/huddle/task-manager-design/entries';
-import type { Task } from '../../../cplugs/huddle/task-manager-design/model';
+import { taskOf } from '../../../plugins/huddle/task-manager-design/adapter';
+import { entriesOf } from '../../../plugins/huddle/task-manager-design/entries';
+import type { Task } from '../../../plugins/huddle/task-manager-design/model';
 import { isUnreadTask, unreadMessageCount } from './mk2-unread';
 import { chipCount } from './mk2-chips';
-import { AGGREGATE, type TaskManagerGroup, type TaskManagerListBody } from '../../../cplugs/huddle/huddle-model';
+import { AGGREGATE, type TaskManagerGroup, type TaskManagerListBody } from '../../../plugins/huddle/huddle-model';
 import { t } from '../../../lib/i18n/index.svelte';
 
 export function headCountOf(tasks: readonly Task[]): number {

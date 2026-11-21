@@ -182,7 +182,7 @@ def test_custom_adapters_call_their_routes(world, monkeypatch):
     monkeypatch.setattr(session_interrupt_routes, "interrupt_session", interrupt)
     monkeypatch.setattr(session_dialog_routes, "get_dialog", get_dialog)
     monkeypatch.setattr(session_dialog_routes, "answer_session_dialog", answer)
-    monkeypatch.setattr(projects_routes, "delete_project", delete)
+    monkeypatch.setattr(projects_routes, "delete_project_for", delete)
     monkeypatch.setattr(project_tools, "_current_name", name_of)
     monkeypatch.setattr(beast_mode_routes, "set_beast_mode", put)
     assert not _call("session_interrupt", {"target": "cloude_b"}).get("isError")
@@ -194,7 +194,7 @@ def test_custom_adapters_call_their_routes(world, monkeypatch):
     store = pending.get_store()
     asyncio.run(store.approve(store.list()[0]["id"]))
     assert seen == [("interrupt", "ses_cloude_b", True), ("get_dialog", "ses_cloude_b"),
-                    ("get_dialog", "ses_cloude_b"), ("answer", "ses_cloude_b", "Yes"), ("put_beast_mode", False), ("delete_project", "demo")]
+                    ("get_dialog", "ses_cloude_b"), ("answer", "ses_cloude_b", "Yes"), ("put_beast_mode", False), ("delete_project", 3)]
 
 
 CLOSED_UUID = "cccccccc-3333-4333-8333-333333333333"

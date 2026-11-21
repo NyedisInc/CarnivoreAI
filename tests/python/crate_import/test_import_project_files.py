@@ -9,10 +9,10 @@ from typing import Any
 from src.core.crate_import.model import ImportRequest, new_import_id
 from src.core.crate_import.plan import build_plan
 from src.core.crate_import import apply as ap
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import build_plan as build_export_plan
-from src.cplugs.crate.writer import run_export
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import build_plan as build_export_plan
+from src.plugins.crate.writer import run_export
+from src.plugins.sdk import crate_format as cf
 from tests.python.cplugs.crate.crate_world import env_for, make_world, project_request
 from tests.python.crate_import.install import Install
 from tests.python.crate_import.test_import_plan import target

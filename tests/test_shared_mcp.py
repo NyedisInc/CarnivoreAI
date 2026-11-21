@@ -212,6 +212,7 @@ def test_every_launch_is_rendered_by_the_one_choke_point():
     assert renderers == {
         ("src/config/agent_command.py", "resolve_launch"),
         ("src/api/launch_profiles_routes.py", "resolve_launch"),
+        ("src/plugins/host/session_create_launch.py", "resolve_launch"),
     }
     assert 'resolve_launch(request, "preview")' in (
         ROOT / "src/api/launch_profiles_routes.py"

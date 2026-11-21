@@ -7,7 +7,7 @@ import subprocess
 import sys
 import threading
 import time
-from typing import Callable, Optional
+from typing import Callable, Optional, Sequence
 
 _YES_TTL_S = 300.0
 _NO_TTL_S = 15.0
@@ -82,8 +82,8 @@ def _xcode_select_dir() -> str:
     return done.stdout.strip() if done.returncode == 0 else ""
 
 
-def tool_available(tool: str) -> bool:
-    found = shutil.which(tool)
+def tool_available(tool: str, *, extra_dirs: Sequence[str] = ()) -> bool:
+    found = shutil.which(tool, path=os.pathsep.join([os.environ.get("PATH", os.defpath), *extra_dirs])) if extra_dirs else shutil.which(tool)
     if not found:
         return False
     if not _is_macos() or os.path.dirname(os.path.normpath(found)) != _SHIM_DIR:

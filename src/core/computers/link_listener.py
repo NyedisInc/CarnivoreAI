@@ -16,7 +16,7 @@ import structlog
 
 from src.core.computers.link_streams import LocalSocket, inbound_handler
 from src.core.computers.mux import frames as f
-from src.core.computers.mux.session import MuxError, MuxSession
+from src.core.computers.mux.session import MuxError, MuxSession, MuxStream
 from src.core.computers.tls_identity import LinkCert, LinkIdentity
 from src.core.federation import back_route
 
@@ -34,6 +34,7 @@ MAX_TRACKED_SOURCES = 256
 
 STOPPED, DIALING = "stopped", "dialing"
 LINKED, ALERTED, NO_HELLO = "linked", "alerted", "no_hello"
+FOLLOWS = "follows"
 ALERT_READ_TIMEOUT = 1.0
 
 
@@ -271,6 +272,8 @@ class _Conn:
     member: Member
     session: MuxSession
     sha: str
+    relayed: bool = False
+    announced: bool = False
 
 
 def _member_hello(hello: Dict[str, Any]) -> tuple:
@@ -287,7 +290,13 @@ class LinkListener:
                  on_unlink: Optional[Callable[[str], Awaitable[None]]] = None,
                  on_rotated: Optional[Callable[[str, str], Awaitable[None]]] = None,
                  on_member_hello: Optional[Callable[[str, List[str], Optional[int]], Awaitable[None]]] = None,
-                 on_members: Optional[Callable[[Sequence[Member]], None]] = None) -> None:
+                 on_members: Optional[Callable[[Sequence[Member]], None]] = None,
+                 hello_extras: Optional[Callable[[str], Dict[str, Any]]] = None,
+                 app_streams_ok: Callable[[], bool] = lambda: True,
+                 on_follow_reply: Optional[Callable[[str, Dict[str, Any]], Awaitable[None]]] = None,
+                 on_member_device_id: Optional[Callable[[str, str], None]] = None) -> None:
+        self._hello_extras, self._app_streams_ok, self._on_follow_reply = hello_extras, app_streams_ok, on_follow_reply
+        self._on_member_device_id = on_member_device_id
         self._identity, self._fed_dir, self._listener_path = identity, fed_dir, listener_path
         self._addresses, self.port = addresses, port
         self._on_link, self._on_unlink, self._on_rotated = on_link, on_unlink, on_rotated
@@ -297,8 +306,39 @@ class LinkListener:
         self._conns: Dict[str, _Conn] = {}
         self.state = STOPPED
 
+    def members(self) -> List[Member]:
+        return list(self._members.values())
+
     def connected(self) -> List[str]:
         return sorted(self._conns)
+
+    def relayed(self) -> List[str]:
+        return sorted(iid for iid, conn in self._conns.items() if conn.relayed)
+
+    def reset_relayed_streams(self) -> None:
+        for conn in list(self._conns.values()):
+            if conn.relayed:
+                conn.session.reset_streams(f.RST_LIMIT)
+
+    def _extras(self, iid: str) -> Dict[str, Any]:
+        if self._hello_extras is None:
+            return {}
+        try:
+            return dict(self._hello_extras(iid))
+        except Exception as exc:  # noqa: BLE001
+            log.error("link_hello_extras_failed", peer=iid[:8], **failure_fields(exc))
+            return {}
+
+    def _inbound(self, relayed: bool) -> Callable[[MuxStream], Awaitable[None]]:
+        bridge_to_peer = inbound_handler(self._listener_path)
+
+        async def on_open(stream: MuxStream) -> None:
+            if relayed and not self._app_streams_ok():
+                log.info("link_stream_refused", why="relay budget used")
+                stream.reset(f.RST_LIMIT)
+                return
+            await bridge_to_peer(stream)
+        return on_open
 
     async def set_members(self, members: Sequence[Member]) -> str:
         self._members = {m.peer_install_id: m for m in members}
@@ -312,6 +352,15 @@ class LinkListener:
                 await conn.session.close(f.GO_REMOVED)
         return self.state
 
+    async def reannounce(self, iid: Optional[str] = None) -> int:
+        closed = 0
+        for key, conn in list(self._conns.items()):
+            if (iid is None or key == iid) and not conn.announced and "relay_id" in self._extras(key):
+                conn.announced = True
+                await conn.session.close(f.GO_NORMAL)
+                closed += 1
+        return closed
+
     async def drop_links(self) -> None:
         for conn in list(self._conns.values()):
             await conn.session.close(f.GO_NORMAL)
@@ -319,9 +368,9 @@ class LinkListener:
     async def stop(self) -> None:
         await self.set_members([])
 
-    async def serve(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> str:
+    async def serve(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, relayed: bool = False) -> str:
         try:
-            return await self._serve(reader, writer)
+            return await self._serve(reader, writer, relayed)
         except asyncio.CancelledError:
             raise
         except Exception as exc:  # noqa: BLE001
@@ -330,7 +379,16 @@ class LinkListener:
         finally:
             writer.close()
 
-    async def _serve(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> str:
+    async def _follow_reply(self, iid: str, hello: Dict[str, Any]) -> None:
+        log.info("link_follow_reply", peer=iid[:8], follows=str(hello.get("follows"))[:8])
+        if self._on_follow_reply is None:
+            return
+        try:
+            await self._on_follow_reply(iid, hello)
+        except Exception as exc:  # noqa: BLE001
+            log.error("link_follow_reply_failed", peer=iid[:8], **failure_fields(exc))
+
+    async def _serve(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, relayed: bool = False) -> str:
         ssl_obj = writer.get_extra_info("ssl_object")
         try:
             der = ssl_obj.getpeercert(binary_form=True) if ssl_obj is not None else None
@@ -350,14 +408,15 @@ class LinkListener:
             if member is None:
                 return NO_HELLO
         back_path = str(back_route.socket_dir(self._fed_dir, member.grant_id) / f"in-{member.grant_id}-{secrets.token_hex(back_route.NONCE_HEX // 2)}.sock")
-        session = MuxSession(reader, writer, dialer=False, on_open=inbound_handler(self._listener_path))
-        local = LocalSocket(session, back_path)
+        session = MuxSession(reader, writer, dialer=False, on_open=self._inbound(relayed))
+        local = LocalSocket(session, back_path, refuse=(lambda: not self._app_streams_ok()) if relayed else None)
         await local.start()
-        conn = _Conn(member, session, sha)
+        extras = self._extras(member.peer_install_id)
+        conn = _Conn(member, session, sha, relayed, announced="relay_id" in extras)
         outcome = NO_HELLO
         try:
             await session.start({"v": f.PROTOCOL_VERSION, "back_path": back_path,
-                                 "addresses": list(self._addresses())[:MAX_ADDRESSES], "link_port": self.port})
+                                 "addresses": list(self._addresses())[:MAX_ADDRESSES], "link_port": self.port, **extras})
             try:
                 hello = await asyncio.wait_for(session.hello(), HELLO_TIMEOUT)
             except (MuxError, asyncio.TimeoutError):
@@ -366,10 +425,17 @@ class LinkListener:
             if self._by_sha.get(sha) is not member:
                 await session.close(f.GO_REMOVED)
                 return NO_HELLO
+            if isinstance(hello.get("follows"), str):
+                await self._follow_reply(member.peer_install_id, hello)
+                await session.close(f.GO_NORMAL)
+                return FOLLOWS
             older = self._conns.get(member.peer_install_id)
             self._conns[member.peer_install_id] = conn
             if older is not None:
                 await older.session.close(f.GO_REPLACED)
+            device_id = hello.get("device_id")
+            if self._on_member_device_id is not None and isinstance(device_id, str):
+                self._on_member_device_id(member.peer_install_id, device_id)
             if self._on_member_hello is not None:
                 addresses, listen_port = _member_hello(hello)
                 try:

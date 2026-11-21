@@ -12,7 +12,7 @@ from src.core.secret_scanning.claimed_spans import ClaimedSpans
 from src.core.message_model_secrets import DETECTOR_AWS_SECRET_ACCESS_KEY, scan_text
 from src.core.secret_scanning.deadline import Deadline, ScanTimeout
 from src.core.stream_redactor import redact_whole
-from src.cplugs.sdk.file_secrets import credential_counts
+from src.plugins.sdk.file_secrets import credential_counts
 
 _ALNUM = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"
 _AWS_VALUE = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKE"

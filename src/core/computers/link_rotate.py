@@ -121,6 +121,10 @@ def _der_of(path: Path) -> Optional[bytes]:
         return None
 
 
+def staged_der(fed_dir: Path, iid: str) -> Optional[bytes]:
+    return _der_of(_paths(fed_dir, iid)["next_cert"])
+
+
 def read_staged(fed_dir: Path, iid: str) -> Optional[Staged]:
     paths = _paths(fed_dir, iid)
     der = _der_of(paths["next_cert"])

@@ -18,7 +18,7 @@ from src.core.work import tables  # noqa: E402
 from src.core.work.importer import copy  # noqa: E402
 from src.core.work.ladder import MIGRATIONS as LEGACY_MIGRATIONS, SCHEMA_VERSION as LEGACY_VERSION  # noqa: E402
 from src.core.work.work_ladder import VERSION as WORK_VERSION, VERSION_KEY  # noqa: E402
-from src.cplugs.sdk.storage import CplugSchemaError, migrate  # noqa: E402
+from src.plugins.sdk.storage import CplugSchemaError, migrate  # noqa: E402
 
 WORK = "work"
 EXPORTABLE_THROUGH = 4

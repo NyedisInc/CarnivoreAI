@@ -37,7 +37,8 @@ def test_copy_is_lowercase_plain_with_name_placeholders_only() -> None:
                                                   CATALOG).items():
         assert text == text.lower(), key
         assert not re.search("[" + chr(0x2013) + chr(0x2014) + "]", text), key
-        assert set(re.findall(r"\{(\w+)\}", text)) <= {"session", "project", "computer", "from_account", "to_account", "limit"}, key
+        assert set(re.findall(r"\{(\w+)\}", text)) <= {"session", "project", "computer", "from_account", "to_account", "limit",
+                                                       "version"}, key
         assert "`" not in text and "${" not in text, key
 
 

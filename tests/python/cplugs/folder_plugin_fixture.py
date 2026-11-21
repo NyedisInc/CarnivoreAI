@@ -4,9 +4,9 @@ from __future__ import annotations
 import dataclasses
 from typing import Any
 
-from src.cplugs.host import runtime
-from src.cplugs.sdk import data_decl
-from src.cplugs.sdk.definition import CplugDefinition
+from src.plugins.host import runtime
+from src.plugins.sdk import data_decl
+from src.plugins.sdk.definition import CplugDefinition
 
 FIXTURE_ID = "boardfix"
 SETTINGS = {"boardsRoot": {"kind": "string", "default": ""}}

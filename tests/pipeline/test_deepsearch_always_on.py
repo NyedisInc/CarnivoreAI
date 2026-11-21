@@ -6,7 +6,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from src.cplugs.host import runtime
+from src.plugins.host import runtime
 from src.core.deepsearch import pipeline_plugin
 
 ROOT = Path(__file__).resolve().parents[2]

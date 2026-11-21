@@ -1,5 +1,5 @@
 import { t } from '../../../lib/i18n/index.svelte';
-import { messageTime } from '../../../cplugs/huddle/huddle-model';
+import { messageTime } from '../../../plugins/huddle/huddle-model';
 
 const MINUTE_S = 60;
 const HOUR_S = 3600;

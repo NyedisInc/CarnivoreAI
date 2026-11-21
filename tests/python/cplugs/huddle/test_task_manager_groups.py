@@ -9,8 +9,8 @@ from types import SimpleNamespace
 from fastapi.testclient import TestClient
 
 from src.core.mcp import tools
-from src.cplugs.huddle import service
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import service
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work.ladder import MIGRATIONS, SCHEMA_VERSION
 from src.core.work.storage import WorkStorage
 from tests.python.cplugs.huddle.test_task_manager_focus import add, call, client, setup  # noqa: F401

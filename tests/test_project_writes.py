@@ -39,6 +39,16 @@ class TestWrites:
             assert row["raw_path"] == "~/app", "the user's own spelling is kept"
             assert list_projects_ordered(conn)[0]["id"] == row["id"]
 
+    def test_id_key_survives_a_rename(self, state_dir: Path) -> None:
+        with closing(connect(db_path_for(state_dir))) as conn:
+            row = create_project(conn, name="delete-guard (2)", path="~/dp")
+            conn.execute("UPDATE projects SET display_name = 'delete-guard' WHERE id = ?", (row["id"],))
+            assert resolve_by_name(conn, f"id:{row['id']}")["display_name"] == "delete-guard"
+            with pytest.raises(ProjectNotFound):
+                resolve_by_name(conn, "delete-guard (2)")
+            with pytest.raises(ProjectNotFound):
+                resolve_by_name(conn, "id:999999")
+
     def test_name_clash_counts_local_rows_only(self, state_dir: Path) -> None:
         from src.core.hosts.remote_project import bind_remote_project
         from src.core.pack.identity.replicas import accept_replica
@@ -93,20 +103,23 @@ class TestWrites:
             with pytest.raises(ProjectNotFound):
                 resolve_by_name(conn, "ai-setup")
 
-    def test_delete_succeeds_when_a_stopped_session_row_still_names_the_project(
+    def test_delete_removes_the_projects_stopped_rows_and_keeps_a_running_one(
         self, state_dir: Path
     ) -> None:
         with closing(connect(db_path_for(state_dir))) as conn:
             row = create_project(conn, name="had-a-session", path="/had-a-session")
-            conn.execute(
-                "INSERT INTO sessions (session_uuid, project_id, working_dir, tmux_socket, tmux_name, origin, "
-                "agent_type, agent_family, lifecycle, created_at, updated_at, host_key) "
-                "VALUES ('u-1', ?, '/had-a-session', 'cloude', 't', 'created', 'claude', 'claude', 'stopped', 't', 't', 'local')",
-                (row["id"],),
-            )
+            for uuid, state in (("u-stopped", "stopped"), ("u-running", "running")):
+                conn.execute(
+                    "INSERT INTO sessions (session_uuid, project_id, working_dir, tmux_socket, tmux_name, origin, "
+                    "agent_type, agent_family, lifecycle, created_at, updated_at, host_key) "
+                    "VALUES (?, ?, '/had-a-session', 'cloude', ?, 'created', 'claude', 'claude', ?, 't', 't', 'local')",
+                    (uuid, row["id"], uuid, state),
+                )
             conn.commit()
-            delete_project(conn, row["id"])
-            kept = conn.execute("SELECT project_id FROM sessions WHERE session_uuid = 'u-1'").fetchone()
+            removed = delete_project(conn, row["id"])
+            assert removed["sessions_removed"] == 1
+            assert conn.execute("SELECT 1 FROM sessions WHERE session_uuid = 'u-stopped'").fetchone() is None
+            kept = conn.execute("SELECT project_id FROM sessions WHERE session_uuid = 'u-running'").fetchone()
             assert kept is not None and kept[0] is None
 
     def test_an_ambiguous_name_is_its_own_error_not_a_guess(

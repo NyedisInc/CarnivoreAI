@@ -10,7 +10,8 @@ import structlog
 
 from src.core.pipe_liveness import PIPE_OWNER_OPTION
 from src.core.pipe_prune.plan import PaneFacts
-from src.core.tmux_discovery import resolve_tmux_path, tmux_argv_prefix
+from src.core.tmux_discovery import resolve_tmux_path
+from src.core.tmux_transport.run import tmux_run_sync
 
 logger = structlog.get_logger()
 
@@ -37,13 +38,9 @@ def parse_pane_rows(text: str) -> PaneFacts:
 def read_panes(socket_name: str) -> PaneFacts:
     if resolve_tmux_path() is None:
         return PaneFacts(complete=False)
-    argv = tmux_argv_prefix(socket_name) + ["list-panes", "-a", "-F", PANE_FORMAT]
-    try:
-        proc = subprocess.run(
-            argv, capture_output=True, timeout=PROBE_TIMEOUT_SECONDS, check=False
-        )
-    except (subprocess.TimeoutExpired, OSError) as exc:
-        logger.warning("pipe_prune_tmux_probe_failed", error=str(exc))
+    proc = tmux_run_sync(socket_name, "list-panes", "-a", "-F", PANE_FORMAT, timeout=PROBE_TIMEOUT_SECONDS)
+    if proc.error:
+        logger.warning("pipe_prune_tmux_probe_failed", error=proc.error)
         return PaneFacts(complete=False)
     if proc.returncode != 0:
         return PaneFacts(complete=False)

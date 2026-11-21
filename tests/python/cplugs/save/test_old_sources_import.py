@@ -36,7 +36,7 @@ def test_preview_writes_nothing_apply_files_it_a_rerun_files_nothing_and_undo_re
 
 
 def test_an_archived_project_is_no_known_project(rig, monkeypatch) -> None:
-    from src.cplugs.sdk import vault_sources
+    from src.plugins.sdk import vault_sources
 
     client, _state, body = rig
     row = {"uid": "p1", "root": "/gone", "display_name": "home", "archived_at": "2026-09-08T00:00:00Z"}

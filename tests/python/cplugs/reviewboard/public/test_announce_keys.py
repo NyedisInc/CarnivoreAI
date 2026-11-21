@@ -4,9 +4,9 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from src.cplugs.reviewboard.public import announce
+from src.plugins.reviewboard.public import announce
 
-CATALOG = Path(__file__).resolve().parents[5] / "web" / "src" / "cplugs" / "reviewboard" / "catalog.en.js"
+CATALOG = Path(__file__).resolve().parents[5] / "web" / "src" / "plugins" / "reviewboard" / "catalog.en.js"
 KEY = re.compile(r"^\s*'(cplug\.[a-z0-9_.]+)':", re.M)
 
 

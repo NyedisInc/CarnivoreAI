@@ -94,7 +94,7 @@ def test_public_host_prefers_custom_name_and_phone_routes_use_it():
     import inspect
     from src.api import phone_link_routes
     m = PhoneLinkManager.__new__(PhoneLinkManager)
-    m.hostname = "link.example"
+    m._hostname = "link.example"
     m.custom = SimpleNamespace(live_host=lambda: "")
     assert m.public_host() == "link.example"
     m.custom = SimpleNamespace(live_host=lambda: "mine.example.com")

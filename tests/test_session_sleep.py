@@ -26,6 +26,7 @@ from src.api.auth import require_auth
 from src.core import session_sleep
 from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
+from src.core.session_ops import row_probe
 from src.core.session_recreate_presence import (
     TMUX_GONE,
     TMUX_PRESENT,
@@ -174,7 +175,7 @@ class _LocalServers:
 def client(state_dir, monkeypatch):
     from src.api import session_records_routes, session_recent_routes
 
-    monkeypatch.setattr(recreate_routes, "_socket_name", lambda: "cloude", raising=True)
+    monkeypatch.setattr(row_probe, "socket_name", lambda: "cloude", raising=True)
     closes = []
 
     async def _close(manager, *, name, socket):
@@ -203,7 +204,7 @@ def _presence(monkeypatch, *outcomes):
         outcome = seen.pop(0) if len(seen) > 1 else seen[0]
         return TmuxPresence(outcome=outcome, detail="test")
 
-    monkeypatch.setattr(recreate_routes, "_measure_presence", _measure, raising=True)
+    monkeypatch.setattr(row_probe, "measure_presence", _measure, raising=True)
 
 
 def test_sleep_closes_a_present_session_and_keeps_its_row_asleep(state_dir, client, monkeypatch):
@@ -333,6 +334,35 @@ def test_wake_runs_the_recreate_action_under_the_rows_own_wrapper(state_dir, cli
     assert r.status_code == 200, r.text
     assert r.json()["conversation"] == "resumed"
     assert called == [(ROW_UUID, "claude-skip")]
+
+
+def test_wake_of_a_dead_pane_row_whose_name_another_instance_holds_recreates(state_dir, client, monkeypatch):
+    c, _ = client
+    _insert(state_dir, lifecycle="stopped", source="pane_dead", agent_type="claude-skip")
+    monkeypatch.setattr(session_sleep, "is_dead_pane_stop", lambda row: True)
+    monkeypatch.setattr("src.core.session_agent_choice.configured_wrapper_ids",
+                        lambda settings_obj: ["claude-skip", "cld"])
+    _presence(monkeypatch, TMUX_PRESENT)
+    probe = {"line": f"0|{EPOCH + 500}|{NAME}\n"}
+    monkeypatch.setattr("src.core.restart_live_gate.probe_line", lambda name, socket: probe["line"])
+    called = []
+
+    async def _recreate(session_uuid, agent_type, *, get_manager, **kw):
+        called.append(session_uuid)
+        return recreate_routes.RecreateResponse(
+            status="started", session_uuid=session_uuid, session_name=NAME + "-2",
+            presence="gone", conversation="resumed", detail="resumed",
+        )
+
+    monkeypatch.setattr("src.api.recreate_action.recreate_by_uuid", _recreate)
+    r = c.post(f"/api/v1/sessions/{ROW_UUID}/wake")
+    assert r.status_code == 200, r.text
+    assert called == [ROW_UUID]
+
+    probe["line"] = None
+    called.clear()
+    r = c.post(f"/api/v1/sessions/{ROW_UUID}/wake")
+    assert r.json()["status"] == "refused" and called == []
 
 
 

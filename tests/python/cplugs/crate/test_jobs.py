@@ -11,13 +11,13 @@ from typing import Any, Dict, List
 import pytest
 
 from src.core.db import connect, db_path_for
-from src.cplugs.crate import constants as K
-from src.cplugs.crate import start
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.jobs import runner, state
-from src.cplugs.crate.jobs.sweep import sweep_interrupted
-from src.cplugs.crate.plan import build_plan
-from src.cplugs.crate.writer import run_export
+from src.plugins.crate import constants as K
+from src.plugins.crate import start
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.jobs import runner, state
+from src.plugins.crate.jobs.sweep import sweep_interrupted
+from src.plugins.crate.plan import build_plan
+from src.plugins.crate.writer import run_export
 from tests.python.cplugs.crate.api_world import ApiWorld, stop_runner
 from tests.python.cplugs.crate.crate_world import env_for, make_world, session_request
 

@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.huddle import actor_log, service
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import actor_log, service
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work.ladder import MIGRATIONS, SCHEMA_VERSION
 from src.core.work.storage import WorkStorage
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401

@@ -206,9 +206,11 @@
         closeLabel={t('themes.page.back')}
         sub={pageSub}
         bar={pageBar}
+        frame="column"
+        scroll="self"
     >
-        <div class="oc-page__body themes-body" class:themes-body--detail={sheetOpen} data-embedded={embedded ? '' : undefined} bind:this={bodyEl}>
-            <div class="oc-page__scroll">
+        <div class="themes-layout" class:themes-layout--detail={sheetOpen} data-embedded={embedded ? '' : undefined} bind:this={bodyEl}>
+            <div class="oc-page__scroll themes-main">
                 <section class="oc-page__main" aria-label={t('themes.page.grid')}>
                     {#if notice}
                         <p class="oc-page__state">{notice}</p>
@@ -315,11 +317,12 @@
         }
     }
 
-    .themes-body {
+    .themes-layout {
         display: flex;
+        min-height: 0;
     }
 
-    .themes-body > :global(.oc-page__scroll) {
+    .themes-main {
         flex: 1 1 0;
         min-width: 0;
     }
@@ -328,7 +331,7 @@
         flex: 0 0 380px;
     }
 
-    .themes-body[data-embedded] :global([data-themes-back]) {
+    .themes-layout[data-embedded] :global([data-themes-back]) {
         display: block;
     }
 
@@ -343,13 +346,13 @@
             display: none;
         }
 
-        .themes-body--detail .themes-side {
+        .themes-layout--detail .themes-side {
             display: flex;
             flex: 1 1 100%;
             border-left: none;
         }
 
-        .themes-body--detail :global(.oc-page__scroll) {
+        .themes-layout--detail .themes-main {
             display: none;
         }
 

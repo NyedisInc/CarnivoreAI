@@ -162,7 +162,7 @@ test('every amb-join keyframe names an animation type that has a rule in animati
     const css = fs.readFileSync(path.join(ROOT, 'css', 'animation-pause.css'), 'utf8');
     const types = fs.readFileSync(path.join(ROOT, 'css', 'animation-types.css'), 'utf8');
     const ids = [...css.matchAll(/@keyframes amb-join-([\w-]+)/g)].map((m) => m[1]);
-    assert.ok(ids.length >= 2);
+    assert.ok(ids.length >= 1);
     for (const id of ids) assert.ok(types.includes('data-anim-off~="' + id + '"'), id);
 });
 
@@ -171,12 +171,9 @@ test('no Motion helper on the page: the ticker installs nothing', () => {
     vm.runInNewContext(JS, ctx);
 });
 
-test('the sources carry no infinite animation for the ring or the spiral', () => {
+test('the sources carry no infinite animation for the ring', () => {
     const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '');
     const ring = strip(fs.readFileSync(path.join(ROOT, 'css', 'popup-focus.css'), 'utf8'));
-    const chip = strip(fs.readFileSync(path.join(ROOT, 'css', 'session-sidebar-account-chip.css'), 'utf8'));
     assert.doesNotMatch(ring, /popup-focus-turn\s+6s|@keyframes\s+popup-focus-turn/);
-    assert.doesNotMatch(chip, /infinite|@keyframes\s+session-sidebar-spiral-turn/);
     assert.match(ring, /\.popup-focus-turn > \.pf-sheen::before \{[^}]*transform: rotate\(calc\(var\(--amb-step, 0\) \* 15deg\)\)/);
-    assert.match(chip, /\.spiral-turn \{[^}]*transform: rotate\(calc\(var\(--amb-step, 0\) \* 15deg\)\)/);
 });

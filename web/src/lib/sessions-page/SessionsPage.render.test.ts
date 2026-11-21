@@ -7,6 +7,7 @@ import { group, session } from '../projects-shared/test-fixtures';
 import { setLocale } from '../i18n/index.svelte';
 import { closeItemMenu } from '../item-menu/open.svelte';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
+import { viewport } from '../../opscenter/engine/viewport.svelte';
 
 installPopoverPolyfill();
 
@@ -39,7 +40,22 @@ afterEach(() => {
     if (handle) void unmount(handle);
     handle = null;
     document.body.innerHTML = '';
+    viewport.wide = true;
+    viewport.phone = false;
+    viewport.narrow = false;
 });
+
+async function showAt(wide: boolean, narrow: boolean): Promise<HTMLElement> {
+    viewport.wide = wide;
+    viewport.phone = !wide;
+    viewport.narrow = narrow;
+    const page = mount(SessionsPage, { target: document.body, props: { api: fakeApi(), readers, embedded: false, now: () => NOW } }) as { show: () => void };
+    handle = page;
+    page.show();
+    flushSync();
+    await vi.waitFor(() => expect(document.querySelector('.sp-count')).not.toBeNull());
+    return document.querySelector('.sp-page') as HTMLElement;
+}
 
 const before = (a: Element, b: Element): boolean => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
 
@@ -61,13 +77,12 @@ describe('SessionsPage shell', () => {
         const title = q('.oc-titlebar__title');
         const views = [...document.querySelectorAll('[data-view-switch] [data-view]')];
         expect(views.map((b) => b.getAttribute('data-view'))).toEqual(['list', 'pivot', 'timeline']);
-        const find = q('.sp-find input[type="search"]');
+        const find = q('.oc-titlebar__find input[type="search"]');
         const sum = q('.sp-sum');
         expect(title.textContent).toBe('projects');
-        expect(before(title, find)).toBe(true);
-        expect(before(find, sum)).toBe(true);
+        expect(before(title, sum)).toBe(true);
+        expect(before(sum, find)).toBe(true);
         expect(before(views[2]!, q('.sp-count'))).toBe(true);
-        expect(q('.sp-find svg')).not.toBeNull();
 
         expect(q('[data-sum="running"]').textContent).toBe('1');
         expect(q('[data-sum="asleep"]').textContent).toBe('1');
@@ -85,6 +100,39 @@ describe('SessionsPage shell', () => {
             ['pivot', true],
             ['timeline', true],
         ]);
+    });
+
+    test('the page wears its nav frame: the find, summary and icon buttons are the frame title strip, at the frame density (#2775, S11)', async () => {
+        handle = mount(SessionsPage, { target: document.body, props: { api: fakeApi(), readers, embedded: true, now: () => NOW } });
+        flushSync();
+        await vi.waitFor(() => expect(document.querySelector('.sp-count')).not.toBeNull());
+        const root = document.querySelector('.sp-page') as HTMLElement;
+        expect(root.getAttribute('data-frame')).toBe('nav');
+        const head = root.querySelector('header.oc-titlebar') as HTMLElement;
+        expect(head.getAttribute('data-frame-region')).toBe('header');
+        expect(head.getAttribute('data-btn-density')).toBe('frame');
+        expect(head.querySelector('.oc-titlebar__find input[type="search"]')).not.toBeNull();
+        expect(head.querySelector('.oc-titlebar__sub .sp-sum')).not.toBeNull();
+        const acts = [...head.querySelectorAll('.oc-titlebar__actions .sp-acts [data-act]')].map((b) => b.getAttribute('data-act'));
+        expect(acts).toEqual(['new-project', 'new-company', 'new-session', 'clean-worktrees', 'show-hidden', 'fold-all']);
+        expect(root.querySelectorAll('.pl-title')).toHaveLength(0);
+        expect(root.querySelector('[data-frame-region="body"][data-scroll="self"] .sp-body .sp-hosts')).not.toBeNull();
+    });
+
+    test('on a phone the icon buttons and the fleet summary ride the tool row, so the header keeps room for the find (S11 review)', async () => {
+        const root = await showAt(false, true);
+        expect(root.querySelector('header .sp-acts')).toBeNull();
+        expect(root.querySelector('header .sp-sum')).toBeNull();
+        expect(root.querySelector('.oc-page__bar .sp-acts')).not.toBeNull();
+        expect(root.querySelector('.oc-page__bar .sp-sum')).not.toBeNull();
+    });
+
+    test('from 768 to 1023 the fleet summary rides the tool row, where it is never clipped to one line; the icon buttons stay in the header (S11 review)', async () => {
+        const root = await showAt(false, false);
+        expect(root.querySelector('header .oc-titlebar__sub .sp-sum')).toBeNull();
+        expect(root.querySelector('.oc-page__bar .sp-sum')).not.toBeNull();
+        expect(root.querySelector('header .oc-titlebar__actions .sp-acts')).not.toBeNull();
+        expect(root.querySelector('.oc-page__bar .sp-acts')).toBeNull();
     });
 
     test('a page row and a project heading draw no menu button (Joe (ccsliinc), 2026-10-22); the right click is their menu', async () => {
@@ -113,5 +161,22 @@ describe('SessionsPage shell', () => {
         document.querySelector<HTMLButtonElement>('[data-state="sleep"]')!.click();
         flushSync();
         expect(document.querySelector('.sp-count')?.textContent).toBe('1 of 2');
+    });
+
+    test('a bar too narrow for its labelled row goes compact: the class is worn and each select\'s "any" option carries its label (fit-bar wiring)', async () => {
+        const clientWidth = vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(300);
+        const box = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({ width: 200 } as DOMRect);
+        vi.stubGlobal('ResizeObserver', class { constructor(private cb: () => void) {} observe() { queueMicrotask(this.cb); } disconnect() {} });
+        try {
+            handle = mount(SessionsPage, { target: document.body, props: { api: fakeApi(), readers, embedded: true, now: () => NOW } });
+            flushSync();
+            await vi.waitFor(() => expect(document.querySelector('.sp-bar.sp-bar--compact')).not.toBeNull());
+            const company = document.querySelector<HTMLSelectElement>('[data-g="company"] select')!;
+            expect(company.options[0]!.textContent).toBe('company');
+        } finally {
+            clientWidth.mockRestore();
+            box.mockRestore();
+            vi.unstubAllGlobals();
+        }
     });
 });

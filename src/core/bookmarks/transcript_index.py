@@ -62,6 +62,9 @@ class TranscriptIndex:
     carried: List[Tuple[str, int, int]] = field(default_factory=list)
     suppressed: bool = False
     skipped_lines: int = 0
+    consumed: int = 0
+    last_start: Optional[int] = None
+    last_serial: Optional[str] = None
 
     def leaf(self) -> Optional[str]:
         return self.order[-1] if self.order else None
@@ -146,19 +149,56 @@ def build_index(path: Path) -> TranscriptIndex:
     if size > MAX_TRANSCRIPT_BYTES:
         raise TranscriptUnavailable(f"the transcript is over the {MAX_TRANSCRIPT_LABEL} bookmark limit")
     index = TranscriptIndex(path=path, size=size)
-    offset = 0
+    _read_lines(index, path, 0, size)
+    if index.skipped_lines:
+        logger.info("bookmark_index_skipped_lines", path=str(path), skipped=index.skipped_lines)
+    return index
+
+
+def _read_lines(index: TranscriptIndex, path: Path, offset: int, size: int) -> None:
+    last = None
     try:
         with path.open("rb") as stream:
+            stream.seek(offset)
             for raw in stream:
                 start, offset = offset, offset + len(raw)
                 if offset > size:
                     break
                 _index_line(index, raw, start)
+                if raw.endswith(b"\n"):
+                    index.consumed = offset
+                    if raw.strip():
+                        last = (start, raw)
     except OSError as exc:
         raise TranscriptUnavailable(f"the transcript could not be read: {exc.strerror or exc}") from exc
-    if index.skipped_lines:
-        logger.info("bookmark_index_skipped_lines", path=str(path), skipped=index.skipped_lines)
-    return index
+    if last is not None:
+        index.last_start, index.last_serial = last[0], _serial(last[1])
+
+
+def _serial(raw: bytes) -> str:
+    from src.core.transcript_manifest.tail import line_serial  # noqa: PLC0415
+
+    return line_serial(raw[:-1])
+
+
+def _resumable(old: TranscriptIndex, path: Path, size: int) -> bool:
+    from src.core.pipeline import reader  # noqa: PLC0415
+
+    if size <= old.size or old.consumed != old.size or old.last_serial is None or old.last_start is None:
+        return False
+    try:
+        return reader.check_cursor(str(path), size, old.consumed, old.last_serial, old.last_start).reset is None
+    except OSError:
+        return False
+
+
+def _extended(old: TranscriptIndex, path: Path, size: int) -> TranscriptIndex:
+    new = TranscriptIndex(
+        path=path, size=size, source_session_id=old.source_session_id, nodes=dict(old.nodes), order=list(old.order),
+        children=dict(old.children), carried=list(old.carried), suppressed=old.suppressed, skipped_lines=old.skipped_lines,
+        consumed=old.consumed, last_start=old.last_start, last_serial=old.last_serial)
+    _read_lines(new, path, old.consumed, size)
+    return new
 
 
 def _index_line(index: TranscriptIndex, raw: bytes, start: int) -> None:
@@ -187,7 +227,7 @@ def _index_line(index: TranscriptIndex, raw: bytes, start: int) -> None:
     index.nodes[node.uuid] = node
     index.order.append(node.uuid)
     if node.parent:
-        index.children.setdefault(node.parent, []).append(node.uuid)
+        index.children[node.parent] = [*index.children.get(node.parent, ()), node.uuid]
 
 
 _cache: "OrderedDict[str, Tuple[int, int, TranscriptIndex]]" = OrderedDict()
@@ -205,7 +245,10 @@ def cached_index(path: Path) -> TranscriptIndex:
         if hit and hit[0] == st.st_size and hit[1] == st.st_mtime_ns:
             _cache.move_to_end(key)
             return hit[2]
-    index = build_index(path)
+    if hit and st.st_size <= MAX_TRANSCRIPT_BYTES and _resumable(hit[2], path, st.st_size):
+        index = _extended(hit[2], path, st.st_size)
+    else:
+        index = build_index(path)
     with _cache_lock:
         _cache[key] = (st.st_size, st.st_mtime_ns, index)
         _cache.move_to_end(key)

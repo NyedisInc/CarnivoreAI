@@ -2,6 +2,7 @@
 <script lang="ts">
     import { failureReason } from '../errors/failure-reason';
     import Button from '../base/Button.svelte';
+    import Sheet from '../sheet/Sheet.svelte';
     import { untrack } from 'svelte';
     import { subscribe } from '../../opscenter/api/events.svelte';
     import { BookmarkWidgetActions } from '../../opscenter/cells/bookmarks/widget-actions.svelte';
@@ -40,7 +41,7 @@
     const marksActions = new BookmarkWidgetActions();
     let resumeNotice = $state<{ text: string; error: boolean } | null>(null);
     let groupTick = $state(0);
-    let asideEl = $state<HTMLElement | undefined>();
+    let asideEl = $state<HTMLElement | null>(null);
 
     const uuid = $derived(row?.s.session_uuid ?? null);
     const live = $derived(row ? data.live(row.s) : undefined);
@@ -112,7 +113,7 @@
 
 <svelte:window onkeydown={onKey} />
 
-<aside class="sp-pn" id="sp-pn" data-open aria-label={t('sessions.page.panel.label')} bind:this={asideEl}>
+<Sheet place="page" class="sp-pn" width="var(--pn-w)" id="sp-pn" data-open aria-label={t('sessions.page.panel.label')} bind:el={asideEl}>
     <div class="pl-titlebar sp-pn-bar">
         <Button size="sm" data-pn-back onclick={onClose}>&lt; {t('sessions.page.panel.back')}</Button>
         <span class="pl-label sp-pn-bar-l">{t('sessions.page.panel.title')}</span>
@@ -138,4 +139,4 @@
             <p class="sp-pn-note sp-pn-sec">{t('sessions.page.loading')}</p>
         {/if}
     </div>
-</aside>
+</Sheet>

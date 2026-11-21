@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { afterEach, describe, expect, test } from 'vitest';
 import { contextFromRow } from './row-context';
-import { registerSwarmRoster, unregisterSwarmRoster } from '../../cplugs/sdk/swarm-roster.svelte';
+import { registerSwarmRoster, unregisterSwarmRoster } from '../../plugins/sdk/swarm-roster.svelte';
 
 const ROW = { session_uuid: 'u-7', tmux_session: 'carnivore_a', activity_status: 'idle' };
 

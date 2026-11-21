@@ -1,5 +1,5 @@
 
-Object.assign(API.prototype, {
+extendPrototype(API, {
 
     async getCatalogItems() {
         return await this.call('/catalog/items');
@@ -81,4 +81,4 @@ Object.assign(API.prototype, {
     async getCatalogInstallCounts(ids) {
         return await this.call('/catalog/install-counts', { method: 'POST', body: { ids } });
     },
-});
+}, 'api-catalog.js');

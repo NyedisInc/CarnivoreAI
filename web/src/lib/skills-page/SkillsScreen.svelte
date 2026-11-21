@@ -2,6 +2,7 @@
 <script lang="ts">
     import { captureOpener, restoreOpenerFocus } from '../dialog-frame/opener-focus';
     import { onDestroy } from 'svelte';
+    import Button from '../base/Button.svelte';
     import ManagerFrame from '../manager-frame/ManagerFrame.svelte';
     import { createManagerController } from '../manager-frame/manager-controller.svelte';
     import { MANAGER_KEYS } from '../manager-frame/manager-model';
@@ -446,12 +447,10 @@
             {#if hostTab === undefined}
             <div class="sk-tabs" role="group" aria-label={t('skills.tab.label')}>
                 {#each ['skills', 'census'] as const as id (id)}
-                    <button
-                        type="button"
-                        class="oc-chip"
+                    <Button
                         aria-pressed={tab === id}
                         data-skills-tab={id}
-                        onclick={() => pickTab(id)}>{t(`skills.tab.${id}`)}</button
+                        onclick={() => pickTab(id)}>{t(`skills.tab.${id}`)}</Button
                     >
                 {/each}
             </div>

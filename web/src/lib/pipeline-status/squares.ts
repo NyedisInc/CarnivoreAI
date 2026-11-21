@@ -5,7 +5,7 @@ import type { Tone } from './model';
 
 export const FALLBACK_ICON = 'chart';
 
-const MANIFESTS = import.meta.glob<{ id: string; icon?: string }>('../../../../src/cplugs/*/cplug.json', {
+const MANIFESTS = import.meta.glob<{ id: string; icon?: string }>('../../../../src/plugins/*/cplug.json', {
     eager: true,
     import: 'default',
 });

@@ -193,8 +193,8 @@
       display: inline-flex;
       flex: none;
       align-items: center;
-      gap: 4px;
-      padding: 1px 6px;
+      gap: var(--oc-space-1);
+      padding: var(--oc-gap-hair) var(--oc-space-1-5);
       border: var(--oc-border, 1px) solid color-mix(in srgb, var(--oc-green) 55%, transparent);
       border-radius: var(--oc-radius-sm, 2px);
       font-size: var(--oc-fs-micro);
@@ -229,7 +229,7 @@
     .dash-card__end {
       display: inline-flex;
       flex: none;
-      gap: 2px;
+      gap: var(--oc-space-0-5);
     }
 
     .dash-card__confirm {

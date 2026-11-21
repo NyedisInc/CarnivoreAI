@@ -4,10 +4,13 @@ from __future__ import annotations
 import asyncio
 from types import SimpleNamespace
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Protocol, Set
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Protocol, Set
 
 import structlog
 from fastapi import HTTPException
+from src.core.session_delivery import cold_start, wake_choice
+from src.core.session_startup_gate import GATE_READY
+from src.models.activity_status import RESTING
 
 logger = structlog.get_logger()
 
@@ -15,7 +18,6 @@ READY_TIMEOUT_S = 90.0
 READY_STEP_S = 1.5
 BUSY_CODES = frozenset({"pane_dialog_open", "paste_not_settled", "agent_waking", "restore_offer_open"})
 GONE_CODES = frozenset({"session_gone", "session_not_found", "pane_not_an_agent", "receiver_instance_changed"})
-READY_STATUSES = ("idle", "finished_unread")
 
 
 class BringUpFailed(Exception):
@@ -46,10 +48,14 @@ def refusal_code(exc: HTTPException) -> str:
 
 
 def ops_for_app(app_state: Any) -> Any:
-    from src.cplugs.host import capabilities, session_actions  # noqa: PLC0415
+    from src.plugins.host import capabilities, session_actions  # noqa: PLC0415
 
     request = session_actions.AppRequest(SimpleNamespace(state=app_state))
     return capabilities.Sessions(capabilities.local_infos_from_app(app_state), request, may_message=True)
+
+
+def input_ready(info: Any) -> bool:
+    return info.activity_status in RESTING and info.startup_gate == GATE_READY
 
 
 async def wait_ready(ops: SessionOps, match: Callable[[Any, Dict[str, str]], bool], what: str,
@@ -62,7 +68,8 @@ async def wait_ready(ops: SessionOps, match: Callable[[Any, Dict[str, str]], boo
         infos = await ops.list()
         keys = await ops.durable_keys(infos)
         for info in infos:
-            if match(info, keys) and info.activity_status in READY_STATUSES:
+            if match(info, keys) and input_ready(info):
+                cold_start.mark_brought_up(info.session.id)
                 return info.session.id
         if loop.time() + step > deadline:
             raise BringUpFailed(f"{what} did not reach its prompt within {int(timeout)} seconds")
@@ -102,17 +109,75 @@ async def start_in_project(ops: SessionOps, project_id: int) -> str:
     return await wait_ready(ops, lambda info, _keys: info.session.id == created, "the new session")
 
 
-async def wake_newest(ops: SessionOps, project_id: int) -> Optional[str]:
+LeadWaker = Callable[[str], Awaitable[Optional[str]]]
+
+_BRING_UP_LOCKS: Dict[int, asyncio.Lock] = {}
+
+
+def project_lock(project_id: int) -> asyncio.Lock:
+    return _BRING_UP_LOCKS.setdefault(project_id, asyncio.Lock())
+
+
+def default_lead_waker(ops: SessionOps) -> LeadWaker:
+    async def wake(lead_key: str) -> Optional[str]:
+        live = await find_live(ops, lead_key)
+        if live is not None and wake_choice.can_take(live):
+            return live.session.id
+        try:
+            asleep = await is_asleep(ops, lead_key)
+        except HTTPException as exc:
+            raise BringUpFailed(f"could not read the sleeping sessions: {refusal_code(exc)}") from exc
+        return await wake_by_uuid(ops, lead_key) if asleep else None
+
+    return wake
+
+
+async def _lead_or_none(own: List[Any], project_id: int, lead_key: str, wake_lead: LeadWaker) -> Optional[str]:
     try:
-        sleepers = [s for s in await ops.asleep() if s["project_id"] == project_id]
+        return await wake_lead(lead_key)
+    except BringUpFailed as exc:
+        if not own:
+            raise
+        logger.info("session_bring_up_lead_wake_failed", project=project_id, error=str(exc)[:200])
+        return None
+
+
+async def _bring_up_unlocked(ops: SessionOps, project_id: int, lead_key: str, wake_lead: Optional[LeadWaker]) -> Optional[str]:
+    own = wake_choice.running_agents(await ops.list(), project_id)
+    keys = await ops.durable_keys(own) if own and lead_key else {}
+    ready = wake_choice.running_lead(own, keys, lead_key)
+    if ready is None and lead_key:
+        ready = await _lead_or_none(own, project_id, lead_key, wake_lead or default_lead_waker(ops))
+    if ready is None:
+        ready = wake_choice.most_recent(own)
+    return ready if ready is not None else await _wake_sleeper(ops, project_id)
+
+
+async def _wake_sleeper(ops: SessionOps, project_id: int) -> Optional[str]:
+    try:
+        sleepers = await ops.asleep()
     except HTTPException as exc:
         raise BringUpFailed(f"could not read the sleeping sessions: {refusal_code(exc)}") from exc
-    return await wake_by_uuid(ops, sleepers[0]["session_uuid"]) if sleepers else None
+    chosen = wake_choice.pick_sleeper(sleepers, project_id, "")
+    return await wake_by_uuid(ops, chosen) if chosen else None
 
 
-async def wake_newest_or_start(ops: SessionOps, project_id: int) -> str:
-    woken = await wake_newest(ops, project_id)
-    return woken if woken is not None else await start_in_project(ops, project_id)
+async def wake_newest(ops: SessionOps, project_id: int, lead_key: str = "", wake_lead: Optional[LeadWaker] = None) -> Optional[str]:
+    async with project_lock(project_id):
+        return await _bring_up_unlocked(ops, project_id, lead_key, wake_lead)
+
+
+async def running_session(ops: SessionOps, project_id: int, lead_key: str = "") -> Optional[str]:
+    own = wake_choice.running_agents(await ops.list(), project_id)
+    if not own:
+        return None
+    return wake_choice.running_lead(own, await ops.durable_keys(own), lead_key) or wake_choice.most_recent(own)
+
+
+async def wake_newest_or_start(ops: SessionOps, project_id: int, lead_key: str = "", wake_lead: Optional[LeadWaker] = None) -> str:
+    async with project_lock(project_id):
+        ready = await _bring_up_unlocked(ops, project_id, lead_key, wake_lead)
+        return ready if ready is not None else await start_in_project(ops, project_id)
 
 
 async def find_live(ops: SessionOps, session_uuid: str) -> Optional[Any]:

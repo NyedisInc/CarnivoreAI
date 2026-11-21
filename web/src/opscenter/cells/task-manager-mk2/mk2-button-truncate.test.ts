@@ -7,7 +7,7 @@ import { flushSync, mount, unmount } from 'svelte';
 import Mk2MarkRead from './Mk2MarkRead.svelte';
 import { markReadHolds, undoMarkRead } from './mk2-mark-read.svelte';
 import { cssRules } from '../../../lib/base/css-rules';
-import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
+import type { HuddleItem } from '../../../plugins/huddle/huddle-model';
 
 const apps: object[] = [];
 afterEach(() => {
@@ -36,7 +36,7 @@ describe('Mark II buttons stay inside their widget', () => {
   });
 
   test('the schedule time and its edit key stay one unit but never grow wider than the row', () => {
-    const when = rule('../../../cplugs/huddle/TaskManagerRow.svelte', '.tkm-when');
+    const when = rule('../../../plugins/huddle/TaskManagerRow.svelte', '.tkm-when');
     expect(when.flex).toBe('none');
     expect(when['min-width']).toBe('0');
     expect(when['max-width']).toBe('100%');

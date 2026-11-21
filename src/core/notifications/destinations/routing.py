@@ -11,6 +11,7 @@ from src.core.notifications import doc_model, kind_specs
 from src.core.notifications.routing_view import DestinationView, RoutingView
 from src.core.notifications.settings_doc import mutes, view
 from src.core.notifications.settings_doc.store import Doc, SettingsDocStore
+from src.core.sessions.agent_update_warn import warn_exc_once
 
 log = structlog.get_logger(__name__)
 
@@ -55,12 +56,12 @@ class RoutingProvider:
         try:
             rows = list(self._subscriptions())
         except (OSError, ValueError) as exc:
-            log.warning("notification_subscriptions_unreadable", error=str(exc), error_type=type(exc).__name__)
+            warn_exc_once("notification_subscriptions_unreadable", exc)
             rows = []
         try:
             devices = list(self._native_devices())
         except (OSError, ValueError) as exc:
-            log.warning("notification_native_devices_unreadable", error=str(exc), error_type=type(exc).__name__)
+            warn_exc_once("notification_native_devices_unreadable", exc)
             devices = []
         pushes = [view.webpush_view(doc, str(r["id"]), subscription_label(r)) for r in rows if r.get("id")]
         pushes += [view.apns_view(doc, str(r["id"]), native_device_label(r)) for r in devices if r.get("id")]

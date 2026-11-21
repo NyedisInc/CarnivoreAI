@@ -144,7 +144,7 @@
     position: absolute;
     width: 3px;
     height: 3px;
-    border-radius: 50%;
+    border-radius: var(--oc-radius-circle);
     background: radial-gradient(circle, var(--oc-text-bright) 0 35%, transparent 70%);
     opacity: 0;
     pointer-events: none;

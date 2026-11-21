@@ -86,6 +86,6 @@
     .lp-import__note { margin: 0; color: var(--oc-text-secondary); font-size: 12px; }
     .lp-import__label { color: var(--oc-text-muted); font-size: 10px; letter-spacing: var(--oc-tracking-label, 0.6px); text-transform: uppercase; }
     .lp-import :global(textarea[data-field][data-mono]) { font-family: var(--font-mono); }
-    .lp-import__script { max-height: 30vh; overflow: auto; margin: 0; padding: 8px; border: 1px solid var(--oc-line-rule); border-radius: 2px; background: var(--oc-ground-field); color: var(--oc-text-primary); font-family: var(--font-mono); font-size: 11px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .lp-import__script { max-height: 30vh; overflow: auto; margin: 0; padding: 8px; border: 1px solid var(--oc-line-rule); border-radius: var(--oc-radius-control); background: var(--oc-ground-field); color: var(--oc-text-primary); font-family: var(--font-mono); font-size: 11px; white-space: pre-wrap; overflow-wrap: anywhere; }
   }
 </style>

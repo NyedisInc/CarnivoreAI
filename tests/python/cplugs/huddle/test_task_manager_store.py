@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.huddle import rules
-from src.cplugs.huddle.rules import TaskManagerForbidden, TaskManagerInvalid, TaskManagerNotFound, TaskManagerStale
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import rules
+from src.plugins.huddle.rules import TaskManagerForbidden, TaskManagerInvalid, TaskManagerNotFound, TaskManagerStale
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work.ladder import MIGRATIONS, SCHEMA_VERSION
 from src.core.work.importer import ready
 from src.core.work.storage import WorkStorage
 from src.core.work.work_ladder import VERSION as WORK_VERSION
-from src.cplugs.sdk import CplugSchemaError
+from src.plugins.sdk import CplugSchemaError
 
 
 @pytest.fixture

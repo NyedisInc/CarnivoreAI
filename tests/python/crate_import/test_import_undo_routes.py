@@ -14,10 +14,10 @@ from src.core.crate_import import ledger
 from src.core.crate_import.model import ImportRequest, new_import_id
 from src.core.crate_import.plan import build_plan
 from src.core.db import connect, db_path_for
-from src.cplugs.crate import import_store, import_undo, mcp
-from src.cplugs.crate.jobs import runner
-from src.cplugs.crate.jobs.sweep import sweep_interrupted
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.crate import import_store, import_undo, mcp
+from src.plugins.crate.jobs import runner
+from src.plugins.crate.jobs.sweep import sweep_interrupted
+from src.plugins.sdk import crate_format as cf
 from tests.python.cplugs.crate.api_world import BASE, stop_runner, wait_job
 from tests.python.cplugs.crate.test_mcp import _call
 from tests.python.crate_import.test_import_routes import (  # noqa: F401

@@ -96,7 +96,8 @@
         {/if}
     {/snippet}
     <div class="skp" data-skill-page={item.id}>
-        <Page title={item.name} icon={kindIcon('skill') ?? 'skill'} embedded class="skp-page" actions={pageActions}>
+        <Page title={item.name} icon={kindIcon('skill') ?? 'skill'} embedded frame="column" scroll="self" class="skp-page" actions={pageActions}>
+            <div class="skp-col">
             {#if removing && group.locations.length > 0}
                 <SkillRemoveStrip {group} removals={actions.removals} {t} onRemove={(loc) => void actions.remove(loc)} onClose={() => (removing = false)} {onOpenCatalog} />
             {/if}
@@ -132,6 +133,7 @@
                     onRegenerateArt={() => void regenerateArt()}
                     onState={(harness, choice) => void actions.changeState(item, harness, choice)}
                 />
+            </div>
             </div>
         </Page>
     </div>

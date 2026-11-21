@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.huddle import artifacts
-from src.cplugs.sdk import sandboxed_html
+from src.plugins.huddle import artifacts
+from src.plugins.sdk import sandboxed_html
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -40,4 +40,4 @@ def test_a_file_name_that_could_break_the_header_is_refused(name: object) -> Non
 def test_there_is_one_copy_of_the_sandbox_policy_under_src() -> None:
     holders = sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / "src").rglob("*.py")
                      if "sandbox allow-scripts; default-src 'none'" in p.read_text(encoding="utf-8"))
-    assert holders == ["src/cplugs/sdk/sandboxed_html.py"]
+    assert holders == ["src/plugins/sdk/sandboxed_html.py"]

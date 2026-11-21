@@ -235,7 +235,7 @@ def test_effort_nudge_is_detected_always_and_kept_with_enter_once_per_launch_und
 
 
 def test_every_rule_label_is_fixed_and_none_is_an_affirmative_chrome_or_bypass_row() -> None:
-    assert [r.label for r in rules.RULES] == [DEV_CHANNELS_ACCEPT, YES_LABEL, IMPORTS_YES_LABEL, CHROME_ACCEPT_LABEL, CHROME_DECLINE_LABEL, YES_LABEL, rules.BYPASS_ACCEPT_LABEL, rules.MCP_APPROVE_LABEL, "Enable selected", "Keep"]
+    assert [r.label for r in rules.RULES] == [DEV_CHANNELS_ACCEPT, YES_LABEL, IMPORTS_YES_LABEL, CHROME_ACCEPT_LABEL, CHROME_DECLINE_LABEL, YES_LABEL, rules.BYPASS_ACCEPT_LABEL, rules.MCP_APPROVE_LABEL, "Enable selected", "Keep", "Yes, add it"]
     assert list(dict.fromkeys(r.info.id for r in rules.RULES)) == [i.id for i in catalog.RULE_INFOS]
 
 

@@ -3,7 +3,7 @@ import { drawerEnv } from './env';
 import { mountPanel, unmountPanel } from '../mount';
 import { toggleAccountMenu } from '../drawer-hud/account-menu.svelte';
 import { openSignInDoor } from '../carnivore-account/sign-in-door';
-import { BAR_INDICATOR_ACTION, cplugBarIndicators } from '../../cplugs/host/readers';
+import { BAR_INDICATOR_ACTION, cplugBarIndicators } from '../../plugins/host/readers';
 import { BEAST_BAR_ACTION, beastIndicator } from '../beast-mode/control.svelte';
 import DrawerBar from './DrawerBar.svelte';
 import { barView, type VersionView } from './bar-view.svelte';

@@ -78,6 +78,14 @@ def held_alpha() -> Optional[str]:
     return wired.runtime.settings().master_install_id if wired is not None else None
 
 
+def content_alpha() -> Optional[str]:
+    from src.core.pack.machines import runtime
+
+    held = held_alpha()
+    wired = runtime.wiring()
+    return None if wired is not None and wired.runtime.content_alpha() is None else held
+
+
 def _limit(grant_id: str) -> None:
     now = time.monotonic()
     with _HITS_LOCK:
@@ -93,7 +101,7 @@ async def _alpha(principal: Principal = Depends(_require_skills)) -> str:
     if not principal.is_peer or principal.grant is None:
         raise HTTPException(403, {"code": "peer_token_required", "detail": "only a paired computer sends skills"})
     peer = principal.grant.peer_install_id
-    held = await run_in_threadpool(held_alpha)
+    held = await run_in_threadpool(content_alpha)
     if held != peer:
         raise HTTPException(403, {"code": "not_alpha", "held_alpha": held, "detail": "only the Pack's alpha decides what syncs"})
     if direction.contained(peer):
@@ -200,7 +208,7 @@ def _make_job(doc: Dict[str, Any], caller: str, blob_id: Optional[str], install:
     def job() -> None:
         stage = state_dir() / "pack" / f"skills-stage-{secrets.token_hex(6)}"
         try:
-            if held_alpha() != caller or doc["gen"] < state.applied_gen():
+            if content_alpha() != caller or doc["gen"] < state.applied_gen():
                 logger.info("pack_skills_apply_dropped", gen=doc["gen"])
                 return
             bundle = None
@@ -215,7 +223,7 @@ def _make_job(doc: Dict[str, Any], caller: str, blob_id: Optional[str], install:
             logger.info("pack_skills_applied", gen=doc["gen"], rows=len(report.rows), kept=len(report.kept))
             if doc.get("warez") and services is not None and loop is not None:
                 ctx = warez_receiver.Context(state, roots_now(), services, loop, caller, doc["gen"],
-                                             lambda: held_alpha() == caller and (state.load().get("doc") or {}).get("gen") == doc["gen"])
+                                             lambda: content_alpha() == caller and (state.load().get("doc") or {}).get("gen") == doc["gen"])
                 warez_receiver.run(doc, ctx, install)
         finally:
             shutil.rmtree(stage, ignore_errors=True)

@@ -8,8 +8,8 @@ from typing import List
 
 import pytest
 
-from src.core import plugin_layout
-from src.cplugs.host import folder_watch, identity, install_folder, registry_boot, registry_files, registry_migration, sidecar_registry, sideload
+from src.core.plugin_registry import plugin_layout
+from src.plugins.host import folder_watch, identity, install_folder, registry_boot, registry_files, registry_migration, sidecar_registry, sideload
 from tests.python.cplugs import registry_world as W
 from tests.python.cplugs.test_registry_migration_full_tuple import Alerts, boot
 

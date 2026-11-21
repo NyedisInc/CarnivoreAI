@@ -115,7 +115,7 @@ describe('runWake', () => {
         it('opens the restart picker with the uuid and wakes again with the pick', async () => {
             const opened = pickerPage({ agentType: 'claude-skip-permissions' });
             expect(await runWake({ name: 'carnivore_3D Work-2', label: '3D Work', sessionUuid: 'u-3d' })).toBe(true);
-            expect(opened).toEqual([['carnivore_3D Work-2', '3D Work', null, 'u-3d']]);
+            expect(opened).toEqual([['', '3D Work', null, 'u-3d']]);
             expect(calls).toEqual([['wake', 'u-3d', undefined], ['wake', 'u-3d', 'claude-skip-permissions']]);
             expect(said).toEqual([]);
         });
@@ -141,6 +141,15 @@ describe('runWake', () => {
                 { SessionRestartPicker: { open: async () => ({ agentType: 'cld', account: { accountId: 'play', pinned: true } }) } });
             await pickAndWake('carnivore_a', 'a', 'u-a');
             expect(seen).toEqual([['u-a', 'cld', { accountId: 'play', pinned: true }]]);
+        });
+
+        it('opens the picker with NO tmux name, so a synthetic asleep:<uuid> row name never reaches the server (#2979)', async () => {
+            const opened: unknown[][] = [];
+            standUp({ wakeSession: async () => ({ status: 'started' }) },
+                { SessionRestartPicker: { open: async (...a: unknown[]) => { opened.push(a); return { agentType: 'cld', account: null }; } } });
+            await pickAndWake('asleep:u-2', 'twin', 'u-2');
+            expect(opened[0]![0]).toBe('');
+            expect(opened[0]![3]).toBe('u-2');
         });
 
         it('with no picker on the page the refusal is shown as it is', async () => {
@@ -209,6 +218,18 @@ describe('runReopen and runArchive (#1845)', () => {
         expect(await runReopen(CTX)).toBe(true);
         expect(calls).toEqual([['restart', 'u-a']]);
         expect(focus).toEqual([['u-a', 'reopen:carnivore_a']]);
+    });
+
+    it('a reopen whose row recorded no conversation says a NEW one started, never a silent resume (#2977)', async () => {
+        standUp({ restartSession: async () => ({ conversation: 'none_recorded', title_carried: 'Carnivore', row_reused: true }) });
+        expect(await runReopen(CTX)).toBe(true);
+        expect(said).toEqual(['session.restart.none_recorded.named{"title":"Carnivore"}']);
+    });
+
+    it('a clean resume says nothing', async () => {
+        standUp({ restartSession: async () => ({ conversation: 'resumed', title_carried: 'Carnivore', row_reused: true }) });
+        expect(await runReopen(CTX)).toBe(true);
+        expect(said).toEqual([]);
     });
 
     it('a failed reopen says why and focuses nothing', async () => {

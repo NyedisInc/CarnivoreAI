@@ -4,6 +4,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -134,18 +135,22 @@ def _picker_without_a_version_probe(monkeypatch):
 
 
 def test_collect_tmux_runs_the_binary_the_picker_chose(monkeypatch):
+    from src.core.tmux_transport import run
+
     seen = []
-    monkeypatch.setattr(server_status, "tmux_argv_prefix", lambda socket: ["/picked/tmux", "-L", socket])
+    monkeypatch.setattr(run, "control_run", lambda socket, args: None)
+    monkeypatch.setattr(run, "tmux_argv_prefix", lambda socket: ["/picked/tmux", "-L", socket])
     monkeypatch.setattr(server_status.shutil, "which", lambda _n: "/picked/tmux")
-    monkeypatch.setattr(server_status, "_run_full", lambda argv: seen.append(argv) or (1, "", "no server running"))
-    server_status.collect_tmux("picked_sock")
-    assert seen and seen[0][:3] == ["/picked/tmux", "-L", "picked_sock"]
+    monkeypatch.setattr(run.subprocess, "run", lambda argv, **k: seen.append(argv) or SimpleNamespace(
+        returncode=1, stdout=b"", stderr=b"no server running"))
+    assert server_status.collect_tmux("picked_sock")["server_running"] is False
+    assert seen and seen[0][:4] == ["/picked/tmux", "-L", "picked_sock", "list-sessions"]
 
 
 def test_collect_tmux_no_server_is_available_and_not_running(monkeypatch):
     monkeypatch.setattr(
-        server_status, "_run_full",
-        lambda argv: (1, "", "no server running on /tmp/tmux-501/cloude"),
+        server_status, "_tmux_full",
+        lambda socket, *args: (1, "", "no server running on /tmp/tmux-501/cloude"),
     )
     out = server_status.collect_tmux("cloude")
     assert out["available"] is True
@@ -156,16 +161,16 @@ def test_collect_tmux_no_server_is_available_and_not_running(monkeypatch):
 
 def test_collect_tmux_socket_never_created_is_also_not_an_error(monkeypatch):
     monkeypatch.setattr(
-        server_status, "_run_full",
-        lambda argv: (1, "", "error connecting to /x (No such file or directory)"),
+        server_status, "_tmux_full",
+        lambda socket, *args: (1, "", "error connecting to /x (No such file or directory)"),
     )
     assert server_status.collect_tmux("cloude")["server_running"] is False
 
 
 def test_collect_tmux_real_failure_is_unavailable_not_empty(monkeypatch):
     monkeypatch.setattr(
-        server_status, "_run_full",
-        lambda argv: (1, "", "server exited unexpectedly"),
+        server_status, "_tmux_full",
+        lambda socket, *args: (1, "", "server exited unexpectedly"),
     )
     out = server_status.collect_tmux("cloude")
     assert out["available"] is False
@@ -174,7 +179,7 @@ def test_collect_tmux_real_failure_is_unavailable_not_empty(monkeypatch):
 
 
 def test_collect_tmux_unrunnable_reports_could_not_determine(monkeypatch):
-    monkeypatch.setattr(server_status, "_run_full", lambda argv: None)
+    monkeypatch.setattr(server_status, "_tmux_full", lambda socket, *args: None)
     out = server_status.collect_tmux("cloude")
     assert out["available"] is False
     assert out["server_running"] is None
@@ -188,11 +193,11 @@ def test_collect_tmux_missing_binary_is_unavailable(monkeypatch):
 
 
 def test_collect_tmux_history_limit_unknown_is_none_not_the_default(monkeypatch):
-    def fake(argv):
+    def fake(socket, *argv):
         if "list-sessions" in argv:
             return (0, "", "")
         return (1, "", "nope")
-    monkeypatch.setattr(server_status, "_run_full", fake)
+    monkeypatch.setattr(server_status, "_tmux_full", fake)
     assert server_status.collect_tmux("cloude")["history_limit"] is None
 
 

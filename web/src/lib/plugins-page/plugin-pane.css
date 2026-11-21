@@ -33,7 +33,7 @@
     width: 6px;
     height: 6px;
     margin-right: 5px;
-    border-radius: 50%;
+    border-radius: var(--oc-radius-circle);
     background: currentColor;
     vertical-align: 1px;
 }
@@ -355,17 +355,4 @@
 
 .plp .modal-btn {
     flex: none;
-    padding: 7px 16px;
-    font-size: 13px;
-}
-
-.plp .modal-btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-
-@media (pointer: coarse), (max-width: 600px) {
-    .plp .modal-btn {
-        min-height: 44px;
-    }
 }

@@ -54,8 +54,22 @@ def door_path() -> str:
 
 
 MAX_CANDIDATES = 16
-_CAND_FIELD_MAX = {"name": 64, "fid": 64, "fid_short": 8, "pack_name": 32, "computer_label": 32}
+_CAND_FIELD_MAX = {"name": 32, "fid": 64, "fid_short": 8, "pack_name": 32, "computer_label": 32}
 _MEMBERS_MAX = 6
+_DOOR_LINE_MAX = 4095
+
+
+def _fit_to_door(cands: List[Dict[str, Any]], job: str, code: str) -> List[Dict[str, Any]]:
+    def size() -> int:
+        return len(json.dumps({"op": "relay_fail", "job": job, "code": code, "candidates": cands}))
+
+    while cands and size() > _DOOR_LINE_MAX:
+        with_members = [c for c in cands if c.get("members")]
+        if with_members:
+            with_members[-1]["members"] = []
+        else:
+            cands.pop()
+    return cands
 
 def _clean(value: Any) -> str:
     if isinstance(value, bool):
@@ -320,6 +334,7 @@ async def _serve_waiting(out: Printer, status: Dict[str, Any]) -> int:
         cands = [{k: (None if m.get(k) is None else str(m[k])[:n]) for k, n in _CAND_FIELD_MAX.items()}
                  | {"members": [{"label": str(x["label"])[:24], "fid_short": str(x["fid_short"])[:8], "seen": bool(x["seen"])} for x in m.get("members", [])[:_MEMBERS_MAX]]}
                  for m in mains[:MAX_CANDIDATES]] if code in ("several", "found") else None
+        cands = _fit_to_door(cands, job, code) if cands else cands
         out.final(await _relay_failed(job, code, **({"candidates": cands} if cands else {})))
         return 0
     main = mains[0]

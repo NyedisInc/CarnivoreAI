@@ -1,7 +1,10 @@
 
 @layer primitives {
+  :root, [data-session-theme] {
+    --oc-control-radius: var(--oc-radius-control);
+  }
+
   :root {
-    --oc-control-radius: 2px;
     --oc-control-line: var(--oc-line-faint);
     --oc-control-line-hi: color-mix(in srgb, var(--oc-line-rule) 55%, var(--oc-text-muted));
   }
@@ -26,7 +29,7 @@
     min-width: min-content;
     padding: 5px var(--oc-space-2);
     border: 1px solid var(--oc-control-line);
-    border-radius: var(--oc-control-radius);
+    border-radius: var(--oc-radius-control);
     background: transparent;
     color: var(--oc-text-secondary);
     font: inherit;
@@ -46,29 +49,9 @@
     border-color: transparent;
   }
 
-  .oc-check__box {
-    display: grid;
-    place-items: center;
-    flex: none;
-    width: 12px;
-    height: 12px;
-    border: 1px solid var(--oc-control-line-hi);
-    border-radius: 1px;
-  }
 
   .oc-check[aria-checked='true'] {
     color: var(--oc-text-primary);
-  }
-
-  .oc-check[aria-checked='true'] .oc-check__box {
-    border-color: var(--oc-green);
-  }
-
-  .oc-check[aria-checked='true'] .oc-check__box::after {
-    content: '';
-    width: 6px;
-    height: 6px;
-    background: var(--oc-green);
   }
 
   .oc-check--bare {
@@ -88,7 +71,7 @@
   }
 
   .oc-check:disabled {
-    opacity: 0.45;
+    opacity: var(--oc-disabled-opacity);
     cursor: default;
   }
 
@@ -120,7 +103,7 @@
     display: inline-flex;
     max-width: 100%;
     border: 1px solid var(--oc-control-line);
-    border-radius: var(--oc-control-radius);
+    border-radius: var(--oc-radius-control);
     overflow: hidden;
   }
 
@@ -152,7 +135,7 @@
   }
 
   .oc-seg__item:disabled {
-    opacity: 0.45;
+    opacity: var(--oc-disabled-opacity);
     cursor: not-allowed;
   }
 
@@ -163,7 +146,7 @@
     min-width: 0;
     padding: var(--oc-space-3);
     border: 1px solid var(--oc-control-line);
-    border-radius: var(--oc-control-radius);
+    border-radius: var(--oc-radius-control);
     background: transparent;
     color: var(--oc-text-secondary);
     font: inherit;
@@ -206,33 +189,6 @@
     color: var(--oc-green);
   }
 
-  .oc-radio {
-    display: grid;
-    place-items: center;
-    flex: none;
-    width: 12px;
-    height: 12px;
-    border: 1px solid var(--oc-control-line-hi);
-    border-radius: 50%;
-  }
-
-  [aria-checked='true'] .oc-radio {
-    border-color: var(--oc-green);
-  }
-
-  [aria-checked='true'] .oc-radio::after {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--oc-green);
-  }
-
-  .oc-btn {
-    --_btn-pad-y: 7px;
-    --_btn-pad: 16px;
-    --_btn-fs: 13px;
-  }
 
   .oc-btn--sm {
     --_btn-pad-y: 0;
@@ -248,88 +204,6 @@
     --_btn-lh: 20px;
   }
 
-  .oc-ibtn {
-    display: inline-grid;
-    place-items: center;
-    width: var(--oc-ibtn-size, 20px);
-    height: var(--oc-ibtn-size, 20px);
-    padding: 0;
-    border: 1px solid var(--oc-control-line);
-    border-radius: var(--oc-control-radius);
-    background: var(--oc-ground-field);
-    color: var(--oc-text-secondary);
-    font: inherit;
-    cursor: pointer;
-  }
-
-  .oc-ibtn:hover:not(:disabled) {
-    border-color: var(--oc-control-line-hi);
-  }
-
-  .oc-ibtn:disabled {
-    opacity: 0.35;
-    cursor: default;
-  }
-
-  .oc-ibtn--bare {
-    border-color: transparent;
-    background: none;
-    color: var(--oc-text-dim);
-  }
-
-  .oc-ibtn--bare:hover:not(:disabled) {
-    border-color: transparent;
-    background: var(--oc-ground-hover);
-    color: var(--oc-text-primary);
-  }
-
-  .oc-ibtn--bare[aria-expanded='true'],
-  .oc-ibtn--bare[aria-pressed='true'] {
-    color: var(--oc-orange);
-  }
-
-  .oc-ibtn--close:hover:not(:disabled) {
-    color: var(--oc-coral);
-  }
-
-  [data-widget-head] .oc-ibtn--bare[aria-pressed='true'],
-  [data-widget-head] .oc-ibtn--bare[aria-expanded='true'] {
-    color: var(--oc-text-primary);
-  }
-
-  .oc-ibtn--float {
-    --oc-ibtn-size: 22px;
-    border-color: transparent;
-    border-radius: var(--oc-radius-sm);
-    background: none;
-    color: var(--oc-text-muted);
-    opacity: 0.4;
-    transition: opacity var(--oc-motion-fast, 120ms) ease, color var(--oc-motion-fast, 120ms) ease;
-  }
-
-  .oc-ibtn--float:hover:not(:disabled),
-  .oc-ibtn--float:focus-visible,
-  .oc-ibtn--float[aria-expanded='true'] {
-    opacity: 1;
-    border-color: var(--oc-line-panel);
-    background: var(--oc-ground-raised);
-    color: var(--oc-text-primary);
-  }
-
-  @media (hover: none) {
-    .oc-ibtn--float { opacity: 1; }
-  }
-
-  .oc-ibtn--bare[aria-current='page'] {
-    background: var(--oc-ground-hover);
-    color: var(--oc-orange);
-  }
-
-  .oc-ibtn:not(.oc-ibtn--bare)[aria-pressed='true'] {
-    border-color: var(--oc-orange);
-    background: var(--oc-ground-hover);
-    color: var(--oc-orange);
-  }
 
   .oc-order {
     display: flex;
@@ -343,7 +217,7 @@
     gap: var(--oc-space-2);
     padding: 3px var(--oc-space-2);
     border: 1px solid var(--oc-control-line);
-    border-radius: var(--oc-control-radius);
+    border-radius: var(--oc-radius-control);
     font-size: var(--oc-fs-body, 12px);
   }
 
@@ -374,20 +248,10 @@
       min-height: 44px;
     }
 
-    .oc-ibtn {
-      width: 44px;
-      height: 44px;
-    }
-
     [data-widget-head]:not(.oc-frame-title--phone) .oc-check,
     [data-widget-head]:not(.oc-frame-title--phone) .oc-choice,
     [data-widget-head]:not(.oc-frame-title--phone) .oc-btn {
       min-height: 0;
-    }
-
-    [data-widget-head]:not(.oc-frame-title--phone) .oc-ibtn {
-      width: var(--oc-ibtn-size, 20px);
-      height: var(--oc-ibtn-size, 20px);
     }
   }
 
@@ -407,12 +271,12 @@
 
   .oc-gauge__pace {
     position: absolute;
-    z-index: 1;
+    z-index: var(--oc-z-raised);
     top: calc(-1 * var(--oc-gauge-pace-over, 0px));
     bottom: calc(-1 * var(--oc-gauge-pace-over, 0px));
     width: 2px;
     transform: translateX(-50%);
-    border-radius: 1px;
+    border-radius: var(--oc-radius-xs);
     background: var(--oc-gauge-pace-color, var(--oc-text-bright));
     box-shadow: -1px 0 0 0 color-mix(in oklab, var(--oc-ground-panel, transparent) 60%, transparent), 1px 0 0 0 color-mix(in oklab, var(--oc-ground-panel, transparent) 60%, transparent);
     pointer-events: none;
@@ -422,7 +286,7 @@
     position: relative;
     display: block;
     height: var(--oc-gauge-h, 6px);
-    border-radius: 3px;
+    border-radius: var(--oc-radius-tight);
     background: var(--oc-gauge-track, var(--oc-ground-hover));
     box-shadow: var(--oc-gauge-ring, inset 0 0 0 1px var(--oc-line-frame));
     overflow: hidden;
@@ -518,7 +382,7 @@
 
   .oc-well {
     border: 1px solid var(--oc-control-line);
-    border-radius: var(--oc-control-radius);
+    border-radius: var(--oc-radius-control);
     overflow: hidden;
   }
 

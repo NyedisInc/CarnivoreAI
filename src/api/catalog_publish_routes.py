@@ -28,7 +28,7 @@ from src.core.catalog import (
 )
 from src.core.skill_manager.types import SCOPE_PERSONAL
 from src.core.skills.ledger_types import SCOPE_GLOBAL
-from src.cplugs.host import sideload
+from src.plugins.host import sideload
 from src.models.catalog_publish import (
     ItemFactsResponse,
     PublishAccountResponse,

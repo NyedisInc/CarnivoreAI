@@ -7,7 +7,7 @@ from typing import Any, Dict, List
 import pytest
 from structlog.testing import capture_logs
 
-from src.cplugs.reviewboard.public import carry
+from src.plugins.reviewboard.public import carry
 from tests.python.cplugs.reviewboard.public.carry_fixtures import counts, make_old_folder, sha
 
 

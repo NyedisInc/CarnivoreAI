@@ -206,7 +206,9 @@ test('an open Layout command bar above the grid is covered: the page reaches the
 
 test('the stylesheet points the page at the surface and stops hiding what is under it', () => {
     const css = readFileSync(resolve(__dirname, 'menu-page.css'), 'utf8');
-    const rule = css.match(/body\.menu-page-surface \.oc-page:not\(\.oc-page--embedded\)\s*\{([^}]*)\}/);
+    const frame = readFileSync(resolve(__dirname, '../../opscenter/page.css'), 'utf8');
+    expect(css, 'the shell sheet restyles no page root').not.toMatch(/body\.menu-page-surface \.oc-page/);
+    const rule = frame.match(/body\.menu-page-surface \.oc-page:not\(\.oc-page--embedded\)\s*\{([^}]*)\}/);
     expect(rule, 'the surface rule exists').not.toBeNull();
     expect(rule![1]).toContain('top: var(--menu-surface-top)');
     expect(rule![1]).toContain('bottom: var(--menu-surface-bottom)');

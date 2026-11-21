@@ -9,10 +9,10 @@ from types import SimpleNamespace
 import pytest
 
 from src.core.flow_data import feed, live, tail
-from src.cplugs.flow import service
+from src.plugins.flow import service
 from src.core.flow_data.collect import build
-from src.cplugs.host.activity_reader import ActivityReader
-from src.cplugs.sdk import transcript_events
+from src.plugins.host.activity_reader import ActivityReader
+from src.plugins.sdk import transcript_events
 from tests.python.cplugs.flow import fixture as fx
 
 NOW = fx.BASE + 4 * 3600

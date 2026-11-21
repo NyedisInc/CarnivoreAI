@@ -5,11 +5,11 @@ import os
 import tempfile
 from pathlib import Path
 
-from src.core.claude_config import profile_roots
+from src.core.claude_config import accounts_folder_cache, profile_roots
 
 
 def test_every_transcript_root_resolves_inside_the_temp_dir(tmp_path, monkeypatch):
-    accounts = Path(os.environ[profile_roots.ACCOUNTS_DIR_ENV])
+    accounts = Path(os.environ[accounts_folder_cache.ACCOUNTS_DIR_ENV])
     assert accounts.resolve().is_relative_to(Path(tempfile.gettempdir()).resolve())
     relay = accounts / "0123456789ab-x-relay"
     (relay / "projects").mkdir(parents=True)

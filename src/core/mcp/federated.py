@@ -15,6 +15,7 @@ from src.core.federation import peer_forward, peer_hosts, peer_links, peer_listi
 from src.core.federation.peer_forward import SID, UUID
 from src.core.hosts.ddl import LOCAL_HOST_KEY
 from src.core.mcp.common import ToolError
+from src.core.session_status import STATUS_DEAD
 
 logger = structlog.get_logger()
 
@@ -127,7 +128,7 @@ async def resolved_again(wire_id: str, epoch: Optional[int]) -> Any:
 
 
 def pane_live(info: Any) -> bool:
-    return info.activity_status != "dead"
+    return info.activity_status != STATUS_DEAD
 
 
 async def _screen_socket(info: Any, query: dict, action: Any) -> Any:

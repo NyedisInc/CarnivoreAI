@@ -35,6 +35,7 @@ CSS_FILES = [
 ]
 
 JS_FILES = [
+    "js/i18n/tr.js",
     "js/session-status-ui.js",
     "js/session-restart-live.js",
     "js/session-restart-options.js",

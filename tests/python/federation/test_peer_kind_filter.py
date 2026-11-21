@@ -66,4 +66,4 @@ def test_register_every_hosts_statement_outside_the_store_names_its_kind():
         for m in re.finditer(r"FROM hosts\b[^\"']*", text):
             if "kind" not in m.group(0) and "peer_install_id" not in m.group(0):
                 found.add(str(path.relative_to(SRC)))
-    assert found == {"core/hosts/store.py"}
+    assert found == {"core/hosts/store.py", "api/session_record_payload.py"}

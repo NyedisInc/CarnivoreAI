@@ -80,14 +80,20 @@
   }
 </script>
 
+
+{#snippet notice()}<State inline title={data.notice ?? ''} data-automations-notice />{/snippet}
+
 {#if open}
   <Page
     title={t('automations.page.title')}
     class="pledger ap-page"
+    frame="column"
+    scroll="self"
     embedded={embedded}
     data-automations=""
     data-pane-open={data.paneOpen ? '' : undefined}
     data-drawer-open={data.drawer ? '' : undefined}
+    notes={data.notice ? notice : undefined}
   >
     {#snippet actions()}
       <div class="ap-acts">
@@ -100,7 +106,6 @@
         <FindBox />
       </div>
     {/snippet}
-    {#if data.notice}<State inline title={data.notice} data-automations-notice />{/if}
 
     <div {...panelAttrs('automations', data.top)} class="ap-body" data-selected-automation={data.selectedId ?? undefined}>
       {#if data.top === 'advanced'}

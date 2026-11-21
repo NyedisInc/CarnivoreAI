@@ -23,6 +23,8 @@
     hideAgents = false,
     hideShells = false,
     hideTimers = false,
+    shellsInline = false,
+    onshells = undefined,
   }: {
     sessionId: string;
     form?: Form;
@@ -32,12 +34,14 @@
     hideAgents?: boolean;
     hideShells?: boolean;
     hideTimers?: boolean;
+    shellsInline?: boolean;
+    onshells?: (count: number | null) => void;
   } = $props();
 
   const TICK_MS = 30000;
 
   const row = $derived(rowFor(sessions.data, sessionId));
-  const wantsLists = $derived(!hideAgents || !hideShells);
+  const wantsLists = $derived(!hideAgents || !hideShells || shellsInline);
   const key = $derived(refreshKey(row as Record<string, unknown> | null));
   let agentRows = $state<SubagentRow[] | null>(null);
   let work = $state<SessionBackgroundWork | null>(null);
@@ -56,7 +60,8 @@
   const counts = $derived(workCounts(agentRows, work));
   const portCount = $derived(portLines(row as Record<string, unknown> | null).length);
   const agentsCount = $derived(!hideAgents && counts.agents ? counts.agents : null);
-  const shellsCount = $derived(!hideShells && counts.shells ? counts.shells : null);
+  const shellsCount = $derived(!hideShells && !shellsInline && counts.shells ? counts.shells : null);
+  $effect(() => { onshells?.(shellsInline && counts.shells ? counts.shells : null); });
   let nowMs = $state(Date.now());
   const timers = $derived(hideTimers ? null : timerChip(row, nowMs));
   const until = $derived(untilText(row?.timers_next_fire_at, nowMs));

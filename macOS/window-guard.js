@@ -19,6 +19,8 @@ function createWindowGuard({ getPort, verifyHolder, onRefused, onCleared, reload
   let checking = false;
   let generation = 0;
   let refused = false;
+  let refusedRan = false;
+  let unreadableLogged = false;
   let cancelledAny = false;
   let lastUptime = null;
   let held = [];
@@ -53,6 +55,12 @@ function createWindowGuard({ getPort, verifyHolder, onRefused, onCleared, reload
     try {
       const refusal = await verifyHolder();
       if (mine !== generation) return;
+      const couldNotRun = Boolean(refusal) && refusal.reason === 'unreadable';
+      if (couldNotRun && !wasBlocked && !blocked) {
+        if (!unreadableLogged) log('[window-guard] holder check could not run (lsof timed out or failed); window requests stay allowed, checking again next poll');
+        unreadableLogged = true;
+        return;
+      }
       if (refusal) {
         blocked = true;
         if (!refused) {
@@ -60,17 +68,20 @@ function createWindowGuard({ getPort, verifyHolder, onRefused, onCleared, reload
           onRefused(refusal);
         }
         refused = true;
+        if (!couldNotRun) refusedRan = true;
         return;
       }
+      unreadableLogged = false;
       if (!wasBlocked && !blocked) return;
       blocked = false;
       log('[window-guard] holder is ours, window requests allowed');
       const loads = held;
       held = [];
       for (const load of loads) load();
-      const owed = refused || cancelledAny;
+      const owed = refusedRan || cancelledAny;
       const wasRefused = refused;
       refused = false;
+      refusedRan = false;
       cancelledAny = false;
       if (wasRefused) onCleared();
       if (owed) reloadWindows();

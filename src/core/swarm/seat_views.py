@@ -6,7 +6,7 @@ from typing import List, Optional
 
 from src.core.swarm import alpha, project_removal
 from src.core.swarm.names import shown_name
-from src.cplugs.sdk.swarm import SeatRef
+from src.plugins.sdk.swarm import SeatRef
 
 
 LEAD_RANKS = ("project", "company")

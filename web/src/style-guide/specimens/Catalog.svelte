@@ -51,9 +51,9 @@
 {/snippet}
 
 {#if part === 'toolbar'}
+  <div class="oc-titlebar__find">{@render searchField()}</div>
   <div class="oc-titlebar__actions">
   <WarezTools
-    search={searchField}
     {view}
     onView={(next) => (view = next)}
     sortKey="index"

@@ -21,6 +21,8 @@ TABLE: Mapping[str, Tuple[str, str]] = {
     "session_stop": ("sessions.stop", "Stop a session: put it to sleep, keeping its row and conversation for a later wake."),
     "session_wake": ("sessions.wake",
                      "Wake an asleep session (by session_uuid or tmux name) so it resumes the same conversation."),
+    "session_mass_death_resume": ("sessions.mass_death.resume",
+                                  "After many panes died at once, wake each dead session and type a short interruption note into it."),
     "session_interrupt": ("sessions.interrupt", "Interrupt a live agent session by pressing Escape once."),
     "session_delete": ("sessions.delete",
                        "Delete a session: kill its tmux session, or drop an asleep one from the lists. Always waits for the "
@@ -106,6 +108,12 @@ TABLE: Mapping[str, Tuple[str, str]] = {
     "session_local_servers_list": ("sessions.local_servers.list", "List the dev servers detected in a live session's output."),
     "session_conversations_list": ("sessions.history.conversations.list",
                                    "List a session's current and earlier conversations, newest first, with summaries."),
+    "session_events_list": ("sessions.history.events.list",
+                            "List a Claude Code session's typed events (kinds, positions, identifiers; no text), forward by cursor or "
+                            "newest turns first. Refused while session chat is off."),
+    "session_state_get": ("sessions.history.state.get",
+                          "Get a Claude Code session's state from its transcript: open turn, last turn end, open agents, queued re-invoke. "
+                          "Refused while session chat is off."),
     "session_resume_candidates_list": ("sessions.resume_candidates.list", "List stopped sessions on this computer that could be resumed."),
     "session_adoption_candidates_list": ("sessions.adoption_candidates.list",
                                          "List tmux sessions started outside Carnivore that could be adopted."),

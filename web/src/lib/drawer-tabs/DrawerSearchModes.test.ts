@@ -127,7 +127,7 @@ test('one word goes to three different searches, one per mode', async () => {
     choose(CONTEXT_MODE_ID);
     await vi.advanceTimersByTimeAsync(400);
     flushSync();
-    expect(apiCalls.slice(1).map((u) => u.replace(/[?&](q|limit|offset|per_group)=[^&]*/g, '').replace(/&/, '?'))).toEqual([
+    expect(apiCalls.slice(1).map((u) => u.replace(/[?&](q|limit|offset|per_group|sort)=[^&]*/g, '').replace(/&/, '?'))).toEqual([
         `${DATABASE_SUGGEST_PATH}`,
         `${DATABASE_SEARCH_PATH}?scope=peers`,
         `${DATABASE_SEARCH_PATH}?scope=local`,

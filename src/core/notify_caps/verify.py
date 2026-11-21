@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import time
-from types import SimpleNamespace
 from typing import Any, Dict, Optional, Tuple
 
 from src.core.approvals.dialog_gate import CLEAR, dialog_verdict
@@ -32,5 +31,5 @@ async def ask_is_open(app_state: Any, record: CapRecord) -> Optional[Result]:
     session_id = str(record.target.get("session", ""))
     if record.target.get("type") != "dialog" or effects.is_remote(session_id):
         return None
-    verdict = await dialog_verdict(SimpleNamespace(state=app_state), session_id)
+    verdict = await dialog_verdict(app_state, session_id)
     return GONE if verdict == CLEAR else None

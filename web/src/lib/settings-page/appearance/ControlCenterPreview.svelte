@@ -238,7 +238,7 @@
         width: 72px;
         height: 6px;
         overflow: hidden;
-        border-radius: 1px;
+        border-radius: var(--oc-radius-xs);
         background: color-mix(in srgb, var(--oc-text-primary) 14%, transparent);
     }
 
@@ -380,7 +380,7 @@
     .ccp-tab {
         padding: 2px 10px;
         border: 1px solid var(--oc-control-line);
-        border-radius: var(--oc-control-radius);
+        border-radius: var(--oc-radius-control);
         background: transparent;
         color: var(--oc-text-secondary);
         font: inherit;
@@ -405,7 +405,7 @@
     .ccp-st {
         width: 7px;
         height: 7px;
-        border-radius: 50%;
+        border-radius: var(--oc-radius-circle);
     }
 
     .ccp-st-work { background: var(--oc-green); }

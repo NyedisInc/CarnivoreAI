@@ -24,6 +24,7 @@ from src.core.session_journal_measure import Measurement, measure
 from src.core.session_journal_observe import live_entries, observe
 from src.core.swarm import switch as swarm_switch
 from src.core.notifications.sources import restore as restore_source
+from src.core.product_identity import test_mode_enabled
 from src.core.session_restore_offer import (
     OFFER_OPEN,
     REASON_TMUX_SERVER_GONE,
@@ -55,7 +56,7 @@ def journal_enabled() -> bool:
             return True
         if value in _FALSEY:
             return False
-    return os.environ.get("CLOUDE_TEST_MODE", "").strip().lower() not in _TRUTHY
+    return not test_mode_enabled()
 
 
 def interval_seconds() -> int:

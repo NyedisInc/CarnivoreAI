@@ -12,6 +12,7 @@
   import { slotOf, type FeedRow } from '../logic/feed';
   import { settledStatus, skipReason, statusWord } from '../logic/words';
   import { data, openDrawer, openInAdvanced } from '../page-store.svelte';
+  import { downloadAttachment } from '../run-actions';
   import { attachmentRows, sinceSentence } from './drawer-model';
   import { dr, loadRun } from './drawer-state.svelte';
   import LastRun from './LastRun.svelte';
@@ -70,7 +71,17 @@
     <Card title={t('automations.simple.dr.attachments')} compact>
       {#snippet children()}
         <List label={t('automations.simple.dr.attachments')} data-dr-attachments>
-          {#each attachments as file, i (i)}<ListRow primary={file.name} meta={file.size} />{/each}
+          {#each attachments as file, i (i)}
+            <ListRow meta={file.size}>
+              {#snippet primary()}
+                {@const real = run?.attachments?.[i]?.name}
+                {#if real}
+                  
+                  <Button variant="quiet" size="bare" data-attachment={real} onclick={() => void downloadAttachment(run!.run_id, real)}>{file.name}</Button>
+                {:else}{file.name}{/if}
+              {/snippet}
+            </ListRow>
+          {/each}
         </List>
       {/snippet}
     </Card>

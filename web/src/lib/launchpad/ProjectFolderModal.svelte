@@ -9,7 +9,6 @@
     import type { FolderChoice } from './modal-types';
     import { validateName } from './project-folder';
     import ModalShell from '../dialog-frame/ModalShell.svelte';
-    import IconButton from '../base/IconButton.svelte';
     import Button from '../base/Button.svelte';
     import Field from '../base/Field.svelte';
 
@@ -107,18 +106,11 @@
     }
 </script>
 
-<ModalShell
+<ModalShell look="titlerow"
     title={t(PROJECT_CREATE_KEYS.folderTitle)}
-    overlayClass="text-prompt-modal na-flow"
+    overlayClass="na-flow"
     onCancel={() => close(null)}
 >
-    {#snippet head()}
-        <div class="text-prompt-modal__head">
-            <span class="text-prompt-modal__verb">&raquo; {t(PROJECT_CREATE_KEYS.folderTitle)}</span>
-            <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close
-                onclick={() => close(null)} />
-        </div>
-    {/snippet}
     <div class="modal-input-group">
         <Field
             label={t(PROJECT_CREATE_KEYS.folderParentLabel)}

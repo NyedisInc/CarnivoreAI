@@ -40,8 +40,8 @@ vi.mock('../../../lib/listing-push/boot', async (importOriginal) => ({
 
 import Mark2 from './Cell.svelte';
 import Mk2Host from './fixtures/Mk2Host.svelte';
-import { cplugEnablement } from '../../../cplugs/host/enablement.svelte';
-import { huddle } from '../../../cplugs/huddle/huddle.svelte';
+import { cplugEnablement } from '../../../plugins/host/enablement.svelte';
+import { huddle } from '../../../plugins/huddle/huddle.svelte';
 
 cplugEnablement.enabled = { huddle: true };
 const apps: Array<ReturnType<typeof mount>> = [];

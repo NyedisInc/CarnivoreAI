@@ -21,7 +21,7 @@
         var st = states.get(term);
         var base = heldRows(term);
         if (!st || st.sessionId !== sessionId || st.navToken !== navToken
-            || base < st.baseY) {
+            || (base < st.baseY && !st.inflight)) {
             st = { sessionId: sessionId, navToken: navToken, inflight: false,
                    exhausted: false, baseY: base, retryAt: 0 };
             states.set(term, st);
@@ -57,6 +57,7 @@
             st.inflight = false;
         }
         if (outcome.loaded === 'painted') {
+            if (heldRows(term) <= held) st.exhausted = true;
             st.baseY = heldRows(term);
             return 'painted';
         }

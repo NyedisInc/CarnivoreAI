@@ -44,7 +44,7 @@ def make_backend(recorder: list[list[str]]) -> TmuxBackend:
         session_name="cloude_resize_test",
     )
 
-    def _fake_run(*args: str, stdin_bytes=None, check: bool = True):
+    def _fake_run(*args: str, stdin_bytes=None, check: bool = True, **_kw):
         recorder.append(list(args))
         return 0, b"", b""
 
@@ -86,7 +86,7 @@ async def test_pty_resize_frame_issues_tmux_resize_window():
     argv = resizes[0]
     assert argv[argv.index("-x") + 1] == "42"
     assert argv[argv.index("-y") + 1] == "48"
-    assert argv[argv.index("-t") + 1] == "cloude_resize_test"
+    assert argv[argv.index("-t") + 1] == "=cloude_resize_test:"
 
 
 @pytest.mark.asyncio

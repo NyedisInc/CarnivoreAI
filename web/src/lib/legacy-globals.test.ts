@@ -9,13 +9,13 @@ export const WINDOW_CAST = /\b(?:window|hostWindow\(\)|globalThis)\)?\s+as\s+unk
 
 const WINDOW_CAST_KNOWN: readonly string[] = [
   'admin/App.svelte x1',
-  'cplugs/huddle/style-guide/CharacterBoard.svelte x1',
-  'cplugs/huddle/style-guide/ExpressionBoard.svelte x1',
-  'cplugs/huddle/style-guide/SwarmPageBoard.svelte x1',
-  'cplugs/huddle/style-guide/SwarmPanelBoard.svelte x1',
-  'cplugs/huddle/swarm/swarm-settings.svelte.ts x1',
-  'cplugs/sdk/floor.svelte.ts x1',
-  'cplugs/sdk/sessions.svelte.ts x1',
+  'plugins/huddle/style-guide/CharacterBoard.svelte x1',
+  'plugins/huddle/style-guide/ExpressionBoard.svelte x1',
+  'plugins/huddle/style-guide/SwarmPageBoard.svelte x1',
+  'plugins/huddle/style-guide/SwarmPanelBoard.svelte x1',
+  'plugins/huddle/swarm/swarm-settings.svelte.ts x1',
+  'plugins/sdk/floor.svelte.ts x1',
+  'plugins/sdk/sessions.svelte.ts x1',
   'lib/add-to-menu/host.ts x1',
   'lib/automations/schedule-prefill.ts x3',
   'lib/browser/center-nav.ts x1',
@@ -66,7 +66,7 @@ const WINDOW_CAST_KNOWN: readonly string[] = [
   'widget-harness/idle-run.ts x2',
 ];
 
-const WINDOW_CAST_KNOWN_CEILING = 58;
+const WINDOW_CAST_KNOWN_CEILING = 56;
 
 export function countWindowCasts(text: string): number {
   return (text.match(WINDOW_CAST) ?? []).length;
@@ -115,6 +115,6 @@ describe('legacy window globals go through legacy-globals.ts', () => {
     const found = findCasts();
     const stale = [...known()].filter(([file, n]) => (found.get(file) ?? 0) !== n);
     expect(stale, 'lower or delete the row of a migrated file').toEqual([]);
-    expect(WINDOW_CAST_KNOWN.length).toBeLessThanOrEqual(WINDOW_CAST_KNOWN_CEILING);
+    expect(WINDOW_CAST_KNOWN.length, 'lower WINDOW_CAST_KNOWN_CEILING to the row count').toBe(WINDOW_CAST_KNOWN_CEILING);
   });
 });

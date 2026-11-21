@@ -9,8 +9,8 @@ import pytest
 from scripts.crate import flows
 from scripts.crate.client import sha256_of
 from src.core.blobcodec.place import sha256_file
-from src.cplugs.crate import folders, import_store
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.crate import folders, import_store
+from src.plugins.sdk import crate_format as cf
 from tests.python.cplugs.crate.api_world import stop_runner
 from tests.python.crate_headless.world import TwoInstalls
 

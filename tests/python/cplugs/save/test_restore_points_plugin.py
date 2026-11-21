@@ -9,8 +9,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.host import routes as host_routes, runtime
-from src.cplugs.sdk import save_triggers, transcript_files, vault_sources
+from src.plugins.host import routes as host_routes, runtime
+from src.plugins.sdk import save_triggers, transcript_files, vault_sources
 from tests.python.cplugs.save.vault_helpers import stop_follower
 from tests.python.time_machine.helpers import CONV, FOLDER, WORKDIR, make_corpus
 

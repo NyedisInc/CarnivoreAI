@@ -137,7 +137,7 @@
         visibility: visible;
         transition: none;
         border: 1px solid var(--oc-control-line);
-        border-radius: var(--oc-control-radius);
+        border-radius: var(--oc-radius-control);
         overflow: hidden;
         pointer-events: none;
         font-size: medium;

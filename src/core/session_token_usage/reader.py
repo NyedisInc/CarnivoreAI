@@ -205,7 +205,7 @@ def _read_claude(
 
 
 def _read_codex(
-    subject: SessionSubject, *, codex_home: Optional[str]
+    subject: SessionSubject, *, codex_home: Optional[str], rollout_path: Optional[str] = None
 ) -> SessionTokenUsage:
     if not subject.conversation_uuid:
         return _absent(
@@ -215,9 +215,11 @@ def _read_codex(
         )
     home = codex_home or DEFAULT_CODEX_HOME
     cache_key = (home, subject.conversation_uuid)
-    path = _cached_location(_CODEX_LOCATION_CACHE, cache_key)
+    path = rollout_path or _cached_location(_CODEX_LOCATION_CACHE, cache_key)
     if path is not None and not os.path.isfile(path):
         path = None
+    if path is None and rollout_path:
+        return _absent("no codex rollout exists for this thread, so nothing has been spent on it", FAMILY_CODEX)
     if path is None:
         try:
             path = rollout_path_for(home, subject.conversation_uuid)
@@ -273,6 +275,7 @@ def read_session_token_usage(
     projects_dir: Optional[Path] = None,
     codex_home: Optional[str] = None,
     max_cold_bytes: Optional[int] = None,
+    rollout_path: Optional[str] = None,
 ) -> SessionTokenUsage:
     family = (session_row.agent_family or "").strip().lower()
     if family == FAMILY_CLAUDE:
@@ -280,7 +283,7 @@ def read_session_token_usage(
             session_row, projects_dir=projects_dir, max_cold_bytes=max_cold_bytes
         )
     if family == FAMILY_CODEX:
-        return _read_codex(session_row, codex_home=codex_home)
+        return _read_codex(session_row, codex_home=codex_home, rollout_path=rollout_path)
     if not family:
         return _unchecked(
             "this session's agent family has not been determined, so which "

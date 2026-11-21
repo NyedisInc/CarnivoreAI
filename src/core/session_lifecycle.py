@@ -44,6 +44,7 @@ class ReconcileOutcome:
     stopped_uuids: Tuple[str, ...] = field(default_factory=tuple)
     examined: int = 0
     pane_dead_stopped: int = 0
+    pane_dead_uuids: Tuple[str, ...] = field(default_factory=tuple)
     renamed: int = 0
     revived: int = 0
     reason: Optional[str] = None
@@ -152,6 +153,7 @@ def _reap_absent_instances(
     stopped: List[str] = []
     renamed = 0
     pane_dead_stopped = 0
+    pane_dead_uuids: List[str] = []
 
     live_names = rename_map(listing.sessions)
     stored_by_key: Dict[Tuple[int, str], List[Dict[str, Any]]] = {}
@@ -239,6 +241,7 @@ def _reap_absent_instances(
                 ),
             )
             stopped.append(str(row["session_uuid"]))
+            pane_dead_uuids.append(str(row["session_uuid"]))
             pane_dead_stopped += 1
             logger.info(
                 "session_lifecycle_reaped_pane_dead",
@@ -321,12 +324,16 @@ def _reap_absent_instances(
             ),
         )
 
+    from src.core.mass_death import detector as mass_death
+
+    mass_death.observe(pane_dead_uuids)
     return ReconcileOutcome(
         outcome=RECONCILE_EVALUATED,
         evaluated=True,
         stopped_uuids=tuple(stopped),
         examined=len(candidates),
         pane_dead_stopped=pane_dead_stopped,
+        pane_dead_uuids=tuple(pane_dead_uuids),
         renamed=renamed,
         revived=revived,
         reason=listing.reason,

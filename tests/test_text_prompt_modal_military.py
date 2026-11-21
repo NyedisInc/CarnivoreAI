@@ -330,7 +330,7 @@ def test_secondary_is_a_quiet_outline_that_never_takes_the_accent(page):
     )
     assert measured["background"] in _TRANSPARENT, measured
     assert measured["edgeWidth"] == "1px", measured
-    assert measured["edge"] == _token(page, "--oc-line-rule"), measured
+    assert measured["edge"] == _token(page, "--oc-line-button"), measured
     assert measured["text"] == _token(page, "--oc-text-secondary"), measured
     assert measured["text"] != _token(page, "--oc-orange"), measured
 

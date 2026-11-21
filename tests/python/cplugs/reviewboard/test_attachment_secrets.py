@@ -6,7 +6,7 @@ import string
 
 import structlog
 
-from src.cplugs.sdk import file_secrets
+from src.plugins.sdk import file_secrets
 from tests.python.cplugs.reviewboard.harness import BASE, task_manager_store
 from tests.python.cplugs.reviewboard.test_attachments import MD, PDF, b64, board, client, env, sidecar, tree  # noqa: F401
 
@@ -123,8 +123,8 @@ def test_a_credential_scan_that_runs_past_the_deadline_is_refused_as_unscannable
     import pytest
 
     from src.core.secret_scanning import deadline as scan_deadline
-    from src.cplugs.reviewboard import attachment_secrets
-    from src.cplugs.reviewboard.errors import UnscannableFile
+    from src.plugins.reviewboard import attachment_secrets
+    from src.plugins.reviewboard.errors import UnscannableFile
 
     ticks = itertools.count(0, 20)
     monkeypatch.setattr(scan_deadline, "_now", lambda: float(next(ticks)))

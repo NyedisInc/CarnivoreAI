@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.core import launch_failure
+from src.core.launch_profiles import launch_failure
 from src.core.sessions.errors import SessionCreateFailed, TmuxError
 
 from .conftest import LEAK

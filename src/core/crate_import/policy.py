@@ -43,7 +43,7 @@ def _all(kind: str, store: str, tables: str, reason: str = "") -> Dict[str, Deci
 
 MAIN = "cloude.db"
 DECISIONS: Dict[str, Decision] = {
-    **_all(RESTORE, MAIN, "companies projects sessions session_notes session_groups session_group_styles session_group_membership "
+    **_all(RESTORE, MAIN, "companies projects sessions session_notes session_groups session_group_styles session_group_rules session_group_membership "
            "layouts layout_styles layout_members layout_broadcast_off conversation_milestones conversation_index lineage_nodes "
            "lineage_edges agent_spawn_links session_conversations work_items work_messages work_item_lineage work_card_events "
            "work_blockers work_item_nudges work_item_triggers work_message_receipts work_write_actors "
@@ -51,6 +51,7 @@ DECISIONS: Dict[str, Decision] = {
            "work_sends work_project_roles"),
     **_all(RESTORE_HISTORY, MAIN, "mcp_events messaging_messages crosstalk_messages"),
     **_all(RESTORE, "bookmarks.db", "bookmarks"),
+    **_all(SKIP, "bookmarks.db", "turn_checkpoints", S_MACHINE),
     **_all(RESTORE_HISTORY, "attention_history.db", "attention_events"),
     **_all(RESTORE, "automations.db", "automations automation_changes"),
     **_all(RESTORE_HISTORY, "automations.db", "runs run_sessions"),
@@ -76,7 +77,7 @@ DECISIONS: Dict[str, Decision] = {
 
 APPLY_ORDER: Tuple[str, ...] = tuple(f"{MAIN}.{name}" for name in (
     "companies", "projects", "sessions", "session_notes", "session_conversations", "conversation_index", "conversation_milestones",
-    "lineage_nodes", "lineage_edges", "agent_spawn_links", "session_groups", "session_group_styles", "session_group_membership",
+    "lineage_nodes", "lineage_edges", "agent_spawn_links", "session_groups", "session_group_styles", "session_group_rules", "session_group_membership",
     "layouts", "layout_styles", "layout_members", "layout_broadcast_off"))
 WORK_TABLES: Tuple[str, ...] = tuple(f"{MAIN}.{name}" for name in (
     "work_items", "work_item_groups", "work_messages", "work_inbox", "work_item_lineage", "work_card_events", "work_blockers",

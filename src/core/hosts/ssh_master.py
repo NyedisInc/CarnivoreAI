@@ -11,7 +11,7 @@ import signal
 import stat
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Optional, Tuple
+from typing import Callable, Mapping, Optional, Sequence, Tuple
 
 import structlog
 
@@ -119,8 +119,12 @@ class SshMaster:
                  slot: int = 0, ssh_binary: str = SSH_BINARY, connect_timeout: float = 30.0,
                  check_interval: float = 30.0, stable_after: float = 30.0,
                  delay: Callable[[int], float] = backoff_delay,
-                 on_change: Optional[Callable[[MasterStatus], None]] = None) -> None:
+                 on_change: Optional[Callable[[MasterStatus], None]] = None,
+                 pre_options: Sequence[Tuple[str, str]] = (),
+                 child_env: Optional[Mapping[str, str]] = None) -> None:
         self.host_key = host_key
+        self.pre_options = tuple(pre_options)
+        self._child_env = None if child_env is None else dict(child_env)
         self.dest = dest
         self.slot = slot
         self.control_path = ssh_exec.validate_control_path(control_path)
@@ -256,9 +260,10 @@ class SshMaster:
         await self._clear_control_path()
         try:
             proc = await asyncio.create_subprocess_exec(
-                *master_argv(self.dest, self.control_path, ssh_binary=self._ssh_binary),
+                *master_argv(self.dest, self.control_path, ssh_binary=self._ssh_binary,
+                             pre_options=self.pre_options),
                 stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.DEVNULL,
-                stderr=asyncio.subprocess.PIPE, start_new_session=True)
+                stderr=asyncio.subprocess.PIPE, start_new_session=True, env=self._child_env)
         except OSError as exc:
             return FAILURE_SSH_UNAVAILABLE, failure_detail(FAILURE_SSH_UNAVAILABLE, str(exc)), None
         self._proc = proc
@@ -337,7 +342,7 @@ class SshMaster:
     async def _check_pid(self) -> Optional[int]:
         result = await ssh_exec.run_process(
             control_argv(self.dest, self.control_path, "check", ssh_binary=self._ssh_binary),
-            timeout=5.0, verb="check", host=self.host_key)
+            timeout=5.0, verb="check", host=self.host_key, env=self._child_env)
         match = _CHECK_PID_RE.search(result.stderr_text) if result.returncode == 0 else None
         return int(match.group(1)) if match else None
 
@@ -349,7 +354,7 @@ class SshMaster:
             logger.warning("ssh_master_orphan_exited", host=self.host_key, slot=self.slot, pid=orphan)
             await ssh_exec.run_process(
                 control_argv(self.dest, self.control_path, "exit", ssh_binary=self._ssh_binary),
-                timeout=5.0, verb="exit", host=self.host_key)
+                timeout=5.0, verb="exit", host=self.host_key, env=self._child_env)
             for _ in range(40):
                 if not os.path.lexists(self.control_path):
                     return

@@ -246,7 +246,7 @@
         min-width: 0;
     }
 
-    @media (max-width: 700px), (pointer: coarse) {
+    @media (max-width: 767px), (pointer: coarse) {
 
         .ap-page .w-days {
             gap: var(--oc-space-0-5);

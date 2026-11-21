@@ -32,6 +32,7 @@ class _LinkHandles:
     notification_sync_task: Optional["asyncio.Task[None]"] = None
     pack_machines_task: Optional["asyncio.Task[None]"] = None
     pack_maintain_task: Optional["asyncio.Task[None]"] = None
+    pack_jobs_task: Optional["asyncio.Task[None]"] = None
     computers_rt: Optional[object] = None
 
 
@@ -133,7 +134,8 @@ async def _start_link(ctx: "BootContext", held: _LinkHandles) -> None:
         door_path=str(_fed_dir / door_file_name), door_totp_ok=door_totp_ok,
         door_login=door_login_tokens, refresh_store=lambda: app.state.refresh_store,
         setup_status=lambda: current_setup_state().status,
-        discovery=lambda: getattr(app.state, "federation_discovery", None), notify=resource_push.notify)
+        discovery=lambda: getattr(app.state, "federation_discovery", None), notify=resource_push.notify,
+        phone_link=lambda: getattr(app.state, "phone_link", None), link_domain=ctx.auth_cfg.relay.link_domain)
     await held.computers_rt.prepare(_peer_links.LINKS)
     await _peer_links.LINKS.boot()
     await _start_pack_layer(ctx, held)
@@ -178,6 +180,9 @@ async def _start_pack_layer(ctx: "BootContext", held: _LinkHandles) -> None:
 
     _pack_placement_ai.register_feature()
     held.pack_maintain_task = _pack_maintain.start(app, _pack_machines.wiring())
+    from src.core.pack.jobs import boot as _pack_jobs
+
+    held.pack_jobs_task = _pack_jobs.start(app)
     from src.api import pack_copy_sync as _pack_copy_sync
 
     _pack_copy_sync.subscribe(app.state)
@@ -187,6 +192,7 @@ async def _start_pack_layer(ctx: "BootContext", held: _LinkHandles) -> None:
 async def _stop_link(ctx: "BootContext", held: _LinkHandles) -> None:
     if held.computers_rt is not None:
         await ctx.stop_part("computers_runtime", held.computers_rt.stop)
+    await stop_task(held.pack_jobs_task, wait=False)
     await stop_task(held.pack_maintain_task, wait=False)
     from src.api import pack_copy_sync as _pack_copy_sync_stop
 

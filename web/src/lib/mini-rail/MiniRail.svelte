@@ -64,7 +64,7 @@
       top: var(--desktop-inset-top, 0px);
       left: 0;
       bottom: 0;
-      z-index: 1100;
+      z-index: var(--oc-z-drawer);
       width: var(--sidebar-rail-w, 48px);
       box-sizing: border-box;
       display: flex;

@@ -8,6 +8,7 @@ from typing import Any, Callable, Dict, Optional
 import structlog
 
 from src.core import config_writer, resource_push, ui_preferences
+from src.core.keymap.clashes import KeymapClashError
 from src.core.desktop_app import preferences as desktop_preferences
 from src.core.resource_push import topics
 
@@ -133,9 +134,18 @@ class UiPreferencesStore:
             committed.update(moved)
             return new_config
 
-        outcome = config_writer.commit(
-            self._resolved_path(), mutate, precondition=precondition
-        )
+        try:
+            outcome = config_writer.commit(
+                self._resolved_path(), mutate, precondition=precondition
+            )
+        except KeymapClashError as exc:
+            block = self.read()
+            return UpdateResult(
+                status=REJECTED_INVALID,
+                revision=block["revision"],
+                values=block["values"],
+                detail=str(exc),
+            )
         block = ui_preferences.read_block(outcome.data)
 
         if outcome.status == config_writer.STALE_REVISION:

@@ -136,8 +136,9 @@ test('the bar draws agents and shells counts from the control center lists, neve
   await settle();
   const num = (seg: string) => target.querySelector(`.oc-tfw-seg[data-seg="${seg}"] .oc-tfw-num`)?.textContent;
   expect(num('agents')).toBe('1');
-  expect(num('shells')).toBe('1');
-  expect(target.querySelector('.oc-tfw-seg[data-seg="shells"]')?.textContent).toMatch(/^shells\s*1$/);
+  expect(target.querySelector('.oc-tfw-seg[data-seg="shells"]')).toBeNull();
+  expect(target.querySelector('button.oc-tf .oc-tf-model .oc-tf-shells .oc-tf-shells-num')?.textContent).toBe('1');
+  expect(target.querySelector('button.oc-tf .oc-tf-shells svg.oc-tf-shells-glyph rect')).not.toBeNull();
   expect(target.querySelector('.oc-tfw-seg[data-seg="agents"]')?.textContent).toMatch(/^agents\s*1$/);
   const clock = target.querySelector('.oc-tfw-seg[data-seg="timers"]');
   expect(clock?.textContent).toContain('timers');
@@ -157,7 +158,7 @@ test('the bar counts equal the grown control center headers on the same lists', 
   expect(panel('agents')).toBe('1');
   expect(panel('processes')).toBe('1');
   expect(bar('agents')).toBe(panel('agents'));
-  expect(bar('shells')).toBe(panel('processes'));
+  expect(target.querySelector('button.oc-tf .oc-tf-shells-num')?.textContent).toBe(panel('processes'));
 });
 
 test('the bar and an open control center on one listing row share ONE read of each list (#2773)', async () => {
@@ -193,12 +194,9 @@ test('a segment grows the bar into the control center on its own section; a seco
     const focused = () => target.querySelector('.scc-section[data-focused="true"]')?.getAttribute('data-scc-section');
 
     await settle();
-    seg('shells').click();
-    await settle();
-    expect(bar.getAttribute('aria-expanded')).toBe('true');
-    expect(focused()).toBe('processes');
     seg('agents').click();
     await settle();
+    expect(bar.getAttribute('aria-expanded')).toBe('true');
     expect(focused()).toBe('agents');
 
     seg('timers').click();
@@ -260,6 +258,7 @@ test('hidden agents, shells and timers items never draw their segment, and the g
     expect(target.querySelector('.oc-tfw-seg[data-seg="timers"]')).toBeNull();
     expect(target.querySelector('.oc-tfw-seg[data-seg="agents"]')).toBeNull();
     expect(target.querySelector('.oc-tfw-seg[data-seg="shells"]')).toBeNull();
+    expect(target.querySelector('.oc-tf-shells')).toBeNull();
 
     const bar = target.querySelector<HTMLButtonElement>('button.oc-tf')!;
     bar.click();

@@ -6,6 +6,7 @@ interface AsleepRow {
   asleep?: boolean;
   session_uuid?: string | null;
   name?: string;
+  tmux_name?: string | null;
   label?: string | null;
 }
 
@@ -14,7 +15,7 @@ export async function addMemberAndWake(layoutUuid: string, sessionUuid: string):
   const rows = (globalThis as { SessionSidebar?: SidebarPick<'rows'> }).SessionSidebar?.rows<AsleepRow>() ?? [];
   const row = rows.find((r) => r && r.asleep && r.session_uuid === sessionUuid);
   if (row) {
-    wakeOrPick(sessionUuid, row.name ?? '', row.label || row.name || '').catch((err: unknown) => {
+    wakeOrPick(sessionUuid, row.tmux_name ?? row.name ?? '', row.label || row.tmux_name || row.name || '').catch((err: unknown) => {
       console.warn('wake after add to layout failed', err);
     });
   }

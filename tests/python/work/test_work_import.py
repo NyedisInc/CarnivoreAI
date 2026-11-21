@@ -15,7 +15,7 @@ from src.core.work.importer import copy, ready
 from src.core.work.importer.errors import WorkImportDeferred
 from src.core.work.ladder import SCHEMA_VERSION as LEGACY_VERSION
 from src.core.work.storage import WorkStorage, storage_for
-from src.cplugs.sdk.storage import CplugStorage
+from src.plugins.sdk.storage import CplugStorage
 
 
 @pytest.fixture

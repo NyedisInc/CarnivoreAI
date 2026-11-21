@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Tuple
 
-CURRENT_SCHEMA_VERSION: int = 104
+CURRENT_SCHEMA_VERSION: int = 105
 
 META_SCHEMA_VERSION = "schema_version"
 META_CREATED_AT = "created_at"

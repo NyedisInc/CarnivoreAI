@@ -66,10 +66,17 @@
     return out;
   });
 
+  let handingBack = false;
+
   function close(): void {
     const back = anchor;
     onClose();
-    back?.focus({ preventScroll: true });
+    handingBack = true;
+    try {
+      back?.focus({ preventScroll: true });
+    } finally {
+      handingBack = false;
+    }
   }
 
   const items = (level: number): HTMLElement[] =>
@@ -109,7 +116,10 @@
     if (node.blocked) return;
     if (node.flash) { runFlash(node, node.flash); return; }
     if (node.children) open(level, node, event.detail === 0);
-    else node.run?.();
+    else {
+      node.run?.();
+      if (nestedIn?.hasAttribute('popover')) nestedIn.hidePopover();
+    }
   }
 
   function hover(level: number, node: MenuNode): void {
@@ -172,6 +182,7 @@
   }
 
   function onFocusIn(event: FocusEvent): void {
+    if (handingBack) return;
     const target = event.target as Node | null;
     if (!target || isInside(target)) return;
     onClose();
@@ -281,7 +292,7 @@
         onclick={(event) => activate(level, node, event)}
         onpointerenter={() => hover(level, node)}
       >
-        {#if node.toggle && node.checked !== undefined}<span class="acm-box" class:acm-box--on={node.checked} aria-hidden="true"></span>{/if}
+        {#if node.toggle && node.checked !== undefined}<span class="acm-box oc-check__box" class:acm-box--on={node.checked} aria-hidden="true"></span>{/if}
         {#if node.agent}<SessionFace facts={node.agent} mark />
         {:else if node.aggregateLightHtml}<span class="acm-agg-led">{@html node.aggregateLightHtml}</span>
         {:else if node.glyphHtml}<span class="acm-icon" aria-hidden="true">{@html node.glyphHtml}</span>
@@ -309,7 +320,7 @@
       position: fixed;
       inset: auto;
       margin: 0;
-      z-index: 45;
+      z-index: var(--oc-z-shell-menu);
       display: flex;
       flex-direction: column;
       min-width: 180px;
@@ -386,29 +397,9 @@
     }
 
     .acm-item[aria-disabled='true'][role='menuitemcheckbox'] {
-      opacity: 0.45;
+      opacity: var(--oc-disabled-opacity);
     }
 
-    .acm-box {
-      display: grid;
-      flex: none;
-      place-items: center;
-      width: 12px;
-      height: 12px;
-      border: 1px solid var(--oc-control-line-hi);
-      border-radius: 1px;
-    }
-
-    .acm-box--on {
-      border-color: var(--oc-green);
-    }
-
-    .acm-box--on::after {
-      content: '';
-      width: 6px;
-      height: 6px;
-      background: var(--oc-green);
-    }
 
     .acm-label {
       min-width: 0;

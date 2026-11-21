@@ -1,12 +1,12 @@
 /* list, so the */
 import type { ActionBindings, WidgetDefinition } from '../../widgets/shell/define-widget.svelte';
-import { setAccordion, setHideCompleted, setView, taskManagerPrefs } from '../../../cplugs/huddle/task-manager-prefs.svelte';
-import { completedLists, removeCompleted } from '../../../cplugs/huddle/huddle.svelte';
-import { AGGREGATE } from '../../../cplugs/huddle/huddle-model';
+import { setAccordion, setHideCompleted, setView, taskManagerPrefs } from '../../../plugins/huddle/task-manager-prefs.svelte';
+import { completedLists, removeCompleted } from '../../../plugins/huddle/huddle.svelte';
+import { AGGREGATE } from '../../../plugins/huddle/huddle-model';
 import { openModal } from '../../../lib/modal';
 import { t } from '../../../lib/i18n/index.svelte';
 import Mk2DeleteClosedModal from './Mk2DeleteClosedModal.svelte';
-import { countBadges, setCountsHidden } from '../../../cplugs/huddle/task-manager-status-folds.svelte';
+import { countBadges, setCountsHidden } from '../../../plugins/huddle/task-manager-status-folds.svelte';
 import type { LocalStateField } from '../../widgets/shell/widget-state.svelte';
 import { isSavedView, type Mk2SavedView } from './mk2-view-state.svelte';
 import { isMk2State, MK2_DEFAULT_STATE } from './mk2-task-state';

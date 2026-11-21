@@ -20,7 +20,7 @@ from src.core.budget_hold import gate
 from src.core.budget_hold.store import HoldStore
 from src.core.session_resume_target import CONVERSATION_NONE_RECORDED, CONVERSATION_RESUMED, ResumeTarget
 from src.core.session_transcript_presence import CONVERSATION_ABSENT, CONVERSATION_PRESENT, ConversationPresence
-from src.cplugs.sdk import ports
+from src.plugins.sdk import ports
 
 NOW = 1_000_000.0
 TENANT = "ten_1"

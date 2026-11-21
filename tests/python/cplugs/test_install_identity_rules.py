@@ -9,8 +9,8 @@ from typing import Optional
 
 import pytest
 
-from src.cplugs.host import identity, sideload, sideload_routes
-from src.cplugs.runtime import sandbox
+from src.plugins.host import identity, sideload, sideload_routes
+from src.plugins.runtime import sandbox
 
 SHIPPED = frozenset({"huddle", "unread"})
 KEY_A, KEY_B = "5F52A0A0A0A0A0A0", "9C11B1B1B1B1B1B1"

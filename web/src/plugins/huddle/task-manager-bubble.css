@@ -1,0 +1,13 @@
+@layer components {
+  .hb-k--form_answer {
+    --_edge-style: dashed;
+    --_radius: 0;
+    --_ground: var(--oc-ground-panel);
+  }
+
+  .tkm-fa-icon {
+    display: inline-flex;
+    order: -1;
+    color: var(--_post);
+  }
+}

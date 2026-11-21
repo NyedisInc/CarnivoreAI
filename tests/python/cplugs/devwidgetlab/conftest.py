@@ -5,8 +5,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.cplugs.devwidgetlab.drafts import checkout
-from src.cplugs.sdk import signed_links
+from src.plugins.devwidgetlab.drafts import checkout
+from src.plugins.sdk import signed_links
 
 
 @pytest.fixture(autouse=True)

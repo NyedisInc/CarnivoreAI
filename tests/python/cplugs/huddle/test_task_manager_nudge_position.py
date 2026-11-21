@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.cplugs.huddle import lifecycle
-from src.cplugs.huddle.nudge import lines, planning, settings
+from src.plugins.huddle import lifecycle
+from src.plugins.huddle.nudge import lines, planning, settings
 
 TEXTS = settings.read({}).texts
 

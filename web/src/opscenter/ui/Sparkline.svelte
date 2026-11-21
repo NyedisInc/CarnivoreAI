@@ -60,7 +60,7 @@
       display: block;
       flex: 1 1 0;
       min-width: 2px;
-      border-radius: 1px;
+      border-radius: var(--oc-radius-xs);
     }
 
     .oc-spark-measured {

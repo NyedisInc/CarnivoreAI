@@ -11,10 +11,11 @@
     bare?: boolean;
     role?: 'switch' | 'checkbox';
     glyph?: string;
+    mixed?: boolean;
     onchange?: (next: boolean) => void;
   }
 
-  let { label, checked = $bindable(false), hint = '', note = '', bare = false, role = 'switch', glyph = '', disabled = false, onchange, ...rest }: Props = $props();
+  let { label, checked = $bindable(false), hint = '', note = '', bare = false, role = 'switch', glyph = '', mixed = false, disabled = false, onchange, ...rest }: Props = $props();
 
   function toggle(): void {
     const next = !checked;
@@ -29,7 +30,8 @@
   class="oc-check"
   class:oc-check--bare={bare || !label.trim()}
   {role}
-  aria-checked={checked}
+  aria-checked={mixed ? 'mixed' : checked}
+  data-mixed={mixed ? '' : undefined}
   {disabled}
   onclick={toggle}
 >

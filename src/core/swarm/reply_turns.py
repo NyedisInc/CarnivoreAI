@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
 
-END_STOPS = frozenset({"end_turn", "stop_sequence", "max_tokens", "refusal"})
+from src.core.transcript_contract.stop_reasons import END_STOPS
+
 INTERRUPT = "[Request interrupted by user"
 WINDOWS = (2 * 1024 * 1024, 16 * 1024 * 1024, 64 * 1024 * 1024)
 

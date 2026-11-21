@@ -36,7 +36,7 @@ def port_listener_pids(port: int) -> FrozenSet[int]:
 def pane_pid_sessions(
     socket: str,
     *,
-    runner: Callable[..., subprocess.CompletedProcess] = subprocess.run,
+    runner: Optional[Callable[..., subprocess.CompletedProcess]] = None,
 ) -> Dict[int, str]:
     done = tmux_run_text(socket, "list-panes", "-a", "-F", "#{session_name}\t#{pane_pid}",
                          timeout=TMUX_TIMEOUT_SECONDS, runner=runner)

@@ -31,6 +31,7 @@ vi.mock('../../../opscenter/api/host', () => ({ openSession: vi.fn(() => true), 
 installPopoverPolyfill();
 
 import DetailPane from './DetailPane.svelte';
+import { closeItemMenu } from '../../item-menu/open.svelte';
 import { data, takeAddress } from '../page-store.svelte';
 import { pane } from './pane-data.svelte';
 import { reports } from '../feed-store.svelte';
@@ -170,13 +171,30 @@ test('the action row shows cancel on a live run only', async () => {
   expect(document.querySelector('[data-act="run"]')).not.toBeNull();
 });
 
-test('delete asks in a popup under the kebab: the actions stay, Escape and cancel answer no, focus goes back to the kebab', async () => {
+test('the head draws no menu button: right click and Shift+F10 open the one item menu (top-down cleanup M26)', async () => {
   await mountPane([run(1, 'succeeded')]);
-  const kebab = q<HTMLButtonElement>('[data-pane-kebab]');
+  expect(document.querySelector('[data-detail-pane] [data-kebab]'), 'the pane head draws no kebab').toBeNull();
+  q('[data-pane-head]').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 40, clientY: 40 }));
+  await settle();
+  const items = () => [...document.querySelectorAll<HTMLElement>('[role="menu"] [data-node]')].map((item) => item.dataset.node);
+  expect(items()).toEqual(['edit', 'duplicate', 'delete']);
+  closeItemMenu();
+  await settle();
+  expect(document.querySelector('[role="menu"] [data-node]')).toBeNull();
+  q<HTMLButtonElement>('[data-pane-edit]').focus();
+  q('[data-pane-edit]').dispatchEvent(new KeyboardEvent('keydown', { key: 'F10', shiftKey: true, bubbles: true, cancelable: true }));
+  await settle();
+  expect(items(), 'Shift+F10 in the pane opens the same menu').toEqual(['edit', 'duplicate', 'delete']);
+  closeItemMenu();
+});
+
+test('delete asks in a popup under the status row: the actions stay, Escape and cancel answer no, focus goes back to the row', async () => {
+  await mountPane([run(1, 'succeeded')]);
+  const top = q<HTMLElement>('.ap-pn-top');
   const ask = async () => {
-    kebab.click();
+    q('[data-pane-head]').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 40, clientY: 40 }));
     await settle();
-    [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find((item) => /delete/.test(item.textContent ?? ''))!.click();
+    q<HTMLElement>('[role="menu"] [data-node="delete"]').click();
     await settle();
   };
   await ask();
@@ -189,7 +207,7 @@ test('delete asks in a popup under the kebab: the actions stay, Escape and cance
   await settle();
   expect(document.querySelector('[data-pane-delete]')).toBeNull();
   expect(q('[data-detail-pane]').hasAttribute('data-open')).toBe(true);
-  expect(document.activeElement).toBe(kebab);
+  expect(document.activeElement).toBe(top);
   await ask();
   q('[data-pane-delete-no]').click();
   await settle();

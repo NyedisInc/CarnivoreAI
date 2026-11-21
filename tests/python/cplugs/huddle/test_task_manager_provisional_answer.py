@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from contextlib import closing
 
-from src.cplugs.huddle import service, sends
+from src.plugins.huddle import service, sends
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_rich_ask import ANSWERS, FORM, _ask, client  # noqa: F401
 

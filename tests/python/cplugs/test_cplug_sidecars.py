@@ -9,13 +9,13 @@ from pathlib import Path
 import pytest
 import structlog
 
-from src.cplugs.host import runtime
-from src.cplugs.sdk import sidecar
-from src.cplugs.sdk.manifest import parse_manifest
+from src.plugins.host import runtime
+from src.plugins.sdk import sidecar
+from src.plugins.sdk.manifest import parse_manifest
 from tests.helpers.catalog_text import catalog_text
 
 ROOT = Path(__file__).resolve().parents[3]
-PLUGINS = ROOT / "src" / "cplugs"
+PLUGINS = ROOT / "src" / "plugins"
 SHIPPED = [d.id for d in runtime.definitions()]
 
 

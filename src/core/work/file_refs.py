@@ -12,7 +12,7 @@ from typing import Any, Callable, Dict, Iterator, List, Mapping, Optional, Seque
 import structlog
 
 from src.core.blobcodec.place import PlaceConflict, PlaceMismatch, write_verified
-from src.cplugs.sdk import ports, task_folders
+from src.plugins.sdk import ports, task_folders
 
 logger = structlog.get_logger()
 

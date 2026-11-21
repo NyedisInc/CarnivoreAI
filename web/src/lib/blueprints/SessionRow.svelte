@@ -173,8 +173,8 @@
 
 <style>
     .bp-row {
-        border-top: 1px solid var(--oc-border);
-        padding: 10px 0;
+        border-top: var(--oc-border) solid var(--oc-line-rule);
+        padding: var(--oc-gap-parts) 0;
     }
 
     .bp-row:first-child {
@@ -185,25 +185,25 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 6px;
+        margin-bottom: var(--oc-space-1-5);
     }
 
     .bp-row__grid {
         display: grid;
         grid-template-columns: 120px 1fr;
-        gap: 6px 10px;
+        gap: var(--oc-space-1-5) var(--oc-gap-parts);
         align-items: start;
     }
 
     .bp-row__grid > .modal-label {
-        padding-top: 6px;
+        padding-top: var(--oc-space-1-5);
     }
 
     .bp-row__folder-mode {
         display: flex;
-        gap: 14px;
+        gap: calc(var(--oc-space-3) + var(--oc-space-0-5));
         align-items: center;
-        padding-top: 6px;
+        padding-top: var(--oc-space-1-5);
     }
 
     .bp-row__picker { min-width: 0; }

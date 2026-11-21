@@ -13,7 +13,7 @@ from src.core.db import transaction
 from src.core.swarm import body, body_create, definition, delivery, memory, profiles, push, seats, slugs, store, switch, thread_port, wake_prompt
 from src.core.swarm import settings as swarm_settings
 from src.core.session_label import InvalidLabel, set_label
-from src.cplugs.sdk.swarm import SwarmError
+from src.plugins.sdk.swarm import SwarmError
 
 logger = structlog.get_logger()
 

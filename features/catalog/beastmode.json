@@ -14,7 +14,7 @@
     "src/core/approvals/beast_grid_migration.py",
     "src/core/mcp/beast_tools.py",
     "src/api/beast_mode_routes.py",
-    "src/cplugs/sdk/beast_mode.py",
+    "src/plugins/sdk/beast_mode.py",
     "src/core/approvals/auto_answer/engine.py",
     "src/core/beast_prompts/engine.py",
     "src/core/mcp/beast_mode.py",

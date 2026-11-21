@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 from contextlib import closing
 from typing import Any, Dict, List, Optional
 
@@ -14,10 +15,11 @@ from src.api import asleep_themes, asleep_wake_listing
 from src.api import recreate_routes as rr
 from src.api.peer_auth import require_peer_sessions
 from src.api.session_record_payload import _session_record_payload, attach_host_labels
-from src.core import restart_inflight, session_change_notice, session_sleep, unread_follow_up
+from src.core import restart_inflight, session_change_notice, session_sleep
 from src.core.pipeline import triggers as save_triggers
 from src.core.read_caches.ttl_flight import TtlFlight
-from src.core.session_recreate_presence import TMUX_GONE, TMUX_PRESENT, TMUX_UNKNOWN
+from src.core.session_ops import row_probe
+from src.core.session_ops import sleep as sleep_ops
 from src.models import SessionRecord, SuccessResponse
 from src.api.error_response import api_error
 
@@ -47,35 +49,22 @@ class SleepResponse(BaseModel):
     detail: str = Field("", description="one sentence, fit to show verbatim")
 
 
-def _refused(row: dict, refusal: session_sleep.SleepRefusal) -> SleepResponse:
-    logger.info(
-        "session_sleep_refused",
-        session_uuid=row.get("session_uuid"),
-        tmux_name=row.get("tmux_name"),
-        code=refusal.code,
-    )
-    return SleepResponse(
-        status="refused",
-        session_uuid=str(row.get("session_uuid")),
-        session_name=row.get("tmux_name"),
-        code=refusal.code,
-        detail=refusal.detail,
-    )
-
-
-def _record_sleep(row: dict, source: str) -> int:
-    from src.core.db import connect
-
-    with closing(connect(rr._db_path(), create=False)) as conn:
-        moved = session_sleep.mark_asleep(
-            conn,
-            row_id=int(row["id"]),
-            tmux_name=str(row["tmux_name"]),
-            tmux_created_epoch=int(row["tmux_created_epoch"]),
-            source=source,
-        )
-        conn.commit()
-        return moved
+def sleep_error_to_http(exc: Exception) -> HTTPException:
+    if isinstance(exc, restart_inflight.RestartInFlightError):
+        return api_error(409, restart_inflight.IN_PROGRESS_CODE, exc)
+    if isinstance(exc, row_probe.RowDatastoreUnreadable):
+        return api_error(503, "datastore_unavailable", exc)
+    if isinstance(exc, row_probe.RowNotFound):
+        return api_error(404, "session_not_found", exc)
+    if isinstance(exc, row_probe.RowOnRemoteHost):
+        return api_error(409, "remote_host", exc)
+    if isinstance(exc, row_probe.RowNeverHadTmux):
+        return api_error(409, "session_has_no_tmux", exc)
+    if isinstance(exc, row_probe.UnsafeTmuxName):
+        return api_error(400, "session_name_invalid", exc, name=exc.name)
+    if isinstance(exc, sleep_ops.SleepFailed):
+        return api_error(500, "session_sleep_failed", exc, tmux_name=exc.tmux_name)
+    return api_error(500, "internal_error", exc)
 
 
 async def sleep_by_uuid(
@@ -86,70 +75,10 @@ async def sleep_by_uuid(
     fresh_ok: bool = False,
 ) -> SleepResponse:
     try:
-        with restart_inflight.claim(session_uuid):
-            row = rr._resolved(await run_in_threadpool(rr._read_row, session_uuid), session_uuid)
-            refusal = session_sleep.sleep_refusal(row, fresh_ok=fresh_ok)
-            if refusal is not None:
-                return _refused(row, refusal)
-            name = rr._safe(str(row.get("tmux_name") or ""))
-            socket = str(row.get("tmux_socket") or rr._socket_name())
-            presence = await run_in_threadpool(rr._measure_presence, name, socket)
-            if presence.outcome == TMUX_UNKNOWN:
-                return _refused(row, session_sleep.SleepRefusal(
-                    session_sleep.REFUSED_PRESENCE_UNKNOWN,
-                    "cannot sleep: the tmux socket could not be listed, so "
-                    "whether this session is running was not evaluated. "
-                    "nothing was stopped",
-                ))
-            unread_follow_up.carry_into_sleep(app_state.session_manager, row)
-            if presence.outcome == TMUX_PRESENT:
-                await app_state.local_servers.clear_session(name)
-                try:
-                    await session_sleep.close_for_sleep(
-                        app_state.session_manager, name=name, socket=socket
-                    )
-                except RuntimeError as exc:
-                    raise api_error(500, "session_sleep_failed", exc, tmux_name=name) from exc
-                after = await run_in_threadpool(rr._measure_presence, name, socket)
-                if after.outcome != TMUX_GONE:
-                    logger.error("session_sleep_still_present", tmux_name=name,
-                                 presence=after.outcome)
-                    raise HTTPException(
-                        status_code=500,
-                        detail=(
-                            f"{name!r} was asked to close but the socket still "
-                            f"reads {after.outcome}, so it was not marked asleep"
-                        ),
-                    )
-            moved = await run_in_threadpool(_record_sleep, row, source)
-    except restart_inflight.RestartInFlightError as exc:
-        raise api_error(409, restart_inflight.IN_PROGRESS_CODE, exc) from exc
-
-    session_change_notice.publish(
-        app_state, session_change_notice.build_structural_notice("slept")
-    )
-    if moved:
-        save_triggers.schedule_for_uuid(session_uuid, save_triggers.EVENT_SLEEP)
-    if not moved:
-        return _refused(row, session_sleep.SleepRefusal(
-            session_sleep.REFUSED_ROW_MOVED,
-            "the session was closed, but its record changed while it was "
-            "being put to sleep, so it was not marked asleep",
-        ))
-    logger.info("session_slept", session_uuid=session_uuid, tmux_name=name,
-                presence=presence.outcome)
-    return SleepResponse(
-        status="asleep",
-        session_uuid=session_uuid,
-        session_name=name,
-        detail="asleep. wake it from the session menu to resume the same conversation",
-    )
-
-
-async def auto_sleep_by_uuid(app_state: Any, session_uuid: str) -> SleepResponse:
-    return await sleep_by_uuid(
-        app_state, session_uuid, source=session_sleep.LIFECYCLE_SOURCE_SLEPT_BY_TIMER
-    )
+        outcome = await sleep_ops.sleep_session(app_state, session_uuid, source=source, fresh_ok=fresh_ok)
+    except sleep_ops.SLEEP_ERRORS as exc:
+        raise sleep_error_to_http(exc) from exc
+    return SleepResponse(**dataclasses.asdict(outcome))
 
 
 @router.post(
@@ -160,9 +89,8 @@ async def auto_sleep_by_uuid(app_state: Any, session_uuid: str) -> SleepResponse
 async def sleep_session(request: Request, session_uuid: str) -> SleepResponse:
     """Stop this session's agent and close its tmux session; keep the row, asleep.
 
-    Description: the HTTP face of :func:`sleep_by_uuid`, which holds every
-      gate and the close.
-    Raises: HTTPException - as :func:`sleep_by_uuid` does.
+    Description: the HTTP face of ``session_ops.sleep.sleep_session``, which holds every gate and the close.
+    Raises: HTTPException - 400, 404, 409, 500, 503 as :func:`sleep_error_to_http` maps the typed errors.
     """
     return await sleep_by_uuid(request.app.state, session_uuid)
 
@@ -245,7 +173,7 @@ def _carry_crosstalk_grants(session_uuid: str, old_epoch: Any) -> None:
     from src.core.crosstalk import store as crosstalk_store
 
     try:
-        fresh = rr._resolved(rr._read_row(session_uuid), session_uuid)
+        fresh = rr._resolved(row_probe.read_row(session_uuid), session_uuid)
         crosstalk_store.carry_contact_epochs(session_uuid, old_epoch, fresh.get("tmux_created_epoch"))
     except Exception as exc:  # noqa: BLE001
         logger.warning("wake_crosstalk_carry_failed", session_uuid=session_uuid, error=str(exc))
@@ -269,7 +197,7 @@ async def wake_by_uuid(
     picked = (agent_type or "").strip()
     try:
         with restart_inflight.claim(session_uuid):
-            row = rr._resolved(await run_in_threadpool(rr._read_row, session_uuid), session_uuid)
+            row = rr._resolved(await run_in_threadpool(row_probe.read_row, session_uuid), session_uuid)
             if not session_sleep.is_asleep(row):
                 raise HTTPException(
                     status_code=409,
@@ -278,8 +206,8 @@ async def wake_by_uuid(
             old_epoch = (row or {}).get("tmux_created_epoch")
             if session_sleep.is_dead_pane_stop(row) and not (fork or fresh or start_fresh or extra_env):
                 presence = await run_in_threadpool(
-                    rr._measure_presence, rr._safe(str(row.get("tmux_name") or "")),
-                    str(row.get("tmux_socket") or rr._socket_name()))
+                    row_probe.measure_row_presence, row, rr._safe(str(row.get("tmux_name") or "")),
+                    str(row.get("tmux_socket") or row_probe.socket_name()))
                 in_place = await wake_dead_pane(app_state, row, presence, agent_type=picked or None,
                                                 account_id=account_id, account_pinned=account_pinned)
                 if in_place is not None:
@@ -372,7 +300,7 @@ async def kill_asleep_session(request: Request, session_uuid: str, confirm_name:
     await swarm_leaders.require_confirm(session_uuid=session_uuid, confirm_name=confirm_name)
 
     def _kill() -> bool:
-        with closing(connect(rr._db_path(), create=False)) as conn:
+        with closing(connect(row_probe.db_path(), create=False)) as conn:
             found = conn.execute(
                 "SELECT * FROM sessions WHERE session_uuid = ?", (session_uuid,)
             ).fetchone()
@@ -460,7 +388,7 @@ async def _assemble_asleep_rows(app_state: Any, infos: Optional[List[Any]] = Non
     from src.core.db import DatastoreUnreadableError
     from src.core.db_reuse.core_read import lend_pooled_read
 
-    db_path = rr._db_path()
+    db_path = row_probe.db_path()
     if not db_path.exists():
         return []
 

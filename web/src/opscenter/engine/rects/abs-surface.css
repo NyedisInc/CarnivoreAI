@@ -4,7 +4,16 @@
 }
 
 .abs-surface > .abs-zoomed {
-  z-index: 20;
+  z-index: var(--oc-z-float);
+}
+
+.abs-surface:not(.motion-busy) > .motion-item:not(.abs-zoomed):has([data-cell^="terminal:"][data-oc-focus]) {
+  z-index: var(--oc-z-step);
+  overflow: visible;
+}
+
+.abs-surface:not(.motion-busy) > .motion-item:not(.abs-zoomed):has([data-cell^="terminal:"][data-oc-focus]) > .abs-body {
+  overflow: visible;
 }
 
 .abs-surface.abs-moving > .abs-handle {
@@ -52,7 +61,7 @@
 
 .dock-compass {
   position: absolute;
-  z-index: 130;
+  z-index: var(--oc-z-dock-guide);
   box-sizing: border-box;
   pointer-events: none;
   background: var(--oc-ground-titlerow);

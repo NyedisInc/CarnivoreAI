@@ -61,10 +61,13 @@ def test_generated_files_and_sounds_match_a_fresh_generation() -> None:
     for name in sounds.NAMES:
         out = sounds.paths(name)
         samples = sounds.render(name)
-        assert out["wav"].read_bytes() == sounds.wav_bytes(samples), name
-        s = sounds.stats(samples)
-        assert s["peak_db"] < -1.5 and s["first"] == 0 and s["last"] == 0 and s["max_step"] < 0.2 and s["seconds"] < 1.5, (name, s)
-        assert out["aiff"].stat().st_size > 10_000 and out["caf"].stat().st_size > 10_000
+        assert out["wav"].read_bytes() == sounds.wav_bytes(samples, sounds.rate_of(name)), name
+        s = sounds.stats(samples, sounds.rate_of(name))
+        assert s["peak_db"] < -1.5 and s["first"] == 0 and s["last"] == 0 and s["max_step"] < (0.5 if name in sounds.EXTRA else 0.2) and s["seconds"] < 1.5, (name, s)
+        if name in sounds.EXTRA:
+            assert out["wav"].stat().st_size < 30_000, name
+        else:
+            assert out["aiff"].stat().st_size > 10_000 and out["caf"].stat().st_size > 10_000
 
 
 def test_every_contract_string_key_is_in_the_catalog_and_none_is_orphaned() -> None:

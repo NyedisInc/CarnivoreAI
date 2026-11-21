@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import pytest
 
-from src.cplugs.save.service import RUNTIME
+from src.plugins.save.service import RUNTIME
 from tests.python.cplugs.folder_plugin_fixture import install_into_ship_list
-from src.cplugs.sdk import transcript_files as tf, vault_sources
+from src.plugins.sdk import transcript_files as tf, vault_sources
 
 
 @pytest.fixture(autouse=True)

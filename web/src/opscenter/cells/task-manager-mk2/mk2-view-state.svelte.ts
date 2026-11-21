@@ -1,7 +1,7 @@
 import { untrack } from 'svelte';
-import { huddle } from '../../../cplugs/huddle/huddle.svelte';
-import { setViewChip, setViewQuery, viewFilter, viewFilterActive, type ViewChip } from '../../../cplugs/huddle/task-manager-view-filter.svelte';
-import type { Tab } from '../../../cplugs/huddle/task-manager-design/model';
+import { huddle } from '../../../plugins/huddle/huddle.svelte';
+import { setViewChip, setViewQuery, viewFilter, viewFilterActive, type ViewChip } from '../../../plugins/huddle/task-manager-view-filter.svelte';
+import type { Tab } from '../../../plugins/huddle/task-manager-design/model';
 import { MK2_CHIP_TEST } from './mk2-chips';
 
 export interface Mk2SavedView { query: string; chip: ViewChip | null; open: number | null; tab: Tab }

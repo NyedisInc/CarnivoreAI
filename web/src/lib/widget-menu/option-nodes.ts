@@ -13,7 +13,7 @@ export function settingFields(cell: Pick<WidgetManifest, 'settings'>): [string, 
 }
 
 export function hasOptions(manifest: Pick<WidgetManifest, 'views'> & { id?: string }, cell: Pick<WidgetManifest, 'settings'>, editing: boolean): boolean {
-  return (manifest.id !== undefined && hasPlacementOptions(manifest.id)) || (editing && (hasViews(manifest) || settingFields(cell).length > 0));
+  return (manifest.id !== undefined && hasPlacementOptions(manifest.id)) || settingFields(cell).length > 0 || (editing && hasViews(manifest));
 }
 
 export interface OptionNodesInput {

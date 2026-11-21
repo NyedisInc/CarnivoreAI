@@ -15,7 +15,7 @@ from src.api.auth import limiter
 from src.api.request_log import LOG_EXTRA_KEY
 from src.config import settings
 from src.core.mcp import channel as channel_events
-from src.core.mcp import protocol, token_store
+from src.core.mcp import call_budget, protocol, token_store
 from src.core.mcp.caller import AgentCaller
 
 logger = structlog.get_logger()
@@ -72,10 +72,11 @@ async def mcp_post(
     if not protocol.body_allowed(raw, caller):
         return too_large
     request.scope[LOG_EXTRA_KEY] = {"rpc": protocol.rpc_methods(raw)}
-    status, payload, headers = await protocol.handle_body(
-        raw, request.app.state.session_manager, caller, request.app, channel=_channel_caller(request, caller),
-        session_id=request.headers.get(protocol.SESSION_ID_HEADER),
-    )
+    with call_budget.using(call_budget.from_header(request.headers.get(call_budget.HEADER))):
+        status, payload, headers = await protocol.handle_body(
+            raw, request.app.state.session_manager, caller, request.app, channel=_channel_caller(request, caller),
+            session_id=request.headers.get(protocol.SESSION_ID_HEADER),
+        )
     if payload is None:
         return Response(status_code=status, headers=headers)
     return JSONResponse(payload, status_code=status, headers=headers)

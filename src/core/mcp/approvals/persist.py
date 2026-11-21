@@ -91,5 +91,5 @@ def open_in(state_dir: Optional[Path]) -> Optional[ActionFile]:
     try:
         return ActionFile(Path(state_dir) / FILE_NAME)
     except ApprovalsStoreError as exc:
-        logger.error("agent_actions_file_unavailable", error=str(exc))
+        logger.error("agent_actions_file_unavailable", error=str(exc), error_type=type(exc).__name__)
         return None

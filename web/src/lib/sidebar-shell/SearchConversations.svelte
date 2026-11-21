@@ -1,6 +1,6 @@
 
 <script lang="ts">
-    import { sessionRowForConversation } from '../../cplugs/sdk/sessions.svelte';
+    import { sessionRowForConversation } from '../../plugins/sdk/sessions.svelte';
     import { t } from '../i18n/index.svelte';
     import HitRow from '../deepsearch/HitRow.svelte';
     import { conversationName, conversationState, relativeWhen } from '../deepsearch/result-model';

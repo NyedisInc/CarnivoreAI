@@ -24,6 +24,7 @@ class TtlFlight(Generic[T]):
         self._value: Optional[T] = None
         self._at = float("-inf")
         self._generation = 0
+        self._flight_generation = 0
         _ALL.append(self)
 
     def invalidate(self) -> None:
@@ -45,4 +46,8 @@ class TtlFlight(Generic[T]):
                 self._value, self._at = value, started
             return value
 
+        if not self._flight.in_flight:
+            self._flight_generation = generation
+        elif self._flight_generation != generation:
+            return await run()
         return await self._flight.run(run)

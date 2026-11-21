@@ -2,13 +2,13 @@
   import { t } from '../../../lib/i18n/index.svelte';
   import Icon from '../../ui/Icon.svelte';
   import { revealInTaskManager } from '../../../lib/task-manager-reveal/reveal';
-  import TaskManagerAsk from '../../../cplugs/huddle/TaskManagerAsk.svelte';
-  import TaskManagerAskForm from '../../../cplugs/huddle/ask/TaskManagerAskForm.svelte';
-  import TaskManagerMarkdown from '../../../cplugs/huddle/TaskManagerMarkdown.svelte';
-  import HuddleReply from '../../../cplugs/huddle/HuddleReply.svelte';
-  import { latestMessage } from '../../../cplugs/huddle/huddle-density';
-  import { isFormAsk } from '../../../cplugs/huddle/task-manager-posts';
-  import { inlineQuestion } from '../../../cplugs/huddle/ask/ask-model';
+  import TaskManagerAsk from '../../../plugins/huddle/TaskManagerAsk.svelte';
+  import TaskManagerAskForm from '../../../plugins/huddle/ask/TaskManagerAskForm.svelte';
+  import TaskManagerMarkdown from '../../../plugins/huddle/TaskManagerMarkdown.svelte';
+  import HuddleReply from '../../../plugins/huddle/HuddleReply.svelte';
+  import { latestMessage } from '../../../plugins/huddle/huddle-density';
+  import { isFormAsk } from '../../../plugins/huddle/task-manager-posts';
+  import { inlineQuestion } from '../../../plugins/huddle/ask/ask-model';
   import MissingPopup from './MissingPopup.svelte';
   import type { ListRow } from './model';
 

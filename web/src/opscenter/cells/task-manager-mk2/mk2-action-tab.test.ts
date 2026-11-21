@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
-import { askFold, oneLineFold, ONE_LINE_CHARS, postFold } from '../../../cplugs/huddle/task-manager-posts';
-import { taskOf } from '../../../cplugs/huddle/task-manager-design/adapter';
-import { newCount, unread } from '../../../cplugs/huddle/task-manager-design/model';
+import type { HuddleItem } from '../../../plugins/huddle/huddle-model';
+import { askFold, oneLineFold, ONE_LINE_CHARS, postFold } from '../../../plugins/huddle/task-manager-posts';
+import { taskOf } from '../../../plugins/huddle/task-manager-design/adapter';
+import { newCount, unread } from '../../../plugins/huddle/task-manager-design/model';
 import { actionableIdOf, cardsInFrontOf } from './mk2-task-tabs';
 
 const msg = (id: number, kind: string, extra: Record<string, unknown> = {}) => ({ id, item_id: 1, author: 'claude', kind, text: `message ${id}`, created_at: id, unread: true, answered: false, ...extra });

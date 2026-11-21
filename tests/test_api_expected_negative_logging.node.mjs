@@ -52,6 +52,7 @@ function loadApi({ status, body }) {
     sandbox.window = sandbox;
     sandbox.globalThis = sandbox;
     vm.createContext(sandbox);
+    vm.runInContext(fs.readFileSync(path.join(ROOT, 'client/js/extend-prototype.js'), 'utf8'), sandbox, { filename: 'extend-prototype.js' });
     const src = fs.readFileSync(path.join(ROOT, 'client/js/api.js'), 'utf8');
     vm.runInContext(src, sandbox, { filename: 'api.js' });
     vm.runInContext(fs.readFileSync(path.join(ROOT, 'client/js/api-provider-ledger.js'), 'utf8'),

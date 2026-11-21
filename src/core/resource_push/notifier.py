@@ -219,6 +219,35 @@ def publish_frame(frame: Dict[str, Any]) -> bool:
     return True
 
 
+def call_on_loop(fn: Callable[..., None], *args: Any) -> bool:
+    notifier = _active
+    if notifier is None:
+        return False
+    try:
+        running = asyncio.get_running_loop()
+    except RuntimeError:
+        running = None
+    try:
+        if running is notifier._loop:  # noqa: SLF001
+            fn(*args)
+        else:
+            notifier._loop.call_soon_threadsafe(fn, *args)  # noqa: SLF001
+    except RuntimeError as exc:
+        logger.debug("resource_push_loop_closed", error=str(exc))
+        return False
+    return True
+
+
+def loop_time() -> Optional[float]:
+    notifier = _active
+    return notifier._loop.time() if notifier is not None else None  # noqa: SLF001
+
+
+def call_later(delay: float, fn: Callable[..., None], *args: Any) -> Optional["asyncio.TimerHandle"]:
+    notifier = _active
+    return notifier._loop.call_later(delay, fn, *args) if notifier is not None else None  # noqa: SLF001
+
+
 def install(
     publish: Callable[[Dict[str, Any]], int],
     *,

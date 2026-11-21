@@ -10,7 +10,7 @@ from src.core.approvals import beast_grid
 from src.core.approvals.auto_answer.engine import grid_policy
 from src.core.beast_prompts.wiring import prompt_allowed
 from src.core.mcp import beast_mode
-from src.cplugs.host.mcp import INBOX_TOOLS
+from src.plugins.host.mcp import INBOX_TOOLS
 from tests.python.beast_mode.grid import install
 
 COMBOS = list(itertools.product((False, True), repeat=2))

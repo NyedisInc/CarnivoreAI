@@ -1,5 +1,5 @@
 import type { ApprovalItem } from '../../../lib/approvals/approvals-model';
-import type { TaskManagerGroup } from '../../../cplugs/huddle/huddle-model';
+import type { TaskManagerGroup } from '../../../plugins/huddle/huddle-model';
 import type { AppAlert } from '../../../lib/app-alerts/alerts-model';
 import type { RunRow } from '../developer/model';
 import { alertRows, approvalRows, failedAutomationRows, taskManagerRows, type AttentionRow, type AttentionTarget, type Translate } from '../../../lib/attention-kinds/rows';

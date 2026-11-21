@@ -26,7 +26,7 @@
   padding: 8px 10px;
   border: var(--oc-border) solid var(--oc-line-panel);
   border-left: 3px solid var(--oc-orange);
-  border-radius: 3px;
+  border-radius: var(--oc-radius-tight);
   background: var(--oc-ground-card);
   color: var(--oc-text-primary);
   box-shadow: 0 2px 12px var(--oc-shadow-lift);

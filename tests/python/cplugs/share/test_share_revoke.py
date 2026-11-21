@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.host import routes as host_routes, runtime
+from src.plugins.host import routes as host_routes, runtime
 from tests.python.cplugs.owner import turn_on
 
 
@@ -80,6 +80,6 @@ def test_a_missing_store_is_nothing_to_revoke(tmp_path: Path) -> None:
 
 
 def test_only_share_has_a_purge_hook() -> None:
-    from src.cplugs.host import system_lifecycle
+    from src.plugins.host import system_lifecycle
 
     assert set(system_lifecycle.PURGE_HOOKS) == {"share"}

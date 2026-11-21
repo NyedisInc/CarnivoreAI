@@ -4,6 +4,7 @@
     import PackWorkTab from '../pack-machines/PackWorkTab.svelte';
     import PackLoginsTab from '../pack-machines/PackLoginsTab.svelte';
     import PackSkillsTab from '../skills-hub/pack/PackSkillsTab.svelte';
+    import JobsTab from '../pack-jobs/JobsTab.svelte';
     import PackRoster from '../pack-roster/PackRoster.svelte';
     import type { PackTab } from './pack-hash';
 
@@ -20,6 +21,8 @@
 <div class="pk-screen" data-screen="hosts" {...panel}>
     {#if tab === 'work'}
         <PackWorkTab />
+    {:else if tab === 'jobs'}
+        <JobsTab />
     {:else if tab === 'logins'}
         <PackLoginsTab />
     {:else if tab === 'skills'}

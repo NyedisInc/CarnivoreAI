@@ -14,6 +14,11 @@ SCOPE_CALL = "host_scope"
 Key = Tuple[str, str]
 
 REGISTER = {
+    ("src/core/attention/codex_pane_home.py", "_recorded_home"): (
+        "PERMANENT. Reads the launch record of a codex pane tmux cannot be asked about, "
+        "and only for a pane the watcher found on THIS computer's own socket, so every "
+        "row it can name is local; a peer's row never reaches it."
+    ),
     ("src/core/db_steps.py", "_v9_merge_rename_splits"): (
         "PERMANENT. The v8 -> v9 migration step, which runs at schema v9, "
         "31 versions before host_key exists. Every row it touches is local."

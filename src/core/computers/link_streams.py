@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 import os
 import stat
-from typing import Awaitable, Callable
+from typing import Awaitable, Callable, Optional
 
 import structlog
 
@@ -29,11 +29,15 @@ def inbound_handler(listener_path: str) -> Callable[[MuxStream], Awaitable[None]
 
 class LocalSocket:
 
-    def __init__(self, session: MuxSession, path: str) -> None:
-        self.session, self.path = session, path
+    def __init__(self, session: MuxSession, path: str, refuse: Optional[Callable[[], bool]] = None) -> None:
+        self.session, self.path, self._refuse = session, path, refuse
         self._server: asyncio.AbstractServer | None = None
 
     async def _handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        if self._refuse is not None and self._refuse():
+            log.info("link_local_open_refused", why="relay budget used")
+            writer.close()
+            return
         try:
             stream = await self.session.open("peer-api")
         except MuxError as exc:

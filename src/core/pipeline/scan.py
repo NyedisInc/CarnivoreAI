@@ -4,9 +4,8 @@ from __future__ import annotations
 import sqlite3
 import time
 from contextlib import closing
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from typing import Any, Callable, Dict, Iterable, List, NamedTuple, Optional, Sequence, Set, Tuple
 
 import structlog
 
@@ -23,11 +22,10 @@ logger = structlog.get_logger()
 
 SCAN_INTERVAL_SECONDS: float = TM.SCAN_INTERVAL_SECONDS
 
-_COLUMNS = "path, conversation_id, family, kind, status, dataless, gone_at, complete_bytes"
+_COLUMNS = "path, conversation_id, family, kind, dataless, gone_at, complete_bytes"
 
 
-@dataclass(frozen=True)
-class ManifestFile:
+class ManifestFile(NamedTuple):
 
     path: str
     conversation_id: str
@@ -52,9 +50,9 @@ def load_rows(db: Path) -> List[ManifestFile]:
     with closing(connect(Path(db), create=False)) as conn:
         if not store.table_present(conn):
             return []
-        return [ManifestFile(r[0], r[1], r[2], r[3], bool(r[5]), r[6] is not None, int(r[7] or 0))
-                for r in conn.execute(f"SELECT {_COLUMNS} FROM {TM.TABLE} WHERE conversation_id IS NOT NULL "
-                                      "AND conversation_id != ''")]
+        return [ManifestFile(path, conv, family, kind, bool(dataless), gone_at is not None, int(complete or 0))
+                for path, conv, family, kind, dataless, gone_at, complete in conn.execute(
+                    f"SELECT {_COLUMNS} FROM {TM.TABLE} WHERE conversation_id IS NOT NULL AND conversation_id != ''")]
 
 
 def read_cursors(state_dir: Path, plugin: C.Plugin) -> Dict[str, Tuple[int, str]]:
@@ -101,10 +99,12 @@ class Scanner:
     def __init__(self, state_dir: Path, db: Optional[Path], plugins: Sequence[C.Plugin],
                  mark_file: Callable[[FileTarget, str], bool], mark_removed: Callable[[str, str, str], bool],
                  *, refresh_fn: Optional[Callable[[], Any]] = None, wall: Callable[[], float] = time.time,
-                 mark_file_removed: Optional[Callable[[FileTarget, str], bool]] = None) -> None:
+                 mark_file_removed: Optional[Callable[[FileTarget, str], bool]] = None,
+                 is_active: Callable[[C.Plugin], bool] = lambda plugin: True) -> None:
         self._state_dir = Path(state_dir)
         self._db = db
         self._plugins = tuple(plugins)
+        self._is_active = is_active
         self._mark_file = mark_file
         self._mark_removed = mark_removed
         self._mark_file_removed = mark_file_removed
@@ -145,7 +145,7 @@ class Scanner:
         files: Dict[str, ManifestFile] = {}
         gone: Dict[str, str] = {}
         gone_files: Dict[str, ManifestFile] = {}
-        for plugin in self._plugins:
+        for plugin in self.current_plugins():
             self._settle(plugin)
             try:
                 cursors = read_cursors(self._state_dir, plugin)
@@ -166,6 +166,9 @@ class Scanner:
             for row in gone_files.values():
                 self._mark_file_removed(row.target(), TRIGGER_SCAN)
         return len(files), len(gone) + len(gone_files)
+
+    def current_plugins(self) -> Tuple[C.Plugin, ...]:
+        return tuple(p for p in self._plugins if self._is_active(p))
 
     def _settle(self, plugin: C.Plugin) -> None:
         if plugin.before_scan is None:

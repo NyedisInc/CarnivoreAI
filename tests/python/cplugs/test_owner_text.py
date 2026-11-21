@@ -5,8 +5,8 @@ import time
 
 import pytest
 
-from src.cplugs.sdk.owner_text import owner_text, sanitize, stored_text
-from src.cplugs.sdk.visible_text import TextRefused, clean_json
+from src.plugins.sdk.owner_text import owner_text, sanitize, stored_text
+from src.plugins.sdk.visible_text import TextRefused, clean_json
 
 REFUSED = {"bidi U+202E": "\u202e", "isolate U+2066": "\u2066", "tag U+E0041": "\U000e0041", "stray ESC": "\x1b", "C0 U+001C": "\x1c",
            "U+2028": "\u2028"}
@@ -38,7 +38,7 @@ def test_owner_text_is_richer_than_visitor_text() -> None:
 
 
 def test_the_visitor_rule_keeps_refusing() -> None:
-    submission = pytest.importorskip("src.cplugs.reviewboard.public.submission")
+    submission = pytest.importorskip("src.plugins.reviewboard.public.submission")
     Malformed, visitor_text = submission.Malformed, submission.clean_text
     for bad in ("a\u200bb", "a\x7fb", "a\r\nb", "\x1b[31mred", "a\x85b"):
         with pytest.raises(Malformed):

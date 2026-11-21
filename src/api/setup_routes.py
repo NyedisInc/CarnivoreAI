@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
@@ -14,6 +15,8 @@ from pydantic import BaseModel, Field
 from src.api.auth import require_auth
 from src.api.enrollment_gate import is_local_request
 from src.config import settings
+from src.core.config_backup.backup import back_up_config
+from src.core import config_writer
 from src.core.config_defaults import (
     effective_shipped_defaults,
     supported_keys as model_supported_keys,
@@ -33,6 +36,8 @@ from src.core.setup_state import (
 from src.api.error_response import api_error
 
 logger = structlog.get_logger()
+
+BASE_FILENAME = "config-base.json"
 
 router = APIRouter(tags=["setup"])
 
@@ -152,7 +157,7 @@ def _compute_plan() -> dict[str, Any]:
         }
 
     example = load_json(_REPO_ROOT / "config.example.json") or {}
-    base_path = _state_dir() / "config-base.json"
+    base_path = _state_dir() / BASE_FILENAME
     try:
         base = load_json(base_path)
     except json.JSONDecodeError:
@@ -225,6 +230,44 @@ async def setup_state(_: bool = Depends(guard_wizard_access)) -> dict[str, Any]:
     }
 
 
+def _record_defaults_base(state_dir: Path, effective: dict[str, Any]) -> None:
+    try:
+        (state_dir / BASE_FILENAME).write_text(
+            json.dumps(effective, indent=2) + "\n", encoding="utf-8"
+        )
+    except OSError as exc:
+        logger.warning("setup_base_record_failed", error=str(exc))
+
+
+def _apply_shipped_default(document: dict[str, Any], effective: dict[str, Any], path: str) -> bool:
+    parts = path.split(".")
+    source: Any = effective
+    for part in parts:
+        if not isinstance(source, dict) or part not in source:
+            return False
+        source = source[part]
+    if source is None:
+        return False
+    cursor = document
+    for part in parts[:-1]:
+        cursor = cursor.setdefault(part, {})
+    cursor[parts[-1]] = source
+    return True
+
+
+class _ApplyMutatorError(RuntimeError):
+    pass
+
+
+@dataclass
+class _ApplyCapture:
+
+    backup: tuple[Path, str] = (Path(), "")
+    effective: dict[str, Any] = field(default_factory=dict)
+    changed: list[str] = field(default_factory=list)
+    had_file: bool = True
+
+
 @router.post("/setup/apply")
 async def setup_apply(
     body: ApplyRequest,
@@ -248,52 +291,46 @@ async def setup_apply(
             backup or write fails. Never a partial write reported as success.
     """
     config_path = _config_path()
-    try:
-        mine = load_json(config_path) or {}
-    except json.JSONDecodeError as exc:
-        raise api_error(409, "config_not_json", None, error_type=type(exc).__name__, position=exc.pos)
-
     take_new = {d.path for d in body.decisions if d.choice == "take_new"}
     if not take_new:
         return {"changed": [], "backup": None, "note": "No changes requested."}
 
     example = load_json(_REPO_ROOT / "config.example.json") or {}
-    effective = effective_shipped_defaults(example, mine)
-
-    changed: list[str] = []
-    updated = json.loads(json.dumps(mine))
-    for path in sorted(take_new):
-        parts = path.split(".")
-        source: Any = effective
-        for part in parts:
-            if not isinstance(source, dict) or part not in source:
-                source = None
-                break
-            source = source[part]
-        if source is None:
-            continue
-
-        cursor = updated
-        for part in parts[:-1]:
-            cursor = cursor.setdefault(part, {})
-        cursor[parts[-1]] = source
-        changed.append(path)
-
-    from scripts.config_upgrade import back_up_config  # noqa: PLC0415
-
     state_dir = _state_dir()
-    try:
+    applied = _ApplyCapture()
+
+    def mutate(mine: dict[str, Any]) -> dict[str, Any]:
+        try:
+            effective = effective_shipped_defaults(example, mine)
+            updated = json.loads(json.dumps(mine))
+            applied.changed = [p for p in sorted(take_new) if _apply_shipped_default(updated, effective, p)]
+        except ValueError as exc:
+            raise _ApplyMutatorError(str(exc)) from exc
         backup_target, outcome = back_up_config(config_path, state_dir)
-        config_path.write_text(json.dumps(updated, indent=2) + "\n", encoding="utf-8")
+        applied.backup = (backup_target, outcome if applied.had_file else "NOT_PRESENT")
+        applied.effective = effective
+        return updated
+
+    applied.had_file = config_path.exists()
+    try:
+        if not applied.had_file:
+            config_writer.create_if_absent(
+                config_path, {}, file_mode=config_writer.PRIVATE_FILE_MODE
+            )
+        commit = config_writer.commit(config_path, mutate, backup_required=True)
+    except _ApplyMutatorError as exc:
+        raise api_error(500, "setup_apply_failed", exc) from exc
+    except ValueError as exc:
+        raise api_error(409, "config_not_json", None, error_type=type(exc).__name__)
     except (OSError, RuntimeError) as exc:
         raise api_error(500, "setup_apply_failed", exc) from exc
 
-    try:
-        (state_dir / "config-base.json").write_text(
-            json.dumps(effective, indent=2) + "\n", encoding="utf-8"
-        )
-    except OSError as exc:
-        logger.warning("setup_base_record_failed", error=str(exc))
+    if commit.status not in (config_writer.COMMITTED, config_writer.UNCHANGED):
+        raise api_error(500, "setup_apply_failed", None, error_type=commit.status)
+
+    changed = applied.changed
+    backup_target, outcome = applied.backup
+    _record_defaults_base(state_dir, applied.effective)
 
     logger.info("setup_apply", changed=changed)
     return {

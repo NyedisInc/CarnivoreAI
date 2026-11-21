@@ -41,10 +41,10 @@ vi.mock('../../../lib/listing-push/boot', async (importOriginal) => ({
 import Mark2 from './Cell.svelte';
 import Mk2Host from './fixtures/Mk2Host.svelte';
 import { declaredActionsFor } from '../../widgets/menu/declared-actions.svelte';
-import { cplugEnablement } from '../../../cplugs/host/enablement.svelte';
-import { huddle } from '../../../cplugs/huddle/huddle.svelte';
-import { HOLD_LEAVE_MS } from '../../../cplugs/huddle/task-manager-view-hold.svelte';
-import { clearViewFilter } from '../../../cplugs/huddle/task-manager-view-filter.svelte';
+import { cplugEnablement } from '../../../plugins/host/enablement.svelte';
+import { huddle } from '../../../plugins/huddle/huddle.svelte';
+import { HOLD_LEAVE_MS } from '../../../plugins/huddle/task-manager-view-hold.svelte';
+import { clearViewFilter } from '../../../plugins/huddle/task-manager-view-filter.svelte';
 
 cplugEnablement.enabled = { huddle: true };
 

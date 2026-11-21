@@ -11,15 +11,14 @@ import structlog
 from fastapi import HTTPException
 
 from src.core.automations import models as m
-from src.cplugs.host.session_actions import AppRequest
-from src.cplugs.sdk import turn_events
+from src.plugins.host.session_actions import AppRequest
+from src.plugins.sdk import turn_events
+from src.models.activity_status import BUSY, RESTING
 
 logger = structlog.get_logger()
 
 RUN_TIMEOUT_S = 7200.0
 RUNS_KEPT_WITH_SESSIONS = 3
-DONE_STATES = ("finished_unread", "idle")
-WORKING_STATES = ("working", "working_subagent")
 
 _marks: Dict[int, Dict[str, str]] = {}
 _by_ses_id: Dict[str, "tuple[str, str]"] = {}
@@ -68,14 +67,14 @@ def _stored_state(row_id: Optional[int], session_uuid: str) -> str:
 
 
 async def _sleep(app_state: Any, store: Any, row: Dict[str, Any]) -> bool:
-    from src.api import session_sleep_routes  # noqa: PLC0415
     from src.core import session_sleep  # noqa: PLC0415
+    from src.core.session_ops import sleep as sleep_ops  # noqa: PLC0415
 
     try:
-        result = await session_sleep_routes.sleep_by_uuid(
+        result = await sleep_ops.sleep_session(
             app_state, row["session_uuid"], source=session_sleep.LIFECYCLE_SOURCE_SLEPT_BY_TIMER, fresh_ok=False)
-    except HTTPException as exc:
-        logger.info("automation_run_sleep_failed", run_id=row["run_id"], status=exc.status_code)
+    except sleep_ops.SLEEP_ERRORS as exc:
+        logger.info("automation_run_sleep_failed", run_id=row["run_id"], error_type=type(exc).__name__)
         return False
     if result.status != "asleep":
         logger.info("automation_run_sleep_refused", run_id=row["run_id"], code=result.code)
@@ -175,11 +174,11 @@ async def sweep(app_state: Any, store: Any, now: Optional[float] = None) -> None
             continue
         info = infos.get(row["session_row_id"])
         status = getattr(info, "activity_status", None)
-        if status in WORKING_STATES:
+        if status in BUSY:
             _seen_working.add(row["session_uuid"])
         elif status == "question":
             asking.add(row["run_id"])
-        elif status in DONE_STATES and (row["session_uuid"] in _seen_working or row["run_status"] not in m.LIVE_STATUSES):
+        elif status in RESTING and (row["session_uuid"] in _seen_working or row["run_status"] not in m.LIVE_STATUSES):
             if await _sleep(app_state, store, row):
                 states[row["session_uuid"]] = "asleep"
     await _flip_waiting(store, asking)

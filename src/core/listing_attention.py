@@ -30,6 +30,7 @@ from src.core.attention.transcript_facts import (
     TranscriptFacts,
     read_transcript_facts,
 )
+from src.core.timeline import hot as timeline_hot
 
 logger = structlog.get_logger()
 
@@ -117,6 +118,7 @@ def _facts_for_path(
         if len(_FACTS_MEMO) >= FACTS_MEMO_MAX_ENTRIES:
             _FACTS_MEMO.clear()
         _FACTS_MEMO[path] = (key[0], key[1], facts)
+    timeline_hot.shadow_read(path, key, facts, now=now)
     return facts
 
 

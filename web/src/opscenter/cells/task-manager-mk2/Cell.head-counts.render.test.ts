@@ -49,8 +49,8 @@ vi.mock('../../../lib/listing-push/boot', async (importOriginal) => ({
 
 import Mark2 from './Cell.svelte';
 import Mk2HeadHost from './fixtures/Mk2HeadHost.svelte';
-import { cplugEnablement } from '../../../cplugs/host/enablement.svelte';
-import { toggleRow } from '../../../cplugs/huddle/huddle.svelte';
+import { cplugEnablement } from '../../../plugins/host/enablement.svelte';
+import { toggleRow } from '../../../plugins/huddle/huddle.svelte';
 
 cplugEnablement.enabled = { huddle: true };
 const apps: Array<ReturnType<typeof mount>> = [];

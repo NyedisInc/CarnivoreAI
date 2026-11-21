@@ -121,7 +121,7 @@ def test_a_crashed_file_with_a_changed_shape_is_still_stale(tmp_path):
 
 def test_a_live_ok_record_outranks_a_shape_refusal_under_the_same_name(tmp_path):
     pid = os.getpid()
-    (tmp_path / ("%d.json" % pid)).write_text(json.dumps(_with(pid=pid)), encoding="utf-8")
+    (tmp_path / ("%d.json" % pid)).write_text(json.dumps(_with(pid=pid, procStart=KeyError)), encoding="utf-8")
     (tmp_path / "1.json").write_text(json.dumps(_with(pid=1, status=KeyError)),
                                      encoding="utf-8")
     assert read_registry_index(str(tmp_path))[TMUX_NAME].verdict == REG_OK

@@ -1,5 +1,5 @@
 
-Object.assign(API.prototype, {
+extendPrototype(API, {
     async getPublishableSkills() {
         return await this.call('/catalog/publish/mine');
     },
@@ -37,4 +37,4 @@ Object.assign(API.prototype, {
     async getPublishAccount() {
         return await this.call('/catalog/handle', { expectedStatuses: [403, 502, 503] });
     },
-});
+}, 'api-catalog-publish.js');

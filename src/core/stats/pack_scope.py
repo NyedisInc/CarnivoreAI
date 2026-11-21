@@ -221,10 +221,11 @@ def for_request(store: Any, view: Any, request: Any, table: str) -> Optional[Pac
     if owned is None:
         return None
     host = request.filters.host
+    picked = request.filters.hosts
     arms: List[Arm] = []
-    if host in (None, LOCAL):
+    if host in (None, LOCAL) and (picked is None or LOCAL in picked):
         arms.append(Arm(skip=_LOCAL_LOSES, args=(json.dumps(sorted(owned.local_loses)),)) if owned.local_loses else Arm())
-    if host != LOCAL:
+    if host != LOCAL and (picked is None or any(h != LOCAL for h in picked)):
         source = _PEER_USAGE if table == "minute_usage" else _PEER_COUNTERS
         arms.append(Arm(source, _PEER_LOSES, (json.dumps(sorted(owned.peer_loses)),), _app_path(store))
                     if owned.peer_loses else Arm(source, carnivore=_app_path(store)))

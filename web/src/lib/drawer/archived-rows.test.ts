@@ -11,11 +11,11 @@ const records = [
 
 describe('archivedRows', () => {
     it('adds nothing while the toggle is off', () => {
-        expect(archivedRows(records, false, new Set())).toEqual([]);
+        expect(archivedRows(records, false, [])).toEqual([]);
     });
 
     it('one row per archived record, keyed by uuid, marked archived and never asleep, a listed name winning', () => {
-        const rows = archivedRows(records, true, new Set(['carnivore_live']));
+        const rows = archivedRows(records, true, [{ name: 'carnivore_live' }]);
         expect(rows.map((r) => r.name)).toEqual([`${ARCHIVED_NAME_PREFIX}u-old`]);
         expect(rows[0]).toMatchObject({
             archived: true, asleep: false, status: 'archived', session_uuid: 'u-old', label: 'old talk', project_id: 5, project_name: 'moved',
@@ -23,7 +23,7 @@ describe('archivedRows', () => {
     });
 
     it('a hostile input yields nothing', () => {
-        expect(archivedRows(null as unknown as unknown[], true, new Set())).toEqual([]);
+        expect(archivedRows(null as unknown as unknown[], true, [])).toEqual([]);
     });
 });
 
@@ -32,7 +32,7 @@ describe('archivedRows leaves closed sessions to the closed rows (#1845)', () =>
         const rows = archivedRows([
             { session_uuid: 'c', lifecycle: 'stopped', closed: true, tmux_name: 'carnivore_c' },
             { session_uuid: 'a', archived_at: '2026-10-01', tmux_name: 'carnivore_a' },
-        ], true, new Set());
+        ], true, []);
         expect(rows.map((r) => r.name)).toEqual([`${ARCHIVED_NAME_PREFIX}a`]);
         expect(rows[0]?.archived).toBe(true);
     });
@@ -47,5 +47,11 @@ describe('archivedLast', () => {
     it('moves archived rows after the others, each side in its order', () => {
         const rows = [{ name: 'x', archived: true }, { name: 'a' }, { name: 'y', archived: true }, { name: 'b' }];
         expect(archivedLast(rows).map((r) => r.name)).toEqual(['a', 'b', 'x', 'y']);
+    });
+
+    it('a live row that is a DIFFERENT session with the same tmux name hides nothing (#2979)', () => {
+        const rows = archivedRows([{ archived_at: 'x', session_uuid: 'u-old', tmux_name: 'carnivore_live' }], true,
+            [{ name: 'carnivore_live', session_uuid: 'u-live' }]);
+        expect(rows.map((r) => r.session_uuid)).toEqual(['u-old']);
     });
 });

@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -12,6 +11,7 @@ from src.config import settings
 from src.core.boot.steps import BootStep, FailureMode, teardown_slot
 from src.core.db_integrity_task import DatabaseIntegrityScheduler
 from src.core.log_level import live as live_log_level
+from src.core.product_identity import test_mode_enabled
 from src.core.provider_ledger import poller as provider_ledger_poller
 from src.core.session_journal_task import SessionJournalScheduler
 from src.core.update_check import UpdateChecker
@@ -96,7 +96,7 @@ async def _stop_session_journal(ctx: "BootContext") -> None:
 
 
 def _start_lineage(_ctx: "BootContext") -> None:
-    if os.environ.get("CLOUDE_TEST_MODE") != "1":
+    if not test_mode_enabled():
         from src.core.db import db_path_for as _lineage_db_path
         from src.core.lineage import live as _lineage_live
 

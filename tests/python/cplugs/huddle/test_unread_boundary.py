@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.huddle.rules import TaskManagerInvalid
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle.rules import TaskManagerInvalid
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work.storage import WorkStorage
 
 
@@ -57,7 +57,7 @@ def test_a_failed_save_keeps_everything_unread(store, monkeypatch):
     def boom(*_args, **_kwargs):
         raise RuntimeError("disk full")
 
-    monkeypatch.setattr("src.cplugs.huddle.store.sends.stamp_joe", boom)
+    monkeypatch.setattr("src.plugins.huddle.store.sends.stamp_joe", boom)
     with pytest.raises(RuntimeError):
         store.post(item, "my reply", actor="joe", ack_through=shown)
     monkeypatch.undo()

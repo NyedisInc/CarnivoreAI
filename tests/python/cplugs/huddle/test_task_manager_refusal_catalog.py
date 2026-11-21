@@ -9,13 +9,14 @@ from typing import Iterable, Set
 
 from src.api import one_shot_routes
 from src.core import session_one_shot_gate
-from src.cplugs.host import runtime
-from src.cplugs.huddle import rules, sending
+from src.core.sessions import guarded_paste
+from src.plugins.host import runtime
+from src.plugins.huddle import rules, sending
 
 ROOT = Path(__file__).resolve().parents[4]
 CATALOG = ROOT / "client/js/i18n/catalog.en.js"
-HUDDLE = ROOT / "src/cplugs/huddle"
-RAISERS = {"OneShotRefused", "_refuse"}
+HUDDLE = ROOT / "src/plugins/huddle"
+RAISERS = {"OneShotRefused", "_refuse", "PasteSessionNotFound"}
 
 
 def _resolve(node: ast.expr, module: ModuleType) -> str | None:
@@ -47,10 +48,11 @@ def error_codes(base: type) -> Iterable[str]:
 
 
 def server_codes() -> Set[str]:
-    from src.cplugs.huddle import routes as huddle_routes, service  # noqa: PLC0415
+    from src.plugins.huddle import routes as huddle_routes, service  # noqa: PLC0415
 
     codes = set(error_codes(rules.TaskManagerError)) | {sending.REFUSED}
     codes |= codes_in(Path(one_shot_routes.__file__), one_shot_routes)
+    codes |= codes_in(Path(guarded_paste.__file__), guarded_paste)
     codes |= codes_in(Path(session_one_shot_gate.__file__), session_one_shot_gate)
     codes |= codes_in(Path(runtime.__file__), runtime)
     for module in (huddle_routes, service, sending):

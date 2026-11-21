@@ -8,12 +8,12 @@ from typing import Any
 
 import pytest
 
-from src.cplugs.crate import project_git
-from src.cplugs.devwidgetlab.drafts import checkout, ship, store
-from src.cplugs.devwidgetlab.errors import DraftInvalid
-from src.cplugs.huddle import wait_checks
-from src.cplugs.runtime import git_ops, guards
-from src.cplugs.runtime.dispatch import HostDispatcher
+from src.plugins.crate import project_git
+from src.plugins.devwidgetlab.drafts import checkout, ship, store
+from src.plugins.devwidgetlab.errors import DraftInvalid
+from src.plugins.huddle import wait_checks
+from src.plugins.runtime import git_ops, guards
+from src.plugins.runtime.dispatch import HostDispatcher
 
 
 def _boom(*_a: Any, **_k: Any) -> Any:

@@ -86,6 +86,7 @@ console.log('[SessionRestartPicker Module] Loading...');
     function present(displayName, preview, status, mode, sessionUuid, focusWrapper, armedByGesture, busyWork, accounts) {
         mode = mode || 'restart';
         sessionUuid = sessionUuid || null;
+        var quiet = preview.nothing_running === true && preview.pane_state === 'alive';
         if (overlayEl && pendingResolve) dismiss(pendingResolve, null);
         return new Promise(function (resolve) {
             pendingResolve = resolve;
@@ -116,7 +117,7 @@ console.log('[SessionRestartPicker Module] Loading...');
                 + 'aria-live="polite"></div>'
                 + '</div>'
                 + '<div class="modal-footer restart-picker__foot">'
-                + (preview.pane_state === 'alive' && window.SessionRestartLive
+                + (preview.pane_state === 'alive' && !quiet && window.SessionRestartLive
                     ? window.SessionRestartLive.armHtml(
                         armedByGesture === true ? { armedByGesture: true } : undefined)
                     : '')
@@ -150,7 +151,7 @@ console.log('[SessionRestartPicker Module] Loading...');
 
             function sync() {
                 var live = armed();
-                if (choice) choice.setEnabled(function (data) { return rowEnabled(data, live); });
+                if (choice) choice.setEnabled(function (data) { return rowEnabled(data, live || quiet); });
                 var picked = choice ? choice.selected() : null;
                 var ok = !!picked && !picked.disabled;
                 go.disabled = !ok;

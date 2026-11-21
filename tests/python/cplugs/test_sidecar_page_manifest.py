@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict
 
-from src.cplugs.host.sidecar_manifest import load_sidecar_manifest, with_sidecar_facts
+from src.plugins.host.sidecar_manifest import load_sidecar_manifest, with_sidecar_facts
 
 VIEWS = [{"name": "flow", "surfaces": ["panel"], "files": ["index.html"]},
          {"name": "ov", "surfaces": ["overlay"], "files": ["index.html"]}]

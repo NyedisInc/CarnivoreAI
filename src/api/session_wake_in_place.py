@@ -6,7 +6,8 @@ from typing import Any, Optional
 import structlog
 from fastapi.concurrency import run_in_threadpool
 
-from src.core.session_recreate_presence import TMUX_GONE, TMUX_PRESENT, TmuxPresence
+from src.core.session_recreate_presence import TMUX_GONE, TMUX_PRESENT, TmuxPresence, epoch_marks_other_instance
+from src.core.session_ops import row_probe
 
 logger = structlog.get_logger()
 
@@ -32,7 +33,7 @@ def classify_husk(raw: Optional[str], name: str, epoch: Optional[int]) -> str:
         created = int(parts[1])
     except ValueError:
         return HUSK_UNKNOWN
-    if created != int(epoch):
+    if epoch_marks_other_instance(int(epoch), created):
         return HUSK_OTHER
     return HUSK_DEAD if parts[0] == "1" else HUSK_ALIVE
 
@@ -63,7 +64,7 @@ async def wake_dead_pane(
     if presence.outcome != TMUX_PRESENT:
         return _refused(row, presence.outcome, "presence_unknown")
     name = rr._safe(str(row.get("tmux_name") or ""))
-    socket = str(row.get("tmux_socket") or rr._socket_name())
+    socket = str(row.get("tmux_socket") or row_probe.socket_name())
     epoch = row.get("tmux_created_epoch")
     verdict = classify_husk(await run_in_threadpool(probe_line, name, socket), name,
                             int(epoch) if epoch is not None else None)

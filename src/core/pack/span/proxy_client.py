@@ -13,7 +13,7 @@ from src.core.federation import peer_hosts, peer_links
 from src.core.federation.peer_client import PeerRefused, PeerUnreachable
 from src.core.mcp.caller import AgentCaller
 from src.core.mcp.common import _fail
-from src.cplugs.sdk.tool_families import TASK_MANAGER_PREFIX
+from src.plugins.sdk.tool_families import TASK_MANAGER_PREFIX
 
 logger = structlog.get_logger()
 

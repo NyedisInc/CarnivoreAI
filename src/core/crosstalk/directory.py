@@ -114,6 +114,10 @@ def _closed_rows() -> list[dict]:
     return _stored_rows("closed_rows")
 
 
+def _stopped_rows() -> list[dict]:
+    return _stored_rows("stopped_rows")
+
+
 def _stored_rows(reader: str, state_dir: Path | None = None) -> list[dict]:
     from src.config import settings
     from src.core import session_sleep

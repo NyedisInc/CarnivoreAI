@@ -13,13 +13,13 @@ from src.api import mcp_health_listing
 from src.core.conversation_writers import Proc, ProcessTable
 from src.core.mcp_health.client_log import ClientLogReader
 from src.core.mcp_health.monitor import McpMonitor, Target, measure_target
-from src.cplugs.host import mcp_health_port
-from src.cplugs.host.mcp_health_port import HostMcpHealth, health_from_document
-from src.cplugs.runtime import guards
-from src.cplugs.runtime.dispatch import HostDispatcher, HostServices, PluginContext
-from src.cplugs.runtime.owner_tokens import OwnerTokens
-from src.cplugs.sdk import ports
-from src.cplugs.sdk.mcp_health import PORT_NAME
+from src.plugins.host import mcp_health_port
+from src.plugins.host.mcp_health_port import HostMcpHealth, health_from_document
+from src.plugins.runtime import guards
+from src.plugins.runtime.dispatch import HostDispatcher, HostServices, PluginContext
+from src.plugins.runtime.owner_tokens import OwnerTokens
+from src.plugins.sdk import ports
+from src.plugins.sdk.mcp_health import PORT_NAME
 from src.models import Session, SessionInfo
 
 SECRETS = ("SECRET_ARGV_9f3a", "SECRET_ENV_71bc", "SECRET_URL_c0de", "SECRET_QUERY_55aa", "SECRET_HEADER_42ee", "SECRET_AGENT_1d2c")

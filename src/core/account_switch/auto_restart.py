@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Set, Tuple
 
 import structlog
-from fastapi import HTTPException
 
 from src.core.pack.identity.home import ProjectMovedAway
 from src.config.provider_account_switch import ProviderAccountSwitchConfig
@@ -26,12 +25,12 @@ from src.core.launch_profiles.secrets import SecretError
 from src.core.provider_ledger import accounts_store, poller_scan
 from src.core.provider_ledger.login_command import PROFILE_ENV_VARS
 from src.core.session_delivery import bring_up
-from src.core.session_delivery.bring_up import READY_STATUSES
+from src.core.sessions.guarded_paste import PasteRefused
+from src.models.activity_status import RESTING
 from src.core.session_respawn import LIVE_RESTART_REASON_USAGE_LIMIT_ROTATION
 from src.core.session_resume_target import CONVERSATION_RESUMED
 from src.core.swarm.switch import BodyHeld
-from src.core.tmux_control.reader import control_read_async
-from src.core.tmux_discovery import tmux_argv_prefix
+from src.core.tmux_transport.run import tmux_run
 from src.models.provider_ledger import LedgerSnapshot
 
 logger = structlog.get_logger()
@@ -104,26 +103,8 @@ def read_transcript_tail(path: Path) -> List[Dict[str, Any]]:
 
 
 async def _tmux_output(socket: str, *args: str) -> Optional[str]:
-    answered = await control_read_async(socket, args)
-    if answered is not None:
-        return answered.decode("utf-8", errors="replace")
-    argv = tmux_argv_prefix(socket) + list(args)
-    try:
-        proc = await asyncio.create_subprocess_exec(
-            *argv,
-            stdin=asyncio.subprocess.DEVNULL,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.DEVNULL,
-        )
-    except OSError:
-        return None
-    try:
-        stdout, _ = await asyncio.wait_for(proc.communicate(), pane_account.READ_TIMEOUT_SECONDS)
-    except asyncio.TimeoutError:
-        proc.kill()
-        await proc.wait()
-        return None
-    return stdout.decode("utf-8", errors="replace") if proc.returncode == 0 else None
+    done = await tmux_run(socket, *args, timeout=pane_account.READ_TIMEOUT_SECONDS)
+    return done.stdout.decode("utf-8", errors="replace") if done.ok else None
 
 
 class SessionEvidence:
@@ -270,7 +251,7 @@ async def _quiet_for(evidence: Any, name: str, stop: LimitStop, now: datetime) -
 
 
 def _ready(info: Any) -> bool:
-    return info.activity_status in READY_STATUSES and info.activity_hint is None
+    return info.activity_status in RESTING and info.activity_hint is None
 
 
 async def _pass(manager, snapshot, accounts, switch, *, now, monotonic, evidence, read_profile,
@@ -448,11 +429,9 @@ async def _continue(manager, evidence, rotation, state, info, stop, session_uuid
 async def _type_continue(rotation, state, info, record_id: str, session_uuid: Optional[str]) -> Optional[str]:
     try:
         await rotation.paste_continue(info, session_uuid)
-    except HTTPException as exc:
-        detail = exc.detail if isinstance(exc.detail, dict) else {}
-        code = str(detail.get("code", "refused"))
-        logger.info("limit_rotation_continue_refused", tmux_session=info.tmux_session, code=code)
-        return code
+    except PasteRefused as exc:
+        logger.info("limit_rotation_continue_refused", tmux_session=info.tmux_session, code=exc.code)
+        return exc.code
     state.mark_continue_sent(record_id)
     return None
 

@@ -1,5 +1,5 @@
 import { ensurePanel } from '../mount';
-import { agentPage } from '../../cplugs/huddle/agents/agent-page.svelte';
+import { agentPage } from '../../plugins/huddle/agents/agent-page.svelte';
 import AgentDrawer from './AgentDrawer.svelte';
 import { openAgentDrawer } from './agent-drawer.svelte';
 

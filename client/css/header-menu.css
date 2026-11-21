@@ -23,7 +23,7 @@
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
-    z-index: 1100;
+    z-index: var(--oc-z-drawer);
     display: none;
     flex-direction: column;
     gap: 2px;

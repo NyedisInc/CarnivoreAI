@@ -12,7 +12,7 @@ logger = structlog.get_logger()
 
 
 _ORPHANS: Dict[int, List[sqlite3.Connection]] = {}
-_ORPHAN_LOCK = threading.Lock()
+_ORPHAN_LOCK = threading.RLock()
 _REAPERS = threading.local()
 
 
@@ -27,8 +27,8 @@ def _close_orphans(ident: int) -> None:
     if not _ORPHANS:
         return
     with _ORPHAN_LOCK:
-        mine = _ORPHANS.pop(ident, [])
-    for conn in mine:
+        mine = _ORPHANS.pop(ident, None)
+    for conn in mine or ():
         _close_quietly(conn)
 
 

@@ -87,6 +87,7 @@ async function decide(item: ApprovalItem, run: () => Promise<unknown>): Promise<
     approvals.notices = { ...approvals.notices, [key]: explain(error) };
     return false;
   } finally {
+    (globalThis as { BootFetchDedupe?: { clear(): void } }).BootFetchDedupe?.clear();
     await refreshApprovals();
   }
 }

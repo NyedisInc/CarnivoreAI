@@ -1,3 +1,5 @@
+import { t } from './i18n/index.svelte';
+import { STATUS } from './activity-status';
 
 export const INNER_STATES = Object.freeze([
     'working',
@@ -122,6 +124,7 @@ export interface LedSignals {
     transport?: string | null | undefined;
     host_offline?: string | null | undefined;
     usage_limit?: string | null | undefined;
+    login_expired?: string | null | undefined;
 }
 
 export function hostOffline(row: object | null | undefined): string | null {
@@ -141,6 +144,14 @@ export function usageLimitLabel(row: object | null | undefined): string | null {
     const m = at.getMinutes();
     const clock = `${h % 12 || 12}${m ? ':' + (m < 10 ? '0' : '') + m : ''}${h < 12 ? 'am' : 'pm'}`;
     return `over limit, resets ${LIMIT_MONTHS[at.getMonth()]} ${at.getDate()} ${clock}`;
+}
+
+export function loginExpiredLabel(row: object | null | undefined): string | null {
+    const l = (row as { login_expired?: { message?: unknown } | null } | null | undefined)?.login_expired;
+    if (!l || typeof l !== 'object') return null;
+    return typeof l.message === 'string' && l.message
+        ? t('session.status.login_expired_with', { message: l.message })
+        : t('session.status.login_expired');
 }
 
 export function ledStateFor(signals?: LedSignals | null): LedState {
@@ -165,6 +176,10 @@ export function ledStateFor(signals?: LedSignals | null): LedState {
         return { inner: 'limit', outer: 'off' };
     }
 
+    if (s.login_expired) {
+        return { inner: 'notice', outer: 'steady' };
+    }
+
     if (gate === 'awaiting_startup_prompt') {
         return { inner: 'waiting-input', outer: 'active' };
     }
@@ -182,7 +197,7 @@ export function ledStateFor(signals?: LedSignals | null): LedState {
         return { inner: 'working', outer: 'active' };
     }
 
-    if (status === 'finished_unread') {
+    if (status === STATUS.finished_unread) {
         return { inner: 'done', outer: 'unread' };
     }
 

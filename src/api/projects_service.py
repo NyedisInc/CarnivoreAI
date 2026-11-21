@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import structlog
 from fastapi import HTTPException
@@ -81,6 +81,19 @@ def _storage_by_project(view: ProjectsView) -> Dict[int, Dict[str, Any]]:
         return {}
 
 
+def _delegate_marks() -> Tuple[Optional[Set[str]], Dict[str, int]]:
+    import sqlite3
+
+    from src.core.pack.jobs import boot
+    from src.core.pack.jobs.types import JobError
+
+    try:
+        return boot.engine().store.delegate_marks()
+    except (JobError, sqlite3.Error) as exc:
+        logger.warning("project_delegate_marks_unreadable", error=type(exc).__name__)
+        return None, {}
+
+
 def views_to_responses(view: ProjectsView, response_cls: Any) -> List[Any]:
     from src.core.companies import hero_images
     from src.core.project_lineage.parents import parent_project_ids
@@ -89,6 +102,7 @@ def views_to_responses(view: ProjectsView, response_cls: Any) -> List[Any]:
     revs = hero_images.index(hero_images.PROJECT)
     parents = parent_project_ids(view.projects, worktree_store.default_store().repo_by_path())
     storage = _storage_by_project(view)
+    marked, made = _delegate_marks()
     return [
         response_cls(
             id=item["id"],
@@ -113,6 +127,8 @@ def views_to_responses(view: ProjectsView, response_cls: Any) -> List[Any]:
             moved_to_install_id=item.get("moved_to_install_id"),
             moved_to_label=item.get("moved_to_label"),
             air_gap=item.get("air_gap"),
+            auto_delegate=None if marked is None or not item.get("uid") else item["uid"] in marked,
+            auto_delegate_leftovers=None if marked is None or not item.get("uid") else made.get(item["uid"], 0),
             has_image=item["id"] in revs,
             image_rev=revs.get(item["id"]),
         )
@@ -120,19 +136,26 @@ def views_to_responses(view: ProjectsView, response_cls: Any) -> List[Any]:
     ]
 
 
-def resolve_target(conn: Any, name: str) -> Dict[str, Any]:
+ProjectKey = Union[str, int]
+
+
+def resolve_target(conn: Any, key: ProjectKey) -> Dict[str, Any]:
     from src.core.project_writes import (
         ProjectNameAmbiguous,
         ProjectNotFound,
+        resolve_by_id,
         resolve_by_name,
     )
 
     try:
-        return resolve_by_name(conn, name)
+        if isinstance(key, int) and not isinstance(key, bool):
+            return resolve_by_id(conn, key)
+        return resolve_by_name(conn, key)
     except ProjectNotFound:
-        raise HTTPException(status_code=404, detail=f"Project '{name}' not found")
+        label = f"id {key}" if isinstance(key, int) else f"'{key}'"
+        raise HTTPException(status_code=404, detail=f"Project {label} not found")
     except ProjectNameAmbiguous as exc:
-        raise api_error(409, "project_ambiguous", exc, name=name) from exc
+        raise api_error(409, "project_ambiguous", exc, name=str(key)) from exc
 
 
 def touch_project_best_effort(settings: Any, working_dir: str) -> Optional[Dict]:

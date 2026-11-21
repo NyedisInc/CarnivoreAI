@@ -206,6 +206,7 @@ export interface LedgerPoke {
 }
 
 export interface LedgerTotalWindow extends LedgerWindow {
+    provider?: string | null;
     accounts?: number | null;
 }
 

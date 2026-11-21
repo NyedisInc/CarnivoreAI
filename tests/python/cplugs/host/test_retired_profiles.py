@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 
 from src.core.plugin_health import sizes
-from src.cplugs.host import registry_files, retired_profiles
-from src.cplugs.runtime import sandbox
+from src.plugins.host import registry_files, retired_profiles
+from src.plugins.runtime import sandbox
 
 MOVED_UUID = "a" * 32
 UNMOVED_UUID = "b" * 32

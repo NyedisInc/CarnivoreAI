@@ -77,7 +77,7 @@
 
     .oc-connection { display:inline-flex; align-items:center; gap:5px; color:var(--oc-text-dim); font-size:var(--oc-fs-micro); white-space:nowrap; }
 
-    .oc-connection-dot { width:7px; height:7px; border-radius:50%; background:var(--oc-text-dim); }
+    .oc-connection-dot { width:7px; height:7px; border-radius:var(--oc-radius-circle); background:var(--oc-text-dim); }
 
     .connected .oc-connection-dot { background:var(--oc-green-bright); }
 

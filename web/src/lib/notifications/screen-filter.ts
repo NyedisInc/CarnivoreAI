@@ -17,7 +17,7 @@ export interface MutesBody {
 }
 
 export interface NotifyScreenGlobal {
-    shows(toast: { notify_type?: unknown } | null | undefined): boolean;
+    shows(toast: { notify_type?: unknown; test_target?: unknown } | null | undefined): boolean;
     groupOf(type: unknown): string | null;
 }
 
@@ -34,7 +34,9 @@ export class ScreenFilter {
 
     constructor(private readonly fetcher: Fetcher = authFetch) {}
 
-    shows(toast: { notify_type?: unknown } | null | undefined): boolean {
+    shows(toast: { notify_type?: unknown; test_target?: unknown } | null | undefined): boolean {
+        if (toast?.test_target === 'app') return true;
+        if (toast?.test_target === 'desktop') return false;
         const type = this.canonical(toast?.notify_type);
         if (typeof type !== 'string' || !type) return true;
         if (this.muted.has(type)) return false;

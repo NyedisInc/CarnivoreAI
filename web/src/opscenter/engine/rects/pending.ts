@@ -20,6 +20,20 @@ export const TAB_KIND = 'tab:';
 
 const SESSION_KINDS: readonly string[] = ['terminal', 'browser'];
 
+const CHART_KIND = 'analytics:';
+
+const FRESH_CHART = /^analytics:(new|preset:.+)$/;
+
+function pendingForChart(layout: Layout, kind: string, primary: string): Pending | null {
+  const id = (FRESH_CHART.test(kind) ? instanceId('analytics', `w${Date.now().toString(36)}`) : kind) as SlotId;
+  if (layout.hidden.includes(id)) {
+    const next = showCell(layout, id, META);
+    return next === layout ? null : { id, layout: next };
+  }
+  const result = addInstance(layout, 'analytics', id.slice(CHART_KIND.length), primary, META);
+  return result.refusal ? null : { id, layout: result.layout };
+}
+
 export function pendingFor(layout: Layout, kind: string, primary: string, store?: LayoutStore): Pending | null {
   if (kind.startsWith(TAB_KIND)) return store ? pendingForTab(store, kind.slice(TAB_KIND.length)) : null;
   if (kind in META) {
@@ -28,6 +42,7 @@ export function pendingFor(layout: Layout, kind: string, primary: string, store?
     return next === layout ? null : { id, layout: next };
   }
   if (SESSION_KINDS.includes(kind)) return null;
+  if (kind.startsWith(CHART_KIND)) return pendingForChart(layout, kind, primary);
   const name = `w${Date.now().toString(36)}`;
   const result = addInstance(layout, kind as InstanceKind, name, primary, META);
   return result.refusal ? null : { id: instanceId(kind as InstanceKind, name), layout: result.layout };

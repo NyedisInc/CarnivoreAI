@@ -37,7 +37,7 @@
       .terminal-empty {
           position: absolute;
           inset: 0;
-          z-index: 20;
+          z-index: var(--oc-z-float);
           display: flex;
           align-items: center;
           justify-content: center;

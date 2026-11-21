@@ -28,7 +28,7 @@
       position: fixed;
       right: 12px;
       bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-      z-index: 55;
+      z-index: var(--oc-z-notice);
       display: flex;
       align-items: center;
       gap: 10px;
@@ -43,7 +43,7 @@
     }
 
     .oc-notice--refusal {
-      z-index: 60;
+      z-index: var(--oc-z-sheet);
       right: auto;
       left: 50%;
       transform: translateX(-50%);

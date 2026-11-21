@@ -80,7 +80,7 @@ def _load_auth_config(ctx: "BootContext") -> None:
 
 
 async def _start_local_servers(ctx: "BootContext") -> None:
-    ctx.local_servers = LocalServersTracker(loop=asyncio.get_running_loop())
+    ctx.local_servers = LocalServersTracker.for_manager(asyncio.get_running_loop(), ctx.session_manager)
     ctx.local_servers.attach(ctx.log_monitor, ctx.session_manager)
     await ctx.local_servers.start()
 

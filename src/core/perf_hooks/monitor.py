@@ -10,6 +10,7 @@ from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 import structlog
 
 from src.core.perf_hooks.process_stats import ProcessSampler, ProcessStatsError
+from src.core.supervise.loop import spawn as spawn_supervised
 
 logger = structlog.get_logger()
 
@@ -96,7 +97,7 @@ class PerfMonitor:
         self.enabled = True
         self._enabled_at = self._clock()
         self._buckets = deque([_Bucket()], maxlen=BUCKETS)
-        self._task = asyncio.get_running_loop().create_task(self._run(), name="perf-hooks")
+        self._task = spawn_supervised("perf-hooks", self._run)
         logger.info("perf_hooks_enabled")
 
     def disable(self) -> None:

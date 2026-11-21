@@ -3,7 +3,10 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 const wake = vi.hoisted(() => vi.fn(() => Promise.resolve(null)));
 vi.mock('../api/asleep.svelte', () => ({
-  asleep: { data: [{ id: 7, asleep: true, tmux_name: 'cloude_zz', session_uuid: 'u-7', title: 'zz' }] },
+  asleep: { data: [
+    { id: 7, asleep: true, tmux_name: 'cloude_zz', session_uuid: 'u-7', title: 'zz' },
+    { id: 8, asleep: true, tmux_name: 'cloude_zz', session_uuid: 'u-8', title: 'zz twin' },
+  ] },
   wakeOrPick: wake,
 }));
 vi.mock('../api', () => ({
@@ -20,7 +23,7 @@ import { resetTabCache, tabsFor } from './tab-groups.svelte';
 const carried: string[] = [];
 let off: () => void = () => {};
 
-const start = (name: string) => ({ name, pointerId: 1, pointerType: 'mouse', clientX: 10, clientY: 10 });
+const start = (name: string, sessionUuid?: string) => ({ name, sessionUuid, pointerId: 1, pointerType: 'mouse', clientX: 10, clientY: 10 });
 
 beforeEach(() => {
   resetTabCache();
@@ -66,4 +69,17 @@ test('a live row drags as before and wakes nothing', () => {
 
 test('a row nobody knows starts no drag', () => {
   expect(beginDrawerTabDrag(start('cloude_nope'))).toBe(false);
+});
+
+test('a twin that shares a tmux name drags by its session_uuid, and wakes its own record (#2979)', () => {
+  expect(beginDrawerTabDrag(start('asleep:u-8', 'u-8'))).toBe(true);
+  drop();
+  expect(tabsFor(terminalLayout, PRIMARY_SLOT)).toContain('terminal:row:8');
+  expect(wake).toHaveBeenCalledWith('u-8', 'cloude_zz', 'zz twin');
+});
+
+test('the plain-name row drags its own record, not the first record that shares the name (#2979)', () => {
+  expect(beginDrawerTabDrag(start('cloude_zz', 'u-8'))).toBe(true);
+  drop();
+  expect(tabsFor(terminalLayout, PRIMARY_SLOT)).toContain('terminal:row:8');
 });

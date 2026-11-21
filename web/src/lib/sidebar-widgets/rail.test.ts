@@ -20,7 +20,7 @@ import { closeDrawerAfterSwitch } from '../drawer-tabs/menu-hotkeys';
 import { DRAWER_LIST_ID, DRAWER_SEARCH_ID, DRAWER_STATS_ID } from '../drawer-tabs/drawer-tabs';
 import { SidebarWidgetRegistry } from './registry';
 import { registerCoreSidebarWidgets } from './core-widgets';
-import { registerSwarmFlyout } from '../../cplugs/huddle/swarm-flyout';
+import { registerSwarmFlyout } from '../../plugins/huddle/swarm-flyout';
 import { activeFlyout, flyoutShowsTab, openFlyout, railHostsTab } from './flyout.svelte';
 import { initMenuPageEscape } from '../menu-page/menu-page-escape';
 import { railEntries, widgetPresent } from './rail-model';
@@ -240,6 +240,8 @@ test('T11: a question arriving shows the questions key with no number on it (#27
   expect(railBtn(QUESTIONS_FLYOUT).textContent ?? '').not.toMatch(/\d/);
   expect(railBtn(QUESTIONS_FLYOUT).getAttribute('aria-label')).toBe('questions, 1 waiting');
   expect(activeFlyout()).toBeNull();
+  expect(railBtn(QUESTIONS_FLYOUT).getAttribute('data-rail-attention')).toBe('question');
+  expect(railBtn(SESSION_LIST_WIDGET).hasAttribute('data-rail-attention')).toBe(false);
 });
 
 test('T12: menu and agents stay fixed at the top; a registered widget cannot sort above them', () => {

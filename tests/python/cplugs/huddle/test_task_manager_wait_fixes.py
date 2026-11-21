@@ -15,10 +15,10 @@ from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 
 from src.api.auth import limiter
-from src.cplugs.huddle import schedule, wait_checks as checks, wait_runner, waits
-from src.cplugs.huddle.rules import TaskManagerForbidden, TaskManagerInvalid
-from src.cplugs.huddle.roles import unstick
-from src.cplugs.sdk import app_info
+from src.plugins.huddle import schedule, wait_checks as checks, wait_runner, waits
+from src.plugins.huddle.rules import TaskManagerForbidden, TaskManagerInvalid
+from src.plugins.huddle.roles import unstick
+from src.plugins.sdk import app_info
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import env  # noqa: F401
@@ -298,7 +298,7 @@ def test_the_repo_root_comes_from_the_environment_and_an_install_with_no_repo_sa
 
 
 def test_a_failed_hand_back_after_expiry_reopens_the_wait_instead_of_stranding_the_task(env, client, monkeypatch):  # noqa: F811
-    from src.cplugs.huddle.rules import TaskManagerInvalid
+    from src.plugins.huddle.rules import TaskManagerInvalid
 
     item = env.add(client)["id"]
     park(env.store, item)

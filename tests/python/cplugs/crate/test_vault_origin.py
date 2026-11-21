@@ -11,17 +11,17 @@ import pytest
 
 from src.core.blobcodec.chunking import ChunkReader
 from src.core.claude_transcript_correlate import slugify_project_dir
-from src.cplugs.crate import constants as K
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import build_plan
-from src.cplugs.crate.vault_files import VaultOpener
-from src.cplugs.crate.writer import run_export
-from src.cplugs.save.fallback import BackupTranscripts
-from src.cplugs.save.vault import units
-from src.cplugs.save.vault.identity import Identity
-from src.cplugs.save.vault.store import Vault
-from src.cplugs.sdk import crate_format as cf
-from src.cplugs.sdk import crate_sources as cs
+from src.plugins.crate import constants as K
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import build_plan
+from src.plugins.crate.vault_files import VaultOpener
+from src.plugins.crate.writer import run_export
+from src.plugins.save.fallback import BackupTranscripts
+from src.plugins.save.vault import units
+from src.plugins.save.vault.identity import Identity
+from src.plugins.save.vault.store import Vault
+from src.plugins.sdk import crate_format as cf
+from src.plugins.sdk import crate_sources as cs
 from src.core.deepsearch import fallback_hook as fb
 from tests.python.cplugs.crate.crate_world import env_for, make_world, session_request
 from tests.python.inventory.world import CONV_A

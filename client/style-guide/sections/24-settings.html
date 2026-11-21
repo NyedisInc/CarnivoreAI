@@ -1,7 +1,8 @@
 <h2 class="sg-h2">settings</h2>
 <p class="sg-lead">Settings is a full-page menu page (settings redesign, 2026-09-28, <code>docs/settings-and-pages-inventory.md</code>)
-on the manager frame's chrome (<code>web/src/lib/settings-page/SettingsScreen.svelte</code>: <code>.oc-page</code> root (<code>Page.svelte</code>),
-<code>.oc-titlebar</code> title strip, no close button, Escape clears a search; each section and tab is its own #settings link), inside the page shell (<a href="#chrome-menu-page">the menu page shell</a>), so it covers the screen
+on the nav page frame in its drawer pair mode (<a href="#chrome-page-frames-pair">the drawer pair</a>; Joe (ccsliinc), 2026-11-10;
+<code>web/src/lib/settings-page/SettingsScreen.svelte</code>: one <code>Page.svelte</code> with <code>pair</code>; from 1024px the frame draws the list
+drawer and the page drawer, below that one page; Escape clears a search; each section and tab is its own #settings link), inside the page shell (<a href="#chrome-menu-page">the menu page shell</a>), so it covers the screen
 behind it and the drawer's settings row is marked. It is compiled end to end: a section rail (with the search field on top) beside ONE tabbed page per section, a
 search over every setting, and a save footer inside the frame of every tab that holds a typed value. A section is a tab strip
 (<a href="#page-tabs">page tabs</a>, one tab per group, labels from the group labels) over the open group's rows; a section
@@ -26,8 +27,9 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
         one base <code>ListRow</code> per section, holding one whole-row <code>Button</code> (<code>variant="row"</code>, <code>data-section</code>) with its icon (<code>.st-nav__icon</code>), label
         (<code>.st-nav__label</code>), the unsaved dot (<code>.st-nav__dot</code>, the page tabs' <code>.oc-ptab__dot</code>)
         and, while a search is typed, its match count (<code>.st-nav__count</code>, the button dimmed by <code>data-empty</code> at zero); an item carries no tooltip (no <code>title</code>; the section's hint shows as text in search results). The open section is the selected <code>ListRow</code> (<code>aria-current="page"</code> on its button). Below the sections come two headed groups, each a <code>.st-nav__heading</code> (an <code>.oc-label</code>) over a base <code>List</code>, in this order (Joe (ccsliinc), 2026-10-30, #2723): <b>features</b> (<code>data-st-features-heading</code>, always drawn) opens with its overview entry (<code>data-section="features"</code>, "all features": every built-in with its switch, on or off) and then one row per ENABLED built-in with settings; <b>plugins</b> (<code>data-st-plugins-heading</code>, drawn only while an enabled store plugin has settings) has one row per such plugin. Either kind of row opens that item's own settings form in the same frame. That form is the plugins page's own (<code>.plp-region</code>), drawn inside one <code>Card</code> titled with the plugin's name in <code>PluginSettingsSection.svelte</code>. Below 768px the list is gone and a native
-        <code>.st-nav__select</code> sits beside the search field in one 44px row. The content column
-        (<code>.st-content</code>) holds the tab strip (<code>.st-tabs</code>), then the open group's panel
+        <code>.st-nav__select</code> sits beside the search field in one 44px row. The rail is the frame's side and the tab strip the
+        frame's tab row; on a phone that row is the section picker beside the strip (<code>.st-phonetabs</code>, <code>.st-tabs</code>), the
+        frame's tab row height. The content column (<code>.st-content</code>, <code>.st-content--phone</code> on a phone) holds the open group's panel
         (<code>.st-panel</code>, with its one dim hint line <code>.st-tabhint</code> and its rows in <code>.st-rows</code> inside one <code>Card</code>, <code>[data-st-frame]</code>) or the
         embedded screen (<code>.st-screen</code>). The hosts list's <code>.oc-page__items--list</code> (now on the Pack page, <code>.pk-screen</code>) collapses the switch column on <code>.mgr-card</code> rows when
         no <code>.mgr-card__head</code> contains an <code>.oc-check</code>. The section's own title (<code>h2.st-section__title</code>) is visually
@@ -323,27 +325,6 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
         unknown, with a hint line and never a retry) and <code>.messaging-log__text</code>, with retry on a failed inbound row. The provider card
         ends its status lines with the duplicate-send protection line: plain when a replayed key was ever answered with the original, in
         <code>.messaging-held</code> when never seen. Styles: <code>web/src/lib/messaging/messaging.css</code>.</dd>
-    <dt>notifications: routing matrix, link and pause</dt>
-    <dd>The <code>notifications.routing</code> group (issue #1278) is two panel rows in the same <code>.tm</code> frame, both clients of
-        <code>/api/v1/notifications/*</code>. <code>MatrixPanel.svelte</code> is the routing matrix: <code>.mx-table</code> in an
-        <code>.mx-scroll</code> wrapper, one row per notification type (<code>.mx-type</code> label <code>.mx-label</code> and
-        <code>.mx-desc</code>) under its group, and one column for the screen, one for the global default
-        tick set ("what a new destination starts with") and one per destination, web push devices included (<code>.mx-colname</code>,
-        <code>.mx-colsub</code>). <code>MatrixCell.svelte</code> is one <code>.mx-cell</code>: a square <code>.oc-check</code>, then its source
-        in small type (<code>.mx-src</code>); a cell pinned to this computer shows the <code>.mx-badge</code> "local" with an
-        a base quiet "reset to global" button. A locked cell is disabled and says why in short words (<code>.mx-why</code>, "always on" for
-        needs-you, "stays here" for in-app only and the notifications-health type), with the full sentences in <code>.mx-legend</code> under the
-        matrix. Below 1024px the table is replaced by <code>.mx-picker</code> (a base select) over an <code>.mx-list</code> of
-        <code>.mx-item</code> rows, one column at a time, each group a <code>.mx-group-row</code> (its heading and its one switch).
-        The nine groups (#2734) each fold to one <code>.mx-family</code> row: a <code>.mx-group</code> heading button in the accent (caret
-        <code>.mx-group__caret</code>, the type count in <code>.mx-group__count</code>, <code>aria-expanded</code>) that opens the group to its
-        types, and one group switch per column (an <code>.oc-check</code> noted "some" when only part of the group is ticked; a flip writes
-        each writable type). A row that absorbed a retired type shows a one-time cyan <code>.mx-merged</code> line. "This computer only" is an
-        <code>.oc-check</code> switch above the matrix that writes ticks as local pins. <code>LinkPanel.svelte</code> (<code>.mx-link</code>,
-        <code>.mx-link__row</code>, <code>.mx-link__kind</code>, <code>.mx-link__base</code>) shows which kind of link goes into an outside
-        notification and why, in plain words from the server's reason code, and the per-computer "pause all outside delivery" switch. Both
-        re-read when the <code>notification_settings</code> resource topic moves and poll only while it is not live. Styles:
-        <code>web/src/lib/notifications/matrix/matrix.css</code>.</dd>
     <dt>notifications: sync with paired computers</dt>
     <dd><code>SyncPanel.svelte</code> (issue #1278), the last row of the <code>notifications.routing</code> group, in the same <code>.tm</code>
         frame. A client of <code>/api/v1/notifications/sync</code>. One <code>.sy-peer</code> per paired computer, a hairline
@@ -463,7 +444,10 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
         (<code>WolfButton.svelte</code>, the base <code>IconButton</code> <code>[data-roster-key="leader"]</code>) opens a <code>.modal-btn</code> confirm before it makes a leader. The pack
         settings panel (<code>SettingsPanel.svelte</code>, <code>.m1-sets</code>) folds into a gear in the title strip
         (<code>[data-roster-key="gear"]</code>, a base <code>IconButton</code>; the panel and pane close keys are its close variant); its section headings use <code>--oc-text-bright</code>, the danger heading keeps coral
-        (<code>.m1-danger__k</code>). Status is a shape plus a word (<code>.pp-st</code>), never colour alone.</dd>
+        (<code>.m1-danger__k</code>). The overview tab's "what it has" block (<code>PaneAbilities.svelte</code>) reuses <code>.pp-facts</code>,
+        <code>.pp-tools</code> and the base <code>Button</code>: facts, tools, the pegged line composed from figures (never the server's sentence), the
+        read lines "takes work" and "may install tools" that jump to the editor, and "check again"; its labels are
+        <code>LabelEditor.svelte</code>, a base <code>Tag</code> with a base <code>IconButton</code> remove each, a base <code>Field</code> and add. Status is a shape plus a word (<code>.pp-st</code>), never colour alone.</dd>
     <dt>pack page: the settings blocks</dt>
     <dd>Below the roster, <code>PackSettingsBlock.svelte</code> (auto-distribute, enhanced placement and its model, held by the
         master) and <code>PackRelayBlock.svelte</code> (one switch per Claude account, off until the owner turns it on) are
@@ -483,10 +467,40 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
         the repo name, owner and account, always private, and its one <code>.modal-btn-confirm</code> button is the only thing that
         creates a repo. Inside that block <code>ProjectReplicas.svelte</code> (<code>.pt-replicas</code>, <code>.pt-replica-list</code>,
         <code>.pt-replica</code>) lists the computers running a copy of the project, each with a <code>.modal-btn-danger</code> remove that
-        takes two presses, and a picker of connected paired computers with <code>.modal-btn-confirm</code> add replica. A session or Swarm agent on another computer wears <code>MachineBadge.svelte</code>
+        takes two presses, and a picker of connected paired computers with <code>.modal-btn-confirm</code> add replica.
+        <strong>Project settings control deck (#3054).</strong> <code>ProjectTransport.svelte</code> is a deck: <code>.dk-home</code> holds the auto-delegate
+        tile (<code>.dk-tile</code>, head <code>.dk-head</code> with <code>.dk-label</code>, a plain <code>.dk-desc</code> line, ticked computers as base
+        <code>ListRow</code>s <code>.dk-tick</code>, <code>.dk-jobs</code>, copy now <code>.dk-acts</code>), a coral <code>.dk-tile--leftover</code> tile and three
+        base <code>Button</code> doors (<code>data-door</code>) (<code>.dk-sum</code>) that push a <code>.dk-page</code> over the deck (replicas, github, what computers have: one
+        <code>.dk-cap</code> block per computer, chips are the base <code>Tag</code> in <code>.dk-cap__chips</code>, labels in <code>.dk-set</code>);
+        <code>.dk-foot</code> holds the air-gap switch and the ssh words. <code>ComputerGlyph.svelte</code> (<code>.dk-glyph--self</code>,
+        <code>--linked</code>, <code>--down</code>) is the Pack's computer icon with its state as a tooltip. The sidebar project row wears
+        base <code>IconButton</code> <code>[data-pack-mark]</code>, the coral Pack wolf, while auto-delegate is on (muted with a coral dot when it is off but copies remain).
+        <code>ProjectDelegateNeeds.svelte</code> (<code>.pt-needs</code>, <code>.pt-needs-kind</code>, <code>.pt-needs-words</code>) lists each kind of
+        job with two base fields (needs, prefer), the default beside a kind the project stores nothing for, a quiet back to default and one
+        <code>.modal-btn-confirm</code> save. The jobs tab opens with <code>JobsNumbers.svelte</code> (<code>.pt-numbers</code>): a label and
+        two or three quiet lines on how much heavy work ran on other computers.
+        Above it <code>ProjectAutoDelegate.svelte</code> draws the auto-delegate mark with the base switch, one base checkbox row per
+        paired computer (the state line is the checkbox hint) a quiet copy now button. Turning the switch off asks nothing; while it is off, one <code>.pt-row</code> per copy the mark made reads <code>.pt-note</code> text (computer: copy kept at folder) beside a quiet small trash button. A computer reached by plain ssh is managed on its own pane in the Pack roster: <code>SshTargetBlock.svelte</code> draws a base takes-work switch (off by default), its state in words, the facts the computer reports and a quiet check button, and <code>HostKeyConfirm.svelte</code> is the title-strip modal that shows the fingerprint in mono beside a <code>.modal-btn-secondary</code> cancel and a <code>.modal-btn-confirm</code> confirm. <code>SshTargetRows.svelte</code> lists those computers on the auto-delegate block above, one <code>.pt-replica</code> row each with its state and no control. A session or Swarm agent on another computer wears <code>MachineBadge.svelte</code>
         (<code>.oc-machine-badge</code>): a 1px outlined, tracked, uppercase label of the computer's name, dimmed through
         <code>data-host-state</code> when that computer is down, drawn on Swarm ledger rows, org nodes and the chat header
         (the drawer's own chip is the same look).</dd>
+    <dt>pack page: the jobs tab</dt>
+    <dd><code>JobsTab.svelte</code> is the Pack page's <code>#pack/jobs</code> tab, drawn with the tab chrome the logins tab uses
+        (<code>.pm-panel</code>, <code>.pl-titlebar</code>): a base <code>Segmented</code> live or all, a quiet caller chip button, and a
+        base <code>List</code> of <code>JobRow.svelte</code> rows, then a second list, "running here for another computer", read only.
+        <code>JobRow.svelte</code> is a base <code>ListRow</code>: a state <code>Tag</code> leads, the task or command head is the primary text,
+        "computer &middot; project" the secondary, the duration the meta, the why line and <code>JobDetails.svelte</code> (a base
+        <code>Fold</code> over a <code>.pp-facts</code> list) below, and quiet "open worker" and "stop" buttons. "stop" opens
+        <code>StopJobDialog.svelte</code>, the title-strip modal with a <code>.modal-btn-secondary</code> cancel and a
+        <code>.modal-btn-danger</code> stop. Text from a job is drawn as text and wraps inside the row. A session row that started live
+        jobs wears a "3 jobs" badge in the badge slot (last kind, warn tone while a job waits on a question).</dd>
+    <dt>pack page: the allow lists</dt>
+    <dd><code>MachineAllowLists.svelte</code> is a section of the machine editor (Pack &gt; work), drawn with the editor's own
+        <code>.pm-reserve</code>, <code>.pm-rules</code>, <code>.pm-note</code>, <code>.pm-warn</code> and <code>.pm-actions</code>: a
+        base <code>Segmented</code> (every project or only the ticked ones), a base <code>Checkbox</code> per company and per project
+        (a box that would widen a peer's list is disabled with its reason), the ids this computer does not know as one kept line, and a
+        base confirm <code>Button</code> save that stays off while nothing is ticked.</dd>
     <dt>pack page: the migrate wizard</dt>
     <dd><code>MigrateWizard.svelte</code> moves a project or a company to another paired computer, or brings a moved-away project
         home. It sits in the pack panel's block (a pick of project or company) and opens from the Projects page's project and
@@ -538,25 +552,73 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
     <dd>Pack fields and pickers are the base <code>Field</code>, <code>NumberField</code> and <code>Select</code>.</dd>
 </dl>
 
-<h3 class="sg-h3" id="settings-notify-inspector">notification inspector</h3>
+<h3 class="sg-h3" id="settings-notify-inspector">notification routing</h3>
 <dl class="sg-facts">
     <dt>what it is</dt>
-    <dd><code>web/src/lib/notifications/inspector/Inspector.svelte</code>, the first block of settings > notifications > routing: the accepted
-        notification mockup's settings view. A framed pair of columns (<code>.ins__frame</code>): the types in their groups on the left
-        (<code>.ins__list</code>, each group a tracked <code>h4</code> band, each type the base <code>row</code> Button with its
-        <code>.nc-led</code> square, its name in <code>.ins__name</code> and its word on or off in <code>.ins__st</code>, the picked one
-        marked by the accent edge), the picked type on the right.</dd>
+    <dd><code>web/src/lib/notifications/inspector/Inspector.svelte</code>, the one block of settings > notifications > routing (the owner, 2026-11-19,
+        mockup M1 r2): a grid of a left column (<code>.ins-left</code>) and one detail pane. A basic or advanced view switch (a base
+        <code>Segmented</code>, kept per browser) sits above it.</dd>
+    <dt>the group rail</dt>
+    <dd><code>GroupRail.svelte</code> in an <code>.ins-panel</code> with an <code>.ins-bar</code> title strip: the eight groups, each an <code>.ins-grow</code> row
+        with a caret (<code>Button</code>), its name (<code>Button</code>), ONE switch (the app's green square; a group that is partly on is the
+        blue square with a triangle, <code>aria-checked="mixed"</code>) and a count line (<code>.ins-gsum</code>, "3 of 6 on"). The caret unfolds its types
+        (<code>.ins-trow</code>, each with its own switch); the advanced view unfolds them all. Under it <code>Housekeeping.svelte</code> (<code>.ins-house</code>)
+        keeps the pause switch, the muted and sync folds, and in the advanced view the link back; the basic view shows only a warning line
+        (<code>.ins-warn--row</code>) when there is no working link.</dd>
     <dt>the pane</dt>
-    <dd>A title strip (<code>.ins__title</code>: the type in the accent, its id dim), a base <code>Segmented</code> shape switcher for a type that comes in
-        several shapes, then the previews in <code>.ins__walls</code> (dimmed while no device is on): one per ticked device, each on a
-        <code>.pv-wall</code> gradient built from tokens (<code>Previews.svelte</code>): the iPhone banner and the computer banner as HTML stand-ins
-        (<code>.pv-note</code>) and the iPhone card, the live <code>NotifyCard</code> without its action row, in a rounded <code>.pv-sheet</code>.
-        Then the controls in <code>.ins__ctl</code>: a tracked label (<code>.ins__lab</code>) and the control (<code>.ins__row</code>, a quiet note in
-        <code>.ins__hint</code>). On and the corner card are the base <code>Switch</code>; sound and urgency the base <code>Select</code> on the field
-        ground with a drawn chevron; play a cyan base <code>Button</code>; send a test the base <code>Button</code>; each device (<code>.ins__dev</code>)
-        a small outlined chip, a base <code>Button</code> with <code>aria-pressed</code>, cyan when on, labelled by the computer's own name or the iPhone's name.
-        Below 1024 px the frame is one column and the list becomes a short scrolling box above the pane.</dd>
+    <dd>A title strip in the accent (<code>.ins-bar--hot</code>), the master switch (<code>.ins-master</code>: on, off or some on), then three framed sections
+        (<code>Sections.svelte</code>, <code>.ins-sec</code>, each its own <code>.ins-sec__bar</code> title strip in small tracked accent capitals and a wide
+        gap between them): send it to, how it sounds (a base <code>Select</code>, a play ICON <code>IconButton</code>, the urgency <code>Segmented</code> with its
+        hint) and test (three base <code>Button</code>s, each with its own <code>role="status"</code> result line). A master that is off dims the three
+        (<code>data-disabled</code>) and keeps the values: its targets are kept.</dd>
+    <dt>send it to</dt>
+    <dd><code>ComputerBlocks.svelte</code>: one <code>.ins-comp</code> block per Pack computer, this one first, each wearing its own tint
+        (<code>.ins-hue-1</code> to <code>.ins-hue-4</code>, set from <code>--oc-computer-1</code> to <code>--oc-computer-4</code> and their <code>-deep</code> twins): a deep title
+        strip with the hue square (<code>.ins-hue</code>), then three rows (<code>.ins-tg</code>) in the app, on the desktop, phone, each a switch with plain
+        words, the corner card a sub-switch (<code>.ins-tg__sub</code>) under the desktop row. A cell never written says "not set yet" and is unticked;
+        a computer that does not sync here gets <code>.ins-warn</code>.</dd>
+    <dt>the preview</dt>
+    <dd><code>Previews.svelte</code> and <code>Preview.svelte</code>: one frame (<code>.ins-pf</code>) shown as the app (the real <code>NotifyCard</code>),
+        the desktop (<code>.ins-mac</code> banner, 344 wide) or the phone (<code>.ins-ios</code> banner, 370 wide), switched by a base
+        <code>Segmented</code>, and a three line caption (<code>.ins-cap</code>): what this is, when it shows, where it appears. The two banners replicate what
+        the operating system draws, so they keep its shapes and its font stack but take ink and glass from tokens. Below 1180px the pane's two columns
+        stack with the preview first, below 900px the rail stacks above. Styles: <code>web/src/lib/notifications/inspector/inspector.css</code>.</dd>
 </dl>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup</span><code>web/src/lib/notifications/inspector/GroupRail.svelte</code><span><code>.ins-grow</code></span></div>
+    <div class="sg-specimen__body">
+        <div class="ins-panel ins-rail" style="max-width: 320px">
+            <div class="ins-bar"><h2>what to notify me about</h2><span class="ins-count">3 groups</span></div>
+            <div class="ins-group"><div class="ins-grow" data-selected><button type="button" data-btn="quiet" data-size="bare" data-ins="caret" aria-label="unfold needs you">+</button><button type="button" data-btn="quiet" data-size="bare" data-ins="gname" aria-pressed="true">needs you</button><button type="button" class="oc-check oc-check--bare" role="switch" aria-checked="true" aria-label="needs you notifications"><span class="oc-check__box"></span></button><span class="ins-gsum">6 of 6 on</span></div></div>
+            <div class="ins-group"><div class="ins-grow"><button type="button" data-btn="quiet" data-size="bare" data-ins="caret" aria-label="unfold sessions">+</button><button type="button" data-btn="quiet" data-size="bare" data-ins="gname" aria-pressed="false">sessions</button><button type="button" class="oc-check oc-check--bare" role="switch" aria-checked="mixed" data-mixed aria-label="sessions notifications"><span class="oc-check__box"></span></button><span class="ins-gsum">some on: 4 of 9 on</span></div></div>
+            <div class="ins-group"><div class="ins-grow" data-off><button type="button" data-btn="quiet" data-size="bare" data-ins="caret" aria-label="unfold swarm">+</button><button type="button" data-btn="quiet" data-size="bare" data-ins="gname" aria-pressed="false">swarm</button><button type="button" class="oc-check oc-check--bare" role="switch" aria-checked="false" aria-label="swarm notifications"><span class="oc-check__box"></span></button><span class="ins-gsum">0 of 3 on</span></div></div>
+        </div>
+    </div>
+</div>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup</span><code>web/src/lib/notifications/inspector/ComputerBlocks.svelte</code><span><code>.ins-comp</code></span></div>
+    <div class="sg-specimen__body">
+        <div class="ins-sec" style="max-width: 420px">
+            <div class="ins-sec__bar"><span class="ins-label">send it to</span></div>
+            <div class="ins-sec__body">
+                <div class="ins-panel ins-comp ins-hue-1"><div class="ins-bar ins-comp__bar"><span class="ins-hue"></span><h3>nostromo</h3><span class="ins-dim">this computer, online</span></div>
+                    <div class="ins-tg"><button type="button" class="oc-check" role="switch" aria-checked="true"><span class="oc-check__box"></span><span class="oc-check__label">in the app</span></button></div>
+                    <div class="ins-tg"><button type="button" class="oc-check" role="switch" aria-checked="mixed" data-mixed><span class="oc-check__box"></span><span class="oc-check__label">phone</span></button></div></div>
+                <div class="ins-panel ins-comp ins-hue-2"><div class="ins-bar ins-comp__bar"><span class="ins-hue"></span><h3>tower</h3><span class="ins-dim">online</span></div>
+                    <div class="ins-tg"><button type="button" class="oc-check" role="switch" aria-checked="false"><span class="oc-check__box"></span><span class="oc-check__label">on the desktop</span></button><span class="ins-dim ins-tg__note">not set yet</span></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>markup</span><code>web/src/lib/notifications/inspector/Sections.svelte</code><span><code>.ins-sec</code></span></div>
+    <div class="sg-specimen__body">
+        <div class="ins-sec" style="max-width: 420px">
+            <div class="ins-sec__bar"><span class="ins-label">how it sounds</span></div>
+            <div class="ins-sec__body"><div class="ins-row"><span class="ins-dim">sound</span><button type="button" class="oc-ibtn" aria-label="play ask" data-btn="secondary" data-size="icon"><svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" fill="currentColor"><path d="m8 4 12 8-12 8Z"/></svg></button></div></div>
+        </div>
+    </div>
+</div>
 
 <h3 class="sg-h3" id="settings-mistakes">common mistakes</h3>
 <ul class="sg-mistakes">

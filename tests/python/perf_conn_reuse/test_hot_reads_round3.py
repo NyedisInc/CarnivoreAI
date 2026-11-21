@@ -122,7 +122,7 @@ def test_spawn_queue_count_opens_nothing_and_sees_a_new_spawn(state_dir, open_db
 
 def test_cplug_session_uuids_open_nothing_under_churn_and_see_a_new_row(state_dir, open_db, monkeypatch):
     from src.api import peer_auth
-    from src.cplugs.host import session_uuid_reads
+    from src.plugins.host import session_uuid_reads
 
     monkeypatch.setattr(peer_auth, "open_db", open_db)
     holder: dict = {}
@@ -183,7 +183,7 @@ def test_computers_view_rows_open_nothing_and_see_a_new_peer(state_dir, open_db,
     from src.core.federation import peer_hosts
 
     rt = SimpleNamespace(open_db=open_db, listener=None, dialer=None, link_state="stopped", invites=None, fed_key=None,
-                         iid="me", label="Me", link_port=0, join_server=None, addresses=[], member_listener=None)
+                         iid="me", label="Me", link_port=0, join_server=None, addresses=[], member_listener=None, findable=lambda: None)
     links = SimpleNamespace(state=lambda iid: "disconnected")
     assert idle_cost(monkeypatch, lambda: view.build_view(rt, links)) == 0
     assert churn_cost(monkeypatch, state_dir, lambda: view.build_view(rt, links)) == 0
@@ -240,7 +240,7 @@ def test_relay_setting_keeps_an_account_switched_off_with_no_machines_off(state_
 
 def test_durable_keys_maps_a_live_row_to_its_stored_uuid_and_an_unstored_one_to_itself(state_dir, open_db, monkeypatch, run):
     from src.api import peer_auth
-    from src.cplugs.host.capabilities import Sessions
+    from src.plugins.host.capabilities import Sessions
 
     monkeypatch.setattr(peer_auth, "open_db", open_db)
     holder: dict = {}

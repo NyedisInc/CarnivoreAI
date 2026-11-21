@@ -126,7 +126,7 @@ def test_any_warning_line_or_another_shown_folder_is_refused(world, monkeypatch)
                     " ⚠ This folder is part of the repository at /Users/owner/code/enclosing",
                     " an unknown line a newer claude adds"):
         assert _answers(b.conn, real, screen=_screen(real, warning=warning)) == [], warning
-    assert _answers(b.conn, real, screen=_screen(real, no_row="No, continue without these permissions")) == []
+    assert _answers(b.conn, real, screen=_screen(real, no_row="No, continue without these permissions")) == [("ses_1", YES_LABEL)]
     assert _answers(b.conn, real, screen=_screen(real, shown="/somewhere/else")) == []
     assert _answers(b.conn, real, screen=_screen(real, shown=real + "/sub")) == []
 

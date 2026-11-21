@@ -12,6 +12,7 @@ FENCED: tuple[tuple[str, str], ...] = (
     ("/api/v1/cplug-owner", "third-party plugin switch"),
     ("/api/v1/cplugs/safe-mode", "plugin safe mode"),
     ("/api/v1/cplugs/reviewboard/public", "public review links and their visitors"),
+    ("/api/v1/pack/interim/confirm", "the owner's interim main confirm"),
 )
 
 

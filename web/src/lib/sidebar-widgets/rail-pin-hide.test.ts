@@ -13,7 +13,7 @@ import { setLocale } from '../i18n/index.svelte';
 import { PREFERENCE_FIELD, RAIL_PIN_ID } from './rail-icons.svelte';
 import { layoutEditor } from '../../opscenter/layout-editor/editor.svelte';
 import { rail, railOn, setupRail, settle, teardownRail } from './fixtures/rail-harness';
-import { registerSwarmFlyout } from '../../cplugs/huddle/swarm-flyout';
+import { registerSwarmFlyout } from '../../plugins/huddle/swarm-flyout';
 import MiniRail from '../mini-rail/MiniRail.svelte';
 
 registerSwarmFlyout();

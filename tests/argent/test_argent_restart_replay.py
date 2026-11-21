@@ -21,7 +21,7 @@ from src.core.argent.store import ArgentStore
 from src.core.argent.token_store import TokenStore
 from src.core.sessions import launch_overlay
 from src.core.sessions.launch_overlay import OverlayContext
-from src.cplugs.sdk import ports
+from src.plugins.sdk import ports
 
 NOW = 1_000_000.0
 TOKEN = "FIXTURE-asicli-not-a-secret"

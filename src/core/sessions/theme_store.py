@@ -86,7 +86,7 @@ class ThemeStore:
                     pass
             os.replace(str(tmp), str(path))
         except (OSError, TypeError, ValueError) as exc:
-            logger.error("failed_to_save_pinned_themes", error=str(exc))
+            logger.error("failed_to_save_pinned_themes", error=str(exc), error_type=type(exc).__name__)
             if tmp is not None:
                 try:
                     tmp.unlink(missing_ok=True)

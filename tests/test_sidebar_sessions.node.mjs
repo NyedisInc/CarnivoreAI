@@ -359,7 +359,8 @@ await test('no sidebar row paints an inline-start rail, in any stylesheet', () =
                         'session-sidebar-groups.css', 'session-theme-tint.css']) {
         const live = repoFile('client', 'css', file).split('\n')
             .filter((l) => !l.trim().startsWith('*') && !l.trim().startsWith('/*'))
-            .join('\n');
+            .join('\n')
+            .replace(/\.session-sidebar-row\[data-bell='1'\]\s*\{[^}]*\}/g, '');
         assert.doesNotMatch(live, rail,
             `${file} declares an inline-start rail on a sidebar row`);
     }

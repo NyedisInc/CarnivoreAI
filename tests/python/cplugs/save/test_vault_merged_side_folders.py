@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 import stat
 
-from src.cplugs.save.vault import health, restore, units
+from src.plugins.save.vault import health, restore, units
 from tests.python.cplugs.save.test_vault_follow import drain, engine_for
 from tests.python.cplugs.save.vault_helpers import CONV, ENC, World, jsonl
 

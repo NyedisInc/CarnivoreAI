@@ -26,9 +26,10 @@ export interface PanelProvider {
   fit(kind: string): { w: number; h: number };
   info(kind: string): { about: string; data: string } | undefined;
   revision(): unknown;
+  loaded(): boolean;
 }
 
-let panelProvider: PanelProvider = { manifests: () => ({}), isPanel: () => false, tail: () => undefined, info: () => undefined, fit: () => ({ w: 6, h: 5 }), revision: () => 0 };
+let panelProvider: PanelProvider = { manifests: () => ({}), isPanel: () => false, tail: () => undefined, info: () => undefined, fit: () => ({ w: 6, h: 5 }), revision: () => 0, loaded: () => true };
 
 export function setPanelProvider(provider: PanelProvider): void {
   panelProvider = provider;

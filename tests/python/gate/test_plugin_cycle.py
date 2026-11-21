@@ -8,7 +8,7 @@ from typing import Dict, Iterator
 
 import pytest
 
-from src.cplugs.host import dependencies, developer_mode, runtime
+from src.plugins.host import dependencies, developer_mode, runtime
 from tests.python.gate import cycle
 from scripts.gate.known_defects import KNOWN
 

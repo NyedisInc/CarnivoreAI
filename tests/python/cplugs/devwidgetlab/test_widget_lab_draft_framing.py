@@ -7,9 +7,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src import security_headers as sh
-from src.cplugs.host import developer_mode
-from src.cplugs.devwidgetlab.drafts import create, preview
-from src.cplugs.sdk import signed_links
+from src.plugins.host import developer_mode
+from src.plugins.devwidgetlab.drafts import create, preview
+from src.plugins.sdk import signed_links
 from tests.python.cplugs.devwidgetlab.test_widget_lab_routes import host_app  # noqa: F401
 from tests.python.cplugs.owner import turn_on
 

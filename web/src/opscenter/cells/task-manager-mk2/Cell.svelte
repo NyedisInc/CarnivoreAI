@@ -9,14 +9,14 @@
 <script lang="ts">
   /* the widget menu */
   import type { CellProps } from '../../lib/cell';
-  import HuddleBody from '../../../cplugs/huddle/HuddleBody.svelte';
+  import HuddleBody from '../../../plugins/huddle/HuddleBody.svelte';
   import { sessionScopeFor } from '../../widgets/session-scope';
   import { sessions } from '../../api';
   import { activeTerminalSessionId } from '../../lib/active-terminal';
   import WidgetShell from '../../widgets/shell/WidgetShell.svelte';
   import { useWidget, type WidgetHandle } from '../../widgets/shell/define-widget.svelte';
   import { t } from '../../../lib/i18n/index.svelte';
-  import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
+  import type { HuddleItem } from '../../../plugins/huddle/huddle-model';
   import Mk2Bar from './Mk2Bar.svelte';
   import Mk2Count from './Mk2Count.svelte';
   import Mk2Frame from './Mk2Frame.svelte';

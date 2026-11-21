@@ -4,13 +4,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from src.cplugs.sdk import data_decl
+from src.plugins.sdk import data_decl
 
 from src.core.backup_health import vault_record
 from src.core.inventory.locations import Locations
 from src.core.inventory.vault_claims import vault_root
-from src.cplugs.host import data_roots, purge_kept, runtime, state as owner_state
-from src.cplugs.host.vault_location_migration import migrate
+from src.plugins.host import data_roots, purge_kept, runtime, state as owner_state
+from src.plugins.host.vault_location_migration import migrate
 from tests.python.cplugs.save.vault_helpers import store_save_settings
 
 REAL_SHAPED = {"auth": {"token_ttl": 3600}, "save_pipeline": {"capture_scope": "human", "vault_location": ""},
@@ -78,7 +78,7 @@ def test_core_inventory_and_the_plugin_resolve_the_same_root_through_the_setting
     store_save_settings(state, {"vaultLocation": str(tmp_path / "new" / "vault")})
     locations = Locations(state_dir=state, config_path=config, homes=(), codex=tmp_path / "codex")
     assert vault_root(locations) == tmp_path / "new" / "vault"
-    from src.cplugs.save.vault import location
+    from src.plugins.save.vault import location
 
     assert location.resolve_root(state, config) == tmp_path / "new" / "vault"
 

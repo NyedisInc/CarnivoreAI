@@ -7,8 +7,8 @@ from src.core.app_alerts import constants as AK
 from src.core.app_alerts import service
 from src.core.db import db_path_for
 from src.core.db_migration import ensure_db_migrated
-from src.cplugs.host import capabilities, runtime
-from src.cplugs.sdk import context
+from src.plugins.host import capabilities, runtime
+from src.plugins.sdk import context
 
 EXPLAINER = {
     "id": "check_access", "label_key": "cplug.demo.action.check", "explain_key": "cplug.demo.alert.explain",

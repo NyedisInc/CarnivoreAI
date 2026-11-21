@@ -6,8 +6,8 @@ import time
 from typing import List
 from unittest import mock
 
-from src.cplugs.reviewboard.public import listener as public_listener
-from src.cplugs.reviewboard.public.listener import MAX_CONCURRENCY
+from src.plugins.reviewboard.public import listener as public_listener
+from src.plugins.reviewboard.public.listener import MAX_CONCURRENCY
 from tests.python.cplugs.reviewboard.public.harness import LOOPBACK, ServerThread, edge_for, exchange, request
 
 

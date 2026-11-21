@@ -17,12 +17,12 @@ from src.core.crate_import.model import ImportRequest
 from src.core.db import connect, db_path_for
 from src.core.inventory.locations import Locations
 from src.core.project_move.paths import PathMapping
-from src.cplugs.crate.env import CrateEnv
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import ExportRequest, build_plan as build_export_plan
-from src.cplugs.crate.writer import run_export
-from src.cplugs.sdk import crate_format as cf
-from src.cplugs.sdk.crate_sources import PaneListing
+from src.plugins.crate.env import CrateEnv
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import ExportRequest, build_plan as build_export_plan
+from src.plugins.crate.writer import run_export
+from src.plugins.sdk import crate_format as cf
+from src.plugins.sdk.crate_sources import PaneListing
 from tests.python.crate_import.install import Install
 from tests.python.crate_import.test_import_plan import plan_of, target
 from tests.python.crate_import.test_import_relocated import export_with_paths

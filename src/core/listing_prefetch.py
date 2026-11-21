@@ -4,6 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Sequence, Tuple
 
+from src.core.hosts.table_columns import schema_pass
+
 
 @dataclass(frozen=True)
 class NameReads:
@@ -53,7 +55,10 @@ def build_listing_prefetch(
 ) -> ListingPrefetch:
     by_name: Dict[str, NameReads] = {}
     unique = [n for n in dict.fromkeys(names) if n]
-    batched = label_identity_for_names(unique) if label_identity_for_names and unique else {}
+    batched: Mapping[str, Tuple[Optional[str], Optional[dict]]] = {}
+    if label_identity_for_names and unique:
+        with schema_pass():
+            batched = label_identity_for_names(unique)
     for name in unique:
         if name in by_name:
             continue

@@ -23,7 +23,7 @@ from src.core.crate_import.env import BoardRelinkFailed, ImportEnv, StoreHome
 from src.core.crate_import.idmap import IdMap
 from src.core.crate_import.model import W_BOARD_UNLINKED, W_STORE_NO_FOLDER, W_STORE_PLUGIN_OFF, W_STORE_UNLOCATED, Collector
 from src.core.inventory.plugin_units import BOARD_SIDECAR, MAX_BOARD_DEPTH
-from src.cplugs.sdk import task_folders
+from src.plugins.sdk import task_folders
 
 logger = structlog.get_logger()
 

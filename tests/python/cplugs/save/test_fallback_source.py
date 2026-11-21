@@ -9,11 +9,11 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.host import routes as host_routes, runtime
-from src.cplugs.save.fallback import BackupTranscripts
-from src.cplugs.save.vault.location import VaultUnavailable
+from src.plugins.host import routes as host_routes, runtime
+from src.plugins.save.fallback import BackupTranscripts
+from src.plugins.save.vault.location import VaultUnavailable
 from src.core.deepsearch import fallback_hook as fb
-from src.cplugs.sdk import transcript_files
+from src.plugins.sdk import transcript_files
 from tests.python.cplugs.save.vault_helpers import CODEX_ID, CONV, World, jsonl
 from tests.python.time_machine.helpers import make_corpus
 
@@ -24,8 +24,8 @@ def _vault_state(root: Path) -> list:
 
 @pytest.fixture
 def backed_up(tmp_path: Path):
-    from src.cplugs.save.vault import units
-    from src.cplugs.save.vault.identity import Identity
+    from src.plugins.save.vault import units
+    from src.plugins.save.vault.identity import Identity
 
     world = World(tmp_path)
     main = world.write_conversation(jsonl(30))
@@ -84,7 +84,7 @@ def test_a_damaged_chunk_is_unavailable_not_wrong_bytes_and_an_unreachable_vault
         list(BackupTranscripts(unreachable).conversations())
     with pytest.raises(OSError):
         BackupTranscripts(unreachable).files(CONV)
-    assert list(BackupTranscripts(lambda: __import__("src.cplugs.save.vault.store", fromlist=["Vault"]).Vault(tmp_path / "empty")).conversations()) == []
+    assert list(BackupTranscripts(lambda: __import__("src.plugins.save.vault.store", fromlist=["Vault"]).Vault(tmp_path / "empty")).conversations()) == []
 
 
 def test_the_boot_flag_defaults_off_raises_on_begin_and_lowers_on_end():

@@ -6,9 +6,9 @@ import time
 
 import pytest
 
-from src.cplugs.reviewboard import pdf_scan
-from src.cplugs.reviewboard.pdf_streams import PdfUnreadable
-from src.cplugs.sdk.file_secrets import Deadline
+from src.plugins.reviewboard import pdf_scan
+from src.plugins.reviewboard.pdf_streams import PdfUnreadable
+from src.plugins.sdk.file_secrets import Deadline
 
 SEPARATORS = [b"\x00", b"\x0b", b"\t", b"\n", b"\x0c", b"\r", b" ", b"\r\n", b"%c\n", b"%c\r", b"%\x00 junk (\n", b"%\n", b" \x00\t\n\x0c\r ", b" %x\r\n\x00%y\n ", b"%" + b"c" * 3000 + b"\n"]
 SCRIPT = b"<< /S /JavaScript /JS (x) >>\nendobj\n"

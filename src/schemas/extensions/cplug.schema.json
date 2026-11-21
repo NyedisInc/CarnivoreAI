@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://carnivore.ai/schemas/extensions/cplug.schema.json",
   "title": "Carnivore plugin (cplug), layer 1",
-  "description": "A Carnivore plugin. Its runtime manifest stays src/cplugs/<id>/cplug.json; this sidecar carries the shared envelope and must agree with it on every field both carry.",
+  "description": "A Carnivore plugin. Its runtime manifest stays src/plugins/<id>/cplug.json; this sidecar carries the shared envelope and must agree with it on every field both carry.",
   "allOf": [
     {
       "$ref": "item.schema.json"

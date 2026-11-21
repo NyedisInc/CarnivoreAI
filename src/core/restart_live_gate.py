@@ -5,7 +5,7 @@ import sqlite3
 import subprocess
 from contextlib import closing
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import structlog
 
@@ -29,6 +29,16 @@ def classify_probe(raw: str, name: str, epoch: Optional[int]) -> Optional[bool]:
     except ValueError:
         return None
     return created == int(epoch)
+
+
+def probe_epoch(raw: Optional[str], name: str) -> Optional[int]:
+    parts = (raw or "").strip().split("|", 2)
+    if len(parts) != 3 or parts[2] != name or parts[0] not in ("0", "1"):
+        return None
+    try:
+        return int(parts[1])
+    except ValueError:
+        return None
 
 
 def probe_line(name: str, socket: str) -> Optional[str]:
@@ -89,3 +99,25 @@ def bound_instance_running(
         int(epoch) if epoch is not None else None,
         (row["tmux_socket"] or "").strip() or default_socket,
     )
+
+
+async def nothing_running(manager: Any, tmux_name: str) -> bool:
+    from src.core.auto_sleep.live_work import hold_for
+    from src.core.hosts.identity import is_remote_backend
+    from src.models.activity_status import RESTING
+
+    try:
+        session_id = next(
+            (sid for sid, b in manager._registry.backends.items()
+             if getattr(b, "tmux_session", None) == tmux_name and not is_remote_backend(b)), None)
+        info = await manager.get_session_info(session_id) if session_id else None
+        if info is None or info.activity_status not in RESTING or info.activity_hint is not None:
+            return False
+        if info.background_open or info.subagents_running or info.timers_live:
+            return False
+        read = getattr(manager, "_fresh_evidence", None)
+        evidence = await read(session_id) if read else None
+        return evidence is not None and hold_for(evidence, require_measured=True) is None
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("restart_nothing_running_unmeasured", tmux_name=tmux_name, error_type=type(exc).__name__)
+        return False

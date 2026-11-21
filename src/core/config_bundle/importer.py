@@ -10,6 +10,7 @@ from pydantic import ValidationError
 from src.config.launch_profiles import LAUNCH_PROFILES_KEY
 from src.core import config_migration, config_migration_steps, ui_preferences
 from src.core.config_bundle import constants
+from src.core.keymap.clashes import KeymapClashError
 from src.core.config_bundle.bundle import ConfigBundle, clean_pins, project
 from src.core.config_bundle.merge import carry_secrets, deep_merge, diff, flatten
 from src.core.config_bundle.redact import redact
@@ -212,7 +213,10 @@ def build_document(
                 changes[name] = None
     moved: Dict[str, Any] = {}
     if changes:
-        candidate, _block, moved = ui_preferences.apply_changes(candidate, changes)
+        try:
+            candidate, _block, moved = ui_preferences.apply_changes(candidate, changes)
+        except KeymapClashError as exc:
+            raise ImportRefused(f"preferences: {exc}") from exc
     block = ui_preferences.read_block(candidate)
 
     pins_after = _merged_pins(clean_pins(pins_now), prepared.pins, mode)

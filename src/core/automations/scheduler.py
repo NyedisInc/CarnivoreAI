@@ -17,7 +17,8 @@ from src.core.automations import models as m
 from src.core.automations.store import AutomationStore
 from src.core.automations.store_schema import storage_for
 from src.core.automations.targets.recipe import tell_failure
-from src.cplugs.sdk.storage import CplugSchemaError
+from src.core.supervise.loop import supervise
+from src.plugins.sdk.storage import CplugSchemaError
 
 logger = structlog.get_logger()
 
@@ -83,8 +84,8 @@ class Scheduler:
         claimed = await asyncio.to_thread(self.store.claim_due, self._clock(), self._boot_id)
         try:
             await run_sessions.sweep(self._app_state, self.store, self._clock())
-        except (*PASS_ERRORS, HTTPException) as exc:
-            logger.error("automation_sweep_failed", error_type=type(exc).__name__, error=str(exc)[:200])
+        except Exception as exc:
+            logger.error("automation_sweep_failed", error_type=type(exc).__name__, error=str(exc)[:200], exc_info=exc)
         for run in claimed:
             try:
                 await self._dispatch(run)
@@ -246,6 +247,9 @@ class Scheduler:
                 await asyncio.to_thread(self._after_end, run["automation_id"], run["run_id"], m.FAILED, m.R_INTERRUPTED)
         except PASS_ERRORS as exc:
             logger.error("automation_reconcile_failed", error_type=type(exc).__name__, error=str(exc)[:200])
+        await supervise("automations-scheduler", self._pass_loop)
+
+    async def _pass_loop(self) -> None:
         while True:
             self._wake.clear()
             try:

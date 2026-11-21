@@ -44,7 +44,12 @@ class TlsInitiatorTransport:
                  listen_port: Callable[[], Optional[int]] = lambda: None,
                  on_first_link: Optional[Callable[[], Awaitable[None]]] = None,
                  on_rotated: Optional[Callable[[str], Awaitable[None]]] = None,
+                 hello_extras: Callable[[], Dict[str, Any]] = lambda: {},
+                 on_relay_id: Optional[Callable[[str], None]] = None,
+                 on_roster: Optional[Callable[[Any], Awaitable[None]]] = None,
                  control_dir: Optional[Path] = None) -> None:
+        self._hello_extras, self._on_relay_id, self._on_roster = hello_extras, on_relay_id, on_roster
+        self._watch: Optional["asyncio.Task[None]"] = None
         self._rv, self._get_link, self._listener = rendezvous, get_link, listener_path
         self._make_client, self._on_first_link, self._on_rotated = make_client, on_first_link, on_rotated
         self._addresses, self._listen_port = addresses, listen_port
@@ -55,6 +60,14 @@ class TlsInitiatorTransport:
         self._session: Optional[MuxSession] = None
         self._local: Optional[LocalSocket] = None
         self._linked = False
+        self._announced = False
+
+    async def reannounce(self) -> bool:
+        if self._session is None or self._announced or not self._hello_extras():
+            return False
+        self._announced = True
+        await self._teardown(f.GO_NORMAL)
+        return True
 
     async def settle(self) -> None:
         await self._rv.settle()
@@ -68,6 +81,7 @@ class TlsInitiatorTransport:
         if conn is None:
             raise LinkDown("waiting for main")
         reader, writer = conn
+        relayed = self._rv.taken_via_relay
         session = MuxSession(reader, writer, dialer=True, on_open=inbound_handler(self._listener))
         self._session = session
         try:
@@ -79,10 +93,17 @@ class TlsInitiatorTransport:
             if not self._linked and self._on_first_link is not None:
                 await self._on_first_link()
             self._linked = True
+            if relayed:
+                self._watch = asyncio.get_running_loop().create_task(self._leave_relay_for_direct(session), name="link-relay-watch")
         except BaseException:
             await self._teardown(f.GO_NORMAL)
             raise
         return Route("unix", self.out_path)
+
+    async def _leave_relay_for_direct(self, session: MuxSession) -> None:
+        await self._rv.settle()
+        log.info("link_direct_available_leaving_relay")
+        await session.close(f.GO_NORMAL)
 
     async def _note_rotation(self, writer: asyncio.StreamWriter, link: store.LinkRow) -> None:
         ssl_obj = writer.get_extra_info("ssl_object")
@@ -96,8 +117,10 @@ class TlsInitiatorTransport:
             log.error("link_on_rotated_failed", **failure_fields(exc))
 
     async def _hello(self, session: MuxSession) -> None:
+        extras = self._hello_extras()
+        self._announced = bool(extras)
         await session.start({"v": f.PROTOCOL_VERSION, "proto": PROTOCOL_MAJOR, "addresses": list(self._addresses()),
-                             "listen_port": self._listen_port()})
+                             "listen_port": self._listen_port(), **extras})
         try:
             hello = await asyncio.wait_for(session.hello(), HELLO_TIMEOUT)
         except asyncio.TimeoutError:
@@ -106,6 +129,14 @@ class TlsInitiatorTransport:
             reasons = {f.GO_VERSION: "main speaks another link version", f.GO_REMOVED: "main removed this computer"}
             raise LinkDown(reasons.get(session.goaway_reason, "main closed the link during hello")) from None
         self._body = {"kind": "unix", "path": _back_path(hello)}
+        relay_id = hello.get("relay_id")
+        if self._on_relay_id is not None and isinstance(relay_id, str):
+            self._on_relay_id(relay_id)
+        if self._on_roster is not None and hello.get("roster") is not None:
+            try:
+                await self._on_roster(hello["roster"])
+            except Exception as exc:  # noqa: BLE001
+                log.error("link_roster_failed", **failure_fields(exc))
 
     async def renew(self, client: PeerClient) -> None:
         response = await client.request("POST", "/federation/link", json=self._body)
@@ -114,6 +145,10 @@ class TlsInitiatorTransport:
 
     async def _teardown(self, reason: int) -> None:
         session, local, self._session, self._local = self._session, self._local, None, None
+        watch, self._watch = self._watch, None
+        if watch is not None and watch is not asyncio.current_task():
+            watch.cancel()
+            await asyncio.gather(watch, return_exceptions=True)
         if session is not None:
             await session.close(reason)
         if local is not None:
@@ -128,6 +163,9 @@ def tls_transport_factory(*, install_id: str, listener_path: str, rendezvous: Re
                           addresses: Callable[[], List[str]], listen_port: Callable[[], Optional[int]],
                           cache: Optional[store.LinkCache] = None,
                           on_rotated: Optional[Callable[[str, str], Awaitable[None]]] = None,
+                          hello_extras: Callable[[str], Dict[str, Any]] = lambda _peer: {},
+                          on_relay_id: Optional[Callable[[str, str], None]] = None,
+                          on_roster: Optional[Callable[[str, Any], Awaitable[None]]] = None,
                           control_dir: Optional[Path] = None) -> Callable[[PeerRow, Callable[[Route], PeerClient]], Optional[Transport]]:
     rows = cache if cache is not None else store.CACHE
 
@@ -146,5 +184,7 @@ def tls_transport_factory(*, install_id: str, listener_path: str, rendezvous: Re
         return TlsInitiatorTransport(
             install_id=install_id, host_key=row.key, rendezvous=rendezvous, get_link=lambda: rows.tls_main_for(peer),
             listener_path=listener_path, make_client=make, addresses=addresses, listen_port=listen_port,
-            on_first_link=first, on_rotated=rotated, control_dir=control_dir)
+            on_first_link=first, on_rotated=rotated, hello_extras=lambda: hello_extras(peer),
+            on_relay_id=lambda relay_id: on_relay_id(peer, relay_id) if on_relay_id is not None else None,
+            on_roster=(lambda raw: on_roster(peer, raw)) if on_roster is not None else None, control_dir=control_dir)
     return factory

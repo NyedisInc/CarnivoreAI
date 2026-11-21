@@ -40,7 +40,7 @@ from src.core.attention.registry_record import REG_BUSY, REG_IDLE, REG_SHELL, pa
 from src.core.attention.registry_index import registry_for_session
 from src.core.attention.resolve import resolve_attention
 from src.core.attention.resolve_rest import DONE_QUIET_SECONDS
-from src.core.attention.transcript_walk import BOOKKEEPING_RECORD_TYPES
+from src.core.attention.transcript_records import BOOKKEEPING_RECORD_TYPES
 from src.core.attention.transcript_facts import (
     FACTS_FOUND,
     TranscriptFacts,

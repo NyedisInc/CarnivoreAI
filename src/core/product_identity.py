@@ -127,3 +127,10 @@ def identity_report() -> dict:
         "browser_key_prefix": "current",
         "release_repo": "current",
     }
+
+
+_TEST_MODE_TRUTHY = frozenset({"1", "true", "yes", "on"})
+
+
+def test_mode_enabled() -> bool:
+    return (env_value("TEST_MODE") or "").strip().lower() in _TEST_MODE_TRUTHY

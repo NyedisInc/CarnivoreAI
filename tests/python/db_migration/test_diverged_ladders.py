@@ -14,8 +14,8 @@ from src.core.db_steps import run_chain
 from src.core.project_colors.ddl import apply_v61
 from src.core.work.ladder import MIGRATIONS, SCHEMA_VERSION, feature_rungs
 from src.core.work.storage import LEGACY_STORAGE
-from src.cplugs.sdk import CplugSchemaError, CplugStorage
-from src.cplugs.sdk.storage_reconcile import master_rows
+from src.plugins.sdk import CplugSchemaError, CplugStorage
+from src.plugins.sdk.storage_reconcile import master_rows
 
 
 def _cloude_master(state_dir: Path) -> frozenset:

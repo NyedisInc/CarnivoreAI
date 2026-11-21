@@ -769,6 +769,6 @@ def test_joining_counts_as_the_members_own_yes_only_when_it_never_answered(monke
         runtime=SimpleNamespace(set_restrictions=lambda changes, **kw: restrictions.append(changes)), sync_scopes=lambda: None)
     monkeypatch.setattr(join_consent.machines_runtime, "wiring", lambda: wired)
     assert join_consent.accept_on_join() is True
-    assert saved[0].mode == "all" and restrictions == [{"may_receive_credentials": True}]
+    assert saved[0].mode == "all" and restrictions == [{"may_receive_credentials": True, "may_receive_global_setup": True}]
     state.mode = "none"
     assert join_consent.accept_on_join() is False and len(saved) == 1

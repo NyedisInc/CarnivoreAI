@@ -8,7 +8,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from src.api.auth import require_auth
-from src.cplugs.host.peer_refusal import refuse_peer_token_writes
+from src.plugins.host.peer_refusal import refuse_peer_token_writes
 from src.api import catalog_cplug_gates, catalog_mod_gates
 from src.api.catalog_install_support import (
     apply_now,

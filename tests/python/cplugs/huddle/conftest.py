@@ -14,28 +14,28 @@ def plain_sessions_record_no_swarm_row(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def forget_held_rows():
-    from src.cplugs.huddle import changes_view
+    from src.plugins.huddle import changes_view
 
     changes_view._SENT.clear()
 
 
 @pytest.fixture(autouse=True)
 def no_personal_addon_skills(monkeypatch):
-    from src.cplugs.huddle import mcp
+    from src.plugins.huddle import mcp
 
     monkeypatch.setattr(mcp, "stale_extensions", lambda *args, **kwargs: [])
 
 
 @pytest.fixture(autouse=True)
 def no_stored_session_rows(monkeypatch):
-    from src.cplugs.host import session_rows
+    from src.plugins.host import session_rows
 
     monkeypatch.setattr(session_rows, "read", lambda keys: {})
 
 
 @pytest.fixture(autouse=True)
 def no_nested_projects(monkeypatch):
-    from src.cplugs.host import capabilities
+    from src.plugins.host import capabilities
 
     monkeypatch.setattr(capabilities.Projects, "enclosing", lambda self: {})
 

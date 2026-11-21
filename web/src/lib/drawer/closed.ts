@@ -1,9 +1,12 @@
 
+import { claimsOf, liveRowIs, rowNameFor } from './record-row-name';
+
 interface ClosedRecord {
     closed?: boolean;
     session_uuid?: string;
     tmux_name?: string | null;
     title?: string | null;
+    last_work_at?: string | null;
     owned?: boolean;
     tmux_created_epoch?: number;
     agent_family?: string | null;
@@ -24,24 +27,24 @@ export function isClosedRow(row: Record<string, unknown> | null | undefined): bo
 }
 
 export function addClosedRows(rows: Array<Record<string, unknown>>, records: readonly unknown[]): number {
-    const taken = new Set((rows || []).map((r) => r && r.name));
+    const claims = claimsOf(rows || []);
     const seen = new Set<string>();
     let added = 0;
     for (const raw of Array.isArray(records) ? records : []) {
         const rec = raw as ClosedRecord | null;
         if (!rec || rec.closed !== true || !rec.session_uuid || seen.has(rec.session_uuid)) continue;
-        const name = rec.tmux_name || `${CLOSED_NAME_PREFIX}${rec.session_uuid}`;
-        if (taken.has(name)) continue;
-        taken.add(name);
+        if (liveRowIs(claims, rec.session_uuid, rec.tmux_name)) continue;
         seen.add(rec.session_uuid);
         rows.push({
-            name,
+            name: rowNameFor(claims, CLOSED_NAME_PREFIX, rec.session_uuid, rec.tmux_name),
             label: rec.title != null ? rec.title : null,
             closed: true,
             asleep: false,
             archived: false,
             status: CLOSED_STATUS,
             session_uuid: rec.session_uuid,
+            tmux_name: rec.tmux_name || null,
+            last_work_at: rec.last_work_at || null,
             session_id: null,
             is_active: false,
             unread: false,

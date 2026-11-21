@@ -10,7 +10,7 @@
   import TerminalCell from '../terminal/Cell.svelte';
   import PageTabBody from './PageTabBody.svelte';
   import { isPageTab, pageIdOfTab } from '../../engine/page-tabs';
-  import { isNonSessionTab, isWidgetTab, widgetIdOfTab, widgetTabId } from '../../engine/widget-tabs';
+  import { isNonSessionTab, isWidgetTab, widgetIdOfTab, widgetTabId, widgetTargetOfTab } from '../../engine/widget-tabs';
   import WidgetTabBody from './WidgetTabBody.svelte';
   import { widgetTabBinding, widgetTabBodyKey } from './widget-tab-item';
   import { createWidgetTabSource } from './widget-tab-source.svelte';
@@ -43,8 +43,8 @@
   const widgetSource = createWidgetTabSource({
     remove: (tab) => ctl.close(tab),
     swap: (tab, view) => {
-      const binding = widgetTabBinding(widgetIdOfTab(tab) ?? '');
-      if (binding) ctl.swapWidgetTab(tab, widgetTabId(viewWidgetId(binding.widget, view)));
+      const binding = widgetTabBinding(widgetIdOfTab(tab) ?? '', widgetTargetOfTab(tab));
+      if (binding) ctl.swapWidgetTab(tab, widgetTabId(viewWidgetId(binding.widget, view), binding.target));
     },
   });
 
@@ -68,7 +68,7 @@
   const zone = createZone({
     key: `grid:${untrack(() => props.instance)}`,
     tabs: (): TabRef[] => ctl.tabs.map((key) => ({ key, kind: isWidgetTab(key) ? 'widget' : isPageTab(key) ? 'page' : 'terminal' })),
-    headerId: (tab) => (tab.kind === 'widget' ? widgetTabBodyKey(widgetIdOfTab(tab.key) ?? '') : null) ?? `grid:${untrack(() => props.instance)}#${tab.key}`,
+    headerId: (tab) => (tab.kind === 'widget' ? widgetTabBodyKey(widgetIdOfTab(tab.key) ?? '', widgetTargetOfTab(tab.key)) : null) ?? `grid:${untrack(() => props.instance)}#${tab.key}`,
     active: () => ctl.active,
     select: ctl.select,
     panel: () => 'open',
@@ -79,7 +79,7 @@
     openMenu: (tab, at: ZoneMenuAnchor) => {
       const anchor = at instanceof HTMLElement ? at : at.anchor;
       if (!anchor) return false;
-      if (tab.kind === 'widget' && widgetTabBinding(widgetIdOfTab(tab.key) ?? '')) {
+      if (tab.kind === 'widget' && widgetTabBinding(widgetIdOfTab(tab.key) ?? '', widgetTargetOfTab(tab.key))) {
         widgetMenu = { tab: tab.key, anchor, point: at instanceof HTMLElement ? null : { x: at.x, y: at.y } };
         return true;
       }
@@ -113,7 +113,7 @@
 </script>
 
 {#snippet widgetMenuHost(open: NonNullable<typeof widgetMenu>)}
-  {@const binding = widgetTabBinding(widgetIdOfTab(open.tab) ?? '')}
+  {@const binding = widgetTabBinding(widgetIdOfTab(open.tab) ?? '', widgetTargetOfTab(open.tab))}
   {#if binding}
     {#if open.point}
       <span class="oc-tg-spot" bind:this={menuSpot} style:left={`${open.point.x}px`} style:top={`${open.point.y}px`} aria-hidden="true"></span>
@@ -123,6 +123,7 @@
       bodyHost="tab"
       manifest={binding.widget}
       view={binding.view}
+      target={binding.target}
       options={widgetTabOptions(open.tab)}
       placementKey={open.tab}
       source={widgetSource}

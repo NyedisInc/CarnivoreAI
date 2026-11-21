@@ -6,8 +6,8 @@ from contextlib import closing
 
 import pytest
 
-from src.cplugs.huddle import lifecycle, service
-from src.cplugs.huddle.wire import ITEM_COLS
+from src.plugins.huddle import lifecycle, service
+from src.plugins.huddle.wire import ITEM_COLS
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client  # noqa: F401
 
 BASE = "/api/v1/cplugs/huddle"

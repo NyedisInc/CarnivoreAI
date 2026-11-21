@@ -9,7 +9,7 @@ from typing import Dict, Iterator
 import pytest
 
 from scripts.gate import tree_copy as tc
-from src.cplugs.host import dependencies, developer_mode, runtime
+from src.plugins.host import dependencies, developer_mode, runtime
 from tests.python.gate import cycle
 from scripts.gate.known_defects import KNOWN
 from tests.python.gate.test_plugin_cycle import build_version
@@ -80,7 +80,7 @@ def test_not_removable_plugins_are_left_out_on_purpose() -> None:
 
 def test_a_broken_purge_in_the_copy_is_caught(base_tree: Path, tmp_path: Path) -> None:
     def break_purge(tree: Path) -> None:
-        guard = tree / "src" / "cplugs" / "host" / "purge_guard.py"
+        guard = tree / "src" / "plugins" / "host" / "purge_guard.py"
         text = guard.read_text(encoding="utf-8")
         assert "def purge(folder: Path, plugin_id: str, plugins_root: Path, key: Optional[str] = None) -> PurgePlan:" in text
         guard.write_text(text.replace("def purge(folder: Path, plugin_id: str, plugins_root: Path, key: Optional[str] = None) -> PurgePlan:",

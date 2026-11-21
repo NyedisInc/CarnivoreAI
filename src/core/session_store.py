@@ -365,6 +365,13 @@ def needs_attention(conn: sqlite3.Connection) -> List[Dict[str, Any]]:
     return [dict(row) for row in rows]
 
 
+def uuid_for_row(conn: sqlite3.Connection, row_id: Optional[int]) -> Optional[str]:
+    if row_id is None:
+        return None
+    row = conn.execute("SELECT session_uuid FROM sessions WHERE id = ?", (int(row_id),)).fetchone()
+    return str(row[0]) if row is not None and row[0] else None
+
+
 def count_sessions(conn: sqlite3.Connection) -> int:
     if not sessions_table_ready(conn):
         return 0
@@ -424,7 +431,7 @@ def identity_for_live_name(
         scope_sql, scope_params = host_scope(conn, host_key, column="s.host_key")
         row = conn.execute(
             "SELECT s.id, s.parent_session_id, s.agent_type, s.agent_family, "
-            "s.agent_family_source, s.claude_session_uuid, s.launch_record, s.project_id, "
+            "s.agent_family_source, s.claude_session_uuid, s.launch_record, s.project_id, s.session_uuid, "
             "p.display_name AS project_name "
             "FROM sessions s "
             "LEFT JOIN projects p ON p.id = s.project_id "
@@ -437,7 +444,7 @@ def identity_for_live_name(
         scope_sql, scope_params = host_scope(conn, host_key)
         row = conn.execute(
             "SELECT id, parent_session_id, agent_type, agent_family, "
-            "agent_family_source, claude_session_uuid, launch_record "
+            "agent_family_source, claude_session_uuid, launch_record, session_uuid "
             "FROM sessions "
             f"WHERE tmux_socket = ?{scope_sql} AND tmux_name = ? "
             "AND tmux_created_epoch IS NOT NULL "
@@ -456,6 +463,7 @@ def identity_for_live_name(
         "agent_family_source": row["agent_family_source"],
         "claude_session_uuid": row["claude_session_uuid"] or None,
         "launch_record": row["launch_record"],
+        "session_uuid": row["session_uuid"] or None,
         "project_id": int(project_id) if project_id is not None else None,
         "project_name": project_name,
     }

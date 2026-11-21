@@ -1,5 +1,5 @@
 import { isKeptAwake } from '../auto-sleep/auto-sleep-store.svelte';
-import { swarmRosterAgents } from '../../cplugs/sdk/swarm-roster.svelte';
+import { swarmRosterAgents } from '../../plugins/sdk/swarm-roster.svelte';
 import { memberOf } from '../swarm-membership/member-face';
 import { isPinned } from './store';
 import type { RuleContext } from './group-rule';

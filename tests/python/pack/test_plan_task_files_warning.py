@@ -15,7 +15,7 @@ from src.api import pack_migrate_env as env_mod  # noqa: E402
 from src.core.pack.migrate import apply, plan, task_manager_side  # noqa: E402
 from src.core.work import file_refs  # noqa: E402
 from src.core.pack.migrate.ops import MAX_LISTED_FILES  # noqa: E402
-from src.cplugs.sdk import ports, task_folders  # noqa: E402
+from src.plugins.sdk import ports, task_folders  # noqa: E402
 from tests.python.pack.test_migrate_two_machines import seed, world  # noqa: E402,F401
 from tests.python.pack.test_task_file_paths import FILE_ID, FakeRoot, entry_for, task_folder  # noqa: E402
 from tests.python.pack.test_task_manager_side_compat import sql  # noqa: E402

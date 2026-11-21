@@ -109,7 +109,7 @@
             height: 1.4rem;
             padding: 0;
             border: 1px solid var(--oc-line-frame);
-            border-radius: 2px;
+            border-radius: var(--oc-radius-control);
             background: var(--_swatch);
             cursor: pointer;
         }

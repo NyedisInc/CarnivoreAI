@@ -378,3 +378,19 @@ def test_rollback_restores_a_state_dir_file_to_the_state_dir(tmp_path: Path):
     assert not (logs / "session_metadata.json").exists(), (
         "restore misfiled a state-dir file into the old LOG_DIRECTORY"
     )
+
+
+def test_destroy_last_session_retires_metadata_keeping_the_bytes(dirs):
+    import asyncio
+
+    log_dir, _ = dirs
+    _write_old_metadata(log_dir, "sess-only", "work-a", ["work-a"])
+    mgr = SessionManager()
+    mgr._load_session_metadata()
+    path = settings.get_session_metadata_path()
+    before = path.read_bytes()
+
+    asyncio.run(mgr.destroy_session("sess-only"))
+
+    assert not path.exists()
+    assert path.with_name(path.name + ".retired").read_bytes() == before

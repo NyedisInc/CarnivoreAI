@@ -7,8 +7,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.cplugs.host import mcp as host_mcp
-from src.cplugs.host import sidecar_registry
+from src.plugins.host import mcp as host_mcp
+from src.plugins.host import sidecar_registry
 from tests.python.api_keys.conftest import bearer, client, key_store, owner_jwt  # noqa: F401
 from tests.python.plugin_health.world import make_world
 

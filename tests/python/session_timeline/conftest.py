@@ -12,12 +12,12 @@ from src.core import resource_push
 from src.core.bookmarks import locate, rows, store
 from src.core.lineage import constants as K
 from src.core.lineage import ddl, graph, milestones
-from src.cplugs.save.port import RestorePoints
-from src.cplugs.save.vault import units
-from src.cplugs.save.vault.identity import Identity
-from src.cplugs.save.vault.store import Vault
-from src.cplugs.sdk import transcript_files as tf
-from src.cplugs.sdk import ports, restore_points
+from src.plugins.save.port import RestorePoints
+from src.plugins.save.vault import units
+from src.plugins.save.vault.identity import Identity
+from src.plugins.save.vault.store import Vault
+from src.plugins.sdk import transcript_files as tf
+from src.plugins.sdk import ports, restore_points
 from tests.python.bookmarks import fixtures
 from tests.python.time_machine import helpers as tm_helpers
 

@@ -11,8 +11,8 @@ from typing import Dict
 import pytest
 import structlog
 
-from src.cplugs.reviewboard import attachment_secrets, office_text, office_xml
-from src.cplugs.reviewboard.errors import SecretInFile, UnscannableFile
+from src.plugins.reviewboard import attachment_secrets, office_text, office_xml
+from src.plugins.reviewboard.errors import SecretInFile, UnscannableFile
 from tests.python.cplugs.reviewboard.test_attachment_secrets import post
 from tests.python.cplugs.reviewboard.test_attachments import MD, board, client, env, sidecar, tree  # noqa: F401
 

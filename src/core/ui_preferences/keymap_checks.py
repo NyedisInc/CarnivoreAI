@@ -4,23 +4,19 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from src.core.keymap import protected
+from src.core.keymap.catalog_text import catalog_lines
 
 MAX_OVERRIDDEN_ACTIONS = 600
 MAX_CHORDS_PER_ACTION = 4
 
 _TOP_LEVEL = (*protected.FAMILIES, "mouse")
 
-_REASONS = {
-    "malformed": "that is not a shortcut the app can read",
-    "reserved": "that shortcut belongs to the operating system or the browser",
-    "escape": "escape closes the top layer, so no action can take it",
-    "tab": "tab moves focus, so no action can take it",
-    "needs_cmd": "on a mac, a shortcut that can reach the terminal must include cmd, or the terminal loses that key",
-    "needs_ctrl_shift": "off a mac, a shortcut that can reach the terminal must be ctrl with shift, or the terminal loses that key",
-    "no_ctrl_alt": "ctrl with alt types characters on many keyboards, so no action can take it",
-    "terminal_owned": "the terminal or a text field already uses that shortcut",
-    "needs_modifier": "an action inside a text box needs ctrl, alt or cmd, or it would swallow the letters being typed",
-}
+_REASON_PREFIX = "keymap.refuse."
+
+
+def _reason(code: str) -> str:
+    key = f"{_REASON_PREFIX}{code}"
+    return catalog_lines(key).get(key, key)
 
 
 def _check_keys(family: str, mapping: Any) -> Dict[str, List[str]]:
@@ -34,7 +30,7 @@ def _check_keys(family: str, mapping: Any) -> Dict[str, List[str]]:
         for chord in chords:
             code = protected.refusal(family, chord, action_id) if isinstance(chord, str) else "malformed"
             if code:
-                raise ValueError(f"keymap.{family}: {_REASONS[code]}")
+                raise ValueError(f"keymap.{family}: {_reason(code)}")
     return mapping
 
 

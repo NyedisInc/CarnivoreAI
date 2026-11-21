@@ -177,7 +177,7 @@ class ThemeBackgroundManifest(BaseModel):
 class ThemeCharactersManifest(BaseModel):
     """The optional `characters` block of a theme.json: which Pack character pack the theme wears.
 
-    The Pack's squares (`web/src/cplugs/huddle/swarm/characters/`, docs/swarm.md
+    The Pack's squares (`web/src/plugins/huddle/swarm/characters/`, docs/swarm.md
     section 13) render under every theme through `--oc-*` tokens. A theme may
     ALSO name an alternate pack, a different drawing of the same states. `pack`
     is only a NAME, a short lowercase slug the client looks up in its own table

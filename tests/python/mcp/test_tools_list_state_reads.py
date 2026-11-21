@@ -7,8 +7,8 @@ from structlog.testing import capture_logs
 
 from src.api.request_log import RequestLogMiddleware
 from src.core.mcp import protocol, tools
-from src.cplugs.host import mcp as cplug_mcp, state as owner_state
-from src.cplugs.host.runtime import Host
+from src.plugins.host import mcp as cplug_mcp, state as owner_state
+from src.plugins.host.runtime import Host
 
 
 def _count_state_reads(monkeypatch) -> list:

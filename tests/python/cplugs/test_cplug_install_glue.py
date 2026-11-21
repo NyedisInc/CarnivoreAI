@@ -15,8 +15,8 @@ from src.api import catalog_cplug_gates
 from src.core.live_install_roots import LiveInstallRoots
 from src.core.skills import kinds
 from src.core.skills.ledger_types import SCOPE_GLOBAL
-from src.cplugs.host import identity, install_gates, mcp, sidecar_boot, sidecar_registry
-from src.cplugs.host import state as owner_state
+from src.plugins.host import identity, install_gates, mcp, sidecar_boot, sidecar_registry
+from src.plugins.host import state as owner_state
 from tests.helpers.catalog_app import catalog_app, ledger_rows
 from tests.helpers.catalog_surface import (
     FIXTURE_REPO, build_skill, fixture_trust_root, keypairs, publish_index, serve_archive, skill_item)

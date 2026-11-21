@@ -5,12 +5,12 @@ import dataclasses
 from pathlib import Path
 
 from src.core.claude_transcript_correlate import slugify_project_dir
-from src.cplugs.crate import share as S
-from src.cplugs.crate import share_out as SO
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import build_plan
-from src.cplugs.crate.writer import run_export
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.crate import share as S
+from src.plugins.crate import share_out as SO
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import build_plan
+from src.plugins.crate.writer import run_export
+from src.plugins.sdk import crate_format as cf
 from tests.python.cplugs.crate.crate_world import env_for, make_world, session_request
 from tests.python.inventory.world import CONV_A
 

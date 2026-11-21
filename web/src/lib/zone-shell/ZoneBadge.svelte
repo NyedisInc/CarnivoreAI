@@ -17,7 +17,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      border-radius: 50%;
+      border-radius: var(--oc-radius-circle);
       background: var(--oc-ground-panel);
       color: currentColor;
       pointer-events: none;

@@ -164,7 +164,7 @@
       .oc-md-editor__hints {
         position: absolute;
         inset: var(--oc-space-1);
-        z-index: 1;
+        z-index: var(--oc-z-raised);
         overflow-y: auto;
         padding: var(--oc-space-2);
         border-radius: var(--oc-radius-sm);
@@ -237,7 +237,7 @@
 
       .oc-notes-preview :global(code) {
         padding: 0 3px;
-        border-radius: 2px;
+        border-radius: var(--oc-radius-control);
         background: var(--oc-ground-field);
         box-shadow: inset 0 0 0 1px var(--oc-line-rule);
         font-family: var(--font-mono);
@@ -247,7 +247,7 @@
         margin: 6px 0;
         padding: 6px var(--oc-space-2);
         overflow-x: auto;
-        border-radius: 3px;
+        border-radius: var(--oc-radius-tight);
         background: var(--oc-ground-field);
         box-shadow: inset 0 0 0 1px var(--oc-line-rule);
       }

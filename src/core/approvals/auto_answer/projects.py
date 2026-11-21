@@ -37,3 +37,9 @@ def in_projects_db(folder: str) -> bool:
         logger.info("auto_answer_projects_unreadable", error_type=type(exc).__name__)
         return False
     return inside(folder, roots)
+
+
+def in_agent_slot_db(folder: str) -> bool:
+    from src.core.pack.jobs import slot_lookup
+
+    return slot_lookup.live_agent_slot(folder) is not None

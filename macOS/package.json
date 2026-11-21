@@ -1,6 +1,6 @@
 {
   "name": "cloude-code-menubar",
-  "version": "1.16.8",
+  "version": "1.16.9",
   "description": "macOS menu bar app for Carnivore remote control",
   "main": "main.js",
   "scripts": {

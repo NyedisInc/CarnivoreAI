@@ -42,6 +42,7 @@ class StrictModel(BaseModel):
 
 class StatsFilters(StrictModel):
     host: str | None = Field(None, max_length=128)
+    hosts: list[str] | None = Field(None, min_length=1, max_length=64)
     provider: Literal["claude", "codex"] | None = None
     project: str | None = Field(None, max_length=512)
     model: str | None = Field(None, max_length=128)
@@ -50,6 +51,13 @@ class StatsFilters(StrictModel):
     account_id: str | None = Field(None, max_length=128)
     window: str | None = Field(None, max_length=64)
     subagent_type: str | None = Field(None, max_length=64)
+
+    @field_validator("hosts")
+    @classmethod
+    def safe_hosts(cls, value: list[str] | None) -> list[str] | None:
+        if value is not None and any(not h.strip() or len(h) > 128 or any(ord(c) < 32 for c in h) for h in value):
+            raise ValueError("each computer must be nonempty, at most 128 characters and contain no control characters")
+        return value
 
     @field_validator("host", "project", "model", "agent_kind", "conversation_id", "account_id", "window",
                      "subagent_type")

@@ -1,4 +1,4 @@
-import { agentIdFromHash, agentPage, type AgentDrawerTab } from '../../cplugs/huddle/agents/agent-page.svelte';
+import { agentIdFromHash, agentPage, type AgentDrawerTab } from '../../plugins/huddle/agents/agent-page.svelte';
 import { DEFAULT_WIDTH_PX, readWidth as readLeftWidth } from '../drawer/resize';
 
 export const AGENT_DRAWER_WIDTH_KEY = 'carnivore.huddle.agent-drawer.width';

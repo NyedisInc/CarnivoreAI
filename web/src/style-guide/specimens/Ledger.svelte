@@ -47,18 +47,18 @@
 <Page
   embedded
   class="pledger"
+  frame="column"
+  stack
   title={t(LEDGER_KEYS.screenTitle)}
   count={t(LEDGER_KEYS.totalAccounts, { count: accounts.length })}
   onClose={() => {}}
   closeLabel={t(MANAGER_KEYS.close)}
   actions={pageActions}
 >
-  <div class="oc-page__main oc-page__main--stack">
-    <LedgerTotal
-      total={{ accounts: 2, windows: [{ kind: 'five_hour', label: '5h', used_pct: 69, accounts: 2, resets_at: soon(2.2) }] }}
-      {now}
-      {t}
-    />
-    <LedgerCards {accounts} {now} {t} />
-  </div>
+  <LedgerTotal
+    total={{ accounts: 2, windows: [{ kind: 'five_hour', label: '5h', used_pct: 69, accounts: 2, resets_at: soon(2.2) }] }}
+    {now}
+    {t}
+  />
+  <LedgerCards {accounts} {now} {t} />
 </Page>

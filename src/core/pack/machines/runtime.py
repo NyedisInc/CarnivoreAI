@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import sqlite3
 from contextlib import closing
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import structlog
@@ -17,6 +18,7 @@ from src.core.federation import fed_key, grants, peer_hosts, peer_links, peer_li
 from src.core.pack.load import agents as agents_mod
 from src.core.pack.machines import capabilities as caps_mod
 from src.core.pack.machines import exchange, restrictions as restrictions_mod, roster as roster_mod, settings_sign
+from src.core.pack.machines.probe import CanKeeper
 from src.core.pack.machines.config_state import ConfigState, default as default_state
 from src.core.pack.machines.snapshot import SnapshotCollector
 from src.core.pack.relay import consent as consent_mod, offers as offers_mod
@@ -24,6 +26,8 @@ from src.core.pack.rollup_import.puller import BULK_MAX_BODY, RollupImporter
 from src.core.resource_push import topics
 
 logger = structlog.get_logger()
+
+CAN_CHECK_SECONDS = 600.0
 
 
 def default_master_id(conn: sqlite3.Connection, self_id: str) -> str:
@@ -87,6 +91,25 @@ class Wiring:
     def __init__(self, runtime: exchange.PackMachines, open_db: Callable[[], sqlite3.Connection],
                  links: Callable[[], Optional[peer_links.PeerLinks]], state: ConfigState) -> None:
         self.runtime, self._open_db, self._links, self.state = runtime, open_db, links, state
+        self.keeper: Optional[CanKeeper] = None
+        self.last_toolchain: Dict[str, Any] = {}
+
+    def rescan_self(self) -> Dict[str, Any]:
+        block, fresh = self.keeper.refresh("rescan") if self.keeper is not None else ({}, True)
+        if not fresh:
+            return {"toolchain": self.last_toolchain, "can": block, "fresh": False}
+        toolchain = self.last_toolchain = self.runtime.collector.rescan()
+        self._changed()
+        return {"toolchain": toolchain, "can": block, "fresh": True}
+
+    def set_labels(self, labels: List[str]) -> List[str]:
+        self.state.save_labels(labels)
+        self._changed()
+        return self.state.labels()
+
+    def _changed(self) -> None:
+        self.runtime._invalidate_snapshot()  # noqa: SLF001
+        self.runtime._notify(exchange.TOPIC, self.runtime.install_id, exchange.NOTIFY_EVERY_SECONDS)  # noqa: SLF001
 
     def open_db(self) -> sqlite3.Connection:
         return self._open_db()
@@ -169,6 +192,11 @@ def start(open_db: Callable[[], sqlite3.Connection], links_getter: Callable[[], 
             logger.info("pack_relay_consent_migrated", mode=consent_mod.MODE_ALL)
     except (OSError, ValueError) as exc:
         logger.warning("pack_relay_consent_migration_failed", error=type(exc).__name__)
+    try:
+        if state.migrate_keyboard_rule():
+            logger.info("pack_keyboard_rule_migrated")
+    except (OSError, ValueError) as exc:
+        logger.warning("pack_keyboard_rule_migration_failed", error=type(exc).__name__)
     signing = settings_sign.Signing(install_id=install_id, load_key=lambda: fed_key.load_key(install_id),
                                     pinned_key=lambda iid: pinned_key(open_db, iid))
     runtime = exchange.PackMachines(
@@ -177,6 +205,8 @@ def start(open_db: Callable[[], sqlite3.Connection], links_getter: Callable[[], 
         agents=lambda: agents_mod.collect(open_db), importer=RollupImporter(open_db, post_for, caps_for),
         signing=signing, paired=lambda: any_live_grant(open_db))
     runtime.pipeline_rev = pipeline_rev
+    keeper = CanKeeper(Path(state_dir()), labels=state.labels)
+    runtime.collector.add_extra("can", lambda: keeper.current() or None)
     for entry in stored:
         runtime.roster.entries.setdefault(entry.install_id, entry)
     runtime.member_labels = lambda: [{"install_id": install_id, "label": label},
@@ -185,6 +215,7 @@ def start(open_db: Callable[[], sqlite3.Connection], links_getter: Callable[[], 
     runtime.credential_offers = lambda: offers_mod.local_offers(open_db, settings.auth_config_file)
     runtime.offers_changed = lambda: resource_push.notify(topics.PACK_RELAY_OFFER)
     wired = Wiring(runtime, open_db, links_getter, state)
+    wired.keeper = keeper
     set_wiring(wired)
     links = links_getter()
     if links is not None:
@@ -194,4 +225,20 @@ def start(open_db: Callable[[], sqlite3.Connection], links_getter: Callable[[], 
 
         links.set_beat_hook(hook)
         links.add_connect_listener(lambda peer_id: asyncio.get_running_loop().run_in_executor(None, wired.sync_scopes, peer_id))
-    return asyncio.create_task(runtime.run_tick(), name="pack-machines-tick")
+
+    async def can_loop() -> None:
+        while True:
+            try:
+                if await asyncio.to_thread(keeper.due):
+                    await asyncio.to_thread(keeper.refresh, "due")
+                    await asyncio.to_thread(wired._changed)  # noqa: SLF001
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("pack_can_probe_failed", error=type(exc).__name__)
+            await asyncio.sleep(CAN_CHECK_SECONDS)
+
+    async def run_all() -> None:
+        await asyncio.gather(runtime.run_tick(), can_loop())
+
+    return asyncio.create_task(run_all(), name="pack-machines-tick")

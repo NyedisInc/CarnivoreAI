@@ -4,19 +4,19 @@
   import { titleWhenTruncated } from '../../../lib/base/truncate';
   import { MK2_VIEW, type Mk2ViewHolder } from './mk2-view-context';
   import { saveTab } from './mk2-view-state.svelte';
-  import { isApproved, type HuddleItem } from '../../../cplugs/huddle/huddle-model';
-  import { huddle } from '../../../cplugs/huddle/huddle.svelte';
-  import HuddleReview from '../../../cplugs/huddle/HuddleReview.svelte';
-  import TaskManagerScheduleKeys from '../../../cplugs/huddle/TaskManagerScheduleKeys.svelte';
-  import HuddleReply from '../../../cplugs/huddle/HuddleReply.svelte';
-  import TaskManagerRowPosts from '../../../cplugs/huddle/TaskManagerRowPosts.svelte';
-  import { decisionKeys } from '../../../cplugs/huddle/chat/chat-model';
-  import { wrapperParts } from '../../../cplugs/huddle/huddle-density';
-  import { reviewOf } from '../../../cplugs/huddle/huddle-review';
-  import { stepsOfItem } from '../../../cplugs/huddle/task-manager-steps.svelte';
-  import { taskOf } from '../../../cplugs/huddle/task-manager-design/adapter';
-  import { inspectionOf } from '../../../cplugs/huddle/task-manager-design/inspection.svelte';
-  import { newCount, type Resource, type Tab } from '../../../cplugs/huddle/task-manager-design/model';
+  import { isApproved, type HuddleItem } from '../../../plugins/huddle/huddle-model';
+  import { huddle } from '../../../plugins/huddle/huddle.svelte';
+  import HuddleReview from '../../../plugins/huddle/HuddleReview.svelte';
+  import TaskManagerScheduleKeys from '../../../plugins/huddle/TaskManagerScheduleKeys.svelte';
+  import HuddleReply from '../../../plugins/huddle/HuddleReply.svelte';
+  import TaskManagerRowPosts from '../../../plugins/huddle/TaskManagerRowPosts.svelte';
+  import { decisionKeys } from '../../../plugins/huddle/chat/chat-model';
+  import { wrapperParts } from '../../../plugins/huddle/huddle-density';
+  import { reviewOf } from '../../../plugins/huddle/huddle-review';
+  import { stepsOfItem } from '../../../plugins/huddle/task-manager-steps.svelte';
+  import { taskOf } from '../../../plugins/huddle/task-manager-design/adapter';
+  import { inspectionOf } from '../../../plugins/huddle/task-manager-design/inspection.svelte';
+  import { newCount, type Resource, type Tab } from '../../../plugins/huddle/task-manager-design/model';
   import './mk2-design.css';
   import Tabs, { panelAttrs, type TabDef } from '../../ui/Tabs.svelte';
   import { t } from '../../../lib/i18n/index.svelte';
@@ -28,8 +28,8 @@
   import Mk2SharedViewer from './Mk2SharedViewer.svelte';
   import Mk2Subtasks from './Mk2Subtasks.svelte';
   import { actionableIdOf, actionDataOf, cardsInFrontOf, statusLinesOf } from './mk2-task-tabs';
-  import { progressOf, sinceRead } from '../../../cplugs/huddle/task-manager-progress.svelte';
-  import { waitLine } from '../../../cplugs/huddle/task-manager-wait';
+  import { progressOf, sinceRead } from '../../../plugins/huddle/task-manager-progress.svelte';
+  import { waitLine } from '../../../plugins/huddle/task-manager-wait';
 
   let { item, detailed = false }: { item: HuddleItem; detailed?: boolean } = $props();
 

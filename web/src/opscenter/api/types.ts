@@ -1,4 +1,6 @@
 
+import type { ActivityStatus } from '../../lib/activity-status';
+
 export interface SessionRow {
   id: string;
   pty_pid: number | null;
@@ -28,6 +30,11 @@ export interface SessionStats {
   local_servers: number;
 }
 
+export interface LoginExpired {
+  message: string;
+  since: string | null;
+}
+
 export interface UsageLimit {
   kind: 'session' | 'weekly' | 'weekly_model' | 'other';
   resets_at: string | null;
@@ -43,6 +50,7 @@ import type {
   McpServerHealthInfo,
   McpDropInfo,
   McpHealthInfo,
+  CodexHelpersInfo,
   LocalServerInfo,
 } from './session-info-types';
 export type {
@@ -53,6 +61,7 @@ export type {
   McpServerHealthInfo,
   McpDropInfo,
   McpHealthInfo,
+  CodexHelpersInfo,
   LocalServerInfo,
 } from './session-info-types';
 /* could not determine */
@@ -71,20 +80,24 @@ export interface SessionInfo {
   agent_family_source: string | null;
   agent_wrapper_label: string | null;
   pinned_theme: string | null;
-  activity_status: string | null;
+  activity_status: ActivityStatus | null;
   activity_hint: string | null;
   unread: boolean | null;
   startup_gate: string | null;
   status_source: string | null;
+  pr?: Record<string, unknown> | null;
   workflow_active?: boolean | null;
   usage_limit?: UsageLimit | null;
+  login_expired?: LoginExpired | null;
   project_id?: number | null;
   project_name?: string | null;
   session_row_id?: number | null;
+  session_uuid?: string | null;
   claude_session_uuid?: string | null;
   subagents_state?: string | null;
   subagents_running?: number | null;
   subagents_total?: number | null;
+  subagents_stalled?: number | null;
   timers_state?: string | null;
   timers_live?: number | null;
   timers_next_fire_at?: string | null;
@@ -100,7 +113,6 @@ export interface SessionInfo {
   account_id?: string | null;
   local_servers?: LocalServerInfo[];
   claude_title?: string | null;
-  session_uuid?: string | null;
   agent_wrapper_icon?: string | null;
   prompt_suggestion?: string | null;
   swarm_agent_id?: number | null;
@@ -116,6 +128,7 @@ export interface SessionInfo {
   messaging?: MessagingMark | null;
   background_processes?: BackgroundProcessesInfo | null;
   mcp_health?: McpHealthInfo | null;
+  codex_helpers?: CodexHelpersInfo | null;
   launched_with?: Record<string, unknown> | null;
   do_not_disturb?: boolean | null;
   task_lead?: boolean | null;
@@ -176,6 +189,8 @@ export interface ProjectResponse {
   parent_project_id?: number | null;
   has_image?: boolean;
   image_rev?: string | null;
+  auto_delegate?: boolean | null;
+  auto_delegate_leftovers?: number | null;
   new_sessions_join_swarm?: boolean;
   storage?: { state: string; packed_in?: number | null } | null;
   pack_state?: string | null;
@@ -262,7 +277,9 @@ export interface AccountUsage {
 }
 
 export interface LedgerTotalWindow {
+  provider?: 'claude' | 'codex' | null;
   kind: string;
+  window_seconds?: number | null;
   label: string;
   used_pct: number;
   resets_at: string | null;
@@ -284,6 +301,20 @@ export type TokenUsageState = 'ok' | 'absent' | 'unchecked';
 
 export type TokenUsageFamily = 'claude' | 'codex';
 
+export interface DelegatedUsage {
+  jobs: number;
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_tokens: number;
+  cache_write_tokens: number;
+  cost_usd: number | null;
+  accounts: string[];
+  remote_jobs?: number;
+  ran_on?: string[];
+  running?: number;
+  running_on?: string[];
+}
+
 /* could not be determined */
 export interface SessionTokenUsage {
   state: TokenUsageState;
@@ -304,6 +335,7 @@ export interface SessionTokenUsage {
   as_of: string;
   detail: string | null;
   account: AccountUsage | null;
+  delegated?: DelegatedUsage | null;
 }
 
 export interface Toast {

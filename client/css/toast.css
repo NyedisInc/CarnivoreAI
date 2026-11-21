@@ -3,7 +3,7 @@
   position: fixed;
   top: 60px;
   right: calc(16px + var(--oc-toast-clear-right, 0px));
-  z-index: 1100;
+  z-index: var(--oc-z-drawer);
   display: flex;
   flex-direction: column;
   gap: 10px;

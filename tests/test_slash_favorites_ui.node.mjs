@@ -120,9 +120,14 @@ test('a chip reserves the same room and can still shrink', () => {
     assert.match(chip, /min-width:\s*0\s*;/,
         'a flex child defaults to min-width: auto and would push the grid '
         + 'past the modal on a long command name');
-    const button = ruleBody(chipsCss, '.command-button');
-    const pad = /padding-right:\s*(\d+)px/.exec(button);
-    assert.ok(pad && Number(pad[1]) >= 40, 'no room reserved for the chip star');
+    const svelte = read('web', 'src', 'lib', 'slash-favorites', 'FavoriteChips.svelte');
+    const body = /\.command-chip :global\(\[data-fav-chip\]\)\s*\{([^}]*)\}/.exec(svelte);
+    assert.ok(body, 'the chip body rule is gone from FavoriteChips.svelte');
+    const pad = /padding:\s*\S+\s+(var\(--oc-tap\)|\d+px)/.exec(body[1]);
+    assert.ok(pad, 'no right padding reserved for the chip star');
+    const tap = pad[1] === 'var(--oc-tap)'
+        ? Number(/--oc-tap:\s*(\d+)px/.exec(read('web', 'src', 'opscenter', 'tokens.css'))[1]) : parseInt(pad[1], 10);
+    assert.ok(tap >= 40, 'no room reserved for the chip star');
 });
 
 // ---------------------------------------------------------------------

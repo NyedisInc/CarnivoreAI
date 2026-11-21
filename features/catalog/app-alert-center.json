@@ -1,27 +1,36 @@
 {
   "api_routes": [
-    "src/api/app_alerts_routes.py"
+    "src/api/app_alerts_routes.py",
+    "src/api/mass_death_routes.py",
+    "src/api/codex_helpers_routes.py"
   ],
   "area": "status-notifications",
   "docs": [
-    "docs/save-pipeline.md"
+    "docs/save-pipeline.md",
+    "docs/restart-and-recreate-history.md",
+    "docs/codex-helper-check.md"
   ],
   "examples": [
     "The Spark and the mini are both unreachable while conversations close: a red badge appears on the bell beside the Carnivore mark in the agents drawer, a card says no summary server reachable, and the panel shows how many summaries are waiting. The alert resolves by itself on the first summary that succeeds.",
     "You already know a server is down: dismiss the alert and it stays quiet until the condition clears, or snooze it for an hour.",
-    "You want a Slack message when the save pipeline stops, but no pop-up card: tick save pipeline under the Slack destination and untick it on screen."
+    "You want a Slack message when the save pipeline stops, but no pop-up card: tick save pipeline under the Slack destination and untick it on screen.",
+    "A stray kill command ends 18 agent panes in one second: one alert says 18 sessions died at once, and its resume all with a note button wakes each into its same conversation and types a short note telling it what happened."
   ],
   "how_to": [
     "Click the bell beside the Carnivore mark in the agents drawer (or under the claw of the closed drawer's icon rail): open alerts first, errors before warnings, each with its count and first and last seen; resolved alerts of the last 24 hours fold underneath. On a phone with the drawer shut, a coloured dot on the claw says an alert is open; tap the claw, then the bell. Clicking any alert card opens the panel too.",
     "Dismiss, snooze 1h, or clear resolved from the panel; each is a route: POST /api/v1/alerts/{id}/dismiss, POST /api/v1/alerts/{id}/snooze {minutes}, POST /api/v1/alerts/dismiss-resolved.",
     "GET /api/v1/alerts?state=active|all for the list and the badge counts; changes also arrive on /ws/events as app_alert.raised, app_alert.updated and app_alert.resolved.",
     "An alert card can be hidden per type: untick that alert's row in the screen column of the routing matrix. The bell and the panel still list it.",
-    "Alerts can also be routed to outside destinations (chat, push, email, sms): tick the alert rows (self check, save pipeline, archive, transcripts, account, phone link) under a destination in the matrix."
+    "Alerts can also be routed to outside destinations (chat, push, email, sms): tick the alert rows (self check, save pipeline, archive, transcripts, account, phone link) under a destination in the matrix.",
+    "After a mass pane death (3 or more panes dead within 10 seconds, seen at boot too) press resume all with a note on the alert: POST /api/v1/sessions/mass-death/resume, or the session_mass_death_resume MCP tool. A session a gate declines is reported and left alone.",
+    "When macOS blocks a Codex version's helper programs (quarantined and never approved), one alert per version says so: \"macos blocked codex 0.170 helpers: approve them in system settings > privacy & security\". It goes to every destination with self check ticked (phone push included), its open privacy & security button opens the pane, re-check looks again, and it resolves itself once the check passes. Each Codex row's codex_helpers field carries the same sentence. Status: GET /api/v1/agents/codex/helpers, run now: POST /api/v1/agents/codex/helpers/check, or the codex_helpers_status and codex_helpers_check MCP tools."
   ],
   "id": "app-alert-center",
   "issues": [
     1143,
-    1278
+    1278,
+    2974,
+    3046
   ],
   "keywords": [
     "alert",
@@ -29,7 +38,10 @@
     "app health",
     "badge",
     "bell",
+    "codex helpers",
+    "gatekeeper",
     "llm down",
+    "quarantine",
     "spark",
     "summary server",
     "warning"
@@ -40,7 +52,7 @@
   "status": "beta",
   "summary": "one place for app health: any part of the app can raise a deduplicated alert with a severity, and the bell in the agents drawer shows the count, a panel lists them, and every newly raised alert raises a card coloured by its severity.",
   "surfaces": [],
-  "updated": "2026-10-03",
+  "updated": "2026-11-18",
   "where": [
     "The bell beside the Carnivore mark in the agents drawer's header, and under the claw of the closed drawer's icon rail; on a phone, a severity dot on the claw that opens the drawer. Shown once signed in. API under /api/v1/alerts."
   ]

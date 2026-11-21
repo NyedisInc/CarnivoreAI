@@ -153,6 +153,19 @@ test('previewFor asks the recreate endpoint for an unreadable pane',
         assert.equal(answer.preview.options[0].kind, 'recreate');
     });
 
+test('a wake (no tmux name, only a uuid) goes straight to the recreate endpoint (#2979)',
+    async () => {
+        let asked = null;
+        const w = load({
+            restartPreview: async () => { throw new Error('a name another session reuses must not be previewed'); },
+            recreatePreview: async (uuid) => { asked = uuid; return GONE; },
+        });
+        const answer = await w.SessionRestartOptions.previewFor('', 'row-uuid');
+        assert.equal(asked, 'row-uuid');
+        assert.equal(answer.mode, 'recreate');
+        assert.equal(answer.sessionUuid, 'row-uuid');
+    });
+
 test('a failed recreate ask falls back to the first answer, not to nothing',
     async () => {
         const w = load({

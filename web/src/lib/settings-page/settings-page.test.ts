@@ -154,7 +154,7 @@ describe('the document and its drafts', () => {
 
     test('the channels group is the destinations panel and no plaintext channel field is left in the registry', () => {
         expect(settingsInGroup('notifications.channels').map((s) => s.control.kind)).toEqual(['notify-destinations']);
-        expect(settingsInGroup('notifications.routing').map((s) => s.control.kind)).toEqual(['notify-inspector', 'notify-link', 'notify-matrix', 'notify-mutes', 'notify-sync']);
+        expect(settingsInGroup('notifications.routing').map((s) => s.control.kind)).toEqual(['notify-inspector']);
         expect(SETTINGS.filter((s) => s.control.kind === 'secret')).toEqual([]);
     });
 

@@ -3,13 +3,12 @@ from __future__ import annotations
 
 import json
 import sqlite3
-import subprocess
 from contextlib import closing
 from typing import Any, Callable, Dict, List, Optional
 
 from src.core.hosts.ddl import LOCAL_HOST_KEY
 from src.core.pack.load import process_tree
-from src.core.tmux_control.reader import control_read
+from src.core.tmux_transport.run import tmux_argv_stdout
 from src.core.tmux_discovery import TmuxVersionSkewError, tmux_argv_prefix
 
 MAX_ROWS = 200
@@ -19,19 +18,7 @@ _SQL = ("SELECT s.id, s.session_uuid, s.tmux_socket, s.tmux_name, a.id, a.displa
         "WHERE s.host_key = ? AND s.lifecycle = 'running' AND s.tmux_name IS NOT NULL")
 
 
-def _run(argv: List[str]) -> Optional[str]:
-    if len(argv) > 3 and argv[1] == "-L":
-        answered = control_read(argv[2], argv[3:])
-        if answered is not None:
-            return answered.decode("utf-8", errors="replace")
-    try:
-        done = subprocess.run(argv, capture_output=True, text=True, timeout=3, check=False)
-    except (OSError, subprocess.SubprocessError):
-        return None
-    return done.stdout if done.returncode == 0 else None
-
-
-def pane_pids(sockets: List[str], *, run: Callable[[List[str]], Optional[str]] = _run) -> Dict[tuple, List[int]]:
+def pane_pids(sockets: List[str], *, run: Callable[[List[str]], Optional[str]] = tmux_argv_stdout) -> Dict[tuple, List[int]]:
     out: Dict[tuple, List[int]] = {}
     for socket in sockets:
         try:
@@ -78,7 +65,7 @@ def summarise(rows: List[Dict[str, Any]], procs: List[process_tree.Proc]) -> Dic
 
 
 def collect(open_db: Callable[[], sqlite3.Connection], *, ps: Callable[[], Optional[List[process_tree.Proc]]] = process_tree.read,
-            run: Callable[[List[str]], Optional[str]] = _run) -> Optional[Dict[str, Any]]:
+            run: Callable[[List[str]], Optional[str]] = tmux_argv_stdout) -> Optional[Dict[str, Any]]:
     with closing(open_db()) as conn:
         found = conn.execute(_SQL, (LOCAL_HOST_KEY,)).fetchall()
     procs = ps()

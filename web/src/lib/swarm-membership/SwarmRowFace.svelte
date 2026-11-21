@@ -1,6 +1,6 @@
 
 <script lang="ts">
-  import { swarmFace } from '../../cplugs/sdk/swarm-face.svelte';
+  import { swarmFace } from '../../plugins/sdk/swarm-face.svelte';
   import { statusTitle } from '../status-dot';
   import type { AgentMarkFacts } from '../sessions/agent-marks';
   import { memberState, type Membership } from './member-face';
@@ -9,7 +9,7 @@
 
   const face = $derived(memberState(facts));
   const Face = $derived(swarmFace.component);
-  const title = $derived(statusTitle(facts.status, facts.statusSource, facts.activityHint, facts.unread, facts.parkedSummary ?? null, facts.hostOffline ?? null, facts.usageLimit ?? null));
+  const title = $derived(statusTitle(facts.status, facts.statusSource, facts.activityHint, facts.unread, facts.parkedSummary ?? null, facts.hostOffline ?? null, facts.usageLimit ?? null, facts.loginExpired ?? null));
 </script>
 
 <span class="swarm-row-face" data-swarm-member={member.agentId} data-unread={face.unread ? '1' : undefined} role="img" aria-label={title} title={title}>{#if Face}<Face state={face.state} size={13} agentId={member.agentId} seed={member.seed} rank={member.rank} />{/if}</span>

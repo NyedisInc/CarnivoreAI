@@ -8,9 +8,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.huddle import changes_view, service
-from src.cplugs.huddle.rules import CLAUDE, JOE, TaskManagerForbidden, TaskManagerInvalid
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import changes_view, service
+from src.plugins.huddle.rules import CLAUDE, JOE, TaskManagerForbidden, TaskManagerInvalid
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work.ladder import MIGRATIONS, SCHEMA_VERSION
 from src.core.work.storage import WorkStorage
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401

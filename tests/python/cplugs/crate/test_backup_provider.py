@@ -11,9 +11,9 @@ from src.core.crate_import.env import ImportEnv
 from src.core.deepsearch import fallback_hook as fb
 from src.core.inventory import plugin_stores
 from src.core.inventory.locations import Locations
-from src.cplugs.crate import constants as K
-from src.cplugs.crate.backup_points import plan_backups
-from src.cplugs.sdk import data_decl
+from src.plugins.crate import constants as K
+from src.plugins.crate.backup_points import plan_backups
+from src.plugins.sdk import data_decl
 
 FOLDER = {"own": "excluded", "share": "excluded", "reason": "the points of every conversation", "purge": "kept"}
 
@@ -34,7 +34,7 @@ def test_the_declaration_parses_and_the_contract_checks_it() -> None:
 
 
 def test_the_save_plugin_declares_it() -> None:
-    from src.cplugs.registry import CPLUGS
+    from src.plugins.registry import CPLUGS
 
     save = next(d.manifest for d in CPLUGS if d.id == "save")
     assert [d.id for d in save.data if d.provides == data_decl.PROVIDES_BACKUP_POINTS] == ["vault"]

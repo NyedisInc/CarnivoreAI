@@ -35,15 +35,22 @@
     return Number.isNaN(date.getTime()) ? '' : date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 
-  async function act(run: () => Promise<unknown>): Promise<void> {
-    if (busy) return;
+  async function act(run: () => Promise<unknown>): Promise<boolean> {
+    if (busy) return false;
     busy = true;
     try {
       await run();
+      return true;
     } catch {
+      return false;
     } finally {
       busy = false;
     }
+  }
+
+  async function dismissThenCloseIfEmpty(run: () => Promise<unknown>): Promise<void> {
+    const ok = await act(run);
+    if (ok && sections.open.length === 0 && sections.resolved.length === 0 && waiting.length === 0) onClose();
   }
 
   async function runAction(alert: AppAlert, action: AlertAction): Promise<void> {
@@ -157,7 +164,7 @@
                 onclick={() => act(() => snoozeAlert(alert.id, SNOOZE_MINUTES))}>{t('app_alert.row.snooze')}</Button>
             {/if}
             <Button size="sm" disabled={busy}
-              onclick={() => act(() => dismissAlert(alert.id))}>{t('app_alert.row.dismiss')}</Button>
+              onclick={() => dismissThenCloseIfEmpty(() => dismissAlert(alert.id))}>{t('app_alert.row.dismiss')}</Button>
           </div>
         </div>
       </div>
@@ -169,7 +176,7 @@
           onclick={() => (showResolved = !showResolved)}>{t('app_alert.panel.resolved', { count: sections.resolved.length })}</Button>
         <span class="aa-spacer"></span>
         <Button size="sm" disabled={busy}
-          onclick={() => act(() => dismissResolvedAlerts())}>{t('app_alert.panel.dismiss_resolved')}</Button>
+          onclick={() => dismissThenCloseIfEmpty(() => dismissResolvedAlerts())}>{t('app_alert.panel.dismiss_resolved')}</Button>
       </div>
       {#if showResolved}
         {#each sections.resolved as alert (alert.id)}
@@ -191,28 +198,28 @@
     position: fixed;
     top: 56px;
     right: 12px;
-    z-index: 1200;
+    z-index: var(--oc-z-menu);
     width: min(460px, calc(100vw - 24px));
     max-height: min(70vh, 640px);
     display: flex;
     flex-direction: column;
     font-family: var(--font-mono);
-    color: var(--pl-text);
-    border-radius: var(--pl-radius-sm);
+    color: var(--oc-text-primary);
+    border-radius: var(--oc-radius-sm);
   }
   .aa-spacer { flex: 1; }
   .aa-body { overflow-y: auto; min-height: 0; }
-  .aa-empty { margin: 0; padding: 14px 12px; color: var(--pl-muted); font-size: 12px; }
+  .aa-empty { margin: 0; padding: 14px 12px; color: var(--oc-text-secondary); font-size: 12px; }
   .aa-row {
     display: flex;
     gap: 10px;
     align-items: flex-start;
     padding: 10px 12px;
-    box-shadow: inset 0 -1px 0 0 var(--pl-line-quiet);
+    box-shadow: inset 0 -1px 0 0 var(--oc-line-faint);
   }
   .aa-row--resolved { opacity: 0.7; }
   .aa-wait { width: 100%; color: inherit; font: inherit; text-align: left; }
-  .aa-wait-wrap { box-shadow: inset 0 -1px 0 0 var(--pl-line-quiet); }
+  .aa-wait-wrap { box-shadow: inset 0 -1px 0 0 var(--oc-line-faint); }
   .aa-wait-wrap .aa-wait { box-shadow: none; }
   .aa-wait-open { display: flex; padding: 0 12px 8px; }
   .aa-wait:hover { background: var(--oc-ground-hover); }
@@ -221,30 +228,30 @@
     width: 8px;
     height: 8px;
     margin-top: 4px;
-    border-radius: 1px;
-    background: var(--pl-dim);
+    border-radius: var(--oc-radius-xs);
+    background: var(--oc-text-muted);
   }
   .aa-mark--error { background: var(--oc-coral); }
   .aa-mark--warn { background: var(--oc-yellow); }
   .aa-mark--info { background: var(--oc-cyan); }
   .aa-mark--resolved { background: var(--oc-green); }
   .aa-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-  .aa-title { font-size: 12px; color: var(--pl-text); }
-  .aa-count { margin-left: 6px; color: var(--pl-muted); }
-  .aa-detail { font-size: 11px; color: var(--pl-muted); }
+  .aa-title { font-size: 12px; color: var(--oc-text-primary); }
+  .aa-count { margin-left: 6px; color: var(--oc-text-secondary); }
+  .aa-detail { font-size: 11px; color: var(--oc-text-secondary); }
   .aa-actions { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px; }
   .aa-meta { display: flex; align-items: center; gap: 8px; justify-content: space-between; min-width: 0; }
   .aa-source { display: inline-flex; align-items: center; gap: 5px; min-width: 0; text-transform: uppercase; letter-spacing: 0.08em; }
-  .aa-source-glyph { display: inline-flex; flex: none; color: var(--pl-muted); }
+  .aa-source-glyph { display: inline-flex; flex: none; color: var(--oc-text-secondary); }
   .aa-chip {
     flex: none;
     padding: 1px 6px;
-    border: var(--oc-border, 1px) solid var(--pl-line);
-    border-radius: var(--pl-radius-sm);
+    border: var(--oc-border, 1px) solid var(--oc-line-rule);
+    border-radius: var(--oc-radius-sm);
     font-size: var(--oc-fs-label);
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--pl-muted);
+    color: var(--oc-text-secondary);
   }
   .aa-chip--needs_you {
     color: var(--oc-orange-bright);
@@ -252,13 +259,13 @@
     background: color-mix(in oklab, var(--oc-orange) 18%, transparent);
   }
   .aa-chip--question { color: var(--oc-cyan); border-color: var(--oc-cyan); }
-  .aa-explain { margin: 4px 0; padding: 8px 0; box-shadow: inset 0 1px 0 0 var(--pl-line-quiet), inset 0 -1px 0 0 var(--pl-line-quiet); }
-  .aa-explain-text { margin: 0; font-size: 11px; color: var(--pl-text); line-height: 1.5; }
+  .aa-explain { margin: 4px 0; padding: 8px 0; box-shadow: inset 0 1px 0 0 var(--oc-line-faint), inset 0 -1px 0 0 var(--oc-line-faint); }
+  .aa-explain-text { margin: 0; font-size: 11px; color: var(--oc-text-primary); line-height: 1.5; }
   .aa-fold {
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    box-shadow: inset 0 -1px 0 0 var(--pl-line-quiet);
+    box-shadow: inset 0 -1px 0 0 var(--oc-line-faint);
   }
 </style>

@@ -45,7 +45,11 @@ def tmux_socket():
     os.system(f"{shutil.which('tmux')} -L {name} kill-server >/dev/null 2>&1")
 
 
-def test_listing_capture_and_process_table_are_posix_spawned(spawned, tmux_socket):
+def test_listing_capture_and_process_table_are_posix_spawned(spawned, tmux_socket, monkeypatch):
+    from src.core import claude_resume_argv
+
+    monkeypatch.setenv("CARNIVORE_CONTROL_INPUT", "0")
+    monkeypatch.setattr(claude_resume_argv.libproc_snapshot, "snapshot", lambda *_a, **_k: None)
     probe = TmuxBackend.for_external(session_name="cloude_ps", on_output=None,
                                      working_dir=Path(tempfile.gettempdir()),
                                      socket_name=tmux_socket)
@@ -53,5 +57,6 @@ def test_listing_capture_and_process_table_are_posix_spawned(spawned, tmux_socke
     assert listing.ok and [row["name"] for row in listing.sessions] == ["cloude_ps"]
     assert AttentionEvidenceReader._capture(tmux_socket, "cloude_ps") is not None
     assert list_process_table()
-    verbs = [argv[3] if "tmux" in argv[0] else os.path.basename(argv[0]) for argv in spawned]
-    assert "list-panes" in verbs and "capture-pane" in verbs and "ps" in verbs
+    verbs = [next((w for w in argv[3:] if not w.startswith("-")), "?") if "tmux" in argv[0] else os.path.basename(argv[0])
+             for argv in spawned]
+    assert "list-panes" in verbs and "capture-pane" in verbs and "ps" in verbs, spawned

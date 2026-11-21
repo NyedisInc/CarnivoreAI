@@ -20,6 +20,7 @@ from src.core.stats_feed import peers
 from src.core.stats_feed import state as feed_state
 from src.core.stats_feed.model import WINDOWS, Classes, fold, trailing_rate, window_start
 from src.core.stats_feed.reader import Snapshot, read_probe, read_snapshot
+from src.core.supervise.loop import spawn as spawn_supervised
 
 logger = structlog.get_logger()
 
@@ -93,7 +94,7 @@ class StatsFeed:
         if self._wake is None:
             self._wake = asyncio.Event()
         if not self.running:
-            self._task = self._loop.create_task(self._run())
+            self._task = spawn_supervised("stats-feed", self._run)
 
     def touch(self, *, pulled: bool = False) -> None:
         self._lease_until = self._clock() + LEASE_S

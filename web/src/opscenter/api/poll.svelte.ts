@@ -27,6 +27,7 @@ export interface ResourceOptions<T> {
   body?: { key: string; read: (body: unknown) => T | null; renewMs?: number };
   afterPush?: () => void;
   pollWhile?: () => boolean;
+  haltOnUnavailable?: boolean;
 }
 
 interface PushSource {
@@ -150,6 +151,7 @@ export function resource<T>(fetcher: () => Promise<T>, options: ResourceOptions<
     if (stopped || options.intervalMs <= 0) return;
     if (timer !== undefined) clearTimeout(timer);
     timer = undefined;
+    if (options.haltOnUnavailable && held.status === 'unavailable') return;
     if (options.pushed && failures === 0 && pushSource()?.isLive()) return;
     if (topicsLive()) {
       const renew = options.body?.renewMs;

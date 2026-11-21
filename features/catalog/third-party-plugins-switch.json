@@ -38,7 +38,7 @@
   "summary": "one owner switch, off by default, that decides whether any plugin installed from the catalog may run, with a sandbox check and a safe mode.",
   "surfaces": [
     "web/src/lib/plugins-page/ThirdPartySwitch.svelte",
-    "src/cplugs/host/owner_switch.py"
+    "src/plugins/host/owner_switch.py"
   ],
   "updated": "2026-10-25",
   "where": [

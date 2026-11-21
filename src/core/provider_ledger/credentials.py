@@ -13,7 +13,7 @@ from typing import Any, List, Optional, Tuple, Union
 import structlog
 
 from src.config.provider_accounts import DEFAULT_CLAUDE_CONFIG_DIR
-from src.core.provider_ledger import claude_store, keychain
+from src.core.provider_ledger import claude_store, keychain, keychain_memo
 from src.core.provider_ledger.miss_cache import MissCache
 from src.core.provider_ledger.codex_credentials import (
     CODEX_AUTH_FILE,
@@ -147,9 +147,15 @@ def _parse_claude_blob(raw: str, *, source: str) -> Optional[ClaudeCredential]:
     )
 
 
-def _read_claude_keychain(service: str, account: Optional[str]) -> Optional[ClaudeCredential]:
-    raw = keychain.read_password(service, account=account)
-    return _parse_claude_blob(raw, source="keychain") if raw else None
+def _read_claude_keychain(
+    service: str, account: Optional[str], *, fresh: bool = False
+) -> Optional[ClaudeCredential]:
+
+    def read() -> Optional[ClaudeCredential]:
+        raw = keychain.read_password(service, account=account)
+        return _parse_claude_blob(raw, source="keychain") if raw else None
+
+    return keychain_memo.remembered_read(service, account, read, fresh=fresh)
 
 
 def _read_claude_file(config_dir: str) -> Optional[ClaudeCredential]:
@@ -179,13 +185,13 @@ def _login_stamp(config_dir: str) -> tuple:
     return tuple(stamps)
 
 
-def read_claude_credential(config_dir: str) -> Optional[ClaudeCredential]:
+def read_claude_credential(config_dir: str, *, fresh: bool = False) -> Optional[ClaudeCredential]:
     stamp = _login_stamp(config_dir)
     if _misses.blocked(config_dir, stamp):
         return None
     credential = claude_store.read_freshest(
         claude_keychain_services(config_dir),
-        _read_claude_keychain,
+        lambda service, account: _read_claude_keychain(service, account, fresh=fresh),
         lambda: _read_claude_file(config_dir),
         datetime.now(timezone.utc),
     )

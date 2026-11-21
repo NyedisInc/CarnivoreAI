@@ -20,14 +20,14 @@ from src.core.composition import build_services
 from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
 from src.core.ui_preferences_store import UiPreferencesStore
-from src.cplugs.host import adoption, state as cplug_state
-from src.cplugs.registry import PLUGINS_ROOT, plugin_folders
+from src.plugins.host import adoption, state as cplug_state
+from src.plugins.registry import PLUGINS_ROOT, plugin_folders
 from tests.helpers.catalog_app import StateOnlySettings
 from tests.helpers.catalog_surface import FrozenClock
 from tests.test_skill_installer import FakeInstallRoots
 
 SHIPPED = plugin_folders(PLUGINS_ROOT)
-EXPECTED_SHIPPED = ["huddle", "unread", "share", "save", "flow", "reviewboard", "publicboard", "tmdevtools", "crate", "devwidgetlab", "timemachine"]
+EXPECTED_SHIPPED = ["huddle", "unread", "share", "save", "flow", "reviewboard", "tmdevtools", "crate", "devwidgetlab", "argent", "sessionchat", "timemachine"]
 
 
 class Env:

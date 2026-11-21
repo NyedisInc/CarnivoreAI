@@ -17,7 +17,7 @@ from src.core.mcp import tools
 from src.core.mcp.common import ToolError
 from src.core.swarm import body, brief, create, spawn, store
 from src.core.swarm.cards import effects, ops, port as card_port, validate
-from src.cplugs.sdk.cards import CardRefused
+from src.plugins.sdk.cards import CardRefused
 from tests.python.swarm.cards.test_card_enforcement import LIST, approved_rows, call, caller, col, dealt_to, owner, sql_rows, world
 
 

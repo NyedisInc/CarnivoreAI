@@ -10,9 +10,9 @@ The sections below that say "tab" for the table and the run feed describe the su
 <h3 class="sg-h3" id="automations-simple">the three tabs: overview, review feed and drawer</h3>
 <dl class="sg-facts">
     <dt>tabs</dt>
-    <dd>Three top tabs in the shared tab row (<code>.ap-toptabs</code>, <code>.ap-tabrow</code>), remembered per device. The sessions tab wears the unread badge
+    <dd>Three top tabs in the shared tab row (<code>.ap-tabrow</code> places the find box beside them), the shared page tabs at the frame height and the frame's first-tab offset, with no size or look of the page's own (#2775), remembered per device. The sessions tab wears the unread badge
         (<code>.oc-ptab__badge</code>). <code>AdvancedTab</code> holds the older page inside <code>.ap-adv</code>: a head with the page sentence, the pause
-        switch and the commands popover (<code>.ap-adv-head</code>, <code>.ap-adv-sum</code>) and the two sub-tabs table and run feed (<code>.ap-subtabs</code>).
+        switch and the commands popover (<code>.ap-adv-head</code>, <code>.ap-adv-sum</code>) and the two sub-tabs table and run feed (the shared strip's frame-height variant, <code>.oc-ptabs--frame</code>, like the detail pane's tabs).
         Deep links <code>#automations/advanced</code>, <code>#automations/run/&lt;id&gt;</code> and <code>#automations/session/&lt;uuid&gt;</code> land there.</dd>
     <dt>overview</dt>
     <dd><code>OverviewTab</code>: four base <code>StatTile</code>s in a wrapping grid (<code>Tiles</code>, <code>.s-tiles</code>, <code>.s-tiles__item</code>;
@@ -65,7 +65,7 @@ The sections below that say "tab" for the table and the run feed describe the su
         window: from 680 px the last-12 strip and the ok rate, from 900 px the on switch, from 1100 px the next run and the median took
         (<code>.ap-c-next</code>, <code>.ap-c-strip</code>, <code>.ap-c-rate</code>, <code>.ap-c-med</code>, <code>.ap-c-on</code>). The table is the
         base list (<code>.oc-list</code>) and each row a base row (<code>.oc-list__row</code>): a selected row is the selected layer
-        with a 2 px orange left edge, and run now with the kebab (<code>.oc-list__actions</code>) shows on hover, focus or selection,
+        with a 2 px orange left edge, and run now (<code>.oc-list__actions</code>) shows on hover, focus or selection,
         always on a phone. On a phone there is no header row and a row is two lines.</dd>
     <dt>toolbar</dt>
     <dd><code>AutoToolbar</code> (<code>.ap-lt</code>, the base toolbar's band strip, <code>.oc-toolbar--band</code>): hairline groups (base <code>Field</code>/<code>Select</code> groups) each with a small uppercase label
@@ -77,8 +77,8 @@ The sections below that say "tab" for the table and the run feed describe the su
     <dd><code>AutoRow</code>: the health light, the name with its needs-attention tag (the base tag, <code>.oc-tag</code>, the first matching of waiting
         on you, last run failed, skipped lately, newest output empty, switched off) and the schedule in words (<code>.ap-l2</code>), the next
         run, the last run (<code>.ap-lr</code>), the strip, the rate, the median, the on switch (the shared <code>.oc-check</code>, its word hidden in
-        the cell) and the outlined <code>run now</code> (the base confirm button, <code>data-btn="confirm"</code> at the small size) with the kebab
-        (a base <code>IconButton</code>). <code>RowMenu</code> (the app's one menu, <code>CascadeMenu</code>) offers edit, duplicate and delete; delete asks in a strip
+        the cell) and the outlined <code>run now</code> (the base confirm button, <code>data-btn="confirm"</code> at the small size). A row draws
+        no menu button: its right click and Shift+F10 open the one item menu (<code>row-menu-nodes.ts</code>) with edit, duplicate and delete; delete asks in a strip
         (<code>.ap-confirm</code>) with the restart picker's danger button.</dd>
     <dt>marks and strip</dt>
     <dd><code>Mark</code> draws a run status as a shape (<code>.ap-mk-run</code>, <code>.ap-mk-light</code>): succeeded a filled square, failed a
@@ -115,6 +115,8 @@ The sections below that say "tab" for the table and the run feed describe the su
         <code>target-forms.ts</code>. A later target adds one line there and its own form file. <code>TargetRecipe</code> draws
         the recipe's whole-number params from the schema the server sends. <code>TargetBlueprint</code> lists the saved Blueprints
         (a select) and one square check per member (<code>Check</code>); all ticked saves every member, including ones added later.
+        On a saved automation with a ticked member that has no computer of its own it also draws a base <code>Segmented</code>, "this
+        computer" or "auto" (issue #2992), one write to the automation's placement route per pick; a refusal shows its sentence under it.
         <code>TargetCard</code> picks a project board and takes the card's title, summary, text and how to validate (each with the board's
         length cap shown), plus one <code>Check</code> switch to start the card right away.</dd>
     <dt>cron agent form</dt>
@@ -130,7 +132,7 @@ The sections below that say "tab" for the table and the run feed describe the su
         on) and the outlined <code>new automation</code> (<code>data-btn="confirm"</code>). A paused scheduler also shows
         <code>.ap-strip</code>. The root is <code>.ap-page</code> (<code>page.css</code>).</dd>
     <dt>tabs</dt>
-    <dd>Under the title the page wears the shared page tabs (<code>Tabs</code>, <code>.oc-ptabs</code>, flattened here by <code>.ap-tabs</code> to the mockup's strip): <b>automations</b> and
+    <dd>Under the title the page wears the shared page tabs (<code>Tabs</code>, <code>.oc-ptabs</code>, in the frame's tab row): <b>automations</b> and
         <b>sessions</b>. There is no Task Manager tab. The chosen tab is remembered per device
         (<code>carnivore.tabs.automations</code>, try/catch); a remembered <code>huddle</code> reads as automations.</dd>
     <dt>counter strip</dt>
@@ -151,7 +153,7 @@ The sections below that say "tab" for the table and the run feed describe the su
         takes itself off the address. Save is still the one authenticated create call.</dd>
     <dt>files</dt>
     <dd><code>web/src/lib/automations/</code>: <code>AutomationsScreen</code>, <code>CounterStrip</code>, <code>AutoList</code>,
-        <code>AutoToolbar</code>, <code>AutoRow</code>, <code>RunStrip</code>, <code>Mark</code>, <code>RowMenu</code>, <code>NewestRunLine</code>,
+        <code>AutoToolbar</code>, <code>AutoRow</code>, <code>RunStrip</code>, <code>Mark</code>, <code>row-menu-nodes.ts</code>, <code>NewestRunLine</code>,
         <code>KeyHints</code>, <code>auto-list.css</code>, <code>LogDock</code>, <code>CommandsPopover</code>, <code>page.css</code>, <code>AutomationEditor</code>,
         <code>TargetPicker</code>, <code>TargetRecipe</code>, <code>TargetBlueprint</code>, <code>TargetCard</code>, <code>AgentBuilder</code>, the detail pane under <code>pane/</code> (<code>DetailPane</code>, <code>PaneHead</code>, <code>PaneEditor</code>,
         <code>OutputTab</code>, <code>RunsTab</code>, <code>OverviewTab</code>, <code>LogTab</code>, <code>pane.css</code>), and
@@ -197,9 +199,11 @@ The sections below that say "tab" for the table and the run feed describe the su
         off under reduced motion. A title row (<code>.ap-pn-bar</code>), the head or the editor, four tabs (<code>.ap-pn-tabs</code>)
         and the body. <code>[</code> steps to the older run, <code>]</code> to the newer one, Escape closes.</dd>
     <dt>head and editor</dt>
-    <dd><code>PaneHead</code>: the light and when it runs next, the kebab in its icon cluster (<code>.ap-pn-icons</code>), the name (<code>.ap-pn-name</code>), what it runs and the
+    <dd><code>PaneHead</code>: the light and when it runs next (<code>.ap-pn-top</code>), the name (<code>.ap-pn-name</code>), what it runs and the
         schedule (<code>.ap-pn-meta</code>), then the switch, <code>run now</code> and <code>edit</code>, and the note "run now spends
-        plan usage" or "run now spends none". Delete is confirmed in a popup under the kebab (<code>ConfirmPopup.svelte</code>, the menus section's anchored popup).
+        plan usage" or "run now spends none". It draws no menu button: edit, duplicate and delete open from a right click or a long
+        press on the head, or Shift+F10 in the pane, through the one item menu (<code>item-menu/page-row.ts</code>), like a list row.
+        Delete is confirmed in a popup under the status row (<code>ConfirmPopup.svelte</code>, the menus section's anchored popup).
         <code>PaneEditor</code> wraps <code>AutomationEditor</code>: four template chips (small base buttons, <code>data-btn</code> pressed) on a new automation,
         then the one editor with the live next five. A save that met a newer version reads again and says "changed elsewhere, reloaded".</dd>
     <dt>output</dt>

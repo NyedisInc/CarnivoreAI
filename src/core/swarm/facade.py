@@ -14,8 +14,8 @@ from src.core.db_reuse import datastore_pool
 from src.core.swarm import alerts, alpha, answers, body, company_promote, delivery, done_feed, facts, learning, project_agent, project_promote, promotion, push, question_close, reports, routing, seat_views, sleep_commit, store, suggest, switch, thread_port, turn_off, watch
 from src.core.swarm.cards import dealer, port as card_port
 from src.core.swarm.names import shown_name
-from src.cplugs.sdk.cards import CardPort
-from src.cplugs.sdk.swarm import AgentRef, SeatRef, SwarmError, ThreadPort, WakeTicket
+from src.plugins.sdk.cards import CardPort
+from src.plugins.sdk.swarm import AgentRef, SeatRef, SwarmError, ThreadPort, WakeTicket
 
 logger = structlog.get_logger()
 

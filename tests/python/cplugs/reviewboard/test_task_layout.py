@@ -8,9 +8,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.huddle import board_port
-from src.cplugs.reviewboard import layout, root_port, scan
-from src.cplugs.sdk import task_folders
+from src.plugins.huddle import board_port
+from src.plugins.reviewboard import layout, root_port, scan
+from src.plugins.sdk import task_folders
 from tests.python.cplugs.reviewboard.boards import SIDECAR, make_board, sidecar
 from tests.python.cplugs.reviewboard.harness import BASE, Env, task_manager_on, task_manager_store, make_env
 

@@ -21,6 +21,8 @@ from src.core.session_project_binding import (
     resolve_project_binding,
 )
 from src.core.session_store import get_instance
+from src.core.sessions.adopt_confirm import NOT_CONFIRMED
+from src.core.sessions.adopt_takeover import take_over_for_adoption
 from src.core.tmux_listing import TmuxListing
 
 if TYPE_CHECKING:
@@ -51,6 +53,7 @@ class AdoptPersistResult:
     project_attribution: Optional[str] = None
     epoch: Optional[int] = None
     detail: Optional[str] = None
+    taken_over_from: Optional[str] = None
 
     @property
     def persisted(self) -> bool:
@@ -77,6 +80,8 @@ def persist_adoption(
     pane_dead_probe: Optional[Callable[[str], Optional[bool]]] = None,
     now: Optional[str] = None,
     correlate: bool = True,
+    correlation: Optional["LadderResult"] = None,
+    takeover_refusal: Optional[str] = NOT_CONFIRMED,
 ) -> AdoptPersistResult:
     from src.core.session_identity import record_instance
 
@@ -145,6 +150,18 @@ def persist_adoption(
             epoch=epoch,
             detail="that session's process has exited",
         )
+    if correlate and correlation is None:
+        correlation = measure_claude_correlation(
+            name=name, socket=socket, epoch=epoch, working_dir=working_dir,
+            pane_pid=pane_pid_probe(name) if pane_pid_probe is not None else None,
+        )
+    previous_name: Optional[str] = None
+    if not stored and correlation is not None:
+        stored, previous_name = take_over_for_adoption(
+            conn, socket=socket, name=name, epoch=epoch, live=live,
+            listing=listing, correlation=correlation, working_dir=working_dir,
+            lifecycle_source=ADOPT_LIFECYCLE_SOURCE, confirm_refusal=takeover_refusal, now=now,
+        )
     stored_project_id = stored.get("project_id")
     binding = resolve_project_binding(
         conn,
@@ -202,17 +219,8 @@ def persist_adoption(
             detail=claim.detail,
         )
 
-    if correlate:
-        pane_pid = pane_pid_probe(name) if pane_pid_probe is not None else None
-        _try_correlate_claude_session(
-            conn,
-            socket=socket,
-            name=name,
-            epoch=epoch,
-            working_dir=working_dir,
-            pane_pid=pane_pid,
-            now=now,
-        )
+    if correlate and correlation is not None:
+        bind_claude_correlation(conn, correlation, socket=socket, name=name, epoch=epoch, now=now)
 
     logger.info(
         "adopt_persisted",
@@ -231,24 +239,8 @@ def persist_adoption(
         project_id=binding.project_id,
         project_attribution=binding.attribution,
         epoch=epoch,
+        taken_over_from=previous_name if previous_name and previous_name != name else None,
     )
-
-
-def _try_correlate_claude_session(
-    conn: sqlite3.Connection,
-    *,
-    socket: str,
-    name: str,
-    epoch: int,
-    working_dir: Optional[str],
-    pane_pid: Optional[int],
-    now: Optional[str],
-) -> None:
-    ladder = measure_claude_correlation(
-        name=name, socket=socket, epoch=epoch, working_dir=working_dir, pane_pid=pane_pid
-    )
-    if ladder is not None:
-        bind_claude_correlation(conn, ladder, socket=socket, name=name, epoch=epoch, now=now)
 
 
 def measure_claude_correlation(
@@ -347,12 +339,14 @@ def correlate_after_commit(
     name: str,
     pane_pid: Optional[int],
     now: Optional[str] = None,
+    ladder: Optional["LadderResult"] = None,
 ) -> None:
     if result.outcome != ADOPT_CLAIMED or result.epoch is None:
         return
-    ladder = measure_claude_correlation(
-        name=name, socket=socket, epoch=result.epoch, working_dir=result.working_dir, pane_pid=pane_pid
-    )
+    if ladder is None:
+        ladder = measure_claude_correlation(
+            name=name, socket=socket, epoch=result.epoch, working_dir=result.working_dir, pane_pid=pane_pid
+        )
     if ladder is None:
         return
     from src.core.db import transaction

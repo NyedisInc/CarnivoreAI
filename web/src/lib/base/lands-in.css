@@ -1,0 +1,38 @@
+@layer patterns {
+  .oc-lands {
+    display: flex;
+    flex-direction: column;
+    gap: var(--oc-space-1);
+    min-width: 0;
+    padding: var(--oc-space-2) var(--oc-space-3);
+    border: var(--oc-border) solid var(--oc-line-hairline);
+    background: var(--oc-ground-field);
+    font-family: var(--oc-font);
+    font-size: var(--oc-fs-label);
+    line-height: var(--oc-lh-body);
+  }
+
+  .oc-lands__line {
+    display: flex;
+    gap: var(--oc-space-2);
+    min-width: 0;
+    color: var(--oc-text-secondary);
+  }
+
+  .oc-lands__level {
+    flex: none;
+    min-width: var(--oc-space-6);
+    letter-spacing: var(--oc-tracking-label);
+    text-transform: uppercase;
+    color: var(--_oc-lands-tone, var(--oc-text-muted));
+  }
+
+  .oc-lands__text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .oc-lands__line[data-level='ok'] { --_oc-lands-tone: var(--oc-green); }
+  .oc-lands__line[data-level='warn'] { --_oc-lands-tone: var(--oc-yellow); }
+  .oc-lands__line[data-level='block'] { --_oc-lands-tone: var(--oc-coral); }
+}

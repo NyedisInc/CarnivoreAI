@@ -35,7 +35,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 2000;
+    z-index: var(--oc-z-takeover);
     padding: var(--oc-space-2) max(var(--oc-space-3), env(safe-area-inset-right, 0px)) calc(var(--oc-space-3) + env(safe-area-inset-bottom, 0px)) max(var(--oc-space-3), env(safe-area-inset-left, 0px));
     background: var(--oc-ground-titlerow);
     box-shadow: 0 -1px 0 var(--oc-line-frame);

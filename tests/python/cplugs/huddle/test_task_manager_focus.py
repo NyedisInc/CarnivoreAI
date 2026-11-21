@@ -13,8 +13,8 @@ from fastapi.testclient import TestClient
 from src.api.auth import require_auth
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
-from src.cplugs.host import runtime
-from src.cplugs.huddle import routes as huddle_routes, service
+from src.plugins.host import runtime
+from src.plugins.huddle import routes as huddle_routes, service
 from tests.python.cplugs.huddle.test_task_manager_mcp import full_echo
 from tests.python.cplugs.owner import turn_on
 

@@ -12,7 +12,7 @@ from src.core.notifications.sources import toast as toast_source
 from src.models.notifications import Toast
 
 ROOT = Path(__file__).resolve().parents[3]
-_ALLOWED_CALLS = ("attention_notify_type", "plugin_notify_type")
+_ALLOWED_CALLS = ("attention_notify_type", "plugin_notify_type", "event_notify_type")
 
 
 def _record_toast_calls() -> List[ast.Call]:
@@ -24,6 +24,9 @@ def _record_toast_calls() -> List[ast.Call]:
                 fn = node.func
                 if (fn.attr if isinstance(fn, ast.Attribute) else getattr(fn, "id", "")) == "record_toast":
                     node.path = str(path.relative_to(ROOT))  # type: ignore[attr-defined]
+                    node.module_constants = {  # type: ignore[attr-defined]
+                        t.id: n.value.value for n in tree.body if isinstance(n, ast.Assign)
+                        and isinstance(n.value, ast.Constant) for t in n.targets if isinstance(t, ast.Name)}
                     calls.append(node)
     return calls
 
@@ -36,7 +39,9 @@ def test_every_record_toast_caller_passes_a_registered_notify_type() -> None:
         kw = {k.arg: k.value for k in call.keywords}
         assert "notify_type" in kw, call.path  # type: ignore[attr-defined]
         value = kw["notify_type"]
-        if isinstance(value, ast.Constant):
+        if isinstance(value, ast.Name) and value.id in call.module_constants:  # type: ignore[attr-defined]
+            assert T.is_registered(call.module_constants[value.id]), (call.path, value.id)  # type: ignore[attr-defined]
+        elif isinstance(value, ast.Constant):
             assert T.is_registered(value.value), (call.path, value.value)  # type: ignore[attr-defined]
         else:
             assert isinstance(value, ast.Call) and (
@@ -61,7 +66,7 @@ def test_attention_notify_type_table_is_registered_and_complete() -> None:
 
 
 def test_plugin_notify_type_keeps_a_plugin_inside_its_own_registered_types(monkeypatch) -> None:
-    from src.cplugs.host.capabilities import plugin_notify_type
+    from src.plugins.host.capabilities import plugin_notify_type
 
     monkeypatch.setattr(T, "is_registered", lambda type_id: type_id == "cplug.acme.thing")
     assert plugin_notify_type("acme", "cplug.acme.thing") == "cplug.acme.thing"

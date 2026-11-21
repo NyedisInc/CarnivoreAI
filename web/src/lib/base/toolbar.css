@@ -54,6 +54,14 @@
     flex: none;
   }
 
+  @media (min-width: 768px) {
+    .oc-toolbar__facets {
+      flex: 0 1 auto;
+      flex-wrap: wrap;
+      max-width: 100%;
+    }
+  }
+
   .oc-toolbar__extras {
     flex: none;
   }

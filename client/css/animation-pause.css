@@ -1,7 +1,6 @@
 
 @layer legacy {
 @keyframes amb-join-dialog-glow {}
-@keyframes amb-join-avatar-spiral {}
 
 [data-anim-offscreen],
 [data-anim-offscreen]::before,

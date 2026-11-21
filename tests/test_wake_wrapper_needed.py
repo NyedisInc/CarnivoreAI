@@ -14,7 +14,8 @@ from tests.test_session_sleep import (  # noqa: F401
 )
 
 # ruff: noqa: E402
-from src.api import recreate_routes, session_sleep_routes
+from src.api import recreate_routes
+from src.core.session_ops import sleep as sleep_ops
 from src.core import session_sleep
 from src.core.session_recreate_presence import TMUX_PRESENT
 from src.core.session_restore_offer import NEVER_OFFERED
@@ -147,7 +148,7 @@ def test_auto_sleep_marks_the_row_slept_by_timer(state_dir, client, monkeypatch)
     app_state = c.app.state
     import asyncio
 
-    result = asyncio.run(session_sleep_routes.auto_sleep_by_uuid(app_state, ROW_UUID))
+    result = asyncio.run(sleep_ops.auto_sleep_session(app_state, ROW_UUID))
     assert result.status == "asleep", result.detail
     row = _row(state_dir)
     assert row["lifecycle_source"] == "slept_by_timer"

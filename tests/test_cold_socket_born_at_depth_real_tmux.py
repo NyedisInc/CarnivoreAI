@@ -189,7 +189,7 @@ async def test_a_config_that_cannot_be_written_still_launches_a_session(
     try:
         assert _tmux(socket, "has-session", "-t", "cloude_born_nofile").returncode == 0
         depth = _pane_depth(socket, "cloude_born_nofile")
-        if tmux_version() >= (3, 8):
+        if tmux_version() >= (3, 7):
             assert is_full_depth(depth, HISTORY_LIMIT)
         else:
             assert is_stock_depth(depth)

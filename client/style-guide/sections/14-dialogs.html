@@ -110,10 +110,20 @@ per option, the footer's buttons, nothing else.</p>
     <dt>ModalShell</dt>
     <dd><code>web/src/lib/dialog-frame/ModalShell.svelte</code>: the one compiled dialog frame. Props <code>title</code> (already
         translated), <code>children</code> and <code>footer</code> snippets, <code>dismissable</code> (false while busy),
-        <code>onCancel</code>, and for a dialog with its own card look <code>head</code> (a replacement title strip), an optional <code>footer</code> (absent: no footer row), <code>contentClass</code> (extra classes on the panel) and any other attribute, which lands on the overlay (the send-to and move-folder dialogs are built this way). It carries no style of its own and borrows the chassis classes by name, so it changes with the
+        <code>onCancel</code>, <code>look</code> (<code>plain</code>, the default chassis header row, or <code>titlerow</code>, the
+        title strip below: the shell then wears <code>text-prompt-modal</code> on the overlay and draws
+        <code>.modal-titlerow.text-prompt-modal__head</code> itself, the tracked accent label <code>&raquo; label</code> and the 14px
+        close X), <code>label</code> (the strip's words when they differ from the accessible <code>title</code>),
+        <code>closable</code> (false: no X), <code>closeLabel</code> (the X's name), <code>headExtra</code> (a snippet after the
+        label inside the strip: a pager, a period, a subject). THE SHELL DRAWS THE HEAD (top-down cleanup M15): no dialog writes
+        <code>text-prompt-modal__head</code> or picks the strip by <code>overlayClass</code>
+        (<code>web/src/lib/dialog-frame/one-dialog-head.test.ts</code>, a list that only goes down); the X is disabled while
+        <code>dismissable</code> is false. For a head that is not a title strip, <code>head</code> (a replacement), an optional <code>footer</code> (absent: no footer row), <code>contentClass</code> (extra classes on the panel) and any other attribute, which lands on the overlay (the send-to and move-folder dialogs are built this way). It carries no style of its own and borrows the chassis classes by name, so it changes with the
         legacy dialogs. It takes focus on mount, traps Tab, handles Escape itself and restores focus on unmount.</dd>
     <dt>built on it</dt>
-    <dd><code>ProjectNameModal</code> (a name and a path hint, resolves <code>ProjectDetails</code>),
+    <dd><code>NewProjectModal</code> (this computer's new project: a name, a company dropdown grouped by parent whose last option opens the inline
+        <code>NewCompanyBox</code>, the searchable folder tree opened at the company's folder, the path preview and the <code>LandsIn</code> check;
+        resolves <code>NewProjectChoice</code>), <code>ProjectNameModal</code> (a name and a path hint, resolves <code>ProjectDetails</code>),
         <code>ChoiceModal</code> (one of N, disabled rows stay visible with their reason), <code>ConfirmSheet</code> (a lead
         sentence, optional mono lines such as folders, optional document to accept with a tick, <code>destructive</code>
         paints the confirm red), <code>ProjectFolderModal</code>, <code>CloneModal</code>, <code>EditProjectModal</code> (also the project's color: <code>.pc-swatches</code>, a row of small square swatches, one
@@ -126,7 +136,7 @@ per option, the footer's buttons, nothing else.</p>
         <code>SignInModal</code>, and the dialogs plugins contribute (each documented in its own fragment). A new compiled dialog is one of these or a new component
         that renders <code>ModalShell</code>; it never draws its own overlay. <code>ProjectNameModal</code> and
         <code>ProjectFolderModal</code> (issue #984 restyle, the new-agent / new-project flow) wear
-        <code>overlayClass="text-prompt-modal na-flow"</code> and a <code>head</code> snippet, the same recipe as
+        <code>look="titlerow"</code> and <code>overlayClass="na-flow"</code>, the same recipe as
         <code>LayoutNameModal</code> below - <code>na-flow</code> (<code>client/css/new-agent-flow.css</code>) restores this
         flow's own ~500px width, since <code>text-prompt-modal</code>'s 380px cap suits one field, not a folder field plus a
         path preview.</dd>
@@ -201,22 +211,21 @@ per option, the footer's buttons, nothing else.</p>
         (<code>privacy.install_report.field.*</code>), in the shared <code>tm</code> panel-kit type. Read only.</dd>
     <dt>ForkPicker</dt>
     <dd><code>web/src/lib/crosstalk/ForkPicker.svelte</code> uses the shared <code>ModalShell</code>
-        and <code>text-prompt-modal na-flow</code> form recipe for provider, model, effort, name,
+        (<code>look="titlerow"</code>) and the <code>na-flow</code> form recipe for provider, model, effort, name,
         optional continuation and worktree. The action keeps the active terminal in place while
         the new tab is appended beside its source.</dd>
     <dt>LayoutNameModal</dt>
     <dd><code>web/src/opscenter/layouts/LayoutNameModal.svelte</code> (issue #424): names the Layout a split makes. It is the
         one compiled dialog that wears the Military Terminal recipe of the new-group dialog: <code>ModalShell</code> with
-        <code>overlayClass="text-prompt-modal"</code> and a <code>head</code> snippet drawing
-        <code>.text-prompt-modal__head</code>, a base <code>Field</code> (label, hint as its help line), cancel a base
-        <code>Button</code>, save a confirm <code>Button</code>, close the base <code>IconButton</code>. A refusal (a taken name, the limit) stays in the
+        <code>look="titlerow"</code>, a base <code>Field</code> (label, hint as its help line), cancel a base
+        <code>Button</code>, save a confirm <code>Button</code>, close the shell's own X. A refusal (a taken name, the limit) stays in the
         dialog as the <code>Field</code>'s own error line with the
         name still typed. Cancel, Escape, the backdrop and a navigation all put the view back.</dd>
     <dt>DetailsModal</dt>
     <dd><code>web/src/opscenter/cells/analytics/DetailsModal.svelte</code> (Joe, 2026-09-30): an analytics card opened up.
-        <code>ModalShell</code> with <code>overlayClass="text-prompt-modal analytics-modal"</code>, mounted on the body by
+        <code>ModalShell</code> with <code>look="titlerow"</code> and <code>overlayClass="analytics-modal"</code>, mounted on the body by
         <code>lib/modal.ts</code> so a cell frame's paint containment cannot clip it. The head strip carries the tracked
-        verb, the card's title (<code>.analytics-modal__title</code>) and its period as the state marker
+        verb, then in <code>headExtra</code> the card's title (<code>.analytics-modal__title</code>) and its period as the state marker
         (<code>.analytics-modal__period</code>); the footer is one quiet close. The content is a column capped at the
         viewport and <code>.modal-body</code> is its ONE scrolling box: no table, list or control group inside scrolls on its
         own and nothing is wider than the dialog. Regions are hairline separated (<code>.analytics-modal__region</code>):
@@ -250,8 +259,9 @@ per option, the footer's buttons, nothing else.</p>
         (a base <code>Button</code>, <code>data-show-path-copy</code>, reads "copied" or "copy failed" for a moment), and "close" in the footer.</dd>
     <dt>overlayClass and head</dt>
     <dd>Two optional <code>ModalShell</code> props for a dialog with a scoped look: an extra class on the overlay, and a snippet
-        that replaces the plain header row. Absent, the chassis is unchanged. The confirm dialog (<code>ConfirmOkModal</code>) uses both to wear the
-        <code>text-prompt-modal</code> strip.</dd>
+        that replaces the head entirely, for a head that is not a title strip (the send-to and move-folder cards, the war room's
+        widget head, the ask form's empty head). Absent, the chassis is unchanged. The title strip is never a <code>head</code>
+        snippet: it is <code>look="titlerow"</code>, as the confirm dialog (<code>ConfirmOkModal</code>, <code>closable={false}</code>) wears it.</dd>
     <dt>mounting</dt>
     <dd>A dialog is mounted on demand onto <code>document.body</code> through the launchpad's modal host
         (<code>web/src/lib/launchpad/modals.ts</code>) and unmounted when it resolves. Never mount one at load: it takes focus
@@ -270,10 +280,10 @@ per option, the footer's buttons, nothing else.</p>
         <code>folderIconSvg</code> the config editor tree already draws, never the platform folder emoji.</dd>
     <dt>LeaderConfirm (issue #1371)</dt>
     <dd><code>web/src/lib/leader-confirm/LeaderConfirm.svelte</code>, opened by <code>askLeaderConfirm</code>: the extreme confirmation for
-        closing, deleting, killing or turning off a Swarm leader. The text-prompt look (<code>.leader-confirm</code> on the overlay): a
+        closing, deleting, killing or turning off a Swarm leader. The text-prompt look on its overlay: a
         sentence of what is lost (<code>.leader-confirm__lost</code>, <code>.leader-confirm__list</code>), a mono field where the
         owner types the leader's exact name, <code>.modal-btn-secondary</code> cancel holding the default focus, and
-        <code>.modal-btn-danger</code> disabled until the text matches. The server refuses the action without the name too.</dd>
+        <code>.modal-btn-danger</code> disabled until the text matches (the base dims it). The server refuses the action without the name too.</dd>
     <dt>BlueprintEditorModal, LaunchModal, ExportModal, ImportModal</dt>
     <dd><code>web/src/lib/blueprints/</code> (issue #790, D47, <code>docs/blueprints.md</code>): the blueprints screen's own
         four dialogs, every one a plain <code>ModalShell</code> with no scoped overlay class. <code>LaunchModal</code> carries

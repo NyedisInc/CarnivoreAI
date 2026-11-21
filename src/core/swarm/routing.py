@@ -18,7 +18,7 @@ from src.core.swarm.cards import phone, port as card_port
 from src.core.swarm.question_events import learned_events, question_events
 from src.core.trail_entry import utc_now
 from src.core.swarm.names import shown_name
-from src.cplugs.sdk.swarm import SwarmError
+from src.plugins.sdk.swarm import SwarmError
 
 logger = structlog.get_logger()
 

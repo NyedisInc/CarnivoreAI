@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Request
 
 from src.api.auth import require_auth
 from src.core.plugin_health.gather import build_report
-from src.cplugs.host import runtime
+from src.plugins.host import runtime
 
 router = APIRouter(prefix="/cplug-owner", tags=["cplugs"], dependencies=[Depends(require_auth)])
 

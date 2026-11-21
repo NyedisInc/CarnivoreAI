@@ -25,6 +25,8 @@ export const WRITE_DELAY = 600;
 
 const RETRY_DELAY = 300;
 
+const MAX_REFUSED_ATTEMPTS = 5;
+
 export interface PreferencesApi {
   HYDRATED: string;
   COMMITTED: string;
@@ -48,6 +50,7 @@ const pending = new Map<string, ArrangementEntry>();
 let held: Arrangement | null = null;
 let applying = false;
 let inflight = false;
+let refusedAttempts = 0;
 let writeTimer: ReturnType<typeof setTimeout> | undefined;
 let heldTimer: ReturnType<typeof setTimeout> | undefined;
 let started = false;
@@ -141,13 +144,20 @@ async function flush(): Promise<void> {
   inflight = true;
   try {
     const result = await api.set(FIELD, next);
+    if (result.status !== 'refused') refusedAttempts = 0;
     if (result.status === 'stale_revision') {
       await resolveConflict(api, replay);
     } else if (result.status === 'committed' || result.status === 'unchanged') {
       synced = next;
     } else if (result.status === 'refused') {
-      requeue();
-      scheduleWrite(RETRY_DELAY * 4);
+      refusedAttempts += 1;
+      if (refusedAttempts >= MAX_REFUSED_ATTEMPTS) {
+        console.warn('[terminal tabs] arrangement write refused, dropped after retries', { sessions: ops.map(([key]) => key), attempts: refusedAttempts, detail: (result as { detail?: string }).detail });
+        refusedAttempts = 0;
+      } else {
+        requeue();
+        scheduleWrite(RETRY_DELAY * 4);
+      }
     }
   } catch (error) {
     console.warn('[terminal tabs] arrangement write failed', error);
@@ -333,6 +343,7 @@ export function resetArrangementSync(): void {
   pending.clear();
   applying = false;
   inflight = false;
+  refusedAttempts = 0;
   if (writeTimer !== undefined) clearTimeout(writeTimer);
   if (heldTimer !== undefined) clearTimeout(heldTimer);
   writeTimer = undefined;

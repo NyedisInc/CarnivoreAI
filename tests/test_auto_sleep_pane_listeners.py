@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-import subprocess
 from types import SimpleNamespace
 
 import pytest
@@ -10,7 +9,6 @@ from src.core.auto_sleep import pane_listeners
 from src.core.auto_sleep.pane_listeners import (
     ListenerSnapshot,
     MeasureError,
-    listening_pids,
     parse_lsof_pids,
 )
 from src.core.conversation_writers import Proc, ProcessTable
@@ -36,31 +34,26 @@ def test_parse_refuses_a_process_line_that_is_not_a_pid():
         parse_lsof_pids("pabc\n")
 
 
-def test_listening_pids_reads_exit_zero(monkeypatch):
-    _lsof(monkeypatch, stdout="p7\nf4\n")
-    assert listening_pids() == frozenset({7})
+def test_a_process_holding_a_listen_socket_is_seen_by_the_kernel_read_and_a_closed_one_is_not():
+    import os
+    import socket
+
+    from src.core.auto_sleep.pane_ports import pid_holds_listener
+
+    server = socket.socket()
+    server.bind(("127.0.0.1", 0))
+    server.listen(1)
+    try:
+        assert pid_holds_listener(os.getpid()) is True
+    finally:
+        server.close()
+    assert pid_holds_listener(os.getpid()) is False
 
 
-def test_lsof_silent_exit_one_is_nothing_listening(monkeypatch):
-    _lsof(monkeypatch, returncode=1)
-    assert listening_pids() == frozenset()
-
-
-@pytest.mark.parametrize(
-    "kwargs",
-    [
-        {"returncode": 1, "stderr": "lsof: unknown option"},
-        {"returncode": 2},
-        {"returncode": 0, "stdout": ""},
-        {"raises": subprocess.TimeoutExpired("lsof", 5)},
-        {"raises": FileNotFoundError("lsof")},
-    ],
-    ids=["exit 1 with an error", "exit 2", "exit 0 naming nothing", "timeout", "missing"],
-)
-def test_every_other_lsof_outcome_cannot_measure(monkeypatch, kwargs):
-    _lsof(monkeypatch, **kwargs)
-    with pytest.raises(MeasureError):
-        listening_pids()
+def test_the_real_snapshot_never_spawns_lsof(monkeypatch):
+    monkeypatch.setattr(pane_listeners, "read_process_table", lambda: ProcessTable.from_rows([Proc(1, 0, "t", "launchd")]))
+    snap = pane_listeners.take_snapshot()
+    assert snap.listeners is None
 
 
 def _snapshot(listeners):

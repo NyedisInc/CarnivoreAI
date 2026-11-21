@@ -229,7 +229,7 @@
     .oc-topbar-dot {
       width: 7px;
       height: 7px;
-      border-radius: 50%;
+      border-radius: var(--oc-radius-circle);
       background: var(--oc-text-secondary);
     }
 
@@ -250,7 +250,7 @@
       .oc-topbar {
         position: sticky;
         top: 0;
-        z-index: 50;
+        z-index: var(--oc-z-shell-popover);
         padding: 0 var(--oc-space-2);
       }
 

@@ -17,6 +17,7 @@ const EXPOSURE_REFRESH_EVERY = 4;
 const { createSupervisor, SUPERVISOR_RESTART } = require('./supervisor-policy');
 const { createSlowRetry } = require('./supervisor-slow-retry');
 const setupVerdict = require('./setup-verdict');
+const DOWN_AFTER_MISSES = 3;
 const { resolvePublishedUrl, resolveAppWindowUrl } = require('./published-url');
 const { appendWithRotation } = require('./log-rotation');
 const { appendEngineLog } = require('./engine/detached-spawn');
@@ -366,7 +367,7 @@ class ServerManager {
       console.log(`Port ${port} already in use, checking if it's our server...`);
       const health = await this.getHealth();
       if (health) {
-        const foreign = portTrust.holderRefusal(await portTrust.listeners(port, { execFile }), process.getuid());
+        const foreign = portTrust.holderRefusal(await portTrust.listenersStrict(port, { execFile }), process.getuid());
         if (foreign) {
           this.state = 'stopped';
           this.startBlockedReason = `holder-${foreign.reason}`;
@@ -524,17 +525,7 @@ class ServerManager {
   }
 
   findPortHolderPid(port) {
-    return new Promise((resolve) => {
-      exec(`lsof -nP -iTCP:${port} -sTCP:LISTEN -t`, (err, stdout) => {
-        if (err) {
-          resolve(null);
-          return;
-        }
-        const first = String(stdout || '').trim().split('\n')[0];
-        const pid = parseInt(first, 10);
-        resolve(Number.isNaN(pid) ? null : pid);
-      });
-    });
+    return portTrust.listeners(port, { execFile }).then((found) => (found && found.length ? found[0].pid : null));
   }
 
   superviseDown(event = {}) {
@@ -563,12 +554,16 @@ class ServerManager {
     return decision;
   }
 
+  healthDown() { return (this.healthMisses || 0) >= DOWN_AFTER_MISSES; }
+
   superviseTick(healthy) {
+    this.healthMisses = healthy ? 0 : (this.healthMisses || 0) + 1;
     if (this.quitting || this.stopRequested) return;
     if (healthy) {
       this.supervisor.noteStillUp();
       return;
     }
+    if (!this.healthDown()) return;
     if (this.state !== 'running' || (this.startBlockedReason && this.startBlockedReason !== this.startBlockedByGuard)) return;
     this.state = 'stopped';
     if (!this.ownedProcess && this.serviceOwnsEngine()) { this.awaitingService = true; console.log('[supervisor] the login service owns the engine: not restarting it; watching for it to come back'); return; }

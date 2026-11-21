@@ -11,8 +11,8 @@ from src.api.auth import require_auth
 from src.core import db
 from src.core.swarm import body
 from src.core.swarm.cards import board as card_board, capacity, ops, port as card_port, validate
-from src.cplugs.sdk import CplugSchemaError
-from src.cplugs.sdk.cards import CardRefused
+from src.plugins.sdk import CplugSchemaError
+from src.plugins.sdk.cards import CardRefused
 from src.models.swarm_cards import (CapacityReading, CardBoard, CardColumnMove, CardCreate, CardDeleted, CardFlag, CardQueue, CardGrant, CardGrantPut, CardDone, CardEventWindow, CardEvents, CardValidation, CardMove, CardPause,
                                    CardPauseResult, CardPinRequest, CardRelease, CardRules, CardRulesPatch, CardSendBack, CardSuggestionAction, CardSuggestionView, CardSwap, CardView)
 

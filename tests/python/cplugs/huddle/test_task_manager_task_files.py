@@ -10,12 +10,12 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.host import runtime
-from src.cplugs.huddle import files, routes as huddle_routes, service, task_files
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.host import runtime
+from src.plugins.huddle import files, routes as huddle_routes, service, task_files
+from src.plugins.huddle.store import TaskManagerStore
 from src.config.uploads import UploadsConfig
-from src.cplugs.huddle import routes_artifacts  # noqa: F401
-from src.cplugs.sdk import ports, signed_links, task_folders, uploads as sdk_uploads
+from src.plugins.huddle import routes_artifacts  # noqa: F401
+from src.plugins.sdk import ports, signed_links, task_folders, uploads as sdk_uploads
 from tests.python.cplugs.owner import turn_on
 
 BASE = "/api/v1/cplugs/huddle"
@@ -194,7 +194,7 @@ def marker_store(folder: Path):
 
 
 def store_id_of(app: FastAPI):
-    from src.cplugs.huddle import store_identity
+    from src.plugins.huddle import store_identity
 
     with runtime.host_for(app).storage("huddle").connect(False) as conn:
         return store_identity.read(conn)
@@ -230,7 +230,7 @@ def test_a_folder_stamped_by_another_store_is_never_written_into(client, app, ro
 
 
 def test_the_store_id_is_read_before_it_is_written(client, app, root, monkeypatch):
-    from src.cplugs.huddle import store_identity
+    from src.plugins.huddle import store_identity
 
     item = add(client, "12", "Once")
     reply(client, item, [paste(client, item)["id"]])
@@ -244,7 +244,7 @@ def test_the_store_id_is_read_before_it_is_written(client, app, root, monkeypatc
 def test_a_store_id_that_cannot_be_made_does_not_fail_the_reply_and_the_file_stays_in_the_plugin_folder(client, app, root, monkeypatch):
     import sqlite3
 
-    from src.cplugs.huddle import store_identity
+    from src.plugins.huddle import store_identity
 
     def broken(conn):
         raise sqlite3.OperationalError("database is locked")

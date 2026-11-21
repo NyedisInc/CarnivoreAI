@@ -53,6 +53,9 @@ class PeerLinks:
                 await hook(peer_install_id, client, link.capabilities)
         return on_beat
 
+    def transport(self, peer_install_id: str) -> Optional[Transport]:
+        return self._transports.get(peer_install_id)
+
     def capabilities(self, peer_install_id: str) -> list:
         link = self._links.get(peer_install_id)
         return list(link.capabilities) if link is not None else []

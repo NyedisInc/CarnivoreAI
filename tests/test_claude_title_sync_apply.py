@@ -94,7 +94,7 @@ def db(tmp_path):
         "id INTEGER PRIMARY KEY, tmux_socket TEXT, tmux_name TEXT, "
         "tmux_created_epoch INTEGER, claude_session_uuid TEXT, title TEXT, "
         "claude_title TEXT, working_dir TEXT, parent_session_id INTEGER, "
-        "agent_type TEXT, agent_family TEXT, agent_family_source TEXT, "
+        "agent_type TEXT, agent_family TEXT, agent_family_source TEXT, session_uuid TEXT, "
         "created_at TEXT)"
     )
     apply_v56(conn)

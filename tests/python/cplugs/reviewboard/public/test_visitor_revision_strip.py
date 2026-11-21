@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, List, Optional
 
-from src.cplugs.reviewboard.public import minting
+from src.plugins.reviewboard.public import minting
 from tests.python.cplugs.reviewboard.public.read_harness import add_revision, edge, get, mint_token
 
 SECOND = b"<!doctype html><title>bar</title><main>second</main>"

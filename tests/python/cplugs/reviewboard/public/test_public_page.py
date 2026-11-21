@@ -6,7 +6,7 @@ import re
 import time
 from pathlib import Path
 
-from src.cplugs.reviewboard.public import assets, routes
+from src.plugins.reviewboard.public import assets, routes
 from tests.python.cplugs.reviewboard.public.read_harness import edge, get
 
 REPO = Path(__file__).resolve().parents[5]
@@ -69,7 +69,7 @@ def test_the_page_cannot_reach_an_owner_route_through_its_own_listener(read_env,
 def test_the_file_names_the_table_serves_are_the_two_the_build_emits() -> None:
     assert {name for where, name, _ in assets.FILES.values() if where == "dist"} == {"reviewboard-public.js", "reviewboard-public.css"}
     scripts = json.loads((REPO / "web" / "package.json").read_text())["scripts"]
-    assert "build-plugin-bundles.mjs" in scripts["build"] and (REPO / "web" / "src" / "cplugs" / "reviewboard" / "vite.bundle.config.ts").is_file()
+    assert "build-plugin-bundles.mjs" in scripts["build"] and (REPO / "web" / "src" / "plugins" / "reviewboard" / "vite.bundle.config.ts").is_file()
 
 
 def test_the_board_answer_names_no_newer_revision_and_says_how_long_the_frames_last(read_env, store) -> None:
@@ -87,8 +87,8 @@ def test_the_board_answer_names_no_newer_revision_and_says_how_long_the_frames_l
 def test_the_frame_lifetime_in_the_answer_is_the_one_the_tickets_are_minted_with(read_env, store, monkeypatch) -> None:
     from types import SimpleNamespace
 
-    from src.cplugs.reviewboard.public import wiring
-    from src.cplugs.reviewboard.public.read import READER
+    from src.plugins.reviewboard.public import wiring
+    from src.plugins.reviewboard.public.read import READER
     from tests.python.cplugs.reviewboard.public.read_harness import mint_token
 
     monkeypatch.setattr(wiring, "TICKET_TTL_S", 7)
@@ -118,5 +118,5 @@ def test_the_shell_says_something_useful_when_the_script_never_loads() -> None:
 def test_the_eval_pattern_the_bundle_check_uses_is_the_repos_own() -> None:
     from tests.test_no_remote_assets import _EVAL_SHAPED
 
-    source = (REPO / "web" / "src" / "cplugs" / "reviewboard" / "public" / "visitor-page" / "owner-routes.test.ts").read_text()
+    source = (REPO / "web" / "src" / "plugins" / "reviewboard" / "public" / "visitor-page" / "owner-routes.test.ts").read_text()
     assert f"const EVAL_SHAPED = /{_EVAL_SHAPED.pattern}/;" in source

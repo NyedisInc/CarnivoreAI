@@ -1,4 +1,5 @@
 import type { RowMenuCtx } from '../row-context';
+import { RESTING } from '../../activity-status';
 import { worktreeForSession } from '../../worktree-cleanup/api';
 import { downloadableRow, isDownloadingRow } from '../../open-files/download-row.svelte';
 
@@ -181,7 +182,7 @@ export const ROW_ITEMS: readonly RowItem[] = [
         id: 'reconnect-mcp', order: 5,
         label: (c) => (c.mcpServers ? tr('mcp.reconnect_named', { servers: c.mcpServers }) : tr('mcp.reconnect')),
         available: (c) => !isSessionless(c) && !isRemote(c) && !c.asleep && c.agentFamily === 'claude' && !!c.mcpDropped,
-        enabled: (c) => c.status === 'idle' || c.status === 'finished_unread',
+        enabled: (c) => RESTING.has(c.status),
         reason: () => tr('mcp.reconnect_busy'),
     },
     {

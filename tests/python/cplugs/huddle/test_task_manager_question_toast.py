@@ -10,10 +10,10 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.cplugs.host import runtime
+from src.plugins.host import runtime
 from src.api.auth import require_auth
-from src.cplugs.huddle import question_toasts, routes as huddle_routes
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import question_toasts, routes as huddle_routes
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
 from src.core.sessions.toast_inbox import ToastInbox

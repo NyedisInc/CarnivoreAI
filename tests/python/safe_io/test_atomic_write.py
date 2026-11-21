@@ -67,12 +67,12 @@ def _manifest(p: Path, d: bytes) -> None:
 
 
 def _summary(p: Path, d: bytes) -> None:
-    from src.cplugs.save.vault.summary_disk import write_atomic
+    from src.plugins.save.vault.summary_disk import write_atomic
     write_atomic(p, d)
 
 
 def _reviewboard(p: Path, d: bytes) -> None:
-    from src.cplugs.reviewboard.store import write_atomic
+    from src.plugins.reviewboard.store import write_atomic
     write_atomic(p, d)
 
 

@@ -17,9 +17,10 @@ from src.core.crate_import import apply as ap
 from src.core.crate_import.model import ImportRequest, new_import_id
 from src.core.crate_import.plan import build_plan
 from src.core.db import connect, db_path_for, get_meta
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.sdk import crate_format as cf
 from tests.python.crate_import.install import Install, make_install
 from tests.python.crate_import.test_import_same_path import rows_of
+from src.core.session_ops import row_probe
 
 SHARE = Path(__file__).resolve().parents[2] / "fixtures" / "crate" / "v1" / "project-share.crate"
 SENDER_UUIDS = {"sess-uuid-A-0001", "sess-uuid-B-0002"}
@@ -106,7 +107,7 @@ def test_recreate_adds_fork_session_from_the_marker_alone(tmp_path: Path, monkey
     with closing(install.db()) as conn:
         fork_marker.set_marker(conn, "s-1", "conv-1")
         conn.commit()
-    monkeypatch.setattr(recreate_routes, "_db_path", lambda: db_path_for(install.state))
+    monkeypatch.setattr(row_probe, "db_path", lambda: db_path_for(install.state))
     seen: List[Any] = []
 
     async def no_hold(_uuid: str) -> None:

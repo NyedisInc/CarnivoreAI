@@ -6,15 +6,15 @@ from pathlib import Path
 from typing import Iterator, Set
 
 ROOT = Path(__file__).resolve().parents[5]
-START = ("src.cplugs.reviewboard.public.edge", "src.cplugs.reviewboard.public.headers", "src.cplugs.reviewboard.public.routes", "src.cplugs.reviewboard.public.listener")
-PUBLIC = "src.cplugs.reviewboard.public"
-FORBIDDEN = ("src.api", "src.main", "src.core", "src.utils", "src.models", "src.config", "src.cplugs.huddle", "src.cplugs.reviewboard", "src.cplugs.share")
-NOT_FOLLOWED = {"src", "src.cplugs", "src.cplugs.sdk", "src.cplugs.reviewboard.public"}
-EXPECTED = {"src.cplugs.reviewboard.public.edge", "src.cplugs.reviewboard.public.headers", "src.cplugs.reviewboard.public.routes", "src.cplugs.reviewboard.public.listener",
-            "src.cplugs.sdk.sandboxed_html", "src.cplugs.reviewboard.public.read", "src.cplugs.reviewboard.public.resolve", "src.cplugs.reviewboard.public.respond",
-            "src.cplugs.reviewboard.public.assets", "src.cplugs.reviewboard.public.capability", "src.cplugs.reviewboard.public.ratelimit", "src.cplugs.reviewboard.public.deps", "src.cplugs.reviewboard.public.health",
-            "src.cplugs.reviewboard.public.write", "src.cplugs.reviewboard.public.submission", "src.cplugs.sdk.visible_text", "src.cplugs.reviewboard.public.waiting",
-            "src.cplugs.reviewboard.public.singleflight", "src.cplugs.reviewboard.public.theme", "src.cplugs.reviewboard.public.presence"}
+START = ("src.plugins.reviewboard.public.edge", "src.plugins.reviewboard.public.headers", "src.plugins.reviewboard.public.routes", "src.plugins.reviewboard.public.listener")
+PUBLIC = "src.plugins.reviewboard.public"
+FORBIDDEN = ("src.api", "src.main", "src.core", "src.utils", "src.models", "src.config", "src.plugins.huddle", "src.plugins.reviewboard", "src.plugins.share")
+NOT_FOLLOWED = {"src", "src.plugins", "src.plugins.sdk", "src.plugins.reviewboard.public"}
+EXPECTED = {"src.plugins.reviewboard.public.edge", "src.plugins.reviewboard.public.headers", "src.plugins.reviewboard.public.routes", "src.plugins.reviewboard.public.listener",
+            "src.plugins.sdk.sandboxed_html", "src.plugins.reviewboard.public.read", "src.plugins.reviewboard.public.resolve", "src.plugins.reviewboard.public.respond",
+            "src.plugins.reviewboard.public.assets", "src.plugins.reviewboard.public.capability", "src.plugins.reviewboard.public.ratelimit", "src.plugins.reviewboard.public.deps", "src.plugins.reviewboard.public.health",
+            "src.plugins.reviewboard.public.write", "src.plugins.reviewboard.public.submission", "src.plugins.sdk.visible_text", "src.plugins.reviewboard.public.waiting",
+            "src.plugins.reviewboard.public.singleflight", "src.plugins.reviewboard.public.theme", "src.plugins.reviewboard.public.presence"}
 
 
 def forbidden(module: str) -> bool:
@@ -68,7 +68,7 @@ def test_the_public_request_path_reaches_nothing_of_the_main_app() -> None:
 
 
 def test_the_walk_can_fail() -> None:
-    assert [m for m in reachable(("src.cplugs.sdk.routing",)) if forbidden(m)], "routing.py imports the API; the walk must say so"
+    assert [m for m in reachable(("src.plugins.sdk.routing",)) if forbidden(m)], "routing.py imports the API; the walk must say so"
 
 
 def package_level_imports(source: str) -> list:
@@ -81,10 +81,10 @@ def test_the_request_path_never_imports_from_a_package_init() -> None:
 
 
 def test_the_boundary_can_fail_inside_the_plugin() -> None:
-    assert forbidden("src.cplugs.reviewboard.service") and forbidden("src.cplugs.reviewboard.public_port") and forbidden("src.cplugs.reviewboard")
-    assert not forbidden("src.cplugs.reviewboard.public.edge") and not forbidden("src.cplugs.reviewboard.public")
+    assert forbidden("src.plugins.reviewboard.service") and forbidden("src.plugins.reviewboard.public_port") and forbidden("src.plugins.reviewboard")
+    assert not forbidden("src.plugins.reviewboard.public.edge") and not forbidden("src.plugins.reviewboard.public")
 
 
 def test_the_package_level_check_can_fail() -> None:
-    assert package_level_imports("from src.cplugs.sdk import SettingsVerdict\n") == ["src.cplugs.sdk"]
-    assert package_level_imports("from src.cplugs.reviewboard.public.listener import MAX_HEAD_BYTES\n") == []
+    assert package_level_imports("from src.plugins.sdk import SettingsVerdict\n") == ["src.plugins.sdk"]
+    assert package_level_imports("from src.plugins.reviewboard.public.listener import MAX_HEAD_BYTES\n") == []

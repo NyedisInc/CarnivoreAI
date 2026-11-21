@@ -171,9 +171,13 @@ _Facts = TypeVar("_Facts")
 
 
 def against_contract(facts: _Facts, records: Sequence[Any], verdict: str) -> _Facts:
-    problems = check_window(records)
+    return with_problems(facts, check_window(records), verdict)
+
+
+def with_problems(facts: _Facts, problems: Sequence[str], verdict: str) -> _Facts:
     if not problems:
         return facts
+    problems = tuple(problems)
     return replace(
         facts, verdict=verdict, pending_background_agents=None,
         pending_field_present=False, pending_workflows=None, shape_problems=problems,

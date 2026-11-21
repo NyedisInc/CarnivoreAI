@@ -48,7 +48,7 @@ try {
     await page.waitForTimeout(400);
     const m = await page.evaluate(() => {
       const r = (sel) => { const el = document.querySelector(`.sg-automations-demo ${sel}`); if (!el) return null; const b = el.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width, height: b.height }; };
-      return { page: r('.ap-page'), list: r('.ap-listcol'), pane: r('.ap-pn'), never: r('[data-pane-never-ran]'), tree: r('[data-scheduled-tree]'), treeName: r('.ap-st-name'), title: r('.oc-titlebar'), toolbar: r('.ap-lt') };
+      return { page: r('.ap-page'), list: r('.ap-listcol'), pane: r('.ap-pn'), never: r('[data-pane-never-ran]'), tree: r('[data-scheduled-tree]'), treeName: r('[data-st-name]'), title: r('.oc-titlebar'), toolbar: r('.ap-lt') };
     });
     results.push({ width, ...m });
     const clip = { x: 0, y: 0, width: RAIL + width + ZONE, height: 900 };

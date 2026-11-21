@@ -175,6 +175,13 @@ def _no_breaks(text: str) -> str:
     return "".join(" " if unicodedata.category(c) in ("Cc", "Zl", "Zp") else c for c in text)
 
 
+_ESCAPES = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)?|\x1b.?")
+
+
+def _plain_text(text: str) -> str:
+    return "".join(c for c in _ESCAPES.sub("", text) if c in "\n\t" or unicodedata.category(c) not in ("Cc", "Cf", "Zl", "Zp"))
+
+
 def _question_pick(answer: Any, limit: Optional[int] = _PICK_MAX) -> str:
     answer = answer if isinstance(answer, dict) else {}
     picked = answer.get("options") if isinstance(answer.get("options"), list) else [answer.get("option")]
@@ -214,7 +221,55 @@ def _plugin_session(ctx: _Ctx) -> tuple:
              _c("plugin_prompt", prompt=json.dumps(prompt)) if prompt else _c("plugin_no_prompt")], [])
 
 
+_MODE_WORDS = {"default": "ask", "manual": "ask", "plan": "ask", "ask": "ask", "acceptEdits": "edits", "auto": "auto",
+               "dontAsk": "dontask", "bypassPermissions": "bypass", "skip_all": "bypass", "unknown": "unknown"}
+
+
+def _delegate(ctx: _Ctx) -> tuple:
+    a = ctx.args
+    computer, folder = str(a["computer"]), str(a["folder"])
+    copy = _c("delegate_copy", folder=short_path(folder))
+    tools = [str(t) for t in a.get("installs") or []]
+    install = [_c("delegate_installs", tools=", ".join(tools), computer=computer)] if tools else []
+    if "task" not in a:
+        command = str(a["command"])
+        runs = "delegate_runs_ssh" if a.get("ssh") is True else "delegate_runs"
+        return ("run", "job", computer, CONFIRM, [_c(runs, command=_cut(command, 60), computer=computer), *install, copy],
+                [{"key": "command", "value": command}, {"key": "path", "value": folder}])
+    task, agent = str(a["task"]), str(a.get("agent_type") or "")
+    word = _MODE_WORDS.get(str(a.get("permission_mode") or "unknown"), "unknown")
+    definition = a.get("definition") or {}
+    prompt, file = _plain_text(str(definition.get("prompt") or "")), _no_breaks(str(definition.get("file") or ""))
+    return ("run", "job", computer, CONFIRM,
+            [_c("delegate_agent_runs", agent=agent or "an agent", computer=computer, task=_cut(_no_breaks(task), 100)), *install, copy,
+             _c(f"delegate_mode_{word}", computer=computer)],
+            [{"key": "task", "value": task}, {"key": "agent_type", "value": agent},
+             {"key": "definition", "value": prompt, "file": file}, {"key": "family", "value": str(a.get("family") or "")},
+             {"key": "path", "value": folder}, {"key": "model", "value": str(a.get("model") or "")},
+             {"key": "time_cap", "value": str(a["time_cap_minutes"]) if a.get("time_cap_minutes") else ""}])
+
+
+_POSTURE_KEYS = {"ask": "place_mode_ask", "accept_edits": "place_mode_edits", "skip_all": "delegate_mode_bypass", "unknown": "place_mode_unknown"}
+
+
+def _placed_create(ctx: _Ctx) -> tuple:
+    a = ctx.args
+    if a.get("placement") != "auto":
+        return _fallback(ctx)
+    computer, reason = str(a["computer"]), str(a["reason"])
+    if "posture" not in a:
+        return (ctx.action.replace("_", " "), "", ctx.target or ctx.name(0), CONFIRM, [_c("place_here", reason=reason)], [])
+    account = str(a.get("account") or "")
+    cons = [_c("place_remote", computer=computer, reason=reason),
+            _c("place_account", account=account, computer=computer) if account else _c("place_account_default", computer=computer),
+            _c(_POSTURE_KEYS.get(str(a["posture"]), "place_mode_unknown"), computer=computer)]
+    return (ctx.action.replace("_", " "), "", ctx.target or ctx.name(0), DANGER if a["posture"] == "skip_all" else CONFIRM, cons, [])
+
+
 _RULES: Dict[str, Rule] = {
+    "delegate": _delegate,
+    "session_create": _placed_create,
+    "agent_spawn": _placed_create,
     "plugin_session_create": _plugin_session,
     "session_purge": _purge,
     "session_delete": _delete_session,
@@ -248,7 +303,7 @@ def _fallback(ctx: _Ctx) -> tuple:
 
 def build(action: str, args: Optional[Dict[str, Any]], target_name: str, summary: str, plain: str = "",
           confirm_text: str = "", live: bool = False,
-          in_use: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+          in_use: Optional[Dict[str, Any]] = None, beast_hint: bool = False) -> Dict[str, Any]:
     ctx = _Ctx(action, args or {}, target_name or "", summary, plain, confirm_text, live)
     rule = _RULES.get(action, _fallback)
     try:
@@ -259,7 +314,9 @@ def build(action: str, args: Optional[Dict[str, Any]], target_name: str, summary
     if summary:
         detail.append({"key": "summary", "value": summary})
     card = {"verb": verb, "object": obj, "name": name or "", "tone": tone,
-            "consequences": cons[:3], "detail": detail}
+            "consequences": cons[:4 if action == "delegate" else 3], "detail": detail}
+    if beast_hint and action == "delegate":
+        card["beast_hint"] = True
     block = in_use_mod.display_parts(in_use)
     if block:
         card["in_use"] = block

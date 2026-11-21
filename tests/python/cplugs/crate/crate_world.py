@@ -6,10 +6,10 @@ from types import SimpleNamespace
 from typing import Any, Optional
 
 from src.core.blobcodec.codec import decompress
-from src.cplugs.crate.env import CrateEnv
-from src.cplugs.crate.plan import ExportRequest
-from src.cplugs.sdk import crate_format as cf
-from src.cplugs.sdk.crate_sources import PaneListing
+from src.plugins.crate.env import CrateEnv
+from src.plugins.crate.plan import ExportRequest
+from src.plugins.sdk import crate_format as cf
+from src.plugins.sdk.crate_sources import PaneListing
 from tests.python.inventory.world_build import build_world
 from tests.python.inventory.world import UUID_A, UUID_B  # noqa: F401
 

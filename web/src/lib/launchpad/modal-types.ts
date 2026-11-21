@@ -4,6 +4,12 @@ export interface ProjectDetails {
     description: string;
 }
 
+export interface NewProjectChoice {
+    name: string;
+    folder: string;
+    companyId: number;
+}
+
 export interface ChoiceItem {
     key: string;
     label: string;

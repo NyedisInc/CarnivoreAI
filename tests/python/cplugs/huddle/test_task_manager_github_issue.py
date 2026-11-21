@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.huddle import github_issue
-from src.cplugs.huddle.rules import TaskManagerInvalid
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import github_issue
+from src.plugins.huddle.rules import TaskManagerInvalid
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work.ladder import MIGRATIONS, SCHEMA_VERSION
 from src.core.work.storage import WorkStorage
 from tests.python.cplugs.huddle.test_task_manager_focus import add, call, client, setup  # noqa: F401

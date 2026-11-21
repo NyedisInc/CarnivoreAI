@@ -51,7 +51,7 @@ async function draw(document_: unknown, extra: Record<string, unknown> = {}): Pr
     return target;
 }
 
-const SERVER = readFileSync(resolvePath(__dirname, '../../../../src/cplugs/host/ui_doc.py'), 'utf8');
+const SERVER = readFileSync(resolvePath(__dirname, '../../../../src/plugins/host/ui_doc.py'), 'utf8');
 
 describe('client validation mirrors the server', () => {
     test('every limit and the node vocabulary are the same numbers and fields as ui_doc.py', () => {
@@ -70,7 +70,9 @@ describe('client validation mirrors the server', () => {
         expect(client).toEqual(server);
         const setOf = (name: string): string[] => [...new RegExp(`^${name} = frozenset\\(\\{([^}]*)\\}\\)`, 'm').exec(SERVER)![1]!.matchAll(/"(\w+)"/g)].map((x) => x[1]!).sort();
         expect([...V.TONES].sort()).toEqual(setOf('TONES'));
-        expect([...V.STATUSES].sort()).toEqual(setOf('STATUSES'));
+        const vocab = readFileSync(resolvePath(__dirname, '../../../../src/models/activity_status.py'), 'utf8');
+        const literal = /^ActivityStatus = Literal\[([\s\S]*?)\]/m.exec(vocab)![1]!;
+        expect([...V.STATUSES].sort()).toEqual([...literal.matchAll(/"(\w+)"/g)].map((x) => x[1]!).sort());
     });
 
     test.each(NEGATIVE)('refuses %s with the server code', (_name, document_, code) => {

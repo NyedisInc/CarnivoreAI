@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import os
 import sqlite3
 import threading
 import time
@@ -17,6 +16,7 @@ from . import activity, changes, config, events, observations, pack_scope, rules
 from .plugin import PLUGIN_ID, ingest
 from .account_owner import AccountAttribution
 from .store import StatsStore
+from src.core.product_identity import test_mode_enabled
 
 logger = structlog.get_logger()
 
@@ -55,7 +55,7 @@ class StatsScheduler:
         self._stale_reported = False
 
     def start(self) -> bool:
-        if os.environ.get('CLOUDE_TEST_MODE') or self._task is not None:
+        if test_mode_enabled() or self._task is not None:
             return False
         self._task = asyncio.create_task(self._run(), name='stats-collector')
         return True

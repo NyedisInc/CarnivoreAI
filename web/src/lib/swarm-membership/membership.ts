@@ -1,4 +1,4 @@
-import { refreshSwarmRoster } from '../../cplugs/sdk/swarm-roster.svelte';
+import { refreshSwarmRoster } from '../../plugins/sdk/swarm-roster.svelte';
 import { authFetch } from '../../opscenter/api/auth.svelte';
 import { confirmOk } from '../confirm-ok/confirm-ok';
 import { t } from '../i18n/index.svelte';

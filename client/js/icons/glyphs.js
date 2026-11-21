@@ -1,5 +1,6 @@
 
 import { LOGO_GLYPHS } from './logo-glyphs.js';
+import { PICKER_GLYPHS } from './picker-glyphs.js';
 
 export const GLYPH_VIEWBOX = '0 0 16 16';
 export const GLYPH_SIZE = 16;
@@ -7,6 +8,7 @@ export const GLYPH_SIZE = 16;
 
 export const GLYPHS = {
     ...LOGO_GLYPHS,
+    ...PICKER_GLYPHS,
     gear: [
         { tag: 'circle', cx: '8', cy: '8', r: '4.2', stroke: 'currentColor', 'stroke-width': '1.5' },
         { tag: 'circle', cx: '8', cy: '8', r: '1.6', stroke: 'currentColor', 'stroke-width': '1.5' },

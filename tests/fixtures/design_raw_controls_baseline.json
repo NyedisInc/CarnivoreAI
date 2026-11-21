@@ -1,167 +1,164 @@
 {
  "about": "hand-written buttons and fields outside web/src/lib/base per web/src file, and named data-base-exempt tags; may only fall (scripts/design/raw_controls.py, issue #2361)",
  "files": {
-  "web/src/cplugs/huddle/HuddleBody.svelte": {
+  "web/src/plugins/huddle/HuddleBody.svelte": {
    "buttons": 9,
    "fields": 4
   },
-  "web/src/cplugs/huddle/HuddleReply.svelte": {
+  "web/src/plugins/huddle/HuddleReply.svelte": {
    "buttons": 5,
    "fields": 1
   },
-  "web/src/cplugs/huddle/HuddleViewSwitch.svelte": {
+  "web/src/plugins/huddle/HuddleViewSwitch.svelte": {
    "buttons": 4
   },
-  "web/src/cplugs/huddle/SwarmDecisionKeys.svelte": {
+  "web/src/plugins/huddle/SwarmDecisionKeys.svelte": {
    "buttons": 2
   },
-  "web/src/cplugs/huddle/TaskManagerArtifactDialog.svelte": {
+  "web/src/plugins/huddle/TaskManagerChips.svelte": {
    "buttons": 1
   },
-  "web/src/cplugs/huddle/TaskManagerChips.svelte": {
+  "web/src/plugins/huddle/TaskManagerCommandBox.svelte": {
    "buttons": 1
   },
-  "web/src/cplugs/huddle/TaskManagerCommandBox.svelte": {
+  "web/src/plugins/huddle/TaskManagerEmptyGroup.svelte": {
    "buttons": 1
   },
-  "web/src/cplugs/huddle/TaskManagerEmptyGroup.svelte": {
-   "buttons": 1
-  },
-  "web/src/cplugs/huddle/TaskManagerForkDialog.svelte": {
+  "web/src/plugins/huddle/TaskManagerForkDialog.svelte": {
    "buttons": 2,
    "fields": 3
   },
-  "web/src/cplugs/huddle/TaskManagerInboxRow.svelte": {
+  "web/src/plugins/huddle/TaskManagerInboxRow.svelte": {
    "buttons": 1
   },
-  "web/src/cplugs/huddle/TaskManagerMarkerFilter.svelte": {
+  "web/src/plugins/huddle/TaskManagerMarkerFilter.svelte": {
    "buttons": 1
   },
-  "web/src/cplugs/huddle/TaskManagerNewGroup.svelte": {
+  "web/src/plugins/huddle/TaskManagerNewGroup.svelte": {
    "buttons": 2,
    "fields": 1
   },
-  "web/src/cplugs/huddle/TaskManagerProjectHead.svelte": {
+  "web/src/plugins/huddle/TaskManagerProjectHead.svelte": {
    "buttons": 2
   },
-  "web/src/cplugs/huddle/TaskManagerRow.svelte": {
+  "web/src/plugins/huddle/TaskManagerRow.svelte": {
    "buttons": 6,
    "fields": 1
   },
-  "web/src/cplugs/huddle/TaskManagerSchedule.svelte": {
+  "web/src/plugins/huddle/TaskManagerSchedule.svelte": {
    "buttons": 1
   },
-  "web/src/cplugs/huddle/TaskManagerScheduleEditor.svelte": {
+  "web/src/plugins/huddle/TaskManagerScheduleEditor.svelte": {
    "buttons": 4,
    "fields": 7
   },
-  "web/src/cplugs/huddle/TaskManagerScheduleOffer.svelte": {
+  "web/src/plugins/huddle/TaskManagerScheduleOffer.svelte": {
    "buttons": 1
   },
-  "web/src/cplugs/huddle/TaskManagerSearch.svelte": {
+  "web/src/plugins/huddle/TaskManagerSearch.svelte": {
    "buttons": 2,
    "fields": 1
   },
-  "web/src/cplugs/huddle/TaskManagerSections.svelte": {
+  "web/src/plugins/huddle/TaskManagerSections.svelte": {
    "buttons": 5,
    "fields": 1
   },
-  "web/src/cplugs/huddle/TaskManagerSend.svelte": {
+  "web/src/plugins/huddle/TaskManagerSend.svelte": {
    "buttons": 3
   },
-  "web/src/cplugs/huddle/TaskManagerStatusFilter.svelte": {
+  "web/src/plugins/huddle/TaskManagerStatusFilter.svelte": {
    "buttons": 3
   },
-  "web/src/cplugs/huddle/TaskManagerStatusModal.svelte": {
+  "web/src/plugins/huddle/TaskManagerStatusModal.svelte": {
    "buttons": 1
   },
-  "web/src/cplugs/huddle/TaskManagerStatusSections.svelte": {
+  "web/src/plugins/huddle/TaskManagerStatusSections.svelte": {
    "buttons": 3
   },
-  "web/src/cplugs/huddle/TaskManagerSubHead.svelte": {
+  "web/src/plugins/huddle/TaskManagerSubHead.svelte": {
    "buttons": 1
   },
-  "web/src/cplugs/huddle/TaskManagerTail.svelte": {
+  "web/src/plugins/huddle/TaskManagerTail.svelte": {
    "buttons": 1
   },
-  "web/src/cplugs/huddle/TaskManagerTickConfirm.svelte": {
+  "web/src/plugins/huddle/TaskManagerTickConfirm.svelte": {
    "buttons": 2
   },
-  "web/src/cplugs/huddle/TaskManagerTitleEdit.svelte": {
+  "web/src/plugins/huddle/TaskManagerTitleEdit.svelte": {
    "buttons": 2,
    "fields": 1
   },
-  "web/src/cplugs/huddle/agents/AgentChatFrame.svelte": {
+  "web/src/plugins/huddle/agents/AgentChatFrame.svelte": {
    "buttons": 1
   },
-  "web/src/cplugs/huddle/ask/AskQuestion.svelte": {
+  "web/src/plugins/huddle/ask/AskQuestion.svelte": {
    "fields": 1
   },
-  "web/src/cplugs/huddle/ask/TaskManagerAskForm.svelte": {
+  "web/src/plugins/huddle/ask/TaskManagerAskForm.svelte": {
    "buttons": 1,
    "fields": 1
   },
-  "web/src/cplugs/huddle/ask/fields/AskChoice.svelte": {
+  "web/src/plugins/huddle/ask/fields/AskChoice.svelte": {
    "buttons": 1,
    "fields": 1
   },
-  "web/src/cplugs/huddle/ask/fields/AskRank.svelte": {
+  "web/src/plugins/huddle/ask/fields/AskRank.svelte": {
    "buttons": 2
   },
-  "web/src/cplugs/huddle/ask/fields/AskText.svelte": {
+  "web/src/plugins/huddle/ask/fields/AskText.svelte": {
    "fields": 2
   },
-  "web/src/cplugs/huddle/chat/AuthorPath.svelte": {
+  "web/src/plugins/huddle/chat/AuthorPath.svelte": {
    "buttons": 1
   },
-  "web/src/cplugs/huddle/chat/ChatAskForm.svelte": {
+  "web/src/plugins/huddle/chat/ChatAskForm.svelte": {
    "exempt": 2
   },
-  "web/src/cplugs/huddle/chat/ChatAvatar.svelte": {
+  "web/src/plugins/huddle/chat/ChatAvatar.svelte": {
    "exempt": 1
   },
-  "web/src/cplugs/huddle/chat/ChatBar.svelte": {
+  "web/src/plugins/huddle/chat/ChatBar.svelte": {
    "buttons": 1
   },
-  "web/src/cplugs/huddle/chat/ChatCard.svelte": {
+  "web/src/plugins/huddle/chat/ChatCard.svelte": {
    "buttons": 5,
    "fields": 1
   },
-  "web/src/cplugs/huddle/chat/ChatWidget.svelte": {
+  "web/src/plugins/huddle/chat/ChatWidget.svelte": {
    "buttons": 3,
    "fields": 1
   },
-  "web/src/cplugs/huddle/chat/RewindView.svelte": {
+  "web/src/plugins/huddle/chat/RewindView.svelte": {
    "buttons": 3
   },
-  "web/src/cplugs/huddle/chat/TrafficCard.svelte": {
+  "web/src/plugins/huddle/chat/TrafficCard.svelte": {
    "buttons": 1
   },
-  "web/src/cplugs/huddle/swarm/SwarmLedger.svelte": {
+  "web/src/plugins/huddle/swarm/SwarmLedger.svelte": {
    "buttons": 2
   },
-  "web/src/cplugs/huddle/swarm/SwarmOrg.svelte": {
+  "web/src/plugins/huddle/swarm/SwarmOrg.svelte": {
    "buttons": 4
   },
-  "web/src/cplugs/huddle/swarm/SwarmPanel.svelte": {
+  "web/src/plugins/huddle/swarm/SwarmPanel.svelte": {
    "buttons": 6
   },
-  "web/src/cplugs/huddle/swarm/SwarmSettingsForm.svelte": {
+  "web/src/plugins/huddle/swarm/SwarmSettingsForm.svelte": {
    "fields": 6
   },
-  "web/src/cplugs/huddle/swarm/SwarmTitleActions.svelte": {
+  "web/src/plugins/huddle/swarm/SwarmTitleActions.svelte": {
    "buttons": 2
   },
-  "web/src/cplugs/save/FolderUnits.svelte": {
+  "web/src/plugins/save/FolderUnits.svelte": {
    "fields": 1
   },
-  "web/src/cplugs/save/LocationPanel.svelte": {
+  "web/src/plugins/save/LocationPanel.svelte": {
    "fields": 1
   },
-  "web/src/cplugs/save/ScopePanel.svelte": {
+  "web/src/plugins/save/ScopePanel.svelte": {
    "buttons": 1
   },
-  "web/src/cplugs/share/ShareModal.svelte": {
+  "web/src/plugins/share/ShareModal.svelte": {
    "fields": 3
   },
   "web/src/lib/approvals/AskForm.svelte": {
@@ -247,9 +244,6 @@
   "web/src/lib/catalog/ItemSummary.svelte": {
    "buttons": 1
   },
-  "web/src/lib/catalog/KeyHelp.svelte": {
-   "buttons": 1
-  },
   "web/src/lib/catalog/ModFacts.svelte": {
    "checkbox": 2
   },
@@ -283,9 +277,6 @@
   "web/src/lib/catalog/TrySheet.svelte": {
    "buttons": 3,
    "fields": 1
-  },
-  "web/src/lib/catalog/WarezActs.svelte": {
-   "buttons": 3
   },
   "web/src/lib/catalog/WarezCard.svelte": {
    "buttons": 1
@@ -427,7 +418,7 @@
    "buttons": 1
   },
   "web/src/lib/skills-hub/pack/PackSkillsTab.svelte": {
-   "buttons": 9
+   "buttons": 6
   },
   "web/src/lib/skills-hub/pack/PackTakeSheet.svelte": {
    "buttons": 2
@@ -437,9 +428,6 @@
   },
   "web/src/lib/skills-page/SkillHealth.svelte": {
    "buttons": 5
-  },
-  "web/src/lib/skills-page/SkillsScreen.svelte": {
-   "buttons": 1
   },
   "web/src/lib/slash-favorites/FavoriteChips.svelte": {
    "exempt": 2
@@ -526,7 +514,7 @@
    "buttons": 1
   },
   "web/src/opscenter/cells/analytics/DetailsModal.svelte": {
-   "buttons": 2
+   "buttons": 1
   },
   "web/src/opscenter/cells/developer/SentList.svelte": {
    "fields": 1
@@ -578,7 +566,7 @@
   }
  },
  "totals": {
-  "buttons": 297,
+  "buttons": 287,
   "checkbox": 8,
   "exempt": 49,
   "fields": 60,

@@ -11,11 +11,11 @@ from datetime import datetime, timedelta, timezone
 import pytest
 import structlog
 
-from src.cplugs.huddle import schedule, wait_runner, waits
-from src.cplugs.huddle.answer_writer import AnswerWriter
-from src.cplugs.huddle.roles import unstick
-from src.cplugs.huddle.rules import TaskManagerInvalid
-from src.cplugs.huddle.waits import WaitStore
+from src.plugins.huddle import schedule, wait_runner, waits
+from src.plugins.huddle.answer_writer import AnswerWriter
+from src.plugins.huddle.roles import unstick
+from src.plugins.huddle.rules import TaskManagerInvalid
+from src.plugins.huddle.waits import WaitStore
 from tests.python.cplugs.huddle.test_task_manager_lane import synthetic_v37
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client  # noqa: F401
@@ -288,7 +288,7 @@ def test_a_wrong_missing_expired_or_ended_wait_token_is_refused_the_same_way(cli
 
 
 def test_the_apps_own_auth_works_without_a_token_and_the_mcp_tool_is_the_same_callback(client, env, manager, told, monkeypatch):  # noqa: F811
-    from src.cplugs.huddle import routes_wait
+    from src.plugins.huddle import routes_wait
 
     item = env.add(client)["id"]
     park(env.store, item)

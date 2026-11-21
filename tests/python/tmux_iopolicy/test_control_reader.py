@@ -9,6 +9,8 @@ import tempfile
 import time
 from pathlib import Path
 
+from typing import List, Optional
+
 import pytest
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -23,7 +25,8 @@ os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 # ruff: noqa: E402
 from src.core.tmux_backend import TmuxBackend
 from src.core.tmux_control import reader as reader_mod
-from src.core.tmux_control.reader import close_readers, control_read
+from src.core.tmux_control.reader import close_readers, control_run
+from src.core.tmux_stderr import listing_env
 from tests.socket_guard import derive_test_socket
 
 pytestmark = pytest.mark.skipif(shutil.which("tmux") is None, reason="real tmux binary not available")
@@ -31,12 +34,18 @@ pytestmark = pytest.mark.skipif(shutil.which("tmux") is None, reason="real tmux 
 HOSTILE = "a'; kill-session -t =victim ; 'b#{pane_id}$(x)\""
 
 
+def control_read(socket: str, args: List[str]) -> Optional[bytes]:
+    answer = control_run(socket, args)
+    return answer[1] if answer is not None and answer[0] == 0 else None
+
+
 def _tmux(socket: str, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run(["tmux", "-L", socket, *args], capture_output=True, check=False, timeout=15)
 
 
 def _up(socket: str) -> None:
-    for _ in range(100):
+    deadline = time.monotonic() + reader_mod.START_TIMEOUT_SECONDS * 2 + reader_mod.RESTART_COOLDOWN_SECONDS + 15
+    while time.monotonic() < deadline:
         if control_read(socket, ["list-sessions"]) is not None:
             return
         time.sleep(0.1)
@@ -121,8 +130,8 @@ def test_idle_pollers_spawn_no_tmux_process_over_ten_seconds(socket, monkeypatch
 
     from src.core.account_switch.pane_account import read_pane_profile
     from src.core.pack.load import agents
-    from src.core.pack.reserve import throttle
     from src.core.session_pane_facts import read_pane_facts
+    from src.core.tmux_transport.run import tmux_argv_stdout
     from src.core.swarm import body_death
     from src.core.tmux_discovery import tmux_argv_prefix
 
@@ -144,7 +153,7 @@ def test_idle_pollers_spawn_no_tmux_process_over_ten_seconds(socket, monkeypatch
     async def one_pass() -> None:
         folded = await asyncio.to_thread(backend.list_sessions_and_panes)
         assert folded.panes is not None and folded.panes.ok and folded.sessions.ok
-        assert "known" in (throttle._run(prefix + ["list-panes", "-a", "-F", "#{session_name}"]) or "")
+        assert "known" in (tmux_argv_stdout(prefix + ["list-panes", "-a", "-F", "#{session_name}"]) or "")
         assert (await read_pane_facts(socket, "known")).cwd
         assert (await read_pane_profile(socket, "known", "CLAUDE_CONFIG_DIR")).value == "/p/x"
         assert await body_death._pane_dead("known", socket) is False
@@ -192,7 +201,7 @@ def test_non_ascii_names_round_trip_whatever_the_engine_locale(socket, monkeypat
     monkeypatch.delenv("LANG", raising=False)
     close_readers()
     args = ["list-sessions", "-F", "#{session_name}"]
-    direct = subprocess.run(["tmux", "-L", socket, *args], env={**os.environ, "LC_ALL": "C"}, capture_output=True, check=False).stdout
+    direct = subprocess.run(["tmux", "-u", "-L", socket, *args], env=listing_env(), capture_output=True, check=False).stdout
     _up(socket)
     via_control = control_read(socket, args)
     assert via_control is not None and "café 中".encode() in direct
@@ -238,12 +247,11 @@ def test_a_wedged_server_never_stalls_the_event_loop_and_cools_down(socket):
     async def go() -> None:
         t0 = time.monotonic()
         assert control_read(socket, listing) is None and time.monotonic() - t0 < 0.2
-        for _ in range(50):
+        deadline = time.monotonic() + reader_mod.START_TIMEOUT_SECONDS * 2 + reader_mod.RESTART_COOLDOWN_SECONDS + 15
+        while control_read(socket, listing) is None:
+            if time.monotonic() > deadline:
+                raise AssertionError("client never came up")
             await asyncio.sleep(0.2)
-            if control_read(socket, listing) is not None:
-                break
-        else:
-            raise AssertionError("client never came up")
         os.kill(pid, signal.SIGSTOP)
         try:
             t0 = time.monotonic()
@@ -255,7 +263,8 @@ def test_a_wedged_server_never_stalls_the_event_loop_and_cools_down(socket):
             os.kill(pid, signal.SIGCONT)
 
     asyncio.run(go())
-    assert reader_mod._READERS[socket]._retry_after > time.monotonic()
+    reader = reader_mod._READERS[socket]
+    assert reader._proc is not None and reader._proc.poll() is None and reader._retry_after <= time.monotonic()
 
 
 def test_a_tmux_that_refuses_the_handshake_is_not_retried_every_few_seconds(socket, monkeypatch):
@@ -277,14 +286,14 @@ def test_a_wedged_server_does_not_starve_the_default_thread_pool(socket):
 
     async def go() -> float:
         for _ in range(50):
-            if await reader_mod.control_read_async(socket, listing) is not None:
+            if await reader_mod.control_run_async(socket, listing) is not None:
                 break
             await asyncio.sleep(0.2)
         else:
             raise AssertionError("client never came up")
         os.kill(pid, signal.SIGSTOP)
         try:
-            flood = [asyncio.create_task(reader_mod.control_read_async(socket, listing)) for _ in range(60)]
+            flood = [asyncio.create_task(reader_mod.control_run_async(socket, listing)) for _ in range(60)]
             await asyncio.sleep(0.05)
             t0 = time.monotonic()
             assert await asyncio.to_thread(lambda: 1) == 1
@@ -341,7 +350,7 @@ def test_close_is_bounded_under_an_in_flight_reader_and_that_reader_never_raises
 
     def read() -> None:
         try:
-            outcome.append(reader.run(["list-panes", "-a", "-F", "#{pane_id}"]))
+            outcome.append(reader.query(["list-panes", "-a", "-F", "#{pane_id}"]))
         except BaseException as exc:  # noqa: BLE001
             outcome.append(exc)
 

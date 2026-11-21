@@ -20,12 +20,13 @@
 
     const rowName = $derived(p.attrs['data-name'] || '');
     const rowBand = $derived(p.attrs['data-band']);
+    const rowUuid = $derived(p.attrs['data-session-uuid']);
     const editing = $derived(isRowEditing(rowName, rowBand));
     const facts = $derived(search.facts);
     const armable = $derived(wakeArmable(p.led, p.ghost));
-    const armed = $derived(armable && isWakeArmed(rowName, rowBand));
-    $effect(() => { if (!armable && isWakeArmed(rowName, rowBand)) disarmWake(); });
-    $effect(() => () => { if (isWakeArmed(rowName, rowBand)) disarmWake(); });
+    const armed = $derived(armable && isWakeArmed(rowName, rowBand, rowUuid));
+    $effect(() => { if (!armable && isWakeArmed(rowName, rowBand, rowUuid)) disarmWake(); });
+    $effect(() => () => { if (isWakeArmed(rowName, rowBand, rowUuid)) disarmWake(); });
     const cursor = $derived(searchD.agentNames[searchD.cursor] === rowName ? '1' : undefined);
     function inertWhenArmed(el: HTMLElement): (() => void) | void {
         if (!armed) return;

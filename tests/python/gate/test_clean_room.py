@@ -8,7 +8,7 @@ import pytest
 
 from scripts.gate import tree_copy as tc
 
-LIGHT = ("src", "client", "config.example.json", "pytest.ini", "web/src/cplugs")
+LIGHT = ("src", "client", "config.example.json", "pytest.ini", "web/src/plugins")
 
 
 @pytest.fixture(scope="module")
@@ -59,7 +59,7 @@ def test_each_removable_plugin_goes_alone(base_tree: Path, tmp_path: Path, plugi
 
 
 def test_the_strip_refuses_a_plugin_that_is_not_there(tmp_path: Path) -> None:
-    (tmp_path / "src" / "cplugs").mkdir(parents=True)
+    (tmp_path / "src" / "plugins").mkdir(parents=True)
     with pytest.raises(tc.TreeCopyError, match="no plugin folder"):
         tc.strip_folders(tmp_path, ["nope"])
 
@@ -73,6 +73,6 @@ def test_core_reaching_into_a_removed_plugin_turns_the_import_red(base_tree: Pat
     tree = _with_probe(base_tree, tmp_path)
     tc.strip_folders(tree, ["flow"])
     main = tree / "src" / "main.py"
-    main.write_text("from src.cplugs import flow  # the planted reach\n" + main.read_text(encoding="utf-8"), encoding="utf-8")
+    main.write_text("from src.plugins import flow  # the planted reach\n" + main.read_text(encoding="utf-8"), encoding="utf-8")
     done = _probe(tree, tmp_path)
     assert done.returncode != 0 and "flow" in done.stderr

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.cplugs.host import sideload, sideload_copy
+from src.plugins.host import sideload, sideload_copy
 
 DATALESS = 0x40000000
 

@@ -6,8 +6,8 @@ from contextlib import closing
 
 import pytest
 
-from src.cplugs.host import runtime
-from src.cplugs.huddle import lineage, turn_return
+from src.plugins.host import runtime
+from src.plugins.huddle import lineage, turn_return
 from tests.python.cplugs.huddle.roles_rig import BASE
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, pasted  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_tags import World, add, store_of  # noqa: F401

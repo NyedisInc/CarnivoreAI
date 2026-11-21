@@ -16,6 +16,7 @@ from src.core.attention.registry_index import registry_for_session
 from src.core.conversation_writers import MeasureError, read_pid_record, read_process_table, same_process_start
 from src.core.session_transcript_presence import conversation_presence
 from src.core.crosstalk.delivery.identity import conversation_id
+from src.models.activity_status import blocked_on_owner
 
 logger = structlog.get_logger(__name__)
 _NAME = re.compile(r"^[^\"<>\r\n]{1,100}$")
@@ -188,7 +189,7 @@ async def deliver(app: Any, info: Any, message: dict) -> str | tuple[str, str] |
         fresh = await app.state.session_manager.get_session_info(session_id=info.session.id)
         if fresh is None or fresh.session.tmux_created_epoch != message["receiver_epoch"]:
             return "failed", "receiver instance changed before native delivery"
-        if fresh.activity_status == "question" or fresh.startup_gate != "ready":
+        if blocked_on_owner(fresh):
             return "held", "receiver has an open dialog or startup gate"
         if conversation_id(fresh, message) != target_conversation:
             return "held", "receiver conversation changed before native delivery"

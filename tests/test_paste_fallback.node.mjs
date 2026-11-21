@@ -6,6 +6,7 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { createEnvironment } from './mini-dom.mjs';
+import { resolveZ } from './helpers/z-scale.mjs';
 
 const CATALOG = (await import('../client/js/i18n/catalog.en.js')).default;
 
@@ -46,9 +47,9 @@ function zIndexOf(css, selector) {
     const at = css.indexOf(selector + ' {');
     assert.notEqual(at, -1, `selector ${selector} is gone from the stylesheet`);
     const block = css.slice(at, css.indexOf('}', at));
-    const m = /z-index:\s*(\d+)/.exec(block);
+    const m = /z-index:\s*([^;]+);/.exec(block);
     assert.ok(m, `${selector} declares no z-index`);
-    return Number(m[1]);
+    return resolveZ(m[1], selector);
 }
 
 function load(opts = {}) {
@@ -222,7 +223,7 @@ test('ONE INJECTION PATH: the fallback never writes to the socket itself', () =>
     }
     // client/js/terminal-input-ownership.js.
     assert.ok(clientFile('js', 'clipboard.js')
-        .includes('window.PasteFallback.open(term, injectText, ticket)'));
+        .includes('window.PasteFallback.open(term, injectText, ticket, forcedPrompt === true)'));
 });
 
 test('insert injects through clipboard.js, preserving newlines as one payload', async () => {

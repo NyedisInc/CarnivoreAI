@@ -8,8 +8,8 @@ import pytest
 
 from src.api import peer_auth
 from src.core.db import DatastoreUnreadableError
-from src.cplugs.host import session_rows
-from src.cplugs.sdk.session_rows import SessionRowsUnreadable, StoredRow
+from src.plugins.host import session_rows
+from src.plugins.sdk.session_rows import SessionRowsUnreadable, StoredRow
 
 
 @pytest.fixture

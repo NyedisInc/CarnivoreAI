@@ -239,7 +239,7 @@
       min-width: 18px;
       height: 16px;
       padding: 0 calc(var(--oc-space-1) + var(--oc-border));
-      border-radius: 999px;
+      border-radius: var(--oc-radius-round);
       background: var(--oc-orange);
       color: var(--oc-ground-chrome);
       font-size: var(--oc-fs-micro);

@@ -8,10 +8,10 @@ vi.mock('../../opscenter/api/auth.svelte', async (original) => ({ ...(await orig
 import AccountMenu from './AccountMenu.svelte';
 import * as Bar from '../drawer/bar';
 import { accountChip, closeAccountMenu } from './account-menu.svelte';
-import { cplugEnablement } from '../../cplugs/host/enablement.svelte';
-import { cplugAccountMenuItems } from '../../cplugs/host/readers';
+import { cplugEnablement } from '../../plugins/host/enablement.svelte';
+import { cplugAccountMenuItems } from '../../plugins/host/readers';
 import { beastStatus } from '../beast-mode/control.svelte';
-import type { CplugManifest, CplugWeb } from '../../cplugs/sdk';
+import type { CplugManifest, CplugWeb } from '../../plugins/sdk';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
 
 installPopoverPolyfill();

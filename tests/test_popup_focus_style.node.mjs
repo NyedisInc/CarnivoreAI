@@ -123,7 +123,7 @@ const COMPILED = [
 for (const [file, cls] of COMPILED) {
     test(`compiled .${cls} wears the shared class and draws no look of its own`, () => {
         const src = read(file);
-        const anchored = new RegExp(`<AnchoredPopup[^>]*?class="${cls}"`).test(src);
+        const anchored = new RegExp(`<AnchoredPopup[^>]*?class="(?:[^"]* )?${cls}[ "]`).test(src);
         assert.ok(anchored || new RegExp(`class="${cls} popup-focus"`).test(src), `${file} must mark its panel`);
         const style = svelteStyle(file);
         const body = ruleBody(style, `.${cls}`) ?? ruleBody(style, `:global(.${cls})`);
@@ -162,53 +162,13 @@ test('every terminal frame carries a dimmed session-accent border', () => {
         'colour only: nothing that can resize the pane');
 });
 
-test('the active terminal wears the shared look at full accent, same border width', () => {
+test('no terminal frame wears the shared look: which pane holds input is the active tab color bar, not the pane', () => {
     const src = read(FRAME);
-    assert.match(src, /class:popup-focus=\{selected\}/, 'active is the selected terminal');
-    assert.match(src, /const selected = \$derived\(\s*terminal && \(focused \|\| \(inputFocus\.owner === null && inputFocus\.selected === instance\)\)/,
-        'selected is the input owner, or the last selected terminal while nothing owns input');
-    const body = ruleBody(svelteStyle(FRAME), '.oc-frame-terminal.popup-focus');
-    assert.ok(body, 'expected the active terminal rule');
-    assert.match(body, /--pf-edge-top:\s*var\(--oc-orange\)/);
-    assert.match(body, /--pf-edge-bottom:\s*var\(--oc-orange\)/);
-    assert.match(body, /border-width:\s*var\(--oc-border\)/, 'the look must keep the frame border width');
-    assert.doesNotMatch(body, /padding|(^|\n)\s*(width|height|min-|max-)/);
+    assert.doesNotMatch(src, /class:popup-focus/, 'the frame wears the shared look for nobody now');
+    assert.doesNotMatch(src, /pf-sheen/, 'no turning sheen is drawn on a frame');
     const base = ruleBody(svelteStyle(FRAME), '.oc-frame');
     assert.doesNotMatch(base, LOOK, 'the unconditional frame rule would paint over the shared look');
     assert.ok(ruleBody(svelteStyle(FRAME), '.oc-frame:not(.popup-focus)'), 'the ground moves to the not-active rule');
-});
-
-test('the active terminal glows 5px in its accent, by shadow alone', () => {
-    const body = ruleBody(svelteStyle(FRAME), '.oc-frame-terminal.popup-focus');
-    assert.match(body, /--pf-glow:\s*color-mix\(in srgb, var\(--oc-orange\)/);
-    assert.match(body, /box-shadow:\s*0 0 5px var\(--pf-glow\), inset 0 0 5px var\(--pf-glow\)/);
-});
-
-test('the selected frame turns its sheen on the compositor and the bare one keeps an overlay ring', () => {
-    const src = read(FRAME);
-    assert.match(src, /class:popup-focus-turn=\{selected\}/);
-    assert.match(src, /class:popup-focus-ring=\{selected && meta\.chrome === 'bare'\}/);
-    assert.match(src, /<span class="pf-sheen" aria-hidden="true"><\/span>/);
-    const shared = noComments(read(SHARED));
-    assert.doesNotMatch(shared, /@keyframes\s+popup-focus-turn/, 'the ring has no keyframes: client/js/ambient-ticker.js steps it (Carnivore round 3, B12)');
-    const turn = ruleBody(shared, '.popup-focus.popup-focus-turn');
-    assert.match(turn, /animation:\s*none/, 'the frame itself no longer animates the registered angle');
-    assert.doesNotMatch(turn, /conic-gradient/, 'the frame border is static');
-    const host = ruleBody(shared, '.popup-focus-turn > .pf-sheen');
-    assert.match(host, /position:\s*absolute/);
-    assert.match(host, /pointer-events:\s*none/);
-    assert.match(host, /mask-composite:\s*exclude/, 'a static mask clips the sheen to the 1px band');
-    assert.match(host, /animation:\s*amb-join-dialog-glow\s+1ms;/, 'the host only carries the one millisecond join the ticker listens for');
-    assert.doesNotMatch(host, /infinite/, 'nothing on the ring runs forever');
-    const turner = ruleBody(shared, '.popup-focus-turn > .pf-sheen::before');
-    assert.match(turner, /transform:\s*rotate\(calc\(var\(--amb-step, 0\) \* 15deg\)\)/, 'one step is 15deg: 24 steps are the old 6s lap');
-    assert.doesNotMatch(turner, /animation|transition/, 'no animation and no easing between steps');
-    assert.match(turner, /will-change:\s*transform/);
-    assert.match(turner, /conic-gradient\(\s*from 0deg/);
-    assert.match(shared, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.popup-focus-turn > \.pf-sheen::before \{\s*transform: none;/,
-        'reduced motion parks the sheen as well');
-    const base = ruleBody(shared, '.popup-focus.popup-focus-turn.popup-focus-ring');
-    assert.match(base, /border:\s*0/, 'the bare frame keeps no border: its rectangle is the session size');
 });
 
 test('a terminal never stacks the old focus ring under the shared look', () => {

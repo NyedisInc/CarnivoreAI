@@ -11,7 +11,7 @@ from src.core.db_migration import ensure_db_migrated
 from src.core.skills import kinds
 from src.core.skills.ledger import InstallLedger
 from src.core.skills.ledger_types import GLOBAL_PROJECT_PATH, SCOPE_GLOBAL, InstalledItem
-from src.cplugs.host import registry_files
+from src.plugins.host import registry_files
 
 UUID_CLOCK = "0123456789abcdef0123456789abcdef"
 UUID_MINE = "fedcba9876543210fedcba9876543210"

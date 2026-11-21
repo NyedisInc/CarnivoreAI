@@ -318,7 +318,7 @@
     .oc-tv-dot {
       width: 7px;
       height: 7px;
-      border-radius: 50%;
+      border-radius: var(--oc-radius-circle);
       flex: 0 0 auto;
       background: var(--oc-dot-color);
     }

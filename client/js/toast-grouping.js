@@ -8,7 +8,7 @@ if (typeof ToastManager !== 'function') {
     );
 }
 
-Object.assign(ToastManager.prototype, {
+extendPrototype(ToastManager, {
     _severity(kind) {
       const s = TOAST_SEVERITY[kind];
       return typeof s === 'number' ? s : SEVERITY_DEFAULT;
@@ -87,4 +87,4 @@ Object.assign(ToastManager.prototype, {
       }
       return n;
     },
-});
+}, 'toast-grouping.js');

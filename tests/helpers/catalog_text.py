@@ -6,9 +6,9 @@ from typing import Dict
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CATALOG_PATH = REPO_ROOT / "client" / "js" / "i18n" / "catalog.en.js"
-PLUGINS_WEB = REPO_ROOT / "web" / "src" / "cplugs"
+PLUGINS_WEB = REPO_ROOT / "web" / "src" / "plugins"
 SLICE_NAME = "catalog.en.js"
-PLUGINS_SRC = REPO_ROOT / "src" / "cplugs"
+PLUGINS_SRC = REPO_ROOT / "src" / "plugins"
 NOTIFY_SLICE_NAME = "notify.catalog.en.js"
 
 

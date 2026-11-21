@@ -12,14 +12,13 @@ import structlog
 from src.core.resource_push import notifier, topics
 from src.core.session_git.repo_cache import RepoCache
 from src.models.session_git import SessionGitStatus
+from src.models.activity_status import BUSY, RESTING
 
 logger = structlog.get_logger()
 
 TICK_SECONDS: float = 5.0
 LEASE_SECONDS: float = 45.0
 KEEPALIVE_SECONDS: float = 20.0
-_WORKING = frozenset({"working", "working_subagent"})
-_RESTING = frozenset({"idle", "finished_unread"})
 
 
 def signature(status: SessionGitStatus) -> str:
@@ -78,11 +77,11 @@ class GitStatusWatch:
 
     def on_status(self, session_id: str, display: str) -> None:
         previous = self._s.last_status.get(session_id)
-        if display in _WORKING:
+        if display in BUSY:
             self._s.last_status[session_id] = display
         else:
             self._s.last_status.pop(session_id, None)
-        if session_id in self._s.viewers and previous in _WORKING and display in _RESTING:
+        if session_id in self._s.viewers and previous in BUSY and display in RESTING:
             self._s.dirty.add(session_id)
 
     async def _tick(self) -> bool:

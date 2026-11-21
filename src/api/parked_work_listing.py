@@ -12,7 +12,7 @@ from src.core.attention.transcript_facts import FACTS_FOUND
 from src.core.attention.usage_limit import active_usage_limit
 from src.core.subagents.parked_work import describe_entry
 from src.models import SessionInfo
-from src.models.sessions import BackgroundProcessesInfo, UsageLimitInfo
+from src.models.sessions import BackgroundProcessesInfo, LoginExpiredInfo, UsageLimitInfo
 
 
 def _open_background_summary(evidence: Any) -> Optional[str]:
@@ -44,6 +44,7 @@ def mark_parked_work(session_manager: Any, infos: Iterable[Any]) -> None:
         info.background_open = background_open_for(watcher, info, now)
         info.background_processes = background_processes_for(watcher, info, now)
         info.usage_limit = usage_limit_for(watcher, info, now)
+        info.login_expired = login_expired_for(watcher, info, now)
         info.prompt_suggestion = prompt_suggestion_for(watcher, info, now)
 
 
@@ -88,6 +89,14 @@ def usage_limit_for(watcher: Any, info: Any, now: datetime) -> Optional[UsageLim
         message=limit.message,
         since=limit.since.isoformat() if limit.since else None,
     )
+
+
+def login_expired_for(watcher: Any, info: Any, now: datetime) -> Optional[LoginExpiredInfo]:
+    observation = fresh_claude_observation(watcher, info, now)
+    hit = getattr(getattr(observation.evidence, "transcript", None), "login_expired", None) if observation is not None else None
+    if hit is None:
+        return None
+    return LoginExpiredInfo(message=hit.message, since=hit.since.isoformat() if hit.since else None)
 
 
 def background_processes_for(watcher: Any, info: Any, now: datetime) -> Optional[BackgroundProcessesInfo]:

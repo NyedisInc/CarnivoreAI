@@ -17,12 +17,14 @@
     "Ask an agent to call placement_explain with a workload kind (light, browser, suite, build or render) to see the decision and every computer's headroom.",
     "Turn auto-distribute on in the Pack settings (the alpha holds it) to spread light work too; pick the model for enhanced placement under byoai routing as the pack placement feature.",
     "Tag a swarm_spawn with a workload (kind and size estimates); without one the task type picks a default.",
-    "Open a Swarm agent's chat: when the pack placed it, a quiet line under the title strip says placed on <computer>: <reason>. An agent the pack did not place shows no line."
+    "Open a Swarm agent's chat: when the pack placed it, a quiet line under the title strip says placed on <computer>: <reason>. An agent the pack did not place shows no line.",
+    "Pass needs (for example ffmpeg, xcode, gpu, mem_gb>=32 or label:render box) and prefer to placement_explain to see which computers meet them; a computer that has not reported what it has is named as needing an app update, a pegged one is named with the gauge's reason."
   ],
   "id": "pack-placement",
   "issues": [
     1519,
-    1618
+    1618,
+    2990
   ],
   "keywords": [
     "pack",
@@ -32,18 +34,21 @@
     "queue",
     "headroom",
     "auto-distribute",
-    "workload"
+    "workload",
+    "needs",
+    "pegged",
+    "requirements"
   ],
   "media_exempt": "Routes and agent tools only in this slice; the settings screen for it ships with the Pack settings UI slice.",
   "name": "Pack placement",
   "since": "2026-10-10",
   "status": "beta",
-  "summary": "a new agent goes to the computer with room left after the share its owner keeps free; light work stays on its project's home, battery blocks heavy work, a full Pack queues the request, and a computer over its line puts its own agents in the background priority.",
+  "summary": "a new agent goes to the computer with room left after the share its owner keeps free; light work stays on its project's home, battery blocks heavy work, a full Pack queues the request, and a computer over its line puts its own agents in the background priority; placement now reads what each computer really has (tools, Xcode, GPU, labels) and skips one that is pegged, and a job can ask for requirement words.",
   "surfaces": [
     "src/api/pack_placement_routes.py",
     "src/core/mcp/pack_placement_tools.py"
   ],
-  "updated": "2026-10-10",
+  "updated": "2026-11-16",
   "where": [
     "Agent tools (placement_explain, pack_queue_items_list, pack_queue_cancel) and the Pack API; the pack placement feature in byoai routing."
   ]

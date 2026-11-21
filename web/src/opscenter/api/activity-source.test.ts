@@ -52,11 +52,12 @@ test('a loaded row is matched by session id too, not only tmux name', () => {
 test('no loaded row for the handle: the cloude_-stripped handle, not the raw slug', () => {
   sessionRows.splice(0, sessionRows.length);
   expect(sourceForHandle('cloude_orphan')).toBe('orphan');
+  expect(sourceForHandle('carnivore_orphan')).toBe('orphan');
 });
 
-test('an external (non-cloude) handle with no loaded row renders verbatim', () => {
+test('an external handle (no owned tmux prefix) with no loaded row renders verbatim', () => {
   sessionRows.splice(0, sessionRows.length);
-  expect(sourceForHandle('carnivore_Agent_-_Cloude_Code')).toBe('carnivore_Agent_-_Cloude_Code');
+  expect(sourceForHandle('Agent_-_Cloude_Code')).toBe('Agent_-_Cloude_Code');
 });
 
 test('no handle at all is the empty string, never a dash or a label', () => {

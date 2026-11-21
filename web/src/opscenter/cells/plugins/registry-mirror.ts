@@ -7,7 +7,7 @@ export interface PluginMirrorRow {
 }
 
 const MANIFESTS = import.meta.glob<{ id: string; surfaces: { plugins?: string[] } }>(
-  '../../../../../src/cplugs/*/cplug.json',
+  '../../../../../src/plugins/*/cplug.json',
   { eager: true, import: 'default' },
 );
 

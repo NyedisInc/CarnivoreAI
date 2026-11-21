@@ -6,6 +6,8 @@ from typing import Any, Iterable
 from src.core.pipeline.plugin_db import lock_for
 from src.core.session_timeline import push as timeline_push
 from src.core.stats.plugin import PLUGIN_ID, live
+from src.models.activity_status import ASKING, BUSY
+from src.core.session_status import STATUS_UNKNOWN, STATUS_WORKING_SUBAGENT
 
 
 
@@ -30,7 +32,6 @@ class ActivityPoint:
                 self.model, self.agent_kind)
 
 
-_WAITING_STATES = ('question', 'notice')
 _BAND_METRICS = frozenset({'observed_seconds', 'working_seconds'})
 
 
@@ -83,13 +84,13 @@ class ActivityRecorder:
                               (point.observed_at, old.observed_at)).fetchone():
                     continue
                 for minute, seconds in _pieces(old.observed_at, point.observed_at):
-                    known = old.state != 'unknown' and point.state != 'unknown'
+                    known = old.state != STATUS_UNKNOWN and point.state != STATUS_UNKNOWN
                     self._write(db, minute, old,
                                 observed=seconds if known else 0,
-                                working=seconds if known and old.state in ('working', 'working_subagent') else 0,
+                                working=seconds if known and old.state in BUSY else 0,
                                 running=seconds if old.running else 0,
-                                waiting=seconds if known and old.state in _WAITING_STATES else 0,
-                                subagent=seconds if known and (old.state == 'working_subagent'
+                                waiting=seconds if known and old.state in ASKING else 0,
+                                subagent=seconds if known and (old.state == STATUS_WORKING_SUBAGENT
                                                                or (old.subagents or 0) > 0) else 0)
                 if old.running and not point.running:
                     self._write(db, int(point.observed_at // 60) * 60, point, completions=1)

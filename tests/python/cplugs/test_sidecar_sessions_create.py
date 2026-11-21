@@ -12,11 +12,11 @@ import pytest
 from fastapi import HTTPException
 
 from src.core.mcp import pending, write_tools
-from src.cplugs.host import capabilities, session_create_launch as launch_mod, session_create_port, sidecar_boot, sideload
-from src.cplugs.host.session_create_port import SessionCreatePort, standing_of
-from src.cplugs.runtime import guards
-from src.cplugs.runtime.dispatch import HostDispatcher, HostServices, PluginContext
-from src.cplugs.runtime.owner_tokens import OwnerTokens
+from src.plugins.host import capabilities, session_create_launch as launch_mod, session_create_port, sidecar_boot, sideload
+from src.plugins.host.session_create_port import SessionCreatePort, standing_of
+from src.plugins.runtime import guards
+from src.plugins.runtime.dispatch import HostDispatcher, HostServices, PluginContext
+from src.plugins.runtime.owner_tokens import OwnerTokens
 
 
 def run_async(fn):
@@ -361,7 +361,7 @@ async def test_a_card_too_large_to_show_is_a_typed_refusal(rig) -> None:
 
 
 def _fake_runtime(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, world: World) -> sidecar_boot.SidecarRuntime:
-    from src.cplugs.host import runtime as host_runtime
+    from src.plugins.host import runtime as host_runtime
 
     monkeypatch.setattr(pending, "_store", pending.PendingActions())
     rt = sidecar_boot.SidecarRuntime(host_runtime.Host(tmp_path, None), SimpleNamespace(state=SimpleNamespace()), asyncio.get_running_loop())

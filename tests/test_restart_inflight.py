@@ -22,6 +22,7 @@ from fastapi import HTTPException
 
 from src.api import imported_restart_routes, recreate_routes
 from src.api import session_restart_apply_routes as apply_routes
+from src.core.session_ops import restart as restart_ops
 from src.core import restart_inflight
 
 
@@ -58,13 +59,13 @@ def gate():
 def test_restart_route_answers_409_to_a_second_click(monkeypatch, gate):
     calls = []
 
-    async def fake_inner(request, session_uuid):
+    async def fake_inner(app_state, session_uuid, unconfirmed_note=None):
         calls.append(session_uuid)
         await gate.wait()
         return "restarted"
 
-    monkeypatch.setattr(apply_routes, "_restart_session", fake_inner)
-    request = SimpleNamespace()
+    monkeypatch.setattr(restart_ops, "_restart_unclaimed", fake_inner)
+    request = SimpleNamespace(app=SimpleNamespace(state=None))
 
     async def scenario():
         task = await _second_call_is_refused(
@@ -81,13 +82,13 @@ def test_restart_route_answers_409_to_a_second_click(monkeypatch, gate):
 
 def test_restart_route_does_not_serialise_different_rows(monkeypatch, gate):
 
-    async def fake_inner(request, session_uuid):
+    async def fake_inner(app_state, session_uuid, unconfirmed_note=None):
         if session_uuid == "row-a":
             await gate.wait()
         return session_uuid
 
-    monkeypatch.setattr(apply_routes, "_restart_session", fake_inner)
-    request = SimpleNamespace()
+    monkeypatch.setattr(restart_ops, "_restart_unclaimed", fake_inner)
+    request = SimpleNamespace(app=SimpleNamespace(state=None))
 
     async def scenario():
         task = asyncio.create_task(apply_routes.restart_session(request, "row-a"))
@@ -144,14 +145,14 @@ def test_recreate_route_answers_409_to_a_second_click(monkeypatch, gate):
 def test_a_restart_and_a_recreate_of_one_row_share_the_slot(monkeypatch, gate):
     from src.api import recreate_action
 
-    async def fake_inner(request, session_uuid):
+    async def fake_inner(app_state, session_uuid, unconfirmed_note=None):
         await gate.wait()
         return "restarted"
 
     async def fake_recreate(session_uuid, agent_type, get_manager, account_id=None, account_pinned=None):
         return "started"
 
-    monkeypatch.setattr(apply_routes, "_restart_session", fake_inner)
+    monkeypatch.setattr(restart_ops, "_restart_unclaimed", fake_inner)
     monkeypatch.setattr(recreate_action, "recreate_by_uuid", fake_recreate)
     body = SimpleNamespace(session_uuid="row-5", agent_type="claude")
     request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace()))
@@ -170,16 +171,16 @@ def test_a_restart_and_a_recreate_of_one_row_share_the_slot(monkeypatch, gate):
 def test_a_burst_of_five_restarts_spawns_once(monkeypatch, gate):
     calls = []
 
-    async def fake_inner(request, session_uuid):
+    async def fake_inner(app_state, session_uuid, unconfirmed_note=None):
         calls.append(session_uuid)
         await gate.wait()
         return "restarted"
 
-    monkeypatch.setattr(apply_routes, "_restart_session", fake_inner)
+    monkeypatch.setattr(restart_ops, "_restart_unclaimed", fake_inner)
 
     async def scenario():
         tasks = [
-            asyncio.create_task(apply_routes.restart_session(None, "row-26"))
+            asyncio.create_task(apply_routes.restart_session(SimpleNamespace(app=SimpleNamespace(state=None)), "row-26"))
             for _ in range(5)
         ]
         await asyncio.sleep(0)

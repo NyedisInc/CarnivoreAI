@@ -8,7 +8,7 @@
     width: 7px;
     cursor: ew-resize;
     background: transparent;
-    z-index: 1101;
+    z-index: calc(var(--oc-z-drawer) + var(--oc-z-step));
     touch-action: none;
 }
 

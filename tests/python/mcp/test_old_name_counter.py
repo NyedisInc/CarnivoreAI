@@ -11,7 +11,7 @@ import pytest
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
 from src.core.mcp_usage import old_names as counter, report, rollup
-from src.cplugs.sdk import old_names as sdk
+from src.plugins.sdk import old_names as sdk
 from tests.python.cplugs.huddle.test_task_manager_mcp import CALLER, call, huddle_store, manager  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client  # noqa: F401
 from tests.python.mcp.test_mcp_usage_counter import world  # noqa: F401

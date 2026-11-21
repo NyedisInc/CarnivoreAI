@@ -3,7 +3,6 @@
     import { onDestroy } from 'svelte';
     import ModalShell from '../dialog-frame/ModalShell.svelte';
     import Button from '../base/Button.svelte';
-    import IconButton from '../base/IconButton.svelte';
     import { t } from '../i18n/index.svelte';
     import { copyText } from '../settings-page/mcp-panel/api';
 
@@ -36,14 +35,7 @@
     }
 </script>
 
-<ModalShell title={t('sidebar.show_path.title', { name })} overlayClass="text-prompt-modal" onCancel={() => close(null)}>
-    {#snippet head()}
-        <div class="text-prompt-modal__head">
-            <span class="text-prompt-modal__verb">&raquo; {t('sidebar.show_path.title', { name })}</span>
-            <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close
-                onclick={() => close(null)} />
-        </div>
-    {/snippet}
+<ModalShell look="titlerow" title={t('sidebar.show_path.title', { name })} onCancel={() => close(null)}>
     <div class="sp-field" data-show-path-modal>
         <code class="sp-path" data-show-path-value>{path}</code>
         <Button data-show-path-copy

@@ -60,9 +60,9 @@ export const HOST_RULES: readonly HostRule[] = [
   },
   {
     name: 'page-row-menu',
-    pattern: /\boncontextmenu=|<(?:SessionKebab|RowMenu)\b|\bisMenuKey\(/,
+    pattern: /\boncontextmenu=|<(?:SessionKebab|RowMenu)\b|\bisMenuKey\(|\bicon=["']kebab["']/,
     owners: ['lib/item-menu/'],
-    within: ['lib/sessions-page/', 'lib/deepsearch/', 'lib/sessions-search/'],
+    within: ['lib/sessions-page/', 'lib/deepsearch/', 'lib/sessions-search/', 'lib/automations/'],
   },
 ];
 

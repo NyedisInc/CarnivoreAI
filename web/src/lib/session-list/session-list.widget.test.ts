@@ -11,7 +11,7 @@ import { SESSION_LIST_WIDGET } from '../sidebar-widgets/widget-ids';
 import { closeRailMenu } from '../sidebar-widgets/rail-menu.svelte';
 import { editorSeams } from '../../opscenter/layout-editor/editor.svelte';
 import { prefs, railBtn, railOn, settle, setupRail, teardownRail } from '../sidebar-widgets/fixtures/rail-harness';
-import { registerSwarmFlyout } from '../../cplugs/huddle/swarm-flyout';
+import { registerSwarmFlyout } from '../../plugins/huddle/swarm-flyout';
 
 // The swarm slide-out is the Task Manager plugin's, so the test registers it; the harness no longer does.
 registerSwarmFlyout();

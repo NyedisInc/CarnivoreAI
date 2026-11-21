@@ -114,6 +114,7 @@
     .ap-page .t-find {
         flex: none;
         width: 220px;
+        margin-left: auto;
     }
 
     @container ap-page (max-width: 1100px) {
@@ -122,7 +123,7 @@
         }
     }
 
-    @media (max-width: 700px) {
+    @media (max-width: 767px) {
         .ap-page .t-pane {
             padding-block: var(--oc-space-5);
             gap: var(--oc-space-5);

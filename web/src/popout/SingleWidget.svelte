@@ -21,8 +21,8 @@
   import PopoutMenu from './PopoutMenu.svelte';
   import type { MenuSlot } from '../opscenter/shell/widget-head';
   import type { FrameHeader } from '../opscenter/shell/frame-header.svelte';
-  import { followEnablement } from '../cplugs/host/enablement.svelte';
-  import { enablementKnown, popoutWidgetFor } from '../cplugs/host/popout-widgets';
+  import { followEnablement } from '../plugins/host/enablement.svelte';
+  import { enablementKnown, popoutWidgetFor } from '../plugins/host/popout-widgets';
 
   let { widget, placement = {} }: { widget: string; placement?: PopoutPlacement } = $props();
 

@@ -52,7 +52,7 @@ async def redeem_totp_code(request: Request, code: str) -> AuthTokenResponse:
             try:
                 await store.issue(refresh_jti, "claudetunnel_user", refresh_exp)
             except Exception as e:
-                logger.error("refresh_store_issue_failed", error=str(e))
+                logger.error("refresh_store_issue_failed", error=str(e), error_type=type(e).__name__, exc_info=True)
                 raise HTTPException(
                     status_code=500,
                     detail="Failed to persist refresh token",
@@ -60,13 +60,14 @@ async def redeem_totp_code(request: Request, code: str) -> AuthTokenResponse:
 
         logger.info("totp_verification_success")
 
+        sentinel = None
         try:
             sentinel = _totp_paired_sentinel_path()
             sentinel.parent.mkdir(parents=True, exist_ok=True)
             sentinel.touch(exist_ok=True)
             sentinel.with_name(PACK_LEFT_NAME).unlink(missing_ok=True)
         except Exception as e:
-            logger.error("totp_paired_sentinel_write_failed", error=str(e))
+            logger.error("totp_paired_sentinel_write_failed", error=str(e), error_type=type(e).__name__, exc_info=True, path=str(sentinel) if sentinel else None)
 
         return AuthTokenResponse(
             success=True,
@@ -77,7 +78,7 @@ async def redeem_totp_code(request: Request, code: str) -> AuthTokenResponse:
         )
 
     except FileNotFoundError as e:
-        logger.error("auth_config_missing", error=str(e))
+        logger.error("auth_config_missing", error=str(e), error_type=type(e).__name__)
         raise HTTPException(
             status_code=500,
             detail="Authentication not configured. Run setup_auth.py first."
@@ -85,7 +86,7 @@ async def redeem_totp_code(request: Request, code: str) -> AuthTokenResponse:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("totp_verification_error", error=str(e))
+        logger.error("totp_verification_error", error=str(e), error_type=type(e).__name__, exc_info=True)
         raise HTTPException(status_code=500, detail="authentication error")
 
 
@@ -242,7 +243,7 @@ async def logout(request: Request, body: RefreshTokenRequest):
     except HTTPException:
         logger.info("logout_with_invalid_refresh")
     except Exception as e:
-        logger.error("logout_error", error=str(e))
+        logger.error("logout_error", error=str(e), error_type=type(e).__name__, exc_info=True)
 
     return SuccessResponse(success=True, message="Logged out")
 

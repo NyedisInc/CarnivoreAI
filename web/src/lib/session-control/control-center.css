@@ -165,6 +165,10 @@
     color: var(--oc-green);
   }
 
+  .scc .scc-num--stalled {
+    color: var(--oc-yellow-bright);
+  }
+
   .scc .scc-meta {
     grid-column: 2 / -1;
     color: var(--oc-text-dim);
@@ -203,7 +207,7 @@
   }
 
   .scc .scc-num[data-lan='true'] {
-    color: var(--oc-amber);
+    color: var(--oc-yellow);
   }
 
   .scc .scc-ask {

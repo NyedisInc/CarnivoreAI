@@ -16,9 +16,9 @@ from fastapi import FastAPI
 
 from src.api import catalog_cplug_gates
 from src.api.auth import require_auth
-from src.cplugs.host import identity, owner_switch, routes as host_routes, runtime, sidecar_boot, sidecar_index, sidecar_registry
-from src.cplugs.host import state as owner_state
-from src.cplugs.runtime import index_expiry, sandbox
+from src.plugins.host import identity, owner_switch, routes as host_routes, runtime, sidecar_boot, sidecar_index, sidecar_registry
+from src.plugins.host import state as owner_state
+from src.plugins.runtime import index_expiry, sandbox
 
 try:
     sandbox.find_interpreter()

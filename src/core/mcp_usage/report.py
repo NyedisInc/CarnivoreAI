@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from src.cplugs.sdk import old_names as sdk_old_names
+from src.plugins.sdk import old_names as sdk_old_names
 from src.core.mcp_usage import store as usage_store
 
 MAX_DAYS = usage_store.RETENTION_DAYS

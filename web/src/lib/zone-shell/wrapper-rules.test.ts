@@ -8,14 +8,14 @@ import { WRAPPER_RULES, scanWrappers } from './wrapper-rules';
 const SRC = fileURLToPath(new URL('../..', import.meta.url));
 
 const KNOWN: readonly string[] = [
-  'cplugs/crate/ExportDialog.svelte:interval-anywhere',
-  'cplugs/crate/ImportDialog.svelte:interval-anywhere',
-  'cplugs/huddle/chat/ChatWidget.svelte:interval-anywhere',
-  'cplugs/huddle/style-guide/CharacterBoard.svelte:interval-anywhere',
-  'cplugs/huddle/style-guide/ExpressionBoard.svelte:interval-anywhere',
-  'cplugs/huddle/task-manager-progress.svelte.ts:interval-anywhere',
-  'cplugs/sdk/tab-flyout.ts:flyout-press',
-  'cplugs/share/ShareModal.svelte:interval-anywhere',
+  'plugins/crate/ExportDialog.svelte:interval-anywhere',
+  'plugins/crate/ImportDialog.svelte:interval-anywhere',
+  'plugins/huddle/chat/ChatWidget.svelte:interval-anywhere',
+  'plugins/huddle/style-guide/CharacterBoard.svelte:interval-anywhere',
+  'plugins/huddle/style-guide/ExpressionBoard.svelte:interval-anywhere',
+  'plugins/huddle/task-manager-progress.svelte.ts:interval-anywhere',
+  'plugins/sdk/tab-flyout.ts:flyout-press',
+  'plugins/share/ShareModal.svelte:interval-anywhere',
   'lib/automations/page-store.svelte.ts:interval-anywhere',
   'lib/background-work/FootWork.svelte:interval-anywhere',
   'lib/computers/InviteCard.svelte:interval-anywhere',

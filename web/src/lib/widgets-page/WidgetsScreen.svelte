@@ -5,7 +5,6 @@
     import Page from '../../opscenter/ui/Page.svelte';
     import PageToolbar, { type ToolbarFacet } from '../../opscenter/ui/PageToolbar.svelte';
     import SearchField from '../../opscenter/ui/SearchField.svelte';
-    import { viewport } from '../../opscenter/engine/viewport.svelte';
     import { createManagerController } from '../manager-frame/manager-controller.svelte';
     import { MANAGER_KEYS } from '../manager-frame/manager-model';
     import type { ManagerAdapter } from '../manager-frame/types';
@@ -20,6 +19,8 @@
     import type { ItemSettingsController } from '../item-settings/item-settings-controller.svelte';
     import { createWidgetsAdapter, type WidgetItem } from './widgets-adapter';
     import PlacesBody from './PlacesBody.svelte';
+    import PlacesRail from './PlacesRail.svelte';
+    import { lensLabel, lensRows, pickLens } from './places-lens';
     import WidgetPane from './WidgetPane.svelte';
     import { PLACES } from './places';
     import { boardList } from './places-state.svelte';
@@ -145,7 +146,8 @@
         else if (id === 'show') view.show = next === 'fits' ? 'fits' : 'all';
         else if (id === 'board') view.board = next;
     }
-    const narrow = $derived(viewport.narrow && !embedded);
+    const lens = $derived(lensRows(ctl.items as readonly WidgetItem[], query, t));
+    const showLens = $derived(tab === 'widgets' && ctl.status.kind !== 'loading' && ctl.status.kind !== 'error');
 </script>
 
 {#snippet searchBox()}
@@ -155,10 +157,9 @@
     </span>
 {/snippet}
 
-{#snippet toolbar(withSearch: boolean)}
+{#snippet toolbar()}
     <PageToolbar
-        showSearch={withSearch}
-        search={withSearch ? searchBox : undefined}
+        showSearch={false}
         {facets}
         onFacet={facet}
         showView={false}
@@ -168,7 +169,9 @@
     />
 {/snippet}
 
-{#snippet barToolbar()}{@render toolbar(false)}{/snippet}
+{#snippet rail()}
+    <PlacesRail groups={lens.groups} fits={lens.fits} states={lens.states} busy={false} {t} onPick={pickLens} />
+{/snippet}
 
 {#if open}
     <Page
@@ -177,17 +180,20 @@
         ariaLabel={t('widgets.page.label')}
         {embedded}
         onClose={embedded ? undefined : close}
-        search={narrow && tab === 'widgets' ? searchBox : undefined}
-        bar={narrow && tab === 'widgets' ? barToolbar : undefined}
+        frame="nav"
+        scroll="self"
+        find={tab === 'widgets' ? searchBox : undefined}
+        bar={tab === 'widgets' ? toolbar : undefined}
+        side={showLens ? rail : undefined}
+        sideLabel={lensLabel(lens)}
     >
         {#snippet tabs()}
             <Tabs tabs={tabDefs} active={tab} onSelect={pickTab} label={t('widgets.page.tab.label')} idBase="wp" />
         {/snippet}
-        {#snippet sub()}{#if !narrow && tab === 'widgets'}{@render toolbar(true)}{/if}{/snippet}
         {#snippet actions()}
             {#if tab === 'widgets'}
-            <Button size="sm" data-k="reset-bars" title={t('widgets.places.reset.title')} onclick={() => void resetBars(t)}>{t('widgets.places.reset.label')}</Button>
-            <Button size="sm" data-k="help" title={t('widgets.places.help.title')} aria-label={t('widgets.places.help.title')} onclick={help}>{t('widgets.places.help.label')}</Button>
+            <Button data-k="reset-bars" title={t('widgets.places.reset.title')} onclick={() => void resetBars(t)}>{t('widgets.places.reset.label')}</Button>
+            <Button data-k="help" title={t('widgets.places.help.title')} aria-label={t('widgets.places.help.title')} onclick={help}>{t('widgets.places.help.label')}</Button>
             {/if}
         {/snippet}
         {#if tab === 'settings'}

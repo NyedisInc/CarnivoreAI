@@ -38,7 +38,7 @@
         flex: none;
         width: 8px;
         height: 8px;
-        border-radius: 50%;
+        border-radius: var(--oc-radius-circle);
     }
 
     .ph-led--running {
@@ -54,14 +54,14 @@
     .ph-led--unknown {
         width: 7px;
         height: 7px;
-        border-radius: 1px;
+        border-radius: var(--oc-radius-xs);
         background: var(--oc-line-frame);
     }
 
     .ph-led--removed {
         width: 7px;
         height: 7px;
-        border-radius: 1px;
+        border-radius: var(--oc-radius-xs);
         border: 1px dashed var(--oc-text-dim);
     }
 

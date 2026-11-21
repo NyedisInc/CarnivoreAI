@@ -61,7 +61,8 @@ async def company_label(company_id: int) -> str:
 
 
 def _company_out(row: Any) -> dict:
-    return {"id": row["id"], "name": row["name"], "parent_id": row.get("parent_id"), "hq_project_id": row.get("hq_project_id")}
+    return {"id": row["id"], "name": row["name"], "parent_id": row.get("parent_id"), "hq_project_id": row.get("hq_project_id"),
+            "folder": row.get("folder")}
 
 
 async def company_create(manager: Any, caller: AgentCaller, args: dict) -> dict:
@@ -137,6 +138,49 @@ async def company_hq_set(manager: Any, caller: AgentCaller, args: dict) -> dict:
     return await _patch(manager, caller, "company_hq_set", company_id, "hq_project_id", project_id, summary)
 
 
+def _folder_arg(args: dict) -> Optional[str]:
+    if "folder" not in args:
+        raise ToolError("folder is required: an existing folder, or null to clear it")
+    value = args["folder"]
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value.strip() or "\x00" in value:
+        raise ToolError("folder must be a path as text, or null to clear it")
+    return value.strip()
+
+
+async def company_folder_set(manager: Any, caller: AgentCaller, args: dict) -> dict:
+    _only(args, "company_folder_set", {"company_id", "folder"})
+    company_id, folder = _id_arg(args, "company_id"), _folder_arg(args)
+    company = await company_label(company_id)
+    summary = (f"clear the folder of {company} (its projects and folders are untouched)" if folder is None else
+               f"set the folder of {company} to {json.dumps(folder)}, where its new projects will go (nothing on disk moves)")
+    return await _patch(manager, caller, "company_folder_set", company_id, "folder", folder, summary)
+
+
+async def project_company_set(manager: Any, caller: AgentCaller, args: dict) -> dict:
+    from src.api import companies_routes
+    from src.core.mcp.project_tools import project_id_arg, project_label
+    from src.models.projects import SetProjectsCompanyRequest
+
+    _only(args, "project_company_set", {"project", "company_id"})
+    project_id, company_id = project_id_arg(args), _id_arg(args, "company_id", nullable=True)
+
+    async def run(approved: bool) -> dict:
+        body = SetProjectsCompanyRequest(project_ids=[project_id], company_id=company_id)
+        answer = await _via_route(companies_routes.set_projects_company(body))
+        result = answer.results[0]
+        if not result.ok:
+            raise ToolError(result.error or f"project {project_id} was not filed")
+        return _ok({"project_id": project_id, "company_id": company_id, "name": result.name})
+
+    where = "no company (orphaned)" if company_id is None else await company_label(company_id)
+    summary = f"file {await project_label(project_id)} (project) under {where} (its folder and sessions are untouched)"
+    return await park(manager, caller, "", "", "project_company_set", summary,
+                      {"project": project_id, "company_id": company_id}, run,
+                      dedupe_key=f"project_company_set:{project_id}:{company_id}")
+
+
 async def company_delete(manager: Any, caller: AgentCaller, args: dict) -> dict:
     from src.api import companies_routes
 
@@ -183,6 +227,20 @@ TOOLS: dict = {
         {"company_id": _COMPANY_ID,
          "project_id": {"type": ["integer", "null"], "minimum": 1, "description": "project id from projects_list, or null"}},
         ["company_id", "project_id"], company_hq_set,
+    ),
+    "company_folder_set": (
+        "Set the folder a company's new projects go under (company_id from companies_list), or clear it with folder null. It must be "
+        "an existing folder of yours. It is a default, never a lock: nothing on disk moves and no existing project changes. " + _WAITS,
+        {"company_id": _COMPANY_ID,
+         "folder": {"type": ["string", "null"], "description": "an existing folder (the long iCloud spelling is stored), or null to clear"}},
+        ["company_id", "folder"], company_folder_set,
+    ),
+    "project_company_set": (
+        "File a project under a company (project from projects_list, company_id from companies_list), or orphan it with company_id "
+        "null. Its folder and sessions are untouched. " + _WAITS,
+        {"project": {"type": "integer", "minimum": 1, "description": "project id from projects_list"},
+         "company_id": {"type": ["integer", "null"], "minimum": 1, "description": "company id from companies_list, or null to orphan"}},
+        ["project", "company_id"], project_company_set,
     ),
     "company_delete": (
         "Delete a company: its projects become orphaned (never deleted) and its child companies move up to its parent. "

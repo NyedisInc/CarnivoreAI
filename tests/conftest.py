@@ -11,6 +11,9 @@ from typing import Any, Iterator
 
 import pytest
 
+sys.dont_write_bytecode = True
+os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+
 os.environ.setdefault("CLOUDE_STATE_DIR", tempfile.mkdtemp(prefix="cc_test_state_"))
 
 os.environ.setdefault("DEFAULT_WORKING_DIR", tempfile.mkdtemp(prefix="cc_test_wd_"))
@@ -27,6 +30,8 @@ os.environ.setdefault(
         tempfile.mkdtemp(prefix="cc_test_claude_home_"), ".claude", "settings.json"
     ),
 )
+
+os.environ.setdefault("CLOUDE_CODEX_DIR", tempfile.mkdtemp(prefix="cc_test_codex_home_"))
 
 os.environ["CARNIVORE_ACCOUNTS_DIR"] = tempfile.mkdtemp(prefix="cc_test_accounts_")
 
@@ -76,10 +81,20 @@ def hero_art_off(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.fixture(autouse=True)
 def claude_credential_miss_cache_empty() -> None:
-    from src.core.provider_ledger import codex_credentials, credentials
+    from src.core.provider_ledger import codex_credentials, credentials, keychain_memo
 
     credentials._misses.clear()
     codex_credentials._misses.clear()
+    keychain_memo.clear()
+
+
+@pytest.fixture(autouse=True)
+def path_and_fingerprint_memos_empty() -> None:
+    from src.core.mcp import fingerprint_memo
+    from src.core.safe_io import realpath_memo
+
+    fingerprint_memo.clear()
+    realpath_memo.clear()
 
 
 @pytest.fixture(autouse=True)
@@ -237,6 +252,37 @@ def _reset_tmux_probe_cache():
     tmux_discovery.reset_probe_cache()
     yield
     tmux_discovery.reset_probe_cache()
+
+
+@pytest.fixture(autouse=True)
+def _forget_installed_sidecar_registry():
+    from src.plugins.host import sidecar_registry
+
+    sidecar_registry._registry = None
+    yield
+    sidecar_registry._registry = None
+
+
+@pytest.fixture(autouse=True)
+def _forget_built_pack_jobs():
+    boot = sys.modules.get("src.core.pack.jobs.boot")
+    if boot is not None:
+        boot._built.clear()
+    yield
+    boot = sys.modules.get("src.core.pack.jobs.boot")
+    if boot is not None:
+        boot._built.clear()
+
+
+@pytest.fixture(autouse=True)
+def _empty_process_pending_actions():
+    pending = sys.modules.get("src.core.mcp.pending")
+    if pending is not None:
+        pending.get_store()._items.clear()
+    yield
+    pending = sys.modules.get("src.core.mcp.pending")
+    if pending is not None:
+        pending.get_store()._items.clear()
 
 
 @pytest.fixture(autouse=True)
@@ -432,3 +478,9 @@ def _drop_listing_caches():
     invalidate_all()
     yield
     invalidate_all()
+
+
+@pytest.fixture(autouse=True)
+def git_env_cleared(monkeypatch: pytest.MonkeyPatch) -> None:
+    for name in [key for key in os.environ if key.startswith("GIT_")]:
+        monkeypatch.delenv(name)

@@ -54,7 +54,7 @@ class ServerPrefsConfig(BaseModel):
     Fields:
         bind_host: Remembered bind address, or "" for "app default".
         tls_preferred: Whether the user wants TLS once it exists.
-        developer_mode: Whether ``dev`` tier plugins are shown and load (``src/cplugs/host/developer_mode.py``); off by default.
+        developer_mode: Whether ``dev`` tier plugins are shown and load (``src/plugins/host/developer_mode.py``); off by default.
     """
 
     bind_host: str = ""

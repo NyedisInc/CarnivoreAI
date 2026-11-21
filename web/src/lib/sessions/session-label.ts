@@ -1,3 +1,4 @@
+import { handleWithoutPrefix } from '../product-identity';
 import { hostWindow } from './env';
 
 export interface NameableRow {
@@ -20,7 +21,7 @@ export function legacySessionLabel(): LegacySessionLabel | null {
 
 export function derivedDisplayName(tmuxName: string | null | undefined): string {
     const name = tmuxName || '';
-    return name.startsWith('cloude_') ? name.slice('cloude_'.length) : name;
+    return handleWithoutPrefix(name);
 }
 
 export function sessionDisplayLabel(row: NameableRow | null | undefined): string {

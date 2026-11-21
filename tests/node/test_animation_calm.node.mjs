@@ -87,3 +87,11 @@ test('stylesheet: three pause rules, the reduce backstop, and no animation: none
     assert.equal(css.replace(m[0], '').includes('animation: none'), false);
     assert.match(css, /@layer legacy/);
 });
+
+test('stylesheet: reduce motion stops literal transitions too, not only the tokenized ones', () => {
+    const css = CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    const m = css.match(/@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?\}\s*\}/);
+    assert.ok(m, 'reduce backstop present');
+    assert.match(m[0], /transition: none !important;/);
+    assert.equal(css.replace(m[0], '').includes('transition: none'), false);
+});

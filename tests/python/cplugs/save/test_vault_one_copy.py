@@ -4,8 +4,8 @@ from __future__ import annotations
 import os
 import time
 
-from src.cplugs.save.vault import constants as K
-from src.cplugs.save.vault import retention
+from src.plugins.save.vault import constants as K
+from src.plugins.save.vault import retention
 from tests.python.cplugs.save.vault_helpers import CONV, World, jsonl
 
 

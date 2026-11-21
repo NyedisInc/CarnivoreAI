@@ -8,6 +8,7 @@ import { placeInRail } from '../../lib/session-rail/rail-store.svelte';
 import type { RailEdge } from '../../lib/session-rail/rail-model';
 import type { RailSpot } from '../../lib/session-rail/rail-sections';
 import { addChart } from '../cells/analytics/state.svelte';
+import type { ChartConfig } from '../cells/analytics/types';
 import type { CarryTarget } from './drawer-carry';
 import type { GroupRow } from './drawer-groups';
 import { addAnalyticsWidget, addWidget } from './editor.svelte';
@@ -70,12 +71,12 @@ export function landNow(store: LayoutStore, row: GroupRow, target: CarryTarget):
   }
 }
 
-export function landFamilyCopy(store: LayoutStore, row: GroupRow, target: CarryTarget): void {
+export function landFamilyCopy(store: LayoutStore, row: GroupRow, target: CarryTarget, config?: ChartConfig): void {
   if (target.area === 'surface') {
     if (addAnalyticsWidget(undefined)) store.announce(t('layout_editor.announce.added', { title: row.title }));
     return;
   }
-  const chart = addChart();
+  const chart = addChart(config);
   if (target.area === 'rail') {
     addToRail(store, target.edge, row.manifest.id, row.title, target.spot, chart.id);
   } else if (target.area === 'zone') {

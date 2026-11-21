@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import http.client
+import ipaddress
 import json
 import socket
 import ssl
@@ -29,6 +30,9 @@ USER_AGENT: str = "carnivore-mcp-probe/1"
 SESSION_HEADER: str = "Mcp-Session-Id"
 _AUTH_STATUSES = frozenset({401, 403})
 _NOT_FOUND_STATUSES = frozenset({404, 410})
+
+_LOOPBACK_NAMES = frozenset({"localhost"})
+OWN_MCP_PATH: str = "/mcp"
 
 _INITIALIZE = json.dumps({
     "jsonrpc": "2.0", "id": 1, "method": "initialize",
@@ -120,18 +124,51 @@ def _terminate(url: str, session_id: str, timeout: float) -> None:
         log.debug("mcp_probe_terminate_failed", error=type(exc).__name__)
 
 
+def _is_loopback(host: Optional[str]) -> bool:
+    if not host:
+        return False
+    if host.lower() in _LOOPBACK_NAMES:
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
+
+
+def is_own_endpoint(url: str, own_port: Optional[int]) -> bool:
+    if own_port is None:
+        return False
+    try:
+        parts = urlsplit(url)
+        port = parts.port
+    except ValueError:
+        return False
+    return (_is_loopback(parts.hostname) and port == own_port
+            and (parts.path or "/").rstrip("/") == OWN_MCP_PATH)
+
+
+def configured_port() -> Optional[int]:
+    from src.config import settings  # noqa: PLC0415
+
+    port = getattr(settings, "port", None)
+    return port if isinstance(port, int) else None
+
+
 class ProbeTable:
 
     def __init__(self, probe: Callable[[str, str], ProbeResult] = probe_once,
-                 interval: timedelta = PROBE_INTERVAL, max_concurrent: int = MAX_CONCURRENT) -> None:
+                 interval: timedelta = PROBE_INTERVAL, max_concurrent: int = MAX_CONCURRENT,
+                 own_port: Callable[[], Optional[int]] = configured_port) -> None:
         self._probe = probe
+        self._own_port = own_port
         self._interval = interval
         self._pool = ThreadPoolExecutor(max_workers=max_concurrent, thread_name_prefix="mcp-probe")
         self._results: Dict[Tuple[str, str], ProbeResult] = {}
         self._lock = threading.Lock()
 
     def due(self, wanted: Iterable[Tuple[str, str]], now: datetime) -> Tuple[Tuple[str, str], ...]:
-        keys = set(wanted)
+        port = self._own_port()
+        keys = {k for k in wanted if not is_own_endpoint(k[1], port)}
         with self._lock:
             for stale in [k for k in self._results if k not in keys]:
                 del self._results[stale]

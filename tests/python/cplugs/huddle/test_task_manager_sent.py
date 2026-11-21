@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from src.cplugs.huddle import told_log
+from src.plugins.huddle import told_log
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_send_queue import BASE, SEND, env, flush_due  # noqa: F401
 

@@ -18,11 +18,11 @@ import structlog
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.host import runtime, system_lifecycle
-from src.cplugs.reviewboard import CPLUG
-from src.cplugs.reviewboard.public import links, mcp as board_mcp, routes_owner
-from src.cplugs.reviewboard import document, public_port
-from src.cplugs.reviewboard.public import port as board_public
+from src.plugins.host import runtime, system_lifecycle
+from src.plugins.reviewboard import CPLUG
+from src.plugins.reviewboard.public import links, mcp as board_mcp, routes_owner
+from src.plugins.reviewboard import document, public_port
+from src.plugins.reviewboard.public import port as board_public
 from tests.python.cplugs.reviewboard.public.test_public_links_switch_support import set_public
 from tests.python.cplugs.reviewboard.boards import PAGE, SIDECAR, make_board
 from tests.python.cplugs.reviewboard.harness import PANE, Env, make_env
@@ -312,7 +312,7 @@ def test_the_secret_never_reaches_a_log(client) -> None:
 
 
 def test_clearing_the_ended_links_removes_expired_and_revoked_ones_and_nothing_live(client, storage) -> None:
-    from src.cplugs.reviewboard.public import links
+    from src.plugins.reviewboard.public import links
     revoked, live, expiring = (mint(client).json()["link"]["id"] for _ in range(3))
     client.delete(f"{BASE}/{revoked}")
     with sqlite3.connect(storage.db_path) as conn:

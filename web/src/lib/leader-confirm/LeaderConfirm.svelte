@@ -25,13 +25,7 @@
     }
 </script>
 
-<ModalShell title={t('leader.confirm.title', { verb })} overlayClass="text-prompt-modal leader-confirm" onCancel={() => close(null)}>
-    {#snippet head()}
-        <div class="text-prompt-modal__head">
-            <span class="text-prompt-modal__verb">&raquo; {t('leader.confirm.title', { verb })}</span>
-            <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close onclick={() => close(null)} />
-        </div>
-    {/snippet}
+<ModalShell look="titlerow" title={t('leader.confirm.title', { verb })} overlayClass="leader-confirm" onCancel={() => close(null)}>
     <div data-leader-confirm>
         <p class="leader-confirm__lost">{t('leader.confirm.lost', { name, rank: t(`leader.rank.${rank}`) })}</p>
         <ul class="leader-confirm__list">
@@ -55,6 +49,5 @@
     @layer components {
         .leader-confirm__lost { margin: 0 0 var(--oc-space-2); color: var(--oc-text-bright); }
         .leader-confirm__list { margin: 0 0 var(--oc-space-3); padding-left: var(--oc-space-4); color: var(--oc-text-secondary); }
-        :global(.leader-confirm .modal-btn-danger:disabled) { opacity: 0.45; cursor: not-allowed; }
     }
 </style>

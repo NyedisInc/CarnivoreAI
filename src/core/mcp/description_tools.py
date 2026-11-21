@@ -100,8 +100,7 @@ async def project_description_set(manager: Any, caller: AgentCaller, args: dict)
     name = await _current_name(project_id, include_archived=True)
 
     async def run(_approved: bool) -> dict:
-        current = await _current_name(project_id, include_archived=True)
-        row = await _via_route(projects_routes.update_project(current, body))
+        row = await _via_route(projects_routes.update_project_for(project_id, body))
         return _ok({"project": {"id": row.id, "name": row.name, "short_description": row.short_description,
                                 "long_description": row.description}})
 

@@ -5,7 +5,7 @@ import asyncio
 
 import pytest
 
-from src.cplugs.huddle import schedule
+from src.plugins.huddle import schedule
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, row  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import ITEMS, LISTS, Env, arm, call, env, iso  # noqa: F401
 

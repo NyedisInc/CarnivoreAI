@@ -1,6 +1,5 @@
 @layer patterns {
   .oc-options {
-    --oc-option-mark: var(--oc-space-3);
     display: flex;
     flex-direction: column;
     gap: var(--oc-space-1);
@@ -52,26 +51,6 @@
     flex: none;
     align-items: center;
     height: 1lh;
-  }
-
-  .oc-option__box {
-    display: grid;
-    place-items: center;
-    width: var(--oc-option-mark);
-    height: var(--oc-option-mark);
-    border: var(--oc-border) solid var(--oc-line-control);
-    border-radius: var(--oc-border);
-  }
-
-  .oc-option[aria-checked='true'] .oc-option__box {
-    border-color: var(--oc-green);
-  }
-
-  .oc-option[aria-checked='true'] .oc-option__box::after {
-    content: '';
-    width: calc(var(--oc-option-mark) / 2);
-    height: calc(var(--oc-option-mark) / 2);
-    background: var(--oc-green);
   }
 
   .oc-option__text {

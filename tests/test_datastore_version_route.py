@@ -160,7 +160,7 @@ def test_data_block_is_additive_and_breaks_nothing(client) -> None:
 
     body = test_client.get("/api/v1/version").json()
 
-    assert set(body) == {"version", "update", "data", "client_build"}
+    assert set(body) == {"version", "update", "data", "client_build", "dev_build"}
     assert isinstance(body["client_build"], str)
     assert body["update"]["status"] == "unknown"
     assert body["update"]["reason"] == "the update checker is not running"

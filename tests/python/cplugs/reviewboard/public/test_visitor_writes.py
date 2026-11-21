@@ -9,9 +9,9 @@ from typing import Any, Dict, List
 
 import pytest
 
-from src.cplugs.reviewboard.public import responses
-from src.cplugs.reviewboard.public.write import WRITER
-from src.cplugs.sdk import ports
+from src.plugins.reviewboard.public import responses
+from src.plugins.reviewboard.public.write import WRITER
+from src.plugins.sdk import ports
 from tests.python.cplugs.reviewboard.public.read_harness import edge, get, mint_token
 
 SLUG = "20261013-bottom-bar"

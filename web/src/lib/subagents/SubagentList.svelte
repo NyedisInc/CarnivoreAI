@@ -12,6 +12,7 @@
     fetchSubagents,
     orderRows,
     secondsSince,
+    stalledText,
     type SessionSubagents,
   } from './subagents';
 
@@ -131,7 +132,7 @@
               <td><span class="sal-status sal-status--{row.status}">{t(`subagents.status.${row.status}`)}</span></td>
               <td class="sal-type">{row.agent_type ?? t('subagents.list.type_unknown')}</td>
               <td>{row.description ?? t('subagents.list.no_description')}</td>
-              <td class="sal-num">{age(row.started_at)}</td>
+              <td class="sal-num" class:sal-num--stalled={stalledText(row, nowMs) !== null}>{stalledText(row, nowMs) ?? age(row.started_at)}</td>
             </tr>
           {/each}
         </tbody>

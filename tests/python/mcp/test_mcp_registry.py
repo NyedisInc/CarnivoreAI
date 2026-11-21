@@ -9,8 +9,8 @@ from src.core.mcp import aliases, protocol, tools
 from src.core.mcp.caller import AgentCaller
 from src.core.mcp.registry import gates, index
 from src.core.mcp.registry.model import HEADINGS, MAX_SUMMARY_CHARS, Capability, id_problems, problems
-from src.cplugs.host import runtime
-from src.cplugs.sdk import ToolSpec, with_capabilities
+from src.plugins.host import runtime
+from src.plugins.sdk import ToolSpec, with_capabilities
 
 def _current() -> list:
     return [n for n in tools.tool_names() if not aliases.is_alias(n)]
@@ -80,7 +80,9 @@ def test_registry_metadata_never_reaches_tools_list_or_its_fingerprint(monkeypat
     caller = AgentCaller("tok", "tok", "tok", "tok", "write")
     before = json.dumps(tools.tool_definitions(), sort_keys=True)
     fingerprint = protocol.tool_fingerprint(caller)
-    assert all(set(row) <= {"name", "description", "inputSchema", "annotations"} for row in json.loads(before))
+    rows = json.loads(before)
+    assert all(set(row) <= {"name", "description", "inputSchema", "annotations", "_meta"} for row in rows)
+    assert {r["name"] for r in rows if "_meta" in r} <= {"delegate"}
     ids = {c.id for c in index.entries().values() if c.id.count(".") > 1}
     assert not [i for i in ids if f'"{i}"' in before]
     junk = {n: Capability(n, f"system.junk.n{i}", "junk") for i, n in enumerate(index.entries())}

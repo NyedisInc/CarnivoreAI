@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.cplugs.sdk import restore_points
+from src.plugins.sdk import restore_points
 from src.core.bookmarks import locate, service
 from src.core.bookmarks.errors import TranscriptUnavailable
 from tests.python.bookmarks import fixtures
@@ -14,7 +14,7 @@ def test_add_and_list_work_with_no_plugin_state_at_all(env, monkeypatch):  # noq
     def boom(*args, **kwargs):
         raise AssertionError("bookmarks must not consult plugin state")
 
-    monkeypatch.setattr("src.cplugs.host.gate.is_on", boom)
+    monkeypatch.setattr("src.plugins.host.gate.is_on", boom)
     mark = service.add_bookmark("row-uuid-1", label="x")
     assert [b["id"] for b in service.list_bookmarks("row-uuid-1")["bookmarks"]] == [mark.id]
 

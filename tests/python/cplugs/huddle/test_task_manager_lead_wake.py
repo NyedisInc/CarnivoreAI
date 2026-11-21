@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.cplugs.huddle.roles import lead
-from src.cplugs.huddle.roles.store import RoleStore
+from src.plugins.huddle.roles import lead
+from src.plugins.huddle.roles.store import RoleStore
 from tests.python.cplugs.huddle.roles_rig import BASE, SwarmStub, aged, use_swarm
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, pasted  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_tags import SLEEPER, SEND, World, add, store_of, world  # noqa: F401
@@ -61,7 +61,7 @@ def test_an_asleep_project_agent_is_woken_through_the_swarm_and_never_behind_its
 
 
 def test_a_seat_that_moved_up_to_an_agent_with_no_body_yet_starts_it_and_tells_it(client, world, pasted, monkeypatch):
-    from src.cplugs.sdk.swarm import SeatRef
+    from src.plugins.sdk.swarm import SeatRef
 
     stub = use_swarm(monkeypatch, SwarmStub(fallbacks={"12": SeatRef(7, "alpha", None, None, False, "SysOp")}))
     stub.on_wake = lambda agent_id, body: world.live.append(aged(body, 1, 0))
@@ -69,3 +69,14 @@ def test_a_seat_that_moved_up_to_an_agent_with_no_body_yet_starts_it_and_tells_i
     add(client)
     result = told(client)
     assert stub.woken == [(7, "manual")] and result["status"] == "sent" and pasted[-1][0] == "ses_swarm_7"
+
+
+def test_a_lead_woken_beside_running_agents_is_told_who_runs_once(client, world, pasted):
+    world.sleeper()
+    seat(world, SLEEPER)
+    add(client)
+    assert told(client)["status"] == "sent" and world.woken == [SLEEPER] and pasted[-1][0] == SLEEPER
+    first = pasted[-1][1]
+    assert "already running" in first and "(ses_new)" in first and "(ses_old)" in first
+    add(client, "next")
+    assert told(client)["status"] == "sent" and pasted[-1][0] == SLEEPER and "already running" not in pasted[-1][1]

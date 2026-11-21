@@ -5,10 +5,10 @@ import asyncio
 
 import pytest
 
-from src.cplugs.huddle import service
-from src.cplugs.huddle.nudge_store import NudgeStore
-from src.cplugs.huddle.roles import lead, route, service as roles_service
-from src.cplugs.huddle.roles.store import RoleStore, SeatTaken
+from src.plugins.huddle import service
+from src.plugins.huddle.nudge_store import NudgeStore
+from src.plugins.huddle.roles import lead, route, service as roles_service
+from src.plugins.huddle.roles.store import RoleStore, SeatTaken
 from tests.python.cplugs.huddle.roles_rig import BASE, SwarmStub, aged, give_asleep, give_rows, use_swarm
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import env  # noqa: F401
@@ -188,7 +188,7 @@ def test_set_lead_on_a_project_without_an_agent_is_the_plain_seat_unless_asked_t
 
 
 def test_a_refused_promotion_is_a_400_with_the_swarms_sentence_and_changes_no_seat(client, app, monkeypatch):
-    from src.cplugs.sdk.swarm import SwarmError
+    from src.plugins.sdk.swarm import SwarmError
 
     give_asleep(monkeypatch, [])
     give_rows(app, [aged("ses_old", 12, 5), aged("ses_agent", 12, 1)])

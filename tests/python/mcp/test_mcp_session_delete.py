@@ -17,6 +17,7 @@ from src.core.mcp import beast_mode, pending, tools  # noqa: E402
 from src.core.mcp.caller import AgentCaller  # noqa: E402
 from tests.python.beast_mode.grid import arm as arm_beast  # noqa: E402
 
+STOPPED_UUID = "stopped-uuid-77"
 ASLEEP_UUID = "12d67d84-9428-4105-90d0-12b01f2d8670"
 PANE = AgentCaller("ses_a", "cloude_a", "ses_a")
 READ_ONLY = AgentCaller("ses_a", "cloude_a", "ses_a", scope="read")
@@ -93,8 +94,11 @@ def world(monkeypatch):
     monkeypatch.setattr(session_records_routes, "delete_session_record", record_delete)
     monkeypatch.setattr(drawer_pins, "write_pinned", write_pinned)
     monkeypatch.setattr(directory, "_asleep_rows", lambda: list(asleep["rows"]))
+    stopped = {"rows": [{"id": 77, "session_uuid": STOPPED_UUID, "tmux_name": None}]}
+    monkeypatch.setattr(directory, "_stopped_rows", lambda: list(stopped["rows"]))
     view = View()
     view.asleep = asleep
+    view.stopped = stopped
     view.pins = pins
     return view, calls
 
@@ -174,6 +178,19 @@ def test_asleep_delete_by_uuid_and_name_waits_then_deletes_and_unpins(world, tar
     _approve_only()
     assert calls == [("delete_session_record", ASLEEP_UUID), ("unpin", ("other-uuid",))]
     assert view.pins["now"] == ["other-uuid"]
+
+
+def test_a_stopped_row_with_no_tmux_and_no_sleep_source_is_archived_by_uuid_after_approval(world):
+    view, calls = world
+    answer = _call(view, "session_delete", {"target": STOPPED_UUID})
+    assert "pending" in str(answer) and not answer.get("isError") and calls == []
+    _approve_only()
+    assert calls[0] == ("delete_session_record", STOPPED_UUID)
+
+
+def test_a_stopped_row_is_never_reached_by_a_name_or_a_guess(world):
+    view, calls = world
+    assert _call(view, "session_delete", {"target": "not-a-uuid"}).get("isError") and calls == []
 
 
 def test_asleep_delete_always_waits_even_with_beast_mode_on(world, monkeypatch):

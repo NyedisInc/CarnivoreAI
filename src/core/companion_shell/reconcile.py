@@ -24,6 +24,7 @@ from src.core.hosts.identity import REMOTE_ID_PREFIX
 from src.core.session_close_lifecycle import LIFECYCLE_SOURCE_CLOSED
 from src.core.session_pane_death import LIFECYCLE_SOURCE_PANE_DEAD
 from src.core.session_sleep import SLEEP_SOURCES
+from src.core.session_ops import row_probe
 
 logger = structlog.get_logger()
 
@@ -87,13 +88,12 @@ def _registered(manager: Any, name: Optional[str]) -> bool:
 
 
 async def _agent_tmux_gone(row: Mapping[str, Any]) -> bool:
-    from src.api import recreate_routes as rr
     from src.core.session_recreate_presence import TMUX_GONE
 
     name = row.get("a_tmux_name")
     if not name:
         return False
-    presence = await asyncio.to_thread(rr._measure_presence, name, row.get("tmux_socket") or rr._socket_name())
+    presence = await asyncio.to_thread(row_probe.measure_presence, name, row.get("tmux_socket") or row_probe.socket_name())
     return presence.outcome == TMUX_GONE
 
 

@@ -54,6 +54,13 @@ def current() -> AgentToolSwitches:
         pack=family_signals.in_use("pack"), messaging=family_signals.in_use("messaging"), ai=family_signals.in_use("ai"))
 
 
+def config_stamp() -> str:
+    try:
+        return settings.load_auth_config().mcp.model_dump_json()
+    except (ValueError, OSError):
+        return ""
+
+
 def _swarm_switched_off(family: tool_families.Family, state: AgentToolSwitches) -> bool:
     return family.key == "swarm" and state.swarm_off
 

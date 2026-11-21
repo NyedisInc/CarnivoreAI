@@ -15,17 +15,20 @@
     "Several sessions are waiting while you are away: the detailed style says how many, and each card tells you what it wants (\"wants permission: Bash git push\") without opening it.",
     "Finished-turn cards are noisy while you work: untick the screen column for that notification and the bell and history still record it.",
     "A finished-turn card keeps popping on your phone while you work at the computer: tap its mute button, pick mute here, and that phone stops showing and pushing it while the computer still does.",
-    "You are typing in one session while another asks for permission: only the other one bings, and your phone stays quiet about the one you are already looking at."
+    "You are typing in one session while another asks for permission: only the other one bings, and your phone stays quiet about the one you are already looking at.",
+    "Your phone stays quiet about finished turns while nostromo still shows them: untick phone on tower's block for the sessions group."
   ],
   "how_to": [
     "Click a toast to open that session; dismiss it with its x. Click a question or permission toast (also from the history list, a browser push or the desktop notification) to open the approvals popup on that item instead; it closes itself once answered.",
     "A busy session's toasts are grouped into one.",
     "Pick the toast style under settings, notifications, toast style: compact (the default) shows each session's most urgent event; detailed shows its latest event with a descriptive title and a snippet, counts the sessions waiting, and a click opens the session and dismisses only that card.",
     "Attach an image to a session and click the small thumbnail on the attached notice to see it full size; Esc, a click outside the picture or the close button closes it.",
-    "Settings, notifications, routing, the screen column: untick a notification to stop its pop-up card. Needs-you cards are always shown. Hiding a card hides the pop-up only; the bell, the history, the status light and the tray still keep it.",
     "Every notification card has a mute button at its bottom right: mute here silences that type on this device (on a phone, its push too), mute everywhere silences it on every device and destination. A muted card confirms with an undo. Settings, notifications, routing, muted notifications lists each mute with where it holds and an unmute button. Muting never changes the status lights.",
     "A program that prints a notification escape code (OSC 9, 777 or 99) raises a terminal notice card; mute the type here to switch it off for one session.",
-    "Quiet for the session you are looking at (settings, notifications, on by default): the session whose terminal has the keyboard in a focused Carnivore window gets no card, banner or sound, and its phone alerts wait; a needs-you item still open after 2 minutes reaches the phone then. Other sessions that need you still get a Mac banner with sound while Carnivore is in front; their other events stay cards. The iPhone app shows no banner for the session it has open."
+    "Quiet for the session you are looking at (settings, notifications, on by default): the session whose terminal has the keyboard in a focused Carnivore window gets no card, banner or sound, and its phone alerts wait; a needs-you item still open after 2 minutes reaches the phone then. Other sessions that need you still get a Mac banner with sound while Carnivore is in front; their other events stay cards. The iPhone app shows no banner for the session it has open.",
+    "Settings, notifications, routing: each of the eight groups (needs you, sessions, messages, swarm, health, security, automations, app) has one switch; a blue square with a half-filled triangle means some of its types are on. The advanced view unfolds every type with its own switch. Switching a type or group off keeps where it was sent; switching it on restores that. Needs-you cards are always shown, and hiding a card hides the pop-up only; the bell, the history, the status light and the tray still keep it.",
+    "Under send it to, every Pack computer has its own block: in the app, on the desktop (with a corner card option) and phone. A computer that has not saved a choice yet shows not set yet. Under how it sounds pick the sound (the play icon previews it) and the urgency. Under test, send a test for the selected type to your phone, to this computer's desktop or to the carnivore app; each shows its own result line.",
+    "One preview with a caption shows what the notification is, when it shows and where it appears; switch it between app, desktop and phone."
   ],
   "id": "notification-toasts",
   "issues": [
@@ -34,7 +37,8 @@
     1278,
     1445,
     2732,
-    2745
+    2745,
+    3067
   ],
   "keywords": [
     "detailed",
@@ -46,24 +50,10 @@
     "mute",
     "quiet"
   ],
-  "media": [
-    {
-      "alt": "two toast cards under a line reading 2 sessions waiting: wants permission: Bash npm run build for web-client, and finished and is waiting on you for api-server, each with a snippet",
-      "caption": "the detailed toast style: the latest event per session with a descriptive title and a snippet, and a count of sessions waiting",
-      "file": "detailed-stack.png",
-      "kind": "screenshot"
-    },
-    {
-      "alt": "two toast cards: needs your permission for web-client and Your turn for api-server",
-      "caption": "the compact toast style, the default: one card per session showing its most urgent event",
-      "file": "compact-stack.png",
-      "kind": "screenshot"
-    }
-  ],
   "name": "Notification toasts",
   "since": "2026-09-10",
   "status": "stable",
-  "summary": "get a toast when a session needs your attention, grouped so a busy session doesn't spam you; the screen column of the routing matrix decides which cards pop up.",
+  "summary": "get a toast when a session needs your attention, grouped so a busy session doesn't spam you; the routing screen decides, per computer, whether each notification lands in the app, on the desktop or on your phone.",
   "surfaces": [
     "client/js/toast-grouping.js",
     "client/js/toast-mode.js",
@@ -75,10 +65,12 @@
     "web/src/lib/notifications/mute/mute-control.ts",
     "web/src/lib/notifications/mute/MutesPanel.svelte"
   ],
-  "updated": "2026-10-30",
+  "updated": "2026-11-19",
   "where": [
     "Top right of the screen, when a session needs you.",
+    "Settings, notifications tab: the routing screen (eight groups on the left, the selected group or type on the right, with one block per Pack computer).",
     "Settings, notifications tab, toast style.",
     "Bottom right of every notification card: the mute button. Settings, notifications tab, muted notifications."
-  ]
+  ],
+  "media_exempt": "the old toast screenshots no longer show the routing screen; the routing screen is recaptured before the next version bump (features/capture), not per change"
 }

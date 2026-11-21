@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 
-from src.cplugs.huddle import your_items
-from src.cplugs.huddle.rules import CLAUDE, JOE
+from src.plugins.huddle import your_items
+from src.plugins.huddle.rules import CLAUDE, JOE
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 
 

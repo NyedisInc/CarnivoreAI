@@ -45,11 +45,11 @@ vi.mock('../../../lib/listing-push/boot', async (importOriginal) => ({
 
 import Original from '../task-manager/Cell.svelte';
 import Mark2 from './Cell.svelte';
-import { cplugEnablement } from '../../../cplugs/huddle/../host/enablement.svelte';
-import { clearViewFilter } from '../../../cplugs/huddle/task-manager-view-filter.svelte';
-import { huddle } from '../../../cplugs/huddle/huddle.svelte';
-import { resetInspections } from '../../../cplugs/huddle/task-manager-design/inspection.svelte';
-import { setViewChip } from '../../../cplugs/huddle/task-manager-view-filter.svelte';
+import { cplugEnablement } from '../../../plugins/huddle/../host/enablement.svelte';
+import { clearViewFilter } from '../../../plugins/huddle/task-manager-view-filter.svelte';
+import { huddle } from '../../../plugins/huddle/huddle.svelte';
+import { resetInspections } from '../../../plugins/huddle/task-manager-design/inspection.svelte';
+import { setViewChip } from '../../../plugins/huddle/task-manager-view-filter.svelte';
 import { effectiveState, MK2_DEFAULT_STATE } from './mk2-task-state';
 import type { TaskState } from '../../../lib/base/task-wrapper';
 

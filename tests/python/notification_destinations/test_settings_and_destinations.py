@@ -192,7 +192,10 @@ def test_extras_roundtrip_and_details_refused_for_sms(service):
         "away": True, "quiet": {"start": "22:00", "end": "07:00"}, "reminder_minutes": 10, "projects": ["a", "b"], "details": True}
     assert client.put(f"{BASE}/destinations/{dest}/extras", json={"quiet": None}).json()["destination"]["extras"]["quiet"] is None
     assert client.put(f"{BASE}/destinations/{dest}/extras", json={"quiet": {"start": "25:00", "end": "07:00"}}).status_code == 422
-    assert client.put(f"{BASE}/destinations/{dest}/extras", json={"reminder_minutes": 0}).status_code == 422
+    assert client.put(f"{BASE}/destinations/{dest}/extras", json={"reminder_minutes": 1441}).status_code == 422
+    off = client.put(f"{BASE}/destinations/{dest}/extras", json={"reminder_minutes": 0})
+    assert off.status_code == 200
+    assert off.json()["destination"]["extras"]["reminder_minutes"] == 0
     twilio = client.post(f"{BASE}/destinations", json={"kind": "twilio", "name": "sms", "secrets": {
         "sid": "AC1", "token": "t", "from_number": "+15550001111", "numbers": ["+15550002222"]}}).json()["destination"]["id"]
     r = client.put(f"{BASE}/destinations/{twilio}/extras", json={"details": True})

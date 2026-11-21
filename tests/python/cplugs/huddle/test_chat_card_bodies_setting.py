@@ -4,14 +4,14 @@ from __future__ import annotations
 import asyncio
 
 from src.core.swarm import settings as swarm_settings, stream
-from src.cplugs.huddle.swarm_port import TaskManagerSwarmPort
+from src.plugins.huddle.swarm_port import TaskManagerSwarmPort
 from tests.python.cplugs.huddle.test_task_manager_agent_lists import BASE, world  # noqa: F401
 
 
 def _page(world, monkeypatch, on: bool) -> list:
     monkeypatch.setattr(swarm_settings, "read_current", lambda: swarm_settings.SwarmConfig(chat_card_bodies=on))
     monkeypatch.setattr(stream, "EXTRA_SOURCES", [])
-    agent = {"id": int(world.key.split(":")[1]), "thread_key": world.key}
+    agent = {"id": int(world.key.split(":")[1]), "thread_key": world.key, "rank": "agent", "display_name": "Tester"}
     return asyncio.run(stream.page(agent))["entries"]
 
 

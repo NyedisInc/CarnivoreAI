@@ -14,14 +14,14 @@ from src.core.crate_import import undo
 from src.core.crate_import.model import ImportRequest, new_import_id
 from src.core.crate_import.plan import build_plan
 from src.core.deepsearch import fallback_hook as fb
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import build_plan as build_export_plan
-from src.cplugs.crate.writer import run_export
-from src.cplugs.save.fallback import BackupTranscripts
-from src.cplugs.save.vault import units
-from src.cplugs.save.vault.identity import Identity
-from src.cplugs.save.vault.store import Vault
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import build_plan as build_export_plan
+from src.plugins.crate.writer import run_export
+from src.plugins.save.fallback import BackupTranscripts
+from src.plugins.save.vault import units
+from src.plugins.save.vault.identity import Identity
+from src.plugins.save.vault.store import Vault
+from src.plugins.sdk import crate_format as cf
 from tests.python.cplugs.crate.crate_world import env_for, make_world, project_request
 from tests.python.crate_import.test_import_plan import target
 from tests.python.crate_import.test_import_same_path import rows_of
@@ -193,7 +193,7 @@ def test_a_foreign_crate_files_its_backups_only_when_the_owner_ticks(tmp_path: P
 
 
 def test_the_mcp_path_ignores_the_backups_tick() -> None:
-    from src.cplugs.crate import imports
+    from src.plugins.crate import imports
 
     body = {"mode": "same_paths", "file_backups": True, "made_here": True}
     assert imports.request_of(body, allow_made_here=True).file_backups is True

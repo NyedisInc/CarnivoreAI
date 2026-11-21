@@ -47,7 +47,7 @@ def test_first_answer_moves_to_the_next_question(rig_slot: RigSlot, tmp_path) ->
             shots.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(shots / "advance-1.png"))
         with page.expect_response(lambda r: r.url.endswith("/dialog/answer") and r.request.method == "POST") as posted:
-            cell.locator(".ap-actions .modal-btn-secondary", has_text="The Matrix").click()
+            cell.locator("[data-ap-option]", has_text="The Matrix").click()
         assert posted.value.status == 200
         items = call(rig_slot, "GET", "/api/v1/approvals")[1]["items"]
         assert [i["question"] for i in items] == ["Which bands?"], items

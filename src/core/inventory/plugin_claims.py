@@ -16,7 +16,7 @@ from src.core.inventory.locations import Locations
 from src.core.inventory.model import KIND_DIR, KIND_FILE, REPORT, SCOPE_PROJECT, Artifact, Inventory
 from src.core.inventory.scope import project_scope
 from src.core.work import tables as work_tables
-from src.cplugs.sdk.computer import local_computer
+from src.plugins.sdk.computer import local_computer
 
 logger = structlog.get_logger()
 

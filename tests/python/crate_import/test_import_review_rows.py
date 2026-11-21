@@ -45,7 +45,7 @@ def test_a_session_of_the_crates_own_project_follows_this_imports_project_not_an
 def test_a_chosen_project_beats_an_earlier_imports_map_for_a_crate_with_no_project_row(tmp_path: Path) -> None:
     from tests.python.crate_import.install import make_install
     from tests.python.crate_import.test_import_golden import FIXTURES, restore, seed_target_project
-    from src.cplugs.sdk import crate_format as cf
+    from src.plugins.sdk import crate_format as cf
 
     path = FIXTURES / "v1" / "session-own.crate"
     install = make_install(tmp_path)

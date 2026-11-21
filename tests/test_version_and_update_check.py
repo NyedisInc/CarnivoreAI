@@ -501,6 +501,7 @@ def test_a_packaged_install_with_no_git_entry_asks_nobody_and_answers_not_applic
     server_dir = _production_layout(tmp_path)
     write_version_file("1.2.3", root=server_dir)
     ran: list = []
+    monkeypatch.setenv("CARNIVORE_APP_VERSION", "1.2.3")
     monkeypatch.setattr(update_check, "fetch_remote_tags", lambda remote: ran.append(remote) or ["9.9.9"])
     monkeypatch.setattr(update_check.subprocess, "run", lambda *a, **k: ran.append(a) or None)
     checker = UpdateChecker(config_path=server_dir / "config.json", root=server_dir, cache_path=server_dir / "cache.json")

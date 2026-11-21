@@ -1,7 +1,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
+import weakref
 from typing import Any, Hashable, Optional, Tuple
 
 import structlog
@@ -22,6 +24,55 @@ def get_negotiator(session_manager: Any) -> TerminalSizeNegotiator:
         except (AttributeError, TypeError):
             logger.debug("negotiator_cache_unavailable")
     return negotiator
+
+
+class _ResizeSlot:
+
+    __slots__ = ("lock", "last_applied", "__weakref__")
+
+    def __init__(self) -> None:
+        self.lock = asyncio.Lock()
+        self.last_applied: Optional[Tuple[int, int]] = None
+
+
+_RESIZE_SLOTS: "weakref.WeakValueDictionary[str, _ResizeSlot]" = weakref.WeakValueDictionary()
+
+_IN_FLIGHT_RESIZES: "set[asyncio.Task[Any]]" = set()
+
+
+def _resize_slot(session_id: str) -> _ResizeSlot:
+    slot = _RESIZE_SLOTS.get(session_id)
+    if slot is None:
+        slot = _RESIZE_SLOTS[session_id] = _ResizeSlot()
+    return slot
+
+
+async def _resize_under_lock(
+    session_manager: Any,
+    session_id: str,
+    negotiator: Optional[TerminalSizeNegotiator],
+    effective: Tuple[int, int],
+) -> None:
+    slot = _resize_slot(session_id)
+    async with slot.lock:
+        target = (negotiator.effective_size(session_id) if negotiator is not None else None) or effective
+        if target == slot.last_applied:
+            logger.debug("negotiated_resize_coalesced", session_id=session_id, cols=target[0], rows=target[1])
+            return
+        await asyncio.to_thread(session_manager.resize_terminal, target[0], target[1], session_id=session_id)
+        slot.last_applied = target
+
+
+async def _run_resize_shielded(
+    session_manager: Any,
+    session_id: str,
+    negotiator: Optional[TerminalSizeNegotiator],
+    effective: Tuple[int, int],
+) -> None:
+    task = asyncio.ensure_future(_resize_under_lock(session_manager, session_id, negotiator, effective))
+    _IN_FLIGHT_RESIZES.add(task)
+    task.add_done_callback(_IN_FLIGHT_RESIZES.discard)
+    await asyncio.shield(task)
 
 
 async def apply_effective_size(
@@ -48,10 +99,10 @@ async def apply_effective_size(
     else:
         issued = True
         try:
-            session_manager.resize_terminal(eff_cols, eff_rows, session_id=session_id)
+            await _run_resize_shielded(session_manager, session_id, negotiator, (eff_cols, eff_rows))
         except Exception as exc:
             failed = True
-            logger.error("negotiated_resize_failed", error=str(exc))
+            logger.error("negotiated_resize_failed", error=str(exc), error_type=type(exc).__name__, exc_info=True, session_id=session_id)
 
     await broadcast_size(
         session_id, negotiator, connection_manager, departed=departed)

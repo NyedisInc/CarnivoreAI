@@ -2,9 +2,9 @@
   import { t } from '../../../lib/i18n/index.svelte';
   import Icon from '../../ui/Icon.svelte';
   import { truncatedTip } from '../../../lib/tooltip/truncated-tip';
-  import { messageTime, type HuddleItem } from '../../../cplugs/huddle/huddle-model';
-  import { trailWho } from '../../../cplugs/huddle/crosstalk-trail';
-  import { createTrailFeed } from '../../../cplugs/huddle/crosstalk-trail-feed.svelte';
+  import { messageTime, type HuddleItem } from '../../../plugins/huddle/huddle-model';
+  import { trailWho } from '../../../plugins/huddle/crosstalk-trail';
+  import { createTrailFeed } from '../../../plugins/huddle/crosstalk-trail-feed.svelte';
 
   let { item }: { item: HuddleItem } = $props();
 

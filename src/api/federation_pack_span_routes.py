@@ -145,7 +145,7 @@ async def board_verb(verb: str, body: BoardBody, request: Request, principal: Pr
     from src.config import settings as app_settings
     from src.core.mcp import tools
     from src.core.mcp.protocol import BatchView
-    from src.cplugs.host import runtime
+    from src.plugins.host import runtime
 
     install = _peer(principal)
     huddle = runtime.find("huddle")

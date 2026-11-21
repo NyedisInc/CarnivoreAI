@@ -33,6 +33,23 @@ function textOf(el: Element): string {
     return (el.getAttribute('title') ?? el.getAttribute(PARK_ATTR) ?? '').trim();
 }
 
+function paintText(el: HTMLElement, text: string): void {
+    if (!text.includes('\n\u2022 ')) {
+        el.textContent = text;
+        return;
+    }
+    el.textContent = '';
+    text.split('\n').forEach((line, i) => {
+        if (i > 0) el.append('\n');
+        if (line.startsWith('\u2022 ')) {
+            const mark = document.createElement('span');
+            mark.className = 'cc-tooltip-bullet';
+            mark.textContent = '\u2022';
+            el.append(mark, line.slice(1));
+        } else el.append(line);
+    });
+}
+
 function isCarrier(el: Element): boolean {
     return el.hasAttribute('data-tooltip') || el.hasAttribute('title') || el.hasAttribute(PARK_ATTR);
 }
@@ -132,7 +149,7 @@ function onAttributeChange(records: MutationRecord[]): void {
         return;
     }
     if (bubble && bubble.textContent !== text) {
-        bubble.textContent = text;
+        paintText(bubble, text);
         place(shown);
     }
 }
@@ -212,7 +229,7 @@ function show(target: Element, source: Source): void {
     const text = textOf(target);
     if (!text || !target.isConnected) return;
     const el = ensureBubble();
-    el.textContent = text;
+    paintText(el, text);
     el.hidden = false;
     raiseBubble(el);
     place(target);

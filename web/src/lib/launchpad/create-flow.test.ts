@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { GOOD_FOLDER, GOOD_NAME, enT, modals, recorder } from './create-harness';
+import { GOOD_FOLDER, GOOD_NAME, GOOD_NEW_PROJECT, enT, modals, recorder } from './create-harness';
 import { accountFields, buildCreatePayload, agentTypeFor, chooseHost, createConsoleFlow, createProjectFlow } from './create-flow';
 import { buildOpenProjectPayload, isRemoteRoot, splitRemoteRoot } from './open-project-payload';
 import type { HostChoice } from './create-host';
@@ -10,22 +10,22 @@ import { openProjectFromFolderFlow } from './open-folder-flow';
 describe('RULE: the folder step cannot be skipped', () => {
     test('a create asks for a folder BEFORE it creates anything', async () => {
         const rec = recorder();
-        const m = modals({ name: [GOOD_NAME], folder: GOOD_FOLDER });
+        const m = modals({ newProject: [GOOD_NEW_PROJECT] });
         const result = await createProjectFlow(rec.host, m.openers, enT(), null);
 
         expect(result.outcome).toBe('created');
-        expect(m.asked.map(([kind]) => kind)).toEqual(['name', 'folder']);
+        expect(m.asked.map(([kind]) => kind)).toEqual(['newProject']);
         const createdAt = rec.calls.findIndex(([kind]) => kind === 'createSession');
         expect(createdAt).toBeGreaterThan(-1);
         expect(rec.calls.slice(0, createdAt).map(([kind]) => kind)).not.toContain('createProject');
     });
 
-    test('cancelling the folder step creates NOTHING AT ALL', async () => {
+    test('cancelling the form creates NOTHING AT ALL', async () => {
         const rec = recorder();
-        const m = modals({ name: [GOOD_NAME], folder: null });
+        const m = modals({ newProject: [null] });
         const result = await createProjectFlow(rec.host, m.openers, enT(), null);
 
-        expect(result.outcome).toBe('cancelled_folder');
+        expect(result.outcome).toBe('cancelled_form');
         expect(result.payload).toBe(null);
         expect(rec.calls.map(([kind]) => kind)).not.toContain('createSession');
         expect(rec.calls.map(([kind]) => kind)).not.toContain('createProject');
@@ -34,7 +34,7 @@ describe('RULE: the folder step cannot be skipped', () => {
 
     test('cancelling the provider gate never even asks for a name', async () => {
         const rec = recorder({ chooseProvider: async () => null });
-        const m = modals({ name: [GOOD_NAME], folder: GOOD_FOLDER });
+        const m = modals({ newProject: [GOOD_NEW_PROJECT] });
         const result = await createProjectFlow(rec.host, m.openers, enT(), null);
 
         expect(result.outcome).toBe('cancelled_provider');
@@ -42,25 +42,16 @@ describe('RULE: the folder step cannot be skipped', () => {
         expect(rec.calls.map(([kind]) => kind)).not.toContain('createSession');
     });
 
-    test('cancelling the name step never asks for a folder', async () => {
-        const rec = recorder();
-        const m = modals({ name: [null], folder: GOOD_FOLDER });
-        const result = await createProjectFlow(rec.host, m.openers, enT(), null);
-
-        expect(result.outcome).toBe('cancelled_name');
-        expect(m.asked.map(([kind]) => kind)).toEqual(['name']);
-        expect(rec.calls.map(([kind]) => kind)).not.toContain('createSession');
-    });
 });
 
 describe('RULE: the field is project_parent_dir, never working_dir', () => {
     test('the create payload carries the chosen PARENT and no working_dir', async () => {
         const rec = recorder();
-        const m = modals({ name: [GOOD_NAME], folder: GOOD_FOLDER });
+        const m = modals({ newProject: [GOOD_NEW_PROJECT] });
         await createProjectFlow(rec.host, m.openers, enT(), null);
 
         const payload = rec.payloads[0]!;
-        expect(payload.project_parent_dir).toBe('/Users/me/Development');
+        expect(payload.project_parent_dir).toBe(GOOD_NEW_PROJECT.folder);
         expect('working_dir' in payload).toBe(false);
     });
 
@@ -82,13 +73,12 @@ describe('RULE: a refused name is re-asked, never rewritten', () => {
     test('an illegal name shows a sentence and re-opens with what was typed', async () => {
         const rec = recorder();
         const m = modals({
-            name: [{ name: 'a/b', description: '' }, GOOD_NAME],
-            folder: GOOD_FOLDER,
+            newProject: [{ ...GOOD_NEW_PROJECT, name: 'a/b' }, GOOD_NEW_PROJECT],
         });
         const result = await createProjectFlow(rec.host, m.openers, enT(), null);
 
         expect(result.outcome).toBe('created');
-        const nameAsks = m.asked.filter(([kind]) => kind === 'name');
+        const nameAsks = m.asked.filter(([kind]) => kind === 'newProject');
         expect(nameAsks).toHaveLength(2);
         expect((nameAsks[1]![1] as { defaultName: string }).defaultName).toBe('a/b');
         expect(rec.errors).toEqual(["a project name cannot contain '/'"]);
@@ -97,10 +87,10 @@ describe('RULE: a refused name is re-asked, never rewritten', () => {
 
     test('the refused name is never silently sanitised into the payload', async () => {
         const rec = recorder();
-        const m = modals({ name: [{ name: 'a/b', description: '' }], folder: GOOD_FOLDER });
+        const m = modals({ newProject: [{ ...GOOD_NEW_PROJECT, name: 'a/b' }] });
         const result = await createProjectFlow(rec.host, m.openers, enT(), null);
 
-        expect(result.outcome).toBe('cancelled_name');
+        expect(result.outcome).toBe('cancelled_form');
         expect(rec.payloads).toEqual([]);
         expect(rec.errors).toEqual(["a project name cannot contain '/'"]);
     });
@@ -109,7 +99,7 @@ describe('RULE: a refused name is re-asked, never rewritten', () => {
 describe('what the create posts, beyond the folder', () => {
     test('a claude project sends the name as the session label', async () => {
         const rec = recorder();
-        const m = modals({ name: [GOOD_NAME], folder: GOOD_FOLDER });
+        const m = modals({ newProject: [GOOD_NEW_PROJECT] });
         await createProjectFlow(rec.host, m.openers, enT(), null);
         expect(rec.payloads[0]!.label).toBe('My App');
         expect(rec.payloads[0]!.project_name).toBe('My App');
@@ -136,7 +126,7 @@ describe('what the create posts, beyond the folder', () => {
 
     test('the xterm grid rides along so the pane is born the right size', async () => {
         const rec = recorder();
-        const m = modals({ name: [GOOD_NAME], folder: GOOD_FOLDER });
+        const m = modals({ newProject: [GOOD_NEW_PROJECT] });
         await createProjectFlow(rec.host, m.openers, enT(), null);
         expect(rec.payloads[0]!.cols).toBe(132);
         expect(rec.payloads[0]!.rows).toBe(40);
@@ -159,7 +149,7 @@ describe('what the create posts, beyond the folder', () => {
 describe('what happens after the session lands', () => {
     test('the project row is written and the tree is refreshed', async () => {
         const rec = recorder();
-        const m = modals({ name: [GOOD_NAME], folder: GOOD_FOLDER });
+        const m = modals({ newProject: [GOOD_NEW_PROJECT] });
         await createProjectFlow(rec.host, m.openers, enT(), null);
 
         const kinds = rec.calls.map(([kind]) => kind);
@@ -178,7 +168,7 @@ describe('what happens after the session lands', () => {
                 throw new Error('project already exists');
             },
         });
-        const m = modals({ name: [GOOD_NAME], folder: GOOD_FOLDER });
+        const m = modals({ newProject: [GOOD_NEW_PROJECT] });
         const result = await createProjectFlow(rec.host, m.openers, enT(), null);
         expect(result.outcome).toBe('created');
         expect(rec.errors).toEqual([]);
@@ -190,7 +180,7 @@ describe('what happens after the session lands', () => {
                 throw new Error('listing unavailable');
             },
         });
-        const m = modals({ name: [GOOD_NAME], folder: GOOD_FOLDER });
+        const m = modals({ newProject: [GOOD_NEW_PROJECT] });
         const result = await createProjectFlow(rec.host, m.openers, enT(), null);
         expect(result.outcome).toBe('created');
         expect(rec.errors).toEqual([]);
@@ -202,7 +192,7 @@ describe('what happens after the session lands', () => {
                 throw new Error('a session is already running');
             },
         });
-        const m = modals({ name: [GOOD_NAME], folder: GOOD_FOLDER });
+        const m = modals({ newProject: [GOOD_NEW_PROJECT] });
         const result = await createProjectFlow(rec.host, m.openers, enT(), 'openclaw');
         expect(result.outcome).toBe('detached_and_retried');
         expect(rec.calls).toContainEqual(['detachAndCreateNew', 'openclaw']);
@@ -215,7 +205,7 @@ describe('what happens after the session lands', () => {
                 throw new Error('disk is full');
             },
         });
-        const m = modals({ name: [GOOD_NAME], folder: GOOD_FOLDER });
+        const m = modals({ newProject: [GOOD_NEW_PROJECT] });
         const result = await createProjectFlow(rec.host, m.openers, enT(), null);
         expect(result.outcome).toBe('failed');
         expect(rec.errors).toEqual(['failed to create session: disk is full']);
@@ -227,7 +217,7 @@ describe('what happens after the session lands', () => {
                 throw new Error('');
             },
         });
-        const m = modals({ name: [GOOD_NAME], folder: GOOD_FOLDER });
+        const m = modals({ newProject: [GOOD_NEW_PROJECT] });
         await createProjectFlow(rec.host, m.openers, enT(), null);
         expect(rec.errors[0]).toBe('failed to create session: the server could not be reached');
     });
@@ -257,7 +247,7 @@ describe('issue #162 slice S6: which host a create launches on', () => {
 
     test('cancelling the host step cancels the whole launch, creating nothing', async () => {
         const rec = recorder({ listHosts: async () => [REMOTE] });
-        const m = modals({ choice: null, name: [GOOD_NAME], folder: GOOD_FOLDER });
+        const m = modals({ choice: null });
         const result = await createProjectFlow(rec.host, m.openers, enT(), null);
         expect(result.outcome).toBe('cancelled_host');
         expect(rec.calls.map(([kind]) => kind)).not.toContain('createSession');
@@ -339,7 +329,7 @@ describe('issue #162 slice S6: which host a create launches on', () => {
         const local = recorder();
         let asked: unknown = 'unset';
         local.host.chooseProvider = async (remote) => { asked = remote; return { wrapperId: 'cld' }; };
-        await createProjectFlow(local.host, modals({ name: [GOOD_NAME], folder: GOOD_FOLDER }).openers, enT(), null);
+        await createProjectFlow(local.host, modals({ newProject: [GOOD_NEW_PROJECT] }).openers, enT(), null);
         expect(asked).toBe(null);
         expect('agent_type_is_far' in local.payloads[0]!).toBe(false);
 
@@ -352,10 +342,10 @@ describe('issue #162 slice S6: which host a create launches on', () => {
 
     test('a local launch is unchanged: host_key is never sent', async () => {
         const rec = recorder();
-        const m = modals({ name: [GOOD_NAME], folder: GOOD_FOLDER });
+        const m = modals({ newProject: [GOOD_NEW_PROJECT] });
         await createProjectFlow(rec.host, m.openers, enT(), null);
         expect('host_key' in rec.payloads[0]!).toBe(false);
-        expect(rec.payloads[0]!.project_parent_dir).toBe(GOOD_FOLDER.parent);
+        expect(rec.payloads[0]!.project_parent_dir).toBe(GOOD_NEW_PROJECT.folder);
     });
 });
 
@@ -373,7 +363,7 @@ describe('RULE: a refused project root is shown, not swallowed (P23)', () => {
     test('a 409 project_root_refused reaches the error line in the catalog words', async () => {
         const refusal = Object.assign(new Error('refused'), { status: 409, body: { code: 'project_root_refused' } });
         const rec = recorder({ createProject: async () => { throw refusal; } });
-        const m = modals({ name: [GOOD_NAME], folder: GOOD_FOLDER });
+        const m = modals({ newProject: [GOOD_NEW_PROJECT] });
         const result = await createProjectFlow(rec.host, m.openers, enT(), null);
 
         expect(result.outcome).toBe('created');
@@ -398,7 +388,7 @@ describe('RULE: a refused folder creates no session (#1928)', () => {
     test('a 409 project_root_refused from the folder check stops the flow before createSession', async () => {
         const refusal = Object.assign(new Error('refused'), { status: 409, body: { code: 'project_root_refused' } });
         const rec = recorder({ checkProjectRoot: async () => { throw refusal; } });
-        const m = modals({ name: [GOOD_NAME], folder: GOOD_FOLDER });
+        const m = modals({ newProject: [GOOD_NEW_PROJECT] });
         const result = await createProjectFlow(rec.host, m.openers, enT(), null);
 
         expect(result.outcome).toBe('failed');
@@ -440,5 +430,52 @@ describe('opening an existing project builds its body by the same local-only rul
             expect(isRemoteRoot(root)).toBe(true);
         }
         expect(isRemoteRoot('/Users/me/api')).toBe(false);
+    });
+});
+
+describe('issue #2945: a project made from the new project form is filed under its company', () => {
+    test('the form is the only step on this computer, and the company rides on the project row', async () => {
+        const rec = recorder();
+        const m = modals({ newProject: [GOOD_NEW_PROJECT] });
+        const result = await createProjectFlow(rec.host, m.openers, enT(), null);
+        expect(result.outcome).toBe('created');
+        expect(m.asked.map(([kind]) => kind)).toEqual(['newProject']);
+        expect((m.asked[0]![1] as { confirmLabel: string }).confirmLabel).toBe('create project');
+        const row = rec.calls.find(([kind]) => kind === 'createProject')?.[1] as { company_id?: number };
+        expect(row.company_id).toBe(GOOD_NEW_PROJECT.companyId);
+        expect(rec.calls.map(([kind]) => kind)).not.toContain('setProjectCompany');
+    });
+
+    test('a row that already exists is filed under the company afterwards, never left orphaned', async () => {
+        const collided = Object.assign(new Error('project already exists'), { status: 409, body: { existing_project: { id: 4, name: 'Old Name' } } });
+        const rec = recorder({ createProject: async () => { throw collided; } });
+        const m = modals({ newProject: [GOOD_NEW_PROJECT] });
+        const result = await createProjectFlow(rec.host, m.openers, enT(), null);
+        expect(result.outcome).toBe('created');
+        expect(rec.calls).toContainEqual(['setProjectCompany', { projectName: 'Old Name', companyId: GOOD_NEW_PROJECT.companyId }]);
+        expect(rec.errors).toEqual([]);
+    });
+
+    test('a refused folder row is not filed anywhere and says why', async () => {
+        const refused = Object.assign(new Error('refused'), { status: 409, body: { code: 'project_root_refused' } });
+        const rec = recorder({ createProject: async () => { throw refused; } });
+        await createProjectFlow(rec.host, modals({ newProject: [GOOD_NEW_PROJECT] }).openers, enT(), null);
+        expect(rec.calls.map(([kind]) => kind)).not.toContain('setProjectCompany');
+        expect(rec.errors).toHaveLength(1);
+    });
+
+    test('cancelling the name step of a paired or ssh computer never asks for a folder', async () => {
+        const SSH: HostChoice = {
+            key: 'studio', label: 'Studio', local: false, ssh_target: 'studio', enabled: true, probe_state: 'ok',
+            ssh_port: null, socket: null, session_count: 0, probe_detail: null, probed_at: null,
+            tmux_path: null, tmux_version: null, login_path: null, agent_paths: null, login_shell: null,
+            machine_id: null, remote_carnivore: null, created_at: '', updated_at: '',
+        };
+        const rec = recorder({ listHosts: async () => [SSH] });
+        const m = modals({ choice: 'studio', name: [null] });
+        const result = await createProjectFlow(rec.host, m.openers, enT(), null);
+        expect(result.outcome).toBe('cancelled_name');
+        expect(m.asked.map(([kind]) => kind)).toEqual(['choice', 'name']);
+        expect(rec.calls.map(([kind]) => kind)).not.toContain('createSession');
     });
 });

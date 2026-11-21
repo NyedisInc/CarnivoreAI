@@ -27,7 +27,12 @@ function makeTerm(held) {
                 buf.length = lines;
                 buf.viewportY = buf.baseY;
             }
-            if (typeof cb === 'function') cb();
+            if (typeof cb !== 'function') return;
+            if (!term.parseDelay) return cb();
+            const done = buf.baseY, vy = buf.viewportY;
+            buf.baseY = 1; buf.viewportY = 0;
+            term.listeners.forEach((fn) => fn());
+            setTimeout(() => { buf.baseY = done; buf.viewportY = vy; cb(); }, 10);
         },
         scrollToLine(n) { buf.viewportY = n; term.scrolls.push(n); },
     };
@@ -165,4 +170,13 @@ test('attach listens once and a scroll that reaches the top starts the fetch', a
     r.term.listeners[0]();
     await new Promise((res) => setTimeout(res, 20));
     assert.equal(r.requests.length, 1);
+});
+
+test('a paint that fires onScroll at the top while parsing never starts a second load or snaps the view down', async () => {
+    const r = realm({ available: 12000, held: 5000 });
+    r.term.parseDelay = true;
+    r.S.attach(r.ctl);
+    r.term.listeners[0]();
+    await new Promise((res) => setTimeout(res, 80));
+    assert.equal(r.requests.length, 1, 'the paint own onScroll is not the user reaching the top');
 });

@@ -1,5 +1,4 @@
 import { authFetch } from '../../../opscenter/api/auth.svelte';
-import type { TestAnswer } from '../destinations/api';
 
 export type Fetcher = typeof authFetch;
 
@@ -33,10 +32,58 @@ export async function fetchStyles(fetcher: Fetcher = authFetch): Promise<StylesD
 export const putStyle = (typeId: string, patch: StylePatch, fetcher: Fetcher = authFetch) =>
     fetcher<Partial<StylesDoc> | null>(`${BASE}/styles/${seg(typeId)}`, { method: 'PUT', body: JSON.stringify(patch) });
 
-export const sendTypedTest = (destId: string, typeId: string, fetcher: Fetcher = authFetch) =>
-    fetcher<TestAnswer>(`${BASE}/destinations/${seg(destId)}/test`, { method: 'POST', body: JSON.stringify({ type_id: typeId }) });
+export type Target = 'app' | 'desk' | 'phone' | 'corner';
 
-export async function fetchComputerName(fetcher: Fetcher = authFetch): Promise<string> {
-    const b = await fetcher<{ self?: { label?: string } } | null>('/computers');
-    return b?.self?.label ?? '';
+export interface RouteCell {
+    readonly value: boolean | null;
+    readonly source: 'global' | 'default' | 'unknown' | 'locked';
+    readonly locked: boolean;
 }
+
+export interface RouteComputer {
+    readonly install_id: string;
+    readonly label: string;
+    readonly self: boolean;
+    readonly online: boolean | null;
+    readonly syncs: boolean;
+    readonly hue: number;
+}
+
+export interface RouteType {
+    readonly on: boolean;
+    readonly locked: { readonly phone: boolean; readonly corner: boolean };
+    readonly cells: Readonly<Record<string, Readonly<Record<Target, RouteCell>>>>;
+}
+
+export interface RoutesBody {
+    readonly revision: number;
+    readonly self: string;
+    readonly phone_paired: boolean;
+    readonly computers: readonly RouteComputer[];
+    readonly types: Readonly<Record<string, RouteType>>;
+    readonly skipped?: readonly string[];
+}
+
+export type TestTarget = 'phone' | 'desktop' | 'app';
+
+export interface SendTestAnswer {
+    readonly ok: boolean;
+    readonly failure: string | null;
+    readonly status_code: number | null;
+    readonly target: string;
+    readonly delivered: number;
+}
+
+export async function fetchRoutes(fetcher: Fetcher = authFetch): Promise<RoutesBody> {
+    const b = await fetcher<Partial<RoutesBody> | null>(`${BASE}/routes`);
+    return { revision: b?.revision ?? 0, self: b?.self ?? '', phone_paired: b?.phone_paired === true, computers: b?.computers ?? [], types: b?.types ?? {} };
+}
+
+export const putRoutes = (body: { type_ids: readonly string[]; computer: string; target: Target; value: boolean }, fetcher: Fetcher = authFetch) =>
+    fetcher<RoutesBody>(`${BASE}/routes`, { method: 'PUT', body: JSON.stringify(body) });
+
+export const putMaster = (typeIds: readonly string[], value: boolean, fetcher: Fetcher = authFetch) =>
+    fetcher<RoutesBody>(`${BASE}/master`, { method: 'PUT', body: JSON.stringify({ type_ids: typeIds, value }) });
+
+export const sendTest = (typeId: string, target: TestTarget, fetcher: Fetcher = authFetch) =>
+    fetcher<SendTestAnswer>(`${BASE}/test`, { method: 'POST', body: JSON.stringify({ type_id: typeId, target }) });

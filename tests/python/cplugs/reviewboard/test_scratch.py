@@ -15,11 +15,11 @@ from src.api.auth import require_auth
 from src.config.uploads import UploadsConfig
 from src.core.mcp import protocol, write_tools
 from src.core.mcp.caller import AgentCaller
-from src.cplugs.huddle import board_port
-from src.cplugs.reviewboard import scan, scratch
-from src.cplugs.reviewboard.errors import TooLarge
-from src.cplugs.sdk import ToolError, signed_links, uploads as sdk_uploads
-from src.cplugs.sdk.local_files import read_local_file
+from src.plugins.huddle import board_port
+from src.plugins.reviewboard import scan, scratch
+from src.plugins.reviewboard.errors import TooLarge
+from src.plugins.sdk import ToolError, signed_links, uploads as sdk_uploads
+from src.plugins.sdk.local_files import read_local_file
 from tests.python.cplugs.reviewboard.harness import BASE, PANE, Env, task_manager_on, task_manager_store, make_env
 
 TOKEN = AgentCaller("mcp-token:7", "mcp-token:7", "mcp-token:7", token_name="phone", scope="write")
@@ -129,7 +129,7 @@ def test_the_multipart_route_posts_the_same_way(env: Env, client):
 
 
 def test_the_multipart_route_judges_its_size_before_it_reads_the_body(env: Env, client, monkeypatch):
-    from src.cplugs.reviewboard import routes_scratch
+    from src.plugins.reviewboard import routes_scratch
     form = {"data": {"name": "desk"}, "files": [("page", ("page.html", PAGE.encode(), "text/html")), ("files", ("a.png", png(), "image/png"))]}
     monkeypatch.setattr(routes_scratch, "MAX_REQUEST_BYTES", 200)
     response = client.post(f"{BASE}/scratch", **form)

@@ -11,7 +11,7 @@ from typing import Any, Dict, FrozenSet, Iterable, List, Optional, Set, Tuple
 
 import structlog
 
-from src.cplugs.sdk import task_folders
+from src.plugins.sdk import task_folders
 
 logger = structlog.get_logger()
 

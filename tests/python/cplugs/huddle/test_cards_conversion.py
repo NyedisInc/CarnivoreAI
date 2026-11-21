@@ -10,15 +10,15 @@ from typing import Any, Dict, List
 
 import pytest
 
-from src.cplugs.huddle import blockers, waits, from_project, inbox, item_owner, nudges, rules, service, store as store_module, store_reads, wire
-from src.cplugs.huddle.cards import policy, projection, reads
-from src.cplugs.huddle.cards.columns import CARD_COLS
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import blockers, waits, from_project, inbox, item_owner, nudges, rules, service, store as store_module, store_reads, wire
+from src.plugins.huddle.cards import policy, projection, reads
+from src.plugins.huddle.cards.columns import CARD_COLS
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work import tables
 from src.core.work.importer import ready
 from src.core.work.ladder import MIGRATIONS
 from src.core.work.storage import LEGACY_STORAGE, WorkStorage
-from src.cplugs.sdk import CplugSchemaError, CplugStorage, storage_backup
+from src.plugins.sdk import CplugSchemaError, CplugStorage, storage_backup
 
 TASKS = [
     ("all", "open plain", "open", 0, "todo"), ("all", "claimed", "open", 1, "in_progress"),

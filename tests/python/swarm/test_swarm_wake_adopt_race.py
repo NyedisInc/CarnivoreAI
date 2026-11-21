@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.api import recreate_routes
+from src.core.session_ops import row_probe
 from src.core.db import connect, db_path_for
 from src.core.session_recreate_presence import TMUX_GONE, TmuxPresence
 from src.core.swarm import body, body_create
@@ -19,7 +19,7 @@ from tests.python.launch_profiles.test_launch_profile_restart_replay import _cre
 
 @pytest.mark.asyncio
 async def test_a_tab_readopting_mid_wake_leaves_the_body_on_the_agents_row(env, monkeypatch):  # noqa: F811
-    monkeypatch.setattr(recreate_routes, "_measure_presence", lambda name, socket: TmuxPresence(TMUX_GONE, "gone"))
+    monkeypatch.setattr(row_probe, "measure_presence", lambda name, socket: TmuxPresence(TMUX_GONE, "gone"))
     monkeypatch.setattr(body_create, "write_settings", lambda *a, **k: None)
     monkeypatch.setattr(body_create, "write_definition", lambda *a, **k: None)
     mgr, session = await _create(env, "claude-ask")

@@ -8,8 +8,8 @@ from typing import Any, List
 import pytest
 import structlog
 
-from src.cplugs.host import runtime
-from src.cplugs.registry import CPLUGS
+from src.plugins.host import runtime
+from src.plugins.registry import CPLUGS
 
 
 def _boom(_ctx: Any) -> None:
@@ -57,7 +57,7 @@ async def test_a_stop_hook_raising_does_not_stop_the_other_plugins_stopping(host
 
 
 def test_a_revoked_grant_counts_on_the_next_call_not_at_context_build(tmp_path: Path) -> None:
-    from src.cplugs.host import state as owner_state
+    from src.plugins.host import state as owner_state
 
     manifest = CPLUGS[0].manifest
     perm = next(iter(manifest.permissions))
@@ -70,7 +70,7 @@ def test_a_revoked_grant_counts_on_the_next_call_not_at_context_build(tmp_path: 
 
 @pytest.mark.parametrize("name", ["CLAUDE.local.md", "Agent.md", "QWEN.md", "copilot-instructions.md", "SKILL.md", "WARP.md", "CONVENTIONS.md", "CRUSH.md"])
 def test_exports_refuse_the_other_agents_instruction_names(name: str) -> None:
-    from src.cplugs.runtime import fsguard
+    from src.plugins.runtime import fsguard
 
     with pytest.raises(fsguard.UnsafePath):
         fsguard.check_export_name(name)
@@ -78,8 +78,8 @@ def test_exports_refuse_the_other_agents_instruction_names(name: str) -> None:
 
 @pytest.mark.asyncio
 async def test_a_revoked_grant_refuses_the_capability_objects_built_before_the_revoke(tmp_path: Path) -> None:
-    from src.cplugs.host import state as owner_state
-    from src.cplugs.sdk.context import GrantRevoked
+    from src.plugins.host import state as owner_state
+    from src.plugins.sdk.context import GrantRevoked
 
     d = next(x for x in CPLUGS if "sessions.read" in x.manifest.permissions)
     owner_state.update(tmp_path, d.manifest, None, lambda st: replace(st, enabled=True, grants=("sessions.read",)))
@@ -96,7 +96,7 @@ async def test_a_revoked_grant_refuses_the_capability_objects_built_before_the_r
 
 
 def test_grant_revoked_is_a_runtime_error_so_a_plugin_catch_degrades() -> None:
-    from src.cplugs.sdk.context import GrantRevoked
+    from src.plugins.sdk.context import GrantRevoked
 
     assert issubclass(GrantRevoked, RuntimeError)
 
@@ -105,8 +105,8 @@ def test_grant_revoked_is_a_runtime_error_so_a_plugin_catch_degrades() -> None:
 async def test_a_task_manager_shaped_grant_set_may_still_call_asleep_and_the_method_map_follows_the_plugin_shape(tmp_path: Path) -> None:
     from types import SimpleNamespace
 
-    from src.cplugs.host import audit, state as owner_state
-    from src.cplugs.sdk.context import GrantRevoked
+    from src.plugins.host import audit, state as owner_state
+    from src.plugins.sdk.context import GrantRevoked
 
     d = next(x for x in CPLUGS if x.id == "huddle")
     owner_state.update(tmp_path, d.manifest, None, lambda st: replace(st, enabled=True, grants=("sessions.read", "sessions.message")))

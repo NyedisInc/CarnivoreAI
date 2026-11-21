@@ -16,6 +16,8 @@ from .plugin.extract import project_key
 RULE_NAMES = ('CLAUDE.md', 'CLAUDE.local.md', 'AGENTS.md', '.claude/CLAUDE.md')
 MAX_RULE_BYTES = 1024 * 1024
 _SHA = re.compile(r'^[0-9a-f]{40,64}$')
+_RAW_BLOB_FIELD = 3
+_NO_RAW_LINE = ''
 
 
 def initialize(store: Any) -> None:
@@ -44,6 +46,19 @@ def _git(cwd: Path, args: list[str]) -> str:
                             text=True, timeout=3, check=False,
                             env={**os.environ, 'GIT_OPTIONAL_LOCKS': '0'})
     return result.stdout if result.returncode == 0 else ''
+
+
+def _parse_log_raw(output: str, name: str) -> list[tuple[str, str]]:
+    pairs: list[tuple[str, str]] = []
+    for line in output.splitlines():
+        if line.startswith(':'):
+            fields, _, path = line.partition('\t')
+            parts = fields.split()
+            if pairs and path == name and len(parts) > _RAW_BLOB_FIELD:
+                pairs[-1] = (pairs[-1][0], parts[_RAW_BLOB_FIELD])
+        elif line.strip():
+            pairs.append((line, _NO_RAW_LINE))
+    return pairs
 
 
 class RuleObserver:
@@ -127,11 +142,12 @@ class RuleObserver:
             if progress and progress['head'] == head and progress['complete']:
                 return
             offset = progress['offset'] if progress and progress['head'] == head else 0
-            history = _git(root, ['log', '-20', f'--skip={offset}', '--format=%H %ct', '--', name])
-            entries = history.splitlines()
+            history = _git(root, ['log', '-20', f'--skip={offset}', '--format=%H %ct', '--raw', '--no-abbrev',
+                                  '--no-renames', '--relative', '--', name])
+            entries = _parse_log_raw(history, name)
             deadline = time.monotonic() + 3
             processed = 0
-            for line in entries:
+            for line, blob in entries:
                 if time.monotonic() > deadline:
                     break
                 bits = line.split()
@@ -139,8 +155,9 @@ class RuleObserver:
                     processed += 1
                     continue
                 commit, stamp = bits[0], int(bits[1])
-                blob = _git(root, ['rev-parse', '--verify', f'{commit}:{name}']).strip()
-                if not _SHA.fullmatch(blob):
+                if blob == _NO_RAW_LINE:
+                    blob = _git(root, ['rev-parse', '--verify', f'{commit}:./{name}']).strip()
+                if not _SHA.fullmatch(blob) or not blob.strip('0'):
                     processed += 1
                     continue
                 digest = hashlib.sha256(f'git-blob:{blob}'.encode()).hexdigest()

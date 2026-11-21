@@ -11,7 +11,7 @@ from src.api import asleep_wake_listing
 from src.core import resource_push
 from src.core.automations import pause, plugin_schedules, wake_schedule
 from src.core.resource_push import topics
-from src.cplugs.sdk import ports
+from src.plugins.sdk import ports
 from src.models.records import SessionRecord
 
 

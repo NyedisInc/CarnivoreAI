@@ -4,9 +4,9 @@ from __future__ import annotations
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-FOLDERS = ("src/core/crate_format", "src/core/crate_crypto", "src/core/blobcodec", "src/cplugs/crate")
-FILES = ("src/cplugs/sdk/blob_codec.py", "src/cplugs/sdk/crate_format.py", "src/cplugs/sdk/crate_sources.py",
-         "src/cplugs/sdk/crate_rows.py", "src/cplugs/sdk/exports.py")
+FOLDERS = ("src/core/crate_format", "src/core/crate_crypto", "src/core/blobcodec", "src/plugins/crate")
+FILES = ("src/plugins/sdk/blob_codec.py", "src/plugins/sdk/crate_format.py", "src/plugins/sdk/crate_sources.py",
+         "src/plugins/sdk/crate_rows.py", "src/plugins/sdk/exports.py")
 LIMIT = 500
 
 

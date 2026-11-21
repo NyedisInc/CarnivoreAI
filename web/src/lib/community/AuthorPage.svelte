@@ -84,7 +84,7 @@
         gap: 4px;
         padding: 8px 10px;
         border: 1px solid var(--cat-line);
-        border-radius: 3px;
+        border-radius: var(--oc-radius-tight);
         background: var(--cat-raised);
     }
     .author__head { display: flex; align-items: center; gap: 8px; }
@@ -92,7 +92,7 @@
     .author__badge {
         padding: 0 5px;
         border: 1px solid var(--cat-action-edge);
-        border-radius: 2px;
+        border-radius: var(--oc-radius-control);
         color: var(--cat-action);
         font-family: var(--cat-mono);
         font-size: 10px;

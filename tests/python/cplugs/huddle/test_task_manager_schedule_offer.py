@@ -6,10 +6,10 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from src.cplugs.host import runtime
-from src.cplugs.huddle import schedule_offer, triggers
-from src.cplugs.huddle.rules import CLAUDE, JOE, TaskManagerInvalid, TaskManagerNotFound
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.host import runtime
+from src.plugins.huddle import schedule_offer, triggers
+from src.plugins.huddle.rules import CLAUDE, JOE, TaskManagerInvalid, TaskManagerNotFound
+from src.plugins.huddle.store import TaskManagerStore
 from tests.python.cplugs.huddle.test_task_manager_mcp import CALLER, call, huddle_store, manager  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, pasted  # noqa: F401
 

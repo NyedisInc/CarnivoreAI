@@ -21,7 +21,7 @@ MIN_MEMBERS = 2
 
 PAGE_TAB_RE = re.compile(r"^page:[0-9a-f]{16}$")
 
-WIDGET_TAB_RE = re.compile(r"^widget:[a-z0-9][a-z0-9._-]{0,63}$")
+WIDGET_TAB_RE = re.compile(r"^widget:(?:[a-z0-9][a-z0-9._-]{0,63}|(?!core\.)[a-z0-9][a-z0-9._-]{0,63}@[a-z0-9][a-z0-9-]{0,31})$")
 
 PAGE_SLOT_PREFIX = "terminal:pg-"
 

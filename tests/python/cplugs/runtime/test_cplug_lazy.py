@@ -9,12 +9,12 @@ from typing import Any, Callable, Dict, List
 
 import pytest
 
-from src.cplugs.runtime import process as process_mod
-from src.cplugs.runtime import supervisor as sup_mod
-from src.cplugs.runtime import watchdog
-from src.cplugs.runtime.dispatch import HostDispatcher, HostServices, PluginContext
-from src.cplugs.runtime.owner_tokens import OwnerTokens
-from src.cplugs.runtime.process import PluginSpec
+from src.plugins.runtime import process as process_mod
+from src.plugins.runtime import supervisor as sup_mod
+from src.plugins.runtime import watchdog
+from src.plugins.runtime.dispatch import HostDispatcher, HostServices, PluginContext
+from src.plugins.runtime.owner_tokens import OwnerTokens
+from src.plugins.runtime.process import PluginSpec
 
 PID = "acme-clock"
 
@@ -177,6 +177,7 @@ def test_usage_is_read_with_one_ps_fork(monkeypatch):
         return subprocess.CompletedProcess(argv, 0, stdout="  2048 1-02:03:04.50\n")
 
     monkeypatch.setattr(watchdog.subprocess, "run", fake_run)
+    monkeypatch.setattr(watchdog.proc_usage, "_LIBPROC", None)
     usage = watchdog.usage_of(42)
     assert len(calls) == 1 and usage == watchdog.Usage(2048 * 1024, 86400 + 2 * 3600 + 3 * 60 + 4.5)
     monkeypatch.setattr(watchdog.subprocess, "run", lambda argv, **kw: subprocess.CompletedProcess(argv, 1, stdout=""))
@@ -253,8 +254,8 @@ def test_a_burst_of_calls_samples_at_most_once_per_busy_interval(monkeypatch, tm
 
 
 def test_the_manifest_declares_subscriptions_and_the_spec_carries_them():
-    from src.cplugs.host import sidecar_manifest as man
-    from src.cplugs.host.sidecar_spec import build_spec
+    from src.plugins.host import sidecar_manifest as man
+    from src.plugins.host.sidecar_spec import build_spec
 
     base = {"schema": 1, "id": "clock", "name": "Clock", "description": "d", "version": "1.0.0", "entry": "main.py", "tools": []}
     assert man.parse_sidecar_manifest(base, "clock", "dg").subscriptions == ()

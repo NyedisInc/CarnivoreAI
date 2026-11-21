@@ -259,12 +259,22 @@ def main(argv: list[str]) -> int:
         rc = subprocess.run(["bash", str(RUN_TESTS)], cwd=REPO).returncode
         return {0: PASS, 1: FAIL}.get(rc, REFUSED)
 
+    def full_suite_green_here() -> bool:
+        dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=REPO, capture_output=True, text=True)
+        if dirty.returncode != 0 or dirty.stdout.strip():
+            return False
+        return subprocess.run(["bash", str(REPO / "scripts" / "full-suite-master.sh"), "--is-green", "HEAD"],
+                              cwd=REPO, capture_output=True).returncode == 0
+
     smoke_rc = stage("smoke", run_pytest, "smoke", smoke, workers)
     stage("feature catalog", run_features_check)
     if smoke_rc == PASS and tier == "full":
         stage("full suite", full_suite)
     elif smoke_rc == PASS and tier == "gate":
-        stage("gate matrix", run_pytest, "gate matrix", [GATE_TESTS], workers, must_collect=[])
+        if full_suite_green_here():
+            print("== gate matrix: skipped, the full suite was green at this sha and already ran tests/python/gate", flush=True)
+        else:
+            stage("gate matrix", run_pytest, "gate matrix", [GATE_TESTS], workers, must_collect=[])
         stage("clean room", run_gate_script, "scripts.gate.clean_room")
         stage("default state", run_gate_script, "scripts.gate.default_state")
         stage("field installs", run_gate_script, "scripts.gate.field_installs")

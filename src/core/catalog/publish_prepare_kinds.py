@@ -14,9 +14,9 @@ from src.core import message_model_secrets
 from src.core.catalog import plugin_pack, publish_prepare, submission_preview
 from src.core.catalog import submission_rules as rules
 from src.core.skills.plugin_safe_subset import CODE_MANIFEST_KEYS, mcp_problems, plugin_declares_nonmcp_code
-from src.cplugs.host import install_gates
-from src.cplugs.sdk import api_contract
-from src.cplugs.sdk.manifest import ID_PATTERN as CPLUG_ID_PATTERN, RESERVED_IDS as CPLUG_RESERVED_IDS
+from src.plugins.host import install_gates
+from src.plugins.sdk import api_contract
+from src.plugins.sdk.manifest import ID_PATTERN as CPLUG_ID_PATTERN, RESERVED_IDS as CPLUG_RESERVED_IDS
 
 logger = structlog.get_logger()
 
@@ -312,7 +312,7 @@ def _check_cplug(folder: Path, paths: List[str], read: Dict[str, bytes], prepare
         prepared.total_bytes += len(body) - len(read[path])
         prepared.members = [(p, body if p == path else c) for p, c in prepared.members]
     if prepared.total_bytes > install_gates.MAX_TOTAL_BYTES:
-        _refuse(prepared, rules.BODY_TOO_LARGE, f"a cplug may total at most {install_gates.MAX_TOTAL_BYTES // 1024} KiB", None)
+        _refuse(prepared, rules.BODY_TOO_LARGE, f"a plugin may total at most {install_gates.MAX_TOTAL_BYTES // 1024} KiB", None)
 
 
 def _json_object(raw: bytes) -> Optional[Dict[str, Any]]:

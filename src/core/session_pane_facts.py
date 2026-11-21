@@ -7,7 +7,6 @@ from typing import Optional
 
 import structlog
 
-from src.core.tmux_control.reader import control_read_async
 from src.core.tmux_transport.run import tmux_run
 from src.models.session_pane_facts import SessionPaneFacts
 
@@ -82,9 +81,6 @@ def git_branch(cwd: str) -> Optional[str]:
 
 
 async def read_pane_facts(socket: str, tmux_name: str) -> SessionPaneFacts:
-    answered = await control_read_async(socket, ["display-message", "-p", "-t", f"={tmux_name}:", _FORMAT])
-    if answered is not None:
-        return await _facts_with_branch(answered, tmux_name)
     done = await tmux_run(socket, "display-message", "-p", "-t", f"={tmux_name}:", _FORMAT,
                           timeout=READ_TIMEOUT_SECONDS)
     if done.error:

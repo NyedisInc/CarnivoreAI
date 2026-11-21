@@ -61,7 +61,7 @@
 
         .lpd-detail { color: var(--oc-text-muted); font-size: 11px; overflow-wrap: anywhere; }
 
-        .lpd-tag { flex: none; padding: 0 5px; border: 1px solid var(--oc-line-rule); border-radius: 2px; color: var(--oc-text-muted); font-size: 10px; letter-spacing: var(--oc-tracking-label, 0.6px); text-transform: uppercase; white-space: nowrap; }
+        .lpd-tag { flex: none; padding: 0 5px; border: 1px solid var(--oc-line-rule); border-radius: var(--oc-radius-control); color: var(--oc-text-muted); font-size: 10px; letter-spacing: var(--oc-tracking-label, 0.6px); text-transform: uppercase; white-space: nowrap; }
 
         .lpd-tag--default { border-color: var(--oc-orange); color: var(--oc-orange); }
 

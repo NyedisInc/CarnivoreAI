@@ -19,10 +19,10 @@ from src.core.crate_import.plan import build_plan as plan_import
 from src.core.db import connect, db_path_for, set_meta
 from src.core.exports.store import crate_written_key
 from src.core.project_move.plan import PaneListing
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import build_plan
-from src.cplugs.crate.writer import run_export
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import build_plan
+from src.plugins.crate.writer import run_export
+from src.plugins.sdk import crate_format as cf
 from tests.python.cplugs.crate.crate_world import env_for, make_world, project_request
 from tests.python.crate_import.install import Install, make_install
 from tests.python.session_purge.purge_world import insert

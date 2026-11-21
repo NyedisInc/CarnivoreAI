@@ -78,3 +78,23 @@ def test_table_probes_each_unique_url_once_per_interval_and_forgets_unwanted():
         assert table.get("http", "http://b/mcp") is None and len(calls) == 3
     finally:
         table.close()
+
+
+def test_our_own_mcp_is_never_probed_so_no_bad_credential_refusal_is_logged_for_it():
+    calls = []
+    now = datetime(2026, 11, 18, tzinfo=timezone.utc)
+
+    def fake(url, transport):
+        calls.append(url)
+        return ProbeResult(True, "reachable", "200", now)
+
+    table = ProbeTable(probe=fake, interval=timedelta(seconds=60), own_port=lambda: 8123)
+    try:
+        own = {("http", "http://127.0.0.1:8123/mcp"), ("http", "http://localhost:8123/mcp/")}
+        other = {("http", "http://127.0.0.1:9000/mcp"), ("http", "http://127.0.0.1:8123/other"),
+                 ("http", "https://mcp.context7.com/mcp")}
+        table.refresh(own | other, now)
+        assert sorted(calls) == sorted(url for _, url in other)
+        assert table.get("http", "http://127.0.0.1:8123/mcp") is None
+    finally:
+        table.close()

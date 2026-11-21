@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.cplugs.reviewboard import attachments_port
+from src.plugins.reviewboard import attachments_port
 from tests.python.cplugs.reviewboard.harness import BASE, task_manager_store
 from tests.python.cplugs.reviewboard.test_attachment_removal import _pane_attach, two  # noqa: F401
 from tests.python.cplugs.reviewboard.test_attachments import board, client, env, sidecar  # noqa: F401
@@ -46,14 +46,14 @@ def test_after_the_board_removes_it_the_file_is_gone_and_a_loose_file_is_still_d
 
 
 def test_the_two_port_names_agree():
-    from src.cplugs.reviewboard import attachments_port  # noqa: PLC0415
-    from src.cplugs.sdk import board_files  # noqa: PLC0415
+    from src.plugins.reviewboard import attachments_port  # noqa: PLC0415
+    from src.plugins.sdk import board_files  # noqa: PLC0415
 
     assert attachments_port.NAME == board_files.PORT
 
 
 def test_a_board_deleted_mid_scan_is_skipped_not_a_refusal(env, client, board, two, monkeypatch):
-    from src.cplugs.reviewboard import service  # noqa: PLC0415
+    from src.plugins.reviewboard import service  # noqa: PLC0415
 
     real = service.boards
     monkeypatch.setattr(service, "boards", lambda root, task=None: {**real(root, task), "boards": [{"slug": "20261014-vanished"}, *real(root, task)["boards"]]})

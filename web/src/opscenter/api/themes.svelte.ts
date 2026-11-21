@@ -21,5 +21,5 @@ function demoThemes(): ThemeManifest[] {
 
 export const themes: Resource<ThemeManifest[]> = resource<ThemeManifest[]>(
   () => authFetch<ThemeManifest[]>('/themes'),
-  { intervalMs: THEMES_POLL_MS, name: 'themes', demo: demoThemes },
+  { intervalMs: THEMES_POLL_MS, name: 'themes', demo: demoThemes, topics: ['themes'] },
 );

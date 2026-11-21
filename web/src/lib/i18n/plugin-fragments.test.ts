@@ -60,7 +60,7 @@ describe('the shipped slices', () => {
         const slices = pluginSlices();
         const ids = slices.map(([id]) => id);
         for (const id of ['flow', 'reviewboard', 'save', 'share', 'unread']) {
-            if (existsSync(new URL(`../../cplugs/${id}`, import.meta.url))) expect(ids).toContain(id);
+            if (existsSync(new URL(`../../plugins/${id}`, import.meta.url))) expect(ids).toContain(id);
         }
         expect(ids).not.toContain('mcphealth');
         for (const [id, slice] of slices) {

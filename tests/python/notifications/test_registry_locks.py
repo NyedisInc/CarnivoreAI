@@ -11,6 +11,7 @@ _PLAN_SEED = {
     "pack.skills",
     "approval.agent_action",
     "swarm.question_climbed",
+    "agent.review",
 }
 
 
@@ -33,7 +34,7 @@ def test_outside_locked_off_rows() -> None:
 
 
 def test_seed_equals_the_plan_default_tick_set() -> None:
-    assert set(T.seed_type_ids()) == _PLAN_SEED and len(T.seed_type_ids()) == 14
+    assert set(T.seed_type_ids()) == _PLAN_SEED and len(T.seed_type_ids()) == 15
     assert "approval.folder_trust" not in _PLAN_SEED and not T.get_type("approval.folder_trust").defaults.screen
 
 

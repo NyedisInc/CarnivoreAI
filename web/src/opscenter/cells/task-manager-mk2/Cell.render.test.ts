@@ -45,10 +45,10 @@ import Mk2Host from './fixtures/Mk2Host.svelte';
 import Mk2HeadHost from './fixtures/Mk2HeadHost.svelte';
 import { listTasksOf } from './mk2-head-count';
 import { declaredActionsFor } from '../../widgets/menu/declared-actions.svelte';
-import { cplugEnablement } from '../../../cplugs/host/enablement.svelte';
-import { clearViewFilter } from '../../../cplugs/huddle/task-manager-view-filter.svelte';
-import { taskManagerPrefs } from '../../../cplugs/huddle/task-manager-prefs.svelte';
-import { huddle } from '../../../cplugs/huddle/huddle.svelte';
+import { cplugEnablement } from '../../../plugins/host/enablement.svelte';
+import { clearViewFilter } from '../../../plugins/huddle/task-manager-view-filter.svelte';
+import { taskManagerPrefs } from '../../../plugins/huddle/task-manager-prefs.svelte';
+import { huddle } from '../../../plugins/huddle/huddle.svelte';
 
 cplugEnablement.enabled = { huddle: true };
 

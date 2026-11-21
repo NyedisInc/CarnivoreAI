@@ -227,77 +227,74 @@
     <Page
         bind:root
         class="pledger"
+        frame="column"
+        stack
         title={t(LEDGER_KEYS.screenTitle)}
         count={rows.length > 0 ? t(LEDGER_KEYS.totalAccounts, { count: rows.length }) : undefined}
         onClose={close}
         closeLabel={t(MANAGER_KEYS.close)}
         actions={pageActions}
     >
+        <LedgerNotices {loop} {failure} {loading} {isEmpty} {t} {now} />
+
         
-        <div class="oc-page__scroll">
-            <div class="oc-page__main oc-page__main--stack">
-                <LedgerNotices {loop} {failure} {loading} {isEmpty} {t} {now} />
+        <LedgerAccountsEditor
+            {host}
+            {t}
+            {taken}
+            startOpen={isEmpty}
+            bind:open={adding}
+            onChanged={() => read()}
+        />
 
+        {#if rows.length}
+            <div class="ledger-deck">
                 
-                <LedgerAccountsEditor
-                    {host}
-                    {t}
-                    {taken}
-                    startOpen={isEmpty}
-                    bind:open={adding}
-                    onChanged={() => read()}
-                />
-
-                {#if rows.length}
-                    <div class="ledger-deck">
-                        
-                        <AutoSwitchPanel />
-                        {#if total}
-                            <LedgerTotal {total} {now} {t} />
-                        {/if}
-                    </div>
-                    <LedgerHeadroom accounts={rows} {t} />
-                    <LedgerCards
-                        accounts={rows}
-                        {now}
-                        {t}
-                        onRemove={(row) => void removeRow(row.id, rowDeps)}
-                        removingId={busyRows.remove}
-                        onLogin={(row) => void startLogin(row.id, rowDeps)}
-                        loginId={busyRows.login}
-                        onEdit={(row, edit) => saveRowEdit(row.id, edit, rowDeps)}
-                        editingId={busyRows.edit}
-                        onRename={host.renameBuiltInLogin ? renameBuiltIn : undefined}
-                        stored={(id) => configured?.find((account) => account.id === id) ?? null}
-                        {rowNotices}
-                        {targetId}
-                        sessionsFor={(id) => grouped.byAccount.get(id) ?? []}
-                        onOpenSession={openRow}
-                    />
-                    
-                    <LedgerSessions
-                        rows={grouped.unknown}
-                        {t}
-                        onOpen={openRow}
-                        heading={t('ledger.sessions.unknown')}
-                        hideEmpty
-                    />
-                {/if}
-
-                {#if peers}
-                    <LedgerPeers {peers} {now} {t} />
-                {/if}
-
-                
-                {#if loop?.alive === true}
-                    <footer class="ledger-foot">
-                        <p class="ledger-loop" data-ledger="loop">
-                            {t(LEDGER_KEYS.loopAlive, { age: formatAge(loop.last_pass_at, now, t) })}
-                        </p>
-                    </footer>
+                <AutoSwitchPanel />
+                {#if total}
+                    <LedgerTotal {total} {now} {t} />
                 {/if}
             </div>
-        </div>
+            <LedgerHeadroom accounts={rows} {t} />
+            <LedgerCards
+                accounts={rows}
+                {now}
+                {t}
+                onRemove={(row) => void removeRow(row.id, rowDeps)}
+                removingId={busyRows.remove}
+                onLogin={(row) => void startLogin(row.id, rowDeps)}
+                loginId={busyRows.login}
+                onEdit={(row, edit) => saveRowEdit(row.id, edit, rowDeps)}
+                editingId={busyRows.edit}
+                onRename={host.renameBuiltInLogin ? renameBuiltIn : undefined}
+                stored={(id) => configured?.find((account) => account.id === id) ?? null}
+                {rowNotices}
+                {targetId}
+                sessionsFor={(id) => grouped.byAccount.get(id) ?? []}
+                onOpenSession={openRow}
+            />
+            
+            <LedgerSessions
+                rows={grouped.unknown}
+                {t}
+                onOpen={openRow}
+                heading={t('ledger.sessions.unknown')}
+                hideEmpty
+            />
+        {/if}
+
+        {#if peers}
+            <LedgerPeers {peers} {now} {t} />
+        {/if}
+
+        
+        {#if loop?.alive === true}
+            <footer class="ledger-foot">
+                <p class="ledger-loop" data-ledger="loop">
+                    {t(LEDGER_KEYS.loopAlive, { age: formatAge(loop.last_pass_at, now, t) })}
+                </p>
+            </footer>
+        {/if}
     </Page>
 {/if}
 

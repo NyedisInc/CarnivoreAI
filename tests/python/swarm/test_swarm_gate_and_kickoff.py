@@ -86,3 +86,28 @@ async def test_a_gate_cleared_outside_the_card_closes_it_and_a_lost_kickoff_land
         assert _kickoffs(world, second) == 1 and _kickoffs(world, agent_id) == 1
         assert sum("desk" in t for t in world.pasted[before:]) == 1
     watch.reset()
+
+
+@pytest.mark.asyncio
+async def test_a_measured_ready_screen_sends_the_kickoff_inside_the_grace_and_a_dialog_does_not(world, monkeypatch):  # noqa: F811
+    monkeypatch.setattr(delivery, "KICKOFF_GRACE_S", 3600.0)
+    ready = {"on": False}
+
+    async def past_gate(*_args):
+        return ready["on"]
+
+    monkeypatch.setattr(delivery, "_past_trust_gate", past_gate)
+    watch.reset()
+    transport = httpx.ASGITransport(app=world.app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://t/api/v1") as client:
+        with monkeypatch.context() as lost:
+            lost.setattr(delivery, "send_wake_prompt", lambda *a, **k: None)
+            agent_id = await _make(client, world, "tidy the docs")
+            woke = await client.post(f"{API}/agents/{agent_id}/messages", json={"text": "hello"})
+            assert woke.status_code == 200, woke.text
+        await asyncio.sleep(0.3)
+        assert await delivery.settle_wake(world.app.state, agent_id) is False and _kickoffs(world, agent_id) == 0
+        ready["on"] = True
+        assert await delivery.settle_wake(world.app.state, agent_id) is True
+        await _until(lambda: _kickoffs(world, agent_id) == 1, "the kickoff to land on a measured ready screen")
+    watch.reset()

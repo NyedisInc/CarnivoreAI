@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 from src.core.stat_gate.dir_names import entry_names
+from src.core.subagents import launch_memo
 from src.core.subagents.parent_index import CompletionIndex
 
 AGENT_FILE_PREFIX = "agent-"
@@ -15,6 +16,22 @@ AgentFilesSignature = Optional[Tuple[Tuple[str, FileTimes], ...]]
 
 
 def agent_files_signature(directory: Path) -> AgentFilesSignature:
+    return agent_files_signature_read(directory)[0]
+
+
+def agent_files_signature_read(directory: Path) -> Tuple[AgentFilesSignature, bool]:
+    read_now: list = []
+
+    def compute() -> Tuple[AgentFilesSignature, bool]:
+        read_now.append(True)
+        signature = read_agent_files_signature(directory)
+        return signature, signature is not None and all(times is not None for _, times in signature)
+
+    signature = launch_memo.remembered(str(directory), compute)
+    return signature, bool(read_now)
+
+
+def read_agent_files_signature(directory: Path) -> AgentFilesSignature:
     try:
         names = entry_names(directory)
     except FileNotFoundError:
@@ -40,4 +57,4 @@ def index_snapshot(index: Optional[CompletionIndex]) -> Optional[Tuple[Tuple, Tu
     return (tuple(sorted(index.by_agent_id.items())), tuple(sorted(index.by_tool_use.items())))
 
 
-__all__ = ["agent_files_signature", "index_snapshot"]
+__all__ = ["agent_files_signature", "agent_files_signature_read", "index_snapshot", "read_agent_files_signature"]

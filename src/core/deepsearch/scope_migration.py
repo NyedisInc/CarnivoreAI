@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional, Protocol
 import structlog
 
 from src.core.deepsearch import index_scope
-from src.cplugs.host import state as plugin_state
+from src.plugins.host import state as plugin_state
 
 logger = structlog.get_logger()
 

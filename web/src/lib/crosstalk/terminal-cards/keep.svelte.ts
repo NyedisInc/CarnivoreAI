@@ -1,4 +1,4 @@
-import { onEventFrame } from '../../../cplugs/sdk/terminal';
+import { onEventFrame } from '../../../plugins/sdk/terminal';
 import { cardOf, sideEnabled, withCard, MAX_KEPT_CARDS, type Card, type CardFrame, type CardSide } from './model';
 import { cardSettings } from './prefs.svelte';
 

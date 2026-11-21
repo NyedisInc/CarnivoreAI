@@ -13,7 +13,7 @@ from src.api.auth import require_auth
 from src.api.capped_reads import read_capped_upload
 from src.api.remote_route_guard import routed_remote
 from src.api.session_background_routes import _entry_model, _store
-from src.api.session_name_known import known_tmux_names, strip_adopted_prefix
+from src.api.session_name_known import known_tmux_names_async, strip_adopted_prefix
 from src.config import settings
 from src.core import terminal_background
 from src.core.hosts.remote_controls import image_file_stem
@@ -23,14 +23,14 @@ from src.models import SessionBackgroundEntry
 logger = structlog.get_logger()
 router = APIRouter()
 
-def _known_session(request: Request, session_name: str) -> str:
+async def _known_session(request: Request, session_name: str) -> str:
     session_manager = request.app.state.session_manager
     remote = routed_remote(session_manager, session_name)
     if remote is not None:
         return remote.key
     owned_tmux = request.app.state.services.owned_tmux
     name = strip_adopted_prefix(session_name)
-    if name not in known_tmux_names(session_manager, owned_tmux):
+    if name not in await known_tmux_names_async(session_manager, owned_tmux):
         logger.info("session_background_image_404", session_name=name)
         raise HTTPException(status_code=404, detail=f"Unknown session {name!r}")
     return name
@@ -109,7 +109,7 @@ async def upload_session_background_image(
       supported image, 400 a session name that cannot be a filename, 500
       a failed write.
     """
-    name = _known_session(request, session_name)
+    name = await _known_session(request, session_name)
     max_bytes = settings.load_auth_config().uploads.max_size_mb * 1024 * 1024
     data = await read_capped_upload(file, max_bytes)
 
@@ -176,7 +176,7 @@ async def get_session_background_image(
     Raises: HTTPException 404 when the session is unknown, has no stored
       picture, or the recorded file is gone from disk.
     """
-    name = _known_session(request, session_name)
+    name = await _known_session(request, session_name)
     entry = _store(request).get(name) or {}
     path = _stored_path(name, entry.get("image"))
     if path is None or not path.is_file():
@@ -215,7 +215,7 @@ async def delete_session_background_image(
     Output: Response - 204, no body.
     Raises: HTTPException(404) when the session is unknown.
     """
-    name = _known_session(request, session_name)
+    name = await _known_session(request, session_name)
     store = _store(request)
     entry = store.get(name) or {}
     path = _stored_path(name, entry.get("image"))

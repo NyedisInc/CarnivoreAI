@@ -130,7 +130,7 @@ async def list_hosts() -> HostsResponse:
 async def add_host(body: CreateHostRequest) -> HostModel:
     """Add a machine by its ssh target. Stored with ``probe_state`` 'never'.
 
-    Description: the key is generated server side (Alex (Adoom666),
+    Description: the key is generated server side (the owner,
       2026-09-28), never supplied by the caller; the response carries it.
     Raises: HTTPException 400 (a field is invalid), 409 (key generation
       exhausted its retries), 503.
@@ -169,10 +169,21 @@ async def update_host(key: str, body: UpdateHostRequest, request: Request) -> Ho
 async def delete_host(key: str, request: Request) -> HostDeletedResponse:
     """Remove a host no sessions row names. Nothing on that machine is touched.
 
-    Raises: HTTPException 404, 409 (this machine, or sessions still name it), 503.
+    Description: a host with a live command job over ssh is 409 ``host_in_use``, and one that still holds a project's copies (the far cache and
+      folders) is 409 ``host_has_copies`` until the owner removes them (DELETE /pack/ssh-targets/{key}/folders); a clean idle one also drops its
+      job settings and pinned key.
+    Raises: HTTPException 404, 409 (this machine, sessions still name it, a job runs there or copies are left there), 503.
     Example: DELETE /api/v1/hosts/studio
     """
+    from src.core.pack.jobs.ssh import owner
+
+    jobs = owner.job_store(required=False)
+    if await run_in_threadpool(owner.live_jobs, jobs, key):
+        raise api_error(409, "host_in_use", extra={"reason": "a job is running on that computer"})
+    if await run_in_threadpool(jobs.ssh_seeds_for, key):
+        raise api_error(409, "host_has_copies", extra={"reason": "projects have copies on that computer; remove the copies first"})
     await _call(store.delete_host, key)
+    await run_in_threadpool(owner.forget_settings, jobs, key)
     await _forget_connection(request, key)
     return HostDeletedResponse(key=key)
 
@@ -220,6 +231,7 @@ async def link_computer(key: str, body: LinkComputerRequest) -> HostModel:
     """
     host, counts = await _call(store.link_computer, key, body.computer_install_id)
     from src.core import resource_push
+    from src.core.resource_push import topics
 
-    resource_push.notify("computers")
+    resource_push.notify(topics.COMPUTERS)
     return to_model(host, counts)

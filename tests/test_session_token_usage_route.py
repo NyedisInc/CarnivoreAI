@@ -215,6 +215,7 @@ class _StubInfo:
         self.agent_family = family
         self.tmux_session = tmux_name
         self.session = _StubSession(working_dir)
+        self.session_uuid: Optional[str] = None
 
 
 class _StubManager:

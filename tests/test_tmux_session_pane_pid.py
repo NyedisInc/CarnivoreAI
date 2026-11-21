@@ -10,6 +10,7 @@ import pytest
 
 from src.core import tmux_session_pane_pid as module
 from src.core.tmux_session_pane_pid import make_pane_pid_probe, probe_session_pane_pid
+from src.core.tmux_transport.run import ERROR_TIMEOUT, TmuxRunResult
 from tests.socket_guard import derive_test_socket
 
 needs_tmux = pytest.mark.skipif(shutil.which("tmux") is None, reason="real tmux binary not available")
@@ -51,9 +52,9 @@ def test_probe_is_bounded_and_a_timeout_is_unknown() -> None:
 
     def wedged(*args, **kwargs):
         seen.update(kwargs)
-        raise subprocess.TimeoutExpired(cmd="tmux", timeout=kwargs["timeout"])
+        return TmuxRunResult(None, b"", b"", ERROR_TIMEOUT)
 
-    with patch("src.core.tmux_session_cwd.subprocess.run", wedged), \
+    with patch("src.core.tmux_session_cwd.tmux_run_sync", wedged), \
             patch("src.core.tmux_session_cwd.shutil.which", return_value="/usr/bin/tmux"), \
             patch("src.core.tmux_session_cwd.tmux_argv_prefix", return_value=["tmux", "-L", "x"]):
         assert probe_session_pane_pid("a", socket="x", timeout=1.5) is None

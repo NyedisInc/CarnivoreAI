@@ -6,6 +6,7 @@ import { flushSync, mount, unmount } from 'svelte';
 import Check from './Check.svelte';
 
 const css = readFileSync('src/opscenter/controls.css', 'utf8');
+const mark = readFileSync('src/lib/base/mark.css', 'utf8');
 let mounted: Record<string, unknown> | null = null;
 
 afterEach(() => {
@@ -43,5 +44,5 @@ test('the bare modifier hides the frame, hover included; the labelled frame and 
     expect(bare).toContain('border-color: transparent');
     expect(css).toContain('.oc-check--bare:hover:not(:disabled)');
     expect(block('.oc-check {')).toContain('border: 1px solid var(--oc-control-line)');
-    expect(block('.oc-check__box {')).toContain('border: 1px solid var(--oc-control-line-hi)');
+    expect(mark).toMatch(/:where\(\.oc-check__box[^{]*\{[^}]*border: var\(--oc-border\) solid var\(--oc-line-control\)/);
 });

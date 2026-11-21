@@ -14,28 +14,25 @@ const KNOWN: readonly string[] = [
 const KNOWN_CEILING = 1;
 
 const KEY_KNOWN: readonly string[] = [
-  'cplugs/devwidgetlab/DockBar.svelte:key-button',
-  'cplugs/devwidgetlab/DockBar.svelte:menu-key-literal',
+  'plugins/devwidgetlab/DockBar.svelte:key-button',
+  'plugins/devwidgetlab/DockBar.svelte:menu-key-literal',
 ];
 
 const KEY_KNOWN_CEILING = 2;
 
 const TAB_KNOWN: readonly string[] = [
-  'cplugs/huddle/agents/AgentChatFrame.svelte:page-tabs',
+  'plugins/huddle/agents/AgentChatFrame.svelte:page-tabs',
 ];
 
 const TAB_KNOWN_CEILING = 1;
 
 const DIALOG_KNOWN: readonly string[] = [
-  'cplugs/huddle/TaskManagerArtifactDialog.svelte:dialog-frame',
-  'cplugs/huddle/TaskManagerForkDialog.svelte:dialog-frame',
-  'cplugs/huddle/TaskManagerScheduleEditor.svelte:dialog-frame',
-  'cplugs/huddle/TaskManagerSend.svelte:dialog-frame',
-  'cplugs/huddle/TaskManagerTickConfirm.svelte:dialog-frame',
+  'plugins/huddle/TaskManagerSend.svelte:dialog-frame',
+  'plugins/huddle/TaskManagerTickConfirm.svelte:dialog-frame',
   'lib/catalog/ItemNotePopup.svelte:dialog-frame',
 ];
 
-const DIALOG_KNOWN_CEILING = 6;
+const DIALOG_KNOWN_CEILING = 3;
 
 const PAGE_ROW_MENU_KNOWN: readonly string[] = [
   'lib/sessions-page/PanelHead.svelte:page-row-menu',
@@ -113,8 +110,16 @@ describe('host work stays in the zone shell', () => {
       { path: 'lib/sessions-search/Keys.ts', text: 'if (isMenuKey(event)) openMenu();' },
       { path: 'lib/item-menu/ItemMenu.svelte', text: '<div oncontextmenu={open}></div>' },
       { path: 'lib/projects-page/Row.svelte', text: '<div oncontextmenu={open}></div>' },
+      { path: 'lib/automations/pane/Head.svelte', text: '<IconButton variant="quiet" icon="kebab" label="more" />' },
+      { path: 'lib/automations/pane/Menu.svelte', text: '{#if menu}<RowMenu anchor={menu} />{/if}' },
     ]).map(keyOf);
-    expect(planted).toEqual(['lib/deepsearch/Hit.svelte:page-row-menu', 'lib/sessions-page/Row.svelte:page-row-menu', 'lib/sessions-search/Keys.ts:page-row-menu']);
+    expect(planted).toEqual([
+      'lib/automations/pane/Head.svelte:page-row-menu',
+      'lib/automations/pane/Menu.svelte:page-row-menu',
+      'lib/deepsearch/Hit.svelte:page-row-menu',
+      'lib/sessions-page/Row.svelte:page-row-menu',
+      'lib/sessions-search/Keys.ts:page-row-menu',
+    ]);
   });
 
   it('lets the menu settings row hold the rail pin (ruling a) and no other menu file', () => {

@@ -6,7 +6,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any, Dict
 
-from src.cplugs.host import plugin_fold, runtime, state as owner_state
+from src.plugins.host import plugin_fold, runtime, state as owner_state
 from tests.python.cplugs.reviewboard.harness import make_env
 
 

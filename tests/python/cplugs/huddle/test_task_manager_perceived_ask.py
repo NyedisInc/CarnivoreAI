@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import pytest
 
-from src.cplugs.huddle import perceived_ask
-from src.cplugs.huddle.inbox_store import InboxStore
-from src.cplugs.huddle.rules import CLAUDE, JOE, TaskManagerInvalid
+from src.plugins.huddle import perceived_ask
+from src.plugins.huddle.inbox_store import InboxStore
+from src.plugins.huddle.rules import CLAUDE, JOE, TaskManagerInvalid
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 
 

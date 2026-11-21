@@ -58,7 +58,7 @@ def test_build_log_is_not_written_inside_the_packed_macos_folder() -> None:
 
 def test_build_runs_both_gates_before_the_dmg_is_copied_out() -> None:
     text = SCRIPT.read_text(encoding="utf-8")
-    assert text.index('node "$VERIFY_ASAR"') < text.index('cp "$built" "$OUT_DIR/')
+    assert text.index('node "$VERIFY_ASAR"') < text.index('mv "$built" "$OUT_DIR/')
     assert 'node "$VERIFY_MODULES"' in text
 
 

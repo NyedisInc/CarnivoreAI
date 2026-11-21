@@ -14,12 +14,12 @@ SCOPE_DIRS = (
     "lib/terminal-empty", "lib/terminal-notice", "lib/terminal-background",
 )
 CSS_FILES = ("lib/session-control/control-center.css",)
-COLOUR_LITERALS = {"lib/terminal-search/SearchPanel.svelte": 6}
+COLOUR_LITERALS = {"lib/terminal-search/SearchPanel.svelte": 0}
 UNLAYERED = {
     "opscenter/cells/notes/Cell.svelte": 4,
     "opscenter/cells/running-sessions/Cell.svelte": 16,
     "opscenter/cells/terminal-live/Cell.svelte": 4,
-    "opscenter/layout-editor/WidgetDrawer.svelte": 18,
+    "opscenter/layout-editor/WidgetDrawer.svelte": 15,
     "opscenter/layout-editor/DrawerHead.svelte": 3,
     "opscenter/layout-editor/DrawerTools.svelte": 3,
     "opscenter/shell/CellFrame.svelte": 0,
@@ -38,7 +38,7 @@ LEGACY_OVERRIDES: dict[str, dict[str, tuple[str, ...]]] = {
         ".bt-row :global([data-btn])": ("flex", "min-height", "padding", "font-size"),
     },
 }
-LITERAL_BASELINE = 264
+LITERAL_BASELINE = 118
 _ANY_PX = ANY_PX
 _COLOUR = COLOUR
 
@@ -103,13 +103,15 @@ def test_on_scale_values_use_the_tokens() -> None:
 
 def test_off_scale_literals_only_fall() -> None:
     total = sum(len(_ANY_PX.findall(c)) for c in styled_components().values())
-    assert total <= LITERAL_BASELINE, f"{total} literal spacing/type declarations, baseline {LITERAL_BASELINE}"
+    assert total == LITERAL_BASELINE, f"{total} literal spacing/type declarations, baseline {LITERAL_BASELINE}; fewer: lower it"
 
 
 def test_no_colour_literals_in_component_styles() -> None:
     found = {r: len(_COLOUR.findall(c)) for r, c in styled_components().items() if _COLOUR.search(c)}
     bad = {r: n for r, n in found.items() if n > COLOUR_LITERALS.get(r, 0)}
     assert not bad, f"colour literals (use --oc-* tokens; tokens.css owns them): {bad}"
+    stale = {r: (n, found.get(r, 0)) for r, n in COLOUR_LITERALS.items() if found.get(r, 0) < n}
+    assert not stale, f"lower these COLOUR_LITERALS entries (allowed, actual): {stale}"
 
 
 def test_negative_controls() -> None:

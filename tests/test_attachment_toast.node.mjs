@@ -13,6 +13,7 @@ const attachSrc = read('client', 'js', 'attachment-toast.js');
 const toastSrc = read('client', 'js', 'toast.js');
 // issue #55 split ToastManager's class body across three files that each
 // extend ToastManager.prototype (client/js/api-toasts.js's pattern for
+const extendProtoSrc = read('client', 'js', 'extend-prototype.js');
 const toastGroupingSrc = read('client', 'js', 'toast-grouping.js');
 const toastRenderSrc = read('client', 'js', 'toast-view.js');
 const toastLifecycleSrc = read('client', 'js', 'toast-lifecycle.js');
@@ -126,6 +127,7 @@ function makeSandbox(opts = {}) {
     vm.runInContext(sessionLabelSrc, sandbox);
     vm.runInContext(summarySrc, sandbox);
     vm.runInContext(toastGroupSrc, sandbox);
+    vm.runInContext(extendProtoSrc, sandbox);
     vm.runInContext(toastSrc, sandbox);
     vm.runInContext(toastGroupingSrc, sandbox);
     vm.runInContext(toastRenderSrc, sandbox);

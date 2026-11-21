@@ -2,8 +2,8 @@
 import pytest
 from fastapi import APIRouter
 
-from src.cplugs.host import identity, routes
-from src.cplugs.sdk.routing import cplug_router
+from src.plugins.host import identity, routes
+from src.plugins.sdk.routing import cplug_router
 
 
 def _fixture_router(prefix: str, method: str, path: str) -> APIRouter:
@@ -40,8 +40,8 @@ def test_plugin_template_that_covers_a_host_path_is_refused():
 
 
 def test_registry_host_picks_the_layout():
-    from src.cplugs.host import runtime
-    from src.cplugs.sdk.manifest import TIERS
+    from src.plugins.host import runtime
+    from src.plugins.sdk.manifest import TIERS
     assert runtime.router_prefix("huddle", third_party="builtin" not in TIERS) == "/cplugs/huddle"
 
 

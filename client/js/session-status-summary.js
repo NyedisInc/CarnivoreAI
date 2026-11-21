@@ -9,6 +9,7 @@ console.log('[SessionStatusSummary Module] Loading...');
         { key: 'unread', inner: 'done' },
         { key: 'done', inner: 'idle' },
         { key: 'dead', inner: 'dead' },
+        { key: 'asleep', inner: 'asleep' },
         { key: 'unknown', inner: 'unknown' },
     ];
 
@@ -37,6 +38,7 @@ console.log('[SessionStatusSummary Module] Loading...');
         if (l.outer === 'unread') return 'unread';
         if (l.inner === 'idle' || l.inner === 'done') return 'done';
         if (l.inner === 'dead' || l.inner === 'disconnected') return 'dead';
+        if (l.inner === 'asleep' || l.inner === 'asleep-unread') return 'asleep';
         return 'unknown';
     }
 

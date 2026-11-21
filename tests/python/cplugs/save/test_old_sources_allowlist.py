@@ -1,8 +1,8 @@
 
 from __future__ import annotations
 
-from src.cplugs.save import import_service as svc
-from src.cplugs.save.service import RUNTIME
+from src.plugins.save import import_service as svc
+from src.plugins.save.service import RUNTIME
 from tests.python.cplugs.save.old_sources_rig import BASE, C1, C2, rig, snapshot  # noqa: F401
 
 

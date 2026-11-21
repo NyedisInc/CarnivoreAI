@@ -36,6 +36,8 @@ class WSMessageType(str, Enum):
     LISTING_DELTA = "listing.delta"
     PEER_LISTING = "peer.listing"
     RESOURCES_CHANGED = "resources.changed"
+    PACK_JOBS_DELTA = "pack_jobs.delta"
+    TIMELINE_DELTA = "timeline.delta"
     CPLUG_DATA = "cplug.data"
     APPROVALS = "approvals"
     PREFERENCES_CHANGED = "preferences.changed"

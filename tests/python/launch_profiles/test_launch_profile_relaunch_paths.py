@@ -9,7 +9,7 @@ from types import SimpleNamespace
 import pytest
 from fastapi import HTTPException
 
-from src.api import imported_restart_routes, recreate_routes, session_fork_routes, session_sleep_routes
+from src.api import imported_restart_routes, session_fork_routes, session_sleep_routes
 from src.api.imported_restart_routes import ImportedRestartRequest
 from src.api.launch_profile_errors import refuse_gone_profile
 from src.api.recreate_action import recreate_by_uuid
@@ -18,6 +18,7 @@ from src.core.db import connect, db_path_for
 from src.core.session_recreate_presence import TMUX_GONE, TmuxPresence
 from src.core.tmux_backend import TmuxBackend
 from tests.python.launch_profiles.test_launch_profile_restart_replay import _create, _set_record, env  # noqa: F401
+from src.core.session_ops import row_probe
 
 
 @pytest.fixture
@@ -30,7 +31,7 @@ def starts(env, monkeypatch):  # noqa: F811
         return await swapped(self, command=command, env=env, **kw)
 
     monkeypatch.setattr(TmuxBackend, "start", spy)
-    monkeypatch.setattr(recreate_routes, "_measure_presence", lambda name, socket: TmuxPresence(TMUX_GONE, "gone"))
+    monkeypatch.setattr(row_probe, "measure_presence", lambda name, socket: TmuxPresence(TMUX_GONE, "gone"))
     return seen
 
 

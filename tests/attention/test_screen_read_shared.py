@@ -6,7 +6,7 @@ import time
 from types import SimpleNamespace
 
 from src.core.account_switch import auto_restart
-from src.core.attention import screen_read
+from src.core.tmux_transport import run as tmux_run_mod
 from src.core.attention.screen_reuse import ScreenReuse
 from src.core.attention_reader import AttentionEvidenceReader
 
@@ -23,7 +23,7 @@ def test_two_readers_in_one_pass_cause_one_capture(monkeypatch):
         captures.append((socket, name))
         return "prompt\n"
 
-    monkeypatch.setattr(screen_read, "subprocess", SimpleNamespace(run=None, TimeoutExpired=Exception))
+    monkeypatch.setattr(tmux_run_mod, "subprocess", SimpleNamespace(run=None, TimeoutExpired=Exception, DEVNULL=None))
     monkeypatch.setattr(AttentionEvidenceReader, "_capture", staticmethod(fake_capture))
     monkeypatch.setattr(auto_restart, "capture_screen", fake_capture)
     shared = ScreenReuse()

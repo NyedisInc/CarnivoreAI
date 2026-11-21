@@ -20,6 +20,7 @@ from src.core.computers.invites import MemberRefused, TooManyInvites
 from src.core.computers.join_link import build_link
 from src.core.hosts import ssh_exec
 from src.core.hosts.ssh_exec import SshDestination
+from src.core.resource_push import topics
 
 log = structlog.get_logger(__name__)
 
@@ -150,7 +151,7 @@ class AddJobs:
         task = asyncio.get_running_loop().create_task(_run(rt, job, dest))
         self._tasks.add(task)
         task.add_done_callback(self._tasks.discard)
-        rt.notify("computers")
+        rt.notify(topics.COMPUTERS)
         return job
 
 
@@ -164,7 +165,7 @@ def _set(rt: Any, job: AddJob, **fields: Any) -> None:
     if "step" in changed:
         log.info("computer_add_step", job=job.id, step=job.step)
     if changed:
-        rt.notify("computers")
+        rt.notify(topics.COMPUTERS)
 
 
 def _members(rt: Any) -> Dict[str, bool]:

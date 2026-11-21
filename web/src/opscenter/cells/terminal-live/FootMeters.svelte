@@ -28,6 +28,7 @@
     footBarOrder,
     leadScope,
     leadWindow,
+    shells = null,
   }: {
     option: 'a' | 'b' | 'c';
     admit: Record<string, boolean>;
@@ -42,6 +43,7 @@
     footBarOrder: readonly FootBarOrderId[];
     leadScope: LeadScope;
     leadWindow: UsageWindowView | undefined;
+    shells?: number | null;
   } = $props();
 </script>
 
@@ -75,6 +77,12 @@
       {#if a.effort && hasEffort && rowsByKey.model.spans.length > 2}
         <span class="oc-tf-effort {effortClass(payload?.effort)}" data-fw="effort" data-word={rowsByKey.model.spans[2]?.text}
           >{rowsByKey.model.spans[2]?.text}</span>
+      {/if}
+      {#if shells}
+        
+        <span class="oc-tf-shells" data-fw="shells" role="img" aria-label={t('background_work.foot.title', { count: shells })}
+          ><span class="oc-tf-shells-num" aria-hidden="true">{shells}</span><svg class="oc-tf-shells-glyph" viewBox="0 0 10 10" aria-hidden="true"
+            focusable="false"><rect x="0.8" y="1.4" width="8.4" height="7.2" rx="1" /><path d="M2.6 3.9 4.2 5.1 2.6 6.3M5.2 6.6h2" /></svg></span>
       {/if}
     </span>
   {/if}
@@ -226,7 +234,7 @@
       min-width: 14px;
       max-width: 160px;
       height: 6px;
-      border-radius: 3px;
+      border-radius: var(--oc-radius-tight);
       background: var(--oc-ground-hover);
       box-shadow: inset 0 0 0 1px var(--oc-line-frame);
       overflow: hidden;
@@ -316,6 +324,32 @@
       white-space: nowrap;
     }
 
+    .oc-tf-shells {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--oc-space-1);
+      white-space: nowrap;
+    }
+
+    .oc-tf-shells::before {
+      content: '\00b7\0020';
+      color: var(--oc-text-dim);
+    }
+
+    .oc-tf-shells-num {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .oc-tf-shells-glyph {
+      width: 10px;
+      height: 10px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.2;
+      stroke-linecap: round;
+      color: var(--oc-green-bright);
+    }
+
     .oc-tf-effort:not(:global(.effort-level)) {
       color: var(--oc-text-dim);
     }
@@ -366,16 +400,16 @@
     }
 
     .oc-tf-meters .oc-tf-bar {
-      flex: 0 0 112px;
-      min-width: 112px;
-      max-width: 112px;
+      flex: 0 0 var(--oc-tf-meter-w);
+      min-width: var(--oc-tf-meter-w);
+      max-width: var(--oc-tf-meter-w);
       height: 7px;
     }
 
     .oc-tf-meters .oc-tf-gauge {
-      flex: 0 0 112px;
-      min-width: 112px;
-      max-width: 112px;
+      flex: 0 0 var(--oc-tf-meter-w);
+      min-width: var(--oc-tf-meter-w);
+      max-width: var(--oc-tf-meter-w);
     }
 
     .oc-tf-gauge .oc-gauge__pace {
@@ -434,7 +468,7 @@
     .oc-tf-dot {
       width: 7px;
       height: 7px;
-      border-radius: 50%;
+      border-radius: var(--oc-radius-circle);
       flex: 0 0 auto;
       background: var(--oc-text-dim);
     }

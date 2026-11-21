@@ -9,7 +9,7 @@ from typing import Any, Dict
 from src.core.crosstalk import card_prefs_migration as migration
 from src.core.crosstalk import card_push
 from src.core.ui_preferences_store import UiPreferencesStore
-from src.cplugs.host import state as owner_state
+from src.plugins.host import state as owner_state
 
 
 def _state(state_dir: Path, entries: Dict[str, Any]) -> None:

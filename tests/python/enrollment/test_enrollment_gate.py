@@ -15,7 +15,7 @@ from structlog.testing import capture_logs
 
 os.environ.setdefault("DEFAULT_WORKING_DIR", tempfile.mkdtemp(prefix="cc_enroll_wd_"))
 os.environ.setdefault("LOG_DIRECTORY", tempfile.mkdtemp(prefix="cc_enroll_logs_"))
-os.environ.setdefault("TOTP_SECRET", "JBSWY3DPEHPK3PXP")
+os.environ.setdefault("TOTP_SECRET", "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP")
 os.environ.setdefault("JWT_SECRET", "test-jwt-secret-not-a-real-one-32b")
 
 import src.api.auth as auth_mod  # noqa: E402
@@ -25,8 +25,8 @@ from src.core.owner_identity.otpauth import build_otpauth_uri, sanitize_account 
 from src.core.phone_link.gate import STRIPPED_HEADERS, is_denied  # noqa: E402
 from src.config import settings  # noqa: E402
 
-KNOWN = "JBSWY3DPEHPK3PXP"
-OTHER = "KRSXG5CTMVRXEZLU"
+KNOWN = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP"
+OTHER = "KRSXG5CTMVRXEZLUKRSXG5CTMVRXEZLU"
 PORT = settings.port
 
 

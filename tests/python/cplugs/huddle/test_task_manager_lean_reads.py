@@ -7,7 +7,7 @@ import pytest
 import structlog
 
 from src.core.mcp import tools
-from src.cplugs.huddle import CPLUG, lean_read
+from src.plugins.huddle import CPLUG, lean_read
 from tests.python.cplugs.huddle.test_task_manager_mcp import CALLER, call, huddle_store, manager  # noqa: F401
 
 SUMMARY_KEYS = {"id", "number", "title", "status", "section", "unread"}
@@ -174,7 +174,7 @@ def test_a_form_message_sends_the_structure_and_only_a_text_lead(manager):
 
 
 def test_an_answer_message_sends_its_answers_and_one_text_line_per_question():
-    from src.cplugs.huddle import mcp
+    from src.plugins.huddle import mcp
     message = {"id": 9, "author": "joe", "kind": "reply", "text": "answers to 1 question:\n1. Which one? a", "answered": False,
                "answers_to": 4,
                "answers": {"pick": {"choice": "o1", "label": "a", "prompt": "Which one?"}, "why": {"text": "because", "prompt": "Why?"},
@@ -185,7 +185,7 @@ def test_an_answer_message_sends_its_answers_and_one_text_line_per_question():
 
 
 def test_a_plain_message_keeps_its_whole_text(manager):
-    from src.cplugs.huddle import mcp
+    from src.plugins.huddle import mcp
     out = mcp._thread_message({"id": 1, "author": "joe", "kind": "reply", "text": "line one\nline two", "answered": False})
     assert out["text"] == "line one\nline two"
 

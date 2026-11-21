@@ -75,7 +75,7 @@ export function armAsleepRow(rowEl: Element): boolean {
     if (!isArmableRow(rowEl) || !inVisibleDrawer(rowEl)) return false;
     const name = dataOf(rowEl, 'name');
     if (!name) return false;
-    if (!armWake(name, dataOf(rowEl, 'band') || null, closestTo(rowEl, '.session-sidebar-panel'))) return false;
+    if (!armWake(name, dataOf(rowEl, 'band') || null, closestTo(rowEl, '.session-sidebar-panel'), dataOf(rowEl, 'sessionUuid') || null)) return false;
     const label = (rowEl.querySelector('[data-row-name]')?.textContent || '').trim() || name;
     announce(t('sidebar.row.wake_arm.armed', { name: label }));
     return true;

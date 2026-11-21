@@ -73,6 +73,8 @@ def agent_command(
     explicit: bool = False,
     plan_sink: Optional[list] = None,
     purpose: Purpose = "pane",
+    launch_line: Optional[str] = None,
+    permission_hook: bool = False,
 ) -> str:
     profiles = profiles_for(profiles, agents)
     scripts_dir = wrapper_scripts_dir(resolve_state_dir())
@@ -86,6 +88,12 @@ def agent_command(
     if harness == DEFAULT_FAMILY:
         app_args = single_name_flag(app_args)
         app_args = mcp_config_args() + app_args
+        if launch_line:
+            from src.core.pack.jobs.launch_line import add_to_args
+            app_args = add_to_args(app_args, launch_line)
+        if launch_line or permission_hook:
+            from src.core.beast_prompts.launch_hooks import add_hooks
+            app_args = add_hooks(app_args, delegate=bool(launch_line), permission=permission_hook)
         if carnivore_mcp_url:
             app_args = mcp_launch.claude_args(channel=carnivore_mcp_channel) + app_args
     elif harness == "codex" and carnivore_mcp_url:

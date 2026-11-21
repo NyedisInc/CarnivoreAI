@@ -4,9 +4,9 @@ from __future__ import annotations
 import sqlite3
 from contextlib import closing
 
-from src.cplugs.huddle import blockers
-from src.cplugs.huddle.blockers import BlockerStore
-from src.cplugs.huddle.rules import JOE
+from src.plugins.huddle import blockers
+from src.plugins.huddle.blockers import BlockerStore
+from src.plugins.huddle.rules import JOE
 from tests.python.cplugs.huddle.test_task_manager_lane import synthetic_v37
 from tests.python.cplugs.huddle.test_task_manager_mcp import huddle_store, manager  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_state_rungs import walk

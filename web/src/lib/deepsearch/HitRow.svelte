@@ -9,7 +9,7 @@
   import type { DeepSearchController } from './deepsearch.svelte';
   import type { DeepGroup, DeepHit } from './deepsearch-api';
   import { ledKind, stateKey, type ConvState } from './result-model';
-  import type { ListingRow } from '../../cplugs/sdk/sessions.svelte';
+  import type { ListingRow } from '../../plugins/sdk/sessions.svelte';
   import './search-d.css';
 
   interface Props {

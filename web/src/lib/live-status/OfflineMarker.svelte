@@ -44,7 +44,7 @@
       position: fixed;
       left: 8px;
       bottom: 8px;
-      z-index: 9998;
+      z-index: calc(var(--oc-z-dialog) - var(--oc-z-step));
       display: flex;
       align-items: center;
       gap: 8px;

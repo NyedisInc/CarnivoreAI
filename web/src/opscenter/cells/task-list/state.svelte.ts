@@ -1,4 +1,4 @@
-import { holdAggregate, huddle, startTaskManager } from '../../../cplugs/huddle/huddle.svelte';
+import { holdAggregate, huddle, startTaskManager } from '../../../plugins/huddle/huddle.svelte';
 import type { PlacementOptions } from '../../widgets/placement-options';
 import { listRows, type ListRow } from './model';
 

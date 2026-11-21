@@ -5,12 +5,15 @@ import asyncio
 import hashlib
 import socket
 import ssl
-from typing import Callable, Optional, Sequence, Tuple
+from typing import Any, Awaitable, Callable, Dict, Optional, Sequence, Tuple
 
 import structlog
 
 from src.core.computers.link_listener import DEFAULT_LINK_PORT, AlertingSSLObject, _HandshakeGate, _TlsGate
+from src.core.computers.mux import frames as mf
+from src.core.computers.mux.session import MuxError, MuxSession
 from src.core.computers.tls_identity import LinkCert, LinkIdentity, server_link_ctx
+from src.core.federation.pairing import PROTOCOL_MAJOR
 
 log = structlog.get_logger(__name__)
 
@@ -32,10 +35,13 @@ class Rendezvous:
         self._slot: Optional[Conn] = None
         self._timer: Optional[asyncio.TimerHandle] = None
         self._ready = asyncio.Event()
+        self._slot_relay = False
+        self.taken_via_relay = False
+        self.taken_local_address: Optional[str] = None
 
-    def offer(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    def offer(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, via_relay: bool = False) -> None:
         self._drop()
-        self._slot = (reader, writer)
+        self._slot, self._slot_relay = (reader, writer), via_relay
         self._ready.set()
         self._timer = asyncio.get_running_loop().call_later(self._hold, self._expire, writer)
 
@@ -55,6 +61,9 @@ class Rendezvous:
 
     def take(self) -> Optional[Conn]:
         slot, self._slot = self._slot, None
+        self.taken_via_relay = slot is not None and self._slot_relay
+        sock = slot[1].get_extra_info("sockname") if slot is not None else None
+        self.taken_local_address = sock[0] if isinstance(sock, (tuple, list)) and sock else None
         if self._timer is not None:
             self._timer.cancel()
             self._timer = None
@@ -82,8 +91,11 @@ class MemberListener:
     HANDSHAKE_TIMEOUT = MEMBER_HANDSHAKE_TIMEOUT
 
     def __init__(self, *, identity: LinkIdentity, rendezvous: Rendezvous, host: str = "0.0.0.0",
-                 on_state: Optional[Callable[[str], None]] = None) -> None:
+                 on_state: Optional[Callable[[str], None]] = None,
+                 follow_hello: Optional[Callable[[], Awaitable[Optional[Dict[str, Any]]]]] = None) -> None:
         self._identity, self._rv, self._host, self._on_state = identity, rendezvous, host, on_state
+        self._follow_hello = follow_hello
+        self._follow_shas: frozenset = frozenset()
         self._gate = _HandshakeGate(PER_SOURCE_HANDSHAKES, TOTAL_HANDSHAKES)
         self._ctx: Optional[ssl.SSLContext] = None
         self._shas: frozenset = frozenset()
@@ -121,15 +133,19 @@ class MemberListener:
         self._set_state(LISTENING)
         return True
 
-    async def set_pins(self, pins: Sequence[LinkCert]) -> None:
-        ctx = await asyncio.to_thread(server_link_ctx, self._identity, pins) if pins else None
+    async def set_pins(self, pins: Sequence[LinkCert], follow_pins: Sequence[LinkCert] = ()) -> None:
+        shas = frozenset(c.cert_sha256 for c in pins)
+        extra = [c for c in follow_pins if c.cert_sha256 not in shas]
+        ctx = await asyncio.to_thread(server_link_ctx, self._identity, [*pins, *extra]) if (pins or extra) else None
         if ctx is not None:
             ctx.sslobject_class = AlertingSSLObject
         self._ctx = ctx
-        self._shas = frozenset(c.cert_sha256 for c in pins)
+        self._shas = shas
+        self._follow_shas = frozenset(c.cert_sha256 for c in extra) if ctx is not None else frozenset()
 
     async def stop(self) -> None:
         server, self._server, self._ctx, self._shas, self.port = self._server, None, None, frozenset(), None
+        self._follow_shas = frozenset()
         if server is not None:
             server.close()
         self._rv.close()
@@ -138,11 +154,28 @@ class MemberListener:
     async def _on_tls_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         ssl_obj = writer.get_extra_info("ssl_object")
         der = ssl_obj.getpeercert(binary_form=True) if ssl_obj is not None else None
-        if not der or hashlib.sha256(der).hexdigest() not in self._shas:
+        sha = hashlib.sha256(der).hexdigest() if der else ""
+        if sha in self._follow_shas and sha not in self._shas:
+            await self._answer_follow(reader, writer)
+            return
+        if not der or sha not in self._shas:
             log.info("member_listener_handshake_failed", why="not_pinned")
             writer.close()
             return
         self._rv.offer(reader, writer)
+
+    async def _answer_follow(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        try:
+            extras = await self._follow_hello() if self._follow_hello is not None else None
+            if not extras:
+                writer.close()
+                return
+            session = MuxSession(reader, writer, dialer=True)
+            await session.start({"v": mf.PROTOCOL_VERSION, "proto": PROTOCOL_MAJOR, **extras})
+            await session.close(mf.GO_NORMAL)
+        except (MuxError, OSError, ValueError) as exc:
+            log.info("member_listener_follow_failed", why=type(exc).__name__)
+            writer.close()
 
 
 def _port_free(port: int, host: str = "0.0.0.0") -> bool:

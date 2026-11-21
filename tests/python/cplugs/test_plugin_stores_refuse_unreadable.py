@@ -7,8 +7,8 @@ from typing import Callable
 import pytest
 
 from src.core.json_artifact import UnreadableArtifact, read_for_update
-from src.cplugs.host import identity, sideload
-from src.cplugs.runtime.children import ChildLedger
+from src.plugins.host import identity, sideload
+from src.plugins.runtime.children import ChildLedger
 
 UUID = "a" * 32
 TORN = b'{"installs": {"clock": {"uuid": "aaa'

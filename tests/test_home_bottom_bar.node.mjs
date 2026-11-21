@@ -198,13 +198,13 @@ test('the bare button hover reset is gone, and .home-bar__btn never opts into it
         + 'add :not(:disabled) rather than !important');
 });
 
-test('the focus ring is inset, so it cannot paint over the content above', () => {
-    const ring = homeBarRules.filter((r) => r.selector.includes(':focus-visible')
-        && /box-shadow:\s*inset\s/.test(r.body));
-    assert.ok(ring.length > 0,
-        'the bar items must keep a visible keyboard focus ring, and it has '
-        + 'to be inset: an item is exactly as tall as the bar, so an outset '
-        + 'ring lands on the project list');
+test('the focus ring is the shared border rule: a reserved border inside the box, no ring of the bar\'s own', () => {
+    const items = homeBarRules.filter((r) => /(^|,)\s*\.home-bar__btn\s*(,|$)/.test(r.selector));
+    assert.ok(items.some((r) => /border:\s*1px solid transparent/.test(r.body)),
+        'the bar items must reserve an invisible 1px border for the shared focus rule to brighten');
+    const own = homeBarRules.filter((r) => r.selector.includes(':focus-visible')
+        && /(?:box-shadow|outline):\s+(?!none)/.test(r.body));
+    assert.deepEqual(own.map((r) => r.selector), [], 'no bar rule may draw its own focus ring');
 });
 
 // ---------------------------------------------------------------------

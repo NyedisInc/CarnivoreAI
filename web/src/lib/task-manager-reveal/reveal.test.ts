@@ -33,7 +33,7 @@ vi.mock('../widget-bars/bar-lead.svelte', () => ({ barLead: { take: h.lead } }))
 vi.mock('../drawer-zone/zone-store.svelte', () => ({ drawerZone: { get items() { return h.drawer; } } }));
 vi.mock('../drawer/show-drawer', () => ({ showDrawerForPage: h.showDrawer }));
 
-import { revealWish } from '../../cplugs/sdk/task-manager-reveal.svelte';
+import { revealWish } from '../../plugins/sdk/task-manager-reveal.svelte';
 import { sidebarTabs } from '../dynamic-tabs/tab-store.svelte';
 import { t } from '../i18n/index.svelte';
 import { mountedWidget, openTaskManagerItem, revealInTaskManager, showTaskManager } from './reveal';

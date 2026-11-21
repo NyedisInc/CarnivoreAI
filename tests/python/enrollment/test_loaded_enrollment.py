@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 os.environ.setdefault("DEFAULT_WORKING_DIR", tempfile.mkdtemp(prefix="cc_loaded_wd_"))
 os.environ.setdefault("LOG_DIRECTORY", tempfile.mkdtemp(prefix="cc_loaded_logs_"))
-os.environ.setdefault("TOTP_SECRET", "JBSWY3DPEHPK3PXP")
+os.environ.setdefault("TOTP_SECRET", "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP")
 os.environ.setdefault("JWT_SECRET", "test-jwt-secret-not-a-real-one-32b")
 
 import src.api.auth as auth_mod  # noqa: E402
@@ -18,8 +18,8 @@ from src.config import settings  # noqa: E402
 from src.core.api_keys import gate as api_key_gate, store as api_key_store  # noqa: E402
 from src.core.owner_identity.otpauth import build_otpauth_uri  # noqa: E402
 
-LOADED = "JBSWY3DPEHPK3PXP"
-ROTATED = "KRSXG5CTMVRXEZLU"
+LOADED = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP"
+ROTATED = "KRSXG5CTMVRXEZLUKRSXG5CTMVRXEZLU"
 
 
 ROUTE = "/api/v1/auth/enrollment/loaded"

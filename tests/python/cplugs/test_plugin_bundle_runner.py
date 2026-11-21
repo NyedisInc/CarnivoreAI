@@ -14,17 +14,17 @@ def listed(web: Path) -> subprocess.CompletedProcess:
 
 def test_it_lists_every_plugin_bundle_config_in_order(tmp_path: Path) -> None:
     for plugin in ("zeta", "alpha"):
-        folder = tmp_path / "src" / "cplugs" / plugin
+        folder = tmp_path / "src" / "plugins" / plugin
         folder.mkdir(parents=True)
         (folder / "vite.bundle.config.ts").write_text("export default {}\n")
-    (tmp_path / "src" / "cplugs" / "plain").mkdir()
+    (tmp_path / "src" / "plugins" / "plain").mkdir()
     done = listed(tmp_path)
     assert done.returncode == 0, done.stderr
-    assert done.stdout.split() == ["src/cplugs/alpha/vite.bundle.config.ts", "src/cplugs/zeta/vite.bundle.config.ts"]
+    assert done.stdout.split() == ["src/plugins/alpha/vite.bundle.config.ts", "src/plugins/zeta/vite.bundle.config.ts"]
 
 
 def test_with_no_plugin_bundles_at_all_it_succeeds_and_builds_nothing(tmp_path: Path) -> None:
-    (tmp_path / "src" / "cplugs").mkdir(parents=True)
+    (tmp_path / "src" / "plugins").mkdir(parents=True)
     done = listed(tmp_path)
     assert done.returncode == 0 and done.stdout.strip() == "", done.stderr
 

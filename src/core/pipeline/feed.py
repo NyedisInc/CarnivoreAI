@@ -4,12 +4,14 @@ from __future__ import annotations
 import asyncio
 import os
 import time
+from pathlib import Path
 from typing import Any, Callable, Dict, FrozenSet, Optional, Set, Tuple
 
 import structlog
 
 from src.core.pipeline import runtime
 from src.core.pipeline.observe import TRIGGER_LIVE
+from src.core.timeline import agent_tail
 
 logger = structlog.get_logger()
 
@@ -89,6 +91,8 @@ class LiveFeed:
                                                      os.path.realpath(subagents) if subagents else None, TRIGGER_LIVE)
             self.counters["looks"] += 1
             self.counters["marked"] += marked
+            if subagents is not None:
+                agent_tail.wake(transcript, Path(transcript).stem)
             return marked
         except Exception as exc:  # noqa: BLE001
             self.counters["errors"] += 1

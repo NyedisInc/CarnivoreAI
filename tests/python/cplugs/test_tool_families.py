@@ -12,10 +12,10 @@ from src.core.mcp.agent_tool_switches import AgentToolSwitches, hidden_reason
 from src.core.mcp.caller import AgentCaller
 from src.core.pack.span import proxy_client
 from src.core.swarm import definition
-from src.cplugs.host import runtime
-from src.cplugs.sdk import CplugDefinition, ManifestError, ToolSpec, tool_result
-from src.cplugs.sdk.manifest import parse_manifest
-from src.cplugs.sdk.tool_families import TASK_MANAGER_PREFIX, TOOL_FAMILIES, family_prefix
+from src.plugins.host import runtime
+from src.plugins.sdk import CplugDefinition, ManifestError, ToolSpec, tool_result
+from src.plugins.sdk.manifest import parse_manifest
+from src.plugins.sdk.tool_families import TASK_MANAGER_PREFIX, TOOL_FAMILIES, family_prefix
 
 PANE = AgentCaller(session_id="ses_a", tmux_name="carnivore_a", current_session_id="ses_a")
 TOOL = "task_manager_boards_list"

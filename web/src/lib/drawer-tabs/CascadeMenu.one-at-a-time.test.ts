@@ -96,3 +96,15 @@ test('a menu with no icon draws no icon slot', () => {
   render(ONE);
   expect(document.querySelector('.acm-icon')).toBeNull();
 });
+
+test('a leaf of a fold-out closes the popover menu it hangs from, so a dialog it opens is not left behind an open menu', () => {
+  const host = document.createElement('div');
+  host.setAttribute('popover', 'manual');
+  document.body.append(host);
+  const hide = vi.spyOn(host, 'hidePopover');
+  const run = vi.fn();
+  render([{ id: 'restart', label: 'restart', run }], { nestedIn: host });
+  document.querySelector<HTMLElement>('[data-node="restart"]')!.click();
+  expect(run).toHaveBeenCalledTimes(1);
+  expect(hide).toHaveBeenCalledTimes(1);
+});

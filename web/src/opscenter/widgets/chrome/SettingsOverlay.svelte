@@ -145,7 +145,7 @@
       position: fixed;
       inset: auto;
       margin: 0;
-      z-index: 50;
+      z-index: var(--oc-z-shell-popover);
       display: grid;
       grid-template-rows: auto minmax(0, 1fr) auto;
       max-height: calc(100vh - var(--oc-space-4));
@@ -182,13 +182,6 @@
     }
 
     .oc-configure-body {
-      --pl-line: var(--oc-line-rule);
-      --pl-text: var(--oc-text-primary);
-      --pl-muted: var(--oc-text-secondary);
-      --pl-dim: var(--oc-text-muted);
-      --pl-high: var(--oc-coral);
-      --pl-raised: var(--oc-ground-raised);
-      --pl-mono: var(--font-mono);
       min-height: 0;
       overflow: auto;
       padding: 0 var(--oc-space-2) var(--oc-space-2);

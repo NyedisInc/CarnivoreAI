@@ -10,7 +10,7 @@ DISAGREEING_LABELS = ("Media Compression", "client: acme", "build \U0001f680 now
 
 CALLER_MODULES = (
     "src.api.session_fork_routes",
-    "src.api.session_restart_apply_routes",
+    "src.core.session_ops.restart",
     "src.api.session_conversations_routes",
 )
 

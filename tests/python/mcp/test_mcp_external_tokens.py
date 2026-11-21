@@ -14,9 +14,9 @@ from src.core.mcp import pending, token_store, tools, write_tools
 from src.main import app
 from dataclasses import replace
 
-from src.cplugs.host import runtime, state as owner_state
-from src.cplugs.host import developer_mode
-from src.cplugs.host import mcp as cplug_mcp
+from src.plugins.host import runtime, state as owner_state
+from src.plugins.host import developer_mode
+from src.plugins.host import mcp as cplug_mcp
 from tests.python.cplugs.owner import isolated_host
 from tests.python.mcp.test_mcp_endpoint import _rpc
 from tests.python.mcp.test_mcp_write import WriteManager, seed_crosstalk_directory
@@ -102,7 +102,7 @@ def test_every_write_from_a_write_token_goes_to_the_inbox_even_with_the_gate_off
     _, secret = store.mint("script", "write")
     assert cfg.gate_cross_session_actions is False
     names = {t["name"] for t in _rpc_call(client, secret, "tools/list")["result"]["tools"]}
-    assert {n for n in tools.WRITE_TOOLS - {"notify"} if cplug_mcp.available(n)} <= names
+    assert {n for n in tools.WRITE_TOOLS - {"notify", "review_send"} if cplug_mcp.available(n)} <= names
     for name, args in [("session_stop", {"target": "cloude_b"}), ("session_send_keys", {"target": "cloude_b", "text": "hi"}),
                        ("session_restart", {"target": "cloude_b"}), ("session_send_message", {"target": "cloude_b", "text": "yo"}),
                        ("session_notes_put", {"target": "cloude_b", "body": "x", "expected_revision": 0})]:

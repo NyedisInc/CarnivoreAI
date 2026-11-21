@@ -1,7 +1,7 @@
 import { homeBoards } from '../engine/home-sync.svelte';
 import { openDashboardPopout, openHomePopout, openWallboard } from '../../popout/popout';
 import { openTabPopout } from '../../lib/dynamic-tabs/tab-popout';
-import { cplugPopoutTabsOn } from '../../cplugs/host/readers';
+import { cplugPopoutTabsOn } from '../../plugins/host/readers';
 import { t } from '../../lib/i18n/index.svelte';
 
 export type OpenTargetKind = 'home' | 'wallboard' | 'dashboard' | 'tab';

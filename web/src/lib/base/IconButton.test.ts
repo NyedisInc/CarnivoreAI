@@ -91,7 +91,7 @@ describe('icon-button.css', () => {
     });
 
     test('quiet draws a transparent edge and the close tone turns coral only on hover', () => {
-        const quiet = rules.find((r) => r.selector === ":where([data-btn='quiet'][data-size='icon'])")!;
+        const quiet = rules.find((r) => r.selector.startsWith(":where([data-btn='quiet'][data-size='icon'],"))!;
         expect(quiet.decls['--_btn-edge']).toBe('transparent');
         expect(quiet.decls['--_btn-edge-hover']).toBe('transparent');
         const close = find("data-tone='close'")[0]!;

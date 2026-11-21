@@ -12,7 +12,7 @@ vi.mock('../../api', () => ({
 }));
 vi.mock('../../api/host', () => ({ primarySessionId: () => '' }));
 
-const RESTORED = ['skills', 'plugins', 'files', 'notes', 'theme', 'background'];
+const RESTORED = ['skills', 'plugins', 'files', 'notes', 'theme', 'sound', 'background'];
 const KEPT = ['search', 'utilities', 'sleep', 'size-master'];
 const UTILITIES = createRawSnippet(() => ({ render: () => '<span class="stub-utility"></span>' }));
 

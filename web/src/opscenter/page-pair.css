@@ -1,0 +1,36 @@
+
+@layer patterns {
+  .oc-page__frame[data-pair] > .oc-page__side {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: var(--oc-frame-pair-side-w);
+  }
+
+  .oc-page[data-pair='list'] > .oc-page__frame > .oc-page__side {
+    flex: 1 1 auto;
+    width: auto;
+  }
+
+  @container oc-frame (max-width: 719px) {
+    .oc-page__frame[data-pair] > .oc-page__side {
+      display: grid;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    .oc-page[data-pair] > .oc-page__frame[data-pair],
+    .oc-page[data-pair] > .oc-page__frame > .oc-page__col > .oc-page__body {
+      flex: 1 0 auto;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .oc-page[data-pair] > .oc-page__frame > .oc-page__col > .oc-page__away > .oc-page__tabs {
+      padding: 0;
+    }
+
+    .oc-page--away[data-pair] > .oc-page__frame > .oc-page__col > .oc-page__away {
+      transform: translateY(-100%);
+    }
+  }
+}

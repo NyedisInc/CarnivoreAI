@@ -38,10 +38,10 @@ import PlacementBody from '../../../lib/zone-shell/PlacementBody.svelte';
 import { HOST_LOOKS } from '../../../lib/zone-shell/host-looks';
 import { CORE_MANIFESTS } from '../../widgets/core-manifests';
 import { sizes } from '../../engine/observe.svelte';
-import { cplugEnablement } from '../../../cplugs/host/enablement.svelte';
-import { clearViewFilter } from '../../../cplugs/huddle/task-manager-view-filter.svelte';
-import { resetInspections } from '../../../cplugs/huddle/task-manager-design/inspection.svelte';
-import { huddle } from '../../../cplugs/huddle/huddle.svelte';
+import { cplugEnablement } from '../../../plugins/host/enablement.svelte';
+import { clearViewFilter } from '../../../plugins/huddle/task-manager-view-filter.svelte';
+import { resetInspections } from '../../../plugins/huddle/task-manager-design/inspection.svelte';
+import { huddle } from '../../../plugins/huddle/huddle.svelte';
 
 cplugEnablement.enabled = { huddle: true };
 const SINGLE = CORE_MANIFESTS['core.task-manager-mk2']!;

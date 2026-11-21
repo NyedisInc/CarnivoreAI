@@ -61,6 +61,12 @@ def refused_result(reason: str) -> dict:
 _PRIVATE = ("tool_args", "caller_env_id", "dedupe_key", "beast_eligible", "target_epoch", "target_name", "decided_at")
 
 
+def _would_approve(action: str) -> bool:
+    from src.core.mcp import beast_mode
+
+    return beast_mode.would_approve(action)
+
+
 @dataclass
 class PendingAction:
 
@@ -108,7 +114,8 @@ class PendingAction:
             "decided_at": self.decided_at, "result": self.result if self.status != PENDING else None,
             "confirm_text": self.confirm_text or None, "in_use": self.in_use or None,
             "display": display.build(self.action, self.args, self.target_name or self.target_tmux, self.args_summary,
-                                     self.plain, self.confirm_text, live=bool(self.target_tmux), in_use=self.in_use),
+                                     self.plain, self.confirm_text, live=bool(self.target_tmux), in_use=self.in_use,
+                                     beast_hint=self.status == PENDING and _would_approve(self.action)),
         }
 
     def stored(self) -> dict:
@@ -138,7 +145,7 @@ class PendingActions:
         try:
             rows = file.load()
         except ApprovalsStoreError as exc:
-            logger.error("agent_actions_restore_failed", error=str(exc))
+            logger.error("agent_actions_restore_failed", error=str(exc), error_type=type(exc).__name__)
             return 0
         restored = 0
         for row in rows:

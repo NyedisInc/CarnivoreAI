@@ -1,6 +1,6 @@
-import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
-import { statusOf } from '../../../cplugs/huddle/huddle-status';
-import { titleOf } from '../../../cplugs/huddle/task-manager-design/task-view';
+import type { HuddleItem } from '../../../plugins/huddle/huddle-model';
+import { statusOf } from '../../../plugins/huddle/huddle-status';
+import { titleOf } from '../../../plugins/huddle/task-manager-design/task-view';
 
 export interface Mk2SubtaskRow { id: number; title: string; statusKey: string; owner: string }
 

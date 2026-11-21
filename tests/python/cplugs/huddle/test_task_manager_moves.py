@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.cplugs.huddle import lifecycle, lineage, question_cancel, triggers
-from src.cplugs.huddle.rules import TaskManagerInvalid
+from src.plugins.huddle import lifecycle, lineage, question_cancel, triggers
+from src.plugins.huddle.rules import TaskManagerInvalid
 from tests.python.cplugs.huddle.test_task_manager_lifecycle import tell
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, row  # noqa: F401
@@ -72,8 +72,8 @@ def test_an_answer_goes_to_open_and_a_cancel_goes_to_open_with_a_note(manager): 
 
 
 def test_a_cancel_route_reopens_the_task(client, app):  # noqa: F811
-    from src.cplugs.host import runtime
-    from src.cplugs.huddle.store import TaskManagerStore
+    from src.plugins.host import runtime
+    from src.plugins.huddle.store import TaskManagerStore
 
     created = client.post("/api/v1/cplugs/huddle/lists/12/items", json={"text": "ask me"}).json()["id"]
     store = TaskManagerStore(runtime.host_for(app).storage("huddle"), notify=lambda key: None)

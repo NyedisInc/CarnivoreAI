@@ -43,11 +43,7 @@
     }
 
     .ap-page [data-scheduler-pause-switch][aria-checked='true'] .oc-check__box {
-        border-color: var(--oc-yellow);
-    }
-
-    .ap-page [data-scheduler-pause-switch][aria-checked='true'] .oc-check__box::after {
-        background: var(--oc-yellow);
+        --_mark-ink: var(--oc-yellow);
     }
 
     .ap-page .ap-strip {
@@ -67,7 +63,7 @@
 
     .ap-page .ap-cmd-pop {
         position: absolute;
-        z-index: 40;
+        z-index: var(--oc-z-page);
         top: calc(100% + 4px);
         right: 0;
         width: min(420px, calc(100vw - 32px));
@@ -234,7 +230,7 @@
         box-shadow: inset 0 1px 0 0 var(--oc-line-faint);
     }
 
-    @media (max-width: 700px) {
+    @media (max-width: 767px) {
         .ap-page .ap-sum {
             flex-basis: 100%;
             order: 3;
@@ -248,10 +244,6 @@
             padding-bottom: var(--oc-space-0-5);
         }
 
-        .ap-page [data-btn],
-        .ap-page .ap-switch {
-            min-height: var(--oc-tap);
-        }
 
         .ap-page .ap-cmd-pop {
             position: fixed;
@@ -290,66 +282,20 @@
     }
 
     .ap-page[data-pane-open] > .oc-page__away > * {
-        margin-right: var(--pn-dock);
+        margin-right: var(--ap-pn-dock);
     }
 
     .ap-page[data-pane-open] > .oc-titlebar {
-        padding-inline: max(var(--oc-page-gutter), calc((100% - var(--pn-dock) - var(--oc-page-max)) / 2 + var(--oc-page-gutter)));
-    }
-
-    .ap-page .ap-tabs {
-        height: auto;
-        padding: 0 var(--oc-space-3);
-        background: var(--oc-ground-chrome);
-        --_strip: var(--oc-ground-chrome);
-    }
-
-    .ap-page .ap-tabs .oc-ptabs__list {
-        gap: 0;
-    }
-
-    .ap-page .ap-tabs .oc-ptab {
-        gap: 0;
-        min-height: 30px;
-        padding: 0 var(--oc-space-3);
-        background: transparent;
-        border: 0;
-        color: var(--oc-text-muted);
-        font-size: var(--oc-fs-label);
-        line-height: var(--oc-lh-body);
-        white-space: normal;
-    }
-
-    .ap-page .ap-tabs .oc-ptab:hover:not(:disabled) {
-        color: var(--oc-text-primary);
-        background: var(--oc-ground-hover);
-    }
-
-    .ap-page .ap-tabs .oc-ptab[aria-selected='true'] {
-        color: var(--oc-text-bright);
-        background: transparent;
-        box-shadow: inset 0 -2px 0 0 var(--oc-orange);
-    }
-
-    @media (max-width: 700px) {
-        .ap-page .ap-tabs .oc-ptab {
-            min-height: var(--oc-tap);
-        }
+        padding-inline: max(var(--oc-page-gutter), calc((100% - var(--ap-pn-dock) - var(--oc-page-max)) / 2 + var(--oc-page-gutter)));
     }
 
     .ap-page .oc-page__tabs {
-        padding: 0;
         background: var(--oc-ground-chrome);
-    }
-
-    .ap-page .ap-tabrow {
-        --_col-max: 1600px;
-        padding-inline: max(var(--oc-page-gutter), calc((100% - var(--_col-max)) / 2 + var(--oc-page-gutter)));
     }
 
     @container ap-page (min-width: 1100.02px) {
         .ap-page[data-drawer-open] > .oc-page__away > * {
-            margin-right: var(--dr-w);
+            margin-right: var(--ap-dr-w);
         }
     }
 
@@ -364,74 +310,17 @@
         gap: 0 var(--oc-space-4);
     }
 
-    .ap-page .ap-tabrow .ap-toptabs {
-        flex: 1 1 auto;
-        min-width: 0;
-    }
 
-    .ap-page .ap-toptabs {
-        height: auto;
-        padding-inline: 0;
-        background: transparent;
-        box-shadow: none;
-        --_strip: transparent;
-    }
-
-    .ap-page .ap-toptabs .oc-ptabs__list {
-        gap: 0;
-    }
-
-    .ap-page .ap-toptabs .oc-ptab {
-        gap: var(--oc-space-3);
-        min-height: 44px;
-        padding: 0 var(--oc-space-5) 0 0;
-        margin-right: var(--oc-space-2);
-        background: transparent;
-        border: 0;
-        color: var(--oc-text-muted);
-        font-size: var(--oc-fs-label);
-        line-height: 1.4;
-        white-space: nowrap;
-    }
-
-    .ap-page .ap-toptabs .oc-ptab:hover:not(:disabled) {
-        color: var(--oc-text-primary);
-        background: transparent;
-    }
-
-    .ap-page .ap-toptabs .oc-ptab[aria-selected='true'] {
-        color: var(--oc-text-bright);
-        background: transparent;
-        box-shadow: inset 0 -2px 0 0 var(--oc-orange);
-    }
-
-    .ap-page .ap-toptabs .oc-ptab__badge {
-        color: var(--oc-text-dim);
-        font-family: var(--font-mono, monospace);
-        font-size: var(--oc-fs-label);
-        line-height: 17px;
-        text-transform: none;
-        letter-spacing: 0;
-    }
-
-    @media (max-width: 700px) {
-        .ap-page .ap-toptabs .oc-ptab {
-            min-height: 48px;
-            padding-right: var(--oc-space-4);
-        }
-    }
-
-    .ap-page :is(.oc-titlebar, .ap-strip, .t-pane, .t-feed, .ap-dr) [data-btn] {
-        --_btn-h: 0px;
+    .ap-page :is(.ap-strip, .t-pane, .t-feed, .ap-dr) [data-btn] {
         --_btn-pad-y: 3px;
         --_btn-pad: 10px;
         --_btn-fs: var(--oc-fs-body);
         --_btn-lh: 1.4;
     }
 
-    @media (max-width: 700px) {
-        .ap-page :is(.oc-titlebar, .ap-strip, .t-pane, .t-feed, .ap-dr) [data-btn] {
-            --_btn-h: 44px;
+    @media not (pointer: coarse) {
+        .ap-page :is(.ap-strip, .t-pane, .t-feed, .ap-dr) [data-btn] {
+            --_btn-h: 0px;
         }
     }
 
@@ -448,7 +337,7 @@
     border-radius: 0;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 767px) {
     .ap-page.pledger > .pl-titlebar {
         padding-block: var(--oc-space-1-5);
     }
@@ -466,19 +355,19 @@
     color: var(--oc-orange);
 }
 
-@media (min-width: 701px) {
+@media (min-width: 768px) {
     .ap-page.pledger {
         overflow: clip;
     }
 
-    .ap-page.pledger > .ap-body {
+    .ap-page.pledger .ap-body {
         overflow-x: clip;
         overflow-y: auto;
         overscroll-behavior: contain;
     }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 767px) {
     .ap-page .ap-pn:not([data-open]),
     .ap-page .ap-dr:not([data-open]) {
         transform: none;

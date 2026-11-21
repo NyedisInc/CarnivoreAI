@@ -32,8 +32,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts.lib.testsrv_client import api  # noqa: E402
 from scripts.plugin import check, templates  # noqa: E402
 from src.core.catalog import plugin_pack  # noqa: E402
-from src.cplugs.host import install_gates  # noqa: E402
-from src.cplugs.runtime import sandbox  # noqa: E402
+from src.plugins.host import install_gates  # noqa: E402
+from src.plugins.runtime import sandbox  # noqa: E402
 
 PASS, FAIL, COULD_NOT = 0, 1, 2
 SIDELOAD_PATH = "/api/v1/cplug-owner/sideload"
@@ -94,10 +94,13 @@ def _run_own_tests(source: Path, runtime_dir: Path, code_dir: Path) -> Optional[
     if not (source / "tests").is_dir():
         return None
     shutil.copytree(source / "tests", code_dir / "tests")
-    env = {**os.environ, "PYTHONPATH": os.pathsep.join([str(runtime_dir), str(code_dir)]), "PYTHONDONTWRITEBYTECODE": "1"}
+    inherited = {k: v for k, v in os.environ.items() if not k.startswith(("PYTEST_", "COV_CORE_", "COVERAGE_"))}
+    env = {**inherited, "PYTHONPATH": os.pathsep.join([str(runtime_dir), str(code_dir)]), "PYTHONDONTWRITEBYTECODE": "1"}
     done = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "tests"], cwd=str(code_dir), env=env,
                           capture_output=True, text=True, timeout=TEST_TIMEOUT_S, check=False)
     print(done.stdout.strip()[-1500:])
+    if done.returncode != 0 and done.stderr.strip():
+        print(done.stderr.strip()[-1500:])
     return done.returncode
 
 

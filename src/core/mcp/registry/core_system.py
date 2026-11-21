@@ -8,6 +8,10 @@ TABLE: Mapping[str, Tuple[str, str]] = {
                           "Get the Carnivore app's updater state, versions and auto update switch, for this or a paired computer."),
     "app_update": ("system.app_update.run",
                    "Check for, install, or switch automatic Carnivore app updates on this or a paired computer."),
+    "codex_helpers_status": ("system.codex_helpers.get",
+                             "Get whether the installed Codex can start its helpers: verdict, version, quarantine flags, handshake."),
+    "codex_helpers_check": ("system.codex_helpers.check",
+                            "Check the installed Codex's helpers now (read only); raises or clears the version's alert."),
     "whoami": ("system.identity.get",
                "Get who you are: your own session row (or a token's name and scope) and the tool families hidden from you, "
                "with why."),

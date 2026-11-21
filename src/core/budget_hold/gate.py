@@ -10,10 +10,11 @@ import structlog
 
 from src.core.budget_hold.store import STORE
 from src.core.budget_hold.submit_detect import SubmitDetector
+from src.models.activity_status import RESTING
 
 logger = structlog.get_logger()
 
-_HELD_STATUSES = frozenset({"idle", "finished_unread", "unknown", None})
+_HELD_STATUSES = RESTING | {"unknown", None}
 
 _switch_cache: Tuple[Optional[Tuple[int, int]], bool] = (None, False)
 

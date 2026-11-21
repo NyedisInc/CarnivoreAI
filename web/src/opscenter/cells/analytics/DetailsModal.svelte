@@ -109,15 +109,11 @@
   }
 </script>
 
-<ModalShell title={view.title} overlayClass="text-prompt-modal analytics-modal" onCancel={() => close(null)}>
-  {#snippet head()}
-    <div class="text-prompt-modal__head analytics-modal__head" data-analytics-details={view.id}>
-      <span class="text-prompt-modal__verb">&raquo; {t('analytics.details')}</span>
-      <span class="analytics-modal__title">{view.title}</span>
-      <span class="analytics-modal__period">{view.period}</span>
-      
-      <button type="button" class="modal-close" aria-label={t('analytics.close')} onclick={() => close(null)}>&times;</button>
-    </div>
+<ModalShell look="titlerow" title={view.title} label={t('analytics.details')} closeLabel={t('analytics.close')} overlayClass="analytics-modal"
+  onCancel={() => close(null)} data-analytics-details={view.id}>
+  {#snippet headExtra()}
+    <span class="analytics-modal__title">{view.title}</span>
+    <span class="analytics-modal__period">{view.period}</span>
   {/snippet}
 
   {#if notice}<p class="analytics-modal__error" role="alert">{notice}</p>{/if}

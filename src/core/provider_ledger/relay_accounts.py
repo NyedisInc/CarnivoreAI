@@ -1,17 +1,18 @@
 
 from __future__ import annotations
 
-import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
 
 from src.config.provider_accounts import ProviderAccount, profile_dir_for
-from src.core.claude_config import profile_roots
+from src.core.claude_config import accounts_folder_cache, profile_roots
 from src.models.provider_ledger import AccountUsage
 
 RELAY_NAME_RE = re.compile(r"([0-9a-f]{12})-([a-z0-9][a-z0-9-]{0,62})-relay")
+RELAY_GLOB = "????????????-*-relay"
+CODEX_RELAY_GLOB = "????????????-*-relay-codex"
 CODEX_RELAY_NAME_RE = re.compile(r"([0-9a-f]{12})-([a-z0-9][a-z0-9-]{0,62})-relay-codex")
 NAME_SUFFIX = " (relayed)"
 
@@ -40,12 +41,7 @@ def relay_accounts() -> List[ProviderAccount]:
 
 
 def _codex_relay_dirs() -> List[Path]:
-    override = os.environ.get(profile_roots.ACCOUNTS_DIR_ENV, "").strip()
-    root = Path(override).expanduser() if override else Path.home() / ".carnivore" / "accounts"
-    try:
-        return sorted(p for p in root.glob("????????????-*-relay-codex") if p.is_dir() and CODEX_RELAY_NAME_RE.fullmatch(p.name))
-    except OSError:
-        return []
+    return accounts_folder_cache.listed_dirs(CODEX_RELAY_GLOB, lambda name: CODEX_RELAY_NAME_RE.fullmatch(name) is not None)
 
 
 def codex_relay_accounts() -> List[ProviderAccount]:

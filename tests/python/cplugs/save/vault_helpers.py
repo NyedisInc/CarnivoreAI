@@ -7,10 +7,10 @@ from typing import List, Optional
 
 from fastapi.testclient import TestClient
 
-from src.cplugs import save as save_plugin
-from src.cplugs.save.vault.identity import Identity
-from src.cplugs.save.vault.store import Vault
-from src.cplugs.save.vault.units import Sources
+from src.plugins import save as save_plugin
+from src.plugins.save.vault.identity import Identity
+from src.plugins.save.vault.store import Vault
+from src.plugins.save.vault.units import Sources
 
 CONV = "12345678-aaaa-bbbb-cccc-1234567890ab"
 ENC = "-Users-x-proj"
@@ -66,7 +66,7 @@ class World:
         return path
 
     def capture(self, conv: str = CONV, reason: str = "follow", identity: Optional[Identity] = None, **kw):
-        from src.cplugs.save.vault import units
+        from src.plugins.save.vault import units
 
         plan = units.plan_claude(self.sources, conv)
         assert plan is not None, "fixture conversation missing"
@@ -117,7 +117,7 @@ def stop_follower(client: TestClient) -> None:
 def store_plugin_entry(state: Path, plugin_id: str, settings: dict, *, enabled: bool = True) -> None:
     import json
 
-    from src.cplugs.host import state as owner_state
+    from src.plugins.host import state as owner_state
 
     path = owner_state.state_path(state)
     path.parent.mkdir(parents=True, exist_ok=True)

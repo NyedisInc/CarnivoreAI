@@ -2,6 +2,7 @@
   /* the empty state there is nothing */
   import AnchoredPopup from '../../lib/dialog-frame/AnchoredPopup.svelte';
   import WidgetIcon from '../ui/WidgetIcon.svelte';
+  import MenuItem from '../../lib/base/MenuItem.svelte';
   import type { LayoutStore } from './layout.svelte';
   import { restoreWithFlight } from './FlyLayer.svelte';
   import { GUTTER } from './tracks';
@@ -95,11 +96,12 @@
 
 <AnchoredPopup
   bind:element={panel}
-  class="oc-popover"
+  class="oc-popover session-row-menu"
   label={t('opscenter.components.title')}
   tabindex={-1}
   {anchor}
   placement="manual"
+  topLayer
   style={placement === 'below'
     ? `left: ${Math.round(box.left)}px; top: ${Math.round(box.top)}px; max-height: ${Math.round(box.maxHeight)}px; overflow-y: auto`
     : `left: ${Math.round(box.left)}px; bottom: ${Math.round(box.bottom)}px`}
@@ -108,51 +110,40 @@
   {onClose}
   onEscape={close}
 >
-  {#if viewport.wide}
+  <div class="session-row-menu__title">{t('opscenter.components.menu_title')}</div>
+  <div>
     
-    <p class="oc-popover-empty" data-layout-editor-pointer>{t('layout_editor.pointer')}</p>
-  {:else if hidden.length === 0}
-    <p class="oc-popover-empty">{t('opscenter.components.empty')}</p>
-  {:else}
-    <ul class="oc-popover-list">
+    {#if viewport.wide}
+      <MenuItem label={t('opscenter.components.add_widget')} onclick={onAddWidget} />
+      {#if fittable}
+        <div class="session-row-menu__sep" role="separator"></div>
+        <MenuItem label={t('opscenter.components.fit_rows')} onclick={onFitRows} />
+      {/if}
+    {:else if hidden.length === 0}
+      <p class="oc-popover-empty">{t('opscenter.components.empty')}</p>
+    {:else}
       {#each hidden as meta (meta.id)}
-        <li>
-          <button type="button" class="oc-popover-item" data-btn="row" onclick={() => onRestore(meta.id)}>
+        <MenuItem label={t(meta.titleKey)} onclick={() => onRestore(meta.id)}>
+          {#snippet icon()}
             <span class="oc-popover-icon" style={`color: var(--${meta.iconTone})`}>
               <WidgetIcon name={meta.icon} widget={meta.id} size={15} />
             </span>
-            <span class="oc-popover-name">{t(meta.titleKey)}</span>
-          </button>
-        </li>
+          {/snippet}
+        </MenuItem>
       {/each}
-    </ul>
-  {/if}
-  {#if viewport.wide}
-    <button type="button" class="oc-popover-item oc-popover-arrange" data-btn="row" onclick={onAddWidget}
-      >{t('opscenter.awe_s3.add_widget')}</button
-    >
-  {/if}
-  {#if viewport.wide && fittable}
-    <button type="button" class="oc-popover-reset" data-btn="row" onclick={onFitRows}
-      >{t('opscenter.components.fit_rows')}</button
-    >
-  {/if}
-  <button type="button" class="oc-popover-reset" data-btn="row" onclick={onReset}
-    >{t('opscenter.components.reset_layout')}</button
-  >
-  <button type="button" class="oc-popover-reset" data-btn="row" data-widgets-page onclick={onAllWidgets}
-    >{t('opscenter.components.all_widgets')}</button
-  >
+    {/if}
+    <div class="session-row-menu__sep" role="separator"></div>
+    <MenuItem label={t('opscenter.components.reset_layout')} onclick={onReset} />
+    <div class="session-row-menu__sep" role="separator"></div>
+    <MenuItem label={t('opscenter.components.all_widgets')} data-widgets-page onclick={onAllWidgets} />
+  </div>
 </AnchoredPopup>
 
 <style>
   @layer components {
     :global(.oc-popover) {
       position: fixed;
-      z-index: 45;
       min-width: 204px;
-      padding: var(--oc-space-1-5);
-      border-radius: var(--oc-radius-sm);
     }
 
     .oc-popover-empty {
@@ -162,65 +153,9 @@
       font-size: var(--oc-fs-label);
     }
 
-    .oc-popover-list {
-      margin: 0 0 var(--oc-space-1);
-      padding: 0;
-      list-style: none;
-    }
-
-    .oc-popover-item,
-    .oc-popover-reset {
-      align-items: center;
-      gap: calc(var(--oc-space-2) + var(--oc-space-0-5));
-      width: 100%;
-      padding: var(--oc-space-1-5) var(--oc-space-2);
-      border-radius: var(--oc-radius-sm);
-      color: var(--oc-text-secondary);
-      font-size: var(--oc-fs-label);
-    }
-
-    .oc-popover-reset {
-      border-top: var(--oc-border) solid var(--oc-line-rule);
-      border-radius: 0 0 var(--oc-radius-sm) var(--oc-radius-sm);
-      color: var(--oc-text-dim);
-    }
-
-    .oc-popover-item:disabled {
-      cursor: default;
-      color: var(--oc-text-dim);
-    }
-
-    .oc-popover-arrange {
-      margin: var(--oc-space-1) 0 0;
-      padding-top: var(--oc-space-1);
-      border-top: var(--oc-border) solid var(--oc-line-rule);
-    }
-
-    .oc-popover-item:hover,
-    .oc-popover-item:focus-visible,
-    .oc-popover-reset:hover,
-    .oc-popover-reset:focus-visible {
-      background: var(--oc-ground-hover);
-      color: var(--oc-text-bright);
-    }
-
     .oc-popover-icon {
       display: inline-flex;
       flex: 0 0 auto;
     }
-
-    .oc-popover-name {
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    @media (max-width: 1023px) {
-      .oc-popover-item,
-      .oc-popover-reset {
-        min-height: var(--oc-tap);
-      }
-  }
   }
 </style>

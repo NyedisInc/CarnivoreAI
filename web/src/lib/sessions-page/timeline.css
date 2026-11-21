@@ -17,7 +17,7 @@
     .sp-tl-stick {
         position: sticky;
         top: 0;
-        z-index: 30;
+        z-index: var(--oc-z-region-overlay);
         background: var(--oc-ground-page);
     }
 
@@ -89,7 +89,7 @@
         gap: var(--oc-space-0-5) var(--oc-space-4);
         align-items: center;
         min-height: 24px;
-        padding: 3px var(--tl-gut);
+        padding: var(--oc-pad-snug) var(--tl-gut);
         background: var(--oc-ground-panel);
         box-shadow: inset 0 -1px 0 0 var(--oc-line-faint);
         color: var(--oc-text-muted);
@@ -263,7 +263,7 @@
         width: 9px;
         height: 9px;
         border: 1px solid var(--oc-text-bright);
-        border-radius: 1px;
+        border-radius: var(--oc-radius-xs);
         background: var(--oc-ground-page);
     }
 
@@ -427,7 +427,7 @@
         min-width: 0;
         height: 100%;
         padding-right: var(--oc-space-2);
-        padding-left: 20px;
+        padding-left: calc(var(--oc-space-4) + var(--oc-space-1));
         cursor: pointer;
     }
 
@@ -724,7 +724,7 @@
         height: 28px;
         margin-top: -13px;
         border: 1px solid var(--oc-text-bright);
-        border-radius: 2px;
+        border-radius: var(--oc-radius-control);
         background: var(--oc-ground-page);
     }
 
@@ -737,7 +737,7 @@
         width: 14px;
         height: 26px;
         border: 1px solid var(--oc-text-bright);
-        border-radius: 2px;
+        border-radius: var(--oc-radius-control);
         background: var(--oc-ground-page);
     }
 
@@ -911,7 +911,7 @@
         .sp-tl-slider {
             position: sticky;
             bottom: 0;
-            z-index: 25;
+            z-index: calc(var(--oc-z-region-overlay) - var(--oc-z-step));
             display: flex;
             align-items: center;
             height: 44px;

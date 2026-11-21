@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from src.cplugs.sdk import ports
-from src.cplugs.sdk.owner_reply import NAME, OwnerReplyDeclined, OwnerReplyRefused, OwnerReplyUnavailable
+from src.plugins.sdk import ports
+from src.plugins.sdk.owner_reply import NAME, OwnerReplyDeclined, OwnerReplyRefused, OwnerReplyUnavailable
 
 __all__ = ["NAME", "OwnerReplyDeclined", "OwnerReplyRefused", "OwnerReplyUnavailable", "owner_reply"]
 

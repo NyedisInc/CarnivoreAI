@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work.storage import WorkStorage
 
 

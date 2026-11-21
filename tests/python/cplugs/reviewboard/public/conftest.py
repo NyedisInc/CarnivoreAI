@@ -7,11 +7,11 @@ from typing import Any, Iterator
 
 import pytest
 
-from src.cplugs.reviewboard.public import assets, routes_owner, wiring
-from src.cplugs.reviewboard.public.read import READER
-from src.cplugs.reviewboard.public.write import WRITER
-from src.cplugs.reviewboard import public_port
-from src.cplugs.sdk import signed_links
+from src.plugins.reviewboard.public import assets, routes_owner, wiring
+from src.plugins.reviewboard.public.read import READER
+from src.plugins.reviewboard.public.write import WRITER
+from src.plugins.reviewboard import public_port
+from src.plugins.sdk import signed_links
 from tests.python.cplugs.reviewboard.public.test_public_links_switch_support import set_public
 from tests.python.cplugs.reviewboard.boards import SIDECAR, make_board
 from tests.python.cplugs.reviewboard.harness import Env, make_env
@@ -29,6 +29,7 @@ def seeded_dist(root: Path) -> Path:
 def read_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Env]:
     monkeypatch.setattr(signed_links, "settings", SimpleNamespace(load_auth_config=lambda: SimpleNamespace(jwt_secret="test-secret")))
     made = make_env(tmp_path)
+    monkeypatch.setattr(public_port, "local_computer", lambda: "mac-mini-m4")
     monkeypatch.setattr(assets, "DIST_DIR", seeded_dist(tmp_path))
     set_public(made, True)
     public_port.register(made.host.context("reviewboard", background=True))

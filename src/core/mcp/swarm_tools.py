@@ -12,8 +12,8 @@ from src.core.mcp.caller import AgentCaller
 from src.core.mcp import lean_answers
 from src.core.mcp.common import ToolError, _ok
 from src.core.swarm.cards import ops, port as card_port
-from src.cplugs.sdk.cards import CardRefused
-from src.cplugs.sdk.storage import CplugSchemaError
+from src.plugins.sdk.cards import CardRefused
+from src.plugins.sdk.storage import CplugSchemaError
 from src.core.swarm import answers, body, brief, conflicts, done_feed, facts, naming_rules, project_agent, promotion, question_close, receipts, rename, reports, rewind, routing, say, spawn, store, stream, suggest, views, waiting
 from src.core.swarm import effort as effort_floor
 from src.core.swarm.settings import LookShape

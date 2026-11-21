@@ -9,7 +9,7 @@ import pytest
 
 from src.core.work.storage import WorkStorage
 from src.core.db_reuse.change_cache import CACHE
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle.store import TaskManagerStore
 
 LISTS = ["all"] + [str(n) for n in range(1, 13)]
 ITEMS = 1000

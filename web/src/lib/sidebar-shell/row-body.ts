@@ -5,6 +5,7 @@ import { t } from '../i18n/index.svelte';
 import { ledStateFor, type InnerState } from '../led';
 import { normalizeStatus } from '../status-dot';
 import { timerChip } from '../timers/timers';
+import { codexHelpersFlag } from './codex-helpers-flag';
 import type { SidebarRow } from './legacy';
 import { modelPlan } from './row-chips';
 import type { Attrs, LedPlan, ModelPlan } from './row-plan';
@@ -13,7 +14,7 @@ import { ageLabel, epochFromIso } from './row-text';
 export type BodyTone = 'ok' | 'warn' | 'info' | 'muted' | 'dim' | 'bad' | 'ctx4' | 'ctx5';
 
 export interface BodyFlag {
-    kind: 'permission' | 'host' | 'exited' | 'update' | 'context';
+    kind: 'permission' | 'host' | 'codex_helpers' | 'exited' | 'update' | 'context';
     tone: BodyTone;
     text: string;
 }
@@ -64,7 +65,9 @@ export function stateWord(led: LedPlan): { text: string; tone: BodyTone } {
         transport: led.transport,
         host_offline: led.hostOffline,
         usage_limit: led.usageLimit,
+        login_expired: led.loginExpired,
     }).inner;
+    if (led.loginExpired && inner === 'notice') return { text: t('session.status.login_expired'), tone: 'info' };
     const w = STATE_WORDS[inner] ?? STATE_WORDS.unknown;
     return { text: t(w.key), tone: w.tone };
 }
@@ -155,6 +158,8 @@ export function rowFlags(r: SidebarRow, led: LedPlan): BodyFlag[] {
     const status = normalizeStatus(led.status);
     if (status === 'question') out.push({ kind: 'permission', tone: 'warn', text: t('session.status.question') });
     if (led.hostOffline) out.push({ kind: 'host', tone: 'bad', text: t('session.status.host_offline', { host: led.hostOffline }) });
+    const codex = codexHelpersFlag(r);
+    if (codex) out.push(codex);
     if (status === 'dead') out.push({ kind: 'exited', tone: 'dim', text: exitedText(r) });
     const upd = r.agent_update as { running?: unknown; installed?: unknown; ready?: unknown } | null | undefined;
     if (upd && upd.ready === true && typeof upd.running === 'string' && typeof upd.installed === 'string') {

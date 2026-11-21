@@ -5,8 +5,8 @@ import asyncio
 import json
 from dataclasses import replace
 
-from src.cplugs.host import plugin_fold, runtime, state as owner_state
-from src.cplugs.huddle.nudge import scheduler, settings, sweep
+from src.plugins.host import plugin_fold, runtime, state as owner_state
+from src.plugins.huddle.nudge import scheduler, settings, sweep
 from tests.python.cplugs.huddle.test_task_manager_nudge_sweep import Rig, rig  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note  # noqa: F401
 

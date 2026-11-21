@@ -5,11 +5,11 @@ import glob
 import os
 import sqlite3
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Tuple
 
 import structlog
 
-from src.core.attention import fs_event_index
+from src.core.attention import codex_read_cache, fs_event_index
 from src.core.attention.codex_reader import (
     CodexEvidence,
     CodexRecordFacts,
@@ -32,21 +32,26 @@ DEFAULT_CODEX_HOME = os.path.expanduser("~/.codex")
 def rollout_path_for(codex_home: str, thread_uuid: str) -> Optional[str]:
     state_db = latest_state_db(codex_home)
     if state_db is not None:
-        con = _connect_ro(state_db)
-        if con is not None:
-            try:
-                row = con.execute(
-                    "SELECT rollout_path FROM threads WHERE id = ?",
-                    (thread_uuid,),
-                ).fetchone()
-                if row is not None and row[0]:
-                    return os.path.expanduser(str(row[0]))
-            except sqlite3.Error as exc:
-                logger.debug("codex_state_db_read_failed", codex_home=codex_home, thread_uuid=thread_uuid,
-                             error=str(exc))
-            finally:
-                con.close()
+        stored = codex_read_cache.remembered_db_read(
+            state_db, ("rollout_path", thread_uuid), lambda: _stored_rollout_path(state_db, thread_uuid)
+        )
+        if stored:
+            return os.path.expanduser(str(stored))
     return rollout_path_in_sessions(codex_home, thread_uuid)
+
+
+def _stored_rollout_path(state_db: str, thread_uuid: str) -> Tuple[Optional[str], bool]:
+    con = _connect_ro(state_db)
+    if con is None:
+        return None, False
+    try:
+        row = con.execute("SELECT rollout_path FROM threads WHERE id = ?", (thread_uuid,)).fetchone()
+        return (row[0] if row is not None else None), True
+    except sqlite3.Error as exc:
+        logger.debug("codex_state_db_read_failed", state_db=state_db, thread_uuid=thread_uuid, error=str(exc))
+        return None, False
+    finally:
+        con.close()
 
 
 def rollout_path_in_sessions(codex_home: str, thread_uuid: str) -> Optional[str]:
@@ -54,6 +59,12 @@ def rollout_path_in_sessions(codex_home: str, thread_uuid: str) -> Optional[str]
     sessions_root = os.path.join(os.path.expanduser(codex_home), "sessions")
     if index is not None and index.ready and index.covers(sessions_root):
         return index.lookup(thread_uuid, fs_event_index.CODEX)
+    return codex_read_cache.remembered_rollout(
+        codex_home, thread_uuid, lambda: _walk_sessions(codex_home, thread_uuid)
+    )
+
+
+def _walk_sessions(codex_home: str, thread_uuid: str) -> Optional[str]:
     hits = glob.glob(
         os.path.join(
             codex_home, "sessions", "*", "*", "*",

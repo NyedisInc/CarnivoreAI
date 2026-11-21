@@ -9,7 +9,7 @@ import pytest
 import src.config  # noqa: F401
 from src.api import automation_timers_listing as listing
 from src.core.automations import plugin_schedules
-from src.cplugs.sdk import ports
+from src.plugins.sdk import ports
 from src.models import SessionInfo
 
 AUTO = {"automation_id": "a", "name": "nightly", "enabled": True, "retry_due_at": None, "next_fire_at": 500.0,

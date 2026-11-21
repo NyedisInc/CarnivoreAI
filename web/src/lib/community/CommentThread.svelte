@@ -286,7 +286,7 @@
         gap: 6px;
         padding: 10px 12px;
         border: 1px solid var(--cat-line);
-        border-radius: 4px;
+        border-radius: var(--oc-radius-sm);
         background: var(--cat-panel);
     }
     .thr__heading {

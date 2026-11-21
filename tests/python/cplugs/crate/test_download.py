@@ -6,7 +6,7 @@ from typing import Any, Dict
 
 import pytest
 
-from src.cplugs.crate import download, folders
+from src.plugins.crate import download, folders
 from tests.python.cplugs.crate.api_world import BASE, ApiWorld, export, stop_runner
 from tests.python.cplugs.crate.crate_world import UUID_A
 

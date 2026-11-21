@@ -5,7 +5,7 @@ from typing import Any, Optional
 
 from src.models.utc_time import as_aware_utc
 
-WORKING_STATES = frozenset({"working", "working_subagent"})
+from src.models.activity_status import BUSY
 LIVE_SOURCES = frozenset({"registry", "pane"})
 IN_USE_ACTIONS = frozenset({"session_restart", "session_stop", "session_delete", "session_purge"})
 _IN_FLIGHT_KEYS = frozenset({"agents", "tasks", "dialog", "working"})
@@ -20,7 +20,7 @@ def summarize(info: Any, registry: Any = None) -> Optional[dict]:
             signals.append({"key": key, "params": {"count": str(count)}})
     if status == "question":
         signals.append({"key": "dialog"})
-    if status in WORKING_STATES:
+    if status in BUSY:
         if source in LIVE_SOURCES:
             signals.append({"key": "working", "params": {"source": source}})
         else:

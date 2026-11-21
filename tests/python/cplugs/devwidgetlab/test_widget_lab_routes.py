@@ -11,9 +11,9 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.devwidgetlab import capture, errors
-from src.cplugs.devwidgetlab.drafts import store
-from src.cplugs.host import developer_mode, runtime
+from src.plugins.devwidgetlab import capture, errors
+from src.plugins.devwidgetlab.drafts import store
+from src.plugins.host import developer_mode, runtime
 from tests.python.cplugs.owner import turn_on
 
 BASE = "/api/v1/cplugs/devwidgetlab"
@@ -26,7 +26,7 @@ def host_app(tmp_path: Path, monkeypatch):
     app = FastAPI()
     host = runtime.install(app, tmp_path)
     host.publish = lambda topic: None
-    app.include_router(__import__("src.cplugs.host.routes", fromlist=["router"]).router, prefix="/api/v1")
+    app.include_router(__import__("src.plugins.host.routes", fromlist=["router"]).router, prefix="/api/v1")
     return app, host
 
 
@@ -184,7 +184,7 @@ def test_a_capture_past_its_limit_is_stopped(tmp_path: Path, monkeypatch) -> Non
 
 
 def test_capture_uses_the_same_checkout_lookup_as_the_drafts(tmp_path: Path, monkeypatch) -> None:
-    from src.cplugs.devwidgetlab.drafts import checkout
+    from src.plugins.devwidgetlab.drafts import checkout
 
     monkeypatch.setattr(checkout, "resolve", lambda storage_path=None: None)
     assert capture.availability() == {"available": False, "reason": "no_checkout"}

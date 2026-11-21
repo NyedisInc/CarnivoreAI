@@ -9,10 +9,12 @@
   import { closeOffered, closeWidget } from '../engine/close-widget';
   import type { CellMeta, PhoneSummary, SlotId } from '../engine/types';
   import { kindOf } from '../engine/meta';
+  import { applyStoredCellDim } from '../../lib/cell-dim/cell-dim';
   import type { LayoutStore } from '../engine/layout.svelte';
   import { observeCell } from '../engine/observe.svelte';
   import { reducedMotion, viewport } from '../engine/viewport.svelte';
   import { inputFocus } from '../lib/input-focus.svelte';
+  import { tabsFor } from '../engine/tab-groups.svelte';
   import ZoneShell from '../../lib/zone-shell/ZoneShell.svelte';
   import { createGridZone } from './grid-zone';
   import { layoutEditor } from '../layout-editor/editor.svelte';
@@ -67,8 +69,14 @@
   const collapsible = $derived(meta.rightControl === 'collapse');
   const bodyId = $derived(`${instance}-body`);
 
-  const focused = $derived(inputFocus.owner === instance);
+  const focused = $derived(
+    inputFocus.owner !== null
+      && (kindOf(instance) === 'terminal'
+        ? tabsFor(store, instance).includes(inputFocus.owner)
+        : inputFocus.owner === instance),
+  );
 
+  applyStoredCellDim();
   const terminal = $derived(kindOf(meta.id) === 'terminal');
 
   const phoneCollapsible = $derived(viewport.phone && meta.chrome === 'card');
@@ -300,10 +308,15 @@
       content: '';
       position: absolute;
       inset: 0;
-      z-index: 41;
+      z-index: calc(var(--oc-z-page) + var(--oc-z-step));
       pointer-events: none;
       border-radius: inherit;
       box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--oc-orange) 40%, var(--oc-line-panel));
+    }
+
+    .oc-frame-terminal[data-oc-focus]:not(.popup-focus) {
+      border-color: var(--oc-orange);
+      box-shadow: 0 0 10px 2px color-mix(in srgb, var(--oc-orange) 70%, transparent);
     }
 
     .oc-frame.oc-frame-bare {
@@ -319,7 +332,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      z-index: 40;
+      z-index: var(--oc-z-page);
       box-sizing: border-box;
       border-radius: inherit;
       pointer-events: none;

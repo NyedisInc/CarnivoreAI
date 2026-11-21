@@ -5,7 +5,7 @@ from typing import Optional
 
 import structlog
 
-from src.cplugs.sdk.swarm import ThreadPort
+from src.plugins.sdk.swarm import ThreadPort
 
 logger = structlog.get_logger()
 

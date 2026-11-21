@@ -13,7 +13,7 @@ from src.core.automations import recipes
 from src.core.automations import notify_policy
 from src.core.swarm import switch as swarm_switch
 from src.core.swarm.cards import ops
-from src.cplugs.sdk.cards import CardRefused
+from src.plugins.sdk.cards import CardRefused
 from src.core.project_writes import list_projects_ordered
 
 logger = structlog.get_logger()

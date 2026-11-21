@@ -16,24 +16,31 @@ from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 
 from src.core import config_writer, setup_state
-from src.core.computers import commit, forget, join_job, link_rotate, membership, store
+from src.core.computers import commit, forget, join_job, link_rotate, membership, roster_source, store
 from src.core.computers.door import Door
 from src.core.computers.invites import Invites
 from src.core.computers.join_server import JoinServer
 from src.core.computers.knock import KnockDesk
 from src.core.computers.link_addresses import learned_listen, local_addresses
+from src.core.computers.beacon import BeaconListener, BeaconSender, subnet_of
 from src.core.computers.link_dialer import LinkDialer
 from src.core.computers.link_listener import DEFAULT_LINK_PORT, LinkListener, Member
-from src.core.computers.link_transport import tls_transport_factory
+from src.core.computers.link_transport import TlsInitiatorTransport, tls_transport_factory
 from src.core.computers.member_listener import LISTENING, MemberListener, Rendezvous
+from src.core.computers.member_relay_dial import MemberRelayDialer
+from src.core.computers.takeover_driver import TakeoverDriver
 from src.core.computers.tls_identity import LinkIdentity, ensure_link_identity, link_stem, pinned_certs
 from src.core.db import get_meta
 from src.core.db_models import META_INSTALL_ID
 from src.core.federation import fed_key, peer_hosts, peer_listing
 from src.core.federation.peer_links import PeerLinks
 from src.core.notifications.sources import computers as owner_notices
-from src.core.pack.machines import settings_doc
+from src.config.relay import DEFAULT_LINK_DOMAIN
+from src.core.pack.machines import capabilities as pack_caps, roster_doc, settings_doc
+from src.core.pack.reconnect import config as reconnect_config
+from src.core.phone_link.pack_relay import PackRelay
 from src.core.relay_identity.device_key import DeviceKey, DeviceKeyUnavailable
+from src.core.resource_push import topics
 
 log = structlog.get_logger(__name__)
 
@@ -44,6 +51,9 @@ OFF_LOOPBACK = "off_loopback"
 _WILDCARD_HOSTS = ("0.0.0.0", "::", "*")
 
 _ACTIVE: Optional["ComputersRuntime"] = None
+
+CAP_RELAY_V1 = "pack.relay_v1"
+pack_caps.register(CAP_RELAY_V1)
 
 
 def active() -> Optional["ComputersRuntime"]:
@@ -120,8 +130,47 @@ class LazyPack:
     def adopt(self, doc: settings_doc.PackSettings, signature: Optional[Dict[str, Any]] = None) -> bool:
         rt = self._wired().runtime
         changed = rt.custody.adopt(doc, signature)
+        rt.custody.clear_roster()
         rt.skills_settings_changed("local_edit", "")
         return changed
+
+    def clear_roster(self) -> bool:
+        return self._wired().runtime.custody.clear_roster()
+
+    def roster(self) -> Optional[roster_doc.Roster]:
+        return self._wired().runtime.custody.roster()
+
+    def roster_wire(self) -> Optional[Dict[str, Any]]:
+        return self._wired().runtime.custody.roster_wire()
+
+    def merge_roster(self, raw: Any, sender: str) -> bool:
+        return self._wired().runtime.custody.merge_roster(raw, sender)
+
+    def refresh_roster(self, inputs: List[roster_doc.RosterInput]) -> str:
+        return self._wired().runtime.refresh_roster(inputs)
+
+    def is_laptop(self, install_id: str) -> bool:
+        return self._wired().runtime.is_laptop(install_id)
+
+    def follow_hello(self) -> Optional[Dict[str, Any]]:
+        rt = self._wired().runtime
+        wire = rt.custody.roster_wire()
+        if wire is None:
+            return None
+        doc, signature = rt.custody.outgoing()
+        return roster_doc.fit_hello({"follows": doc["master_install_id"], "generation": doc["rev"][0], "settings": doc,
+                                     "settings_sig": signature, "roster": wire, "can_claim": rt.custody.can_claim()})
+
+    def merge_follow(self, hello: Dict[str, Any], sender: str) -> None:
+        pack = self._wired().runtime
+        if pack._merge_remote(hello.get("settings"), sender, hello.get("settings_sig"), hello.get("roster")):
+            pack.kick()
+        pack._merge_roster(hello.get("roster"), sender)
+
+    def kick(self) -> None:
+        wired = self._wiring()
+        if wired is not None:
+            wired.runtime.kick()
 
 
 class _GatedListener:
@@ -134,6 +183,8 @@ class _GatedListener:
         await asyncio.to_thread(rt.refresh_flags)
         allowed = rt.complete and not rt.joined
         state = await rt.listener.set_members(list(members) if allowed else [])
+        await rt.sync_pack_relay(list(members) if allowed else [])
+        await rt.sync_beacon(allowed and bool(members))
         rt.last_pins = tuple(sorted(m.peer_install_id + m.cert.cert_sha256 for m in members)) if allowed else ()
         return state
 
@@ -146,7 +197,11 @@ class ComputersRuntime:
                  refresh_store: Callable[[], Any] = lambda: None, discovery: Callable[[], Any] = lambda: None,
                  notify: Optional[commit.Notify] = None,
                  setup_state_fn: Callable[[], setup_state.SetupState] = setup_state.current_setup_state,
-                 setup_status: Callable[[], str] = lambda: "unknown", control_dir: Optional[Path] = None) -> None:
+                 setup_status: Callable[[], str] = lambda: "unknown", control_dir: Optional[Path] = None,
+                 phone_link: Callable[[], Any] = lambda: None, link_domain: str = DEFAULT_LINK_DOMAIN) -> None:
+        self._phone_link, self._link_domain = phone_link, link_domain
+        self._roster: Optional[LazyPack] = pack if isinstance(pack, LazyPack) else None
+        self._roster_cache: Optional[Tuple[roster_doc.Roster, Dict[str, Any]]] = None
         self._open_db, self.pack, self._fed_dir, self._listener_path = open_db, pack, fed_dir, listener_path
         self._config_path, self._host, self._label, self._version = config_path, host, label, app_version
         self.open_db, self.fed_dir, self.config_path, self.label = open_db, fed_dir, config_path, label
@@ -168,6 +223,13 @@ class ComputersRuntime:
         self.dialer: Optional[LinkDialer] = None
         self.rendezvous = Rendezvous()
         self.member_listener: Optional[MemberListener] = None
+        self.pack_relay: Optional[PackRelay] = None
+        self.member_relay: Optional[MemberRelayDialer] = None
+        self.takeover: Optional[TakeoverDriver] = None
+        self.beacon_listener: Optional[BeaconListener] = None
+        self.beacon_sender: Optional[BeaconSender] = None
+        self._beacon_alpha = False
+        self._subnets: List[str] = []
         self._member_pins: Tuple[str, ...] = ()
         self._reserved = False
         self._discovery_on = False
@@ -179,6 +241,7 @@ class ComputersRuntime:
         self._task: Optional["asyncio.Task[None]"] = None
         self._kick = asyncio.Event()
         self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._reannounce_tasks: "set[asyncio.Task[None]]" = set()
         self._advertised: Optional[Tuple[Optional[int], Tuple[Tuple[str, str], ...]]] = None
         self.pack_member = False
         self.pack_members: Tuple[Tuple[str, str], ...] = ()
@@ -197,7 +260,8 @@ class ComputersRuntime:
             install_id=self.iid or "", listener_path=self._listener_path, rendezvous=self.rendezvous,
             on_first_link=self._on_first_link, addresses=lambda: list(self.addresses),
             listen_port=lambda: self.member_listener.port if self.member_listener is not None else None,
-            on_rotated=self._on_rotated, control_dir=self._control_dir)
+            on_rotated=self._on_rotated, hello_extras=self._member_hello_extras, on_relay_id=self._on_relay_id,
+            on_roster=self._on_roster, control_dir=self._control_dir)
 
     def _load(self) -> None:
         with closing(self._open_db()) as conn:
@@ -225,13 +289,35 @@ class ComputersRuntime:
         self.listener = LinkListener(identity=self.identity, fed_dir=self._fed_dir, listener_path=self._listener_path,
                                      addresses=lambda: list(self.addresses), port=self.link_port,
                                      on_link=self._on_link, on_unlink=self._on_unlink, on_rotated=self._on_rotated,
-                                     on_member_hello=self._on_member_hello,
+                                     on_member_hello=self._on_member_hello, hello_extras=self._alpha_hello_extras,
+                                     on_follow_reply=self._on_follow_reply, on_member_device_id=self._on_member_device_id,
+                                     app_streams_ok=lambda: self.pack_relay is None or not self.pack_relay.budget.exhausted,
                                      on_members=lambda members: self.dialer.set_members(members) if self.dialer is not None else None)
+        self.pack_relay = PackRelay(identity=self.identity, hub=self.listener, config_path=self._config_path,
+                                    budget_path=self._fed_dir / "pack-relay-budget.json")
+        self.member_relay = MemberRelayDialer(identity=self.identity, rendezvous=self.rendezvous, main=self._main_row,
+                                              relay_host=self._relay_host, enabled=self.pack_relay.enabled, linked=self._main_linked,
+                                              roster_shas=self._roster_shas)
+        phone = self._phone_link()
+        if phone is not None:
+            phone.set_pack(self.pack_relay)
+        self.links.add_connect_listener(self._on_peer_connected)
         self.dialer = LinkDialer(identity=self.identity, hub=self.listener, rows=store.CACHE.get,
-                                 on_change=lambda _iid: self.notify("computers"))
+                                 on_change=lambda _iid: self.notify(topics.COMPUTERS),
+                                 on_candidate_win=lambda iid: self.beacon_listener.throttle.refund(iid) if self.beacon_listener else None)
+        self.beacon_listener = BeaconListener(members=self.listener.members, connected=self.listener.connected,
+                                              kick=lambda iid, source: self.dialer.kick(iid, source) if self.dialer is not None else None,
+                                              host=bind)
+        self._subnets = await asyncio.to_thread(reconnect_config.known_subnets, self._config_path)
+        identity = self.identity
+        self.beacon_sender = BeaconSender(cert_sha256=lambda: identity.cert.cert_sha256, addresses=lambda: list(self.addresses),
+                                          subnets=lambda: list(self._subnets), linked=self._main_linked,
+                                          enabled=lambda: self.pack_relay.enabled() and self._main_row() is not None)
+        self.beacon_sender.start()
         self.member_listener = MemberListener(identity=self.identity, rendezvous=self.rendezvous,
                                               host=ALL_BIND if bind == LOOPBACK_BIND else bind,
-                                              on_state=lambda _state: self.notify("computers"))
+                                              on_state=lambda _state: self.notify(topics.COMPUTERS), follow_hello=self._follow_hello)
+        self.takeover = TakeoverDriver(self) if self._roster is not None else None
         self.invites = Invites(on_change=self._invites_changed, on_notice=self._on_notice, is_member=self.is_joiner)
         self.knocks = KnockDesk(self.invites, self._label, notify=self.notify, emit=owner_notices.knock)
         self.join_server = JoinServer(invites=self.invites, identity=self.identity, fed_key=self.fed_key, public_key=self.public_key,
@@ -268,7 +354,14 @@ class ComputersRuntime:
             await asyncio.gather(self._task, return_exceptions=True)
             self._task = None
         join_job.configure_join(None)
-        for part in (self.door, self.join_server, self.dialer, self.listener, self.member_listener):
+        phone = self._phone_link()
+        if phone is not None:
+            phone.set_pack(None)
+            try:
+                await phone.reconcile()
+            except (OSError, RuntimeError, sqlite3.Error) as exc:
+                log.warning("pack_relay_detach_failed", error_type=type(exc).__name__)
+        for part in (self.door, self.join_server, self.beacon_sender, self.beacon_listener, self.dialer, self.listener, self.member_listener, self.member_relay, self.pack_relay):
             if part is not None:
                 try:
                     await part.stop()
@@ -278,9 +371,11 @@ class ComputersRuntime:
     async def forget(self, iid: str, *, notify_peer: bool) -> bool:
         if self.links is None or self.iid is None:
             raise RuntimeError("the computers runtime is not prepared")
-        return await forget.forget_computer(
+        told = await forget.forget_computer(
             iid, notify_peer=notify_peer, open_db=self._open_db, links=self.links, pack=self.pack, own_iid=self.iid,
             config_path=self._config_path, fed_dir=self._fed_dir, repin=self.repin, notify=self._notify_fn)
+        await self.after_roster_change()
+        return told
 
     async def rotate_link(self, new_key: DeviceKey) -> None:
         if self.iid is None or self.identity is None:
@@ -296,10 +391,12 @@ class ComputersRuntime:
             discovery.refresh_link_port()
         await asyncio.to_thread(link_rotate.stage, new_key, self.iid, self._fed_dir)
         await self.link_rotation_step()
-        self.notify("computers")
+        self.notify(topics.COMPUTERS)
 
     async def link_rotation_step(self) -> str:
         if self.links is None or self.iid is None or self.identity is None or self.fed_key is None:
+            return link_rotate.IDLE
+        if self.takeover is not None and await self.takeover.rotation_paused():
             return link_rotate.IDLE
         result = await link_rotate.run_step(links=self.links, open_db=self._open_db, fed_dir=self._fed_dir, iid=self.iid,
                                             signer=self.fed_key, identity=self.identity)
@@ -329,13 +426,13 @@ class ComputersRuntime:
         host = await asyncio.to_thread(main_host)
         if host is not None and self.links is not None:
             await self.links.start_initiator(host)
-        self.notify("computers")
+        self.notify(topics.COMPUTERS)
 
     async def _on_rotated(self, iid: str, sha: str) -> None:
         if await asyncio.to_thread(link_rotate.promote, self._open_db, iid, sha):
             if self.listener is not None:
                 await self.repin(force=True)
-            self.notify("computers")
+            self.notify(topics.COMPUTERS)
 
     def refresh_flags(self) -> None:
         state = self._setup_state()
@@ -394,7 +491,7 @@ class ComputersRuntime:
         if ml is None or self.identity is None:
             return
         if main is None or main.cert_der is None:
-            if not self._reserved:
+            if not self._reserved and not (self.takeover is not None and await self.takeover.answer_walks(ml)):
                 await ml.stop()
                 self._member_pins = ()
             return
@@ -406,9 +503,10 @@ class ComputersRuntime:
             self._reserved = False
             if not (await ml.bind(main.link_port) if main.link_port else await ml.reserve(self.link_port)):
                 return
-        key = tuple(sorted(c.cert_sha256 for c in pins))
+        follow = self._follow_pins(main.peer_install_id)
+        key = tuple(sorted(c.cert_sha256 for c in pins)) + ("|",) + tuple(sorted(c.cert_sha256 for c in follow))
         if force or key != self._member_pins:
-            await ml.set_pins(pins)
+            await ml.set_pins(pins, follow)
             self._member_pins = key
 
     async def reserve_listen_port(self) -> Optional[int]:
@@ -440,6 +538,204 @@ class ComputersRuntime:
             self._advertised = port
             discovery.refresh_link_port()
 
+    async def sync_pack_relay(self, members: Sequence[Member]) -> None:
+        if self.pack_relay is None:
+            return
+        try:
+            changed = await self.pack_relay.set_members(members)
+        except (ValueError, OSError) as exc:
+            log.warning("pack_relay_pins_failed", error_type=type(exc).__name__)
+            return
+        phone = self._phone_link()
+        if changed and phone is not None:
+            try:
+                await phone.reconcile()
+            except (OSError, RuntimeError, sqlite3.Error) as exc:
+                log.warning("pack_relay_reconcile_failed", error_type=type(exc).__name__)
+
+    async def sync_beacon(self, alpha: Optional[bool] = None) -> None:
+        if alpha is not None:
+            self._beacon_alpha = alpha
+        listener = self.beacon_listener
+        if listener is None:
+            return
+        if self._beacon_alpha and not self.loopback_bind and self.pack_relay is not None and self.pack_relay.enabled():
+            await listener.start()
+        else:
+            await listener.stop()
+
+    async def relay_switch_changed(self) -> None:
+        await self.sync_beacon()
+        phone = self._phone_link()
+        if phone is not None:
+            await phone.reconcile()
+        if self.listener is not None:
+            await self.listener.reannounce()
+        self.notify(topics.COMPUTERS)
+        self.notify(topics.PACK_MACHINES)
+
+    def _on_peer_connected(self, iid: str) -> None:
+        if self._loop is not None:
+            task = self._loop.create_task(self._reannounce(iid), name="pack-relay-reannounce")
+            self._reannounce_tasks.add(task)
+            task.add_done_callback(self._reannounce_tasks.discard)
+            main = self._main_row()
+            if main is not None and main.peer_install_id == iid and not self.rendezvous.taken_via_relay:
+                note = self._loop.create_task(self._remember_subnet(), name="pack-beacon-subnet")
+                self._reannounce_tasks.add(note)
+                note.add_done_callback(self._reannounce_tasks.discard)
+
+    async def _remember_subnet(self) -> None:
+        local = self.rendezvous.taken_local_address
+        subnet = subnet_of(local) if local else None
+        if subnet is None:
+            return
+        try:
+            if await asyncio.to_thread(reconnect_config.remember_subnet, self._config_path, subnet):
+                self._subnets = await asyncio.to_thread(reconnect_config.known_subnets, self._config_path)
+        except (OSError, ValueError) as exc:
+            log.warning("pack_beacon_subnet_not_saved", error_type=type(exc).__name__)
+
+    async def _reannounce(self, iid: str) -> None:
+        try:
+            if self.listener is not None:
+                await self.listener.reannounce(iid)
+            transport = self.links.transport(iid) if self.links is not None else None
+            if isinstance(transport, TlsInitiatorTransport):
+                await transport.reannounce()
+        except (OSError, RuntimeError) as exc:
+            log.warning("pack_relay_reannounce_failed", error_type=type(exc).__name__)
+
+    def _alpha_hello_extras(self, iid: str) -> Dict[str, Any]:
+        phone, relay = self._phone_link(), self.pack_relay
+        relay_id = phone.device_id() if phone is not None else None
+        extras: Dict[str, Any] = {}
+        if (relay_id and reconnect_config.valid_relay_id(relay_id) and relay is not None and relay.enabled()
+                and self.links is not None and pack_caps.has(self.links.capabilities(iid), CAP_RELAY_V1)):
+            extras["relay_id"] = relay_id
+        if (self._roster_cache is not None and self.links is not None
+                and pack_caps.has(self.links.capabilities(iid), pack_caps.CAP_ROSTER)):
+            extras["roster"] = self._roster_cache[1]
+        return roster_doc.fit_hello(extras)
+
+    def _member_hello_extras(self, main_iid: str) -> Dict[str, Any]:
+        phone = self._phone_link()
+        device_id = phone.device_id() if phone is not None else None
+        if device_id and self.links is not None and pack_caps.has(self.links.capabilities(main_iid), CAP_RELAY_V1):
+            return {"device_id": device_id}
+        return {}
+
+    def _own_roster_input(self) -> roster_doc.RosterInput:
+        assert self.identity is not None and self.iid is not None and self._roster is not None
+        phone = self._phone_link()
+        relay_id = phone.device_id() if phone is not None else None
+        return roster_doc.RosterInput(
+            install_id=self.iid, label=self._label, fed_public_key=self.public_key, cert=self.identity.cert.der,
+            next_cert=link_rotate.staged_der(self._fed_dir, self.iid), addresses=tuple(self.addresses), link_port=self.link_port,
+            relay_id=relay_id if relay_id and reconnect_config.valid_relay_id(relay_id) else None, laptop=self._roster.is_laptop(self.iid))
+
+    def _roster_inputs_blocking(self) -> Optional[List[roster_doc.RosterInput]]:
+        assert self.identity is not None and self._roster is not None
+        return roster_source.build_inputs(
+            self._open_db, own=self._own_roster_input(), own_link_fid=self.identity.cert.link_fid,
+            relay_id_for=lambda iid: reconnect_config.learned_relay_id(self._config_path, iid), laptop_for=self._roster.is_laptop)
+
+    async def roster_inputs(self) -> List[roster_doc.RosterInput]:
+        if self._roster is None or self.identity is None:
+            raise roster_source.RosterUnavailable("the roster is not available on this computer")
+        inputs = await asyncio.to_thread(self._roster_inputs_blocking)
+        if inputs is None:
+            raise roster_source.RosterUnavailable("the Pack could not be read")
+        return inputs
+
+    async def after_roster_change(self) -> None:
+        if self._roster is None:
+            return
+        try:
+            wire = await asyncio.to_thread(self._roster.roster_wire)
+            parsed = roster_doc.from_wire(wire)
+            self._roster_cache = (parsed[0], wire) if parsed is not None and wire is not None else None
+            if self.member_listener is not None and self.identity is not None:
+                await self._sync_member_listener(False)
+        except (OSError, ValueError, RuntimeError) as exc:
+            log.warning("pack_roster_reload_failed", error_type=type(exc).__name__)
+            return
+        self.notify(topics.COMPUTERS)
+        self.notify(topics.PACK_MACHINES)
+
+    async def _sync_roster(self) -> None:
+        if self._roster is None or self.identity is None or self.listener is None:
+            return
+        try:
+            held_wire = await asyncio.to_thread(self._roster.roster_wire)
+            if held_wire != (self._roster_cache[1] if self._roster_cache is not None else None):
+                await self.after_roster_change()
+            if not self.listener.members():
+                return
+            inputs = await asyncio.to_thread(self._roster_inputs_blocking)
+            if inputs is None:
+                return
+            if await asyncio.to_thread(self._roster.refresh_roster, inputs):
+                await self.after_roster_change()
+                self._roster.kick()
+        except (OSError, sqlite3.Error, ValueError, RuntimeError) as exc:
+            log.warning("pack_roster_sync_failed", error_type=type(exc).__name__)
+
+    def _follow_pins(self, main_iid: str) -> list:
+        held = self._roster_cache[0] if self._roster_cache is not None else None
+        if held is None or self.identity is None:
+            return []
+        ders = [d for entry in held.computers if entry.install_id not in (self.iid, main_iid) for d in entry.ders()]
+        return pinned_certs(ders, own_link_fid=self.identity.cert.link_fid)
+
+    def _roster_shas(self, iid: str) -> Optional[frozenset]:
+        held = self._roster_cache[0] if self._roster_cache is not None else None
+        entry = held.entry(iid) if held is not None else None
+        return frozenset(entry.shas()) if entry is not None else None
+
+    async def _follow_hello(self) -> Optional[Dict[str, Any]]:
+        if self._roster is None:
+            return None
+        try:
+            return await asyncio.to_thread(self._roster.follow_hello)
+        except (OSError, ValueError, RuntimeError) as exc:
+            log.warning("pack_follow_hello_failed", error_type=type(exc).__name__)
+            return None
+
+    async def _on_follow_reply(self, iid: str, hello: Dict[str, Any]) -> None:
+        if self._roster is None:
+            return
+        await asyncio.to_thread(self._roster.merge_follow, hello, iid)
+        await self.after_roster_change()
+
+    async def _on_roster(self, main_iid: str, raw: Any) -> None:
+        main = self._main_row()
+        if self._roster is None or main is None or main.peer_install_id != main_iid:
+            return
+        if await asyncio.to_thread(self._roster.merge_roster, raw, main_iid):
+            await self.after_roster_change()
+
+    def _on_member_device_id(self, iid: str, device_id: str) -> None:
+        try:
+            reconnect_config.remember_relay_id(self._config_path, iid, device_id)
+        except (OSError, ValueError) as exc:
+            log.warning("pack_member_device_id_not_saved", error_type=type(exc).__name__)
+
+    def _on_relay_id(self, main_iid: str, relay_id: str) -> None:
+        try:
+            reconnect_config.remember_relay_id(self._config_path, main_iid, relay_id)
+        except (OSError, ValueError) as exc:
+            log.warning("pack_relay_id_not_saved", error_type=type(exc).__name__)
+
+    def _relay_host(self) -> Optional[str]:
+        main = self._main_row()
+        relay_id = reconnect_config.learned_relay_id(self._config_path, main.peer_install_id) if main is not None else None
+        return f"{relay_id}.{self._link_domain}" if relay_id else None
+
+    def _main_linked(self) -> bool:
+        main = self._main_row()
+        return main is not None and self.links is not None and self.links.state(main.peer_install_id) == "connected"
+
     def notify(self, topic: str) -> None:
         if self._notify_fn is not None:
             self._notify_fn(topic)
@@ -447,10 +743,10 @@ class ComputersRuntime:
     async def _on_link(self, iid: str) -> None:
         assert self.links is not None
         await commit.main_final(self._open_db, self.links, iid, notify=self._notify_fn)
-        self.notify("computers")
+        self.notify(topics.COMPUTERS)
 
     async def _on_unlink(self, iid: str) -> None:
-        self.notify("computers")
+        self.notify(topics.COMPUTERS)
 
     async def _on_first_link(self, main_iid: str) -> None:
         async def revoke() -> None:
@@ -478,11 +774,11 @@ class ComputersRuntime:
                 store.set_link_address(conn, peer_iid, tuple(found), found_port)
 
         await asyncio.to_thread(write)
-        self.notify("computers")
+        self.notify(topics.COMPUTERS)
 
     def _invites_changed(self) -> None:
-        self.notify("computers")
-        self.notify("pack_knocks")
+        self.notify(topics.COMPUTERS)
+        self.notify(topics.PACK_KNOCKS)
         self.kick()
 
     def _on_notice(self, event: str, addr: str) -> None:
@@ -504,6 +800,11 @@ class ComputersRuntime:
                 assert self.invites is not None and self.join_server is not None
                 self.invites.sweep()
                 await self.join_server.sync()
+                if self.member_relay is not None:
+                    self.member_relay.tick()
+                await self._sync_roster()
+                if self.takeover is not None:
+                    await self.takeover.tick()
                 if time.monotonic() - last_slow >= commit.SWEEP_EVERY_SECONDS:
                     last_slow = time.monotonic()
                     await self._slow_tick()

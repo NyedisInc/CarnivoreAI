@@ -40,7 +40,7 @@ function stripBlockComments(text) {
 
 function scannedFiles() {
     const out = [];
-    const exts = ['.css', '.svelte', '.ts', '.json'];
+    const exts = ['.css', '.svelte', '.ts', '.js', '.json'];
     const skipDirs = new Set(['node_modules', 'dist', 'vendor', 'widget-harness-build']);
     const walk = (dir) => {
         for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -66,10 +66,10 @@ function scan(files) {
         lines.forEach((line, i) => {
             for (const m of line.matchAll(DECL_RE)) declared.add(m[0]);
             for (const m of line.matchAll(STYLE_DIRECTIVE_RE)) declared.add(m[1]);
-            if (file.endsWith('.ts') && !file.endsWith('.test.ts')) {
+            if (/\.(ts|svelte|js)$/.test(file) && !file.endsWith('.test.ts')) {
                 for (const m of line.matchAll(RUNTIME_PROP_RE)) declared.add(m[1]);
             }
-            for (const m of line.matchAll(USE_RE)) {
+            for (const m of file.endsWith('.test.ts') ? [] : line.matchAll(USE_RE)) {
                 uses.push({
                     token: m[1],
                     file: relFile,

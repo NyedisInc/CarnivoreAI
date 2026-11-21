@@ -80,7 +80,7 @@ test('a dashboard pop-out adds a widget from its drawer and saves only its own b
   flushSync();
   const drawer = document.querySelector<HTMLElement>('.le-drawer')!;
   expect(drawer).not.toBeNull();
-  expect(drawer.classList.contains('le-drawer--docked')).toBe(false);
+  expect(drawer.hasAttribute('data-sheet-docked')).toBe(false);
   expect(drawer.querySelector('[data-zone-shelf]')).toBeNull();
   expect(drawer.querySelector('[data-zone-card]')).toBeNull();
 

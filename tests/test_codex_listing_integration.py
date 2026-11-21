@@ -105,6 +105,9 @@ def _live_lock(monkeypatch):
 
 
 def test_symlinked_codex_home_matches_physical_writer_lock(tmp_path, monkeypatch):
+    from src.core.attention import output_holders
+
+    monkeypatch.setattr(output_holders, "libproc_available", lambda: False)
     physical = _make_home(tmp_path, turns=[("completed", None)], lock=True)
     link = tmp_path / "linked-codex-home"
     link.symlink_to(physical, target_is_directory=True)

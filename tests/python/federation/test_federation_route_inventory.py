@@ -24,6 +24,7 @@ from src.core.db import connect, db_path_for, get_meta  # noqa: E402
 from src.core.db_migration import ensure_db_migrated  # noqa: E402
 from src.core.federation import fed_key, grants, peer_forward, peer_token  # noqa: E402
 from src.main import app  # noqa: E402
+from src.plugins.host.peer_refusal import PEER_FORBIDDEN_CODE, READ_METHODS, refuse_peer_token_writes  # noqa: E402
 from tests.test_route_auth_inventory import _dep_calls, _walk  # noqa: E402
 
 PEER_ALLOWED = {
@@ -58,6 +59,12 @@ PEER_ALLOWED = {
     ("POST", "/api/v1/federation/link-cert"): "machine",
     ("PUT", "/api/v1/federation/pack/reserve"): "machine",
     ("PUT", "/api/v1/federation/pack/restrictions/tighten"): "machine",
+    ("POST", "/api/v1/federation/pack/rescan"): "machine",
+    ("PUT", "/api/v1/federation/pack/labels"): "machine",
+    ("POST", "/api/v1/federation/argent/credential"): "credentials",
+    ("POST", "/api/v1/federation/argent/credential/request"): "machine",
+    ("POST", "/api/v1/federation/argent/poll"): "machine",
+    ("POST", "/api/v1/federation/argent/switch"): "machine",
     ("POST", "/api/v1/federation/pack/credentials"): "credentials",
     ("POST", "/api/v1/federation/pack/credentials/codex"): "credentials",
     ("DELETE", "/api/v1/federation/pack/credentials/codex/{account_key}"): "credentials",
@@ -74,6 +81,18 @@ PEER_ALLOWED = {
     ("POST", "/api/v1/federation/pack/blobs/{blob_id}/seal"): "replica",
     ("GET", "/api/v1/federation/pack/blobs/{blob_id}"): "replica",
     ("POST", "/api/v1/federation/pack/bundle/apply"): "replica",
+    ("POST", "/api/v1/federation/pack/jobs/admit"): "replica",
+    ("POST", "/api/v1/federation/pack/jobs/start"): "replica",
+    ("POST", "/api/v1/federation/pack/jobs/status"): "replica",
+    ("POST", "/api/v1/federation/pack/jobs/collect"): "replica",
+    ("POST", "/api/v1/federation/pack/jobs/stop"): "replica",
+    ("POST", "/api/v1/federation/pack/jobs/release"): "replica",
+    ("POST", "/api/v1/federation/pack/jobs/reply"): "replica",
+    ("POST", "/api/v1/federation/pack/jobs/forget-copy"): "replica",
+    ("POST", "/api/v1/federation/pack/jobs/install"): "replica",
+    ("GET", "/api/v1/federation/pack/jobs/install/{install_id}"): "replica",
+    ("POST", "/api/v1/federation/pack/jobs/prewarm"): "replica",
+    ("POST", "/api/v1/federation/pack/sessions/create"): "replica",
     ("POST", "/api/v1/federation/pack/gh-login"): "credentials",
     ("POST", "/api/v1/federation/pack/ledger-status"): "credentials",
     ("POST", "/api/v1/federation/pack/ledger-sessions"): "machine",
@@ -87,6 +106,8 @@ PEER_ALLOWED = {
     ("POST", "/api/v1/federation/pack/global/blobs/{blob_id}/seal"): "global-setup",
     ("GET", "/api/v1/federation/pack/global/blobs/{blob_id}"): "global-setup",
     ("POST", "/api/v1/federation/pack/global/apply"): "global-setup",
+    ("POST", "/api/v1/federation/pack/global/panel"): "global-setup",
+    ("POST", "/api/v1/federation/pack/global/panel-change"): "machine",
     ("POST", "/api/v1/federation/pack/skills/export"): "skills",
     ("GET", "/api/v1/federation/pack/skills/export/{blob_id}"): "skills",
     ("POST", "/api/v1/federation/pack/skills/export/{blob_id}/done"): "skills",
@@ -143,6 +164,7 @@ def peer_bearer(tmp_path, monkeypatch) -> str:
 
 
 def _fill(path: str) -> str:
+    path = re.sub(r"\{[^}:]+:int\}", "1", path)
     return re.sub(r"\{[^}]+\}", "x", path)
 
 
@@ -171,8 +193,11 @@ def test_a_peer_token_gets_401_on_every_unscoped_route(peer_bearer) -> None:
             continue
         response = client.request(method, _fill(path), headers=head)
         checked += 1
-        if response.status_code != 401:
+        refuses_by_name = method not in READ_METHODS and any(c is refuse_peer_token_writes for c in _dep_calls(route.dependant))
+        if response.status_code != (403 if refuses_by_name else 401):
             leaks.append((method, path, response.status_code))
+        elif refuses_by_name and response.json().get("detail", {}).get("code") != PEER_FORBIDDEN_CODE:
+            leaks.append((method, path, "403 without peer_forbidden"))
     assert checked > 100, "the walk saw too few guarded routes to mean anything"
     assert leaks == []
 

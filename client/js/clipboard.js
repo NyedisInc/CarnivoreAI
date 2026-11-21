@@ -102,13 +102,29 @@
             return;
         }
 
+        let forced = false;
+        const hintLib = window.PastePromptHint;
+        const timed = async (read) => {
+            const t0 = Date.now();
+            let refused = false;
+            try {
+                return await read();
+            } catch (err) {
+                refused = !!hintLib && hintLib.isRefusal(err);
+                throw err;
+            } finally {
+                if (hintLib && hintLib.wasForcedToPrompt(Date.now() - t0, refused)) forced = true;
+            }
+        };
+
         if (canRead) {
             try {
-                const items = await navigator.clipboard.read();
+                const items = await timed(() => navigator.clipboard.read());
                 for (const item of items) {
                     const imageType = (item.types || []).find((t) => t.indexOf('image/') === 0);
                     if (imageType) {
                         const blob = await item.getType(imageType);
+                        if (forced) report(term, globalThis.CloudeTr('terminal.clipboard.prompt_hint'), 'info');
                         await uploadAndInject(term, blob, '', own);
                         return;
                     }
@@ -117,6 +133,7 @@
                     if ((item.types || []).indexOf('text/plain') !== -1) {
                         const blob = await item.getType('text/plain');
                         injectText(term, await blob.text(), own);
+                        if (forced) report(term, globalThis.CloudeTr('terminal.clipboard.prompt_hint'), 'info');
                         return;
                     }
                 }
@@ -128,9 +145,10 @@
 
         if (canReadText) {
             try {
-                const text = await navigator.clipboard.readText();
+                const text = await timed(() => navigator.clipboard.readText());
                 if (text) {
                     injectText(term, text, own);
+                    if (forced) report(term, globalThis.CloudeTr('terminal.clipboard.prompt_hint'), 'info');
                 } else {
                     report(term, globalThis.CloudeTr('terminal.clipboard.empty'), 'info');
                 }
@@ -139,12 +157,12 @@
             }
         }
 
-        openFallback(term, own);
+        openFallback(term, own, forced);
     }
 
-    function openFallback(term, ticket) {
+    function openFallback(term, ticket, forcedPrompt) {
         if (window.PasteFallback && typeof window.PasteFallback.open === 'function') {
-            window.PasteFallback.open(term, injectText, ticket);
+            window.PasteFallback.open(term, injectText, ticket, forcedPrompt === true);
             return;
         }
         report(term,

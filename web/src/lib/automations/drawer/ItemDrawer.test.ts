@@ -7,6 +7,8 @@ const stub = vi.hoisted(() => ({
   updateAutomation: vi.fn(), runAutomationNow: vi.fn(), listProjectChoices: vi.fn(), listSessionRecords: vi.fn(), listFeed: vi.fn(),
 }));
 vi.mock('../api', () => stub);
+const download = vi.hoisted(() => vi.fn());
+vi.mock('../run-actions', async (orig) => ({ ...(await orig<typeof import('../run-actions')>()), downloadAttachment: download }));
 vi.mock('../../resource-push/boot', () => ({ resourcePush: () => ({ pushOrPoll: () => () => {}, onChange: () => () => {} }) }));
 
 import ItemDrawer from './ItemDrawer.svelte';
@@ -107,5 +109,16 @@ test('run mode shows the title and summary, and full report in advanced opens th
   expect(data.top).toBe('advanced');
   expect(data.tab).toBe('sessions');
   expect(data.feedRunId).toBe('r2');
+  closeDrawer();
+});
+
+test('run mode: clicking an attachment name downloads it through downloadAttachment (login token), not a bare link', async () => {
+  openDrawer('run', 'r2');
+  await settle();
+  const ctl = q<HTMLButtonElement>('[data-dr-attachments] [data-attachment="out.txt"]');
+  expect(ctl.textContent?.trim()).toBe('out.txt');
+  expect(ctl.hasAttribute('href')).toBe(false);
+  ctl.click();
+  expect(download).toHaveBeenCalledWith('r2', 'out.txt');
   closeDrawer();
 });

@@ -35,13 +35,7 @@
   }
 </script>
 
-<ModalShell title={t('session.fork_to.title')} overlayClass="text-prompt-modal na-flow" dismissable={!busy} onCancel={onClose}>
-  {#snippet head()}
-    <div class="text-prompt-modal__head">
-      <span class="text-prompt-modal__verb">{t('session.fork_to.title')}</span>
-      <IconButton variant="close" icon="close" label={t('modal.close')} disabled={busy} onclick={onClose} />
-    </div>
-  {/snippet}
+<ModalShell look="titlerow" title={t('session.fork_to.title')} overlayClass="na-flow" dismissable={!busy} onCancel={onClose}>
   <p class="modal-description">{t('session.fork_to.source', { name })}</p>
   <Select id="fork-provider" label={t('session.fork_to.provider')} bind:value={provider} disabled={busy} options={PROVIDERS} />
   <Field id="fork-model" label={t('session.fork_to.model')} bind:value={model} disabled={busy} maxlength={200} placeholder={t('session.fork_to.default')} />

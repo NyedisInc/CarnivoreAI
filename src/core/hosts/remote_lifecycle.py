@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 logger = structlog.get_logger()
 
-REMOTE_ENV_NAMES = frozenset({"CLOUDECODE_SESSION_ID", "TERM", "COLORTERM", "LANG", "LC_ALL",
+REMOTE_ENV_NAMES = frozenset({"CARNIVORE_SESSION_ID", "CLOUDECODE_SESSION_ID", "TERM", "COLORTERM", "LANG", "LC_ALL",
                               "LC_CTYPE"})
 
 

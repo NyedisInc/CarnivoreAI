@@ -13,6 +13,7 @@ export const TOUCH_EXTRA_SLOP_PX = 10;
 
 interface Drag {
     name: string;
+    sessionUuid: string | null;
     band: string | null;
     bandMoved: boolean;
     startX: number;
@@ -80,7 +81,7 @@ export function onRowPointerDown(e: PointerEvent): void {
         e.stopPropagation();
     }
     drag = {
-        name: row.dataset.name, band: row.dataset.band || null, bandMoved: false,
+        name: row.dataset.name, sessionUuid: row.dataset.sessionUuid || null, band: row.dataset.band || null, bandMoved: false,
         startX: e.clientX, startY: e.clientY, claimedClick: false, active: false,
         crossed: undefined, group: undefined, groupChanged: false,
         pointerId: e.pointerId, pointerType: e.pointerType,
@@ -117,7 +118,7 @@ function handOff(d: Drag, e: PointerEvent): boolean {
     const sideways = !d.active && dx >= slop(d.pointerType) && dx > Math.abs(e.clientY - d.startY);
     if (!sideways && e.clientX >= box.left && e.clientX <= box.right) return false;
     const taken = tabDrag.begin({
-        name: d.name, pointerId: d.pointerId, pointerType: d.pointerType, clientX: e.clientX, clientY: e.clientY,
+        name: d.name, sessionUuid: d.sessionUuid, pointerId: d.pointerId, pointerType: d.pointerType, clientX: e.clientX, clientY: e.clientY,
     });
     if (!taken) return false;
     d.claimedClick = true;

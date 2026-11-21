@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import pytest
 
 from src.config.mcp import McpConfig
-from src.cplugs.huddle import CPLUG
+from src.plugins.huddle.public import CPLUG
 from src.core.mcp import agent_tool_switches, deprecated_tools, instructions, protocol, tool_families, tools
 from src.core.mcp.caller import AgentCaller
 from tests.python.mcp.test_mcp_endpoint import _call, _hdr, _rpc, env  # noqa: F401
@@ -37,14 +37,14 @@ def test_a_config_with_neither_key_reads_huddle_off_swarm_on(tmp_path) -> None:
     cfg = tmp_path / "config.json"
     cfg.write_text(json.dumps({"mcp": {"enabled": True}}))
     block = load(cfg, totp_secret="x", jwt_secret="y").mcp
-    assert (block.agent_huddle_tools, block.agent_swarm_tools, block.agent_app_settings_tools) == (False, True, False)
-    assert agent_tool_switches.DEFAULTS == agent_tool_switches.AgentToolSwitches(huddle=False, swarm=True, app_settings=False)
+    assert (block.agent_huddle_tools, block.agent_swarm_tools, block.agent_app_settings_tools) == (False, True, True)
+    assert agent_tool_switches.DEFAULTS == agent_tool_switches.AgentToolSwitches(huddle=False, swarm=True, app_settings=True)
 
 
 def test_defaults_hide_huddle_and_keep_swarm(switches) -> None:
     names = _names()
     assert not any(n.startswith(TASK_MANAGER_FAMILY) for n in names)
-    assert sum(n.startswith("swarm_") and n not in tool_families.SWARM_SWITCH_TOOLS for n in names) == 33
+    assert sum(n.startswith("swarm_") and n not in tool_families.SWARM_SWITCH_TOOLS for n in names) == 42
     assert "sessions_list" in names
 
 
@@ -138,12 +138,12 @@ def test_the_route_reads_and_writes_through_the_config_writer_and_needs_the_owne
     assert client.get("/api/v1/mcp-admin/agent-tools", headers=_hdr(mgr)).status_code == 401
     app.dependency_overrides[require_auth] = lambda: {"sub": "owner"}
     try:
-        assert client.get("/api/v1/mcp-admin/agent-tools").json() == {"huddle": False, "swarm": True, "app_settings": False}
+        assert client.get("/api/v1/mcp-admin/agent-tools").json() == {"huddle": False, "swarm": True, "app_settings": True}
         r = client.put("/api/v1/mcp-admin/agent-tools", json={"huddle": True})
-        assert r.status_code == 200 and r.json() == {"huddle": True, "swarm": True, "app_settings": False}
+        assert r.status_code == 200 and r.json() == {"huddle": True, "swarm": True, "app_settings": True}
         assert len(passes) == 1
         r = client.put("/api/v1/mcp-admin/agent-tools", json={"swarm": False})
-        assert r.json() == {"huddle": True, "swarm": False, "app_settings": False} and len(passes) == 1
+        assert r.json() == {"huddle": True, "swarm": False, "app_settings": True} and len(passes) == 1
         r = client.put("/api/v1/mcp-admin/agent-tools", json={"app_settings": True})
         assert r.json() == {"huddle": True, "swarm": False, "app_settings": True} and len(passes) == 1
         assert client.put("/api/v1/mcp-admin/agent-tools", json={}).status_code == 422

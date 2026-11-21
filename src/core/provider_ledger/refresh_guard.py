@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import time
@@ -9,7 +10,9 @@ from typing import List, Optional, Tuple
 
 import structlog
 
-from src.core.attention.registry_index import pid_is_running
+from src.core.attention.record_identity import read_lstarts
+from src.core.attention.registry_index import MAX_REGISTRY_FILE_BYTES, pid_is_running
+from src.core.conversation_writers import same_process_start
 from src.config.provider_accounts import DEFAULT_CLAUDE_CONFIG_DIR
 
 logger = structlog.get_logger()
@@ -87,6 +90,16 @@ def _pid_config_dir(pid: int) -> Optional[str]:
     return os.path.realpath(os.path.expanduser(DEFAULT_CLAUDE_CONFIG_DIR))
 
 
+def _record_proc_start(path: str) -> Optional[str]:
+    try:
+        with open(path, "rb") as handle:
+            data = json.loads(handle.read(MAX_REGISTRY_FILE_BYTES))
+    except (OSError, ValueError):
+        return None
+    value = data.get("procStart") if isinstance(data, dict) else None
+    return value if isinstance(value, str) and value.strip() else None
+
+
 def live_claude_pids(claude_dir: str) -> List[int]:
     base = os.path.join(claude_dir, SESSIONS_DIRNAME)
     try:
@@ -95,7 +108,7 @@ def live_claude_pids(claude_dir: str) -> List[int]:
         )
     except OSError:
         return []
-    pids: List[int] = []
+    candidates: List[Tuple[int, str]] = []
     for name in names[:SCAN_LIMIT]:
         stem = name[: -len(".json")]
         if not stem.isdigit():
@@ -103,6 +116,19 @@ def live_claude_pids(claude_dir: str) -> List[int]:
         pid = int(stem)
         if pid_is_running(pid) is False:
             continue
+        candidates.append((pid, name))
+    starts = {
+        pid: start
+        for pid, name in candidates
+        if (start := _record_proc_start(os.path.join(base, name)))
+    }
+    now_starts = read_lstarts(starts) if starts else None
+    pids: List[int] = []
+    for pid, _name in candidates:
+        if now_starts is not None and pid in starts:
+            seen = now_starts.get(pid)
+            if seen is not None and not same_process_start(seen, starts[pid]):
+                continue
         owner = _pid_config_dir(pid)
         if owner is None or owner == os.path.realpath(claude_dir):
             pids.append(pid)

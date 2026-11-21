@@ -233,7 +233,16 @@ describe('extras and details', () => {
         type(q('[data-notify="extra-projects"]')!, 'alpha, beta');
         await click('[data-notify="extras-save"]');
         await vi.waitFor(() => expect(rig.calls.some((c) => c.method === 'PUT')).toBe(true));
-        expect(rig.calls.find((c) => c.method === 'PUT')!.body).toEqual({ away: true, quiet: null, reminder_minutes: null, projects: ['alpha', 'beta'], details: false, scope: 'local' });
+        expect(rig.calls.find((c) => c.method === 'PUT')!.body).toEqual({ away: true, quiet: null, reminder_minutes: 10, projects: ['alpha', 'beta'], details: false, scope: 'local' });
+    });
+
+    test('turning the reminder off PUTs 0, which the engine reads as off (not null, the 10 minute default)', async () => {
+        const rig = await render([dest({})], { 'PUT /notifications/destinations/d_aaaaaaaaaaaa/extras': () => ({ destination: dest({}) }) });
+        await click('[data-notify="extras-toggle"]');
+        await click('[data-notify="extra-reminder"]');
+        await click('[data-notify="extras-save"]');
+        await vi.waitFor(() => expect(rig.calls.some((c) => c.method === 'PUT')).toBe(true));
+        expect((rig.calls.find((c) => c.method === 'PUT')!.body as { reminder_minutes: number }).reminder_minutes).toBe(0);
     });
 });
 

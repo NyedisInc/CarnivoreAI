@@ -15,6 +15,9 @@ from src.core.tmux_paste_buffer import (
 OLD_TMUX_REJECTION = b"command paste-buffer: unknown flag -S\n"
 
 
+DELETE = ("delete-buffer", "-b", "cloude_x")
+
+
 class FakeTmux:
 
     def __init__(self, answers: list[tuple[int, bytes]]) -> None:
@@ -63,21 +66,21 @@ def test_an_old_server_is_retried_once_without_the_flag():
 
 
 def test_any_other_failure_raises_without_a_retry():
-    fake = FakeTmux([(1, b"target pane has exited\n")])
+    fake = FakeTmux([(1, b"target pane has exited\n"), (0, b"")])
     with pytest.raises(PasteBufferError, match="target pane has exited"):
         _paste(fake, bracketed=False)
-    assert len(fake.calls) == 1
+    assert [c[0] for c in fake.calls] == ["paste-buffer", "delete-buffer"] and fake.calls[1] == DELETE
 
 
 def test_a_failed_retry_raises_the_retry_error():
-    fake = FakeTmux([(1, OLD_TMUX_REJECTION), (1, b"no buffer cloude_x\n")])
+    fake = FakeTmux([(1, OLD_TMUX_REJECTION), (1, b"no buffer cloude_x\n"), (0, b"")])
     with pytest.raises(PasteBufferError, match="no buffer cloude_x"):
         _paste(fake, bracketed=False)
-    assert len(fake.calls) == 2
+    assert [c[0] for c in fake.calls] == ["paste-buffer", "paste-buffer", "delete-buffer"]
 
 
 def test_the_bracketed_route_is_never_retried():
-    fake = FakeTmux([(1, OLD_TMUX_REJECTION)])
+    fake = FakeTmux([(1, OLD_TMUX_REJECTION), (0, b"")])
     with pytest.raises(PasteBufferError):
         _paste(fake, bracketed=True)
-    assert len(fake.calls) == 1
+    assert [c[0] for c in fake.calls] == ["paste-buffer", "delete-buffer"]

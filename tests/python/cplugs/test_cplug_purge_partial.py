@@ -9,7 +9,7 @@ import httpx
 from fastapi import FastAPI
 
 from src.api.auth import require_auth
-from src.cplugs.host import identity, routes as host_routes, runtime, secret_store
+from src.plugins.host import identity, routes as host_routes, runtime, secret_store
 
 NAME, ITEM = "clock", "acme/clock"
 KEYCHAIN: Dict[Any, str] = {}

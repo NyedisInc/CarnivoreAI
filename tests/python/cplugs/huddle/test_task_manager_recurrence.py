@@ -6,9 +6,9 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from src.cplugs.huddle import recurrence
-from src.cplugs.huddle.recurrence import next_after, parse_rule
-from src.cplugs.huddle.rules import TaskManagerInvalid
+from src.plugins.huddle import recurrence
+from src.plugins.huddle.recurrence import next_after, parse_rule
+from src.plugins.huddle.rules import TaskManagerInvalid
 
 HOUR = 3600.0
 ZONE = ZoneInfo("America/New_York")

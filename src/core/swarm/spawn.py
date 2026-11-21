@@ -131,7 +131,7 @@ async def _check_card(parent: Dict[str, Any], card_id: Any) -> None:
 async def _give_card(app_state: Any, plan: "SpawnPlan", child: Dict[str, Any]) -> str:
     from src.core.swarm import facts
     from src.core.swarm.cards import ops, port as card_port, texts
-    from src.cplugs.sdk.cards import CardRefused
+    from src.plugins.sdk.cards import CardRefused
 
     request = plan.request
     try:
@@ -256,7 +256,12 @@ async def _place(plan: "SpawnPlan") -> Optional[Any]:
     if plan.target is not None:
         return None
     from src.core.pack.placement import explain, queue as spawn_queue
+    from src.core.pack.session_place import same_file
 
+    if not plan.machine and plan.parent.get("repo_dir"):
+        brief = " ".join(str(plan.request.get(k) or "") for k in ("job", "goal", "task"))
+        if await same_file.reason_for(plan.parent["repo_dir"], brief):
+            return None
     try:
         work = explain.workload_for(plan.workload, plan.request.get("task_type"))
         decision = await explain.place(explain.Request(work, project=plan.parent.get("repo_dir"), machine=plan.machine), record_it=False)

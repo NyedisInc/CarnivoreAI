@@ -6,6 +6,7 @@
   import { analytics, refreshAnalytics } from './state.svelte';
 
   const signedOut = $derived(auth.state === 'signed-out');
+  $effect(() => { if (!signedOut && !analytics.loaded && !analytics.error) void refreshAnalytics(); });
 </script>
 
 {#if signedOut}

@@ -10,7 +10,7 @@ import pytest
 
 from scripts.widgets import harness
 from scripts.widgets.gate import gate_widget
-from src.cplugs.sdk.widget_gate import GateRefused, refuse_unless_passing
+from src.plugins.sdk.widget_gate import GateRefused, refuse_unless_passing
 
 RECORDS: Dict[str, Dict[str, Any]] = {
     r["id"]: r for r in json.loads((Path(harness.REPO) / "src" / "data" / "widget-contracts.json").read_text(encoding="utf-8"))["widgets"]

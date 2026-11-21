@@ -8,12 +8,14 @@ import ipaddress
 import socket
 import ssl
 import time
-from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, Sequence, Tuple
+from collections import deque
+from dataclasses import dataclass, field
+from typing import Callable, Deque, Dict, List, Optional, Sequence, Tuple
 
 import structlog
 
 from src.core.computers import store
+from src.core.computers.join_identity import lan_address_ok
 from src.core.computers.link_listener import ALERTED, LINKED, LinkListener, Member, failure_fields
 from src.core.computers.tls_identity import LinkIdentity, client_link_ctx
 from src.core.hosts.ssh_master import backoff_delay
@@ -24,7 +26,9 @@ CONNECT_TIMEOUT = 5.0
 DIAL_STAGGER = 0.25
 SLOW_SECONDS = 300.0
 MAX_NAME_ADDRESSES = 4
+RELAY_PROBE_SECONDS = 60.0
 REFUSED_AFTER_ALERTS = 3
+MAX_CANDIDATES = 3
 
 LINKED_STATE, DIALING, UNREACHABLE, LOCAL_NETWORK_BLOCKED = "linked", "dialing", "unreachable", "local_network_blocked"
 REFUSED, CERT_MISMATCH = "refused", "cert_mismatch"
@@ -51,6 +55,13 @@ def _failure_state(errors: Sequence[BaseException], targets: Sequence[Tuple[str,
     return UNREACHABLE
 
 
+def _candidate_ok(address: str) -> bool:
+    try:
+        return ipaddress.ip_address(address).version == 4 and lan_address_ok(address)
+    except ValueError:
+        return False
+
+
 @dataclass
 class _Dial:
 
@@ -61,15 +72,18 @@ class _Dial:
     since: Optional[float] = None
     last_good: Optional[str] = None
     alerts: int = 0
+    candidates: Deque[str] = field(default_factory=lambda: deque(maxlen=MAX_CANDIDATES))
 
 
 class LinkDialer:
 
     def __init__(self, *, identity: LinkIdentity, hub: LinkListener, rows: Callable[[str], Optional[store.LinkRow]],
                  on_change: Optional[Callable[[str], None]] = None, backoff: Callable[[int], float] = backoff_delay,
-                 connect_timeout: float = CONNECT_TIMEOUT, stagger: float = DIAL_STAGGER) -> None:
+                 connect_timeout: float = CONNECT_TIMEOUT, stagger: float = DIAL_STAGGER,
+                 on_candidate_win: Optional[Callable[[str], None]] = None) -> None:
         self._identity, self._hub, self._rows, self._on_change = identity, hub, rows, on_change
         self._backoff, self._timeout, self._stagger = backoff, connect_timeout, stagger
+        self._on_candidate_win = on_candidate_win
         self._dials: Dict[str, _Dial] = {}
 
     def set_members(self, members: Sequence[Member]) -> None:
@@ -86,9 +100,11 @@ class LinkDialer:
                 self._dials[iid] = _Dial(task=asyncio.get_running_loop().create_task(self._run(iid), name=f"link-dial-{iid[:8]}"),
                                          kick=asyncio.Event(), member=member)
 
-    def kick(self, iid: Optional[str] = None) -> None:
+    def kick(self, iid: Optional[str] = None, candidate: Optional[str] = None) -> None:
         for key, dial in self._dials.items():
             if iid is None or key == iid:
+                if candidate is not None and _candidate_ok(candidate) and candidate not in dial.candidates:
+                    dial.candidates.append(candidate)
                 dial.kick.set()
 
     def dial_state(self, iid: str) -> Optional[Dict[str, Optional[float]]]:
@@ -107,6 +123,8 @@ class LinkDialer:
         await asyncio.gather(*tasks, return_exceptions=True)
 
     def _set(self, iid: str, dial: _Dial, state: str) -> None:
+        if iid in self._hub.relayed():
+            return
         changed = state != dial.state
         dial.since = (dial.since or time.time()) if state == UNREACHABLE else None
         dial.state = state
@@ -136,7 +154,10 @@ class LinkDialer:
                 attempt += 1
                 if outcome == REFUSED:
                     wait = SLOW_SECONDS
-            dial.kick.clear()
+            if not dial.candidates:
+                dial.kick.clear()
+            if iid in self._hub.relayed():
+                wait = min(wait, RELAY_PROBE_SECONDS)
             try:
                 await asyncio.wait_for(dial.kick.wait(), wait)
             except asyncio.TimeoutError:
@@ -144,19 +165,24 @@ class LinkDialer:
 
     async def _round(self, iid: str, dial: _Dial) -> str:
         row = self._rows(iid)
-        if row is None or not row.addresses or not row.link_port:
+        tried = list(dial.candidates)
+        dial.candidates.clear()
+        if row is None or not row.link_port or not (row.addresses or tried):
             self._set(iid, dial, UNREACHABLE)
             return UNREACHABLE
         member = dial.member
         pins = [c for c in (member.cert, member.next_cert) if c is not None]
         ctx = await asyncio.to_thread(client_link_ctx, self._identity, pins)
-        targets = sorted(((a, row.link_port) for a in await self._expand(row.addresses)), key=lambda t: t[0] != dial.last_good)
+        stored = sorted(((a, row.link_port) for a in await self._expand(row.addresses) if a not in tried), key=lambda t: t[0] != dial.last_good)
+        targets = [(a, row.link_port) for a in tried] + stored
         conn, errors = await self._dial(targets, ctx, member.shas())
         if conn is None:
             state = _failure_state(errors, targets)
             self._set(iid, dial, state)
             return state
         address, _port, reader, writer = conn
+        if address in tried and self._on_candidate_win is not None:
+            self._on_candidate_win(iid)
         outcome = await self._hub.serve(reader, writer)
         if outcome == LINKED:
             dial.last_good, dial.alerts = address, 0

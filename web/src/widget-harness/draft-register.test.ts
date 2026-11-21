@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { registerDraftWidget, type DraftSpec } from './draft-register';
 import { harnessWidget } from './catalog';
 import { CORE_MANIFESTS, manifestById, manifestForSlot } from '../opscenter/widgets/core-manifests';
-import { draftLabWidget } from '../cplugs/sdk/widget-lab';
+import { draftLabWidget } from '../plugins/sdk/widget-lab';
 import { itemPath } from '../lib/item-settings/api';
 
 const SPEC: DraftSpec = {

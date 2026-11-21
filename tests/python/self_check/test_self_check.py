@@ -122,6 +122,7 @@ def test_agents_report_names_codex_when_present_and_missing_when_not() -> None:
 
 def test_report_carries_the_agents_beside_the_checks(monkeypatch) -> None:
     monkeypatch.setattr(monitor, "run_checks", lambda ctx, io=None: run_checks(CTX, FakeIO()))
+    monkeypatch.setattr(monitor, "SystemIO", FakeIO)
     answer = monitor.report(CTX)
     assert set(answer) == {"status", "checks", "agents"}
     assert answer["agents"] == {"codex": {"found": False, "path": None}}

@@ -14,6 +14,7 @@
         transport?: string | null;
         hostOffline?: string | null;
         usageLimit?: string | null;
+        loginExpired?: string | null;
         size?: string | null;
         showLabel?: boolean;
         bare?: boolean;
@@ -29,6 +30,7 @@
         transport = null,
         hostOffline = null,
         usageLimit = null,
+        loginExpired = null,
         size = null,
         showLabel = false,
         bare = false,
@@ -43,9 +45,10 @@
             transport,
             host_offline: hostOffline,
             usage_limit: usageLimit,
+            login_expired: loginExpired,
         }),
     );
-    const label = $derived(statusTitle(key, statusSource, activityHint, unread, parkedSummary, hostOffline, usageLimit));
+    const label = $derived(statusTitle(key, statusSource, activityHint, unread, parkedSummary, hostOffline, usageLimit, loginExpired));
     const dotClass = $derived(STATUS_DOT_CLASS[key] ?? 'unknown');
     const sizeVar = $derived(
         typeof size === 'string' && /^[0-9]+(\.[0-9]+)?(px|rem|em)$/.test(size)
@@ -62,6 +65,7 @@
             transport,
             host_offline: hostOffline,
             usage_limit: usageLimit,
+            login_expired: loginExpired,
         })
         : null);
 </script>

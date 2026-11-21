@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.crate import constants as K
-from src.cplugs.crate import refs
+from src.plugins.crate import constants as K
+from src.plugins.crate import refs
 import sqlite3
 from contextlib import closing
 

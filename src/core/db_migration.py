@@ -82,7 +82,7 @@ def _resolve_trail(trail: MigrationTrail) -> tuple:
         try:
             trail.mark_interrupted(entry)
         except OSError as exc:
-            logger.error("migration_trail_interrupt_write_failed", error=str(exc))
+            logger.error("migration_trail_interrupt_write_failed", error=str(exc), error_type=type(exc).__name__)
             break
         logger.warning(
             "migration_step_interrupted",
@@ -149,7 +149,7 @@ def ensure_db_migrated(
     try:
         read, _interrupted, trail_status = _resolve_trail(trail)
     except OSError as exc:
-        logger.error("migration_trail_resolve_failed", error=str(exc))
+        logger.error("migration_trail_resolve_failed", error=str(exc), error_type=type(exc).__name__, state_dir=str(state_dir))
         read = TrailReadResult(status=TRAIL_READ_UNREADABLE, error=str(exc))
         trail_status = TRAIL_STATUS_UNREADABLE
 
@@ -425,7 +425,7 @@ def _audit_and_repair(
             detail=detail,
         )
     except OSError as exc:
-        logger.error("db_schema_repair_trail_unwritable", error=str(exc))
+        logger.error("db_schema_repair_trail_unwritable", error=str(exc), error_type=type(exc).__name__)
 
     try:
         with transaction(conn):

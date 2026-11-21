@@ -5,8 +5,8 @@ import sqlite3
 from pathlib import Path
 
 from src.core.mcp import tools
-from src.cplugs.huddle import item_marker, mcp
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import item_marker, mcp
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work.ladder import MIGRATIONS, SCHEMA_VERSION, feature_rungs
 from src.core.work.storage import WorkStorage
 from tests.python.cplugs.huddle.test_task_manager_focus import add, call, client, setup  # noqa: F401

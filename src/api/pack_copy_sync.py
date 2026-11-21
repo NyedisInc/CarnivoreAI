@@ -12,7 +12,7 @@ from src.config import settings
 from src.core.pack.identity import home, replicas
 from src.core.pack.move import turn
 from src.core.pack.send import follow
-from src.cplugs.sdk import turn_events
+from src.plugins.sdk import turn_events
 
 logger = structlog.get_logger()
 

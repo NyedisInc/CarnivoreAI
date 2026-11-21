@@ -3,7 +3,6 @@
     import { onMount } from 'svelte';
     import Button from '../../lib/base/Button.svelte';
     import Field from '../../lib/base/Field.svelte';
-    import IconButton from '../../lib/base/IconButton.svelte';
     import ModalShell from '../../lib/dialog-frame/ModalShell.svelte';
     import { t } from '../../lib/i18n/index.svelte';
     import { NAME_MAX, nameProblem } from './shape';
@@ -69,19 +68,11 @@
     }
 </script>
 
-<ModalShell
+<ModalShell look="titlerow"
     title={t('layout.name.title')}
-    overlayClass="text-prompt-modal"
     dismissable={!busy}
     onCancel={() => close(false)}
 >
-    {#snippet head()}
-        <div class="text-prompt-modal__head">
-            <span class="text-prompt-modal__verb">&raquo; {t('layout.name.title')}</span>
-            <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close
-                disabled={busy} onclick={() => close(false)} />
-        </div>
-    {/snippet}
     <div class="modal-input-group" data-layout-name-modal>
         <Field
             id={FIELD_ID}

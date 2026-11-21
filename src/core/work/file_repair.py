@@ -13,7 +13,7 @@ import structlog
 from src.core.db import transaction
 from src.core.work import file_refs
 from src.core.work.storage import storage_for
-from src.cplugs.sdk import task_folders
+from src.plugins.sdk import task_folders
 
 logger = structlog.get_logger()
 

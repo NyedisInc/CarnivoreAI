@@ -14,10 +14,10 @@ from src.api.session_listing_collections import build_asleep, build_list, build_
 from src.core.automations import pause
 from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
-from src.cplugs.huddle import schedule_port, service
-from src.cplugs.huddle.roles import port as roles_port
-from src.cplugs.huddle.roles import tags
-from src.cplugs.huddle.roles.store import RoleStore
+from src.plugins.huddle import schedule_port, service
+from src.plugins.huddle.roles import port as roles_port
+from src.plugins.huddle.roles import tags
+from src.plugins.huddle.roles.store import RoleStore
 from src.models import Session, SessionInfo
 from tests.python.cplugs.huddle.test_page_load_connections import count_connects
 from tests.python.cplugs.huddle.test_task_manager_routes import app, note  # noqa: F401

@@ -11,13 +11,14 @@
         note?: string;
         hint?: string;
         glyph?: string;
+        mixed?: boolean;
         ariaLabel?: string;
         id?: string;
         [attribute: `data-${string}`]: string | undefined;
         onToggle: (next: boolean) => void;
     }
 
-    const { label, checked, role = 'checkbox', disabled = false, bare = false, note = '', hint = '', glyph = '', ariaLabel, id, onToggle, ...rest }: Props = $props();
+    const { label, checked, role = 'checkbox', disabled = false, bare = false, note = '', hint = '', glyph = '', mixed = false, ariaLabel, id, onToggle, ...rest }: Props = $props();
 </script>
 
 <Switch
@@ -29,6 +30,7 @@
     {note}
     {hint}
     {glyph}
+    {mixed}
     {id}
     aria-label={ariaLabel}
     bind:checked={() => checked, (next) => onToggle(next)}

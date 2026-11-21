@@ -8,7 +8,7 @@ from typing import Callable, Dict, Iterable, List, Optional, Set
 import structlog
 
 from src.core.auto_sleep.idle_seed import SeedResult
-from src.core.session_status import STATUS_IDLE
+from src.core.session_status import STATUS_IDLE, STATUS_UNKNOWN
 
 logger = structlog.get_logger()
 
@@ -21,6 +21,7 @@ class IdleRun:
     last: datetime
     unread: bool = False
     read_since: Optional[datetime] = None
+    parked: bool = False
 
 
 class IdleClock:
@@ -41,6 +42,9 @@ class IdleClock:
         unread: bool = False,
     ) -> None:
         if display != STATUS_IDLE or activity_hint is not None:
+            current = self._runs.get(session_id)
+            if current is not None and current.parked and display == STATUS_UNKNOWN and activity_hint is None:
+                return
             self._runs.pop(session_id, None)
             return
         run = self._runs.get(session_id)
@@ -49,9 +53,7 @@ class IdleClock:
             if session_id not in self._seeded and seed is not None:
                 since = self._seed_once(session_id, key, observed_at, seed)
             self._seeded.add(session_id)
-            self._runs[session_id] = IdleRun(
-                key, since, observed_at, unread, None if unread else observed_at
-            )
+            self._runs[session_id] = IdleRun(key, since, observed_at, unread, None if unread else since)
             return
         if unread:
             read_since = None
@@ -62,6 +64,18 @@ class IdleClock:
         self._runs[session_id] = IdleRun(
             key, run.since, max(run.last, observed_at), unread, read_since
         )
+
+    def park(self, session_id: str, observed_at: datetime) -> None:
+        run = self._runs.get(session_id)
+        if run is None:
+            self._runs[session_id] = IdleRun("parked", observed_at, observed_at, False, observed_at, True)
+        elif run.parked:
+            self._runs[session_id] = IdleRun(run.key, run.since, max(run.last, observed_at), False, run.read_since, True)
+
+    def unpark(self, session_id: str) -> None:
+        run = self._runs.get(session_id)
+        if run is not None and run.parked:
+            del self._runs[session_id]
 
     def _seed_once(
         self,

@@ -7,9 +7,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.core.browser_pages import resolvers
-from src.cplugs import huddle
-from src.cplugs.host import runtime
-from src.cplugs.huddle import artifact_browser
+from src.plugins import huddle
+from src.plugins.host import runtime
+from src.plugins.huddle import artifact_browser
 from tests.python.cplugs.huddle.test_task_manager_artifacts import (  # noqa: F401
     BASE, PAGE, app, client, item, post, signing_secret, upload_caps)
 

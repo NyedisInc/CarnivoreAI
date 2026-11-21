@@ -4,9 +4,9 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from src.cplugs.flow import routes
-from src.cplugs.sdk import OWN_POLICY_HEADER
-from src.cplugs.sdk.sandboxed_html import VIEW_CSP
+from src.plugins.flow import routes
+from src.plugins.sdk import OWN_POLICY_HEADER
+from src.plugins.sdk.sandboxed_html import VIEW_CSP
 
 
 def _call(monkeypatch, html: bool) -> Any:

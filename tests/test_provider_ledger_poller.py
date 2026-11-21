@@ -24,6 +24,7 @@ if str(ROOT) not in sys.path:
 # ruff: noqa: E402
 from src.config.provider_accounts import ProviderAccount
 from src.core.provider_ledger import poller as poller_module
+from src.core.provider_ledger import poller_scan
 from src.core.provider_ledger import poller_state
 from src.core.provider_ledger.codex_credentials import CodexCredential
 from src.core.provider_ledger.credentials import ClaudeCredential, ClaudeIdentity
@@ -657,7 +658,8 @@ class TestTheSnapshotShape:
 
     @pytest.mark.asyncio
     @pytest.mark.with_default_login
-    async def test_an_install_with_no_accounts_polls_the_auto_default_login(self):
+    async def test_an_install_with_no_accounts_polls_the_auto_default_login(self, monkeypatch):
+        monkeypatch.setattr(poller_scan, "read_claude_credential", lambda config_dir: live_claude_credential())
         poller = build_poller([])
 
         await poller.run_pass()
@@ -671,6 +673,7 @@ class TestTheSnapshotShape:
     @pytest.mark.with_default_login
     async def test_a_configured_account_is_polled_beside_the_default_login(self, tmp_path, monkeypatch):
         monkeypatch.setenv("HOME", str(tmp_path))
+        monkeypatch.setattr(poller_scan, "read_claude_credential", lambda config_dir: live_claude_credential())
         fetch = FakeFetcher([ok_outcome()])
         poller = build_poller([claude_account()], claude_fetch=fetch)
 
@@ -682,14 +685,13 @@ class TestTheSnapshotShape:
 
     @pytest.mark.asyncio
     @pytest.mark.with_default_login
-    async def test_the_auto_default_reports_missing_when_there_is_no_login(self):
+    async def test_no_default_row_when_there_is_no_login(self, monkeypatch):
+        monkeypatch.setattr(poller_scan, "read_claude_credential", lambda config_dir: None)
         poller = build_poller([], claude_credential=None)
 
         await poller.run_pass()
 
-        snapshot = poller.snapshot()
-        assert [a.id for a in snapshot.accounts] == ["auto-claude-default"]
-        assert snapshot.accounts[0].credential_state == "missing"
+        assert [a.id for a in poller.snapshot().accounts] == []
 
     @pytest.mark.asyncio
     async def test_a_claude_row_takes_its_identity_from_the_profile_file(self):

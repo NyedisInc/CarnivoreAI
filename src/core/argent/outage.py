@@ -18,7 +18,7 @@ from src.core import resource_push
 from src.core.argent import health, notices, row_state, store
 from src.core.argent import settings as settings_module
 from src.core.resource_push import topics
-from src.cplugs.sdk import turn_events
+from src.plugins.sdk import turn_events
 
 logger = structlog.get_logger()
 

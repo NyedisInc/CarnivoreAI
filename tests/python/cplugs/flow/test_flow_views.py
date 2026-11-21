@@ -10,10 +10,10 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.flow import service
+from src.plugins.flow import service
 from src.core.flow_data.collect import build
-from src.cplugs.flow.views import events, model, page, tasks, text, tree
-from src.cplugs.host.activity_reader import ActivityReader
+from src.plugins.flow.views import events, model, page, tasks, text, tree
+from src.plugins.host.activity_reader import ActivityReader
 from tests.python.cplugs.flow import fixture as fx
 
 NOW = fx.BASE + 4 * 3600

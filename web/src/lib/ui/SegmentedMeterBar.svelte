@@ -43,7 +43,7 @@
 
     .seg-bar__cell {
         flex: 1 1 0;
-        border-radius: 1px;
+        border-radius: var(--oc-radius-xs);
         box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--seg-bar-fill) 45%, transparent);
     }
 

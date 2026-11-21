@@ -17,8 +17,10 @@ from src.core.session_token_usage import claude_reader
 from src.core.session_transcript_presence import CONVERSATION_ABSENT, CONVERSATION_PRESENT
 from src.core.subagents.parent_index import parse_timestamp
 from src.core.subagents.parent_index import read_completion_index
-from src.core.subagents.reader import read_subagents, subagents_dir_for
-from src.core.subagents.scan_inputs import agent_files_signature, index_snapshot
+from src.core.subagents.reader import subagents_dir_for
+from src.core.subagents.stall import StalledAgent, STALL_NOTIFY_AFTER, read_marked, stalled_agents
+from src.core.subagents.scan_inputs import (agent_files_signature_read, index_snapshot,
+                                            read_agent_files_signature)
 
 logger = structlog.get_logger(__name__)
 
@@ -40,11 +42,13 @@ class SubagentTally:
     total: Optional[int] = None
     unknown: Optional[int] = None
     last_activity_at: Optional[datetime] = None
+    stalled: Optional[int] = None
+    long_stalled: Tuple[StalledAgent, ...] = ()
 
 
 NOT_APPLICABLE = SubagentTally(STATE_NOT_APPLICABLE)
 UNCHECKED = SubagentTally(STATE_UNCHECKED)
-ABSENT = SubagentTally(STATE_ABSENT, running=0, total=0, unknown=0)
+ABSENT = SubagentTally(STATE_ABSENT, running=0, total=0, unknown=0, stalled=0)
 
 
 @dataclass
@@ -141,11 +145,12 @@ class SubagentTallyCache:
         return entry
 
     @staticmethod
-    def _inputs(parent: Path) -> Optional[tuple]:
-        files = agent_files_signature(subagents_dir_for(parent))
+    def _inputs(parent: Path) -> Tuple[Optional[tuple], bool]:
+        directory = subagents_dir_for(parent)
+        files, read_now = agent_files_signature_read(directory)
         if files is None:
-            return None
-        return (files, index_snapshot(read_completion_index(parent)))
+            return None, read_now
+        return (files, index_snapshot(read_completion_index(parent))), read_now
 
     def _tally(self, uuid: str, working_dir: Optional[str],
                process_started_at: Optional[datetime], now: datetime) -> SubagentTally:
@@ -158,12 +163,16 @@ class SubagentTallyCache:
         fresh = entry.tally is not None and at - entry.computed_at < REFRESH_SECONDS
         if fresh and entry.key == key:
             return entry.tally
-        inputs = self._inputs(entry.path)
+        inputs, read_now = self._inputs(entry.path)
         if fresh and inputs is not None and inputs == entry.inputs and key[2] == entry.key[2]:
             entry.key = key
             return entry.tally
-        result = read_subagents(entry.path, conversation_uuid=uuid,
-                                process_started_at=process_started_at, now=now)
+        if inputs is not None and not read_now:
+            current = read_agent_files_signature(subagents_dir_for(entry.path))
+            inputs = None if current is None else (current, inputs[1])
+        result = read_marked(entry.path, conversation_uuid=uuid,
+                             process_started_at=process_started_at, now=now,
+                             files=inputs[0] if inputs is not None else None)
         counts = result.counts
         if result.state != STATE_OK or counts is None:
             tally = UNCHECKED
@@ -173,8 +182,12 @@ class SubagentTallyCache:
                                for row in result.subagents) if at is not None),
                 default=None,
             )
-            tally = SubagentTally(STATE_OK, running=counts.running, total=counts.total,
-                                  unknown=counts.unknown, last_activity_at=latest)
+            stalled = stalled_agents(result)
+            limit = STALL_NOTIFY_AFTER.total_seconds()
+            tally = SubagentTally(
+                STATE_OK, running=counts.running, total=counts.total, unknown=counts.unknown,
+                last_activity_at=latest, stalled=len(stalled),
+                long_stalled=tuple(a for a in stalled if a.idle_seconds >= limit))
         entry.key, entry.tally, entry.computed_at, entry.inputs = key, tally, at, inputs
         return tally
 

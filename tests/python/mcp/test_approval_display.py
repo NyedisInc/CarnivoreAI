@@ -51,6 +51,8 @@ CASES = [
     ("session_dialog_questions_answer", {"target": "u1", "questions_fingerprint": "a" * 64,
                                          "answers": [{"option": "Blue"}, {"options": ["Cheese"], "other": "private words"}]}, "api",
      "answer 2 questions on api", "", False, ("answer", "session_dialog", "api", "confirm")),
+    ("delegate", {"computer": "studio", "command": "npm test", "folder": f"{HOME}/Development/trader"}, "",
+     'run on "studio": npm test', "", False, ("run", "job", "studio", "confirm")),
 ]
 
 JARGON = ("tmux", "record", "row", "re-point", "fingerprint", "uuid", "epoch", "database")
@@ -98,7 +100,7 @@ def test_the_style_guide_specimens_are_the_real_display_blocks(monkeypatch) -> N
     for spec in specimens:
         i = spec["input"]
         built = display.build(i["action"], i["args"], i["target"], i["summary"], plain=i["plain"],
-                              confirm_text=i["confirm_text"], live=i["live"])
+                              confirm_text=i["confirm_text"], live=i["live"], beast_hint=i.get("beast_hint", False))
         assert built == spec["display"], spec["id"]
 
 
@@ -214,3 +216,100 @@ def test_the_batch_answer_card_detail_keeps_spacing_and_the_line_flattens_it() -
     block = display.build("session_dialog_questions_answer", shown, "api", "s")
     assert [r["value"] for r in block["detail"] if r["key"] == "answer"] == ['1. typed text "a   b  "']
     assert block["consequences"][0]["params"]["picks"] == '1. typed text "a b"'
+
+
+def test_the_delegate_hint_is_a_field_and_never_a_line() -> None:
+    args = {"computer": "studio", "command": "npm test", "folder": f"{HOME}/Development/trader"}
+    plain = display.build("delegate", args, "", "s")
+    hinted = display.build("delegate", args, "", "s", beast_hint=True)
+    assert "beast_hint" not in plain and hinted["beast_hint"] is True
+    assert [c["key"] for c in plain["consequences"]] == [c["key"] for c in hinted["consequences"]] == ["delegate_runs", "delegate_copy"]
+    assert hinted["consequences"][1]["params"]["folder"] == "~/Development/trader"
+    other = display.build("session_stop", {}, "api", "s", beast_hint=True)
+    assert "beast_hint" not in other
+
+
+TASK_ARGS = {"computer": "studio", "folder": f"{HOME}/Development/trader", "task": "fix the retry path\nthen run the tests " + "x" * 200,
+             "agent_type": "reviewer", "family": "claude", "permission_mode": "default", "model": "m1", "time_cap_minutes": 30}
+
+
+def test_the_task_card_has_three_lines_in_order_and_the_whole_task_in_detail() -> None:
+    block = display.build("delegate", TASK_ARGS, "", "s")
+    assert [c["key"] for c in block["consequences"]] == ["delegate_agent_runs", "delegate_copy", "delegate_mode_ask"]
+    first = block["consequences"][0]["params"]
+    assert first["agent"] == "reviewer" and first["computer"] == "studio" and "\n" not in first["task"] and first["task"].endswith("...")
+    rows = {r["key"]: r["value"] for r in block["detail"]}
+    assert rows["task"] == TASK_ARGS["task"] and rows["agent_type"] == "reviewer" and rows["model"] == "m1" and rows["time_cap"] == "30"
+    assert display.build("delegate", {**TASK_ARGS, "agent_type": ""}, "", "s")["consequences"][0]["params"]["agent"] == "an agent"
+
+
+def test_an_install_is_the_second_line_in_both_forms_and_absent_without_one() -> None:
+    cmd = {"computer": "studio", "command": "ffmpeg -i a b", "folder": f"{HOME}/Development/trader"}
+    keys = [c["key"] for c in display.build("delegate", {**cmd, "installs": ["ffmpeg", "node"]}, "", "s")["consequences"]]
+    assert keys == ["delegate_runs", "delegate_installs", "delegate_copy"]
+    line = display.build("delegate", {**cmd, "installs": ["ffmpeg", "node"]}, "", "s")["consequences"][1]
+    assert line["params"] == {"tools": "ffmpeg, node", "computer": "studio"}
+    task = [c["key"] for c in display.build("delegate", {**TASK_ARGS, "installs": ["gh"]}, "", "s")["consequences"]]
+    assert task == ["delegate_agent_runs", "delegate_installs", "delegate_copy", "delegate_mode_ask"]
+    assert "delegate_installs" not in [c["key"] for c in display.build("delegate", {**cmd, "installs": []}, "", "s")["consequences"]]
+
+
+@pytest.mark.parametrize("mode,key", [("bypassPermissions", "delegate_mode_bypass"), ("skip_all", "delegate_mode_bypass"),
+                                      ("acceptEdits", "delegate_mode_edits"), ("manual", "delegate_mode_ask"), ("dontAsk", "delegate_mode_dontask"),
+                                      ("auto", "delegate_mode_auto"), ("unknown", "delegate_mode_unknown"), ("nonsense", "delegate_mode_unknown")])
+def test_the_worker_mode_line_names_the_mode_and_bypass_has_its_own_key(mode, key) -> None:
+    block = display.build("delegate", {**TASK_ARGS, "permission_mode": mode}, "", "s")
+    assert block["consequences"][2]["key"] == key
+    text = re.search(rf"'approvals\.display\.c\.{key}': '([^']*)'", CATALOG.read_text(encoding="utf-8")).group(1)
+    assert (mode in ("bypassPermissions", "skip_all")) == text.startswith("permission checks bypassed")
+
+
+def test_every_task_card_key_is_in_the_catalog() -> None:
+    keys = _catalog_keys()
+    block = display.build("delegate", TASK_ARGS, "", "s")
+    emitted = [f"approvals.display.c.{c['key']}" for c in block["consequences"]] + [f"approvals.display.d.{d['key']}" for d in block["detail"]]
+    assert [k for k in emitted if k not in keys] == [] and "approvals.card.chip.beast_off" in keys
+
+
+def test_would_approve_needs_beast_off_and_the_on_column_ticked(monkeypatch) -> None:
+    from src.core.mcp import beast_mode
+
+    monkeypatch.setattr(beast_mode, "eligible_action", lambda action: True)
+    state = {"armed": False, "ticked": True}
+    monkeypatch.setattr(beast_mode, "beast_enabled", lambda: state["armed"])
+    monkeypatch.setattr(beast_mode, "ticked_in", lambda row, mode: state["ticked"])
+    assert beast_mode.would_approve("delegate") is True
+    state["armed"] = True
+    assert beast_mode.would_approve("delegate") is False
+    state.update(armed=False, ticked=False)
+    assert beast_mode.would_approve("delegate") is False
+    state["ticked"] = True
+    assert beast_mode.would_approve("session_stop") is False
+
+
+def test_as_dict_asks_beast_only_for_a_pending_delegate(monkeypatch) -> None:
+    from src.core.mcp import beast_mode
+
+    seen = []
+    monkeypatch.setattr(beast_mode, "beast_enabled", lambda: seen.append("armed") or False)
+    monkeypatch.setattr(beast_mode, "eligible_action", lambda action: True)
+    monkeypatch.setattr(beast_mode, "ticked_in", lambda row, mode: True)
+    base = dict(id="act_1", created_at=0.0, caller_session_id="", caller_tmux="c", target_session_id="", target_tmux="",
+                args_summary="s")
+    pending.PendingAction(action="session_stop", args={}, **base).as_dict()
+    assert seen == []
+    args = {"computer": "studio", "command": "npm test", "folder": "/x"}
+    row = pending.PendingAction(action="delegate", args=args, **base).as_dict()
+    assert row["display"]["beast_hint"] is True
+    done = pending.PendingAction(action="delegate", args=args, status="approved", **base).as_dict()
+    assert "beast_hint" not in done["display"]
+
+
+def test_the_definition_is_a_detail_row_only_and_the_face_is_unchanged() -> None:
+    prompt = "line one\x1b[31m red\x00\u202e\u200b\n" + "p" * 300
+    definition = {"file": "rev.md", "prompt": prompt}
+    block = display.build("delegate", {**TASK_ARGS, "definition": definition}, "", "s")
+    assert block["consequences"] == display.build("delegate", TASK_ARGS, "", "s")["consequences"]
+    row = next(r for r in block["detail"] if r["key"] == "definition")
+    assert row["file"] == "rev.md" and row["value"] == "line one red\n" + "p" * 300
+    assert "definition" not in [r["key"] for r in display.build("delegate", TASK_ARGS, "", "s")["detail"]]

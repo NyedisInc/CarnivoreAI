@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from src.config.agents import AgentsConfig
-from src.config.launch_profiles import LaunchProfile
+from src.config.launch_profiles import CustomCommand, LaunchProfile
 from src.core.agent_wrappers import AgentWrapper, wrapper_scripts_dir
 from src.core.launch_profiles.endpoints import ConnectionMissing
 from src.core.launch_profiles.permissions import PERMISSION_FLAGS, UnsupportedPosture, permission_flags
@@ -172,3 +172,17 @@ def test_permission_table_matches_the_help_fixtures():
     for harness, posture in (("codex", "accept_edits"), ("shell", "skip_all"), ("shell", "ask"), ("hermes", "ask")):
         with pytest.raises(UnsupportedPosture):
             permission_flags(harness, posture)
+
+
+def test_pass_through_claude_wrapper_carries_an_explicit_model(world, tmp_path):
+    claude = next(p for p in world[1] if p.harness == "claude")
+    wrapper = claude.model_copy(update={"custom_command": CustomCommand(script='claude "$@"'),
+                                            "permissions": "harness_default", "flags": [], "before_launch": ""})
+    request = dict(agent_type="claude", model="opus", model_is_explicit=True, scripts_dir=tmp_path)
+    plan = resolve_launch(LaunchRequest(profiles=(wrapper,), **request))
+    assert plan.argv_tail == ("--model", "opus")
+    assert plan.script_file is not None
+    extra = wrapper.model_copy(update={"custom_command": wrapper.custom_command.model_copy(
+        update={"script": 'claude --foo "$@"'})})
+    with pytest.raises(ValueError, match="opaque custom command"):
+        resolve_launch(LaunchRequest(profiles=(extra,), **request))

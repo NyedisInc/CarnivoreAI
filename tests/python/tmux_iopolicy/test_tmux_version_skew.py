@@ -26,7 +26,7 @@ def _bundled_tmux() -> Path:
 
 
 SPIKE_TMUX = _bundled_tmux()
-BREW_TMUX = Path("/opt/homebrew/bin/tmux")
+BREW_TMUX = Path(os.environ.get("CARNIVORE_SKEW_TMUX") or "/opt/homebrew/bin/tmux")
 SESSION = "carnivore_skewtest"
 
 

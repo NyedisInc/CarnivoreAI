@@ -148,8 +148,8 @@ One component draws it, <code>web/src/opscenter/shell/WidgetHead.svelte</code>; 
         control is the sort, which a cell under 440px drops, is dropped WITH one separator beside it, so a narrow row
         never starts with a hairline.</dd>
     <dt>the close x</dt>
-    <dd><code>.oc-ibtn.oc-ibtn--bare.oc-ibtn--close</code> (<code>opscenter/controls.css</code>, after the bare hover in the
-        same layer), 20px, a 13px close glyph, dim, the destructive <code>--oc-coral</code> only under the
+    <dd><code>.oc-ibtn.oc-ibtn--bare.oc-ibtn--close</code> (<code>lib/base/icon-button.css</code>, the close tone after the quiet
+        one in the same layer), 20px, a 13px close glyph, dim, the destructive <code>--oc-coral</code> only under the
         pointer. INSTANT, NO CONFIRM: a singleton is hidden and comes back from the
         components list, an instance is removed, through the one path the menu's close takes
         (<code>engine/close-widget.ts</code>; in edit layout the change is final at once). Absent on the terminal page's own pane, on a
@@ -424,10 +424,10 @@ facts use the server's period summaries and keep missing data distinct from zero
         It takes no pointer and is hidden from a screen reader.</dd>
     <dt>the widget drawer</dt>
     <dd><code>WidgetDrawer.svelte</code> (<code>.le-drawer</code>; its title row, find box and rows are drawn by <code>DrawerHead.svelte</code>, <code>DrawerTools.svelte</code> and <code>DrawerList.svelte</code>) is the body of the left sidebar's EDIT LAYOUT TAB
-        (<code>EditLayoutBody.svelte</code>, <code>.le-drawer--docked</code>: in the column's flow, no frame of its own; Joe
+        (<code>EditLayoutBody.svelte</code>, the sheet frame's <code>docked</code>: in the column's flow, no frame of its own; Joe
         (ccsliinc), 2026-10-01, <a href="#chrome-dynamic-tabs">dynamic tabs</a>). The sidebar docks, so a live pane is
         resized only by the drawer's own width, never by the editor. Undocked (no sidebar) it is fixed over the right edge,
-        folding to its title row (<code>.le-drawer--folded</code>). While any layout drag is carried (<code>body.grid-carrying</code>, from lift to release or Escape, not the settle glide) the undocked drawer slides off the right edge (transform only) and takes no pointer, so the right band and column can be aimed at; it returns as it was. Copied, not invented: the title row
+        folding to its title row (<code>folded</code>); the frame is the shared side sheet (<a href="#panels-sheet">a side sheet</a>). While any layout drag is carried (<code>body.grid-carrying</code>, from lift to release or Escape, not the settle glide) the undocked drawer slides off the right edge (transform only) and takes no pointer, so the right band and column can be aimed at; it returns as it was. Copied, not invented: the title row
         (<code>.le-titlebar</code>, <code>.le-title</code>, <code>.le-label</code>) is the ledger's <code>.pl-titlebar</code>
         family; the find field (a bare base <code>Field</code>) shares one line (<code>.le-find</code>) with
         one kind select (<code>.le-kind</code>, an <code>.oc-field</code>; Joe (ccsliinc), 2026-10-03: "under find, i dont
@@ -872,7 +872,7 @@ facts use the server's period summaries and keep missing data distinct from zero
         with lots of data below it"), so a plugin added later gets its square with no change. <code>.ps-sq__row</code> holds one
         <code>.ps-sq__item</code> per plugin: the square <code>.ps-sq__square</code>, drawn as the deleted job widget's
         add-on icon (the deleted <code>Cell.svelte</code> at 0ccf20a2b^): 28px, a 1px reserved border so the shared focus rule has an
-        edge, the plugin's own manifest icon (<code>src/cplugs/&lt;id&gt;/cplug.json</code>, else <code>chart</code>) and its
+        edge, the plugin's own manifest icon (<code>src/plugins/&lt;id&gt;/cplug.json</code>, else <code>chart</code>) and its
         state mark <code>.ps-sq__mark</code> in the bottom-right corner. The plugin's friendly name is the square's
         accessible name and the detail's head, never a label on the row. The squares carry no rebuild control (Joe
         (ccsliinc), 2026-10-12: "remove the refresh icons not needed"); the rebuild is the full panel's, in Settings,
@@ -1016,7 +1016,7 @@ facts use the server's period summaries and keep missing data distinct from zero
     <dd>The log tab (Joe (ccsliinc), 2026-10-15, #1827: "a log viewer to the dev widget as a new tab, top strip is buttons for each
         status to filter each type. scrolling not all inclusive"), since #1861 the ONE shared viewer
         <code>web/src/opscenter/log/LogViewer.svelte</code>, which the <code>#logs</code> page
-        (<code>LogsScreen.svelte</code>, the page frame with an <code>.oc-page__body.oc-lv-page</code> body) mounts too. It reads a
+        (<code>LogsScreen.svelte</code>, the column page frame with <code>scroll="self"</code>: the viewer fills the body region's fixed box) mounts too. It reads a
         source (<code>LogSource</code>), never the network itself. The root wears <code>.oc-rc.oc-lv</code>. <code>LogToolbar.svelte</code>
         draws the run chart's <code>.oc-rc-bar.oc-lv-bar</code> strip: one base <code>Button</code> (<code>size="sm"</code>, <code>data-level</code>) toggle per
         level (<code>aria-pressed</code>, all on by default, remembered per device; an ON level turns its own border and text to its
@@ -1061,7 +1061,7 @@ facts use the server's period summaries and keep missing data distinct from zero
         bell (<code>bell</code> icon) when all is on or two or more kinds are checked, and that kind's own icon and name when exactly one is; the
         count is the copy's rail badge and the <code>.oc-qs-count</code> line at the top of the widget, a hairline-underlined tracked uppercase label
         in <code>--oc-yellow</code> (<code>widgets/placement-options.ts</code>, <code>cells/questions/sources.ts</code>,
-        <code>cells/questions/placement.ts</code>). Each check is drawn as a square box (<code>.acm-box</code>, filled green via <code>.acm-box--on</code> when checked, the shape of <code>.oc-check__box</code>; a check disabled by all is dimmed whole); the single letter at a row's end is the menu's hotkey (<code>menu-key</code>), not a stray character. The widget body carries no filter of its own, and the top bell has none.</dd>
+        <code>cells/questions/placement.ts</code>). Each check is drawn as the one check mark (<code>.oc-check__box</code>, <code>lib/base/mark.css</code>, filled green through the row's own <code>aria-checked</code>; a check disabled by all is dimmed whole); the single letter at a row's end is the menu's hotkey (<code>menu-key</code>), not a stray character. The widget body carries no filter of its own, and the top bell has none.</dd>
     <dt>states</dt>
     <dd>Nothing waiting draws the base state (<code>.oc-state--inline</code>), "nothing waiting on you". A row that cannot open draws
         the same state as an error (the coral bar).</dd>
@@ -1132,7 +1132,7 @@ facts use the server's period summaries and keep missing data distinct from zero
 <h3 class="sg-h3" id="cells-warroom">the war room page and its wall cell (id warroom)</h3>
 <dl class="sg-facts">
     <dt>what it is</dt>
-    <dd>A full menu page, <code>#warroom</code> (<code>web/src/lib/warroom/WarRoomScreen.svelte</code>, issue #135, Alex (example-owner), 2026-10-20), wearing the one page frame (<code>opscenter/ui/Page.svelte</code>) and mounting a layout grid (<code>web/src/lib/warroom/WarRoomGrid.svelte</code>, the terminal page's surface shape) from its own store, <code>warroomLayout</code>, the third page of the layout engine. Edit layout works on it as on Home, so any widget can be dropped beside the wall. It has no phone: the menu row and the page go away at 700px and narrower.</dd>
+    <dd>A full menu page, <code>#warroom</code> (<code>web/src/lib/warroom/WarRoomScreen.svelte</code>, issue #135, Alex (example-owner), 2026-10-20), wearing the canvas page frame (<code>opscenter/ui/Page.svelte</code>, <code>frame="canvas"</code>: the header, then one fixed box the surface fills; its "+" is the frame's one header button) and mounting a layout grid (<code>web/src/lib/warroom/WarRoomGrid.svelte</code>, the terminal page's surface shape) from its own store, <code>warroomLayout</code>, the third page of the layout engine. Edit layout works on it as on Home, so any widget can be dropped beside the wall. It has no phone: the menu row and the page go away at 700px and narrower.</dd>
     <dt>the wall cell</dt>
     <dd>The one cell it places by default, <code>warroom</code> (<code>web/src/opscenter/cells/warroom/Cell.svelte</code>, widget <code>core.warroom</code>, one per surface), filling the page. It draws ONE uniform grid of equal tiles that fills the window (<code>.ww</code> inside a <code>.ww-fill</code> box; columns and rows from the tile count and the box's aspect, scrolling only below a minimum tile). A project's tiles sit together in reading order inside <code>.ww-cell</code>s, and one outline in the project's colour wraps their union (a border on the cell edges whose neighbour is another project), with a small uppercase <code>.ww-plabel</code> on its first cell. The hovered tile peeks by transform only, to ONE width at every tile count that the peek zoom slider sets (0 no zoom, 50 the default, 100 the largest). Four include switches (shells, browsers, asleep, paired computers) ride the host header as <code>.oc-chip</code> and are also switches in the widget menu, beside the peek zoom slider (<code>.ww-peek</code>: a <code>.ww-peek-label</code>, a thin-track <code>.ww-peek-range</code> with a small square accent thumb, and the number in <code>.ww-peek-val</code>), whose menu twin is a radio set of five stops.</dd>
     <dt>the tile</dt>
@@ -1165,7 +1165,8 @@ facts use the server's period summaries and keep missing data distinct from zero
         growing it never resizes the session's pane. Three sections under small tracked labels (<code>.scc-section</code>, <code>.scc-head</code>,
         <code>.scc-label</code>, a count in <code>.scc-count</code>): scheduled tasks (listed only), subagents and
         background processes, as hairline rows (<code>.scc-list</code>, <code>.scc-row</code>: <code>.scc-type</code>,
-        <code>.scc-text</code>, <code>.scc-num</code>, a dim pid line in <code>.scc-meta</code>). A work segment's click
+        <code>.scc-text</code>, <code>.scc-num</code>, a dim pid line in <code>.scc-meta</code>). A stalled subagent's timer reads
+        <code>stalled Nm</code> in amber (<code>.scc-num--stalled</code>, <code>--oc-yellow-bright</code>). A work segment's click
         opens it on its section, whose label wears the accent.</dd>
     <dt>the stats grid</dt>
     <dd><code>.oc-tfs</code> is one label column and one value column shared down every group (<code>subgrid</code>):

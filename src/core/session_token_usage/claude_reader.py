@@ -11,6 +11,7 @@ from typing import Any, BinaryIO, Dict, Optional, Tuple
 
 import structlog
 
+from src.core.attention.transcript_records import SYNTHETIC_MODEL
 from src.core.claude_project_dirs import candidate_project_dirs
 from src.core.session_token_usage import transcript_absence
 from src.core.session_token_usage.cache import (
@@ -121,6 +122,11 @@ def _usage_of(record: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     return usage if isinstance(usage, dict) else None
 
 
+def _is_synthetic_turn(record: Dict[str, Any]) -> bool:
+    message = record.get("message")
+    return record.get("type") == "assistant" and isinstance(message, dict) and message.get("model") == SYNTHETIC_MODEL
+
+
 def scan_lines(handle: BinaryIO, totals: TranscriptTotals) -> Tuple[TranscriptTotals, int]:
     offset = handle.tell()
     while True:
@@ -153,6 +159,8 @@ def scan_lines(handle: BinaryIO, totals: TranscriptTotals) -> Tuple[TranscriptTo
                 effort=selection.effort,
                 ultra=selection.ultra,
             )
+            continue
+        if _is_synthetic_turn(record):
             continue
         usage = _usage_of(record)
         if usage is None:

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.host import preview_check
+from src.plugins.host import preview_check
 from tests.python.cplugs.preview_fixtures import BAD, GOOD
 
 ROOT = Path(__file__).resolve().parents[3]

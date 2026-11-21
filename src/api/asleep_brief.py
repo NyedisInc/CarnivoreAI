@@ -9,13 +9,13 @@ import structlog
 from fastapi import HTTPException
 from fastapi.concurrency import run_in_threadpool
 
-from src.api import recreate_routes as rr
 from src.core import session_sleep
 from src.core.db_reuse.change_cache import HOT_READS
 from src.core.automations import plugin_schedules
 from src.core.session_roles import read as roles_read
-from src.cplugs.sdk import ports
+from src.plugins.sdk import ports
 from src.api.error_response import api_error
+from src.core.session_ops import row_probe
 
 logger = structlog.get_logger()
 
@@ -38,7 +38,7 @@ def read_asleep_rows(db_path: Path) -> List[Dict[str, Any]]:
 async def asleep_brief() -> List[Dict[str, Any]]:
     from src.core.db import DatastoreUnreadableError  # noqa: PLC0415
 
-    db_path = rr._db_path()
+    db_path = row_probe.db_path()
     if not db_path.exists():
         return []
     try:

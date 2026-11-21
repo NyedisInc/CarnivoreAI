@@ -30,8 +30,9 @@ const SNAPSHOT = {
   total: {
     accounts: 2,
     windows: [
-      { kind: 'five_hour', label: '5h', used_pct: 4, resets_at: null, accounts: 2 },
-      { kind: 'seven_day', label: '7d', used_pct: 48, resets_at: null, accounts: 2 },
+      { provider: 'claude', kind: 'five_hour', label: '5h', used_pct: 4, resets_at: null, accounts: 2 },
+      { provider: 'claude', kind: 'seven_day', label: '7d', used_pct: 48, resets_at: null, accounts: 2 },
+      { provider: 'codex', kind: 'primary', window_seconds: 604800, label: '7d', used_pct: 11, resets_at: null, accounts: 1 },
     ],
   },
   loop: { alive: true, last_pass_at: null },
@@ -60,9 +61,9 @@ function render(): HTMLElement {
 const foldOf = (el: HTMLElement): string | null => el.querySelector('.ldp')!.getAttribute('data-fold');
 
 describe('DrawerLedger density', () => {
-  test('the header steps compact, expanded, glance, total only and wraps; the smallest view is the total line alone', () => {
+  test('empty header space steps compact, expanded, glance, total only and wraps; the smallest view is the total line alone', () => {
     const el = render();
-    const title = el.querySelector<HTMLElement>('.ldp-title')!;
+    const title = el.querySelector<HTMLElement>('.ldp-head')!;
     const seen: Array<string | null> = [foldOf(el)];
     expect(el.querySelectorAll('.ldp-account')).toHaveLength(2);
 
@@ -82,8 +83,9 @@ describe('DrawerLedger density', () => {
     expect(el.querySelector('.ldp-total-label')?.textContent).toBe('all accounts total');
     expect(el.querySelector('.ldp-total .ldp-dim')?.textContent).toBe('2 accounts');
     const meters = [...el.querySelectorAll('.ldp-total .ldp-mini .ldp-meter')];
-    expect(meters.map((m) => m.textContent?.replace(/\s+/g, ' ').trim())).toEqual(['5h 4%', '7d 48%']);
-    expect(el.querySelectorAll('.ldp-total .ldp-mini .ldp-meter .oc-gauge').length).toBe(2);
+    expect(meters.map((m) => m.textContent?.replace(/\s+/g, ' ').trim())).toEqual(['5h 4%', '7d 48%', '7d 11%']);
+    expect(el.querySelectorAll('.ldp-total .ldp-mini .ldp-meter .oc-gauge').length).toBe(3);
+    expect(el.querySelectorAll('.ldp-total .ldp-meter .ldp-provider-mark[role="img"]').length).toBe(3);
     expect(el.querySelector('.ldp-window, table')).toBeNull();
 
     title.click();

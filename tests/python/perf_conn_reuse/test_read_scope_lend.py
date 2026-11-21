@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from contextlib import closing
 
-from src.cplugs.sdk.storage import CplugStorage, StorageSpec
+from src.plugins.sdk.storage import CplugStorage, StorageSpec
 from tests.python.perf_conn_reuse.helpers import count_connects, opens_of
 
 N = 40

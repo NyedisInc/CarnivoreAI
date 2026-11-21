@@ -17,9 +17,9 @@ from src.core.db_steps import run_chain
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
 from src.core.swarm import store as swarm_store, thread_port
-from src.cplugs.host import runtime
-from src.cplugs.huddle import rules, routes as huddle_routes, service
-from src.cplugs.huddle.swarm_port import TaskManagerSwarmPort
+from src.plugins.host import runtime
+from src.plugins.huddle import rules, routes as huddle_routes, service
+from src.plugins.huddle.swarm_port import TaskManagerSwarmPort
 from tests.python.cplugs.owner import turn_on
 
 BASE = "/api/v1/cplugs/huddle"

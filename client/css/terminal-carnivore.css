@@ -81,7 +81,7 @@ body.ps-terminal-active :is(#header-title-text, #header-rename-pencil) {
     .session-sidebar-pin) {
     background: transparent;
     border: 1px solid var(--cv-line-rule);
-    border-radius: 4px;
+    border-radius: var(--oc-radius-sm);
     color: var(--cv-orange);
 }
 

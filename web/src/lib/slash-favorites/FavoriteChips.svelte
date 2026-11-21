@@ -310,7 +310,7 @@
         bottom: 0;
         width: 4px;
         background: var(--fav-mark);
-        z-index: 1;
+        z-index: var(--oc-z-raised);
         pointer-events: none;
     }
 
@@ -335,7 +335,7 @@
         right: 0;
         width: 44px;
         height: 44px;
-        z-index: 1;
+        z-index: var(--oc-z-raised);
     }
 
     .command-chip :global([data-fav-grip] span) {

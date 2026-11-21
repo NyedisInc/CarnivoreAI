@@ -13,14 +13,14 @@ from types import SimpleNamespace
 import pytest
 from fastapi import HTTPException
 
-from src.api import one_shot_routes
-from src.cplugs.host import capabilities, runtime, session_actions, state as owner_state
+from tests.python.cplugs.huddle.paste_fakes import patch_paste
+from src.plugins.host import capabilities, runtime, session_actions, state as owner_state
 from dataclasses import replace as _replace
 
-from src.cplugs.huddle import held, schedule, service
-from src.cplugs.huddle.nudge import planning, scheduler as nudge_scheduler, settings as nudge_settings, sweep as nudge_sweep
-from src.cplugs.huddle.nudge_store import NudgeStore
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import held, schedule, service
+from src.plugins.huddle.nudge import planning, scheduler as nudge_scheduler, settings as nudge_settings, sweep as nudge_sweep
+from src.plugins.huddle.nudge_store import NudgeStore
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work.ladder import MIGRATIONS, SCHEMA_VERSION
 from src.core.work.storage import WorkStorage
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, row  # noqa: F401
@@ -206,7 +206,7 @@ def test_a_refused_paste_is_not_counted_and_never_held(client, rig, monkeypatch)
     async def refuse(request, session_id, text):
         raise HTTPException(status_code=409, detail={"code": "pane_dialog_open", "detail": "a dialog is open"})
 
-    monkeypatch.setattr(one_shot_routes, "paste_through_gates", refuse)
+    patch_paste(monkeypatch, refuse)
     rig.sweep(1.5)
     assert "nudge" not in rig.item(item["id"]) and held.snapshot() == [] and rig.nudge_lines(item["id"]) == []
 

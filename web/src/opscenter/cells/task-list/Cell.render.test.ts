@@ -58,7 +58,7 @@ import CellWithHost from '../../shell/fixtures/CellWithHost.svelte';
 import { declaredActionsFor } from '../../widgets/menu/declared-actions.svelte';
 import './meta';
 import { setLocale } from '../../../lib/i18n/index.svelte';
-import { cplugEnablement } from '../../../cplugs/host/enablement.svelte';
+import { cplugEnablement } from '../../../plugins/host/enablement.svelte';
 import { metaFor } from '../../engine/meta';
 import { sidebarTabs } from '../../../lib/dynamic-tabs/tab-store.svelte';
 

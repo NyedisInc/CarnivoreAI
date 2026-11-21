@@ -6,12 +6,12 @@ import threading
 
 import pytest
 
-from src.cplugs.host import runtime
-from src.cplugs.huddle import rules
-from src.cplugs.huddle.roles import ask, gone, lead, port as roles_port
-from src.cplugs.huddle.roles.store import RoleStore
-from src.cplugs.sdk.session_rows import SessionRowsUnreadable, StoredRow
-from src.cplugs.sdk.swarm import SeatRef
+from src.plugins.host import runtime
+from src.plugins.huddle import rules
+from src.plugins.huddle.roles import ask, gone, lead, port as roles_port
+from src.plugins.huddle.roles.store import RoleStore
+from src.plugins.sdk.session_rows import SessionRowsUnreadable, StoredRow
+from src.plugins.sdk.swarm import SeatRef
 from tests.python.cplugs.huddle.roles_rig import BASE, SwarmStub, aged, give_asleep, give_rows, give_stored_rows, use_swarm
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_tags import store_of

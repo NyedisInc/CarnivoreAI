@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "about": "every stylesheet and Svelte component Carnivore ships, each class filed under the style guide section that documents it. tests/test_style_guide_drift.py fails when the code and this file disagree. add a new class or component here, under the section that documents it, in the same change that adds it; python3 -m tests.helpers.style_guide_inventory prints the gap. a plugin that keeps its strings and guide entries in its own folder files its rows in web/src/cplugs/<id>/style-guide.json and its prose in web/src/cplugs/<id>/style-guide/<section file>.html instead (docs/cplugs.md 1.2a).",
+  "about": "every stylesheet and Svelte component Carnivore ships, each class filed under the style guide section that documents it. tests/test_style_guide_drift.py fails when the code and this file disagree. add a new class or component here, under the section that documents it, in the same change that adds it; python3 -m tests.helpers.style_guide_inventory prints the gap. a plugin that keeps its strings and guide entries in its own folder files its rows in web/src/plugins/<id>/style-guide.json and its prose in web/src/plugins/<id>/style-guide/<section file>.html instead (docs/cplugs.md 1.2a).",
   "sections": [
     {
       "id": "review",
@@ -256,11 +256,12 @@
     "web/src/lib/ui/PrefsArchive.fixture.svelte": "vitest fixture: reads both archive filters in a derived for prefs-archive.test.ts; never rendered by the app",
     "web/src/lib/base/IconButtonBind.fixture.svelte": "vitest fixture: an IconButton with a bound element for IconButton.test.ts; never rendered by the app",
     "web/src/opscenter/ui/InsetHostFixture.svelte": "vitest fixture: a host that calls provideInset() for Tabs.render.test.ts; never rendered by the app",
-    "web/src/cplugs/reviewboard/fixtures/": "vitest fixture: a stand-in board header key for header-keys.render.test.ts; never rendered by the app",
+    "web/src/opscenter/ui/InsetFindFixture.svelte": "vitest fixture: an inset page handed a header search for Page.frame.render.test.ts; never rendered by the app",
+    "web/src/plugins/reviewboard/fixtures/": "vitest fixture: a stand-in board header key for header-keys.render.test.ts; never rendered by the app",
     "web/src/opscenter/shell/fixtures/": "vitest fixtures that mount CellFrame for tests; never rendered by the app",
     "web/src/opscenter/cells/plugin-view/fixtures/": "vitest fixture: the plugin-view cell under a host title strip for Cell.header.test.ts; never rendered by the app",
     "web/src/opscenter/cells/terminal-group/fixtures/": "vitest fixtures for the page tab tests (Cell.pages.test.ts); never rendered by the app",
-    "web/src/cplugs/huddle/style-guide/": "the huddle plugin's own live specimens, listed to the guide through web/src/cplugs/style-guide.ts (#1630)",
+    "web/src/plugins/huddle/style-guide/": "the huddle plugin's own live specimens, listed to the guide through web/src/plugins/style-guide.ts (#1630)",
     "web/src/style-guide/": "this guide's own specimen harness",
     "web/src/lib/sidebar-widgets/fixtures/": "vitest fixtures for the sidebar rail tests (rail.test.ts); never rendered by the app",
     "web/src/opscenter/cells/files/fixtures/": "vitest fixtures that mount the files widget under a host for Cell.test.ts; never rendered by the app",
@@ -269,7 +270,6 @@
     "web/src/lib/dialog-frame/fixtures/": "vitest fixtures that open AnchoredPopup for anchored-popup.test.ts; never rendered by the app",
     "web/src/lib/right-drawer/fixtures/": "vitest fixtures: a notes cell stand-in for right-drawer-zone.test.ts; never rendered by the app",
     "web/src/opscenter/ui/fixtures/": "vitest fixture: mounts RunChartTable with a cell snippet for RunChartTable.render.test.ts; never rendered by the app",
-    "web/src/lib/automations/fixtures/": "vitest fixture: the open-state caller pattern for RowMenu.close.test.ts; never rendered by the app",
     "web/src/opscenter/cells/task-manager-mk2/fixtures/": "vitest fixtures that mount a TM Mark II cell under a frame header for Cell.render.test.ts; never rendered by the app",
     "web/src/opscenter/engine/rects/AbsSurface.fixture.svelte": "vitest fixture: a host that mounts AbsSurface with bare cells for AbsSurface.render.test.ts; never rendered by the app",
     "web/src/opscenter/engine/rects/AbsSurface.terminal.fixture.svelte": "vitest fixture: a host that mounts AbsSurface with the terminal page's real CellHost cells for AbsSurface.terminal.test.ts; never rendered by the app"
@@ -621,7 +621,6 @@
       "section": "dialogs",
       "classes": [
         "is-unavailable",
-        "modal-btn",
         "restart-picker",
         "restart-picker__arm",
         "restart-picker__choice",
@@ -651,8 +650,6 @@
         "is-refused",
         "is-reopened",
         "is-waiting",
-        "modal-btn",
-        "restore-offer",
         "restore-offer__all",
         "restore-offer__blocked",
         "restore-offer__check",
@@ -695,6 +692,7 @@
         "session-row-menu__label",
         "session-row-menu__reason",
         "session-row-menu__sep",
+        "session-row-menu__title",
         "session-sidebar-panel",
         "session-sidebar-row",
         "session-sidebar-row-controls-cluster",
@@ -1305,7 +1303,6 @@
       "classes_by_section": {
         "dialogs": [
           "modal-body",
-          "modal-btn",
           "modal-content",
           "modal-footer",
           "modal-input",
@@ -1452,6 +1449,28 @@
       "section": "base-set",
       "classes": []
     },
+    "web/src/lib/base/ChatBubble.svelte": {
+      "section": "base-set",
+      "classes": []
+    },
+    "web/src/lib/base/chat-bubble.css": {
+      "section": "base-set",
+      "classes": [
+        "hb",
+        "hb--row",
+        "hb--thread",
+        "hb--waiting",
+        "hb--owner-side",
+        "hb--head-nowrap",
+        "hb-mark",
+        "hb-main",
+        "hb-head",
+        "hb-who",
+        "hb-kind",
+        "hb-time",
+        "hb-body"
+      ]
+    },
     "web/src/lib/base/Tag.svelte": {
       "section": "base-set",
       "classes": []
@@ -1517,7 +1536,6 @@
       "section": "base-set",
       "classes": [
         "oc-option",
-        "oc-option__box",
         "oc-option__label",
         "oc-option__lead",
         "oc-option__reason",
@@ -2000,10 +2018,8 @@
     "web/src/lib/leader-confirm/LeaderConfirm.svelte": {
       "section": "dialogs",
       "classes": [
-        "leader-confirm",
         "leader-confirm__list",
-        "leader-confirm__lost",
-        "modal-btn-danger"
+        "leader-confirm__lost"
       ]
     },
     "web/src/lib/catalog/KindMark.svelte": {
@@ -2129,9 +2145,8 @@
       "section": "ledger-catalog",
       "classes": [
         "cat",
-        "cat--flush",
+        "cat-col",
         "oc-page__bar",
-        "oc-titlebar",
         "rows",
         "screen__back",
         "screen__backbtn",
@@ -2522,8 +2537,6 @@
       "section": "menus",
       "classes": [
         "acm-agg-led",
-        "acm-box",
-        "acm-box--on",
         "acm-chevron",
         "acm-desc",
         "acm-heading",
@@ -2747,7 +2760,9 @@
       "classes": [
         "modal-body",
         "modal-content--fill",
-        "modal-header"
+        "modal-header",
+        "ms-label",
+        "text-prompt-modal__head"
       ]
     },
     "web/src/lib/launchpad/ProjectFolderModal.svelte": {
@@ -3035,12 +3050,19 @@
         "ledger-hero__reset",
         "ledger-hero__win",
         "ledger-usage__none",
+        "ledger-window__mark",
         "ledger-window__meter",
         "ledger-window__name",
         "ledger-window__pct",
         "ledger-window__reset",
         "ledger-windows",
         "ledger-windows__end"
+      ]
+    },
+    "web/src/lib/sheet/Sheet.svelte": {
+      "section": "panels",
+      "classes": [
+        "oc-sheet"
       ]
     },
     "web/src/lib/ledger/ledger-chrome.css": {
@@ -3346,6 +3368,7 @@
         "sal-name",
         "sal-note",
         "sal-num",
+        "sal-num--stalled",
         "sal-panel",
         "sal-status",
         "sal-status--done",
@@ -3366,6 +3389,7 @@
       "section": "menus",
       "classes": [
         "cc-tooltip",
+        "cc-tooltip-bullet",
         "prompt-rail-tooltip"
       ]
     },
@@ -3442,6 +3466,14 @@
         "fav-swatch--none",
         "fav-swatches",
         "fav-swatches__label"
+      ]
+    },
+    "web/src/lib/cell-dim/CellDimPanel.svelte": {
+      "section": "terminal",
+      "classes": [
+        "cdim",
+        "cdim__range",
+        "cdim__value"
       ]
     },
     "web/src/lib/terminal-background/TerminalBackgroundButton.svelte": {
@@ -3674,10 +3706,10 @@
         "oc-label",
         "oc-page__bar",
         "themes-active",
-        "themes-body",
-        "themes-body--detail",
+        "themes-layout",
+        "themes-layout--detail",
+        "themes-main",
         "themes-grid",
-        "oc-page__scroll",
         "themes-now",
         "themes-screen",
         "themes-side"
@@ -3715,6 +3747,50 @@
         "pot-foot"
       ]
     },
+    "web/src/lib/pack-jobs/JobDetails.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/pack-jobs/JobRow.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/pack-jobs/JobsNumbers.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/pack-jobs/JobsTab.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/pack-jobs/StopJobDialog.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/pack-machines/MachineAllowLists.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/pack-ssh-targets/HostKeyConfirm.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/pack-ssh-targets/SshTargetBlock.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/pack-ssh-targets/SshTargetRows.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/pack-transport/ProjectAutoDelegate.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/pack-transport/ProjectDelegateNeeds.svelte": {
+      "section": "settings",
+      "classes": []
+    },
     "web/src/lib/pack-transport/ProjectReplicas.svelte": {
       "section": "settings",
       "classes": []
@@ -3726,13 +3802,69 @@
     "web/src/lib/pack-transport/pack-transport.css": {
       "section": "settings",
       "classes": [
+        "dk-acts",
+        "dk-acts--copy",
+        "dk-body",
+        "dk-cap",
+        "dk-cap__chips",
+        "dk-cap__head",
+        "dk-cap__name",
+        "dk-chev",
+        "dk-col",
+        "dk-count",
+        "dk-crumb",
+        "dk-desc",
+        "dk-desc--tile",
+        "dk-end",
+        "dk-fieldrow",
+        "dk-foot",
+        "dk-glyph",
+        "dk-glyph--coral",
+        "dk-glyph--down",
+        "dk-glyph--link",
+        "dk-glyph--linked",
+        "dk-glyph--self",
+        "dk-grp",
+        "dk-head",
+        "dk-home",
+        "dk-jobs",
+        "dk-k",
+        "dk-label",
+        "dk-line",
+        "dk-line--primary",
+        "dk-more",
+        "dk-pad",
+        "dk-page",
+        "dk-page__body",
+        "dk-pub",
+        "dk-rep",
+        "dk-set",
+        "dk-set__h",
+        "dk-set__t",
+        "dk-ssh",
+        "dk-sum",
+        "dk-sum--err",
+        "dk-sum--muted",
+        "dk-tick",
+        "dk-tile",
+        "dk-tile--leftover",
+        "oc-list__main",
+        "oc-list__primary",
+        "oc-list__row",
+        "oc-list__secondary",
+        "oc-state",
+        "oc-sub",
         "pt",
         "pt-actions",
         "pt-body",
         "pt-done",
         "pt-error",
         "pt-line",
+        "pt-needs",
+        "pt-needs-kind",
+        "pt-needs-words",
         "pt-note",
+        "pt-numbers",
         "pt-publish",
         "pt-replica",
         "pt-replica-list",
@@ -4008,12 +4140,7 @@
         "oc-page__detail",
         "oc-page__scroll",
         "oc-rank__name",
-        "oc-titlebar",
-        "oc-titlebar__actions",
-        "oc-titlebar__sub",
         "oc-toolbar",
-        "oc-toolbar__end",
-        "oc-toolbar__search",
         "pn-band",
         "pn-brief",
         "pn-detail",
@@ -4385,7 +4512,6 @@
         "oc-lv-list",
         "oc-lv-live",
         "oc-lv-more",
-        "oc-lv-page",
         "oc-lv-pill",
         "oc-lv-rec",
         "oc-lv-row",
@@ -4691,13 +4817,8 @@
       "section": "menus",
       "classes": [
         "oc-popover",
-        "oc-popover-arrange",
         "oc-popover-empty",
-        "oc-popover-icon",
-        "oc-popover-item",
-        "oc-popover-list",
-        "oc-popover-name",
-        "oc-popover-reset"
+        "oc-popover-icon"
       ]
     },
     "web/src/opscenter/engine/FlyLayer.svelte": {
@@ -4721,7 +4842,6 @@
         "grid-dragging",
         "oc-cellslot",
         "oc-cellslot-reserved",
-        "oc-cellslot-span",
         "oc-cellslot-zoomed",
         "oc-gutter",
         "oc-gutter-band",
@@ -4734,7 +4854,6 @@
         "oc-insert-row",
         "oc-intersection",
         "oc-row",
-        "oc-slot-lifted",
         "oc-span-edge",
         "oc-stack-above",
         "oc-stack-below",
@@ -4864,7 +4983,8 @@
         "rail-body",
         "oc-ptab__icon",
         "oc-ptabs--compact",
-        "oc-ptabs--collapse"
+        "oc-ptabs--collapse",
+        "oc-ptabs--frame"
       ]
     },
     "web/src/opscenter/shell/TabStrip.svelte": {
@@ -5278,15 +5398,10 @@
         "header",
         "menu-page-open",
         "menu-page-surface",
-        "oc-page",
-        "oc-page--embedded",
         "screen",
         "session-sidebar-pinned",
         "session-sidebar-railed",
-        "ps-page-back",
-        "oc-page--drawer-list",
-        "oc-page--ghost",
-        "oc-page__resize"
+        "ps-page-back"
       ]
     },
     "web/src/opscenter/layouts/LayoutCommandBar.svelte": {
@@ -5671,8 +5786,6 @@
         "le-card__name",
         "le-card__text",
         "le-drawer",
-        "le-drawer--docked",
-        "le-drawer--folded",
         "le-empty",
         "le-foot",
         "le-foot__row",
@@ -5704,6 +5817,7 @@
         "session-sidebar-bar__avatar",
         "session-sidebar-bar__signin",
         "mr-footer",
+        "spiral-mask",
         "spiral-turn"
       ]
     },
@@ -5744,6 +5858,7 @@
         "scc-note",
         "scc-notice",
         "scc-num",
+        "scc-num--stalled",
         "scc-owner-actions",
         "scc-owner-kind",
         "scc-owner-list",
@@ -5811,24 +5926,19 @@
     "web/src/lib/settings-page/settings-page.css": {
       "section": "settings",
       "classes": [
-        "oc-page--drawer-stacked",
         "mgr",
         "mgr-mark",
         "modal-btn",
         "modal-input",
-        "oc-page__body",
-        "oc-page__tabs",
         "oc-ptabs",
-        "oc-titlebar__sub",
         "oc-wide",
         "settings-page",
         "settings-section",
         "settings-section-description",
         "settings-section-title",
         "sf__error",
-        "st-body",
-        "st-body--phone",
         "st-content",
+        "st-content--phone",
         "st-copy",
         "st-copy__value",
         "st-env",
@@ -5871,9 +5981,7 @@
         "st-unit__suffix",
         "tm__actions",
         "toast-mode-option",
-        "toast-mode-options",
-        "st-body--list",
-        "st-body--stacked"
+        "toast-mode-options"
       ]
     },
     "web/src/lib/settings-page/config-bundle/CommandConsent.svelte": {
@@ -6329,10 +6437,6 @@
         "oc-group__label",
         "oc-group__main",
         "oc-group__side",
-        "oc-ibtn",
-        "oc-ibtn--bare",
-        "oc-ibtn--close",
-        "oc-ibtn--float",
         "oc-key",
         "oc-order",
         "oc-order__item",
@@ -6340,7 +6444,6 @@
         "oc-order__n",
         "oc-order__name",
         "oc-pane",
-        "oc-radio",
         "oc-seg",
         "oc-seg__item",
         "oc-sub",
@@ -6373,63 +6476,72 @@
       ]
     },
     "web/src/opscenter/page.css": {
-      "section": "controls",
-      "classes": [
-        "oc-btn",
-        "oc-field",
-        "oc-label",
-        "oc-notice",
-        "oc-notice--error",
-        "oc-notice--muted",
-        "oc-notice--warn",
-        "oc-page",
-        "oc-page--away",
-        "oc-page--embedded",
-        "oc-page--inset",
-        "oc-page__away",
-        "oc-page__bar",
-        "oc-page__body",
-        "oc-page__body--reading",
-        "oc-page__chips",
-        "oc-page__detail",
-        "oc-page__detail-body",
-        "oc-page__empty",
-        "oc-page__empty-text",
-        "oc-page__error",
-        "oc-page__error-detail",
-        "oc-page__error-title",
-        "oc-page__foot",
-        "oc-page__group",
-        "oc-page__group-head",
-        "oc-page__group-meta",
-        "oc-page__group-title",
-        "oc-page__inset-end",
-        "oc-page__item",
-        "oc-page__items",
-        "oc-page__items--list",
-        "oc-page__lede",
-        "oc-page__main",
-        "oc-page__main--stack",
-        "oc-page__notes",
-        "oc-page__scroll",
-        "oc-page__search",
-        "oc-page__state",
-        "oc-page__tabs",
-        "oc-page__tools",
-        "oc-titlebar",
-        "oc-titlebar__actions",
-        "oc-titlebar__back",
-        "oc-titlebar__controls",
-        "oc-titlebar__count",
-        "oc-titlebar__icon",
-        "oc-titlebar__omni",
-        "oc-titlebar__omni-row",
-        "oc-titlebar__sub",
-        "oc-titlebar__title",
-        "session-sidebar-pinned",
-        "session-sidebar-railed",
-        "oc-titlebar--drawer"
-      ]
+      "classes_by_section": {
+        "controls": [
+          "oc-btn",
+          "oc-field",
+          "oc-label",
+          "oc-notice",
+          "oc-notice--error",
+          "oc-notice--muted",
+          "oc-notice--warn",
+          "oc-page",
+          "oc-page--away",
+          "oc-page--embedded",
+          "oc-page--inset",
+          "oc-page__away",
+          "oc-page__bar",
+          "oc-page__body",
+          "oc-page__chips",
+          "oc-page__detail",
+          "oc-page__detail-body",
+          "oc-page__empty",
+          "oc-page__empty-text",
+          "oc-page__error",
+          "oc-page__error-detail",
+          "oc-page__error-title",
+          "oc-page__foot",
+          "oc-page__group",
+          "oc-page__group-head",
+          "oc-page__group-meta",
+          "oc-page__group-title",
+          "oc-page__inset-end",
+          "oc-page__item",
+          "oc-page__items",
+          "oc-page__items--list",
+          "oc-page__lede",
+          "oc-page__main",
+          "oc-page__main--stack",
+          "oc-page__notes",
+          "oc-page__scroll",
+          "oc-page__search",
+          "oc-page__split",
+          "oc-page__split--reading",
+          "oc-page__state",
+          "oc-page__tabs",
+          "oc-page__tools",
+          "oc-titlebar",
+          "oc-titlebar__actions",
+          "oc-titlebar__back",
+          "oc-titlebar__controls",
+          "oc-titlebar__count",
+          "oc-titlebar__icon",
+          "oc-titlebar__omni",
+          "oc-titlebar__omni-row",
+          "oc-titlebar__sub",
+          "oc-titlebar__title",
+          "session-sidebar-pinned",
+          "session-sidebar-railed",
+          "oc-titlebar--drawer"
+        ],
+        "chrome": [
+          "menu-page-surface",
+          "oc-page--drawer-list",
+          "oc-page--drawer-stacked",
+          "oc-page--ghost",
+          "oc-page__resize"
+        ]
+      }
     },
     "web/src/opscenter/ui/Page.svelte": {
       "section": "controls",
@@ -6807,6 +6919,10 @@
         "alarm-strip",
         "alarm-strip--firing"
       ]
+    },
+    "web/src/opscenter/viz/ComputersPick.svelte": {
+      "section": "charts",
+      "classes": []
     },
     "web/src/opscenter/viz/TripwireEditor.svelte": {
       "section": "charts",
@@ -7782,11 +7898,11 @@
       "section": "cells",
       "classes": []
     },
-    "web/src/cplugs/huddle/swarm/characters/Character.svelte": {
+    "web/src/plugins/huddle/swarm/characters/Character.svelte": {
       "section": "swarm-characters",
       "classes": []
     },
-    "web/src/cplugs/huddle/swarm/characters/characters.css": {
+    "web/src/plugins/huddle/swarm/characters/characters.css": {
       "section": "swarm-characters",
       "classes": [
         "pk-bd",
@@ -7815,11 +7931,11 @@
         "pk-tl"
       ]
     },
-    "web/src/cplugs/huddle/swarm/NodeMenu.svelte": {
+    "web/src/plugins/huddle/swarm/NodeMenu.svelte": {
       "section": "swarm-characters",
       "classes": []
     },
-    "web/src/cplugs/huddle/HuddleBody.svelte": {
+    "web/src/plugins/huddle/HuddleBody.svelte": {
       "section": "chrome",
       "classes": [
         "hd",
@@ -7856,7 +7972,7 @@
         "hd-scroll--stack"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerRow.svelte": {
+    "web/src/plugins/huddle/TaskManagerRow.svelte": {
       "section": "chrome",
       "classes": [
         "hdr",
@@ -7903,7 +8019,7 @@
         "tkm-marker"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerSchedule.svelte": {
+    "web/src/plugins/huddle/TaskManagerSchedule.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-sched",
@@ -7915,13 +8031,13 @@
         "tkm-sched-note--failed"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerActionTag.svelte": {
+    "web/src/plugins/huddle/TaskManagerActionTag.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-action"
       ]
     },
-    "web/src/cplugs/huddle/HuddleReview.svelte": {
+    "web/src/plugins/huddle/HuddleReview.svelte": {
       "section": "chrome",
       "classes": [
         "hdr",
@@ -7939,7 +8055,7 @@
         "tkm-review-link"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerSend.svelte": {
+    "web/src/plugins/huddle/TaskManagerSend.svelte": {
       "section": "chrome",
       "classes": [
         "hdtl",
@@ -7960,7 +8076,7 @@
         "hdtl-asks"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerSections.svelte": {
+    "web/src/plugins/huddle/TaskManagerSections.svelte": {
       "section": "chrome",
       "classes": [
         "hds-section",
@@ -7980,7 +8096,7 @@
         "hd-drop"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerProjectHead.svelte": {
+    "web/src/plugins/huddle/TaskManagerProjectHead.svelte": {
       "section": "chrome",
       "classes": [
         "hd-group",
@@ -7995,11 +8111,11 @@
         "hd-stack-top"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerTail.svelte": {
+    "web/src/plugins/huddle/TaskManagerTail.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/cplugs/huddle/task-manager-tail.css": {
+    "web/src/plugins/huddle/task-manager-tail.css": {
       "section": "chrome",
       "classes": [
         "hd-slot",
@@ -8010,7 +8126,7 @@
         "hd-tail-over"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerSubHead.svelte": {
+    "web/src/plugins/huddle/TaskManagerSubHead.svelte": {
       "section": "chrome",
       "classes": [
         "hds-sub",
@@ -8021,7 +8137,7 @@
         "hds-count"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerEmptyGroup.svelte": {
+    "web/src/plugins/huddle/TaskManagerEmptyGroup.svelte": {
       "section": "chrome",
       "classes": [
         "hdeg-head",
@@ -8031,7 +8147,7 @@
         "hdeg-line"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerStatusSections.svelte": {
+    "web/src/plugins/huddle/TaskManagerStatusSections.svelte": {
       "section": "chrome",
       "classes": [
         "hss-section",
@@ -8055,7 +8171,7 @@
         "hdr-agent-page"
       ]
     },
-    "web/src/cplugs/huddle/HuddleViewSwitch.svelte": {
+    "web/src/plugins/huddle/HuddleViewSwitch.svelte": {
       "section": "chrome",
       "classes": [
         "hdv",
@@ -8064,7 +8180,7 @@
         "hdv-key--icon"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerStatusFilter.svelte": {
+    "web/src/plugins/huddle/TaskManagerStatusFilter.svelte": {
       "section": "chrome",
       "classes": [
         "hdf",
@@ -8075,14 +8191,14 @@
         "hdf-needs"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerNewGroup.svelte": {
+    "web/src/plugins/huddle/TaskManagerNewGroup.svelte": {
       "section": "chrome",
       "classes": [
         "hdg",
         "hdg-input"
       ]
     },
-    "web/src/cplugs/huddle/HuddleThread.svelte": {
+    "web/src/plugins/huddle/HuddleThread.svelte": {
       "section": "chrome",
       "classes": [
         "hdt",
@@ -8097,11 +8213,11 @@
         "hdt-reply"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerTargetPick.svelte": {
+    "web/src/plugins/huddle/TaskManagerTargetPick.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/cplugs/huddle/HuddleReply.svelte": {
+    "web/src/plugins/huddle/HuddleReply.svelte": {
       "section": "chrome",
       "classes": [
         "oc-inline-field",
@@ -8117,7 +8233,7 @@
         "hdt-send--ready"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerRowPeek.svelte": {
+    "web/src/plugins/huddle/TaskManagerRowPeek.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-peek",
@@ -8128,7 +8244,7 @@
         "tkm-latest-text"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerAsk.svelte": {
+    "web/src/plugins/huddle/TaskManagerAsk.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-ask",
@@ -8138,7 +8254,7 @@
         "tkm-ask-q"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerAnswerBox.svelte": {
+    "web/src/plugins/huddle/TaskManagerAnswerBox.svelte": {
       "section": "chrome",
       "classes": [
         "hda",
@@ -8146,7 +8262,7 @@
         "hda-body"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerFormAnswer.svelte": {
+    "web/src/plugins/huddle/TaskManagerFormAnswer.svelte": {
       "section": "chrome",
       "classes": [
         "hdfa",
@@ -8156,7 +8272,7 @@
         "hdfa-note"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerCommandBox.svelte": {
+    "web/src/plugins/huddle/TaskManagerCommandBox.svelte": {
       "section": "chrome",
       "classes": [
         "hcb",
@@ -8167,11 +8283,11 @@
         "hcb-live"
       ]
     },
-    "web/src/cplugs/sdk/Markdown.svelte": {
+    "web/src/plugins/sdk/Markdown.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/cplugs/huddle/TaskManagerMarkdown.svelte": {
+    "web/src/plugins/huddle/TaskManagerMarkdown.svelte": {
       "section": "chrome",
       "classes": [
         "hmd",
@@ -8191,7 +8307,7 @@
         "hmd-kv"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerRowPosts.svelte": {
+    "web/src/plugins/huddle/TaskManagerRowPosts.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-posts",
@@ -8209,7 +8325,7 @@
         "tkm-post-files"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerTitleEdit.svelte": {
+    "web/src/plugins/huddle/TaskManagerTitleEdit.svelte": {
       "section": "chrome",
       "classes": [
         "hdr-title",
@@ -8411,50 +8527,27 @@
         "toast__mute-undo"
       ]
     },
-    "web/src/lib/notifications/matrix/LinkPanel.svelte": {
-      "section": "settings",
-      "classes": []
-    },
-    "web/src/lib/notifications/matrix/MatrixCell.svelte": {
-      "section": "settings",
-      "classes": []
-    },
-    "web/src/lib/notifications/matrix/MatrixPanel.svelte": {
-      "section": "settings",
-      "classes": []
-    },
-    "web/src/lib/notifications/matrix/matrix.css": {
-      "section": "settings",
-      "classes": [
-        "mx-badge",
-        "mx-cell",
-        "mx-cell--row",
-        "mx-colname",
-        "mx-colsub",
-        "mx-desc",
-        "mx-family",
-        "mx-group",
-        "mx-group-row",
-        "mx-group__caret",
-        "mx-group__count",
-        "mx-item",
-        "mx-label",
-        "mx-legend",
-        "mx-link",
-        "mx-link__base",
-        "mx-link__kind",
-        "mx-link__row",
-        "mx-list",
-        "mx-merged",
-        "mx-picker",
-        "mx-scroll",
-        "mx-src",
-        "mx-table",
-        "mx-type",
-        "mx-why"
-      ]
-    },
     "web/src/lib/notifications/inspector/Inspector.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/notifications/inspector/GroupRail.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/notifications/inspector/ComputerBlocks.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/notifications/inspector/Sections.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/notifications/inspector/Housekeeping.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/notifications/inspector/Preview.svelte": {
       "section": "settings",
       "classes": []
     },
@@ -8466,29 +8559,84 @@
       "section": "settings",
       "classes": [
         "ins",
-        "ins__ctl",
-        "ins__dev",
-        "ins__frame",
-        "ins__hint",
-        "ins__lab",
-        "ins__list",
-        "ins__name",
-        "ins__prev",
-        "ins__row",
-        "ins__st",
-        "ins__title",
-        "ins__walls",
+        "ins-bar",
+        "ins-bar--hot",
+        "ins-cap",
+        "ins-cap__k",
+        "ins-sample",
+        "ins-chip",
+        "ins-comp",
+        "ins-comp__bar",
+        "ins-count",
+        "ins-ctl",
+        "ins-dim",
+        "ins-frame",
+        "ins-group",
+        "ins-grow",
+        "ins-grow-fill",
+        "ins-gsum",
+        "ins-house",
+        "ins-house__pause",
+        "ins-hue",
+        "ins-hue-1",
+        "ins-hue-2",
+        "ins-hue-3",
+        "ins-hue-4",
+        "ins-ios",
+        "ins-ios__ic",
+        "ins-ios__lv",
+        "ins-ios__s",
+        "ins-ios__t",
+        "ins-ios__ts",
+        "ins-ios__tx",
+        "ins-label",
+        "ins-left",
+        "ins-link",
+        "ins-mac",
+        "ins-mac__ic",
+        "ins-mac__s",
+        "ins-mac__t",
+        "ins-mac__ts",
+        "ins-mac__tx",
+        "ins-main",
+        "ins-master",
+        "ins-master__w",
+        "ins-panel",
+        "ins-pf",
+        "ins-pf--app",
+        "ins-pf--desk",
+        "ins-pf--phone",
+        "ins-pf__bar",
+        "ins-pf__body",
+        "ins-pf__sample",
+        "ins-pf__corner",
+        "ins-pf__date",
+        "ins-pf__ghost",
+        "ins-pf__menu",
+        "ins-pf__nocorner",
+        "ins-pf__stack",
+        "ins-pf__status",
+        "ins-pf__time",
+        "ins-prev",
+        "ins-row",
+        "ins-sec",
+        "ins-sec__bar",
+        "ins-sec__body",
+        "ins-sec__body--flush",
+        "ins-secs",
+        "ins-showas",
+        "ins-side",
+        "ins-test",
+        "ins-tg",
+        "ins-tg__note",
+        "ins-tg__sub",
+        "ins-trow",
+        "ins-two",
+        "ins-viewswitch",
+        "ins-warn",
+        "ins-warn--row",
         "nc-acts",
-        "pv-body",
-        "pv-level",
-        "pv-note",
-        "pv-pic",
-        "pv-sheet",
-        "pv-sheet--card",
-        "pv-text",
-        "pv-title",
-        "pv-ts",
-        "pv-wall"
+        "oc-fold"
       ]
     },
     "web/src/lib/launch-picker/LaunchPickerModal.svelte": {
@@ -8516,12 +8664,9 @@
         "mgr-card",
         "mgr-card__head",
         "oc-check",
-        "oc-page__body",
         "oc-page__items--list",
         "pack-page",
-        "pk-body",
-        "pk-screen",
-        "pk-tabs"
+        "pk-screen"
       ]
     },
     "web/src/lib/settings-page/SettingsScreenSection.svelte": {
@@ -8974,7 +9119,7 @@
         "hero-art__svg"
       ]
     },
-    "web/src/cplugs/huddle/chat/ChatWidget.svelte": {
+    "web/src/plugins/huddle/chat/ChatWidget.svelte": {
       "section": "chrome",
       "classes": [
         "hdc",
@@ -9025,7 +9170,7 @@
         "oc-ibtn"
       ]
     },
-    "web/src/cplugs/huddle/chat/ChatBar.svelte": {
+    "web/src/plugins/huddle/chat/ChatBar.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-bar",
@@ -9042,7 +9187,7 @@
         "hdc-brain"
       ]
     },
-    "web/src/cplugs/huddle/chat/ChatAskForm.svelte": {
+    "web/src/plugins/huddle/chat/ChatAskForm.svelte": {
       "section": "chrome",
       "classes": [
         "hca",
@@ -9068,7 +9213,7 @@
         "hca-x"
       ]
     },
-    "web/src/cplugs/huddle/chat/ChatCard.svelte": {
+    "web/src/plugins/huddle/chat/ChatCard.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-card",
@@ -9099,7 +9244,7 @@
         "hdt-name"
       ]
     },
-    "web/src/cplugs/huddle/chat/ChatAvatar.svelte": {
+    "web/src/plugins/huddle/chat/ChatAvatar.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-av",
@@ -9111,7 +9256,7 @@
         "pk-gw"
       ]
     },
-    "web/src/cplugs/huddle/chat/AuthorPath.svelte": {
+    "web/src/plugins/huddle/chat/AuthorPath.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-crumb",
@@ -9125,7 +9270,7 @@
         "hdc-path--lead"
       ]
     },
-    "web/src/cplugs/huddle/chat/WaitingTray.svelte": {
+    "web/src/plugins/huddle/chat/WaitingTray.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-wait",
@@ -9157,13 +9302,13 @@
         "hdc-wait-sub"
       ]
     },
-    "web/src/cplugs/huddle/chat/ChatMarkdown.svelte": {
+    "web/src/plugins/huddle/chat/ChatMarkdown.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-md"
       ]
     },
-    "web/src/cplugs/huddle/SwarmDecisionKeys.svelte": {
+    "web/src/plugins/huddle/SwarmDecisionKeys.svelte": {
       "section": "chrome",
       "classes": [
         "hdk-actions",
@@ -9172,7 +9317,7 @@
         "hdk-refusal"
       ]
     },
-    "web/src/cplugs/huddle/swarm/SwarmPanel.svelte": {
+    "web/src/plugins/huddle/swarm/SwarmPanel.svelte": {
       "section": "swarm-characters",
       "classes": [
         "pkp",
@@ -9203,17 +9348,17 @@
         "pkp-drag-plop"
       ]
     },
-    "web/src/cplugs/huddle/swarm/SwarmTitleActions.svelte": {
+    "web/src/plugins/huddle/swarm/SwarmTitleActions.svelte": {
       "section": "swarm-characters",
       "classes": [
         "pta-page"
       ]
     },
-    "web/src/cplugs/huddle/swarm/SwarmPanelLive.svelte": {
+    "web/src/plugins/huddle/swarm/SwarmPanelLive.svelte": {
       "section": "swarm-characters",
       "classes": []
     },
-    "web/src/cplugs/huddle/chat/TrafficCard.svelte": {
+    "web/src/plugins/huddle/chat/TrafficCard.svelte": {
       "section": "chrome",
       "classes": [
         "hdx",
@@ -9231,7 +9376,7 @@
         "hdx-toggle"
       ]
     },
-    "web/src/cplugs/huddle/chat/EventCard.svelte": {
+    "web/src/plugins/huddle/chat/EventCard.svelte": {
       "section": "chrome",
       "classes": [
         "hde",
@@ -9239,7 +9384,7 @@
         "hde-text"
       ]
     },
-    "web/src/cplugs/huddle/chat/RewindView.svelte": {
+    "web/src/plugins/huddle/chat/RewindView.svelte": {
       "section": "chrome",
       "classes": [
         "hdw",
@@ -9257,11 +9402,11 @@
         "hdw-when"
       ]
     },
-    "web/src/cplugs/huddle/chat/RewindPicker.svelte": {
+    "web/src/plugins/huddle/chat/RewindPicker.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/cplugs/huddle/swarm/SwarmLedger.svelte": {
+    "web/src/plugins/huddle/swarm/SwarmLedger.svelte": {
       "section": "swarm-page",
       "classes": [
         "pkg-alert",
@@ -9284,7 +9429,7 @@
         "pkg-who"
       ]
     },
-    "web/src/cplugs/huddle/swarm/SwarmOrg.svelte": {
+    "web/src/plugins/huddle/swarm/SwarmOrg.svelte": {
       "section": "swarm-page",
       "classes": [
         "pko",
@@ -9302,7 +9447,7 @@
         "pko-stage"
       ]
     },
-    "web/src/cplugs/huddle/swarm/SwarmSettingsForm.svelte": {
+    "web/src/plugins/huddle/swarm/SwarmSettingsForm.svelte": {
       "section": "swarm-page",
       "classes": [
         "pkg-look",
@@ -9318,7 +9463,7 @@
         "pkg-set-text"
       ]
     },
-    "web/src/cplugs/huddle/swarm/SwarmSeatRefusal.svelte": {
+    "web/src/plugins/huddle/swarm/SwarmSeatRefusal.svelte": {
       "section": "swarm-page",
       "classes": [
         "pkg-refusal"
@@ -9328,7 +9473,6 @@
       "section": "swarm-page",
       "classes": [
         "pkg-body",
-        "pkg-body--scroll",
         "pkg-foot",
         "pkg-need",
         "pkg-need-text",
@@ -9738,13 +9882,13 @@
         "ps-drawer-open"
       ]
     },
-    "web/src/cplugs/huddle/chat/ChatWidgetHost.svelte": {
+    "web/src/plugins/huddle/chat/ChatWidgetHost.svelte": {
       "section": "chrome",
       "classes": [
         "hdw"
       ]
     },
-    "web/src/cplugs/huddle/agents/AgentChatFrame.svelte": {
+    "web/src/plugins/huddle/agents/AgentChatFrame.svelte": {
       "section": "chrome",
       "classes": [
         "had-topgap",
@@ -9764,12 +9908,9 @@
         "ap-notice"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerScheduleEditor.svelte": {
+    "web/src/plugins/huddle/TaskManagerScheduleEditor.svelte": {
       "section": "chrome",
       "classes": [
-        "hse",
-        "hse-titlerow",
-        "hse-label",
         "hse-body",
         "hse-field",
         "hse-text",
@@ -9777,22 +9918,17 @@
         "hse-repeat",
         "hse-days",
         "hse-number",
-        "hse-day--on",
-        "hse-foot"
+        "hse-day--on"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerForkDialog.svelte": {
+    "web/src/plugins/huddle/TaskManagerForkDialog.svelte": {
       "section": "chrome",
       "classes": [
-        "hfk",
-        "hfk-titlerow",
-        "hfk-label",
         "hfk-body",
-        "hfk-field",
-        "hfk-foot"
+        "hfk-field"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerTickConfirm.svelte": {
+    "web/src/plugins/huddle/TaskManagerTickConfirm.svelte": {
       "section": "chrome",
       "classes": [
         "htc",
@@ -9804,20 +9940,20 @@
         "htc-foot"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerFromProject.svelte": {
+    "web/src/plugins/huddle/TaskManagerFromProject.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-from"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerTagged.svelte": {
+    "web/src/plugins/huddle/TaskManagerTagged.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-tagged",
         "tkm-tagged--open"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerWait.svelte": {
+    "web/src/plugins/huddle/TaskManagerWait.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-wait",
@@ -9825,14 +9961,14 @@
         "tkm-wait-on"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerGithubIssue.svelte": {
+    "web/src/plugins/huddle/TaskManagerGithubIssue.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-issue",
         "tkm-issue-link"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerInboxRow.svelte": {
+    "web/src/plugins/huddle/TaskManagerInboxRow.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-inbox",
@@ -9841,7 +9977,7 @@
         "tkm-inbox-text"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerFromInbox.svelte": {
+    "web/src/plugins/huddle/TaskManagerFromInbox.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-inbox-from",
@@ -9849,14 +9985,14 @@
         "tkm-inbox-from-text"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerForkedFrom.svelte": {
+    "web/src/plugins/huddle/TaskManagerForkedFrom.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-fork",
         "tkm-fork-link"
       ]
     },
-    "web/src/cplugs/huddle/CrosstalkTrail.svelte": {
+    "web/src/plugins/huddle/CrosstalkTrail.svelte": {
       "section": "chrome",
       "classes": [
         "hdt-trail",
@@ -9868,7 +10004,7 @@
         "hdt-trail-who"
       ]
     },
-    "web/src/cplugs/huddle/ask/ask-form.css": {
+    "web/src/plugins/huddle/ask/ask-form.css": {
       "section": "chrome",
       "classes": [
         "hdq",
@@ -9919,53 +10055,53 @@
         "modal-overlay"
       ]
     },
-    "web/src/cplugs/huddle/ask/AskQuestion.svelte": {
+    "web/src/plugins/huddle/ask/AskQuestion.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/cplugs/huddle/ask/TaskManagerAskBubble.svelte": {
+    "web/src/plugins/huddle/ask/TaskManagerAskBubble.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/cplugs/huddle/ask/TaskManagerAskForm.svelte": {
+    "web/src/plugins/huddle/ask/TaskManagerAskForm.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/cplugs/huddle/ask/TaskManagerAskInline.svelte": {
+    "web/src/plugins/huddle/ask/TaskManagerAskInline.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/cplugs/huddle/ask/TaskManagerAskPanel.svelte": {
+    "web/src/plugins/huddle/ask/TaskManagerAskPanel.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/cplugs/huddle/ask/fields/AskChoice.svelte": {
+    "web/src/plugins/huddle/ask/fields/AskChoice.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/cplugs/huddle/ask/fields/AskPasteZone.svelte": {
+    "web/src/plugins/huddle/ask/fields/AskPasteZone.svelte": {
       "section": "chrome",
       "classes": [
         "hdq-paste"
       ]
     },
-    "web/src/cplugs/huddle/ask/fields/AskRank.svelte": {
+    "web/src/plugins/huddle/ask/fields/AskRank.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/cplugs/huddle/ask/fields/AskText.svelte": {
+    "web/src/plugins/huddle/ask/fields/AskText.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/cplugs/huddle/ask/fields/AskWhen.svelte": {
+    "web/src/plugins/huddle/ask/fields/AskWhen.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/cplugs/huddle/ask/fields/AskYesNo.svelte": {
+    "web/src/plugins/huddle/ask/fields/AskYesNo.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/cplugs/huddle/TaskManagerArtifactCard.svelte": {
+    "web/src/plugins/huddle/TaskManagerArtifactCard.svelte": {
       "section": "chrome",
       "classes": [
         "hda",
@@ -9976,7 +10112,19 @@
         "hda-open"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerRoundCard.svelte": {
+    "web/src/plugins/huddle/TaskManagerBoardCard.svelte": {
+      "section": "chrome",
+      "classes": [
+        "hdbc-text",
+        "hdbc-line",
+        "hdbc-files",
+        "hdbc-file",
+        "hdbc-file--removed",
+        "hdbc-name",
+        "hdbc-type"
+      ]
+    },
+    "web/src/plugins/huddle/TaskManagerRoundCard.svelte": {
       "section": "chrome",
       "classes": [
         "hdrc",
@@ -9986,19 +10134,15 @@
         "hdrc-open"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerArtifactDialog.svelte": {
+    "web/src/plugins/huddle/TaskManagerArtifactDialog.svelte": {
       "section": "chrome",
       "classes": [
-        "hda-dlg",
-        "hda-dlg-titlerow",
-        "hda-dlg-label",
-        "hda-dlg-keys",
-        "hda-dlg-body",
+        "hda-dlg-popout",
         "hda-dlg-frame",
         "hda-dlg-note"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerFiles.svelte": {
+    "web/src/plugins/huddle/TaskManagerFiles.svelte": {
       "section": "chrome",
       "classes": [
         "hdf",
@@ -10009,14 +10153,14 @@
         "hdf-size"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerScheduleOffer.svelte": {
+    "web/src/plugins/huddle/TaskManagerScheduleOffer.svelte": {
       "section": "chrome",
       "classes": [
         "hdo",
         "hdo-when"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerSteps.svelte": {
+    "web/src/plugins/huddle/TaskManagerSteps.svelte": {
       "section": "chrome",
       "classes": [
         "hds",
@@ -10026,7 +10170,7 @@
         "hds-list"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerProgress.svelte": {
+    "web/src/plugins/huddle/TaskManagerProgress.svelte": {
       "section": "chrome",
       "classes": [
         "hdp",
@@ -10039,36 +10183,24 @@
         "hdp-age"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerBubble.svelte": {
+    "web/src/plugins/huddle/TaskManagerBubble.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/cplugs/huddle/task-manager-tree.css": {
+    "web/src/plugins/huddle/task-manager-tree.css": {
       "section": "chrome",
       "classes": [
         "hd-block"
       ]
     },
-    "web/src/cplugs/huddle/task-manager-bubble.css": {
+    "web/src/plugins/huddle/task-manager-bubble.css": {
       "section": "chrome",
       "classes": [
-        "hb",
-        "hb--row",
-        "hb--thread",
-        "hb--waiting",
-        "hb--owner",
-        "hb--form_answer",
-        "hb-fa-icon",
-        "hb-mark",
-        "hb-main",
-        "hb-head",
-        "hb-who",
-        "hb-kind",
-        "hb-time",
-        "hb-body"
+        "hb-k--form_answer",
+        "tkm-fa-icon"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerChips.svelte": {
+    "web/src/plugins/huddle/TaskManagerChips.svelte": {
       "section": "chrome",
       "classes": [
         "hdc",
@@ -10078,20 +10210,20 @@
         "hdc-remove"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerThumb.svelte": {
+    "web/src/plugins/huddle/TaskManagerThumb.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-thumb"
       ]
     },
-    "web/src/cplugs/huddle/chat/ChatSentImages.svelte": {
+    "web/src/plugins/huddle/chat/ChatSentImages.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-sent-images",
         "hdc-sent-gone"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerImagePreview.svelte": {
+    "web/src/plugins/huddle/TaskManagerImagePreview.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-preview",
@@ -10500,8 +10632,7 @@
         "catalog-phonebar__row--tools",
         "keys-menu",
         "oc-facet",
-        "oc-facet__select",
-        "warez-act"
+        "oc-facet__select"
       ]
     },
     "web/src/lib/catalog/FilterGroup.svelte": {
@@ -10538,11 +10669,9 @@
         "oc-facet",
         "oc-facet__key",
         "oc-facet__select",
-        "oc-field",
         "oc-ibtn",
         "oc-page__view",
-        "wtools",
-        "wtools__search"
+        "wtools"
       ]
     },
     "web/src/lib/catalog/WarezStatusLine.svelte": {
@@ -10705,6 +10834,10 @@
         "lst-error",
         "lst-actions"
       ]
+    },
+    "web/src/lib/launch-picker/LaunchComputer.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
     },
     "web/src/lib/launch-picker/LaunchChoice.svelte": {
       "section": "ledger-catalog",
@@ -10929,7 +11062,9 @@
         "sbr-rail__fill",
         "sbr-rail__head",
         "sbr-rail__label",
+        "sbr-rail__label--bare",
         "sbr-rail__label--on",
+        "sbr-rail__label-icon",
         "sbr-rail__label-text",
         "sbr-rail__sep",
         "sbr-rail__zone"
@@ -11032,10 +11167,6 @@
       "section": "sessions-page",
       "classes": []
     },
-    "web/src/lib/sessions-page/TitleStrip.svelte": {
-      "section": "sessions-page",
-      "classes": []
-    },
     "web/src/lib/sessions-page/FleetSummary.svelte": {
       "section": "sessions-page",
       "classes": []
@@ -11047,13 +11178,6 @@
     "web/src/lib/sessions-page/sessions-page.css": {
       "section": "sessions-page",
       "classes": [
-        "oc-page__bar",
-        "oc-page__body",
-        "oc-search",
-        "oc-titlebar",
-        "oc-titlebar__back",
-        "oc-titlebar__sub",
-        "oc-titlebar__title",
         "pl-label",
         "pl-title",
         "pl-titlebar",
@@ -11062,19 +11186,15 @@
         "sp-bar--compact",
         "sp-body",
         "sp-count",
-        "sp-find",
         "sp-g",
         "sp-gl",
         "sp-host",
         "sp-hosts",
         "sp-page",
         "sp-pair",
-        "sp-phonebar",
         "sp-seg",
         "sp-sepbar",
-        "sp-strip",
-        "sp-sum",
-        "sp-tbl"
+        "sp-sum"
       ]
     },
     "web/src/lib/sessions-page/GroupSection.svelte": {
@@ -11435,10 +11555,9 @@
       "section": "cells",
       "classes": []
     },
-    "web/src/cplugs/huddle/TaskManagerStatusModal.svelte": {
+    "web/src/plugins/huddle/TaskManagerStatusModal.svelte": {
       "section": "chrome",
       "classes": [
-        "hd-status-modal__label",
         "hd-status-modal__list"
       ]
     },
@@ -11536,20 +11655,20 @@
         "dps__tag--exported"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerMarker.svelte": {
+    "web/src/plugins/huddle/TaskManagerMarker.svelte": {
       "section": "chrome",
       "classes": [
         "hdm"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerMarkerFilter.svelte": {
+    "web/src/plugins/huddle/TaskManagerMarkerFilter.svelte": {
       "section": "chrome",
       "classes": [
         "hdm-set",
         "hdm-key"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerSearch.svelte": {
+    "web/src/plugins/huddle/TaskManagerSearch.svelte": {
       "section": "chrome",
       "classes": [
         "hds-key",
@@ -11715,17 +11834,11 @@
         "ap-state--error",
         "ap-strip",
         "ap-sum",
-        "ap-switch",
         "ap-tab",
         "ap-tabrow",
-        "ap-tabs",
-        "ap-toptabs",
         "oc-check__box",
         "oc-page__away",
         "oc-page__tabs",
-        "oc-ptab",
-        "oc-ptab__badge",
-        "oc-ptabs__list",
         "oc-titlebar",
         "oc-titlebar__sub",
         "pl-label",
@@ -11835,10 +11948,6 @@
       "classes": []
     },
     "web/src/lib/automations/NewestRunLine.svelte": {
-      "section": "automations",
-      "classes": []
-    },
-    "web/src/lib/automations/RowMenu.svelte": {
       "section": "automations",
       "classes": []
     },
@@ -12068,7 +12177,6 @@
         "ap-pn-fires",
         "ap-pn-headsec",
         "ap-pn-ic",
-        "ap-pn-icons",
         "ap-pn-meta",
         "ap-pn-name",
         "ap-pn-note",
@@ -12098,8 +12206,6 @@
         "auto-form__row",
         "oc-fold",
         "oc-label",
-        "oc-ptab",
-        "oc-ptabs__list",
         "oc-select-row",
         "pl-label",
         "w-inl"
@@ -12276,6 +12382,7 @@
         "oc-titlebar",
         "skp",
         "skp-cards",
+        "skp-col",
         "skp-ctx",
         "skp-ctx__body",
         "skp-ctx__desc",
@@ -12504,7 +12611,6 @@
       "section": "cells",
       "classes": [
         "oc-surface",
-        "wr-body",
         "wr-surface"
       ]
     },
@@ -12576,6 +12682,7 @@
         "oc-btn--danger",
         "oc-btn--ghost",
         "oc-btn--tool",
+        "oc-ibtn",
         "xterm"
       ]
     },
@@ -12590,8 +12697,10 @@
     "web/src/lib/sessions-page/ProjectToolWindow.svelte": {
       "section": "sessions-page",
       "classes": [
+        "dk-body",
         "pw",
         "pw-body",
+        "pw-body--deck",
         "pw-label",
         "pw-tally",
         "pw-title"
@@ -12653,6 +12762,10 @@
       "section": "settings",
       "classes": []
     },
+    "web/src/lib/pack-roster/LabelEditor.svelte": {
+      "section": "settings",
+      "classes": []
+    },
     "web/src/lib/pack-roster/Marks.svelte": {
       "section": "settings",
       "classes": []
@@ -12662,6 +12775,14 @@
       "classes": []
     },
     "web/src/lib/pack-roster/PackRoster.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/pack-roster/PackReconnect.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/pack-roster/PaneAbilities.svelte": {
       "section": "settings",
       "classes": []
     },
@@ -12788,14 +12909,7 @@
         "m1-top__act",
         "m1-top__id",
         "modal-btn",
-        "oc-facet",
-        "oc-facet--menu",
-        "oc-facet__val",
         "oc-field",
-        "oc-page",
-        "oc-page__bar",
-        "oc-page__body",
-        "oc-ptab",
         "oc-rank",
         "oc-rank__head",
         "oc-rank__metric",
@@ -12891,7 +13005,7 @@
         "rs-state"
       ]
     },
-    "web/src/lib/pack-roster/RosterFacet.svelte": {
+    "web/src/lib/pack-roster/RosterBar.svelte": {
       "section": "settings",
       "classes": []
     },
@@ -13035,7 +13149,6 @@
         "ap-adv-head",
         "ap-adv-sum",
         "ap-page",
-        "ap-subtabs",
         "pl-titlebar"
       ]
     },
@@ -13106,6 +13219,9 @@
         "oc-tf-pct",
         "oc-tf-reset",
         "oc-tf-scope",
+        "oc-tf-shells",
+        "oc-tf-shells-glyph",
+        "oc-tf-shells-num",
         "oc-tf-state"
       ]
     },
@@ -13316,7 +13432,11 @@
     "web/src/lib/base/icon-button.css": {
       "section": "base-set",
       "classes": [
-        "oc-frame-title--phone"
+        "oc-frame-title--phone",
+        "oc-ibtn",
+        "oc-ibtn--bare",
+        "oc-ibtn--close",
+        "oc-ibtn--float"
       ]
     },
     "web/src/lib/base/MenuItem.svelte": {
@@ -13338,6 +13458,16 @@
     "web/src/lib/base/RadioGroup.svelte": {
       "section": "base-set",
       "classes": []
+    },
+    "web/src/lib/base/mark.css": {
+      "section": "base-set",
+      "classes": [
+        "oc-check__box",
+        "oc-option",
+        "oc-option__box",
+        "oc-pick__input",
+        "oc-radio"
+      ]
     },
     "web/src/lib/base/pick.css": {
       "section": "base-set",
@@ -13712,7 +13842,7 @@
       "section": "cells",
       "classes": []
     },
-    "web/src/cplugs/huddle/task-manager-design/SharedThumb.svelte": {
+    "web/src/plugins/huddle/task-manager-design/SharedThumb.svelte": {
       "section": "chrome",
       "classes": []
     },
@@ -13871,7 +14001,7 @@
         "oc-hdl"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerScheduleKeys.svelte": {
+    "web/src/plugins/huddle/TaskManagerScheduleKeys.svelte": {
       "section": "chrome",
       "classes": []
     },
@@ -13904,7 +14034,7 @@
         "swarm-row-face"
       ]
     },
-    "web/src/cplugs/huddle/chat/MemoryPanel.svelte": {
+    "web/src/plugins/huddle/chat/MemoryPanel.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-memory",
@@ -14138,7 +14268,8 @@
         "oc-tree__label",
         "oc-tree__leaf",
         "oc-tree__line",
-        "oc-tree__row"
+        "oc-tree__row",
+        "oc-tree__tags"
       ]
     },
     "web/src/lib/keymap/KeymapEditor.svelte": {
@@ -14271,6 +14402,94 @@
     },
     "web/src/lib/notify-card/Glyph.svelte": {
       "section": "feedback",
+      "classes": []
+    },
+    "web/src/opscenter/page-frames.css": {
+      "section": "controls",
+      "classes": [
+        "oc-page",
+        "oc-page__bar--picker",
+        "oc-page__body",
+        "oc-page__body--detail",
+        "oc-page__col",
+        "oc-page__detail--frame",
+        "oc-page__detail-actions",
+        "oc-page__detail-head",
+        "oc-page__detail-title",
+        "oc-page__fill",
+        "oc-page__frame",
+        "oc-page__frame--detail",
+        "oc-page__picker",
+        "oc-page__scroll",
+        "oc-page__search",
+        "oc-page__sheet-head",
+        "oc-page__side",
+        "oc-titlebar",
+        "oc-titlebar--find",
+        "oc-titlebar__actions",
+        "oc-titlebar__find"
+      ]
+    },
+    "web/src/opscenter/page-pair.css": {
+      "section": "controls",
+      "classes": [
+        "oc-page",
+        "oc-page--away",
+        "oc-page__away",
+        "oc-page__body",
+        "oc-page__col",
+        "oc-page__frame",
+        "oc-page__side",
+        "oc-page__tabs"
+      ]
+    },
+    "web/src/lib/base/LandsIn.svelte": {
+      "section": "base-set",
+      "classes": []
+    },
+    "web/src/lib/base/lands-in.css": {
+      "section": "base-set",
+      "classes": [
+        "oc-lands",
+        "oc-lands__level",
+        "oc-lands__line",
+        "oc-lands__text"
+      ]
+    },
+    "web/src/lib/new-project/NewProjectModal.svelte": {
+      "section": "dialogs",
+      "classes": [
+        "new-project-form",
+        "new-project-tree"
+      ]
+    },
+    "web/src/lib/new-project/NewCompanyBox.svelte": {
+      "section": "dialogs",
+      "classes": [
+        "new-project-box",
+        "new-project-box__buttons"
+      ]
+    },
+    "web/src/lib/terminal-sound/TerminalSoundButton.svelte": {
+      "section": "terminal",
+      "classes": [
+        "tsnd",
+        "tsnd-pop",
+        "tsnd__lab",
+        "tsnd__row",
+        "tsnd__title"
+      ]
+    },
+    "web/src/lib/pack-transport/ComputerGlyph.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/pack-transport/ProjectAbilities.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/pack-transport/ProjectGithub.svelte": {
+      "section": "settings",
       "classes": []
     }
   }

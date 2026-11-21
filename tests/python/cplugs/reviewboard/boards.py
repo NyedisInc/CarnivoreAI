@@ -7,8 +7,8 @@ import json
 from pathlib import Path
 from typing import Any, Dict
 
-from src.cplugs.reviewboard import document
-from src.cplugs.reviewboard.scan import MARKER
+from src.plugins.reviewboard import document
+from src.plugins.reviewboard.scan import MARKER
 
 PAGE = b"<!doctype html><title>bar</title><div data-rb-anchor='send'>send</div>\n"
 

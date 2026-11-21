@@ -158,7 +158,8 @@ def test_h4_concurrent_callers_share_one_failed_fetch(owner, monkeypatch):
 
     class Slow:
         async def request(self, *a, **k):
-            calls.append(1)
+            if a[1] == "/sessions/list":
+                calls.append(1)
             await asyncio.sleep(10)
 
     owner.client = lambda iid: Slow()
@@ -208,8 +209,8 @@ def test_m3_a_churning_peer_is_capped_and_pruned(owner, monkeypatch):
 
 def test_m3_a_peers_stopped_rows_stay_out_of_recent():
     import inspect
-    from src.api import session_recent_routes
-    assert 'origin") != "peer"' in inspect.getsource(session_recent_routes)
+    from src.core.sessions import recent_rows
+    assert 'origin") != "peer"' in inspect.getsource(recent_rows)
 
 
 def test_l1_unpair_removes_the_shadow_rows_projects_and_snapshot(owner):

@@ -65,6 +65,7 @@ test('the bell sits in the drawer header (wide) and under the rail claw (narrow)
   const heading = document.querySelector('.session-sidebar-heading')!;
   const wide = heading.querySelector<HTMLButtonElement>('[data-app-alert-bell="drawer"]');
   expect(wide).not.toBeNull();
+  expect(wide!.getAttribute('data-alert-severity')).toBe('error');
   expect(wide!.querySelector('[data-app-alert-badge="error"]')?.textContent).toBe('1');
 
   wide!.click();

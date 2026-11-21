@@ -45,7 +45,7 @@ def check_value(name: str, value: Any) -> Any:
     if name == "reminder_minutes":
         if value is None:
             return None
-        if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= MAX_REMINDER_MINUTES:
+        if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= MAX_REMINDER_MINUTES:
             raise bad
         return value
     if name == "projects":

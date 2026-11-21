@@ -432,7 +432,7 @@ def test_the_frame_types_live_in_the_one_message_enum():
     assert WSMessageType.SESSIONS_CHANGED.value == "sessions.changed"
     assert WSMessageType.PREFERENCES_CHANGED.value == "preferences.changed"
 
-    from src.api.preferences_routes import PREFERENCES_CHANGED_EVENT
+    from src.core.preferences_push.broadcast import PREFERENCES_CHANGED_EVENT
 
     assert PREFERENCES_CHANGED_EVENT == WSMessageType.PREFERENCES_CHANGED.value
 

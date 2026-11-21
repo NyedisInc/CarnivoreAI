@@ -36,7 +36,8 @@ await test('NEGATIVE: a payload with no model builds a row that says null, never
 await test('the layout list opens from the drawer button row, and the header copy stays hidden', () => {
     const css = repoFile('client', 'css', 'terminal-grid.css');
     assert.ok(!/#terminal-components \.oc-popover\s*\{/.test(css), 'no placement override');
-    assert.ok(!/#headerComponentsBtn\s*\{\s*display:\s*flex/.test(css), 'nothing reveals the header button');
+    assert.ok(!/(^|\n)#headerComponentsBtn\s*\{\s*display:\s*flex/.test(css), 'nothing reveals the header button');
+    assert.match(css, /body\.ps-grid-surface #headerComponentsBtn\s*\{\s*display:\s*flex;/, 'the one reveal is the mounted grid');
     assert.match(css, /#headerComponentsBtn\s*\{\s*display:\s*none;/, 'the header button is hidden');
     const bar = repoFile('web', 'src', 'lib', 'drawer', 'bar.ts');
     assert.ok(!/openTerminalComponents|'grid'/.test(bar), 'the bottom bar no longer owns the grid button');

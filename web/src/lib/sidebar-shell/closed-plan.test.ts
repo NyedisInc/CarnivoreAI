@@ -33,7 +33,7 @@ function loaded(shown: boolean): SidebarRow[] {
         { name: 'carnivore_nap', status: 'asleep', asleep: true, agent_family: 'claude', session_uuid: 'u-nap', project_id: 5, project_name: 'moved' },
     ];
     addClosedRows(rows, RECORDS);
-    rows.push(...archivedRows(RECORDS, shown, new Set(rows.map((r) => String(r.name)))));
+    rows.push(...archivedRows(RECORDS, shown, rows));
     return rows as SidebarRow[];
 }
 

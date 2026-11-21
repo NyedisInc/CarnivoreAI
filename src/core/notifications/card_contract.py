@@ -15,8 +15,12 @@ KINDS: Tuple[str, ...] = (
 )
 
 LEVELS: Dict[str, str] = {"p": "passive", "a": "active", "t": "time-sensitive"}
-SOUNDS: Tuple[str, ...] = ("ask", "done", "alarm", "soft", "none", "default")
 EARCONS: Tuple[str, ...] = ("ask", "done", "alarm", "soft")
+EXTRA_SOUNDS: Tuple[str, ...] = (
+    "ping", "echo", "chime", "knock", "blip", "bell", "pop", "drop", "sonar", "buzz", "rise", "fall",
+)
+SOUNDS: Tuple[str, ...] = EARCONS + EXTRA_SOUNDS + ("none", "default")
+DEVICE_SOUNDS: Tuple[str, ...] = EARCONS + ("none", "default")
 SETTLE_WHERE: Tuple[str, ...] = ("computer", "phone", "auto", "elsewhere")
 
 LIMITS: Dict[str, int] = {
@@ -153,7 +157,7 @@ STRING_KEYS: Tuple[str, ...] = (
     "notify.card.state.answered_elsewhere", "notify.card.value.on_side", "notify.card.where.auto", "notify.card.where.computer",
     "notify.inspector.title", "notify.inspector.label", "notify.inspector.col.on", "notify.inspector.col.sound",
     "notify.inspector.col.urgency", "notify.inspector.col.devices", "notify.inspector.play", "notify.inspector.sound.ask",
-    "notify.inspector.sound.done", "notify.inspector.sound.alarm", "notify.inspector.sound.soft", "notify.inspector.sound.none",
+    "notify.inspector.sound.done", "notify.inspector.sound.alarm", "notify.inspector.sound.soft", "notify.inspector.sound.none", "notify.inspector.sound.ping", "notify.inspector.sound.echo", "notify.inspector.sound.chime", "notify.inspector.sound.knock", "notify.inspector.sound.blip", "notify.inspector.sound.bell", "notify.inspector.sound.pop", "notify.inspector.sound.drop", "notify.inspector.sound.sonar", "notify.inspector.sound.buzz", "notify.inspector.sound.rise", "notify.inspector.sound.fall",
     "notify.inspector.sound.default", "notify.inspector.level.passive", "notify.inspector.level.active",
     "notify.inspector.level.time_sensitive", "notify.inspector.device.iphone", "notify.inspector.device.computer",
     "notify.inspector.corner", "notify.inspector.shape", "notify.inspector.reset", "notify.inspector.open_card",

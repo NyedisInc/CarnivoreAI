@@ -47,6 +47,9 @@ class Pack:
     def adopt(self, doc, signature=None) -> bool:
         return self.state.save_settings(doc, signature)
 
+    def clear_roster(self) -> bool:
+        return False
+
     def save_settings(self, doc) -> bool:
         return self.state.save_settings(doc)
 

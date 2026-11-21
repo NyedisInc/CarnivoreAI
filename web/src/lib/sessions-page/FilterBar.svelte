@@ -9,6 +9,7 @@
     import ViewSwitch from './ViewSwitch.svelte';
     import type { SessionsView } from './views';
     import { PROJECT_SORTS, type ProjectSortKey } from './toolbar-prefs';
+    import { COMPACT_CLASS, watchBarFit } from './fit-bar';
     import { STATE_KEYS, filtersActive, toggleState, NO_FILTERS, type Filters, type StateKey } from './filters';
 
     interface Props {
@@ -27,18 +28,12 @@
     }
     let { view, onView, filters = $bindable(), companies, projects, computers, providers, projectSort, onProjectSort, shown, total, t }: Props = $props();
 
-    let barWidth = $state(0);
-    let phone = $state(false);
-    function followBar(el: Element): (() => void) | undefined {
-        if (typeof ResizeObserver === 'undefined') return undefined;
-        const watch = new ResizeObserver(() => {
-            barWidth = el.clientWidth;
-            phone = window.innerWidth <= 700;
+    let compact = $state(false);
+    function followBar(el: HTMLElement): (() => void) | undefined {
+        return watchBarFit(el, (next) => {
+            compact = next;
         });
-        watch.observe(el);
-        return () => watch.disconnect();
     }
-    const compact = $derived(barWidth > 0 && barWidth < 960 && !phone);
     const active = $derived(filtersActive(filters));
 
     const selects = $derived([
@@ -89,7 +84,7 @@
     </div>
 {/snippet}
 
-<Toolbar band class={compact ? 'sp-bar sp-bar--compact' : 'sp-bar'} filters={facets} label={t('sessions.page.filter.label')} {@attach followBar}>
+<Toolbar band class={compact ? `sp-bar ${COMPACT_CLASS}` : 'sp-bar'} filters={facets} label={t('sessions.page.filter.label')} {@attach followBar}>
     {#snippet end()}
         {#if active}<Button size="sm" data-clear onclick={clear}>{t('sessions.page.filter.clear')}</Button>{/if}
         <ViewSwitch {view} {onView} {t} />

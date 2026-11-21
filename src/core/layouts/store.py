@@ -14,6 +14,7 @@ from src.core.db import table_exists, transaction
 from src.core.layouts.style_ddl import LAYOUT_STYLES_TABLE
 from src.core.layouts.broadcast_ddl import LAYOUT_BROADCAST_OFF_TABLE
 from src.core.layouts.ddl import LAYOUT_MEMBERS_TABLE, LAYOUTS_TABLE
+from src.core.session_store import uuid_for_row
 from src.core.trail_entry import utc_now
 
 NAME_MAX = 60
@@ -339,9 +340,8 @@ def _store_shape(conn: sqlite3.Connection, row: sqlite3.Row, shape: Any,
     if not shape_rules.has_enough_members(rows, canonical):
         survivor = None
         if rows:
-            uuid_row = conn.execute("SELECT session_uuid FROM sessions WHERE id = ?",
-                                    (rows[0],)).fetchone()
-            survivor = LayoutMember(rows[0], str(uuid_row[0]), 0)
+            survivor_uuid = uuid_for_row(conn, rows[0])
+            survivor = LayoutMember(rows[0], survivor_uuid, 0) if survivor_uuid else None
         conn.execute("DELETE FROM layouts WHERE id = ?", (layout_id,))
         _clear_group_membership(conn, str(row[1]))
         return WriteResult(layout=None, deleted=True, survivor=survivor)

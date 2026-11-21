@@ -144,7 +144,7 @@
       position: fixed;
       left: var(--oc-space-6);
       bottom: var(--oc-space-6);
-      z-index: 50;
+      z-index: var(--oc-z-shell-popover);
       min-width: 0;
       max-width: calc(100vw - var(--oc-space-6) * 2);
       max-height: 70vh;

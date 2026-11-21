@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from src.core.work import tables
 from src.core.mcp import tools
-from src.cplugs.huddle import blockers, files, lineage
-from src.cplugs.huddle.rules import STATE_REQUEST_TOOL
+from src.plugins.huddle import blockers, files, lineage
+from src.plugins.huddle.rules import STATE_REQUEST_TOOL
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 
 

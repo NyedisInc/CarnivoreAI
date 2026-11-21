@@ -46,9 +46,9 @@ import Mark2All, { TASK_MANAGER_MK2_ALL_WIDGET } from './Cell.svelte';
 import Mk2Host from '../task-manager-mk2/fixtures/Mk2Host.svelte';
 import Mk2HeadHost from '../task-manager-mk2/fixtures/Mk2HeadHost.svelte';
 import { declaredActionsFor } from '../../widgets/menu/declared-actions.svelte';
-import { clearViewFilter } from '../../../cplugs/huddle/task-manager-view-filter.svelte';
-import { cplugEnablement } from '../../../cplugs/host/enablement.svelte';
-import { swarmView } from '../../../cplugs/huddle/huddle-swarm-view.svelte';
+import { clearViewFilter } from '../../../plugins/huddle/task-manager-view-filter.svelte';
+import { cplugEnablement } from '../../../plugins/host/enablement.svelte';
+import { swarmView } from '../../../plugins/huddle/huddle-swarm-view.svelte';
 
 cplugEnablement.enabled = { huddle: true };
 

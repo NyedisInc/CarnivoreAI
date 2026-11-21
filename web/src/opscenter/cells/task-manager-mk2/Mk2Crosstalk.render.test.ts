@@ -10,7 +10,7 @@ vi.mock('../../api/auth.svelte', async (importOriginal) => {
 });
 
 import Mk2Crosstalk from './Mk2Crosstalk.svelte';
-import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
+import type { HuddleItem } from '../../../plugins/huddle/huddle-model';
 
 const item = { id: 7, text: 'trace me', thread: [] } as unknown as HuddleItem;
 const row = (id: string, preview: string) => ({ id, thread: 't', sender_name: 'Alice', receiver_name: 'Bob', created_at: 1760000000, status: 'delivered', preview });

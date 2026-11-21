@@ -58,7 +58,7 @@ describe('analytics details dialog', () => {
       const answer = openModal(DetailsModal, { view });
       flushSync();
       const root = overlay()!;
-      if (way === 'head') root.querySelector<HTMLButtonElement>('.text-prompt-modal__head .modal-close')!.click();
+      if (way === 'head') root.querySelector<HTMLButtonElement>('.text-prompt-modal__head [data-modal-close]')!.click();
       if (way === 'footer') root.querySelector<HTMLButtonElement>('.modal-footer .modal-btn-secondary')!.click();
       if (way === 'escape') root.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       await expect(answer).resolves.toBeNull();

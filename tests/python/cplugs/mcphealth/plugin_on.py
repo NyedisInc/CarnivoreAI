@@ -6,8 +6,8 @@ from types import SimpleNamespace
 from typing import Any, Iterator, List, Optional, Sequence
 
 from src.core.mcp_health.fold import McpHealth
-from src.cplugs.sdk import ports
-from src.cplugs.sdk.mcp_health import PORT_NAME
+from src.plugins.sdk import ports
+from src.plugins.sdk.mcp_health import PORT_NAME
 
 
 class StubPort:

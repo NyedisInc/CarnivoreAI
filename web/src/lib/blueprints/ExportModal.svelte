@@ -51,17 +51,17 @@
 <style>
   @layer components {
     .bp-modal__error {
-        margin: 10px 0 0;
-        padding: 6px 8px;
+        margin: var(--oc-gap-parts) 0 0;
+        padding: var(--oc-space-1-5) var(--oc-space-2);
         border-left: 2px solid var(--oc-coral);
         background: color-mix(in srgb, var(--oc-coral) 12%, var(--oc-ground-raised));
-        font-size: 12px;
+        font-size: var(--oc-fs-body);
     }
 
     .bp-modal__ok {
-        margin: 10px 0 0;
+        margin: var(--oc-gap-parts) 0 0;
         color: var(--oc-text-primary);
-        font-size: 12px;
+        font-size: var(--oc-fs-body);
     }
   }
 </style>

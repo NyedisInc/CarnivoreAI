@@ -7,11 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.huddle import fork as forks, lifecycle, rules
-from src.cplugs.huddle.rules import CLAUDE, JOE, TaskManagerForbidden
+from src.plugins.huddle import fork as forks, lifecycle, rules
+from src.plugins.huddle.rules import CLAUDE, JOE, TaskManagerForbidden
 from src.core.work.ladder import MIGRATIONS
 from src.core.work.storage import WorkStorage
-from src.cplugs.sdk import CplugStorage, StorageSpec
+from src.plugins.sdk import CplugStorage, StorageSpec
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 
 KEY = "key-a"

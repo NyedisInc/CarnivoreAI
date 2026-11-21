@@ -12,7 +12,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, StrictBool
 
 from src.api.auth import require_auth
-from src.api.preferences_routes import _store, broadcast_changed
+from src.api.preferences_routes import _store
+from src.core.preferences_push.broadcast import broadcast_changed
 from src.core import item_settings_store, resource_push, session_change_notice, ui_preferences, ui_preferences_store
 from src.core.resource_push import topics as resource_topics
 from src.models.websocket import WSMessageType
@@ -116,7 +117,7 @@ async def import_board(body: ImportRequest, request: Request) -> Dict[str, Any]:
     if result.status == ui_preferences_store.STALE_REVISION:
         raise _refuse(409, "preferences_stale", "the boards changed since you read them", revision=result.revision)
     if result.status == ui_preferences_store.COMMITTED:
-        await broadcast_changed(request, result, body.client_id)
+        await broadcast_changed(request.app.state, result, body.client_id)
     logger.info("board_imported", board=board_id, widgets=len(plan.widgets))
     outcome = await run_in_threadpool(_apply_settings, plan.settings) if plan.settings else {"applied": [], "refused": [], "revision": None}
     if outcome["applied"]:

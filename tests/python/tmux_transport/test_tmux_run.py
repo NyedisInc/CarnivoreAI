@@ -81,3 +81,21 @@ def test_text_run_maps_timeout_and_oserror() -> None:
 
     assert tmux_run_text("c", "x", timeout=1, runner=slow, argv_prefix=["t"]).error == ERROR_TIMEOUT
     assert tmux_run_text("c", "x", timeout=1, runner=gone, argv_prefix=["t"]).error == ERROR_NOT_STARTED
+
+
+def test_a_control_answer_decodes_as_text_mode_does() -> None:
+    from src.core.tmux_transport.run import _as_text
+
+    assert _as_text(b"a\r\nb\rc\n") == "a\nb\nc\n"
+    assert _as_text("café".encode()) == "café"
+    assert _as_text(b"\xff") is None
+
+
+def test_an_injected_runner_skips_the_control_client(monkeypatch: pytest.MonkeyPatch) -> None:
+    from src.core.tmux_transport import run
+
+    monkeypatch.setattr(run, "control_run", lambda *a: pytest.fail("the control client was asked"))
+    monkeypatch.setattr(run, "tmux_argv_prefix", lambda socket: ["tmux", "-L", socket])
+    done = tmux_run_text("t", "list-panes", "-a", timeout=1.0,
+                         runner=lambda *a, **k: SimpleNamespace(returncode=0, stdout="x\n", stderr=""))
+    assert (done.returncode, done.stdout) == (0, "x\n")

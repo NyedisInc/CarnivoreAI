@@ -11,9 +11,9 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.devwidgetlab import capture, matrix
-from src.cplugs.devwidgetlab.drafts import store
-from src.cplugs.host import developer_mode, runtime
+from src.plugins.devwidgetlab import capture, matrix
+from src.plugins.devwidgetlab.drafts import store
+from src.plugins.host import developer_mode, runtime
 from tests.python.cplugs.owner import turn_on
 
 BASE = "/api/v1/cplugs/devwidgetlab"
@@ -25,7 +25,7 @@ def lab(tmp_path: Path, monkeypatch):
     app = FastAPI()
     host = runtime.install(app, tmp_path)
     host.publish = lambda topic: None
-    app.include_router(__import__("src.cplugs.host.routes", fromlist=["router"]).router, prefix="/api/v1")
+    app.include_router(__import__("src.plugins.host.routes", fromlist=["router"]).router, prefix="/api/v1")
     turn_on(host, "devwidgetlab")
     app.dependency_overrides[require_auth] = lambda: {"sub": "test"}
     monkeypatch.setattr(matrix, "_job", {"task": None, "started": None, "exit": None, "reason": ""})
@@ -37,7 +37,7 @@ def test_the_routes_need_a_token(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(developer_mode, "is_on", lambda: True)
     app = FastAPI()
     runtime.install(app, tmp_path)
-    app.include_router(__import__("src.cplugs.host.routes", fromlist=["router"]).router, prefix="/api/v1")
+    app.include_router(__import__("src.plugins.host.routes", fromlist=["router"]).router, prefix="/api/v1")
     with TestClient(app) as anonymous:
         assert anonymous.get(f"{BASE}/fit-table").status_code == 401
         assert anonymous.post(f"{BASE}/matrix", json={}).status_code == 401

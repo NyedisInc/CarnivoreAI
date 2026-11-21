@@ -12,7 +12,7 @@ from fastapi import HTTPException
 from src.api import beast_mode_routes
 from src.core.approvals import beast_policy
 from src.core.mcp import beast_mode, beast_store, tools
-from src.cplugs.host import runtime
+from src.plugins.host import runtime
 
 
 @pytest.fixture

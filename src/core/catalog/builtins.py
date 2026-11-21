@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 import structlog
 
-from src.cplugs.registry import MANIFEST_FILE, PLUGINS_ROOT, plugin_folders
+from src.plugins.registry import MANIFEST_FILE, PLUGINS_ROOT, plugin_folders
 from src.core.skills.bundled_install import BundledSkillError, bundled_digest, bundled_version
 from src.core.skills.required import REQUIRED_SKILLS
 from src.models.catalog_builtins import BuiltinEntry

@@ -59,7 +59,7 @@
               {#if contract.raw.rows.length}
                 <dl class="qc-raw__rows" data-approval-detail>
                   {#each contract.raw.rows as row, i (i)}
-                    <dt class="qc-fact__key">{detailLabel(row.key)}</dt>
+                    <dt class="qc-fact__key">{detailLabel(row.key)}{row.file ? ` ${row.file}` : ''}</dt>
                     <dd class="qc-raw__value">{row.value}</dd>
                   {/each}
                 </dl>
@@ -184,7 +184,7 @@
     .qc-raw .ap-line { display: block; font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.2em; box-shadow: inset 2px 0 0 0 transparent; padding-left: var(--oc-space-1); }
     .qc-raw .ap-line--risk { background: color-mix(in oklab, var(--oc-coral) 14%, transparent); box-shadow: inset 2px 0 0 0 var(--oc-coral); }
     .qc-raw__rows { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1px 10px; margin: var(--oc-space-1) 0 0; font-size: var(--oc-fs-label); }
-    .qc-raw__value { margin: 0; color: var(--oc-text-secondary); overflow-wrap: anywhere; }
+    .qc-raw__value { margin: 0; color: var(--oc-text-secondary); overflow-wrap: anywhere; white-space: pre-wrap; }
 
     @container oc-ap (max-width: 260px) {
       .qc-raw { max-height: 6em; }

@@ -3,11 +3,12 @@ from __future__ import annotations
 
 import asyncio
 from typing import Any, Awaitable, Callable, Optional
+from src.models.activity_status import RESTING
+from src.core.session_status import STATUS_QUESTION, STATUS_WORKING_SUBAGENT
 
 SETTLE_SECONDS = 4.0
 POLL_SECONDS = 1.0
 FIND_SECONDS = 15.0
-RESTING = ("idle", "finished_unread")
 
 
 class TurnNotEnded(Exception):
@@ -30,7 +31,7 @@ def blocker_text(info: Any, name: str) -> str:
         return f"{name} still has a background task running; wait for it to finish or stop it, then send again"
     if state in RESTING:
         return f"{name} is still starting up or waiting on a dialog; answer it, then send again"
-    if state == "question":
+    if state == STATUS_QUESTION:
         return f"{name} is waiting for your answer; answer it, then send again"
     return f"{name} is still working; the move waits for its turn to end and never stops it"
 
@@ -43,7 +44,7 @@ def shells_only(info: Any) -> int:
         return 0
     if info.activity_status in RESTING and info.activity_hint is not None:
         return count
-    return count if info.activity_status == "working_subagent" and getattr(info, "subagents_running", None) == 0 else 0
+    return count if info.activity_status == STATUS_WORKING_SUBAGENT and getattr(info, "subagents_running", None) == 0 else 0
 
 
 def at_turn_end(info: Any) -> bool:

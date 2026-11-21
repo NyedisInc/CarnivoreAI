@@ -21,13 +21,13 @@ vi.mock('../opscenter/api/auth.svelte', async (importOriginal) => {
     },
   };
 });
-vi.mock('../cplugs/host/enablement.svelte', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../cplugs/host/enablement.svelte')>()),
+vi.mock('../plugins/host/enablement.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../plugins/host/enablement.svelte')>()),
   followEnablement: () => {},
 }));
 
 import SingleWidget from './SingleWidget.svelte';
-import { cplugEnablement } from '../cplugs/host/enablement.svelte';
+import { cplugEnablement } from '../plugins/host/enablement.svelte';
 import { isWidgetId, widgetFromSearch } from './popout';
 
 // jsdom has no popover API; the one item menu shows its levels through it (#2613).

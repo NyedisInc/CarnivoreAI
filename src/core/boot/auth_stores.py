@@ -63,7 +63,7 @@ async def refresh_purge_loop(store: RefreshStore, *, spectator_store: Optional[S
         except asyncio.CancelledError:
             raise
         except Exception as e:  # noqa: BLE001
-            logger.error("refresh_purge_loop_error", error=str(e))
+            logger.error("refresh_purge_loop_error", error=str(e), error_type=type(e).__name__, exc_info=True)
             await asyncio.sleep(_PURGE_ERROR_BACKOFF_SECONDS)
 
 

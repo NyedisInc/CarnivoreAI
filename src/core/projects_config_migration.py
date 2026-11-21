@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 
 import structlog
 
-from src.core.config_files_io import atomic_write
+from src.core import config_writer
 from src.core.db import connect, db_path_for, transaction
 from src.core.project_reconcile import record_migration
 from src.core.project_store import (
@@ -152,11 +152,15 @@ def _entries_from(doc: Any) -> List[_Entry]:
     return entries
 
 
-def _drop_projects_key(config_path: Path, doc: Any) -> None:
-    doc.pop(PROJECTS_KEY, None)
-    doc.pop(PROJECTS_COMMENT_KEY, None)
-    doc[PROJECTS_RETIRED_KEY] = PROJECTS_RETIRED_NOTE
-    atomic_write(config_path, json.dumps(doc, indent=2) + "\n")
+def _drop_projects_key(config_path: Path) -> None:
+
+    def mutate(doc: Dict[str, Any]) -> Dict[str, Any]:
+        doc.pop(PROJECTS_KEY, None)
+        doc.pop(PROJECTS_COMMENT_KEY, None)
+        doc[PROJECTS_RETIRED_KEY] = PROJECTS_RETIRED_NOTE
+        return doc
+
+    config_writer.commit(config_path, mutate)
 
 
 def migrate_projects_out_of_config(
@@ -280,8 +284,8 @@ def _migrate_with_db(
         )
 
     try:
-        _drop_projects_key(config_path, doc)
-    except OSError as exc:
+        _drop_projects_key(config_path)
+    except (OSError, ValueError) as exc:
         logger.warning("projects_migration_write_failed", error=str(exc))
         return MigrationResult(
             ok=False,

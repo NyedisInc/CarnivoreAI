@@ -1,7 +1,7 @@
 /* with a plain */
 import { bootStep } from './lib/boot-step';
 import { installScreenFlags } from './lib/page-flags/page-flags';
-import './cplugs/host/early-kinds';
+import './plugins/host/early-kinds';
 import './app.css';
 import './opscenter/app.css';
 import './lib/first-run/boot';
@@ -44,6 +44,7 @@ import { bootNativeShell } from './lib/native-shell/shell';
 import { bootPhoneMic } from './lib/phone-mic/boot';
 import { bootPackKnock } from './lib/pack-knock/boot';
 import { installNotifyScreen } from './lib/notifications/screen-filter';
+import { installNotifySound } from './lib/notifications/sound-player';
 import { installDesktopClick } from './lib/notifications/desktop-click';
 import { startPresenceBeacon } from './lib/notifications/presence';
 import { startWatchedSession } from './lib/notifications/quiet-watched.svelte';
@@ -194,7 +195,7 @@ import { mountAppAlerts } from './lib/app-alerts/mount-alerts.svelte';
 import { startApprovals } from './lib/approvals/approvals.svelte';
 import { openApprovalFor, wireAskOpeners } from './lib/approvals/mount-approvals.svelte';
 import { startMenuCommands } from './lib/desktop-menu/browser-actions';
-import { runCplugCardAction, startCplugs } from './cplugs/host/readers';
+import { runCplugCardAction, startCplugs } from './plugins/host/readers';
 import {
     clearTerminalStartupNotice,
     showTerminalStartupNotice,
@@ -574,6 +575,7 @@ bootNativeShell();
 bootPhoneMic();
 bootPackKnock();
 installNotifyScreen();
+installNotifySound();
 installDesktopClick();
 startWatchedSession();
 startPresenceBeacon();

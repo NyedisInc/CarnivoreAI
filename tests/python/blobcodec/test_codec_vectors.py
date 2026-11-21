@@ -11,7 +11,7 @@ import pytest
 from src.core.blobcodec.chunking import ChunkReader, ChunkRef, chain_sha
 from src.core.blobcodec.codec import (BlobCorrupt, blob_relpath, codec_library, compress, decompress, decompress_bounded,
                                      default_codec)
-from src.cplugs.sdk import blob_codec as sdk_blob_codec
+from src.plugins.sdk import blob_codec as sdk_blob_codec
 
 MiB = 1024 * 1024
 

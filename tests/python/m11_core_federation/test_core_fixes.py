@@ -184,7 +184,7 @@ def test_a_restart_record_is_built_without_reading_a_keychain_secret(monkeypatch
     monkeypatch.setattr(create_seam, "launch_record_json", lambda p, account: json.dumps({"digest": p.digest, "a": account}))
 
     class Settings:
-        def pane_launch_command(self, _agent: str, *, model: Any, extra_args: Any, plan_sink: list) -> str:
+        def pane_launch_command(self, _agent: str, *, model: Any, extra_args: Any, plan_sink: list, working_dir: Any = None) -> str:
             plan_sink.append(plan)
             return "cmd"
 
@@ -395,11 +395,11 @@ def test_a_failed_bulk_colour_write_names_the_rows_that_already_landed(monkeypat
 
     done: List[Any] = []
 
-    async def update_project(name: str, request: Any) -> Any:
-        if name == "beta":
+    async def update_project_for(project_id: int, request: Any) -> Any:
+        if project_id == 2:
             raise HTTPException(status_code=409, detail="name collision")
-        done.append(name)
-        return SimpleNamespace(id=1, name=name, color=request.color)
+        done.append(names[project_id])
+        return SimpleNamespace(id=project_id, name=names[project_id], color=request.color)
 
     captured: dict = {}
 
@@ -411,7 +411,7 @@ def test_a_failed_bulk_colour_write_names_the_rows_that_already_landed(monkeypat
     import src.core.mcp.write_tools as write_tools
 
     monkeypatch.setattr(project_tools, "_names_by_id", names_by_id)
-    monkeypatch.setattr(projects_routes, "update_project", update_project)
+    monkeypatch.setattr(projects_routes, "update_project_for", update_project_for)
     monkeypatch.setattr(write_tools, "park", park)
     caller = AgentCaller("ses_a", "cloude_a", "ses_a")
     asyncio.run(project_color_tools.project_color_set(None, caller, {"colors": {"alpha": "#aabbcc", "beta": "#112233"}}))

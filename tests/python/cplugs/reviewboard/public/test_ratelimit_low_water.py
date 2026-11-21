@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from src.cplugs.reviewboard.public import ratelimit
+from src.plugins.reviewboard.public import ratelimit
 
 LOW_WATER = ratelimit.MAX_KEYS * 3 // 4
 

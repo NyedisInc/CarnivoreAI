@@ -6,9 +6,9 @@ from typing import Any, Dict, List
 
 import pytest
 
-from src.cplugs.reviewboard.public.edge import EdgeConfig, PublicEdge, canonical_ip
-from src.cplugs.reviewboard.public.headers import BASE_HEADERS, PERMISSIONS_POLICY, SHELL_CSP, api_headers, frame_headers, shell_headers
-from src.cplugs.sdk.sandboxed_html import VIEW_CSP
+from src.plugins.reviewboard.public.edge import EdgeConfig, PublicEdge, canonical_ip
+from src.plugins.reviewboard.public.headers import BASE_HEADERS, PERMISSIONS_POLICY, SHELL_CSP, api_headers, frame_headers, shell_headers
+from src.plugins.sdk.sandboxed_html import VIEW_CSP
 
 HOST = b"review.example.test"
 

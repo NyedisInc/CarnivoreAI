@@ -4,6 +4,7 @@ const { applyDevDockIcon } = require('./dev-dock-icon');
 const { relocateUserData } = require('./userdata-migration');
 const { applyProofMarker, readRunningPurpose } = require('./proof-marker');
 applyProofMarker(app);
+require('./mock-keychain-policy').applyMockKeychainPolicy(app);
 
 const userDataMigration = relocateUserData(app);
 
@@ -181,6 +182,7 @@ function startAutoUpdate() {
 }
 const windowGuard = require('./window-guard-wire').wireWindowGuard({ getManager: () => serverManager, refreshTray: () => refreshTray(), reload: () => appWindow.reload() });
 const appWindow = createAppWindow({
+  bounceDock: () => dockPresence.bounce(),
   guard: windowGuard,
   getUrl: () => (serverManager ? serverManager.getAppWindowUrl() : null),
   shouldMirror: (ask) => (trayMenu ? trayMenu.mirrorAllowed(ask) : true),
@@ -525,7 +527,7 @@ function startStatsPolling() {
             serverManager.startTime = Date.now();
           }
         }
-      } else {
+      } else if (state !== 'running' || serverManager.healthDown()) {
         if (serverManager.isProcessRunning() || serverManager.startWait) {
           if (state !== 'starting') {
             console.log('Process running but health check failed, marking as starting');

@@ -12,7 +12,7 @@ from src.api import row_looks_routes
 from src.core import row_looks
 from src.core.browser_pages import open_pages, select
 from src.core.row_looks.palette import COLORS, ICONS
-from src.cplugs.reviewboard.mcp import TOOLS
+from src.plugins.reviewboard.mcp import TOOLS
 from src.models.row_looks import RowLookRequest
 from tests.python.cplugs.reviewboard.test_board_page import SLUG, make_board
 from tests.python.cplugs.reviewboard.test_publish import HTML, client, create_body, env, item  # noqa: F401
@@ -111,16 +111,16 @@ def test_the_tool_enums_are_the_one_palette():
 
 
 @pytest.mark.parametrize("model_path", [
-    "src.cplugs.reviewboard.requests:CreateBody",
-    "src.cplugs.reviewboard.requests:OpenBody",
-    "src.cplugs.reviewboard.live_requests:LiveCreateBody",
+    "src.plugins.reviewboard.requests:CreateBody",
+    "src.plugins.reviewboard.requests:OpenBody",
+    "src.plugins.reviewboard.live_requests:LiveCreateBody",
 ])
 def test_every_body_with_a_look_checks_both_names_through_the_one_mixin(model_path: str) -> None:
     import importlib
 
     from pydantic import ValidationError
 
-    from src.cplugs.reviewboard.requests import LookChecked
+    from src.plugins.reviewboard.requests import LookChecked
 
     module, name = model_path.split(":")
     model = getattr(importlib.import_module(module), name)

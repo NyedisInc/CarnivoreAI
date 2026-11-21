@@ -85,7 +85,7 @@ def start(links_getter: Callable[[], Optional[peer_links.PeerLinks]], services: 
     home = Path.home()
     roots = {"claude": home / ".claude" / "skills", "codex": home / ".agents" / "skills"}
     sync = SkillsSync(
-        install_id=runtime.install_id, state=receiving.receiver_state(), alpha_id=lambda: runtime.settings().master_install_id,
+        install_id=runtime.install_id, state=receiving.receiver_state(), alpha_id=runtime.content_alpha,
         choices=ConfigChoices(wired.state), family_roots=lambda: roots,
         receiver_roots=receiving.roots_now, peers=peers, request_for=request_for,
         notify=lambda: resource_push.notify_coalesced(topics.PACK_SKILLS, "skills", NOTIFY_EVERY_SECONDS),

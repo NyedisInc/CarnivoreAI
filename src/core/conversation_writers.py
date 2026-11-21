@@ -169,11 +169,16 @@ def resume_uuid_in(command: str) -> Optional[str]:
 
 
 def process_cwd(pid: int) -> Optional[str]:
+    folder = libproc_snapshot.process_cwd(pid)
+    return os.path.realpath(folder) if folder else lsof_cwd(pid)
+
+
+def lsof_cwd(pid: int) -> Optional[str]:
     try:
         proc = subprocess.run(
             ["/usr/sbin/lsof", "-b", "-w", "-a", "-p", str(pid), "-d", "cwd", "-Fn"],
             capture_output=True, text=True, timeout=LSOF_TIMEOUT_SECONDS,
-            check=False,
+            check=False, close_fds=False,
         )
     except (OSError, subprocess.TimeoutExpired):
         return None

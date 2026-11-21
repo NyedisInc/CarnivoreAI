@@ -5,9 +5,9 @@ from typing import Any, Optional
 
 from src.core.auto_sleep import live_work
 from src.core.hosts.identity import is_remote_info
+from src.models.activity_status import RESTING
 
 FAMILY: str = "claude"
-IDLE_STATUSES: frozenset = frozenset({"idle", "finished_unread"})
 GATE_READY: str = "ready"
 IDLE_SECONDS: float = 120.0
 
@@ -44,7 +44,7 @@ def refusal(info: Any, observation: Any, quiet_seconds: Optional[float]) -> Opti
     if out_of_scope is not None:
         return out_of_scope
     status = getattr(info, "activity_status", None)
-    if status not in IDLE_STATUSES:
+    if status not in RESTING:
         return f"{STATUS_PREFIX}{status}"
     if getattr(info, "startup_gate", None) != GATE_READY:
         return REASON_STARTUP_GATE

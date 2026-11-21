@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from src.cplugs.huddle import triggers, wait_runner
+from src.plugins.huddle import triggers, wait_runner
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import ITEMS, call, env, iso  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_waits import INSTALL, park  # noqa: F401

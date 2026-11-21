@@ -55,7 +55,7 @@
 .popup-focus-turn > .pf-sheen {
     position: absolute;
     inset: calc(-1 * var(--pf-bw));
-    z-index: 41;
+    z-index: calc(var(--oc-z-page) + var(--oc-z-step));
     pointer-events: none;
     container-type: size;
     padding: 1px;

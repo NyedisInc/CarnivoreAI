@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import pytest
 
-from src.cplugs.reviewboard import pdf_scan
-from src.cplugs.reviewboard.pdf_streams import PdfUnreadable
-from src.cplugs.sdk.file_secrets import Deadline
+from src.plugins.reviewboard import pdf_scan
+from src.plugins.reviewboard.pdf_streams import PdfUnreadable
+from src.plugins.sdk.file_secrets import Deadline
 from tests.python.cplugs.reviewboard.pdf_fixtures import BYPASSES, ORDINARY, ROUND9_REVIEW
 
 

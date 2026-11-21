@@ -14,8 +14,8 @@ from fastapi import FastAPI
 from src.core.mcp import channel, protocol, tools, write_tools
 from src.core.mcp.caller import AgentCaller
 from src.core.resource_push import topics
-from src.cplugs.host import mcp as cplug_mcp, runtime, sidecar_registry, state as owner_state
-from src.cplugs.host.sidecar_manifest import load_sidecar_manifest, with_sidecar_facts
+from src.plugins.host import mcp as cplug_mcp, runtime, sidecar_registry, state as owner_state
+from src.plugins.host.sidecar_manifest import load_sidecar_manifest, with_sidecar_facts
 
 NAME = "clock"
 PANE = AgentCaller("ses_1", "cloude_a", "ses_1")

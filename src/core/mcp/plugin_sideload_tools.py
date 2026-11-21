@@ -22,7 +22,7 @@ _NAME = {"name": {"type": "string", "maxLength": 64, "description": "the install
 
 
 def _require_on(request: Any) -> None:
-    from src.cplugs.host import sideload_routes
+    from src.plugins.host import sideload_routes
 
     live = getattr(getattr(getattr(request, "app", None), "state", None), "sidecar_runtime", None)
     if live is None:
@@ -43,7 +43,7 @@ def _warned(answer: Any) -> Any:
 
 
 async def _run_load(call: ra.Call) -> Any:
-    from src.cplugs.host import sideload_git_routes, sideload_routes
+    from src.plugins.host import sideload_git_routes, sideload_routes
 
     _require_on(call.request)
     args = call.args
@@ -75,7 +75,7 @@ def _remove_summary(args: dict, _target: Any) -> str:
 
 SPECS = (
     ra.RouteTool(
-        name=_SIDELOAD, route="src.cplugs.host.sideload_routes:post_sideload", gate=ra.ACT,
+        name=_SIDELOAD, route="src.plugins.host.sideload_routes:post_sideload", gate=ra.ACT,
         description="Sideload or re-sync your own plugin from path or git_url as local/<name>. Always waits for the owner. "
                     "Warning: " + SIDELOAD_WARNING,
         properties={"path": {"type": "string", "maxLength": 1024, "description": _PATH_RULES},
@@ -85,7 +85,7 @@ SPECS = (
         invoke=_load, summary=_load_summary, request_check=_require_on, example={"path": "/tmp/clock"},
     ),
     ra.RouteTool(
-        name=_REMOVE, route="src.cplugs.host.sideload_routes:delete_sideload", gate=ra.ACT,
+        name=_REMOVE, route="src.plugins.host.sideload_routes:delete_sideload", gate=ra.ACT,
         description="Remove one sideloaded plugin of any kind by name (kind only when two kinds share the name): a sidecar plugin stops "
                     "and its copied code goes; a theme, skill or Claude Code plugin folder moves to the trash; a git checkout goes; data and grants "
                     "stay. Always waits for the owner. Refused (sideload_off) while developer mode is off.",

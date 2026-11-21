@@ -11,7 +11,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 import structlog
 
 from src.core.pipeline import contract as C
-from src.core.pipeline import activity, plugin_db, recent, registry, scan, status
+from src.core.pipeline import activity, plugin_db, recent, registry, scan, status, switch
 from src.core.pipeline.deliver import (Delivery, FileTarget, PluginRun, SKIP_BUDGET, SKIP_GONE, SKIP_ICLOUD,
                                        SKIP_TIMEOUT, SKIP_UNREADABLE, deliver_file, deliver_file_removed, deliver_removed)
 from src.core.pipeline.lifecycle import Lifecycle
@@ -67,9 +67,10 @@ class Engine:
             (lambda conv: lineage_of(self.db_path, conv)) if self.db_path is not None else (lambda conv: None))
         self.dirty = DirtySet(clock)
         self.scanner = scan.Scanner(self.state_dir, self.db_path, self.plugins, self.mark_dirty, self.mark_removed,
-                                    refresh_fn=refresh_fn, wall=wall, mark_file_removed=self.mark_file_removed)
+                                    refresh_fn=refresh_fn, wall=wall, mark_file_removed=self.mark_file_removed,
+                                    is_active=self.plugin_on)
         self.lifecycle = Lifecycle(self.db_path, state_dir=self.state_dir, plugins=self.plugins,
-                                   writer=lifecycle_writer)
+                                   writer=lifecycle_writer, is_active=self.plugin_on)
         self.observer = Observer(self.mark_dirty)
         self.recent = recent_runs if recent_runs is not None else recent.RecentRuns(
             recent.db_resolver(self.db_path), wall=wall, clock=clock)
@@ -97,6 +98,12 @@ class Engine:
         self._tallies: Dict[str, status.PluginTally] = {p.id: status.PluginTally() for p in self.plugins}
         self.wakes = 0
         self.scan_ticks = 0
+
+    def plugin_on(self, plugin: C.Plugin) -> bool:
+        return switch.is_on(plugin, self.state_dir)
+
+    def active_plugins(self) -> Tuple[C.Plugin, ...]:
+        return switch.active(self.plugins, self.state_dir)
 
     def mark_dirty(self, target: FileTarget, trigger: str = TRIGGER_LIVE) -> bool:
         created = self.dirty.mark_file(target, trigger)
@@ -197,7 +204,7 @@ class Engine:
             view = self.dirty.view()
             if view.pending > view.parked:
                 return False
-            for plugin in self.plugins:
+            for plugin in self.active_plugins():
                 if plugin.on_caught_up is None or plugin.id in self._paused:
                     continue
                 try:
@@ -218,13 +225,14 @@ class Engine:
 
     def _deliver_batch(self, entries: List[Entry]) -> None:
         with self._deliver_lock:
-            runs = [PluginRun(p) for p in self.plugins if p.id not in self._paused]
-            delivery = Delivery(self.state_dir, runs, TRIGGER_LIVE, None, clock=self._wall, timer=self._clock)
             self._in_flight = {e.key: e for e in entries}
             copies = self.dirty.waiting_copies(entries)
             self._set_batch_rest(copies)
             started = self._clock()
+            delivery: Optional[Delivery] = None
             try:
+                runs = [PluginRun(p) for p in self.active_plugins() if p.id not in self._paused]
+                delivery = Delivery(self.state_dir, runs, TRIGGER_LIVE, None, clock=self._wall, timer=self._clock)
                 bulk_only = not any(e.live for e in entries)
                 for index, entry in enumerate(entries):
                     if index and (self._clock() - started > BATCH_WALL_SECONDS
@@ -245,7 +253,8 @@ class Engine:
                 for entry in list(self._in_flight.values()):
                     self.dirty.settle(entry, file_error=PARK_WORKER_ERROR)
                 self._in_flight = {}
-                delivery.close_reads()
+                if delivery is not None:
+                    delivery.close_reads()
 
     def _set_batch_rest(self, rest: Tuple[Waiting, ...]) -> None:
         with self._activity_lock:
@@ -403,7 +412,7 @@ class Engine:
         lookup = self.recent.cached_lookup
         snapshot = status.Snapshot(
             now=now, wall=wall, view=self.dirty.view(), in_flight=len(self._in_flight),
-            last_progress=self._last_progress, last_delivery_wall=self._last_delivery_wall, plugins=self.plugins,
+            last_progress=self._last_progress, last_delivery_wall=self._last_delivery_wall, plugins=self.active_plugins(),
             rebuilding=tuple(rebuilding), scan=self.scanner.last, recent=tuple(self.recent.rows()),
             tallies={pid: (t.last_delivery_at, t.runs) for pid, t in self._tallies.items()},
             threads={"worker": self._alive(THREAD_WORKER), "scan": self._alive(THREAD_SCAN),

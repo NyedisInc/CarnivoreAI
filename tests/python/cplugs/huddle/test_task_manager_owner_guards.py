@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.huddle import answers, lineage, owner_guards
-from src.cplugs.huddle.cards import state_log
+from src.plugins.huddle import answers, lineage, owner_guards
+from src.plugins.huddle.cards import state_log
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 
 HANDOFF = "20261015-cleanup"

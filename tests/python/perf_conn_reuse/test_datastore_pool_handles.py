@@ -204,3 +204,47 @@ def test_pool_dropped_on_another_thread_closes_on_the_owner(tmp_path, caplog):
         assert _is_closed(kept[0])
     finally:
         gc.enable()
+
+
+def test_orphan_sweep_survives_a_finalizer_running_inside_it(tmp_path: Path) -> None:
+    from src.core.db_reuse import thread_connections as tc
+
+    made = {}
+
+    def make() -> None:
+        holder = tc._Holder()
+        holder.slots["x"] = (sqlite3.connect(":memory:", check_same_thread=False), 1)
+        made["holder"] = holder
+        built.set()
+        release.wait(10)
+
+    built, release = threading.Event(), threading.Event()
+    maker = threading.Thread(target=make)
+    maker.start()
+    assert built.wait(5)
+    holder = made["holder"]
+
+    class FinalizingDict(dict):
+
+        def pop(self, *args):
+            holder.close_all()
+            return super().pop(*args)
+
+    result = {}
+
+    def sweep() -> None:
+        saved = tc._ORPHANS
+        tc._ORPHANS = FinalizingDict({threading.get_ident(): []})
+        try:
+            tc._close_orphans(threading.get_ident())
+            result["done"] = True
+        finally:
+            tc._ORPHANS = saved
+
+    worker = threading.Thread(target=sweep, daemon=True)
+    worker.start()
+    worker.join(timeout=5)
+    assert not worker.is_alive(), "orphan sweep deadlocked on its own lock"
+    release.set()
+    maker.join()
+    assert result.get("done")

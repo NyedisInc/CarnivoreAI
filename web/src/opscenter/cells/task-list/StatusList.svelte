@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { huddle } from '../../../cplugs/huddle/huddle.svelte';
-  import { holdDone } from '../../../cplugs/huddle/task-manager-done.svelte';
+  import { huddle } from '../../../plugins/huddle/huddle.svelte';
+  import { holdDone } from '../../../plugins/huddle/task-manager-done.svelte';
   import ListBody from './ListBody.svelte';
   import { statusRows } from './model';
   import { holdList } from './state.svelte';

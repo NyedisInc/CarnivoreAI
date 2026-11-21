@@ -250,6 +250,11 @@ console.log('[SessionRestartOptions Module] Loading...');
 
 
     function previewFor(tmuxName, sessionUuid) {
+        if (!tmuxName && sessionUuid && window.API.recreatePreview) {
+            return window.API.recreatePreview(sessionUuid).then(function (recreated) {
+                return { preview: recreated, mode: 'recreate', sessionUuid: sessionUuid };
+            });
+        }
         return window.API.restartPreview(tmuxName).then(function (preview) {
             if (!shouldRecreate(preview) || !sessionUuid
                 || !window.API.recreatePreview) {

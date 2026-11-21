@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, List
 
 from src.core.argent import commits
-from src.cplugs.sdk import turn_events
+from src.plugins.sdk import turn_events
 
 ME = "me@example.test"
 

@@ -35,13 +35,13 @@ def _paths(outcome: D.DiscoveryOutcome) -> List[str]:
 @pytest.fixture()
 def iterdir_calls(monkeypatch: pytest.MonkeyPatch) -> List[str]:
     calls: List[str] = []
-    real = Path.iterdir
+    real = os.scandir
 
-    def counting(self: Path):
-        calls.append(str(self))
-        return real(self)
+    def counting(path):
+        calls.append(str(path))
+        return real(path)
 
-    monkeypatch.setattr(Path, "iterdir", counting)
+    monkeypatch.setattr(D.os, "scandir", counting)
     return calls
 
 

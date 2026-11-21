@@ -25,8 +25,8 @@ class _HostHandle:
 
 
 def _run_one_time_migrations(ctx: "BootContext", state_dir: Path) -> None:
-    from src.cplugs.host.state import StateWriteFailed
-    from src.cplugs.host.split_migration import migrate as migrate_split_plugins
+    from src.plugins.host.state import StateWriteFailed
+    from src.plugins.host.split_migration import migrate as migrate_split_plugins
 
     config_path = Path(settings.auth_config_file).expanduser()
     fresh_install = ctx.datastore_state.fresh_install
@@ -34,19 +34,19 @@ def _run_one_time_migrations(ctx: "BootContext", state_dir: Path) -> None:
         migrate_split_plugins(state_dir, config_path, fresh_install)
     except (OSError, ValueError) as exc:
         logger.error("cplug_split_migration_failed", error=f"{type(exc).__name__}: {exc}")
-    from src.cplugs.host.vault_location_migration import migrate as migrate_vault_location
+    from src.plugins.host.vault_location_migration import migrate as migrate_vault_location
 
     try:
         migrate_vault_location(state_dir, config_path)
     except StateWriteFailed as exc:
         logger.error("vault_location_migration_failed", error=f"{type(exc).__name__}: {exc}")
-    from src.cplugs.host.swarm_default_migration import migrate as migrate_swarm_default
+    from src.plugins.host.swarm_default_migration import migrate as migrate_swarm_default
 
     try:
         migrate_swarm_default(state_dir, fresh_install)
     except StateWriteFailed as exc:
         logger.error("cplug_swarm_default_migration_failed", error=f"{type(exc).__name__}: {exc}")
-    from src.cplugs.host.plugin_fold import migrate as migrate_folded_plugins
+    from src.plugins.host.plugin_fold import migrate as migrate_folded_plugins
 
     try:
         migrate_folded_plugins(state_dir)
@@ -59,13 +59,13 @@ def _host_steps() -> list[BootStep]:
 
     async def start(ctx: "BootContext") -> None:
         app = ctx.app
-        from src.cplugs.host import runtime as cplugs_host
+        from src.plugins.host import runtime as cplugs_host
 
         held.host = cplugs_host.install(app, settings.get_state_dir())
         state_dir = held.host.state_dir
 
         def retired() -> None:
-            from src.cplugs.host.legacy_disabled import import_disabled_plugins
+            from src.plugins.host.legacy_disabled import import_disabled_plugins
 
             import_disabled_plugins(
                 state_dir,
@@ -81,18 +81,18 @@ def _host_steps() -> list[BootStep]:
             card_prefs_migration.migrate(state_dir, app.state.ui_preferences_store)
             _run_one_time_migrations(ctx, state_dir)
 
-        from src.cplugs.host import registry_boot
+        from src.plugins.host import registry_boot
 
         outcome = registry_boot.run(state_dir, retired=retired)
         logger.info("plugin_registry_boot", action=outcome.action, detail=outcome.detail, read_only=outcome.read_only)
-        from src.cplugs.host import retired_profiles
+        from src.plugins.host import retired_profiles
 
         retired_profiles.retire_old_profiles(state_dir)
         await held.host.start()
 
     async def stop(ctx: "BootContext") -> None:
         from src.core.approvals import beast_lifecycle
-        from src.cplugs.host import runtime as cplugs_host
+        from src.plugins.host import runtime as cplugs_host
 
         await ctx.stop_part("cplugs_host", lambda: cplugs_host.host_for(ctx.app).stop())
         await ctx.stop_part("beast_lifecycle", lambda: beast_lifecycle.stop(held.host.state_dir))
@@ -107,7 +107,7 @@ def _host_steps() -> list[BootStep]:
 
 
 async def _start_sidecar(ctx: "BootContext", host: object) -> None:
-    from src.cplugs.host import sidecar_boot
+    from src.plugins.host import sidecar_boot
 
     app = ctx.app
     app.state.sidecar_runtime = await sidecar_boot.boot(host, app, asyncio.get_running_loop())

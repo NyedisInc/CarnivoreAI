@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 from pydantic import ValidationInfo
 
 from src.core.ui_preferences.checks import json_size_cap
-from src.core.ui_preferences.constants import FOOT_BAR_ITEM_IDS, FOOT_BAR_ORDER_IDS, LAUNCHPAD_SECTION_IDS, MAX_COLLAPSED_PATHS, MAX_KEY_LENGTH, MAX_MENU_ORDER, MAX_SIDEBAR_TAB_COLORS, RAIL_MAGNIFY_PERCENTS, SIDEBAR_DENSITIES, SIDEBAR_LAYOUTS, SIDEBAR_TAB_COLOR_NAMES, SIDEBAR_TAB_ID_RE, WIDGET_DRAWER_VIEWS
+from src.core.ui_preferences.constants import FOOT_BAR_ITEM_IDS, FOOT_BAR_ORDER_IDS, LAUNCHPAD_SECTION_IDS, MAX_COLLAPSED_PATHS, MAX_KEY_LENGTH, MAX_MENU_ORDER, MAX_SIDEBAR_TAB_COLORS, MENU_PAGE_WIDTH_MAX_PX, MENU_PAGE_WIDTH_MIN_PX, RAIL_MAGNIFY_PERCENTS, SIDEBAR_DENSITIES, SIDEBAR_LAYOUTS, SIDEBAR_TAB_COLOR_NAMES, SIDEBAR_TAB_ID_RE, WIDGET_DRAWER_VIEWS
 from src.core.ui_preferences.drawer_arrangement import DrawerArrangement, MAX_DRAWER_ARRANGEMENT_BYTES
 
 
@@ -41,6 +41,12 @@ def check_density(value: Optional[str], info: ValidationInfo) -> Optional[str]:
 def check_rail_magnify(value: Optional[int]) -> Optional[int]:
     if value is not None and value not in RAIL_MAGNIFY_PERCENTS:
         raise ValueError(f"rail_magnify must be one of {list(RAIL_MAGNIFY_PERCENTS)}")
+    return value
+
+
+def check_menu_page_width(value: Optional[int]) -> Optional[int]:
+    if value is not None and not MENU_PAGE_WIDTH_MIN_PX <= value <= MENU_PAGE_WIDTH_MAX_PX:
+        raise ValueError(f"menu_page_width must be {MENU_PAGE_WIDTH_MIN_PX} to {MENU_PAGE_WIDTH_MAX_PX} px")
     return value
 
 

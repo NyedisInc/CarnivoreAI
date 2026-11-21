@@ -15,13 +15,25 @@ from src.core.pack.move import account as account_launch
 from src.core.session_recreate import RECREATE
 from src.core.session_respawn import RESPAWN_TRANSCRIPT_MISSING
 from src.api.error_response import api_error
+from src.core.db import DatastoreUnreadableError
+from src.core.session_ops import row_probe
 
 TRANSCRIPT_MISSING_CODE = "transcript_missing"
 
 logger = structlog.get_logger()
 
 
-async def recreate_by_uuid(
+async def recreate_by_uuid(session_uuid: str, agent_type: str, **kwargs: Any) -> "rr.RecreateResponse":
+    from src.core import restart_inflight
+
+    try:
+        with restart_inflight.claim(session_uuid):
+            return await _recreate_claimed(session_uuid, agent_type, **kwargs)
+    except restart_inflight.RestartInFlightError as exc:
+        raise api_error(409, restart_inflight.IN_PROGRESS_CODE, exc) from exc
+
+
+async def _recreate_claimed(
     session_uuid: str,
     agent_type: str,
     *,
@@ -134,10 +146,14 @@ async def recreate_by_uuid(
                 detail=account_launch.NOT_USABLE_DETAIL, code=account_launch.NOT_USABLE_CODE, codes=[account_launch.NOT_USABLE_CODE])
         extra_env = launch["extra_env"]
     from src.core.sessions.name_locks import hold_adopt
+    from src.core.sessions.reuse_guard import ReuseRowTakenError
 
     manager = get_manager()
     try:
         async with hold_adopt(manager, plan.tmux_name):
+            stale = await _refusal_if_no_longer_gone(session_uuid, row_overrides, corpus, fresh, plan)
+            if stale is not None:
+                return stale
             session = await manager.create_session(
                 session_id=f"ses_{_uuid.uuid4().hex[:8]}",
                 working_dir=plan.working_dir,
@@ -151,12 +167,20 @@ async def recreate_by_uuid(
                 claude_account=account_plan.account_id,
                 extra_env=extra_env,
             )
+    except ReuseRowTakenError as exc:
+        logger.warning("recreate_refused_row_taken_over", name=name, session_uuid=session_uuid, held=exc.held_tmux_name)
+        return rr.RecreateResponse(
+            status="refused", session_uuid=session_uuid, session_name=name, presence=plan.presence,
+            conversation=plan.conversation, command=plan.command, working_dir=plan.working_dir,
+            detail=f"cannot recreate: the session came back on its own in {exc.held_tmux_name}. the new copy was stopped")
     except (OSError, ValueError, RuntimeError) as exc:
         raise api_error(500, "session_recreate_failed", exc, name=name, session_uuid=session_uuid) from exc
 
-    await restart_account.persist(_config_path(), session_uuid, account_plan)
-    if fresh and plan.reuse_session_id is not None:
-        await run_in_threadpool(_clear_conversation, int(plan.reuse_session_id))
+    final_name = getattr(session, "tmux_session", None)
+    async with hold_adopt(manager, final_name if final_name != plan.tmux_name else None):
+        await restart_account.persist(_config_path(), session_uuid, account_plan)
+        if fresh and plan.reuse_session_id is not None:
+            await run_in_threadpool(_clear_conversation, int(plan.reuse_session_id))
     logger.info(
         "recreate_started",
         name=name,
@@ -179,12 +203,27 @@ async def recreate_by_uuid(
     )
 
 
+async def _refusal_if_no_longer_gone(
+    session_uuid: str, row_overrides: Optional[Dict[str, Any]], corpus: Optional[Path], fresh: bool, plan: Any,
+) -> Optional["rr.RecreateResponse"]:
+    again = await run_in_threadpool(rr._gather, session_uuid, row_overrides, fresh=fresh, corpus_root=corpus)
+    presence = again["presence"]
+    if presence.gone:
+        return None
+    logger.info("recreate_refused_after_lock", name=again["name"], session_uuid=session_uuid, presence=presence.outcome)
+    return rr.RecreateResponse(
+        status="refused", session_uuid=session_uuid, session_name=again["name"], presence=presence.outcome,
+        conversation=plan.conversation, command=plan.command, working_dir=plan.working_dir,
+        detail=f"cannot recreate: {presence.detail}. nothing was started",
+    )
+
+
 async def _share_fork_due(session_uuid: str, row: Dict[str, Any]) -> bool:
     from src.core.crate_import import fork_marker
 
     try:
-        return await run_in_threadpool(fork_marker.wake_forks_at, rr._db_path(), session_uuid, row.get("claude_session_uuid"))
-    except (rr.DatastoreUnreadableError, sqlite3.Error, OSError) as exc:
+        return await run_in_threadpool(fork_marker.wake_forks_at, row_probe.db_path(), session_uuid, row.get("claude_session_uuid"))
+    except (DatastoreUnreadableError, sqlite3.Error, OSError) as exc:
         logger.error("share_fork_marker_unreadable", session_uuid=session_uuid, error=str(exc)[:120])
         raise HTTPException(status_code=503, detail="the share marker could not be read; nothing was started")
 
@@ -194,6 +233,6 @@ def _clear_conversation(row_id: int) -> None:
 
     from src.core.db import connect
 
-    with closing(connect(rr._db_path(), create=False)) as conn:
+    with closing(connect(row_probe.db_path(), create=False)) as conn:
         conn.execute("UPDATE sessions SET claude_session_uuid = NULL WHERE id = ?", (row_id,))
         conn.commit()

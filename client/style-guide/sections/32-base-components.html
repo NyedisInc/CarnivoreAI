@@ -26,7 +26,15 @@ with no look of its own, pending Alex's ruling on #2033.</p>
         caller puts in it. Arrows walk the visible rows, Right opens a shut branch, Left shuts an open one or steps out to its
         parent, Home and End jump, Enter and Space fold a branch or activate a leaf, and typing letters jumps to the next row starting with them. A leaf's buttons go in the <code>actions</code> cell (<code>.oc-tree__actions</code>) beside the row, never inside the treeitem. One tab stop. <code>forceOpen</code> opens
         every branch for a search that shows only what matched. Indent is one token step per level; the chevron is the one
-        <code>FoldChevron.svelte</code>.</dd>
+        <code>FoldChevron.svelte</code>. A tree whose rows are things to pick (the new project form's folders) passes
+        <code>selected</code> and <code>onSelect</code>: any row, a branch included, selects on a click (a branch still folds), the picked row
+        wears the accent bar, <code>branchMeta</code> draws tags at the right of a branch (<code>.oc-tree__tags</code>) and
+        <code>showCount={false}</code> drops the leaf count.</dd>
+    <dt>lands in</dt>
+    <dd><code>.oc-lands</code>, <code>LandsIn.svelte</code>: the check shown before something is created, one
+        <code>.oc-lands__line</code> per finding that leads with a small <code>.oc-lands__level</code> word in its tone
+        (ok green, warn yellow, stop coral) and then the <code>.oc-lands__text</code> sentence, on a hairline frame. It only draws; the
+        findings come from the server and the words from the catalog, so any create flow shows the same card.</dd>
     <dt>field</dt>
     <dd><code>.oc-form-field</code>, <code>Field.svelte</code>: a real label above the base field (<code>data-field</code>,
         no class), whose boundary is the control line (3:1), help or error below tied by <code>aria-describedby</code>.
@@ -60,7 +68,11 @@ with no look of its own, pending Alex's ruling on #2033.</p>
     <dd><code>Button.svelte</code> is a plain <code>&lt;button&gt;</code> (or a link) with <code>data-btn</code> and
         <code>data-size</code> and no class: its whole look is the base layer
         (<a href="#base-elements">foundations: base elements</a>). secondary (the default), confirm, danger, quiet and
-        row, md or sm. Two buttons of one variant and size differ only in their label.</dd>
+        row, md or sm. Two buttons of one variant and size differ only in their label. The md size is the restart picker footer's button
+        (<code>--oc-btn-pad-y</code>, <code>--oc-space-4</code>, <code>--oc-fs-control</code>), the same for <code>.oc-btn</code> and every
+        <code>.modal-btn</code> variant, set once in <code>lib/base/elements.css</code>: no dialog sizes its own buttons. A region that wants the
+        compact size puts <code>data-btn-density="compact"</code> on itself (not <code>data-density</code>, which is the session drawer's row density);
+        an icon square keeps its own size.</dd>
     <dt>option list</dt>
     <dd><code>.oc-options</code>, <code>OptionList.svelte</code>: one choice (bits-ui RadioGroup, one tab stop, arrows
         choose) or several (bits-ui Checkbox), a numbered prompt with a tag, a recommended tag and a reason per row, and
@@ -68,6 +80,14 @@ with no look of its own, pending Alex's ruling on #2033.</p>
     <dt>tag</dt>
     <dd><code>.oc-tag</code>, <code>Tag.svelte</code>: a static uppercase word in one of six tones; a pressable filter is
         still <code>.oc-chip</code>.</dd>
+    <dt>chat bubble</dt>
+    <dd><code>.hb</code>, <code>ChatBubble.svelte</code>: one message of a conversation (the task manager thread, the flow chat, the
+        session chat). A 1px hairline and a faint tint in the tone token (<code>--_post</code>, always an <code>--oc-*</code> color),
+        small square corners, no shadow. <code>.hb--row</code> is a 14px mark column, the body and a key column;
+        <code>.hb--thread</code> is a header row (<code>.hb-head</code>: author, <code>.hb-kind</code> label in a quiet outline,
+        <code>.hb-time</code>) over the body. The caller fills the <code>body</code> snippet; a variant changes only the tone, the
+        ground or the edge through private properties (<code>--_edge-style</code>, <code>--_radius</code>, <code>--_ground</code>), never the structure; a caller's kind is only <code>.hb-k--&lt;kind&gt;</code> and <code>data-hb</code>. <code>.hb--owner-side</code> (the <code>owner</code> option) is the owner's side: raised ground, a right bar (<code>--_bar-w</code>, <code>--_bar-color</code>) and a header read from the right.
+        <code>.hb--waiting</code> draws the edge in the full token; <code>.hb--head-nowrap</code> keeps the header on one line and the author name ellipsizes.</dd>
     <dt>keycap</dt>
     <dd><code>.oc-keycaps</code> &gt; <code>.oc-keycap</code>, <code>Keycap.svelte</code>: the keys of one shortcut as small outlined
         mono caps, one per key, on a 1px hairline with no fill (a hint, never a button); <code>--hit</code> accents the caps of
@@ -88,7 +108,9 @@ with no look of its own, pending Alex's ruling on #2033.</p>
         (the page kit's <code>PageToolbar</code> draws through it) and scrolls sideways on a phone;
         <code>.oc-toolbar--band</code> is a standalone strip on the band ground with a hairline under it, and
         <code>.oc-toolbar--wrap</code> wraps on a phone instead. A control that does not fit goes to the one widget
-        menu, never a menu of the toolbar's own.</dd>
+        menu, never a menu of the toolbar's own. From 768px up the filters cluster (<code>.oc-toolbar__facets</code>) may shrink to the
+        bar and wrap its groups onto a second line, so a wide set of filters is never clipped by the page body; below 768px it stays
+        one row that scrolls sideways.</dd>
     <dt>state</dt>
     <dd><code>.oc-state</code>, <code>State.svelte</code>: what a region says when it is empty, loading or failed. Muted
         words, an optional glyph and hint, an optional row of actions; a warn (something stopped, <code>kind="warn"</code>) wears the yellow bar and an error is an alert with the coral bar and the
@@ -119,8 +141,9 @@ with no look of its own, pending Alex's ruling on #2033.</p>
 button recipe or the one field (<code>data-btn</code>, <code>data-field</code>), reserves the 1px border the focus rule lights, and reads tokens only.</p>
 <dl class="sg-facts">
     <dt>icon button</dt>
-    <dd><code>IconButton.svelte</code>, <code>icon-button.css</code> (<code>variant="danger"</code> is bare like quiet with the glyph coral at rest: a destructive key, nothing new on hover): the base button at <code>data-size="icon"</code>, a square that wears what
-        <code>.oc-ibtn</code> wore. <code>label</code> is required and is both the accessible name and the tooltip (an icon-only control is the one place a
+    <dd><code>IconButton.svelte</code>, <code>icon-button.css</code> (<code>variant="danger"</code> is bare like quiet with the glyph coral at rest: a destructive key, nothing new on hover): the base button at <code>data-size="icon"</code>, the one square. The
+        <code>.oc-ibtn</code> class family (<code>--bare</code>, <code>--close</code>, <code>--float</code>) is the same recipe in the same sheet, not a copy
+        (top-down cleanup M19), so a class button and an <code>IconButton</code> dim, hover and focus alike. <code>label</code> is required and is both the accessible name and the tooltip (an icon-only control is the one place a
         tooltip is right). Variants: secondary (the framed square; <code>pressed</code> makes it a toggle), quiet (no frame until pointed at), close (quiet,
         coral under the pointer), float (the faint floating icon). An optional <code>tooltip</code> is the hover tip when it must differ from the name (a hint, a shortcut); <code>label</code> stays the accessible name. a custom property on the button or an ancestor sets the square; a phone gets the thumb target.</dd>
     <dt>switch</dt>
@@ -135,6 +158,10 @@ button recipe or the one field (<code>data-btn</code>, <code>data-field</code>),
         filling its middle when on, a dash when mixed (<code>indeterminate</code>, checkbox only). The label is a string or a slot, with an optional
         hint line. A <code>RadioGroup</code> (<code>role="radiogroup"</code>) gives its radios one shared name, so the browser's own keys apply: one tab
         stop, arrows move and choose. Options as data or as <code>Radio</code> children; <code>orientation</code> vertical or horizontal. The mark sits beside the FIRST line of its label at every width: a label that wraps on a phone does not float the mark mid-block, the thumb height is padding around the first line.</dd>
+    <dt>the check mark</dt>
+    <dd><code>mark.css</code> (top-down cleanup M19): the one checkbox square and radio circle, drawn once for every family that shows one, the switch box <code>.oc-check__box</code>, the round <code>.oc-radio</code>, an answer row's <code>.oc-option__box</code>, the native <code>.oc-pick__input</code> and the cascade menu's on/off box. A <code>--oc-mark</code> square on the control line with a 1px corner (round for a radio); on, the edge and a middle half the box wide take the mark ink, <code>--_mark-ink</code> (the confirm token); mixed is a bar. A context changes only the ink on the box (the scheduler's pause switch is amber, a danger pick coral), never the drawing; <code>one-mark.test.ts</code> refuses a second copy.
+        <button type="button" class="oc-check" role="checkbox" aria-checked="true"><span class="oc-check__box" aria-hidden="true"></span>on</button>
+        <button type="button" class="oc-check" role="checkbox" aria-checked="false"><span class="oc-check__box" aria-hidden="true"></span>off</button></dd>
     <dt>menu item</dt>
     <dd><code>MenuItem.svelte</code>: one row of an anchored item menu, drawn in the item menu's own look with no CSS of its own (the classes of <code>client/css/session-row-menu.css</code>: <code>.session-row-menu__item</code> with its icon, label, key and reason spans), so a Svelte menu and the legacy item menu cannot drift. <code>label</code>, an <code>icon</code> snippet, <code>keyHint</code> (the key word at the row's end), <code>reason</code> (a line under the label; while <code>disabled</code> it is the tooltip and <code>aria-description</code> instead). <code>disabled</code> is <code>aria-disabled</code>, never the attribute, so the arrow keys still reach it. Nothing on hover beyond the menu's own rule. The caller owns the <code>.session-row-menu</code> panel, focus walk and close; the widgets page's <code>PlaceMenu</code> is the first caller.</dd>
     <dt>select</dt>
@@ -228,6 +255,9 @@ This is a demo; the Task Manager's own code is not changed here.</p>
     <dd><code>tests/python/design_system/test_theme_contrast_roles.py</code>: the role matrix of the contrast section,
         computed for every bundled theme; a new failing pair or a lower ratio fails
         (<code>tests/fixtures/design_contrast_roles_baseline.json</code>).</dd>
+    <dt>one dialog button size</dt>
+    <dd><code>web/src/lib/base/one-dialog-size.test.ts</code>: no sheet outside the base sets a padding, font size or <code>--_btn-*</code>
+        size on a <code>.modal-btn</code> family or plain <code>.oc-btn</code> button, beyond a KNOWN list that only goes down.</dd>
     <dt>the theme contract</dt>
     <dd><code>tests/python/design_system/test_theme_contract.py</code>: every bundled theme sets only contract names and
         every required one; a planted <code>--oc-space-3</code> is reported at load.</dd>

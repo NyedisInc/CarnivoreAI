@@ -262,7 +262,7 @@ async def install_skills(request: Request, folder: str, skill_ids: List[str],
 
 
 def _row_identity(request: Request, session: Any) -> Tuple[Optional[int], Optional[str]]:
-    from src.core.session_store import identity_for_instance, identity_for_live_name
+    from src.core.session_store import identity_for_instance, identity_for_live_name, uuid_for_row
 
     name = getattr(session, "tmux_session", None)
     if not name:
@@ -275,9 +275,8 @@ def _row_identity(request: Request, session: Any) -> Tuple[Optional[int], Option
             identity = identity_for_live_name(conn, socket=socket, name=name)
         if identity is None:
             return None, None
-        found = conn.execute("SELECT session_uuid FROM sessions WHERE id = ?",
-                             (int(identity["id"]),)).fetchone()
-    return int(identity["id"]), (str(found[0]) if found else None)
+        uuid = uuid_for_row(conn, int(identity["id"]))
+    return int(identity["id"]), uuid
 
 
 async def create_member_session(request: Request, member: BlueprintSession, folder: str,

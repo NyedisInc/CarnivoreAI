@@ -75,7 +75,10 @@ def test_capture_reads_viewport_on_explicit_socket_only(monkeypatch):
         calls.append((command, kwargs))
         return SimpleNamespace(returncode=0, stdout=b"prompt", stderr=b"")
 
-    monkeypatch.setattr(screen_read.subprocess, "run", run)
+    from src.core.tmux_transport import run as tmux_run_mod
+
+    monkeypatch.setattr(tmux_run_mod, "control_run", lambda *_a: None)
+    monkeypatch.setattr(tmux_run_mod.subprocess, "run", run)
     assert AttentionEvidenceReader._capture(None, "cloude_a") is None
     assert calls == []
     assert AttentionEvidenceReader._capture("cloude-test", "cloude_a") == "prompt"
@@ -145,8 +148,9 @@ def test_codex_record_reads_uncheckpointed_live_wal(tmp_path):
 
 
 def test_owned_lock_probe_is_one_bounded_command(monkeypatch):
-    from src.core.attention import codex_stores
+    from src.core.attention import codex_stores, output_holders
     calls = []
+    monkeypatch.setattr(output_holders, "libproc_available", lambda: False)
 
     def run(command, **kwargs):
         calls.append((command, kwargs))

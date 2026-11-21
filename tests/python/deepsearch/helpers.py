@@ -20,7 +20,7 @@ from src.core.deepsearch import rules
 from src.core.deepsearch.cache import db as cache_db
 from src.core.deepsearch.cache import flip
 from src.core.transcript_manifest import condition
-from src.cplugs.host import runtime, state as owner_state
+from src.plugins.host import runtime, state as owner_state
 
 from tests.python.transcript_source.helpers import CONV, FOLDER, WORKDIR
 

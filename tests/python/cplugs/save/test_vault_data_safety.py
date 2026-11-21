@@ -7,9 +7,9 @@ import types
 
 import pytest
 
-from src.cplugs.save.vault import legacy, restore, retention
-from src.cplugs.save.vault.ingest import SourceUnstable, ingest_file
-from src.cplugs.save.vault.manifest import SoleCopyError
+from src.plugins.save.vault import legacy, restore, retention
+from src.plugins.save.vault.ingest import SourceUnstable, ingest_file
+from src.plugins.save.vault.manifest import SoleCopyError
 from tests.python.cplugs.save.test_vault_legacy import POINT, SLUG, _old_point
 from tests.python.cplugs.save.vault_helpers import CONV, ENC, World, jsonl
 
@@ -114,7 +114,7 @@ def test_a_read_that_comes_back_short_is_refused_not_recorded_as_the_whole_file(
             return types.SimpleNamespace(**{**fields, "st_size": st.st_size + 4096})
         return st
 
-    monkeypatch.setattr("src.cplugs.save.vault.ingest.os.stat", bigger)
+    monkeypatch.setattr("src.plugins.save.vault.ingest.os.stat", bigger)
     with pytest.raises(SourceUnstable):
         ingest_file(world.vault.blobs, main, role="transcript", home="claude", rel=f"projects/{ENC}/{CONV}.jsonl")
     assert world.capture().status == "failed" and world.vault.manifests.point_ids(CONV) == []
@@ -132,8 +132,8 @@ def test_a_chunk_reused_by_a_capture_gets_a_fresh_mtime_so_a_collection_grace_pr
 
 
 def test_blob_folders_are_fsynced_before_the_manifest_that_names_them(tmp_path, monkeypatch):
-    from src.cplugs.save.engine import layout
-    from src.cplugs.save.vault.manifest import ManifestStore
+    from src.plugins.save.engine import layout
+    from src.plugins.save.vault.manifest import ManifestStore
 
     world = World(tmp_path)
     world.write_conversation(jsonl(50), subagents=0, tool_results=0)

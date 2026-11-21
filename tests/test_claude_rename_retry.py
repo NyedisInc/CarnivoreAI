@@ -335,3 +335,15 @@ def test_the_ledger_cannot_grow_without_bound(ledger):
     marks = store.load_marks(ledger)
     assert len(marks) <= store.MAX_ENTRIES
     assert marks.get("pending:1") == pending
+
+
+def test_a_full_ledger_keeps_the_newest_agreement_and_stops_rewriting(ledger):
+    for index in range(store.MAX_ENTRIES):
+        store.save_mark(ledger, f"frame:{index}", _agreed_on(OLD))
+
+    newest = _agreed_on("newest")
+    assert store.save_mark(ledger, "frame:newest", newest) is True
+    assert store.mark_for(ledger, "frame:newest") == newest
+    assert len(store.load_marks(ledger)) <= store.MAX_ENTRIES
+    assert store.save_mark(ledger, "frame:newest", newest) is False
+    assert store.mark_for(ledger, "frame:0") is None

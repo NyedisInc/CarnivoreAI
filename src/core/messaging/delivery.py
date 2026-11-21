@@ -6,7 +6,6 @@ import re
 import sqlite3
 import time
 from contextlib import closing
-from types import SimpleNamespace
 from typing import Any, Dict, List, Optional
 
 import structlog
@@ -120,7 +119,7 @@ class Drainer:
             return
         from src.core.approvals.dialog_gate import CLEAR, OPEN, dialog_verdict
 
-        verdict = await dialog_verdict(self.app, str(card["id"]))
+        verdict = await dialog_verdict(self.app.state, str(card["id"]))
         if verdict != CLEAR:
             reason = "dialog_open" if verdict == OPEN else "dialog_unreadable"
             log.info("messaging_held", session_uuid=session_uuid, reason=reason, rows=len(rows))
@@ -194,13 +193,13 @@ class Drainer:
                  parts=len(parts), batch_id=batch_id)
 
     async def _deliver_part(self, session_id: str, text: str, meta: Dict[str, str]) -> Optional[tuple]:
-        from src.api.channel_delivery import deliver_through_gates
+        from src.core.sessions.channel_delivery import deliver_through_gates
+        from src.core.sessions.guarded_paste import PasteRefused
 
         try:
-            await deliver_through_gates(SimpleNamespace(app=self.app), session_id, text, meta, fresh_dialog_check=True)
-        except HTTPException as exc:
-            detail = exc.detail if isinstance(exc.detail, dict) else {}
-            code = str(detail.get("code") or "paste_refused")
+            await deliver_through_gates(self.app.state, session_id, text, meta, fresh_dialog_check=True)
+        except PasteRefused as exc:
+            code = exc.code
             if code in HOLD_CODES:
                 return "held", code
             return "failed", "delivery_uncertain" if code == "paste_not_settled" else code

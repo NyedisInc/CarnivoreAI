@@ -94,7 +94,7 @@ class OwnedTmuxLedger:
 
             return MetadataLoad(session=raw, owned_count=len(self.names))
         except (OSError, ValueError, TypeError) as exc:
-            logger.error("failed_to_load_session_metadata", error=str(exc))
+            logger.error("failed_to_load_session_metadata", error=str(exc), error_type=type(exc).__name__)
             return MetadataLoad(session=None, owned_count=len(self.names))
 
     def save(self, payload: dict) -> bool:
@@ -109,7 +109,7 @@ class OwnedTmuxLedger:
             )
             return True
         except (OSError, ValueError, TypeError) as exc:
-            logger.error("failed_to_save_session_metadata", error=str(exc))
+            logger.error("failed_to_save_session_metadata", error=str(exc), error_type=type(exc).__name__)
             return False
 
     def drop_session_pointer(self) -> None:
@@ -125,7 +125,7 @@ class OwnedTmuxLedger:
                     owned_count=len(self.names),
                 )
         except (OSError, ValueError, TypeError) as exc:
-            logger.error("failed_to_delete_stale_metadata", error=str(exc))
+            logger.error("failed_to_delete_stale_metadata", error=str(exc), error_type=type(exc).__name__)
 
 
     def instances_from_db(self) -> Optional[set]:

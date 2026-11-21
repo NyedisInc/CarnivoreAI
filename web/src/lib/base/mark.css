@@ -1,0 +1,36 @@
+@layer base {
+  :where(.oc-check__box, .oc-radio, .oc-option__box, .oc-pick__input) {
+    --_mark-ink: var(--oc-green);
+    display: inline-block;
+    box-sizing: border-box;
+    flex: none;
+    width: var(--oc-mark);
+    height: var(--oc-mark);
+    border: var(--oc-border) solid var(--oc-line-control);
+    border-radius: var(--oc-border);
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: calc(var(--oc-mark) / 2) calc(var(--oc-mark) / 2);
+  }
+
+  :where(.oc-radio, .oc-pick__input[type='radio']) {
+    border-radius: var(--oc-radius-circle);
+  }
+
+  :where([aria-checked='true'] .oc-check__box, .oc-option[aria-checked='true'] .oc-option__box, .oc-pick__input[type='checkbox']:checked) {
+    border-color: var(--_mark-ink);
+    background-image: linear-gradient(var(--_mark-ink), var(--_mark-ink));
+  }
+
+  :where([aria-checked='true'] .oc-radio, .oc-pick__input[type='radio']:checked) {
+    border-color: var(--_mark-ink);
+    background-image: radial-gradient(circle closest-side, var(--_mark-ink) 100%, transparent 100%);
+  }
+
+  :where([aria-checked='mixed'] .oc-check__box, .oc-pick__input[type='checkbox']:indeterminate) {
+    border-color: var(--oc-cyan);
+    background-image: linear-gradient(to bottom right, transparent 50%, var(--oc-cyan) 50%);
+    background-size: calc(var(--oc-mark) / 2) calc(var(--oc-mark) / 2);
+  }
+}

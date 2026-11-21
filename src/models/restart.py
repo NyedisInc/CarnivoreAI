@@ -381,6 +381,14 @@ class RestartPreviewResponse(BaseModel):
             "row with no launch record"
         ),
     )
+    nothing_running: bool = Field(
+        False,
+        description=(
+            "True only when the server MEASURED this session at rest with no foreground or background work "
+            "(restart_live_gate.nothing_running); the picker then shows no arm box. False or absent: unmeasured "
+            "or something is running, the box stays"
+        ),
+    )
 
 
 class RestartSessionResponse(BaseModel):

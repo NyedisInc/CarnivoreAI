@@ -94,7 +94,7 @@
 
   .dps__led--ring {
     border: 1.5px solid var(--oc-text-dim);
-    border-radius: 50%;
+    border-radius: var(--oc-radius-circle);
   }
 
   .dps__led--dash {
@@ -111,7 +111,7 @@
     white-space: nowrap;
     padding: 0 var(--oc-space-1);
     border: var(--oc-border) solid var(--oc-line-frame);
-    border-radius: 2px;
+    border-radius: var(--oc-radius-control);
     color: var(--oc-text-dim);
     font-size: var(--oc-fs-micro);
     letter-spacing: 0.08em;

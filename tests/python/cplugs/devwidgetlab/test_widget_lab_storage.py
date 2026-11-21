@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any, List
 
-from src.cplugs.devwidgetlab import capture, matrix
+from src.plugins.devwidgetlab import capture, matrix
 from tests.python.cplugs.devwidgetlab.test_widget_lab_routes import REQUEST, FakeProc
 
 
@@ -59,7 +59,7 @@ def test_a_matrix_run_is_pointed_at_the_labs_own_storage_folder(tmp_path: Path, 
 
 
 def test_a_new_draft_is_written_only_under_the_labs_own_storage_folder(tmp_path: Path) -> None:
-    from src.cplugs.devwidgetlab.drafts import create
+    from src.plugins.devwidgetlab.drafts import create
 
     storage = tmp_path / "state" / "cplugs" / "devwidgetlab"
     other = tmp_path / "elsewhere"

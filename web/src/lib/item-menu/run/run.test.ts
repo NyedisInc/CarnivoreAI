@@ -183,6 +183,20 @@ describe('the order the table tries things in', () => {
     });
 });
 
+describe('restart from a terminal tab', () => {
+    it('with no drawer row on screen, the tab as anchor reaches the restart picker', async () => {
+        const runRestart = restartMock.runRestart;
+        runRestart.mockClear();
+        page({ SessionSidebar: { id: 'c' } });
+        const tab = document.createElement('button');
+        document.body.appendChild(tab);
+        await run('restart', ctx({ anchor: tab }));
+        expect(said).toEqual([]);
+        expect(runRestart).toHaveBeenCalledTimes(1);
+        expect(runRestart.mock.calls[0]?.[1]).toBe('cloude_a');
+    });
+});
+
 describe('navToken', () => {
     it('moves on every navigation the app announces', () => {
         const before = navToken();

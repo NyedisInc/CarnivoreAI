@@ -5,9 +5,9 @@ import sqlite3
 from contextlib import closing
 from pathlib import Path
 
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle.public import TaskManagerStore
 from src.core.work.storage import LEGACY_STORAGE, WorkStorage
-from src.cplugs.sdk import CplugStorage
+from src.plugins.sdk import CplugStorage
 
 
 def make_legacy(state_dir: Path) -> Path:

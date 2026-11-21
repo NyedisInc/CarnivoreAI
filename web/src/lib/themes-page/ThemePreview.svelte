@@ -106,7 +106,7 @@
         width: 100%;
         overflow: hidden;
         border: 1px solid var(--p-border);
-        border-radius: 3px;
+        border-radius: var(--oc-radius-tight);
         background: var(--p-page);
         color: var(--p-fg);
         font-family: var(--font-mono, monospace);
@@ -148,7 +148,7 @@
         flex: 0 0 auto;
         display: block;
         height: 1.4cqw;
-        border-radius: 1px;
+        border-radius: var(--oc-radius-xs);
         background: var(--p-fg);
         opacity: 0.85;
     }
@@ -204,7 +204,7 @@
         flex: 0 0 auto;
         width: 1.8cqw;
         height: 1.8cqw;
-        border-radius: 50%;
+        border-radius: var(--oc-radius-circle);
     }
 
     .tpv-term {
@@ -250,7 +250,7 @@
     .tpv-seg {
         display: block;
         height: 1.4cqw;
-        border-radius: 1px;
+        border-radius: var(--oc-radius-xs);
     }
 
     .tpv-large .tpv-term {

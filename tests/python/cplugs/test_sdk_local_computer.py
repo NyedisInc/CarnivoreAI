@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import src.core.federation.discovery as discovery
-from src.cplugs.sdk import computer
+from src.plugins.sdk import computer
 
 
 def test_the_name_is_asked_of_the_system_once(monkeypatch) -> None:

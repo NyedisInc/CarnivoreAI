@@ -43,6 +43,12 @@ def _reserve_set(call: ra.Call) -> Any:
     return call.route(call.args["machine"], ReserveBody(**body), call.request)
 
 
+def _reconnect_off(call: ra.Call) -> Any:
+    from src.api.pack_machines_routes import ReconnectBody
+
+    return call.route(ReconnectBody(relay=False, takeover=False), call.request)
+
+
 def _restrictions_set(call: ra.Call) -> Any:
     from src.api.pack_machines_routes import RestrictionsBody
 
@@ -86,6 +92,13 @@ SPECS = (
         description="Turn this computer's follow-the-master refresh on or off (it still needs the computer's own may_update_carnivore rule).",
         properties={"tracks_master": {"type": "boolean"}}, required=("tracks_master",), invoke=_tracks_set,
         summary=_summary("change whether this computer follows the master"), example={"tracks_master": True},
+    ),
+    ra.RouteTool(
+        name="pack_reconnect_off", route="src.api.pack_machines_routes:put_reconnect", gate=ra.ACT,
+        description="Switch OFF the Pack's reconnect helpers on this computer: the relay path and the automatic takeover of the main role. "
+                    "Off only: turning either on is the owner's, in the app. Read the state with computers_list and detail specs "
+                    "(takeover_available, generation, per computer link_path).",
+        properties={}, invoke=_reconnect_off, summary=_summary("switch the Pack relay path and takeover off"), example={},
     ),
     ra.RouteTool(
         name="pack_reserve_get", route="src.api.pack_machines_routes:get_reserve", gate=ra.READ,

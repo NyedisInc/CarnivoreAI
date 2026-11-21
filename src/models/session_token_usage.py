@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from typing import Literal, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -10,6 +10,29 @@ from src.models.provider_ledger import AccountUsage
 TokenUsageState = Literal["ok", "absent", "unchecked"]
 
 TokenUsageFamily = Literal["claude", "codex"]
+
+
+class DelegatedUsage(BaseModel):
+    """What agent jobs this session handed to other computers spent (auto-delegate phase 2, #2989).
+
+    Description: summed over the caller's agent jobs that reported usage; the worker's own spend, never part of this session's transcript
+      counts. Absent (``SessionTokenUsage.delegated`` None) when the session delegated nothing, never zero.
+    Inputs: n/a (a response model).
+    Output: n/a.
+    Example: DelegatedUsage(jobs=2, input_tokens=900, output_tokens=300, cost_usd=0.42, accounts=["work"])
+    """
+
+    jobs: int = Field(0, ge=0, description="How many agent jobs reported usage (0 when only live work exists).")
+    input_tokens: int = Field(0, ge=0)
+    output_tokens: int = Field(0, ge=0)
+    cache_read_tokens: int = Field(0, ge=0)
+    cache_write_tokens: int = Field(0, ge=0)
+    cost_usd: Optional[float] = Field(None, ge=0, description="Sum of the jobs that priced their usage; None when none did.")
+    accounts: List[str] = Field(default_factory=list, description="The distinct account labels the workers spent from.")
+    remote_jobs: int = Field(0, ge=0, description="How many of this session's jobs (agent and command, any state) were placed on another computer.")
+    ran_on: List[str] = Field(default_factory=list, description="The distinct labels of the computers those jobs ran on.")
+    running: int = Field(0, ge=0, description="How many of this session's jobs run on another computer right now (agent and command jobs).")
+    running_on: List[str] = Field(default_factory=list, description="The distinct labels of the computers they run on.")
 
 
 class SessionTokenUsage(BaseModel):
@@ -149,5 +172,13 @@ class SessionTokenUsage(BaseModel):
             "determined, never that the account has no limits. See "
             "src/core/session_token_usage/account_resolve.py for why it "
             "has to be deduced at all."
+        ),
+    )
+
+    delegated: Optional[DelegatedUsage] = Field(
+        None,
+        description=(
+            "Usage of the agent jobs this session handed to other Pack computers (a different scope from every count above: the "
+            "workers' own transcripts). None means no job reported usage and none runs elsewhere, never zero."
         ),
     )

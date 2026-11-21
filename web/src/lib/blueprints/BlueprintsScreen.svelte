@@ -256,31 +256,31 @@
 
     .bp-card__actions {
         display: flex;
-        margin-top: 10px;
+        margin-top: var(--oc-gap-parts);
     }
 
     .bp-detail__heading {
-        margin: 16px 0 6px;
+        margin: var(--oc-space-4) 0 var(--oc-space-1-5);
         color: var(--oc-text-secondary);
-        font-size: 10px;
+        font-size: var(--oc-fs-micro);
         letter-spacing: var(--oc-tracking-label, 0.6px);
         text-transform: uppercase;
     }
 
     .bp-detail__actions {
         display: flex;
-        gap: 8px;
-        margin-top: 16px;
+        gap: var(--oc-space-2);
+        margin-top: var(--oc-space-4);
     }
 
     .bp-detail__notice,
     .bp-detail__error {
-        margin: 12px 0 0;
-        padding: 6px 8px;
+        margin: var(--oc-space-3) 0 0;
+        padding: var(--oc-space-1-5) var(--oc-space-2);
         border-left: 2px solid var(--oc-cyan);
         background: var(--oc-ground-field);
         color: var(--oc-text-primary);
-        font-size: 12px;
+        font-size: var(--oc-fs-body);
         overflow-wrap: anywhere;
     }
 

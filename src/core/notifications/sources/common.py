@@ -4,6 +4,7 @@ from __future__ import annotations
 import functools
 import time
 from pathlib import Path
+import sqlite3
 from typing import Any, Dict, Mapping, Optional
 
 import structlog
@@ -36,7 +37,7 @@ def session_fields(manager: Any, session_id: Optional[str]) -> Dict[str, Any]:
             identity = manager._identity_for_live_name(tmux_name)
             project = (identity or {}).get("project_name") or ""
             label = manager._label_for_tmux_name(tmux_name)
-        except (AttributeError, OSError, ValueError) as exc:
+        except (AttributeError, OSError, ValueError, RuntimeError, sqlite3.Error) as exc:
             logger.debug("notify_session_fields_unreadable", error_type=type(exc).__name__)
     return {"session_id": session_id, "tmux_name": tmux_name, "project": project,
             "session_ref": label or tmux_name or ""}

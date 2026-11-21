@@ -232,7 +232,7 @@
     .oc-preview-chip,
     .oc-preview-line {
       position: absolute;
-      border-radius: 1px;
+      border-radius: var(--oc-radius-xs);
     }
 
     .oc-tile-name,

@@ -6,9 +6,9 @@ from typing import Any, Dict, List
 
 import pytest
 
-from src.cplugs.sdk.schema_check import SchemaError, SchemaSet
-from src.cplugs.sdk.schema_digest import SCHEMA_DIR, SCHEMA_SET_DIGEST, schema_set_digest
-from src.cplugs.sdk.sidecar import schemas, validate_document
+from src.plugins.sdk.schema_check import SchemaError, SchemaSet
+from src.plugins.sdk.schema_digest import SCHEMA_DIR, SCHEMA_SET_DIGEST, schema_set_digest
+from src.plugins.sdk.sidecar import schemas, validate_document
 from tests.python.cplugs.test_extension_schemas import DIGEST, KINDS, good
 
 SET = schemas()
@@ -30,7 +30,7 @@ def front(kind: str, **over: Any) -> Dict[str, Any]:
 
 
 def test_the_schema_set_digest_is_pinned() -> None:
-    assert schema_set_digest() == SCHEMA_SET_DIGEST, "schemas changed: run python3 -m src.cplugs.sdk.schema_digest, update the constant and the catalog repo pin"
+    assert schema_set_digest() == SCHEMA_SET_DIGEST, "schemas changed: run python3 -m src.plugins.sdk.schema_digest, update the constant and the catalog repo pin"
 
 
 def test_the_digest_ignores_notes_and_the_execute_bit_but_not_content(tmp_path: Path) -> None:

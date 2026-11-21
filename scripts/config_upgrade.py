@@ -56,9 +56,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import shutil
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -66,6 +64,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from src.core import config_writer  # noqa: E402
+from src.core.config_backup.backup import BACKUP_DIRNAME, back_up_config  # noqa: E402,F401
 from src.core.config_defaults import (  # noqa: E402
     effective_shipped_defaults,
     supported_keys as model_supported_keys,
@@ -81,8 +80,6 @@ from src.core.config_merge import (  # noqa: E402
 )
 
 BASE_FILENAME = "config-base.json"
-
-BACKUP_DIRNAME = "config-backups"
 
 OUTCOME_LABELS = {
     "unchanged": "unchanged",
@@ -124,30 +121,6 @@ def write_config(config_path: Path, merged: dict) -> None:
         config_writer.commit(config_path, lambda _fresh: merged)
     else:
         config_writer.create_if_absent(config_path, merged, file_mode=config_writer.PRIVATE_FILE_MODE)
-
-
-def back_up_config(config_path: Path, state_dir: Path) -> tuple[Path, str]:
-    backup_dir = state_dir / BACKUP_DIRNAME
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    target = backup_dir / f"config.{stamp}.json"
-
-    if not config_path.exists():
-        return target, "NOT_PRESENT"
-
-    backup_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(config_path, target)
-
-    if not target.exists() or target.stat().st_size != config_path.stat().st_size:
-        raise RuntimeError(
-            f"backup of {config_path} did not land at {target}; refusing to "
-            "modify the config without a verified copy"
-        )
-
-    manifest = backup_dir / ".manifest"
-    with manifest.open("a", encoding="utf-8") as handle:
-        handle.write(f"BACKED_UP\tconfig\t{target.name}\n")
-
-    return target, "BACKED_UP"
 
 
 def render_plan(result, importable_selected: dict) -> str:

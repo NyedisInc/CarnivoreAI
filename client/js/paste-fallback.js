@@ -76,7 +76,7 @@ console.log('[PasteFallback Module] Loading...');
         return null;
     }
 
-    function open(term, inject, ticket) {
+    function open(term, inject, ticket, forcedPrompt) {
         if (!term || typeof inject !== 'function') return null;
         close();
         if (window.FabMenu && typeof window.FabMenu.dismissNotice === 'function') {
@@ -106,6 +106,19 @@ console.log('[PasteFallback Module] Loading...');
 
         inputEl = buildInput();
         panel.appendChild(inputEl);
+
+        if (forcedPrompt) {
+            var promptHint = hint.cloneNode(false);
+            promptHint.setAttribute('id', 'pasteFallbackPromptHint');
+            promptHint.textContent = tr('terminal.clipboard.prompt_hint');
+            var dismiss = buildButton('pasteFallbackPromptHintDismiss', tr('paste_fallback.prompt_hint_dismiss'), 'ghost', function () {
+                promptHint.remove();
+                dismiss.remove();
+                focusInput();
+            });
+            panel.appendChild(promptHint);
+            panel.appendChild(dismiss);
+        }
 
         var actions = document.createElement('div');
         actions.className = 'paste-fallback__actions';

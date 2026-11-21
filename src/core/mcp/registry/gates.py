@@ -5,7 +5,7 @@ from typing import Dict
 
 from src.core.mcp import aliases, beast_mode, pane_only, route_adapters, tools
 from src.core.mcp.approvals import call_context
-from src.cplugs.host import mcp as cplug_mcp
+from src.plugins.host import mcp as cplug_mcp
 
 READ = "read"
 ARRANGE = "arrange"

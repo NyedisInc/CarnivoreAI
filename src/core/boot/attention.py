@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Awaitable, Callable, Optional, Union
 
 import structlog
 
-from src.api.session_sleep_routes import auto_sleep_by_uuid
+from src.core.session_ops.sleep import auto_sleep_session
 from src.api.websocket import connection_manager
 from src.config import settings
 from src.core import resource_push
@@ -126,7 +126,7 @@ def _start_listing_push(ctx: "BootContext", held: _Held) -> None:
 
     from src.core.auto_sleep.pane_ports import PORT_WATCH
     from src.core.session_git.pr_status import PR_WATCH
-    from src.cplugs.sdk import turn_events
+    from src.plugins.sdk import turn_events
 
     app = ctx.app
     build_watch = ClientBuildWatch(client_build_key)
@@ -165,7 +165,7 @@ def _start_auto_sleep(ctx: "BootContext", held: _Held) -> None:
     app = ctx.app
     auto_sleeper = AutoSleeper(
         app.state, ctx.auto_sleep_clock,
-        sleep=lambda session_uuid: auto_sleep_by_uuid(app.state, session_uuid),
+        sleep=lambda session_uuid: auto_sleep_session(app.state, session_uuid),
     )
     app.state.auto_sleeper = auto_sleeper
     held.tasks["auto_sleep"] = asyncio.create_task(auto_sleeper.run())

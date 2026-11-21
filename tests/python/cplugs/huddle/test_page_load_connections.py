@@ -7,9 +7,9 @@ import sqlite3
 import traceback
 
 from src.core.db_migration import ensure_db_migrated
-from src.cplugs.huddle import schedule_port, scheduled
-from src.cplugs.huddle.roles import port as roles_port
-from src.cplugs.huddle.roles import tags
+from src.plugins.huddle import schedule_port, scheduled
+from src.plugins.huddle.roles import port as roles_port
+from src.plugins.huddle.roles import tags
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import env, iso  # noqa: F401
 

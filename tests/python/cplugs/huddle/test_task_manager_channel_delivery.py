@@ -4,9 +4,9 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
-from fastapi import HTTPException
 
-from src.api import one_shot_routes
+from src.core.sessions import guarded_paste
+from src.core.sessions.guarded_paste import PasteRefused
 from src.config.mcp import McpConfig
 from src.core.mcp import channel
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, pasted  # noqa: F401
@@ -24,15 +24,15 @@ def channels(app, monkeypatch):
         get_session=lambda sid: SimpleNamespace(tmux_session=f"cloude_{sid}")))
     state = SimpleNamespace(cfg=cfg, registry=registry, gated=[], refuse=None)
 
-    async def check(request, session_id, text):
+    async def check(app_state, session_id, text, options=None):
         state.gated.append(session_id)
         if state.refuse is not None:
             raise state.refuse
         clean = SimpleNamespace(text=text, byte_length=len(text.encode()), stripped_count=0)
-        return one_shot_routes.GatedBody(SimpleNamespace(tmux_session=f"cloude_{session_id}"), None, clean,
+        return guarded_paste.GatedBody(SimpleNamespace(tmux_session=f"cloude_{session_id}"), None, clean,
                                          None, "node", "idle", None)
 
-    monkeypatch.setattr(one_shot_routes, "check_through_gates", check)
+    monkeypatch.setattr(guarded_paste, "check_through_gates", check)
     return state
 
 
@@ -82,7 +82,7 @@ def test_setting_off_pastes_even_with_a_stream_open(client, app, pasted, channel
 
 def test_a_busy_pane_holds_a_channel_tell_and_records_nothing(client, app, pasted, channels):
     stream = channels.registry.open("cloude_ses_old", "ses_old")
-    channels.refuse = HTTPException(status_code=409, detail={"code": "pane_dialog_open", "message": "a dialog is open"})
+    channels.refuse = PasteRefused("pane_dialog_open", "a dialog is open")
     client.post("/api/v1/cplugs/huddle/lists/12/items", json={"text": "while a dialog is open"})
     note(app, "ses_old", "12", 100.0)
     body = client.post(SEND, json={}).json()
@@ -101,7 +101,7 @@ def test_a_push_the_registry_declines_after_the_gate_pastes_the_gated_body(clien
         sent.append((session_id, gated.clean.text))
         return SimpleNamespace(pasted_bytes=gated.clean.byte_length, submitted=True)
 
-    monkeypatch.setattr(one_shot_routes, "paste_gated", paste_gated)
+    monkeypatch.setattr(guarded_paste, "paste_gated", paste_gated)
     client.post("/api/v1/cplugs/huddle/lists/12/items", json={"text": "declined"})
     note(app, "ses_old", "12", 100.0)
     told = client.post(SEND, json={}).json()

@@ -7,10 +7,10 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from src.cplugs.huddle import wait_runner, waits
-from src.cplugs.huddle.answer_writer import AnswerWriter
-from src.cplugs.huddle.roles import unstick
-from src.cplugs.huddle.rules import TaskManagerInvalid, TaskManagerUseFireAt
+from src.plugins.huddle import wait_runner, waits
+from src.plugins.huddle.answer_writer import AnswerWriter
+from src.plugins.huddle.roles import unstick
+from src.plugins.huddle.rules import TaskManagerInvalid, TaskManagerUseFireAt
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import ITEMS, env  # noqa: F401
@@ -140,7 +140,7 @@ def test_the_time_question_is_a_datetime_field_and_its_answer_is_an_iso_time_wit
 
 
 def test_an_agent_can_not_ask_a_datetime_with_a_recommendation():
-    from src.cplugs.huddle import rich_ask
+    from src.plugins.huddle import rich_ask
 
     ok, _ = rich_ask.normalize([{"type": "datetime", "prompt": "when?"}])
     assert ok[0]["type"] == "datetime"
@@ -169,8 +169,8 @@ def test_every_time_the_picker_builds_is_taken(client, env, told, picked):  # no
 
 @pytest.mark.parametrize("text,rule", [("2020-01-01T09:00:00+00:00", "time_past"), ("soon", "time"), ("2030-10-30T09:00:00", "time")])
 def test_owner_time_labels_only_a_past_time_as_past(text, rule):
-    from src.cplugs.huddle.roles import wait_stuck
-    from src.cplugs.huddle.rules import TaskManagerAnswerInvalid
+    from src.plugins.huddle.roles import wait_stuck
+    from src.plugins.huddle.rules import TaskManagerAnswerInvalid
 
     with pytest.raises(TaskManagerAnswerInvalid) as refused:
         wait_stuck.owner_time(text, time.time())

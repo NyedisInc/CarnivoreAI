@@ -62,14 +62,15 @@ PAYLOAD_ENV = {"sys_platform": "darwin", "platform_python_implementation": "CPyt
                "python_full_version": "3.12.15", "python_version": "3.12", "platform_system": "Darwin"}
 
 
-def marker_applies(marker: str) -> bool:
+def marker_applies(marker: str, machine: str | None = None) -> bool:
     if " or " in marker:
         return True
+    env = dict(PAYLOAD_ENV, **({"platform_machine": machine} if machine else {}))
     for clause in marker.split(" and "):
         m = re.fullmatch(r"\s*(\w+)\s*(==|!=|<=|>=|<|>)\s*'([^']*)'\s*", clause)
-        if not m or m.group(1) not in PAYLOAD_ENV:
+        if not m or m.group(1) not in env:
             return True
-        have, op, want = PAYLOAD_ENV[m.group(1)], m.group(2), m.group(3)
+        have, op, want = env[m.group(1)], m.group(2), m.group(3)
         if m.group(1).startswith("python_") and op in ("<", ">", "<=", ">="):
             a, b = [tuple(int(x) for x in v.split(".")) for v in (have, want)]
             ok = {"<": a < b, ">": a > b, "<=": a <= b, ">=": a >= b}[op]
@@ -80,11 +81,11 @@ def marker_applies(marker: str) -> bool:
     return True
 
 
-def parse_lock(text: str) -> list[tuple[str, str]]:
+def parse_lock(text: str, machine: str | None = None) -> list[tuple[str, str]]:
     rows = []
     for line in text.splitlines():
         m = re.match(r"^([A-Za-z0-9][A-Za-z0-9_.-]*)==([^\s;\\]+)\s*(?:;\s*(.*?))?\s*\\?$", line)
-        if m and (not m.group(3) or marker_applies(m.group(3))):
+        if m and (not m.group(3) or marker_applies(m.group(3), machine)):
             rows.append((m.group(1), m.group(2)))
     return rows
 
@@ -374,19 +375,20 @@ def build_notices(*, trees: list[Path], recipe: dict, lock_text: str, pins: dict
     wheels = parse_lock(lock_text)
     locked = {norm(n) for n, _ in wheels}
     used_components: set[str] = set()
-    seen_wheel: set[str] = set()
+    seen_wheel: set[tuple[str, str]] = set()
     for tree in trees:
         infos = dist_infos(tree)
-        for name, ver in wheels:
+        machine = next((m for m in ("arm64", "x86_64") if m in tree.name), None)
+        for name, ver in parse_lock(lock_text, machine):
             key = norm(name)
-            if key in seen_wheel:
+            if (key, ver) in seen_wheel:
                 continue
             if key not in infos:
                 gaps.append(f"locked wheel {name}=={ver} is not installed in {tree.name}")
                 continue
             try:
                 entries += wheel_entries(name, ver, infos[key], recipe.get("sbom_exclude", {}), recipe.get("sbom_license_fallback", {}))
-                seen_wheel.add(key)
+                seen_wheel.add((key, ver))
             except NoticeError as e:
                 gaps.append(str(e))
         owners = record_owners(tree)

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import sqlite3
 import time
-from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
@@ -11,6 +10,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 import structlog
 from pydantic import ValidationError
 
+from src.core.db_reuse.thread_connections import ThreadConnections
 from src.core.pack.relay.codex_target import codex_relay_profile_name
 from src.core.pack.relay.ledger_sync_wire import LedgerSessionsBody, LedgerStatusBody
 from src.core.pack.relay.target_side import relay_profile_name
@@ -46,21 +46,27 @@ class StoredSessions:
     received_at: float
 
 
-def _connect() -> Optional[sqlite3.Connection]:
-    if PATH is None:
-        return None
-    path = PATH()
+def _open(path: Path) -> sqlite3.Connection:
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(path), timeout=5.0)
     conn.execute(_DDL)
     return conn
 
 
+_POOL = ThreadConnections(_open, limit=4)
+
+
+def _connect() -> Optional[sqlite3.Connection]:
+    if PATH is None:
+        return None
+    return _POOL.get(PATH())
+
+
 def _save(kind: str, sender: str, provider: str, key: str, body_json: str, now: Optional[float]) -> None:
     conn = _connect()
     if conn is None:
         return
-    with closing(conn), conn:
+    with conn:
         conn.execute("INSERT OR REPLACE INTO pack_ledger_sync VALUES (?, ?, ?, ?, ?, ?)",
                      (kind, sender, provider, key, body_json, now if now is not None else time.time()))
 
@@ -77,7 +83,7 @@ def forget(sender: str, provider: str, account_key: str) -> None:
     conn = _connect()
     if conn is None:
         return
-    with closing(conn), conn:
+    with conn:
         conn.execute("DELETE FROM pack_ledger_sync WHERE sender = ? AND provider = ? AND account_key = ?", (sender, provider, account_key))
 
 
@@ -85,7 +91,7 @@ def _rows(kind: str) -> List[Tuple[str, str, str, str, float]]:
     conn = _connect()
     if conn is None:
         return []
-    with closing(conn):
+    with conn:
         return conn.execute("SELECT sender, provider, account_key, body, received_at FROM pack_ledger_sync WHERE kind = ?", (kind,)).fetchall()
 
 

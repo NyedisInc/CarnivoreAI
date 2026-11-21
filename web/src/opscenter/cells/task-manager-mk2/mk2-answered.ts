@@ -1,4 +1,4 @@
-import type { Message } from '../../../cplugs/huddle/task-manager-design/model';
+import type { Message } from '../../../plugins/huddle/task-manager-design/model';
 
 export interface Mk2Answered { answered: boolean; time: string | null }
 

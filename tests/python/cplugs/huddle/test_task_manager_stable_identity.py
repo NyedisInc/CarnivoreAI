@@ -11,13 +11,13 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.api import one_shot_routes
+from tests.python.cplugs.huddle.paste_fakes import patch_paste
 from src.api.auth import require_auth
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
-from src.cplugs.host import capabilities, runtime
-from src.cplugs.huddle import callers, routes as huddle_routes, service
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.host import capabilities, runtime
+from src.plugins.huddle import callers, routes as huddle_routes, service
+from src.plugins.huddle.store import TaskManagerStore
 from tests.python.cplugs.owner import turn_on
 
 NOW = datetime(2026, 10, 4, 12, 0, 0)
@@ -63,7 +63,7 @@ def world(tmp_path: Path, monkeypatch):
         pasted.append((session_id, text))
         return SimpleNamespace(pasted_bytes=len(text), submitted=True)
 
-    monkeypatch.setattr(one_shot_routes, "paste_through_gates", paste)
+    patch_paste(monkeypatch, paste)
     with TestClient(app) as client:
         yield SimpleNamespace(app=app, client=client, world=state, manager=manager, pasted=pasted,
                               storage=runtime.host_for(app).storage("huddle"))

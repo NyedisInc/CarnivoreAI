@@ -161,7 +161,7 @@ async def websocket_terminal(websocket: WebSocket):
                     known_pane_size=measured, hidden=handshake_hidden,
                 )
             except Exception as exc:
-                logger.error("ws_handshake_resize_failed", error=str(exc))
+                logger.error("ws_handshake_resize_failed", error=str(exc), error_type=type(exc).__name__, exc_info=True, session_id=requested_sid)
                 outcome = ResizeOutcome(
                     target=(handshake_cols, handshake_rows),
                     issued=True,
@@ -255,7 +255,7 @@ async def websocket_terminal(websocket: WebSocket):
         connection_manager.disconnect(websocket)
         return
     except Exception as exc:
-        logger.error("ws_handshake_error", error=str(exc))
+        logger.error("ws_handshake_error", error=str(exc), error_type=type(exc).__name__, exc_info=True, session_id=requested_sid)
 
     try:
         writer_task = asyncio.create_task(_drain_viewer(
@@ -300,7 +300,7 @@ async def websocket_terminal(websocket: WebSocket):
     except WebSocketDisconnect:
         logger.info("websocket_client_disconnected")
     except Exception as e:
-        logger.error("websocket_error", error=str(e))
+        logger.error("websocket_error", error=str(e), error_type=type(e).__name__, exc_info=True, session_id=requested_sid)
     finally:
         registry.unsubscribe(viewer_stream, target_sid)
         local_servers.unsubscribe(local_servers_queue)

@@ -11,9 +11,9 @@ from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
 from src.core.mcp import tools as mcp_tools
-from src.cplugs.host import data_roots, routes as host_routes, runtime, state as owner_state
-from src.cplugs.host import mcp as cplug_mcp
-from src.cplugs.sdk.definition import CplugDefinition
+from src.plugins.host import data_roots, routes as host_routes, runtime, state as owner_state
+from src.plugins.host import mcp as cplug_mcp
+from src.plugins.sdk.definition import CplugDefinition
 from tests.helpers.catalog_text import CATALOG_PATH, REPO_ROOT, slice_paths
 from tests.python.cplugs.owner import turn_on
 from tests.python.cplugs.removability import KEY_LINE, assert_no_dangling_assets
@@ -149,7 +149,7 @@ def seed(client: TestClient, host: runtime.Host, d: CplugDefinition, work: Path)
 
 
 def declared_prefix(plugin_id: str) -> str:
-    raw = json.loads((REPO_ROOT / "src" / "cplugs" / plugin_id / "cplug.json").read_text(encoding="utf-8"))
+    raw = json.loads((REPO_ROOT / "src" / "plugins" / plugin_id / "cplug.json").read_text(encoding="utf-8"))
     return str(raw.get("css_prefix", ""))
 
 
@@ -187,7 +187,7 @@ def strings_styles_check(d: CplugDefinition) -> Tuple[Optional[bool], str]:
         return None, NOT_REMOVABLE[d.id]
     try:
         assert_no_dangling_assets(d.id)
-        missing = [p for p in d.manifest.owns.styles if not (REPO_ROOT / "web" / "src" / "cplugs" / d.id / p).is_file()]
+        missing = [p for p in d.manifest.owns.styles if not (REPO_ROOT / "web" / "src" / "plugins" / d.id / p).is_file()]
         assert not missing, f"owns.styles files missing: {missing}"
     except AssertionError as exc:
         return False, str(exc)[:300]

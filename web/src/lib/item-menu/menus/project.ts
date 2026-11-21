@@ -2,7 +2,7 @@ import { t } from '../../i18n/index.svelte';
 import { companyList } from '../../companies';
 import { companySource } from '../../sidebar-shell/company-source.svelte';
 import { agentOffered } from '../../projects-shared/agent-offer';
-import { projectPanels } from '../../../cplugs/sdk/project-panels';
+import { projectPanels } from '../../../plugins/sdk/project-panels';
 import { projectNameFor, setProjectColor } from '../../sidebar-shell/heading-project-actions';
 import { drawerProjectOf, runDrawerProjectVerb } from '../../sidebar-shell/project-menu-run.svelte';
 import { projectColorOf } from '../../project-colors/store.svelte';

@@ -11,6 +11,7 @@ class CreateProjectRequest(BaseModel):
     path: str = Field(..., description="Project directory path")
     description: Optional[str] = Field(None, max_length=LONG_DESCRIPTION_MAX,
                                        description="Project (long) description, at most 2000 characters")
+    company_id: Optional[int] = Field(None, ge=1, description="File the new project under this company in the same call, so it is never orphaned")
 
 
 class CheckProjectRootRequest(BaseModel):
@@ -113,6 +114,10 @@ class ProjectResponse(BaseModel):
     moved_to_install_id: Optional[str] = Field(None, description="A moved-away project's new home (install id); null otherwise")
     moved_to_label: Optional[str] = Field(None, description="That machine's label, for the words ``moved to <machine>``; null otherwise")
     air_gap: Optional[bool] = Field(None, description="Never touch GitHub for this project; Carnivore carries everything (null before v80)")
+    auto_delegate: Optional[bool] = Field(
+        None, description="This project's auto-delegate mark (the sidebar row draws the Pack icon while it is on); null when the jobs engine is not running (not measured), never false as a stand-in")
+    auto_delegate_leftovers: Optional[int] = Field(
+        None, description="How many copies the mark made are still on other computers (shown while the mark is off); null when not measured, 0 when none")
     has_image: bool = Field(False, description="An uploaded hero image is stored for this project")
     image_rev: Optional[str] = Field(None, description="Changes on every re-upload; the client sends it as ?rev=")
 
@@ -267,3 +272,4 @@ class AddReplicaRequest(BaseModel):
     machine: str = Field(..., min_length=1, max_length=200, description="The paired machine: its label, host key or install id")
     root: Optional[str] = Field(None, max_length=4096, description="The folder on that machine; omitted: under its projects folder")
     transport: str = Field("git", pattern="^(git|carried)$", description="How code reaches it: git (the remote) or carried (over the link)")
+    auto: bool = Field(False, description="Set only by the auto-delegate mark's copy run: the copy is a made copy that may later be removed")

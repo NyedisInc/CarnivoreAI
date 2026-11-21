@@ -28,7 +28,7 @@
     .tlx-glyph[data-kind='bookmark'] { --_hue: var(--oc-yellow); }
     .tlx-glyph[data-kind='bookmark']::before { inset: 0 0.1875rem 0 0.1875rem; clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 52%, 0 70%); }
     .tlx-glyph[data-kind='restart'] { --_hue: var(--oc-green); }
-    .tlx-glyph[data-kind='restart']::before { border: 0.125rem solid var(--_hue); border-radius: 50%; background: none; }
+    .tlx-glyph[data-kind='restart']::before { border: 0.125rem solid var(--_hue); border-radius: var(--oc-radius-circle); background: none; }
     .tlx-glyph[data-kind='restore'] { --_hue: var(--oc-cyan); }
     .tlx-glyph[data-kind='restore']::before { border: var(--oc-border) solid var(--_hue); background: none; }
     .tlx-glyph[data-kind='sleep'] { --_hue: var(--oc-text-dim); }

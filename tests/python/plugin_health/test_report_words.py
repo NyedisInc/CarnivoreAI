@@ -12,8 +12,8 @@ from src.core.plugin_health import model
 from src.core.plugin_health.claude_plugins import measured_digest
 from src.core.skills import kinds
 from src.core.skills.ledger_types import HARNESS_CLAUDE, InstallTarget
-from src.cplugs.host import identity, sidecar_registry, sideload
-from src.cplugs.host import state as owner_state
+from src.plugins.host import identity, sidecar_registry, sideload
+from src.plugins.host import state as owner_state
 from tests.python.plugin_health.world import FAR_FUTURE, make_world, write_code
 
 EXPIRED = "2020-01-01T00:00:00Z"
@@ -153,7 +153,7 @@ def test_boot_logs_one_line_of_counts_with_no_paths_and_changes_nothing(tmp_path
 
     from structlog.testing import capture_logs
 
-    from src.cplugs.host import owner_switch
+    from src.plugins.host import owner_switch
 
     w = make_world(tmp_path, real_host=True)
     try:

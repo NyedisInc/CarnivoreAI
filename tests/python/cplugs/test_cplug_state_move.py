@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.host.legacy_move import MARKER, move_legacy_state
+from src.plugins.host.legacy_move import MARKER, move_legacy_state
 
 
 def _addon_era(state: Path) -> None:
@@ -64,7 +64,7 @@ def test_both_present_without_marker_cplugs_wins(tmp_path):
 
 def test_failed_copy_publishes_nothing(tmp_path, monkeypatch):
     _addon_era(tmp_path)
-    import src.cplugs.host.legacy_move as lm
+    import src.plugins.host.legacy_move as lm
 
     def boom(*a, **k):
         raise OSError("disk full")

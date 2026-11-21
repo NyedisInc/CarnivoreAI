@@ -1,9 +1,9 @@
-import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
-import { statusKey, statusOf, type TaskManagerStatus } from '../../../cplugs/huddle/huddle-status';
-import { isStatusEcho, reviewOf } from '../../../cplugs/huddle/huddle-review';
-import { rowFeed } from '../../../cplugs/huddle/task-manager-posts';
-import { ageNow, clip, elapsed, isStale, type ProgressLine } from '../../../cplugs/huddle/huddle-progress';
-import type { WaitLine } from '../../../cplugs/huddle/task-manager-wait';
+import type { HuddleItem } from '../../../plugins/huddle/huddle-model';
+import { statusKey, statusOf, type TaskManagerStatus } from '../../../plugins/huddle/huddle-status';
+import { isStatusEcho, reviewOf } from '../../../plugins/huddle/huddle-review';
+import { rowFeed } from '../../../plugins/huddle/task-manager-posts';
+import { ageNow, clip, elapsed, isStale, type ProgressLine } from '../../../plugins/huddle/huddle-progress';
+import type { WaitLine } from '../../../plugins/huddle/task-manager-wait';
 
 export interface Mk2Row { labelKey: string; value: string }
 

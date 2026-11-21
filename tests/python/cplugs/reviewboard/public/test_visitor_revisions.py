@@ -12,9 +12,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.reviewboard.public import drafts, links, minting, responses, theme
-from src.cplugs.reviewboard.public.read import READER
-from src.cplugs.reviewboard.public.write import WRITER
+from src.plugins.reviewboard.public import drafts, links, minting, responses, theme
+from src.plugins.reviewboard.public.read import READER
+from src.plugins.reviewboard.public.write import WRITER
 from tests.python.cplugs.reviewboard.public.read_harness import add_revision, call, edge, get, mint_token
 
 SLUG = "20261013-bottom-bar"
@@ -170,7 +170,7 @@ def test_a_visitor_cannot_read_another_visitors_answers(read_env, store) -> None
 
 
 def test_a_draft_names_the_boards_visitors_topic_only_when_it_changed(read_env, store, monkeypatch) -> None:
-    from src.cplugs.reviewboard.public import announce
+    from src.plugins.reviewboard.public import announce
     told: List[str] = []
     monkeypatch.setattr(announce, "changed", lambda ctx, board: told.append(board))
     token = mint_token(store)

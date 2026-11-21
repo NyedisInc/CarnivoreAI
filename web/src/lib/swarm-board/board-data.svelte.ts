@@ -1,11 +1,11 @@
 import { authFetch, ApiError } from '../../opscenter/api/auth.svelte';
 import { resourcePush } from '../resource-push/boot';
 import { familyOf } from '../resource-push/store';
-import { floorSource } from '../../cplugs/sdk';
-import { swarmRoster, startSwarmRoster, type RosterAgent } from '../../cplugs/huddle/agents/agent-roster.svelte';
-import { colorBook, type ColorBook } from '../../cplugs/huddle/swarm/agent-colors.svelte';
-import type { NodeLooks } from '../../cplugs/huddle/swarm/node-look';
-import { createNodeLooks } from '../../cplugs/huddle/swarm/node-looks.svelte';
+import { floorSource } from '../../plugins/sdk';
+import { swarmRoster, startSwarmRoster, type RosterAgent } from '../../plugins/huddle/agents/agent-roster.svelte';
+import { colorBook, type ColorBook } from '../../plugins/huddle/swarm/agent-colors.svelte';
+import type { NodeLooks } from '../../plugins/huddle/swarm/node-look';
+import { createNodeLooks } from '../../plugins/huddle/swarm/node-looks.svelte';
 import { COLUMNS, scopeParam, type BoardQuery, type CardBoard, type CardColumn, type CardLane, type CardView } from './board-types';
 
 export const CARDS_FAMILY = 'cplug.huddle.cards';

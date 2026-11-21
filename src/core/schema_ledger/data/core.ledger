@@ -100,3 +100,10 @@ C96 b8c6f9fbccb654ace238e630bd0e05a32aba0d419bae26fd46e34e24f195cdeb alex add-ho
 C97 c5a1ee09e2f54d48f339f98ec5599bc97e4a9baa8280063dfc52c8bdd0ac7394 alex admit-pack-into-installed-items-consent-via-edit
 # Re-pinned 2026-10-27 per Joe (ccsliinc) (#2395), no behavior change: docstring path text after 62b2e022a (C34, C36, C37); helper and constant rename with identical values after 0acdb3a9b0 (C61, C91). See docs/DECISIONS.md.
 C98 08e628791ceb56f992fd495980db4ffbd307bf964bcf9263930b26e8173ec5cf joe convert-every-stored-legacy-project-color-key-to
+C99 59c3829f1854e0cdbcb0b8afe715f30b125e797c3ff5ed0fe57a0c314979b2d2 Alex add-swarm-agents-parked-row-id-and-projects-new
+C100 32140693be9f678b4b1025b1c9bad59d8c3f44acec7a187fdd64931119abdb90 Alex add-the-memory-diet-columns-fact-kind-and-use-a
+C101 f8a4f7772222fa90e81f0b0eee8b2fbc41c7da8a6b1adb313ea2eca34190f2ba Alex add-session-group-rules-a-dynamic-group-s-attrib
+C102 a04c1e894f12906dadedd3fecabd66cf91a8951d0b2f527a48ead8b6c32380bb Alex crosstalk-index-crosstalk-messages-in-reply-to-s
+C103 d8c35f1c39b5adf6bb36b5cefad6d1a78e4524cf5e50d07ed356ebdc0901cce6 Alex add-pack-rollups-agent-name-the-exporting-owner
+C104 2c6c1bf7a17ccf7fe7bfcecb3c022f821d9a51efb0e3aaf36b04a9246f049e1c Alex add-plugin-registry-marker-the-one-row-that-reco
+C105 d169c323a242e12458f9a72a639f9c0c8c967ef9439818c99e2b93ab7f8f5b1d Alex add-companies-folder-and-backfill-it-from-each-c

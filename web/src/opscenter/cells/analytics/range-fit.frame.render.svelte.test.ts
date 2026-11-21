@@ -32,7 +32,7 @@ async function framed(room: number, late = false): Promise<HTMLElement> {
   vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockImplementation(function (this: HTMLElement) {
     return this === name() ? (this.textContent ?? '').trim().length : 100;
   });
-  const chart = { c1: { id: 'c1', revision: 1, title: TITLE, enabled: true, series: [{ metric: 'total_tokens', operation: 'timeline' }], filters: {}, range: { mode: 'global' }, display: { type: 'line' } } as unknown as ChartConfig };
+  const chart = { c1: { id: 'c1', revision: 1, title: TITLE, enabled: true, series: [{ metric: 'working_seconds', operation: 'timeline' }], filters: {}, range: { mode: 'global' }, display: { type: 'line' } } as unknown as ChartConfig };
   analytics.charts = late ? {} : chart;
   tripwires.list = [];
   const target = document.createElement('div');

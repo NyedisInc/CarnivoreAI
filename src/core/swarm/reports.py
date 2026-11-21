@@ -11,7 +11,7 @@ from src.core import db
 from src.core.mcp.caller import AgentCaller
 from src.core.swarm import activity, body, delivery, memory, push, say, spawn, promotion_store, store, teardown, thread_port
 from src.core.swarm.cards import effects as card_effects, port as card_port
-from src.cplugs.sdk.cards import CardRefused
+from src.plugins.sdk.cards import CardRefused
 
 logger = structlog.get_logger()
 

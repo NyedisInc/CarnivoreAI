@@ -49,14 +49,14 @@ import Original from '../task-manager/Cell.svelte';
 import Mark2 from './Cell.svelte';
 import Mk2Host from './fixtures/Mk2Host.svelte';
 import { declaredActionsFor } from '../../widgets/menu/declared-actions.svelte';
-import { cplugEnablement } from '../../../cplugs/host/enablement.svelte';
-import { clearViewFilter } from '../../../cplugs/huddle/task-manager-view-filter.svelte';
-import { huddle } from '../../../cplugs/huddle/huddle.svelte';
-import { resetInspections } from '../../../cplugs/huddle/task-manager-design/inspection.svelte';
+import { cplugEnablement } from '../../../plugins/host/enablement.svelte';
+import { clearViewFilter } from '../../../plugins/huddle/task-manager-view-filter.svelte';
+import { huddle } from '../../../plugins/huddle/huddle.svelte';
+import { resetInspections } from '../../../plugins/huddle/task-manager-design/inspection.svelte';
 import { actionDataOf } from './mk2-task-tabs';
-import { applyProgress } from '../../../cplugs/huddle/task-manager-progress.svelte';
+import { applyProgress } from '../../../plugins/huddle/task-manager-progress.svelte';
 import Mk2TaskTabs from './Mk2TaskTabs.svelte';
-import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
+import type { HuddleItem } from '../../../plugins/huddle/huddle-model';
 
 cplugEnablement.enabled = { huddle: true };
 /** A file under `cells/`, from the web root vitest runs in. Inputs: relative path. Output: absolute path. */

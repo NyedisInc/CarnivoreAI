@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Optional
 
 from src.core.crosstalk import store
+from src.core.mcp import beast_mode
 from src.core.mcp.common import ToolError
 
 REPORT_BACK_SUFFIX = ('\n\nWhen the requested work is complete, report the actual outcome to your '
@@ -31,3 +32,7 @@ def agent_cli_flags(provider: str, effort: Optional[str], beast: bool) -> list[s
     if beast and provider == 'codex':
         flags.append('--dangerously-bypass-approvals-and-sandbox')
     return flags
+
+
+def peer_spawn_flags(provider: str, effort: Optional[str], sender_beast: bool) -> list[str]:
+    return agent_cli_flags(provider, effort, beast_mode.approval_skip('agent_spawn') and sender_beast)

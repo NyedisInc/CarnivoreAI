@@ -10,12 +10,12 @@ import structlog
 
 from src.api.catalog_install_support import refuse_409
 from src.core.catalog.first_party_listing import pinned_key_id
-from src.cplugs.host import identity, install_gates, runtime
-from src.cplugs.host import state as owner_state
-from src.cplugs.host.install_gates import CplugFacts, CplugGateRefusal
-from src.cplugs.host.secret_store import SecretError, SecretStore
-from src.cplugs.host.sidecar_registry import SidecarDefinition
-from src.cplugs.host.state import StateWriteFailed
+from src.plugins.host import identity, install_gates, runtime
+from src.plugins.host import state as owner_state
+from src.plugins.host.install_gates import CplugFacts, CplugGateRefusal
+from src.plugins.host.secret_store import SecretError, SecretStore
+from src.plugins.host.sidecar_registry import SidecarDefinition
+from src.plugins.host.state import StateWriteFailed
 
 logger = structlog.get_logger(__name__)
 

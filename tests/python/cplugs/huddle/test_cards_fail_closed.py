@@ -14,8 +14,8 @@ from fastapi import FastAPI
 from src.core.swarm.cards import port as card_port
 from src.core.work.ladder import MIGRATIONS
 from src.core.work.storage import LEGACY_STORAGE
-from src.cplugs.host import runtime
-from src.cplugs.sdk import CplugSchemaError, CplugStorage, StorageSpec, storage_backup
+from src.plugins.host import runtime
+from src.plugins.sdk import CplugSchemaError, CplugStorage, StorageSpec, storage_backup
 from tests.python.cplugs.huddle.test_cards_conversion import build_v22
 from tests.python.cplugs.owner import turn_on
 

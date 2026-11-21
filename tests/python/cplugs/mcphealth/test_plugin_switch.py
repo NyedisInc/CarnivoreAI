@@ -10,9 +10,9 @@ import pytest
 from fastapi import HTTPException
 
 from src.api import mcp_health_listing, mcp_reconnect_routes
-from src.cplugs.host import runtime
-from src.cplugs.sdk import ports
-from src.cplugs.sdk.mcp_health import PORT_NAME
+from src.plugins.host import runtime
+from src.plugins.sdk import ports
+from src.plugins.sdk.mcp_health import PORT_NAME
 from src.models import Session, SessionInfo
 
 
@@ -43,12 +43,12 @@ def test_no_port_means_the_reconnect_route_has_nothing_measured(monkeypatch):
 
 def test_the_compiled_in_copy_is_gone_and_the_other_plugins_still_import():
     with pytest.raises(ModuleNotFoundError):
-        importlib.import_module("src.cplugs.mcphealth")
+        importlib.import_module("src.plugins.mcphealth")
     assert runtime.find("mcphealth") is None and "mcphealth" not in [d.id for d in runtime.definitions()]
     shipped = [d.id for d in runtime.definitions()]
     assert len(shipped) >= 9
     for plugin_id in shipped:
-        assert importlib.import_module(f"src.cplugs.{plugin_id}") is not None, plugin_id
+        assert importlib.import_module(f"src.plugins.{plugin_id}") is not None, plugin_id
 
 
 def test_the_measuring_is_core_and_the_judge_is_not_in_src():

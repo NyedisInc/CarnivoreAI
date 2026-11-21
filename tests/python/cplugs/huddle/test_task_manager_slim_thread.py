@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from src.cplugs.huddle import slim
+from src.plugins.huddle import slim
 
 
 def msg(id_: int, author: str = "claude", kind: str = "info", **extra):

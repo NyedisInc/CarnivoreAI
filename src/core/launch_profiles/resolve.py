@@ -84,6 +84,15 @@ def _transparent_codex_yolo(profile: LaunchProfile) -> bool:
             and command.entry is None and command.script.strip() == 'codex --yolo "$@"')
 
 
+def _transparent_claude(profile: LaunchProfile) -> bool:
+    command = profile.custom_command
+    return (profile.harness == "claude" and profile.model.mode == "default"
+            and profile.permissions == "harness_default" and command is not None
+            and profile.endpoint.mode == "native" and not profile.flags
+            and not (profile.before_launch or "").strip()
+            and command.entry is None and command.script.strip() in ('claude "$@"', 'command claude "$@"'))
+
+
 def _model_for(profile: LaunchProfile, requested: Optional[str], transparent_codex: bool = False,
                explicit: bool = False) -> Optional[str]:
     if profile.model.mode == "fixed":
@@ -160,11 +169,15 @@ def resolve_launch(request: LaunchRequest, purpose: Purpose = "pane") -> LaunchP
             f"the '{family.name}' agent needs a model and none was given; "
             "pick one from the launch modal rather than launching bare"
         )
-    model = _model_for(profile, request.model, transparent_codex, request.model_is_explicit)
+    transparent_claude = _transparent_claude(profile)
+    model = _model_for(profile, request.model, transparent_codex or transparent_claude, request.model_is_explicit)
     endpoint = _endpoint_for(launch_profile, request, model)
     if endpoint is not None:
         model = endpoint.model
     app_args = list(request.app_args)
+    if transparent_claude and model:
+        app_args = ["--model", model, *app_args]
+        model = None
     fallback_args = list(app_args)
     if transparent_codex and request.disable_alternate_screen:
         fallback_args.append(_CODEX_NO_ALT_SCREEN)

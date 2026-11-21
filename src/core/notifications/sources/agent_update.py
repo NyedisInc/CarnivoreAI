@@ -56,7 +56,7 @@ def check_once(watcher: Any, state_dir: Optional[Any] = None, manager: Any = Non
         instance_key=f"agent_update:{installed}", card_hint=hint,
     )
     fired = common.fire_once(TYPE_ID, installed, event, state_dir)
-    if fired and manager is not None and _loop is not None and stale:
+    if fired and manager is not None and _loop is not None and not _loop.is_closed() and stale:
         asyncio.run_coroutine_threadsafe(_record_mac_toast(manager, stale[0][0], event, _app_state), _loop)
     return fired
 

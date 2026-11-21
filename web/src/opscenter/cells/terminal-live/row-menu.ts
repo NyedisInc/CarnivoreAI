@@ -62,6 +62,7 @@ export function openRowMenu(row: SessionInfo, uuid: string | null, anchor: HTMLE
   const ctx = contextFromRow(menuRow(row, uuid), {
     surface: 'sidebar', renameable: isAsleepRow(row) ? !!uuid : !!row.session?.id, band: '',
   });
+  ctx.anchor = anchor;
   const pinnedTheme = options.host ? undefined : row.pinned_theme ?? null;
   return openContextMenu(ctx, anchor, options, pinnedTheme);
 }

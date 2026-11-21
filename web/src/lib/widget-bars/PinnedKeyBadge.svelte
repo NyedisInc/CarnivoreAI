@@ -17,7 +17,7 @@
       min-width: 12px;
       height: 12px;
       padding: 0 2px;
-      border-radius: 1px;
+      border-radius: var(--oc-radius-xs);
       background: var(--oc-ground-hover);
       box-shadow: 0 0 0 1px var(--oc-line-frame);
       color: var(--oc-orange);

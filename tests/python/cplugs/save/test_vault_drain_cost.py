@@ -11,11 +11,11 @@ from typing import Iterator, List
 
 import pytest
 
-from src.cplugs.save.vault import constants as K, restore, retention
-from src.cplugs.save.vault.chunks import BlobStore
-from src.cplugs.save.vault.stamp_memo import StampMemo
-from src.cplugs.save.vault.follow import Engine
-from src.cplugs.save.vault.manifest import Manifest
+from src.plugins.save.vault import constants as K, restore, retention
+from src.plugins.save.vault.chunks import BlobStore
+from src.plugins.save.vault.stamp_memo import StampMemo
+from src.plugins.save.vault.follow import Engine
+from src.plugins.save.vault.manifest import Manifest
 from tests.python.cplugs.save.test_vault_follow import drain, engine_for
 from tests.python.cplugs.save.vault_helpers import CONV, World, jsonl
 

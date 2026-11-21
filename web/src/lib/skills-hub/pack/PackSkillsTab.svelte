@@ -1,6 +1,7 @@
 
 <script lang="ts">
   import { failureReason } from '../../errors/failure-reason';
+  import Button from '../../base/Button.svelte';
   import ManagerFrame from '../../manager-frame/ManagerFrame.svelte';
   import { viewport } from '../../../opscenter/engine/viewport.svelte';
   import { t as appT } from '../../i18n/index.svelte';
@@ -132,18 +133,15 @@
 >
   {#snippet toolbar()}
     {#if view}<span class="lsk-mark" data-pks-alpha>{t('skills.pack.alpha_badge', { name: alphaName })}</span>{/if}
-    <button
-      type="button"
-      class="oc-btn"
+    <Button
       role="switch"
       aria-checked={allMode}
       data-pks-all
       disabled={readOnly}
-      class:pks-on={allMode}
-      onclick={() => (planning = { kind: 'mode', mode: allMode ? 'off' : 'all' })}>{t('skills.pack.all')}: {allMode ? t('skills.pack.on') : t('skills.pack.off')}</button
+      onclick={() => (planning = { kind: 'mode', mode: allMode ? 'off' : 'all' })}>{t('skills.pack.all')}: {allMode ? t('skills.pack.on') : t('skills.pack.off')}</Button
     >
-    <button type="button" class="oc-btn" role="switch" aria-checked={data.inventory} class:pks-on={data.inventory} data-pks-inventory disabled={readOnly} onclick={() => void toggleInventory()}>{t('skills.pack.inventory')}</button>
-    <button type="button" class="oc-btn" data-pks-sync-now onclick={() => void pushNow()}>{t('skills.pack.sync_now')}</button>
+    <Button role="switch" aria-checked={data.inventory} data-pks-inventory disabled={readOnly} onclick={() => void toggleInventory()}>{t('skills.pack.inventory')}</Button>
+    <Button data-pks-sync-now onclick={() => void pushNow()}>{t('skills.pack.sync_now')}</Button>
   {/snippet}
   {#snippet body()}
     <div class="lsk-page" data-pks>

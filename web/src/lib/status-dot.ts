@@ -97,6 +97,7 @@ export function statusTitle(
     parkedSummary?: unknown,
     hostOffline?: unknown,
     usageLimit?: unknown,
+    loginExpired?: unknown,
 ): string {
     if (normalizeStatus(status) === 'asleep' && unread) return ASLEEP_UNREAD_LABEL;
     if (typeof hostOffline === 'string' && hostOffline && normalizeStatus(status) !== 'asleep') {
@@ -105,6 +106,9 @@ export function statusTitle(
     const key = normalizeStatus(status);
     if (typeof usageLimit === 'string' && usageLimit && key !== 'asleep' && key !== 'dead' && key !== 'stopped') {
         return usageLimit;
+    }
+    if (typeof loginExpired === 'string' && loginExpired && key !== 'asleep' && key !== 'dead' && key !== 'stopped') {
+        return loginExpired;
     }
     return labelWithSource(status, statusSource, activityHint, parkedSummary);
 }
@@ -119,6 +123,7 @@ export interface StatusSignals {
     transport?: string | null | undefined;
     host_offline?: string | null | undefined;
     usage_limit?: string | null | undefined;
+    login_expired?: string | null | undefined;
     size?: string | null | undefined;
 }
 
@@ -128,7 +133,7 @@ export function ledHtmlForStatus(
 ): string {
     const key = normalizeStatus(status);
     const s: StatusSignals = signals || {};
-    const label = statusTitle(key, s.status_source, s.activity_hint, s.unread, s.parked_summary, s.host_offline, s.usage_limit);
+    const label = statusTitle(key, s.status_source, s.activity_hint, s.unread, s.parked_summary, s.host_offline, s.usage_limit, s.login_expired);
     const cssClass = STATUS_DOT_CLASS[key] as string;
     const led = ledStateFor({
         activity_status: key,
@@ -137,6 +142,7 @@ export function ledHtmlForStatus(
         transport: s.transport,
         host_offline: s.host_offline,
         usage_limit: s.usage_limit,
+        login_expired: s.login_expired,
     });
     return ledHtml({
         inner: led.inner,
@@ -153,7 +159,7 @@ export function ledAttrsForStatus(
 ): Record<string, string> {
     const key = normalizeStatus(status);
     const s: StatusSignals = signals || {};
-    const label = statusTitle(key, s.status_source, s.activity_hint, s.unread, s.parked_summary, s.host_offline, s.usage_limit);
+    const label = statusTitle(key, s.status_source, s.activity_hint, s.unread, s.parked_summary, s.host_offline, s.usage_limit, s.login_expired);
     const led = ledStateFor({
         activity_status: key,
         unread: s.unread,
@@ -161,6 +167,7 @@ export function ledAttrsForStatus(
         transport: s.transport,
         host_offline: s.host_offline,
         usage_limit: s.usage_limit,
+        login_expired: s.login_expired,
     });
     return {
         class: `status-dot status-dot--${STATUS_DOT_CLASS[key] as string} status-led`,

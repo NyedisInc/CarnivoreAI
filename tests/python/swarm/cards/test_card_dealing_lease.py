@@ -24,10 +24,10 @@ from src.core.db_migration import ensure_db_migrated
 from src.core.swarm import body, delivery, store, thread_port, watch
 from src.core.swarm.cards import dealer, lease, ops, port as card_port, sweep
 from src.core.swarm.facade import SwarmFacade
-from src.cplugs import huddle as huddle_plugin
-from src.cplugs.huddle import service
-from src.cplugs.huddle.cards import policy
-from src.cplugs.huddle.cards.port import TaskManagerCardPort
+from src.plugins import huddle as huddle_plugin
+from src.plugins.huddle import service
+from src.plugins.huddle.cards import policy
+from src.plugins.huddle.public import TaskManagerCardPort
 from src.core.work.storage import WorkStorage
 
 LEASE_S = sweep.LEASE_S
@@ -632,7 +632,7 @@ async def test_a_lapse_decides_on_the_switch_and_beat_at_write_time_and_a_non_pr
 async def test_an_unreadable_project_list_leaves_the_step_unrun_and_the_dealer_closed(world, monkeypatch):
     from src.api import projects_service
     from src.core.project_authority import MODE_DB_UNREADABLE, ProjectsView
-    from src.cplugs.host import capabilities
+    from src.plugins.host import capabilities
 
     w = world
     bring_up(w)

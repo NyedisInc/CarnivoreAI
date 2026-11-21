@@ -21,17 +21,17 @@ function createCorner(deps) {
   let timer = null;
   let wired = false;
 
-  const fromCorner = (event) => !!win && !win.isDestroyed() && event.sender === win.webContents
+  const fromWindow = (event) => !!win && !win.isDestroyed() && event.sender === win.webContents
     && !!event.senderFrame && event.senderFrame === event.sender.mainFrame;
 
   function wire() {
     if (wired) return;
     wired = true;
     deps.ipcMain.on('carnivore:corner-press', (event, id) => {
-      if (fromCorner(event) && current && typeof id === 'string') deps.onPress(current.key, id);
+      if (fromWindow(event) && current && typeof id === 'string') deps.onPress(current.key, id);
     });
     deps.ipcMain.on('carnivore:corner-close', (event) => {
-      if (!fromCorner(event) || !current) return;
+      if (!fromWindow(event) || !current) return;
       const { key } = current;
       hide();
       deps.onClose(key);

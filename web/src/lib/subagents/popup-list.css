@@ -1,7 +1,7 @@
 
 .sal-panel {
   position: fixed;
-  z-index: 1200;
+  z-index: var(--oc-z-menu);
   display: flex;
   flex-direction: column;
   width: min(520px, calc(100vw - 16px));
@@ -98,6 +98,10 @@
 .sal-panel .sal-num {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+.sal-panel .sal-num--stalled {
+  color: var(--oc-yellow-bright);
 }
 
 .sal-panel .sal-status {

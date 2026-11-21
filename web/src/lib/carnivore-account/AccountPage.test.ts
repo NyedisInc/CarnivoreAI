@@ -75,7 +75,7 @@ describe('signed in', () => {
 
     it('draws the same avatar as the drawer chip for the same account, handle or not (#1200)', async () => {
         for (const handle of ['', 'ada-lovelace']) {
-            const facts = { signedIn: true, handle, login: 'alex@evergreenai.com', email: 'alex@evergreenai.com', provider: 'email' };
+            const facts = { signedIn: true, handle, login: 'alex@example.invalid', email: 'alex@example.invalid', provider: 'email' };
             catalogAccount.facts = facts;
             accountChip.identity = accountIdentity(facts);
             page({ readNews: async () => true, setNews: async (n) => n });

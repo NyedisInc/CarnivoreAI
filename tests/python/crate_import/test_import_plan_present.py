@@ -11,7 +11,7 @@ import pytest
 from src.core.crate_import import keymap
 from src.core.crate_import.model import ImportRequest
 from src.core.crate_import.plan import build_plan
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.sdk import crate_format as cf
 from tests.python.crate_import.test_import_work_side import imported
 
 NO_NATURAL_KEY = ("cloude.db.lineage_edges", "cloude.db.work_card_rules", "cloude.db.work_project_roles", "stats.db.stats_annotations")

@@ -130,6 +130,16 @@ export function bands<T extends BucketRow>(rows: readonly T[]): Array<Band<T>> {
     return keys.map((key) => ({ key, rows: buckets.get(key) as T[] }));
 }
 
+const CONSOLE_PROJECT_NAME = /^(console-[0-9a-z]+|home-terminal)$/;
+
+export function isConsoleProject(row: BucketRow): boolean {
+    return row.working_dir === '~' || CONSOLE_PROJECT_NAME.test(String(row.project_name ?? ''));
+}
+
+function projectLabel(row: BucketRow): string {
+    return (row.project_name as string) || 'unnamed project';
+}
+
 export function projectBuckets<T extends BucketRow>(rows: readonly T[]): Array<ProjectBucket<T>> {
     const rogueKey = G.BAND_ROGUE;
     const order: string[] = [];
@@ -141,10 +151,22 @@ export function projectBuckets<T extends BucketRow>(rows: readonly T[]): Array<P
         const key = known ? G.projectBandKeyFor(pid) : rogueKey;
         if (!buckets.has(key)) {
             buckets.set(key, {
-                label: known ? ((row.project_name as string) || 'unnamed project') : 'rogue agents',
+                label: known ? projectLabel(row) : 'rogue agents',
                 rows: [],
                 isProject: known,
             });
+            order.push(key);
+        }
+        (buckets.get(key) as { rows: T[] }).rows.push(row);
+    }
+    const agentKeys = new Set(buckets.keys());
+    for (const row of Array.isArray(rows) ? rows : []) {
+        const pid = row.project_id;
+        if (!isTerminal(row) || pid === null || pid === undefined || row.asleep === true || row.closed === true || row.archived === true) continue;
+        const key = G.projectBandKeyFor(pid);
+        if (agentKeys.has(key) || isConsoleProject(row)) continue;
+        if (!buckets.has(key)) {
+            buckets.set(key, { label: projectLabel(row), rows: [], isProject: true });
             order.push(key);
         }
         (buckets.get(key) as { rows: T[] }).rows.push(row);

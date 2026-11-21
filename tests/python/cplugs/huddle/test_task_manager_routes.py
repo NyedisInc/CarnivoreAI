@@ -9,10 +9,11 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.cplugs.host import runtime
-from src.cplugs.huddle import callers, routes as huddle_routes, rules, service
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.host import runtime
+from src.plugins.huddle import callers, routes as huddle_routes, rules, service
+from src.plugins.huddle.store import TaskManagerStore
 from src.api import one_shot_routes
+from src.core.sessions import guarded_paste
 from src.api.auth import require_auth
 from tests.python.cplugs.owner import turn_on
 
@@ -22,7 +23,7 @@ NOW = datetime(2026, 10, 2, 12, 0, 0)
 def row(sid: str, project: int, agent: str = "claude", minutes_ago: int = 0):
     session = SimpleNamespace(id=sid, agent_type=agent, last_activity=NOW - timedelta(minutes=minutes_ago))
     return SimpleNamespace(session=session, agent_type=agent, agent_family=None, project_id=project, project_name="carnivore",
-                           label=sid, tmux_session=f"cloude_{sid}", activity_status="idle", host_key="local")
+                           label=sid, tmux_session=f"cloude_{sid}", activity_status="idle", startup_gate="ready", host_key="local")
 
 
 @pytest.fixture
@@ -134,7 +135,11 @@ def pasted(monkeypatch):
         sent.append((session_id, text))
         return SimpleNamespace(pasted_bytes=len(text), submitted=True)
 
+    async def core_paste(app_state, session_id, text, options=None):
+        return await paste(app_state, session_id, text)
+
     monkeypatch.setattr(one_shot_routes, "paste_through_gates", paste)
+    monkeypatch.setattr(guarded_paste, "paste_through_gates", core_paste)
     return sent
 
 

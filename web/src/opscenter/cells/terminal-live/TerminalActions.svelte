@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import Icon from '../../ui/Icon.svelte';
+  import TerminalSoundButton from '../../../lib/terminal-sound/TerminalSoundButton.svelte';
   import { sessions, asleep, sleepSession } from '../../api';
   import { primarySessionId, openSettings } from '../../api/host';
   import { rowFor } from '../terminal-viewer/meta';
@@ -142,6 +143,8 @@
     return () => { resize.disconnect(); mutate.disconnect(); };
   });
 
+  let sound: TerminalSoundButton | undefined = $state();
+
   let themeOpen = $state(false);
 
   function pressed(item: ToolbarItem): boolean {
@@ -157,7 +160,7 @@
   }
 
   function ready(item: ToolbarItem): boolean {
-    if (item.id === 'theme') return !!row?.tmux_session;
+    if (item.id === 'theme' || item.id === 'sound') return !!row?.tmux_session;
     if (item.id === 'sleep') return !!sleepUuid();
     return !!sessionId;
   }
@@ -172,6 +175,7 @@
     downShowing = undefined;
     inputFocus.select(slot);
     if (item.id === 'theme') { chooseTheme(anchor); return; }
+    if (item.id === 'sound') { options?.hidePopover(); sound?.toggleAt(anchor); return; }
     if (item.id === 'notes') { runNotes(showing); return; }
     if (item.id === 'sleep') { void sleepThis(); return; }
     if (item.action) runTool(item.action, anchor, showing);
@@ -328,6 +332,7 @@
   });
 
 </script>
+<TerminalSoundButton bind:this={sound} sessionName={row?.tmux_session} />
 <div class="cell-tools" bind:this={tools} role="group" aria-label={t('terminal.tools.label')} data-toolbar-state={split.state}>
   {#each split.bar as item (item.id)}
     {#if item.id === 'utilities'}
@@ -427,7 +432,7 @@
   @layer components {
     .cell-tools { display:flex; align-items:center; gap:2px; }
 
-    .cell-tools button, .cell-tools :global(.tbg-open) { display:flex; align-items:center; justify-content:center; width:26px; height:var(--cell-tool-h, 26px); margin:0; padding:0; border:1px solid transparent; border-radius:3px; background:transparent; color:var(--oc-text-dim); cursor:pointer; }
+    .cell-tools button, .cell-tools :global(.tbg-open) { display:flex; align-items:center; justify-content:center; width:26px; height:var(--cell-tool-h, 26px); margin:0; padding:0; border:1px solid transparent; border-radius:var(--oc-radius-tight); background:transparent; color:var(--oc-text-dim); cursor:pointer; }
 
     .bar-utilities { display:flex; align-items:center; align-self:stretch; gap:2px; }
 

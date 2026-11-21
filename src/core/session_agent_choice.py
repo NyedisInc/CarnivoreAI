@@ -52,6 +52,7 @@ def validate_agent_choice(
     *,
     model: Optional[str] = None,
     extra_args: Optional[List[str]] = None,
+    working_dir: Optional[str] = None,
 ) -> AgentChoice:
     asked = (agent_type or "").strip()
     if not asked:
@@ -84,7 +85,7 @@ def validate_agent_choice(
 
     try:
         command = settings_obj.pane_launch_command(
-            asked, model=model, extra_args=extra_args
+            asked, model=model, extra_args=extra_args, working_dir=working_dir
         )
     except (ValueError, OSError, AttributeError) as exc:
         logger.warning(

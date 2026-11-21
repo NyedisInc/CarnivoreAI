@@ -3,9 +3,9 @@
   import { clock, startClock } from '../../lib/frozen-clock.svelte';
   import { truncatedTip } from '../../../lib/tooltip/truncated-tip';
   import ListRow from './ListRow.svelte';
-  import { statusKey } from '../../../cplugs/huddle/huddle-status';
-  import { badgeLabelKey } from '../../../cplugs/huddle/task-manager-badge-menu';
-  import type { BadgeStatus } from '../../../cplugs/huddle/task-manager-prefs.svelte';
+  import { statusKey } from '../../../plugins/huddle/huddle-status';
+  import { badgeLabelKey } from '../../../plugins/huddle/task-manager-badge-menu';
+  import type { BadgeStatus } from '../../../plugins/huddle/task-manager-prefs.svelte';
   import { LIST_ORDER, sectionsOf, type ListDensity, type ListGroupBy, type ListRow as Row, type ListSection } from './model';
 
   let { rows, limit = null, density, grouping, heads = true }: {

@@ -14,7 +14,7 @@ from src.core.ui_preferences.account_checks import check_builtin_login_label, ch
 from src.core.ui_preferences.activity_checks import check_toast_mode, check_terminal_screen_reader, check_deepsearch_index_scope, check_swarm_chat_muted, check_automation_runs_seen_at, check_warez_last_call, check_automation_runs_read, check_disabled_plugin_ids, check_terminal_layouts_size, check_home_layout_size
 from src.core.ui_preferences.keymap_checks import check_keymap
 from src.core.ui_preferences.desktop_checks import check_desktop_bools, check_desktop_hotkey, check_desktop_terminal_app, check_desktop_terminal_custom
-from src.core.ui_preferences.sidebar_checks import check_menu_order, check_rail_hidden_icons, check_density, check_rail_magnify, check_sidebar_layout, check_widget_drawer_view, check_sidebar_tab_colors, check_drawer_arrangement_size, check_collapsed_paths, check_launchpad_sections, check_foot_bar_items, check_foot_bar_order
+from src.core.ui_preferences.sidebar_checks import check_menu_order, check_rail_hidden_icons, check_density, check_rail_magnify, check_menu_page_width, check_sidebar_layout, check_widget_drawer_view, check_sidebar_tab_colors, check_drawer_arrangement_size, check_collapsed_paths, check_launchpad_sections, check_foot_bar_items, check_foot_bar_order
 from src.core.ui_preferences.theme_checks import check_theme_id, check_favorite_theme_ids, check_script_consent, check_model_id, check_favorite_skill_names
 from src.core.ui_preferences.layouts import FootBarLayout, HomeLayout, TerminalLayouts, WarroomLayout
 
@@ -75,6 +75,7 @@ class UiPreferenceValues(BaseModel):
     animations: Optional[StrictBool] = None
     row_lights_animate: Optional[StrictBool] = None
     rail_magnify: Optional[StrictInt] = None
+    menu_page_width: Optional[StrictInt] = None
     rail_dock_names: Optional[StrictBool] = None
     notify_quiet_watched: Optional[StrictBool] = None
     disabled_plugins: Optional[List[str]] = None
@@ -110,6 +111,7 @@ class UiPreferenceValues(BaseModel):
     _density = field_validator("sidebar_density", "sidebar_density_mobile")(check_density)
     _sidebar_layout = field_validator("sidebar_layout")(check_sidebar_layout)
     _rail_magnify = field_validator("rail_magnify")(check_rail_magnify)
+    _menu_page_width = field_validator("menu_page_width")(check_menu_page_width)
     _widget_drawer_view = field_validator("widget_drawer_view", "widget_drawer_view_mobile")(check_widget_drawer_view)
     _sidebar_tab_colors = field_validator("sidebar_tab_colors")(check_sidebar_tab_colors)
     _drawer_arrangement_size = field_validator("drawer_arrangement")(check_drawer_arrangement_size)

@@ -36,7 +36,7 @@ describe('addPluginEntries', () => {
         const guide = (window as unknown as { StyleGuide: { addPluginEntries: (e: unknown) => void } }).StyleGuide;
         expect((window as { StyleGuideReady?: boolean }).StyleGuideReady).toBe(true);
         guide.addPluginEntries({
-            rows: { 'web/src/cplugs/zz/Thing.svelte': { section: 'chrome', classes: ['zz-box'] } },
+            rows: { 'web/src/plugins/zz/Thing.svelte': { section: 'chrome', classes: ['zz-box'] } },
             prose: [
                 { plugin: 'zz', file: '19-chrome.html', html: '<h3 id="zz-h">zz plugin</h3>' },
                 { plugin: 'zz', file: '99-missing.html', html: '<p>no section</p>' },
@@ -49,7 +49,7 @@ describe('addPluginEntries', () => {
         expect(chrome.querySelector('[data-sg-plugin="zz"] #zz-h')).not.toBeNull();
         expect(document.body.textContent).not.toContain('no section');
         expect(chrome.querySelectorAll('.sg-coverage').length).toBe(1);
-        expect(chrome.querySelector('.sg-coverage')!.textContent).toContain('web/src/cplugs/zz/Thing.svelte');
+        expect(chrome.querySelector('.sg-coverage')!.textContent).toContain('web/src/plugins/zz/Thing.svelte');
         expect(chrome.querySelector('.sg-coverage')!.textContent).toContain('web/src/lib/Core.svelte');
         expect(document.getElementById('sg-full-index')!.textContent).toContain('.zz-box');
         expect(document.getElementById('sg-exclusions')!.querySelectorAll('li').length).toBe(1);

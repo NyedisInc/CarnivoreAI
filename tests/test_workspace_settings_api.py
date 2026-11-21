@@ -169,7 +169,7 @@ def test_tls_preference_persists_even_though_it_is_not_in_force(
 
 
 def test_developer_mode_is_off_by_default_and_persists_and_is_read_back(client, config_path):
-    from src.cplugs.host import developer_mode
+    from src.plugins.host import developer_mode
 
     assert client.get("/api/v1/config/settings").json()["server_prefs"]["developer_mode"] is False
     assert developer_mode.is_on() is False

@@ -45,7 +45,7 @@ def test_card_effects_skip_the_fact_and_the_teardown_while_off(flip, monkeypatch
 
 def test_a_validation_is_refused_before_any_stale_validator_is_retired(flip, monkeypatch):
     from src.core.swarm.cards import validate
-    from src.cplugs.sdk.cards import CardRefused
+    from src.plugins.sdk.cards import CardRefused
 
     read: list = []
     torn: list = []

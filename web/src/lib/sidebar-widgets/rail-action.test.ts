@@ -10,16 +10,16 @@ vi.mock('../../opscenter/api/auth.svelte', () => ({
 const openPage = vi.hoisted(() => vi.fn(async () => undefined));
 vi.mock('../browser/select-push.svelte', async (original) => ({ ...(await original<Record<string, unknown>>()), openPage }));
 
-import { cplugEnablement } from '../../cplugs/host/enablement.svelte';
-import { cplugTabs } from '../../cplugs/host/readers';
-import { devwidgetlabCplug } from '../../cplugs/devwidgetlab';
-import { SELECTION_KEY } from '../../cplugs/devwidgetlab/lab-selection';
-import { installLabBus } from '../../cplugs/devwidgetlab/lab-test-bus';
+import { cplugEnablement } from '../../plugins/host/enablement.svelte';
+import { cplugTabs } from '../../plugins/host/readers';
+import { devwidgetlabCplug } from '../../plugins/devwidgetlab';
+import { SELECTION_KEY } from '../../plugins/devwidgetlab/lab-selection';
+import { installLabBus } from '../../plugins/devwidgetlab/lab-test-bus';
 import { registerTab, tabRegistry } from '../dynamic-tabs/registry';
 import { setLocale } from '../i18n/index.svelte';
 import { activeFlyout, closeFlyout } from './flyout.svelte';
 import { railOn, railBtn, rail, flyout, press, setupRail, settle, teardownRail } from './fixtures/rail-harness';
-import { registerSwarmFlyout } from '../../cplugs/huddle/swarm-flyout';
+import { registerSwarmFlyout } from '../../plugins/huddle/swarm-flyout';
 
 // The swarm slide-out is the Task Manager plugin's, so the test registers it; the harness no longer does.
 registerSwarmFlyout();

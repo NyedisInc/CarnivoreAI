@@ -7,12 +7,12 @@ from types import SimpleNamespace
 from fastapi import HTTPException
 from structlog.testing import capture_logs
 
-from src.api import one_shot_routes
-from src.cplugs.host import runtime
-from src.cplugs.huddle import item_owner, owner_read, structured
-from src.cplugs.huddle.roles import mcp_tags
-from src.cplugs.huddle.rules import CLAUDE, JOE
-from src.cplugs.huddle.store import TaskManagerStore
+from tests.python.cplugs.huddle.paste_fakes import patch_paste
+from src.plugins.host import runtime
+from src.plugins.huddle import item_owner, owner_read, structured
+from src.plugins.huddle.roles import mcp_tags
+from src.plugins.huddle.rules import CLAUDE, JOE
+from src.plugins.huddle.store import TaskManagerStore
 from tests.python.cplugs.huddle.test_task_manager_mcp import CALLER, call, huddle_store, manager  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, pasted  # noqa: F401
 
@@ -152,7 +152,7 @@ def test_a_refused_owner_part_leaves_the_list_untold_and_the_default_part_still_
         sent.append((session_id, text))
         return SimpleNamespace(pasted_bytes=len(text), submitted=True)
 
-    monkeypatch.setattr(one_shot_routes, "paste_through_gates", paste)
+    patch_paste(monkeypatch, paste)
     mine, theirs = add(client, "owned"), add(client, "plain")
     note(app, "ses_old", "12", 100.0)
     told_once(client)

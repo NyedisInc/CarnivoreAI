@@ -583,8 +583,8 @@ def test_a_primary_is_never_sent_the_observer_grid_frame():
         painted = _drive_primary(ws, seen)
 
     sizes = [frame for frame in seen if frame.get("type") == "terminal_size"]
-    assert sizes == [], (
-        f"a primary was handed the observer's grid frame: {sizes!r}"
+    assert [(f.get("cols"), f.get("rows"), f.get("measured")) for f in sizes] == [(143, 41, True)], (
+        f"a primary must get exactly one measured grid frame: {sizes!r}"
     )
     assert painted is not None, "the primary's own attach never painted"
 

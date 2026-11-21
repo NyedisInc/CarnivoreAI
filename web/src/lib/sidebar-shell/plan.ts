@@ -69,6 +69,7 @@ export interface HeadingPlan {
     pickedIconHtml: string;
     rollupHtml: string;
     menu?: HeadingMenuPlan;
+    packMark?: { kind: 'on' | 'leftover'; label: string; projectId: string };
     fxHtml?: string;
 }
 
@@ -225,6 +226,7 @@ interface SectionOpts {
     noLight?: boolean;
     inactive?: boolean;
     movedTo?: string;
+    delegate?: 'on' | 'leftover';
 }
 
 function sectionPlan(ctx: Ctx, key: string, rows: SidebarRow[], o: SectionOpts): SectionPlan {
@@ -258,6 +260,9 @@ function sectionPlan(ctx: Ctx, key: string, rows: SidebarRow[], o: SectionOpts):
         ...(menu ? { menu } : {}),
         ...(o.movedTo !== undefined ? { badge: movedAwayChip(o.movedTo) } : o.inactive ? { inactive: inactiveProjectIcon() } : {}),
     };
+    if (o.isProject && o.delegate) {
+        heading.packMark = { kind: o.delegate, projectId: key.slice(BAND_PROJECT_PREFIX.length), label: t(`sidebar.project.delegate.${o.delegate}`) };
+    }
     const fxHtml = L.groupColour?.groupFxHtml ? L.groupColour.groupFxHtml(key, label) : '';
     if (fxHtml) heading.fxHtml = fxHtml;
     const kids = o.isProject && ctx.leaders.spawned ? rows.filter((r) => ctx.leaders.spawned!(r)) : [];
@@ -276,7 +281,7 @@ function sectionPlan(ctx: Ctx, key: string, rows: SidebarRow[], o: SectionOpts):
         rows: collapsed
             ? []
             : uniqueKeys(drawn.map((r) => rowPlan(ctx, r, key, o.subtitleFor ? o.subtitleFor(r) : undefined))),
-        spawned: kids.length ? spawnedPlan(ctx, key, kids) : null,
+        spawned: kids.length && !collapsed ? spawnedPlan(ctx, key, kids) : null,
     };
 }
 
@@ -316,7 +321,7 @@ function uniqueKeys(rows: RowPlan[]): RowPlan[] {
 }
 
 function companyPlan(
-    ctx: Ctx, c: CompanyBucket<SidebarRow>, leaderRow: SidebarRow | undefined, source?: Pick<CompanySource, 'projectParentOf' | 'projectArchived' | 'projectMovedTo'>,
+    ctx: Ctx, c: CompanyBucket<SidebarRow>, leaderRow: SidebarRow | undefined, source?: Pick<CompanySource, 'projectParentOf' | 'projectArchived' | 'projectMovedTo' | 'projectDelegate'>,
 ): CompanyPlan {
     const PH = ctx.L.projectHeader!;
     const open = !ctx.isFolded(c.key);
@@ -344,7 +349,7 @@ function companyPlan(
             ...(orphaned ? {} : { menu: { kind: 'company', id: c.key, label: t('sidebar.company.menu.title', { name: label }) } as HeadingMenuPlan }),
             ...(companyTint(c.companyId) ? { tint: companyTint(c.companyId) } : {}),
         },
-        sections: open ? projectSections(ctx, c.projects, source?.projectParentOf, source?.projectArchived, source?.projectMovedTo) : [],
+        sections: open ? projectSections(ctx, c.projects, source?.projectParentOf, source?.projectArchived, source?.projectMovedTo, source?.projectDelegate) : [],
     };
 }
 
@@ -362,7 +367,7 @@ export function withInactiveProjects(
 
 function projectSections(
     ctx: Ctx, buckets: ReadonlyArray<ProjectBucket>, parentOf?: CompanySource['projectParentOf'],
-    isArchived?: CompanySource['projectArchived'], movedTo?: CompanySource['projectMovedTo'],
+    isArchived?: CompanySource['projectArchived'], movedTo?: CompanySource['projectMovedTo'], delegate?: CompanySource['projectDelegate'],
 ): SectionPlan[] {
     const moved = (b: ProjectBucket): string | null => (b.isProject && movedTo ? movedTo(b.key.slice(BAND_PROJECT_PREFIX.length)) : null);
     const archived = (b: ProjectBucket): boolean => !!(b.isProject && isArchived && isArchived(b.key.slice(BAND_PROJECT_PREFIX.length)));
@@ -370,6 +375,7 @@ function projectSections(
     const plan = (b: ProjectBucket): SectionPlan => sectionPlan(ctx, b.key, b.rows, {
         labelOverride: b.label, isProject: b.isProject, ...(inactive(b) ? { inactive: true } : {}),
         ...(moved(b) !== null ? { movedTo: moved(b) as string } : {}),
+        ...(b.isProject && delegate && delegate(b.key.slice(BAND_PROJECT_PREFIX.length)) ? { delegate: delegate(b.key.slice(BAND_PROJECT_PREFIX.length))! } : {}),
     });
     if (!parentOf) return buckets.map(plan);
     const parentKey = (b: ProjectBucket): string | null => {

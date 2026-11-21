@@ -76,8 +76,8 @@ def test_every_family_member_is_a_registered_tool_and_the_table_is_sane() -> Non
         assert any(family.has(n) for n in registered), family.key
     for name in registered:
         assert sum(f.has(name) for f in tool_families.FAMILIES) <= 1, name
-    assert len(tool_families.BY_KEY["pack"].names) == 33 and len(tool_families.BY_KEY["messaging"].names) == 6
-    assert len(tool_families.BY_KEY["ai"].names) == 3 and len(tool_families.BY_KEY["app_settings"].names) == 21
+    assert len(tool_families.BY_KEY["pack"].names) == 43 and len(tool_families.BY_KEY["messaging"].names) == 6
+    assert len(tool_families.BY_KEY["ai"].names) == 3 and len(tool_families.BY_KEY["app_settings"].names) == 24
     joes = {"dashboards_list", "widgets_list", "item_settings_get", "item_settings_update", "dashboard_create", "dashboard_rename",
             "dashboard_layout_set", "dashboard_activate", "dashboard_delete", "widget_bars_reset", "board_export", "board_import"}
     assert not [n for n in joes if tool_families.family_of(n)]
@@ -193,6 +193,8 @@ def test_a_missing_config_holds_no_ai_connection(world) -> None:
 
 def test_the_app_settings_box_hides_exactly_its_tools_and_joes_stay_visible(cfg) -> None:
     members = tool_families.BY_KEY["app_settings"].names
+    assert members <= _names()
+    cfg.agent_app_settings_tools = False
     off = _names()
     assert not members & off
     assert {"dashboards_list", "widgets_list", "board_export", "themes_list", "session_theme_set"} <= off
@@ -274,6 +276,7 @@ def test_an_invalidate_during_a_probe_is_not_overwritten_by_it(monkeypatch) -> N
 
 
 def test_whoami_lists_the_hidden_families_with_why_and_how(world, cfg) -> None:
+    cfg.agent_app_settings_tools = False
     result = asyncio.run(tools.call_tool(None, WRITE_TOKEN, "whoami", {}))
     body = json.loads(result["content"][0]["text"])
     rows = {r["family"]: r for r in body["hidden_families"]}

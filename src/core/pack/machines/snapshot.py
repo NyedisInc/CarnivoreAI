@@ -4,15 +4,20 @@ from __future__ import annotations
 import os
 import platform
 import re
+import shutil
 import subprocess
 import threading
 import time
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+import structlog
+
 from src.core import host_metrics
 from src.core.dev_tools import git_guard
 from src.core.launch_profiles.installed import harness_installed
+
+log = structlog.get_logger(__name__)
 
 SNAPSHOT_VERSION = 1
 TOOLS = (("python3.12", "python3.12"), ("python3", "python3"), ("node", "node"), ("npm", "npm"), ("git", "git"),
@@ -23,8 +28,11 @@ HID_TTL = 30.0
 
 
 def _run(argv: List[str], timeout: float = 3.0) -> Optional[str]:
+    found = shutil.which(argv[0]) if argv else None
+    if not found:
+        return None
     try:
-        done = subprocess.run(argv, capture_output=True, text=True, timeout=timeout, check=False)
+        done = subprocess.run([found, *argv[1:]], capture_output=True, text=True, timeout=timeout, check=False, close_fds=False)
     except (OSError, subprocess.SubprocessError):
         return None
     return done.stdout if done.returncode == 0 else None
@@ -81,6 +89,25 @@ class SnapshotCollector:
         self._battery_at = float("-inf")
         self._hid: Optional[float] = None
         self._hid_at = float("-inf")
+        self._extras: Dict[str, Callable[[], Optional[Dict[str, Any]]]] = {}
+
+    def add_extra(self, key: str, fn: Callable[[], Optional[Dict[str, Any]]]) -> None:
+        with self._lock:
+            self._extras[key] = fn
+
+    def _collect_extras(self) -> Dict[str, Dict[str, Any]]:
+        with self._lock:
+            extras = dict(self._extras)
+        out: Dict[str, Dict[str, Any]] = {}
+        for key, fn in extras.items():
+            try:
+                value = fn()
+            except Exception as exc:  # noqa: BLE001
+                log.warning("pack_snapshot_extra_failed", key=key, error=type(exc).__name__)
+                continue
+            if isinstance(value, dict):
+                out[key] = value
+        return out
 
     def rescan(self) -> Dict[str, Any]:
         with self._lock:
@@ -111,10 +138,12 @@ class SnapshotCollector:
             if self._toolchain is None:
                 self._toolchain = read_toolchain()
             specs, toolchain, battery = dict(self._specs), dict(self._toolchain), self._battery_now()
+        extras = self._collect_extras()
+        throttled = (extras.get("pressure") or {}).get("throttled")
         memory, disk, load = host_metrics.collect_memory(), host_metrics.collect_disk(self._state_dir()), host_metrics.collect_load()
         total = memory.get("total_bytes") if memory["available"] else None
         avail = memory.get("available_bytes") if memory["available"] else None
-        return {
+        snap = {
             "v": SNAPSHOT_VERSION, "install_id": install_id, "label": label, "app_version": app_version,
             "taken_at": time.time() if now is None else now, "specs": specs,
             "load": {
@@ -133,5 +162,10 @@ class SnapshotCollector:
                 "uptime_seconds": host_metrics.collect_host()["uptime_seconds"],
             },
             "battery": battery, "hid_idle_seconds": hid_idle, "toolchain": toolchain, "reserve": reserve,
-            "restrictions": restrictions, "capabilities": capabilities, "throttled": 0, "agents": None,
+            "restrictions": restrictions, "capabilities": capabilities,
+            "throttled": throttled if isinstance(throttled, int) and not isinstance(throttled, bool) and throttled >= 0 else 0,
+            "agents": None,
         }
+        for key, value in extras.items():
+            snap.setdefault(key, value)
+        return snap

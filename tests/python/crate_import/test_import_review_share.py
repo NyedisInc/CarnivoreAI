@@ -8,7 +8,7 @@ from pathlib import Path
 from src.core.crate_import import share_in
 from src.core.crate_import.model import B_BAD_IDENTIFIER, ImportRequest
 from src.core.crate_import.plan import build_plan
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.sdk import crate_format as cf
 from tests.python.crate_import.install import make_install
 from tests.python.crate_import.test_import_share import SHARE
 

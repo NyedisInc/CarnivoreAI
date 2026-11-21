@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Optional, Tuple
 
@@ -23,9 +24,19 @@ KIND_DEFAULT = "default"
 KIND_MUTE = "mute"
 KIND_STYLE = "style"
 KIND_LOCAL = "local"
+KIND_ROUTE = "route"
+KIND_ON = "on"
+
+ROUTE_TARGETS: Tuple[str, ...] = ("app", "desk", "phone", "corner")
+_IID = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+SELF_IID_KEY = "local/route_iid"
 
 Version = Tuple[int, str]
 Entry = Dict[str, Any]
+
+
+class SettingsValueError(ValueError):
+    pass
 
 
 @dataclass(frozen=True)
@@ -37,6 +48,8 @@ class ParsedPath:
     col: Optional[str] = None
     extra: Optional[str] = None
     name: Optional[str] = None
+    iid: Optional[str] = None
+    target: Optional[str] = None
 
 
 def _check_dest(dest: str) -> str:
@@ -79,6 +92,27 @@ def style_path(type_id: str) -> str:
     return f"{KIND_STYLE}/{_check_type(type_id)}"
 
 
+def _check_iid(iid: str) -> str:
+    if not isinstance(iid, str) or not _IID.match(iid):
+        raise SettingsValueError(f"not a computer id: {iid!r}")
+    return iid
+
+
+def route_path(iid: str, target: str, type_id: str) -> str:
+    if target not in ROUTE_TARGETS:
+        raise SettingsValueError(f"not a route target: {target!r}")
+    return f"{KIND_ROUTE}/{_check_iid(iid)}/{target}/{_check_type(type_id)}"
+
+
+def on_path(type_id: str) -> str:
+    return f"{KIND_ON}/{_check_type(type_id)}"
+
+
+def self_iid(doc: Mapping[str, Any]) -> Optional[str]:
+    value = doc["local"].get(SELF_IID_KEY)
+    return value if isinstance(value, str) and _IID.match(value) else None
+
+
 def corner_key(type_id: str) -> str:
     return local_key(f"corner.{_check_type(type_id)}")
 
@@ -101,6 +135,14 @@ def parse_path(path: str) -> ParsedPath:
         return ParsedPath(KIND_MUTE, type_id=_check_type(rest))
     if head == KIND_STYLE:
         return ParsedPath(KIND_STYLE, type_id=_check_type(rest))
+    if head == KIND_ON:
+        return ParsedPath(KIND_ON, type_id=_check_type(rest))
+    if head == KIND_ROUTE:
+        iid, _, tail = rest.partition("/")
+        target, _, type_id = tail.partition("/")
+        if target not in ROUTE_TARGETS:
+            raise SettingsValueError(f"not a route target: {target!r}")
+        return ParsedPath(KIND_ROUTE, type_id=_check_type(type_id), iid=_check_iid(iid), target=target)
     if head == KIND_TICK:
         col, _, type_id = rest.partition("/")
         if col not in (COL_SCREEN, COL_DESKTOP):

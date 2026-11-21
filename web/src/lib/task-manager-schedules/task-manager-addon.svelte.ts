@@ -1,6 +1,6 @@
-import manifest from '../../../../src/cplugs/huddle/cplug.json';
-import { cplugEnabled } from '../../cplugs/host/enablement.svelte';
-import type { CplugManifest } from '../../cplugs/sdk';
+import manifest from '../../../../src/plugins/huddle/cplug.json';
+import { cplugEnabled } from '../../plugins/host/enablement.svelte';
+import type { CplugManifest } from '../../plugins/sdk';
 
 export function taskManagerAddonOn(): boolean {
   return cplugEnabled(manifest as CplugManifest);

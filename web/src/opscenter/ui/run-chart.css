@@ -68,7 +68,7 @@
     width: 6px;
     height: 6px;
     box-sizing: border-box;
-    border-radius: 50%;
+    border-radius: var(--oc-radius-circle);
     background: var(--oc-green);
   }
 

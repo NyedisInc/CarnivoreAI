@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { Message } from '../../../cplugs/huddle/task-manager-design/model';
+import type { Message } from '../../../plugins/huddle/task-manager-design/model';
 import { answeredOf } from './mk2-answered';
 
 const ask = (answered: boolean): Message => ({ by: 'agent', kind: 'question', time: '1:00 pm', text: 'q', answered });

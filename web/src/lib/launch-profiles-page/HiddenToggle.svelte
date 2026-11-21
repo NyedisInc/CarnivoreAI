@@ -22,6 +22,6 @@
 <style>
   @layer components {
     .lp-hidden { display: flex; flex-direction: column; gap: var(--oc-space-0-5); padding-bottom: var(--oc-space-2); }
-    .lp-hint-line { color: var(--pl-dim); font-size: var(--oc-fs-hint); }
+    .lp-hint-line { color: var(--oc-text-muted); font-size: var(--oc-fs-hint); }
   }
 </style>

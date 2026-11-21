@@ -8,11 +8,11 @@
   "summary": "wakes an idle agent about stale swarm items and flags an item to you when the agent never answers; part of the Task Manager plugin again, with its own switch that ships off.",
   "description": "The nudge is part of the Task Manager plugin again (it was its own plugin from 2026-10-12 to 2026-10-16). It ships off: its own switch, 'send nudges to idle agents', is in the Task Manager's settings, and with it off no nudge is sent and nothing runs; turn it on and it starts without a restart. It also stops whenever the Task Manager plugin is off. Its timers (minutes of silence, nudges before an item is flagged, items named per nudge) and the three nudge texts are settings in the Task Manager's side pane, under the same names as before. What you saved under the old nudge plugin carries over once, when the app first starts after the change.",
   "surfaces": [
-    "src/cplugs/huddle/nudge/__init__.py",
-    "src/cplugs/huddle/nudge/sweep.py",
-    "src/cplugs/huddle/nudge/scheduler.py",
-    "src/cplugs/huddle/nudge/lines.py",
-    "src/cplugs/host/plugin_fold.py"
+    "src/plugins/huddle/nudge/__init__.py",
+    "src/plugins/huddle/nudge/sweep.py",
+    "src/plugins/huddle/nudge/scheduler.py",
+    "src/plugins/huddle/nudge/lines.py",
+    "src/plugins/host/plugin_fold.py"
   ],
   "api_routes": [
     "GET /api/v1/cplugs/huddle/lists/{key}/prefs",

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { t } from '../../../lib/i18n/index.svelte';
-  import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
-  import { setReviewCheck } from '../../../cplugs/huddle/huddle.svelte';
+  import type { HuddleItem } from '../../../plugins/huddle/huddle-model';
+  import { setReviewCheck } from '../../../plugins/huddle/huddle.svelte';
   import OptionList, { type OptionItem } from '../../../lib/base/OptionList.svelte';
   import { tickedLine } from './mk2-review-checks';
 

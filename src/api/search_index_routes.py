@@ -104,6 +104,6 @@ async def put_search_filter(body: FilterBody) -> Dict[str, Any]:
     except rules_mod.RulesError as exc:
         raise api_error(422, "invalid_request", exc, step="put_search_filter") from exc
     except (FileNotFoundError, OSError) as exc:
-        logger.error("search_filter_write_failed", error=str(exc))
+        logger.error("search_filter_write_failed", error=str(exc), error_type=type(exc).__name__)
         raise HTTPException(status_code=500, detail="config.json could not be written") from exc
     return rules_mod.describe(stored)

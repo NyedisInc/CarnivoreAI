@@ -1,7 +1,7 @@
 import { createI18n } from '../../../../client/js/i18n/runtime.js';
 import type { CreateHost, CreatePayload, CreatedSession, HostChoice, ProviderChoice } from './create-host';
 import type { ModalOpeners } from './modals';
-import type { ChoiceOptions, ClonedProject, EditResult, FolderChoice } from './modal-types';
+import type { ChoiceOptions, ClonedProject, EditResult, FolderChoice, NewProjectChoice } from './modal-types';
 
 /** A real translator over the shipped en catalog. */
 export function enT(): (key: string, params?: Record<string, unknown> | null) => string {
@@ -39,6 +39,10 @@ export function recorder(overrides: Partial<CreateHost> = {}): Recorder {
         createProject: async (row) => {
             calls.push(['createProject', row]);
             return row;
+        },
+        setProjectCompany: async (projectName, companyId) => {
+            calls.push(['setProjectCompany', { projectName, companyId }]);
+            return null;
         },
         checkProjectRoot: async (path) => {
             calls.push(['checkProjectRoot', path]);
@@ -95,6 +99,7 @@ export function recorder(overrides: Partial<CreateHost> = {}): Recorder {
 
 export function modals(script: {
     name?: Array<{ name: string; description: string } | null>;
+    newProject?: Array<NewProjectChoice | null>;
     folder?: FolderChoice | null;
     choice?: string | null;
     edit?: EditResult | null;
@@ -102,12 +107,17 @@ export function modals(script: {
 }): { openers: ModalOpeners; asked: Array<[string, unknown]> } {
     const asked: Array<[string, unknown]> = [];
     const names = [...(script.name ?? [])];
+    const forms = [...(script.newProject ?? [])];
     return {
         asked,
         openers: {
             async name(request) {
                 asked.push(['name', request]);
                 return names.length ? (names.shift() ?? null) : null;
+            },
+            async newProject(request) {
+                asked.push(['newProject', request]);
+                return forms.length ? (forms.shift() ?? null) : null;
             },
             async folder(request) {
                 asked.push(['folder', request]);
@@ -131,6 +141,12 @@ export function modals(script: {
 
 
 export const GOOD_NAME = { name: 'My App', description: 'a thing' };
+
+export const GOOD_NEW_PROJECT: NewProjectChoice = {
+    name: GOOD_NAME.name,
+    folder: '/Users/me/Development/Org/Acme/Globex/my-app',
+    companyId: 13,
+};
 
 export const GOOD_FOLDER: FolderChoice = {
     parent: '/Users/me/Development',

@@ -84,6 +84,11 @@
     padding: var(--sb-block-pad);
 }
 
+.session-sidebar-group[data-block][data-collapsed="1"]:not(:last-child),
+.session-sidebar-group:has(> .session-sidebar-group__headerrow[data-band-kind="project"])[data-collapsed="1"]:not(:last-child) {
+    margin-bottom: calc(var(--sb-block-pad) + var(--sb-block-edge));
+}
+
 
 .session-sidebar-group:is([data-group="terminals"], [data-group="browsers"], [data-group="layouts"]) {
     --band-shade: color-mix(in oklab, var(--band-hue) 65%, var(--oc-text-primary));
@@ -293,7 +298,7 @@
 
 .group-colour-picker {
     position: fixed;
-    z-index: 1200;
+    z-index: var(--oc-z-menu);
     width: 216px;
     font-family: var(--font-mono);
     font-size: var(--oc-fs-label);
@@ -337,7 +342,7 @@
     height: 18px;
     padding: 0;
     border: 1px solid var(--oc-line-panel);
-    border-radius: 2px;
+    border-radius: var(--oc-radius-control);
     background: var(--swatch);
     cursor: pointer;
 }
@@ -362,7 +367,7 @@
     min-height: 22px;
     padding: 0 6px;
     border: 1px solid var(--oc-line-panel);
-    border-radius: 2px;
+    border-radius: var(--oc-radius-control);
     background: transparent;
     color: var(--oc-text-secondary);
     font-family: inherit;
@@ -379,7 +384,7 @@
 
 .group-icon-picker {
     position: fixed;
-    z-index: 1200;
+    z-index: var(--oc-z-menu);
     width: max-content;
     max-width: calc(100vw - 16px);
     font-family: var(--font-mono);

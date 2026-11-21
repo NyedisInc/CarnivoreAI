@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.host import purge_owned
+from src.plugins.host import purge_owned
 
 
 def _tree(state: Path) -> None:

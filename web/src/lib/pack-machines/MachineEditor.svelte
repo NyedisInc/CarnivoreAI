@@ -4,6 +4,7 @@
   import Check from '../../opscenter/ui/Check.svelte';
   import NumberField from '../base/NumberField.svelte';
   import ReserveForm from './ReserveForm.svelte';
+  import MachineAllowLists from './MachineAllowLists.svelte';
   import { saveRestrictions, type PackMachine, type Restrictions } from './pack-machines-store.svelte';
 
   interface Props {
@@ -38,11 +39,14 @@
     <div class="pm-rules">
       {#each rules as rule (rule)}
         {@const on = snap.restrictions[rule] === true}
-        <Check label={t(`pack.machines.rule.${rule}`)} checked={on} disabled={ruleLocked(on)} data-rule={rule}
+        <Check label={t(`pack.machines.rule.${rule}`)} hint={rule === 'may_host_agents' ? t('pack.machines.rule.may_host_agents_hint') : undefined} checked={on} disabled={ruleLocked(on)} data-rule={rule}
           onToggle={(next) => void saveRestrictions(machine.install_id, { [rule]: next })} />
       {/each}
     </div>
     <NumberField label={t('pack.machines.max_agents')} min={0} max={10000} placeholder={t('pack.machines.no_cap')}
       value={snap.restrictions.max_agents ?? null} onchange={setCap} />
+    {#key JSON.stringify([snap.restrictions.allowed_projects, snap.restrictions.allowed_companies])}
+      <MachineAllowLists {machine} />
+    {/key}
   </div>
 {/if}

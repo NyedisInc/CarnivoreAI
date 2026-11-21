@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from typing import Optional, Protocol
 
 import structlog
@@ -26,8 +27,11 @@ _STALL_NOTICE = (
 
 
 class _PaintTarget(Protocol):
+    async def send_text(self, data: str) -> None: ...
+    """The slice of the WebSocket this module uses."""
 
     async def send_bytes(self, data: bytes) -> None: ...
+    async def send_text(self, data: str) -> None: ...
 
 
 class _PaintBackend(Protocol):
@@ -68,11 +72,18 @@ async def paint_on_attach(
         except OSError as exc:
             logger.warning("ws_paint_remote_stream_failed", error=str(exc))
 
+    alternate_known: Optional[bool] = None
     try:
         alternate = await asyncio.to_thread(backend.pane_in_alternate_screen)
+        alternate_known = bool(alternate)
     except Exception as exc:
         logger.warning("ws_paint_alt_probe_failed", error=str(exc))
         alternate = True
+
+    try:
+        await websocket.send_text(json.dumps({"type": "pane_screen", "alternate": alternate_known}))
+    except Exception as exc:
+        logger.warning("ws_paint_pane_screen_send_failed", error=str(exc))
 
     try:
         screen = await asyncio.to_thread(backend.capture_visible_screen)

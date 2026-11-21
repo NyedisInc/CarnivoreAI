@@ -5,7 +5,7 @@ import asyncio
 from types import SimpleNamespace
 from typing import Any, Dict, List
 
-from src.cplugs.flow import service, store
+from src.plugins.flow import service, store
 from src.core.flow_data.collect import build
 
 BUILT_AT = 100_000.0

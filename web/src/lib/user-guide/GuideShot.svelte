@@ -127,7 +127,7 @@
         height: 22px;
         padding: 0;
         border: var(--oc-border, 1px) solid var(--oc-orange);
-        border-radius: 2px;
+        border-radius: var(--oc-radius-control);
         background: var(--oc-ground-titlerow);
         color: var(--oc-orange);
         font: 600 11px/1 var(--font-mono);
@@ -204,7 +204,7 @@
         height: 22px;
         padding: 0;
         border: var(--oc-border, 1px) solid var(--oc-orange);
-        border-radius: 2px;
+        border-radius: var(--oc-radius-control);
         background: var(--oc-ground-titlerow);
         color: var(--oc-orange);
         font: 600 11px/1 var(--font-mono);

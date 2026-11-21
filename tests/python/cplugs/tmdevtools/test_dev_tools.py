@@ -12,14 +12,14 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.host import developer_mode
+from src.plugins.host import developer_mode
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
-from src.cplugs.host import runtime
-from src.cplugs.huddle import devtools_port, groups, service as task_manager_service
-from src.cplugs.huddle.store import TaskManagerStore
-from src.cplugs.sdk import ports
-from src.cplugs.tmdevtools import commands, routes
+from src.plugins.host import runtime
+from src.plugins.huddle import devtools_port, groups, service as task_manager_service
+from src.plugins.huddle.public import TaskManagerStore
+from src.plugins.sdk import ports
+from src.plugins.tmdevtools import commands, routes
 from tests.python.cplugs.owner import turn_on
 
 BASE = "/api/v1/cplugs/tmdevtools"

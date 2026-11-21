@@ -8,6 +8,7 @@ from typing import List, Optional, Sequence, Tuple
 
 import structlog
 
+from src.core.safe_io import realpath_memo
 from src.core.skill_fires.parse import (
     HARNESS_CLAUDE, HARNESS_CODEX, Fire, parse_line,
 )
@@ -30,6 +31,10 @@ class ScanResult:
     state: str
     bytes_read: int = 0
     fires_seen: int = 0
+    applied: bool = False
+
+
+READ_CURSOR = object()
 
 
 def _read_lines(handle, start: int, budget: int) -> Tuple[List[Tuple[int, bytes]], int, int]:
@@ -62,11 +67,12 @@ def _read_lines(handle, start: int, budget: int) -> Tuple[List[Tuple[int, bytes]
 
 
 def scan_file(store: SkillFireStore, path: str, harness: str, profile: str,
-              *, budget: int = PASS_BYTES) -> ScanResult:
+              *, budget: int = PASS_BYTES, cursor: object = READ_CURSOR) -> ScanResult:
     try:
-        path = os.path.realpath(path)
+        path = realpath_memo.realpath(path)
         size = os.stat(path).st_size
-        cursor = store.cursor_for(path)
+        if cursor is READ_CURSOR:
+            cursor = store.cursor_for(path)
         if cursor is not None and size == cursor.size and cursor.offset >= size:
             return ScanResult(STATE_OK)
         with open(path, "rb") as handle:
@@ -88,7 +94,7 @@ def scan_file(store: SkillFireStore, path: str, harness: str, profile: str,
     except Exception as exc:  # noqa: BLE001
         logger.warning("skill_fire_scan_failed", error_type=type(exc).__name__)
         return ScanResult(STATE_UNREADABLE)
-    return ScanResult(STATE_PARTIAL if consumed >= budget else STATE_OK, consumed, len(fires))
+    return ScanResult(STATE_PARTIAL if consumed >= budget else STATE_OK, consumed, len(fires), True)
 
 
 def transcript_roots(home: Path) -> List[Tuple[str, str, Path]]:

@@ -3,21 +3,24 @@
     "src/api/projects_routes.py"
   ],
   "area": "sessions",
-  "docs": [],
+  "docs": [
+    "docs/new-project-form.md"
+  ],
   "examples": [
     "Spin up a folder for a quick prototype without leaving the app.",
     "Find the project you worked on last week, sorted by last used."
   ],
   "how_to": [
     "Choose New Project, then start empty (a fresh folder) or open an existing folder.",
-    "Pick a provider, name it, then pick or type the folder it should live in - the full path is shown before anything is created, and that folder is used exactly as chosen, nothing appended to it.",
+    "Pick a provider, then fill one form: the project's name, its company (or + new company...) and the folder, picked from the Org tree, which opens at the company's folder. The full path and a check of where it lands are shown before anything is created; that folder is used exactly as chosen.",
     "Browse projects from the PROJECTS card and start a session in one.",
     "On a paired computer, browse lists that computer's folders; an older carnivore there means you type the folder."
   ],
   "id": "project-create-and-browse",
   "issues": [
     984,
-    1018
+    1018,
+    2945
   ],
   "keywords": [
     "projects"
@@ -39,9 +42,13 @@
     "web/src/lib/launchpad/ProjectNameModal.svelte",
     "client/js/providers.js",
     "client/js/folder-picker-modal.js",
-    "client/css/new-agent-flow.css"
+    "client/css/new-agent-flow.css",
+    "web/src/lib/new-project/NewProjectModal.svelte",
+    "web/src/lib/base/LandsIn.svelte",
+    "GET /api/v1/projects/folder-tree",
+    "POST /api/v1/projects/landing-check"
   ],
-  "updated": "2026-09-28",
+  "updated": "2026-11-11",
   "where": [
     "Menu tab, New Project.",
     "Home screen, the PROJECTS card; View all for the full list."

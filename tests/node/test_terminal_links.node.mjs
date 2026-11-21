@@ -50,10 +50,10 @@ function makeContext(opts = {}) {
     ctx.window = ctx;
     ctx.globalThis = ctx;
     vm.createContext(ctx);
-    vm.runInContext(read('client/vendor/xterm/xterm.js'), ctx);
-    vm.runInContext(read('client/vendor/xterm/xterm-addon-web-links.js'), ctx);
     ctx.navigator = { platform: opts.platform || 'MacIntel', userAgent: 'node' };
     ctx.document = doc;
+    vm.runInContext(read('client/vendor/xterm/xterm.js'), ctx);
+    vm.runInContext(read('client/vendor/xterm/xterm-addon-web-links.js'), ctx);
     vm.runInContext(read('client/js/terminal-client-factory.js'), ctx);
     vm.runInContext(read('client/js/terminal-links.js'), ctx);
     return { ctx, clicked, timers };

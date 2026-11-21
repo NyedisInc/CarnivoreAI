@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
 from src.api.stats_routes import router
-from src.cplugs.host import runtime, state as owner_state
+from src.plugins.host import runtime, state as owner_state
 from src.core.stats import config
 from tests.stats import seed
 from tests.stats.test_clear_and_off import CONV, _fixture, _line, _usage

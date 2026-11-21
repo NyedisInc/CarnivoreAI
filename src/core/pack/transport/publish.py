@@ -4,13 +4,13 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Any, BinaryIO, Dict, Iterator, List, Optional, Tuple
+from typing import Any, BinaryIO, Callable, Dict, Iterator, List, Optional, Tuple
 
 import structlog
 
 from src.core import message_model_secrets as secrets
 from src.core.message_model_secrets import scan_text
-from src.core.pack.transport import github_account, ladder
+from src.core.pack.transport import github_account, history_objects, history_scan, ladder, publish_git
 
 logger = structlog.get_logger()
 
@@ -120,15 +120,19 @@ def _binary_hits(window: bytes) -> bool:
 
 
 def _file_holds_secret(path: Path, remaining: List[int]) -> bool:
+    return holds_secret(lambda: path.open("rb"), remaining)
+
+
+def holds_secret(opener: Callable[[], BinaryIO], remaining: List[int]) -> bool:
     binary, consumed = False, 0
-    with path.open("rb") as handle:
+    with opener() as handle:
         for window, chunk in _windows(handle, remaining):
             if scan_text(window.decode("utf-8", "replace")):
                 return True
             if not binary and b"\0" in chunk:
                 binary = True
                 if consumed:
-                    with path.open("rb") as again:
+                    with opener() as again:
                         if any(_binary_hits(earlier) for earlier, _ in _windows(again, None, consumed)):
                             return True
             if binary and _binary_hits(window):
@@ -176,6 +180,64 @@ def scan_for_secrets(root: str) -> List[str]:
     return flagged
 
 
+HISTORY_TOO_BIG_DETAIL = "the history holds too many objects to scan; nothing was published"
+HISTORY_FAILED_DETAIL = "the history could not be read to scan it; nothing was published"
+
+
+def _history_refusal(exc: Exception) -> PublishRefused:
+    if isinstance(exc, history_objects.HistoryScanFailed):
+        logger.warning("pack_publish_history_scan_failed", reason=exc.reason, named=len(exc.paths))
+        return PublishRefused("scan_failed", HISTORY_FAILED_DETAIL, exc.paths)
+    if isinstance(exc, history_objects.HistoryTooBig):
+        return PublishRefused("history_too_big", HISTORY_TOO_BIG_DETAIL, [], {"limit": f"{exc.limit:,}"})
+    paths = exc.paths if isinstance(exc, history_objects.HistoryBudgetExceeded) else []
+    return PublishRefused("scan_budget_exceeded", BUDGET_DETAIL, paths, budget_params())
+
+
+def scan_history_for_secrets(root: str, rev: Optional[str] = None, *, staged: bool = False) -> List[str]:
+    private: Optional[publish_git.PrivateIndex] = None
+    try:
+        if rev is None:
+            rev = history_scan.resolve_head(root)
+            if rev is None:
+                private, staged = publish_git.PrivateIndex(root), True
+                rev = private.stage()
+        return history_scan.history_hits(root, rev, staged=staged, holds_secret=holds_secret, budget=MAX_TOTAL_SCAN_BYTES)
+    except (history_objects.HistoryScanError, ScanBudgetExceeded) as exc:
+        raise _history_refusal(exc) from None
+    except publish_git.GitStepFailed as exc:
+        raise PublishRefused(exc.code, exc.detail) from None
+    finally:
+        if private is not None:
+            private.discard()
+
+
+def _scanned_commit(root: str) -> str:
+    private: Optional[publish_git.PrivateIndex] = None
+    try:
+        publish_git.current_branch(root)
+        head = history_scan.resolve_head(root)
+        if head is None:
+            private = publish_git.PrivateIndex(root)
+        rev = head if private is None else private.stage()
+        flagged = scan_history_for_secrets(root, rev, staged=private is not None)
+        if flagged:
+            raise PublishRefused("secrets_found", "files that look like they hold a credential; nothing was published", flagged)
+        if private is None:
+            return rev
+        private.lock()
+        commit = publish_git.commit_scanned_tree(root, rev)
+        private.adopt()
+        return commit
+    except history_objects.HistoryScanError as exc:
+        raise _history_refusal(exc) from None
+    except publish_git.GitStepFailed as exc:
+        raise PublishRefused(exc.code, exc.detail) from None
+    finally:
+        if private is not None:
+            private.discard()
+
+
 def publish(root: str, *, name: str, owner: str, account: str, air_gap: bool) -> Dict[str, Any]:
     if air_gap:
         raise PublishRefused("air_gap", "air-gap is on for this project; it never contacts GitHub")
@@ -200,15 +262,19 @@ def publish(root: str, *, name: str, owner: str, account: str, air_gap: bool) ->
     flagged = scan_for_secrets(root)
     if flagged:
         raise PublishRefused("secrets_found", "files that look like they hold a credential; nothing was published", flagged)
-    if _git(root, "rev-parse", "--verify", "HEAD").returncode != 0:
-        who = [] if _git(root, "config", "user.email").stdout.strip() else ["-c", "user.name=Carnivore", "-c", "user.email=carnivore@localhost"]
-        if _git(root, "add", "-A").returncode != 0 or ladder.run(
-                ["git", "-C", root, *who, "commit", "-m", "first commit", "--no-gpg-sign"], air_gap=False, timeout=300.0).returncode != 0:
-            raise PublishRefused("git_failed", "the first commit failed")
-    done = ladder.run([gh, "repo", "create", f"{owner}/{name}", "--private", "--source", ".", "--push"], air_gap=False,
+    commit = _scanned_commit(root)
+    try:
+        branch = publish_git.current_branch(root)
+    except publish_git.GitStepFailed as exc:
+        raise PublishRefused(exc.code, exc.detail) from None
+    done = ladder.run([gh, "repo", "create", f"{owner}/{name}", "--private", "--source", "."], air_gap=False,
                       cwd=root, env=token, timeout=600.0)
     if done.returncode != 0:
         logger.warning("pack_publish_failed", status=done.returncode, stderr_bytes=len(done.stderr))
         raise PublishRefused("gh_failed", "gh could not create the repo")
+    try:
+        publish_git.push_scanned(root, gh, commit, branch, token, owner=owner, name=name)
+    except publish_git.GitStepFailed as exc:
+        raise PublishRefused(exc.code, exc.detail) from None
     logger.info("pack_publish_created", owner=owner, name=name, account=account)
     return {"url": f"https://github.com/{owner}/{name}", "owner": owner, "name": name, "private": True}

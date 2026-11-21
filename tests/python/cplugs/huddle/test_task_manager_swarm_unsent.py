@@ -6,9 +6,9 @@ from contextlib import closing
 
 import pytest
 
-from src.cplugs.huddle import rules, send_queue
-from src.cplugs.huddle.nudge_store import NudgeStore
-from src.cplugs.huddle.rules import CLAUDE, JOE
+from src.plugins.huddle import rules, send_queue
+from src.plugins.huddle.nudge_store import NudgeStore
+from src.plugins.huddle.rules import CLAUDE, JOE
 from tests.python.cplugs.huddle.test_task_manager_routes import _store, app, client, note  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_send_queue import BASE, SEND, env  # noqa: F401
 

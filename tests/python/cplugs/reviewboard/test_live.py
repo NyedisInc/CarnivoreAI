@@ -10,12 +10,12 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.huddle import board_port
+from src.plugins.huddle import board_port
 from types import SimpleNamespace
 
-from src.cplugs.reviewboard import document, scan, viewer
-from src.cplugs.sdk import signed_links
-from src.cplugs.reviewboard.errors import BoardNotFound
+from src.plugins.reviewboard import document, scan, viewer
+from src.plugins.sdk import signed_links
+from src.plugins.reviewboard.errors import BoardNotFound
 from tests.python.cplugs.reviewboard.boards import SIDECAR, make_board, make_root, sidecar as v1_sidecar
 from tests.python.cplugs.reviewboard.harness import BASE, Env, task_manager_on, task_manager_store, make_env
 from tests.python.cplugs.reviewboard.test_publish import ANCHORS, HTML, PROMPTS, create_body, tree

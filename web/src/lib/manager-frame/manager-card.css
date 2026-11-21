@@ -1,6 +1,6 @@
 
 .mgr .mgr-card {
-    --_bd: var(--pl-line-panel);
+    --_bd: var(--oc-focus-quiet);
     display: flex;
     flex-direction: column;
     gap: var(--oc-space-1-5);
@@ -9,9 +9,8 @@
 }
 
 .mgr .mgr-card.mgr-card--selected {
-    background: var(--pl-raised);
-    border-color: var(--pl-line);
-    --_bd: var(--pl-line);
+    background: var(--oc-ground-raised);
+    border-color: var(--oc-line-rule);
 }
 
 .mgr .mgr-card__head {
@@ -24,7 +23,7 @@
 
 .mgr .mgr-card__name {
     min-width: 0;
-    color: var(--pl-text);
+    color: var(--oc-text-primary);
     font-weight: 600;
     font-size: var(--oc-fs-status);
     overflow-wrap: anywhere;
@@ -46,15 +45,15 @@
 
 .mgr .mgr-card__meta {
     margin: 0;
-    color: var(--pl-muted);
-    font-family: var(--pl-mono);
+    color: var(--oc-text-secondary);
+    font-family: var(--font-mono);
     font-size: var(--oc-fs-label);
     overflow-wrap: anywhere;
 }
 
 .mgr .mgr-card__brief {
     margin: 0;
-    color: var(--pl-muted);
+    color: var(--oc-text-secondary);
     font-size: var(--oc-fs-body);
     line-height: 1.45;
 }
@@ -70,10 +69,10 @@
 
 .mgr .mgr-mark {
     padding: var(--oc-gap-hair) var(--oc-space-1-5);
-    border: 1px solid var(--pl-line-quiet);
-    border-radius: var(--pl-radius-sm);
-    color: var(--pl-muted);
-    font-family: var(--pl-mono);
+    border: 1px solid var(--oc-line-faint);
+    border-radius: var(--oc-radius-sm);
+    color: var(--oc-text-secondary);
+    font-family: var(--font-mono);
     font-size: var(--oc-fs-micro);
     text-transform: uppercase;
     letter-spacing: var(--oc-tracking-label, 0.6px);
@@ -82,9 +81,9 @@
 .mgr .mgr-card__error {
     margin: 0;
     padding: var(--oc-space-1-5) var(--oc-space-2);
-    border-left: 2px solid var(--pl-high);
-    background: var(--pl-raised);
-    color: var(--pl-text);
+    border-left: 2px solid var(--oc-coral);
+    background: var(--oc-ground-raised);
+    color: var(--oc-text-primary);
     font-size: var(--oc-fs-label);
     line-height: 1.45;
     overflow-wrap: anywhere;

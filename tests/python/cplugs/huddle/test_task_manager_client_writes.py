@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from src.cplugs.huddle import client_writes, service
+from src.plugins.huddle import client_writes, service
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client  # noqa: F401
 
 BASE = "/api/v1/cplugs/huddle"

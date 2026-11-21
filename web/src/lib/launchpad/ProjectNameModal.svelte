@@ -5,7 +5,6 @@
     import type { Translate } from '../sessions/types';
     import type { ProjectDetails } from './modal-types';
     import ModalShell from '../dialog-frame/ModalShell.svelte';
-    import IconButton from '../base/IconButton.svelte';
     import Button from '../base/Button.svelte';
     import Field from '../base/Field.svelte';
 
@@ -63,14 +62,7 @@
     }
 </script>
 
-<ModalShell {title} overlayClass="text-prompt-modal na-flow" onCancel={() => close(null)}>
-    {#snippet head()}
-        <div class="text-prompt-modal__head">
-            <span class="text-prompt-modal__verb">&raquo; {title}</span>
-            <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close
-                onclick={() => close(null)} />
-        </div>
-    {/snippet}
+<ModalShell look="titlerow" {title} overlayClass="na-flow" onCancel={() => close(null)}>
     {#if pathHint}
         <div class="modal-input-group">
             <div class="modal-label">{t(PROJECT_CREATE_KEYS.folderLabel)}</div>

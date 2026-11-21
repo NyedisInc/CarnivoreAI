@@ -171,7 +171,16 @@
       .filter((b): b is Bar => b !== undefined);
   }
 
-  const totalBars = $derived(snapshot ? shortLongBars({ windows: snapshot.total?.windows ?? [] } as unknown as AccountUsage) : []);
+  const totalBars = $derived.by((): Array<Bar & { provider: string | null }> => {
+    const byProvider = new Map<string, unknown[]>();
+    for (const w of snapshot?.total?.windows ?? []) {
+      const key = (w as { provider?: string | null }).provider ?? '';
+      byProvider.set(key, [...(byProvider.get(key) ?? []), w]);
+    }
+    return [...byProvider].flatMap(([provider, windows]) =>
+      shortLongBars({ windows } as unknown as AccountUsage).map((b) => ({ ...b, provider: provider || null })),
+    );
+  });
 
   function isStale(account: AccountUsage): boolean {
     return staleRead || (account.credential_state !== 'ok' && account.windows.length > 0);
@@ -197,18 +206,6 @@
     const pin = (globalThis as { SessionSidebarPin?: { closeAfterSwitch?: () => void } }).SessionSidebarPin;
     pin?.closeAfterSwitch?.();
     openLedgerScreen();
-  }
-
-  function onTitleClick(event: MouseEvent): void {
-    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    event.preventDefault();
-    toggle();
-  }
-
-  function onTitleKeydown(event: KeyboardEvent): void {
-    if (event.key !== ' ' && event.key !== 'Spacebar') return;
-    event.preventDefault();
-    toggle();
   }
 
   function foldLabel(current: LedgerFold): string {
@@ -243,9 +240,7 @@
       href={LEDGER_HASH}
       class="ldp-title"
       id="ldp-title"
-      role="button"
-      onclick={onTitleClick}
-      onkeydown={onTitleKeydown}
+      onclick={openProviders}
     >{t('ledger.drawer.title')}</a>
     {#if fold !== 'hidden' && updated}
       <span class="ldp-dim">{updated}</span>
@@ -274,6 +269,10 @@
       <div class="ldp-mini">
         {#each totalBars as b (b.key)}
           <span class="ldp-meter">
+            {#if b.provider}
+              {@const mark = providerMark(b.provider, 12)}
+              <span class="ldp-provider-mark" role="img" aria-label={mark.label} title={mark.label}>{@html mark.svg}</span>
+            {/if}
             <span class="ldp-dim">{b.label}</span>
             {@render bar(b, 7, staleRead)}
             <span class="ldp-pct">{b.percentText}</span>

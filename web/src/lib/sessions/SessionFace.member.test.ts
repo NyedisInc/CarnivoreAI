@@ -9,9 +9,9 @@ vi.mock('../StatusLed.svelte', () => ({
 }));
 
 import SessionFace from './SessionFace.svelte';
-import { registerSwarmFace, swarmFace, unregisterSwarmFace } from '../../cplugs/sdk/swarm-face.svelte';
+import { registerSwarmFace, swarmFace, unregisterSwarmFace } from '../../plugins/sdk/swarm-face.svelte';
 import type { Component } from 'svelte';
-import type { SwarmFaceProps } from '../../cplugs/sdk/swarm-face.svelte';
+import type { SwarmFaceProps } from '../../plugins/sdk/swarm-face.svelte';
 
 const Character = ((anchor: Comment) => {
     const mark = document.createElement('i');

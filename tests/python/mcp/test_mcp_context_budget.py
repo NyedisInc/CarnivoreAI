@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 
-from src.core.mcp import channel, instructions, protocol, tools
+from src.core.mcp import channel, fingerprint_memo, instructions, protocol, tools
 from src.core.mcp.caller import AgentCaller
 from tests.python.mcp.test_mcp_endpoint import _hdr, _rpc, env  # noqa: F401
 
@@ -53,6 +53,7 @@ def test_changed_tool_list_answers_404_and_initialize_still_works(env, monkeypat
     headers = {**_hdr(mgr), "Mcp-Session-Id": sid}
     real = tools.tool_definitions
     monkeypatch.setattr(tools, "tool_definitions", lambda c=None: real(c)[:-1])
+    fingerprint_memo.clear()
     r = client.post("/mcp", json=_rpc("tools/list"), headers=headers)
     assert r.status_code == 404 and r.json()["error"]["code"] == protocol.SESSION_EXPIRED
     again = client.post("/mcp", json=_rpc("initialize", {}), headers=headers)
@@ -84,3 +85,14 @@ def test_stream_sends_list_changed_once_when_the_fingerprint_moves():
 
     chunks = asyncio.run(run())
     assert sum(channel.TOOLS_CHANGED_METHOD in c for c in chunks) == 1
+
+
+def test_delegate_and_argent_lines_both_fit_with_huddle_swarm_and_argent_on(monkeypatch):
+    from src.core.mcp import agent_tool_switches
+    from src.plugins.sdk import ports
+
+    monkeypatch.setattr(agent_tool_switches, "current", lambda: agent_tool_switches.AgentToolSwitches(huddle=True, swarm=True))
+    monkeypatch.setattr(ports, "get", lambda name: object())
+    plain = instructions.guide(None, channel=False)
+    assert "call delegate before" in plain and "argent_story_declare" in plain and len(plain) <= instructions.MAX_CHARS
+    assert len(instructions.guide(None, channel=True)) <= instructions.MAX_CHARS

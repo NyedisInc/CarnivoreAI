@@ -10,7 +10,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from src.api.auth import require_auth
 from src.core.pack.machines import runtime
-from src.core.pack.placement import explain, queue as spawn_queue
+from src.core.pack.placement import explain, needs as needs_mod, queue as spawn_queue
+from src.api.error_response import api_error
 
 router = APIRouter(prefix="/pack", tags=["pack-placement"], dependencies=[Depends(require_auth)])
 
@@ -27,7 +28,7 @@ class WorkloadBody(BaseModel):
 
 
 class ExplainBody(BaseModel):
-    """What to place: a workload tag, or a ``task_type`` slug that implies one; the project's name or folder; the tools it needs."""
+    """What to place: a workload tag, or a ``task_type`` slug that implies one; the project's name or folder; ``needs`` (hard requirements) and ``prefer`` (soft ones), words of the closed vocabulary."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -35,6 +36,7 @@ class ExplainBody(BaseModel):
     task_type: Optional[str] = Field(default=None, max_length=80)
     project: Optional[str] = Field(default=None, max_length=1024)
     needs: List[str] = Field(default_factory=list, max_length=12)
+    prefer: List[str] = Field(default_factory=list, max_length=12)
 
 
 @router.post("/placement/explain")
@@ -43,9 +45,13 @@ async def placement_explain(body: ExplainBody, request: Request) -> Dict[str, An
     try:
         work = explain.workload_for(body.workload.model_dump(exclude_none=True) if body.workload else None, body.task_type)
     except ValueError as exc:
-        raise HTTPException(422, {"code": "workload_invalid", "detail": str(exc)[:300]}) from None
+        raise api_error(422, "workload_invalid", exc) from exc
     try:
-        decision = await explain.place(explain.Request(work, needs=[n[:32] for n in body.needs], project=body.project),
+        needs, prefer = needs_mod.parse_all(body.needs, limit=12), needs_mod.parse_all(body.prefer, limit=12)
+    except ValueError as exc:
+        raise HTTPException(422, {"code": "need_unknown", "detail": str(exc)}) from None
+    try:
+        decision = await explain.place(explain.Request(work, needs=needs, prefer=prefer, project=body.project),
                                        record_it=False, remote=True)
     except explain.PlacementUnavailable:
         raise HTTPException(503, {"code": "pack_unavailable", "detail": "the Pack machine layer is not running"}) from None

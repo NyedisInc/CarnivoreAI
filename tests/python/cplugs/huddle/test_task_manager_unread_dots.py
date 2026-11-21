@@ -9,7 +9,7 @@ import pytest
 
 from src.core.work.storage import WorkStorage
 from src.core.work.work_ladder import VERSION as WORK_VERSION
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle.store import TaskManagerStore
 
 DAILY = {"freq": "daily", "time": "09:00"}
 

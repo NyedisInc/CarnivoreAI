@@ -9,7 +9,7 @@ vi.mock('../sessions/SessionFace.svelte', () => ({
 }));
 
 import RowLed from './RowLed.svelte';
-import { registerSwarmRoster, unregisterSwarmRoster } from '../../cplugs/sdk/swarm-roster.svelte';
+import { registerSwarmRoster, unregisterSwarmRoster } from '../../plugins/sdk/swarm-roster.svelte';
 
 const ROW = { provider: 'claude', s: { state: 'live', session_uuid: 'u-7' } };
 let app: Record<string, unknown> | null = null;

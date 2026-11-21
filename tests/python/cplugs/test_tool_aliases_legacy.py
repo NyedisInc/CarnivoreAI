@@ -5,8 +5,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.cplugs.host import runtime
-from src.cplugs.sdk import manifest as m
+from src.plugins.host import runtime
+from src.plugins.sdk import manifest as m
 from src.core.mcp import aliases
 
 SURFACES = SimpleNamespace(mcp_tools={"task_manager_board_public_links_remove": object()})

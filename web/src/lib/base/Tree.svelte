@@ -27,9 +27,16 @@
     defaultOpen?: (node: TreeNode, level: number) => boolean;
     forceOpen?: boolean;
     onActivate?: (node: TreeNode) => void;
+    selected?: string | null;
+    onSelect?: (node: TreeNode) => void;
+    branchMeta?: Snippet<[TreeNode]>;
+    showCount?: boolean;
   }
 
-  let { nodes, leaf, actions, label, open = $bindable({}), defaultOpen = (_n, level) => level === 1, forceOpen = false, onActivate, ...rest }: Props = $props();
+  let {
+    nodes, leaf, actions, label, open = $bindable({}), defaultOpen = (_n, level) => level === 1, forceOpen = false, onActivate,
+    selected = null, onSelect, branchMeta, showCount = true, ...rest
+  }: Props = $props();
 
   let root = $state<HTMLUListElement | undefined>();
   let stop = $state<string | null>(null);
@@ -89,6 +96,7 @@
     else if ((event.key === 'Enter' || event.key === ' ') && node) {
       if (branch) toggle(node, level);
       else onActivate?.(node);
+      onSelect?.(node);
     } else handled = false;
     if (handled) event.preventDefault();
   }
@@ -108,22 +116,28 @@
     {#if node.children}
       {@const expanded = isOpen(node, depth)}
       <li role="none">
+        <!-- svelte-ignore a11y_click_events_have_key_events: the keys are the tree's own, on the <ul> (onKey) -->
         <div
           class="oc-tree__row oc-tree__branch"
           role="treeitem"
           aria-level={depth}
           aria-expanded={expanded}
+          aria-selected={selected === null ? undefined : selected === node.id}
           tabindex={(stop ?? nodes[0]?.id) === node.id ? 0 : -1}
           data-tree-item={node.id}
           data-tree-label={node.label}
           data-tree-branch="true"
           style:--_oc-tree-depth={depth - 1}
-          onclick={() => toggle(node, depth)}
+          onclick={() => {
+            toggle(node, depth);
+            onSelect?.(node);
+          }}
           onfocus={() => (stop = node.id)}
         >
           <FoldChevron />
           <span class="oc-tree__label">{node.label}</span>
-          <span class="oc-tree__count">{node.count ?? leafCount(node)}</span>
+          {#if branchMeta}<span class="oc-tree__tags">{@render branchMeta(node)}</span>{/if}
+          {#if showCount}<span class="oc-tree__count">{node.count ?? leafCount(node)}</span>{/if}
         </div>
         {#if expanded}
           <ul role="group" class="oc-tree__group">{@render level(node.children, depth + 1)}</ul>
@@ -131,15 +145,17 @@
       </li>
     {:else}
       <li role="none" class="oc-tree__line">
+        <!-- svelte-ignore a11y_click_events_have_key_events: the keys are the tree's own, on the <ul> (onKey) -->
         <div
           class="oc-tree__row oc-tree__leaf"
           role="treeitem"
           aria-level={depth}
-          aria-selected="false"
+          aria-selected={selected === node.id}
           tabindex={(stop ?? nodes[0]?.id) === node.id ? 0 : -1}
           data-tree-item={node.id}
           data-tree-label={node.label}
           style:--_oc-tree-depth={depth - 1}
+          onclick={() => onSelect?.(node)}
           onfocus={() => (stop = node.id)}
         >
           {@render leaf(node)}

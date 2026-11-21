@@ -14,9 +14,9 @@ from src.core.mcp import swarm_tools
 from src.core.swarm import body, done_feed, stream, views
 from src.core.swarm.cards import effects, ops, port as card_port
 from src.core.work.storage import WorkStorage
-from src.cplugs.huddle import service
-from src.cplugs.huddle.cards import policy
-from src.cplugs.huddle.cards.port import TaskManagerCardPort
+from src.plugins.huddle import service
+from src.plugins.huddle.cards import policy
+from src.plugins.huddle.public import TaskManagerCardPort
 
 WORKER = "agent:9"
 AGENTS = {"sysop": {"id": 1, "rank": "alpha", "thread_key": "all", "company_id": None},

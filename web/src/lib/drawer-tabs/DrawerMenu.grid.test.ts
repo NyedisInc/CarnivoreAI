@@ -8,8 +8,8 @@ import FlyoutBodyFixture from '../sidebar-widgets/fixtures/FlyoutBodyFixture.sve
 import { registerTab, tabRegistry } from '../dynamic-tabs/registry';
 import { agentsTab, menuTab, questionsTab } from './core-tabs';
 import { registerCoreSidebarWidgets } from '../sidebar-widgets/core-widgets';
-import { registerSwarmFlyout } from '../../cplugs/huddle/swarm-flyout';
-import { cplugEnablement } from '../../cplugs/host/enablement.svelte';
+import { registerSwarmFlyout } from '../../plugins/huddle/swarm-flyout';
+import { cplugEnablement } from '../../plugins/host/enablement.svelte';
 
 cplugEnablement.enabled = { huddle: true };
 for (const def of [menuTab, agentsTab, questionsTab]) if (!tabRegistry.get(def.id)) registerTab(def);

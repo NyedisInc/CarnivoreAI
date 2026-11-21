@@ -124,7 +124,7 @@ class TestTheSendIsTheConsentTheUserRead:
             )
             assert answer.status_code == 200
             assert answer.json()["submission_id"] == "abc123"
-            (request,) = app.sent
+            (request,) = [r for r in app.sent if r.method == "POST"]
             assert request.url.path == "/api/v1/submissions"
             assert request.headers["authorization"] == "Bearer HELD-ACCESS-SECRET"
             import json

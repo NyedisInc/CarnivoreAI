@@ -101,14 +101,14 @@
   .le-wrow {
     display: flex;
     align-items: stretch;
-    gap: 2px;
+    gap: var(--oc-space-0-5);
   }
 
   .le-wrow > :global([data-widget]) {
     flex: 1 1 auto;
     min-width: 0;
     min-height: 30px;
-    padding: 3px 6px;
+    padding: var(--oc-pad-snug) var(--oc-space-1-5);
     gap: var(--oc-space-2);
   }
 
@@ -157,7 +157,7 @@
   }
 
   .le-row__card {
-    margin: 2px 0 var(--oc-space-2) 0;
+    margin: var(--oc-space-0-5) 0 var(--oc-space-2) 0;
     padding: var(--oc-space-2) var(--oc-space-2) var(--oc-space-2) var(--oc-space-3);
     box-shadow: inset 1px 0 0 var(--oc-line-rule);
   }
@@ -176,7 +176,7 @@
     flex-shrink: 0;
     width: 7px;
     height: 7px;
-    margin: 0 2px 0 var(--oc-space-1);
+    margin: 0 var(--oc-space-0-5) 0 var(--oc-space-1);
     border-right: 1px solid var(--oc-text-muted);
     border-bottom: 1px solid var(--oc-text-muted);
     transform: rotate(-45deg);

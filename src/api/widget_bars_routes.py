@@ -7,7 +7,8 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from src.api.auth import require_auth
-from src.api.preferences_routes import _store, broadcast_changed
+from src.api.preferences_routes import _store
+from src.core.preferences_push.broadcast import broadcast_changed
 from src.core import ui_preferences_store
 from src.core.widget_placement.widget_bars import WIDGET_BAR_FIELDS
 
@@ -29,8 +30,8 @@ async def reset_widget_bars(request: Request) -> Dict[str, Any]:
     try:
         result = store.update({field: None for field in WIDGET_BAR_FIELDS})
     except FileNotFoundError as exc:
-        logger.error("widget_bars_reset_config_missing", error=str(exc))
+        logger.error("widget_bars_reset_config_missing", error=str(exc), error_type=type(exc).__name__)
         raise HTTPException(status_code=500, detail="Configuration not found. Run setup_auth.py first.")
     if result.status == ui_preferences_store.COMMITTED:
-        await broadcast_changed(request, result, None)
+        await broadcast_changed(request.app.state, result, None)
     return result.as_payload()

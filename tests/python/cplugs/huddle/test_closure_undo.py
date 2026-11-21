@@ -6,8 +6,8 @@ from contextlib import closing
 
 import pytest
 
-from src.cplugs.huddle import send_queue, service
-from src.cplugs.huddle.cards import state_log
+from src.plugins.huddle import send_queue, service
+from src.plugins.huddle.cards import state_log
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_send_queue import env, flush_due  # noqa: F401
 

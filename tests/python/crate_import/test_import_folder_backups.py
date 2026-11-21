@@ -13,14 +13,14 @@ from src.core.crate_import import apply as ap
 from src.core.crate_import.model import ImportRequest, new_import_id
 from src.core.crate_import.plan import build_plan
 from src.core.deepsearch import fallback_hook as fb
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import build_plan as build_export_plan
-from src.cplugs.crate.writer import run_export
-from src.cplugs.registry import CPLUGS
-from src.cplugs.save.fallback import BackupTranscripts
-from src.cplugs.save.vault.store import Vault
-from src.cplugs.sdk import crate_format as cf
-from src.cplugs.sdk import task_folders
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import build_plan as build_export_plan
+from src.plugins.crate.writer import run_export
+from src.plugins.registry import CPLUGS
+from src.plugins.save.fallback import BackupTranscripts
+from src.plugins.save.vault.store import Vault
+from src.plugins.sdk import crate_format as cf
+from src.plugins.sdk import task_folders
 from tests.python.cplugs.crate.crate_world import env_for, make_world, project_request
 from tests.python.cplugs.crate.test_plugin_data import OWN_ONLY_KEPT, manifest_with, marker
 from tests.python.cplugs.reviewboard.boards import make_board, make_root
@@ -121,7 +121,7 @@ def test_the_points_are_filed_where_the_boards_were_restored(tmp_path: Path) -> 
         assert vault.manifests.is_kept(UNIT, manifest.point_id)
         for entry in manifest.files:
             assert len(b"".join(vault.blobs.get(c) for c in entry.chunks)) == entry.length
-    from src.cplugs.save.vault import folders
+    from src.plugins.save.vault import folders
 
     target, _result, _used = folders.restore_folder(vault, UNIT)
     assert (target / expected[SLUG_MINE] / "sidecar.json").is_file()
@@ -174,7 +174,7 @@ def test_an_undo_removes_exactly_the_filed_points(tmp_path: Path) -> None:
 
 
 def wired_default(tmp: Path, crate: SimpleNamespace):
-    from src.cplugs.sdk.crate_import import plugin_homes_of
+    from src.plugins.sdk.crate_import import plugin_homes_of
 
     install = target_install(tmp, crate)
     vault = make_vault(tmp / "target-vault")

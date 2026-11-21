@@ -14,6 +14,7 @@ from src.models import (
     RestartPreviewResponse,
 )
 from src.api.error_response import api_error
+from src.core.restart_live_gate import nothing_running
 
 logger = structlog.get_logger()
 
@@ -49,12 +50,14 @@ async def restart_preview(
     remote = routed_remote(session_manager, session_name)
 
     try:
+        quiet = False
         if remote is not None:
             from src.core.hosts.remote_restart import preview_remote
 
             preview = await preview_remote(session_manager, remote.key)
         else:
             preview = await session_manager.restart_preview(session_name)
+            quiet = await nothing_running(session_manager, session_name)
     except ValueError as exc:
         raise api_error(400, "session_restart_invalid", exc, name=session_name, step="preview") from exc
     except Exception as exc:  # noqa: BLE001
@@ -99,4 +102,5 @@ async def restart_preview(
         ],
         wrappers_status=preview.wrappers_status,
         launch_display=preview.launch_display,
+        nothing_running=quiet,
     )

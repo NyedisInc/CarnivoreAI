@@ -7,7 +7,7 @@ vi.mock('../../browser/pages.svelte', () => ({ pageById: (id: string) => (id ===
 import './all';
 import { itemMenu } from '../registry';
 import type { RowMenuCtx } from '../row-context';
-import { registerPageRowAction, resetPageRowActions, type PageRowAction } from '../../../cplugs/sdk/page-row-actions';
+import { registerPageRowAction, resetPageRowActions, type PageRowAction } from '../../../plugins/sdk/page-row-actions';
 
 const env = { close: vi.fn(), glyph: () => '' };
 const ctx = { name: 'browser:p1', label: 'row', kind: 'browser', isPage: true, owned: true, status: 'unknown', pluginItems: '' } as unknown as RowMenuCtx;

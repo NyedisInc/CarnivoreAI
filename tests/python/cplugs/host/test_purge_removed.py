@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.host import purge_owned, purge_removed
-from src.cplugs.sdk.data_decl import DataDecl, DataPolicy
+from src.plugins.host import purge_owned, purge_removed
+from src.plugins.sdk.data_decl import DataDecl, DataPolicy
 
 
 def _decl(store_id: str, purge: str, **where: str) -> DataDecl:

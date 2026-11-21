@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.host import ui_doc
+from src.plugins.host import ui_doc
 
 ROOT = Path(__file__).resolve().parents[3]
 FIXTURE = json.loads((ROOT / "web/src/lib/cplug-ui/size-parity.fixture.json").read_text(encoding="utf-8"))

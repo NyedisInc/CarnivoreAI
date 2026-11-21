@@ -10,15 +10,10 @@
         font: inherit;
     }
 
-    .sp-page .oc-titlebar,
-    .sp-page .oc-titlebar__title {
-        font-weight: 400;
-    }
-
     .sp-page .pl-titlebar {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: var(--oc-gap-parts);
         min-width: 0;
         min-height: var(--oc-titlerow-h, 37px);
         padding: 0 var(--oc-space-3);
@@ -50,70 +45,25 @@
 }
 
 @layer components {
-    .sp-page .oc-page__body.sp-body {
+    .sp-body {
         display: flex;
         flex-direction: column;
-        flex: 1 1 0;
         min-width: 0;
         min-height: 0;
     }
 
-    .sp-page .oc-titlebar {
-        position: relative;
-        padding-block: var(--oc-space-1);
-        padding-inline: var(--oc-space-3);
-        column-gap: 0;
-    }
-
-    .sp-page .oc-titlebar__title {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip-path: inset(50%);
-        white-space: nowrap;
-    }
-
-    .sp-page .oc-titlebar__sub {
-        grid-column: 1 / -1;
-        display: block;
-        width: 100%;
-    }
-
-    .sp-strip {
-        --sp-find-w: clamp(280px, 28cqw, 440px);
-        flex: 1 1 100%;
-        display: grid;
-        grid-template-columns: minmax(max-content, 1fr) minmax(200px, var(--sp-find-w)) minmax(0, 1fr);
-        align-items: center;
-        gap: var(--oc-space-2) var(--oc-space-4);
-        min-width: 0;
-    }
-
     .sp-acts {
-        --oc-ibtn-size: var(--oc-control-h-sm);
         display: inline-flex;
         flex: none;
         gap: var(--oc-space-1-5);
-    }
-
-    .sp-find {
-        position: relative;
-        display: flex;
-        min-width: 0;
-        border: 0;
-    }
-
-    .sp-strip > .sp-sum {
-        grid-column: 3;
     }
 
     .sp-sum {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        justify-content: flex-end;
-        gap: var(--oc-space-1) 14px;
+        justify-content: flex-start;
+        gap: var(--oc-space-1) calc(var(--oc-space-3) + var(--oc-space-0-5));
         min-width: 0;
         color: var(--oc-text-secondary);
     }
@@ -135,62 +85,6 @@
         font-weight: 400;
     }
 
-    .sp-tbl {
-        display: flex;
-        flex: 1 1 auto;
-        align-items: center;
-        gap: 10px;
-        min-width: 0;
-    }
-
-    .sp-page .oc-page__bar {
-        align-items: stretch;
-        min-height: 0;
-        padding: 0;
-        background: var(--oc-ground-titlerow);
-        border-bottom: 0;
-    }
-
-    .sp-phonebar {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: var(--oc-space-1-5) var(--oc-space-4);
-        box-sizing: border-box;
-        width: 100%;
-        min-width: 0;
-        padding: var(--oc-space-1) var(--oc-space-3);
-        background: var(--oc-ground-titlerow);
-        box-shadow: inset 0 -1px 0 0 var(--oc-line-rule);
-    }
-
-    .sp-phonebar .sp-find {
-        position: relative;
-        top: auto;
-        left: auto;
-        flex: 1 1 100%;
-        order: 2;
-        width: auto;
-        transform: none;
-    }
-
-    .sp-phonebar .sp-find .oc-search {
-        min-height: var(--oc-tap);
-    }
-
-    .sp-phonebar .sp-sum {
-        flex: 1 1 100%;
-        order: 3;
-        justify-content: flex-start;
-    }
-
-    .sp-page .oc-titlebar__back {
-        min-width: 44px;
-        min-height: 44px;
-    }
-
-
-
 
     .sp-g {
         display: inline-flex;
@@ -200,7 +94,7 @@
         max-width: 100%;
         min-height: 28px;
         border: 1px solid var(--oc-line-panel);
-        border-radius: 2px;
+        border-radius: var(--oc-radius-control);
         background: var(--oc-ground-field);
     }
 
@@ -312,11 +206,6 @@
             padding-inline: var(--oc-space-3);
         }
     }
-}
-
-.sp-page .oc-titlebar,
-.sp-page .oc-titlebar .oc-titlebar__title {
-    font-weight: 400;
 }
 
 @media (max-width: 700px) {

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import sys
+import threading
 import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -48,6 +49,14 @@ def _fake_backend(calls: list, name: str = "external_target") -> MagicMock:
     return backend
 
 
+@pytest.fixture
+def mock_settings(tmp_path: Path):
+    with patch("src.core.session_manager.settings") as settings_mock:
+        settings_mock.load_auth_config.return_value = _auth_cfg()
+        settings_mock.get_session_metadata_path.return_value = tmp_path / "metadata"
+        yield settings_mock
+
+
 async def _adopt(calls: list, **kwargs) -> dict:
     with patch.object(SessionManager, "_load_session_metadata", return_value=None):
         manager = SessionManager()
@@ -55,12 +64,12 @@ async def _adopt(calls: list, **kwargs) -> dict:
     backend = _fake_backend(calls)
     with patch(
         "src.core.tmux_backend.TmuxBackend.for_external", return_value=backend
-    ), patch("src.core.session_manager.settings") as mock_settings:
-        mock_settings.load_auth_config.return_value = _auth_cfg()
+    ):
         return await manager.adopt_external_session("external_target", **kwargs)
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("mock_settings")
 async def test_adopt_resizes_the_pane_to_the_client_grid() -> None:
     calls: list = []
     await _adopt(calls, initial_cols=163, initial_rows=46)
@@ -68,6 +77,22 @@ async def test_adopt_resizes_the_pane_to_the_client_grid() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("mock_settings")
+async def test_adopt_resize_runs_off_the_event_loop_thread() -> None:
+    threads: list = []
+    loop_thread = threading.get_ident()
+    with patch.object(SessionManager, "_load_session_metadata", return_value=None):
+        manager = SessionManager()
+    manager._resolve_external_cwd = AsyncMock(return_value=Path("/tmp"))
+    backend = _fake_backend([])
+    backend.resize = MagicMock(side_effect=lambda c, r: threads.append(threading.get_ident()))
+    with patch("src.core.tmux_backend.TmuxBackend.for_external", return_value=backend):
+        await manager.adopt_external_session("external_target", initial_cols=163, initial_rows=46)
+    assert threads and threads[0] != loop_thread
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("mock_settings")
 async def test_adopt_resizes_before_capturing_scrollback() -> None:
     calls: list = []
     await _adopt(calls, initial_cols=163, initial_rows=46)
@@ -76,6 +101,7 @@ async def test_adopt_resizes_before_capturing_scrollback() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("mock_settings")
 async def test_adopt_without_dimensions_does_not_invent_any() -> None:
     calls: list = []
     await _adopt(calls)
@@ -83,6 +109,7 @@ async def test_adopt_without_dimensions_does_not_invent_any() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("mock_settings")
 async def test_adopt_with_only_one_dimension_declines() -> None:
     calls: list = []
     await _adopt(calls, initial_cols=163)
@@ -90,6 +117,7 @@ async def test_adopt_with_only_one_dimension_declines() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("mock_settings")
 async def test_a_failed_resize_does_not_abort_the_adoption() -> None:
     calls: list = []
     with patch.object(SessionManager, "_load_session_metadata", return_value=None):
@@ -99,8 +127,7 @@ async def test_a_failed_resize_does_not_abort_the_adoption() -> None:
     backend.resize = MagicMock(side_effect=RuntimeError("tmux said no"))
     with patch(
         "src.core.tmux_backend.TmuxBackend.for_external", return_value=backend
-    ), patch("src.core.session_manager.settings") as mock_settings:
-        mock_settings.load_auth_config.return_value = _auth_cfg()
+    ):
         result = await manager.adopt_external_session(
             "external_target", initial_cols=163, initial_rows=46
         )

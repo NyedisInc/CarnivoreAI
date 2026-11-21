@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 
 from src.core.mcp import tools
-from src.cplugs.huddle import inbox_filing, rules, state_request, state_rungs
+from src.plugins.huddle import inbox_filing, rules, state_request, state_rungs
 from tests.python.cplugs.huddle.test_task_manager_focus import CALLER, add, call, client, setup  # noqa: F401
 
 BASE = "/api/v1/cplugs/huddle"

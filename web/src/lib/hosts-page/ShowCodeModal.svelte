@@ -1,7 +1,6 @@
 
 <script lang="ts">
     import Button from '../base/Button.svelte';
-    import IconButton from '../base/IconButton.svelte';
     import { t as reactiveT } from '../i18n/index.svelte';
     import ModalShell from '../dialog-frame/ModalShell.svelte';
     import type { Translate } from '../sessions/types';
@@ -93,13 +92,7 @@
     }
 </script>
 
-<ModalShell title={t('hosts.code.title')} overlayClass="text-prompt-modal na-flow" onCancel={() => void dismiss()}>
-    {#snippet head()}
-        <div class="text-prompt-modal__head">
-            <span class="text-prompt-modal__verb">&raquo; {t('hosts.code.title')}</span>
-            <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close onclick={() => void dismiss()} />
-        </div>
-    {/snippet}
+<ModalShell look="titlerow" title={t('hosts.code.title')} overlayClass="na-flow" onCancel={() => void dismiss()}>
     {#if waiting}
         <PairSas {t} sas={waiting.sas} label={waiting.label} fid={waiting.fid} lead={t('hosts.sas.this_mac_lead')} />
         {#if answered}

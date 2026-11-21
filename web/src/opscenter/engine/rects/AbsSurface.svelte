@@ -11,6 +11,7 @@
   import { raiseFlag } from '../../../lib/page-flags/page-flags';
   import { mountMotion, registerDropHost, type MotionHandle } from '../../../lib/motion-grid';
   import { primarySessionId } from '../../api/host';
+  import { resolveDropKind } from '../../layout-editor/drop-kind';
   import { createRowsAdapter } from './rows-adapter';
   import { dividerSpecs } from './dividers';
   import { layoutGeometry } from './layout-rects';
@@ -146,7 +147,7 @@
           id: dropId,
           takes: (kind) => pendingFor(store.state.layout, kind, primarySessionId(), store) !== null,
           accept(kind, ev) {
-            const placed = pendingFor(store.state.layout, kind, primarySessionId(), store);
+            const placed = pendingFor(store.state.layout, resolveDropKind(kind), primarySessionId(), store);
             if (!placed) return false;
             adapter.setPending(placed);
             const box = sizeOf(sizeKey);
@@ -174,7 +175,7 @@
             return ok;
           },
           add(kind) {
-            const placed = pendingFor(store.state.layout, kind, primarySessionId(), store);
+            const placed = pendingFor(store.state.layout, resolveDropKind(kind), primarySessionId(), store);
             if (!placed || placed.tab) return false;
             store.commitLayout(placed.layout, store.snapshot());
             return true;

@@ -90,10 +90,12 @@ def test_fit_resizes_the_pane_to_this_terminal(private_socket: tuple[str, Path])
         os.execvpe(plan.argvs[0][0], list(plan.argvs[0]), dict(plan.env, TERM="xterm"))
     _winsize(fd, 20, 60)
     size = ""
+    poller = select.poll()
+    poller.register(fd, select.POLLIN)
     try:
         for _ in range(50):
             time.sleep(0.1)
-            if select.select([fd], [], [], 0)[0]:
+            if poller.poll(0):
                 with contextlib.suppress(OSError):
                     os.read(fd, 65536)
             size = _tmux(binary, path, "display-message", "-p", "-t", "=carnivore_fit:", "#{window_width}x#{window_height}")

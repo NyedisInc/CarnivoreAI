@@ -248,3 +248,27 @@ def test_the_watcher_feeds_the_clock_without_the_unread_overlay():
     source = inspect.getsource(wiring_builders.make_on_observation)
     assert "unread=False, tmux_status=STATUS_UNKNOWN" in source
     assert "unread=unread," in source
+
+
+
+
+def test_a_seeded_read_session_keeps_its_saved_idle_time_across_a_restart():
+    clock = IdleClock()
+    seed = lambda: SeedResult(since=_at(-20 * 60), source=SOURCE_CLAUDE_TRANSCRIPT)  # noqa: E731
+    clock.observe("s1", "k@1", "idle", None, _at(0), seed=seed, unread=False)
+    assert clock.sleep_seconds("s1", _at(0), unread=False) == pytest.approx(20 * 3600)
+    assert clock.sleep_seconds("s1", _at(0), unread=True) == pytest.approx(20 * 3600)
+
+
+def test_a_parked_run_survives_unknown_but_not_any_other_status():
+    clock = IdleClock()
+    clock.observe("s1", "k@1", "unknown", None, _at(0))
+    assert clock.run_for("s1") is None
+    clock.park("s1", _at(0))
+    clock.observe("s1", "k@1", "unknown", None, _at(5))
+    assert clock.sleep_seconds("s1", _at(10), unread=False) == pytest.approx(600)
+    clock.observe("s1", "k@1", "working", None, _at(11))
+    assert clock.run_for("s1") is None
+    clock.park("s1", _at(12))
+    clock.unpark("s1")
+    assert clock.run_for("s1") is None

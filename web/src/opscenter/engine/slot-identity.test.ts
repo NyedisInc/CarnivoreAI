@@ -102,3 +102,10 @@ test('the synced map: the same object back when nothing moved, and an unreadable
   expect(next.sessions.bad).toBe(map.sessions.bad);
   expect(instancesOf(next.sessions.good!.layout!)).toEqual([PRIMARY_SLOT, 'terminal:row:1']);
 });
+
+test('isRowTail flags the unresolved row tail and no real session id (#2755)', async () => {
+  const { isRowTail, sessionForSlot } = await import('./slot-identity');
+  expect(isRowTail(sessionForSlot('terminal:row:7', []))).toBe(true);
+  expect(isRowTail('ses_b')).toBe(false);
+  expect(isRowTail('adopted:cloude_a')).toBe(false);
+});

@@ -27,8 +27,8 @@ function ctx(extra: Partial<WidgetMenuCtx> = {}): WidgetMenuCtx {
 describe('normal mode', () => {
   test('content, then window (pop out, show header), then edit layout, then close; one hairline per group', () => {
     const menu = buildWidgetMenu(ctx());
-    expect(ids(menu)).toEqual(['sort:name', 'sort:recent', 'view-all', 'extend-row', 'pop-out', 'show-header', 'edit-layout', 'close-widget']);
-    expect(breaks(menu)).toEqual(['view-all', 'extend-row', 'pop-out', 'edit-layout', 'close-widget']);
+    expect(ids(menu)).toEqual(['sort:name', 'sort:recent', 'view-all', 'extend-row', 'pop-out', 'show-header', 'settings', 'edit-layout', 'close-widget']);
+    expect(breaks(menu)).toEqual(['view-all', 'extend-row', 'pop-out', 'settings', 'edit-layout', 'close-widget']);
   });
 
   test('extend a row and pull back a row are back in normal mode (Alex (Example-owner), 2026-10-22); pull back only once it covers two rows', () => {
@@ -52,9 +52,12 @@ describe('normal mode', () => {
     expect(edit.filter((id) => id === 'session' || id === 'all')).toEqual(['session', 'all']);
   });
 
-  test('settings, views, move to drawer are edit mode only (Q3 b): none of them is here', () => {
+  test('settings is in normal mode too (the owner, 2026-11-19); views and move to drawer stay edit only', () => {
     const menu = ids(buildWidgetMenu(ctx()));
-    for (const id of ['settings', 'session', 'all', 'pull-back-row', 'move-to-drawer']) expect(menu).not.toContain(id);
+    expect(menu).toContain('settings');
+    expect(menu.indexOf('settings')).toBeGreaterThan(menu.indexOf('show-header'));
+    for (const id of ['session', 'all', 'pull-back-row', 'move-to-drawer']) expect(menu).not.toContain(id);
+    expect(ids(buildWidgetMenu(ctx({ settings: [] })))).not.toContain('settings');
   });
 
   test('close is last, in the destructive token, and an instance reads remove', () => {
@@ -88,7 +91,7 @@ describe('edit mode (the icon is the gear)', () => {
 
 describe('what never applies is left out, never drawn empty', () => {
   test('no pop out, no header tick, no layout, no close: only the content remains and no hairline leads or trails', () => {
-    const menu = buildWidgetMenu(ctx({ arrange: [], popOut: null, header: null, editLayout: null, close: null }));
+    const menu = buildWidgetMenu(ctx({ arrange: [], popOut: null, header: null, editLayout: null, close: null, settings: [] }));
     expect(ids(menu)).toEqual(['sort:name', 'sort:recent', 'view-all']);
     expect(breaks(menu)).toEqual(['view-all']);
   });
@@ -160,8 +163,8 @@ describe('the letters (client/js/menu-keys.js): a verb has one letter in every m
       expect(byId.get('show-header')).toBe('h');
       expect(byId.get('close-widget')).toBe('k');
       expect(byId.get(editing ? 'done-editing' : 'edit-layout')).toBe('e');
-      if (editing) expect(byId.get('settings')).toBe(',');
-      else expect(byId.get('pop-out')).toBe('o');
+      expect(byId.get('settings')).toBe(',');
+      if (!editing) expect(byId.get('pop-out')).toBe('o');
       const drawn = keys.filter(Boolean);
       expect(new Set(drawn).size).toBe(drawn.length);
     }

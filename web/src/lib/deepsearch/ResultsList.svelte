@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sessionRowForConversation } from '../../cplugs/sdk/sessions.svelte';
+  import { sessionRowForConversation } from '../../plugins/sdk/sessions.svelte';
   import { t } from '../i18n/index.svelte';
   import './search-d.css';
   import HitRow from './HitRow.svelte';

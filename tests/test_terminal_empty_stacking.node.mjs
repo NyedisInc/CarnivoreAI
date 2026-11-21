@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { resolveZ } from './helpers/z-scale.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -14,9 +15,9 @@ function read(relative) {
 function zIndexOf(css, selector) {
     const rule = new RegExp(`${selector}\\s*\\{([^}]*)\\}`).exec(css);
     assert.ok(rule, `no rule found for ${selector}`);
-    const z = /z-index:\s*(-?\d+)/.exec(rule[1]);
-    assert.ok(z, `rule for ${selector} carries no numeric z-index`);
-    return Number(z[1]);
+    const z = /z-index:\s*([^;]+);/.exec(rule[1]);
+    assert.ok(z, `rule for ${selector} carries no z-index`);
+    return resolveZ(z[1], selector);
 }
 
 test('the no-session panel paints under the header and the agents drawer', () => {

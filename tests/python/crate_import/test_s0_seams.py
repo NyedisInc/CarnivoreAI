@@ -20,11 +20,11 @@ from src.core.project_move.paths import PathMapping, rebase_journal_for
 from src.core.project_tombstones import record_tombstone, tombstoned_roots
 from src.core.project_writes import insert_project_row, remove_created_project
 from src.core.work.import_rows import import_rows
-from src.cplugs.crate import service_crates
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import build_plan
-from src.cplugs.crate.writer import run_export
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.crate import service_crates
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import build_plan
+from src.plugins.crate.writer import run_export
+from src.plugins.sdk import crate_format as cf
 from tests.python.cplugs.crate.crate_world import env_for, make_world, project_request
 
 FIXTURES_V11 = Path(__file__).resolve().parents[2] / "fixtures" / "crate" / "v1.1"

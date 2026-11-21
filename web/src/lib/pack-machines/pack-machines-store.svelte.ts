@@ -53,6 +53,40 @@ export interface AgentsSection {
   machine: { cpu_pct: number; rss_mb: number };
 }
 
+export interface CanGpu { vendor: string; model: string; vram_gb: number | null; discrete: boolean }
+
+export interface CanBlock {
+  v: number;
+  rev: string;
+  probed_at: number;
+  os: string;
+  os_version?: string | null;
+  arch?: string | null;
+  chip?: string | null;
+  cores?: number | null;
+  mem_gb?: number | null;
+  gpus: CanGpu[];
+  tools: Record<string, boolean>;
+  xcode?: string | null;
+  ios_sim: boolean;
+  brew: boolean;
+  labels: string[];
+  installing?: string | null;
+}
+
+export interface PressureBlock {
+  pegged: boolean;
+  since: number | null;
+  why?: string;
+  busy_cores: number | null;
+  line: number | null;
+  cores: number | null;
+  run_queue_per_core: number | null;
+  mem: 'normal' | 'warn' | 'critical' | null;
+  held?: { cpu: number; ram_gb: number; n: number };
+  throttled?: number;
+}
+
 export interface MachineSnapshot {
   load: {
     cores: number | null;
@@ -67,6 +101,8 @@ export interface MachineSnapshot {
   restrictions: Restrictions;
   toolchain?: Record<string, boolean> | null;
   app_version?: string;
+  can?: CanBlock | null;
+  pressure?: PressureBlock | null;
   agents?: AgentsSection | null;
   throttled?: number;
 }
@@ -83,7 +119,16 @@ export interface PackMachine {
   specs: { model?: string | null; cores?: number | null; mem_total_gb?: number | null } | null;
   snapshot: MachineSnapshot | null;
   age_seconds: number | null;
+  roster_v1?: boolean;
+  eligible?: boolean;
+  is_home?: boolean;
+  rank?: number | null;
+  can_claim?: boolean;
+  link_path?: 'direct' | 'relay' | 'none' | null;
+  relay_id_known?: boolean;
 }
+
+export type TakeoverReason = 'off' | 'no_eligible' | 'alpha_not_updated' | 'ok';
 
 export interface PackMachinesView {
   master_install_id: string | null;
@@ -96,6 +141,12 @@ export interface PackMachinesView {
   };
   disagreement: string[] | null;
   machines: PackMachine[];
+  generation?: number | null;
+  roster_issued_at?: number | null;
+  home_install_id?: string | null;
+  interim?: boolean;
+  takeover_available?: { ok: boolean; reason: TakeoverReason };
+  reconnect?: { relay_on: boolean; takeover_on: boolean };
 }
 
 /* the push topic */
@@ -113,7 +164,7 @@ export const packMachines: Resource<PackMachinesView> = resource<PackMachinesVie
 
 export const tracksMaster: Resource<{ tracks_master: boolean }> = resource<{ tracks_master: boolean }>(
   () => authFetch<{ tracks_master: boolean }>('/pack/tracks-master'),
-  { intervalMs: 30000, name: 'pack-tracks-master' },
+  { intervalMs: 30000, name: 'pack-tracks-master', topics: ['pack_tracks_master'] },
 );
 
 export const packActivity = $state<{ busy: string | null; error: string | null }>({ busy: null, error: null });

@@ -54,6 +54,12 @@ describe('Switch', () => {
         expect(sw({ bare: true }).classList.contains('oc-check--bare')).toBe(true);
         expect(sw({ label: '', 'aria-label': 'sounds' }).classList.contains('oc-check--bare')).toBe(true);
     });
+    test('mixed announces aria-checked mixed and marks data-mixed; without it the state is the boolean', () => {
+        const el = sw({ mixed: true });
+        expect(el.getAttribute('aria-checked')).toBe('mixed');
+        expect(el.hasAttribute('data-mixed')).toBe(true);
+        expect(sw().hasAttribute('data-mixed')).toBe(false);
+    });
     test('role checkbox announces a set member in the same look; glyph draws its icon', () => {
         const el = sw({ role: 'checkbox', glyph: 'bell' });
         expect(el.getAttribute('role')).toBe('checkbox');

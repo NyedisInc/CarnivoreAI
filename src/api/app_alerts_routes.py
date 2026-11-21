@@ -52,7 +52,7 @@ class SnoozeBody(BaseModel):
 class SystemSettingsBody(BaseModel):
     """Which macOS settings pane to open: a name from ``kinds.SYSTEM_PANES``, never a URL."""
 
-    pane: Literal["full_disk_access"]
+    pane: Literal["full_disk_access", "privacy_security"]
 
 
 @router.get("")

@@ -4,6 +4,7 @@ import type { SessionInfo } from './types';
 import { running as demoRunning } from '../data/sessions';
 import { parseServerTime } from '../lib/format';
 import { t } from '../../lib/i18n/index.svelte';
+import { STATUS } from '../../lib/activity-status';
 
 export const SESSIONS_POLL_MS = 5000;
 
@@ -47,7 +48,7 @@ export function statusLabel(
     if (m) return t('session.status.question_part', { n: m[1], m: m[2] });
   }
   if (unread === true && (key === 'idle' || key === 'unknown')) {
-    return t(STATUS_KEYS['finished_unread'] as string);
+    return t(STATUS_KEYS[STATUS.finished_unread] as string);
   }
   return t(STATUS_KEYS[key] as string);
 }
@@ -67,7 +68,7 @@ export function statusHue(
   if (key === 'question') return 'yellow';
   if (key === 'notice') return 'blue';
   if (key === 'working' || key === 'working_subagent' || key === 'running') return 'green';
-  if (key === 'finished_unread' || unread === true) return 'green';
+  if (key === STATUS.finished_unread || unread === true) return 'green';
   return 'grey';
 }
 

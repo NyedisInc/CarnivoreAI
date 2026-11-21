@@ -34,7 +34,7 @@ export function effectiveRange(config: ChartConfig, ctx: PlanContext): { from: s
 }
 
 export function allowedFilters(metric: string, filters: StatsFilters, quotaWindow?: string): StatsFilters {
-  const keys: (keyof StatsFilters)[] = metric === 'quota_utilization' ? ['provider', 'account_id', 'window'] : ['provider', 'host', 'project', 'model', 'agent_kind', 'conversation_id'];
+  const keys: (keyof StatsFilters)[] = metric === 'quota_utilization' ? ['provider', 'account_id', 'window'] : ['provider', 'host', 'hosts', 'project', 'model', 'agent_kind', 'conversation_id'];
   const selected = Object.fromEntries(keys.filter((key) => filters[key]).map((key) => [key, filters[key]])) as StatsFilters;
   if (metric === 'quota_utilization' && !selected.window && quotaWindow) selected.window = quotaWindow;
   return selected;

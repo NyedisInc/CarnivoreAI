@@ -23,6 +23,7 @@ BUILT_FAMILIES = (
     "keymap.item.",
     "keymap.group.",
     "ios.",
+    "app_alert.pack_skills.alpha_changed.detail",
 )
 BUILT_INFIXES = (".option.",)
 MIN_PLAUSIBLE_KEYS = 1000

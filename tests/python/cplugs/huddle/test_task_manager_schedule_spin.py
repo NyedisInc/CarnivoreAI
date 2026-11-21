@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from types import SimpleNamespace
 
-from src.cplugs.huddle import schedule
+from src.plugins.huddle import schedule
 
 
 def _scheduler(ran: int) -> schedule.Scheduler:

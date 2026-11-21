@@ -153,10 +153,10 @@
 
 <style>
   @layer components {
-    .ak { display: flex; flex-direction: column; gap: var(--oc-space-3); padding: 14px; font-family: var(--font-mono); color: var(--pl-text); }
+    .ak { display: flex; flex-direction: column; gap: var(--oc-space-3); padding: 14px; font-family: var(--font-mono); color: var(--oc-text-primary); }
     .ak[data-busy='true'] { opacity: 0.6; transition: opacity 0.12s ease; }
     .ak-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--oc-space-2); }
-    .ak-name { font-size: var(--oc-fs-run-title); color: var(--pl-text); }
+    .ak-name { font-size: var(--oc-fs-run-title); color: var(--oc-text-primary); }
     .ak-host {
       padding: 0 var(--oc-space-1);
       border: var(--oc-border, 1px) solid var(--oc-cyan);
@@ -168,20 +168,20 @@
     }
     .ak-tabs { min-width: 0; }
     .ak-panel { display: flex; flex-direction: column; gap: var(--oc-space-2); min-width: 0; }
-    .ak-question { margin: 0; font-size: var(--oc-fs-heading); line-height: 1.45; color: var(--pl-text); white-space: pre-wrap; overflow-wrap: anywhere; }
+    .ak-question { margin: 0; font-size: var(--oc-fs-heading); line-height: 1.45; color: var(--oc-text-primary); white-space: pre-wrap; overflow-wrap: anywhere; }
     .ak-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--oc-space-3); }
     .ak-body--preview { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     @media (max-width: 700px) { .ak-body--preview { grid-template-columns: minmax(0, 1fr); } }
     .ak-options { display: flex; flex-direction: column; gap: var(--oc-space-1-5); min-width: 0; }
-    .ak :global(.oc-choice__name), .ak :global(.oc-check__label) { font-size: var(--oc-fs-run-title); color: var(--pl-text); white-space: normal; overflow-wrap: anywhere; }
-    .ak :global(.oc-choice__desc), .ak :global(.oc-check__hint) { font-size: var(--oc-fs-body); color: var(--pl-text); opacity: 0.8; white-space: normal; overflow-wrap: anywhere; }
+    .ak :global(.oc-choice__name), .ak :global(.oc-check__label) { font-size: var(--oc-fs-run-title); color: var(--oc-text-primary); white-space: normal; overflow-wrap: anywhere; }
+    .ak :global(.oc-choice__desc), .ak :global(.oc-check__hint) { font-size: var(--oc-fs-body); color: var(--oc-text-primary); opacity: 0.8; white-space: normal; overflow-wrap: anywhere; }
     .ak :global(.oc-check) { white-space: normal; padding: var(--oc-space-2) 10px; }
     .ak :global(.oc-choice) { padding: var(--oc-space-2) 10px; }
     .ak-other { display: flex; flex-direction: column; gap: var(--oc-space-1); padding-top: var(--oc-space-1); }
     .ak-preview {
       margin: 0; padding: var(--oc-space-2) 10px; max-height: 18em; overflow: auto; font-family: var(--font-mono); font-size: var(--oc-fs-body);
-      color: var(--pl-text); white-space: pre-wrap; overflow-wrap: anywhere;
-      box-shadow: inset 0 0 0 var(--oc-border, 1px) var(--pl-line-quiet); border-radius: var(--oc-radius-sm, 2px);
+      color: var(--oc-text-primary); white-space: pre-wrap; overflow-wrap: anywhere;
+      box-shadow: inset 0 0 0 var(--oc-border, 1px) var(--oc-line-faint); border-radius: var(--oc-radius-sm, 2px);
     }
     .ak-notice { margin: 0; font-size: var(--oc-fs-label, 12px); color: var(--oc-coral); overflow-wrap: anywhere; }
     .ak-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--oc-space-2); }

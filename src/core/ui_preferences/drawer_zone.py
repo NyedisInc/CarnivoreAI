@@ -147,7 +147,7 @@ class SessionRail(BaseModel):
     family copy's target; each key once ACROSS the whole rail, at most
     ``MAX_SESSION_RAIL_ITEMS``: a rail scrolls, it does not cap), without the
     glance placements. ONE MODEL FOR BOTH RAILS: ``session_rail`` is the side
-    rail (ABSENT MEANS THE DEFAULT, files and notes; Alex (Adoom666), 2026-10-11) and
+    rail (ABSENT MEANS THE DEFAULT, files and notes; the owner, 2026-10-11) and
     ``session_rail_bottom`` the bottom one (ABSENT READS AS [core.shell, core.scheduled-tasks], #2511); the server
     never fabricates either. One value for every device; written by the layout
     editor, followed live through the preference layer. The bars' own chrome

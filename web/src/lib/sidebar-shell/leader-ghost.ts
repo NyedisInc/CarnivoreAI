@@ -1,5 +1,5 @@
-import { openSwarmAgentTerminal, renameSwarmAgent, turnOffSwarmAgent, wakeSwarmAgent } from '../../cplugs/sdk/swarm-agent-actions';
-import { refreshSwarmRoster } from '../../cplugs/sdk/swarm-roster.svelte';
+import { openSwarmAgentTerminal, renameSwarmAgent, turnOffSwarmAgent, wakeSwarmAgent } from '../../plugins/sdk/swarm-agent-actions';
+import { refreshSwarmRoster } from '../../plugins/sdk/swarm-roster.svelte';
 import { askLeaderConfirm } from '../leader-confirm/confirm';
 import { t } from '../i18n/index.svelte';
 import { announceFailure, reasonOf } from './interaction-globals';

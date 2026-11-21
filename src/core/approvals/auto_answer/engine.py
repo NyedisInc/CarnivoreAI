@@ -46,7 +46,8 @@ def answers_own_dev_channels(dialog: Any) -> bool:
 
 
 def default_seams() -> rules.Seams:
-    return rules.Seams(_read_process_rows, carried_trust.carried_op_for, carried_trust.carried_imports_for, projects.in_projects_db)
+    return rules.Seams(_read_process_rows, carried_trust.carried_op_for, carried_trust.carried_imports_for, projects.in_projects_db,
+                       in_agent_slot=projects.in_agent_slot_db)
 
 
 async def will_answer(dialog: Any, info: Any) -> bool:
@@ -99,7 +100,7 @@ class AutoAnswerEngine:
         rule = next((r for r in rules.rules_for(dialog) if rule_on(policy, r.info.id)), None)
         if rule is None:
             return None
-        key = (session_id, rule.info.id)
+        key = (session_id, rule.info.id + rule.slot)
         identity = tuple(getattr(evidence, "identity", None) or ())
         instance = identity[:4] if len(identity) >= 4 else None
         if instance is None or key in self._inflight or (rule.needs_pid and instance[3] is None):
@@ -122,7 +123,7 @@ class AutoAnswerEngine:
         return task
 
     async def _run(self, key: tuple, entry: list, rule: rules.ScreenRule, ctx: rules.Ctx) -> None:
-        session_id, rule_id = key
+        session_id, rule_id = key[0], rule.info.id
         try:
             verdict = await rule.guard(ctx)
             if verdict.outcome == rules.WAIT:

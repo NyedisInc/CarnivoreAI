@@ -16,7 +16,7 @@ import pytest
 from src.core.db import connect, db_path_for
 from src.core.swarm import spawn, store
 from src.core.swarm.cards import capacity, cpu, dealer, deliver, ops, port as card_port, sweep
-from src.cplugs.huddle.cards import policy, tx
+from src.plugins.huddle.cards import policy, tx
 from src.core.mcp import card_capacity_tools
 from tests.python.swarm.cards.test_card_enforcement import _spawn, _spawn_world, caller, call, owner, owner_approves, refused, world  # noqa: F401
 

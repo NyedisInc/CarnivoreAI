@@ -8,7 +8,7 @@ from src.core.mcp.caller import AgentCaller
 from src.core.mcp.common import ToolError
 from src.core.swarm import body
 from src.core.swarm.cards import capacity, ops, port as card_port
-from src.cplugs.sdk.cards import CardRefused
+from src.plugins.sdk.cards import CardRefused
 
 _SCOPE_PATTERN = r"^(company|project):[1-9][0-9]{0,9}$"
 

@@ -18,8 +18,8 @@ from fastapi import FastAPI
 from src.core.work.capability import WorkCapability
 from src.core.work.importer import ready
 from src.core.work.storage import DB_NAME, LEGACY_STORAGE, folder
-from src.cplugs.host import runtime
-from src.cplugs.sdk import CplugSchemaError, CplugStorage, StorageSpec
+from src.plugins.host import runtime
+from src.plugins.sdk import CplugSchemaError, CplugStorage, StorageSpec
 from tests.python.cplugs.owner import turn_on
 
 ITEM_SQL = ("INSERT INTO items (list_key, text, position, created_by, state, created_at, updated_at, created_seq, seq) "

@@ -6,11 +6,11 @@ const opened = vi.hoisted(() => vi.fn());
 const calls = vi.hoisted(() => ({ turnOff: [] as unknown[][], ask: vi.fn(), wake: vi.fn(), refresh: vi.fn() }));
 const openCalls = vi.hoisted(() => [] as unknown[][]);
 vi.mock('../item-menu/open.svelte', () => ({ openItemMenu: (...a: unknown[]) => { openCalls.push(a); return true; }, closeItemMenu: () => {} }));
-vi.mock('../../cplugs/sdk/swarm-agent-actions', () => ({
+vi.mock('../../plugins/sdk/swarm-agent-actions', () => ({
     wakeSwarmAgent: calls.wake, renameSwarmAgent: vi.fn(), turnOffSwarmAgent: async (...a: unknown[]) => { calls.turnOff.push(a); },
     openSwarmAgentTerminal: opened,
 }));
-vi.mock('../../cplugs/sdk/swarm-roster.svelte', () => ({ refreshSwarmRoster: calls.refresh }));
+vi.mock('../../plugins/sdk/swarm-roster.svelte', () => ({ refreshSwarmRoster: calls.refresh }));
 vi.mock('../leader-confirm/confirm', () => ({ askLeaderConfirm: calls.ask }));
 vi.mock('../i18n/index.svelte', () => ({ t: (k: string) => k }));
 import { openGhostMenu, openGhostTerminal, type GhostAgent } from './leader-ghost';

@@ -29,6 +29,15 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
+describe('the list stacks above the drawer (#2942)', () => {
+  test('it is promoted into the top layer, so the drawer (z-index 1100) can never cover it', () => {
+    const { host, anchor } = page();
+    open(host, anchor, () => {});
+    const panel = host.querySelector('.oc-popover') as HTMLElement;
+    expect(panel.getAttribute('popover')).toBe('manual');
+  });
+});
+
 describe('the list the terminal page opens is the engine\'s own', () => {
   test('it opens anchored, carrying no add or per-mode arrange any more (issue #1043)', () => {
     const { host, anchor } = page();
@@ -40,17 +49,17 @@ describe('the list the terminal page opens is the engine\'s own', () => {
 
     const items = Array.from(host.querySelectorAll('button')).map((b) => (b.textContent || '').trim());
     expect(items.filter((text) => /^arrange/i.test(text)).length).toBe(0);
-    expect(items.some((text) => text === 'add widget')).toBe(true);
-    expect(items.some((text) => /reset/i.test(text))).toBe(true);
+    expect(items).toEqual(['add a widget', 'reset layout', 'all widgets']);
     expect(items.some((text) => /fit rows/i.test(text))).toBe(false);
-    expect(items.some((text) => /all widgets/i.test(text))).toBe(true);
     for (const hidden of [/notes/i, /files/i, /scheduled tasks/i, /keep awake/i]) {
       expect(items.some((text) => hidden.test(text))).toBe(false);
     }
-    expect(host.querySelector('[data-layout-editor-pointer]')?.textContent).toBe(
-      'add widgets with the + button, or drag them in from the widget drawer',
-    );
-    expect(items.length).toBe(3);
+    expect(host.querySelector('[data-layout-editor-pointer]')).toBe(null);
+    expect(panel.textContent).not.toMatch(/drag them in/i);
+    const title = panel.querySelector('.session-row-menu__title') as HTMLElement;
+    expect(title.textContent?.trim()).toBe('widgets');
+    expect(panel.firstElementChild).toBe(title);
+    expect(panel.querySelectorAll('[role="menuitem"]').length).toBe(3);
 
     unmount(app, { outro: false });
     flushSync();
@@ -64,7 +73,7 @@ describe('the list the terminal page opens is the engine\'s own', () => {
     const app = open(host, anchor, () => {});
 
     const arrange = Array.from(host.querySelectorAll('button'))
-      .find((b) => (b.textContent || '').trim() === 'add widget') as HTMLButtonElement;
+      .find((b) => (b.textContent || '').trim() === 'add a widget') as HTMLButtonElement;
     expect(arrange).not.toBe(undefined);
     arrange.click();
     flushSync();

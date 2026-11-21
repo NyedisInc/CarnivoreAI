@@ -7,7 +7,7 @@ import sqlite3
 from src.core.automations import models as m
 from src.core.automations.store import AutomationStore
 from src.core.automations.store_schema import MIGRATIONS, storage_for
-from src.cplugs.sdk.storage import CplugStorage, StorageSpec
+from src.plugins.sdk.storage import CplugStorage, StorageSpec
 
 MASTER_RUNG_ONE_SHA256 = "f047adb0e5bab3e36a0ec8b64b524fa666f6196acb9a4e17164bc58409d5450e"
 NOW = 1_800_000_000.0

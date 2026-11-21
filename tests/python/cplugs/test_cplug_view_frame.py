@@ -18,7 +18,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.cplugs.host import identity, runtime, sidecar_registry
+from src.plugins.host import identity, runtime, sidecar_registry
 from tests.python.api_keys.conftest import bearer, client, owner_jwt  # noqa: F401
 
 NAME, ITEM = "pet", "acme/pet"
@@ -32,7 +32,7 @@ APP_CSP = ("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inli
 @pytest.fixture
 def world(tmp_path, monkeypatch):
     """A live installed ``pet`` with one declared view behind the real routes. Output: namespace(root, state, flag, key)."""
-    from src.cplugs.sdk import signed_links
+    from src.plugins.sdk import signed_links
     from src.main import app
 
     monkeypatch.setattr(signed_links, "settings", SimpleNamespace(load_auth_config=lambda: SimpleNamespace(jwt_secret="test-secret")))
@@ -143,7 +143,7 @@ def test_a_plugin_that_is_off_or_held_answers_409_for_the_file_and_the_ticket(cl
 
 
 def test_the_manifest_refuses_a_view_that_could_reach_outside_its_folder():
-    from src.cplugs.host.sidecar_manifest import SidecarManifestError, parse_sidecar_manifest
+    from src.plugins.host.sidecar_manifest import SidecarManifestError, parse_sidecar_manifest
 
     def parse(views):
         return parse_sidecar_manifest({**CPLUG, "views": views}, NAME, "d")
@@ -158,7 +158,7 @@ def test_the_manifest_refuses_a_view_that_could_reach_outside_its_folder():
 
 
 def test_a_fifo_at_a_declared_path_is_refused_without_blocking(world):  # noqa: F811
-    from src.cplugs.host import sidecar_view
+    from src.plugins.host import sidecar_view
 
     fifo = world.root / "views" / "walk" / "fifo.js"
     os.mkfifo(fifo)

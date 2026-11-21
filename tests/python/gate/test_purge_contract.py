@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.host import dependencies, developer_mode, runtime
-from src.cplugs.sdk.data_decl import DataDecl, DataPolicy
+from src.plugins.host import dependencies, developer_mode, runtime
+from src.plugins.sdk.data_decl import DataDecl, DataPolicy
 from tests.python.gate import cycle
 from tests.python.gate.test_plugin_cycle import build_version
 

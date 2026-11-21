@@ -8,8 +8,8 @@ from typing import Dict, List, Tuple
 
 import pytest
 
-from src.cplugs.crate.forbidden import SourceForbidden
-from src.cplugs.crate.write_files import write_lines
+from src.plugins.crate.forbidden import SourceForbidden
+from src.plugins.crate.write_files import write_lines
 
 UUID = "11111111-2222-3333-4444-555555555555"
 HIT = f'{{"sessionId":"{UUID}","display":"hi"}}\n'.encode()

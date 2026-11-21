@@ -23,7 +23,6 @@
     import SettingControl from './SettingControl.svelte';
     import { settingsDoc } from './settings-doc.svelte';
     import { registerPageDirty } from '../menu-page/menu-page-dirty';
-    import { menuPageState } from '../menu-page/menu-page-shell.svelte';
     import { findSurface } from '../menu-page/menu-page-surface';
     import { dirtySectionsOf, dirtyTabsOf } from './dirty-places';
     import { searchPluginSettings, searchScreenSections, searchSettings, type PluginMatch } from './settings-search';
@@ -76,18 +75,8 @@
     let flashTimer: ReturnType<typeof setTimeout> | null = null;
     // svelte-ignore state_referenced_locally
     let contentOpen = $state(embedded);
-    let listRoot = $state<HTMLDivElement | undefined>();
-    let listW = $state(240);
-    $effect(() => {
-        const el = listRoot;
-        if (!el || typeof ResizeObserver !== 'function') return;
-        const ro = new ResizeObserver(() => (listW = el.getBoundingClientRect().width || listW));
-        ro.observe(el);
-        return () => ro.disconnect();
-    });
 
     const phoneBar = $derived(viewport.narrow && !embedded);
-    const drawerMode = $derived(menuPageState.surface && !embedded && !phoneBar);
     const wantsDrawers = (): boolean => !embedded && typeof window !== 'undefined' && findSurface(document, window) !== null;
     const matches = $derived(searchSettings(query, t));
     const sectionHits = $derived(searchScreenSections(query, t));
@@ -341,6 +330,10 @@
     </div>
 {/snippet}
 
+{#snippet sectionTabs()}
+    <Tabs tabs={tabDefs} active={tab ?? ''} onSelect={pickTab} label={t('settings.tabs.label')} idBase={`settings-${active}`} />
+{/snippet}
+
 {#snippet saveFoot()}
     <SettingsFooter {t} />
 {/snippet}
@@ -368,7 +361,7 @@
 {/snippet}
 
 {#snippet contentBody()}
-            <div class="st-content">
+            <div class="st-content" class:st-content--phone={phoneBar}>
                 {#if searching}
                     <div class="oc-page__scroll">
                         <div class="oc-page__main st-main">
@@ -386,16 +379,6 @@
                         </div>
                     </div>
                 {:else}
-                    {#if tabbed && !phoneBar && !pluginEntry}
-                        <Tabs
-                            tabs={tabDefs}
-                            active={tab ?? ''}
-                            onSelect={pickTab}
-                            label={t('settings.tabs.label')}
-                            idBase={`settings-${active}`}
-                            class="st-tabs"
-                        />
-                    {/if}
                     <section class="st-section" data-section={pluginEntry ? undefined : active} data-plugin-section={pluginEntry?.id} aria-labelledby="settings-section-title">
                         <h2 class="st-section__title oc-visually-hidden" id="settings-section-title">{pluginEntry ? pluginEntry.name : t(sectionKey(active, 'label'))}</h2>
                         {#if pluginEntry}
@@ -436,32 +419,16 @@
             </div>
 {/snippet}
 
-{#if open && drawerMode}
-    <Page
-        class="pledger mgr settings-page oc-page--drawer-list"
-        title={t('settings.page.title')}
-        onClose={close}
-        closeLabel={t(MANAGER_KEYS.close)}
-        onkeydown={onKeydown}
-        bind:titleEl
-        bind:root={listRoot}
-    >
-        <div class="oc-page__body st-body st-body--list">{@render nav()}</div>
-    </Page>
-    {#if contentOpen}
-        <Page
-            class="pledger mgr settings-page oc-page--drawer-stacked"
-            style="--oc-drawer-offset: {listW}px"
-            title={pluginEntry ? pluginEntry.name : searching ? t('settings.search.label') : t(sectionKey(active, 'label'))}
-            onDrawerClose={closeContent}
-            onkeydown={onKeydown}
-        >
-            <div class="oc-page__body st-body st-body--stacked">{@render contentBody()}</div>
-        </Page>
-    {/if}
-{:else if open}
+{#if open}
+    
     <Page
         class="pledger mgr settings-page"
+        frame="nav"
+        scroll="self"
+        pair
+        pairOpen={contentOpen}
+        pairTitle={pluginEntry ? pluginEntry.name : searching ? t('settings.search.label') : t(sectionKey(active, 'label'))}
+        onPairClose={closeContent}
         {embedded}
         title={t('settings.page.title')}
         onClose={embedded ? undefined : close}
@@ -469,13 +436,9 @@
         onkeydown={onKeydown}
         bind:titleEl
         search={phoneBar ? railSearch : undefined}
-        tabs={phoneBar ? phoneTabs : undefined}
+        tabs={phoneBar ? phoneTabs : tabbed && !searching && !pluginEntry ? sectionTabs : undefined}
+        side={phoneBar ? undefined : nav}
     >
-        <div class="oc-page__body st-body" class:st-body--phone={phoneBar}>
-            {#if !phoneBar}
-                {@render nav()}
-            {/if}
-            {@render contentBody()}
-        </div>
+        {@render contentBody()}
     </Page>
 {/if}

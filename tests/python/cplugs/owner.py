@@ -5,7 +5,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any, Iterable
 
-from src.cplugs.host import runtime, state as owner_state
+from src.plugins.host import runtime, state as owner_state
 
 
 def turn_on(host: runtime.Host, cplug_id: str = "huddle") -> owner_state.CplugState:

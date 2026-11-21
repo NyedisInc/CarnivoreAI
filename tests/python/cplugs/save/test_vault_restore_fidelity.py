@@ -5,10 +5,10 @@ import os
 import stat
 import pytest
 
-from src.cplugs.save.vault import constants as K
-from src.cplugs.save.vault import restore
-from src.cplugs.sdk.blob_codec import PlaceConflict, place_no_clobber
-from src.cplugs.save.vault.manifest import FileEntry, Manifest
+from src.plugins.save.vault import constants as K
+from src.plugins.save.vault import restore
+from src.plugins.sdk.blob_codec import PlaceConflict, place_no_clobber
+from src.plugins.save.vault.manifest import FileEntry, Manifest
 from tests.python.cplugs.save.vault_helpers import CONV, World, jsonl
 
 
@@ -106,7 +106,7 @@ def test_a_captured_0600_is_still_restored_0600_when_the_point_is_not_an_import(
 
 
 def test_new_imports_record_the_source_files_real_mode_and_never_invent_one(tmp_path):
-    from src.cplugs.save.vault.old_sources import extras
+    from src.plugins.save.vault.old_sources import extras
 
     path = tmp_path / "a.jsonl"
     path.write_text("{}\n")
@@ -119,7 +119,7 @@ def test_new_imports_record_the_source_files_real_mode_and_never_invent_one(tmp_
 def test_the_archive_importer_files_the_copys_mode_not_a_hardcoded_one(tmp_path):
     from types import SimpleNamespace
 
-    from src.cplugs.save.vault.old_sources import apply, model
+    from src.plugins.save.vault.old_sources import apply, model
 
     def planned(mode_kwargs):
         copy = model.Copy("s", "l", None, 3, "ab" * 32, 1.0, lambda: iter(()), **mode_kwargs)

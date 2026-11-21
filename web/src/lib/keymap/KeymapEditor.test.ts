@@ -105,3 +105,10 @@ test('a chord the app would run before a menu or the terminal blocks the save wh
     if (!holder) return;
     expect(judge(action('history.back'), holder.keys.mac.find((c) => c.includes('cmd'))!, 'mac', ALL_ACTIONS, {}).clashes.map((a) => a.id)).toContain(holder.id);
 });
+
+test('judge applies the one clash rule: a may-share overlay action over a global chord overlaps, it does not block (#2786)', () => {
+    const verdict = judge(action('palette.pick_1'), 'cmd+2', 'mac', ALL_ACTIONS, {});
+    expect(verdict.clashes.map((a) => a.id)).not.toContain('layout.tab.2');
+    expect(verdict.overlaps.map((a) => a.id)).toContain('layout.tab.2');
+    expect(judge(action('history.back'), 'cmd+k', 'mac', ALL_ACTIONS, {}).clashes.map((a) => a.id)).toEqual(['palette.open']);
+});

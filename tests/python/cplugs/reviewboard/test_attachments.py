@@ -13,8 +13,8 @@ from fastapi.testclient import TestClient
 from src.api.auth import require_auth
 from src.config.uploads import UploadsConfig
 from src.core.mcp.caller import AgentCaller
-from src.cplugs.huddle import board_port, routes as task_manager_routes
-from src.cplugs.sdk import uploads as sdk_uploads
+from src.plugins.huddle import board_port, routes as task_manager_routes
+from src.plugins.sdk import uploads as sdk_uploads
 from tests.python.cplugs.reviewboard.harness import BASE, PANE, Env, task_manager_on, task_manager_store, make_env
 
 TOKEN = AgentCaller("mcp-token:7", "mcp-token:7", "mcp-token:7", token_name="phone", scope="write")
@@ -160,8 +160,7 @@ def test_a_note_the_task_manager_would_refuse_is_refused_first_and_a_crlf_note_i
 
 
 def test_a_task_manager_refusal_after_the_files_are_saved_removes_them_and_answers_a_board_refusal(env: Env, client, board, monkeypatch):
-    from src.cplugs.huddle.rules import TaskManagerForbidden
-    from src.cplugs.huddle.store import TaskManagerStore
+    from src.plugins.huddle.public import TaskManagerForbidden, TaskManagerStore
 
     def refuse(self, *args, **kwargs):
         raise TaskManagerForbidden("the item is settled")
@@ -183,7 +182,7 @@ def test_a_non_string_file_body_is_a_422_not_a_crash(env: Env, client, board):
 
 
 def test_an_index_write_that_fails_after_the_post_is_a_success_that_says_so(env: Env, client, board, monkeypatch):
-    from src.cplugs.reviewboard import attachments
+    from src.plugins.reviewboard import attachments
 
     def broken(*args, **kwargs):
         raise OSError("disk full")
@@ -201,7 +200,7 @@ def test_an_index_write_that_fails_after_the_post_is_a_success_that_says_so(env:
 
 
 def test_an_index_entry_whose_file_id_is_not_8_hex_is_left_out():
-    from src.cplugs.reviewboard import attachments
+    from src.plugins.reviewboard import attachments
 
     good = {"file_id": "ab12cd34", "item_id": 7, "message_id": 41, "name": "a.md", "mime": "text/markdown", "bytes": 3,
             "sha256": "a" * 64, "added_at": "2026-10-14T09:05:00Z", "revision": "r1"}

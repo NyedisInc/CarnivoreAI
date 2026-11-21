@@ -20,7 +20,7 @@ from starlette.websockets import WebSocketDisconnect  # noqa: E402
 from src.api.auth import require_auth  # noqa: E402
 from src.api.checkpoint_revert_routes import require_owner  # noqa: E402
 from src.main import app  # noqa: E402
-from src.cplugs.sdk import public_routes  # noqa: E402
+from src.plugins.sdk import public_routes  # noqa: E402
 
 PUBLIC_HTTP = {
     ("GET", "/api/v1/cplugs/{cplug_id}/view/{name}/{ticket}/{rest:path}"): "a plugin view frame loads in an iframe, which cannot send a bearer; the signed one-hour ticket in the path is the credential (A15, sidecar_view.py)",
@@ -57,6 +57,10 @@ PUBLIC_HTTP = {
     ("POST", "/api/v1/federation/token"): "a signature by a granted Ed25519 key is the credential; gated inside",
     ("POST", "/api/v1/federation/prove"): "signs a caller's own nonce with the federation key; carries no secret",
     ("POST", "/mcp"): "the agent MCP endpoint; the pane's hook token plus its session id is the credential, loopback only, checked by require_agent (issue #152)",
+    ("POST", "/api/v1/beast-mode/permission-request"): "the PermissionRequest hook of a Beast Mode launch asks whether to allow one call; the pane's hook token is the credential, checked by require_agent; an external token always answers none (#3063)",
+    ("POST", "/api/v1/pack/jobs/precheck"): "the pre-run hook of a marked project's agent asks whether a command should run here; the pane's hook token is the credential, checked by require_agent; an external token always answers run (#3061)",
+    ("POST", "/api/v1/pack/jobs/precheck/agent"): "the pre-run hook of a marked project's agent asks whether a subagent (the Agent tool) should run here; the pane's hook token is the credential, checked by require_agent; an external token always answers run",
+    ("POST", "/api/v1/pack/jobs/precheck/finished"): "the PostToolUse hook of a marked project's agent says a command finished so its wall time is learned; the pane's hook token is the credential, checked by require_agent; an external token is ignored (#3061)",
     ("POST", "/api/v1/sessions/{session_id}/agent-message"): "an agent notifies the owner about its OWN session; the pane's hook token is the credential, checked by require_agent, which also refuses another session's path and any external or read token (issue #1278)",
     ("POST", "/api/v1/sessions/{session_id}/messaging/send"): "a bound agent texts the owner as its OWN session; the pane's hook token is the credential, checked by require_agent, which also refuses another session's path and any external or read token (issue #1499)",
     ("POST", "/api/v1/cplugs/huddle/items/{item_id}/wait/resolve"): "the wait callback a script calls when the thing a task waits on is done: the wait's one-time token is the credential, checked and spent atomically (wait_resolve.py, waits.WaitStore.claim_end); every refusal is the same 403 and never says whether the item exists (docs/task-manager.md, Part 1b-2a)",
@@ -130,7 +134,7 @@ def test_every_plugin_declared_public_route_is_really_open() -> None:
 def test_add_public_get_records_its_reason_and_a_call_without_one_records_nothing() -> None:
     from fastapi import APIRouter  # noqa: PLC0415
 
-    from src.cplugs.sdk import add_public_get  # noqa: PLC0415
+    from src.plugins.sdk import add_public_get  # noqa: PLC0415
 
     router = APIRouter(prefix="/cplugs/synthetic")
     add_public_get(router, "synthetic", "/a", lambda: None, "why a is public")
@@ -139,7 +143,7 @@ def test_add_public_get_records_its_reason_and_a_call_without_one_records_nothin
         assert public_routes()[("GET", "/cplugs/synthetic/a")] == "why a is public"
         assert ("GET", "/cplugs/synthetic/b") not in public_routes()
     finally:
-        from src.cplugs.sdk import routing  # noqa: PLC0415
+        from src.plugins.sdk import routing  # noqa: PLC0415
 
         routing._PUBLIC_ROUTES.pop(("GET", "/cplugs/synthetic/a"), None)
 
@@ -161,6 +165,7 @@ def test_every_websocket_route_is_a_known_handshake_route() -> None:
 
 
 def _fill(path: str) -> str:
+    path = re.sub(r"\{[^}:]+:int\}", "1", path)
     return re.sub(r"\{[^}]+\}", "x", path)
 
 

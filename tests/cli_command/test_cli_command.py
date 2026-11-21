@@ -21,8 +21,10 @@ def test_shim_content_quotes_every_path(tmp_path):
     assert "exec '/opt/py thon/bin/python3' -m src.tui \"$@\"" in lines
 
 
-def test_checkout_command_round_trips_paths_with_spaces():
+def test_checkout_command_round_trips_paths_with_spaces(monkeypatch):
     import shlex
+    monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
+    monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
     cmd = service.checkout_command(Path("/Users/a b/Application Support/server"), "/Users/a b/venv/bin/python3")
     assert shlex.split(cmd) == ["cd", "/Users/a b/Application Support/server", "&&", "/Users/a b/venv/bin/python3", "-m", "src.tui"]
     assert shlex.split(service.status_body(Path("/s"))["run_from_checkout"])[:2] == ["cd", str(service.source_root())]

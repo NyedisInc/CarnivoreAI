@@ -58,7 +58,7 @@ async def emit(event: SessionEvent) -> None:
 
 
 def _identity(manager: Any, name: str) -> dict:
-    from src.core.session_store import identity_for_live_name, sessions_table_ready
+    from src.core.session_store import identity_for_live_name, sessions_table_ready, uuid_for_row
 
     conn = manager._datastore_connection()
     if conn is None:
@@ -69,8 +69,7 @@ def _identity(manager: Any, name: str) -> dict:
         found = identity_for_live_name(conn, socket=manager.tmux_socket_name(), name=name)
         if not found:
             return {}
-        row = conn.execute("SELECT session_uuid FROM sessions WHERE id = ?", (int(found["id"]),)).fetchone()
-        return {"id": int(found["id"]), "uuid": row["session_uuid"] if row else None,
+        return {"id": int(found["id"]), "uuid": uuid_for_row(conn, int(found["id"])),
                 "project": found.get("project_name") or "", "family": found.get("agent_family") or ""}
     except (sqlite3.Error, KeyError, TypeError, ValueError) as exc:
         logger.debug("session_event_identity_read_failed", error_type=type(exc).__name__)

@@ -14,7 +14,7 @@ import { setLocale } from '../i18n/index.svelte';
 import { activeFlyout } from './flyout.svelte';
 import { tabFlags } from './fixtures/tab-flags.svelte';
 import { FLOW_TAB, REPO, flyout, press, rail, railOn, setupRail, settle, teardownRail } from './fixtures/rail-harness';
-import { registerSwarmFlyout } from '../../cplugs/huddle/swarm-flyout';
+import { registerSwarmFlyout } from '../../plugins/huddle/swarm-flyout';
 
 // The swarm slide-out is the Task Manager plugin's, so the test registers it; the harness no longer does.
 registerSwarmFlyout();

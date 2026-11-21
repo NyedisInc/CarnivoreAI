@@ -47,9 +47,9 @@
   "status": "beta",
   "summary": "with the save plugin on (it ships off), every killed or removed session leaves a compressed conversation backup of its conversation, sleep or restart keep one rotating emergency copy, and a conversation still being written gets a fresh copy every 30 minutes.",
   "surfaces": [
-    "web/src/cplugs/save/SessionTab.svelte",
-    "web/src/cplugs/save/SaveSettings.svelte",
-    "web/src/cplugs/save/RestorePoints.svelte"
+    "web/src/plugins/save/SessionTab.svelte",
+    "web/src/plugins/save/SaveSettings.svelte",
+    "web/src/plugins/save/RestorePoints.svelte"
   ],
   "updated": "2026-10-21",
   "where": [

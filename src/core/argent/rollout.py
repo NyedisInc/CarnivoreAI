@@ -15,6 +15,7 @@ from src.core.argent import health, outage, row_state, rollout_store as store
 from src.core.argent import settings as settings_module
 from src.core.argent.rebuild import CannotRebuild
 from src.core.argent.runtime import get_runtime
+from src.core.attention.codex_pane_home import codex_home_for_row
 from src.core.auto_sleep import live_work
 from src.core.budget_hold.store import STORE
 from src.core.hosts.identity import is_remote_info
@@ -23,7 +24,7 @@ from src.core.session_instance_rekey import IDENTITY_CANNOT_DETERMINE
 from src.core.session_respawn import LIVE_RESTART_REASON_ARGENT_ROLLOUT
 from src.core.session_resume_target import CONVERSATION_RESUMED
 from src.core.session_transcript_presence import CONVERSATION_ABSENT, CONVERSATION_PRESENT, family_conversation_presence
-from src.cplugs.sdk import ports
+from src.plugins.sdk import ports
 
 logger = structlog.get_logger()
 
@@ -168,8 +169,10 @@ class RolloutEngine:
         target = await asyncio.to_thread(self._manager._resume_target_for_tmux_name, info.tmux_session, self._manager.tmux_socket_name())
         if target.outcome != CONVERSATION_RESUMED or not target.claude_session_uuid:
             return NO_CONVERSATION
-        presence = await asyncio.to_thread(family_conversation_presence, info.agent_family, target.claude_session_uuid,
-                                           working_dir=getattr(info.session, "working_dir", None))
+        presence = await asyncio.to_thread(
+            family_conversation_presence, info.agent_family, target.claude_session_uuid,
+            working_dir=getattr(info.session, "working_dir", None),
+            codex_home=codex_home_for_row(info.agent_family, self._manager.tmux_socket_name(), info.tmux_session))
         if presence.outcome not in (CONVERSATION_PRESENT, CONVERSATION_ABSENT):
             return NO_CONVERSATION
         size = _size(presence.path) if presence.outcome == CONVERSATION_PRESENT else 0
@@ -406,6 +409,11 @@ async def resume_at_boot() -> None:
 async def stop() -> None:
     task, _timer.task = _timer.task, None
     if task is not None and not task.done():
+        owner = task.get_loop()
+        if owner is not asyncio.get_running_loop():
+            if not owner.is_closed():
+                owner.call_soon_threadsafe(task.cancel)
+            return
         task.cancel()
         with suppress(asyncio.CancelledError):
             await task

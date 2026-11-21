@@ -1,0 +1,59 @@
+{
+  "api_routes": [
+    "GET /api/v1/pack/machines",
+    "GET /api/v1/pack/reconnect",
+    "PUT /api/v1/pack/reconnect",
+    "PUT /api/v1/pack/successors",
+    "PUT /api/v1/pack/eligible",
+    "POST /api/v1/pack/interim/confirm"
+  ],
+  "area": "settings",
+  "docs": [
+    "docs/pack.md",
+    "docs/federation.md",
+    "docs/phone-link.md",
+    "docs/computers.md"
+  ],
+  "examples": [
+    "Carry a laptop to a coffee shop: it falls off the home network, finds its main again through the relay, and the pack page says via relay until it is back on a direct link.",
+    "Turn off the machine that is main for a few minutes and the first computer you opted in steps up, limited, until the original is back.",
+    "Reorder who steps up first and opt a computer out of ever taking over."
+  ],
+  "how_to": [
+    "Open pack, computers, then the pack settings panel on the right: the reconnect and takeover section holds the switches and the successor order.",
+    "Turn on use the relay when the direct link is gone to let a computer reach its main through carnivore.ai when the direct link is down (the weaker protection note sits at that switch).",
+    "Turn on take over when main is gone on a computer, then opt computers in with the switch beside each name and move them up or down; only main edits the order.",
+    "When this computer follows a takeover main it says read only until you confirm; press confirm new main on each computer that should follow it. The original main takes the role back by itself once it is linked and stable for 5 minutes."
+  ],
+  "id": "pack-reconnect",
+  "issues": [
+    2980
+  ],
+  "keywords": [
+    "pack",
+    "reconnect",
+    "takeover",
+    "relay",
+    "beacon",
+    "successor",
+    "main",
+    "alpha",
+    "failover"
+  ],
+  "media_exempt": "The section needs a live pack of two or more computers, one of them cut off from its main, to show the state lines and the order; the capture is recorded with the release run.",
+  "name": "Pack reconnect and takeover",
+  "since": "2026-11-13",
+  "status": "beta",
+  "summary": "a computer that falls off its main finds its way back by the relay or a LAN beacon, and if main stays gone an opted-in successor takes over with limited powers until the original returns, with no vote and no outside service.",
+  "surfaces": [
+    "web/src/lib/pack-roster/PackReconnect.svelte",
+    "web/src/lib/pack-roster/roster-model.ts",
+    "src/core/pack/machines/reconnect_view.py",
+    "src/core/mcp/pack_machines_tools.py",
+    "src/api/pack_machines_routes.py"
+  ],
+  "updated": "2026-11-13",
+  "where": [
+    "Pack, computers tab, pack settings panel (the gear in the title strip), section reconnect and takeover."
+  ]
+}

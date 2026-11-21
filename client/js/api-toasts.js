@@ -8,10 +8,10 @@ if (typeof API !== 'function') {
     );
 }
 
-Object.assign(API.prototype, {
+extendPrototype(API, {
     async getAllToasts({ unackedOnly = true, limit = null } = {}) {
         const params = [`unacked=${unackedOnly ? 'true' : 'false'}`];
         if (limit) params.push(`limit=${encodeURIComponent(limit)}`);
         return await this.call(`/toasts?${params.join('&')}`);
     },
-});
+}, 'api-toasts.js');

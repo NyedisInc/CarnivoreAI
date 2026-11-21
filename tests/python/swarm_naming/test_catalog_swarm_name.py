@@ -8,7 +8,7 @@ CATALOG = Path(__file__).resolve().parents[3] / "client" / "js" / "i18n" / "cata
 ENTRY = re.compile(r"'(?P<key>[A-Za-z0-9_.]+)'\s*:\s*'(?P<value>(?:[^'\\]|\\.)*)'")
 OLD_NAME = re.compile(r"\b(packs?|alpha)\b", re.IGNORECASE)
 ALLOWED = {"skill.browse.packs.heading"}
-PACK_MEANS_MACHINES = ("pack.", "projects.page.pack", "projects.page.action.pack", "projects.page.tag.pack",
+PACK_MEANS_MACHINES = ("pack.", "projects.page.pack", "projects.page.action.pack", "projects.page.action.move_computer", "projects.page.tag.pack",
                        "gallery.preset.pack_", "ai.feature.pack_", "warez.kind.chip.loadout", "approvals.display.verb.pack",
                        "hosts.tab.pack", "opscenter.nav.hosts", "viz.pack", "first_run.", "computers.",
                        "app_alert.source.pack_skills", "app_alert.pack_skills.", "sidebar.pack.", "drawer.pack.",
@@ -16,7 +16,9 @@ PACK_MEANS_MACHINES = ("pack.", "projects.page.pack", "projects.page.action.pack
                        "notify.type.pack.skills.", "notify.copy.pack.skills.", "menubar.setup.joined",
                        "roster.",
                        "pack_knock.", "notify.type.computer.knock.", "notify.copy.computer.knock.",
-                       "skills.prov.consent_pack")
+                       "skills.prov.consent_pack",
+                       "automations.placement.", "launch_picker.computer.", "api.error.requirement_unmet", "api.error.pack_not_running",
+                       "notify.routing.group.when.security")
 ALPHA_IS_THE_LEAD = ("pack.machines.", "pack.work.", "app_alert.pack_skills.", "drawer.pack.alpha", "skills.pack.",
                      "notify.type.pack.skills.")
 ALPHA = re.compile(r"\balpha\b", re.IGNORECASE)

@@ -1,4 +1,4 @@
-# Rung ledger of the huddle plugin's legacy ladder (src/cplugs/huddle/store.py MIGRATIONS), one line per rung.
+# Rung ledger of the huddle plugin's legacy ladder (src/plugins/huddle/store.py MIGRATIONS), one line per rung.
 # H<n> <sha256 of the rung's exact SQL text> <author, - = before the ledger> <slug>
 # Frozen at 48 (huddle.freeze). Append-only; see docs/maintenance-history.md and issue #1711.
 H1 7151ca0878b1d352a1728d125ad3046db6183651657a6bb8d9907e47f93bfafe - initial-items-messages-reads

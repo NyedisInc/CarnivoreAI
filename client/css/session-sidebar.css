@@ -48,7 +48,7 @@
     position: fixed;
     inset: 0;
     background: var(--oc-backdrop);
-    z-index: 1090;
+    z-index: var(--oc-z-scrim);
 }
 
 .session-sidebar-backdrop[hidden] {
@@ -64,7 +64,7 @@
     width: var(--sidebar-dock-w);
     background: var(--oc-ground-chrome);
     border-right: var(--oc-border) solid var(--oc-line-chrome);
-    z-index: 1100;
+    z-index: var(--oc-z-drawer);
     display: flex;
     flex-direction: column;
     transform: translateX(-100%);

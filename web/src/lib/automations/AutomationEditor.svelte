@@ -191,7 +191,7 @@
       </div>
       
       <div class="ap-pn-edb" data-editor-target-block>
-        <TargetPicker part="rest" bind:target {targets} {projects} />
+        <TargetPicker part="rest" bind:target {targets} {projects} automationId={automation?.automation_id} />
         {#if kindWritten && target?.kind !== 'agent'}<FieldHint field="text" text={t(`${kindWritten}.hint`)} eg={t(`${kindWritten}.eg`)} onFill={fillKindText} />{/if}
         <ContractFields bind:projectId bind:misfire bind:retryMax bind:backoffMin bind:runtimeMin {projects} />
       </div>

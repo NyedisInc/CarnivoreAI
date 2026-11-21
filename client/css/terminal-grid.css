@@ -76,7 +76,7 @@ body.ps-grid-surface .header :is(
     #sessionNotesBtn
 ) { display: none; }
 #terminal-grid.ps-grid-focus [data-cell^="terminal:"]:not([data-oc-focus]) .oc-frame-body {
-    opacity: 0.88;
+    opacity: var(--oc-cell-dim);
 }
 #terminal-grid [data-cell^="terminal:"] .terminal-container {
     border: 0;
@@ -106,7 +106,7 @@ body.ps-grid-surface .header :is(
     inset: 0;
     box-sizing: border-box;
     padding: 1px;
-    z-index: 30;
+    z-index: var(--oc-z-region-overlay);
     pointer-events: none;
 }
 

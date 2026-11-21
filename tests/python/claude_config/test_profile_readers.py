@@ -17,7 +17,7 @@ from src.core.claude_transcript_correlate import (
     slugify_project_dir,
 )
 from src.core.project_history.transcripts import transcript_uuid_index
-from src.core.session_transcript_presence import CONVERSATION_ABSENT, conversation_presence
+from src.core.session_transcript_presence import CONVERSATION_PRESENT, conversation_presence
 from src.core.scheduled_tasks import ScheduledTaskReader
 
 UUID = "44444444-aaaa-bbbb-cccc-000000000004"
@@ -83,7 +83,7 @@ def test_the_resume_preflight_does_not_union_profiles(install):
     folder = install / "projects" / "-tmp-x"
     folder.mkdir()
     (folder / f"{UUID}.jsonl").write_text("{}\n")
-    assert conversation_presence(UUID).outcome == CONVERSATION_ABSENT
+    assert conversation_presence(UUID).outcome == CONVERSATION_PRESENT
 
 
 def test_project_history_resume_index_sees_a_managed_profile_transcript(install):

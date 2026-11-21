@@ -1,8 +1,8 @@
 
 from __future__ import annotations
 
-from src.cplugs.save.vault import adopt
-from src.cplugs.save.vault.old_sources import review
+from src.plugins.save.vault import adopt
+from src.plugins.save.vault.old_sources import review
 from tests.python.cplugs.save.old_sources_helpers import incoming_point
 from tests.python.deepsearch.helpers import rec
 from tests.python.deepsearch.test_deepsearch_vault_read import _again, _groups, _register, rig  # noqa: F401

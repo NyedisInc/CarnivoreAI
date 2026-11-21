@@ -6,7 +6,7 @@ import { codeOnly, scanCell, scanCellData, type CellSource, type DataFinding, ty
 import { ALLOWED, DATA_KNOWN, DATA_KNOWN_CEILING, KNOWN, KNOWN_CEILING, PLUGIN_KNOWN, excusedRules } from './menu-rules';
 
 const CELLS = fileURLToPath(new URL('../../cells', import.meta.url));
-const PLUGINS = fileURLToPath(new URL('../../../cplugs', import.meta.url));
+const PLUGINS = fileURLToPath(new URL('../../../plugins', import.meta.url));
 const DRAFT_ROOT = process.env['MENU_CONFORMANCE_ROOT'] ?? '';
 
 function sourcesOf(dir: string, base = ''): CellSource[] {

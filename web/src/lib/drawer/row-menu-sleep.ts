@@ -3,6 +3,7 @@ import { confirmOk } from '../confirm-ok/confirm-ok';
 import type { SidebarPick } from '../legacy-globals';
 import { say, tr } from '../item-menu/run/run-env';
 import { nonEmptyErrorMessageOr } from '../errors/failure-reason';
+import { restartNotice } from '../../../../client/js/labels/recent-session.js';
 
 export interface SleepCtx {
     name: string;
@@ -13,6 +14,8 @@ export interface SleepCtx {
 
 interface WakeAnswer { status?: string; code?: string; detail?: string; session_id?: string | null }
 
+interface RestartAnswer { conversation?: string | null; title_carried?: string | null; row_reused?: boolean | null; detail?: string | null }
+
 export interface WakeOutcome { started: boolean; sessionId: string | null }
 
 interface PickerChoice { agentType?: string; account?: string }
@@ -22,7 +25,7 @@ interface SleepGlobals {
         sleepSession(uuid: string): Promise<{ status?: string; detail?: string } | undefined>;
         wakeSession(uuid: string, agentType?: string | null, account?: string | null, startFresh?: boolean): Promise<WakeAnswer | undefined>;
         killAsleepSession(uuid: string): Promise<unknown>;
-        restartSession(uuid: string): Promise<unknown>;
+        restartSession(uuid: string): Promise<RestartAnswer | undefined>;
         deleteSessionRecord(uuid: string): Promise<unknown>;
     };
     SessionRestartPicker?: {
@@ -105,7 +108,7 @@ export async function offerFresh(name: string, label: string, sessionUuid: strin
 export async function pickAndWake(name: string, label: string, sessionUuid: string): Promise<WakeAnswer | null> {
     const picker = g().SessionRestartPicker;
     if (!picker || typeof picker.open !== 'function') return null;
-    const choice = await picker.open(name, label, null, sessionUuid);
+    const choice = await picker.open('', label || name, null, sessionUuid);
     if (!choice || !choice.agentType) return null;
     return (await g().API!.wakeSession(sessionUuid, choice.agentType, choice.account)) ?? null;
 }
@@ -183,13 +186,16 @@ export async function runReopen(ctx: SleepCtx): Promise<boolean> {
     if (!ctx.sessionUuid) { say(ctx, tr('session.wake.no_uuid')); return false; }
     const nav = g().NavigationGeneration ? g().NavigationGeneration!.begin('reopen:' + ctx.name) : null;
     let started = false;
+    let answer: RestartAnswer | null = null;
     try {
-        await g().API!.restartSession(ctx.sessionUuid);
+        answer = (await g().API!.restartSession(ctx.sessionUuid)) ?? null;
         started = true;
     } catch (err) {
         console.error('[SessionRowMenuSleep] reopen failed:', err);
         say(ctx, tr('session.reopen.failed', { name, reason: reasonOf(err) }));
     }
+    const notice = started ? restartNotice(answer, tr) : null;
+    if (notice) say(ctx, notice);
     await refresh();
     if (started && g().WakeFocus) void g().WakeFocus!.afterWake(ctx.sessionUuid, nav);
     return started;

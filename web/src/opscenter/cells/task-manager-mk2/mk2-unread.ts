@@ -1,9 +1,9 @@
-import { entriesOf } from '../../../cplugs/huddle/task-manager-design/entries';
-import { stateOfItem } from '../../../cplugs/huddle/task-manager-design/adapter';
-import { newMessageIds } from '../../../cplugs/huddle/task-manager-design/task-view';
-import { newCount, type Task, type TaskState } from '../../../cplugs/huddle/task-manager-design/model';
-import { unread } from '../../../cplugs/huddle/task-manager-design/unread';
-import type { HuddleItem, TaskManagerGroup } from '../../../cplugs/huddle/huddle-model';
+import { entriesOf } from '../../../plugins/huddle/task-manager-design/entries';
+import { stateOfItem } from '../../../plugins/huddle/task-manager-design/adapter';
+import { newMessageIds } from '../../../plugins/huddle/task-manager-design/task-view';
+import { newCount, type Task, type TaskState } from '../../../plugins/huddle/task-manager-design/model';
+import { unread } from '../../../plugins/huddle/task-manager-design/unread';
+import type { HuddleItem, TaskManagerGroup } from '../../../plugins/huddle/huddle-model';
 
 const INACTIVE: ReadonlySet<TaskState> = new Set<TaskState>(['closed', 'later']);
 

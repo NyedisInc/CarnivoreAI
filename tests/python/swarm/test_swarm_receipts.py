@@ -218,6 +218,6 @@ def test_a_pass_or_a_timeout_sends_the_question_up(env):
     env.conn.execute("UPDATE swarm_question_hops SET at = ? WHERE question_id = ? AND outcome = 'timeout'", (past, q2["question_id"]))
     run(routing.sweep(object()))
     assert state_of(env, q2["question_id"]) == "open"
-    with pytest.raises(routing.QuestionRefused):
-        env.as_agent(env.loki)
-        run(answers.answer(VIEW, None, {"question_id": q2["question_id"], "text": "late", "fact_ids": []}))
+    env.as_agent(env.loki)
+    late = run(answers.answer(VIEW, None, {"question_id": q2["question_id"], "text": "late", "fact_ids": []}))
+    assert late["state"] == "answered", late

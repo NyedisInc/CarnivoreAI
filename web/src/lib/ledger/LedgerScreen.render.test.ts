@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, test } from 'vitest';
 import { mount, unmount } from 'svelte';
 
@@ -262,9 +263,11 @@ describe('two accounts and a total', () => {
         expect(document.querySelectorAll('[data-ledger="loop"]')).toHaveLength(1);
     });
 
-    test('the screen scrolls inside its own container, so a phone never scrolls the page', async () => {
+    test('the screen scrolls in the frame\'s one scroller, and the frame keeps the title strip put below 1024', async () => {
         await paint(LEDGER);
-        expect(document.querySelectorAll('.oc-page__scroll')).toHaveLength(1);
+        expect(document.querySelectorAll('[data-frame-region=body] > .oc-page__scroll')).toHaveLength(1);
+        const css = readFileSync('src/opscenter/page-frames.css', 'utf8');
+        expect(css).toMatch(/@media \(max-width: 1023px\) \{\s*\.oc-page\[data-frame\] > \.oc-titlebar \{\s*position: sticky;\s*top: 0;/);
     });
 });
 
@@ -335,5 +338,23 @@ describe('opened on one account (the agents drawer re-add link)', () => {
         await paint(LEDGER);
         expect(document.querySelectorAll('[data-ledger="row"][data-landed]')).toHaveLength(0);
         expect(document.querySelectorAll('[data-ledger="row"][data-account-id]')).toHaveLength(2);
+    });
+});
+
+describe('the column frame (#2775, S1)', () => {
+    test('the page wears the column frame and the FRAME draws the scroller and the stacked main column', async () => {
+        await paint(LEDGER);
+        expect(document.querySelector('.oc-page')?.getAttribute('data-frame')).toBe('column');
+        const row = document.querySelector(
+            '[data-frame-region=body] > .oc-page__scroll > .oc-page__main.oc-page__main--stack [data-ledger="row"]',
+        );
+        expect(row).not.toBeNull();
+        expect(document.querySelectorAll('.oc-page__scroll')).toHaveLength(1);
+    });
+
+    test('the screen draws none of the frame markup itself', () => {
+        const source = readFileSync('src/lib/ledger/LedgerScreen.svelte', 'utf8').replace(/<!--[\s\S]*?-->/g, '');
+        expect(source).not.toMatch(/class="oc-page__(scroll|main)/);
+        expect(source).toMatch(/<Page[^>]*frame="column"/s);
     });
 });

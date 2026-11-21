@@ -22,8 +22,8 @@ from src.core.argent.lifecycle import PORT_NAME
 from src.core.argent.runtime import Runtime, set_runtime
 from src.core.argent.store import ArgentStore
 from src.core.argent.token_store import TokenStore, TokenUnavailable
-from src.cplugs import argent as argent_cplug
-from src.cplugs.sdk import ports
+from src.plugins import argent as argent_cplug
+from src.plugins.sdk import ports
 
 ROOT = Path(__file__).resolve().parents[4]
 FIXTURES = ROOT / "tests" / "fixtures" / "argent"

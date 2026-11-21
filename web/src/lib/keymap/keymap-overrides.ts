@@ -1,6 +1,5 @@
-import { chordsOf } from '../../../../client/js/keymap/effective.js';
+import { chordsOf, conflicts } from '../../../../client/js/keymap/effective.js';
 import { normalize } from '../../../../client/js/keymap/chord.js';
-import { scopesOverlap } from '../../../../client/js/keymap/scopes.js';
 import { refusal } from '../../../../client/js/keymap/protected.js';
 import type { KeyboardFamily, KeymapAction } from './keymap-view';
 
@@ -53,13 +52,19 @@ export interface Verdict {
 /* at the same time */
 export function judge(action: KeymapAction, chord: string, family: KeyboardFamily, all: readonly KeymapAction[], overrides: KeymapOverrides): Verdict {
     const refused = refusal(family, chord, action.scope, all);
-    const hasCmd = chord.split('+').includes('cmd');
+    const candidate = { ...action, rebindable: true };
+    const after = { ...overrides, [family]: { ...(overrides[family] ?? {}), [action.id]: [chord] } };
+    const registry = all.map((a) => (a.id === action.id ? candidate : a));
+    const clashing = new Set(
+        (conflicts(registry, family, after) as { chord: string; a: string; b: string }[])
+            .filter((c) => c.chord === chord && (c.a === action.id || c.b === action.id))
+            .map((c) => (c.a === action.id ? c.b : c.a)),
+    );
     const holders = all.filter((a) => a.id !== action.id && a.category !== 'standard' && (chordsOf(a, family, overrides) as string[]).includes(chord));
-    const shared = (a: KeymapAction): boolean => a.mayShare && action.mayShare;
     return {
         refused,
-        clashes: holders.filter((a) => !shared(a) && (a.scope === action.scope || scopesOverlap(a.scope, action.scope, hasCmd))),
-        overlaps: holders.filter(shared),
+        clashes: holders.filter((a) => clashing.has(a.id)),
+        overlaps: holders.filter((a) => !clashing.has(a.id)),
     };
 }
 

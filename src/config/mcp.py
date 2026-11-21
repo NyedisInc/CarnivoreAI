@@ -11,7 +11,7 @@ class McpConfig(BaseModel):
 
     Fields:
         enabled: the kill switch. False makes ``/mcp`` answer 404.
-        gate_cross_session_actions: when True (default OFF, Alex (Adoom666), 2026-10-12) an agent's
+        gate_cross_session_actions: when True (default OFF, the owner, 2026-10-12) an agent's
             keystroke, restart or stop aimed at ANOTHER session waits for
             the owner's decision. Read by the write-tool slice; unused by
             the read-only tools.
@@ -37,7 +37,7 @@ class McpConfig(BaseModel):
         agent_swarm_tools: every ``swarm_*`` tool and the swarm words of the guide (#1685; default ON, Alex's).
         agent_app_settings_tools: the app-settings tools (drawer pins and groups, preferences, colors, skills, mods,
             catalog, plugin rebuild, system settings; ``tool_families.py`` lists them) for every MCP caller on this
-            computer (#1754, Alex (Adoom666), 2026-10-13; default OFF: an agent rarely needs to rearrange the app).
+            computer (#1754, the owner, 2026-10-13; default ON since the owner, 2026-11-20: agents add tabs to Layouts).
             All three are read live by ``src/core/mcp/agent_tool_switches.py``.
         trusted_proxy_hosts: exact IP addresses of a reverse proxy the owner runs (Joe (ccsliinc), 2026-10-13, #1741;
             default EMPTY, which is the loopback-only gate exactly). A request from one of them may reach ``/mcp`` with
@@ -61,6 +61,6 @@ class McpConfig(BaseModel):
     bridge_migration: bool = True
     agent_huddle_tools: bool = False
     agent_swarm_tools: bool = True
-    agent_app_settings_tools: bool = False
+    agent_app_settings_tools: bool = True
     trusted_proxy_hosts: list[str] = Field(default_factory=list)
     tool_overrides: dict[str, bool] = Field(default_factory=dict)

@@ -66,12 +66,20 @@ def check_argv(argv: Sequence[str], *, air_gap: bool) -> None:
 
 
 def run(argv: Sequence[str], *, air_gap: bool, cwd: Optional[str] = None, env: Optional[Mapping[str, str]] = None,
-        stdin: Optional[bytes] = None, timeout: float = DEFAULT_TIMEOUT) -> subprocess.CompletedProcess:
+        stdin: Optional[bytes] = None, timeout: float = DEFAULT_TIMEOUT, inherit_env: bool = True) -> subprocess.CompletedProcess:
     check_argv(argv, air_gap=air_gap)
     if argv and argv[0] == "git" and not git_guard.git_available():
         return subprocess.CompletedProcess(list(argv), 127, b"", b"git is not installed")
-    merged: Dict[str, str] = {**os.environ, "GIT_TERMINAL_PROMPT": "0", **(env or {})}
+    merged: Dict[str, str] = {**(os.environ if inherit_env else {}), "GIT_TERMINAL_PROMPT": "0", **(env or {})}
     return subprocess.run(list(argv), cwd=cwd, env=merged, input=stdin, capture_output=True, timeout=timeout, check=False)
+
+
+def stream(argv: Sequence[str], *, air_gap: bool, env: Optional[Mapping[str, str]] = None) -> subprocess.Popen:
+    check_argv(argv, air_gap=air_gap)
+    if argv and argv[0] == "git" and not git_guard.git_available():
+        raise FileNotFoundError("git is not installed")
+    merged: Dict[str, str] = {**os.environ, "GIT_TERMINAL_PROMPT": "0", **(env or {})}
+    return subprocess.Popen(list(argv), env=merged, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 
 
 def choose_rung(*, purpose: str, air_gap: bool, has_git: bool, has_remote: bool) -> Choice:

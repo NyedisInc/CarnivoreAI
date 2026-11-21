@@ -205,7 +205,7 @@ def _wants_resend_card(agent_id: int) -> bool:
 
 
 async def _post_resend_card(agent_id: int, thread_key: str, display_name: str) -> None:
-    from src.cplugs.sdk.swarm import SwarmError
+    from src.plugins.sdk.swarm import SwarmError
     from src.core.swarm import alerts, push, thread_port
 
     port = thread_port.get()

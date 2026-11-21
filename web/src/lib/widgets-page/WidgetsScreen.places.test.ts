@@ -132,6 +132,35 @@ describe('the fits filter', () => {
     });
 });
 
+describe('the nav frame (#2775)', () => {
+    test('the rail is the frame side, the search the header find slot, the menus the tool row, the buttons the frame header button', async () => {
+        const root = await show();
+        const page = root.querySelector('.oc-page.wp-screen')!;
+        expect(page.getAttribute('data-frame')).toBe('nav');
+        const side = page.querySelector('[data-frame-region="side"]')!;
+        expect(side.querySelector('.wp-rail [data-rail="place:glance"]')).not.toBeNull();
+        expect(page.querySelector('[data-frame-region="body"] .wp-rail')).toBeNull();
+        expect(page.querySelector('[data-frame-region="find"] input')).not.toBeNull();
+        expect(page.querySelector('[data-frame-region="tools"] .oc-toolbar')).not.toBeNull();
+        expect(page.querySelector('.oc-titlebar .oc-toolbar')).toBeNull();
+        for (const key of ['reset-bars', 'help']) {
+            const button = page.querySelector(`.oc-titlebar [data-k="${key}"]`)!;
+            expect(button.closest('[data-btn-density="frame"]')).not.toBeNull();
+            expect(button.hasAttribute('data-size')).toBe(false);
+        }
+        expect(page.querySelector('[data-frame-region="frame"][data-scroll="self"] [data-frame-region="body"][data-scroll="self"] > .oc-page__fill > .wp-body > .oc-page__scroll')).not.toBeNull();
+    });
+
+    test('a rail press narrows the cards and names the lens on the phone picker', async () => {
+        const root = await show();
+        root.querySelector<HTMLButtonElement>('[data-frame-region="side"] [data-rail="st:options"]')!.click();
+        await settle();
+        const withOptions = manifests.filter((m) => m.settings !== undefined).length;
+        expect(root.querySelectorAll('li.wp-card').length).toBe(withOptions);
+        expect(root.querySelector('.oc-page__picker [data-btn]')?.textContent?.trim()).toBe(t('widgets.places.rail.options'));
+    });
+});
+
 describe('the sticky podium', () => {
     test('the five places sit in the sticky wrapper and the stylesheet pins it', async () => {
         const root = await show();
@@ -148,6 +177,19 @@ describe('the sticky podium', () => {
         await settle();
         expect(root.querySelectorAll('.wp-stick .wp-place').length).toBe(5);
         expect(root.querySelector('.wp-place[data-place="bottom"]')!.hasAttribute('data-chosen')).toBe(true);
+    });
+});
+
+describe('one body (#2775)', () => {
+    test('the page layout sits inside the frame\'s one body, with the pane open or not', async () => {
+        const root = await show();
+        expect(root.querySelectorAll('.oc-page__body').length, 'no pane').toBe(1);
+        expect(root.querySelector('.oc-page__body > .oc-page__fill > .wp-body > .oc-page__scroll')).not.toBeNull();
+        card(root, 'core.activity-log').querySelector<HTMLButtonElement>('[data-card-open]')!.click();
+        await settle();
+        expect(root.querySelectorAll('.oc-page__body').length, 'pane open').toBe(1);
+        expect(root.querySelector('.oc-page__fill > .wp-body.wp-body--reading > .wp-detail')).not.toBeNull();
+        expect(root.querySelectorAll('.oc-page__scroll').length, 'one list column').toBe(1);
     });
 });
 

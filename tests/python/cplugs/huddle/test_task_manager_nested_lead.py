@@ -5,10 +5,10 @@ import asyncio
 
 import pytest
 
-from src.cplugs.host import capabilities, runtime
-from src.cplugs.huddle import service
-from src.cplugs.huddle.roles import gone, lead, port as roles_port, retrofit
-from src.cplugs.huddle.roles.store import RoleStore
+from src.plugins.host import capabilities, runtime
+from src.plugins.huddle import service
+from src.plugins.huddle.roles import gone, lead, port as roles_port, retrofit
+from src.plugins.huddle.roles.store import RoleStore
 from tests.python.cplugs.huddle.roles_rig import BASE, SwarmStub, aged, give_asleep, give_rows, use_swarm
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_tags import store_of

@@ -2,7 +2,7 @@
 <script lang="ts">
   import { t } from '../i18n/index.svelte';
   import SearchField from '../../opscenter/ui/SearchField.svelte';
-  import { floorSource } from '../../cplugs/sdk';
+  import { floorSource } from '../../plugins/sdk';
   import { createBoardData } from './board-data.svelte';
   import type { BoardScope } from './board-types';
   import { BOARD_VIEWS, VIEW_COMPONENTS, readView, writeView, type BoardView } from './views';

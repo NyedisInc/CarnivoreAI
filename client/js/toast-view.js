@@ -9,7 +9,7 @@ const AUTO_SLEEP_TOAST_KIND = 'AutoSlept';
 
 const FADE_MS = 220;
 
-Object.assign(ToastManager.prototype, {
+extendPrototype(ToastManager, {
     subscribe(listener) {
       this._viewListeners.add(listener);
       listener(this._view);
@@ -193,6 +193,6 @@ Object.assign(ToastManager.prototype, {
       this._expanded = !this._expanded;
       this._scheduleRender();
     },
-});
+}, 'toast-view.js');
 
 const OVERFLOW_WORDED_SEVERITY = 2;

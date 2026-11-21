@@ -1,5 +1,5 @@
 
-export const BADGE_ORDER = ['progress', 'ports', 'pr'] as const;
+export const BADGE_ORDER = ['progress', 'ports', 'pr', 'jobs'] as const;
 export type BadgeKind = (typeof BADGE_ORDER)[number];
 
 export const SLOT_MAX_ITEMS = 5;

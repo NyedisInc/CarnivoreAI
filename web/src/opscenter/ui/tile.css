@@ -8,7 +8,7 @@
     height: var(--tile-size, 28px);
     box-sizing: border-box;
     border: 1px solid var(--oc-line-surface);
-    border-radius: var(--oc-control-radius, 2px);
+    border-radius: var(--oc-radius-control);
     background: var(--oc-surface-2);
     color: var(--oc-text-secondary);
   }

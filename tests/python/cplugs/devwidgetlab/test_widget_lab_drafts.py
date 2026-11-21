@@ -13,9 +13,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.devwidgetlab import errors
-from src.cplugs.devwidgetlab.drafts import brief, create, preview, session, ship, starter, store
-from src.cplugs.sdk import signed_links
+from src.plugins.devwidgetlab import errors
+from src.plugins.devwidgetlab.drafts import brief, create, preview, session, ship, starter, store
+from src.plugins.sdk import signed_links
 from tests.python.cplugs.devwidgetlab.test_widget_lab_routes import BASE, host_app  # noqa: F401
 from tests.python.cplugs.devwidgetlab.draft_helpers import fake_repo, new_draft
 from tests.python.cplugs.owner import turn_on
@@ -307,7 +307,7 @@ def test_shipping_a_draft_with_problems_writes_nothing(tmp_path: Path) -> None:
 
 
 def test_the_ship_script_is_a_dry_run_unless_told_to_apply(tmp_path: Path, capsys) -> None:
-    from src.cplugs.devwidgetlab.drafts import ship_cli as ship_draft
+    from src.plugins.devwidgetlab.drafts import ship_cli as ship_draft
 
     storage = tmp_path / "s"
     made = new_draft(storage)

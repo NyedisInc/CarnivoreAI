@@ -1,6 +1,6 @@
 /* the widget menu */
 import { isTaskState, type TaskState } from '../../../lib/base/task-wrapper';
-import type { ViewChip } from '../../../cplugs/huddle/task-manager-view-filter.svelte';
+import type { ViewChip } from '../../../plugins/huddle/task-manager-view-filter.svelte';
 
 export const MK2_DEFAULT_STATE: TaskState = 'compact';
 

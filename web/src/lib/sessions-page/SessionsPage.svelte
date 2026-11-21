@@ -5,7 +5,7 @@
     import { onMount, tick } from 'svelte';
     import { t as reactiveT } from '../i18n/index.svelte';
     import Page from '../../opscenter/ui/Page.svelte';
-    import Field from '../base/Field.svelte';
+    import SearchField from '../../opscenter/ui/SearchField.svelte';
     import State from '../base/State.svelte';
     import Toolbar from '../base/Toolbar.svelte';
     import { viewport } from '../../opscenter/engine/viewport.svelte';
@@ -19,7 +19,6 @@
     import PivotView from './PivotView.svelte';
     import SessionPanel from './SessionPanel.svelte';
     import TimelineView from './TimelineView.svelte';
-    import TitleStrip from './TitleStrip.svelte';
     import TitleActions from './TitleActions.svelte';
     import ViewSwitch from './ViewSwitch.svelte';
     import MigrateWizard from '../pack-migrate/MigrateWizard.svelte';
@@ -93,6 +92,7 @@
     const historyFailed = $derived(data.status === 'error');
     const panelRow = $derived(route.session ? (rows.find((r) => r.s.session_uuid === route.session) ?? data.closedRows.find((r) => r.s.session_uuid === route.session) ?? null) : null);
     const narrow = $derived(viewport.narrow && !embedded);
+    const summaryInBar = $derived(!viewport.wide);
 
     const folds = $derived(view === 'list' ? list : view === 'timeline' ? timeline : undefined);
 
@@ -218,29 +218,26 @@
 </script>
 
 {#snippet findField()}
-    <Field variant="search" block type="search" bind:value={filters.q} placeholder={t('sessions.page.find.placeholder')} label={t('sessions.page.find.label')}
-        clearLabel={t('sessions.page.find.clear')} autocomplete="off" spellcheck="false" onkeydown={findKey} />
+    <SearchField value={filters.q} onInput={(next) => (filters.q = next)} placeholder={t('sessions.page.find.placeholder')} ariaLabel={t('sessions.page.find.label')} onkeydown={findKey} />
 {/snippet}
 
 {#snippet pageSub()}
-    <TitleStrip title={t('sessions.page.title')} onNewProject={() => projectCtl.create('project')} onNewCompany={() => void projectCtl.createCompany()} onNewSession={() => projectCtl.create('session')} {showHidden} onToggleHidden={toggleHidden} showFold={!!folds} allOpen={folds?.allExpanded() ?? false} onToggleAll={() => folds?.toggleAll()} find={findField} {counts} listingDown={data.listingDown} {historyFailed} {t} />
+    <FleetSummary {counts} listingDown={data.listingDown} {historyFailed} {t} />
 {/snippet}
 
-{#snippet phoneBar()}
-    <div class="sp-phonebar">
-        <div class="sp-tbl">
-            <span class="pl-title" aria-hidden="true">{t('sessions.page.title')}</span>
-            <TitleActions onNewProject={() => projectCtl.create('project')} onNewCompany={() => void projectCtl.createCompany()} onNewSession={() => projectCtl.create('session')} {showHidden} onToggleHidden={toggleHidden} showFold={!!folds} allOpen={folds?.allExpanded() ?? false} onToggleAll={() => folds?.toggleAll()} {t} />
-        </div>
-        <div class="sp-find">{@render findField()}</div>
-        <FleetSummary {counts} listingDown={data.listingDown} {historyFailed} {t} />
-    </div>
+{#snippet pageActions()}
+    <TitleActions onNewProject={() => projectCtl.create('project')} onNewCompany={() => void projectCtl.createCompany()} onNewSession={() => projectCtl.create('session')} {showHidden} onToggleHidden={toggleHidden} showFold={!!folds} allOpen={folds?.allExpanded() ?? false} onToggleAll={() => folds?.toggleAll()} {t} />
 {/snippet}
 
 {#snippet pageNotes()}
     {#if shownNotice}<p class="oc-notice" role="status" data-notice>{shownNotice}</p>{/if}
     {#if data.listingDown}<p class="oc-notice" role="status" data-strip="listing">{t('sessions.page.notice.listing_down')}</p>{/if}
     {#if historyFailed}<p class="oc-notice" role="status" data-strip="history">{data.errorText || t('sessions.page.notice.history_failed')}</p>{/if}
+{/snippet}
+
+{#snippet toolRow()}
+    {#if summaryInBar}{@render pageSub()}{/if}
+    {#if narrow}{@render pageActions()}{/if}
 {/snippet}
 
 {#snippet filterBar()}
@@ -256,13 +253,17 @@
         bind:root={pageRoot}
         onkeydown={pageKey}
         onClose={embedded ? undefined : close}
-        sub={narrow ? undefined : pageSub}
-        bar={narrow ? phoneBar : undefined}
+        frame="nav"
+        scroll="self"
+        sub={summaryInBar ? undefined : pageSub}
+        find={findField}
+        actions={narrow ? undefined : pageActions}
+        bar={summaryInBar || narrow ? toolRow : undefined}
         notes={shownNotice || data.listingDown || historyFailed ? pageNotes : undefined}
         data-view={view}
         data-session={route.session ?? undefined}
     >
-        <div class="oc-page__body sp-body">
+        <div class="sp-body">
             <MigrateWizard />
             {#if projectTool}<ProjectToolWindow tool={projectTool.tool} project={projectTool.project} {t} onClose={() => (projectTool = null)} />{/if}
             {#if view !== 'list'}

@@ -35,7 +35,7 @@
       {#if rows.length}
         <dl class="ap-head__rows">
           {#each rows as row, i (i)}
-            <dt class="ap-head__key">{detailLabel(row.key)}</dt>
+            <dt class="ap-head__key">{detailLabel(row.key)}{row.file ? ` ${row.file}` : ''}</dt>
             <dd class="ap-head__value">{row.value}</dd>
           {/each}
         </dl>

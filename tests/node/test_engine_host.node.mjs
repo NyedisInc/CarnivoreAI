@@ -245,7 +245,7 @@ t('adopt: health first; the bind test only runs when nothing answered; the pid i
   const up = sm.slice(sm.indexOf('async engineIsUp('), sm.indexOf('async engineIsUp(') + 400);
   const healthAt = up.indexOf('getHealth('), bindAt = up.indexOf('isPortInUse(');
   assert.ok(healthAt >= 0 && bindAt >= 0 && healthAt < bindAt, 'engineIsUp asks health before the bind test');
-  assert.match(sm, /lsof -nP -iTCP:\$\{port\} -sTCP:LISTEN -t/);
+  assert.match(sm, /findPortHolderPid\(port\) \{\s+return portTrust\.listeners\(port, \{ execFile \}\)/);
   const probed = await require(path.join(macDir, 'engine-host', 'index.js')).createEngineHost({ name: 'detached' }).adopt({
     getHealth: async () => ({ version: '1' }), isPortInUse: async () => assert.fail('bind probe before health'),
     findPortHolderPid: async () => 99, getPort: () => 8000,
@@ -335,23 +335,23 @@ function toggleRig() {
 t('toggles under detached are exactly today: engine = the LaunchAgent, background stays null', () => {
   const { readLogin, setLogin } = require(path.join(macDir, 'login-items.js'));
   const { dir, installer } = toggleRig();
-  assert.deepEqual(readLogin({ installer, dir }), { engine: false, window: false, background: null });
-  assert.deepEqual(setLogin({ installer, launchArgs: () => [], dir, which: 'engine', enabled: true }), { engine: true, window: false, background: null });
-  assert.deepEqual(setLogin({ installer, launchArgs: () => [], dir, which: 'background', enabled: true }), { engine: true, window: false, background: null });
+  assert.deepEqual(readLogin({ installer, dir }), { engine: false, window: false, background: null, launchWindow: true });
+  assert.deepEqual(setLogin({ installer, launchArgs: () => [], dir, which: 'engine', enabled: true }), { engine: true, window: false, background: null, launchWindow: true });
+  assert.deepEqual(setLogin({ installer, launchArgs: () => [], dir, which: 'background', enabled: true }), { engine: true, window: false, background: null, launchWindow: true });
 });
 
 t('toggles under launchd-agent: 1 is the service, 2 the LaunchAgent that opens the app, 3 the window flag and needs 2', () => {
   const { readLogin, setLogin } = require(path.join(macDir, 'login-items.js'));
   const { dir, installer, service } = toggleRig();
   const set = (which, enabled) => setLogin({ installer, service, launchArgs: () => [], dir, which, enabled });
-  assert.deepEqual(readLogin({ installer, service, dir }), { engine: false, window: false, background: false });
-  assert.deepEqual(set('engine', true), { engine: true, window: false, background: false });
+  assert.deepEqual(readLogin({ installer, service, dir }), { engine: false, window: false, background: false, launchWindow: true });
+  assert.deepEqual(set('engine', true), { engine: true, window: false, background: false, launchWindow: true });
   assert.equal(installer.on, false);
-  assert.deepEqual(set('background', true), { engine: true, window: false, background: true });
-  assert.deepEqual(set('window', true), { engine: true, window: true, background: true });
-  assert.deepEqual(set('background', false), { engine: true, window: false, background: false });
-  assert.deepEqual(set('window', true), { engine: true, window: true, background: true });
-  assert.deepEqual(set('engine', false), { engine: false, window: true, background: true });
+  assert.deepEqual(set('background', true), { engine: true, window: false, background: true, launchWindow: true });
+  assert.deepEqual(set('window', true), { engine: true, window: true, background: true, launchWindow: true });
+  assert.deepEqual(set('background', false), { engine: true, window: false, background: false, launchWindow: true });
+  assert.deepEqual(set('window', true), { engine: true, window: true, background: true, launchWindow: true });
+  assert.deepEqual(set('engine', false), { engine: false, window: true, background: true, launchWindow: true });
   assert.equal(service.on, false);
 });
 
@@ -553,11 +553,11 @@ t('#2442: a window whose ADOPTED engine dies while the login service owns it sta
   const quiet = console.log; console.log = () => {};
   try {
     const adopted = mk(false, true);
-    adopted.superviseTick(false);
+    for (let i = 0; i < 3; i++) adopted.superviseTick(false);
     assert.equal(downs.length, 0);
     assert.equal(adopted.state, 'stopped');
-    mk(true, true).superviseTick(false);
-    mk(false, false).superviseTick(false);
+    const a = mk(true, true); const b = mk(false, false);
+    for (let i = 0; i < 3; i++) { a.superviseTick(false); b.superviseTick(false); }
     assert.equal(downs.length, 2);
   } finally { console.log = quiet; }
   const main = fs.readFileSync(path.join(macDir, 'main.js'), 'utf8');
@@ -580,7 +580,34 @@ t('a health miss while a deliberate stop is in flight is not an unexpected death
     assert.equal(m.state, 'running');
     m.stopRequested = false;
     m.superviseTick(false);
+    m.superviseTick(false);
     assert.equal(downs.length, 1);
+  } finally { console.log = quiet; }
+});
+
+t('a running server is declared down only after 3 consecutive missed health probes; a healthy probe resets the count', () => {
+  const real = Module._load;
+  Module._load = function load(request, ...rest) { return request === 'electron' ? { app: { isPackaged: false, getPath: () => os.tmpdir(), getVersion: () => '0' } } : real.call(this, request, ...rest); };
+  let ServerManager;
+  try { ServerManager = require(path.join(macDir, 'server-manager.js')); } finally { Module._load = real; }
+  const downs = [];
+  const m = new ServerManager();
+  m.state = 'running'; m.ownedProcess = true; m.serviceOwnsEngine = () => false; m.superviseDown = (event) => downs.push(event);
+  const quiet = console.log; console.log = () => {};
+  try {
+    m.superviseTick(false);
+    assert.equal(downs.length, 0);
+    assert.equal(m.state, 'running');
+    assert.equal(m.healthDown(), false);
+    m.superviseTick(false);
+    m.superviseTick(true);
+    m.superviseTick(false);
+    m.superviseTick(false);
+    assert.equal(downs.length, 0);
+    m.superviseTick(false);
+    assert.equal(m.healthDown(), true);
+    assert.equal(downs.length, 1);
+    assert.equal(m.state, 'stopped');
   } finally { console.log = quiet; }
 });
 
@@ -618,7 +645,7 @@ t('review S1 (#2442): after an adopted service engine goes quiet the window re-a
   m.getHealth = async () => (healthy ? { ok: 1 } : null);
   m.start = async () => { starts++; };
   const quiet = console.log; console.log = () => {};
-  try { m.superviseTick(false); } finally { console.log = quiet; }
+  try { for (let i = 0; i < 3; i++) m.superviseTick(false); } finally { console.log = quiet; }
   assert.equal(await watchForService(m), false);
   assert.equal(starts, 0);
   healthy = true;

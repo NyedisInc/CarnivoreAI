@@ -78,3 +78,46 @@ def test_write_refuses_while_a_row_grew_and_changes_nothing(tmp_path: Path, monk
     monkeypatch.setattr(ll, "scan_all", lambda: {name: {} for name in ll.SECTIONS})
     assert ll.main(["--write"]) == 0
     assert ll.json.loads(fixture.read_text(encoding="utf-8"))["sections"]["tablists"] == {}
+
+
+def test_a_later_kind_is_first_measured_once_then_only_falls() -> None:
+    kind = "radius"
+    found = {"css_raw_values": {"x.css": {"spacing": 1, kind: 2}, "y.css": {kind: 1, "color": 1}}}
+    known = {"css_raw_values": {"x.css": {"spacing": 1}}}
+    admitted = ll.first_measured(found, known)
+    assert admitted["css_raw_values"] == {"x.css": {"spacing": 1, kind: 2}, "y.css": {kind: 1}}
+    assert known == {"css_raw_values": {"x.css": {"spacing": 1}}}
+    later = {"css_raw_values": {"x.css": {"spacing": 1, kind: 3}, "y.css": {kind: 1}, "z.css": {kind: 1}}}
+    grown, _ = ll.compare(later, ll.first_measured(later, admitted))
+    assert grown == [f"css_raw_values x.css {kind}: 3 > 2", f"css_raw_values z.css {kind}: 1 > 0"]
+
+
+def test_the_js_controls_scan_sees_client_js() -> None:
+    rows = FOUND["js_controls"]
+    assert len(rows) > 20 and all(any(k in c for c in rows.values()) for k in ll.JS_KINDS)
+
+
+def test_negative_control_js_controls_count_code_not_comments() -> None:
+    code = ("el.innerHTML = '<button>a</button><input>';\nconst b = document.createElement('button');\n"
+            "const s = document.createElement(\"select\");\nwrap.insertAdjacentHTML('beforeend', '<textarea></textarea>');\n")
+    assert ll.count_js(code) == {"dom-write": 4, "button": 2, "field": 3}
+    quiet = "// createElement('button')\n/* el.innerHTML = '<input>' */\nif (el.innerHTML == x) {}\nconst u = 'http://a/b'; // <button>\n"
+    assert ll.count_js(quiet) == {"dom-write": 0, "button": 0, "field": 0}
+    assert ll.count_js("const t = '<buttons>'; const i = '<inputs>';") == {"dom-write": 0, "button": 0, "field": 0}
+
+
+def test_negative_control_a_legacy_file_growing_inside_its_row_goes_red() -> None:
+    rel, kinds = next(iter(KNOWN["js_controls"].items()))
+    grown_found = {**FOUND, "js_controls": {**FOUND["js_controls"], rel: {**kinds, "button": kinds.get("button", 0) + 1}}}
+    grown, _stale = ll.compare(grown_found, KNOWN)
+    assert any(line.startswith(f"js_controls {rel}") or rel in line and "button" in line for line in grown), grown
+
+
+def test_the_js_controls_section_was_first_measured_and_a_missing_tree_is_never_clean(tmp_path: Path) -> None:
+    admitted = ll.first_measured(FOUND, {k: v for k, v in KNOWN.items() if k != "js_controls"})
+    assert admitted["js_controls"] == FOUND["js_controls"]
+    try:
+        ll.scan_js(tmp_path / "absent", tmp_path)
+    except FileNotFoundError:
+        return
+    raise AssertionError("a missing client/js read as clean")

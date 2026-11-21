@@ -39,7 +39,7 @@
 }
 
 .mgr .mgr-card--rich .mgr-mark {
-    border-radius: var(--oc-control-radius, 2px);
+    border-radius: var(--oc-radius-control);
 }
 
 .mgr .mgr-card__byline {
@@ -114,7 +114,7 @@
 .mgr .mgr-card__over {
     position: absolute;
     top: var(--oc-space-2);
-    z-index: 1;
+    z-index: var(--oc-z-raised);
     display: flex;
     align-items: center;
     gap: var(--oc-space-2);
@@ -190,7 +190,7 @@
     width: 22px;
     height: 22px;
     border: 1px solid var(--oc-line-surface);
-    border-radius: var(--oc-control-radius, 2px);
+    border-radius: var(--oc-radius-control);
     color: var(--oc-text-muted);
 }
 

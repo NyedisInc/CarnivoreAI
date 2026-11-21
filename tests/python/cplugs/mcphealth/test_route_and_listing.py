@@ -7,6 +7,7 @@ import pytest
 from fastapi import HTTPException
 
 from src.api import mcp_health_listing, mcp_reconnect_routes
+from src.core.sessions import guarded_paste
 from src.core.mcp_health.fold import McpDrop, McpHealth
 from src.models import Session, SessionInfo
 from tests.python.cplugs.mcphealth.plugin_on import app_state, plugin_on
@@ -47,10 +48,10 @@ def plugin():
 def pasted(monkeypatch):
     sent = []
 
-    async def fake(request, session_id, text, **kw):
-        sent.append((text, kw))
+    async def fake(app_state, session_id, text, options):
+        sent.append((text, {"idle_only": options.idle_only, "fresh_dialog_check": options.fresh_dialog_check}))
 
-    monkeypatch.setattr(mcp_reconnect_routes, "paste_through_gates", fake)
+    monkeypatch.setattr(guarded_paste, "paste_through_gates", fake)
     monkeypatch.setattr(mcp_reconnect_routes, "refuse_remote", lambda *a, **k: None)
     return sent
 

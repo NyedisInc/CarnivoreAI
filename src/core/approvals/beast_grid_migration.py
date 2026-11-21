@@ -10,7 +10,7 @@ from src.config.config_file import read_config
 from src.core import config_writer
 from src.core.approvals.auto_answer.catalog import SCOPES
 from src.core.approvals.beast_grid import cell_defaults
-from src.cplugs.host import state as plugin_state
+from src.plugins.host import state as plugin_state
 
 logger = structlog.get_logger()
 

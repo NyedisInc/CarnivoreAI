@@ -29,7 +29,7 @@ def _helpers() -> list:
 def test_m1_a_stored_off_save_plugin_stops_neither_the_boot_nor_a_lifecycle_trigger(tmp_path, monkeypatch):
     from concurrent.futures import Future
 
-    from src.cplugs.host import runtime as host_runtime, state as owner_state
+    from src.plugins.host import runtime as host_runtime, state as owner_state
     from src.core.pipeline import triggers, wiring
 
     manifest = host_runtime.find("save").manifest

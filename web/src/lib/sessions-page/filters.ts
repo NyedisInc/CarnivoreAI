@@ -1,5 +1,6 @@
 import type { HistoryGroup, HistoryProject, HistorySession } from '../projects-shared/history-api';
 import type { SessionListItem } from '../sessions/types';
+import { ASKING, BUSY, STATUS } from '../activity-status';
 
 export const AGENT_FAMILIES: readonly string[] = ['claude', 'codex'];
 
@@ -58,8 +59,7 @@ export function rowsFromGroups(groups: readonly HistoryGroup[], peers: readonly 
     return rows;
 }
 
-const NEEDS_STATUS = new Set(['question', 'notice', 'finished_unread']);
-const WORKING_STATUS = new Set(['working', 'working_subagent']);
+const NEEDS_STATUS: ReadonlySet<string> = new Set([...ASKING, STATUS.finished_unread]);
 
 export function needsYou(s: HistorySession, sig: Signals): boolean {
     const w = sig.live(s);
@@ -68,7 +68,7 @@ export function needsYou(s: HistorySession, sig: Signals): boolean {
 }
 
 export function isWorking(s: HistorySession, sig: Signals): boolean {
-    return WORKING_STATUS.has(sig.live(s)?.activity_status ?? '');
+    return BUSY.has(sig.live(s)?.activity_status ?? '');
 }
 
 export interface FleetCounts {

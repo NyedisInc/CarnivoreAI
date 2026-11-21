@@ -6,6 +6,7 @@
   import Tabs, { panelAttrs, type TabDef } from '../../../opscenter/ui/Tabs.svelte';
   import { closePane, data } from '../page-store.svelte';
   import { claimEscape, escapeTaken } from '../logic/escape';
+  import { forwardMenuKey } from '../../item-menu/page-row';
   import LogTab from './LogTab.svelte';
   import OutputTab from './OutputTab.svelte';
   import OverviewTab from './OverviewTab.svelte';
@@ -22,6 +23,7 @@
   const isNew = $derived(data.paneMode === 'new');
   const editing = $derived(data.paneMode === 'edit' || isNew);
   const shown = $derived(data.paneRunId ? (pane.runs.find((r) => r.run_id === data.paneRunId) ?? pane.runs[0] ?? null) : (pane.runs[0] ?? null));
+  let paneEl = $state<HTMLElement | null>(null);
   const fadeKey = $derived(`${data.paneTab}:${data.paneTab === 'output' || data.paneTab === 'log' ? (shown?.run_id ?? '') : ''}`);
 
   $effect(() => {
@@ -62,6 +64,8 @@
     } else if ((e.key === '[' || e.key === ']') && data.paneTab === 'output' && !editing && !inField(e)) {
       e.preventDefault();
       step(e.key === '[' ? 1 : -1);
+    } else if (!editing && !inField(e) && e.target instanceof Node && paneEl?.contains(e.target)) {
+      forwardMenuKey(e, paneEl.querySelector('[data-pane-head]'));
     }
   }
 
@@ -87,6 +91,7 @@
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <aside
+  bind:this={paneEl}
   class="ap-pn"
   tabindex="-1"
   aria-label={t('automations.page.pane.aria')}
@@ -111,7 +116,7 @@
         {/if}
       </section>
       {#if automation && !isNew}
-        <Tabs tabs={paneTabs} active={data.paneTab} onSelect={(id) => (data.paneTab = id as (typeof TABS)[number])} label={t('automations.page.pane.tabs_aria')} idBase="ap-pn" class="ap-pn-tabs" />
+        <Tabs tabs={paneTabs} active={data.paneTab} onSelect={(id) => (data.paneTab = id as (typeof TABS)[number])} label={t('automations.page.pane.tabs_aria')} idBase="ap-pn" class="ap-pn-tabs oc-ptabs--frame" />
         <section class="ap-pn-sec ap-pn-bodysec" {...panelAttrs('ap-pn', data.paneTab)}>
           {#key fadeKey}
             <div class="ap-pn-fade" data-pane-body={data.paneTab}>

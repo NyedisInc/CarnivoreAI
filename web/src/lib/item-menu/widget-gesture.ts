@@ -9,7 +9,17 @@ export interface MenuPoint {
 export type OpenWidgetMenu = (at: MenuPoint | null, from: HTMLElement) => void;
 
 function headerDoor(from: HTMLElement): HTMLElement | null {
+    const tab = tabDoor(from);
+    if (tab !== undefined) return tab;
     return from.closest<HTMLElement>('[data-cell]')?.querySelector<HTMLElement>('[data-corner]') ?? null;
+}
+
+function tabDoor(from: HTMLElement): HTMLElement | null | undefined {
+    if (!from.closest('[data-widget-tab]')) return undefined;
+    const key = from.closest<HTMLElement>('[data-tab-pane]')?.dataset.tabPane;
+    const cell = from.closest<HTMLElement>('[data-cell]');
+    const tab = key ? [...(cell?.querySelectorAll<HTMLElement>('[data-tab]') ?? [])].find((el) => el.dataset.tab === key) : undefined;
+    return tab?.parentElement?.querySelector<HTMLElement>('[data-corner]') ?? null;
 }
 
 /* the widget menu */

@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 
 from src.core.mcp import write_tools
-from src.cplugs.huddle import batch, service
+from src.plugins.huddle import batch, service
 from src.core.mcp.caller import AgentCaller
 from tests.python.cplugs.huddle.test_task_manager_mcp import CALLER, call, huddle_store, manager  # noqa: F401
 

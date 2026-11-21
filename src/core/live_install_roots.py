@@ -7,7 +7,7 @@ from typing import Iterator
 
 import structlog
 
-from src.core import plugin_layout
+from src.core.plugin_registry import plugin_layout
 from src.core.sessions.ports import SettingsReader, Target
 from src.core.skills import kinds
 from src.core.theme_paths import user_themes_dir

@@ -52,10 +52,12 @@ it('a Layout member keeps its row when a newer asleep twin shares its tmux name 
     ];
     const plain: Array<Record<string, unknown>> = [];
     w.SessionSidebarAsleep.addRows(plain, recs);
-    assert.deepEqual(plain.map((r) => r.session_uuid), ['u-twin'], 'no Layout: newest twin keeps the name');
+    assert.deepEqual(plain.map((r) => r.session_uuid), ['u-twin', 'u-member'], 'no Layout: both show (#2979), newest twin keeps the name');
+    assert.equal(plain[0]!.name, 'carnivore_p');
     const rows: Array<Record<string, unknown>> = [];
     w.SessionSidebarAsleep.addRows(rows, recs, new Set(['u-member']));
-    assert.deepEqual(rows.map((r) => r.session_uuid), ['u-member'], 'the Layout member wins the name');
+    assert.deepEqual(rows.map((r) => r.session_uuid), ['u-member', 'u-twin'], 'the Layout member wins the plain name');
+    assert.equal(rows[0]!.name, 'carnivore_p');
 });
 
 it('an asleep record keeps the alarm icon words for what will wake it, and null stays null (issue #1903)', async () => {

@@ -15,12 +15,12 @@ CATALOG_PREFIX = "/api/v1/catalog/"
 OWNER_PREFIX = "/api/v1/cplug-owner/"
 SAFE_MODE_PATH = "/api/v1/cplugs/safe-mode"
 SECRETS_SEGMENT = "/secrets/"
-PLUGIN_FORWARD_MODULE = "src/cplugs/host/sidecar_routes.py::"
+PLUGIN_FORWARD_MODULE = "src/plugins/host/sidecar_routes.py::"
 UI_ASSET_SEGMENTS = ("/ui/", "/preview", "/view/")
 
 EXTRA_REACH: Dict[str, FrozenSet[str]] = {
-    "plugin_sideload_add": frozenset({"src.cplugs.host.sideload_git_routes:post_sideload_git"}),
-    "plugins_list": frozenset({"src.cplugs.host.routes:list_cplugs", "src.cplugs.host.routes:get_cplug",
+    "plugin_sideload_add": frozenset({"src.plugins.host.sideload_git_routes:post_sideload_git"}),
+    "plugins_list": frozenset({"src.plugins.host.routes:list_cplugs", "src.plugins.host.routes:get_cplug",
                                "src.api.plugin_health_routes:get_health"}),
 }
 

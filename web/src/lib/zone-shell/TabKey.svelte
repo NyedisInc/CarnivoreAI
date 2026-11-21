@@ -252,6 +252,10 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    .sbr-rail__btn[data-rail-attention='question'] {
+      color: var(--oc-yellow-bright);
+    }
+
     .sbr-rail__btn:hover {
       background: var(--oc-ground-hover);
       color: var(--oc-text-primary);

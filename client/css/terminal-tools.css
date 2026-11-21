@@ -10,7 +10,7 @@
 
 .fab-menu {
     position: fixed;
-    z-index: 10001;
+    z-index: calc(var(--oc-z-over-dialog) + var(--oc-z-step));
     display: flex;
     flex-direction: column;
     min-width: 220px;
@@ -66,7 +66,7 @@
 
 .cloude-session-theme {
     position: fixed;
-    z-index: 10001;
+    z-index: calc(var(--oc-z-over-dialog) + var(--oc-z-step));
     display: flex;
     flex-direction: column;
     min-width: 200px;

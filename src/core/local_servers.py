@@ -40,6 +40,14 @@ def _build_url(port: int) -> str:
 
 class LocalServersTracker:
 
+    @classmethod
+    def for_manager(
+        cls,
+        loop: Optional[asyncio.AbstractEventLoop],
+        session_manager: Any,
+    ) -> "LocalServersTracker":
+        return cls(loop=loop, socket_name=session_manager.tmux_socket_name())
+
     def __init__(
         self,
         loop: Optional[asyncio.AbstractEventLoop] = None,
@@ -84,7 +92,7 @@ class LocalServersTracker:
                 )
             except Exception as exc:
                 logger.error(
-                    "local_server_broadcast_error", error=str(exc)
+                    "local_server_broadcast_error", error=str(exc), error_type=type(exc).__name__, exc_info=True
                 )
 
 
@@ -285,5 +293,5 @@ class LocalServersTracker:
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
-                logger.error("local_servers_janitor_error", error=str(exc))
+                logger.error("local_servers_janitor_error", error=str(exc), error_type=type(exc).__name__, exc_info=True)
                 await asyncio.sleep(min(JANITOR_INTERVAL_SECONDS, 5.0))

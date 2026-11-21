@@ -62,6 +62,16 @@ def default_tick(doc: Mapping[str, Any], type_id: str) -> bool:
 
 
 def cell(doc: Mapping[str, Any], column: str, type_id: str) -> Cell:
+    me = doc_model.self_iid(doc)
+    if me is not None and column in (doc_model.COL_SCREEN, doc_model.COL_DESKTOP) and types.get_type(type_id) is not None:
+        from src.core.notifications.settings_doc import routes  # noqa: PLC0415
+
+        resolved = routes.resolve(doc, me, me, "app" if column == doc_model.COL_SCREEN else "desk", type_id)
+        return Cell(bool(resolved.value) and routes.master_on(doc, type_id), resolved.source, False)
+    return legacy_cell(doc, column, type_id)
+
+
+def legacy_cell(doc: Mapping[str, Any], column: str, type_id: str) -> Cell:
     row = types.get_type(type_id)
     if row is None:
         raise ValueError(f"not a notification type: {type_id!r}")
@@ -208,8 +218,17 @@ class DocRoutingView:
 
     def is_ticked(self, column: str, type_id: str) -> bool:
         try:
+            from src.core.notifications.settings_doc import routes  # noqa: PLC0415
+
+            if not routes.master_on(self._doc, type_id):
+                return False
             if mutes.is_muted_for(self._doc, type_id, self._push_owners.get(column)):
                 return False
+            me = doc_model.self_iid(self._doc)
+            if me is not None and kind_specs.is_push_destination_id(column):
+                phone = routes.resolve(self._doc, me, me, "phone", type_id)
+                if phone.source == routes.SRC_GLOBAL:
+                    return bool(phone.value)
             return cell(self._doc, column, type_id).value
         except (KeyError, ValueError):
             return False

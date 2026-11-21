@@ -294,7 +294,7 @@
     width: 6px;
     height: 6px;
     margin-right: var(--oc-space-1-5);
-    border-radius: 50%;
+    border-radius: var(--oc-radius-circle);
     background: var(--oc-green);
 }
 

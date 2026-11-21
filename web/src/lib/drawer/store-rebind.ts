@@ -39,8 +39,12 @@ export function rebind(stored: RebindInput, rows: readonly RebindRow[]): RebindO
     const remembered = new Set<string>(([] as string[]).concat(stored.pinned || [], stored.order || [], ...bandLists));
 
     const target = (name: string): string | null => {
-        if (live.has(name)) return null;
         const uuid = ids[name];
+        const holder = live.get(name);
+        if (holder) {
+            if (uuid && holder.session_uuid && holder.session_uuid !== uuid && byUuid.has(uuid)) return byUuid.get(uuid) as string;
+            return null;
+        }
         if (uuid && byUuid.has(uuid)) return byUuid.get(uuid) as string;
         for (const p of LEGACY_PREFIXES) {
             if (name.indexOf(p) !== 0) continue;
@@ -81,7 +85,10 @@ export function rebind(stored: RebindInput, rows: readonly RebindRow[]): RebindO
         delete ids[from];
     });
     live.forEach((row, name) => {
-        if (row.session_uuid) ids[name] = row.session_uuid;
+        if (!row.session_uuid) return;
+        const prev = ids[name];
+        if (prev && prev !== row.session_uuid && !byUuid.has(prev)) return;
+        ids[name] = row.session_uuid;
     });
     const nextBands: Record<string, string[]> = {};
     for (const k of Object.keys(bands)) nextBands[k] = map(bands[k]);

@@ -6,8 +6,8 @@ from typing import Any, Dict
 
 import pytest
 
-from src.cplugs.crate import folders, removal
-from src.cplugs.crate.jobs import runner
+from src.plugins.crate import folders, removal
+from src.plugins.crate.jobs import runner
 from tests.python.cplugs.crate.api_world import BASE, ApiWorld, export, stop_runner
 from tests.python.cplugs.crate.crate_world import UUID_A
 

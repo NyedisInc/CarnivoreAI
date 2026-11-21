@@ -1,8 +1,8 @@
 @layer base {
-  :where([data-btn][data-size='icon']) {
+  :where([data-btn][data-size='icon'], .oc-ibtn) {
     --_btn-h: var(--oc-ibtn-size, var(--oc-control-h-xs));
     --_btn-pad: 0;
-    --_btn-radius: var(--oc-control-radius);
+    --_btn-radius: var(--oc-radius-control);
     width: var(--oc-ibtn-size, var(--oc-control-h-xs));
     height: var(--oc-ibtn-size, var(--oc-control-h-xs));
     min-width: 0;
@@ -10,7 +10,7 @@
     overflow: visible;
   }
 
-  :where([data-btn=''][data-size='icon'], [data-btn='secondary'][data-size='icon']) {
+  :where([data-btn=''][data-size='icon'], [data-btn='secondary'][data-size='icon'], .oc-ibtn) {
     --_btn-edge: var(--oc-control-line);
     --_btn-fill: var(--oc-ground-field);
     --_btn-ink: var(--oc-text-secondary);
@@ -19,7 +19,7 @@
     --_btn-ink-hover: var(--oc-text-secondary);
   }
 
-  :where(:is([data-btn=''], [data-btn='secondary'])[data-size='icon'][aria-pressed='true']) {
+  :where(:is([data-btn=''], [data-btn='secondary'])[data-size='icon'][aria-pressed='true'], .oc-ibtn:not(.oc-ibtn--bare, .oc-ibtn--float)[aria-pressed='true']) {
     --_btn-edge: var(--oc-orange);
     --_btn-fill: var(--oc-ground-hover);
     --_btn-ink: var(--oc-orange);
@@ -28,7 +28,7 @@
     --_btn-ink-hover: var(--oc-orange);
   }
 
-  :where([data-btn='quiet'][data-size='icon']) {
+  :where([data-btn='quiet'][data-size='icon'], .oc-ibtn--bare, .oc-ibtn--float) {
     --_btn-edge: transparent;
     --_btn-fill: transparent;
     --_btn-ink: var(--oc-text-dim);
@@ -37,21 +37,21 @@
     --_btn-ink-hover: var(--oc-text-primary);
   }
 
-  :where([data-btn='quiet'][data-size='icon']:is([aria-expanded='true'], [aria-pressed='true'])) {
+  :where(:is([data-btn='quiet'][data-size='icon'], .oc-ibtn--bare):is([aria-expanded='true'], [aria-pressed='true'])) {
     --_btn-ink: var(--oc-orange);
   }
 
-  :where([data-btn='quiet'][data-size='icon'][aria-current='page']) {
+  :where(:is([data-btn='quiet'][data-size='icon'], .oc-ibtn--bare)[aria-current='page']) {
     --_btn-fill: var(--oc-ground-hover);
     --_btn-ink: var(--oc-orange);
   }
 
-  :where([data-widget-head] [data-btn='quiet'][data-size='icon']:is([aria-expanded='true'], [aria-pressed='true'])) {
+  :where([data-widget-head] :is([data-btn='quiet'][data-size='icon'], .oc-ibtn--bare):is([aria-expanded='true'], [aria-pressed='true'])) {
     --_btn-ink: var(--oc-text-primary);
   }
 
-  :where([data-btn][data-size='icon']:is(:disabled, [aria-disabled='true'])) {
-    opacity: 0.35;
+  :where(:is([data-btn][data-size='icon'], .oc-ibtn):is(:disabled, [aria-disabled='true'])) {
+    opacity: var(--oc-disabled-opacity);
     cursor: default;
   }
 
@@ -61,11 +61,11 @@
     --_btn-fill-hover: transparent;
   }
 
-  :where([data-btn][data-size='icon'][data-tone='close']) {
+  :where([data-btn][data-size='icon'][data-tone='close'], .oc-ibtn--close) {
     --_btn-ink-hover: var(--oc-coral);
   }
 
-  :where([data-btn][data-size='icon'][data-tone='float']) {
+  :where([data-btn][data-size='icon'][data-tone='float'], .oc-ibtn--float) {
     --oc-ibtn-size: var(--oc-row-h-dense);
     --_btn-radius: var(--oc-radius-sm);
     --_btn-ink: var(--oc-text-muted);
@@ -77,7 +77,7 @@
     transition-duration: var(--oc-motion-fast);
   }
 
-  :where([data-btn][data-size='icon'][data-tone='float']:is(:hover, :focus-visible, [aria-expanded='true']):not(:disabled)) {
+  :where(:is([data-btn][data-size='icon'][data-tone='float'], .oc-ibtn--float):is(:hover, :focus-visible, [aria-expanded='true']):not(:disabled)) {
     --_btn-edge: var(--oc-line-panel);
     --_btn-fill: var(--oc-ground-raised);
     --_btn-ink: var(--oc-text-primary);
@@ -85,22 +85,28 @@
   }
 
   @media (hover: none) {
-    :where([data-btn][data-size='icon'][data-tone='float']) {
+    :where([data-btn][data-size='icon'][data-tone='float'], .oc-ibtn--float) {
       opacity: 1;
     }
   }
 
   @media (max-width: 1023px) {
-    :where([data-btn][data-size='icon']) {
+    :where([data-btn][data-size='icon'], .oc-ibtn) {
       --_btn-h: var(--oc-tap);
       width: var(--oc-tap);
       height: var(--oc-tap);
     }
 
-    :where([data-widget-head]:not(.oc-frame-title--phone) [data-btn][data-size='icon']) {
+    :where([data-widget-head]:not(.oc-frame-title--phone) :is([data-btn][data-size='icon'], .oc-ibtn), [data-foot-bar] :is([data-btn][data-size='icon'], .oc-ibtn)) {
       --_btn-h: var(--oc-ibtn-size, var(--oc-control-h-xs));
       width: var(--oc-ibtn-size, var(--oc-control-h-xs));
       height: var(--oc-ibtn-size, var(--oc-control-h-xs));
+    }
+
+    :where([data-btn-density='frame'] :is([data-btn][data-size='icon'], .oc-ibtn[data-size='icon'])) {
+      --_btn-h: var(--oc-ibtn-size);
+      width: var(--oc-ibtn-size);
+      height: var(--oc-ibtn-size);
     }
   }
 }

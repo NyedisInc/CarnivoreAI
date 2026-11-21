@@ -1,0 +1,556 @@
+{
+ "about": "reach-ins into the shared base controls per file and kind (scripts/design/reach_ins.py KINDS, top-down review M7); may only fall",
+ "files": {
+  "client/css/animation-calm.css": {
+   "important": 5
+  },
+  "client/css/animation-pause.css": {
+   "important": 2
+  },
+  "client/css/animation-types.css": {
+   "important": 13
+  },
+  "client/css/config-editor-modal.css": {
+   "important": 1
+  },
+  "client/css/resting-row-lights.css": {
+   "important": 2
+  },
+  "client/css/screen-chrome.css": {
+   "important": 4
+  },
+  "client/css/session-sidebar-account-chip.css": {
+   "private-write": 10
+  },
+  "client/css/session-sidebar-resize.css": {
+   "important": 1
+  },
+  "client/css/session-sidebar-rows.css": {
+   "private-write": 1
+  },
+  "client/css/session-sidebar.css": {
+   "important": 1
+  },
+  "client/css/slash-commands-fab.css": {
+   "important": 1
+  },
+  "client/css/status-led.css": {
+   "important": 1
+  },
+  "client/css/styles.css": {
+   "hook": 1,
+   "important": 10,
+   "private-write": 2
+  },
+  "client/css/terminal-tools.css": {
+   "important": 1
+  },
+  "src/plugins/reviewboard/frame/layer.css": {
+   "important": 1
+  },
+  "web/src/admin/admin.css": {
+   "hook": 6
+  },
+  "web/src/lib/account-switch/SwitchAccountButton.svelte": {
+   "hook": 3,
+   "private-write": 6
+  },
+  "web/src/lib/approvals/ApprovalCard.svelte": {
+   "global": 2,
+   "hook": 7,
+   "private-write": 2
+  },
+  "web/src/lib/approvals/AskForm.svelte": {
+   "global": 6
+  },
+  "web/src/lib/automations/auto-list.css": {
+   "hook": 2
+  },
+  "web/src/lib/automations/feed/feed.css": {
+   "hook": 9
+  },
+  "web/src/lib/automations/overview/overview.css": {
+   "hook": 1
+  },
+  "web/src/lib/automations/page.css": {
+   "hook": 4,
+   "private-write": 5
+  },
+  "web/src/lib/automations/pane/pane.css": {
+   "hook": 6
+  },
+  "web/src/lib/automations/report/report.css": {
+   "hook": 3
+  },
+  "web/src/lib/automations/review/review.css": {
+   "hook": 2
+  },
+  "web/src/lib/automations/schedule/schedule.css": {
+   "hook": 1
+  },
+  "web/src/lib/blueprints/SkillsPicker.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/bookmarks/BookmarksPanel.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/byoai/byoai.css": {
+   "hook": 2
+  },
+  "web/src/lib/carnivore-account/SignInModal.svelte": {
+   "global": 1,
+   "hook": 1
+  },
+  "web/src/lib/catalog/AccountPanel.svelte": {
+   "hook": 2
+  },
+  "web/src/lib/catalog/CardImageRow.svelte": {
+   "hook": 1,
+   "important": 6
+  },
+  "web/src/lib/catalog/CatalogDetail.svelte": {
+   "global": 1,
+   "hook": 2
+  },
+  "web/src/lib/catalog/CatalogFilterRail.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/catalog/CatalogPhoneBar.svelte": {
+   "global": 2
+  },
+  "web/src/lib/catalog/CatalogToolbar.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/catalog/ConfirmSheet.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/catalog/FilterGroup.svelte": {
+   "global": 6
+  },
+  "web/src/lib/catalog/InstallSheet.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/catalog/ItemNoteForm.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/catalog/ItemNotePopup.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/catalog/OneShotPicker.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/catalog/RatingControl.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/catalog/SessionsPanel.svelte": {
+   "hook": 2
+  },
+  "web/src/lib/catalog/TrySheet.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/catalog/WarezTools.svelte": {
+   "global": 10,
+   "hook": 4
+  },
+  "web/src/lib/catalog/menu/InstalledKindScreen.svelte": {
+   "global": 1
+  },
+  "web/src/lib/catalog/menu/WarezMenu.svelte": {
+   "global": 4,
+   "hook": 3
+  },
+  "web/src/lib/computers/computers.css": {
+   "hook": 1
+  },
+  "web/src/lib/dashboards/DashboardCard.svelte": {
+   "hook": 2,
+   "private-write": 4
+  },
+  "web/src/lib/dashboards/DashboardList.svelte": {
+   "private-write": 1
+  },
+  "web/src/lib/deepsearch/ContextModal.svelte": {
+   "hook": 2,
+   "private-write": 4
+  },
+  "web/src/lib/deepsearch/search-d.css": {
+   "hook": 2,
+   "private-write": 11
+  },
+  "web/src/lib/dialog-frame/ConfirmPopup.svelte": {
+   "global": 1
+  },
+  "web/src/lib/drawer-tabs/DrawerQuestions.svelte": {
+   "global": 1,
+   "hook": 2
+  },
+  "web/src/lib/drawer-tabs/DrawerSearch.svelte": {
+   "global": 1
+  },
+  "web/src/lib/drawer-tabs/NewSessionButton.svelte": {
+   "hook": 3
+  },
+  "web/src/lib/drawer-tabs/SearchTerms.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/drawer-tabs/ViewMenu.svelte": {
+   "hook": 3
+  },
+  "web/src/lib/drawer-zone/DrawerZone.svelte": {
+   "important": 4
+  },
+  "web/src/lib/editor-controls/EditorControls.svelte": {
+   "global": 2
+  },
+  "web/src/lib/elite/elite-board.css": {
+   "important": 1
+  },
+  "web/src/lib/elite/elite.css": {
+   "important": 2
+  },
+  "web/src/lib/first-run/first-run.css": {
+   "hook": 2
+  },
+  "web/src/lib/launch-picker/LaunchStory.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/launch-profiles-page/ImportProfileModal.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/launch-profiles-page/LaunchProfileEditor.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/launch-profiles-page/LaunchProfilesScreen.svelte": {
+   "private-write": 2
+  },
+  "web/src/lib/ledger/ColorSwatches.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/ledger/LedgerAccountsEditor.svelte": {
+   "global": 2
+  },
+  "web/src/lib/ledger/LedgerCards.svelte": {
+   "global": 2,
+   "hook": 1
+  },
+  "web/src/lib/ledger/LedgerHeadroom.svelte": {
+   "global": 1
+  },
+  "web/src/lib/ledger/LedgerRowEditor.svelte": {
+   "global": 2
+  },
+  "web/src/lib/ledger/LedgerSessions.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/manager-frame/manager-frame.css": {
+   "hook": 4
+  },
+  "web/src/lib/menu-page/menu-page.css": {
+   "important": 2
+  },
+  "web/src/lib/notifications/inspector/inspector.css": {
+   "private-write": 2
+  },
+  "web/src/lib/notify-card/notify-card.css": {
+   "hook": 1,
+   "private-write": 1
+  },
+  "web/src/lib/pack-machines/pack-work.css": {
+   "hook": 1
+  },
+  "web/src/lib/pack-migrate/migrate-wizard.css": {
+   "hook": 1
+  },
+  "web/src/lib/pack-op-toast/pack-op-toast.css": {
+   "private-write": 1
+  },
+  "web/src/lib/pack-roster/roster.css": {
+   "hook": 30,
+   "important": 1,
+   "private-write": 1
+  },
+  "web/src/lib/pack-transport/pack-transport.css": {
+   "hook": 1
+  },
+  "web/src/lib/palette/Palette.svelte": {
+   "global": 1
+  },
+  "web/src/lib/phone-mic/PhoneMic.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/plugins-page/PluginsScreen.svelte": {
+   "private-write": 2
+  },
+  "web/src/lib/plugins-page/plugin-pane.css": {
+   "hook": 1
+  },
+  "web/src/lib/publish-page/checks.css": {
+   "hook": 2
+  },
+  "web/src/lib/publish-page/detail.css": {
+   "hook": 5
+  },
+  "web/src/lib/publish-page/page.css": {
+   "hook": 1
+  },
+  "web/src/lib/publish-page/side.css": {
+   "hook": 2
+  },
+  "web/src/lib/publish-page/wizard.css": {
+   "hook": 3
+  },
+  "web/src/lib/session-move/move-folder.css": {
+   "hook": 1
+  },
+  "web/src/lib/sessions-page/pivot.css": {
+   "hook": 1
+  },
+  "web/src/lib/sessions-page/sessions-list.css": {
+   "hook": 1,
+   "important": 1,
+   "private-write": 12
+  },
+  "web/src/lib/sessions-page/sessions-page.css": {
+   "hook": 8,
+   "private-write": 6
+  },
+  "web/src/lib/sessions-page/sessions-panel.css": {
+   "hook": 2,
+   "private-write": 4
+  },
+  "web/src/lib/sessions-page/timeline.css": {
+   "hook": 1
+  },
+  "web/src/lib/settings-page/SettingsNav.svelte": {
+   "hook": 5
+  },
+  "web/src/lib/settings-page/mcp-panel/McpToolSwitchesPanel.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/settings-page/phone-link/custom-domain.css": {
+   "hook": 1
+  },
+  "web/src/lib/settings-page/settings-page.css": {
+   "hook": 2
+  },
+  "web/src/lib/skill-page/skill-page.css": {
+   "hook": 3
+  },
+  "web/src/lib/skills-hub/local/local-skills.css": {
+   "hook": 1
+  },
+  "web/src/lib/slash-favorites/FavoriteChips.svelte": {
+   "private-write": 1
+  },
+  "web/src/lib/swarm-board/SwarmBoard.svelte": {
+   "global": 2,
+   "hook": 1
+  },
+  "web/src/lib/terminal-search/PromptHeader.svelte": {
+   "important": 1
+  },
+  "web/src/lib/terminal-search/PromptHeaderControls.svelte": {
+   "private-write": 1
+  },
+  "web/src/lib/terminal-search/PromptRail.svelte": {
+   "important": 1
+  },
+  "web/src/lib/themes-page/BuildYourOwn.svelte": {
+   "hook": 3,
+   "important": 2
+  },
+  "web/src/lib/themes-page/ThemeInspector.svelte": {
+   "hook": 1
+  },
+  "web/src/lib/themes-page/ThemesScreen.svelte": {
+   "global": 6,
+   "hook": 3
+  },
+  "web/src/lib/warroom/WarRoomScreen.svelte": {
+   "global": 1
+  },
+  "web/src/lib/widgets-page/widgets-page.css": {
+   "hook": 10,
+   "private-write": 22
+  },
+  "web/src/lib/zone-shell/TabKey.svelte": {
+   "global": 5
+  },
+  "web/src/opscenter/App.svelte": {
+   "global": 6
+  },
+  "web/src/opscenter/cells/analytics/Controls.svelte": {
+   "hook": 1
+  },
+  "web/src/opscenter/cells/analytics/DetailsModal.svelte": {
+   "hook": 4
+  },
+  "web/src/opscenter/cells/analytics/TimelineView.svelte": {
+   "global": 1
+  },
+  "web/src/opscenter/cells/automations/AutomationRows.svelte": {
+   "global": 1
+  },
+  "web/src/opscenter/cells/changes/Cell.svelte": {
+   "global": 4
+  },
+  "web/src/opscenter/cells/developer/Cell.svelte": {
+   "global": 2
+  },
+  "web/src/opscenter/cells/files/Cell.svelte": {
+   "global": 1
+  },
+  "web/src/opscenter/cells/session-contents/Cell.svelte": {
+   "global": 4,
+   "private-write": 1
+  },
+  "web/src/opscenter/cells/task-manager-mk2/Mk2Bar.svelte": {
+   "private-write": 1
+  },
+  "web/src/opscenter/cells/task-manager-mk2/Mk2Crosstalk.svelte": {
+   "private-write": 2
+  },
+  "web/src/opscenter/cells/task-manager-mk2/Mk2Frame.svelte": {
+   "hook": 2
+  },
+  "web/src/opscenter/cells/task-manager-mk2/Mk2Subtasks.svelte": {
+   "private-write": 1
+  },
+  "web/src/opscenter/cells/task-manager-mk2/mk2-design.css": {
+   "hook": 6,
+   "important": 1,
+   "private-write": 2
+  },
+  "web/src/opscenter/cells/terminal-live/Cell.svelte": {
+   "global": 1
+  },
+  "web/src/opscenter/cells/terminal-live/TerminalActions.svelte": {
+   "global": 1
+  },
+  "web/src/opscenter/cells/terminal-live/TerminalFoot.svelte": {
+   "global": 5
+  },
+  "web/src/opscenter/cells/terminal-live/TerminalHead.svelte": {
+   "global": 3
+  },
+  "web/src/opscenter/cells/terminal-live/TerminalUtilities.svelte": {
+   "global": 1
+  },
+  "web/src/opscenter/cells/timeline/KindKey.svelte": {
+   "private-write": 1
+  },
+  "web/src/opscenter/colhead.css": {
+   "important": 1
+  },
+  "web/src/opscenter/engine/ComponentsPopover.svelte": {
+   "global": 1
+  },
+  "web/src/opscenter/engine/rects/DividerHandle.svelte": {
+   "global": 2
+  },
+  "web/src/opscenter/focus.css": {
+   "important": 5
+  },
+  "web/src/opscenter/layout-editor/BoardTransfer.svelte": {
+   "hook": 1
+  },
+  "web/src/opscenter/layout-editor/DrawerHead.svelte": {
+   "private-write": 1
+  },
+  "web/src/opscenter/layout-editor/WidgetDrawer.svelte": {
+   "hook": 1
+  },
+  "web/src/opscenter/layout-editor/WidgetRow.svelte": {
+   "private-write": 1
+  },
+  "web/src/opscenter/layouts/LayoutCellMarks.svelte": {
+   "global": 2
+  },
+  "web/src/opscenter/layouts/LayoutCommandBar.svelte": {
+   "private-write": 1
+  },
+  "web/src/opscenter/page.css": {
+   "hook": 2
+  },
+  "web/src/opscenter/shell/TabStrip.svelte": {
+   "global": 1
+  },
+  "web/src/opscenter/shell/WidgetHead.svelte": {
+   "global": 5
+  },
+  "web/src/opscenter/ui/log-viewer.css": {
+   "hook": 7,
+   "private-write": 4
+  },
+  "web/src/opscenter/ui/page-kit.css": {
+   "hook": 2
+  },
+  "web/src/opscenter/widgets/chrome/RefusalPlate.svelte": {
+   "hook": 1
+  },
+  "web/src/opscenter/widgets/chrome/SettingsOverlay.svelte": {
+   "global": 1
+  },
+  "web/src/opscenter/widgets/info/WidgetInfoPopover.svelte": {
+   "global": 1
+  },
+  "web/src/pair/pair.css": {
+   "hook": 2
+  },
+  "web/src/plugins/crate/JobProgress.svelte": {
+   "global": 1,
+   "hook": 1
+  },
+  "web/src/plugins/devwidgetlab/lab-menu.css": {
+   "hook": 3
+  },
+  "web/src/plugins/huddle/HuddleBody.svelte": {
+   "global": 1,
+   "hook": 2
+  },
+  "web/src/plugins/huddle/TaskManagerRow.svelte": {
+   "global": 2
+  },
+  "web/src/plugins/huddle/TaskManagerTagged.svelte": {
+   "private-write": 2
+  },
+  "web/src/plugins/huddle/chat/ChatBar.svelte": {
+   "global": 2,
+   "hook": 3
+  },
+  "web/src/plugins/huddle/chat/ChatWidget.svelte": {
+   "global": 2,
+   "hook": 3
+  },
+  "web/src/plugins/huddle/swarm/characters/characters.css": {
+   "important": 6
+  },
+  "web/src/plugins/reviewboard/ClosedReviews.svelte": {
+   "private-write": 2
+  },
+  "web/src/plugins/reviewboard/board.css": {
+   "private-write": 9
+  },
+  "web/src/plugins/reviewboard/header.css": {
+   "hook": 1,
+   "private-write": 2
+  },
+  "web/src/plugins/reviewboard/tray.css": {
+   "hook": 3,
+   "private-write": 3
+  },
+  "web/src/plugins/save/RestorePoints.svelte": {
+   "global": 1,
+   "hook": 1
+  },
+  "web/src/plugins/share/ShareModal.svelte": {
+   "hook": 2
+  }
+ },
+ "totals": {
+  "global": 112,
+  "hook": 243,
+  "important": 77,
+  "private-write": 134
+ }
+}

@@ -4,17 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Carnivore setup</title>
+<link rel="stylesheet" href="/static/css/layers.css" />
+<link rel="stylesheet" href="/static/dist/app.css" />
 <style>
   :root {
-    --bg: #12131a;
-    --panel: #1b1d27;
-    --panel-edge: #2b2e3d;
-    --ink: #e8e9f0;
-    --ink-dim: #a3a7ba;
-    --accent: #5b9dff;
-    --warn: #e0a33a;
-    --danger: #e05c5c;
-    --ok: #4cbf7a;
+    --bg: var(--oc-ground-page);
+    --panel: var(--oc-ground-card);
+    --panel-edge: var(--oc-line-panel);
+    --well: var(--oc-ground-field);
+    --ink: var(--oc-text-primary);
+    --ink-dim: var(--oc-text-secondary);
+    --accent: var(--oc-cyan);
+    --on-accent: var(--oc-ground-field);
+    --warn: var(--oc-yellow-bright);
+    --danger: var(--oc-coral);
+    --ok: var(--oc-green);
+    --tint-warn: color-mix(in srgb, var(--warn) 12%, var(--bg));
+    --tint-ok: color-mix(in srgb, var(--ok) 12%, var(--bg));
+    --tint-danger: color-mix(in srgb, var(--danger) 12%, var(--bg));
     --radius: 10px;
   }
   * { box-sizing: border-box; }
@@ -43,27 +50,27 @@
 
   .banner {
     border-left: 4px solid var(--warn);
-    background: #241f14;
+    background: var(--tint-warn);
     padding: 14px 18px;
     border-radius: var(--radius);
     margin: 0 0 20px;
   }
-  .banner.ok { border-left-color: var(--ok); background: #14241a; }
-  .banner.danger { border-left-color: var(--danger); background: #241416; }
+  .banner.ok { border-left-color: var(--ok); background: var(--tint-ok); }
+  .banner.danger { border-left-color: var(--danger); background: var(--tint-danger); }
 
   .check { display: flex; gap: 12px; align-items: flex-start; padding: 9px 0; }
   .check + .check { border-top: 1px solid var(--panel-edge); }
   .mark {
     flex: 0 0 22px; height: 22px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 700; color: #12131a;
+    font-size: 13px; font-weight: 700; color: var(--bg);
   }
   .mark.pass { background: var(--ok); }
   .mark.fail { background: var(--danger); }
   .mark.unknown { background: var(--ink-dim); }
 
   .values { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
-  .value-box { background: #14161f; border: 1px solid var(--panel-edge); border-radius: 8px; padding: 10px 12px; }
+  .value-box { background: var(--well); border: 1px solid var(--panel-edge); border-radius: 8px; padding: 10px 12px; }
   .value-box h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-dim); }
   pre { margin: 0; font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; word-break: break-word; max-height: 180px; overflow: auto; }
 
@@ -71,13 +78,13 @@
   label.choice {
     flex: 1 1 300px; display: block; cursor: pointer;
     border: 1px solid var(--panel-edge); border-radius: 8px; padding: 10px 12px;
-    background: #14161f;
+    background: var(--well);
   }
   label.choice input { margin-right: 8px; }
   label.choice .consequence { display: block; margin-top: 4px; color: var(--ink-dim); font-size: 13px; }
 
   button {
-    font: inherit; font-weight: 600; color: #0d1017; background: var(--accent);
+    font: inherit; font-weight: 600; color: var(--on-accent); background: var(--accent);
     border: 0; border-radius: 8px; padding: 11px 20px; cursor: pointer;
   }
   button.secondary { background: transparent; color: var(--ink); border: 1px solid var(--panel-edge); }
@@ -85,10 +92,10 @@
   .actions { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
 
   input[type=text] {
-    font: inherit; background: #14161f; color: var(--ink);
+    font: inherit; background: var(--well); color: var(--ink);
     border: 1px solid var(--panel-edge); border-radius: 8px; padding: 10px 12px; width: 200px;
   }
-  code { background: #14161f; border-radius: 4px; padding: 1px 5px; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85em; background: var(--well); border-radius: 4px; padding: 1px 5px; }
   @media (max-width: 620px) { .values { grid-template-columns: 1fr; } }
 </style>
 </head>

@@ -14,11 +14,8 @@ TRANSIENT = {
     "client/js/header-menu.js": "menu panel built on open, removed on close",
     "client/js/session-theme-menu.js": "picker built on open, removed on close",
     "client/js/slash-commands.js": "modal built on open, removed on close",
-    "web/src/cplugs/huddle/TaskManagerArtifactDialog.svelte": "{#if artifactDialog.open}",
-    "web/src/cplugs/huddle/TaskManagerForkDialog.svelte": "{#if forkDialog.open}",
-    "web/src/cplugs/huddle/TaskManagerScheduleEditor.svelte": "{#if scheduleEditor.open}",
-    "web/src/cplugs/huddle/TaskManagerStatusFilter.svelte": "always mounted, but `.hdf-card:not([data-open='on'])` sets animation: none",
-    "web/src/cplugs/huddle/TaskManagerTickConfirm.svelte": "{#if tickConfirm.open}",
+    "web/src/plugins/huddle/TaskManagerStatusFilter.svelte": "always mounted, but `.hdf-card:not([data-open='on'])` sets animation: none",
+    "web/src/plugins/huddle/TaskManagerTickConfirm.svelte": "{#if tickConfirm.open}",
     "web/src/lib/byoai/ModelPicker.svelte": "{#if open}",
     "web/src/lib/catalog/ItemNotePopup.svelte": "{#if open}",
     "web/src/lib/palette/Palette.svelte": "mounted only while open (palette-host.ts)",
@@ -92,5 +89,5 @@ def test_negative_controls(tmp_path):
 
 
 def test_status_filter_gate_is_in_place():
-    src = (ROOT / "web/src/cplugs/huddle/TaskManagerStatusFilter.svelte").read_text(encoding="utf-8")
+    src = (ROOT / "web/src/plugins/huddle/TaskManagerStatusFilter.svelte").read_text(encoding="utf-8")
     assert re.search(r"\.hdf-card:not\(\[data-open='on'\]\)\s*\{\s*animation:\s*none", src)

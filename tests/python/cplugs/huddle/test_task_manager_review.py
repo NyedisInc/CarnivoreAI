@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 
 from src.core.mcp import tools
-from src.cplugs.huddle import review
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import review
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work.ladder import MIGRATIONS, SCHEMA_VERSION
 from src.core.work.storage import WorkStorage
 from tests.python.cplugs.huddle.test_task_manager_focus import CALLER, add, call, client, setup  # noqa: F401

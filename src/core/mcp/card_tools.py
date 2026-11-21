@@ -14,7 +14,7 @@ from src.core.mcp.caller import AgentCaller
 from src.core.mcp.common import ToolError, _ok
 from src.core.swarm import facts, spawn
 from src.core.swarm.cards import board as card_board, ops, port as card_port
-from src.cplugs.sdk.cards import CardRefused
+from src.plugins.sdk.cards import CardRefused
 
 logger = structlog.get_logger()
 

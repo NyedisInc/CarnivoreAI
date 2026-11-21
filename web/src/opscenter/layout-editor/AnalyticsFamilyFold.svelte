@@ -1,10 +1,10 @@
 <script lang="ts">
   import type { SlotId } from '../engine/types';
   import { analytics } from '../cells/analytics/state.svelte';
-  import { GALLERY_CATEGORIES, PRESETS, presetNoteKey, presetTitleKey, type GalleryCategory } from '../viz/presets';
+  import { GALLERY_CATEGORIES, PRESETS, presetNoteKey, presetTitleKey, type GalleryCategory, type Preset } from '../viz/presets';
   import { manifestById } from '../widgets/core-manifests';
   import { passesFilter, type DrawerInputs } from './drawer-model';
-  import { addAnalyticsWidget, addGalleryPreset, hideAnalyticsWidget, removeWidget, restoreAnalyticsWidget } from './editor.svelte';
+  import { addAnalyticsWidget, hideAnalyticsWidget, removeWidget, restoreAnalyticsWidget } from './editor.svelte';
   import Button from '../../lib/base/Button.svelte';
   import ChartDeleteChip from './ChartDeleteChip.svelte';
   import { t } from '../../lib/i18n/index.svelte';
@@ -15,12 +15,16 @@
     matchesFamily,
     inputs,
     onSurface,
+    oncarddown,
+    oncardpick,
   }: {
     open: boolean;
     needle: string;
     matchesFamily: boolean;
     inputs: Pick<DrawerInputs, 'query' | 'category'>;
     onSurface: readonly SlotId[];
+    oncarddown: (event: PointerEvent, preset: Preset) => void;
+    oncardpick: (preset: Preset) => void;
   } = $props();
 
   let galleryCategory = $state<GalleryCategory | null>(null);
@@ -48,7 +52,8 @@
     </div>
     <ul class="le-gallery__cards">
       {#each galleryCards as preset (preset.id)}
-        <li><Button variant="row" data-le-card="" data-preset={preset.id} data-viz={preset.viz} title={t(presetNoteKey(preset))} onclick={() => addGalleryPreset(preset)}>
+        <li><Button variant="row" data-le-card="" data-preset={preset.id} data-viz={preset.viz} title={t(presetNoteKey(preset))}
+          onpointerdown={(event: PointerEvent) => oncarddown(event, preset)} onclick={() => oncardpick(preset)}>
           <span class="le-gallery__plus" aria-hidden="true">+</span>
           <span class="le-gallery__text"><span class="le-gallery__name">{t(presetTitleKey(preset))}</span><span class="le-gallery__note"
               ><span class="le-gallery__viz">{t(`viz.${preset.viz}`)}</span><span class="le-gallery__sep" aria-hidden="true">·</span>{t(presetNoteKey(preset))}</span

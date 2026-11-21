@@ -4,8 +4,8 @@ from __future__ import annotations
 from dataclasses import replace
 from pathlib import Path
 
-from src.cplugs.host import default_roots, state as owner_state
-from src.cplugs.registry import CPLUGS
+from src.plugins.host import default_roots, state as owner_state
+from src.plugins.registry import CPLUGS
 from tests.python.cplugs.folder_plugin_fixture import definition
 
 DEFINITION = definition()

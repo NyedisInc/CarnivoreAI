@@ -165,12 +165,12 @@
 <style>
   @layer components {
         :global(.terminal-container) {
-            --terminal-search-match-bg: #4d3b30;
-            --terminal-search-match-border: #8a5a44;
-            --terminal-search-match-ruler: #8a5a44;
-            --terminal-search-active-bg: #d77757;
-            --terminal-search-active-border: #e88768;
-            --terminal-search-active-ruler: #d77757;
+            --terminal-search-match-bg: var(--oc-search-match-bg);
+            --terminal-search-match-border: var(--oc-search-match-border);
+            --terminal-search-match-ruler: var(--oc-search-match-border);
+            --terminal-search-active-bg: var(--oc-search-active-bg);
+            --terminal-search-active-border: var(--oc-search-active-border);
+            --terminal-search-active-ruler: var(--oc-search-active-bg);
         }
 
         .terminal-search-panel {
@@ -178,7 +178,7 @@
             position: absolute;
             top: 15px;
             right: 39px;
-            z-index: 1110;
+            z-index: var(--oc-z-drawer-float);
 
             width: min(560px, calc(100% - 54px));
             box-sizing: border-box;
@@ -253,7 +253,7 @@
             right: 0;
             bottom: 0;
             width: 24px;
-            z-index: 31;
+            z-index: calc(var(--oc-z-region-overlay) + var(--oc-z-step));
             pointer-events: none;
         }
 

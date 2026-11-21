@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.huddle import task_files
-from src.cplugs.sdk import ports, task_folders
+from src.plugins.huddle import task_files
+from src.plugins.sdk import ports, task_folders
 from tests.python.cplugs.reviewboard.harness import BASE, task_manager_store
 from tests.python.cplugs.reviewboard.test_attachments import HTML, client, env  # noqa: F401
 

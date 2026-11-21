@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+import sys
 from typing import Optional, Tuple
 
 import structlog
@@ -65,9 +66,25 @@ def _refused_under_test(service: str) -> bool:
     return running_under_test() or bool(os.environ.get(TEST_SLOT_ENV))
 
 
+_KEY_STORE_SERVICES = frozenset({DEVICE_KEY_SERVICE, FEDERATION_KEY_SERVICE})
+
+
+def _key_store_for(service: str):
+    if service not in _KEY_STORE_SERVICES or sys.platform == "darwin":
+        return None
+    if sys.platform == "win32":
+        from src.core.key_store import dpapi_store
+        return dpapi_store
+    from src.core.key_store import file_store
+    return file_store
+
+
 def read_password_state(service: str, account: str) -> Tuple[str, Optional[str]]:
     if _refused_under_test(service):
         return READ_UNAVAILABLE, None
+    store = _key_store_for(service)
+    if store is not None:
+        return store.read_state(service, account)
     try:
         result = subprocess.run(
             [SECURITY_BIN, "find-generic-password", "-s", service, "-a", account, "-w"],
@@ -92,6 +109,10 @@ def read_password(service: str, account: str) -> Optional[str]:
 def write_password(service: str, account: str, secret: str, replace: bool = True) -> None:
     if _refused_under_test(service):
         raise KeychainWriteError("the production item is refused under test")
+    store = _key_store_for(service)
+    if store is not None:
+        store.write(service, account, secret, replace)
+        return
     for name, value in (("service", service), ("account", account), ("secret", secret)):
         if not _SAFE_SECRET.fullmatch(value):
             raise KeychainWriteError(f"{name} has characters security -i cannot take")
@@ -111,6 +132,9 @@ def write_password(service: str, account: str, secret: str, replace: bool = True
 def delete_password(service: str, account: str) -> bool:
     if _refused_under_test(service):
         return False
+    store = _key_store_for(service)
+    if store is not None:
+        return store.delete(service, account)
     try:
         result = subprocess.run(
             [SECURITY_BIN, "delete-generic-password", "-s", service, "-a", account],

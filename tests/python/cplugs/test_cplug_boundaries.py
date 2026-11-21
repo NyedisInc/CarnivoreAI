@@ -26,8 +26,8 @@ def violations(source: str, cplug_id: str) -> List[str]:
 
 
 def test_every_cplug_imports_only_the_sdk_and_itself():
-    shipped = ["argent", "crate", "devwidgetlab", "flow", "huddle", "reviewboard", "save", "share", "timemachine", "tmdevtools", "unread"]
-    assert feature_ids() == [i for i in shipped if (ROOT / "src" / "cplugs" / i).is_dir()]
+    shipped = ["argent", "crate", "devwidgetlab", "flow", "huddle", "reviewboard", "save", "sessionchat", "share", "timemachine", "tmdevtools", "unread"]
+    assert feature_ids() == [i for i in shipped if (ROOT / "src" / "plugins" / i).is_dir()]
     found = {}
     for cplug_id in feature_ids():
         for path in (CPLUGS / cplug_id).rglob("*.py"):
@@ -38,9 +38,9 @@ def test_every_cplug_imports_only_the_sdk_and_itself():
 
 
 def test_the_boundary_check_can_fail():
-    assert violations("from src.core.mcp import tools\nimport src.api.auth\nfrom src.cplugs.other import x\n", "huddle") == [
-        "src.core.mcp", "src.api.auth", "src.cplugs.other"]
-    assert violations("import json\nfrom fastapi import Depends\nfrom src.cplugs.sdk import ToolSpec\nfrom . import rules\n", "huddle") == []
+    assert violations("from src.core.mcp import tools\nimport src.api.auth\nfrom src.plugins.other import x\n", "huddle") == [
+        "src.core.mcp", "src.api.auth", "src.plugins.other"]
+    assert violations("import json\nfrom fastapi import Depends\nfrom src.plugins.sdk import ToolSpec\nfrom . import rules\n", "huddle") == []
     assert violations("from src.core.deepsearch import fallback_hook\n", "save") == []
     assert violations("from src.core.deepsearch import index_scope\n", "save") == ["src.core.deepsearch"]
     assert violations("from src.core.deepsearch.fallback_hook import register\n", "save") == []
@@ -56,9 +56,9 @@ def test_core_never_imports_an_cplug_except_the_ship_list():
     offenders = []
     for path in (ROOT / "src").rglob("*.py"):
         rel = path.relative_to(ROOT / "src")
-        if rel.parts[0] == "cplugs" and (len(rel.parts) == 2 or rel.parts[1] in ids):
+        if rel.parts[0] == "plugins" and (len(rel.parts) == 2 or rel.parts[1] in ids):
             continue
         if core_importers(path.read_text(), ids):
             offenders.append(str(rel))
     assert offenders == []
-    assert core_importers("from src.cplugs.huddle import store\n", ["huddle"])
+    assert core_importers("from src.plugins.huddle import store\n", ["huddle"])

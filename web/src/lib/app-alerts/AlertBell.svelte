@@ -21,7 +21,7 @@
 
 {#if revealed && badge.count > 0}
   
-  <button type="button" data-btn="quiet" data-size="icon" data-app-alert-bell={place}
+  <button type="button" data-btn="quiet" data-size="icon" data-app-alert-bell={place} data-alert-severity={badge.severity ?? undefined}
     aria-label={label} data-tooltip={label} aria-expanded={alertPanel.open} aria-controls="app-alerts-panel"
     onclick={() => toggleAppAlerts()}>
     <Icon name="bell" size={16} />
@@ -35,6 +35,8 @@
     position: relative;
     flex: 0 0 auto;
   }
+  [data-app-alert-bell][data-alert-severity='error'] { color: var(--oc-coral); }
+  [data-app-alert-bell][data-alert-severity='warn'] { color: var(--oc-yellow-bright); }
   [data-app-alert-bell='drawer'] {
     --oc-ibtn-size: 28px;
   }

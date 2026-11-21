@@ -46,10 +46,12 @@ function createToastBanner(deps) {
     }
     if (!card.reachable) return card.status === 404 ? { missing: true } : null;
     const type = String(card.data.type || '');
+    if (card.data.test_target === 'app') return { missing: true };
     const [settings, styles] = await Promise.all([read(api, SETTINGS_ROUTE), read(api, STYLES_ROUTE)]);
     const cell = settings && settings.desktop ? settings.desktop[type] : undefined;
     const style = styles && styles.styles ? styles.styles[type] : undefined;
-    return { response: card.data, desktopOn: cell ? cell.value : undefined, corner: style ? style.corner : undefined };
+    const desktopOn = card.data.test_target === 'desktop' ? true : (cell ? cell.value : undefined);
+    return { response: card.data, desktopOn, corner: style ? style.corner : undefined };
   }
 
   function trim() {

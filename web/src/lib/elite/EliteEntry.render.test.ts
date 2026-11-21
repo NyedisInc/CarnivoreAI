@@ -188,4 +188,18 @@ describe('Elite Access entry', () => {
         expect(Modem.enabled()).toBe(true);
         expect(elite.querySelector('[data-opt="sound"]')).toBeNull();
     });
+
+    test('it wears the column frame (#2775): the board scrolls itself inside the frame body box, the boot stage still covers the page', async () => {
+        const { ensurePanel } = await import('../mount');
+        const EliteScreen = (await import('./EliteScreen.svelte')).default;
+        const { openEliteScreen } = await import('./elite-host');
+        ensurePanel('elite-screen', EliteScreen as never, { host: hostFor(), t } as never);
+        openEliteScreen({ direct: true });
+        await settle(150);
+        const page = elite.querySelector('.oc-page.elite')!;
+        expect(page.getAttribute('data-frame')).toBe('column');
+        expect(page.querySelector('.oc-titlebar')?.getAttribute('data-btn-density')).toBe('frame');
+        expect(page.querySelector('[data-frame-region="body"][data-scroll="self"] > .oc-page__fill > .m1c')).not.toBeNull();
+        expect(page.querySelector('.oc-page__fill > .elite-stage')).not.toBeNull();
+    });
 });

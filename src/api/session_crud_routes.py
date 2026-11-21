@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.concurrency import run_in_threadpool
 from src.api import session_rejoin_capture
 from src.api import (
-    agent_update_listing, asleep_brief, automation_listing, automation_timers_listing, description_listing, mcp_health_listing, swarm_member_listing, messaging_listing, parked_work_listing, session_account_listing, session_roles_listing, skill_fire_listing, spectator_listing,
+    agent_update_listing, asleep_brief, codex_helpers_listing, automation_listing, automation_timers_listing, description_listing, mcp_health_listing, swarm_member_listing, messaging_listing, parked_work_listing, session_account_listing, session_roles_listing, skill_fire_listing, spectator_listing,
     sleep_hold_listing, subagent_listing, timer_listing, pr_listing,
 )
 from src.api.auth import require_auth
@@ -21,7 +21,7 @@ from src.core.read_caches.ttl_flight import TtlFlight
 from src.core.pack.relay import runtime as relay_runtime
 from src.core.account_switch import create_account
 from src.core.launch_profiles import create_seam
-from src.core.launch_failure import classify_launch_failure
+from src.core.launch_profiles.launch_failure import classify_launch_failure
 from src.core.sessions.errors import SessionCreateFailed, TmuxError
 from src.core.launch_profiles.resolve import LaunchProfileNotFound
 from src.core.launch_profiles.secrets import SecretError
@@ -372,6 +372,7 @@ async def _assemble_owner_listing(app_state: Any) -> List[SessionInfo]:
     skill_fire_listing.mark_skill_fires(session_manager, infos)
     parked_work_listing.mark_parked_work(session_manager, infos)
     agent_update_listing.mark_agent_update(session_manager, infos)
+    codex_helpers_listing.mark_codex_helpers(infos)
     pr_listing.mark_pr(infos)
     mcp_health_listing.mark_mcp_health(app_state, infos)
     session_account_listing.mark_session_account(app_state, infos)

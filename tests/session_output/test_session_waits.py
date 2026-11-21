@@ -147,7 +147,7 @@ async def test_a_secret_inside_the_match_is_redacted(env):
     token = "ghp_" + "A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8"
     task = asyncio.create_task(_wait(registry, pane, waits.WaitSpec(text="DEPLOYED", timeout=5)))
     await asyncio.sleep(0.05)
-    pane.write(f"export GH={token}\nDEPLOYED ok\n".encode())
+    pane.write(f"export GH={token} done\nDEPLOYED ok\n".encode())
     out = await asyncio.wait_for(task, 2.0)
     assert out.matched == "output" and token not in out.tail and out.tail.startswith("export GH=*")
 

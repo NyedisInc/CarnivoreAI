@@ -5,7 +5,7 @@ import functools
 
 from src.core.argent.lifecycle import PORT_NAME
 from src.core.notifications import catalog_lines
-from src.cplugs.sdk import ports
+from src.plugins.sdk import ports
 
 CATALOG_KEY = "argent.mcp.instructions"
 

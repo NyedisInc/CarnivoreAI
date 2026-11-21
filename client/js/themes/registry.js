@@ -142,6 +142,7 @@
 
     async function loadManifests() {
         var rows = await fetchManifests();
+        if (rows === null && manifests.size > 0) return false;
         var fallback = rows === null ? await fetchStaticManifest(DEFAULT_THEME_ID) : null;
         manifests.clear();
         (rows || []).forEach(function (m) {

@@ -11,8 +11,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.host import routes as host_routes, runtime
-from src.cplugs.sdk import transcript_files, vault_sources
+from src.plugins.host import routes as host_routes, runtime
+from src.plugins.sdk import transcript_files, vault_sources
 from tests.python.cplugs.save.old_sources_helpers import lines
 from tests.python.cplugs.save.vault_helpers import stop_follower
 

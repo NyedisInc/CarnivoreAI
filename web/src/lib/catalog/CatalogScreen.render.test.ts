@@ -306,10 +306,10 @@ describe('the rows, the search and the filters', () => {
         const strip = document.querySelector('.oc-titlebar') as HTMLElement;
         expect(strip.querySelector('.oc-titlebar__title .oc-titlebar__icon svg[data-icon="floppy-525"]')).not.toBeNull();
         expect(strip.querySelector('.oc-titlebar__title')?.textContent?.trim()).toBe(t('skill.screen.title'));
-        expect(strip.querySelector('.wtools input[type="search"]')).not.toBeNull();
+        expect(strip.querySelector('.oc-titlebar__find input[type="search"]')).not.toBeNull();
         expect(strip.querySelector('.wtools [data-facet="sort"]')).not.toBeNull();
         expect(strip.querySelectorAll('.wtools .oc-page__view .oc-ibtn')).toHaveLength(2);
-        expect(strip.querySelector('.warez-act')).not.toBeNull();
+        expect(strip.querySelector('[data-warez-act]')).not.toBeNull();
         expect(document.querySelector('.oc-page__bar')).toBeNull();
         expect(document.querySelector('.oc-toolbar')).toBeNull();
         expect(document.querySelectorAll('input[type="search"]')).toHaveLength(1);
@@ -600,6 +600,22 @@ describe('opening on one kind (the themes page opens it on theme)', () => {
 });
 
 describe('the faceted shelf bar and the status line (issue #1554)', () => {
+    test('the page wears its nav frame: the search is the frame header slot and every header button and icon square is a base control at the frame density (#2775, S11)', async () => {
+        await paint();
+        const root = document.querySelector('.oc-page.cat') as HTMLElement;
+        expect(root.getAttribute('data-frame')).toBe('nav');
+        const strip = root.querySelector('header.oc-titlebar') as HTMLElement;
+        expect(strip.getAttribute('data-frame-region')).toBe('header');
+        expect(strip.getAttribute('data-btn-density')).toBe('frame');
+        expect(strip.querySelector('[data-frame-region="find"] input[type="search"]')).not.toBeNull();
+        const acts = [...strip.querySelectorAll('[data-warez-act]')];
+        expect(acts.length).toBeGreaterThanOrEqual(2);
+        expect(acts.every((b) => b.hasAttribute('data-btn') && !/modal-btn/.test(b.className))).toBe(true);
+        expect([...strip.querySelectorAll('.oc-page__view .oc-ibtn')].every((b) => b.getAttribute('data-size') === 'icon')).toBe(true);
+        expect(strip.querySelector('.modal-btn, .oc-btn')).toBeNull();
+        expect(root.querySelector('[data-frame-region="body"][data-scroll="self"] .cat-col .screen__body')).not.toBeNull();
+    });
+
     const MIXED: CatalogItem[] = [
         ...ITEMS.map((item) => ({ ...item, kind: 'skill', publisher: 'nyedis' })),
         { id: 'nyedis/glow', name: 'glow', kind: 'mod', publisher: 'nyedis', latest: '1.0', card: { title: 'Glow', brief: 'a mod' } },
@@ -653,7 +669,7 @@ describe('the faceted shelf bar and the status line (issue #1554)', () => {
     test('refresh is a text button in the title strip, publish is not, and ? opens the keys menu', async () => {
         await paint(hostFor(MIXED, [], [], INDEX));
         const strip = document.querySelector('.oc-titlebar') as HTMLElement;
-        expect(strip.querySelector('.warez-act')?.textContent?.trim()).toBe(t('skill.catalog.refresh'));
+        expect(strip.querySelector('[data-warez-act]')?.textContent?.trim()).toBe(t('skill.catalog.refresh'));
         expect(strip.querySelector('#catalog-submit-open')).toBeNull();
         expect(document.querySelector('.oc-page__bar .bar__refresh')).toBeNull();
         document.dispatchEvent(new KeyboardEvent('keydown', { key: '?', bubbles: true }));

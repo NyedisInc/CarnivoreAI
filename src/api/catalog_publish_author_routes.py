@@ -13,7 +13,7 @@ from src.api.catalog_hosted_routes import _hosted, _relay
 from src.api.catalog_publish_routes import _SUBMISSION_ID
 from src.api.catalog_rating_routes import _bearer
 from src.core.catalog import submission_rules, submissions_watch
-from src.cplugs.host import install_gates
+from src.plugins.host import install_gates
 from src.models.catalog_publish_author import (
     AppealRequest,
     LimitsResponse,

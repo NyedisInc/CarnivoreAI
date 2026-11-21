@@ -7,8 +7,8 @@ from typing import Dict
 
 import pytest
 
-from src.cplugs.reviewboard.public import carry, links
-from src.cplugs.sdk import CplugStorage, StorageSpec
+from src.plugins.reviewboard.public import carry, links
+from src.plugins.sdk import CplugStorage, StorageSpec
 from tests.python.cplugs.reviewboard.public.carry_fixtures import counts, make_old_folder, sha
 
 SPEC = StorageSpec(db="links.db", migrations=links.MIGRATIONS, private=True)

@@ -15,7 +15,7 @@ afterEach(() => {
 
 function page(onClose?: () => void): void {
   viewport.narrow = true;
-  app = mount(Page, { target: document.body, props: { title: 'Plugins', onClose } });
+  app = mount(Page, { target: document.body, props: { title: 'Plugins', frame: 'column', onClose } });
   flushSync();
 }
 

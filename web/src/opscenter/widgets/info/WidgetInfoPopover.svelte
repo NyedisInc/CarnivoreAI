@@ -59,7 +59,7 @@
       position: fixed;
       inset: auto;
       margin: 0;
-      z-index: 50;
+      z-index: var(--oc-z-shell-popover);
       display: flex;
       flex-direction: column;
       max-height: calc(100vh - var(--oc-space-4));

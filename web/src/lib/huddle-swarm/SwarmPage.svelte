@@ -5,22 +5,22 @@
     import { readTab, writeTab } from '../../opscenter/ui/tab-memory';
     import { isOneOf } from '../../opscenter/ui/stored-choice';
     import { t } from '../i18n/index.svelte';
-    import { openFeaturesPage } from '../../cplugs/sdk';
-    import { swarmInactive, setSwarmInactive } from '../../cplugs/huddle/huddle-swarm-inactive.svelte';
-    import SwarmLedger from '../../cplugs/huddle/swarm/SwarmLedger.svelte';
-    import SwarmOrg from '../../cplugs/huddle/swarm/SwarmOrg.svelte';
-    import SwarmPanel from '../../cplugs/huddle/swarm/SwarmPanel.svelte';
-    import SwarmSeatRefusal from '../../cplugs/huddle/swarm/SwarmSeatRefusal.svelte';
+    import { openFeaturesPage } from '../../plugins/sdk';
+    import { swarmInactive, setSwarmInactive } from '../../plugins/huddle/huddle-swarm-inactive.svelte';
+    import SwarmLedger from '../../plugins/huddle/swarm/SwarmLedger.svelte';
+    import SwarmOrg from '../../plugins/huddle/swarm/SwarmOrg.svelte';
+    import SwarmPanel from '../../plugins/huddle/swarm/SwarmPanel.svelte';
+    import SwarmSeatRefusal from '../../plugins/huddle/swarm/SwarmSeatRefusal.svelte';
     import SwarmBoard from '../swarm-board/SwarmBoard.svelte';
     import { boardFocus, isFresh } from '../swarm-board/board-focus.svelte';
-    import { lineageFloor, type FloorItem, type FloorTarget } from '../../cplugs/huddle/swarm/floor';
-    import { SWARM_TABS, SWARM_TAB_KEY } from '../../cplugs/huddle/swarm/swarm-page';
-    import { createSwarmLive, openFloorTarget, turnOnSeat } from '../../cplugs/huddle/swarm/swarm-live.svelte';
-    import { swarmSettings } from '../../cplugs/huddle/swarm/swarm-settings.svelte';
-    import { saveTierOrder } from '../../cplugs/huddle/swarm/node-order.svelte';
-    import { turnOnRefusal } from '../../cplugs/huddle/swarm/turn-on-refusal';
-    import { buildTree, floorItems } from '../../cplugs/huddle/swarm/swarm-tree';
-    import { filterKey, toggleFilter } from '../../cplugs/huddle/agents/agent-page.svelte';
+    import { lineageFloor, type FloorItem, type FloorTarget } from '../../plugins/huddle/swarm/floor';
+    import { SWARM_TABS, SWARM_TAB_KEY } from '../../plugins/huddle/swarm/swarm-page';
+    import { createSwarmLive, openFloorTarget, turnOnSeat } from '../../plugins/huddle/swarm/swarm-live.svelte';
+    import { swarmSettings } from '../../plugins/huddle/swarm/swarm-settings.svelte';
+    import { saveTierOrder } from '../../plugins/huddle/swarm/node-order.svelte';
+    import { turnOnRefusal } from '../../plugins/huddle/swarm/turn-on-refusal';
+    import { buildTree, floorItems } from '../../plugins/huddle/swarm/swarm-tree';
+    import { filterKey, toggleFilter } from '../../plugins/huddle/agents/agent-page.svelte';
 
     interface Props {
         close?: () => void;
@@ -105,8 +105,8 @@
     {/if}
 {/snippet}
 
-<Page title={t('cplug.huddle.swarm.page.title')} onClose={close} {embedded} tabs={tabStrip} notes={live.threadsReady === false ? notes : undefined}>
-    <div class="pkg-body" class:pkg-body--scroll={tab === 'board'} data-swarm-page data-swarm-tab={tab} {...panelAttrs('swarm', tab)}>
+<Page title={t('cplug.huddle.swarm.page.title')} onClose={close} {embedded} frame="column" scroll="self" tabs={tabStrip} notes={live.threadsReady === false ? notes : undefined}>
+    <div class="pkg-body" data-swarm-page data-swarm-tab={tab} {...panelAttrs('swarm', tab)}>
         {#if tab === 'board'}
             <SwarmBoard />
         {:else}
@@ -132,15 +132,15 @@
 <style>
   @layer components {
     .pkg-body {
-        padding: var(--oc-space-3);
         min-width: 0;
+        min-height: 0;
+        padding: var(--oc-space-3);
     }
 
-    /* the page frame */
-    .pkg-body--scroll {
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
+    @media (min-width: 768px) {
+        .pkg-body {
+            overflow-y: auto;
+        }
     }
 
     .pkg-need {

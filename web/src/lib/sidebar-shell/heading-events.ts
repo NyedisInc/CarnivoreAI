@@ -81,7 +81,7 @@ function onClick(e: MouseEvent): void {
         openItemMenu(kebab.type, { key: kebab.key, anchor: kebab.el }, kebab.el);
         return;
     }
-    const toggle = target.closest('[data-group-toggle]');
+    const toggle = target.closest('[data-group-toggle]') ?? (e.currentTarget as Element | null)?.querySelector('[data-group-toggle]');
     if (toggle) {
         e.stopPropagation();
         const key = toggle.getAttribute('data-group-toggle') || '';

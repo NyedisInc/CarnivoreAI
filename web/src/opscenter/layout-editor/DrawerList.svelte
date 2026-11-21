@@ -31,6 +31,8 @@
     familyOpen,
     onRowDown,
     onRowClick,
+    onCardDown,
+    onCardPick,
     inputs,
     onSurface,
     showAnalytics,
@@ -52,6 +54,8 @@
     familyOpen: (row: GroupRow) => boolean | null;
     onRowDown: (event: PointerEvent, row: GroupRow) => void;
     onRowClick: (row: GroupRow) => void;
+    onCardDown: ComponentProps<typeof AnalyticsFamilyFold>['oncarddown'];
+    onCardPick: ComponentProps<typeof AnalyticsFamilyFold>['oncardpick'];
     inputs: ComponentProps<typeof AnalyticsFamilyFold>['inputs'];
     onSurface: SlotId[];
     showAnalytics: boolean;
@@ -77,7 +81,7 @@
     />
   </li>
   {#if row.widgetId === 'core.analytics' && row.state !== 'refused'}
-    <AnalyticsFamilyFold open={galleryOpen || needle !== ''} {needle} matchesFamily={showAnalytics} {inputs} {onSurface} />
+    <AnalyticsFamilyFold open={galleryOpen || needle !== ''} {needle} matchesFamily={showAnalytics} {inputs} {onSurface} oncarddown={onCardDown} oncardpick={onCardPick} />
   {/if}
 {/snippet}
 

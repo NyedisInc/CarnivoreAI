@@ -203,6 +203,20 @@ it('a shell row lands in TERMINALS and not in PROJECTS; an agent row in the same
     assert.ok(!html.includes('console-abc123'));
 });
 
+it('a project with only a live shell gets its heading with that shell under it; the home console project still does not (#3023)', async () => {
+    const rows = fixtureRows().concat([{
+        name: 'cloude_shellonly', label: null, is_pinned: false,
+        agent_family: 'shell', project_id: 40, project_name: 'ShellOnly',
+        working_dir: '/Users/alex/dev/shellonly', status: 'unknown',
+        created_by_cloude: true, session_id: null,
+    }]);
+    const html = body(rows);
+    assert.deepEqual(namesInGroup(html, 'p:40'), ['cloude_shellonly']);
+    assert.ok(namesInGroup(html, 'terminals').includes('cloude_shellonly'));
+    assert.ok(!html.includes('data-group="p:30"'));
+    assert.deepEqual(namesInGroup(html, 'p:10'), ['cloude_myapp']);
+});
+
 it('the folder subtitle draws for a terminal row and never for an agent row', async () => {
     const html = body(fixtureRows());
     assert.ok(html.includes('session-sidebar-row-subtitle'));

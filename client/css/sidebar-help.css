@@ -288,7 +288,7 @@
     content: '';
     width: 7px;
     height: 7px;
-    border-radius: 1px;
+    border-radius: var(--oc-radius-xs);
     background: var(--help-type, var(--oc-text-muted));
 }
 
@@ -351,7 +351,7 @@
     content: '';
     width: 7px;
     height: 7px;
-    border-radius: 1px;
+    border-radius: var(--oc-radius-xs);
     background: currentColor;
 }
 

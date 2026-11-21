@@ -8,10 +8,10 @@
   "summary": "an optional plugin, off until you switch it on, that checks every 15 minutes that Apple's Time Machine made a backup in the last 24 hours and raises one alert when it did not or cannot tell. A computer with no Time Machine disk set up gets no alert.",
   "description": "The time machine check plugin runs tmutil once every 15 minutes (first pass a minute after it starts), off the event loop, and keeps one alert. A backup older than 24 hours raises it at once; a read that fails raises a cannot-tell alert on the second pass in a row, with a check access explainer that opens the Full Disk Access setting; a backup running right now changes nothing; a healthy backup, or a computer with no Time Machine destination, closes the alert. Its re-check now button posts to the plugin's own route. It ships off for everyone and needs only the notify permission.",
   "surfaces": [
-    "src/cplugs/timemachine/service.py",
-    "src/cplugs/timemachine/checks.py",
-    "src/cplugs/timemachine/routes.py",
-    "web/src/cplugs/timemachine/index.ts"
+    "src/plugins/timemachine/service.py",
+    "src/plugins/timemachine/checks.py",
+    "src/plugins/timemachine/routes.py",
+    "web/src/plugins/timemachine/index.ts"
   ],
   "api_routes": [
     "POST /api/v1/cplugs/timemachine/check",

@@ -13,10 +13,10 @@ WRITE_NAMES = {"atomic_write_json", "atomic_write_text", "open"}
 WRITE_ATTRS = {("os", "replace"), ("os", "rename"), ("shutil", "move"), ("json", "dump")}
 WRITE_METHODS = {"write_text", "write_bytes"}
 
-BOUNDARY = {"src/cplugs/host/registry_store.py", "src/cplugs/host/registry_files.py"}
+BOUNDARY = {"src/plugins/host/registry_store.py", "src/plugins/host/registry_files.py"}
 
 ALLOWED: dict = {
-    ("src/cplugs/host/legacy_move.py", "_copy_json"): "one-time addons/ to cplugs/ folder move: it rewrites state.json inside a temp copy "
+    ("src/plugins/host/legacy_move.py", "_copy_json"): "one-time addons/ to cplugs/ folder move: it rewrites state.json inside a temp copy "
     "that is published whole by os.replace, before the host, the runtime or plugins.json exist",
 }
 
@@ -68,7 +68,7 @@ def offenders(root: Path = SRC) -> List[str]:
 def test_only_registry_store_writes_the_four_plugin_stores():
     bad = offenders()
     assert not bad, (
-        "these functions write state.json, installs.json, sideload.json or third-party.json outside src/cplugs/host/registry_store.py and registry_files.py (its file-level half, called only under the lock):\n  "
+        "these functions write state.json, installs.json, sideload.json or third-party.json outside src/plugins/host/registry_store.py and registry_files.py (its file-level half, called only under the lock):\n  "
         + "\n  ".join(bad) + "\n\nEvery write goes through registry_store.write_document (inside registry_store.exclusive) or registry_store.commit, "
         "or a second writer loses an update and plugins.json drifts from the files it projects."
     )
@@ -84,8 +84,8 @@ def test_the_scan_goes_red_on_a_writer_outside_the_boundary(tmp_path):
 
 
 def test_the_boundary_still_carries_the_write_sequence():
-    store = (SRC / "cplugs" / "host" / "registry_store.py").read_text(encoding="utf-8")
-    source = (SRC / "cplugs" / "host" / "registry_files.py").read_text(encoding="utf-8")
+    store = (SRC / "plugins" / "host" / "registry_store.py").read_text(encoding="utf-8")
+    source = (SRC / "plugins" / "host" / "registry_files.py").read_text(encoding="utf-8")
     source = source[source.index("def write_registry("):]
     backup, temp = source.index('".bak"'), source.index("unique_tmp_path(path)")
     fsync, replace = source.index("os.fsync(handle.fileno())", temp), source.index("os.replace(temp, path)")

@@ -1,7 +1,7 @@
 <script lang="ts">
   import Button from '../../../lib/base/Button.svelte';
   import { t } from '../../../lib/i18n/index.svelte';
-  import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
+  import type { HuddleItem } from '../../../plugins/huddle/huddle-model';
   import { clock, startClock } from '../../lib/frozen-clock.svelte';
   import { holdLeft, pressMarkRead } from './mk2-mark-read.svelte';
 

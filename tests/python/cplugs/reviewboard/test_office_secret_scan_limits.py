@@ -8,8 +8,8 @@ import time
 import pytest
 
 from src.core.secret_scanning import deadline as scan_deadline
-from src.cplugs.reviewboard import office_text
-from src.cplugs.reviewboard.errors import UnscannableFile
+from src.plugins.reviewboard import office_text
+from src.plugins.reviewboard.errors import UnscannableFile
 from tests.python.cplugs.reviewboard.test_office_secret_scan import BODY, FAKE, make_zip, xlsx
 from tests.python.cplugs.reviewboard.test_office_secret_scan_evasions import HIT, _zip_bytes, hit
 
@@ -55,7 +55,7 @@ def test_the_deadline_trips_between_parts(monkeypatch):
 
 
 def test_one_deadline_covers_every_file_of_an_attach(monkeypatch):
-    from src.cplugs.reviewboard import attachment_secrets
+    from src.plugins.reviewboard import attachment_secrets
     ticks = itertools.count(0, 20)
     monkeypatch.setattr(scan_deadline, "_now", lambda: float(next(ticks)))
     files = [(f"{n}.docx", make_zip({f"word/p{n}.xml": "<w:t>x</w:t>" for n in range(2)})) for n in range(3)]

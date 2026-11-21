@@ -236,10 +236,6 @@
     color: var(--oc-text-dim);
   }
 
-  .oc-lv-page {
-    grid-template-rows: minmax(0, 1fr);
-  }
-
   @media (max-width: 1023px) {
     .oc-lv-bar [data-btn],
     .oc-lv-filters [data-btn] {

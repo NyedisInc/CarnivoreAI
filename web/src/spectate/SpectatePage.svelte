@@ -354,7 +354,7 @@
     right: 0;
     height: 100vh;
     height: 100dvh;
-    z-index: 2000;
+    z-index: var(--oc-z-takeover);
     display: flex;
     flex-direction: column;
     padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -411,7 +411,7 @@
   .spectate-dot {
     width: 7px;
     height: 7px;
-    border-radius: 50%;
+    border-radius: var(--oc-radius-circle);
     background: var(--oc-yellow);
   }
 
@@ -429,7 +429,7 @@
   .spectate-badge {
     padding: 1px 6px;
     border: 1px solid var(--oc-orange-dim);
-    border-radius: 2px;
+    border-radius: var(--oc-radius-control);
     background: var(--oc-orange-tint);
     color: var(--oc-orange-bright);
     font-size: 11px;

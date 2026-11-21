@@ -48,7 +48,7 @@
           right: 0;
           width: 12px;
           height: 100%;
-          border-radius: 1px;
+          border-radius: var(--oc-radius-xs);
           background: var(--oc-text-muted);
           transition:
               width 0.1s ease,

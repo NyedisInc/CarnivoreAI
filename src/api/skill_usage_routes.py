@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Query
 
 from src.api.auth import require_auth
 from src.core.skill_fires.tally import default_store
-from src.models.sessions import SkillUsage
+from src.models.skill_fires import SkillUsage
 
 router = APIRouter()
 

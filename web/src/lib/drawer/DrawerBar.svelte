@@ -4,7 +4,7 @@
   import Icon from '../../opscenter/ui/Icon.svelte';
   import { t } from '../i18n/index.svelte';
   import { accountChip } from '../drawer-hud/account-menu.svelte';
-  import { cplugBarIndicators } from '../../cplugs/host/readers';
+  import { cplugBarIndicators } from '../../plugins/host/readers';
   import { BEAST_BAR_ACTION, beastIndicator } from '../beast-mode/control.svelte';
   import { avatarInnerHtml, isMember } from './avatar';
   import type { BarView } from './bar-view.svelte';

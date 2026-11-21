@@ -42,9 +42,10 @@ def key_store(monkeypatch, tmp_path) -> store_module.ApiKeyStore:
 
 
 @pytest.fixture
-def client() -> TestClient:
+def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
     from src.main import app
 
+    monkeypatch.setattr(app.state, "refresh_store", None, raising=False)
     return TestClient(app, client=("127.0.0.1", 50000), raise_server_exceptions=False)
 
 

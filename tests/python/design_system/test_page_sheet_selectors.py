@@ -5,9 +5,11 @@ from pathlib import Path
 
 import pytest
 
+from scripts.design import raw_values, reach_ins
+from scripts.design.reach_ins import split_top_level, style_preludes
 from tests.python.design_system._sources import REPO, strip_comments
 
-SCAN_ROOTS = (REPO / "web" / "src" / "lib", REPO / "web" / "src" / "cplugs", REPO / "client" / "css")
+SCAN_ROOTS = (REPO / "web" / "src" / "lib", REPO / "web" / "src" / "plugins", REPO / "client" / "css")
 EXCLUDED_DIRS = (REPO / "web" / "src" / "lib" / "base",)
 MIN_SHEETS = 100
 
@@ -27,40 +29,6 @@ def sheets() -> list[Path]:
     for root in SCAN_ROOTS:
         found += [p for p in root.rglob("*.css") if not any(d in p.parents for d in EXCLUDED_DIRS)]
     return sorted(found)
-
-
-def split_top_level(text: str, sep: str) -> list[str]:
-    parts, depth, cur = [], 0, []
-    for ch in text:
-        depth += (ch in "([") - (ch in ")]")
-        if ch == sep and depth == 0:
-            parts.append("".join(cur).strip())
-            cur = []
-        else:
-            cur.append(ch)
-    parts.append("".join(cur).strip())
-    return [p for p in parts if p]
-
-
-def style_preludes(css: str) -> list[str]:
-    out: list[str] = []
-    stack: list[bool] = []
-    start = 0
-    for i, ch in enumerate(css):
-        if ch == "{":
-            prelude = css[start:i].strip()
-            is_rule = not prelude.startswith("@") and not any(stack)
-            if is_rule and prelude:
-                out.append(prelude)
-            stack.append(not prelude.startswith("@"))
-            start = i + 1
-        elif ch == "}":
-            if stack:
-                stack.pop()
-            start = i + 1
-        elif ch == ";" and not any(stack):
-            start = i + 1
-    return out
 
 
 def leak_of(selector: str) -> str | None:
@@ -127,3 +95,66 @@ def test_missing_subject_files_fail(monkeypatch: pytest.MonkeyPatch, tmp_path: P
     monkeypatch.setattr(__import__(__name__, fromlist=["x"]), "SCAN_ROOTS", (tmp_path / "gone",))
     with pytest.raises(AssertionError):
         test_scan_finds_its_sheets()
+
+
+REACH_FLOOR = 100
+
+
+def test_reach_ins_only_fall() -> None:
+    found = reach_ins.scan()
+    assert len(found) >= REACH_FLOOR, f"only {len(found)} files with a reach-in: a scan root moved or the scan read nothing"
+    grown, stale = raw_values.compare(found, reach_ins.load_baseline(), reach_ins.KINDS)
+    assert not grown, "new reach-ins into a shared base control (use a base variant or a token, never restyle it):\n" + "\n".join(grown)
+    assert not stale, "reach-ins removed; lower the baseline with python3 -m scripts.design.reach_ins --write:\n" + "\n".join(stale)
+
+
+@pytest.mark.parametrize(
+    ("css", "kind"),
+    [(".wp-screen .wp-add > [data-btn] { border: 0; }", "hook"), (".x .oc-pick__input { color: x; }", "hook"),
+     (".x :global(.modal-btn-danger) { color: x; }", "hook"), (".x [data-field='search'] { color: x; }", "hook"),
+     (".x :global(.oc-row) { color: x; }", "global"), (".x { --_btn-bg: var(--a); }", "private-write"),
+     (".x { --_pick-h: 2px; }", "private-write"), (".x { color: var(--a) !important; }", "important"),
+     ("@media (max-width: 1px) { .x { gap: 0 ! important; } }", "important")],
+)
+def test_negative_control_each_reach_in_kind_is_counted(css: str, kind: str) -> None:
+    assert reach_ins.count_css(css) == {**dict.fromkeys(reach_ins.KINDS, 0), kind: 1}
+
+
+@pytest.mark.parametrize(
+    "css",
+    [".x .oc-button-ish { color: x; }", ".x .modal-btnx { color: x; }", ".x { color: var(--_btn-bg); --_own-bg: 1px; }",
+     ".x [data-btnish] { color: x; }", ":global(.app-root) .x { color: x; }"],
+)
+def test_reach_in_lookalikes_are_not_counted(css: str) -> None:
+    assert reach_ins.count_css(css) == dict.fromkeys(reach_ins.KINDS, 0)
+
+
+def test_negative_control_a_planted_reach_in_goes_red_and_the_owners_are_not_read(tmp_path: Path) -> None:
+    web = tmp_path / "web" / "src"
+    (web / "lib" / "base").mkdir(parents=True)
+    (web / "lib" / "base" / "elements.css").write_text(":where([data-btn]) { --_btn-bg: x; }\n")
+    (web / "Page.svelte").write_text("<div></div>\n<style>.p :global(.oc-btn) { border: 0 !important; }</style>\n")
+    roots = ((web, frozenset({".css", ".svelte"})),)
+    found = reach_ins.scan(roots, tmp_path)
+    assert found == {"web/src/Page.svelte": {"hook": 1, "global": 1, "important": 1}}
+    grown, _ = raw_values.compare(found, {}, reach_ins.KINDS)
+    assert grown == ["web/src/Page.svelte hook: 1 > 0", "web/src/Page.svelte global: 1 > 0", "web/src/Page.svelte important: 1 > 0"]
+    with pytest.raises(FileNotFoundError):
+        reach_ins.scan(((tmp_path / "gone", frozenset({".css"})),), tmp_path)
+
+
+def test_the_reach_in_scan_covers_every_tree() -> None:
+    found = reach_ins.load_baseline()
+    for prefix in ("web/src/", "src/plugins/", "client/css/"):
+        assert any(rel.startswith(prefix) for rel in found), prefix
+    assert not any(reach_ins.is_owner(rel) for rel in found)
+
+
+def test_plugin_sheets_are_held_by_the_reach_in_ratchet(tmp_path: Path) -> None:
+    plugin = tmp_path / "web" / "src" / "plugins" / "zz"
+    plugin.mkdir(parents=True)
+    (plugin / "look.css").write_text(".zz-head .oc-btn { --_btn-bg: x; }\n")
+    found = reach_ins.scan(((tmp_path / "web" / "src", frozenset({".css"})),), tmp_path)
+    assert found == {"web/src/plugins/zz/look.css": {"hook": 1, "private-write": 1}}
+    held = {rel.split("/")[3] for rel in reach_ins.load_baseline() if rel.startswith("web/src/plugins/")}
+    assert len(held) >= 4, held

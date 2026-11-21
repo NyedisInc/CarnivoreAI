@@ -4,8 +4,8 @@ from __future__ import annotations
 import pytest
 
 from src.core.blobcodec import chunking
-from src.cplugs.save.vault.chunks import BlobStore
-from src.cplugs.save.vault.ranges import ChunkCache, EntryReader
+from src.plugins.save.vault.chunks import BlobStore
+from src.plugins.save.vault.ranges import ChunkCache, EntryReader
 from src.core.deepsearch.fallback_hook import FallbackUnavailable
 from tests.python.cplugs.save.vault_helpers import CONV, World, jsonl
 

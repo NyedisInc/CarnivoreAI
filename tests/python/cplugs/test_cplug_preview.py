@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.host import install_gates
-from src.cplugs.host.sidecar_manifest import SidecarManifestError, load_sidecar_manifest
+from src.plugins.host import install_gates
+from src.plugins.host.sidecar_manifest import SidecarManifestError, load_sidecar_manifest
 from tests.python.cplugs.preview_fixtures import BAD, GOOD
 
 PACKAGE = Path(__file__).resolve().parents[3] / "packages" / "cplugs" / "mcphealth"

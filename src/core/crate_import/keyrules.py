@@ -43,6 +43,7 @@ _CODES: Dict[str, Dict[str, str]] = {
     "cloude.db.session_notes": {"session_uuid": _SESSION},
     "cloude.db.session_groups": {"id": "self", "group_uuid": "nat"},
     "cloude.db.session_group_styles": {"group_id": "ref:session_groups.id"},
+    "cloude.db.session_group_rules": {"group_id": "ref:session_groups.id"},
     "cloude.db.session_group_membership": {"session_uuid": _SESSION, "group_id": "ref:session_groups.id"},
     "cloude.db.layouts": {"id": "self", "layout_uuid": "nat", "source_key": "null"},
     "cloude.db.layout_styles": {"layout_uuid": "ref:layouts.layout_uuid"},

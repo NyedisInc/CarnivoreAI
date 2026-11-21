@@ -32,7 +32,7 @@ from src.core.session_one_shot_gate import (
 from src.core.session_startup_gate import GATE_READY
 from src.core.session_status import STATUS_IDLE, STATUS_QUESTION
 from src.core.tmux_backend import SESSION_PREFIX, TmuxBackend
-from src.core.tmux_one_shot import PasteNotSettledError
+from src.core.tmux_one_shot import PasteNotSettledError, PasteNotSubmittedError
 
 from tests import socket_guard
 
@@ -163,7 +163,7 @@ def test_a_pane_that_never_changes_gets_no_enter_at_all(tmux_socket):
     time.sleep(1.0)
 
     before = _capture(backend, SILENT_PANE)
-    with pytest.raises(PasteNotSettledError):
+    with pytest.raises(PasteNotSubmittedError):
         asyncio.run(tmux_one_shot.paste_and_submit(backend, BODY))
     assert _capture(backend, SILENT_PANE) == before, (
         "the pane changed after all, so this test no longer exercises the "

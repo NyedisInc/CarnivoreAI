@@ -33,7 +33,7 @@ def test_search_row_lives_inside_the_phone_scroller() -> None:
 
 
 def test_mode_select_matches_the_field_height() -> None:
-    mode = re.search(r"\.ds-mode \{([^}]*)\}", SEARCH).group(1)
+    mode = re.search(r":global\(\[data-ds-mode\]\) \{([^}]*)\}", SEARCH).group(1)
     assert "height: 100%" in mode
     assert "--oc-search-h: var(--drawer-field-h" in re.search(r"\.ds-row :global\(\.oc-search\) \{([^}]*)\}", SEARCH).group(1)
 
@@ -45,7 +45,7 @@ def test_search_row_bar_token_is_field_plus_padding() -> None:
 
 
 def test_phone_tap_target_is_taller_than_the_look() -> None:
-    mode = re.search(r"\.ds-mode::after \{([^}]*)\}", SEARCH).group(1)
+    mode = re.search(r":global\(\[data-ds-mode\]::after\) \{([^}]*)\}", SEARCH).group(1)
     assert "height: var(--oc-tap" in mode and "content: ''" in mode
     assert re.search(r"left: 0;", mode), "must not reach left over the search field"
-    assert re.search(r"@media \(max-width: 1023px\) \{\s*\.ds-mode \{\s*position: relative", SEARCH)
+    assert re.search(r"@media \(max-width: 1023px\) \{\s*:global\(\[data-ds-mode\]\) \{\s*position: relative", SEARCH)

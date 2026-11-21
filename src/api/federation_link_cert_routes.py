@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from src.api.peer_auth import Principal, open_db, require_peer
 from src.core.computers import link_rotate, runtime
+from src.core.resource_push import topics
 
 router = APIRouter(prefix="/federation", tags=["federation"])
 _require_machine = require_peer("machine")
@@ -46,5 +47,5 @@ async def announce_link_cert(body: LinkCertBody, principal: Principal = Depends(
     except sqlite3.Error:
         raise HTTPException(503, {"code": "computers_unavailable", "detail": "the datastore could not store the certificate"}) from None
     await rt.repin(force=True)
-    rt.notify("computers")
+    rt.notify(topics.COMPUTERS)
     return {"accepted": True}

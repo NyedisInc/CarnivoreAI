@@ -10,14 +10,14 @@ from typing import Any, Dict, List
 
 from fastapi import FastAPI
 
-from src.cplugs.host import runtime, state as owner_state
-from src.cplugs.huddle import board_port, service as task_manager_service
-from src.cplugs.reviewboard import layout
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.host import runtime, state as owner_state
+from src.plugins.huddle import board_port, service as task_manager_service
+from src.plugins.reviewboard import layout
+from src.plugins.huddle.public import TaskManagerStore
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
-from src.cplugs.reviewboard import routes
-from src.cplugs.reviewboard.scan import MARKER
+from src.plugins.reviewboard import routes
+from src.plugins.reviewboard.scan import MARKER
 from tests.python.cplugs.owner import turn_on
 
 BASE = "/api/v1/cplugs/reviewboard"

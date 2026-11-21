@@ -14,6 +14,8 @@ VERBS = frozenset({
 VIEW_NOUNS = frozenset({"status", "output", "log", "changes", "guide", "inbox", "thread", "backlog", "ledger", "manifest", "profile",
                         "roster"})
 KEPT = {
+    "delegate_stats": "#2990 G7: the numbers behind delegate (misses, remote share, load), a computed read named for the feature it measures; _get would hide that it is a report",
+    "delegate": "P28 a (the owner, 2026-11-16): the feature's one-word tool name, always loaded",
     "whoami": "a one-word identity read every agent knows",
     "task_manager_scratch_post": "Joe (ccsliinc)'s #1758 word: a client posts to a scratch board; create would read as always new",
     "task_manager_scratch_clear": "Joe (ccsliinc)'s #1758 word, 'until I clear it'; delete would read as removing the Scratch task too",
@@ -52,6 +54,13 @@ KEPT = {
     "crate_import_undo": "Joe (ccsliinc)'s #1912 word (docs/crate-import.md): undo a finished restore; delete would read as removing the crate",
     "files_open": "Joe's request (#1724): open a file into his files list, as browser_open opens a page; the open_files route is POST /files/open",
     "session_attach_command": "the R1-14 contract name (#2328, PLAN row): the argv that attaches a terminal, named for the command it returns; get would hide what comes back",
+    "pack_reconnect_off": "the #2980 contract name (docs/pack.md): deliberately one-way (it turns reconnect and takeover off, nothing turns it on), as beastmode_off is, so no _set",
+    "pack_relay_account_use": "the Pack relay's verb-object phrase (docs/federation.md): point a relayed account at use on a computer; set would read as a write of a stored value",
+    "pack_global_sync_now": "run is not the verb and now names the one-shot: sync the global setup this minute, as automation_run_now keeps its own word; the status read is pack_global_sync_status",
+    "session_mass_death_resume": "names the event it answers (a mass death of sessions) and the action, resume them; a verb-object phrase, not a record verb",
+    "argent_writeback_review_list": "the argent writeback review queue (docs/argent.md): the list of items awaiting review, review being the queue's own noun",
+    "argent_work_item_close": "the argent plan's work item word (docs/argent.md): close is the lifecycle step the owner names; delete would read as removing the record",
+    "argent_retag": "the argent plan's contract name (docs/argent.md): move a stretch of cost to another work item, a single verb with no object to name",
 }
 UNCHECKED_PREFIXES = ("swarm_",)
 _SHAPE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)+$")

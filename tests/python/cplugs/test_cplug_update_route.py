@@ -14,7 +14,7 @@ from src.api import catalog_installed_routes as routes
 from src.api.auth import require_auth
 from src.core.catalog.index_refresher import HOURLY_SECONDS, IndexRefresher
 from src.core.skills import install_by_reference
-from src.cplugs.host import identity, owner_switch, routes as host_routes, runtime, sidecar_boot, sidecar_index
+from src.plugins.host import identity, owner_switch, routes as host_routes, runtime, sidecar_boot, sidecar_index
 from tests.python.cplugs.test_cplug_update_revoke import (AVAILABLE, ITEM, KEY_ID, NAME, FakeCache, FakeClock, alive, lay_code)
 
 sandboxed = pytest.mark.skipif(not AVAILABLE, reason="needs macOS sandbox-exec and the framework Python")

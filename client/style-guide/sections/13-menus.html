@@ -85,6 +85,10 @@
     </div>
 </div>
 <dl class="sg-facts">
+    <dt>title strip</dt>
+    <dd><code>session-row-menu__title</code>, first inside the panel, for a menu that opens from a control with no row to name it
+        (the widgets menu behind the sidebar's top bar key). One short lowercase label drawn uppercase in <code>--oc-orange</code> on
+        <code>--oc-ground-titlerow</code>, fixed height, hairline by <code>box-shadow</code>; then the rows, <code>session-row-menu__sep</code> between groups.</dd>
     <dt>popup focus</dt>
     <dd>Add <code>popup-focus</code> to the panel's class list and declare no border, ground or shadow of your own; the look
         is drawn once in <code>client/css/popup-focus.css</code>, which loads last so it wins at equal specificity. Worn by the
@@ -228,7 +232,9 @@
     <dt>states</dt>
     <dd>Live is the one green (<code>.sal-status--live</code>); every ended state (fired, canceled, replaced, expired,
         refused, lost) is dim (<code>.sal-status--ended</code>); unknown and unreadable are yellow
-        (<code>.sal-status--unknown</code>). Not applicable and not measured are sentences, never an empty table.</dd>
+        (<code>.sal-status--unknown</code>). Not applicable and not measured are sentences, never an empty table. A running
+        subagent that wrote nothing for five minutes and waits on no monitor shows its age cell as <code>stalled Nm</code>
+        in amber (<code>.sal-num--stalled</code>, token <code>--oc-yellow-bright</code>); nothing is stopped.</dd>
     <dt>access</dt>
     <dd><code>role="dialog"</code> named "timers of NAME"; Escape, the close control or a click elsewhere closes it and
         focus returns to the chip.</dd>
@@ -324,6 +330,9 @@
         browser's own tooltip never fires beside it; it comes back on leave. <code>data-tooltip-side</code> (top, bottom,
         left, right; default top) is a preference that flips when it does not fit. A press or Escape hides it until the
         pointer leaves; a touch never shows it.</dd>
+    <dt>list tip</dt>
+    <dd>A tip whose lines start with <code>&bull; </code> gets each mark in <code>.cc-tooltip-bullet</code>, the theme accent
+        (<code>--oc-orange</code>); the text is unchanged (the foot bar's pack icon, #3060).</dd>
     <dt>cut-off text</dt>
     <dd>Text clipped with an ellipsis (a Task Manager row's title) may show its complete text in this same box: the
         <code>truncatedTip</code> action (<code>web/src/lib/tooltip/truncated-tip.ts</code>) sets <code>data-tooltip</code>

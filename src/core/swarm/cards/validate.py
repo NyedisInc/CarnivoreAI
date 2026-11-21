@@ -16,8 +16,8 @@ from src.core import db
 from src.core.mcp.caller import AgentCaller
 from src.core.swarm import body, brief, memory, profiles, spawn, store, switch, teardown
 from src.core.swarm.cards import effects, ops, port as card_port
-from src.cplugs.sdk.cards import CardRefused
-from src.cplugs.sdk.storage import CplugSchemaError
+from src.plugins.sdk.cards import CardRefused
+from src.plugins.sdk.storage import CplugSchemaError
 
 logger = structlog.get_logger()
 

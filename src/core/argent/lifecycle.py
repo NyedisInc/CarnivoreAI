@@ -9,7 +9,7 @@ import structlog
 from src.core import resource_push
 from src.core.resource_push import topics
 from src.core.sessions import launch_overlay, session_events
-from src.cplugs.sdk import ports
+from src.plugins.sdk import ports
 from src.core.argent import refresh, cards_sync, commits, cost_poller, fallback_spend, gateway_reach, health, poll_relay, outage, rollout, timeline, upstream_registry, work_items, writeback
 from src.core.argent.overlay import ArgentOverlay
 from src.core.argent.registration import Registrar, follow_rename

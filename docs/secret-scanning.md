@@ -63,15 +63,15 @@ The hook runs a second scanner after the python one passes:
 gitleaks git --staged <repo> --config .gitleaks.toml --redact --no-banner
 ```
 
-the same tool and the same `.gitleaks.toml` config CI runs
-(`.github/workflows/secret-scan.yml`). The two are complementary, not
+the `.gitleaks.toml` config of this repo
+(pinned version in `.github/workflows/secret-scan.yml`). The two are complementary, not
 redundant, measured 2026-08-31: the python scanner catches a 1Password
 `ops_` service account token, which gitleaks's default ruleset has no
 rule for at all; gitleaks names roughly 170 vendor formats (stripe,
 sendgrid, twilio, npm, and more) the python scanner would only ever
 catch through its generic entropy heuristic, which is off by default
 because it is unusable over source (see above). Running only one of
-them locally is what let a commit pass this hook and then fail CI.
+them would leave a class of credential unseen.
 
 Install it with `brew install gitleaks`. Installed on the dev mini
 (192.0.2.6) via Homebrew, 2026-09-10, version 8.30.1, matching the
@@ -81,12 +81,25 @@ out of the workflow file and compares it against the local
 `gitleaks version` on every run, printing a NOTE, never a refusal, on a
 mismatch, since rules can differ between versions.
 
-A missing `gitleaks` binary or a missing `.gitleaks.toml` does not
-refuse the commit. Both print a NOTE that the second gate did not run
-and exit 0, because a hook nobody can get past gets uninstalled and
-then both gates are gone. That NOTE means exactly what it says, not
-"clean": the python scanner passed, gitleaks did not run, and CI still
-runs gitleaks against the same config and can still reject the commit.
+A missing `gitleaks` binary REFUSES the commit (exit 2, could not scan, never a
+pass) with a one-line hint, `brew install gitleaks`. CI is off on purpose
+(`docs/ci.md`), so this hook is the only place the second gate runs. A missing
+`.gitleaks.toml` still prints a NOTE that the gate did not run and exits 0.
+`git commit --no-verify` remains the documented emergency bypass.
+
+## History scan at a version bump
+
+The hook only sees staged lines. Before every version bump run, from the repo root:
+
+```sh
+scripts/release/history_secret_scan.sh
+```
+
+It finds the last commit that changed the `version` line of `macOS/package.json`
+before HEAD and runs exactly `gitleaks git --log-opts="<that sha>..HEAD" --redact
+--exit-code 1 .`. Exit 0 clean, 1 findings (blocks the bump; no matched value is
+printed), 2 could not determine (gitleaks missing or no resolvable range), never
+a pass.
 
 ## Audit mode
 
@@ -276,7 +289,7 @@ either. If the scanner fires on something correct, fix the pattern.
 ## Office attachments (docx, xlsx, pptx)
 
 Files attached to Task Manager tasks are scanned by the same detector set (`sdk/file_secrets.credential_counts`). A docx, xlsx or pptx is a zip,
-so `src/cplugs/reviewboard/office_text.py` reads its parts BY CONTENT, not by name (markup, nested zips up to 4 deep, images and fonts skipped,
+so `src/plugins/reviewboard/office_text.py` reads its parts BY CONTENT, not by name (markup, nested zips up to 4 deep, images and fonts skipped,
 anything else as printable runs), `office_xml.py` pulls out the text, attribute values, comments and CDATA, and the file is scanned in two readings
 (runs joined, and every tag a separator) keeping the higher count per detector. The XML is not parsed (`xml.etree` expands entities); a declared
 entity is refused. Hostile or unreadable files fail closed: more than 2000 entries, over 100 MiB inflated (64 MiB per part), over 16 MiB of

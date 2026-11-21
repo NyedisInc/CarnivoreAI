@@ -30,7 +30,7 @@ async def _refuse_open_dialog(request: Request) -> Optional[str]:
     session_id = request.app.state.services.registry.resolve_session_id(None)
     if session_id is None:
         return None
-    verdict = await dialog_verdict(request.app, session_id)
+    verdict = await dialog_verdict(request.app.state, session_id)
     if verdict == CLEAR:
         return session_id
     code = "pane_dialog_open" if verdict == OPEN else "dialog_unreadable"

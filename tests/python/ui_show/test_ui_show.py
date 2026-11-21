@@ -245,7 +245,7 @@ def test_an_external_token_s_show_waits_in_the_owner_s_inbox_class():
 
 
 def test_board_with_the_review_board_plugin_off_is_not_found(ui, monkeypatch):
-    from src.cplugs.sdk import board_pages
+    from src.plugins.sdk import board_pages
 
     _active(ui)
     monkeypatch.setattr(board_pages, "get", lambda: None)
@@ -254,8 +254,8 @@ def test_board_with_the_review_board_plugin_off_is_not_found(ui, monkeypatch):
 
 
 def test_board_resolves_through_the_registered_port(ui, monkeypatch):
-    from src.cplugs.reviewboard import pages_port
-    from src.cplugs.sdk import ports
+    from src.plugins.reviewboard import pages_port
+    from src.plugins.sdk import ports
 
     _active(ui)
     pages_port.register()

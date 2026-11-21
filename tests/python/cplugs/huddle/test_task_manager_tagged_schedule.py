@@ -6,9 +6,9 @@ from contextlib import closing
 
 import pytest
 
-from src.cplugs.host import runtime
-from src.cplugs.huddle import fire, schedule_port, scheduled, wait_runner
-from src.cplugs.huddle.roles import ask, tags
+from src.plugins.host import runtime
+from src.plugins.huddle import fire, schedule_port, scheduled, wait_runner
+from src.plugins.huddle.roles import ask, tags
 from tests.python.cplugs.huddle.roles_rig import BASE
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, pasted  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_tags import SLEEPER, World, add, store_of  # noqa: F401
@@ -115,7 +115,7 @@ def test_a_stale_wait_handback_is_told_to_the_tag_not_the_holder(client, world, 
 
 
 def test_a_wait_ended_with_no_owner_request_still_wakes_its_agent(client, world, pasted):
-    from src.cplugs.huddle.roles import port as roles_port
+    from src.plugins.huddle.roles import port as roles_port
 
     item = add(client)
     store = store_of(world.app)

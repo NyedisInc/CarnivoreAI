@@ -24,12 +24,12 @@ export function isArmableRow(el: Element): boolean {
     return armableRows.has(el);
 }
 
-export function wakeArmKey(name: string, band: string | null | undefined): string {
-    return `${name}|${band || ''}`;
+export function wakeArmKey(name: string, band: string | null | undefined, sessionUuid?: string | null): string {
+    return `${sessionUuid || name}|${band || ''}`;
 }
 
-export function isWakeArmed(name: string, band: string | null | undefined): boolean {
-    return wakeArm.key !== '' && wakeArm.key === wakeArmKey(name, band);
+export function isWakeArmed(name: string, band: string | null | undefined, sessionUuid?: string | null): boolean {
+    return wakeArm.key !== '' && wakeArm.key === wakeArmKey(name, band, sessionUuid);
 }
 
 function armedRowEl(): HTMLElement | null {
@@ -97,9 +97,9 @@ function watchPanel(panel: Element): void {
     panelWatch.observe(panel, { attributes: true, attributeFilter: ['class'] });
 }
 
-export function armWake(name: string, band: string | null | undefined, panel: Element | null = null): boolean {
+export function armWake(name: string, band: string | null | undefined, panel: Element | null = null, sessionUuid?: string | null): boolean {
     if (wakeArm.busy) return false;
-    wakeArm.key = wakeArmKey(name, band);
+    wakeArm.key = wakeArmKey(name, band, sessionUuid);
     wakeArm.name = name;
     wakeArm.band = band || '';
     wakeArm.armedAt = Date.now();

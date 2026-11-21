@@ -86,7 +86,7 @@ class PTYSession:
                 )
 
         except (OSError, struct.error) as e:
-            logger.error("pty_session_start_failed", error=str(e))
+            logger.error("pty_session_start_failed", error=str(e), error_type=type(e).__name__, pid=self.pid)
             raise PTYSessionError(f"Failed to start PTY session: {e}") from e
 
     def _exec_child(self, command: Optional[str], extra_env: Optional[Dict[str, str]]) -> None:
@@ -127,7 +127,7 @@ class PTYSession:
                         await asyncio.sleep(0.01)
                         continue
                     else:
-                        logger.error("pty_read_error", error=str(e))
+                        logger.error("pty_read_error", error=str(e), error_type=type(e).__name__, pid=self.pid)
                         await asyncio.sleep(0.1)
 
             except asyncio.CancelledError:
@@ -139,7 +139,9 @@ class PTYSession:
     def _wait_for_output(self):
         if not self.running:
             return
-        select.select([self.master_fd], [], [], 0.1)
+        poller = select.poll()
+        poller.register(self.master_fd, select.POLLIN)
+        poller.poll(100)
 
     async def _call_output_callback(self, data: bytes):
         if asyncio.iscoroutinefunction(self.on_output):
@@ -154,7 +156,7 @@ class PTYSession:
         try:
             os.write(self.master_fd, data)
         except OSError as e:
-            logger.error("pty_write_failed", error=str(e))
+            logger.error("pty_write_failed", error=str(e), error_type=type(e).__name__, pid=self.pid)
             raise PTYSessionError(f"Failed to write to PTY: {e}") from e
 
     async def send_command(self, command: str):

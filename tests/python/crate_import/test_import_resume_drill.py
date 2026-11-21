@@ -21,7 +21,7 @@ from src.core.db_migration import ensure_db_migrated
 from src.core.project_move.plan import PaneListing
 from src.core.project_writes import insert_project_row
 from src.core.work.storage import storage_for
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.sdk import crate_format as cf
 from tests.python.crate_format.golden_read import FIXTURES_ROOT
 from tests.python.crate_format.test_resume_drill_real import (
     EXIT_MARK, EXIT_WAIT_S, KEEP_ENV, LAST_PROMPT, NOT_FOUND_MARKERS, POLL_S, STARTUP_MARKERS, WAIT_S, _pane, _profile, _tmux,

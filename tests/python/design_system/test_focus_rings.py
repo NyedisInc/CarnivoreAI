@@ -3,58 +3,13 @@ from __future__ import annotations
 
 import functools
 import http.server
-import re
 import threading
 from pathlib import Path
 
 import pytest
 
-from tests.python.design_system._sources import css_of
 
 CLIENT = Path(__file__).resolve().parents[3] / "client"
-
-RINGED = [
-    ("session-row-menu.css", ".session-row-menu__item:focus-visible"),
-    ("session-sidebar-density.css", ".session-sidebar-row:focus-visible"),
-    ("config-editor.css", ".config-editor-file:focus-visible"),
-    ("config-editor.css", ".config-editor-toggle:focus-visible"),
-    ("home-bar.css", ".home-bar__btn:focus-visible"),
-    ("home-bar.css", ".home-bar__link:focus-visible"),
-]
-RING = re.compile(r"box-shadow:\s*(?:inset\s+)?0\s+0\s+0\s+\d+px\s+var\(--(?:oc-orange|color-accent)\)")
-
-
-def focus_rings(css: str, selector: str) -> list[str]:
-    out = []
-    for match in re.finditer(r"([^{}]+)\{([^}]*)\}", css):
-        if selector in match.group(1) and RING.search(match.group(2)):
-            out.append(match.group(2).strip())
-    return out
-
-
-def test_ring_scan_can_go_red():
-    sample = ".x:focus-visible { box-shadow: inset 0 0 0 2px var(--oc-orange); }"
-    assert focus_rings(sample, ".x:focus-visible")
-
-
-@pytest.mark.parametrize(("sheet", "selector"), RINGED)
-def test_no_own_focus_ring(sheet, selector):
-    assert focus_rings(css_of(CLIENT / "css" / sheet), selector) == []
-
-
-@pytest.mark.parametrize(
-    ("sheet", "base"),
-    [
-        ("session-row-menu.css", ".session-row-menu .session-row-menu__item {"),
-        ("config-editor.css", ".config-editor-file {"),
-        ("home-bar.css", ".home-bar__link {"),
-    ],
-)
-def test_reserved_transparent_border(sheet, base):
-    css = css_of(CLIENT / "css" / sheet)
-    block = css[css.index("\n" + base):].split("}", 1)[0]
-    assert "border: 1px solid transparent" in block, f"{sheet} {base} lost its reserved border"
-
 
 PAGE = """<!DOCTYPE html><html><head>
 <link rel="stylesheet" href="/css/layers.css"><link rel="stylesheet" href="/css/styles.css">

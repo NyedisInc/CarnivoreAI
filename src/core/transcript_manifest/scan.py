@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field, fields, replace
 from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Optional, Sequence, Set
 
@@ -50,6 +50,15 @@ class Row:
     changed_at: str
     gone_at: Optional[str]
     id: Optional[int] = None
+
+    @classmethod
+    def from_values(cls, values: Sequence[object]) -> "Row":
+        row = object.__new__(cls)
+        row.__dict__.update(zip(_ROW_FIELDS, values, strict=True))
+        return row
+
+
+_ROW_FIELDS = tuple(f.name for f in fields(Row))
 
 
 @dataclass

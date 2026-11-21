@@ -11,10 +11,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.huddle import board_port, wire as task_manager_wire
-from src.cplugs.reviewboard import document, publish, revisions, scan, store
-from src.cplugs.reviewboard.errors import BadRequest
-from src.cplugs.reviewboard.requests import ReviseBody
+from src.plugins.huddle import board_port, wire as task_manager_wire
+from src.plugins.reviewboard import document, publish, revisions, scan, store
+from src.plugins.reviewboard.errors import BadRequest
+from src.plugins.reviewboard.requests import ReviseBody
 from src.core.mcp.caller import AgentCaller
 from tests.python.cplugs.reviewboard.boards import PAGE, SIDECAR, make_board
 from tests.python.cplugs.reviewboard.harness import BASE, OWN_PROJECT, Env, task_manager_on, task_manager_store, make_env
@@ -304,7 +304,7 @@ def test_the_page_name_follows_the_revision_number():
     assert revisions.file_name(2, "main") == "r002.html" and revisions.file_name(12, "journeys") == "r012--journeys.html"
     assert revisions.file_name(1000, "main") == "r1000.html"
     with pytest.raises(BadRequest):
-        from src.cplugs.reviewboard.requests import RevisionBody
+        from src.plugins.reviewboard.requests import RevisionBody
         revisions._pages(RevisionBody(summary="s", html="x", views=[{"id": "a", "label": "a", "html": "y"}, {"id": "a", "label": "b", "html": "z"}]), 1)
 
 

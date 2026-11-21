@@ -6,10 +6,10 @@ import { afterEach, beforeEach, describe, it } from 'vitest';
 import { flushSync } from 'svelte';
 import * as Bar from './bar';
 import { versionFooterStub } from './test-support';
-import { cplugBarIndicators } from '../../cplugs/host/readers';
-import { cplugEnablement } from '../../cplugs/host/enablement.svelte';
+import { cplugBarIndicators } from '../../plugins/host/readers';
+import { cplugEnablement } from '../../plugins/host/enablement.svelte';
 import { beastStatus } from '../beast-mode/control.svelte';
-import type { CplugManifest, CplugWeb } from '../../cplugs/sdk';
+import type { CplugManifest, CplugWeb } from '../../plugins/sdk';
 
 const MANIFEST = { id: 'fake', default_enabled: true } as unknown as CplugManifest;
 

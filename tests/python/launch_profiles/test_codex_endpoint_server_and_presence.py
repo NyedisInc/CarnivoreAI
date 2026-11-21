@@ -29,8 +29,14 @@ def test_a_codex_resume_is_looked_up_in_the_rollout_store(tmp_path: Path, monkey
     rollout.mkdir(parents=True)
     (rollout / f"rollout-2026-10-03T05-00-00-{THREAD}.jsonl").write_text("{}\n")
     from src.core.attention import codex_gather
+    from src.core.tmux_transport.lifecycle import LocalLifecycle
+
+    from src.core.attention import codex_pane_home
 
     monkeypatch.setattr(codex_gather, "DEFAULT_CODEX_HOME", str(tmp_path))
+    monkeypatch.setattr(codex_pane_home, "DEFAULT_CODEX_HOME", str(tmp_path))
+    codex_pane_home.clear_cache()
     backend = TmuxBackend.__new__(TmuxBackend)
     backend.working_dir = tmp_path
+    backend._lifecycle = LocalLifecycle(backend)
     assert asyncio.run(backend._resume_presence(THREAD, "codex"))[0] == "present"

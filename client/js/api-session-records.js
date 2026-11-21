@@ -1,5 +1,5 @@
 
-Object.assign(API.prototype, {
+extendPrototype(API, {
     async renameSession(sessionId, newName) {
         return await this.call(
             `/sessions/${encodeURIComponent(sessionId)}/name`,
@@ -89,4 +89,4 @@ Object.assign(API.prototype, {
             { method: 'DELETE' }
         ));
     },
-});
+}, 'api-session-records.js');

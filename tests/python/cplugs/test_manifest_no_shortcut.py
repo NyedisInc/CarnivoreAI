@@ -7,9 +7,9 @@ from typing import Any, Dict, List
 
 import pytest
 
-from src.cplugs.host.sidecar_manifest import SidecarManifestError, load_sidecar_manifest
+from src.plugins.host.sidecar_manifest import SidecarManifestError, load_sidecar_manifest
 
-CPLUGS = Path(__file__).resolve().parents[3] / "src" / "cplugs"
+CPLUGS = Path(__file__).resolve().parents[3] / "src" / "plugins"
 
 
 def _declared_keys(manifest: Any) -> List[str]:

@@ -14,6 +14,7 @@ def seed_conversations(w: SimpleNamespace) -> None:
     group = s.put("session_groups", (A,), group_uuid="g-1", name="g", position=0, created_at=NOW, updated_at=NOW)
     s.put("session_group_membership", (A,), session_uuid=UUID_A, group_id=group, position=0, added_at=NOW)
     s.put("session_group_styles", (A,), group_id=group, updated_at=NOW)
+    s.put("session_group_rules", (A,), group_id=group, rule_json="{}", updated_at=NOW)
     s.put("session_group_members", (A,), tmux_name=TMUX_A, group_id=group, added_at=NOW)
     layout = s.put("layouts", (A,), layout_uuid="l-1", name="l", name_fold="l", position=0, shape="x", revision=1,
                    created_at=NOW, updated_at=NOW)

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+from src.core.kill_guard.shims import path_with_guard
 from src.core.launch_profiles.installed import path_with_install_dirs
 import re
 import shlex
@@ -340,7 +341,7 @@ class TmuxBackend(SessionBackend):
         if pane_lang:
             args.extend(["-e", f"LANG={pane_lang}"])
 
-        tmux_env["PATH"] = path_with_install_dirs(tmux_env.get("PATH") or os.environ.get("PATH", ""))
+        tmux_env["PATH"] = path_with_guard(path_with_install_dirs(tmux_env.get("PATH") or os.environ.get("PATH", "")))
 
         for key, value in sorted((env or {}).items()):
             if value is None:
@@ -1472,7 +1473,7 @@ class TmuxBackend(SessionBackend):
             if asyncio.iscoroutine(result):
                 await result
         except Exception as exc:
-            logger.error("tmux_on_output_error", error=str(exc))
+            logger.error("tmux_on_output_error", error=str(exc), error_type=type(exc).__name__, exc_info=True)
 
     async def _drain_to_eof(self, current_fd: int) -> int:
         drained = 0

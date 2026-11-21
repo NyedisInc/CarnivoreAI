@@ -176,7 +176,7 @@
   @layer components {
     .rail-out {
       position: absolute;
-      z-index: 40;
+      z-index: var(--oc-z-page);
       min-height: 0;
       background: var(--oc-ground-panel);
       color: var(--oc-text-secondary);

@@ -40,7 +40,7 @@ _TYPE_SEVERITY: Dict[str, str] = {
     "computer.knock": SEVERITY_WARN,
 }
 
-_PLACEHOLDER = re.compile(r"\{(session|project|computer|from_account|to_account|limit)\}")
+_PLACEHOLDER = re.compile(r"\{(session|project|computer|from_account|to_account|limit|version)\}")
 _OPTIONAL = re.compile(r"\[([^\[\]]*)\]")
 _CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f  ​-‏‪-‮⁦-⁩﻿]")
 _URL = re.compile(r"(?i)\b(?:(?:https?|ftp)://|www\.)[^\s<>\"']+")

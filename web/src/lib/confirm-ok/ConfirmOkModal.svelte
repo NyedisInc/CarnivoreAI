@@ -36,12 +36,7 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div style:display="contents" onkeydown={onEnter}>
-    <ModalShell {title} overlayClass="text-prompt-modal" onCancel={() => close(null)}>
-        {#snippet head()}
-            <div class="text-prompt-modal__head">
-                <span class="text-prompt-modal__verb">{title}</span>
-            </div>
-        {/snippet}
+    <ModalShell look="titlerow" closable={false} {title} onCancel={() => close(null)}>
         <div class="modal-message" data-confirm-ok-message>{message}</div>
         {#if details}<div class="modal-description" data-confirm-ok-details>{details}</div>{/if}
         {#snippet footer()}

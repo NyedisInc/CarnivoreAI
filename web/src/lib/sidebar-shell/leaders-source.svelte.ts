@@ -1,4 +1,4 @@
-import { swarmRoster, startSwarmRoster } from '../../cplugs/huddle/agents/agent-roster.svelte';
+import { swarmRoster, startSwarmRoster } from '../../plugins/huddle/agents/agent-roster.svelte';
 import { projects } from '../../opscenter/api/projects.svelte';
 import { indexLeaders, type LeaderIndex, type RosterWithCompany } from './leaders';
 import { repaintDrawerRows } from './interaction-globals';

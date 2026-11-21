@@ -267,3 +267,18 @@ def test_the_mini_terminal_row_as_the_database_stores_it_reopens_as_a_shell(tmp_
     assert out["wrapper_default"] == "shell-default"
     assert out["wrapper_source"] == "shell_family_default"
     assert "shell-default" in {o["id"] for o in out["wrapper_options"]}
+
+
+def test_a_name_held_by_a_pane_of_another_epoch_is_not_a_block_but_an_unknown_epoch_is():
+    from src.core.session_journal_measure import Measurement
+    from src.core.session_journal_observe import PaneFacts
+    from src.core.session_restore_eval import BLOCK_NAME_IN_USE, _kind_and_block
+
+    def measure(epoch):
+        return Measurement(listing_ok=True, listing_complete=True,
+                           panes=[PaneFacts(name="carnivore_x", epoch=epoch)])
+
+    row = {"tmux_name": "carnivore_x", "tmux_created_epoch": 5}
+    assert _kind_and_block(row, measure(9))[1] is None
+    assert _kind_and_block(row, measure(None))[1] == BLOCK_NAME_IN_USE
+    assert _kind_and_block({**row, "tmux_created_epoch": None}, measure(9))[1] == BLOCK_NAME_IN_USE

@@ -25,33 +25,33 @@ function setup() {
     show() {}
   }
   const electron = { BrowserWindow: FakeWindow, Notification: FakeNotification, shell: { openExternal() {} },
-    app: { dock: { bounce: () => { seen.bounces += 1; } } }, ipcMain: { on: (n, fn) => { ipc[n] = fn; } } };
+    app: {}, ipcMain: { on: (n, fn) => { ipc[n] = fn; } } };
   const realLoad = Module._load;
   Module._load = function (request, ...rest) { return request === 'electron' ? electron : realLoad.call(this, request, ...rest); };
   try {
     const p = require.resolve(path.join(macDir, 'app-window.js'));
     delete require.cache[p];
     delete require.cache[require.resolve(path.join(macDir, 'window-host.js'))];
-    require(p).createAppWindow({ getUrl: () => 'http://127.0.0.1:8000', shouldMirror: async () => true }).open();
+    require(p).createAppWindow({ getUrl: () => 'http://127.0.0.1:8000', shouldMirror: async () => true, bounceDock: () => { seen.bounces += 1; } }).open();
     return { seen, ipc, ev: { sender: wcs, senderFrame: wcs.mainFrame } };
   } finally {
     Module._load = realLoad;
   }
 }
 
-test('a needs-you card is a real banner: id, session group, subtitle, the distinct sound, one Dock bounce; others play the default', async () => {
+test('a needs-you card is a real banner: id, session group, subtitle, silent (the page plays the sound), one Dock bounce', async () => {
   const rig = setup();
   await rig.ipc['carnivore:notify'](rig.ev, 'needs you', 'b', 'ses_1', { id: 'toast_1', group: 'needs_you', subtitle: 'api', session_id: 'ses_1', tmux_name: 'carnivore_api' });
   await rig.ipc['carnivore:notify'](rig.ev, 'done', 'b', '', { id: 'toast_2', group: 'sessions', subtitle: 'api', session_id: 'ses_1' });
   await rig.ipc['carnivore:notify'](rig.ev, 'quiet', 'b', '', { id: 'toast_3', group: 'needs_you', session_id: 'ses_2', silent: true });
   await rig.ipc['carnivore:notify'](rig.ev, 'bad', 'b', '', { id: 'x y', session_id: '../../etc', subtitle: 7 });
   const [ask, done, quiet, bad] = rig.seen.options;
-  assert.deepEqual(ask, { title: 'needs you', body: 'b', id: 'toast_1', groupId: 'ses_1', subtitle: 'api', sound: 'Glass' });
-  assert.equal(done.sound, undefined, 'the rest play the default sound');
+  assert.deepEqual(ask, { title: 'needs you', body: 'b', id: 'toast_1', groupId: 'ses_1', subtitle: 'api', silent: true });
+  assert.equal(done.sound, undefined, 'every banner is silent, the page plays the sound');
   assert.equal(done.groupId, 'ses_1');
   assert.equal(quiet.silent, true);
   assert.equal(quiet.sound, undefined, 'a suppressed banner is silent, no sound named');
-  assert.deepEqual(bad, { title: 'bad', body: 'b' }, 'bad fields are dropped');
+  assert.deepEqual(bad, { title: 'bad', body: 'b', silent: true }, 'bad fields are dropped');
   assert.equal(rig.seen.bounces, 2, 'each needs-you card bounces the Dock once');
 });
 

@@ -2,12 +2,14 @@ import {
     PROJECT_CREATE_KEYS,
     nameRefusal,
 } from '../../../../client/js/labels/project-create.js';
+import { NEW_PROJECT_KEYS } from '../../../../client/js/labels/new-project.js';
 import type { Translate } from '../sessions/types';
 import { reasonOf } from './failure-reason';
 import type { CreateHost, CreatePayload, CreatedSession, HostChoice, ProviderChoice } from './create-host';
 import { LOCAL_HOST_KEY } from './create-host';
 import { remoteBrowseNote, remoteFolderSource } from './remote-folders';
 import type { ModalOpeners } from './modals';
+import type { NewProjectChoice } from './modal-types';
 import { refusedWith } from './refusal-shape';
 import { validateName } from './project-folder';
 import { beginNav } from './nav-generation';
@@ -18,6 +20,7 @@ export type CreateOutcome =
     | 'cancelled_host'
     | 'cancelled_name'
     | 'cancelled_folder'
+    | 'cancelled_form'
     | 'detached_and_retried'
     | 'failed';
 
@@ -47,6 +50,25 @@ export async function askForName(
         const sentence = nameRefusal(verdict, t);
         if (sentence) host.showError(sentence);
         prefill = details.name;
+    }
+}
+
+export async function askForNewProject(
+    modals: ModalOpeners,
+    host: CreateHost,
+    t: Translate,
+    title: string,
+    confirmLabel: string,
+): Promise<NewProjectChoice | null> {
+    let prefill = '';
+    for (;;) {
+        const picked = await modals.newProject({ title, confirmLabel, defaultName: prefill });
+        if (!picked) return null;
+        const verdict = validateName(picked.name);
+        if (verdict.ok) return picked;
+        const sentence = nameRefusal(verdict, t);
+        if (sentence) host.showError(sentence);
+        prefill = picked.name;
     }
 }
 
@@ -159,44 +181,47 @@ export async function createProjectFlow(
         const title = agentType
             ? t(PROJECT_CREATE_KEYS.nameTitleForAgent, { agent: agentType })
             : t(PROJECT_CREATE_KEYS.nameTitle);
-        const details = await askForName(
-            modals,
-            host,
-            t,
-            title,
-            t(PROJECT_CREATE_KEYS.wizardNext),
-        );
-        if (!details) return { ...refused, outcome: 'cancelled_name' };
-
         const isPeer = hostChoice.key.startsWith('peer-');
-        const probe = isPeer ? host.remoteFolders(hostChoice.key, null) : null;
-        const remote = isLocal
-            ? null
-            : {
-                  label: hostChoice.label,
-                  creates: isPeer,
-                  ...(probe ? { browse: probe.then((a) => remoteBrowseNote(a, hostChoice.label, t)) } : {}),
-              };
-        const folder = await modals.folder({
-            name: details.name,
-            defaultParent: isLocal
-                ? () => host.defaultParentDir()
-                : probe
-                  ? async () => {
-                        const a = await probe;
-                        return a.status === 'ok' ? a.path : null;
-                    }
-                  : async () => '~',
-            openPicker: isLocal
-                ? host.folderPicker()
-                : probe
-                  ? host.folderPicker(remoteFolderSource(host, hostChoice, t))
-                  : null,
-            remote,
-            confirmLabel: t(PROJECT_CREATE_KEYS.wizardCreate),
-        });
-        if (!folder) return { ...refused, outcome: 'cancelled_folder' };
-        const parent = folder.parent;
+        let details: { name: string; description: string };
+        let parent: string;
+        let companyId: number | null = null;
+        if (isLocal) {
+            const picked = await askForNewProject(
+                modals,
+                host,
+                t,
+                agentType ? title : t(NEW_PROJECT_KEYS.title),
+                t(PROJECT_CREATE_KEYS.wizardCreate),
+            );
+            if (!picked) return { ...refused, outcome: 'cancelled_form' };
+            details = { name: picked.name, description: '' };
+            parent = picked.folder;
+            companyId = picked.companyId;
+        } else {
+            const named = await askForName(modals, host, t, title, t(PROJECT_CREATE_KEYS.wizardNext));
+            if (!named) return { ...refused, outcome: 'cancelled_name' };
+            details = named;
+            const probe = isPeer ? host.remoteFolders(hostChoice.key, null) : null;
+            const remote = {
+                label: hostChoice.label,
+                creates: isPeer,
+                ...(probe ? { browse: probe.then((a) => remoteBrowseNote(a, hostChoice.label, t)) } : {}),
+            };
+            const folder = await modals.folder({
+                name: details.name,
+                defaultParent: probe
+                    ? async () => {
+                          const a = await probe;
+                          return a.status === 'ok' ? a.path : null;
+                      }
+                    : async () => '~',
+                openPicker: probe ? host.folderPicker(remoteFolderSource(host, hostChoice, t)) : null,
+                remote,
+                confirmLabel: t(PROJECT_CREATE_KEYS.wizardCreate),
+            });
+            if (!folder) return { ...refused, outcome: 'cancelled_folder' };
+            parent = folder.parent;
+        }
         if (isLocal && !(await folderAllowed(host, parent, t))) return { ...refused, outcome: 'failed' };
 
         host.updateStatus(
@@ -220,6 +245,7 @@ export async function createProjectFlow(
                 name: details.name,
                 path: String(session.working_dir ?? ''),
                 description: details.description || null,
+                ...(companyId !== null ? { company_id: companyId } : {}),
             }, t);
         }
         host.announceSessionCreated(session, nav);
@@ -296,21 +322,34 @@ async function folderAllowed(host: CreateHost, folder: string, t: Translate): Pr
 
 async function persistProjectRow(
     host: CreateHost,
-    row: { name: string; path: string; description?: string | null },
+    row: { name: string; path: string; description?: string | null; company_id?: number },
     t: Translate,
     showRefusal: boolean = true,
 ): Promise<void> {
     try {
         await host.createProject(row);
+        return;
     } catch (error) {
-        const body = (error as { body?: { code?: unknown } } | null)?.body;
+        const body = (error as { body?: { code?: unknown; existing_project?: { name?: unknown } } } | null)?.body;
         if (body?.code === 'project_root_refused') {
             if (showRefusal) host.showError(t(PROJECT_CREATE_KEYS.rootRefused));
             return;
         }
-        if (!refusedWith(error, { code: 'project_name_taken', phrase: 'already exists' })) {
-            console.error('CloudeWeb: failed to save project:', error);
+        const collided = refusedWith(error, { code: 'project_name_taken', phrase: 'already exists' });
+        if (!collided) console.error('CloudeWeb: failed to save project:', error);
+        const existing = typeof body?.existing_project?.name === 'string' ? body.existing_project.name : row.name;
+        if (row.company_id !== undefined && (collided || body?.existing_project)) {
+            await fileUnderCompany(host, existing, row.company_id, t);
         }
+    }
+}
+
+async function fileUnderCompany(host: CreateHost, projectName: string, companyId: number, t: Translate): Promise<void> {
+    try {
+        await host.setProjectCompany(projectName, companyId);
+    } catch (error) {
+        console.error('CloudeWeb: failed to file the project under its company:', error);
+        host.showError(t(PROJECT_CREATE_KEYS.createFailed, { reason: reasonOf(error, t) }));
     }
 }
 

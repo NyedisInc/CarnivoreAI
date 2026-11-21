@@ -11,7 +11,7 @@ export type CardKind = 'startup' | 'bash' | 'edit' | 'permission' | 'question' |
 
 export type CardTone = 'startup' | 'perm' | 'ask' | 'plan' | 'agent' | 'codex' | 'raw';
 
-export type CardChip = 'beast' | 'waits' | 'mcp' | 'read_only' | 'none';
+export type CardChip = 'beast' | 'beast_off' | 'waits' | 'mcp' | 'read_only' | 'none';
 
 export type Words = { key: string; params?: Record<string, string | number> } | { text: string };
 
@@ -231,7 +231,9 @@ function codexCard(item: ApprovalItem, who: string, folder: string): Pick<CardCo
 }
 
 const FACE_EFFECT_LINES = 2;
-const FULL_FACE_ACTIONS: ReadonlySet<string> = new Set(['plugin_session_create']);
+const FULL_FACE_ACTIONS: ReadonlySet<string> = new Set(['plugin_session_create', 'delegate']);
+const BYPASS_LINE = 'delegate_mode_bypass';
+const INSTALL_LINE = 'delegate_installs';
 
 function agentCard(item: ApprovalItem, rows: readonly ListingRowLike[]): Pick<CardContract, 'who' | 'kind' | 'tone' | 'headline' | 'facts' | 'raw' | 'chip'> {
   const who = item.external_client || (sessionNameFor(item.caller, rows) ?? '');
@@ -240,7 +242,12 @@ function agentCard(item: ApprovalItem, rows: readonly ListingRowLike[]): Pick<Ca
   const facts: CardFact[] = [];
   if (display) {
     const lines = consequenceLines(display);
-    for (const line of FULL_FACE_ACTIONS.has(item.action ?? '') ? lines : lines.slice(0, FACE_EFFECT_LINES)) facts.push({ id: 'effect', value: [{ text: line }], wrap: true });
+    const shown = FULL_FACE_ACTIONS.has(item.action ?? '') ? lines : lines.slice(0, FACE_EFFECT_LINES);
+    shown.forEach((line, i) => {
+      const key = display.consequences?.[i]?.key;
+      const bypass = key === BYPASS_LINE || key === INSTALL_LINE;
+      facts.push({ id: 'effect', value: [{ text: line }], wrap: true, tone: bypass ? 'warn' : undefined });
+    });
     const inUse = inUseLine(display);
     if (inUse) facts.push({ id: 'in_use', value: [{ text: inUse }], wrap: true, tone: display.in_use?.tone === 'alert' ? 'warn' : undefined });
   } else if (item.summary) {
@@ -256,7 +263,7 @@ function agentCard(item: ApprovalItem, rows: readonly ListingRowLike[]): Pick<Ca
   const body = item.body?.trim() ? item.body : '';
   const detail = display?.detail ?? [];
   return {
-    who, kind: 'agent', tone: 'agent', chip: 'mcp', headline, facts,
+    who, kind: 'agent', tone: 'agent', chip: display?.beast_hint === true ? 'beast_off' : 'mcp', headline, facts,
     raw: detail.length || body ? { kind: 'agent', rows: detail, text: body } : null,
   };
 }

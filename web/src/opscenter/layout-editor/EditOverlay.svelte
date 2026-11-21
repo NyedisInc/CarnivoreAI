@@ -13,7 +13,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      z-index: 60;
+      z-index: var(--oc-z-sheet);
       border: 1px dashed var(--oc-cyan);
       pointer-events: none;
     }
@@ -23,7 +23,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      z-index: 60;
+      z-index: var(--oc-z-sheet);
       border: var(--oc-border) dashed var(--oc-cyan);
       pointer-events: none;
     }

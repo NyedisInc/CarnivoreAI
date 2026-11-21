@@ -20,6 +20,7 @@ from src.api.auth import require_auth  # noqa: E402
 from src.api import recreate_routes  # noqa: E402
 from src.core.db import connect, db_path_for  # noqa: E402
 from src.core.db_migration import ensure_db_migrated  # noqa: E402
+from src.core.session_ops import row_probe
 from src.core.session_recreate_presence import (  # noqa: E402
     TMUX_GONE,
     TMUX_PRESENT,
@@ -42,8 +43,9 @@ def app_env(tmp_path, monkeypatch):
         type(settings), "get_state_dir", lambda self: state_dir, raising=True
     )
     monkeypatch.setattr(
-        recreate_routes, "_socket_name", lambda: "cloude", raising=True
+        row_probe, "socket_name", lambda: "cloude", raising=True
     )
+    monkeypatch.setattr("src.core.restart_live_gate.probe_line", lambda name, socket: None, raising=True)
     assert ensure_db_migrated(state_dir).status == "ok"
 
     app = FastAPI()
@@ -55,8 +57,8 @@ def app_env(tmp_path, monkeypatch):
 
 def _presence(monkeypatch, outcome, detail="measured in the test"):
     monkeypatch.setattr(
-        recreate_routes,
-        "_measure_presence",
+        row_probe,
+        "measure_presence",
         lambda name, socket_name: TmuxPresence(outcome=outcome, detail=detail),
         raising=True,
     )
@@ -159,7 +161,8 @@ def test_a_row_that_never_had_a_tmux_session_is_a_409(app_env):
         "/api/v1/sessions/recreate/preview", params={"session_uuid": ROW_UUID}
     )
     assert r.status_code == 409
-    assert "imported" in r.json()["detail"]
+    assert r.json()["detail"]["code"] == "session_has_no_tmux"
+    assert "imported" in r.json()["detail"]["detail"]
 
 
 def test_the_route_is_addressed_by_the_durable_key_not_by_the_tmux_name():
@@ -365,3 +368,56 @@ def test_the_preview_baseline_comes_from_the_recorded_launch(app_env):
     assert body["unchanged"]["actionable"] is True
     folded = [o["agent_type"] for o in body["options"] if o["same_as_unchanged"]]
     assert folded == ["claude"]
+
+
+def _pane_epoch(monkeypatch, epoch):
+    line = None if epoch is None else f"0|{epoch}|{NAME}\n"
+    monkeypatch.setattr("src.core.restart_live_gate.probe_line", lambda name, socket: line, raising=True)
+
+
+def test_a_name_held_by_a_pane_of_another_epoch_is_gone_for_the_closed_row(app_env):
+    client, state_dir, mp = app_env
+    _insert(state_dir)
+    _presence(mp, TMUX_PRESENT, "still on the socket")
+    _pane_epoch(mp, 1788999999)
+
+    r = client.get("/api/v1/sessions/recreate/preview", params={"session_uuid": ROW_UUID})
+    assert r.status_code == 200, r.text
+    assert r.json()["pane_state"] == "dead"
+
+
+def test_a_stale_other_running_row_does_not_flip_a_pane_with_the_rows_own_epoch(app_env):
+    client, state_dir, mp = app_env
+    _insert(state_dir)
+    _insert(state_dir, session_uuid="row-uuid-stale-holder", tmux_created_epoch=1788821999)
+    with connect(db_path_for(state_dir), create=False) as conn:
+        conn.execute("UPDATE sessions SET lifecycle = 'running' WHERE session_uuid = 'row-uuid-stale-holder'")
+    _presence(mp, TMUX_PRESENT, "still on the socket")
+    _pane_epoch(mp, 1788821572)
+
+    r = client.get("/api/v1/sessions/recreate/preview", params={"session_uuid": ROW_UUID})
+    assert r.json()["pane_state"] == "alive"
+
+
+def test_an_unreadable_pane_epoch_stays_present(app_env):
+    client, state_dir, mp = app_env
+    _insert(state_dir)
+    _presence(mp, TMUX_PRESENT, "still on the socket")
+    _pane_epoch(mp, None)
+
+    r = client.get("/api/v1/sessions/recreate/preview", params={"session_uuid": ROW_UUID})
+    assert r.json()["pane_state"] == "alive"
+
+
+def test_the_action_does_not_treat_a_pane_of_another_epoch_as_present(app_env):
+    client, state_dir, mp = app_env
+    _insert(state_dir)
+    _presence(mp, TMUX_PRESENT, "still on the socket")
+    _pane_epoch(mp, 1788999999)
+
+    r = client.post(
+        "/api/v1/sessions/recreate",
+        json={"session_uuid": ROW_UUID, "agent_type": "not-a-configured-wrapper"},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["presence"] == "gone"

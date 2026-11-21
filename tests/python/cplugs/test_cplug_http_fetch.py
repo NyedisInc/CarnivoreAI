@@ -14,13 +14,13 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.host import netguard, routes as host_routes, runtime, secret_store
-from src.cplugs.host.egress_log import EgressLog
-from src.cplugs.host.fetch_proxy import FetchRefused, PluginFetch, RateLimiter
-from src.cplugs.host.fetch_transport import RawResponse
-from src.cplugs.host.secret_store import SecretError, SecretStore
-from src.cplugs.sdk import ManifestError
-from src.cplugs.sdk.manifest import parse_manifest
+from src.plugins.host import netguard, routes as host_routes, runtime, secret_store
+from src.plugins.host.egress_log import EgressLog
+from src.plugins.host.fetch_proxy import FetchRefused, PluginFetch, RateLimiter
+from src.plugins.host.fetch_transport import RawResponse
+from src.plugins.host.secret_store import SecretError, SecretStore
+from src.plugins.sdk import ManifestError
+from src.plugins.sdk.manifest import parse_manifest
 
 TOKEN = "ghp_exampleTOKENvalue1234"
 OTHER = "other_secret_value_5678"
@@ -370,7 +370,7 @@ def test_the_secret_and_egress_routes_never_return_a_value(tmp_path, monkeypatch
 
 
 def test_a_server_trickling_bytes_is_cut_at_the_deadline():
-    from src.cplugs.host.fetch_transport import StdlibTransport
+    from src.plugins.host.fetch_transport import StdlibTransport
 
     srv = socket.socket()
     srv.bind(("127.0.0.1", 0))
@@ -411,7 +411,7 @@ def test_a_revoked_tick_bites_on_the_next_fetch_of_a_live_proxy(rig):
 
 
 def test_the_host_reads_grants_and_enabled_live(tmp_path):
-    from src.cplugs.host import state as owner_state
+    from src.plugins.host import state as owner_state
 
     m = parse_manifest(manifest_raw())
     host = runtime.Host(tmp_path)

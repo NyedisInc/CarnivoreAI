@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.cplugs.runtime import webhooks
+from src.plugins.runtime import webhooks
 
 SECRET = b"s" * 32
 NOW = 1_000_000.0

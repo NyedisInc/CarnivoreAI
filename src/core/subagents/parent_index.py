@@ -11,6 +11,7 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple
 import structlog
 
 from src.core.session_token_usage.cache import HEAD_BYTES, IncrementalCache, stat_signature
+from src.core.subagents.workflow_ends import LAUNCH_MARK, TERMINAL_STATUSES, journal_workflow_ids, launch_pair
 from src.core.transcript_contract.cold_budget import BudgetedHandle, LineSource
 from src.core.session_token_usage.persist_spec import PersistSpec, decode_instant, encode_instant
 from src.core.transcript_contract import (
@@ -52,9 +53,12 @@ class CompletionIndex:
 
     by_agent_id: Dict[str, RecordedEnd] = field(default_factory=dict)
     by_tool_use: Dict[str, RecordedEnd] = field(default_factory=dict)
+    by_workflow: Dict[str, RecordedEnd] = field(default_factory=dict)
+    workflow_tasks: Dict[str, str] = field(default_factory=dict)
 
     def copy(self) -> "CompletionIndex":
-        return CompletionIndex(dict(self.by_agent_id), dict(self.by_tool_use))
+        return CompletionIndex(dict(self.by_agent_id), dict(self.by_tool_use),
+                               dict(self.by_workflow), dict(self.workflow_tasks))
 
     def end_for(self, agent_id: str, tool_use_id: Optional[str]) -> Optional[RecordedEnd]:
         ends = [self.by_agent_id.get(agent_id)]
@@ -161,6 +165,24 @@ def _keep_newest(target: Dict[str, RecordedEnd], key: str, end: RecordedEnd) -> 
         target[key] = end
 
 
+def _fold_workflow_ends(index: CompletionIndex, text: str, at: datetime) -> None:
+    for block in _NOTIFICATION_RE.findall(text):
+        status = _STATUS_RE.search(block)
+        if status is None or status.group(1) not in TERMINAL_STATUSES:
+            continue
+        folders = journal_workflow_ids(block)
+        folders += [index.workflow_tasks[t] for t in _TASK_ID_RE.findall(block) if t in index.workflow_tasks]
+        for folder in dict.fromkeys(folders):
+            _keep_newest(index.by_workflow, folder, RecordedEnd(at, status.group(1)))
+
+
+def _fold_workflow_launch(index: CompletionIndex, record: Dict[str, Any]) -> None:
+    for block in tool_result_blocks(record):
+        pair = launch_pair(_result_text(block))
+        if pair is not None:
+            index.workflow_tasks[pair[0]] = pair[1]
+
+
 def scan_parent_lines(
     handle: LineSource, index: CompletionIndex, *, spawner: bool = False
 ) -> Tuple[CompletionIndex, int]:
@@ -172,7 +194,8 @@ def scan_parent_lines(
             notification, result = False, True
         sync = result and _AGENT_MARK in line
         bare = spawner and result
-        if not (notification or sync or bare):
+        launch = result and LAUNCH_MARK in line
+        if not (notification or sync or bare or launch):
             continue
         record = decode_object(line)
         if record is None:
@@ -184,6 +207,9 @@ def scan_parent_lines(
             text = _notification_text(record)
             for agent_id, status in _notifications(text or ""):
                 _keep_newest(index.by_agent_id, agent_id, RecordedEnd(at, status))
+            _fold_workflow_ends(index, text or "", at)
+        if launch:
+            _fold_workflow_launch(index, record)
         if sync:
             for tool_use_id, status, agent_id in _sync_results(record):
                 end = RecordedEnd(at, status)
@@ -217,17 +243,24 @@ def _decode_ends(rows: Any) -> Dict[str, RecordedEnd]:
 
 
 def encode_index(index: CompletionIndex) -> Dict[str, Any]:
-    return {"a": _encode_ends(index.by_agent_id), "t": _encode_ends(index.by_tool_use)}
+    return {"a": _encode_ends(index.by_agent_id), "t": _encode_ends(index.by_tool_use),
+            "w": _encode_ends(index.by_workflow), "k": [list(pair) for pair in index.workflow_tasks.items()]}
 
 
 def decode_index(value: Any) -> CompletionIndex:
-    if not isinstance(value, dict) or set(value) != {"a", "t"}:
-        raise ValueError("index payload must hold exactly a and t")
-    return CompletionIndex(_decode_ends(value["a"]), _decode_ends(value["t"]))
+    if not isinstance(value, dict) or set(value) != {"a", "t", "w", "k"}:
+        raise ValueError("index payload must hold exactly a, t, w and k")
+    tasks = value["k"]
+    if not (isinstance(tasks, list) and all(
+            isinstance(p, list) and len(p) == 2 and all(isinstance(x, str) for x in p) for p in tasks)):
+        raise ValueError("workflow tasks must be a list of [task, folder] string pairs")
+    return CompletionIndex(_decode_ends(value["a"]), _decode_ends(value["t"]),
+                           _decode_ends(value["w"]), {task: folder for task, folder in tasks})
 
 
 INDEX_SOURCES: Tuple[str, ...] = (
     "src.core.subagents.parent_index",
+    "src.core.subagents.workflow_ends",
     "src.core.transcript_contract.stream",
     "src.core.transcript_contract.lines",
     "src.core.transcript_contract.parsed",
@@ -244,7 +277,7 @@ INDEX_SOURCES: Tuple[str, ...] = (
 
 
 def index_spec(name: str) -> PersistSpec:
-    return PersistSpec(name=name, manual_version=1, sources=INDEX_SOURCES,
+    return PersistSpec(name=name, manual_version=2, sources=INDEX_SOURCES,
                        encode=encode_index, decode=decode_index)
 
 

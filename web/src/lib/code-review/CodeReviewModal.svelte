@@ -17,13 +17,7 @@
   const gutter = $derived(String(lines.length).length);
 </script>
 
-<ModalShell title={t('code_review.title')} overlayClass="text-prompt-modal cr-modal" onCancel={onClose}>
-  {#snippet head()}
-    <div class="text-prompt-modal__head">
-      <span class="text-prompt-modal__verb">&raquo; {t('code_review.title')}</span>
-      <IconButton label={t('code_review.close')} variant="close" icon="close" iconSize={14} data-modal-close onclick={() => onClose()} />
-    </div>
-  {/snippet}
+<ModalShell look="titlerow" closeLabel={t('code_review.close')} title={t('code_review.title')} overlayClass="cr-modal" onCancel={onClose}>
   <div class="pledger cr-body" data-code-review>
     <div class="cr-bar">
       <span class="pl-label cr-title" data-code-review-title>{title}</span>
@@ -68,24 +62,24 @@
     :global(.modal-overlay.cr-modal .modal-content) { max-width: none; border-radius: 0; }
   }
   .cr-body { display: flex; flex-direction: column; min-height: 0; }
-  .cr-bar { display: flex; align-items: center; gap: 10px; padding: 8px 14px; box-shadow: inset 0 -1px 0 0 var(--pl-line-quiet); }
+  .cr-bar { display: flex; align-items: center; gap: 10px; padding: 8px 14px; box-shadow: inset 0 -1px 0 0 var(--oc-line-faint); }
   .cr-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .cr-count { flex: none; }
   [data-code-review-toggle] { flex: none; }
   [data-code-review-toggle][aria-pressed='true'] { color: var(--oc-coral); --_bd: var(--oc-coral); border-color: var(--_bd); }
   .cr-lines {
     margin: 0; padding: 0; list-style: none; overflow: auto; overscroll-behavior: contain;
-    max-height: min(60vh, 520px); font-family: var(--font-mono); font-size: 12px; line-height: 1.5; color: var(--pl-text);
+    max-height: min(60vh, 520px); font-family: var(--font-mono); font-size: 12px; line-height: 1.5; color: var(--oc-text-primary);
   }
   .cr-line { display: flex; align-items: baseline; gap: 10px; padding: 0 14px 0 0; box-shadow: inset 2px 0 0 0 transparent; }
   .cr-line--risk {
     background: color-mix(in oklab, var(--oc-coral) 14%, transparent);
     box-shadow: inset 2px 0 0 0 var(--oc-coral);
   }
-  .cr-num { flex: none; min-width: calc(var(--cr-gutter, 2ch) + 14px); padding-left: 14px; text-align: right; color: var(--pl-muted); font-variant-numeric: tabular-nums; user-select: none; }
+  .cr-num { flex: none; min-width: calc(var(--cr-gutter, 2ch) + 14px); padding-left: 14px; text-align: right; color: var(--oc-text-secondary); font-variant-numeric: tabular-nums; user-select: none; }
   .cr-text { flex: 1; min-width: 0; font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; }
   .cr-tag { flex: none; color: var(--oc-coral); font-size: var(--oc-fs-micro); letter-spacing: 0.08em; text-transform: uppercase; }
-  .cr-empty { margin: 0; padding: 14px; color: var(--pl-muted); font-size: 12px; }
+  .cr-empty { margin: 0; padding: 14px; color: var(--oc-text-secondary); font-size: 12px; }
   .cr-foot { display: flex; flex: 1; align-items: center; gap: 8px; min-width: 0; }
   .cr-spacer { flex: 1; }
 </style>

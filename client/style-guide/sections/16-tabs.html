@@ -12,7 +12,7 @@ filters are <code>.oc-chip</code> with <code>aria-pressed</code>.</p>
         <code>active</code> and remembers the choice with <code>tab-memory.ts</code>.</li>
     <li><strong>Access.</strong> Roving tabindex, arrows wrap, Home and End jump, disabled tabs are skipped, and selection
         follows focus. Focus is the shared rule on the tab's reserved 1px border.</li>
-    <li><strong>Sizes.</strong> 31px at 1024 and up, 44px below. Tabs never wrap: the strip scrolls sideways with a faded
+    <li><strong>Sizes.</strong> 31px at 1024 and up, 44px below. In a framed page's tab row (<code>data-btn-density="frame"</code>, ui/Page.svelte) the strip is the frame height, the header button's 26px, at every width under a mouse and 44px under a touch screen; a page never sizes its own tabs (#2775). There the strip draws no ground of its own (the row owns it, so a row of another ground shows no band), and a search field in the row is the same height. Tabs never wrap: the strip scrolls sideways with a faded
         edge. The selected tab is the LIGHTER fill (<code>--oc-ground-tab-selected</code>) with the accent top edge, and the
         other tabs the darker one (<code>--oc-ground-tab-inactive</code>, a step lighter under the pointer); the selected
         tab does not change on hover (Joe (ccsliinc), 2026-10-12, #1689: "the current tab should be the lighter color and
@@ -42,6 +42,10 @@ full page and keeps the lighter fill. A strip may carry ONE small control at its
 (class <code>oc-ptabs--collapse</code>) makes the strip its own size container: a tab with an <code>icon</code> draws its label wide and its icon alone
 below 340px, with the label kept as the tab's <code>aria-label</code> and <code>title</code> (a tab with no icon keeps its label). A host
 that wants the picked tab to match its panel sets <code>--_tab-on</code> to the panel's ground. Held by <code>Tabs.render.test.ts</code>.</p>
+<p><b>frame height</b> (#2775, staging sweep 2026-11-11): a strip in a framed page's body (the automations workbench's sub-tabs, its detail
+pane's tabs) wears <code>oc-ptabs--frame</code>: the frame tab row's height under a mouse at every width, the tap size under a touch screen,
+and it never shrinks in a column. A page never sizes the strip, its list or a tab itself. Held by
+<code>tests/python/design_system/test_tab_strip_restyles.py</code>.</p>
 <div class="sg-specimen">
     <div class="sg-specimen__label"><span>live</span><code>Tabs.svelte</code><span><code>joined</code>: the picked tab runs into the body</span></div>
     <div class="sg-specimen__body"><div id="sg-live-page-tabs-joined"></div></div>

@@ -9,8 +9,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.huddle import board_port, reply as task_manager_reply, send_queue
-from src.cplugs.reviewboard import scan
+from src.plugins.huddle import board_port, reply as task_manager_reply, send_queue
+from src.plugins.reviewboard import scan
 from tests.python.cplugs.reviewboard.harness import BASE, Env, task_manager_on, task_manager_store, make_env
 from tests.python.cplugs.reviewboard.test_publish import create_body
 
@@ -191,7 +191,7 @@ def test_a_board_with_no_task_refuses_a_send(world, board):
 def test_a_round_on_a_review_task_reopens_it_with_the_joe_replied_lineage_row(world, board):
     from contextlib import closing
 
-    from src.cplugs.huddle import lineage
+    from src.plugins.huddle import lineage
 
     env, client, _ = world
     slug, item = board

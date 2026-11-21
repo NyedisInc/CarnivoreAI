@@ -8,8 +8,8 @@ from typing import Any, Dict, Optional
 
 import pytest
 
-from src.cplugs.host import gate, runtime, state as owner_state
-from src.cplugs.host.split_migration import effective_switches, migrate
+from src.plugins.host import gate, runtime, state as owner_state
+from src.plugins.host.split_migration import effective_switches, migrate
 
 
 @pytest.fixture(autouse=True)

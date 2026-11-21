@@ -12,11 +12,11 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.cplugs.host import owner_switch, sidecar_boot
-from src.cplugs.runtime import sandbox
-from src.cplugs.runtime.children import ChildLedger
-from src.cplugs.runtime.dispatch import PluginContext
-from src.cplugs.runtime.process import PluginSpec
+from src.plugins.host import owner_switch, sidecar_boot
+from src.plugins.runtime import sandbox
+from src.plugins.runtime.children import ChildLedger
+from src.plugins.runtime.dispatch import PluginContext
+from src.plugins.runtime.process import PluginSpec
 from tests.python.api_keys.conftest import bearer, client, key_store, owner_jwt  # noqa: F401
 
 FIXTURE = Path(__file__).parent / "runtime" / "fixtures" / "probe_plugin" / "main.py"
@@ -143,7 +143,7 @@ def test_an_api_key_is_refused_on_both_routes_and_the_owner_is_not(client, owner
 
 
 def test_boot_installs_the_sidecar_registry_and_reads_the_ledger_only_when_a_database_exists(tmp_path):
-    from src.cplugs.host import sidecar_registry
+    from src.plugins.host import sidecar_registry
 
     sidecar_registry.install(None)
     try:

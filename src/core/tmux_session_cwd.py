@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 import shutil
-import subprocess
 from typing import Callable, Optional
 
 import structlog
 
 from src.core.tmux_discovery import TmuxVersionSkewError, tmux_argv_prefix
+from src.core.tmux_transport.run import tmux_run_sync
 
 logger = structlog.get_logger()
 
@@ -54,26 +54,21 @@ def probe_session_format(
         return None
     if not shutil.which(base[0]):
         return None
-    try:
-        completed = subprocess.run(
-            [
-                *base,
-                "display-message",
-                "-p",
-                "-t",
-                f"={name}:",
-                fmt,
-            ],
-            capture_output=True,
-            timeout=timeout,
-            check=False,
-        )
-    except (subprocess.TimeoutExpired, OSError) as exc:
+    completed = tmux_run_sync(
+        socket,
+        "display-message",
+        "-p",
+        "-t",
+        f"={name}:",
+        fmt,
+        timeout=timeout,
+    )
+    if completed.error:
         logger.warning(
             "session_cwd_probe_failed",
             tmux_name=name,
             tmux_socket=socket,
-            error=str(exc),
+            error=completed.error,
             note="working directory CANNOT BE DETERMINED; attribution unknown",
         )
         return None

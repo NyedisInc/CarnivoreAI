@@ -80,14 +80,14 @@ test('with no bridge, follow is a harmless no-op', () => {
   expect(() => stop()).not.toThrow();
 });
 
-test('absent items: agents and shells hidden, the other six shown; the settings store agrees', () => {
+test('absent items: agents hidden, the other seven shown; the settings store agrees', () => {
   install();
   expect(readFootBarItems()).toEqual({
     model: true, effort: true, context: true, window_5h: true, window_7d: true,
-    agents: false, shells: false, timers: true,
+    agents: false, shells: true, timers: true,
   });
   footBarItems.value = {};
-  expect(footBarItems.effective('shells')).toBe(false);
+  expect(footBarItems.effective('shells')).toBe(true);
   expect(footBarItems.effective('agents')).toBe(false);
   expect(footBarItems.effective('timers')).toBe(true);
 });
@@ -95,7 +95,7 @@ test('absent items: agents and shells hidden, the other six shown; the settings 
 test('a stored true for agents shows it; a stored false still hides', () => {
   const state = install();
   state.stored = { agents: true, timers: false };
-  expect(readFootBarItems()).toMatchObject({ agents: true, shells: false, timers: false });
+  expect(readFootBarItems()).toMatchObject({ agents: true, shells: true, timers: false });
   footBarItems.value = { agents: true };
   expect(footBarItems.effective('agents')).toBe(true);
 });

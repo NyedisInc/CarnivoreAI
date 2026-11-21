@@ -119,7 +119,8 @@ def db(tmp_path, monkeypatch):
 
 @pytest.fixture
 def world(db, monkeypatch):
-    from src.api import channel_delivery
+    from src.core.sessions import channel_delivery
+    from src.core.sessions.guarded_paste import PasteRefused
     from src.core.approvals import dialog_gate
     from src.core.messaging import delivery
 
@@ -160,11 +161,10 @@ def world(db, monkeypatch):
     monkeypatch.setattr(dialog_gate, "_default_capture", capture)
     pasted: List[Dict[str, Any]] = []
 
-    async def fake_deliver(request, session_id, text, meta=None, *, fresh_dialog_check=False):
+    async def fake_deliver(app_state, session_id, text, meta=None, *, fresh_dialog_check=False):
         assert fresh_dialog_check is True, "every messaging delivery must ask the fresh dialog check in the lock"
-        if await dialog_gate.dialog_verdict(request.app, session_id) != dialog_gate.CLEAR:
-            from fastapi import HTTPException
-            raise HTTPException(status_code=409, detail={"code": "pane_dialog_open"})
+        if await dialog_gate.dialog_verdict(app_state, session_id) != dialog_gate.CLEAR:
+            raise PasteRefused("pane_dialog_open", "a dialog is open")
         pasted.append({"session_id": session_id, "text": text})
         return channel_delivery.DeliveryResponse(pasted_bytes=len(text), submitted=True, delivered_via="paste")
 

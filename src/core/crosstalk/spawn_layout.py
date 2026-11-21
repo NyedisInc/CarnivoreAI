@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import asyncio
-from types import SimpleNamespace
 from typing import Any
 
 from src.core import ui_preferences, ui_preferences_store
+from src.core.preferences_push.broadcast import broadcast_changed
 
 PRIMARY = 'terminal:@primary'
 
@@ -47,8 +47,6 @@ def add_to_arrangement(value: dict | None, parent: Any, child: Any) -> dict:
 
 
 async def persist(app: Any, parent: Any, child: Any) -> str:
-    from src.api.preferences_routes import broadcast_changed
-
     pref = getattr(app.state, 'ui_preferences_store', None)
     if pref is None:
         return 'unavailable'
@@ -62,7 +60,7 @@ async def persist(app: Any, parent: Any, child: Any) -> str:
         if result.status == ui_preferences_store.STALE_REVISION:
             continue
         if result.status == ui_preferences_store.COMMITTED:
-            await broadcast_changed(SimpleNamespace(app=app), result, None)
+            await broadcast_changed(app.state, result, None)
             return 'saved'
         return result.status
     return 'conflict'

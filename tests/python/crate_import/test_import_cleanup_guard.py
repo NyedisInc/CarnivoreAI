@@ -13,7 +13,7 @@ from src.core.crate_import import hooks as hk
 from src.core.crate_import import files_apply
 from src.core.crate_import.model import ImportRequest, new_import_id
 from src.core.crate_import.plan import build_plan
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.sdk import crate_format as cf
 from tests.python.crate_import.test_import_plan import target
 from tests.python.crate_import.test_import_project_files import project_crate, restore
 

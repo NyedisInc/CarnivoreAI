@@ -40,7 +40,7 @@ const input = (rows: SidebarRow[]): PaintInput => ({ rows, density: 'compact', l
 
 function loaded(): SidebarRow[] {
     const live: SidebarRow[] = [{ name: 'carnivore_live', status: 'idle', session_row_id: 1, project_id: 3, project_name: 'live' }];
-    return [...live, ...archivedRows(Archived.archivedRecords(), Archived.archivedShown(), new Set(live.map((r) => r.name)))] as SidebarRow[];
+    return [...live, ...archivedRows(Archived.archivedRecords(), Archived.archivedShown(), live)] as SidebarRow[];
 }
 
 function companies(rows: SidebarRow[]): CompanyPlan[] {

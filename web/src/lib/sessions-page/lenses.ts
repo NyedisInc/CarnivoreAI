@@ -1,5 +1,6 @@
 import type { Translate } from '../sessions/types';
 import type { PageRow, Signals } from './filters';
+import { STATUS } from '../activity-status';
 import { readChoice, writeChoice } from '../../opscenter/ui/stored-choice';
 
 export const LENSES = [
@@ -62,7 +63,7 @@ export interface LensContext {
     thisComputer: string;
 }
 
-export const NEED_KINDS = ['question', 'startup', 'notice', 'finished_unread', 'asleep_unread'] as const;
+export const NEED_KINDS = [STATUS.question, 'startup', STATUS.notice, STATUS.finished_unread, 'asleep_unread'] as const;
 export type NeedKind = (typeof NEED_KINDS)[number];
 
 export function needKind(s: PageRow['s'], sig: Signals): NeedKind | null {
@@ -70,7 +71,7 @@ export function needKind(s: PageRow['s'], sig: Signals): NeedKind | null {
     if (w) {
         if (w.startup_gate === 'awaiting_startup_prompt') return 'startup';
         const a = w.activity_status;
-        return a === 'question' || a === 'notice' || a === 'finished_unread' ? a : null;
+        return a === STATUS.question || a === STATUS.notice || a === STATUS.finished_unread ? a : null;
     }
     return s.state === 'asleep' && sig.asleepUnread(s.session_uuid) ? 'asleep_unread' : null;
 }

@@ -245,6 +245,7 @@ def test_a_keychain_write_puts_the_secret_on_stdin_never_in_argv(monkeypatch):
     assert len(seen) == 1, "an unsafe secret still reached security"
 
 
+@pytest.mark.mac_gui_session
 @pytest.mark.skipif(sys.platform != "darwin" or not os.path.exists("/usr/bin/security"),
                     reason="needs the macOS security binary")
 def test_a_real_keychain_round_trip_under_a_throwaway_service():

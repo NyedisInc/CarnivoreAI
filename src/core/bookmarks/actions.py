@@ -114,8 +114,8 @@ async def _rewind_claimed(manager: Any, row: rows.SessionRow, current: str, entr
                             "nothing was restarted", code="row_moved")
     try:
         result = await manager.respawn_session(row.tmux_name, live_restart_confirmed=True)
-    except Exception:
-        await _undo(row, current, new_uuid, path)
+    except Exception as exc:
+        await _undo(row, current, new_uuid, path, cause=exc)
         raise
     killed = bool(result.get("killed_live_pane"))
     if not result.get("ok") and not killed:
@@ -170,6 +170,12 @@ def _record_cut(kind: str, session_uuid: Optional[str], source: str, copy: str, 
         return False
 
 
-async def _undo(row: rows.SessionRow, previous: str, new_uuid: str, path) -> None:
-    await asyncio.to_thread(rows.swap_conversation, row.id, new_uuid, previous, None, row.claude_session_uuid_source)
+async def _undo(row: rows.SessionRow, previous: str, new_uuid: str, path, cause: Exception | None = None) -> None:
+    restored = await asyncio.to_thread(rows.swap_conversation, row.id, new_uuid, previous, None,
+                                       row.claude_session_uuid_source)
+    if not restored:
+        logger.error("bookmark_rewind_undo_failed", row_id=row.id, previous=previous, copy=new_uuid, path=str(path),
+                     error=repr(cause) if cause is not None else None)
+        raise RewindRefused("the rewind could not be undone; this session now resumes the rewound copy "
+                            "and the original conversation is still on disk", code="undo_failed")
     remove_copy(path)

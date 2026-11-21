@@ -14,10 +14,12 @@ from src.core import session_change_notice
 from src.core.account_switch.auto_restart import at_rest
 from src.config.auto_sleep import AutoSleepConfig
 from src.core.auto_sleep import live_work, swarm_rule, pane_listeners, store
+from src.models.activity_status import RESTING
 from src.core.auto_sleep.idle_clock import IdleClock
 from src.core.swarm import settings as swarm_settings
 from src.core.notifications.sources import frames
-from src.core.session_status import STATUS_FINISHED_UNREAD
+from src.core.session_startup_gate import GATE_AWAITING
+from src.core.session_status import STATUS_FINISHED_UNREAD, STATUS_UNKNOWN
 from src.models.websocket import WSMessageType
 
 logger = structlog.get_logger()
@@ -77,6 +79,10 @@ class Eligible(NamedTuple):
 
     session_uuid: str
     swarm_member: Optional[swarm_rule.Member]
+
+
+def parked_at_startup(info: Any) -> bool:
+    return info.activity_status == STATUS_UNKNOWN and info.startup_gate == GATE_AWAITING
 
 
 class AutoSleeper:
@@ -185,6 +191,8 @@ class AutoSleeper:
             return []
         swarm_cfg = swarm_settings.read_block(config)
         swarm_names = {m.tmux_name for m in members.by_row.values()}
+        if swarm_names:
+            await self._park_startup_bodies(manager, swarm_names, now)
         due = [
             sid for sid in self._clock.idle_ids()
             if self._idle_long_enough(sid, now, settings, self._clock.is_unread(sid))
@@ -213,6 +221,22 @@ class AutoSleeper:
             if outcome:
                 slept.append(chosen.session_uuid)
         return slept
+
+    async def _park_startup_bodies(self, manager: Any, swarm_names: Set[str], now: datetime) -> None:
+        watcher = getattr(manager, "_attention_watcher", None)
+        if watcher is None:
+            return
+        for sid, row in list(manager._registry.sessions.items()):
+            if getattr(row, "tmux_session", None) not in swarm_names:
+                continue
+            observation = watcher.observation_for(sid, now=now)
+            if observation is None or observation.stale or observation.verdict.state != STATUS_UNKNOWN:
+                continue
+            info = await manager.get_session_info(sid)
+            if info is not None and parked_at_startup(info):
+                self._clock.park(sid, now)
+            else:
+                self._clock.unpark(sid)
 
     def _swarm_due(self, manager: Any, session_id: str, now: datetime, swarm_cfg: Any, swarm_names: Set[str]) -> bool:
         tmux = getattr(manager._registry.sessions.get(session_id), "tmux_session", None)
@@ -249,7 +273,7 @@ class AutoSleeper:
         if info.activity_hint is not None:
             return None
         if swarm is not None:
-            if info.activity_status not in ("idle", STATUS_FINISHED_UNREAD):
+            if info.activity_status not in RESTING and not parked_at_startup(info):
                 return None
             idle_for = self._clock.sleep_seconds(session_id, self._now(), unread=False)
             if swarm_cfg is None or idle_for is None or idle_for < swarm_cfg.auto_sleep_idle_minutes * 60:
@@ -287,11 +311,12 @@ class AutoSleeper:
             if why is not None:
                 logger.info("auto_sleep_swarm_pending", session_id=session_id, agent_id=swarm.agent_id, why=why)
                 return None
-        if self._hold(session_id, info, getattr(observation, "evidence", None), require_measured=False):
+        parked = parked_at_startup(info)
+        if not parked and self._hold(session_id, info, getattr(observation, "evidence", None), require_measured=False):
             return None
         if await self._serves(manager, session_id, snapshot):
             return None
-        if await self._fresh_hold(manager, session_id, info):
+        if not parked and await self._fresh_hold(manager, session_id, info):
             return None
         return Eligible(uuid, swarm)
 

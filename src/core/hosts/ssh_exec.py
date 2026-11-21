@@ -8,7 +8,7 @@ import re
 import signal
 import time
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 import structlog
 
@@ -106,18 +106,27 @@ def _remote_command(remote_command: str) -> str:
     return remote_command
 
 
-def master_argv(dest: SshDestination, control_path: str, *, ssh_binary: str = SSH_BINARY) -> List[str]:
+def _checked_pre_options(pre_options: Sequence[Tuple[str, str]]) -> List[str]:
+    for key, value in pre_options:
+        if not key or any(ch in key + value for ch in "\n\r\0"):
+            raise SshArgumentError("an ssh option may not be empty or hold a newline or NUL byte")
+    return _options(pre_options)
+
+
+def master_argv(dest: SshDestination, control_path: str, *, ssh_binary: str = SSH_BINARY,
+                pre_options: Sequence[Tuple[str, str]] = ()) -> List[str]:
     control = (("ControlMaster", "yes"), ("ControlPersist", "no"),
                ("ControlPath", validate_control_path(control_path)))
-    return [ssh_binary, *_options(HARDENING_OPTIONS), *_options(control),
+    return [ssh_binary, *_checked_pre_options(pre_options), *_options(HARDENING_OPTIONS), *_options(control),
             *dest.port_args(), "-N", "--", dest.target]
 
 
 def mux_argv(dest: SshDestination, control_path: str, remote_command: str, *,
-             ssh_binary: str = SSH_BINARY) -> List[str]:
+             ssh_binary: str = SSH_BINARY,
+             pre_options: Sequence[Tuple[str, str]] = ()) -> List[str]:
     control = (("ControlMaster", "no"), ("ControlPath", validate_control_path(control_path)),
                ("ProxyCommand", "false"))
-    return [ssh_binary, *_options(HARDENING_OPTIONS), *_options(control),
+    return [ssh_binary, *_checked_pre_options(pre_options), *_options(HARDENING_OPTIONS), *_options(control),
             *dest.port_args(), "--", dest.target, _remote_command(remote_command)]
 
 
@@ -350,14 +359,14 @@ async def collect_process(proc: asyncio.subprocess.Process, *, stdin_data: Optio
 async def run_process(argv: Sequence[str], *, stdin_data: Optional[bytes] = None,
                       timeout: float = 30.0, max_output: int = 1 << 20,
                       max_stderr: int = 64 << 10, verb: str = "exec",
-                      host: str = "") -> ExecResult:
+                      host: str = "", env: Optional[Mapping[str, str]] = None) -> ExecResult:
     started = time.monotonic()
     try:
         proc = await asyncio.create_subprocess_exec(
             *argv,
             stdin=asyncio.subprocess.PIPE if stdin_data is not None else asyncio.subprocess.DEVNULL,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-            start_new_session=True,
+            start_new_session=True, env=None if env is None else dict(env),
         )
     except OSError as exc:
         logger.warning("ssh_exec_spawn_failed", host=host, verb=verb, error=type(exc).__name__)

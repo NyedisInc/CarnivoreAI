@@ -92,15 +92,22 @@ def test_unchanged_file_with_no_usage_in_its_tail_is_read_once(
     assert len(opens) == after_first and second is first
 
 
-def test_a_repeated_read_failure_warns_once_then_drops_to_debug() -> None:
-    from structlog.testing import capture_logs
+def test_a_repeated_read_failure_warns_once_then_drops_to_debug(monkeypatch: pytest.MonkeyPatch) -> None:
+    levels: list[str] = []
 
+    class Recorder:
+
+        def warning(self, *_a: object, **_k: object) -> None:
+            levels.append("warning")
+
+        def debug(self, *_a: object, **_k: object) -> None:
+            levels.append("debug")
+
+    monkeypatch.setattr(lmf, "logger", Recorder())
     lmf._SEEN_FAILURES.clear()
-    with capture_logs() as logs:
-        for _ in range(3):
-            lmf._log_read_failure("cloude_throttle", "KeyError")
-        lmf._log_read_failure("cloude_throttle", "ValueError")
-    levels = [entry["log_level"] for entry in logs]
+    for _ in range(3):
+        lmf._log_read_failure("cloude_throttle", "KeyError")
+    lmf._log_read_failure("cloude_throttle", "ValueError")
     assert levels == ["warning", "debug", "debug", "warning"]
 
 

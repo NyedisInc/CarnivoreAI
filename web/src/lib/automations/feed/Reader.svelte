@@ -15,7 +15,7 @@
   import { bytesWords, isLive, reasonWords, runStatusWord, runTime, skipReason, statusWord, type Clock } from '../logic/words';
   import RunSheet, { type SheetRun } from '../report/RunSheet.svelte';
   import { readerFacts, whatRan, type ReaderRun } from './feed-model';
-  import { attachmentHref, cancelRun, carryOn, fixIt, openRunSessions } from '../run-actions';
+  import { attachmentHref, cancelRun, downloadAttachment, carryOn, fixIt, openRunSessions } from '../run-actions';
 
   type Props = {
     run: FeedRun;
@@ -146,7 +146,7 @@
           <dd data-attachments>
             {#if run.attachments?.length}
               {#each run.attachments as a, i (a.name)}
-                <a class="ap-rd-file" href={attachmentHref(run.run_id, a.name)} download={a.name} data-attachment={a.name}>{a.name} ({bytesWords(a.bytes)})</a>{i < run.attachments.length - 1 ? ', ' : ''}
+                <a class="ap-rd-file" href={attachmentHref(run.run_id, a.name)} download={a.name} data-attachment={a.name} onclick={(e) => { e.preventDefault(); void downloadAttachment(run.run_id, a.name); }}>{a.name} ({bytesWords(a.bytes)})</a>{i < run.attachments.length - 1 ? ', ' : ''}
               {/each}
             {:else}
               {t('automations.page.reader.attachments_none')}

@@ -1,6 +1,7 @@
 <h2 class="sg-h2">buttons</h2>
 <p class="sg-lead"><strong>Buttons copy the restart picker footer</strong> (Alex (example-owner), 2026-09-25): the shared
-<code>.modal-btn</code> family, lowercase mono labels, a small radius, no corner brackets. <strong>Calm by default</strong>: an
+<code>.modal-btn</code> family, lowercase mono labels, a small radius, no corner brackets. Its size is the one medium of the base
+(<code>lib/base/elements.css</code>), the same in every dialog; a region asks for the compact size with <code>data-btn-density="compact"</code>. <strong>Calm by default</strong>: an
 outline for cancel, a tinted interior inside a 1px edge for confirm and for destroy. The filled block is the alert variant only
 (Alex, #637: "way too loud and agressive. should be for like SUPER ALERT buttons").</p>
 
@@ -97,9 +98,24 @@ outline for cancel, a tinted interior inside a 1px edge for confirm and for dest
             <button type="button" class="oc-btn oc-btn--danger">remove</button>
             <button type="button" class="oc-btn" disabled>disabled</button>
         </div>
+        <div class="sg-row" data-btn-density="compact">
+            <button type="button" class="oc-btn oc-btn--confirm">compact</button>
+            <button type="button" class="modal-btn modal-btn-secondary">cancel</button>
+            <button type="button" class="modal-btn modal-btn-danger">remove</button>
+        </div>
+        <div class="sg-row" data-btn-density="frame">
+            <button type="button" data-btn="secondary">frame</button>
+            <button type="button" data-btn="secondary" data-size="sm">frame sm</button>
+        </div>
     </div>
 </div>
 <dl class="sg-facts">
+    <dt>size</dt>
+    <dd>One medium for every family, the restart picker footer's (<code>--oc-btn-pad-y</code>, set in <code>lib/base/elements.css</code>). The second row
+        is a region with <code>data-btn-density="compact"</code>: every text button inside takes the 24px compact size, an icon square keeps its own.
+        The third row is <code>data-btn-density="frame"</code>, which <code>ui/Page.svelte</code> declares on a framed page's title strip, tab row, tool row and detail head:
+        every text button inside takes the frame's one header height (<code>--oc-frame-btn-h</code>, the tap size on a touch screen) and an icon button is a square of it.
+        The frame declares the region; it never writes a button size.</dd>
     <dt>use</dt>
     <dd><code>.oc-btn</code> on every menu page: a quiet outline, 44px under 1024px.
         <code>--confirm</code> is the calm confirm recipe; <code>--ghost</code> drops the edge; <code>--danger</code> paints edge and label

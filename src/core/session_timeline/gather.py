@@ -43,7 +43,7 @@ def _bookmarks(session_uuid: str) -> List[Dict[str, Any]]:
 
 
 def _points(conversations: List[str]) -> Dict[str, List[Dict[str, Any]]]:
-    from src.cplugs.sdk import restore_points  # noqa: PLC0415
+    from src.plugins.sdk import restore_points  # noqa: PLC0415
 
     port = restore_points.get()
     out: Dict[str, List[Dict[str, Any]]] = {}

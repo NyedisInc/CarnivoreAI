@@ -1,5 +1,5 @@
 import { ApiError } from '../../opscenter/api/auth.svelte';
-import { openSession } from '../../cplugs/sdk/sessions.svelte';
+import { openSession } from '../../plugins/sdk/sessions.svelte';
 import { t } from '../i18n/index.svelte';
 import type { ConversationTarget, OpenOutcome } from '../conversation-open/open';
 import { bookmarkAt, branchAt, copyText, linkUrl, resumeSession } from './result-actions';

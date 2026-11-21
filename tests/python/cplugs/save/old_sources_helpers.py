@@ -4,7 +4,7 @@ from __future__ import annotations
 import hashlib
 from typing import Any, Dict, Optional
 
-from src.cplugs.save.vault import constants as K
+from src.plugins.save.vault import constants as K
 from src.core.deepsearch.fallback_hook import FallbackPoint, IncomingFile
 
 ENC = "-Users-x-proj"
@@ -20,7 +20,7 @@ def incoming_point(unit: str, data: bytes, *, epoch: float = 1_700_000_000.0, ta
 
 
 def make_copy(source: str, rel_in_source: str, data: bytes, captured: float = 1_700_000_000.0, locator: str = ""):
-    from src.cplugs.save.vault.old_sources import model, names
+    from src.plugins.save.vault.old_sources import model, names
 
     ident = names.identify(rel_in_source)
     assert ident is not None, rel_in_source

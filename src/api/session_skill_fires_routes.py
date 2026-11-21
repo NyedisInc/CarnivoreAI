@@ -16,7 +16,7 @@ from src.core.attention.evidence import FAMILY_CODEX, observed_conversation_uuid
 from src.core.session_token_usage import claude_reader
 from src.core.session_transcript_presence import CONVERSATION_PRESENT
 from src.core.skill_fires.tally import DEFAULT_RECENT_FIRES, MAX_RECENT_FIRES, SkillTallyCache, STATE_MEASURED, default_store
-from src.models.sessions import SessionSkillFires, SkillFireOut
+from src.models.skill_fires import SessionSkillFires, SkillFireOut
 
 router = APIRouter()
 

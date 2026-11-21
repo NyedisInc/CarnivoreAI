@@ -43,6 +43,7 @@ const BUCKETS = [
     'unread',
     'done',
     'dead',
+    'asleep',
     'unknown',
     'a-bucket-from-2030',
 ];

@@ -171,7 +171,7 @@
     .oc-table-head {
       position: sticky;
       top: 0;
-      z-index: 1;
+      z-index: var(--oc-z-raised);
       height: var(--oc-table-headheight);
       background: var(--oc-ground-panel);
       box-shadow: inset 0 -1px 0 0 var(--oc-line-rule);

@@ -24,6 +24,7 @@ from src.core.attention.turn_counts import (
 from src.core.session_token_usage.cache import HEAD_BYTES, IncrementalCache, stat_signature
 from src.core.transcript_contract.cold_budget import BudgetedHandle, LineSource
 from src.core.session_token_usage.persist_spec import PersistSpec, decode_instant, encode_instant
+from src.core.subagents import launch_memo
 from src.core.subagents.files import read_line_facts, read_meta_facts
 from src.core.subagents.parent_index import (
     PARENT_SLICE_BYTES,
@@ -371,29 +372,38 @@ def find_open_launches(
 
 
 def conversation_launches(parent_path: Path) -> Optional[List[Tuple[OpenLaunch, bool]]]:
+    return launch_memo.remembered(str(parent_path), lambda: _read_conversation(parent_path))
+
+
+def _read_conversation(parent_path: Path) -> Tuple[Optional[List[Tuple[OpenLaunch, bool]]], bool]:
     parent = _incremental(parent_path, _LEDGERS, _Ledger, _scan_launches, "")
     if parent is None:
-        return None
+        return None, False
     index = read_completion_index(parent_path)
     if index is None:
-        return None
+        return None, False
     found = [(launch, _retired(launch.task_id, parent, index))
              for launch in parent.launches.values()]
     directory = subagents_dir_for(parent_path)
+    complete = True
     try:
         names = [name for name in entry_names(directory) if _AGENT_FILE_RE.match(name)]
-    except OSError:
+    except FileNotFoundError:
         names = []
+    except OSError:
+        names, complete = [], False
     for name in names:
         agent_id = _AGENT_FILE_RE.match(name).group(1)
         path = directory / name
         ledger = _incremental(path, _LEDGERS, _Ledger, _scan_launches, agent_id)
+        complete = complete and ledger is not None
         if ledger is None or not ledger.launches:
             continue
         own = read_completion_index(path, cache=_AGENT_NOTICES)
+        complete = complete and own is not None
         found.extend((launch, _retired(launch.task_id, ledger, own, index))
                      for launch in ledger.launches.values())
-    return found
+    return found, complete
 
 
 __all__ = [

@@ -13,6 +13,7 @@ from src.api import projects_service
 from src.api.auth import require_auth
 from src.config import settings
 from src.core.companies import accounts, hero_art_gen, hero_images, lineage, store
+from src.core.companies.folder import CompanyFolderInvalid, canonical_company_folder
 from src.core.project_colors.color_math import oklch_hue_of
 from src.core.project_colors.palette import is_hex_color
 from src.models.projects import (
@@ -37,6 +38,7 @@ class CompanyResponse(BaseModel):
     hue: Optional[int] = Field(None, description="The chosen base hue of the company's color family, 0-359; null is the default")
     parent_id: Optional[int] = Field(None, description="The company this one sits under; null is a top-level company")
     hq_project_id: Optional[int] = Field(None, description="The company agent's HQ project id; null when none is set")
+    folder: Optional[str] = Field(None, description="The folder this company's new projects go under (a default, never a lock); null when none is set")
 
 
 class CompanyNameRequest(BaseModel):
@@ -54,6 +56,7 @@ class CompanyPatchRequest(BaseModel):
     color: Optional[str] = Field(None, description="A #rrggbb pick from the shared color picker; stored as its OKLCH hue (not with hue)")
     parent_id: Optional[int] = Field(None, ge=1)
     hq_project_id: Optional[int] = Field(None, ge=1)
+    folder: Optional[str] = Field(None, description="An existing folder of yours, or null to clear it")
 
 
 class CompaniesResponse(BaseModel):
@@ -143,7 +146,7 @@ async def rename_company(company_id: int, body: CompanyPatchRequest) -> dict:
     projects_service.guard_writable(settings)
     sent = body.model_fields_set
     if not sent or ("name" in sent and body.name is None):
-        raise HTTPException(status_code=422, detail="send a name, a hue, a color, a parent_id or an hq_project_id")
+        raise HTTPException(status_code=422, detail="send a name, a hue, a color, a parent_id, an hq_project_id or a folder")
     if "color" in sent:
         if "hue" in sent:
             raise HTTPException(status_code=422, detail="send a hue or a color, not both")
@@ -162,8 +165,11 @@ async def rename_company(company_id: int, body: CompanyPatchRequest) -> dict:
                 company = store.set_parent(conn, company_id, body.parent_id)
             if "hq_project_id" in sent:
                 company = store.set_hq_project(conn, company_id, body.hq_project_id)
+            if "folder" in sent:
+                folder = None if body.folder is None else canonical_company_folder(body.folder, settings)
+                company = store.set_company_folder(conn, company_id, folder)
             return _with_image(company)
-    except store.CompanyNameInvalid as exc:
+    except (store.CompanyNameInvalid, CompanyFolderInvalid) as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     except (store.CompanyNotFound, store.ProjectNotFound) as exc:
         raise _not_found(exc)

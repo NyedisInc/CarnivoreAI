@@ -20,6 +20,7 @@ from src.core.federation import peer_hosts, peer_links
 from src.core.federation.peer_client import PeerRefused, PeerUnreachable
 from src.core.account_switch.launch_env import _config_path
 from src.core.pack.identity import home, replicas
+from src.core.pack.machines import capabilities as pack_capabilities
 from src.core.pack.move import account
 from src.core.pack.transport import bundles
 from src.core.pack.trust_carry import imports, store as trust_store
@@ -55,13 +56,13 @@ def find_peer(machine: str) -> peer_hosts.PeerRow:
     raise HTTPException(404, {"code": "unknown_machine", "detail": f"no paired computer named {machine!r}"})
 
 
-async def call_peer(peer: peer_hosts.PeerRow, method: str, path: str, body: Any = None) -> Any:
+async def call_peer(peer: peer_hosts.PeerRow, method: str, path: str, body: Any = None, *, timeout: float = PEER_TIMEOUT_SECONDS) -> Any:
     links = peer_links.LINKS
     client = links.client(peer.peer_install_id) if links is not None else None
     if client is None:
         raise HTTPException(502, {"code": "machine_unreachable", "detail": f"{peer.label} is not connected right now"})
     try:
-        reply = await asyncio.wait_for(client.request(method, path, json=body), PEER_TIMEOUT_SECONDS)
+        reply = await asyncio.wait_for(client.request(method, path, json=body), timeout)
     except (PeerUnreachable, PeerRefused, asyncio.TimeoutError) as exc:
         raise api_error(502, "machine_unreachable", exc, peer=peer.label) from exc
     try:
@@ -77,6 +78,15 @@ async def call_peer(peer: peer_hosts.PeerRow, method: str, path: str, body: Any 
             detail = None
         raise HTTPException(502, {"code": code, "detail": f"{peer.label} refused ({reply.status_code})", "peer_detail": detail})
     return data or {}
+
+
+def _auto_field(peer_install_id: str, auto: bool) -> Dict[str, Any]:
+    from src.api.federation_pack_copies_routes import CAP_FORGET_COPY
+
+    links = peer_links.LINKS
+    if not auto or links is None or not pack_capabilities.has(links.capabilities(peer_install_id), CAP_FORGET_COPY):
+        return {}
+    return {"auto": True}
 
 
 def _view(conn: Any, project: Dict[str, Any]) -> Dict[str, Any]:
@@ -131,7 +141,8 @@ async def add_project_replica(project_name: str, body: AddReplicaRequest) -> Dic
         "project_uid": project["uid"], "name": project["display_name"], "root": body.root,
         "company_uid": found["company_uid"], "company_name": found["company_name"], "transport": body.transport,
         **trust_wire.source_trusted_field(peer.peer_install_id, await run_in_threadpool(trust_store.project_trusted, project["root"], found["profiles"])),
-        **trust_wire.source_imports_field(peer.peer_install_id, await run_in_threadpool(imports.source_imports_ok, project["root"], found["profiles"]))})
+        **trust_wire.source_imports_field(peer.peer_install_id, await run_in_threadpool(imports.source_imports_ok, project["root"], found["profiles"])),
+        **_auto_field(peer.peer_install_id, body.auto)})
 
     def write() -> Dict[str, Any]:
         with closing(projects_service.open_db_or_503(settings)) as conn:
@@ -146,7 +157,7 @@ async def add_project_replica(project_name: str, body: AddReplicaRequest) -> Dic
     from src.api import project_transport_routes
 
     if await run_in_threadpool(bundles.is_repo, project["root"]):
-        view["code"] = await project_transport_routes.carry_to(project, peer.peer_install_id, str(peer.label), False)
+        view["code"] = await project_transport_routes.carry_to(project, peer.peer_install_id, str(peer.label), True)
     return view
 
 

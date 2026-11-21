@@ -28,6 +28,7 @@ async def test_a_loopback_bind_turns_tls_joins_off(world, monkeypatch) -> None:
     for host in ("127.0.0.1", "0.0.0.0"):
         rt = _runtime(main, monkeypatch, host=host)
         await rt.prepare(PeerLinks(open_db=main.open_db, listener_path=rt._listener_path))
+        main.pack.default_master = rt.iid
         await rt.start()
         try:
             states[host] = (rt.loopback_bind, rt.link_state, rt.advertised_port())

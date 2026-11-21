@@ -39,7 +39,7 @@ function gatherSnapshot(d) {
       effectiveHost: sm.getEffectiveBindHost(),
       measuredUrl: sm.getMeasuredUrl(),
       publishedUrl: sm.getPublishedUrl(),
-      otpAvailable: !joined && sm.getSetupStatus() !== 'incomplete',
+      otpAvailable: !joined && sm.getSetupVerdict().status !== 'incomplete',
     },
     launchAtLogin: d.launchAgentInstaller.isEnabled(),
     offlineTuiAvailable: sm.getState() === 'stopped' && trayTerminal.offlineTuiAvailable(sm.baseDir, sm.payload),

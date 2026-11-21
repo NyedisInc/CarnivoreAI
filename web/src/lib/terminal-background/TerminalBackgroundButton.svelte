@@ -116,7 +116,7 @@
             width: 22px;
             height: 22px;
             border: none;
-            border-radius: 4px;
+            border-radius: var(--oc-radius-sm);
             margin: 0 2px;
             background: transparent;
             padding: 0;
@@ -190,7 +190,7 @@
             margin: 0;
             left: 0;
             top: 0;
-            z-index: 60;
+            z-index: var(--oc-z-sheet);
             width: 260px;
             max-width: calc(100vw - 16px);
             border-radius: var(--oc-radius-sm);

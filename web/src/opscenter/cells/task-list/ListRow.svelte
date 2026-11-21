@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from '../../ui/Icon.svelte';
   import { t } from '../../../lib/i18n/index.svelte';
-  import { STATUS_ICON, statusIconColor, statusKey } from '../../../cplugs/huddle/huddle-status';
+  import { STATUS_ICON, statusIconColor, statusKey } from '../../../plugins/huddle/huddle-status';
   import { truncatedTip } from '../../../lib/tooltip/truncated-tip';
   import { ageWords } from './age';
   import ApproveKey from './ApproveKey.svelte';

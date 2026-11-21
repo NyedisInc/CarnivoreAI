@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { icons } from '../ui/icons';
-import { taskManagerTab } from '../../cplugs/huddle/task-manager-tab';
+import { taskManagerTab } from '../../plugins/huddle/task-manager-tab';
 
 test('the swarm tab uses the alpha-over-two icon', () => {
   expect(taskManagerTab.icon).toBe('swarm');

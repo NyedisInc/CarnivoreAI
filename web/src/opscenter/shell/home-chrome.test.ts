@@ -13,7 +13,7 @@ import { approvals } from '../../lib/approvals/approvals.svelte';
 import { closeAccountMenu } from '../../lib/drawer-hud/account-menu.svelte';
 import { POPOUT_PATH } from '../../popout/popout';
 import { installPopoverPolyfill } from '../../lib/popover-jsdom-polyfill';
-import { cplugEnablement } from '../../cplugs/host/enablement.svelte';
+import { cplugEnablement } from '../../plugins/host/enablement.svelte';
 
 installPopoverPolyfill();
 

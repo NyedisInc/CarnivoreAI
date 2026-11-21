@@ -124,8 +124,10 @@ class CredentialSource:
 
     def __init__(self, credential: Any) -> None:
         self.credential = credential
+        self.fresh_flags: List[bool] = []
 
-    def __call__(self, config_dir: str) -> Any:
+    def __call__(self, config_dir: str, *, fresh: bool = False) -> Any:
+        self.fresh_flags.append(fresh)
         return self.credential
 
 
@@ -250,6 +252,20 @@ class TestTheScheduleFiresAtExpiryMinusTheLead:
         answer = row(poller.snapshot(), "max-main")
         assert answer.credential_state == "ok"
         assert answer.poke.state == "idle"
+
+    @pytest.mark.asyncio
+    async def test_only_the_after_nudge_read_bypasses_the_keychain_memo(self) -> None:
+        expires = NOW + timedelta(hours=2)
+        clock = FakeClock()
+        clock.now = expires - LEAD
+        source = CredentialSource(claude_credential(expires_at=expires))
+        poke = FakePoke(on_run=lambda: setattr(source, "credential", refreshed_credential(10)))
+        poller = build_poller([claude_account()], clock=clock, source=source, poke=poke)
+
+        await poller.run_pass()
+        assert len(poke.calls) == 1
+        assert source.fresh_flags[0] is False
+        assert source.fresh_flags.count(True) == 1
 
     @pytest.mark.asyncio
     async def test_the_refresh_check_sends_no_usage_request(self) -> None:
@@ -741,7 +757,7 @@ class TestTheClockIsReReadRightBeforeTheSpawn:
             "two": claude_credential(expires_at=NOW + timedelta(minutes=2)),
         }
 
-        def source(config_dir: str) -> Any:
+        def source(config_dir: str, *, fresh: bool = False) -> Any:
             return by_dir["one" if config_dir.endswith("one") else "two"]
 
         def slow_refresh() -> None:
@@ -925,6 +941,49 @@ class TestTheBusyGuardReadsOnlyThrowawayDirectories:
         assert refresh_guard.busy_reason(str(mine)) == refresh_guard.BUSY_CLAUDE_RUNNING
         owner["v"] = None
         assert refresh_guard.busy_reason(str(mine)) == refresh_guard.BUSY_CLAUDE_RUNNING
+
+    def _record_profile(self, tmp_path: Path, monkeypatch, record: str, lstarts) -> Path:
+        profile = tmp_path / "profile"
+        (profile / "sessions").mkdir(parents=True)
+        (profile / "sessions" / f"{os.getpid()}.json").write_text(record)
+        monkeypatch.setattr(refresh_guard, "_pid_config_dir", lambda pid: None)
+        monkeypatch.setattr(refresh_guard, "read_lstarts", lambda pids: lstarts)
+        return profile
+
+    def test_a_reused_pid_whose_start_differs_from_its_record_is_not_busy(
+        self, tmp_path: Path, monkeypatch
+    ) -> None:
+        profile = self._record_profile(
+            tmp_path, monkeypatch, '{"procStart": "Mon Nov 16 17:52:01 2026"}',
+            {os.getpid(): "Tue Nov 17 14:29:40 2026"},
+        )
+        assert refresh_guard.live_claude_pids(str(profile)) == []
+        assert refresh_guard.busy_reason(str(profile)) is None
+
+    def test_a_pid_whose_start_matches_its_record_is_busy(
+        self, tmp_path: Path, monkeypatch
+    ) -> None:
+        profile = self._record_profile(
+            tmp_path, monkeypatch, '{"procStart": "Mon Nov 16 17:52:01 2026"}',
+            {os.getpid(): "Mon Nov 16 17:52:01 2026"},
+        )
+        assert refresh_guard.live_claude_pids(str(profile)) == [os.getpid()]
+
+    def test_an_unmeasurable_start_stays_busy(self, tmp_path: Path, monkeypatch) -> None:
+        for lstarts in (None, {}):
+            profile = self._record_profile(
+                tmp_path / str(lstarts), monkeypatch, '{"procStart": "Mon Nov 16 17:52:01 2026"}',
+                lstarts,
+            )
+            assert refresh_guard.live_claude_pids(str(profile)) == [os.getpid()]
+
+    def test_a_record_with_no_start_field_keeps_the_signal_zero_answer(
+        self, tmp_path: Path, monkeypatch
+    ) -> None:
+        profile = self._record_profile(
+            tmp_path, monkeypatch, "{}", {os.getpid(): "Tue Nov 17 14:29:40 2026"},
+        )
+        assert refresh_guard.live_claude_pids(str(profile)) == [os.getpid()]
 
     def test_pid_config_dir_reads_this_processes_env(self, monkeypatch) -> None:
         monkeypatch.setenv("CLAUDE_CONFIG_DIR", "/tmp")

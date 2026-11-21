@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional
 
 from src.core.work.file_refs import FileHome
-from src.cplugs.sdk import task_folders
+from src.plugins.sdk import task_folders
 
 ID = "abcd1234"
 NAME = f"{ID}-a.png"

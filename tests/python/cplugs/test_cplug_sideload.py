@@ -9,8 +9,8 @@ from types import SimpleNamespace
 import pytest
 
 from src.core.db_migration import ensure_db_migrated
-from src.cplugs.host import developer_mode, identity, runtime, sideload, sidecar_boot, sidecar_registry
-from src.cplugs.host import state as owner_state
+from src.plugins.host import developer_mode, identity, runtime, sideload, sidecar_boot, sidecar_registry
+from src.plugins.host import state as owner_state
 from tests.python.api_keys.conftest import bearer, client, key_store, owner_jwt  # noqa: F401
 
 URL = "/api/v1/cplug-owner/sideload"
@@ -118,7 +118,7 @@ def test_fence_and_switch_then_unverified_local_row_then_edit_needs_approval_the
 
 
 def test_expiry_timer_is_armed_at_boot_and_stops_the_sideloads(world, monkeypatch):
-    from src.cplugs.host import sideload_routes
+    from src.plugins.host import sideload_routes
     from src.main import app
 
     w = world
@@ -146,7 +146,7 @@ def test_expiry_timer_is_armed_at_boot_and_stops_the_sideloads(world, monkeypatc
 
 
 def test_delete_of_a_name_that_is_not_a_sideload_stops_nothing_and_local_is_a_reserved_handle(world, monkeypatch):
-    from src.cplugs.host import sideload_routes
+    from src.plugins.host import sideload_routes
     from src.models.catalog_names import RESERVED_PUBLISHER_HANDLES
 
     w = world
@@ -163,7 +163,7 @@ def test_delete_of_a_name_that_is_not_a_sideload_stops_nothing_and_local_is_a_re
 
 def test_developer_mode_off_through_settings_stops_the_sideloads_with_no_timer(world, monkeypatch):
     from src.config import settings
-    from src.cplugs.host import sideload_routes
+    from src.plugins.host import sideload_routes
 
     w = world
     assert w.client.put(f"{URL}/switch", json={"enabled": True, "hours": None}, headers=w.owner).status_code == 200
@@ -186,7 +186,7 @@ def test_developer_mode_off_stop_failure_still_returns_the_saved_settings_and_lo
     from structlog.testing import capture_logs
 
     from src.config import settings
-    from src.cplugs.host import sideload_routes
+    from src.plugins.host import sideload_routes
 
     w = world
 

@@ -14,7 +14,8 @@ import structlog
 
 from src.core.skill_fires.parse import HARNESS_CLAUDE, parse_claude_line
 from src.core.skill_watch.classify import classify_call
-from src.core.subagents.scan_inputs import AgentFilesSignature, agent_files_signature
+from src.core.subagents.scan_inputs import (AgentFilesSignature, agent_files_signature,
+                                             read_agent_files_signature)
 from src.core.timers.redact import redact
 
 logger = structlog.get_logger(__name__)
@@ -270,7 +271,8 @@ def _read_subagent_file(fd: int, fpath: str, start: Optional[float], state: Span
 
 def _read_subagents(path: str, state: SpanState) -> None:
     root = os.path.join(path[:-6] if path.endswith(".jsonl") else path, "subagents")
-    listed = agent_files_signature(Path(root))
+    signature = read_agent_files_signature if state.done else agent_files_signature
+    listed = signature(Path(root))
     if listed is None:
         return
     files = tuple(entry for entry in listed if entry[0].endswith(".jsonl"))

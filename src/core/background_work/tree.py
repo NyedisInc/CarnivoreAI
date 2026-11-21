@@ -58,7 +58,7 @@ def probe_pane_pids(
     name: str,
     socket: str,
     *,
-    runner: Callable[..., subprocess.CompletedProcess] = subprocess.run,
+    runner: Optional[Callable[..., subprocess.CompletedProcess]] = None,
 ) -> Tuple[int, ...]:
     if not name or ":" in name or "." in name:
         raise PaneNotFound(f"unusable tmux session name {name!r}")

@@ -38,7 +38,7 @@ button.session-sidebar-row-wake-icon {
 }
 
 button.session-sidebar-row-wake-icon:hover {
-    color: var(--oc-text);
+    color: var(--oc-text-primary);
 }
 
 .session-sidebar-row-provider__lead {
@@ -189,7 +189,7 @@ button.session-sidebar-row-wake-icon:hover {
     width: var(--oc-space-2);
     height: var(--oc-space-2);
     margin: 0 var(--oc-space-1);
-    border-radius: 50%;
+    border-radius: var(--oc-radius-circle);
     background: var(--oc-yellow);
 }
 
@@ -258,7 +258,7 @@ button.session-sidebar-row-wake-icon:hover {
     position: absolute;
     width: 2px;
     height: 2px;
-    border-radius: 50%;
+    border-radius: var(--oc-radius-circle);
     background: var(--model-top-ink);
     opacity: 0;
     animation: session-model-spark 2.4s ease-out infinite;

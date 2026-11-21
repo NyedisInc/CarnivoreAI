@@ -3,11 +3,11 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { flushSync, mount, unmount } from 'svelte';
 
 import { tooltipTargetFor } from './tooltip';
-import SwarmOrg from '../../cplugs/huddle/swarm/SwarmOrg.svelte';
-import { AGENTS, COMPANIES, NOW, PROJECTS, SESSIONS, rowOf } from '../../cplugs/huddle/style-guide/swarm-fixture';
-import { buildFloor } from '../../cplugs/huddle/swarm/floor';
-import { buildTree } from '../../cplugs/huddle/swarm/swarm-tree';
-import { cplugEnablement } from '../../cplugs/host/enablement.svelte';
+import SwarmOrg from '../../plugins/huddle/swarm/SwarmOrg.svelte';
+import { AGENTS, COMPANIES, NOW, PROJECTS, SESSIONS, rowOf } from '../../plugins/huddle/style-guide/swarm-fixture';
+import { buildFloor } from '../../plugins/huddle/swarm/floor';
+import { buildTree } from '../../plugins/huddle/swarm/swarm-tree';
+import { cplugEnablement } from '../../plugins/host/enablement.svelte';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
 
 installPopoverPolyfill();

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'vitest';
-import { registerSwarmRoster, unregisterSwarmRoster } from '../../cplugs/sdk/swarm-roster.svelte';
+import { registerSwarmRoster, unregisterSwarmRoster } from '../../plugins/sdk/swarm-roster.svelte';
 import { liveRuleContext } from './group-rule-live';
 
 const ROW = { session_uuid: 'u-7' };

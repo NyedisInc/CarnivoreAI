@@ -26,7 +26,7 @@
   }
 
   .oc-field:disabled {
-    opacity: 0.55;
+    opacity: var(--oc-disabled-opacity);
     cursor: not-allowed;
   }
 

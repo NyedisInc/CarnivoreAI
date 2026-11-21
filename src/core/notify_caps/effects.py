@@ -14,6 +14,7 @@ from src.core.mcp import federated
 from src.core.mcp.caller import AgentCaller
 from src.core.mcp.common import ToolError
 from src.core.mcp.protocol import BatchView
+from src.models.activity_status import RESTING
 from src.core.notify_caps import owner_reply_port
 from src.core.notify_caps.owner_reply_port import OwnerReplyDeclined, OwnerReplyRefused, OwnerReplyUnavailable
 
@@ -95,7 +96,6 @@ async def reopen(app_state: Any, session_id: str) -> Result:
     return 200, {"state": "sent", "agent": name, "working": False}
 
 
-IDLE_STATUSES = frozenset({"idle", "finished_unread"})
 
 
 FRESH_WAIT_SECONDS = 4.0
@@ -139,7 +139,7 @@ async def restart_agents(app_state: Any, session_ids: Any) -> Result:
         info = None if is_remote(session_id) else await manager.get_session_info(session_id)
         seen = watcher.observation_for(session_id) if watcher is not None and info is not None else None
         idle = (seen is not None and not seen.stale and seen.verdict.state == STATE_DONE_IDLE
-                and getattr(info, "activity_status", None) in IDLE_STATUSES and bool(info.tmux_session)
+                and getattr(info, "activity_status", None) in RESTING and bool(info.tmux_session)
                 and observation_update(seen) is not None and not has_background_work(seen.evidence))
         if not idle:
             skipped += 1

@@ -191,6 +191,8 @@ class Settings(BaseSettings):
         pane_launch: bool = False,
         plan_sink: Optional[list] = None,
         purpose: str = "pane",
+        launch_line: Optional[str] = None,
+        permission_hook: bool = False,
     ) -> str:
         auth = None
         try:
@@ -224,6 +226,8 @@ class Settings(BaseSettings):
             connections=connections,
             plan_sink=plan_sink,
             purpose=purpose,
+            launch_line=launch_line,
+            permission_hook=permission_hook,
         )
 
     def pane_launch_command(
@@ -234,10 +238,15 @@ class Settings(BaseSettings):
         *,
         model_is_explicit: bool = False,
         plan_sink: Optional[list] = None,
+        working_dir: Optional[str] = None,
     ) -> str:
+        from src.core.beast_prompts import launch_hooks as _launch_hooks
+        from src.core.pack.jobs import launch_line as _launch_line
+
         return self.get_agent_command(
             agent_type, model=model, extra_args=extra_args, model_is_explicit=model_is_explicit,
-            pane_launch=True, plan_sink=plan_sink,
+            pane_launch=True, plan_sink=plan_sink, launch_line=_launch_line.line_for(working_dir),
+            permission_hook=_launch_hooks.permission_hook_wanted(),
         )
 
     def get_launch_profiles(self) -> tuple:

@@ -1,6 +1,6 @@
 /* reserved 1px border */
 @layer base {
-  :where(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *)) {
+  :where(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *), .oc-ibtn) {
     --_btn-h: var(--oc-control-h);
     --_btn-pad-y: 0;
     --_btn-pad: var(--oc-space-4);
@@ -23,22 +23,18 @@
     --_btn-tx: all;
   }
 
+  :where(.oc-btn, .modal-btn, .modal-btn-danger, .modal-btn-confirm) {
+    --_btn-pad-y: var(--oc-btn-pad-y);
+    --_btn-pad: var(--oc-space-4);
+    --_btn-fs: var(--oc-fs-control);
+  }
+
   :where(.modal-btn) {
-    --_btn-pad-y: 10px;
-    --_btn-pad: 24px;
-    --_btn-fs: 0.95rem;
     width: auto;
     height: auto;
   }
 
-  :where(.modal-btn-danger, .modal-btn-confirm) {
-    --_btn-pad-y: 6px;
-    --_btn-pad: 12px;
-    --_btn-fs: 0.8rem;
-    --_btn-bw: 1px;
-  }
-
-  :where(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *), .oc-btn, .modal-btn, .modal-btn-danger, .modal-btn-confirm) {
+  :where(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *), .oc-btn, .oc-ibtn, .modal-btn, .modal-btn-danger, .modal-btn-confirm) {
     padding: var(--_btn-pad-y) var(--_btn-pad);
     border: var(--_btn-bw) solid currentColor;
     border-radius: var(--_btn-radius);
@@ -51,7 +47,7 @@
     transition-timing-function: ease;
   }
 
-  :where(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *), .oc-btn) {
+  :where(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *), .oc-btn, .oc-ibtn) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -85,7 +81,7 @@
     display: contents;
   }
 
-  :where(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *), .oc-btn, .modal-btn:not([class*='modal-btn-']), .modal-btn-secondary, .modal-btn-primary, .modal-btn-confirm, .modal-btn-danger, .modal-btn-alert) {
+  :where(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *), .oc-btn, .oc-ibtn, .modal-btn:not([class*='modal-btn-']), .modal-btn-secondary, .modal-btn-primary, .modal-btn-confirm, .modal-btn-danger, .modal-btn-alert) {
     --_btn-edge: var(--oc-line-button);
     --_btn-fill: transparent;
     --_btn-ink: var(--oc-text-secondary);
@@ -97,15 +93,28 @@
     color: var(--_btn-ink);
   }
 
-  :where(:is(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *), .oc-btn):hover:not(:disabled, [aria-disabled='true']), :is(.modal-btn:not([class*='modal-btn-']), .modal-btn-secondary, .modal-btn-primary, .modal-btn-confirm, .modal-btn-danger, .modal-btn-alert):hover) {
+  :where(:is(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *), .oc-btn, .oc-ibtn):hover:not(:disabled, [aria-disabled='true']), :is(.modal-btn:not([class*='modal-btn-']), .modal-btn-secondary, .modal-btn-primary, .modal-btn-confirm, .modal-btn-danger, .modal-btn-alert):hover) {
     border-color: var(--_btn-edge-hover);
     background: var(--_btn-fill-hover);
     color: var(--_btn-ink-hover);
   }
 
-  :where(:is(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *), .oc-btn):is(:disabled, [aria-disabled='true'])) {
-    opacity: 0.45;
+  :where(:is(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *), .oc-btn, .oc-ibtn):is(:disabled, [aria-disabled='true']), :is(.modal-btn, .modal-btn-danger, .modal-btn-confirm):disabled) {
+    opacity: var(--oc-disabled-opacity);
     cursor: not-allowed;
+  }
+
+  :where([data-btn-density='compact']) :where(.oc-btn, .modal-btn, .modal-btn-danger, .modal-btn-confirm, [data-btn]:not([data-size])) {
+    --_btn-h: var(--oc-control-h-sm);
+    --_btn-pad-y: var(--oc-space-1);
+    --_btn-pad: var(--oc-space-3);
+    --_btn-fs: var(--oc-fs-body);
+  }
+
+  @media (pointer: coarse), (max-width: 600px) {
+    :where(.modal-btn, .modal-btn-danger, .modal-btn-confirm) {
+      min-height: var(--oc-tap);
+    }
   }
 
   :where([data-btn][aria-pressed='true'], [data-btn][aria-checked='true']) {
@@ -193,6 +202,30 @@
 
   @media (pointer: coarse) {
     :where([data-btn]:not([data-size='auto'], [data-size='bare'], [data-size='icon'])) {
+      --_btn-h: var(--oc-tap);
+    }
+  }
+
+  :where([data-btn-density='frame']) :where([data-btn]:not([data-size='auto'], [data-size='bare'], [data-size='icon'])) {
+    --_btn-h: var(--oc-frame-btn-h);
+    --_btn-pad: var(--oc-space-3);
+    --_btn-fs: var(--oc-fs-label);
+  }
+
+  :where([data-btn-density='frame']) {
+    --oc-ibtn-size: var(--oc-frame-btn-h);
+    --oc-search-h: var(--oc-frame-btn-h);
+    --oc-facet-h: var(--oc-frame-btn-h);
+  }
+
+  @media (pointer: coarse) {
+    :where([data-btn-density='frame']) {
+      --oc-ibtn-size: var(--oc-tap);
+      --oc-search-h: var(--oc-tap);
+      --oc-facet-h: var(--oc-tap);
+    }
+
+    :where([data-btn-density='frame']) :where([data-btn]:not([data-size='auto'], [data-size='bare'], [data-size='icon'])) {
       --_btn-h: var(--oc-tap);
     }
   }

@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping, Optional
 
-from src.core.notifications import card_contract
+from src.core.notifications import card_contract, types
 from src.core.notifications.settings_doc import styles_store
 
 _doc_source: Optional[Callable[[], Mapping[str, Any]]] = None
@@ -40,3 +40,14 @@ def effective_style_in(doc: Mapping[str, Any], type_id: str) -> Style:
 def effective_style(type_id: str) -> Style:
     source = _doc_source
     return effective_style_in(source(), type_id) if source is not None else default_style(type_id)
+
+
+def playback_in(doc: Mapping[str, Any], type_id: str, tmux_name: Optional[str] = None) -> str:
+    style = effective_style_in(doc, type_id)
+    if style.level == "p":
+        return "none"
+    if tmux_name:
+        mine = styles_store.session_sound(doc, tmux_name, types.canonical(type_id))
+        if mine is not None:
+            return mine
+    return style.sound

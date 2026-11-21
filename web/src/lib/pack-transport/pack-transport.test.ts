@@ -14,6 +14,7 @@ vi.mock('../../opscenter/api/auth.svelte', async (original) => ({
       throw new ApiError('some files could not be opened to check them for a credential. nothing was published.', 409, 'unscannable_files', { detail: { code: 'unscannable_files', files: publishRefusal.files, files_more: publishRefusal.more } });
     }
     if (init?.method === 'POST') return { url: 'https://github.com/NyedisInc/notes', owner: 'NyedisInc', name: 'notes', private: true };
+    if (path.endsWith('/delegate-needs')) return { kinds: {}, vocabulary: [] };
     if (path.endsWith('/replicas')) return { pack_state: 'home', replicas: [] };
     if (path.endsWith('/github-account')) {
       return { air_gap: false, account: null, source: 'none', needs_card: true, rung: 'carried', rung_reason: 'no remote', logged_in: ['NyedisAdam'] };
@@ -59,8 +60,7 @@ describe('the machine badge', () => {
 
 describe('the publish private repo card', () => {
   test('creates nothing until the owner presses the button, then one POST with what was answered', async () => {
-    const root = place(ProjectTransport, { name: 'notes' });
-    (root.querySelector('[data-pt="toggle"]') as HTMLElement).click();
+    const root = place(ProjectTransport, { name: 'notes', page: 'github' });
     await tick();
     expect(root.querySelector('[data-pt="publish"]')).not.toBeNull();
     expect(root.querySelector('[data-pt="rung-line"]')?.getAttribute('data-rung')).toBe('carried');
@@ -90,8 +90,7 @@ describe('the publish private repo card', () => {
 describe('a refused publish', () => {
   test('the card names the files the scan refused, capped, with "and N more"', async () => {
     publishRefusal = { files: ['assets/logo.png', 'dump.bin'], more: 3 };
-    const root = place(ProjectTransport, { name: 'notes' });
-    (root.querySelector('[data-pt="toggle"]') as HTMLElement).click();
+    const root = place(ProjectTransport, { name: 'notes', page: 'github' });
     await tick();
     const ownerBox = root.querySelector('[data-pt="publish-owner-input"]') as HTMLInputElement;
     ownerBox.value = 'NyedisInc';

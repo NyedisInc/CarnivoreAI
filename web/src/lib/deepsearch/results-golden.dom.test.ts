@@ -6,8 +6,8 @@ import { canonicalDom } from '../sidebar-shell/legacy-fixture';
 (HTMLElement.prototype as { showPopover?: () => void }).showPopover ??= () => {};
 (HTMLElement.prototype as { hidePopover?: () => void }).hidePopover ??= () => {};
 
-vi.mock('../../cplugs/sdk/sessions.svelte', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../cplugs/sdk/sessions.svelte')>()),
+vi.mock('../../plugins/sdk/sessions.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../plugins/sdk/sessions.svelte')>()),
   sessionRowForConversation: (id: string) => (id === 'conv-live' ? { activity_status: 'working', label: 'nightly restic fix' } : undefined),
 }));
 vi.mock('../resource-push/boot', async (importOriginal) => ({

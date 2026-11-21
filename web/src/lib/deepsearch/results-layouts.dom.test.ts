@@ -17,8 +17,8 @@ const wire = vi.hoisted(() => ({
   onPush: null as null | ((topics: string[]) => void),
 }));
 
-vi.mock('../../cplugs/sdk/sessions.svelte', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../cplugs/sdk/sessions.svelte')>()),
+vi.mock('../../plugins/sdk/sessions.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../plugins/sdk/sessions.svelte')>()),
   sessionRowForConversation: (id: string) => wire.live[id],
   resourcePush: () => ({ onChange: (fn: (topics: string[]) => void) => { wire.onPush = fn; return () => { wire.onPush = null; }; } }),
   openSession: async (id: string) => { wire.openedSession.push(id); return true; },

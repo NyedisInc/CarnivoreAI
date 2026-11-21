@@ -69,6 +69,7 @@ class Toast(BaseModel):
     notify_type: Optional[str] = Field(
         None, description="Registered notification type id, e.g. 'session.finished'; None on older records"
     )
+    test_target: Optional[str] = Field(None, description="'app' or 'desktop' on a test toast; None on a real one")
     detail: Optional[ToastDetail] = Field(
         None, description="Reason, tool, target and snippet for the detailed toast mode"
     )

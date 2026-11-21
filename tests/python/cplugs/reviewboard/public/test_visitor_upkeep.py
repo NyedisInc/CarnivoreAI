@@ -15,11 +15,11 @@ import pytest
 import structlog
 import structlog.testing
 
-from src.cplugs.reviewboard.public import lifecycle
-from src.cplugs.reviewboard.public.service import SERVICE
-from src.cplugs.reviewboard.public import drafts, ratelimit, wiring
-from src.cplugs.reviewboard.public.read import READER
-from src.cplugs.reviewboard.public.write import WRITER
+from src.plugins.reviewboard.public import lifecycle
+from src.plugins.reviewboard.public.service import SERVICE
+from src.plugins.reviewboard.public import drafts, ratelimit, wiring
+from src.plugins.reviewboard.public.read import READER
+from src.plugins.reviewboard.public.write import WRITER
 from tests.python.cplugs.reviewboard.public.read_harness import mint_token
 from tests.python.cplugs.reviewboard.public.test_visitor_revision_rules import ANSWERS, SLUG, VISITORS, key, owner, post, rstore  # noqa: F401
 

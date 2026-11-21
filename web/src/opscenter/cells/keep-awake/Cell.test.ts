@@ -149,10 +149,10 @@ describe('the keep awake cell', () => {
     expect(mac.textContent).not.toContain('is held awake');
   });
 
-  test('a kept name the listing does not carry keeps its row, by tmux name, project not measured', async () => {
+  test('a kept name the listing does not carry keeps its row, by display name (owned prefix stripped), project not measured', async () => {
     autoSleepReply = state({ keep_awake: ['carnivore_gone'], keep_awake_session_uuids: ['u1', 'u2'], mac_awake: true });
     const target = await render();
-    expect(target.querySelector('[data-keep-awake-row]')?.textContent).toBe('carnivore_gone');
+    expect(target.querySelector('[data-keep-awake-row]')?.textContent).toBe('gone');
     expect(target.textContent).toContain('not measured');
     expect(target.textContent).toContain('1 more kept awake with no live session');
   });

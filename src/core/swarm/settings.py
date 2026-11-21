@@ -47,12 +47,11 @@ class SwarmConfig(BaseModel):
     sleep: it only sleeps and its parent is carded, #1457), wake_hit_min_coverage (0.6), learning_batch_size (10), learning_max_age_hours (24),
     flash_per_agent_per_hour (1), flash_per_swarm_per_hour (3), page_default_view (tree), panel_default_density
     (expanded), character_pack (theme: follow the theme; else a pack name), upper_ranks_permissions (skip_all: SysOp,
-    company and project agents launch with permission prompts off, Alex (Adoom666), 2026-10-07, #1380; or ask), and the
+    company and project agents launch with permission prompts off, the owner, 2026-10-07, #1380; or ask), and the
     Swarm look (#1426): color_mode (project: the project color families; random: a stable bright hue per agent), shapes
     (a body shape per agent type, square by default) and animations (a state's picked animation or "none"; an absent
-    state plays its own), and naming_family (False: Alex (Adoom666), 2026-10-08, #1444: off means no naming-family review card and
-    plain names; on, a project agent may propose a family and its spawns then need a persona name), and chat_card_bodies (False: Alex
-    (Adoom666), 2026-10-27, #2590: off means a board card's body is never an entry of an agent's chat, so no agent reading its
+    state plays its own), and naming_family (False: the owner, 2026-10-08, #1444: off means no naming-family review card and
+    plain names; on, a project agent may propose a family and its spawns then need a persona name), and chat_card_bodies (False: the owner, 2026-10-27, #2590: off means a board card's body is never an entry of an agent's chat, so no agent reading its
     thread spends tokens on it, nor is a server info notice such as "wake failed", #1553; on shows each board card in the chat of
     the thread that holds its list, and the notices, as before)."""
 

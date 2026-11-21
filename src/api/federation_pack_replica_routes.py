@@ -1,7 +1,9 @@
 
 from __future__ import annotations
 
+import os
 from contextlib import closing
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 import structlog
@@ -13,6 +15,8 @@ from src.api import projects_service
 from src.api.peer_auth import Principal, require_peer
 from src.config import settings
 from src.core.pack.identity import home, replicas
+from src.core.pack.jobs import copies
+from src.core.pack.jobs.store import JobStore
 from src.core.pack.machines import capabilities as pack_capabilities
 from src.core.pack.trust_carry import wire as trust_wire
 
@@ -37,6 +41,7 @@ class ReplicaBody(BaseModel):
     transport: Optional[str] = Field(default=None, max_length=32)
     source_trusted: bool = False
     source_imports_ok: bool = False
+    auto: bool = False
 
 
 def _peer_only(principal: Principal) -> str:
@@ -63,7 +68,13 @@ async def register_replica(body: ReplicaBody, principal: Principal = Depends(_re
             except replicas.ReplicaRefused as exc:
                 raise HTTPException(exc.status, {"code": exc.code, "detail": str(exc)}) from exc
             home.notify_changed()
-            return answer
+        store = JobStore(Path(settings.get_state_dir()))
+        if answer.get("adopted"):
+            store.made_copy_delete(os.path.realpath(answer["root"]))
+        if answer["created"] or answer.get("revived"):
+            copies.record_made(store, root=answer["root"], project_uid=body.project_uid,
+                               home_install_id=home_install_id, auto=body.auto, folder_made=answer["folder_made"])
+        return answer
 
     logger.info("pack_replica_registered", project_uid=body.project_uid, home=home_install_id)
     return await run_in_threadpool(write)
@@ -80,8 +91,11 @@ async def detach_replica(project_uid: str, principal: Principal = Depends(_requi
 
     def write() -> Dict[str, Any]:
         with closing(projects_service.open_db_or_503(settings)) as conn:
+            row = conn.execute("SELECT root FROM projects WHERE uid = ? AND host_key = 'local'", (project_uid,)).fetchone()
             done = replicas.detach_replica(conn, home_install_id=home_install_id, project_uid=project_uid)
             if done:
+                if row is not None and row["root"]:
+                    JobStore(Path(settings.get_state_dir())).made_copy_delete(os.path.realpath(row["root"]))
                 home.notify_changed()
             return {"detached": done}
 

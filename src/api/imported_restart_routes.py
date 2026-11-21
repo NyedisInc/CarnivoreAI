@@ -12,6 +12,7 @@ from starlette.concurrency import run_in_threadpool
 from src.core.account_switch.launch_env import _config_path
 from src.core.pack.identity.home import ProjectMovedAway
 from src.core.pack.move import account as account_launch
+from src.core.sessions.reuse_guard import ReuseRowTakenError
 from src.api.peer_auth import require_peer_sessions
 from src.core.db import DatastoreUnreadableError, connect, db_path_for
 from src.core.session_agent_choice import (
@@ -288,7 +289,8 @@ async def _imported_restart(
         family=row.get("agent_family"),
     )
     choice = validate_agent_choice(
-        settings, body.agent_type, model=row.get("model"), extra_args=extra_args
+        settings, body.agent_type, model=row.get("model"), extra_args=extra_args,
+        working_dir=row.get("working_dir"),
     )
     plan = plan_imported_restart(
         row,
@@ -337,6 +339,11 @@ async def _imported_restart(
         )
     except ProjectMovedAway:
         raise
+    except ReuseRowTakenError as exc:
+        return ImportedRestartResponse(
+            status="refused", session_uuid=body.session_uuid, conversation=plan.conversation, command=plan.command,
+            working_dir=plan.working_dir,
+            detail=f"cannot restart: the session came back on its own in {exc.held_tmux_name}. the new copy was stopped")
     except Exception as exc:  # noqa: BLE001
         raise api_error(500, "session_restart_failed", exc, session_uuid=body.session_uuid, step="imported") from exc
 

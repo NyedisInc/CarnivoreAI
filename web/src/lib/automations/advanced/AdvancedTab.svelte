@@ -17,7 +17,7 @@
 
 <div class="ap-adv" data-ap-advanced>
   <AdvancedHead />
-  <Tabs tabs={subTabs} active={data.tab} onSelect={(id) => setTab(id, true)} label={t('automations.simple.adv.tabs_aria')} idBase="automations-adv" class="ap-tabs ap-subtabs" />
+  <Tabs tabs={subTabs} active={data.tab} onSelect={(id) => setTab(id, true)} label={t('automations.simple.adv.tabs_aria')} idBase="automations-adv" class="ap-subtabs oc-ptabs--frame" />
   <CounterStrip />
   <div {...panelAttrs('automations-adv', data.tab)} class="ap-body">
     {#if data.status === 'loading'}

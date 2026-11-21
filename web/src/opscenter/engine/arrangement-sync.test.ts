@@ -333,6 +333,23 @@ test('u161-02: a write that throws is kept and sent again, not lost with the cle
   expect(JSON.stringify(last.sessions[KEY]!.layout)).toContain('terminal:ses_x');
 });
 
+test('a refused write is retried a bounded number of times, then dropped with a warning, never resent forever', async () => {
+  terminalLayout.bindSession('cloude_api', 1);
+  prefs.values[FIELD] = arrangement({});
+  startArrangementSync(null);
+  await hydrateArrangement();
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  vi.spyOn(prefs, 'set').mockResolvedValue({ status: 'refused' });
+  terminalLayout.add('terminal', 'ses_x');
+  for (let n = 0; n < 12; n += 1) await settle();
+  const sent = vi.mocked(prefs.set).mock.calls.length;
+  expect(sent).toBeGreaterThan(1);
+  expect(sent).toBeLessThanOrEqual(5);
+  expect(warn.mock.calls.some((call) => String(call[0]).includes('refused'))).toBe(true);
+  for (let n = 0; n < 6; n += 1) await settle();
+  expect(vi.mocked(prefs.set).mock.calls.length).toBe(sent);
+});
+
 test('u161-03: a migration whose write throws is retried on the next hydrate', async () => {
   localStorage.setItem(TABS_KEY_PREFIX + OTHER, JSON.stringify({ groups: { [PRIMARY_SLOT]: { tabs: [PRIMARY_SLOT, C] } }, active: {} }));
   localStorage.setItem(SESSION_INDEX_KEY, JSON.stringify([]));

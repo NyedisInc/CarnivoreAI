@@ -6,6 +6,7 @@ vi.mock('../../api/auth.svelte', () => ({ authFetch: vi.fn(), ApiError: class ex
 vi.mock('../../viz/tripwire-follow', () => ({ followTripwires: () => {} }));
 vi.mock('../../viz/query-client', () => ({ runQueries: vi.fn(async () => []) }));
 
+import { authFetch } from '../../api/auth.svelte';
 import Cell from './Cell.svelte';
 import CellInFrame from '../../shell/fixtures/CellInFrame.svelte';
 import { analytics } from './state.svelte';
@@ -20,6 +21,7 @@ beforeEach(() => {
   analytics.charts = {};
   analytics.loaded = false;
   analytics.error = '';
+  vi.mocked(authFetch).mockReset().mockReturnValue(new Promise(() => {}));
   tripwires.list = [];
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
 });

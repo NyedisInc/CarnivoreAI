@@ -42,7 +42,7 @@
   "summary": "a strip above every swarm chat box with everything waiting on you, answered in place; sysop and company chats roll up their children's items by breadcrumb",
   "surfaces": [
     "every Swarm agent chat, above the box",
-    "web/src/cplugs/huddle/chat/WaitingTray.svelte"
+    "web/src/plugins/huddle/chat/WaitingTray.svelte"
   ],
   "updated": "2026-11-02",
   "where": [

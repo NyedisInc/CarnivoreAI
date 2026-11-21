@@ -97,7 +97,7 @@ export function rows(allRows: unknown): LayoutRow[] {
             layout_uuid: L.layout_uuid,
             label: L.name,
             colour: L.colour, gradient: L.gradient, animation: L.animation,
-            member_count: Array.isArray(L.members) ? L.members.length : 0,
+            member_count: members.length,
             member_names: members.map((r) => (label ? (label.resolve?.(r) || r.name || '') : (r.label || r.name || ''))),
             _members: members,
             created_at_epoch: Date.parse(L.created_at) / 1000 || 0,

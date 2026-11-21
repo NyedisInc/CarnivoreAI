@@ -1,7 +1,7 @@
 
 'use strict';
 
-const { Notification, ipcMain, app } = require('electron');
+const { Notification, ipcMain } = require('electron');
 const policy = require('./app-window-policy');
 const { createWindowHost } = require('./window-host');
 
@@ -9,7 +9,6 @@ const MAX_TITLE = 200;
 const MAX_BODY = 1000;
 const ASK_ID_PATTERN = /^[A-Za-z0-9_:.-]{1,200}$/;
 const NEEDS_YOU = 'needs_you';
-const NEEDS_YOU_SOUND = 'Glass';
 
 /* grouped by session */
 function bannerOptions(title, body, meta) {
@@ -20,8 +19,7 @@ function bannerOptions(title, body, meta) {
   const groupId = ok(m.session_id) ? m.session_id : (ok(m.tmux_name) ? m.tmux_name : '');
   if (groupId) opts.groupId = groupId;
   if (typeof m.subtitle === 'string' && m.subtitle.trim()) opts.subtitle = m.subtitle.slice(0, MAX_TITLE);
-  if (m.silent === true) opts.silent = true;
-  else if (m.group === NEEDS_YOU) opts.sound = NEEDS_YOU_SOUND;
+  opts.silent = true;
   return opts;
 }
 
@@ -30,7 +28,7 @@ function idOf(meta, field) {
   return typeof v === 'string' && ASK_ID_PATTERN.test(v) ? v : '';
 }
 
-function createAppWindow({ getUrl, windowState, shouldMirror, toastBanner, guard }) {
+function createAppWindow({ getUrl, windowState, shouldMirror, toastBanner, guard, bounceDock }) {
   const host = createWindowHost({ getUrl, windowState, guard });
   let handlersWired = false;
 
@@ -45,7 +43,7 @@ function createAppWindow({ getUrl, windowState, shouldMirror, toastBanner, guard
     const frameUrl = event.senderFrame.url;
     if (policy.originOf(frameUrl) !== host.mainOrigin()) return;
     if (typeof title !== 'string' || typeof body !== 'string') return;
-    if (meta && meta.group === NEEDS_YOU && app && app.dock && typeof app.dock.bounce === 'function') app.dock.bounce('informational');
+    if (meta && meta.group === NEEDS_YOU && bounceDock) bounceDock();
     if (shouldMirror) {
       let mirror = true;
       try {

@@ -1,6 +1,6 @@
 import pytest
 
-from src.cplugs.host import developer_mode
+from src.plugins.host import developer_mode
 
 
 @pytest.fixture(autouse=True)

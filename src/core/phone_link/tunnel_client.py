@@ -7,7 +7,7 @@ import ipaddress
 import json
 import time
 from collections import deque
-from typing import Any, Awaitable, Callable, Deque, Dict, List, Optional, Protocol
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Deque, Dict, List, Optional, Protocol
 
 import structlog
 import websockets
@@ -17,11 +17,16 @@ from src.core import relay_protocol as proto
 from src.core.phone_link import frames
 from src.core.phone_link.custom_domain import hello as tls_hello
 from src.core.phone_link.gate import LinkStream, StreamTable
+from src.core.phone_link.pack_relay import PACK_ALPN, PEEK_SECONDS
 from src.core.relay_identity.session import (
     REFRESH_MARGIN_SECONDS,
     DeviceSession,
     RelayAuthError,
 )
+from src.core.supervise.loop import spawn as spawn_supervised
+
+if TYPE_CHECKING:
+    from src.core.phone_link.pack_relay import PackAdmission, PackRelay
 
 logger = structlog.get_logger()
 
@@ -76,18 +81,22 @@ class _Stream:
         self.recv_credit = frames.INITIAL_WINDOW
         self.inbound: "asyncio.Queue[Optional[bytes]]" = asyncio.Queue()
         self.sent_close = False
+        self.admission: "Optional[PackAdmission]" = None
         self.tasks: List["asyncio.Task[None]"] = []
 
 
 class TunnelClient:
 
-    def __init__(self, *, url: str, session: DeviceSession, local_port: Callable[[], int],
-                 streams: StreamTable, custom: Optional[CustomRouting] = None,
+    def __init__(self, *, url: str, session: DeviceSession, local_port: Callable[[], Optional[int]],
+                 streams: StreamTable, custom: Optional[CustomRouting] = None, pack: Optional["PackRelay"] = None,
                  connect: Connect = websockets.connect,
                  clock: Callable[[], float] = time.time,
                  sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
-                 client_ip_check: Callable[[str], Optional[str]] = public_client_ip) -> None:
-        self._custom = custom
+                 client_ip_check: Callable[[str], Optional[str]] = public_client_ip,
+                 on_status: Optional[Callable[[], None]] = None) -> None:
+        self._custom, self._pack = custom, pack
+        if pack is not None:
+            pack.acceptor.send_trust = self.trust
         self._client_ip_check = client_ip_check
         self._url, self._session, self._local_port = url, session, local_port
         self._table, self._connect, self._clock, self._sleep = streams, connect, clock, sleep
@@ -95,7 +104,19 @@ class TunnelClient:
         self._out: Optional["asyncio.Queue[bytes]"] = None
         self._streams: Dict[int, _Stream] = {}
         self._held: Optional[Any] = None
-        self.status = "stopped"
+        self._on_status = on_status
+        self._status = "stopped"
+
+    @property
+    def status(self) -> str:
+        return self._status
+
+    @status.setter
+    def status(self, value: str) -> None:
+        changed = value != self._status
+        self._status = value
+        if changed and self._on_status is not None:
+            self._on_status()
 
     @property
     def connected(self) -> bool:
@@ -104,7 +125,10 @@ class TunnelClient:
     def start(self) -> None:
         if self._task is None or self._task.done():
             self.status = "connecting"
-            self._task = asyncio.create_task(self._run(), name="phone-link-tunnel")
+            self._task = spawn_supervised("phone-link-tunnel", self._run, on_give_up=self._on_give_up)
+
+    def _on_give_up(self) -> None:
+        self.status = "stopped"
 
     async def stop(self) -> None:
         if self._task is not None:
@@ -117,6 +141,20 @@ class TunnelClient:
     def trust(self, stream_id: int) -> None:
         if self._out is not None and stream_id in self._streams:
             self._out.put_nowait(frames.pack(frames.TRUST, stream_id))
+
+    def attach_pack(self, pack: "PackRelay") -> None:
+        self._pack = pack
+        pack.acceptor.send_trust = self.trust
+
+    def detach_pack(self) -> None:
+        pack, self._pack = self._pack, None
+        if pack is not None:
+            pack.acceptor.send_trust = None
+        for stream in [s for s in self._streams.values() if s.info.pack]:
+            self._end(stream, frames.REASON_NORMAL)
+        for stream in self._streams.values():
+            if stream.admission is not None:
+                stream.admission.release(stream.info)
 
     def close_device(self, device_id: str) -> None:
         for stream in [s for s in self._streams.values() if s.info.device == device_id]:
@@ -277,8 +315,22 @@ class TunnelClient:
             stream.tasks = [asyncio.create_task(self._route_custom(stream)),
                             asyncio.create_task(self._pre_auth_deadline(stream))]
             return
+        if self._pack is not None:
+            if not self._pack.admission.enter(info):
+                logger.info("pack_relay_stream_refused", why="admission")
+                self._send_close(sid, frames.REASON_LIMIT)
+                return
+            stream = _Stream(sid, info, None, None, 0)
+            stream.admission = self._pack.admission
+            self._streams[sid] = stream
+            stream.tasks = [asyncio.create_task(self._route_peek(stream))]
+            return
+        port = self._local_port()
+        if port is None:
+            self._send_close(sid, frames.REASON_ERROR)
+            return
         try:
-            reader, writer = await asyncio.open_connection("127.0.0.1", self._local_port())
+            reader, writer = await asyncio.open_connection("127.0.0.1", port)
         except OSError as exc:
             logger.warning("phone_link_local_connect_failed", error=type(exc).__name__)
             self._send_close(sid, frames.REASON_ERROR)
@@ -291,26 +343,22 @@ class TunnelClient:
                         asyncio.create_task(self._from_local(stream)),
                         asyncio.create_task(self._pre_auth_deadline(stream))]
 
-    async def _route_custom(self, stream: _Stream) -> None:
-        assert self._custom is not None
+    async def _read_hello(self, stream: _Stream) -> "Optional[tuple]":
         head, hello = b"", None
         while hello is None:
             chunk = await stream.inbound.get()
             if chunk is None:
                 self._end(stream, frames.REASON_NORMAL)
-                return
+                return None
             head += chunk
             try:
                 hello = tls_hello.parse(head)
             except tls_hello.HelloError:
                 self._end(stream, frames.REASON_ERROR)
-                return
-        challenge = hello.is_acme_challenge
-        port = self._custom.challenge_port() if challenge else (self._local_port() if self._custom.ready() else None)
-        if port is None or hello.sni != stream.info.sni:
-            logger.info("phone_link_custom_stream_refused", challenge=challenge)
-            self._end(stream, frames.REASON_ERROR)
-            return
+                return None
+        return head, hello
+
+    async def _attach(self, stream: _Stream, port: int, head: bytes, *, register: bool, deadline: bool) -> None:
         try:
             reader, writer = await asyncio.open_connection("127.0.0.1", port)
         except OSError as exc:
@@ -318,7 +366,7 @@ class TunnelClient:
             self._end(stream, frames.REASON_ERROR)
             return
         stream.reader, stream.writer, stream.port = reader, writer, writer.get_extra_info("sockname")[1]
-        if not challenge:
+        if register:
             self._table.add(stream.port, stream.info)
         try:
             writer.write(head)
@@ -330,6 +378,51 @@ class TunnelClient:
             stream.recv_credit += len(head)
             self._out.put_nowait(frames.pack(frames.WINDOW, stream.sid, frames.window_payload(len(head))))
         stream.tasks += [asyncio.create_task(self._to_local(stream)), asyncio.create_task(self._from_local(stream))]
+        if deadline:
+            stream.tasks.append(asyncio.create_task(self._pre_auth_deadline(stream)))
+
+    async def _route_peek(self, stream: _Stream) -> None:
+        pack = self._pack
+        assert pack is not None
+        try:
+            peeked = await asyncio.wait_for(self._read_hello(stream), PEEK_SECONDS)
+        except asyncio.TimeoutError:
+            logger.info("pack_relay_peek_timeout")
+            self._end(stream, frames.REASON_IDLE)
+            return
+        if peeked is None:
+            return
+        head, hello = peeked
+        if PACK_ALPN in hello.alpn:
+            port = pack.port()
+            if port is None or sum(1 for s in self._streams.values() if s.info.pack and s.info.trusted) >= pack.max_streams:
+                logger.info("pack_relay_stream_refused", why="limit" if port is not None else "stopped")
+                self._end(stream, frames.REASON_LIMIT)
+                return
+            stream.info.pack = True
+            await self._attach(stream, port, head, register=True, deadline=False)
+            return
+        port = self._local_port()
+        pack.admission.release(stream.info)
+        if port is None:
+            logger.info("pack_relay_stream_refused", why="not_pack")
+            self._end(stream, frames.REASON_ERROR)
+            return
+        await self._attach(stream, port, head, register=True, deadline=True)
+
+    async def _route_custom(self, stream: _Stream) -> None:
+        assert self._custom is not None
+        peeked = await self._read_hello(stream)
+        if peeked is None:
+            return
+        head, hello = peeked
+        challenge = hello.is_acme_challenge
+        port = self._custom.challenge_port() if challenge else (self._local_port() if self._custom.ready() else None)
+        if port is None or hello.sni != stream.info.sni:
+            logger.info("phone_link_custom_stream_refused", challenge=challenge)
+            self._end(stream, frames.REASON_ERROR)
+            return
+        await self._attach(stream, port, head, register=not challenge, deadline=False)
 
 
     def _send_close(self, sid: int, reason: int) -> None:
@@ -339,6 +432,8 @@ class TunnelClient:
     def _end(self, stream: _Stream, reason: int, notify: bool = True) -> None:
         if self._streams.pop(stream.sid, None) is None:
             return
+        if stream.admission is not None:
+            stream.admission.release(stream.info, failed=True)
         if notify and not stream.sent_close:
             stream.sent_close = True
             self._send_close(stream.sid, reason)
@@ -385,6 +480,8 @@ class TunnelClient:
                 self._end(stream, frames.REASON_NORMAL)
                 return
             stream.credit -= len(data)
+            if stream.info.pack and self._pack is not None:
+                self._pack.budget.add(len(data))
             if self._out is not None:
                 self._out.put_nowait(frames.pack(frames.DATA, stream.sid, data))
 

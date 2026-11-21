@@ -17,11 +17,11 @@ from src.core.crate_import.plan import build_plan
 from src.core.crate_import.model import ImportRequest, new_import_id
 from src.core.db import connect, db_path_for, set_meta
 from src.core.exports.store import crate_written_key
-from src.cplugs.crate import constants as K
-from src.cplugs.crate import import_store, imports, mcp
-from src.cplugs.crate.jobs import state
-from src.cplugs.crate.jobs.sweep import sweep_interrupted
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.crate import constants as K
+from src.plugins.crate import import_store, imports, mcp
+from src.plugins.crate.jobs import state
+from src.plugins.crate.jobs.sweep import sweep_interrupted
+from src.plugins.sdk import crate_format as cf
 from tests.python.cplugs.crate.api_world import BASE, ApiWorld, export, stop_runner, wait_job
 from tests.python.cplugs.crate.test_mcp import _call
 from tests.python.crate_import.install import Install, make_install

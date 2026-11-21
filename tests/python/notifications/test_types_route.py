@@ -24,9 +24,9 @@ def _app(authed: bool) -> TestClient:
     return TestClient(app)
 
 
-def test_authenticated_get_returns_37_types_in_eight_groups_and_13_kinds() -> None:
+def test_authenticated_get_returns_41_types_in_eight_groups_and_13_kinds() -> None:
     body = _app(True).get(URL).json()
-    assert len(body["types"]) == 37 and len(body["kinds"]) == 13
+    assert len(body["types"]) == 41 and len(body["kinds"]) == 13
     assert [f["id"] for f in body["families"]] == [
         "needs_you", "sessions", "messages", "swarm", "health", "security", "automations", "app"]
     assert body["aliases"] == {"session.posted": "agent.message", "session.limit_rotation": "account.switched"}
@@ -57,4 +57,4 @@ def test_route_is_included_in_the_aggregator() -> None:
     app.include_router(router, prefix="/api/v1")
     app.dependency_overrides[require_auth] = lambda: None
     response = TestClient(app).get(URL)
-    assert response.status_code == 200 and len(response.json()["types"]) == 37
+    assert response.status_code == 200 and len(response.json()["types"]) == 41

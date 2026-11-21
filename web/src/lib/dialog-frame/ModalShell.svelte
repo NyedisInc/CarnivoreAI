@@ -22,6 +22,11 @@
         onCancel: () => void;
         overlayClass?: string;
         contentClass?: string;
+        look?: 'plain' | 'titlerow';
+        label?: string;
+        closable?: boolean;
+        closeLabel?: string;
+        headExtra?: Snippet;
         head?: Snippet;
         role?: 'dialog' | 'alertdialog';
         describedby?: string;
@@ -32,7 +37,10 @@
         fill?: boolean;
     }
 
-    let { title, children, footer, dismissable = true, onCancel, overlayClass = '', contentClass = '', head, role = 'dialog', describedby, trapFocus = true, escapeGuard, width, height, fill = false, ...rest }: Props = $props();
+    let { title, children, footer, dismissable = true, onCancel, overlayClass = '', contentClass = '', look = 'plain', label, closable = true, closeLabel, headExtra, head, role = 'dialog', describedby, trapFocus = true, escapeGuard, width, height, fill = false, ...rest }: Props = $props();
+
+    const titlerow = $derived(look === 'titlerow');
+    const overlayClasses = $derived(['modal-overlay', titlerow && 'text-prompt-modal', overlayClass].filter(Boolean).join(' '));
 
     let overlay = $state<HTMLElement | null>(null);
     let opener: HTMLElement | null = null;
@@ -98,7 +106,7 @@
 <div
     {...rest}
     bind:this={overlay}
-    class={overlayClass ? `modal-overlay ${overlayClass}` : 'modal-overlay'}
+    class={overlayClasses}
     {role}
     aria-modal="true"
     aria-label={title}
@@ -114,10 +122,11 @@
         style:max-width={width || height ? 'none' : undefined}
         data-oc-base
     >
-        {#if head}{@render head()}{:else}<div class="modal-header">
-            <span>&raquo; {title}</span>
-            <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close
-                disabled={!dismissable} onclick={onCancel} />
+        {#if head}{@render head()}{:else}<div class={{ 'modal-titlerow': titlerow, 'text-prompt-modal__head': titlerow, 'modal-header': !titlerow }}>
+            <span class={{ 'text-prompt-modal__verb': titlerow, 'ms-label': true }}>&raquo; {label ?? title}</span>
+            {#if headExtra}{@render headExtra()}{/if}
+            {#if closable}<IconButton label={closeLabel ?? t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close
+                disabled={!dismissable} onclick={onCancel} />{/if}
         </div>{/if}
         <div class="modal-body">{@render children()}</div>
         {#if footer}<div class="modal-footer">{@render footer()}</div>{/if}
@@ -148,5 +157,15 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 12px;
+    }
+
+    @layer components {
+        .text-prompt-modal__head .ms-label {
+            flex: 0 1 auto;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
     }
 </style>

@@ -264,11 +264,11 @@
     }
 
     .bp-launch__member {
-        border-top: 1px solid var(--oc-border);
-        padding: 8px 0;
+        border-top: var(--oc-border) solid var(--oc-line-rule);
+        padding: var(--oc-space-2) 0;
         display: flex;
         flex-direction: column;
-        gap: 3px;
+        gap: calc(var(--oc-space-0-5) + var(--oc-gap-hair));
     }
 
     .bp-launch__member:first-child {
@@ -278,7 +278,7 @@
     .bp-launch__row-head {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: var(--oc-space-1-5);
         min-width: 0;
     }
 
@@ -295,13 +295,13 @@
 
     .bp-launch__member-label {
         font-weight: 600;
-        font-size: 12px;
+        font-size: var(--oc-fs-body);
     }
 
     .bp-launch__row-meta {
         margin-left: auto;
         color: var(--oc-text-muted);
-        font-size: 10px;
+        font-size: var(--oc-fs-micro);
         text-transform: uppercase;
         letter-spacing: var(--oc-tracking-label, 0.6px);
     }
@@ -309,7 +309,7 @@
     .bp-launch__chips {
         display: flex;
         flex-wrap: wrap;
-        gap: 4px;
+        gap: var(--oc-space-1);
     }
 
     /* with a plain */
@@ -322,19 +322,19 @@
         white-space: nowrap;
         color: var(--oc-text-muted);
         font-family: var(--font-mono);
-        font-size: 11px;
+        font-size: var(--oc-fs-label);
     }
 
     .bp-launch__line {
-        font-size: 11px;
+        font-size: var(--oc-fs-label);
         color: var(--oc-text-primary);
     }
 
     .bp-launch__notice {
-        padding: 4px 8px;
+        padding: var(--oc-space-1) var(--oc-space-2);
         border: 1px solid var(--oc-yellow);
-        border-radius: 4px;
-        font-size: 11px;
+        border-radius: var(--oc-radius-sm);
+        font-size: var(--oc-fs-label);
         color: var(--oc-text-primary);
     }
 
@@ -351,21 +351,21 @@
     }
 
     .bp-launch__consent {
-        padding: 6px 8px;
+        padding: var(--oc-space-1-5) var(--oc-space-2);
         border: 1px solid var(--oc-yellow);
-        border-radius: 4px;
+        border-radius: var(--oc-radius-sm);
     }
 
     .bp-launch__partial {
-        margin-top: 8px;
+        margin-top: var(--oc-space-2);
         color: var(--oc-coral);
-        font-size: 12px;
+        font-size: var(--oc-fs-body);
     }
 
     .bp-launch__ok {
-        margin-top: 8px;
+        margin-top: var(--oc-space-2);
         color: var(--oc-text-primary);
-        font-size: 12px;
+        font-size: var(--oc-fs-body);
     }
 
 </style>

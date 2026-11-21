@@ -48,11 +48,14 @@ def test_no_bundled_theme_sets_a_deprecated_name() -> None:
     assert not found, f"bundled themes still set deprecated tokens: {found}"
 
 
-def test_base_stylesheet_maps_old_radius_names_onto_the_legacy_tokens() -> None:
+def test_base_stylesheet_maps_old_radius_names_onto_the_corner_scale() -> None:
     css = (REPO / "client" / "css" / "styles.css").read_text(encoding="utf-8")
-    for old in ("sm", "md", "lg"):
-        for chunk in css.split(f"--radius-{old}:")[1:3]:
-            assert f"var(--legacy-radius-{old}," in chunk.split(";", 1)[0]
+    rungs = {"sm": "--oc-radius-tight", "md": "--oc-radius-sm", "lg": "--oc-radius-lg"}
+    for old, rung in rungs.items():
+        chunks = css.split(f"--radius-{old}:")[1:]
+        assert chunks, f"styles.css no longer defines --radius-{old}"
+        for chunk in chunks:
+            assert f"var(--legacy-radius-{old}, var({rung}))" in chunk.split(";", 1)[0]
 
 
 def test_negative_control_each_break_is_named() -> None:
@@ -144,10 +147,10 @@ def test_legacy_radii_keep_each_themes_pre_migration_values() -> None:
     assert found == {k: tuple(x) for k, x in PRE_MIGRATION_RADII.items()}
 
 
-def test_svelte_radii_resolve_to_2px_and_4px_under_every_builtin_theme() -> None:
+def test_corner_inputs_default_to_2px_and_4px() -> None:
     tokens = (REPO / "web" / "src" / "opscenter" / "tokens.css").read_text(encoding="utf-8")
     control = re.search(r"--oc-radius-control:\s*clamp\(0px, var\(--radius-control, (\d+)px\)", tokens)
     panel = re.search(r"--oc-radius-panel:\s*clamp\(0px, var\(--radius-panel, (\d+)px\)", tokens)
     assert control and panel and (control.group(1), panel.group(1)) == ("2", "4")
     setting = {p.parent.name: sorted({"--radius-control", "--radius-panel"} & set(_vars(p))) for p in THEMES}
-    assert not any(setting.values()), f"built-in themes set the Svelte radius tokens: {setting}"
+    assert not any(setting.values()), f"bundled themes set the corner inputs (a visible corner change): {setting}"

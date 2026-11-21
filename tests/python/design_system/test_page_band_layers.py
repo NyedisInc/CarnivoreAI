@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
+
+from tests.python.design_system.test_page_band_layers_static import luma, luminance, theme_vars
 
 pytest.importorskip(
     "playwright.sync_api",
@@ -32,11 +33,6 @@ MARKUP = """
 </div>
 <div id="probe-band"></div><div id="probe-content"></div><div id="probe-panel"></div>
 """
-
-
-def theme_vars(theme: str) -> dict[str, str]:
-    data = json.loads((REPO / "client" / "css" / "themes" / theme / "theme.json").read_text())
-    return {k: v for k, v in data["cssVars"].items() if k.startswith("--")}
 
 
 @pytest.fixture(scope="module")
@@ -98,27 +94,6 @@ def test_band_holds_the_top_and_content_holds_the_data(browser, theme):
         assert got[region] == band, f"{theme}: {region} is {got[region]}, the band is {band}"
     for region in ("outer", "inset"):
         assert got[region] == content, f"{theme}: {region} is {got[region]}, the content ground is {content}"
-
-
-def luminance(color: str) -> float:
-    import re
-
-    srgb = re.fullmatch(r"color\(srgb ([\d.e+-]+) ([\d.e+-]+) ([\d.e+-]+)(?: / [\d.]+)?\)", color.strip())
-    rgb = re.fullmatch(r"rgba?\((\d+), (\d+), (\d+)(?:, [\d.]+)?\)", color.strip())
-    if srgb:
-        channels = [float(v) for v in srgb.groups()]
-    elif rgb:
-        channels = [int(v) / 255 for v in rgb.groups()]
-    else:
-        raise ValueError(f"unreadable color {color!r}")
-    lin = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
-    return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
-
-
-def test_luminance_reads_both_serializations():
-    assert luminance("rgb(0, 0, 0)") < luminance("color(srgb 0.5 0.5 0.5)") < luminance("rgb(255, 255, 255)")
-    with pytest.raises(ValueError):
-        luminance("transparent")
 
 
 @pytest.mark.parametrize("theme", TAB_THEMES)
@@ -210,10 +185,6 @@ PIXEL_READER = """async ([b64, points]) => {
     for (const [name, x, y] of points) out[name] = Array.from(ctx.getImageData(Math.round(x), Math.round(y), 1, 1).data.slice(0, 3));
     return out;
 }"""
-
-
-def luma(rgb: list[int]) -> float:
-    return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]
 
 
 def measure_painted(browser, theme: str) -> dict[str, list[int]]:

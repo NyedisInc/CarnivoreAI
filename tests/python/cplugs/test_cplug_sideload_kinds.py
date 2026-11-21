@@ -12,7 +12,7 @@ from src.core import theme_script_consent as ladder
 from src.core.db_migration import ensure_db_migrated
 from src.core.theme_catalog_consent import CONSENT_FIELD, effects_digest_of
 from src.core.ui_preferences_store import COMMITTED
-from src.cplugs.host import developer_mode, runtime, sideload, sideload_copy, sidecar_boot, sidecar_registry
+from src.plugins.host import developer_mode, runtime, sideload, sideload_copy, sidecar_boot, sidecar_registry
 from tests.python.api_keys.conftest import bearer, client, key_store, owner_jwt  # noqa: F401
 from tests.test_skill_installer import FakeInstallRoots
 
@@ -339,7 +339,7 @@ def test_a_foreign_folder_that_appears_while_staging_is_never_removed(world, mon
     src = w.src / "racer"
     write_skill(src, "plain prose\n")
     target = w.roots.targets_for("skill", "global", None)[0].leaf_dir / "racer"
-    from src.cplugs.host import sideload_other
+    from src.plugins.host import sideload_other
     real = sideload_other._stage
 
     def stage_then_foreign(roots, source):

@@ -12,6 +12,7 @@ from typing import Callable, Dict, Iterator, List, Optional, Set, Tuple
 
 from src.core.session_output import cursor as pipe_cursor
 from src.core.session_output.tap import TAP, OutputTap
+from src.models.activity_status import RESTING
 
 MAX_TIMEOUT_SECONDS = 50.0
 MAX_PER_CALLER = 4
@@ -25,7 +26,7 @@ CARRY_BYTES = 4 * 1024
 MIN_READ_INTERVAL_SECONDS = 0.5
 
 STATE_SETS: Dict[str, frozenset] = {
-    "idle": frozenset({"idle", "finished_unread"}),
+    "idle": RESTING,
     "blocked": frozenset({"question"}),
     "waiting": frozenset({"notice"}),
     "exited": frozenset({"dead"}),

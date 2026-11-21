@@ -96,3 +96,49 @@ def test_the_token_rides_the_environment_only(monkeypatch: pytest.MonkeyPatch) -
     pr_status.fetch("me", ("me", "app"))
     assert seen["env"] == {"GH_TOKEN": "tok-secret-value"}
     assert not any("tok-secret-value" in a for a in seen["argv"])
+
+
+def test_a_folder_is_re_resolved_only_when_its_head_moves_or_the_backstop_passes() -> None:
+    resolves: List[str] = []
+    now = [1000.0]
+    heads = {"/code/app": 1, "/code/plain": None}
+
+    def resolve(folder: str) -> Target:
+        resolves.append(folder)
+        return Target("feat/x", None, None)
+
+    watch = PrWatch(resolve=resolve, call=lambda a, r: _raw(), clock=lambda: now[0], stamp=heads.__getitem__)
+
+    async def tick() -> None:
+        for folder in heads:
+            watch.badge(folder)
+        watch.tick(lambda: None)
+        if watch._task is not None:
+            await watch._task
+
+    async def run() -> None:
+        await tick()
+        assert sorted(resolves) == ["/code/app", "/code/plain"]
+        resolves.clear()
+        now[0] += pr_status.TTL_NONE + 1
+        await tick()
+        assert resolves == ["/code/plain"], "an unchanged HEAD is not re-resolved; a folder with no HEAD keeps 120 s"
+        resolves.clear()
+        heads["/code/app"] = 2
+        await tick()
+        assert resolves == ["/code/app"], "a checkout (HEAD moved) is re-resolved on the next tick"
+        resolves.clear()
+        now[0] += pr_status.TTL_TARGET + 1
+        await tick()
+        assert sorted(resolves) == ["/code/app", "/code/plain"], "the backstop re-resolves everything"
+
+    asyncio.run(run())
+
+
+def test_head_stamp_reads_the_repository_head_without_a_subprocess(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    (tmp_path / "repo" / ".git").mkdir(parents=True)
+    (tmp_path / "repo" / ".git" / "HEAD").write_text("ref: refs/heads/main\n")
+    (tmp_path / "repo" / "src").mkdir()
+    monkeypatch.setattr(subprocess, "Popen", lambda *a, **k: pytest.fail("no subprocess for a stamp"))
+    assert isinstance(pr_status.head_stamp(str(tmp_path / "repo" / "src")), int)
+    assert pr_status.head_stamp(str(tmp_path / "none")) is None

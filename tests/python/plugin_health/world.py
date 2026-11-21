@@ -15,8 +15,8 @@ from src.core.db_migration import ensure_db_migrated
 from src.core.skills import kinds
 from src.core.skills.ledger import InstallLedger
 from src.core.skills.ledger_types import GLOBAL_PROJECT_PATH, HARNESS_CLAUDE, SCOPE_GLOBAL, InstalledItem, InstallTarget
-from src.cplugs.host import identity, runtime, sidecar_boot, sidecar_registry, sideload
-from src.cplugs.host import state as owner_state
+from src.plugins.host import identity, runtime, sidecar_boot, sidecar_registry, sideload
+from src.plugins.host import state as owner_state
 
 STAMP = "2026-11-09T00:00:00Z"
 FAR_FUTURE = "2099-01-01T00:00:00Z"

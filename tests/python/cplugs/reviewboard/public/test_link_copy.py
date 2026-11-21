@@ -14,8 +14,8 @@ from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
 from src.core.api_keys.fence import fenced_family
-from src.cplugs.reviewboard.public import links, minting
-from src.cplugs.sdk import CplugStorage, StorageSpec
+from src.plugins.reviewboard.public import links, minting
+from src.plugins.sdk import CplugStorage, StorageSpec
 from tests.python.cplugs.reviewboard.public.read_harness import edge, get
 from tests.python.cplugs.reviewboard.boards import SIDECAR
 

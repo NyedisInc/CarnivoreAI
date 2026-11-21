@@ -1,8 +1,8 @@
 
 from __future__ import annotations
 
-from src.cplugs.huddle import service
-from src.cplugs.host import runtime
+from src.plugins.huddle import service
+from src.plugins.host import runtime
 from tests.python.cplugs.huddle.test_task_manager_routes import app  # noqa: F401
 
 ROWS = [{"id": "ses_a", "key": "key-a", "name": "a"}, {"id": "ses_b", "key": "key-b", "name": "b"}]

@@ -48,13 +48,7 @@
     });
 </script>
 
-<ModalShell {title} overlayClass="text-prompt-modal" describedby="browser-popout-question" onCancel={() => close(null)}>
-    {#snippet head()}
-        <div class="text-prompt-modal__head">
-            <span class="text-prompt-modal__verb">&raquo; {title}</span>
-            <IconButton variant="close" icon="close" label={t('modal.close')} onclick={() => close(null)} />
-        </div>
-    {/snippet}
+<ModalShell look="titlerow" {title} describedby="browser-popout-question" onCancel={() => close(null)}>
     <p class="modal-description" id="browser-popout-question">{t('browser.popout.question')}</p>
     <p class="modal-description" data-popout-proxy-hint>{t('browser.popout.proxy_hint')}</p>
     <p class="modal-description" data-popout-real-hint>{realHint}</p>

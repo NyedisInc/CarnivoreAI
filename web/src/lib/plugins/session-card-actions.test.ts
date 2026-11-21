@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import './builtin';
 import { runSessionCardAction, sessionCardMenuItems } from './session-card-actions';
 import { surfacesOf } from './registry';
-import { ACTION_ID, FLAG, unreadCplug } from '../../cplugs/unread';
+import { ACTION_ID, FLAG, unreadCplug } from '../../plugins/unread';
 import type { PluginContext, SessionCardRow } from './types';
 
 const repoRoot = fileURLToPath(new URL('../../../..', import.meta.url));

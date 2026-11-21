@@ -9,6 +9,7 @@ from src.api.remote_route_guard import refuse_remote
 from src.api.resize_negotiation import adopt_grid
 from src.config import settings
 from src.core.hosts.registry import HostUnavailable
+from src.core.restart_live_gate import nothing_running
 from src.core.swarm import leaders as swarm_leaders
 from src.core.swarm import switch as swarm_switch
 from src.core.launch_profiles import create_seam
@@ -242,11 +243,12 @@ async def respawn_session(request: Request, body: RespawnSessionRequest):
         confirm_restart_live=bool(body.confirm_restart_live),
     )
 
+    confirmed = bool(body.confirm_restart_live) or await nothing_running(session_manager, body.session_name)
     result = await respawn_or_http(
         session_manager,
         body.session_name,
         agent_type=body.agent_type,
-        live_restart_confirmed=bool(body.confirm_restart_live),
+        live_restart_confirmed=confirmed,
         account_id=body.account_id,
         account_pinned=body.account_pinned,
     )

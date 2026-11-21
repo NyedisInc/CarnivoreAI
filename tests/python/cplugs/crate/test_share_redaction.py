@@ -16,13 +16,13 @@ import pytest
 
 from src.core.claude_transcript_correlate import slugify_project_dir
 from src.core.db import connect, db_path_for
-from src.cplugs.crate import constants as K
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import build_plan
-from src.cplugs.crate.share import ShareUnscannable
-from src.cplugs.crate.share_out import NOT_TEXT
-from src.cplugs.crate.writer import run_export
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.crate import constants as K
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import build_plan
+from src.plugins.crate.share import ShareUnscannable
+from src.plugins.crate.share_out import NOT_TEXT
+from src.plugins.crate.writer import run_export
+from src.plugins.sdk import crate_format as cf
 from tests.python.cplugs.crate.crate_world import UUID_A, crate_text, env_for, make_world, session_request
 from tests.python.inventory.world import CONV_A
 

@@ -24,7 +24,7 @@ from src.core.argent.store import ArgentStore
 from src.core.argent.token_store import TokenStore
 from src.core.budget_hold.store import HoldStore
 from src.core.session_token_usage.reader import SessionSubject
-from src.cplugs.sdk import ports
+from src.plugins.sdk import ports
 from src.models.per_request_usage import RequestUsageRow
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "argent"

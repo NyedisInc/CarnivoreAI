@@ -10,14 +10,14 @@ from typing import Any, Dict, List
 
 import pytest
 
-from src.cplugs.huddle import swarm_port, rules
-from src.cplugs.huddle.answer_writer import AnswerWriter
-from src.cplugs.huddle.cards import flow, policy, reads, tx
-from src.cplugs.huddle.cards.flow import CardAct
-from src.cplugs.huddle.rules import CLAUDE, JOE, TaskManagerForbidden
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import swarm_port, rules
+from src.plugins.huddle.answer_writer import AnswerWriter
+from src.plugins.huddle.cards import flow, policy, reads, tx
+from src.plugins.huddle.cards.flow import CardAct
+from src.plugins.huddle.rules import CLAUDE, JOE, TaskManagerForbidden
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work.storage import WorkStorage
-from src.cplugs.sdk.swarm import SwarmError
+from src.plugins.sdk.swarm import SwarmError
 
 
 @pytest.fixture()

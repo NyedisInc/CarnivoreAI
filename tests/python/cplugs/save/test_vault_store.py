@@ -8,10 +8,10 @@ import pytest
 
 from src.core.blobcodec import chunking
 from src.core.blobcodec.codec import _zstd as zstd_module
-from src.cplugs.save.vault import restore
-from src.cplugs.save.vault.chunks import BlobStore
-from src.cplugs.save.vault.ingest import DatalessSource, SourceUnstable, ingest_file
-from src.cplugs.sdk.blob_codec import BlobCorrupt, ChunkReader, ChunkRef, chain_sha
+from src.plugins.save.vault import restore
+from src.plugins.save.vault.chunks import BlobStore
+from src.plugins.save.vault.ingest import DatalessSource, SourceUnstable, ingest_file
+from src.plugins.sdk.blob_codec import BlobCorrupt, ChunkReader, ChunkRef, chain_sha
 from tests.python.cplugs.save.vault_helpers import CONV, ENC, World, jsonl
 
 
@@ -103,7 +103,7 @@ def test_a_line_still_being_written_is_not_stored_torn(tmp_path):
 def test_a_file_that_is_a_placeholder_is_refused_not_recorded_short(tmp_path, monkeypatch):
     world = World(tmp_path)
     main = world.write_conversation(jsonl(10), subagents=0, tool_results=0)
-    monkeypatch.setattr("src.cplugs.save.vault.ingest.dataless.is_dataless_stat", lambda st: st.st_ino == main.stat().st_ino)
+    monkeypatch.setattr("src.plugins.save.vault.ingest.dataless.is_dataless_stat", lambda st: st.st_ino == main.stat().st_ino)
     with pytest.raises(DatalessSource):
         ingest_file(world.vault.blobs, main, role="transcript", home="claude", rel="projects/x/a.jsonl")
     outcome = world.capture()
@@ -129,7 +129,7 @@ def test_a_file_replaced_while_it_is_read_is_retried_then_refused(tmp_path, monk
                 return types.SimpleNamespace(**{**fields, "st_size": 1})
         return st
 
-    monkeypatch.setattr("src.cplugs.save.vault.ingest.os.stat", flaky)
+    monkeypatch.setattr("src.plugins.save.vault.ingest.os.stat", flaky)
     with pytest.raises(SourceUnstable):
         ingest_file(world.vault.blobs, main, role="transcript", home="claude", rel="p/a.jsonl")
 

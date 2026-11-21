@@ -22,7 +22,7 @@ async def record(app_state: Any, agent: Optional[Dict[str, Any]], event: contrac
         info = await body.live_info(app_state, agent)
         if info is None:
             return None
-        toast = manager.record_toast(info.session.id, TOAST_KIND, event.title, event.details, notify_type=event.type_id)
+        toast = manager.record_toast(info.session.id, TOAST_KIND, event.title, event.details, notify_type=toast_source.event_notify_type(event.type_id))
     except (ValueError, AttributeError, OSError) as exc:
         logger.info("swarm_mac_toast_skipped", type_id=event.type_id, error_type=type(exc).__name__)
         return None

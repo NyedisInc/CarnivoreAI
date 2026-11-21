@@ -16,6 +16,7 @@ from src.core.subagents.files import (
     FILE_UNREADABLE,
     LineFacts,
     MetaFacts,
+    mtime_seconds,
     read_line_facts,
     read_meta_facts,
 )
@@ -23,6 +24,13 @@ from src.core.subagents.parent_index import (
     CompletionIndex,
     RecordedEnd,
     read_completion_index,
+)
+from src.core.subagents.scan_inputs import AgentFilesSignature
+from src.core.subagents.workflow_ends import (
+    WORKFLOW_PREFIX,
+    WORKFLOWS_DIR,
+    read_journal_ends,
+    workflow_id_of,
 )
 from src.models.subagents import SessionSubagents, SubagentCounts, SubagentInfo
 
@@ -39,8 +47,6 @@ _USER_AGENT_ID = re.compile(r"^[0-9a-f]+$")
 _JSONL = ".jsonl"
 _META = ".meta.json"
 _PREFIX = "agent-"
-_WORKFLOWS = "workflows"
-_WORKFLOW_PREFIX = "wf_"
 
 
 @dataclass(frozen=True)
@@ -61,7 +67,14 @@ def _iso(value: Optional[datetime]) -> Optional[str]:
     return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def _scan_one(directory: Path, newest: dict, internal: set) -> None:
+def _times_by_name(files: AgentFilesSignature) -> Optional[Dict[str, Tuple[int, int]]]:
+    if files is None:
+        return None
+    return {name: (times[0], times[1]) for name, times in files if times is not None}
+
+
+def _scan_one(directory: Path, newest: dict, internal: set,
+              times: Optional[Dict[str, Tuple[int, int]]] = None) -> None:
     for name in entry_names(directory):
         if not name.startswith(_PREFIX):
             continue
@@ -74,21 +87,25 @@ def _scan_one(directory: Path, newest: dict, internal: set) -> None:
         if not _USER_AGENT_ID.match(agent_id):
             internal.add(agent_id)
             continue
-        try:
-            mtime = os.stat(os.path.join(directory, name)).st_mtime
-        except OSError:
-            mtime = 0.0
+        known = times.get(name) if times is not None else None
+        if known is not None:
+            mtime = mtime_seconds(known[1])
+        else:
+            try:
+                mtime = os.stat(os.path.join(directory, name)).st_mtime
+            except OSError:
+                mtime = 0.0
         if agent_id not in newest or mtime > newest[agent_id][0]:
             newest[agent_id] = (mtime, directory)
 
 
-def _scan(directory: Path) -> Tuple[List[_Candidate], int]:
+def _scan(directory: Path, times: Optional[Dict[str, Tuple[int, int]]] = None) -> Tuple[List[_Candidate], int]:
     newest: dict = {}
     internal: set = set()
-    _scan_one(directory, newest, internal)
-    workflows = directory / _WORKFLOWS
+    _scan_one(directory, newest, internal, times)
+    workflows = directory / WORKFLOWS_DIR
     try:
-        folders = [workflows / n for n in entry_names(workflows) if n.startswith(_WORKFLOW_PREFIX)]
+        folders = [workflows / n for n in entry_names(workflows) if n.startswith(WORKFLOW_PREFIX)]
     except OSError:
         folders = []
     for folder in folders:
@@ -127,6 +144,21 @@ def classify(
     return "running", ("resumed_after_end" if end is not None else "no_end_recorded")
 
 
+def _newest(first: Optional[RecordedEnd], second: Optional[RecordedEnd]) -> Optional[RecordedEnd]:
+    if first is None or second is None:
+        return first or second
+    return second if second.at > first.at else first
+
+
+def _workflow_end(directory: Path, agent_id: str, index: Optional[CompletionIndex]) -> Optional[RecordedEnd]:
+    folder = workflow_id_of(directory)
+    if folder is None:
+        return None
+    ends, at = read_journal_ends(directory)
+    journal = RecordedEnd(at, ends[agent_id]) if at is not None and agent_id in ends else None
+    return _newest(journal, index.by_workflow.get(folder) if index is not None else None)
+
+
 def _info(
     directory: Path,
     agent_id: str,
@@ -139,6 +171,7 @@ def _info(
     fields = meta.fields or {}
     tool_use_id = fields.get("toolUseId")
     end = index.end_for(agent_id, tool_use_id) if index is not None else None
+    end = _newest(end, _workflow_end(directory, agent_id, index))
     spawner = fields.get("parentAgentId")
     if index is not None and isinstance(spawner, str) and _USER_AGENT_ID.match(spawner):
         nested = read_completion_index(
@@ -177,6 +210,7 @@ def read_subagents(
     process_started_at: Optional[datetime] = None,
     now: Optional[datetime] = None,
     max_listed: int = MAX_LISTED,
+    files: AgentFilesSignature = None,
 ) -> SessionSubagents:
     instant = now or datetime.now(timezone.utc)
     base = SessionSubagents(
@@ -184,8 +218,9 @@ def read_subagents(
         contract_versions=contract_versions(), as_of=_iso(instant),
     )
     directory = subagents_dir_for(transcript_path)
+    times = _times_by_name(files)
     try:
-        candidates, internal = _scan(directory)
+        candidates, internal = _scan(directory, times)
     except FileNotFoundError:
         base.counts = SubagentCounts(total=0, listed=0, running=0, done=0,
                                      unknown=0, shape_unrecognized=0, internal=0)
@@ -196,14 +231,23 @@ def read_subagents(
         base.state = "unchecked"
         base.detail = "the subagents directory could not be listed"
         return base
+    try:
+        listed = frozenset(entry_names(directory)) if times is not None else frozenset()
+    except OSError:
+        times, listed = None, frozenset()
     index = read_completion_index(transcript_path)
     if index is None:
         base.state = "unchecked"
     rows: List[SubagentInfo] = []
     for candidate in candidates[:max_listed]:
         stem = candidate.directory / f"{_PREFIX}{candidate.agent_id}"
-        meta = read_meta_facts(Path(f"{stem}{_META}"))
-        line = read_line_facts(Path(f"{stem}{_JSONL}"))
+        meta_name, line_name = f"{_PREFIX}{candidate.agent_id}{_META}", f"{_PREFIX}{candidate.agent_id}{_JSONL}"
+        here = candidate.directory == directory
+        trusted = times is not None and here
+        meta = read_meta_facts(Path(f"{stem}{_META}"),
+                               times.get(meta_name) if trusted and meta_name in listed else None)
+        line = read_line_facts(Path(f"{stem}{_JSONL}"),
+                               times.get(line_name) if trusted and line_name in listed else None)
         rows.append(_info(candidate.directory, candidate.agent_id, meta, line, index,
                           process_started_at, instant))
     base.subagents = rows

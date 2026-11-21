@@ -6,7 +6,7 @@ from typing import Any
 
 from fastapi.testclient import TestClient
 
-from src.cplugs.host import runtime, state as owner_state
+from src.plugins.host import runtime, state as owner_state
 from src.api.auth import require_auth
 from tests.python.cplugs.reviewboard.harness import Env
 

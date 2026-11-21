@@ -149,5 +149,16 @@ await test('a user gesture still writes the global theme (positive control)', as
         'the PATCH recorder saw nothing; every "no PATCH" above would pass for the wrong reason');
 });
 
+await test('(P1-14) a failed re-fetch keeps the themes that already loaded', async () => {
+    const r = await boot({ serverTheme: 'alien', themes: IDS });
+    assert.equal(r.sandbox.Themes.listAll().length, IDS.length, 'harness: the list must load first');
+    r.setThemes('fail');
+    await r.sandbox.Themes.init();
+    await settle();
+    assert.equal(r.sandbox.Themes.listAll().length, IDS.length,
+        'an unreadable answer must not clear the loaded manifests');
+    assert.equal(r.dataset.theme, 'alien', 'the owner theme must stay painted');
+});
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

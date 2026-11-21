@@ -5,8 +5,8 @@ from typing import List
 
 import pytest
 
-from src.cplugs.huddle import CPLUG, send_queue
-from src.cplugs.sdk import old_names
+from src.plugins.huddle import CPLUG, send_queue
+from src.plugins.sdk import old_names
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, pasted  # noqa: F401
 
 BASE = "/api/v1/cplugs/huddle"

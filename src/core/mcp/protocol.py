@@ -10,8 +10,9 @@ import structlog
 
 from src.core.mcp import channel as channel_events
 from src.core.argent import subagent_join
-from src.core.mcp import aliases, federated, instructions, tools
+from src.core.mcp import agent_tool_switches, aliases, federated, fingerprint_memo, instructions, tools
 from src.core.mcp.caller import AgentCaller
+from src.plugins.host import registry_files, sidecar_registry
 from src.core.mcp_health.first_hand import LINKS
 
 SUPPORTED_VERSIONS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05", "2024-10-07")
@@ -29,6 +30,9 @@ INVALID_PARAMS = -32602
 SESSION_EXPIRED = -32001
 SESSION_ID_HEADER = "Mcp-Session-Id"
 FINGERPRINT_CHARS = 16
+
+registry_files.on_write(fingerprint_memo.clear)
+sidecar_registry.on_install(fingerprint_memo.clear)
 
 def _error(msg_id: Any, code: int, message: str) -> dict:
     return {"jsonrpc": "2.0", "id": msg_id, "error": {"code": code, "message": message}}
@@ -49,6 +53,9 @@ class BatchView:
         self._peer_infos: Optional[list] = None
 
     def fresh(self) -> "BatchView":
+        from src.api.session_crud_routes import OWNER_LISTING_CACHE  # noqa: PLC0415
+
+        OWNER_LISTING_CACHE.invalidate()
         return BatchView(self._manager, self.app, force_peers=True)
 
     async def list_session_infos(self) -> list:
@@ -89,9 +96,13 @@ class BatchView:
 
 
 def tool_fingerprint(caller: AgentCaller, channel: bool = False) -> str:
-    blob = json.dumps([tools.tool_definitions(caller), instructions.guide(caller, channel=channel)],
-                      sort_keys=True, separators=(",", ":"), default=str)
-    return hashlib.sha256(blob.encode()).hexdigest()[:FINGERPRINT_CHARS]
+    def compute() -> str:
+        blob = json.dumps([tools.tool_definitions(caller), instructions.guide(caller, channel=channel)],
+                          sort_keys=True, separators=(",", ":"), default=str)
+        return hashlib.sha256(blob.encode()).hexdigest()[:FINGERPRINT_CHARS]
+
+    return fingerprint_memo.remembered(
+        (caller, channel, agent_tool_switches.current(), agent_tool_switches.config_stamp()), compute)
 
 
 def session_is_current(session_id: Optional[str], caller: AgentCaller, channel: bool = False) -> bool:

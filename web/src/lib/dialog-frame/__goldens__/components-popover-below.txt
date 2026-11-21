@@ -1,9 +1,21 @@
-<div aria-label="Hidden widgets" class="oc-anchored oc-popover popup-focus" role="dialog" style="left: 8px; top: 4px; max-height: 756px; overflow-y: auto;" tabindex="-1">
-  <p class="oc-popover-empty" data-layout-editor-pointer="">
-    "add widgets with the + button, or drag them in from the widget drawer"
-  <button class="oc-popover-arrange oc-popover-item" data-btn="row" type="button">
-    "add widget"
-  <button class="oc-popover-reset" data-btn="row" type="button">
-    "reset layout"
-  <button class="oc-popover-reset" data-btn="row" data-widgets-page="" type="button">
-    "all widgets"
+<div aria-label="Hidden widgets" class="oc-anchored oc-popover popup-focus session-row-menu" popover="manual" role="dialog" style="left: 8px; top: 4px; max-height: 756px; overflow-y: auto;" tabindex="-1">
+  <div class="session-row-menu__title">
+    "widgets"
+  <div>
+    <button class="session-row-menu__item" role="menuitem" tabindex="-1" type="button">
+      <span class="session-row-menu__icon">
+      <span class="session-row-menu__label">
+        "add a widget"
+      <span class="session-row-menu__key">
+    <div class="session-row-menu__sep" role="separator">
+    <button class="session-row-menu__item" role="menuitem" tabindex="-1" type="button">
+      <span class="session-row-menu__icon">
+      <span class="session-row-menu__label">
+        "reset layout"
+      <span class="session-row-menu__key">
+    <div class="session-row-menu__sep" role="separator">
+    <button class="session-row-menu__item" data-widgets-page="true" role="menuitem" tabindex="-1" type="button">
+      <span class="session-row-menu__icon">
+      <span class="session-row-menu__label">
+        "all widgets"
+      <span class="session-row-menu__key">

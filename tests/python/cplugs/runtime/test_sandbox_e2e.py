@@ -10,11 +10,11 @@ from typing import Any, Dict, List
 
 import pytest
 
-from src.cplugs.runtime import sandbox
-from src.cplugs.runtime.dispatch import HostDispatcher, HostServices, PluginContext
-from src.cplugs.runtime.owner_tokens import OwnerTokens
-from src.cplugs.runtime.process import PluginSpec
-from src.cplugs.runtime.supervisor import Supervisor
+from src.plugins.runtime import sandbox
+from src.plugins.runtime.dispatch import HostDispatcher, HostServices, PluginContext
+from src.plugins.runtime.owner_tokens import OwnerTokens
+from src.plugins.runtime.process import PluginSpec
+from src.plugins.runtime.supervisor import Supervisor
 
 FIXTURES = Path(__file__).parent / "fixtures"
 CHANNEL_TOOLS = ({"name": "send_test", "description": "Send a test alert to the configured channels",

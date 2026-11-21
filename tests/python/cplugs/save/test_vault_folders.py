@@ -9,10 +9,10 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.host import routes as host_routes, runtime
-from src.cplugs.save.vault import folders, health, retention
-from src.cplugs.save.vault.follow import Engine
-from src.cplugs.sdk import vault_sources
+from src.plugins.host import routes as host_routes, runtime
+from src.plugins.save.vault import folders, health, retention
+from src.plugins.save.vault.follow import Engine
+from src.plugins.sdk import vault_sources
 from tests.python.cplugs.save.vault_helpers import World, store_plugin_entry, store_save_settings
 
 UNIT = "boardfix.boards"
@@ -139,9 +139,9 @@ def test_a_folder_plugin_purge_keeps_the_vault_copies(tmp_path: Path, monkeypatc
 
 
 def test_the_backup_menu_switch_stops_new_points_for_one_folder_and_keeps_the_old_ones(tmp_path: Path, monkeypatch) -> None:
-    from src.cplugs.save import folder_routes
-    from src.cplugs.save.service import RUNTIME
-    from src.cplugs.sdk import transcript_files
+    from src.plugins.save import folder_routes
+    from src.plugins.save.service import RUNTIME
+    from src.plugins.sdk import transcript_files
 
     world, boards = World(tmp_path), tmp_path / "review-boards" / "boards"
     _checkout(boards)

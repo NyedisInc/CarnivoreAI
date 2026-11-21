@@ -21,7 +21,7 @@ from src.core.project_move.plan import PaneListing
 from src.core.project_tombstones import record_tombstone, tombstoned_roots
 from src.core.session_imported_restart import DIRECTORY_MEASURED, resume_directory
 from src.core.session_restore_offer import offer_candidates
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.sdk import crate_format as cf
 from tests.python.crate_import.install import Install
 from tests.python.crate_import.test_import_plan import export_crate, target, tree_hash
 from tests.python.inventory.world import CONV_A, CONV_B, TMUX_A, UUID_A, UUID_B

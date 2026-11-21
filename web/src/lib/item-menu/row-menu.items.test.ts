@@ -88,6 +88,11 @@ describe('a closed, asleep or archived row (test_row_menu_closed)', () => {
         for (const gone of ['wake', 'sleep', 'restart', 'reopen']) expect(arch, gone).not.toContain(gone);
     });
 
+    test('an archived row offers no remove: delete stays an archive, purge the only real delete (#2942)', () => {
+        const arch = idsOf({ ...BASE, archived: true });
+        for (const gone of ['remove-archived', 'remove']) expect(arch, gone).not.toContain(gone);
+    });
+
     test('the words come from the catalog, and archive without a uuid is drawn refused', () => {
         const labels = Object.fromEntries(itemsOf(CLOSED).map((i) => [i.id, i.label]));
         expect(labels.reopen).toBe('session.menu.reopen');

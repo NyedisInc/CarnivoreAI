@@ -5,10 +5,10 @@ import asyncio
 from types import SimpleNamespace
 from typing import Any, Dict, List, Tuple
 
-from src.cplugs.host import mcp_health_port, runtime, sidecar_boot
-from src.cplugs.host.sidecar_boot import MCP_HEALTH_ID
-from src.cplugs.sdk import ports
-from src.cplugs.sdk.mcp_health import PORT_NAME
+from src.plugins.host import mcp_health_port, runtime, sidecar_boot
+from src.plugins.host.sidecar_boot import MCP_HEALTH_ID
+from src.plugins.sdk import ports
+from src.plugins.sdk.mcp_health import PORT_NAME
 
 
 class _StubMonitor:

@@ -96,32 +96,32 @@
     .bp-skills__chips {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
-        margin-bottom: 6px;
+        gap: var(--oc-space-1-5);
+        margin-bottom: var(--oc-space-1-5);
         min-height: 20px;
     }
 
     .bp-skills__chip {
         display: inline-flex;
         align-items: center;
-        gap: 4px;
-        padding: 2px 6px;
-        border: 1px solid var(--oc-border);
-        border-radius: 2px;
+        gap: var(--oc-space-1);
+        padding: var(--oc-space-0-5) var(--oc-space-1-5);
+        border: var(--oc-border) solid var(--oc-line-rule);
+        border-radius: var(--oc-radius-control);
         background: var(--oc-ground-raised);
         color: var(--oc-text-primary);
-        font-size: 11px;
+        font-size: var(--oc-fs-label);
         font-family: var(--font-mono);
     }
 
     .bp-skills__none {
         color: var(--oc-text-muted);
-        font-size: 11px;
+        font-size: var(--oc-fs-label);
     }
 
     .bp-skills__add {
         display: flex;
-        gap: 6px;
+        gap: var(--oc-space-1-5);
         align-items: center;
     }
 

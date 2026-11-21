@@ -13,11 +13,11 @@ from typing import Any, List
 import pytest
 import structlog
 
-from src.cplugs.reviewboard.public import links, minting
-from src.cplugs.reviewboard.public.read import READER
-from src.cplugs.reviewboard.public.resolve import Resolver
-from src.cplugs.sdk import CplugSchemaError, signed_links
-from src.cplugs.sdk.sandboxed_html import VIEW_CSP
+from src.plugins.reviewboard.public import links, minting
+from src.plugins.reviewboard.public.read import READER
+from src.plugins.reviewboard.public.resolve import Resolver
+from src.plugins.sdk import CplugSchemaError, signed_links
+from src.plugins.sdk.sandboxed_html import VIEW_CSP
 from tests.python.cplugs.reviewboard.public.read_harness import add_revision, edge, get, mint_token, rewrite
 from tests.python.cplugs.reviewboard.boards import PAGE
 
@@ -195,7 +195,7 @@ def test_a_follow_link_refuses_a_newer_revision_that_holds_a_secret_and_scans_it
 
 
 def test_a_follow_link_whose_newer_scan_cannot_finish_keeps_the_cleared_revision(read_env, store, folder: Path, monkeypatch) -> None:
-    from src.cplugs.sdk.file_secrets import ScanTimeout
+    from src.plugins.sdk.file_secrets import ScanTimeout
 
     follow = mint_token(store, mode="follow")
     add_revision(folder, PAGE + b"<p>new</p>")
@@ -230,7 +230,7 @@ def test_a_store_failure_on_a_frame_and_a_missing_signing_key_are_503(read_env, 
 
 
 def test_an_unbound_reader_and_a_board_that_is_off_answer_503(read_env, store) -> None:
-    from src.cplugs.reviewboard import public_port
+    from src.plugins.reviewboard import public_port
 
     token = mint_token(store)
     public_port.unregister()

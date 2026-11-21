@@ -126,6 +126,11 @@ class PairingStore:
         self._claim_expires = 0.0
         self._misses: Dict[str, Deque[float]] = defaultdict(deque)
         self.on_revoke: List[Callable[[str], None]] = []
+        self.on_change: List[Callable[[], None]] = []
+
+    def _changed(self) -> None:
+        for hook in list(self.on_change):
+            hook()
 
     def close(self) -> None:
         with self._lock:
@@ -142,6 +147,7 @@ class PairingStore:
         with self._lock:
             self._db.execute("INSERT OR REPLACE INTO settings(key, value) VALUES('enabled', ?)",
                              ("1" if value else "0",))
+        self._changed()
 
     def setting(self, key: str) -> Optional[str]:
         with self._lock:
@@ -174,6 +180,7 @@ class PairingStore:
             self._codes.append(_Code(_digest(secret), secret_expires, "window_secret"))
             self._codes.append(_Code(_digest(code), expires, "window_code"))
         logger.info("phone_link_window_opened")
+        self._changed()
         return Window(secret, code, expires, secret_expires)
 
     def locked(self) -> bool:
@@ -186,6 +193,7 @@ class PairingStore:
         with self._lock:
             self._failures = []
             self.last_failed = False
+        self._changed()
 
     def _kill_spent(self, key: str) -> None:
         del self._pending[key]
@@ -217,6 +225,7 @@ class PairingStore:
         with self._lock:
             self._end_window()
             self._pending = {}
+        self._changed()
 
     def _live_pending(self) -> Dict[str, _Pending]:
         now = self._clock()
@@ -285,7 +294,9 @@ class PairingStore:
                 return ClaimResult(None, "already_paired")
             if self._redeem(secret, ("window_secret",), ip) is None:
                 return None
-            return self._begin_pending(label)
+            result = self._begin_pending(label)
+        self._changed()
+        return result
 
     def claim_code(self, code: str, ip: str, label: str = "phone", host: str = "",
                    current_cookie: Optional[str] = None, legacy_host: str = "") -> Optional[ClaimResult]:
@@ -294,7 +305,9 @@ class PairingStore:
                 return None
             if self._live_device(current_cookie, host, legacy_host) is not None:
                 return ClaimResult(None, "already_paired")
-            return self._begin_pending(label)
+            result = self._begin_pending(label)
+        self._changed()
+        return result
 
     def pending_open(self) -> bool:
         with self._lock:
@@ -312,9 +325,11 @@ class PairingStore:
                 return None
             if pending.attempts >= MAX_PENDING_ATTEMPTS:
                 self._kill_spent(key)
-                return None
-            pending.attempts += 1
-            return MAX_PENDING_ATTEMPTS - pending.attempts
+            else:
+                pending.attempts += 1
+                return MAX_PENDING_ATTEMPTS - pending.attempts
+        self._changed()
+        return None
 
     def drop_if_spent(self, handle: Optional[str]) -> bool:
         with self._lock:
@@ -322,7 +337,8 @@ class PairingStore:
             if pending is None or pending.attempts < MAX_PENDING_ATTEMPTS:
                 return pending is None
             self._kill_spent(_digest(handle or ""))
-            return True
+        self._changed()
+        return True
 
     def complete_pending(self, handle: Optional[str], host: str = "") -> Optional[str]:
         with self._lock:
@@ -333,7 +349,8 @@ class PairingStore:
             now = self._clock()
             self.last_claim = Claim(device_id, pending.label, "browser", int(now))
             self._claim_expires = now + WINDOW_SECONDS
-            return cookie
+        self._changed()
+        return cookie
 
 
     def _mint(self, label: str, kind: str, host: str = "") -> Tuple[str, str]:
@@ -366,6 +383,8 @@ class PairingStore:
                 self._db.execute("UPDATE devices SET last_seen=? WHERE id=?", (int(now), device_id))
             except sqlite3.Error as exc:
                 logger.warning("phone_link_touch_failed", device=device_id, error=str(exc))
+                return
+        self._changed()
 
     def devices(self) -> List[Device]:
         with self._lock:
@@ -394,6 +413,7 @@ class PairingStore:
             if self.last_claim is not None and self.last_claim.device_id == device_id:
                 self.last_claim = None
         logger.info("phone_link_device_revoked", device=device_id)
+        self._changed()
         for hook in list(self.on_revoke):
             hook(device_id)
         return True

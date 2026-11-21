@@ -3,6 +3,7 @@
   import TabKey from './TabKey.svelte';
   import EditCell from './EditCell.svelte';
   import { nextKey } from './key-nav';
+  import { edgeFade, type EdgeFade } from './strip-edge-fade';
   import type { Zone } from './zone.svelte';
   import type { KeyFace, TabRef } from './zone-types';
 
@@ -97,6 +98,25 @@
     return () => strip.removeEventListener('keydown', walkWithArrows, true);
   });
 
+  let fade = $state<EdgeFade>(null);
+
+  $effect(() => {
+    if (!root || flow) return;
+    const strip = root;
+    const measure = (): void => {
+      fade = axis === 'x' ? edgeFade(strip.scrollLeft, strip.clientWidth, strip.scrollWidth) : edgeFade(strip.scrollTop, strip.clientHeight, strip.scrollHeight);
+    };
+    measure();
+    strip.addEventListener('scroll', measure, { passive: true });
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+    observer?.observe(strip);
+    for (const keys of strip.querySelectorAll('[data-rail-keys], .rail__cell')) observer?.observe(keys);
+    return () => {
+      strip.removeEventListener('scroll', measure);
+      observer?.disconnect();
+    };
+  });
+
   function cellAction(node: HTMLElement, key: string): { update?(key: string): void; destroy?(): void } | void {
     return motion?.cell(node, key);
   }
@@ -122,7 +142,7 @@
         />
 {/snippet}
 
-<div class="rail__sections" data-motion={motion ? '' : undefined} data-rail-sections data-axis={axis} data-editing={editing} data-flow={flow ? '' : undefined} bind:this={root}>
+<div class="rail__sections" data-motion={motion ? '' : undefined} data-rail-sections data-axis={axis} data-editing={editing} data-flow={flow ? '' : undefined} data-fade={fade} bind:this={root}>
   {#each zones as zone, s (s)}
     {@const tabs = zone.tabs}
     {@const lifted = tabs.filter((tab) => tab.key !== carriedKey)}
@@ -218,8 +238,42 @@
     }
 
     .rail__sections[data-motion] {
-      overflow: auto;
-      scrollbar-width: thin;
+      overflow-x: hidden;
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+
+    .rail__sections[data-motion][data-axis='x'] {
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    .rail__sections[data-motion]::-webkit-scrollbar {
+      display: none;
+    }
+
+    .rail__sections[data-fade='start'] {
+      mask-image: linear-gradient(to bottom, transparent, var(--oc-mask-solid) var(--oc-space-5));
+    }
+
+    .rail__sections[data-fade='end'] {
+      mask-image: linear-gradient(to top, transparent, var(--oc-mask-solid) var(--oc-space-5));
+    }
+
+    .rail__sections[data-fade='both'] {
+      mask-image: linear-gradient(to bottom, transparent, var(--oc-mask-solid) var(--oc-space-5), var(--oc-mask-solid) calc(100% - var(--oc-space-5)), transparent);
+    }
+
+    .rail__sections[data-axis='x'][data-fade='start'] {
+      mask-image: linear-gradient(to right, transparent, var(--oc-mask-solid) var(--oc-space-5));
+    }
+
+    .rail__sections[data-axis='x'][data-fade='end'] {
+      mask-image: linear-gradient(to left, transparent, var(--oc-mask-solid) var(--oc-space-5));
+    }
+
+    .rail__sections[data-axis='x'][data-fade='both'] {
+      mask-image: linear-gradient(to right, transparent, var(--oc-mask-solid) var(--oc-space-5), var(--oc-mask-solid) calc(100% - var(--oc-space-5)), transparent);
     }
 
     .rail__sections[data-motion] .rail__keys {

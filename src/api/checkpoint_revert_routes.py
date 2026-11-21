@@ -150,6 +150,6 @@ async def revert_files(request: Request, session_uuid: str, checkpoint_id: int, 
         done = await run_in_threadpool(revert_mod.revert, get_store(), cp, body.fingerprint, state_root())
     except revert_mod.RevertRefused as exc:
         raise _refused(exc) from exc
-    sent, why = await tell_codex(request.app.state.session_manager, request.app, row, cp)
+    sent, why = await tell_codex(request.app.state.session_manager, request.app.state, row, cp)
     return RevertDone(id=cp.id, safety_id=done.safety.id, changed=done.plan.change, created=done.plan.create,
                       deleted=done.plan.delete, kept=_kept(done.kept), note_sent=sent, note_error=why)

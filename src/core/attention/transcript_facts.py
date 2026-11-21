@@ -9,6 +9,7 @@ from typing import Any, List, Optional, Sequence, Tuple
 from src.core.attention.transcript_walk import WindowWalk
 from src.core.attention.toast_facts import ToastFacts, extract_toast_facts
 from src.core.attention.transcript_contract import against_contract
+from src.core.attention.login_expired import LoginExpired
 from src.core.attention.usage_limit import UsageLimit, active_usage_limit
 from src.core.attention.transcript_records import TURN_END_INTERRUPT, TURN_END_NO_MODEL_TURN
 from src.core.attention.turn_counts import KIND_WORKFLOW, TURN_END_COUNTED_KINDS, content_blocks
@@ -61,6 +62,7 @@ class TranscriptFacts:
     mcp_events: Tuple[McpEvent, ...] = ()
     mcp_window_from: Optional[datetime] = None
     usage_limit: Optional[UsageLimit] = None
+    login_expired: Optional[LoginExpired] = None
 
     @property
     def found(self) -> bool:
@@ -249,6 +251,7 @@ def classify_transcript_records(
         mcp_events=extract_mcp_events(records),
         mcp_window_from=window_start(records),
         usage_limit=limit_now,
+        login_expired=walk.login_hit,
     )
 
 

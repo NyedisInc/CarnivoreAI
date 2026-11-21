@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.huddle import lifecycle
-from src.cplugs.huddle.store import TaskManagerStore
+from src.plugins.huddle import lifecycle
+from src.plugins.huddle.store import TaskManagerStore
 from src.core.work.storage import WorkStorage
 
 
@@ -70,7 +70,7 @@ def test_every_state_move_leaves_one_line_saying_who_from_to(store):
 
 def test_an_owner_reply_that_reopens_a_review_logs_the_move_and_the_task_still_awaits_the_answer(store):
     from contextlib import closing
-    from src.cplugs.huddle import reply_return
+    from src.plugins.huddle import reply_return
 
     item = store.add("all", "work", actor="joe")["id"]
     store.update(item, actor="claude", state="review")

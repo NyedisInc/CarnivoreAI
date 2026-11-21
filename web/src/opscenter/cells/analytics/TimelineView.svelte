@@ -12,6 +12,7 @@
   import Icon from '../../ui/Icon.svelte';
   import { live, watchLive } from '../../viz/noc-feed.svelte';
   import TripwireEditor from '../../viz/TripwireEditor.svelte';
+  import ComputersPick from '../../viz/ComputersPick.svelte';
   import { seriesUnit, thresholdLines } from '../../viz/tripwire-model';
   import { tripwires } from '../../viz/tripwires.svelte';
   import { auth } from '../../api/auth.svelte';
@@ -42,6 +43,8 @@
   import { watchVisible } from '../../viz/visible';
   import { declareSettingsPanel } from '../../widgets/chrome/settings-panels.svelte';
   import { fitRange } from './range-fit';
+  import Segmented from '../../../lib/base/Segmented.svelte';
+  import { AGENT_WINDOWS, agentWindow } from '../../viz/agents';
 
   let { instance, tier }: { instance: string; tier: Tier } = $props();
   const id = $derived(instance.slice('analytics:'.length));
@@ -114,6 +117,13 @@
   const cardKind = $derived(primary?.operation === 'ranking' ? 'ranking' : primary?.metric === 'total_tokens' ? 'tokens'
     : primary?.metric === 'estimated_cost_nano_usd' ? 'cost' : primary?.metric === 'working_seconds' ? 'activity'
     : primary?.metric === 'quota_utilization' ? 'quota' : primary?.metric === 'cache_read_tokens' ? 'cache' : 'chart');
+  /* tokens per agent */
+  const windowed = $derived(cardKind === 'tokens');
+  const windowPick = $derived(config && config.range.mode !== 'pinned' && !config.range.zoom
+    ? (config.range.preset && !AGENT_WINDOWS.includes(config.range.preset) ? '' : agentWindow(config)) : '');
+  function pickWindow(next: string): void {
+    if (config && next && next !== windowPick) changeAnalyticsConfig({ ...config, range: { mode: 'global', preset: next as RangePreset, zoom: null } });
+  }
   const showFacts = $derived(cardKind === 'tokens' && context.length > 0 && roomForFactsRow);
   const summaryValue = $derived(typeof headline?.summary?.value === 'number' ? headline.summary.value : null);
   const hitRate = $derived(cacheHitRate(summaryValue, contextValue('input_tokens'), contextValue('cache_write_tokens')));
@@ -475,12 +485,17 @@
   </ol>
 {/snippet}
 
+{#snippet windowPicker()}
+  <Segmented label={t('agents.window.label')} data-tokens-window options={AGENT_WINDOWS.map((option) => ({ value: option, label: t(`agents.window.${option}`), attrs: { 'data-window': option, title: t(`analytics.preset_${option}`) } }))}
+    bind:value={() => windowPick, pickWindow} onmousedown={(event) => event.preventDefault()} />
+{/snippet}
+
 {#snippet rangeLabels()}
-  <span class="analytics-period">{periodLabel}</span><span class="analytics-period analytics-period--short" aria-hidden="true">{periodShort}</span>{#if asOf}<span class="analytics-asof" title={asOf}>{t('analytics.as_of', { time: clockLabel(asOf) })}</span>{/if}
+  {#if windowed}{@render windowPicker()}{:else}<span class="analytics-period">{periodLabel}</span><span class="analytics-period analytics-period--short" aria-hidden="true">{periodShort}</span>{/if}{#if asOf}<span class="analytics-asof" title={asOf}>{t('analytics.as_of', { time: clockLabel(asOf) })}</span>{/if}
 {/snippet}
 
 {#snippet rangeGroup()}
-  <span class="analytics-range" use:fitRange={periodLabel}>{@render rangeLabels()}</span>
+  {#if windowed}<span class="analytics-range">{@render rangeLabels()}</span>{:else}<span class="analytics-range" use:fitRange={periodLabel}>{@render rangeLabels()}</span>{/if}
 {/snippet}
 
 {#snippet openButton(look: 'float' | 'quiet')}
@@ -540,6 +555,7 @@
       <label>{t('analytics.from')} <Field type="datetime-local" value={localValue(config.range.from || range.from)} onchange={(event) => pinTime('from', event.currentTarget.value)} /></label>
       <label>{t('analytics.to')} <Field type="datetime-local" value={localValue(config.range.to || range.to)} onchange={(event) => pinTime('to', event.currentTarget.value)} /></label>
     {/if}
+    <ComputersPick {config} {edit} />
     <TripwireEditor {config} />
   </div>
   {/if}
@@ -549,7 +565,7 @@
   @layer components {
     :global(.analytics-cell--tile) .analytics-headline strong { flex: none; font-size: var(--oc-fs-figure); }
 
-    .analytics-open { position: absolute; top: var(--oc-space-2); right: var(--oc-space-2); z-index: 1; }
+    .analytics-open { position: absolute; top: var(--oc-space-2); right: var(--oc-space-2); z-index: var(--oc-z-raised); }
 
     @media (max-width: 1023px) {
       .analytics-open { right: 0; }
@@ -629,7 +645,7 @@
 
     .analytics-quota-legend { grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: var(--oc-space-0-5) var(--oc-space-3); font-size: var(--oc-fs-micro); }
 
-    .analytics-swatch { flex: none; width: 8px; height: 8px; border-radius: 1px; align-self: center; }
+    .analytics-swatch { flex: none; width: 8px; height: 8px; border-radius: var(--oc-radius-xs); align-self: center; }
 
     .analytics-quota-legend li { justify-content: flex-start; }
 

@@ -20,6 +20,7 @@ from src.core.mcp.caller import AgentCaller
 from src.main import app
 from src.models import Session, SessionInfo
 from tests.python.mcp.test_mcp_endpoint import FakeManager, _call, _hdr, _info
+from src.core.session_ops import sleep as sleep_ops
 
 
 class WriteManager(FakeManager):
@@ -107,7 +108,7 @@ def env(monkeypatch, tmp_path):
         slept.append(session_uuid)
         return SimpleNamespace(status="asleep", detail="ok")
 
-    monkeypatch.setattr("src.api.session_sleep_routes.sleep_by_uuid", fake_sleep)
+    monkeypatch.setattr(sleep_ops, "sleep_session", fake_sleep)
     monkeypatch.setattr(write_tools, "_session_uuid_of_row", lambda row: f"uuid-{row}")
     mgr.wire_panes(monkeypatch)
     app.dependency_overrides[require_auth] = lambda: {"sub": "owner"}

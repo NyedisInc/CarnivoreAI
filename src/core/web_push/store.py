@@ -11,6 +11,8 @@ from typing import Any, Dict, List, Optional
 import structlog
 
 from src.core.config_files_io import atomic_write
+from src.core import resource_push
+from src.core.resource_push import topics
 
 logger = structlog.get_logger()
 
@@ -43,6 +45,7 @@ class SubscriptionStore:
 
     def _save(self, rows: List[Dict[str, Any]]) -> None:
         atomic_write(self._path, json.dumps(rows), mode=0o600)
+        resource_push.notify(topics.PHONE_LINK)
 
     def list(self) -> List[Dict[str, Any]]:
         with self._lock:

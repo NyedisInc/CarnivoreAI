@@ -101,3 +101,20 @@ def pane_state_for(presence: TmuxPresence) -> str:
     if presence.outcome == TMUX_PRESENT:
         return PANE_ALIVE
     return PANE_UNKNOWN
+
+
+def epoch_marks_other_instance(recorded: Optional[int], observed: Optional[int]) -> bool:
+    return recorded is not None and observed is not None and int(recorded) != int(observed)
+
+
+def presence_as_other_instance(presence: TmuxPresence) -> TmuxPresence:
+    if presence.outcome != TMUX_PRESENT:
+        return presence
+    return TmuxPresence(
+        outcome=TMUX_GONE,
+        detail=(
+            "the tmux name now belongs to another session, so this one is "
+            "gone and comes back under a new name"
+        ),
+        listed=presence.listed,
+    )

@@ -134,7 +134,7 @@ class BackgroundCountReader:
         if not owned:
             return frozenset()
         finished = finished_agent_ids(parent_path, owned.values(),
-                                      process_started_at=process_started_at)
+                                      process_started_at=process_started_at, now=now)
         if finished is None:
             return None
         return leftover_task_ids(live, owned, finished)

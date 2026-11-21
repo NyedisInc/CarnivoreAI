@@ -6,7 +6,7 @@ import os
 import time
 from pathlib import Path
 
-from src.cplugs.huddle import inbox_files, rules
+from src.plugins.huddle import inbox_files, rules
 from tests.python.cplugs.huddle.test_task_manager_inbox import BASE, env, queue  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client  # noqa: F401
 

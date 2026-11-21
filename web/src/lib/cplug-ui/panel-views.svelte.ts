@@ -24,7 +24,7 @@ export interface PanelFits {
     readonly anySize: boolean;
 }
 const STRING_OWNER = 'panelviews';
-const KIND_SHAPE = /^[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*$/;
+const KIND_SHAPE = /^(?=.{3,64}$)[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*$/;
 
 export interface PanelEntry {
     readonly kind: string;
@@ -36,7 +36,7 @@ export interface PanelEntry {
     readonly fits: PanelFits;
 }
 
-export const panels = $state<{ list: PanelEntry[] }>({ list: [] });
+export const panels = $state<{ list: PanelEntry[]; loaded: boolean }>({ list: [], loaded: false });
 const MANIFESTS = new Map<string, WidgetManifest>();
 const PANEL_KINDS = new Set<string>();
 
@@ -125,6 +125,7 @@ export function setPanels(rows: readonly CplugRow[]): void {
     const list = panelEntries(rows);
     for (const entry of list) register(entry);
     panels.list = list;
+    panels.loaded = true;
 }
 
 export function livePanelManifests(): Readonly<Record<string, WidgetManifest>> {
@@ -146,5 +147,6 @@ setPanelProvider({
     tail: (kind) => panelOf(kind)?.tail,
     info: (kind) => INFO.get(kind),
     revision: () => panels.list,
+    loaded: () => panels.loaded,
     fit: (kind) => { const entry = panelOf(kind); return entry ? landingFit(entry.fits) : PANEL_FIT; },
 });

@@ -1,6 +1,6 @@
 import { scanRules, type HostFinding, type HostRule, type HostSource } from './host-scan';
 
-const LED_SIGNAL_PROPS = 'unread|startupGate|statusSource|transport|activityHint|parkedSummary|hostOffline|usageLimit';
+const LED_SIGNAL_PROPS = 'unread|startupGate|statusSource|transport|activityHint|parkedSummary|hostOffline|usageLimit|loginExpired';
 
 export const WRAPPER_RULES: readonly HostRule[] = [
   {

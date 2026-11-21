@@ -178,7 +178,7 @@ def test_every_live_container_is_mounted_and_every_mount_has_a_container(
     in_html = set()
     for html in fragments.values():
         in_html |= set(re.findall(r'id="(sg-live-[a-z0-9-]+)"', html))
-    sources = [SPECIMEN_MAIN, *sorted((REPO_ROOT / "web" / "src" / "cplugs").glob("*/style-guide/specimens.ts"))]
+    sources = [SPECIMEN_MAIN, *sorted((REPO_ROOT / "web" / "src" / "plugins").glob("*/style-guide/specimens.ts"))]
     in_main = {i for src in sources for i in re.findall(r"id: '(sg-live-[a-z0-9-]+)'", src.read_text(encoding="utf-8"))}
     assert in_html and in_main, "no live specimens found; the reader is broken"
     assert in_html == in_main, (

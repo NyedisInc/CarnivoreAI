@@ -8,13 +8,13 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.cplugs.host.activity_log import ActivityLog
-from src.cplugs.host.egress_log import EgressLog
-from src.cplugs.host import identity, net_routes, runtime, sidecar_registry
-from src.cplugs.host import state as owner_state
-from src.cplugs.host.secret_store import SecretStore, network_key
-from src.cplugs.host.sidecar_manifest import SidecarManifestError, parse_sidecar_manifest
-from src.cplugs.host.sidecar_registry import SidecarRegistry
+from src.plugins.host.activity_log import ActivityLog
+from src.plugins.host.egress_log import EgressLog
+from src.plugins.host import identity, net_routes, runtime, sidecar_registry
+from src.plugins.host import state as owner_state
+from src.plugins.host.secret_store import SecretStore, network_key
+from src.plugins.host.sidecar_manifest import SidecarManifestError, parse_sidecar_manifest
+from src.plugins.host.sidecar_registry import SidecarRegistry
 
 SHIPPED = {"huddle"}
 ITEM = "acme/clock"

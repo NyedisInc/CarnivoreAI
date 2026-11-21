@@ -53,6 +53,16 @@ and never take input meant for the terminal.</p>
         #959): a full-width, icon-plus-label row (<code>.tbg-menuitem</code>, <code>.tbg-menuitem-label</code>) instead of the
         bare 22px icon (<code>.tbg-open</code>) the legacy info bar and the wide toolbar still use. Same open/close/Escape/
         outside-press contract either way; only the trigger's shape changes.</dd>
+    <dt>inactive cell dim</dt>
+    <dd><code>web/src/lib/cell-dim/CellDimPanel.svelte</code>: one range row (<code>.cdim</code>, <code>.cdim__range</code>, <code>.cdim__value</code>)
+        in settings, terminal, text that sets <code>--oc-cell-dim</code> live while dragging, so an unfocused terminal cell can be tuned by eye.
+        Default 20 percent (<code>tokens.css</code>), kept per browser. The focused cell wears its session accent as a still glow
+        OUTSIDE its border (<code>CellFrame.svelte</code>, an outer <code>box-shadow</code>), never a border-width or padding change.</dd>
+    <dt>notification sounds</dt>
+    <dd><code>web/src/lib/terminal-sound/TerminalSoundButton.svelte</code>: a headless popover (<code>.tsnd-pop</code>) opened from the kebab's
+        "notification sounds" row, drawn like the background picture's: a title-row strip (<code>.tsnd__title</code>, small accent label) over one
+        row per type (<code>.tsnd__row</code>, <code>.tsnd__lab</code>) holding the base Select and Button. It sets this agent's own sound for
+        a type; "global pick" clears it.</dd>
     <dt>phone mic strip</dt>
     <dd>The dictation strip the key bar's mic key opens (<code>web/src/lib/phone-mic/PhoneMic.svelte</code>, #2789): fixed to the bottom of the screen so the pane never resizes, a title-row strip with a small accent label (listening, recording, transcribing), the live transcript under a hairline, and the base Button pair (cancel quiet, send confirming). The mic key's glyph is a capsule, pickup arc and stem in the key bar's own 20px geometry.</dd>
     <dt>phone</dt>

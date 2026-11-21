@@ -9,11 +9,11 @@ from fastapi.testclient import TestClient
 
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
-from src.cplugs.huddle import mcp
-from src.cplugs.huddle.roles import mcp_roles
-from src.cplugs.sdk import ToolError
-from src.cplugs.host import runtime
-from src.cplugs.huddle.roles import port as roles_port, service as roles_service
+from src.plugins.huddle import mcp
+from src.plugins.huddle.roles import mcp_roles
+from src.plugins.sdk import ToolError
+from src.plugins.host import runtime
+from src.plugins.huddle.roles import port as roles_port, service as roles_service
 from tests.python.cplugs.huddle.roles_rig import BASE, SwarmStub, aged, give_asleep, give_rows, use_swarm
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client  # noqa: F401
 
@@ -131,7 +131,7 @@ def test_a_lead_session_is_refused_do_not_disturb_and_taking_the_seat_clears_its
 
 
 def test_the_tool_is_in_the_manifest_and_the_agent_write_class():
-    from src.cplugs.huddle import mcp as tool_module
+    from src.plugins.huddle import mcp as tool_module
 
     assert "task_manager_role_set" in json.loads(open(tool_module.__file__.replace("mcp.py", "cplug.json")).read())["surfaces"]["mcp_tools"]
     assert tool_module.TOOLS["task_manager_role_set"].gate == "agent"

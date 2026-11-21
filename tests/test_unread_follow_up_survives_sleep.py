@@ -25,7 +25,8 @@ pytest.importorskip("fastapi")
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.api import recreate_routes, session_sleep_routes
+from src.api import session_sleep_routes
+from src.core.session_ops import sleep as sleep_ops
 from src.api.auth import require_auth
 from src.api.session_record_payload import _session_record_payload
 from src.core import session_sleep, session_store
@@ -37,6 +38,7 @@ from src.core.session_restart import rebind_instance
 from src.core.session_view_clears import clear_view_state
 from src.core.unread_store import UnreadStore
 from src.models import Session, SessionStatus
+from src.core.session_ops import row_probe
 
 NAME = "carnivore_followup"
 ROW_UUID = "row-uuid-followup"
@@ -229,15 +231,15 @@ async def _sleep(mgr: SessionManager, monkeypatch) -> None:
 
     outcomes = [TMUX_PRESENT, TMUX_GONE]
     monkeypatch.setattr(session_sleep, "close_for_sleep", _close, raising=True)
-    monkeypatch.setattr(recreate_routes, "_socket_name", lambda: "cloude", raising=True)
+    monkeypatch.setattr(row_probe, "socket_name", lambda: "cloude", raising=True)
     monkeypatch.setattr(
-        recreate_routes, "_measure_presence",
+        row_probe, "measure_presence",
         lambda name, socket: TmuxPresence(outcome=outcomes.pop(0) if len(outcomes) > 1 else outcomes[0],
                                           detail="test"),
         raising=True,
     )
     app_state = SimpleNamespace(session_manager=mgr, local_servers=_LocalServers())
-    result = await session_sleep_routes.sleep_by_uuid(app_state, ROW_UUID)
+    result = await sleep_ops.sleep_session(app_state, ROW_UUID)
     assert result.status == "asleep", result
 
 

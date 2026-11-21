@@ -213,7 +213,7 @@
       flex: 0 0 auto;
       width: 8px;
       height: 8px;
-      border-radius: 50%;
+      border-radius: var(--oc-radius-circle);
     }
 
     .oc-log-pmsg {
@@ -253,7 +253,7 @@
     .oc-log-divider {
       width: 2px;
       height: 2px;
-      border-radius: 1px;
+      border-radius: var(--oc-radius-xs);
       background: transparent;
       box-shadow:
         0 -4px 0 0 var(--oc-text-dim),

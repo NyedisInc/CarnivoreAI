@@ -15,14 +15,14 @@ from src.core import resource_push
 from src.core.automations import models as m
 from src.core.automations import scheduler_log
 from src.core.automations import run_title
-from src.core.automations import attachments, changes, contract, gates, schedule, targets
+from src.core.automations import attachments, changes, contract, gates, schedule, target_projects, targets
 from src.core.automations.store_claim import ClaimMixin
 from src.core.automations.report_empty import report_is_empty
 from src.core.automations.store_schema import JSON_RUN, Tx, automation_row, closing, next_number, run_row
 from src.core.computers.this_label import this_label
 from src.core.resource_push import topics
 from src.core.timers.redact import redact
-from src.cplugs.sdk.storage import CplugStorage
+from src.plugins.sdk.storage import CplugStorage
 
 logger = structlog.get_logger()
 
@@ -197,6 +197,24 @@ class AutomationStore(ClaimMixin):
             row = conn.execute("SELECT 1 FROM automations WHERE seed_key = ? UNION ALL SELECT 1 FROM seed_tombstones "
                                "WHERE seed_key = ?", (seed_key, seed_key)).fetchone()
         return row is not None
+
+    def repoint_project(self, source_id: int, target_id: int, actor: Optional[Dict[str, Any]] = None) -> int:
+        who = actor or {"kind": "app"}
+        now = self._clock()
+        moved = 0
+        with self._write(topics.AUTOMATIONS) as tx:
+            for row in tx.execute("SELECT * FROM automations").fetchall():
+                new_target, target_changed = target_projects.repoint_target(json.loads(row["target"]), source_id, target_id)
+                if row["project_id"] != source_id and not target_changed:
+                    continue
+                tx.execute("UPDATE automations SET project_id = ?, target = ?, updated_at = ?, updated_by = ?, updated_actor = ?, "
+                           "revision = revision + 1 WHERE automation_id = ?",
+                           (target_id if row["project_id"] == source_id else row["project_id"], json.dumps(new_target), now,
+                            who["kind"], json.dumps(who), row["automation_id"]))
+                saved = tx.execute("SELECT * FROM automations WHERE automation_id = ?", (row["automation_id"],)).fetchone()
+                changes.record(tx.conn, row["automation_id"], "update", now, who, automation_row(row), automation_row(saved))
+                moved += 1
+        return moved
 
     def set_enabled(self, automation_id: str, enabled: bool) -> Dict[str, Any]:
         return self.update(automation_id, None, enabled=enabled)

@@ -9,8 +9,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.reviewboard.public import drafts, presence, waiting, wiring
-from src.cplugs.reviewboard.public.presence import Presence
+from src.plugins.reviewboard.public import drafts, presence, waiting, wiring
+from src.plugins.reviewboard.public.presence import Presence
 from tests.python.cplugs.reviewboard.public.read_harness import edge, get, mint_token
 from tests.python.cplugs.reviewboard.boards import SIDECAR
 

@@ -13,15 +13,15 @@ import structlog
 from src.core import session_notes_store
 from src.core.cross_session_search import strip_ansi
 from src.core.db import DatastoreUnreadableError, connect, db_path_for
-from src.cplugs.host import mcp as cplug_mcp
-from src.core.mcp import (session_target, companion_shell_tools, dashboard_tools, description_tools, project_color_tools, color_tools, dialog_tools, notification_tools, preference_tools,
+from src.plugins.host import mcp as cplug_mcp
+from src.core.mcp import (session_target, companion_shell_tools, dashboard_tools, description_tools, project_color_tools, color_tools, layout_tools, dialog_tools, notification_tools, preference_tools,
                           project_lifecycle_tools, project_replica_tools, session_control_tools, automation_tools, beast_mode, bookmark_tools, lineage_tools, timeline_tools, board_tools, byoai_tools, crosstalk_tools, federated, launch_profile_tools, notify_tools,
-                          messaging_tools, card_capacity_tools, card_tools, card_validate_tools, company_tools, group_tools, swarm_memory_tools, swarm_tools, pin_tools, pipeline_tools, session_delete_tools, session_folder_move_tools, session_purge_tools, project_tools, project_pack_tools, catalog_tools, mod_tools, skill_tools, read_tools, swarm_order_tools, write_tools, computers_tools, pack_machines_tools, app_update_tools, plugin_sideload_tools, plugin_admin_tools, pack_relay_tools, api_key_tools, pack_skills_tools, pack_global_sync_tools, pack_placement_tools, pack_transport_tools, pack_span_tools, pack_migrate_tools, pack_move_tools, browser_open_tools, files_open_tools, ui_show_tools, row_look_tools, pack_send_tools, usage_tools, session_usage_tools, session_inspect_tools, session_recovery_tools, session_background_tools, swarm_switch_tools, argent_tools, swarm_member_tools, beast_tools, autonomy_tools, deepsearch_tools, wait_tools)
+                          messaging_tools, card_capacity_tools, card_tools, card_validate_tools, company_tools, group_tools, swarm_memory_tools, swarm_tools, pin_tools, pipeline_tools, session_delete_tools, session_folder_move_tools, session_purge_tools, project_tools, project_pack_tools, catalog_tools, mod_tools, skill_tools, read_tools, swarm_order_tools, write_tools, computers_tools, pack_machines_tools, app_update_tools, plugin_sideload_tools, plugin_admin_tools, pack_relay_tools, api_key_tools, pack_skills_tools, pack_global_sync_tools, pack_placement_tools, pack_transport_tools, pack_span_tools, pack_migrate_tools, pack_move_tools, browser_open_tools, files_open_tools, ui_show_tools, row_look_tools, pack_send_tools, usage_tools, session_usage_tools, session_inspect_tools, session_recovery_tools, session_background_tools, swarm_switch_tools, argent_tools, swarm_member_tools, beast_tools, autonomy_tools, deepsearch_tools, wait_tools, pack_jobs_tools, pack_jobs_reply_tools, pack_jobs_metrics_tools, ssh_targets_tools, codex_helpers_tools, session_events_tools)
 from src.core.mcp import agent_tool_switches, aliases, merged_tools, pane_only, read_only_hint, tool_switches
 from src.core.mcp import lean_answers
 from src.core.mcp.approvals import call_context
 from src.core.mcp.caller import AgentCaller
-from src.cplugs.sdk import old_names
+from src.plugins.sdk import old_names
 from src.core.flow_data import mcp_events
 from src.core.pack.span import proxy_client as span_proxy
 from src.core.swarm import guard as swarm_guard
@@ -211,7 +211,7 @@ _TOOLS: dict[str, tuple[str, dict, list, Handler]] = {
                       {"include_archived": {"type": "boolean", "description": "also list archived projects (default false)"},
                        "detail": {"type": "boolean", "description": "whole descriptions instead of the lean default"}},
                       [], projects_list),
-    "companies_list": ("Every company A-Z with its id, name, project_count, hue (its Swarm color-family hue, null for the default), parent_id (the company it sits under, null at the top level) and hq_project_id. A project with no company is orphaned.",
+    "companies_list": ("Every company A-Z with its id, name, project_count, hue (its Swarm color-family hue, null for the default), parent_id (the company it sits under, null at the top level), hq_project_id and folder (where its new projects go, null when unset). A project with no company is orphaned.",
                        {}, [], companies_list),
     "session_notes_get": ("Get a session's markdown note (secrets redacted), live or asleep, with its revision and update time. session_notes_put needs that revision to write.", {"target": _TARGET_SCHEMA}, ["target"], session_notes_get),
 }
@@ -258,7 +258,7 @@ _TOOLS.update(card_tools.TOOLS)
 _TOOLS.update(card_validate_tools.TOOLS)
 _TOOLS.update(card_capacity_tools.TOOLS)
 _ROUTE_MODULES = (swarm_memory_tools, session_control_tools, companion_shell_tools, dialog_tools, dashboard_tools, preference_tools, notification_tools,
-                  project_lifecycle_tools, project_replica_tools, messaging_tools, description_tools, project_color_tools, color_tools, computers_tools, pack_machines_tools, app_update_tools, plugin_sideload_tools, plugin_admin_tools, pack_relay_tools, api_key_tools, pack_skills_tools, pack_global_sync_tools, pack_placement_tools, pack_transport_tools, pack_span_tools, pack_migrate_tools, pack_move_tools, browser_open_tools, files_open_tools, ui_show_tools, row_look_tools, pack_send_tools, usage_tools, session_usage_tools, session_inspect_tools, session_recovery_tools, session_background_tools, swarm_switch_tools, argent_tools, swarm_member_tools, beast_tools, autonomy_tools)
+                  project_lifecycle_tools, project_replica_tools, messaging_tools, description_tools, project_color_tools, color_tools, layout_tools, computers_tools, pack_machines_tools, app_update_tools, plugin_sideload_tools, plugin_admin_tools, pack_relay_tools, api_key_tools, pack_skills_tools, pack_global_sync_tools, pack_placement_tools, pack_transport_tools, pack_span_tools, pack_migrate_tools, pack_move_tools, browser_open_tools, files_open_tools, ui_show_tools, row_look_tools, pack_send_tools, usage_tools, session_usage_tools, session_inspect_tools, session_recovery_tools, session_background_tools, swarm_switch_tools, argent_tools, swarm_member_tools, beast_tools, autonomy_tools, pack_jobs_tools, pack_jobs_reply_tools, pack_jobs_metrics_tools, ssh_targets_tools, codex_helpers_tools, session_events_tools)
 for _module in _ROUTE_MODULES:
     _TOOLS.update(_module.READ_TOOLS)
     _TOOLS.update(_module.WRITE_TOOLS)
@@ -301,6 +301,9 @@ LARGE_BODY_TOOLS = cplug_mcp.BODY_LIMITS
 GATED_TOOLS = call_context.GATED_TOOLS | cplug_mcp.INBOX_TOOLS
 
 
+ALWAYS_LOAD = frozenset({"delegate"})
+
+
 def tool_definitions(caller: Optional[AgentCaller] = None) -> list[dict]:
     switches = agent_tool_switches.current() if caller is not None else None
     live = cplug_mcp.live_tools()
@@ -311,6 +314,7 @@ def tool_definitions(caller: Optional[AgentCaller] = None) -> list[dict]:
             "description": desc,
             "inputSchema": {"type": "object", "properties": props, "required": required},
             **({"annotations": hint} if (hint := read_only_hint.annotations(aliases.canonical(name), WRITE_TOOLS)) else {}),
+            **({"_meta": {"anthropic/alwaysLoad": True}} if name in ALWAYS_LOAD else {}),
         }
         for name, (desc, props, required, _h) in _TOOLS.items()
         if allowed(caller, name, switches, enabled_memo=memo)

@@ -126,7 +126,8 @@ def test_every_command_in_a_real_batch_actually_lands(scratch_session):
     assert _tmux(
         "show-options", "-t", name, "window-size"
     ).stdout.strip() == "window-size manual"
-    assert _tmux("list-keys", "-T", "root", "WheelUpPane").stdout.strip()
+    wheel_up = [ln for ln in _tmux("list-keys", "-T", "root").stdout.splitlines() if " WheelUpPane " in ln]
+    assert wheel_up and "scroll-up" in wheel_up[0]
 
 
 @requires_tmux

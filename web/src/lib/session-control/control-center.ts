@@ -41,7 +41,7 @@ export interface InterruptResponse {
 
 export function refreshKey(row: Record<string, unknown> | null | undefined): string {
     return JSON.stringify([
-        row?.subagents_running ?? null, row?.subagents_total ?? null, row?.background_open ?? null,
+        row?.subagents_running ?? null, row?.subagents_total ?? null, row?.subagents_stalled ?? null, row?.background_open ?? null,
         row?.timers_live ?? null, row?.timers_next_fire_at ?? null,
     ]);
 }

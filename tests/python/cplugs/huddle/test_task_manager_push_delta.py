@@ -12,8 +12,8 @@ import pytest
 from src.core.db_reuse.change_cache import CACHE
 from src.core.resource_push import notifier as notifier_module
 from src.core.work.storage import WorkStorage
-from src.cplugs.huddle import push_delta
-from src.cplugs.sdk import CplugContext
+from src.plugins.huddle import push_delta
+from src.plugins.sdk import CplugContext
 
 ITEMS = 40
 

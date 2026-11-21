@@ -9,7 +9,7 @@ import { flushSync, mount, unmount } from 'svelte';
 
 import SidebarControls from '../sidebar-widgets/SidebarControls.svelte';
 import { drawerSurface } from './drawer-surface.svelte';
-import { cplugEnablement } from '../../cplugs/host/enablement.svelte';
+import { cplugEnablement } from '../../plugins/host/enablement.svelte';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
 import { t } from '../i18n/index.svelte';
 

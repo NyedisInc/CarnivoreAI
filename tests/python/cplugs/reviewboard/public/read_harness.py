@@ -8,8 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from src.cplugs.reviewboard.public.edge import EdgeConfig, PublicEdge
-from src.cplugs.reviewboard import document
+from src.plugins.reviewboard.public.edge import EdgeConfig, PublicEdge
+from src.plugins.reviewboard import document
 from tests.python.cplugs.reviewboard.boards import SIDECAR
 
 PEER = "203.0.113.11"
@@ -92,5 +92,5 @@ def mint_token(store: Any, board: str = SIDECAR["board"]["slug"], mode: str = "p
     import asyncio
     from types import SimpleNamespace
 
-    from src.cplugs.reviewboard.public import minting
+    from src.plugins.reviewboard.public import minting
     return asyncio.run(minting.mint_link(SimpleNamespace(storage=store), board, ttl, mode))["token"]

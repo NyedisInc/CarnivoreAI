@@ -79,7 +79,7 @@ async def test_a_job_without_a_relay_ends_no_relay_and_a_helper_failure_ends_it_
     assert (job.state, job.error, job.running) == ("failed", "no_pack", False)
     job = join_job.start_join("123456", None, origin="local", totp_ok=True)
     join_job.fail_relay("several", [{"name": "a", "fid": "f1", "fid_short": "f1", "addresses": ["10.0.0.5"]}])
-    assert (job.state, job.error, job.running) == ("finding", None, False) and job.candidates == [{"name": "a", "fid": "f1", "fid_short": "f1", "pack_name": None, "label": "a f1"}]
+    assert (job.state, job.error, job.running) == ("finding", None, False) and job.candidates == [{"name": "a", "fid": "f1", "fid_short": "f1", "pack_name": None, "members": [], "label": "a"}]
     with pytest.raises(join_job.JoinNotAllowed):
         join_job.fail_relay("no_pack")
 

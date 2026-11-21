@@ -3,12 +3,12 @@
   import { buttonAttrs } from '../../../lib/base/classes';
   import { titleWhenTruncated } from '../../../lib/base/truncate';
   import Icon from '../../ui/Icon.svelte';
-  import TaskManagerMarkdown from '../../../cplugs/huddle/TaskManagerMarkdown.svelte';
-  import { webLink, type Resource, type Task } from '../../../cplugs/huddle/task-manager-design/model';
+  import TaskManagerMarkdown from '../../../plugins/huddle/TaskManagerMarkdown.svelte';
+  import { webLink, type Resource, type Task } from '../../../plugins/huddle/task-manager-design/model';
   import { answeredOf } from './mk2-answered';
   import Mk2Crosstalk from './Mk2Crosstalk.svelte';
-  import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
-  import SharedThumb from '../../../cplugs/huddle/task-manager-design/SharedThumb.svelte';
+  import type { HuddleItem } from '../../../plugins/huddle/huddle-model';
+  import SharedThumb from '../../../plugins/huddle/task-manager-design/SharedThumb.svelte';
 
   let { task, item, onResource, onSource, detailed = false }: { task: Task; item: HuddleItem; onResource: (id: string) => void; onSource: (resource: Resource) => void; detailed?: boolean } = $props();
 

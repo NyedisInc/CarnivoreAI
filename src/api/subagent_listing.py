@@ -45,6 +45,7 @@ def mark_subagents(session_manager: Any, infos: Iterable[Any]) -> None:
         info.subagents_state = tally.state if tally is not None else None
         info.subagents_running = tally.running if tally is not None else None
         info.subagents_total = tally.total if tally is not None else None
+        info.subagents_stalled = tally.stalled if tally is not None else None
         info.workflow_active = (
             workflow_active(observation.evidence) if observation is not None else None
         )

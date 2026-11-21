@@ -56,7 +56,7 @@ async def get_common_commands():
         return body
 
     except FileNotFoundError as e:
-        logger.error("auth_config_missing", error=str(e))
+        logger.error("auth_config_missing", error=str(e), error_type=type(e).__name__)
         raise HTTPException(
             status_code=500,
             detail="Configuration not found. Run setup_auth.py first."
@@ -95,30 +95,15 @@ async def toggle_favorite_command(body: ToggleFavoriteCommandRequest):
         HTTPException: 400 on a blank command or past the favorites cap,
             500 if config.json is missing or unreadable.
     """
-    try:
-        path = _config_path()
-        raw, declared = slash_favorites.read_raw(path)
-        entries = slash_favorites.toggle(raw, declared, body.command, body.favorite)
-        slash_favorites.write(path, entries)
-        settings.drop_auth_config_cache()
-        result = slash_favorites.payload(path)
-        logger.info(
-            "common_command_favorite_toggled",
-            command=body.command, favorite=body.favorite,
-            count=len(result["commands"]),
-        )
-        return result
-    except slash_favorites.FavoritesError as e:
-        raise api_error(400, "invalid_request", e, step="toggle_favorite_command") from e
-    except FileNotFoundError as e:
-        logger.error("auth_config_missing", error=str(e))
-        raise HTTPException(
-            status_code=500,
-            detail="Configuration not found. Run setup_auth.py first."
-        )
-    except ValueError as e:
-        logger.error("common_command_favorite_config_invalid", error=str(e))
-        raise api_error(500, "internal_error", e, step="toggle_favorite_command") from e
+    result = _favorites_write(
+        lambda path: slash_favorites.apply_toggle(path, body.command, body.favorite)
+    )
+    logger.info(
+        "common_command_favorite_toggled",
+        command=body.command, favorite=body.favorite,
+        count=len(result["commands"]),
+    )
+    return result
 
 
 def _stale_conflict(path: Path, error: Exception) -> HTTPException:
@@ -134,13 +119,13 @@ def _favorites_write(apply) -> dict:
     except slash_favorites.FavoritesError as e:
         raise api_error(400, "invalid_request", e, step="_favorites_write") from e
     except FileNotFoundError as e:
-        logger.error("auth_config_missing", error=str(e))
+        logger.error("auth_config_missing", error=str(e), error_type=type(e).__name__)
         raise HTTPException(
             status_code=500,
             detail="Configuration not found. Run setup_auth.py first."
         )
     except ValueError as e:
-        logger.error("common_command_favorite_config_invalid", error=str(e))
+        logger.error("common_command_favorite_config_invalid", error=str(e), error_type=type(e).__name__)
         raise api_error(500, "internal_error", e, step="_favorites_write") from e
     settings.drop_auth_config_cache()
     return slash_favorites.payload(path)

@@ -34,6 +34,7 @@ RETRY_STATUSES = (502, 503, 504)
 
 CHANNEL_HEADER = "X-Carnivore-Channel"
 SESSION_HEADER = "X-Carnivore-Session"
+TOOL_TIMEOUT_HEADER = "X-Carnivore-Tool-Timeout"
 MCP_SESSION_HEADER = "Mcp-Session-Id"
 PROTOCOL_HEADER = "Mcp-Protocol-Version"
 
@@ -245,6 +246,7 @@ class Upstream:
             h[SESSION_HEADER] = self.s.session_ref
         if self.s.channel:
             h[CHANNEL_HEADER] = "1"
+        h[TOOL_TIMEOUT_HEADER] = str(int(REQUEST_TIMEOUT_S))
         if with_session and self.session_id:
             h[MCP_SESSION_HEADER] = self.session_id
         if with_session and self.protocol:

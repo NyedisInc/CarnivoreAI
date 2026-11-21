@@ -1,5 +1,5 @@
 /* the home screen */
-import '../cplugs/host/early-kinds';
+import '../plugins/host/early-kinds';
 import '../app.css';
 import '../opscenter/app.css';
 import './popout.css';
@@ -10,7 +10,7 @@ import { mountPanel } from '../lib/mount';
 import OpscenterApp from '../opscenter/App.svelte';
 import { t } from '../lib/i18n/index.svelte';
 import { manifestById } from '../opscenter/widgets/core-manifests';
-import { popoutWidgetFor } from '../cplugs/host/popout-widgets';
+import { popoutWidgetFor } from '../plugins/host/popout-widgets';
 import SingleWidget from './SingleWidget.svelte';
 import AgentPopout from './AgentPopout.svelte';
 import TabPopout from './TabPopout.svelte';
@@ -24,7 +24,7 @@ import { BOARD_PARAM } from '../opscenter/engine/home-boards';
 import { bootListingPush } from '../lib/listing-push/boot';
 import { stopHomeCacheWrites } from '../opscenter/engine/persist';
 import { startPopoutEditor } from '../opscenter/layout-editor/popout-editor';
-import { startPopoutCplugs } from '../cplugs/host/popout-start';
+import { startPopoutCplugs } from '../plugins/host/popout-start';
 
 export const POPOUT_CONTAINER = 'popout-screen';
 

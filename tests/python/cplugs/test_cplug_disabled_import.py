@@ -2,8 +2,8 @@
 from pathlib import Path
 
 from src.core import ui_preferences
-from src.cplugs.host import runtime, state as owner_state
-from src.cplugs.host.legacy_disabled import import_disabled_plugins
+from src.plugins.host import runtime, state as owner_state
+from src.plugins.host.legacy_disabled import import_disabled_plugins
 
 MANIFESTS = {d.id: d.manifest for d in runtime.definitions()}
 

@@ -624,28 +624,37 @@
     },
     {
       "api_routes": [
-        "src/api/app_alerts_routes.py"
+        "src/api/app_alerts_routes.py",
+        "src/api/mass_death_routes.py",
+        "src/api/codex_helpers_routes.py"
       ],
       "area": "status-notifications",
       "docs": [
-        "docs/save-pipeline.md"
+        "docs/save-pipeline.md",
+        "docs/restart-and-recreate-history.md",
+        "docs/codex-helper-check.md"
       ],
       "examples": [
         "The Spark and the mini are both unreachable while conversations close: a red badge appears on the bell beside the Carnivore mark in the agents drawer, a card says no summary server reachable, and the panel shows how many summaries are waiting. The alert resolves by itself on the first summary that succeeds.",
         "You already know a server is down: dismiss the alert and it stays quiet until the condition clears, or snooze it for an hour.",
-        "You want a Slack message when the save pipeline stops, but no pop-up card: tick save pipeline under the Slack destination and untick it on screen."
+        "You want a Slack message when the save pipeline stops, but no pop-up card: tick save pipeline under the Slack destination and untick it on screen.",
+        "A stray kill command ends 18 agent panes in one second: one alert says 18 sessions died at once, and its resume all with a note button wakes each into its same conversation and types a short note telling it what happened."
       ],
       "how_to": [
         "Click the bell beside the Carnivore mark in the agents drawer (or under the claw of the closed drawer's icon rail): open alerts first, errors before warnings, each with its count and first and last seen; resolved alerts of the last 24 hours fold underneath. On a phone with the drawer shut, a coloured dot on the claw says an alert is open; tap the claw, then the bell. Clicking any alert card opens the panel too.",
         "Dismiss, snooze 1h, or clear resolved from the panel; each is a route: POST /api/v1/alerts/{id}/dismiss, POST /api/v1/alerts/{id}/snooze {minutes}, POST /api/v1/alerts/dismiss-resolved.",
         "GET /api/v1/alerts?state=active|all for the list and the badge counts; changes also arrive on /ws/events as app_alert.raised, app_alert.updated and app_alert.resolved.",
         "An alert card can be hidden per type: untick that alert's row in the screen column of the routing matrix. The bell and the panel still list it.",
-        "Alerts can also be routed to outside destinations (chat, push, email, sms): tick the alert rows (self check, save pipeline, archive, transcripts, account, phone link) under a destination in the matrix."
+        "Alerts can also be routed to outside destinations (chat, push, email, sms): tick the alert rows (self check, save pipeline, archive, transcripts, account, phone link) under a destination in the matrix.",
+        "After a mass pane death (3 or more panes dead within 10 seconds, seen at boot too) press resume all with a note on the alert: POST /api/v1/sessions/mass-death/resume, or the session_mass_death_resume MCP tool. A session a gate declines is reported and left alone.",
+        "When macOS blocks a Codex version's helper programs (quarantined and never approved), one alert per version says so: \"macos blocked codex 0.170 helpers: approve them in system settings > privacy & security\". It goes to every destination with self check ticked (phone push included), its open privacy & security button opens the pane, re-check looks again, and it resolves itself once the check passes. Each Codex row's codex_helpers field carries the same sentence. Status: GET /api/v1/agents/codex/helpers, run now: POST /api/v1/agents/codex/helpers/check, or the codex_helpers_status and codex_helpers_check MCP tools."
       ],
       "id": "app-alert-center",
       "issues": [
         1143,
-        1278
+        1278,
+        2974,
+        3046
       ],
       "keywords": [
         "alert",
@@ -653,7 +662,10 @@
         "app health",
         "badge",
         "bell",
+        "codex helpers",
+        "gatekeeper",
         "llm down",
+        "quarantine",
         "spark",
         "summary server",
         "warning"
@@ -664,7 +676,7 @@
       "status": "beta",
       "summary": "one place for app health: any part of the app can raise a deduplicated alert with a severity, and the bell in the agents drawer shows the count, a panel lists them, and every newly raised alert raises a card coloured by its severity.",
       "surfaces": [],
-      "updated": "2026-10-03",
+      "updated": "2026-11-18",
       "where": [
         "The bell beside the Carnivore mark in the agents drawer's header, and under the claw of the closed drawer's icon rail; on a phone, a severity dot on the claw that opens the drawer. Shown once signed in. API under /api/v1/alerts."
       ]
@@ -1006,8 +1018,8 @@
         "src/core/argent/rollout.py",
         "src/core/budget_hold/gate.py",
         "src/core/mcp/argent_tools.py",
-        "src/cplugs/argent/__init__.py",
-        "web/src/cplugs/argent/ArgentSettings.svelte"
+        "src/plugins/argent/__init__.py",
+        "web/src/plugins/argent/ArgentSettings.svelte"
       ],
       "updated": "2026-11-05",
       "where": [
@@ -1114,7 +1126,7 @@
         "PUT /api/v1/automations/scheduler"
       ],
       "area": "settings",
-      "description": "An automation is a cron schedule on this computer's clock plus one thing to do, today a report recipe (Scrooge). The Automations page lists them with their next fire time, newest run and an on or off switch; edit, run now and delete sit on each row. Cron also reads the third Tuesday style, written 2#3 in the day-of-week field, and POST /automations/schedule/parse turns a sentence like every third Tuesday at 5 PM into a cron through the connected AI, for confirmation only. The editor checks the cron as you type and shows the next five fires or the reason it is refused (two fires under 15 minutes apart, or never). Under the selected automation, run history shows each run's status, cost and named reason; consecutive skips with the same reason fold into one row that gives the count and dates. A run with a report opens it in place: totals, projects, lever coverage including the levers that could not be measured, and the findings. Every action is an authenticated route, and the page follows the automations and automation_runs push topics instead of polling. A cron agent target runs the installed claude (claude -p) on a schedule in a project folder under a picked login: read only by default, file edits inside the folder as an opt-in, or no permission prompts only after typing a confirming phrase in the app (never settable over MCP), with a spend cap, turn limit and time limit on every run. A finished agent run shows its final text and a continue in a session button that opens a Carnivore session resuming its conversation. The page has three tabs: automations (the list), sessions (projects, the sessions under each, and the automations on each node, with unassigned for the rest, each node showing its next run and last result) and, while the task manager addon is enabled, task manager (the task manager items that carry a schedule, by list, read only). Schedule this on a session or project in the drawer opens the editor already pointed at it. A scheduler pause switch on the page (and in the menu bar tray menu, which also lists the next three runs and the last three results and opens this page) holds every scheduled run as a skipped run with the reason scheduler_paused; run now still works. The page opens simple: an automations tab of tiles and cards, a sessions tab that is a review feed with a quick-view drawer, and an advanced tab that keeps everything above (table, pane, run feed, counters, scheduler log, commands, pause switch) unchanged. A run title and summary are written by code on the server, never by an AI.",
+      "description": "An automation is a cron schedule on this computer's clock plus one thing to do, today a report recipe (Scrooge). The Automations page lists them with their next fire time, newest run and an on or off switch; a row's right click, long press or Shift+F10 opens its one menu (edit, duplicate, delete), and the selected automation's pane head opens the same menu the same way, beside its switch, run now and edit buttons. Cron also reads the third Tuesday style, written 2#3 in the day-of-week field, and POST /automations/schedule/parse turns a sentence like every third Tuesday at 5 PM into a cron through the connected AI, for confirmation only. The editor checks the cron as you type and shows the next five fires or the reason it is refused (two fires under 15 minutes apart, or never). Under the selected automation, run history shows each run's status, cost and named reason; consecutive skips with the same reason fold into one row that gives the count and dates. A run with a report opens it in place: totals, projects, lever coverage including the levers that could not be measured, and the findings. Every action is an authenticated route, and the page follows the automations and automation_runs push topics instead of polling. A cron agent target runs the installed claude (claude -p) on a schedule in a project folder under a picked login: read only by default, file edits inside the folder as an opt-in, or no permission prompts only after typing a confirming phrase in the app (never settable over MCP), with a spend cap, turn limit and time limit on every run. A finished agent run shows its final text and a continue in a session button that opens a Carnivore session resuming its conversation. The page has three tabs: automations (the list), sessions (projects, the sessions under each, and the automations on each node, with unassigned for the rest, each node showing its next run and last result) and, while the task manager addon is enabled, task manager (the task manager items that carry a schedule, by list, read only). Schedule this on a session or project in the drawer opens the editor already pointed at it. A scheduler pause switch on the page (and in the menu bar tray menu, which also lists the next three runs and the last three results and opens this page) holds every scheduled run as a skipped run with the reason scheduler_paused; run now still works. The page opens simple: an automations tab of tiles and cards, a sessions tab that is a review feed with a quick-view drawer, and an advanced tab that keeps everything above (table, pane, run feed, counters, scheduler log, commands, pause switch) unchanged. A run title and summary are written by code on the server, never by an AI.",
       "docs": [
         "docs/automations.md",
         "docs/mcp-server.md"
@@ -1329,7 +1341,7 @@
         "src/core/approvals/beast_grid_migration.py",
         "src/core/mcp/beast_tools.py",
         "src/api/beast_mode_routes.py",
-        "src/cplugs/sdk/beast_mode.py",
+        "src/plugins/sdk/beast_mode.py",
         "src/core/approvals/auto_answer/engine.py",
         "src/core/beast_prompts/engine.py",
         "src/core/mcp/beast_mode.py",
@@ -1803,16 +1815,18 @@
         "src/api/hero_image_routes.py"
       ],
       "area": "sessions",
-      "description": "A company is a named group of projects, the tier above them (company, then project, then agent). Create, rename and delete companies, nest one company under another (up to four levels), and file any project under one or take it out. A project with no company is orphaned. A project whose folder sits inside another project's folder shows under that project. Deleting a company orphans its projects and moves its child companies up a level, and touches nothing else. Every browser updates live, and agents can read companies through the carnivore MCP server.",
+      "description": "A company is a named group of projects, the tier above them (company, then project, then agent). Create, rename and delete companies, nest one company under another (up to four levels), and file any project under one or take it out. A project with no company is orphaned. A project whose folder sits inside another project's folder shows under that project. Deleting a company orphans its projects and moves its child companies up a level, and touches nothing else. Every browser updates live, and agents can read companies through the carnivore MCP server. A company can store a folder its new projects go under, a default that moves nothing on disk.",
       "docs": [
-        "docs/mcp-server.md"
+        "docs/mcp-server.md",
+        "docs/new-project-form.md"
       ],
       "examples": [
         "Group the projects of one client under a company, so the sidebar and projects page can show them together.",
         "Delete a company you no longer use: its projects become orphaned and keep all their agents.",
         "Open the projects page, press a company card, and see only that client's projects; an old #projects/<project> link opens at its company path.",
         "Open the projects page: companies show as hero cards (toggle to a ledger of thumbnails) above the orphaned projects, each section with its own toggle; a company's own menu has set image to replace a generated hero and remove image to bring it back.",
-        "Mirror a folder tree: IMC as a company, Amerifund as a company under it, and Org/IMC/Amerifund/support as a project nested under the Amerifund project."
+        "Mirror a folder tree: Acme as a company, Apex as a company under it, and Org/Acme/Apex/support as a project nested under the Apex project.",
+        "Give Globex the folder Org/Acme/Globex once; every new Globex project is then proposed at Org/Acme/Globex/<project name>, and moving a project elsewhere stays one click."
       ],
       "how_to": [
         "In the agents tab, open a project heading's menu, pick company, then a company (or new company to name one).",
@@ -1823,11 +1837,13 @@
         "On the projects page press new company, or the kebab on a company card to rename or delete it.",
         "On a project's menu choose company, then pick a company (or new company); choose remove from company, under it, to orphan the project.",
         "Call POST /api/v1/companies with a name and a parent_id to create a company under another; PATCH /api/v1/companies/{id} with parent_id (null for the top level) to move it, or hq_project_id to set its HQ project.",
-        "Put a project's folder inside another project's folder and it shows nested under that project in the agents tab, when both are in the same company."
+        "Put a project's folder inside another project's folder and it shows nested under that project in the agents tab, when both are in the same company.",
+        "Call PATCH /api/v1/companies/{id} with a folder (an existing folder, or null to clear it) to set the folder its new projects go under; the new project form opens its tree there."
       ],
       "id": "companies",
       "issues": [
-        1338
+        1338,
+        2945
       ],
       "keywords": [
         "company",
@@ -1852,9 +1868,10 @@
         "the companies_list MCP tool",
         "the projects page companies level (#projects/c/<company id>)",
         "the company headings and the company menu on a project in the agents tab",
-        "PUT/GET/DELETE /api/v1/companies/{id}/image and /api/v1/projects/{project}/image (hero images)"
+        "PUT/GET/DELETE /api/v1/companies/{id}/image and /api/v1/projects/{project}/image (hero images)",
+        "the company_folder_set and project_company_set MCP tools"
       ],
-      "updated": "2026-11-07",
+      "updated": "2026-11-11",
       "where": [
         "The agents tab of the sidebar: every top-level company is a foldable heading, A to Z, with its projects and their agents inside it, then its child companies, each one step further in; a project inside another project's folder sits under it; an orphaned projects heading comes last.",
         "The routes under /api/v1/companies.",
@@ -2390,7 +2407,7 @@
         "GET /api/v1/cplugs/{id}/view/{name}/{ticket}/{file}"
       ],
       "area": "settings",
-      "description": "A plugin's own script runs only inside a sandboxed frame with no network, no cookies, no storage and no access to the app around it. It talks to its own plugin through a small bridge that reaches only the routes the plugin declared. The overlay surface is live: one transparent layer under every popover that is clipped to a few declared rectangles and never covers the terminal. The panel surface (a view as a widget or tab) is not offered yet because it needs the layout owner's hooks.",
+      "description": "A plugin's own script runs only inside a sandboxed frame with no network, no cookies, no storage and no access to the app around it. It talks to its own plugin through a small bridge that reaches only the routes the plugin declared. The overlay surface is live: one transparent layer under every popover that is clipped to a few declared rectangles and never covers the terminal. The panel surface is live too: a view that declares it is a widget and can also open as a tab beside your terminals.",
       "docs": [
         "docs/cplug-platform.md",
         "docs/cplug-runtime.md",
@@ -2402,7 +2419,8 @@
       "how_to": [
         "Install a plugin that declares a view and turn it on with third-party plugins enabled.",
         "Its overlay view appears; clicks outside its declared rectangles go to the app underneath.",
-        "Turn the plugin or the master switch off and the frame is removed."
+        "Turn the plugin or the master switch off and the frame is removed.",
+        "A view that declares the panel surface can also open as a tab of a terminal group: plus menu, widget, plugins, then the plugin's name."
       ],
       "id": "custom-view-frame",
       "issues": [
@@ -2933,12 +2951,12 @@
       "summary": "load a plugin from a local folder to try it, under developer mode, which turns itself off after the duration you pick.",
       "surfaces": [
         "web/src/lib/plugins-page/SideloadSwitch.svelte",
-        "src/cplugs/host/sideload_routes.py",
-        "src/cplugs/host/sideload.py",
+        "src/plugins/host/sideload_routes.py",
+        "src/plugins/host/sideload.py",
         "web/src/lib/cplug-ui/page-views.svelte.ts",
         "web/src/lib/cplug-ui/PageMenu.svelte",
         "web/src/lib/cplug-ui/PageMain.svelte",
-        "src/cplugs/host/sidecar_page.py",
+        "src/plugins/host/sidecar_page.py",
         "web/src/lib/plugins-page/drop-folder.ts"
       ],
       "updated": "2026-11-09",
@@ -3111,13 +3129,13 @@
       "status": "beta",
       "summary": "a developer plugin, off by default: a page that draws any registered widget in each host it is declared for at its published sizes, under any theme, from a fixture or a pasted json scenario, and captures it to a png with metadata.",
       "surfaces": [
-        "src/cplugs/devwidgetlab/__init__.py",
-        "src/cplugs/devwidgetlab/cplug.json",
-        "src/cplugs/devwidgetlab/routes.py",
-        "src/cplugs/devwidgetlab/capture.py",
-        "web/src/cplugs/devwidgetlab/index.ts",
-        "web/src/cplugs/devwidgetlab/LabViewer.svelte",
-        "web/src/cplugs/sdk/widget-lab.ts",
+        "src/plugins/devwidgetlab/__init__.py",
+        "src/plugins/devwidgetlab/cplug.json",
+        "src/plugins/devwidgetlab/routes.py",
+        "src/plugins/devwidgetlab/capture.py",
+        "web/src/plugins/devwidgetlab/index.ts",
+        "web/src/plugins/devwidgetlab/LabViewer.svelte",
+        "web/src/plugins/sdk/widget-lab.ts",
         "web/src/widget-harness/scenario.ts",
         "web/src/widget-harness/scenario-store.ts",
         "scripts/widgets/capture_one.py",
@@ -3593,7 +3611,7 @@
     },
     {
       "api_routes": [
-        "src/cplugs/flow/routes.py"
+        "src/plugins/flow/routes.py"
       ],
       "area": "sessions",
       "description": "The flow plugin rebuilds a multi-agent run two ways from one collector. The swimlane flow chart: one lane per agent session with subagents nested under their parent, blocks for the work each did, and arrows for crosstalk messages, spawns, subagent launches and returns, task manager posts and owner replies, every item carrying the ids it came from and an arrow no exact key proves marked inferred; an agent calls flow_get (or the owner its route), and with html set gets one self-contained page to post to the task manager. The flow tab: a live chat of the same run, ordered by cause instead of a time axis, with each agent's words as a bubble in its own color (a subagent stepped in under its parent) and cards between them for tasks, crosstalk, spawns, subagent launches and returns, task manager posts and runs of tool calls (folded, open to see each call). The tab is for testing and stays out of the tab strip until the plugin setting show tab is switched on (it ships off). The tab follows the run as it happens over the push while it is open and does nothing while it is closed. The plugin ships off; finished charts are kept as snapshots in its own flow.db.",
@@ -3634,11 +3652,11 @@
       "status": "beta",
       "summary": "rebuild a multi-agent run as a swimlane chart on demand, or follow it live as a chat in the flow tab.",
       "surfaces": [
-        "src/cplugs/flow/mcp.py",
-        "src/cplugs/flow/views/page.py",
+        "src/plugins/flow/mcp.py",
+        "src/plugins/flow/views/page.py",
         "src/core/flow_data/feed.py",
         "src/core/flow_data/live.py",
-        "web/src/cplugs/flow/FlowBody.svelte"
+        "web/src/plugins/flow/FlowBody.svelte"
       ],
       "updated": "2026-10-27",
       "where": [
@@ -3727,7 +3745,7 @@
       "how_to": [
         "Scan the stat tiles (one figure each), then running sessions, recently closed, projects, skills, themes and the provider ledger.",
         "Click a running session to open it; use + to start one.",
-        "Read token/cache breakdowns, API-equivalent cost, activity, model/project rankings, tokens per agent (a line per agent over 1h, 24h or 1w, with the running agents and their tokens per minute below) and account/window quota history on Home. Open Details for filters, tables, annotations and comparisons. Edit layout to configure or hide cards; existing arrangements are preserved.",
+        "Read token/cache breakdowns (the tokens used card picks 1h, 24h or 1w in its header), API-equivalent cost, activity, model/project rankings, tokens per agent (a line per agent over 1h, 24h or 1w, with the running agents and their tokens per minute below) and account/window quota history on Home. Open Details for filters, tables, annotations and comparisons. Edit layout to configure or hide cards; existing arrangements are preserved.",
         "Every widget wears one 31px header: its icon menu at the left, its name, its own controls, then a close x that hides it at once (back from the components list; a copy such as a browser is removed). Untick show header in the icon menu to hide one copy's header on every device; its icon then sits over the top left of the widget.",
         "Drag the thin grip under the bottom row of widgets downward to make that row taller than the window; the home screen then scrolls. Drag it back up to shrink it (it stops where the page fits the window); the height is saved like any other row height."
       ],
@@ -4598,11 +4616,11 @@
       "surfaces": [
         "packages/cplugs/mcphealth/cplug.json",
         "packages/cplugs/mcphealth/mcphealth_main.py",
-        "src/cplugs/host/mcp_health_port.py",
+        "src/plugins/host/mcp_health_port.py",
         "src/core/mcp_health/monitor.py",
         "src/core/mcp_health/host_methods.py",
-        "src/cplugs/host/catalog_move.py",
-        "src/cplugs/sdk/mcp_health.py",
+        "src/plugins/host/catalog_move.py",
+        "src/plugins/sdk/mcp_health.py",
         "src/api/mcp_health_listing.py"
       ],
       "updated": "2026-10-25",
@@ -4832,8 +4850,8 @@
       "surfaces": [
         "web/src/lib/notifications/inspector/Inspector.svelte",
         "web/src/lib/notifications/destinations/DestinationsPanel.svelte",
-        "web/src/lib/notifications/matrix/MatrixPanel.svelte",
-        "web/src/lib/notifications/matrix/LinkPanel.svelte"
+        "web/src/lib/notifications/inspector/GroupRail.svelte",
+        "web/src/lib/notifications/inspector/ComputerBlocks.svelte"
       ],
       "updated": "2026-11-07",
       "where": [
@@ -4859,17 +4877,20 @@
         "Several sessions are waiting while you are away: the detailed style says how many, and each card tells you what it wants (\"wants permission: Bash git push\") without opening it.",
         "Finished-turn cards are noisy while you work: untick the screen column for that notification and the bell and history still record it.",
         "A finished-turn card keeps popping on your phone while you work at the computer: tap its mute button, pick mute here, and that phone stops showing and pushing it while the computer still does.",
-        "You are typing in one session while another asks for permission: only the other one bings, and your phone stays quiet about the one you are already looking at."
+        "You are typing in one session while another asks for permission: only the other one bings, and your phone stays quiet about the one you are already looking at.",
+        "Your phone stays quiet about finished turns while nostromo still shows them: untick phone on tower's block for the sessions group."
       ],
       "how_to": [
         "Click a toast to open that session; dismiss it with its x. Click a question or permission toast (also from the history list, a browser push or the desktop notification) to open the approvals popup on that item instead; it closes itself once answered.",
         "A busy session's toasts are grouped into one.",
         "Pick the toast style under settings, notifications, toast style: compact (the default) shows each session's most urgent event; detailed shows its latest event with a descriptive title and a snippet, counts the sessions waiting, and a click opens the session and dismisses only that card.",
         "Attach an image to a session and click the small thumbnail on the attached notice to see it full size; Esc, a click outside the picture or the close button closes it.",
-        "Settings, notifications, routing, the screen column: untick a notification to stop its pop-up card. Needs-you cards are always shown. Hiding a card hides the pop-up only; the bell, the history, the status light and the tray still keep it.",
         "Every notification card has a mute button at its bottom right: mute here silences that type on this device (on a phone, its push too), mute everywhere silences it on every device and destination. A muted card confirms with an undo. Settings, notifications, routing, muted notifications lists each mute with where it holds and an unmute button. Muting never changes the status lights.",
         "A program that prints a notification escape code (OSC 9, 777 or 99) raises a terminal notice card; mute the type here to switch it off for one session.",
-        "Quiet for the session you are looking at (settings, notifications, on by default): the session whose terminal has the keyboard in a focused Carnivore window gets no card, banner or sound, and its phone alerts wait; a needs-you item still open after 2 minutes reaches the phone then. Other sessions that need you still get a Mac banner with sound while Carnivore is in front; their other events stay cards. The iPhone app shows no banner for the session it has open."
+        "Quiet for the session you are looking at (settings, notifications, on by default): the session whose terminal has the keyboard in a focused Carnivore window gets no card, banner or sound, and its phone alerts wait; a needs-you item still open after 2 minutes reaches the phone then. Other sessions that need you still get a Mac banner with sound while Carnivore is in front; their other events stay cards. The iPhone app shows no banner for the session it has open.",
+        "Settings, notifications, routing: each of the eight groups (needs you, sessions, messages, swarm, health, security, automations, app) has one switch; a blue square with a half-filled triangle means some of its types are on. The advanced view unfolds every type with its own switch. Switching a type or group off keeps where it was sent; switching it on restores that. Needs-you cards are always shown, and hiding a card hides the pop-up only; the bell, the history, the status light and the tray still keep it.",
+        "Under send it to, every Pack computer has its own block: in the app, on the desktop (with a corner card option) and phone. A computer that has not saved a choice yet shows not set yet. Under how it sounds pick the sound (the play icon previews it) and the urgency. Under test, send a test for the selected type to your phone, to this computer's desktop or to the carnivore app; each shows its own result line.",
+        "One preview with a caption shows what the notification is, when it shows and where it appears; switch it between app, desktop and phone."
       ],
       "id": "notification-toasts",
       "issues": [
@@ -4878,7 +4899,8 @@
         1278,
         1445,
         2732,
-        2745
+        2745,
+        3067
       ],
       "keywords": [
         "detailed",
@@ -4890,24 +4912,11 @@
         "mute",
         "quiet"
       ],
-      "media": [
-        {
-          "alt": "two toast cards under a line reading 2 sessions waiting: wants permission: Bash npm run build for web-client, and finished and is waiting on you for api-server, each with a snippet",
-          "caption": "the detailed toast style: the latest event per session with a descriptive title and a snippet, and a count of sessions waiting",
-          "file": "detailed-stack.png",
-          "kind": "screenshot"
-        },
-        {
-          "alt": "two toast cards: needs your permission for web-client and Your turn for api-server",
-          "caption": "the compact toast style, the default: one card per session showing its most urgent event",
-          "file": "compact-stack.png",
-          "kind": "screenshot"
-        }
-      ],
+      "media_exempt": "the old toast screenshots no longer show the routing screen; the routing screen is recaptured before the next version bump (features/capture), not per change",
       "name": "Notification toasts",
       "since": "2026-09-10",
       "status": "stable",
-      "summary": "get a toast when a session needs your attention, grouped so a busy session doesn't spam you; the screen column of the routing matrix decides which cards pop up.",
+      "summary": "get a toast when a session needs your attention, grouped so a busy session doesn't spam you; the routing screen decides, per computer, whether each notification lands in the app, on the desktop or on your phone.",
       "surfaces": [
         "client/js/toast-grouping.js",
         "client/js/toast-mode.js",
@@ -4919,9 +4928,10 @@
         "web/src/lib/notifications/mute/mute-control.ts",
         "web/src/lib/notifications/mute/MutesPanel.svelte"
       ],
-      "updated": "2026-10-30",
+      "updated": "2026-11-19",
       "where": [
         "Top right of the screen, when a session needs you.",
+        "Settings, notifications tab: the routing screen (eight groups on the left, the selected group or type on the right, with one block per Pack computer).",
         "Settings, notifications tab, toast style.",
         "Bottom right of every notification card: the mute button. Settings, notifications tab, muted notifications."
       ]
@@ -4970,11 +4980,11 @@
       "status": "stable",
       "summary": "wakes an idle agent about stale swarm items and flags an item to you when the agent never answers; part of the Task Manager plugin again, with its own switch that ships off.",
       "surfaces": [
-        "src/cplugs/huddle/nudge/__init__.py",
-        "src/cplugs/huddle/nudge/sweep.py",
-        "src/cplugs/huddle/nudge/scheduler.py",
-        "src/cplugs/huddle/nudge/lines.py",
-        "src/cplugs/host/plugin_fold.py"
+        "src/plugins/huddle/nudge/__init__.py",
+        "src/plugins/huddle/nudge/sweep.py",
+        "src/plugins/huddle/nudge/scheduler.py",
+        "src/plugins/huddle/nudge/lines.py",
+        "src/plugins/host/plugin_fold.py"
       ],
       "updated": "2026-10-16",
       "where": [
@@ -5101,6 +5111,122 @@
         "Session menu, Open In Terminal App... in the menu bar, and the terminal widget menu, open in terminal app.",
         "The Carnivore icon in the Dock (drop a folder) and any terminal in the window (drop a file or folder).",
         "Session menu and File menu: Reveal in Finder, Open in Editor, Reveal Project in Finder, Open Project in Editor."
+      ]
+    },
+    {
+      "api_routes": [
+        "POST /pack/jobs",
+        "GET /pack/jobs",
+        "GET /pack/jobs/{job_id}",
+        "POST /pack/jobs/{job_id}/stop",
+        "GET /projects/{name}/auto-delegate",
+        "PUT /projects/{name}/auto-delegate",
+        "POST /pack/machines/{machine}/rescan",
+        "PUT /pack/machines/{machine}/labels",
+        "GET /projects/{name}/delegate-needs",
+        "PUT /projects/{name}/delegate-needs",
+        "GET /pack/installs",
+        "POST /pack/installs",
+        "GET /pack/jobs/metrics",
+        "GET /pack/ssh-targets",
+        "PUT /pack/ssh-targets/{host_key}",
+        "POST /pack/ssh-targets/{host_key}/probe",
+        "DELETE /pack/ssh-targets/{host_key}/folders"
+      ],
+      "area": "settings",
+      "description": "A project you mark for auto-delegate lets a session's agent call the delegate tool before a heavy command. When this computer has no room, Carnivore copies the working folder into a side repository, the other computer runs the command in its own job folder, and the changed files are applied back here. The mark is off by default and an agent's delegate waits for your approval unless Beast Mode is on. A job can also be a task: delegate takes a task and an optional agent type, the other computer starts a normal visible session of the same harness (claude or codex) in the job folder, and its changed files, closing text and token usage come back. A worker's question parks the job for job_reply, and the caller is told once when a job needs it. The worker runs under a login the other computer chooses, never your credentials, and git push is blocked by default (not a sandbox). A job can also say what it needs (tools, a GPU, memory, an owner label): a job no computer can run is refused with a plain reason, a missing tool on the other computer can be installed with Homebrew after you approve, copies stay in sync and warmed ahead of the first job, and a counter shows how much heavy work stayed home. The jobs have a screen, the Pack page's jobs tab, with the numbers on work that stayed home, and a count on the session row.",
+      "docs": [
+        "docs/pack-jobs.md"
+      ],
+      "examples": [
+        "Run the whole test suite on the idle computer while this one keeps its CPU for you.",
+        "Build a project on a computer that already has its dependencies installed and get the build output back.",
+        "Stop a runaway job from its agent with job_stop and have the other computer free its folder.",
+        "Ask a worker on the idle computer to write the missing tests for a module and get the new files back with what it said and what it cost.",
+        "See that the studio computer has the ios simulator and is not pegged before you send it a build.",
+        "Label a computer rtx 4090, then let an agent ask for it by that label.",
+        "See which computer is running the long test run an agent handed off, and stop it from the jobs tab.",
+        "Turn auto-delegate off, then press trash on the studio computer's leftover copy and see it go to that computer's trash, while the copy with unfinished work is kept and named.",
+        "Spot the 2 jobs badge on a session row and click it to see what that session handed to other computers.",
+        "Start a session for a marked project while a test run pegs this computer: auto starts it on the idle computer, in its copy at your last commit.",
+        "Pick auto for a project that needs xcode: the session starts on the computer that has it, or the picker says why nobody can.",
+        "Send a render to a Windows computer with a big graphics card that runs no carnivore, reached over ssh on port 2222: the card says it runs there over ssh, and the result files come back here.",
+        "See that a computer over ssh did not answer, with its last figures shown by age, before an agent sends it a job.",
+        "See in the heavy work block that most of this week's test runs ran on the studio computer, and how many hours stayed here while this computer was busy."
+      ],
+      "how_to": [
+        "Right click the project's heading, pick project settings, untick any computer that must never get a copy, then turn on auto-delegate; it copies the project at once.",
+        "Turning it off asks nothing: flip the switch in the project settings and it is off. The master stays here and the copies stay on their computers, idle and not syncing. Each copy auto-delegate made is listed as computer: copy kept at folder with a trash button; trash moves it to that computer's trash after its own checks, and a copy with uncommitted work, a stash, commits the master lacks, or a live session is kept with the reason. Copies you made yourself are never listed.",
+        "Ask an agent to run a heavy command. It calls delegate first; the answer is either decision here (run it yourself) or a job on another computer.",
+        "Approve the card in the approvals inbox. With Beast Mode off the card says Beast Mode would have approved it.",
+        "A job that takes longer than one call: the agent calls job_wait with the job id.",
+        "If a changed file clashed with an edit you made meanwhile, nothing is applied and the job's version waits on a ref for 24 hours.",
+        "Hand over a task instead of a command: the agent calls delegate with task (and agent_type for a named agent). The card shows the task, the worker's permission mode (bypass is a warning line) and the account note. A worker's question comes back as a question answer; answer it with job_reply.",
+        "Open the Pack page, pick a computer and read the what it has block: system, chip, memory, gpus, tools and whether it is pegged. Press check again to re-read it now (at most once a minute).",
+        "Add or remove a label in the same block; each change saves the whole list at once.",
+        "A computer that shows update carnivore on this computer to see what it has runs an older version.",
+        "Add needs and prefer to a delegate call, for example needs [\"xcode\"]; a refused answer names the computers and what each lacks.",
+        "Open the Pack page and pick the jobs tab. Live jobs show first with a state tag, the task or command, the computer and project, and how long they have run; the live and all filter adds the older ones, and details shows the exit code, output and result.",
+        "Press stop on a live job and confirm; the row changes to stopped when the computer answers. Press open worker on an agent job to open the worker's session.",
+        "A session that started live jobs shows a job count on its row; click it to open the jobs tab narrowed to that session, and clear the chip to see every job.",
+        "Jobs other computers sent to this one are listed under running here for another computer; they are read only.",
+        "Open the launch picker on a marked project, pick auto in the computer row and start: Carnivore says where it started, how many uncommitted files stayed on this computer, and that the work lives on that computer until it pushes or you move it back.",
+        "Agents can ask for it: session_create or agent_spawn with placement auto (and needs); the approval card names the computer, the account and the permission mode.",
+        "For a blueprint automation, set its computer row to auto: each member without a computer of its own is placed the same way; a member with an opening prompt starts here.",
+        "Add the computer in the hosts list, then turn takes-work on for it with its fingerprint: the first try shows the host key to compare, the second (with that fingerprint) pins it. A computer over ssh runs command jobs only, never an agent task, and nothing is installed on it.",
+        "Open a project's settings, find what its jobs need under the auto-delegate switch, and type the words a kind of job must have or should prefer; save sends only the kinds you changed, and back to default restores the built-in words.",
+        "Open a computer in the Pack page, then its allow lists: pick every project, or only the projects and companies you tick, so a computer never takes work from a project you did not allow.",
+        "Remove the copies an ssh computer holds from its block in the computers tab (it asks once)."
+      ],
+      "id": "pack-auto-delegate",
+      "issues": [
+        2988,
+        2989,
+        2990,
+        2993,
+        2992,
+        2991
+      ],
+      "keywords": [
+        "pack",
+        "delegate",
+        "job",
+        "auto-delegate",
+        "remote command",
+        "placement",
+        "agent job",
+        "worker",
+        "job_reply",
+        "needs",
+        "homebrew install",
+        "keep in sync",
+        "delegate_stats"
+      ],
+      "media_exempt": "captured at the next version bump",
+      "name": "Auto-delegate",
+      "since": "2026-11-16",
+      "status": "beta",
+      "summary": "an agent can hand a heavy command, such as a test run or a build, or a whole task for a worker session, to another computer of your pack, and the changed files come back unless one of them clashes with your own edit.",
+      "surfaces": [
+        "src/api/pack_jobs_routes.py",
+        "src/api/federation_pack_jobs_routes.py",
+        "src/core/mcp/pack_jobs_tools.py",
+        "src/core/pack/jobs/",
+        "src/core/mcp/pack_jobs_reply_tools.py",
+        "src/api/pack_ssh_target_routes.py",
+        "src/core/pack/jobs/ssh/",
+        "src/core/mcp/ssh_targets_tools.py"
+      ],
+      "updated": "2026-11-19",
+      "where": [
+        "a project heading's menu (drawer or sessions page) > project settings > sharing this project between computers",
+        "Agent tools delegate, job_reply, job_wait and job_stop, and the owner routes under /pack/jobs and /projects/{name}/auto-delegate. The approval card appears in the approvals inbox. The delegated usage shows in the terminal foot bar. The jobs have a screen: Pack page > jobs.",
+        "project settings > auto-delegate > turn the switch off: no dialog; each copy it made is listed with a trash button",
+        "Pack page > computers > a computer > overview > what it has (facts, labels, pegged line, check again)",
+        "Pack page > jobs (live jobs, history, and the jobs other computers sent here); a session row's job count in the sidebar and on the sessions page",
+        "Launch picker > computer (this computer or auto), for a project marked auto-delegate; and a saved blueprint automation's editor > computer row (this computer or auto)",
+        "Settings of a computer reached by plain ssh: the hosts list in the app, then the owner routes under /pack/ssh-targets (the agent tool ssh_targets_list only reads them)",
+        "project settings > auto-delegate > what its jobs need (per kind: needs, prefer, back to default); Pack page > computers > a computer > allow lists (every project or only the ticked ones)"
       ]
     },
     {
@@ -5355,7 +5481,10 @@
         "PUT /api/v1/projects/{project_name}/github-account",
         "PUT /api/v1/projects/{project_name}/air-gap",
         "GET /api/v1/projects/{project_name}/publish-repo",
-        "POST /api/v1/projects/{project_name}/publish-repo"
+        "POST /api/v1/projects/{project_name}/publish-repo",
+        "GET /api/v1/pack/machines/{machine}/labels",
+        "PUT /api/v1/pack/machines/{machine}/labels",
+        "POST /api/v1/pack/machines/{machine}/rescan"
       ],
       "area": "settings",
       "docs": [
@@ -5377,14 +5506,16 @@
         "On the logins tab: switch the credential relay on per Claude account, and this computer's own may receive credentials switch.",
         "On a project's page, open transport... to set air-gap, see which github account the project uses and where that came from, pick one of the logged-in accounts, see how a replica would get the code, and publish a private repo for a folder with no remote.",
         "A session or Swarm agent running on another computer wears that computer's name as a small badge on the Swarm page and in its chat header.",
-        "The ssh tab holds ssh-only machines and the pairing tools."
+        "The ssh tab holds ssh-only machines and the pairing tools.",
+        "Give a computer your own labels (up to 16 short words, from any paired computer) and rescan what it has; the labels and the probe of its tools, Xcode, GPUs and Homebrew ride in its snapshot so placement can ask for them. The idle keyboard rule is now on for every computer: after 10 idle minutes it keeps the smaller away share even inside the schedule."
       ],
       "id": "pack-machines",
       "issues": [
         1514,
         1521,
         1618,
-        1921
+        1921,
+        2990
       ],
       "keywords": [
         "pack",
@@ -5422,7 +5553,7 @@
         "web/src/lib/pack-machines/PackMeter.svelte",
         "web/src/lib/pack-machines/PackMarks.svelte"
       ],
-      "updated": "2026-10-18",
+      "updated": "2026-11-16",
       "where": [
         "Pack: the computers, work, logins and ssh tabs."
       ]
@@ -5583,7 +5714,7 @@
         "huddle drawer panel bar: swarm page link",
         "main area page #swarm",
         "web/src/lib/huddle-swarm/",
-        "web/src/cplugs/huddle/swarm/"
+        "web/src/plugins/huddle/swarm/"
       ],
       "updated": "2026-10-28",
       "where": [
@@ -5610,12 +5741,14 @@
         "Ask an agent to call placement_explain with a workload kind (light, browser, suite, build or render) to see the decision and every computer's headroom.",
         "Turn auto-distribute on in the Pack settings (the alpha holds it) to spread light work too; pick the model for enhanced placement under byoai routing as the pack placement feature.",
         "Tag a swarm_spawn with a workload (kind and size estimates); without one the task type picks a default.",
-        "Open a Swarm agent's chat: when the pack placed it, a quiet line under the title strip says placed on <computer>: <reason>. An agent the pack did not place shows no line."
+        "Open a Swarm agent's chat: when the pack placed it, a quiet line under the title strip says placed on <computer>: <reason>. An agent the pack did not place shows no line.",
+        "Pass needs (for example ffmpeg, xcode, gpu, mem_gb>=32 or label:render box) and prefer to placement_explain to see which computers meet them; a computer that has not reported what it has is named as needing an app update, a pegged one is named with the gauge's reason."
       ],
       "id": "pack-placement",
       "issues": [
         1519,
-        1618
+        1618,
+        2990
       ],
       "keywords": [
         "pack",
@@ -5625,18 +5758,21 @@
         "queue",
         "headroom",
         "auto-distribute",
-        "workload"
+        "workload",
+        "needs",
+        "pegged",
+        "requirements"
       ],
       "media_exempt": "Routes and agent tools only in this slice; the settings screen for it ships with the Pack settings UI slice.",
       "name": "Pack placement",
       "since": "2026-10-10",
       "status": "beta",
-      "summary": "a new agent goes to the computer with room left after the share its owner keeps free; light work stays on its project's home, battery blocks heavy work, a full Pack queues the request, and a computer over its line puts its own agents in the background priority.",
+      "summary": "a new agent goes to the computer with room left after the share its owner keeps free; light work stays on its project's home, battery blocks heavy work, a full Pack queues the request, and a computer over its line puts its own agents in the background priority; placement now reads what each computer really has (tools, Xcode, GPU, labels) and skips one that is pegged, and a job can ask for requirement words.",
       "surfaces": [
         "src/api/pack_placement_routes.py",
         "src/core/mcp/pack_placement_tools.py"
       ],
-      "updated": "2026-10-10",
+      "updated": "2026-11-16",
       "where": [
         "Agent tools (placement_explain, pack_queue_items_list, pack_queue_cancel) and the Pack API; the pack placement feature in byoai routing."
       ]
@@ -5691,6 +5827,65 @@
       "where": [
         "The drawer's project heading, after the name, when the project moved away.",
         "The Projects page, a tag on the project's card and list row."
+      ]
+    },
+    {
+      "api_routes": [
+        "GET /api/v1/pack/machines",
+        "GET /api/v1/pack/reconnect",
+        "PUT /api/v1/pack/reconnect",
+        "PUT /api/v1/pack/successors",
+        "PUT /api/v1/pack/eligible",
+        "POST /api/v1/pack/interim/confirm"
+      ],
+      "area": "settings",
+      "docs": [
+        "docs/pack.md",
+        "docs/federation.md",
+        "docs/phone-link.md",
+        "docs/computers.md"
+      ],
+      "examples": [
+        "Carry a laptop to a coffee shop: it falls off the home network, finds its main again through the relay, and the pack page says via relay until it is back on a direct link.",
+        "Turn off the machine that is main for a few minutes and the first computer you opted in steps up, limited, until the original is back.",
+        "Reorder who steps up first and opt a computer out of ever taking over."
+      ],
+      "how_to": [
+        "Open pack, computers, then the pack settings panel on the right: the reconnect and takeover section holds the switches and the successor order.",
+        "Turn on use the relay when the direct link is gone to let a computer reach its main through carnivore.ai when the direct link is down (the weaker protection note sits at that switch).",
+        "Turn on take over when main is gone on a computer, then opt computers in with the switch beside each name and move them up or down; only main edits the order.",
+        "When this computer follows a takeover main it says read only until you confirm; press confirm new main on each computer that should follow it. The original main takes the role back by itself once it is linked and stable for 5 minutes."
+      ],
+      "id": "pack-reconnect",
+      "issues": [
+        2980
+      ],
+      "keywords": [
+        "pack",
+        "reconnect",
+        "takeover",
+        "relay",
+        "beacon",
+        "successor",
+        "main",
+        "alpha",
+        "failover"
+      ],
+      "media_exempt": "The section needs a live pack of two or more computers, one of them cut off from its main, to show the state lines and the order; the capture is recorded with the release run.",
+      "name": "Pack reconnect and takeover",
+      "since": "2026-11-13",
+      "status": "beta",
+      "summary": "a computer that falls off its main finds its way back by the relay or a LAN beacon, and if main stays gone an opted-in successor takes over with limited powers until the original returns, with no vote and no outside service.",
+      "surfaces": [
+        "web/src/lib/pack-roster/PackReconnect.svelte",
+        "web/src/lib/pack-roster/roster-model.ts",
+        "src/core/pack/machines/reconnect_view.py",
+        "src/core/mcp/pack_machines_tools.py",
+        "src/api/pack_machines_routes.py"
+      ],
+      "updated": "2026-11-13",
+      "where": [
+        "Pack, computers tab, pack settings panel (the gear in the title strip), section reconnect and takeover."
       ]
     },
     {
@@ -6011,7 +6206,7 @@
         "GET /api/v1/pipeline/status"
       ],
       "area": "home",
-      "description": "The pipeline widget came back 2026-10-12 on the owner's request (\"yes bring them back\", #1689) after the other operator's #1682 U1 removed the old job version. It is global only, off the surface until you place it, and it draws the new engine. On top is a row of status squares (item 519), one per plugin the engine runs (stats, deep search, and any later one), each showing its state by shape as well as color the way the old job widget did: a filled green circle caught up, a yellow ring behind, a coral diamond failing, a gray dash when the engine is off; a rebuild shows as behind and says rebuilding. Hovering a square, focusing it with the keyboard or tapping it opens its detail: how many files wait and how old the oldest is, when it last delivered, its last error and how many are failing, and how many runs since the server started. The squares carry no rebuild button (2026-10-12): a rebuild is done from Settings, pipeline. The overall status line (caught up, behind, stalled, rebuilding or off) sits small beside the row. Under it are two short sections (2026-10-12): running lists each plugin on the transcript being delivered right now (and any rebuild in progress) with its area and how long it has run, ticking in the browser; queue lists the next transcripts waiting in the order the engine takes them, at most eight and then \"+N more\", each for all plugins or the one plugin whose retry holds it, with its area (a live transcript whose session name is not known yet shows its short id) and how long it has waited, or when its retry is due. The engine announces a delivery when it starts as well as when the batch ends, so running shows without polling. Under those is the pipeline chart (item 542, #1701): one row per area and plugin, updated in place rather than a row per run, with the plugin's friendly name, its area (the session's name, else the project's, else machine for work with no session such as a catch-up scan of an old conversation or a rebuild), how long the last run took, how long ago that was (ticking in the browser with no request) and how many runs since the server started. A failed run wears a diamond mark, a parked one a dash. Every figure column keeps the room its widest value needs, so the run time is never cut off; the name and area give way first, and a very narrow widget drops the runs and then the area before any figure. The server keeps these rows in memory only (about 100, empty after a restart); it records and logs, it never alerts. Every view shares one read of GET /api/v1/pipeline/status, pushed on the pipeline topic after every batch, park, scan pass and rebuild, so nothing polls while the live connection is up (a 10 second poll runs only while it is down). The developer widget carries it as its pipeline tab. While the conversation backups plugin is on, the chart also shows a backups row (area conversations, #1807): its 30 minute passes plus the captures on close, sleep, restart, clear and fork as runs, the last run's time and duration, and a failed mark when the latest pass or capture failed; with the plugin off the row is not there. It comes through a plugin seam (src/cplugs/sdk/pipeline_rows.py), so the plugin stays self contained.",
+      "description": "The pipeline widget came back 2026-10-12 on the owner's request (\"yes bring them back\", #1689) after the other operator's #1682 U1 removed the old job version. It is global only, off the surface until you place it, and it draws the new engine. On top is a row of status squares (item 519), one per plugin the engine runs (stats, deep search, and any later one), each showing its state by shape as well as color the way the old job widget did: a filled green circle caught up, a yellow ring behind, a coral diamond failing, a gray dash when the engine is off; a rebuild shows as behind and says rebuilding. Hovering a square, focusing it with the keyboard or tapping it opens its detail: how many files wait and how old the oldest is, when it last delivered, its last error and how many are failing, and how many runs since the server started. The squares carry no rebuild button (2026-10-12): a rebuild is done from Settings, pipeline. The overall status line (caught up, behind, stalled, rebuilding or off) sits small beside the row. Under it are two short sections (2026-10-12): running lists each plugin on the transcript being delivered right now (and any rebuild in progress) with its area and how long it has run, ticking in the browser; queue lists the next transcripts waiting in the order the engine takes them, at most eight and then \"+N more\", each for all plugins or the one plugin whose retry holds it, with its area (a live transcript whose session name is not known yet shows its short id) and how long it has waited, or when its retry is due. The engine announces a delivery when it starts as well as when the batch ends, so running shows without polling. Under those is the pipeline chart (item 542, #1701): one row per area and plugin, updated in place rather than a row per run, with the plugin's friendly name, its area (the session's name, else the project's, else machine for work with no session such as a catch-up scan of an old conversation or a rebuild), how long the last run took, how long ago that was (ticking in the browser with no request) and how many runs since the server started. A failed run wears a diamond mark, a parked one a dash. Every figure column keeps the room its widest value needs, so the run time is never cut off; the name and area give way first, and a very narrow widget drops the runs and then the area before any figure. The server keeps these rows in memory only (about 100, empty after a restart); it records and logs, it never alerts. Every view shares one read of GET /api/v1/pipeline/status, pushed on the pipeline topic after every batch, park, scan pass and rebuild, so nothing polls while the live connection is up (a 10 second poll runs only while it is down). The developer widget carries it as its pipeline tab. While the conversation backups plugin is on, the chart also shows a backups row (area conversations, #1807): its 30 minute passes plus the captures on close, sleep, restart, clear and fork as runs, the last run's time and duration, and a failed mark when the latest pass or capture failed; with the plugin off the row is not there. It comes through a plugin seam (src/plugins/sdk/pipeline_rows.py), so the plugin stays self contained.",
       "docs": [
         "docs/save-pipeline.md",
         "docs/widget-system.md"
@@ -6079,8 +6274,8 @@
         "web/src/opscenter/ui/run-queue.css",
         "web/src/opscenter/cells/pipeline/activity.ts",
         "src/core/pipeline/activity.py",
-        "src/cplugs/sdk/pipeline_rows.py",
-        "src/cplugs/save/pipeline_row.py"
+        "src/plugins/sdk/pipeline_rows.py",
+        "src/plugins/save/pipeline_row.py"
       ],
       "updated": "2026-10-29",
       "where": [
@@ -6091,8 +6286,8 @@
     },
     {
       "api_routes": [
-        "src/cplugs/host/routes.py",
-        "src/cplugs/host/sideload_routes.py"
+        "src/plugins/host/routes.py",
+        "src/plugins/host/sideload_routes.py"
       ],
       "area": "settings",
       "description": "FEATURES AND PLUGINS (Joe (ccsliinc), 2026-10-30, #2723): an item the app carries is a feature, listed in Settings > features with its own on/off switch, on or off; an item from the store is a plugin, listed on this page. Both pages are the shared manager frame, one kind of row with one switch each. A plugin that is switched off stops contributing to every surface it adds to (the session row menu, a tab, a menu link). Mark unread and share read only are plugins that ship on; task manager ships on for a clean install and keeps an existing install's choice. The choice is stored on the server, so every device agrees. Features are part of the app, so none of those can be installed or removed. Store plugins from the catalog sit on the same page as the same card warez draws (hero image on top, same order as warez): a plugin that is not installed shows the same add control as warez (add, with its caret to pick global or a project), a plugin with an update due shows update, and only an installed plugin shows its switch, which turns it off for the picked project. A plugin that runs a program (an MCP server) prints the full command on its card; add goes through warez's one-click route and opens the install sheet when the server asks for consent. Turning one on grants what it asks, listed in its details. The details are tabbed: overview, settings, permissions and data, with the state and switch always at the top and a plain reason when a plugin is held or waiting for a grant. Each permission is shown by risk tier, a plugin that asks for something dangerous in combination carries a warning, and a plugin's recent permission use is listed in its details. An agent can turn a plugin off or revoke grants over MCP, never turn one on or add a grant.",
@@ -6220,21 +6415,24 @@
         "src/api/projects_routes.py"
       ],
       "area": "sessions",
-      "docs": [],
+      "docs": [
+        "docs/new-project-form.md"
+      ],
       "examples": [
         "Spin up a folder for a quick prototype without leaving the app.",
         "Find the project you worked on last week, sorted by last used."
       ],
       "how_to": [
         "Choose New Project, then start empty (a fresh folder) or open an existing folder.",
-        "Pick a provider, name it, then pick or type the folder it should live in - the full path is shown before anything is created, and that folder is used exactly as chosen, nothing appended to it.",
+        "Pick a provider, then fill one form: the project's name, its company (or + new company...) and the folder, picked from the Org tree, which opens at the company's folder. The full path and a check of where it lands are shown before anything is created; that folder is used exactly as chosen.",
         "Browse projects from the PROJECTS card and start a session in one.",
         "On a paired computer, browse lists that computer's folders; an older carnivore there means you type the folder."
       ],
       "id": "project-create-and-browse",
       "issues": [
         984,
-        1018
+        1018,
+        2945
       ],
       "keywords": [
         "projects"
@@ -6256,9 +6454,13 @@
         "web/src/lib/launchpad/ProjectNameModal.svelte",
         "client/js/providers.js",
         "client/js/folder-picker-modal.js",
-        "client/css/new-agent-flow.css"
+        "client/css/new-agent-flow.css",
+        "web/src/lib/new-project/NewProjectModal.svelte",
+        "web/src/lib/base/LandsIn.svelte",
+        "GET /api/v1/projects/folder-tree",
+        "POST /api/v1/projects/landing-check"
       ],
-      "updated": "2026-09-28",
+      "updated": "2026-11-11",
       "where": [
         "Menu tab, New Project.",
         "Home screen, the PROJECTS card; View all for the full list."
@@ -6528,9 +6730,9 @@
     },
     {
       "api_routes": [
-        "src/cplugs/reviewboard/public/routes_owner.py",
-        "src/cplugs/reviewboard/public/read.py",
-        "src/cplugs/reviewboard/public/write.py"
+        "src/plugins/reviewboard/public/routes_owner.py",
+        "src/plugins/reviewboard/public/read.py",
+        "src/plugins/reviewboard/public/write.py"
       ],
       "area": "sessions",
       "description": "Public review links is a setting of the review board plugin, off by default, that will let people outside your network open one review board through your own reverse proxy, look at it, and leave answers and comments, and nothing else. It starts with the guarded door, and now you can make the links themselves: a link opens one board, lasts one hour, one day or seven days, and is pinned to the revision you shared or follows newer ones, as you choose. When you turn it on and fill in a port, a bind address, your public host name and your proxy's address, it opens a second small listener. A person holding a link opens the page and sees that one board, read only, with no account: its title, summary, pages, questions and marked spots, and nothing else of yours. Before a request is looked at, the door checks that it comes from your proxy, names your host, has a plain path with no encodings, dot segments or query, and matches an exact route; websockets and protocol upgrades are never accepted, bodies and headers are capped, and every answer carries the strict security headers. Turning the plugin off closes the socket. The link is shown once when you make it and only a fingerprint of it is kept, so a copy of the data opens nothing. Before a link exists the board's pages, prompts and title are scanned, and anything that looks like a password or key refuses the share. You can end one link, all of a board's links, or every link, and Claude can end links too but never make them. The visitor page draws the board in the house look and takes the secret out of the address bar as soon as it opens. A visitor can answer the board's questions and leave a comment, on the whole board or on one of its marked spots, with an optional name; nothing else. Each post is checked against the board's own rules, scanned for passwords and keys (a match is refused and nothing is kept), rate limited per visitor, capped per board, per link and per day, and a double tap lands once. What visitors send goes into the plugin's own store and stops there: it is never a reply on the task, never typed into a session, never seen by Claude, and visitors never see each other's words. A visitors key in the board's title strip shows you what came in, as plain text, every sender marked unverified, and updates on its own: the key counts the answers you have not forwarded yet, and a board with new visitor posts gets one alert, toasted when it opens, counting the answers you have not forwarded and closing when none are left; only your own press of forward to claude posts the new answers on the board's task as your reply, fenced and labeled as unverified outside input. The link is checked again on every look: a link you ended, one that ran out, or one whose board was edited after it was scanned shows only that it has ended, exactly like a link that never existed, and a link set to follow newer revisions shows a newer one only after it passes the same credential scan. Each visitor address and each link is rate limited.",
@@ -6577,47 +6779,47 @@
       "status": "beta",
       "summary": "off by default: opens a guarded second port for your own reverse proxy and makes short-lived, revocable, secret-scanned links that show one board and take visitors' answers and comments, which reach Claude only when you forward them.",
       "surfaces": [
-        "src/cplugs/reviewboard/public/edge.py",
-        "src/cplugs/reviewboard/public/service.py",
-        "src/cplugs/reviewboard/public/settings.py",
-        "src/cplugs/reviewboard/public/headers.py",
-        "src/cplugs/reviewboard/public/listener.py",
-        "src/cplugs/reviewboard/public/links.py",
-        "src/cplugs/reviewboard/public/minting.py",
-        "src/cplugs/reviewboard/public/routes_owner.py",
-        "src/cplugs/reviewboard/public/mcp.py",
-        "src/cplugs/reviewboard/public_port.py",
-        "src/cplugs/reviewboard/public/port.py",
-        "src/cplugs/reviewboard/public/routes.py",
-        "src/cplugs/reviewboard/public/read.py",
-        "src/cplugs/reviewboard/public/resolve.py",
-        "src/cplugs/reviewboard/public/respond.py",
-        "src/cplugs/reviewboard/public/capability.py",
-        "src/cplugs/reviewboard/public/ratelimit.py",
-        "src/cplugs/reviewboard/public/assets.py",
-        "src/cplugs/reviewboard/public/deps.py",
-        "src/cplugs/reviewboard/public/wiring.py",
-        "web/src/cplugs/reviewboard/public/ShareLinkModal.svelte",
-        "web/src/cplugs/reviewboard/public/ShareLinkKey.svelte",
-        "web/src/cplugs/sdk/board-header-keys.ts",
-        "web/src/cplugs/reviewboard/public/page-row-action.ts",
-        "web/src/cplugs/sdk/page-row-actions.ts",
+        "src/plugins/reviewboard/public/edge.py",
+        "src/plugins/reviewboard/public/service.py",
+        "src/plugins/reviewboard/public/settings.py",
+        "src/plugins/reviewboard/public/headers.py",
+        "src/plugins/reviewboard/public/listener.py",
+        "src/plugins/reviewboard/public/links.py",
+        "src/plugins/reviewboard/public/minting.py",
+        "src/plugins/reviewboard/public/routes_owner.py",
+        "src/plugins/reviewboard/public/mcp.py",
+        "src/plugins/reviewboard/public_port.py",
+        "src/plugins/reviewboard/public/port.py",
+        "src/plugins/reviewboard/public/routes.py",
+        "src/plugins/reviewboard/public/read.py",
+        "src/plugins/reviewboard/public/resolve.py",
+        "src/plugins/reviewboard/public/respond.py",
+        "src/plugins/reviewboard/public/capability.py",
+        "src/plugins/reviewboard/public/ratelimit.py",
+        "src/plugins/reviewboard/public/assets.py",
+        "src/plugins/reviewboard/public/deps.py",
+        "src/plugins/reviewboard/public/wiring.py",
+        "web/src/plugins/reviewboard/public/ShareLinkModal.svelte",
+        "web/src/plugins/reviewboard/public/ShareLinkKey.svelte",
+        "web/src/plugins/reviewboard/board-header-keys.ts",
+        "web/src/plugins/reviewboard/public/page-row-action.ts",
+        "web/src/plugins/sdk/page-row-actions.ts",
         "web/src/lib/item-menu/menus/page-actions.ts",
-        "src/cplugs/reviewboard/public/public/index.html",
-        "web/src/cplugs/reviewboard/public/public/main.ts",
-        "web/src/cplugs/reviewboard/public/public/PublicBoard.svelte",
-        "web/src/cplugs/reviewboard/public/public/fragment.ts",
-        "web/src/cplugs/reviewboard/public/public/board-client.ts",
-        "web/src/cplugs/reviewboard/vite.bundle.config.ts",
-        "src/cplugs/reviewboard/public/write.py",
-        "src/cplugs/reviewboard/public/submission.py",
-        "src/cplugs/reviewboard/public/responses.py",
-        "src/cplugs/reviewboard/public/visitors.py",
-        "src/cplugs/reviewboard/visitor_checks.py",
-        "web/src/cplugs/reviewboard/public/VisitorsKey.svelte",
-        "web/src/cplugs/reviewboard/public/VisitorsModal.svelte",
-        "web/src/cplugs/reviewboard/public/visitors-api.ts",
-        "web/src/cplugs/reviewboard/public/public/VisitorForm.svelte"
+        "src/plugins/reviewboard/public/page/index.html",
+        "web/src/plugins/reviewboard/public/visitor-page/main.ts",
+        "web/src/plugins/reviewboard/public/visitor-page/PublicBoard.svelte",
+        "web/src/plugins/reviewboard/public/visitor-page/fragment.ts",
+        "web/src/plugins/reviewboard/public/visitor-page/board-client.ts",
+        "web/src/plugins/reviewboard/vite.bundle.config.ts",
+        "src/plugins/reviewboard/public/write.py",
+        "src/plugins/reviewboard/public/submission.py",
+        "src/plugins/reviewboard/public/responses.py",
+        "src/plugins/reviewboard/public/visitors.py",
+        "src/plugins/reviewboard/visitor_checks.py",
+        "web/src/plugins/reviewboard/public/VisitorsKey.svelte",
+        "web/src/plugins/reviewboard/public/VisitorsModal.svelte",
+        "web/src/plugins/reviewboard/public/visitors-api.ts",
+        "web/src/plugins/reviewboard/public/visitor-page/VisitorForm.svelte"
       ],
       "updated": "2026-10-30",
       "where": [
@@ -6877,10 +7079,10 @@
     },
     {
       "api_routes": [
-        "src/cplugs/reviewboard/routes.py",
-        "src/cplugs/reviewboard/routes_scratch.py",
-        "src/cplugs/reviewboard/routes_attachments.py",
-        "src/cplugs/reviewboard/routes_live.py"
+        "src/plugins/reviewboard/routes.py",
+        "src/plugins/reviewboard/routes_scratch.py",
+        "src/plugins/reviewboard/routes_attachments.py",
+        "src/plugins/reviewboard/routes_live.py"
       ],
       "area": "sessions",
       "description": "The review board is a plugin (off by default, needs the task manager) for mockups that go through rounds of review. A board is one folder in a git checkout: a sidecar file and one immutable page per revision, so the folder alone rebuilds the board. The read side is: the boards folder setting (it must be a real folder holding a .boards-root file, inside a git checkout, and never the app copy, an app bundle or the app state folder), the list of boards with whose turn each is in (your turn, with claude, undelivered), one board in full with the rounds you sent word for word, a rescan after a hand edit or a git pull, and two agent tools to read them. The board page shows a board read only: a title strip with whose turn it is, a history bar of revisions with the rounds you sent as diamonds between them, and the mockup itself in a locked-down frame (scripts run, but it has no network, storage or login, and it can only point at tagged parts of the page). You can step through revisions, switch between the real width and a fit-to-width view, and pop the page out into a tab of its own. Claude opens a board on your screen with task_manager_board_focus. Claude publishes boards and revisions: task_manager_board_create starts a board for a task and task_manager_board_revision_add adds each next revision (a page, a summary and the prompts to answer); every revision posts a card on the task and by default puts the task in review. A revision's files are never changed once written, and a failed write leaves the board as it was. Slice 5 adds Joe's review loop: a prompt fold-down under the board header where he ticks, checks and writes notes, drafts kept on the server, a send that lands on the task as his reply once even if sent twice, a round card on the task, diamonds on the history bar, resend and relink for a round that did not get through, ghost lines for a question asked again, and flip. A revision may instead own its controls (payload_mode): the page posts its state, the board header has a draft light, a save stepper, a note for the agent and send, there is no sidebar, the page's state autosaves as one overwriting draft, every send makes a numbered save and only nudges the session to review the payload, and a theme picker repaints just the page in another Carnivore theme. Closed reviews: a board whose task is done is closed (derived on read, never stored, so reopening the task reopens it), and each project's page on the projects page has a closed reviews group listing them, newest closed first, while the plugin is on. A revision may also name a questions layer (task_manager_board_create and task_manager_board_revision_add take layer): claude sends a list of questions instead of writing the controls, and the board draws them inside the frame, with no page needed. The fields are yes or no, pick one, pick several, on or off, a short text and a long text, and each question has a small note key. Questions sit right under the part of the page they ask about, the rest in one section at the end, or all in one panel at the edge of the frame (a bottom sheet on a phone). Your answers autosave, step through saves and send exactly like a payload page, and arrive as values and notes keyed by the question ids.",
@@ -6979,44 +7181,44 @@
       "status": "beta",
       "summary": "mockups under review as a folder of files in a git checkout: Claude publishes revisions, and you and Claude read them.",
       "surfaces": [
-        "src/cplugs/reviewboard/service.py",
-        "src/cplugs/reviewboard/mcp.py",
-        "src/cplugs/reviewboard/root.py",
-        "src/cplugs/reviewboard/scan.py",
-        "src/cplugs/reviewboard/store.py",
-        "src/cplugs/reviewboard/publish.py",
-        "src/cplugs/huddle/board_port.py",
-        "src/cplugs/reviewboard/viewer.py",
-        "src/cplugs/reviewboard/ticket.py",
-        "src/cplugs/reviewboard/bridge.js",
-        "src/cplugs/reviewboard/opener.py",
-        "web/src/cplugs/reviewboard/BoardScreen.svelte",
-        "src/cplugs/reviewboard/rounds.py",
-        "src/cplugs/reviewboard/drafts.py",
-        "src/cplugs/reviewboard/relink.py",
-        "src/cplugs/reviewboard/round_text.py",
-        "src/cplugs/huddle/reply.py",
-        "web/src/cplugs/reviewboard/Tray.svelte",
-        "web/src/cplugs/huddle/TaskManagerRoundCard.svelte",
-        "src/cplugs/reviewboard/payload_draft.py",
-        "web/src/cplugs/reviewboard/PayloadControls.svelte",
-        "web/src/cplugs/reviewboard/ThemePicker.svelte",
-        "web/src/cplugs/sdk/themes.ts",
-        "src/cplugs/reviewboard/attachments.py",
-        "src/cplugs/reviewboard/mcp_attachments.py",
-        "web/src/cplugs/reviewboard/AttachmentsKey.svelte",
-        "web/src/cplugs/reviewboard/NotesPanel.svelte",
+        "src/plugins/reviewboard/service.py",
+        "src/plugins/reviewboard/mcp.py",
+        "src/plugins/reviewboard/root.py",
+        "src/plugins/reviewboard/scan.py",
+        "src/plugins/reviewboard/store.py",
+        "src/plugins/reviewboard/publish.py",
+        "src/plugins/huddle/board_port.py",
+        "src/plugins/reviewboard/viewer.py",
+        "src/plugins/reviewboard/ticket.py",
+        "src/plugins/reviewboard/bridge.js",
+        "src/plugins/reviewboard/opener.py",
+        "web/src/plugins/reviewboard/BoardScreen.svelte",
+        "src/plugins/reviewboard/rounds.py",
+        "src/plugins/reviewboard/drafts.py",
+        "src/plugins/reviewboard/relink.py",
+        "src/plugins/reviewboard/round_text.py",
+        "src/plugins/huddle/reply.py",
+        "web/src/plugins/reviewboard/Tray.svelte",
+        "web/src/plugins/huddle/TaskManagerRoundCard.svelte",
+        "src/plugins/reviewboard/payload_draft.py",
+        "web/src/plugins/reviewboard/PayloadControls.svelte",
+        "web/src/plugins/reviewboard/ThemePicker.svelte",
+        "web/src/plugins/sdk/themes.ts",
+        "src/plugins/reviewboard/attachments.py",
+        "src/plugins/reviewboard/mcp_attachments.py",
+        "web/src/plugins/reviewboard/AttachmentsKey.svelte",
+        "web/src/plugins/reviewboard/NotesPanel.svelte",
         "web/src/lib/markdown-editor/MarkdownEditor.svelte",
-        "src/cplugs/reviewboard/state.py",
-        "web/src/cplugs/reviewboard/ClosedReviews.svelte",
-        "web/src/cplugs/sdk/project-panels.ts",
-        "src/cplugs/reviewboard/frame/layer-core.js",
-        "src/cplugs/reviewboard/frame/layer-fields.js",
-        "src/cplugs/reviewboard/frame/layer-fields-more.js",
-        "src/cplugs/reviewboard/frame/layer-rows.js",
-        "src/cplugs/reviewboard/frame/layer.css",
-        "src/cplugs/reviewboard/layers/inject.py",
-        "web/src/cplugs/reviewboard/layer-payload.ts"
+        "src/plugins/reviewboard/state.py",
+        "web/src/plugins/reviewboard/ClosedReviews.svelte",
+        "web/src/plugins/sdk/project-panels.ts",
+        "src/plugins/reviewboard/frame/layer-core.js",
+        "src/plugins/reviewboard/frame/layer-fields.js",
+        "src/plugins/reviewboard/frame/layer-fields-more.js",
+        "src/plugins/reviewboard/frame/layer-rows.js",
+        "src/plugins/reviewboard/frame/layer.css",
+        "src/plugins/reviewboard/layers/inject.py",
+        "web/src/plugins/reviewboard/layer-payload.ts"
       ],
       "updated": "2026-10-16",
       "where": [
@@ -8828,6 +9030,50 @@
     },
     {
       "api_routes": [
+        "PUT /api/v1/cplugs/sessionchat"
+      ],
+      "area": "sessions",
+      "description": "Session chat ships off for everyone. While it is off nothing indexes and no timeline.db file exists. Switching it on starts the timeline index: the pipeline reads every Claude transcript once from the start (about 30 MB per second, and the index is about 0.2 percent of the transcript size) and then follows each session as it grows. The index holds only byte positions, ids, counts, kinds and timestamps; a turn's text is read from the transcript when it is shown, and search stays in the deep search index. Switching it off stops indexing at the next batch and keeps the file, so switching it on again resumes where it stopped.",
+      "docs": [
+        "docs/timeline.md",
+        "docs/cplugs.md"
+      ],
+      "examples": [
+        "A fresh install has no timeline.db and does no timeline work.",
+        "After switching it on, the first pass reads the whole transcript folder once, then each session is followed as it grows."
+      ],
+      "how_to": [
+        "Open Settings > features and switch on session chat; the index builds in the background over the next minutes, with no restart.",
+        "Switch it off to stop indexing; the index file is kept and resumes if you switch it on again."
+      ],
+      "id": "sessionchat",
+      "issues": [],
+      "keywords": [
+        "session chat",
+        "timeline",
+        "index",
+        "transcript",
+        "off by default",
+        "feature"
+      ],
+      "media_exempt": "no screen of its own: a switch drawn by Settings > features over a background index, so there is nothing new to capture",
+      "name": "Session chat",
+      "since": "2026-11-12",
+      "status": "beta",
+      "summary": "an optional feature, off until you switch it on in Settings > features, that keeps a small local index of every Claude session transcript (positions, counts and threads, never the text) so a session can be read as a chat.",
+      "surfaces": [
+        "src/plugins/sessionchat/__init__.py",
+        "src/core/pipeline/switch.py",
+        "src/core/timeline/plugin.py",
+        "web/src/plugins/sessionchat/index.ts"
+      ],
+      "updated": "2026-11-12",
+      "where": [
+        "Settings > features: the session chat switch."
+      ]
+    },
+    {
+      "api_routes": [
         "GET /api/v1/projects/history",
         "GET /api/v1/sessions/usage",
         "GET /api/v1/sessions/latest-lines",
@@ -10080,6 +10326,52 @@
     },
     {
       "api_routes": [
+        "GET /api/v1/sessions/list",
+        "GET /api/v1/sessions/{session_id}/subagents"
+      ],
+      "area": "sessions",
+      "description": "A running sub-agent whose transcript has not moved for five minutes is marked stalled: its age in the control center and in the sub-agent list turns amber and reads \"stalled Nm\", and the listing carries a subagents_stalled count. A sub-agent that is waiting on purpose, holding an armed Monitor inside its deadline, is never stalled, and when the launch ledger cannot be read nothing is marked. Once a stall passes fifteen minutes the app raises one notification per stall, filed under the parent session, with the per-session mute and the per-type switch honored; an agent that writes again and later stalls again is a new stall. Both limits are named constants (STALL_AFTER, STALL_NOTIFY_AFTER in src/core/subagents/stall.py). Nothing is stopped and no timer is added: the mark rides the watcher's own subagent tally and is pushed through the listing.",
+      "docs": [
+        "docs/session-status.md",
+        "docs/notifications.md"
+      ],
+      "examples": [
+        "A builder sub-agent freezes at 21m 35s: after five quiet minutes its age reads stalled 5m in amber, and at fifteen minutes one notification names the stuck agent in the parent session."
+      ],
+      "how_to": [
+        "Open the session control center (click the agents count on the terminal foot bar) or a session's sub-agent list.",
+        "Find a running sub-agent whose age reads stalled Nm in amber.",
+        "Turn the sub-agent stalled type off or mute the session in settings, notifications, if you do not want the notification."
+      ],
+      "id": "subagent-stalled",
+      "issues": [
+        2953
+      ],
+      "keywords": [
+        "subagents",
+        "stalled",
+        "stuck",
+        "notification"
+      ],
+      "media_exempt": "needs a real sub-agent frozen for five minutes; the amber word is covered by the style guide entry and a unit test, and a recapture recipe needs a fake transcript clock the capture harness does not have",
+      "name": "Stalled sub-agents",
+      "since": "2026-11-11",
+      "status": "stable",
+      "summary": "A sub-agent that stops writing turns amber and says stalled, then tells you once.",
+      "surfaces": [
+        "session control center agents list",
+        "sub-agent list popup",
+        "notifications"
+      ],
+      "updated": "2026-11-11",
+      "where": [
+        "Session control center, agents section: the age cell of a running sub-agent reads stalled Nm in amber.",
+        "Sub-agent list popup: the same word in the age column.",
+        "Notifications: a sub-agent stalled card, filed under the parent session."
+      ]
+    },
+    {
+      "api_routes": [
         "GET /api/v1/swarm/cards/board",
         "GET /api/v1/swarm/cards/{id}/events",
         "GET /api/v1/swarm/cards/events",
@@ -10554,7 +10846,7 @@
       "summary": "a strip above every swarm chat box with everything waiting on you, answered in place; sysop and company chats roll up their children's items by breadcrumb",
       "surfaces": [
         "every Swarm agent chat, above the box",
-        "web/src/cplugs/huddle/chat/WaitingTray.svelte"
+        "web/src/plugins/huddle/chat/WaitingTray.svelte"
       ],
       "updated": "2026-11-02",
       "where": [
@@ -10754,9 +11046,9 @@
       "summary": "a shared list between you and claude: claude posts what is done and what needs your call, you approve, note, reorder and reply, and the tab surfaces when claude posts.",
       "surfaces": [
         "left sidebar huddle tab",
-        "web/src/cplugs/huddle/",
-        "src/cplugs/huddle/routes.py",
-        "src/cplugs/huddle/mcp.py"
+        "web/src/plugins/huddle/",
+        "src/plugins/huddle/routes.py",
+        "src/plugins/huddle/mcp.py"
       ],
       "updated": "2026-10-28",
       "where": [
@@ -11691,7 +11983,7 @@
       "summary": "one owner switch, off by default, that decides whether any plugin installed from the catalog may run, with a sandbox check and a safe mode.",
       "surfaces": [
         "web/src/lib/plugins-page/ThirdPartySwitch.svelte",
-        "src/cplugs/host/owner_switch.py"
+        "src/plugins/host/owner_switch.py"
       ],
       "updated": "2026-10-25",
       "where": [
@@ -11747,9 +12039,9 @@
       "status": "beta",
       "summary": "with the save plugin on (it ships off), every killed or removed session leaves a compressed conversation backup of its conversation, sleep or restart keep one rotating emergency copy, and a conversation still being written gets a fresh copy every 30 minutes.",
       "surfaces": [
-        "web/src/cplugs/save/SessionTab.svelte",
-        "web/src/cplugs/save/SaveSettings.svelte",
-        "web/src/cplugs/save/RestorePoints.svelte"
+        "web/src/plugins/save/SessionTab.svelte",
+        "web/src/plugins/save/SaveSettings.svelte",
+        "web/src/plugins/save/RestorePoints.svelte"
       ],
       "updated": "2026-10-21",
       "where": [
@@ -11794,10 +12086,10 @@
       "status": "beta",
       "summary": "an optional plugin, off until you switch it on, that checks every 15 minutes that Apple's Time Machine made a backup in the last 24 hours and raises one alert when it did not or cannot tell. A computer with no Time Machine disk set up gets no alert.",
       "surfaces": [
-        "src/cplugs/timemachine/service.py",
-        "src/cplugs/timemachine/checks.py",
-        "src/cplugs/timemachine/routes.py",
-        "web/src/cplugs/timemachine/index.ts"
+        "src/plugins/timemachine/service.py",
+        "src/plugins/timemachine/checks.py",
+        "src/plugins/timemachine/routes.py",
+        "web/src/plugins/timemachine/index.ts"
       ],
       "updated": "2026-10-26",
       "where": [
@@ -11806,7 +12098,7 @@
     },
     {
       "api_routes": [
-        "src/cplugs/tmdevtools/routes.py"
+        "src/plugins/tmdevtools/routes.py"
       ],
       "area": "sessions",
       "description": "task-manager-dev-tools is an experimental plugin of the dev tier: hidden and not loaded until you turn on developer mode (Settings, Advanced), and then off by default. It needs the task manager. It gives Claude three tools for your task manager screen. task_manager_dev_scroll_set scrolls the task manager to the top in every browser you have open (optionally switching to one project first). task_manager_dev_fold_set folds or unfolds a project (its bar, status sections and groups), a named group, or a task, and with action close collapses an opened task card back to its row without changing any task. task_manager_dev_tasks_list lists projects or tasks compactly (id, title, status, project, group, tag), filtered by any mix of project, status, group, tag and kind, so Claude can answer what the open questions are, what tasks are open, or what is open in one project. Scroll and fold are pushed to the browsers, which act on the task manager's own fold state; nothing is polled and nothing new is stored. With the plugin off there are no routes and no tools.",
@@ -11843,12 +12135,12 @@
       "status": "beta",
       "summary": "experimental, off by default: Claude can scroll your task manager to the top, fold things and list tasks by status.",
       "surfaces": [
-        "src/cplugs/tmdevtools/mcp.py",
-        "src/cplugs/tmdevtools/service.py",
-        "src/cplugs/tmdevtools/commands.py",
-        "src/cplugs/huddle/devtools_port.py",
-        "web/src/cplugs/tmdevtools/commands.ts",
-        "web/src/cplugs/huddle/task-manager-view-commands.ts"
+        "src/plugins/tmdevtools/mcp.py",
+        "src/plugins/tmdevtools/service.py",
+        "src/plugins/tmdevtools/commands.py",
+        "src/plugins/huddle/devtools_port.py",
+        "web/src/plugins/tmdevtools/commands.ts",
+        "web/src/plugins/huddle/task-manager-view-commands.ts"
       ],
       "updated": "2026-10-13",
       "where": [
@@ -38739,7 +39031,7 @@
         "theme-system"
       ],
       "issue": 2033,
-      "release": "v1.16.8",
+      "release": "Unreleased",
       "summary": "design base slice 3: the shared shells (the .oc-btn and .modal-btn families) now draw from one button recipe in the base, and the shells opt into the base (data-oc-base) so their classless controls take the house look. A bare .modal-btn with no variant class wears the quiet outline secondary instead of the browser's white block. The style guide gains a live review of the shells. The raw-values baseline was regenerated on the merge because master gained raw values in the same files",
       "type": "fixed"
     },
@@ -47735,6 +48027,17 @@
     },
     {
       "date": "2026-11-03",
+      "details": "S0 of #2775. Page gains frame, scroll, side, detail and an optional header search slot; the header, tab row and tool row buttons of a page that wears a frame share one height (pages without a frame are untouched); the frame tokens move to tokens.css; the style guide shows the three frames; the first measurement of three gates (frame regions owned, every menu page declares its frame, header controls are base buttons). No page moves.",
+      "features": [],
+      "issue": 2775,
+      "landed_at": "2026-11-11T13:41:34Z",
+      "pr": 2775,
+      "release": "Unreleased",
+      "summary": "page frames: Page takes a frame (column, nav, canvas), frame tokens, one header-button height, three gates",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-03",
       "features": [
         "task-manager"
       ],
@@ -47744,6 +48047,19 @@
       "release": "v1.16.6",
       "summary": "paste or drop a file on the Task Manager add row and it shows as a removable chip outside the field, then goes with the entry and is attached to every task filed from it",
       "type": "added"
+    },
+    {
+      "date": "2026-11-03",
+      "details": "The providers page wears the column page frame. Visible change: its header button is the frame's one header-button height (26px, was 32px; 44px on a touch screen). The frame now draws the page's scroller and main column; below 1024px the page root scrolls and the title strip stays pinned at the top, as it does above 1024px.",
+      "features": [
+        "provider-ledger"
+      ],
+      "issue": 2775,
+      "landed_at": "2026-11-11T13:41:34Z",
+      "pr": 2775,
+      "release": "Unreleased",
+      "summary": "providers page: the add account button is the page frame's header height, 26px instead of 32px",
+      "type": "changed"
     },
     {
       "date": "2026-11-03",
@@ -49812,6 +50128,17 @@
     {
       "date": "2026-11-09",
       "features": [
+        "theme-system",
+        "build-your-own-theme"
+      ],
+      "landed_at": "2026-11-10T00:09:55Z",
+      "release": "Unreleased",
+      "summary": "a theme's two corner choices, control and panel, now reach every corner in the app, global or per session; the bundled themes look the same",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
         "carnivore-mcp-server"
       ],
       "issue": 1470,
@@ -49893,6 +50220,16 @@
     {
       "date": "2026-11-09",
       "features": [
+        "session-restart-and-resume"
+      ],
+      "landed_at": "2026-11-09T23:23:28Z",
+      "release": "Unreleased",
+      "summary": "dialog buttons are one size in every dialog: the restart picker footer size, set once in the base, with a compact size a region asks for; a disabled dialog button dims everywhere. what you see change: a plain dialog button shrinks from 10px by 24px padding to 7px by 16px at the control font size, danger and confirm buttons grow from 6px by 12px to the same 7px by 16px, and on a phone or touch screen every dialog button is at least 44px tall",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
         "terminal-cells-and-tabs"
       ],
       "issue": 2921,
@@ -49923,6 +50260,16 @@
       "pr": 2935,
       "release": "v1.16.8",
       "summary": "every compass arm on a window with room for two halves now drops, and an up or down drop cuts the window in two",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "session-restart-and-resume"
+      ],
+      "landed_at": "2026-11-09T23:56:17Z",
+      "release": "Unreleased",
+      "summary": "every dialog title strip is drawn by the one dialog frame: the same chevron label and close x everywhere, and the x is disabled while a dialog is busy",
       "type": "fixed"
     },
     {
@@ -49961,6 +50308,16 @@
     {
       "date": "2026-11-09",
       "features": [
+        "task-manager"
+      ],
+      "landed_at": "2026-11-10T00:09:55Z",
+      "release": "Unreleased",
+      "summary": "task manager dialogs now open above every drawer and panel instead of behind them: every overlay reads one stacking scale",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
         "layout-editor"
       ],
       "issue": 2936,
@@ -49981,6 +50338,16 @@
       "release": "v1.16.8",
       "summary": "the add widgets drawer slides out of the way while you drag, so the right edge and right column can be aimed at",
       "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "automations"
+      ],
+      "landed_at": "2026-11-09T21:32:07Z",
+      "release": "Unreleased",
+      "summary": "the automations pane head draws no menu button: right click, long press or Shift+F10 on the head (or Shift+F10 anywhere in the pane) opens the same edit, duplicate, delete menu a list row opens",
+      "type": "changed"
     },
     {
       "date": "2026-11-09",
@@ -50028,6 +50395,74 @@
       "type": "changed"
     },
     {
+      "date": "2026-11-09",
+      "features": [
+        "sessions-page",
+        "automations",
+        "layout-editor"
+      ],
+      "landed_at": "2026-11-10T00:20:36Z",
+      "release": "Unreleased",
+      "summary": "the sessions panel, the automations reader and the layout editor's drawer share one side sheet frame: the same edge, width scale, layer and slide, and on a phone the same full-screen sheet from the top of the page, never under the menu bar or the notch",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "task-manager"
+      ],
+      "landed_at": "2026-11-10T00:03:52Z",
+      "release": "Unreleased",
+      "summary": "the task manager's fork, schedule and page dialogs use the shared dialog frame: the same title strip, backdrop, close x and stacking as every other dialog, so they no longer slide under an open drawer. what you see change: the fork dialog is 380px wide, the shared dialog width, down from 416px",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "theme-system",
+        "terminal-search",
+        "blueprints"
+      ],
+      "landed_at": "2026-11-09T21:14:41Z",
+      "release": "Unreleased",
+      "summary": "the terminal search highlights, the frame edges of every panel and the session pane accents now follow the theme, global or per session, and the blueprints borders the browser used to drop now draw",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "theme-system"
+      ],
+      "landed_at": "2026-11-09T21:32:07Z",
+      "release": "Unreleased",
+      "summary": "top-down cleanup: every disabled control dims by one token, every check mark is drawn by one recipe, and the oc-ibtn icon buttons are drawn by the base icon button recipe instead of a second copy in controls.css",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-09",
+      "features": [
+        "animations-setting"
+      ],
+      "landed_at": "2026-11-09T21:32:07Z",
+      "release": "Unreleased",
+      "summary": "with animations off or the system's reduce motion on, transitions written with a literal duration stop too, not only the ones that use the motion tokens, so nothing slides or fades",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-10",
+      "details": "Inside a framed page's tab row the tab strip draws no ground of its own, so the automations tab row no longer shows a band of strip ground between its gutters. A search field in a frame row (title strip, tab row, tool row) is the frame height like the buttons beside it: the automations find box is 26px beside its 26px tabs (was 24px), the themes search too; 44px under a touch screen.",
+      "features": [
+        "automations",
+        "theme-system"
+      ],
+      "issue": 2775,
+      "landed_at": "2026-11-11T15:00:07Z",
+      "pr": 2775,
+      "release": "Unreleased",
+      "summary": "a framed page's tab row is one even ground, and a search field in a frame row is the frame height, 26px",
+      "type": "changed"
+    },
+    {
       "date": "2026-11-10",
       "features": [
         "account-auto-switch"
@@ -50064,6 +50499,76 @@
     },
     {
       "date": "2026-11-10",
+      "details": "The simple view's 25px buttons now apply under a mouse only, so a touch screen of any width gets the base 44px floor (a touch screen above 767px got 25px before). The page's phone-width floors are gone: a narrow mouse window keeps the 25px buttons and the 30px and 32px tabs, the top tabs stay 44px at every width, and the workbench and pane tabs take the 44px tap size under a touch screen of any width (a touch screen above 767px got 30 and 32px before). The page and feed read the shared live phone flag instead of measuring the window themselves.",
+      "features": [
+        "automations"
+      ],
+      "issue": 2775,
+      "landed_at": "2026-11-11T14:36:33Z",
+      "pr": 2775,
+      "release": "Unreleased",
+      "summary": "automations: the simple view's buttons keep the base touch floor on any touch screen, and the page draws no width-based tap sizes of its own",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-10",
+      "details": "The frame measures where its title strip and tab and tool rows end and pins sticky rows there: 82px with the swarm tab row showing (56px strip plus a 26px row), 56px while the row is slid away, and the automations page's own 44px strip plus its rows. Before, the offset was a constant 56px, so after scrolling down and a little back up the swarm board's column row sat over the returned tabs and a tap on a tab hit the board. Pinned rows now paint below the tab row. The automations feed's day headers pin at the same offset, and the widgets page's place dock pins under the rows too (it measured the title strip alone). The hosts roster's pane tabs drop their own phone-width height and follow the shared tab strip.",
+      "features": [
+        "swarm-board",
+        "automations",
+        "widgets-page"
+      ],
+      "issue": 2775,
+      "landed_at": "2026-11-11T14:59:23Z",
+      "pr": 2775,
+      "release": "Unreleased",
+      "summary": "below 768px a row a page pins while scrolling rests under the tab row while it shows and rises to the title strip when the tab row slides away, so it never covers a tab",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-10",
+      "details": "Below the 768 phone line the page itself scrolls, so the swarm page body no longer scrolls on its own there (it never moved and its sticky rows scrolled off with the cards). The page frame now gives a sticky row its offset, --oc-frame-sticky-top: 0 at every other width and the phone title strip height below 768, and the board's column row, the list view's pane and the card pane pin at it. From 768 up nothing changes: the body is the one scroller and the rows pin at its top. On a board 720px or narrower the open card's pane still sits above the lanes in the flow, as designed.",
+      "features": [
+        "swarm-board"
+      ],
+      "issue": 2775,
+      "landed_at": "2026-11-11T14:32:13Z",
+      "pr": 2775,
+      "release": "Unreleased",
+      "summary": "below 768px the swarm board's column row and list pane stay in view under the title strip while the page scrolls",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-10",
+      "details": "Elite access wears the column frame; its board scrolls inside the page from 768 up and lands on the same pixels as before. The widgets page wears the nav frame: reset bars and ? are 26px tall with 12px side padding (were 24/8), the title strip is 37px (was 47) with the search in the header and the menus in a tool row under it, and the lens rail is the frame's 208px side (was 168). From 768 to 1023px the lens rail now shows beside the cards (it was hidden) and an open widget's detail sits beside it at the cards' width; below 768 the lenses open from a picker as a sheet, which stays in view when the page is scrolled. The 400px detail at 1024 and up is unchanged. Settings stays on its own two-drawer layout for now.",
+      "features": [
+        "warez-elite-access",
+        "widgets-page"
+      ],
+      "issue": 2775,
+      "landed_at": "2026-11-11T14:59:05Z",
+      "pr": 2775,
+      "release": "Unreleased",
+      "summary": "elite access and the widgets page wear their page frames: the widgets header buttons are the frame's one header button, and its lens rail is the frame's side",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-10",
+      "details": "The shared tab strip takes the frame height inside a framed page's tab row. Measured at 1863px before: automations tabs 44px with no side padding, swarm and hosts 31px; after: all 26px with 12px side padding and 11px type, matching the header buttons and the themes filter chips. A narrow mouse window keeps 26px (it was 44px below 1024), and a touch screen of any width gets 44px. The automations top tabs drop their own look (taller, no padding, an underline) and wear the shared tabs; the hosts page's phone-width tab floor is gone.",
+      "features": [
+        "automations",
+        "swarm-board",
+        "pack-page"
+      ],
+      "issue": 2775,
+      "landed_at": "2026-11-11T14:41:05Z",
+      "pr": 2775,
+      "release": "Unreleased",
+      "summary": "every framed page's tabs are one size: the frame height, 26px like the header buttons, at every width under a mouse and 44px under a touch screen",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-10",
       "features": [],
       "landed_at": "2026-11-10T22:11:36Z",
       "release": "v1.16.8",
@@ -50080,6 +50585,80 @@
     },
     {
       "date": "2026-11-10",
+      "details": "From 1024px the list drawer still opens 240px wide at the agents drawer's edge, the page drawer beside it at 640px (560 at 1100), above and below each other as before, with the same slide in and out and the same resize handle. Below 1024 the rail is still 184px beside the content and the page still scrolls as one; a phone keeps its omnibar search and its section picker beside the tabs. What moved to the frame's sizes: the two drawers' close icons are the frame's 26px header button (were 20), and the section tabs sit in the frame's tab row, 26px under a mouse at every width (were 31 in the drawer and 44 below 1024); the phone's picker row follows the tabs, 26px under a mouse and 44 under a touch screen as before. An embedded screen (launch profiles) still has one scroll area.",
+      "features": [
+        "settings-panel"
+      ],
+      "issue": 2775,
+      "landed_at": "2026-11-11T15:05:41Z",
+      "pr": 2775,
+      "release": "Unreleased",
+      "summary": "settings wears the shared page frame: the nav frame gains a drawer pair mode, so the settings list and the settings page drawer are drawn by the frame, at the same places and widths as before",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-10",
+      "details": "Every page built on the manager frame, and automations, wears the column frame with a self-scrolling body. Visible change: the top-right title-strip button is 26px tall with 12px side padding and 11px type on every one of them (was 32/16/13 on the manager pages and a hand-sized 25/10/12 on automations; 44px on a touch screen). The manager list, its reading pane and the automations pane and drawer keep their layout. From 768 to 1023px a manager page now keeps its box and scrolls its list or pane inside it (the whole page scrolled there before); automations takes the frame's phone line, 767px, for its whole phone layout (the page scroll, the full-sheet pane and quick view, back buttons; its 44px taps now come from the shared touch-screen rule, so a narrow desktop window keeps the dense buttons), and its pane and quick view stay pinned in view when opened under a scrolled list. The automations notice now rides the frame's notes strip. The reading pane's own title strip (back to the list) wears the same header button, and the skills page's tab buttons and the pack tab's all, inventory and sync now buttons are the shared button.",
+      "features": [
+        "automations",
+        "blueprints",
+        "dashboards",
+        "plugins-page",
+        "skills-manager",
+        "claude-code-mods",
+        "carnivore-account-page"
+      ],
+      "issue": 2775,
+      "landed_at": "2026-11-11T13:44:19Z",
+      "pr": 2775,
+      "release": "Unreleased",
+      "summary": "the blueprints, dashboards, plugins, skills, mods, account, docs, changelog and agent pages and automations wear the column page frame: their header buttons are the frame's one header button, as on the providers page",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-10",
+      "features": [
+        "agents-sidebar",
+        "layouts"
+      ],
+      "issue": 2942,
+      "landed_at": "2026-11-11T22:44:12Z",
+      "release": "Unreleased",
+      "summary": "the context gauge no longer vanishes after an interrupt or API error because Claude Code's made-up turns are skipped; a Layout's session count matches the rows it shows; the add-widget key and the widgets menu read as the standard item menu",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-10",
+      "details": "The manager pages' grid and list toggle (blueprints and the other manager pages) drew 24px squares in the frame's tool row beside 26px text buttons, 44px below 1024 by width, and the phone's view flip 44px by width. Inside a frame region they now take the base icon square: 26px under a mouse at every width, 44px under a touch screen. Outside a frame the toggle keeps its 24px.",
+      "features": [
+        "blueprints"
+      ],
+      "issue": 2775,
+      "landed_at": "2026-11-11T15:02:39Z",
+      "pr": 2775,
+      "release": "Unreleased",
+      "summary": "the grid and list view buttons in a framed page's rows are 26px squares like the buttons beside them, 44px on a touch screen",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-10",
+      "details": "Logs, swarm, themes and pack wear the column frame with a self-scrolling body; the war room wears the canvas frame. Visible change: the war room's + is 26px tall with 12px side padding (was 24/8), the themes library and guide buttons and the pack page's add a computer are 26px with 12px padding and 11px type (were 32/16/13), and the themes filter chips are 26/12 (were 24/8; at phone width they scroll sideways inside their group). From 768 to 1023px the log viewer and the war room fill the page (they shrank to a strip or showed nothing there before), and the swarm ledger and nodes views scroll inside the page from 768 up instead of running past the window edge. Below 768 the war room shows its wall (an empty strip before) and the log viewer's list keeps its height.",
+      "features": [
+        "developer-widget",
+        "warroom",
+        "swarm-board",
+        "theme-system",
+        "pack-page"
+      ],
+      "issue": 2775,
+      "landed_at": "2026-11-11T14:32:11Z",
+      "pr": 2775,
+      "release": "Unreleased",
+      "summary": "the logs, war room, swarm, themes and pack pages wear their page frames: their header buttons are the frame's one header button, and a self-scrolling page keeps its height at every width",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-10",
       "features": [
         "carnivore-mcp-server",
         "plugins-page"
@@ -50090,6 +50669,1956 @@
       "release": "v1.16.8",
       "summary": "the plugin api v1 document is now a checked contract with a stable or experimental label on every row, and agents can restart or stop a plugin (always asking the owner first) and read its recent capability calls and outbound requests",
       "type": "added"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "icon-picker"
+      ],
+      "issue": 2956,
+      "landed_at": "2026-11-12T01:23:04Z",
+      "release": "Unreleased",
+      "summary": "36 more general-purpose icons for groups: work, money, health, travel, music, mail, lock, rocket and more",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "automations",
+        "crosstalk",
+        "messaging"
+      ],
+      "landed_at": "2026-11-12T04:24:13Z",
+      "release": "Unreleased",
+      "summary": "a background loop that crashes (the automations scheduler, the messaging stream, the save follower, the stats feed, the perf monitor, the pipe pruner, the phone link tunnel and certificate renewal, the crosstalk expiry timer) is now logged with its name and the error and restarted with a growing, jittered, capped pause, and stops with a loud log line after ten crashes in a row, instead of silently stopping",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "notification-destinations",
+        "build-your-own-theme"
+      ],
+      "landed_at": "2026-11-12T03:00:42Z",
+      "release": "Unreleased",
+      "summary": "a batch of small fixes: a destination's reminder can be set to off (0) and stays off, a failed theme list re-fetch keeps the themes already loaded, a corrupt native push device file is moved aside instead of wiped, starring a slash command decides inside one config lock so two stars no longer undo each other, a resumed conversation held by a managed account profile is found, the rename-retry ledger keeps the newest entry when full, the local-servers tracker searches the tmux socket sessions live on, session names strip both tmux prefixes in the web app, and the test-mode switch is read one way under both spellings",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "companies",
+        "project-create-and-browse"
+      ],
+      "issue": 2945,
+      "landed_at": "2026-11-11T18:47:15Z",
+      "pr": 2945,
+      "release": "Unreleased",
+      "summary": "a new project is created from one form with a company dropdown and a folder tree that opens at the company's stored folder, checked before anything is made; a company can store the folder its new projects go under, and agents get company_folder_set and project_company_set",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "beast-mode",
+        "crosstalk"
+      ],
+      "landed_at": "2026-11-12T12:11:48Z",
+      "release": "Unreleased",
+      "summary": "a paired computer's agent runs unprompted here only when Beast Mode is on on both machines: the codex permission bypass needs this computer's own Beast Mode and the sender's",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "plugins-page"
+      ],
+      "issue": 2948,
+      "landed_at": "2026-11-11T16:02:19Z",
+      "release": "Unreleased",
+      "summary": "a re-runnable tool renames the two plugin code folders (src/cplugs and web/src/cplugs to src/plugins and web/src/plugins) on any branch and rewrites every code-path reference, leaving ids, routes, manifests and stored folders alone; the rename itself has not run yet",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "subagent-stalled"
+      ],
+      "issue": 2953,
+      "landed_at": "2026-11-11T22:44:12Z",
+      "release": "Unreleased",
+      "summary": "a running sub-agent with no new transcript activity for five minutes turns its age amber and reads stalled Nm, unless it is waiting on an armed monitor, and a stall past fifteen minutes raises one notification under the parent session, honoring mutes",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "task-manager"
+      ],
+      "issue": 2943,
+      "landed_at": "2026-11-11T14:29:59Z",
+      "release": "Unreleased",
+      "summary": "a server public module names what tests and app assemblers outside the Task Manager may import from it, and a ratchet keeps the importers that go round it from growing; no screen or route changes",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "session-status-lights"
+      ],
+      "issue": 2946,
+      "landed_at": "2026-11-11T18:20:47Z",
+      "release": "Unreleased",
+      "summary": "a session resting at its prompt after a restart reads idle instead of unknown when the old process left a queued task notice behind, and a session whose sub-agent is waiting on its own monitor and shell reads working with a sub-agent instead of unknown, so that shell is no longer listed as a leftover",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "sidebar-rail",
+        "app-alert-center"
+      ],
+      "issue": 2947,
+      "landed_at": "2026-11-12T01:23:04Z",
+      "release": "Unreleased",
+      "summary": "a waiting question shows a bright yellow icon on the sidebar rail and an alert bell turns red (warn: yellow) so they draw the eye",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "projects-page"
+      ],
+      "issue": 2944,
+      "landed_at": "2026-11-11T18:45:07Z",
+      "pr": 2944,
+      "release": "Unreleased",
+      "summary": "adopting a session or signing in never creates a project; deleting a project removes its stopped sessions; an archived-looking stopped session can be deleted by uuid over MCP",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "automations"
+      ],
+      "landed_at": "2026-11-12T02:18:18Z",
+      "release": "Unreleased",
+      "summary": "an automation run's attachment in the Reader downloads again: the click now fetches the file with the login token instead of a bare link that always got 401",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "session-bookmarks"
+      ],
+      "landed_at": "2026-11-12T02:46:16Z",
+      "release": "Unreleased",
+      "summary": "an undone rewind keeps the copied conversation when the row could not be put back on the original, and detaching or destroying the last session moves its metadata file aside to a recoverable .retired copy instead of deleting it",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [],
+      "landed_at": "2026-11-12T04:56:42Z",
+      "release": "Unreleased",
+      "summary": "domain operations move out of the route layer again on today's tip: the guarded paste, sleeping a session, restarting a stopped session and the preference broadcast raise typed errors in core with the routes translating to the same status codes and error codes, and two ratchets stop faked requests and bare ValueError/RuntimeError raises from growing",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "agents-sidebar"
+      ],
+      "landed_at": "2026-11-12T01:38:16Z",
+      "release": "Unreleased",
+      "summary": "every slide-out menu page now opens at one shared width: drag any page's right edge and the rest follow, it is remembered across closing, reloading and browsers, and a double-click resets it; the edge is also thicker and colored so you can see how wide the page is",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [],
+      "landed_at": "2026-11-11T21:25:05Z",
+      "release": "Unreleased",
+      "summary": "master known reds green: launch_failure.py and ten flat test files moved into domain folders, MCP route ledger renamed and extended for the plugin folder rename, publicboard catalog paths, swarm tool count",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "projects-page"
+      ],
+      "landed_at": "2026-11-12T02:09:05Z",
+      "release": "Unreleased",
+      "summary": "merging two projects now moves the source project's transcript archive, root-decision, storage, company HQ, Task Manager tag and automation rows (including a project named inside an automation's target) to the target and renames its conversation index rows, so a merge no longer fails on a foreign key or leaves rows pointing at a deleted project; a source that still holds Swarm, Pack or Task Manager data, or two projects that both hold a storage record, are refused before anything is written",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "details": "S11 of #2775, the last slice of the page moves. The frame prop is required on the shared Page and its unframed legacy path is gone. The last callers pass one: the warez skill page (column, scrolling itself, its remove strip and grid in one column), the launch profiles page (column, the frame's stacked main column in place of its own scroller) and the inset test fixture. The known list of unframed menu pages is deleted; the menu frames test now holds every Page under web/src to passing a frame.",
+      "features": [],
+      "issue": 2775,
+      "landed_at": "2026-11-11T19:39:56Z",
+      "pr": 2775,
+      "release": "Unreleased",
+      "summary": "page frames: every page wears a frame and the frame prop is required",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "session-groups"
+      ],
+      "issue": 2955,
+      "landed_at": "2026-11-12T01:25:08Z",
+      "release": "Unreleased",
+      "summary": "right-click a group heading and pick new group to make another group",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "keyboard-shortcuts"
+      ],
+      "issue": 2786,
+      "landed_at": "2026-11-12T01:34:00Z",
+      "release": "Unreleased",
+      "summary": "saving a shortcut override through the API or MCP is refused when it puts two actions on one chord where both can be live, the same rule the keys page already applies; stored overrides stay readable and are never rewritten",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "details": "The app's built-in browser keeps its cookies under a fixed local key on builds with no Apple Team ID, so macOS no longer asks for the cloude-code-menubar Safe Storage key after every install. One sign-in is needed after the switch.",
+      "features": [
+        "macos-menu-bar-app"
+      ],
+      "issue": 2949,
+      "landed_at": "2026-11-11T18:20:52Z",
+      "pr": 2949,
+      "release": "Unreleased",
+      "summary": "self-signed builds stop asking for the keychain on every update",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "details": "S11 of #2775. The sessions page and warez wear the shared page's nav frame (frame nav, scroll self). Sessions: the frame draws the title, the fleet summary as its sub, the find in its header search slot (the omnibar on a phone) and the create, cleanup, show-hidden and fold icon buttons as its actions, so those squares are 26px under a mouse (24px before) and 44px under a touch screen (24px before); the page's own title strip, clipped heading and phone bar are gone. Warez: the search moves into the frame's header search slot, refresh, publish, sign in and ? become base buttons at the frame height, and the grid and list pair become the frame's square (26 by 26 under a mouse, was 32 by 26; 44 under a touch screen). The lens rail, the warez menu and the reading pane stay the pages' own layout inside the body.",
+      "features": [
+        "sessions-page",
+        "warez"
+      ],
+      "issue": 2775,
+      "landed_at": "2026-11-11T18:59:27Z",
+      "pr": 2775,
+      "release": "Unreleased",
+      "summary": "sessions and warez wear the nav page frame: one header button and icon square size",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "carnivore-account-signin"
+      ],
+      "issue": 2959,
+      "landed_at": "2026-11-12T00:51:46Z",
+      "release": "Unreleased",
+      "summary": "signing in with google or github from the desktop app opens the provider page in your browser at once instead of showing a blocked-tab message, and the google button wears the four-colour google G",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "carnivore-mcp-server"
+      ],
+      "landed_at": "2026-11-12T03:45:08Z",
+      "release": "Unreleased",
+      "summary": "the MCP project tools (rename, color, description, archive, restore, delete, move) now address a project by its exact id, so two projects that share a display name can each be edited, and a rename while an approval card waits can no longer send the change to the wrong project; the app gains matching /projects/by-id/{id} routes and keeps the name-keyed ones",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [],
+      "landed_at": "2026-11-11T23:29:40Z",
+      "release": "Unreleased",
+      "summary": "the Task Manager chat bubble and the flow chat bubble are drawn through one shared ChatBubble base in the base layer, with the owner side as a declared option; the owner-side bar and header read from the right in both. Deliberate look changes to check at staging: the owner bubble now has a right bar (inset, in both the Task Manager and flow); header tracking went from 0.1em to 0.08em; the Task Manager body line-height went from 1.5 to 1.45; the flow owner header now reads right to left; the flow task chip now wears the agent's tone through the base kind label",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "pack-global-sync"
+      ],
+      "issue": 2960,
+      "landed_at": "2026-11-12T02:25:26Z",
+      "release": "Unreleased",
+      "summary": "the agent panel is one value on every Pack computer: the main sends its companies, project names, project membership, colors, pins, row order and section order, and a paired computer files the main's sessions under the main's own project ids; folds, density and every show or hide setting stay per computer",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "pack-global-sync"
+      ],
+      "issue": 2960,
+      "landed_at": "2026-11-12T03:38:47Z",
+      "release": "Unreleased",
+      "summary": "the agent panel sync is two way: an edit to a company, project name, membership, color, pin, row order or section order on any Pack computer reaches the main and then every other computer, the newer edit wins per field, and a computer held one way sends nothing",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [],
+      "landed_at": "2026-11-12T03:13:24Z",
+      "release": "Unreleased",
+      "summary": "the automation store's claim mixin declares the host surface it needs (StoreCore) and a test fails on an undeclared use, and the toast and API prototype patches throw at load when two files define the same method instead of the later one silently winning",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "pack-page",
+        "automations"
+      ],
+      "landed_at": "2026-11-11T22:54:55Z",
+      "media_unchanged": true,
+      "release": "Unreleased",
+      "summary": "the computers page's pack settings gear, sort and grid or list pair are the 26px of every other page's header and tool row (44 on a touch screen), and the automations page's body tabs and first tab follow the shared tab strip instead of their own sizes; the shared frame row rule also resizes every sort box in a frame row (plugins, skills, warez, widgets and page toolbars): with a mouse at 768px and wider nothing moves, on touch at 768px and wider they go from 26 to 44, and in a narrow mouse window under 768px they go from 44 to 26, because size follows the pointer and never the width",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [],
+      "landed_at": "2026-11-12T04:12:25Z",
+      "release": "Unreleased",
+      "summary": "the eight status-light states are one typed vocabulary: activity_status is an enum in the API schema and a union in the web code, and the sets for resting, busy and blocked-on-owner have one home instead of 21 hand-built copies; a status name this build does not know (a peer on another app version) reads as unknown, never a dropped row",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "launch-picker"
+      ],
+      "issue": 2950,
+      "landed_at": "2026-11-11T18:24:45Z",
+      "pr": 2950,
+      "release": "Unreleased",
+      "summary": "the scroll bar no longer flickers while the new agent dialog is open",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [],
+      "landed_at": "2026-11-12T03:23:48Z",
+      "release": "Unreleased",
+      "summary": "the server error log lines name the exception type, carry a traceback at the blanket crash handlers and the session id in scope, and an unreadable notification store or listing read warns once per cause instead of hiding at debug or repeating; a guard in the commit gate keeps the bare error=str(e) shape from coming back",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [],
+      "landed_at": "2026-11-12T03:57:21Z",
+      "release": "Unreleased",
+      "summary": "the session listing now sends each session's durable key (session_uuid) on every row that has a database row, one reader replaces the inline lookups outside Swarm, and the drawer and open-files read it off the listing instead of joining the stored records by guesswork",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [],
+      "landed_at": "2026-11-12T12:45:18Z",
+      "release": "Unreleased",
+      "summary": "the session timeline's typed event model and the transcript extractor (a declared mapping with an explicit ignore list, a census test over the synthetic fixtures); nothing reads it yet, so nothing visible changes",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [],
+      "landed_at": "2026-11-12T02:09:06Z",
+      "release": "Unreleased",
+      "summary": "the setup page reads its colors from the shared --oc-* tokens and follows the active theme instead of carrying its own palette, and a test fails on any color literal in it",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "first-run-setup",
+        "provider-model-picker"
+      ],
+      "landed_at": "2026-11-12T02:55:41Z",
+      "release": "Unreleased",
+      "summary": "the setup wizard's apply step, the provider model list and the projects migration now write config.json through the one locked writer, so a crash cannot leave an empty file and a change made meanwhile is kept; apply no longer imports a script the packaged app does not ship",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "pack-page",
+        "theme-system"
+      ],
+      "landed_at": "2026-11-11T21:34:53Z",
+      "media_unchanged": true,
+      "release": "Unreleased",
+      "summary": "the themes page draws one body (the frame's) instead of two, and the computers page's first tab sits where every other framed page's does: its own 16px gutter on the tab strip is gone",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "layout-editor"
+      ],
+      "issue": 1157,
+      "landed_at": "2026-11-12T02:44:17Z",
+      "release": "Unreleased",
+      "summary": "the widget drawer sits clear of the right and bottom widget bars at every window size, and the analytics gallery cards can be dragged onto the screen (or pressed) on the terminal page, landing as their own chart",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [],
+      "landed_at": "2026-11-12T03:36:31Z",
+      "release": "Unreleased",
+      "summary": "theme, background and unread name checks, pane resizes (now in negotiated order with a 2 second tmux budget) and the adopt-time resize no longer block the event loop on tmux calls",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "shared-terminal-viewer"
+      ],
+      "issue": 2755,
+      "landed_at": "2026-11-12T01:38:57Z",
+      "release": "Unreleased",
+      "summary": "token usage is never asked for a row slot's unresolved tail (row:7), from the terminal foot, the mini rail or the drawer ledger, and a 404 for a session id stops that session's usage poll instead of repeating every thirty seconds",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-11",
+      "features": [
+        "pack-global-sync"
+      ],
+      "issue": 2960,
+      "landed_at": "2026-11-12T03:53:32Z",
+      "release": "Unreleased",
+      "summary": "two-way agent panel sync fixes: a member's edit to a copy of the main's project now reaches the main and sticks, a pin or reorder on a member no longer drops the pins of sessions it cannot see, and a received panel can no longer be read as a local edit or swallow a real one",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-12",
+      "features": [
+        "plugins-page"
+      ],
+      "landed_at": "2026-11-12T14:07:05Z",
+      "release": "Unreleased",
+      "summary": "a failed plugin call now shows a plain sentence saying what happened and what to do, instead of a raw error key and a console warning about a missing string",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-12",
+      "details": "A Workflow records each agent's end only in its own journal.jsonl, never in the parent transcript, so every finished workflow agent stayed running until it crossed the stall limits. The reader now reads the journal result lines and the workflow's own terminal notification as ends.",
+      "features": [
+        "subagent-stalled",
+        "subagent-counts"
+      ],
+      "issue": 2953,
+      "landed_at": "2026-11-12T20:39:39Z",
+      "pr": 2953,
+      "release": "Unreleased",
+      "summary": "a finished workflow agent no longer reads as running, so it no longer raises a false stuck notice",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-12",
+      "features": [
+        "plugins-page"
+      ],
+      "issue": 2969,
+      "landed_at": "2026-11-12T14:07:01Z",
+      "release": "Unreleased",
+      "summary": "a page load no longer asks every plugin for a status badge it cannot draw: the host remembers a plugin's no such surface answer per version, answers 404 without starting the plugin, and the browser stops asking; a plugin error frame now shows in the server log with its code and message",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-12",
+      "features": [
+        "sessionchat"
+      ],
+      "landed_at": "2026-11-12T23:59:37Z",
+      "release": "Unreleased",
+      "summary": "a session chat feature switch, off by default: the timeline index (T4) does nothing and creates no timeline.db until the owner switches it on in Settings > features",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-12",
+      "features": [
+        "app-alert-center"
+      ],
+      "issue": 2974,
+      "landed_at": "2026-11-12T22:06:28Z",
+      "pr": 2974,
+      "release": "Unreleased",
+      "summary": "one alert and one click after a mass pane death: when 3 or more agent panes die within 10 seconds (seen at boot too), the alert center says how many, and resume all with a note wakes each session through the one wake and types a short interruption note into it once ready (POST /sessions/mass-death/resume, MCP session_mass_death_resume)",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-12",
+      "features": [
+        "launch-picker"
+      ],
+      "issue": 2974,
+      "landed_at": "2026-11-12T21:56:39Z",
+      "pr": 2974,
+      "release": "Unreleased",
+      "summary": "pkill and killall in a Carnivore pane refuse broad kills (options after the pattern, many matches, a claude or tmux match) and point at kill <pid>",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-12",
+      "features": [
+        "agents-sidebar"
+      ],
+      "landed_at": "2026-11-12T14:15:19Z",
+      "release": "Unreleased",
+      "summary": "the close X on a slide-out menu page now closes the page and everything stacked with it, so no earlier page slides back up and Back does not reopen one",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-12",
+      "features": [
+        "plugins-page",
+        "widgets-page",
+        "skills-manager",
+        "dashboards",
+        "blueprints"
+      ],
+      "issue": 2775,
+      "landed_at": "2026-11-12T12:46:01Z",
+      "media_unchanged": true,
+      "release": "Unreleased",
+      "summary": "the manager pages and the widgets page draw their list beside the reading pane inside the frame's one body instead of a second body of their own; nothing moves on screen, and the page layout scan now has no exceptions left",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-12",
+      "features": [
+        "sessions-page"
+      ],
+      "landed_at": "2026-11-12T15:44:41Z",
+      "release": "Unreleased",
+      "summary": "the sessions page filter row never runs past its bar: the group labels drop when the labelled row, measured, does not fit (with a margin so it does not flicker at the edge), and a row still too wide wraps its groups onto a second line",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-12",
+      "features": [
+        "sessions-page"
+      ],
+      "landed_at": "2026-11-12T17:56:18Z",
+      "release": "Unreleased",
+      "summary": "the sessions page shows its list on a phone again: below 768 the nav page frame gave the body no height, so only the title, summary and tool row drew over a blank page; the frame now fills the page for every self-scrolling nav page",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-12",
+      "features": [
+        "terminal-cells-and-tabs"
+      ],
+      "landed_at": "2026-11-12T12:13:16Z",
+      "release": "Unreleased",
+      "summary": "the terminal runs on the maintained @xterm packages (xterm 5.5.0 and its fit, webgl, unicode11, search and web-links add-ons) instead of the deprecated xterm packages that get no fixes, same files and same behavior, with a test that keeps the recorded packages and hashes in step with the files",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-12",
+      "features": [
+        "terminal-text-size"
+      ],
+      "issue": 2965,
+      "landed_at": "2026-11-12T04:42:47Z",
+      "release": "Unreleased",
+      "summary": "the terminal text size shortcuts (Ctrl+Cmd+=, Ctrl+Cmd+-, Ctrl+Cmd+0) work on a Mac again: a chord can name its physical key, so a press whose key arrives as a control character or Unidentified still fires, and Ctrl+Cmd+Shift+= counts as bigger",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-13",
+      "features": [
+        "computers"
+      ],
+      "issue": 2870,
+      "landed_at": "2026-11-13T21:11:03Z",
+      "pr": 2870,
+      "release": "Unreleased",
+      "summary": "a look for a pack on a LAN with many packs or long names no longer loses its answer: the helper trims it to fit the door's line cap",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-13",
+      "features": [
+        "pack-roster"
+      ],
+      "issue": 2980,
+      "landed_at": "2026-11-13T19:00:52Z",
+      "pr": 2980,
+      "release": "Unreleased",
+      "summary": "a pack keeps working when its alpha is down: an opted-in successor takes over with limited powers and the home takes it back",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-13",
+      "features": [
+        "pack-machines"
+      ],
+      "issue": 2980,
+      "landed_at": "2026-11-13T17:44:45Z",
+      "pr": 2980,
+      "release": "Unreleased",
+      "summary": "a pack member that dropped off on a known network is found again by the alpha through a small LAN beacon (off until switched on in pack settings)",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-13",
+      "features": [
+        "pack-machines"
+      ],
+      "issue": 2980,
+      "landed_at": "2026-11-13T17:27:24Z",
+      "pr": 2980,
+      "release": "Unreleased",
+      "summary": "a pack member that lost the direct path can reach the alpha through the carnivore link relay (off until switched on in pack settings)",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-13",
+      "features": [
+        "approval-inbox"
+      ],
+      "landed_at": "2026-11-14T01:30:55Z",
+      "release": "Unreleased",
+      "summary": "an approval card now clears as soon as you answer it, also in the first seconds after the page loads, when the list could be read from the boot-window copy taken before your answer",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-13",
+      "details": "Slice 2 of the Pack reconnect plan: a Linux or Windows computer can now hold a relay device key and a federation signing key. macOS stays on the Keychain.",
+      "features": [],
+      "issue": 2980,
+      "landed_at": "2026-11-13T17:06:05Z",
+      "pr": 2980,
+      "release": "Unreleased",
+      "summary": "device key and federation key have a Linux file store and a Windows DPAPI store behind the same keychain seam",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-13",
+      "features": [
+        "pack-global-sync"
+      ],
+      "issue": 2960,
+      "landed_at": "2026-11-13T14:10:58Z",
+      "release": "Unreleased",
+      "summary": "hand-made session groups sync across the Pack: a group created, renamed, re-membered, reordered or deleted on any computer shows the same name, members, order and band on every other one, while folds and every show or hide setting stay per computer",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-13",
+      "features": [
+        "task-manager"
+      ],
+      "landed_at": "2026-11-14T13:32:08Z",
+      "release": "Unreleased",
+      "summary": "the Task Manager Mark II scheduled chip (#2982) counts and filters every task with a run still coming, an unpaused repeat or a one-time schedule not yet fired, whatever section the task sits in; done tasks, fired one-shots and paused repeats stay out, so the number no longer drops when a repeating task moves to review or working",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-13",
+      "features": [
+        "pack-machines"
+      ],
+      "issue": 2980,
+      "landed_at": "2026-11-13T18:13:05Z",
+      "pr": 2980,
+      "release": "Unreleased",
+      "summary": "the pack alpha signs a roster of every computer in takeover order (nobody is eligible until you turn them on), and members can tell a pinned computer whom they follow",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-13",
+      "features": [
+        "pack-reconnect"
+      ],
+      "issue": 2980,
+      "landed_at": "2026-11-13T19:35:21Z",
+      "pr": 2980,
+      "release": "Unreleased",
+      "summary": "the pack page has a reconnect and takeover section: the relay switch, the takeover switch with its reason, the successor order, a via relay badge and the confirm for a takeover main",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-13",
+      "features": [],
+      "issue": 2951,
+      "landed_at": "2026-11-18T21:58:49Z",
+      "release": "Unreleased",
+      "summary": "the session timeline's hot driver runs in shadow beside the status lights' transcript reader and counts where the two disagree (GET /api/v1/timeline/parity); it runs only while session chat is on, which ships off, and never changes a light",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-14",
+      "features": [
+        "custom-view-frame"
+      ],
+      "issue": 2983,
+      "landed_at": "2026-11-15T13:28:54Z",
+      "release": "Unreleased",
+      "summary": "a plugin's panel view can open as a tab beside your terminals: plus menu, widget, plugins; one copy per terminal page, loads when first shown, and the plugin mark stays visible",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-14",
+      "features": [
+        "terminal-fast-open"
+      ],
+      "issue": 2984,
+      "landed_at": "2026-11-15T01:43:20Z",
+      "release": "Unreleased",
+      "summary": "clicking a session in the drawer no longer drops you into claude's detailed transcript view: a pane the server measured as not on the alternate screen never gets ctrl+o from a wheel tick, and scrolling down in the live view never opens it",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-14",
+      "features": [
+        "phone-link"
+      ],
+      "landed_at": "2026-11-14T23:51:37Z",
+      "release": "Unreleased",
+      "summary": "in the iPhone app, when pasting from the clipboard was forced to prompt (refused, or slow enough that the system dialog was on screen), a hint under the paste text area, or a toast when the paste went through, says how to stop the alert: settings > apps > carnivore > paste from other apps > allow",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-14",
+      "features": [
+        "carnivore-mcp-server"
+      ],
+      "issue": 2975,
+      "landed_at": "2026-11-15T03:38:18Z",
+      "release": "Unreleased",
+      "summary": "the mcp session_restart and session_wake tools find a just-exited session by its ses_ id as well as its tmux name: a created session now stores its ses_ id on its row (a restart that reuses the row stores the new one), and a stored row matches that id, never a name or a guess for a closed row",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-15",
+      "features": [
+        "terminal-background-work"
+      ],
+      "issue": 1180,
+      "landed_at": "2026-11-15T13:25:30Z",
+      "release": "Unreleased",
+      "summary": "the background shell count no longer stats every sub-agent file of a conversation on each watcher pass: a conversation's answer is remembered until the filesystem event stream reports a change to its transcript or a sub-agent file (or 60 seconds pass), so a conversation with 2,172 sub-agent files costs nothing while it is quiet",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-16",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 2993,
+      "landed_at": "2026-11-17T05:08:07Z",
+      "pr": 2999,
+      "release": "Unreleased",
+      "summary": "a computer's page in the pack shows what it has, its labels and when it is pegged, with a check again button, and the machine editor can limit which projects and companies it takes",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-16",
+      "features": [
+        "dashboards"
+      ],
+      "issue": 1682,
+      "landed_at": "2026-11-16T18:42:53Z",
+      "release": "Unreleased",
+      "summary": "a dashboard analytics widget sums every computer in the Pack by default and its settings list the Pack's computers as checkboxes, so you pick which ones feed its totals; the choice is saved on the widget itself, an offline computer keeps its last numbers tagged with its through time, and a computer alone sees no change",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-16",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 2990,
+      "landed_at": "2026-11-17T05:48:41Z",
+      "pr": 3000,
+      "release": "Unreleased",
+      "summary": "a job can say what it needs, a missing tool can be installed with homebrew after you approve, and copies stay in sync",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-16",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 2988,
+      "landed_at": "2026-11-17T02:08:41Z",
+      "pr": 2994,
+      "release": "Unreleased",
+      "summary": "an agent can hand a heavy command to another computer of your pack, and the changed files come back, once you mark the project for auto-delegate",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-16",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 2989,
+      "landed_at": "2026-11-17T04:12:42Z",
+      "pr": 2996,
+      "release": "Unreleased",
+      "summary": "an agent can hand a whole task, not just a command, to another computer of your pack: a worker session of the same harness does it there and its files, closing text and token use come back",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-16",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3001,
+      "landed_at": "2026-11-17T05:31:30Z",
+      "pr": 3002,
+      "release": "Unreleased",
+      "summary": "an agent job's worker no longer runs unreviewed harness settings and a reply cannot land on a newer question",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-16",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 2993,
+      "landed_at": "2026-11-17T03:28:59Z",
+      "pr": 2995,
+      "release": "Unreleased",
+      "summary": "auto-delegate has a switch in project settings, with a never-use tick per computer",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-16",
+      "features": [
+        "notification-toasts"
+      ],
+      "issue": 2985,
+      "landed_at": "2026-11-16T19:12:35Z",
+      "release": "Unreleased",
+      "summary": "carnivore plays the notification sound itself: sixteen distinct sounds, one pick per notification type in settings, and a pick per agent from its terminal menu, so you can tell by ear which agent and what kind; desktop banners are now silent so a card makes one sound",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-16",
+      "features": [
+        "pack-placement",
+        "pack-machines"
+      ],
+      "issue": 2990,
+      "landed_at": "2026-11-17T03:40:41Z",
+      "pr": 2990,
+      "release": "Unreleased",
+      "summary": "placement sees what each computer has and whether it is pegged, the idle keyboard rule is on for every computer, and a job can ask for requirement words",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-16",
+      "features": [
+        "sidebar-rail"
+      ],
+      "issue": 2987,
+      "landed_at": "2026-11-16T21:46:02Z",
+      "release": "Unreleased",
+      "summary": "the side rail no longer shows a scroll bar that pushed its keys sideways and cut the last one off: both bars scroll along their own axis with no bar, and a faint fade shows at an edge only while keys are hidden past it",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-16",
+      "features": [
+        "terminal-background-work"
+      ],
+      "issue": 1180,
+      "landed_at": "2026-11-16T15:39:00Z",
+      "release": "Unreleased",
+      "summary": "the sub-agent folder fingerprint that the parked work counter, the subagent tally and the skill spans each take on every watcher pass is remembered until the filesystem event stream reports a change in that conversation (or 60 seconds pass), so a quiet conversation with thousands of sub-agent files costs no stat calls",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-17",
+      "features": [
+        "task-manager"
+      ],
+      "issue": 2986,
+      "landed_at": "2026-11-17T19:14:35Z",
+      "release": "Unreleased",
+      "summary": "Task Manager delivery brings a project's session up one at a time: two deliveries landing together no longer start two sessions, and a running session of the project, the list's lead first, is used before waking or starting another",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-17",
+      "features": [
+        "task-manager"
+      ],
+      "issue": 3014,
+      "landed_at": "2026-11-20T12:42:54Z",
+      "release": "Unreleased",
+      "summary": "a Task Manager wake sent to a session that was just started or woken now waits until that session is measured ready for input, then checks the message reached the conversation and sends it once more if it did not; the log says delivered, resent or unconfirmed instead of sent",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-17",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 2991,
+      "landed_at": "2026-11-17T16:22:03Z",
+      "pr": 2998,
+      "release": "Unreleased",
+      "summary": "a computer reached by plain ssh, with no carnivore on it, can take command jobs",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-17",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3011,
+      "landed_at": "2026-11-17T21:16:39Z",
+      "pr": 3011,
+      "release": "Unreleased",
+      "summary": "a delegated job whose dependency folder is gitignored (a venv, node_modules) no longer fails when its changes are collected",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-17",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 2993,
+      "landed_at": "2026-11-17T17:45:51Z",
+      "pr": 2993,
+      "release": "Unreleased",
+      "summary": "a far sweep error after an ssh computer's folders were forgotten no longer turns that computer's turn-off answer into a failure",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-17",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 2993,
+      "landed_at": "2026-11-17T07:03:06Z",
+      "pr": 3003,
+      "release": "Unreleased",
+      "summary": "a jobs tab on the pack page lists the work the computers ran for your agents, a session row shows how many jobs it has live, and turning auto-delegate off can move the copies it made to the trash",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-17",
+      "features": [
+        "session-status-lights"
+      ],
+      "issue": 3013,
+      "landed_at": "2026-11-20T12:42:54Z",
+      "release": "Unreleased",
+      "summary": "a session whose Claude login expired is flagged login_expired on its row instead of reading finished, the owner gets one needs login notification per lockout, and a Task Manager tell to it is reported as not sent",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-17",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3012,
+      "landed_at": "2026-11-17T22:11:01Z",
+      "pr": 3012,
+      "release": "Unreleased",
+      "summary": "an agent job's requested model now applies on a profile whose command is the plain claude pass-through wrapper",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-17",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3016,
+      "landed_at": "2026-11-17T23:08:34Z",
+      "pr": 3016,
+      "release": "Unreleased",
+      "summary": "an agent job's watch reads the worker's conversation id from the right place, so the job no longer fails at its first poll",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-17",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 2992,
+      "landed_at": "2026-11-17T08:39:45Z",
+      "pr": 3008,
+      "release": "Unreleased",
+      "summary": "auto in the computer picker starts a session on another computer with the same permissions this computer would use",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-17",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 2992,
+      "landed_at": "2026-11-17T07:59:10Z",
+      "pr": 3005,
+      "release": "Unreleased",
+      "summary": "auto in the computer picker starts a session on the computer that fits best",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-17",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 2991,
+      "landed_at": "2026-11-17T16:37:39Z",
+      "pr": 2998,
+      "release": "Unreleased",
+      "summary": "computers reached by plain ssh: the project copy step never tries to copy a project to one, and one ssh computer whose reading fails with an unexpected error no longer blanks the readings of the others",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-17",
+      "features": [
+        "terminal-component-tabs"
+      ],
+      "issue": null,
+      "landed_at": "2026-11-17T21:37:15Z",
+      "release": "Unreleased",
+      "summary": "in the terminal grid the cells that do not take your typing are dimmed about 10% again and the one that does has a bright border: a cell with tabs was never recognised as holding input, so the dimming and the ring skipped it",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-17",
+      "features": [
+        "session-restart-and-resume"
+      ],
+      "landed_at": "2026-11-18T00:22:09Z",
+      "release": "Unreleased",
+      "summary": "restarting an agent from its terminal tab opens the restart picker even when its drawer row is closed, folded or filtered away, instead of refusing with row is no longer on screen",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-17",
+      "features": [
+        "terminal-cells-and-tabs"
+      ],
+      "issue": null,
+      "landed_at": "2026-11-18T00:36:28Z",
+      "release": "Unreleased",
+      "summary": "scrolling up in a terminal no longer snaps back to the bottom: loading older history at the top of the buffer used to start a second load from its own repaint, which put the view one row above live",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-17",
+      "features": [
+        "desktop-engine-service"
+      ],
+      "issue": 0,
+      "landed_at": "2026-11-17T18:19:06Z",
+      "pr": 0,
+      "release": "Unreleased",
+      "summary": "the app no longer closes and reopens its window when the server is slow to answer one health check",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-17",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3001,
+      "landed_at": "2026-11-17T07:24:32Z",
+      "pr": 3006,
+      "release": "Unreleased",
+      "summary": "the delegate card shows the agent prompt a claude worker runs with, and the worker's login is called the same only when it is the same account",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-17",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 2993,
+      "landed_at": "2026-11-17T17:33:23Z",
+      "pr": 2993,
+      "release": "Unreleased",
+      "summary": "the jobs tab shows how much heavy work went elsewhere, a project says what its jobs need, and turning auto-delegate off can remove the copies on ssh computers",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "provider-ledger"
+      ],
+      "issue": 3019,
+      "landed_at": "2026-11-18T16:58:02Z",
+      "release": "Unreleased",
+      "summary": "a Claude login's pre-expiry renewal is no longer blocked forever by a leftover claude record whose process id a system process reused after a reboot: the record's start time is compared with the process's real start time and a mismatch counts as a dead claude",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "session-restart-and-resume"
+      ],
+      "issue": 3045,
+      "landed_at": "2026-11-19T00:26:48Z",
+      "release": "Unreleased",
+      "summary": "a Codex session launched on a Carnivore account can be woken, restarted and moved again: the transcript check now looks in the session's own CODEX_HOME instead of ~/.codex, so its rollout is found",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "pack-placement"
+      ],
+      "issue": 3030,
+      "landed_at": "2026-11-18T18:09:12Z",
+      "release": "Unreleased",
+      "summary": "a Swarm agent you have open in the browser or on your phone, or typed into in the last two minutes, is no longer slowed while the computer is busy and comes back to normal speed within 10 seconds (also after a restart); a process the throttle slowed that later left every agent tree is put back to normal; and a session imported from a paired computer no longer makes the server run tmux against a socket that does not exist every 10 seconds",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "agents-sidebar"
+      ],
+      "issue": 3024,
+      "landed_at": "2026-11-18T17:11:35Z",
+      "pr": 3024,
+      "release": "Unreleased",
+      "summary": "a collapsed project in the sidebar no longer draws its agents sub-heading below it",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "task-manager"
+      ],
+      "landed_at": "2026-11-18T15:59:25Z",
+      "release": "Unreleased",
+      "summary": "a new or renamed project's list tab shows its name at once instead of its id until a reload, and deleting a project now clears its Task Manager items and groups so the next project that gets the same id does not inherit them",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "agents-sidebar"
+      ],
+      "issue": 3023,
+      "landed_at": "2026-11-18T18:50:59Z",
+      "release": "Unreleased",
+      "summary": "a project whose only live sessions are plain shells now shows its heading in the sidebar with those shells under it, except the home console's own project",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "session-status-lights"
+      ],
+      "issue": 3026,
+      "landed_at": "2026-11-18T17:16:08Z",
+      "release": "Unreleased",
+      "summary": "a session's status, conversation id and restore checks no longer trust a leftover claude record whose process id a system process reused after a reboot: the record's start time is compared with the process's real start time and a mismatch counts as a dead claude, which also stops it making a live session read as two claudes in one pane",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "agents-sidebar"
+      ],
+      "issue": 3042,
+      "landed_at": "2026-11-18T21:09:28Z",
+      "release": "Unreleased",
+      "summary": "a sidebar group whose sessions are all asleep now shows the sleeping moon and the word sleeping instead of unknown, and a click anywhere on a heading row, not only on its label, folds or opens its tree",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "swarm-board"
+      ],
+      "issue": 3048,
+      "landed_at": "2026-11-19T00:33:42Z",
+      "release": "Unreleased",
+      "summary": "a swarm wake sends its kickoff as soon as the agent's screen is measured ready (no startup dialog) instead of always waiting 20 seconds; 20 seconds stays as the ceiling",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "task-manager"
+      ],
+      "issue": 3029,
+      "landed_at": "2026-11-18T22:18:52Z",
+      "release": "Unreleased",
+      "summary": "a wake from the task manager (a tell, a scheduled fire, the nudge, the add box, unstick) now goes to the list's lead: running, it is used; asleep, it is woken even when another agent of the project runs, and its first tell names that running agent so the lead decides whether to hand off; with no lead, a gone lead or a lead that will not wake, a running agent is used and nothing is woken; only then the newest asleep session, and a new one only where a start was already allowed. a swarm lead is woken through the swarm, and two wakes landing together for one project wake one session",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "auto-sleep-and-keep-awake"
+      ],
+      "issue": 3050,
+      "landed_at": "2026-11-19T00:33:37Z",
+      "release": "Unreleased",
+      "summary": "auto sleep puts idle sessions to sleep under load: the dev-server check reads the kernel instead of running lsof (5,551 timeouts held sessions awake), a read session keeps its saved idle time across a server restart, and a Swarm agent parked at its startup prompt counts as idle",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "app-alert-center"
+      ],
+      "issue": 3046,
+      "landed_at": "2026-11-19T00:26:48Z",
+      "release": "Unreleased",
+      "summary": "carnivore now checks each installed codex version's helper programs (quarantine flag plus a short handshake with the code mode host) at boot, every ten minutes while failing and before a codex launch, and when macos blocked them it raises one alert per version that reaches the phone, marks every codex row with a readable reason, and clears itself once approved; the mcp health probe no longer probes carnivore's own /mcp, so no bad credential refusal is logged for itself",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "dashboards"
+      ],
+      "issue": 3040,
+      "landed_at": "2026-11-18T20:40:07Z",
+      "release": "Unreleased",
+      "summary": "edit layout works on every page again, not only the dashboard: the drawer's right-click menu and the account menu offer it on the terminal page and the war room too, and the dashboard keeps its grid editing",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "terminal-component-tabs"
+      ],
+      "issue": null,
+      "landed_at": "2026-11-18T17:06:45Z",
+      "release": "Unreleased",
+      "summary": "only one terminal cell can wear the typing glow at a time: a tab dragged out of the cell that carries its name no longer leaves two cells lit",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "provider-ledger"
+      ],
+      "issue": 3047,
+      "landed_at": "2026-11-19T00:33:45Z",
+      "release": "Unreleased",
+      "summary": "perf_profile now names the short jobs the worker pool and event loop run, per function with count and CPU; the pack jobs and ledger sync databases keep one connection per thread, and the pack reconnect settings are re-read from config.json only when the file changed",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3025,
+      "landed_at": "2026-11-18T17:27:41Z",
+      "release": "Unreleased",
+      "summary": "the auto-delegate turn-off dialog names this computer by its name instead of its install id, asks which computer keeps the project, and says per computer what happens to each copy (stays as a separate folder, or moves to that computer's trash when the box is ticked)",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "desktop-native-windows"
+      ],
+      "issue": 3021,
+      "landed_at": "2026-11-18T17:18:17Z",
+      "release": "Unreleased",
+      "summary": "the desktop app no longer refuses to stop or start its own engine because one port holder check was slow: the listener is read with netstat in about 0.01 s instead of lsof walking every process, and the stop, start and service restart checks retry a read that could not run before they refuse",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "desktop-native-windows"
+      ],
+      "issue": 3017,
+      "landed_at": "2026-11-18T15:40:17Z",
+      "release": "Unreleased",
+      "summary": "the desktop app no longer reloads its window when the port holder check is too slow to finish: a check that could not run is told apart from one that saw a stranger and, on a healthy engine, changes nothing",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "terminal-background-work"
+      ],
+      "issue": 1180,
+      "landed_at": "2026-11-18T17:44:30Z",
+      "release": "Unreleased",
+      "summary": "the once-a-minute rule history pass of the stats plugin reads each commit's rule file blob id from the same git log call instead of forking git rev-parse per commit, so a pass costs at most two git processes instead of up to 21, with identical stored markers; a project folder inside a larger repository now records its own rule file, not the repository top one",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "terminal-background-work"
+      ],
+      "issue": 1180,
+      "landed_at": "2026-11-18T14:53:02Z",
+      "release": "Unreleased",
+      "summary": "the plugin watchdog reads each plugin process's memory and CPU straight from the macOS kernel (libproc) instead of forking ps every sample, with ps kept as the fallback when libproc is unavailable",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3052,
+      "landed_at": "2026-11-19T00:46:13Z",
+      "release": "Unreleased",
+      "summary": "the project settings window finds its project after a sync renames it: it addresses the project by its row id, so the auto-delegate box no longer says it can't find the project",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "provider-ledger"
+      ],
+      "issue": 1180,
+      "landed_at": "2026-11-18T14:54:54Z",
+      "release": "Unreleased",
+      "summary": "the provider ledger remembers its read of Claude Code's keychain credential until the login keychain file changes (or 60 seconds pass), so the poll no longer forks the security tool on every pass; a failed read is never remembered",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [],
+      "issue": 3037,
+      "landed_at": "2026-11-18T18:35:22Z",
+      "release": "Unreleased",
+      "summary": "the safety-net transcript scan does about half the work per pass: a directory that did not change hands back its entries without new path objects, and the manifest scan no longer loads every removed file's row each time; rows, marks and timing are unchanged",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "pack-machines"
+      ],
+      "issue": 3034,
+      "landed_at": "2026-11-18T18:34:56Z",
+      "release": "Unreleased",
+      "summary": "the server spends less CPU on child processes: a codex row whose tmux session is gone is no longer asked about every 3 seconds, vm_stat, pmset and lsof reads skip the fork of the large server process, vm_stat is shared between callers for 2 seconds, and a live process's folder is read through libproc instead of lsof",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [],
+      "issue": 3032,
+      "landed_at": "2026-11-18T18:34:38Z",
+      "release": "Unreleased",
+      "summary": "the session listing asks the database about its schema once per pass instead of about five times per session, with the same labels and identities",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [],
+      "landed_at": "2026-11-18T22:36:27Z",
+      "release": "Unreleased",
+      "summary": "the session timeline's typed event stream is exposed: routes for a session's state, events, one event's redacted body, turns and tasks, an in-process hook and a plugin port (timeline_events), a timeline.delta push frame of positions only, and two MCP tools (session_events_list, session_state_get); all of it refuses or does nothing while session chat is off, which is the default, and a live transcript's conversation graph is now extended on append instead of re-read",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [],
+      "landed_at": "2026-11-18T22:47:01Z",
+      "release": "Unreleased",
+      "summary": "the status watcher reads which codex writer locks a pane holds from the kernel instead of starting two lsof processes per codex session every two seconds; a lock it cannot confirm that way still goes to lsof, so the answers are the same with less cpu at idle",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [],
+      "landed_at": "2026-11-19T03:14:38Z",
+      "release": "Unreleased",
+      "summary": "the status watcher remembers where each codex session's rollout file is and what the codex state and history databases said until those files change, instead of walking the sessions folders and opening sqlite for every codex session every two seconds; a new, newer or rotated rollout and every database write are still picked up on the next cycle",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [],
+      "issue": 3036,
+      "landed_at": "2026-11-18T18:35:05Z",
+      "release": "Unreleased",
+      "summary": "the status watcher stats each sub-agent file once per cycle instead of two or three times, reads a transcript's skill fires in one database session, and the transcript index re-lists a folder only when the folder changed; same answers, less cpu",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "terminal-background-work"
+      ],
+      "issue": 1180,
+      "landed_at": "2026-11-18T16:07:53Z",
+      "release": "Unreleased",
+      "summary": "the transcript path the skill tally resolves every watcher pass and the plugin state folder resolved on every MCP request are remembered for 30 seconds instead of lstat-ing every path component each time, and the MCP tool fingerprint (a hash of every tool definition) is remembered for 2 seconds per caller, tool switches and config, and dropped at once when a plugin toggle is written or a catalog plugin is installed or removed (any other change to the tool list can reach a connected client up to 2 seconds late)",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3043,
+      "landed_at": "2026-11-18T21:25:17Z",
+      "release": "Unreleased",
+      "summary": "the turn-off auto-delegate dialog is now a radio pair, one short row per computer and one trash box, with no paragraphs; a copy turned off with trash and later added again is recorded as made by auto-delegate again, so the trash box comes back",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "details": "Slice 3 of #2642. The 5 minute tmux binary re-selection asks the already running read-only control client for the server version instead of spawning tmux, without ever creating a client for another socket (the jobs server). The tmux -V cache is keyed on the binary's file identity so an upgrade is still caught as skew. The self-check's list-sessions stays a real process on purpose (docs/tmux-control-input.md).",
+      "features": [],
+      "issue": 2642,
+      "landed_at": "2026-11-19T03:20:29Z",
+      "release": "Unreleased",
+      "summary": "tmux reads: binary re-selection rides the live control client, no spawn at idle",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-18",
+      "details": "Slice 1 of the remaining #2642 work. The control-mode reader now answers a read tmux refuses (an unset variable, a missing session, pane or window) with the same exit code and stderr a one-shot tmux prints, measured byte for byte on tmux 3.8, instead of falling back to a spawn every time; display-message and folded reads still fall back on an error. has-session joins the routed reads (target required). LocalTransport.run and run_sync take the control answer, errors included, and log a failure once after either path. TmuxBackend.pid (the auto-sleep pane lookup, the busiest tmux spawn on a live idle engine) and is_alive ask as read-only probes, and the pane account reader shares one show-environment helper. The subprocess path stays the fallback.",
+      "features": [],
+      "issue": 2642,
+      "landed_at": "2026-11-18T20:52:50Z",
+      "release": "Unreleased",
+      "summary": "tmux reads: error answers, has-session and the auto-sleep pane pid ride the control-mode client instead of a spawn",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-18",
+      "details": "Slice 2b of #2642. The shared one-shot tmux runners (tmux_run, the new blocking tmux_run_sync, tmux_run_text) ask the persistent read-only control client first for a pure read, so the background-work pane tree, the auto-sleep port owner, the War Room capture, the adopt cwd probe, the session cwd and pane pid probe, server status, the pipe pruner and the pack agent host's has-session spawn no tmux process when the client can answer. Writes and the stdin secret path still spawn tmux as before; a gone session answers exactly as the subprocess did. The jobs runner and cross-session search stay on the subprocess on purpose (docs/tmux-control-input.md).",
+      "features": [],
+      "issue": 2642,
+      "landed_at": "2026-11-18T22:51:57Z",
+      "release": "Unreleased",
+      "summary": "tmux reads: the shared one-shot runners and the remaining direct reads ride the control client first",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-18",
+      "details": "Slice 2a of #2642. The readers that only took a control-mode SUCCESS (capture_screen, the codex pane home read, the pack load and throttle scans, pane facts, the auto-restart probe) now take the reader's error answer too, so a gone session or an unset variable costs no tmux process; each keeps its own subprocess fallback and its exact handling of a missing session. The success-only control_read and control_read_async wrappers are removed (no caller left), so a stale test patch of them fails loudly instead of silently doing nothing.",
+      "features": [],
+      "issue": 2642,
+      "landed_at": "2026-11-18T22:26:42Z",
+      "release": "Unreleased",
+      "summary": "tmux reads: the success-only control readers also take error answers, so a gone session costs no spawn",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3028,
+      "landed_at": "2026-11-18T17:41:33Z",
+      "release": "Unreleased",
+      "summary": "turning auto-delegate back on after its copy was moved to the trash now sends the whole project again instead of an empty folder: forgetting a copy clears what was known to be sent, and adding a copy always sends a full bundle",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3051,
+      "landed_at": "2026-11-19T00:30:57Z",
+      "release": "Unreleased",
+      "summary": "turning auto-delegate off just turns it off, with no dialog; copies auto-delegate made stay listed with a trash button each",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-18",
+      "features": [
+        "pack-placement"
+      ],
+      "issue": 3049,
+      "landed_at": "2026-11-19T00:33:39Z",
+      "release": "Unreleased",
+      "summary": "while the computer is busy, a Swarm agent's own process (claude or codex) is no longer slowed, which removes the lag when typing into it; only the tests, builds and scans it started are slowed, and an agent an older version left slowed is put back to normal",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3061,
+      "landed_at": "2026-11-20T00:05:25Z",
+      "pr": 3061,
+      "release": "Unreleased",
+      "summary": "a build, test or render that the auto-delegate check blocked can no longer be run again to get past it; only the delegate tool saying run it here lets it run on this computer",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3057,
+      "landed_at": "2026-11-19T17:13:03Z",
+      "release": "Unreleased",
+      "summary": "a claude session in a project with auto-delegate on starts with one extra system prompt line telling it to run heavy commands through the delegate tool, because most heavy runs still stayed on this computer; running sessions get it at their next restart",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3053,
+      "landed_at": "2026-11-19T15:03:22Z",
+      "release": "Unreleased",
+      "summary": "a copy that auto-delegate re-attached from an existing folder no longer shows a trash row that the other computer always refuses, a refused trash clears the stale row, and the trash button is now a red danger button",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "beastmode"
+      ],
+      "issue": 3059,
+      "landed_at": "2026-11-19T21:45:34Z",
+      "release": "Unreleased",
+      "summary": "a project agent no longer freezes on Claude's add-directory trust screen for its own swarm desk folder: Carnivore presses 'Yes, add it' for that folder only, once per launch",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "session-status-lights"
+      ],
+      "issue": 3056,
+      "landed_at": "2026-11-19T17:04:57Z",
+      "release": "Unreleased",
+      "summary": "a session you are looking at no longer keeps the hollow green ring after a turn ends, even when its tab was in the background at that moment",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "session-recent-and-reopen",
+        "session-restart-and-resume"
+      ],
+      "issue": 2977,
+      "landed_at": "2026-11-19T23:08:11Z",
+      "pr": 2977,
+      "release": "Unreleased",
+      "summary": "a session you resume by hand in tmux takes back its own closed entry, and reopening an entry with no recorded conversation says a new one was started",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "dashboards"
+      ],
+      "issue": 3065,
+      "landed_at": "2026-11-20T00:15:26Z",
+      "release": "Unreleased",
+      "summary": "a stats widget such as tokens per agent in a terminal layout no longer sits on loading history after a reload straight onto a session: a card still waiting for its chart definitions now asks for them itself instead of waiting for the Home screen",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "landed_at": "2026-11-19T17:58:44Z",
+      "release": "Unreleased",
+      "summary": "agents delegate any command that runs code, and light work leaves this computer once it is past its reserve",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "saved-layouts",
+        "carnivore-mcp-server"
+      ],
+      "issue": 3068,
+      "landed_at": "2026-11-20T03:22:13Z",
+      "release": "Unreleased",
+      "summary": "an agent can now list saved layouts and add or remove a session (by id, tmux name or agent name) with three new app settings MCP tools: layouts_list, layout_member_add and layout_member_remove",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3061,
+      "landed_at": "2026-11-19T22:03:36Z",
+      "release": "Unreleased",
+      "summary": "an agent in a project with auto-delegate on is told at launch, by a hook that exists only for that launch, to run a command through the delegate tool when this computer is over its reserve and another has room, and a Mac no longer counts threads waiting on disk as a busy CPU",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "beast-mode"
+      ],
+      "issue": 3063,
+      "landed_at": "2026-11-19T22:32:42Z",
+      "release": "Unreleased",
+      "summary": "beast mode answers a claude permission prompt in milliseconds through a hook that exists only in the launches carnivore starts, instead of reading the screen and pressing keys; anything it does not answer still shows the dialog and the screen press handles it",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "terminal-component-tabs"
+      ],
+      "issue": 3058,
+      "landed_at": "2026-11-19T17:36:47Z",
+      "release": "Unreleased",
+      "summary": "choosing restart (or any item) from the actions fold-out of a terminal's title-strip menu now closes the whole menu, so the restart picker no longer opens behind a menu that stays on screen",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "session-sleep"
+      ],
+      "landed_at": "2026-11-19T22:51:21Z",
+      "release": "Unreleased",
+      "summary": "closed and asleep sessions that share a tmux name each show their own row in the drawer",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3061,
+      "landed_at": "2026-11-20T03:36:28Z",
+      "release": "Unreleased",
+      "summary": "in a project with auto-delegate on, a new agent started by an agent (agent_spawn, session_create) goes to the computer with room unless it says here or names a computer, and a Claude Code subagent started while this computer is full is sent to the delegate tool as an agent task on the computer that has room",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3054,
+      "landed_at": "2026-11-19T18:48:36Z",
+      "pr": 3054,
+      "release": "Unreleased",
+      "summary": "project settings is a control deck: auto-delegate with its ticked computers, replicas, github and what each computer has sit behind three doors; a computer on too old a carnivore is unchecked and reads remote carnivore needs update; every computer icon names its state; the sidebar project row shows the Pack wolf while auto-delegate is on",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "session-recreate"
+      ],
+      "issue": 2981,
+      "landed_at": "2026-11-19T22:41:23Z",
+      "release": "Unreleased",
+      "summary": "reopening a closed session whose tmux name a newer session now owns no longer fails or risks restarting the other session's pane: the closed one comes back under a fresh name and the reopen offer stops blocking it as name in use",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "session-restart-and-resume"
+      ],
+      "issue": 3055,
+      "landed_at": "2026-11-19T17:07:31Z",
+      "release": "Unreleased",
+      "summary": "restarting a session that has nothing running, foreground or background, no longer asks you to tick kill running session: the server measures it and the restart button works directly; anything running keeps the box",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "notification-toasts"
+      ],
+      "issue": 3066,
+      "landed_at": "2026-11-20T00:25:01Z",
+      "release": "Unreleased",
+      "summary": "send a test in settings > notifications > routing now says why a test failed (for example the service refused the credentials) instead of only 'the test did not go through'",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "notification-toasts",
+        "notification-destinations"
+      ],
+      "issue": 3067,
+      "landed_at": "2026-11-20T02:11:59Z",
+      "release": "Unreleased",
+      "summary": "settings > notifications > routing is rebuilt as eight groups with one switch each, an advanced view per type, one block per Pack computer (in the app, on the desktop, phone), three framed sections and a test button per target; switching off keeps targets",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3061,
+      "landed_at": "2026-11-20T00:42:06Z",
+      "pr": 3061,
+      "release": "Unreleased",
+      "summary": "the auto-delegate check now blocks only commands predicted heavy (builds, tests, renders, long runs, or a command shape that took a minute or more before) and never one run outside the project; its messages start with a red ///",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "provider-ledger"
+      ],
+      "issue": 0,
+      "landed_at": "2026-11-19T16:31:32Z",
+      "pr": 0,
+      "release": "Unreleased",
+      "summary": "the providers panel's all accounts total shows each provider's mark in front of its 7d and 5h lines, so two 7d lines are told apart",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [],
+      "landed_at": "2026-11-19T20:46:14Z",
+      "release": "Unreleased",
+      "summary": "the server remembers which relay profile folders are in the accounts folder until that folder changes, instead of listing it dozens of times a minute at idle; adding, removing or renaming a profile folder is still picked up on the next call",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "session-status-lights"
+      ],
+      "issue": 3062,
+      "landed_at": "2026-11-19T22:29:16Z",
+      "release": "Unreleased",
+      "summary": "the stale cloudecode hooks in Codex's config are cleaned out at boot: managed entries leave ~/.codex/hooks.json and their trust tables leave ~/.codex/config.toml, with a timestamped backup of each and nothing else touched",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3060,
+      "landed_at": "2026-11-20T00:13:10Z",
+      "pr": 3060,
+      "release": "Unreleased",
+      "summary": "the terminal foot bar's pack wolf icon also shows for a session that only sent command jobs to another computer, and its hover names the computers",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3060,
+      "landed_at": "2026-11-19T22:38:10Z",
+      "release": "Unreleased",
+      "summary": "the terminal foot bar's pack wolf icon turns green while work this session handed to another computer is running there, and its hover says which computer",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "home-screen"
+      ],
+      "landed_at": "2026-11-20T02:18:32Z",
+      "release": "Unreleased",
+      "summary": "the tokens used widget picks its window in its header, 1h, 24h or 1w, the way tokens per agent does; 24h is the default and the choice is saved on the widget",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "layout-editor"
+      ],
+      "landed_at": "2026-11-20T02:39:10Z",
+      "release": "Unreleased",
+      "summary": "the widget menu now has a settings item for every widget that has settings: right-click the widget (or press Shift+F10) and pick settings to change it live, without entering edit layout",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-19",
+      "features": [
+        "pack-auto-delegate"
+      ],
+      "issue": 3060,
+      "landed_at": "2026-11-19T22:00:13Z",
+      "release": "Unreleased",
+      "summary": "work a session handed to other computers now shows in the terminal foot bar as the pack wolf icon alone, and hovering it shows the job count, tokens and cost",
+      "type": "changed"
+    },
+    {
+      "date": "2026-11-20",
+      "features": [],
+      "issue": 3069,
+      "landed_at": "2026-11-20T15:20:27Z",
+      "release": "Unreleased",
+      "summary": "a missing gitleaks now refuses the commit, and a bump-time history scan covers private history",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-20",
+      "features": [
+        "reviewboard",
+        "task-manager"
+      ],
+      "issue": 1835,
+      "landed_at": "2026-11-20T16:10:15Z",
+      "release": "Unreleased",
+      "summary": "a review board an agent posts on a task now shows on that task's thread as a card: the board title and revision, the files attached on that revision with their types (a removed file marked removed), and an icon that opens the board",
+      "type": "added"
+    },
+    {
+      "date": "2026-11-20",
+      "features": [],
+      "issue": 3070,
+      "landed_at": "2026-11-20T18:44:04Z",
+      "pr": 3070,
+      "release": "Unreleased",
+      "summary": "a swarm or huddle thread no longer freezes itself when the garbage collector closes an orphaned database connection while it is sweeping its own",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-20",
+      "features": [],
+      "issue": 3070,
+      "landed_at": "2026-11-20T15:53:41Z",
+      "release": "Unreleased",
+      "summary": "a version bump is one command, scripts/release/bump.sh: it fixes the sha once, runs the full suite on the second computer in parallel with the public export, history secret scan and gate matrix, stops on any red, and lands a version-line-only bump commit",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-20",
+      "features": [],
+      "issue": 3070,
+      "landed_at": "2026-11-20T19:42:55Z",
+      "pr": 3070,
+      "release": "Unreleased",
+      "summary": "full parallel suite no longer fails on state leaked between tests in a worker: closed-loop guards, test isolation resets",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-20",
+      "features": [],
+      "issue": 3070,
+      "landed_at": "2026-11-20T21:12:53Z",
+      "pr": 3070,
+      "release": "Unreleased",
+      "summary": "full suite reruns its failing tests once alone and reports a pass as a flake",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-20",
+      "features": [],
+      "issue": 3070,
+      "landed_at": "2026-11-20T20:37:11Z",
+      "pr": 3070,
+      "release": "Unreleased",
+      "summary": "full suite: a closed crosstalk dispatcher no longer delivers, fresh views drop the one second owner listing cache, widget harness builds are serialized, plugin test child gets a clean pytest env",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-20",
+      "features": [],
+      "issue": 3070,
+      "landed_at": "2026-11-20T21:29:16Z",
+      "pr": 3070,
+      "release": "Unreleased",
+      "summary": "full suite: select() on fds past 1024 replaced by poll in the tmux control reader, codex handshake and pty reader; a listing cache pass begun before a change notice is never joined after it; swarm test fixtures drop loop-bound locks between tests",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-20",
+      "features": [
+        "pack-code-transport"
+      ],
+      "issue": 2756,
+      "landed_at": "2026-11-20T14:39:54Z",
+      "release": "Unreleased",
+      "summary": "publish a private repo now scans everything git would push before pushing: every blob and commit message in the existing history, the staged first commit, and the Git LFS objects it names, and the push never carries tags or submodule commits, so a token committed once and deleted later refuses the publish, naming the file and the commit, never the value; history that cannot be read refuses too",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-20",
+      "features": [],
+      "issue": 3070,
+      "landed_at": "2026-11-20T23:42:24Z",
+      "pr": 3070,
+      "release": "Unreleased",
+      "summary": "scrub private names, hosts and ids from shipped samples, tests and docstrings, and keep the generic tokens the public export gates flagged",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-20",
+      "features": [
+        "keyboard-shortcuts"
+      ],
+      "issue": 2785,
+      "landed_at": "2026-11-20T14:40:04Z",
+      "release": "Unreleased",
+      "summary": "the Mac menu bar's Go menu shows the Back and Forward shortcuts saved on the keys page instead of always Cmd+[ and Cmd+], and rebuilds when they change",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-20",
+      "features": [
+        "pack-credential-relay"
+      ],
+      "issue": 2553,
+      "landed_at": "2026-11-20T14:44:27Z",
+      "release": "Unreleased",
+      "summary": "the Pack relay panel, the ledger account list, the follow-the-master switch, the themes list and the phone link panel stop polling: the relay write and arming announce pack_relay, the relay view also follows the peer set, one-way list and account topics, the follow-the-master switch has its own pack_tracks_master topic, the phone link panel is pushed on a new phone_link topic (tunnel status, devices, push results, pairing), and the computers notifies use the shared topic constants",
+      "type": "fixed"
+    },
+    {
+      "date": "2026-11-20",
+      "features": [],
+      "issue": 3070,
+      "landed_at": "2026-11-20T15:29:27Z",
+      "release": "Unreleased",
+      "summary": "the full suite ends a hung run itself (silent 15 minutes or past 90 minutes, exit 97 or 98, naming the tests that were running), writes failing test ids as they happen, reaps its leftover test tmux servers, keeps a green ledger (--is-green) and can run on another computer with --host <computer>",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-20",
+      "features": [],
+      "issue": 2563,
+      "landed_at": "2026-11-20T16:01:06Z",
+      "release": "Unreleased",
+      "summary": "the task manager plugin reads session status words through the plugin SDK instead of three hand-built sets",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-20",
+      "features": [],
+      "issue": 3070,
+      "landed_at": "2026-11-20T19:51:40Z",
+      "pr": 3070,
+      "release": "Unreleased",
+      "summary": "tmux binary version probe: a failed or timed-out tmux -V is asked again instead of being remembered as no version for the file, which made every later binary selection read a healthy tmux as skewed",
+      "type": "internal"
+    },
+    {
+      "date": "2026-11-20",
+      "features": [],
+      "issue": 3070,
+      "landed_at": "2026-11-20T23:19:55Z",
+      "pr": 3070,
+      "release": "Unreleased",
+      "summary": "version bump retry reuses recorded greens, incremental history scan, a red step no longer stops its siblings",
+      "type": "internal"
     }
   ]
 }

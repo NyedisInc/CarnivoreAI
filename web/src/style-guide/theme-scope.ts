@@ -1,5 +1,5 @@
 /* element carrying a */
-import type { ThemeRegistry } from '../cplugs/sdk/themes';
+import type { ThemeRegistry } from '../plugins/sdk/themes';
 import { scopeVars } from './contrast';
 import { withColorScheme } from '../lib/theme-scheme';
 

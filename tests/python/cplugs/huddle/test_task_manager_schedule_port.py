@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import asyncio
 
-from src.cplugs.huddle import schedule_port, triggers
-from src.cplugs.sdk import ports
+from src.plugins.huddle import schedule_port, triggers
+from src.plugins.sdk import ports
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import env, iso  # noqa: F401
 

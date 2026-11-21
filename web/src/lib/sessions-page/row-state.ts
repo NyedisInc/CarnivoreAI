@@ -2,8 +2,9 @@ import type { HistorySession } from '../projects-shared/history-api';
 import type { SessionListItem } from '../sessions/types';
 import { normalizeStatus } from '../status-dot';
 import { needKind } from './lenses';
+import { ACTIVITY_STATUSES } from '../activity-status';
 
-const KNOWN = ['working', 'working_subagent', 'question', 'notice', 'finished_unread', 'idle', 'dead', 'unknown', 'stopped'];
+const KNOWN: readonly string[] = [...ACTIVITY_STATUSES, 'stopped'];
 
 export function stateKeyOf(s: HistorySession, live: SessionListItem | undefined): string {
     if (s.state === 'closed' || s.state === 'removed' || s.state === 'unknown') return s.state;

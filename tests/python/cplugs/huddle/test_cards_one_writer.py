@@ -8,8 +8,8 @@ from typing import Iterator, List
 
 ROOT = Path(__file__).resolve().parents[4]
 SRC = ROOT / "src"
-ALLOWED = {SRC / "cplugs/huddle/cards/flow.py", SRC / "cplugs/huddle/cards/policy.py",
-           SRC / "cplugs/huddle/cards/state_log.py", SRC / "core/pack/migrate/task_manager_history.py"}
+ALLOWED = {SRC / "plugins/huddle/cards/flow.py", SRC / "plugins/huddle/cards/policy.py",
+           SRC / "plugins/huddle/cards/state_log.py", SRC / "core/pack/migrate/task_manager_history.py"}
 FROZEN_LADDER = SRC / "core" / "work" / "ladder"
 
 ITEM_WRITE = re.compile(r"(?:UPDATE\s+work_items\s+SET|REPLACE\s+INTO\s+work_items|INSERT\s+(?:OR\s+\w+\s+)?INTO\s+work_items)\b[^;]*?\bcard_", re.I | re.S)
@@ -38,9 +38,9 @@ def test_only_flow_and_policy_write_card_columns_and_tables():
 
 
 def test_the_two_writers_still_carry_the_patterns_so_the_check_can_go_red():
-    assert "item card column" in offenders((SRC / "cplugs/huddle/cards/flow.py").read_text())
-    assert "card table" in offenders((SRC / "cplugs/huddle/cards/flow.py").read_text())
-    assert "card table" in offenders((SRC / "cplugs/huddle/cards/policy.py").read_text())
+    assert "item card column" in offenders((SRC / "plugins/huddle/cards/flow.py").read_text())
+    assert "card table" in offenders((SRC / "plugins/huddle/cards/flow.py").read_text())
+    assert "card table" in offenders((SRC / "plugins/huddle/cards/policy.py").read_text())
     assert offenders('conn.execute("UPDATE work_items SET card_holder = 3 WHERE id = 1")') == ["item card column"]
     assert offenders('conn.execute("DELETE FROM work_card_events WHERE id = 1")') == ["card table"]
     assert offenders('c.execute("update work_items set card_holder = 3 where id = 1")') == ["item card column"]

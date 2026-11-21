@@ -12,6 +12,8 @@
     import LaunchNamePin from './LaunchNamePin.svelte';
     import LaunchWorktree from './LaunchWorktree.svelte';
     import LaunchStory from './LaunchStory.svelte';
+    import LaunchComputer from './LaunchComputer.svelte';
+    import type { SessionPlaceApi } from '../session-place/api';
     import type { WorktreeAnswer } from './worktree-model';
     import type { LaunchPrefill } from './prefill';
     import { answerFor, farRows, initialSelection, isValidModelId, rowsFromProfiles, type PickerRow } from './picker-model';
@@ -31,9 +33,10 @@
         goLabel?: string | null;
         prefill?: LaunchPrefill | null;
         folder?: string | null;
-        close: (value: { profileId: string; profileLabel: string; model: string | null; account: AccountAnswer | null; farLauncher?: boolean; name?: string; pinned?: boolean; worktree?: WorktreeAnswer | null; story?: string | null } | null) => void;
+        placement?: { workingDir: string; api?: SessionPlaceApi } | null;
+        close: (value: { profileId: string; profileLabel: string; model: string | null; account: AccountAnswer | null; farLauncher?: boolean; name?: string; pinned?: boolean; worktree?: WorktreeAnswer | null; story?: string | null; computer?: 'here' | 'auto' } | null) => void;
     }
-    const { title, t, preselect = null, projectDefault = null, harness = null, onlyHarnesses = null, onlyIds = null, api: injected, lastModel = '', accounts: withAccounts = true, remote = null, goLabel = null, prefill = null, folder = null, close }: Props = $props();
+    const { title, t, preselect = null, projectDefault = null, harness = null, onlyHarnesses = null, onlyIds = null, api: injected, lastModel = '', accounts: withAccounts = true, remote = null, goLabel = null, prefill = null, folder = null, placement = null, close }: Props = $props();
     // svelte-ignore state_referenced_locally
     const api: LaunchProfilesApi = injected ?? createLaunchProfilesApi();
 
@@ -53,6 +56,8 @@
     let accountName = $state<string | null>(null);
     let worktree = $state<WorktreeAnswer | null>(null);
     let story = $state<string | null>(null);
+    let computer = $state('here');
+    let computerNote = $state('');
     let farListed = $state(false);
 
     const picked = $derived(rows.find((r) => r.value === value));
@@ -98,7 +103,7 @@
     });
 
     function go(): void {
-        if (canGo && answer && picked) close({ ...answer, profileLabel: picked.label, account, ...(remote ? { farLauncher: farListed } : {}), ...(prefill ? { name: name.trim(), pinned } : {}), ...(worktree ? { worktree } : {}), ...(story ? { story } : {}) });
+        if (canGo && answer && picked) close({ ...answer, profileLabel: picked.label, account, ...(remote ? { farLauncher: farListed } : {}), ...(prefill ? { name: name.trim(), pinned } : {}), ...(worktree ? { worktree } : {}), ...(story ? { story } : {}), ...(placement ? { computer: computer === 'auto' ? 'auto' as const : 'here' as const } : {}) });
     }
 </script>
 
@@ -129,6 +134,11 @@
             {#if prefill}<LaunchNamePin {t} bind:name bind:pinned />{/if}
             {#if folder && !remote}<LaunchWorktree {t} {folder} {name} bind:answer={worktree} />{/if}
             {#if !remote}<LaunchStory {t} bind:answer={story} />{/if}
+            {#if placement && !remote}
+                <span class="lpm-field">{t('launch_picker.computer.label')}</span>
+                <LaunchComputer {t} workingDir={placement.workingDir} agentType={picked?.value ?? ''} api={placement.api} bind:computer bind:note={computerNote} />
+                {#if computerNote}<p class="lpm-note" data-lpm-computer-note>{computerNote}</p>{/if}
+            {/if}
         {/if}
     </div>
     {#snippet footer()}

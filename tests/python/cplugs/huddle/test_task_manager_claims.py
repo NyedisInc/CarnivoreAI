@@ -10,9 +10,9 @@ import pytest
 
 from src.core.mcp.caller import AgentCaller
 from src.core.work.work_ladder import VERSION as WORK_VERSION
-from src.cplugs.huddle import conversation_release
-from src.cplugs.huddle.rules import CLAUDE, JOE
-from src.cplugs.sdk import conversation_events
+from src.plugins.huddle import conversation_release
+from src.plugins.huddle.rules import CLAUDE, JOE
+from src.plugins.sdk import conversation_events
 from tests.python.cplugs.huddle.test_task_manager_lifecycle import status, tell
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 

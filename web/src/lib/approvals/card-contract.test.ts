@@ -236,6 +236,52 @@ describe('an agent action', () => {
   });
 });
 
+describe('a delegate card', () => {
+  const DELEGATE: ApprovalItem = {
+    id: 'act_3', source: 'agent_action', caller: 'carnivore_nova', action: 'delegate',
+    display: {
+      verb: 'run', object: 'job', name: 'studio', tone: 'confirm', detail: [{ key: 'task', value: 'the whole task' }],
+      consequences: [{ key: 'delegate_agent_runs', params: { agent: 'reviewer', computer: 'studio', task: 'fix it' } },
+        { key: 'delegate_copy', params: { folder: '~/x' } }, { key: 'delegate_mode_ask', params: { computer: 'studio' } }],
+    },
+  };
+
+  test('all three lines and the tool show on the face, within the fact limit', () => {
+    const card = cardContract(DELEGATE, { rows: ROWS });
+    expect(card.facts.map((f) => f.id)).toEqual(['effect', 'effect', 'effect', 'tool']);
+    expect(card.facts.length).toBeLessThanOrEqual(MAX_FACTS);
+    expect(card.facts.every((f) => f.tone === undefined)).toBe(true);
+  });
+
+  test('the bypass line is a warning and no other line is', () => {
+    const bypass = { ...DELEGATE, display: { ...DELEGATE.display!, consequences: [...DELEGATE.display!.consequences.slice(0, 2), { key: 'delegate_mode_bypass', params: { computer: 'studio' } }] } };
+    expect(cardContract(bypass, { rows: ROWS }).facts.map((f) => f.tone)).toEqual([undefined, undefined, 'warn', undefined]);
+  });
+
+  test('an install line is the second line, drawn as a warning, and the face shows four lines', () => {
+    const cons = DELEGATE.display!.consequences;
+    const withInstall = { ...DELEGATE, display: { ...DELEGATE.display!, consequences: [cons[0], { key: 'delegate_installs', params: { tools: 'ffmpeg', computer: 'studio' } }, cons[1], cons[2]] } };
+    const card = cardContract(withInstall, { rows: ROWS });
+    expect(card.facts.slice(0, 4).map((f) => f.id)).toEqual(['effect', 'effect', 'effect', 'effect']);
+    expect(card.facts.map((f) => f.tone)).toEqual([undefined, 'warn', undefined, undefined]);
+    expect(factText(card.facts[1]!)).toBe('installs ffmpeg on studio with homebrew first');
+  });
+
+  test('the agent definition is a detail row with its file, and the face keeps its four facts', () => {
+    const row = { key: 'definition', value: 'review it <b>never</b> push', file: 'rev.md' };
+    const card = cardContract({ ...DELEGATE, display: { ...DELEGATE.display!, detail: [...DELEGATE.display!.detail, row] } }, { rows: ROWS });
+    expect(card.facts.map((f) => f.id)).toEqual(['effect', 'effect', 'effect', 'tool']);
+    expect(card.raw).toMatchObject({ kind: 'agent' });
+    expect((card.raw as { rows: unknown[] }).rows).toContainEqual(row);
+  });
+
+  test('the footer chip is beast_off only with the hint field', () => {
+    expect(cardContract(DELEGATE, { rows: ROWS }).chip).toBe('mcp');
+    expect(cardContract({ ...DELEGATE, display: { ...DELEGATE.display!, beast_hint: true } }, { rows: ROWS }).chip).toBe('beast_off');
+    expect(cardContract({ ...DELEGATE, display: { ...DELEGATE.display!, beast_hint: false } }, { rows: ROWS }).chip).toBe('mcp');
+  });
+});
+
 describe('the rules every card shares', () => {
   test('no card shows more than four facts', () => {
     const many = cardContract({

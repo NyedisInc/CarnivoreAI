@@ -17,6 +17,7 @@ from src.core.hosts.ddl import LOCAL_HOST_KEY
 from src.core.launch_record import record_launch_on_row, write_launch_record
 from src.core.session_adopt_persist import find_live_instance
 from src.core.session_project_binding import resolve_project_binding
+from src.core.sessions.reuse_guard import refuse_if_row_live_elsewhere
 from src.core.tmux_listing import TmuxListing
 
 logger = structlog.get_logger()
@@ -67,8 +68,11 @@ def persist_creation(
     now: Optional[str] = None,
     host_key: str = LOCAL_HOST_KEY,
     project_name: Optional[str] = None,
+    app_session_id: Optional[str] = None,
 ) -> CreatePersistResult:
-    from src.core.session_identity import record_instance
+    from src.core.session_identity import APP_SESSION_ID_PREFIX, record_instance
+
+    app_id = app_session_id if (app_session_id or "").startswith(APP_SESSION_ID_PREFIX) else None
 
     if not listing.ok:
         logger.warning(
@@ -152,6 +156,10 @@ def persist_creation(
     if reuse_session_id is not None:
         from src.core.session_restart import rebind_instance
 
+        refuse_if_row_live_elsewhere(
+            conn, row_id=int(reuse_session_id), listing=listing, socket=socket, name=name, epoch=epoch
+        )
+
         rebound = rebind_instance(
             conn,
             row_id=int(reuse_session_id),
@@ -173,6 +181,8 @@ def persist_creation(
                 family_source=family_source,
             )
             write_launch_record(conn, session_uuid=rebound.session_uuid, record=launch_record)
+            if app_id:
+                conn.execute("UPDATE sessions SET legacy_session_id = ? WHERE id = ?", (app_id, int(reuse_session_id)))
             logger.info(
                 "create_persisted_by_reuse",
                 tmux_name=name,
@@ -224,6 +234,7 @@ def persist_creation(
         title=resolved_title,
         model=(model or "").strip() or None,
         host_key=host_key,
+        legacy_session_id=app_id,
     )
     if result.refused:
         logger.warning(

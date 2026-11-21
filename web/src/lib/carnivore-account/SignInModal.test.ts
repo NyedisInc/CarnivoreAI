@@ -78,8 +78,27 @@ describe('SignInModal', () => {
             const icon = button.querySelector('.signin__icon svg[data-icon]')!;
             expect(icon.getAttribute('data-icon')).toBe(provider);
             expect(icon.getAttribute('width')).toBe('16');
-            expect(icon.getAttribute('fill')).toBe('currentColor');
+            if (provider === 'github') expect(icon.getAttribute('fill')).toBe('currentColor');
+            else expect(icon.querySelectorAll('path[fill^="#"]').length).toBe(4);
             expect(button.firstElementChild!.classList.contains('signin__icon')).toBe(true);
+        }
+    });
+
+    it('in the desktop app opens no blank tab and opens the returned https url straight away', async () => {
+        (globalThis as { carnivoreDesktop?: unknown }).carnivoreDesktop = {};
+        try {
+            const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+            const { host, release } = fakeHost();
+            open(host);
+            document.querySelector<HTMLButtonElement>('[data-signin-provider="google"]')!.click();
+            expect(openSpy).not.toHaveBeenCalled();
+            release({ flow_id: 'w1', url: 'https://provider.example/auth', expires_in: 600, interval: 3 });
+            await settle();
+            expect(openSpy).toHaveBeenCalledTimes(1);
+            expect(openSpy).toHaveBeenCalledWith('https://provider.example/auth', '_blank', 'noopener');
+            expect(document.querySelector('[data-signin-link]')).toBeNull();
+        } finally {
+            delete (globalThis as { carnivoreDesktop?: unknown }).carnivoreDesktop;
         }
     });
 

@@ -159,8 +159,8 @@
         flex-direction: column;
         min-width: 0;
         min-height: 0;
-        border-right: 1px solid var(--pl-line);
-        background: var(--pl-panel);
+        border-right: 1px solid var(--oc-line-rule);
+        background: var(--oc-ground-panel);
         overflow-y: auto;
     }
 
@@ -233,7 +233,7 @@
     @media (max-width: 767px) {
         .st-nav {
             border-right: 0;
-            border-bottom: 1px solid var(--pl-line);
+            border-bottom: 1px solid var(--oc-line-rule);
             overflow: visible;
         }
 
@@ -241,7 +241,7 @@
             display: grid;
             grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
             gap: var(--oc-space-2);
-            padding: var(--oc-space-1) var(--pl-gutter);
+            padding: var(--oc-space-1) var(--oc-region-gutter);
         }
 
         .st-nav__select {

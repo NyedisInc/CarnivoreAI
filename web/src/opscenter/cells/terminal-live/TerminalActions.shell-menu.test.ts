@@ -33,13 +33,13 @@ function draw(width: number, agentFamily: string | null): { kebab: Element | nul
 test('a shell kebab lists files, notes, theme, background and actions, and no agent-only drawer', () => {
   const { kebab, menu } = draw(1000, 'shell');
   expect(kebab).not.toBeNull();
-  expect(menu).toEqual(['files', 'notes', 'theme', 'background', 'actions']);
+  expect(menu).toEqual(['files', 'notes', 'theme', 'sound', 'background', 'actions']);
 });
 
 test('a narrow shell strip folds its icons into the same kebab, never into nothing', () => {
   const { kebab, menu } = draw(0, 'shell');
   expect(kebab).not.toBeNull();
-  for (const id of ['files', 'notes', 'theme', 'background', 'search', 'sleep', 'size-master', 'actions']) {
+  for (const id of ['files', 'notes', 'theme', 'sound', 'background', 'search', 'sleep', 'size-master', 'actions']) {
     expect(menu, id).toContain(id);
   }
   expect(menu).not.toContain('skills');

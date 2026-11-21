@@ -48,7 +48,8 @@ def test_parent_cycle_terminates():
     assert owner_of_listeners(frozenset({5}), {10: "a"}, table) is None
 
 
-def test_pane_pid_sessions_parses_and_treats_no_server_as_empty():
+def test_pane_pid_sessions_parses_and_treats_no_server_as_empty(monkeypatch):
+    monkeypatch.setattr("src.core.tmux_transport.run.tmux_argv_prefix", lambda socket: ["tmux", "-L", socket])
     ok = SimpleNamespace(returncode=0, stdout="s1\t100\ns2\t200\nbad\tx\n", stderr="")
     assert port_owner.pane_pid_sessions("t", runner=lambda *a, **k: ok) == {100: "s1", 200: "s2"}
     none = SimpleNamespace(returncode=1, stdout="", stderr="no server running on /x")

@@ -50,6 +50,7 @@ function makeStorage(entries) {
 function loadModule({ preferences = makePreferences(), storage = makeStorage({}) } = {}) {
     delete require.cache[require.resolve(MODULE_PATH)];
     delete globalThis.ThemeConsent;
+    globalThis.window = globalThis;
     globalThis.Preferences = preferences;
     globalThis.localStorage = storage;
     const mod = require(MODULE_PATH);

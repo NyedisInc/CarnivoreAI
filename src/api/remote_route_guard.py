@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-import sqlite3
 from typing import Any, Optional, Tuple
 
 from fastapi import HTTPException
@@ -43,14 +42,3 @@ def refuse_remote(manager: Any, value: Optional[str], action: str) -> None:
     found = remote_target(manager, value)
     if found is not None:
         raise remote_refusal(found[0], action)
-
-
-def stored_host_key(conn: sqlite3.Connection, session_uuid: str) -> str:
-    try:
-        row = conn.execute("SELECT host_key FROM sessions WHERE session_uuid = ?",
-                           (session_uuid,)).fetchone()
-    except sqlite3.OperationalError as exc:
-        if "no such column" in str(exc) or "no such table" in str(exc):
-            return "local"
-        raise
-    return str(row[0]) if row is not None and row[0] else "local"

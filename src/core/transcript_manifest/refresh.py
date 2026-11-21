@@ -45,10 +45,15 @@ def claude_observed(entry: CorpusEntry) -> Observed:
     if entry.kind == "subagent":
         kind, conv = K.KIND_SUBAGENT, (parts[1] if len(parts) > 1 else None)
     elif entry.kind == "session":
-        kind, conv = K.KIND_CONVERSATION, Path(parts[-1]).stem
+        kind, conv = K.KIND_CONVERSATION, _stem(parts[-1])
     else:
         kind, conv = K.KIND_OTHER, None
     return Observed(str(entry.abs_path), K.FAMILY_CLAUDE, _root_of(entry), entry.source_path, conv, kind)
+
+
+def _stem(name: str) -> str:
+    dot = name.rfind(".")
+    return name[:dot] if 0 < dot < len(name) - 1 else name
 
 
 def codex_observed(entry: CorpusEntry) -> Observed:
@@ -103,8 +108,8 @@ def refresh(db_path: Path, *, write: bool = True, claude_roots: Optional[Sequenc
 
 
 def _scan_on(conn: sqlite3.Connection, found: Walk, now: str, write: bool) -> ScanResult:
-    result = scan(store.load_rows(conn), found.observed, complete_roots=found.complete_roots,
-                  unreadable_roots=found.unreadable_roots, now=now)
+    result = scan(store.load_scan_rows(conn, (obs.path for obs in found.observed)), found.observed,
+                  complete_roots=found.complete_roots, unreadable_roots=found.unreadable_roots, now=now)
     result.discovery_unreadable = found.unreadable_dirs
     if write and store.table_present(conn):
         store.persist(conn, result, now)

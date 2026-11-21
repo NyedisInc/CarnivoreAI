@@ -13,11 +13,11 @@ from src.core.byoai.contracts import ChatResult, EmbedResult, Usage
 from src.core.byoai.gateway import Gateway
 from src.core.byoai.keys import KeyStore
 from src.core.byoai.store import ByoaiStore
-from src.cplugs.host import ai_budget, plugin_ai, runtime, state as owner_state
-from src.cplugs.sdk import ManifestError
-from src.cplugs.sdk.context import CapabilityMissing
-from src.cplugs.sdk.definition import CplugDefinition
-from src.cplugs.sdk.manifest import parse_manifest
+from src.plugins.host import ai_budget, plugin_ai, runtime, state as owner_state
+from src.plugins.sdk import ManifestError
+from src.plugins.sdk.context import CapabilityMissing
+from src.plugins.sdk.definition import CplugDefinition
+from src.plugins.sdk.manifest import parse_manifest
 
 FID = "cplug.demoai.summary"
 EID = "cplug.demoai.vec"

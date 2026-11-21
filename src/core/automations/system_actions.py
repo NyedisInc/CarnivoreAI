@@ -2,14 +2,13 @@
 from __future__ import annotations
 
 import asyncio
-from types import SimpleNamespace
 from typing import Any, Dict, Optional, Tuple
 
 import structlog
-from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.core.automations.recipes import RecipeFailed, RecipeSkipped
+from src.core.session_status import STATUS_DEAD
 
 logger = structlog.get_logger()
 
@@ -37,12 +36,6 @@ class NotifyParams(BaseModel):
     text: str = Field(min_length=1, max_length=NOTIFY_TEXT_MAX)
 
 
-def _request(app_state: Any) -> Any:
-    from src.cplugs.host.session_actions import AppRequest  # noqa: PLC0415
-
-    return AppRequest(SimpleNamespace(state=app_state))
-
-
 async def sleep_idle_sessions(ctx: Any, params: NoParams) -> Tuple[Dict[str, Any], Optional[float]]:
     sleeper = getattr(ctx.app_state, "auto_sleeper", None)
     if sleeper is None:
@@ -52,16 +45,16 @@ async def sleep_idle_sessions(ctx: Any, params: NoParams) -> Tuple[Dict[str, Any
 
 
 async def restart_session(ctx: Any, params: RestartParams) -> Tuple[Dict[str, Any], Optional[float]]:
-    from src.api.session_restart_apply_routes import restart_session as route  # noqa: PLC0415
     from src.core.session_delivery import bring_up  # noqa: PLC0415
+    from src.core.session_ops import restart as restart_ops  # noqa: PLC0415
 
     live = await bring_up.find_live(bring_up.ops_for_app(ctx.app_state), params.session_uuid)
-    if live is not None and live.activity_status != "dead":
+    if live is not None and live.activity_status != STATUS_DEAD:
         raise RecipeSkipped(R_SESSION_LIVE)
     try:
-        answer = await route(_request(ctx.app_state), params.session_uuid)
-    except HTTPException as exc:
-        logger.info("automation_restart_refused", status=exc.status_code)
+        answer = await restart_ops.restart_stopped_session(ctx.app_state, params.session_uuid)
+    except restart_ops.RESTART_ERRORS as exc:
+        logger.info("automation_restart_refused", error_type=type(exc).__name__)
         raise RecipeFailed(R_RESTART_REFUSED) from exc
     body = answer.model_dump(mode="json") if hasattr(answer, "model_dump") else dict(answer or {})
     return {"action": "restart_session", "conversation": body.get("conversation"), "row_reused": body.get("row_reused")}, None

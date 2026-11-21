@@ -75,7 +75,7 @@ describe('the project replicas block', () => {
     state.replicas = [{ install_id: 'studio', label: 'studio', state: 'active' }];
     const root = await render();
     const button = root.querySelector<HTMLButtonElement>('[data-pt="replica-remove"]')!;
-    expect(button.getAttribute('data-btn')).toBe('danger');
+    expect(button.getAttribute('aria-label')).toContain('stop studio');
     button.click();
     await settle();
     expect(calls.some((c) => c.method === 'DELETE')).toBe(false);

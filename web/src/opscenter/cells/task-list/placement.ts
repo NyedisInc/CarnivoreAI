@@ -1,7 +1,7 @@
 import type { WidgetSettingField, WidgetSettingsSchema } from '../../widgets/types';
 import { registerPlacementOptions } from '../../widgets/placement-options';
-import { BADGE_STATUSES } from '../../../cplugs/huddle/task-manager-prefs.svelte';
-import { badgeLabelKey } from '../../../cplugs/huddle/task-manager-badge-menu';
+import { BADGE_STATUSES } from '../../../plugins/huddle/task-manager-prefs.svelte';
+import { badgeLabelKey } from '../../../plugins/huddle/task-manager-badge-menu';
 import { statusOption } from './model';
 
 export const LIST_MENU_HEADING = 'opscenter.cell.task_list.menu.heading';

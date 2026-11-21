@@ -11,10 +11,10 @@ import pytest
 
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
-from src.cplugs.crate import mcp, service
-from src.cplugs.host import runtime, state as owner_state
-from src.cplugs.sdk import ToolError
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.crate import mcp, service
+from src.plugins.host import runtime, state as owner_state
+from src.plugins.sdk import ToolError
+from src.plugins.sdk import crate_format as cf
 from tests.python.cplugs.crate.api_world import ApiWorld, export, stop_runner, wait_job
 from tests.python.cplugs.crate.crate_world import UUID_A
 
@@ -132,13 +132,13 @@ def test_bundles_list_keeps_one_projects_crates(tmp_path: Path, monkeypatch: pyt
 
 
 def test_a_plan_changed_job_failure_says_to_preview_with_the_same_label_and_options() -> None:
-    from src.cplugs.crate import service, writer
+    from src.plugins.crate import service, writer
     failure = service.job_failure(writer.ExportRefused("plan_changed", object()))
     assert failure.code == "plan_changed" and "same label and options" in failure.detail
 
 
 def test_crate_remove_says_what_the_card_approves_and_moves_to_the_trash(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    from src.cplugs.crate import folders, removal
+    from src.plugins.crate import folders, removal
 
     trash = tmp_path / "trash"
     trash.mkdir()

@@ -12,9 +12,9 @@ import pytest
 from src.core.db import db_path_for
 from src.core.inventory import file_claims, registry
 from src.core.inventory.registry_side import side_db_path
-from src.cplugs.crate import policy as P
-from src.cplugs.crate.plan import build_plan
-from src.cplugs.sdk import crate_sources as cs
+from src.plugins.crate import policy as P
+from src.plugins.crate.plan import build_plan
+from src.plugins.sdk import crate_sources as cs
 from tests.python.cplugs.crate.crate_world import env_for, make_world, project_request, session_request
 
 ACTIONS = {P.CARRY, P.EXCLUDE, P.DERIVED, P.OPTIONAL}

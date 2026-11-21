@@ -6,11 +6,11 @@ import zlib
 
 import pytest
 
-from src.cplugs.reviewboard import pdf_doc, pdf_scan, pdf_xref
-from src.cplugs.reviewboard.pdf_lexer import Meter
-from src.cplugs.reviewboard.pdf_objects import Dict as PdfDict, Name
-from src.cplugs.reviewboard.pdf_streams import Budget, PdfUnreadable
-from src.cplugs.sdk.file_secrets import Deadline
+from src.plugins.reviewboard import pdf_doc, pdf_scan, pdf_xref
+from src.plugins.reviewboard.pdf_lexer import Meter
+from src.plugins.reviewboard.pdf_objects import Dict as PdfDict, Name
+from src.plugins.reviewboard.pdf_streams import Budget, PdfUnreadable
+from src.plugins.sdk.file_secrets import Deadline
 from tests.python.cplugs.reviewboard.pdf_fixtures import (BYPASSES, CLEAN_CAT, PAGE, PAGES, ROUND9_REVIEW, broken_primary_xref, classic, deep_prev_chain, gap_backtrack,
                                                           ordinary_xref_stream_predictor, prev_chain_into_body, type2_hidden_objstm,
                                                           unparseable_chained_section, xref_stream_into_body)

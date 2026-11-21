@@ -64,7 +64,7 @@ def env(monkeypatch, tmp_path):
     monkeypatch.setattr(token_store, "get_store", lambda: store)
     monkeypatch.setattr(agent_message, "_LIMITER", agent_message.Limiter())
 
-    async def no_fanout(toast):
+    async def no_fanout(toast, **kw):
         return None
     monkeypatch.setattr(agent_message, "_broadcast", no_fanout)
     isolated_host(monkeypatch, app, tmp_path)

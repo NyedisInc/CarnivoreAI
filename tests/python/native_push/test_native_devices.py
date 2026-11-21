@@ -199,3 +199,16 @@ def test_the_revoke_route_cascades(rig) -> None:
     client.post("/api/v1/native-devices", json=body(), headers=as_device("dev_a"))
     assert client.delete("/api/v1/phone-link/devices/dev_a").json() == {"revoked": True}
     assert client.get("/api/v1/native-devices").json() == {"devices": []} and keychain.items == {}
+
+
+def test_a_corrupt_device_file_is_moved_aside_not_overwritten(tmp_path: Path) -> None:
+    from src.core.native_push.store import FILE_NAME, NativeDeviceStore
+
+    store = NativeDeviceStore(tmp_path)
+    (tmp_path / FILE_NAME).write_text("[{not json", encoding="utf-8")
+    assert store.list() == []
+    store.upsert("dev_1", "ios", "tok", "sandbox", "ai.carnivore.ios", "1.0")
+    kept = [p for p in tmp_path.iterdir() if p.name.startswith(FILE_NAME + ".corrupt-")]
+    assert len(kept) == 1
+    assert kept[0].read_text(encoding="utf-8") == "[{not json"
+    assert len(store.list()) == 1

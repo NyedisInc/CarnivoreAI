@@ -114,6 +114,28 @@ async def test_the_bridge_migration_restart_carries_the_bridge(bridge_config, mo
         assert_bridge(argv_of(command, bridge_config))
 
 
+def test_marked_project_launch_carries_the_delegate_line_once(bridge_config, monkeypatch, tmp_path):
+    import sqlite3
+    from src.core.pack.jobs import launch_line
+
+    marked, other = tmp_path / "marked", tmp_path / "other"
+    marked.mkdir(), other.mkdir()
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE projects (uid TEXT, root TEXT, host_key TEXT, archived_at TEXT)")
+    conn.execute("INSERT INTO projects VALUES ('p1', ?, 'local', NULL)", (str(marked),))
+    engine = SimpleNamespace(store=SimpleNamespace(marked_projects=lambda: ["p1"]), _open_db=lambda: conn)
+    monkeypatch.setattr(launch_line.boot, "engine", lambda: engine)
+    resume = resume_arguments(UUID, family="claude")
+
+    on = validate_agent_choice(settings, "cld", extra_args=resume, working_dir=str(marked / "sub")).command
+    off = validate_agent_choice(settings, "cld", extra_args=resume, working_dir=str(other)).command
+    argv = argv_of(on, bridge_config)
+    assert argv.count("--append-system-prompt") == 1
+    assert argv[argv.index("--append-system-prompt") + 1] == launch_line.LAUNCH_LINE
+    assert "--append-system-prompt" not in argv_of(off, bridge_config)
+    assert launch_line.add_to_args(["--append-system-prompt", "mine"], "x") == ["--append-system-prompt", "mine\nx"]
+
+
 def _calls_outside_settings() -> list:
     hits = []
     for path in sorted((ROOT / "src").rglob("*.py")):

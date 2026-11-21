@@ -188,7 +188,7 @@
   .terminal-font-panel__preview {
     padding: var(--oc-space-2) var(--oc-space-3);
     box-shadow: inset 0 0 0 1px var(--oc-line-hairline);
-    border-radius: 2px;
+    border-radius: var(--oc-radius-control);
     color: var(--oc-text-primary);
     background: var(--oc-ground-field);
     white-space: nowrap;
@@ -202,7 +202,7 @@
     flex-direction: column;
     padding: var(--oc-space-1);
     box-shadow: inset 0 0 0 1px var(--oc-line-hairline);
-    border-radius: 2px;
+    border-radius: var(--oc-radius-control);
     background: var(--oc-ground-field);
   }
   .terminal-font-panel__filter {

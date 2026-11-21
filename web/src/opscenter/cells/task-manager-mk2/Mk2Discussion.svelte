@@ -4,11 +4,11 @@
   import { titleWhenTruncated } from '../../../lib/base/truncate';
   import { t } from '../../../lib/i18n/index.svelte';
   import Icon from '../../ui/Icon.svelte';
-  import TaskManagerMarkdown from '../../../cplugs/huddle/TaskManagerMarkdown.svelte';
-  import type { Inspection, Task } from '../../../cplugs/huddle/task-manager-design/model';
-  import { anchorOf, restoreAnchor } from '../../../cplugs/huddle/task-manager-design/scroll-anchor';
-  import { loadThread } from '../../../cplugs/huddle/huddle.svelte';
-  import { unread } from '../../../cplugs/huddle/task-manager-design/unread';
+  import TaskManagerMarkdown from '../../../plugins/huddle/TaskManagerMarkdown.svelte';
+  import type { Inspection, Task } from '../../../plugins/huddle/task-manager-design/model';
+  import { anchorOf, restoreAnchor } from '../../../plugins/huddle/task-manager-design/scroll-anchor';
+  import { loadThread } from '../../../plugins/huddle/huddle.svelte';
+  import { unread } from '../../../plugins/huddle/task-manager-design/unread';
 
   let { task, view, onResource, source = -1, detailed = false }: { task: Task; view: Inspection; onResource: (id: string) => void; source?: number; detailed?: boolean } = $props();
 

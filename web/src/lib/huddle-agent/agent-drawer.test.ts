@@ -42,7 +42,7 @@ const view = vi.hoisted(() => ({ phone: false }));
 vi.mock('../drawer/phone-view.svelte', () => ({ phoneView: () => view.phone }));
 
 const terminal = vi.hoisted(() => ({ opened: [] as number[] }));
-vi.mock('../../cplugs/huddle/agents/agent-terminal', () => ({ openAgentTerminal: async (id: number) => { terminal.opened.push(id); return true; } }));
+vi.mock('../../plugins/huddle/agents/agent-terminal', () => ({ openAgentTerminal: async (id: number) => { terminal.opened.push(id); return true; } }));
 
 const drag = vi.hoisted(() => ({ calls: [] as unknown[][] }));
 vi.mock('../../opscenter/layout-editor/drawer-drag', async (importOriginal) => ({
@@ -51,15 +51,15 @@ vi.mock('../../opscenter/layout-editor/drawer-drag', async (importOriginal) => (
 }));
 
 import { setLocale } from '../i18n/index.svelte';
-import { registerCplugWidgets } from '../../cplugs/host/widgets';
-import { huddleCplug } from '../../cplugs/huddle/index';
+import { registerCplugWidgets } from '../../plugins/host/widgets';
+import { huddleCplug } from '../../plugins/huddle/index';
 import { homeLayout } from '../../opscenter/engine/layout.svelte';
 import { agentFromSearch, agentGeometryKey, agentPath, agentWindowName } from '../../popout/popout';
-import { registerCplugPage } from '../../cplugs/sdk/pages';
-import { AGENT_PAGE, agentPage, openAgentPage } from '../../cplugs/huddle/agents/agent-page.svelte';
-import { huddle } from '../../cplugs/huddle/huddle.svelte';
-import { AGGREGATE } from '../../cplugs/huddle/huddle-model';
-import HuddleReply from '../../cplugs/huddle/HuddleReply.svelte';
+import { registerCplugPage } from '../../plugins/sdk/pages';
+import { AGENT_PAGE, agentPage, openAgentPage } from '../../plugins/huddle/agents/agent-page.svelte';
+import { huddle } from '../../plugins/huddle/huddle.svelte';
+import { AGGREGATE } from '../../plugins/huddle/huddle-model';
+import HuddleReply from '../../plugins/huddle/HuddleReply.svelte';
 import { openAgentDrawerHost } from './drawer-host';
 import { agentDrawer, AGENT_DRAWER_DOCKED_CLASS, AGENT_DRAWER_WIDTH_KEY, PHONE_LOCK_CLASS, closeAgentDrawer, dockBesideTerminal, drawerAnchorLeft, widthFromPointer, leftDrawerWidth, setDrawerWidth } from './agent-drawer.svelte';
 import { STORAGE_KEY as LEFT_WIDTH_KEY } from '../drawer/resize';

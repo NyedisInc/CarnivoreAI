@@ -53,6 +53,8 @@ class LinkStream:
     trusted: bool = False
     device: Optional[str] = None
     sni: str = ""
+    pack: bool = False
+    slot: bool = False
 
 
 class StreamTable:

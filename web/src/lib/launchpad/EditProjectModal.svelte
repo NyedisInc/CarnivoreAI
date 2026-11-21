@@ -14,10 +14,10 @@
     import { isProjectColor } from '../project-colors/palette';
     import ProjectColorSwatches from '../project-colors/ProjectColorSwatches.svelte';
     import Check from '../../opscenter/ui/Check.svelte';
-    import taskManagerManifest from '../../../../src/cplugs/huddle/cplug.json';
-    import { cplugEnabled } from '../../cplugs/host/enablement.svelte';
-    import { getListInbox, getListNudge } from '../../cplugs/huddle/task-list-prefs';
-    import type { CplugManifest } from '../../cplugs/sdk';
+    import taskManagerManifest from '../../../../src/plugins/huddle/cplug.json';
+    import { cplugEnabled } from '../../plugins/host/enablement.svelte';
+    import { getListInbox, getListNudge } from '../../plugins/huddle/task-list-prefs';
+    import type { CplugManifest } from '../../plugins/sdk';
 
     interface Props {
         projectName: string;

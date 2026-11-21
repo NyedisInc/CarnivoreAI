@@ -20,8 +20,8 @@ from src.core.work.importer import copy
 from src.core.work.importer.errors import WorkImportDeferred
 from src.core.work.ladder import SCHEMA_VERSION as LEGACY_VERSION
 from src.core.work.work_ladder import MIGRATIONS, VERSION, VERSION_KEY
-from src.cplugs.sdk import storage_backup
-from src.cplugs.sdk.storage import CplugSchemaError, CplugStorage, StorageSpec
+from src.plugins.sdk import storage_backup
+from src.plugins.sdk.storage import CplugSchemaError, CplugStorage, StorageSpec
 
 logger = structlog.get_logger(__name__)
 

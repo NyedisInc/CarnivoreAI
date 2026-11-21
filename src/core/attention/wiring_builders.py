@@ -33,6 +33,7 @@ from src.core.notifications.sources.approvals import ApprovalsSource
 from src.core.session_output import escape_notices
 from src.core.session_output import waits as session_waits
 from src.core.session_status import STATUS_UNKNOWN
+from src.core.timeline import parity as timeline_parity
 from src.core.unread_store import UnreadStore
 from src.models import SessionRenamedMessage, ToastNewMessage
 
@@ -197,6 +198,8 @@ class ObservationHooks:
     auto_answer: Any
     pipeline_feed: Any
     raise_skill_notice: Callable[[WatchTarget, Any], None]
+    raise_stall_notice: Callable[[WatchTarget, Any], None]
+    raise_login_notice: Callable[[WatchTarget, Any], None] = lambda target, observation: None
 
 
 @dataclass
@@ -237,7 +240,8 @@ def make_on_observation(
 ) -> Callable[[WatchTarget, Observation], None]:
     history, died_tracker = hooks.history, hooks.died_tracker
     beast_prompts, auto_answer, pipeline_feed = hooks.beast_prompts, hooks.auto_answer, hooks.pipeline_feed
-    raise_skill_notice = hooks.raise_skill_notice
+    raise_skill_notice, raise_stall_notice = hooks.raise_skill_notice, hooks.raise_stall_notice
+    raise_login_notice = hooks.raise_login_notice
     memos = memos if memos is not None else ObservationMemos()
     published, marks = memos.published, memos.marks
 
@@ -263,6 +267,8 @@ def make_on_observation(
         findings = getattr(getattr(observation.evidence, "skills", None), "tripwire", ())
         if findings:
             raise_skill_notice(target, findings)
+        raise_stall_notice(target, getattr(getattr(observation.evidence, "subagents", None), "long_stalled", ()))
+        raise_login_notice(target, observation)
         verdict = observation.verdict
         decision = getattr(observation.evidence, "screen_decision", None)
         logger.debug("attention_status_decided", session_id=target.session_id, state=verdict.state,
@@ -308,6 +314,7 @@ def make_on_observation(
             if messaging is not None:
                 messaging.on_status(target.session_id, display)
             session_waits.REGISTRY.on_status(target.session_id, display)
+        timeline_parity.PARITY.on_observation(target.session_id, observation.evidence, display)
 
     return on_observation
 

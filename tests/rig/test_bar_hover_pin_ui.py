@@ -19,10 +19,15 @@ PINS = {
     "bottom": "#session-widget-rail-bottom [data-bar-pin]",
     "rail": ".oc-nav-pin [data-bar-pin]",
 }
+PINNED_PINS = {"rail": ".sbr-shell__pin [data-bar-pin]"}
 SHOTS = os.environ.get("SHOTS_DIR")
 
 
 def _open_page(pw, rig_slot: RigSlot) -> Page:
+    prefs = rig_slot.slot.api("GET", "/api/v1/preferences")
+    rig_slot.slot.api("PATCH", "/api/v1/preferences", {
+        "changes": {"widget_bars": {"v": 1, "side": {"mode": "autohide"}, "bottom": {"mode": "autohide"}, "rail": {"mode": "autohide"}}},
+        "expected_revision": prefs["revision"]})
     rig_slot.slot.api("POST", "/api/v1/sessions", {
         "project_name": "barhover", "working_dir": "~", "agent_type": "shell", "auto_start_claude": True, "copy_templates": False})
     ctx = pw.chromium.launch().new_context(storage_state=rig_slot.slot.auth, viewport={"width": 1440, "height": 900})
@@ -32,7 +37,7 @@ def _open_page(pw, rig_slot: RigSlot) -> Page:
     page.wait_for_timeout(1500)
     if page.locator(".modal-overlay[role=dialog]").count():
         page.keyboard.press("Escape")
-    page.get_by_text("barhover").first.click()
+    page.locator(".session-sidebar-row-name", has_text="barhover").first.click()
     page.wait_for_selector("#session-widget-rail", timeout=20000)
     page.wait_for_timeout(800)
     return page
@@ -90,8 +95,12 @@ def test_hover_opens_the_pin_keeps_it_open_click_still_toggles(rig_slot: RigSlot
         assert _state(page, name) == "pinned", f"{name}: a pinned strip retracted"
         _shot(page, name, "pinned")
 
+        pin = page.locator(PINNED_PINS.get(name, PINS[name])).first
         pin.click()
-        expect(pin).to_have_attribute("aria-pressed", "false")
+        if name in PINNED_PINS:
+            expect(page.locator(sel).first).not_to_have_attribute(attr, "pinned", timeout=3000)
+        else:
+            expect(pin).to_have_attribute("aria-pressed", "false")
         _away(page)
         expect(page.locator(sel).first).to_have_attribute(attr, "handle", timeout=3000)
         page.mouse.move(x, y, steps=4)

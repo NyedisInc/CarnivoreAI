@@ -1,6 +1,6 @@
 import type { SessionInfo } from '../../opscenter/api/types';
 import { t } from '../i18n/index.svelte';
-import { hostOffline, usageLimitLabel } from '../led';
+import { hostOffline, loginExpiredLabel, usageLimitLabel } from '../led';
 import { hostWindow } from './env';
 
 export interface AgentMarkFacts {
@@ -12,6 +12,7 @@ export interface AgentMarkFacts {
   statusSource: string | null;
   activityHint: string | null;
   usageLimit?: string | null;
+  loginExpired?: string | null;
   parkedSummary?: string | null;
   hostOffline?: string | null;
   icon?: string | null;
@@ -26,6 +27,7 @@ export const NOT_MEASURED: Readonly<AgentMarkFacts> = Object.freeze({
   statusSource: null,
   activityHint: null,
   usageLimit: null,
+  loginExpired: null,
   parkedSummary: null,
   hostOffline: null,
   transport: null,
@@ -69,6 +71,7 @@ export interface FaceRow {
   activity_hint?: string | null;
   parked_summary?: string | null;
   usage_limit?: unknown;
+  login_expired?: unknown;
   host_key?: string | null;
   host_label?: string | null;
   host_state?: string | null;
@@ -96,6 +99,7 @@ export function faceFacts(row: FaceRow, opts: FaceOptions = {}): AgentMarkFacts 
     activityHint: row.activity_hint ?? null,
     parkedSummary: row.parked_summary ?? null,
     usageLimit: usageLimitLabel(row),
+    loginExpired: loginExpiredLabel(row),
     hostOffline: hostOffline(row),
     transport: opts.transport !== undefined ? opts.transport : transportFor(row.tmux_session ?? row.name ?? null),
   };

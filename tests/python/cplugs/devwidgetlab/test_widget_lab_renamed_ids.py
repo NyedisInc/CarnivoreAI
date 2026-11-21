@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from src.core.widget_placement.retired_widgets import RENAMED_WIDGETS
-from src.cplugs.devwidgetlab.drafts import renames, store
+from src.plugins.devwidgetlab.drafts import renames, store
 
 WIDGETS_JSON = Path(__file__).resolve().parents[4] / "src" / "data" / "widgets.json"
 

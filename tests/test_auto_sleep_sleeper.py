@@ -392,3 +392,20 @@ def test_an_early_return_clears_last_passes_holds(world):
     _config(world, auto_sleep={"enabled": False})
     assert _run(world) == []
     assert world.sleeper.holds == {}
+
+
+def test_a_swarm_body_parked_at_its_startup_prompt_counts_as_idle_but_plain_unknown_does_not(world):
+    parked, _ = _add(world, 1, status="unknown")
+    plain, _ = _add(world, 2, status="unknown")
+    for sid, gate in ((parked, "awaiting_startup_prompt"), (plain, "unknown")):
+        world.clock.forget(sid)
+        world.manager.infos[sid].startup_gate = gate
+        world.manager._registry.sessions[sid] = SimpleNamespace(tmux_session=f"carnivore_s{sid[-1]}")
+    unknown = SimpleNamespace(stale=False, verdict=SimpleNamespace(state="unknown"))
+    world.manager._attention_watcher.observation_for = lambda _sid, now=None: unknown
+    bodies = {"carnivore_s1", "carnivore_s2"}
+    asyncio.run(world.sleeper._park_startup_bodies(world.manager, bodies, NOW - timedelta(minutes=11)))
+    assert world.clock.run_for(parked) is not None and world.clock.run_for(plain) is None
+    cfg = SimpleNamespace(auto_sleep_idle_minutes=10)
+    assert world.sleeper._swarm_due(world.manager, parked, NOW, cfg, {"carnivore_s1"})
+    assert not world.sleeper._swarm_due(world.manager, plain, NOW, cfg, {"carnivore_s2"})

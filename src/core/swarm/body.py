@@ -17,7 +17,7 @@ from src.core.swarm import admission, alerts, body_create, conflicts, delivery, 
 from src.core.swarm.body_create import BodyIdentity
 from src.core.pack.identity import home as project_home
 from src.core.swarm.memory import SwarmFileError
-from src.cplugs.sdk.swarm import SwarmError
+from src.plugins.sdk.swarm import SwarmError
 
 logger = structlog.get_logger()
 T = TypeVar("T")

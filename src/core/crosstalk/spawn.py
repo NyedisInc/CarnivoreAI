@@ -35,9 +35,17 @@ class SpawnRequest(BaseModel):
     report_back: bool = True
     parent: str | None = Field(default=None, min_length=1, max_length=200)
     peer: str | None = Field(default=None, min_length=1, max_length=128)
+    placement: Literal['here', 'auto'] = 'here'
+    needs: list[str] = Field(default_factory=list, max_length=8)
 
     @model_validator(mode='after')
     def _one_folder(self) -> 'SpawnRequest':
+        if self.needs and self.placement != 'auto':
+            raise ValueError('needs works only with placement auto')
+        if self.placement == 'auto' and self.peer is not None:
+            raise ValueError('placement auto picks the computer; leave peer out')
+        if any(not 0 < len(word) <= 64 for word in self.needs):
+            raise ValueError('a need is 1 to 64 characters')
         if self.project is not None and self.working_dir is not None:
             raise ValueError('give only one of project or working_dir')
         if self.model is not None:
@@ -86,6 +94,49 @@ async def _worktree(path: str, name: str) -> str:
     return plan.path
 
 
+async def finish_local(view: Any, caller: AgentCaller, body: SpawnRequest, *, parent_id: str | None, parent_epoch: Any, again: Any,
+                       created: Any, target_dir: str, task: str, extra: dict | None = None) -> dict:
+    from src.core.mcp.protocol import BatchView
+
+    fresh = view.fresh()
+    cards = await directory.list_cards(BatchView(view.app.state.session_manager, view.app),
+                                       self_tmux=again.tmux_session if again else None,
+                                       include_remote=False)
+    sender = next((card for card in cards if card['id'] == parent_id), None)
+    receiver = next((card for card in cards if card['id'] == created.id), None)
+    if (sender is None and not caller.external) or receiver is None:
+        raise ToolError(f'session {created.id} started, but the task is pending directory discovery')
+    receiver_info = next((info for info in await fresh.fresh().list_session_infos()
+                          if info.session.id == created.id), None)
+    if receiver_info is None:
+        raise ToolError(f'session {created.id} started, but its pane is not listed yet')
+    sender_key = caller.current_session_id if caller.external else _sender_key(sender)
+    sender_epoch = None if caller.external else parent_epoch
+    await asyncio.to_thread(store.grant_contact, sender_key, _sender_key(receiver),
+                            sender_epoch, receiver_info.session.tmux_created_epoch, source='spawn')
+    message = await bus.send(fresh.fresh(), caller, to=created.id, text=task,
+                             expect_reply=body.report_back, owner_approved=True,
+                             action='agent_spawn')
+    await asyncio.to_thread(
+        spawn_links.record_quietly, child_id=created.id, child_uuid=receiver.get('session_uuid'), parent_id=parent_id,
+        parent_uuid=None if sender is None else sender.get('session_uuid'),
+        parent_kind=spawn_links.KIND_EXTERNAL if caller.external else spawn_links.KIND_SESSION,
+        task_message_id=message.get('id') if isinstance(message, dict) else None,
+        parent_row_id=None if again is None else again.session_row_id, child_row_id=receiver_info.session_row_id)
+    from src.core.crosstalk import spawn_layout
+    from src.core import session_change_notice
+    layout_status = await spawn_layout.persist(view.app, again, receiver_info) if again else 'external_client'
+    session_change_notice.publish(view.app.state, {
+        'type': 'agent.spawned', 'parent': parent_id, 'session_id': created.id,
+        'name': receiver['name'], 'layout_status': layout_status,
+    })
+    logger.info('crosstalk_agent_spawned', parent_id=parent_id, session_id=created.id,
+                provider=body.provider, worktree=body.worktree, layout_status=layout_status)
+    return {'id': created.id, 'parent': parent_id, 'working_dir': target_dir,
+            'task_message': message, 'report_back': body.report_back,
+            'startup_gate': receiver_info.startup_gate, 'layout_status': layout_status, **(extra or {})}
+
+
 async def spawn(view: Any, caller: AgentCaller, body: SpawnRequest, *, owner_approved: bool = False) -> dict:
     from src.core.mcp import beast_mode, write_tools
     from src.core.mcp.protocol import BatchView
@@ -110,11 +161,24 @@ async def spawn(view: Any, caller: AgentCaller, body: SpawnRequest, *, owner_app
     if parent is None and body.project is None and body.working_dir is None:
         raise ToolError('external spawn needs project or working_dir')
     folder = await _folder(body, parent)
+    if 'placement' not in body.model_fields_set and 'needs' not in body.model_fields_set:
+        from src.core.mcp import place_args
+        if await place_args.agent_default_auto(folder):
+            body = body.model_copy(update={'placement': 'auto'})
     parent_epoch = parent.session.tmux_created_epoch if parent else None
     summary = f"spawn {body.provider} in {folder} for: {body.task[:160]}"
-    shown = body.model_dump(exclude_none=True)
+    shown = body.model_dump(exclude_none=True, exclude=None if body.placement == 'auto' else {'placement', 'needs'})
     task = spawn_rules.task_with_report_back(body.task, body.report_back)
     spawn_rules.validate_paste_text(task)
+    extra = None
+    if body.placement == 'auto':
+        from src.core.crosstalk import spawn_remote
+        from src.core.mcp import place_args
+        auto = await spawn_remote.prepare_auto(view, caller, body, folder)
+        if auto.plan.decision == 'remote':
+            return await spawn_remote.spawn(view, caller, body, owner_approved=owner_approved, auto=auto)
+        summary, shown = place_args.summary_of(auto.plan, summary), place_args.card_args(auto.plan, auto.starter, shown)
+        extra = {'placement': auto.plan.wire()}
 
     async def run(_approved: bool) -> dict:
         from src.api.session_crud_routes import create_session_with_extra
@@ -142,42 +206,8 @@ async def spawn(view: Any, caller: AgentCaller, body: SpawnRequest, *, owner_app
             created = await _via_route(create_session_with_extra(_request(fresh), request,
                                                                  agent_extra_args=spawn_rules.agent_cli_flags(body.provider, body.effort, beast)))
             _created[created.id] = (caller.tmux_name, time.monotonic())
-        cards = await directory.list_cards(BatchView(view.app.state.session_manager, view.app),
-                                           self_tmux=again.tmux_session if again else None,
-                                           include_remote=False)
-        sender = next((card for card in cards if card['id'] == parent_id), None)
-        receiver = next((card for card in cards if card['id'] == created.id), None)
-        if (sender is None and not caller.external) or receiver is None:
-            raise ToolError(f'session {created.id} started, but the task is pending directory discovery')
-        receiver_info = next((info for info in await fresh.fresh().list_session_infos()
-                              if info.session.id == created.id), None)
-        if receiver_info is None:
-            raise ToolError(f'session {created.id} started, but its pane is not listed yet')
-        sender_key = caller.current_session_id if caller.external else _sender_key(sender)
-        sender_epoch = None if caller.external else parent_epoch
-        await asyncio.to_thread(store.grant_contact, sender_key, _sender_key(receiver),
-                                sender_epoch, receiver_info.session.tmux_created_epoch, source='spawn')
-        message = await bus.send(fresh.fresh(), caller, to=created.id, text=task,
-                                 expect_reply=body.report_back, owner_approved=True,
-                                 action='agent_spawn')
-        await asyncio.to_thread(
-            spawn_links.record_quietly, child_id=created.id, child_uuid=receiver.get('session_uuid'), parent_id=parent_id,
-            parent_uuid=None if sender is None else sender.get('session_uuid'),
-            parent_kind=spawn_links.KIND_EXTERNAL if caller.external else spawn_links.KIND_SESSION,
-            task_message_id=message.get('id') if isinstance(message, dict) else None,
-            parent_row_id=None if again is None else again.session_row_id, child_row_id=receiver_info.session_row_id)
-        from src.core.crosstalk import spawn_layout
-        from src.core import session_change_notice
-        layout_status = await spawn_layout.persist(view.app, again, receiver_info) if again else 'external_client'
-        session_change_notice.publish(view.app.state, {
-            'type': 'agent.spawned', 'parent': parent_id, 'session_id': created.id,
-            'name': receiver['name'], 'layout_status': layout_status,
-        })
-        logger.info('crosstalk_agent_spawned', parent_id=parent_id, session_id=created.id,
-                    provider=body.provider, worktree=body.worktree, layout_status=layout_status)
-        return {'id': created.id, 'parent': parent_id, 'working_dir': target_dir,
-                'task_message': message, 'report_back': body.report_back,
-                'startup_gate': receiver_info.startup_gate, 'layout_status': layout_status}
+        return await finish_local(view, caller, body, parent_id=parent_id, parent_epoch=parent_epoch, again=again,
+                                  created=created, target_dir=target_dir, task=task, extra=extra)
 
     if owner_approved:
         return await run(True)
@@ -185,5 +215,6 @@ async def spawn(view: Any, caller: AgentCaller, body: SpawnRequest, *, owner_app
         return await beast_mode.run_unprompted(caller, 'agent_spawn', lambda: run(True),
                                                 target_id=parent_id, target_tmux=parent.tmux_session if parent else '',
                                                 summary=summary, args=shown)
+    auto_key = {'dedupe_key': place_args.dedupe_key(body.model_dump(exclude_none=True, exclude={'peer'})), 'supersede': True} if body.placement == 'auto' else {}
     return await write_tools.park(view, caller, parent_id, parent.tmux_session if parent else '',
-                                  'agent_spawn', summary, shown, run)
+                                  'agent_spawn', summary, shown, run, **auto_key)

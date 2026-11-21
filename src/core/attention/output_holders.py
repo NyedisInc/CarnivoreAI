@@ -31,6 +31,9 @@ _PROC_PIDFDVNODEINFO = 1
 _PROX_FDTYPE_VNODE = 1
 _PROC_PIDFDVNODEPATHINFO = 2
 
+_FD_LIST_SLACK = 16
+_FD_LIST_ATTEMPTS = 4
+
 
 class _ProcFdInfo(ctypes.Structure):
 
@@ -119,7 +122,11 @@ class _Unmeasurable(Exception):
     pass
 
 
-def _vnodes_libproc(pid: int) -> Optional[Set[Tuple[int, int]]]:
+class ScanLimitReached(Exception):
+    pass
+
+
+def _vnode_fds(pid: int) -> Optional[List[int]]:
     lib = _LIBPROC
     need = lib.proc_pidinfo(pid, _PROC_PIDLISTFDS, 0, None, 0)
     if need <= 0:
@@ -127,27 +134,95 @@ def _vnodes_libproc(pid: int) -> Optional[Set[Tuple[int, int]]]:
         if err == errno.ESRCH:
             return None
         raise _Unmeasurable("proc_pidinfo sizing failed, errno %d" % err)
-    count = need // ctypes.sizeof(_ProcFdInfo) + 16
-    fds = (_ProcFdInfo * count)()
-    got = lib.proc_pidinfo(pid, _PROC_PIDLISTFDS, 0, fds, ctypes.sizeof(fds))
-    if got <= 0:
-        err = ctypes.get_errno()
-        if err == errno.ESRCH:
-            return None
-        raise _Unmeasurable("proc_pidinfo listfds failed, errno %d" % err)
+    count = need // ctypes.sizeof(_ProcFdInfo) + _FD_LIST_SLACK
+    for _ in range(_FD_LIST_ATTEMPTS):
+        fds = (_ProcFdInfo * count)()
+        got = lib.proc_pidinfo(pid, _PROC_PIDLISTFDS, 0, fds, ctypes.sizeof(fds))
+        if got <= 0:
+            err = ctypes.get_errno()
+            if err == errno.ESRCH:
+                return None
+            raise _Unmeasurable("proc_pidinfo listfds failed, errno %d" % err)
+        if got < ctypes.sizeof(fds):
+            break
+        count *= 2
+    else:
+        raise _Unmeasurable("descriptor list still filled its buffer after %d reads" % _FD_LIST_ATTEMPTS)
+    return [entry.proc_fd for entry in fds[: got // ctypes.sizeof(_ProcFdInfo)]
+            if entry.proc_fdtype == _PROX_FDTYPE_VNODE]
+
+
+def _vnodes_libproc(pid: int) -> Optional[Set[Tuple[int, int]]]:
+    fds = _vnode_fds(pid)
+    if fds is None:
+        return None
     held: Set[Tuple[int, int]] = set()
     info = _VnodeFdInfo()
-    for entry in fds[: got // ctypes.sizeof(_ProcFdInfo)]:
-        if entry.proc_fdtype != _PROX_FDTYPE_VNODE:
-            continue
-        size = lib.proc_pidfdinfo(
-            pid, entry.proc_fd, _PROC_PIDFDVNODEINFO, ctypes.byref(info),
-            ctypes.sizeof(info),
+    for fd in fds:
+        size = _LIBPROC.proc_pidfdinfo(
+            pid, fd, _PROC_PIDFDVNODEINFO, ctypes.byref(info), ctypes.sizeof(info),
         )
         if size < ctypes.sizeof(info):
             continue
         held.add((int(info.pvi.vi_stat.vst_dev), int(info.pvi.vi_stat.vst_ino)))
     return held
+
+
+def libproc_available() -> bool:
+    return _LIBPROC is not None
+
+
+def open_vnode_paths(
+    pid: int, *, max_entries: Optional[int] = None, deadline: Optional[float] = None,
+) -> Optional[List[Tuple[Tuple[int, int], str]]]:
+    if _LIBPROC is None:
+        return None
+    try:
+        fds = _vnode_fds(pid)
+    except _Unmeasurable as exc:
+        logger.debug("open_vnode_paths_unreadable", pid=pid, error=str(exc))
+        return None
+    if fds is None:
+        return None
+    if max_entries is not None and len(fds) > max_entries:
+        raise ScanLimitReached("pid %d holds %d vnodes, cap %d" % (pid, len(fds), max_entries))
+    found: List[Tuple[Tuple[int, int], str]] = []
+    info = _VnodeFdInfoWithPath()
+    for fd in fds:
+        if deadline is not None and time.monotonic() > deadline:
+            raise ScanLimitReached("deadline passed reading pid %d" % pid)
+        size = _LIBPROC.proc_pidfdinfo(
+            pid, fd, _PROC_PIDFDVNODEPATHINFO, ctypes.byref(info), ctypes.sizeof(info),
+        )
+        if size < ctypes.sizeof(info):
+            continue
+        stat = info.pvip.vip_vi.vi_stat
+        path = info.pvip.vip_path.decode("utf-8", errors="replace")
+        found.append(((int(stat.vst_dev), int(stat.vst_ino)), path))
+    return found
+
+
+def vnode_identity(path: str) -> Optional[Tuple[int, int]]:
+    try:
+        stat = os.stat(path)
+    except OSError:
+        return None
+    return (_dev_key(stat.st_dev), stat.st_ino)
+
+
+def holders_among(identity: Tuple[int, int], pids: Iterable[int]) -> Set[int]:
+    if _LIBPROC is None:
+        return set()
+    found: Set[int] = set()
+    for pid in pids:
+        try:
+            held = _vnodes_libproc(pid)
+        except _Unmeasurable as exc:
+            logger.debug("holders_among_unreadable", pid=pid, error=str(exc))
+            continue
+        if held and identity in held:
+            found.add(pid)
+    return found
 
 
 def _vnodes_procfs(pid: int) -> Optional[Set[Tuple[int, int]]]:
@@ -269,5 +344,6 @@ def _scan(read, root_pid, process_parents, wanted, answers, budget_seconds) -> D
 
 __all__ = [
     "HELD", "NOT_HELD", "UNMEASURED", "descendants", "open_file_path", "probe_output_holders",
+    "libproc_available", "open_vnode_paths", "vnode_identity", "holders_among", "ScanLimitReached",
     "MAX_CONCURRENT_PROBES", "PROBE_BUDGET_SECONDS", "MAX_PROBED_PROCESSES",
 ]

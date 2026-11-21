@@ -1,6 +1,6 @@
 import { MENU_PAGES, MENU_PAGE_OPEN_CLASS, menuPage, type MenuPage } from './menu-pages';
 import { sidebarTabs } from '../dynamic-tabs/tab-store.svelte';
-import { clearPageHash, hashNamesPage, pageOfHash, pushPageHash, type HashEnv } from './menu-page-hash';
+import { clearPageHash, hashNamesPage, pageOfHash, popPageEntries, pushPageHash, type HashEnv } from './menu-page-hash';
 import { initMenuPageEscape } from './menu-page-escape';
 import { initMenuPageOutside } from './menu-page-outside';
 import { mayClosePage, type ConfirmFn } from './menu-page-dirty';
@@ -121,6 +121,8 @@ export function backFromMenuPage(doc: Document = document, deps: ShellDeps = def
     }
 }
 
+let popsPending = false;
+
 let confirming = false;
 
 export async function closeMenuPageGuarded(doc: Document = document, deps: ShellDeps = defaultDeps, all = false): Promise<boolean> {
@@ -133,9 +135,16 @@ export async function closeMenuPageGuarded(doc: Document = document, deps: Shell
     } finally {
         confirming = false;
     }
-    if (all) closeMenuPagesExcept(null, doc, deps);
-    else backFromMenuPage(doc, deps);
+    if (all) {
+        closeMenuPagesExcept(null, doc, deps);
+        pushedFor = null;
+        popsPending = popPageEntries(deps.hashEnv);
+    } else backFromMenuPage(doc, deps);
     return true;
+}
+
+export function closeMenuPageFromX(doc: Document = document, deps: ShellDeps = defaultDeps): Promise<boolean> {
+    return closeMenuPageGuarded(doc, deps, parked.size === 0);
 }
 
 export function syncMenuPages(doc: Document = document, deps: ShellDeps = defaultDeps): string | null {
@@ -198,7 +207,7 @@ export function reconcilePageWithHash(
 function escapeListener(doc: Document, deps: ShellDeps): () => void {
     return initMenuPageEscape(doc, {
         pageOpen: () => openMenuPages(doc).length > 0,
-        close: () => void closeMenuPageGuarded(doc, deps),
+        close: () => void (menuPageState.surface ? closeMenuPageFromX(doc, deps) : closeMenuPageGuarded(doc, deps)),
     });
 }
 
@@ -217,7 +226,14 @@ export function initMenuPageShell(doc: Document = document, deps: ShellDeps = de
     }
     syncMenuPages(doc, deps);
     const win = doc.defaultView;
-    const onTraverse = (): void => reconcilePageWithHash(doc, deps, win?.location.hash ?? null);
+    const onTraverse = (): void => {
+        if (popsPending) {
+            popsPending = false;
+            const landed = pageOfHash(win?.location.hash ?? null);
+            if (landed) clearPageHash(landed, deps.hashEnv);
+        }
+        reconcilePageWithHash(doc, deps, win?.location.hash ?? null);
+    };
     win?.addEventListener('hashchange', onTraverse);
     win?.addEventListener('popstate', onTraverse);
     const stopEscape = escapeListener(doc, deps);
@@ -237,6 +253,7 @@ export function initMenuPageShell(doc: Document = document, deps: ShellDeps = de
 export function resetMenuPageShell(): void {
     settled = null;
     parked.clear();
+    popsPending = false;
     menuPageState.open = null;
     menuPageState.surface = false;
 }

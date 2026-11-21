@@ -27,8 +27,8 @@ CARRIER_FRAMES: Tuple[str, ...] = ("toast.new", "app_alert.raised", "approvals")
 CARRIER_CLIENT_KINDS: Tuple[str, ...] = ("AppAlert",)
 FEEDBACK_CLIENT_KINDS: Tuple[str, ...] = (
     "AutoSleepError", "RecentOpen", "AccountSignedIn", "Attachment", "WriteFailed", "AgentOpen", "BeastError",
-    "NotifyMuted", "ApprovalGone", "Bookmark", "PackSend", "BudgetHold",
-    "WidgetsBars", "SwarmSwitchError",
+    "NotifyMuted", "ApprovalGone", "Bookmark", "BudgetHold",
+    "WidgetsBars", "SwarmSwitchError", "LayoutOversize", "SwarmCardGone",
 )
 
 _NO_FINISHED_SEED: Tuple[str, ...] = ("sns", "twilio", "pagerduty")
@@ -131,6 +131,7 @@ TYPES: Tuple[NotifyType, ...] = (
          Match(frames=("provider_account.switched",), client_kinds=("AccountSwitched",)), _SHOWN),
     _row("app.restore_offer", FAMILY_SESSIONS, "restore", Match(), _SHOWN),
     _row("session.terminal_notice", FAMILY_SESSIONS, "toast", Match(carrier="Notification"), _SHOWN),
+    _row("session.agent_stalled", FAMILY_SESSIONS, "toast", Match(carrier="Notification"), _SHOWN),
     _row("agent.message", FAMILY_MESSAGES, "toast", Match(carrier="Notification"), _SHOWN),
     _row("agent.review", FAMILY_MESSAGES, "toast", Match(carrier="Notification"), _SEED, _NO_FINISHED_SEED),
     _row("plugin.notice", FAMILY_MESSAGES, "toast", Match(carrier="Notification"), _SHOWN),

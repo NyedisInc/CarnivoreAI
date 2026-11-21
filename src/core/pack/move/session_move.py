@@ -25,6 +25,7 @@ from src.core.pack.move import interrupt as interrupt_mod, moved_note, ops, turn
 from src.core.pack.send import snapshot
 from src.core.pack.transport import blobs
 from src.core.session_sleep import is_asleep
+from src.core.session_status import STATUS_QUESTION
 
 logger = structlog.get_logger()
 RECEIVE = "/federation/pack/session/receive"
@@ -85,7 +86,7 @@ def turn_ended_text(exc: "turn.TurnNotEnded", name: str) -> str:
         return f"{name} still has a background task running; wait for it to finish or stop it, then send again"
     if exc.state is None:
         return f"{name} was not listed for the whole wait; check that it is running, then send again"
-    if exc.state == "question":
+    if exc.state == STATUS_QUESTION:
         return f"{name} is waiting for your answer; answer it, then send again"
     if exc.state in turn.RESTING:
         return f"{name} is still starting up or waiting on a dialog; answer it, then send again"

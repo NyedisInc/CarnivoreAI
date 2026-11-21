@@ -7,6 +7,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Iterable, List, Optional
 
+from src.core.pack.machines import can_block
 from src.core.pack.machines import capabilities as caps_mod
 from src.core.pack.machines import settings_doc
 from src.core.pack.machines.ddl import PACK_MACHINES_TABLE
@@ -70,6 +71,7 @@ class Roster:
 
     def record(self, install_id: str, *, label: str, snapshot: Dict[str, Any], holds_master: Optional[str]) -> Entry:
         entry = self.entries.setdefault(install_id, Entry(install_id))
+        snapshot = can_block.clean_received(snapshot)
         entry.label = label or entry.label
         entry.snapshot, entry.received_at, entry.holds_master, entry.from_store = snapshot, self._clock(), holds_master, False
         entry.specs = snapshot.get("specs") if isinstance(snapshot.get("specs"), dict) else entry.specs

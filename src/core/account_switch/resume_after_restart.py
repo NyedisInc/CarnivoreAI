@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 import asyncio
-from types import SimpleNamespace
 from typing import Any, Optional, Set
 
 import structlog
-from fastapi import HTTPException
 
 from src.core.mcp.beast_mode import beast_enabled
 from src.core.session_delivery import bring_up
 from src.core.session_startup_gate import GATE_READY
+from src.core.sessions import guarded_paste
+from src.core.sessions.guarded_paste import GateOptions, PasteRefused
 
 logger = structlog.get_logger(__name__)
 
@@ -24,12 +24,16 @@ RETRY_S = 5.0
 _TASKS: Set["asyncio.Task[None]"] = set()
 
 
+def schedule_text(app_state: Any, tmux_name: str, text: str) -> None:
+    task = asyncio.get_running_loop().create_task(resume_when_ready(app_state, tmux_name, text=text))
+    _TASKS.add(task)
+    task.add_done_callback(_TASKS.discard)
+
+
 def schedule(app_state: Any, tmux_name: str) -> bool:
     if not beast_enabled():
         return False
-    task = asyncio.get_running_loop().create_task(resume_when_ready(app_state, tmux_name))
-    _TASKS.add(task)
-    task.add_done_callback(_TASKS.discard)
+    schedule_text(app_state, tmux_name, RESUME_WORD)
     return True
 
 
@@ -47,21 +51,18 @@ async def _wait_started(app_state: Any, tmux_name: str, timeout: float, step: fl
         await asyncio.sleep(step)
 
 
-async def resume_when_ready(app_state: Any, tmux_name: str, *, settle: float = SETTLE_S, retry: float = RETRY_S,
-                            timeout: float = READY_TIMEOUT_S, step: float = READY_STEP_S) -> bool:
-    from src.api.one_shot_routes import paste_through_gates  # noqa: PLC0415
-
+async def resume_when_ready(app_state: Any, tmux_name: str, *, text: str = RESUME_WORD, settle: float = SETTLE_S,
+                            retry: float = RETRY_S, timeout: float = READY_TIMEOUT_S, step: float = READY_STEP_S) -> bool:
     await asyncio.sleep(settle)
     session_id = await _wait_started(app_state, tmux_name, timeout, step)
     if session_id is None:
         logger.warning("resume_after_restart_not_ready", name=tmux_name, waited_s=timeout)
         return False
-    request = SimpleNamespace(app=SimpleNamespace(state=app_state))
     for attempt in range(1, ATTEMPTS + 1):
         try:
-            await paste_through_gates(request, session_id, RESUME_WORD, fresh_dialog_check=True, hold_exempt=True)
-        except HTTPException as exc:
-            logger.info("resume_after_restart_refused", name=tmux_name, attempt=attempt, detail=str(exc.detail))
+            await guarded_paste.paste_through_gates(app_state, session_id, text, GateOptions(fresh_dialog_check=True, hold_exempt=True))
+        except PasteRefused as exc:
+            logger.info("resume_after_restart_refused", name=tmux_name, attempt=attempt, detail=exc.message)
             if attempt < ATTEMPTS:
                 await asyncio.sleep(retry)
             continue

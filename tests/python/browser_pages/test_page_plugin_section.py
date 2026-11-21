@@ -13,10 +13,10 @@ from fastapi.testclient import TestClient
 from src.api import browser_open_routes
 from src.api.auth import require_auth
 from src.core.browser_pages import app_open, open_pages
-from src.cplugs.host import page_owner, runtime
-from src.cplugs.host import state as owner_state
-from src.cplugs.host.runtime import find
-from src.cplugs.sdk import manifest as manifest_mod
+from src.plugins.host import page_owner, runtime
+from src.plugins.host import state as owner_state
+from src.plugins.host.runtime import find
+from src.plugins.sdk import manifest as manifest_mod
 
 BOARD = "/static/popout.html?tab=reviewboard&board=demo"
 PLAIN = "/static/popout.html?tab=notaplugin&item=3"

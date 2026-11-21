@@ -11,11 +11,10 @@ import pytest
 
 from src.core.swarm import body
 from src.core.swarm.cards import board as card_board, effects, ops, permits, port as card_port
-from src.cplugs.huddle import service
-from src.cplugs.huddle.cards import policy
-from src.cplugs.huddle.cards.port import TaskManagerCardPort
-from src.cplugs.sdk.cards import CardRefused
-from src.cplugs.huddle.rules import CLAUDE, JOE
+from src.plugins.huddle import service
+from src.plugins.huddle.cards import policy
+from src.plugins.huddle.public import CLAUDE, JOE, TaskManagerCardPort
+from src.plugins.sdk.cards import CardRefused
 from src.core.work.storage import WorkStorage
 
 COMPANY_1 = {"id": 7, "rank": "company", "thread_key": "agent:7", "company_id": 1}

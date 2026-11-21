@@ -1,8 +1,8 @@
 
 <script lang="ts">
   import { t } from '../../../i18n/index.svelte';
-  import { Character } from '../../../../cplugs/huddle/swarm/characters';
-  import { activePack } from '../../../../cplugs/huddle/swarm/swarm-settings.svelte';
+  import { Character } from '../../../../plugins/huddle/swarm/characters';
+  import { activePack } from '../../../../plugins/huddle/swarm/swarm-settings.svelte';
   import StatusGlyph from '../../StatusGlyph.svelte';
   import SentBackGlyph from './SentBackGlyph.svelte';
   import type { CardCounts } from '../../board-types';

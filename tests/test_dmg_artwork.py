@@ -4,6 +4,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import subprocess
+import sys
 from pathlib import Path
 from types import ModuleType
 
@@ -129,7 +130,7 @@ def test_the_renderer_runs_end_to_end(art: ModuleType, tmp_path: Path) -> None:
 
     result = subprocess.run(
         [
-            "python3", str(RENDERER),
+            sys.executable, str(RENDERER),
             "--source", str(BACKGROUND_SOURCE),
             "--out-dir", str(tmp_path),
         ],

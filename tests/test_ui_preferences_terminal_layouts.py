@@ -212,3 +212,20 @@ def test_a_widget_tab_commits_beside_session_and_page_tabs(store):
     result = store.update({FIELD: value})
     assert result.status == COMMITTED, result.detail
     assert result.values[FIELD] == value
+
+
+def test_a_widget_tab_may_carry_an_install_tail_and_a_bad_tail_is_refused(store):
+    good = arrangement(k={"layout": LAYOUT, "groups": {"terminal:@primary": {"tabs": ["terminal:@primary", "widget:hello.game@panel-ab12cd34"]}}})
+    result = store.update({FIELD: good})
+    assert result.status == COMMITTED, result.detail
+    assert result.values[FIELD] == good
+    for bad in ("widget:hello.game@", "widget:hello.game@Bad", "widget:hello.game@-x", "widget:hello.game@a@b", "widget:hello.game@" + "a" * 33):
+        refused = store.update({FIELD: arrangement(k=entry(tabs=[bad]))})
+        assert refused.status != COMMITTED, bad
+
+
+def test_a_core_widget_tab_never_carries_an_install_tail(store):
+    refused = store.update({FIELD: arrangement(k=entry(tabs=["widget:core.tasks@panel-ab12cd34"]))})
+    assert refused.status != COMMITTED
+    ok = store.update({FIELD: arrangement(k=entry(tabs=["widget:core.tasks", "widget:hello.game@panel-ab12cd34"]))})
+    assert ok.status == COMMITTED, ok.detail

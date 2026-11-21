@@ -19,7 +19,7 @@ from src.core.argent.runtime import Runtime, set_runtime
 from src.core.argent.device_login import DeviceLogin
 from src.core.argent.store import ArgentStore
 from src.core.argent.token_store import TokenStore
-from src.cplugs.sdk import ports
+from src.plugins.sdk import ports
 from src.models.session_requests import CreateSessionRequest
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "argent"

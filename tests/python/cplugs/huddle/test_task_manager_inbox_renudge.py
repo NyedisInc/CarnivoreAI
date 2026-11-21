@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from src.cplugs.huddle import inbox
+from src.plugins.huddle import inbox
 from tests.python.cplugs.huddle.test_task_manager_inbox import BASE, env, queue, row  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_inbox_promoted import promote
 from tests.python.cplugs.huddle.test_task_manager_inbox_stuck import app, client, run_pass, stick  # noqa: F401

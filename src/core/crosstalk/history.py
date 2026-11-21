@@ -6,6 +6,7 @@ from contextlib import closing
 from typing import Any, Optional
 
 from src.core.crosstalk import store
+from src.core.session_store import uuid_for_row
 
 THREADS_LIMIT = 50
 THREADS_MAX = 200
@@ -31,16 +32,16 @@ def _session_keys(conn: sqlite3.Connection, session: Optional[str], session_row:
     keys: list[str] = [session] if session else []
     lookups = []
     if session:
-        lookups.append(('SELECT session_uuid FROM sessions WHERE session_uuid=?', (session,)))
+        lookups.append(lambda: (conn.execute('SELECT session_uuid FROM sessions WHERE session_uuid=?', (session,)).fetchone() or [None])[0])
     if session_row is not None:
-        lookups.append(('SELECT session_uuid FROM sessions WHERE id=?', (session_row,)))
-    for sql, args in lookups:
+        lookups.append(lambda: uuid_for_row(conn, session_row))
+    for lookup in lookups:
         try:
-            row = conn.execute(sql, args).fetchone()
+            found = lookup()
         except sqlite3.OperationalError:
-            row = None
-        if row and row[0] and row[0] not in keys:
-            keys.append(row[0])
+            found = None
+        if found and found not in keys:
+            keys.append(found)
     return keys
 
 

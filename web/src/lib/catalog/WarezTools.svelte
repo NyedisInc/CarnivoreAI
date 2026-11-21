@@ -1,6 +1,5 @@
 
 <script lang="ts">
-    import type { Snippet } from 'svelte';
     import FacetSelect from '../../opscenter/ui/FacetSelect.svelte';
     import ViewToggle from '../manager-frame/ViewToggle.svelte';
     import { BROWSE_KEYS } from '../../../../client/js/labels/skill-browse.js';
@@ -10,24 +9,19 @@
     import type { SortKey } from './sort';
 
     interface Props {
-        search: Snippet;
         sortKey: SortKey;
         onSort: (next: SortKey) => void;
         view: ManagerView;
         onView: (next: ManagerView) => void;
-        arrange?: boolean;
         t: Translate;
     }
 
-    const { search, sortKey, onSort, view, onView, arrange = true, t }: Props = $props();
+    const { sortKey, onSort, view, onView, t }: Props = $props();
 </script>
 
-<div class="wtools" role="search">
-    <div class="wtools__search">{@render search()}</div>
-    {#if arrange}
-        <FacetSelect id="sort" label={t(BROWSE_KEYS.sortLabel)} value={sortKey} options={sortOptions(t)} onChange={(next) => onSort(next as SortKey)} />
-        <ViewToggle {view} {onView} {t} />
-    {/if}
+<div class="wtools">
+    <FacetSelect id="sort" label={t(BROWSE_KEYS.sortLabel)} value={sortKey} options={sortOptions(t)} onChange={(next) => onSort(next as SortKey)} />
+    <ViewToggle {view} {onView} {t} />
 </div>
 
 <style>
@@ -36,18 +30,6 @@
         align-items: center;
         gap: var(--oc-space-2);
         min-width: 0;
-    }
-
-    .wtools__search {
-        flex: none;
-        width: 236px;
-    }
-
-    .wtools__search :global(.oc-field) {
-        height: var(--oc-rowheight, 26px);
-        padding-block: 0;
-        padding-inline: 8px;
-        font-size: 12px;
     }
 
     .wtools :global(.oc-facet) {
@@ -94,8 +76,6 @@
     }
 
     .wtools :global(.oc-page__view .oc-ibtn) {
-        --oc-ibtn-size: var(--oc-rowheight, 26px);
-        width: 32px;
         border: 0;
         border-left: 1px solid var(--oc-line-panel);
         border-radius: 0;

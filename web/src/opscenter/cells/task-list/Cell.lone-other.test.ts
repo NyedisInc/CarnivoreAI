@@ -33,7 +33,7 @@ vi.mock('../../../lib/listing-push/boot', async (importOriginal) => ({
 import Cell from './Cell.svelte';
 import './meta';
 import { setLocale } from '../../../lib/i18n/index.svelte';
-import { cplugEnablement } from '../../../cplugs/host/enablement.svelte';
+import { cplugEnablement } from '../../../plugins/host/enablement.svelte';
 import { metaFor } from '../../engine/meta';
 
 setLocale('en');

@@ -129,6 +129,25 @@ def test_the_computer_filter_returns_only_that_computers_rows(world):
     assert {row["key"]: row["value"] for row in ranked} == {"local": 200, STUDIO: 120, MINI: 7}
 
 
+def test_a_widget_sums_only_the_computers_it_ticked_and_an_offline_one_is_named(world):
+    state, store, tmp = world
+    studio, mini = Peer(tmp, STUDIO, state), Peer(tmp, MINI, state)
+    studio.conversation("conv-studio", project_key("/work/studio"), [1, 2, 3], tokens=40)
+    mini.conversation("conv-mini", project_key("/work/mini"), [4], tokens=7)
+    studio.send()
+    mini.send()
+    assert _total(store, filters={"hosts": ["local", MINI]}) == 200 + 7
+    assert _total(store, filters={"hosts": [STUDIO, MINI]}) == 120 + 7
+    assert _total(store, filters={"hosts": ["local"]}) == 200
+    assert _total(store, filters={"hosts": [STUDIO]}) == 120
+    assert _total(store, filters={"hosts": ["install-ghost"]}) is None or _total(store, filters={"hosts": ["install-ghost"]}) == 0
+    with pytest.raises(ValueError):
+        _query(filters={"hosts": []})
+    stored = {"ok": True, "result": queries.execute(store, _query(filters={"hosts": ["local", MINI]}))}
+    shown = pack_scope.annotate(store, [stored], {STUDIO: True, MINI: False}, "mac")
+    assert [c["id"] for c in shown[0]["result"]["pack"]["offline"]] == [MINI]
+
+
 def test_a_moved_conversation_counts_once_under_its_owner(world):
     state, store, tmp = world
     with store.connect() as db:

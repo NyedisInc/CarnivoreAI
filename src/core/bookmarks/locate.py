@@ -36,7 +36,7 @@ def resolve_transcript(conversation: str, working_dir: Optional[str], roots: Opt
 
 
 def restore_from_points(conversation: str) -> Path:
-    from src.cplugs.sdk import restore_points  # noqa: PLC0415
+    from src.plugins.sdk import restore_points  # noqa: PLC0415
 
     port = restore_points.get()
     if port is None:

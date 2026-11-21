@@ -168,33 +168,19 @@ test('no tree-row hover rule adds width, padding, border or an outset shadow', (
     }
 });
 
-test('the focus ring is inset, so keyboard focus adds no width either', () => {
-    const focusRules = editorRules
+test('the focus ring is the shared border rule, so keyboard focus adds no width either', () => {
+    const rowRules = editorRules
         .flatMap((r) => r.selector.split(',').map((s) => ({ selector: s.trim(), body: r.body })))
-        .filter((r) => ROW_CLASSES.some((c) => r.selector.includes(c))
-            && r.selector.includes(':focus-visible')
-            && (r.body.match(/box-shadow:\s*([^;]+)/) || [])[1]?.trim() !== 'none'
-            && /box-shadow:/.test(r.body));
-    assert.ok(focusRules.length > 0, 'the tree rows must keep a visible focus ring');
-    for (const r of focusRules) {
-        assert.match(r.body, /box-shadow:\s*inset\s/,
-            `${r.selector} must use an inset ring; an outset one overflows the tree`);
+        .filter((r) => ROW_CLASSES.some((c) => r.selector.includes(c)));
+    for (const cls of ROW_CLASSES) {
+        const base = rowRules.find((r) => r.selector === `.${cls}`);
+        assert.ok(base && /border:\s*1px solid transparent/.test(base.body), `.${cls} must reserve an invisible 1px border`);
     }
-});
-
-test('the focus ring survives the box-shadow: none neutralizer', () => {
-    const zeroing = rowHoverRules(editorRules, false)
-        .filter((r) => /box-shadow:\s*none/.test(r.body))
-        .map((r) => specificity(r.selector))
-        .reduce((a, b) => (cmp(a, b) >= 0 ? a : b), [0, 0, 0]);
-    const ring = editorRules
-        .flatMap((r) => r.selector.split(',').map((s) => ({ selector: s.trim(), body: r.body })))
-        .filter((r) => ROW_CLASSES.some((c) => r.selector.includes(c))
-            && /box-shadow:\s*inset\s/.test(r.body))
-        .map((r) => specificity(r.selector))
-        .reduce((a, b) => (cmp(a, b) >= 0 ? a : b), [0, 0, 0]);
-    assert.ok(cmp(ring, zeroing) >= 0,
-        `focus-ring specificity ${ring} loses to the box-shadow: none rule ${zeroing}`);
+    const focus = rowRules.filter((r) => r.selector.includes(':focus-visible') && !/glyph/.test(r.selector));
+    assert.ok(focus.length > 0, 'the tree rows must still name :focus-visible');
+    for (const r of focus) {
+        assert.ok(!/(?:box-shadow|outline):\s+(?!none)/.test(r.body), `${r.selector} must draw no ring of its own`);
+    }
 });
 
 // ---------------------------------------------------------------------

@@ -1,11 +1,33 @@
 import { t } from '../i18n/index.svelte';
 import { openSession, openSessions } from '../../opscenter/api/host';
+import { authFetchBlob } from '../../opscenter/api/auth.svelte';
 import * as api from './api';
 import { refusalText } from './format';
 import { data, refresh } from './page-store.svelte';
 
+export function attachmentPath(runId: string, name: string): string {
+  return `/automations/runs/${encodeURIComponent(runId)}/attachments/${encodeURIComponent(name)}`;
+}
+
 export function attachmentHref(runId: string, name: string): string {
-  return `/api/v1/automations/runs/${encodeURIComponent(runId)}/attachments/${encodeURIComponent(name)}`;
+  return `/api/v1${attachmentPath(runId, name)}`;
+}
+
+export async function downloadAttachment(runId: string, name: string): Promise<void> {
+  try {
+    const blob = await authFetchBlob(attachmentPath(runId, name));
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    link.rel = 'noopener';
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  } catch (error) {
+    data.notice = refusalText(error);
+  }
 }
 
 function opened(session: api.CreatedSession, key: string): void {

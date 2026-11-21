@@ -209,7 +209,7 @@ class LedgerPoller:
         elif measured == "ok":
             poller_poke.forget_if_superseded(state, credential)
             credential, state.refresh_check_at = await self._poker.pre_expiry(
-                state, credential, now, lambda: self._read_credential(state)
+                state, credential, now, lambda: self._read_credential(state, fresh=True)
             )
             measured = credentials.credential_state_for(credential, now)
             if measured == "ok" and account.provider in ("claude", "codex"):
@@ -259,12 +259,12 @@ class LedgerPoller:
     async def _probe_usage(self, access_token: str) -> str:
         return (await self._claude_fetch(self._client, access_token)).state
 
-    async def _read_credential(self, state: AccountState) -> Any:
+    async def _read_credential(self, state: AccountState, *, fresh: bool = False) -> Any:
         account = state.account
         profile_dir = profile_dir_for(account)
         if account.provider == "claude":
             credential = await asyncio.to_thread(
-                self._read_claude_credential, profile_dir
+                self._read_claude_credential, profile_dir, **({"fresh": True} if fresh else {})
             )
             identity = await asyncio.to_thread(
                 self._read_claude_identity, profile_dir

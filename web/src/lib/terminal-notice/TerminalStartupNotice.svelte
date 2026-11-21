@@ -33,7 +33,7 @@
           position: absolute;
           top: 15px;
           left: 15px;
-          z-index: 1105;
+          z-index: calc(var(--oc-z-drawer-float) - var(--oc-z-step));
 
           display: flex;
           align-items: center;

@@ -1,6 +1,7 @@
 import { resourcePush } from '../resource-push/boot';
 import { whenListingPushBooted, type ListingPushGlobal } from '../listing-push/boot';
 import { readTab, writeTab } from '../../opscenter/ui/tab-memory';
+import { viewport } from '../../opscenter/engine/viewport.svelte';
 import * as api from './api';
 import { feed, loadFeed, refreshFeed, releaseFeedCaches } from './feed-store.svelte';
 import { refusalText } from './format';
@@ -31,8 +32,6 @@ import { t } from '../i18n/index.svelte';
 export const AUTOMATION_TOPICS = ['automations', 'automation_runs', 'automation_commands'] as const;
 const POLL_MS = 15000;
 const COUNTS_MIN_GAP_MS = 60000;
-const PHONE_PX = 700;
-
 export interface FeedFilters {
   status: string;
   automation: string;
@@ -85,7 +84,7 @@ let countsTimer: ReturnType<typeof setTimeout> | null = null;
 let lastCountsTimerAt = 0;
 
 function isPhone(): boolean {
-  return typeof window !== 'undefined' && window.innerWidth <= PHONE_PX;
+  return viewport.narrow;
 }
 
 export function firstAttention(): string | null {

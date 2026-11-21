@@ -30,7 +30,7 @@ def migration_summary(conn: sqlite3.Connection) -> Dict[str, Any]:
     try:
         parsed = json.loads(raw)
     except (TypeError, ValueError) as exc:
-        logger.error("project_migration_record_unreadable", error=str(exc))
+        logger.error("project_migration_record_unreadable", error=str(exc), error_type=type(exc).__name__)
         return {
             "state": "unreadable",
             "ok": None,

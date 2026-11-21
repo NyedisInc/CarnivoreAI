@@ -1,11 +1,11 @@
 @layer components {
     .sp-page > * {
-        --pn-w: 480px;
+        --pn-w: var(--oc-sheet-w);
     }
 
     @container sp-page (min-width: 1700px) {
         .sp-page > * {
-            --pn-w: 560px;
+            --pn-w: var(--oc-sheet-w-wide);
         }
     }
 
@@ -17,39 +17,6 @@
         padding-right: var(--pn-w);
     }
 
-    .sp-pn {
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 6;
-        display: flex;
-        flex-direction: column;
-        width: var(--pn-w);
-        max-width: 100%;
-        min-width: 0;
-        background: var(--oc-ground-panel);
-        box-shadow:
-            -1px 0 0 0 var(--oc-line-rule),
-            -12px 0 24px -16px var(--oc-backdrop);
-        outline: none;
-        animation: sp-pn-in var(--oc-motion) ease-out;
-    }
-
-    @keyframes sp-pn-in {
-        from {
-            transform: translateX(100%);
-        }
-        to {
-            transform: none;
-        }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        .sp-pn {
-            animation: none;
-        }
-    }
 
     .sp-pn-bar {
         flex: none;
@@ -371,7 +338,7 @@
         display: grid;
         grid-template-columns: 52px minmax(0, 1fr);
         gap: var(--oc-space-2);
-        padding: 3px 0;
+        padding: var(--oc-pad-snug) 0;
     }
 
     .sp-pn-tl li::before {
@@ -382,7 +349,7 @@
         width: 7px;
         height: 7px;
         border: 1px solid var(--oc-text-secondary);
-        border-radius: 1px;
+        border-radius: var(--oc-radius-xs);
         background: var(--oc-ground-panel);
     }
 
@@ -429,13 +396,6 @@
 
         .sp-page[data-session] > .oc-titlebar {
             margin-right: 0;
-        }
-
-        .sp-pn {
-            position: fixed;
-            inset: env(safe-area-inset-top, 0px) 0 0;
-            z-index: 60;
-            width: 100%;
         }
 
         .sp-page .sp-pn-bar [data-pn-back] {

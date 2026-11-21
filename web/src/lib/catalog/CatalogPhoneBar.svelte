@@ -26,7 +26,7 @@
         <FacetSelect id="sort" label={t(BROWSE_KEYS.sortLabel)} value={sortKey} options={sortOptions(t)} onChange={(next) => onSort(next as SortKey)} />
     </div>
     {#if !readonly}
-    <div class="catalog-phonebar__row catalog-phonebar__row--tools">
+    <div class="catalog-phonebar__row catalog-phonebar__row--tools" data-btn-density="frame">
         <WarezActs {refreshing} {onRefresh} {onPublish} {t} />
     </div>
     {/if}
@@ -65,18 +65,11 @@
         flex-wrap: nowrap;
     }
 
-    .catalog-phonebar__row--tools > :global(.warez-act) {
+    .catalog-phonebar__row--tools > :global([data-warez-act]) {
         flex: 1 1 auto;
-        min-width: 44px;
-        padding-inline: 8px;
     }
 
     .catalog-phonebar__row--tools :global(.keys-menu) {
         flex: none;
-    }
-
-    .catalog-phonebar__row--tools :global(.keys-menu .warez-act) {
-        width: 44px;
-        padding: 0;
     }
 </style>

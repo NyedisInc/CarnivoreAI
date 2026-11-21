@@ -1,14 +1,14 @@
 <script lang="ts">
   import { setContext, untrack, type Snippet } from 'svelte';
-  import { DETAIL_SLOT } from '../../../cplugs/huddle/task-manager-detail-slot';
-  import { BODY_OPTIONS, type BodyOptions } from '../../../cplugs/huddle/task-manager-body-options';
-  import { TAGGED_OPEN, type TaggedOpener } from '../../../cplugs/huddle/task-manager-tagged-open';
+  import { DETAIL_SLOT } from '../../../plugins/huddle/task-manager-detail-slot';
+  import { BODY_OPTIONS, type BodyOptions } from '../../../plugins/huddle/task-manager-body-options';
+  import { TAGGED_OPEN, type TaggedOpener } from '../../../plugins/huddle/task-manager-tagged-open';
   import { openSession } from '../../api';
   import { sessionIdForUuid } from '../../../lib/open-files/session-ref';
   import Mk2TaskTabs from './Mk2TaskTabs.svelte';
   import { MK2_VIEW, type Mk2ViewHolder } from './mk2-view-context';
   import { effectiveState } from './mk2-task-state';
-  import { viewFilter } from '../../../cplugs/huddle/task-manager-view-filter.svelte';
+  import { viewFilter } from '../../../plugins/huddle/task-manager-view-filter.svelte';
   import type { TaskState } from '../../../lib/base/task-wrapper';
 
   let { projectColors, statusBar, taskState, view, children }: { projectColors: boolean; statusBar: boolean; taskState: TaskState; view: Mk2ViewHolder; children: Snippet } = $props();

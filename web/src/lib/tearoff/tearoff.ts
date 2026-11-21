@@ -1,5 +1,5 @@
 import { rowIdOfSlot } from '../../opscenter/engine/slot-identity';
-import { widgetIdOfTab, WIDGET_TAB_PREFIX } from '../../opscenter/engine/widget-tabs';
+import { widgetIdOfTab, widgetTargetOfTab, WIDGET_TAB_PREFIX } from '../../opscenter/engine/widget-tabs';
 
 export type TearOffKind = 'terminal' | 'widget';
 
@@ -40,6 +40,7 @@ export function releaseTearOff(win: Window, target: TearOffTarget | null, up: Re
 export function tabTearOffTarget(tab: string): TearOffTarget | null {
   const row = rowIdOfSlot(tab);
   if (row !== null) return { kind: 'terminal', id: String(row) };
+  if (widgetTargetOfTab(tab) !== null) return null;
   const widget = widgetIdOfTab(tab);
   return widget === null ? null : { kind: 'widget', id: widget };
 }

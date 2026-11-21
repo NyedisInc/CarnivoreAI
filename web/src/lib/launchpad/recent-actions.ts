@@ -92,6 +92,7 @@ export async function forkSession(
     host.refreshProjectList();
 }
 
+/* the new session */
 export async function restartRecentSession(
     opts: Partial<RestartOptions> | null | undefined,
     host: RecentHost,

@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import sqlite3
 from contextlib import closing
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Optional
 
 import structlog
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
@@ -13,6 +13,8 @@ from src.api import projects_service
 from src.api.auth import require_auth
 from src.config import settings
 from src.core import session_store
+from src.core.automations.store import AutomationStore
+from src.core.automations.store_schema import DB_NAME as AUTOMATIONS_DB, FOLDER_NAME as AUTOMATIONS_FOLDER, storage_for
 from src.core.db import DatastoreUnreadableError, connect, db_path_for
 from src.core.library_cleanup import projects, sessions
 from src.core.library_cleanup.errors import CleanupNotFound, CleanupRefused
@@ -56,21 +58,35 @@ async def _run(write: Callable[[sqlite3.Connection], Dict[str, Any]]) -> Dict[st
         raise api_error(503, "datastore_unavailable", exc)
 
 
+def _automation_repoint(request: Request) -> Optional[Callable[[int, int], int]]:
+    store = getattr(request.app.state, "automation_store", None)
+    if store is None:
+        state_dir = settings.get_state_dir()
+        if not (state_dir / AUTOMATIONS_FOLDER / AUTOMATIONS_DB).exists():
+            return None
+        store = AutomationStore(storage_for(state_dir))
+    return store.repoint_project
+
+
 @router.post("/projects/{source_id}/merge")
-async def merge_project(source_id: int, body: MergeBody) -> Dict[str, Any]:
+async def merge_project(source_id: int, body: MergeBody, request: Request) -> Dict[str, Any]:
     """Merge project ``source_id`` into ``body.into``.
 
-    Description: re-points every session row and conversation index row, then
-      deletes the empty source row with a tombstone, in one transaction. Two
-      spellings of one folder merge freely; two different folders only with
-      ``allow_different_folder``.
-    Inputs: source_id (path int). body (MergeBody).
-    Output: dict {source, target, sessions_moved, index_rows_moved, same_folder}.
-    Raises: 404 no_project; 409 same_project / different_folder; 503.
+    Description: re-points every session, conversation index, transcript archive,
+      root-decision, storage, company HQ, Task Manager tag and automation row, then
+      deletes the empty source row with a tombstone (the carnivore.db rows in one
+      transaction; automations first, through their own store). Two spellings of one
+      folder merge freely; two different folders only with ``allow_different_folder``.
+      Swarm, Pack and Task Manager rows are never moved: a source holding any is refused.
+    Inputs: source_id (path int). body (MergeBody). request (finds the automations store).
+    Output: dict {source, target, sessions_moved, index_rows_moved, automations_moved, same_folder}.
+    Raises: 404 no_project; 409 same_project / different_folder / storage_conflict /
+      source_has_swarm_or_pack_data / source_has_task_manager_data (all before any write); 503.
     """
     projects_service.guard_writable(settings)
     return await _run(lambda conn: projects.merge_projects(
-        conn, source_id, body.into, allow_different_folder=body.allow_different_folder))
+        conn, source_id, body.into, allow_different_folder=body.allow_different_folder,
+        repoint_automations=_automation_repoint(request)))
 
 
 @router.delete("/sessions/{session_uuid}")

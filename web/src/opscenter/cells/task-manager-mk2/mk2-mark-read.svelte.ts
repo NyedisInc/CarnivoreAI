@@ -1,5 +1,5 @@
-import { heldRead } from '../../../cplugs/huddle/huddle.svelte';
-import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
+import { heldRead } from '../../../plugins/huddle/huddle.svelte';
+import type { HuddleItem } from '../../../plugins/huddle/huddle-model';
 
 export const MARK_READ_HOLD_SECONDS = 5;
 

@@ -4,10 +4,10 @@
   import { titleWhenTruncated } from '../../../lib/base/truncate';
   import Icon from '../../ui/Icon.svelte';
   import Select from '../../../lib/base/Select.svelte';
-  import TaskManagerArtifactCard from '../../../cplugs/huddle/TaskManagerArtifactCard.svelte';
-  import TaskManagerFiles from '../../../cplugs/huddle/TaskManagerFiles.svelte';
-  import TaskManagerRoundCard from '../../../cplugs/huddle/TaskManagerRoundCard.svelte';
-  import { webLink, type Resource, type Tab } from '../../../cplugs/huddle/task-manager-design/model';
+  import TaskManagerArtifactCard from '../../../plugins/huddle/TaskManagerArtifactCard.svelte';
+  import TaskManagerFiles from '../../../plugins/huddle/TaskManagerFiles.svelte';
+  import TaskManagerRoundCard from '../../../plugins/huddle/TaskManagerRoundCard.svelte';
+  import { webLink, type Resource, type Tab } from '../../../plugins/huddle/task-manager-design/model';
 
   let { itemId, resource, backTab, version = $bindable(''), onBack, onSource }: {
     itemId: number; resource: Resource; backTab: Tab; version?: string; onBack: () => void; onSource: (resource: Resource) => void;

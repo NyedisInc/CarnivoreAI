@@ -9,7 +9,9 @@ import pytest
 from fastapi import HTTPException
 
 from src.api import one_shot_routes
-from src.cplugs.huddle import held, service
+from tests.python.cplugs.huddle.paste_fakes import patch_paste
+from src.core.sessions.guarded_paste import PasteRefused
+from src.plugins.huddle import held, service
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note  # noqa: F401
 
 SEND = "/api/v1/cplugs/huddle/send"
@@ -37,7 +39,7 @@ class Pane:
 @pytest.fixture
 def pane(monkeypatch):
     fake = Pane()
-    monkeypatch.setattr(one_shot_routes, "paste_through_gates", fake)
+    patch_paste(monkeypatch, fake)
     monkeypatch.setattr(held, "POLL_S", 0.02)
     yield fake
     held.reset()
@@ -79,7 +81,7 @@ def test_a_busy_session_holds_the_tell_and_it_goes_out_when_free_never_into_the_
 def test_a_hold_that_times_out_raises_a_toast_and_the_items_stay_waiting(client, app, pane, monkeypatch):
     toasts = []
     monkeypatch.setattr(held, "minutes", lambda ctx: 0.001)
-    from src.cplugs.host import capabilities
+    from src.plugins.host import capabilities
     monkeypatch.setattr(capabilities, "toaster", lambda cid, st: lambda sid, title: toasts.append((sid, title)) or None)
     client.post("/api/v1/cplugs/huddle/lists/12/items", json={"text": "x"})
     note(app, "ses_old", "12", 100.0)
@@ -126,7 +128,7 @@ def test_a_hard_refusal_is_kept_as_not_sent_for_every_window(client, app, monkey
     async def refuse(request, session_id, text):
         raise HTTPException(status_code=409, detail={"code": "pane_not_an_agent", "message": "a shell"})
 
-    monkeypatch.setattr(one_shot_routes, "paste_through_gates", refuse)
+    patch_paste(monkeypatch, refuse)
     client.post("/api/v1/cplugs/huddle/lists/12/items", json={"text": "x"})
     note(app, "ses_old", "12", 100.0)
     result = client.post(SEND, json={"lists": ["12"]}).json()["results"][0]
@@ -136,7 +138,7 @@ def test_a_hard_refusal_is_kept_as_not_sent_for_every_window(client, app, monkey
 
 
 def test_the_hold_bound_is_a_plugin_setting_with_a_default():
-    from src.cplugs.host import runtime
+    from src.plugins.host import runtime
     field = runtime.find("huddle").manifest.settings_schema["fields"][held.SETTING]
     assert field["default"] == held.DEFAULT_MINUTES == 30 and field["kind"] == "number"
     assert held.minutes(SimpleNamespace(settings={})) == 30
@@ -182,7 +184,7 @@ def test_a_hold_retried_many_times_writes_one_start_and_one_end_line(monkeypatch
     async def deliver():
         attempts.append(time.time())
         if len(attempts) < 9:
-            raise one_shot_routes._refuse("pane_dialog_open", "a dialog is open", "ses_1")
+            raise one_shot_routes.paste_refusal_to_http(PasteRefused("pane_dialog_open", "a dialog is open", "ses_1"))
         return {}
 
     async def scenario():
@@ -200,19 +202,19 @@ def test_a_hold_retried_many_times_writes_one_start_and_one_end_line(monkeypatch
 
 
 def stored(ctx) -> list:
-    from src.cplugs.huddle import held_rows
+    from src.plugins.huddle import held_rows
 
     return held_rows.load(service.store(ctx))
 
 
 def host_ctx(app):
-    from src.cplugs.host import runtime
+    from src.plugins.host import runtime
 
     return runtime.host_for(app).context("huddle", background=True)
 
 
 def test_a_hold_survives_a_restart_and_goes_out_when_free(client, app, pane):
-    from src.cplugs.huddle import held_resume
+    from src.plugins.huddle import held_resume
 
     client.post("/api/v1/cplugs/huddle/lists/12/items", json={"text": "x"})
     note(app, "ses_old", "12", 100.0)
@@ -235,7 +237,7 @@ def test_a_hold_survives_a_restart_and_goes_out_when_free(client, app, pane):
 
 
 def test_a_hold_past_its_original_deadline_expires_at_boot_and_sends_nothing(client, app, pane):
-    from src.cplugs.huddle import held_resume
+    from src.plugins.huddle import held_resume
 
     client.post("/api/v1/cplugs/huddle/lists/12/items", json={"text": "x"})
     note(app, "ses_old", "12", 100.0)
@@ -243,7 +245,7 @@ def test_a_hold_past_its_original_deadline_expires_at_boot_and_sends_nothing(cli
     ctx = host_ctx(app)
     held.reset()
     pane.dialog = False
-    from src.cplugs.huddle import held_rows
+    from src.plugins.huddle import held_rows
 
     row_ = stored(ctx)[0]
     held_rows.save(service.store(ctx), {**row_, "deadline": time.time() - 1})

@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 
 from src.core.mcp.caller import AgentCaller
-from src.cplugs.huddle import service
+from src.plugins.huddle import service
 from tests.python.cplugs.huddle.test_task_manager_mcp import CALLER, call, huddle_store, manager  # noqa: F401
 
 REFUSAL = ("item {item} is on the Blog list, not your project Carnivore. Write to your own list (list: mine). "

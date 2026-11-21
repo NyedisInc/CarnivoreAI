@@ -26,7 +26,7 @@ export function autoAnswerConfirm(answer: boolean | ((asked: AskedConfirm) => bo
             if (!dialog || seen.has(dialog)) continue;
             seen.add(dialog);
             const record: AskedConfirm = {
-                title: text(dialog, '.text-prompt-modal__verb'),
+                title: dialog.getAttribute('aria-label') ?? '',
                 message: text(dialog, '[data-confirm-ok-message]'),
                 details: text(dialog, '[data-confirm-ok-details]'),
                 okLabel: go.textContent ?? '',

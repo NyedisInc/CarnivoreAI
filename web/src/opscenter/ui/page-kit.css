@@ -19,7 +19,7 @@
     align-items: center;
     gap: var(--oc-space-1);
     box-sizing: border-box;
-    height: var(--oc-rowheight, 26px);
+    height: var(--oc-facet-h, var(--oc-rowheight, 26px));
     padding: 0 var(--oc-space-2);
     border: 1px solid var(--oc-line-rule);
     border-radius: var(--oc-radius-sm);
@@ -101,7 +101,7 @@
 
 
   @media (max-width: 767px) {
-    .oc-facet {
+    .oc-facet:not([data-btn-density='frame'] *) {
       height: 44px;
     }
   }

@@ -49,6 +49,7 @@ HARNESS_HTML = """<!DOCTYPE html>
   </div>
   <div id="archive-screen" class="screen"></div>
 
+  <script src="/static/js/i18n/tr.js"></script>
   <script src="/static/js/navigation-generation.js"></script>
   <script src="/static/js/app-screen-entry.js"></script>
   <script src="/static/js/app.js"></script>

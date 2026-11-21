@@ -4,7 +4,7 @@ import { flushSync, mount, unmount } from 'svelte';
 
 import DrawerMenu from './DrawerMenu.svelte';
 import { setLocale } from '../i18n/index.svelte';
-import { cplugEnablement } from '../../cplugs/host/enablement.svelte';
+import { cplugEnablement } from '../../plugins/host/enablement.svelte';
 
 cplugEnablement.enabled = { huddle: true };
 setLocale('en');

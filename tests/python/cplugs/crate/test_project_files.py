@@ -13,16 +13,16 @@ from typing import Dict, List
 import pytest
 
 from src.core.inventory import registry, state_files
-from src.cplugs.crate import constants as K
-from src.cplugs.crate import project_files as PF
-from src.cplugs.crate import project_git as PG
-from src.cplugs.crate import service
-from src.cplugs.crate.errors import CrateApiError
-from src.cplugs.crate.forbidden import project_root_problem
-from src.cplugs.crate.handle import JobHandle
-from src.cplugs.crate.plan import build_plan
-from src.cplugs.crate.writer import run_export
-from src.cplugs.sdk import crate_format as cf
+from src.plugins.crate import constants as K
+from src.plugins.crate import project_files as PF
+from src.plugins.crate import project_git as PG
+from src.plugins.crate import service
+from src.plugins.crate.errors import CrateApiError
+from src.plugins.crate.forbidden import project_root_problem
+from src.plugins.crate.handle import JobHandle
+from src.plugins.crate.plan import build_plan
+from src.plugins.crate.writer import run_export
+from src.plugins.sdk import crate_format as cf
 from tests.python.cplugs.crate.crate_world import env_for, make_world, project_request, session_request
 
 TOKEN = "ghp_" + "x" * 36

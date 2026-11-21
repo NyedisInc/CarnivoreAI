@@ -33,9 +33,7 @@
         const host = wrap;
         const watched = podium;
         const root = scroller(host);
-        const title = (root ?? document).querySelector<HTMLElement>('.oc-titlebar');
-        const top = (): number => (title ? title.offsetHeight : 0);
-        host.style.top = `${top()}px`;
+        const top = (): number => parseFloat(getComputedStyle(host).top) || 0;
         const observer = new IntersectionObserver(
             (entries) => {
                 for (const entry of entries) {
@@ -46,14 +44,7 @@
             { root, threshold: [0, 1] },
         );
         observer.observe(watched);
-        const resize = (): void => {
-            host.style.top = `${top()}px`;
-        };
-        window.addEventListener('resize', resize);
-        return () => {
-            observer.disconnect();
-            window.removeEventListener('resize', resize);
-        };
+        return () => observer.disconnect();
     });
 
     function name(id: 'any' | PlaceId): string {

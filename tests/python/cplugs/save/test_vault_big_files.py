@@ -9,14 +9,14 @@ from typing import List
 
 import pytest
 
-from src.cplugs.save.scheduler import Follower
+from src.plugins.save.scheduler import Follower
 from src.core.blobcodec import chunking
-from src.cplugs.save.vault import constants as K
-from src.cplugs.save.vault import health, restore, retention
-from src.cplugs.save.vault.chunks import BlobStore
-from src.cplugs.save.vault.follow import Engine, SliceResult
-from src.cplugs.save.vault.store import STATUS_PARTIAL, STATUS_WRITTEN
-from src.cplugs.sdk.blob_codec import Throttle
+from src.plugins.save.vault import constants as K
+from src.plugins.save.vault import health, restore, retention
+from src.plugins.save.vault.chunks import BlobStore
+from src.plugins.save.vault.follow import Engine, SliceResult
+from src.plugins.save.vault.store import STATUS_PARTIAL, STATUS_WRITTEN
+from src.plugins.sdk.blob_codec import Throttle
 from tests.python.cplugs.save.vault_helpers import CONV, World, jsonl
 
 

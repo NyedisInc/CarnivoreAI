@@ -8,10 +8,10 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.reviewboard import mcp, viewer
-from src.cplugs.reviewboard.layers import inject, tool_schema
+from src.plugins.reviewboard import mcp, viewer
+from src.plugins.reviewboard.layers import inject, tool_schema
 from src.core.mcp.caller import AgentCaller
-from src.cplugs.sdk import ToolError
+from src.plugins.sdk import ToolError
 from tests.python.cplugs.reviewboard.boards import PAGE, SIDECAR, make_board, make_root
 from tests.python.cplugs.reviewboard.layer_fixtures import QUESTIONS, layer_sidecar
 
@@ -100,7 +100,7 @@ def test_a_token_may_not_name_a_file_at_the_top_or_inside_views(caller, args) ->
 
 @pytest.mark.parametrize("name", ["task_manager_board_create", "task_manager_board_revision_add", "task_manager_board_live_set"])
 def test_every_page_writing_tool_lists_file_path_as_pane_only(name: str) -> None:
-    from src.cplugs.reviewboard import mcp_live  # noqa: F401
+    from src.plugins.reviewboard import mcp_live  # noqa: F401
     spec = mcp.TOOLS.get(name) or mcp_live.TOOLS[name]
     assert "file_path" in spec.pane_only_args
 

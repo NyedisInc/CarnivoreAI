@@ -2,64 +2,64 @@
  "_doc": "Libraries vendored under client/vendor. Every file there must be listed in some component's files (globs relative to client/vendor); a component other than first-party needs a text_file under notices/texts. The CodeMirror package list is the module list of an esbuild metafile from scripts/codemirror-vendor at its pinned versions (transitive patch versions may differ from the committed bundle).",
  "components": [
   {
-   "name": "xterm",
-   "version": "5.3.0",
+   "name": "@xterm/xterm",
+   "version": "5.5.0",
    "license": "MIT",
    "files": [
     "xterm/xterm.js",
     "xterm/xterm.css"
    ],
-   "text_file": "vendor/xterm-5.3.0.txt",
+   "text_file": "vendor/xterm-5.5.0.txt",
    "used_in": "the terminal view (client/vendor/xterm)"
   },
   {
-   "name": "xterm-addon-fit",
-   "version": "0.8.0",
+   "name": "@xterm/addon-fit",
+   "version": "0.10.0",
    "license": "MIT",
    "files": [
     "xterm/xterm-addon-fit.js"
    ],
-   "text_file": "vendor/xterm-addon-fit-0.8.0.txt",
+   "text_file": "vendor/xterm-addon-fit-0.10.0.txt",
    "used_in": "the terminal view (client/vendor/xterm)"
   },
   {
-   "name": "xterm-addon-webgl",
-   "version": "0.16.0",
+   "name": "@xterm/addon-webgl",
+   "version": "0.18.0",
    "license": "MIT",
    "files": [
     "xterm/xterm-addon-webgl.js"
    ],
-   "text_file": "vendor/xterm-addon-webgl-0.16.0.txt",
+   "text_file": "vendor/xterm-addon-webgl-0.18.0.txt",
    "used_in": "the terminal view (client/vendor/xterm)"
   },
   {
-   "name": "xterm-addon-unicode11",
-   "version": "0.6.0",
+   "name": "@xterm/addon-unicode11",
+   "version": "0.8.0",
    "license": "MIT",
    "files": [
     "xterm/xterm-addon-unicode11.js"
    ],
-   "text_file": "vendor/xterm-addon-unicode11-0.6.0.txt",
+   "text_file": "vendor/xterm-addon-unicode11-0.8.0.txt",
    "used_in": "the terminal view (client/vendor/xterm)"
   },
   {
-   "name": "xterm-addon-search",
-   "version": "0.13.0",
+   "name": "@xterm/addon-search",
+   "version": "0.15.0",
    "license": "MIT",
    "files": [
     "xterm/xterm-addon-search.js"
    ],
-   "text_file": "vendor/xterm-addon-search-0.13.0.txt",
+   "text_file": "vendor/xterm-addon-search-0.15.0.txt",
    "used_in": "the terminal view (client/vendor/xterm)"
   },
   {
-   "name": "xterm-addon-web-links",
-   "version": "0.9.0",
+   "name": "@xterm/addon-web-links",
+   "version": "0.11.0",
    "license": "MIT",
    "files": [
     "xterm/xterm-addon-web-links.js"
    ],
-   "text_file": "vendor/xterm-addon-web-links-0.9.0.txt",
+   "text_file": "vendor/xterm-addon-web-links-0.11.0.txt",
    "used_in": "the terminal view (client/vendor/xterm)"
   },
   {

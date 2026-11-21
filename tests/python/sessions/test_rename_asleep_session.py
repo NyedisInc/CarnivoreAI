@@ -8,14 +8,14 @@ from fastapi.testclient import TestClient
 
 from src.api import recreate_routes, session_records_routes, session_rename_routes, session_sleep_routes
 from src.api.auth import require_auth
+from src.core.session_ops import row_probe
 from tests.test_session_sleep import NAME, ROW_UUID, _insert, _row, state_dir  # noqa: F401
 
 
 def test_an_asleep_session_renames_without_tmux_and_wakes_under_the_new_name(state_dir, monkeypatch):
     _insert(state_dir, lifecycle="stopped", source="slept_by_user")
     tmux_calls = []
-    for attr in ("_measure_presence",):
-        monkeypatch.setattr(recreate_routes, attr, lambda *a, **k: tmux_calls.append(a), raising=True)
+    monkeypatch.setattr(row_probe, "measure_presence", lambda *a, **k: tmux_calls.append(a), raising=True)
 
     woken = []
 

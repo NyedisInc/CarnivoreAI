@@ -9,12 +9,14 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from src.api.mcp_health_listing import mcp_health_for_row
-from src.api.one_shot_routes import paste_through_gates
+from src.api.one_shot_routes import paste_refusal_to_http
 from src.api.peer_auth import require_peer_sessions
 from src.api.remote_route_guard import refuse_remote
 from src.core.agent_families import DEFAULT_FAMILY
 from src.core.mcp_health.reconnect import ReconnectRefused, reconnect_command
-from src.core.session_one_shot_gate import PROMPT_READY_STATUSES
+from src.core.sessions import guarded_paste
+from src.core.sessions.guarded_paste import GateOptions, PasteRefused
+from src.models.activity_status import RESTING
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -62,14 +64,17 @@ async def reconnect_mcp(request: Request, session_id: str, body: McpReconnectReq
         raise HTTPException(status_code=404, detail=f"No session with id {session_id!r}")
     if info.agent_family is not None and info.agent_family != DEFAULT_FAMILY:
         raise _refuse(session_id, REFUSE_NOT_CLAUDE, "MCP reconnect is only offered for a claude session")
-    if info.activity_status not in PROMPT_READY_STATUSES:
+    if info.activity_status not in RESTING:
         raise _refuse(session_id, REFUSE_BUSY, "the session is busy; wait until it is idle at its prompt")
     health = mcp_health_for_row(request.app.state, info, datetime.now(timezone.utc))
     try:
         command = reconnect_command(health, body.server)
     except ReconnectRefused as refusal:
         raise _refuse(session_id, refusal.code, refusal.message) from refusal
-    await paste_through_gates(request, session_id, command, idle_only=True, fresh_dialog_check=True)
+    try:
+        await guarded_paste.paste_through_gates(request.app.state, session_id, command, GateOptions(idle_only=True, fresh_dialog_check=True))
+    except PasteRefused as refusal:
+        raise paste_refusal_to_http(refusal) from refusal
     servers = [d.name for d in health.dropped] if health is not None else []
     logger.info("mcp_reconnect_sent", session_id=session_id, command=command, servers=servers)
     return McpReconnectResponse(sent=True, command=command, servers=servers)

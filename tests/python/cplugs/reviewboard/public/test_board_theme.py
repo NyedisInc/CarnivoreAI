@@ -47,7 +47,7 @@ def test_a_bad_body_or_slug_is_refused(read_env, owner) -> None:
 def test_visitors_get_the_live_board_theme_and_it_wins_over_the_link_s(read_env, store, owner) -> None:
     from asyncio import run
     from types import SimpleNamespace
-    from src.cplugs.reviewboard.public import minting
+    from src.plugins.reviewboard.public import minting
     token = run(minting.mint_link(SimpleNamespace(storage=store), SLUG, "1d", "pinned", theme=LINK_PALETTE))["token"]
     assert visitor_theme(token) == LINK_PALETTE
     owner.put(LOOK, json={"theme": "carnivore-light", "palette": BOARD_PALETTE})
@@ -72,7 +72,7 @@ def test_an_oversized_stored_palette_falls_back_to_the_link_s_and_never_fails_th
     import json
     from asyncio import run
     from types import SimpleNamespace
-    from src.cplugs.reviewboard.public import minting
+    from src.plugins.reviewboard.public import minting
     token = run(minting.mint_link(SimpleNamespace(storage=store), SLUG, "1d", "pinned", theme=LINK_PALETTE))["token"]
     owner.put(LOOK, json={"theme": "x", "palette": BOARD_PALETTE})
     [path] = list(read_env.host.storage("reviewboard").path.glob(f"looks/{SLUG}.json"))
@@ -83,6 +83,6 @@ def test_an_oversized_stored_palette_falls_back_to_the_link_s_and_never_fails_th
 
 
 def test_the_reader_itself_drops_an_unusable_palette_whatever_port_handed_it_over() -> None:
-    from src.cplugs.reviewboard.public.read import _board_palette
+    from src.plugins.reviewboard.public.read import _board_palette
     assert _board_palette({f"--oc-n{i}": "red" for i in range(5000)}) is None
     assert _board_palette({"--oc-a": "red"}) == {"--oc-a": "red"} and _board_palette(None) is None

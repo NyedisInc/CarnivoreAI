@@ -151,7 +151,7 @@ function sharedKeep(): number {
 const OVERRIDES: Array<[string, string, string]> = [
     ['page-tabs', '../../opscenter/ui/tabs.css', '.oc-ptab {'],
     ['command-bar', '../../opscenter/layouts/LayoutCommandBar.svelte', 'The focus edge lifts FROM'],
-    ['review-prompt', '../../cplugs/reviewboard/tray.css', '.rb-prompt {'],
+    ['review-prompt', '../../plugins/reviewboard/tray.css', '.rb-prompt {'],
 ];
 
 function overrideOf(file: string, anchor: string): { base: string; keep: number } {
@@ -224,15 +224,13 @@ const NO_BASE = 'a transparent base leaves only the 25% lift as the lit edge; no
 
 const EXEMPT: Record<string, string> = {
     'lib/base/elements.css|var(--_btn-focus, var(--_btn-edge))': 'the base button\'s own dispatch; every variant it resolves to is in the table above',
-    'lib/manager-frame/manager-card.css|var(--pl-line-panel)': 'a page palette token (--pl-*) set at run time, not in tokens.css or a theme',
-    'lib/manager-frame/manager-card.css|var(--pl-line)': 'a page palette token (--pl-*) set at run time, not in tokens.css or a theme',
     'lib/markdown-editor/MarkdownEditor.svelte|var(--oc-control-line)': 'a token with no definition in tokens.css; finding for the editor\'s lane',
-    'cplugs/save/RestorePoints.svelte|color-mix(in srgb, var(--oc-cyan) 65%, transparent)': NO_BASE,
+    'plugins/save/RestorePoints.svelte|color-mix(in srgb, var(--oc-cyan) 65%, transparent)': NO_BASE,
     'lib/swarm-board/SwarmBoard.svelte|transparent': NO_BASE,
-    'cplugs/huddle/swarm/SwarmOrg.svelte|transparent': NO_BASE,
-    'cplugs/huddle/HuddleViewSwitch.svelte|transparent': NO_BASE,
-    'cplugs/huddle/chat/ChatAskForm.svelte|transparent': NO_BASE,
-    'cplugs/huddle/TaskManagerMarkerFilter.svelte|transparent': NO_BASE,
+    'plugins/huddle/swarm/SwarmOrg.svelte|transparent': NO_BASE,
+    'plugins/huddle/HuddleViewSwitch.svelte|transparent': NO_BASE,
+    'plugins/huddle/chat/ChatAskForm.svelte|transparent': NO_BASE,
+    'plugins/huddle/TaskManagerMarkerFilter.svelte|transparent': NO_BASE,
 };
 
 const KNOWN_BELOW: Record<string, string> = {
@@ -241,7 +239,7 @@ const KNOWN_BELOW: Record<string, string> = {
     'lib/swarm-board/views/SwimlanesView.svelte|var(--oc-line-rule)': 'swarm board, the owner\'s lane: 1.90:1 on dracula',
     'lib/swarm-board/views/swimlanes/SwimLane.svelte|var(--oc-line-rule)': 'swarm board, the owner\'s lane: 1.90:1 on dracula',
     'lib/swarm-board/views/TimelineView.svelte|var(--oc-line-rule)': 'swarm board, the owner\'s lane: 1.90:1 on dracula',
-    'cplugs/huddle/HuddleBody.svelte|var(--oc-line-rule)': 'task manager lead\'s lane: 1.90:1 on dracula',
+    'plugins/huddle/HuddleBody.svelte|var(--oc-line-rule)': 'task manager lead\'s lane: 1.90:1 on dracula',
 };
 
 function declaredBd(): Map<string, number> {
@@ -289,8 +287,8 @@ test('the declaration scan sees the sites the review named (it cannot pass by lo
     const keys = [...declaredBd().keys()];
     for (const needle of [
         'opscenter/cells/files/Cell.svelte|var(--oc-yellow)', 'opscenter/shell/PopoutBarActions.svelte|var(--oc-cyan)',
-        'cplugs/devwidgetlab/lab-frame.css|var(--oc-orange)', 'cplugs/huddle/HuddleReply.svelte|var(--oc-orange)',
-        'cplugs/huddle/TaskManagerRowPosts.svelte|currentColor',
+        'plugins/devwidgetlab/lab-frame.css|var(--oc-orange)', 'plugins/huddle/HuddleReply.svelte|var(--oc-orange)',
+        'plugins/huddle/TaskManagerRowPosts.svelte|currentColor',
     ]) {
         expect(keys).toContain(needle);
     }

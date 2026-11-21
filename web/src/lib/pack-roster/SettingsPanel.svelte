@@ -11,12 +11,14 @@
   import FedConfirmModal from '../hosts-page/FedConfirmModal.svelte';
   import ShowCodeModal from '../hosts-page/ShowCodeModal.svelte';
   import RosterJoin from './RosterJoin.svelte';
+  import PackReconnect from './PackReconnect.svelte';
+  import type { RosterComputer } from './roster-model';
   import { createFederationApi, errorCode, readPackName, writePackName } from '../hosts-page/federation-api';
   import { ageWords, stateWords } from '../computers/computers-format';
   import { activity, computers, leave } from '../computers/computers-store.svelte';
     import { reasonOf } from './roster-store.svelte';
 
-  const { onClose, nowMs }: { onClose: () => void; nowMs: number } = $props();
+  const { onClose, nowMs, list }: { onClose: () => void; nowMs: number; list: readonly RosterComputer[] } = $props();
   const fed = createFederationApi();
   const view = $derived(computers.data);
   const role = $derived(view?.self.role ?? 'standalone');
@@ -93,6 +95,7 @@
       {:else if linkState === 'local_network_blocked'}<p class="pp-warn">{t('computers.link.local_network_blocked')}</p>{/if}
       <p class="pp-hint">{t('computers.footer.awake')}</p>
     </section>
+    <PackReconnect {list} {nowMs} />
     {#if role === 'member'}
       <section class="m1-sec" data-sec="membership"><h3 class="pp-k">{t('roster.sets.membership')}</h3>
         <div class="pp-member" data-cmp="member-line">

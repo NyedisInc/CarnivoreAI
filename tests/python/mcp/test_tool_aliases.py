@@ -5,13 +5,13 @@ import asyncio
 
 import pytest
 
-from src.cplugs.host import runtime
+from src.plugins.host import runtime
 
 from src.core.mcp import aliases, merged_tools, protocol, tools
 from src.core.mcp.caller import AgentCaller
-from src.cplugs.host import mcp as cplug_mcp, runtime
-from src.cplugs.huddle import CPLUG, mcp as task_manager_mcp
-from src.cplugs.sdk.manifest import ManifestError, parse_manifest
+from src.plugins.host import mcp as cplug_mcp, runtime
+from src.plugins.huddle import CPLUG, mcp as task_manager_mcp
+from src.plugins.sdk.manifest import ManifestError, parse_manifest
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, manager  # noqa: F401
 
 REMOVED = {

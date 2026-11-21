@@ -47,9 +47,8 @@ async def project_delete(manager: Any, caller: AgentCaller, args: dict) -> dict:
     request = ra.route_request(manager)
 
     async def run(_approved: bool) -> dict:
-        current = await _current_name(project_id, include_archived=True)
-        answer = await _via_route(projects_routes.delete_project(current, request))
-        return _ok({"deleted": True, "project": {"id": project_id, "name": current}, "detail": jsonable_encoder(answer)})
+        answer = await _via_route(projects_routes.delete_project_for(project_id, request))
+        return _ok({"deleted": True, "project": {"id": project_id, "name": name}, "detail": jsonable_encoder(answer)})
 
     summary = (f"DELETE project {json.dumps(name)} for good: its agents are turned off and its row is deleted "
                "(the folder on disk is kept)")

@@ -12,7 +12,7 @@ from src.core.argent import notices, work_items
 from src.core.argent.classifier import normalize
 from src.core.argent.client import ArgentClient, ArgentError, NotFound, Unauthorized, Unreachable
 from src.core.argent.store import open_db
-from src.cplugs.sdk.cards import CardRefused
+from src.plugins.sdk.cards import CardRefused
 
 logger = structlog.get_logger()
 

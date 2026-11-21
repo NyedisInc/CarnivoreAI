@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 
-from src.cplugs.huddle import lifecycle, schedule, triggers
+from src.plugins.huddle import lifecycle, schedule, triggers
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_schedule import ITEMS, env, iso  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_nudge_position import make_row
@@ -131,14 +131,14 @@ def test_2568_a_refused_fire_writes_only_the_refusal_line(client, env):  # noqa:
 
 
 def test_2568_the_line_says_when_the_target_was_the_lead():
-    from src.cplugs.huddle import fire_line
+    from src.plugins.huddle import fire_line
     assert fire_line.line("Agent - Trader", True) == "scheduled wake-up sent to Agent - Trader (the list's lead)"
     assert fire_line.line("Agent - Trader", False) == "scheduled wake-up sent to Agent - Trader"
 
 
 
 def fire_tagged(client, env, tag: str, *, lead: str = "") -> tuple:
-    from src.cplugs.huddle.roles import tags
+    from src.plugins.huddle.roles import tags
     from tests.python.cplugs.huddle.roles_rig import BASE
     note(client.app, "ses_old", "12", 100.0)
     note(client.app, "ses_new", "12", 200.0)
@@ -177,6 +177,6 @@ def test_2568_step2_an_untagged_item_goes_to_the_lead_as_before(client, env):  #
 
 
 def test_2568_step2_the_line_gives_the_reason_for_a_fall_back():
-    from src.cplugs.huddle import fire_line
+    from src.plugins.huddle import fire_line
     assert fire_line.line("A", True, True) == "scheduled wake-up sent to A (the list's lead; the task's own session is gone)"
     assert fire_line.line("A", False, True) == "scheduled wake-up sent to A (the task's own session is gone)"

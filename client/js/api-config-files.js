@@ -8,7 +8,7 @@ if (typeof API !== 'function') {
     );
 }
 
-Object.assign(API.prototype, {
+extendPrototype(API, {
     async getConfigFileTree(root, projectPath = null, opts = {}) {
         const params = new URLSearchParams({ root });
         if (projectPath) params.set('project_path', projectPath);
@@ -45,4 +45,4 @@ Object.assign(API.prototype, {
             body,
         });
     },
-});
+}, 'api-config-files.js');

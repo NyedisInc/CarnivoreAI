@@ -119,9 +119,11 @@ TABLE: Tuple[Rule, ...] = (
     _f("GET", "/sessions/{session_id}/timers", _SID),
     _f("GET", "/sessions/{session_id}/subagents", _SID),
     _f("GET", "/sessions/{session_id}/token-usage", _SID),
+    _f("GET", "/sessions/{session_id}/token-usage/requests", _SID),
     _f("GET", "/sessions/{session_id}/background-work", _SID),
     _f("POST", "/sessions/{session_id}/background-work/{pid}/terminate", _SID),
     _f("POST", "/sessions/{session_id}/background-work/terminate-all", _SID),
+    _f("POST", "/sessions/{session_id}/background-work/stop-leftovers", _SID),
     _f("GET", "/sessions/{session_id}/toasts", _SID),
     _f("POST", "/sessions/{session_id}/toasts", _SID),
     _f("POST", "/toasts/{toast_id}/ack", ("query", "session_id", NAME)),
@@ -137,7 +139,11 @@ TABLE: Tuple[Rule, ...] = (
         ("GET", "/sessions/{session_uuid}/bookmarks"), ("POST", "/sessions/{session_uuid}/bookmarks"),
         ("GET", "/sessions/{session_uuid}/compactions/{entry_uuid}/preview"),
         ("GET", "/sessions/{session_uuid}/turns"), ("POST", "/sessions/{session_uuid}/branch"),
-        ("POST", "/sessions/{session_uuid}/rewind"))),
+        ("POST", "/sessions/{session_uuid}/rewind"),
+        ("GET", "/sessions/{session_uuid}/checkpoints"), ("GET", "/sessions/{session_uuid}/checkpoints/{checkpoint_id}/changes"),
+        ("GET", "/sessions/{session_uuid}/checkpoints/{checkpoint_id}/diff"),
+        ("GET", "/sessions/{session_uuid}/checkpoints/{checkpoint_id}/revert/preview"),
+        ("POST", "/sessions/{session_uuid}/checkpoints/{checkpoint_id}/revert"))),
     _f("POST", "/sessions/{session_id}/mcp/reconnect", _SID),
     _r("POST", "/sessions/records/{session_uuid}/purge", "a hard delete of the owning computer's own files, owner login only, never a peer action"),
     _r("POST", "/sessions/{session_id}/messaging/send", "a bound agent texts the owner of the computer it runs on; it is never a peer action"),
@@ -145,6 +151,12 @@ TABLE: Tuple[Rule, ...] = (
     _r("POST", "/sessions/{session_uuid}/conversations/{conversation_id}/resume", _CONVERSATIONS),
     _r("GET", "/sessions/{session_uuid}/timeline", "the timeline joins the owning computer's conversations, marks and stats, kept in its own datastore"),
     _r("GET", "/sessions/{session_uuid}/timeline/peek", "the peek reads the owning computer's own transcript"),
+    _r("GET", "/sessions/{session}/timeline/state", "the timeline reads the owning computer's own cold index and transcript files"),
+    _r("GET", "/sessions/{session}/timeline/events", "the timeline reads the owning computer's own cold index and transcript files"),
+    _r("GET", "/sessions/{session}/timeline/events/{event_id}", "the timeline reads the owning computer's own cold index and transcript files"),
+    _r("GET", "/sessions/{session}/timeline/turns", "the timeline reads the owning computer's own cold index and transcript files"),
+    _r("GET", "/sessions/{session}/timeline/threads", "the timeline reads the owning computer's own cold index and transcript files"),
+    _l("POST", "/sessions/auto"),
     _r("POST", "/sessions/{session_uuid}/move-folder", "moves the owning computer's working folder on its own disk; the owner stays the only owner, so move it on that computer"),
     _r("GET", "/cplugs/save/sessions/{session_uuid}/points", _OWNER_DISK),
     _r("POST", "/cplugs/save/sessions/{session_uuid}/points/{point_id}/pin", _OWNER_DISK),
@@ -159,7 +171,7 @@ TABLE: Tuple[Rule, ...] = (
         ("GET", "/sessions/restore-offer"), ("POST", "/sessions/restore-offer/accept"),
         ("POST", "/sessions/restore-offer/decline"), ("GET", "/session-backgrounds"),
         ("GET", "/session-groups"), ("POST", "/session-groups"), ("DELETE", "/session-groups/{group_uuid}"),
-        ("PATCH", "/session-groups/{group_uuid}"), ("PUT", "/session-groups/{group_uuid}/icon"),
+        ("PATCH", "/session-groups/{group_uuid}"), ("PUT", "/session-groups/{group_uuid}/icon"), ("PUT", "/session-groups/{group_uuid}/rule"),
         ("POST", "/session-groups/{group_uuid}/order"), ("PUT", "/session-groups/{group_uuid}/style"),
         ("POST", "/session-groups/assign"), ("POST", "/session-groups/order"),
         ("POST", "/layouts/{layout_uuid}/members"), ("DELETE", "/layouts/{layout_uuid}/members/{session_uuid}"),
@@ -169,6 +181,10 @@ TABLE: Tuple[Rule, ...] = (
         ("GET", "/sessions/{session_id}/git-status"), ("GET", "/sessions/{session_id}/git-diff"),
         ("GET", "/sessions/{session_id}/tasks"),
         ("GET", "/sessions/{session_id}/upload-image"),
+        ("POST", "/sessions/{session_id}/paths/resolve"), ("POST", "/sessions/{session_id}/paths/open"),
+        ("GET", "/argent/sessions/{session_id}/context"), ("PUT", "/argent/sessions/{session_id}/context"),
+        ("POST", "/argent/sessions/{session_id}/classify"),
+        ("POST", "/sessions/mass-death/resume"),
         ("DELETE", "/swarm/members/{session_uuid}"),
         ("GET", "/sessions/latest-lines"), ("GET", "/sessions/usage"), ("GET", "/sessions/{session_uuid}/contents"),
         ("PATCH", "/sessions/records/{session_uuid}/description"), ("GET", "/sessions/roster"),
@@ -188,6 +204,8 @@ _UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
 
 
 def is_session_path(path: str) -> bool:
+    if path.startswith(("/federation/", "/api/v1/federation/")):
+        return False
     return bool(_SESSION_PATH.search(path)) or bool(re.search(r"\{[a-z_]*session[a-z_]*\}", path))
 
 

@@ -4,12 +4,11 @@ import { reports } from '../feed-store.svelte';
 import { resetFilters as resetListFilters, visibleRows } from '../list-state.svelte';
 import { isLive } from '../logic/words';
 import type { FeedRun } from '../logic/types';
+import { viewport } from '../../../opscenter/engine/viewport.svelte';
 import { data, openPane, select, setFilters, setTab } from '../page-store.svelte';
 
 export const FIRST_LIMIT = 120;
 export const MORE_LIMIT = 50;
-const PHONE_PX = 700;
-
 export const fv = $state({
   q: '',
   changedOnly: false,
@@ -23,7 +22,7 @@ export const fv = $state({
 export const outside = $state({ run: null as FeedRun | null });
 
 export function isPhone(): boolean {
-  return typeof window !== 'undefined' && window.innerWidth <= PHONE_PX;
+  return viewport.narrow;
 }
 
 export function anyFilter(): boolean {

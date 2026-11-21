@@ -53,7 +53,8 @@ def build_world(tmp_path: Path, monkeypatch: Any) -> SimpleNamespace:
     state = base / "state"
     state.mkdir()
     monkeypatch.setattr(type(settings), "get_state_dir", lambda self: state, raising=True)
-    monkeypatch.setattr(settings, "auth_config_file", str(base / "config.json"), raising=False)
+    (state / "config.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(settings, "auth_config_file", str(state / "config.json"), raising=False)
     monkeypatch.setattr(settings, "_auth_config_cache", None, raising=False)
     assert ensure_db_migrated(state, 4, "0.0.0").status == "ok"
     home = base / "home"

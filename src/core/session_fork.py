@@ -9,7 +9,7 @@ import structlog
 
 from src.core.db_models import SESSION_FORK_KIND_FORK
 from src.core.session_label import label_from_tmux_name
-from src.core.session_store import sessions_table_ready
+from src.core.session_store import sessions_table_ready, uuid_for_row
 from src.core.trail_entry import utc_now
 from src.core.hosts.ddl import LOCAL_HOST_KEY, host_scope
 
@@ -132,10 +132,10 @@ def _record_spawn_edge(conn: sqlite3.Connection, parent_id: int, child_session_u
 
     if not graph.ready(conn):
         return
-    parent = conn.execute("SELECT session_uuid FROM sessions WHERE id = ?", (parent_id,)).fetchone()
-    if parent is None or not parent[0]:
+    parent_uuid = uuid_for_row(conn, parent_id)
+    if not parent_uuid:
         return
-    graph.add_edge(conn, LK.NODE_SESSION, parent[0], LK.NODE_SESSION, child_session_uuid, LK.KIND_SPAWNED_BY,
+    graph.add_edge(conn, LK.NODE_SESSION, parent_uuid, LK.NODE_SESSION, child_session_uuid, LK.KIND_SPAWNED_BY,
                    created_at=stamp)
 
 

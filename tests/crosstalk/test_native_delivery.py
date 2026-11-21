@@ -287,7 +287,7 @@ def test_zero_turn_native_retry_covers_local_and_peer_messages():
 
 
 def test_paste_path_delivers_to_finished_unread_receiver(monkeypatch):
-    from src.api import one_shot_routes
+    from src.core.sessions import guarded_paste
     from src.core.crosstalk import directory
     from src.core.mcp import protocol
     from src.core.mcp.federated import LOCAL_HOST_KEY
@@ -314,7 +314,7 @@ def test_paste_path_delivers_to_finished_unread_receiver(monkeypatch):
     async def cards(*_a, **_k):
         return [{'id': 'ses_x', 'session_uuid': 'u'}]
 
-    async def paste(request, session_id, text, **kwargs):
+    async def paste(app_state, session_id, text, options=None):
         pasted.append(session_id)
 
     async def no_swarm(*_a):
@@ -324,7 +324,7 @@ def test_paste_path_delivers_to_finished_unread_receiver(monkeypatch):
     monkeypatch.setattr(directory, 'list_cards', cards)
     monkeypatch.setattr(store, 'claim_for', lambda key: message)
     monkeypatch.setattr(store, 'finish', lambda mid, status, reason=None: finished.append((status, reason)))
-    monkeypatch.setattr(one_shot_routes, 'paste_through_gates', paste)
+    monkeypatch.setattr(guarded_paste, 'paste_through_gates', paste)
     from src.core.crosstalk.delivery import dispatcher as module
     monkeypatch.setattr(module, '_record_swarm', no_swarm)
     app = SimpleNamespace(state=SimpleNamespace(session_manager=Manager()))
@@ -333,7 +333,7 @@ def test_paste_path_delivers_to_finished_unread_receiver(monkeypatch):
 
 
 def test_an_unexpected_error_after_the_claim_does_not_strand_the_row(monkeypatch):
-    from src.api import one_shot_routes
+    from src.core.sessions import guarded_paste
     from src.core.crosstalk import directory
     from src.core.mcp import protocol
     from src.core.mcp.federated import LOCAL_HOST_KEY
@@ -360,7 +360,7 @@ def test_an_unexpected_error_after_the_claim_does_not_strand_the_row(monkeypatch
     async def cards(*_a, **_k):
         return [{'id': 'ses_x', 'session_uuid': 'u'}]
 
-    async def paste(request, session_id, text, **kwargs):
+    async def paste(app_state, session_id, text, options=None):
         raise sqlite3.OperationalError('database is locked')
 
     async def no_swarm(*_a):
@@ -371,7 +371,7 @@ def test_an_unexpected_error_after_the_claim_does_not_strand_the_row(monkeypatch
     monkeypatch.setattr(store, 'claim_for', lambda key: message)
     monkeypatch.setattr(store, 'get', lambda mid: {'status': 'delivering'})
     monkeypatch.setattr(store, 'finish', lambda mid, status, reason=None: finished.append((status, reason)))
-    monkeypatch.setattr(one_shot_routes, 'paste_through_gates', paste)
+    monkeypatch.setattr(guarded_paste, 'paste_through_gates', paste)
     from src.core.crosstalk.delivery import dispatcher as module
     monkeypatch.setattr(module, '_record_swarm', no_swarm)
     app = SimpleNamespace(state=SimpleNamespace(session_manager=Manager()))

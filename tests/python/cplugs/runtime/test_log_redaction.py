@@ -8,9 +8,9 @@ from typing import Any, Dict, List
 
 from structlog.testing import capture_logs
 
-from src.cplugs.runtime import log_redaction
-from src.cplugs.runtime.dispatch import HostDispatcher, HostServices, PluginContext
-from src.cplugs.runtime.owner_tokens import OwnerTokens
+from src.plugins.runtime import log_redaction
+from src.plugins.runtime.dispatch import HostDispatcher, HostServices, PluginContext
+from src.plugins.runtime.owner_tokens import OwnerTokens
 
 FAKE_TOKEN = "ghp" + "_" + "".join(string.ascii_letters[(i * 7) % 52] for i in range(36))
 
@@ -59,7 +59,7 @@ def test_stderr_past_the_cap_is_dropped() -> None:
 def test_process_drains_stderr_through_the_redacting_log() -> None:
     from types import SimpleNamespace  # noqa: PLC0415
 
-    from src.cplugs.runtime.process import PluginProcess  # noqa: PLC0415
+    from src.plugins.runtime.process import PluginProcess  # noqa: PLC0415
 
     async def run() -> PluginProcess:
         spec = SimpleNamespace(ctx=SimpleNamespace(plugin_id="clock"))

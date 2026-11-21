@@ -75,17 +75,24 @@ describe('Checkbox', () => {
 
 describe('pick.css', () => {
     const rules = sheet('pick.css');
-    test('the checked box fills with the confirm token and a mixed one draws a dash, radios do not take the mixed look', () => {
-        const checked = rules.find((r) => r.selector === ".oc-pick__input[type='checkbox']:checked")!;
-        expect(checked.decls['background-image']).toContain('var(--oc-green)');
-        const mixed = rules.find((r) => r.selector === ".oc-pick__input[type='checkbox']:indeterminate")!;
-        expect(mixed.decls['background-size']).toBe('50% var(--oc-space-0-5)');
-        expect(rules.some((r) => /(^|[^\]])\:indeterminate/.test(r.selector.replace(/\[type='checkbox'\]:indeterminate/g, '')))).toBe(false);
+    const mark = sheet('mark.css');
+    test('the checked box fills with the mark ink, the confirm token, and a mixed one draws a triangle; radios do not take the mixed look', () => {
+        const box = mark.find((r) => r.selector.includes('.oc-pick__input') && r.decls['--_mark-ink'] !== undefined)!;
+        expect(box.decls['--_mark-ink']).toBe('var(--oc-green)');
+        const checked = mark.find((r) => r.selector.includes(".oc-pick__input[type='checkbox']:checked"))!;
+        expect(checked.decls['background-image']).toContain('var(--_mark-ink)');
+        const mixed = mark.find((r) => r.selector.includes(".oc-pick__input[type='checkbox']:indeterminate"))!;
+        expect(mixed.selector).toContain("[aria-checked='mixed'] .oc-check__box");
+        expect(mixed.decls['background-image']).toBe('linear-gradient(to bottom right, transparent 50%, var(--oc-cyan) 50%)');
+        expect(mixed.decls['background-size']).toBe('calc(var(--oc-mark) / 2) calc(var(--oc-mark) / 2)');
+        const bare = (r: { selector: string }) => /(^|[^\]])\:indeterminate/.test(r.selector.replace(/\[type='checkbox'\]:indeterminate/g, ''));
+        expect([...rules, ...mark].some(bare)).toBe(false);
     });
 
     test('the box keeps its 1px border for the shared focus rule and carries no literal', () => {
+        const box = mark.find((r) => r.selector.includes('.oc-pick__input') && r.decls.border !== undefined)!;
+        expect(box.decls.border).toBe('var(--oc-border) solid var(--oc-line-control)');
         const input = rules.find((r) => r.selector === '.oc-pick__input')!;
-        expect(input.decls.border).toBe('var(--oc-border) solid var(--oc-line-control)');
         expect(input.decls['--_bd']).toBe('var(--oc-line-control)');
         const text = rules.map((r) => Object.values(r.decls).join(' ')).join(' ');
         expect(text).not.toMatch(/#[0-9a-f]{3,8}\b|rgb\(|\d+px/i);

@@ -5,8 +5,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.huddle import answers, kinds, rich_ask, service
-from src.cplugs.huddle.rules import TaskManagerForbidden, TaskManagerInvalid
+from src.plugins.huddle import answers, kinds, rich_ask, service
+from src.plugins.huddle.rules import TaskManagerForbidden, TaskManagerInvalid
 from tests.python.cplugs.huddle.test_task_manager_mcp import call, huddle_store, manager  # noqa: F401
 
 FORM = [{"id": "go", "type": "yes_no", "prompt": "Ship it?"}, {"id": "why", "type": "short_text", "prompt": "Why?", "required": False}]
@@ -15,7 +15,7 @@ FORM = [{"id": "go", "type": "yes_no", "prompt": "Ship it?"}, {"id": "why", "typ
 @pytest.fixture
 def client(manager):
     manager.app.dependency_overrides[require_auth] = lambda: {"sub": "test"}
-    from src.cplugs.huddle import routes
+    from src.plugins.huddle import routes
     manager.app.include_router(routes.router, prefix="/api/v1")
     with TestClient(manager.app) as test_client:
         yield test_client
@@ -126,7 +126,7 @@ def _stored(store) -> None:
 def test_an_answer_with_files_keeps_the_quote_and_the_files_in_parts_and_on_the_wire(manager):
     import json
 
-    from src.cplugs.huddle import files
+    from src.plugins.huddle import files
     store, item = _item(manager)
     asked = store.post(item, "show me the screen", actor="joe")["message"]["id"]
     _stored(store)
@@ -144,7 +144,7 @@ def test_an_answer_with_files_keeps_the_quote_and_the_files_in_parts_and_on_the_
 def test_an_answer_with_a_quote_and_files_and_an_offer_keeps_all_three(manager):
     from datetime import datetime, timedelta, timezone
 
-    from src.cplugs.huddle import files
+    from src.plugins.huddle import files
     store, item = _item(manager)
     when = (datetime.now(timezone.utc) + timedelta(days=3)).replace(microsecond=0).isoformat()
     _stored(store)
@@ -158,7 +158,7 @@ def test_an_answer_with_a_quote_and_files_and_an_offer_keeps_all_three(manager):
 def test_an_offer_on_a_reply_with_files_keeps_the_files(manager):
     from datetime import datetime, timedelta, timezone
 
-    from src.cplugs.huddle import files
+    from src.plugins.huddle import files
     store, item = _item(manager)
     when = (datetime.now(timezone.utc) + timedelta(days=3)).replace(microsecond=0).isoformat()
     _stored(store)

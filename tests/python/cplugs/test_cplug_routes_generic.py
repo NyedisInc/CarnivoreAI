@@ -7,7 +7,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.cplugs.host import routes as host_routes, runtime
+from src.plugins.host import routes as host_routes, runtime
 from src.api.auth import require_auth
 
 
@@ -37,7 +37,7 @@ def test_every_cplug_route_needs_a_token_and_answers_409_while_off(app: FastAPI,
             assert anonymous.get(path).status_code == expected, path
     paths = [p for p in paths if p.startswith("/api/v1/cplugs/huddle/")]
     app.dependency_overrides[require_auth] = lambda: {"sub": "test"}
-    from src.cplugs.huddle import service
+    from src.plugins.huddle import service
 
     monkeypatch.setattr(service, "project_names", lambda ctx: {})
     with TestClient(app) as client:
@@ -68,11 +68,11 @@ def test_the_host_routes_refuse_what_the_contract_refuses(app: FastAPI):
     with TestClient(app) as client:
         listed = client.get("/api/v1/cplugs").json()["cplugs"]
         root = Path(__file__).resolve().parents[3]
-        present = lambda ids: [i for i in ids if (root / "src/cplugs" / i).is_dir()]  # noqa: E731
-        assert [a["id"] for a in listed] == present(["huddle", "unread", "share", "save", "flow", "reviewboard", "crate", "argent", "timemachine"])
+        present = lambda ids: [i for i in ids if (root / "src/plugins" / i).is_dir()]  # noqa: E731
+        assert [a["id"] for a in listed] == present(["huddle", "unread", "share", "save", "flow", "reviewboard", "crate", "argent", "sessionchat", "timemachine"])
         assert {a["id"]: a["enabled"] for a in listed} == {i: v for i, v in {
-            "huddle": True, "unread": True, "share": True, "save": False, "flow": False, "reviewboard": False, "crate": False, "argent": False, "timemachine": False}.items() if i in present(list(
-            ["huddle", "unread", "share", "save", "flow", "reviewboard", "crate", "argent", "timemachine"]))}
+            "huddle": True, "unread": True, "share": True, "save": False, "flow": False, "reviewboard": False, "crate": False, "argent": False, "sessionchat": False, "timemachine": False}.items() if i in present(list(
+            ["huddle", "unread", "share", "save", "flow", "reviewboard", "crate", "argent", "sessionchat", "timemachine"]))}
         assert client.get("/api/v1/cplugs/nope").json()["detail"]["code"] == "cplug_unknown"
         stale = client.put("/api/v1/cplugs/huddle", json={"revision": 7, "enabled": False})
         assert stale.status_code == 409 and stale.json()["detail"]["code"] == "stale_revision"

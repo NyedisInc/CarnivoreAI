@@ -8,7 +8,7 @@ if (typeof API !== 'function') {
     );
 }
 
-Object.assign(API.prototype, {
+extendPrototype(API, {
     async getProviderLedger() {
         return await this.call('/provider-ledger');
     },
@@ -38,4 +38,4 @@ Object.assign(API.prototype, {
             expectedStatuses: [404]
         });
     },
-});
+}, 'api-provider-ledger.js');

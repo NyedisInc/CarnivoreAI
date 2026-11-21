@@ -44,3 +44,20 @@ test('a leaf actions cell is outside the treeitem', () => {
     expect(host.querySelector('[data-act="a"]')).not.toBeNull();
     expect(host.querySelector('[role="treeitem"] [data-act]')).toBeNull();
 });
+
+test('picking: a click on a branch folds it AND selects it, a leaf click selects, and the picked row says so', () => {
+    const target = document.createElement('div');
+    document.body.append(target);
+    const picked: string[] = [];
+    const leaf = createRawSnippet((node: () => TreeNode) => ({ render: () => `<span>${node().label}</span>` }));
+    handle = mount(Tree, { target, props: { nodes: NODES, leaf, label: 'tree', selected: 'a', showCount: false, onSelect: (n: TreeNode) => picked.push(n.id) } });
+    flushSync();
+    expect(item(target, 'a').getAttribute('aria-selected')).toBe('true');
+    expect(item(target, 'b').getAttribute('aria-selected')).toBe('false');
+    expect(target.querySelector('.oc-tree__count')).toBeNull();
+    item(target, 'b').click();
+    item(target, 'g').click();
+    flushSync();
+    expect(picked).toEqual(['b', 'g']);
+    expect(item(target, 'g').getAttribute('aria-expanded')).toBe('false');
+});

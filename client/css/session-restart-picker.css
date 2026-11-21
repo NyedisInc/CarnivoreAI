@@ -48,7 +48,7 @@
     width: 6px;
     height: 6px;
     margin-right: 5px;
-    border-radius: 50%;
+    border-radius: var(--oc-radius-circle);
     background: currentColor;
     vertical-align: 1px;
 }
@@ -172,15 +172,6 @@
     padding: 12px 14px 14px;
 }
 
-.restart-picker .modal-btn {
-    padding: 7px 16px;
-    font-size: 13px;
-}
-
-.restart-picker .modal-btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
 
 .restart-picker__arm {
     position: relative;
@@ -216,9 +207,6 @@
         margin-right: 0;
     }
 
-    .restart-picker .modal-btn {
-        min-height: 44px;
-    }
 }
 
 .restart-picker__choice {

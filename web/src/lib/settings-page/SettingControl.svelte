@@ -4,6 +4,7 @@
     import ToastModePanel from '../toast-mode/ToastModePanel.svelte';
     import ScreenReaderPanel from '../screen-reader/ScreenReaderPanel.svelte';
     import TerminalFontPanel from '../terminal-font/TerminalFontPanel.svelte';
+    import CellDimPanel from '../cell-dim/CellDimPanel.svelte';
     import TimeZonePanel from '../time-zone/TimeZonePanel.svelte';
     import SettingRow from './SettingRow.svelte';
     import TextControl from './controls/TextControl.svelte';
@@ -37,11 +38,7 @@
     import ConnectionsPanel from '../byoai/ConnectionsPanel.svelte';
     import DestinationsPanel from '../notifications/destinations/DestinationsPanel.svelte';
     import MessagingScreen from '../messaging/MessagingScreen.svelte';
-    import LinkPanel from '../notifications/matrix/LinkPanel.svelte';
     import Inspector from '../notifications/inspector/Inspector.svelte';
-    import MatrixPanel from '../notifications/matrix/MatrixPanel.svelte';
-    import MutesPanel from '../notifications/mute/MutesPanel.svelte';
-    import SyncPanel from '../notifications/sync/SyncPanel.svelte';
     import RoutingPanel from '../byoai/RoutingPanel.svelte';
     import CallsPanel from '../byoai/CallsPanel.svelte';
     import PipelineStatusPanel from '../pipeline-status/PipelineStatusPanel.svelte';
@@ -87,6 +84,8 @@
         <div class="st-legacy"><ToastModePanel /></div>
     {:else if def.control.kind === 'terminal-font'}
         <TerminalFontPanel />
+    {:else if def.control.kind === 'cell-dim'}
+        <CellDimPanel />
     {:else if def.control.kind === 'screen-reader'}
         <div class="st-legacy"><ScreenReaderPanel /></div>
     {:else if def.control.kind === 'time-zone'}
@@ -137,16 +136,8 @@
         <DestinationsPanel {t} />
     {:else if def.control.kind === 'messaging'}
         <MessagingScreen {t} />
-    {:else if def.control.kind === 'notify-link'}
-        <LinkPanel {t} />
     {:else if def.control.kind === 'notify-inspector'}
         <Inspector {t} />
-    {:else if def.control.kind === 'notify-matrix'}
-        <MatrixPanel {t} />
-    {:else if def.control.kind === 'notify-mutes'}
-        <MutesPanel {t} />
-    {:else if def.control.kind === 'notify-sync'}
-        <SyncPanel {t} />
     {:else if def.control.kind === 'ai-connections'}
         <ConnectionsPanel {t} />
     {:else if def.control.kind === 'ai-routing'}

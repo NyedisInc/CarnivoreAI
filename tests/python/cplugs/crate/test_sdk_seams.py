@@ -11,9 +11,9 @@ import pytest
 from src.core.crate_format.canonical import RawText
 from src.core.db import connect, db_path_for
 from src.core.project_move.plan import PaneListing
-from src.cplugs.sdk import crate_sources as cs
-from src.cplugs.sdk import exports as sdk_exports
-from src.cplugs.sdk.crate_rows import RowQuery, snapshot_rows
+from src.plugins.sdk import crate_sources as cs
+from src.plugins.sdk import exports as sdk_exports
+from src.plugins.sdk.crate_rows import RowQuery, snapshot_rows
 from tests.python.inventory.world_build import build_world
 from tests.python.session_purge.purge_world import add_session
 from tests.python.inventory.world import CONV_A, TMUX_A, UUID_A, UUID_B

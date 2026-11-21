@@ -15,7 +15,7 @@ from src.core.browser_pages import open_pages, page_tab
 from src.core.browsers import store as browser_store
 from src.core.db import DatastoreUnreadableError, connect, db_path_for
 from src.core.open_files import open_list
-from src.cplugs.sdk import board_pages
+from src.plugins.sdk import board_pages
 
 logger = structlog.get_logger()
 

@@ -7,7 +7,7 @@ from contextlib import closing
 from pathlib import Path
 from typing import Dict
 
-from src.cplugs.reviewboard.public import links, responses
+from src.plugins.reviewboard.public import links, responses
 
 LINK_TABLES = ("links", "link_revisions")
 RESPONSE_TABLES = ("responses", "visitors", "drafts", "board_numbers")

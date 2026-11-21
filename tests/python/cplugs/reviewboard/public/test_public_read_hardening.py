@@ -13,13 +13,13 @@ import asyncio
 
 import structlog
 
-from src.cplugs.reviewboard.public import capability, deps, health, links, minting, ratelimit, resolve, routes_owner
-from src.cplugs.reviewboard.public.read import READER
-from src.cplugs.reviewboard.public.resolve import Resolver
-from src.cplugs.reviewboard import public_port, viewer
-from src.cplugs.reviewboard.layers import inject as layer_inject
-from src.cplugs.reviewboard.public.port import PublicBoardUnavailable
-from src.cplugs.sdk.file_secrets import ScanTimeout
+from src.plugins.reviewboard.public import capability, deps, health, links, minting, ratelimit, resolve, routes_owner
+from src.plugins.reviewboard.public.read import READER
+from src.plugins.reviewboard.public.resolve import Resolver
+from src.plugins.reviewboard import public_port, viewer
+from src.plugins.reviewboard.layers import inject as layer_inject
+from src.plugins.reviewboard.public.port import PublicBoardUnavailable
+from src.plugins.sdk.file_secrets import ScanTimeout
 from tests.python.cplugs.reviewboard.public.read_harness import add_revision, edge, get, mint_token, rewrite
 from tests.python.cplugs.reviewboard.public.test_public_read import FAKE_KEY
 from tests.python.cplugs.reviewboard.boards import PAGE
@@ -71,7 +71,7 @@ def test_a_broken_layer_runtime_raises_the_board_unavailable_not_a_bare_oserror(
 
 
 def test_a_missing_shell_file_is_the_fixed_503(read_env, monkeypatch) -> None:
-    from src.cplugs.reviewboard.public import assets
+    from src.plugins.reviewboard.public import assets
 
     monkeypatch.setattr(assets, "PUBLIC_DIR", Path("/nonexistent"))
     assert_fixed(get(edge(), "/"), 503, "unavailable")
@@ -105,7 +105,7 @@ def test_a_ticket_for_an_older_revision_serves_that_revision_and_never_a_newer_o
     assert moved["revision"] == "r2" and get(edge(), moved["views"][0]["frame"]).status == 200
     stale = get(edge(), old)
     assert stale.status == 200 and b"<p>second</p>" not in stale.body
-    from src.cplugs.reviewboard.public.read import READER
+    from src.plugins.reviewboard.public.read import READER
     resolver = READER.resolver
     assert resolver is not None
     forged = resolver.deps.mint_ticket([follow.removeprefix("pbl_").split(".")[0], "r9", "main"])
@@ -115,7 +115,7 @@ def test_a_ticket_for_an_older_revision_serves_that_revision_and_never_a_newer_o
 def test_a_ticket_for_an_existing_revision_the_link_never_served_is_refused(read_env, store, folder: Path) -> None:
     pinned = mint_token(store)
     add_revision(folder, PAGE + b"<p>second</p>")
-    from src.cplugs.reviewboard.public.read import READER
+    from src.plugins.reviewboard.public.read import READER
     resolver = READER.resolver
     assert resolver is not None
     forged = resolver.deps.mint_ticket([pinned.removeprefix("pbl_").split(".")[0], "r2", "main"])

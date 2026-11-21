@@ -16,7 +16,7 @@ vi.mock('../../api/auth.svelte', async (importOriginal) => {
 });
 
 import Mk2Discussion from './Mk2Discussion.svelte';
-import type { Inspection, Message, Task } from '../../../cplugs/huddle/task-manager-design/model';
+import type { Inspection, Message, Task } from '../../../plugins/huddle/task-manager-design/model';
 
 const message = (id: number): Message => ({ id: String(id), by: 'agent', time: 'now', text: `m${id}`, read: false });
 const view = (): Inspection => ({ tab: 'discussion', earlier: false, approved: false, scroll: 0, boundary: 0 });

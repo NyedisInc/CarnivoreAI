@@ -24,12 +24,13 @@ SPECS = (
     ra.RouteTool(
         name="placement_explain", route="src.api.pack_placement_routes:placement_explain", gate=ra.READ,
         description="Which computer in the Pack would take a job now, and why. Names every computer's headroom after its compute "
-                    "reserve and any filter that ruled one out (battery, a missing tool, a restriction). Light work stays on the "
+                    "reserve and any filter that ruled one out (battery, a missing tool, pegged, a restriction). Light work stays on the "
                     "project's home; heavy kinds (browser, suite, build, render) go to the most headroom. Writes nothing.",
         properties={"workload": {"type": "object", "description": "kind (light, browser, suite, build, render), est_cpu_cores, est_ram_gb, est_disk_gb"},
                     "task_type": {"type": "string", "description": "a slug; implies a kind when workload has none"},
                     "project": {"type": "string", "description": "the project's name or folder"},
-                    "needs": {"type": "array", "items": {"type": "string"}, "description": "tools the job needs (playwright, python3.12, docker, node, gh)"}},
+                    "needs": {"type": "array", "items": {"type": "string"}, "description": "hard requirements, met only by a computer that reports them: ffmpeg, node, xcode, gpu:nvidia, mem_gb>=32, disk_gb>=50, os:linux, label:<name>"},
+                    "prefer": {"type": "array", "items": {"type": "string"}, "description": "soft requirements, same words; they only order the computers that qualify"}},
         invoke=_explain, example={"workload": {"kind": "browser"}},
     ),
     ra.RouteTool(
